@@ -120,16 +120,17 @@ export interface User {
   permissionApprovalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED'
 
   /**
-   * CMS: 관리자 「회원 등록」 플로우로만 생성된 계정.
-   * 기본 정보 description의「관리자에 의해 등록」안내·상세 [정보 수정] 노출에는
-   * `identitySelfSignupCompletedAfterAdminRegistration`이 아닐 때만 사용한다.
+   * CMS: 관리자 「회원 등록」으로 생성된 이력이 있는지.
+   * 직접 등록으로 취급하려면 `identitySelfSignupCompletedAfterAdminRegistration === true`여야 한다.
+   * 상세 UI·편집 가능 범위는 `admin-provisioned-member-policy`의
+   * `shouldShowCmsMemberInfoEditButton` / `isSelfRegisteredMemberForCmsBasicInfo`,
+   * 관리자 회원(`role === 'ADMIN'`)은 `canEditAdminMemberInfo`·`canAccessAdminCommentInAdminDetail`을 따른다.
    */
   registeredByAdmin?: boolean
 
   /**
-   * 관리자 등록 계정이 본인인증 후 직접 가입(추가 절차)을 완료한 경우.
-   * true이면 CMS에서는 일반 회원과 동일하게 취급하여 [정보 수정]·기본 정보의 관리자 등록 안내 문구를 비노출한다.
-   * ([관리자 코멘트] 영역은 별도 필드이며 동일하게 노출된다.)
+   * 관리자 등록 후 본인 직접 가입(추가 절차)을 완료한 경우. true이면 CMS에서 **직접 등록**과 동일하게 취급한다.
+   * 기본정보 일괄 수정은 불가(읽기 전용)·관리자 코멘트(및 관리자 회원의 권한 유형)는 CMS 관리자 전원 예외, 강사(INSTRUCTOR)는 강사비 등급도 예외.
    */
   identitySelfSignupCompletedAfterAdminRegistration?: boolean
 

@@ -48,7 +48,8 @@ function filterRowsBySearchParams(
 ): MemberPermissionApplicationRow[] {
   const p = urlPrefix(memberType)
   const q = (searchParams.get(`${p}_search`) ?? '').trim().toLowerCase()
-  const role = parseRole(searchParams.get(`${p}_role`))
+  const role =
+    memberType === 'admin' ? 'ALL' : parseRole(searchParams.get(`${p}_role`))
   const approvalStatus = parseApproval(searchParams.get(`${p}_approval`))
   const fromStr = searchParams.get(`${p}_from`)
   const toStr = searchParams.get(`${p}_to`)
@@ -80,7 +81,14 @@ const searchSyncRules = (
   memberType: MembersPermissionTableContext['memberType']
 ): readonly TableSearchParamRule<MembersPermissionPendingFilters>[] => {
   const p = urlPrefix(memberType)
-  return [
+  const roleParamRule: TableSearchParamRule<MembersPermissionPendingFilters> = {
+    kind: 'param',
+    filterKey: 'role',
+    paramKey: `${p}_role`,
+    condition: f => f.role !== 'ALL',
+    transform: v => String(v),
+  }
+  const baseRules: TableSearchParamRule<MembersPermissionPendingFilters>[] = [
     {
       kind: 'param',
       filterKey: 'search',
@@ -88,13 +96,7 @@ const searchSyncRules = (
       condition: f => f.search.trim().length > 0,
       transform: v => String(v).trim(),
     },
-    {
-      kind: 'param',
-      filterKey: 'role',
-      paramKey: `${p}_role`,
-      condition: f => f.role !== 'ALL',
-      transform: v => String(v),
-    },
+    ...(memberType === 'instructor' ? [roleParamRule] : []),
     {
       kind: 'param',
       filterKey: 'approvalStatus',
@@ -106,6 +108,9 @@ const searchSyncRules = (
       kind: 'apply',
       apply: (nextParams, filters) => {
         const prefix = urlPrefix(memberType)
+        if (memberType === 'admin') {
+          nextParams.delete(`${prefix}_role`)
+        }
         nextParams.delete(`${prefix}_from`)
         nextParams.delete(`${prefix}_to`)
         const range = filters.createdAtRange
@@ -116,6 +121,7 @@ const searchSyncRules = (
       },
     },
   ]
+  return baseRules
 }
 
 /** 탭별(inst/admin)로 쿼리 키가 분리되어 동시 마운트 시에도 URL이 충돌하지 않는다. */
@@ -141,7 +147,8 @@ export const membersPermissionTablePageConfig: TablePageConfig<
     syncPendingFromUrl: ({ context, searchParams, setPendingFilters, table: _t, columnFilters: _cf }) => {
       const p = urlPrefix(context.memberType)
       const search = searchParams.get(`${p}_search`) ?? ''
-      const role = parseRole(searchParams.get(`${p}_role`))
+      const role =
+        context.memberType === 'admin' ? 'ALL' : parseRole(searchParams.get(`${p}_role`))
       const approvalStatus = parseApproval(searchParams.get(`${p}_approval`))
       const fromStr = searchParams.get(`${p}_from`)
       const toStr = searchParams.get(`${p}_to`)
@@ -172,8 +179,10 @@ export const membersPermissionTablePageConfig: TablePageConfig<
     hasActiveFilters: ({ context, searchParams }) => {
       const p = urlPrefix(context.memberType)
       if ((searchParams.get(`${p}_search`) ?? '').trim()) return true
-      const r = searchParams.get(`${p}_role`)
-      if (r && r !== 'ALL') return true
+      if (context.memberType === 'instructor') {
+        const r = searchParams.get(`${p}_role`)
+        if (r && r !== 'ALL') return true
+      }
       const a = searchParams.get(`${p}_approval`)
       if (a && a !== 'ALL') return true
       if (searchParams.get(`${p}_from`) && searchParams.get(`${p}_to`)) return true
@@ -206,5 +215,3 @@ export const membersPermissionTablePageConfig: TablePageConfig<
     tableConfig: {},
   }),
 }
-
-// Remove unused paramConfig export - I left dead code paramConfig at top, remove it

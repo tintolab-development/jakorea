@@ -30,10 +30,16 @@ import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import {
   canAccessAdminCommentInAdminDetail,
   canEditAdminMemberInfo,
+  isMasterAdminUser,
   shouldShowCmsMemberInfoEditButton,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import {
+  getAdminPermissionVariant,
+  type AdminPermissionTagVariant,
+} from '@/features/user/shared/lib/admin-permission-display'
+import {
   draftToAdminCommentAndInstructorFeePatch,
+  draftToAdminMemberRestrictedPatch,
   draftToAdminProvisionedInstructorBasicInfoPatch,
   draftToBasicInfoPatch,
   draftToSchoolAdminCommentOnlyPatch,
@@ -102,6 +108,7 @@ export function useUserDetailController({
     null
   )
   const [basicInfoSaveLoading, setBasicInfoSaveLoading] = useState(false)
+  const [adminPermissionVariantPatching, setAdminPermissionVariantPatching] = useState(false)
   const [instructorPermissionRevokeOpen, setInstructorPermissionRevokeOpen] = useState(false)
 
   useUserDetailUrlSync({
@@ -121,6 +128,7 @@ export function useUserDetailController({
       setBasicInfoEditing(false)
       setBasicInfoDraft(null)
       setBasicInfoSaveLoading(false)
+      setAdminPermissionVariantPatching(false)
       setInstructorPermissionRevokeOpen(false)
     }
   }, [open])
@@ -131,6 +139,7 @@ export function useUserDetailController({
     setBasicInfoEditing(false)
     setBasicInfoDraft(null)
     setBasicInfoSaveLoading(false)
+    setAdminPermissionVariantPatching(false)
     setInstructorPermissionRevokeOpen(false)
   }, [displayUser?.id])
 
@@ -347,13 +356,18 @@ export function useUserDetailController({
         patch =
           displayUser.role === 'INSTRUCTOR'
             ? draftToAdminCommentAndInstructorFeePatch(basicInfoDraft)
-            : draftToSchoolAdminCommentOnlyPatch(basicInfoDraft)
+            : displayUser.role === 'ADMIN'
+              ? draftToAdminMemberRestrictedPatch(basicInfoDraft)
+              : draftToSchoolAdminCommentOnlyPatch(basicInfoDraft)
       } else if (displayUser.role === 'SCHOOL') {
         patch = draftToSchoolInstitutionBasicInfoPatch(basicInfoDraft)
       } else if (displayUser.role === 'INSTRUCTOR') {
         patch = draftToAdminProvisionedInstructorBasicInfoPatch(basicInfoDraft)
       } else if (displayUser.role === 'ADMIN') {
-        patch = draftToBasicInfoPatch(basicInfoDraft)
+        patch =
+          isMasterAdminUser(currentUser) && shouldShowCmsMemberInfoEditButton(displayUser)
+            ? draftToBasicInfoPatch(basicInfoDraft)
+            : draftToAdminMemberRestrictedPatch(basicInfoDraft)
       } else {
         patch = draftToBasicInfoPatch(basicInfoDraft)
       }
@@ -379,6 +393,29 @@ export function useUserDetailController({
     setBasicInfoDraft(prev => (prev ? { ...prev, ...partial } : prev))
   }, [])
 
+  const patchAdminPermissionVariantFromDetailView = useCallback(
+    async (nextPermission: AdminPermissionTagVariant) => {
+      if (!displayUser || displayUser.role !== 'ADMIN') return
+      if (!canAccessAdminCommentInAdminDetail(currentUser)) return
+      if (!patchMemberBasicInfo) return
+      const current = getAdminPermissionVariant(displayUser)
+      if (nextPermission === current) return
+      setAdminPermissionVariantPatching(true)
+      try {
+        const updated = await patchMemberBasicInfo(displayUser.id, {
+          listMetrics: { adminPermissionVariant: nextPermission },
+        })
+        onMemberBasicInfoSaved?.(updated)
+        showSuccessMessage('관리자 권한 유형이 변경되었습니다.')
+      } catch (error) {
+        handleError(error, { defaultMessage: '관리자 권한 유형 변경에 실패했습니다.' })
+      } finally {
+        setAdminPermissionVariantPatching(false)
+      }
+    },
+    [displayUser, currentUser, patchMemberBasicInfo, onMemberBasicInfoSaved]
+  )
+
   const openInstructorPermissionRevoke = useCallback(() => {
     if (!displayUser || displayUser.role !== 'INSTRUCTOR') return
     setInstructorPermissionRevokeOpen(true)
@@ -390,7 +427,8 @@ export function useUserDetailController({
 
   const confirmInstructorPermissionRevoke = useCallback(
     (_payload: { reason: string; notifyTiming: InstructorPermissionRevokeNotifyTiming }) => {
-      // TODO(api): 강사 권한 박탈 API 연동 후 실제 처리로 교체
+      // TODO(api): 강사 권한 박탈 API 연동 후 alert 제거·실제 처리로 교체
+      window.alert('준비 중입니다.')
       setInstructorPermissionRevokeOpen(false)
     },
     []
@@ -501,6 +539,16 @@ export function useUserDetailController({
 
   const role = displayUser?.role
 
+  const canPatchAdminPermissionInDetailView = useMemo(
+    () =>
+      Boolean(
+        patchMemberBasicInfo &&
+          displayUser?.role === 'ADMIN' &&
+          canAccessAdminCommentInAdminDetail(currentUser)
+      ),
+    [patchMemberBasicInfo, displayUser?.role, currentUser]
+  )
+
   const instructorResumeApplicantRow = useMemo((): ApplicantInstructorRow | null => {
     if (!displayUser || displayUser.role !== 'INSTRUCTOR') return null
     const profile = resolveInstructorMemberProfile(displayUser)
@@ -523,6 +571,7 @@ export function useUserDetailController({
       basicInfoEditing,
       basicInfoDraft,
       basicInfoSaveLoading,
+      adminPermissionVariantPatching,
       instructorPermissionRevokeOpen,
     },
     actions: {
@@ -546,6 +595,7 @@ export function useUserDetailController({
       cancelBasicInfoEdit,
       saveBasicInfoEdit,
       updateBasicInfoDraft,
+      patchAdminPermissionVariantFromDetailView,
       openInstructorPermissionRevoke,
       closeInstructorPermissionRevoke,
       confirmInstructorPermissionRevoke,
@@ -556,6 +606,7 @@ export function useUserDetailController({
       sidebarExpandedGroupKeys,
       sidebarActiveChildKey,
       instructorResumeApplicantRow,
+      canPatchAdminPermissionInDetailView,
     },
   }
 }

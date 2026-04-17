@@ -3,6 +3,7 @@
  * ProgramCalendar 컴포넌트 전용 — program-calendar-view 좌·우 패널과 분리
  */
 
+/* 루트는 TSX의 단일 .program-calendar-main(+ className) — 예전 바깥 .program-calendar-container 래퍼 없음 */
 /* ===== 중앙: 메인 캘린더 ===== */
 .program-calendar-main {
   flex: 1;
@@ -14,7 +15,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-16);
-  min-height: 0;
 }
 
 /* 메인 캘린더 헤더 (디바이더 없음: 헤더와 캘린더 그리드 구분선 제거) — 본문과 간격은 .program-calendar-main gap */
@@ -151,11 +151,81 @@
   box-sizing: border-box;
 }
 
+/* events 모드 + eventsTooltipTrigger=cell: 셀 빈 영역까지 호버로 전일정 툴팁 */
+.program-calendar-cell-tooltip-trigger--full-cell {
+  height: 100%;
+  align-self: stretch;
+}
+
+.program-calendar-cell-tooltip-trigger--full-cell > .program-calendar-cell {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* cell 툴팁 모드: 짧은 제목이어도 일정 배지가 셀 가로 전체를 사용 */
+.program-calendar-cell-tooltip-trigger--full-cell .program-calendar-cell-events {
+  align-items: stretch;
+  align-self: stretch;
+  width: 100%;
+}
+
+.program-calendar-cell-tooltip-trigger--full-cell .program-calendar-cell-events > div {
+  min-width: 0;
+  width: 100%;
+}
+
+.program-calendar-cell-tooltip-trigger--full-cell .program-calendar-event {
+  width: 100%;
+}
+
+.program-calendar-cell-tooltip-trigger--full-cell .program-calendar-event-title {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start !important;
+  min-width: 0;
+}
+
+.program-calendar-cell-tooltip-trigger--full-cell .program-calendar-event-more {
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .program-calendar-week-cell-tooltip-trigger {
   display: block;
   width: 100%;
   flex: 1 1 auto;
   min-height: 0;
+  box-sizing: border-box;
+}
+
+.program-calendar-week-cell-tooltip-trigger--full-cell {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.program-calendar-week-cell-tooltip-trigger--full-cell .program-calendar-week-cell-events > div {
+  min-width: 0;
+  width: 100%;
+}
+
+.program-calendar-week-cell-tooltip-trigger--full-cell .program-calendar-event {
+  width: 100%;
+}
+
+.program-calendar-week-cell-tooltip-trigger--full-cell .program-calendar-event-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.program-calendar-week-cell-tooltip-trigger--full-cell .program-calendar-event-more {
+  align-self: stretch;
+  width: 100%;
   box-sizing: border-box;
 }
 
@@ -450,10 +520,21 @@
 /* Ant Design Calendar 오버라이드 */
 .program-calendar-main .ant-picker-calendar {
   background: transparent;
-  flex: 1;
+  flex: 0 1 auto;
   display: flex;
   flex-direction: column;
+}
+
+/* Calendar fullscreen={false} → ant-picker-calendar-mini; 메인 월 그리드는 mini 전용 256px 고정 높이 미사용 */
+.program-calendar-main .ant-picker-calendar-mini .ant-picker-content {
+  height: auto !important;
   min-height: 0;
+}
+
+.program-calendar-main .ant-picker-body,
+.program-calendar-main .ant-picker-panel {
+  overflow: visible;
+  max-height: none;
 }
 
 .program-calendar-main .ant-picker-calendar-date {

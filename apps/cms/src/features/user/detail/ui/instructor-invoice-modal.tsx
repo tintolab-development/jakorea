@@ -1,6 +1,7 @@
 import { DownloadOutlined } from '@ant-design/icons'
 import { PlainHeaderModal } from '@/shared/ui/plain-header-modal'
 import { AppButton } from '@/shared/ui/app-button'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   getInstructorSettlementInvoiceStatusPresentation,
   type InstructorSettlementInvoiceDetail,
@@ -42,84 +43,68 @@ export function InstructorInvoiceModal({ open, onClose, data }: InstructorInvoic
       }
     >
       <section>
-        <h3 className="plain-header-modal__section-title">기본 정보</h3>
         <div className="instructor-invoice-modal__basic-group">
-          <div className="instructor-invoice-modal__basic-card">
-            <table className="instructor-invoice-modal__basic-table">
-              <colgroup>
-                <col className="instructor-invoice-modal__basic-col--label" />
-                <col className="instructor-invoice-modal__basic-col--value" />
-                <col className="instructor-invoice-modal__basic-col--label" />
-                <col className="instructor-invoice-modal__basic-col--value" />
-              </colgroup>
-              <tbody>
-                <tr>
-                  <th className="instructor-invoice-modal__cell-label">프로그램명</th>
-                  <td colSpan={3} style={{ textAlign: 'center' }}>
-                    {data.programName}
-                  </td>
-                </tr>
-                <tr>
-                  <th className="instructor-invoice-modal__cell-label">프로그램 진행 회차</th>
-                  <td>{data.sessionProgress}</td>
-                  <th className="instructor-invoice-modal__cell-label">사업 운영 기간</th>
-                  <td>{data.operationPeriod}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div className="instructor-invoice-modal__basic-card">
-            <table className="instructor-invoice-modal__basic-table">
-              <colgroup>
-                <col className="instructor-invoice-modal__basic-col--label" />
-                <col className="instructor-invoice-modal__basic-col--value" />
-                <col className="instructor-invoice-modal__basic-col--label" />
-                <col className="instructor-invoice-modal__basic-col--value" />
-              </colgroup>
-              <tbody>
-                <tr>
-                  <th className="instructor-invoice-modal__cell-label">지급조서 처리 현황</th>
-                  <td>
-                    <div className="instructor-invoice-modal__payment-row">
-                      <span
-                        style={{
-                          color: paymentStatementPresentation.color,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {paymentStatementPresentation.label}
-                      </span>
-                      <span className="instructor-invoice-modal__payment-row-separator">|</span>
-                      <AppButton
-                        variant="viewDetails"
-                        size="large"
-                        onClick={() => window.alert('준비 중입니다.')}
-                      >
-                        알림 발송
-                      </AppButton>
-                    </div>
-                  </td>
-                  <th className="instructor-invoice-modal__cell-label">이체 예정일</th>
-                  <td>{data.expectedTransferDate}</td>
-                </tr>
-                <tr>
-                  <th className="instructor-invoice-modal__cell-label">강의비 책정 기준</th>
-                  <td>{data.lectureFeeBasis}</td>
-                  <th className="instructor-invoice-modal__cell-label">사업소득자 여부</th>
-                  <td>{data.businessIncomeEarner}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <DetailInfoForm title="기본 정보" className="instructor-invoice-modal__detail-form-card">
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field label="프로그램명" view={<span>{data.programName}</span>} />
+              <DetailInfoForm.Field
+                label="사업 운영 기간"
+                view={<span>{data.operationPeriod}</span>}
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="프로그램 진행 회차"
+                view={<span>{data.sessionProgress}</span>}
+              />
+              <DetailInfoForm.Field
+                label="지급조서 처리 현황"
+                view={
+                  <div className="instructor-invoice-modal__payment-row">
+                    <span
+                      style={{
+                        color: paymentStatementPresentation.color,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {paymentStatementPresentation.label}
+                    </span>
+                    <span className="instructor-invoice-modal__payment-row-separator">|</span>
+                    <AppButton
+                      variant="viewDetails"
+                      size="large"
+                      onClick={() => window.alert('준비 중입니다.')}
+                    >
+                      알림 발송
+                    </AppButton>
+                  </div>
+                }
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="이체 예정일"
+                view={<span>{data.expectedTransferDate}</span>}
+              />
+              <DetailInfoForm.Field
+                label="강의비 책정 기준"
+                view={<span>{data.lectureFeeBasis}</span>}
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="사업소득자 여부"
+                view={<span>{data.businessIncomeEarner}</span>}
+              />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
         </div>
       </section>
 
       <section>
-        <div className="instructor-invoice-modal__detail-heading">
-          <h3 className="plain-header-modal__section-title plain-header-modal__section-title--inline">
-            산출 내역 상세
-          </h3>
-          <span className="instructor-invoice-modal__section-caption-inline">
+        <div style={{ marginBottom: '8px' }}>
+          <span className="info-section-title">산출 내역 상세</span>
+          <span className="info-section-description">
             교통비 및 숙소비는 강사가 지급 신청한 경우에만 항목 노출됩니다.
           </span>
         </div>
@@ -209,7 +194,7 @@ export function InstructorInvoiceModal({ open, onClose, data }: InstructorInvoic
                       icon={<DownloadOutlined />}
                       onClick={() => window.alert('준비 중입니다.')}
                     >
-                      지급조서 다운로드
+                      지급조서 발급
                     </AppButton>
                   </div>
                 </td>

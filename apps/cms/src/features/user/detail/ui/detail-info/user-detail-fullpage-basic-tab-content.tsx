@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { Space } from 'antd'
 import type { User } from '@/types/user'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
@@ -15,18 +14,12 @@ import { InstructorResumeDetailForms } from '@/features/user/detail/ui/instructo
 import { SchoolAffiliatedTeachersSection } from '@/features/user/detail/ui/school-affiliated-teachers-section'
 import { UserDetailAdminCommentSection } from './user-detail-admin-comment-section'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
+import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 import {
-  ADMIN_REGISTERED_SCHOOL_TITLE_NOTICE,
   canAccessAdminCommentInAdminDetail,
+  canEditAdminMemberInfo,
   shouldShowAdminCommentSection,
-  shouldShowAdminRegisteredSchoolTitleNotice,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
-import {
-  resolveUserBasicInfoBodyKey,
-  parseUserBasicInfoEntryQuery,
-  USER_BASIC_INFO_ENTRY_QUERY_KEY,
-} from '@/features/user/detail/ui/user-basic-info-section'
-import { useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 
 export interface UserDetailFullpageBasicTabContentProps {
@@ -39,6 +32,10 @@ export interface UserDetailFullpageBasicTabContentProps {
   memberInfoEditing?: boolean
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  adminPermissionVariantPatching?: boolean
+  onPatchAdminPermissionVariantFromDetailView?: (
+    nextPermission: AdminPermissionTagVariant
+  ) => void | Promise<void>
 }
 
 export function UserDetailFullpageBasicTabContent({
@@ -51,21 +48,12 @@ export function UserDetailFullpageBasicTabContent({
   memberInfoEditing = false,
   memberInfoDraft,
   onMemberInfoDraftChange,
+  adminPermissionVariantPatching = false,
+  onPatchAdminPermissionVariantFromDetailView,
 }: UserDetailFullpageBasicTabContentProps) {
-  const [searchParams] = useSearchParams()
   const currentUser = useAuthStore(state => state.user)
-  const institutionTitleTrailing = useMemo(() => {
-    const entryFromQuery = parseUserBasicInfoEntryQuery(
-      searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY)
-    )
-    const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryFromQuery, user.role)
-    if (bodyKey !== 'institution' || !shouldShowAdminRegisteredSchoolTitleNotice(user)) return undefined
-    return (
-      <span className="user-basic-info-section__school-admin-notice" role="note">
-        {ADMIN_REGISTERED_SCHOOL_TITLE_NOTICE}
-      </span>
-    )
-  }, [user, basicInfoEntrySource, searchParams])
+  const adminMemberProfileFieldsEditableWhenEditing =
+    user.role !== 'ADMIN' || canEditAdminMemberInfo(currentUser, user)
   const canShowAdminCommentForTarget =
     user.role === 'ADMIN'
       ? canAccessAdminCommentInAdminDetail(currentUser)
@@ -89,12 +77,14 @@ export function UserDetailFullpageBasicTabContent({
         user={user}
         entrySource={basicInfoEntrySource}
         caption={basicTab.caption}
-        institutionBasicInfoTitleTrailing={institutionTitleTrailing}
         externalId1365={basicTab.externalId1365}
         personalInfoRevealed={personalInfoRevealed}
         memberInfoEditing={memberInfoEditing}
         memberInfoDraft={memberInfoDraft}
         onMemberInfoDraftChange={onMemberInfoDraftChange}
+        adminPermissionVariantPatching={adminPermissionVariantPatching}
+        onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
+        adminMemberProfileFieldsEditableWhenEditing={adminMemberProfileFieldsEditableWhenEditing}
       />
       {basicTab.showConsentAgreement ? (
         <UserConsentAgreementSection preset={resolveUserConsentAgreementPreset(user)} />

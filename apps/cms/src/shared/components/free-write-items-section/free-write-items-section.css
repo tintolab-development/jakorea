@@ -1,0 +1,75 @@
+/**
+ * 자유 작성 항목 — `detail-info-form`과 동일한 테두리·반경·라벨 배경·타이포 토큰
+ * 레이아웃만 카드형(상단 회색 헤더 + 하단 입력)으로 구성
+ */
+
+.free-write-items-section {
+  width: 100%;
+  min-width: 0;
+}
+
+.free-write-items-section__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.free-write-items-section__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  color: var(--default-BK, #3d3d3d);
+  padding: 0 8px;
+}
+
+.free-write-items-section__description {
+  margin: 0;
+  padding: 0 8px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+}
+
+.free-write-items-section__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.free-write-items-section__card {
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 6px;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.free-write-items-section__card-header {
+  padding: 12px 16px;
+  background: #f5f6f7;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  color: var(--default-BK, #3d3d3d);
+  text-align: left;
+}
+
+.free-write-items-section__card-body {
+  padding: 12px 16px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.free-write-items-section__card-body .cms-textarea {
+  width: 100%;
+  display: flex;
+}
+
+.free-write-items-section__card-body .cms-textarea.cms-textarea--explicit-width .cms-textarea__control {
+  min-height: 120px;
+}

@@ -31,11 +31,195 @@
   min-height: 120px;
 }
 
-.address-search__result-count {
-  color: var(--main-BK, #3d3d3d);
-  font-size: 14px;
+.address-search__results.address-search__results--idle {
+  min-height: 0;
+}
+
+.address-search__tip--hidden {
+  display: none !important;
+}
+
+/* 자동완성 목록 (입력 중) — 시안: 흰 박스·라운드·구분선, 키워드 `--JA-mint-01` */
+.address-search__suggest-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--8, 8px);
+  background: var(--main-WT, #fff);
+}
+
+.address-search__suggest-item {
+  margin: 0;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.address-search__suggest-item:last-child {
+  border-bottom: none;
+}
+
+.address-search__suggest-btn {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 15px;
   font-weight: 500;
   line-height: 150%;
+  color: var(--main-BK, #3d3d3d);
+  box-sizing: border-box;
+}
+
+.address-search__suggest-btn:hover {
+  background: var(--table-header-bg, #fafafa);
+}
+
+.address-search__suggest-hit {
+  color: var(--JA-mint-01, #01a1af);
+  font-weight: 500;
+  background: none;
+}
+
+/* [검색] 클릭 후 상세 결과 — 우편번호·영문보기·도로명/지번 배지 (시안) */
+.address-search__result-card-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--8, 8px);
+  background: var(--main-WT, #fff);
+}
+
+.address-search__result-card-item {
+  margin: 0;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.address-search__result-card-item:last-child {
+  border-bottom: none;
+}
+
+.address-search__result-card-body {
+  padding: 12px;
+  box-sizing: border-box;
+  cursor: pointer;
+  outline: none;
+}
+
+.address-search__result-card-body:hover {
+  background: var(--table-header-bg, #fafafa);
+}
+
+.address-search__result-card-body:focus-visible {
+  outline: 2px solid var(--JA-mint-01, #01a1af);
+  outline-offset: -2px;
+}
+
+.address-search__result-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.address-search__result-zip {
+  overflow: hidden;
+  color: var(--color-mint-01, #01a1af);
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 24px */
+}
+
+.address-search__eng-link {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--color-text-secondary, #8c8c8c);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.address-search__eng-link:hover:not(:disabled) {
+  color: var(--default-BK, #3d3d3d);
+}
+
+.address-search__eng-link--disabled {
+  text-decoration: none;
+  opacity: 0.45;
+  cursor: default;
+}
+
+.address-search__eng-preview {
+  margin: 0 0 16px;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+.address-search__result-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.address-search__result-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.address-search__type-badge {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 4px;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  color: var(--color-mint-01, #01a1af);
+
+  display: flex;
+  width: 52px;
+  padding: 3px 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.address-search__addr-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
 }
 
 .address-search__result-empty {
@@ -44,11 +228,54 @@
   line-height: 150%;
 }
 
+/* 검색 결과 10건 이상 — 시안: 위·아래 16px, 1행 Bold+Medium, 2행 mint */
+.address-search__many-results-notice {
+  margin: 16px 0;
+  font-family: Pretendard, sans-serif;
+}
+
+.address-search__many-results-line1 {
+  margin: 0;
+  font-size: 14px;
+  font-style: normal;
+  line-height: 150%;
+}
+
+.address-search__many-results-em {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.address-search__many-results-text {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.address-search__many-results-line2 {
+  margin: 0;
+  margin-top: 4px;
+  padding: 0;
+  color: var(--color-mint-01, #01a1af);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
 .address-search__result-table-wrap {
   max-height: 280px;
   overflow: auto;
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: var(--8, 8px);
+  border: 1px solid #d4d4d4;
+  border-radius: 12px;
 }
 
 .address-search__result-table {
@@ -61,7 +288,7 @@
 .address-search__result-table td {
   padding: 10px 12px;
   text-align: left;
-  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid #d4d4d4;
   vertical-align: top;
 }
 
@@ -94,19 +321,20 @@
 .address-search__tip {
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .address-search__tip-title {
-  margin: 0;
-  font-size: 14px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
   font-weight: 700;
-  line-height: 150%;
-  color: var(--main-BK, #3d3d3d);
+  line-height: 150%; /* 24px */
+  margin-top: 16px;
 }
 
 .address-search__tip-lead {
-  margin: 0;
+  margin-bottom: 16px;
   font-size: 14px;
   line-height: 160%;
   color: var(--main-BK, #3d3d3d);
@@ -132,7 +360,69 @@
 
 .address-search__tip-item-example {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 150%;
-  color: var(--color-primary, #1677ff);
+  color: var(--JA-mint-01, #01a1af);
+}
+
+/**
+ * 주소 검색 모달 시안: 헤더·검색행·Tip 순서, 카드형 모서리, 검색 버튼·예시 강조 `--JA-mint-01`
+ * 카드 높이 고정 600px — 본문만 스크롤
+ */
+.content-modal.address-search-modal .teal-header-modal__body {
+  padding-top: 24px;
+  flex: 1 1 auto;
+  min-height: 0;
+  align-self: stretch;
+  overflow-y: auto;
+}
+
+.content-modal.address-search-modal.teal-header-modal .ant-modal-content {
+  border-radius: 14px;
+  height: 600px;
+  max-height: 600px;
+  min-height: 600px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.content-modal.address-search-modal.teal-header-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.address-search-modal .address-search__body {
+  gap: 4px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.address-search-modal .address-search__results {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.address-search-modal .cms-input__control:hover:not(.cms-input__control--disabled),
+.address-search-modal .cms-input__control:focus-within:not(.cms-input__control--disabled) {
+  border-color: var(--JA-mint-01, #01a1af);
+}
+
+.address-search-modal
+  .address-search__search-btn.cms-button.ant-btn.cms-button--primary:not(:disabled):not(
+    .ant-btn-disabled
+  ) {
+  background: var(--JA-mint-01, #01a1af) !important;
+  border-color: var(--JA-mint-01, #01a1af) !important;
+  color: var(--main-WT, #fff) !important;
+}
+
+.address-search-modal .address-search__tip-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
 }

@@ -29,6 +29,8 @@ import '@/features/user/shared/ui/admin-permission-tag.css'
 import { AddressSearch, CmsButton, CmsInput, CmsSelect } from '@/shared/ui'
 import { getFormInputsWidth } from '@/shared/lib/form-inputs-width'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
+import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
 
 const GENDER_EDIT_OPTIONS = [
   { value: '남성', label: '남성' },
@@ -36,10 +38,6 @@ const GENDER_EDIT_OPTIONS = [
 ]
 
 const JA_EVALUATION_GRADE_OPTIONS = ['A', 'B', 'C', 'D'].map(v => ({ value: v, label: v }))
-const INSTRUCTOR_FEE_GRADE_OPTIONS = ['1급 강사비', '2급 강사비', '3급 강사비'].map(v => ({
-  value: v,
-  label: v,
-}))
 
 /** 개인 회원 소속 학년 선택 (시안·프로그램 신청 탭 `GRADE_OPTIONS`와 동일 체계) */
 const INDIVIDUAL_AFFILIATION_GRADE_OPTIONS: { value: string; label: string }[] = [
@@ -102,8 +100,6 @@ export interface UserBasicInfoSectionProps {
   user: Omit<User, 'password'>
   entrySource?: UserBasicInfoEntrySource
   caption?: ReactNode
-  /** 기관(학교) 본문일 때 기본 정보 타이틀 우측 안내(예: 관리자 등록 학교) */
-  institutionBasicInfoTitleTrailing?: ReactNode
   scheduleChangeCount?: number
   externalId1365?: UserBasicInfoExternalId1365 | null
   personalInfoRevealed?: boolean
@@ -111,6 +107,15 @@ export interface UserBasicInfoSectionProps {
   memberInfoEditing?: boolean
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  /** 관리자(ADMIN) 상세 — 뷰 모드에서 권한 유형만 즉시 저장 */
+  adminPermissionVariantPatching?: boolean
+  onPatchAdminPermissionVariantFromDetailView?: (
+    nextPermission: AdminPermissionTagVariant
+  ) => void | Promise<void>
+  /**
+   * 관리자 회원 상세 — [정보 수정] 중 성명·연락처·이메일 편집 허용 여부(마스터+관리자 등록일 때만 true).
+   */
+  adminMemberProfileFieldsEditableWhenEditing?: boolean
 }
 
 function ageFromBirthDate(birthDate: DateValue | undefined): number | null {
@@ -322,6 +327,7 @@ function AllUsersFields({
   memberInfoEditing,
   memberInfoDraft,
   onMemberInfoDraftChange,
+  cmsMayEditBasicProfileFields,
 }: {
   user: Omit<User, 'password'>
   scheduleChangeCount?: number
@@ -330,8 +336,11 @@ function AllUsersFields({
   memberInfoEditing?: boolean
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  /** 관리자 등록(직접 가입 미완료)일 때만 기본정보 필드 편집 가능 */
+  cmsMayEditBasicProfileFields: boolean
 }) {
-  const editing = Boolean(memberInfoEditing && memberInfoDraft && onMemberInfoDraftChange)
+  const sessionEditing = Boolean(memberInfoEditing && memberInfoDraft && onMemberInfoDraftChange)
+  const basicEditing = sessionEditing && cmsMayEditBasicProfileFields
   const d = memberInfoDraft
 
   return (
@@ -341,7 +350,7 @@ function AllUsersFields({
           rows={[
             {
               subLabel: '한글',
-              main: editing ? (
+              main: basicEditing ? (
                 <span className="user-basic-info-section__name-with-badge">
                   <CmsInput
                     value={d!.name}
@@ -372,7 +381,7 @@ function AllUsersFields({
             },
             {
               subLabel: '영문',
-              main: editing ? (
+              main: basicEditing ? (
                 <CmsInput
                   value={d!.nameEn}
                   onChange={e => onMemberInfoDraftChange!({ nameEn: e.target.value })}
@@ -384,7 +393,7 @@ function AllUsersFields({
                 <span>{user.nameEn ?? '-'}</span>
               ),
               sideLabel: '성별 및 생년월일',
-              side: editing ? (
+              side: basicEditing ? (
                 <span className="user-basic-info-section__inline-controls">
                   <CmsSelect
                     value={d!.gender || undefined}
@@ -414,6 +423,7 @@ function AllUsersFields({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="연락처"
+          readOnlyDisplay={sessionEditing && !cmsMayEditBasicProfileFields}
           view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
           edit={
             <CmsInput
@@ -426,6 +436,7 @@ function AllUsersFields({
         />
         <DetailInfoForm.Field
           label="이메일"
+          readOnlyDisplay={sessionEditing && !cmsMayEditBasicProfileFields}
           view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
           edit={
             <CmsInput
@@ -440,6 +451,7 @@ function AllUsersFields({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="자택 주소"
+          readOnlyDisplay={sessionEditing && !cmsMayEditBasicProfileFields}
           view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
           edit={
             <Space.Compact style={{ width: '100%' }}>
@@ -472,6 +484,7 @@ function AllUsersFields({
         />
         <DetailInfoForm.Field
           label="소속"
+          readOnlyDisplay={sessionEditing && !cmsMayEditBasicProfileFields}
           view={<span>{affiliationLine(user)}</span>}
           edit={
             <span className="detail-info-form-inputs-wrapper-no-gap">
@@ -505,8 +518,16 @@ function AllUsersFields({
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field label="가입일" view={<span>{formatDate(user.createdAt)}</span>} />
-        <DetailInfoForm.Field label="연동된 소셜 계정" view={<span>{socialLine(user)}</span>} />
+        <DetailInfoForm.Field
+          label="가입일"
+          readOnlyDisplay
+          view={<span>{formatDate(user.createdAt)}</span>}
+        />
+        <DetailInfoForm.Field
+          label="연동된 소셜 계정"
+          readOnlyDisplay
+          view={<span>{socialLine(user)}</span>}
+        />
       </DetailInfoForm.Row>
     </>
   )
@@ -516,12 +537,18 @@ function InstitutionFields({
   user,
   memberInfoDraft,
   onMemberInfoDraftChange,
+  memberInfoEditing,
+  cmsMayEditBasicProfileFields,
 }: {
   user: Omit<User, 'password'>
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  memberInfoEditing?: boolean
+  cmsMayEditBasicProfileFields: boolean
 }) {
   const d = memberInfoDraft
+  const sessionEditing = Boolean(memberInfoEditing && memberInfoDraft && onMemberInfoDraftChange)
+  const lockInstitutionBasics = sessionEditing && !cmsMayEditBasicProfileFields
   const schoolName = user.schoolInfo?.schoolName ?? '-'
   const schoolAddress = user.schoolInfo?.address ?? '-'
   const applicationCount = institutionTimesLabel(
@@ -534,6 +561,7 @@ function InstitutionFields({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="기관명"
+          readOnlyDisplay={lockInstitutionBasics}
           view={<span>{schoolName}</span>}
           edit={
             <CmsInput
@@ -547,6 +575,7 @@ function InstitutionFields({
         />
         <DetailInfoForm.Field
           label="기관 소재지"
+          readOnlyDisplay={lockInstitutionBasics}
           view={<span>{schoolAddress}</span>}
           edit={
             <Space.Compact style={{ width: '100%' }}>
@@ -581,39 +610,13 @@ function InstitutionFields({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="프로그램 신청 횟수"
+          readOnlyDisplay
           view={<span>{applicationCount}</span>}
-          edit={
-            <CmsInput
-              value={d?.institutionProgramApplicationCount ?? ''}
-              onChange={e =>
-                onMemberInfoDraftChange?.({
-                  institutionProgramApplicationCount: e.target.value,
-                })
-              }
-              inputSize="medium"
-              width="100%"
-              placeholder="회 단위 숫자"
-              aria-label="프로그램 신청 횟수"
-            />
-          }
         />
         <DetailInfoForm.Field
           label="프로그램 수강 횟수"
+          readOnlyDisplay
           view={<span>{attendanceCount}</span>}
-          edit={
-            <CmsInput
-              value={d?.institutionProgramAttendanceCount ?? ''}
-              onChange={e =>
-                onMemberInfoDraftChange?.({
-                  institutionProgramAttendanceCount: e.target.value,
-                })
-              }
-              inputSize="medium"
-              width="100%"
-              placeholder="회 단위 숫자"
-              aria-label="프로그램 수강 횟수"
-            />
-          }
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="single">
@@ -668,8 +671,16 @@ function settlementStatusView(user: Omit<User, 'password'>) {
 function SchoolTeacherMetaFields({ user }: { user: Omit<User, 'password'> }) {
   return (
     <DetailInfoForm.Row type="double">
-      <DetailInfoForm.Field label="가입일" view={<span>{formatDate(user.createdAt)}</span>} />
-      <DetailInfoForm.Field label="연동된 소셜 계정" view={<span>{socialLine(user)}</span>} />
+      <DetailInfoForm.Field
+        label="가입일"
+        readOnlyDisplay
+        view={<span>{formatDate(user.createdAt)}</span>}
+      />
+      <DetailInfoForm.Field
+        label="연동된 소셜 계정"
+        readOnlyDisplay
+        view={<span>{socialLine(user)}</span>}
+      />
     </DetailInfoForm.Row>
   )
 }
@@ -678,8 +689,16 @@ function SchoolTeacherMetaFields({ user }: { user: Omit<User, 'password'> }) {
 function InstructorMetaFields({ user }: { user: Omit<User, 'password'> }) {
   return (
     <DetailInfoForm.Row type="double">
-      <DetailInfoForm.Field label="가입일" view={<span>{formatDate(user.createdAt)}</span>} />
-      <DetailInfoForm.Field label="연동된 소셜 계정" view={<span>{socialLine(user)}</span>} />
+      <DetailInfoForm.Field
+        label="가입일"
+        readOnlyDisplay
+        view={<span>{formatDate(user.createdAt)}</span>}
+      />
+      <DetailInfoForm.Field
+        label="연동된 소셜 계정"
+        readOnlyDisplay
+        view={<span>{socialLine(user)}</span>}
+      />
     </DetailInfoForm.Row>
   )
 }
@@ -764,6 +783,7 @@ function InstructorDualOrOnlyBasicFields({
   memberInfoEditing,
   memberInfoDraft,
   onMemberInfoDraftChange,
+  cmsMayEditBasicProfileFields,
 }: {
   user: Omit<User, 'password'>
   scheduleChangeCount?: number
@@ -771,8 +791,11 @@ function InstructorDualOrOnlyBasicFields({
   memberInfoEditing?: boolean
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  cmsMayEditBasicProfileFields: boolean
 }) {
-  const editing = Boolean(memberInfoEditing && memberInfoDraft && onMemberInfoDraftChange)
+  const sessionEditing = Boolean(memberInfoEditing && memberInfoDraft && onMemberInfoDraftChange)
+  const basicEditing = sessionEditing && cmsMayEditBasicProfileFields
+  const basicLockedInSession = sessionEditing && !cmsMayEditBasicProfileFields
   const d = memberInfoDraft
   return (
     <>
@@ -781,7 +804,7 @@ function InstructorDualOrOnlyBasicFields({
           rows={[
             {
               subLabel: '한글',
-              main: editing ? (
+              main: basicEditing ? (
                 <span className="user-basic-info-section__name-with-badge">
                   <CmsInput
                     value={d?.name ?? ''}
@@ -807,7 +830,7 @@ function InstructorDualOrOnlyBasicFields({
             },
             {
               subLabel: '영문',
-              main: editing ? (
+              main: basicEditing ? (
                 <CmsInput
                   value={d?.nameEn ?? ''}
                   onChange={e => onMemberInfoDraftChange?.({ nameEn: e.target.value })}
@@ -819,7 +842,7 @@ function InstructorDualOrOnlyBasicFields({
                 <span>{user.nameEn ?? '-'}</span>
               ),
               sideLabel: '성별 및 생년월일',
-              side: editing ? (
+              side: basicEditing ? (
                 <span className="user-basic-info-section__inline-controls">
                   <CmsSelect
                     value={d?.gender || undefined}
@@ -851,6 +874,7 @@ function InstructorDualOrOnlyBasicFields({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="연락처"
+          readOnlyDisplay={basicLockedInSession}
           view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
           edit={
             <CmsInput
@@ -863,6 +887,7 @@ function InstructorDualOrOnlyBasicFields({
         />
         <DetailInfoForm.Field
           label="이메일"
+          readOnlyDisplay={basicLockedInSession}
           view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
           edit={
             <CmsInput
@@ -877,6 +902,7 @@ function InstructorDualOrOnlyBasicFields({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="자택 주소"
+          readOnlyDisplay={basicLockedInSession}
           view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
           edit={
             <span className="detail-info-form-inputs-wrapper-no-gap">
@@ -909,6 +935,7 @@ function InstructorDualOrOnlyBasicFields({
         />
         <DetailInfoForm.Field
           label="정산 계좌 정보"
+          readOnlyDisplay={basicLockedInSession}
           view={<span>{instructorBankLine(user, personalInfoRevealed)}</span>}
           edit={
             <span className="detail-info-form-inputs-wrapper-no-gap">
@@ -946,6 +973,7 @@ function InstructorDualOrOnlyBasicFields({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="최종 학력"
+          readOnlyDisplay={basicLockedInSession}
           view={<span>{highestEducationLine(user)}</span>}
           edit={
             <span className="detail-info-form-inputs-wrapper-no-gap">
@@ -971,6 +999,7 @@ function InstructorDualOrOnlyBasicFields({
         />
         <DetailInfoForm.Field
           label="소속 및 강사 경력"
+          readOnlyDisplay={basicLockedInSession}
           view={<span>{affiliationAndInstructorCareerLine(user)}</span>}
           edit={
             <span className="detail-info-form-inputs-wrapper-no-gap">
@@ -1002,6 +1031,7 @@ function InstructorDualOrOnlyBasicFields({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="JA 평가 등급"
+          readOnlyDisplay={basicLockedInSession}
           view={<span>{jaEvaluationGradeLine(user)}</span>}
           edit={
             <CmsSelect
@@ -1024,7 +1054,7 @@ function InstructorDualOrOnlyBasicFields({
           label="강사비 등급"
           view={<span>{instructorFeeGradeLine(user)}</span>}
           edit={
-            editing ? (
+            sessionEditing ? (
               <CmsSelect
                 value={memberInfoDraft?.instructorFeeGrade || undefined}
                 onChange={v =>
@@ -1046,6 +1076,7 @@ function InstructorDualOrOnlyBasicFields({
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="사업소득자 여부"
+          readOnlyDisplay={basicLockedInSession}
           view={instructorBusinessIncomeView(user)}
           edit={
             <CmsSelect
@@ -1070,6 +1101,7 @@ function InstructorDualOrOnlyBasicFields({
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="한 줄 소개"
+          readOnlyDisplay={basicLockedInSession}
           view={<span>{oneLineIntroLine(user)}</span>}
           edit={
             <CmsInput
@@ -1092,6 +1124,7 @@ function InstructorFieldsByProfile({
   memberInfoEditing,
   memberInfoDraft,
   onMemberInfoDraftChange,
+  cmsMayEditBasicProfileFields,
 }: {
   user: Omit<User, 'password'>
   scheduleChangeCount?: number
@@ -1099,6 +1132,7 @@ function InstructorFieldsByProfile({
   memberInfoEditing?: boolean
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  cmsMayEditBasicProfileFields: boolean
 }) {
   return (
     <InstructorDualOrOnlyBasicFields
@@ -1108,6 +1142,7 @@ function InstructorFieldsByProfile({
       memberInfoEditing={memberInfoEditing}
       memberInfoDraft={memberInfoDraft}
       onMemberInfoDraftChange={onMemberInfoDraftChange}
+      cmsMayEditBasicProfileFields={cmsMayEditBasicProfileFields}
     />
   )
 }
@@ -1118,15 +1153,26 @@ function AdminFields({
   memberInfoEditing,
   memberInfoDraft,
   onMemberInfoDraftChange,
+  adminPermissionVariantPatching = false,
+  onPatchAdminPermissionVariantFromDetailView,
+  adminMemberProfileFieldsEditableWhenEditing = true,
 }: {
   user: Omit<User, 'password'>
   personalInfoRevealed: boolean
   memberInfoEditing?: boolean
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+  adminPermissionVariantPatching?: boolean
+  onPatchAdminPermissionVariantFromDetailView?: (
+    nextPermission: AdminPermissionTagVariant
+  ) => void | Promise<void>
+  adminMemberProfileFieldsEditableWhenEditing?: boolean
 }) {
   const [adminPermissionOpen, setAdminPermissionOpen] = useState(false)
   const editing = Boolean(memberInfoEditing && memberInfoDraft && onMemberInfoDraftChange)
+  const sensitiveProfileEditable = editing && adminMemberProfileFieldsEditableWhenEditing
+  const permDropdownInView = Boolean(onPatchAdminPermissionVariantFromDetailView) && !editing
+  const permEditorActive = editing || permDropdownInView
   const permVariant = getAdminPermissionVariant(user)
   const selectedPerm =
     memberInfoDraft?.adminPermissionVariant === 'manager' ||
@@ -1134,6 +1180,7 @@ function AdminFields({
     memberInfoDraft?.adminPermissionVariant === 'viewer'
       ? memberInfoDraft.adminPermissionVariant
       : permVariant
+  const statusForPermDropdown: AdminPermissionTagVariant = editing ? selectedPerm : permVariant
   const renderAdminPermBadge = (variant: AdminPermissionTagVariant) => (
     <AppStatusBadge
       label={ADMIN_PERMISSION_TAG_LABEL[variant]}
@@ -1149,7 +1196,7 @@ function AdminFields({
           rows={[
             {
               subLabel: '한글',
-              main: editing ? (
+              main: sensitiveProfileEditable ? (
                 <CmsInput
                   value={memberInfoDraft?.name ?? ''}
                   onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
@@ -1164,20 +1211,25 @@ function AdminFields({
               side: (
                 <span
                   className={
-                    editing
+                    permEditorActive
                       ? `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME}`
                       : undefined
                   }
                 >
-                  {editing ? (
+                  {permEditorActive ? (
                     <StatusDropdownCell<AdminPermissionTagVariant>
-                      status={selectedPerm}
+                      status={statusForPermDropdown}
                       statusOptions={['manager', 'partner', 'viewer']}
                       renderBadge={renderAdminPermBadge}
                       isItemDisabled={(cur, option) => cur === option}
-                      onChange={next => {
-                        onMemberInfoDraftChange?.({ adminPermissionVariant: next })
+                      onChange={async next => {
+                        if (editing) {
+                          onMemberInfoDraftChange?.({ adminPermissionVariant: next })
+                          return
+                        }
+                        await onPatchAdminPermissionVariantFromDetailView?.(next)
                       }}
+                      isUpdating={permDropdownInView && adminPermissionVariantPatching}
                       isOpen={adminPermissionOpen}
                       onOpenChange={setAdminPermissionOpen}
                       tagLayout="tag160"
@@ -1195,7 +1247,7 @@ function AdminFields({
             },
             {
               subLabel: '영문',
-              main: editing ? (
+              main: sensitiveProfileEditable ? (
                 <CmsInput
                   value={memberInfoDraft?.nameEn ?? ''}
                   onChange={e => onMemberInfoDraftChange?.({ nameEn: e.target.value })}
@@ -1215,6 +1267,7 @@ function AdminFields({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="연락처"
+          readOnlyDisplay={editing && !adminMemberProfileFieldsEditableWhenEditing}
           view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
           edit={
             <CmsInput
@@ -1228,6 +1281,7 @@ function AdminFields({
         />
         <DetailInfoForm.Field
           label="이메일"
+          readOnlyDisplay={editing && !adminMemberProfileFieldsEditableWhenEditing}
           view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
           edit={
             <CmsInput
@@ -1260,13 +1314,15 @@ export function UserBasicInfoSection({
   user,
   entrySource: entrySourceProp,
   caption,
-  institutionBasicInfoTitleTrailing,
   scheduleChangeCount,
   externalId1365,
   personalInfoRevealed = false,
   memberInfoEditing = false,
   memberInfoDraft,
   onMemberInfoDraftChange,
+  adminPermissionVariantPatching = false,
+  onPatchAdminPermissionVariantFromDetailView,
+  adminMemberProfileFieldsEditableWhenEditing = true,
 }: UserBasicInfoSectionProps) {
   const [searchParams] = useSearchParams()
   const entryFromQuery = parseUserBasicInfoEntryQuery(
@@ -1275,7 +1331,9 @@ export function UserBasicInfoSection({
   const bodyKey = resolveUserBasicInfoBodyKey(entrySourceProp, entryFromQuery, user.role)
   const instructorProfile =
     user.role === 'INSTRUCTOR' ? (resolveInstructorMemberProfile(user) ?? 'instructor_only') : null
-  /** 정책: 편집 모드 진입 시 기본 폼은 edit 모드로 전환(필드별 edit 슬롯 유무로 실제 편집 범위 제어) */
+  /** 관리자 등록(직접 가입 미완료)일 때만 기본정보 필드 일괄 편집 — 직접 등록은 코멘트(·강사비 등급)만 예외 */
+  const cmsMayEditBasicProfileFields = shouldShowCmsMemberInfoEditButton(user)
+  /** 정책: 편집 모드 진입 시 기본 폼은 edit 모드로 전환(필드별 edit 슬롯·readOnlyDisplay로 실제 편집 범위 제어) */
   const basicFormMemberEditing = memberInfoEditing
   const detailInfoFormMode: 'view' | 'edit' = basicFormMemberEditing ? 'edit' : 'view'
   return (
@@ -1310,6 +1368,7 @@ export function UserBasicInfoSection({
                   memberInfoEditing={basicFormMemberEditing}
                   memberInfoDraft={memberInfoDraft}
                   onMemberInfoDraftChange={onMemberInfoDraftChange}
+                  cmsMayEditBasicProfileFields={cmsMayEditBasicProfileFields}
                 />
               )}
             </DetailInfoForm>
@@ -1317,9 +1376,6 @@ export function UserBasicInfoSection({
         ) : (
           <DetailInfoForm
             title="기본 정보"
-            titleTrailing={
-              bodyKey === 'institution' ? institutionBasicInfoTitleTrailing : undefined
-            }
             description={caption}
             className="user-basic-info-section"
             mode={detailInfoFormMode}
@@ -1333,12 +1389,15 @@ export function UserBasicInfoSection({
                 memberInfoEditing={basicFormMemberEditing}
                 memberInfoDraft={memberInfoDraft}
                 onMemberInfoDraftChange={onMemberInfoDraftChange}
+                cmsMayEditBasicProfileFields={cmsMayEditBasicProfileFields}
               />
             ) : bodyKey === 'institution' ? (
               <InstitutionFields
                 user={user}
                 memberInfoDraft={memberInfoDraft}
                 onMemberInfoDraftChange={onMemberInfoDraftChange}
+                memberInfoEditing={basicFormMemberEditing}
+                cmsMayEditBasicProfileFields={cmsMayEditBasicProfileFields}
               />
             ) : (
               <AdminFields
@@ -1347,6 +1406,13 @@ export function UserBasicInfoSection({
                 memberInfoEditing={basicFormMemberEditing}
                 memberInfoDraft={memberInfoDraft}
                 onMemberInfoDraftChange={onMemberInfoDraftChange}
+                adminPermissionVariantPatching={
+                  user.role === 'ADMIN' ? adminPermissionVariantPatching : false
+                }
+                onPatchAdminPermissionVariantFromDetailView={
+                  user.role === 'ADMIN' ? onPatchAdminPermissionVariantFromDetailView : undefined
+                }
+                adminMemberProfileFieldsEditableWhenEditing={adminMemberProfileFieldsEditableWhenEditing}
               />
             )}
           </DetailInfoForm>

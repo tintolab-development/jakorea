@@ -201,7 +201,13 @@ export function StatusDropdownCell<T extends string = string>({
     <Dropdown
       menu={{
         items: menuItems,
-        onClick: ({ key }) => onChange(key as T),
+        onClick: ({ key, domEvent }) => {
+          // 테이블 행 onClick과 겹침 방지: 메뉴 항목 선택 직후 포털이 닫히며
+          // mouseup/click이 아래 행으로 떨어져 상세로 이동하는 경우가 있음
+          domEvent.stopPropagation()
+          domEvent.preventDefault()
+          onChange(key as T)
+        },
       }}
       trigger={['click']}
       disabled={isUpdating}
@@ -210,6 +216,16 @@ export function StatusDropdownCell<T extends string = string>({
       getPopupContainer={() => document.body}
       open={isOpen}
       onOpenChange={onOpenChange}
+      popupRender={originNode => (
+        <div
+          onMouseDown={e => {
+            e.preventDefault()
+            e.stopPropagation()
+          }}
+        >
+          {originNode}
+        </div>
+      )}
     >
       <span
         className={`status-dropdown-cell__status-trigger${
