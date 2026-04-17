@@ -17,8 +17,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-16);
-  height: 100% !important;
-  min-height: 0;
 }
 
 /* 메인 캘린더 헤더 (디바이더 없음: 헤더와 캘린더 그리드 구분선 제거) — 본문과 간격은 .program-calendar-main gap */
@@ -297,7 +295,6 @@
 /* 메인 캘린더 셀: 배지는 셀 안에서만 노출 */
 .program-calendar-cell {
   min-height: 120px;
-  height: 120px;
   padding: 4px 8px;
   border: 1px solid var(--color-border-light);
   cursor: pointer;
@@ -520,10 +517,21 @@
 /* Ant Design Calendar 오버라이드 */
 .program-calendar-main .ant-picker-calendar {
   background: transparent;
-  flex: 1;
+  flex: 0 1 auto;
   display: flex;
   flex-direction: column;
+}
+
+/* Calendar fullscreen={false} → ant-picker-calendar-mini; 메인 월 그리드는 mini 전용 256px 고정 높이 미사용 */
+.program-calendar-main .ant-picker-calendar-mini .ant-picker-content {
+  height: auto !important;
   min-height: 0;
+}
+
+.program-calendar-main .ant-picker-body,
+.program-calendar-main .ant-picker-panel {
+  overflow: visible;
+  max-height: none;
 }
 
 .program-calendar-main .ant-picker-calendar-date {

@@ -12,6 +12,8 @@ export function PermissionHeaderActions({
     return null
   }
 
+  const showApproveButton = displayUser.permissionApprovalStatus !== 'APPROVED'
+
   return (
     <div className="info-section-buttons--wrapper">
       <CmsButton
@@ -20,15 +22,17 @@ export function PermissionHeaderActions({
           onPermissionReject?.({ userId: displayUser.id, permissionRole })
         }}
       >
-        신청 반려
+        {permissionRole === 'instructor' ? '승인 반려' : '신청 반려'}
       </CmsButton>
-      <CmsButton
-        onClick={() => {
-          onPermissionApprove?.({ userId: displayUser.id, permissionRole })
-        }}
-      >
-        신청 승인
-      </CmsButton>
+      {showApproveButton ? (
+        <CmsButton
+          onClick={() => {
+            onPermissionApprove?.({ userId: displayUser.id, permissionRole })
+          }}
+        >
+          신청 승인
+        </CmsButton>
+      ) : null}
       {personalInfoButton ? (
         <CmsButton width={180} variant={personalInfoButton.variant} onClick={personalInfoButton.onClick}>
           {personalInfoButton.label}

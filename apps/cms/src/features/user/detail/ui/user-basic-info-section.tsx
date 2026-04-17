@@ -30,6 +30,7 @@ import { AddressSearch, CmsButton, CmsInput, CmsSelect } from '@/shared/ui'
 import { getFormInputsWidth } from '@/shared/lib/form-inputs-width'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
 
 const GENDER_EDIT_OPTIONS = [
   { value: '남성', label: '남성' },
@@ -37,10 +38,6 @@ const GENDER_EDIT_OPTIONS = [
 ]
 
 const JA_EVALUATION_GRADE_OPTIONS = ['A', 'B', 'C', 'D'].map(v => ({ value: v, label: v }))
-const INSTRUCTOR_FEE_GRADE_OPTIONS = ['1급 강사비', '2급 강사비', '3급 강사비'].map(v => ({
-  value: v,
-  label: v,
-}))
 
 /** 개인 회원 소속 학년 선택 (시안·프로그램 신청 탭 `GRADE_OPTIONS`와 동일 체계) */
 const INDIVIDUAL_AFFILIATION_GRADE_OPTIONS: { value: string; label: string }[] = [

@@ -1,0 +1,101 @@
+.instructor-register-modal .ant-modal-body {
+  max-height: min(78vh, 900px);
+  overflow-y: auto;
+}
+
+.instructor-register-modal__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.instructor-register-modal__hyphen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  color: var(--default-BK, #3d3d3d);
+  flex-shrink: 0;
+}
+
+.instructor-register-modal__consent-actions {
+  width: 100%;
+}
+
+.instructor-register-modal__consent-actions.ant-space {
+  align-items: center;
+}
+
+/** 정보 제공 동의: 값 영역 전체를 세로 중앙 (라디오·구분선·버튼·안내) */
+.instructor-register-modal__consent-section .detail-info-form__field-content--edit {
+  align-items: center;
+}
+
+.instructor-register-modal__consent-guide {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+  max-width: 420px;
+}
+
+.instructor-register-modal__consent-guide p {
+  margin: 0;
+}
+
+.instructor-register-modal__consent-submit-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.instructor-register-modal__consent-status {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--JA-mint-01, #01a1af);
+}
+
+/** 동의서 미제출·제출 전 — 초상권 등 안내 문구와 톤 맞춤 */
+.instructor-register-modal__consent-status--pending {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
+  font-weight: 600;
+}
+
+/** 동적 행 삭제: 회색 원 + 흰색 X — 행 flex 끝(우측) 정렬 */
+.instructor-register-modal__row-delete-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 21px;
+  height: 21px;
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #8c8c8c;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.instructor-register-modal__row-delete-circle:hover {
+  background: #737373;
+}
+
+.instructor-register-modal__row-delete-circle:focus-visible {
+  outline: 2px solid var(--JA-mint-01, #01a1af);
+  outline-offset: 2px;
+}
+
+.instructor-register-modal__row-delete-circle-icon {
+  font-size: 10px;
+  color: inherit;
+}

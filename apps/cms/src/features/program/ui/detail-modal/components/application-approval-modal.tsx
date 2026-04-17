@@ -8,6 +8,7 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui/app-button'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { AppSelect } from '@/shared/ui/app-select'
+import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
 import './application-approval-modal.css'
 
 export type InstructorFeePricingMode = 'program' | 'instructor'
@@ -17,8 +18,6 @@ export interface InstructorApprovalConfirmDetail {
   /** `instructor`일 때만 선택된 옵션 value */
   instructorFeeType: string | null
 }
-
-const INSTRUCTOR_FEE_OPTIONS = [{ value: 'special_lecture', label: '특강 강사비' }]
 
 export interface ApplicationApprovalModalProps {
   open: boolean
@@ -35,12 +34,12 @@ export function ApplicationApprovalModal({
   instructorName,
 }: ApplicationApprovalModalProps) {
   const [feeMode, setFeeMode] = useState<InstructorFeePricingMode>('instructor')
-  const [feeType, setFeeType] = useState<string>(INSTRUCTOR_FEE_OPTIONS[0]!.value)
+  const [feeType, setFeeType] = useState<string>(INSTRUCTOR_FEE_GRADE_OPTIONS[0]!.value)
 
   useEffect(() => {
     if (open) {
       setFeeMode('instructor')
-      setFeeType(INSTRUCTOR_FEE_OPTIONS[0]!.value)
+      setFeeType(INSTRUCTOR_FEE_GRADE_OPTIONS[0]!.value)
     }
   }, [open])
 
@@ -92,7 +91,7 @@ export function ApplicationApprovalModal({
                 size="large"
                 value={feeType}
                 onChange={v => setFeeType(v)}
-                options={INSTRUCTOR_FEE_OPTIONS}
+                options={INSTRUCTOR_FEE_GRADE_OPTIONS}
                 getPopupContainer={() => document.body}
               />
             ) : null}

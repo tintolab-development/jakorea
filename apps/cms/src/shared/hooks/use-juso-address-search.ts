@@ -3,7 +3,7 @@
  * @see https://www.juso.go.kr/ 개발자센터
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 
 /** 행안부 API는 브라우저에서 CORS 제한이 있을 수 있어, 백엔드 프록시 사용을 권장합니다. */
 const JUSO_ADDR_LINK_API_URL = 'https://www.juso.go.kr/addrlink/addrLinkApi.do'
@@ -34,6 +34,8 @@ export interface JusoAddressRow {
   roadAddrPart1: string
   /** 지번주소 */
   jibunAddr: string
+  /** 영문 도로명주소 */
+  engAddr?: string
   /** 우편번호 */
   zipNo: string
   /** 행정구역코드 */
@@ -59,6 +61,8 @@ export interface JusoAddressItem {
   roadAddr: string
   /** 지번주소 */
   jibunAddr: string
+  /** 영문 도로명주소 (있을 때만) */
+  engAddr?: string
   /** 우편번호 */
   zipNo: string
   /** 시도명 */
@@ -67,16 +71,21 @@ export interface JusoAddressItem {
   sggNm: string
   /** 읍면동명 */
   emdNm: string
+  /** 도로명 (자동완성 한 줄 표시용) */
+  rn?: string
 }
 
 function mapRowToItem(row: JusoAddressRow): JusoAddressItem {
+  const eng = row.engAddr?.trim()
   return {
     roadAddr: row.roadAddr ?? '',
     jibunAddr: row.jibunAddr ?? '',
+    engAddr: eng || undefined,
     zipNo: row.zipNo ?? '',
     siNm: row.siNm ?? '',
     sggNm: row.sggNm ?? '',
     emdNm: row.emdNm ?? '',
+    rn: row.rn,
   }
 }
 
@@ -134,26 +143,31 @@ export function useJusoAddressSearch(
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const searchGenerationRef = useRef(0)
 
   const search = useCallback(
     async (
       keyword: string,
       page: number = 1
     ): Promise<{ addresses: JusoAddressItem[]; totalCount: number }> => {
+      const gen = ++searchGenerationRef.current
       const trimmed = keyword.trim()
       if (!trimmed) {
         setAddresses([])
         setTotalCount(0)
         setError(null)
+        setLoading(false)
         return { addresses: [], totalCount: 0 }
       }
       if (!confmKey) {
         const err = new Error(
           '행안부 주소 API 승인키가 설정되지 않았습니다. apps/cms/.env(또는 .env.local)에 VITE_ADDRESS_API_KEY 또는 VITE_JUSO_CONFM_KEY를 넣은 뒤 개발 서버를 재시작해 주세요.'
         )
-        setError(err)
-        setAddresses([])
-        setTotalCount(0)
+        if (gen === searchGenerationRef.current) {
+          setError(err)
+          setAddresses([])
+          setTotalCount(0)
+        }
         return { addresses: [], totalCount: 0 }
       }
 
@@ -187,26 +201,35 @@ export function useJusoAddressSearch(
         const jusoList: JusoAddressRow[] = Array.isArray(results?.juso) ? results.juso : []
         const items = jusoList.map(mapRowToItem)
 
+        if (gen !== searchGenerationRef.current) {
+          return { addresses: items, totalCount: total }
+        }
         setAddresses(items)
         setTotalCount(total)
         return { addresses: items, totalCount: total }
       } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err))
-        setError(e)
-        setAddresses([])
-        setTotalCount(0)
+        if (gen === searchGenerationRef.current) {
+          setError(e)
+          setAddresses([])
+          setTotalCount(0)
+        }
         throw e
       } finally {
-        setLoading(false)
+        if (gen === searchGenerationRef.current) {
+          setLoading(false)
+        }
       }
     },
     [apiUrl, confmKey, countPerPage]
   )
 
   const reset = useCallback(() => {
+    searchGenerationRef.current += 1
     setAddresses([])
     setTotalCount(0)
     setError(null)
+    setLoading(false)
   }, [])
 
   return { addresses, totalCount, loading, error, search, reset }

@@ -801,6 +801,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
             renderWeekView()
           ) : (
             <Calendar
+              fullscreen={false}
               value={currentMonth}
               fullCellRender={dateFullCellRender}
               headerRender={() => null}

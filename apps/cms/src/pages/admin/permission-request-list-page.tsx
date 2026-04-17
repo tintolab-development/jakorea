@@ -2,9 +2,21 @@
  * 권한 승인 — 강사·관리자 탭, 회원 권한 신청 목록
  */
 
-import { useCallback, useMemo, useState } from 'react'
-import { Tabs, message } from 'antd'
-import { MembersPermissionList } from '@/features/user/permission-management/members-permission-list'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import { Tabs } from 'antd'
+import {
+  MembersPermissionList,
+  type MembersPermissionListHandle,
+} from '@/features/user/permission-management/members-permission-list'
+import {
+  InstructorPermissionApproveModal,
+  type InstructorPermissionApprovePayload,
+} from '@/features/user/permission-management/instructor-permission-approve-modal'
+import {
+  InstructorPermissionRejectModal,
+  type InstructorPermissionRejectPayload,
+} from '@/features/user/permission-management/instructor-permission-reject-modal'
+import { InstructorPermissionApprovedCompleteModal } from '@/features/user/permission-management/instructor-permission-approved-complete-modal'
 import { UserDetailFullPageModal } from '@/pages/users/user-detail-fullpage-modal'
 import { useUserStore } from '@/features/user/shared/model/user-store'
 import { userRoleToBasicInfoEntrySource } from '@/shared/config/member-list-kinds'
@@ -12,11 +24,59 @@ import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpag
 import { updateMockUserById } from '@/data/mock/users'
 import './permission-request-page.css'
 
+const INSTRUCTOR_PERMISSION_APPROVE_MODAL_Z = 1150
+/** 풀페이지 회원 상세(권한 모드) 위에도 반려 확인이 보이도록 여유 있게 */
+const INSTRUCTOR_PERMISSION_REJECT_MODAL_Z = 2100
+const INSTRUCTOR_PERMISSION_APPROVED_COMPLETE_MODAL_Z = 1160
+
+type InstructorApproveModalState =
+  | {
+      variant: 'single'
+      userId: string
+      displayName: string
+      source: 'list' | 'detail'
+    }
+  | {
+      variant: 'bulk'
+      userIds: string[]
+      memberCount: number
+      source: 'list'
+    }
+
+type InstructorApprovedCompleteState =
+  | { variant: 'single'; displayName: string; source: 'list' | 'detail' }
+  | { variant: 'bulk'; memberCount: number; source: 'list' }
+
+type InstructorRejectModalState =
+  | {
+      variant: 'single'
+      userId: string
+      displayName: string
+      source: 'list' | 'detail'
+    }
+  | { variant: 'bulk'; userIds: string[]; memberCount: number; source: 'list' }
+
+type AdminApproveModalState = InstructorApproveModalState
+type AdminRejectModalState = InstructorRejectModalState
+type AdminApprovedCompleteState = InstructorApprovedCompleteState
+
 export function PermissionRequestListPage() {
   const fetchUserById = useUserStore(s => s.fetchUserById)
+  const instructorListRef = useRef<MembersPermissionListHandle>(null)
+  const adminListRef = useRef<MembersPermissionListHandle>(null)
   const [detailUserId, setDetailUserId] = useState<string | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [permissionRole, setPermissionRole] = useState<UserDetailPermissionRole | null>(null)
+  const [instructorApproveModal, setInstructorApproveModal] =
+    useState<InstructorApproveModalState | null>(null)
+  const [instructorApprovedComplete, setInstructorApprovedComplete] =
+    useState<InstructorApprovedCompleteState | null>(null)
+  const [instructorRejectModal, setInstructorRejectModal] =
+    useState<InstructorRejectModalState | null>(null)
+  const [adminApproveModal, setAdminApproveModal] = useState<AdminApproveModalState | null>(null)
+  const [adminRejectModal, setAdminRejectModal] = useState<AdminRejectModalState | null>(null)
+  const [adminApprovedComplete, setAdminApprovedComplete] =
+    useState<AdminApprovedCompleteState | null>(null)
 
   const detailUser = useUserStore(state =>
     detailUserId ? (state.usersById[detailUserId] ?? null) : null
@@ -36,11 +96,9 @@ export function PermissionRequestListPage() {
           setPermissionRole(role)
           setDetailUserId(userId)
           setDetailOpen(true)
-        } else {
-          message.error('회원 정보를 찾을 수 없습니다.')
         }
       } catch {
-        message.error('회원 정보를 불러오지 못했습니다.')
+        // 회원 조회 실패 시 상세 모달 미오픈
       }
     },
     [fetchUserById]
@@ -54,28 +112,184 @@ export function PermissionRequestListPage() {
 
   const handlePermissionApprove = useCallback(
     (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
+      if (ctx.permissionRole === 'instructor') {
+        const name = detailUser?.name?.trim() || '회원'
+        setAdminApproveModal(null)
+        setAdminRejectModal(null)
+        setInstructorRejectModal(null)
+        setInstructorApproveModal({
+          variant: 'single',
+          userId: ctx.userId,
+          displayName: name,
+          source: 'detail',
+        })
+        return
+      }
+      if (ctx.permissionRole === 'admin') {
+        const name = detailUser?.name?.trim() || '회원'
+        setInstructorApproveModal(null)
+        setInstructorRejectModal(null)
+        setAdminRejectModal(null)
+        setAdminApproveModal({
+          variant: 'single',
+          userId: ctx.userId,
+          displayName: name,
+          source: 'detail',
+        })
+        return
+      }
       updateMockUserById(ctx.userId, { permissionApprovalStatus: 'APPROVED' })
-      message.success(
-        ctx.permissionRole === 'instructor'
-          ? '강사 권한 신청을 승인했습니다.'
-          : '관리자 권한 신청을 승인했습니다.'
-      )
       handleCloseDetail()
     },
-    [handleCloseDetail]
+    [detailUser, handleCloseDetail]
   )
+
+  const handleInstructorApproveModalConfirm = useCallback(
+    (_payload: InstructorPermissionApprovePayload) => {
+      if (!instructorApproveModal) return
+      if (instructorApproveModal.variant === 'single') {
+        const { userId, source, displayName } = instructorApproveModal
+        updateMockUserById(userId, { permissionApprovalStatus: 'APPROVED' })
+        instructorListRef.current?.applyInstructorPermissionApproved(userId)
+        instructorListRef.current?.clearRowSelection()
+        setInstructorApproveModal(null)
+        setInstructorApprovedComplete({ variant: 'single', displayName, source })
+        return
+      }
+      const { userIds, memberCount, source } = instructorApproveModal
+      userIds.forEach(uid => {
+        updateMockUserById(uid, { permissionApprovalStatus: 'APPROVED' })
+        instructorListRef.current?.applyInstructorPermissionApproved(uid)
+      })
+      instructorListRef.current?.clearRowSelection()
+      setInstructorApproveModal(null)
+      setInstructorApprovedComplete({ variant: 'bulk', memberCount, source })
+    },
+    [instructorApproveModal]
+  )
+
+  const handleAdminApproveModalConfirm = useCallback(
+    (_payload: InstructorPermissionApprovePayload) => {
+      if (!adminApproveModal) return
+      if (adminApproveModal.variant === 'single') {
+        const { userId, source, displayName } = adminApproveModal
+        updateMockUserById(userId, { permissionApprovalStatus: 'APPROVED' })
+        adminListRef.current?.applyInstructorPermissionApproved(userId)
+        adminListRef.current?.clearRowSelection()
+        setAdminApproveModal(null)
+        setAdminApprovedComplete({ variant: 'single', displayName, source })
+        return
+      }
+      const { userIds, memberCount, source } = adminApproveModal
+      userIds.forEach(uid => {
+        updateMockUserById(uid, { permissionApprovalStatus: 'APPROVED' })
+        adminListRef.current?.applyInstructorPermissionApproved(uid)
+      })
+      adminListRef.current?.clearRowSelection()
+      setAdminApproveModal(null)
+      setAdminApprovedComplete({ variant: 'bulk', memberCount, source })
+    },
+    [adminApproveModal]
+  )
+
+  const handleInstructorApprovedCompleteClose = useCallback(() => {
+    const source = instructorApprovedComplete?.source
+    setInstructorApprovedComplete(null)
+    if (source === 'detail') {
+      handleCloseDetail()
+    }
+  }, [instructorApprovedComplete, handleCloseDetail])
+
+  const handleAdminApprovedCompleteClose = useCallback(() => {
+    const source = adminApprovedComplete?.source
+    setAdminApprovedComplete(null)
+    if (source === 'detail') {
+      handleCloseDetail()
+    }
+  }, [adminApprovedComplete, handleCloseDetail])
 
   const handlePermissionReject = useCallback(
     (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
+      if (ctx.permissionRole === 'instructor') {
+        const name = detailUser?.name?.trim() || '회원'
+        setAdminApproveModal(null)
+        setAdminRejectModal(null)
+        setInstructorApproveModal(null)
+        setInstructorRejectModal({
+          variant: 'single',
+          userId: ctx.userId,
+          displayName: name,
+          source: 'detail',
+        })
+        return
+      }
+      if (ctx.permissionRole === 'admin') {
+        const name = detailUser?.name?.trim() || '회원'
+        setInstructorApproveModal(null)
+        setInstructorRejectModal(null)
+        setAdminApproveModal(null)
+        setAdminRejectModal({
+          variant: 'single',
+          userId: ctx.userId,
+          displayName: name,
+          source: 'detail',
+        })
+        return
+      }
       updateMockUserById(ctx.userId, { permissionApprovalStatus: 'REJECTED' })
-      message.success(
-        ctx.permissionRole === 'instructor'
-          ? '강사 권한 신청을 반려했습니다.'
-          : '관리자 권한 신청을 반려했습니다.'
-      )
       handleCloseDetail()
     },
-    [handleCloseDetail]
+    [detailUser, handleCloseDetail]
+  )
+
+  const handleInstructorRejectModalConfirm = useCallback(
+    (_payload: InstructorPermissionRejectPayload) => {
+      if (!instructorRejectModal) return
+      if (instructorRejectModal.variant === 'single') {
+        const { userId, source } = instructorRejectModal
+        updateMockUserById(userId, { permissionApprovalStatus: 'REJECTED' })
+        instructorListRef.current?.applyInstructorPermissionRejected(userId)
+        instructorListRef.current?.clearRowSelection()
+        setInstructorRejectModal(null)
+        if (source === 'detail') {
+          handleCloseDetail()
+        }
+        return
+      }
+      const { userIds } = instructorRejectModal
+      userIds.forEach(uid => {
+        updateMockUserById(uid, { permissionApprovalStatus: 'REJECTED' })
+        instructorListRef.current?.applyInstructorPermissionRejected(uid)
+      })
+      instructorListRef.current?.clearRowSelection()
+      setInstructorRejectModal(null)
+    },
+    [instructorRejectModal, handleCloseDetail]
+  )
+
+  const handleAdminRejectModalConfirm = useCallback(
+    (_payload: InstructorPermissionRejectPayload) => {
+      if (!adminRejectModal) return
+      if (adminRejectModal.variant === 'single') {
+        const { userId, source } = adminRejectModal
+        updateMockUserById(userId, { permissionApprovalStatus: 'REJECTED' })
+        adminListRef.current?.applyInstructorPermissionRejected(userId)
+        adminListRef.current?.clearRowSelection()
+        setAdminRejectModal(null)
+        if (source === 'detail') {
+          handleCloseDetail()
+        }
+        return
+      }
+      const { userIds } = adminRejectModal
+      userIds.forEach(uid => {
+        updateMockUserById(uid, { permissionApprovalStatus: 'REJECTED' })
+        adminListRef.current?.applyInstructorPermissionRejected(uid)
+      })
+      adminListRef.current?.clearRowSelection()
+      setAdminRejectModal(null)
+    },
+    [adminRejectModal, handleCloseDetail]
   )
 
   return (
@@ -89,8 +303,49 @@ export function PermissionRequestListPage() {
             label: '강사',
             children: (
               <MembersPermissionList
+                ref={instructorListRef}
                 memberType="instructor"
                 onOpenUserDetail={handleOpenUserDetail}
+                onInstructorApproveRequest={payload => {
+                  setAdminApproveModal(null)
+                  setAdminRejectModal(null)
+                  setInstructorRejectModal(null)
+                  setInstructorApproveModal(
+                    payload.mode === 'single'
+                      ? {
+                          variant: 'single',
+                          userId: payload.userId,
+                          displayName: payload.displayName,
+                          source: 'list',
+                        }
+                      : {
+                          variant: 'bulk',
+                          userIds: payload.userIds,
+                          memberCount: payload.memberCount,
+                          source: 'list',
+                        }
+                  )
+                }}
+                onInstructorRejectRequest={payload => {
+                  const nextReject: InstructorRejectModalState =
+                    payload.mode === 'single'
+                      ? {
+                          variant: 'single',
+                          userId: payload.userId,
+                          displayName: payload.displayName,
+                          source: 'list',
+                        }
+                      : {
+                          variant: 'bulk',
+                          userIds: payload.userIds,
+                          memberCount: payload.memberCount,
+                          source: 'list',
+                        }
+                  setAdminApproveModal(null)
+                  setAdminRejectModal(null)
+                  setInstructorApproveModal(null)
+                  setInstructorRejectModal(nextReject)
+                }}
               />
             ),
           },
@@ -98,7 +353,51 @@ export function PermissionRequestListPage() {
             key: 'admin',
             label: '관리자',
             children: (
-              <MembersPermissionList memberType="admin" onOpenUserDetail={handleOpenUserDetail} />
+              <MembersPermissionList
+                ref={adminListRef}
+                memberType="admin"
+                onOpenUserDetail={handleOpenUserDetail}
+                onAdminApproveRequest={payload => {
+                  setInstructorApproveModal(null)
+                  setInstructorRejectModal(null)
+                  setAdminRejectModal(null)
+                  setAdminApproveModal(
+                    payload.mode === 'single'
+                      ? {
+                          variant: 'single',
+                          userId: payload.userId,
+                          displayName: payload.displayName,
+                          source: 'list',
+                        }
+                      : {
+                          variant: 'bulk',
+                          userIds: payload.userIds,
+                          memberCount: payload.memberCount,
+                          source: 'list',
+                        }
+                  )
+                }}
+                onAdminRejectRequest={payload => {
+                  const nextReject: AdminRejectModalState =
+                    payload.mode === 'single'
+                      ? {
+                          variant: 'single',
+                          userId: payload.userId,
+                          displayName: payload.displayName,
+                          source: 'list',
+                        }
+                      : {
+                          variant: 'bulk',
+                          userIds: payload.userIds,
+                          memberCount: payload.memberCount,
+                          source: 'list',
+                        }
+                  setInstructorApproveModal(null)
+                  setInstructorRejectModal(null)
+                  setAdminApproveModal(null)
+                  setAdminRejectModal(nextReject)
+                }}
+              />
             ),
           },
         ]}
@@ -114,6 +413,128 @@ export function PermissionRequestListPage() {
         onPermissionApprove={handlePermissionApprove}
         onPermissionReject={handlePermissionReject}
       />
+
+      {instructorApproveModal ? (
+        <InstructorPermissionApproveModal
+          permissionKind="instructor"
+          open
+          zIndex={INSTRUCTOR_PERMISSION_APPROVE_MODAL_Z}
+          onCancel={() => setInstructorApproveModal(null)}
+          onConfirm={handleInstructorApproveModalConfirm}
+          {...(instructorApproveModal.variant === 'single'
+            ? {
+                variant: 'single' as const,
+                userDisplayName: instructorApproveModal.displayName,
+              }
+            : {
+                variant: 'bulk' as const,
+                memberCount: instructorApproveModal.memberCount,
+              })}
+        />
+      ) : null}
+
+      {adminApproveModal ? (
+        <InstructorPermissionApproveModal
+          permissionKind="admin"
+          open
+          zIndex={INSTRUCTOR_PERMISSION_APPROVE_MODAL_Z}
+          onCancel={() => setAdminApproveModal(null)}
+          onConfirm={handleAdminApproveModalConfirm}
+          {...(adminApproveModal.variant === 'single'
+            ? {
+                variant: 'single' as const,
+                userDisplayName: adminApproveModal.displayName,
+              }
+            : {
+                variant: 'bulk' as const,
+                memberCount: adminApproveModal.memberCount,
+              })}
+        />
+      ) : null}
+
+      {instructorRejectModal ? (
+        <InstructorPermissionRejectModal
+          key={
+            instructorRejectModal.variant === 'single'
+              ? `rej-${instructorRejectModal.userId}`
+              : `rej-bulk-${instructorRejectModal.userIds.join(',')}`
+          }
+          permissionKind="instructor"
+          open
+          zIndex={INSTRUCTOR_PERMISSION_REJECT_MODAL_Z}
+          onCancel={() => setInstructorRejectModal(null)}
+          onConfirm={handleInstructorRejectModalConfirm}
+          {...(instructorRejectModal.variant === 'single'
+            ? {
+                variant: 'single' as const,
+                userDisplayName: instructorRejectModal.displayName,
+              }
+            : {
+                variant: 'bulk' as const,
+                memberCount: instructorRejectModal.memberCount,
+              })}
+        />
+      ) : null}
+
+      {adminRejectModal ? (
+        <InstructorPermissionRejectModal
+          key={
+            adminRejectModal.variant === 'single'
+              ? `admin-rej-${adminRejectModal.userId}`
+              : `admin-rej-bulk-${adminRejectModal.userIds.join(',')}`
+          }
+          permissionKind="admin"
+          open
+          zIndex={INSTRUCTOR_PERMISSION_REJECT_MODAL_Z}
+          onCancel={() => setAdminRejectModal(null)}
+          onConfirm={handleAdminRejectModalConfirm}
+          {...(adminRejectModal.variant === 'single'
+            ? {
+                variant: 'single' as const,
+                userDisplayName: adminRejectModal.displayName,
+              }
+            : {
+                variant: 'bulk' as const,
+                memberCount: adminRejectModal.memberCount,
+              })}
+        />
+      ) : null}
+
+      {instructorApprovedComplete ? (
+        <InstructorPermissionApprovedCompleteModal
+          permissionKind="instructor"
+          open
+          zIndex={INSTRUCTOR_PERMISSION_APPROVED_COMPLETE_MODAL_Z}
+          onClose={handleInstructorApprovedCompleteClose}
+          {...(instructorApprovedComplete.variant === 'single'
+            ? {
+                variant: 'single' as const,
+                userDisplayName: instructorApprovedComplete.displayName,
+              }
+            : {
+                variant: 'bulk' as const,
+                memberCount: instructorApprovedComplete.memberCount,
+              })}
+        />
+      ) : null}
+
+      {adminApprovedComplete ? (
+        <InstructorPermissionApprovedCompleteModal
+          permissionKind="admin"
+          open
+          zIndex={INSTRUCTOR_PERMISSION_APPROVED_COMPLETE_MODAL_Z}
+          onClose={handleAdminApprovedCompleteClose}
+          {...(adminApprovedComplete.variant === 'single'
+            ? {
+                variant: 'single' as const,
+                userDisplayName: adminApprovedComplete.displayName,
+              }
+            : {
+                variant: 'bulk' as const,
+                memberCount: adminApprovedComplete.memberCount,
+              })}
+        />
+      ) : null}
     </div>
   )
 }
