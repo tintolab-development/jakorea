@@ -187,9 +187,9 @@ export function ProgramList({
             {children}
           </div>
           <ProgramCalendarView
-            programs={table.getRowModel().rows.map(row => row.original)}
+            items={table.getRowModel().rows.map(row => row.original)}
             loading={loading}
-            onProgramClick={onView}
+            onItemClick={onView}
           />
         </>
       ) : null}

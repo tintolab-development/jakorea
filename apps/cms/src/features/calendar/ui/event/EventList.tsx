@@ -61,9 +61,9 @@ export function EventList({
               tooltipOverlayClassName={tooltipOverlayClassName}
               previewContent={previewOne}
             >
-              <div className="program-calendar-event-tooltip-trigger">
+              <div className="calendar-event-tooltip-trigger">
                 <div
-                  className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
+                  className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
                   style={{
                     backgroundColor: colors.bg,
                     border: withWeekBorder
@@ -74,7 +74,7 @@ export function EventList({
                   }}
                   onClick={e => e.stopPropagation()}
                 >
-                  <span className="program-calendar-event-title" style={{ color: colors.text }}>
+                  <span className="calendar-event-title" style={{ color: colors.text }}>
                     {displayTitle}
                   </span>
                 </div>
@@ -97,7 +97,7 @@ export function EventList({
               return renderPreview(moreList, moreColorMap)
             })()}
           >
-            <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
+            <div className="calendar-event-tooltip-trigger calendar-event-more">
               {formatEventsOverflowText?.(dayEvents.length - 2) ?? `외 ${dayEvents.length - 2}개의 항목`}
             </div>
           </EventOverlay>

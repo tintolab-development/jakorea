@@ -1,6 +1,6 @@
 /**
  * 공통 프로그램 메인 캘린더 (중앙 컬럼)
- * - 마크업·클래스는 `program-calendar-*` 단일 체계
+ * - 마크업·클래스는 `calendar-*` 단일 체계
  * - `scheduleOverlay`로 Popover(프로그램 일정) vs Tooltip(신청자 일정)만 분기
  */
 
@@ -31,8 +31,8 @@ import {
 } from '@/features/program/program-detail/ui/applicant-list/applicant-calendar-schedule-helpers'
 import { SegmentedTab } from '@/shared/ui/segmented-tab'
 import '@/shared/ui/overlay-popover.css'
-import './program-calendar.css'
-import { ProgramCalendarOverlayFollowCursor } from '@/shared/components/program-calendar-cursor-overlay'
+// import './program-calendar.css'
+import { CalendarCursorOverlayFollowCursor } from '@/shared/components/program-calendar-cursor-overlay'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -72,7 +72,7 @@ type ProgramCalendarSharedProps = {
    * 일정 호버 오버레이. 미지정 시 `programs` → popover, `events` → tooltip
    */
   scheduleOverlay?: 'popover' | 'tooltip'
-  /** Tooltip일 때 `program-calendar-tooltip-overlay`에 추가하는 클래스 */
+  /** Tooltip일 때 `calendar-tooltip-overlay`에 추가하는 클래스 */
   tooltipOverlayClassName?: string
   /**
    * 주간 뷰: `simple`(7열 태그) | `time-grid`(좌측 한글 시 라벨 + 시간 격자).
@@ -201,10 +201,7 @@ function getPaymentOrderEventClasses(event: ProgramCalendarEventItem): string[] 
   const original = event.originalItem as { status?: string } | undefined
   const status = typeof original?.status === 'string' ? original.status.trim() : ''
   if (!status) return []
-  return [
-    'program-calendar-event--payment-order-tag',
-    `program-calendar-event--payment-order-status-${status}`,
-  ]
+  return ['calendar-event--payment-order-tag', `calendar-event--payment-order-status-${status}`]
 }
 
 /** 주간 시간 격자: 총 높이를 24시간에 균등 분배 */
@@ -405,31 +402,24 @@ function weekTimeGridEventColors(
       text: surface.text,
     } as ScheduleColorPair
   }
-  return (
-    resolveEventColors?.(event) ??
-    resolvedWeekColors.get(event.id) ??
-    SCHEDULE_COLORS[0]
-  )
+  return resolveEventColors?.(event) ?? resolvedWeekColors.get(event.id) ?? SCHEDULE_COLORS[0]
 }
 
 function CalendarCellSchedulePreview({ date, programs }: { date: Dayjs; programs: Program[] }) {
   const scheduleColorMap = buildResolvedScheduleColorMapForPrograms(programs)
 
   return (
-    <div className="program-calendar-cell-preview">
+    <div className="calendar-cell-preview">
       {programs.map(program => {
         const { statusLabel, time } = getProgramDayScheduleLine(program, date)
         const title = program.title ?? ''
         const colorPair = scheduleColorMap.get(String(program.id)) ?? SCHEDULE_COLORS[0]
         return (
-          <button key={program.id} type="button" className="program-calendar-cell-preview__item">
-            <span
-              className="program-calendar-cell-preview__title"
-              style={{ color: colorPair.text }}
-            >
+          <button key={program.id} type="button" className="calendar-cell-preview__item">
+            <span className="calendar-cell-preview__title" style={{ color: colorPair.text }}>
               [{title}]
             </span>
-            <span className="program-calendar-cell-preview__desc">
+            <span className="calendar-cell-preview__desc">
               {statusLabel} | {time}
             </span>
           </button>
@@ -446,13 +436,13 @@ function wrapScheduleOverlay(
   trigger: ReactElement
 ): ReactNode {
   return (
-    <ProgramCalendarOverlayFollowCursor
+    <CalendarCursorOverlayFollowCursor
       variant={scheduleOverlay}
       tooltipOverlayClassName={tooltipOverlayClassName}
       content={previewContent}
     >
       {trigger}
-    </ProgramCalendarOverlayFollowCursor>
+    </CalendarCursorOverlayFollowCursor>
   )
 }
 
@@ -487,7 +477,9 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       ? (props.eventsTooltipScope ?? 'trigger-only')
       : 'trigger-only'
     const formatEventsOverflowText = isEvents ? props.formatEventsOverflowText : undefined
-    const eventsTooltipTrigger = isEvents ? (props.eventsTooltipTrigger ?? 'event-strip') : 'event-strip'
+    const eventsTooltipTrigger = isEvents
+      ? (props.eventsTooltipTrigger ?? 'event-strip')
+      : 'event-strip'
 
     const scheduleOverlay: 'popover' | 'tooltip' =
       scheduleOverlayProp ?? (isEvents ? 'tooltip' : 'popover')
@@ -550,10 +542,10 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       const isToday = date.isSame(dayjs(), 'day')
 
       const cellClass = [
-        'program-calendar-cell',
-        !isCurrentMonth ? 'program-calendar-cell--other-month' : '',
-        isSelected ? 'program-calendar-cell--selected' : '',
-        isToday ? 'program-calendar-cell--today' : '',
+        'calendar-cell',
+        !isCurrentMonth ? 'calendar-cell--other-month' : '',
+        isSelected ? 'calendar-cell--selected' : '',
+        isToday ? 'calendar-cell--today' : '',
       ]
         .filter(Boolean)
         .join(' ')
@@ -568,7 +560,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
 
         const emptyEventsCell = (
           <div className={cellClass} onClick={() => onSelectDate(date)}>
-            <div className="program-calendar-cell-date">{date.date()}</div>
+            <div className="calendar-cell-date">{date.date()}</div>
           </div>
         )
 
@@ -580,8 +572,8 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
           const fullDayPreview = buildEventsPreview(dayEvents, resolvedColors)
           const cellInner = (
             <div className={cellClass} onClick={() => onSelectDate(date)}>
-              <div className="program-calendar-cell-date">{date.date()}</div>
-              <div className="program-calendar-cell-events">
+              <div className="calendar-cell-date">{date.date()}</div>
+              <div className="calendar-cell-events">
                 {dayEvents.slice(0, 2).map(event => {
                   const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
                   const isEventSelected = selectedRowKeys.includes(event.id)
@@ -592,16 +584,13 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                   return (
                     <div key={String(event.id)}>
                       <div
-                        className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
+                        className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
                         style={{
                           backgroundColor: colors.bg,
                         }}
                         onClick={e => e.stopPropagation()}
                       >
-                        <span
-                          className="program-calendar-event-title"
-                          style={{ color: colors.text }}
-                        >
+                        <span className="calendar-event-title" style={{ color: colors.text }}>
                           {displayTitle}
                         </span>
                       </div>
@@ -609,7 +598,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                   )
                 })}
                 {dayEvents.length > 2 && (
-                  <div className="program-calendar-event-more">
+                  <div className="calendar-event-more">
                     {formatEventsOverflowText?.(dayEvents.length - 2) ??
                       `외 ${dayEvents.length - 2}개의 항목`}
                   </div>
@@ -621,7 +610,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
             scheduleOverlay,
             tooltipOverlayClassName,
             fullDayPreview,
-            <div className="program-calendar-cell-tooltip-trigger program-calendar-cell-tooltip-trigger--full-cell">
+            <div className="calendar-cell-tooltip-trigger calendar-cell-tooltip-trigger--full-cell">
               {cellInner}
             </div>
           )
@@ -629,9 +618,9 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
 
         const cellBody = (
           <div className={cellClass} onClick={() => onSelectDate(date)}>
-            <div className="program-calendar-cell-date">{date.date()}</div>
+            <div className="calendar-cell-date">{date.date()}</div>
             {hasItems && (
-              <div className="program-calendar-cell-events">
+              <div className="calendar-cell-events">
                 {dayEvents.slice(0, 2).map(event => {
                   const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
                   const isEventSelected = selectedRowKeys.includes(event.id)
@@ -651,11 +640,11 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                         scheduleOverlay,
                         tooltipOverlayClassName,
                         previewOne,
-                        <div className="program-calendar-event-tooltip-trigger">
+                        <div className="calendar-event-tooltip-trigger">
                           <div
                             className={[
-                              'program-calendar-event',
-                              isEventSelected ? 'program-calendar-event--selected' : '',
+                              'calendar-event',
+                              isEventSelected ? 'calendar-event--selected' : '',
                               ...getPaymentOrderEventClasses(event),
                             ]
                               .filter(Boolean)
@@ -665,10 +654,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                             }}
                             onClick={e => e.stopPropagation()}
                           >
-                            <span
-                              className="program-calendar-event-title"
-                              style={{ color: colors.text }}
-                            >
+                            <span className="calendar-event-title" style={{ color: colors.text }}>
                               {displayTitle}
                             </span>
                           </div>
@@ -691,7 +677,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                             : buildResolvedColorMap(moreList)
                         return buildEventsPreview(moreList, moreColorMap)
                       })(),
-                      <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
+                      <div className="calendar-event-tooltip-trigger calendar-event-more">
                         {formatEventsOverflowText?.(dayEvents.length - 2) ??
                           `외 ${dayEvents.length - 2}개의 항목`}
                       </div>
@@ -713,26 +699,24 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
 
       const cellBody = (
         <div className={cellClass} onClick={() => onSelectDate(date)}>
-          <div className="program-calendar-cell-date">{date.date()}</div>
+          <div className="calendar-cell-date">{date.date()}</div>
           {hasPrograms && (
-            <div className="program-calendar-cell-events">
+            <div className="calendar-cell-events">
               {dayPrograms.slice(0, 2).map(program => {
                 const spanRole = getProgramSpanRole(program, date)
                 const colorPair = scheduleColorMap.get(String(program.id)) ?? SCHEDULE_COLORS[0]
                 return (
                   <div
                     key={program.id}
-                    className={`program-calendar-event program-calendar-event--span-${spanRole}`}
+                    className={`calendar-event calendar-event--span-${spanRole}`}
                     style={{ backgroundColor: colorPair.bg }}
                   >
-                    <span className="program-calendar-event-title">{program.title}</span>
+                    <span className="calendar-event-title">{program.title}</span>
                   </div>
                 )
               })}
               {dayPrograms.length > 2 && (
-                <div className="program-calendar-event-more">
-                  외 {dayPrograms.length - 2}개의 항목
-                </div>
+                <div className="calendar-event-more">외 {dayPrograms.length - 2}개의 항목</div>
               )}
             </div>
           )}
@@ -740,7 +724,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       )
 
       if (!hasPrograms) return cellBody
-      const trigger = <div className="program-calendar-cell-tooltip-trigger">{cellBody}</div>
+      const trigger = <div className="calendar-cell-tooltip-trigger">{cellBody}</div>
       return wrapScheduleOverlay(scheduleOverlay, tooltipOverlayClassName, preview, trigger)
     }
 
@@ -749,14 +733,14 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       const totalPx = WEEK_TIME_GRID_TOTAL_PX
       const hourPx = WEEK_TIME_GRID_HOUR_PX
       const rootStyle = {
-        '--program-calendar-week-total-px': `${totalPx}px`,
-        '--program-calendar-week-hour-px': `${hourPx}px`,
+        '--calendar-week-total-px': `${totalPx}px`,
+        '--calendar-week-hour-px': `${hourPx}px`,
       } as CSSProperties
 
       return (
-        <div className="program-calendar-week program-calendar-week--time-grid" style={rootStyle}>
-          <div className="program-calendar-week-time-grid__header-row" role="row">
-            <div className="program-calendar-week-time-grid__header-corner" aria-hidden />
+        <div className="calendar-week calendar-week--time-grid" style={rootStyle}>
+          <div className="calendar-week-time-grid__header-row" role="row">
+            <div className="calendar-week-time-grid__header-corner" aria-hidden />
             {weekDates.map(date => {
               const isSelected = date.isSame(selectedDate, 'day')
               const dateKey = date.format('YYYY-MM-DD')
@@ -767,9 +751,9 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                   key={dateKey}
                   type="button"
                   className={[
-                    'program-calendar-week-header-cell',
-                    'program-calendar-week-time-grid__header-day',
-                    isSelected ? 'program-calendar-week-time-grid__header-day--selected' : '',
+                    'calendar-week-header-cell',
+                    'calendar-week-time-grid__header-day',
+                    isSelected ? 'calendar-week-time-grid__header-day--selected' : '',
                   ]
                     .filter(Boolean)
                     .join(' ')}
@@ -780,47 +764,49 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
               )
             })}
           </div>
-          <div className="program-calendar-week-time-grid__scroll">
-            <div className="program-calendar-week-time-grid__shell">
-              <div className="program-calendar-week-time-grid__gutter">
+          <div className="calendar-week-time-grid__scroll">
+            <div className="calendar-week-time-grid__shell">
+              <div className="calendar-week-time-grid__gutter">
                 {WEEK_TIME_GRID_HOUR_ROWS.map((row, hourIdx) => (
                   <div
                     key={`week-gutter-${hourIdx}`}
                     className={[
-                      'program-calendar-week-time-grid__gutter-cell',
-                      hourIdx === 0 ? 'program-calendar-week-time-grid__gutter-cell--first' : '',
+                      'calendar-week-time-grid__gutter-cell',
+                      hourIdx === 0 ? 'calendar-week-time-grid__gutter-cell--first' : '',
                     ]
                       .filter(Boolean)
                       .join(' ')}
                     style={{ top: hourIdx * hourPx }}
                   >
-                    <span className="program-calendar-week-time-grid__gutter-period">{row.period}</span>
-                    <span className="program-calendar-week-time-grid__gutter-hour">{row.hour}</span>
+                    <span className="calendar-week-time-grid__gutter-period">{row.period}</span>
+                    <span className="calendar-week-time-grid__gutter-hour">{row.hour}</span>
                   </div>
                 ))}
               </div>
-              <div className="program-calendar-week-time-grid__columns">
+              <div className="calendar-week-time-grid__columns">
                 {weekDates.map(date => {
                   const dateKey = date.format('YYYY-MM-DD')
                   const dayEvents = getEventsForDate(events, date)
                   const resolvedWeekColors = buildResolvedColorMap(dayEvents)
-                  const allDayEvents = dayEvents.filter(e => parseHHmmToMinutes(e.startTime) == null)
+                  const allDayEvents = dayEvents.filter(
+                    e => parseHHmmToMinutes(e.startTime) == null
+                  )
                   const timedEvents = dayEvents.filter(e => parseHHmmToMinutes(e.startTime) != null)
                   const timedLayouts = layoutTimedEventsForDay(timedEvents, hourPx)
 
                   return (
                     <div
                       key={dateKey}
-                      className="program-calendar-week-time-grid__column"
+                      className="calendar-week-time-grid__column"
                       role="presentation"
                       onClick={() => onSelectDate(date)}
                     >
                       <div
-                        className="program-calendar-week-time-grid__column-inner"
+                        className="calendar-week-time-grid__column-inner"
                         style={{ height: totalPx }}
                       >
                         {allDayEvents.map((event, idx) => {
-                          const displayTitle = weekTimeGridEventLabel(event)
+                          const displayTitle = 'weekTimeGridEventLabel(event)'
                           const isEventSelected = selectedRowKeys.includes(event.id)
                           const colors = weekTimeGridEventColors(
                             event,
@@ -847,12 +833,12 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                                 scheduleOverlay,
                                 tooltipOverlayClassName,
                                 previewOne,
-                                <div className="program-calendar-event-tooltip-trigger">
+                                <div className="calendar-event-tooltip-trigger">
                                   <div
                                     className={[
-                                      'program-calendar-week-time-grid__event',
-                                      'program-calendar-event',
-                                      isEventSelected ? 'program-calendar-event--selected' : '',
+                                      'calendar-week-time-grid__event',
+                                      'calendar-event',
+                                      isEventSelected ? 'calendar-event--selected' : '',
                                       ...getPaymentOrderEventClasses(event),
                                     ]
                                       .filter(Boolean)
@@ -861,7 +847,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                                     onClick={e => e.stopPropagation()}
                                   >
                                     <span
-                                      className="program-calendar-event-title program-calendar-week-time-grid__event-text"
+                                      className="calendar-event-title calendar-week-time-grid__event-text"
                                       style={{ color: colors.text }}
                                     >
                                       {displayTitle}
@@ -904,13 +890,13 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                                 scheduleOverlay,
                                 tooltipOverlayClassName,
                                 previewOne,
-                                <div className="program-calendar-event-tooltip-trigger">
+                                <div className="calendar-event-tooltip-trigger">
                                   <div
                                     className={[
-                                      'program-calendar-week-time-grid__event',
-                                      'program-calendar-event',
-                                      'program-calendar-week-time-grid__event--timed',
-                                      isEventSelected ? 'program-calendar-event--selected' : '',
+                                      'calendar-week-time-grid__event',
+                                      'calendar-event',
+                                      'calendar-week-time-grid__event--timed',
+                                      isEventSelected ? 'calendar-event--selected' : '',
                                       ...getPaymentOrderEventClasses(event),
                                     ]
                                       .filter(Boolean)
@@ -919,7 +905,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                                     onClick={e => e.stopPropagation()}
                                   >
                                     <span
-                                      className="program-calendar-event-title program-calendar-week-time-grid__event-text"
+                                      className="calendar-event-title calendar-week-time-grid__event-text"
                                       style={{ color: colors.text }}
                                     >
                                       {displayTitle}
@@ -945,15 +931,15 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       const weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
       return (
-        <div className="program-calendar-week">
-          <div className="program-calendar-week-header">
+        <div className="calendar-week">
+          <div className="calendar-week-header">
             {weekdayNames.map(day => (
-              <div key={day} className="program-calendar-week-header-cell">
+              <div key={day} className="calendar-week-header-cell">
                 {day}
               </div>
             ))}
           </div>
-          <div className="program-calendar-week-body">
+          <div className="calendar-week-body">
             {weekDates.map(date => {
               const isSelected = date.isSame(selectedDate, 'day')
 
@@ -969,11 +955,11 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                   return (
                     <div
                       key={date.format('YYYY-MM-DD')}
-                      className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
+                      className={`calendar-week-cell ${isSelected ? 'calendar-week-cell--selected' : ''}`}
                       onClick={() => onSelectDate(date)}
                     >
                       <div
-                        className={`program-calendar-week-cell-date ${isSelected ? 'program-calendar-week-cell-date--selected' : ''}`}
+                        className={`calendar-week-cell-date ${isSelected ? 'calendar-week-cell-date--selected' : ''}`}
                       >
                         {date.date()}
                       </div>
@@ -986,11 +972,11 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                   const weekCellInnerPlain = (
                     <>
                       <div
-                        className={`program-calendar-week-cell-date ${isSelected ? 'program-calendar-week-cell-date--selected' : ''}`}
+                        className={`calendar-week-cell-date ${isSelected ? 'calendar-week-cell-date--selected' : ''}`}
                       >
                         {date.date()}
                       </div>
-                      <div className="program-calendar-week-cell-events">
+                      <div className="calendar-week-cell-events">
                         {dayEvents.slice(0, 2).map(event => {
                           const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
                           const isEventSelected = selectedRowKeys.includes(event.id)
@@ -1001,17 +987,15 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                           return (
                             <div key={String(event.id)}>
                               <div
-                                className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
+                                className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
                                 style={{
                                   backgroundColor: colors.bg,
-                                  border: isEventSelected
-                                    ? 'none'
-                                    : `1px solid ${colors.border}`,
+                                  border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
                                 }}
                                 onClick={e => e.stopPropagation()}
                               >
                                 <span
-                                  className="program-calendar-event-title"
+                                  className="calendar-event-title"
                                   style={{ color: colors.text }}
                                 >
                                   {displayTitle}
@@ -1021,7 +1005,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                           )
                         })}
                         {dayEvents.length > 2 && (
-                          <div className="program-calendar-event-more">
+                          <div className="calendar-event-more">
                             {formatEventsOverflowText?.(dayEvents.length - 2) ??
                               `외 ${dayEvents.length - 2}개의 항목`}
                           </div>
@@ -1032,14 +1016,14 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                   return (
                     <div
                       key={date.format('YYYY-MM-DD')}
-                      className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
+                      className={`calendar-week-cell ${isSelected ? 'calendar-week-cell--selected' : ''}`}
                       onClick={() => onSelectDate(date)}
                     >
                       {wrapScheduleOverlay(
                         scheduleOverlay,
                         tooltipOverlayClassName,
                         fullDayPreview,
-                        <div className="program-calendar-week-cell-tooltip-trigger program-calendar-week-cell-tooltip-trigger--full-cell">
+                        <div className="calendar-week-cell-tooltip-trigger calendar-week-cell-tooltip-trigger--full-cell">
                           {weekCellInnerPlain}
                         </div>
                       )}
@@ -1050,12 +1034,12 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                 const weekCellInner = (
                   <>
                     <div
-                      className={`program-calendar-week-cell-date ${isSelected ? 'program-calendar-week-cell-date--selected' : ''}`}
+                      className={`calendar-week-cell-date ${isSelected ? 'calendar-week-cell-date--selected' : ''}`}
                     >
                       {date.date()}
                     </div>
                     {hasItems && (
-                      <div className="program-calendar-week-cell-events">
+                      <div className="calendar-week-cell-events">
                         {dayEvents.slice(0, 2).map(event => {
                           const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
                           const isEventSelected = selectedRowKeys.includes(event.id)
@@ -1078,11 +1062,11 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                                 scheduleOverlay,
                                 tooltipOverlayClassName,
                                 previewOne,
-                                <div className="program-calendar-event-tooltip-trigger">
+                                <div className="calendar-event-tooltip-trigger">
                                   <div
                                     className={[
-                                      'program-calendar-event',
-                                      isEventSelected ? 'program-calendar-event--selected' : '',
+                                      'calendar-event',
+                                      isEventSelected ? 'calendar-event--selected' : '',
                                       ...getPaymentOrderEventClasses(event),
                                     ]
                                       .filter(Boolean)
@@ -1096,7 +1080,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                                     onClick={e => e.stopPropagation()}
                                   >
                                     <span
-                                      className="program-calendar-event-title"
+                                      className="calendar-event-title"
                                       style={{ color: colors.text }}
                                     >
                                       {displayTitle}
@@ -1121,7 +1105,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                                     : buildResolvedColorMap(moreList)
                                 return buildEventsPreview(moreList, moreColorMap)
                               })(),
-                              <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
+                              <div className="calendar-event-tooltip-trigger calendar-event-more">
                                 {formatEventsOverflowText?.(dayEvents.length - 2) ??
                                   `외 ${dayEvents.length - 2}개의 항목`}
                               </div>
@@ -1136,7 +1120,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                 return (
                   <div
                     key={date.format('YYYY-MM-DD')}
-                    className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
+                    className={`calendar-week-cell ${isSelected ? 'calendar-week-cell--selected' : ''}`}
                     onClick={() => onSelectDate(date)}
                   >
                     {weekCellInner}
@@ -1152,30 +1136,30 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
               const weekCellInner = (
                 <>
                   <div
-                    className={`program-calendar-week-cell-date ${isSelected ? 'program-calendar-week-cell-date--selected' : ''}`}
+                    className={`calendar-week-cell-date ${isSelected ? 'calendar-week-cell-date--selected' : ''}`}
                   >
                     {date.date()}
                   </div>
                   {hasPrograms && (
-                    <div className="program-calendar-week-cell-events">
+                    <div className="calendar-week-cell-events">
                       {dayPrograms.slice(0, 2).map(program => {
                         const colorPair =
                           scheduleColorMap.get(String(program.id)) ?? SCHEDULE_COLORS[0]
                         return (
                           <div
                             key={program.id}
-                            className="program-calendar-event"
+                            className="calendar-event"
                             style={{
                               backgroundColor: colorPair.bg,
                             }}
                             onClick={e => e.stopPropagation()}
                           >
-                            <span className="program-calendar-event-title">{program.title}</span>
+                            <span className="calendar-event-title">{program.title}</span>
                           </div>
                         )
                       })}
                       {dayPrograms.length > 2 && (
-                        <div className="program-calendar-event-more">
+                        <div className="calendar-event-more">
                           외 {dayPrograms.length - 2}개의 항목
                         </div>
                       )}
@@ -1187,7 +1171,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
               return (
                 <div
                   key={date.format('YYYY-MM-DD')}
-                  className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
+                  className={`calendar-week-cell ${isSelected ? 'calendar-week-cell--selected' : ''}`}
                   onClick={() => onSelectDate(date)}
                 >
                   {hasPrograms
@@ -1195,9 +1179,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                         scheduleOverlay,
                         tooltipOverlayClassName,
                         preview,
-                        <div className="program-calendar-week-cell-tooltip-trigger">
-                          {weekCellInner}
-                        </div>
+                        <div className="calendar-week-cell-tooltip-trigger">{weekCellInner}</div>
                       )
                     : weekCellInner}
                 </div>
@@ -1208,35 +1190,34 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       )
     }
 
-    const showCalendarChrome =
-      !hideHeader && (!hideDateControls || !hideModeToggle)
+    const showCalendarChrome = !hideHeader && (!hideDateControls || !hideModeToggle)
 
     return (
-      <div ref={ref} className={['program-calendar-main', className].filter(Boolean).join(' ')}>
+      <div ref={ref} className={['calendar-main', className].filter(Boolean).join(' ')}>
         {showCalendarChrome ? (
-          <div className="program-calendar-header">
-            <div className="program-calendar-header-left">
+          <div className="calendar-header">
+            <div className="calendar-header-left">
               {hideDateControls ? null : (
                 <>
                   {hideHeaderTitle ? null : (
-                    <span className="program-calendar-header-title">{headerTitle}</span>
+                    <span className="calendar-header-title">{headerTitle}</span>
                   )}
-                  <Button size="small" className="program-calendar-today-btn" onClick={handleToday}>
+                  <Button size="small" className="calendar-today-btn" onClick={handleToday}>
                     오늘
                   </Button>
-                  <div className="program-calendar-nav">
+                  <div className="calendar-nav">
                     <Button
                       type="text"
                       size="small"
                       icon={<LeftOutlined />}
-                      className="program-calendar-nav-btn"
+                      className="calendar-nav-btn"
                       onClick={handlePrev}
                     />
                     <Button
                       type="text"
                       size="small"
                       icon={<RightOutlined />}
-                      className="program-calendar-nav-btn"
+                      className="calendar-nav-btn"
                       onClick={handleNext}
                     />
                   </div>
@@ -1244,7 +1225,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
               )}
             </div>
             {hideModeToggle ? null : (
-              <div className="program-calendar-header-right">
+              <div className="calendar-header-right">
                 <SegmentedTab
                   size="medium"
                   value={mode}
@@ -1259,7 +1240,11 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
           </div>
         ) : null}
         {mode === 'week' ? (
-          isEvents && weekViewVariant === 'time-grid' ? renderWeekTimeGridForEvents() : renderWeekView()
+          isEvents && weekViewVariant === 'time-grid' ? (
+            renderWeekTimeGridForEvents()
+          ) : (
+            renderWeekView()
+          )
         ) : (
           <Calendar
             fullscreen={false}

@@ -4,7 +4,7 @@
  */
 
 /* 월간 요일 행: 공통 program-calendar.css(테이블 레이아웃)과 동일 — 페이지별 추가 구분선만 */
-.payment-orders-calendar-root .program-calendar-main .ant-picker-content thead th {
+.payment-orders-calendar-root .calendar-main .ant-picker-content thead th {
   border-bottom: 1px solid #f0f0f0;
 }
 
@@ -27,7 +27,7 @@
 /*
  * participating 레이아웃 기본 min-height 900px·우측 height 900px 제거:
  * 캘린더 그리드 실제 높이에 맞춰 좌·우 래퍼 수축, 그리드 하단 빈 여백 제거.
- * program-calendar-main / ant-picker-calendar 의 flex:1 이 남는 세로를 채우지 않도록 함.
+ * calendar-main / ant-picker-calendar 의 flex:1 이 남는 세로를 채우지 않도록 함.
  */
 .payment-orders-calendar-root .participating-institutions-calendar-layout {
   min-height: 0;
@@ -47,23 +47,23 @@
   justify-content: flex-start;
 }
 
-.payment-orders-calendar-root .program-calendar-main {
+.payment-orders-calendar-root .calendar-main {
   flex: 0 0 auto;
   min-height: 0;
 }
 
 /* 주간 뷰: ProgramCalendar 전용 — 공통 program-calendar.css + 레이아웃 flex(0) 조합 시 격자가 수축하지 않도록 */
 .payment-orders-calendar-root
-  .payment-orders-calendar__program-calendar.program-calendar-main
-  .program-calendar-week {
+  .payment-orders-calendar__program-calendar.calendar-main
+  .calendar-week {
   width: 100%;
   min-height: 320px;
   flex: 1 1 auto;
 }
 
 .payment-orders-calendar-root
-  .payment-orders-calendar__program-calendar.program-calendar-main
-  .program-calendar-week-body {
+  .payment-orders-calendar__program-calendar.calendar-main
+  .calendar-week-body {
   flex: 1 1 auto;
   min-height: 200px;
   grid-template-rows: minmax(180px, 1fr);
@@ -71,16 +71,16 @@
 
 /* 주간 요일 행 — Pretendard, 가운데 정렬, UPPERCASE (월간 thead 규칙과 별개) */
 .payment-orders-calendar-root
-  .payment-orders-calendar__program-calendar.program-calendar-main
-  .program-calendar-week-header {
+  .payment-orders-calendar__program-calendar.calendar-main
+  .calendar-week-header {
   border-bottom: 1px solid #f0f0f0;
   padding: 0 0 8px 0;
   box-sizing: border-box;
 }
 
 .payment-orders-calendar-root
-  .payment-orders-calendar__program-calendar.program-calendar-main
-  .program-calendar-week-header-cell {
+  .payment-orders-calendar__program-calendar.calendar-main
+  .calendar-week-header-cell {
   display: flex !important;
   min-width: 0 !important;
   min-height: 37px !important;
@@ -106,26 +106,26 @@
 }
 
 .payment-orders-calendar-root
-  .payment-orders-calendar__program-calendar.program-calendar-main
-  .program-calendar-week-time-grid__header-day--selected {
+  .payment-orders-calendar__program-calendar.calendar-main
+  .calendar-week-time-grid__header-day--selected {
   color: var(--JA-mint-01, #01a1af) !important;
 }
 
 /* 요일 아래 날짜 숫자·칩 영역과 요일 행 사이 여백은 셀 padding으로 유지 */
 .payment-orders-calendar-root
-  .payment-orders-calendar__program-calendar.program-calendar-main
-  .program-calendar-week-cell {
+  .payment-orders-calendar__program-calendar.calendar-main
+  .calendar-week-cell {
   padding: 8px !important;
 }
 
-.payment-orders-calendar-root .program-calendar-main .ant-picker-calendar,
-.payment-orders-calendar-root .program-calendar-main .ant-picker-panel,
-.payment-orders-calendar-root .program-calendar-main .ant-picker-body {
+.payment-orders-calendar-root .calendar-main .ant-picker-calendar,
+.payment-orders-calendar-root .calendar-main .ant-picker-panel,
+.payment-orders-calendar-root .calendar-main .ant-picker-body {
   flex: 0 0 auto !important;
   min-height: 0;
 }
 
-/* Ant Tooltip: 커스텀 inner만 보이도록 (program-calendar-tooltip-overlay 와 동일 패턴) */
+/* Ant Tooltip: 커스텀 inner만 보이도록 (calendar-tooltip-overlay 와 동일 패턴) */
 .payment-orders-calendar-tooltip-overlay .ant-tooltip-arrow {
   display: none !important;
 }
@@ -208,7 +208,7 @@
 
 /* 캘린더 셀 태그: 공통 스펙 */
 .payment-orders-calendar-event-tag,
-.program-calendar-event--payment-order-tag {
+.calendar-event--payment-order-tag {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -228,7 +228,7 @@
   text-align: left;
 }
 
-.program-calendar-event--payment-order-tag {
+.calendar-event--payment-order-tag {
   height: auto;
   min-height: 0;
   text-overflow: ellipsis;
@@ -248,7 +248,7 @@
 .payment-orders-calendar-event-tag__amount,
 .payment-orders-calendar-event-tag__status,
 .payment-orders-calendar-event-tag__sep,
-.program-calendar-event--payment-order-tag .program-calendar-event-title {
+.calendar-event--payment-order-tag .calendar-event-title {
   flex-shrink: 1;
   min-width: 0;
   overflow: hidden;
@@ -262,12 +262,12 @@
 }
 
 .account-payments-calendar-event-tag--pending .payment-orders-calendar-event-tag__status,
-.program-calendar-event--payment-order-status-pending .program-calendar-event-title {
+.calendar-event--payment-order-status-pending .calendar-event-title {
   color: var(--color-orange, #f07917) !important;
 }
 
 .account-payments-calendar-event-tag--completed .payment-orders-calendar-event-tag__status,
-.program-calendar-event--payment-order-status-confirmed .program-calendar-event-title {
+.calendar-event--payment-order-status-confirmed .calendar-event-title {
   color: var(--color-green, #1e8c29) !important;
 }
 
@@ -275,11 +275,11 @@
   color: var(--color-blue, #017eaf) !important;
 }
 
-.program-calendar-event--payment-order-status-correction .program-calendar-event-title {
+.calendar-event--payment-order-status-correction .calendar-event-title {
   color: var(--color-red, #c32f4a) !important;
 }
 
-.program-calendar-event--payment-order-status-rejected .program-calendar-event-title {
+.calendar-event--payment-order-status-rejected .calendar-event-title {
   color: var(--color-blue, #017eaf) !important;
 }
 
@@ -299,19 +299,19 @@
   background: linear-gradient(0deg, rgba(1, 126, 175, 0.1) 0%, rgba(1, 126, 175, 0.1) 100%), #fff;
 }
 
-.program-calendar-event--payment-order-status-pending {
+.calendar-event--payment-order-status-pending {
   background: rgba(240, 121, 23, 0.06);
 }
 
-.program-calendar-event--payment-order-status-confirmed {
+.calendar-event--payment-order-status-confirmed {
   background: #f2f8f2;
 }
 
-.program-calendar-event--payment-order-status-correction {
+.calendar-event--payment-order-status-correction {
   background: rgba(195, 47, 74, 0.06);
 }
 
-.program-calendar-event--payment-order-status-rejected {
+.calendar-event--payment-order-status-rejected {
   background: linear-gradient(0deg, rgba(1, 126, 175, 0.1) 0%, rgba(1, 126, 175, 0.1) 100%), #fff;
 }
 
@@ -630,7 +630,7 @@
 }
 
 .payment-orders-calendar-root--instructor
-  .payment-orders-calendar__program-calendar.program-calendar-main
-  .program-calendar-event-title {
+  .payment-orders-calendar__program-calendar.calendar-main
+  .calendar-event-title {
   line-height: 130%;
 }

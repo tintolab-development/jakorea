@@ -13,19 +13,19 @@ import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { Program } from '@/types/domain'
-import { CalendarMain } from '@/features/calendar/ui/calendar-main/CalendarMain'
+import { CalendarMain } from './calendar-main'
 import { CalendarMini } from './calendar-mini'
 import { CalendarSearch } from './calendar-search'
 import { CalendarSubRightList } from './calendar-sub-right-list'
-import './calendar-set.css'
+import './calendar.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
 interface CalendarSetMainProps {
-  programs: Program[]
+  items: Program[]
   loading?: boolean
-  onProgramClick: (program: Program) => void
+  onItemClick: (item: Program) => void
 }
 
 function useCalendarUIState() {
@@ -35,7 +35,9 @@ function useCalendarUIState() {
 
   const handleDateSelect = useCallback((date: Dayjs) => {
     setSelectedDate(date)
-    setCurrentMonth(prevMonth => (date.isSame(prevMonth, 'month') ? prevMonth : date.startOf('month')))
+    setCurrentMonth(prevMonth =>
+      date.isSame(prevMonth, 'month') ? prevMonth : date.startOf('month')
+    )
   }, [])
 
   const handleMonthChange = useCallback((month: Dayjs) => {
@@ -56,18 +58,21 @@ function useCalendarUIState() {
   }
 }
 
-function useCalendarFilter(programs: Program[]) {
+function useCalendarFilter(items: Program[]) {
   const [calendarSearchKeyword, setCalendarSearchKeyword] = useState('')
   const [calendarProgramSelection, setCalendarProgramSelection] = useState<string[] | null>(null)
 
-  const normalizedKeyword = useMemo(() => calendarSearchKeyword.trim().toLowerCase(), [calendarSearchKeyword])
+  const normalizedKeyword = useMemo(
+    () => calendarSearchKeyword.trim().toLowerCase(),
+    [calendarSearchKeyword]
+  )
 
-  const allProgramIds = useMemo(() => programs.map(program => program.id), [programs])
+  const allProgramIds = useMemo(() => items.map(program => program.id), [items])
 
   const programFilterOptions = useMemo(() => {
     const keywordFiltered = normalizedKeyword
-      ? programs.filter(program => (program.title ?? '').toLowerCase().includes(normalizedKeyword))
-      : programs
+      ? items.filter(program => (program.title ?? '').toLowerCase().includes(normalizedKeyword))
+      : items
     const sortedPrograms = [...keywordFiltered].sort((a, b) =>
       (a.title ?? '').localeCompare(b.title ?? '', 'ko')
     )
@@ -75,7 +80,7 @@ function useCalendarFilter(programs: Program[]) {
       id: program.id,
       title: program.title?.trim() || '이름 없음',
     }))
-  }, [programs, normalizedKeyword])
+  }, [items, normalizedKeyword])
 
   const effectiveProgramSelection = useMemo(
     () => calendarProgramSelection ?? allProgramIds,
@@ -84,15 +89,17 @@ function useCalendarFilter(programs: Program[]) {
 
   const handleProgramFilterChange = useCallback(
     (programId: string, checked: boolean) => {
-      const ids = programs.map(program => program.id)
+      const ids = items.map(program => program.id)
       setCalendarProgramSelection(prev => {
         const base = prev ?? ids
-        const next = checked ? [...new Set([...base, programId])] : base.filter(id => id !== programId)
+        const next = checked
+          ? [...new Set([...base, programId])]
+          : base.filter(id => id !== programId)
         const allSelected = next.length === ids.length && ids.every(id => next.includes(id))
         return allSelected ? null : next
       })
     },
-    [programs]
+    [items]
   )
 
   const onKeywordChange = useCallback((value: string) => {
@@ -109,20 +116,20 @@ function useCalendarFilter(programs: Program[]) {
   }
 }
 
-function useCalendarPrograms(programs: Program[], keyword: string, selection: string[] | null) {
+function useCalendarPrograms(items: Program[], keyword: string, selection: string[] | null) {
   const normalizedKeyword = useMemo(() => keyword.trim().toLowerCase(), [keyword])
 
   const filteredByCalendar = useMemo(() => {
     const keywordFiltered = normalizedKeyword
-      ? programs.filter(program => (program.title ?? '').toLowerCase().includes(normalizedKeyword))
-      : programs
+      ? items.filter(program => (program.title ?? '').toLowerCase().includes(normalizedKeyword))
+      : items
 
     if (selection === null) return keywordFiltered
     if (selection.length === 0) return []
 
     const selectedIdSet = new Set(selection)
     return keywordFiltered.filter(program => selectedIdSet.has(program.id))
-  }, [programs, normalizedKeyword, selection])
+  }, [items, normalizedKeyword, selection])
 
   const programDates = useMemo(() => {
     const dates = new Set<string>()
@@ -183,7 +190,7 @@ function useElementHeight(ref: RefObject<HTMLElement | null>, deps: DependencyLi
   return height
 }
 
-function CalendarSetMain({ programs, loading, onProgramClick }: CalendarSetMainProps) {
+function CalendarSetMain({ items, loading, onItemClick }: CalendarSetMainProps) {
   const {
     selectedDate,
     currentMonth,
@@ -199,9 +206,9 @@ function CalendarSetMain({ programs, loading, onProgramClick }: CalendarSetMainP
     effectiveProgramSelection,
     handleProgramFilterChange,
     onKeywordChange,
-  } = useCalendarFilter(programs)
+  } = useCalendarFilter(items)
   const { filteredByCalendar, programDates } = useCalendarPrograms(
-    programs,
+    items,
     calendarSearchKeyword,
     calendarProgramSelection
   )
@@ -210,7 +217,7 @@ function CalendarSetMain({ programs, loading, onProgramClick }: CalendarSetMainP
 
   if (loading) {
     return (
-      <div className="program-calendar-view program-calendar-view--loading">
+      <div className="calendar-view calendar-view--loading">
         <Spin size="large" />
       </div>
     )
@@ -236,24 +243,27 @@ function CalendarSetMain({ programs, loading, onProgramClick }: CalendarSetMainP
           onOptionToggle={handleProgramFilterChange}
         />
       </div>
-      <div className="calendar-main">
+      <div className="calendar-main-container">
         <CalendarMain
           ref={mainCalendarRef}
-          programs={filteredByCalendar}
+          items={filteredByCalendar}
           selectedDate={selectedDate}
           currentMonth={currentMonth}
           mode={calendarMode}
           onSelectDate={handleDateSelect}
           onMonthChange={handleMonthChange}
           onModeChange={onModeChange}
-          onProgramClick={onProgramClick}
+          onItemClick={onItemClick}
         />
       </div>
-      <div className="calendar-sub-right-list" style={sidebarHeight ? { height: sidebarHeight } : undefined}>
+      <div
+        className="calendar-sub-right-list"
+        style={sidebarHeight ? { height: sidebarHeight } : undefined}
+      >
         <CalendarSubRightList
           selectedDate={selectedDate}
-          programs={filteredByCalendar}
-          onProgramClick={onProgramClick}
+          items={filteredByCalendar}
+          onItemClick={onItemClick}
         />
       </div>
     </div>
@@ -265,4 +275,3 @@ export const CalendarSet = Object.assign(() => null, {
 })
 
 export type { CalendarSetMainProps }
-

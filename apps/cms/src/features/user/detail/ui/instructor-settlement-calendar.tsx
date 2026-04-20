@@ -301,7 +301,7 @@ export function InstructorSettlementCalendarView({
     const applyMonthRowHeight = () => {
       const thead = main.querySelector('.ant-picker-content thead')
       if (!thead) {
-        main.style.removeProperty('--program-calendar-month-row-height')
+        main.style.removeProperty('--calendar-month-row-height')
         return
       }
       const mainRect = main.getBoundingClientRect()
@@ -311,7 +311,7 @@ export function InstructorSettlementCalendarView({
       const forBody = Math.max(0, innerBottom - tbodyTop - BOTTOM_RESERVE)
       const rowPx = Math.max(MIN_ROW, forBody / ROWS)
       main.style.setProperty(
-        '--program-calendar-month-row-height',
+        '--calendar-month-row-height',
         `${Math.round(rowPx * 10) / 10}px`
       )
     }
@@ -322,7 +322,7 @@ export function InstructorSettlementCalendarView({
     requestAnimationFrame(applyMonthRowHeight)
     return () => {
       ro.disconnect()
-      main.style.removeProperty('--program-calendar-month-row-height')
+      main.style.removeProperty('--calendar-month-row-height')
     }
   }, [currentMonth])
 
@@ -351,21 +351,21 @@ export function InstructorSettlementCalendarView({
           overrideEventColorMap={overrideEventColorMap}
           scheduleOverlay="tooltip"
           eventsTooltipTrigger="cell"
-          tooltipOverlayClassName="program-calendar-tooltip-overlay--settlement"
+          tooltipOverlayClassName="calendar-tooltip-overlay--settlement"
           renderEventsTooltipContent={({ events: dayEvents }) => (
-            <div className="program-calendar-schedule-panel">
+            <div className="calendar-schedule-panel">
               {dayEvents.map(ev => {
                 const row = ev.originalItem as InstructorSettlementListRow
                 const colors = statusToColor(row.status)
                 return (
-                  <div key={String(ev.id)} className="program-calendar-schedule-panel__row">
-                    <div className="program-calendar-schedule-panel__title">[{row.programName}]</div>
+                  <div key={String(ev.id)} className="calendar-schedule-panel__row">
+                    <div className="calendar-schedule-panel__title">[{row.programName}]</div>
                     <div>
                       <span style={{ color: colors.text, fontWeight: 700 }}>
                         {INSTRUCTOR_SETTLEMENT_STATUS_LABELS[row.status]}
                       </span>
-                      <span className="program-calendar-schedule-panel__text">
-                        <span className="program-calendar-schedule-panel__sep">|</span> +
+                      <span className="calendar-schedule-panel__text">
+                        <span className="calendar-schedule-panel__sep">|</span> +
                         {row.scheduledAmount.toLocaleString()}원
                       </span>
                     </div>

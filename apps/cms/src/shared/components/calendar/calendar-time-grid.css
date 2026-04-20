@@ -1,0 +1,30 @@
+:root {
+  --calendar-hour-height: 54px;
+  --calendar-total-height: calc(var(--calendar-hour-height) * 24);
+}
+
+.calendar-week--time-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-week-time-grid__shell {
+  display: grid;
+  grid-template-columns: 112px 20px 1fr;
+  height: var(--calendar-total-height);
+}
+
+.calendar-week-time-grid__column {
+  border-right: 1px solid #e0e0e0;
+}
+
+.calendar-week-time-grid__column-inner {
+  position: relative;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--calendar-hour-height) - 1px),
+    #f0f0f0 calc(var(--calendar-hour-height) - 1px),
+    #f0f0f0 var(--calendar-hour-height)
+  );
+}

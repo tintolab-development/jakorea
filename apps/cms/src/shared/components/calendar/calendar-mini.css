@@ -1,0 +1,15 @@
+.program-mini-calendar {
+  background: var(--color-bg-base);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.program-mini-calendar-cell {
+  width: 30px;
+  height: 30px;
+}
+
+.program-mini-calendar-cell--selected {
+  background: var(--color-brand-primary);
+  border-radius: 50%;
+}

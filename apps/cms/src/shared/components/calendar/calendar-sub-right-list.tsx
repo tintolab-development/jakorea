@@ -20,17 +20,17 @@ dayjs.extend(isSameOrBefore)
 
 interface CalendarSubRightListProps {
   selectedDate: Dayjs
-  programs: Program[]
-  onProgramClick: (program: Program) => void
+  items: Program[]
+  onItemClick: (item: Program) => void
 }
 
 export function CalendarSubRightList({
   selectedDate,
-  programs,
-  onProgramClick,
+  items,
+  onItemClick,
 }: CalendarSubRightListProps) {
   const dayPrograms = useMemo(() => {
-    return programs.filter(program => {
+    return items.filter(program => {
       const start = dayjs(program.startDate)
       const end = dayjs(program.endDate)
       const isInEducationPeriod =
@@ -46,7 +46,7 @@ export function CalendarSubRightList({
 
       return isInEducationPeriod || isInApplicationPeriod
     })
-  }, [programs, selectedDate])
+  }, [items, selectedDate])
 
   const scheduleListColorMap = useMemo(
     () => buildResolvedScheduleColorMapForPrograms(dayPrograms),
@@ -73,7 +73,7 @@ export function CalendarSubRightList({
                 backgroundColor: color.bg,
                 border: `1px solid ${color.border}`,
               }}
-              onClick={() => onProgramClick(program)}
+              onClick={() => onItemClick(program)}
             >
               <div className="program-schedule-list__event-column">
                 <div className="program-schedule-list__event-head" title={program.title ?? ''}>

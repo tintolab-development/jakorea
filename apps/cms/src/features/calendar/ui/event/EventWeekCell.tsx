@@ -58,11 +58,11 @@ export function EventWeekCell(props: EventWeekCellProps) {
   if (!hasEvents) {
     return (
       <div
-        className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
+        className={`calendar-week-cell ${isSelected ? 'calendar-week-cell--selected' : ''}`}
         onClick={() => onSelectDate(date)}
       >
         <div
-          className={`program-calendar-week-cell-date ${isSelected ? 'program-calendar-week-cell-date--selected' : ''}`}
+          className={`calendar-week-cell-date ${isSelected ? 'calendar-week-cell-date--selected' : ''}`}
         >
           {date.date()}
         </div>
@@ -74,11 +74,11 @@ export function EventWeekCell(props: EventWeekCellProps) {
     const weekCellInnerPlain = (
       <>
         <div
-          className={`program-calendar-week-cell-date ${isSelected ? 'program-calendar-week-cell-date--selected' : ''}`}
+          className={`calendar-week-cell-date ${isSelected ? 'calendar-week-cell-date--selected' : ''}`}
         >
           {date.date()}
         </div>
-        <div className="program-calendar-week-cell-events">
+        <div className="calendar-week-cell-events">
           <EventList
             dayEvents={dayEvents}
             selectedRowKeys={selectedRowKeys}
@@ -99,7 +99,7 @@ export function EventWeekCell(props: EventWeekCellProps) {
 
     return (
       <div
-        className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
+        className={`calendar-week-cell ${isSelected ? 'calendar-week-cell--selected' : ''}`}
         onClick={() => onSelectDate(date)}
       >
         <EventOverlay
@@ -107,7 +107,7 @@ export function EventWeekCell(props: EventWeekCellProps) {
           tooltipOverlayClassName={tooltipOverlayClassName}
           previewContent={renderPreview(dayEvents, colorMap)}
         >
-          <div className="program-calendar-week-cell-tooltip-trigger program-calendar-week-cell-tooltip-trigger--full-cell">
+          <div className="calendar-week-cell-tooltip-trigger calendar-week-cell-tooltip-trigger--full-cell">
             {weekCellInnerPlain}
           </div>
         </EventOverlay>
@@ -117,15 +117,15 @@ export function EventWeekCell(props: EventWeekCellProps) {
 
   return (
     <div
-      className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
+      className={`calendar-week-cell ${isSelected ? 'calendar-week-cell--selected' : ''}`}
       onClick={() => onSelectDate(date)}
     >
       <div
-        className={`program-calendar-week-cell-date ${isSelected ? 'program-calendar-week-cell-date--selected' : ''}`}
+        className={`calendar-week-cell-date ${isSelected ? 'calendar-week-cell-date--selected' : ''}`}
       >
         {date.date()}
       </div>
-      <div className="program-calendar-week-cell-events">
+      <div className="calendar-week-cell-events">
         <EventList
           dayEvents={dayEvents}
           selectedRowKeys={selectedRowKeys}

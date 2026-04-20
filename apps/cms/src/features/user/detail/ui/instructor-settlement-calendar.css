@@ -1,5 +1,5 @@
 /**
- * 강사 정산 캘린더 툴팁 — program-calendar-schedule-panel 행 정렬 보정
+ * 강사 정산 캘린더 툴팁 — calendar-schedule-panel 행 정렬 보정
  */
 
 /**
@@ -30,7 +30,7 @@
 }
 
 /**
- * ProgramCalendar 루트 = .program-calendar-main(+ className) 단일 래퍼.
+ * ProgramCalendar 루트 = .calendar-main(+ className) 단일 래퍼.
  * 열 래퍼(.instructor-settlement-calendar-program-outer)에 margin·flex 배분.
  */
 .instructor-settlement-calendar-program-outer {
@@ -43,25 +43,25 @@
   flex-direction: column;
 }
 
-.instructor-settlement-calendar-program-outer > .program-calendar-main {
+.instructor-settlement-calendar-program-outer > .calendar-main {
   flex: 0 0 auto;
   min-width: 0;
 }
 
-.program-calendar-tooltip-overlay--settlement .program-calendar-schedule-panel {
+.calendar-tooltip-overlay--settlement .calendar-schedule-panel {
   padding-left: 0;
   padding-right: 16px;
 }
 
-.program-calendar-tooltip-overlay--settlement .program-calendar-schedule-panel__row {
+.calendar-tooltip-overlay--settlement .calendar-schedule-panel__row {
   align-items: stretch;
   width: 100%;
   box-sizing: border-box;
   padding: 8px 10px;
 }
 
-.program-calendar-tooltip-overlay--settlement
-  .program-calendar-schedule-panel__row
+.calendar-tooltip-overlay--settlement
+  .calendar-schedule-panel__row
   > div:last-child {
   display: flex;
   flex-wrap: wrap;

@@ -1,35 +1,61 @@
-import { forwardRef, Fragment, useMemo, type ReactElement, type ReactNode } from 'react'
-import { Calendar, Button } from 'antd'
+import { forwardRef, useCallback, useMemo, type ReactNode } from 'react'
+import { Button } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { Program } from '@/types/domain'
-import { getProgramDayScheduleLine } from '@/entities/program/lib/program-day-schedule-line'
 import {
-  SCHEDULE_COLORS,
   type ScheduleColorPair,
   buildResolvedScheduleColorMapForPrograms,
 } from '@/features/program/ui/program-schedule-colors'
-import {
-  ApplicantCalendarEventPopoverContent,
-  useApplicantCalendarColorMaps,
-} from '@/features/program/program-detail/ui/applicant-list/applicant-calendar-schedule-helpers'
+import { useApplicantCalendarColorMaps } from '@/features/program/program-detail/ui/applicant-list/applicant-calendar-schedule-helpers'
 import { SegmentedTab } from '@/shared/ui/segmented-tab'
 import '@/shared/ui/overlay-popover.css'
-import '../program-calendar.css'
-import { ProgramCalendarOverlayFollowCursor } from '@/shared/components/program-calendar-cursor-overlay'
+import { CalendarBody } from './calendar-body'
+import {
+  CalendarCell,
+  CalendarCellSchedulePreview,
+  buildEventsPreview,
+  type CalendarEventsConfig,
+} from './calendar-core/calendar-cell'
+import {
+  calendarItemsForEventMode,
+  dateValueToCalendarString,
+  getItemsForDate,
+  mapEventsToItems,
+  uniqueScheduleSourcesForDay,
+  type CalendarItem,
+} from './calendar-core/calendar-helpers'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
-export type CalendarMainEventItem = {
-  id: string | number
-  title?: string
-  startDate: string
-  endDate: string
-  originalItem?: unknown
+/** 교육·신청 기간을 각각 한 쌍의 범위로 올려 `getItemsForDate`와 동일한 가시성을 유지합니다. */
+function buildCalendarItemsFromPrograms(programs: Program[]): CalendarItem[] {
+  const out: CalendarItem[] = []
+  for (const program of programs) {
+    out.push({
+      id: `${String(program.id)}__edu`,
+      title: program.title,
+      startDate: dateValueToCalendarString(program.startDate),
+      endDate: dateValueToCalendarString(program.endDate),
+      type: 'event',
+      original: program,
+    })
+    if (program.applicationStartDate && program.applicationEndDate) {
+      out.push({
+        id: `${String(program.id)}__app`,
+        title: program.title,
+        startDate: dateValueToCalendarString(program.applicationStartDate),
+        endDate: dateValueToCalendarString(program.applicationEndDate),
+        type: 'event',
+        original: program,
+      })
+    }
+  }
+  return out
 }
 
 type CalendarMainSharedProps = {
@@ -46,111 +72,38 @@ type CalendarMainSharedProps = {
   hideHeader?: boolean
 }
 
-export type CalendarMainProgramProps = CalendarMainSharedProps & {
-  programs: Program[]
-  onProgramClick: (program: Program) => void
+export type CalendarMainItemsProps = CalendarMainSharedProps & {
+  items: Program[]
+  onItemClick: (item: Program) => void
   events?: undefined
   selectedRowKeys?: undefined
 }
 
+export type CalendarMainScheduleProps = CalendarMainItemsProps
+
+/** @deprecated Use `CalendarMainScheduleProps` or `CalendarMainItemsProps` */
+export type CalendarMainProgramProps = CalendarMainItemsProps
+
 export type CalendarMainEventsProps = CalendarMainSharedProps & {
-  events: CalendarMainEventItem[]
+  events: Parameters<typeof mapEventsToItems>[0]
   selectedRowKeys?: React.Key[]
   renderEventsTooltipContent?: (args: {
-    events: CalendarMainEventItem[]
+    events: CalendarItem[]
     colorMap: Map<string | number, ScheduleColorPair>
   }) => ReactNode
-  overrideEventColorMap?: (
-    dayEvents: CalendarMainEventItem[]
-  ) => Map<string | number, ScheduleColorPair>
-  resolveEventColors?: (event: CalendarMainEventItem) => ScheduleColorPair | undefined
+  overrideEventColorMap?: (dayEvents: CalendarItem[]) => Map<string | number, ScheduleColorPair>
+  resolveEventColors?: (item: CalendarItem) => ScheduleColorPair | undefined
   eventsTooltipScope?: 'trigger-only' | 'full-day'
   formatEventsOverflowText?: (hiddenCount: number) => string
   eventsTooltipTrigger?: 'event-strip' | 'cell'
-  programs?: undefined
-  onProgramClick?: undefined
+  items?: undefined
+  onItemClick?: undefined
 }
 
-export type CalendarMainProps = CalendarMainProgramProps | CalendarMainEventsProps
-
-type SpanRole = 'start' | 'middle' | 'end' | 'single'
-
-type CalendarEventsConfig = {
-  selectedRowKeys: React.Key[]
-  renderEventsTooltipContent?: (args: {
-    events: CalendarMainEventItem[]
-    colorMap: Map<string | number, ScheduleColorPair>
-  }) => ReactNode
-  overrideEventColorMap?: (
-    dayEvents: CalendarMainEventItem[]
-  ) => Map<string | number, ScheduleColorPair>
-  resolveEventColors?: (event: CalendarMainEventItem) => ScheduleColorPair | undefined
-  eventsTooltipScope: 'trigger-only' | 'full-day'
-  formatEventsOverflowText?: (hiddenCount: number) => string
-  eventsTooltipTrigger: 'event-strip' | 'cell'
-}
+export type CalendarMainProps = CalendarMainItemsProps | CalendarMainEventsProps
 
 function isEventsProps(p: CalendarMainProps): p is CalendarMainEventsProps {
   return 'events' in p && Array.isArray(p.events)
-}
-
-function getProgramSpanRole(program: Program, date: Dayjs): SpanRole {
-  const start = dayjs(program.startDate)
-  const end = dayjs(program.endDate)
-  const isInEducation = date.isSameOrAfter(start, 'day') && date.isSameOrBefore(end, 'day')
-  let rangeStart: Dayjs
-  let rangeEnd: Dayjs
-
-  if (program.applicationStartDate && program.applicationEndDate) {
-    const appStart = dayjs(program.applicationStartDate)
-    const appEnd = dayjs(program.applicationEndDate)
-    const isInApp = date.isSameOrAfter(appStart, 'day') && date.isSameOrBefore(appEnd, 'day')
-    if (isInApp) {
-      rangeStart = appStart
-      rangeEnd = appEnd
-    } else if (isInEducation) {
-      rangeStart = start
-      rangeEnd = end
-    } else {
-      return 'single'
-    }
-  } else if (isInEducation) {
-    rangeStart = start
-    rangeEnd = end
-  } else {
-    return 'single'
-  }
-
-  if (rangeStart.isSame(rangeEnd, 'day')) return 'single'
-  if (date.isSame(rangeStart, 'day')) return 'start'
-  if (date.isSame(rangeEnd, 'day')) return 'end'
-  return 'middle'
-}
-
-function getProgramsForDate(programs: Program[], date: Dayjs): Program[] {
-  return programs.filter(program => {
-    const start = dayjs(program.startDate)
-    const end = dayjs(program.endDate)
-    const isInEducationPeriod = date.isSameOrAfter(start, 'day') && date.isSameOrBefore(end, 'day')
-
-    let isInApplicationPeriod = false
-    if (program.applicationStartDate && program.applicationEndDate) {
-      const appStart = dayjs(program.applicationStartDate)
-      const appEnd = dayjs(program.applicationEndDate)
-      isInApplicationPeriod =
-        date.isSameOrAfter(appStart, 'day') && date.isSameOrBefore(appEnd, 'day')
-    }
-
-    return isInEducationPeriod || isInApplicationPeriod
-  })
-}
-
-function getEventsForDate(events: CalendarMainEventItem[], date: Dayjs): CalendarMainEventItem[] {
-  return events.filter(event => {
-    const start = dayjs(event.startDate)
-    const end = dayjs(event.endDate)
-    return date.isSameOrAfter(start, 'day') && date.isSameOrBefore(end, 'day')
-  })
 }
 
 function useCalendarNavigation({
@@ -196,67 +149,6 @@ function useCalendarNavigation({
   return { handleToday, handlePrev, handleNext, headerTitle }
 }
 
-function CalendarCellSchedulePreview({ date, programs }: { date: Dayjs; programs: Program[] }) {
-  const scheduleColorMap = buildResolvedScheduleColorMapForPrograms(programs)
-
-  return (
-    <div className="program-calendar-cell-preview">
-      {programs.map(program => {
-        const { statusLabel, time } = getProgramDayScheduleLine(program, date)
-        const title = program.title ?? ''
-        const colorPair = scheduleColorMap.get(String(program.id)) ?? SCHEDULE_COLORS[0]
-        return (
-          <button key={program.id} type="button" className="program-calendar-cell-preview__item">
-            <span className="program-calendar-cell-preview__title" style={{ color: colorPair.text }}>
-              [{title}]
-            </span>
-            <span className="program-calendar-cell-preview__desc">
-              {statusLabel} | {time}
-            </span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-function ScheduleOverlayWrapper({
-  scheduleOverlay,
-  tooltipOverlayClassName,
-  previewContent,
-  children,
-}: {
-  scheduleOverlay: 'popover' | 'tooltip'
-  tooltipOverlayClassName?: string
-  previewContent: ReactNode
-  children: ReactElement
-}) {
-  return (
-    <ProgramCalendarOverlayFollowCursor
-      variant={scheduleOverlay}
-      tooltipOverlayClassName={tooltipOverlayClassName}
-      content={previewContent}
-    >
-      {children}
-    </ProgramCalendarOverlayFollowCursor>
-  )
-}
-
-function buildEventsPreview(
-  dayEvents: CalendarMainEventItem[],
-  colorMap: Map<string | number, ScheduleColorPair>,
-  renderEventsTooltipContent?: (args: {
-    events: CalendarMainEventItem[]
-    colorMap: Map<string | number, ScheduleColorPair>
-  }) => ReactNode
-) {
-  return renderEventsTooltipContent ? (
-    renderEventsTooltipContent({ events: dayEvents, colorMap })
-  ) : (
-    <ApplicantCalendarEventPopoverContent events={dayEvents} colorMap={colorMap} />
-  )
-}
-
 function CalendarHeader({
   headerTitle,
   mode,
@@ -273,30 +165,30 @@ function CalendarHeader({
   onNext: () => void
 }) {
   return (
-    <div className="program-calendar-header">
-      <div className="program-calendar-header-left">
-        <span className="program-calendar-header-title">{headerTitle}</span>
-        <Button size="small" className="program-calendar-today-btn" onClick={onToday}>
+    <div className="calendar-header">
+      <div className="calendar-header-left">
+        <span className="calendar-header-title">{headerTitle}</span>
+        <Button size="small" className="calendar-today-btn" onClick={onToday}>
           오늘
         </Button>
-        <div className="program-calendar-nav">
+        <div className="calendar-nav">
           <Button
             type="text"
             size="small"
             icon={<LeftOutlined />}
-            className="program-calendar-nav-btn"
+            className="calendar-nav-btn"
             onClick={onPrev}
           />
           <Button
             type="text"
             size="small"
             icon={<RightOutlined />}
-            className="program-calendar-nav-btn"
+            className="calendar-nav-btn"
             onClick={onNext}
           />
         </div>
       </div>
-      <div className="program-calendar-header-right">
+      <div className="calendar-header-right">
         <SegmentedTab
           size="medium"
           value={mode}
@@ -311,741 +203,227 @@ function CalendarHeader({
   )
 }
 
-function MonthProgramCell({
-  date,
-  currentMonth,
-  selectedDate,
-  programs,
-  onSelectDate,
-  scheduleOverlay,
-  tooltipOverlayClassName,
-}: {
+type RenderCalendarDayCellParams = {
   date: Dayjs
-  currentMonth: Dayjs
+  cellMode: 'month' | 'week'
+  currentMonthForCell: Dayjs
+  items: CalendarItem[]
   selectedDate: Dayjs
-  programs: Program[]
   onSelectDate: (date: Dayjs) => void
   scheduleOverlay: 'popover' | 'tooltip'
   tooltipOverlayClassName?: string
-}) {
-  const isCurrentMonth = date.isSame(currentMonth, 'month')
-  const isSelected = date.isSame(selectedDate, 'day')
-  const isToday = date.isSame(dayjs(), 'day')
-  const dayPrograms = getProgramsForDate(programs, date)
-  const hasPrograms = dayPrograms.length > 0
-  const scheduleColorMap = buildResolvedScheduleColorMapForPrograms(dayPrograms)
-  const preview = <CalendarCellSchedulePreview date={date} programs={dayPrograms} />
-
-  const cellClass = [
-    'program-calendar-cell',
-    !isCurrentMonth ? 'program-calendar-cell--other-month' : '',
-    isSelected ? 'program-calendar-cell--selected' : '',
-    isToday ? 'program-calendar-cell--today' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
-
-  const cellBody = (
-    <div className={cellClass} onClick={() => onSelectDate(date)}>
-      <div className="program-calendar-cell-date">{date.date()}</div>
-      {hasPrograms && (
-        <div className="program-calendar-cell-events">
-          {dayPrograms.slice(0, 2).map(program => {
-            const spanRole = getProgramSpanRole(program, date)
-            const colorPair = scheduleColorMap.get(String(program.id)) ?? SCHEDULE_COLORS[0]
-            return (
-              <div
-                key={program.id}
-                className={`program-calendar-event program-calendar-event--span-${spanRole}`}
-                style={{ backgroundColor: colorPair.bg }}
-              >
-                <span className="program-calendar-event-title">{program.title}</span>
-              </div>
-            )
-          })}
-          {dayPrograms.length > 2 && (
-            <div className="program-calendar-event-more">외 {dayPrograms.length - 2}개의 항목</div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-
-  if (!hasPrograms) return cellBody
-  return (
-    <ScheduleOverlayWrapper
-      scheduleOverlay={scheduleOverlay}
-      tooltipOverlayClassName={tooltipOverlayClassName}
-      previewContent={preview}
-    >
-      <div className="program-calendar-cell-tooltip-trigger">{cellBody}</div>
-    </ScheduleOverlayWrapper>
-  )
+  colorMap: Map<string | number, ScheduleColorPair>
+  eventsConfig?: CalendarEventsConfig
+  buildResolvedColorMap: (dayEvents: CalendarItem[]) => Map<string | number, ScheduleColorPair>
 }
 
-function MonthEventCell({
-  date,
-  currentMonth,
-  selectedDate,
-  events,
-  config,
-  buildResolvedColorMap,
-  onSelectDate,
-  scheduleOverlay,
-  tooltipOverlayClassName,
-}: {
-  date: Dayjs
-  currentMonth: Dayjs
-  selectedDate: Dayjs
-  events: CalendarMainEventItem[]
-  config: CalendarEventsConfig
-  buildResolvedColorMap: (
-    dayEvents: CalendarMainEventItem[]
-  ) => Map<string | number, ScheduleColorPair>
-  onSelectDate: (date: Dayjs) => void
-  scheduleOverlay: 'popover' | 'tooltip'
-  tooltipOverlayClassName?: string
-}) {
-  const isCurrentMonth = date.isSame(currentMonth, 'month')
-  const isSelected = date.isSame(selectedDate, 'day')
-  const isToday = date.isSame(dayjs(), 'day')
-  const dayEvents = getEventsForDate(events, date)
-  const hasItems = dayEvents.length > 0
-  const resolvedColors =
-    config.overrideEventColorMap != null
-      ? config.overrideEventColorMap(dayEvents)
-      : buildResolvedColorMap(dayEvents)
+function renderCalendarDayCell(p: RenderCalendarDayCellParams): ReactNode {
+  const {
+    date,
+    cellMode,
+    currentMonthForCell,
+    items,
+    selectedDate,
+    onSelectDate,
+    scheduleOverlay,
+    tooltipOverlayClassName,
+    colorMap,
+    eventsConfig,
+    buildResolvedColorMap,
+  } = p
 
-  const cellClass = [
-    'program-calendar-cell',
-    !isCurrentMonth ? 'program-calendar-cell--other-month' : '',
-    isSelected ? 'program-calendar-cell--selected' : '',
-    isToday ? 'program-calendar-cell--today' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
-
-  if (!hasItems) {
+  const dayItems = getItemsForDate(items, date)
+  if (eventsConfig != null) {
+    const dayEvents = calendarItemsForEventMode(dayItems)
+    const overlayContent =
+      dayEvents.length > 0
+        ? buildEventsPreview(dayEvents, colorMap, eventsConfig.renderEventsTooltipContent)
+        : null
     return (
-      <div className={cellClass} onClick={() => onSelectDate(date)}>
-        <div className="program-calendar-cell-date">{date.date()}</div>
-      </div>
-    )
-  }
-
-  if (config.eventsTooltipTrigger === 'cell') {
-    const fullDayPreview = buildEventsPreview(
-      dayEvents,
-      resolvedColors,
-      config.renderEventsTooltipContent
-    )
-
-    const cellInner = (
-      <div className={cellClass} onClick={() => onSelectDate(date)}>
-        <div className="program-calendar-cell-date">{date.date()}</div>
-        <div className="program-calendar-cell-events">
-          {dayEvents.slice(0, 2).map(event => {
-            const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
-            const isEventSelected = config.selectedRowKeys.includes(event.id)
-            const colors =
-              config.resolveEventColors?.(event) ?? resolvedColors.get(event.id) ?? SCHEDULE_COLORS[0]
-            return (
-              <div key={String(event.id)}>
-                <div
-                  className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
-                  style={{ backgroundColor: colors.bg }}
-                  onClick={e => e.stopPropagation()}
-                >
-                  <span className="program-calendar-event-title" style={{ color: colors.text }}>
-                    {displayTitle}
-                  </span>
-                </div>
-              </div>
-            )
-          })}
-          {dayEvents.length > 2 && (
-            <div className="program-calendar-event-more">
-              {config.formatEventsOverflowText?.(dayEvents.length - 2) ?? `외 ${dayEvents.length - 2}개의 항목`}
-            </div>
-          )}
-        </div>
-      </div>
-    )
-
-    return (
-      <ScheduleOverlayWrapper
+      <CalendarCell
+        date={date}
+        items={items}
+        selectedDate={selectedDate}
+        currentMonth={currentMonthForCell}
+        mode={cellMode}
+        selectedKeys={eventsConfig.selectedRowKeys}
+        colorMap={colorMap}
+        onSelectDate={onSelectDate}
+        overlayEnabled={dayEvents.length > 0}
+        overlayContent={overlayContent}
         scheduleOverlay={scheduleOverlay}
         tooltipOverlayClassName={tooltipOverlayClassName}
-        previewContent={fullDayPreview}
-      >
-        <div className="program-calendar-cell-tooltip-trigger program-calendar-cell-tooltip-trigger--full-cell">
-          {cellInner}
-        </div>
-      </ScheduleOverlayWrapper>
-    )
-  }
-
-  return (
-    <div className={cellClass} onClick={() => onSelectDate(date)}>
-      <div className="program-calendar-cell-date">{date.date()}</div>
-      <div className="program-calendar-cell-events">
-        {dayEvents.slice(0, 2).map(event => {
-          const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
-          const isEventSelected = config.selectedRowKeys.includes(event.id)
-          const colors =
-            config.resolveEventColors?.(event) ?? resolvedColors.get(event.id) ?? SCHEDULE_COLORS[0]
-          const tooltipList = config.eventsTooltipScope === 'full-day' ? dayEvents : [event]
-          const tooltipColorMap =
-            config.overrideEventColorMap != null
-              ? config.overrideEventColorMap(
-                  config.eventsTooltipScope === 'full-day' ? dayEvents : [event]
-                )
-              : buildResolvedColorMap(tooltipList)
-          const previewOne = buildEventsPreview(
-            tooltipList,
-            tooltipColorMap,
-            config.renderEventsTooltipContent
-          )
-          return (
-            <Fragment key={String(event.id)}>
-              <ScheduleOverlayWrapper
-                scheduleOverlay={scheduleOverlay}
-                tooltipOverlayClassName={tooltipOverlayClassName}
-                previewContent={previewOne}
-              >
-                <div className="program-calendar-event-tooltip-trigger">
-                  <div
-                    className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
-                    style={{ backgroundColor: colors.bg }}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <span className="program-calendar-event-title" style={{ color: colors.text }}>
-                      {displayTitle}
-                    </span>
-                  </div>
-                </div>
-              </ScheduleOverlayWrapper>
-            </Fragment>
-          )
-        })}
-        {dayEvents.length > 2 && (
-          <Fragment key="more">
-            <ScheduleOverlayWrapper
-              scheduleOverlay={scheduleOverlay}
-              tooltipOverlayClassName={tooltipOverlayClassName}
-              previewContent={(() => {
-                const moreList =
-                  config.eventsTooltipScope === 'full-day' ? dayEvents : dayEvents.slice(2)
-                const moreColorMap =
-                  config.overrideEventColorMap != null
-                    ? config.overrideEventColorMap(moreList)
-                    : buildResolvedColorMap(moreList)
-                return buildEventsPreview(moreList, moreColorMap, config.renderEventsTooltipContent)
-              })()}
-            >
-              <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
-                {config.formatEventsOverflowText?.(dayEvents.length - 2) ?? `외 ${dayEvents.length - 2}개의 항목`}
-              </div>
-            </ScheduleOverlayWrapper>
-          </Fragment>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function WeekProgramCell({
-  date,
-  selectedDate,
-  programs,
-  onSelectDate,
-  scheduleOverlay,
-  tooltipOverlayClassName,
-}: {
-  date: Dayjs
-  selectedDate: Dayjs
-  programs: Program[]
-  onSelectDate: (date: Dayjs) => void
-  scheduleOverlay: 'popover' | 'tooltip'
-  tooltipOverlayClassName?: string
-}) {
-  const isSelected = date.isSame(selectedDate, 'day')
-  const dayPrograms = getProgramsForDate(programs, date)
-  const hasPrograms = dayPrograms.length > 0
-  const scheduleColorMap = buildResolvedScheduleColorMapForPrograms(dayPrograms)
-  const preview = <CalendarCellSchedulePreview date={date} programs={dayPrograms} />
-
-  const weekCellInner = (
-    <>
-      <div
-        className={`program-calendar-week-cell-date ${isSelected ? 'program-calendar-week-cell-date--selected' : ''}`}
-      >
-        {date.date()}
-      </div>
-      {hasPrograms && (
-        <div className="program-calendar-week-cell-events">
-          {dayPrograms.slice(0, 2).map(program => {
-            const colorPair = scheduleColorMap.get(String(program.id)) ?? SCHEDULE_COLORS[0]
-            return (
-              <div
-                key={program.id}
-                className="program-calendar-event"
-                style={{ backgroundColor: colorPair.bg }}
-                onClick={e => e.stopPropagation()}
-              >
-                <span className="program-calendar-event-title">{program.title}</span>
-              </div>
-            )
-          })}
-          {dayPrograms.length > 2 && (
-            <div className="program-calendar-event-more">외 {dayPrograms.length - 2}개의 항목</div>
-          )}
-        </div>
-      )}
-    </>
-  )
-
-  return (
-    <div
-      className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
-      onClick={() => onSelectDate(date)}
-    >
-      {hasPrograms ? (
-        <ScheduleOverlayWrapper
-          scheduleOverlay={scheduleOverlay}
-          tooltipOverlayClassName={tooltipOverlayClassName}
-          previewContent={preview}
-        >
-          <div className="program-calendar-week-cell-tooltip-trigger">{weekCellInner}</div>
-        </ScheduleOverlayWrapper>
-      ) : (
-        weekCellInner
-      )}
-    </div>
-  )
-}
-
-function WeekEventCell({
-  date,
-  selectedDate,
-  events,
-  config,
-  buildResolvedColorMap,
-  onSelectDate,
-  scheduleOverlay,
-  tooltipOverlayClassName,
-}: {
-  date: Dayjs
-  selectedDate: Dayjs
-  events: CalendarMainEventItem[]
-  config: CalendarEventsConfig
-  buildResolvedColorMap: (
-    dayEvents: CalendarMainEventItem[]
-  ) => Map<string | number, ScheduleColorPair>
-  onSelectDate: (date: Dayjs) => void
-  scheduleOverlay: 'popover' | 'tooltip'
-  tooltipOverlayClassName?: string
-}) {
-  const isSelected = date.isSame(selectedDate, 'day')
-  const dayEvents = getEventsForDate(events, date)
-  const hasItems = dayEvents.length > 0
-  const resolvedWeekColors =
-    config.overrideEventColorMap != null
-      ? config.overrideEventColorMap(dayEvents)
-      : buildResolvedColorMap(dayEvents)
-
-  if (!hasItems) {
-    return (
-      <div
-        className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
-        onClick={() => onSelectDate(date)}
-      >
-        <div
-          className={`program-calendar-week-cell-date ${isSelected ? 'program-calendar-week-cell-date--selected' : ''}`}
-        >
-          {date.date()}
-        </div>
-      </div>
-    )
-  }
-
-  if (config.eventsTooltipTrigger === 'cell') {
-    const fullDayPreview = buildEventsPreview(
-      dayEvents,
-      resolvedWeekColors,
-      config.renderEventsTooltipContent
-    )
-    const weekCellInnerPlain = (
-      <>
-        <div
-          className={`program-calendar-week-cell-date ${isSelected ? 'program-calendar-week-cell-date--selected' : ''}`}
-        >
-          {date.date()}
-        </div>
-        <div className="program-calendar-week-cell-events">
-          {dayEvents.slice(0, 2).map(event => {
-            const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
-            const isEventSelected = config.selectedRowKeys.includes(event.id)
-            const colors =
-              config.resolveEventColors?.(event) ?? resolvedWeekColors.get(event.id) ?? SCHEDULE_COLORS[0]
-            return (
-              <div key={String(event.id)}>
-                <div
-                  className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
-                  style={{
-                    backgroundColor: colors.bg,
-                    border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
-                  }}
-                  onClick={e => e.stopPropagation()}
-                >
-                  <span className="program-calendar-event-title" style={{ color: colors.text }}>
-                    {displayTitle}
-                  </span>
-                </div>
-              </div>
-            )
-          })}
-          {dayEvents.length > 2 && (
-            <div className="program-calendar-event-more">
-              {config.formatEventsOverflowText?.(dayEvents.length - 2) ?? `외 ${dayEvents.length - 2}개의 항목`}
-            </div>
-          )}
-        </div>
-      </>
-    )
-
-    return (
-      <div
-        className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
-        onClick={() => onSelectDate(date)}
-      >
-        <ScheduleOverlayWrapper
-          scheduleOverlay={scheduleOverlay}
-          tooltipOverlayClassName={tooltipOverlayClassName}
-          previewContent={fullDayPreview}
-        >
-          <div className="program-calendar-week-cell-tooltip-trigger program-calendar-week-cell-tooltip-trigger--full-cell">
-            {weekCellInnerPlain}
-          </div>
-        </ScheduleOverlayWrapper>
-      </div>
-    )
-  }
-
-  const weekCellInner = (
-    <>
-      <div
-        className={`program-calendar-week-cell-date ${isSelected ? 'program-calendar-week-cell-date--selected' : ''}`}
-      >
-        {date.date()}
-      </div>
-      <div className="program-calendar-week-cell-events">
-        {dayEvents.slice(0, 2).map(event => {
-          const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
-          const isEventSelected = config.selectedRowKeys.includes(event.id)
-          const colors =
-            config.resolveEventColors?.(event) ?? resolvedWeekColors.get(event.id) ?? SCHEDULE_COLORS[0]
-          const tooltipList = config.eventsTooltipScope === 'full-day' ? dayEvents : [event]
-          const tooltipColorMap =
-            config.overrideEventColorMap != null
-              ? config.overrideEventColorMap(
-                  config.eventsTooltipScope === 'full-day' ? dayEvents : [event]
-                )
-              : buildResolvedColorMap(tooltipList)
-          const previewOne = buildEventsPreview(
-            tooltipList,
-            tooltipColorMap,
-            config.renderEventsTooltipContent
-          )
-          return (
-            <Fragment key={String(event.id)}>
-              <ScheduleOverlayWrapper
-                scheduleOverlay={scheduleOverlay}
-                tooltipOverlayClassName={tooltipOverlayClassName}
-                previewContent={previewOne}
-              >
-                <div className="program-calendar-event-tooltip-trigger">
-                  <div
-                    className={`program-calendar-event ${isEventSelected ? 'program-calendar-event--selected' : ''}`}
-                    style={{
-                      backgroundColor: colors.bg,
-                      border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
-                    }}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <span className="program-calendar-event-title" style={{ color: colors.text }}>
-                      {displayTitle}
-                    </span>
-                  </div>
-                </div>
-              </ScheduleOverlayWrapper>
-            </Fragment>
-          )
-        })}
-        {dayEvents.length > 2 && (
-          <Fragment key="more">
-            <ScheduleOverlayWrapper
-              scheduleOverlay={scheduleOverlay}
-              tooltipOverlayClassName={tooltipOverlayClassName}
-              previewContent={(() => {
-                const moreList =
-                  config.eventsTooltipScope === 'full-day' ? dayEvents : dayEvents.slice(2)
-                const moreColorMap =
-                  config.overrideEventColorMap != null
-                    ? config.overrideEventColorMap(moreList)
-                    : buildResolvedColorMap(moreList)
-                return buildEventsPreview(moreList, moreColorMap, config.renderEventsTooltipContent)
-              })()}
-            >
-              <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
-                {config.formatEventsOverflowText?.(dayEvents.length - 2) ?? `외 ${dayEvents.length - 2}개의 항목`}
-              </div>
-            </ScheduleOverlayWrapper>
-          </Fragment>
-        )}
-      </div>
-    </>
-  )
-
-  return (
-    <div
-      className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
-      onClick={() => onSelectDate(date)}
-    >
-      {weekCellInner}
-    </div>
-  )
-}
-
-function MonthView({
-  currentMonth,
-  selectedDate,
-  onSelectDate,
-  scheduleOverlay,
-  tooltipOverlayClassName,
-  programs,
-  events,
-  eventsConfig,
-  buildResolvedColorMap,
-}: {
-  currentMonth: Dayjs
-  selectedDate: Dayjs
-  onSelectDate: (date: Dayjs) => void
-  scheduleOverlay: 'popover' | 'tooltip'
-  tooltipOverlayClassName?: string
-  programs?: Program[]
-  events?: CalendarMainEventItem[]
-  eventsConfig?: CalendarEventsConfig
-  buildResolvedColorMap: (
-    dayEvents: CalendarMainEventItem[]
-  ) => Map<string | number, ScheduleColorPair>
-}) {
-  if (events != null && eventsConfig != null) {
-    return (
-      <Calendar
-        fullscreen={false}
-        value={currentMonth}
-        headerRender={() => null}
-        fullCellRender={date => (
-          <MonthEventCell
-            date={date}
-            currentMonth={currentMonth}
-            selectedDate={selectedDate}
-            events={events}
-            config={eventsConfig}
-            buildResolvedColorMap={buildResolvedColorMap}
-            onSelectDate={onSelectDate}
-            scheduleOverlay={scheduleOverlay}
-            tooltipOverlayClassName={tooltipOverlayClassName}
-          />
-        )}
+        eventsConfig={eventsConfig}
+        buildResolvedColorMap={buildResolvedColorMap}
       />
     )
   }
-
+  const dayScheduleSources = uniqueScheduleSourcesForDay(dayItems)
+  const overlayContent = (
+    <CalendarCellSchedulePreview date={date} items={dayScheduleSources} colorMap={colorMap} />
+  )
   return (
-    <Calendar
-      fullscreen={false}
-      value={currentMonth}
-      headerRender={() => null}
-      fullCellRender={date => (
-        <MonthProgramCell
-          date={date}
-          currentMonth={currentMonth}
-          selectedDate={selectedDate}
-          programs={programs ?? []}
-          onSelectDate={onSelectDate}
-          scheduleOverlay={scheduleOverlay}
-          tooltipOverlayClassName={tooltipOverlayClassName}
-        />
-      )}
+    <CalendarCell
+      date={date}
+      items={items}
+      selectedDate={selectedDate}
+      currentMonth={currentMonthForCell}
+      mode={cellMode}
+      selectedKeys={[]}
+      colorMap={colorMap}
+      onSelectDate={onSelectDate}
+      overlayEnabled={dayScheduleSources.length > 0}
+      overlayContent={overlayContent}
+      scheduleOverlay={scheduleOverlay}
+      tooltipOverlayClassName={tooltipOverlayClassName}
     />
   )
 }
 
-function WeekView({
-  weekDates,
-  selectedDate,
-  onSelectDate,
-  scheduleOverlay,
-  tooltipOverlayClassName,
-  programs,
-  events,
-  eventsConfig,
-  buildResolvedColorMap,
-}: {
-  weekDates: Dayjs[]
-  selectedDate: Dayjs
-  onSelectDate: (date: Dayjs) => void
-  scheduleOverlay: 'popover' | 'tooltip'
-  tooltipOverlayClassName?: string
-  programs?: Program[]
-  events?: CalendarMainEventItem[]
-  eventsConfig?: CalendarEventsConfig
-  buildResolvedColorMap: (
-    dayEvents: CalendarMainEventItem[]
-  ) => Map<string | number, ScheduleColorPair>
-}) {
-  const weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-  const isEventsMode = events != null && eventsConfig != null
+export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
+  function CalendarMainInner(props, ref) {
+    const {
+      selectedDate,
+      currentMonth,
+      mode,
+      onSelectDate,
+      onMonthChange,
+      onModeChange,
+      className,
+      onTodayClick,
+      scheduleOverlay: scheduleOverlayProp,
+      tooltipOverlayClassName,
+      hideHeader = false,
+    } = props
 
-  return (
-    <div className="program-calendar-week">
-      <div className="program-calendar-week-header">
-        {weekdayNames.map(day => (
-          <div key={day} className="program-calendar-week-header-cell">
-            {day}
-          </div>
-        ))}
-      </div>
-      <div className="program-calendar-week-body">
-        {weekDates.map(date => {
-          if (isEventsMode) {
-            return (
-              <WeekEventCell
-                key={date.format('YYYY-MM-DD')}
-                date={date}
-                selectedDate={selectedDate}
-                events={events}
-                config={eventsConfig}
-                buildResolvedColorMap={buildResolvedColorMap}
-                onSelectDate={onSelectDate}
-                scheduleOverlay={scheduleOverlay}
-                tooltipOverlayClassName={tooltipOverlayClassName}
-              />
-            )
-          }
+    const isEventsMode = isEventsProps(props)
+    const sourcePrograms = isEventsMode ? undefined : props.items
+    const events = isEventsMode ? props.events : undefined
 
-          return (
-            <WeekProgramCell
-              key={date.format('YYYY-MM-DD')}
-              date={date}
-              selectedDate={selectedDate}
-              programs={programs ?? []}
-              onSelectDate={onSelectDate}
-              scheduleOverlay={scheduleOverlay}
-              tooltipOverlayClassName={tooltipOverlayClassName}
-            />
-          )
-        })}
-      </div>
-    </div>
-  )
-}
+    const items = useMemo((): CalendarItem[] => {
+      if (events !== undefined) return mapEventsToItems(events)
+      return buildCalendarItemsFromPrograms(sourcePrograms ?? [])
+    }, [events, sourcePrograms])
 
-export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(function CalendarMainInner(
-  props,
-  ref
-) {
-  const {
-    selectedDate,
-    currentMonth,
-    mode,
-    onSelectDate,
-    onMonthChange,
-    onModeChange,
-    className,
-    onTodayClick,
-    scheduleOverlay: scheduleOverlayProp,
-    tooltipOverlayClassName,
-    hideHeader = false,
-  } = props
+    const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events ?? [])
 
-  const isEventsMode = isEventsProps(props)
-  const programs = isEventsMode ? undefined : props.programs
-  const events = isEventsMode ? props.events : undefined
-
-  const eventsConfig: CalendarEventsConfig | undefined = isEventsMode
-    ? {
-        selectedRowKeys: props.selectedRowKeys ?? [],
-        renderEventsTooltipContent: props.renderEventsTooltipContent,
-        overrideEventColorMap: props.overrideEventColorMap,
-        resolveEventColors: props.resolveEventColors,
-        eventsTooltipScope: props.eventsTooltipScope ?? 'trigger-only',
-        formatEventsOverflowText: props.formatEventsOverflowText,
-        eventsTooltipTrigger: props.eventsTooltipTrigger ?? 'event-strip',
+    const colorMap = useMemo((): Map<string | number, ScheduleColorPair> => {
+      if (isEventsProps(props)) {
+        return props.overrideEventColorMap?.(items) ?? buildResolvedColorMap(items)
       }
-    : undefined
+      return buildResolvedScheduleColorMapForPrograms((props as CalendarMainItemsProps).items)
+    }, [
+      buildResolvedColorMap,
+      isEventsMode,
+      items,
+      isEventsMode ? (props as CalendarMainEventsProps).overrideEventColorMap : undefined,
+    ])
 
-  const scheduleOverlay: 'popover' | 'tooltip' =
-    scheduleOverlayProp ?? (isEventsMode ? 'tooltip' : 'popover')
+    const eventsConfig: CalendarEventsConfig | undefined = isEventsMode
+      ? {
+          selectedRowKeys: props.selectedRowKeys ?? [],
+          renderEventsTooltipContent: props.renderEventsTooltipContent,
+          overrideEventColorMap: props.overrideEventColorMap,
+          resolveEventColors: props.resolveEventColors,
+          eventsTooltipScope: props.eventsTooltipScope ?? 'trigger-only',
+          formatEventsOverflowText: props.formatEventsOverflowText,
+          eventsTooltipTrigger: props.eventsTooltipTrigger ?? 'event-strip',
+        }
+      : undefined
 
-  const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events ?? [])
+    const scheduleOverlay: 'popover' | 'tooltip' = scheduleOverlayProp ?? 'popover'
 
-  const weekDates = useMemo(() => {
-    const startOfWeek = currentMonth.startOf('week')
-    return Array.from({ length: 7 }, (_, i) => startOfWeek.add(i, 'day'))
-  }, [currentMonth])
+    const weekDates = useMemo(() => {
+      const startOfWeek = currentMonth.startOf('week')
+      return Array.from({ length: 7 }, (_, i) => startOfWeek.add(i, 'day'))
+    }, [currentMonth])
 
-  const { handleToday, handlePrev, handleNext, headerTitle } = useCalendarNavigation({
-    currentMonth,
-    mode,
-    onSelectDate,
-    onMonthChange,
-    onTodayClick,
-    weekDates,
-  })
+    const { handleToday, handlePrev, handleNext, headerTitle } = useCalendarNavigation({
+      currentMonth,
+      mode,
+      onSelectDate,
+      onMonthChange,
+      onTodayClick,
+      weekDates,
+    })
 
-  return (
-    <div ref={ref} className={['program-calendar-main', className].filter(Boolean).join(' ')}>
-      {!hideHeader && (
-        <CalendarHeader
-          headerTitle={headerTitle}
+    const renderMonthCell = useCallback(
+      (date: Dayjs) =>
+        renderCalendarDayCell({
+          date,
+          cellMode: 'month',
+          currentMonthForCell: currentMonth,
+          items,
+          selectedDate,
+          onSelectDate,
+          scheduleOverlay,
+          tooltipOverlayClassName,
+          colorMap,
+          eventsConfig,
+          buildResolvedColorMap,
+        }),
+      [
+        currentMonth,
+        items,
+        selectedDate,
+        onSelectDate,
+        scheduleOverlay,
+        tooltipOverlayClassName,
+        colorMap,
+        eventsConfig,
+        buildResolvedColorMap,
+      ]
+    )
+
+    const renderWeekDay = useCallback(
+      (date: Dayjs) =>
+        renderCalendarDayCell({
+          date,
+          cellMode: 'week',
+          currentMonthForCell: date,
+          items,
+          selectedDate,
+          onSelectDate,
+          scheduleOverlay,
+          tooltipOverlayClassName,
+          colorMap,
+          eventsConfig,
+          buildResolvedColorMap,
+        }),
+      [
+        items,
+        selectedDate,
+        onSelectDate,
+        scheduleOverlay,
+        tooltipOverlayClassName,
+        colorMap,
+        eventsConfig,
+        buildResolvedColorMap,
+      ]
+    )
+
+    return (
+      <div ref={ref} className={['calendar-main', className].filter(Boolean).join(' ')}>
+        {!hideHeader && (
+          <CalendarHeader
+            headerTitle={headerTitle}
+            mode={mode}
+            onModeChange={onModeChange}
+            onToday={handleToday}
+            onPrev={handlePrev}
+            onNext={handleNext}
+          />
+        )}
+        <CalendarBody
           mode={mode}
-          onModeChange={onModeChange}
-          onToday={handleToday}
-          onPrev={handlePrev}
-          onNext={handleNext}
-        />
-      )}
-      {mode === 'week' ? (
-        <WeekView
           weekDates={weekDates}
-          selectedDate={selectedDate}
-          onSelectDate={onSelectDate}
-          scheduleOverlay={scheduleOverlay}
-          tooltipOverlayClassName={tooltipOverlayClassName}
-          programs={programs}
-          events={events}
-          eventsConfig={eventsConfig}
-          buildResolvedColorMap={buildResolvedColorMap}
-        />
-      ) : (
-        <MonthView
           currentMonth={currentMonth}
-          selectedDate={selectedDate}
-          onSelectDate={onSelectDate}
-          scheduleOverlay={scheduleOverlay}
-          tooltipOverlayClassName={tooltipOverlayClassName}
-          programs={programs}
-          events={events}
-          eventsConfig={eventsConfig}
-          buildResolvedColorMap={buildResolvedColorMap}
+          monthFullCellRender={renderMonthCell}
+          weekRenderDay={renderWeekDay}
         />
-      )}
-    </div>
-  )
-})
+      </div>
+    )
+  }
+)
 
 CalendarMain.displayName = 'CalendarMain'
-

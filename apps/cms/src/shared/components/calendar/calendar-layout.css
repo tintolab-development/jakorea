@@ -1,0 +1,29 @@
+.calendar-set {
+  display: flex;
+  gap: var(--spacing-24);
+  width: 100%;
+  min-height: 600px;
+  margin-top: 16px;
+}
+
+.calendar-sub-left {
+  flex: 0 0 auto;
+  min-width: 260px;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.calendar-main-container {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.calendar-sub-right-list {
+  flex: 0 0 auto;
+  min-width: 320px;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+}

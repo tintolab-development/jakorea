@@ -89,13 +89,13 @@ export function ApplicantCalendarView({
 
     const applyMonthRowHeight = () => {
       if (calendarMode !== 'month') {
-        main.style.removeProperty('--program-calendar-month-row-height')
+        main.style.removeProperty('--calendar-month-row-height')
         return
       }
 
       const thead = main.querySelector('.ant-picker-content thead')
       if (!thead) {
-        main.style.removeProperty('--program-calendar-month-row-height')
+        main.style.removeProperty('--calendar-month-row-height')
         return
       }
 
@@ -106,7 +106,7 @@ export function ApplicantCalendarView({
       const forBody = Math.max(0, innerBottom - tbodyTop - BOTTOM_RESERVE)
       const rowPx = Math.max(MIN_ROW, forBody / ROWS)
       main.style.setProperty(
-        '--program-calendar-month-row-height',
+        '--calendar-month-row-height',
         `${Math.round(rowPx * 10) / 10}px`
       )
     }
@@ -121,7 +121,7 @@ export function ApplicantCalendarView({
     requestAnimationFrame(applyMonthRowHeight)
     return () => {
       ro.disconnect()
-      main.style.removeProperty('--program-calendar-month-row-height')
+      main.style.removeProperty('--calendar-month-row-height')
     }
   }, [calendarMode, loading, currentMonth])
 

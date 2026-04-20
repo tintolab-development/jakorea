@@ -61,10 +61,10 @@ export function EventMonthCell(props: EventMonthCellProps) {
   )
 
   const cellClass = [
-    'program-calendar-cell',
-    !isCurrentMonth ? 'program-calendar-cell--other-month' : '',
-    isSelected ? 'program-calendar-cell--selected' : '',
-    isToday ? 'program-calendar-cell--today' : '',
+    'calendar-cell',
+    !isCurrentMonth ? 'calendar-cell--other-month' : '',
+    isSelected ? 'calendar-cell--selected' : '',
+    isToday ? 'calendar-cell--today' : '',
   ]
     .filter(Boolean)
     .join(' ')
@@ -72,7 +72,7 @@ export function EventMonthCell(props: EventMonthCellProps) {
   if (!hasEvents) {
     return (
       <div className={cellClass} onClick={() => onSelectDate(date)}>
-        <div className="program-calendar-cell-date">{date.date()}</div>
+        <div className="calendar-cell-date">{date.date()}</div>
       </div>
     )
   }
@@ -80,8 +80,8 @@ export function EventMonthCell(props: EventMonthCellProps) {
   if (eventsTooltipTrigger === 'cell') {
     const cellInner = (
       <div className={cellClass} onClick={() => onSelectDate(date)}>
-        <div className="program-calendar-cell-date">{date.date()}</div>
-        <div className="program-calendar-cell-events">
+        <div className="calendar-cell-date">{date.date()}</div>
+        <div className="calendar-cell-events">
           <EventList
             dayEvents={dayEvents}
             selectedRowKeys={selectedRowKeys}
@@ -104,7 +104,7 @@ export function EventMonthCell(props: EventMonthCellProps) {
         tooltipOverlayClassName={tooltipOverlayClassName}
         previewContent={renderPreview(dayEvents, colorMap)}
       >
-        <div className="program-calendar-cell-tooltip-trigger program-calendar-cell-tooltip-trigger--full-cell">
+        <div className="calendar-cell-tooltip-trigger calendar-cell-tooltip-trigger--full-cell">
           {cellInner}
         </div>
       </EventOverlay>
@@ -113,8 +113,8 @@ export function EventMonthCell(props: EventMonthCellProps) {
 
   return (
     <div className={cellClass} onClick={() => onSelectDate(date)}>
-      <div className="program-calendar-cell-date">{date.date()}</div>
-      <div className="program-calendar-cell-events">
+      <div className="calendar-cell-date">{date.date()}</div>
+      <div className="calendar-cell-events">
         <EventList
           dayEvents={dayEvents}
           selectedRowKeys={selectedRowKeys}

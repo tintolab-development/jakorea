@@ -8,8 +8,18 @@ import {
   type ScheduleColorPair,
 } from '../../../ui/program-schedule-colors'
 
-export function getEntityKey(event: { originalItem?: unknown; title?: string }): string {
-  const item = event?.originalItem as Record<string, unknown> | undefined
+export function getEntityKey(event: {
+  originalItem?: unknown
+  title?: string
+  /** `CalendarItem` 등에서 중첩 페이로드 */
+  original?: unknown
+}): string {
+  const fromNested =
+    event.originalItem ??
+    (event.original != null && typeof event.original === 'object' && 'originalItem' in event.original
+      ? (event.original as { originalItem?: unknown }).originalItem
+      : event.original)
+  const item = fromNested as Record<string, unknown> | undefined
   if (item && typeof item.schoolName === 'string') return item.schoolName
   if (item && typeof item.instructorName === 'string') return item.instructorName
   return String(event?.title ?? '').replace(/^\[.*?\]\s*/, '') ?? ''
@@ -63,33 +73,33 @@ export function ApplicantCalendarEventPopoverContent({
   colorMap: Map<string | number, ScheduleColorPair>
 }) {
   return (
-    <div className="program-calendar-schedule-panel">
+    <div className="calendar-schedule-panel">
       {events.map(ev => {
         const colors = colorMap.get(ev.id) ?? SCHEDULE_COLORS[0]
         const parts = getPopoverRowParts(ev.originalItem as Record<string, unknown> | undefined)
         const fallbackTitle = String(ev.title ?? '').replace(/^\[.*?\]\s*/, '')
         if (!parts) {
           return (
-            <div key={String(ev.id)} className="program-calendar-schedule-panel__row">
-              <span className="program-calendar-schedule-panel__title" style={{ color: colors.text }}>
+            <div key={String(ev.id)} className="calendar-schedule-panel__row">
+              <span className="calendar-schedule-panel__title" style={{ color: colors.text }}>
                 {fallbackTitle || '-'}
               </span>
             </div>
           )
         }
         return (
-          <div key={String(ev.id)} className="program-calendar-schedule-panel__row">
-            <span className="program-calendar-schedule-panel__title" style={{ color: colors.text }}>
+          <div key={String(ev.id)} className="calendar-schedule-panel__row">
+            <span className="calendar-schedule-panel__title" style={{ color: colors.text }}>
               {parts.title}
             </span>
-            <span className="program-calendar-schedule-panel__sep" aria-hidden>
+            <span className="calendar-schedule-panel__sep" aria-hidden>
               |
             </span>
-            <span className="program-calendar-schedule-panel__text">{parts.location}</span>
-            <span className="program-calendar-schedule-panel__sep" aria-hidden>
+            <span className="calendar-schedule-panel__text">{parts.location}</span>
+            <span className="calendar-schedule-panel__sep" aria-hidden>
               |
             </span>
-            <span className="program-calendar-schedule-panel__text">{parts.countLabel}</span>
+            <span className="calendar-schedule-panel__text">{parts.countLabel}</span>
           </div>
         )
       })}
@@ -113,7 +123,11 @@ export function useApplicantCalendarColorMaps(events: unknown[]) {
   }, [events, colorPalette])
 
   const buildResolvedColorMap = useCallback(
-    (eventList: Array<{ id: string | number } & { originalItem?: unknown; title?: string }>) => {
+    (
+      eventList: Array<
+        { id: string | number } & { originalItem?: unknown; title?: string; original?: unknown }
+      >
+    ) => {
       const map = new Map<string | number, ScheduleColorPair>()
       const usedIndices = new Set<number>()
       let prevIdx = -1
