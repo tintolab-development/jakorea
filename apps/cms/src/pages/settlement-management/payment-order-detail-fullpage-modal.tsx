@@ -2,37 +2,16 @@
  * 정산 관리 > 지급조서 확인 — 지급 현황 상세 풀페이지 모달 (프로그램·강사 공통 셸)
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Dayjs } from 'dayjs'
-import {
-  getMockPaymentOrderCalculationStatementFromInstructorDetailPage,
-  getMockPaymentOrderCalculationStatementFromProgramDetailPage,
-  getMockPaymentOrderInstructorDetail,
-  getMockPaymentOrderProgramDetail,
-  type PaymentOrderAdminInstructorRow,
-  type PaymentOrderAdminProgramRow,
-  type PaymentOrderProgramCalculationStatement,
+import type {
+  PaymentOrderAdminInstructorRow,
+  PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
 import {
   PaymentOrderDetailView,
-  type PaymentOrderCalculationStatementLineRow,
   type PaymentOrderDetailViewProps,
 } from '@/features/settlement/ui/payment-record'
-import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
-
-/** 컴포넌트 밖에 두어 `current` 참조가 렌더마다 바뀌지 않게 함 (useMemo/useCallback deps) */
-const CONFIG = {
-  program: {
-    getDetail: getMockPaymentOrderProgramDetail,
-    getCalc: getMockPaymentOrderCalculationStatementFromProgramDetailPage,
-    getTitle: (detail: any) => `지급 현황 상세_${detail.programName}`,
-  },
-  instructor: {
-    getDetail: getMockPaymentOrderInstructorDetail,
-    getCalc: getMockPaymentOrderCalculationStatementFromInstructorDetailPage,
-    getTitle: (detail: any) => `지급 현황 상세_${detail.nameKo}`,
-  },
-} as const
+import { usePaymentOrderDetailFullPageModalState } from './use-payment-order-detail-fullpage-modal'
 
 export type PaymentOrderDetailFullPageModalProps = {
   type: 'program' | 'instructor'
@@ -45,67 +24,9 @@ export type PaymentOrderDetailFullPageModalProps = {
 }
 
 export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPageModalProps) {
-  const { type, isOpen, onClose, data, listPageDateRange } = props
+  const { canRender, sharedViewProps, viewBranch } = usePaymentOrderDetailFullPageModalState(props)
 
-  const row = data
-  const current = CONFIG[type]
-
-  const [lineAggregateStatus, setLineAggregateStatus] =
-    useState<PaymentOrderDetailAggregateStatus>('na')
-  const [calcStatementOpen, setCalcStatementOpen] = useState(false)
-  const [calcStatementData, setCalcStatementData] =
-    useState<PaymentOrderProgramCalculationStatement | null>(null)
-
-  const handleAggregateChange = useCallback((status: PaymentOrderDetailAggregateStatus) => {
-    setLineAggregateStatus(status)
-  }, [])
-
-  const detail = useMemo(() => {
-    if (!row) return null
-    return current.getDetail(row as any)
-  }, [row, current])
-
-  useEffect(() => {
-    if (isOpen) {
-      setLineAggregateStatus('na')
-      setCalcStatementOpen(false)
-      setCalcStatementData(null)
-    }
-  }, [isOpen, type, row])
-
-  const openCalculationStatement = useCallback(
-    (lineRow: PaymentOrderCalculationStatementLineRow) => {
-      if (!row || !detail) return
-
-      setCalcStatementData(current.getCalc(row as any, detail as any, lineRow as any))
-      setCalcStatementOpen(true)
-    },
-    [row, detail, current]
-  )
-
-  const closeCalculationStatement = useCallback(() => {
-    setCalcStatementOpen(false)
-    setCalcStatementData(null)
-  }, [])
-
-  const resetCalcAndClose = useCallback(() => {
-    setCalcStatementOpen(false)
-    setCalcStatementData(null)
-    onClose()
-  }, [onClose])
-
-  const sharedViewProps = {
-    isOpen,
-    lineAggregateStatus,
-    handleAggregateChange,
-    calcStatementOpen,
-    calcStatementData,
-    openCalculationStatement,
-    closeCalculationStatement,
-    resetCalcAndClose,
-  }
-
-  if (!isOpen || !row || !detail) {
+  if (!canRender || !viewBranch) {
     return null
   }
 
@@ -113,12 +34,7 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
     <PaymentOrderDetailView
       {...({
         ...sharedViewProps,
-        kind: type,
-        title: current.getTitle(detail),
-        modalClassName: type === 'instructor' ? '' : undefined,
-        detail,
-        row,
-        listPageDateRange,
+        ...viewBranch,
       } as PaymentOrderDetailViewProps)}
     />
   )
