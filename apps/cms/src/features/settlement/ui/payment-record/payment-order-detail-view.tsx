@@ -2,7 +2,7 @@
  * 지급 현황 상세 풀페이지 — 단일 모달·사이드바·산출 내역서 셸 + 본문
  */
 
-import { useCallback, useMemo, type ReactElement } from 'react'
+import { useMemo, type ReactElement } from 'react'
 import type { Dayjs } from 'dayjs'
 import type {
   PaymentOrderAdminInstructorDetail,
@@ -14,13 +14,15 @@ import type {
   PaymentOrderProgramCalculationStatement,
 } from '@/data/mock/payment-order-admin-list'
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
-import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { usePaymentOrderDetailInstructorPrivacyReveal } from './use-payment-order-detail-instructor-privacy'
+import { usePaymentOrderStatementCommitBridge } from './use-payment-order-statement-commit-bridge'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import {
   DetailModalSidebar,
   type DetailModalSidebarNavItem,
 } from '@/shared/ui/detail-modal-sidebar'
 import { PaymentOrderDetailFilterTable } from './payment-order-detail-filter-table'
+import { PaymentOrderInstructorCalculationStatementModal } from './payment-order-instructor-calculation-statement-modal'
 import { PaymentOrderProgramCalculationStatementModal } from './payment-order-program-calculation-statement-modal'
 import { PaymentOrderInstructorBasicInfo } from '@/pages/settlement-management/payment-order-instructor-basic-info'
 import { PaymentOrderProgramBasicInfo } from '@/pages/settlement-management/payment-order-program-basic-info'
@@ -85,19 +87,18 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
 
   const instructorRowKey = kind === 'instructor' ? row.no : null
 
-  const resolvePersonalInfoAccessItem = useCallback(() => {
-    const instructorDetail = detail as PaymentOrderAdminInstructorDetail
-    return instructorDetail.nameKo ?? '지급 현황 상세 강사'
-  }, [detail])
+  const { registerStatementCommitSink, handleStatementLineCommitted } =
+    usePaymentOrderStatementCommitBridge(closeCalculationStatement)
 
   const {
     personalInfoRevealed,
     onPrivacyControlClick: handlePrivacyToggleClick,
     confirmModal: personalInfoRevealModal,
-  } = usePersonalInfoReveal({
-    resolveAccessItem: resolvePersonalInfoAccessItem,
-    resetDeps: [isOpen, kind, instructorRowKey],
-    controlMode: 'toggleRemask',
+  } = usePaymentOrderDetailInstructorPrivacyReveal({
+    isOpen,
+    kind,
+    instructorRowKey,
+    detail,
   })
 
   const sidebarItems = useMemo<DetailModalSidebarNavItem[]>(
@@ -154,6 +155,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
           listPageDateRange={listPageDateRange}
           onAggregateChange={handleAggregateChange}
           onOpenCalculationStatement={openCalculationStatement}
+          registerStatementCommitSink={registerStatementCommitSink}
         />
       ) : (
         <PaymentOrderDetailFilterTable
@@ -163,6 +165,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
           listPageDateRange={listPageDateRange}
           onAggregateChange={handleAggregateChange}
           onOpenCalculationStatement={openCalculationStatement}
+          registerStatementCommitSink={registerStatementCommitSink}
         />
       )}
     </>
@@ -171,11 +174,23 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
   return (
     <>
       {kind === 'instructor' ? personalInfoRevealModal : null}
-      <PaymentOrderProgramCalculationStatementModal
-        open={calcStatementOpen}
-        onCancel={closeCalculationStatement}
-        data={calcStatementData}
-      />
+      {kind === 'program' ? (
+        <PaymentOrderProgramCalculationStatementModal
+          open={calcStatementOpen}
+          onCancel={closeCalculationStatement}
+          data={calcStatementData}
+          onStatementLineCommitted={handleStatementLineCommitted}
+          onAfterRejectResultClosed={closeCalculationStatement}
+        />
+      ) : (
+        <PaymentOrderInstructorCalculationStatementModal
+          open={calcStatementOpen}
+          onCancel={closeCalculationStatement}
+          data={calcStatementData}
+          onStatementLineCommitted={handleStatementLineCommitted}
+          onAfterRejectResultClosed={closeCalculationStatement}
+        />
+      )}
       <DetailFullPageModal
         open={isOpen}
         onClose={resetCalcAndClose}
