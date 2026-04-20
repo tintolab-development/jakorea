@@ -141,8 +141,6 @@ export function SchoolDetailStudentListSection({
   const [assignmentSubmissionStudent, setAssignmentSubmissionStudent] =
     useState<SchoolDetailStudentRow | null>(null)
   const [addStudentModalOpen, setAddStudentModalOpen] = useState(false)
-  const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
-  const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
 
   const studentList = useMemo(
     () => getSchoolDetailStudents(schoolId, studentCount),
@@ -242,11 +240,6 @@ export function SchoolDetailStudentListSection({
       reset(rowsToFormValues(filteredStudentList))
     }
   }, [isStudentListEditMode, filteredStudentList, reset])
-
-  useEffect(() => {
-    setPersonalInfoRevealed(false)
-    setPersonalInfoRevealConfirmOpen(false)
-  }, [schoolId])
 
   const openLectureAttendance = useCallback((record: SchoolDetailStudentRow) => {
     setLectureAttendanceStudent(record)

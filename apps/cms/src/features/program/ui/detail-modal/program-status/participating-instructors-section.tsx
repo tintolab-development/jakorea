@@ -174,8 +174,6 @@ export function ParticipatingInstructorsSection({
   const [calendarSelectedDate, setCalendarSelectedDate] = useState<Dayjs>(() => dayjs())
   /** 캘린더 우측 기관 멀티셀렉트 — 날짜별 옵션과 동기화 시 전체 선택이 기본, []는 사용자가 모두 해제한 경우 */
   const [calendarSelectedSchools, setCalendarSelectedSchools] = useState<string[]>([])
-  const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
-  const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
 
   useEffect(() => {
     setPendingFilters({ ...filters })
@@ -389,11 +387,6 @@ export function ParticipatingInstructorsSection({
   useEffect(() => {
     setCalendarSelectedSchools(calendarSchoolFilterOptions.map(o => o.value))
   }, [calendarSchoolFilterOptions])
-
-  useEffect(() => {
-    setPersonalInfoRevealed(false)
-    setPersonalInfoRevealConfirmOpen(false)
-  }, [programId])
 
   const instructorsForCalendarDateFiltered = useMemo(() => {
     if (calendarSelectedSchools.length === 0) return []

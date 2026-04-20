@@ -323,20 +323,6 @@ export function ParticipatingInstructorFullpageView({
     setOpenRoleDropdownId(null)
   }, [d.id, schoolRows, instructorList])
 
-  const handlePrivacyToggleClick = useCallback(() => {
-    if (personalInfoRevealed) {
-      setPersonalInfoRevealed(false)
-      return
-    }
-    setPersonalInfoRevealConfirmOpen(true)
-  }, [personalInfoRevealed])
-
-  const handleConfirmPersonalInfoReveal = useCallback((reason: string) => {
-    trackPersonalInfoAccess(d.instructorName ?? '참여 강사 상세 정보', reason)
-    setPersonalInfoRevealed(true)
-    setPersonalInfoRevealConfirmOpen(false)
-  }, [d.instructorName])
-
   const handleRoleChange = useCallback((schoolId: string, newRole: InstructorRoleKey) => {
     setAssignedSchools(prev => {
       const updated = prev.map(row => ({

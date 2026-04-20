@@ -62,17 +62,10 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [appliedFilters, setAppliedFilters] = useState<ProgramManagersFilters>(filters)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
-  const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
-  const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
 
   useEffect(() => {
     setPendingFilters({ ...filters })
   }, [filters])
-
-  useEffect(() => {
-    setPersonalInfoRevealed(false)
-    setPersonalInfoRevealConfirmOpen(false)
-  }, [programId])
 
   const managerFilterFields = useMemo((): FilterFieldConfig[] => {
     return [

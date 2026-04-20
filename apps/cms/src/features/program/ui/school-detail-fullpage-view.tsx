@@ -232,8 +232,6 @@ export function SchoolDetailFullpageView({
 
   useEffect(() => {
     setTextbookStatusDropdownOpen(false)
-    setPersonalInfoRevealed(false)
-    setPersonalInfoRevealConfirmOpen(false)
   }, [detail.id])
 
   const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }

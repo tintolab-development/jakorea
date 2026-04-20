@@ -4,8 +4,6 @@
  */
 
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import type { FilterFieldConfig } from '@/shared/components/table-filter-group'
-import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { ViewModeController } from '@/shared/components/view-mode'
 import '@/shared/components/list-page/list-page-layout.css'
 import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'

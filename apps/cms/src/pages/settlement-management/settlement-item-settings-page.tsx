@@ -2,7 +2,7 @@
  * 정산 관리 > 정산 항목 설정 — 임금 / 지급 / 공제 카테고리 카드 목록
  */
 
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import {
