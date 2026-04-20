@@ -1,6 +1,6 @@
 /**
  * 대량이체 양식 — Fortune Sheet 초기 데이터 및 동일 규칙의 표 행 생성
- * API 연동 시 세전/세액은 서버 필드로 대체하고, splitAmountForVat는 제거할 수 있습니다.
+ * 목록 1건당 이체 1행(정산 금액 전액).
  */
 
 import type { Cell, CellWithRowAndCol, Sheet } from '@fortune-sheet/core'
@@ -19,6 +19,8 @@ export const BULK_TRANSFER_HEADER_LABELS = [
 ] as const
 
 const COL_COUNT = BULK_TRANSFER_HEADER_LABELS.length
+/** Workbook `column`·시트 `column`과 동기화 — 미지정 시 라이브러리 기본(큰 값)으로 열 J 이후가 보일 수 있음 */
+export const BULK_TRANSFER_SHEET_COLUMN_COUNT = COL_COUNT
 const MINT_BG = '#01A1AF'
 const HEADER_FG = '#FFFFFF'
 const DEPOSIT_LABEL = 'JA코리아'
@@ -44,13 +46,6 @@ function simpleHash(s: string): number {
     h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
   }
   return Math.abs(h)
-}
-
-/** 총액(부가세 포함)을 부가세 10% 가정으로 세전 공급가·부가세로 분해 */
-export function splitAmountForVat(totalWithVat: number): { feeExclTax: number; taxAmount: number } {
-  const feeExclTax = Math.round(totalWithVat / 1.1)
-  const taxAmount = totalWithVat - feeExclTax
-  return { feeExclTax, taxAmount }
 }
 
 function mockPayoutMeta(instructorName: string, rowId: string) {
@@ -95,35 +90,34 @@ function headerCell(text: string): Cell {
     m: text,
     bg: MINT_BG,
     fc: HEADER_FG,
-    ht: 1,
-    vt: 1,
+    /** Fortune Sheet: ht 0=가운데, 1=왼쪽, 2=오른쪽 / vt 0=가운데, 1=위, 2=아래 */
+    ht: 0,
+    vt: 0,
   }
 }
 
 function dataCell(text: string | number): Cell {
   const m = typeof text === 'number' ? text.toLocaleString('ko-KR') : text
-  return { v: m, m }
+  return { v: m, m, ht: 0, vt: 0 }
 }
 
-/** 미리보기·엑셀 공통: 각 목록 행당 세전 1행 + 세액 1행 */
+/** 미리보기·엑셀 공통: 계좌 지급 완료 목록 행당 이체 1행 */
 export function buildBulkTransferSheetRows(rows: AccountPaymentRow[]): BulkTransferSheetRow[] {
   const ordered = getCompletedRowsOrderedForBulkTransfer(rows)
   const lines: BulkTransferSheetRow[] = []
   for (const row of ordered) {
-    const { feeExclTax, taxAmount } = splitAmountForVat(row.amount)
     const { bank, acctNum, mobile } = mockPayoutMeta(row.instructorName, row.id)
-    const base = {
+    lines.push({
       depositBank: bank,
       depositAccount: acctNum,
+      depositAmount: row.amount,
       expectedDepositor: row.instructorName,
       depositStatement: DEPOSIT_LABEL,
       withdrawalStatement: DASH,
       memo: DASH,
       cmsCode: DASH,
       mobile,
-    }
-    lines.push({ ...base, depositAmount: feeExclTax })
-    lines.push({ ...base, depositAmount: taxAmount })
+    })
   }
   return lines
 }
@@ -165,17 +159,22 @@ export function buildBulkTransferFortuneSheet(rows: AccountPaymentRow[]): Sheet 
     r += 1
   }
 
-  /** 9열 합 ≈ 1290px — 1400 모달(좌우 패딩·행머리 제외)에 맞춤 */
+  /**
+   * 열 너비 합은 모달 본문 가용 폭에 맞춤 (그리드가 컨테이너보다 좁으면 오른쪽에 흰 여백만 커짐).
+   * Fortune Sheet `calcRowColSize`: 각 열 (너비+1)px 누적 후 끝에 고정 120px 추가.
+   * 대략 usable ≈ 내부폭 - 행머리(~45) - 9 - 120 → 열 합 ~1200–1260px면 1400 모달에서 여백·스크롤 균형.
+   * 아래는 기존 비율 유지 채로 합계 1240px.
+   */
   const columnlen: Record<string, number> = {
-    '0': 155,
-    '1': 195,
-    '2': 130,
-    '3': 135,
-    '4': 160,
-    '5': 160,
-    '6': 100,
-    '7': 115,
-    '8': 140,
+    '0': 150,
+    '1': 187,
+    '2': 125,
+    '3': 130,
+    '4': 153,
+    '5': 153,
+    '6': 96,
+    '7': 111,
+    '8': 135,
   }
 
   return {
@@ -183,7 +182,7 @@ export function buildBulkTransferFortuneSheet(rows: AccountPaymentRow[]): Sheet 
     status: 1,
     order: 0,
     row: totalRows,
-    column: COL_COUNT,
+    column: BULK_TRANSFER_SHEET_COLUMN_COUNT,
     defaultRowHeight: 22,
     defaultColWidth: 88,
     celldata,
