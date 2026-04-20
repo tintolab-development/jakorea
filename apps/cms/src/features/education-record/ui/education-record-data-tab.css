@@ -51,3 +51,24 @@
   opacity: 0.6;
   white-space: nowrap;
 }
+
+/* 실적 데이터 테이블: 긴 텍스트가 옆 셀로 침범하지 않도록 강제 말줄임 */
+.er-data-tab .cms-data-table table.ant-table {
+  table-layout: fixed;
+}
+
+.er-data-tab .cms-data-table .ant-table-thead > tr > th,
+.er-data-tab .cms-data-table .ant-table-tbody > tr > td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.er-data-tab .cms-data-table .ant-table-thead > tr > th > *,
+.er-data-tab .cms-data-table .ant-table-tbody > tr > td > * {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
