@@ -16,6 +16,7 @@ export const LINE_STATUS_OPTIONS: readonly PaymentOrderAdminLineProcessingStatus
   'confirmed',
   'correction',
   'rejected',
+  'application_rejected',
 ]
 
 export type AppliedLineStatus = 'all' | PaymentOrderAdminLineProcessingStatus
@@ -55,14 +56,19 @@ export function matchesDateRange(iso: string, range: [Dayjs, Dayjs] | null): boo
 
 /**
  * 라인 상태로 기본정보의 지급조서 처리 현황(집계) 산출 — 사용자 수동 변경 없음.
- * `application_rejected`는 라인 enum 미포함 시 산출되지 않음(상수·스타일만 예약).
+ * 라인에 `application_rejected`가 있으면 집계에 반영(확인 완료와 혼재 시 `partial`).
  */
 export function deriveAggregateFromLines(
   statuses: PaymentOrderAdminLineProcessingStatus[]
 ): PaymentOrderDetailAggregateStatus {
   if (statuses.length === 0) return 'na'
   if (statuses.some(s => s === 'correction')) return 'correction'
+
+  const hasAppRejected = statuses.some(s => s === 'application_rejected')
   const hasConfirmed = statuses.some(s => s === 'confirmed')
+  if (hasAppRejected && hasConfirmed) return 'partial'
+  if (hasAppRejected) return 'application_rejected'
+
   if (hasConfirmed && !statuses.every(s => s === 'confirmed')) return 'partial'
   if (statuses.every(s => s === 'confirmed')) return 'confirmed'
   if (statuses.every(s => s === 'rejected')) return 'rejected'
@@ -80,4 +86,6 @@ export interface PaymentOrderCalculationStatementCommitPayload {
   lineId: string
   status: PaymentOrderAdminLineProcessingStatus
   rejectionReason?: string
+  /** 확인 처리 시 강의비 지급 예정일 (ISO YYYY-MM-DD) */
+  lectureFeePaymentScheduledDate?: string
 }
