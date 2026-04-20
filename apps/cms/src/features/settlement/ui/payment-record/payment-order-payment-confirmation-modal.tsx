@@ -35,7 +35,8 @@ function thirdTuesdayOfMonth(monthRef: Dayjs): Dayjs {
 export interface PaymentOrderPaymentConfirmationModalProps {
   open: boolean
   onCancel: () => void
-  onConfirm: () => void
+  /** 선택한 강의비 지급 예정일(ISO YYYY-MM-DD) */
+  onConfirm: (payload: { lectureFeePaymentScheduledDateIso: string }) => void
   data: PaymentOrderProgramCalculationStatement | null
 }
 
@@ -77,7 +78,14 @@ export function PaymentOrderPaymentConfirmationModal({
           <AppButton variant="cancel" size="large" onClick={onCancel}>
             취소
           </AppButton>
-          <AppButton variant="primary" size="filter-wide" modalTeal onClick={onConfirm}>
+          <AppButton
+            variant="primary"
+            size="filter-wide"
+            modalTeal
+            onClick={() =>
+              onConfirm({ lectureFeePaymentScheduledDateIso: expectedDate.format('YYYY-MM-DD') })
+            }
+          >
             지급조서 확인 완료
           </AppButton>
         </div>

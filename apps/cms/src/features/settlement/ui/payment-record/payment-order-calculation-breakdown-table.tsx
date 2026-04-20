@@ -184,9 +184,15 @@ export function PaymentOrderCalculationBreakdownTable({
 }: PaymentOrderCalculationBreakdownTableProps) {
   const tableRows = useMemo(() => buildPaymentOrderCalculationTableRows(blocks), [blocks])
   const columns = useMemo(() => getPaymentOrderCalculationColumns(), [])
+  const hideHeaderActionsStatuses: PaymentOrderAdminLineProcessingStatus[] = [
+    'confirmed',
+    'application_rejected',
+    'rejected',
+  ]
   const showHeaderActions =
     headerActions != null &&
-    (processingStatus === undefined || processingStatus !== 'confirmed')
+    (processingStatus === undefined ||
+      !hideHeaderActionsStatuses.includes(processingStatus))
 
   const handleDownload = () => {
     window.alert('준비 중입니다.')
