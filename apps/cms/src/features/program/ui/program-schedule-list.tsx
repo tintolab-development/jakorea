@@ -20,6 +20,7 @@ import {
   buildResolvedScheduleColorMapForPrograms,
 } from './program-schedule-colors'
 import '@/shared/components/calendar/calendar-set.css'
+import '@/shared/components/calendar/calendar-sub-right.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -60,7 +61,7 @@ export function ProgramScheduleList({
   )
 
   return (
-    <div className="program-schedule-list">
+    <div className="calendar-list">
       {dayPrograms.length === 0 ? (
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
       ) : (
@@ -73,7 +74,7 @@ export function ProgramScheduleList({
           return (
             <div
               key={program.id}
-              className="program-schedule-item"
+              className="calendar-list-item"
               data-has-color="true"
               style={{
                 backgroundColor: color.bg,
@@ -81,11 +82,11 @@ export function ProgramScheduleList({
               }}
               onClick={() => onProgramClick(program)}
             >
-              <div className="program-schedule-list__event-column">
-                <div className="program-schedule-list__event-head" title={program.title ?? ''}>
+              <div className="calendar-list-item__column">
+                <div className="calendar-list-item__head" title={program.title ?? ''}>
                   {program.title ?? ''}
                 </div>
-                <div className="program-schedule-list__event-desc">
+                <div className="calendar-list-item__desc">
                   <span>{config.label}</span>
                   <span>| {time}</span>
                 </div>

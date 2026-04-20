@@ -226,12 +226,7 @@ const WEEK_TIME_GRID_HOUR_ROWS: readonly { period: '오전' | '오후'; hour: st
   return rows
 })()
 
-function formatWeekHeaderDayLabel(date: Dayjs, weekDates: Dayjs[]): string {
-  const i = weekDates.findIndex(d => d.isSame(date, 'day'))
-  const prev = i > 0 ? weekDates[i - 1] : null
-  if (prev && prev.month() !== date.month()) {
-    return `${date.month() + 1}.${date.date()}`
-  }
+function formatWeekHeaderDayLabel(date: Dayjs): string {
   return String(date.date())
 }
 
@@ -763,7 +758,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
             {weekDates.map(date => {
               const isSelected = date.isSame(selectedDate, 'day')
               const dateKey = date.format('YYYY-MM-DD')
-              const dayLabel = formatWeekHeaderDayLabel(date, weekDates)
+              const dayLabel = formatWeekHeaderDayLabel(date)
               const weekday = WEEK_HEADER_WEEKDAY_EN[date.day()]
               return (
                 <button

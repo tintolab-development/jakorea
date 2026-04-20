@@ -6,15 +6,11 @@ import type { Program } from '@/types/domain'
 import { CalendarSet } from '@/shared/ui'
 
 interface ProgramCalendarViewProps {
-  programs: Program[]
+  items: Program[]
   loading?: boolean
-  onProgramClick: (program: Program) => void
+  onItemClick: (program: Program) => void
 }
 
-export function ProgramCalendarView({
-  programs,
-  loading,
-  onProgramClick,
-}: ProgramCalendarViewProps) {
-  return <CalendarSet.Main programs={programs} loading={loading} onProgramClick={onProgramClick} />
+export function ProgramCalendarView({ items, loading, onItemClick }: ProgramCalendarViewProps) {
+  return <CalendarSet.Main items={items} loading={loading} onItemClick={onItemClick} />
 }

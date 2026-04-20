@@ -143,7 +143,6 @@ table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
   background: var(--color-table-row-hover) !important;
 }
 
-
 .table-header-actions {
   height: 100%;
   display: flex;
@@ -269,4 +268,9 @@ table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
 
 .fs-16 {
   font-size: 16px;
+}
+
+.calendar-layout {
+  display: flex;
+  gap: 16px;
 }

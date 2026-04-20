@@ -295,19 +295,19 @@ export function InstructorPaymentTab({
           <span className="instructor-payment-tab__month-label">
             {currentMonth.format('YYYY. MM')}
           </span>
-          <div className="program-calendar-nav">
+          <div className="calendar-nav">
             <Button
               type="text"
               size="small"
               icon={<LeftOutlined />}
-              className="program-calendar-nav-btn"
+              className="calendar-nav-btn"
               onClick={handlePrev}
             />
             <Button
               type="text"
               size="small"
               icon={<RightOutlined />}
-              className="program-calendar-nav-btn"
+              className="calendar-nav-btn"
               onClick={handleNext}
             />
           </div>
