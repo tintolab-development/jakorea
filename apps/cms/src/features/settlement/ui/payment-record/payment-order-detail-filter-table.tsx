@@ -3,37 +3,34 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { message, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import { AppButton } from '@/shared/ui/app-button'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
-import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
-import {
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-} from '@/shared/components/status-dropdown-cell'
 import {
   getMockPaymentOrderInstructorDetail,
   getMockPaymentOrderProgramDetail,
   type PaymentOrderAdminInstructorDetailProgramRow,
   type PaymentOrderAdminInstructorRow,
-  type PaymentOrderAdminLineProcessingStatus,
-  type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramDetailInstructorRow,
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
 import {
-  defaultDateRange,
   deriveAggregateFromLines,
-  formatLectureCell,
   formatWon,
   lineStatusSelectOptions,
-  LINE_STATUS_OPTIONS,
   matchesDateRange,
+  resolveDetailInitialDateRange,
   type AppliedLineStatus,
 } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
+import { renderLineProcessingStatusText } from '@/pages/settlement-management/payment-order-detail-aggregate-status'
+import { PaymentOrderLectureDateSessionCell } from './payment-order-lecture-date-session-cell'
+import { PaymentOrderBatchConfirmModal } from './payment-order-batch-confirm-modal'
+import { Divider } from '@/shared/components/divider'
+import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/instructor-payment-statement-blocked-modal'
 import './payment-order-detail-filter-table.css'
 
 export type PaymentOrderDetailLineRow =
@@ -74,51 +71,68 @@ export type PaymentOrderDetailFilterTableProps =
       mode: 'program'
       programRow: PaymentOrderAdminProgramRow
       isOpen: boolean
-      onAggregateChange: (status: PaymentOrderAdminProcessingStatus) => void
+      /** 목록 페이지에 조회 적용된 기간(URL) — 상세 기간 필터 초기 동기화 */
+      listPageDateRange: [Dayjs, Dayjs] | null
+      onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
       onOpenCalculationStatement: (row: PaymentOrderAdminProgramDetailInstructorRow) => void
     }
   | {
       mode: 'instructor'
       instructorRow: PaymentOrderAdminInstructorRow
       isOpen: boolean
-      onAggregateChange: (status: PaymentOrderAdminProcessingStatus) => void
+      listPageDateRange: [Dayjs, Dayjs] | null
+      onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
       onOpenCalculationStatement: (row: PaymentOrderAdminInstructorDetailProgramRow) => void
     }
 
 export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTableProps) {
-  const { mode, isOpen, onAggregateChange, onOpenCalculationStatement } = props
+  const { mode, isOpen, listPageDateRange, onAggregateChange, onOpenCalculationStatement } = props
 
   const contextRowNo = mode === 'program' ? props.programRow.no : props.instructorRow.no
 
   const [draftKeyword, setDraftKeyword] = useState('')
   const [draftInstitutionName, setDraftInstitutionName] = useState('')
   const [draftStatus, setDraftStatus] = useState<AppliedLineStatus>('all')
-  const [draftDateRange, setDraftDateRange] = useState<[Dayjs, Dayjs] | null>(defaultDateRange)
+  const [draftDateRange, setDraftDateRange] = useState<[Dayjs, Dayjs] | null>(() =>
+    resolveDetailInitialDateRange(listPageDateRange)
+  )
   const [applied, setApplied] = useState<DetailAppliedFilters>({
     keyword: '',
     institutionName: '',
     status: 'all',
-    dateRange: defaultDateRange,
+    dateRange: resolveDetailInitialDateRange(listPageDateRange),
   })
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [rowsState, setRowsState] = useState<PaymentOrderDetailLineRow[]>([])
-  const [openStatusRowId, setOpenStatusRowId] = useState<string | null>(null)
+  const [batchConfirmOpen, setBatchConfirmOpen] = useState(false)
+  const [paymentStatementIssueBlocked, setPaymentStatementIssueBlocked] = useState<{
+    open: boolean
+    variant: 'single' | 'multi'
+    selectedCount: number
+  }>({ open: false, variant: 'single', selectedCount: 0 })
 
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) {
+      setBatchConfirmOpen(false)
+      setPaymentStatementIssueBlocked({ open: false, variant: 'single', selectedCount: 0 })
+      return
+    }
+
+    const initialDateRange = resolveDetailInitialDateRange(listPageDateRange)
 
     setDraftKeyword('')
     setDraftInstitutionName('')
     setDraftStatus('all')
-    setDraftDateRange(defaultDateRange)
+    setDraftDateRange(initialDateRange)
     setApplied({
       keyword: '',
       institutionName: '',
       status: 'all',
-      dateRange: defaultDateRange,
+      dateRange: initialDateRange,
     })
     setSelectedRowKeys([])
-    setOpenStatusRowId(null)
+    setBatchConfirmOpen(false)
+    setPaymentStatementIssueBlocked({ open: false, variant: 'single', selectedCount: 0 })
 
     if (mode === 'program') {
       const d = getMockPaymentOrderProgramDetail(props.programRow)
@@ -127,7 +141,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
       const d = getMockPaymentOrderInstructorDetail(props.instructorRow)
       setRowsState(d.programRows.map(r => ({ ...r })))
     }
-  }, [isOpen, mode, contextRowNo])
+  }, [isOpen, mode, contextRowNo, listPageDateRange])
 
   useEffect(() => {
     onAggregateChange(deriveAggregateFromLines(rowsState.map(r => r.processingStatus)))
@@ -142,10 +156,48 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
     })
   }, [draftDateRange, draftInstitutionName, draftKeyword, draftStatus])
 
+  const handleBatchConfirm = useCallback(
+    (scheduledDate: Dayjs) => {
+      const iso = scheduledDate.format('YYYY-MM-DD')
+      setRowsState(prev =>
+        prev.map(row =>
+          selectedRowKeys.includes(row.id)
+            ? {
+                ...row,
+                processingStatus: 'confirmed',
+                lectureFeePaymentScheduledDate: iso,
+              }
+            : row
+        )
+      )
+      message.success('선택한 항목이 지급조서 확인 완료로 반영되었습니다.')
+      setBatchConfirmOpen(false)
+      setSelectedRowKeys([])
+    },
+    [selectedRowKeys]
+  )
+
   const filteredRows = useMemo(
     () => filterDetailRows(rowsState, mode, applied),
     [rowsState, mode, applied]
   )
+
+  const handlePaymentStatementIssue = useCallback(() => {
+    if (selectedRowKeys.length === 0) return
+    const selected = rowsState.filter(r => selectedRowKeys.includes(r.id))
+    if (selected.length === 0) return
+    const hasNotConfirmed = selected.some(r => r.processingStatus !== 'confirmed')
+    if (!hasNotConfirmed) {
+      window.alert('준비 중입니다.')
+      return
+    }
+    const n = selected.length
+    if (n === 1) {
+      setPaymentStatementIssueBlocked({ open: true, variant: 'single', selectedCount: 1 })
+    } else {
+      setPaymentStatementIssueBlocked({ open: true, variant: 'multi', selectedCount: n })
+    }
+  }, [rowsState, selectedRowKeys])
 
   const keywordFieldKey = mode === 'program' ? 'instructorName' : 'programName'
 
@@ -234,6 +286,28 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
   )
 
   const columns: ColumnsType<PaymentOrderDetailLineRow> = useMemo(() => {
+    /** 프로그램 별 정산 목록(강사 상세): 프로그램명·기관명 비중 조정, 버튼열·No·금액 타이트 */
+    const w =
+      mode === 'instructor'
+        ? {
+            no: 52,
+            title: 312,
+            institution: 136,
+            lecture: 204,
+            processing: 164,
+            amount: 124,
+            breakdown: 148,
+          }
+        : {
+            no: 64,
+            title: 120,
+            institution: 160,
+            lecture: 220,
+            processing: 176,
+            amount: 140,
+            breakdown: 196,
+          }
+
     const nameColumn: ColumnsType<PaymentOrderDetailLineRow>[0] =
       mode === 'program'
         ? {
@@ -241,7 +315,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
             dataIndex: 'instructorName',
             key: 'instructorName',
             ellipsis: { showTitle: true },
-            width: 120,
+            width: w.title,
             align: 'center',
           }
         : {
@@ -249,7 +323,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
             dataIndex: 'programName',
             key: 'programName',
             ellipsis: { showTitle: true },
-            width: 280,
+            width: w.title,
             align: 'center',
           }
 
@@ -258,7 +332,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
         title: 'No.',
         dataIndex: 'no',
         key: 'no',
-        width: 64,
+        width: w.no,
         align: 'center',
       },
       nameColumn,
@@ -267,60 +341,54 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
         dataIndex: 'institutionName',
         key: 'institutionName',
         ellipsis: { showTitle: true },
-        width: 160,
+        width: w.institution,
         align: 'center',
       },
       {
         title: '강의 진행 일자',
         key: 'lecture',
-        width: 220,
+        width: w.lecture,
         align: 'center',
-        render: (_: unknown, row: PaymentOrderDetailLineRow) =>
-          formatLectureCell(row.lectureDate, row.sessionOrdinal),
+        render: (_: unknown, row: PaymentOrderDetailLineRow) => (
+          <PaymentOrderLectureDateSessionCell
+            lectureDate={row.lectureDate}
+            sessionOrdinal={row.sessionOrdinal}
+          />
+        ),
       },
       {
         title: '지급 조서 처리 현황',
         key: 'processingStatus',
-        width: 176,
+        width: w.processing,
         align: 'center',
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-        render: (_: unknown, row: PaymentOrderDetailLineRow) => (
-          <>
-            <StatusDropdownCell<PaymentOrderAdminLineProcessingStatus>
-              status={row.processingStatus}
-              statusOptions={LINE_STATUS_OPTIONS}
-              style={{ width: '160px' }}
-              renderBadge={s => <PaymentOrderLineProcessingStatusBadge status={s} detailLabels />}
-              isItemDisabled={(cur, opt) => cur === opt}
-              onChange={newStatus => {
-                setRowsState(prev =>
-                  prev.map(r => (r.id === row.id ? { ...r, processingStatus: newStatus } : r))
-                )
-              }}
-              isOpen={openStatusRowId === row.id}
-              onOpenChange={nextOpen => setOpenStatusRowId(nextOpen ? row.id : null)}
-            />
-          </>
-        ),
+        onCell: () => ({
+          className: 'payment-order-detail-filter-table__td--processing-status',
+        }),
+        render: (_: unknown, row: PaymentOrderDetailLineRow) =>
+          renderLineProcessingStatusText(row.processingStatus),
       },
       {
         title: '정산 예정 금액',
         dataIndex: 'estimatedAmount',
         key: 'estimatedAmount',
-        width: 140,
+        width: w.amount,
         align: 'center',
         render: (amount: number) => formatWon(amount),
       },
       {
         title: '산출 내역',
         key: 'breakdown',
-        width: 196,
+        width: w.breakdown,
         align: 'center',
         render: (_: unknown, row: PaymentOrderDetailLineRow) => (
           <AppButton
             variant="default"
             size="large"
-            style={{ width: '180px' }}
+            className={
+              mode === 'instructor'
+                ? 'payment-order-detail-filter-table__breakdown-btn--140x40'
+                : 'payment-order-detail-filter-table__breakdown-btn--180'
+            }
             onClick={e => {
               e.stopPropagation()
               if (mode === 'program') {
@@ -335,7 +403,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
         ),
       },
     ]
-  }, [mode, onOpenCalculationStatement, openStatusRowId])
+  }, [mode, onOpenCalculationStatement])
 
   const sectionTitle = mode === 'program' ? '강사 별 정산 목록' : '프로그램 별 정산 목록'
 
@@ -346,6 +414,19 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
 
   return (
     <div className="payment-order-detail-filter-table">
+      <PaymentOrderBatchConfirmModal
+        open={batchConfirmOpen}
+        onCancel={() => setBatchConfirmOpen(false)}
+        selectedCount={selectedRowKeys.length}
+        onConfirm={handleBatchConfirm}
+      />
+      <InstructorPaymentStatementBlockedModal
+        open={paymentStatementIssueBlocked.open}
+        onClose={() => setPaymentStatementIssueBlocked(prev => ({ ...prev, open: false }))}
+        variant={paymentStatementIssueBlocked.variant}
+        selectedCount={paymentStatementIssueBlocked.selectedCount}
+        layout="detailFullpage"
+      />
       <div className={filterClassName}>
         <UnifiedFilterCard
           bordered={false}
@@ -373,7 +454,12 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
         />
       </div>
 
-      <div className="payment-order-detail-filter-table__section-divider" />
+      <div
+        className="payment-order-detail-filter-table__section-divider-wrap"
+        aria-hidden
+      >
+        <Divider />
+      </div>
 
       <div className="payment-order-detail-filter-table__below-divider participating-institutions-section__below-divider">
         <div className="participating-institutions-section__table-header">
@@ -388,7 +474,10 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
               variant="cancel"
               size="filter"
               disabled={selectedRowKeys.length === 0}
-              onClick={() => window.alert('준비 중입니다.')}
+              onClick={() => {
+                if (selectedRowKeys.length === 0) return
+                setBatchConfirmOpen(true)
+              }}
             >
               일괄 확인
             </AppButton>
@@ -396,7 +485,8 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
               variant="primary"
               size="filter-wide"
               icon={<DownloadOutlined />}
-              onClick={() => window.alert('준비 중입니다.')}
+              disabled={selectedRowKeys.length === 0}
+              onClick={handlePaymentStatementIssue}
             >
               지급조서 발급
             </AppButton>

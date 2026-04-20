@@ -68,6 +68,8 @@ type ProgramCalendarSharedProps = {
   hideDateControls?: boolean
   /** true면 월간·주간 전환 탭 숨김 — `mode`는 부모가 고정(예: 월간만) */
   hideModeToggle?: boolean
+  /** true면 우측에 월간·주간 탭 대신 고정 「월간」 라벨만 표시 (`hideModeToggle`과 함께 사용) */
+  monthOnlyLabel?: boolean
   /**
    * 일정 호버 오버레이. 미지정 시 `programs` → popover, `events` → tooltip
    */
@@ -470,6 +472,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       hideHeaderTitle = false,
       hideDateControls = false,
       hideModeToggle = false,
+      monthOnlyLabel = false,
       scheduleOverlay: scheduleOverlayProp,
       tooltipOverlayClassName,
       weekViewVariant = 'simple',
@@ -1209,7 +1212,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
     }
 
     const showCalendarChrome =
-      !hideHeader && (!hideDateControls || !hideModeToggle)
+      !hideHeader && (!hideDateControls || !hideModeToggle || monthOnlyLabel)
 
     return (
       <div ref={ref} className={['program-calendar-main', className].filter(Boolean).join(' ')}>
@@ -1243,7 +1246,13 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                 </>
               )}
             </div>
-            {hideModeToggle ? null : (
+            {monthOnlyLabel ? (
+              <div className="program-calendar-header-right">
+                <div className="program-calendar-month-only-badge">
+                  <span className="program-calendar-month-only-badge__inner">월간</span>
+                </div>
+              </div>
+            ) : hideModeToggle ? null : (
               <div className="program-calendar-header-right">
                 <SegmentedTab
                   size="medium"

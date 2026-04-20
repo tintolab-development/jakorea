@@ -16,8 +16,13 @@
   --detail-fullpage-section-gap: 32px;
 }
 
+/**
+ * TealHeaderModal 기본 `.teal-header-modal__body`에 `padding-top: 16px !important`가 있어
+ * 풀페이지(LNB+메인)가 뷰포트 상단부터 붙지 않음 — 동일 셀에서 제거.
+ */
 .detail-fullpage-modal .teal-header-modal__body {
-  padding: 0;
+  padding: 0 !important;
+  gap: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -37,6 +42,7 @@
 .detail-fullpage-modal__layout {
   display: flex;
   flex: 1 1 0;
+  align-items: stretch;
   min-width: 0;
   min-height: 0;
   width: 100%;
@@ -182,9 +188,10 @@
   min-height: 200px;
 }
 
-/* LNB */
+/* LNB — 메인 열과 동일 높이로 스트레치(기본 바디 상단 패딩 제거 후에도 세로 가득) */
 .detail-fullpage-modal__lnb {
   flex-shrink: 0;
+  align-self: stretch;
   width: 240px;
   background: #f5f6f7;
   display: flex;

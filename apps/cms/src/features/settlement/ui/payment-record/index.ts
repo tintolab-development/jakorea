@@ -1,5 +1,9 @@
 export { PaymentOrdersTable, type PaymentOrdersTableProps } from './payment-orders-table'
 export {
+  PaymentOrdersCalendarGrid,
+  type PaymentOrdersCalendarGridProps,
+} from './payment-orders-calendar-grid'
+export {
   PaymentOrdersCalendarView,
   type PaymentOrdersCalendarViewProps,
   type PaymentOrdersCalendarExposure,
@@ -16,6 +20,7 @@ export {
   type PaymentOrderDetailFilterTableProps,
   type PaymentOrderDetailLineRow,
 } from './payment-order-detail-filter-table'
+export { PaymentOrderLectureDateSessionCell } from './payment-order-lecture-date-session-cell'
 export {
   PaymentOrderProgramCalculationStatementModal,
   type PaymentOrderProgramCalculationStatementModalProps,
@@ -28,6 +33,10 @@ export {
   PaymentOrderPaymentRejectionModal,
   type PaymentOrderPaymentRejectionModalProps,
 } from './payment-order-payment-rejection-modal'
+export {
+  PaymentOrderBatchConfirmModal,
+  type PaymentOrderBatchConfirmModalProps,
+} from './payment-order-batch-confirm-modal'
 export {
   PaymentOrderPaymentRejectionResultModal,
   type PaymentOrderPaymentRejectionResultModalProps,

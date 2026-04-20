@@ -7,24 +7,26 @@ import { MASKING_POLICY } from '@/shared/constants/download-policy'
 
 export type PaymentOrderAdminProcessingStatus = 'pending' | 'confirmed' | 'correction' | 'rejected'
 
-/** 목록(집계·테이블) 지급조서 처리 현황 문구 */
+/**
+ * 목록·테이블 지급조서 처리 현황 — 전체 문구 (캘린더만 `PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST` 함축형)
+ */
 export const PAYMENT_ORDER_STATUS_LABELS_LIST: Record<PaymentOrderAdminProcessingStatus, string> = {
-  pending: '확인 대기',
-  rejected: '계좌 지급',
-  confirmed: '확인 완료',
-  correction: '정정 요청',
+  pending: '확인 대기 중',
+  rejected: '계좌 지급 완료',
+  confirmed: '지급조서 확인 완료',
+  correction: '지급 정정 요청',
 }
 
-/** 상세(강사·라인 등) 지급조서 처리 현황 문구 */
+/** 배지·상세 라벨 — 테이블과 동일 전체 문구 */
 export const PAYMENT_ORDER_STATUS_LABELS_DETAIL: Record<PaymentOrderAdminProcessingStatus, string> =
   {
-    pending: '확인 대기',
-    confirmed: '확인 완료',
-    rejected: '계좌 지급',
-    correction: '정정 요청',
+    pending: '확인 대기 중',
+    confirmed: '지급조서 확인 완료',
+    rejected: '계좌 지급 완료',
+    correction: '지급 정정 요청',
   }
 
-/** 캘린더 셀·태그 한 줄용 (목록 톤과 맞춤) */
+/** 캘린더 전용 함축형 (4분류) — 카드·툴팁·그리드 타이틀 한 줄에만 사용 */
 export const PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST: Record<
   PaymentOrderAdminProcessingStatus,
   string
@@ -35,16 +37,11 @@ export const PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST: Record<
   correction: '정정 요청',
 }
 
-/** 캘린더 셀·태그 한 줄용 (상세 톤 — 목록 외 재사용 시) */
+/** @deprecated 캘린더는 `PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST` 사용 */
 export const PAYMENT_ORDER_CALENDAR_STATUS_SHORT_DETAIL: Record<
   PaymentOrderAdminProcessingStatus,
   string
-> = {
-  pending: '확인 대기',
-  confirmed: '확인 완료',
-  rejected: '계좌 지급',
-  correction: '정정 요청',
-}
+> = PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST
 
 export interface PaymentOrderAdminProgramRow {
   no: number
@@ -89,10 +86,10 @@ export const PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS: Record<
   PaymentOrderAdminLineProcessingStatus,
   string
 > = {
-  pending: '확인 대기',
-  confirmed: '확인 완료',
-  correction: '정정 요청',
-  rejected: '계좌 지급',
+  pending: '확인 대기 중',
+  confirmed: '지급조서 확인 완료',
+  correction: '지급 정정 요청',
+  rejected: '계좌 지급 완료',
 }
 
 export interface PaymentOrderAdminProgramDetailInstructorRow {
@@ -105,6 +102,8 @@ export interface PaymentOrderAdminProgramDetailInstructorRow {
   sessionOrdinal: number
   processingStatus: PaymentOrderAdminLineProcessingStatus
   estimatedAmount: number
+  /** 일괄 확인 시 선택한 강의비 지급 예정일 (ISO YYYY-MM-DD) */
+  lectureFeePaymentScheduledDate?: string
 }
 
 export interface PaymentOrderAdminProgramDetail {
@@ -128,6 +127,8 @@ export interface PaymentOrderAdminInstructorDetailProgramRow {
   sessionOrdinal: number
   processingStatus: PaymentOrderAdminLineProcessingStatus
   estimatedAmount: number
+  /** 일괄 확인 시 선택한 강의비 지급 예정일 (ISO YYYY-MM-DD) */
+  lectureFeePaymentScheduledDate?: string
 }
 
 /** 산출 내역서 모달 — 산정 행 구분(합계 수식·표시용) */
@@ -226,12 +227,8 @@ export interface PaymentOrderAdminInstructorDetail {
   programRows: PaymentOrderAdminInstructorDetailProgramRow[]
 }
 
-const statuses: PaymentOrderAdminProcessingStatus[] = [
-  'pending',
-  'confirmed',
-  'correction',
-  'rejected',
-]
+/** 정산 신청 이후 ~ 지급조서 확인 완료까지(다음 단계인 계좌 지급 `rejected`는 목 mock에서 제외) */
+const statuses: PaymentOrderAdminProcessingStatus[] = ['pending', 'confirmed', 'correction']
 
 const programTitles = [
   'HSBC/HKU Business Case Competition 2026 모집 안내',
@@ -296,20 +293,24 @@ function isoDate(year: number, month: number, day: number): string {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
-/** No. 내림차순(큰 번호가 위), 30건 */
+/** 지급조서 확인 페이지 URL·필터 기본 기간(목록 mock 출강일 분포와 동일) */
+export const PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE = {
+  from: '2026-04-01',
+  to: '2026-06-30',
+} as const
+
+/** No. 내림차순(큰 번호가 위), 30건 — 2026년 4~6월에 월별 10건씩 고르게 분산 */
 export const mockPaymentOrderAdminProgramList: PaymentOrderAdminProgramRow[] = Array.from(
   { length: 30 },
   (_, i) => {
     const no = 230 - i
     const titleIdx = i % programTitles.length
     const statusIdx = i % statuses.length
-    const baseDay = 15 + (i % 12)
-    const month = 9 + Math.floor(i / 10)
-    const m = month > 12 ? month - 12 : month
-    const y = month > 12 ? 2026 : 2025
-    const ref = isoDate(y, m, Math.min(baseDay, 28))
-    const d2 = isoDate(y, m, Math.min(baseDay + 3, 28))
-    const d3 = isoDate(y, m, Math.min(baseDay + 7, 28))
+    const m = 4 + Math.floor(i / 10)
+    const baseDay = 3 + ((i * 5 + (i % 7) * 3) % 23)
+    const ref = isoDate(2026, m, Math.min(baseDay, 28))
+    const d2 = isoDate(2026, m, Math.min(baseDay + 3, 28))
+    const d3 = isoDate(2026, m, Math.min(baseDay + 7, 28))
     const pendingCount = i % 13
     return {
       no,
@@ -345,7 +346,7 @@ function buildInstructorCalendarSlot(i: number): { start: string; end: string } 
   return { start: fmt(startMin), end: fmt(endMin) }
 }
 
-/** 강사별 목록: 프로그램명과 교차 연결 */
+/** 강사별 목록: 프로그램명과 교차 연결 — 2026년 4~6월에 월별 7·7·6건 분산 */
 export const mockPaymentOrderAdminInstructorList: PaymentOrderAdminInstructorRow[] =
   instructorNames.map((instructorName, i) => {
     const no = 120 - i
@@ -354,12 +355,10 @@ export const mockPaymentOrderAdminInstructorList: PaymentOrderAdminInstructorRow
       programTitles[i % programTitles.length],
       programTitles[(i + 3) % programTitles.length],
     ].filter((v, j, a) => a.indexOf(v) === j)
-    const baseDay = 10 + (i % 15)
-    const month = 8 + Math.floor(i / 7)
-    const m = month > 12 ? month - 12 : month
-    const y = month > 12 ? 2026 : 2025
-    const ref = isoDate(y, m, Math.min(baseDay, 28))
-    const d2 = isoDate(y, m, Math.min(baseDay + 4, 28))
+    const m = 4 + Math.floor(i / 7)
+    const baseDay = 4 + ((i * 4 + (i % 5) * 2) % 21)
+    const ref = isoDate(2026, m, Math.min(baseDay, 28))
+    const d2 = isoDate(2026, m, Math.min(baseDay + 4, 28))
     const pendingCount = i % 13
     const slot = buildInstructorCalendarSlot(i)
     const base: PaymentOrderAdminInstructorRow = {
@@ -379,12 +378,8 @@ export const mockPaymentOrderAdminInstructorList: PaymentOrderAdminInstructorRow
     return base
   })
 
-const lineStatuses: PaymentOrderAdminLineProcessingStatus[] = [
-  'rejected',
-  'pending',
-  'correction',
-  'confirmed',
-]
+/** 상세 라인도 지급조서 확인 구간만(계좌 지급 단계 제외) */
+const lineStatuses: PaymentOrderAdminLineProcessingStatus[] = ['pending', 'correction', 'confirmed']
 
 const institutionNames = [
   '진월초등학교',
@@ -401,6 +396,27 @@ const institutionNames = [
 
 function mixSeed(programNo: number, salt: number): number {
   return Math.abs((programNo * 7919 + salt * 104729) % 100000)
+}
+
+/**
+ * 목록 집계 행의 출강·기준일과 맞춰 상세 라인 강의일 생성
+ * (목록·URL 기간 필터·캘린더와 동일 분기에 두어 진입 시 행이 비지 않도록 함)
+ */
+function lectureDateFromAggregateAttendance(
+  attendanceDates: string[],
+  referenceDate: string,
+  lineIndex: number,
+  salt: number
+): string {
+  const pool = attendanceDates.length > 0 ? attendanceDates : [referenceDate]
+  const baseIso = pool[lineIndex % pool.length]
+  const parts = baseIso.split('-').map(Number)
+  const y = parts[0]!
+  const m = parts[1]!
+  const d = parts[2]!
+  const jitter = (salt + lineIndex * 5) % 11
+  const day = Math.min(28, Math.max(1, d + jitter - 5))
+  return isoDate(y, m, day)
 }
 
 /**
@@ -425,15 +441,17 @@ export function getMockPaymentOrderProgramDetail(
       const salt = mixSeed(n, 10 + i)
       const nameIdx = (n + i) % instructorNames.length
       const instIdx = (n * 3 + i * 7) % institutionNames.length
-      const day = 1 + (salt % 27)
-      const month = 1 + (salt % 12)
-      const year = 2025 + (salt % 2)
       return {
         id: `po-detail-${n}-${i}`,
         no: rowCount - i,
         instructorName: instructorNames[nameIdx],
         institutionName: institutionNames[instIdx],
-        lectureDate: isoDate(year, month, day),
+        lectureDate: lectureDateFromAggregateAttendance(
+          programRow.settlementRelevantAttendanceDates,
+          programRow.referenceDate,
+          i,
+          salt
+        ),
         sessionOrdinal: 1 + (salt % 8),
         processingStatus: lineStatuses[(n + i) % lineStatuses.length],
         estimatedAmount: [915000, 480000, 120000, 625000, 15000, 350000][(n + i) % 6],
@@ -486,16 +504,18 @@ export function getMockPaymentOrderInstructorDetail(
       const programName =
         i < related.length ? related[i] : programTitles[(n + i * 17) % programTitles.length]
       const instIdx = (n * 5 + i * 11) % institutionNames.length
-      const day = 1 + (salt % 27)
-      const month = 1 + (salt % 12)
-      const year = 2025 + (salt % 2)
       const lineStatus = lineStatuses[(n + i) % lineStatuses.length]
       return {
         id: `po-inst-detail-${n}-${i}`,
         no: rowCount - i,
         programName,
         institutionName: institutionNames[instIdx],
-        lectureDate: isoDate(year, month, day),
+        lectureDate: lectureDateFromAggregateAttendance(
+          instructorRow.settlementRelevantAttendanceDates,
+          instructorRow.referenceDate,
+          i,
+          salt
+        ),
         sessionOrdinal: 1 + (salt % 8),
         processingStatus: lineStatus,
         estimatedAmount: [915000, 480000, 120000, 625000, 15000, 350000, 300000][(n + i) % 7],
@@ -558,9 +578,6 @@ function addressDisplayForStatementBlur(address: string): {
 }
 
 function lineStatusToCalculationDisplay(status: PaymentOrderAdminLineProcessingStatus): string {
-  if (status === 'pending') return '확인 대기 중'
-  /** 산출 내역서 시안: 반려 문구는 「지급 반려」 */
-  if (status === 'rejected') return '지급 반려'
   return PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[status]
 }
 

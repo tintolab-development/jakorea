@@ -77,7 +77,7 @@ export function PaymentOrderProgramCalculationStatementModal({
             <DetailInfoForm
               title="기본 정보"
               hideHeader
-              className="payment-order-calc-statement-modal__detail-form-card"
+              className="payment-order-calc-statement-modal__detail-form-card payment-order-calc-statement-modal__detail-form-card--program"
             >
               <DetailInfoForm.Row type="double">
                 <DetailInfoForm.Field

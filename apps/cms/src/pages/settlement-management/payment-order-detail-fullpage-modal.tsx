@@ -3,13 +3,13 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { Dayjs } from 'dayjs'
 import {
   getMockPaymentOrderCalculationStatementFromInstructorDetailPage,
   getMockPaymentOrderCalculationStatementFromProgramDetailPage,
   getMockPaymentOrderInstructorDetail,
   getMockPaymentOrderProgramDetail,
   type PaymentOrderAdminInstructorRow,
-  type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramRow,
   type PaymentOrderProgramCalculationStatement,
 } from '@/data/mock/payment-order-admin-list'
@@ -18,6 +18,7 @@ import {
   type PaymentOrderCalculationStatementLineRow,
   type PaymentOrderDetailViewProps,
 } from '@/features/settlement/ui/payment-record'
+import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
 
 /** 컴포넌트 밖에 두어 `current` 참조가 렌더마다 바뀌지 않게 함 (useMemo/useCallback deps) */
 const CONFIG = {
@@ -39,21 +40,23 @@ export type PaymentOrderDetailFullPageModalProps = {
   onClose: () => void
   /** 열림 + type 일치 시 해당 행. 닫힌 상태에서는 null 권장 */
   data: PaymentOrderAdminProgramRow | PaymentOrderAdminInstructorRow | null
+  /** 목록 페이지에 조회 적용된 기간(URL) — 상세 기간 필터 초기값 */
+  listPageDateRange: [Dayjs, Dayjs] | null
 }
 
 export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPageModalProps) {
-  const { type, isOpen, onClose, data } = props
+  const { type, isOpen, onClose, data, listPageDateRange } = props
 
   const row = data
   const current = CONFIG[type]
 
   const [lineAggregateStatus, setLineAggregateStatus] =
-    useState<PaymentOrderAdminProcessingStatus>('pending')
+    useState<PaymentOrderDetailAggregateStatus>('na')
   const [calcStatementOpen, setCalcStatementOpen] = useState(false)
   const [calcStatementData, setCalcStatementData] =
     useState<PaymentOrderProgramCalculationStatement | null>(null)
 
-  const handleAggregateChange = useCallback((status: PaymentOrderAdminProcessingStatus) => {
+  const handleAggregateChange = useCallback((status: PaymentOrderDetailAggregateStatus) => {
     setLineAggregateStatus(status)
   }, [])
 
@@ -64,7 +67,7 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
 
   useEffect(() => {
     if (isOpen) {
-      setLineAggregateStatus('pending')
+      setLineAggregateStatus('na')
       setCalcStatementOpen(false)
       setCalcStatementData(null)
     }
@@ -115,6 +118,7 @@ export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPag
         modalClassName: type === 'instructor' ? '' : undefined,
         detail,
         row,
+        listPageDateRange,
       } as PaymentOrderDetailViewProps)}
     />
   )

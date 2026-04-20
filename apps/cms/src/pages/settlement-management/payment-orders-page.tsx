@@ -3,7 +3,9 @@
  * 필터: FilterTableLayout(TableFilterGroup) · 헤더·뷰 전환: ViewModeController (참여기관 섹션과 동일 패턴)
  */
 
-import { useCallback, useMemo, useState, type ReactElement } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
+import { flushSync } from 'react-dom'
+import type { Dayjs } from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
@@ -16,6 +18,7 @@ import type { ViewModeToggleOption } from '@/shared/components/view-mode'
 import {
   mockPaymentOrderAdminInstructorList,
   mockPaymentOrderAdminProgramList,
+  PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE,
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
@@ -75,7 +78,41 @@ export default function PaymentOrdersPage() {
   const [exposureMode, setExposureMode] = useState<ExposureMode>('program')
   const [detailState, setDetailState] = useState<DetailState>(null)
 
+  /** 쿼리에 기간이 없을 때 목 mock 구간으로 채움(필터·캘린더·테이블이 동일 기준을 쓰도록) */
+  const paymentOrdersDefaultRangeAppliedRef = useRef(false)
+
   const tablePageConfig = useMemo(() => createPaymentOrdersTablePageConfig(), [])
+
+  useEffect(() => {
+    const from = searchParams.get('po_from')
+    const to = searchParams.get('po_to')
+    /** 예전 목(2025 출강 구간)이 URL에 남아 있으면 새 목 구간으로 치환 */
+    if (from && to && from.startsWith('2025-') && to.startsWith('2025-')) {
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        next.set('po_from', PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE.from)
+        next.set('po_to', PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE.to)
+        return next
+      }, { replace: true })
+      return
+    }
+    if (paymentOrdersDefaultRangeAppliedRef.current) return
+    if (from && to) {
+      paymentOrdersDefaultRangeAppliedRef.current = true
+      return
+    }
+    if (!from && !to) {
+      paymentOrdersDefaultRangeAppliedRef.current = true
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        next.set('po_from', PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE.from)
+        next.set('po_to', PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE.to)
+        return next
+      }, { replace: true })
+      return
+    }
+    paymentOrdersDefaultRangeAppliedRef.current = true
+  }, [searchParams, setSearchParams])
 
   const appliedFromUrl = useMemo(
     () => parsePaymentOrdersFiltersFromUrl(searchParams),
@@ -112,6 +149,7 @@ export default function PaymentOrdersPage() {
     pendingFilters,
     applySearch: handleSearch,
     handleFilterChange,
+    setPendingFilters,
   } = useTablePage(tablePageConfig, {
     data: rowsForTable,
     searchParams,
@@ -122,6 +160,17 @@ export default function PaymentOrdersPage() {
   const closeDetail = useCallback(() => {
     setDetailState(null)
   }, [])
+
+  /** 캘린더 헤더 네비·오늘·날짜 클릭 → 기간 필터·URL 동기화 (`applySearch`가 갱신된 pending을 읽도록 flushSync) */
+  const applyDateRangeFromCalendar = useCallback(
+    (range: [Dayjs, Dayjs]) => {
+      flushSync(() => {
+        setPendingFilters(prev => ({ ...prev, dateRange: range }))
+      })
+      handleSearch()
+    },
+    [handleSearch, setPendingFilters]
+  )
   const appliedResetKey = useMemo(() => searchParams.toString(), [searchParams])
 
   const programColumns: ColumnsType<PaymentOrderAdminProgramRow> = useMemo(
@@ -288,6 +337,7 @@ export default function PaymentOrdersPage() {
         programRows={listProgram}
         instructorRows={listInstructor}
         filterDateRange={appliedFromUrl.dateRange}
+        onFilterDateRangeApply={applyDateRangeFromCalendar}
         onPaymentStatusDetailClick={payload => {
           if (payload.exposure === 'program') {
             setDetailState({ type: 'program', data: payload.row })
@@ -356,6 +406,7 @@ export default function PaymentOrdersPage() {
         isOpen={detailState !== null}
         onClose={closeDetail}
         data={detailState?.data ?? null}
+        listPageDateRange={appliedFromUrl.dateRange}
       />
     </div>
   )

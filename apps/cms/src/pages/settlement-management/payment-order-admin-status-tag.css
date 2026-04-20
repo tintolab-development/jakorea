@@ -1,28 +1,49 @@
 /**
  * 지급조서 확인 — 기본 정보·목록 테이블용 상태 문구(색만)
  * 행 단위 변경이 있는 상세 목록 테이블의 태그 UI는 TextbookStatusBadge 계열(PaymentOrderLineProcessingStatusBadge) 사용
+ * 집계 색상 토큰은 `shared/constants/payment-order-aggregate-status.ts` 와 동기화
  */
 
 /* 기본 정보·지급조서 확인 목록 테이블: 태그 없이 문구 + 상태색만 */
 .payment-order-admin__status-text {
+  text-align: center;
   font-family: Pretendard, sans-serif;
   font-size: 16px;
+  font-style: normal;
   font-weight: 500;
   line-height: 150%;
 }
 
+/* 풀페이지 기본 정보 집계·하위 목록 라인: 셀 좌측 정렬과 맞춤 */
+.payment-order-admin__status-text--aggregate,
+.payment-order-admin__status-text--line {
+  text-align: left;
+}
+
 .payment-order-admin__status-text--pending {
-  color: var(--color-payment-order-line-pending-text, #1e8c29);
+  color: var(--color-orange, #f07917);
+}
+
+.payment-order-admin__status-text--partial {
+  color: var(--color-purple, #8457ce);
 }
 
 .payment-order-admin__status-text--confirmed {
-  color: var(--color-payment-order-line-confirmed-text, #017eaf);
-}
-
-.payment-order-admin__status-text--correction {
-  color: var(--color-payment-order-line-correction-text, #c32f4a);
+  color: var(--color-green, #1e8c29);
 }
 
 .payment-order-admin__status-text--rejected {
-  color: var(--color-payment-order-line-rejected-text, #464646);
+  color: var(--color-blue, #017eaf);
+}
+
+.payment-order-admin__status-text--na {
+  color: var(--main-BK, #3d3d3d);
+}
+
+.payment-order-admin__status-text--correction {
+  color: var(--color-red, #c32f4a);
+}
+
+.payment-order-admin__status-text--application-rejected {
+  color: var(--color-red, #c32f4a);
 }

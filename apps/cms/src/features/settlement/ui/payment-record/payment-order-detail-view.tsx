@@ -2,24 +2,24 @@
  * 지급 현황 상세 풀페이지 — 단일 모달·사이드바·산출 내역서 셸 + 본문
  */
 
-import { useMemo, type ComponentType, type ReactElement } from 'react'
-import type { PaymentOrderInstructorBasicInfoProps } from '@/pages/settlement-management/payment-order-instructor-basic-info'
-import type { PaymentOrderProgramBasicInfoProps } from '@/pages/settlement-management/payment-order-program-basic-info'
-import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
-import {
-  DetailModalSidebar,
-  type DetailModalSidebarNavItem,
-} from '@/shared/ui/detail-modal-sidebar'
+import { useCallback, useMemo, type ReactElement } from 'react'
+import type { Dayjs } from 'dayjs'
 import type {
   PaymentOrderAdminInstructorDetail,
   PaymentOrderAdminInstructorDetailProgramRow,
   PaymentOrderAdminInstructorRow,
-  PaymentOrderAdminProcessingStatus,
   PaymentOrderAdminProgramDetail,
   PaymentOrderAdminProgramDetailInstructorRow,
   PaymentOrderAdminProgramRow,
   PaymentOrderProgramCalculationStatement,
 } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
+import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import {
+  DetailModalSidebar,
+  type DetailModalSidebarNavItem,
+} from '@/shared/ui/detail-modal-sidebar'
 import { PaymentOrderDetailFilterTable } from './payment-order-detail-filter-table'
 import { PaymentOrderProgramCalculationStatementModal } from './payment-order-program-calculation-statement-modal'
 import { PaymentOrderInstructorBasicInfo } from '@/pages/settlement-management/payment-order-instructor-basic-info'
@@ -35,8 +35,10 @@ export type PaymentOrderCalculationStatementLineRow =
 
 type PaymentOrderDetailViewShared = {
   isOpen: boolean
-  lineAggregateStatus: PaymentOrderAdminProcessingStatus
-  handleAggregateChange: (status: PaymentOrderAdminProcessingStatus) => void
+  /** 목록 페이지에 조회 적용된 기간 — 상세 기간 필터와 동기화 */
+  listPageDateRange: [Dayjs, Dayjs] | null
+  lineAggregateStatus: PaymentOrderDetailAggregateStatus
+  handleAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
   calcStatementOpen: boolean
   calcStatementData: PaymentOrderProgramCalculationStatement | null
   openCalculationStatement: (lineRow: PaymentOrderCalculationStatementLineRow) => void
@@ -63,19 +65,6 @@ type PaymentOrderDetailViewInstructorBranch = {
 export type PaymentOrderDetailViewProps = PaymentOrderDetailViewShared &
   (PaymentOrderDetailViewProgramBranch | PaymentOrderDetailViewInstructorBranch)
 
-type PaymentOrderDetailMainBasicInfoProps =
-  | PaymentOrderProgramBasicInfoProps
-  | PaymentOrderInstructorBasicInfoProps
-
-const COMPONENT_MAP = {
-  program: {
-    BasicInfo: PaymentOrderProgramBasicInfo as ComponentType<PaymentOrderDetailMainBasicInfoProps>,
-  },
-  instructor: {
-    BasicInfo: PaymentOrderInstructorBasicInfo as ComponentType<PaymentOrderDetailMainBasicInfoProps>,
-  },
-} as const
-
 export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): ReactElement {
   const {
     isOpen,
@@ -84,6 +73,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     modalClassName,
     detail,
     row,
+    listPageDateRange,
     lineAggregateStatus,
     handleAggregateChange,
     calcStatementOpen,
@@ -92,6 +82,23 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     closeCalculationStatement,
     resetCalcAndClose,
   } = props
+
+  const instructorRowKey = kind === 'instructor' ? row.no : null
+
+  const resolvePersonalInfoAccessItem = useCallback(() => {
+    const instructorDetail = detail as PaymentOrderAdminInstructorDetail
+    return instructorDetail.nameKo ?? '지급 현황 상세 강사'
+  }, [detail])
+
+  const {
+    personalInfoRevealed,
+    onPrivacyControlClick: handlePrivacyToggleClick,
+    confirmModal: personalInfoRevealModal,
+  } = usePersonalInfoReveal({
+    resolveAccessItem: resolvePersonalInfoAccessItem,
+    resetDeps: [isOpen, kind, instructorRowKey],
+    controlMode: 'toggleRemask',
+  })
 
   const sidebarItems = useMemo<DetailModalSidebarNavItem[]>(
     () => [
@@ -116,21 +123,35 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     />
   )
 
-  const { BasicInfo } = COMPONENT_MAP[kind]
+  /** 풀페이지 상단 여백 제거·프로그램/강사별 기존 스코프 클래스 병행 */
+  const detailModalRootClass = [
+    'payment-order-status-detail-fullpage-modal',
+    kind === 'instructor'
+      ? 'payment-order-instructor-status-detail-fullpage-modal'
+      : 'payment-order-program-status-detail-fullpage-modal',
+    modalClassName,
+  ]
+    .filter((c): c is string => typeof c === 'string' && c.trim().length > 0)
+    .join(' ')
 
   const mainContent = (
     <>
-      <BasicInfo
-        {...({
-          detail,
-          aggregateStatus: lineAggregateStatus,
-        } as PaymentOrderDetailMainBasicInfoProps)}
-      />
+      {kind === 'program' ? (
+        <PaymentOrderProgramBasicInfo detail={detail} aggregateStatus={lineAggregateStatus} />
+      ) : (
+        <PaymentOrderInstructorBasicInfo
+          detail={detail}
+          aggregateStatus={lineAggregateStatus}
+          personalInfoRevealed={personalInfoRevealed}
+          onPersonalInfoButtonClick={handlePrivacyToggleClick}
+        />
+      )}
       {kind === 'program' ? (
         <PaymentOrderDetailFilterTable
           mode="program"
           programRow={row}
           isOpen={isOpen}
+          listPageDateRange={listPageDateRange}
           onAggregateChange={handleAggregateChange}
           onOpenCalculationStatement={openCalculationStatement}
         />
@@ -139,6 +160,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
           mode="instructor"
           instructorRow={row}
           isOpen={isOpen}
+          listPageDateRange={listPageDateRange}
           onAggregateChange={handleAggregateChange}
           onOpenCalculationStatement={openCalculationStatement}
         />
@@ -148,6 +170,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
 
   return (
     <>
+      {kind === 'instructor' ? personalInfoRevealModal : null}
       <PaymentOrderProgramCalculationStatementModal
         open={calcStatementOpen}
         onCancel={closeCalculationStatement}
@@ -157,7 +180,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
         open={isOpen}
         onClose={resetCalcAndClose}
         title={title}
-        className={modalClassName}
+        className={detailModalRootClass}
         sidebar={sidebar}
       >
         <div className="payment-order-program-status-detail__root">{mainContent}</div>

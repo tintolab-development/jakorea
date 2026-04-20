@@ -71,6 +71,25 @@
   max-width: 100%;
 }
 
+.payment-order-calc-statement-modal__detail-form-card--program .detail-info-form__field {
+  min-height: 50px;
+}
+
+.payment-order-calc-statement-modal__detail-form-card--program .detail-info-form__field-label {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  min-height: 50px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.payment-order-calc-statement-modal__detail-form-card--program .detail-info-form__field-content {
+  min-height: 50px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .payment-order-calc-statement-modal__basic--program-info
   .detail-info-form
   .payment-order-admin__status-text {
