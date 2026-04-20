@@ -66,6 +66,10 @@
   padding-top: 16px;
 }
 
+.content-modal.content-modal--description-gap-compact .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 10px;
+}
+
 /* 푸터: 테이블–버튼 갭 30px, padding/보더 없음, 전체 너비 */
 .content-modal .teal-header-modal__footer {
   flex-shrink: 0;

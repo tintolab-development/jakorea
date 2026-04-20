@@ -73,6 +73,14 @@ export { PlainHeaderModal } from './plain-header-modal'
 export type { PlainHeaderModalProps } from './plain-header-modal'
 export { ContentModal } from './content-modal'
 export type { ContentModalProps } from './content-modal'
+export { ModalSpecTable, ModalSpecTableRow, ModalSpecTableRadioCell } from './modal-spec-table/modal-spec-table'
+export type {
+  ModalSpecTableProps,
+  ModalSpecTableRowProps,
+  ModalSpecTableLabelVariant,
+  ModalSpecTableRadioCellProps,
+  ModalSpecTableRadioOption,
+} from './modal-spec-table/modal-spec-table'
 export {
   AppDatePicker,
   AppDateRangePicker,
