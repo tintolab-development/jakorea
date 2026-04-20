@@ -1,5 +1,9 @@
 # Phase 0.5.2 검증 결과
 
+> [!WARNING]
+> 이 문서는 특정 Phase 완료 검증 기록(아카이브 성격)입니다.
+> 현재 구현 상태 확인은 `apps/cms/docs/requirements-specification/progress.md`를 참고하세요.
+
 **Phase**: 0.5.2 - 권한 요청 UX (NFR-SEC-ACC-01)  
 **검증 일자**: 2025-01-19  
 **검증 항목**: 라우터 추가 확인, 실질적 로직 적용 확인

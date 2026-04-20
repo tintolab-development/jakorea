@@ -1,5 +1,9 @@
 # JAKorea CMS MVP 개발 로드맵 V3
 
+> [!WARNING]
+> 이 문서는 V3 기준의 과거 로드맵입니다.
+> 현재 계획/진행은 `apps/cms/docs/roadmap/MVP_ROADMAP_V4_DETAILED.md`와 `apps/cms/docs/requirements-specification/progress.md`를 기준으로 확인하세요.
+
 > **참고**: 이 문서는 `CLIENT_INTERVIEW_2024-12-19.md`의 인터뷰 내용과 `MVP_ROADMAP_V2.md`의 사용자 화면 기반 요구사항을 종합하여 작성되었습니다.  
 > **구분**: ✅ 구현 완료 / 🆕 신규 추가 / 🔄 개선 필요
 

@@ -1,5 +1,9 @@
 # 다음 컨텍스트를 위한 지시사항 프롬프트
 
+> [!WARNING]
+> 이 문서는 과거 컨텍스트 전환용 프롬프트(레거시)입니다.
+> 현재 기준 문서는 `apps/cms/docs/requirements-specification/requirements.md`와 `apps/cms/docs/requirements-specification/progress.md`입니다.
+
 **작성 일자**: 2024-12-19  
 **목적**: 새로운 컨텍스트에서 작업을 이어가기 위한 명확한 지시사항
 
