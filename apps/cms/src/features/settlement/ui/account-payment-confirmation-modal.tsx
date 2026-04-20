@@ -1,15 +1,16 @@
 /**
  * 정산 관리 > 계좌 지급 확인
- * - bulk: 목록 체크 후 일괄 지급 처리
- * - single: 상세 화면「지급 완료 처리」— 입금 안내 + 프로그램명·정산 금액·지급 계좌번호
+ * - bulk: 목록에서 2건 이상 체크 후 일괄 지급 처리
+ * - single: 목록 1건 체크 또는 상세「지급 완료 처리」— 입금 안내 + 프로그램명·정산 금액·지급 계좌번호
  */
 
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui/app-button'
 import { withProgramDetailTdDivider } from '@/features/program/ui/program-detail-td-divider'
-import type {
-  AccountPaymentRow,
-  AccountPaymentStatusDetail,
+import {
+  getMockAccountPaymentStatusDetail,
+  type AccountPaymentRow,
+  type AccountPaymentStatusDetail,
 } from '@/data/mock/account-payments-list'
 import './account-payment-confirmation-modal.css'
 
@@ -45,11 +46,16 @@ function formatWon(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`
 }
 
-/** 테이블에서 체크한 행만 묶어 요약 표시 */
+/** 테이블에서 체크한 행만 묶어 요약 표시 — 1건이면 상세와 동일한 단건(입금 안내) 모달 */
 export function buildAccountPaymentConfirmationPayloadForSelection(
   rows: AccountPaymentRow[]
 ): AccountPaymentConfirmationModalPayload | null {
   if (rows.length === 0) return null
+  if (rows.length === 1) {
+    return buildAccountPaymentSingleConfirmationPayload(
+      getMockAccountPaymentStatusDetail(rows[0])
+    )
+  }
   const uniquePrograms = [...new Set(rows.map(r => r.programName))]
   const programDisplay =
     uniquePrograms.length === 1

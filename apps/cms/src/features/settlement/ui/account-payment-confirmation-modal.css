@@ -104,28 +104,32 @@
   font-weight: 700;
 }
 
-/* 요약: 3행 2열 — flex-shrink 금지(정산 금액 행 잘림 방지) */
+/* 요약: 2열 그리드 — 목록 테이블(cms-data-table)과 동일 --table-line 보더 */
 .account-payment-confirm-modal__summary {
   flex: 0 0 auto;
-  border: 1px solid var(--color-border-light, #e8e8e8);
+  box-sizing: border-box;
+  border: 1px solid var(--table-line, #e0e0e0);
   border-radius: var(--radius-8, 8px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-self: center;
+  align-self: stretch;
   width: 100%;
   max-width: 100%;
+  background: var(--color-bg-base, #fff);
 }
 
 .account-payment-confirm-modal__summary-row {
   display: grid;
   grid-template-columns: 160px 1fr;
+  align-items: stretch;
   min-height: 48px;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
-.account-payment-confirm-modal__summary-row:not(:last-child) {
-  border-bottom: 1px solid var(--color-border-light, #e8e8e8);
+.account-payment-confirm-modal__summary-row + .account-payment-confirm-modal__summary-row {
+  border-top: 1px solid var(--table-line, #e0e0e0);
 }
 
 .account-payment-confirm-modal__summary-th {
@@ -134,7 +138,7 @@
   justify-content: center;
   padding: 12px 16px;
   background: #f9f9fb;
-  border-right: 1px solid var(--color-border-light, #e8e8e8);
+  border-right: 1px solid var(--table-line, #e0e0e0);
   box-sizing: border-box;
   color: var(--default-BK, #3d3d3d);
   text-align: center;
@@ -161,6 +165,7 @@
   line-height: 140%;
   box-sizing: border-box;
   word-break: break-word;
+  border-left: none;
 }
 
 .account-payment-confirm-modal__summary-td--amount {
