@@ -21,11 +21,16 @@ export function renderAggregateStatus(status: PaymentOrderDetailAggregateStatus)
   )
 }
 
+function paymentOrderLineStatusCssModifier(status: PaymentOrderAdminLineProcessingStatus): string {
+  return status === 'application_rejected' ? 'application-rejected' : status
+}
+
 /** 풀페이지 하위 목록 테이블 — 라인별 처리 현황(태그 없이 문구+색) */
 export function renderLineProcessingStatusText(status: PaymentOrderAdminLineProcessingStatus) {
+  const mod = paymentOrderLineStatusCssModifier(status)
   return (
     <span
-      className={`payment-order-admin__status-text payment-order-admin__status-text--line payment-order-admin__status-text--${status}`}
+      className={`payment-order-admin__status-text payment-order-admin__status-text--line payment-order-admin__status-text--${mod}`}
     >
       {PAYMENT_ORDER_LINE_STATUS_LABELS_FULL[status]}
     </span>
