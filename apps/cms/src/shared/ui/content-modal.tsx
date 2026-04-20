@@ -8,6 +8,7 @@
  */
 
 import type { ReactNode } from 'react'
+import type { ModalProps } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import './content-modal.css'
 
@@ -45,6 +46,8 @@ export interface ContentModalProps {
   wrapClassName?: string
   /** TealHeaderModal → Modal `rootClassName` */
   rootClassName?: string
+  /** Ant Design Modal `styles` (패널·바디 인라인 — 전역 CSS보다 우선) */
+  modalStyles?: ModalProps['styles']
 }
 
 export function ContentModal({
@@ -62,6 +65,7 @@ export function ContentModal({
   zIndex,
   wrapClassName,
   rootClassName,
+  modalStyles,
 }: ContentModalProps) {
   const resolvedClassName = ['content-modal', className].filter(Boolean).join(' ')
 
@@ -84,6 +88,7 @@ export function ContentModal({
       zIndex={zIndex}
       wrapClassName={wrapClassName}
       rootClassName={rootClassName}
+      styles={modalStyles}
     >
       {description != null ? (
         <div className="content-modal__description">{description}</div>

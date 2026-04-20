@@ -7,7 +7,7 @@
  */
 
 import { useId, type ReactNode } from 'react'
-import { Modal } from 'antd'
+import { Modal, type ModalProps } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
 import './teal-header-modal.css'
 
@@ -37,6 +37,8 @@ export interface TealHeaderModalProps {
   wrapClassName?: string
   /** 최상위 `.ant-modal-root` — 포털 루트 구분용 */
   rootClassName?: string
+  /** Ant Design Modal `styles` — content/body 등 인라인으로 전역 CSS보다 우선 적용 */
+  styles?: ModalProps['styles']
 }
 
 const SIZE_WIDTH = { default: 800, large: 1400, full: undefined }
@@ -57,6 +59,7 @@ export function TealHeaderModal({
   zIndex,
   wrapClassName,
   rootClassName,
+  styles,
 }: TealHeaderModalProps) {
   const width = widthProp ?? SIZE_WIDTH[size]
   const bodyScrollable = size === 'large' || size === 'full'
@@ -82,6 +85,7 @@ export function TealHeaderModal({
       className={className}
       wrapClassName={wrapClassName}
       rootClassName={rootClassName}
+      styles={styles}
       aria-labelledby={hideHeader ? undefined : titleId}
       destroyOnClose
       maskClosable
