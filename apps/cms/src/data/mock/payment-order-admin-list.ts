@@ -81,6 +81,8 @@ export type PaymentOrderAdminLineProcessingStatus =
   | 'confirmed'
   | 'correction'
   | 'rejected'
+  /** 지급 신청 반려(라인 전용; 목록 `PaymentOrderAdminProcessingStatus` 와 분리) */
+  | 'application_rejected'
 
 export const PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS: Record<
   PaymentOrderAdminLineProcessingStatus,
@@ -90,6 +92,7 @@ export const PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS: Record<
   confirmed: '지급조서 확인 완료',
   correction: '지급 정정 요청',
   rejected: '계좌 지급 완료',
+  application_rejected: '신청 반려',
 }
 
 export interface PaymentOrderAdminProgramDetailInstructorRow {
@@ -104,6 +107,8 @@ export interface PaymentOrderAdminProgramDetailInstructorRow {
   estimatedAmount: number
   /** 일괄 확인 시 선택한 강의비 지급 예정일 (ISO YYYY-MM-DD) */
   lectureFeePaymentScheduledDate?: string
+  /** 신청 반려 시 산출 내역서·상세에 표시할 사유 */
+  processingRejectionReason?: string
 }
 
 export interface PaymentOrderAdminProgramDetail {
@@ -129,6 +134,8 @@ export interface PaymentOrderAdminInstructorDetailProgramRow {
   estimatedAmount: number
   /** 일괄 확인 시 선택한 강의비 지급 예정일 (ISO YYYY-MM-DD) */
   lectureFeePaymentScheduledDate?: string
+  /** 신청 반려 시 산출 내역서·상세에 표시할 사유 */
+  processingRejectionReason?: string
 }
 
 /** 산출 내역서 모달 — 산정 행 구분(합계 수식·표시용) */
@@ -148,6 +155,8 @@ export interface PaymentOrderCalculationStatementProgramBasicInfo {
   processingStatusClass: PaymentOrderAdminLineProcessingStatus
   /** 지급 반려 시 「사유 : …」에 표시할 본문 */
   processingRejectionReason?: string
+  /** 지급조서 확인 완료 시 이체 예정일(요일 포함 한 줄) */
+  lectureFeePaymentScheduledDateDisplay?: string
   lectureFeeStandardTitle: string
   lectureFeeStandardAmount: string
   businessIncomeEarnerLabel: string
@@ -166,6 +175,8 @@ export interface PaymentOrderCalculationStatementInstructorBasicInfo {
   processingStatusDisplay: string
   processingStatusClass: PaymentOrderAdminLineProcessingStatus
   processingRejectionReason?: string
+  /** 지급조서 확인 완료 시 이체 예정일(요일 포함 한 줄) */
+  lectureFeePaymentScheduledDateDisplay?: string
   lectureFeeStandardTitle: string
   lectureFeeStandardAmount: string
   businessIncomeEarnerLabel: string
@@ -700,14 +711,21 @@ export function getMockPaymentOrderProgramCalculationStatement(
       processingStatusDisplay: lineStatusToCalculationDisplay(instructorLineRow.processingStatus),
       processingStatusClass: instructorLineRow.processingStatus,
       processingRejectionReason:
-        instructorLineRow.processingStatus === 'rejected'
-          ? seed % 2 === 0
-            ? '인원 초과'
-            : '기준 미달'
-          : undefined,
+        instructorLineRow.processingStatus === 'application_rejected'
+          ? (instructorLineRow.processingRejectionReason?.trim() || '-')
+          : instructorLineRow.processingStatus === 'rejected'
+            ? seed % 2 === 0
+              ? '인원 초과'
+              : '기준 미달'
+            : undefined,
       lectureFeeStandardTitle,
       lectureFeeStandardAmount: lectureFeeAmountLabel,
       businessIncomeEarnerLabel: '해당 없음',
+      lectureFeePaymentScheduledDateDisplay:
+        instructorLineRow.processingStatus === 'confirmed' &&
+        instructorLineRow.lectureFeePaymentScheduledDate
+          ? formatIsoToKoreanWeekday(instructorLineRow.lectureFeePaymentScheduledDate)
+          : undefined,
     },
     blocks: [block],
     formulaLabel,
@@ -835,14 +853,21 @@ export function getMockPaymentOrderInstructorCalculationStatement(
       processingStatusDisplay: lineStatusToCalculationDisplay(programLineRow.processingStatus),
       processingStatusClass: programLineRow.processingStatus,
       processingRejectionReason:
-        programLineRow.processingStatus === 'rejected'
-          ? seed % 2 === 0
-            ? '인원 초과'
-            : '기준 미달'
-          : undefined,
+        programLineRow.processingStatus === 'application_rejected'
+          ? (programLineRow.processingRejectionReason?.trim() || '-')
+          : programLineRow.processingStatus === 'rejected'
+            ? seed % 2 === 0
+              ? '인원 초과'
+              : '기준 미달'
+            : undefined,
       lectureFeeStandardTitle,
       lectureFeeStandardAmount: lectureFeeAmountLabel,
       businessIncomeEarnerLabel: '해당 없음',
+      lectureFeePaymentScheduledDateDisplay:
+        programLineRow.processingStatus === 'confirmed' &&
+        programLineRow.lectureFeePaymentScheduledDate
+          ? formatIsoToKoreanWeekday(programLineRow.lectureFeePaymentScheduledDate)
+          : undefined,
     },
     blocks: [block],
     formulaLabel,
@@ -851,36 +876,18 @@ export function getMockPaymentOrderInstructorCalculationStatement(
 }
 
 /**
- * 프로그램 지급 현황 상세에서 산출 내역서를 열 때 — 강사 기준(context: instructor) 기본정보·블록으로 표시
+ * 프로그램 지급 현황 상세에서 산출 내역서를 열 때 — 프로그램형 기본정보(context: program)·산출 블록
  */
 export function getMockPaymentOrderCalculationStatementFromProgramDetailPage(
   programRow: PaymentOrderAdminProgramRow,
   programDetail: PaymentOrderAdminProgramDetail,
   lineRow: PaymentOrderAdminProgramDetailInstructorRow
 ): PaymentOrderProgramCalculationStatement {
-  const instructorStub: PaymentOrderAdminInstructorRow = {
-    no: lineRow.no,
-    instructorName: lineRow.instructorName,
-    programCount: programRow.instructorCount,
-    processingStatus: programRow.processingStatus,
-    estimatedAmount: lineRow.estimatedAmount,
-    relatedProgramNames: [programDetail.programName],
-    referenceDate: programRow.referenceDate,
-    settlementRelevantAttendanceDates: programRow.settlementRelevantAttendanceDates,
-    pendingPaymentSettlementItemCount: programRow.pendingPaymentSettlementItemCount,
-  }
-  const instructorDetail = getMockPaymentOrderInstructorDetail(instructorStub)
-  const programLineRow: PaymentOrderAdminInstructorDetailProgramRow = {
-    id: lineRow.id,
-    no: lineRow.no,
-    programName: programDetail.programName,
-    institutionName: lineRow.institutionName,
-    lectureDate: lineRow.lectureDate,
-    sessionOrdinal: lineRow.sessionOrdinal,
-    processingStatus: lineRow.processingStatus,
-    estimatedAmount: lineRow.estimatedAmount,
-  }
-  return getMockPaymentOrderInstructorCalculationStatement(instructorDetail, programLineRow)
+  return getMockPaymentOrderProgramCalculationStatement(
+    programRow,
+    lineRow,
+    programDetail.programName
+  )
 }
 
 /**
