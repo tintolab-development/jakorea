@@ -1,5 +1,9 @@
 # Cursor AI 작업 프롬프트: Phase 0.1.1 역할/권한 체계 재정의
 
+> [!WARNING]
+> 이 문서는 Phase 0.1.1 실행 시점의 일회성 작업 프롬프트(레거시)입니다.
+> 현재 요구사항/진행 기준은 `apps/cms/docs/requirements-specification/requirements.md`와 `apps/cms/docs/requirements-specification/progress.md`입니다.
+
 > **중요**: 이 프롬프트를 Cursor AI에 복사하여 사용하세요.
 > Claude Code가 QA 역할로 대기 중입니다. 작업 완료 후 typecheck/lint/build 검증을 요청하세요.
 

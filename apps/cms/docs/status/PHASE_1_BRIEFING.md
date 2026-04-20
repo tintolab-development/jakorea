@@ -1,5 +1,9 @@
 # Phase 1.1 진행 브리핑
 
+> [!WARNING]
+> 이 문서는 초기 Phase 1.1 브리핑용 기록입니다.
+> 현재 프로젝트 진행 기준 문서는 `apps/cms/docs/requirements-specification/progress.md`입니다.
+
 ## 📋 다음 진행 단계: Phase 1.1 - 프로젝트 기반 구조 설정
 
 ---
