@@ -94,13 +94,9 @@
 | [phases-frontend-mock.md](requirements-specification/MVP/phases-frontend-mock.md) | 프론트엔드 Mock |
 | [kakao-alimtalk-integration-info.md](requirements-specification/MVP/kakao-alimtalk-integration-info.md) | 카카오 알림톡 |
 | [microsoft-authenticator-2fa-info.md](requirements-specification/MVP/microsoft-authenticator-2fa-info.md) | MS Authenticator 2FA |
-| [MVP_ROADMAP_V3.md](roadmap/MVP_ROADMAP_V3.md) | 로드맵 v3 |
 | [MVP_ROADMAP_V4_DETAILED.md](roadmap/MVP_ROADMAP_V4_DETAILED.md) | 로드맵 v4 상세 |
-| [CURRENT_STATUS.md](status/CURRENT_STATUS.md) | 현재 상태 |
 | [REQUIREMENTS_PRIORITY.md](status/REQUIREMENTS_PRIORITY.md) | 요구사항 우선순위 |
-| [PROGRESS.md](status/PROGRESS.md) | 진행 상황 (루트→이동) |
-| [NEXT_PHASE_CHECKLIST.md](status/NEXT_PHASE_CHECKLIST.md) | 다음 Phase 체크리스트 (루트→이동) |
-| [PHASE_1_BRIEFING.md](status/PHASE_1_BRIEFING.md) | Phase 1 브리핑 (루트→이동) |
+| [DOCUMENT_VALIDITY_REVIEW_2026-04-20.md](status/DOCUMENT_VALIDITY_REVIEW_2026-04-20.md) | 문서 유효성 분류표 |
 
 ---
 
@@ -108,13 +104,8 @@
 
 | 문서 | 설명 |
 |------|------|
-| [phase-0.5-integration-verification.md](verification/phase-0.5-integration-verification.md) | Phase 0.5 통합 검증 |
 | [settlement-accommodation-fix.md](verification/settlement-accommodation-fix.md) | 정산 숙박 수정 |
 | [settlement-submit-modal-business-logic-paths.md](verification/settlement-submit-modal-business-logic-paths.md) | 정산 제출 모달 로직 |
-| [phase-0.4.2-verification.md](phase-verification/phase-0.4.2-verification.md) | Phase 0.4.2 검증 |
-| [phase-0.5.1-verification.md](phase-verification/phase-0.5.1-verification.md) | Phase 0.5.1 검증 |
-| [phase-0.5.2-verification.md](phase-verification/phase-0.5.2-verification.md) | Phase 0.5.2 검증 |
-| [phase-0.5.3-verification.md](phase-verification/phase-0.5.3-verification.md) | Phase 0.5.3 검증 |
 | [auth-permission-qa-checklist.md](qa/auth-permission-qa-checklist.md) | 인증/권한 QA 체크리스트 |
 | [auth-permission-qa-report.md](qa/auth-permission-qa-report.md) | 인증/권한 QA 리포트 |
 | [qa-verification-report.md](qa/qa-verification-report.md) | QA 검증 리포트 (루트→이동) |
@@ -200,7 +191,6 @@
 | 문서 | 설명 |
 |------|------|
 | [dashboard-program-progress-improvement.md](design/dashboard-program-progress-improvement.md) | 대시보드 프로그램 진행 개선 |
-| [JA코리아 사용자화면 프롬프트_1219.md](design/JA코리아 사용자화면 프롬프트_1219.md) | 사용자화면 프롬프트 |
 
 ---
 
@@ -211,12 +201,9 @@
 | [initial_interview.md](interview/initial_interview.md) | 초기 인터뷰 |
 | [CLIENT_INTERVIEW_2024-12-19.md](interview/CLIENT_INTERVIEW_2024-12-19.md) | 클라이언트 인터뷰 |
 | [ia-members.md](members/ia-members.md) | IA 멤버 |
-| [CURSOR-PROMPT-PHASE-0.1.1.md](claude-prompt/CURSOR-PROMPT-PHASE-0.1.1.md) | Cursor 프롬프트 Phase 0.1.1 |
 | [CLEANUP_BENEFITS.md](claude-prompt/CLEANUP_BENEFITS.md) | 정리 이점 |
 | [CLEANUP_DEPRECATED_CODE.md](claude-prompt/CLEANUP_DEPRECATED_CODE.md) | Deprecated 코드 정리 |
 | [POLICY_TO_AUDIT.md](claude-prompt/POLICY_TO_AUDIT.md) | 감사 정책 |
-| [QA-STATUS.md](claude-prompt/QA-STATUS.md) | QA 상태 |
-| [NEXT_CONTEXT_PROMPT.md](claude-prompt/NEXT_CONTEXT_PROMPT.md) | 다음 컨텍스트 프롬프트 (루트→이동) |
 
 ---
 
@@ -244,4 +231,27 @@
 
 ---
 
-**마지막 업데이트**: 2025-02-11
+## 12. 레거시/아카이브(참고용)
+
+아래 문서는 기록 보관 또는 과거 프롬프트 참고용입니다. 신규 작업 기준 문서로 사용하지 않습니다.
+
+| 문서 | 상태 |
+|------|------|
+| [status/CURRENT_STATUS.md](status/CURRENT_STATUS.md) | Legacy status |
+| [status/PROGRESS.md](status/PROGRESS.md) | Legacy status |
+| [status/NEXT_PHASE_CHECKLIST.md](status/NEXT_PHASE_CHECKLIST.md) | Legacy checklist |
+| [status/PHASE_1_BRIEFING.md](status/PHASE_1_BRIEFING.md) | Legacy briefing |
+| [roadmap/MVP_ROADMAP_V3.md](roadmap/MVP_ROADMAP_V3.md) | Legacy roadmap |
+| [verification/phase-0.5-integration-verification.md](verification/phase-0.5-integration-verification.md) | Archived verification |
+| [phase-verification/phase-0.4.2-verification.md](phase-verification/phase-0.4.2-verification.md) | Archived verification |
+| [phase-verification/phase-0.5.1-verification.md](phase-verification/phase-0.5.1-verification.md) | Archived verification |
+| [phase-verification/phase-0.5.2-verification.md](phase-verification/phase-0.5.2-verification.md) | Archived verification |
+| [phase-verification/phase-0.5.3-verification.md](phase-verification/phase-0.5.3-verification.md) | Archived verification |
+| [claude-prompt/CURSOR-PROMPT-PHASE-0.1.1.md](claude-prompt/CURSOR-PROMPT-PHASE-0.1.1.md) | Legacy prompt |
+| [claude-prompt/QA-STATUS.md](claude-prompt/QA-STATUS.md) | Legacy prompt |
+| [claude-prompt/NEXT_CONTEXT_PROMPT.md](claude-prompt/NEXT_CONTEXT_PROMPT.md) | Legacy prompt |
+| [design/JA코리아 사용자화면 프롬프트_1219.md](design/JA코리아 사용자화면 프롬프트_1219.md) | Legacy prompt |
+
+---
+
+**마지막 업데이트**: 2026-04-20

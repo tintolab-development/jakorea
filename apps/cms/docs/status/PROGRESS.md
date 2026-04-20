@@ -1,5 +1,9 @@
 # CMS 프로젝트 진행 상황
 
+> [!WARNING]
+> 이 문서는 초기 운영 단계의 롤 기반 진행 로그입니다.
+> 최신 구현 현황은 `apps/cms/docs/requirements-specification/progress.md`를 기준으로 확인하세요.
+
 이 문서는 CMS 프로젝트의 진행 상황을 롤별로 기록합니다.
 
 ## 📋 진행 기록 형식

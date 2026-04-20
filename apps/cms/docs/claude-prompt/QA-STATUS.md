@@ -1,5 +1,9 @@
 # QA Status Report
 
+> [!WARNING]
+> 이 문서는 시점 기반 QA 상태 기록(레거시)입니다.
+> 현재 QA 기준은 `apps/cms/docs/qa/qa-verification-report.md`와 `apps/cms/docs/qa/auth-permission-qa-report.md`를 참고하세요.
+
 > 최종 업데이트: 2026-01-19
 > Phase: 0.4.3 (지급조서/이체리스트), 0.4.4 (실적 통계)
 

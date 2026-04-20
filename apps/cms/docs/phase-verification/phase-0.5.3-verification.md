@@ -1,5 +1,9 @@
 # Phase 0.5.3 검증 결과
 
+> [!WARNING]
+> 이 문서는 특정 Phase 완료 검증 기록(아카이브 성격)입니다.
+> 현재 구현 상태 확인은 `apps/cms/docs/requirements-specification/progress.md`를 참고하세요.
+
 **Phase**: 0.5.3 - 다운로드 보호 UX (NFR-DATA-01, NFR-DATA-02)  
 **검증 일자**: 2025-01-19  
 **검증 항목**: 타입 정의, Hook 구현, 컴포넌트 구현 확인

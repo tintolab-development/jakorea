@@ -1,5 +1,9 @@
 # 다음 Phase 진행 전 확인 사항
 
+> [!WARNING]
+> 이 문서는 과거 시점(2024-12-19)의 단계 진행 체크리스트입니다.
+> 최신 진행 기준은 `apps/cms/docs/requirements-specification/progress.md`를 우선 확인하세요.
+
 **작성 일자**: 2024-12-19  
 **목적**: V3 Phase 7 진행 전 확인해야 할 사항 정리
 

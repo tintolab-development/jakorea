@@ -1,6 +1,6 @@
 .app-layout {
   min-height: 100vh;
-  min-width: 1920px;
+  width: 100%;
   overflow: hidden;
   /* 전체 레이아웃 스크롤 방지 */
 }
