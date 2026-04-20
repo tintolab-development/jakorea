@@ -32,6 +32,7 @@ import {
 import { getProgramAdminDetailInfoTabUrl } from '@/features/program/lib/program-admin-detail-url'
 import { SegmentedTab } from '@/shared/ui'
 import '@/shared/ui/widget-more-button.css'
+import '@/shared/components/program-calendar.css'
 import './program-schedule-widget.css'
 import type { User } from '@/types/user'
 import { filterProgramsByACL } from '@/features/permission-request/lib/program-acl'
@@ -62,14 +63,9 @@ function getEventTypeLabel(type: ScheduleEvent['type']) {
   }
 }
 
-function resolveWidgetProgram(
-  programId: string,
-  variant: ProgramScheduleKind
-): Program | undefined {
+function resolveWidgetProgram(programId: string, variant: ProgramScheduleKind): Program | undefined {
   if (variant === 'economy') {
-    return (
-      programService.getByIdSync(programId) ?? getEconomyPrograms().find(p => p.id === programId)
-    )
+    return programService.getByIdSync(programId) ?? getEconomyPrograms().find(p => p.id === programId)
   }
   return programService.getByIdSync(programId)
 }
@@ -176,7 +172,7 @@ function getDisplayProgramIds(dayEvents: ScheduleEvent[], max = 2): string[] {
   return ids
 }
 
-/** calendar-view Popover 미리보기와 동일 마크업·클래스 (제목만 SCHEDULE_COLORS.text) */
+/** program-calendar-view Popover 미리보기와 동일 마크업·클래스 (제목만 SCHEDULE_COLORS.text) */
 function ScheduleWidgetWeekCellPreview({
   dayEvents,
   onEventClick,
@@ -192,24 +188,27 @@ function ScheduleWidgetWeekCellPreview({
   )
 
   return (
-    <div className="calendar-cell-preview">
+    <div className="program-calendar-cell-preview">
       {dayEvents.map(ev => {
         const colorPair = scheduleColorMap.get(ev.programId) ?? SCHEDULE_COLORS[0]
         return (
           <button
             key={ev.id}
             type="button"
-            className="calendar-cell-preview__item"
+            className="program-calendar-cell-preview__item"
             onClick={e => {
               e.preventDefault()
               e.stopPropagation()
               onEventClick?.(ev)
             }}
           >
-            <span className="calendar-cell-preview__title" style={{ color: colorPair.text }}>
+            <span
+              className="program-calendar-cell-preview__title"
+              style={{ color: colorPair.text }}
+            >
               [{ev.programTitle}]
             </span>
-            <span className="calendar-cell-preview__desc">
+            <span className="program-calendar-cell-preview__desc">
               {getEventTypeLabel(ev.type)} | {ev.time}
             </span>
           </button>
@@ -236,7 +235,7 @@ function ProgramScheduleEventPreviewPopover({
       arrow={false}
       trigger="hover"
       placement="top"
-      overlayClassName="calendar-cell-preview-popover program-schedule-widget__event-preview-popover"
+      overlayClassName="program-calendar-cell-preview-popover program-schedule-widget__event-preview-popover"
       mouseEnterDelay={0.12}
       mouseLeaveDelay={0.08}
       getPopupContainer={() => document.body}
@@ -502,10 +501,10 @@ export function ProgramScheduleWidget({
 
     const monthCell = (
       <div
-        className={`calendar-cell ${!isCurrentMonth ? 'calendar-cell--other-month' : ''} ${isSelected ? 'calendar-cell--selected' : ''} ${isToday ? 'calendar-cell--today' : ''}`}
+        className={`program-calendar-cell ${!isCurrentMonth ? 'program-calendar-cell--other-month' : ''} ${isSelected ? 'program-calendar-cell--selected' : ''} ${isToday ? 'program-calendar-cell--today' : ''}`}
         onClick={() => handleDateSelect(date)}
       >
-        <div className="calendar-cell-date">{date.date()}</div>
+        <div className="program-calendar-cell-date">{date.date()}</div>
         {hasEvents && !halfColumn && (
           <div className="program-schedule-widget__cell-badges">
             {isSingleBlock ? (
@@ -629,15 +628,15 @@ export function ProgramScheduleWidget({
   }
 
   const renderWeekView = () => (
-    <div className="calendar-week">
-      <div className="calendar-week-header">
+    <div className="program-calendar-week">
+      <div className="program-calendar-week-header">
         {WEEKDAY_LABELS.map(day => (
-          <div key={day} className="calendar-week-header-cell">
+          <div key={day} className="program-calendar-week-header-cell">
             {day}
           </div>
         ))}
       </div>
-      <div className="calendar-week-body">
+      <div className="program-calendar-week-body">
         {weekDates.map(date => {
           const dateKey = date.format('YYYY-MM-DD')
           const isSelected = date.isSame(selectedDate, 'day')
@@ -659,8 +658,8 @@ export function ProgramScheduleWidget({
             <div
               key={dateKey}
               className={[
-                'calendar-week-cell',
-                isSelected ? 'calendar-week-cell--selected' : '',
+                'program-calendar-week-cell',
+                isSelected ? 'program-calendar-week-cell--selected' : '',
                 isToday ? 'program-schedule-widget__week-cell--today' : '',
               ]
                 .filter(Boolean)
@@ -669,8 +668,8 @@ export function ProgramScheduleWidget({
             >
               <div
                 className={[
-                  'calendar-week-cell-date',
-                  isSelected ? 'calendar-week-cell-date--selected' : '',
+                  'program-calendar-week-cell-date',
+                  isSelected ? 'program-calendar-week-cell-date--selected' : '',
                 ]
                   .filter(Boolean)
                   .join(' ')}
@@ -709,9 +708,7 @@ export function ProgramScheduleWidget({
                               }
                             }}
                           >
-                            <div className="program-schedule-widget__week-event-title">
-                              {ev.programTitle}
-                            </div>
+                            <div className="program-schedule-widget__week-event-title">{ev.programTitle}</div>
                             <div className="program-schedule-widget__week-event-time">
                               {getEventTypeLabel(ev.type)} | {ev.time}
                             </div>
@@ -878,14 +875,14 @@ export function ProgramScheduleWidget({
       <div className="program-schedule-widget__content">
         {viewMode === 'month' ? (
           <div className="program-schedule-widget__body program-schedule-widget__body--month">
-            <div className="calendar-main program-schedule-widget__calendar-main">
+            <div className="program-calendar-main program-schedule-widget__calendar-main">
               {renderMonthGrid()}
             </div>
             {eventListSection}
           </div>
         ) : (
           <div className="program-schedule-widget__body program-schedule-widget__body--week">
-            <div className="calendar-main program-schedule-widget__calendar-main">
+            <div className="program-calendar-main program-schedule-widget__calendar-main">
               {renderWeekView()}
             </div>
           </div>

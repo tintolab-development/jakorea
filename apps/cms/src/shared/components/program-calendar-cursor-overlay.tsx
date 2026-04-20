@@ -24,13 +24,13 @@ const OVERLAY_LEAVE_DELAY_MS = 80
 /** viewport 클램프 — program 미리보기(333px) */
 const POPOVER_PANEL_ESTIMATE_W = 340
 const POPOVER_PANEL_ESTIMATE_H = 280
-/** 신청자 일정 패널(calendar-schedule-panel) 폭 상한에 맞춤 */
+/** 신청자 일정 패널(program-calendar-schedule-panel) 폭 상한에 맞춤 */
 const TOOLTIP_PANEL_ESTIMATE_W = 368
 const TOOLTIP_PANEL_ESTIMATE_H = 300
 
 type CursorOverlayVariant = 'popover' | 'tooltip'
 
-export interface CalendarCursorOverlayFollowCursorProps {
+export interface ProgramCalendarOverlayFollowCursorProps {
   variant: CursorOverlayVariant
   tooltipOverlayClassName?: string
   content: ReactNode
@@ -41,12 +41,12 @@ export interface CalendarCursorOverlayFollowCursorProps {
  * Popover / Tooltip 공통: 셀·트리거 기준 placement 대신 커서를 따라 `fixed` 포털로 표시
  * (패널 위 호버 시 이탈 타이머 취소 — 신청자·프로그램 미리보기 상호작용)
  */
-export function CalendarCursorOverlayFollowCursor({
+export function ProgramCalendarOverlayFollowCursor({
   variant,
   tooltipOverlayClassName,
   content,
   children,
-}: CalendarCursorOverlayFollowCursorProps) {
+}: ProgramCalendarOverlayFollowCursorProps) {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ x: 0, y: 0 })
   const enterTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -131,7 +131,7 @@ export function CalendarCursorOverlayFollowCursor({
   const portal =
     variant === 'popover' ? (
       <div
-        className="ant-popover app-popover-panel calendar-cell-preview-popover calendar-cursor-popover"
+        className="ant-popover app-popover-panel program-calendar-cell-preview-popover program-calendar-cursor-popover"
         style={{
           position: 'fixed',
           left: pos.x,
@@ -150,7 +150,11 @@ export function CalendarCursorOverlayFollowCursor({
       </div>
     ) : (
       <div
-        className={['calendar-tooltip-overlay', 'calendar-cursor-tooltip', tooltipOverlayClassName]
+        className={[
+          'program-calendar-tooltip-overlay',
+          'program-calendar-cursor-tooltip',
+          tooltipOverlayClassName,
+        ]
           .filter(Boolean)
           .join(' ')}
         style={{

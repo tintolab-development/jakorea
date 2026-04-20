@@ -3,17 +3,18 @@
  */
 
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
-import type {
-  PaymentOrderAdminInstructorDetail,
-  PaymentOrderAdminProcessingStatus,
-} from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminInstructorDetail } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
+import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { formatWon } from './payment-order-detail-fullpage-shared'
 import { renderAggregateStatus } from './payment-order-detail-aggregate-status'
 import '@/features/program/program-detail/ui/applicant-list/applicant-instructor-basic-info.css'
 
 export interface PaymentOrderInstructorBasicInfoProps {
   detail: PaymentOrderAdminInstructorDetail
-  aggregateStatus: PaymentOrderAdminProcessingStatus
+  aggregateStatus: PaymentOrderDetailAggregateStatus
+  personalInfoRevealed: boolean
+  onPersonalInfoButtonClick: () => void
 }
 
 /** 읍·면·동 단위까지 노출, 이후는 블러 (신청 강사 기본정보와 동일 규칙) */
@@ -51,6 +52,8 @@ function AddressBlurDisplay({ address }: { address: string }) {
 export function PaymentOrderInstructorBasicInfo({
   detail,
   aggregateStatus,
+  personalInfoRevealed,
+  onPersonalInfoButtonClick,
 }: PaymentOrderInstructorBasicInfoProps) {
   const maskedPhone = MASKING_POLICY.phone(detail.phone)
   const maskedEmail = MASKING_POLICY.email(detail.email)
@@ -63,17 +66,42 @@ export function PaymentOrderInstructorBasicInfo({
       ? `${maskedAccountLeft} | ${maskedHolder}`
       : maskedAccountLeft || maskedHolder || '-'
 
+  const phoneDisplay = personalInfoRevealed ? detail.phone : maskedPhone
+  const emailDisplay = personalInfoRevealed ? detail.email : maskedEmail
+  const plainAccountLeft = [detail.bankName, detail.accountNumber].filter(Boolean).join(' ')
+  const plainHolder = detail.accountHolder ?? ''
+  const accountDisplay = personalInfoRevealed
+    ? plainAccountLeft && plainHolder
+      ? `${plainAccountLeft} | ${plainHolder}`
+      : plainAccountLeft || plainHolder || '-'
+    : maskedAccountDisplay
+  const addressDisplay = personalInfoRevealed ? (
+    <>{detail.address || '-'}</>
+  ) : (
+    <AddressBlurDisplay address={detail.address} />
+  )
+
   return (
     <div className="payment-order-program-status-detail__basic-block program-detail-fullpage-modal__info-tab-block payment-order-instructor-status-detail__basic-block">
       <div className="applicant-instructor-basic-info payment-order-instructor-status-detail__basic-applicant">
-        <div className="applicant-instructor-basic-info__title">기본 정보</div>
+        <div className="payment-order-instructor-status-detail__basic-header">
+          <div className="applicant-instructor-basic-info__title">기본 정보</div>
+          <PersonalInfoRevealButton
+            ui="app"
+            labelMode="toggle"
+            revealed={personalInfoRevealed}
+            variant="primary"
+            size="filter"
+            onClick={onPersonalInfoButtonClick}
+          />
+        </div>
         <div className="applicant-instructor-basic-info__table-wrap">
-          <table className="applicant-instructor-basic-info__table">
+          <table className="applicant-instructor-basic-info__table payment-order-instructor-status-detail__basic-table">
             <colgroup>
-              <col style={{ width: '140px' }} />
-              <col style={{ width: '80px' }} />
+              <col style={{ width: 120 }} />
+              <col style={{ width: 80 }} />
               <col />
-              <col style={{ width: '160px' }} />
+              <col style={{ width: 200, minWidth: 200, maxWidth: 200 }} />
               <col />
             </colgroup>
             <tbody>
@@ -90,11 +118,13 @@ export function PaymentOrderInstructorBasicInfo({
                 <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
                   {detail.nameKo}
                 </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
-                  자택 주소
+                <td
+                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label payment-order-instructor-status-detail__label-cell--wide"
+                >
+                  연락처
                 </td>
                 <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  <AddressBlurDisplay address={detail.address} />
+                  {phoneDisplay}
                 </td>
               </tr>
               <tr>
@@ -104,45 +134,71 @@ export function PaymentOrderInstructorBasicInfo({
                 <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
                   {detail.nameEn}
                 </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
-                  연락처
+                <td
+                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label payment-order-instructor-status-detail__label-cell--wide"
+                >
+                  이메일
                 </td>
                 <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  {maskedPhone}
+                  {emailDisplay}
                 </td>
               </tr>
               <tr>
                 <td
                   colSpan={2}
-                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
+                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label payment-order-instructor-status-detail__label-cell--wide payment-order-instructor-status-detail__label-cell--span2"
                 >
-                  이메일
+                  자택 주소
                 </td>
                 <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  {maskedEmail}
+                  {addressDisplay}
                 </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
+                <td
+                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label payment-order-instructor-status-detail__label-cell--wide"
+                >
                   정산 계좌 정보
                 </td>
                 <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  {maskedAccountDisplay}
+                  {accountDisplay}
                 </td>
               </tr>
-              <tr className="payment-order-instructor-status-detail__summary-row">
+            </tbody>
+          </table>
+        </div>
+        <div
+          className="applicant-instructor-basic-info__table-wrap payment-order-instructor-status-detail__aggregate-table-wrap"
+          aria-label="지급 조서 처리 현황 및 총 정산 예정 금액"
+        >
+          <table className="applicant-instructor-basic-info__table payment-order-instructor-status-detail__aggregate-table">
+            <colgroup>
+              <col style={{ width: 120 }} />
+              <col style={{ width: 80 }} />
+              <col />
+              <col style={{ width: 200, minWidth: 200, maxWidth: 200 }} />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr className="payment-order-instructor-status-detail__aggregate-row">
                 <td
                   colSpan={2}
-                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
+                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label payment-order-instructor-status-detail__label-cell--wide payment-order-instructor-status-detail__label-cell--span2"
                 >
                   지급 조서 처리 현황
                 </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
+                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value payment-order-instructor-status-detail__aggregate-status-value">
                   {renderAggregateStatus(aggregateStatus)}
                 </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
+                <td
+                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label payment-order-instructor-status-detail__label-cell--wide"
+                >
                   총 정산 예정 금액
                 </td>
                 <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value payment-order-instructor-status-detail__total-amount-cell">
-                  {aggregateStatus === 'rejected' ? '-' : formatWon(detail.totalEstimatedAmount)}
+                  {aggregateStatus === 'rejected' ||
+                  aggregateStatus === 'na' ||
+                  aggregateStatus === 'application_rejected'
+                    ? '-'
+                    : formatWon(detail.totalEstimatedAmount)}
                 </td>
               </tr>
             </tbody>

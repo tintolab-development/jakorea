@@ -7,10 +7,7 @@
 import { Tag } from 'antd'
 import type { CSSProperties } from 'react'
 import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
-import {
-  PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS,
-  PAYMENT_ORDER_STATUS_LABELS_DETAIL,
-} from '@/data/mock/payment-order-admin-list'
+import { PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS } from '@/data/mock/payment-order-admin-list'
 import type { TextbookStatusKey } from '@/data/mock/participating-schools'
 import { TEXTBOOK_STATUS_LABELS } from '@/data/mock/participating-schools'
 import {
@@ -49,10 +46,9 @@ export type TextbookStatusBadgeProps =
 
 function getLabel(props: TextbookStatusBadgeProps): string {
   if (props.variant === 'approval') return APPROVAL_STATUS_LABELS[props.status]
-  if (props.variant === 'payment-order-line')
-    return PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[props.status]
-  if (props.variant === 'payment-order-line-detail')
-    return PAYMENT_ORDER_STATUS_LABELS_DETAIL[props.status]
+  if (props.variant === 'payment-order-line' || props.variant === 'payment-order-line-detail') {
+    return PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS[props.status as PaymentOrderAdminLineProcessingStatus]
+  }
   return TEXTBOOK_STATUS_LABELS[props.status]
 }
 

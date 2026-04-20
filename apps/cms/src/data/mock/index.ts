@@ -62,6 +62,7 @@ export { mockMatchings, mockMatchingsMap } from './matchings'
 export { mockSettlements, mockSettlementsMap } from './settlements'
 export { mockPaymentStatements, mockPaymentStatementsMap } from './payment-statements'
 export {
+  PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE,
   mockPaymentOrderAdminProgramList,
   mockPaymentOrderAdminInstructorList,
   PAYMENT_ORDER_STATUS_LABELS_LIST,

@@ -8,7 +8,7 @@ import { CalendarSet } from '@/shared/ui'
 interface ProgramCalendarViewProps {
   items: Program[]
   loading?: boolean
-  onItemClick: (item: Program) => void
+  onItemClick: (program: Program) => void
 }
 
 export function ProgramCalendarView({ items, loading, onItemClick }: ProgramCalendarViewProps) {

@@ -19,18 +19,19 @@ import {
   type PaymentOrderAdminInstructorDetailProgramRow,
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminLineProcessingStatus,
-  type PaymentOrderAdminProcessingStatus,
 } from '@/data/mock/payment-order-admin-list'
+import { PaymentOrderBatchConfirmModal } from '@/features/settlement/ui/payment-record/payment-order-batch-confirm-modal'
+import { PaymentOrderLectureDateSessionCell } from '@/features/settlement/ui/payment-record/payment-order-lecture-date-session-cell'
 import {
   defaultDateRange,
   deriveAggregateFromLines,
-  formatLectureCell,
   formatWon,
   lineStatusSelectOptions,
   LINE_STATUS_OPTIONS,
   matchesDateRange,
   type AppliedLineStatus,
 } from './payment-order-detail-fullpage-shared'
+import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
 
 interface InstructorDetailAppliedFilters {
   programName: string
@@ -57,7 +58,7 @@ function filterInstructorProgramRows(
 export interface PaymentOrderInstructorSettlementTableProps {
   instructorRow: PaymentOrderAdminInstructorRow
   isOpen: boolean
-  onAggregateChange: (status: PaymentOrderAdminProcessingStatus) => void
+  onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
   onOpenCalculationStatement: (row: PaymentOrderAdminInstructorDetailProgramRow) => void
 }
 
@@ -82,6 +83,7 @@ export function PaymentOrderInstructorSettlementTable({
     PaymentOrderAdminInstructorDetailProgramRow[]
   >([])
   const [openStatusRowId, setOpenStatusRowId] = useState<string | null>(null)
+  const [batchConfirmOpen, setBatchConfirmOpen] = useState(false)
 
   useEffect(() => {
     if (isOpen && instructorRow) {
@@ -96,6 +98,7 @@ export function PaymentOrderInstructorSettlementTable({
         dateRange: defaultDateRange,
       })
       setSelectedRowKeys([])
+      setBatchConfirmOpen(false)
       const d = getMockPaymentOrderInstructorDetail(instructorRow)
       setProgramRowsState(d.programRows.map(r => ({ ...r })))
       setOpenStatusRowId(null)
@@ -114,6 +117,27 @@ export function PaymentOrderInstructorSettlementTable({
       dateRange: draftDateRange,
     })
   }, [draftDateRange, draftInstitutionName, draftProgramName, draftStatus])
+
+  const handleBatchConfirm = useCallback(
+    (scheduledDate: Dayjs) => {
+      const iso = scheduledDate.format('YYYY-MM-DD')
+      setProgramRowsState(prev =>
+        prev.map(row =>
+          selectedRowKeys.includes(row.id)
+            ? {
+                ...row,
+                processingStatus: 'confirmed',
+                lectureFeePaymentScheduledDate: iso,
+              }
+            : row
+        )
+      )
+      message.success('선택한 항목이 지급조서 확인 완료로 반영되었습니다.')
+      setBatchConfirmOpen(false)
+      setSelectedRowKeys([])
+    },
+    [selectedRowKeys]
+  )
 
   const filteredRows = useMemo(
     () => filterInstructorProgramRows(programRowsState, applied),
@@ -150,8 +174,12 @@ export function PaymentOrderInstructorSettlementTable({
         key: 'lecture',
         width: 220,
         align: 'center',
-        render: (_: unknown, row: PaymentOrderAdminInstructorDetailProgramRow) =>
-          formatLectureCell(row.lectureDate, row.sessionOrdinal),
+        render: (_: unknown, row: PaymentOrderAdminInstructorDetailProgramRow) => (
+          <PaymentOrderLectureDateSessionCell
+            lectureDate={row.lectureDate}
+            sessionOrdinal={row.sessionOrdinal}
+          />
+        ),
       },
       {
         title: '지급 조서 처리 현황',
@@ -210,6 +238,12 @@ export function PaymentOrderInstructorSettlementTable({
 
   return (
     <>
+      <PaymentOrderBatchConfirmModal
+        open={batchConfirmOpen}
+        onCancel={() => setBatchConfirmOpen(false)}
+        selectedCount={selectedRowKeys.length}
+        onConfirm={handleBatchConfirm}
+      />
       <div className="payment-order-program-status-detail__filters">
         <UnifiedFilterCard
           bordered={false}
@@ -289,7 +323,10 @@ export function PaymentOrderInstructorSettlementTable({
               variant="cancel"
               size="filter-wide"
               disabled={selectedRowKeys.length === 0}
-              onClick={() => message.info('일괄 확인은 추후 연결됩니다.')}
+              onClick={() => {
+                if (selectedRowKeys.length === 0) return
+                setBatchConfirmOpen(true)
+              }}
             >
               일괄 확인
             </AppButton>

@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from 'react'
-import { CalendarCursorOverlayFollowCursor } from '@/shared/components/program-calendar-cursor-overlay'
+import { ProgramCalendarOverlayFollowCursor } from '@/shared/components/program-calendar-cursor-overlay'
 
 interface EventOverlayProps {
   scheduleOverlay: 'popover' | 'tooltip'
@@ -15,13 +15,13 @@ export function EventOverlay({
   children,
 }: EventOverlayProps) {
   return (
-    <CalendarCursorOverlayFollowCursor
+    <ProgramCalendarOverlayFollowCursor
       variant={scheduleOverlay}
       tooltipOverlayClassName={tooltipOverlayClassName}
       content={previewContent}
     >
       {children}
-    </CalendarCursorOverlayFollowCursor>
+    </ProgramCalendarOverlayFollowCursor>
   )
 }
 

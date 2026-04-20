@@ -37,8 +37,8 @@ import {
   STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
-import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
-import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
+import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import './program-managers-tab.css'
 
 const ROLE_OPTIONS = [
@@ -62,17 +62,10 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [appliedFilters, setAppliedFilters] = useState<ProgramManagersFilters>(filters)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
-  const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
-  const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
 
   useEffect(() => {
     setPendingFilters({ ...filters })
   }, [filters])
-
-  useEffect(() => {
-    setPersonalInfoRevealed(false)
-    setPersonalInfoRevealConfirmOpen(false)
-  }, [programId])
 
   const managerFilterFields = useMemo((): FilterFieldConfig[] => {
     return [
@@ -143,6 +136,21 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
     })
     return [...list].sort((a, b) => b.no - a.no)
   }, [managerList, appliedFilters])
+
+  const resolveProgramManagerPersonalInfoAccessItem = useCallback(() => {
+    if (selectedRowKeys.length !== 1) return '담당자 목록'
+    return managerList.find(row => row.id === String(selectedRowKeys[0]))?.name ?? '담당자 목록'
+  }, [managerList, selectedRowKeys])
+
+  const {
+    personalInfoRevealed,
+    onPrivacyControlClick: handleProgramManagersPrivacyClick,
+    confirmModal: personalInfoRevealModal,
+  } = usePersonalInfoReveal({
+    resolveAccessItem: resolveProgramManagerPersonalInfoAccessItem,
+    resetDeps: [programId],
+    controlMode: 'toggleRemask',
+  })
 
   const handleDeleteClick = () => {
     if (selectedRowKeys.length === 0) {
@@ -377,19 +385,14 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
             <AppButton variant="primary" size="filter" onClick={() => setAddModalOpen(true)}>
               담당자 등록
             </AppButton>
-            <AppButton
+            <PersonalInfoRevealButton
+              ui="app"
+              labelMode="toggle"
+              revealed={personalInfoRevealed}
               variant="primary"
               size="filter-wide"
-              onClick={() => {
-                if (personalInfoRevealed) {
-                  setPersonalInfoRevealed(false)
-                  return
-                }
-                setPersonalInfoRevealConfirmOpen(true)
-              }}
-            >
-              {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
-            </AppButton>
+              onClick={handleProgramManagersPrivacyClick}
+            />
           </div>
         </div>
         <Table<ProgramManagerRow>
@@ -434,19 +437,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         managerNames={managerNamesToDelete}
         onConfirm={handleDeleteConfirm}
       />
-      {personalInfoRevealConfirmOpen ? (
-        <UserPersonalInfoRevealConfirmModal
-          onCancel={() => setPersonalInfoRevealConfirmOpen(false)}
-          onConfirm={reason => {
-            const accessItem = selectedRowKeys.length === 1
-              ? managerList.find(row => row.id === String(selectedRowKeys[0]))?.name ?? '담당자 목록'
-              : '담당자 목록'
-            trackPersonalInfoAccess(accessItem, reason)
-            setPersonalInfoRevealed(true)
-            setPersonalInfoRevealConfirmOpen(false)
-          }}
-        />
-      ) : null}
+      {personalInfoRevealModal}
     </div>
   )
 }

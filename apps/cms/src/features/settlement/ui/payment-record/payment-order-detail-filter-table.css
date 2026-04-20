@@ -6,15 +6,67 @@
   padding: 0 !important;
 }
 
-/* 필터 ↔ 목록 사이 디바이더: 위·아래 각 32px */
-.payment-order-detail-filter-table__section-divider {
-  margin-top: 32px;
-  margin-bottom: 32px;
-  background: #c4cdd1 !important;
+/* 필터 ↔ 목록 사이: 공용 Divider + 상·하 각 32px (`filter-table-layout__divider` 와 동일) */
+.payment-order-detail-filter-table__section-divider-wrap {
+  padding: 32px 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* 구분선 아래 블록: participating 공통 `margin-top: 32px` 는 위 래퍼 패딩과 중복되므로 제거 */
+.payment-order-detail-filter-table .payment-order-detail-filter-table__below-divider.participating-institutions-section__below-divider {
+  margin-top: 0;
+}
+
+/* 강사 별 / 프로그램 별 정산 목록: 본문·헤더 셀 가운데 정렬 (내부 flex·문구 포함) */
+.payment-order-detail-filter-table
+  .cms-data-table.ant-table-wrapper
+  .ant-table-thead
+  > tr
+  > th:not(.ant-table-cell-scrollbar),
+.payment-order-detail-filter-table
+  .cms-data-table.ant-table-wrapper
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row)
+  > td {
+  text-align: center !important;
+}
+
+.payment-order-detail-filter-table .payment-order-lecture-date-session-cell {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.payment-order-detail-filter-table .payment-order-lecture-date-session-cell .program-detail-td-segment-wrap {
+  justify-content: center;
+}
+
+/* 프로그램 별 정산 목록(강사 상세): 산출 내역 상세 보기 140×40 */
+.payment-order-detail-filter-table
+  .payment-order-detail-filter-table__breakdown-btn--140x40.app-button.app-button--large.ant-btn {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+  box-sizing: border-box !important;
+}
+
+/* 강사 별 정산 목록(프로그램 상세): 산출 내역 상세 보기 180px 유지 */
+.payment-order-detail-filter-table
+  .payment-order-detail-filter-table__breakdown-btn--180.app-button.app-button--large.ant-btn {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
 }
 
 /*
- * 강사별 정산 목록 테이블: 행·헤더 셀 54px 고정
+ * 강사별·프로그램별 정산 목록 테이블: 행·헤더 셀 54px 고정
  * (cms-data-table 기본 12×16 패딩 + line-height 조합 시 실측 76px대로 커지는 것 방지)
  */
 .payment-order-detail-filter-table
@@ -36,21 +88,39 @@
   padding-bottom: 0 !important;
 }
 
+/* 지급 조서 처리 현황 열: 가운데 정렬 */
 .payment-order-detail-filter-table
-  .cms-data-table.ant-table-wrapper
-  .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status) {
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  .payment-order-detail-filter-table__td--processing-status {
+  text-align: center !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+}
+
+/* 하위 목록 라인 문구: 전역 좌측 정렬보다 이 테이블만 중앙 */
+.payment-order-detail-filter-table .payment-order-admin__status-text--line {
+  text-align: center !important;
+}
+
+/* 「일괄 확인」과 동일한 disabled 톤 — primary·지급조서 발급(cancel disabled 와 정렬) */
+.payment-order-detail-filter-table
+  .participating-institutions-section__table-actions
+  .app-button--primary.app-button--filter-wide.ant-btn-primary:disabled,
+.payment-order-detail-filter-table
+  .participating-institutions-section__table-actions
+  .app-button--primary.app-button--filter-wide.ant-btn-primary.ant-btn-disabled {
+  background: var(--color-bg-disabled) !important;
+  border-color: var(--color-border-light) !important;
+  color: var(--color-text-disabled) !important;
+  cursor: not-allowed !important;
 }
 
 .payment-order-detail-filter-table
-  .cms-data-table.ant-table-wrapper
-  .ant-table-tbody
-  > tr:has(td .status-dropdown-cell__status-trigger--open)
-  > td {
-  height: 54px !important;
-  min-height: 54px !important;
-  max-height: 54px !important;
+  .participating-institutions-section__table-actions
+  .app-button--primary.app-button--filter-wide.ant-btn-primary:disabled
+  .anticon,
+.payment-order-detail-filter-table
+  .participating-institutions-section__table-actions
+  .app-button--primary.app-button--filter-wide.ant-btn-primary.ant-btn-disabled
+  .anticon {
+  color: var(--color-text-disabled) !important;
 }

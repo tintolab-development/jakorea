@@ -15,18 +15,64 @@
   margin-bottom: 48px;
 }
 
-/* 신청 강사 기본정보 탭과 동일: applicant-instructor-basic-info__title 간격은 부모 .applicant-instructor-basic-info gap */
+/* 기본 정보 제목과 개인정보 버튼 한 줄 (native `<button>` — AppButton htmlType=button, size=filter → 160×44) */
+.payment-order-instructor-status-detail__basic-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
+/**
+ * 성명·한글·영문 제외 라벨(연락처·이메일·자택 주소·정산 계좌·지급 조서·총 정산 예정 금액)
+ * 가로 200px 고정, 세로 최소 50px(한 줄 시 50px에 맞춤, 긴 라벨은 줄바꿈 허용)
+ * `applicant-instructor-basic-info__cell` padding 12×16 덮음 → td + !important
+ */
+.payment-order-instructor-status-detail__basic-block
+  .payment-order-instructor-status-detail__basic-table
+  td.payment-order-instructor-status-detail__label-cell--wide.applicant-instructor-basic-info__cell,
+.payment-order-instructor-status-detail__basic-block
+  .payment-order-instructor-status-detail__aggregate-table
+  td.payment-order-instructor-status-detail__label-cell--wide.applicant-instructor-basic-info__cell {
+  display: table-cell !important;
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+  min-height: 50px !important;
+  padding: 10px !important;
+  box-sizing: border-box !important;
+  border: 1px solid var(--table-line, #e0e0e0) !important;
+  background: #f5f6f7 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+}
+
+.payment-order-instructor-status-detail__basic-block
+  .payment-order-instructor-status-detail__basic-table,
+.payment-order-instructor-status-detail__basic-block
+  .payment-order-instructor-status-detail__aggregate-table {
+  table-layout: fixed;
+  width: 100%;
+}
 
 .payment-order-instructor-status-detail__total-amount-cell {
   font-weight: 700;
 }
 
-.payment-order-instructor-status-detail__summary-row .applicant-instructor-basic-info__cell {
+/* 기본 정보 표와 집계 표 사이: `.applicant-instructor-basic-info` flex gap 16px */
+.payment-order-instructor-status-detail__aggregate-row .applicant-instructor-basic-info__cell {
   vertical-align: middle;
 }
 
-/* 집계 지급조서 처리 현황 문구 좌측 정렬 */
-.payment-order-instructor-status-detail__summary-row
-  .applicant-instructor-basic-info__cell--value:has(.payment-order-admin__status-text) {
+/* 집계 지급조서 처리 현황 값: 좌측 정렬 + 열 최소 너비(표 깨짐·겹침 방지) */
+.payment-order-instructor-status-detail__aggregate-row
+  .payment-order-instructor-status-detail__aggregate-status-value {
   text-align: left;
+  min-width: 140px;
+  overflow-wrap: break-word;
+  word-break: keep-all;
 }

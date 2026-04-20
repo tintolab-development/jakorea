@@ -8,7 +8,7 @@ import {
   type ScheduleColorPair,
 } from '@/features/program/ui/program-schedule-colors'
 import { ApplicantCalendarEventPopoverContent } from '@/features/program/program-detail/ui/applicant-list/applicant-calendar-schedule-helpers'
-import { CalendarCursorOverlayFollowCursor } from '@/shared/components/program-calendar-cursor-overlay'
+import { ProgramCalendarOverlayFollowCursor } from '@/shared/components/program-calendar-cursor-overlay'
 import {
   calendarItemForScheduleSource,
   calendarItemsForEventMode,
@@ -171,13 +171,13 @@ function withOverlay(
   if (!enabled) return node
 
   return (
-    <CalendarCursorOverlayFollowCursor
+    <ProgramCalendarOverlayFollowCursor
       variant={props.scheduleOverlay}
       tooltipOverlayClassName={props.tooltipOverlayClassName}
       content={content}
     >
       {node}
-    </CalendarCursorOverlayFollowCursor>
+    </ProgramCalendarOverlayFollowCursor>
   )
 }
 

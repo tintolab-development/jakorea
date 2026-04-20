@@ -288,7 +288,7 @@
 .program-schedule-widget__body--month
   .program-schedule-widget__month-grid-slot
   .program-schedule-widget__month-td-fill
-  > *:not(.calendar-cell) {
+  > *:not(.program-calendar-cell) {
   display: block !important;
   width: 100%;
   height: 100% !important;
@@ -299,7 +299,7 @@
 
 .program-schedule-widget__body--month
   .program-schedule-widget__month-grid--cells
-  .calendar-cell {
+  .program-calendar-cell {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -321,21 +321,21 @@
 
 .program-schedule-widget__body--month
   .program-schedule-widget__month-grid-slot--edge-w
-  .calendar-cell {
+  .program-calendar-cell {
   border-left: 1px solid var(--color-border-light);
 }
 
 .program-schedule-widget__body--month
   .program-schedule-widget__month-grid-slot--edge-t
-  .calendar-cell {
+  .program-calendar-cell {
   border-top: 1px solid var(--color-border-light);
 }
 
 /* 날짜 숫자 영역 + 타이포 (피그마) */
 .program-schedule-widget__body--month
   .program-schedule-widget__month-grid
-  .calendar-cell
-  .calendar-cell-date {
+  .program-calendar-cell
+  .program-calendar-cell-date {
   display: flex;
   width: 36px;
   height: 36px;
@@ -363,16 +363,16 @@
 
 .program-schedule-widget__body--month
   .program-schedule-widget__month-grid
-  .calendar-cell--other-month
-  .calendar-cell-date {
+  .program-calendar-cell--other-month
+  .program-calendar-cell-date {
   color: #bfbfbf;
 }
 
 /* 선택된 날짜 활성: 원형 배지 + 날짜 폰트 (피그마) */
 .program-schedule-widget__body--month
   .program-schedule-widget__month-grid
-  .calendar-cell--selected
-  .calendar-cell-date {
+  .program-calendar-cell--selected
+  .program-calendar-cell-date {
   display: flex !important;
   width: 36px !important;
   height: 36px !important;
@@ -398,6 +398,27 @@
   align-self: flex-start !important;
   flex-shrink: 0 !important;
   margin-bottom: 0 !important;
+}
+
+/* 대시보드 50% 슬롯 월간: 배지 미표시로 날짜만 — 셀 안 가로·세로 중앙 */
+.program-schedule-widget.program-schedule-widget--dashboard-half
+  .program-schedule-widget__body--month
+  .program-schedule-widget__month-grid--cells
+  .program-calendar-cell {
+  justify-content: center;
+}
+
+.program-schedule-widget.program-schedule-widget--dashboard-half
+  .program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell
+  .program-calendar-cell-date,
+.program-schedule-widget.program-schedule-widget--dashboard-half
+  .program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--selected
+  .program-calendar-cell-date {
+  align-self: center !important;
 }
 
 /* Popover 직계 자식이 아닌 호스트끼리 gap 적용(월간 셀 전용) */
@@ -586,20 +607,20 @@
   height: auto;
   min-height: 0;
   padding: 0 !important;
-  /* 보더는 주간 본문(.calendar-week-body) 셀 그리드에만 — 래퍼 하단선 중복 방지 */
+  /* 보더는 주간 본문(.program-calendar-week-body) 셀 그리드에만 — 래퍼 하단선 중복 방지 */
   border: none !important;
   border-radius: 0 !important;
 }
 
-/* 주간: 공통 calendar-week — 오늘 날짜 강조 */
+/* 주간: 공통 program-calendar-week — 오늘 날짜 강조 */
 .program-schedule-widget.program-schedule-widget--week-view
   .program-schedule-widget__week-cell--today
-  .calendar-week-cell-date:not(.calendar-week-cell-date--selected) {
+  .program-calendar-week-cell-date:not(.program-calendar-week-cell-date--selected) {
   color: var(--JA-mint-01, #01a1af);
   font-weight: 600;
 }
 
-/* 주간 뷰: 일정 카드 목록 (최대 2개 + 외 n개 텍스트), 날짜와 하위 태그 블록 간격은 .calendar-week-cell gap(12px) */
+/* 주간 뷰: 일정 카드 목록 (최대 2개 + 외 n개 텍스트), 날짜와 하위 태그 블록 간격은 .program-calendar-week-cell gap(12px) */
 .program-schedule-widget__week-events {
   display: flex;
   flex-direction: column;
