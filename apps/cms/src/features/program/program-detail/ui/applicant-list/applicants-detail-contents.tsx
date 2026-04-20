@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState, useEffect } from 'react'
+import { useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Tabs, Space, Empty, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -9,8 +9,11 @@ import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
 import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-info'
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
-import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
-import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
+import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import {
+  PersonalInfoRevealButton,
+  PERSONAL_INFO_REVEAL_BUTTON_LABEL,
+} from '@/features/user/detail/ui/personal-info-reveal-button'
 import { SchoolDetailStudentListSection } from '../../../ui/school-detail-student-list-section'
 import { ApplicantInstitutionInstructorAssignTab } from './applicant-institution-instructor-assign-tab'
 import './applicants-detail-contents.css'
@@ -52,20 +55,39 @@ type ApplicantHeaderActionItem = {
   size?: AppButtonSize
 }
 
-function ApplicantHeaderActionsExtra({ items }: { items: ApplicantHeaderActionItem[] }) {
+function ApplicantHeaderActionsExtra({
+  items,
+  personalInfoRevealed,
+}: {
+  items: ApplicantHeaderActionItem[]
+  personalInfoRevealed: boolean
+}) {
   return (
     <Space size="small" className="applicant-contents__header-actions">
-      {items.map(a => (
-        <AppButton
-          key={a.key}
-          variant={a.variant}
-          size={a.size ?? 'filter'}
-          disabled={a.disabled}
-          onClick={a.onClick}
-        >
-          {a.label}
-        </AppButton>
-      ))}
+      {items.map(a =>
+        a.key === 'privacy' ? (
+          <PersonalInfoRevealButton
+            key={a.key}
+            ui="app"
+            labelMode="stickyReveal"
+            revealed={personalInfoRevealed}
+            variant={a.variant}
+            size={a.size ?? 'filter'}
+            disabled={a.disabled}
+            onClick={a.onClick ?? (() => {})}
+          />
+        ) : (
+          <AppButton
+            key={a.key}
+            variant={a.variant}
+            size={a.size ?? 'filter'}
+            disabled={a.disabled}
+            onClick={a.onClick}
+          >
+            {a.label}
+          </AppButton>
+        )
+      )}
     </Space>
   )
 }
@@ -75,7 +97,7 @@ function headerBtnPrivacy(onRevealPersonalInfo: () => void): ApplicantHeaderActi
   return {
     key: 'privacy',
     variant: 'primary',
-    label: '개인정보 상세보기',
+    label: PERSONAL_INFO_REVEAL_BUTTON_LABEL.reveal,
     size: 'filter-wide',
     onClick: onRevealPersonalInfo,
   }
@@ -270,27 +292,21 @@ export function ApplicantsDetailContents({
 
   const applicantId = data.id
 
-  const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
-  const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
-
-  useEffect(() => {
-    setPersonalInfoRevealed(false)
-    setPersonalInfoRevealConfirmOpen(false)
-  }, [applicantId])
-
-  const onRevealPersonalInfo = useCallback(() => {
-    if (personalInfoRevealed) return
-    setPersonalInfoRevealConfirmOpen(true)
-  }, [personalInfoRevealed])
-
-  const handleConfirmPersonalInfoReveal = useCallback((reason: string) => {
-    const accessItem = isInstitution
+  const resolveApplicantPersonalInfoAccessItem = useCallback(() => {
+    return isInstitution
       ? institutionData?.schoolName ?? '신청 기관 정보'
       : instructorData?.instructorName ?? '신청 강사 정보'
-    trackPersonalInfoAccess(accessItem, reason)
-    setPersonalInfoRevealed(true)
-    setPersonalInfoRevealConfirmOpen(false)
-  }, [instructorData?.instructorName, institutionData?.schoolName, isInstitution])
+  }, [isInstitution, institutionData?.schoolName, instructorData?.instructorName])
+
+  const {
+    personalInfoRevealed,
+    openPersonalInfoRevealConfirm: onRevealPersonalInfo,
+    confirmModal: personalInfoRevealModal,
+  } = usePersonalInfoReveal({
+    resolveAccessItem: resolveApplicantPersonalInfoAccessItem,
+    resetDeps: [applicantId],
+    controlMode: 'headerStickyNoop',
+  })
 
   const headerExtraContent = useMemo(() => {
     const items = resolveApplicantHeaderItems({
@@ -308,7 +324,7 @@ export function ApplicantsDetailContents({
       onCancelReject,
     })
     if (!items) return null
-    return <ApplicantHeaderActionsExtra items={items} />
+    return <ApplicantHeaderActionsExtra items={items} personalInfoRevealed={personalInfoRevealed} />
   }, [
     applicantId,
     isApprovedInstitution,
@@ -322,6 +338,7 @@ export function ApplicantsDetailContents({
     onReject,
     onCancelApproval,
     onCancelReject,
+    personalInfoRevealed,
   ])
 
   const tabBarExtraContent = useMemo(() => {
@@ -465,12 +482,7 @@ export function ApplicantsDetailContents({
           items={isInstitution ? institutionTabItems : instructorTabItems}
         />
       </div>
-      {personalInfoRevealConfirmOpen ? (
-        <UserPersonalInfoRevealConfirmModal
-          onCancel={() => setPersonalInfoRevealConfirmOpen(false)}
-          onConfirm={handleConfirmPersonalInfoReveal}
-        />
-      ) : null}
+      {personalInfoRevealModal}
     </div>
   )
 }

@@ -3,7 +3,7 @@
  * 필터(쿼리 파라미터 연동) + 테이블(교육 참여 강사 목록, 정산현황 텍스트 컬러) + 액션 버튼
  */
 
-import { useMemo, useState, useEffect, useRef, type CSSProperties } from 'react'
+import { useMemo, useState, useEffect, useRef, useCallback, type CSSProperties } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { Table, Checkbox } from 'antd'
@@ -34,8 +34,8 @@ import {
   ParticipatingInstructorFullpageView,
   type InstructorDetailTabKey,
 } from './participating-instructor-fullpage-view'
-import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
-import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
+import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
@@ -316,6 +316,24 @@ export function ParticipatingInstructorsSection({
     appliedFilters.jaEvaluationGrade,
   ])
 
+  const resolveParticipatingInstructorsPersonalInfoAccessItem = useCallback(() => {
+    if (selectedInstructorRowKeys.length !== 1) return '참여 강사 목록'
+    return (
+      filteredInstructors.find(row => row.id === String(selectedInstructorRowKeys[0]))
+        ?.instructorName ?? '참여 강사 목록'
+    )
+  }, [filteredInstructors, selectedInstructorRowKeys])
+
+  const {
+    personalInfoRevealed,
+    onPrivacyControlClick: handleParticipatingInstructorsPrivacyClick,
+    confirmModal: personalInfoRevealModal,
+  } = usePersonalInfoReveal({
+    resolveAccessItem: resolveParticipatingInstructorsPersonalInfoAccessItem,
+    resetDeps: [programId],
+    controlMode: 'toggleRemask',
+  })
+
   const selectedInstructorFromUrl = useMemo(() => {
     if (!instructorIdFromUrl) return null
     const row = instructorList.find(r => r.id === instructorIdFromUrl)
@@ -564,20 +582,15 @@ export function ParticipatingInstructorsSection({
             >
               강사 등록
             </AppButton>
-            <AppButton
+            <PersonalInfoRevealButton
+              ui="app"
+              labelMode="toggle"
+              revealed={personalInfoRevealed}
               variant="primary"
               size="filter-wide"
               className="participating-instructors-section__btn-privacy-detail"
-              onClick={() => {
-                if (personalInfoRevealed) {
-                  setPersonalInfoRevealed(false)
-                  return
-                }
-                setPersonalInfoRevealConfirmOpen(true)
-              }}
-            >
-              {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
-            </AppButton>
+              onClick={handleParticipatingInstructorsPrivacyClick}
+            />
           </div>
         </div>
 
@@ -752,20 +765,7 @@ export function ParticipatingInstructorsSection({
         confirmText="삭제"
         confirmVariant="delete"
       />
-      {personalInfoRevealConfirmOpen ? (
-        <UserPersonalInfoRevealConfirmModal
-          onCancel={() => setPersonalInfoRevealConfirmOpen(false)}
-          onConfirm={reason => {
-            const accessItem = selectedInstructorRowKeys.length === 1
-              ? filteredInstructors.find(row => row.id === String(selectedInstructorRowKeys[0]))
-                  ?.instructorName ?? '참여 강사 목록'
-              : '참여 강사 목록'
-            trackPersonalInfoAccess(accessItem, reason)
-            setPersonalInfoRevealed(true)
-            setPersonalInfoRevealConfirmOpen(false)
-          }}
-        />
-      ) : null}
+      {personalInfoRevealModal}
     </div>
   )
 }

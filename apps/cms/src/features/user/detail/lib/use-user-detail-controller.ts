@@ -57,8 +57,10 @@ import {
 } from '@/features/user/detail/ui/user-basic-info-section'
 import { MESSAGES } from '@/shared/constants'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
-import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+
+const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
 
 export type InstructorPermissionRevokeNotifyTiming = 'immediate' | 'manual'
 
@@ -101,8 +103,6 @@ export function useUserDetailController({
   const [volunteerHistories, setVolunteerHistories] = useState<UserHistory[]>([])
   const [volunteerHistoriesLoading, setVolunteerHistoriesLoading] = useState(false)
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false)
-  const [personalInfoRevealed, setPersonalInfoRevealed] = useState(false)
-  const [personalInfoRevealConfirmOpen, setPersonalInfoRevealConfirmOpen] = useState(false)
   const [basicInfoEditing, setBasicInfoEditing] = useState(false)
   const [basicInfoDraft, setBasicInfoDraft] = useState<AdminProvisionedMemberBasicInfoDraft | null>(
     null
@@ -121,10 +121,28 @@ export function useUserDetailController({
     programsChildQueryKey,
   })
 
+  const resolvePersonalInfoAccessItem = useCallback(
+    () =>
+      displayUser?.schoolInfo?.schoolName?.trim() || displayUser?.name || '회원 상세 정보',
+    [displayUser?.name, displayUser?.schoolInfo?.schoolName]
+  )
+
+  const {
+    personalInfoRevealed,
+    personalInfoRevealConfirmOpen,
+    openPersonalInfoRevealConfirm,
+    closePersonalInfoRevealConfirm,
+    submitPersonalInfoReveal,
+    confirmModal: personalInfoRevealModal,
+  } = usePersonalInfoReveal({
+    resolveAccessItem: resolvePersonalInfoAccessItem,
+    resetDeps: [open, displayUser?.id],
+    controlMode: 'hideWhenRevealed',
+    modalZIndex: PERSONAL_INFO_REVEAL_MODAL_Z_INDEX,
+  })
+
   useEffect(() => {
     if (!open) {
-      setPersonalInfoRevealed(false)
-      setPersonalInfoRevealConfirmOpen(false)
       setBasicInfoEditing(false)
       setBasicInfoDraft(null)
       setBasicInfoSaveLoading(false)
@@ -134,8 +152,6 @@ export function useUserDetailController({
   }, [open])
 
   useEffect(() => {
-    setPersonalInfoRevealed(false)
-    setPersonalInfoRevealConfirmOpen(false)
     setBasicInfoEditing(false)
     setBasicInfoDraft(null)
     setBasicInfoSaveLoading(false)
@@ -230,21 +246,6 @@ export function useUserDetailController({
       setWithdrawConfirmOpen(false)
     }
   }, [displayUser, onWithdraw])
-
-  const openPersonalInfoRevealConfirm = useCallback(() => {
-    setPersonalInfoRevealConfirmOpen(true)
-  }, [])
-
-  const closePersonalInfoRevealConfirm = useCallback(() => {
-    setPersonalInfoRevealConfirmOpen(false)
-  }, [])
-
-  const submitPersonalInfoReveal = useCallback((reason: string) => {
-    const accessItem = displayUser?.schoolInfo?.schoolName?.trim() || displayUser?.name || '회원 상세 정보'
-    trackPersonalInfoAccess(accessItem, reason)
-    setPersonalInfoRevealed(true)
-    setPersonalInfoRevealConfirmOpen(false)
-  }, [displayUser?.name, displayUser?.schoolInfo?.schoolName])
 
   const startBasicInfoEdit = useCallback(() => {
     if (!displayUser) return
@@ -573,10 +574,10 @@ export function useUserDetailController({
       basicInfoSaveLoading,
       adminPermissionVariantPatching,
       instructorPermissionRevokeOpen,
+      personalInfoRevealModal,
     },
     actions: {
       setTabState,
-      setPersonalInfoRevealed,
       handleProgressStatusChange,
       handleSidebarSelectTop,
       handleSidebarSelectChild,

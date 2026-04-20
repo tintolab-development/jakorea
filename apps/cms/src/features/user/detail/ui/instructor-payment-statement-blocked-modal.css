@@ -8,3 +8,52 @@
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
 }
+
+.instructor-payment-statement-blocked-modal .instructor-payment-statement-blocked-modal__selection-emphasis {
+  font-weight: 700;
+}
+
+/**
+ * 지급 현황 상세 풀페이지 시안: 600×230, 패딩·섀도우·라운드
+ * (`content-modal` 기본 패딩과 구분 — modifier 내에서만 덮어씀)
+ */
+.instructor-payment-statement-blocked-modal--detail-fullpage.ant-modal .ant-modal-content {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 30px !important;
+  width: 600px !important;
+  max-width: 100% !important;
+  min-height: 230px !important;
+  padding: 26px 30px 34px !important;
+  box-sizing: border-box !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35) !important;
+}
+
+/* 헤더·본문·푸터가 모달 가로 전체를 쓰도록 */
+.instructor-payment-statement-blocked-modal--detail-fullpage.content-modal .teal-header-modal__header,
+.instructor-payment-statement-blocked-modal--detail-fullpage.content-modal .teal-header-modal__body,
+.instructor-payment-statement-blocked-modal--detail-fullpage.content-modal .teal-header-modal__footer {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  align-self: stretch !important;
+}
+
+.instructor-payment-statement-blocked-modal.instructor-payment-statement-blocked-modal--detail-fullpage
+  .instructor-payment-statement-blocked-modal__message {
+  align-items: flex-start;
+  text-align: left;
+  width: 100% !important;
+  max-width: 100% !important;
+  gap: 8px;
+}
+
+.instructor-payment-statement-blocked-modal.instructor-payment-statement-blocked-modal--detail-fullpage
+  .instructor-payment-statement-blocked-modal__message
+  > span {
+  display: block;
+  width: 100%;
+}

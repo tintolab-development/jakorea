@@ -1,0 +1,26 @@
+.calendar-week {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.calendar-week-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-week-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-week-cell {
+  border: 1px solid #f0f0f0;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-week-cell:hover {
+  background: var(--status-hover-bg);
+}

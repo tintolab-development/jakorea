@@ -27,8 +27,8 @@ import type { AddStudentFormValues } from '../model/school-detail-add-student-sc
 import { LectureAttendanceModal } from './lecture-attendance-modal'
 import { AssignmentSubmissionModal } from './assignment-submission-modal'
 import { AddStudentModal } from './add-student-modal'
-import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
-import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
+import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import './school-detail-modal.css'
 import './detail-modal/program-status/program-progress-tab.css'
 import './detail-modal/program-status/participating-institutions-section.css'
@@ -170,6 +170,21 @@ export function SchoolDetailStudentListSection({
       return matchName && matchGender && matchClass
     })
   }, [mergedStudentList, appliedFilters.studentName, appliedFilters.studentGender, appliedFilters.studentClass])
+
+  const resolveStudentListPersonalInfoAccessItem = useCallback(() => {
+    const accessItem = filteredStudentList.find(row => selectedStudentKeys.includes(row.id))?.name
+    return accessItem ?? '학생 명단'
+  }, [filteredStudentList, selectedStudentKeys])
+
+  const {
+    personalInfoRevealed,
+    onPrivacyControlClick: handleStudentListPrivacyClick,
+    confirmModal: personalInfoRevealModal,
+  } = usePersonalInfoReveal({
+    resolveAccessItem: resolveStudentListPersonalInfoAccessItem,
+    resetDeps: [schoolId],
+    controlMode: 'toggleRemask',
+  })
 
   const handleStudentSearch = useCallback(() => {
     applyFilters({ studentName: localStudentName })
@@ -586,20 +601,15 @@ export function SchoolDetailStudentListSection({
                     </AppButton>
                   )
                 )}
-                <AppButton
+                <PersonalInfoRevealButton
+                  ui="app"
+                  labelMode="toggle"
+                  revealed={personalInfoRevealed}
                   variant="primary"
                   size="filter-wide"
                   modalTeal
-                  onClick={() => {
-                    if (personalInfoRevealed) {
-                      setPersonalInfoRevealed(false)
-                      return
-                    }
-                    setPersonalInfoRevealConfirmOpen(true)
-                  }}
-                >
-                  {personalInfoRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
-                </AppButton>
+                  onClick={handleStudentListPrivacyClick}
+                />
               </>
             )}
           </div>
@@ -659,17 +669,7 @@ export function SchoolDetailStudentListSection({
         onCancel={() => setAddStudentModalOpen(false)}
         onAdd={handleAddStudent}
       />
-      {personalInfoRevealConfirmOpen ? (
-        <UserPersonalInfoRevealConfirmModal
-          onCancel={() => setPersonalInfoRevealConfirmOpen(false)}
-          onConfirm={reason => {
-            const accessItem = filteredStudentList.find(row => selectedStudentKeys.includes(row.id))?.name
-            trackPersonalInfoAccess(accessItem ?? '학생 명단', reason)
-            setPersonalInfoRevealed(true)
-            setPersonalInfoRevealConfirmOpen(false)
-          }}
-        />
-      ) : null}
+      {personalInfoRevealModal}
     </div>
   )
 }

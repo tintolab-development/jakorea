@@ -4,13 +4,13 @@
  */
 
 import type { CSSProperties } from 'react'
-import type { PaymentOrderAdminProcessingStatus } from '@/data/mock/payment-order-admin-list'
+import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
 import { TextbookStatusBadge } from './textbook-status-badge'
 
-export type { PaymentOrderAdminProcessingStatus }
+export type { PaymentOrderAdminLineProcessingStatus }
 
 interface PaymentOrderLineProcessingStatusBadgeProps {
-  status: PaymentOrderAdminProcessingStatus
+  status: PaymentOrderAdminLineProcessingStatus
   className?: string
   style?: CSSProperties
   /** true면 `PAYMENT_ORDER_STATUS_LABELS_DETAIL`(상세), 기본은 라인용 문구 */

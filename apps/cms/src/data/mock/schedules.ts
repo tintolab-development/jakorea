@@ -275,6 +275,56 @@ const tomorrowSchedulesAdditional: Schedule[] = Array.from({ length: 10 }, (_, i
   )
 })
 
+/** 주간 겹침·시간축 레이아웃 확인용: 분 단위 시작·다양한 소요(30분~3시간)·자정 근처·클램프 케이스 포함 */
+const ECONOMY_VISIBLE_RANGE_TIME_TEMPLATES: readonly {
+  startH: number
+  startM: number
+  durationM: number
+}[] = [
+  { startH: 7, startM: 0, durationM: 45 },
+  { startH: 7, startM: 45, durationM: 30 },
+  { startH: 8, startM: 15, durationM: 75 },
+  { startH: 8, startM: 50, durationM: 40 },
+  { startH: 9, startM: 0, durationM: 50 },
+  { startH: 9, startM: 30, durationM: 90 },
+  { startH: 10, startM: 10, durationM: 110 },
+  { startH: 10, startM: 45, durationM: 45 },
+  { startH: 11, startM: 20, durationM: 70 },
+  { startH: 12, startM: 0, durationM: 35 },
+  { startH: 12, startM: 25, durationM: 95 },
+  { startH: 13, startM: 15, durationM: 105 },
+  { startH: 14, startM: 0, durationM: 60 },
+  { startH: 14, startM: 30, durationM: 150 },
+  { startH: 15, startM: 45, durationM: 75 },
+  { startH: 16, startM: 20, durationM: 55 },
+  { startH: 17, startM: 0, durationM: 120 },
+  { startH: 18, startM: 30, durationM: 90 },
+  { startH: 19, startM: 15, durationM: 105 },
+  { startH: 22, startM: 0, durationM: 180 },
+]
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0')
+}
+
+function minutesToScheduleEndHHmm(totalMin: number): string {
+  const capped = Math.min(Math.max(0, totalMin), 24 * 60)
+  if (capped === 24 * 60) return '24:00'
+  const h = Math.floor(capped / 60)
+  const m = capped % 60
+  return `${pad2(h)}:${pad2(m)}`
+}
+
+function economyVisibleRangeStartEnd(seq: number): { startTime: string; endTime: string } {
+  const t = ECONOMY_VISIBLE_RANGE_TIME_TEMPLATES[(seq - 1) % ECONOMY_VISIBLE_RANGE_TIME_TEMPLATES.length]
+  const startTotal = t.startH * 60 + t.startM
+  const endTotal = Math.min(startTotal + t.durationM, 24 * 60)
+  return {
+    startTime: `${pad2(t.startH)}:${pad2(t.startM)}`,
+    endTime: minutesToScheduleEndHHmm(endTotal),
+  }
+}
+
 /**
  * 대시보드 프로그램 일정 위젯: 보이는 날짜 구간(월간 35셀·주간 7일 등)마다 호출해
  * `economy-prog-*` 교육 일정 목데이터를 **현재 시점(호출 시각)** 기준으로 생성한다.
@@ -304,9 +354,7 @@ export function buildEconomySchedulesForVisibleRange(
       seq += 1
       const program = pool[s % pool.length]
       const round = program.rounds?.[0]
-      const startHour = 9 + ((seq + s) % 7)
-      const startTime = `${String(startHour).padStart(2, '0')}:00`
-      const endTime = `${String(Math.min(startHour + 2, 18)).padStart(2, '0')}:00`
+      const { startTime, endTime } = economyVisibleRangeStartEnd(seq)
 
       schedules.push({
         id: `sch-economy-vis-${dateStr}-${s}` as UUID,

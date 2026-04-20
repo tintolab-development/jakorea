@@ -116,9 +116,6 @@ export function UserDetailFullPageModal({
       onNavigateToLinkedUser,
       modals,
       withdrawConfirmOpen: state.withdrawConfirmOpen,
-      personalInfoRevealConfirmOpen: state.personalInfoRevealConfirmOpen,
-      onClosePersonalInfoRevealConfirm: actions.closePersonalInfoRevealConfirm,
-      onSubmitPersonalInfoReveal: actions.submitPersonalInfoReveal,
       onProgressStatusChange: actions.handleProgressStatusChange,
       onOpenLectureAttendance: actions.openLectureAttendance,
       onOpenAssignmentSubmission: actions.openAssignmentSubmission,
@@ -152,7 +149,6 @@ export function UserDetailFullPageModal({
     state.volunteerHistoriesLoading,
     state.personalInfoRevealed,
     state.withdrawConfirmOpen,
-    state.personalInfoRevealConfirmOpen,
     state.basicInfoEditing,
     state.basicInfoDraft,
     state.basicInfoSaveLoading,
@@ -166,8 +162,6 @@ export function UserDetailFullPageModal({
     actions.openInstructorPermissionRevoke,
     actions.closeInstructorPermissionRevoke,
     actions.confirmInstructorPermissionRevoke,
-    actions.closePersonalInfoRevealConfirm,
-    actions.submitPersonalInfoReveal,
     derived.instructorResumeApplicantRow,
     derived.canPatchAdminPermissionInDetailView,
     basicInfoEntrySource,
@@ -190,6 +184,7 @@ export function UserDetailFullPageModal({
 
   return (
     <UserDetailFullpageShellProvider value={shell}>
+      {state.personalInfoRevealModal}
       <UserDetailLayout
         open={open}
         onClose={onClose}

@@ -9,11 +9,8 @@ import {
 } from '@/shared/constants'
 import { LectureAttendanceModal } from '@/features/program/ui/lecture-attendance-modal'
 import { AssignmentSubmissionModal } from '@/features/program/ui/assignment-submission-modal'
-import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
 import { InstructorPermissionRevokeModal } from '@/features/user/detail/ui/instructor-permission-revoke-modal'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
-
-const PERSONAL_INFO_REVEAL_MODAL_Z = 1100
 
 export function UserDetailFullpageModalsStack() {
   const {
@@ -23,9 +20,6 @@ export function UserDetailFullpageModalsStack() {
     onWithdrawModalCancel,
     onWithdrawModalConfirm,
     derived,
-    personalInfoRevealConfirmOpen,
-    onClosePersonalInfoRevealConfirm,
-    onSubmitPersonalInfoReveal,
     instructorPermissionRevokeOpen,
     onCloseInstructorPermissionRevoke,
     onConfirmInstructorPermissionRevoke,
@@ -35,13 +29,6 @@ export function UserDetailFullpageModalsStack() {
 
   return (
     <>
-      {personalInfoRevealConfirmOpen ? (
-        <UserPersonalInfoRevealConfirmModal
-          onCancel={onClosePersonalInfoRevealConfirm}
-          onConfirm={onSubmitPersonalInfoReveal}
-          zIndex={PERSONAL_INFO_REVEAL_MODAL_Z}
-        />
-      ) : null}
       {withdrawConfirmOpen && (
         <DeleteGuideModal
           open

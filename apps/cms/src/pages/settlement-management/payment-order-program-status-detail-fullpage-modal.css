@@ -4,6 +4,10 @@
 @import '../../features/program/program-detail/ui/project-info/project-info-form-shared.css';
 @import './payment-order-admin-status-tag.css';
 
+/**
+ * 메인 열 헤더(타이틀·닫기): `detail-fullpage-modal.css` 기본 `--detail-fullpage-header-padding-top`(30px) 유지.
+ * LNB는 `.teal-header-modal__body` 패딩 제거로 본문 상단 정렬 — 헤더 여백은 __header만 담당.
+ */
 .payment-order-program-status-detail-fullpage-modal.detail-fullpage-modal
   .detail-fullpage-modal__content {
   padding: 24px 32px 32px;

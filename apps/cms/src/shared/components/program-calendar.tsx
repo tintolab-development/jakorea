@@ -68,6 +68,8 @@ type ProgramCalendarSharedProps = {
   hideDateControls?: boolean
   /** true면 월간·주간 전환 탭 숨김 — `mode`는 부모가 고정(예: 월간만) */
   hideModeToggle?: boolean
+  /** true면 우측에 월간·주간 탭 대신 고정 「월간」 라벨만 표시 (`hideModeToggle`과 함께 사용) */
+  monthOnlyLabel?: boolean
   /**
    * 일정 호버 오버레이. 미지정 시 `programs` → popover, `events` → tooltip
    */
@@ -224,12 +226,7 @@ const WEEK_TIME_GRID_HOUR_ROWS: readonly { period: '오전' | '오후'; hour: st
   return rows
 })()
 
-function formatWeekHeaderDayLabel(date: Dayjs, weekDates: Dayjs[]): string {
-  const i = weekDates.findIndex(d => d.isSame(date, 'day'))
-  const prev = i > 0 ? weekDates[i - 1] : null
-  if (prev && prev.month() !== date.month()) {
-    return `${date.month() + 1}.${date.date()}`
-  }
+function formatWeekHeaderDayLabel(date: Dayjs): string {
   return String(date.date())
 }
 
@@ -470,6 +467,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       hideHeaderTitle = false,
       hideDateControls = false,
       hideModeToggle = false,
+      monthOnlyLabel = false,
       scheduleOverlay: scheduleOverlayProp,
       tooltipOverlayClassName,
       weekViewVariant = 'simple',
@@ -760,7 +758,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
             {weekDates.map(date => {
               const isSelected = date.isSame(selectedDate, 'day')
               const dateKey = date.format('YYYY-MM-DD')
-              const dayLabel = formatWeekHeaderDayLabel(date, weekDates)
+              const dayLabel = formatWeekHeaderDayLabel(date)
               const weekday = WEEK_HEADER_WEEKDAY_EN[date.day()]
               return (
                 <button
@@ -1209,7 +1207,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
     }
 
     const showCalendarChrome =
-      !hideHeader && (!hideDateControls || !hideModeToggle)
+      !hideHeader && (!hideDateControls || !hideModeToggle || monthOnlyLabel)
 
     return (
       <div ref={ref} className={['program-calendar-main', className].filter(Boolean).join(' ')}>
@@ -1243,7 +1241,13 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                 </>
               )}
             </div>
-            {hideModeToggle ? null : (
+            {monthOnlyLabel ? (
+              <div className="program-calendar-header-right">
+                <div className="program-calendar-month-only-badge">
+                  <span className="program-calendar-month-only-badge__inner">월간</span>
+                </div>
+              </div>
+            ) : hideModeToggle ? null : (
               <div className="program-calendar-header-right">
                 <SegmentedTab
                   size="medium"

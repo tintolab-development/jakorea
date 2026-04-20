@@ -3,7 +3,6 @@
  *  */
 
 import { useMemo, useState } from 'react'
-import { message } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import {
   DetailModalSidebar,
@@ -30,12 +29,15 @@ export interface AccountPaymentStatusDetailFullPageModalProps {
   open: boolean
   onClose: () => void
   row: AccountPaymentRow | null
+  /** 계좌 지급 완료 확인 시 목록·상세의 `accountPaymentStatus`를 갱신 */
+  onAccountPaymentCompleted?: (rowId: string) => void
 }
 
 export function AccountPaymentStatusDetailFullPageModal({
   open,
   onClose,
   row,
+  onAccountPaymentCompleted,
 }: AccountPaymentStatusDetailFullPageModalProps) {
   const detail = useMemo(() => (row ? getMockAccountPaymentStatusDetail(row) : null), [row])
   const [paymentCompleteConfirmOpen, setPaymentCompleteConfirmOpen] = useState(false)
@@ -210,14 +212,16 @@ export function AccountPaymentStatusDetailFullPageModal({
               formulaLabel={detail.formulaLabel}
               totalAmount={detail.totalAmount}
               headerActions={
-                <AppButton
-                  variant="primary"
-                  size="filter"
-                  modalTeal
-                  onClick={() => setPaymentCompleteConfirmOpen(true)}
-                >
-                  지급 완료 처리
-                </AppButton>
+                basic.accountPaymentStatus === 'completed' ? undefined : (
+                  <AppButton
+                    variant="primary"
+                    size="filter"
+                    modalTeal
+                    onClick={() => setPaymentCompleteConfirmOpen(true)}
+                  >
+                    지급 완료 처리
+                  </AppButton>
+                )
               }
             />
           </div>
@@ -228,7 +232,7 @@ export function AccountPaymentStatusDetailFullPageModal({
         open={paymentCompleteConfirmOpen}
         onCancel={() => setPaymentCompleteConfirmOpen(false)}
         onConfirm={() => {
-          message.success('계좌 지급 완료 처리되었습니다.')
+          onAccountPaymentCompleted?.(row.id)
           setPaymentCompleteConfirmOpen(false)
         }}
         data={paymentCompleteConfirmOpen ? singlePaymentConfirmPayload : null}

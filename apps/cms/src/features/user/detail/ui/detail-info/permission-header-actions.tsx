@@ -1,10 +1,12 @@
 import { CmsButton } from '@/shared/ui/cms-button'
+import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import type { PermissionHeaderActionsProps } from './user-detail-fullpage-header-actions'
 
 export function PermissionHeaderActions({
   permissionRole,
   displayUser,
   personalInfoButton,
+  personalInfoRevealed,
   onPermissionApprove,
   onPermissionReject,
   onPermissionResetToPending,
@@ -65,9 +67,15 @@ export function PermissionHeaderActions({
         </CmsButton>
       ) : null}
       {personalInfoButton ? (
-        <CmsButton width={180} variant={personalInfoButton.variant} onClick={personalInfoButton.onClick}>
-          {personalInfoButton.label}
-        </CmsButton>
+        <PersonalInfoRevealButton
+          ui="cms"
+          labelMode="stickyReveal"
+          revealed={personalInfoRevealed}
+          cmsVariant={personalInfoButton.variant}
+          cmsSize="medium"
+          width={180}
+          onClick={personalInfoButton.onClick}
+        />
       ) : null}
     </div>
   )

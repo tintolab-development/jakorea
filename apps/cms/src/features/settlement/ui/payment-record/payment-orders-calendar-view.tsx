@@ -11,7 +11,6 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import { Checkbox } from 'antd'
 import {
   PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST,
-  PAYMENT_ORDER_STATUS_LABELS_LIST,
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramRow,
@@ -25,10 +24,8 @@ import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
 } from '@/features/program/ui/program-schedule-colors'
-import {
-  ProgramCalendar,
-  type ProgramCalendarEventItem,
-} from '@/shared/components/program-calendar'
+import type { ProgramCalendarEventItem } from '@/shared/components/program-calendar'
+import { PaymentOrdersCalendarGrid } from './payment-orders-calendar-grid'
 import '@/features/program/ui/detail-modal/program-status/participating-institutions-calendar-view.css'
 import './payment-orders-calendar-view.css'
 
@@ -259,7 +256,7 @@ function PaymentOrdersCalendarRightPanel({
                     className={`payment-orders-calendar__card-status payment-orders-calendar__card-status--${ev.status}`}
                     style={{ color: PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR[ev.status] }}
                   >
-                    {PAYMENT_ORDER_STATUS_LABELS_LIST[ev.status]}
+                    {PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST[ev.status]}
                   </span>
                   <span className="payment-orders-calendar__card-divider" aria-hidden />
                   <span className="payment-orders-calendar__card-amount">
@@ -301,7 +298,7 @@ function PaymentOrderDayTooltipContent({ items }: { items: PaymentOrderCalendarE
                 className="payment-orders-calendar-tag-preview__status"
                 style={{ color: PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR[ev.status] }}
               >
-                {PAYMENT_ORDER_STATUS_LABELS_LIST[ev.status]}
+                {PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST[ev.status]}
               </span>
               <span className="payment-orders-calendar-tag-preview__sep" aria-hidden>
                 |
@@ -321,12 +318,20 @@ export type PaymentOrdersCalendarDetailClick =
   | { exposure: 'program'; row: PaymentOrderAdminProgramRow }
   | { exposure: 'instructor'; row: PaymentOrderAdminInstructorRow }
 
+/** 상단 기간 필터 `dateRangeOneMonthFromStart`와 동일: 해당 월 1일 ~ 다음달 전날 */
+function oneMonthRangeMatchingFilter(month: Dayjs): [Dayjs, Dayjs] {
+  const start = month.startOf('month')
+  return [start, start.add(1, 'month').subtract(1, 'day')]
+}
+
 export interface PaymentOrdersCalendarViewProps {
   exposure: PaymentOrdersCalendarExposure
   programRows: PaymentOrderAdminProgramRow[]
   instructorRows: PaymentOrderAdminInstructorRow[]
   /** URL·조회에 적용된 기간(실제 출강일). 없으면 데이터 앵커 월을 표시 */
   filterDateRange: [Dayjs, Dayjs] | null
+  /** 캘린더 헤더 네비·날짜 선택 시 기간 필터·URL과 동일하게 맞출 때 호출 */
+  onFilterDateRangeApply?: (range: [Dayjs, Dayjs]) => void
   /** 우측 목록 카드 클릭 시 지급 현황 상세(풀페이지 모달) */
   onPaymentStatusDetailClick?: (payload: PaymentOrdersCalendarDetailClick) => void
 }
@@ -356,6 +361,7 @@ export function PaymentOrdersCalendarView({
   programRows,
   instructorRows,
   filterDateRange,
+  onFilterDateRangeApply,
   onPaymentStatusDetailClick,
 }: PaymentOrdersCalendarViewProps) {
   const events = useMemo(() => {
@@ -403,7 +409,7 @@ export function PaymentOrdersCalendarView({
     })
   }, [filterDateRange, anchor])
   const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
-  /** 프로그램별: 월간만 — 주간 탭 비노출과 동일 동작 */
+  /** 프로그램·강사: 헤더에서 월간만 노출(주간 탭 숨김). `calendarMode`·주간 분기 로직은 유지 */
   const effectiveCalendarMode = exposure === 'program' ? ('month' as const) : calendarMode
 
   const eventsForSelectedDate = useMemo(
@@ -416,16 +422,19 @@ export function PaymentOrdersCalendarView({
       setSelectedDate(date)
       if (effectiveCalendarMode === 'week') {
         setCurrentMonth(date)
+        onFilterDateRangeApply?.(oneMonthRangeMatchingFilter(date))
       } else if (!date.isSame(currentMonth, 'month')) {
         setCurrentMonth(date.startOf('month'))
+        onFilterDateRangeApply?.(oneMonthRangeMatchingFilter(date))
       }
     },
-    [effectiveCalendarMode, currentMonth]
+    [effectiveCalendarMode, currentMonth, onFilterDateRangeApply]
   )
 
   const onMonthChange = useCallback(
     (next: Dayjs) => {
       setCurrentMonth(next)
+      onFilterDateRangeApply?.(oneMonthRangeMatchingFilter(next))
       if (effectiveCalendarMode === 'week') {
         setSelectedDate(prev => {
           const dow = prev.diff(prev.startOf('week'), 'day')
@@ -433,7 +442,7 @@ export function PaymentOrdersCalendarView({
         })
       }
     },
-    [effectiveCalendarMode]
+    [effectiveCalendarMode, onFilterDateRangeApply]
   )
 
   const onModeChange = useCallback(
@@ -468,13 +477,14 @@ export function PaymentOrdersCalendarView({
 
   const onTodayClick = useCallback(() => {
     const today = dayjs()
-    if (exposure === 'program' && filterDateRange?.[0] && filterDateRange[1]) {
+    if (filterDateRange?.[0] && filterDateRange[1]) {
       const [from, to] = filterDateRange
       let d = today
       if (d.isBefore(from, 'day')) d = from
       else if (d.isAfter(to, 'day')) d = to
       setSelectedDate(d)
       setCurrentMonth(d.startOf('month'))
+      onFilterDateRangeApply?.(oneMonthRangeMatchingFilter(d))
       return
     }
     setSelectedDate(today)
@@ -483,7 +493,8 @@ export function PaymentOrdersCalendarView({
     } else {
       setCurrentMonth(today.startOf('month'))
     }
-  }, [exposure, filterDateRange, effectiveCalendarMode])
+    onFilterDateRangeApply?.(oneMonthRangeMatchingFilter(today))
+  }, [filterDateRange, effectiveCalendarMode, onFilterDateRangeApply])
 
   return (
     <div
@@ -496,7 +507,7 @@ export function PaymentOrdersCalendarView({
     >
       <div className="participating-institutions-calendar-layout">
         <div className="participating-institutions-calendar-card">
-          <ProgramCalendar
+          <PaymentOrdersCalendarGrid
             className="payment-orders-calendar__program-calendar"
             selectedDate={selectedDate}
             currentMonth={currentMonth}
@@ -506,9 +517,6 @@ export function PaymentOrdersCalendarView({
             onModeChange={onModeChange}
             onTodayClick={onTodayClick}
             weekViewVariant={exposure === 'instructor' ? 'time-grid' : 'simple'}
-            hideHeaderTitle={exposure === 'program'}
-            hideDateControls={exposure === 'program'}
-            hideModeToggle={exposure === 'program'}
             scheduleOverlay="tooltip"
             tooltipOverlayClassName="payment-orders-calendar-tooltip-overlay"
             events={calendarItems}

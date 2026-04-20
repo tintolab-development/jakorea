@@ -8,6 +8,7 @@
  */
 
 import type { ReactNode } from 'react'
+import type { ModalProps } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import './content-modal.css'
 
@@ -37,14 +38,18 @@ export interface ContentModalProps {
   className?: string
   /** 닫기 버튼 아이콘 (미지정 시 기본 X 아이콘) */
   closeIcon?: ReactNode
-  /** 헤더 타이틀 바로 아래 설명. 전달 시 타이틀–설명 간격 16px 공통 적용 */
+  /** 헤더 타이틀 바로 아래 설명. 전달 시 타이틀–설명 간격은 descriptionGap에 따름 */
   description?: ReactNode
+  /** default: 16px, compact: 10px (헤더 하단 ↔ 설명) */
+  descriptionGap?: 'default' | 'compact'
   /** 다른 모달 위에 겹칠 때 (예: 이중 모달) */
   zIndex?: number
   /** TealHeaderModal → Modal `wrapClassName` (뷰포트 정렬 등) */
   wrapClassName?: string
   /** TealHeaderModal → Modal `rootClassName` */
   rootClassName?: string
+  /** Ant Design Modal `styles` (패널·바디 인라인 — 전역 CSS보다 우선) */
+  modalStyles?: ModalProps['styles']
 }
 
 export function ContentModal({
@@ -59,11 +64,19 @@ export function ContentModal({
   className,
   closeIcon = DEFAULT_CLOSE_ICON,
   description,
+  descriptionGap = 'default',
   zIndex,
   wrapClassName,
   rootClassName,
+  modalStyles,
 }: ContentModalProps) {
-  const resolvedClassName = ['content-modal', className].filter(Boolean).join(' ')
+  const resolvedClassName = [
+    'content-modal',
+    description != null && descriptionGap === 'compact' ? 'content-modal--description-gap-compact' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   const wrappedFooter =
     footer != null ? (
@@ -84,6 +97,7 @@ export function ContentModal({
       zIndex={zIndex}
       wrapClassName={wrapClassName}
       rootClassName={rootClassName}
+      styles={modalStyles}
     >
       {description != null ? (
         <div className="content-modal__description">{description}</div>

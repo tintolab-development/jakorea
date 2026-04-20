@@ -4,7 +4,7 @@ import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import updateLocale from 'dayjs/plugin/updateLocale'
-import './calendar-set.css'
+import './calendar.css'
 
 dayjs.extend(updateLocale)
 dayjs.updateLocale('en', {
@@ -43,26 +43,26 @@ export function CalendarMini({
     return (
       <div
         className={[
-          'program-mini-calendar-cell',
-          hasSchedule ? 'program-mini-calendar-cell--has-schedule' : '',
-          isSelected ? 'program-mini-calendar-cell--selected' : '',
+          'calendar-mini-cell',
+          hasSchedule ? 'calendar-mini-cell--has-schedule' : '',
+          isSelected ? 'calendar-mini-cell--selected' : '',
         ]
           .filter(Boolean)
           .join(' ')}
       >
-        <span className="program-mini-calendar-date">{date.date()}</span>
+        <span className="calendar-mini-date">{date.date()}</span>
       </div>
     )
   }
 
   return (
-    <div className="program-mini-calendar">
-      <div className="program-mini-calendar-header">
-        <button type="button" className="program-mini-calendar-nav-btn" onClick={handlePrevMonth}>
+    <div className="calendar-mini-container">
+      <div className="calendar-mini-header">
+        <button type="button" className="calendar-mini-nav-btn" onClick={handlePrevMonth}>
           <LeftOutlined />
         </button>
-        <span className="program-mini-calendar-title">{currentMonth.format('YYYY.MM')}</span>
-        <button type="button" className="program-mini-calendar-nav-btn" onClick={handleNextMonth}>
+        <span className="calendar-mini-title">{currentMonth.format('YYYY.MM')}</span>
+        <button type="button" className="calendar-mini-nav-btn" onClick={handleNextMonth}>
           <RightOutlined />
         </button>
       </div>
@@ -79,4 +79,3 @@ export function CalendarMini({
     </div>
   )
 }
-

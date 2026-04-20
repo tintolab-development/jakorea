@@ -9,12 +9,12 @@ export type SettlementItemSettingIconKey =
   | 'wage_special_lecture'
   | 'wage_assistant'
   | 'wage_multi_instructor'
+  | 'wage_simple_labor'
   | 'pay_transport'
   | 'pay_lodging'
   | 'pay_meal'
   | 'pay_meeting'
   | 'pay_volunteer'
-  | 'pay_simple_labor'
   | 'deduct_business_33'
   | 'deduct_other_88'
   | 'deduct_other_44'
@@ -36,6 +36,12 @@ export interface SettlementItemSettingSection {
 }
 
 export const settlementItemSettingSections: SettlementItemSettingSection[] = [
+  /**
+   * 임금 항목 중 강사비(급수별 강사비·특강 등) 산정 기준 — 제품/정책 확인용 메모
+   * - 프로그램 등록 시 또는 강사비 유형 선택 시, 유형별 최대 한도 안에서 지급 금액을 입력한다.
+   * - 강사 매칭 시 강사마다 임금 항목을 선택한다.
+   * - 1사1교 프로그램에 한해: 자택–출강지 거리에 따라 같은 급수라도 금액이 달라질 수 있으며, 편도 200km 초과 시 추가 금액이 지급된다.
+   */
   {
     kind: 'wage',
     sectionTitle: '임금 항목',
@@ -76,6 +82,12 @@ export const settlementItemSettingSections: SettlementItemSettingSection[] = [
         description: '출강 인원이 여러명일 때 적용되는 임금입니다.',
         iconKey: 'wage_multi_instructor',
       },
+      {
+        id: 'w-7',
+        title: '단순인건비',
+        description: '1인/1일 단순 근로 시 지원되는 비용입니다.',
+        iconKey: 'wage_simple_labor',
+      },
     ],
   },
   {
@@ -90,7 +102,7 @@ export const settlementItemSettingSections: SettlementItemSettingSection[] = [
       },
       {
         id: 'p-2',
-        title: '교통비(일사일교)',
+        title: '교통비 (1사1교)',
         description: '편도 30km 이상 이동 시 지원되는 비용입니다.',
         iconKey: 'pay_transport',
       },
@@ -98,6 +110,12 @@ export const settlementItemSettingSections: SettlementItemSettingSection[] = [
         id: 'p-3',
         title: '숙박비',
         description: '타지로 출장 시 지원되는 비용입니다.',
+        iconKey: 'pay_lodging',
+      },
+      {
+        id: 'p-7',
+        title: '숙박비 (1사1교)',
+        description: '1사1교 프로그램에서 타지역 출장 시 지원되는 숙박 비용입니다.',
         iconKey: 'pay_lodging',
       },
       {
@@ -118,12 +136,6 @@ export const settlementItemSettingSections: SettlementItemSettingSection[] = [
         description: '자원봉사자에게 지원되는 비용입니다.',
         iconKey: 'pay_volunteer',
       },
-      {
-        id: 'p-7',
-        title: '단순인건비',
-        description: '1인/1일 단순 근로 시 지원되는 비용입니다.',
-        iconKey: 'pay_simple_labor',
-      },
     ],
   },
   {
@@ -132,27 +144,9 @@ export const settlementItemSettingSections: SettlementItemSettingSection[] = [
     items: [
       {
         id: 'd-1',
-        title: '사업소득 3.3%',
-        description: '사업소득자에게 적용되는 공제 항목입니다.',
+        title: '일용근로자 원천징수세액',
+        description: '일용직 급여에서 원천징수하는 소득세액입니다.',
         iconKey: 'deduct_business_33',
-      },
-      {
-        id: 'd-2',
-        title: '기타 소득 8.8%',
-        description: '기타 소득 항목에 적용되는 공제 항목입니다.',
-        iconKey: 'deduct_other_88',
-      },
-      {
-        id: 'd-3',
-        title: '기타 소득 4.4%',
-        description: '상금에 적용되는 공제 항목입니다.',
-        iconKey: 'deduct_other_44',
-      },
-      {
-        id: 'd-4',
-        title: '기타 소득 22%',
-        description: '면접비, 지원금, 경품에 적용되는 공제 항목입니다.',
-        iconKey: 'deduct_other_22',
       },
     ],
   },

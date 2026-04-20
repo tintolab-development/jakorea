@@ -32,7 +32,10 @@ export interface AccountPaymentRow {
   sessionLabel: string
   accountPaymentStatus: AccountPaymentTransferStatus
   amount: number
-  /** 이체 예정일 ISO YYYY-MM-DD */
+  /**
+   * 이체 예정일 ISO `YYYY-MM-DD`.
+   * 계좌 지급 확인 화면에서 이체 예정일 필터·세 번째 요약 카드(구간 내 지급예정 금액 합) 집계에 사용.
+   */
   transferScheduledDate: string
   /** 목록은 항상 지급조서 확인 완료 건만 포함 */
   paymentOrderStatus: Extract<PaymentOrderAdminProcessingStatus, 'confirmed'>

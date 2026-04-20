@@ -97,6 +97,42 @@
   align-items: center;
 }
 
+/* 월간 고정 라벨(세그먼트 탭 자리) — 지급조서 등 */
+.program-calendar-month-only-badge {
+  box-sizing: border-box;
+  display: flex;
+  min-width: 66px;
+  width: fit-content;
+  height: 42px;
+  padding: 4px;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #f5f6f7;
+}
+
+.program-calendar-month-only-badge__inner {
+  box-sizing: border-box;
+  display: flex;
+  height: 34px;
+  padding: 0 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  border-radius: 6px;
+  border: 1px solid var(--JA-mint-01, #01a1af);
+  background: var(--default-WT, #fff);
+  color: var(--JA-mint-01, #01a1af);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
 /* Popover: 공통 크롬은 overlay-popover.css `.app-popover-panel` — 여기서 폭·스크롤만 보강 */
 .program-calendar-cell-preview-popover .ant-popover-inner {
   width: 333px;
