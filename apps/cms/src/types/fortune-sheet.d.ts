@@ -10,8 +10,21 @@ declare module '@fortune-sheet/core' {
     fc?: string
     ht?: number
     vt?: number
-    tb?: number
+    /** 2 / `"2"` = 줄바꿈 — 런타임은 문자열로 정규화 */
+    tb?: number | string
     mc?: { r: number; c: number; rs?: number; cs?: number }
+    /** inlineStr 등 — 줄바꿈(`\\n`) 렌더용 */
+    ct?: {
+      fa?: string
+      t?: string
+      s?: Array<{
+        v?: string
+        fc?: string
+        fs?: number
+        bl?: number
+        [key: string]: unknown
+      }>
+    }
     /** 폰트 크기(pt) */
     fs?: number
     /** 0 일반, 1 굵게 */

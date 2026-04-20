@@ -56,9 +56,8 @@
 }
 
 /**
- * 시트 1행 헤더(캔버스): fc #FFF, fs 14, bl 1, 가운데 — tax-filing-fortune-data headerCell
- * 소득구분 열(캔버스): fc #3D3D3D, fs 14, bl 1, tb 2 줄바꿈 — mergedLabelCell / 소계 A열
- * 디자인 line-height(헤더 150%, 소득구분 130%)는 Fortune 캔버스 기본 행간에 맞춤
+ * 시트 캔버스: 본문·헤더·소득구분 공통 fs 11 (tax-filing-fortune-data PREVIEW_UNIFIED_FS)
+ * 헤더: fc #FFF·bl 1 / 소득구분·소계 A열: fc #3D3D3D·bl 1·tb 줄바꿈
  */
 
 .tax-filing-preview-modal__sheet-host .fortune-sheet-container,

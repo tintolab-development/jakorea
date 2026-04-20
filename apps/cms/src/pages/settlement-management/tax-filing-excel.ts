@@ -7,6 +7,7 @@ import { downloadExcel, generateFilename } from '@/shared/utils/file-download'
 import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
 import {
   buildTaxFilingSheetLines,
+  computeTaxFilingGrandTotals,
   TAX_FILING_HEADER_LABELS,
   TAX_FILING_INCOME_GROUPS,
   type TaxFilingDetailLine,
@@ -38,6 +39,10 @@ function applyHeaderStyle(row: ExcelJS.Row) {
 function applyDataRowStyle(row: ExcelJS.Row, options?: { subtotal?: boolean }) {
   const sub = options?.subtotal ?? false
   row.eachCell((cell, col) => {
+    cell.font = {
+      size: 11,
+      ...(sub && col === 1 ? { bold: true, color: { argb: 'FF3D3D3D' } } : {}),
+    }
     cell.border = {
       top: { style: 'thin', color: { argb: BORDER_LIGHT } },
       bottom: { style: 'thin', color: { argb: BORDER_LIGHT } },
@@ -110,8 +115,10 @@ export async function exportTaxFilingExcel(rows: AccountPaymentRow[]): Promise<v
       const row = sheet.addRow(values)
       applyDataRowStyle(row)
       if (i === 0) {
-        row.getCell(1).value = g.label
-        row.getCell(1).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+        const a1 = row.getCell(1)
+        a1.value = g.label
+        a1.font = { bold: true, size: 11, color: { argb: 'FF3D3D3D' } }
+        a1.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
       } else {
         row.getCell(1).value = ''
       }
@@ -143,6 +150,30 @@ export async function exportTaxFilingExcel(rows: AccountPaymentRow[]): Promise<v
 
   if (lineIdx !== lines.length) {
     throw new Error('tax-filing excel: line count mismatch')
+  }
+
+  const grandTotals = computeTaxFilingGrandTotals(lines)
+  const grandRow = sheet.addRow([
+    '합계',
+    '',
+    grandTotals.paymentAmount,
+    grandTotals.incomeTax,
+    grandTotals.residenceTax,
+    grandTotals.afterDeduction,
+    '-',
+    '-',
+    '-',
+  ])
+  applyDataRowStyle(grandRow, { subtotal: true })
+  const grandA = grandRow.getCell(1)
+  grandA.font = { bold: true, size: 11, color: { argb: 'FF3D3D3D' } }
+  grandA.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+  sheet.mergeCells(`A${excelRow}:B${excelRow}`)
+  for (const col of [3, 4, 5, 6] as const) {
+    const c = grandRow.getCell(col)
+    if (typeof c.value === 'number') {
+      c.numFmt = '#,##0'
+    }
   }
 
   sheet.columns = [

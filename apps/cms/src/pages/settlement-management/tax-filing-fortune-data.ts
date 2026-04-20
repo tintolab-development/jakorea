@@ -28,15 +28,21 @@ const HEADER_FG = '#FFFFFF'
 const INCOME_COL_FG = '#3D3D3D'
 /** rgba(1,161,175,0.1) on #fff 근사 */
 const SUBTOTAL_BG = '#E8F5F6'
-/** 미리보기 헤더·소득구분 강조용 14px bold */
-const PREVIEW_HEAD_FS = 14
+/** 미리보기 전 셀 공통 글자 크기(데이터 영역과 동일) — 색·bold는 셀 유형별 유지 */
+const PREVIEW_UNIFIED_FS = 11
 const DASH = '-'
 
 const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토']
 
 const LABEL_GROUP_1 = '기타소득 8.8%'
 const LABEL_GROUP_2 = '기타소득(상금) 4.4%'
-const LABEL_GROUP_3 = '기타소득(면접비)\n(지원금) (경품)\n22%'
+/** Fortune·엑셀 공통 3줄 라벨 (미리보기는 inlineStr로 \\n 렌더) */
+export const TAX_FILING_GROUP_3_LABEL_LINES = [
+  '기타소득(면접비)',
+  '(지원금) (경품)',
+  '22%',
+] as const
+const LABEL_GROUP_3 = TAX_FILING_GROUP_3_LABEL_LINES.join('\n')
 const LABEL_GROUP_4 = '사업소득 3.3%'
 
 /** 각 그룹: 상세 행 수, A열 라벨, 세율 그룹 id (엑셀 병합·시트 생성 공통) */
@@ -111,14 +117,14 @@ function headerCell(text: string): Cell {
     fc: HEADER_FG,
     ht: 0,
     vt: 0,
-    fs: PREVIEW_HEAD_FS,
+    fs: PREVIEW_UNIFIED_FS,
     bl: 1,
   }
 }
 
 function dataCell(text: string | number): Cell {
   const m = typeof text === 'number' ? text.toLocaleString('ko-KR') : text
-  return { v: m, m, ht: 0, vt: 0 }
+  return { v: m, m, ht: 0, vt: 0, fs: PREVIEW_UNIFIED_FS }
 }
 
 function subtotalCell(text: string | number, leftAlign: boolean): Cell {
@@ -133,12 +139,12 @@ function subtotalCell(text: string | number, leftAlign: boolean): Cell {
     ...(isIncomeColLabel
       ? {
           fc: INCOME_COL_FG,
-          fs: PREVIEW_HEAD_FS,
+          fs: PREVIEW_UNIFIED_FS,
           bl: 1,
           /** 한 줄 초과 시 다음 줄로 줄바꿈 */
-          tb: 2,
+          tb: '2',
         }
-      : {}),
+      : { fs: PREVIEW_UNIFIED_FS }),
   }
 }
 
@@ -150,9 +156,42 @@ function mergedLabelCell(text: string): Cell {
     ht: 0,
     vt: 0,
     /** 2: 자동 줄바꿈 — 한 줄 넘치면 두 줄 이상 표시 */
-    tb: 2,
-    fs: PREVIEW_HEAD_FS,
+    tb: '2',
+    fs: PREVIEW_UNIFIED_FS,
     bl: 1,
+  }
+}
+
+/**
+ * 소득구분 병합 라벨. Fortune Sheet는 일반 셀에서 \\n을 실제 줄바꿈으로 그리지 않으므로,
+ * 3줄 라벨(tax 그룹 3)만 inlineStr로 넣어 줄바꿈을 반영한다.
+ */
+function mergedIncomeCategoryLabelCell(text: string, useInlineNewlines: boolean): Cell {
+  const base: Cell = {
+    v: text,
+    m: text,
+    fc: INCOME_COL_FG,
+    ht: 0,
+    vt: 0,
+    tb: '2',
+    fs: PREVIEW_UNIFIED_FS,
+    bl: 1,
+  }
+  if (!useInlineNewlines) return base
+  return {
+    ...base,
+    ct: {
+      fa: 'General',
+      t: 'inlineStr',
+      s: [
+        {
+          v: text,
+          fc: INCOME_COL_FG,
+          fs: PREVIEW_UNIFIED_FS,
+          bl: 1,
+        },
+      ],
+    },
   }
 }
 
@@ -257,6 +296,39 @@ export function buildTaxFilingSheetLines(rows: AccountPaymentRow[]): TaxFilingSh
   return lines
 }
 
+/** 상세 행만 합산(빈 슬롯·대시 행 제외) */
+export function computeTaxFilingGrandTotals(lines: TaxFilingSheetLine[]): TaxFilingNumericSlice {
+  const z: TaxFilingNumericSlice = {
+    paymentAmount: 0,
+    incomeTax: 0,
+    residenceTax: 0,
+    afterDeduction: 0,
+  }
+  for (const line of lines) {
+    if (line.kind !== 'detail') continue
+    if (line.paymentAmount == null) continue
+    z.paymentAmount += line.paymentAmount
+    z.incomeTax += line.incomeTax ?? 0
+    z.residenceTax += line.residenceTax ?? 0
+    z.afterDeduction += line.afterDeduction ?? 0
+  }
+  return z
+}
+
+function grandTotalMergedLabelCell(text: string): Cell {
+  return {
+    v: text,
+    m: text,
+    fc: INCOME_COL_FG,
+    bg: SUBTOTAL_BG,
+    ht: 0,
+    vt: 0,
+    tb: '2',
+    fs: PREVIEW_UNIFIED_FS,
+    bl: 1,
+  }
+}
+
 function detailToCells(line: TaxFilingDetailLine): Cell[] {
   const amt = line.paymentAmount
   const dashOrNum = (n: number | null) => (n == null ? DASH : n)
@@ -291,7 +363,7 @@ function subtotalToCells(line: TaxFilingSubtotalLine): Cell[] {
 /** Fortune `Workbook`용 시트 1개 */
 export function buildTaxFilingFortuneSheet(rows: AccountPaymentRow[]): Sheet {
   const sheetLines = buildTaxFilingSheetLines(rows)
-  const totalRows = 1 + sheetLines.length
+  const totalRows = 1 + sheetLines.length + 1
 
   const celldata: CellWithRowAndCol[] = []
 
@@ -325,7 +397,7 @@ export function buildTaxFilingFortuneSheet(rows: AccountPaymentRow[]): Sheet {
         if (c === 0) {
           if (isFirst) {
             const primary: Cell = {
-              ...mergedLabelCell(label),
+              ...mergedIncomeCategoryLabelCell(label, g.tax === 3),
               mc: { r: mergeStartR, c: 0, rs, cs: 1 },
             }
             celldata.push({ r: fortuneR, c: 0, v: primary })
@@ -359,6 +431,28 @@ export function buildTaxFilingFortuneSheet(rows: AccountPaymentRow[]): Sheet {
   if (lineIdx !== sheetLines.length) {
     throw new Error('tax-filing: line index mismatch')
   }
+
+  const grandTotals = computeTaxFilingGrandTotals(sheetLines)
+  const grandR = fortuneR
+  merge[`${grandR}_0`] = { r: grandR, c: 0, rs: 1, cs: 2 }
+
+  const primaryGrand: Cell = {
+    ...grandTotalMergedLabelCell('합계'),
+    mc: { r: grandR, c: 0, rs: 1, cs: 2 },
+  }
+  celldata.push({ r: grandR, c: 0, v: primaryGrand })
+  celldata.push({
+    r: grandR,
+    c: 1,
+    v: { mc: { r: grandR, c: 0 } },
+  })
+  celldata.push({ r: grandR, c: 2, v: subtotalCell(grandTotals.paymentAmount, false) })
+  celldata.push({ r: grandR, c: 3, v: subtotalCell(grandTotals.incomeTax, false) })
+  celldata.push({ r: grandR, c: 4, v: subtotalCell(grandTotals.residenceTax, false) })
+  celldata.push({ r: grandR, c: 5, v: subtotalCell(grandTotals.afterDeduction, false) })
+  celldata.push({ r: grandR, c: 6, v: subtotalCell(DASH, false) })
+  celldata.push({ r: grandR, c: 7, v: subtotalCell(DASH, false) })
+  celldata.push({ r: grandR, c: 8, v: subtotalCell(DASH, false) })
 
   /** 열 너비 합 ~1240px 유지, A열은 다줄 소득구분 라벨용으로 넓게 */
   const columnlen: Record<string, number> = {
