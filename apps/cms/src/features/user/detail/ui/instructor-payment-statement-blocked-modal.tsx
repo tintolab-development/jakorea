@@ -14,6 +14,11 @@ export interface InstructorPaymentStatementBlockedModalProps {
   selectedCount?: number
   /** 지급 현황 상세 풀페이지 등 600×230 시안 */
   layout?: 'default' | 'detailFullpage'
+  /**
+   * `paymentStatement`(기본): 지급조서 확인 미처리 안내
+   * `accountPaymentForms`: 계좌 지급 대기 포함 시 대량이체·세금신고 양식 발급 불가 안내
+   */
+  purpose?: 'paymentStatement' | 'accountPaymentForms'
 }
 
 export function InstructorPaymentStatementBlockedModal({
@@ -22,6 +27,7 @@ export function InstructorPaymentStatementBlockedModal({
   variant,
   selectedCount = 0,
   layout = 'default',
+  purpose = 'paymentStatement',
 }: InstructorPaymentStatementBlockedModalProps) {
   const rootClass = [
     'instructor-payment-statement-blocked-modal',
@@ -30,11 +36,49 @@ export function InstructorPaymentStatementBlockedModal({
     .filter(Boolean)
     .join(' ')
 
+  const title =
+    purpose === 'accountPaymentForms' ? '양식 발급 불가 안내' : '지급조서 발급 불가 안내'
+
+  const message =
+    purpose === 'accountPaymentForms' ? (
+      variant === 'single' ? (
+        <>
+          <span>해당 항목은 계좌 지급 대기 중입니다.</span>
+          <span>계좌 지급이 완료되지 않은 항목은 양식 발급이 불가합니다.</span>
+        </>
+      ) : (
+        <>
+          <span>
+            <strong className="instructor-payment-statement-blocked-modal__selection-emphasis">
+              선택한 {selectedCount}개의 항목
+            </strong>
+            중 계좌 지급 대기 중인 항목이 있습니다.
+          </span>
+          <span>계좌 지급이 완료되지 않은 항목은 양식 발급이 불가합니다.</span>
+        </>
+      )
+    ) : variant === 'single' ? (
+      <>
+        <span>해당 항목은 아직 지급조서 확인 처리가 되지 않았습니다.</span>
+        <span>확인 처리가 되지 않은 항목은 지급조서 발급이 불가합니다.</span>
+      </>
+    ) : (
+      <>
+        <span>
+          <strong className="instructor-payment-statement-blocked-modal__selection-emphasis">
+            선택한 {selectedCount}개의 항목
+          </strong>
+          중 아직 지급조서 확인 처리가 되지 않은 항목이 있습니다.
+        </span>
+        <span>확인 처리가 되지 않은 항목은 지급조서 발급이 불가합니다.</span>
+      </>
+    )
+
   return (
     <ContentModal
       open={open}
       onCancel={onClose}
-      title="지급조서 발급 불가 안내"
+      title={title}
       width={600}
       className={rootClass}
       footer={
@@ -43,24 +87,7 @@ export function InstructorPaymentStatementBlockedModal({
         </CmsButton>
       }
     >
-      <div className="instructor-payment-statement-blocked-modal__message">
-        {variant === 'single' ? (
-          <>
-            <span>해당 항목은 아직 지급조서 확인 처리가 되지 않았습니다.</span>
-            <span>확인 처리가 되지 않은 항목은 지급조서 발급이 불가합니다.</span>
-          </>
-        ) : (
-          <>
-            <span>
-              <strong className="instructor-payment-statement-blocked-modal__selection-emphasis">
-                선택한 {selectedCount}개의 항목
-              </strong>
-              중 아직 지급조서 확인 처리가 되지 않은 항목이 있습니다.
-            </span>
-            <span>확인 처리가 되지 않은 항목은 지급조서 발급이 불가합니다.</span>
-          </>
-        )}
-      </div>
+      <div className="instructor-payment-statement-blocked-modal__message">{message}</div>
     </ContentModal>
   )
 }
