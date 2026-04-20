@@ -1,25 +1,19 @@
 /**
  * 정산 항목 설정 — 항목 상세 모달
- * 기본 800×715, 특강 강사비(w-4)만 800×618
+ * 높이: 항목(섹션·행) 개수에 따라 자동 — 외곽 패딩(content-modal) 포함, 뷰포트 초과 시 본문만 스크롤
  */
 
 .settlement-item-setting-detail-modal.content-modal.ant-modal .ant-modal-content {
   width: 800px !important;
   max-width: min(800px, calc(100vw - 32px));
   height: auto;
-  min-height: 715px;
-  max-height: none;
+  min-height: 0;
+  /* 짧은 폼은 콘텐츠 높이만큼, 긴 폼은 뷰포트 안에서 본문 스크롤 */
+  max-height: calc(100vh - 32px);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-
-/* 특강 강사비(w-4): 800×618 */
-.settlement-item-setting-detail-modal--special-lecture.content-modal.ant-modal .ant-modal-content {
-  height: auto !important;
-  min-height: 618px !important;
-  max-height: none !important;
 }
 
 /* 교통비: 산정 행 인풋·셀렉트·라디오 한 줄 세로 중앙 정렬 */
@@ -89,14 +83,65 @@
   height: 100%;
 }
 
+/* 교통비: ModalSpecTable 산정 기준 단위 — 거리 숫자 인풋 120px */
+.settlement-item-setting-detail-modal--transport
+  .modal-spec-table__input-wrap--transport-km
+  .app-input__control {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  flex: 0 0 120px !important;
+}
+
+/* 숙박비: 산정 기준 단위(일) 숫자 인풋 120px */
+.settlement-item-setting-detail-modal--lodging
+  .modal-spec-table__input-wrap--lodging-basis-days
+  .app-input__control {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  flex: 0 0 120px !important;
+}
+
+/* 식사비: 산정 기준 단위(시간) 숫자 인풋 120px */
+.settlement-item-setting-detail-modal--meal
+  .modal-spec-table__input-wrap--meal-basis-hours
+  .app-input__control {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  flex: 0 0 120px !important;
+}
+
+/* 자원봉사자 활동비: 산정 기준 단위(시간) 숫자 인풋 120px */
+.settlement-item-setting-detail-modal--volunteer-activity
+  .modal-spec-table__input-wrap--volunteer-activity-basis-hours
+  .app-input__control {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  flex: 0 0 120px !important;
+}
+
+/* 회의참석비: 산정 기준 단위(시간) 숫자 인풋 120px */
+.settlement-item-setting-detail-modal--meeting-attendance
+  .modal-spec-table__input-wrap--meeting-attendance-hours
+  .app-input__control {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  flex: 0 0 120px !important;
+}
+
 .settlement-item-setting-detail-modal.content-modal.ant-modal .ant-modal-body {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 0 !important;
-  height: 100%;
+  height: auto;
 }
 
 .settlement-item-setting-detail-modal .teal-header-modal__header {
@@ -130,7 +175,8 @@
 }
 
 .settlement-item-setting-detail-modal .teal-header-modal__body {
-  flex: 1 1 auto;
+  /* 고정 min-height로 빈 여백 늘리지 않음 — content-modal의 flex:1 1 auto 덮어씀 */
+  flex: 0 1 auto;
   min-height: 0;
   overflow: visible;
   display: flex;
@@ -138,6 +184,37 @@
   align-items: stretch;
   gap: 30px;
   padding-top: 30px;
+}
+
+/* description 유무: 상단 간격은 content-modal(16px/compact 10px). 기본 30px 패딩과 이중 적용 방지 */
+.settlement-item-setting-detail-modal .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 0;
+}
+
+/* 모달 헤더 하단 디스크립션(항목 설명) */
+.settlement-item-setting-detail-modal .content-modal__description {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  opacity: 0.6;
+}
+
+.settlement-item-setting-detail-modal__section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  width: 100%;
+}
+
+.settlement-item-setting-detail-modal__section-stack--tier1 > section,
+.settlement-item-setting-detail-modal__section-stack--special-lecture > section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 /* 섹션 내부: 레이블 ↔ 컨트롤(산정 기준·자격·비고) 세로 간격 6px — 블록 간 간격은 body gap 30px */
@@ -155,14 +232,29 @@
   background: transparent;
 }
 
+/**
+ * 항목 레이블 — 모달 본문 블록 제목(조건, 산정 기준, 자격 요건, 비고, 지원 기준 등)
+ * - Pretendard / 16px / 700 / line-height 140%
+ * - 색: var(--default-BK, #3D3D3D)
+ * - 타이틀 하단 ↔ 표·필드 블록 간격: 6px
+ */
+.settlement-item-setting-detail-modal {
+  --settlement-modal-item-title-font-size: 16px;
+  --settlement-modal-item-title-font-weight: 700;
+  --settlement-modal-item-title-line-height: 140%;
+  --settlement-modal-item-title-color: var(--default-BK, #3d3d3d);
+  --settlement-modal-item-title-gap-below: 6px;
+}
+
 .settlement-item-setting-detail-modal__section-label {
-  margin: 0 0 6px;
-  color: var(--default-BK, #3d3d3d);
+  margin: 0 0 var(--settlement-modal-item-title-gap-below);
+  padding: 0;
+  color: var(--settlement-modal-item-title-color);
   font-family: Pretendard, sans-serif;
-  font-size: 14px;
+  font-size: var(--settlement-modal-item-title-font-size);
   font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
+  font-weight: var(--settlement-modal-item-title-font-weight);
+  line-height: var(--settlement-modal-item-title-line-height);
 }
 
 .settlement-item-setting-detail-modal__basis-row {
@@ -184,31 +276,6 @@
   min-width: 120px;
 }
 
-/* 1급 강사비(tier1): 산정 기준 첫번째 Select 180×44 */
-.settlement-item-setting-detail-modal:not(
-    .settlement-item-setting-detail-modal--special-lecture
-  ):not(.settlement-item-setting-detail-modal--transport)
-  .settlement-item-setting-detail-modal__basis-controls
-  > .ant-select {
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
-  height: 44px !important;
-  min-height: 44px !important;
-}
-
-.settlement-item-setting-detail-modal:not(
-    .settlement-item-setting-detail-modal--special-lecture
-  ):not(.settlement-item-setting-detail-modal--transport)
-  .settlement-item-setting-detail-modal__basis-controls
-  > .ant-select
-  .ant-select-selector {
-  height: 44px !important;
-  min-height: 44px !important;
-  display: flex !important;
-  align-items: center !important;
-}
-
 /* 특강 등: 산정 기준 — 셀렉트만 전폭 */
 .settlement-item-setting-detail-modal__basis-row--simple {
   width: 100%;
@@ -225,20 +292,6 @@
   width: auto;
   min-width: 100px;
   max-width: 140px;
-}
-
-/* 1급 강사비(tier1): 산정 기준 두번째 Input 100×44 */
-.settlement-item-setting-detail-modal:not(
-    .settlement-item-setting-detail-modal--special-lecture
-  ):not(.settlement-item-setting-detail-modal--transport)
-  .settlement-item-setting-detail-modal__basis-hours.ant-input-affix-wrapper {
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  display: flex;
-  align-items: center;
 }
 
 .settlement-item-setting-detail-modal__basis-hours.ant-input-affix-wrapper > .ant-input {
@@ -365,7 +418,8 @@
   gap: 6px;
 }
 
-.settlement-item-setting-detail-modal__fee-label {
+/* 최대 한도 금액 — 접미사「원」 (스펙: 14px / 500 / 150%) */
+.settlement-item-setting-detail-modal__fee-col .app-input__suffix {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 14px;
@@ -374,14 +428,13 @@
   line-height: 150%;
 }
 
-.settlement-item-setting-detail-modal__fee-divider {
-  width: 1px;
-  height: 32px;
-  flex-shrink: 0;
-  align-self: center;
-  margin: 0 33px;
-  opacity: 0.5;
-  background: var(--default-BK, #3d3d3d);
+.settlement-item-setting-detail-modal__fee-label {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 /* 특강 등: 최대 한도 금액 단일 열 */
@@ -460,4 +513,12 @@
 
 .settlement-item-setting-detail-modal__richtext li + li {
   margin-top: 4px;
+}
+
+/* 일용근로자 원천징수(d-1): 수익 제외 문구 + 금액 인풋 한 줄/줄바꿈 */
+.settlement-item-setting-detail-modal--withholding-daily-worker
+  .modal-spec-table__field-row--withholding-inline {
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  row-gap: 8px;
 }
