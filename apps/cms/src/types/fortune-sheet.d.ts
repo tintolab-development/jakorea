@@ -10,6 +10,12 @@ declare module '@fortune-sheet/core' {
     fc?: string
     ht?: number
     vt?: number
+    tb?: number
+    mc?: { r: number; c: number; rs?: number; cs?: number }
+    /** 폰트 크기(pt) */
+    fs?: number
+    /** 0 일반, 1 굵게 */
+    bl?: number
     [key: string]: unknown
   }
 
@@ -30,6 +36,10 @@ declare module '@fortune-sheet/core' {
     celldata?: CellWithRowAndCol[]
     config?: {
       columnlen?: Record<string, number>
+      /** 행 인덱스 문자열 → 픽셀 높이 */
+      rowlen?: Record<string, number>
+      /** 키 `"r_c"` → `{ r, c, rs, cs }` 병합 영역 */
+      merge?: Record<string, { r: number; c: number; rs: number; cs: number }>
       authority?: Record<string, unknown>
       [key: string]: unknown
     }
@@ -47,6 +57,9 @@ declare module '@fortune-sheet/react' {
   import type { ComponentType } from 'react'
 
   export interface WorkbookProps {
+    /** 미지정 시 라이브러리 기본 열 수(큼)로 컨텍스트가 잡혀 빈 열이 보일 수 있음 */
+    column?: number
+    row?: number
     data?: import('@fortune-sheet/core').Sheet[]
     showToolbar?: boolean
     showFormulaBar?: boolean
