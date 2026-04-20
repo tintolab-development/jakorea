@@ -1,0 +1,68 @@
+.calendar-search {
+  box-sizing: border-box;
+  background: var(--color-bg-base);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--color-border-light);
+}
+
+.calendar-search__filters-wrapper {
+  margin-top: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Ant Checkbox: 라벨은 형제 span — flex + min-width:0 으로 말줄임 동작 */
+.calendar-search__filter-item.ant-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.calendar-search__filter-item .ant-checkbox {
+  flex-shrink: 0;
+  align-self: flex-start;
+  top: 2px;
+}
+
+.calendar-search__filter-item.ant-checkbox-wrapper > span:last-child {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--main-BK, #3d3d3d);
+}
+
+/*
+ * Ant Design 5: `ant-checkbox-checked`는 label이 아니라 내부 span.ant-checkbox에만 붙음.
+ * `--calendar-search-checkbox-fill`은 `.calendar-search__filters-wrapper`에 행마다 설정.
+ */
+.calendar-search__filters-wrapper
+  .calendar-search__filter-item
+  .ant-checkbox.ant-checkbox-checked
+  .ant-checkbox-inner {
+  background-color: var(--calendar-search-checkbox-fill, var(--color-brand-primary)) !important;
+  border-color: var(--calendar-search-checkbox-fill, var(--color-brand-primary)) !important;
+}
+
+.calendar-search__filters-wrapper
+  .calendar-search__filter-item.ant-checkbox-wrapper-checked:hover
+  .ant-checkbox.ant-checkbox-checked:not(.ant-checkbox-disabled)
+  .ant-checkbox-inner {
+  background-color: var(--calendar-search-checkbox-fill, var(--color-brand-primary)) !important;
+  border-color: var(--calendar-search-checkbox-fill, var(--color-brand-primary)) !important;
+}
+
+.calendar-search__filters-wrapper
+  .calendar-search__filter-item:not(.ant-checkbox-wrapper-disabled):hover
+  .ant-checkbox:not(.ant-checkbox-disabled):not(.ant-checkbox-checked)
+  .ant-checkbox-inner {
+  border-color: var(--calendar-search-checkbox-fill, var(--color-brand-primary));
+}

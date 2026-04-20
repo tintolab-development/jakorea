@@ -14,6 +14,7 @@ import { useApplicantCalendarColorMaps } from '@/features/program/program-detail
 import { SegmentedTab } from '@/shared/ui/segmented-tab'
 import '@/shared/ui/overlay-popover.css'
 import { CalendarBody } from './calendar-body'
+import { WeekView } from './ui/week-view'
 import {
   CalendarCell,
   CalendarCellSchedulePreview,
@@ -70,6 +71,8 @@ type CalendarMainSharedProps = {
   scheduleOverlay?: 'popover' | 'tooltip'
   tooltipOverlayClassName?: string
   hideHeader?: boolean
+  /** true면 헤더 우측 월간/주간 토글을 숨김(월간만 쓰는 화면용) */
+  hideModeToggle?: boolean
 }
 
 export type CalendarMainItemsProps = CalendarMainSharedProps & {
@@ -143,7 +146,7 @@ function useCalendarNavigation({
 
   const headerTitle =
     mode === 'week'
-      ? `${weekDates[0].format('MM.DD')} ~ ${weekDates[6].format('MM.DD')}`
+      ? weekDates[0].format('YYYY. MM')
       : currentMonth.format('YYYY.MM')
 
   return { handleToday, handlePrev, handleNext, headerTitle }
@@ -156,6 +159,7 @@ function CalendarHeader({
   onToday,
   onPrev,
   onNext,
+  hideModeToggle,
 }: {
   headerTitle: string
   mode: 'month' | 'week'
@@ -163,6 +167,7 @@ function CalendarHeader({
   onToday: () => void
   onPrev: () => void
   onNext: () => void
+  hideModeToggle?: boolean
 }) {
   return (
     <div className="calendar-header">
@@ -188,17 +193,19 @@ function CalendarHeader({
           />
         </div>
       </div>
-      <div className="calendar-header-right">
-        <SegmentedTab
-          size="medium"
-          value={mode}
-          onChange={value => onModeChange(value as 'month' | 'week')}
-          options={[
-            { label: '월간', value: 'month' },
-            { label: '주간', value: 'week' },
-          ]}
-        />
-      </div>
+      {!hideModeToggle && (
+        <div className="calendar-header-right">
+          <SegmentedTab
+            size="medium"
+            value={mode}
+            onChange={value => onModeChange(value as 'month' | 'week')}
+            options={[
+              { label: '월간', value: 'month' },
+              { label: '주간', value: 'week' },
+            ]}
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -294,6 +301,7 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
       scheduleOverlay: scheduleOverlayProp,
       tooltipOverlayClassName,
       hideHeader = false,
+      hideModeToggle = false,
     } = props
 
     const isEventsMode = isEventsProps(props)
@@ -375,31 +383,20 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
       ]
     )
 
-    const renderWeekDay = useCallback(
-      (date: Dayjs) =>
-        renderCalendarDayCell({
-          date,
-          cellMode: 'week',
-          currentMonthForCell: date,
-          items,
-          selectedDate,
-          onSelectDate,
-          scheduleOverlay,
-          tooltipOverlayClassName,
-          colorMap,
-          eventsConfig,
-          buildResolvedColorMap,
-        }),
-      [
-        items,
-        selectedDate,
-        onSelectDate,
-        scheduleOverlay,
-        tooltipOverlayClassName,
-        colorMap,
-        eventsConfig,
-        buildResolvedColorMap,
-      ]
+    const weekTimeGrid = (
+      <WeekView
+        weekDates={weekDates}
+        selectedDate={selectedDate}
+        onSelectDate={onSelectDate}
+        items={items}
+        colorMap={colorMap}
+        scheduleOverlay={scheduleOverlay}
+        tooltipOverlayClassName={tooltipOverlayClassName}
+        isEventsMode={isEventsMode}
+        eventsConfig={eventsConfig}
+        buildResolvedColorMap={buildResolvedColorMap}
+        onProgramClick={isEventsMode ? undefined : (props as CalendarMainItemsProps).onItemClick}
+      />
     )
 
     return (
@@ -412,14 +409,14 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
             onToday={handleToday}
             onPrev={handlePrev}
             onNext={handleNext}
+            hideModeToggle={hideModeToggle}
           />
         )}
         <CalendarBody
           mode={mode}
-          weekDates={weekDates}
           currentMonth={currentMonth}
           monthFullCellRender={renderMonthCell}
-          weekRenderDay={renderWeekDay}
+          weekView={weekTimeGrid}
         />
       </div>
     )

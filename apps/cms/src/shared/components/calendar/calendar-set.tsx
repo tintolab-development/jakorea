@@ -1,18 +1,11 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type DependencyList,
-  type RefObject,
-} from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { Program } from '@/types/domain'
+import { buildResolvedScheduleColorMapForPrograms } from '@/features/program/ui/program-schedule-colors'
 import { CalendarMain } from './calendar-main'
 import { CalendarMini } from './calendar-mini'
 import { CalendarSearch } from './calendar-search'
@@ -160,36 +153,6 @@ function useCalendarPrograms(items: Program[], keyword: string, selection: strin
   return { filteredByCalendar, programDates }
 }
 
-function useElementHeight(ref: RefObject<HTMLElement | null>, deps: DependencyList = []) {
-  const [height, setHeight] = useState<number | null>(null)
-
-  useEffect(() => {
-    const element = ref.current
-    if (!element) return
-
-    const updateHeight = () => {
-      setHeight(element.offsetHeight)
-    }
-
-    updateHeight()
-
-    let resizeObserver: ResizeObserver | undefined
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(updateHeight)
-      resizeObserver.observe(element)
-    }
-
-    window.addEventListener('resize', updateHeight)
-    return () => {
-      resizeObserver?.disconnect()
-      window.removeEventListener('resize', updateHeight)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ref, ...deps])
-
-  return height
-}
-
 function CalendarSetMain({ items, loading, onItemClick }: CalendarSetMainProps) {
   const {
     selectedDate,
@@ -212,9 +175,10 @@ function CalendarSetMain({ items, loading, onItemClick }: CalendarSetMainProps) 
     calendarSearchKeyword,
     calendarProgramSelection
   )
-  const mainCalendarRef = useRef<HTMLDivElement>(null)
-  const sidebarHeight = useElementHeight(mainCalendarRef, [calendarMode])
-
+  const programScheduleColorMap = useMemo(
+    () => buildResolvedScheduleColorMapForPrograms(filteredByCalendar),
+    [filteredByCalendar]
+  )
   if (loading) {
     return (
       <div className="calendar-view calendar-view--loading">
@@ -239,13 +203,13 @@ function CalendarSetMain({ items, loading, onItemClick }: CalendarSetMainProps) 
           keyword={calendarSearchKeyword}
           options={programFilterOptions}
           selectedIds={effectiveProgramSelection}
+          programColorMap={programScheduleColorMap}
           onKeywordChange={onKeywordChange}
           onOptionToggle={handleProgramFilterChange}
         />
       </div>
       <div className="calendar-main-container">
         <CalendarMain
-          ref={mainCalendarRef}
           items={filteredByCalendar}
           selectedDate={selectedDate}
           currentMonth={currentMonth}
@@ -256,10 +220,7 @@ function CalendarSetMain({ items, loading, onItemClick }: CalendarSetMainProps) 
           onItemClick={onItemClick}
         />
       </div>
-      <div
-        className="calendar-sub-right-list"
-        style={sidebarHeight ? { height: sidebarHeight } : undefined}
-      >
+      <div className="calendar-sub-right-list">
         <CalendarSubRightList
           selectedDate={selectedDate}
           items={filteredByCalendar}

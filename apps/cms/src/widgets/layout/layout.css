@@ -18,6 +18,8 @@
 .layout-content {
   position: relative;
   margin: 0;
+  /* 캘린더 우측 sticky 등: sticky top 계산 시 동일 값 사용 (--cms-layout-content-padding-top) */
+  --cms-layout-content-padding-top: 32px;
   padding: 32px;
   background: transparent;
   min-height: calc(100vh - 64px);
@@ -30,5 +32,6 @@
 }
 
 .layout-content.layout-content--templates {
+  --cms-layout-content-padding-top: 16px;
   padding-top: 16px;
 }

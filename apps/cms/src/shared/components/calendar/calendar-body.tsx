@@ -1,25 +1,23 @@
 import type { Dayjs } from 'dayjs'
 import type { ReactNode } from 'react'
 import { MonthView } from './ui/month-view'
-import { WeekView } from './ui/week-view'
 
 export type CalendarBodyProps = {
   mode: 'month' | 'week'
   currentMonth: Dayjs
-  weekDates: Dayjs[]
   monthFullCellRender: (date: Dayjs) => ReactNode
-  weekRenderDay: (date: Dayjs) => ReactNode
+  /** 주간: 시간 격자(가로 날짜·세로 0~23시). `mode === 'week'`일 때 필수 */
+  weekView: ReactNode
 }
 
 export function CalendarBody({
   mode,
   currentMonth,
-  weekDates,
   monthFullCellRender,
-  weekRenderDay,
+  weekView,
 }: CalendarBodyProps) {
   return mode === 'week' ? (
-    <WeekView weekDates={weekDates} renderDay={weekRenderDay} />
+    weekView
   ) : (
     <MonthView currentMonth={currentMonth} fullCellRender={monthFullCellRender} />
   )

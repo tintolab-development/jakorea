@@ -36,3 +36,7 @@
   line-height: 130%;
   text-transform: uppercase;
 }
+
+.calendar-mini .ant-picker-calendar .ant-picker-panel .ant-picker-body {
+  padding: 0;
+}

@@ -199,18 +199,21 @@
 }
 
 /* 공유 applicant-calendar 레이아웃을 패널 높이에 맞춤(기본 좌측 스크롤; --no-inner-scroll 예외) */
-.instructor-payment-tab__calendar-view-container .applicant-calendar-layout {
+.instructor-payment-tab__calendar-view-container .applicant-calendar-layout,
+.instructor-payment-tab__calendar-view-container .calendar-layout {
   flex: 1 1 0;
   min-height: 0;
   height: 100%;
 }
 
-.instructor-payment-tab__calendar-view-container .applicant-calendar-main {
+.instructor-payment-tab__calendar-view-container .applicant-calendar-main,
+.instructor-payment-tab__calendar-view-container .calendar-main-container {
   min-height: 0;
   overflow-y: auto;
 }
 
-.instructor-payment-tab__calendar-view-container .applicant-calendar-right {
+.instructor-payment-tab__calendar-view-container .applicant-calendar-right,
+.instructor-payment-tab__calendar-view-container .calendar-sub-right-list {
   min-height: 0;
 }
 
@@ -224,14 +227,18 @@
 }
 
 .instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll
-  .applicant-calendar-layout {
+  .applicant-calendar-layout,
+.instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll
+  .calendar-layout {
   flex: 0 0 auto;
   min-height: 0;
   height: auto;
 }
 
 .instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll
-  .applicant-calendar-main {
+  .applicant-calendar-main,
+.instructor-payment-tab__calendar-view-container.instructor-payment-tab__calendar-view-container--no-inner-scroll
+  .calendar-main-container {
   overflow-y: visible;
   min-height: 0;
 }
