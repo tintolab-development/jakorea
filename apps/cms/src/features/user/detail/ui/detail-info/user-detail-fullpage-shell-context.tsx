@@ -25,9 +25,6 @@ export interface UserDetailFullpageShellValue {
   onNavigateToLinkedUser?: (userId: string) => void
   modals: UseUserDetailModalsResult
   withdrawConfirmOpen: boolean
-  personalInfoRevealConfirmOpen: boolean
-  onClosePersonalInfoRevealConfirm: () => void
-  onSubmitPersonalInfoReveal: (reason: string) => void
   onProgressStatusChange: (
     app: Application,
     displayStatus: ProgramEnrollmentDisplayStatus

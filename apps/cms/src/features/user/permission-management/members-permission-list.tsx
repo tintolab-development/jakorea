@@ -38,8 +38,8 @@ import '@/pages/users/user-list-page.css'
 import '@/features/program/ui/program-list.css'
 import './members-permission-list.css'
 import { CmsButton, ContentModal } from '@/shared/ui'
-import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
-import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
+import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { usePersonalInfoRevealByRow } from '@/features/user/detail/lib/use-personal-info-reveal'
 
 const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCategory'], string> = {
   SCHOOL: '학교(교사)',
@@ -169,11 +169,6 @@ export const MembersPermissionList = forwardRef<
   const selectedRowKeysRef = useRef<Key[]>([])
   const rowsRef = useRef(rows)
   rowsRef.current = rows
-  /** 목록 내 연락처·이메일 마스킹 해제 여부 (행 id) */
-  const [privacyRevealedByRowId, setPrivacyRevealedByRowId] = useState<Record<string, boolean>>({})
-  const [personalInfoRevealConfirmTargetId, setPersonalInfoRevealConfirmTargetId] = useState<
-    string | null
-  >(null)
   const [bulkApproveBlockedSelectedCount, setBulkApproveBlockedSelectedCount] = useState<
     number | null
   >(null)
@@ -182,11 +177,23 @@ export const MembersPermissionList = forwardRef<
   >(null)
   useEffect(() => {
     setRows(baseRows)
-    setPrivacyRevealedByRowId({})
-    setPersonalInfoRevealConfirmTargetId(null)
     setBulkApproveBlockedSelectedCount(null)
     setBulkRejectBlockedSelectedCount(null)
   }, [baseRows])
+
+  const resolvePermissionListPersonalInfoAccessItem = useCallback((rowId: string) => {
+    const target = rowsRef.current.find(row => row.id === rowId)
+    return target?.name ?? '회원 권한 신청자'
+  }, [])
+
+  const {
+    privacyRevealedByRowId,
+    handleToggleListPrivacyMask,
+    confirmModal: personalInfoRevealModal,
+  } = usePersonalInfoRevealByRow({
+    resolveAccessItem: resolvePermissionListPersonalInfoAccessItem,
+    resetDeps: [baseRows],
+  })
 
   useImperativeHandle(
     ref,
@@ -419,18 +426,6 @@ export const MembersPermissionList = forwardRef<
   const isSelectedRowPrivacyRevealed =
     selectedSingleRowId != null && Boolean(privacyRevealedByRowId[selectedSingleRowId])
 
-  const handleToggleListPrivacyMask = useCallback(() => {
-    if (selectedRowKeys.length !== 1) {
-      return
-    }
-    const id = String(selectedRowKeys[0])
-    if (isSelectedRowPrivacyRevealed) {
-      setPrivacyRevealedByRowId(prev => ({ ...prev, [id]: false }))
-      return
-    }
-    setPersonalInfoRevealConfirmTargetId(id)
-  }, [selectedRowKeys, isSelectedRowPrivacyRevealed])
-
   const columns: ColumnsType<MemberPermissionApplicationRow> = useMemo(
     () => [
       {
@@ -576,14 +571,18 @@ export const MembersPermissionList = forwardRef<
               신청 승인
             </CmsButton>
           ) : null}
-          <CmsButton
-            variant={isSelectedRowPrivacyRevealed ? 'default' : 'primary'}
-            onClick={handleToggleListPrivacyMask}
+          <PersonalInfoRevealButton
+            ui="cms"
+            labelMode="toggle"
+            revealed={isSelectedRowPrivacyRevealed}
+            cmsVariant={isSelectedRowPrivacyRevealed ? 'default' : 'primary'}
+            cmsSize="medium"
             width={180}
             disabled={selectedRowKeys.length !== 1}
-          >
-            {isSelectedRowPrivacyRevealed ? '개인정보 마스킹' : '개인정보 상세보기'}
-          </CmsButton>
+            onClick={() =>
+              handleToggleListPrivacyMask(selectedRowKeys, isSelectedRowPrivacyRevealed)
+            }
+          />
         </>
       }
     >
@@ -615,20 +614,7 @@ export const MembersPermissionList = forwardRef<
         }
         pagination={false}
       />
-      {personalInfoRevealConfirmTargetId ? (
-        <UserPersonalInfoRevealConfirmModal
-          onCancel={() => setPersonalInfoRevealConfirmTargetId(null)}
-          onConfirm={reason => {
-            const target = tableData.find(row => row.id === personalInfoRevealConfirmTargetId)
-            trackPersonalInfoAccess(target?.name ?? '회원 권한 신청자', reason)
-            setPrivacyRevealedByRowId(prev => ({
-              ...prev,
-              [personalInfoRevealConfirmTargetId]: true,
-            }))
-            setPersonalInfoRevealConfirmTargetId(null)
-          }}
-        />
-      ) : null}
+      {personalInfoRevealModal}
 
       {bulkApproveBlockedSelectedCount != null ? (
         <ContentModal

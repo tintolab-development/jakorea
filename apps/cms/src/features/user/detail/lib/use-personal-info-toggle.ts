@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import type { CmsButtonVariant } from '@/shared/ui/cms-button'
+import { PERSONAL_INFO_REVEAL_BUTTON_LABEL } from '@/features/user/detail/ui/personal-info-reveal-button'
 
 export interface PersonalInfoToggleButtonConfig {
   label: string
@@ -24,7 +25,7 @@ export function usePersonalInfoToggle({
   return useMemo(() => {
     if (personalInfoRevealed) return null
     return {
-      label: '개인정보 상세보기',
+      label: PERSONAL_INFO_REVEAL_BUTTON_LABEL.reveal,
       variant: 'primary' as const,
       onClick,
     }
