@@ -14,6 +14,7 @@ import {
   usePersonalInfoToggle,
   type PersonalInfoToggleButtonConfig,
 } from '@/features/user/detail/lib/use-personal-info-toggle'
+import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { PermissionHeaderActions } from './permission-header-actions'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
 import {
@@ -141,14 +142,15 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
 
   const personalInfoNode =
     !pageShell.basicInfoEditing && headerLayout.showPersonalInfoToggle && personalInfoButton ? (
-      <CmsButton
-        size="medium"
+      <PersonalInfoRevealButton
+        ui="cms"
+        labelMode="stickyReveal"
+        revealed={personalInfoRevealed}
+        cmsVariant={personalInfoButton.variant}
+        cmsSize="medium"
         width={160}
-        variant={personalInfoButton.variant}
         onClick={personalInfoButton.onClick}
-      >
-        {personalInfoButton.label}
-      </CmsButton>
+      />
     ) : null
 
   const headerActionsForLayout = pageShell.basicInfoEditing

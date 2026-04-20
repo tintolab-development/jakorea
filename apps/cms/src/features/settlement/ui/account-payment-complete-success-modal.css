@@ -1,0 +1,28 @@
+/**
+ * 계좌 지급 확인 완료 — TealHeaderModal 전역 패딩(!important)과의 정합용 보조
+ * 치수·그림자·패딩은 ContentModal `modalStyles`(Ant Design `styles`)로 인라인 적용
+ */
+
+/* 헤더 타이틀 ↔ 본문 문구 16px (teal-header-modal__body 기본 padding-top !important 무력화 후 margin으로 간격) */
+.ant-modal.teal-header-modal.content-modal.account-payment-complete-success-modal
+  .teal-header-modal__body {
+  margin-top: 16px !important;
+  padding-top: 0 !important;
+}
+
+/* 본문 ↔ 푸터 30px */
+.ant-modal.teal-header-modal.content-modal.account-payment-complete-success-modal
+  .teal-header-modal__footer {
+  margin-top: 30px !important;
+}
+
+.account-payment-complete-success-modal__message {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: left;
+}

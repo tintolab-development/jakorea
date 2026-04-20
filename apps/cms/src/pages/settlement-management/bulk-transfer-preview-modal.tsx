@@ -10,7 +10,10 @@ import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui/app-button'
 import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
-import { buildBulkTransferFortuneSheet } from '@/pages/settlement-management/bulk-transfer-fortune-data'
+import {
+  BULK_TRANSFER_SHEET_COLUMN_COUNT,
+  buildBulkTransferFortuneSheet,
+} from '@/pages/settlement-management/bulk-transfer-fortune-data'
 import './bulk-transfer-preview-modal.css'
 
 const Workbook = lazy(() => import('./bulk-transfer-fortune-workbook'))
@@ -71,6 +74,7 @@ export function BulkTransferPreviewModal({ open, onCancel, rows }: BulkTransferP
             <Workbook
               key={sheetData[0]?.celldata?.length ?? 0}
               data={sheetData}
+              column={BULK_TRANSFER_SHEET_COLUMN_COUNT}
               showToolbar={false}
               showFormulaBar={false}
               showSheetTabs

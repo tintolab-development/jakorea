@@ -125,3 +125,9 @@
     background: var(--color-payment-order-line-rejected-bg, #f2f3f5);
     border: 1px solid rgba(70, 70, 70, 0.06);
 }
+
+.app-status-badge.textbook-status-badge--application_rejected.textbook-status-badge--payment-order-line {
+    color: var(--color-payment-order-line-correction-text, #c32f4a);
+    background: var(--color-payment-order-line-correction-bg, #f9eaed);
+    border: 1px solid rgba(70, 70, 70, 0.06);
+}

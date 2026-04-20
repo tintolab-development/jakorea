@@ -1,0 +1,81 @@
+/**
+ * 세금신고 양식 미리보기 — 1400×880 (large 모달 기본 840px max-height 덮어씀)
+ */
+
+.tax-filing-preview-modal.teal-header-modal--large.ant-modal {
+  max-width: calc(100vw - var(--spacing-32, 32px));
+}
+
+.tax-filing-preview-modal.teal-header-modal--large .ant-modal-content {
+  max-height: 880px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tax-filing-preview-modal .teal-header-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tax-filing-preview-modal .content-modal__description {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+}
+
+.tax-filing-preview-modal__sheet-host {
+  flex: 1 1 auto;
+  min-height: 400px;
+  height: 620px;
+  width: 100%;
+  margin-top: 8px;
+  border: 1px solid var(--color-border-secondary, #e8e8e8);
+  border-radius: 4px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.tax-filing-preview-modal__sheet-host .fortune-container {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  /* 행/열 머리 등 HTML 영역 — 시트 본문은 캔버스이나 폰트 패밀리 힌트로 통일 */
+  font-family:
+    Pretendard,
+    'Pretendard Variable',
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+}
+
+/**
+ * 시트 캔버스: 본문·헤더·소득구분 공통 fs 11 (tax-filing-fortune-data PREVIEW_UNIFIED_FS)
+ * 헤더: fc #FFF·bl 1 / 소득구분·소계 A열: fc #3D3D3D·bl 1·tb 줄바꿈
+ */
+
+.tax-filing-preview-modal__sheet-host .fortune-sheet-container,
+.tax-filing-preview-modal__sheet-host .fortune-col-body {
+  width: 100%;
+  min-width: 0;
+}
+
+.tax-filing-preview-modal__sheet-host .fortune-sheet-area {
+  width: 100%;
+  min-width: 0;
+}
+
+.tax-filing-preview-modal__sheet-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+}

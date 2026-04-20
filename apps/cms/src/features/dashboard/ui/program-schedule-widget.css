@@ -400,6 +400,27 @@
   margin-bottom: 0 !important;
 }
 
+/* 대시보드 50% 슬롯 월간: 배지 미표시로 날짜만 — 셀 안 가로·세로 중앙 */
+.program-schedule-widget.program-schedule-widget--dashboard-half
+  .program-schedule-widget__body--month
+  .program-schedule-widget__month-grid--cells
+  .program-calendar-cell {
+  justify-content: center;
+}
+
+.program-schedule-widget.program-schedule-widget--dashboard-half
+  .program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell
+  .program-calendar-cell-date,
+.program-schedule-widget.program-schedule-widget--dashboard-half
+  .program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--selected
+  .program-calendar-cell-date {
+  align-self: center !important;
+}
+
 /* Popover 직계 자식이 아닌 호스트끼리 gap 적용(월간 셀 전용) */
 .program-schedule-widget__month-cell-badge-host {
   display: flex;

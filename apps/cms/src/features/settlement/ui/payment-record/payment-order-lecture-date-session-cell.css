@@ -1,0 +1,6 @@
+/**
+ * 테이블 td 내 `ProgramDetailTdDivider` — 기본 12px → 스펙 양옆 10px
+ */
+.payment-order-lecture-date-session-cell .program-detail-td-divider {
+  margin: 0 10px;
+}

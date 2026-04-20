@@ -4,7 +4,8 @@
  */
 
 /* 월간 요일 행: 공통 program-calendar.css(테이블 레이아웃)과 동일 — 페이지별 추가 구분선만 */
-.payment-orders-calendar-root .program-calendar-main .ant-picker-content thead th {
+.payment-orders-calendar-root .program-calendar-main .ant-picker-content thead th,
+.payment-orders-calendar-root .calendar-main .ant-picker-content thead th {
   border-bottom: 1px solid #f0f0f0;
 }
 
@@ -47,7 +48,8 @@
   justify-content: flex-start;
 }
 
-.payment-orders-calendar-root .program-calendar-main {
+.payment-orders-calendar-root .program-calendar-main,
+.payment-orders-calendar-root .calendar-main {
   flex: 0 0 auto;
   min-height: 0;
 }
@@ -120,7 +122,10 @@
 
 .payment-orders-calendar-root .program-calendar-main .ant-picker-calendar,
 .payment-orders-calendar-root .program-calendar-main .ant-picker-panel,
-.payment-orders-calendar-root .program-calendar-main .ant-picker-body {
+.payment-orders-calendar-root .program-calendar-main .ant-picker-body,
+.payment-orders-calendar-root .calendar-main .ant-picker-calendar,
+.payment-orders-calendar-root .calendar-main .ant-picker-panel,
+.payment-orders-calendar-root .calendar-main .ant-picker-body {
   flex: 0 0 auto !important;
   min-height: 0;
 }

@@ -555,6 +555,8 @@ export function SettlementItemSettingIcon({ iconKey }: { iconKey: SettlementItem
       return <IconAssistant />
     case 'wage_multi_instructor':
       return <IconMultiInstructor />
+    case 'wage_simple_labor':
+      return <PaySimpleLaborIcon />
     case 'pay_transport':
       return <IconTransport />
     case 'pay_lodging':
@@ -565,8 +567,6 @@ export function SettlementItemSettingIcon({ iconKey }: { iconKey: SettlementItem
       return <IconMeeting />
     case 'pay_volunteer':
       return <IconVolunteer />
-    case 'pay_simple_labor':
-      return <PaySimpleLaborIcon />
     case 'deduct_business_33':
       return <IconDeductBusiness33 />
     case 'deduct_other_88':

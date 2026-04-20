@@ -59,6 +59,8 @@
   min-width: 0;
 }
 
+/* 바깥만 overflow hidden — 내부까지 숨기면 좁은 그리드+큰 여백이 더 도드라짐 */
+
 .bulk-transfer-preview-modal__sheet-loading {
   display: flex;
   align-items: center;
