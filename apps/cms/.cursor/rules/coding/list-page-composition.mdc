@@ -34,4 +34,4 @@ Use this stack for **admin/data list pages**: filters + toolbar + `cms-data-tabl
 ## Related rules
 
 - [list-page-table-stack.md](../tables/list-page-table-stack.md), [table-implementation.md](../tables/table-implementation.md)
-- 공지 **등록·수정 모달** 레이아웃·치수: [admin-notice-form-modal-spec.md](../process/admin-notice-form-modal-spec.md)
+- Admin notice create/edit modal layout: [admin-notice-form-modal-spec.md](../process/admin-notice-form-modal-spec.md)
