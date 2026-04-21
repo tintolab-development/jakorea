@@ -461,7 +461,7 @@ export function PaymentOrdersCalendarView({
     [exposure]
   )
 
-  const renderEventsTooltipContent = useCallback(
+  const previewTooltipContent = useCallback(
     ({
       events: tooltipEvents,
     }: {
@@ -517,13 +517,12 @@ export function PaymentOrdersCalendarView({
             onModeChange={onModeChange}
             onTodayClick={onTodayClick}
             weekViewVariant={exposure === 'instructor' ? 'time-grid' : 'simple'}
-            scheduleOverlay="tooltip"
             tooltipOverlayClassName="payment-orders-calendar-tooltip-overlay"
             events={calendarItems}
             resolveEventColors={resolvePaymentOrderEventColors}
             eventsTooltipScope="full-day"
             formatEventsOverflowText={n => `외 ${n}개의 항목`}
-            renderEventsTooltipContent={renderEventsTooltipContent}
+            previewTooltipContent={previewTooltipContent}
           />
         </div>
         <div className="participating-institutions-calendar-card participating-institutions-calendar-card--right payment-orders-calendar-card--right">

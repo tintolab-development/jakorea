@@ -163,7 +163,7 @@
 
 .status-badge--variant-text.status-badge--instructor-settlement-statement-verified,
 .status-badge--variant-badge.status-badge--instructor-settlement-statement-verified {
-  --status-accent: #1e8c29;
+  --status-accent: var(--color-green, #1e8c29);
   color: var(--status-accent);
 }
 
@@ -175,7 +175,7 @@
 
 .status-badge--variant-text.status-badge--instructor-settlement-na,
 .status-badge--variant-badge.status-badge--instructor-settlement-na {
-  --status-accent: #464646;
+  --status-accent: var(--color-text-primary, #333333);
   color: var(--status-accent);
 }
 
@@ -187,7 +187,7 @@
 
 .status-badge--variant-text.status-badge--instructor-settlement-correction,
 .status-badge--variant-badge.status-badge--instructor-settlement-correction {
-  --status-accent: #7a2038;
+  --status-accent: var(--color-red, #c32f4a);
   color: var(--status-accent);
 }
 

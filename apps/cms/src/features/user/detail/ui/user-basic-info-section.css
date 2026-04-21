@@ -71,7 +71,7 @@
 }
 
 .user-basic-info-section__settlement-status--none {
-  color: #464646;
+  color: #333333;
 }
 
 .user-basic-info-section__settlement-status--application-rejected {
@@ -79,7 +79,7 @@
 }
 
 .user-basic-info-section__settlement-status--payment-correction-requested {
-  color: #7a2038;
+  color: #c32f4a;
 }
 
 /* 강의비 행 — 스펙: "유형 | 금액" */

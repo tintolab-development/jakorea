@@ -5,20 +5,12 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { DateValue } from '@/types'
 import type { Program } from '@/types/domain'
 import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import { CALENDAR_ITEM_TYPE, type CalendarItem } from '../model/calendar-item'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
-const CALENDAR_ITEM_TYPE = 'event' as const
-
-export type CalendarItem = {
-  id: string | number
-  title?: string
-  startDate: string
-  endDate: string
-  type: typeof CALENDAR_ITEM_TYPE
-  original: unknown
-}
+export type { CalendarItem } from '../model/calendar-item'
 
 export function isProgramOriginal(o: unknown): o is Program {
   if (o === null || typeof o !== 'object') return false

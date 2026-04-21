@@ -34,10 +34,10 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT: Record<
 > = {
   awaiting_confirmation: '확인 대기',
   partial_confirmation: '일부 확인',
-  payment_statement_verified: '조서 완료',
-  account_paid: '지급 완료',
+  payment_statement_verified: '확인 완료',
+  account_paid: '계좌 지급',
   none: '해당 없음',
-  application_rejected: '반려',
+  application_rejected: '신청 반려',
   payment_correction_requested: '정정 요청',
 }
 
@@ -67,9 +67,9 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE: Record<
     border: 'rgba(1, 126, 175, 0.1)',
   },
   none: {
-    bg: 'rgba(70, 70, 70, 0.06)',
-    color: '#464646',
-    border: 'rgba(70, 70, 70, 0.1)',
+    bg: 'rgba(51, 51, 51, 0.06)',
+    color: '#333333',
+    border: 'rgba(51, 51, 51, 0.1)',
   },
   application_rejected: {
     bg: 'rgba(195, 47, 74, 0.06)',
@@ -77,9 +77,9 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE: Record<
     border: 'rgba(195, 47, 74, 0.1)',
   },
   payment_correction_requested: {
-    bg: 'rgba(122, 32, 56, 0.06)',
-    color: '#7a2038',
-    border: 'rgba(122, 32, 56, 0.1)',
+    bg: 'rgba(195, 47, 74, 0.06)',
+    color: '#c32f4a',
+    border: 'rgba(195, 47, 74, 0.1)',
   },
 }
 

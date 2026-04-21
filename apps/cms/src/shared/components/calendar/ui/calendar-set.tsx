@@ -10,7 +10,7 @@ import { CalendarMain } from './calendar-main'
 import { CalendarMini } from './calendar-mini'
 import { CalendarSearch } from './calendar-search'
 import { CalendarSubRightList } from './calendar-sub-right-list'
-import './calendar.css'
+import '../styles/calendar.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)

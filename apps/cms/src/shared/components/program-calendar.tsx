@@ -1,7 +1,7 @@
 /**
  * 공통 프로그램 메인 캘린더 (중앙 컬럼)
  * - 마크업·클래스는 `program-calendar-*` 단일 체계
- * - `scheduleOverlay`로 Popover(프로그램 일정) vs Tooltip(신청자 일정)만 분기
+ * - 일정 호버 오버레이는 항상 tooltip (`ProgramCalendarOverlayFollowCursor`)
  */
 
 import {
@@ -25,10 +25,8 @@ import {
   type ScheduleColorPair,
   buildResolvedScheduleColorMapForPrograms,
 } from '@/features/program/ui/program-schedule-colors'
-import {
-  ApplicantCalendarEventPopoverContent,
-  useApplicantCalendarColorMaps,
-} from '@/features/program/program-detail/ui/applicant-list/applicant-calendar-schedule-helpers'
+import { useApplicantCalendarColorMaps } from '@/features/program/program-detail/ui/applicant-list/applicant-calendar-schedule-helpers'
+import { renderProgramCalendarEventsDefaultTooltipContent } from '@/shared/components/calendar'
 import { SegmentedTab } from '@/shared/ui/segmented-tab'
 import '@/shared/ui/overlay-popover.css'
 import './program-calendar.css'
@@ -70,11 +68,7 @@ type ProgramCalendarSharedProps = {
   hideModeToggle?: boolean
   /** true면 우측에 월간·주간 탭 대신 고정 「월간」 라벨만 표시 (`hideModeToggle`과 함께 사용) */
   monthOnlyLabel?: boolean
-  /**
-   * 일정 호버 오버레이. 미지정 시 `programs` → popover, `events` → tooltip
-   */
-  scheduleOverlay?: 'popover' | 'tooltip'
-  /** Tooltip일 때 `program-calendar-tooltip-overlay`에 추가하는 클래스 */
+  /** 툴팁 오버레이에 추가하는 클래스 (`program-calendar-tooltip-overlay` 등) */
   tooltipOverlayClassName?: string
   /**
    * 주간 뷰: `simple`(7열 태그) | `time-grid`(좌측 한글 시 라벨 + 시간 격자).
@@ -98,7 +92,7 @@ export type ProgramCalendarProgramProps = ProgramCalendarSharedProps & {
 export type ProgramCalendarEventsProps = ProgramCalendarSharedProps & {
   events: ProgramCalendarEventItem[]
   selectedRowKeys?: React.Key[]
-  renderEventsTooltipContent?: (args: {
+  previewTooltipContent?: (args: {
     events: ProgramCalendarEventItem[]
     colorMap: Map<string | number, ScheduleColorPair>
   }) => ReactNode
@@ -437,14 +431,13 @@ function CalendarCellSchedulePreview({ date, programs }: { date: Dayjs; programs
 }
 
 function wrapScheduleOverlay(
-  scheduleOverlay: 'popover' | 'tooltip',
   tooltipOverlayClassName: string | undefined,
   previewContent: ReactNode,
   trigger: ReactElement
 ): ReactNode {
   return (
     <ProgramCalendarOverlayFollowCursor
-      variant={scheduleOverlay}
+      variant="tooltip"
       tooltipOverlayClassName={tooltipOverlayClassName}
       content={previewContent}
     >
@@ -468,7 +461,6 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       hideDateControls = false,
       hideModeToggle = false,
       monthOnlyLabel = false,
-      scheduleOverlay: scheduleOverlayProp,
       tooltipOverlayClassName,
       weekViewVariant = 'simple',
       hideHeader = false,
@@ -478,7 +470,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
     const programs = isEvents ? [] : props.programs
     const events = isEvents ? props.events : []
     const selectedRowKeys = isEvents ? (props.selectedRowKeys ?? []) : []
-    const renderEventsTooltipContent = isEvents ? props.renderEventsTooltipContent : undefined
+    const previewTooltipContent = isEvents ? props.previewTooltipContent : undefined
     const overrideEventColorMap = isEvents ? props.overrideEventColorMap : undefined
     const resolveEventColors = isEvents ? props.resolveEventColors : undefined
     const eventsTooltipScope = isEvents
@@ -486,9 +478,6 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       : 'trigger-only'
     const formatEventsOverflowText = isEvents ? props.formatEventsOverflowText : undefined
     const eventsTooltipTrigger = isEvents ? (props.eventsTooltipTrigger ?? 'event-strip') : 'event-strip'
-
-    const scheduleOverlay: 'popover' | 'tooltip' =
-      scheduleOverlayProp ?? (isEvents ? 'tooltip' : 'popover')
 
     const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events)
 
@@ -536,11 +525,10 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       dayEvents: ProgramCalendarEventItem[],
       colorMap: Map<string | number, ScheduleColorPair>
     ) =>
-      renderEventsTooltipContent ? (
-        renderEventsTooltipContent({ events: dayEvents, colorMap })
-      ) : (
-        <ApplicantCalendarEventPopoverContent events={dayEvents} colorMap={colorMap} />
-      )
+      (previewTooltipContent ?? renderProgramCalendarEventsDefaultTooltipContent)({
+        events: dayEvents,
+        colorMap,
+      })
 
     const dateFullCellRender = (date: Dayjs) => {
       const isCurrentMonth = date.isSame(currentMonth, 'month')
@@ -615,9 +603,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
               </div>
             </div>
           )
-          return wrapScheduleOverlay(
-            scheduleOverlay,
-            tooltipOverlayClassName,
+          return wrapScheduleOverlay(tooltipOverlayClassName,
             fullDayPreview,
             <div className="program-calendar-cell-tooltip-trigger program-calendar-cell-tooltip-trigger--full-cell">
               {cellInner}
@@ -645,9 +631,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                   const previewOne = buildEventsPreview(tooltipList, tooltipColorMap)
                   return (
                     <Fragment key={String(event.id)}>
-                      {wrapScheduleOverlay(
-                        scheduleOverlay,
-                        tooltipOverlayClassName,
+                      {wrapScheduleOverlay(tooltipOverlayClassName,
                         previewOne,
                         <div className="program-calendar-event-tooltip-trigger">
                           <div
@@ -677,9 +661,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                 })}
                 {dayEvents.length > 2 && (
                   <Fragment key="more">
-                    {wrapScheduleOverlay(
-                      scheduleOverlay,
-                      tooltipOverlayClassName,
+                    {wrapScheduleOverlay(tooltipOverlayClassName,
                       (() => {
                         const moreList =
                           eventsTooltipScope === 'full-day' ? dayEvents : dayEvents.slice(2)
@@ -739,7 +721,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
 
       if (!hasPrograms) return cellBody
       const trigger = <div className="program-calendar-cell-tooltip-trigger">{cellBody}</div>
-      return wrapScheduleOverlay(scheduleOverlay, tooltipOverlayClassName, preview, trigger)
+      return wrapScheduleOverlay(tooltipOverlayClassName, preview, trigger)
     }
 
     /** 주간 `events`: 좌측 한글 시 라벨 + `28 (SUN)` 헤더 + 시간 격자 */
@@ -841,9 +823,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                           }
                           return (
                             <Fragment key={String(event.id)}>
-                              {wrapScheduleOverlay(
-                                scheduleOverlay,
-                                tooltipOverlayClassName,
+                              {wrapScheduleOverlay(tooltipOverlayClassName,
                                 previewOne,
                                 <div className="program-calendar-event-tooltip-trigger">
                                   <div
@@ -898,9 +878,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                           }
                           return (
                             <Fragment key={String(event.id)}>
-                              {wrapScheduleOverlay(
-                                scheduleOverlay,
-                                tooltipOverlayClassName,
+                              {wrapScheduleOverlay(tooltipOverlayClassName,
                                 previewOne,
                                 <div className="program-calendar-event-tooltip-trigger">
                                   <div
@@ -1033,9 +1011,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                       className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
                       onClick={() => onSelectDate(date)}
                     >
-                      {wrapScheduleOverlay(
-                        scheduleOverlay,
-                        tooltipOverlayClassName,
+                      {wrapScheduleOverlay(tooltipOverlayClassName,
                         fullDayPreview,
                         <div className="program-calendar-week-cell-tooltip-trigger program-calendar-week-cell-tooltip-trigger--full-cell">
                           {weekCellInnerPlain}
@@ -1072,9 +1048,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                           const previewOne = buildEventsPreview(tooltipList, tooltipColorMap)
                           return (
                             <Fragment key={String(event.id)}>
-                              {wrapScheduleOverlay(
-                                scheduleOverlay,
-                                tooltipOverlayClassName,
+                              {wrapScheduleOverlay(tooltipOverlayClassName,
                                 previewOne,
                                 <div className="program-calendar-event-tooltip-trigger">
                                   <div
@@ -1107,9 +1081,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                         })}
                         {dayEvents.length > 2 && (
                           <Fragment key="more">
-                            {wrapScheduleOverlay(
-                              scheduleOverlay,
-                              tooltipOverlayClassName,
+                            {wrapScheduleOverlay(tooltipOverlayClassName,
                               (() => {
                                 const moreList =
                                   eventsTooltipScope === 'full-day' ? dayEvents : dayEvents.slice(2)
@@ -1189,9 +1161,7 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                   onClick={() => onSelectDate(date)}
                 >
                   {hasPrograms
-                    ? wrapScheduleOverlay(
-                        scheduleOverlay,
-                        tooltipOverlayClassName,
+                    ? wrapScheduleOverlay(tooltipOverlayClassName,
                         preview,
                         <div className="program-calendar-week-cell-tooltip-trigger">
                           {weekCellInner}

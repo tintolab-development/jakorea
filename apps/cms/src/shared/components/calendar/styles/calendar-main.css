@@ -90,4 +90,45 @@
   opacity: 0.8;
 }
 
+.calendar-header-right {
+  display: flex;
+  align-items: center;
+}
+
+/* 월간 고정 라벨 — 지급조서 캘린더 `program-calendar-month-only-badge`와 동일 톤 */
+.calendar-month-only-badge {
+  box-sizing: border-box;
+  display: flex;
+  min-width: 66px;
+  width: fit-content;
+  height: 42px;
+  padding: 4px;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #f5f6f7;
+}
+
+.calendar-month-only-badge__inner {
+  box-sizing: border-box;
+  display: flex;
+  height: 34px;
+  padding: 0 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  border-radius: 6px;
+  border: 1px solid var(--JA-mint-01, #01a1af);
+  background: var(--default-WT, #fff);
+  color: var(--JA-mint-01, #01a1af);
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
 /* calendar-main */

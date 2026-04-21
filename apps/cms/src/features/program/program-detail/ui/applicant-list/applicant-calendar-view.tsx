@@ -180,7 +180,6 @@ export function ApplicantCalendarView({
         onSelectDate={handleDateSelect}
         onMonthChange={setCurrentMonth}
         onModeChange={setCalendarMode}
-        scheduleOverlay="tooltip"
         onTodayClick={handleToday}
       />
 

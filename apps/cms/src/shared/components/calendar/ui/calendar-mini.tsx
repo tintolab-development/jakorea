@@ -4,7 +4,7 @@ import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import updateLocale from 'dayjs/plugin/updateLocale'
-import './calendar.css'
+import '../styles/calendar.css'
 
 dayjs.extend(updateLocale)
 dayjs.updateLocale('en', {

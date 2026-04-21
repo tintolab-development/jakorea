@@ -17,9 +17,8 @@ import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
 } from '@/features/program/ui/program-schedule-colors'
-import { CalendarMain } from '@/shared/components/calendar'
-import type { CalendarItem } from '@/shared/components/calendar/calendar-core/calendar-helpers'
-import '@/shared/components/calendar/calendar.css'
+import { CalendarMain, type CalendarItem } from '@/shared/components/calendar'
+import '@/shared/components/calendar/styles/calendar.css'
 import '@/features/program/ui/detail-modal/program-status/participating-institutions-calendar-view.css'
 import '@/features/settlement/ui/payment-record/payment-orders-calendar-view.css'
 import './account-payments-calendar-view.css'
@@ -290,7 +289,7 @@ export function AccountPaymentsCalendarView({ rows }: AccountPaymentsCalendarVie
     }
   }, [calendarMode])
 
-  const renderEventsTooltipContent = useCallback(
+  const previewTooltipContent = useCallback(
     (args: { events: CalendarItem[]; colorMap: Map<string | number, ScheduleColorPair> }) => (
       <AccountPaymentDayTooltipContent items={calendarItemsToAccountEvents(args.events)} />
     ),
@@ -310,13 +309,12 @@ export function AccountPaymentsCalendarView({ rows }: AccountPaymentsCalendarVie
             onMonthChange={onMonthChange}
             onModeChange={onModeChange}
             onTodayClick={onTodayClick}
-            scheduleOverlay="tooltip"
             tooltipOverlayClassName="payment-orders-calendar-tooltip-overlay"
             events={calendarEvents}
             resolveEventColors={resolveAccountPaymentEventColors}
             eventsTooltipScope="full-day"
             formatEventsOverflowText={n => `외 ${n}개의 항목`}
-            renderEventsTooltipContent={renderEventsTooltipContent}
+            previewTooltipContent={previewTooltipContent}
           />
         </div>
         <div className="participating-institutions-calendar-card participating-institutions-calendar-card--right payment-orders-calendar-card--right">

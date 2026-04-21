@@ -14,13 +14,13 @@ import { useApplicantCalendarColorMaps } from '@/features/program/program-detail
 import { SegmentedTab } from '@/shared/ui/segmented-tab'
 import '@/shared/ui/overlay-popover.css'
 import { CalendarBody } from './calendar-body'
-import { WeekView } from './ui/week-view'
+import { WeekView } from './week-view'
 import {
   CalendarCell,
   CalendarCellSchedulePreview,
   buildEventsPreview,
   type CalendarEventsConfig,
-} from './calendar-core/calendar-cell'
+} from './calendar-cell'
 import {
   calendarItemsForEventMode,
   dateValueToCalendarString,
@@ -28,7 +28,7 @@ import {
   mapEventsToItems,
   uniqueScheduleSourcesForDay,
   type CalendarItem,
-} from './calendar-core/calendar-helpers'
+} from '../lib/calendar-helpers'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -68,7 +68,6 @@ type CalendarMainSharedProps = {
   onModeChange: (mode: 'month' | 'week') => void
   className?: string
   onTodayClick?: () => void
-  scheduleOverlay?: 'popover' | 'tooltip'
   tooltipOverlayClassName?: string
   hideHeader?: boolean
   /** true면 헤더 우측 월간/주간 토글을 숨김(월간만 쓰는 화면용) */
@@ -90,7 +89,7 @@ export type CalendarMainProgramProps = CalendarMainItemsProps
 export type CalendarMainEventsProps = CalendarMainSharedProps & {
   events: Parameters<typeof mapEventsToItems>[0]
   selectedRowKeys?: React.Key[]
-  renderEventsTooltipContent?: (args: {
+  previewTooltipContent?: (args: {
     events: CalendarItem[]
     colorMap: Map<string | number, ScheduleColorPair>
   }) => ReactNode
@@ -193,7 +192,13 @@ function CalendarHeader({
           />
         </div>
       </div>
-      {!hideModeToggle && (
+      {hideModeToggle && mode === 'month' ? (
+        <div className="calendar-header-right">
+          <div className="calendar-month-only-badge" aria-current="true">
+            <span className="calendar-month-only-badge__inner">월간</span>
+          </div>
+        </div>
+      ) : !hideModeToggle ? (
         <div className="calendar-header-right">
           <SegmentedTab
             size="medium"
@@ -205,7 +210,7 @@ function CalendarHeader({
             ]}
           />
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
@@ -217,7 +222,6 @@ type RenderCalendarDayCellParams = {
   items: CalendarItem[]
   selectedDate: Dayjs
   onSelectDate: (date: Dayjs) => void
-  scheduleOverlay: 'popover' | 'tooltip'
   tooltipOverlayClassName?: string
   colorMap: Map<string | number, ScheduleColorPair>
   eventsConfig?: CalendarEventsConfig
@@ -232,7 +236,6 @@ function renderCalendarDayCell(p: RenderCalendarDayCellParams): ReactNode {
     items,
     selectedDate,
     onSelectDate,
-    scheduleOverlay,
     tooltipOverlayClassName,
     colorMap,
     eventsConfig,
@@ -244,7 +247,7 @@ function renderCalendarDayCell(p: RenderCalendarDayCellParams): ReactNode {
     const dayEvents = calendarItemsForEventMode(dayItems)
     const overlayContent =
       dayEvents.length > 0
-        ? buildEventsPreview(dayEvents, colorMap, eventsConfig.renderEventsTooltipContent)
+        ? buildEventsPreview(dayEvents, colorMap, eventsConfig.previewTooltipContent)
         : null
     return (
       <CalendarCell
@@ -258,7 +261,6 @@ function renderCalendarDayCell(p: RenderCalendarDayCellParams): ReactNode {
         onSelectDate={onSelectDate}
         overlayEnabled={dayEvents.length > 0}
         overlayContent={overlayContent}
-        scheduleOverlay={scheduleOverlay}
         tooltipOverlayClassName={tooltipOverlayClassName}
         eventsConfig={eventsConfig}
         buildResolvedColorMap={buildResolvedColorMap}
@@ -281,7 +283,6 @@ function renderCalendarDayCell(p: RenderCalendarDayCellParams): ReactNode {
       onSelectDate={onSelectDate}
       overlayEnabled={dayScheduleSources.length > 0}
       overlayContent={overlayContent}
-      scheduleOverlay={scheduleOverlay}
       tooltipOverlayClassName={tooltipOverlayClassName}
     />
   )
@@ -298,7 +299,6 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
       onModeChange,
       className,
       onTodayClick,
-      scheduleOverlay: scheduleOverlayProp,
       tooltipOverlayClassName,
       hideHeader = false,
       hideModeToggle = false,
@@ -330,7 +330,7 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
     const eventsConfig: CalendarEventsConfig | undefined = isEventsMode
       ? {
           selectedRowKeys: props.selectedRowKeys ?? [],
-          renderEventsTooltipContent: props.renderEventsTooltipContent,
+          previewTooltipContent: props.previewTooltipContent,
           overrideEventColorMap: props.overrideEventColorMap,
           resolveEventColors: props.resolveEventColors,
           eventsTooltipScope: props.eventsTooltipScope ?? 'trigger-only',
@@ -338,8 +338,6 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
           eventsTooltipTrigger: props.eventsTooltipTrigger ?? 'event-strip',
         }
       : undefined
-
-    const scheduleOverlay: 'popover' | 'tooltip' = scheduleOverlayProp ?? 'popover'
 
     const weekDates = useMemo(() => {
       const startOfWeek = currentMonth.startOf('week')
@@ -364,7 +362,6 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
           items,
           selectedDate,
           onSelectDate,
-          scheduleOverlay,
           tooltipOverlayClassName,
           colorMap,
           eventsConfig,
@@ -375,7 +372,6 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
         items,
         selectedDate,
         onSelectDate,
-        scheduleOverlay,
         tooltipOverlayClassName,
         colorMap,
         eventsConfig,
@@ -390,7 +386,6 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
         onSelectDate={onSelectDate}
         items={items}
         colorMap={colorMap}
-        scheduleOverlay={scheduleOverlay}
         tooltipOverlayClassName={tooltipOverlayClassName}
         isEventsMode={isEventsMode}
         eventsConfig={eventsConfig}

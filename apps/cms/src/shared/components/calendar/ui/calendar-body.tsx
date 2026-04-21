@@ -1,6 +1,6 @@
 import type { Dayjs } from 'dayjs'
 import type { ReactNode } from 'react'
-import { MonthView } from './ui/month-view'
+import { MonthView } from './month-view'
 
 export type CalendarBodyProps = {
   mode: 'month' | 'week'

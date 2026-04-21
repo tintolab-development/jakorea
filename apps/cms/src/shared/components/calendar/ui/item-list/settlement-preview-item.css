@@ -1,0 +1,140 @@
+/**
+ * 정산 캘린더 우측 일별 리스트 — `CalendarListItemContentSettlement` 전용.
+ */
+
+.settlement-preview-item-list .settlement-preview-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.settlement-preview-item-list .settlement-preview-item:hover,
+.settlement-preview-item-list .settlement-preview-item--selected:hover {
+  border: 2px solid var(--JA-mint-01, #01a1af) !important;
+  background: var(--default-WT, #fff) !important;
+  box-shadow: none;
+}
+
+.settlement-preview-item-list .settlement-preview-item--selected {
+  background-color: var(--settlement-preview-card-bg) !important;
+  border: 1px solid var(--settlement-preview-card-border) !important;
+  box-shadow: 0 0 0 2px var(--JA-mint-01, #01a1af);
+}
+
+.settlement-preview-item__open {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.settlement-preview-item__open:focus-visible {
+  outline: 2px solid var(--JA-mint-01, #01a1af);
+  outline-offset: 2px;
+}
+
+.settlement-preview-item__title {
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settlement-preview-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.settlement-preview-item__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.45);
+  box-sizing: border-box;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.settlement-preview-item__meta-sep {
+  color: #d4d4d4;
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.settlement-preview-item__amount {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.settlement-preview-item__checkbox {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  align-self: center;
+  border-radius: 10px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settlement-preview-item__checkbox:hover {
+  background: rgba(1, 161, 175, 0.14);
+}
+
+.settlement-preview-item__checkbox .ant-checkbox-wrapper {
+  align-items: center;
+}
+
+.settlement-preview-item__checkbox .ant-checkbox {
+  width: 20px;
+  height: 20px;
+  top: 0;
+}
+
+.settlement-preview-item__checkbox .ant-checkbox .ant-checkbox-inner {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.settlement-preview-item__checkbox .ant-checkbox .ant-checkbox-inner::after {
+  inset-block-start: 45%;
+}
