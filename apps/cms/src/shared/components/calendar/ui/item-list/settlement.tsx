@@ -1,9 +1,12 @@
 import type { CSSProperties } from 'react'
 import { Checkbox } from 'antd'
-import type { InstructorSettlementListRow } from '@/data/mock/instructor-member-settlements'
+import {
+  settlementCalendarPrimaryTitle,
+  type InstructorSettlementListRow,
+} from '@/data/mock/instructor-member-settlements'
 import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
 
-import './settlement-preview-item.css'
+import './settlement-list-item.css'
 
 type CalendarListItemContentSettlementProps = {
   row: InstructorSettlementListRow
@@ -28,26 +31,22 @@ export function CalendarListItemContentSettlement({
 }: CalendarListItemContentSettlementProps) {
   return (
     <div
-      className={`settlement-preview-item${checked ? ' settlement-preview-item--selected' : ''}`}
+      className="settlement-list-item"
       style={
         {
           backgroundColor: colors.bg,
           border: `1px solid ${colors.border}`,
-          '--settlement-preview-card-bg': colors.bg,
-          '--settlement-preview-card-border': colors.border,
+          '--settlement-list-card-bg': colors.bg,
+          '--settlement-list-card-border': colors.border,
         } as CSSProperties
       }
     >
-      <button
-        type="button"
-        className="settlement-preview-item__open"
-        onClick={() => onRowClick(row)}
-      >
-        <div className="settlement-preview-item__title">[{row.programName}]</div>
+      <button type="button" className="settlement-list-item__open" onClick={() => onRowClick(row)}>
+        <div className="settlement-list-item__title">{settlementCalendarPrimaryTitle(row)}</div>
 
-        <div className="settlement-preview-item__meta">
+        <div className="settlement-list-item__meta">
           <span
-            className="settlement-preview-item__badge"
+            className="settlement-list-item__badge"
             style={{
               color: statusStyle.color,
               borderColor: statusStyle.color,
@@ -56,18 +55,18 @@ export function CalendarListItemContentSettlement({
             {badgeLabel}
           </span>
 
-          <span className="settlement-preview-item__meta-sep" aria-hidden>
+          <span className="settlement-list-item__meta-sep" aria-hidden>
             |
           </span>
 
-          <span className="settlement-preview-item__amount">
+          <span className="settlement-list-item__amount">
             +{row.scheduledAmount.toLocaleString()}원
           </span>
         </div>
       </button>
 
       <div
-        className="settlement-preview-item__checkbox"
+        className="settlement-list-item__checkbox"
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >

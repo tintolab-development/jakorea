@@ -2,6 +2,7 @@ import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-c
 import {
   INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
   INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE,
+  settlementCalendarPrimaryTitle,
   type InstructorSettlementListRow,
 } from '@/data/mock/instructor-member-settlements'
 import type { CalendarItem } from '../../model/calendar-item'
@@ -42,7 +43,9 @@ export function renderSettlementEventsTooltipContent({
         const colors = settlementEventStatusColorPair(row.status)
         return (
           <div key={String(ev.id)} className="instructor-settlement-preview">
-            <div className="instructor-settlement-preview__title">[{row.programName}]</div>
+            <div className="instructor-settlement-preview__title">
+              {settlementCalendarPrimaryTitle(row)}
+            </div>
             <div>
               <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
                 {INSTRUCTOR_SETTLEMENT_STATUS_LABELS[row.status]}

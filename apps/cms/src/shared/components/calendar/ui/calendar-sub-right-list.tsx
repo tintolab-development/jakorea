@@ -154,7 +154,7 @@ export function CalendarSubRightSettlementList({
   )
 
   return (
-    <div className="calendar-list settlement-preview-item-list">
+    <div className="calendar-list settlement-list-item-list">
       {dayRows.length === 0 ? (
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 정산이 없습니다" />
       ) : (

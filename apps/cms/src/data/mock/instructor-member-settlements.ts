@@ -132,10 +132,23 @@ export interface InstructorSettlementInvoiceDetail {
   totalAmount: number
 }
 
+/** 지급조서 캘린더 등 1행 제목: 강사별은 대괄호 없이 강사명만, 프로그램별은 `[프로그램명]` */
+export type SettlementCalendarListTitleVariant = 'plain-instructor' | 'bracket-program'
+
 export interface InstructorSettlementListRow {
   id: string
   no: number
   programName: string
+  /**
+   * 계좌 지급 확인 등 강사 단위 1행일 때만 설정.
+   * 캘린더 셀 라벨·리스트/툴팁 1행에 사용 (`settlementCalendarPrimaryTitle` 참고).
+   */
+  instructorName?: string
+  /**
+   * 지급조서 확인 캘린더: 강사별(`plain-instructor`)은 우측·툴팁 1행에 강사명만,
+   * 프로그램별(`bracket-program`)은 `[프로그램명]`. 미지정 시 기존 `강사명 [프로그램명]` 규칙.
+   */
+  settlementListTitleVariant?: SettlementCalendarListTitleVariant
   institutionName: string
   lectureDateDisplay: string
   /** 캘린더 셀 배치용 (해당 일 강의일) */
@@ -144,6 +157,17 @@ export interface InstructorSettlementListRow {
   scheduledAmount: number
   detailAvailable: boolean
   invoice: InstructorSettlementInvoiceDetail
+}
+
+/** 정산 캘린더 우측 목록·일별 툴팁 1행 제목 */
+export function settlementCalendarPrimaryTitle(row: InstructorSettlementListRow): string {
+  if (row.settlementListTitleVariant === 'plain-instructor' && row.instructorName?.trim()) {
+    return row.instructorName.trim()
+  }
+  if (row.instructorName?.trim()) {
+    return `${row.instructorName.trim()} [${row.programName}]`
+  }
+  return `[${row.programName}]`
 }
 
 const sampleInvoice = (

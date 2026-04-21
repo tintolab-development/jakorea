@@ -324,30 +324,6 @@
   overflow-y: visible;
 }
 
-.account-payments-page .participating-institutions-section__table-header {
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 16px;
-  min-width: 0;
-}
-
-.account-payments-page .participating-institutions-section__table-heading {
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 16px;
-  flex: 1;
-  min-width: 0;
-}
-
-.account-payments-page .participating-institutions-section__table-actions {
-  flex-wrap: nowrap;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--spacing-8, 8px);
-}
-
 /* StatusDropdownCell 사용 시 행/셀 53px 고정 (정산 상세 override의 기준 규칙) */
 .participating-institutions-section
   .ant-table-tbody

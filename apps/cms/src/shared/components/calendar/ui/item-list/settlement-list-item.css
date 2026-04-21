@@ -2,7 +2,7 @@
  * 정산 캘린더 우측 일별 리스트 — `CalendarListItemContentSettlement` 전용.
  */
 
-.settlement-preview-item-list .settlement-preview-item {
+.settlement-list-item-list .settlement-list-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -14,20 +14,14 @@
   transition: all 0.2s;
 }
 
-.settlement-preview-item-list .settlement-preview-item:hover,
-.settlement-preview-item-list .settlement-preview-item--selected:hover {
+.settlement-list-item-list .settlement-list-item:hover,
+.settlement-list-item-list .settlement-list-item--selected:hover {
   border: 2px solid var(--JA-mint-01, #01a1af) !important;
   background: var(--default-WT, #fff) !important;
   box-shadow: none;
 }
 
-.settlement-preview-item-list .settlement-preview-item--selected {
-  background-color: var(--settlement-preview-card-bg) !important;
-  border: 1px solid var(--settlement-preview-card-border) !important;
-  box-shadow: 0 0 0 2px var(--JA-mint-01, #01a1af);
-}
-
-.settlement-preview-item__open {
+.settlement-list-item__open {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -44,12 +38,12 @@
   color: inherit;
 }
 
-.settlement-preview-item__open:focus-visible {
+.settlement-list-item__open:focus-visible {
   outline: 2px solid var(--JA-mint-01, #01a1af);
   outline-offset: 2px;
 }
 
-.settlement-preview-item__title {
+.settlement-list-item__title {
   width: 100%;
   margin: 0 0 8px;
   padding: 0;
@@ -62,7 +56,7 @@
   text-overflow: ellipsis;
 }
 
-.settlement-preview-item__meta {
+.settlement-list-item__meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -71,7 +65,7 @@
   min-width: 0;
 }
 
-.settlement-preview-item__badge {
+.settlement-list-item__badge {
   display: inline-flex;
   align-items: center;
   padding: 2px 8px;
@@ -85,7 +79,7 @@
   line-height: 150%;
 }
 
-.settlement-preview-item__meta-sep {
+.settlement-list-item__meta-sep {
   color: #d4d4d4;
   font-size: 13px;
   line-height: 1;
@@ -93,7 +87,7 @@
   user-select: none;
 }
 
-.settlement-preview-item__amount {
+.settlement-list-item__amount {
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);
   text-overflow: ellipsis;
@@ -102,7 +96,7 @@
   line-height: 150%;
 }
 
-.settlement-preview-item__checkbox {
+.settlement-list-item__checkbox {
   flex-shrink: 0;
   width: 52px;
   height: 52px;
@@ -115,26 +109,26 @@
   justify-content: center;
 }
 
-.settlement-preview-item__checkbox:hover {
+.settlement-list-item__checkbox:hover {
   background: rgba(1, 161, 175, 0.14);
 }
 
-.settlement-preview-item__checkbox .ant-checkbox-wrapper {
+.settlement-list-item__checkbox .ant-checkbox-wrapper {
   align-items: center;
 }
 
-.settlement-preview-item__checkbox .ant-checkbox {
+.settlement-list-item__checkbox .ant-checkbox {
   width: 20px;
   height: 20px;
   top: 0;
 }
 
-.settlement-preview-item__checkbox .ant-checkbox .ant-checkbox-inner {
+.settlement-list-item__checkbox .ant-checkbox .ant-checkbox-inner {
   width: 20px;
   height: 20px;
   border-radius: 4px;
 }
 
-.settlement-preview-item__checkbox .ant-checkbox .ant-checkbox-inner::after {
+.settlement-list-item__checkbox .ant-checkbox .ant-checkbox-inner::after {
   inset-block-start: 45%;
 }

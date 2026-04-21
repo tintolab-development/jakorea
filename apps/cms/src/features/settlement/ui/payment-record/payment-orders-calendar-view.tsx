@@ -1,6 +1,7 @@
 /**
  * 정산 관리 > 지급조서 확인 — 캘린더 뷰
  * CalendarMain(이벤트 모드) + CalendarSubRightSettlementList, 공통 정산 툴팁/리스트 UI
+ * 프로그램별·강사별 모두 **월간**만 (주간 토글 없음).
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -114,18 +115,31 @@ function paymentEventToSettlementListRow(
 ): InstructorSettlementListRow {
   const uiStatus = paymentOrderStatusToInstructorUiStatus(ev.status)
   const calendarDate = ev.date.format('YYYY-MM-DD')
-  const programName = ev.bracketTitle
-  const institutionName =
-    ev.exposure === 'program' && ev.sourceProgramRow
-      ? `정산 대상 강사 ${ev.sourceProgramRow.instructorCount}명`
-      : ev.cardSubtitle || '—'
+  const isProgramExposure = ev.exposure === 'program'
+  const programRow = ev.sourceProgramRow
+  const isProgram = isProgramExposure && programRow != null
+  const programNameForRow = isProgram
+    ? ev.bracketTitle
+    : ev.sourceInstructorRow
+      ? ev.cardSubtitle || ev.sourceInstructorRow.relatedProgramNames.join(', ') || '—'
+      : ev.bracketTitle
+  const institutionName = isProgram
+    ? `정산 대상 강사 ${programRow.instructorCount}명`
+    : ev.cardSubtitle || '—'
+  const invoiceProgramName = isProgram
+    ? programRow.programName
+    : ev.sourceInstructorRow?.relatedProgramNames[0] ?? ev.cardSubtitle ?? programNameForRow
+
   return {
     id: ev.id,
-    no:
-      ev.exposure === 'program' && ev.sourceProgramRow
-        ? ev.sourceProgramRow.no
-        : (ev.sourceInstructorRow?.no ?? 0),
-    programName,
+    no: isProgram ? programRow.no : (ev.sourceInstructorRow?.no ?? 0),
+    programName: programNameForRow,
+    instructorName: isProgram
+      ? undefined
+      : ev.sourceInstructorRow
+        ? instructorDisplayTitle(ev.sourceInstructorRow.instructorName)
+        : undefined,
+    settlementListTitleVariant: isProgramExposure ? 'bracket-program' : 'plain-instructor',
     institutionName,
     lectureDateDisplay: ev.date.format('YYYY.MM.DD (ddd)'),
     calendarDate,
@@ -133,9 +147,7 @@ function paymentEventToSettlementListRow(
     scheduledAmount: ev.amount,
     detailAvailable: true,
     invoice: placeholderInvoiceForPaymentOrderCalendar(
-      ev.exposure === 'program' && ev.sourceProgramRow
-        ? ev.sourceProgramRow.programName
-        : programName,
+      invoiceProgramName,
       '—',
       `${calendarDate} · ${ev.cardSubtitle || ''}`,
       ev.amount,
@@ -373,53 +385,26 @@ export function PaymentOrdersCalendarView({
     })
   }, [filterDateRange, anchor])
 
-  const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
-  const effectiveCalendarMode = exposure === 'program' ? ('month' as const) : calendarMode
-
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
+  /** 프로그램별·강사별 모두 월간만 사용 */
   const onSelectDate = useCallback(
     (date: Dayjs) => {
       setSelectedDate(date)
-      if (effectiveCalendarMode === 'week') {
-        setCurrentMonth(date)
-        onFilterDateRangeApply?.(oneMonthRangeMatchingFilter(date))
-      } else if (!date.isSame(currentMonth, 'month')) {
+      if (!date.isSame(currentMonth, 'month')) {
         setCurrentMonth(date.startOf('month'))
         onFilterDateRangeApply?.(oneMonthRangeMatchingFilter(date))
       }
     },
-    [effectiveCalendarMode, currentMonth, onFilterDateRangeApply]
+    [currentMonth, onFilterDateRangeApply]
   )
 
   const onMonthChange = useCallback(
     (next: Dayjs) => {
       setCurrentMonth(next)
       onFilterDateRangeApply?.(oneMonthRangeMatchingFilter(next))
-      if (effectiveCalendarMode === 'week') {
-        setSelectedDate(prev => {
-          const dow = prev.diff(prev.startOf('week'), 'day')
-          return next.startOf('week').add(dow, 'day')
-        })
-      }
     },
-    [effectiveCalendarMode, onFilterDateRangeApply]
-  )
-
-  const onModeChange = useCallback(
-    (mode: 'month' | 'week') => {
-      if (exposure === 'program') return
-      setCalendarMode(mode)
-      setSelectedDate(prev => {
-        if (mode === 'week') {
-          setCurrentMonth(prev)
-        } else {
-          setCurrentMonth(prev.startOf('month'))
-        }
-        return prev
-      })
-    },
-    [exposure]
+    [onFilterDateRangeApply]
   )
 
   const onTodayClick = useCallback(() => {
@@ -435,13 +420,9 @@ export function PaymentOrdersCalendarView({
       return
     }
     setSelectedDate(today)
-    if (effectiveCalendarMode === 'week') {
-      setCurrentMonth(today)
-    } else {
-      setCurrentMonth(today.startOf('month'))
-    }
+    setCurrentMonth(today.startOf('month'))
     onFilterDateRangeApply?.(oneMonthRangeMatchingFilter(today))
-  }, [filterDateRange, effectiveCalendarMode, onFilterDateRangeApply])
+  }, [filterDateRange, onFilterDateRangeApply])
 
   const handleSettlementRowClick = useCallback(
     (row: InstructorSettlementListRow) => {
@@ -463,9 +444,9 @@ export function PaymentOrdersCalendarView({
     <div className="calendar-set">
       <div className="calendar-main-container">
         <CalendarMain
-          mode={effectiveCalendarMode}
-          onModeChange={exposure === 'program' ? () => {} : onModeChange}
-          hideModeToggle={exposure === 'program'}
+          mode="month"
+          hideModeToggle
+          onModeChange={() => {}}
           events={calendarMainEvents}
           currentMonth={currentMonth}
           selectedDate={selectedDate}
@@ -481,7 +462,7 @@ export function PaymentOrdersCalendarView({
           tooltipOverlayClassName="payment-orders-calendar-tooltip-overlay"
         />
       </div>
-      <div className="calendar-sub-right-list payment-orders-calendar-sub-right">
+      <div className="calendar-sub-right-list">
         <CalendarSubRightSettlementList
           key={`${exposure}-${selectedDate.format('YYYY-MM-DD')}`}
           selectedDate={selectedDate}
