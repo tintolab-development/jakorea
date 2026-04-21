@@ -1,7 +1,7 @@
 /**
  * 정산 관리 > 계좌 지급 확인 — 캘린더 뷰
  * 좌측 그리드: shared/components/calendar `CalendarMain`(이벤트 모드)
- * 레이아웃·우측 패널: payment-record/payment-orders-calendar-view.css 재사용
+ * 공통 셸: payment-record/payment-orders-calendar-view.css — 우측·카드·툴팁: account-payments-calendar-view.css
  */
 
 import { useCallback, useMemo, useState } from 'react'

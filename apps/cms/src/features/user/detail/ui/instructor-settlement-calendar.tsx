@@ -23,7 +23,6 @@ import {
 } from '@/shared/components/calendar'
 import '@/shared/components/calendar/styles/calendar.css'
 import '@/shared/components/program-calendar.css'
-import './instructor-settlement-calendar.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)

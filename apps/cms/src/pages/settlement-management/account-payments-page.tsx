@@ -16,7 +16,7 @@ import {
   type AccountPaymentTransferStatus,
 } from '@/data/mock/account-payments-list'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui/cms-button'
 import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/ui/detail-modal/program-status/program-progress-tab.css'
 import './payment-orders-page.css'
@@ -607,50 +607,65 @@ export default function AccountPaymentsPage() {
               </div>
               <div className="participating-institutions-section__table-actions">
                 {viewMode === 'list' ? (
-                  <AppButton
-                    variant="cancel"
-                    size="filter-wide"
+                  <CmsButton
+                    variant="secondary"
+                    size="large"
+                    width="auto"
+                    style={{ minWidth: 180 }}
                     icon={<CalendarOutlined />}
+                    type="button"
                     onClick={() => setViewMode('calendar')}
                   >
                     캘린더 뷰로 보기
-                  </AppButton>
+                  </CmsButton>
                 ) : (
-                  <AppButton
-                    variant="cancel"
-                    size="filter-wide"
+                  <CmsButton
+                    variant="secondary"
+                    size="large"
+                    width="auto"
+                    style={{ minWidth: 180 }}
                     icon={<UnorderedListOutlined />}
+                    type="button"
                     onClick={() => setViewMode('list')}
                   >
                     리스트 뷰로 보기
-                  </AppButton>
+                  </CmsButton>
                 )}
-                <AppButton
+                <CmsButton
                   variant="primary"
-                  size="filter-wide"
+                  size="large"
+                  width="auto"
+                  style={{ minWidth: 180 }}
                   icon={<DownloadOutlined />}
+                  type="button"
                   disabled={selectedRowKeys.length === 0}
                   onClick={openBulkTransferPreview}
                 >
                   대량이체 양식 발급
-                </AppButton>
-                <AppButton
+                </CmsButton>
+                <CmsButton
                   variant="primary"
-                  size="filter-wide"
+                  size="large"
+                  width="auto"
+                  style={{ minWidth: 180 }}
                   icon={<DownloadOutlined />}
+                  type="button"
                   disabled={selectedRowKeys.length === 0}
                   onClick={openTaxFilingPreview}
                 >
                   세금 신고 양식 발급
-                </AppButton>
-                <AppButton
+                </CmsButton>
+                <CmsButton
                   variant="primary"
-                  size="filter-wide"
+                  size="large"
+                  width="auto"
+                  style={{ minWidth: 180 }}
+                  type="button"
                   disabled={selectedRowKeys.length === 0}
                   onClick={openAccountPaymentConfirmFromSelection}
                 >
                   일괄 지급 처리
-                </AppButton>
+                </CmsButton>
               </div>
             </div>
 

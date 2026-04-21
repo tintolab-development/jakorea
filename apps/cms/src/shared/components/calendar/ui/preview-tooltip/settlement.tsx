@@ -6,6 +6,8 @@ import {
 } from '@/data/mock/instructor-member-settlements'
 import type { CalendarItem } from '../../model/calendar-item'
 
+import './settlement-preview-tooltip.css'
+
 export function settlementRowFromCalendarItem(item: CalendarItem): InstructorSettlementListRow {
   const o = item.original
   if (o != null && typeof o === 'object' && 'originalItem' in o) {

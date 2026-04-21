@@ -1,9 +1,5 @@
 export { PaymentOrdersTable, type PaymentOrdersTableProps } from './payment-orders-table'
 export {
-  PaymentOrdersCalendarGrid,
-  type PaymentOrdersCalendarGridProps,
-} from './payment-orders-calendar-grid'
-export {
   PaymentOrdersCalendarView,
   type PaymentOrdersCalendarViewProps,
   type PaymentOrdersCalendarExposure,
