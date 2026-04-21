@@ -4,458 +4,93 @@ always_include: true
 category: process
 ---
 
-# 역할별 Persona 규칙
+# Role personas (PM, Planner, Designer, Developer)
 
-JAKorea CMS 프로젝트에서 사용되는 각 역할(시니어 PM, 기획자, UX/UI 디자이너, 개발자)의 persona 정의입니다.
+Use these personas when reasoning about scope, UX, and implementation trade-offs in JAKorea CMS.
 
-## 🎭 역할 개요
+## Overview
 
-프로젝트는 다음 4가지 주요 역할로 구성됩니다:
+Four primary roles:
 
-1. **👨‍💼 시니어 PM** - 프로젝트 관리 및 의사결정
-2. **📋 시니어 기획자** - 요구사항 정의 및 기능 명세
-3. **🎨 시니어 UX/UI 디자이너** - 사용자 경험 및 인터페이스 디자인
-4. **👨 시니어 개발자** - 기술 구현 및 개발
-
----
-
-## 👨‍💼 시니어 PM (Project Manager)
-
-### 역할 정의
-
-프로젝트 전체의 일정 관리, 우선순위 결정, 의사결정, 팀 간 소통을 조율하는 역할입니다.
-
-### 핵심 책임
-
-- **일정 관리**
-  - Phase별 일정 수립 및 추적
-  - 마일스톤 관리
-  - 리스크 관리 및 대응 계획 수립
-
-- **우선순위 결정**
-  - 기능별 우선순위 결정
-  - 리소스 배분 결정
-  - 클라이언트 요구사항과 기술 제약사항 균형 조율
-
-- **의사결정**
-  - 기술적 선택의 최종 승인
-  - 디자인 방향성 승인
-  - 기능 범위 결정
-
-- **소통 조율**
-  - 클라이언트와의 커뮤니케이션
-  - 팀 내 역할 간 소통 조율
-  - 진행 상황 보고
-
-### 작업 방식
-
-- **계획 수립**: Phase별 목표와 일정을 명확히 정의
-- **정기 회의**: 팀과의 정기적인 체크포인트 미팅
-- **문서화**: 의사결정 사항 및 변경사항 문서화
-- **검증**: 각 Phase 완료 시 최종 검증 수행
-
-### 주요 산출물
-
-- Phase별 일정 계획서
-- 우선순위 결정 문서
-- 진행 상황 보고서
-- 의사결정 기록
-
-### 커뮤니케이션 스타일 (표현 방식)
-
-- **명확하고 간결한 소통**: 결정사항을 명확히 전달 (장황한 설명보다 결론·결정 위주)
-- **데이터 기반 의사결정**: 객관적 근거·지표를 제시하며 우선순위/일정 제안
-- **리스크 관리**: 잠재적 문제를 조기 발견하고 대응 방안을 함께 전달
+1. **Senior PM** — schedule, priority, decisions, stakeholder alignment  
+2. **Senior Planner** — requirements, specs, scenarios  
+3. **Senior UX/UI Designer** — experience, design system, UI consistency  
+4. **Senior Frontend Developer** — architecture, implementation, quality  
 
 ---
 
-## 📋 시니어 기획자 (Product Planner)
+## Senior PM
 
-### 역할 정의
+**Focus:** timelines, milestones, risk, priorities, approvals.
 
-비즈니스 요구사항을 분석하고, 기능 명세서를 작성하며, 사용자 시나리오를 정의하는 역할입니다.
+**Delivers:** phase plans, priority calls, status reports, decision logs.
 
-### 핵심 책임
-
-- **요구사항 분석**
-  - 클라이언트 인터뷰 내용 분석
-  - 비즈니스 목표 이해
-  - 사용자 니즈 파악
-
-- **기능 명세서 작성**
-  - Phase별 기능 정의
-  - 기능별 상세 명세서 작성
-  - 비즈니스 로직 검증
-
-- **사용자 시나리오 정의**
-  - 사용자 플로우 정의
-  - 시나리오 기반 기능 설계
-  - 예외 케이스 처리 방안 정의
-
-- **문서화**
-  - MVP 로드맵 작성
-  - 기능 명세서 관리
-  - 변경사항 추적
-
-### 작업 방식
-
-- **클라이언트 인터뷰**: 요구사항 수집 및 확인
-- **시나리오 기반 설계**: 사용자 관점에서 기능 설계
-- **명세서 작성**: 구체적이고 검증 가능한 명세서 작성
-- **검증**: 비즈니스 로직 및 기능 범위 검증
-
-### 주요 산출물
-
-- 클라이언트 인터뷰 정리 문서
-- MVP 로드맵 (MVP_ROADMAP_V3.md)
-- 기능 명세서
-- 사용자 시나리오 문서
-- [PLANNING_REQUESTS.md](../../../docs/planning/PLANNING_REQUESTS.md)
-
-### 커뮤니케이션 스타일 (표현 방식)
-
-- **사용자 중심 사고**: "누가, 어떤 상황에서, 무엇을 하는지" 사용자 시나리오·플로우로 설명
-- **명확한 정의**: "~일 때 ~한다", "~인 경우 ~로 표시" 등 검증 가능한 문장으로 요구사항 정의
-- **검증 가능성**: 명세·로드맵·인터뷰 정리 등 문서로 정리하고, 구현 후 시나리오대로 동작하는지 검증
+**Communication:** short, decision-first; data-backed trade-offs; surface risks early.
 
 ---
 
-## 🎨 시니어 UX/UI 디자이너 (Senior UX/UI Designer)
+## Senior Planner
 
-### 역할 정의
+**Focus:** business/user needs, functional specs, flows, edge cases.
 
-사용자 경험을 설계하고, 디자인 시스템을 구축하며, 시각적 인터페이스를 설계하는 역할입니다.
+**Delivers:** interview/requirement notes, feature specs, scenarios, updates to  
+[MVP_ROADMAP_V4_DETAILED.md](../../../docs/roadmap/MVP_ROADMAP_V4_DETAILED.md) and [requirements progress](../../../docs/requirements-specification/progress.md).
 
-### 핵심 책임
-
-- **디자인 시스템 구축**
-  - Ant Design 기반 디자인 시스템 확립
-  - 색상 시스템 및 팔레트 정의
-  - 컴포넌트 라이브러리 관리
-
-- **사용자 경험 설계**
-  - 사용자 플로우 디자인
-  - 인터랙션 디자인
-  - 접근성 고려
-
-- **UI 디자인**
-  - 화면 레이아웃 설계
-  - 컴포넌트 디자인
-  - 반응형 디자인 고려
-
-- **디자인 검토**
-  - 개발 구현물과 디자인 일치성 검토
-  - 사용자 경험 개선 제안
-  - 디자인 시스템 일관성 유지
-
-### 작업 방식
-
-- **Ant Design 활용**: 기존 컴포넌트 최대한 활용
-- **디자인 시스템 우선**: 일관된 디자인 시스템 적용
-- **프로토타입 제작**: 주요 플로우 프로토타입 제작
-- **개발팀과 협업**: 구현 가능성 고려한 디자인 제안
-
-### 주요 산출물
-
-- 디자인 시스템 문서 (color-system.md, color-palette.md)
-- UI 원칙 문서 (ui-principles.md)
-- 디자인 요청사항 (design-requests.md)
-- 컴포넌트 디자인 시안
-- 프로토타입
-
-### 커뮤니케이션 스타일 (표현 방식)
-
-- **시각적 소통**: 화면 시안, 프로토타입, 컴포넌트/색상/간격 스펙으로 전달 (텍스트만으로 설명하기보다 시안 첨부)
-- **사용자 관점 강조**: "사용자가 ~할 때 ~하게 보이면 좋겠다", 인터랙션·접근성 관점으로 요청
-- **구현 가능성 고려**: 기술 제약을 전제로 "가능한 범위에서", "우선 ~만" 등으로 범위를 나누어 제안
+**Communication:** testable wording (“when X, then Y”); scenario-driven; keep specs verifiable.
 
 ---
 
-## 👨‍💻 시니어 개발자 (Senior Frontend Developer)
+## Senior UX/UI Designer
 
-### 역할 정의
+**Focus:** Ant Design–based system, flows, accessibility, visual specs.
 
-기술 아키텍처 설계, 코드 구현, 성능 최적화, 개발 환경 구축을 담당하는 역할입니다.
+**Delivers:** references to `color-system.md`, `color-palette.md`, `ui-principles.md`, `design-requests.md`, prototypes.
 
-### 핵심 책임
-
-- **기술 아키텍처 설계**
-  - Feature-Sliced Design (FSD) 구조 설계
-  - 상태 관리 구조 설계
-  - 컴포넌트 아키텍처 설계
-
-- **코드 구현**
-  - TypeScript 기반 타입 안전한 코드 작성
-  - Ant Design 컴포넌트 활용
-  - React Hook Form + Zod 폼 검증 구현
-
-- **코드 리뷰 및 품질 관리**
-  - 코드 리뷰 수행
-  - 코딩 표준 준수
-  - 성능 최적화
-
-- **개발 환경 구축**
-  - 개발 도구 설정
-  - 빌드 시스템 구성
-  - 테스트 환경 구성
-
-### 작업 방식
-
-- **FSD 아키텍처 준수**: Feature-Sliced Design 원칙 준수
-- **타입 안전성**: TypeScript 엄격 모드 사용
-- **컴포넌트 재사용**: 공유 컴포넌트 및 hooks 활용
-- **테스트 가능한 코드**: 테스트 가능한 구조로 작성
-
-### 주요 산출물
-
-- 구현된 기능 및 컴포넌트
-- 기술 문서 (코딩 표준, 아키텍처 가이드)
-- 개발 환경 설정
-- 코드 리뷰 피드백
-
-### 기술 스택
-
-- **프레임워크**: React 18 + TypeScript
-- **UI 라이브러리**: Ant Design 5
-- **상태 관리**: Zustand
-- **폼 관리**: React Hook Form + Zod
-- **라우팅**: React Router v6
-- **빌드 도구**: Vite
-- **패키지 관리**: pnpm Workspace
-
-### 커뮤니케이션 스타일
-
-- **기술적 명확성**: 기술적 결정사항을 명확히 설명
-- **코드 중심 소통**: 코드 예제와 함께 설명
-- **제약사항 공유**: 기술적 제약사항을 사전에 공유
+**Communication:** prefer mocks/specs over prose alone; split scope when constraints bite.
 
 ---
 
-## 🔄 역할 간 협업 방식
+## Senior Frontend Developer
 
-### Phase별 협업 플로우
+**Focus:** FSD layout, TypeScript safety, Ant Design + RHF/Zod, performance, reviews.
 
-1. **기획 단계**
-   - 기획자: 요구사항 분석 및 기능 명세서 작성
-   - PM: 우선순위 결정 및 일정 확정
+**Stack:** React 18, TS, Ant Design 5, Zustand, React Router v6, Vite, pnpm.
 
-2. **디자인 단계**
-   - 디자이너: 디자인 시스템 및 UI 설계
-   - 기획자: 사용자 시나리오 검토
-   - PM: 디자인 방향성 승인
-
-3. **개발 단계**
-   - 개발자: 기술 구현
-   - 디자이너: 구현물 검토 및 피드백
-   - 기획자: 기능 검증
-
-4. **검증 단계**
-   - PM: 최종 검증
-   - 모든 역할: 통합 검토 및 개선사항 논의
-
-### 소통 채널
-
-- **문서 기반 소통**: 명확한 문서화를 통한 소통
-- **정기 미팅**: Phase별 체크포인트 미팅
-- **피드백 루프**: 빠른 피드백 및 개선 사이클
+**Communication:** cite code/constraints; propose alternatives when a design is infeasible.
 
 ---
 
-## 📝 Persona 활용 가이드
+## Collaboration (phase flow)
 
-### AI 어시스턴트 사용 시
+1. **Plan** — planner specs; PM sets priority/schedule.  
+2. **Design** — designer + planner align flows; PM approves direction.  
+3. **Build** — dev implements; designer reviews fit; planner validates behaviour.  
+4. **Verify** — PM drives acceptance; joint review.
 
-각 역할의 persona를 참고하여:
-
-- **PM 관점**: 일정, 우선순위, 리스크 관리 측면 고려
-- **기획자 관점**: 사용자 중심, 명확한 요구사항 정의 측면 고려
-- **디자이너 관점**: 사용자 경험, 디자인 시스템 일관성 측면 고려
-- **개발자 관점**: 기술적 구현 가능성, 아키텍처, 코드 품질 측면 고려
-
-### 작업 시 역할별 체크리스트
-
-- **PM**: 일정, 우선순위, 의사결정 필요 여부 확인
-- **기획자**: 요구사항 명확성, 사용자 시나리오 검증
-- **디자이너**: 디자인 시스템 준수, 사용자 경험 검토
-- **개발자**: 기술적 타당성, 코드 품질, 성능 고려
+Prefer **documented** decisions and fast feedback loops.
 
 ---
 
-## 🔀 역할별 표현 방식 차이 (개발자 참고)
+## How to interpret requests (for developers)
 
-요청이 **누구에게서** 오는지에 따라 표현 방식이 다릅니다. 개발 시 아래를 참고해 해석·응답하세요.
-
-| 구분               | PM                                        | 기획자                                       | 디자이너                                        |
-| ------------------ | ----------------------------------------- | -------------------------------------------- | ----------------------------------------------- |
-| **전달 형태**      | 결정·일정·우선순위 위주, 짧고 명확        | 문서·명세·시나리오, 조건·예외까지 서술       | 시안·프로토타입·스펙(색, 간격, 상태)            |
-| **자주 쓰는 표현** | "이번 주까지", "우선 X만", "이건 보류"    | "~일 때 ~한다", "사용자가 ~하면", "예외: ~"  | "이렇게 보이게", "클릭 시 ~", "여백은 8px"      |
-| **개발자가 할 일** | 범위·일정 맞추기, 리스크 있으면 조기 공유 | 명세/시나리오 기준으로 구현 후 검증 가능하게 | 시안/디자인 시스템 기준 구현, 불가 시 대안 제안 |
-
-### PM 요청 시
-
-- **특징**: 결론·우선순위·일정이 앞에 나옴. 이유는 간단히만 말할 수 있음.
-- **개발 시**: "무엇을, 언제까지, 어떤 순서로"를 먼저 맞추고, 기술적 리스크·일정 이슈는 바로 피드백.
-
-### 기획자 요청 시
-
-- **특징**: 기능 명세·사용자 시나리오·예외 케이스가 문서로 옴. "~인 경우 ~한다" 식 문장이 많음.
-- **개발 시**: 명세/시나리오를 구현 기준으로 두고, 모호한 부분은 "~일 때 ~으로 동작하면 될까요?"로 확인. 검증 가능한 수준으로 정리.
-
-### 디자이너 요청 시
-
-- **특징**: 화면 시안·프로토타입·컴포넌트/색/간격 스펙으로 전달. "사용자가 ~할 때 ~하게" 같은 UX 관점 포함.
-- **개발 시**: 시안·디자인 시스템을 기준으로 구현. 기술적으로 불가하거나 비용이 크면, "현재 구조에서는 ~만 가능한데, ~ 방식으로 가면 어떨까요?"처럼 대안을 제안.
+| Role      | Typical input                         | Your response                          |
+|-----------|---------------------------------------|----------------------------------------|
+| PM        | dates, “first X”, deferrals           | align scope/time; flag schedule risk   |
+| Planner   | conditions, exceptions, scenarios     | implement against spec; clarify gaps   |
+| Designer  | layout, spacing, states, prototypes   | match DS; offer feasible alternatives  |
 
 ---
 
-## 📦 (기획) 템플릿 관리: 파일 양식 / 문자 양식 / 메일 양식
+## Related process specs (implementation detail)
 
-### 배경 / 문제 정의
-
-운영팀(관리자)은 학교/강사/봉사자 대상 안내를 반복적으로 수행합니다. 현재는 템플릿이 흩어져 있거나 개인별로 관리되어:
-
-- 문구/양식이 **일관되지 않음**
-- 최신 버전이 무엇인지 **혼선**
-- 승인/배포/이력 관리가 어려워 **리스크(오발송, 구버전 배포)** 발생
-
-따라서 CMS 내에서 "템플릿"을 3개 카테고리로 분리해 **표준화 + 재사용 + 이력/승인** 흐름을 제공해야 합니다.
-
-### 목표(Outcomes)
-
-- 운영자가 **3분 내** 원하는 템플릿을 찾아 복사/다운로드/전송 준비를 완료
-- 변경 이력/상태(초안/검토/게시)로 **오류 발송/배포 위험 최소화**
-- 템플릿의 "공식 문안"을 단일 소스로 관리
-
-### 대상 사용자(Persona)
-
-- **1차 사용자: ADMIN(운영자)**
-  - 템플릿 생성/수정/승인/아카이브 권한
-- **2차 사용자(차후): 내부 제한 권한(예: 운영 담당자)**
-  - 향후 `TEMPLATE_EDITOR` 같은 role/permission으로 분리 가능
-
-### IA / 라우팅(권한 경계)
-
-- **관리자 전용**
-  - `/templates/files` (파일 양식)
-  - `/templates/sms` (문자 양식)
-  - `/templates/email` (메일 양식)
-- 화면 상단은 Tabs로 이동하며, **탭 상태는 쿼리파라미터로 유지** (`?tab=files|sms|email`)
-
-### 우선순위(권장)
-
-#### P0 — 파일 양식(우선 구현)
-
-- **이유**
-  - 운영 프로세스에서 가장 "정적"이고 오발송 리스크가 낮음
-  - 저장/다운로드/버전 관리로 즉시 효율 개선
-- **핵심 기능**
-  - 목록(검색/태그/카테고리), 업로드/버전 등록, 다운로드, 활성/비활성(게시/아카이브)
-  - 메타데이터: 제목, 설명, 파일형식, 대상(학교/강사/봉사자), 태그, 버전, 상태
-
-#### P1 — 문자(SMS) 양식(다음)
-
-- **이유**
-  - 실제 운영에서 사용 빈도가 높고, 문구 일관성/오타 방지가 중요
-  - UI/검증(문자수/변수 치환) 필요하지만 구현 난이도는 중간
-- **핵심 기능**
-  - 템플릿 작성/미리보기(치환 변수), 복사, 길이 계산(단문/장문), 상태 관리
-  - 변수: `{{name}}`, `{{programTitle}}`, `{{date}}`, `{{time}}`, `{{link}}` 등
-
-#### P2 — 메일(Email) 양식(마지막)
-
-- **이유**
-  - 에디터/HTML/첨부/테스트발송 등 확장 요구가 많아 범위가 큼
-  - 템플릿 품질(디자인/레이아웃)까지 다뤄야 하므로 디자인 협업 필요
-- **핵심 기능**
-  - 제목/본문(리치 텍스트 또는 HTML), 미리보기(데스크탑/모바일), 변수 치환
-  - (차후) 이미지/첨부, 테스트 발송, 서명/푸터 공통화
-
-### 공통 데이터 모델(초안)
-
-- `id`
-- `type`: `files | sms | email`
-- `title`, `description`
-- `status`: `draft | review | published | archived`
-- `tags: string[]`
-- `audience`: `ADMIN_INTERNAL | SCHOOL | INSTRUCTOR | VOLUNTEER | STUDENT` (복수 선택)
-- `updatedAt`, `updatedBy`
-- `version` (파일 양식은 필수, sms/email은 선택)
-- `content`
-  - 파일: `{ fileName, fileUrl(또는 blob ref), mimeType, size }`
-  - sms: `{ text, variables }`
-  - email: `{ subject, html/text, variables }`
-
-### UX 원칙
-
-- 관리자 작업은 "빠른 탐색 → 바로 복사/다운로드"가 핵심
-- 목록은 Table + 빠른 필터(상태/태그/대상) 중심
-- 편집은 Modal 또는 전용 페이지 중 택1(초기에는 Modal 권장)
-- 상태 전환은 명확하게(초안→검토→게시 / 게시→아카이브)
-
-### 성공 기준(Acceptance)
-
-- 관리자 접근 시 `/templates/files`가 기본으로 열리고, 탭 전환이 URL에 유지됨
-- 각 카테고리에서 "등록/수정/비활성화" 기본 CRUD가 동작(초기 mock 기반)
-- 상태가 `published`인 템플릿만 "실사용(복사/다운로드)"에 노출(정책 적용)
+Do **not** duplicate pixel specs here. Follow the linked rule files under `rules/process/` (e.g. member list table, member detail modal, template flows, notifications, dashboard widgets, program modal tabs). Update those files when UI requirements change.
 
 ---
 
-## 📦 템플릿 관리 관련 개선 작업
+## Related rules
 
-템플릿 관리 - 파일 양식 카테고리 구조 개선 작업은 별도 문서로 분리되었습니다.
+- [development-process.md](./development-process.md)  
+- [progress-management.md](./progress-management.md)  
+- [project-overview.md](../project-overview.md)  
 
-**참고 문서**: [템플릿 관리 파일 양식 개선](./template-files-improvement.md)
-
----
-
-## 📦 회원관리 > 전체 회원 테이블 (스크린샷 기준)
-
-전체 회원 목록 테이블 UI/컬럼/모의 데이터 스펙은 **스크린샷**을 상세 참고하여 구현합니다.
-
-**참고 문서**: [전체 회원 테이블 스펙 (member-list-table-spec.md)](./member-list-table-spec.md) · [회원 상세 모달 스펙 (member-detail-modal-spec.md)](./member-detail-modal-spec.md)
-
-- 테이블 컬럼: 선택, No., 회원명, 연락처, 이메일, 회원 유형, 가입일
-- 행 선택 시 연한 파란 배경 하이라이트, 행 클릭 시 상세 모달(스펙: member-detail-modal-spec.md)
-
-**회원 상세 모달 기본 정보 테이블 (필드·위치)**
-
-- 프로필 영역: **184.5×240px**. 테이블 tr 기본: **키 열 180px, 행 높이 48px**.
-- **테이블 좌측**: 성명(2행 병합, 오른쪽에 한글/영문 서브라벨·값) → 연락처 → 주소 → 연동된 소셜 계정.
-- **테이블 우측**: 생년월일 → 성별 → 이메일 → 소속 → 가입일.
-- 상세 필드·데이터 소스는 member-detail-modal-spec.md §6 참고.
-
----
-
-## 📦 수강 프로그램 상세 모달 — 게시글 탭 (스크린샷 기준)
-
-전체 회원 > 프로그램 수강 이력 > 수강 프로그램 상세 모달에서 **「게시글」 탭** UI는 스크린샷과 디자인 스펙을 기준으로 구현합니다.
-
-**참고 문서**: [수강 프로그램 상세 모달 — 게시글 탭 스펙 (enrollment-program-detail-posts-tab-spec.md)](./enrollment-program-detail-posts-tab-spec.md)
-
-- 모달 바디(헤더 제외) 높이: **814px**. 본문은 **2컬럼**: 왼쪽 게시글, 오른쪽 파일 및 사진.
-- 게시글 섹션: 타이틀과 동일 레벨에 「게시글 작성」 버튼(100×32, primary). 파일 및 사진 섹션: 타이틀과 동일 레벨에 「더보기」 버튼(100×32, outline).
-- 읽지 않은 게시글: 민트 스트로크 + 「읽지 않음」 태그. 읽음/읽지 않음 태그 스타일은 스펙 문서 §4 참고.
-
----
-
-## 📦 레이아웃 알림 버튼 — 드롭다운 (스크린샷 기준)
-
-알림 버튼 클릭 시 **모달이 아닌 드롭다운**으로 노출합니다. 카테고리 필터(전체, 신청·매칭, 정산, 문의, 업데이트, 시스템), 크기·패딩·헤더 높이·스타일은 스펙 문서를 따릅니다.
-
-**참고 문서**: [알림 드롭다운 스펙 (notification-dropdown-spec.md)](./notification-dropdown-spec.md)
-
----
-
-## 관련 규칙
-
-- [개발 프로세스](./development-process.md)
-- [진행 상황 관리](./progress-management.md)
-- [프로젝트 개요](../project-overview.md)
-- [대시보드 위젯 50% 분할](./dashboard-widget-drop-50-split.md)
-- [대시보드 위젯 재정렬 비즈니스 로직 및 UX 개선](./dashboard-widget-reorder-ux.md)
-- [프로그램 상세 풀페이지 모달 — 탭 UI 스펙](./program-detail-fullpage-modal-tabs-spec.md) (디자이너 검토 완료 → 개발 위임)
-- [교육 신청 기관 목록 테이블 UI 수정 명세](./applicant-institutions-table-ui-spec.md) (스크린샷 기반 — 컬럼 겹침·가로 스크롤 수정 위임)
-
----
-
-**마지막 업데이트**: 2024년
+**Last updated:** 2026-04-21

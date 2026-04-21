@@ -4,41 +4,33 @@ always_include: false
 category: state
 ---
 
-# 상태 관리
+# State management (Zustand)
 
-## Zustand 사용
+## Global state
 
-전역 상태는 **Zustand**를 사용합니다.
-각 Feature별로 스토어를 분리합니다.
+Use **Zustand** stores scoped by **feature** (`features/<name>/model/*-store.ts`).
 
-## 스토어 구조
+## Local state
+
+Prefer `useState` / `useReducer` inside components. Promote to Zustand only when multiple distant components must share the same data.
+
+## Example
 
 ```typescript
-// features/instructor/model/instructor-store.ts
-import { create } from 'zustand'
-
 interface InstructorState {
   instructors: Instructor[]
-  selectedInstructor: Instructor | null
-  setInstructors: (instructors: Instructor[]) => void
-  setSelectedInstructor: (instructor: Instructor | null) => void
+  setInstructors: (rows: Instructor[]) => void
 }
 
 export const useInstructorStore = create<InstructorState>(set => ({
   instructors: [],
-  selectedInstructor: null,
   setInstructors: instructors => set({ instructors }),
-  setSelectedInstructor: instructor => set({ selectedInstructor: instructor }),
 }))
 ```
 
-## 로컬 상태
+## Related
 
-컴포넌트 내부 상태는 `useState` 또는 `useReducer`를 사용합니다.
-전역 상태가 필요한 경우에만 Zustand를 사용합니다.
+- [custom-hooks.md](../coding/custom-hooks.md)  
+- [fsd-structure.md](../architecture/fsd-structure.md)  
 
-## 관련 규칙
-
-- [Custom Hooks](../coding/custom-hooks.md)
-- [FSD 구조](../architecture/fsd-structure.md)
-
+**Last updated:** 2026-04-21

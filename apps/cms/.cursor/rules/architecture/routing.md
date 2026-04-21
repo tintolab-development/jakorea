@@ -4,22 +4,24 @@ always_include: false
 category: architecture
 ---
 
-# 라우팅
+# Routing
 
-## React Router 설정
+Configure routes under `app/router/`. Use nested routes so `Layout` wraps feature pages.
 
-`app/router/` 디렉토리에 라우팅 설정을 관리합니다.
-중첩 라우팅을 활용하여 레이아웃을 공유합니다.
+## Naming
 
-## 라우팅 구조 예시
+| Pattern | Path |
+|---------|------|
+| List | `/instructors` |
+| Create | `/instructors/new` |
+| Detail | `/instructors/:id` |
+| Edit | `/instructors/:id/edit` |
 
-```typescript
-// app/router/index.tsx
-import { createBrowserRouter } from 'react-router-dom'
-import { Layout } from '@/widgets/layout'
-import { Dashboard } from '@/pages/dashboard'
-import { InstructorsList } from '@/pages/instructors/instructor-list-page'
+Apply the same pattern to other domains (`/programs`, etc.).
 
+## Example
+
+```tsx
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -32,28 +34,9 @@ export const router = createBrowserRouter([
 ])
 ```
 
-## 라우트 네이밍 규칙
+## Related
 
-### 표준 패턴
+- [fsd-structure.md](./fsd-structure.md)  
+- [table-management.md](../tables/table-management.md) — URL sync for filters  
 
-- **목록**: `/instructors`
-- **상세**: `/instructors/:id`
-- **생성**: `/instructors/new`
-- **수정**: `/instructors/:id/edit`
-
-### 예시
-
-```
-/instructors              # 강사 목록
-/instructors/new          # 강사 등록
-/instructors/:id          # 강사 상세
-/instructors/:id/edit     # 강사 수정
-/programs                 # 프로그램 목록
-/programs/:id           # 프로그램 상세
-```
-
-## 관련 규칙
-
-- [FSD 구조](./fsd-structure.md)
-- [테이블 관리](../tables/table-management.md) - Query Parameter 동기화
-
+**Last updated:** 2026-04-21

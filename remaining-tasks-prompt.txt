@@ -1,4 +1,4 @@
-@apps/cms/docs/refactoring/refactoring-priority-report.md 기반으로 CMS 리팩토링 Phase 2 진행
+CMS 리팩토링 Phase 2 진행 (과거 우선순위 문서는 정리됨 — 코드베이스·`.cursor/rules` 기준으로 진행)
 
 ## 우선순위 작업
 

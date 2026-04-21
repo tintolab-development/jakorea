@@ -1,30 +1,21 @@
-# 브라우저 환경 및 반응형 디자인
+# Browser support & layout
 
-## 지원 브라우저
+## Browsers
 
-- Chrome (최신 2개 버전)
-- Firefox (최신 2개 버전)
-- Safari (최신 2개 버전)
-- Edge (최신 2개 버전)
+Target **latest two versions** of Chrome, Firefox, Safari, and Edge.
 
-## 반응형 디자인
+## Viewport
 
-**최소 1920 x 1080 데스크탑 환경만 고려**합니다.
-모바일 및 태블릿 환경은 지원하지 않습니다.
-반응형 디자인은 구현하지 않으며, 고정 레이아웃으로 개발합니다.
+CMS admin is **desktop-first**. Minimum assumed canvas: **1920×1080**.  
+Do **not** implement mobile/tablet responsive layouts unless product explicitly requires it.
 
-## 레이아웃 가이드
+## Layout
 
-- 최소 해상도: 1920px x 1080px
-- 컨텐츠 영역: 중앙 정렬 또는 좌측 정렬
-- 고정 너비 레이아웃 사용 (반응형 미디어 쿼리 사용 안 함)
+- Prefer fixed-width patterns consistent with existing admin shells.  
+- Avoid adding responsive breakpoints for standard list/detail pages without PM approval.
 
-## 관련 규칙
+## Related
 
-- [디자인 가이드라인](../../../.cursor/rules/design-guidelines.md)
+- [ui-principles.md](../design/ui-principles.md)  
 
-
-
-
-
-
+**Last updated:** 2026-04-21
