@@ -1,16 +1,16 @@
 # CMS 문서 인덱스
 
-`apps/cms` 경로 내 MD 문서를 카테고리별로 정리한 인덱스입니다.
+`apps/cms` 경로 내 MD 문서를 카테고리별로 정리한 인덱스입니다. 과거 QA·감사·전략·아카이브 등 참고용 문서는 정리 과정에서 제거되었습니다. 필요하면 `git` 히스토리에서 복원하거나 새로 작성하세요.
 
 ---
 
-## 📁 문서 구조 요약
+## 문서 구조 요약
 
 | 영역 | 경로 | 용도 |
 |------|------|------|
 | **개발 규칙** | `.cursor/rules/` | AI/개발자용 코딩 규칙, 아키텍처, 디자인 가이드 |
 | **스킬** | `.cursor/skills/` | Cursor 스킬 정의 |
-| **프로젝트 문서** | `docs/` | 요구사항, 검증, 전략, 구현 등 |
+| **프로젝트 문서** | `docs/` | 요구사항, 구현, 디자인 스펙 등 |
 
 ---
 
@@ -71,7 +71,7 @@
 | 문서 | 설명 |
 |------|------|
 | [development-process.md](../.cursor/rules/process/development-process.md) | Phase별 개발 프로세스 |
-| [progress-management.md](../.cursor/rules/process/progress-management.md) | PROGRESS.md 기록 규칙 |
+| [progress-management.md](../.cursor/rules/process/progress-management.md) | 진행 기록 규칙 |
 | [persona.md](../.cursor/rules/process/persona.md) | 역할별 Persona |
 | [template-files-improvement.md](../.cursor/rules/process/template-files-improvement.md) | 템플릿 파일 개선 |
 
@@ -96,56 +96,20 @@
 | [microsoft-authenticator-2fa-info.md](requirements-specification/MVP/microsoft-authenticator-2fa-info.md) | MS Authenticator 2FA |
 | [MVP_ROADMAP_V4_DETAILED.md](roadmap/MVP_ROADMAP_V4_DETAILED.md) | 로드맵 v4 상세 |
 | [REQUIREMENTS_PRIORITY.md](status/REQUIREMENTS_PRIORITY.md) | 요구사항 우선순위 |
-| [DOCUMENT_VALIDITY_REVIEW_2026-04-20.md](status/DOCUMENT_VALIDITY_REVIEW_2026-04-20.md) | 문서 유효성 분류표 |
 
 ---
 
-## 3. 검증 & QA & 감사
-
-| 문서 | 설명 |
-|------|------|
-| [settlement-accommodation-fix.md](verification/settlement-accommodation-fix.md) | 정산 숙박 수정 |
-| [settlement-submit-modal-business-logic-paths.md](verification/settlement-submit-modal-business-logic-paths.md) | 정산 제출 모달 로직 |
-| [auth-permission-qa-checklist.md](qa/auth-permission-qa-checklist.md) | 인증/권한 QA 체크리스트 |
-| [auth-permission-qa-report.md](qa/auth-permission-qa-report.md) | 인증/권한 QA 리포트 |
-| [qa-verification-report.md](qa/qa-verification-report.md) | QA 검증 리포트 (루트→이동) |
-| [membership-permission-policy-qa-report.md](qa/membership-permission-policy-qa-report.md) | 멤버십 권한 QA |
-| [sponsor-management-qa-report.md](qa/sponsor-management-qa-report.md) | 후원사 관리 QA |
-| [template-management-verification-report.md](qa/template-management-verification-report.md) | 템플릿 관리 검증 |
-| [게시글_관리_QA_검증_결과.md](qa/게시글_관리_QA_검증_결과.md) | 게시글 관리 QA |
-| [admin-permission-audit-report.md](audit/admin-permission-audit-report.md) | 어드민 권한 감사 |
-| [admin-permission-fix-summary.md](audit/admin-permission-fix-summary.md) | 어드민 권한 수정 요약 |
-| [role-permission-verification-report.md](audit/role-permission-verification-report.md) | 역할 권한 검증 |
-
----
-
-## 4. 전략 & 계획
-
-| 문서 | 설명 |
-|------|------|
-| [STRATEGY_DECISION.md](strategy/STRATEGY_DECISION.md) | 전략 결정 |
-| [EXCEL_INTEGRATION_STRATEGY.md](strategy/EXCEL_INTEGRATION_STRATEGY.md) | 엑셀 연동 전략 |
-| [excel-data-analysis.md](strategy/excel-data-analysis.md) | 엑셀 데이터 분석 (루트→이동) |
-| [DASHBOARD_IMPROVEMENT_SIMPLIFIED.md](strategy/DASHBOARD_IMPROVEMENT_SIMPLIFIED.md) | 대시보드 개선 |
-| [settlement-menu-improvement.md](strategy/settlement-menu-improvement.md) | 정산 메뉴 개선 |
-| [certificate-template-enhancement.md](planning/certificate-template-enhancement.md) | 수료증 템플릿 계획 |
-| [PLANNING_REQUESTS.md](planning/PLANNING_REQUESTS.md) | 기획 요청사항 (루트→이동) |
-
----
-
-## 5. 구현 & 마이그레이션 & 리팩토링
+## 3. 구현 & 도메인
 
 | 문서 | 설명 |
 |------|------|
 | [certificate-template-implementation-summary.md](implementation/certificate-template-implementation-summary.md) | 수료증 템플릿 구현 |
-| [REFACTORING_LOG.md](migration/REFACTORING_LOG.md) | 리팩토링 로그 |
-| [ANT_DESIGN_MIGRATION_ESTIMATE.md](migration/ANT_DESIGN_MIGRATION_ESTIMATE.md) | Ant Design 마이그레이션 |
-| [heavy-pages-analysis.md](refactoring/heavy-pages-analysis.md) | 무거운 페이지 분석 |
-| [refactoring-priority-report.md](refactoring/refactoring-priority-report.md) | 리팩토링 우선순위 |
+| [instructor-settlement-payment-statement-issue-rules.md](features/instructor-settlement-payment-statement-issue-rules.md) | 강사 정산 지급명세 이슈 규칙 |
+| [instructor-fee-budget-criteria.md](settlement/instructor-fee-budget-criteria.md) | 강사 수당·예산 기준 |
 
 ---
 
-## 6. 기능별 가이드
+## 4. 기능별 가이드
 
 ### 관리자
 | 문서 | 설명 |
@@ -169,15 +133,9 @@
 | [BRANCH_GUIDELINES.md](volunteer/BRANCH_GUIDELINES.md) | 브랜치 가이드 |
 | [migration-guide.md](volunteer/migration-guide.md) | 마이그레이션 가이드 |
 
-### 위젯
-| 문서 | 설명 |
-|------|------|
-| [dnd-widget-manual-test-checklist.md](widget/dnd-widget-manual-test-checklist.md) | DnD 위젯 테스트 |
-| [naverworks-widget-editor-plan.md](widget/naverworks-widget-editor-plan.md) | 네이버웍스 위젯 에디터 |
-
 ---
 
-## 7. API & 기술
+## 5. API
 
 | 문서 | 설명 |
 |------|------|
@@ -186,20 +144,27 @@
 
 ---
 
-## 8. 디자인 & UX
+## 6. 디자인 (화면·UX 스펙)
 
 | 문서 | 설명 |
 |------|------|
+| [add-instructor-modal-spec.md](design/add-instructor-modal-spec.md) | 강사 추가 모달 |
+| [applicant-instructor-detail-modal-spec.md](design/applicant-instructor-detail-modal-spec.md) | 지원 강사 상세 모달 |
 | [dashboard-program-progress-improvement.md](design/dashboard-program-progress-improvement.md) | 대시보드 프로그램 진행 개선 |
+| [lecture-attendance-modal-spec.md](design/lecture-attendance-modal-spec.md) | 출석 모달 |
+| [program-detail-applicants-tab-spec.md](design/program-detail-applicants-tab-spec.md) | 프로그램 상세 지원자 탭 |
+| [program-managers-tab-spec.md](design/program-managers-tab-spec.md) | 프로그램 담당자 탭 |
+| [school-detail-add-instructor-assign-spec.md](design/school-detail-add-instructor-assign-spec.md) | 학교 상세 강사 배정 |
+| [school-detail-basic-edit-mode-spec.md](design/school-detail-basic-edit-mode-spec.md) | 학교 상세 기본 편집 |
+| [school-detail-modal-spec.md](design/school-detail-modal-spec.md) | 학교 상세 모달 |
+| [school-detail-modal-student-list-edit-spec.md](design/school-detail-modal-student-list-edit-spec.md) | 학교 상세 수강생 목록 편집 |
 
 ---
 
-## 9. 인터뷰 & 멤버 & 클로드 프롬프트
+## 7. 멤버 & 정책 문서
 
 | 문서 | 설명 |
 |------|------|
-| [initial_interview.md](interview/initial_interview.md) | 초기 인터뷰 |
-| [CLIENT_INTERVIEW_2024-12-19.md](interview/CLIENT_INTERVIEW_2024-12-19.md) | 클라이언트 인터뷰 |
 | [ia-members.md](members/ia-members.md) | IA 멤버 |
 | [CLEANUP_BENEFITS.md](claude-prompt/CLEANUP_BENEFITS.md) | 정리 이점 |
 | [CLEANUP_DEPRECATED_CODE.md](claude-prompt/CLEANUP_DEPRECATED_CODE.md) | Deprecated 코드 정리 |
@@ -207,7 +172,7 @@
 
 ---
 
-## 10. 기타 & 루트 문서
+## 8. 기타
 
 | 문서 | 설명 |
 |------|------|
@@ -217,12 +182,9 @@
 | [logo/README.md](../public/logo/README.md) | 로고 README |
 | [README.md](../README.md) | CMS 루트 README |
 
-### 루트 (apps/cms/) 문서 → docs/ 정리 완료
-이전 루트 산재 문서는 카테고리별로 `docs/` 하위로 이동되었습니다.
-
 ---
 
-## 11. Cursor 스킬
+## 9. Cursor 스킬
 
 | 문서 | 설명 |
 |------|------|
@@ -231,27 +193,4 @@
 
 ---
 
-## 12. 레거시/아카이브(참고용)
-
-아래 문서는 기록 보관 또는 과거 프롬프트 참고용입니다. 신규 작업 기준 문서로 사용하지 않습니다.
-
-| 문서 | 상태 |
-|------|------|
-| [status/CURRENT_STATUS.md](status/CURRENT_STATUS.md) | Legacy status |
-| [status/PROGRESS.md](status/PROGRESS.md) | Legacy status |
-| [status/NEXT_PHASE_CHECKLIST.md](status/NEXT_PHASE_CHECKLIST.md) | Legacy checklist |
-| [status/PHASE_1_BRIEFING.md](status/PHASE_1_BRIEFING.md) | Legacy briefing |
-| [roadmap/MVP_ROADMAP_V3.md](roadmap/MVP_ROADMAP_V3.md) | Legacy roadmap |
-| [verification/phase-0.5-integration-verification.md](verification/phase-0.5-integration-verification.md) | Archived verification |
-| [phase-verification/phase-0.4.2-verification.md](phase-verification/phase-0.4.2-verification.md) | Archived verification |
-| [phase-verification/phase-0.5.1-verification.md](phase-verification/phase-0.5.1-verification.md) | Archived verification |
-| [phase-verification/phase-0.5.2-verification.md](phase-verification/phase-0.5.2-verification.md) | Archived verification |
-| [phase-verification/phase-0.5.3-verification.md](phase-verification/phase-0.5.3-verification.md) | Archived verification |
-| [claude-prompt/CURSOR-PROMPT-PHASE-0.1.1.md](claude-prompt/CURSOR-PROMPT-PHASE-0.1.1.md) | Legacy prompt |
-| [claude-prompt/QA-STATUS.md](claude-prompt/QA-STATUS.md) | Legacy prompt |
-| [claude-prompt/NEXT_CONTEXT_PROMPT.md](claude-prompt/NEXT_CONTEXT_PROMPT.md) | Legacy prompt |
-| [design/JA코리아 사용자화면 프롬프트_1219.md](design/JA코리아 사용자화면 프롬프트_1219.md) | Legacy prompt |
-
----
-
-**마지막 업데이트**: 2026-04-20
+**마지막 업데이트**: 2026-04-21
