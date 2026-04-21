@@ -236,43 +236,27 @@ apps/cms/docs/
 │   └── api-spec-mock-extended.md
 ├── check/                    # 검증/체크리스트 문서
 │   └── INSTRUCTOR_SETTLEMENT_DATA_CHECK.md
-├── claude-prompt/            # Claude 프롬프트 관련
-│   ├── CURSOR-PROMPT-PHASE-0.1.1.md
-│   └── QA-STATUS.md
-├── design/                   # 디자인 관련 문서
-│   └── JA코리아 사용자화면 프롬프트_1219.md
+├── claude-prompt/            # 정책·정리 가이드
+│   ├── CLEANUP_BENEFITS.md
+│   ├── CLEANUP_DEPRECATED_CODE.md
+│   └── POLICY_TO_AUDIT.md
+├── design/                   # 디자인·화면 스펙 문서
+├── features/                 # 도메인 규칙·이슈 메모
+├── implementation/           # 구현 요약
 ├── instructor/               # 강사 관련 문서
 │   ├── migration-guide.md
 │   └── satisfaction-survey-flow.md
-├── interview/                # 클라이언트 인터뷰 문서
-│   ├── CLIENT_INTERVIEW_2024-12-19.md
-│   └── initial_interview.md
-├── memebrs/                  # 멤버 관련 문서 및 이미지
-│   ├── ia-members.md
-│   └── [이미지 파일들]
-├── migration/                # 마이그레이션 관련 문서
-│   ├── ANT_DESIGN_MIGRATION_ESTIMATE.md
-│   └── REFACTORING_LOG.md
+├── members/                  # 멤버 IA 등
+│   └── ia-members.md
 ├── requirements-specification/  # 요구사항 명세서
 │   ├── comparison/
-│   │   └── current-vs-requirements.md
 │   ├── MVP/
-│   │   ├── phases-frontend-mock.md
-│   │   ├── README.md
-│   │   └── v0.*-*.md
 │   └── requirements.md
-├── roadmap/                  # 로드맵 및 단계별 계획
-│   ├── MVP_ROADMAP*.md
-│   ├── PHASE_*.md
-│   ├── NEXT_STEPS.md
-│   └── IMMEDIATE_ACTIONS.md
-├── status/                   # 현재 상태 문서
-│   └── CURRENT_STATUS.md
-├── strategy/                 # 전략 및 개선 계획
-│   ├── STRATEGY_DECISION.md
-│   ├── EXCEL_INTEGRATION_STRATEGY.md
-│   ├── DASHBOARD_IMPROVEMENT_SIMPLIFIED.md
-│   └── settlement-menu-improvement.md
+├── roadmap/                  # 로드맵
+│   └── MVP_ROADMAP_V4_DETAILED.md
+├── settlement/               # 정산 기준 등
+├── status/                   # 우선순위 등
+│   └── REQUIREMENTS_PRIORITY.md
 └── volunteer/                # 봉사 관련 문서
     ├── BRANCH_GUIDELINES.md
     ├── category-structure.md
@@ -296,45 +280,37 @@ apps/cms/docs/
 - 기능 완료 체크리스트
 - 데이터 검증 문서
 
-#### 4. **claude-prompt/** - AI 프롬프트
-- Cursor 프롬프트 문서
-- QA 상태 문서
+#### 4. **claude-prompt/** - 정책·정리 가이드
+- Deprecated 정리, 감사 정책 등 유지 문서
 
 #### 5. **design/** - 디자인 관련
-- UI/UX 프롬프트
-- 디자인 가이드라인
+- 화면·컴포넌트 스펙, UX 개선 메모
 
 #### 6. **instructor/** - 강사 관련
 - 강사 기능 가이드
 - 강사 만족도 설문 플로우
 
-#### 7. **interview/** - 클라이언트 인터뷰
-- 클라이언트 인터뷰 기록
-- 초기 인터뷰 문서
+#### 7. **members/** - 멤버 관련
+- 멤버 IA 문서 등
 
-#### 8. **memebrs/** - 멤버 관련
-- 멤버 IA 문서
-- 멤버 관련 이미지
-
-#### 9. **migration/** - 마이그레이션
-- 라이브러리 마이그레이션 계획
-- 리팩토링 로그
-
-#### 10. **requirements-specification/** - 요구사항 명세
+#### 8. **requirements-specification/** - 요구사항 명세
 - MVP 단계별 요구사항
 - 현재 상태 vs 요구사항 비교
 
-#### 11. **roadmap/** - 로드맵
-- MVP 로드맵 (다양한 버전)
-- Phase별 계획 및 체크리스트
-- 다음 단계 및 즉시 실행 사항
+#### 9. **roadmap/** - 로드맵
+- MVP 로드맵 (예: `MVP_ROADMAP_V4_DETAILED.md`)
 
-#### 12. **status/** - 현재 상태
-- 프로젝트 현재 상태 문서
+#### 10. **status/** - 우선순위·메타
+- 요구사항 우선순위 등
 
-#### 13. **strategy/** - 전략 및 개선
-- 전략 결정 문서
-- 기능별 개선 전략
+#### 11. **features/** - 도메인 규칙
+- 특정 기능·정책 이슈 메모
+
+#### 12. **implementation/** - 구현 요약
+- 기능별 구현 정리 문서
+
+#### 13. **settlement/** - 정산
+- 수당·예산·데이터 기준 문서
 
 #### 14. **volunteer/** - 봉사 관련
 - 봉사 기능 가이드
