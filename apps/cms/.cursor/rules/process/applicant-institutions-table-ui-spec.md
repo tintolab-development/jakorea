@@ -1,83 +1,27 @@
-# 교육 신청 기관 목록 테이블 UI 수정 명세 (스크린샷 기반 개발 위임)
+# Applicant institutions table — layout fix (screenshot handoff)
 
-**대상**: 프로그램 상세 풀페이지 모달 > LNB 「신청자 목록」 > **신청 기관** (교육 신청 기관 목록 테이블)  
-**참조**: [applicant-list.tsx](../../../src/features/program/program-detail/ui/applicant-list/applicant-list.tsx), [applicant-list.css](../../../src/features/program/program-detail/ui/applicant-list/applicant-list.css), [persona.md](./persona.md)  
-**스크린샷**: 프로젝트 assets 내 제공 스크린샷(Screenshot_2026-03-19_at_2.07.26_PM, 2.07.55_PM) 상세 참고.
+**Scope:** Program detail full-page modal → LNB **Applicants** → **Applicant institutions** table.  
+**Code:** `applicant-list.tsx`, `applicant-list.css`.
 
----
+## Problem
 
-## §1 개요
+- **Session / preferred date** column used `width: 1` with `table-layout: fixed`, so content overflowed into **Grade**, **Class count**, **Teacher** columns.  
+- Horizontal scroll did not appear because total `scroll.x` was too small.
 
-- **목적**: 교육 신청 기관 목록 테이블에서 컬럼별 UI가 겹치거나 잘리는 현상을 제거하고, 테이블이 화면을 넘어갈 때 **가로 스크롤**이 정상 동작하도록 수정한다.
-- **사용자**: ADMIN(관리자). Persona 규칙에 따라 디자이너/개발자 관점의 요구를 명세로 정리해 구현·검증 가능하게 한다.
+## Fix
 
----
+1. **Session / preferred schedule column** — remove `width: 1`; set **`width` / `minWidth` ≈ 320px**; keep cell class e.g. `applicant-details__td-sessions`.  
+2. **`scroll.x`** — for the institutions view, sum column widths using **320** for that column (not 1).  
+3. **CSS** — `.applicant-details__td-sessions`: `min-width: 320px`, `white-space: normal`, `overflow-wrap: break-word`. Wrapper: `overflow-x: auto`, no parent clipping horizontal scroll.
 
-## §2 스크린샷에서 확인된 문제점 (원인 분석)
+## Acceptance
 
-### 2.1 컬럼 겹침 / 레이아웃 붕괴
+- [ ] Session text does not overlap neighboring columns.  
+- [ ] When the table is wider than the viewport, a horizontal scrollbar appears and all columns are reachable.  
+- [ ] Column order unchanged.
 
-- **증상**: 「강의 회차 별 희망 교육 날짜 및 시간」 컬럼의 내용(예: `1차시 2026. 01. 23(금) | 1시간 (오프라인) | 1교시 (9:20 ~ 10:10)`)이 **대상 학년**, **대상 학급 수**, **담당 교사명** 셀 영역과 겹쳐 보임.
-- **원인**: 해당 컬럼에 `width: 1`(또는 극소값)이 지정된 상태에서 `table-layout: fixed`가 적용되면, 해당 열이 거의 공간을 갖지 못하고 셀 내용이 옆 셀로 overflow하여 시각적으로 겹침.
+## Related
 
-### 2.2 가로 스크롤 미동작
+`participating-institutions-section.tsx` may need the same **min width + scroll.x** pattern if it uses a similar “sessions” column.
 
-- **증상**: 테이블이 뷰포트보다 넓은데도 가로 스크롤바가 보이지 않거나, 오른쪽 컬럼(담당 교사명, 담당 강사 등)이 잘려서 보이지 않음.
-- **원인**:
-  - 테이블 전체 최소 너비(`scroll.x`)가 컬럼 합계보다 작게 설정되어 있거나,
-  - 회차 컬럼이 `width: 1`로 포함되어 있어 실제 테이블 너비가 부족하고,
-  - 테이블을 감싼 래퍼에 `overflow-x: auto`가 적용되어 있더라도, 내부 테이블이 충분히 넓지 않으면 스크롤이 생기지 않음.
-
-### 2.3 요약
-
-| 문제 | 원인 | 필요한 조치 |
-|------|------|-------------|
-| 회차 컬럼 내용이 옆 컬럼과 겹침 | 회차 컬럼 `width: 1` → 셀 공간 부족 | 회차 컬럼에 **고정 최소 너비**(예: 320px) 부여 |
-| 가로 스크롤이 안 나옴 | `scroll.x`에 회차 1px 반영 → 테이블 전체 너비 부족 | `scroll.x`에 회차 컬럼 **실제 너비**(예: 320px) 반영 |
-| 셀 정렬/레이아웃 어긋남 | 회차 셀만 비정상적으로 좁음 | td에 `min-width`/`width` 일치시켜 한 컬럼 안에만 내용 표시 |
-
----
-
-## §3 수정 요구사항 (개발자 위임 사항)
-
-### 3.1 컬럼 정의 (applicant-list.tsx)
-
-- **「강의 회차 별 희망 교육 날짜 및 시간」 컬럼**
-  - `width: 1` 제거.
-  - `width: 320`, `minWidth: 320` 지정 (한 줄 분량의 회차 텍스트가 겹치지 않도록 할 최소 너비).
-  - `onCell`로 `className: 'applicant-details__td-sessions'` 유지.
-
-### 3.2 scroll.x (가로 스크롤)
-
-- **교육 신청 기관(institutions) 메뉴**일 때:
-  - `tableScrollX` 계산 시 회차 컬럼을 **1이 아닌 320**으로 합산.
-  - 예: `48 + 64 + 180 + 200 + 152 + 320 + 96 + 100 + 120 + 180` (체크박스 48 + 나머지 컬럼 합).
-  - Ant Design `Table`에 `scroll={{ x: tableScrollX }}` 전달하여 테이블 최소 너비를 보장하고, 래퍼에서 가로 스크롤 가능하도록 유지.
-
-### 3.3 CSS (applicant-list.css)
-
-- **테이블 래퍼**
-  - `.applicant-details__table-wrap`: `overflow-x: auto`, `width: 100%` 유지.
-  - 테이블이 뷰포트를 넘으면 가로 스크롤바가 반드시 노출되도록, 상위에서 `overflow: hidden` 등으로 가로 스크롤을 막지 않도록 확인.
-
-- **강의 회차 td (`.applicant-details__td-sessions`)**
-  - `min-width: 320px`, `width: 320px`로 고정해 내용이 해당 셀 안에만 표시되고 옆 셀과 겹치지 않도록 함.
-  - `white-space: normal`, `overflow-wrap: break-word`로 긴 한 줄은 셀 안에서 줄바꿈 가능.
-  - 패딩·정렬은 기존 유지(예: `padding: 12px 24px`, `vertical-align: top`).
-
-### 3.4 검증 기준
-
-- [ ] 회차 컬럼 내용이 「대상 학년」「대상 학급 수」「담당 교사명」「담당 강사」 컬럼과 겹치지 않음.
-- [ ] 뷰포트 너비가 테이블 전체 너비보다 작을 때 **가로 스크롤바**가 나타나고, 스크롤로 오른쪽 컬럼까지 모두 볼 수 있음.
-- [ ] 컬럼 순서는 기존과 동일: 체크박스 | No. | 참여 기관명 | 기관 지역 | 프로그램 승인 현황 | 강의 회차 별 희망 교육 날짜 및 시간 | 대상 학년 | 대상 학급 수 | 담당 교사명 | 담당 강사.
-
----
-
-## §4 참고: 프로그램 진행 현황 > 참여 기관 테이블
-
-- 동일한 “회차” 형태의 컬럼을 쓰는 **참여 기관** 테이블([participating-institutions-section.tsx](../../../src/features/program/ui/participating-institutions-section.tsx))도, 회차 컬럼이 극소 width로 설정되어 있으면 같은 현상이 발생할 수 있음.
-- 본 명세의 수정(회차 컬럼에 충분한 width/minWidth 부여, scroll.x에 반영, 래퍼 overflow-x: auto)을 참고하여, 필요 시 참여 기관 테이블에도 동일 원칙을 적용할 수 있음.
-
----
-
-**마지막 업데이트**: 스크린샷(2026-03-19) 및 코드 분석 기준.
+**Last updated:** 2026-04-21

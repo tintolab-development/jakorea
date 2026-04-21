@@ -3,87 +3,40 @@ priority: high
 category: process
 ---
 
-# CMS — 회원 상세 「정보 제공 동의」
+# CMS — member detail “information consent” block
 
-회원 상세 **상세 정보** 탭의 **정보 제공 동의** 블록에 대한 기획 정의이다. UI 구현·프리셋 분기는 [`user-consent-agreement-section.tsx`](apps/cms/src/features/user/detail/ui/user-consent-agreement-section.tsx) 및 `resolveUserConsentAgreementPreset`과 동기화한다.
+Spec for the **Detail info** tab consent section. Keep in sync with `user-consent-agreement-section.tsx` and `resolveUserConsentAgreementPreset`.
 
-## 0. 공통
+## Common
 
-- 각 항목은 **동의 여부·일시(및 필요 시 동의서)**를 관리한다.
-- 문구에서 **「선택」**인 항목은 법적 필수가 아닐 수 있으나, **미동의 시 아래 제한**이 적용된다.
-- **동의서 작성 필요**가 붙는 항목은 별도 서면/전자 동의서 절차와 연동하고, CMS에서는 상태·「동의서 보기」 등으로 노출한다.
+- Each item tracks **consent status**, **timestamp**, and **document** when required.  
+- Items marked **optional** in law may still block features below if declined.  
+- Items needing a **written agreement** integrate with document workflow; CMS shows status and “view agreement” where applicable.
 
----
+## Items (business rules)
 
-## 1. 개인정보 수집 동의 (회원가입용)
+1. **PII collection (signup)** — Required for signup; without consent, signup cannot complete.  
+2. **Marketing** — Optional; if declined, **no marketing alerts** (align channels with policy).  
+3. **Portrait rights** — Document required; optional, but **no program participation** without consent.  
+4. **Payment statement consent** — Document required; optional for ongoing use, but **no payroll line payments** without it. **First settlement application** must complete the flow once. **Re-consent** when PII expires/changes.  
+5. **Sex-offense record check** (instructors only) — Document; optional, but **no teaching** without consent.  
+6. **Administrative data-sharing pre-consent** (instructors) — Same pattern as 5.  
+7. **Educator undertaking** (instructors) — Same pattern as 5.
 
-- **가입 시 필수 동의** 항목이다.
-- 회원가입 플로우에서 미동의 시 가입 완료 불가(일반적인 개인정보 처리 동의).
+## Visibility by role (summary)
 
----
+| Item | Individual / school flows | Instructor |
+|------|---------------------------|------------|
+| PII, Marketing | ✓ | ✓ |
+| Portrait | Per preset | Per preset |
+| Payment statement | Per preset | ✓ |
+| Items 5–7 | — | ✓ |
 
-## 2. 마케팅 제공 동의
+**ADMIN** preset may hide items — if code diverges, update both doc and component.
 
-- **선택** 항목이다.
-- **미동의 시 알람 수신 불가** — 마케팅·이벤트 등 푸시/문자/메일 등 채널 정책과 맞춘다.
+## API
 
----
+- Store per-item timestamps, document ids/versions, first-settlement flags, re-consent flags — align with backend.  
+- CMS is mostly **read + status**; PDF/e-sign can live in a separate spec.
 
-## 3. 초상권 수집·이용 동의
-
-- **동의서 작성 필요**
-- **선택**이나, **미동의 시 프로그램 참여 불가**
-
----
-
-## 4. 지급조서 작성 동의
-
-- **동의서 작성 필요**
-- **선택**이나, **미동의 시 급여 항목 지급 불가**
-- **정산 신청 시 최초 1회**에 한해 작성·동의 절차를 **필수**로 진행한다.
-- **개인정보가 변경·만료된 경우**에는 **재동의**가 필요하다.
-
----
-
-## 5. 성범죄 경력조회 동의 (강사만)
-
-- **동의서 작성 필요**
-- **선택**이나, **미동의 시 프로그램 강의 참여 불가**
-- 적용 대상: **강사(INSTRUCTOR)** 회원 상세·해당 프리셋 UI.
-
----
-
-## 6. 행정정보 공동이용 사전 동의 (강사만)
-
-- **동의서 작성 필요**
-- **선택**이나, **미동의 시 프로그램 강의 참여 불가**
-- 적용 대상: **강사** 동일.
-
----
-
-## 7. 교육진행자 동의 서약 (강사만)
-
-- **동의서 작성 필요**
-- **선택**이나, **미동의 시 프로그램 강의 참여 불가**
-- 적용 대상: **강사** 동일.
-
----
-
-## 8. 역할별 노출(요약)
-
-| 항목 | 개인·학교 담당 등 | 강사 |
-|------|-------------------|------|
-| 개인정보 수집 동의 | ✓ | ✓ |
-| 마케팅 제공 동의 | ✓ | ✓ |
-| 초상권 수집·이용 동의 | 개인/학교 교사 프리셋 등 기획에 맞게 | 기획에 맞게(순수 강사 UI 라벨은 코드와 정렬) |
-| 지급조서 작성 동의 | 개인/학교 교사 프리셋 등 기획에 맞게 | ✓ |
-| 성범죄 경력조회 동의 | — | ✓ |
-| 행정정보 공동이용 사전 동의 | — | ✓ |
-| 교육진행자 동의 서약 | — | ✓ |
-
-- **관리자(ADMIN)** 프리셋은 상세 화면에서 노출 범위를 별도 기획으로 줄일 수 있다. (현재 코드 기준 유지 시 위 표와 다를 수 있음 — 변경 시 본 문서와 컴포넌트를 함께 수정한다.)
-
-## 9. API·데이터
-
-- 항목별 동의 일시, 동의서 문서 ID/버전, 정산 최초 1회 완료 여부, 개인정보 변경에 따른 재동의 필요 플래그 등은 백엔드 스키마와 맞춘다.
-- CMS는 **조회·안내**가 중심이며, 실제 동의서 PDF/전자서명 연동은 별도 스펙으로 분리해도 된다.
+**Last updated:** 2026-04-21

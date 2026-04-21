@@ -3,26 +3,23 @@ priority: medium
 category: process
 ---
 
-# 회원 상세 — 프로그램 수강 이력 — 수료증/참여인증서 발급 (기획)
+# Member detail — program history — certificates (product rules)
 
-회원 상세 **프로그램 수강 이력** 등에서 **수료증/참여인증서** 일괄·개별 발급 버튼·다운로드 플로우를 구현·수정할 때 준수합니다.
+Applies when implementing bulk/individual **completion certificate** vs **participation certificate** flows on member program history.
 
-발급 사유 선택 UI·옵션 값은 `certificate-bulk-issue-reason-modal.tsx`의 `REASON_OPTIONS` 및 동일 도메인 스펙을 따릅니다.
+Reason-picker UI and option values follow `certificate-bulk-issue-reason-modal.tsx` (`REASON_OPTIONS`) and domain specs.
 
----
+## Issuance logic
 
-## 발급 버튼·발급 처리 (기획 원칙)
+1. Users may re-issue freely **until personal-data retention expires**.  
+2. **Completion certificate** when the user **meets completion criteria**.  
+3. **Participation certificate** when they **do not** meet completion criteria.  
+Keep API/mock models consistent with this split.
 
-1. **개인정보 보관 만료 전까지** 사용자가 **자유롭게 발급**할 수 있다.
-2. **수료 자격이 갖춰진** 사용자(신청·행)에 대해서는 **수료증** 발급 처리를 한다.
-3. **수료 자격이 갖춰지지 않은** 사용자에 대해서는 **참여인증서** 발급 처리를 한다.
+## UI copy
 
-백엔드·목(mock) 연동 시 위 구분을 데이터 모델·API 응답과 일치시킨다.
+- Do **not** paste these rules as permanent on-screen banners without product/design approval.  
+- Document intent in this file and short code comments near handlers.  
+- If Figma specifies copy, follow Figma.
 
----
-
-## UI 정책 (고정 안내 문구 금지)
-
-- 위 기획 문장은 **화면에 상시 노출되는 안내 카피로 추가하지 않는다.** (별도 기획·디자인 시안이 없는 한 툴팁·모달 본문 고정 문구로 반복 삽입하지 않음.)
-- 구현 시에는 **본 규칙 문서**와, 필요 시 **해당 훅/핸들러 인근의 짧은 주석**으로만 의도를 남긴다.
-- 제품 카피가 시안에 명시되면 그때는 시안을 우선한다.
+**Last updated:** 2026-04-21

@@ -4,100 +4,49 @@ always_include: false
 category: process
 ---
 
-# 진행 상황 관리
+# Progress tracking
 
-## PROGRESS.md 기록 규칙
+## Source of truth
 
-프로젝트 진행 상황은 `apps/cms/docs/status/PROGRESS.md`에 롤별로 기록합니다.
+Track delivery against requirements in `apps/cms/docs/requirements-specification/progress.md`. Optional role-specific logs may live elsewhere but must stay aligned with `progress.md`.
 
-## 기록 형식
-
-각 작업 항목은 다음 형식으로 기록합니다:
+## Entry template
 
 ```markdown
-### [날짜] - [작업명]
+### [YYYY-MM-DD] — [Title]
 
-**프롬프트/요청**:
+**Request**: …
 
-- [요청 내용]
+**Outcome**:
+- ✅ …
 
-**결과**:
+**By role**: Designer / Planner / PM / Developer (brief)
 
-- ✅ [완료된 작업 1]
-- ✅ [완료된 작업 2]
-
-**롤별 역할**:
-
-- 🎨 **디자이너**: [디자이너가 수행한 역할]
-- 📋 **기획자**: [기획자가 수행한 역할]
-- 👨‍💼 **PM**: [PM이 수행한 역할]
-- 👨‍💻 **개발자**: [개발자가 수행한 역할]
-
-**참고사항**:
-
-- [추가 참고사항]
+**Notes**: …
 ```
 
-## 기록 대상
+## What to log
 
-- ✅ **기록 대상**: 디버깅을 제외한 모든 의미있는 프롬프트/요청
-- ❌ **기록 제외**: 단순 디버깅, 오타 수정 등
+- **Include**: meaningful prompts and outcomes (not trivial debug/typos).  
+- **Exclude**: pure debugging noise.
 
-## 롤별 역할 정의
+## Role shorthand
 
-- **🎨 디자이너**: UI/UX 디자인, 디자인 시스템, 사용자 경험 개선
-- **📋 기획자**: 요구사항 정의, 기능 명세서 작성, 사용자 시나리오 정의
-- **👨‍💼 PM**: 일정 관리, 우선순위 결정, 의사결정, 팀 간 소통 조율
-- **👨‍💻 개발자**: 코드 구현, 기술 아키텍처, 개발 환경 설정
+- **Designer** — UI/UX, design system.  
+- **Planner** — requirements, specs, scenarios.  
+- **PM** — schedule, priorities, decisions.  
+- **Developer** — implementation, architecture.
 
-## 업데이트 주기
+## When to update
 
-- 각 Phase 완료 시 업데이트
-- 주요 마일스톤 달성 시 업데이트
-- 의미있는 작업 완료 시 즉시 업데이트
+- End of phase, major milestones, or when a meaningful chunk of work finishes.
 
-## Phase별 진행 브리핑
+## Phase kickoff (optional)
 
-각 Phase 시작 전, 다음 롤별로 브리핑을 진행합니다:
+Before each phase, brief by role: goals, deliverables, constraints, ETA. Store phase briefs under `docs/` if needed.
 
-### 🎨 디자이너 브리핑
+## Related
 
-- **작업 목표**: 해당 Phase에서 필요한 디자인 작업
-- **주요 작업 내용**: 구체적인 디자인 작업 항목
-- **제약사항**: 해상도, 언어, 디자인 시스템 등
-- **산출물**: 디자인 시안, 스타일 가이드 등
-- **예상 소요 시간**: 작업 예상 기간
+- [development-process.md](./development-process.md)
 
-### 📋 기획자 브리핑
-
-- **작업 목표**: 해당 Phase에서 필요한 기획 작업
-- **주요 작업 내용**: 구체적인 기획 작업 항목
-- **참고 문서**: 관련 문서 링크
-- **산출물**: 기능 명세서, 사용자 시나리오 등
-- **예상 소요 시간**: 작업 예상 기간
-
-### 👨‍💼 PM 브리핑
-
-- **작업 목표**: 해당 Phase 일정 관리 및 의사결정
-- **주요 의사결정 사항**: 승인이 필요한 항목
-- **일정 관리**: 각 롤별 예상 소요 시간
-- **체크포인트**: 주요 마일스톤
-- **예상 소요 시간**: 전체 Phase 예상 기간
-
-### 👨‍💻 개발자 브리핑
-
-- **작업 목표**: 해당 Phase에서 필요한 개발 작업
-- **주요 작업 내용**: 구체적인 개발 작업 항목
-- **준비사항**: 필요한 준비 작업
-- **산출물**: 구현된 기능, 컴포넌트 등
-- **예상 소요 시간**: 작업 예상 기간
-
-## 브리핑 문서 위치
-
-- Phase별 브리핑: `apps/cms/docs/status/PHASE_X_BRIEFING.md`
-- 진행 상황: `apps/cms/docs/status/PROGRESS.md`
-
-## 관련 규칙
-
-- [개발 프로세스](./development-process.md)
-
+**Last updated:** 2026-04-21
