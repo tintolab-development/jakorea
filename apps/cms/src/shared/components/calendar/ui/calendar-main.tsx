@@ -249,6 +249,7 @@ function renderCalendarDayCell(p: RenderCalendarDayCellParams): ReactNode {
       dayEvents.length > 0
         ? buildEventsPreview(dayEvents, colorMap, eventsConfig.previewTooltipContent)
         : null
+    const overlayEnabled = dayEvents.length > 0 && overlayContent != null
     return (
       <CalendarCell
         date={date}
@@ -259,7 +260,7 @@ function renderCalendarDayCell(p: RenderCalendarDayCellParams): ReactNode {
         selectedKeys={eventsConfig.selectedRowKeys}
         colorMap={colorMap}
         onSelectDate={onSelectDate}
-        overlayEnabled={dayEvents.length > 0}
+        overlayEnabled={overlayEnabled}
         overlayContent={overlayContent}
         tooltipOverlayClassName={tooltipOverlayClassName}
         eventsConfig={eventsConfig}

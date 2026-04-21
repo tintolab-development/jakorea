@@ -47,6 +47,9 @@ export {
   renderSettlementEventsTooltipContent,
 } from './ui/preview-tooltip/settlement'
 export {
+  ProgramPreviewTooltipBody,
   renderProgramApplicantPreviewTooltipContent,
   renderProgramCalendarEventsDefaultTooltipContent,
 } from './ui/preview-tooltip/program'
+export { CalendarPreviewTooltip } from './ui/preview-tooltip/calendar-preview-tooltip'
+export type { ProgramPreviewTooltipEventRow } from './ui/preview-tooltip/program'

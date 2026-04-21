@@ -1,8 +1,7 @@
-import { Fragment } from 'react'
 import dayjs from 'dayjs'
 import { SCHEDULE_COLORS } from '@/features/program/ui/program-schedule-colors'
 import { calendarItemsForEventMode, getItemsForDate, resolveItemColor } from '../lib/calendar-helpers'
-import { buildEventsPreview, withOverlay } from './calendar-cell-commons'
+import { CalendarPreviewTooltip } from './preview-tooltip/calendar-preview-tooltip'
 import type { CalendarCellEventModeProps } from './calendar-cell-types'
 
 export function CalendarCellEventMode(props: CalendarCellEventModeProps) {
@@ -19,10 +18,7 @@ export function CalendarCellEventMode(props: CalendarCellEventModeProps) {
     overlayContent,
     tooltipOverlayClassName,
     eventsConfig: config,
-    buildResolvedColorMap,
   } = props
-
-  const overlayProps = { tooltipOverlayClassName }
 
   const dayEvents = calendarItemsForEventMode(getItemsForDate(items, date))
   const hasItems = dayEvents.length > 0
@@ -84,86 +80,57 @@ export function CalendarCellEventMode(props: CalendarCellEventModeProps) {
         </div>
       )
 
-      return withOverlay(
-        <div className="calendar-cell-tooltip-trigger calendar-cell-tooltip-trigger--full-cell">
-          {cellInner}
-        </div>,
-        overlayEnabled,
-        overlayContent,
-        overlayProps
+      return (
+        <CalendarPreviewTooltip
+          enabled={overlayEnabled && overlayContent != null}
+          content={overlayContent}
+          tooltipOverlayClassName={tooltipOverlayClassName}
+        >
+          <div className="calendar-cell-tooltip-trigger calendar-cell-tooltip-trigger--full-cell">
+            {cellInner}
+          </div>
+        </CalendarPreviewTooltip>
       )
     }
 
     return (
-      <div className={cellClass} onClick={() => onSelectDate(date)}>
-        <div className="calendar-cell-date">{date.date()}</div>
-        <div className="calendar-cell-events">
-          {dayEvents.slice(0, 2).map(event => {
-            const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
-            const isEventSelected = selectedKeys.includes(event.id)
-            const colors =
-              config.resolveEventColors?.(event) ??
-              resolveItemColor(event, colorMap, SCHEDULE_COLORS[0])
-            const tooltipList = config.eventsTooltipScope === 'full-day' ? dayEvents : [event]
-            const tooltipColorMap =
-              config.overrideEventColorMap != null
-                ? config.overrideEventColorMap(
-                    config.eventsTooltipScope === 'full-day' ? dayEvents : [event]
-                  )
-                : buildResolvedColorMap(tooltipList)
-            const previewOne = buildEventsPreview(
-              tooltipList,
-              tooltipColorMap,
-              config.previewTooltipContent
-            )
-            return (
-              <Fragment key={String(event.id)}>
-                {withOverlay(
-                  <div className="calendar-event-tooltip-trigger">
-                    <div
-                      className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
-                      style={{ backgroundColor: colors.bg }}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <span className="calendar-event-title" style={{ color: colors.text }}>
-                        {displayTitle}
-                      </span>
-                    </div>
-                  </div>,
-                  true,
-                  previewOne,
-                  overlayProps
-                )}
-              </Fragment>
-            )
-          })}
-          {dayEvents.length > 2 && (
-            <Fragment key="more">
-              {withOverlay(
-                <div className="calendar-event-tooltip-trigger calendar-event-more">
-                  {config.formatEventsOverflowText?.(dayEvents.length - 2) ??
-                    `외 ${dayEvents.length - 2}개의 항목`}
-                </div>,
-                true,
-                (() => {
-                  const moreList =
-                    config.eventsTooltipScope === 'full-day' ? dayEvents : dayEvents.slice(2)
-                  const moreColorMap =
-                    config.overrideEventColorMap != null
-                      ? config.overrideEventColorMap(moreList)
-                      : buildResolvedColorMap(moreList)
-                  return buildEventsPreview(
-                    moreList,
-                    moreColorMap,
-                    config.previewTooltipContent
-                  )
-                })(),
-                overlayProps
-              )}
-            </Fragment>
-          )}
+      <CalendarPreviewTooltip
+        enabled={overlayEnabled && overlayContent != null}
+        content={overlayContent}
+        tooltipOverlayClassName={tooltipOverlayClassName}
+      >
+        <div className={cellClass} onClick={() => onSelectDate(date)}>
+          <div className="calendar-cell-date">{date.date()}</div>
+          <div className="calendar-cell-events">
+            {dayEvents.slice(0, 2).map(event => {
+              const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
+              const isEventSelected = selectedKeys.includes(event.id)
+              const colors =
+                config.resolveEventColors?.(event) ??
+                resolveItemColor(event, colorMap, SCHEDULE_COLORS[0])
+              return (
+                <div key={String(event.id)}>
+                  <div
+                    className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
+                    style={{ backgroundColor: colors.bg }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <span className="calendar-event-title" style={{ color: colors.text }}>
+                      {displayTitle}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+            {dayEvents.length > 2 && (
+              <div className="calendar-event-more">
+                {config.formatEventsOverflowText?.(dayEvents.length - 2) ??
+                  `외 ${dayEvents.length - 2}개의 항목`}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </CalendarPreviewTooltip>
     )
   }
 
@@ -231,14 +198,15 @@ export function CalendarCellEventMode(props: CalendarCellEventModeProps) {
         className={`calendar-week-cell ${isSelected ? 'calendar-week-cell--selected' : ''}`}
         onClick={() => onSelectDate(date)}
       >
-        {withOverlay(
+        <CalendarPreviewTooltip
+          enabled={overlayEnabled && overlayContent != null}
+          content={overlayContent}
+          tooltipOverlayClassName={tooltipOverlayClassName}
+        >
           <div className="calendar-week-cell-tooltip-trigger calendar-week-cell-tooltip-trigger--full-cell">
             {weekCellInnerPlain}
-          </div>,
-          overlayEnabled,
-          overlayContent,
-          overlayProps
-        )}
+          </div>
+        </CalendarPreviewTooltip>
       </div>
     )
   }
@@ -257,77 +225,45 @@ export function CalendarCellEventMode(props: CalendarCellEventModeProps) {
           const colors =
             config.resolveEventColors?.(event) ??
             resolveItemColor(event, colorMap, SCHEDULE_COLORS[0])
-          const tooltipList = config.eventsTooltipScope === 'full-day' ? dayEvents : [event]
-          const tooltipColorMap =
-            config.overrideEventColorMap != null
-              ? config.overrideEventColorMap(
-                  config.eventsTooltipScope === 'full-day' ? dayEvents : [event]
-                )
-              : buildResolvedColorMap(tooltipList)
-          const previewOne = buildEventsPreview(
-            tooltipList,
-            tooltipColorMap,
-            config.previewTooltipContent
-          )
           return (
-            <Fragment key={String(event.id)}>
-              {withOverlay(
-                <div className="calendar-event-tooltip-trigger">
-                  <div
-                    className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
-                    style={{
-                      backgroundColor: colors.bg,
-                      border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
-                    }}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <span className="calendar-event-title" style={{ color: colors.text }}>
-                      {displayTitle}
-                    </span>
-                  </div>
-                </div>,
-                true,
-                previewOne,
-                overlayProps
-              )}
-            </Fragment>
+            <div key={String(event.id)}>
+              <div
+                className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
+                style={{
+                  backgroundColor: colors.bg,
+                  border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
+                }}
+                onClick={e => e.stopPropagation()}
+              >
+                <span className="calendar-event-title" style={{ color: colors.text }}>
+                  {displayTitle}
+                </span>
+              </div>
+            </div>
           )
         })}
         {dayEvents.length > 2 && (
-          <Fragment key="more">
-            {withOverlay(
-              <div className="calendar-event-tooltip-trigger calendar-event-more">
-                {config.formatEventsOverflowText?.(dayEvents.length - 2) ??
-                  `외 ${dayEvents.length - 2}개의 항목`}
-              </div>,
-              true,
-              (() => {
-                const moreList =
-                  config.eventsTooltipScope === 'full-day' ? dayEvents : dayEvents.slice(2)
-                const moreColorMap =
-                  config.overrideEventColorMap != null
-                    ? config.overrideEventColorMap(moreList)
-                    : buildResolvedColorMap(moreList)
-                return buildEventsPreview(
-                  moreList,
-                  moreColorMap,
-                  config.previewTooltipContent
-                )
-              })(),
-              overlayProps
-            )}
-          </Fragment>
+          <div className="calendar-event-more">
+            {config.formatEventsOverflowText?.(dayEvents.length - 2) ??
+              `외 ${dayEvents.length - 2}개의 항목`}
+          </div>
         )}
       </div>
     </>
   )
 
   return (
-    <div
-      className={`calendar-week-cell ${isSelected ? 'calendar-week-cell--selected' : ''}`}
-      onClick={() => onSelectDate(date)}
+    <CalendarPreviewTooltip
+      enabled={overlayEnabled && overlayContent != null}
+      content={overlayContent}
+      tooltipOverlayClassName={tooltipOverlayClassName}
     >
-      {weekCellInner}
-    </div>
+      <div
+        className={`calendar-week-cell ${isSelected ? 'calendar-week-cell--selected' : ''}`}
+        onClick={() => onSelectDate(date)}
+      >
+        {weekCellInner}
+      </div>
+    </CalendarPreviewTooltip>
   )
 }

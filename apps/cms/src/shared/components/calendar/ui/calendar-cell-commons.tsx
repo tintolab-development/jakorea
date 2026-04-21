@@ -6,14 +6,13 @@ import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
 } from '@/features/program/ui/program-schedule-colors'
-import { ProgramCalendarOverlayFollowCursor } from '@/shared/components/program-calendar-cursor-overlay'
 import {
   calendarItemForScheduleSource,
   resolveItemColor,
   type CalendarItem,
 } from '../lib/calendar-helpers'
-import { renderProgramApplicantPreviewTooltipContent } from './preview-tooltip/program'
-
+import './preview-tooltip/program-preview.css'
+import { CalendarPreviewTooltip } from './preview-tooltip/calendar-preview-tooltip'
 export function CalendarItemList({
   items,
   selectedKeys,
@@ -65,7 +64,7 @@ export function CalendarCellSchedulePreview({
   colorMap: Map<string | number, ScheduleColorPair>
 }) {
   return (
-    <div className="calendar-cell-preview">
+    <div className="program-preview">
       {items.map(entity => {
         const { statusLabel } = getProgramDayScheduleLine(entity, date)
         const startTime =
@@ -80,11 +79,15 @@ export function CalendarCellSchedulePreview({
           SCHEDULE_COLORS[0]
         )
         return (
-          <button key={entity.id} type="button" className="calendar-cell-preview__item">
-            <span className="calendar-cell-preview__title" style={{ color: colorPair.text }}>
+          <button
+            key={entity.id}
+            type="button"
+            className="program-preview-item program-preview-item--stack"
+          >
+            <span className="program-preview-item__title" style={{ color: colorPair.text }}>
               [{title}]
             </span>
-            <span className="calendar-cell-preview__desc">
+            <span className="program-preview-item__desc">
               {statusLabel} | {time}
             </span>
           </button>
@@ -100,16 +103,15 @@ export function withOverlay(
   content: ReactNode,
   props: { tooltipOverlayClassName?: string }
 ) {
-  if (!enabled) return node
-
+  if (!enabled || content == null) return node
   return (
-    <ProgramCalendarOverlayFollowCursor
-      variant="tooltip"
-      tooltipOverlayClassName={props.tooltipOverlayClassName}
+    <CalendarPreviewTooltip
+      enabled
       content={content}
+      tooltipOverlayClassName={props.tooltipOverlayClassName}
     >
       {node}
-    </ProgramCalendarOverlayFollowCursor>
+    </CalendarPreviewTooltip>
   )
 }
 
@@ -120,9 +122,7 @@ export function buildEventsPreview(
     events: CalendarItem[]
     colorMap: Map<string | number, ScheduleColorPair>
   }) => ReactNode
-) {
-  return (previewTooltipContent ?? renderProgramApplicantPreviewTooltipContent)({
-    events: dayItems,
-    colorMap,
-  })
+): ReactNode {
+  if (previewTooltipContent == null) return null
+  return previewTooltipContent({ events: dayItems, colorMap })
 }

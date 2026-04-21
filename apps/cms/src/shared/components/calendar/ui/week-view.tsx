@@ -5,12 +5,12 @@ import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
 } from '@/features/program/ui/program-schedule-colors'
-import { ProgramCalendarOverlayFollowCursor } from '@/shared/components/program-calendar-cursor-overlay'
 import {
   buildEventsPreview,
   CalendarCellSchedulePreview,
   type CalendarEventsConfig,
 } from './calendar-cell'
+import { CalendarPreviewTooltip } from './preview-tooltip/calendar-preview-tooltip'
 import {
   calendarItemsForEventMode,
   getItemsForDate,
@@ -245,15 +245,15 @@ function withScheduleOverlay(
     tooltipOverlayClassName?: string
   }
 ) {
-  if (!enabled) return node
+  if (!enabled || content == null) return node
   return (
-    <ProgramCalendarOverlayFollowCursor
-      variant="tooltip"
-      tooltipOverlayClassName={props.tooltipOverlayClassName}
+    <CalendarPreviewTooltip
+      enabled
       content={content}
+      tooltipOverlayClassName={props.tooltipOverlayClassName}
     >
       {node}
-    </ProgramCalendarOverlayFollowCursor>
+    </CalendarPreviewTooltip>
   )
 }
 
@@ -355,6 +355,15 @@ export function WeekView({
                 )
                 const timedGroups = buildTimedItemGroupLayouts(timedItems, hourPx)
 
+                const fullDayPreview =
+                  eventsConfig.previewTooltipContent != null
+                    ? buildEventsPreview(
+                        dayEvents,
+                        resolvedDayColors,
+                        eventsConfig.previewTooltipContent
+                      )
+                    : null
+
                 return (
                   <div
                     key={dateKey}
@@ -362,150 +371,121 @@ export function WeekView({
                     role="presentation"
                     onClick={() => onSelectDate(date)}
                   >
-                    <div
-                      className="calendar-week-time-grid__column-inner"
-                      style={{ height: totalPx }}
+                    <CalendarPreviewTooltip
+                      enabled={fullDayPreview != null}
+                      content={fullDayPreview}
+                      tooltipOverlayClassName={tooltipOverlayClassName}
                     >
-                      {allDayItems.map((item, idx) => {
-                        const displayTitle = weekTimeGridItemLabel(item)
-                        const isSelected = eventsConfig.selectedRowKeys.includes(item.id)
-                        const colors = weekTimeGridItemColors(
-                          item,
-                          eventsConfig.resolveEventColors,
-                          resolvedDayColors
-                        )
-                        const tooltipList =
-                          eventsConfig.eventsTooltipScope === 'full-day' ? dayEvents : [item]
-                        const tooltipColorMap =
-                          eventsConfig.overrideEventColorMap != null
-                            ? eventsConfig.overrideEventColorMap(tooltipList)
-                            : buildResolvedColorMap(tooltipList)
-                        const previewOne = buildEventsPreview(
-                          tooltipList,
-                          tooltipColorMap,
-                          eventsConfig.previewTooltipContent
-                        )
-                        const pos: CSSProperties & Record<string, string | number> = {
-                          position: 'absolute',
-                          top: idx * 36,
-                          left: 4,
-                          right: 4,
-                          height: 32,
-                          zIndex: 10 + idx,
-                          '--calendar-week-event-overlay-bg': colors.bg,
-                          border: isSelected ? 'none' : `1px solid ${colors.border}`,
-                        }
-                        return (
-                          <Fragment key={String(item.id)}>
-                            {withScheduleOverlay(
-                              <div className="calendar-event-tooltip-trigger">
-                                <div
-                                  className={[
-                                    'calendar-week-time-grid__event',
-                                    'calendar-event',
-                                    isSelected ? 'calendar-event--selected' : '',
-                                  ]
-                                    .filter(Boolean)
-                                    .join(' ')}
-                                  style={pos}
-                                  onClick={e => e.stopPropagation()}
+                      <div
+                        className="calendar-week-time-grid__column-inner"
+                        style={{ height: totalPx }}
+                      >
+                        {allDayItems.map((item, idx) => {
+                          const displayTitle = weekTimeGridItemLabel(item)
+                          const isSelected = eventsConfig.selectedRowKeys.includes(item.id)
+                          const colors = weekTimeGridItemColors(
+                            item,
+                            eventsConfig.resolveEventColors,
+                            resolvedDayColors
+                          )
+                          const pos: CSSProperties & Record<string, string | number> = {
+                            position: 'absolute',
+                            top: idx * 36,
+                            left: 0,
+                            right: 0,
+                            height: 32,
+                            zIndex: 10 + idx,
+                            '--calendar-week-event-overlay-bg': colors.bg,
+                            border: isSelected ? 'none' : `1px solid ${colors.border}`,
+                          }
+                          return (
+                            <div key={String(item.id)} className="calendar-event-tooltip-trigger">
+                              <div
+                                className={[
+                                  'calendar-week-time-grid__event',
+                                  'calendar-event',
+                                  isSelected ? 'calendar-event--selected' : '',
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                                style={pos}
+                                onClick={e => e.stopPropagation()}
+                              >
+                                <span
+                                  className="calendar-event-title calendar-week-time-grid__event-text"
+                                  style={{ color: colors.text }}
                                 >
+                                  {displayTitle}
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        })}
+                        {timedGroups.map((group, idx) => {
+                          const it = group.representative
+                          const groupedText = groupedTimedItemText(group)
+                          const displayTitle =
+                            group.items.length > 1 ? groupedText.title : weekTimeGridItemLabel(it)
+                          const isSelected = group.items.some(grouped =>
+                            eventsConfig.selectedRowKeys.includes(grouped.id)
+                          )
+                          const colors = weekTimeGridItemColors(
+                            it,
+                            eventsConfig.resolveEventColors,
+                            resolvedDayColors
+                          )
+                          const pos: CSSProperties & Record<string, string | number> = {
+                            position: 'absolute',
+                            top: group.top,
+                            left: 0,
+                            right: 0,
+                            height: group.height,
+                            minHeight: 28,
+                            zIndex: 20 + idx,
+                            '--calendar-week-event-overlay-bg': colors.bg,
+                            border: isSelected ? 'none' : `1px solid ${colors.border}`,
+                          }
+                          return (
+                            <div
+                              key={`${String(it.id)}-${group.startM}-${group.endM}-${group.items.length}`}
+                              className="calendar-event-tooltip-trigger"
+                            >
+                              <div
+                                className={[
+                                  'calendar-week-time-grid__event',
+                                  'calendar-event',
+                                  'calendar-week-time-grid__event--timed',
+                                  isSelected ? 'calendar-event--selected' : '',
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                                style={pos}
+                                onClick={e => e.stopPropagation()}
+                              >
+                                {group.items.length > 1 ? (
+                                  <span
+                                    className="calendar-event-title calendar-week-time-grid__event-text"
+                                    style={{ color: colors.text }}
+                                  >
+                                    <span>{displayTitle}</span>
+                                    <span className="calendar-week-time-grid__event-subtext">
+                                      {groupedText.overflowText}
+                                    </span>
+                                  </span>
+                                ) : (
                                   <span
                                     className="calendar-event-title calendar-week-time-grid__event-text"
                                     style={{ color: colors.text }}
                                   >
                                     {displayTitle}
                                   </span>
-                                </div>
-                              </div>,
-                              true,
-                              previewOne,
-                              overlayProps
-                            )}
-                          </Fragment>
-                        )
-                      })}
-                      {timedGroups.map((group, idx) => {
-                        const it = group.representative
-                        const groupedText = groupedTimedItemText(group)
-                        const displayTitle =
-                          group.items.length > 1 ? groupedText.title : weekTimeGridItemLabel(it)
-                        const isSelected = group.items.some(grouped =>
-                          eventsConfig.selectedRowKeys.includes(grouped.id)
-                        )
-                        const colors = weekTimeGridItemColors(
-                          it,
-                          eventsConfig.resolveEventColors,
-                          resolvedDayColors
-                        )
-                        const tooltipList =
-                          eventsConfig.eventsTooltipScope === 'full-day' ? dayEvents : group.items
-                        const tooltipColorMap =
-                          eventsConfig.overrideEventColorMap != null
-                            ? eventsConfig.overrideEventColorMap(tooltipList)
-                            : buildResolvedColorMap(tooltipList)
-                        const previewOne = buildEventsPreview(
-                          tooltipList,
-                          tooltipColorMap,
-                          eventsConfig.previewTooltipContent
-                        )
-                        const pos: CSSProperties & Record<string, string | number> = {
-                          position: 'absolute',
-                          top: group.top,
-                          left: 4,
-                          right: 4,
-                          height: group.height,
-                          minHeight: 28,
-                          zIndex: 20 + idx,
-                          '--calendar-week-event-overlay-bg': colors.bg,
-                          border: isSelected ? 'none' : `1px solid ${colors.border}`,
-                        }
-                        return (
-                          <Fragment
-                            key={`${String(it.id)}-${group.startM}-${group.endM}-${group.items.length}`}
-                          >
-                            {withScheduleOverlay(
-                              <div className="calendar-event-tooltip-trigger">
-                                <div
-                                  className={[
-                                    'calendar-week-time-grid__event',
-                                    'calendar-event',
-                                    'calendar-week-time-grid__event--timed',
-                                    isSelected ? 'calendar-event--selected' : '',
-                                  ]
-                                    .filter(Boolean)
-                                    .join(' ')}
-                                  style={pos}
-                                  onClick={e => e.stopPropagation()}
-                                >
-                                  {group.items.length > 1 ? (
-                                    <span
-                                      className="calendar-event-title calendar-week-time-grid__event-text"
-                                      style={{ color: colors.text }}
-                                    >
-                                      <span>{displayTitle}</span>
-                                      <span className="calendar-week-time-grid__event-subtext">
-                                        {groupedText.overflowText}
-                                      </span>
-                                    </span>
-                                  ) : (
-                                    <span
-                                      className="calendar-event-title calendar-week-time-grid__event-text"
-                                      style={{ color: colors.text }}
-                                    >
-                                      {displayTitle}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>,
-                              true,
-                              previewOne,
-                              overlayProps
-                            )}
-                          </Fragment>
-                        )
-                      })}
-                    </div>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </CalendarPreviewTooltip>
                   </div>
                 )
               }
@@ -538,20 +518,22 @@ export function WeekView({
                           colorMap={colorMap}
                         />
                       ) : (
-                        <div className="calendar-cell-preview">
-                          <span
-                            className="calendar-cell-preview__title"
-                            style={{ color: colors.text }}
-                          >
-                            {weekTimeGridItemLabel(item)}
-                          </span>
+                        <div className="program-preview">
+                          <div className="program-preview-item program-preview-item--stack">
+                            <span
+                              className="program-preview-item__title"
+                              style={{ color: colors.text }}
+                            >
+                              {weekTimeGridItemLabel(item)}
+                            </span>
+                          </div>
                         </div>
                       )
                       const pos: CSSProperties & Record<string, string | number> = {
                         position: 'absolute',
                         top: idx * 36,
-                        left: 4,
-                        right: 4,
+                        left: 0,
+                        right: 0,
                         height: 32,
                         zIndex: 10 + idx,
                         '--calendar-week-event-overlay-bg': colors.bg,
@@ -600,22 +582,24 @@ export function WeekView({
                             colorMap={colorMap}
                           />
                         ) : (
-                          <div className="calendar-cell-preview">
-                            <span
-                              className="calendar-cell-preview__title"
-                              style={{ color: colors.text }}
-                            >
-                              {group.items.length > 1
-                                ? groupedTimedItemText(group).title
-                                : weekTimeGridItemLabel(item)}
-                            </span>
+                          <div className="program-preview">
+                            <div className="program-preview-item program-preview-item--stack">
+                              <span
+                                className="program-preview-item__title"
+                                style={{ color: colors.text }}
+                              >
+                                {group.items.length > 1
+                                  ? groupedTimedItemText(group).title
+                                  : weekTimeGridItemLabel(item)}
+                              </span>
+                            </div>
                           </div>
                         )
                       const pos: CSSProperties & Record<string, string | number> = {
                         position: 'absolute',
                         top: group.top,
-                        left: 4,
-                        right: 4,
+                        left: 0,
+                        right: 0,
                         height: group.height,
                         minHeight: 28,
                         zIndex: 20 + idx,

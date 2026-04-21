@@ -235,33 +235,98 @@
 }
 
 .calendar-week-time-grid__event-text {
-  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   color: var(--default-BK, #3d3d3d);
-  text-overflow: ellipsis;
-  font-family: Pretendard;
   font-size: 12px;
-  font-style: normal;
   font-weight: 500;
   line-height: 130%; /* 15.6px */
-  display: block;
+  /* `.calendar-event-title`의 nowrap을 덮어써야 line-clamp 다줄+말줄임이 동작함 */
+  white-space: normal;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  /* `text-overflow: ellipsis`는 단일 줄·또는 line-clamp와 함께만 유효 */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  text-overflow: ellipsis;
 }
 
 .calendar-week-time-grid__event-subtext {
   display: block;
   margin-top: 2px;
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   color: var(--main-BK, #3d3d3d);
   text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 12px;
   opacity: 0.5;
   font-weight: 500;
   line-height: 130%; /* 15.6px */
 }
 
+/* 주간 격자: 제목은 최대 N줄 후 … (`white-space: normal`만으로는 ellipsis 미적용) */
 .calendar-week--time-grid .calendar-week-time-grid__event .calendar-event-title {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  align-self: stretch;
   white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  text-overflow: ellipsis;
+}
+
+/* 그룹(제목 span + 부가문구): 부모에 line-clamp 두면 자식 블록과 맞물려 …가 안 나오는 경우가 있어 flex로 분리 */
+.calendar-week--time-grid
+  .calendar-week-time-grid__event
+  .calendar-event-title.calendar-week-time-grid__event-text:has(> .calendar-week-time-grid__event-subtext) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  min-height: 0;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  -webkit-box-orient: unset;
+}
+
+.calendar-week--time-grid
+  .calendar-week-time-grid__event
+  .calendar-event-title.calendar-week-time-grid__event-text:has(> .calendar-week-time-grid__event-subtext)
+  > span:not(.calendar-week-time-grid__event-subtext) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  text-overflow: ellipsis;
+}
+
+.calendar-week--time-grid .calendar-week-time-grid__event .calendar-week-time-grid__event-subtext {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .calendar-week-time-grid__event-more {

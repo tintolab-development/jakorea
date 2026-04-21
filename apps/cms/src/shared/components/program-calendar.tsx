@@ -1,7 +1,7 @@
 /**
  * 공통 프로그램 메인 캘린더 (중앙 컬럼)
  * - 마크업·클래스는 `program-calendar-*` 단일 체계
- * - 일정 호버 오버레이는 항상 tooltip (`ProgramCalendarOverlayFollowCursor`)
+ * - 이벤트 모드: `previewTooltipContent`가 있을 때만 호버 tooltip (`CalendarPreviewTooltip`)
  */
 
 import {
@@ -26,11 +26,10 @@ import {
   buildResolvedScheduleColorMapForPrograms,
 } from '@/features/program/ui/program-schedule-colors'
 import { useApplicantCalendarColorMaps } from '@/features/program/program-detail/ui/applicant-list/applicant-calendar-schedule-helpers'
-import { renderProgramCalendarEventsDefaultTooltipContent } from '@/shared/components/calendar'
 import { SegmentedTab } from '@/shared/ui/segmented-tab'
 import '@/shared/ui/overlay-popover.css'
 import './program-calendar.css'
-import { ProgramCalendarOverlayFollowCursor } from '@/shared/components/program-calendar-cursor-overlay'
+import { CalendarPreviewTooltip } from './calendar/ui/preview-tooltip/calendar-preview-tooltip'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -68,7 +67,7 @@ type ProgramCalendarSharedProps = {
   hideModeToggle?: boolean
   /** true면 우측에 월간·주간 탭 대신 고정 「월간」 라벨만 표시 (`hideModeToggle`과 함께 사용) */
   monthOnlyLabel?: boolean
-  /** 툴팁 오버레이에 추가하는 클래스 (`program-calendar-tooltip-overlay` 등) */
+  /** 툴팁 `overlayClassName`에 합성되는 클래스 (페이지별 보정용) */
   tooltipOverlayClassName?: string
   /**
    * 주간 뷰: `simple`(7열 태그) | `time-grid`(좌측 한글 시 라벨 + 시간 격자).
@@ -407,20 +406,21 @@ function CalendarCellSchedulePreview({ date, programs }: { date: Dayjs; programs
   const scheduleColorMap = buildResolvedScheduleColorMapForPrograms(programs)
 
   return (
-    <div className="program-calendar-cell-preview">
+    <div className="program-preview">
       {programs.map(program => {
         const { statusLabel, time } = getProgramDayScheduleLine(program, date)
         const title = program.title ?? ''
         const colorPair = scheduleColorMap.get(String(program.id)) ?? SCHEDULE_COLORS[0]
         return (
-          <button key={program.id} type="button" className="program-calendar-cell-preview__item">
-            <span
-              className="program-calendar-cell-preview__title"
-              style={{ color: colorPair.text }}
-            >
+          <button
+            key={program.id}
+            type="button"
+            className="program-preview-item program-preview-item--stack"
+          >
+            <span className="program-preview-item__title" style={{ color: colorPair.text }}>
               [{title}]
             </span>
-            <span className="program-calendar-cell-preview__desc">
+            <span className="program-preview-item__desc">
               {statusLabel} | {time}
             </span>
           </button>
@@ -436,13 +436,13 @@ function wrapScheduleOverlay(
   trigger: ReactElement
 ): ReactNode {
   return (
-    <ProgramCalendarOverlayFollowCursor
-      variant="tooltip"
-      tooltipOverlayClassName={tooltipOverlayClassName}
+    <CalendarPreviewTooltip
+      enabled={previewContent != null}
       content={previewContent}
+      tooltipOverlayClassName={tooltipOverlayClassName}
     >
       {trigger}
-    </ProgramCalendarOverlayFollowCursor>
+    </CalendarPreviewTooltip>
   )
 }
 
@@ -473,9 +473,6 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
     const previewTooltipContent = isEvents ? props.previewTooltipContent : undefined
     const overrideEventColorMap = isEvents ? props.overrideEventColorMap : undefined
     const resolveEventColors = isEvents ? props.resolveEventColors : undefined
-    const eventsTooltipScope = isEvents
-      ? (props.eventsTooltipScope ?? 'trigger-only')
-      : 'trigger-only'
     const formatEventsOverflowText = isEvents ? props.formatEventsOverflowText : undefined
     const eventsTooltipTrigger = isEvents ? (props.eventsTooltipTrigger ?? 'event-strip') : 'event-strip'
 
@@ -525,10 +522,9 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
       dayEvents: ProgramCalendarEventItem[],
       colorMap: Map<string | number, ScheduleColorPair>
     ) =>
-      (previewTooltipContent ?? renderProgramCalendarEventsDefaultTooltipContent)({
-        events: dayEvents,
-        colorMap,
-      })
+      previewTooltipContent != null
+        ? previewTooltipContent({ events: dayEvents, colorMap })
+        : null
 
     const dateFullCellRender = (date: Dayjs) => {
       const isCurrentMonth = date.isSame(currentMonth, 'month')
@@ -611,6 +607,8 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
           )
         }
 
+        const fullDayStripPreview = buildEventsPreview(dayEvents, resolvedColors)
+
         const cellBody = (
           <div className={cellClass} onClick={() => onSelectDate(date)}>
             <div className="program-calendar-cell-date">{date.date()}</div>
@@ -623,67 +621,47 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                     resolveEventColors?.(event) ??
                     resolvedColors.get(event.id) ??
                     SCHEDULE_COLORS[0]
-                  const tooltipList = eventsTooltipScope === 'full-day' ? dayEvents : [event]
-                  const tooltipColorMap =
-                    overrideEventColorMap != null
-                      ? overrideEventColorMap(tooltipList)
-                      : buildResolvedColorMap(tooltipList)
-                  const previewOne = buildEventsPreview(tooltipList, tooltipColorMap)
                   return (
-                    <Fragment key={String(event.id)}>
-                      {wrapScheduleOverlay(tooltipOverlayClassName,
-                        previewOne,
-                        <div className="program-calendar-event-tooltip-trigger">
-                          <div
-                            className={[
-                              'program-calendar-event',
-                              isEventSelected ? 'program-calendar-event--selected' : '',
-                              ...getPaymentOrderEventClasses(event),
-                            ]
-                              .filter(Boolean)
-                              .join(' ')}
-                            style={{
-                              backgroundColor: colors.bg,
-                            }}
-                            onClick={e => e.stopPropagation()}
-                          >
-                            <span
-                              className="program-calendar-event-title"
-                              style={{ color: colors.text }}
-                            >
-                              {displayTitle}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </Fragment>
+                    <div key={String(event.id)}>
+                      <div
+                        className={[
+                          'program-calendar-event',
+                          isEventSelected ? 'program-calendar-event--selected' : '',
+                          ...getPaymentOrderEventClasses(event),
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                        style={{
+                          backgroundColor: colors.bg,
+                        }}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <span
+                          className="program-calendar-event-title"
+                          style={{ color: colors.text }}
+                        >
+                          {displayTitle}
+                        </span>
+                      </div>
+                    </div>
                   )
                 })}
                 {dayEvents.length > 2 && (
-                  <Fragment key="more">
-                    {wrapScheduleOverlay(tooltipOverlayClassName,
-                      (() => {
-                        const moreList =
-                          eventsTooltipScope === 'full-day' ? dayEvents : dayEvents.slice(2)
-                        const moreColorMap =
-                          overrideEventColorMap != null
-                            ? overrideEventColorMap(moreList)
-                            : buildResolvedColorMap(moreList)
-                        return buildEventsPreview(moreList, moreColorMap)
-                      })(),
-                      <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
-                        {formatEventsOverflowText?.(dayEvents.length - 2) ??
-                          `외 ${dayEvents.length - 2}개의 항목`}
-                      </div>
-                    )}
-                  </Fragment>
+                  <div className="program-calendar-event-more">
+                    {formatEventsOverflowText?.(dayEvents.length - 2) ??
+                      `외 ${dayEvents.length - 2}개의 항목`}
+                  </div>
                 )}
               </div>
             )}
           </div>
         )
 
-        return cellBody
+        return wrapScheduleOverlay(
+          tooltipOverlayClassName,
+          fullDayStripPreview,
+          <div className="program-calendar-cell-tooltip-trigger">{cellBody}</div>
+        )
       }
 
       const dayPrograms = getProgramsForDate(programs, date)
@@ -788,6 +766,8 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                   const timedEvents = dayEvents.filter(e => parseHHmmToMinutes(e.startTime) != null)
                   const timedLayouts = layoutTimedEventsForDay(timedEvents, hourPx)
 
+                  const fullDayTimeGridPreview = buildEventsPreview(dayEvents, resolvedWeekColors)
+
                   return (
                     <div
                       key={dateKey}
@@ -795,118 +775,111 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                       role="presentation"
                       onClick={() => onSelectDate(date)}
                     >
-                      <div
-                        className="program-calendar-week-time-grid__column-inner"
-                        style={{ height: totalPx }}
+                      <CalendarPreviewTooltip
+                        enabled={fullDayTimeGridPreview != null}
+                        content={fullDayTimeGridPreview}
+                        tooltipOverlayClassName={tooltipOverlayClassName}
                       >
-                        {allDayEvents.map((event, idx) => {
-                          const displayTitle = weekTimeGridEventLabel(event)
-                          const isEventSelected = selectedRowKeys.includes(event.id)
-                          const colors = weekTimeGridEventColors(
-                            event,
-                            resolveEventColors,
-                            resolvedWeekColors
-                          )
-                          const tooltipList =
-                            eventsTooltipScope === 'full-day' ? dayEvents : [event]
-                          const tooltipColorMap = buildResolvedColorMap(tooltipList)
-                          const previewOne = buildEventsPreview(tooltipList, tooltipColorMap)
-                          const pos: CSSProperties = {
-                            position: 'absolute',
-                            top: idx * 36,
-                            left: 4,
-                            right: 4,
-                            height: 32,
-                            zIndex: 10 + idx,
-                            backgroundColor: colors.bg,
-                            border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
-                          }
-                          return (
-                            <Fragment key={String(event.id)}>
-                              {wrapScheduleOverlay(tooltipOverlayClassName,
-                                previewOne,
-                                <div className="program-calendar-event-tooltip-trigger">
-                                  <div
-                                    className={[
-                                      'program-calendar-week-time-grid__event',
-                                      'program-calendar-event',
-                                      isEventSelected ? 'program-calendar-event--selected' : '',
-                                      ...getPaymentOrderEventClasses(event),
-                                    ]
-                                      .filter(Boolean)
-                                      .join(' ')}
-                                    style={pos}
-                                    onClick={e => e.stopPropagation()}
+                        <div
+                          className="program-calendar-week-time-grid__column-inner"
+                          style={{ height: totalPx }}
+                        >
+                          {allDayEvents.map((event, idx) => {
+                            const displayTitle = weekTimeGridEventLabel(event)
+                            const isEventSelected = selectedRowKeys.includes(event.id)
+                            const colors = weekTimeGridEventColors(
+                              event,
+                              resolveEventColors,
+                              resolvedWeekColors
+                            )
+                            const pos: CSSProperties = {
+                              position: 'absolute',
+                              top: idx * 36,
+                              left: 0,
+                              right: 0,
+                              height: 32,
+                              zIndex: 10 + idx,
+                              backgroundColor: colors.bg,
+                              border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
+                            }
+                            return (
+                              <div key={String(event.id)} className="program-calendar-event-tooltip-trigger">
+                                <div
+                                  className={[
+                                    'program-calendar-week-time-grid__event',
+                                    'program-calendar-event',
+                                    isEventSelected ? 'program-calendar-event--selected' : '',
+                                    ...getPaymentOrderEventClasses(event),
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' ')}
+                                  style={pos}
+                                  onClick={e => e.stopPropagation()}
+                                >
+                                  <span
+                                    className="program-calendar-event-title program-calendar-week-time-grid__event-text"
+                                    style={{ color: colors.text }}
                                   >
-                                    <span
-                                      className="program-calendar-event-title program-calendar-week-time-grid__event-text"
-                                      style={{ color: colors.text }}
-                                    >
-                                      {displayTitle}
-                                    </span>
-                                  </div>
+                                    {displayTitle}
+                                  </span>
                                 </div>
-                              )}
-                            </Fragment>
-                          )
-                        })}
-                        {timedEvents.map((event, idx) => {
-                          const layout = timedLayouts[idx]
-                          const displayTitle = weekTimeGridEventLabel(event)
-                          const isEventSelected = selectedRowKeys.includes(event.id)
-                          const colors = weekTimeGridEventColors(
-                            event,
-                            resolveEventColors,
-                            resolvedWeekColors
-                          )
-                          const tooltipList =
-                            eventsTooltipScope === 'full-day' ? dayEvents : [event]
-                          const tooltipColorMap = buildResolvedColorMap(tooltipList)
-                          const previewOne = buildEventsPreview(tooltipList, tooltipColorMap)
-                          const widthPct = 100 / layout.columnCount
-                          const leftPct = layout.columnIndex * widthPct
-                          const pos: CSSProperties = {
-                            position: 'absolute',
-                            top: layout.top,
-                            left: `calc(${leftPct}% + 4px)`,
-                            width: `calc(${widthPct}% - 8px)`,
-                            height: layout.height,
-                            minHeight: 28,
-                            zIndex: 1 + idx,
-                            backgroundColor: colors.bg,
-                            border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
-                          }
-                          return (
-                            <Fragment key={String(event.id)}>
-                              {wrapScheduleOverlay(tooltipOverlayClassName,
-                                previewOne,
-                                <div className="program-calendar-event-tooltip-trigger">
-                                  <div
-                                    className={[
-                                      'program-calendar-week-time-grid__event',
-                                      'program-calendar-event',
-                                      'program-calendar-week-time-grid__event--timed',
-                                      isEventSelected ? 'program-calendar-event--selected' : '',
-                                      ...getPaymentOrderEventClasses(event),
-                                    ]
-                                      .filter(Boolean)
-                                      .join(' ')}
-                                    style={pos}
-                                    onClick={e => e.stopPropagation()}
+                              </div>
+                            )
+                          })}
+                          {timedEvents.map((event, idx) => {
+                            const layout = timedLayouts[idx]
+                            const displayTitle = weekTimeGridEventLabel(event)
+                            const isEventSelected = selectedRowKeys.includes(event.id)
+                            const colors = weekTimeGridEventColors(
+                              event,
+                              resolveEventColors,
+                              resolvedWeekColors
+                            )
+                            const n = layout.columnCount
+                            const i = layout.columnIndex
+                            /** 겹침 열 사이만 소간격, 열 좌우 가장자리는 0에 맞춤 */
+                            const overlapGapPx = 2
+                            const pos: CSSProperties = {
+                              position: 'absolute',
+                              top: layout.top,
+                              left:
+                                n <= 1
+                                  ? 0
+                                  : `calc(${i} * (100% - ${(n - 1) * overlapGapPx}px) / ${n} + ${i * overlapGapPx}px)`,
+                              width: n <= 1 ? '100%' : `calc((100% - ${(n - 1) * overlapGapPx}px) / ${n})`,
+                              height: layout.height,
+                              minHeight: 28,
+                              zIndex: 1 + idx,
+                              backgroundColor: colors.bg,
+                              border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
+                            }
+                            return (
+                              <div key={String(event.id)} className="program-calendar-event-tooltip-trigger">
+                                <div
+                                  className={[
+                                    'program-calendar-week-time-grid__event',
+                                    'program-calendar-event',
+                                    'program-calendar-week-time-grid__event--timed',
+                                    isEventSelected ? 'program-calendar-event--selected' : '',
+                                    ...getPaymentOrderEventClasses(event),
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' ')}
+                                  style={pos}
+                                  onClick={e => e.stopPropagation()}
+                                >
+                                  <span
+                                    className="program-calendar-event-title program-calendar-week-time-grid__event-text"
+                                    style={{ color: colors.text }}
                                   >
-                                    <span
-                                      className="program-calendar-event-title program-calendar-week-time-grid__event-text"
-                                      style={{ color: colors.text }}
-                                    >
-                                      {displayTitle}
-                                    </span>
-                                  </div>
+                                    {displayTitle}
+                                  </span>
                                 </div>
-                              )}
-                            </Fragment>
-                          )
-                        })}
-                      </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </CalendarPreviewTooltip>
                     </div>
                   )
                 })}
@@ -1021,6 +994,8 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                   )
                 }
 
+                const fullDayWeekSimplePreview = buildEventsPreview(dayEvents, resolvedWeekColors)
+
                 const weekCellInner = (
                   <>
                     <div
@@ -1037,66 +1012,39 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                             resolveEventColors?.(event) ??
                             resolvedWeekColors.get(event.id) ??
                             SCHEDULE_COLORS[0]
-                          const tooltipList =
-                            eventsTooltipScope === 'full-day' ? dayEvents : [event]
-                          const tooltipColorMap =
-                            overrideEventColorMap != null
-                              ? overrideEventColorMap(
-                                  eventsTooltipScope === 'full-day' ? dayEvents : [event]
-                                )
-                              : buildResolvedColorMap(tooltipList)
-                          const previewOne = buildEventsPreview(tooltipList, tooltipColorMap)
                           return (
-                            <Fragment key={String(event.id)}>
-                              {wrapScheduleOverlay(tooltipOverlayClassName,
-                                previewOne,
-                                <div className="program-calendar-event-tooltip-trigger">
-                                  <div
-                                    className={[
-                                      'program-calendar-event',
-                                      isEventSelected ? 'program-calendar-event--selected' : '',
-                                      ...getPaymentOrderEventClasses(event),
-                                    ]
-                                      .filter(Boolean)
-                                      .join(' ')}
-                                    style={{
-                                      backgroundColor: colors.bg,
-                                      border: isEventSelected
-                                        ? 'none'
-                                        : `1px solid ${colors.border}`,
-                                    }}
-                                    onClick={e => e.stopPropagation()}
-                                  >
-                                    <span
-                                      className="program-calendar-event-title"
-                                      style={{ color: colors.text }}
-                                    >
-                                      {displayTitle}
-                                    </span>
-                                  </div>
-                                </div>
-                              )}
-                            </Fragment>
+                            <div key={String(event.id)}>
+                              <div
+                                className={[
+                                  'program-calendar-event',
+                                  isEventSelected ? 'program-calendar-event--selected' : '',
+                                  ...getPaymentOrderEventClasses(event),
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                                style={{
+                                  backgroundColor: colors.bg,
+                                  border: isEventSelected
+                                    ? 'none'
+                                    : `1px solid ${colors.border}`,
+                                }}
+                                onClick={e => e.stopPropagation()}
+                              >
+                                <span
+                                  className="program-calendar-event-title"
+                                  style={{ color: colors.text }}
+                                >
+                                  {displayTitle}
+                                </span>
+                              </div>
+                            </div>
                           )
                         })}
                         {dayEvents.length > 2 && (
-                          <Fragment key="more">
-                            {wrapScheduleOverlay(tooltipOverlayClassName,
-                              (() => {
-                                const moreList =
-                                  eventsTooltipScope === 'full-day' ? dayEvents : dayEvents.slice(2)
-                                const moreColorMap =
-                                  overrideEventColorMap != null
-                                    ? overrideEventColorMap(moreList)
-                                    : buildResolvedColorMap(moreList)
-                                return buildEventsPreview(moreList, moreColorMap)
-                              })(),
-                              <div className="program-calendar-event-tooltip-trigger program-calendar-event-more">
-                                {formatEventsOverflowText?.(dayEvents.length - 2) ??
-                                  `외 ${dayEvents.length - 2}개의 항목`}
-                              </div>
-                            )}
-                          </Fragment>
+                          <div className="program-calendar-event-more">
+                            {formatEventsOverflowText?.(dayEvents.length - 2) ??
+                              `외 ${dayEvents.length - 2}개의 항목`}
+                          </div>
                         )}
                       </div>
                     )}
@@ -1104,13 +1052,18 @@ export const ProgramCalendar = forwardRef<HTMLDivElement, ProgramCalendarProps>(
                 )
 
                 return (
-                  <div
-                    key={date.format('YYYY-MM-DD')}
-                    className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
-                    onClick={() => onSelectDate(date)}
-                  >
-                    {weekCellInner}
-                  </div>
+                  <Fragment key={date.format('YYYY-MM-DD')}>
+                    {wrapScheduleOverlay(
+                      tooltipOverlayClassName,
+                      fullDayWeekSimplePreview,
+                      <div
+                        className={`program-calendar-week-cell ${isSelected ? 'program-calendar-week-cell--selected' : ''}`}
+                        onClick={() => onSelectDate(date)}
+                      >
+                        {weekCellInner}
+                      </div>
+                    )}
+                  </Fragment>
                 )
               }
 
