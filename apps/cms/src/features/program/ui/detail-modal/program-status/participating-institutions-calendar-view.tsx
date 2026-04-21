@@ -305,9 +305,8 @@ export function ParticipatingInstitutionsCalendarView({
           onSelectDate={handleDateSelect}
           onMonthChange={setCurrentMonth}
           onModeChange={setCalendarMode}
-          scheduleOverlay="tooltip"
           tooltipOverlayClassName="participating-institutions-calendar-tooltip-overlay"
-          renderEventsTooltipContent={({ events: dayEvents }) => (
+          previewTooltipContent={({ events: dayEvents }) => (
             <ParticipatingCalendarEventPopoverContent
               events={dayEvents as CalendarEvent[]}
               titleColorMap={new Map(

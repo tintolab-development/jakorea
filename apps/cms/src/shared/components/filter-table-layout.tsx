@@ -16,6 +16,8 @@ import {
 export type { FilterFieldConfig, TableFilterGroupProps }
 
 export interface FilterTableLayoutProps extends TableFilterGroupProps {
+  /** false면 `TableFilterGroup`·필터 하단 구분선을 숨김(캘린더 전용 뷰 등) */
+  showFilter?: boolean
   /** 테이블 상단 제목 */
   title?: ReactNode
   /** 테이블 상단 보조 설명(건수 등) */
@@ -30,6 +32,7 @@ export interface FilterTableLayoutProps extends TableFilterGroupProps {
 }
 
 export function FilterTableLayout({
+  showFilter = true,
   title,
   description,
   actions,
@@ -38,18 +41,28 @@ export function FilterTableLayout({
   className,
   ...TableFilterGroupProps
 }: FilterTableLayoutProps) {
-  const rootClass = ['filter-table-layout', className].filter(Boolean).join(' ')
+  const rootClass = [
+    'filter-table-layout',
+    !showFilter && 'filter-table-layout--without-filter',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
   const showToolbar = title != null || description != null || actions != null
 
   return (
     <div className={rootClass}>
-      <div className="filter-table-layout__filter">
-        <TableFilterGroup {...TableFilterGroupProps} />
-      </div>
+      {showFilter ? (
+        <>
+          <div className="filter-table-layout__filter">
+            <TableFilterGroup {...TableFilterGroupProps} />
+          </div>
 
-      <div className="filter-table-layout__divider">
-        <Divider />
-      </div>
+          <div className="filter-table-layout__divider">
+            <Divider />
+          </div>
+        </>
+      ) : null}
 
       {topNav != null ? <div className="filter-table-layout__top-nav">{topNav}</div> : null}
 

@@ -154,7 +154,7 @@
 }
 
 .instructor-payment-tab__settlement-text--na {
-  color: #464646;
+  color: #333333;
 }
 
 .instructor-payment-tab__settlement-text--rejected {
@@ -162,7 +162,7 @@
 }
 
 .instructor-payment-tab__settlement-text--correction {
-  color: #7a2038;
+  color: #c32f4a;
 }
 
 /* 산출 내역 열: 버튼 셀 가운데 정렬 */

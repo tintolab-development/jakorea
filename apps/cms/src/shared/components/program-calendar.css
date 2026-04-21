@@ -145,16 +145,6 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* 커서 추적 Popover(createPortal + fixed) — 외부 정렬 transform과 충돌 방지 */
-.program-calendar-cursor-popover {
-  transform: none !important;
-}
-
-/* 커서 추적 Tooltip(신청자 일정 등) — 동일 */
-.program-calendar-cursor-tooltip {
-  transform: none !important;
-}
-
 .program-calendar-cell-preview {
   display: flex;
   width: 333px;
@@ -164,18 +154,6 @@
   align-items: flex-start;
   gap: 8px;
   box-sizing: border-box;
-}
-
-/* 주간·월간 program 모드: Tooltip (패널형이 아닌 투명 래퍼) */
-.program-calendar-tooltip-overlay .ant-tooltip-arrow {
-  display: none !important;
-}
-
-.program-calendar-tooltip-overlay .ant-tooltip-inner {
-  padding: 0;
-  background: transparent;
-  box-shadow: none;
-  border-radius: 0;
 }
 
 .program-calendar-cell-tooltip-trigger {
@@ -1030,11 +1008,17 @@
 }
 
 .program-calendar-week-time-grid__event-text {
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
   width: 100%;
   min-width: 0;
   align-self: stretch;
+  /* `.program-calendar-event-title`의 nowrap보다 뒤에서 덮어 다줄+말줄임 */
   white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
   word-break: break-word;
   overflow-wrap: anywhere;
   font-size: 11px;

@@ -20,7 +20,7 @@
 }
 
 .user-list__settlement-status--none {
-  color: #464646;
+  color: #333333;
 }
 
 .user-list__settlement-status--application-rejected {
@@ -28,5 +28,5 @@
 }
 
 .user-list__settlement-status--payment-correction-requested {
-  color: #7a2038;
+  color: #c32f4a;
 }

@@ -42,6 +42,29 @@ const getDate = (daysAgo: number) => {
   return d.toISOString()
 }
 
+function pad2(n: number): string {
+  return String(n).padStart(2, '0')
+}
+
+function buildProgramStartEndTime(seed: number): { startTime: string; endTime: string } {
+  const templates = [
+    { startH: 9, startM: 0, durationM: 120 },
+    { startH: 10, startM: 30, durationM: 90 },
+    { startH: 13, startM: 0, durationM: 120 },
+    { startH: 14, startM: 30, durationM: 90 },
+    { startH: 16, startM: 0, durationM: 120 },
+  ] as const
+  const t = templates[seed % templates.length]
+  const startTotal = t.startH * 60 + t.startM
+  const endTotal = Math.min(startTotal + t.durationM, 24 * 60)
+  const endH = Math.floor(endTotal / 60)
+  const endM = endTotal % 60
+  return {
+    startTime: `${pad2(t.startH)}:${pad2(t.startM)}`,
+    endTime: `${pad2(endH)}:${pad2(endM)}`,
+  }
+}
+
 /** 공통 정보 탭·후원사 담당자 셀 등에 쓰이는 기본값 (건곳별로 덮어씀) */
 const ECONOMY_SHARED_COMMON: Partial<Program> = {
   teamDivision: 'C&D',
@@ -392,10 +415,13 @@ export function getEconomyPrograms(): Program[] {
   SCREENSHOT_PROGRAMS.forEach((base, i) => {
     const id = `economy-prog-${String(i + 1).padStart(3, '0')}`
     const capacity = 30
+    const { startTime, endTime } = buildProgramStartEndTime(i)
     programs.push({
       ...base,
       id,
       rounds: createRounds(id, capacity),
+      startTime,
+      endTime,
       createdAt: getDate(90 - i),
       updatedAt: getDate(90 - i),
       posterImage: `https://picsum.photos/seed/${id}/400/300`,
@@ -428,6 +454,7 @@ export function getEconomyPrograms(): Program[] {
     const targetLevel = targetLevels[i % 3]
     const approvedCount = i % 5 === 0 ? 0 : Math.min(30, Math.floor((i * 7) % 31))
     const extras = extraFieldsForGeneratedIndex(i)
+    const { startTime, endTime } = buildProgramStartEndTime(i)
     const instCap = extras.instructorCapacity ?? 40
     const inProgress = lifecycleStatus === 'education_after_textbook'
     const isCompleted =
@@ -457,6 +484,8 @@ export function getEconomyPrograms(): Program[] {
       category,
       description: '경제금융 분야 교육 프로그램',
       rounds: createRounds(id, capacity),
+      startTime,
+      endTime,
       startDate: getDate(120 - i),
       endDate: getDate(90 - i),
       applicationStartDate: getDate(150 - i),

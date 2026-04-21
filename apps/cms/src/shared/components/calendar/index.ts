@@ -1,5 +1,5 @@
-export { CalendarSet } from './calendar-set'
-export type { CalendarSetMainProps } from './calendar-set'
+export { CalendarSet } from './ui/calendar-set'
+export type { CalendarSetMainProps } from './ui/calendar-set'
 export {
   calendarItemsForEventMode,
   mapEventsToItems,
@@ -9,9 +9,9 @@ export {
   calendarItemForScheduleSource,
   calendarItemForEventRow,
   isProgramOriginal,
-} from './calendar-core/calendar-helpers'
-export type { CalendarItem } from './calendar-core/calendar-helpers'
-export { CalendarMain } from './calendar-main'
+} from './lib/calendar-helpers'
+export type { CalendarItem } from './model/calendar-item'
+export { CalendarMain } from './ui/calendar-main'
 export { WeekView } from './ui/week-view'
 export type { WeekViewProps } from './ui/week-view'
 export {
@@ -19,18 +19,37 @@ export {
   CalendarCell,
   CalendarCellSchedulePreview,
   buildEventsPreview,
-} from './calendar-core/calendar-cell'
-export type { CalendarCellProps, CalendarEventsConfig } from './calendar-core/calendar-cell'
+} from './ui/calendar-cell'
+export type { CalendarCellProps, CalendarEventsConfig } from './ui/calendar-cell'
 export type {
   CalendarMainProps,
   CalendarMainItemsProps,
   CalendarMainScheduleProps,
   CalendarMainProgramProps,
   CalendarMainEventsProps,
-} from './calendar-main'
-export { CalendarMini } from './calendar-mini'
-export { CalendarSearch } from './calendar-search'
-export type { CalendarSearchProps, CalendarSearchOption } from './calendar-search'
-export { CalendarSubRightList } from './calendar-sub-right-list'
-export type { CalendarSubRightListProps } from './calendar-sub-right-list'
-export { CALENDAR_FILTER_COLOR_CLASSES } from './calendar-color-set'
+} from './ui/calendar-main'
+export { CalendarMini } from './ui/calendar-mini'
+export { CalendarSearch } from './ui/calendar-search'
+export type { CalendarSearchProps, CalendarSearchOption } from './ui/calendar-search'
+export {
+  CalendarSubRightList,
+  CalendarSubRightSettlementList,
+} from './ui/calendar-sub-right-list'
+export type {
+  CalendarSubRightListProps,
+  CalendarSubRightSettlementListProps,
+} from './ui/calendar-sub-right-list'
+export { CALENDAR_FILTER_COLOR_CLASSES } from './lib/calendar-color-set'
+export { CalendarListItemContentSettlement } from './ui/item-list/settlement'
+export {
+  settlementRowFromCalendarItem,
+  settlementEventStatusColorPair,
+  renderSettlementEventsTooltipContent,
+} from './ui/preview-tooltip/settlement'
+export {
+  ProgramPreviewTooltipBody,
+  renderProgramApplicantPreviewTooltipContent,
+  renderProgramCalendarEventsDefaultTooltipContent,
+} from './ui/preview-tooltip/program'
+export { CalendarPreviewTooltip } from './ui/preview-tooltip/calendar-preview-tooltip'
+export type { ProgramPreviewTooltipEventRow } from './ui/preview-tooltip/program'

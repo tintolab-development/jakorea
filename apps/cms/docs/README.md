@@ -96,6 +96,7 @@
 | [microsoft-authenticator-2fa-info.md](requirements-specification/MVP/microsoft-authenticator-2fa-info.md) | MS Authenticator 2FA |
 | [MVP_ROADMAP_V4_DETAILED.md](roadmap/MVP_ROADMAP_V4_DETAILED.md) | 로드맵 v4 상세 |
 | [REQUIREMENTS_PRIORITY.md](status/REQUIREMENTS_PRIORITY.md) | 요구사항 우선순위 |
+| [DOCUMENT_VALIDITY_REVIEW_2026-04-20.md](status/DOCUMENT_VALIDITY_REVIEW_2026-04-20.md) | 문서 유효성 분류표 |
 
 ---
 
