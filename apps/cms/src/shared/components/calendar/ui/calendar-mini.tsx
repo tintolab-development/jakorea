@@ -1,15 +1,10 @@
-/**
- * 프로그램 미니 캘린더 컴포넌트
- * 우측 상단에 표시되는 작은 월간 달력
- */
-
 import { Calendar } from 'antd'
 import enUS from 'antd/es/calendar/locale/en_US'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import updateLocale from 'dayjs/plugin/updateLocale'
-import '@/shared/components/calendar/styles/calendar-set.css'
+import '../styles/calendar.css'
 
 dayjs.extend(updateLocale)
 dayjs.updateLocale('en', {
@@ -17,22 +12,21 @@ dayjs.updateLocale('en', {
 })
 dayjs.locale('en')
 
-interface ProgramMiniCalendarProps {
+interface CalendarMiniProps {
   currentMonth: Dayjs
-  /** 메인 캘린더·우측 일정 목록과 동일한 날짜 선택 */
   selectedDate: Dayjs
   onMonthChange: (month: Dayjs) => void
   onSelectDate: (date: Dayjs) => void
-  programDates: Set<string> // 일정 있는 날짜들 (YYYY-MM-DD 형식)
+  programDates: Set<string>
 }
 
-export function ProgramMiniCalendar({
+export function CalendarMini({
   currentMonth,
   selectedDate,
   onMonthChange,
   onSelectDate,
   programDates,
-}: ProgramMiniCalendarProps) {
+}: CalendarMiniProps) {
   const handlePrevMonth = () => {
     onMonthChange(currentMonth.subtract(1, 'month'))
   }
@@ -41,25 +35,8 @@ export function ProgramMiniCalendar({
     onMonthChange(currentMonth.add(1, 'month'))
   }
 
-  const headerRender = () => {
-    return (
-      <div className="calendar-mini-header">
-        <button type="button" className="calendar-mini-nav-btn" onClick={handlePrevMonth}>
-          <LeftOutlined />
-        </button>
-        <span className="calendar-mini-title">{currentMonth.format('YYYY.MM')}</span>
-        <button type="button" className="calendar-mini-nav-btn" onClick={handleNextMonth}>
-          <RightOutlined />
-        </button>
-      </div>
-    )
-  }
-
   const dateFullCellRender = (date: Dayjs) => {
-    if (!date.isSame(currentMonth, 'month')) {
-      return null
-    }
-
+    if (!date.isSame(currentMonth, 'month')) return null
     const isSelected = date.isSame(selectedDate, 'day')
     const hasSchedule = programDates.has(date.format('YYYY-MM-DD'))
 
@@ -79,8 +56,16 @@ export function ProgramMiniCalendar({
   }
 
   return (
-    <div className="calendar-mini">
-      {headerRender()}
+    <div className="calendar-mini-container">
+      <div className="calendar-mini-header">
+        <button type="button" className="calendar-mini-nav-btn" onClick={handlePrevMonth}>
+          <LeftOutlined />
+        </button>
+        <span className="calendar-mini-title">{currentMonth.format('YYYY.MM')}</span>
+        <button type="button" className="calendar-mini-nav-btn" onClick={handleNextMonth}>
+          <RightOutlined />
+        </button>
+      </div>
       <Calendar
         fullscreen={false}
         value={currentMonth}
@@ -88,9 +73,7 @@ export function ProgramMiniCalendar({
         fullCellRender={dateFullCellRender}
         headerRender={() => null}
         onSelect={(date, { source }) => {
-          if (source === 'date') {
-            onSelectDate(date)
-          }
+          if (source === 'date') onSelectDate(date)
         }}
       />
     </div>

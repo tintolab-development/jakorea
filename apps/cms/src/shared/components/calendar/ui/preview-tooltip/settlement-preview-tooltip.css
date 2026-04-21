@@ -1,0 +1,27 @@
+/* 정산 일정 미리보기 툴팁 — `renderSettlementEventsTooltipContent` */
+
+.instructor-settlement-preview {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.instructor-settlement-preview__title {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.instructor-settlement-preview:not(:last-child) {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #d4d4d4;
+  margin-bottom: 10px;
+}

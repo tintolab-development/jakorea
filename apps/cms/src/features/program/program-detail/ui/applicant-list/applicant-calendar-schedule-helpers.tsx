@@ -1,5 +1,5 @@
 /**
- * 신청자 캘린더 일정 색상·툴팁 내용 (ProgramCalendar events 모드와 공유)
+ * 신청자 캘린더 일정 색상 맵 (`ProgramCalendar` / `CalendarMain` 이벤트 모드와 공유)
  */
 
 import { useMemo, useCallback } from 'react'
@@ -23,88 +23,6 @@ export function getEntityKey(event: {
   if (item && typeof item.schoolName === 'string') return item.schoolName
   if (item && typeof item.instructorName === 'string') return item.instructorName
   return String(event?.title ?? '').replace(/^\[.*?\]\s*/, '') ?? ''
-}
-
-function getPopoverRowParts(
-  item: Record<string, unknown> | null | undefined
-): { title: string; location: string; countLabel: string } | null {
-  if (!item) return null
-  const summary = item.calendarInstitutionSummary as
-    | { applicantCount: number; regionDisplay: string }
-    | undefined
-  if (summary && typeof item.schoolName === 'string') {
-    return {
-      title: item.schoolName,
-      location: summary.regionDisplay || '-',
-      countLabel: `신청 : ${summary.applicantCount}명`,
-    }
-  }
-  if (typeof item.schoolName === 'string' && 'region' in item && item.region != null) {
-    const regionStr = String(item.region).trim()
-    const location = regionStr.split(/\s+/)[0] ?? regionStr
-    const n = typeof item.studentCount === 'number' ? item.studentCount : 0
-    return {
-      title: item.schoolName,
-      location: location || '-',
-      countLabel: `신청 : ${n}명`,
-    }
-  }
-  if (typeof item.instructorName === 'string') {
-    const location =
-      typeof item.schoolName === 'string' && item.schoolName
-        ? item.schoolName
-        : typeof item.address === 'string'
-          ? item.address.split(/\s+/).slice(0, 2).join(' ') || '-'
-          : '-'
-    return {
-      title: item.instructorName,
-      location,
-      countLabel: '신청 : 1명',
-    }
-  }
-  return null
-}
-
-export function ApplicantCalendarEventPopoverContent({
-  events,
-  colorMap,
-}: {
-  events: Array<{ id: string | number; title?: string; originalItem?: unknown }>
-  colorMap: Map<string | number, ScheduleColorPair>
-}) {
-  return (
-    <div className="calendar-schedule-panel">
-      {events.map(ev => {
-        const colors = colorMap.get(ev.id) ?? SCHEDULE_COLORS[0]
-        const parts = getPopoverRowParts(ev.originalItem as Record<string, unknown> | undefined)
-        const fallbackTitle = String(ev.title ?? '').replace(/^\[.*?\]\s*/, '')
-        if (!parts) {
-          return (
-            <div key={String(ev.id)} className="calendar-schedule-panel__row">
-              <span className="calendar-schedule-panel__title" style={{ color: colors.text }}>
-                {fallbackTitle || '-'}
-              </span>
-            </div>
-          )
-        }
-        return (
-          <div key={String(ev.id)} className="calendar-schedule-panel__row">
-            <span className="calendar-schedule-panel__title" style={{ color: colors.text }}>
-              {parts.title}
-            </span>
-            <span className="calendar-schedule-panel__sep" aria-hidden>
-              |
-            </span>
-            <span className="calendar-schedule-panel__text">{parts.location}</span>
-            <span className="calendar-schedule-panel__sep" aria-hidden>
-              |
-            </span>
-            <span className="calendar-schedule-panel__text">{parts.countLabel}</span>
-          </div>
-        )
-      })}
-    </div>
-  )
 }
 
 export function useApplicantCalendarColorMaps(events: unknown[]) {

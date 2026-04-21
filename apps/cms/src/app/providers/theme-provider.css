@@ -292,6 +292,8 @@
   --color-badge-closed-text: #a73434;
 
   /* 공통 상태 색 (배지·지급조서 문구 등 — 폴백은 각 사용처에서 유지 가능) */
+  --color-orange: #f07917;
+  --color-purple: #8457ce;
   --color-green: #1e8c29;
   --color-blue: #017eaf;
   --color-red: #c32f4a;
