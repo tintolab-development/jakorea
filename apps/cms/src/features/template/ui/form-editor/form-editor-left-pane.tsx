@@ -10,16 +10,12 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import {
-  ParagraphCard,
-  TemplateFullpageModalCardDescription,
-  TemplateFullpageModalCardTitle,
-} from '@/features/template/ui/template-fullpage-modal'
+import { ParagraphCard } from '@/features/template/ui/template-fullpage-modal'
 import {
   FormParagraphCardActions,
   FormParagraphCardActionsMinimal,
 } from '@/features/template/ui/paragraph/shared/paragraph-actions'
-import { getFormParagraphDisplayTitle } from '@/features/template/lib/form-title-numbering'
+import { getFormParagraphTitleNumberPrefix } from '@/features/template/lib/form-title-numbering'
 import type {
   AgreementExplanationTextParagraph,
   FormEditorKind,
@@ -56,33 +52,95 @@ function formCardTitleUsesPlaceholderTone(p: WritingFormParagraph): boolean {
   return !p.paragraphTitle.trim()
 }
 
-function cardDescriptionContent(p: WritingFormParagraph): ReactNode {
-  if (p.kind === 'description' && p.variant === 'survey_title_with_period') {
-    const text = p.surveyDescription.trim()
-    return text || <span className="form-editor-placeholder">설명 입력</span>
-  }
-  const text = p.paragraphDescription.trim()
-  if (!text) {
-    return <span className="form-editor-placeholder">설명 입력</span>
-  }
-  return text
-}
-
 function titleWithPeriodPlaceholder(editorKind: FormEditorKind): string {
   return editorKind === 'agreement' ? '동의서 제목 입력' : '타이틀을 입력해 주세요'
 }
 
-function cardTitleContent(
+function paragraphEditableHeading(
   paragraph: WritingFormParagraph,
-  displayTitle: string,
+  paragraphs: WritingFormParagraph[],
+  titleNumbering: FormTitleNumberingStyle,
+  isSelected: boolean,
+  updateParagraph: FormEditorLeftPaneProps['updateParagraph'],
   editorKind: FormEditorKind
-): string {
-  if (isTitleWithPeriodParagraph(paragraph)) {
-    const titleParagraph = paragraph as TitleWithPeriodParagraph
-    const text = titleParagraph.surveyTitle.trim()
-    return text || titleWithPeriodPlaceholder(editorKind)
+) {
+  const prefix = getFormParagraphTitleNumberPrefix(paragraphs, paragraph, titleNumbering)
+
+  if (paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period') {
+    const p = paragraph as TitleWithPeriodParagraph
+    return {
+      isEditMode: isSelected,
+      titleValue: p.surveyTitle,
+      onTitleChange: (next: string) =>
+        updateParagraph(p.id, cur =>
+          cur.kind === 'description' && cur.variant === 'survey_title_with_period'
+            ? { ...cur, surveyTitle: next }
+            : cur
+        ),
+      titlePlaceholder: titleWithPeriodPlaceholder(editorKind),
+      titleRequired: p.requiredMark,
+      titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
+        ? 'paragraph-card__title--placeholder'
+        : undefined,
+      titleLeading: prefix,
+      descriptionValue: p.surveyDescription,
+      onDescriptionChange: (next: string) =>
+        updateParagraph(p.id, cur =>
+          cur.kind === 'description' && cur.variant === 'survey_title_with_period'
+            ? { ...cur, surveyDescription: next }
+            : cur
+        ),
+      descriptionPlaceholder: '설명 입력',
+    }
   }
-  return displayTitle
+
+  if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
+    const p = paragraph
+    return {
+      isEditMode: isSelected,
+      titleValue: p.paragraphTitle,
+      onTitleChange: (next: string) =>
+        updateParagraph(p.id, cur =>
+          cur.kind === 'description' && cur.variant === 'closing' ? { ...cur, paragraphTitle: next } : cur
+        ),
+      titlePlaceholder: '타이틀을 입력해 주세요',
+      titleRequired: p.requiredMark,
+      titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
+        ? 'paragraph-card__title--placeholder'
+        : undefined,
+      titleLeading: prefix,
+      descriptionValue: p.paragraphDescription,
+      onDescriptionChange: (next: string) =>
+        updateParagraph(p.id, cur =>
+          cur.kind === 'description' && cur.variant === 'closing' ? { ...cur, paragraphDescription: next } : cur
+        ),
+      descriptionPlaceholder: '설명 입력',
+    }
+  }
+
+  if (paragraph.kind === 'single_item') {
+    const p = paragraph
+    return {
+      isEditMode: isSelected,
+      titleValue: p.paragraphTitle,
+      onTitleChange: (next: string) =>
+        updateParagraph(p.id, cur => (cur.kind === 'single_item' && cur.id === p.id ? { ...cur, paragraphTitle: next } : cur)),
+      titlePlaceholder: '타이틀을 입력해 주세요',
+      titleRequired: p.requiredMark,
+      titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
+        ? 'paragraph-card__title--placeholder'
+        : undefined,
+      titleLeading: prefix,
+      descriptionValue: p.paragraphDescription,
+      onDescriptionChange: (next: string) =>
+        updateParagraph(p.id, cur =>
+          cur.kind === 'single_item' && cur.id === p.id ? { ...cur, paragraphDescription: next } : cur
+        ),
+      descriptionPlaceholder: '설명 입력',
+    }
+  }
+
+  return undefined
 }
 
 /** 카드 하단 `toggles` — 제목형(기간 노출) 선택 시에만 */
@@ -161,9 +219,11 @@ function PinnedFormCard({
   updateParagraph,
   editorKind,
 }: PinnedCardProps) {
-  const displayTitle = getFormParagraphDisplayTitle(paragraphs, paragraph, titleNumbering)
   const isSelected = selectedCardId === paragraph.id
   const hideCardHeading = isTitleWithPeriodParagraph(paragraph) && isSelected
+  const editableHeading = hideCardHeading
+    ? undefined
+    : paragraphEditableHeading(paragraph, paragraphs, titleNumbering, isSelected, updateParagraph, editorKind)
 
   return (
     <ParagraphCard
@@ -175,26 +235,7 @@ function PinnedFormCard({
         .filter(Boolean)
         .join(' ')}
       onClick={() => onSelectCard(paragraph.id)}
-      title={
-        hideCardHeading ? undefined : (
-          <TemplateFullpageModalCardTitle
-            title={cardTitleContent(paragraph, displayTitle, editorKind)}
-            required={paragraph.requiredMark}
-            titleClassName={
-              formCardTitleUsesPlaceholderTone(paragraph)
-                ? 'paragraph-card__title--placeholder'
-                : undefined
-            }
-          />
-        )
-      }
-      description={
-        hideCardHeading ? undefined : (
-          <TemplateFullpageModalCardDescription>
-            {cardDescriptionContent(paragraph)}
-          </TemplateFullpageModalCardDescription>
-        )
-      }
+      editableHeading={editableHeading}
       toggles={modalCardFooterToggles(paragraph, isSelected, updateParagraph)}
       actions={modalCardFooterActions(paragraph, isSelected)}
     >
@@ -232,9 +273,11 @@ function SortableMiddleFormCard({
     isDragging,
   } = useSortable({ id: paragraph.id })
 
-  const displayTitle = getFormParagraphDisplayTitle(paragraphs, paragraph, titleNumbering)
   const isSelected = selectedCardId === paragraph.id
   const hideCardHeading = isTitleWithPeriodParagraph(paragraph) && isSelected
+  const editableHeading = hideCardHeading
+    ? undefined
+    : paragraphEditableHeading(paragraph, paragraphs, titleNumbering, isSelected, updateParagraph, editorKind)
 
   return (
     <div
@@ -267,26 +310,7 @@ function SortableMiddleFormCard({
             <MenuOutlined />
           </button>
         }
-        title={
-          hideCardHeading ? undefined : (
-            <TemplateFullpageModalCardTitle
-              title={cardTitleContent(paragraph, displayTitle, editorKind)}
-              required={paragraph.requiredMark}
-              titleClassName={
-                formCardTitleUsesPlaceholderTone(paragraph)
-                  ? 'paragraph-card__title--placeholder'
-                  : undefined
-              }
-            />
-          )
-        }
-        description={
-          hideCardHeading ? undefined : (
-            <TemplateFullpageModalCardDescription>
-              {cardDescriptionContent(paragraph)}
-            </TemplateFullpageModalCardDescription>
-          )
-        }
+        editableHeading={editableHeading}
         toggles={modalCardFooterToggles(paragraph, isSelected, updateParagraph)}
         actions={modalCardFooterActions(paragraph, isSelected)}
       >

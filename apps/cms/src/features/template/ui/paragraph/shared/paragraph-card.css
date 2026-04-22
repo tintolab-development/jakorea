@@ -141,6 +141,20 @@
   line-height: 150%;
 }
 
+/* 카드 헤더 — `ParagraphInput`에 `titleClassName`으로 붙는 placeholder 톤 */
+.paragraph-card__title-block .paragraph-input.paragraph-card__title--placeholder .paragraph-input__view-text,
+.paragraph-card__title-block .paragraph-input.paragraph-card__title--placeholder .paragraph-input__placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-weight: 700;
+}
+
+.paragraph-card__title-block
+  .paragraph-input.paragraph-card__title--placeholder.paragraph-input--edit
+  .paragraph-input__shell
+  .ant-input::placeholder {
+  color: var(--gray-85969-d, #85969d);
+}
+
 .paragraph-card__required {
   position: absolute;
   left: -14px;
