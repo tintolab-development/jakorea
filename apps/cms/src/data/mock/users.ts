@@ -63,7 +63,8 @@ const mockAdmins: User[] = [
     adminComment: '전사 관리자 운영 기준 확인 후 권한 변경 바랍니다.',
     listMetrics: {
       adminPermissionVariant: 'manager',
-      managedProgramCount: 1,
+      managedProgramInProgressCount: 5,
+      managedProgramCount: 7,
     },
   },
   {
@@ -88,6 +89,7 @@ const mockAdmins: User[] = [
     adminComment: 'PM/파트너 권한으로 담당 프로그램만 관리합니다.',
     listMetrics: {
       adminPermissionVariant: 'partner',
+      managedProgramInProgressCount: 0,
       managedProgramCount: 1,
     },
   },
@@ -115,6 +117,7 @@ const mockAdmins: User[] = [
     adminComment: '관리자 등록 계정(수정 가능) 테스트용입니다.',
     listMetrics: {
       adminPermissionVariant: 'viewer',
+      managedProgramInProgressCount: 0,
       managedProgramCount: 1,
     },
   },
@@ -1243,6 +1246,7 @@ const extraMockUsers: User[] = [
     affiliation: 'JAKorea | 이전 담당',
     listMetrics: {
       adminPermissionVariant: 'viewer',
+      managedProgramInProgressCount: 0,
       managedProgramCount: 1,
     },
   },

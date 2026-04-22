@@ -22,6 +22,7 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { type MemberListKind, DEFAULT_MEMBER_LIST_KIND } from '@/shared/config/member-list-kinds'
 import { getInstructorTypeDisplayLabel } from '@/entities/user/lib/matches-instructor-list-filters'
+import { ManagedProgramCountDisplay } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -76,12 +77,6 @@ function displayMetric(n: number | undefined | null) {
 function instructorTypeLabel(record: Row): string {
   const label = getInstructorTypeDisplayLabel(record)
   return label || '-'
-}
-
-function adminProgramCountDisplay(record: Row): string {
-  const explicit = record.listMetrics?.managedProgramCount
-  if (explicit !== undefined && explicit !== null) return String(explicit)
-  return String(record.programRoles ? Object.keys(record.programRoles).length : 0)
 }
 
 function settlementStatusTextClass(statusLabel?: string): string {
@@ -333,7 +328,8 @@ function columnsForKind(
         title: '담당 프로그램 수',
         key: 'programCount',
         align: 'center',
-        render: (_: unknown, r: Row) => adminProgramCountDisplay(r) + '개',
+        ellipsis: true,
+        render: (_: unknown, r: Row) => <ManagedProgramCountDisplay user={r} />,
       },
       {
         title: '가입일',

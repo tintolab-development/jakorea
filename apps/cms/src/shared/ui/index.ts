@@ -28,6 +28,7 @@ export {
 export {
   PROGRAM_PROGRESS_HISTORY_DOMAIN,
   buildProgramProgressHistoryDeleteGuide,
+  type ProgramProgressHistoryDeleteDomain,
   type ProgramProgressHistoryDeleteGuide,
 } from './program-progress-history-delete-guide'
 export { InquiryModal } from './inquiry-modal'

@@ -41,9 +41,14 @@ import '@/features/program/ui/program-list.css'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import './member-program-lecture-history.css'
-import { CmsButton, DeleteGuideModal, buildProgramProgressHistoryDeleteGuide } from '@/shared/ui'
-import { CertificateBulkIssueReasonModal } from './certificate-bulk-issue-reason-modal'
-import { LectureReportSubmissionHistoryModal } from './lecture-report-submission-history-modal'
+import {
+  CmsButton,
+  DeleteGuideModal,
+  buildProgramProgressHistoryDeleteGuide,
+  type ProgramProgressHistoryDeleteDomain,
+} from '@/shared/ui'
+import { CertificateBulkIssueReasonModal } from './modal/certificate-bulk-issue-reason-modal'
+import { LectureReportSubmissionHistoryModal } from './modal/lecture-report-submission-history-modal'
 
 function programYear(programId: string): number | null {
   const p = programService.getByIdSync(programId)
@@ -142,6 +147,11 @@ function deriveVolunteerDisplayStatus(history: UserHistory): ProgramEnrollmentDi
   return getEffectiveEnrollmentDisplayStatus('submitted', undefined, program?.lifecycleStatus)
 }
 
+/** 이력 삭제 모달 — 수강 이력 테이블만 「프로그램 수강 이력」 문구 분기 */
+function programHistoryDeleteDomainForMode(mode: MemberProgramHistoryMode): ProgramProgressHistoryDeleteDomain {
+  return mode === 'studentEnrollment' || mode === 'schoolProgramParticipation' ? 'enrollment' : 'progress'
+}
+
 export function MemberProgramLectureHistory({
   applications = [],
   volunteerHistories = [],
@@ -160,6 +170,8 @@ export function MemberProgramLectureHistory({
   onBulkDelete,
   showCertificateBulkIssue = true,
 }: MemberProgramLectureHistoryProps) {
+  const historyDeleteDomain = useMemo(() => programHistoryDeleteDomainForMode(mode), [mode])
+
   const summaryTitle =
     summaryTitleProp ??
     (mode === 'studentEnrollment' || mode === 'schoolProgramParticipation'
@@ -263,8 +275,8 @@ export function MemberProgramLectureHistory({
     const titles = tableData
       .filter(row => keySet.has(String(row.id)))
       .map(row => programTitle(row.programId))
-    return buildProgramProgressHistoryDeleteGuide(titles)
-  }, [tableData, selectedRowKeys])
+    return buildProgramProgressHistoryDeleteGuide(titles, historyDeleteDomain)
+  }, [tableData, selectedRowKeys, historyDeleteDomain])
 
   const handleOpenHistoryDeleteModal = useCallback(() => {
     if (selectedRowKeys.length === 0) return
@@ -272,12 +284,12 @@ export function MemberProgramLectureHistory({
     const titles = tableData
       .filter(row => keySet.has(String(row.id)))
       .map(row => programTitle(row.programId))
-    if (titles.length === 0 || !buildProgramProgressHistoryDeleteGuide(titles)) {
+    if (titles.length === 0 || !buildProgramProgressHistoryDeleteGuide(titles, historyDeleteDomain)) {
       message.warning('선택한 이력을 찾을 수 없습니다.')
       return
     }
     setDeleteHistoryModalOpen(true)
-  }, [selectedRowKeys, tableData])
+  }, [selectedRowKeys, tableData, historyDeleteDomain])
 
   const handleHistoryDeleteCancel = useCallback(() => {
     setDeleteHistoryModalOpen(false)

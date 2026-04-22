@@ -44,6 +44,13 @@
   text-align: center;
 }
 
+/* 기본 정보와 산출 내역 상세 사이 — 신청 반려·확인 처리 (정산 산출 내역서와 동일 배치) */
+.instructor-invoice-modal__statement-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .instructor-invoice-modal .instructor-invoice-modal__payment-row {
   display: inline-flex;
   align-items: center;
@@ -121,6 +128,12 @@
 
 .instructor-invoice-modal .instructor-invoice-modal__detail-table tbody td {
   background: #fff;
+}
+
+.instructor-invoice-modal .instructor-invoice-modal__detail-table td.instructor-invoice-modal__detail-action-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .instructor-invoice-modal

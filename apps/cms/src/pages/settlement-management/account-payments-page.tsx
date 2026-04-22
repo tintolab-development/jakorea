@@ -27,7 +27,7 @@ import {
 } from '@/features/settlement/ui/account-payment-confirmation-modal'
 import { AccountPaymentCompleteSuccessModal } from '@/features/settlement/ui/account-payment-complete-success-modal'
 import { AccountPaymentStatusDetailFullPageModal } from './account-payment-status-detail-fullpage-modal'
-import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/instructor-payment-statement-blocked-modal'
+import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
 
 /** Fortune Sheet·ExcelJS 분리 — lazy 라우트 청크 과대로 인한 dev 동적 import 실패 완화 */
 const BulkTransferPreviewModal = lazy(async () => {

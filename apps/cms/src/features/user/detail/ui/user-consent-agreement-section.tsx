@@ -2,7 +2,7 @@
  * 회원 상세 — 정보 제공 동의 (DetailInfoForm)
  */
 
-import { type ReactNode } from 'react'
+import { type CSSProperties, type ReactNode } from 'react'
 import type { User } from '@/types/user'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -43,6 +43,184 @@ export function resolveUserConsentAgreementPreset(
 
 const SAMPLE_CONSENT = '동의 | 2026.01.15 09:15:42'
 const SAMPLE_AGREED_AT_DISPLAY = '2026.01.15 09:15:42'
+
+const CONSENT_LABEL_WIDTH = 240 as const
+
+/** 단일 필드 값 — 샘플 텍스트 또는 동의서 행 */
+export type ConsentFieldValueSchema =
+  | { type: 'sample_consent' }
+  | {
+      type: 'document'
+      agreed: boolean
+      agreedAtDisplay?: string
+    }
+  /** 더블 행 우측 빈 절반(격자·하단 보더만 유지) */
+  | { type: 'empty_half' }
+
+export interface ConsentFieldSchema {
+  label: string
+  labelWidth: typeof CONSENT_LABEL_WIDTH
+  fullRow?: boolean
+  value: ConsentFieldValueSchema
+}
+
+export interface ConsentRowSchema {
+  rowType: 'single' | 'double'
+  fields: ConsentFieldSchema[]
+}
+
+export type ConsentPresetSchema = Record<UserConsentAgreementPreset, ConsentRowSchema[]>
+
+const CONSENT_ROW_DOUBLE_SAMPLE: ConsentRowSchema = {
+  rowType: 'double',
+  fields: [
+    {
+      label: '개인정보 수집 동의',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      value: { type: 'sample_consent' },
+    },
+    {
+      label: '마케팅 제공 동의',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      value: { type: 'sample_consent' },
+    },
+  ],
+}
+
+const CONSENT_ROWS_INDIVIDUAL_LIKE: ConsentRowSchema[] = [
+  CONSENT_ROW_DOUBLE_SAMPLE,
+  {
+    rowType: 'double',
+    fields: [
+      {
+        label: '초상권 수집·이용 동의',
+        labelWidth: CONSENT_LABEL_WIDTH,
+        value: {
+          type: 'document',
+          agreed: true,
+          agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+        },
+      },
+      {
+        label: '지급조서 작성 동의',
+        labelWidth: CONSENT_LABEL_WIDTH,
+        value: { type: 'document', agreed: false },
+      },
+    ],
+  },
+]
+
+const DOCUMENT_AGREED: ConsentFieldValueSchema = {
+  type: 'document',
+  agreed: true,
+  agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+}
+
+/** 프리셋별 행·필드 구조 (표시 데이터와 분리) */
+export const CONSENT_PRESET_SCHEMA: ConsentPresetSchema = {
+  admin: [CONSENT_ROW_DOUBLE_SAMPLE],
+  individual: CONSENT_ROWS_INDIVIDUAL_LIKE,
+  school_teacher: CONSENT_ROWS_INDIVIDUAL_LIKE,
+  instructor_dual: [
+    CONSENT_ROW_DOUBLE_SAMPLE,
+    {
+      rowType: 'single',
+      fields: [
+        {
+          label: '지급조서 작성 동의',
+          labelWidth: CONSENT_LABEL_WIDTH,
+          fullRow: true,
+          value: DOCUMENT_AGREED,
+        },
+      ],
+    },
+    {
+      rowType: 'single',
+      fields: [
+        {
+          label: '성범죄 경력조회 동의',
+          labelWidth: CONSENT_LABEL_WIDTH,
+          fullRow: true,
+          value: DOCUMENT_AGREED,
+        },
+      ],
+    },
+    {
+      rowType: 'single',
+      fields: [
+        {
+          label: '행정정보 공동이용 사전 동의',
+          labelWidth: CONSENT_LABEL_WIDTH,
+          fullRow: true,
+          value: DOCUMENT_AGREED,
+        },
+      ],
+    },
+    {
+      rowType: 'single',
+      fields: [
+        {
+          label: '교육진행자 동의 서약',
+          labelWidth: CONSENT_LABEL_WIDTH,
+          fullRow: true,
+          value: DOCUMENT_AGREED,
+        },
+      ],
+    },
+  ],
+  instructor_only: [
+    CONSENT_ROW_DOUBLE_SAMPLE,
+    {
+      rowType: 'double',
+      fields: [
+        {
+          label: '초상권 수집·이용 동의',
+          labelWidth: CONSENT_LABEL_WIDTH,
+          value: DOCUMENT_AGREED,
+        },
+        {
+          label: '지급조서 작성 동의',
+          labelWidth: CONSENT_LABEL_WIDTH,
+          value: DOCUMENT_AGREED,
+        },
+      ],
+    },
+    {
+      rowType: 'double',
+      fields: [
+        {
+          label: '성범죄 경력조회 동의',
+          labelWidth: CONSENT_LABEL_WIDTH,
+          value: DOCUMENT_AGREED,
+        },
+        {
+          label: '행정정보 공동이용 사전 동의',
+          labelWidth: CONSENT_LABEL_WIDTH,
+          value: DOCUMENT_AGREED,
+        },
+      ],
+    },
+    {
+      rowType: 'double',
+      fields: [
+        {
+          label: '교육진행자 동의 서약',
+          labelWidth: CONSENT_LABEL_WIDTH,
+          value: DOCUMENT_AGREED,
+        },
+        {
+          label: '',
+          labelWidth: CONSENT_LABEL_WIDTH,
+          value: { type: 'empty_half' },
+        },
+      ],
+    },
+  ],
+}
+
+export interface ConsentRenderCtx {
+  openDocument: () => void
+}
 
 /** `동의 | 2026.01.15 09:15:42` 형태면 상태·구분자·날짜시간으로 나누어 날짜에 전용 스타일 적용 */
 function ConsentValueDisplay({ value }: { value: ReactNode }) {
@@ -117,6 +295,74 @@ function consentFieldContent(value: ReactNode) {
   )
 }
 
+function resolveConsentFieldView(value: ConsentFieldValueSchema, ctx: ConsentRenderCtx): ReactNode {
+  switch (value.type) {
+    case 'sample_consent':
+      return consentFieldContent(SAMPLE_CONSENT)
+    case 'document':
+      return (
+        <ConsentDocumentRow
+          agreed={value.agreed}
+          agreedAtDisplay={value.agreedAtDisplay}
+          onOpenDocument={value.agreed ? ctx.openDocument : undefined}
+        />
+      )
+    case 'empty_half':
+      return null
+    default: {
+      const _exhaustive: never = value
+      return _exhaustive
+    }
+  }
+}
+
+export function renderConsentField(
+  field: ConsentFieldSchema,
+  ctx: ConsentRenderCtx,
+  fieldKey: string
+): ReactNode {
+  if (field.value.type === 'empty_half') {
+    const emptyStyle = {
+      '--detail-info-label-w': `${field.labelWidth}px`,
+    } as CSSProperties
+    return (
+      <div
+        key={fieldKey}
+        className="detail-info-form__field user-consent-agreement-section__field--empty-half"
+        style={emptyStyle}
+        aria-hidden
+      >
+        <div className="detail-info-form__field-content detail-info-form__field-content--view" />
+      </div>
+    )
+  }
+
+  const view = resolveConsentFieldView(field.value, ctx)
+  return (
+    <DetailInfoForm.Field
+      key={fieldKey}
+      label={field.label}
+      labelWidth={field.labelWidth}
+      {...(field.fullRow ? { fullRow: true } : {})}
+      view={view}
+    />
+  )
+}
+
+export function renderConsentRow(
+  row: ConsentRowSchema,
+  ctx: ConsentRenderCtx,
+  rowIndex: number
+): ReactNode {
+  return (
+    <DetailInfoForm.Row key={`consent-row-${rowIndex}`} type={row.rowType}>
+      {row.fields.map((field, fieldIndex) =>
+        renderConsentField(field, ctx, `${rowIndex}-${fieldIndex}`)
+      )}
+    </DetailInfoForm.Row>
+  )
+}
+
 export function UserConsentAgreementSection({
   preset = 'individual',
   caption,
@@ -126,6 +372,9 @@ export function UserConsentAgreementSection({
 
   const doc = onOpenAgreementDocument ?? (() => window.alert('준비 중입니다.'))
 
+  const schema = CONSENT_PRESET_SCHEMA[preset]
+  const ctx: ConsentRenderCtx = { openDocument: doc }
+
   return (
     <div className="user-consent-agreement-section">
       <DetailInfoForm
@@ -133,183 +382,7 @@ export function UserConsentAgreementSection({
         description={effectiveCaption}
         className="user-consent-agreement-section__form"
       >
-        {preset === 'admin' || preset === 'individual' || preset === 'school_teacher' ? (
-          <>
-            <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field
-                label="개인정보 수집 동의"
-                view={consentFieldContent(SAMPLE_CONSENT)}
-              />
-              <DetailInfoForm.Field
-                label="마케팅 제공 동의"
-                view={consentFieldContent(SAMPLE_CONSENT)}
-              />
-            </DetailInfoForm.Row>
-            {(preset === 'individual' || preset === 'school_teacher') && (
-              <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field
-                  label="초상권 수집·이용 동의"
-                  view={
-                    <ConsentDocumentRow
-                      agreed
-                      agreedAtDisplay={SAMPLE_AGREED_AT_DISPLAY}
-                      onOpenDocument={doc}
-                    />
-                  }
-                />
-                <DetailInfoForm.Field
-                  label="지급조서 작성 동의"
-                  view={<ConsentDocumentRow agreed={false} />}
-                />
-              </DetailInfoForm.Row>
-            )}
-          </>
-        ) : null}
-
-        {preset === 'instructor_dual' ? (
-          <>
-            <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field
-                label="개인정보 수집 동의"
-                labelWidth={240}
-                view={consentFieldContent(SAMPLE_CONSENT)}
-              />
-              <DetailInfoForm.Field
-                label="마케팅 제공 동의"
-                labelWidth={240}
-                view={consentFieldContent(SAMPLE_CONSENT)}
-              />
-            </DetailInfoForm.Row>
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="지급조서 작성 동의"
-                labelWidth={240}
-                fullRow
-                view={
-                  <ConsentDocumentRow
-                    agreed
-                    agreedAtDisplay={SAMPLE_AGREED_AT_DISPLAY}
-                    onOpenDocument={doc}
-                  />
-                }
-              />
-            </DetailInfoForm.Row>
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="성범죄 경력조회 동의"
-                labelWidth={240}
-                fullRow
-                view={
-                  <ConsentDocumentRow
-                    agreed
-                    agreedAtDisplay={SAMPLE_AGREED_AT_DISPLAY}
-                    onOpenDocument={doc}
-                  />
-                }
-              />
-            </DetailInfoForm.Row>
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="행정정보 공동이용 사전 동의"
-                labelWidth={240}
-                fullRow
-                view={
-                  <ConsentDocumentRow
-                    agreed
-                    agreedAtDisplay={SAMPLE_AGREED_AT_DISPLAY}
-                    onOpenDocument={doc}
-                  />
-                }
-              />
-            </DetailInfoForm.Row>
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="교육진행자 동의 서약"
-                labelWidth={240}
-                fullRow
-                view={
-                  <ConsentDocumentRow
-                    agreed
-                    agreedAtDisplay={SAMPLE_AGREED_AT_DISPLAY}
-                    onOpenDocument={doc}
-                  />
-                }
-              />
-            </DetailInfoForm.Row>
-          </>
-        ) : null}
-
-        {preset === 'instructor_only' ? (
-          <>
-            <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field
-                label="개인정보 수집 동의"
-                view={consentFieldContent(SAMPLE_CONSENT)}
-              />
-              <DetailInfoForm.Field
-                label="마케팅 제공 동의"
-                view={consentFieldContent(SAMPLE_CONSENT)}
-              />
-            </DetailInfoForm.Row>
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="초상권 동의"
-                fullRow
-                view={
-                  <ConsentDocumentRow
-                    agreed
-                    agreedAtDisplay={SAMPLE_AGREED_AT_DISPLAY}
-                    onOpenDocument={doc}
-                  />
-                }
-              />
-            </DetailInfoForm.Row>
-            <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field
-                label="지급조서 작성 동의"
-                view={
-                  <ConsentDocumentRow
-                    agreed
-                    agreedAtDisplay={SAMPLE_AGREED_AT_DISPLAY}
-                    onOpenDocument={doc}
-                  />
-                }
-              />
-              <DetailInfoForm.Field
-                label="교육진행자 동의 서약"
-                view={
-                  <ConsentDocumentRow
-                    agreed
-                    agreedAtDisplay={SAMPLE_AGREED_AT_DISPLAY}
-                    onOpenDocument={doc}
-                  />
-                }
-              />
-            </DetailInfoForm.Row>
-            <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field
-                label="성범죄 경력조회 동의"
-                view={
-                  <ConsentDocumentRow
-                    agreed
-                    agreedAtDisplay={SAMPLE_AGREED_AT_DISPLAY}
-                    onOpenDocument={doc}
-                  />
-                }
-              />
-              <DetailInfoForm.Field
-                label="행정정보 공동이용 사전 동의"
-                view={
-                  <ConsentDocumentRow
-                    agreed
-                    agreedAtDisplay={SAMPLE_AGREED_AT_DISPLAY}
-                    onOpenDocument={doc}
-                  />
-                }
-              />
-            </DetailInfoForm.Row>
-          </>
-        ) : null}
+        {schema.map((row, rowIndex) => renderConsentRow(row, ctx, rowIndex))}
       </DetailInfoForm>
     </div>
   )

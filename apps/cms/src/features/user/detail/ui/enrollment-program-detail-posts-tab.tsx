@@ -48,10 +48,10 @@ function formatFileSize(bytes?: number): string {
 function formatFileDate(date: string | Date): string {
   return dayjs(date).format('YY. MM. DD')
 }
-import { PostWriteModal } from './post-write-modal'
-import { PostDetailModal } from './post-detail-modal'
+import { PostWriteModal } from './modal/post-write-modal'
+import { PostDetailModal } from './modal/post-detail-modal'
 import { ProfileAvatarIcon } from '@/shared/ui/icons'
-import './enrollment-program-detail-modal.css'
+import './modal/enrollment-program-detail-modal.css'
 
 /** 파일 리스트 옵션 아이콘 (세로 점 세 개) — 30×30 */
 function FileMenuOptionIcon() {

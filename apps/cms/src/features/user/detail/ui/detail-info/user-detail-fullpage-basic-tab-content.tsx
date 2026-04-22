@@ -16,9 +16,8 @@ import { UserDetailAdminCommentSection } from './user-detail-admin-comment-secti
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 import {
-  canAccessAdminCommentInAdminDetail,
   canEditAdminMemberInfo,
-  shouldShowAdminCommentSection,
+  shouldShowAdminCommentSectionForViewer,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 
@@ -54,10 +53,7 @@ export function UserDetailFullpageBasicTabContent({
   const currentUser = useAuthStore(state => state.user)
   const adminMemberProfileFieldsEditableWhenEditing =
     user.role !== 'ADMIN' || canEditAdminMemberInfo(currentUser, user)
-  const canShowAdminCommentForTarget =
-    user.role === 'ADMIN'
-      ? canAccessAdminCommentInAdminDetail(currentUser)
-      : shouldShowAdminCommentSection(user)
+  const canShowAdminCommentForTarget = shouldShowAdminCommentSectionForViewer(currentUser, user)
 
   return (
     <Space direction="vertical" size={24} style={{ width: '100%' }}>

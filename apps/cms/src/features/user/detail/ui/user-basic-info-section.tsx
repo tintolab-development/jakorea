@@ -23,7 +23,13 @@ import type { User, UserRole } from '@/types/user'
 import { formatDate } from '@/shared/utils'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
-import { managedProgramCountDisplay } from '../lib/user-detail-fullpage-helpers'
+import { ManagedProgramCountDisplay } from '../lib/user-detail-fullpage-helpers'
+import {
+  resolveBasicInfoLayout,
+  type BasicInfoBodyKey,
+} from './user-basic-info-layout-resolver'
+import { BasicInfoLayoutRenderer } from './user-basic-info-layout-renderer'
+import type { BasicInfoSectionRenderContext } from './user-basic-info-section-renderer'
 import './user-basic-info-section.css'
 import '@/features/user/shared/ui/admin-permission-tag.css'
 import { AddressSearch, CmsButton, CmsInput, CmsSelect } from '@/shared/ui'
@@ -319,6 +325,100 @@ function Id1365View({
   )
 }
 
+function AddressSearchDetailInputs({
+  searchValue,
+  onSearchChange,
+  detailValue,
+  onDetailChange,
+  searchWidth,
+  detailWidth,
+  detailAriaLabel,
+}: {
+  searchValue: string
+  onSearchChange: (next: string) => void
+  detailValue: string
+  onDetailChange: (next: string) => void
+  searchWidth: string | number
+  detailWidth: string | number
+  detailAriaLabel: string
+}) {
+  return (
+    <>
+      <AddressSearch
+        value={searchValue}
+        onChange={onSearchChange}
+        placeholder="건물명, 도로명 또는 지번"
+        inputSize="medium"
+        width={searchWidth}
+      />
+      <DetailInfoForm.InputsSeparator />
+      <CmsInput
+        placeholder="상세 주소"
+        value={detailValue}
+        onChange={e => onDetailChange(e.target.value)}
+        inputSize="medium"
+        width={detailWidth}
+        aria-label={detailAriaLabel}
+      />
+    </>
+  )
+}
+
+function ContactInfoFieldsRow({
+  user,
+  personalInfoRevealed,
+  readOnlyDisplay,
+  phoneValue,
+  emailValue,
+  onPhoneChange,
+  onEmailChange,
+  phonePlaceholder,
+  emailPlaceholder,
+}: {
+  user: Omit<User, 'password'>
+  personalInfoRevealed: boolean
+  readOnlyDisplay?: boolean
+  phoneValue: string
+  emailValue: string
+  onPhoneChange: (next: string) => void
+  onEmailChange: (next: string) => void
+  phonePlaceholder?: string
+  emailPlaceholder?: string
+}) {
+  return (
+    <DetailInfoForm.Row type="double">
+      <DetailInfoForm.Field
+        label="연락처"
+        readOnlyDisplay={readOnlyDisplay}
+        view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
+        edit={
+          <CmsInput
+            value={phoneValue}
+            onChange={e => onPhoneChange(e.target.value)}
+            inputSize="medium"
+            width="100%"
+            placeholder={phonePlaceholder}
+          />
+        }
+      />
+      <DetailInfoForm.Field
+        label="이메일"
+        readOnlyDisplay={readOnlyDisplay}
+        view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
+        edit={
+          <CmsInput
+            value={emailValue}
+            onChange={e => onEmailChange(e.target.value)}
+            inputSize="medium"
+            width="100%"
+            placeholder={emailPlaceholder}
+          />
+        }
+      />
+    </DetailInfoForm.Row>
+  )
+}
+
 function AllUsersFields({
   user,
   scheduleChangeCount,
@@ -420,34 +520,15 @@ function AllUsersFields({
           ]}
         />
       </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="연락처"
-          readOnlyDisplay={sessionEditing && !cmsMayEditBasicProfileFields}
-          view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
-          edit={
-            <CmsInput
-              value={d?.phone ?? ''}
-              onChange={e => onMemberInfoDraftChange?.({ phone: e.target.value })}
-              inputSize="medium"
-              width="100%"
-            />
-          }
-        />
-        <DetailInfoForm.Field
-          label="이메일"
-          readOnlyDisplay={sessionEditing && !cmsMayEditBasicProfileFields}
-          view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
-          edit={
-            <CmsInput
-              value={d?.email ?? ''}
-              onChange={e => onMemberInfoDraftChange?.({ email: e.target.value })}
-              inputSize="medium"
-              width="100%"
-            />
-          }
-        />
-      </DetailInfoForm.Row>
+      <ContactInfoFieldsRow
+        user={user}
+        personalInfoRevealed={personalInfoRevealed}
+        readOnlyDisplay={sessionEditing && !cmsMayEditBasicProfileFields}
+        phoneValue={d?.phone ?? ''}
+        emailValue={d?.email ?? ''}
+        onPhoneChange={next => onMemberInfoDraftChange?.({ phone: next })}
+        onEmailChange={next => onMemberInfoDraftChange?.({ email: next })}
+      />
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="자택 주소"
@@ -455,29 +536,14 @@ function AllUsersFields({
           view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
           edit={
             <Space.Compact style={{ width: '100%' }}>
-              <AddressSearch
-                value={d?.detailAddressSearch ?? ''}
-                onChange={next =>
-                  onMemberInfoDraftChange?.({
-                    detailAddressSearch: next,
-                  })
-                }
-                placeholder="건물명, 도로명 또는 지번"
-                inputSize="medium"
-                width={'100%'}
-              />
-              <DetailInfoForm.InputsSeparator />
-              <CmsInput
-                placeholder="상세 주소"
-                value={d?.detailAddressDetail ?? ''}
-                onChange={e =>
-                  onMemberInfoDraftChange?.({
-                    detailAddressDetail: e.target.value,
-                  })
-                }
-                inputSize="medium"
-                width="100%"
-                aria-label="자택 주소 상세"
+              <AddressSearchDetailInputs
+                searchValue={d?.detailAddressSearch ?? ''}
+                onSearchChange={next => onMemberInfoDraftChange?.({ detailAddressSearch: next })}
+                detailValue={d?.detailAddressDetail ?? ''}
+                onDetailChange={next => onMemberInfoDraftChange?.({ detailAddressDetail: next })}
+                searchWidth="100%"
+                detailWidth="100%"
+                detailAriaLabel="자택 주소 상세"
               />
             </Space.Compact>
           }
@@ -517,18 +583,7 @@ function AllUsersFields({
           }
         />
       </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="가입일"
-          readOnlyDisplay
-          view={<span>{formatDate(user.createdAt)}</span>}
-        />
-        <DetailInfoForm.Field
-          label="연동된 소셜 계정"
-          readOnlyDisplay
-          view={<span>{socialLine(user)}</span>}
-        />
-      </DetailInfoForm.Row>
+      <CreatedAtAndSocialRow user={user} />
     </>
   )
 }
@@ -579,29 +634,22 @@ function InstitutionFields({
           view={<span>{schoolAddress}</span>}
           edit={
             <Space.Compact style={{ width: '100%' }}>
-              <AddressSearch
-                value={d?.institutionAddressSearch ?? ''}
-                onChange={next =>
+              <AddressSearchDetailInputs
+                searchValue={d?.institutionAddressSearch ?? ''}
+                onSearchChange={next =>
                   onMemberInfoDraftChange?.({
                     institutionAddressSearch: next,
                   })
                 }
-                placeholder="건물명, 도로명 또는 지번"
-                inputSize="medium"
-                width="100%"
-              />
-              <DetailInfoForm.InputsSeparator />
-              <CmsInput
-                placeholder="상세 주소"
-                value={d?.institutionAddressDetail ?? ''}
-                onChange={e =>
+                detailValue={d?.institutionAddressDetail ?? ''}
+                onDetailChange={next =>
                   onMemberInfoDraftChange?.({
-                    institutionAddressDetail: e.target.value,
+                    institutionAddressDetail: next,
                   })
                 }
-                inputSize="medium"
-                width="100%"
-                aria-label="기관 소재지 상세"
+                searchWidth="100%"
+                detailWidth="100%"
+                detailAriaLabel="기관 소재지 상세"
               />
             </Space.Compact>
           }
@@ -667,8 +715,7 @@ function settlementStatusView(user: Omit<User, 'password'>) {
   return <span className={settlementStatusTextClass(s)}>{s && s.length > 0 ? s : '-'}</span>
 }
 
-/** 일반 교사 — 가입일·소셜만 (상단 별도 카드 `DetailInfoForm` 본문용) */
-function SchoolTeacherMetaFields({ user }: { user: Omit<User, 'password'> }) {
+function CreatedAtAndSocialRow({ user }: { user: Omit<User, 'password'> }) {
   return (
     <DetailInfoForm.Row type="double">
       <DetailInfoForm.Field
@@ -685,22 +732,14 @@ function SchoolTeacherMetaFields({ user }: { user: Omit<User, 'password'> }) {
   )
 }
 
+/** 일반 교사 — 가입일·소셜만 (상단 별도 카드 `DetailInfoForm` 본문용) */
+function SchoolTeacherMetaFields({ user }: { user: Omit<User, 'password'> }) {
+  return <CreatedAtAndSocialRow user={user} />
+}
+
 /** 강사(겸직/순수) — 가입일·소셜만 (상단 별도 카드 `DetailInfoForm` 본문용) */
 function InstructorMetaFields({ user }: { user: Omit<User, 'password'> }) {
-  return (
-    <DetailInfoForm.Row type="double">
-      <DetailInfoForm.Field
-        label="가입일"
-        readOnlyDisplay
-        view={<span>{formatDate(user.createdAt)}</span>}
-      />
-      <DetailInfoForm.Field
-        label="연동된 소셜 계정"
-        readOnlyDisplay
-        view={<span>{socialLine(user)}</span>}
-      />
-    </DetailInfoForm.Row>
-  )
+  return <CreatedAtAndSocialRow user={user} />
 }
 
 /** 일반 교사 — 성명 블록 이하 (하단 별도 카드 `DetailInfoForm` 본문용) */
@@ -871,34 +910,15 @@ function InstructorDualOrOnlyBasicFields({
           ]}
         />
       </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="연락처"
-          readOnlyDisplay={basicLockedInSession}
-          view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
-          edit={
-            <CmsInput
-              value={d?.phone ?? ''}
-              onChange={e => onMemberInfoDraftChange?.({ phone: e.target.value })}
-              inputSize="medium"
-              width="100%"
-            />
-          }
-        />
-        <DetailInfoForm.Field
-          label="이메일"
-          readOnlyDisplay={basicLockedInSession}
-          view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
-          edit={
-            <CmsInput
-              value={d?.email ?? ''}
-              onChange={e => onMemberInfoDraftChange?.({ email: e.target.value })}
-              inputSize="medium"
-              width="100%"
-            />
-          }
-        />
-      </DetailInfoForm.Row>
+      <ContactInfoFieldsRow
+        user={user}
+        personalInfoRevealed={personalInfoRevealed}
+        readOnlyDisplay={basicLockedInSession}
+        phoneValue={d?.phone ?? ''}
+        emailValue={d?.email ?? ''}
+        onPhoneChange={next => onMemberInfoDraftChange?.({ phone: next })}
+        onEmailChange={next => onMemberInfoDraftChange?.({ email: next })}
+      />
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="자택 주소"
@@ -906,29 +926,14 @@ function InstructorDualOrOnlyBasicFields({
           view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
           edit={
             <span className="detail-info-form-inputs-wrapper-no-gap">
-              <AddressSearch
-                value={d?.detailAddressSearch ?? ''}
-                onChange={next =>
-                  onMemberInfoDraftChange?.({
-                    detailAddressSearch: next,
-                  })
-                }
-                placeholder="건물명, 도로명 또는 지번"
-                inputSize="medium"
-                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
-              />
-              <DetailInfoForm.InputsSeparator />
-              <CmsInput
-                value={d?.detailAddressDetail ?? ''}
-                onChange={e =>
-                  onMemberInfoDraftChange?.({
-                    detailAddressDetail: e.target.value,
-                  })
-                }
-                inputSize="medium"
-                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
-                placeholder="상세 주소"
-                aria-label="자택 주소 상세"
+              <AddressSearchDetailInputs
+                searchValue={d?.detailAddressSearch ?? ''}
+                onSearchChange={next => onMemberInfoDraftChange?.({ detailAddressSearch: next })}
+                detailValue={d?.detailAddressDetail ?? ''}
+                onDetailChange={next => onMemberInfoDraftChange?.({ detailAddressDetail: next })}
+                searchWidth={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+                detailWidth={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+                detailAriaLabel="자택 주소 상세"
               />
             </span>
           }
@@ -1259,56 +1264,33 @@ function AdminFields({
                 <span>{user.nameEn ?? '-'}</span>
               ),
               sideLabel: '담당 프로그램 수',
-              side: <span>{managedProgramCountDisplay(user)}</span>,
+              side: (
+                <span className="user-basic-info-section__admin-managed-programs">
+                  <ManagedProgramCountDisplay user={user} />
+                </span>
+              ),
             },
           ]}
         />
       </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="연락처"
-          readOnlyDisplay={editing && !adminMemberProfileFieldsEditableWhenEditing}
-          view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
-          edit={
-            <CmsInput
-              value={memberInfoDraft?.phone ?? ''}
-              onChange={e => onMemberInfoDraftChange?.({ phone: e.target.value })}
-              inputSize="medium"
-              placeholder="연락처"
-              width="100%"
-            />
-          }
-        />
-        <DetailInfoForm.Field
-          label="이메일"
-          readOnlyDisplay={editing && !adminMemberProfileFieldsEditableWhenEditing}
-          view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
-          edit={
-            <CmsInput
-              value={memberInfoDraft?.email ?? ''}
-              onChange={e => onMemberInfoDraftChange?.({ email: e.target.value })}
-              inputSize="medium"
-              width="100%"
-              placeholder="이메일"
-            />
-          }
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="가입일"
-          readOnlyDisplay
-          view={<span>{formatDate(user.createdAt)}</span>}
-        />
-        <DetailInfoForm.Field
-          label="연동된 소셜 계정"
-          readOnlyDisplay
-          view={<span>{socialLine(user)}</span>}
-        />
-      </DetailInfoForm.Row>
+      <ContactInfoFieldsRow
+        user={user}
+        personalInfoRevealed={personalInfoRevealed}
+        readOnlyDisplay={editing && !adminMemberProfileFieldsEditableWhenEditing}
+        phoneValue={memberInfoDraft?.phone ?? ''}
+        emailValue={memberInfoDraft?.email ?? ''}
+        onPhoneChange={next => onMemberInfoDraftChange?.({ phone: next })}
+        onEmailChange={next => onMemberInfoDraftChange?.({ email: next })}
+        phonePlaceholder="연락처"
+        emailPlaceholder="이메일"
+      />
+      <CreatedAtAndSocialRow user={user} />
     </>
   )
 }
+
+/** 레이아웃·단일 섹션에 공통으로 넘기는 props (필드 컴포넌트와 분리) */
+type BasicInfoBodySharedProps = BasicInfoSectionRenderContext
 
 export function UserBasicInfoSection({
   user,
@@ -1329,94 +1311,49 @@ export function UserBasicInfoSection({
     searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY)
   )
   const bodyKey = resolveUserBasicInfoBodyKey(entrySourceProp, entryFromQuery, user.role)
-  const instructorProfile =
-    user.role === 'INSTRUCTOR' ? (resolveInstructorMemberProfile(user) ?? 'instructor_only') : null
+  const instructorProfile = resolveInstructorMemberProfile(user)
+  const resolvedLayout = resolveBasicInfoLayout({
+    bodyKey: bodyKey as BasicInfoBodyKey,
+    instructorProfile,
+  })
   /** 관리자 등록(직접 가입 미완료)일 때만 기본정보 필드 일괄 편집 — 직접 등록은 코멘트(·강사비 등급)만 예외 */
   const cmsMayEditBasicProfileFields = shouldShowCmsMemberInfoEditButton(user)
   /** 정책: 편집 모드 진입 시 기본 폼은 edit 모드로 전환(필드별 edit 슬롯·readOnlyDisplay로 실제 편집 범위 제어) */
   const basicFormMemberEditing = memberInfoEditing
   const detailInfoFormMode: 'view' | 'edit' = basicFormMemberEditing ? 'edit' : 'view'
+
+  const sectionContext: BasicInfoBodySharedProps = {
+    user,
+    scheduleChangeCount,
+    externalId1365,
+    personalInfoRevealed,
+    basicFormMemberEditing,
+    memberInfoDraft,
+    onMemberInfoDraftChange,
+    cmsMayEditBasicProfileFields,
+    adminPermissionVariantPatching,
+    onPatchAdminPermissionVariantFromDetailView,
+    adminMemberProfileFieldsEditableWhenEditing,
+  }
+
   return (
     <div className="user-detail-modal__basic-inner">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-        {bodyKey === 'instructor' ? (
-          <div className="user-basic-info-section__split-cards">
-            <DetailInfoForm title="기본 정보" description={caption} mode={detailInfoFormMode}>
-              {instructorProfile === 'school_teacher' ? (
-                <SchoolTeacherMetaFields user={user} />
-              ) : (
-                <InstructorMetaFields user={user} />
-              )}
-            </DetailInfoForm>
-            <DetailInfoForm
-              title="기본 정보 — 성명·연락처 등"
-              hideHeader
-              className="user-basic-info-section user-basic-info-section--school-teacher-profile-card"
-              mode={detailInfoFormMode}
-            >
-              {instructorProfile === 'school_teacher' ? (
-                <SchoolTeacherProfileFields
-                  user={user}
-                  scheduleChangeCount={scheduleChangeCount}
-                  personalInfoRevealed={personalInfoRevealed}
-                />
-              ) : (
-                <InstructorFieldsByProfile
-                  user={user}
-                  scheduleChangeCount={scheduleChangeCount}
-                  personalInfoRevealed={personalInfoRevealed}
-                  memberInfoEditing={basicFormMemberEditing}
-                  memberInfoDraft={memberInfoDraft}
-                  onMemberInfoDraftChange={onMemberInfoDraftChange}
-                  cmsMayEditBasicProfileFields={cmsMayEditBasicProfileFields}
-                />
-              )}
-            </DetailInfoForm>
-          </div>
-        ) : (
-          <DetailInfoForm
-            title="기본 정보"
-            description={caption}
-            className="user-basic-info-section"
-            mode={detailInfoFormMode}
-          >
-            {bodyKey === 'all_users' ? (
-              <AllUsersFields
-                user={user}
-                scheduleChangeCount={scheduleChangeCount}
-                externalId1365={externalId1365}
-                personalInfoRevealed={personalInfoRevealed}
-                memberInfoEditing={basicFormMemberEditing}
-                memberInfoDraft={memberInfoDraft}
-                onMemberInfoDraftChange={onMemberInfoDraftChange}
-                cmsMayEditBasicProfileFields={cmsMayEditBasicProfileFields}
-              />
-            ) : bodyKey === 'institution' ? (
-              <InstitutionFields
-                user={user}
-                memberInfoDraft={memberInfoDraft}
-                onMemberInfoDraftChange={onMemberInfoDraftChange}
-                memberInfoEditing={basicFormMemberEditing}
-                cmsMayEditBasicProfileFields={cmsMayEditBasicProfileFields}
-              />
-            ) : (
-              <AdminFields
-                user={user}
-                personalInfoRevealed={personalInfoRevealed}
-                memberInfoEditing={basicFormMemberEditing}
-                memberInfoDraft={memberInfoDraft}
-                onMemberInfoDraftChange={onMemberInfoDraftChange}
-                adminPermissionVariantPatching={
-                  user.role === 'ADMIN' ? adminPermissionVariantPatching : false
-                }
-                onPatchAdminPermissionVariantFromDetailView={
-                  user.role === 'ADMIN' ? onPatchAdminPermissionVariantFromDetailView : undefined
-                }
-                adminMemberProfileFieldsEditableWhenEditing={adminMemberProfileFieldsEditableWhenEditing}
-              />
-            )}
-          </DetailInfoForm>
-        )}
+        <BasicInfoLayoutRenderer
+          resolution={resolvedLayout}
+          caption={caption}
+          mode={detailInfoFormMode}
+          shared={sectionContext}
+          renderers={{
+            SchoolTeacherMetaFields,
+            InstructorMetaFields,
+            SchoolTeacherProfileFields,
+            InstructorFieldsByProfile,
+            AllUsersFields,
+            InstitutionFields,
+            AdminFields,
+          }}
+        />
       </div>
     </div>
   )

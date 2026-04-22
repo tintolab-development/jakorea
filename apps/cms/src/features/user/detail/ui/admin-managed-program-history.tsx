@@ -177,7 +177,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
     ]
   }, [yearOptions, lifecycleOptions])
 
-  const tableContext = useMemo(() => ({} as const), [])
+  const tableContext = useMemo(() => ({}) as const, [])
 
   const {
     pendingFilters,
@@ -298,10 +298,14 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
         }}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
-        title="프로그램 진행 이력"
+        title="프로그램 담당 이력"
         description={`총 ${displayedCount}건`}
         actions={
-          <CmsButton variant="delete" disabled={selectedRowKeys.length === 0} onClick={handleOpenDeleteModal}>
+          <CmsButton
+            variant="delete"
+            disabled={selectedRowKeys.length === 0}
+            onClick={handleOpenDeleteModal}
+          >
             이력 삭제
           </CmsButton>
         }

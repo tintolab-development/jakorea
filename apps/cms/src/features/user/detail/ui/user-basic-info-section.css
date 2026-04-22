@@ -158,3 +158,10 @@
 .user-basic-info-section .detail-info-form__field-content--view {
   align-items: flex-start;
 }
+
+/* 관리자 담당 프로그램 수 — `DetailInfoForm.Separator` 포함 한 줄 정렬 */
+.user-basic-info-section__admin-managed-programs {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+}

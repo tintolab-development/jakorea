@@ -27,14 +27,15 @@ category: process
 
 - **(관리자가) 기본정보 수정 불가** — 상세에서 기본정보 필드는 편집 모드여도 읽기 전용으로 둔다.
 - **예외 — 관리자 회원 (`role === 'ADMIN'`) 직접 등록**: 저장 시 `draftToAdminMemberRestrictedPatch`(코멘트 + 권한 유형)로 SCHOOL용 코멘트 전용 패치와 구분한다.
-- **예외 — 관리자 코멘트**: [권한 승인 현황]이 **승인 완료(APPROVED)** 일 때만 섹션 노출·편집·저장 가능(§3).
+- **예외 — 관리자 코멘트**: CMS에 **관리자(`role === 'ADMIN'`)** 로 로그인한 경우 회원 상세에서 [관리자 코멘트] 블록은 **권한 승인 현황과 무관하게 항상 노출**한다(본문 없을 때 `작성된 코멘트가 없습니다.`). **편집·저장** 가능 여부는 등록 유형·대상 role 등 기존 규칙을 따른다(§3).
 - **예외 — 강사 회원 (`role === 'INSTRUCTOR'`)**: 위 조건 충족 시 관리자 코멘트에 더해 **강사비 등급** (`listMetrics.instructorTypeLabel` ↔ draft `instructorFeeGrade`) 편집·저장 가능.
 
 저장 시 분기: `use-user-detail-controller` — 직접 등록 + 강사는 `draftToAdminCommentAndInstructorFeePatch`, 그 외 역할은 코멘트만 패치하는 분기(예: `draftToSchoolAdminCommentOnlyPatch`). 관리자 회원이 **관리자 등록**이면서 저장 주체가 **마스터**이면 `draftToBasicInfoPatch`, 그렇지 않으면(비마스터 또는 코멘트 전용 세션) `draftToAdminMemberRestrictedPatch`(코멘트 + 권한 유형).
 
 ## 3. 관리자 코멘트 섹션 노출
 
-- 회원 권한 승인의 **[권한 승인 현황]**이 **승인 완료(`APPROVED`)** 인 회원만, 회원 상세 기본 탭에서 [관리자 코멘트] 블록을 노출한다. (`shouldShowAdminCommentSection` → `permissionApprovalStatus === 'APPROVED'`). 그 외(PENDING·REJECTED·미설정 등)는 해당 영역을 숨긴다.
+- **회원 상세**: 로그인 사용자가 CMS **관리자**(`isCmsAdminUser`)이면 기본 탭에서 [관리자 코멘트] 블록을 **항상** 노출한다. (`shouldShowAdminCommentSectionForViewer` = 관리자 로그인 **또는** `shouldShowAdminCommentSection` → `permissionApprovalStatus === 'APPROVED'`). 본문이 없으면 **`작성된 코멘트가 없습니다.`** 를 표시한다. **열람**은 편집 권한(예: 마스터 전용 기본정보)과 별개로, 관리자 로그인이면 항상 가능하다.
+- **프로그램·학교(기관) 상세** (`SchoolDetailFullpageView` 신청 정보 탭): 동일하게 **관리자 로그인 시에만** [관리자 코멘트] 영역을 노출하고, 빈 값일 때 문구는 회원 상세와 같이 **`작성된 코멘트가 없습니다.`** 로 통일한다.
 - **관리자 회원 상세 (`대상 role === 'ADMIN'`)** — 코멘트·권한 유형 vs 그 외 기본정보:
   - **[관리자 코멘트]**, **권한 유형**: CMS에 로그인한 **모든 관리자**(`AdminLevel` MASTER / ADMIN / GENERAL)가 열람·수정 가능. (`canAccessAdminCommentInAdminDetail` = `isCmsAdminUser`)
   - **그 외 기본정보**(성명, 연락처, 이메일 등): **마스터 관리자만** 수정 가능. 대상이 **관리자 등록** 회원(`shouldShowCmsMemberInfoEditButton`)일 때만 일괄 편집 UI가 풀림 (`canEditAdminMemberInfo` = `isMasterAdminUser` + 관리자 등록).
@@ -74,7 +75,7 @@ UI: 기본 탭에서 `UserDetailAdminCommentSection` + `DetailInfoForm` — **�
 
 ## 구현 참조 파일
 
-- 정책: `apps/cms/src/features/user/shared/lib/admin-provisioned-member-policy.ts`
+- 정책: `apps/cms/src/features/user/shared/lib/admin-provisioned-member-policy.ts` (`shouldShowAdminCommentSectionForViewer`, `isCmsAdminUser` 등)
 - 상세 UI·필드 잠금: `apps/cms/src/features/user/detail/ui/user-basic-info-section.tsx`
 - 저장: `apps/cms/src/features/user/detail/lib/use-user-detail-controller.ts`, `admin-provisioned-member-basic-info-draft.ts`
 - 타입 설명: `apps/cms/src/types/user.ts` (`registeredByAdmin`, `identitySelfSignupCompletedAfterAdminRegistration`)

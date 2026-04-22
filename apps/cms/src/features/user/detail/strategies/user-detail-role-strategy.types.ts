@@ -1,5 +1,6 @@
 import type { Application } from '@/types/domain'
 import type { User } from '@/types/user'
+import type { EnrollmentMode } from '../ui/user-programs-section'
 
 export interface UserDetailStrategyCtx {
   displayUser: Omit<User, 'password'>
@@ -32,8 +33,7 @@ export interface UserDetailStrategySectionConfig {
   programsHistory: {
     enrollmentSectionTitle: string
     enrollmentEmptyDescription: string
-    enrollmentChildUsesStudentMemberHistory: boolean
-    enrollmentChildUsesSchoolProgramParticipationView: boolean
+    enrollmentMode: EnrollmentMode
     showLectureHistoryWhenLectureChild: boolean
     useSchoolProgramParticipationSingleView: boolean
   }

@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react'
 import type { User } from '@/types/user'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 
 export type UserDetailLnbKey = 'detail-info' | 'history' | 'payment-status'
 
@@ -69,11 +71,52 @@ export function instructorDetailShowsPaymentStatusLnb(
   return p === 'instructor_only' || p === 'instructor_dual'
 }
 
-function managedProgramCountDisplay(user: Pick<User, 'listMetrics' | 'programRoles'>): string {
-  const n = user.listMetrics?.managedProgramCount
-  if (n != null && !Number.isNaN(n)) return String(n)
-  const keys = user.programRoles ? Object.keys(user.programRoles).length : 0
-  return keys > 0 ? String(keys) : '-'
+export type ManagedProgramMetricsParts = { inProgress: string; total: string }
+
+/**
+ * 관리자 담당 프로그램 지표 — `진행 중`·`전체` 건수 문자열(각 `n건` 또는 `-건`).
+ * 둘 다 없으면 null(화면에서는 `-` 단독).
+ */
+export function getManagedProgramMetricsParts(
+  user: Pick<User, 'listMetrics' | 'programRoles'>
+): ManagedProgramMetricsParts | null {
+  const lm = user.listMetrics
+  const explicitTotal = lm?.managedProgramCount
+  const explicitInProgress = lm?.managedProgramInProgressCount
+  const roleKeyCount = user.programRoles ? Object.keys(user.programRoles).length : 0
+
+  const total =
+    explicitTotal != null && !Number.isNaN(explicitTotal)
+      ? explicitTotal
+      : roleKeyCount > 0
+        ? roleKeyCount
+        : null
+
+  const inProgress =
+    explicitInProgress != null && !Number.isNaN(explicitInProgress) ? explicitInProgress : null
+
+  if (total === null && inProgress === null) return null
+
+  const inProgressLabel = inProgress !== null ? `${inProgress}건` : '-건'
+  const totalLabel = total !== null ? `${total}건` : '-건'
+  return { inProgress: inProgressLabel, total: totalLabel }
+}
+
+/** 회원 상세·목록 — `진행 중` / `전체` 사이는 `DetailInfoForm.Separator` */
+export function ManagedProgramCountDisplay({
+  user,
+}: {
+  user: Pick<User, 'listMetrics' | 'programRoles'>
+}): ReactNode {
+  const parts = getManagedProgramMetricsParts(user)
+  if (!parts) return '-'
+  return (
+    <>
+      진행 중: {parts.inProgress}
+      <DetailInfoForm.Separator />
+      전체: {parts.total}
+    </>
+  )
 }
 
 function instructorDetailTitleSchoolName(user: Pick<User, 'affiliatedSchoolName' | 'schoolInfo'>): string {
@@ -134,4 +177,4 @@ export function userDetailSidebarNavAriaLabel(
   }
 }
 
-export { managedProgramCountDisplay, instructorDetailTitleSchoolName }
+export { instructorDetailTitleSchoolName }

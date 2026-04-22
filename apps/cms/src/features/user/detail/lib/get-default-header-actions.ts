@@ -1,5 +1,6 @@
 import type { User } from '@/types/user'
 import type { CmsButtonVariant } from '@/shared/ui/cms-button'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 export type ActionConfig = {
   key: string
   label: string
@@ -43,7 +44,11 @@ export function getDefaultHeaderActions(ctx: GetDefaultHeaderActionsCtx): Action
       },
     })
   }
-  if (displayUser.role === 'INSTRUCTOR') {
+  /** 일반교사(`school_teacher`)는 교사·강사 겸직이 아니므로 강사 권한 박탈 대상 아님 */
+  if (
+    displayUser.role === 'INSTRUCTOR' &&
+    resolveInstructorMemberProfile(displayUser) !== 'school_teacher'
+  ) {
     actions.push({
       key: 'revoke-instructor-permission',
       label: '강사 권한 박탈',
