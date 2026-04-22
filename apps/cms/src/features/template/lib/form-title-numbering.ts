@@ -1,12 +1,12 @@
 import type {
-  SurveyParagraph,
-  SurveyTitleNumberingStyle,
-} from '@/features/template/model/survey-draft.schema'
-import { surveyOutlineLabel } from '@/features/template/model/survey-draft.schema'
+  FormTitleNumberingStyle,
+  WritingFormParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
+import { writingOutlineLabel } from '@/features/template/model/writing-form-draft.schema'
 
 /** 번호 대상 단락에 대해 1부터 부여되는 순번 (전체 paragraphs 순서 기준) */
 export function getTitleNumberSequenceIndex(
-  paragraphs: SurveyParagraph[],
+  paragraphs: WritingFormParagraph[],
   paragraphId: string
 ): number | null {
   let n = 0
@@ -18,11 +18,10 @@ export function getTitleNumberSequenceIndex(
   return null
 }
 
-function formatToken(style: SurveyTitleNumberingStyle, sequence: number): string {
+function formatToken(style: FormTitleNumberingStyle, sequence: number): string {
   if (style === 'none') return ''
   if (style === 'numeric') return `${sequence}`
   if (style === 'alpha') {
-    // 1 -> A, 26 -> Z, 27 -> AA (간단 구현)
     let n = sequence
     let s = ''
     while (n > 0) {
@@ -38,15 +37,15 @@ function formatToken(style: SurveyTitleNumberingStyle, sequence: number): string
 }
 
 /** 카드/헤더용: 접두 + 구분자 + 원문 타이틀(또는 아웃라인 라벨) */
-export function getSurveyParagraphDisplayTitle(
-  paragraphs: SurveyParagraph[],
-  paragraph: SurveyParagraph,
-  style: SurveyTitleNumberingStyle
+export function getFormParagraphDisplayTitle(
+  paragraphs: WritingFormParagraph[],
+  paragraph: WritingFormParagraph,
+  style: FormTitleNumberingStyle
 ): string {
   const base =
     paragraph.kind === 'description' && paragraph.variant === 'closing'
-      ? surveyOutlineLabel(paragraph)
-      : paragraph.paragraphTitle.trim() || surveyOutlineLabel(paragraph)
+      ? writingOutlineLabel(paragraph)
+      : paragraph.paragraphTitle.trim() || writingOutlineLabel(paragraph)
 
   if (!paragraph.participatesInTitleNumbering || style === 'none') {
     if (paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period') {
@@ -70,11 +69,11 @@ export function getSurveyParagraphDisplayTitle(
   return `${token}. ${base}`
 }
 
-/** 우측 네비 한 줄(스크린샷: "Q1. 설문자 정보" 등) */
-export function getSurveyNavDisplayLine(
-  paragraphs: SurveyParagraph[],
-  paragraph: SurveyParagraph,
-  style: SurveyTitleNumberingStyle
+/** 우측 네비 한 줄 */
+export function getFormNavDisplayLine(
+  paragraphs: WritingFormParagraph[],
+  paragraph: WritingFormParagraph,
+  style: FormTitleNumberingStyle
 ): string {
-  return getSurveyParagraphDisplayTitle(paragraphs, paragraph, style)
+  return getFormParagraphDisplayTitle(paragraphs, paragraph, style)
 }

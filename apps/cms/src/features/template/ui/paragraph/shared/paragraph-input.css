@@ -9,7 +9,6 @@
   width: 100%;
   font-family: Pretendard, sans-serif;
   font-style: normal;
-  font-weight: 500;
   line-height: 150%;
 }
 
@@ -20,16 +19,11 @@
   gap: 8px;
   width: 100%;
   min-width: 0;
-  padding-left: 0;
-}
-
-.paragraph-input__row:has(.paragraph-input__required) {
-  padding-left: 10px;
 }
 
 .paragraph-input__required {
   position: absolute;
-  left: -5px;
+  left: -12px;
   flex-shrink: 0;
   color: var(--paragraph-input-red);
   font-family: Pretendard, sans-serif;
@@ -65,10 +59,12 @@
 
 .paragraph-input--title {
   font-size: 20px;
+  font-weight: 700;
 }
 
 .paragraph-input--description {
   font-size: 16px;
+  font-weight: 500;
 }
 
 /* ---- view mode ---- */
@@ -81,8 +77,10 @@
 }
 
 /* view + 비입력: 타이틀은 플레이스홀더 톤 고정 */
-.paragraph-input--view.paragraph-input--title:not(.paragraph-input--filled) .paragraph-input__view-text,
-.paragraph-input--view.paragraph-input--title:not(.paragraph-input--filled) .paragraph-input__leading {
+.paragraph-input--view.paragraph-input--title:not(.paragraph-input--filled)
+  .paragraph-input__view-text,
+.paragraph-input--view.paragraph-input--title:not(.paragraph-input--filled)
+  .paragraph-input__leading {
   color: var(--gray-85969-d, #85969d);
 }
 
@@ -110,7 +108,6 @@
   margin: 0;
   font-family: Pretendard, sans-serif !important;
   font-style: normal !important;
-  font-weight: 500 !important;
   line-height: 150% !important;
   box-shadow: none !important;
   background: transparent !important;
@@ -119,11 +116,13 @@
 .paragraph-input--edit.paragraph-input--title .paragraph-input__shell .ant-input,
 .paragraph-input--edit.paragraph-input--title .paragraph-input__shell textarea.ant-input {
   font-size: 20px !important;
+  font-weight: 700 !important;
 }
 
 .paragraph-input--edit.paragraph-input--description .paragraph-input__shell .ant-input,
 .paragraph-input--edit.paragraph-input--description .paragraph-input__shell textarea.ant-input {
   font-size: 16px !important;
+  font-weight: 500 !important;
 }
 
 .paragraph-input--edit.paragraph-input--filled.paragraph-input--title
@@ -162,7 +161,9 @@
  * To-be: 비입력(edit·view 공통 루트는 filled 클래스 없음) 기본 톤 #85969D
  * Ant Input 기본 텍스트색(진회색) 덮어쓰기 — as-is(타이틀만 진하게) 방지
  */
-.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit .paragraph-input__shell input.ant-input,
+.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit
+  .paragraph-input__shell
+  input.ant-input,
 .paragraph-input:not(.paragraph-input--filled).paragraph-input--edit
   .paragraph-input__shell
   textarea.ant-input {
@@ -207,7 +208,9 @@
   opacity: 0.6;
 }
 
-.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit .paragraph-input__shell .ant-input::placeholder,
+.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit
+  .paragraph-input__shell
+  .ant-input::placeholder,
 .paragraph-input:not(.paragraph-input--filled).paragraph-input--edit
   .paragraph-input__shell
   textarea.ant-input::placeholder {
@@ -217,7 +220,9 @@
 }
 
 .paragraph-input--edit.paragraph-input--filled .paragraph-input__shell .ant-input::placeholder,
-.paragraph-input--edit.paragraph-input--filled .paragraph-input__shell textarea.ant-input::placeholder {
+.paragraph-input--edit.paragraph-input--filled
+  .paragraph-input__shell
+  textarea.ant-input::placeholder {
   color: var(--paragraph-input-default) !important;
   opacity: 1 !important;
 }

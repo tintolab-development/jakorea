@@ -1,0 +1,28 @@
+---
+description: CMS 템플릿(/templates) — 완성형 직접 등록 폼 화면은 form-set 폴더에 둔다
+globs:
+  - "apps/cms/src/pages/templates/**/*.{ts,tsx}"
+  - "apps/cms/src/features/template/ui/form-set/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# `form-set` 폴더 (완성형 폼)
+
+**적용 대상:** `/templates` 흐름에서 쓰는 **페이지 단위·완성된 등록 폼** — 예: `TemplateFullpageModal` + 초안 state + `FormEditorLeftPane` / `FormEditorFieldNav` / `FormEditorRightPanel`를 묶어 라우트(또는 탭)에서 그대로 마운트하는 컴포넌트.
+
+## 위치
+
+- 경로: **`apps/cms/src/features/template/ui/form-set/`**
+- 파일명 예: `new-survey-form.tsx`, `new-agreement-form.tsx` (기존 패턴 유지 가능)
+
+## 하지 말 것
+
+- 위와 같은 **완성형 폼**을 `apps/cms/src/features/template/ui/` 루트나 `form-editor/` 옆에 새로 두지 않는다. 신규 추가 시 **`form-set`** 으로 넣는다.
+
+## 함께 두는 것 (변경 없음)
+
+- **에디터 조각** (`FormEditorLeftPane`, `form-editor-field-nav`, `paragraph/*` 등)은 기존처럼 `form-editor/` · `paragraph/` 등 **기능 단위 경로**에 둔다. `form-set`은 “한 화면으로 묶인 진입점” 전용이다.
+
+## 라우트
+
+- `apps/cms/src/pages/templates/` 에서 `@/features/template/ui/form-set/...` 로 import 한다.
