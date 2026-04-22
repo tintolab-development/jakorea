@@ -8,27 +8,24 @@ import {
   useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import './survey-editor.css'
+import './form-editor.css'
 
-export interface SurveyFieldNavItem {
+export interface FormEditorFieldNavItem {
   id: string
   displayLine: string
 }
 
-interface SurveyEditorFieldNavProps {
+interface FormEditorFieldNavProps {
   sectionTitle: string
-  pinnedTop: SurveyFieldNavItem
-  sortableMiddle: SurveyFieldNavItem[]
-  pinnedBottom: SurveyFieldNavItem
+  pinnedTop: FormEditorFieldNavItem
+  sortableMiddle: FormEditorFieldNavItem[]
+  pinnedBottom: FormEditorFieldNavItem
   selectedItemId: string | null
   onSelectItem: (id: string) => void
   onReorderMiddle: (activeId: string, overId: string) => void
+  fieldListBottomSlot?: ReactNode
   children?: ReactNode
 }
 
@@ -37,7 +34,7 @@ function PinnedNavRow({
   selected,
   onSelect,
 }: {
-  item: SurveyFieldNavItem
+  item: FormEditorFieldNavItem
   selected: boolean
   onSelect: () => void
 }) {
@@ -59,12 +56,19 @@ function SortableNavRow({
   selected,
   onSelect,
 }: {
-  item: SurveyFieldNavItem
+  item: FormEditorFieldNavItem
   selected: boolean
   onSelect: () => void
 }) {
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
-    useSortable({ id: item.id })
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id })
 
   return (
     <button
@@ -95,7 +99,7 @@ function SortableNavRow({
   )
 }
 
-export function SurveyEditorFieldNav({
+export function FormEditorFieldNav({
   sectionTitle,
   pinnedTop,
   sortableMiddle,
@@ -103,8 +107,9 @@ export function SurveyEditorFieldNav({
   selectedItemId,
   onSelectItem,
   onReorderMiddle,
+  fieldListBottomSlot,
   children,
-}: SurveyEditorFieldNavProps) {
+}: FormEditorFieldNavProps) {
   const sortableIds = sortableMiddle.map(i => i.id)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
 
@@ -140,6 +145,7 @@ export function SurveyEditorFieldNav({
           onSelect={() => onSelectItem(pinnedBottom.id)}
         />
       </div>
+      {fieldListBottomSlot}
       <hr className="template-modal-nav__children-divider" aria-hidden="true" />
       {children}
     </>

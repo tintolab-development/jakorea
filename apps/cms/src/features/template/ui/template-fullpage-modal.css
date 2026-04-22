@@ -197,6 +197,7 @@
   flex-direction: column;
   gap: 8px;
   width: 100%;
+  margin-bottom: 20px;
 }
 
 .template-modal-nav-item {
@@ -249,103 +250,6 @@
 
 .template-modal-nav-item__handle:active {
   cursor: grabbing;
-}
-
-.full-page-modal-card {
-  position: relative;
-  display: flex;
-  padding: 20px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 20px;
-  align-self: stretch;
-  border-radius: 16px;
-  background: var(--main-WT, #fff);
-  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
-}
-
-.full-page-modal-card__action-slot {
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.full-page-modal-card__drag-handle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: #b4b4b4;
-  cursor: grab;
-}
-
-.full-page-modal-card__drag-handle:active {
-  cursor: grabbing;
-}
-
-.full-page-modal-card--selectable {
-  cursor: pointer;
-}
-
-.full-page-modal-card--active {
-  border-radius: var(--16, 16px);
-  border: 1px solid var(--color-mint-01, #01a1af);
-  background: var(--main-WT, #fff);
-}
-
-.full-page-modal-card__title-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding-left: 10px;
-}
-
-.full-page-modal-card__title {
-  margin: 0;
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 20px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 140%;
-}
-
-/* 설문 카드 등: 아웃라인 placeholder 문구 — ParagraphInput 기본 톤과 맞춤 */
-.full-page-modal-card__title.full-page-modal-card__title--placeholder {
-  color: var(--gray-85969-d, #85969d);
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.full-page-modal-card__required {
-  position: absolute;
-  left: -5px;
-  color: var(--color-red, #c32f4a);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 120%;
-}
-
-.full-page-modal-card__description {
-  margin: 0;
-  color: var(--gray-85969-d, #85969d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
 }
 
 /* 문서 다운로드 버튼 — secondary 기본 스펙에서 width·padding 오버라이드 */

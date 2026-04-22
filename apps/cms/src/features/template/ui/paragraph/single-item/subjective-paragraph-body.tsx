@@ -1,20 +1,18 @@
 import { Input } from 'antd'
-import type { SurveySubjectiveParagraph } from '@/features/template/model/survey-draft.schema'
-import { SurveyParagraphCardActions } from '@/features/template/ui/paragraph/shared/paragraph-actions'
-import '@/features/template/ui/survey/survey-editor.css'
+import type { SubjectiveParagraph } from '@/features/template/model/writing-form-draft.schema'
+import '@/features/template/ui/form-editor/form-editor.css'
 
-export function SurveySubjectiveBody({
+export function SubjectiveParagraphBody({
   paragraph,
-  isEditMode,
+  isEditMode: _isEditMode,
 }: {
-  paragraph: SurveySubjectiveParagraph
+  paragraph: SubjectiveParagraph
   isEditMode: boolean
 }) {
   const ph = paragraph.items[0]?.placeholder ?? '답변을 입력해 주세요'
   return (
-    <div className="survey-editor-body">
-      <Input.TextArea className="survey-editor-subjective" readOnly placeholder={ph} rows={5} />
-      {isEditMode ? <SurveyParagraphCardActions /> : null}
+    <div className="form-editor-body">
+      <Input.TextArea className="form-editor-subjective" readOnly placeholder={ph} rows={5} />
     </div>
   )
 }

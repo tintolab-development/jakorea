@@ -2,18 +2,21 @@ import { useCallback, useMemo, useState } from 'react'
 import { message } from 'antd'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
-import { getSurveyNavDisplayLine } from '@/features/template/lib/survey-title-numbering'
+import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import {
   createDefaultSurveyDraft,
   DEFAULT_SURVEY_PARAGRAPH_IDS,
-  reorderSurveyMiddleParagraphs,
-  type SurveyDraft,
-  type SurveyParagraph,
-  type SurveyTitleNumberingStyle,
-} from '@/features/template/model/survey-draft.schema'
-import { SurveyEditorLeftPane } from '@/features/template/ui/survey/survey-editor-left-pane'
-import { SurveyEditorRightPanel } from '@/features/template/ui/survey/survey-editor-right-panel'
-import { SurveyEditorFieldNav } from '@/features/template/ui/survey/survey-editor-field-nav'
+  reorderWritingFormMiddleParagraphs,
+  type FormTitleNumberingStyle,
+  type WritingFormDraft,
+  type WritingFormParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
+import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
+import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
+import {
+  FormEditorRightPanel,
+  FormEditorTitleNumberingField,
+} from '@/features/template/ui/form-editor/form-editor-right-panel'
 
 type NewSurveyFormQuery = {
   mode?: string
@@ -23,7 +26,7 @@ type NewSurveyFormQuery = {
 
 export default function NewSurveyForm() {
   const { setParams } = useQueryParams<NewSurveyFormQuery>()
-  const [draft, setDraft] = useState<SurveyDraft>(() => createDefaultSurveyDraft())
+  const [draft, setDraft] = useState<WritingFormDraft>(() => createDefaultSurveyDraft())
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
     DEFAULT_SURVEY_PARAGRAPH_IDS.title
   )
@@ -33,7 +36,7 @@ export default function NewSurveyForm() {
   }, [setParams])
 
   const updateParagraph = useCallback(
-    (id: string, updater: (p: SurveyParagraph) => SurveyParagraph) => {
+    (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => {
       setDraft(prev => ({
         ...prev,
         paragraphs: prev.paragraphs.map(p => (p.id === id ? updater(p) : p)),
@@ -45,11 +48,11 @@ export default function NewSurveyForm() {
   const onReorderMiddle = useCallback((activeId: string, overId: string) => {
     setDraft(prev => ({
       ...prev,
-      paragraphs: reorderSurveyMiddleParagraphs(prev.paragraphs, activeId, overId),
+      paragraphs: reorderWritingFormMiddleParagraphs(prev.paragraphs, activeId, overId),
     }))
   }, [])
 
-  const onTitleNumberingChange = useCallback((style: SurveyTitleNumberingStyle) => {
+  const onTitleNumberingChange = useCallback((style: FormTitleNumberingStyle) => {
     setDraft(prev => ({
       ...prev,
       formSettings: { ...prev.formSettings, titleNumbering: style },
@@ -61,9 +64,9 @@ export default function NewSurveyForm() {
     const tail = rest[rest.length - 1]
     const middle = rest.slice(0, -1)
     const { titleNumbering } = draft.formSettings
-    const line = (p: SurveyParagraph) => ({
+    const line = (p: WritingFormParagraph) => ({
       id: p.id,
-      displayLine: getSurveyNavDisplayLine(draft.paragraphs, p, titleNumbering),
+      displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
     })
     return {
       pinnedTop: line(head),
@@ -88,17 +91,18 @@ export default function NewSurveyForm() {
       description="* 등록 시 최소 1개의 단락은 존재해야 합니다."
       templateTabType="writing"
       leftContent={
-        <SurveyEditorLeftPane
+        <FormEditorLeftPane
           paragraphs={draft.paragraphs}
           titleNumbering={draft.formSettings.titleNumbering}
           selectedCardId={activeParagraphId}
           onSelectCard={setActiveParagraphId}
           onReorderMiddle={onReorderMiddle}
           updateParagraph={updateParagraph}
+          editorKind="survey"
         />
       }
       rightNavigation={
-        <SurveyEditorFieldNav
+        <FormEditorFieldNav
           sectionTitle="커스텀 필드"
           pinnedTop={pinnedTop}
           sortableMiddle={sortableMiddle}
@@ -106,14 +110,22 @@ export default function NewSurveyForm() {
           selectedItemId={activeParagraphId}
           onSelectItem={setActiveParagraphId}
           onReorderMiddle={onReorderMiddle}
+          fieldListBottomSlot={
+            <FormEditorTitleNumberingField
+              value={draft.formSettings.titleNumbering}
+              onChange={onTitleNumberingChange}
+            />
+          }
         >
-          <SurveyEditorRightPanel
+          <FormEditorRightPanel
             draft={draft}
             activeParagraphId={activeParagraphId}
             onTitleNumberingChange={onTitleNumberingChange}
             updateParagraph={updateParagraph}
+            editorKind="survey"
+            showTitleNumbering={false}
           />
-        </SurveyEditorFieldNav>
+        </FormEditorFieldNav>
       }
       onPreview={handlePreview}
       onSave={handleSave}

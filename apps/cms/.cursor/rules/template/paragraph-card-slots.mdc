@@ -1,0 +1,30 @@
+---
+description: CMS 템플릿(설문·동의) 단락 바디 — ParagraphCard 슬롯만 담당, 제목/설명 중복 금지
+globs:
+  - "apps/cms/src/features/template/ui/paragraph/**/*.tsx"
+  - "apps/cms/src/features/template/ui/form-editor/**/*.tsx"
+alwaysApply: false
+---
+
+# 템플릿 단락 바디와 `ParagraphCard`
+
+폼 에디터(`FormEditorLeftPane` 등)에서 단락은 **`ParagraphCard`**(`apps/cms/src/features/template/ui/paragraph/shared/paragraph-card.tsx`)로 감싸지며, **`title` / `description` prop**으로 카드 헤더가 채워진다.
+
+## 단락 바디 컴포넌트 작성 시
+
+1. **제목·설명 UI는 넣지 않는다**  
+   `TemplateFullpageModalCardTitle`, `TemplateFullpageModalCardDescription`, `ParagraphInput`(type `title` / `description`) 등으로 카드 상단을 다시 그리지 않는다. 데이터는 `paragraphTitle` / `paragraphDescription`(또는 제목형의 `surveyTitle` 등)에 그대로 두고, 편집은 **카드 헤더·슬롯 분리 구조**를 따른다.
+
+2. **바디 컴포넌트는 슬롯(본문)만**  
+   `renderFormParagraphBody`가 넘기는 영역은 카드의 **중앙 슬롯**이다. 입력·미리보기·토글 등 **해당 단락 variant 고유 UI**만 구현한다.
+
+3. **푸터(토글·액션)**  
+   카드 하단 `toggles` / `actions`가 필요하면 **`form-editor-left-pane`** 등 카드 소유 쪽에서 `ParagraphCard` prop으로 넘기고, 바디 안에 중복 배치하지 않는다(예: 제목형 작성 기간 토글).
+
+4. **스타일**  
+   공통 여백·폼 에디터 톤은 `form-editor.css`, 단락 입력은 `paragraph-input.css` 등 기존 체인을 따른다.
+
+## 관련 파일
+
+- `paragraph-card.tsx` — 카드 레이아웃·헤더·슬롯·푸터
+- `form-editor-left-pane.tsx` — 단락별 `title` / `description` / `toggles` / `actions` 조합

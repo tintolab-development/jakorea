@@ -1,0 +1,257 @@
+import { Form } from 'antd'
+import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsTextArea } from '@/shared/ui/cms-textarea'
+import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
+import { CmsSelect } from '@/shared/ui/cms-select'
+import type {
+  FormEditorKind,
+  FormTitleNumberingStyle,
+  WritingFormDraft,
+  WritingFormParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
+import { writingOutlineLabel } from '@/features/template/model/writing-form-draft.schema'
+import './form-editor.css'
+
+const TITLE_NUMBERING_OPTIONS: { value: FormTitleNumberingStyle; label: string }[] = [
+  { value: 'numeric', label: '1, 2, 3' },
+  { value: 'alpha', label: 'A, B, C' },
+  { value: 'q_repeat', label: 'Q, Q, Q' },
+  { value: 'q123', label: 'Q1, Q2, Q3' },
+  { value: 'none', label: '미선택' },
+]
+
+function paragraphKindLabel(p: WritingFormParagraph): string {
+  if (p.kind === 'description') return '설명글'
+  if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') return '설명글'
+  return '단일항목'
+}
+
+function paragraphVariantLabel(p: WritingFormParagraph): string {
+  switch (p.variant) {
+    case 'survey_title_with_period':
+      return '제목형'
+    case 'user_profile':
+      return '사용자 정보형'
+    case 'score_select':
+      return '점수 선택형'
+    case 'subjective':
+      return '주관식형'
+    case 'agreement_rich_text':
+      return '동의 본문형'
+    case 'agreement_explanation_text':
+      return '텍스트형'
+    case 'agreement_privacy_rows':
+      return '개인정보 수집 항목형'
+    case 'agreement_table_consent':
+      return '표·동의 선택형'
+    case 'closing':
+      return '마무리글형'
+  }
+}
+
+export interface FormEditorRightPanelProps {
+  draft: WritingFormDraft
+  activeParagraphId: string | null
+  onTitleNumberingChange: (style: FormTitleNumberingStyle) => void
+  updateParagraph: (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => void
+  editorKind?: FormEditorKind
+  showTitleNumbering?: boolean
+}
+
+export function FormEditorTitleNumberingField({
+  value,
+  onChange,
+}: {
+  value: FormTitleNumberingStyle
+  onChange: (style: FormTitleNumberingStyle) => void
+}) {
+  return (
+    <div className="form-editor-right-panel__field">
+      <span className="form-editor-right-panel__label">타이틀 번호</span>
+      <CmsSelect
+        width="100%"
+        className="form-editor-right-panel__select"
+        value={value}
+        options={TITLE_NUMBERING_OPTIONS}
+        onChange={v => onChange(v as FormTitleNumberingStyle)}
+      />
+    </div>
+  )
+}
+
+export function FormEditorRightPanel({
+  draft,
+  activeParagraphId,
+  onTitleNumberingChange,
+  updateParagraph,
+  editorKind: _editorKind = 'survey',
+  showTitleNumbering = true,
+}: FormEditorRightPanelProps) {
+  const active = draft.paragraphs.find(p => p.id === activeParagraphId) ?? null
+  const outline = active ? writingOutlineLabel(active) : ''
+
+  return (
+    <div className="form-editor-right-panel">
+      {showTitleNumbering ? (
+        <FormEditorTitleNumberingField
+          value={draft.formSettings.titleNumbering}
+          onChange={onTitleNumberingChange}
+        />
+      ) : null}
+
+      {active ? (
+        <>
+          <Form layout="vertical" className="form-editor-right-panel__form" requiredMark={false}>
+            <span className="form-editor-right-panel__section-title">{outline}</span>
+            <Form.Item>
+              <div className="form-editor-right-panel__kind-row">
+                <CmsSelect
+                  width="100%"
+                  value={paragraphKindLabel(active)}
+                  options={[
+                    { value: paragraphKindLabel(active), label: paragraphKindLabel(active) },
+                  ]}
+                  disabled
+                />
+                <CmsSelect
+                  width="100%"
+                  value={paragraphVariantLabel(active)}
+                  options={[
+                    {
+                      value: paragraphVariantLabel(active),
+                      label: paragraphVariantLabel(active),
+                    },
+                  ]}
+                  disabled
+                />
+              </div>
+            </Form.Item>
+          </Form>
+
+          <Form
+            layout="vertical"
+            className="form-editor-right-panel__form-items"
+            requiredMark={false}
+          >
+            {active.kind === 'description' && active.variant === 'survey_title_with_period' ? (
+              <>
+                {active.showWritingPeriodOnForm ? (
+                  <>
+                    <Form.Item label={'설문 시작일'}>
+                      <CmsRadioGroup
+                        value={active.periodMode}
+                        onChange={e =>
+                          updateParagraph(active.id, () => ({
+                            ...active,
+                            periodMode: e.target.value,
+                          }))
+                        }
+                      >
+                        <CmsRadio value="immediate">바로 시작</CmsRadio>
+                        <CmsRadio value="custom">직접 설정</CmsRadio>
+                      </CmsRadioGroup>
+                    </Form.Item>
+                    <Form.Item label={'설문 종료일'}>
+                      <CmsRadioGroup
+                        value={active.periodMode}
+                        onChange={e =>
+                          updateParagraph(active.id, () => ({
+                            ...active,
+                            periodMode: e.target.value,
+                          }))
+                        }
+                      >
+                        <CmsRadio value="immediate">마감 없음</CmsRadio>
+                        <CmsRadio value="custom">직접 설정</CmsRadio>
+                      </CmsRadioGroup>
+                    </Form.Item>
+                  </>
+                ) : null}
+              </>
+            ) : null}
+
+            {active.kind === 'single_item' &&
+            (active.variant === 'agreement_rich_text' || active.variant === 'agreement_explanation_text') ? (
+              <>
+                <Form.Item label="본문 placeholder">
+                  <CmsInput
+                    width="100%"
+                    value={active.bodyPlaceholder}
+                    onChange={e =>
+                      updateParagraph(active.id, () => ({
+                        ...active,
+                        bodyPlaceholder: e.target.value,
+                      }))
+                    }
+                    placeholder="텍스트를 작성해 주세요"
+                  />
+                </Form.Item>
+                {active.variant === 'agreement_rich_text' ? (
+                  <Form.Item label="본문 초안(미리보기)">
+                    <CmsTextArea
+                      width="100%"
+                      value={active.bodyText}
+                      onChange={e =>
+                        updateParagraph(active.id, () => ({
+                          ...active,
+                          bodyText: e.target.value,
+                        }))
+                      }
+                      rows={4}
+                    />
+                  </Form.Item>
+                ) : (
+                  <Form.Item label="본문(미리보기)">
+                    <CmsInput
+                      width="100%"
+                      value={active.bodyText}
+                      onChange={e =>
+                        updateParagraph(active.id, () => ({
+                          ...active,
+                          bodyText: e.target.value,
+                        }))
+                      }
+                    />
+                  </Form.Item>
+                )}
+              </>
+            ) : null}
+
+            {active.kind === 'single_item' && active.variant === 'agreement_table_consent' ? (
+              <Form.Item label="하단 설명(원문)">
+                <CmsTextArea
+                  width="100%"
+                  value={active.footerDescription}
+                  onChange={e =>
+                    updateParagraph(active.id, () => ({
+                      ...active,
+                      footerDescription: e.target.value,
+                    }))
+                  }
+                  rows={3}
+                  placeholder="설명을 입력해 주세요"
+                />
+              </Form.Item>
+            ) : null}
+
+            {active.kind === 'description' && active.variant === 'closing' ? (
+              <Form.Item label="마무리 문구">
+                <CmsTextArea
+                  width="100%"
+                  value={active.body}
+                  onChange={e =>
+                    updateParagraph(active.id, () => ({
+                      ...active,
+                      body: e.target.value,
+                    }))
+                  }
+                  rows={4}
+                />
+              </Form.Item>
+            ) : null}
+          </Form>
+        </>
+      ) : null}
+    </div>
+  )
+}
