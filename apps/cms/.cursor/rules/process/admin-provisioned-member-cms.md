@@ -72,6 +72,38 @@ UI: 기본 탭에서 `UserDetailAdminCommentSection` + `DetailInfoForm` — **�
 ## 8. 헤더 버튼(요약)
 
 - 학교 상세: **[학교 삭제]** → **[정보 수정]** → **[개인정보 상세보기]** 등 기존 `user-detail-header`·풀페이지 셸 규칙을 따른다. 편집 중 삭제·탈퇴·개인정보 버튼 처리는 기존과 동일.
+- 강사/관리자 **권한 승인 상세 모드** 상단 버튼은 권한 승인 현황별로 아래 순서·variant를 고정한다. (`PermissionHeaderActions`)
+  - **승인 완료(`APPROVED`)**: **[승인 취소]** (`variant="delete"`) / **[개인정보 상세보기]**
+  - **승인 대기(`PENDING`)**: **[신청 반려]** (`variant="delete"`) / **[신청 승인]** (`variant="secondary"`) / **[개인정보 상세보기]**
+  - **신청 반려(`REJECTED`)**: **[반려 취소]** (`variant="delete"`) / **[개인정보 상세보기]**
+
+## 9. 권한 승인 현황(기본 정보 값 셀)
+
+- 대상: **권한 승인 상세 모드 강사/관리자 공통** (`mode="permission"`, role `INSTRUCTOR`/`ADMIN`)
+- 상태가 `PENDING`이 아니면 값 셀을 **상태 텍스트 + divider + [알림 재발송] + 일시** 순서로 렌더한다.
+  - 버튼: `CmsButton`, `size="small"`
+  - 간격: 상태/`|`/버튼/일시 사이 **12px**
+  - 일시 우선순위:
+    1) `permissionNotificationResentAt`(알림 재발송 이력 존재 시)
+    2) `permissionApprovalHandledAt`(최근 승인/반려 처리 시각)
+- 상태가 `PENDING`이면 상태 텍스트만 노출하고 divider/버튼/일시는 숨긴다.
+- 일시 텍스트 스타일은 다음을 고정한다.
+  - `color: var(--default-BK, #3D3D3D)`
+  - `font-family: Pretendard`
+  - `font-size: 16px`
+  - `font-style: normal`
+  - `font-weight: 500`
+  - `line-height: 150%`
+  - `opacity: 0.6`
+
+## 10. 권한 신청 목록 노출 정책 (강사/학교)
+
+- **강사 권한 신청 목록**에는 `role === 'INSTRUCTOR'` 중에서도 **순수 강사**(`instructorMemberProfile === 'instructor_only'`)만 노출한다.
+- 다음 대상은 강사 권한 신청 목록에서 제외한다.
+  - 일반 교사형 강사(`school_teacher`)
+  - 교사 겸 강사(`instructor_dual`)
+  - 개인/학교 회원(`INDIVIDUAL`/`SCHOOL`)
+- **학교(교사) 회원**(`role === 'SCHOOL'`)은 별도 승인 절차 없이 가입 시 `permissionApprovalStatus = 'APPROVED'`로 자동 처리한다.
 
 ## 구현 참조 파일
 

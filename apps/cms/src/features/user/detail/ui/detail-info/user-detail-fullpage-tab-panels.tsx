@@ -6,6 +6,8 @@ import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context
 
 export function UserDetailFullpageTabPanels() {
   const {
+    mode,
+    permissionRole,
     displayUser,
     tabState,
     derived,
@@ -26,6 +28,7 @@ export function UserDetailFullpageTabPanels() {
     onBasicInfoDraftChange,
     adminPermissionVariantPatching,
     onPatchAdminPermissionVariantFromDetailView,
+    onPermissionResendNotification,
   } = useUserDetailFullpageShell()
 
   const { sections, strategy, enrollmentTableRows, resolvedProgramsChild } = derived
@@ -34,6 +37,8 @@ export function UserDetailFullpageTabPanels() {
     <>
       {tabState.lnb === 'detail-info' && (
         <UserDetailFullpageBasicTabContent
+          mode={mode}
+          permissionRole={permissionRole}
           user={displayUser}
           basicTab={sections.basicTab}
           basicInfoEntrySource={basicInfoEntrySource}
@@ -45,6 +50,7 @@ export function UserDetailFullpageTabPanels() {
           onMemberInfoDraftChange={onBasicInfoDraftChange}
           adminPermissionVariantPatching={adminPermissionVariantPatching}
           onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
+          onPermissionResendNotification={onPermissionResendNotification}
         />
       )}
       {tabState.lnb === 'history' &&

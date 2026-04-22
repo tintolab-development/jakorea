@@ -388,6 +388,11 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
     registeredByAdmin: true,
   }
 
+  // 학교(교사) 회원은 별도 권한 승인 절차 없이 가입 즉시 승인 상태
+  if (request.role === 'SCHOOL') {
+    newUser.permissionApprovalStatus = 'APPROVED'
+  }
+
   // 관리자 권한 설정
   if (request.role === 'ADMIN') {
     newUser.adminLevel = request.adminLevel || 'ADMIN'

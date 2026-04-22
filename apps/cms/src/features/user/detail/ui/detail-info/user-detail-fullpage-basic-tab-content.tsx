@@ -22,6 +22,8 @@ import {
 import { useAuthStore } from '@/features/auth/model/auth-store'
 
 export interface UserDetailFullpageBasicTabContentProps {
+  mode: 'default' | 'permission'
+  permissionRole?: 'instructor' | 'admin'
   user: Omit<User, 'password'>
   basicTab: UserDetailStrategySectionConfig['basicTab']
   basicInfoEntrySource?: UserBasicInfoEntrySource
@@ -35,9 +37,15 @@ export interface UserDetailFullpageBasicTabContentProps {
   onPatchAdminPermissionVariantFromDetailView?: (
     nextPermission: AdminPermissionTagVariant
   ) => void | Promise<void>
+  onPermissionResendNotification?: (ctx: {
+    userId: string
+    permissionRole: 'instructor' | 'admin'
+  }) => void
 }
 
 export function UserDetailFullpageBasicTabContent({
+  mode,
+  permissionRole,
   user,
   basicTab,
   basicInfoEntrySource,
@@ -49,6 +57,7 @@ export function UserDetailFullpageBasicTabContent({
   onMemberInfoDraftChange,
   adminPermissionVariantPatching = false,
   onPatchAdminPermissionVariantFromDetailView,
+  onPermissionResendNotification,
 }: UserDetailFullpageBasicTabContentProps) {
   const currentUser = useAuthStore(state => state.user)
   const adminMemberProfileFieldsEditableWhenEditing =
@@ -72,6 +81,8 @@ export function UserDetailFullpageBasicTabContent({
       <UserBasicInfoSection
         user={user}
         entrySource={basicInfoEntrySource}
+        isInstructorPermissionDetail={mode === 'permission' && permissionRole === 'instructor'}
+        isAdminPermissionDetail={mode === 'permission' && permissionRole === 'admin'}
         caption={basicTab.caption}
         externalId1365={basicTab.externalId1365}
         personalInfoRevealed={personalInfoRevealed}
@@ -81,9 +92,17 @@ export function UserDetailFullpageBasicTabContent({
         adminPermissionVariantPatching={adminPermissionVariantPatching}
         onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
         adminMemberProfileFieldsEditableWhenEditing={adminMemberProfileFieldsEditableWhenEditing}
+        onPermissionResendNotification={onPermissionResendNotification}
       />
       {basicTab.showConsentAgreement ? (
-        <UserConsentAgreementSection preset={resolveUserConsentAgreementPreset(user)} />
+        <UserConsentAgreementSection
+          preset={resolveUserConsentAgreementPreset(user)}
+          viewVariant={
+            mode === 'permission' && permissionRole === 'instructor'
+              ? 'permission_instructor'
+              : 'default'
+          }
+        />
       ) : null}
       {instructorResumeApplicantRow ? (
         <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />

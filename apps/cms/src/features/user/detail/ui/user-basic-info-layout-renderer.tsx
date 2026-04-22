@@ -2,10 +2,7 @@ import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { BasicInfoLayout, type BasicInfoLayoutResolved } from './user-basic-info-layout-resolver'
 import { renderResolvedBasicInfoSections } from './user-basic-info-section-renderer'
-import type {
-  BasicInfoSectionRenderContext,
-  BasicInfoSectionRenderers,
-} from './user-basic-info-section-renderer'
+import type { BasicInfoSectionRenderContext } from './user-basic-info-section-renderer'
 
 /**
  * 기본 정보 레이아웃 렌더러
@@ -19,18 +16,15 @@ export function BasicInfoLayoutRenderer({
   caption,
   mode,
   shared,
-  renderers,
 }: {
   resolution: BasicInfoLayoutResolved
   caption?: ReactNode
   mode: 'view' | 'edit'
   shared: BasicInfoSectionRenderContext
-  renderers: BasicInfoSectionRenderers
 }) {
   const rendered = renderResolvedBasicInfoSections({
     resolution,
     shared,
-    renderers,
   })
 
   if (resolution.layout === BasicInfoLayout.SPLIT_CARD) {

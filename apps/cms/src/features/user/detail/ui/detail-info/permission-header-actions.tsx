@@ -2,6 +2,18 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import type { PermissionHeaderActionsProps } from './user-detail-fullpage-header-actions'
 
+type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+
+function normalizeApprovalStatus(status: string | undefined): ApprovalStatus {
+  const raw = status?.trim()
+  if (!raw) return 'PENDING'
+  const upper = raw.toUpperCase()
+  if (upper === 'APPROVED' || raw === '승인 완료') return 'APPROVED'
+  if (upper === 'REJECTED' || raw === '신청 반려' || raw === '반려') return 'REJECTED'
+  if (upper === 'PENDING' || raw === '승인 대기') return 'PENDING'
+  return 'PENDING'
+}
+
 export function PermissionHeaderActions({
   permissionRole,
   displayUser,
@@ -15,7 +27,7 @@ export function PermissionHeaderActions({
     return null
   }
 
-  const approvalStatus = displayUser.permissionApprovalStatus ?? 'PENDING'
+  const approvalStatus = normalizeApprovalStatus(displayUser.permissionApprovalStatus)
 
   return (
     <div className="info-section-buttons--wrapper">
@@ -30,6 +42,7 @@ export function PermissionHeaderActions({
             신청 반려
           </CmsButton>
           <CmsButton
+            variant="secondary"
             onClick={() => {
               onPermissionApprove?.({ userId: displayUser.id, permissionRole })
             }}
@@ -40,7 +53,7 @@ export function PermissionHeaderActions({
       ) : null}
       {approvalStatus === 'REJECTED' ? (
         <CmsButton
-          variant="secondary"
+          variant="delete"
           onClick={() => {
             onPermissionResetToPending?.({
               userId: displayUser.id,
@@ -54,7 +67,7 @@ export function PermissionHeaderActions({
       ) : null}
       {approvalStatus === 'APPROVED' ? (
         <CmsButton
-          variant="secondary"
+          variant="delete"
           onClick={() => {
             onPermissionResetToPending?.({
               userId: displayUser.id,
@@ -72,7 +85,7 @@ export function PermissionHeaderActions({
           labelMode="stickyReveal"
           revealed={personalInfoRevealed}
           cmsVariant={personalInfoButton.variant}
-          cmsSize="medium"
+          cmsSize="large"
           width={180}
           onClick={personalInfoButton.onClick}
         />

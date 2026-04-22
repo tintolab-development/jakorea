@@ -56,6 +56,10 @@ export interface UserDetailFullPageModalProps {
     permissionRole: UserDetailPermissionRole
     fromStatus: 'APPROVED' | 'REJECTED'
   }) => void
+  onPermissionResendNotification?: (ctx: {
+    userId: string
+    permissionRole: UserDetailPermissionRole
+  }) => void
   onNavigateToLinkedUser?: (userId: string) => void
   /** 저장 후 목록·드로어 등 상위가 동일 회원 객체를 갱신할 때 */
   onMemberBasicInfoSaved?: (user: Omit<User, 'password'>) => void
@@ -72,6 +76,7 @@ export function UserDetailFullPageModal({
   onPermissionApprove,
   onPermissionReject,
   onPermissionResetToPending,
+  onPermissionResendNotification,
   onNavigateToLinkedUser,
   onMemberBasicInfoSaved,
 }: UserDetailFullPageModalProps) {
@@ -103,6 +108,8 @@ export function UserDetailFullPageModal({
   const shell = useMemo((): UserDetailFullpageShellValue | null => {
     if (!open || !user || !fullpageDerived) return null
     return {
+      mode,
+      permissionRole,
       displayUser: user,
       tabState: state.tabState,
       derived: fullpageDerived,
@@ -137,11 +144,14 @@ export function UserDetailFullPageModal({
       onOpenInstructorPermissionRevoke: actions.openInstructorPermissionRevoke,
       onCloseInstructorPermissionRevoke: actions.closeInstructorPermissionRevoke,
       onConfirmInstructorPermissionRevoke: actions.confirmInstructorPermissionRevoke,
+      onPermissionResendNotification,
     }
   }, [
     open,
     user,
     fullpageDerived,
+    mode,
+    permissionRole,
     state.tabState,
     state.applications,
     state.applicationsLoading,
@@ -162,6 +172,7 @@ export function UserDetailFullPageModal({
     actions.openInstructorPermissionRevoke,
     actions.closeInstructorPermissionRevoke,
     actions.confirmInstructorPermissionRevoke,
+    onPermissionResendNotification,
     derived.instructorResumeApplicantRow,
     derived.canPatchAdminPermissionInDetailView,
     basicInfoEntrySource,

@@ -118,6 +118,10 @@ export interface User {
 
   /** 회원 권한 승인 페이지에서 관리되는 권한 승인 현황 */
   permissionApprovalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED'
+  /** 권한 승인/반려 처리 일시 (권한 승인 현황 기본 노출 기준) */
+  permissionApprovalHandledAt?: DateValue
+  /** 권한 승인 현황에서 알림 재발송 버튼을 마지막으로 누른 일시 */
+  permissionNotificationResentAt?: DateValue
 
   /**
    * CMS: 관리자 「회원 등록」으로 생성된 이력이 있는지.

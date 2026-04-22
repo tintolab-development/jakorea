@@ -19,6 +19,7 @@ export type UserConsentAgreementPreset =
 
 export interface UserConsentAgreementSectionProps {
   preset?: UserConsentAgreementPreset
+  viewVariant?: 'default' | 'permission_instructor'
   /** 상단 안내 — 미지정 시 프리셋별 기본값 */
   caption?: ReactNode
   /** 동의서 보기 — 필요한 항목에만 사용 */
@@ -218,6 +219,69 @@ export const CONSENT_PRESET_SCHEMA: ConsentPresetSchema = {
   ],
 }
 
+const CONSENT_ROWS_PERMISSION_INSTRUCTOR: ConsentRowSchema[] = [
+  {
+    rowType: 'double',
+    fields: [
+      {
+        label: '개인정보 수집 동의',
+        labelWidth: CONSENT_LABEL_WIDTH,
+        value: DOCUMENT_AGREED,
+      },
+      {
+        label: '마케팅 제공 동의',
+        labelWidth: CONSENT_LABEL_WIDTH,
+        value: DOCUMENT_AGREED,
+      },
+    ],
+  },
+  {
+    rowType: 'double',
+    fields: [
+      {
+        label: '초상권 수집·이용 동의',
+        labelWidth: CONSENT_LABEL_WIDTH,
+        value: DOCUMENT_AGREED,
+      },
+      {
+        label: '지급조서 작성 동의',
+        labelWidth: CONSENT_LABEL_WIDTH,
+        value: DOCUMENT_AGREED,
+      },
+    ],
+  },
+  {
+    rowType: 'double',
+    fields: [
+      {
+        label: '성범죄 경력조회 동의',
+        labelWidth: CONSENT_LABEL_WIDTH,
+        value: DOCUMENT_AGREED,
+      },
+      {
+        label: '행정정보 공동이용 사전 동의',
+        labelWidth: CONSENT_LABEL_WIDTH,
+        value: DOCUMENT_AGREED,
+      },
+    ],
+  },
+  {
+    rowType: 'double',
+    fields: [
+      {
+        label: '교육진행자 동의 서약',
+        labelWidth: CONSENT_LABEL_WIDTH,
+        value: DOCUMENT_AGREED,
+      },
+      {
+        label: '',
+        labelWidth: CONSENT_LABEL_WIDTH,
+        value: { type: 'empty_half' },
+      },
+    ],
+  },
+]
+
 export interface ConsentRenderCtx {
   openDocument: () => void
 }
@@ -365,6 +429,7 @@ export function renderConsentRow(
 
 export function UserConsentAgreementSection({
   preset = 'individual',
+  viewVariant = 'default',
   caption,
   onOpenAgreementDocument,
 }: UserConsentAgreementSectionProps) {
@@ -372,7 +437,10 @@ export function UserConsentAgreementSection({
 
   const doc = onOpenAgreementDocument ?? (() => window.alert('준비 중입니다.'))
 
-  const schema = CONSENT_PRESET_SCHEMA[preset]
+  const schema =
+    viewVariant === 'permission_instructor'
+      ? CONSENT_ROWS_PERMISSION_INSTRUCTOR
+      : CONSENT_PRESET_SCHEMA[preset]
   const ctx: ConsentRenderCtx = { openDocument: doc }
 
   return (
