@@ -12,10 +12,7 @@ import {
   type AccountPaymentRow,
 } from '@/data/mock/account-payments-list'
 import {
-  SCHEDULE_COLORS,
-  type ScheduleColorPair,
-} from '@/features/program/ui/program-schedule-colors'
-import {
+  settlementCalendarPrimaryTitle,
   type InstructorSettlementInvoiceDetail,
   type InstructorSettlementListRow,
   type InstructorSettlementUiStatus,
@@ -25,11 +22,11 @@ import {
   CalendarMini,
   CalendarSearch,
   CalendarSubRightSettlementList,
-  renderSettlementEventsTooltipContent,
   settlementEventStatusColorPair,
   settlementRowFromCalendarItem,
   type CalendarItem,
 } from '@/shared/components/calendar'
+import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
 import '@/shared/components/calendar/styles/calendar.css'
 import '@/shared/components/program-calendar.css'
 
@@ -46,7 +43,51 @@ function pickAnchorDate(rows: AccountPaymentRow[]): Dayjs {
 function accountPaymentStatusToUiStatus(
   s: AccountPaymentRow['accountPaymentStatus']
 ): InstructorSettlementUiStatus {
-  return s === 'completed' ? 'account_paid' : 'awaiting_confirmation'
+  return s
+}
+
+function accountPaymentStatusShortLabel(status: AccountPaymentRow['accountPaymentStatus']): string {
+  switch (status) {
+    case 'awaiting_confirmation':
+      return '확인 대기'
+    case 'partial_confirmation':
+      return '확인 중'
+    case 'account_paid':
+      return '계좌 지급'
+    case 'payment_correction_requested':
+      return '정정 요청'
+    default:
+      return '확인 대기'
+  }
+}
+
+function renderAccountPaymentEventsTooltipContent({ events: dayEvents }: { events: CalendarItem[] }) {
+  return (
+    <div className="program-calendar-schedule-panel">
+      {dayEvents.map(ev => {
+        const row = settlementRowFromCalendarItem(ev)
+        const colors = settlementEventStatusColorPair(row.status)
+        const accountStatus = (ev.original as { originalItem: InstructorSettlementListRow }).originalItem
+          .status as AccountPaymentRow['accountPaymentStatus']
+        return (
+          <div key={String(ev.id)} className="instructor-settlement-preview">
+            <div className="instructor-settlement-preview__title">
+              {settlementCalendarPrimaryTitle(row)}
+            </div>
+            <div>
+              <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
+                {accountPaymentStatusShortLabel(accountStatus)}
+              </span>
+              <span className="program-calendar-schedule-panel__text">
+                <span className="program-calendar-schedule-panel__sep">|</span> +
+                {row.scheduledAmount.toLocaleString()}원
+              </span>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 function placeholderInvoiceForAccountPaymentCalendar(
@@ -155,11 +196,13 @@ export function AccountPaymentsCalendarView({
 
   const programColorMap = useMemo(() => {
     const map = new Map<string, ScheduleColorPair>()
-    allProgramIds.forEach((id, i) => {
-      map.set(id, SCHEDULE_COLORS[i % SCHEDULE_COLORS.length] as ScheduleColorPair)
+    allProgramIds.forEach(id => {
+      const firstRow = rows.find(r => r.programName === id)
+      if (!firstRow) return
+      map.set(id, settlementEventStatusColorPair(accountPaymentStatusToUiStatus(firstRow.accountPaymentStatus)))
     })
     return map
-  }, [allProgramIds])
+  }, [allProgramIds, rows])
 
   const filteredRows = useMemo(() => {
     let r = rows
@@ -304,7 +347,7 @@ export function AccountPaymentsCalendarView({
         eventsTooltipScope="full-day"
         eventsTooltipTrigger="cell"
         formatEventsOverflowText={n => `외 ${n}개의 항목`}
-        previewTooltipContent={renderSettlementEventsTooltipContent}
+        previewTooltipContent={renderAccountPaymentEventsTooltipContent}
       />
       <div className="calendar-sub-right-list">
         <CalendarSubRightSettlementList

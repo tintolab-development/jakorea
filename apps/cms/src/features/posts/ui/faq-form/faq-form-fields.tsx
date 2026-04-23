@@ -22,7 +22,6 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
           <CmsSelect
             placeholder="전체"
             options={categoryOptions}
-            allowClear
             width={240}
             inputSize="large"
           />

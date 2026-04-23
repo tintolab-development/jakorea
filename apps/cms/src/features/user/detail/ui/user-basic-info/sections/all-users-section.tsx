@@ -93,7 +93,6 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
                   placeholder="성별"
                   inputSize="medium"
                   width={120}
-                  allowClear
                 />
                 <CmsInput
                   value={d?.birthDate ?? ''}
@@ -160,7 +159,6 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
                 options={individualAffiliationGradeSelectOptions(d?.affiliationGrade)}
                 inputSize="medium"
                 width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
-                allowClear
                 aria-label="소속 학년"
               />
             </span>

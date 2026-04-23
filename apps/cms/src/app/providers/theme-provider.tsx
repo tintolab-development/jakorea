@@ -6,6 +6,7 @@
 import { ConfigProvider, theme } from 'antd'
 import type { ReactNode } from 'react'
 import './theme-provider.css'
+import './ant-modal-motion-disable.css'
 
 interface ThemeProviderProps {
   children: ReactNode

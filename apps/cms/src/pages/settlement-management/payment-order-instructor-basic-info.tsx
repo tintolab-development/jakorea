@@ -6,6 +6,7 @@ import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { PaymentOrderAdminInstructorDetail } from '@/data/mock/payment-order-admin-list'
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatWon } from './payment-order-detail-fullpage-shared'
 import { renderAggregateStatus } from './payment-order-detail-aggregate-status'
 import '@/features/program/program-detail/ui/applicant-list/applicant-instructor-basic-info.css'
@@ -84,126 +85,70 @@ export function PaymentOrderInstructorBasicInfo({
   return (
     <div className="payment-order-program-status-detail__basic-block program-detail-fullpage-modal__info-tab-block payment-order-instructor-status-detail__basic-block">
       <div className="applicant-instructor-basic-info payment-order-instructor-status-detail__basic-applicant">
-        <div className="payment-order-instructor-status-detail__basic-header">
-          <div className="applicant-instructor-basic-info__title">기본 정보</div>
-          <PersonalInfoRevealButton
-            ui="app"
-            labelMode="toggle"
-            revealed={personalInfoRevealed}
-            variant="primary"
-            size="filter"
-            onClick={onPersonalInfoButtonClick}
-          />
-        </div>
-        <div className="applicant-instructor-basic-info__table-wrap">
-          <table className="applicant-instructor-basic-info__table payment-order-instructor-status-detail__basic-table">
-            <colgroup>
-              <col style={{ width: 120 }} />
-              <col style={{ width: 80 }} />
-              <col />
-              <col style={{ width: 200, minWidth: 200, maxWidth: 200 }} />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr>
-                <td
-                  rowSpan={2}
-                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label applicant-instructor-basic-info__cell--name"
-                >
-                  성명
-                </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
-                  한글
-                </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  {detail.nameKo}
-                </td>
-                <td
-                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label payment-order-instructor-status-detail__label-cell--wide"
-                >
-                  연락처
-                </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  {phoneDisplay}
-                </td>
-              </tr>
-              <tr>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
-                  영문
-                </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  {detail.nameEn}
-                </td>
-                <td
-                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label payment-order-instructor-status-detail__label-cell--wide"
-                >
-                  이메일
-                </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  {emailDisplay}
-                </td>
-              </tr>
-              <tr>
-                <td
-                  colSpan={2}
-                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label payment-order-instructor-status-detail__label-cell--wide payment-order-instructor-status-detail__label-cell--span2"
-                >
-                  자택 주소
-                </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  {addressDisplay}
-                </td>
-                <td
-                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label payment-order-instructor-status-detail__label-cell--wide"
-                >
-                  정산 계좌 정보
-                </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  {accountDisplay}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div
-          className="applicant-instructor-basic-info__table-wrap payment-order-instructor-status-detail__aggregate-table-wrap"
-          aria-label="지급 조서 처리 현황 및 총 정산 예정 금액"
+        <DetailInfoForm
+          title="기본 정보"
+          titleTrailing={
+            <PersonalInfoRevealButton
+              ui="app"
+              labelMode="toggle"
+              revealed={personalInfoRevealed}
+              variant="primary"
+              size="filter"
+              onClick={onPersonalInfoButtonClick}
+            />
+          }
         >
-          <table className="applicant-instructor-basic-info__table payment-order-instructor-status-detail__aggregate-table">
-            <colgroup>
-              <col style={{ width: 120 }} />
-              <col style={{ width: 80 }} />
-              <col />
-              <col style={{ width: 200, minWidth: 200, maxWidth: 200 }} />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr className="payment-order-instructor-status-detail__aggregate-row">
-                <td
-                  colSpan={2}
-                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label payment-order-instructor-status-detail__label-cell--wide payment-order-instructor-status-detail__label-cell--span2"
-                >
-                  지급 조서 처리 현황
-                </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value payment-order-instructor-status-detail__aggregate-status-value">
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.NameBlock
+              rows={[
+                {
+                  subLabel: '한글',
+                  main: <span>{detail.nameKo}</span>,
+                  sideLabel: '연락처',
+                  side: <span>{phoneDisplay}</span>,
+                },
+                {
+                  subLabel: '영문',
+                  main: <span>{detail.nameEn}</span>,
+                  sideLabel: '이메일',
+                  side: <span>{emailDisplay}</span>,
+                },
+              ]}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field label="자택 주소" view={addressDisplay} />
+            <DetailInfoForm.Field label="정산 계좌 정보" view={<span>{accountDisplay}</span>} />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
+
+        <DetailInfoForm
+          title="지급 조서 처리 현황 및 총 정산 예정 금액"
+          hideHeader
+          className="payment-order-instructor-status-detail__aggregate-form"
+        >
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="지급 조서 처리 현황"
+              view={
+                <span className="payment-order-instructor-status-detail__aggregate-status-value">
                   {renderAggregateStatus(aggregateStatus)}
-                </td>
-                <td
-                  className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label payment-order-instructor-status-detail__label-cell--wide"
-                >
-                  총 정산 예정 금액
-                </td>
-                <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value payment-order-instructor-status-detail__total-amount-cell">
-                  {aggregateStatus === 'rejected' ||
-                  aggregateStatus === 'na' ||
+                </span>
+              }
+            />
+            <DetailInfoForm.Field
+              label="총 정산 예정 금액"
+              view={
+                <span className="payment-order-instructor-status-detail__total-amount-cell">
+                  {aggregateStatus === 'na' ||
                   aggregateStatus === 'application_rejected'
                     ? '-'
                     : formatWon(detail.totalEstimatedAmount)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                </span>
+              }
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
       </div>
     </div>
   )

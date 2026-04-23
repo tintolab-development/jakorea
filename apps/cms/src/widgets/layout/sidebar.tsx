@@ -81,8 +81,13 @@ export function Sidebar() {
 
   const [controlledOpenKeys, setControlledOpenKeys] = useState<string[]>(openKeys)
 
+  /** 경로에 맞는 그룹은 열어 주되, 사용자가 펼쳐 둔 다른 그룹은 자동으로 닫지 않음 */
   useEffect(() => {
-    setControlledOpenKeys(openKeys)
+    setControlledOpenKeys(prev => {
+      const merged = new Set(prev)
+      for (const key of openKeys) merged.add(key)
+      return [...merged]
+    })
   }, [openKeys])
 
   const selectedKeys = useMemo(() => {

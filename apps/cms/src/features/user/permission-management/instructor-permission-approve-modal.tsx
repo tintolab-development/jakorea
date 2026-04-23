@@ -136,7 +136,6 @@ export function InstructorPermissionApproveModal(
               inputSize="large"
               width="100%"
               placeholder="강사비 등급을 선택해 주세요"
-              allowClear
               value={feeGrade}
               onChange={v => {
                 setFeeGrade(v as string | undefined)

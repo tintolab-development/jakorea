@@ -8,18 +8,24 @@ import type {
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/data/mock/payment-order-admin-list'
 import {
+  ACCOUNT_PAYMENT_AGGREGATE_LABELS,
+  type AccountPaymentAggregateStatus,
+} from '@/shared/constants/payment-order-aggregate-status'
+import {
   getMockPaymentOrderInstructorCalculationStatement,
   getMockPaymentOrderInstructorDetail,
   type PaymentOrderAdminInstructorDetailProgramRow,
   type PaymentOrderAdminInstructorRow,
 } from '@/data/mock/payment-order-admin-list'
 
-/** 계좌 지급 단계 (지급조서 단계와 별개) */
-export type AccountPaymentTransferStatus = 'pending' | 'completed'
+/** 계좌 지급 단계(rule): 지급 대기 중 > 확인 진행 중 > 계좌 지급 완료 > 지급 정정 요청 */
+export type AccountPaymentTransferStatus = AccountPaymentAggregateStatus
 
 export const ACCOUNT_PAYMENT_STATUS_LABELS: Record<AccountPaymentTransferStatus, string> = {
-  pending: '계좌 지급 대기 중',
-  completed: '계좌 지급 완료',
+  awaiting_confirmation: ACCOUNT_PAYMENT_AGGREGATE_LABELS.awaiting_confirmation,
+  partial_confirmation: ACCOUNT_PAYMENT_AGGREGATE_LABELS.partial_confirmation,
+  account_paid: ACCOUNT_PAYMENT_AGGREGATE_LABELS.account_paid,
+  payment_correction_requested: ACCOUNT_PAYMENT_AGGREGATE_LABELS.payment_correction_requested,
 }
 
 export interface AccountPaymentRow {
@@ -222,11 +228,17 @@ export const MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET = 109_150_000
 
 /**
  * 10건 — 전부 지급조서 확인 완료(paymentOrderStatus: confirmed).
- * 2026년 5월 기준 데이터이며, 계좌 지급 상태는 pending/completed를 균등 배치.
+ * 2026년 5월 기준 데이터이며, 계좌 지급 4상태를 순환 배치.
  */
 export const mockAccountPaymentRows: AccountPaymentRow[] = Array.from({ length: 10 }, (_, i) => {
   const no = 206 - i
-  const accountPaymentStatus: AccountPaymentTransferStatus = i % 2 === 0 ? 'pending' : 'completed'
+  const statusCycle: AccountPaymentTransferStatus[] = [
+    'awaiting_confirmation',
+    'partial_confirmation',
+    'account_paid',
+    'payment_correction_requested',
+  ]
+  const accountPaymentStatus: AccountPaymentTransferStatus = statusCycle[i % statusCycle.length]!
   const transferScheduledDate = isoDate(2026, 5, 2 + i * 2)
   const sessionLabel = i % 3 === 0 ? `${2 + (i % 2)}차시` : `${2} ~ ${3 + (i % 2)}차시`
 

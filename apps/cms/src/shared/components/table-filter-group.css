@@ -125,6 +125,35 @@
   max-width: 100%;
 }
 
+/* table-filter-group 라디오는 좁은 폭에서도 항상 가로 정렬 유지 */
+.table-filter-group__container
+  .unified-filter-card__field--radio
+  .app-radio-group.ant-radio-group {
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.table-filter-group__container
+  .unified-filter-card__field--radio
+  .app-radio-group.ant-radio-group
+  .ant-radio-wrapper {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.table-filter-group__container
+  .unified-filter-card__field--radio
+  .app-radio-group.ant-radio-group
+  .ant-radio-wrapper
+  > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /*
  * 기간(분리 세그먼트): `width` prop 없이 style만 100%일 때도 세그먼트가 218px에 묶이지 않게
  * (CmsDateRangePicker는 `width` 지정 시 cms-datepicker--explicit-width와 동일 효과)

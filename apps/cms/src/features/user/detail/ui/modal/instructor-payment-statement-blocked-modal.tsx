@@ -16,7 +16,7 @@ export interface InstructorPaymentStatementBlockedModalProps {
   layout?: 'default' | 'detailFullpage'
   /**
    * `paymentStatement`(기본): 지급조서 확인 미처리 안내
-   * `accountPaymentForms`: 계좌 지급 대기 포함 시 대량이체·세금신고 양식 발급 불가 안내
+   * `accountPaymentForms`: 계좌 지급 완료 전 상태 포함 시 대량이체·세금신고 양식 발급 불가 안내
    */
   purpose?: 'paymentStatement' | 'accountPaymentForms'
 }
@@ -43,7 +43,7 @@ export function InstructorPaymentStatementBlockedModal({
     purpose === 'accountPaymentForms' ? (
       variant === 'single' ? (
         <>
-          <span>해당 항목은 계좌 지급 대기 중입니다.</span>
+          <span>해당 항목은 계좌 지급 완료 전 상태입니다.</span>
           <span>계좌 지급이 완료되지 않은 항목은 양식 발급이 불가합니다.</span>
         </>
       ) : (
@@ -52,7 +52,7 @@ export function InstructorPaymentStatementBlockedModal({
             <strong className="instructor-payment-statement-blocked-modal__selection-emphasis">
               선택한 {selectedCount}개의 항목
             </strong>
-            중 계좌 지급 대기 중인 항목이 있습니다.
+            중 계좌 지급 완료 전 상태인 항목이 있습니다.
           </span>
           <span>계좌 지급이 완료되지 않은 항목은 양식 발급이 불가합니다.</span>
         </>

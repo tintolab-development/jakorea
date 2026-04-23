@@ -47,9 +47,7 @@ export function InstructorInvoiceModal({
   const trimmedName = instructorNameKo.trim() || '강사'
 
   const effectivePaymentStatementStatus: InstructorSettlementUiStatus =
-    data?.paymentStatementStatus === 'account_paid'
-      ? 'account_paid'
-      : currentPaymentStatementStatus
+    data?.paymentStatementStatus === 'account_paid' ? 'account_paid' : currentPaymentStatementStatus
 
   const effectiveInvoiceData = useMemo(() => {
     if (!data) return null

@@ -16,6 +16,7 @@ import {
   type AccountPaymentRow,
   type AccountPaymentTransferStatus,
 } from '@/data/mock/account-payments-list'
+import { ACCOUNT_PAYMENT_AGGREGATE_STATUSES } from '@/shared/constants/payment-order-aggregate-status'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui/cms-button'
 import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
@@ -104,9 +105,26 @@ function formatWon(amount: number): string {
 
 const statusSelectOptions: { value: AppliedAccountStatus; label: string }[] = [
   { value: 'all', label: '전체' },
-  { value: 'pending', label: ACCOUNT_PAYMENT_STATUS_LABELS.pending },
-  { value: 'completed', label: ACCOUNT_PAYMENT_STATUS_LABELS.completed },
+  ...ACCOUNT_PAYMENT_AGGREGATE_STATUSES.map(value => ({
+    value,
+    label: ACCOUNT_PAYMENT_STATUS_LABELS[value],
+  })),
 ]
+
+function getAccountPaymentStatusClassName(status: AccountPaymentTransferStatus): string {
+  switch (status) {
+    case 'awaiting_confirmation':
+      return 'account-payments-page__status-text--awaiting-confirmation'
+    case 'partial_confirmation':
+      return 'account-payments-page__status-text--partial-confirmation'
+    case 'account_paid':
+      return 'account-payments-page__status-text--account-paid'
+    case 'payment_correction_requested':
+      return 'account-payments-page__status-text--payment-correction-requested'
+    default:
+      return ''
+  }
+}
 
 function useCalendarYear(): number {
   const [y, setY] = useState(() => dayjs().year())
@@ -269,7 +287,8 @@ export default function AccountPaymentsPage() {
     return accountPaymentRows
       .filter(
         r =>
-          r.accountPaymentStatus === 'completed' && matchesDateRange(r.transferScheduledDate, range)
+          r.accountPaymentStatus === 'account_paid' &&
+          matchesDateRange(r.transferScheduledDate, range)
       )
       .reduce((s, r) => s + r.amount, 0)
   }, [accountPaymentRows, selectedYearScoped])
@@ -281,7 +300,7 @@ export default function AccountPaymentsPage() {
       return { labelDateRange: null as string | null, amount: null as number | null }
     }
     const pendingSum = filteredRows
-      .filter(r => r.accountPaymentStatus === 'pending')
+      .filter(r => r.accountPaymentStatus === 'awaiting_confirmation')
       .reduce((s, r) => s + r.amount, 0)
     return {
       labelDateRange: formatSettlementPendingDateRangeOnly([range[0], range[1]]),
@@ -366,13 +385,7 @@ export default function AccountPaymentsPage() {
         width: 160,
         align: 'center',
         render: (s: AccountPaymentTransferStatus) => (
-          <span
-            className={
-              s === 'pending'
-                ? 'account-payments-page__status-text--pending'
-                : 'account-payments-page__status-text--completed'
-            }
-          >
+          <span className={getAccountPaymentStatusClassName(s)}>
             {ACCOUNT_PAYMENT_STATUS_LABELS[s]}
           </span>
         ),
@@ -415,7 +428,7 @@ export default function AccountPaymentsPage() {
       message.warning('선택한 항목을 찾을 수 없습니다.')
       return null
     }
-    if (picked.some(r => r.accountPaymentStatus === 'pending')) {
+    if (picked.some(r => r.accountPaymentStatus !== 'account_paid')) {
       setAccountFormIssueBlockedVariant(selectedRowKeys.length === 1 ? 'single' : 'multi')
       setAccountFormIssueBlockedSelectedCount(selectedRowKeys.length)
       setAccountFormIssueBlockedOpen(true)
@@ -458,10 +471,10 @@ export default function AccountPaymentsPage() {
 
   const handleAccountPaymentCompletedForRow = useCallback((rowId: string) => {
     setAccountPaymentRows(prev =>
-      prev.map(r => (r.id === rowId ? { ...r, accountPaymentStatus: 'completed' as const } : r))
+      prev.map(r => (r.id === rowId ? { ...r, accountPaymentStatus: 'account_paid' as const } : r))
     )
     setAccountPaymentDetailRow(prev =>
-      prev && prev.id === rowId ? { ...prev, accountPaymentStatus: 'completed' as const } : prev
+      prev && prev.id === rowId ? { ...prev, accountPaymentStatus: 'account_paid' as const } : prev
     )
     message.success('계좌 지급 완료 처리되었습니다.')
   }, [])
@@ -566,7 +579,7 @@ export default function AccountPaymentsPage() {
     }
     const ids = new Set(selection.map(r => r.id))
     setAccountPaymentRows(prev =>
-      prev.map(r => (ids.has(r.id) ? { ...r, accountPaymentStatus: 'completed' as const } : r))
+      prev.map(r => (ids.has(r.id) ? { ...r, accountPaymentStatus: 'account_paid' as const } : r))
     )
     setSelectedRowKeys(prev => prev.filter(k => !ids.has(String(k))))
     closeAccountPaymentConfirmModal()
@@ -579,7 +592,7 @@ export default function AccountPaymentsPage() {
 
   const handleIssueBulkTransferFromSuccessModal = useCallback(() => {
     setAccountPaymentCompleteSuccessOpen(false)
-    const completed = filteredRows.filter(r => r.accountPaymentStatus === 'completed')
+    const completed = filteredRows.filter(r => r.accountPaymentStatus === 'account_paid')
     if (completed.length === 0) {
       message.warning(
         '현재 조회 결과에 계좌 지급 완료 항목이 없습니다. 미리보기에는 열 헤더만 표시됩니다.'

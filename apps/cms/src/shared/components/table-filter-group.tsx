@@ -93,6 +93,8 @@ export interface FilterFieldConfig {
   width?: string | number
   /** `dateRange`: 시작일 선택 시 종료일을 시작+1개월−1일로 맞춤 */
   dateRangeOneMonthFromStart?: boolean
+  /** `select`: 첫 옵션 `전체` 자동 삽입 비활성화 */
+  withAllOption?: boolean
 }
 
 export interface TableFilterGroupProps {
@@ -296,7 +298,6 @@ export function TableFilterGroup({
               value={sidoEmpty ? undefined : sido}
               selectClassName="unified-filter-card__select"
               onChange={value => onFilterChange(ar.sidoKey, value ?? '')}
-              allowClear={field.allowClear !== false}
               popupMatchSelectWidth={false}
               style={{ width: '100%', ...field.style }}
               options={ar.sidoOptions.map(opt => ({ label: opt.label, value: opt.value }))}
@@ -307,7 +308,6 @@ export function TableFilterGroup({
               value={sigungu == null || sigungu === '' ? undefined : sigungu}
               selectClassName="unified-filter-card__select"
               onChange={value => onFilterChange(ar.sigunguKey, value ?? '')}
-              allowClear={field.allowClear !== false}
               disabled={sidoEmpty}
               popupMatchSelectWidth={false}
               style={{ width: '100%', ...field.style }}
@@ -337,7 +337,6 @@ export function TableFilterGroup({
               value={primaryEmpty ? undefined : (primaryRaw as string | number)}
               selectClassName="unified-filter-card__select"
               onChange={value => onFilterChange(sp.primary.key, value ?? '')}
-              allowClear={sp.primary.allowClear ?? field.allowClear !== false}
               popupMatchSelectWidth
               style={{ width: '100%', ...field.style }}
               options={sp.primary.options.map(opt => ({ label: opt.label, value: opt.value }))}
@@ -352,7 +351,6 @@ export function TableFilterGroup({
               }
               selectClassName="unified-filter-card__select"
               onChange={value => onFilterChange(sp.secondary.key, value ?? '')}
-              allowClear={sp.secondary.allowClear ?? field.allowClear !== false}
               disabled={sp.secondary.disableWhenPrimaryEmpty === true && primaryEmpty}
               popupMatchSelectWidth
               style={{ width: '100%', ...field.style }}
@@ -372,8 +370,8 @@ export function TableFilterGroup({
             placeholder={field.placeholder || '전체'}
             value={filters[field.key]}
             selectClassName="unified-filter-card__select"
+            withAllOption={field.withAllOption}
             onChange={value => onFilterChange(field.key, value)}
-            allowClear={field.allowClear !== false}
             popupMatchSelectWidth
             style={{ width: '100%', ...field.style }}
             options={field.options?.map(opt => ({

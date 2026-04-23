@@ -75,12 +75,15 @@ export function usePaymentOrdersListPage() {
     const from = searchParams.get('po_from')
     const to = searchParams.get('po_to')
     if (from && to && from.startsWith('2025-') && to.startsWith('2025-')) {
-      setSearchParams(prev => {
-        const next = new URLSearchParams(prev)
-        next.set('po_from', PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE.from)
-        next.set('po_to', PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE.to)
-        return next
-      }, { replace: true })
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set('po_from', PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE.from)
+          next.set('po_to', PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE.to)
+          return next
+        },
+        { replace: true }
+      )
       return
     }
     if (paymentOrdersDefaultRangeAppliedRef.current) return
@@ -90,12 +93,15 @@ export function usePaymentOrdersListPage() {
     }
     if (!from && !to) {
       paymentOrdersDefaultRangeAppliedRef.current = true
-      setSearchParams(prev => {
-        const next = new URLSearchParams(prev)
-        next.set('po_from', PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE.from)
-        next.set('po_to', PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE.to)
-        return next
-      }, { replace: true })
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set('po_from', PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE.from)
+          next.set('po_to', PAYMENT_ORDERS_DEFAULT_URL_DATE_RANGE.to)
+          return next
+        },
+        { replace: true }
+      )
       return
     }
     paymentOrdersDefaultRangeAppliedRef.current = true
@@ -261,14 +267,14 @@ export function usePaymentOrdersListPage() {
           type: 'search',
           label: '프로그램명',
           placeholder: '프로그램명을 입력하세요',
-          width: '24%',
+          width: '25%',
         }
       : {
           key: 'instructorName',
           type: 'search',
           label: '강사명',
           placeholder: '강사명을 입력하세요',
-          width: '24%',
+          width: '25%',
         }
 
     return [
@@ -280,7 +286,7 @@ export function usePaymentOrdersListPage() {
           { label: '프로그램별', value: 'program' },
           { label: '강사별', value: 'instructor' },
         ],
-        width: '14%',
+        width: '16%',
       },
       nameFilter,
       {
@@ -290,13 +296,13 @@ export function usePaymentOrdersListPage() {
         placeholder: '전체',
         options: PENDING_PAYMENT_ITEM_FILTER_OPTIONS,
         allowClear: true,
-        width: '18%',
+        width: '25%',
       },
       {
         key: 'dateRange',
         type: 'dateRange',
         label: '기간',
-        width: '44%',
+        width: '34%',
         dateRangeOneMonthFromStart: true,
       },
     ]

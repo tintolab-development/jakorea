@@ -1,0 +1,38 @@
+/**
+ * CMS 전역: Ant Modal 스케일 모션 비활성화
+ * - 열림/닫힘 모두 scale 없이 opacity만 변화
+ * - `animationend`는 유지되어 닫힘 로직이 정상 동작
+ */
+
+@keyframes antModalNoScaleIn {
+  0% {
+    transform: none;
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes antModalNoScaleOut {
+  0% {
+    transform: none;
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+    opacity: 0;
+  }
+}
+
+.ant-modal.ant-zoom-enter.ant-zoom-enter-active,
+.ant-modal.ant-zoom-appear.ant-zoom-appear-active {
+  animation-name: antModalNoScaleIn !important;
+  transform: none !important;
+}
+
+.ant-modal.ant-zoom-leave.ant-zoom-leave-active {
+  animation-name: antModalNoScaleOut !important;
+  transform: none !important;
+}
