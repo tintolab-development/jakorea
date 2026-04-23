@@ -12,6 +12,8 @@ import type { InstructorPermissionRevokeNotifyTiming } from '@/features/user/det
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 
 export interface UserDetailFullpageShellValue {
+  mode: 'default' | 'permission'
+  permissionRole?: 'instructor' | 'admin'
   displayUser: Omit<User, 'password'>
   tabState: TabState
   derived: UserDetailFullpageDerived
@@ -53,6 +55,10 @@ export interface UserDetailFullpageShellValue {
   onConfirmInstructorPermissionRevoke: (payload: {
     reason: string
     notifyTiming: InstructorPermissionRevokeNotifyTiming
+  }) => void
+  onPermissionResendNotification?: (ctx: {
+    userId: string
+    permissionRole: 'instructor' | 'admin'
   }) => void
 }
 

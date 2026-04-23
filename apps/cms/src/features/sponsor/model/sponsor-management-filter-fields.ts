@@ -11,7 +11,6 @@ export const sponsorManagementFilterFields: FilterFieldConfig[] = [
       { label: '전체', value: 'ALL' },
       { label: '기업', value: 'corporate' },
       { label: '재단', value: 'foundation' },
-      { label: '기관', value: 'institution' },
     ],
   },
   {

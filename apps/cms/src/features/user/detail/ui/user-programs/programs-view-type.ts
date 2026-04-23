@@ -1,0 +1,6 @@
+export type ProgramsViewType =
+  | 'ENROLLMENT_TABLE'
+  | 'STUDENT_HISTORY'
+  | 'SCHOOL_PARTICIPATION'
+  | 'LECTURE_HISTORY'
+  | 'VOLUNTEER_HISTORY'

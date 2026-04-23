@@ -8,6 +8,7 @@ import type {
   MemberPermissionApplicationStatus,
 } from '@/types/member-permission-application'
 import { mockUsers } from './users'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 
 function categoryForUser(u: User): MemberPermissionApplicationRow['memberCategory'] {
   return u.role
@@ -42,12 +43,10 @@ function rowFromUser(
   }
 }
 
-/** 강사 권한 신청: 강사·개인·학교(교사) 혼합 (실제 userId로 상세 모달 연동) */
-const instructorSourceUsers: User[] = [
-  ...mockUsers.filter(u => u.role === 'INSTRUCTOR'),
-  ...mockUsers.filter(u => u.role === 'INDIVIDUAL').slice(0, 24),
-  ...mockUsers.filter(u => u.role === 'SCHOOL').slice(0, 16),
-]
+/** 강사 권한 신청: 순수 강사(`instructor_only`)만 노출 (교사/겸직 강사 제외) */
+const instructorSourceUsers: User[] = mockUsers.filter(
+  u => u.role === 'INSTRUCTOR' && resolveInstructorMemberProfile(u) === 'instructor_only'
+)
 
 /** 관리자 권한 신청: 관리자 + 일부 개인(승급 후보) */
 const adminSourceUsers: User[] = [

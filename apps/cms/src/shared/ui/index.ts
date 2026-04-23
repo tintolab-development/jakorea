@@ -18,6 +18,8 @@ export {
 } from './action-result-messages'
 export { DeleteGuideModal } from './delete-guide-modal'
 export type { DeleteGuideModalProps } from './delete-guide-modal'
+export { ProgramHistoryDeleteBlockedModal } from './program-history-delete-blocked-modal'
+export type { ProgramHistoryDeleteBlockedModalProps } from './program-history-delete-blocked-modal'
 export {
   buildDomainEntityDeleteMessageLines,
   buildBulkDeleteGuideTitle,
@@ -28,6 +30,7 @@ export {
 export {
   PROGRAM_PROGRESS_HISTORY_DOMAIN,
   buildProgramProgressHistoryDeleteGuide,
+  type ProgramProgressHistoryDeleteDomain,
   type ProgramProgressHistoryDeleteGuide,
 } from './program-progress-history-delete-guide'
 export { InquiryModal } from './inquiry-modal'

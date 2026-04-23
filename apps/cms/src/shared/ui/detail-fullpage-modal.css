@@ -134,12 +134,16 @@
  * `overflow-x: hidden`만 준 `__content`가 많은 엔진에서 sticky 조상으로 취급되어 우측 `position:sticky`가 무효화됨.
  * `clip`은 가로만 막고 스크롤 컨테이너를 만들지 않아 sticky가 `__main` 기준으로 동작함.
  */
-.detail-fullpage-modal__content:has(.instructor-payment-tab__calendar-view-container--no-inner-scroll) {
+.detail-fullpage-modal__content:has(
+  .instructor-payment-tab__calendar-view-container--no-inner-scroll
+) {
   overflow-x: clip;
 }
 
 @supports not (overflow-x: clip) {
-  .detail-fullpage-modal__content:has(.instructor-payment-tab__calendar-view-container--no-inner-scroll) {
+  .detail-fullpage-modal__content:has(
+    .instructor-payment-tab__calendar-view-container--no-inner-scroll
+  ) {
     overflow-x: visible;
   }
 }

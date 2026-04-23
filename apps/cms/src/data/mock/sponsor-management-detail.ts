@@ -38,6 +38,7 @@ const DEFAULT_CONTACTS: SponsorContactRow[] = [
 const DEFAULT_PROGRAM_HISTORIES: SponsorProgramHistoryRow[] = [
   {
     id: 'sponsor-program-history-206',
+    programId: 'economy-prog-001',
     title: 'HSBC/HKU Business Case Competition 2026 도전 안내',
     year: 2026,
     lifecycleStatus: 'planned',
@@ -48,16 +49,18 @@ const DEFAULT_PROGRAM_HISTORIES: SponsorProgramHistoryRow[] = [
   },
   {
     id: 'sponsor-program-history-205',
+    programId: 'economy-prog-002',
     title: '2026 JA Korea 대학생경제캠프 ULT 36기 모집',
     year: 2026,
     lifecycleStatus: 'education_in_progress',
     managerName: '홍길동',
     participantCount: '30 / 30',
-    participantType: 'volunteer',
+    participantType: 'individual',
     educationTarget: 'college',
   },
   {
     id: 'sponsor-program-history-204',
+    programId: 'economy-prog-003',
     title: 'EY한영_JA Kova Growth to Professional 2026 대학생 자기 탐진',
     year: 2026,
     lifecycleStatus: 'planned',
@@ -68,6 +71,7 @@ const DEFAULT_PROGRAM_HISTORIES: SponsorProgramHistoryRow[] = [
   },
   {
     id: 'sponsor-program-history-203',
+    programId: 'economy-prog-004',
     title: '2026년 JA Korea 초등 경제교육 모집 안내',
     year: 2026,
     lifecycleStatus: 'planned',
@@ -78,6 +82,7 @@ const DEFAULT_PROGRAM_HISTORIES: SponsorProgramHistoryRow[] = [
   },
   {
     id: 'sponsor-program-history-202',
+    programId: 'economy-prog-005',
     title: '2026 SAP-함께 성장하JA 참여 고등학생 모집 안내 (IT, SW 멘토링)',
     year: 2026,
     lifecycleStatus: 'education_in_progress',
@@ -88,16 +93,18 @@ const DEFAULT_PROGRAM_HISTORIES: SponsorProgramHistoryRow[] = [
   },
   {
     id: 'sponsor-program-history-201',
+    programId: 'economy-prog-006',
     title: '2026 SAP-JA Korea Global Career Discovery 원데이 취업 멘토링',
     year: 2026,
     lifecycleStatus: 'education_in_progress',
     managerName: '홍길동',
     participantCount: '3 / 30',
-    participantType: 'volunteer',
+    participantType: 'individual',
     educationTarget: 'adult',
   },
   {
     id: 'sponsor-program-history-200',
+    programId: 'economy-prog-007',
     title: '2026년 JA Korea 경제금융 교육 전문가단 모집',
     year: 2026,
     lifecycleStatus: 'education_completed',
@@ -108,6 +115,7 @@ const DEFAULT_PROGRAM_HISTORIES: SponsorProgramHistoryRow[] = [
   },
   {
     id: 'sponsor-program-history-199',
+    programId: 'economy-prog-008',
     title: '2026 한국지멘스-JA Korea 특별반 JOB 참가자 모집',
     year: 2026,
     lifecycleStatus: 'education_completed',

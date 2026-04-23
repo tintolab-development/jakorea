@@ -1,3 +1,4 @@
+import type { TextbookEducationTarget } from '@/features/textbook/model/textbook-education-targets'
 import type {
   TextbookCreateInput,
   TextbookEducationStage,
@@ -50,7 +51,7 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
   {
     id: 'TB-126',
-    businessArea: '기업가정신',
+    businessArea: '디지털 리터러시',
     educationTarget: '초등학교',
     grade: '1학년',
     textbookName: 'JA MY Business',
@@ -60,7 +61,7 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
   {
     id: 'TB-125',
-    businessArea: '기업가정신',
+    businessArea: '디지털 리터러시',
     educationTarget: '중학교',
     grade: '2학년',
     textbookName: 'JA MY Business',
@@ -70,7 +71,7 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
   {
     id: 'TB-124',
-    businessArea: '기업가정신',
+    businessArea: '디지털 리터러시',
     educationTarget: '고등학교',
     grade: '3학년',
     textbookName: 'JA MY Business',
@@ -91,8 +92,8 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   {
     id: 'TB-122',
     businessArea: '기업가정신',
-    educationTarget: '초등학교',
-    grade: '1학년',
+    educationTarget: '유아',
+    grade: '전학년',
     textbookName: 'JA MY Business',
     useStatus: 'USED',
     registrant: '이이',
@@ -110,7 +111,7 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
   {
     id: 'TB-120',
-    businessArea: '금융교육',
+    businessArea: '경제금융',
     educationTarget: '고등학교',
     grade: '3학년',
     textbookName: 'JA Smart Finance',
@@ -120,7 +121,7 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
   {
     id: 'TB-119',
-    businessArea: '금융교육',
+    businessArea: '경제금융',
     educationTarget: '대학교',
     grade: '전학년',
     textbookName: 'JA Smart Finance',
@@ -130,9 +131,9 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
   {
     id: 'TB-118',
-    businessArea: '진로교육',
-    educationTarget: '초등학교',
-    grade: '1학년',
+    businessArea: '진로취업',
+    educationTarget: '유아',
+    grade: '전학년',
     textbookName: 'JA Career Start',
     useStatus: 'UNUSED',
     registrant: '윤봉길',
@@ -140,7 +141,7 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
   {
     id: 'TB-117',
-    businessArea: '진로교육',
+    businessArea: '진로취업',
     educationTarget: '중학교',
     grade: '2학년',
     textbookName: 'JA Career Start',
@@ -160,7 +161,7 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
   {
     id: 'TB-115',
-    businessArea: '금융교육',
+    businessArea: '경제금융',
     educationTarget: '중학교',
     grade: '1학년',
     textbookName: 'JA Money Basics',
@@ -170,7 +171,7 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
   {
     id: 'TB-114',
-    businessArea: '진로교육',
+    businessArea: '진로취업',
     educationTarget: '고등학교',
     grade: '2학년',
     textbookName: 'JA Future Path',
@@ -190,8 +191,8 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
   {
     id: 'TB-112',
-    businessArea: '금융교육',
-    educationTarget: '초등학교',
+    businessArea: '경제금융',
+    educationTarget: '유아',
     grade: '전학년',
     textbookName: 'JA Finance for Kids',
     useStatus: 'UNUSED',
@@ -200,7 +201,7 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
   {
     id: 'TB-111',
-    businessArea: '진로교육',
+    businessArea: '진로취업',
     educationTarget: '대학교',
     grade: '1학년',
     textbookName: 'JA Career Design',
@@ -311,7 +312,10 @@ function normalizeEducationStages(
   })
 }
 
-function summarizeFromStages(stages: TextbookEducationStage[]): { target: string; grade: string } {
+function summarizeFromStages(stages: TextbookEducationStage[]): {
+  target: TextbookEducationTarget
+  grade: string
+} {
   const selectedStage =
     stages.find(stage => stage.selected || (stage.grades ?? []).some(grade => grade.selected)) ??
     stages[0]
@@ -334,7 +338,7 @@ function summarizeFromStages(stages: TextbookEducationStage[]): { target: string
   }
 }
 
-function fromEducationStageKey(key: TextbookEducationStageKey): string {
+function fromEducationStageKey(key: TextbookEducationStageKey): TextbookEducationTarget {
   switch (key) {
     case 'kindergarten':
       return '유아'

@@ -15,7 +15,7 @@ import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payme
 import type { PaymentOrderCalculationStatementCommitPayload } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 import { PaymentOrderBatchConfirmModal } from './payment-order-batch-confirm-modal'
 import { Divider } from '@/shared/components/divider'
-import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/instructor-payment-statement-blocked-modal'
+import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
 import { AppButton } from '@/shared/ui/app-button'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import {

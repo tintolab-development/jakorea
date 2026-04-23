@@ -113,11 +113,15 @@ export interface User {
   createdAt: DateValue
   updatedAt: DateValue
 
-  /** CMS 회원 상세 — 관리자 메모(있을 때만 본문 표시) */
+  /** CMS 회원 상세 — 관리자 공유 메모(빈 값이면 UI에서 안내 문구 표시) */
   adminComment?: string
 
   /** 회원 권한 승인 페이지에서 관리되는 권한 승인 현황 */
   permissionApprovalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED'
+  /** 권한 승인/반려 처리 일시 (권한 승인 현황 기본 노출 기준) */
+  permissionApprovalHandledAt?: DateValue
+  /** 권한 승인 현황에서 알림 재발송 버튼을 마지막으로 누른 일시 */
+  permissionNotificationResentAt?: DateValue
 
   /**
    * CMS: 관리자 「회원 등록」으로 생성된 이력이 있는지.
@@ -166,8 +170,10 @@ export interface UserListRowMetrics {
   jaEvaluationGrade?: string
   /** 강사: 정산 현황 라벨 */
   settlementStatusLabel?: string
-  /** 관리자: 담당 프로그램 수 (없으면 programRoles 키 개수 사용) */
+  /** 관리자: 담당 프로그램 수 — 전체(진행 종료 포함) */
   managedProgramCount?: number
+  /** 관리자: 담당 프로그램 중 진행 중인 건수 (`managedProgramCount`와 함께 상세·목록에 표기) */
+  managedProgramInProgressCount?: number
   /** 관리자 목록: 권한 유형 태그 (없으면 programRoles로 추론) */
   adminPermissionVariant?: 'manager' | 'partner' | 'viewer'
   /** 일반 교사 상세: 재직 현황 라벨 */

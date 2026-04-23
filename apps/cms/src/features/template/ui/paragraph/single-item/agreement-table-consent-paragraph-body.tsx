@@ -1,7 +1,6 @@
 import { Input } from 'antd'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import type { AgreementTableConsentParagraph } from '@/features/template/model/writing-form-draft.schema'
-import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
 import '@/features/template/ui/form-editor/form-editor.css'
 
 const HEADER_PH = '항목명을 입력해 주세요'
@@ -30,21 +29,6 @@ export function AgreementTableConsentBody({
 
   return (
     <div className="form-editor-body">
-      <ParagraphInput
-        type="title"
-        isEditMode={isEditMode}
-        value={paragraph.paragraphTitle}
-        onChange={next => onChange({ ...paragraph, paragraphTitle: next })}
-        placeholder="타이틀을 입력해 주세요"
-      />
-      <ParagraphInput
-        type="description"
-        isEditMode={isEditMode}
-        value={paragraph.paragraphDescription}
-        onChange={next => onChange({ ...paragraph, paragraphDescription: next })}
-        placeholder="설명 입력"
-      />
-
       <div className="form-editor-agreement-table">
         <div className="form-editor-agreement-table__row form-editor-agreement-table__row--header">
           {([0, 1, 2] as const).map(i => (

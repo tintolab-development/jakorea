@@ -9,7 +9,7 @@ import {
 } from '@/shared/constants'
 import { LectureAttendanceModal } from '@/features/program/ui/lecture-attendance-modal'
 import { AssignmentSubmissionModal } from '@/features/program/ui/assignment-submission-modal'
-import { InstructorPermissionRevokeModal } from '@/features/user/detail/ui/instructor-permission-revoke-modal'
+import { InstructorPermissionRevokeModal } from '@/features/user/detail/ui/modal/instructor-permission-revoke-modal'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
 
 export function UserDetailFullpageModalsStack() {
@@ -34,12 +34,11 @@ export function UserDetailFullpageModalsStack() {
           open
           onCancel={onWithdrawModalCancel}
           onConfirm={onWithdrawModalConfirm}
-          title={sections.withdraw.isSchoolDelete ? '학교 탈퇴 안내' : '회원 탈퇴 안내'}
+          title={sections.withdraw.isSchoolDelete ? '학교 삭제 안내' : '회원 탈퇴 안내'}
           lines={
             sections.withdraw.isSchoolDelete
               ? buildSchoolDeleteMessageLines({
-                  displayName:
-                    displayUser.schoolInfo?.schoolName?.trim() || displayUser.name,
+                  displayName: displayUser.schoolInfo?.schoolName?.trim() || displayUser.name,
                 })
               : buildMemberWithdrawMessageLines({ displayName: displayUser.name })
           }

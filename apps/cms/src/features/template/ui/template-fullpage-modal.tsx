@@ -168,4 +168,8 @@ export function TemplateFullpageModalCardDescription({
   )
 }
 
-export { ParagraphCard, type ParagraphCardProps } from '@/features/template/ui/paragraph/shared/paragraph-card'
+export {
+  ParagraphCard,
+  type ParagraphCardEditableHeading,
+  type ParagraphCardProps,
+} from '@/features/template/ui/paragraph/shared/paragraph-card'

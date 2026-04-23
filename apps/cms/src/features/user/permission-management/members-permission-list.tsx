@@ -225,20 +225,6 @@ export const MembersPermissionList = forwardRef<
     []
   )
 
-  const selectedKeySet = useMemo(
-    () => new Set(selectedRowKeys.map(k => String(k))),
-    [selectedRowKeys]
-  )
-
-  const selectedRows = useMemo(
-    () => tableData.filter(r => selectedKeySet.has(String(r.id))),
-    [tableData, selectedKeySet]
-  )
-
-  /** 선택 행이 있고 모두 승인 완료면 승인 버튼 숨김 */
-  const showListApproveButton =
-    selectedRows.length === 0 || !selectedRows.every(r => r.approvalStatus === 'APPROVED')
-
   /**
    * 선택 id → 전체 목록(rows)에서 승인 대기 행만 수집 ([신청 승인]용).
    */
@@ -564,19 +550,21 @@ export const MembersPermissionList = forwardRef<
             onClick={bulkReject}
             disabled={!canWrite || selectedRowKeys.length === 0}
           >
-            {memberType === 'instructor' ? '승인 반려' : '신청 반려'}
+            신청 반려
           </CmsButton>
-          {showListApproveButton ? (
-            <CmsButton onClick={bulkApprove} disabled={!canWrite || selectedRowKeys.length === 0}>
-              신청 승인
-            </CmsButton>
-          ) : null}
+          <CmsButton
+            variant="secondary"
+            onClick={bulkApprove}
+            disabled={!canWrite || selectedRowKeys.length === 0}
+          >
+            신청 승인
+          </CmsButton>
           <PersonalInfoRevealButton
             ui="cms"
             labelMode="toggle"
             revealed={isSelectedRowPrivacyRevealed}
             cmsVariant={isSelectedRowPrivacyRevealed ? 'default' : 'primary'}
-            cmsSize="medium"
+            cmsSize="large"
             width={180}
             disabled={selectedRowKeys.length !== 1}
             onClick={() =>

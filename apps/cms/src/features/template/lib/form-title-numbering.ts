@@ -36,6 +36,21 @@ function formatToken(style: FormTitleNumberingStyle, sequence: number): string {
   return `${sequence}`
 }
 
+/** 카드 제목 `ParagraphInput` 앞 번호 접두 (예: `1. `, `A. `) — 번호 없으면 undefined */
+export function getFormParagraphTitleNumberPrefix(
+  paragraphs: WritingFormParagraph[],
+  paragraph: WritingFormParagraph,
+  style: FormTitleNumberingStyle
+): string | undefined {
+  if (!paragraph.participatesInTitleNumbering || style === 'none') return undefined
+  const seq = getTitleNumberSequenceIndex(paragraphs, paragraph.id)
+  if (seq == null) return undefined
+  const token = formatToken(style, seq)
+  if (!token) return undefined
+  if (style === 'q_repeat') return `${token}. `
+  return `${token}. `
+}
+
 /** 카드/헤더용: 접두 + 구분자 + 원문 타이틀(또는 아웃라인 라벨) */
 export function getFormParagraphDisplayTitle(
   paragraphs: WritingFormParagraph[],

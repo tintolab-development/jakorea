@@ -243,16 +243,21 @@ function DetailInfoFormInputsSeparator() {
   return <span className="detail-info-form-inputs-separator"> | </span>
 }
 
+/** `InputsSeparator`와 동일 — 읽기 전용 값 줄 등에서 짧게 쓸 때 */
+const DetailInfoFormSeparator = DetailInfoFormInputsSeparator
+
 DetailInfoFormRoot.Row = DetailInfoFormRow
 DetailInfoFormRoot.Field = DetailInfoFormField
 DetailInfoFormRoot.NameBlock = DetailInfoFormNameBlock
 DetailInfoFormRoot.InputsSeparator = DetailInfoFormInputsSeparator
+DetailInfoFormRoot.Separator = DetailInfoFormSeparator
 
 type DetailInfoFormCompound = typeof DetailInfoFormRoot & {
   Row: typeof DetailInfoFormRow
   Field: typeof DetailInfoFormField
   NameBlock: typeof DetailInfoFormNameBlock
   InputsSeparator: typeof DetailInfoFormInputsSeparator
+  Separator: typeof DetailInfoFormSeparator
 }
 
 export const DetailInfoForm = DetailInfoFormRoot as DetailInfoFormCompound

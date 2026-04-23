@@ -2,7 +2,14 @@
  * 관리자 회원 상세 — 담당 프로그램 이력 (필터 + 테이블)
  */
 
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type Key,
+  type MouseEvent,
+} from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -13,6 +20,7 @@ import { mockPrograms } from '@/data/mock'
 import {
   getEnrollmentDisplayStatusFromProgramLifecycle,
   getProgramLifecycleLabel,
+  isProgramHistoryDeleteBlockedByDisplayStatus,
 } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/components/status-badge'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -23,7 +31,12 @@ import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
-import { CmsButton, DeleteGuideModal, buildProgramProgressHistoryDeleteGuide } from '@/shared/ui'
+import {
+  CmsButton,
+  DeleteGuideModal,
+  ProgramHistoryDeleteBlockedModal,
+  buildProgramProgressHistoryDeleteGuide,
+} from '@/shared/ui'
 import { buildProgressYearSelectOptions } from '@/shared/utils'
 import '@/features/program/ui/program-list.css'
 import '@/pages/programs/program-list-page.css'
@@ -106,6 +119,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
   }, [sourcePrograms])
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteBlockedModalOpen, setDeleteBlockedModalOpen] = useState(false)
 
   const yearOptions = useMemo(() => buildProgressYearSelectOptions(ALL), [])
 
@@ -177,7 +191,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
     ]
   }, [yearOptions, lifecycleOptions])
 
-  const tableContext = useMemo(() => ({} as const), [])
+  const tableContext = useMemo(() => ({}) as const, [])
 
   const {
     pendingFilters,
@@ -215,11 +229,22 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
   }, [])
 
   const handleDeleteConfirm = useCallback((): void => {
+    const hasInProgress = selectedPrograms.some(p =>
+      isProgramHistoryDeleteBlockedByDisplayStatus(
+        getEnrollmentDisplayStatusFromProgramLifecycle(p.lifecycleStatus)
+      )
+    )
+    if (hasInProgress) {
+      setDeleteModalOpen(false)
+      setDeleteBlockedModalOpen(true)
+      return
+    }
+
     const idSet = new Set(selectedRowKeys.map(k => String(k)))
     setLocalPrograms(prev => prev.filter(p => !idSet.has(p.id)))
     setSelectedRowKeys([])
     setDeleteModalOpen(false)
-  }, [selectedRowKeys])
+  }, [selectedPrograms, selectedRowKeys])
 
   const columns: ColumnsType<Program> = useMemo(
     () => [
@@ -284,6 +309,25 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
     []
   )
 
+  const adminManagedProgramTableOnRow = useCallback(
+    (_record: Program) => ({
+      onClick: (e: MouseEvent<HTMLElement>) => {
+        const el = e.target as HTMLElement
+        if (
+          el.closest('.ant-table-selection-column') ||
+          el.closest('.ant-checkbox-wrapper') ||
+          el.closest('button') ||
+          el.closest('a')
+        ) {
+          return
+        }
+        window.alert('준비 중입니다.')
+      },
+      style: { cursor: 'pointer' as const },
+    }),
+    []
+  )
+
   return (
     <>
       <FilterTableLayout
@@ -298,10 +342,14 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
         }}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
-        title="프로그램 진행 이력"
+        title="프로그램 담당 이력"
         description={`총 ${displayedCount}건`}
         actions={
-          <CmsButton variant="delete" disabled={selectedRowKeys.length === 0} onClick={handleOpenDeleteModal}>
+          <CmsButton
+            variant="delete"
+            disabled={selectedRowKeys.length === 0}
+            onClick={handleOpenDeleteModal}
+          >
             이력 삭제
           </CmsButton>
         }
@@ -317,6 +365,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
           scroll={{ x: 'max-content' }}
           pagination={false}
           className="cms-data-table cms-data-table--fluid"
+          onRow={adminManagedProgramTableOnRow}
         />
       </FilterTableLayout>
       {deleteModalOpen && deleteGuide && (
@@ -332,6 +381,12 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
           confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
         />
       )}
+      {deleteBlockedModalOpen ? (
+        <ProgramHistoryDeleteBlockedModal
+          open
+          onClose={() => setDeleteBlockedModalOpen(false)}
+        />
+      ) : null}
     </>
   )
 }

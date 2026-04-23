@@ -25,8 +25,8 @@ import {
 } from '@/data/mock'
 import { downloadFile } from '@/shared/lib/file-download'
 import { truncateDisplayNameForList } from '@/shared/lib/truncate-display-name'
-import { POST_DETAIL_EMOJI_BAR_ITEMS } from './post-detail-emoji-bar-icons'
-import { PostReadStatusPopoverContent } from './post-read-status-popover'
+import { POST_DETAIL_EMOJI_BAR_ITEMS } from '../post-detail-emoji-bar-icons'
+import { PostReadStatusPopoverContent } from '../post-read-status-popover'
 import './post-detail-modal.css'
 
 function formatKoDate(date: string | Date): string {

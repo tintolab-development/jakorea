@@ -25,6 +25,8 @@ import {
   type TextbookKitQuantityValues,
 } from '@/features/textbook/ui/textbook-kit-quantity-modal'
 import { TextbookDetailFullPageModal } from '@/features/textbook/ui/textbook-detail-fullpage-modal'
+import { TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS } from '@/features/textbook/model/textbook-business-areas'
+import { TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS } from '@/features/textbook/model/textbook-education-targets'
 import type { TextbookRow, TextbookUseStatus } from '@/features/textbook/model/textbook.types'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -75,12 +77,7 @@ const textbookFilterFields: FilterFieldConfig[] = [
     label: '사업 분야',
     placeholder: '전체',
     width: '16%',
-    options: [
-      { label: '전체', value: 'ALL' },
-      { label: '기업가정신', value: '기업가정신' },
-      { label: '금융교육', value: '금융교육' },
-      { label: '진로교육', value: '진로교육' },
-    ],
+    options: [{ label: '전체', value: 'ALL' }, ...TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS],
   },
   {
     key: 'educationTarget',
@@ -88,13 +85,7 @@ const textbookFilterFields: FilterFieldConfig[] = [
     label: '교육 대상',
     placeholder: '전체',
     width: '16%',
-    options: [
-      { label: '전체', value: 'ALL' },
-      { label: '초등학교', value: '초등학교' },
-      { label: '중학교', value: '중학교' },
-      { label: '고등학교', value: '고등학교' },
-      { label: '대학교', value: '대학교' },
-    ],
+    options: [{ label: '전체', value: 'ALL' }, ...TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS],
   },
   {
     key: 'grade',
@@ -143,8 +134,10 @@ export default function TextbookPage() {
   const [registerModalOpen, setRegisterModalOpen] = useState(false)
   const [kitQuantityModalOpen, setKitQuantityModalOpen] = useState(false)
   const [kitQuantityChangeConfirmOpen, setKitQuantityChangeConfirmOpen] = useState(false)
-  const [kitQuantities, setKitQuantities] = useState<TextbookKitQuantityValues>(DEFAULT_KIT_QUANTITIES)
-  const [pendingKitQuantities, setPendingKitQuantities] = useState<TextbookKitQuantityValues | null>(null)
+  const [kitQuantities, setKitQuantities] =
+    useState<TextbookKitQuantityValues>(DEFAULT_KIT_QUANTITIES)
+  const [pendingKitQuantities, setPendingKitQuantities] =
+    useState<TextbookKitQuantityValues | null>(null)
 
   const detailTextbookId = searchParams.get('textbookId')
   const detailMode = searchParams.get('textbookMode') === 'edit' ? 'edit' : 'view'
@@ -177,7 +170,10 @@ export default function TextbookPage() {
   const filteredRows = useMemo(() => {
     const keyword = appliedFilters.textbookName.trim().toLowerCase()
     return rows.filter(row => {
-      if (appliedFilters.businessArea !== 'ALL' && row.businessArea !== appliedFilters.businessArea) {
+      if (
+        appliedFilters.businessArea !== 'ALL' &&
+        row.businessArea !== appliedFilters.businessArea
+      ) {
         return false
       }
       if (
@@ -240,13 +236,10 @@ export default function TextbookPage() {
     }
   }, [])
 
-  const handleKitQuantityConfirm = useCallback(
-    (nextValues: TextbookKitQuantityValues) => {
-      setPendingKitQuantities(nextValues)
-      setKitQuantityChangeConfirmOpen(true)
-    },
-    []
-  )
+  const handleKitQuantityConfirm = useCallback((nextValues: TextbookKitQuantityValues) => {
+    setPendingKitQuantities(nextValues)
+    setKitQuantityChangeConfirmOpen(true)
+  }, [])
 
   const handleConfirmKitQuantityChange = useCallback(() => {
     if (pendingKitQuantities == null) return
@@ -257,12 +250,28 @@ export default function TextbookPage() {
     message.success('키트 수량이 변경되었습니다.')
   }, [pendingKitQuantities])
 
-  const deleteGuideTitle = '교재 일괄 삭제 안내'
-  const deleteGuideLines = [
-    `[선택한 ${selectedRowKeys.length}개의 교재]를 목록에서 모두 삭제하시겠습니까?`,
-    '삭제 시 반려 처리되며, 등록된 정보는 모두 삭제됩니다.',
-    '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
-  ]
+  const { deleteGuideTitle, deleteGuideLines } = useMemo(() => {
+    const n = selectedRowKeys.length
+    if (n === 1) {
+      const id = String(selectedRowKeys[0])
+      const row = rows.find(r => r.id === id)
+      const name = row?.textbookName?.trim() || '해당 교재'
+      return {
+        deleteGuideTitle: '교재 삭제 안내',
+        deleteGuideLines: [
+          `[${name}] 교재를 삭제하시겠습니까?`,
+          '삭제된 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
+        ],
+      }
+    }
+    return {
+      deleteGuideTitle: '교재 일괄 삭제 안내',
+      deleteGuideLines: [
+        `**선택한 ${n}개의 교재**를 목록에서 모두 삭제하시겠습니까?`,
+        '삭제된 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
+      ],
+    }
+  }, [rows, selectedRowKeys])
 
   const columns: ColumnsType<TextbookRow> = useMemo(
     () => [
@@ -367,7 +376,11 @@ export default function TextbookPage() {
         }}
         onSave={async payload => {
           if (!selectedTextbook) return
-          if (!payload.textbookName.trim() || !payload.textbookNameEn?.trim() || !payload.businessArea) {
+          if (
+            !payload.textbookName.trim() ||
+            !payload.textbookNameEn?.trim() ||
+            !payload.businessArea
+          ) {
             message.warning('필수 항목을 모두 입력해 주세요.')
             return
           }
@@ -440,10 +453,7 @@ export default function TextbookPage() {
             >
               교재 삭제
             </CmsButton>
-            <CmsButton
-              variant="secondary"
-              onClick={() => setKitQuantityModalOpen(true)}
-            >
+            <CmsButton variant="secondary" onClick={() => setKitQuantityModalOpen(true)}>
               키트 수량 관리
             </CmsButton>
             <CmsButton
@@ -474,7 +484,10 @@ export default function TextbookPage() {
           onRow={record => ({
             onClick: event => {
               const target = event.target as HTMLElement
-              if (target.closest('.ant-checkbox-wrapper') || target.closest('.ant-table-selection-column')) {
+              if (
+                target.closest('.ant-checkbox-wrapper') ||
+                target.closest('.ant-table-selection-column')
+              ) {
                 return
               }
               setDetailRoute(record.id, 'view')

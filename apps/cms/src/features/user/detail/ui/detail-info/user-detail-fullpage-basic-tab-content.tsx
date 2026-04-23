@@ -16,13 +16,14 @@ import { UserDetailAdminCommentSection } from './user-detail-admin-comment-secti
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 import {
-  canAccessAdminCommentInAdminDetail,
   canEditAdminMemberInfo,
-  shouldShowAdminCommentSection,
+  shouldShowAdminCommentSectionForViewer,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 
 export interface UserDetailFullpageBasicTabContentProps {
+  mode: 'default' | 'permission'
+  permissionRole?: 'instructor' | 'admin'
   user: Omit<User, 'password'>
   basicTab: UserDetailStrategySectionConfig['basicTab']
   basicInfoEntrySource?: UserBasicInfoEntrySource
@@ -36,9 +37,15 @@ export interface UserDetailFullpageBasicTabContentProps {
   onPatchAdminPermissionVariantFromDetailView?: (
     nextPermission: AdminPermissionTagVariant
   ) => void | Promise<void>
+  onPermissionResendNotification?: (ctx: {
+    userId: string
+    permissionRole: 'instructor' | 'admin'
+  }) => void
 }
 
 export function UserDetailFullpageBasicTabContent({
+  mode,
+  permissionRole,
   user,
   basicTab,
   basicInfoEntrySource,
@@ -50,14 +57,12 @@ export function UserDetailFullpageBasicTabContent({
   onMemberInfoDraftChange,
   adminPermissionVariantPatching = false,
   onPatchAdminPermissionVariantFromDetailView,
+  onPermissionResendNotification,
 }: UserDetailFullpageBasicTabContentProps) {
   const currentUser = useAuthStore(state => state.user)
   const adminMemberProfileFieldsEditableWhenEditing =
     user.role !== 'ADMIN' || canEditAdminMemberInfo(currentUser, user)
-  const canShowAdminCommentForTarget =
-    user.role === 'ADMIN'
-      ? canAccessAdminCommentInAdminDetail(currentUser)
-      : shouldShowAdminCommentSection(user)
+  const canShowAdminCommentForTarget = shouldShowAdminCommentSectionForViewer(currentUser, user)
 
   return (
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
@@ -76,6 +81,8 @@ export function UserDetailFullpageBasicTabContent({
       <UserBasicInfoSection
         user={user}
         entrySource={basicInfoEntrySource}
+        isInstructorPermissionDetail={mode === 'permission' && permissionRole === 'instructor'}
+        isAdminPermissionDetail={mode === 'permission' && permissionRole === 'admin'}
         caption={basicTab.caption}
         externalId1365={basicTab.externalId1365}
         personalInfoRevealed={personalInfoRevealed}
@@ -85,9 +92,17 @@ export function UserDetailFullpageBasicTabContent({
         adminPermissionVariantPatching={adminPermissionVariantPatching}
         onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
         adminMemberProfileFieldsEditableWhenEditing={adminMemberProfileFieldsEditableWhenEditing}
+        onPermissionResendNotification={onPermissionResendNotification}
       />
       {basicTab.showConsentAgreement ? (
-        <UserConsentAgreementSection preset={resolveUserConsentAgreementPreset(user)} />
+        <UserConsentAgreementSection
+          preset={resolveUserConsentAgreementPreset(user)}
+          viewVariant={
+            mode === 'permission' && permissionRole === 'instructor'
+              ? 'permission_instructor'
+              : 'default'
+          }
+        />
       ) : null}
       {instructorResumeApplicantRow ? (
         <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />
