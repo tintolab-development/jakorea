@@ -1,74 +1,74 @@
-# CMS 프로젝트 규칙
+# CMS project rules
 
-JAKorea CMS (Automation) 프로젝트 개발 규칙입니다.
+Development standards for **JAKorea CMS** (`apps/cms`).
 
-## 🎯 핵심 규칙 (필수 읽기)
+## Start here
 
-- [프로젝트 개요](./project-overview.md) - 프로젝트 전체 이해
-- [FSD 구조](./architecture/fsd-structure.md) - 아키텍처 기반
+- [Project overview](./project-overview.md)
+- [FSD structure](./architecture/fsd-structure.md)
 
-## 📐 아키텍처
+## Architecture
 
-- [FSD 구조](./architecture/fsd-structure.md) - Feature-Sliced Design 아키텍처
-- [라우팅](./architecture/routing.md) - React Router 설정 및 라우트 네이밍
+- [FSD structure](./architecture/fsd-structure.md) — Feature-Sliced Design  
+- [Routing](./architecture/routing.md) — React Router and route naming  
 
-## 💻 코딩 표준
+## Coding
 
-- [코드 스타일](./coding/code-style.md) - ESLint, Prettier, TypeScript, 파일 명명 규칙
-- [컴포넌트 패턴](./coding/component-patterns.md) - 컴포넌트 관심사 분리 및 패턴
-- [목록 페이지 구성 (FilterTableLayout + useTablePage)](./coding/list-page-composition.mdc) - 필터·테이블 화면 재사용 원칙 (영문, Cursor 규칙)
-- [상태 드롭다운 셀](./coding/status-dropdown-cell.md) - 테이블용 상태 배지·드롭다운 셀(StatusDropdownCell) 아키텍처, **활성 래퍼·132×33 태그(tag132)**, 새 테이블/도메인 확장 방법
-- [Custom Hooks](./coding/custom-hooks.md) - Custom Hooks 작성 가이드
-- [타입 안전성 및 일관성](./coding/type-safety-and-consistency.md) - Deprecated 코드 사용 금지, 타입 일관성 유지
-- [리팩토링 원칙](./coding/refactoring-principles.md) - 코드 품질 원칙
-- [템플릿 관리 구현](./coding/template-management.md) - `features/template`(`ui`에 풀페이지 모달·네비 포함), `pages/templates` 공통 UI·라우팅·테이블·모달 패턴 (기획 스펙 제외)
+- [Code style](./coding/code-style.md) — ESLint, Prettier, TS, naming  
+- [Component patterns](./coding/component-patterns.md) — shared UI usage  
+- [List page composition](./coding/list-page-composition.mdc) — filter + table layout  
+- [Status dropdown cell](./coding/status-dropdown-cell.md) — `StatusDropdownCell`, tag layout  
+- [Custom hooks](./coding/custom-hooks.md)  
+- [Type safety & consistency](./coding/type-safety-and-consistency.md) — no deprecated APIs  
+- [Refactoring principles](./coding/refactoring-principles.md)  
+- [Template feature implementation](./coding/template-management.md) — `features/template`, `pages/templates`  
 
-## 🎨 UI/UX
+## UI / UX
 
-- [UI 원칙](./design/ui-principles.md) - 상태 표시 원칙 등
-- [Modal viewport centering](./design/modal-viewport-centering.md) — **모든 모달은 전체 화면(뷰포트) 기준 중앙 정렬** (English rule)
-- 모달 구현 원칙: **`ContentModal` 우선 사용**, **`TealHeaderModal` 직접 사용은 deprecated**
-- [이벤트 처리](./design/event-handling.md) - 이벤트 버블링 및 전파 방지
-- [색상 시스템](./design/color-system.md) - 색상 시스템 가이드
-- [색상 팔레트](./design/color-palette.md) - 색상 팔레트
-- [스타일링 토큰](./design/styling-tokens.md) - CSS 디자인 토큰 사용 규칙
-- [캘린더 UX](./design/schedule-calendar-ux.md) - 캘린더 UX 가이드
-- [디자인 요청](./design/design-requests.md) - 디자인 요청사항
+- [UI principles](./design/ui-principles.md)  
+- [Modal viewport centering](./design/modal-viewport-centering.md) — center modals in viewport  
+- Prefer **`ContentModal`**; direct **`TealHeaderModal`** use is deprecated  
+- [Event handling](./design/event-handling.md)  
+- [Color system](./design/color-system.md)  
+- [Color palette](./design/color-palette.md)  
+- [Styling tokens](./design/styling-tokens.md)  
+- [Schedule / calendar UX](./design/schedule-calendar-ux.md)  
+- [Design requests](./design/design-requests.md)  
 
-## 📚 라이브러리
+## Libraries
 
-- [Ant Design 사용법](./libraries/ant-design-usage.md) - Ant Design 기본 사용법
-- [공유 패키지](./libraries/shared-packages.md) - @jakorea/ui, @jakorea/utils
-- [필수 라이브러리](./libraries/required-libraries.md) - 필수 라이브러리 목록
+- [Ant Design usage](./libraries/ant-design-usage.md)  
+- [Shared packages](./libraries/shared-packages.md) — `@jakorea/ui`, `@jakorea/utils`  
+- [Required libraries](./libraries/required-libraries.md)  
 
-## 🔄 상태 관리
+## State
 
-- [상태 관리](./state/state-management.md) - Zustand 사용법
+- [State management](./state/state-management.md) — Zustand  
 
-## 📊 데이터
+## Data
 
-- [Mock 데이터 관리](./data/mock-data.md) - Mock 데이터 구조 및 관리
-- [API 명세 (Mock)](./data/api-spec-mock.md) - Mock 기반 API 명세 요약
-- [상세 API 명세](../../docs/api-spec-mock-detailed.md) - 상세 API 스펙 (docs)
-- [확장 API 명세](../../docs/api-spec-mock-extended.md) - 확장 API 스펙 (docs)
+- [Mock data](./data/mock-data.md)  
+- [API spec (mock)](./data/api-spec-mock.md)  
+- [API spec detailed](../../docs/api/api-spec-mock-detailed.md)  
+- [API spec extended](../../docs/api/api-spec-mock-extended.md)  
 
-## 📝 폼
+## Forms
 
-- [폼 검증](./forms/form-validation.md) - React Hook Form + Zod
+- [Form validation](./forms/form-validation.md) — RHF + Zod  
 
-## 📋 테이블
+## Tables
 
-- [테이블 구현 컨텍스트](./tables/table-implementation.md) - Ant Design Table 컬럼·CSS·필터 패턴, 산출 내역서 4열 기본정보·모달 가로 오버플로·디바이더·프롬프트 §12 (새 테이블 구현 시 참고)
-- [테이블 관리](./tables/table-management.md) - @tanstack/react-table 및 Query Parameter 동기화
-- [상태 드롭다운 셀](./coding/status-dropdown-cell.md) - 테이블에서 상태 배지+드롭다운 컬럼 사용 시 공통 컴포넌트(StatusDropdownCell), tag132(활성 래퍼) 규칙 및 UI shifting 방지
+- [Table implementation](./tables/table-implementation.md) — Ant Table patterns  
+- [Table management](./tables/table-management.md) — TanStack table & URL sync  
+- [Status dropdown cell](./coding/status-dropdown-cell.md)  
 
-## 🌐 환경
+## Environment
 
-- [브라우저 지원](./environment/browser-support.md) - 지원 브라우저 및 반응형 디자인
-- [패키지 관리](./environment/package-management.md) - pnpm Workspace
-- [기술 스택](./environment/tech-stack.md) - 핵심 기술 및 개발 도구
+- [Browser support](./environment/browser-support.md)  
+- [Package management](./environment/package-management.md) — pnpm workspace  
+- [Tech stack](./environment/tech-stack.md)  
 
-## 🔄 프로세스
+## Process
 
 - [개발 프로세스](./process/development-process.md) - Phase별 개발 프로세스
 - [진행 상황 관리](./process/progress-management.md) - PROGRESS.md 기록 규칙
@@ -78,7 +78,13 @@ JAKorea CMS (Automation) 프로젝트 개발 규칙입니다.
 - [후원사 상세 > 프로그램 진행 이력 — 참여자 유형](./process/sponsor-program-history-participant-type.md) - 학교/기관·개인 학습자만 (`school` | `individual`)
 - [프로그램 이력 삭제 — 진행 중 차단](./process/program-history-delete-blocked.md) - `EDUCATION_IN_PROGRESS` 포함 시 삭제 불가 모달
 - [교재 관리 — 사업 분야](./process/textbook-management.md) - 교재 사업 분야 4종(기획 고정), 코드 상수 `textbook-business-areas.ts`
+- [Development process](./process/development-process.md)  
+- [Progress management](./process/progress-management.md)  
+- [Personas](./process/persona.md)  
+- [Admin notice modal](./process/admin-notice-form-modal-spec.md)  
+- [Certificate issue spec](./process/member-program-certificate-issue-spec.md)  
+- Other `process/*` files — feature-specific UI specs (English).  
 
 ---
 
-**마지막 업데이트**: 2024년
+**Last updated:** 2026-04-21

@@ -1,37 +1,24 @@
-# 공유 패키지 사용
+# Shared packages
 
-## @jakorea/ui
+## `@jakorea/ui`
 
-공유 UI 컴포넌트를 사용합니다.
+Shared UI primitives and composites published from the monorepo.
 
-### 사용 예시
-
-```typescript
+```tsx
 import { Button } from '@jakorea/ui'
-
-<Button variant="primary">클릭</Button>
 ```
 
-## @jakorea/utils
+## `@jakorea/utils`
 
-공유 유틸리티 함수를 사용합니다.
+Date helpers, formatting, etc.
 
-### 사용 예시
-
-```typescript
+```tsx
 import { formatDate, timeSince } from '@jakorea/utils'
-
-const formatted = formatDate(new Date())
-const relative = timeSince(new Date())
 ```
 
-## 관련 규칙
+## Related
 
-- [필수 라이브러리](./required-libraries.md)
-- [패키지 관리](../environment/package-management.md)
+- [required-libraries.md](./required-libraries.md)  
+- [package-management.md](../environment/package-management.md)  
 
-
-
-
-
-
+**Last updated:** 2026-04-21

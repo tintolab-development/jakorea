@@ -3,36 +3,43 @@ priority: high
 category: process
 ---
 
-# CMS — 회원 등록 유형 · 관리자 등록 회원 (Admin-provisioned member)
+# CMS — admin-provisioned vs self-serve members
 
-개인·교사·강사·학교(기관) 회원에 공통되는 CMS 상세 정책이다. 구현·목 데이터는 `User.registeredByAdmin`, `User.identitySelfSignupCompletedAfterAdminRegistration` 및 [`admin-provisioned-member-policy.ts`](apps/cms/src/features/user/shared/lib/admin-provisioned-member-policy.ts)를 기준으로 맞춘다.
+Align UI and mocks with `User.registeredByAdmin`, `User.identitySelfSignupCompletedAfterAdminRegistration`, and `admin-provisioned-member-policy.ts`.
 
-## 1. 회원 등록 유형 (CMS에서의 취급)
+## Registration type
 
-| 구분 | 조건 |
-|------|------|
-| **관리자 등록** (기본정보 일괄 수정 가능) | `registeredByAdmin === true` **이고** `identitySelfSignupCompletedAfterAdminRegistration !== true` |
-| **직접 등록**으로 취급 | 위가 아닌 경우 — 최초부터 직접 가입했거나, **관리자 등록 후 본인 직접 가입(추가 절차)을 완료한 경우** (`identitySelfSignupCompletedAfterAdminRegistration === true`) |
+| Treat as | Condition |
+|----------|-----------|
+| **Admin-provisioned** (broader CMS edit) | `registeredByAdmin === true` **and** `identitySelfSignupCompletedAfterAdminRegistration !== true` |
+| **Self-registered** | Otherwise — signed up directly, or finished self-signup after admin invite |
 
-코드: `shouldShowCmsMemberInfoEditButton` = 관리자 등록 분기, `isSelfRegisteredMemberForCmsBasicInfo` = 직접 등록 분기(논리 반대).
+`shouldShowCmsMemberInfoEditButton` ≈ admin-provisioned; `isSelfRegisteredMemberForCmsBasicInfo` ≈ inverse for basic-info rules.
 
-## 2. [정보 수정] 시 편집 가능 범위
+## Who can edit what
 
-### 2.1 관리자 등록 회원
+- **Admin-provisioned:** admins can edit basic info except fields marked read-only (join date, linked socials, system counts, etc.).  
+- **Self-registered:** basic info stays read-only for admins; exceptions:  
+  - **ADMIN** self-registered: saving may use `draftToAdminMemberRestrictedPatch` (comment + permission type).  
+  - **Admin comment**: only when permission approval is **APPROVED**.  
+  - **INSTRUCTOR** self-registered: when allowed, also **instructor fee tier** with comment patch.  
+- **ADMIN member detail:** all admin roles can edit comment + permission type; **only master** edits other profile fields when member is admin-provisioned (`canEditAdminMemberInfo`). Non-master saves comment/permission only via restricted patch.  
+- Captions “registered by admin” live in **`DetailInfoForm` `description`** only — no duplicate titles.
 
-- **(관리자가) 기본정보 수정 가능** — 읽기 전용으로 지정된 항목은 제외한다.
-- **읽기 전용(예시)**: 가입일, 연동된 소셜 계정, 학교 상세의 등록일·프로그램 신청/수강 횟수(시스템 지표) 등 — 화면에서 `readOnlyDisplay` 또는 동일 의미로 고정.
+## Institution (school) detail
 
-### 2.2 직접 등록 회원
+- Admin-provisioned: editable name, location, admin comment; **createdAt** and **application/enrollment counts** read-only.  
+- Self-registered: lock basic fields; **admin comment** editable.  
+- Use `InstitutionFields` + `draftToSchoolInstitutionBasicInfoPatch` (counts excluded).
 
 - **(관리자가) 기본정보 수정 불가** — 상세에서 기본정보 필드는 편집 모드여도 읽기 전용으로 둔다.
 - **예외 — 관리자 회원 (`role === 'ADMIN'`) 직접 등록**: 저장 시 `draftToAdminMemberRestrictedPatch`(코멘트 + 권한 유형)로 SCHOOL용 코멘트 전용 패치와 구분한다.
 - **예외 — 관리자 코멘트**: CMS에 **관리자(`role === 'ADMIN'`)** 로 로그인한 경우 회원 상세에서 [관리자 코멘트] 블록은 **권한 승인 현황과 무관하게 항상 노출**한다(본문 없을 때 `작성된 코멘트가 없습니다.`). **편집·저장** 가능 여부는 등록 유형·대상 role 등 기존 규칙을 따른다(§3).
 - **예외 — 강사 회원 (`role === 'INSTRUCTOR'`)**: 위 조건 충족 시 관리자 코멘트에 더해 **강사비 등급** (`listMetrics.instructorTypeLabel` ↔ draft `instructorFeeGrade`) 편집·저장 가능.
 
-저장 시 분기: `use-user-detail-controller` — 직접 등록 + 강사는 `draftToAdminCommentAndInstructorFeePatch`, 그 외 역할은 코멘트만 패치하는 분기(예: `draftToSchoolAdminCommentOnlyPatch`). 관리자 회원이 **관리자 등록**이면서 저장 주체가 **마스터**이면 `draftToBasicInfoPatch`, 그렇지 않으면(비마스터 또는 코멘트 전용 세션) `draftToAdminMemberRestrictedPatch`(코멘트 + 권한 유형).
+Normalize API fields to the two flags above. CMS-created users get `registeredByAdmin: true` in mocks (`user-service.ts`, `mock/users.ts`).
 
-## 3. 관리자 코멘트 섹션 노출
+## Header actions
 
 - **회원 상세**: 로그인 사용자가 CMS **관리자**(`isCmsAdminUser`)이면 기본 탭에서 [관리자 코멘트] 블록을 **항상** 노출한다. (`shouldShowAdminCommentSectionForViewer` = 관리자 로그인 **또는** `shouldShowAdminCommentSection` → `permissionApprovalStatus === 'APPROVED'`). 본문이 없으면 **`작성된 코멘트가 없습니다.`** 를 표시한다. **열람**은 편집 권한(예: 마스터 전용 기본정보)과 별개로, 관리자 로그인이면 항상 가능하다.
 - **프로그램·학교(기관) 상세** (`SchoolDetailFullpageView` 신청 정보 탭): 동일하게 **관리자 로그인 시에만** [관리자 코멘트] 영역을 노출하고, 빈 값일 때 문구는 회원 상세와 같이 **`작성된 코멘트가 없습니다.`** 로 통일한다.
@@ -41,9 +48,12 @@ category: process
   - **그 외 기본정보**(성명, 연락처, 이메일 등): **마스터 관리자만** 수정 가능. 대상이 **관리자 등록** 회원(`shouldShowCmsMemberInfoEditButton`)일 때만 일괄 편집 UI가 풀림 (`canEditAdminMemberInfo` = `isMasterAdminUser` + 관리자 등록).
   - 비마스터가 [정보 수정]으로 들어온 경우: 코멘트·권한 유형만 저장 패치에 포함하고(`draftToAdminMemberRestrictedPatch`), 성명·연락처 등은 화면상 읽기 전용으로 둔다.
 
-UI: 기본 탭에서 `UserDetailAdminCommentSection` + `DetailInfoForm` — **「관리자에 의해 등록」 안내 문구는 `DetailInfoForm`의 `description`으로만** 노출한다 (타이틀 우측·다른 섹션 중복 문구 없음).
+## Implementation map
 
-## 4. 기본 정보 description 문구 (관리자 등록 안내)
+- Policy: `admin-provisioned-member-policy.ts`  
+- UI locks: `user-basic-info-section.tsx`  
+- Save: `use-user-detail-controller.ts`, `admin-provisioned-member-basic-info-draft.ts`  
+- Types: `types/user.ts`  
 
 - **회원** `*관리자에 의해 등록된 회원입니다`: `shouldShowAdminRegisteredMemberDetailCaption` — 관리자 등록이면서 직접 가입 미완료일 때.
 - **학교** `*관리자에 의해 등록된 학교입니다`: `shouldShowAdminRegisteredSchoolDetailCaption` — 학교·관리자 등록·직접 가입 미완료·연동 교사 없음 등 조건 충족 시. `resolveUserDetailBasicTabCaption`에서 회원/학교 문구는 상호 배타적으로 합친다.

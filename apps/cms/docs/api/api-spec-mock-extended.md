@@ -1,7 +1,7 @@
 ## JAKorea CMS Mock 기반 API 명세 (Extended Version)
 
 > 이 문서는 `API_SPEC_MOCK_BASED.md`의 **기본 Mock 호환 스펙**을 확장하여,  
-> `MVP_ROADMAP_V2.md` / `MVP_ROADMAP_V3.md` 에 정의된 Phase 4.2 ~ Phase 11까지의  
+> [MVP_ROADMAP_V4_DETAILED.md](../roadmap/MVP_ROADMAP_V4_DETAILED.md) 및 요구사항에 정의된 확장·고도화 범위의  
 > **신규/고도화 요구사항을 모두 포함한 API 설계 초안**입니다.  
 > 실제 백엔드 구현 시, 여기서 정의된 엔드포인트 중 우선순위를 논의하여 MVP → 확장 순으로 단계적 구현을 권장합니다.
 
