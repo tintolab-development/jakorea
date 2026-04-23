@@ -102,6 +102,17 @@
   border-bottom: 1px solid var(--table-line, #e0e0e0);
   height: 54px !important;
 }
+
+/*
+ * 기본 정책: 조회성 테이블(비클릭 행)만 row hover 배경을 비활성화한다.
+ * 클릭 가능한 행(cursor pointer / clickable class)과 hoverable 테이블은 기본 테마 hover 색을 유지한다.
+ */
+.cms-data-table:not(.cms-data-table--hoverable)
+  .ant-table-tbody
+  > tr.ant-table-row:not([style*='cursor: pointer']):not([class*='clickable']):hover
+  > td {
+  background: var(--color-bg-base, #fff) !important;
+}
 /* 마지막 열: scroll.y 시 thead 마지막 th는 스크롤바 맞춤 셀 — 우측 보더 없음 */
 .cms-data-table .ant-table-thead > tr > th:last-child,
 .cms-data-table .ant-table-tbody > tr > td:last-child {

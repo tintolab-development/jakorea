@@ -24,7 +24,7 @@ const INSTITUTION_TYPE_LABELS: Record<string, string> = {
 const PROGRAM_TYPE_LABELS: Record<string, string> = {
   online: '온라인',
   offline: '오프라인',
-  hybrid: '하이브리드',
+  hybrid: '온/오프라인',
 }
 
 export type EducationRecordColumnDeps = {
@@ -81,7 +81,7 @@ export function createEducationRecordColumns({
       render: (sponsorId: string) => getSponsorNameEn(sponsorId),
     },
     {
-      title: '프로그램명(영문)',
+      title: '대표 프로그램명(영문)',
       dataIndex: 'titleEn',
       key: 'titleEn',
       width: 260,

@@ -12,8 +12,8 @@
 .er-data-tab__toolbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-start;
   gap: var(--spacing-12, 12px);
   width: 100%;
   min-width: 0;
@@ -25,14 +25,6 @@
   align-items: baseline;
   flex-wrap: wrap;
   min-width: 0;
-}
-
-.er-data-tab__toolbar-actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--spacing-12, 12px);
-  flex-shrink: 0;
 }
 
 .er-data-tab__title {
@@ -71,4 +63,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/*
+ * 실적관리 테이블은 AntD 내부 스크롤(scroll.x/y)을 사용하므로
+ * 바깥 래퍼의 가로 스크롤을 비활성화해 헤더/바디 수평 동기화 지연(흔들림)을 줄인다.
+ */
+.er-data-tab .list-page-layout__table-shell {
+  overflow-x: hidden;
+}
+
+.er-data-tab .cms-data-table {
+  overflow-x: visible;
 }

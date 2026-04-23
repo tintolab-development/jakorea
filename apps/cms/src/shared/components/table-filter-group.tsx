@@ -297,7 +297,7 @@ export function TableFilterGroup({
               selectClassName="unified-filter-card__select"
               onChange={value => onFilterChange(ar.sidoKey, value ?? '')}
               allowClear={field.allowClear !== false}
-              popupMatchSelectWidth
+              popupMatchSelectWidth={false}
               style={{ width: '100%', ...field.style }}
               options={ar.sidoOptions.map(opt => ({ label: opt.label, value: opt.value }))}
             />
@@ -309,7 +309,7 @@ export function TableFilterGroup({
               onChange={value => onFilterChange(ar.sigunguKey, value ?? '')}
               allowClear={field.allowClear !== false}
               disabled={sidoEmpty}
-              popupMatchSelectWidth
+              popupMatchSelectWidth={false}
               style={{ width: '100%', ...field.style }}
               options={districtOptions.map(opt => ({ label: opt.label, value: opt.value }))}
             />
