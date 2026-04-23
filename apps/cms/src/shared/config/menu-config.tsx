@@ -526,7 +526,7 @@ const allMenuItems: MenuItemConfig[] = [
       },
       {
         key: '/admin/posts/inquiries',
-        label: '문의하기',
+        label: '문의내역',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],

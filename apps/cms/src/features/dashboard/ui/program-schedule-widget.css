@@ -205,9 +205,10 @@
   display: flex;
   flex-direction: column;
   border: none;
-  border-radius: 0;
+  border-radius: var(--radius-8, 8px);
   padding: 0;
-  background: transparent;
+  background: var(--color-bg-base, #fff);
+  overflow: hidden;
 }
 
 /* 월간: 요일 행 + 날짜 그리드 사이 vertical gap 12px (주간 뷰와 동일) */
@@ -329,6 +330,35 @@
   .program-schedule-widget__month-grid-slot--edge-t
   .program-calendar-cell {
   border-top: 1px solid var(--color-border-light);
+}
+
+/* 월간 캘린더 영역 라운드(8px): 코너 셀만 둥글게 처리해 라인 끊김 없이 표시 */
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid--cells
+  > .program-schedule-widget__month-grid-slot:nth-child(1)
+  .program-calendar-cell {
+  border-top-left-radius: var(--radius-8, 8px);
+}
+
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid--cells
+  > .program-schedule-widget__month-grid-slot:nth-child(7)
+  .program-calendar-cell {
+  border-top-right-radius: var(--radius-8, 8px);
+}
+
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid--cells
+  > .program-schedule-widget__month-grid-slot:nth-child(29)
+  .program-calendar-cell {
+  border-bottom-left-radius: var(--radius-8, 8px);
+}
+
+.program-schedule-widget__body--month
+  .program-schedule-widget__month-grid--cells
+  > .program-schedule-widget__month-grid-slot:nth-child(35)
+  .program-calendar-cell {
+  border-bottom-right-radius: var(--radius-8, 8px);
 }
 
 /* 날짜 숫자 영역 + 타이포 (피그마) */
@@ -607,9 +637,10 @@
   height: auto;
   min-height: 0;
   padding: 0 !important;
-  /* 보더는 주간 본문(.program-calendar-week-body) 셀 그리드에만 — 래퍼 하단선 중복 방지 */
   border: none !important;
-  border-radius: 0 !important;
+  border-radius: var(--radius-8, 8px) !important;
+  background: var(--color-bg-base, #fff);
+  overflow: hidden;
 }
 
 /* 주간: 공통 program-calendar-week — 오늘 날짜 강조 */
@@ -901,7 +932,7 @@
   align-self: stretch;
   opacity: 1;
   border-radius: var(--8, 8px);
-  border: 2px solid var(--color-mint-01, #01a1af) !important;
+  border: 1px solid var(--color-mint-01, #01a1af) !important;
   background: var(--main-WT, #fff) !important;
   box-shadow:
     0 0 4px 0 rgba(0, 136, 148, 0.06),

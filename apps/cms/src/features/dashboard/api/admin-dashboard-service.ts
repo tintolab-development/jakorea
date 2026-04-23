@@ -10,6 +10,7 @@ import type { Program } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock/programs'
 import { getEducationPrograms } from '@/data/mock/education-programs'
 import { getEconomyPrograms, getEconomyProgramById } from '@/data/mock/economy-programs'
+import { getVolunteerPrograms } from '@/data/mock/volunteer-programs'
 import { mockApplications } from '@/data/mock/applications'
 import { mockMatchings } from '@/data/mock/matchings'
 import { mockSettlements } from '@/data/mock/settlements'
@@ -513,6 +514,8 @@ export function getMenuShortcutBadgeCounts(): Record<string, number> {
     p => (p.title ?? '').includes('제미나이') || (p.mainTitle ?? '').includes('제미나이')
   )
   const geminiStages = accumulateLifecycleStages(geminiPrograms)
+  const ujatPrograms = getVolunteerPrograms()
+  const ujatStages = accumulateLifecycleStages(ujatPrograms)
 
   const pending = getPendingActionCountsSync()
   const institutionPending = MOCK_APPLICANT_INSTITUTIONS.filter(s => s.approvalStatus === 'pending').length
@@ -528,10 +531,10 @@ export function getMenuShortcutBadgeCounts(): Record<string, number> {
   const accountPaymentPending = mockAccountPaymentRows.filter(r => r.accountPaymentStatus === 'pending').length
 
   const mapped: Record<string, number> = {
-    'programs-all': stages.studentRecruitment + stages.instructorRecruitment,
     'programs-general-education': stages.studentRecruitment,
     'programs-economy': economyStages.studentRecruitment + economyStages.instructorRecruitment,
     'programs-gemini': geminiStages.studentRecruitment + geminiStages.instructorRecruitment,
+    'programs-ujat': ujatStages.studentRecruitment + ujatStages.instructorRecruitment,
     'programs-detail': stages.matchingCompleted,
     'users-all': Math.min(
       999,

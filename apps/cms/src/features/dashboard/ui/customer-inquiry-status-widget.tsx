@@ -5,14 +5,17 @@
 
 import { Card, Button, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
-import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import '@/shared/ui/widget-more-button.css'
 import './dashboard-widget-table.css'
 
 const { Text } = Typography
+
+/** 게시글 관리 · 문의내역 — `inq_prog`로 프로그램명 필터(부분 일치) */
+const ADMIN_POSTS_INQUIRIES_PATH = '/admin/posts/inquiries'
 
 const WIDGET_KEY = 'customer-inquiry-status-widget'
 const EMPTY_IDS: string[] = []
@@ -64,15 +67,13 @@ const MOCK_PROGRAM_INQUIRIES: ProgramInquiryRow[] = [
 ]
 
 export function CustomerInquiryStatusWidget() {
+  const navigate = useNavigate()
   const cardRef = useRef<HTMLDivElement>(null)
   const [halfColumn, setHalfColumn] = useState(false)
   const allowedProgramIds =
     useDashboardSettingsStore(s => s.widgetProgramIds[WIDGET_KEY]) ?? EMPTY_IDS
   const inquiryNotificationReadProgramKeys =
     useDashboardSettingsStore(s => s.inquiryNotificationReadProgramKeys) ?? {}
-  const setInquiryNotificationReadProgramKey = useDashboardSettingsStore(
-    s => s.setInquiryNotificationReadProgramKey
-  )
 
   const data = useMemo(() => {
     if (allowedProgramIds.length === 0) return MOCK_PROGRAM_INQUIRIES
@@ -100,16 +101,18 @@ export function CustomerInquiryStatusWidget() {
     return () => mo.disconnect()
   }, [])
 
-  const handlePendingClick = (programKey: string) => {
-    console.log('handlePendingClick programKey', programKey)
-    window.alert('준비 중입니다.')
-    // setInquiryNotificationReadProgramKey(programKey)
-    // navigate('/admin/posts/inquiries?status=PENDING')
-  }
+  const goToInquiryListForProgram = useCallback(
+    (record: ProgramInquiryRow) => {
+      const search = new URLSearchParams()
+      search.set('inq_prog', record.programName)
+      navigate(`${ADMIN_POSTS_INQUIRIES_PATH}?${search.toString()}`)
+    },
+    [navigate]
+  )
 
-  const handleMoreClick = () => {
-    window.alert(WIDGET_MORE_ALERT_MESSAGE)
-  }
+  const handleMoreClick = useCallback(() => {
+    navigate(ADMIN_POSTS_INQUIRIES_PATH)
+  }, [navigate])
 
   const columns: ColumnsType<ProgramInquiryRow> = useMemo(
     () => [
@@ -134,18 +137,14 @@ export function CustomerInquiryStatusWidget() {
         align: 'center',
         render: (value: number, record: ProgramInquiryRow) =>
           value > 0 ? (
-            <button
-              type="button"
-              className="dashboard-widget-table__pending-btn"
-              onClick={() => handlePendingClick(record.key)}
-            >
+            <span className="dashboard-widget-table__pending-btn" role="presentation">
               <span className="dashboard-widget-table__pending-inner">
                 <span className="dashboard-widget-table__pending-text">{value}건</span>
                 {!inquiryNotificationReadProgramKeys[record.key] && (
                   <span className="dashboard-widget-table__pending-dot" aria-hidden />
                 )}
               </span>
-            </button>
+            </span>
           ) : (
             <span className="dashboard-widget-table__count--muted">0건</span>
           ),
@@ -171,7 +170,7 @@ export function CustomerInquiryStatusWidget() {
         ),
       },
     ],
-    [equalWidth, inquiryNotificationReadProgramKeys, setInquiryNotificationReadProgramKey]
+    [equalWidth, inquiryNotificationReadProgramKeys]
   )
 
   return (
@@ -197,6 +196,9 @@ export function CustomerInquiryStatusWidget() {
         dataSource={data}
         pagination={false}
         className="dashboard-widget-table__data"
+        onRow={record => ({
+          onClick: () => goToInquiryListForProgram(record),
+        })}
       />
     </Card>
   )

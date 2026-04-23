@@ -6,7 +6,7 @@
  * 너비 리사이즈: 우측 엣지 드래그 핸들 → 20px 이상 드래그 시 50%(12) ↔ 100%(24) 스냅
  */
 
-import React, { useRef, useLayoutEffect, useCallback, useState } from 'react'
+import React, { useRef, useLayoutEffect, useCallback, useState, useEffect } from 'react'
 import { DASHBOARD_SLOT_HEIGHT_HALF_PX } from '@/shared/config/dashboard-config'
 import { Col } from 'antd'
 import { useSortable } from '@dnd-kit/sortable'
@@ -55,7 +55,7 @@ export function SortableWidgetSlot({
     id,
     // 부드러운 switching 전환 애니메이션
     transition: {
-      duration: 300,
+      duration: 180,
       easing: 'cubic-bezier(0.2, 0, 0, 1)',
     },
   })
@@ -170,6 +170,25 @@ export function SortableWidgetSlot({
     document.body.style.cursor = ''
   }, [])
 
+  const setGrabbedClass = useCallback((grabbed: boolean) => {
+    const slot = slotRef.current
+    if (!slot) return
+    slot.classList.toggle('dashboard-widget-slot--grabbed', grabbed)
+  }, [])
+
+  const handleGrabPointerDown = useCallback(() => {
+    setGrabbedClass(true)
+  }, [])
+
+  const handleGrabPointerUp = useCallback(() => {
+    setGrabbedClass(false)
+  }, [setGrabbedClass])
+
+  useEffect(() => {
+    if (!isDragging) return
+    setGrabbedClass(false)
+  }, [isDragging, setGrabbedClass])
+
   // noScaleRectSortingStrategy에서 scaleX/scaleY=1로 고정되므로 그대로 사용
   // flex-basis/max-width transition: span 변경(너비 리사이즈) 시 부드러운 애니메이션
   const resizeTransition = onResizeWidth
@@ -179,10 +198,12 @@ export function SortableWidgetSlot({
   const colStyle: React.CSSProperties = {
     transition: resizeTransition ?? undefined,
   }
+  const transformText = CSS.Transform.toString(transform)
   const motionStyle: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
+    transform: transformText ? `${transformText} translateZ(0)` : undefined,
     transition: transition ?? undefined,
     opacity: isDragging ? 0 : 1,
+    willChange: isDragging ? 'transform' : undefined,
   }
 
   const slotHeight =
@@ -208,6 +229,10 @@ export function SortableWidgetSlot({
             ref={setActivatorNodeRef}
             className="widget-drag-handle dashboard-widget-slot__handle"
             aria-label="위젯 드래그 핸들"
+            onPointerDownCapture={handleGrabPointerDown}
+            onPointerUp={handleGrabPointerUp}
+            onPointerCancel={handleGrabPointerUp}
+            onLostPointerCapture={handleGrabPointerUp}
             {...listeners}
             {...attributes}
           >
@@ -229,6 +254,10 @@ export function SortableWidgetSlot({
               cursor: 'grab',
               zIndex: 1,
             }}
+            onPointerDownCapture={handleGrabPointerDown}
+            onPointerUp={handleGrabPointerUp}
+            onPointerCancel={handleGrabPointerUp}
+            onLostPointerCapture={handleGrabPointerUp}
             {...listeners}
             {...attributes}
           />

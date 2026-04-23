@@ -13,6 +13,17 @@
   border-radius: var(--radius-8);
 }
 
+/* 그랩(포인터 다운) 즉시 피드백: 드래그 활성화 전 구간의 체감 지연을 줄인다 */
+.dashboard-widget-slot--grabbed {
+  border: 1px solid var(--JA-mint-01, #01a1af);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--JA-mint-01, #01a1af) 18%, transparent);
+  transform: translateZ(0) scale(0.998);
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
+}
+
 /* 메뉴 바로가기 위젯: 배지 잘림 방지는 overflow 완화로 */
 .dashboard-widget-slot:has(.menu-shortcut-widget) {
   overflow: visible;

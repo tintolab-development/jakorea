@@ -54,7 +54,6 @@
   top: 0;
   z-index: 1;
   height: 54px !important;
-  box-shadow: 0 1px 0 var(--color-border-skeleton, #f0f0f0);
   background: #f5f6f7;
   color: var(--default-BK, #3d3d3d);
   text-align: center !important;
@@ -114,7 +113,7 @@
   background: var(--color-table-row-hover) !important;
 }
 
-/* 문의 현황 — 답변 대기 클릭 셀 */
+/* 문의 현황 — 답변 대기 수(행 전체 클릭으로 문의 목록 이동) */
 .dashboard-widget-table__pending-btn {
   position: relative;
   width: 100%;

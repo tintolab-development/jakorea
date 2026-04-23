@@ -72,7 +72,6 @@ export function useDashboardDnd({
 }: UseDashboardDndParams) {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [overlayRect, setOverlayRect] = useState<OverlayRect | null>(null)
-  const [dropInsertIndex, setDropInsertIndex] = useState<number | null>(null)
   const lastPointerRef = useRef({ x: 0, y: 0 })
   const lastDropIndexRef = useRef<number | null>(null)
   /** 드롭 시 over가 null이어도 직전에 올려둔 위젯으로 1:1 교환하기 위함 (DragOverlay가 포인터를 가릴 수 있음) */
@@ -104,7 +103,6 @@ export function useDashboardDnd({
     } else {
       setOverlayRect(null)
     }
-    setDropInsertIndex(null)
     lastDropIndexRef.current = null
     lastOverIdRef.current = null
     slotRectsCacheRef.current = []
@@ -158,7 +156,6 @@ export function useDashboardDnd({
       }
       if (nextIndex !== lastDropIndexRef.current) {
         lastDropIndexRef.current = nextIndex
-        setDropInsertIndex(nextIndex)
       }
     },
     [orderedIds, getSlotRects]
@@ -170,7 +167,6 @@ export function useDashboardDnd({
       const activeIdStr = active.id as string
       setActiveId(null)
       setOverlayRect(null)
-      setDropInsertIndex(null)
 
       if (!userRole) return
 
@@ -231,13 +227,11 @@ export function useDashboardDnd({
   const handleDragCancel = useCallback(() => {
     setActiveId(null)
     setOverlayRect(null)
-    setDropInsertIndex(null)
   }, [])
 
   return {
     activeId,
     overlayRect,
-    dropInsertIndex,
     sensors,
     handleDragStart,
     handleDragMove,

@@ -18,10 +18,10 @@ export const isShortcutItemEnabled = (shortcutEnabled: Record<string, boolean>, 
 
 /** 바로가기 항목: id, label, path (대시보드 설정·메뉴 바로가기 위젯 공통) — 미구현 경로는 DASHBOARD_HOME_PATH */
 export const SHORTCUT_ITEMS: Array<{ id: string; label: string; path: string }> = [
-  { id: 'programs-all', label: '전체', path: '/programs' },
   { id: 'programs-general-education', label: '일반 프로그램', path: '/programs/education' },
-  { id: 'programs-economy', label: '경제교육 프로그램', path: '/programs/economy-education' },
+  { id: 'programs-economy', label: '1사1교 프로그램', path: '/programs/economy-education' },
   { id: 'programs-gemini', label: '제미나이 프로그램', path: DASHBOARD_HOME_PATH },
+  { id: 'programs-ujat', label: 'UJAT 프로그램', path: '/programs/volunteer' },
   { id: 'users-all', label: '전체 회원 관리', path: '/users/list?kind=all' },
   { id: 'users-school', label: '학교(교사)회원', path: '/users/list?kind=institutions' },
   { id: 'users-instructor', label: '강사 회원 관리', path: '/users/list?kind=instructors' },
@@ -34,7 +34,6 @@ export const SHORTCUT_ITEMS: Array<{ id: string; label: string; path: string }> 
   { id: 'faq', label: 'FAQ', path: '/admin/posts/faq' },
   { id: 'inquiries', label: '문의 사항', path: '/admin/posts/inquiries' },
   { id: 'template-management', label: '템플릿 관리', path: '/templates/form-management' },
-  { id: 'file-forms', label: '발급 양식', path: '/templates/form-management?tab=issuance-form' },
   { id: 'sponsors', label: '후원사 관리', path: '/sponsors' },
   { id: 'textbooks', label: '교재 관리', path: DASHBOARD_HOME_PATH },
   { id: 'programs-detail', label: '세부 프로그램 관리', path: '/programs' },

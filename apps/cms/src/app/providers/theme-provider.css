@@ -254,7 +254,8 @@
   --shadow-card-selected: 0 1px 4px rgba(0, 0, 0, 0.08);
   --shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-modal: 0 4px 20px rgba(0, 0, 0, 0.15);
-  --shadow-drag-overlay: 0 20px 60px rgba(0, 0, 0, 0.2);
+  --shadow-drag-overlay: 0 10px 28px
+    color-mix(in srgb, var(--JA-mint-01, #01a1af) 22%, transparent);
   --color-bg-pending-light: #f8f2f3;
   --color-bg-answered-light: #e3f4f9;
   --color-bg-neutral: #f7f7f7;

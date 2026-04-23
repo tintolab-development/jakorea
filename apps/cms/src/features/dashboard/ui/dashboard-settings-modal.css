@@ -38,7 +38,7 @@
 .dashboard-settings-modal__content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-24);
+  gap: var(--spacing-32, 32px);
   width: 100%;
   align-items: stretch;
   color: var(--default-BK, #3d3d3d);
@@ -53,6 +53,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-12);
+  /* 바로가기 / 위젯 별 프로그램 섹션 제목·콘텐츠 공통 left inset 8px */
+  padding-left: 8px;
+  box-sizing: border-box;
 }
 
 .dashboard-settings-modal__section-title {
@@ -141,6 +144,14 @@
   border: 1px solid var(--JA-mint-01, #01a1af);
   border-radius: var(--radius-8, 8px);
   overflow: hidden;
+  background-clip: padding-box;
+}
+
+/* Ant 기본 radius 규칙보다 우선: 첫 항목 포함 모든 아이템 코너 유지 */
+.dashboard-settings-modal__program-collapse > .ant-collapse-item,
+.dashboard-settings-modal__program-collapse > .ant-collapse-item:first-child,
+.dashboard-settings-modal__program-collapse > .ant-collapse-item:last-child {
+  border-radius: var(--radius-8, 8px) !important;
 }
 
 .dashboard-settings-modal__program-collapse > .ant-collapse-item:last-child {
@@ -153,25 +164,40 @@
   justify-content: space-between !important;
   box-sizing: border-box;
   min-height: 55px;
-  height: 55px;
   padding: 16px !important;
   align-self: stretch;
+  /* 펼침 시에만 border가 생기면 box-sizing으로 콘텐츠가 1px 밀려 텍스트 흔들림 → 항상 1px 확보 */
+  border-bottom: 1px solid transparent;
   background: var(
     --color-bg-mint,
     linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%),
     #fff
   ) !important;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* 닫힘 상태: 헤더 단독 박스도 하단 코너 라운드 유지 */
+.dashboard-settings-modal__program-collapse
+  > .ant-collapse-item:not(.ant-collapse-item-active)
+  > .ant-collapse-header {
+  border-radius: var(--radius-8, 8px);
+}
+
+/* 펼침 상태: 헤더 상단만, 본문 하단만 라운드 */
+.dashboard-settings-modal__program-collapse > .ant-collapse-item-active > .ant-collapse-header {
+  border-radius: var(--radius-8, 8px) var(--radius-8, 8px) 0 0;
 }
 
 .dashboard-settings-modal__program-collapse .ant-collapse-item-active > .ant-collapse-header {
-  border-bottom: 1px solid var(--JA-mint-01, #01a1af);
+  border-bottom-color: var(--JA-mint-01, #01a1af);
 }
 
 .dashboard-settings-modal__program-collapse .ant-collapse-expand-icon {
   padding-inline-end: 0;
 }
 
-/* 아코디언 펼침 화살표: 20×20, aspect-ratio 1/1 (SVG 기본 위쪽, 접힘 시 180°) */
+/* 아코디언 펼침 화살표: 래퍼는 고정, 회전은 svg만 (헤더 flex 재배치로 인한 흔들림 완화) */
 .dashboard-settings-modal__collapse-chevron {
   display: inline-flex;
   flex-shrink: 0;
@@ -181,19 +207,21 @@
   width: 20px;
   height: 20px;
   aspect-ratio: 1 / 1;
+  transform: translateZ(0);
+  transform-origin: center;
+}
+
+.dashboard-settings-modal__collapse-chevron > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
   transform: rotate(180deg);
   transform-origin: center;
   transition: transform 0.2s ease;
 }
 
-.dashboard-settings-modal__collapse-chevron--expanded {
+.dashboard-settings-modal__collapse-chevron--expanded > svg {
   transform: rotate(0deg);
-}
-
-.dashboard-settings-modal__collapse-chevron svg {
-  width: 100%;
-  height: 100%;
-  display: block;
 }
 
 .dashboard-settings-modal__accordion-header {
@@ -226,6 +254,7 @@
   font-weight: 700;
   line-height: 150%;
   min-width: 0;
+  flex: 1;
 }
 
 .dashboard-settings-modal__accordion-body {
@@ -237,7 +266,6 @@
   align-self: stretch;
   gap: 24px;
   min-height: 55px;
-  height: 55px;
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
@@ -268,10 +296,18 @@
   line-height: 150%;
 }
 
+/* Ant Collapse 기본 상단 구분선(회색·검에 가깝게 보임) 제거 — 헤더 하단 민트만 사용 */
 .dashboard-settings-modal__program-collapse .ant-collapse-content {
-  border-top: none;
+  border: none !important;
+  border-top: none !important;
+  background: var(--color-bg-base, #fff) !important;
+  border-radius: 0 0 var(--radius-8, 8px) var(--radius-8, 8px);
+  overflow: hidden;
 }
 
 .dashboard-settings-modal__program-collapse .ant-collapse-content-box {
   padding: 0 !important;
+  border: none !important;
+  background: var(--color-bg-base, #fff) !important;
+  border-radius: 0 0 var(--radius-8, 8px) var(--radius-8, 8px);
 }
