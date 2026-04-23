@@ -137,8 +137,14 @@ body
   content: '*' !important;
 }
 
-/* 테이블 행 호버: 전체 영역 통일 (#01A1AF opacity 0.06). 선택된 Ant Table 행은 tr 배경으로 호버색 덮지 않음 */
+/* 테이블 행 호버: 기본은 미적용, 클릭 가능한 행/테이블에서만 노출 */
 table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
+  background: transparent !important;
+}
+
+table:not(.ant-picker-content) tr[class*='clickable']:hover:not(.ant-table-row-selected),
+table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-selected),
+[class*='--clickable'] .ant-table-tbody > tr:hover:not(.ant-table-row-selected) {
   background: var(--color-table-row-hover) !important;
 }
 
@@ -278,4 +284,13 @@ table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
 .calendar-layout {
   display: flex;
   gap: 16px;
+}
+
+/* Toast UI Editor 본문 타이포 공통 */
+.toastui-editor-defaultUI .toastui-editor-contents,
+.toastui-editor-defaultUI .toastui-editor-contents p,
+.toastui-editor-defaultUI .toastui-editor-contents li,
+.toastui-editor-defaultUI .toastui-editor-contents td,
+.toastui-editor-defaultUI .toastui-editor-contents th {
+  font-size: 15px;
 }
