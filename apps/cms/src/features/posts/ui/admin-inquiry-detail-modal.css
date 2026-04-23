@@ -184,8 +184,7 @@
 }
 
 .admin-inquiry-detail-modal__cell--multiline {
-  vertical-align: top;
-  max-height: 144px;
+  vertical-align: middle;
 }
 
 .admin-inquiry-detail-modal__status {
@@ -203,14 +202,31 @@
   color: inherit;
 }
 
-.admin-inquiry-detail-modal__editor-host {
+.admin-inquiry-detail-modal__answer-textarea {
   width: 100%;
+  height: 300px;
+  padding: 12px 14px;
   margin-top: 0;
+  border: 1px solid var(--color-border-skeleton, #e8e8e8);
+  border-radius: 8px;
+  background: var(--color-bg-base, #fff);
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  box-sizing: border-box;
+  resize: none;
 }
 
-.admin-inquiry-detail-modal__editor-host .toastui-editor-defaultUI {
-  border-radius: 8px;
-  overflow: hidden;
+.admin-inquiry-detail-modal__answer-textarea::placeholder {
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+.admin-inquiry-detail-modal__answer-textarea:focus {
+  outline: none;
+  border-color: var(--JA-mint-01, #01a1af);
 }
 
 .admin-inquiry-detail-modal__answer-readonly {
@@ -223,9 +239,16 @@
 }
 
 .admin-inquiry-detail-modal__body-viewer {
-  max-height: 120px;
-  overflow-y: auto;
+  max-height: none;
+  overflow: hidden;
   padding: 0;
+}
+
+.admin-inquiry-detail-modal__body-viewer .toastui-editor-contents {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .admin-inquiry-detail-modal__answer-placeholder {
@@ -258,6 +281,7 @@
 .admin-inquiry-detail-modal__answer-viewer .toastui-editor-contents li,
 .admin-inquiry-detail-modal__answer-viewer .toastui-editor-contents td,
 .admin-inquiry-detail-modal__answer-viewer .toastui-editor-contents th {
+  margin: 0;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary, sans-serif);
   font-size: 16px;

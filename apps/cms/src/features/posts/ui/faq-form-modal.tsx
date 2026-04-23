@@ -5,7 +5,6 @@ import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-conf
 import { ContentModal } from '@/shared/ui'
 import { FaqFormFields } from '@/features/posts/ui/faq-form/faq-form-fields'
 import { FaqFormModalFooter } from '@/features/posts/ui/faq-form/faq-form-modal-footer'
-import '@toast-ui/editor/dist/toastui-editor.css'
 import './faq-form-modal.css'
 
 export type { FaqFormModalMode, FaqFormModalProps } from '@/features/posts/model/faq-form-types'
@@ -50,7 +49,7 @@ export function FaqFormModal(props: FaqFormModalProps) {
         }
       >
         <Form form={ctrl.form} layout="vertical" requiredMark={false} className="faq-form-modal__form">
-          <FaqFormFields editorHostRef={ctrl.editorHostRef} categoryOptions={ctrl.categoryOptions} />
+          <FaqFormFields categoryOptions={ctrl.categoryOptions} />
         </Form>
       </ContentModal>
     </>

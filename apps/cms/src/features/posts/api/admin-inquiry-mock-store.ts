@@ -20,7 +20,19 @@ const POOL_CATEGORIES = [
   '기타',
 ] as const
 
-const PROGRAM_POOL = ['제미나이 봉사 교실', '경제 리터러시', '진로 설계', '봉사단 정기', null] as const
+/** 생성 행에 쓰는 프로그램명 — 대시보드 `CustomerInquiryStatusWidget`과 겹치게 두어 `inq_prog` 이동 시 조회되게 함 */
+const PROGRAM_POOL = [
+  '제미나이 봉사 교실',
+  '경제 리터러시',
+  '진로 설계',
+  '봉사단 정기',
+  'HSBC/HKU Business Case Competition 2026 모집 안내',
+  '2026 JA Korea 대학생경제교육봉사단 UJAT 36기 모집',
+  'EY한영-JA Korea Growth to Professional 2026 대학생 참가자 모집',
+  '2026년 JA Korea 초등 경제교육 대상학교 모집',
+  '2026 SAP-함께 성장하는AI 참여 고등학생 모집 안내 (IT, SW 멘토링)',
+  null,
+] as const
 const ASSIGNEE_POOL = ['홍길동', '김담당', '이운영', '박지원', null] as const
 
 function hashString(s: string): number {

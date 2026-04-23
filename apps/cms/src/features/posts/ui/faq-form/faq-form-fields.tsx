@@ -1,9 +1,7 @@
-import type { RefObject } from 'react'
 import { Form } from 'antd'
-import { CmsInput, CmsRadioGroup, CmsSelect } from '@/shared/ui'
+import { CmsInput, CmsRadioGroup, CmsSelect, CmsTextArea } from '@/shared/ui'
 
 export type FaqFormFieldsProps = {
-  editorHostRef: RefObject<HTMLDivElement | null>
   categoryOptions: { label: string; value: string }[]
 }
 
@@ -11,7 +9,7 @@ export type FaqFormFieldsProps = {
  * FAQ 등록/수정 폼 본문 — 부모 `Form` 안에서만 사용.
  * 모달·상세 등 레이아웃은 래퍼에서 담당.
  */
-export function FaqFormFields({ editorHostRef, categoryOptions }: FaqFormFieldsProps) {
+export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
   return (
     <div className="faq-form-modal__fields">
       <div className="faq-form-modal__row-split">
@@ -57,10 +55,18 @@ export function FaqFormFields({ editorHostRef, categoryOptions }: FaqFormFieldsP
           maxLength={500}
         />
       </Form.Item>
-      <div className="faq-form-modal__editor-section">
-        <div className="faq-form-modal__editor-label">내용 (답변)</div>
-        <div ref={editorHostRef} className="faq-form-modal__editor-host" />
-      </div>
+      <Form.Item
+        name="answer"
+        label="내용 (답변)"
+        rules={[{ required: true, message: '내용(답변)을 입력해주세요.' }]}
+      >
+        <CmsTextArea
+          placeholder="내용(답변)을 입력해주세요."
+          inputSize="medium"
+          width="100%"
+          maxLength={5000}
+        />
+      </Form.Item>
     </div>
   )
 }

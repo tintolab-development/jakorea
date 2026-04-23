@@ -1,12 +1,10 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { message } from 'antd'
 import { getAdminInquiryDetail, submitAdminInquiryReply } from '@/features/posts/api/admin-inquiry-mock-store'
-import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import type { AdminInquiryDetail } from '@/features/posts/model/admin-inquiry-management.types'
 import { ToastUiMarkdownViewer } from '@/shared/components/toast-ui-markdown-viewer'
 import { AppButton, ContentModal } from '@/shared/ui'
-import '@toast-ui/editor/dist/toastui-editor.css'
 import './admin-inquiry-detail-modal.css'
 
 export interface AdminInquiryDetailModalProps {
@@ -33,23 +31,18 @@ export function AdminInquiryDetailModal({
     return getAdminInquiryDetail(inquiryId)
   }, [open, inquiryId])
 
-  const editorResetKey = `${inquiryId ?? ''}-${detail?.answeredAt ?? ''}-${detail?.answerMarkdown?.length ?? 0}`
+  const [answerText, setAnswerText] = useState('')
 
-  const initialAnswerMarkdown = detail?.answerMarkdown ?? ''
+  useEffect(() => {
+    if (!open) return
+    setAnswerText(detail?.answerMarkdown ?? '')
+  }, [detail?.answerMarkdown, open])
 
-  const { editorHostRef, getMarkdown } = useNoticeWysiwygEditor(
-    open && canWrite && detail != null,
-    initialAnswerMarkdown,
-    editorResetKey,
-    {
-      height: '300px',
-      placeholder: '문의에 답변을 입력해 주세요.',
-    }
-  )
+  const isAnswerRegistered = detail?.status === 'ANSWERED'
 
   const handleReplySubmit = useCallback(() => {
-    if (!detail || !canWrite) return
-    const md = getMarkdown().trim()
+    if (!detail || !canWrite || isAnswerRegistered) return
+    const md = answerText.trim()
     if (md === '') {
       message.warning('답변 내용을 입력해 주세요.')
       return
@@ -62,7 +55,7 @@ export function AdminInquiryDetailModal({
     } else {
       message.error('답변 등록에 실패했습니다.')
     }
-  }, [canWrite, detail, getMarkdown, onCancel, onSuccess])
+  }, [answerText, canWrite, detail, isAnswerRegistered, onCancel, onSuccess])
 
   const handleDelete = useCallback(() => {
     if (!detail || !canWrite) return
@@ -88,7 +81,7 @@ export function AdminInquiryDetailModal({
           size="large"
           modalTeal
           onClick={handleReplySubmit}
-          disabled={!canWrite || !detail}
+          disabled={!canWrite || !detail || isAnswerRegistered}
         >
           답변 등록
         </AppButton>
@@ -210,7 +203,12 @@ export function AdminInquiryDetailModal({
               내용 (답변)
             </h3>
             {canWrite ? (
-              <div className="admin-inquiry-detail-modal__editor-host" ref={editorHostRef} />
+              <textarea
+                className="admin-inquiry-detail-modal__answer-textarea"
+                value={answerText}
+                onChange={e => setAnswerText(e.target.value)}
+                placeholder="문의에 답변을 입력해 주세요."
+              />
             ) : (
               <div className="admin-inquiry-detail-modal__answer-readonly">
                 {detail.answerMarkdown && detail.answerMarkdown.length > 0 ? (
