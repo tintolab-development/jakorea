@@ -32,10 +32,10 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT: Record<
   InstructorSettlementUiStatus,
   string
 > = {
-  awaiting_confirmation: '확인 대기',
+  awaiting_confirmation: '지급대기',
   partial_confirmation: '일부 확인',
   payment_statement_verified: '확인 완료',
-  account_paid: '계좌 지급',
+  account_paid: '지급완료',
   none: '해당 없음',
   application_rejected: '신청 반려',
   payment_correction_requested: '정정 요청',

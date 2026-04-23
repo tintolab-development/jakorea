@@ -57,7 +57,7 @@ export function BulkTransferPreviewModal({ open, onCancel, rows }: BulkTransferP
             icon={<DownloadOutlined />}
             onClick={() => void handleDownload()}
           >
-            파일 다운로드
+            엑셀 다운로드
           </AppButton>
         </>
       }

@@ -64,8 +64,20 @@ export function formatPaymentOrderCalculationWonPlain(n: number): string {
   return `${n.toLocaleString('ko-KR')}원`
 }
 
+function formatLectureSessionSegment(
+  raw: string,
+  mode: 'session' | 'round' | undefined
+): string {
+  if (mode === 'round') {
+    return raw.replace(/차시/g, '회차')
+  }
+  return raw
+}
+
 export function getPaymentOrderCalculationColumns(options?: {
   onDetailClick?: () => void
+  /** 강의 진행 일자 열의 세션 구간: `round`이면 차시 → 회차 (계좌 지급 현황 상세 등) */
+  lectureSessionSegmentLabel?: 'session' | 'round'
 }): ColumnsType<PaymentOrderCalculationTableRow> {
   const onDetailClick = () => {
     window.alert('준비 중입니다.')
@@ -75,6 +87,8 @@ export function getPaymentOrderCalculationColumns(options?: {
     }
     message.info('산정 기준 상세는 추후 연결됩니다.')
   }
+
+  const sessionLabelMode = options?.lectureSessionSegmentLabel ?? 'session'
 
   return [
     {
@@ -97,7 +111,10 @@ export function getPaymentOrderCalculationColumns(options?: {
       }),
       render: (_: unknown, row: PaymentOrderCalculationTableRow) => (
         <div className="payment-order-calc-statement-modal__td-divider-wrap payment-order-calc-statement-modal__td-divider-wrap--center">
-          {withProgramDetailTdDivider([row.lectureDateDisplay, row.lectureSessionDisplay])}
+          {withProgramDetailTdDivider([
+            row.lectureDateDisplay,
+            formatLectureSessionSegment(row.lectureSessionDisplay, sessionLabelMode),
+          ])}
         </div>
       ),
     },
@@ -172,6 +189,8 @@ export interface PaymentOrderCalculationBreakdownTableProps {
   /** 산출 내역 헤더 우측 (예: 신청 반려/확인 처리, 지급 완료 처리) */
   headerActions?: ReactNode
   onDownloadPaymentStatement?: () => void
+  /** 계좌 지급 현황 상세 등: 산출 내역 강의 진행 일자 열에서 차시 대신 회차 표기 */
+  lectureSessionSegmentLabel?: 'session' | 'round'
 }
 
 export function PaymentOrderCalculationBreakdownTable({
@@ -181,9 +200,13 @@ export function PaymentOrderCalculationBreakdownTable({
   processingStatus,
   headerActions,
   onDownloadPaymentStatement,
+  lectureSessionSegmentLabel = 'session',
 }: PaymentOrderCalculationBreakdownTableProps) {
   const tableRows = useMemo(() => buildPaymentOrderCalculationTableRows(blocks), [blocks])
-  const columns = useMemo(() => getPaymentOrderCalculationColumns(), [])
+  const columns = useMemo(
+    () => getPaymentOrderCalculationColumns({ lectureSessionSegmentLabel }),
+    [lectureSessionSegmentLabel]
+  )
   const hideHeaderActionsStatuses: PaymentOrderAdminLineProcessingStatus[] = [
     'confirmed',
     'application_rejected',

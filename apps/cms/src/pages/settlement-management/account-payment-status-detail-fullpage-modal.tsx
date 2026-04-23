@@ -211,6 +211,7 @@ export function AccountPaymentStatusDetailFullPageModal({
               blocks={detail.blocks}
               formulaLabel={detail.formulaLabel}
               totalAmount={detail.totalAmount}
+              lectureSessionSegmentLabel="round"
               headerActions={
                 basic.accountPaymentStatus === 'completed' ? undefined : (
                   <AppButton

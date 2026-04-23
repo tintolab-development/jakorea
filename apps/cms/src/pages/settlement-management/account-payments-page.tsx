@@ -12,6 +12,7 @@ import {
   ACCOUNT_PAYMENT_STATUS_LABELS,
   MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET,
   mockAccountPaymentRows,
+  formatAccountPaymentSessionLabelDisplay,
   type AccountPaymentRow,
   type AccountPaymentTransferStatus,
 } from '@/data/mock/account-payments-list'
@@ -356,6 +357,7 @@ export default function AccountPaymentsPage() {
         key: 'sessionLabel',
         width: 120,
         align: 'center',
+        render: (v: string) => formatAccountPaymentSessionLabelDisplay(v),
       },
       {
         title: '계좌 지급 현황',

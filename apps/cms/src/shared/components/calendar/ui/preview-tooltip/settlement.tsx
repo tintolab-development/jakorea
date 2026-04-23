@@ -1,6 +1,6 @@
 import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
 import {
-  INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
+  INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT,
   INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE,
   settlementCalendarPrimaryTitle,
   type InstructorSettlementListRow,
@@ -48,7 +48,7 @@ export function renderSettlementEventsTooltipContent({
             </div>
             <div>
               <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
-                {INSTRUCTOR_SETTLEMENT_STATUS_LABELS[row.status]}
+                {INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[row.status]}
               </span>
               <span className="program-calendar-schedule-panel__text">
                 <span className="program-calendar-schedule-panel__sep">|</span> +

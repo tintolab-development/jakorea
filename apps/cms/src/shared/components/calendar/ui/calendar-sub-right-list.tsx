@@ -75,7 +75,7 @@ function CalendarSubRightProgramList({
   )
 
   return (
-    <div className="calendar-list">
+    <div className={dayPrograms.length === 0 ? 'calendar-list calendar-list--empty' : 'calendar-list'}>
       {dayPrograms.length === 0 ? (
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
       ) : (
@@ -154,7 +154,13 @@ export function CalendarSubRightSettlementList({
   )
 
   return (
-    <div className="calendar-list settlement-list-item-list">
+    <div
+      className={
+        dayRows.length === 0
+          ? 'calendar-list settlement-list-item-list calendar-list--empty'
+          : 'calendar-list settlement-list-item-list'
+      }
+    >
       {dayRows.length === 0 ? (
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 정산이 없습니다" />
       ) : (

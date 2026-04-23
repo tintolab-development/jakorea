@@ -7,7 +7,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
+import {
+  formatAccountPaymentSessionLabelDisplay,
+  type AccountPaymentRow,
+} from '@/data/mock/account-payments-list'
 import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
@@ -53,14 +56,14 @@ function placeholderInvoiceForAccountPaymentCalendar(
   const d = dayjs(row.transferScheduledDate)
   return {
     programName: row.programName,
-    sessionProgress: row.sessionLabel,
+    sessionProgress: formatAccountPaymentSessionLabelDisplay(row.sessionLabel),
     operationPeriod: '—',
     paymentStatementStatus: status,
     expectedTransferDate: `${d.format('YYYY. MM. DD')}(${['일', '월', '화', '수', '목', '금', '토'][d.day()]})`,
     lectureFeeBasis: '—',
     businessIncomeEarner: '해당 없음',
     institutionName: row.institutionName,
-    lectureDateSessions: `${row.sessionLabel} · ${row.instructorName}`,
+    lectureDateSessions: `${formatAccountPaymentSessionLabelDisplay(row.sessionLabel)} · ${row.instructorName}`,
     lineItems: [
       {
         key: 'estimated',
@@ -86,7 +89,7 @@ function accountPaymentRowToSettlementListRow(row: AccountPaymentRow): Instructo
     programName: row.programName,
     instructorName: row.instructorName,
     institutionName: row.institutionName,
-    lectureDateDisplay: `${row.sessionLabel} · ${row.instructorName}`,
+    lectureDateDisplay: `${formatAccountPaymentSessionLabelDisplay(row.sessionLabel)} · ${row.instructorName}`,
     calendarDate,
     status,
     scheduledAmount: row.amount,
@@ -237,7 +240,9 @@ export function AccountPaymentsCalendarView({
   )
 
   const onMonthChange = useCallback((next: Dayjs) => {
-    setCurrentMonth(next)
+    const firstDayOfMonth = next.startOf('month')
+    setCurrentMonth(firstDayOfMonth)
+    setSelectedDate(firstDayOfMonth)
   }, [])
 
   const onTodayClick = useCallback(() => {
@@ -285,7 +290,6 @@ export function AccountPaymentsCalendarView({
         />
       </div>
       <CalendarMain
-        className="calendar-main"
         mode="month"
         hideModeToggle
         onModeChange={() => {}}
