@@ -284,7 +284,7 @@ export default function DetailedProgramPage() {
           }
           return (
             <CmsSelect
-              inputSize="small"
+              inputSize="medium"
               width="100%"
               value={row.active ? 'true' : 'false'}
               onChange={v => updateDraft(row.id, { active: v === 'true' })}
@@ -294,7 +294,7 @@ export default function DetailedProgramPage() {
         },
       },
       {
-        title: '록자',
+        title: '등록자',
         dataIndex: 'createdBy',
         key: 'createdBy',
         width: TABLE_COLUMN_WIDTHS.name,
@@ -338,15 +338,13 @@ export default function DetailedProgramPage() {
             >
               항목 삭제
             </CmsButton>
-            {isEditMode ? (
-              <CmsButton variant="primary" onClick={handleSave} disabled={!canWrite}>
-                저장
-              </CmsButton>
-            ) : (
-              <CmsButton variant="secondary" onClick={enterEditMode} disabled={!canWrite}>
-                정보 수정
-              </CmsButton>
-            )}
+            <CmsButton
+              variant="secondary"
+              onClick={isEditMode ? handleSave : enterEditMode}
+              disabled={!canWrite}
+            >
+              정보 수정
+            </CmsButton>
             <CmsButton
               variant="primary"
               onClick={handleAddClick}

@@ -1,11 +1,16 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, type MouseEvent } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { TableRowSelection } from 'antd/es/table/interface'
 import type { UseProgramHistoryFilterReturn } from '@/features/sponsor/hooks/use-program-history-filter'
 import type { SponsorProgramHistoryRow } from '@/features/sponsor/model/sponsor-management.types'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import { CmsButton, DeleteGuideModal, buildProgramProgressHistoryDeleteGuide } from '@/shared/ui'
+import {
+  CmsButton,
+  DeleteGuideModal,
+  ProgramHistoryDeleteBlockedModal,
+  buildProgramProgressHistoryDeleteGuide,
+} from '@/shared/ui'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
@@ -13,6 +18,10 @@ import {
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { buildProgressYearSelectOptions } from '@/shared/utils'
 import { SPONSOR_PROGRAM_HISTORY_FILTER_ALL } from '@/features/sponsor/utils/match-program-history-filter'
+import {
+  getEnrollmentDisplayStatusFromProgramLifecycle,
+  isProgramHistoryDeleteBlockedByDisplayStatus,
+} from '@/shared/constants/status'
 
 const LIFECYCLE_OPTIONS = [
   { label: '전체', value: SPONSOR_PROGRAM_HISTORY_FILTER_ALL },
@@ -92,6 +101,7 @@ export function SponsorProgramHistoryPanel({
   onRemoveProgramHistories,
 }: SponsorProgramHistoryPanelProps) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteBlockedModalOpen, setDeleteBlockedModalOpen] = useState(false)
 
   const selectedRows = useMemo((): SponsorProgramHistoryRow[] => {
     const keySet = new Set(selectedKeys.map(k => String(k)))
@@ -126,10 +136,45 @@ export function SponsorProgramHistoryPanel({
   const handleDeleteConfirm = useCallback((): void => {
     const ids = selectedKeys.map(k => String(k))
     if (ids.length === 0) return
+
+    const hasInProgress = selectedRows.some(row =>
+      isProgramHistoryDeleteBlockedByDisplayStatus(
+        getEnrollmentDisplayStatusFromProgramLifecycle(row.lifecycleStatus)
+      )
+    )
+    if (hasInProgress) {
+      setDeleteModalOpen(false)
+      setDeleteBlockedModalOpen(true)
+      return
+    }
+
     onRemoveProgramHistories(ids)
     setSelectedKeys([])
     setDeleteModalOpen(false)
-  }, [onRemoveProgramHistories, selectedKeys, setSelectedKeys])
+  }, [onRemoveProgramHistories, selectedKeys, selectedRows, setSelectedKeys])
+
+  const programHistoryTableOnRow = useCallback(
+    (_record: SponsorProgramHistoryRow) => ({
+      onClick: (e: MouseEvent<HTMLElement>) => {
+        const el = e.target as HTMLElement
+        if (
+          el.closest('.ant-table-selection-column') ||
+          el.closest('.ant-checkbox-wrapper') ||
+          el.closest('button') ||
+          el.closest('a')
+        ) {
+          return
+        }
+        // TODO(program-detail): 행 클릭 시 프로그램 상세 페이지 연결 — 임시 비활성화
+        // const programId = _record.programId?.trim()
+        // if (!programId) return
+        // navigate(getProgramAdminDetailInfoTabUrl(programId))
+        window.alert('준비 중입니다.')
+      },
+      style: { cursor: 'pointer' as const },
+    }),
+    []
+  )
 
   return (
     <>
@@ -165,6 +210,7 @@ export function SponsorProgramHistoryPanel({
           pagination={false}
           scroll={{ x: 'max-content' }}
           rowSelection={rowSelection}
+          onRow={programHistoryTableOnRow}
         />
       </FilterTableLayout>
       {deleteModalOpen && deleteGuide && (
@@ -180,6 +226,12 @@ export function SponsorProgramHistoryPanel({
           confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
         />
       )}
+      {deleteBlockedModalOpen ? (
+        <ProgramHistoryDeleteBlockedModal
+          open
+          onClose={() => setDeleteBlockedModalOpen(false)}
+        />
+      ) : null}
     </>
   )
 }

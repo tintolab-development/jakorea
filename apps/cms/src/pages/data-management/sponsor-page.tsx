@@ -39,9 +39,6 @@ import {
 import { SponsorDeleteBlockedModal } from '@/features/sponsor/ui/modal/sponsor-delete-blocked-modal'
 import { SponsorRegisterModal } from '@/features/sponsor/ui/modal/sponsor-register-modal'
 import { SponsorDetailFullPageModal } from '@/features/sponsor/ui/sponsor-detail-fullpage-modal'
-import '@/pages/programs/program-list-page.css'
-import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
 
 const ORG_LABEL: Record<NonNullable<SponsorManagementRow['organizationKind']>, string> = {
   corporate: '기업',
@@ -288,7 +285,7 @@ export default function SponsorPage() {
   )
 
   return (
-    <div className="sponsor-page">
+    <>
       <FilterTableLayout
         bordered={false}
         fields={sponsorManagementFilterFields}
@@ -385,6 +382,6 @@ export default function SponsorPage() {
         message={actionResultMessage}
         onClose={handleCloseActionResultModal}
       />
-    </div>
+    </>
   )
 }

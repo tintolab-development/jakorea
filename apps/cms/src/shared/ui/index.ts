@@ -18,6 +18,8 @@ export {
 } from './action-result-messages'
 export { DeleteGuideModal } from './delete-guide-modal'
 export type { DeleteGuideModalProps } from './delete-guide-modal'
+export { ProgramHistoryDeleteBlockedModal } from './program-history-delete-blocked-modal'
+export type { ProgramHistoryDeleteBlockedModalProps } from './program-history-delete-blocked-modal'
 export {
   buildDomainEntityDeleteMessageLines,
   buildBulkDeleteGuideTitle,
