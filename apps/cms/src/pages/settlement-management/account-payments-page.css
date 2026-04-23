@@ -225,13 +225,23 @@
   line-height: 165%;
 }
 
-.account-payments-page__status-text--pending {
-  color: var(--color-green, #1e8c29);
+.account-payments-page__status-text--awaiting-confirmation {
+  color: var(--color-orange, #f07917);
   font-weight: 500;
 }
 
-.account-payments-page__status-text--completed {
+.account-payments-page__status-text--partial-confirmation {
+  color: var(--color-purple, #8457ce);
+  font-weight: 500;
+}
+
+.account-payments-page__status-text--account-paid {
   color: var(--color-blue, #017eaf);
+  font-weight: 500;
+}
+
+.account-payments-page__status-text--payment-correction-requested {
+  color: #e8007c;
   font-weight: 500;
 }
 

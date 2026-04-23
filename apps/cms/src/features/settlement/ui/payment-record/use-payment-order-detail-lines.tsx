@@ -344,7 +344,7 @@ export function usePaymentOrderDetailLinesController(
         return
       }
       if (key === 'status') {
-        setDraftStatus((value ?? 'all') as AppliedLineStatus)
+        setDraftStatus((value == null || value === '' ? 'all' : value) as AppliedLineStatus)
         return
       }
       if (key === 'dateRange') {

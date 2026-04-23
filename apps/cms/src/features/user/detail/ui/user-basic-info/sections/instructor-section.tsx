@@ -127,7 +127,6 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                   placeholder="성별"
                   inputSize="medium"
                   width={120}
-                  allowClear
                 />
                 <CmsInput
                   value={d?.birthDate ?? ''}
@@ -231,7 +230,6 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                 placeholder="선택"
                 inputSize="medium"
                 width="100%"
-                allowClear
               />
             }
           />
@@ -249,7 +247,6 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                 placeholder="선택"
                 inputSize="medium"
                 width="100%"
-                allowClear
               />
             }
           />
@@ -276,7 +273,6 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
               placeholder="선택"
               inputSize="medium"
               width="100%"
-              allowClear
             />
           }
         />

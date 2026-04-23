@@ -25,6 +25,21 @@ import {
 } from '@/features/settlement/ui/account-payment-confirmation-modal'
 import './account-payment-status-detail-fullpage-modal.css'
 
+function getAccountPaymentStatusClassName(status: AccountPaymentRow['accountPaymentStatus']): string {
+  switch (status) {
+    case 'awaiting_confirmation':
+      return 'account-payments-page__status-text--awaiting-confirmation'
+    case 'partial_confirmation':
+      return 'account-payments-page__status-text--partial-confirmation'
+    case 'account_paid':
+      return 'account-payments-page__status-text--account-paid'
+    case 'payment_correction_requested':
+      return 'account-payments-page__status-text--payment-correction-requested'
+    default:
+      return ''
+  }
+}
+
 export interface AccountPaymentStatusDetailFullPageModalProps {
   open: boolean
   onClose: () => void
@@ -170,13 +185,7 @@ export function AccountPaymentStatusDetailFullPageModal({
                 <DetailInfoForm.Field
                   label="계좌 지급 현황"
                   view={
-                    <span
-                      className={
-                        basic.accountPaymentStatus === 'pending'
-                          ? 'account-payments-page__status-text--pending'
-                          : 'account-payments-page__status-text--completed'
-                      }
-                    >
+                    <span className={getAccountPaymentStatusClassName(basic.accountPaymentStatus)}>
                       {basic.accountPaymentStatusLabel}
                     </span>
                   }
@@ -212,7 +221,7 @@ export function AccountPaymentStatusDetailFullPageModal({
               formulaLabel={detail.formulaLabel}
               totalAmount={detail.totalAmount}
               headerActions={
-                basic.accountPaymentStatus === 'completed' ? undefined : (
+                basic.accountPaymentStatus === 'account_paid' ? undefined : (
                   <AppButton
                     variant="primary"
                     size="filter"

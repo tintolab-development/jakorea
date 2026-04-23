@@ -81,7 +81,6 @@ export function CertificateBulkIssueReasonModal({
           options={REASON_OPTIONS}
           inputSize="large"
           width="100%"
-          allowClear
         />
       </div>
     </ContentModal>

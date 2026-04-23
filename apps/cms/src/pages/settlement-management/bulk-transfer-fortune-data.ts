@@ -67,7 +67,7 @@ function compareItems(a: AccountPaymentRow, b: AccountPaymentRow): number {
 
 /** 계좌 지급 완료만, 강사명 → 강사 내 항목 순으로 정렬 */
 export function getCompletedRowsOrderedForBulkTransfer(rows: AccountPaymentRow[]): AccountPaymentRow[] {
-  const completed = rows.filter(r => r.accountPaymentStatus === 'completed')
+  const completed = rows.filter(r => r.accountPaymentStatus === 'account_paid')
   const byInstructor = new Map<string, AccountPaymentRow[]>()
   for (const row of completed) {
     const list = byInstructor.get(row.instructorName) ?? []

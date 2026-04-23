@@ -70,57 +70,35 @@ const DEFAULT_KIT_QUANTITIES: TextbookKitQuantityValues = {
   university: '32',
 }
 
-const textbookFilterFields: FilterFieldConfig[] = [
-  {
-    key: 'businessArea',
-    type: 'select',
-    label: '사업 분야',
-    placeholder: '전체',
-    width: '16%',
-    options: [{ label: '전체', value: 'ALL' }, ...TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS],
-  },
-  {
-    key: 'educationTarget',
-    type: 'select',
-    label: '교육 대상',
-    placeholder: '전체',
-    width: '16%',
-    options: [{ label: '전체', value: 'ALL' }, ...TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS],
-  },
-  {
-    key: 'grade',
-    type: 'select',
-    label: '대상 학년',
-    placeholder: '전체',
-    width: '16%',
-    options: [
-      { label: '전체', value: 'ALL' },
-      { label: '전학년', value: '전학년' },
-      { label: '1학년', value: '1학년' },
-      { label: '2학년', value: '2학년' },
-      { label: '3학년', value: '3학년' },
-    ],
-  },
-  {
-    key: 'textbookName',
-    type: 'search',
-    label: '교재명',
-    placeholder: '교재명',
-    width: '24%',
-  },
-  {
-    key: 'useStatus',
-    type: 'select',
-    label: '사용 여부',
-    placeholder: '전체',
-    width: '16%',
-    options: [
-      { label: '전체', value: 'ALL' },
-      { label: '사용', value: 'USED' },
-      { label: '미사용', value: 'UNUSED' },
-    ],
-  },
-]
+type FilterOption = { label: string; value: string }
+
+function gradeOptionsByEducationTarget(educationTarget: string): FilterOption[] {
+  const allOption = { label: '전체', value: 'ALL' }
+  const grade13 = ['1학년', '2학년', '3학년'].map(g => ({ label: g, value: g }))
+  const grade16 = ['1학년', '2학년', '3학년', '4학년', '5학년', '6학년'].map(g => ({
+    label: g,
+    value: g,
+  }))
+  switch (educationTarget) {
+    case '유아':
+      return [allOption, { label: '유아', value: '유아' }, { label: '유치원생', value: '유치원생' }]
+    case '초등학교':
+      return [{ label: '전학년', value: '전학년' }, ...grade16]
+    case '중학교':
+    case '고등학교':
+      return [{ label: '전학년', value: '전학년' }, ...grade13]
+    case '대학교':
+      return [allOption]
+    default:
+      return [
+        allOption,
+        { label: '유아', value: '유아' },
+        { label: '유치원생', value: '유치원생' },
+        { label: '전학년', value: '전학년' },
+        ...grade16,
+      ]
+  }
+}
 
 export default function TextbookPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -138,6 +116,61 @@ export default function TextbookPage() {
     useState<TextbookKitQuantityValues>(DEFAULT_KIT_QUANTITIES)
   const [pendingKitQuantities, setPendingKitQuantities] =
     useState<TextbookKitQuantityValues | null>(null)
+
+  const gradeOptions = useMemo(
+    () => gradeOptionsByEducationTarget(pendingFilters.educationTarget),
+    [pendingFilters.educationTarget]
+  )
+
+  const textbookFilterFields: FilterFieldConfig[] = useMemo(
+    () => [
+      {
+        key: 'businessArea',
+        type: 'select',
+        label: '사업 분야',
+        placeholder: '전체',
+        width: '16%',
+        options: [{ label: '전체', value: 'ALL' }, ...TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS],
+      },
+      {
+        key: 'educationTarget',
+        type: 'select',
+        label: '교육 대상',
+        placeholder: '전체',
+        width: '16%',
+        options: [{ label: '전체', value: 'ALL' }, ...TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS],
+      },
+      {
+        key: 'grade',
+        type: 'select',
+        label: '대상 학년',
+        placeholder: '전체',
+        width: '16%',
+        withAllOption: false,
+        options: gradeOptions,
+      },
+      {
+        key: 'textbookName',
+        type: 'search',
+        label: '교재명',
+        placeholder: '교재명',
+        width: '24%',
+      },
+      {
+        key: 'useStatus',
+        type: 'select',
+        label: '사용 여부',
+        placeholder: '전체',
+        width: '16%',
+        options: [
+          { label: '전체', value: 'ALL' },
+          { label: '사용', value: 'USED' },
+          { label: '미사용', value: 'UNUSED' },
+        ],
+      },
+    ],
+    [gradeOptions]
+  )
 
   const detailTextbookId = searchParams.get('textbookId')
   const detailMode = searchParams.get('textbookMode') === 'edit' ? 'edit' : 'view'
@@ -196,10 +229,22 @@ export default function TextbookPage() {
   }, [appliedFilters, rows])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
-    setPendingFilters(prev => ({
-      ...prev,
-      [key]: (value ?? (key === 'textbookName' ? '' : 'ALL')) as string,
-    }))
+    setPendingFilters(prev => {
+      const nextValue = (value ?? (key === 'textbookName' ? '' : 'ALL')) as string
+      if (key === 'educationTarget') {
+        const nextGradeOptions = gradeOptionsByEducationTarget(nextValue).map(opt => opt.value)
+        const nextGrade = nextGradeOptions.includes(prev.grade) ? prev.grade : 'ALL'
+        return {
+          ...prev,
+          educationTarget: nextValue,
+          grade: nextGrade,
+        }
+      }
+      return {
+        ...prev,
+        [key]: nextValue,
+      }
+    })
   }, [])
 
   const handleSearch = useCallback(() => {

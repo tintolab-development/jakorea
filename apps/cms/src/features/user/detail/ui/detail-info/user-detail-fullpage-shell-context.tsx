@@ -27,6 +27,9 @@ export interface UserDetailFullpageShellValue {
   onNavigateToLinkedUser?: (userId: string) => void
   modals: UseUserDetailModalsResult
   withdrawConfirmOpen: boolean
+  /** 학교(기관) 상세 — 소속 교사가 있을 때 삭제 시도 시 목록과 동일한 불가 안내 */
+  institutionDeleteBlockedOpen: boolean
+  onCloseInstitutionDeleteBlocked: () => void
   onProgressStatusChange: (
     app: Application,
     displayStatus: ProgramEnrollmentDisplayStatus

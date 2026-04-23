@@ -21,6 +21,7 @@ import {
 import {
   SCHEDULE_COLORS,
   buildResolvedScheduleColorMapForPrograms,
+  type ScheduleColorPair,
 } from '@/features/program/ui/program-schedule-colors'
 
 dayjs.extend(isSameOrAfter)
@@ -125,6 +126,8 @@ export type CalendarSubRightSettlementListProps = {
   selectedRowKeys: React.Key[]
   onSelectionChange: (keys: React.Key[]) => void
   onRowClick: (row: InstructorSettlementListRow) => void
+  resolveRowColors?: (row: InstructorSettlementListRow) => ScheduleColorPair | undefined
+  resolveBadgeLabel?: (row: InstructorSettlementListRow) => string | undefined
 }
 
 export function CalendarSubRightSettlementList({
@@ -133,6 +136,8 @@ export function CalendarSubRightSettlementList({
   selectedRowKeys,
   onSelectionChange,
   onRowClick,
+  resolveRowColors,
+  resolveBadgeLabel,
 }: CalendarSubRightSettlementListProps) {
   const dayRows = useMemo(() => {
     return rows.filter(row => dayjs(row.calendarDate).isSame(selectedDate, 'day'))
@@ -159,9 +164,9 @@ export function CalendarSubRightSettlementList({
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 정산이 없습니다" />
       ) : (
         dayRows.map(row => {
-          const colors = settlementEventStatusColorPair(row.status)
+          const colors = resolveRowColors?.(row) ?? settlementEventStatusColorPair(row.status)
           const tagStyle = INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE[row.status]
-          const badgeLabel = INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[row.status]
+          const badgeLabel = resolveBadgeLabel?.(row) ?? INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[row.status]
 
           return (
             <CalendarListItemContentSettlement

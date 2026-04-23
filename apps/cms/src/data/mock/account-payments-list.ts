@@ -8,18 +8,24 @@ import type {
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/data/mock/payment-order-admin-list'
 import {
+  ACCOUNT_PAYMENT_AGGREGATE_LABELS,
+  type AccountPaymentAggregateStatus,
+} from '@/shared/constants/payment-order-aggregate-status'
+import {
   getMockPaymentOrderInstructorCalculationStatement,
   getMockPaymentOrderInstructorDetail,
   type PaymentOrderAdminInstructorDetailProgramRow,
   type PaymentOrderAdminInstructorRow,
 } from '@/data/mock/payment-order-admin-list'
 
-/** 계좌 지급 단계 (지급조서 단계와 별개) */
-export type AccountPaymentTransferStatus = 'pending' | 'completed'
+/** 계좌 지급 단계(rule): 지급 대기 중 > 확인 진행 중 > 계좌 지급 완료 > 지급 정정 요청 */
+export type AccountPaymentTransferStatus = AccountPaymentAggregateStatus
 
 export const ACCOUNT_PAYMENT_STATUS_LABELS: Record<AccountPaymentTransferStatus, string> = {
-  pending: '계좌 지급 대기 중',
-  completed: '계좌 지급 완료',
+  awaiting_confirmation: ACCOUNT_PAYMENT_AGGREGATE_LABELS.awaiting_confirmation,
+  partial_confirmation: ACCOUNT_PAYMENT_AGGREGATE_LABELS.partial_confirmation,
+  account_paid: ACCOUNT_PAYMENT_AGGREGATE_LABELS.account_paid,
+  payment_correction_requested: ACCOUNT_PAYMENT_AGGREGATE_LABELS.payment_correction_requested,
 }
 
 export interface AccountPaymentRow {
@@ -217,11 +223,17 @@ export const MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET = 109_150_000
 
 /**
  * 30건 — 전부 지급조서 확인 완료(paymentOrderStatus: confirmed).
- * 계좌 지급 대기/완료만 교차 배치.
+ * 계좌 지급 4상태를 순환 배치.
  */
 export const mockAccountPaymentRows: AccountPaymentRow[] = Array.from({ length: 30 }, (_, i) => {
   const no = 206 - i
-  const accountPaymentStatus: AccountPaymentTransferStatus = i % 3 === 0 ? 'completed' : 'pending'
+  const statusCycle: AccountPaymentTransferStatus[] = [
+    'awaiting_confirmation',
+    'partial_confirmation',
+    'account_paid',
+    'payment_correction_requested',
+  ]
+  const accountPaymentStatus: AccountPaymentTransferStatus = statusCycle[i % statusCycle.length]!
   const baseM = 1 + (i % 12)
   const year = i < 15 ? 2026 : 2025
   const day = 5 + ((i * 7) % 24)

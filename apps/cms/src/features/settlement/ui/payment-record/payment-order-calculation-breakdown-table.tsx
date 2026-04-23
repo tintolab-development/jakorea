@@ -6,7 +6,7 @@ import { useMemo, type ReactNode } from 'react'
 import { Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { withProgramDetailTdDivider } from '@/features/program/ui/program-detail-td-divider'
 import type {
   PaymentOrderAdminLineProcessingStatus,
@@ -97,7 +97,10 @@ export function getPaymentOrderCalculationColumns(options?: {
       }),
       render: (_: unknown, row: PaymentOrderCalculationTableRow) => (
         <div className="payment-order-calc-statement-modal__td-divider-wrap payment-order-calc-statement-modal__td-divider-wrap--center">
-          {withProgramDetailTdDivider([row.lectureDateDisplay, row.lectureSessionDisplay])}
+          {withProgramDetailTdDivider([
+            row.lectureDateDisplay,
+            row.lectureSessionDisplay.replaceAll('차시', '회차'),
+          ])}
         </div>
       ),
     },
@@ -146,14 +149,14 @@ export function getPaymentOrderCalculationColumns(options?: {
       align: 'center',
       render: () => (
         <div className="payment-order-calc-statement-modal__detail-btn-wrap">
-          <AppButton
+          <CmsButton
             variant="default"
             style={{ width: '160px' }}
             size="large"
             onClick={onDetailClick}
           >
             상세 보기
-          </AppButton>
+          </CmsButton>
         </div>
       ),
     },
@@ -191,8 +194,7 @@ export function PaymentOrderCalculationBreakdownTable({
   ]
   const showHeaderActions =
     headerActions != null &&
-    (processingStatus === undefined ||
-      !hideHeaderActionsStatuses.includes(processingStatus))
+    (processingStatus === undefined || !hideHeaderActionsStatuses.includes(processingStatus))
 
   const handleDownload = () => {
     window.alert('준비 중입니다.')
@@ -249,7 +251,7 @@ export function PaymentOrderCalculationBreakdownTable({
                 </span>
               </Table.Summary.Cell>
               <Table.Summary.Cell index={5} align="center">
-                <AppButton
+                <CmsButton
                   variant="primary"
                   size="large"
                   style={{ width: '160px' }}
@@ -257,7 +259,7 @@ export function PaymentOrderCalculationBreakdownTable({
                   onClick={handleDownload}
                 >
                   지급조서 발급
-                </AppButton>
+                </CmsButton>
               </Table.Summary.Cell>
             </Table.Summary.Row>
           </Table.Summary>

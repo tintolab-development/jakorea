@@ -124,13 +124,9 @@ function useCalendarNavigation({
   weekDates: Dayjs[]
 }) {
   const handleToday = () => {
-    if (onTodayClick) {
-      onTodayClick()
-      return
-    }
     const today = dayjs()
+    onTodayClick?.()
     onSelectDate(today)
-    onMonthChange(today.startOf('month'))
   }
 
   const handlePrev = () => {

@@ -11,6 +11,7 @@ import { LectureAttendanceModal } from '@/features/program/ui/lecture-attendance
 import { AssignmentSubmissionModal } from '@/features/program/ui/assignment-submission-modal'
 import { InstructorPermissionRevokeModal } from '@/features/user/detail/ui/modal/instructor-permission-revoke-modal'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
+import { InstitutionDeleteBlockedModal } from '@/features/user/shared/ui/institution-delete-blocked-modal'
 
 export function UserDetailFullpageModalsStack() {
   const {
@@ -19,6 +20,8 @@ export function UserDetailFullpageModalsStack() {
     withdrawConfirmOpen,
     onWithdrawModalCancel,
     onWithdrawModalConfirm,
+    institutionDeleteBlockedOpen,
+    onCloseInstitutionDeleteBlocked,
     derived,
     instructorPermissionRevokeOpen,
     onCloseInstructorPermissionRevoke,
@@ -29,6 +32,11 @@ export function UserDetailFullpageModalsStack() {
 
   return (
     <>
+      <InstitutionDeleteBlockedModal
+        open={institutionDeleteBlockedOpen}
+        onClose={onCloseInstitutionDeleteBlocked}
+        selectedCount={1}
+      />
       {withdrawConfirmOpen && (
         <DeleteGuideModal
           open

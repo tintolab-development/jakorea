@@ -90,8 +90,7 @@ export function createVolunteersSchema({
                     <CmsSelect
                       value={field.value ?? undefined}
                       options={VOLUNTEER_TARGET_OPTIONS}
-                      onChange={v => field.onChange(v ?? undefined)}
-                      allowClear
+                      onChange={v => field.onChange(v == null || v === '' ? undefined : v)}
                       placeholder="모집 대상 선택"
                     />
                   )}
@@ -223,7 +222,7 @@ export function createVolunteersSchema({
                         width={'25%'}
                         value={field.value ?? undefined}
                         options={INTERVIEW_METHOD_OPTIONS}
-                        onChange={v => field.onChange(v ?? undefined)}
+                        onChange={v => field.onChange(v == null || v === '' ? undefined : v)}
                         placeholder="방법 선택"
                       />
                     )}

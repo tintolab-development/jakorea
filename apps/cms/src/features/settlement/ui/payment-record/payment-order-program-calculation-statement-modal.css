@@ -26,7 +26,8 @@
   overflow-y: visible;
 }
 
-.payment-order-calc-statement-modal.teal-header-modal--large .teal-header-modal__body.teal-header-modal__body--scrollable,
+.payment-order-calc-statement-modal.teal-header-modal--large
+  .teal-header-modal__body.teal-header-modal__body--scrollable,
 .payment-order-calc-statement-modal.teal-header-modal--large .teal-header-modal__body {
   overflow-y: visible !important;
   overflow-x: auto;
@@ -209,6 +210,13 @@
   justify-content: flex-start;
 }
 
+.payment-order-calc-statement-modal__detail-btn-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
 /* 항목 타이틀: 기본 정보, 산출 내역 상세 */
 .payment-order-calc-statement-modal__section-title {
   margin: 0 0 12px;
@@ -267,8 +275,12 @@
 }
 
 /* 산출 내역서 모달 — 산출 내역 상세 헤더: 신청 반려·확인 처리 120×40 */
-.payment-order-calc-statement-modal .payment-order-calc-statement-modal__detail-actions .app-button.app-button--large.ant-btn,
-.payment-order-calc-statement-modal .payment-order-calc-statement-modal__detail-actions .app-button.app-button--large.ant-btn-lg {
+.payment-order-calc-statement-modal
+  .payment-order-calc-statement-modal__detail-actions
+  .app-button.app-button--large.ant-btn,
+.payment-order-calc-statement-modal
+  .payment-order-calc-statement-modal__detail-actions
+  .app-button.app-button--large.ant-btn-lg {
   box-sizing: border-box !important;
   width: 120px !important;
   min-width: 120px !important;
@@ -513,7 +525,7 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--default-BK, #3d3d3d);
 }
 
 .payment-order-calc-statement-modal__summary-total {
@@ -523,7 +535,7 @@
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 150%;
   color: #01a1af;
   font-variant-numeric: tabular-nums;

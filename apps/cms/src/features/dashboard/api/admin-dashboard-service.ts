@@ -525,7 +525,9 @@ export function getMenuShortcutBadgeCounts(): Record<string, number> {
     mockPaymentOrderAdminProgramList.filter(r => r.processingStatus === 'pending').length +
     mockPaymentOrderAdminInstructorList.filter(r => r.processingStatus === 'pending').length
 
-  const accountPaymentPending = mockAccountPaymentRows.filter(r => r.accountPaymentStatus === 'pending').length
+  const accountPaymentPending = mockAccountPaymentRows.filter(
+    r => r.accountPaymentStatus !== 'account_paid'
+  ).length
 
   const mapped: Record<string, number> = {
     'programs-all': stages.studentRecruitment + stages.instructorRecruitment,

@@ -4,15 +4,20 @@
  */
 
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { settlementItemSettingSections } from './settlement-item-settings'
 
-export type PaymentOrderAdminProcessingStatus = 'pending' | 'confirmed' | 'correction' | 'rejected'
+export type PaymentOrderAdminProcessingStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'correction'
+  | 'application_rejected'
 
 /**
  * 목록·테이블 지급조서 처리 현황 — 전체 문구 (캘린더만 `PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST` 함축형)
  */
 export const PAYMENT_ORDER_STATUS_LABELS_LIST: Record<PaymentOrderAdminProcessingStatus, string> = {
   pending: '확인 대기 중',
-  rejected: '계좌 지급 완료',
+  application_rejected: '신청 반려',
   confirmed: '지급조서 확인 완료',
   correction: '지급 정정 요청',
 }
@@ -22,7 +27,7 @@ export const PAYMENT_ORDER_STATUS_LABELS_DETAIL: Record<PaymentOrderAdminProcess
   {
     pending: '확인 대기 중',
     confirmed: '지급조서 확인 완료',
-    rejected: '계좌 지급 완료',
+    application_rejected: '신청 반려',
     correction: '지급 정정 요청',
   }
 
@@ -33,7 +38,7 @@ export const PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST: Record<
 > = {
   pending: '확인 대기',
   confirmed: '확인 완료',
-  rejected: '계좌 지급',
+  application_rejected: '신청 반려',
   correction: '정정 요청',
 }
 
@@ -239,7 +244,12 @@ export interface PaymentOrderAdminInstructorDetail {
 }
 
 /** 정산 신청 이후 ~ 지급조서 확인 완료까지(다음 단계인 계좌 지급 `rejected`는 목 mock에서 제외) */
-const statuses: PaymentOrderAdminProcessingStatus[] = ['pending', 'confirmed', 'correction']
+const statuses: PaymentOrderAdminProcessingStatus[] = [
+  'pending',
+  'confirmed',
+  'correction',
+  'application_rejected',
+]
 
 const programTitles = [
   'HSBC/HKU Business Case Competition 2026 모집 안내',
@@ -389,8 +399,13 @@ export const mockPaymentOrderAdminInstructorList: PaymentOrderAdminInstructorRow
     return base
   })
 
-/** 상세 라인도 지급조서 확인 구간만(계좌 지급 단계 제외) */
-const lineStatuses: PaymentOrderAdminLineProcessingStatus[] = ['pending', 'correction', 'confirmed']
+/** 상세 라인 상태(지급조서 확인 구간 + 신청 반려) */
+const lineStatuses: PaymentOrderAdminLineProcessingStatus[] = [
+  'pending',
+  'correction',
+  'confirmed',
+  'application_rejected',
+]
 
 const institutionNames = [
   '진월초등학교',
@@ -404,6 +419,21 @@ const institutionNames = [
   '한울중학교',
   '늘봄초등학교',
 ]
+
+/**
+ * 산출 내역서 > 강의비 책정 기준
+ * - 정산 항목 설정의 임금 항목 중 6개를 순환 노출
+ * - 단순인건비는 강의비 책정 기준 대상에서 제외
+ */
+const settlementWageStandardTitles = settlementItemSettingSections
+  .find(section => section.kind === 'wage')
+  ?.items.filter(item => item.id !== 'w-7')
+  .slice(0, 6)
+  .map(item => item.title) ?? ['1급 강사비']
+
+function pickSettlementWageStandardTitle(seed: number): string {
+  return settlementWageStandardTitles[seed % settlementWageStandardTitles.length] ?? '1급 강사비'
+}
 
 function mixSeed(programNo: number, salt: number): number {
   return Math.abs((programNo * 7919 + salt * 104729) % 100000)
@@ -617,13 +647,11 @@ export function getMockPaymentOrderProgramCalculationStatement(
   )
   const programSessionProgressDisplay = `${programDetail.sessionCompleted} / ${programDetail.sessionTotal}`
 
-  const isSpecialLecture = seed % 3 !== 0
   const lectureFee =
     instructorLineRow.estimatedAmount > 0 ? instructorLineRow.estimatedAmount : 915000
   const lectureFeeAmountLabel = `${lectureFee.toLocaleString('ko-KR')}원`
-  const lectureFeeStandardTitle = isSpecialLecture
-    ? '특강 강의비'
-    : '프로그램 1회 강의비 (3급 강사)'
+  const lectureFeeStandardTitle = pickSettlementWageStandardTitle(seed)
+  const isSpecialLecture = lectureFeeStandardTitle === '특강 강사비'
 
   const sessionStart = Math.max(1, instructorLineRow.sessionOrdinal)
   const sessionEnd = sessionStart + 1 + (seed % 2)
@@ -749,12 +777,10 @@ export function getMockPaymentOrderInstructorCalculationStatement(
     instructorDetail.address
   )
 
-  const isSpecialLecture = seed % 3 !== 0
   const lectureFee = programLineRow.estimatedAmount > 0 ? programLineRow.estimatedAmount : 915000
   const lectureFeeAmountLabel = `${lectureFee.toLocaleString('ko-KR')}원`
-  const lectureFeeStandardTitle = isSpecialLecture
-    ? '특강 강의비'
-    : '프로그램 1회 강의비 (3급 강사)'
+  const lectureFeeStandardTitle = pickSettlementWageStandardTitle(seed)
+  const isSpecialLecture = lectureFeeStandardTitle === '특강 강사비'
 
   const sessionStart = Math.max(1, programLineRow.sessionOrdinal)
   const sessionEnd = sessionStart + 1 + (seed % 2)
