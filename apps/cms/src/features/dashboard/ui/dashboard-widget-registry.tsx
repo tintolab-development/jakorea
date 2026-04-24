@@ -144,8 +144,17 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<Record<DashboardWidgetType, Dash
     <ProgramScheduleWidget
       variant="economy"
       widgetKey={PROGRAM_SCHEDULE_WIDGET_KEYS.economy}
-      title="경제 교육 프로그램 일정"
+      title="1사1교 프로그램 일정"
       viewAllPath="/programs/company-school"
+      user={p.user}
+    />
+  ),
+  'program-schedule-ujat-widget': p => (
+    <ProgramScheduleWidget
+      variant="ujat"
+      widgetKey={PROGRAM_SCHEDULE_WIDGET_KEYS.ujat}
+      title="UJAT 프로그램 일정"
+      viewAllPath="/programs/ujat"
       user={p.user}
     />
   ),
@@ -153,8 +162,8 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<Record<DashboardWidgetType, Dash
     <ProgramScheduleWidget
       variant="gemini"
       widgetKey={PROGRAM_SCHEDULE_WIDGET_KEYS.gemini}
-      title="제미나이 프로그램 일정"
-      viewAllPath="/programs"
+      title="Gemini 프로그램 일정"
+      viewAllPath="/programs/gemini"
       user={p.user}
     />
   ),

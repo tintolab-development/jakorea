@@ -57,6 +57,7 @@ export {
   buildEconomySchedulesForVisibleRange,
   buildGeneralSchedulesForVisibleRange,
   buildGeminiSchedulesForVisibleRange,
+  buildUjatSchedulesForVisibleRange,
 } from './schedules'
 export { mockMatchings, mockMatchingsMap } from './matchings'
 export { mockSettlements, mockSettlementsMap } from './settlements'
@@ -107,6 +108,7 @@ export {
   isGeminiProgram,
   getGeneralEducationPrograms,
   getGeminiPrograms,
+  getUjatPrograms,
   getProgramScheduleKindsForAdminUser,
   PROGRAM_SCHEDULE_WIDGET_KEYS,
   type ProgramScheduleKind,
