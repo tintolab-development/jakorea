@@ -10,7 +10,6 @@ import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detai
 import type { UserDetailFullpageDerived } from '@/features/user/detail/lib/use-user-detail-fullpage-derived'
 import type { InstructorPermissionRevokeNotifyTiming } from '@/features/user/detail/lib/use-user-detail-controller'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
-
 export interface UserDetailFullpageShellValue {
   mode: 'default' | 'permission'
   permissionRole?: 'instructor' | 'admin'

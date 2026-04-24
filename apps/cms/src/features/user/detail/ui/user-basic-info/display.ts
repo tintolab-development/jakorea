@@ -3,6 +3,7 @@ import type { User } from '@/types/user'
 import type { DateValue } from '@/types'
 import { formatDate } from '@/shared/utils'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { getMemberPermissionInstructorApplicationTypeLabel } from '@/features/user/permission-management/lib/member-permission-instructor-application-type'
 
 function ageFromBirthDate(birthDate: DateValue | undefined): number | null {
   if (!birthDate) return null
@@ -75,14 +76,9 @@ export function oneLineIntroLine(user: Omit<User, 'password'>): string {
   return bio && bio.length > 0 ? bio : '-'
 }
 
+/** 회원 관리 기준 신청·소속 구분 (강사비 등급 `instructorTypeLabel`은 사용하지 않음) */
 export function instructorApplicationTypeLine(user: Omit<User, 'password'>): string {
-  const instructorType = user.listMetrics?.instructorTypeLabel?.trim()
-  if (instructorType) return instructorType
-  const affiliation = user.affiliation?.trim()
-  if (!affiliation) return '-'
-  const [firstToken] = affiliation.split('|')
-  const resolved = firstToken?.trim()
-  return resolved && resolved.length > 0 ? resolved : '-'
+  return getMemberPermissionInstructorApplicationTypeLabel(user)
 }
 
 export function addressLine(user: Omit<User, 'password'>): string {

@@ -32,6 +32,7 @@ export function AdminSection(ctx: BasicInfoSectionContext) {
     adminPermissionVariantPatching = false,
     onPatchAdminPermissionVariantFromDetailView,
     adminMemberProfileFieldsEditableWhenEditing = true,
+    onPermissionResendNotification,
     viewContext,
   } = ctx
   const [adminPermissionOpen, setAdminPermissionOpen] = useState(false)
@@ -79,7 +80,11 @@ export function AdminSection(ctx: BasicInfoSectionContext) {
             ),
             sideLabel: isAdminPermissionDetail ? '권한 승인 현황' : '권한 유형',
             side: isAdminPermissionDetail ? (
-              <PermissionApprovalStatusWithResend user={user} />
+              <PermissionApprovalStatusWithResend
+                user={user}
+                onPermissionResendNotification={onPermissionResendNotification}
+                notifyPermissionRole="admin"
+              />
             ) : (
               <span
                 className={

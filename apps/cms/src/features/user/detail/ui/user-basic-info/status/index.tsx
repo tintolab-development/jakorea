@@ -1,6 +1,8 @@
 import dayjs from 'dayjs'
 import type { User } from '@/types/user'
+import type { MemberPermissionApplicationStatus } from '@/types/member-permission-application'
 import { CmsButton } from '@/shared/ui'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 
 export function schoolTeacherEmploymentBadgeModifier(label: string): 'active' | 'muted' {
   const t = label.trim()
@@ -15,7 +17,7 @@ function settlementStatusTextClass(statusLabel?: string) {
   switch (normalized) {
     case '확인 대기 중':
       return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--awaiting-confirmation'
-    case '일부 확인 완료':
+    case '일부 지급 완료':
       return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--partially-confirmed'
     case '지급조서 확인 완료':
       return 'user-basic-info-section__settlement-status user-basic-info-section__settlement-status--payment-statement-verified'
@@ -37,7 +39,9 @@ export function settlementStatusView(user: Omit<User, 'password'>) {
   return <span className={settlementStatusTextClass(s)}>{s && s.length > 0 ? s : '-'}</span>
 }
 
-function normalizePermissionApprovalStatus(status: User['permissionApprovalStatus']) {
+export function normalizePermissionApprovalStatus(
+  status: User['permissionApprovalStatus']
+): MemberPermissionApplicationStatus {
   const raw = String(status ?? '').trim()
   const upper = raw.toUpperCase()
   if (upper === 'APPROVED' || raw === '승인 완료') return 'APPROVED'
@@ -68,8 +72,8 @@ export function permissionApprovalStatusTextView(user: Omit<User, 'password'>) {
   return <span className={permissionApprovalStatusTextClass(status)}>승인 대기</span>
 }
 
-function permissionApprovalStatusListToneClass(status: User['permissionApprovalStatus']) {
-  const normalized = normalizePermissionApprovalStatus(status)
+function permissionApprovalStatusListToneClass(user: Omit<User, 'password'>) {
+  const normalized = normalizePermissionApprovalStatus(user.permissionApprovalStatus)
   if (normalized === 'APPROVED') {
     return 'user-basic-info-section__permission-approval-status-list-tone user-basic-info-section__permission-approval-status-list-tone--approved'
   }
@@ -82,12 +86,12 @@ function permissionApprovalStatusListToneClass(status: User['permissionApprovalS
 export function permissionApprovalStatusListToneView(user: Omit<User, 'password'>) {
   const status = normalizePermissionApprovalStatus(user.permissionApprovalStatus)
   if (status === 'APPROVED') {
-    return <span className={permissionApprovalStatusListToneClass(status)}>승인 완료</span>
+    return <span className={permissionApprovalStatusListToneClass(user)}>승인 완료</span>
   }
   if (status === 'REJECTED') {
-    return <span className={permissionApprovalStatusListToneClass(status)}>신청 반려</span>
+    return <span className={permissionApprovalStatusListToneClass(user)}>신청 반려</span>
   }
-  return <span className={permissionApprovalStatusListToneClass(status)}>승인 대기</span>
+  return <span className={permissionApprovalStatusListToneClass(user)}>승인 대기</span>
 }
 
 function permissionApprovalHistoryTimestamp(user: Omit<User, 'password'>) {
@@ -104,27 +108,46 @@ function permissionApprovalHistoryTimestampLabel(user: Omit<User, 'password'>) {
 
 export function PermissionApprovalStatusWithResend({
   user,
+  onPermissionResendNotification,
+  notifyPermissionRole,
 }: {
   user: Omit<User, 'password'>
+  onPermissionResendNotification?: (ctx: {
+    userId: string
+    permissionRole: 'instructor' | 'admin'
+  }) => void
+  notifyPermissionRole?: 'instructor' | 'admin'
 }) {
   const status = normalizePermissionApprovalStatus(user.permissionApprovalStatus)
-  const statusNode = permissionApprovalStatusListToneView(user)
+  const tone = permissionApprovalStatusListToneView(user)
 
-  if (status === 'PENDING') return statusNode
+  if (status === 'PENDING') {
+    return tone
+  }
+
+  const resend = (
+    <CmsButton
+      variant="secondary"
+      size="small"
+      onClick={() => {
+        if (onPermissionResendNotification && notifyPermissionRole) {
+          onPermissionResendNotification({ userId: user.id, permissionRole: notifyPermissionRole })
+        } else {
+          window.alert('준비중 입니다.')
+        }
+      }}
+    >
+      알림 재발송
+    </CmsButton>
+  )
 
   return (
     <span className="user-basic-info-section__permission-approval-meta">
-      {statusNode}
-      <span className="user-basic-info-section__permission-approval-divider">|</span>
-      <CmsButton
-        variant="secondary"
-        size="small"
-        onClick={() => {
-          window.alert('준비중 입니다.')
-        }}
-      >
-        알림 재발송
-      </CmsButton>
+      <span className="user-basic-info-section__permission-approval-dropdown-wrap">
+        {tone}
+        <DetailInfoForm.TdDivider />
+        {resend}
+      </span>
       <span className="user-basic-info-section__permission-approval-timestamp">
         {permissionApprovalHistoryTimestampLabel(user)}
       </span>

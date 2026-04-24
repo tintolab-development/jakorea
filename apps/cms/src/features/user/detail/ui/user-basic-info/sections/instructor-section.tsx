@@ -60,6 +60,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
     memberInfoDraft,
     onMemberInfoDraftChange,
     cmsMayEditBasicProfileFields,
+    onPermissionResendNotification,
     viewContext,
   } = ctx
   const isInstructorPermissionDetail =
@@ -100,9 +101,15 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
               </span>
             ),
             sideLabel: isInstructorPermissionDetail ? '권한 승인 현황' : '정산 현황',
-            side: isInstructorPermissionDetail
-              ? <PermissionApprovalStatusWithResend user={user} />
-              : settlementStatusView(user),
+            side: isInstructorPermissionDetail ? (
+              <PermissionApprovalStatusWithResend
+                user={user}
+                onPermissionResendNotification={onPermissionResendNotification}
+                notifyPermissionRole="instructor"
+              />
+            ) : (
+              settlementStatusView(user)
+            ),
           },
           {
             subLabel: '영문',

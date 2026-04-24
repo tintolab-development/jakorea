@@ -166,6 +166,11 @@ export interface UserListRowMetrics {
   institutionRegisteredTeacherCount?: number
   /** 강사: 유형 라벨 */
   instructorTypeLabel?: string
+  /**
+   * 회원·권한 UI 전용 강사 신청/소속 구분 (예: JA 강사단, 특강 강사, 제미나이 강사단).
+   * 정산의 강사비 등급(`instructorTypeLabel`)과 별도 — 없으면 클라이언트가 소속·경력 문구로 추론 가능.
+   */
+  permissionApplicationTypeLabel?: string
   /** 강사: JA 평가 등급 */
   jaEvaluationGrade?: string
   /** 강사: 정산 현황 라벨 */

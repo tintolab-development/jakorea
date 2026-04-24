@@ -5,7 +5,7 @@
   vertical-align: middle !important;
 }
 
-/* 권한 승인 현황: 강사·관리자 목록 공통 — 텍스트 + 상태별 색만 (배지/태그 비사용) */
+/* 권한 승인 현황: 읽기 전용(쓰기 불가)일 때 텍스트 톤 */
 .members-permission-list__approval-status {
   font-family: Pretendard, sans-serif;
   font-size: 16px;
