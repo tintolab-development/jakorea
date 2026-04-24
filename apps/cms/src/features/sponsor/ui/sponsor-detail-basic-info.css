@@ -1,0 +1,23 @@
+/* 후원사 상세 > 기본 정보: 후원 시작일/후원 상태 행 높이 57px */
+.sponsor-detail-basic-info__status-row > .detail-info-form__field {
+  height: 57px !important;
+  min-height: 57px !important;
+}
+
+.sponsor-detail-basic-info__status-row > .detail-info-form__field > .detail-info-form__field-label,
+.sponsor-detail-basic-info__status-row > .detail-info-form__field > .detail-info-form__field-content {
+  height: 57px !important;
+  min-height: 57px !important;
+  box-sizing: border-box !important;
+  align-items: center !important;
+}
+
+/* 후원 상태(StatusDropdownCell) 트리거의 고정 패딩/높이가 행 높이를 밀지 않도록 동일 높이로 맞춤 */
+.sponsor-detail-basic-info__status-row
+  .detail-info-form__field-content
+  .status-dropdown-cell__status-trigger {
+  min-height: 57px !important;
+  height: 57px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}

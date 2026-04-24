@@ -23,7 +23,8 @@ import {
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
-import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import './sponsor-page.css'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -203,6 +204,7 @@ export default function SponsorPage() {
       {
         title: 'No.',
         key: 'no',
+        className: CMS_TABLE_NO_COL_CLASS,
         width: TABLE_COLUMN_WIDTHS.index,
         align: 'center',
         render: (_: unknown, __: SponsorManagementRow, index: number) => tableData.length - index,
@@ -287,6 +289,7 @@ export default function SponsorPage() {
   return (
     <>
       <FilterTableLayout
+        className="sponsor-page"
         bordered={false}
         fields={sponsorManagementFilterFields}
         filters={{
@@ -316,7 +319,7 @@ export default function SponsorPage() {
       >
         <Table<SponsorManagementRow>
           rowKey="id"
-          className="cms-data-table cms-data-table--hoverable"
+          className="sponsor-page__table cms-data-table cms-data-table--hoverable"
           columns={columns}
           dataSource={tableData}
           pagination={false}

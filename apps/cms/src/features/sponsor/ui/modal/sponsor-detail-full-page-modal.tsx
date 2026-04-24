@@ -16,6 +16,7 @@ import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailModalSidebar, type DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
 import { CmsButton } from '@/shared/ui'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
+import './sponsor-detail-full-page-modal.css'
 
 const LNB_DETAIL = 'sponsor-detail'
 const LNB_PROGRAMS = 'sponsor-programs'
@@ -103,6 +104,7 @@ function SponsorDetailFullPageModalInner({
       open={open}
       onClose={onClose}
       title={`후원사 상세_${detail.nameDisplayKo}`}
+      className="sponsor-detail-fullpage-modal"
       sidebar={
         <DetailModalSidebar
           navAriaLabel="후원사 상세 메뉴"

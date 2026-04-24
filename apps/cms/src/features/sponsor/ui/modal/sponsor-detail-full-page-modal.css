@@ -1,0 +1,67 @@
+/* 후원사 상세 풀페이지 내 테이블 강제 고정 */
+.sponsor-detail-fullpage-modal .cms-data-table col.ant-table-selection-col {
+  width: var(--table-selection-column-width, 68px) !important;
+  min-width: var(--table-selection-column-width, 68px) !important;
+}
+
+.sponsor-detail-fullpage-modal .cms-data-table col.ant-table-selection-col + col {
+  width: var(--table-no-column-width, 80px) !important;
+  min-width: var(--table-no-column-width, 80px) !important;
+}
+
+.sponsor-detail-fullpage-modal .cms-data-table .ant-table-thead > tr > th.ant-table-selection-column,
+.sponsor-detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td.ant-table-selection-column {
+  width: var(--table-selection-column-width, 68px) !important;
+  min-width: var(--table-selection-column-width, 68px) !important;
+  max-width: var(--table-selection-column-width, 68px) !important;
+  padding: 12px 4px 12px 8px !important;
+  box-sizing: border-box !important;
+}
+
+.sponsor-detail-fullpage-modal .cms-data-table .ant-table-thead > tr > th.cms-table-col--no,
+.sponsor-detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td.cms-table-col--no {
+  width: var(--table-no-column-width, 80px) !important;
+  min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
+}
+
+.sponsor-detail-fullpage-modal .cms-data-table .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar),
+.sponsor-detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  box-sizing: border-box !important;
+}
+
+.sponsor-detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+/* 후원 상태 셀: 상태변경 드롭다운/배지 높이를 축소해 54px 행 높이 유지 */
+.sponsor-detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td.status-dropdown-cell__cell-status {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.sponsor-detail-fullpage-modal .cms-data-table .status-dropdown-cell__status-trigger {
+  min-height: 34px !important;
+  height: 34px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.sponsor-detail-fullpage-modal
+  .cms-data-table
+  .status-dropdown-cell__status-trigger
+  .app-status-badge.sponsor-sponsorship-status-badge--table,
+.sponsor-detail-fullpage-modal
+  .cms-data-table
+  td.status-dropdown-cell__cell-status
+  .app-status-badge.sponsor-sponsorship-status-badge--table {
+  min-height: 28px !important;
+  height: 28px !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  line-height: 1.2 !important;
+}

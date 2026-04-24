@@ -7,7 +7,7 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 const CONTACT_TYPE_OPTIONS = [
   'lead',
@@ -91,6 +91,7 @@ export function buildContactColumns(params: BuildContactColumnsParams): ColumnsT
     {
       title: 'No.',
       key: 'no',
+      className: CMS_TABLE_NO_COL_CLASS,
       width: TABLE_COLUMN_WIDTHS.index,
       align: 'center',
       render: (_: unknown, __: SponsorContactRow, index: number) => contactCount - index,
