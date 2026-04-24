@@ -100,9 +100,16 @@ export function ProgramListPage() {
     viewModeFromUrl === 'list' || viewModeFromUrl === 'calendar' ? viewModeFromUrl : 'list'
   )
 
+  const pNorm = location.pathname.replace(/\/$/, '') || '/'
   const isRecruitmentRoute =
-    location.pathname === '/programs/education/student-recruitment' ||
-    location.pathname === '/programs/education/instructor-recruitment'
+    pNorm === '/programs/education/student-recruitment' ||
+    pNorm === '/programs/education/instructor-recruitment' ||
+    pNorm === '/programs/general/student-recruitment' ||
+    pNorm === '/programs/general/instructor-recruitment' ||
+    pNorm === '/programs/company-school/student-recruitment' ||
+    pNorm === '/programs/company-school/instructor-recruitment' ||
+    pNorm === '/programs/economy-education/student-recruitment' ||
+    pNorm === '/programs/economy-education/instructor-recruitment'
 
   // 3. Modal States
   const {
@@ -148,10 +155,8 @@ export function ProgramListPage() {
     }
   }, [isRecruitmentRoute, viewMode, searchParams, setSearchParams])
 
-  // 풀페이지 모달 ↔ 쿼리 파라미터(programId) 연동 — 새로고침 시에도 모달 유지
-  const isFullPageModalPath =
-    location.pathname === '/programs/education' ||
-    location.pathname === '/programs/economy-education'
+  // 풀페이지 모달 ↔ 쿼리 파라미터(programId) 연동 — LNB 4분류·레거시 분류 URL은 준비 중이므로 `/programs`에서만
+  const isFullPageModalPath = pNorm === '/programs'
   useEffect(() => {
     if (!isFullPageModalPath) return
     const programIdFromUrl = searchParams.get('programId')
@@ -251,20 +256,20 @@ export function ProgramListPage() {
       return
     }
 
-    if (location.pathname === '/programs/education/student-recruitment') {
+    if (pNorm === '/programs/education/student-recruitment' || pNorm === '/programs/general/student-recruitment') {
       setSelectedProgramForModal(program)
       return
     }
 
-    if (location.pathname === '/programs/education/instructor-recruitment') {
+    if (
+      pNorm === '/programs/education/instructor-recruitment' ||
+      pNorm === '/programs/general/instructor-recruitment'
+    ) {
       setSelectedProgramForInstructorModal(program)
       return
     }
 
-    if (
-      location.pathname === '/programs/education' ||
-      location.pathname === '/programs/economy-education'
-    ) {
+    if (pNorm === '/programs' || pNorm === '/programs/education' || pNorm === '/programs/economy-education' || pNorm === '/programs/general' || pNorm === '/programs/company-school') {
       setSelectedProgramForFullPageModal(program)
       const nextParams = new URLSearchParams(searchParams)
       nextParams.set('programId', program.id)

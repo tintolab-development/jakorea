@@ -34,7 +34,7 @@ function WageValueParts({ text }: { text: string }) {
     <>
       {parts.map((p, i) => (
         <span key={i}>
-          {i > 0 ? <span className="detail-info-form-inputs-separator"> | </span> : null}
+          {i > 0 ? <DetailInfoForm.TdDivider /> : null}
           {p}
         </span>
       ))}

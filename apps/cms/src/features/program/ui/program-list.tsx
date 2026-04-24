@@ -65,8 +65,12 @@ export function ProgramList({
   children,
 }: ProgramListProps) {
   const location = useLocation()
+  const p = location.pathname.replace(/\/$/, '') || '/'
   const isEconomyPage =
-    location.pathname === '/programs/economy-education' || tableVariant === 'economy'
+    p === '/programs/economy-education' ||
+    p === '/programs/company-school' ||
+    p.startsWith('/programs/company-school/') ||
+    tableVariant === 'economy'
   const [searchParams, setSearchParams] = useSearchParams()
   const economyView: EconomyView = config?.view ?? 'ALL'
   const tableType = config?.tableType

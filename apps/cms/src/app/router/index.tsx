@@ -5,7 +5,7 @@
  */
 
 import { lazy, Suspense } from 'react'
-import { Navigate, createBrowserRouter } from 'react-router-dom'
+import { Navigate, createBrowserRouter, useLocation, useParams } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
 import { ProtectedRoute } from '@/app/components/protected-route'
 import { Spin } from 'antd'
@@ -45,6 +45,22 @@ import { MfaPage } from '@/pages/auth/mfa-page'
 import { OAuthCallbackPage } from '@/pages/auth/oauth-callback-page'
 import { ForbiddenPage } from '@/pages/error/forbidden-page'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
+
+const programCategoryPreparing = (
+  <ComingSoonPage
+    title="페이지 준비중"
+    description="해당 프로그램 영역은 현재 준비 중입니다. 곧 이용하실 수 있습니다."
+  />
+)
+
+/** 레거시 `/programs/education/…`·`/programs/economy-education/…` → 신규 경로로 통일 */
+function ProgramsSubpathRedirect({ toBase }: { toBase: string }) {
+  const params = useParams()
+  const { search } = useLocation()
+  const rest = params['*'] ?? ''
+  const to = rest ? `${toBase}/${rest}` : toBase
+  return <Navigate to={`${to}${search}`} replace />
+}
 import TemplateFormTab from '@/pages/templates/template-form-tab'
 import {
   RedirectLegacyTemplatesEmail,
@@ -244,27 +260,23 @@ export const router = createBrowserRouter([
         path: 'programs',
         children: [
           { index: true, element: <ProgramListPage /> },
-          {
-            // 임시: LNB「일반 교육 프로그램」 및 해당 하위 URL 전부 준비중 화면 (경제 교육은 `economy-education` 유지)
-            path: 'education',
-            element: (
-              <ComingSoonPage
-                title="페이지 준비중"
-                description="일반 교육 프로그램 영역은 현재 준비 중입니다. 곧 이용하실 수 있습니다."
-              />
-            ),
-          },
+          { path: 'general', element: programCategoryPreparing },
+          { path: 'general/*', element: programCategoryPreparing },
+          { path: 'company-school', element: programCategoryPreparing },
+          { path: 'company-school/*', element: programCategoryPreparing },
+          { path: 'ujat', element: programCategoryPreparing },
+          { path: 'ujat/*', element: programCategoryPreparing },
+          { path: 'gemini', element: programCategoryPreparing },
+          { path: 'gemini/*', element: programCategoryPreparing },
+          { path: 'volunteer', element: <ProgramListPage /> }, // 봉사 프로그램 (기존 경로 유지)
           {
             path: 'education/*',
-            element: (
-              <ComingSoonPage
-                title="페이지 준비중"
-                description="일반 교육 프로그램 영역은 현재 준비 중입니다. 곧 이용하실 수 있습니다."
-              />
-            ),
+            element: <ProgramsSubpathRedirect toBase="/programs/general" />,
           },
-          { path: 'volunteer', element: <ProgramListPage /> }, // 봉사 프로그램 (기존 경로 유지)
-          { path: 'economy-education', element: <ProgramListPage /> }, // 경제 교육 프로그램
+          {
+            path: 'economy-education/*',
+            element: <ProgramsSubpathRedirect toBase="/programs/company-school" />,
+          },
           { path: ':id/apply', element: <ProgramApplicationPage /> }, // Phase 0.2.2: 신청서 작성 페이지
           { path: ':id/apply/complete', element: <ProgramApplicationCompletePage /> }, // Phase 0.2.3: 신청 완료 페이지
           { path: 'my', element: <MyProgramApplicationsPage /> },

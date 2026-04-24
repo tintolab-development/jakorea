@@ -61,11 +61,7 @@ function getRoundCurriculumContent(
   return defaultDesc ? `1시간 | ${defaultDesc}` : '1시간 | (상세 내용 없음)'
 }
 
-const CurriculumDivider = () => (
-  <span className="detail-info-form-inputs-separator" role="presentation" aria-hidden />
-)
-
-/** 조회 모드: 시간 + (온라인|오프라인|온/오프라인) + 설명; `|`는 구분선 스타일 span */
+/** 조회 모드: 시간 + (온라인|오프라인|온/오프라인) + 설명; 구분은 DetailInfoForm 세로 디바이더 */
 function CurriculumReadonlyDisplay({
   content,
   deliveryType,
@@ -80,7 +76,7 @@ function CurriculumReadonlyDisplay({
       {duration} ({deliveryLabel})
       {description ? (
         <>
-          <CurriculumDivider />
+          <DetailInfoForm.TdDivider />
           {description}
         </>
       ) : null}
@@ -155,7 +151,7 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
                         options={ROUND_DELIVERY_OPTIONS}
                         onChange={e => updateRoundDeliveryType(roundIndex, e.target.value)}
                       />
-                      <CurriculumDivider />
+                      <DetailInfoForm.TdDivider />
                       <CmsInput
                         value={duration}
                         onChange={e =>
@@ -163,7 +159,7 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
                         }
                         placeholder="1시간"
                       />
-                      <CurriculumDivider />
+                      <DetailInfoForm.TdDivider />
                       <CmsInput
                         value={description}
                         onChange={e => updateRoundCurriculum(roundIndex, duration, e.target.value)}

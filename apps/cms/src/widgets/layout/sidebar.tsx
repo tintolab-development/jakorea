@@ -4,7 +4,7 @@ import { Layout, Menu } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useMemo, useEffect, type CSSProperties } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { getMenuItemsByRole } from '@/shared/config/menu-config'
+import { getMenuItemsByRole, isProgramManagementLnbPath } from '@/shared/config/menu-config'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { memberListHref, normalizeMemberListKind } from '@/shared/config/member-list-kinds'
 import './sidebar.css'
@@ -102,11 +102,15 @@ export function Sidebar() {
       return [memberListHref('instructors')]
     }
 
-    // ADMIN: 프로그램 상세·수정 URL에서도 일반 교육 프로그램 메뉴 하이라이트
+    // ADMIN: 프로그램 상세·수정 URL에서도 일반 프로그램 LNB 키로 하이라이트
     const programsReserved = [
       'my',
       'favorites',
       'volunteer',
+      'general',
+      'company-school',
+      'ujat',
+      'gemini',
       'education',
       'economy-education',
       'new',
@@ -117,7 +121,7 @@ export function Sidebar() {
       const segments = rest.split('/').filter(Boolean)
       const firstSegment = segments[0]
       if (firstSegment && !programsReserved.includes(firstSegment)) {
-        return ['/programs/education']
+        return ['/programs/general']
       }
     }
 
@@ -165,12 +169,15 @@ export function Sidebar() {
           onClick={({ key }) => {
             // 기존: if (typeof key === 'string' && key.startsWith('/')) navigate(key)
             if (typeof key !== 'string' || !key.startsWith('/')) return
-            if (key === '/programs/education') {
+            if (isProgramManagementLnbPath(key)) {
               window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-              // navigate(key)
               return
             }
-            if (key === '/templates/kakao-notification' || key === '/templates/email-management') {
+            if (
+              key === '/templates/form-management' ||
+              key === '/templates/kakao-notification' ||
+              key === '/templates/email-management'
+            ) {
               window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
               return
             }

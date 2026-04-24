@@ -73,16 +73,25 @@ export function MainHeader() {
     // 관리자: 강사 모집 경로 — 레이아웃 타이틀 '강의 신청 현황'
     if (
       user?.role === 'ADMIN' &&
-      location.pathname === '/programs/education/instructor-recruitment'
+      (location.pathname === '/programs/education/instructor-recruitment' ||
+        location.pathname === '/programs/general/instructor-recruitment' ||
+        location.pathname === '/programs/company-school/instructor-recruitment' ||
+        location.pathname === '/programs/economy-education/instructor-recruitment')
     ) {
       return '강의 신청 현황'
     }
 
-    // 관리자: 교육 프로그램 하위(수강자 모집/수강 신청 현황) — 레이아웃 타이틀 '수강 신청 현황'
+    // 관리자: 일반/1사1교 하위(수강자 모집/수강 신청 현황) — 레이아웃 타이틀 '수강 신청 현황'
     if (
       user?.role === 'ADMIN' &&
       (location.pathname === '/programs/education/student-recruitment' ||
-        location.pathname === '/programs/education/enrollment')
+        location.pathname === '/programs/education/enrollment' ||
+        location.pathname === '/programs/general/student-recruitment' ||
+        location.pathname === '/programs/general/enrollment' ||
+        location.pathname === '/programs/company-school/student-recruitment' ||
+        location.pathname === '/programs/company-school/enrollment' ||
+        location.pathname === '/programs/economy-education/student-recruitment' ||
+        location.pathname === '/programs/economy-education/enrollment')
     ) {
       return '수강 신청 현황'
     }
@@ -98,7 +107,19 @@ export function MainHeader() {
     }
 
     // 관리자: 프로그램 상세/수정 페이지 타이틀
-    const programsReserved = ['my', 'favorites', 'volunteer', 'education', 'economy-education', 'new', 'satisfaction']
+    const programsReserved = [
+      'my',
+      'favorites',
+      'volunteer',
+      'general',
+      'company-school',
+      'ujat',
+      'gemini',
+      'education',
+      'economy-education',
+      'new',
+      'satisfaction',
+    ]
     if (user?.role === 'ADMIN' && location.pathname.startsWith('/programs/')) {
       const rest = location.pathname.slice('/programs/'.length)
       const segments = rest.split('/').filter(Boolean)

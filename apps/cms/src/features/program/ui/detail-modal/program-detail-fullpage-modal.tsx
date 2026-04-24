@@ -42,6 +42,7 @@ import { ProjectInfoDetailPanels } from '../../program-detail/ui/project-info/pr
 import { ProgramManagersTab } from '../program-managers-tab'
 import type { Program } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
+import { getEconomyPrograms } from '@/data/mock'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
 import {
@@ -637,7 +638,17 @@ export function ProgramDetailFullPageModal({
 
   if (!open) return null
 
-  const isEconomyEducationProgram = location.pathname.includes('/programs/economy-education')
+  const pNorm = location.pathname.replace(/\/$/, '') || '/'
+  const isEconomyOnProgramsIndex =
+    pNorm === '/programs' &&
+    displayProgram != null &&
+    getEconomyPrograms().some(pr => pr.id === displayProgram.id)
+  const isEconomyEducationProgram =
+    pNorm === '/programs/economy-education' ||
+    pNorm.startsWith('/programs/economy-education/') ||
+    pNorm === '/programs/company-school' ||
+    pNorm.startsWith('/programs/company-school/') ||
+    isEconomyOnProgramsIndex
 
   return (
     <DetailFullPageModal
