@@ -24,8 +24,10 @@
   --filter-area-label-font-size: 14px;
   --filter-area-label-font-weight: 500;
   --filter-area-label-line-height: 150%;
-  /** Ant Table rowSelection 체크박스 열 */
-  --table-selection-column-width: 60px;
+  /** Ant Table rowSelection 체크박스 열(좌 패딩 8px 포함 총폭) */
+  --table-selection-column-width: 68px;
+  /** No. 열(목록 테이블 공통) */
+  --table-no-column-width: 80px;
   /** Ant Table 내 체크박스 박스 크기 (ant-table-selection-checkbox.css) */
   --table-checkbox-size: 20px;
   /** Select allowClear(X) ↔ 드롭다운 화살표 간격 (우측 기준 오프셋) */

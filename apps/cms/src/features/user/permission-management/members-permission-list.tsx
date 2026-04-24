@@ -32,7 +32,7 @@ import {
   mockMemberPermissionApplicationsInstructor,
 } from '@/data/mock/member-permission-applications'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
-import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpage-modal'
@@ -420,6 +420,7 @@ export const MembersPermissionList = forwardRef<
       {
         title: 'No.',
         key: 'no',
+        className: CMS_TABLE_NO_COL_CLASS,
         width: TABLE_COLUMN_WIDTHS.index,
         align: 'center',
         render: (_: unknown, __: MemberPermissionApplicationRow, index: number) =>
@@ -585,7 +586,7 @@ export const MembersPermissionList = forwardRef<
     >
       <Table<MemberPermissionApplicationRow>
         rowKey="id"
-        className="cms-data-table"
+        className="cms-data-table members-permission-list__table"
         columns={columns}
         dataSource={tableData}
         onRow={record => ({

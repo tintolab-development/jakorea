@@ -1,3 +1,31 @@
+/*
+ * 권한 승인 목록: Ant CSS-in-js·colgroup 차이 대비 — 체크박스 68px(좌 8px 패딩 포함), No. 80px
+ */
+.members-permission-list__table.cms-data-table:has(.ant-table-selection-column) colgroup > col:nth-child(1) {
+  width: var(--table-selection-column-width, 68px) !important;
+  min-width: var(--table-selection-column-width, 68px) !important;
+}
+.members-permission-list__table.cms-data-table:has(.ant-table-selection-column) colgroup > col:nth-child(2) {
+  width: var(--table-no-column-width, 80px) !important;
+  min-width: var(--table-no-column-width, 80px) !important;
+}
+.members-permission-list__table.cms-data-table:not(:has(.ant-table-selection-column))
+  colgroup
+  > col:first-child {
+  width: var(--table-no-column-width, 80px) !important;
+  min-width: var(--table-no-column-width, 80px) !important;
+}
+
+.members-permission-list__table.cms-data-table .ant-table-thead > tr > th.ant-table-cell.ant-table-selection-column,
+.members-permission-list__table.cms-data-table .ant-table-tbody > tr > td.ant-table-cell.ant-table-selection-column {
+  width: var(--table-selection-column-width, 68px) !important;
+  min-width: var(--table-selection-column-width, 68px) !important;
+  max-width: var(--table-selection-column-width, 68px) !important;
+  box-sizing: border-box !important;
+  padding: 12px 4px 12px 8px !important;
+  vertical-align: middle !important;
+}
+
 /* 권한 승인 현황 열: 헤더·셀 가운데 정렬 */
 .cms-data-table th.members-permission-list__col--approval-status,
 .cms-data-table td.members-permission-list__col--approval-status {
@@ -5,9 +33,10 @@
   vertical-align: middle !important;
 }
 
-/* 권한 승인 현황: 읽기 전용(쓰기 불가)일 때 텍스트 톤 */
+/* 권한 승인 현황 · 상태값 (회원 권한 승인 — 피그마 타이포) */
 .members-permission-list__approval-status {
-  font-family: Pretendard, sans-serif;
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
@@ -15,13 +44,13 @@
 }
 
 .members-permission-list__approval-status--pending {
-  color: var(--color-blue, #017eaf);
+  color: var(--color-green, #1e8c29);
 }
 
 .members-permission-list__approval-status--approved {
-  color: #464646;
+  color: var(--main-BK, #3d3d3d);
 }
 
 .members-permission-list__approval-status--rejected {
-  color: var(--color-red, #c32f4a);
+  color: #c32f4a;
 }
