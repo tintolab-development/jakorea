@@ -45,6 +45,8 @@ export interface CmsDatePickerProps extends Omit<DatePickerProps, 'variant' | 'c
   width?: number | string
 }
 
+const cmsDatePickerPopupContainer = () => document.body
+
 const CmsDatePickerRender: ForwardRefRenderFunction<CmsDatePickerRef, CmsDatePickerProps> = (
   {
     className,
@@ -62,6 +64,7 @@ const CmsDatePickerRender: ForwardRefRenderFunction<CmsDatePickerRef, CmsDatePic
   },
   ref
 ) => {
+  const { getPopupContainer, ...pickerRest } = rest
   const hasExplicitWidth = width != null
   const widthStyle: CSSProperties | undefined =
     width != null
@@ -93,7 +96,8 @@ const CmsDatePickerRender: ForwardRefRenderFunction<CmsDatePickerRef, CmsDatePic
         inputReadOnly={inputReadOnly ?? true}
         placeholder={placeholder ?? DEFAULT_APP_DATE_PLACEHOLDER}
         disabled={disabled}
-        {...rest}
+        {...pickerRest}
+        getPopupContainer={getPopupContainer ?? cmsDatePickerPopupContainer}
       />
     </span>
   )
@@ -139,6 +143,7 @@ const CmsDateRangePickerRender: ForwardRefRenderFunction<
     onCalendarChange: _onCalendarChange,
     order: _order,
     oneMonthFromStart = false,
+    getPopupContainer,
     ...rest
   },
   ref
@@ -227,6 +232,8 @@ const CmsDateRangePickerRender: ForwardRefRenderFunction<
     'variant' | 'className' | 'value' | 'onChange' | 'placeholder' | 'size'
   >
 
+  const resolvedPopupContainer = getPopupContainer ?? cmsDatePickerPopupContainer
+
   const segmentStartCn = [
     'cms-datepicker__segment',
     disabledStart && 'cms-datepicker__segment--disabled',
@@ -261,6 +268,7 @@ const CmsDateRangePickerRender: ForwardRefRenderFunction<
           id={startId}
           defaultPickerValue={defaultStart}
           {...sharedPickerProps}
+          getPopupContainer={resolvedPopupContainer}
         />
       </span>
       <span className="cms-datepicker__range-separator" aria-hidden>
@@ -284,6 +292,7 @@ const CmsDateRangePickerRender: ForwardRefRenderFunction<
           id={endId}
           defaultPickerValue={defaultEnd}
           {...sharedPickerProps}
+          getPopupContainer={resolvedPopupContainer}
         />
       </span>
     </span>

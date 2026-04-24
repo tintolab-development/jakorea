@@ -119,6 +119,27 @@ export interface TableFilterGroupProps {
   cardStyle?: React.CSSProperties
   /** Card 테두리 표시 여부 */
   bordered?: boolean
+  /**
+   * 다행(`rows`)일 때만 사용.
+   * `fixed`: 기존처럼 행마다 `grid-template-columns`를 인라인 지정(최대 4칸·3칸은 1fr 1fr 2fr).
+   * `responsive`: 인라인 그리드 없음 — `multiRowResponsiveLayout`에 따라 배치.
+   */
+  multiRowGridMode?: 'fixed' | 'responsive'
+  /**
+   * `multiRowGridMode="responsive"`일 때만.
+   * `per-row`: 행 단위 그리드 + 컨테이너 쿼리(최대 4열 등).
+   * `merged-auto-fill`: 상단 필터는 flex-wrap으로 카드 너비에 따라 1줄·2줄·3줄로 줄바꿈.
+   * `mergedAutoFillInlineSearch`: true면 모든 필드 + 조회를 **한 줄 flex-wrap**에 넣어 문의일·조회도 동일 규칙으로 줄바꿈(이 경우 `mergedAutoFillTrailingFieldKeys` 무시).
+   * `mergedAutoFillTrailingFieldKeys`만 있으면: 해당 키만 하단 행 + 조회(우측).
+   * 둘 다 없으면: 전체 필드 한 블록 + 조회는 그 아래 한 줄 우측.
+   */
+  multiRowResponsiveLayout?: 'per-row' | 'merged-auto-fill'
+  /**
+   * `merged-auto-fill`일 때만. 예: `['dateRange']` — 나머지는 위쪽 flex-wrap, 나열한 필드는 하단 행 + 조회.
+   */
+  mergedAutoFillTrailingFieldKeys?: readonly string[]
+  /** `merged-auto-fill`일 때만. true면 필터 전부와 조회 버튼을 한 flex-wrap에 배치 */
+  mergedAutoFillInlineSearch?: boolean
 }
 type DateRangeFilterValue = [Dayjs | null, Dayjs | null] | null
 
@@ -134,6 +155,10 @@ export function TableFilterGroup({
   onSearch,
   loading = false,
   extra,
+  multiRowGridMode = 'fixed',
+  multiRowResponsiveLayout = 'per-row',
+  mergedAutoFillTrailingFieldKeys,
+  mergedAutoFillInlineSearch = false,
 }: TableFilterGroupProps) {
   const resolvedRows = useMemo(
     () => (rowsProp != null && rowsProp.length > 0 ? rowsProp : [fields]),
@@ -507,7 +532,7 @@ export function TableFilterGroup({
     const inner = renderFieldInner(field)
     if (inner == null) return null
     return (
-      <div key={field.key} className="table-filter-group__grid-cell">
+      <div key={field.key} className="table-filter-group__grid-cell" data-filter-field-key={field.key}>
         {inner}
       </div>
     )
@@ -530,6 +555,47 @@ export function TableFilterGroup({
   )
 
   const isMultiRowLayout = resolvedRows.length > 1
+  const useResponsiveMultiRowGrid = isMultiRowLayout && multiRowGridMode === 'responsive'
+  const useMergedResponsiveGrid =
+    useResponsiveMultiRowGrid && multiRowResponsiveLayout === 'merged-auto-fill'
+  const useMergedInlineSearchWrap = useMergedResponsiveGrid && mergedAutoFillInlineSearch
+
+  const mergedTrailingKeySet = useMemo(() => {
+    if (
+      !useMergedResponsiveGrid ||
+      useMergedInlineSearchWrap ||
+      mergedAutoFillTrailingFieldKeys == null ||
+      mergedAutoFillTrailingFieldKeys.length === 0
+    ) {
+      return null
+    }
+    return new Set(mergedAutoFillTrailingFieldKeys)
+  }, [mergedAutoFillTrailingFieldKeys, useMergedInlineSearchWrap, useMergedResponsiveGrid])
+
+  const { mergedHeadFields, mergedTailFields } = useMemo(() => {
+    if (!useMergedResponsiveGrid) {
+      return { mergedHeadFields: filterRowFields, mergedTailFields: [] as typeof filterRowFields }
+    }
+    if (mergedTrailingKeySet == null) {
+      return { mergedHeadFields: filterRowFields, mergedTailFields: [] as typeof filterRowFields }
+    }
+    const head = filterRowFields.filter(f => !mergedTrailingKeySet.has(f.key))
+    const tail = filterRowFields.filter(f => mergedTrailingKeySet.has(f.key))
+    if (tail.length === 0) {
+      return { mergedHeadFields: filterRowFields, mergedTailFields: [] as typeof filterRowFields }
+    }
+    return { mergedHeadFields: head, mergedTailFields: tail }
+  }, [filterRowFields, mergedTrailingKeySet, useMergedResponsiveGrid])
+
+  const useMergedAutoFillSplitBottomRow =
+    useMergedResponsiveGrid && !useMergedInlineSearchWrap && mergedTailFields.length > 0
+
+  const fieldsContainerClassName = [
+    'table-filter-group__fields-container',
+    useResponsiveMultiRowGrid && 'table-filter-group__fields-container--multi-row-responsive',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   const fieldsBody =
     resolvedRows.length <= 1 ? (
@@ -542,6 +608,52 @@ export function TableFilterGroup({
       >
         {resolvedRows[0]?.map(field => renderFieldCol(field, resolvedRows[0].length)) ?? null}
       </Row>
+    ) : useMergedResponsiveGrid ? (
+      useMergedInlineSearchWrap ? (
+        <div
+          className={[
+            'table-filter-group__fields-rows',
+            'table-filter-group__fields-rows--merged-responsive',
+            'table-filter-group__fields-rows--merged-responsive-inline-search',
+          ].join(' ')}
+        >
+          <div className="table-filter-group__merged-inline-wrap">
+            {filterRowFields.map(field => renderFieldGridCell(field))}
+            <div className="table-filter-group__merged-inline-wrap__search">{actionButtons}</div>
+          </div>
+        </div>
+      ) : (
+        <div
+          className={[
+            'table-filter-group__fields-rows',
+            'table-filter-group__fields-rows--merged-responsive',
+            useMergedAutoFillSplitBottomRow && 'table-filter-group__fields-rows--merged-responsive-split',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <div
+            className={[
+              'table-filter-group__fields-grid-row',
+              'table-filter-group__fields-grid-row--responsive',
+              'table-filter-group__fields-grid-row--merged-auto-fill',
+            ].join(' ')}
+            data-filter-row-items={String(mergedHeadFields.length)}
+          >
+            {mergedHeadFields.map(field => renderFieldGridCell(field))}
+          </div>
+          {useMergedAutoFillSplitBottomRow ? (
+            <div className="table-filter-group__merged-responsive-bottom">
+              <div className="table-filter-group__merged-responsive-bottom__fields">
+                {mergedTailFields.map(field => renderFieldGridCell(field))}
+              </div>
+              <div className="table-filter-group__merged-responsive-bottom__actions">{actionButtons}</div>
+            </div>
+          ) : (
+            <div className="table-filter-group__merged-responsive-actions">{actionButtons}</div>
+          )}
+        </div>
+      )
     ) : (
       <div className="table-filter-group__fields-rows">
         {resolvedRows.map((rowFields, rowIndex) => {
@@ -550,10 +662,18 @@ export function TableFilterGroup({
             return (
               <div
                 key={rowIndex}
-                className="table-filter-group__fields-grid-row"
-                style={{
-                  gridTemplateColumns: gridTemplateForRow(rowFields.length, maxRowFieldCount),
-                }}
+                className={[
+                  'table-filter-group__fields-grid-row',
+                  useResponsiveMultiRowGrid && 'table-filter-group__fields-grid-row--responsive',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                data-filter-row-items={useResponsiveMultiRowGrid ? String(rowFields.length) : undefined}
+                style={
+                  useResponsiveMultiRowGrid
+                    ? undefined
+                    : { gridTemplateColumns: gridTemplateForRow(rowFields.length, maxRowFieldCount) }
+                }
               >
                 {rowFields.map(field => renderFieldGridCell(field))}
               </div>
@@ -562,10 +682,19 @@ export function TableFilterGroup({
           return (
             <div key={rowIndex} className="table-filter-group__fields-row-with-action">
               <div
-                className="table-filter-group__fields-grid-row table-filter-group__fields-grid-row--stretch"
-                style={{
-                  gridTemplateColumns: gridTemplateForRow(rowFields.length, maxRowFieldCount),
-                }}
+                className={[
+                  'table-filter-group__fields-grid-row',
+                  'table-filter-group__fields-grid-row--stretch',
+                  useResponsiveMultiRowGrid && 'table-filter-group__fields-grid-row--responsive',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                data-filter-row-items={useResponsiveMultiRowGrid ? String(rowFields.length) : undefined}
+                style={
+                  useResponsiveMultiRowGrid
+                    ? undefined
+                    : { gridTemplateColumns: gridTemplateForRow(rowFields.length, maxRowFieldCount) }
+                }
               >
                 {rowFields.map(field => renderFieldGridCell(field))}
               </div>
@@ -580,7 +709,7 @@ export function TableFilterGroup({
 
   return (
     <div className="table-filter-group__container">
-      <div className="table-filter-group__fields-container">{fieldsBody}</div>
+      <div className={fieldsContainerClassName}>{fieldsBody}</div>
       {!isMultiRowLayout ? (
         <div className="table-filter-group__fields-shell">{actionButtons}</div>
       ) : null}

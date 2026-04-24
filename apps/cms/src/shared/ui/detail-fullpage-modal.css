@@ -439,6 +439,39 @@
   padding: 0 !important;
 }
 
+/**
+ * UnifiedFilterCard: `FilterFieldConfig.width`(% 등) 사용 시 Col 래퍼만 넓어지는 문제 방지.
+ * `table-filter-group`의 pct-width Col과 동일 토큰(`--filter-control-max-width` 등)으로 래퍼 상한 정렬.
+ */
+.detail-fullpage-modal
+  .unified-filter-card__fields-inner
+  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio) {
+  max-width: min(100%, var(--filter-control-max-width, 260px));
+  box-sizing: border-box;
+}
+
+.detail-fullpage-modal
+  .unified-filter-card__fields-inner
+  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio):has(
+    .app-datepicker--range-split
+  ) {
+  max-width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
+  );
+}
+
+.detail-fullpage-modal
+  .unified-filter-card__fields-inner
+  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio):has(
+    .unified-filter-card__address-region-selects
+  ) {
+  max-width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px))
+  );
+}
+
 /* 회원 상세 풀페이지 — 신청/수강 이력: 필터 미사용 시 슬롯 숨김 */
 .detail-fullpage-modal .user-detail-fullpage-modal__enrollment-layout .filter-table-layout__filter,
 .detail-fullpage-modal

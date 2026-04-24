@@ -242,3 +242,189 @@
   flex: 1 1 0;
   min-width: 0;
 }
+
+/*
+ * 다행 + `multiRowGridMode="responsive"`:
+ * - `merged-auto-fill`: 상단 필터는 flex-wrap + 고정폭 칸 — 카드 너비에 따라 1줄·2줄·3줄로 자연스럽게 줄바꿈
+ * - `per-row`(기본): 필터 카드 가로(`container-type: inline-size`)로 행별 1·2·4열(또는 1fr 1fr 2fr)
+ */
+.table-filter-group__fields-container--multi-row-responsive {
+  container-type: inline-size;
+  container-name: tfg-multi-row;
+}
+
+.table-filter-group__fields-grid-row.table-filter-group__fields-grid-row--responsive {
+  justify-items: start;
+}
+
+.table-filter-group__fields-container--multi-row-responsive
+  .table-filter-group__fields-grid-row--responsive:not(.table-filter-group__fields-grid-row--merged-auto-fill) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/*
+ * merged 상단: grid 대신 flex-wrap — 트랙 수 추정 없이 카드 inline-size에 맞춰 줄 수가 늘고 줄어듦
+ * (각 칸 폭은 페이지/토큰에서 min(100%, 260px)로 맞춤)
+ */
+.table-filter-group__fields-grid-row.table-filter-group__fields-grid-row--merged-auto-fill {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: var(--table-filter-field-gap, var(--filter-field-gap, 12px));
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.table-filter-group__fields-grid-row--merged-auto-fill > .table-filter-group__grid-cell {
+  flex: 0 0 auto;
+  width: min(100%, var(--filter-control-max-width, 260px));
+  max-width: min(100%, var(--filter-control-max-width, 260px));
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* 필터 전부 + 조회: 한 flex-wrap(문의일·조회도 상단과 동일 줄바꿈 규칙) */
+.table-filter-group__merged-inline-wrap {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: var(--table-filter-field-gap, var(--filter-field-gap, 12px));
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.table-filter-group__merged-inline-wrap > .table-filter-group__grid-cell {
+  flex: 0 0 auto;
+  width: min(100%, var(--filter-control-max-width, 260px));
+  max-width: min(100%, var(--filter-control-max-width, 260px));
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.table-filter-group__merged-inline-wrap__search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--table-filter-field-gap, var(--filter-field-gap, 12px));
+  flex: 0 0 auto;
+  margin-left: auto;
+  align-self: flex-end;
+  box-sizing: border-box;
+}
+
+@container tfg-multi-row (max-width: 480px) {
+  .table-filter-group__merged-inline-wrap__search {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+.table-filter-group__fields-rows--merged-responsive .table-filter-group__merged-responsive-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--table-filter-field-gap, var(--filter-field-gap, 12px));
+  width: 100%;
+  margin-top: var(--table-filter-field-gap, var(--filter-field-gap, 12px));
+  box-sizing: border-box;
+}
+
+/* merged + trailing keys: 문의일 등과 조회 버튼을 한 줄(하단)에서 baseline 정렬 */
+.table-filter-group__merged-responsive-bottom {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--table-filter-field-gap, var(--filter-field-gap, 12px));
+  width: 100%;
+  margin-top: var(--table-filter-field-gap, var(--filter-field-gap, 12px));
+  box-sizing: border-box;
+}
+
+.table-filter-group__merged-responsive-bottom__fields {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--table-filter-field-gap, var(--filter-field-gap, 12px));
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.table-filter-group__merged-responsive-bottom__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--table-filter-field-gap, var(--filter-field-gap, 12px));
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.table-filter-group__merged-responsive-bottom__fields > .table-filter-group__grid-cell {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+/* 좁은 필터 카드: 문의일 + 조회를 세로로 쌓고 조회는 우측 정렬 유지 */
+@container tfg-multi-row (max-width: 520px) {
+  .table-filter-group__merged-responsive-bottom {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--table-filter-field-gap, var(--filter-field-gap, 12px));
+  }
+
+  .table-filter-group__merged-responsive-bottom__actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@container tfg-multi-row (min-width: 560px) {
+  .table-filter-group__fields-container--multi-row-responsive
+    .table-filter-group__fields-grid-row--responsive:not(.table-filter-group__fields-grid-row--merged-auto-fill)[data-filter-row-items='4'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .table-filter-group__fields-container--multi-row-responsive
+    .table-filter-group__fields-grid-row--responsive:not(.table-filter-group__fields-grid-row--merged-auto-fill)[data-filter-row-items='3'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .table-filter-group__fields-container--multi-row-responsive
+    .table-filter-group__fields-grid-row--responsive:not(.table-filter-group__fields-grid-row--merged-auto-fill)[data-filter-row-items='3']
+    .table-filter-group__grid-cell[data-filter-field-key='dateRange'] {
+    grid-column: 1 / -1;
+  }
+}
+
+@container tfg-multi-row (min-width: 1080px) {
+  .table-filter-group__fields-container--multi-row-responsive
+    .table-filter-group__fields-grid-row--responsive:not(.table-filter-group__fields-grid-row--merged-auto-fill)[data-filter-row-items='4'] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .table-filter-group__fields-container--multi-row-responsive
+    .table-filter-group__fields-grid-row--responsive:not(.table-filter-group__fields-grid-row--merged-auto-fill)[data-filter-row-items='3'] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
+  }
+
+  .table-filter-group__fields-container--multi-row-responsive
+    .table-filter-group__fields-grid-row--responsive:not(.table-filter-group__fields-grid-row--merged-auto-fill)[data-filter-row-items='3']
+    .table-filter-group__grid-cell[data-filter-field-key='dateRange'] {
+    grid-column: auto;
+  }
+}
