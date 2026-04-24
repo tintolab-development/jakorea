@@ -536,7 +536,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                 </AppButton>
               </div>
               <Table<ParticipatingSchoolRow>
-                className="program-progress-tab__table"
+                className="program-progress-tab__table cms-data-table"
                 rowKey="id"
                 size="middle"
                 pagination={false}
@@ -606,7 +606,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                 </div>
               </div>
               <Table<ParticipatingInstructorRow>
-                className="program-progress-tab__table program-progress-tab__table--clickable"
+                className="program-progress-tab__table program-progress-tab__table--clickable cms-data-table"
                 rowKey="id"
                 size="middle"
                 pagination={false}

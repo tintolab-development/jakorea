@@ -148,7 +148,7 @@ export function TeacherTeachingHistoryTab({ initialData }: TeacherTeachingHistor
           rowKey="id"
           pagination={false}
           size="middle"
-          className="teacher-detail-modal__teaching-table"
+          className="teacher-detail-modal__teaching-table cms-data-table"
         />
       ) : (
         <Empty description="프로그램 강의 이력이 없습니다." />

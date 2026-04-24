@@ -38,6 +38,7 @@ import {
   maskMobilePhoneMiddleStars,
 } from '../lib/teacher-contact-display-mask'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import {
   StatusDropdownCell,
@@ -1014,6 +1015,7 @@ export function SchoolDetailFullpageView({
                     pagination={false}
                     scroll={{ x: 1100 }}
                     rowSelection={{
+                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                       selectedRowKeys: selectedAssignedKeys,
                       onChange: keys => setSelectedAssignedKeys(keys),
                     }}
@@ -1060,6 +1062,7 @@ export function SchoolDetailFullpageView({
                   pagination={false}
                   scroll={{ x: 1000 }}
                   rowSelection={{
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                     selectedRowKeys: selectedWaitingKeys,
                     onChange: keys => setSelectedWaitingKeys(keys),
                     getCheckboxProps: record => ({

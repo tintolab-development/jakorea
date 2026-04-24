@@ -17,6 +17,7 @@ import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instru
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { AppButton } from '@/shared/ui/app-button'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
@@ -944,6 +945,7 @@ export function ParticipatingInstructorFullpageView({
                     pagination={false}
                     scroll={{ x: 1280 }}
                     rowSelection={{
+                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                       selectedRowKeys: selectedAssignedSchoolKeys,
                       onChange: keys => setSelectedAssignedSchoolKeys(keys),
                     }}
@@ -998,6 +1000,7 @@ export function ParticipatingInstructorFullpageView({
                   pagination={false}
                   scroll={{ x: 1180 }}
                   rowSelection={{
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                     selectedRowKeys: selectedWaitingSchoolKeys,
                     onChange: keys => setSelectedWaitingSchoolKeys(keys),
                     getCheckboxProps: record => ({

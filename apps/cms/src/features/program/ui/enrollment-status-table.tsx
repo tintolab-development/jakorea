@@ -157,6 +157,7 @@ export function EnrollmentStatusTable({ data, loading }: EnrollmentStatusTablePr
 
   return (
     <Table<Program>
+      className="cms-data-table"
       rowKey="id"
       dataSource={programs}
       columns={columns}
