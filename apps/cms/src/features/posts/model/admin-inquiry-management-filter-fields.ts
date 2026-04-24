@@ -22,9 +22,9 @@ export function createInitialInquiryCategoryRows(): InquiryCategoryRow[] {
 }
 
 /**
- * TableFilterGroup `rows` — `TableFilterGroup`이 CSS Grid로 처리:
- * 1행 `repeat(4,1fr)`, 2행은 상대 4칸에 맞춰 `1fr 1fr 2fr`(문의일 2칸 분량).
- * 칸 사이·행 사이 gap 12px는 `--table-filter-field-gap`.
+ * TableFilterGroup `rows` — 문의내역: `merged-auto-fill` + `mergedAutoFillInlineSearch`:
+ * 모든 필터와 조회를 한 flex-wrap에 두어 화면 너비에 따라 한 줄·여러 줄로 동일 규칙 적용.
+ * 칸 사이 gap 12px는 `--table-filter-field-gap`.
  */
 export function buildAdminInquiryFilterRows(
   categoryLabels: readonly string[]

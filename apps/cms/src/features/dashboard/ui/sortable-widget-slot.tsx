@@ -6,7 +6,14 @@
  * 너비 리사이즈: 우측 엣지 드래그 핸들 → 20px 이상 드래그 시 50%(12) ↔ 100%(24) 스냅
  */
 
-import React, { useRef, useLayoutEffect, useCallback, useState } from 'react'
+import React, {
+  useRef,
+  useLayoutEffect,
+  useCallback,
+  useState,
+  useEffect,
+  useId,
+} from 'react'
 import { DASHBOARD_SLOT_HEIGHT_HALF_PX } from '@/shared/config/dashboard-config'
 import { Col } from 'antd'
 import { useSortable } from '@dnd-kit/sortable'
@@ -35,6 +42,46 @@ interface HandleRect {
 /** 스냅 트리거 최소 드래그 거리 (px) */
 const RESIZE_THRESHOLD = 20
 
+function DashboardWidgetResizeWidthIcon({ maskId }: { maskId: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      aria-hidden
+      className="dashboard-widget-resize-handle__svg"
+    >
+      <mask
+        id={maskId}
+        style={{ maskType: 'alpha' }}
+        maskUnits="userSpaceOnUse"
+        x="0"
+        y="0"
+        width="20"
+        height="20"
+      >
+        <rect
+          opacity="0.6"
+          x="20"
+          y="8.74228e-07"
+          width="20"
+          height="20"
+          transform="rotate(90 20 8.74228e-07)"
+          fill="#D9D9D9"
+        />
+      </mask>
+      <g mask={`url(#${maskId})`}>
+        <path
+          d="M4.04167 10.0002L7.27083 13.2293C7.4375 13.396 7.52083 13.5905 7.52083 13.8127C7.52083 14.0349 7.4375 14.2293 7.27083 14.396C7.10417 14.5627 6.90625 14.646 6.67708 14.646C6.44792 14.646 6.25 14.5627 6.08333 14.396L2.85417 11.1877C2.53472 10.8682 2.375 10.4724 2.375 10.0002C2.375 9.52795 2.53472 9.13212 2.85417 8.81267L6.08333 5.58351C6.25 5.41684 6.44792 5.33698 6.67708 5.34392C6.90625 5.35087 7.10417 5.43767 7.27083 5.60434C7.4375 5.77101 7.52083 5.96892 7.52083 6.19809C7.52083 6.42726 7.4375 6.62517 7.27083 6.79184L4.04167 10.0002ZM15.9583 10.0002L12.75 6.79184C12.5833 6.62517 12.5035 6.43073 12.5104 6.20851C12.5174 5.98628 12.5972 5.79184 12.75 5.62517C12.9167 5.45851 13.1146 5.3717 13.3438 5.36476C13.5729 5.35781 13.7708 5.43767 13.9375 5.60434L17.1458 8.81267C17.4653 9.13212 17.625 9.52795 17.625 10.0002C17.625 10.4724 17.4653 10.8682 17.1458 11.1877L13.9375 14.396C13.7708 14.5627 13.5729 14.6425 13.3438 14.6356C13.1146 14.6286 12.9167 14.5418 12.75 14.3752C12.5972 14.2085 12.5174 14.0141 12.5104 13.7918C12.5035 13.5696 12.5833 13.3752 12.75 13.2085L15.9583 10.0002Z"
+          fill="#3D3D3D"
+        />
+      </g>
+    </svg>
+  )
+}
+
 export function SortableWidgetSlot({
   id,
   children,
@@ -55,7 +102,7 @@ export function SortableWidgetSlot({
     id,
     // 부드러운 switching 전환 애니메이션
     transition: {
-      duration: 300,
+      duration: 180,
       easing: 'cubic-bezier(0.2, 0, 0, 1)',
     },
   })
@@ -72,6 +119,7 @@ export function SortableWidgetSlot({
   const isResizingRef = useRef(false)
   const resizeStartXRef = useRef(0)
   const [isResizing, setIsResizing] = useState(false)
+  const resizeIconMaskId = useId().replace(/:/g, '')
 
   const setColRef = useCallback(
     (el: HTMLDivElement | null) => {
@@ -142,7 +190,7 @@ export function SortableWidgetSlot({
       resizeStartXRef.current = e.clientX
       setIsResizing(true)
       e.currentTarget.setPointerCapture(e.pointerId)
-      document.body.style.cursor = 'col-resize'
+      document.body.style.cursor = 'grabbing'
     },
     [onResizeWidth]
   )
@@ -170,6 +218,25 @@ export function SortableWidgetSlot({
     document.body.style.cursor = ''
   }, [])
 
+  const setGrabbedClass = useCallback((grabbed: boolean) => {
+    const slot = slotRef.current
+    if (!slot) return
+    slot.classList.toggle('dashboard-widget-slot--grabbed', grabbed)
+  }, [])
+
+  const handleGrabPointerDown = useCallback(() => {
+    setGrabbedClass(true)
+  }, [])
+
+  const handleGrabPointerUp = useCallback(() => {
+    setGrabbedClass(false)
+  }, [setGrabbedClass])
+
+  useEffect(() => {
+    if (!isDragging) return
+    setGrabbedClass(false)
+  }, [isDragging, setGrabbedClass])
+
   // noScaleRectSortingStrategy에서 scaleX/scaleY=1로 고정되므로 그대로 사용
   // flex-basis/max-width transition: span 변경(너비 리사이즈) 시 부드러운 애니메이션
   const resizeTransition = onResizeWidth
@@ -179,10 +246,12 @@ export function SortableWidgetSlot({
   const colStyle: React.CSSProperties = {
     transition: resizeTransition ?? undefined,
   }
+  const transformText = CSS.Transform.toString(transform)
   const motionStyle: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
+    transform: transformText ? `${transformText} translateZ(0)` : undefined,
     transition: transition ?? undefined,
     opacity: isDragging ? 0 : 1,
+    willChange: isDragging ? 'transform' : undefined,
   }
 
   const slotHeight =
@@ -199,7 +268,7 @@ export function SortableWidgetSlot({
       <div style={motionStyle}>
         <div
           ref={slotRef}
-          className="dashboard-widget-slot"
+          className={`dashboard-widget-slot${onResizeWidth ? ' dashboard-widget-slot--resizable-width' : ''}`}
           style={slotStyle}
           data-col-span={colSpan}
         >
@@ -208,6 +277,10 @@ export function SortableWidgetSlot({
             ref={setActivatorNodeRef}
             className="widget-drag-handle dashboard-widget-slot__handle"
             aria-label="위젯 드래그 핸들"
+            onPointerDownCapture={handleGrabPointerDown}
+            onPointerUp={handleGrabPointerUp}
+            onPointerCancel={handleGrabPointerUp}
+            onLostPointerCapture={handleGrabPointerUp}
             {...listeners}
             {...attributes}
           >
@@ -229,6 +302,10 @@ export function SortableWidgetSlot({
               cursor: 'grab',
               zIndex: 1,
             }}
+            onPointerDownCapture={handleGrabPointerDown}
+            onPointerUp={handleGrabPointerUp}
+            onPointerCancel={handleGrabPointerUp}
+            onLostPointerCapture={handleGrabPointerUp}
             {...listeners}
             {...attributes}
           />
@@ -246,7 +323,9 @@ export function SortableWidgetSlot({
             aria-label="너비 조절 (드래그)"
             title="너비 조절: 좌우로 드래그하면 50% / 100%로 변경됩니다"
           >
-            <div className="dashboard-widget-resize-handle__bar" />
+            <span className="dashboard-widget-resize-handle__icon-wrap">
+              <DashboardWidgetResizeWidthIcon maskId={`dw-resize-mask-${resizeIconMaskId}`} />
+            </span>
           </div>
         )}
           {children}

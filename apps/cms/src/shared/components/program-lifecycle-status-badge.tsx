@@ -49,7 +49,8 @@ export function ProgramLifecycleStatusBadge({
   variant = 'default',
 }: ProgramLifecycleStatusBadgeProps) {
   const location = useLocation()
-  const isEconomyPage = location.pathname === '/programs/economy-education'
+  const p = location.pathname.replace(/\/$/, '') || '/'
+  const isEconomyPage = p === '/programs/economy-education' || p === '/programs/company-school' || p.startsWith('/programs/company-school/')
 
   const label = isEconomyPage ? getEconomyDisplayLabel(status) : getProgramLifecycleLabel(status)
   const modifier = isEconomyPage ? getEconomyModifier(status) : `program-lifecycle-status-badge--${status.replace(/_/g, '-')}`

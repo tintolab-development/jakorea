@@ -59,6 +59,7 @@ import { MESSAGES } from '@/shared/constants'
 import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
 
 const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
 
@@ -103,6 +104,7 @@ export function useUserDetailController({
   const [volunteerHistories, setVolunteerHistories] = useState<UserHistory[]>([])
   const [volunteerHistoriesLoading, setVolunteerHistoriesLoading] = useState(false)
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false)
+  const [institutionDeleteBlockedOpen, setInstitutionDeleteBlockedOpen] = useState(false)
   const [basicInfoEditing, setBasicInfoEditing] = useState(false)
   const [basicInfoDraft, setBasicInfoDraft] = useState<AdminProvisionedMemberBasicInfoDraft | null>(
     null
@@ -148,6 +150,7 @@ export function useUserDetailController({
       setBasicInfoSaveLoading(false)
       setAdminPermissionVariantPatching(false)
       setInstructorPermissionRevokeOpen(false)
+      setInstitutionDeleteBlockedOpen(false)
     }
   }, [open])
 
@@ -157,6 +160,7 @@ export function useUserDetailController({
     setBasicInfoSaveLoading(false)
     setAdminPermissionVariantPatching(false)
     setInstructorPermissionRevokeOpen(false)
+    setInstitutionDeleteBlockedOpen(false)
   }, [displayUser?.id])
 
   useEffect(() => {
@@ -233,11 +237,22 @@ export function useUserDetailController({
   )
 
   const openWithdrawConfirm = useCallback(() => {
+    if (
+      displayUser?.role === 'SCHOOL' &&
+      institutionHasRegisteredTeachers(displayUser)
+    ) {
+      setInstitutionDeleteBlockedOpen(true)
+      return
+    }
     setWithdrawConfirmOpen(true)
-  }, [])
+  }, [displayUser])
 
   const closeWithdrawConfirm = useCallback(() => {
     setWithdrawConfirmOpen(false)
+  }, [])
+
+  const closeInstitutionDeleteBlocked = useCallback(() => {
+    setInstitutionDeleteBlockedOpen(false)
   }, [])
 
   const handleWithdrawConfirm = useCallback(() => {
@@ -567,6 +582,7 @@ export function useUserDetailController({
       volunteerHistories,
       volunteerHistoriesLoading,
       withdrawConfirmOpen,
+      institutionDeleteBlockedOpen,
       personalInfoRevealed,
       personalInfoRevealConfirmOpen,
       basicInfoEditing,
@@ -588,6 +604,7 @@ export function useUserDetailController({
       openEnrollmentProgramDetail,
       openWithdrawConfirm,
       closeWithdrawConfirm,
+      closeInstitutionDeleteBlocked,
       handleWithdrawConfirm,
       openPersonalInfoRevealConfirm,
       closePersonalInfoRevealConfirm,

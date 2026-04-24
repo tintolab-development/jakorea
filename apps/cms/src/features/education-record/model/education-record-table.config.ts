@@ -111,27 +111,14 @@ function filterPrograms(
 
     if (sponsorNameQ) {
       const sponsorNameKo = program.sponsorId ? sponsorService.getNameById(program.sponsorId) : ''
-      const sponsorNameEn =
-        (program.sponsorId && sponsorService.getAllSync().find(s => s.id === program.sponsorId)?.nameEn) ||
-        ''
-      if (
-        !includesIgnoreCase(sponsorNameKo, sponsorNameQ) &&
-        !includesIgnoreCase(sponsorNameEn, sponsorNameQ)
-      ) {
-        return false
-      }
+      if (!includesIgnoreCase(sponsorNameKo, sponsorNameQ)) return false
     }
 
     if (mainTitleQ && !includesIgnoreCase(program.mainTitle, mainTitleQ)) return false
     if (titleQ && !includesIgnoreCase(program.title, titleQ)) return false
 
-    if (textbookNameQ) {
-      if (
-        !includesIgnoreCase(program.textbookName, textbookNameQ) &&
-        !includesIgnoreCase(program.textbookNameEn, textbookNameQ)
-      ) {
-        return false
-      }
+    if (textbookNameQ && !includesIgnoreCase(program.textbookName, textbookNameQ)) {
+      return false
     }
 
     return true

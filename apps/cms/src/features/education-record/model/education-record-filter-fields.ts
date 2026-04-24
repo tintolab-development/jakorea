@@ -24,12 +24,21 @@ const SIDO_OPTIONS = MOCK_SIDO_SIGUNGU.map(sido => ({
 function getSigunguOptionsBySido(
   sido: string | undefined | null
 ): Array<{ label: string; value: string }> {
-  const source =
-    sido && sido.trim().length > 0
-      ? (MOCK_SIDO_SIGUNGU.find(s => s.name === sido)?.sigungu ?? [])
-      : MOCK_SIDO_SIGUNGU.flatMap(s => s.sigungu)
+  if (sido && sido.trim().length > 0) {
+    const selected = MOCK_SIDO_SIGUNGU.find(s => s.name === sido)
+    if (!selected) return []
+    return selected.sigungu.map(sg => ({
+      label: `${selected.name} ${sg.name}`,
+      value: sg.name,
+    }))
+  }
 
-  return source.map(sg => ({ label: sg.name, value: sg.name }))
+  return MOCK_SIDO_SIGUNGU.flatMap(s =>
+    s.sigungu.map(sg => ({
+      label: `${s.name} ${sg.name}`,
+      value: sg.name,
+    }))
+  )
 }
 
 export type CreateEducationRecordFilterFieldsArgs = {
@@ -90,28 +99,28 @@ export function createEducationRecordFilterFields({
       key: 'sponsorName',
       type: 'search',
       label: '후원사명',
-      placeholder: '전체',
+      placeholder: '후원사명을 입력하세요',
       flex: '1 1 0',
     },
     {
       key: 'mainTitle',
       type: 'search',
       label: '대표 프로그램명',
-      placeholder: '전체',
+      placeholder: '대표 프로그램명을 입력하세요',
       flex: '1 1 0',
     },
     {
       key: 'title',
       type: 'search',
       label: '세부 프로그램명',
-      placeholder: '전체',
+      placeholder: '세부 프로그램명을 입력하세요',
       flex: '1 1 0',
     },
     {
       key: 'textbookName',
       type: 'search',
       label: '교재명',
-      placeholder: '전체',
+      placeholder: '교재명을 입력하세요',
       flex: '1 1 0',
     },
   ]

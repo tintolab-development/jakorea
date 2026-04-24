@@ -175,7 +175,7 @@ export function AdminInquiryPage() {
         className: 'admin-inquiry-page__col-no',
         onHeaderCell: () => ({ className: 'admin-inquiry-page__col-no' }),
         render: (_: unknown, __: AdminInquiryRow, index: number) =>
-          tableData.length === 0 ? '—' : tableData.length - index,
+          tableData.length === 0 ? '-' : tableData.length - index,
       },
       {
         title: '답변 현황',
@@ -200,6 +200,7 @@ export function AdminInquiryPage() {
         width: DATA_COL_WIDTH,
         align: 'center',
         ellipsis: true,
+        render: (v: string) => (v == null || v === '' ? '-' : v),
       },
       {
         title: '프로그램명',
@@ -208,7 +209,7 @@ export function AdminInquiryPage() {
         width: DATA_COL_WIDTH,
         align: 'center',
         ellipsis: true,
-        render: (v: string | null) => (v == null || v === '' ? '—' : v),
+        render: (v: string | null) => (v == null || v === '' ? '-' : v),
       },
       {
         title: '제목',
@@ -219,6 +220,7 @@ export function AdminInquiryPage() {
         ellipsis: { showTitle: true },
         onHeaderCell: () => ({ className: 'admin-inquiry-page__cell--title' }),
         onCell: () => ({ className: 'admin-inquiry-page__cell--title' }),
+        render: (text: string) => (text == null || text === '' ? '-' : text),
       },
       {
         title: '문의 회원',
@@ -227,6 +229,7 @@ export function AdminInquiryPage() {
         width: DATA_COL_WIDTH,
         align: 'center',
         ellipsis: true,
+        render: (v: string) => (v == null || v === '' ? '-' : v),
       },
       {
         title: '문의 일시',
@@ -234,7 +237,14 @@ export function AdminInquiryPage() {
         key: 'createdAt',
         width: DATA_COL_WIDTH,
         align: 'center',
-        render: (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
+        ellipsis: { showTitle: true },
+        onHeaderCell: () => ({ className: 'admin-inquiry-page__col-datetime' }),
+        onCell: () => ({ className: 'admin-inquiry-page__cell--datetime' }),
+        render: (iso: string) => (
+          <span className="admin-inquiry-page__datetime-text">
+            {dayjs(iso).format('YYYY.MM.DD HH:mm:ss')}
+          </span>
+        ),
       },
       {
         title: '담당자',
@@ -243,7 +253,7 @@ export function AdminInquiryPage() {
         width: DATA_COL_WIDTH,
         align: 'center',
         ellipsis: true,
-        render: (v: string | null) => (v == null || v === '' ? '—' : v),
+        render: (v: string | null) => (v == null || v === '' ? '-' : v),
       },
       {
         title: '답변 일시',
@@ -251,8 +261,14 @@ export function AdminInquiryPage() {
         key: 'answeredAt',
         width: DATA_COL_WIDTH,
         align: 'center',
-        render: (iso: string | null) =>
-          iso == null || iso === '' ? '—' : dayjs(iso).format('YYYY.MM.DD HH:mm:ss'),
+        ellipsis: { showTitle: true },
+        onHeaderCell: () => ({ className: 'admin-inquiry-page__col-datetime' }),
+        onCell: () => ({ className: 'admin-inquiry-page__cell--datetime' }),
+        render: (iso: string | null) => (
+          <span className="admin-inquiry-page__datetime-text">
+            {iso == null || iso === '' ? '-' : dayjs(iso).format('YYYY.MM.DD HH:mm:ss')}
+          </span>
+        ),
       },
     ],
     [tableData.length]
@@ -306,6 +322,9 @@ export function AdminInquiryPage() {
       />
       <FilterTableLayout
         bordered={false}
+        multiRowGridMode="responsive"
+        multiRowResponsiveLayout="merged-auto-fill"
+        mergedAutoFillInlineSearch
         rows={filterRowsConfig}
         filters={{
           status: pendingFilters.status,

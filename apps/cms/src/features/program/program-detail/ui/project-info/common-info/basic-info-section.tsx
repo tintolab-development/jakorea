@@ -218,7 +218,7 @@ export function BasicInfoSection({
                   {...field}
                   options={CATEGORY_OPTIONS}
                   width={'100%'}
-                  onChange={v => v && field.onChange(v)}
+                  onChange={v => field.onChange(v ? v : undefined)}
                 />
               )}
             />
@@ -238,7 +238,6 @@ export function BasicInfoSection({
                   options={BUSINESS_AREA_OPTIONS}
                   onChange={v => field.onChange(v ?? undefined)}
                   width={'100%'}
-                  allowClear
                 />
               )}
             />
@@ -260,7 +259,6 @@ export function BasicInfoSection({
                   <CmsSelect
                     {...field}
                     placeholder="후원사 선택"
-                    allowClear={false}
                     showSearch
                     optionFilterProp="label"
                     options={sponsors.map(s => ({ value: s.id, label: s.name }))}
@@ -313,19 +311,20 @@ export function BasicInfoSection({
                           return (
                             <CmsSelect
                               placeholder="담당자 선택"
-                              allowClear
                               value={selectedIndex >= 0 ? selectedIndex : undefined}
                               options={managers.map((m, i) => ({
                                 value: i,
                                 label: m.name,
                               }))}
                               onChange={idx => {
-                                if (idx !== undefined && idx >= 0 && managers[idx]) {
-                                  commonInfoForm.setValue('managerName', managers[idx].name)
-                                  commonInfoForm.setValue('contactPhone', managers[idx].phone)
-                                } else {
+                                if (idx === '' || idx == null) {
                                   commonInfoForm.setValue('managerName', '')
                                   commonInfoForm.setValue('contactPhone', undefined)
+                                  return
+                                }
+                                if (typeof idx === 'number' && idx >= 0 && managers[idx]) {
+                                  commonInfoForm.setValue('managerName', managers[idx].name)
+                                  commonInfoForm.setValue('contactPhone', managers[idx].phone)
                                 }
                               }}
                               width={'50%'}
@@ -364,7 +363,6 @@ export function BasicInfoSection({
                   options={EDUCATION_PROCESS_OPTIONS}
                   onChange={v => field.onChange(v ?? undefined)}
                   width={'100%'}
-                  allowClear
                   placeholder="교육 과정 선택"
                 />
               )}
@@ -385,7 +383,6 @@ export function BasicInfoSection({
                   options={IP_OWNED_OPTIONS}
                   onChange={v => field.onChange(v ?? undefined)}
                   width={'100%'}
-                  allowClear
                   placeholder="JA"
                 />
               )}
@@ -409,7 +406,6 @@ export function BasicInfoSection({
                   options={COURSE_DELIVERED_BY_OPTIONS}
                   onChange={v => field.onChange(v ?? undefined)}
                   width={'100%'}
-                  allowClear
                   placeholder="JA"
                 />
               )}
@@ -469,7 +465,6 @@ export function BasicInfoSection({
                   options={PROGRAM_CATEGORY_OPTIONS}
                   onChange={v => field.onChange(v ?? undefined)}
                   width={'100%'}
-                  allowClear
                   placeholder="프로그램 종류 선택"
                   disabled={commonInfoForm.watch('ips') !== 'Succeed'}
                 />

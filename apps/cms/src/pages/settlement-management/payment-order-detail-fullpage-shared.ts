@@ -15,7 +15,6 @@ export const LINE_STATUS_OPTIONS: readonly PaymentOrderAdminLineProcessingStatus
   'pending',
   'confirmed',
   'correction',
-  'rejected',
   'application_rejected',
 ]
 
@@ -64,17 +63,10 @@ export function deriveAggregateFromLines(
   if (statuses.length === 0) return 'na'
   if (statuses.some(s => s === 'correction')) return 'correction'
 
-  const hasAppRejected = statuses.some(s => s === 'application_rejected')
-  const hasConfirmed = statuses.some(s => s === 'confirmed')
-  if (hasAppRejected && hasConfirmed) return 'partial'
-  if (hasAppRejected) return 'application_rejected'
-
-  if (hasConfirmed && !statuses.every(s => s === 'confirmed')) return 'partial'
+  if (statuses.every(s => s === 'application_rejected')) return 'application_rejected'
   if (statuses.every(s => s === 'confirmed')) return 'confirmed'
-  if (statuses.every(s => s === 'rejected')) return 'rejected'
   if (statuses.every(s => s === 'pending')) return 'pending'
-  /* confirmed 없이 pending·rejected 등만 혼재 */
-  return 'pending'
+  return 'partial'
 }
 
 export function formatWon(amount: number): string {

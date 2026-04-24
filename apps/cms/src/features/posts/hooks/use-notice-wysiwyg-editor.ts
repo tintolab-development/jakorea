@@ -52,6 +52,13 @@ export function useNoticeWysiwygEditor(
         usageStatistics: false,
         placeholder,
         initialValue: initialMarkdown || '',
+        toolbarItems: [
+          ['heading', 'bold', 'italic', 'strike'],
+          ['hr', 'quote'],
+          ['ul', 'ol', 'table'],
+          ['link', 'image'],
+          ['code', 'codeblock'],
+        ],
         events: {
           change: () => {},
         },

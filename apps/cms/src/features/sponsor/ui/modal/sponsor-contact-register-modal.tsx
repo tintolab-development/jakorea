@@ -24,12 +24,15 @@ interface SponsorContactRegisterModalProps {
   open: boolean
   onCancel: () => void
   onSubmit: (payload: SponsorContactRegisterPayload) => void
+  /** 기존 담당자가 없을 때는 주 담당자만 등록 가능 */
+  existingContactCount?: number
 }
 
 export function SponsorContactRegisterModal({
   open,
   onCancel,
   onSubmit,
+  existingContactCount = 0,
 }: SponsorContactRegisterModalProps) {
   const [form] = Form.useForm<SponsorContactRegisterFormValues>()
 
@@ -95,7 +98,7 @@ export function SponsorContactRegisterModal({
             size="large"
             options={[
               { label: '주 담당자', value: 'lead' },
-              { label: '담당자', value: 'assistant' },
+              { label: '담당자', value: 'assistant', disabled: existingContactCount === 0 },
             ]}
           />
         </Form.Item>

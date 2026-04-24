@@ -1,7 +1,7 @@
 /**
  * 프로그램 진행 현황 위젯 (목록/대시보드)
  * Phase 4.5: 전체 프로그램 진행 현황 (상태별 집계)
- * 경로 기반 선택: /programs/education, /programs/economy-education, student-recruitment, instructor-recruitment
+ * 경로 기반 선택: /programs/general, /programs/company-school(및 레거시 education·economy-education)
  */
 
 import { useLocation, useSearchParams, useNavigate } from 'react-router-dom'
@@ -30,11 +30,25 @@ import {
 } from '@/features/dashboard/ui/progress-stages-widget'
 import './program-status-widget.css'
 
-/** 교육/경제 교육 프로그램 레이아웃 하위 경로인지 */
-const isEducationLayoutPath = (pathname: string) =>
-  pathname === '/programs/education' || pathname.startsWith('/programs/education/')
+/** 일반(레거시 education, 신규 general) */
+const isEducationLayoutPath = (pathname: string) => {
+  const p = pathname.replace(/\/$/, '') || '/'
+  return (
+    p === '/programs/education' ||
+    p.startsWith('/programs/education/') ||
+    p === '/programs/general' ||
+    p.startsWith('/programs/general/')
+  )
+}
 
-const isEconomyLayoutPath = (pathname: string) => pathname === '/programs/economy-education'
+const isEconomyLayoutPath = (pathname: string) => {
+  const p = pathname.replace(/\/$/, '') || '/'
+  return (
+    p === '/programs/economy-education' ||
+    p === '/programs/company-school' ||
+    p.startsWith('/programs/company-school/')
+  )
+}
 
 /** 의존성 배열용 빈 배열 */
 const EMPTY_PROGRAMS: readonly unknown[] = []
@@ -66,8 +80,13 @@ export function ProgramStatusWidget({
     'total' | 'studentRecruitment' | 'instructorRecruitment' | null
   >(() => {
     if (!isEducationLayoutPath(location.pathname)) return null
-    if (location.pathname === '/programs/education/student-recruitment') return 'studentRecruitment'
-    if (location.pathname === '/programs/education/instructor-recruitment')
+    const p = location.pathname.replace(/\/$/, '') || '/'
+    if (p === '/programs/education/student-recruitment' || p === '/programs/general/student-recruitment')
+      return 'studentRecruitment'
+    if (
+      p === '/programs/education/instructor-recruitment' ||
+      p === '/programs/general/instructor-recruitment'
+    )
       return 'instructorRecruitment'
     return 'total'
   }, [location.pathname])
@@ -206,20 +225,20 @@ export function ProgramStatusWidget({
         navigate(`${path}${query ? `?${query}` : ''}`, { replace: true })
       }
       if (key === 'total') {
-        mergeQuery('/programs/education', null)
+        mergeQuery('/programs/general', null)
         return
       }
       if (key === 'studentRecruitment') {
-        mergeQuery('/programs/education/student-recruitment', 'recruiting_students')
+        mergeQuery('/programs/general/student-recruitment', 'recruiting_students')
         return
       }
       if (key === 'instructorRecruitment') {
-        mergeQuery('/programs/education/instructor-recruitment', 'recruiting_instructors')
+        mergeQuery('/programs/general/instructor-recruitment', 'recruiting_instructors')
         return
       }
       const stageKey = key as ProgramProgressStageKey
       const value = STAGE_TO_PROGRAMS_QUERY[stageKey]?.value
-      if (value) mergeQuery('/programs/education', value)
+      if (value) mergeQuery('/programs/general', value)
       return
     }
 

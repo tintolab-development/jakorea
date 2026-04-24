@@ -100,3 +100,13 @@
   font-size: 13px;
   color: var(--color-text-secondary);
 }
+
+.calendar-list--empty {
+  justify-content: center;
+  align-items: center;
+}
+
+.calendar-list--empty .ant-empty {
+  margin: 0;
+  text-align: center;
+}

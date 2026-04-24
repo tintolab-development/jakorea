@@ -98,7 +98,6 @@ export function createInstitutionsSchema({
                         field.onChange((v as 'elementary' | 'middle' | 'high') || undefined)
                       }
                       placeholder="대상"
-                      allowClear
                       className="program-detail-info-tab__target-select"
                     />
                   )}

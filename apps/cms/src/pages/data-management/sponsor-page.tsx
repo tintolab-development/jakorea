@@ -316,11 +316,12 @@ export default function SponsorPage() {
       >
         <Table<SponsorManagementRow>
           rowKey="id"
-          className="cms-data-table"
+          className="cms-data-table cms-data-table--hoverable"
           columns={columns}
           dataSource={tableData}
           pagination={false}
           onRow={record => ({
+            style: { cursor: 'pointer' },
             onClick: (e: MouseEvent<HTMLElement>) => {
               const el = e.target as HTMLElement
               if (

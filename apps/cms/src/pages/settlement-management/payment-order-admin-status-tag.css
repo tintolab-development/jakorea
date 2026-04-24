@@ -32,16 +32,12 @@
   color: var(--color-green, #1e8c29);
 }
 
-.payment-order-admin__status-text--rejected {
-  color: var(--color-blue, #017eaf);
-}
-
 .payment-order-admin__status-text--na {
   color: var(--main-BK, #3d3d3d);
 }
 
 .payment-order-admin__status-text--correction {
-  color: var(--color-red, #c32f4a);
+  color: #e8007c;
 }
 
 .payment-order-admin__status-text--application-rejected {

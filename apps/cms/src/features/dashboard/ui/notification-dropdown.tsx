@@ -62,9 +62,19 @@ export function NotificationDropdown({
   const [category, setCategory] = useState<NotificationCategoryKey>('all')
 
   const filtered = useMemo(() => {
-    if (category === 'all') return notifications
-    if (category === 'inquiry') return [] // 추후 API 확장
-    return notifications.filter(n => n.type === category)
+    const base =
+      category === 'all'
+        ? notifications
+        : category === 'inquiry'
+          ? [] // 추후 API 확장
+          : notifications.filter(n => n.type === category)
+
+    return [...base].sort((a, b) => {
+      // 1) 미읽음 우선
+      if (a.read !== b.read) return a.read ? 1 : -1
+      // 2) 같은 상태 내에서는 최신순
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
   }, [notifications, category])
 
   const handleItemClick = async (notification: Notification) => {

@@ -1,5 +1,5 @@
 /**
- * FAQ 등록/수정 모달 — 800px 폭, 답변은 Toast UI WYSIWYG(공지와 동일 스택)
+ * FAQ 등록/수정 모달 — 800px 폭
  */
 
 .faq-form-modal-wrap {
@@ -37,7 +37,6 @@
   box-sizing: border-box !important;
 }
 
-/* 모달 박스: 에디터 툴바+본문 수용 상한 약간 확대 */
 .content-modal.faq-form-modal .ant-modal-content {
   display: flex;
   flex-direction: column;
@@ -144,36 +143,8 @@
   margin-bottom: 6px;
 }
 
-/* 내용(답변): Toast UI 에디터 — 레이블 ↔ 에디터 6px(공지 내용 블록과 동일 톤) */
-.faq-form-modal__editor-section {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
+.faq-form-modal__fields .cms-textarea {
   width: 100%;
-}
-
-.faq-form-modal__editor-label {
-  flex-shrink: 0;
-  margin-bottom: 6px;
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.faq-form-modal__editor-host {
-  width: 100%;
-  min-height: 240px;
-  flex-shrink: 0;
-  box-sizing: border-box;
-}
-
-.faq-form-modal__editor-host .toastui-editor {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
 }
 
 .faq-form-modal .content-modal__footer-actions {
@@ -195,22 +166,26 @@
   margin-left: auto;
 }
 
-/* FAQ 수정 모달 — 좌측「FAQ 삭제」라벨 타이포 */
-.faq-form-modal .faq-form-modal__faq-delete.ant-btn {
+/**
+ * FAQ 수정 모달 — 좌측「FAQ 삭제」라벨 (admin-faq-delete-btn.css 스펙과 동일, large+antd 이김)
+ */
+.faq-form-modal .faq-form-modal__faq-delete.cms-button.cms-button--delete.cms-button--large.ant-btn {
   text-align: center;
-}
-
-.faq-form-modal .faq-form-modal__faq-delete .cms-button__label {
-  text-align: center;
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 150%;
 }
 
 .faq-form-modal
-  .faq-form-modal__faq-delete.ant-btn:not(:disabled):not(.ant-btn-disabled)
+  .faq-form-modal__faq-delete.cms-button.cms-button--delete.cms-button--large.ant-btn
+  .cms-button__label {
+  text-align: center !important;
+  font-family: Pretendard, var(--font-family-primary, sans-serif) !important;
+  font-size: 14px !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+  line-height: 150% !important; /* 21px */
+}
+
+.faq-form-modal
+  .faq-form-modal__faq-delete.cms-button.cms-button--delete.ant-btn:not(:disabled):not(.ant-btn-disabled)
   .cms-button__label {
   color: #c32f4a !important;
 }

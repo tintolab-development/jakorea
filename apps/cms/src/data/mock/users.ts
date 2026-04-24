@@ -202,6 +202,7 @@ const mockInstructors: User[] = [
     },
     listMetrics: {
       instructorTypeLabel: '2급 강사비',
+      permissionApplicationTypeLabel: '특강 강사',
       settlementStatusLabel: '확인 대기 중',
       jaEvaluationGrade: 'B',
       employmentStatusLabel: '전근',
@@ -1220,7 +1221,8 @@ const extraMockUsers: User[] = [
     },
     listMetrics: {
       instructorTypeLabel: '1급 강사비',
-      settlementStatusLabel: '일부 확인 완료',
+      permissionApplicationTypeLabel: '제미나이 강사단',
+      settlementStatusLabel: '일부 지급 완료',
       employmentStatusLabel: '재직 중',
       instructorAssignedGrade: '1학년',
     },
@@ -1309,6 +1311,7 @@ const extraMockUsers: User[] = [
     adminComment: '관리자 등록 강사 데모 계정',
     listMetrics: {
       instructorTypeLabel: '1급 강사비',
+      permissionApplicationTypeLabel: 'JA 강사단',
       settlementStatusLabel: '확인 대기 중',
       jaEvaluationGrade: 'B',
       employmentStatusLabel: '재직 중',

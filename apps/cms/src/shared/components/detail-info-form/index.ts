@@ -1,5 +1,6 @@
 export {
   DetailInfoForm,
+  DetailInfoFormTdDivider,
   type DetailInfoFormFieldProps,
   type DetailInfoFormMode,
   type DetailInfoFormNameBlockProps,

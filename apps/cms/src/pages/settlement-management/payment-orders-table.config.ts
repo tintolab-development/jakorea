@@ -225,7 +225,9 @@ export function createPaymentOrdersTablePageConfig(
         if (key === 'pendingPaymentBucket') {
           return {
             ...prev,
-            pendingPaymentBucket: (value ?? 'all') as PendingPaymentItemBucket,
+            pendingPaymentBucket: (value == null || value === ''
+              ? 'all'
+              : value) as PendingPaymentItemBucket,
           }
         }
         if (key === 'dateRange') {

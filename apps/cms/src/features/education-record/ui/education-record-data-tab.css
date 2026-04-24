@@ -12,8 +12,8 @@
 .er-data-tab__toolbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-start;
   gap: var(--spacing-12, 12px);
   width: 100%;
   min-width: 0;
@@ -25,14 +25,6 @@
   align-items: baseline;
   flex-wrap: wrap;
   min-width: 0;
-}
-
-.er-data-tab__toolbar-actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--spacing-12, 12px);
-  flex-shrink: 0;
 }
 
 .er-data-tab__title {
@@ -71,4 +63,37 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* IP Owned · Course Delivered By: 말줄임 없이 전체 노출(줄바꿈) */
+.er-data-tab .cms-data-table .ant-table-thead > tr > th.er-data-tab__cell--wrap,
+.er-data-tab .cms-data-table .ant-table-tbody > tr > td.er-data-tab__cell--wrap {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  height: auto !important;
+  min-height: 54px;
+  vertical-align: middle;
+  word-break: break-word;
+}
+
+.er-data-tab .cms-data-table .ant-table-thead > tr > th.er-data-tab__cell--wrap > *,
+.er-data-tab .cms-data-table .ant-table-tbody > tr > td.er-data-tab__cell--wrap > * {
+  display: block;
+  max-width: 100%;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/*
+ * 실적관리 테이블은 AntD 내부 스크롤(scroll.x/y)을 사용하므로
+ * 바깥 래퍼의 가로 스크롤을 비활성화해 헤더/바디 수평 동기화 지연(흔들림)을 줄인다.
+ */
+.er-data-tab .list-page-layout__table-shell {
+  overflow-x: hidden;
+}
+
+.er-data-tab .cms-data-table {
+  overflow-x: visible;
 }

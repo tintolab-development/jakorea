@@ -144,7 +144,6 @@ export function TextbookRegisterModal({
             }
             options={TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS}
             style={{ width: '100%' }}
-            allowClear
           />
         </div>
 
@@ -164,7 +163,6 @@ export function TextbookRegisterModal({
             }
             options={TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS}
             style={{ width: '100%' }}
-            allowClear
           />
         </div>
 
@@ -184,7 +182,6 @@ export function TextbookRegisterModal({
               { label: '3학년', value: '3학년' },
             ]}
             style={{ width: '100%' }}
-            allowClear
           />
         </div>
       </div>

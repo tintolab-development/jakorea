@@ -20,6 +20,8 @@ export interface MemberPermissionApplicationRow {
   phone: string
   email: string
   memberCategory: 'SCHOOL' | 'INDIVIDUAL' | 'INSTRUCTOR' | 'ADMIN'
+  /** 강사 탭: 회원 상세「신청 유형」과 동일 규칙. 관리자 탭: 개인 후보는 관리자 권한 신청, 관리자는 권한 유형 라벨 */
+  applicationTypeLabel: string
   approvalStatus: MemberPermissionApplicationStatus
   appliedAt: string
 }

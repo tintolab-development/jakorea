@@ -76,9 +76,14 @@
   );
   --sidebar-hover-on-base: var(--sidebar-hover-overlay), var(--color-sidebar-bg);
   --sidebar-hover-on-selected: var(--sidebar-hover-overlay), var(--sidebar-selected-stack);
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 100%;
+  /* 가로 패딩 없음: 행이 사이드바·스크롤 영역까지 맞닿도록 (Ant 기본 inline padding 제거) */
+  padding-inline: 0 !important;
+  padding-block: 10px;
   background: var(--color-sidebar-bg) !important;
   color: var(--color-sidebar-text) !important;
-  padding: 10px;
 }
 
 /* ---- 행 공통(패딩·레이아웃) ---- */
@@ -87,10 +92,12 @@
   margin-block: 0 !important;
   margin-inline: 0 !important;
   width: 100%;
+  max-width: 100%;
   height: 54px !important;
   padding: 10px 18px 10px 20px !important;
   display: flex;
   align-items: center;
+  box-sizing: border-box;
   background: var(--color-sidebar-bg) !important;
   color: var(--color-sidebar-text) !important;
 }
@@ -104,6 +111,8 @@
 
 .sidebar-menu.ant-menu > li.ant-menu-item,
 .sidebar-menu.ant-menu > li.ant-menu-submenu {
+  width: 100% !important;
+  max-width: 100%;
   margin-bottom: 2px !important;
 }
 
@@ -143,12 +152,19 @@
   padding: 10px 18px 10px 20px !important;
 }
 
-/* children 있는 메뉴가 펼쳐진(open) 때 타이틀 행 하단 구분선 */
-.sidebar-menu .ant-menu-submenu.ant-menu-submenu-open > .ant-menu-submenu-title {
+/*
+ * 1뎁스 부모(자식 있는 행): 접힘 ↔ 펼침 시 하단 1px 유무로 높이가 달라져 흔들리는 것 방지
+ * — 항상 동일 두께 보더 슬롯(닫힘: 투명), 펼침 시에만 색만 지정
+ */
+.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-submenu-title {
+  border-bottom: 1px solid transparent;
+}
+
+.sidebar-menu.ant-menu > li.ant-menu-submenu.ant-menu-submenu-open > .ant-menu-submenu-title {
   border-bottom: 1px solid var(--color-sidebar-border);
 }
 
-/* 2뎁스 open 행(회원 목록 등)은 하단 보더 제거 */
+/* 2·3뎁스 부모(open)는 하단 구분선 없음(기존 디자인 유지) */
 .sidebar-menu .ant-menu-sub > li.ant-menu-submenu.ant-menu-submenu-open > .ant-menu-submenu-title {
   border-bottom: none !important;
 }
@@ -448,6 +464,10 @@
 }
 
 .sidebar-menu .ant-menu-submenu-arrow {
+  flex-shrink: 0;
+  width: 14px;
+  min-width: 14px;
+  text-align: center;
   color: var(--color-sidebar-text) !important;
 }
 
@@ -536,6 +556,27 @@
   width: 0 !important;
   min-width: 0 !important;
   margin: 0 !important;
+}
+
+/* ---- 포커스: 브라우저·Ant 기본 outline / 포커스 링 제거 (사이드바 영역 한정) ---- */
+.sidebar-container .sidebar-header :focus,
+.sidebar-container .sidebar-header :focus-visible {
+  outline: none !important;
+}
+
+.sidebar-container .sidebar-menu :focus,
+.sidebar-container .sidebar-menu :focus-visible {
+  outline: none !important;
+}
+
+.sidebar-container .sidebar-menu .ant-menu-item:focus,
+.sidebar-container .sidebar-menu .ant-menu-item:focus-visible,
+.sidebar-container .sidebar-menu .ant-menu-submenu-title:focus,
+.sidebar-container .sidebar-menu .ant-menu-submenu-title:focus-visible,
+.sidebar-container .sidebar-menu li.ant-menu-item:focus-visible,
+.sidebar-container .sidebar-menu li.ant-menu-submenu:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* ---- 디바이더 ---- */

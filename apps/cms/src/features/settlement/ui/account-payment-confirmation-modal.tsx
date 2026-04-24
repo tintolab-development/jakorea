@@ -5,7 +5,7 @@
  */
 
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { withProgramDetailTdDivider } from '@/features/program/ui/program-detail-td-divider'
 import {
   getMockAccountPaymentStatusDetail,
@@ -52,9 +52,7 @@ export function buildAccountPaymentConfirmationPayloadForSelection(
 ): AccountPaymentConfirmationModalPayload | null {
   if (rows.length === 0) return null
   if (rows.length === 1) {
-    return buildAccountPaymentSingleConfirmationPayload(
-      getMockAccountPaymentStatusDetail(rows[0])
-    )
+    return buildAccountPaymentSingleConfirmationPayload(getMockAccountPaymentStatusDetail(rows[0]))
   }
   const uniquePrograms = [...new Set(rows.map(r => r.programName))]
   const programDisplay =
@@ -109,18 +107,17 @@ export function AccountPaymentConfirmationModal({
       className={modalClassName}
       footer={
         <div className="account-payment-confirm-modal__footer-actions">
-          <AppButton variant="cancel" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             취소
-          </AppButton>
-          <AppButton
+          </CmsButton>
+          <CmsButton
             variant="primary"
-            size="tableAction"
-            modalTeal
+            size="medium"
             className="account-payment-confirm-modal__submit-btn"
             onClick={onConfirm}
           >
             계좌 지급 완료
-          </AppButton>
+          </CmsButton>
         </div>
       }
     >
@@ -128,27 +125,24 @@ export function AccountPaymentConfirmationModal({
         <div className="account-payment-confirm-modal__inner">
           <div className="account-payment-confirm-modal__intro">
             {data.kind === 'bulk' ? (
-              <>
-                <p className="account-payment-confirm-modal__line">
-                  선택하신 모든 항목에 대해 강의비 계좌 지급을 완료 처리하시겠습니까?
-                </p>
-                <p className="account-payment-confirm-modal__line">
-                  모든 항목에 대한 입금 완료 후, 아래의{' '}
-                  <strong className="account-payment-confirm-modal__strong">[계좌 지급 완료]</strong>{' '}
-                  버튼을 눌러주세요.
-                </p>
-              </>
+              <p className="account-payment-confirm-modal__line">
+                선택하신 모든 항목에 대해 강의비 계좌 지급을 완료 처리하시겠습니까? <br />
+                모든 항목에 대한 입금 완료 후, 아래의{' '}
+                <strong className="account-payment-confirm-modal__strong">
+                  [계좌 지급 완료]
+                </strong>{' '}
+                버튼을 눌러주세요.
+              </p>
             ) : (
-              <>
-                <p className="account-payment-confirm-modal__line">
-                  아래의 내용을 확인하신 후 안내된 계좌번호로 정확한 금액을 입금해 주세요.
-                </p>
-                <p className="account-payment-confirm-modal__line">
-                  입금이 완료되면 아래의{' '}
-                  <strong className="account-payment-confirm-modal__strong">[계좌 지급 완료]</strong>{' '}
-                  버튼을 눌러주세요.
-                </p>
-              </>
+              <p className="account-payment-confirm-modal__line">
+                아래의 내용을 확인하신 후 안내된 계좌번호로 정확한 금액을 입금해 주세요.
+                <br />
+                입금이 완료되면 아래의{' '}
+                <strong className="account-payment-confirm-modal__strong">
+                  [계좌 지급 완료]
+                </strong>{' '}
+                버튼을 눌러주세요.
+              </p>
             )}
           </div>
 
@@ -212,10 +206,7 @@ export function AccountPaymentConfirmationModal({
                     className="account-payment-confirm-modal__summary-td account-payment-confirm-modal__summary-td--divider-inline"
                     role="cell"
                   >
-                    {withProgramDetailTdDivider([
-                      data.accountBankAndNumber,
-                      data.accountHolder,
-                    ])}
+                    {withProgramDetailTdDivider([data.accountBankAndNumber, data.accountHolder])}
                   </div>
                 </div>
               </>

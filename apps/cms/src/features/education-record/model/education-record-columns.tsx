@@ -24,7 +24,7 @@ const INSTITUTION_TYPE_LABELS: Record<string, string> = {
 const PROGRAM_TYPE_LABELS: Record<string, string> = {
   online: '온라인',
   offline: '오프라인',
-  hybrid: '하이브리드',
+  hybrid: '온/오프라인',
 }
 
 export type EducationRecordColumnDeps = {
@@ -81,7 +81,7 @@ export function createEducationRecordColumns({
       render: (sponsorId: string) => getSponsorNameEn(sponsorId),
     },
     {
-      title: '프로그램명(영문)',
+      title: '대표 프로그램명(영문)',
       dataIndex: 'titleEn',
       key: 'titleEn',
       width: 260,
@@ -162,6 +162,9 @@ export function createEducationRecordColumns({
       key: 'ipOwned',
       width: 110,
       align: 'center',
+      ellipsis: false,
+      onHeaderCell: () => ({ className: 'er-data-tab__cell--wrap' }),
+      onCell: () => ({ className: 'er-data-tab__cell--wrap' }),
       render: (value?: string) => value || 'JA',
     },
     {
@@ -170,6 +173,9 @@ export function createEducationRecordColumns({
       key: 'courseDeliveredBy',
       width: 190,
       align: 'center',
+      ellipsis: false,
+      onHeaderCell: () => ({ className: 'er-data-tab__cell--wrap' }),
+      onCell: () => ({ className: 'er-data-tab__cell--wrap' }),
       render: (value?: string) => value || '-',
     },
     {

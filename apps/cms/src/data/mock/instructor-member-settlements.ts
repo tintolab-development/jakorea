@@ -19,7 +19,7 @@ export type InstructorSettlementUiStatus =
 
 export const INSTRUCTOR_SETTLEMENT_STATUS_LABELS: Record<InstructorSettlementUiStatus, string> = {
   awaiting_confirmation: '확인 대기 중',
-  partial_confirmation: '일부 확인 완료',
+  partial_confirmation: '확인 진행 중',
   payment_statement_verified: '지급조서 확인 완료',
   account_paid: '계좌 지급 완료',
   none: '해당 없음',
@@ -32,10 +32,10 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT: Record<
   InstructorSettlementUiStatus,
   string
 > = {
-  awaiting_confirmation: '확인 대기',
+  awaiting_confirmation: '지급대기',
   partial_confirmation: '일부 확인',
   payment_statement_verified: '확인 완료',
-  account_paid: '계좌 지급',
+  account_paid: '지급완료',
   none: '해당 없음',
   application_rejected: '신청 반려',
   payment_correction_requested: '정정 요청',
@@ -78,7 +78,7 @@ export const INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE: Record<
   },
   payment_correction_requested: {
     bg: 'rgba(195, 47, 74, 0.06)',
-    color: '#c32f4a',
+    color: '#E8007C',
     border: 'rgba(195, 47, 74, 0.1)',
   },
 }

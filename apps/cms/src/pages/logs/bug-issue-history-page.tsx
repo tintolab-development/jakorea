@@ -107,6 +107,7 @@ export default function BugIssueHistoryPage() {
       <Table<BugIssueLog>
         rowKey="id"
         className="cms-data-table"
+        rowHoverable={false}
         tableLayout="fixed"
         scroll={{ x: BUG_ISSUE_HISTORY_TABLE_SCROLL_X }}
         columns={columns}

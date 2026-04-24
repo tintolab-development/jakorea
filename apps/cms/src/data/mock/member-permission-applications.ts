@@ -7,6 +7,11 @@ import type {
   MemberPermissionApplicationRow,
   MemberPermissionApplicationStatus,
 } from '@/types/member-permission-application'
+import { getMemberPermissionInstructorApplicationTypeLabel } from '@/features/user/permission-management/lib/member-permission-instructor-application-type'
+import {
+  ADMIN_PERMISSION_TAG_LABEL,
+  getAdminPermissionVariant,
+} from '@/features/user/shared/lib/admin-permission-display'
 import { mockUsers } from './users'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 
@@ -25,10 +30,24 @@ function appliedAtIso(seed: number): string {
   return d.toISOString()
 }
 
+function applicationTypeLabelForList(u: User, listKind: 'instructor' | 'admin'): string {
+  if (listKind === 'instructor') {
+    return getMemberPermissionInstructorApplicationTypeLabel(u)
+  }
+  if (u.role === 'INDIVIDUAL') {
+    return '관리자 권한 신청'
+  }
+  if (u.role === 'ADMIN') {
+    return ADMIN_PERMISSION_TAG_LABEL[getAdminPermissionVariant(u)]
+  }
+  return '-'
+}
+
 function rowFromUser(
   u: User,
   index: number,
-  prefix: string
+  prefix: string,
+  listKind: 'instructor' | 'admin'
 ): MemberPermissionApplicationRow {
   const approvalStatus = u.permissionApprovalStatus ?? rotateStatus(index)
   return {
@@ -38,6 +57,7 @@ function rowFromUser(
     phone: u.phone ?? '',
     email: u.email,
     memberCategory: categoryForUser(u),
+    applicationTypeLabel: applicationTypeLabelForList(u, listKind),
     approvalStatus,
     appliedAt: appliedAtIso(index + 3),
   }
@@ -55,7 +75,7 @@ const adminSourceUsers: User[] = [
 ]
 
 export const mockMemberPermissionApplicationsInstructor: MemberPermissionApplicationRow[] =
-  instructorSourceUsers.map((u, i) => rowFromUser(u, i, 'mpa-inst'))
+  instructorSourceUsers.map((u, i) => rowFromUser(u, i, 'mpa-inst', 'instructor'))
 
 export const mockMemberPermissionApplicationsAdmin: MemberPermissionApplicationRow[] =
-  adminSourceUsers.map((u, i) => rowFromUser(u, i, 'mpa-adm'))
+  adminSourceUsers.map((u, i) => rowFromUser(u, i, 'mpa-adm', 'admin'))

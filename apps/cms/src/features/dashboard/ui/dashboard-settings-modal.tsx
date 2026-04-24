@@ -194,6 +194,27 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
     })
   }, [])
 
+  /** 전체 선택: 메뉴 바로가기 항목이 아님 — 모든 바로가기 id를 켜거나 끔 */
+  const setAllDraftShortcuts = useCallback((enabled: boolean) => {
+    setDraftShortcutEnabled(prev => {
+      const base = prev ?? { ...useDashboardSettingsStore.getState().shortcutEnabled }
+      const next = { ...base }
+      for (const item of SHORTCUT_ITEMS) {
+        next[item.id] = enabled
+      }
+      return next
+    })
+  }, [])
+
+  const shortcutAllEnabled = useMemo(
+    () => SHORTCUT_ITEMS.every(item => isShortcutItemEnabled(shortcutEnabled, item.id)),
+    [shortcutEnabled]
+  )
+  const shortcutAllIndeterminate = useMemo(() => {
+    const anyOn = SHORTCUT_ITEMS.some(item => isShortcutItemEnabled(shortcutEnabled, item.id))
+    return anyOn && !shortcutAllEnabled
+  }, [shortcutAllEnabled, shortcutEnabled])
+
   const setDraftWidgetProgramIdsForKey = useCallback((widgetKey: string, programIds: string[]) => {
     setDraftWidgetProgramIds(prev => {
       const base =
@@ -311,6 +332,13 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
         <section className="dashboard-settings-modal__section">
           <div className="dashboard-settings-modal__section-title">바로가기 아이콘 설정</div>
           <div className="dashboard-settings-modal__shortcuts">
+            <Checkbox
+              checked={shortcutAllEnabled}
+              indeterminate={shortcutAllIndeterminate}
+              onChange={e => setAllDraftShortcuts(e.target.checked)}
+            >
+              전체 선택
+            </Checkbox>
             {SHORTCUT_ITEMS.map(item => (
               <Checkbox
                 key={item.id}

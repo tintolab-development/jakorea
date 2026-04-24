@@ -15,6 +15,7 @@ import { NoticeFormModal } from '@/features/posts/ui/notice-form-modal'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { CmsButton } from '@/shared/ui'
+import { downloadFile } from '@/shared/lib/file-download'
 import { ToastUiMarkdownViewer } from '@/shared/components/toast-ui-markdown-viewer'
 import './admin-notice-detail-page.css'
 
@@ -60,8 +61,8 @@ export function AdminNoticeDetailPage() {
     setEditModalOpen(true)
   }, [canWrite])
 
-  const handleAttachmentClick = useCallback(() => {
-    message.info('첨부파일 다운로드는 추후 연결됩니다.')
+  const handleAttachmentClick = useCallback((fileName: string, fileUrl?: string) => {
+    downloadFile(fileName, fileUrl)
   }, [])
 
   if (!notice) {
@@ -93,6 +94,7 @@ export function AdminNoticeDetailPage() {
         open={deleteConfirmOpen}
         onCancel={() => setDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
+        preset="notice"
       />
       {notice ? (
         <NoticeFormModal
@@ -134,12 +136,12 @@ export function AdminNoticeDetailPage() {
                 첨부파일
               </div>
               <ul className="admin-notice-detail-page__attachments-list">
-                {attachmentItems.map(att => (
-                  <li key={att.name}>
+                {attachmentItems.map((att, index) => (
+                  <li key={`${att.name}-${index}`}>
                     <button
                       type="button"
                       className="admin-notice-detail-page__file"
-                      onClick={handleAttachmentClick}
+                      onClick={() => handleAttachmentClick(att.name, att.fileUrl)}
                     >
                       <NoticeAttachmentDownloadIcon className="admin-notice-detail-page__file-icon" />
                       <span className="admin-notice-detail-page__file-name">{att.name}</span>

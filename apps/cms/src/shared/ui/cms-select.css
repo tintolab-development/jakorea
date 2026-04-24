@@ -54,6 +54,11 @@
   box-shadow: none !important;
 }
 
+/* CmsSelect는 `allowClear` 비활성 — 혹시 전달되어도 × 숨김 */
+.cms-select .ant-select-clear {
+  display: none !important;
+}
+
 .cms-select .ant-select-arrow {
   flex-shrink: 0;
   inset-inline-end: 0 !important;

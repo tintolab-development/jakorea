@@ -1,6 +1,7 @@
 /**
  * 필터 영역 Select(드롭다운) 및 검색 인풋 공통 크기
- * 기본 240×44px, 화면 크기에 따라 반응형 적용
+ * 기본 240×44px, 최대 너비 --filter-control-max-width(260px), 화면 크기에 따라 반응형 적용
+ * 필터 칸 사이 간격: --filter-field-gap(기본 12px) — TableFilterGroup·UnifiedFilterCard·ListPageFilters 등
  * 레이블·컨트롤 사이 갭: --filter-label-control-gap (= --spacing-6, 6px)
  * 필터 레이블 타이포: --filter-area-label-* (14px / 500 / 150% / default-BK / Pretendard 계열)
  * 필터 레이블 텍스트 영역 높이: --filter-label-height (27px)
@@ -9,6 +10,11 @@
 
 :root {
   --filter-control-width: 240px;
+  --filter-control-max-width: 260px;
+  /** 분리형 기간(시작·종료 두 칸): 구분자(~) 좌우 margin 6px 등 포함한 가운데 간격 */
+  --filter-control-range-split-between: 20px;
+  /** 필터 칸 사이·TableFilterGroup·UnifiedFilterCard 행 간격 */
+  --filter-field-gap: 12px;
   --filter-control-height: 44px;
   --filter-control-min-width: 180px;
   --filter-label-height: 27px;
@@ -25,6 +31,8 @@
   /** Select allowClear(X) ↔ 드롭다운 화살표 간격 (우측 기준 오프셋) */
   --filter-select-arrow-inset-end: 8px;
   --filter-select-clear-inset-end: 38px;
+  /** 필터 셀렉트 화살표 SVG (12×7, fill #85969D) — `FilterSelectChevronIcon` 과 동일 */
+  --filter-select-chevron-url: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%227%22%20viewBox%3D%220%200%2012%207%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M5.28071%206.1472C5.52331%206.30741%205.85327%206.28022%206.06685%206.06664L11.0668%201.06664C11.3109%200.822558%2011.3109%200.426924%2011.0668%200.182846C10.8228%20-0.0612316%2010.4271%20-0.0612316%2010.1831%200.182846L5.62495%204.74095L1.06685%200.182846C0.82277%20-0.0612316%200.427136%20-0.0612316%200.183058%200.182846C-0.0610194%200.426924%20-0.0610194%200.822558%200.183058%201.06664L5.18306%206.06664L5.28071%206.1472Z%22%20fill%3D%22%2385969D%22%2F%3E%3C%2Fsvg%3E');
 }
 
 @media (max-width: 1200px) {
@@ -77,15 +85,38 @@
 .unified-filter-card .app-select,
 .unified-filter-card .unified-filter-card__field .app-select,
 .unified-filter-card .labeled-search-input .app-input,
-.unified-filter-card .unified-filter-card__field .app-datepicker,
-.unified-filter-card .app-datepicker {
+.unified-filter-card .unified-filter-card__field .app-datepicker:not(.app-datepicker--range-split),
+.unified-filter-card .app-datepicker:not(.app-datepicker--range-split) {
   min-width: var(--filter-control-width);
+  max-width: var(--filter-control-max-width);
   width: 100%;
   height: var(--filter-control-height) !important;
   box-sizing: border-box;
   display: inline-flex;
   align-items: stretch;
   border-radius: 8px;
+}
+
+/* 분리형 기간(AppDateRangePicker): 바깥은 두 칸 + 구분자까지, 각 세그먼트는 아래에서 max 260 */
+.unified-filter-card .unified-filter-card__field .app-datepicker.app-datepicker--range-split,
+.unified-filter-card .app-datepicker.app-datepicker--range-split {
+  min-width: var(--filter-control-width);
+  max-width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width) + var(--filter-control-range-split-between, 20px))
+  );
+  width: 100%;
+  height: var(--filter-control-height) !important;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: 8px;
+}
+
+.unified-filter-card .app-datepicker--range-split .app-datepicker__segment {
+  max-width: min(100%, var(--filter-control-max-width));
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* 셀렉트·기간: 드롭다운이 잘리지 않도록 — 클리어·화살표는 app-select / app-datepicker 규칙으로 박스 안 배치 */
@@ -107,6 +138,7 @@
 .unified-filter-card .ant-select,
 .unified-filter-card .unified-filter-card__field .ant-select {
   min-width: var(--filter-control-width);
+  max-width: var(--filter-control-max-width);
   width: 100%;
   height: var(--filter-control-height) !important;
 }
@@ -131,9 +163,15 @@
 
 /* LabeledSearchInput + AppInput: 래퍼 패딩 안에 맞추고 allowClear 아이콘이 박스 밖으로 나가지 않게 */
 .unified-filter-card .labeled-search-input {
-  max-width: none !important;
+  max-width: var(--filter-control-max-width) !important;
   width: 100%;
   min-width: 0;
+}
+
+.unified-filter-card .app-multi-select,
+.list-page-filters .app-multi-select {
+  max-width: var(--filter-control-max-width);
+  width: 100%;
 }
 
 .unified-filter-card .labeled-search-input .app-input {
@@ -210,6 +248,17 @@
   box-sizing: border-box !important;
 }
 
+.unified-filter-card .ant-picker:not(.ant-picker-range) {
+  max-width: var(--filter-control-max-width);
+}
+
+.unified-filter-card .ant-picker-range {
+  max-width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width) + var(--filter-control-range-split-between, 20px))
+  );
+}
+
 .unified-filter-card .ant-picker .ant-picker-input,
 .unified-filter-card .ant-picker-range .ant-picker-input {
   height: 100% !important;
@@ -232,6 +281,7 @@
 .program-filter-card .ant-select .ant-select-selector,
 .program-filter-wrapper .ant-select .ant-select-selector {
   width: var(--filter-control-width) !important;
+  max-width: var(--filter-control-max-width) !important;
   min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
   min-height: var(--filter-control-height) !important;
@@ -243,6 +293,7 @@
 .program-filter-card .ant-select,
 .program-filter-wrapper .ant-select {
   width: var(--filter-control-width) !important;
+  max-width: var(--filter-control-max-width) !important;
   min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
 }
@@ -267,6 +318,19 @@
   display: inline-flex !important;
   align-items: center !important;
   box-sizing: border-box !important;
+}
+
+.program-filter-card .ant-picker:not(.ant-picker-range),
+.program-filter-wrapper .ant-picker:not(.ant-picker-range) {
+  max-width: var(--filter-control-max-width) !important;
+}
+
+.program-filter-card .ant-picker-range,
+.program-filter-wrapper .ant-picker-range {
+  max-width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width) + var(--filter-control-range-split-between, 20px))
+  ) !important;
 }
 
 .program-filter-card .ant-picker .ant-picker-input,
@@ -299,6 +363,7 @@
 /* 진행 현황 탭 필터 */
 .program-progress-tab__filters .ant-select {
   width: var(--filter-control-width) !important;
+  max-width: var(--filter-control-max-width) !important;
   min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
   overflow: visible !important;
@@ -330,11 +395,13 @@
 
 .program-progress-tab__filter-col .ant-select {
   width: var(--filter-control-width) !important;
+  max-width: var(--filter-control-max-width) !important;
   min-width: var(--filter-control-min-width);
 }
 
 .program-progress-tab__filters .labeled-search-input__input {
   width: var(--filter-control-width) !important;
+  max-width: var(--filter-control-max-width) !important;
   min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
   min-height: var(--filter-control-height) !important;
@@ -353,6 +420,7 @@
 .program-applicants-tab__filter-col .ant-select,
 .program-managers-tab__filter-col .ant-select {
   width: var(--filter-control-width) !important;
+  max-width: var(--filter-control-max-width) !important;
   min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
 }
@@ -381,6 +449,7 @@
 /* List 페이지 필터 (ListPageFilters) */
 .list-page-filters .ant-select {
   width: var(--filter-control-width) !important;
+  max-width: var(--filter-control-max-width) !important;
   min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
 }
@@ -394,6 +463,7 @@
 
 .list-page-filters .labeled-search-input__input {
   width: var(--filter-control-width) !important;
+  max-width: var(--filter-control-max-width) !important;
   min-width: var(--filter-control-min-width);
   height: var(--filter-control-height) !important;
   min-height: var(--filter-control-height) !important;
@@ -406,6 +476,11 @@
   min-height: 0 !important;
   line-height: 1 !important;
   padding: 0 11px !important;
+}
+
+/* List 페이지: Space로 나란히 둔 필터 간격 */
+.list-page-filters .ant-space {
+  gap: var(--filter-field-gap, 12px) !important;
 }
 
 /* Ant Select 단독( ListPageFilters · 신청자/담당자 탭 ): X ↔ 화살표 간격 */
@@ -554,6 +629,7 @@
   .program-managers-tab__filter-col .ant-select,
   .list-page-filters .ant-select {
     width: 100% !important;
+    max-width: var(--filter-control-max-width) !important;
     min-width: var(--filter-control-min-width);
   }
 
@@ -563,23 +639,127 @@
   .program-progress-tab__filters .labeled-search-input__input,
   .list-page-filters .labeled-search-input__input {
     width: 100% !important;
+    max-width: var(--filter-control-max-width) !important;
     min-width: var(--filter-control-min-width);
   }
 
   .unified-filter-card .app-select,
-  .unified-filter-card .app-datepicker,
+  .unified-filter-card .app-datepicker:not(.app-datepicker--range-split),
   .unified-filter-card .labeled-search-input .app-input {
     width: 100% !important;
+    max-width: var(--filter-control-max-width) !important;
     min-width: var(--filter-control-min-width);
   }
 
-  .unified-filter-card .ant-picker,
-  .unified-filter-card .ant-picker-range,
-  .program-filter-card .ant-picker,
-  .program-filter-card .ant-picker-range,
-  .program-filter-wrapper .ant-picker,
-  .program-filter-wrapper .ant-picker-range {
+  .unified-filter-card .app-datepicker.app-datepicker--range-split {
     width: 100% !important;
+    max-width: min(
+      100%,
+      calc(2 * var(--filter-control-max-width) + var(--filter-control-range-split-between, 20px))
+    ) !important;
     min-width: var(--filter-control-min-width);
   }
+
+  .unified-filter-card .app-multi-select,
+  .list-page-filters .app-multi-select {
+    max-width: var(--filter-control-max-width) !important;
+  }
+
+  .unified-filter-card .ant-picker:not(.ant-picker-range),
+  .program-filter-card .ant-picker:not(.ant-picker-range),
+  .program-filter-wrapper .ant-picker:not(.ant-picker-range) {
+    width: 100% !important;
+    max-width: var(--filter-control-max-width) !important;
+    min-width: var(--filter-control-min-width);
+  }
+
+  .unified-filter-card .ant-picker-range,
+  .program-filter-card .ant-picker-range,
+  .program-filter-wrapper .ant-picker-range {
+    width: 100% !important;
+    max-width: min(
+      100%,
+      calc(2 * var(--filter-control-max-width) + var(--filter-control-range-split-between, 20px))
+    ) !important;
+    min-width: var(--filter-control-min-width);
+  }
+}
+
+/* ----- 필터 영역 Select 화살표: 시안 SVG로 통일 (Ant 기본 Down 아이콘 대체) ----- */
+/* CmsSelect: Ant 화살표는 absolute + translateY(-50%) 조합이 많음 — 배경 SVG와 수직 중앙 */
+.cms-select .ant-select {
+  position: relative;
+}
+
+.cms-select .ant-select-arrow {
+  position: absolute !important;
+  top: 50% !important;
+  margin-top: 0 !important;
+  transform: translateY(-50%) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.cms-select .ant-select-arrow,
+.app-select.app-select--filter .ant-select-arrow,
+.unified-filter-card .ant-select .ant-select-arrow,
+.list-page-filters .ant-select .ant-select-arrow,
+.program-filter-card .ant-select .ant-select-arrow,
+.program-filter-wrapper .ant-select .ant-select-arrow,
+.program-progress-tab__filters .ant-select .ant-select-arrow,
+.program-applicants-tab__filter-col .ant-select .ant-select-arrow,
+.program-managers-tab__filter-col .ant-select .ant-select-arrow,
+.table-filter-group__container .cms-select .ant-select-arrow,
+.school-detail-modal__tab-filters .ant-select .ant-select-arrow {
+  background-image: var(--filter-select-chevron-url);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px 7px;
+  width: 12px !important;
+  height: 7px !important;
+  min-height: 0 !important;
+}
+
+.cms-select .ant-select-arrow > *,
+.app-select.app-select--filter .ant-select-arrow > *,
+.unified-filter-card .ant-select .ant-select-arrow > *,
+.list-page-filters .ant-select .ant-select-arrow > *,
+.program-filter-card .ant-select .ant-select-arrow > *,
+.program-filter-wrapper .ant-select .ant-select-arrow > *,
+.program-progress-tab__filters .ant-select .ant-select-arrow > *,
+.program-applicants-tab__filter-col .ant-select .ant-select-arrow > *,
+.program-managers-tab__filter-col .ant-select .ant-select-arrow > *,
+.table-filter-group__container .cms-select .ant-select-arrow > *,
+.school-detail-modal__tab-filters .ant-select .ant-select-arrow > * {
+  display: none !important;
+}
+
+.cms-select .ant-select.ant-select-open .ant-select-arrow,
+.table-filter-group__container .cms-select .ant-select.ant-select-open .ant-select-arrow {
+  transform: translateY(-50%) rotate(180deg) !important;
+}
+
+.app-select.app-select--filter .ant-select.ant-select-open .ant-select-arrow,
+.list-page-filters .ant-select.ant-select-open .ant-select-arrow,
+.program-filter-card .ant-select.ant-select-open .ant-select-arrow,
+.program-filter-wrapper .ant-select.ant-select-open .ant-select-arrow,
+.program-progress-tab__filters .ant-select.ant-select-open .ant-select-arrow,
+.program-applicants-tab__filter-col .ant-select.ant-select-open .ant-select-arrow,
+.program-managers-tab__filter-col .ant-select.ant-select-open .ant-select-arrow,
+.school-detail-modal__tab-filters .ant-select.ant-select-open .ant-select-arrow {
+  transform: translateY(-50%) rotate(180deg) !important;
+}
+
+.cms-select--disabled .ant-select-arrow,
+.app-select.app-select--filter .ant-select-disabled .ant-select-arrow,
+.list-page-filters .ant-select-disabled .ant-select-arrow,
+.program-filter-card .ant-select-disabled .ant-select-arrow,
+.program-filter-wrapper .ant-select-disabled .ant-select-arrow,
+.program-progress-tab__filters .ant-select-disabled .ant-select-arrow,
+.program-applicants-tab__filter-col .ant-select-disabled .ant-select-arrow,
+.program-managers-tab__filter-col .ant-select-disabled .ant-select-arrow,
+.table-filter-group__container .cms-select--disabled .ant-select-arrow,
+.school-detail-modal__tab-filters .ant-select-disabled .ant-select-arrow {
+  opacity: 0.45;
 }

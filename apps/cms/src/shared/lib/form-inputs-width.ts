@@ -1,6 +1,6 @@
 /**
  * `DetailInfoForm.InputsSeparator` 한 개가 가로로 차지하는 px.
- * `apps/cms/src/index.css` 의 `.detail-info-form-inputs-separator` (width 1px + margin 0 12px) 와 동기화할 것.
+ * `detail-info-form.css` 의 `.detail-info-form-inputs-separator` (width 1px + margin 0 12px) 와 동기화할 것.
  */
 export const DETAIL_INFO_FORM_SEPARATOR_WIDTH = 26
 

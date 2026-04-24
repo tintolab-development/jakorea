@@ -77,8 +77,7 @@
   border: 1px solid var(--JA-mint-01, #01a1af);
   background: var(--default-WT, #fff);
   color: var(--JA-mint-01, #01a1af);
-  font-size: 14px;
-  font-style: normal;
+  font-size: 16px;
   font-weight: 600;
   line-height: 150%;
   /* 21px */
@@ -124,8 +123,7 @@
   background: var(--default-WT, #fff);
   color: var(--JA-mint-01, #01a1af);
   font-family: Pretendard, var(--font-family-primary), sans-serif;
-  font-size: 15px;
-  font-style: normal;
+  font-size: 16px;
   font-weight: 700;
   line-height: 150%;
   white-space: nowrap;

@@ -100,7 +100,6 @@ export function PermissionRequestListPage() {
     useState<AdminApprovedCompleteState | null>(null)
   const [permissionStatusResetConfirm, setPermissionStatusResetConfirm] =
     useState<PermissionStatusResetConfirmState | null>(null)
-
   const detailUser = useUserStore(state =>
     detailUserId ? (state.usersById[detailUserId] ?? null) : null
   )
