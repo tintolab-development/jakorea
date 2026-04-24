@@ -1222,7 +1222,7 @@ const extraMockUsers: User[] = [
     listMetrics: {
       instructorTypeLabel: '1급 강사비',
       permissionApplicationTypeLabel: '제미나이 강사단',
-      settlementStatusLabel: '일부 지급 완료',
+      settlementStatusLabel: '확인 진행중',
       employmentStatusLabel: '재직 중',
       instructorAssignedGrade: '1학년',
     },

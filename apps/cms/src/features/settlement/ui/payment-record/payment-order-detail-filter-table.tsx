@@ -13,6 +13,7 @@ import type {
 } from '@/data/mock/payment-order-admin-list'
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
 import type { PaymentOrderCalculationStatementCommitPayload } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { PaymentOrderBatchConfirmModal } from './payment-order-batch-confirm-modal'
 import { Divider } from '@/shared/components/divider'
 import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
@@ -142,6 +143,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
           dataSource={filteredRows}
           pagination={false}
           rowSelection={{
+            columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             selectedRowKeys,
             onChange: keys => setSelectedRowKeys(keys),
           }}

@@ -343,7 +343,7 @@ export function PaymentOrderInstructorSettlementTable({
 
         <div className="payment-order-program-status-detail__table-wrap participating-institutions-section__table-wrap">
           <Table<PaymentOrderAdminInstructorDetailProgramRow>
-            className="payment-order-program-status-detail__table participating-institutions-section__table"
+            className="payment-order-program-status-detail__table participating-institutions-section__table cms-data-table"
             rowKey="id"
             columns={columns}
             dataSource={filteredRows}
