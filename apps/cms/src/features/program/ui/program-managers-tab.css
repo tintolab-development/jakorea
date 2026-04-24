@@ -28,8 +28,8 @@
 
   .program-managers-tab .unified-filter-card__fields-inner > .ant-col:nth-child(1),
   .program-managers-tab .unified-filter-card__fields-inner > .ant-col:nth-child(2) {
-    flex: 1 1 calc((100% - 12px) / 2) !important;
-    max-width: calc((100% - 12px) / 2) !important;
+    flex: 1 1 calc((100% - var(--filter-field-gap, 12px)) / 2) !important;
+    max-width: calc((100% - var(--filter-field-gap, 12px)) / 2) !important;
     min-width: 0 !important;
   }
 
@@ -63,7 +63,7 @@
 @media (max-width: 1199px) and (min-width: 769px) {
   .program-managers-tab .unified-filter-card__fields-inner.ant-row {
     flex-wrap: wrap !important;
-    gap: 12px;
+    gap: var(--filter-field-gap, 12px);
   }
 
   .program-managers-tab .unified-filter-card__fields-inner > .ant-col:not(:last-child) {
@@ -72,8 +72,8 @@
   }
 
   .program-managers-tab .unified-filter-card__fields-inner > .ant-col {
-    flex: 1 1 calc((100% - 12px) / 2) !important;
-    max-width: calc((100% - 12px) / 2) !important;
+    flex: 1 1 calc((100% - var(--filter-field-gap, 12px)) / 2) !important;
+    max-width: calc((100% - var(--filter-field-gap, 12px)) / 2) !important;
     min-width: min(100%, 160px) !important;
   }
 
