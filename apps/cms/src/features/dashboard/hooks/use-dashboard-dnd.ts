@@ -23,7 +23,6 @@ import type { DisplayItemMeta } from '@/features/dashboard/model/dashboard-widge
 import { isWidgetResizable } from '@/shared/config/dashboard-config'
 import {
   COL_SPAN_FULL,
-  COL_SPAN_HALF,
   computeDragEndResult,
   getInsertIndexFromPoint,
   type SlotRect,
@@ -202,15 +201,8 @@ export function useDashboardDnd({
       // setOrderedIds 내부 reorderToAvoidTopGap 후처리를 유지해 상단 빈칸 보정 정책을 그대로 적용한다.
       setOrderedIds(userRole, next)
 
-      if (computed.shouldSplit && computed.splitTargetId) {
-        setWidgetWidth(userRole, computed.splitTargetId, COL_SPAN_HALF)
-        setWidgetWidth(userRole, activeIdStr, COL_SPAN_HALF)
-      } else if (computed.droppedInEmptySpace && !computed.skipShrinkActive) {
-        const activeColSpan = getEffectiveColSpan(activeIdStr)
-        if (activeColSpan === COL_SPAN_FULL && isWidgetResizable(activeIdStr)) {
-          setWidgetWidth(userRole, activeIdStr, COL_SPAN_HALF)
-        }
-      }
+      // QA 중 UI 안정성을 위해 DnD는 순서 이동만 처리하고,
+      // 위젯 너비(12/24)는 리사이즈 핸들에서만 변경한다.
       onLayoutSaved?.()
     },
     [
