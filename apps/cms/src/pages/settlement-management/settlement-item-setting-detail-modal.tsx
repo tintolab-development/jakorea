@@ -1438,7 +1438,16 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
               </div>
             </div>
           </ModalSpecTableRow>
-          <ModalSpecTableRow label="면접비, 지원금, 경품 (기타소득)" labelVariant="basis">
+          <ModalSpecTableRow
+            label={
+              <>
+                면접비, 지원금, 경품
+                <br />
+                (기타소득)
+              </>
+            }
+            labelVariant="basis"
+          >
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
                 <AppInput

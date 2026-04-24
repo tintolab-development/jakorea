@@ -716,8 +716,8 @@ export default function AccountPaymentsPage() {
           <div className="account-payments-page__calendar-without-card">
             <div className="table-header-actions account-payments-page__calendar-toolbar">
               <div className="table-header-title--wrapper">
-                <span className="table-title">계좌 지급 대상 목록</span>
-                <span className="table-description">{`예정 프로그램 총 ${total}건`}</span>
+                <span className="table-title">예정 프로그램</span>
+                <span className="table-description">{`총 ${total}건`}</span>
               </div>
               <div className="account-payments-page__calendar-toolbar-actions">
                 {accountPaymentsFilterTableActions}
