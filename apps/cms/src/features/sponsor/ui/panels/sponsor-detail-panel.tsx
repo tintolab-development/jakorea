@@ -57,7 +57,12 @@ export function SponsorDetailPanel({
 
   return (
     <Flex vertical gap="large">
-      <SponsorBasicInfoSection value={basicInfo} isEditing={isEditing} onChange={onChange} />
+      <SponsorBasicInfoSection
+        value={basicInfo}
+        isEditing={isEditing}
+        onChange={onChange}
+        canWrite={canWrite}
+      />
       <SponsorContactsSection
         contacts={contacts}
         canWrite={canWrite}

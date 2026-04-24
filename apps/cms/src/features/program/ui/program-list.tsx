@@ -4,7 +4,7 @@
 
 import { Table } from 'antd'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useSearchParams, useLocation } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import './program-list.css'
 import { ProgramCalendarView } from './program-calendar-view'
@@ -59,18 +59,11 @@ export function ProgramList({
   showRowSelection = false,
   showCalendarView = false,
   viewMode: externalViewMode,
-  tableVariant = 'general',
+  tableVariant: _tableVariant = 'general',
   onDisplayCountChange,
   config,
   children,
 }: ProgramListProps) {
-  const location = useLocation()
-  const p = location.pathname.replace(/\/$/, '') || '/'
-  const isEconomyPage =
-    p === '/programs/economy-education' ||
-    p === '/programs/company-school' ||
-    p.startsWith('/programs/company-school/') ||
-    tableVariant === 'economy'
   const [searchParams, setSearchParams] = useSearchParams()
   const economyView: EconomyView = config?.view ?? 'ALL'
   const tableType = config?.tableType
@@ -162,7 +155,7 @@ export function ProgramList({
             rowSelection={
               showRowSelection && (onBulkDelete != null || onSelectionChange != null)
                 ? {
-                    columnWidth: isEconomyPage ? 80 : TABLE_COLUMN_WIDTHS.checkbox,
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                     selectedRowKeys: effectiveSelectedRowKeys,
                     onChange: handleSelectionChange,
                   }

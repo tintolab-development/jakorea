@@ -29,6 +29,7 @@ import {
   type SettlementCalendarEvent,
 } from './instructor-settlement-calendar'
 import '@/features/program/program-detail/ui/applicant-list/applicant-list.css'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import './instructor-payment-tab.css'
 
 const FILTER_FIELDS: FilterFieldConfig[] = [
@@ -372,6 +373,7 @@ export function InstructorPaymentTab({
               scroll={{ x: 'max-content' }}
               className="cms-data-table cms-data-table--fluid"
               rowSelection={{
+                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
               }}

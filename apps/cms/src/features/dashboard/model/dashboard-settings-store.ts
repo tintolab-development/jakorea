@@ -44,11 +44,12 @@ export const SHORTCUT_ITEMS: Array<{ id: string; label: string; path: string }> 
   { id: 'bug-issue-history', label: '버그/이슈 이력', path: '/logs' },
 ]
 
-/** 위젯별 프로그램 설정용 위젯 키 (6개 위젯) */
+/** 위젯별 프로그램 설정용 위젯 키 (7개: 일정 4 + 기타) */
 export const WIDGET_PROGRAM_KEYS = [
   { key: 'program-schedule-general-widget', label: '일반 프로그램 일정' },
-  { key: 'program-schedule-economy-widget', label: '경제 교육 프로그램 일정' },
-  { key: 'program-schedule-gemini-widget', label: '제미나이 프로그램 일정' },
+  { key: 'program-schedule-economy-widget', label: '1사1교 프로그램 일정' },
+  { key: 'program-schedule-ujat-widget', label: 'UJAT 프로그램 일정' },
+  { key: 'program-schedule-gemini-widget', label: 'Gemini 프로그램 일정' },
   { key: 'recruitment-status-widget', label: '모집 신청 현황' },
   { key: 'customer-inquiry-status-widget', label: '프로그램 별 문의 현황' },
   { key: 'kpi-achievement-widget', label: '사업 별 KPI 대비 달성률' },

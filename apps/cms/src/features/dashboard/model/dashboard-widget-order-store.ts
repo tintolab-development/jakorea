@@ -16,7 +16,7 @@ import type { DashboardWidgetConfig, DashboardWidgetSlotHeightPx } from '@/share
 export const WIDGET_IDS_WITHOUT_BUILT_IN_HANDLE: readonly string[] = [] as const
 
 const STORAGE_KEY = 'dashboard-widget-order'
-const PERSIST_VERSION = 2
+const PERSIST_VERSION = 3
 
 interface PersistedLayoutState {
   orderByRole: Record<string, string[]>
@@ -66,6 +66,37 @@ function migrateLayoutState(persisted: unknown, version: number): PersistedLayou
               'program-schedule-general-widget': val,
               'program-schedule-economy-widget': val,
               'program-schedule-gemini-widget': val,
+            },
+          }
+        }
+      }
+
+      if (version < 3) {
+        const adminOrder = orderByRole['ADMIN']
+        if (adminOrder && !adminOrder.includes('program-schedule-ujat-widget')) {
+          const next = [...adminOrder]
+          const ecoIdx = next.indexOf('program-schedule-economy-widget')
+          const gemIdx = next.indexOf('program-schedule-gemini-widget')
+          if (ecoIdx !== -1) {
+            next.splice(ecoIdx + 1, 0, 'program-schedule-ujat-widget')
+          } else if (gemIdx !== -1) {
+            next.splice(gemIdx, 0, 'program-schedule-ujat-widget')
+          } else {
+            next.push('program-schedule-ujat-widget')
+          }
+          orderByRole = { ...orderByRole, ADMIN: next }
+        }
+        const adminWidths = widthByRole['ADMIN']
+        if (
+          adminWidths &&
+          adminWidths['program-schedule-ujat-widget'] === undefined &&
+          adminWidths['program-schedule-economy-widget'] !== undefined
+        ) {
+          widthByRole = {
+            ...widthByRole,
+            ADMIN: {
+              ...adminWidths,
+              'program-schedule-ujat-widget': adminWidths['program-schedule-economy-widget'],
             },
           }
         }

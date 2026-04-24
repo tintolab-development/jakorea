@@ -13,6 +13,7 @@ import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
 import { AddressSearch, CmsButton, CmsInput, CmsRadioGroup } from '@/shared/ui'
 import type { SponsorOrganizationKind } from '@/types/domain'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import './sponsor-detail-basic-info.css'
 
 const ORG_LABEL: Record<SponsorOrganizationKind, string> = {
   corporate: '기업',
@@ -38,18 +39,44 @@ interface SponsorBasicInfoSectionProps {
   value: BasicInfoEditState
   isEditing: boolean
   onChange: (updater: (prev: BasicInfoEditState) => BasicInfoEditState) => void
+  /** true면 조회 모드에서도 후원 상태를 배지·드롭다운으로 변경 가능 */
+  canWrite?: boolean
 }
 
 export function SponsorBasicInfoSection({
   value,
   isEditing,
   onChange,
+  canWrite = false,
 }: SponsorBasicInfoSectionProps) {
   const [isSponsorshipStatusDropdownOpen, setIsSponsorshipStatusDropdownOpen] = useState(false)
 
   const sponsorshipStartDisplay = value.sponsorshipStartDate
     ? dayjs(value.sponsorshipStartDate).format('YYYY.MM.DD')
     : '-'
+
+  const sponsorshipStatusFieldContent =
+    canWrite ? (
+      <StatusDropdownCell<SponsorshipStatus>
+        status={value.sponsorshipStatus ?? 'active'}
+        statusOptions={SPONSORSHIP_STATUS_OPTIONS}
+        renderBadge={status => (
+          <SponsorSponsorshipStatusBadge status={status} variant="table" />
+        )}
+        isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
+        onChange={next =>
+          onChange(prev => ({
+            ...prev,
+            sponsorshipStatus: next,
+          }))
+        }
+        isOpen={isSponsorshipStatusDropdownOpen}
+        onOpenChange={setIsSponsorshipStatusDropdownOpen}
+        style={{ width: '120px' }}
+      />
+    ) : (
+      <SponsorSponsorshipStatusBadge status={value.sponsorshipStatus ?? 'active'} variant="table" />
+    )
 
   return (
     <DetailInfoForm title="기본 정보" hideHeader mode={isEditing ? 'edit' : 'view'}>
@@ -167,7 +194,7 @@ export function SponsorBasicInfoSection({
           }
         />
       </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
+      <DetailInfoForm.Row type="double" className="sponsor-detail-basic-info__status-row">
         <DetailInfoForm.Field
           label="후원 시작일"
           view={<span>{sponsorshipStartDisplay}</span>}
@@ -175,31 +202,8 @@ export function SponsorBasicInfoSection({
         />
         <DetailInfoForm.Field
           label="후원 상태"
-          view={
-            <SponsorSponsorshipStatusBadge
-              status={value.sponsorshipStatus ?? 'active'}
-              variant="table"
-            />
-          }
-          edit={
-            <StatusDropdownCell<SponsorshipStatus>
-              status={value.sponsorshipStatus ?? 'active'}
-              statusOptions={SPONSORSHIP_STATUS_OPTIONS}
-              renderBadge={status => (
-                <SponsorSponsorshipStatusBadge status={status} variant="table" />
-              )}
-              isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
-              onChange={next =>
-                onChange(prev => ({
-                  ...prev,
-                  sponsorshipStatus: next,
-                }))
-              }
-              isOpen={isSponsorshipStatusDropdownOpen}
-              onOpenChange={setIsSponsorshipStatusDropdownOpen}
-              style={{ width: '120px' }}
-            />
-          }
+          view={sponsorshipStatusFieldContent}
+          edit={sponsorshipStatusFieldContent}
         />
       </DetailInfoForm.Row>
     </DetailInfoForm>

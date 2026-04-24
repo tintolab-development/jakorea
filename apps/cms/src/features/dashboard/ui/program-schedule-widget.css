@@ -451,6 +451,32 @@
   align-self: center !important;
 }
 
+/* 대시보드 50%: 일정이 있는 날 — 날짜 숫자에 민트 원형 배경(배지 미표시 대체) */
+.program-schedule-widget.program-schedule-widget--dashboard-half
+  .program-schedule-widget__body--month
+  .program-schedule-widget__month-grid
+  .program-calendar-cell--has-schedule:not(.program-calendar-cell--selected)
+  .program-calendar-cell-date {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0 10px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  aspect-ratio: 1 / 1;
+  border-radius: 60px;
+  background: var(
+      --color-bg-mint,
+      linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%),
+      #fff
+    );
+  box-sizing: border-box;
+}
+
 /* Popover 직계 자식이 아닌 호스트끼리 gap 적용(월간 셀 전용) */
 .program-schedule-widget__month-cell-badge-host {
   display: flex;

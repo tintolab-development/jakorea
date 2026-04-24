@@ -160,13 +160,13 @@
 }
 
 /* fluid 기본 table-layout:auto 는 헤더·본문 최소 너비 불일치로 열이 어긋남 → fixed + 컬럼 width 스펙 정렬 */
-/* 컬럼 width 합 60+80+246+160+246×4 = 1530 — fluid 기본 min-width(1080)보다 크면 가로 스크롤로 스펙 유지 */
+/* 컬럼 width 합 68+80+246+160+246×4 = 1538 — fluid 기본 min-width(1080)보다 크면 가로 스크롤로 스펙 유지 */
 .program-managers-tab .program-managers-tab__managers-table.cms-data-table--fluid .ant-table-container {
-  min-width: 1530px;
+  min-width: 1538px;
 }
 
 .program-managers-tab .program-managers-tab__managers-table.cms-data-table--fluid {
-  --table-selection-column-width: 60px;
+  --table-selection-column-width: 68px;
 }
 
 .program-managers-tab .program-managers-tab__managers-table.cms-data-table--fluid table.ant-table {

@@ -262,7 +262,13 @@ export function AdminCategoryPage() {
           </Space>
         </Card>
 
-        <Table columns={columns} dataSource={filteredData} rowKey="id" pagination={false} />
+        <Table
+          className="cms-data-table cms-data-table--skip-auto-no-col"
+          columns={columns}
+          dataSource={filteredData}
+          rowKey="id"
+          pagination={false}
+        />
       </Space>
 
       {/* 카테고리 등록/수정 모달 */}

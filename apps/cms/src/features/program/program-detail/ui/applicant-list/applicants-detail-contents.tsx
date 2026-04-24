@@ -434,6 +434,7 @@ export function ApplicantsDetailContents({
         children: (
           <div className="extra-tab-content applicant-contents__instructor-assignment-tab">
             <Table
+              className="cms-data-table cms-data-table--skip-auto-no-col"
               columns={assignmentColumns}
               dataSource={assignmentData}
               pagination={false}

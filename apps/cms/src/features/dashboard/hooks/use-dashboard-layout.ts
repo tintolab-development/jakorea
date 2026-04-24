@@ -16,6 +16,11 @@ import {
   type DisplayItemMeta,
   type DashboardWidgetOrderState,
 } from '@/features/dashboard/model/dashboard-widget-order-store'
+import {
+  SHORTCUT_ITEMS,
+  isShortcutItemEnabled,
+  useDashboardSettingsStore,
+} from '@/features/dashboard/model/dashboard-settings-store'
 
 export interface UseDashboardLayoutParams {
   userRole: UserRole | null
@@ -30,6 +35,7 @@ export interface UseDashboardLayoutResult {
   orderedIds: string[]
   setOrderedIds: (role: string, ids: string[]) => void
   getColSpanForId: (id: string) => 12 | 24
+  /** DnD·그리드에 실제로 올리는 id 순서(바로가기를 모두 끄면 `menu-shortcut-widget` 제외) */
   displayOrder: string[]
   roleWidths: Record<string, 12 | 24>
   setWidgetWidth: (role: string, widgetId: string, colSpan: 12 | 24) => void
@@ -68,6 +74,11 @@ export function useDashboardLayout({
   const setWidgetWidth = useDashboardWidgetOrderStore(
     (s: DashboardWidgetOrderState) => s.setWidgetWidth
   )
+  const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
+  const hasVisibleMenuShortcuts = useMemo(
+    () => SHORTCUT_ITEMS.some(item => isShortcutItemEnabled(shortcutEnabled, item.id)),
+    [shortcutEnabled]
+  )
   const roleWidths = (widthByRole[userRole ?? ''] ?? {}) as Record<string, 12 | 24>
 
   const getColSpanForId = useCallback(
@@ -80,16 +91,29 @@ export function useDashboardLayout({
     [roleWidths, displayItemsMeta]
   )
 
-  const displayOrder = useMemo(
+  const fullLayoutOrder = useMemo(
     () => reorderToAvoidTopGap(orderedIds, getColSpanForId),
     [orderedIds, getColSpanForId]
   )
 
+  const displayOrder = useMemo(() => {
+    if (hasVisibleMenuShortcuts) return fullLayoutOrder
+    return fullLayoutOrder.filter(id => id !== 'menu-shortcut-widget')
+  }, [fullLayoutOrder, hasVisibleMenuShortcuts])
+
   const setOrderedIds = useCallback(
     (role: string, next: string[]) => {
-      setOrderedIdsRaw(role, reorderToAvoidTopGap(next, getColSpanForId))
+      const full = reorderToAvoidTopGap(orderedIds, getColSpanForId)
+      const menuIndex = full.indexOf('menu-shortcut-widget')
+      if (menuIndex === -1 || hasVisibleMenuShortcuts) {
+        setOrderedIdsRaw(role, reorderToAvoidTopGap(next, getColSpanForId))
+        return
+      }
+      const nextFull = [...next]
+      nextFull.splice(menuIndex, 0, 'menu-shortcut-widget')
+      setOrderedIdsRaw(role, reorderToAvoidTopGap(nextFull, getColSpanForId))
     },
-    [setOrderedIdsRaw, getColSpanForId]
+    [orderedIds, getColSpanForId, hasVisibleMenuShortcuts, setOrderedIdsRaw]
   )
 
   const getSlotRects = useCallback(() => {

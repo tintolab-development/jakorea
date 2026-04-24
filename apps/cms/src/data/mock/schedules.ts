@@ -7,7 +7,11 @@ import type { Schedule, UUID } from '../../types'
 import { mockPrograms } from './programs'
 import { mockInstructors } from './instructors'
 import { getEconomyPrograms } from './economy-programs'
-import { getGeneralEducationPrograms, getGeminiPrograms } from './program-schedule-categories'
+import {
+  getGeneralEducationPrograms,
+  getGeminiPrograms,
+  getUjatPrograms,
+} from './program-schedule-categories'
 
 // Phase 0.2.6: instructor-1-fixed-id-for-testing용 일정 할당
 const INSTRUCTOR1_ID = 'instructor-1-fixed-id-for-testing'
@@ -315,6 +319,17 @@ function minutesToScheduleEndHHmm(totalMin: number): string {
   return `${pad2(h)}:${pad2(m)}`
 }
 
+/** 4~6월: 대시보드 위젯 목 일정이 매일 쌓이지 않도록 월 12일만 일정 생성 */
+const DASHBOARD_SPARSE_QUARTER_MONTHS = new Set([4, 5, 6])
+const DASHBOARD_SPARSE_QUARTER_DAYS = new Set([1, 3, 5, 7, 9, 12, 15, 18, 20, 22, 25, 28])
+
+function isDashboardWidgetScheduleDayForDateKey(dateKey: string): boolean {
+  const d = new Date(`${dateKey}T12:00:00`)
+  const m = d.getMonth() + 1
+  if (!DASHBOARD_SPARSE_QUARTER_MONTHS.has(m)) return true
+  return DASHBOARD_SPARSE_QUARTER_DAYS.has(d.getDate())
+}
+
 function economyVisibleRangeStartEnd(seq: number): { startTime: string; endTime: string } {
   const t = ECONOMY_VISIBLE_RANGE_TIME_TEMPLATES[(seq - 1) % ECONOMY_VISIBLE_RANGE_TIME_TEMPLATES.length]
   const startTotal = t.startH * 60 + t.startM
@@ -325,10 +340,23 @@ function economyVisibleRangeStartEnd(seq: number): { startTime: string; endTime:
   }
 }
 
+/** 1사1교 위젯: 출강지(학교) 목 — 일반 `locations`와 구분 */
+const ECONOMY_WIDGET_SCHOOL_LOCATIONS = [
+  '서울 강서초등학교',
+  '인천 연수초등학교',
+  '부산 해운대중학교',
+  '대구 수성초등학교',
+  '광주 서석초등학교',
+  '대전 유성초등학교',
+  '울산 남부초등학교',
+  '세종 다정초등학교',
+] as const
+
 /**
- * 대시보드 프로그램 일정 위젯: 보이는 날짜 구간(월간 35셀·주간 7일 등)마다 호출해
- * `economy-prog-*` 교육 일정 목데이터를 **현재 시점(호출 시각)** 기준으로 생성한다.
- * `allowedEconomyProgramIdSet`가 null이면 전체 경제 프로그램, 빈 Set이면 일정 없음.
+ * 1사1교 프로그램 일정 위젯: `economy-prog-*` 가시 구간 동적 목 일정
+ * - 날짜 희소(4~6월)는 공통 `isDashboardWidgetScheduleDayForDateKey` 사용
+ * - **하루 1건**만 생성 (다른 위젯 대비 캘린더 과밀 완화)
+ * - 제목/장소는 출강·회차 맥락에 맞게 program 메타 기반
  */
 export function buildEconomySchedulesForVisibleRange(
   visibleDateKeys: string[],
@@ -349,22 +377,28 @@ export function buildEconomySchedulesForVisibleRange(
   let seq = 0
 
   for (const dateStr of visibleDateKeys) {
-    const maxSlots = Math.min(2, pool.length)
+    if (!isDashboardWidgetScheduleDayForDateKey(dateStr)) continue
+    const maxSlots = 1
     for (let s = 0; s < maxSlots; s++) {
       seq += 1
-      const program = pool[s % pool.length]
+      const program = pool[(seq - 1) % pool.length]
       const round = program.rounds?.[0]
       const { startTime, endTime } = economyVisibleRangeStartEnd(seq)
+      const roundNo = 1 + ((seq - 1) % 4)
+      const programShort = (program.mainTitle || program.title || '프로그램').trim()
+      const title = `${roundNo}회차 교육`
+      const schoolName = ECONOMY_WIDGET_SCHOOL_LOCATIONS[(seq - 1) % ECONOMY_WIDGET_SCHOOL_LOCATIONS.length]
+      const location = `${schoolName} · ${programShort}`
 
       schedules.push({
         id: `sch-economy-vis-${dateStr}-${s}` as UUID,
         programId: program.id,
         roundId: round?.id,
-        title: `${scheduleTitles[(seq - 1) % scheduleTitles.length]} ${s + 1}차시`,
+        title,
         date: dateStr,
         startTime,
         endTime,
-        location: locations[(seq - 1) % locations.length],
+        location,
         instructorId: mockInstructors[(seq - 1) % mockInstructors.length]?.id,
         createdAt,
         updatedAt: createdAt,
@@ -397,6 +431,7 @@ export function buildGeneralSchedulesForVisibleRange(
   let seq = 0
 
   for (const dateStr of visibleDateKeys) {
+    if (!isDashboardWidgetScheduleDayForDateKey(dateStr)) continue
     const maxSlots = Math.min(2, pool.length)
     for (let s = 0; s < maxSlots; s++) {
       seq += 1
@@ -447,6 +482,7 @@ export function buildGeminiSchedulesForVisibleRange(
   let seq = 0
 
   for (const dateStr of visibleDateKeys) {
+    if (!isDashboardWidgetScheduleDayForDateKey(dateStr)) continue
     const maxSlots = Math.min(2, pool.length)
     for (let s = 0; s < maxSlots; s++) {
       seq += 1
@@ -458,6 +494,57 @@ export function buildGeminiSchedulesForVisibleRange(
 
       schedules.push({
         id: `sch-gemini-vis-${dateStr}-${s}` as UUID,
+        programId: program.id,
+        roundId: round?.id,
+        title: `${scheduleTitles[(seq - 1) % scheduleTitles.length]} ${s + 1}차시`,
+        date: dateStr,
+        startTime,
+        endTime,
+        location: locations[(seq - 1) % locations.length],
+        instructorId: mockInstructors[(seq - 1) % mockInstructors.length]?.id,
+        createdAt,
+        updatedAt: createdAt,
+      })
+    }
+  }
+
+  return schedules
+}
+
+/**
+ * UJAT(봉사) 프로그램 일정 위젯: 가시 구간 동적 목 일정
+ */
+export function buildUjatSchedulesForVisibleRange(
+  visibleDateKeys: string[],
+  allowedProgramIdSet: Set<string> | null
+): Schedule[] {
+  const ujatPrograms = getUjatPrograms()
+  if (ujatPrograms.length === 0) return []
+
+  const pool =
+    allowedProgramIdSet == null
+      ? ujatPrograms
+      : ujatPrograms.filter(p => allowedProgramIdSet.has(p.id))
+
+  if (pool.length === 0) return []
+
+  const createdAt = new Date().toISOString()
+  const schedules: Schedule[] = []
+  let seq = 0
+
+  for (const dateStr of visibleDateKeys) {
+    if (!isDashboardWidgetScheduleDayForDateKey(dateStr)) continue
+    const maxSlots = Math.min(2, pool.length)
+    for (let s = 0; s < maxSlots; s++) {
+      seq += 1
+      const program = pool[s % pool.length]
+      const round = program.rounds?.[0]
+      const startHour = 9 + ((seq + s) % 7)
+      const startTime = `${String(startHour).padStart(2, '0')}:00`
+      const endTime = `${String(Math.min(startHour + 2, 18)).padStart(2, '0')}:00`
+
+      schedules.push({
+        id: `sch-ujat-vis-${dateStr}-${s}` as UUID,
         programId: program.id,
         roundId: round?.id,
         title: `${scheduleTitles[(seq - 1) % scheduleTitles.length]} ${s + 1}차시`,

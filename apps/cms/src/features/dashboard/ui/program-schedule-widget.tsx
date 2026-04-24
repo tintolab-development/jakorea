@@ -1,5 +1,5 @@
 /**
- * 대시보드 - 프로그램 일정 위젯 (일반 / 경제 교육 / 제미나이)
+ * 대시보드 - 프로그램 일정 위젯 (일반 / 1사1교 / UJAT / Gemini)
  * - 월간/주간 탭 전환, 상단 헤더 공유, 하위 캘린더 형식만 전환
  * - 월간: 월 그리드 + 우측 일정 리스트 / 주간: 주간 그리드 셀 내 이벤트
  */
@@ -12,9 +12,11 @@ import dayjs, { type Dayjs } from 'dayjs'
 import {
   mockSchedules,
   getEconomyPrograms,
+  getUjatPrograms,
   buildEconomySchedulesForVisibleRange,
   buildGeneralSchedulesForVisibleRange,
   buildGeminiSchedulesForVisibleRange,
+  buildUjatSchedulesForVisibleRange,
   getGeneralEducationPrograms,
   getGeminiPrograms,
   type ProgramScheduleKind,
@@ -37,6 +39,12 @@ import type { User } from '@/types/user'
 import { filterProgramsByACL } from '@/features/permission-request/lib/program-acl'
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+
+/** 월간 헤더로 월을 바꾼 뒤 선택일: 이번 달(년·월)이면 오늘, 그 밖이면 해당 월 1일 */
+function selectedDateAfterMonthNavigation(visibleMonth: Dayjs): Dayjs {
+  const today = dayjs()
+  return visibleMonth.isSame(today, 'month') ? today : visibleMonth.startOf('month')
+}
 
 interface ScheduleEvent {
   id: string
@@ -66,6 +74,9 @@ function resolveWidgetProgram(programId: string, variant: ProgramScheduleKind): 
   if (variant === 'economy') {
     return programService.getByIdSync(programId) ?? getEconomyPrograms().find(p => p.id === programId)
   }
+  if (variant === 'ujat') {
+    return programService.getByIdSync(programId) ?? getUjatPrograms().find(p => p.id === programId)
+  }
   return programService.getByIdSync(programId)
 }
 
@@ -88,6 +99,8 @@ function getCategoryProgramIdSet(variant: ProgramScheduleKind): Set<string> {
       return new Set(getGeneralEducationPrograms().map(p => p.id))
     case 'economy':
       return new Set(getEconomyPrograms().map(p => p.id))
+    case 'ujat':
+      return new Set(getUjatPrograms().map(p => p.id))
     case 'gemini':
       return new Set(getGeminiPrograms().map(p => p.id))
   }
@@ -99,6 +112,8 @@ function getProgramsForRecruitment(variant: ProgramScheduleKind): Program[] {
       return getGeneralEducationPrograms()
     case 'economy':
       return getEconomyPrograms()
+    case 'ujat':
+      return getUjatPrograms()
     case 'gemini':
       return getGeminiPrograms()
   }
@@ -136,6 +151,8 @@ function buildDynamicSchedulesForVisibleRange(
       return buildGeneralSchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
     case 'economy':
       return buildEconomySchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
+    case 'ujat':
+      return buildUjatSchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
     case 'gemini':
       return buildGeminiSchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
   }
@@ -463,7 +480,9 @@ export function ProgramScheduleWidget({
     if (viewMode === 'week') {
       setCurrentMonth(prev => prev.subtract(1, 'week'))
     } else {
-      setCurrentMonth(prev => prev.subtract(1, 'month'))
+      const next = currentMonth.subtract(1, 'month')
+      setCurrentMonth(next)
+      setSelectedDate(selectedDateAfterMonthNavigation(next))
     }
   }
 
@@ -471,7 +490,9 @@ export function ProgramScheduleWidget({
     if (viewMode === 'week') {
       setCurrentMonth(prev => prev.add(1, 'week'))
     } else {
-      setCurrentMonth(prev => prev.add(1, 'month'))
+      const next = currentMonth.add(1, 'month')
+      setCurrentMonth(next)
+      setSelectedDate(selectedDateAfterMonthNavigation(next))
     }
   }
 
@@ -501,7 +522,15 @@ export function ProgramScheduleWidget({
 
     const monthCell = (
       <div
-        className={`program-calendar-cell ${!isCurrentMonth ? 'program-calendar-cell--other-month' : ''} ${isSelected ? 'program-calendar-cell--selected' : ''} ${isToday ? 'program-calendar-cell--today' : ''}`}
+        className={[
+          'program-calendar-cell',
+          !isCurrentMonth ? 'program-calendar-cell--other-month' : '',
+          isSelected ? 'program-calendar-cell--selected' : '',
+          isToday ? 'program-calendar-cell--today' : '',
+          hasEvents ? 'program-calendar-cell--has-schedule' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         onClick={() => handleDateSelect(date)}
       >
         <div className="program-calendar-cell-date">{date.date()}</div>

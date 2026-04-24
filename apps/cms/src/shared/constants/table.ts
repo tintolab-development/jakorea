@@ -3,11 +3,14 @@
  * 컬럼 너비, 기본 설정 등
  */
 
+/** Ant Design Table `columns`의 No. 열 — `className`으로 th/td 폭을 CSS와 맞출 때 사용 */
+export const CMS_TABLE_NO_COL_CLASS = 'cms-table-col--no'
+
 export const TABLE_COLUMN_WIDTHS = {
   status: 110,
   date: 120,
   action: 72,
-  checkbox: 60,
+  checkbox: 68,
   index: 80,
   name: 120,
   email: 200,

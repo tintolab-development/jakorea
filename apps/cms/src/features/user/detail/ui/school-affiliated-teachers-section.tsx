@@ -225,6 +225,7 @@ export function SchoolAffiliatedTeachersSection({
             <Table
               className="cms-data-table cms-data-table--fluid"
               rowSelection={{
+                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
               }}

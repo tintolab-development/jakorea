@@ -616,7 +616,7 @@ export function SchoolDetailStudentListSection({
             scroll={{ x: 'max-content' }}
             columns={studentColumnsEdit}
             dataSource={watch('students') ?? []}
-            className="school-detail-modal__student-table"
+            className="school-detail-modal__student-table cms-data-table"
           />
         ) : (
           <Table<SchoolDetailStudentRow>
@@ -627,7 +627,7 @@ export function SchoolDetailStudentListSection({
             scroll={{ x: 'max-content' }}
             columns={studentColumnsView}
             dataSource={filteredStudentList}
-            className="school-detail-modal__student-table"
+            className="school-detail-modal__student-table cms-data-table"
           />
         )}
       </div>

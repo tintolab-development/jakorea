@@ -24,7 +24,7 @@ type ConsentValue = 'agree' | 'disagree'
 
 interface AddUserIndividualFormValues {
   name: string
-  englishName?: string
+  englishName: string
   residentRegistrationFirst?: string
   residentRegistrationLast?: string
   affiliation?: string
@@ -80,10 +80,10 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
   const consentWithholdingTax = Form.useWatch('consentWithholdingTax', form)
   const canSubmit =
     Boolean(allValues?.name?.trim()) &&
+    Boolean(allValues?.englishName?.trim()) &&
     Boolean(allValues?.residentRegistrationFirst?.trim()) &&
     Boolean(allValues?.residentRegistrationLast?.trim()) &&
     Boolean(allValues?.contact?.trim()) &&
-    Boolean(allValues?.address?.trim()) &&
     Boolean(allValues?.email?.trim()) &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(allValues?.email?.trim() ?? '')
 
@@ -130,9 +130,14 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
             />
             <DetailInfoForm.Field
               label="영문 성명"
+              required
               view="-"
               edit={
-                <Form.Item name="englishName" noStyle>
+                <Form.Item
+                  name="englishName"
+                  noStyle
+                  rules={[{ required: true, message: '영문 성명을 입력해주세요' }]}
+                >
                   <CmsInput placeholder="영문 성명" inputSize="medium" width="100%" />
                 </Form.Item>
               }
@@ -252,7 +257,6 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="자택 주소지"
-              required
               fullRow
               view="-"
               edit={
@@ -260,7 +264,6 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
                   <Form.Item
                     name="address"
                     noStyle
-                    rules={[{ required: true, message: '주소를 입력해주세요' }]}
                   >
                     <AddressSearch
                       value={address}

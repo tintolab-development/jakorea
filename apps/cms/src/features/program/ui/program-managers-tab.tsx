@@ -37,6 +37,7 @@ import {
   STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import './program-managers-tab.css'
@@ -400,7 +401,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
           rowKey="id"
           pagination={false}
           rowSelection={{
-            columnWidth: 60,
+            columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             selectedRowKeys,
             onChange: keys => setSelectedRowKeys(keys as string[]),
           }}

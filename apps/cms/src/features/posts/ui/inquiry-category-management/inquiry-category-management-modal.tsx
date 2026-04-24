@@ -160,7 +160,7 @@ export function InquiryCategoryManagementModal({
             <Table<InquiryCategoryRow>
               rowKey="id"
               bordered
-              className="cms-data-table notice-category-management-modal__table"
+              className="cms-data-table cms-data-table--skip-auto-no-col notice-category-management-modal__table"
               tableLayout="fixed"
               pagination={false}
               columns={columns}
