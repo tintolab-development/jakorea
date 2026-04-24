@@ -40,13 +40,13 @@ export function useSponsorDetailModalTableColumns({
 
   const contactColumns = useMemo((): ColumnsType<SponsorContactRow> => {
     return buildContactColumns({
-      contactCount: contacts.length,
+      contacts,
       canWrite,
       openDropdownId,
       onTypeChange: handleTypeChange,
       onDropdownOpenChange: handleContactTypeDropdownOpenChange,
     })
-  }, [canWrite, contacts.length, handleContactTypeDropdownOpenChange, handleTypeChange, openDropdownId])
+  }, [canWrite, contacts, handleContactTypeDropdownOpenChange, handleTypeChange, openDropdownId])
 
   const programHistoryColumns = useMemo((): ColumnsType<SponsorProgramHistoryRow> => {
     return buildProgramHistoryColumns(filteredProgramHistoryRowCount)

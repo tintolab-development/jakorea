@@ -8,6 +8,7 @@ import type {
   SponsorProgramHistoryRow,
 } from '@/features/sponsor/model/sponsor-management.types'
 import type { BasicInfoEditState } from '@/features/sponsor/ui/sponsor-detail-basic-info'
+import { normalizeSponsorContactsSingleLead } from '@/features/sponsor/utils/normalize-sponsor-contacts-single-lead'
 import { splitAddress } from '@/features/sponsor/utils/split-address'
 
 export interface UseSponsorDetailReturn {
@@ -57,7 +58,7 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
 
   /* eslint-disable react-hooks/set-state-in-effect -- `detail` 스냅샷으로 편집용 로컬 상태 동기화(목 데이터) */
   useEffect(() => {
-    setContacts(detail.contacts.map(contact => ({ ...contact })))
+    setContacts(normalizeSponsorContactsSingleLead(detail.contacts.map(contact => ({ ...contact }))))
     setProgramHistories(detail.programHistories.map(row => ({ ...row })))
     setBasicInfo(buildBasicInfoEditStateFromDetail(detail))
     setIsEditingBasicInfo(false)

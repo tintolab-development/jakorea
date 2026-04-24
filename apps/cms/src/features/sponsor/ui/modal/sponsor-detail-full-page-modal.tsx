@@ -159,6 +159,7 @@ function SponsorDetailFullPageModalInner({
         open={registerModalOpen}
         onCancel={handleCloseContactRegisterModal}
         onSubmit={handleRegister}
+        existingContactCount={contacts.length}
       />
     </DetailFullPageModal>
   )

@@ -2,6 +2,7 @@ import type React from 'react'
 import { useCallback, useMemo, useState, type Key } from 'react'
 import type { SponsorContactRow } from '@/features/sponsor/model/sponsor-management.types'
 import type { SponsorContactRegisterPayload } from '@/features/sponsor/ui/modal/sponsor-contact-register-modal'
+import { normalizeSponsorContactsSingleLead } from '@/features/sponsor/utils/normalize-sponsor-contacts-single-lead'
 
 export interface UseSponsorContactsReturn {
   selectedKeys: Key[]
@@ -55,9 +56,20 @@ export function useSponsorContacts(
 
   const handleTypeChange = useCallback(
     (rowId: string, nextType: SponsorContactRow['contactType']): void => {
-      setContacts(prev =>
-        prev.map(contact => (contact.id === rowId ? { ...contact, contactType: nextType } : contact))
-      )
+      setContacts(prev => {
+        const target = prev.find(c => c.id === rowId)
+        if (target?.contactType === 'lead' && nextType === 'assistant') {
+          const leadCount = prev.filter(c => c.contactType === 'lead').length
+          if (leadCount <= 1) return prev
+        }
+        const mapped = prev.map(contact => {
+          if (contact.id === rowId) return { ...contact, contactType: nextType }
+          if (nextType === 'lead' && contact.contactType === 'lead')
+            return { ...contact, contactType: 'assistant' as const }
+          return contact
+        })
+        return normalizeSponsorContactsSingleLead(mapped)
+      })
       setOpenDropdownId(null)
     },
     [setContacts, setOpenDropdownId]
@@ -67,7 +79,14 @@ export function useSponsorContacts(
     (payload: SponsorContactRegisterPayload): void => {
       if (!canWrite) return
       setContacts(prev => {
-        const nextIndex = prev.length + 1
+        const contactType = prev.length === 0 ? ('lead' as const) : payload.contactType
+        const base =
+          contactType === 'lead'
+            ? prev.map(contact =>
+                contact.contactType === 'lead' ? { ...contact, contactType: 'assistant' as const } : contact
+              )
+            : prev
+        const nextIndex = base.length + 1
         const nextContact: SponsorContactRow = {
           id: `contact-${Date.now()}-${nextIndex}`,
           name: payload.name,
@@ -75,9 +94,9 @@ export function useSponsorContacts(
           phone: payload.phone,
           email: payload.email,
           registeredAt: new Date().toISOString(),
-          contactType: payload.contactType,
+          contactType,
         }
-        return [nextContact, ...prev]
+        return normalizeSponsorContactsSingleLead([nextContact, ...base])
       })
       setRegisterModalOpenState(false)
     },
@@ -87,7 +106,9 @@ export function useSponsorContacts(
   const handleDelete = useCallback((): void => {
     if (!canWrite || selectedKeys.length === 0) return
     const selectedSet = new Set(selectedKeys.map(key => String(key)))
-    setContacts(prev => prev.filter(contact => !selectedSet.has(contact.id)))
+    setContacts(prev =>
+      normalizeSponsorContactsSingleLead(prev.filter(contact => !selectedSet.has(contact.id)))
+    )
     setSelectedKeysState([])
     setDeleteModalOpenState(false)
   }, [canWrite, selectedKeys, setContacts])

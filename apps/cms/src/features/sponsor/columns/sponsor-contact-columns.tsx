@@ -15,7 +15,7 @@ const CONTACT_TYPE_OPTIONS = [
 ] as const satisfies readonly SponsorContactRow['contactType'][]
 
 export interface BuildContactColumnsParams {
-  contactCount: number
+  contacts: SponsorContactRow[]
   canWrite: boolean
   openDropdownId: string | null
   onTypeChange: (rowId: string, type: SponsorContactRow['contactType']) => void
@@ -24,21 +24,16 @@ export interface BuildContactColumnsParams {
 
 interface SponsorContactTypeCellProps {
   row: SponsorContactRow
+  contacts: SponsorContactRow[]
   canWrite: boolean
   openDropdownId: string | null
   onTypeChange: (rowId: string, type: SponsorContactRow['contactType']) => void
   onDropdownOpenChange: (rowId: string, open: boolean) => void
 }
 
-function isSameContactType(
-  current: SponsorContactRow['contactType'],
-  option: SponsorContactRow['contactType']
-): boolean {
-  return current === option
-}
-
 const SponsorContactTypeCell = memo(function SponsorContactTypeCell({
   row,
+  contacts,
   canWrite,
   openDropdownId,
   onTypeChange,
@@ -62,12 +57,22 @@ const SponsorContactTypeCell = memo(function SponsorContactTypeCell({
     return <SponsorContactTypeBadge type={type} />
   }, [])
 
+  const leadCount = contacts.filter(c => c.contactType === 'lead').length
+  const isItemDisabled = useCallback(
+    (current: SponsorContactRow['contactType'], option: SponsorContactRow['contactType']): boolean => {
+      if (current === option) return true
+      if (current === 'lead' && option === 'assistant' && leadCount === 1) return true
+      return false
+    },
+    [leadCount]
+  )
+
   return (
     <StatusDropdownCell<SponsorContactRow['contactType']>
       status={row.contactType}
       statusOptions={CONTACT_TYPE_OPTIONS}
       renderBadge={renderBadge}
-      isItemDisabled={isSameContactType}
+      isItemDisabled={isItemDisabled}
       onChange={canWrite ? handleChange : undefined}
       isOpen={openDropdownId === row.id}
       onOpenChange={handleOpenChange}
@@ -79,7 +84,8 @@ const SponsorContactTypeCell = memo(function SponsorContactTypeCell({
  * 후원사 담당자 테이블의 `ColumnsType` 정의를 생성합니다.
  */
 export function buildContactColumns(params: BuildContactColumnsParams): ColumnsType<SponsorContactRow> {
-  const { contactCount, canWrite, openDropdownId, onTypeChange, onDropdownOpenChange } = params
+  const { contacts, canWrite, openDropdownId, onTypeChange, onDropdownOpenChange } = params
+  const contactCount = contacts.length
 
   return [
     {
@@ -134,6 +140,7 @@ export function buildContactColumns(params: BuildContactColumnsParams): ColumnsT
       render: (_: SponsorContactRow['contactType'], row: SponsorContactRow) => (
         <SponsorContactTypeCell
           row={row}
+          contacts={contacts}
           canWrite={canWrite}
           openDropdownId={openDropdownId}
           onTypeChange={onTypeChange}
