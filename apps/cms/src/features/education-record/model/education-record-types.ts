@@ -13,13 +13,13 @@ export type EducationRecordPendingFilters = {
   sido: string
   /** 시/군/구 이름 (예: `'강남구'`). 빈 문자열이면 전체 */
   sigungu: string
-  /** 후원사명 검색어(국문/영문 부분일치) */
+  /** 후원사명 검색어(국문 부분일치) */
   sponsorName: string
   /** 대표 프로그램명 검색어 */
   mainTitle: string
   /** 세부 프로그램명 검색어 */
   title: string
-  /** 교재명 검색어(국문/영문 부분일치) */
+  /** 교재명 검색어(국문 부분일치) */
   textbookName: string
 }
 

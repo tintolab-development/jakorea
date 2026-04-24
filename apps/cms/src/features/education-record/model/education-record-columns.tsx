@@ -162,6 +162,9 @@ export function createEducationRecordColumns({
       key: 'ipOwned',
       width: 110,
       align: 'center',
+      ellipsis: false,
+      onHeaderCell: () => ({ className: 'er-data-tab__cell--wrap' }),
+      onCell: () => ({ className: 'er-data-tab__cell--wrap' }),
       render: (value?: string) => value || 'JA',
     },
     {
@@ -170,6 +173,9 @@ export function createEducationRecordColumns({
       key: 'courseDeliveredBy',
       width: 190,
       align: 'center',
+      ellipsis: false,
+      onHeaderCell: () => ({ className: 'er-data-tab__cell--wrap' }),
+      onCell: () => ({ className: 'er-data-tab__cell--wrap' }),
       render: (value?: string) => value || '-',
     },
     {
