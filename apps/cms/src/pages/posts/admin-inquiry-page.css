@@ -7,6 +7,67 @@
   width: 100%;
 }
 
+/*
+ * 문의내역 TableFilterGroup: 일반 칸 max-width 260px.
+ * 문의일(dateRange): 래퍼 전체를 260px 한 덩어리로 제한하지 않음 — 분리형 각 세그먼트(시작·종료)만 max 260px.
+ */
+.admin-inquiry-page .table-filter-group__grid-cell {
+  max-width: min(100%, var(--filter-control-max-width, 260px));
+  width: min(100%, var(--filter-control-max-width, 260px));
+  box-sizing: border-box;
+}
+
+.admin-inquiry-page .table-filter-group__grid-cell[data-filter-field-key='dateRange'] {
+  max-width: none;
+  width: auto;
+}
+
+.admin-inquiry-page
+  .table-filter-group__grid-cell[data-filter-field-key='dateRange']
+  .cms-datepicker.cms-datepicker--range-split {
+  max-width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
+  );
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-inquiry-page
+  .table-filter-group__grid-cell[data-filter-field-key='dateRange']
+  .cms-datepicker.cms-datepicker--range-split
+  .cms-datepicker__segment {
+  max-width: min(100%, var(--filter-control-max-width, 260px)) !important;
+  flex: 0 1 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-inquiry-page .table-filter-group__grid-cell .unified-filter-card__field {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-inquiry-page .table-filter-group__grid-cell .unified-filter-card__label {
+  display: block;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+  height: auto;
+  min-height: var(--filter-label-height, 27px);
+}
+
+.admin-inquiry-page .table-filter-group__grid-cell .labeled-search-input__label {
+  display: flex;
+  align-items: flex-start;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+  height: auto;
+  min-height: var(--filter-label-height, 27px);
+}
+
 .admin-inquiry-page .filter-table-layout .filter-table-layout__divider {
   padding: 32px 0;
 }
@@ -56,4 +117,23 @@
 
 .admin-inquiry-page__row--clickable {
   cursor: pointer;
+}
+
+/* 문의 일시·답변 일시: 화면너비가 좁을 때 td 밖으로 텍스트가 넘치지 않도록 */
+.admin-inquiry-page__table.cms-data-table th.admin-inquiry-page__col-datetime,
+.admin-inquiry-page__table.cms-data-table td.admin-inquiry-page__cell--datetime {
+  min-width: 0 !important;
+  max-width: 100%;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.admin-inquiry-page__datetime-text {
+  display: block;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

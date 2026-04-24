@@ -6,6 +6,8 @@ import dayjs from 'dayjs'
 
 export interface NoticeAttachment {
   name: string
+  /** API 연동 시 — 없으면 mock placeholder 텍스트 파일로 다운로드 */
+  fileUrl?: string
 }
 
 export interface Notice {

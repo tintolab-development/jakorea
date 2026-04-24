@@ -208,6 +208,7 @@ export function NoticeFormModal({
         open={deleteConfirmOpen}
         onCancel={() => setDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
+        preset="notice"
       />
       <ContentModal
         open={open}

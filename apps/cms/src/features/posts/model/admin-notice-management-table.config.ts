@@ -1,6 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ColumnsType } from 'antd/es/table'
-import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { Notice } from '@/data/mock/notices'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
@@ -9,15 +8,14 @@ import type {
   AdminNoticePendingFilters,
   AdminNoticeTableContext,
 } from './admin-notice-management.types'
+import {
+  normalizeDateRangePickerValueToPending,
+  pendingDateRangeTupleEqual,
+  resolvePendingDateRangeFromUrl,
+  type UrlDateRangePendingSyncRef,
+} from '@/features/posts/lib/url-date-range-pending-sync'
 
-function dayjsPairEqual(
-  a: [Dayjs, Dayjs] | null | undefined,
-  b: [Dayjs, Dayjs] | null | undefined
-): boolean {
-  if (a == null && b == null) return true
-  if (a == null || b == null) return false
-  return a[0].valueOf() === b[0].valueOf() && a[1].valueOf() === b[1].valueOf()
-}
+const adminNoticeUrlDateRangeSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
 
 function parseVisibility(raw: string | null): AdminNoticePendingFilters['visibility'] {
   if (raw === 'public' || raw === 'private') return raw
@@ -138,10 +136,15 @@ export const adminNoticeManagementTablePageConfig: TablePageConfig<
       const category = parseCategory(searchParams.get('an_cat'), context.allowedCategoryLabels)
       const from = searchParams.get('an_from')
       const to = searchParams.get('an_to')
-      const dateRange =
-        from && to ? ([dayjs(from), dayjs(to)] as [Dayjs, Dayjs]) : null
 
       setPendingFilters(prev => {
+        const dateRange = resolvePendingDateRangeFromUrl({
+          ref: adminNoticeUrlDateRangeSyncRef,
+          from,
+          to,
+          prev: prev.dateRange,
+        }) as AdminNoticePendingFilters['dateRange']
+
         const next: AdminNoticePendingFilters = {
           title,
           author,
@@ -154,7 +157,7 @@ export const adminNoticeManagementTablePageConfig: TablePageConfig<
           prev.author === next.author &&
           prev.visibility === next.visibility &&
           prev.category === next.category &&
-          dayjsPairEqual(prev.dateRange, next.dateRange)
+          pendingDateRangeTupleEqual(prev.dateRange, next.dateRange)
         ) {
           return prev
         }
@@ -190,12 +193,7 @@ export const adminNoticeManagementTablePageConfig: TablePageConfig<
         return { ...prev, category: v }
       }
       if (key === 'dateRange') {
-        const range = Array.isArray(value) ? value : null
-        const dr =
-          range?.[0] && range?.[1]
-            ? ([range[0], range[1]] as [Dayjs, Dayjs])
-            : null
-        return { ...prev, dateRange: dr }
+        return { ...prev, dateRange: normalizeDateRangePickerValueToPending(value) }
       }
       if (key === 'title' || key === 'author') {
         return { ...prev, [key]: String(value ?? '') }

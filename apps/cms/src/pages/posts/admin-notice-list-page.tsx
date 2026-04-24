@@ -242,6 +242,7 @@ export function AdminNoticeListPage() {
         open={bulkDeleteConfirmOpen}
         onCancel={() => setBulkDeleteConfirmOpen(false)}
         onConfirm={handleConfirmBulkDelete}
+        preset="notice"
         line1={bulkDeleteLine1}
       />
       <NoticeCategoryManagementModal

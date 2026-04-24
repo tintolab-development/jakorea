@@ -67,7 +67,8 @@
 /* 타이틀「카테고리 관리」↔ 테이블 간격 30px (content-modal 기본 body padding 0) */
 /* 세로 스크롤은 `__table-scroll` 한 곳 — 목록·등록 행이 함께 움직임 */
 .content-modal.notice-category-management-modal .teal-header-modal__body {
-  flex: 1 1 auto;
+  /* flex:1이면 본인 영역이 늘어나고, 테이블·스크롤 래퍼 flex:1이었을 때 아래에 빈 띠가 잡힘 */
+  flex: 0 1 auto;
   min-height: 0;
   overflow: hidden;
   align-items: stretch;
@@ -86,20 +87,24 @@
   justify-content: flex-end;
 }
 
+/* flex:1로 세로 늘어나지 않게 — 늘어난 영역이 스크롤 래퍼 안에 빈 띠로 보임 */
 .notice-category-management-modal__table-wrap {
   width: 100%;
   min-height: 0;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  align-self: stretch;
 }
 
-/* thead + tbody + summary(등록)까지 한 덩어리로 세로 스크롤 */
+/* thead + tbody + summary(등록)까지 한 덩어리 — 높이는 콘텐츠에 맞춤, 많을 때만 max-height까지 스크롤 */
 .notice-category-management-modal__table-scroll {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   max-height: min(300px, calc(100vh - 220px));
+  width: 100%;
+  align-self: stretch;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -107,6 +112,9 @@
 
 .notice-category-management-modal__table.ant-table-wrapper {
   width: 100%;
+  height: auto;
+  min-height: 0;
+  flex: 0 0 auto;
 }
 
 /* 스크롤 시 컬럼 헤더 유지 */
@@ -125,9 +133,11 @@
   font-family: Pretendard, sans-serif;
 }
 
+/* 외곽 스트로크와 헤더 BG 정렬: cms-data-table과 동일 R + 클립(헤더만 둥근 것처럼 보이는 현상 방지) */
 .notice-category-management-modal__table .ant-table-container {
   border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 0;
+  border-radius: var(--radius-8, 8px);
+  overflow: hidden;
 }
 
 .notice-category-management-modal__table .ant-table-thead > tr > th {
@@ -219,6 +229,8 @@
   vertical-align: middle !important;
   text-align: center;
   background: var(--main-WT, #fff) !important;
+  /* 등록 행(tfoot) 하단 셀 보더 + 컨테이너 stroke 하단이 겹쳐 이중 선처럼 보이는 것 방지 */
+  border-bottom: none !important;
 }
 
 .notice-category-management-modal__summary .ant-table-cell .notice-category-management-modal__actions {

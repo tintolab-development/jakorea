@@ -26,6 +26,7 @@ export function FaqFormModal(props: FaqFormModalProps) {
         open={ctrl.deleteConfirmOpen}
         onCancel={() => ctrl.setDeleteConfirmOpen(false)}
         onConfirm={ctrl.handleConfirmDelete}
+        preset="faq"
         title="FAQ 삭제"
         line1="해당 FAQ를 삭제하시겠습니까?"
         line2="삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?"
