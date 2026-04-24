@@ -1,4 +1,4 @@
-import type { Dayjs } from 'dayjs'
+import type { AdminPostsPendingDateRange } from '@/features/posts/lib/url-date-range-pending-sync'
 
 /** 문의 관리 목록 — 필터·URL 동기화 */
 export type AdminInquiryStatusFilter = 'ALL' | 'PENDING' | 'ANSWERED'
@@ -12,7 +12,7 @@ export interface AdminInquiryPendingFilters extends Record<string, unknown> {
   title: string
   memberName: string
   assigneeName: string
-  dateRange: [Dayjs, Dayjs] | null
+  dateRange: AdminPostsPendingDateRange
 }
 
 export type InquiryCategoryRow = {

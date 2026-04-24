@@ -13,9 +13,7 @@ const EDUCATION_TARGET_LABEL: Record<SponsorProgramHistoryRow['educationTarget']
 }
 
 function renderParticipantType(_: unknown, row: SponsorProgramHistoryRow): string {
-  if (row.participantType === 'school') return '학교/기관'
-  if (row.participantType === 'volunteer') return '봉사자'
-  return '개인 학습자'
+  return row.participantType === 'school' ? '학교/기관' : '개인 학습자'
 }
 
 /**
@@ -38,7 +36,7 @@ export function buildProgramHistoryColumns(
       title: '프로그램명',
       dataIndex: 'title',
       key: 'title',
-      width: 360,
+      minWidth: 400,
       ellipsis: true,
     },
     {
@@ -89,7 +87,8 @@ export function buildProgramHistoryColumns(
       key: 'educationTarget',
       width: 120,
       align: 'center',
-      render: (_: unknown, row: SponsorProgramHistoryRow) => EDUCATION_TARGET_LABEL[row.educationTarget],
+      render: (_: unknown, row: SponsorProgramHistoryRow) =>
+        EDUCATION_TARGET_LABEL[row.educationTarget],
     },
   ]
 }

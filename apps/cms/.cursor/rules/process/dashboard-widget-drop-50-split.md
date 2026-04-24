@@ -1,94 +1,34 @@
-# 대시보드(홈) 위젯 드래그앤드롭 — 오른쪽 배치 시 50% 분할
+# Dashboard widgets — drop on right of 100% row → 50% / 50%
 
-## 배경 / 현재 상태
+## Goal
 
-- 대시보드(홈) 화면에서 위젯 드래그앤드롭 시 **width(가로 폭) 사이즈만 변경 가능**한 상태입니다.
-- 사이즈 변경이 가능한 위젯들만 해당 동작 대상입니다.
+When a resizable widget is **100%** wide and another widget is dropped on its **right**, both become **50%** on one row: existing → left 50%, dropped → right 50%. Persist in `widthByRole` / grid span (12+12 in a 24-col grid).
 
-## 목표(요구 동작)
+## Acceptance
 
-**100% 너비 위젯의 오른쪽**으로 다른 위젯을 드롭했을 때 다음이 적용되도록 합니다.
+- With widget A at 100%, dragging B onto A’s right yields A left 50%, B right 50%, same row.  
+- Survives refresh if persistence is enabled.
 
-1. **원래 그 자리에 있던 위젯**
-   - **좌측**으로 이동하고,
-   - 너비가 **50%**로 줄어듭니다.
+## Hit testing (implementation summary)
 
-2. **드롭한(이동시킨) 위젯**
-   - 드롭한 방향(오른쪽)으로 배치되고,
-   - 너비가 **50%**로 줄어듭니다.
+- **Slot rects:** `[data-dashboard-slot-id]` → `getBoundingClientRect()`.  
+- **Pointer:** start from `activatorEvent`, add `delta` through `onDragMove` for drop position.
 
-결과적으로, 100% 위젯 오른쪽에 위젯을 놓으면 **두 위젯이 좌·우로 나란히 50% : 50%** 레이아웃이 되도록 합니다.
+### When `over` is a widget
 
-## 사용자 시나리오 (검증용)
+- Dropping on a **100%** widget: use **full rect** of that widget. If policy requires right-half only for split, follow current code (original doc: right half triggers split + insert right).
 
-- **조건**: 대시보드에 너비 100%인 위젯 A가 있고, 다른 위젯 B를 드래그하여 A의 **오른쪽**에 드롭한다.
-- **기대 결과**:
-  - A는 좌측에 50% 너비로 표시된다.
-  - B는 우측에 50% 너비로 표시된다.
-  - 두 위젯은 같은 행에서 좌·우로 나란히 배치된다.
+### When `over` is empty (row-first)
 
-## 구현 시 고려사항(개발 참고)
+1. Exclude the dragging slot from rects.  
+2. Group slots into **rows** by vertical overlap (~8px).  
+3. Find row by `y`; inside row, insert by x vs slot midpoints / row ends / gutters.  
+4. If y matches no row, fall back to nearest slot (vertical distance weighted 2×).
 
-- 위젯 레이아웃/그리드 상태(너비·위치)를 저장하는 데이터 구조에 **50% 분할 결과**가 반영되어야 함.
-- “오른쪽에 드롭”을 **드롭 타겟 영역(오른쪽 절반)** 또는 **드롭 위치 좌표**로 판단할 수 있음.
-- 50%는 **그리드 컬럼 비율(예: 12칸 중 6칸)** 또는 **% 단위 width** 등 현재 대시보드 구현 방식에 맞게 정의.
+### When split applies
 
-## 성공 기준(Acceptance)
+- Dropping onto a 100% widget’s **right half**, or inserting **after** a 100% widget in a row when pointer is in the “empty right” zone → set both widgets to 50%.
 
-- 100% 너비 위젯의 오른쪽 영역에 위젯을 드롭하면, 기존 위젯은 좌측 50%, 드롭한 위젯은 우측 50%로 배치된다.
-- 새로고침 또는 재진입 후에도 해당 레이아웃이 유지된다(저장/복원 로직 적용 시).
+See `dashboard-widget-reorder-ux.md` for store updates.
 
----
-
-## 드롭 영역이 잡히는 기준 (구현 상세)
-
-삽입 위치·50% 분할 여부는 **드롭 끝난 순간의 마우스(포인터) 위치**와 **각 위젯 슬롯의 화면 좌표(rect)**로만 결정된다.
-
-### 1. 영역 데이터가 나오는 곳
-
-- **슬롯 rect**: `rowRef` 안의 `[data-dashboard-slot-id="{위젯id}"]` DOM 요소마다 `getBoundingClientRect()`로 뷰포트 기준 left, right, top, bottom을 구한다.
-- **포인터 위치**: 드래그 시작 시 `activatorEvent.clientX/clientY`로 초기값을 두고, `onDragMove`에서 `delta.x/delta.y`를 더해 **드롭 끝난 시점의 (x, y)**를 쓴다.
-- **순서**: rect 목록은 **orderedIds 순서**와 동일하다 (그리드에서 위→아래, 왼→오른 배치 순서).
-
-### 2. "다른 위젯 위에 드롭"된 경우 (over 있음)
-
-- dnd-kit이 **어떤 위젯 위에 드롭됐는지(over)** 알려준다.
-- **100% 위젯 위**일 때: **위젯 영역 전체**를 인식한다. 포인터가 왼쪽 절반이든 오른쪽 절반이든 상관없이, 해당 위젯 위에 진입(드롭)만 하면 **50% 분할** + 드롭한 위젯을 그 위젯 오른쪽에 삽입한다.
-
-즉, **인식 영역 = 해당 위젯의 rect 전체** 이다 (가로 절반 구분 없음).
-
-### 3. "빈 공간에 드롭"된 경우 (over 없음) — **행(row) 우선**
-
-- **드래그 중인 위젯의 슬롯**은 계산에서 **제외**한다 (빈 자리는 영역으로 쓰지 않음).
-- **행 구성**: 슬롯 rect를 orderedIds 순서대로 보며, **세로(top~bottom)가 8px 이상 겹치는 슬롯**을 같은 행으로 묶는다. 한 행 = 같은 가로 줄에 있는 위젯들.
-
-**1단계 — 포인터가 어떤 행에 속하는지**
-
-- `point.y`가 행의 top~bottom(±8px) 안에 있으면 그 **행**을 선택한다.
-- 어떤 행에도 속하지 않으면(아주 위/아래 빈 공간): 예전처럼 **가장 가까운 슬롯**(세로 거리 2배 가중) 하나를 골라, 그 슬롯의 가로 중앙 기준 앞/뒤 삽입.
-
-**2단계 — 선택된 행 안에서 가로 위치로 삽입**
-
-- **포인터가 그 행의 어떤 슬롯 안**에 있으면 → 그 슬롯의 **가로 중앙** 기준으로 앞/뒤 삽입.
-- **포인터가 그 행의 첫 슬롯 왼쪽** (`point.x <= 첫 슬롯.left`) → 그 행의 **맨 앞**에 삽입.
-- **포인터가 그 행의 마지막 슬롯 오른쪽** (`point.x >= 마지막 슬롯.right`) → 그 행의 **맨 뒤(빈 오른쪽)**에 삽입 → 100%면 50% 분할 후보.
-- **포인터가 두 슬롯 사이(gutter)** → **오른쪽 슬롯 앞**에 삽입.
-
-이렇게 하면 "이 행의 빈 오른쪽"이 **항상 "마지막 위젯 뒤"**로만 잡혀서, 의도한 위치에 더 잘 들어간다.
-
-정리하면, **영역 기준은** "먼저 포인터가 속한 **행**을 정하고, 그 행 안에서는 **슬롯 경계·가로 중앙·행의 왼/오른 끝**" 이다.
-
-### 4. 50% 분할이 적용되는 경우
-
-- **다른 위젯 위에 드롭**: 그 위젯이 100%이고 포인터가 그 위젯 **오른쪽 절반**에 있을 때.
-- **빈 공간에 드롭**: 위 1·2단계로 정해진 **삽입 위치가 "어떤 100% 위젯 바로 뒤"**일 때 (그 위젯을 50%로 줄이고, 드롭한 위젯도 50%로 넣음).
-
-### 5. 요약 표
-
-| 상황 | 영역/기준 | 결과 |
-|------|-----------|------|
-| 다른 위젯 위 드롭 (대상이 100%) | 해당 위젯 **rect 전체** (진입만 하면 인식) | 항상 50% 분할 + 오른쪽에 삽입 |
-| 빈 공간, 포인터가 어떤 행에 속함 | 그 **행** 안에서: 슬롯 안(가로 중앙) / 첫 슬롯 왼쪽 / 마지막 슬롯 오른쪽 / 두 슬롯 사이 | 그 행 기준 앞·뒤·사이 삽입 |
-| 빈 공간, 어떤 행에도 안 속함 | 가장 가까운 슬롯(세로 2배 가중) rect의 가로 절반 | 그 슬롯 앞 / 뒤 |
-
-**행 우선**으로 바꾼 뒤에는 "이 줄의 빈 오른쪽"이 항상 그 줄의 마지막 위젯 뒤로만 잡혀서, 영역이 더 자연스럽게 인식된다.
+**Last updated:** 2026-04-21

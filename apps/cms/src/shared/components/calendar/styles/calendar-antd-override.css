@@ -1,0 +1,49 @@
+/*
+ * `.calendar-main`이 이미 카드용 radius·padding·box-shadow를 담당하므로
+ * Ant Calendar 루트/패널의 기본 border·shadow는 제거해 이중 프레임을 막는다.
+ */
+.calendar-main .ant-picker-calendar {
+  background: transparent;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.calendar-main .ant-picker-calendar .ant-picker-panel {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.calendar-main .ant-picker-calendar .ant-picker-panel .ant-picker-body {
+  padding: 0;
+  border: none !important;
+}
+
+.calendar-main .ant-picker-cell {
+  padding: 0;
+}
+
+.calendar-main .ant-picker-calendar-date-value {
+  display: none;
+}
+
+.calendar-main .ant-picker-content table {
+  table-layout: fixed;
+}
+
+/* 월간 뷰: 요일 행 (SUN, MON, …) — thead에는 padding이 먹지 않으므로 th에 적용 */
+.calendar-main .ant-picker-calendar-mini .ant-picker-content thead th {
+  padding: 12px 0 8px 0;
+  color: var(--gray-85969-d, #85969d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  text-transform: uppercase;
+}
+
+.calendar-mini .ant-picker-calendar .ant-picker-panel .ant-picker-body {
+  padding: 0;
+}

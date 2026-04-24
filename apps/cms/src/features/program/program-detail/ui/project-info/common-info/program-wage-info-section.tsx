@@ -34,7 +34,7 @@ function WageValueParts({ text }: { text: string }) {
     <>
       {parts.map((p, i) => (
         <span key={i}>
-          {i > 0 ? <span className="detail-info-form-inputs-separator"> | </span> : null}
+          {i > 0 ? <DetailInfoForm.TdDivider /> : null}
           {p}
         </span>
       ))}
@@ -171,10 +171,9 @@ export function ProgramWageInfoSection({
                       value={current || undefined}
                       options={options}
                       placeholder="강사비 유형 선택"
-                      allowClear
                       showSearch
                       optionFilterProp="label"
-                      onChange={v => field.onChange(v ?? undefined)}
+                      onChange={v => field.onChange(v == null || v === '' ? undefined : v)}
                     />
                   )
                 }}
@@ -200,10 +199,11 @@ export function ProgramWageInfoSection({
                         value={field.value || '시간'}
                         options={PROGRAM_WAGE_PRICING_MEASURE_OPTIONS}
                         onChange={v => {
-                          field.onChange(v ?? '시간')
+                          field.onChange(
+                            v === '' || v == null ? '시간' : (v as string)
+                          )
                           syncWagePricingTimeUnit(form)
                         }}
-                        allowClear={false}
                       />
                     )}
                   />

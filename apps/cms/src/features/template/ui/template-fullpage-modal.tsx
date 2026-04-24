@@ -3,6 +3,7 @@ import { useId, type ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import './template-fullpage-modal.css'
+import './paragraph/shared/paragraph-card.css'
 
 interface TemplateFullpageModalProps {
   open: boolean
@@ -20,19 +21,12 @@ interface TemplateFullpageModalProps {
   className?: string
 }
 
-interface TemplateFullpageModalCardProps {
-  children: ReactNode
-  className?: string
-  onClick?: () => void
-  actionSlot?: ReactNode
-}
-
 interface TemplateFullpageModalCardTitleProps {
   title: ReactNode
   required?: boolean
   /** `title-wrap` 루트 */
   className?: string
-  /** `full-page-modal-card__title` span — placeholder 톤 등 */
+  /** `paragraph-card__title` span — placeholder 톤 등 */
   titleClassName?: string
 }
 
@@ -147,23 +141,6 @@ export function TemplateFullpageModal({
   )
 }
 
-export function TemplateFullpageModalCard({
-  children,
-  className,
-  onClick,
-  actionSlot,
-}: TemplateFullpageModalCardProps) {
-  return (
-    <section
-      className={['full-page-modal-card', className].filter(Boolean).join(' ')}
-      onClick={onClick}
-    >
-      {actionSlot ? <div className="full-page-modal-card__action-slot">{actionSlot}</div> : null}
-      {children}
-    </section>
-  )
-}
-
 export function TemplateFullpageModalCardTitle({
   title,
   required = false,
@@ -171,9 +148,9 @@ export function TemplateFullpageModalCardTitle({
   titleClassName,
 }: TemplateFullpageModalCardTitleProps) {
   return (
-    <div className={['full-page-modal-card__title-wrap', className].filter(Boolean).join(' ')}>
-      {required ? <span className="full-page-modal-card__required">*</span> : null}
-      <span className={['full-page-modal-card__title', titleClassName].filter(Boolean).join(' ')}>
+    <div className={['paragraph-card__title-wrap', className].filter(Boolean).join(' ')}>
+      {required ? <span className="paragraph-card__required">*</span> : null}
+      <span className={['paragraph-card__title', titleClassName].filter(Boolean).join(' ')}>
         {title}
       </span>
     </div>
@@ -185,8 +162,14 @@ export function TemplateFullpageModalCardDescription({
   className,
 }: TemplateFullpageModalCardDescriptionProps) {
   return (
-    <p className={['full-page-modal-card__description', className].filter(Boolean).join(' ')}>
+    <p className={['paragraph-card__description', className].filter(Boolean).join(' ')}>
       {children}
     </p>
   )
 }
+
+export {
+  ParagraphCard,
+  type ParagraphCardEditableHeading,
+  type ParagraphCardProps,
+} from '@/features/template/ui/paragraph/shared/paragraph-card'

@@ -7,7 +7,13 @@ import type {
   MemberPermissionApplicationRow,
   MemberPermissionApplicationStatus,
 } from '@/types/member-permission-application'
+import { getMemberPermissionInstructorApplicationTypeLabel } from '@/features/user/permission-management/lib/member-permission-instructor-application-type'
+import {
+  ADMIN_PERMISSION_TAG_LABEL,
+  getAdminPermissionVariant,
+} from '@/features/user/shared/lib/admin-permission-display'
 import { mockUsers } from './users'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 
 function categoryForUser(u: User): MemberPermissionApplicationRow['memberCategory'] {
   return u.role
@@ -24,10 +30,24 @@ function appliedAtIso(seed: number): string {
   return d.toISOString()
 }
 
+function applicationTypeLabelForList(u: User, listKind: 'instructor' | 'admin'): string {
+  if (listKind === 'instructor') {
+    return getMemberPermissionInstructorApplicationTypeLabel(u)
+  }
+  if (u.role === 'INDIVIDUAL') {
+    return '관리자 권한 신청'
+  }
+  if (u.role === 'ADMIN') {
+    return ADMIN_PERMISSION_TAG_LABEL[getAdminPermissionVariant(u)]
+  }
+  return '-'
+}
+
 function rowFromUser(
   u: User,
   index: number,
-  prefix: string
+  prefix: string,
+  listKind: 'instructor' | 'admin'
 ): MemberPermissionApplicationRow {
   const approvalStatus = u.permissionApprovalStatus ?? rotateStatus(index)
   return {
@@ -37,17 +57,16 @@ function rowFromUser(
     phone: u.phone ?? '',
     email: u.email,
     memberCategory: categoryForUser(u),
+    applicationTypeLabel: applicationTypeLabelForList(u, listKind),
     approvalStatus,
     appliedAt: appliedAtIso(index + 3),
   }
 }
 
-/** 강사 권한 신청: 강사·개인·학교(교사) 혼합 (실제 userId로 상세 모달 연동) */
-const instructorSourceUsers: User[] = [
-  ...mockUsers.filter(u => u.role === 'INSTRUCTOR'),
-  ...mockUsers.filter(u => u.role === 'INDIVIDUAL').slice(0, 24),
-  ...mockUsers.filter(u => u.role === 'SCHOOL').slice(0, 16),
-]
+/** 강사 권한 신청: 순수 강사(`instructor_only`)만 노출 (교사/겸직 강사 제외) */
+const instructorSourceUsers: User[] = mockUsers.filter(
+  u => u.role === 'INSTRUCTOR' && resolveInstructorMemberProfile(u) === 'instructor_only'
+)
 
 /** 관리자 권한 신청: 관리자 + 일부 개인(승급 후보) */
 const adminSourceUsers: User[] = [
@@ -56,7 +75,7 @@ const adminSourceUsers: User[] = [
 ]
 
 export const mockMemberPermissionApplicationsInstructor: MemberPermissionApplicationRow[] =
-  instructorSourceUsers.map((u, i) => rowFromUser(u, i, 'mpa-inst'))
+  instructorSourceUsers.map((u, i) => rowFromUser(u, i, 'mpa-inst', 'instructor'))
 
 export const mockMemberPermissionApplicationsAdmin: MemberPermissionApplicationRow[] =
-  adminSourceUsers.map((u, i) => rowFromUser(u, i, 'mpa-adm'))
+  adminSourceUsers.map((u, i) => rowFromUser(u, i, 'mpa-adm', 'admin'))

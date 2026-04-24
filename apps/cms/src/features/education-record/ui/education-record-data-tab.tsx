@@ -5,13 +5,9 @@
  *   `exportEducationRecordExcel` 을 사용 (공용 `exportTableToExcel` 은 raw 값만 기록하므로 미사용)
  */
 
-import { useCallback, useState } from 'react'
-import { App, Table } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
-import { CmsButton } from '@/shared/ui/cms-button'
-import { exportEducationRecordExcel } from '@/features/education-record/lib/education-record-export'
 import '@/shared/components/list-page/list-page-layout.css'
 import './education-record-data-tab.css'
 
@@ -28,10 +24,6 @@ const EDUCATION_RECORD_MAX_VISIBLE_ROWS = 20
 const EDUCATION_RECORD_TABLE_SCROLL_Y =
   EDUCATION_RECORD_ROW_HEIGHT * EDUCATION_RECORD_MAX_VISIBLE_ROWS
 
-/** 엑셀 다운로드 버튼 사이즈 (px) */
-const EXCEL_BUTTON_WIDTH = 180
-const EXCEL_BUTTON_HEIGHT = 44
-
 export type EducationRecordDataTabProps = {
   antdColumns: ColumnsType<Program>
   tableData: Program[]
@@ -43,31 +35,6 @@ export function EducationRecordDataTab({
   tableData,
   displayedCount,
 }: EducationRecordDataTabProps) {
-  const { message } = App.useApp()
-  const [isExporting, setIsExporting] = useState(false)
-
-  const handleExportExcel = useCallback(async () => {
-    if (isExporting) return
-    if (!tableData || tableData.length === 0) {
-      message.warning('다운로드할 데이터가 없습니다.')
-      return
-    }
-    setIsExporting(true)
-    const hide = message.loading('엑셀 파일 생성 중입니다…', 0)
-    try {
-      await exportEducationRecordExcel(antdColumns, tableData, '실적데이터')
-      message.success(`엑셀 다운로드 완료 (${tableData.length.toLocaleString()}건)`)
-    } catch (error) {
-      console.error('[education-record] excel export failed', error)
-      message.error('엑셀 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.')
-    } finally {
-      hide()
-      setIsExporting(false)
-    }
-  }, [antdColumns, isExporting, message, tableData])
-
-  const hasData = tableData.length > 0
-
   return (
     <div className="er-data-tab">
       <div className="er-data-tab__toolbar">
@@ -76,19 +43,6 @@ export function EducationRecordDataTab({
           <div className="er-data-tab__description">
             총 {displayedCount.toLocaleString()}건
           </div>
-        </div>
-        <div className="er-data-tab__toolbar-actions">
-          <CmsButton
-            variant="primary"
-            icon={<DownloadOutlined />}
-            onClick={handleExportExcel}
-            loading={isExporting}
-            disabled={!hasData}
-            width={EXCEL_BUTTON_WIDTH}
-            style={{ height: EXCEL_BUTTON_HEIGHT }}
-          >
-            엑셀 다운로드
-          </CmsButton>
         </div>
       </div>
 

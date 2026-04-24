@@ -4,8 +4,20 @@ import { message } from 'antd'
 import { CmsButton, CmsCheckbox, CmsInput, CmsRadio, CmsSelect } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
-import { DetailModalSidebar, type DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
-import type { TextbookCreateInput, TextbookEducationStage, TextbookRow } from '@/features/textbook/model/textbook.types'
+import {
+  DetailModalSidebar,
+  type DetailModalSidebarNavItem,
+} from '@/shared/ui/detail-modal-sidebar'
+import {
+  TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS,
+  type TextbookBusinessArea,
+} from '@/features/textbook/model/textbook-business-areas'
+import type { TextbookEducationTarget } from '@/features/textbook/model/textbook-education-targets'
+import type {
+  TextbookCreateInput,
+  TextbookEducationStage,
+  TextbookRow,
+} from '@/features/textbook/model/textbook.types'
 import './textbook-detail-fullpage-modal.css'
 
 const TEXTBOOK_DETAIL_LNB_ITEMS: DetailModalSidebarNavItem[] = [
@@ -79,30 +91,29 @@ export function TextbookDetailFullPageModal({
       }
     >
       <div className="textbook-detail-fullpage-modal__root">
-        <section className="textbook-detail-fullpage-modal__basic-info-section" aria-label="기본 정보">
-          {!isEditMode ? (
-            <DetailInfoForm title="기본 정보">
-              <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field
-                  label="등록일"
-                  view={
-                    <div
-                      className="textbook-detail-fullpage-modal__registered-value"
-                      role="group"
-                      aria-label="등록일 정보"
-                    >
-                      <span>{formatDate(textbook.registeredAt)}</span>
-                      <span className="textbook-detail-fullpage-modal__registered-divider" aria-hidden>
-                        |
-                      </span>
-                      <span>{textbook.registrant}</span>
-                    </div>
-                  }
-                />
-              </DetailInfoForm.Row>
-            </DetailInfoForm>
-          ) : null}
-          <DetailInfoForm title="기본 정보" hideHeader={!isEditMode} mode={isEditMode ? 'edit' : 'view'}>
+        <section
+          className="textbook-detail-fullpage-modal__basic-info-section"
+          aria-label="기본 정보"
+        >
+          <DetailInfoForm title="기본 정보">
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="등록일"
+                view={
+                  <div
+                    className="textbook-detail-fullpage-modal__registered-value"
+                    role="group"
+                    aria-label="등록일 정보"
+                  >
+                    <span>{formatDate(textbook.registeredAt)}</span>
+                    <DetailInfoForm.InputsSeparator />
+                    <span>{textbook.registrant}</span>
+                  </div>
+                }
+              />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
+          <DetailInfoForm title="기본 정보" hideHeader mode={isEditMode ? 'edit' : 'view'}>
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="교재명 (국문)"
@@ -112,7 +123,9 @@ export function TextbookDetailFullPageModal({
                   <CmsInput
                     value={editForm.textbookName}
                     onChange={event =>
-                      setEditForm(prev => (prev ? { ...prev, textbookName: event.target.value } : prev))
+                      setEditForm(prev =>
+                        prev ? { ...prev, textbookName: event.target.value } : prev
+                      )
                     }
                     inputSize="medium"
                     width="100%"
@@ -127,7 +140,9 @@ export function TextbookDetailFullPageModal({
                   <CmsInput
                     value={editForm.textbookNameEn}
                     onChange={event =>
-                      setEditForm(prev => (prev ? { ...prev, textbookNameEn: event.target.value } : prev))
+                      setEditForm(prev =>
+                        prev ? { ...prev, textbookNameEn: event.target.value } : prev
+                      )
                     }
                     inputSize="medium"
                     width="100%"
@@ -145,14 +160,17 @@ export function TextbookDetailFullPageModal({
                     inputSize="medium"
                     value={editForm.businessArea}
                     onChange={value =>
-                      setEditForm(prev => (prev ? { ...prev, businessArea: String(value ?? '') } : prev))
+                      setEditForm(prev =>
+                        prev
+                          ? {
+                              ...prev,
+                              businessArea: (value ?? '') as TextbookBusinessArea,
+                            }
+                          : prev
+                      )
                     }
-                    options={[
-                      { label: '기업가정신', value: '기업가정신' },
-                      { label: '금융교육', value: '금융교육' },
-                      { label: '진로교육', value: '진로교육' },
-                    ]}
-                    style={{ width: 180 }}
+                    options={TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS}
+                    style={{ width: 220 }}
                   />
                 }
               />
@@ -167,7 +185,10 @@ export function TextbookDetailFullPageModal({
                     onChange={event =>
                       setEditForm(prev =>
                         prev
-                          ? { ...prev, useStatus: event.target.value as TextbookCreateInput['useStatus'] }
+                          ? {
+                              ...prev,
+                              useStatus: event.target.value as TextbookCreateInput['useStatus'],
+                            }
                           : prev
                       )
                     }
@@ -181,7 +202,10 @@ export function TextbookDetailFullPageModal({
           </DetailInfoForm>
         </section>
 
-        <DetailInfoForm title="교육 대상" className="textbook-detail-fullpage-modal__education-form">
+        <DetailInfoForm
+          title="교육 대상"
+          className="textbook-detail-fullpage-modal__education-form"
+        >
           {editForm.educationStages.map(stage => (
             <DetailInfoForm.Row key={stage.key} type="single">
               <DetailInfoForm.Field
@@ -221,15 +245,19 @@ export function TextbookDetailFullPageModal({
                           educationStages: prev.educationStages.map(current => {
                             if (current.key !== stage.key) return current
                             const nextGrades = current.grades?.map(grade =>
-                              grade.label === label ? { ...grade, selected: !grade.selected } : grade
+                              grade.label === label
+                                ? { ...grade, selected: !grade.selected }
+                                : grade
                             )
-                            const hasSelectedOption = nextGrades?.some(grade => grade.selected) ?? false
+                            const hasSelectedOption =
+                              nextGrades?.some(grade => grade.selected) ?? false
                             const allSelected =
                               (nextGrades?.length ?? 0) > 0 &&
                               (nextGrades?.every(grade => grade.selected) ?? false)
                             return {
                               ...current,
-                              selected: allSelected || (stage.key === 'kindergarten' && hasSelectedOption),
+                              selected:
+                                allSelected || (stage.key === 'kindergarten' && hasSelectedOption),
                               grades: nextGrades,
                             }
                           }),
@@ -269,13 +297,13 @@ function EducationStageView({
           {allLabel}
         </CmsCheckbox>
       ) : (
-        <label className="textbook-detail-fullpage-modal__check">
-          <input type="checkbox" checked={stage.selected} disabled />
-          <span>{allLabel}</span>
-        </label>
+        <CmsCheckbox checked={stage.selected} disabled checkboxSize="medium">
+          {allLabel}
+        </CmsCheckbox>
       )}
       {optionLabels.map(label => {
-        const selected = gradeSelectedMap.get(label) ?? (stage.key === 'kindergarten' && stage.selected)
+        const selected =
+          gradeSelectedMap.get(label) ?? (stage.key === 'kindergarten' && stage.selected)
         return (
           <span key={label}>
             {editable ? (
@@ -287,10 +315,9 @@ function EducationStageView({
                 {label}
               </CmsCheckbox>
             ) : (
-              <label className="textbook-detail-fullpage-modal__check">
-                <input type="checkbox" checked={selected} disabled />
-                <span>{label}</span>
-              </label>
+              <CmsCheckbox checked={selected} disabled checkboxSize="medium">
+                {label}
+              </CmsCheckbox>
             )}
           </span>
         )
@@ -302,7 +329,7 @@ function EducationStageView({
 type TextbookEditForm = {
   textbookName: string
   textbookNameEn: string
-  businessArea: string
+  businessArea: TextbookBusinessArea
   useStatus: TextbookCreateInput['useStatus']
   educationStages: TextbookEducationStage[]
 }
@@ -335,8 +362,10 @@ function toSubmitPayload(form: TextbookEditForm): TextbookCreateInput | null {
 
   if (!selectedStage) return null
 
-  const selectedGrades = selectedStage?.grades?.filter(grade => grade.selected).map(grade => grade.label) ?? []
-  const grade = selectedGrades.length === 0 || selectedGrades.length >= 2 ? '전학년' : selectedGrades[0]
+  const selectedGrades =
+    selectedStage?.grades?.filter(grade => grade.selected).map(grade => grade.label) ?? []
+  const grade =
+    selectedGrades.length === 0 || selectedGrades.length >= 2 ? '전학년' : selectedGrades[0]
 
   return {
     textbookName: form.textbookName.trim(),
@@ -352,7 +381,9 @@ function toSubmitPayload(form: TextbookEditForm): TextbookCreateInput | null {
   }
 }
 
-function mapStageKeyToEducationTarget(stageKey: TextbookEducationStage['key']): string {
+function mapStageKeyToEducationTarget(
+  stageKey: TextbookEducationStage['key']
+): TextbookEducationTarget {
   switch (stageKey) {
     case 'kindergarten':
       return '유아'

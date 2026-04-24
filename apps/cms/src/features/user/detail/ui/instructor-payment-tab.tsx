@@ -19,12 +19,11 @@ import {
   rowsToCalendarEvents,
   INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
   INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
-  isInstructorSettlementEligibleForPaymentStatementIssue,
   type InstructorSettlementListRow,
   type InstructorSettlementUiStatus,
 } from '@/data/mock/instructor-member-settlements'
-import { InstructorInvoiceModal } from './instructor-invoice-modal'
-import { InstructorPaymentStatementBlockedModal } from './instructor-payment-statement-blocked-modal'
+import { InstructorInvoiceModal } from './modal/instructor-invoice-modal'
+import { InstructorPaymentStatementBlockedModal } from './modal/instructor-payment-statement-blocked-modal'
 import {
   InstructorSettlementCalendarView,
   type SettlementCalendarEvent,
@@ -90,6 +89,9 @@ export function InstructorPaymentTab({
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [invoiceOpen, setInvoiceOpen] = useState(false)
   const [invoiceData, setInvoiceData] = useState<InstructorSettlementListRow | null>(null)
+  const [confirmedStatementRowIds, setConfirmedStatementRowIds] = useState<Set<string>>(
+    () => new Set()
+  )
   const [paymentStatementBlockedModal, setPaymentStatementBlockedModal] = useState<{
     open: boolean
     variant: 'single' | 'multi'
@@ -97,10 +99,25 @@ export function InstructorPaymentTab({
   }>({ open: false, variant: 'single', selectedCount: 0 })
 
   const baseRows = useMemo(() => getInstructorSettlementRows(instructorUserId), [instructorUserId])
+  const effectiveRows = useMemo(
+    () =>
+      baseRows.map(row => {
+        if (!confirmedStatementRowIds.has(row.id) || row.status === 'account_paid') return row
+        return {
+          ...row,
+          status: 'payment_statement_verified' as const,
+          invoice: {
+            ...row.invoice,
+            paymentStatementStatus: 'payment_statement_verified' as const,
+          },
+        }
+      }),
+    [baseRows, confirmedStatementRowIds]
+  )
 
   const monthRows = useMemo(
-    () => filterRowsByMonth(baseRows, currentMonth),
-    [baseRows, currentMonth]
+    () => filterRowsByMonth(effectiveRows, currentMonth),
+    [effectiveRows, currentMonth]
   )
 
   const handlePrev = () => {
@@ -128,8 +145,8 @@ export function InstructorPaymentTab({
   }, [monthRows, appliedFilters])
 
   const summary = useMemo(
-    () => summarizeSettlementRows(filteredRows, { allRowsForTotal: baseRows }),
-    [filteredRows, baseRows]
+    () => summarizeSettlementRows(filteredRows, { allRowsForTotal: effectiveRows }),
+    [filteredRows, effectiveRows]
   )
 
   const calendarEvents: SettlementCalendarEvent[] = useMemo(
@@ -226,38 +243,8 @@ export function InstructorPaymentTab({
   }
 
   const handleBulkDownload = useCallback(() => {
-    /** 캘린더 뷰: 우측에 보이는 «그 날짜» 행만 발급 대상 (다른 날짜에 체크해 둔 키는 제외) */
-    const issueRowPool =
-      viewMode === 'calendar'
-        ? filteredRows.filter(r => dayjs(r.calendarDate).isSame(calendarSelectedDate, 'day'))
-        : filteredRows
-
-    if (selectedRowKeys.length === 0) {
-      message.info('발급할 행을 선택해 주세요.')
-      return
-    }
-    const selectedRows = issueRowPool.filter(r => selectedRowKeys.includes(r.id))
-    if (selectedRows.length === 0) {
-      if (viewMode === 'calendar' && selectedRowKeys.length > 0) {
-        message.info('현재 선택한 날짜 목록에서 발급할 행을 선택해 주세요.')
-      } else {
-        message.info('발급할 행을 선택해 주세요.')
-      }
-      return
-    }
-    const hasIneligible = selectedRows.some(
-      r => !isInstructorSettlementEligibleForPaymentStatementIssue(r.status)
-    )
-    if (hasIneligible) {
-      setPaymentStatementBlockedModal({
-        open: true,
-        variant: selectedRows.length === 1 ? 'single' : 'multi',
-        selectedCount: selectedRows.length,
-      })
-      return
-    }
     window.alert('준비 중입니다.')
-  }, [filteredRows, selectedRowKeys, viewMode, calendarSelectedDate])
+  }, [])
 
   return (
     <div
@@ -413,6 +400,26 @@ export function InstructorPaymentTab({
           setInvoiceData(null)
         }}
         data={invoiceData?.invoice ?? null}
+        settlementLineRowId={invoiceData?.id ?? null}
+        instructorNameKo={invoiceData?.instructorName?.trim() || _instructorName.trim() || '강사'}
+        onPaymentStatementConfirmed={rowId => {
+          setConfirmedStatementRowIds(prev => {
+            const next = new Set(prev)
+            next.add(rowId)
+            return next
+          })
+          setInvoiceData(prev => {
+            if (!prev || prev.id !== rowId || prev.status === 'account_paid') return prev
+            return {
+              ...prev,
+              status: 'payment_statement_verified',
+              invoice: {
+                ...prev.invoice,
+                paymentStatementStatus: 'payment_statement_verified',
+              },
+            }
+          })
+        }}
       />
 
       <InstructorPaymentStatementBlockedModal

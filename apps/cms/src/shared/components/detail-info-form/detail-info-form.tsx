@@ -239,20 +239,35 @@ function DetailInfoFormNameBlock({
   )
 }
 
-function DetailInfoFormInputsSeparator() {
-  return <span className="detail-info-form-inputs-separator"> | </span>
+/**
+ * 테이블 td·Field 값 영역 인라인 구분 — 세로 1×13px, default-BK 50%, 양옆 12px 간격
+ * (문자 `|` 대신 스크린 리더 무시용 막대)
+ */
+export function DetailInfoFormTdDivider() {
+  return <span className="detail-info-form-inputs-separator" aria-hidden />
 }
+
+function DetailInfoFormInputsSeparator() {
+  return <DetailInfoFormTdDivider />
+}
+
+/** `InputsSeparator`와 동일 — 읽기 전용 값 줄 등에서 짧게 쓸 때 */
+const DetailInfoFormSeparator = DetailInfoFormInputsSeparator
 
 DetailInfoFormRoot.Row = DetailInfoFormRow
 DetailInfoFormRoot.Field = DetailInfoFormField
 DetailInfoFormRoot.NameBlock = DetailInfoFormNameBlock
+DetailInfoFormRoot.TdDivider = DetailInfoFormTdDivider
 DetailInfoFormRoot.InputsSeparator = DetailInfoFormInputsSeparator
+DetailInfoFormRoot.Separator = DetailInfoFormSeparator
 
 type DetailInfoFormCompound = typeof DetailInfoFormRoot & {
   Row: typeof DetailInfoFormRow
   Field: typeof DetailInfoFormField
   NameBlock: typeof DetailInfoFormNameBlock
+  TdDivider: typeof DetailInfoFormTdDivider
   InputsSeparator: typeof DetailInfoFormInputsSeparator
+  Separator: typeof DetailInfoFormSeparator
 }
 
 export const DetailInfoForm = DetailInfoFormRoot as DetailInfoFormCompound

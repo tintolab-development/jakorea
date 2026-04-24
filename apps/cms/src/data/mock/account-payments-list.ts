@@ -8,18 +8,24 @@ import type {
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/data/mock/payment-order-admin-list'
 import {
+  ACCOUNT_PAYMENT_AGGREGATE_LABELS,
+  type AccountPaymentAggregateStatus,
+} from '@/shared/constants/payment-order-aggregate-status'
+import {
   getMockPaymentOrderInstructorCalculationStatement,
   getMockPaymentOrderInstructorDetail,
   type PaymentOrderAdminInstructorDetailProgramRow,
   type PaymentOrderAdminInstructorRow,
 } from '@/data/mock/payment-order-admin-list'
 
-/** 계좌 지급 단계 (지급조서 단계와 별개) */
-export type AccountPaymentTransferStatus = 'pending' | 'completed'
+/** 계좌 지급 단계(rule): 지급 대기 중 > 확인 진행 중 > 계좌 지급 완료 > 지급 정정 요청 */
+export type AccountPaymentTransferStatus = AccountPaymentAggregateStatus
 
 export const ACCOUNT_PAYMENT_STATUS_LABELS: Record<AccountPaymentTransferStatus, string> = {
-  pending: '계좌 지급 대기 중',
-  completed: '계좌 지급 완료',
+  awaiting_confirmation: ACCOUNT_PAYMENT_AGGREGATE_LABELS.awaiting_confirmation,
+  partial_confirmation: ACCOUNT_PAYMENT_AGGREGATE_LABELS.partial_confirmation,
+  account_paid: ACCOUNT_PAYMENT_AGGREGATE_LABELS.account_paid,
+  payment_correction_requested: ACCOUNT_PAYMENT_AGGREGATE_LABELS.payment_correction_requested,
 }
 
 export interface AccountPaymentRow {
@@ -28,7 +34,7 @@ export interface AccountPaymentRow {
   instructorName: string
   programName: string
   institutionName: string
-  /** 예: `2 ~ 3차시`, `2차시` */
+  /** mock·API 구간 표기(차시). 화면은 `formatAccountPaymentSessionLabelDisplay`로 회차 표시. */
   sessionLabel: string
   accountPaymentStatus: AccountPaymentTransferStatus
   amount: number
@@ -39,6 +45,11 @@ export interface AccountPaymentRow {
   transferScheduledDate: string
   /** 목록은 항상 지급조서 확인 완료 건만 포함 */
   paymentOrderStatus: Extract<PaymentOrderAdminProcessingStatus, 'confirmed'>
+}
+
+/** 계좌 지급 확인 — 목록·캘린더 등 `sessionLabel` UI 표시(차시 → 회차) */
+export function formatAccountPaymentSessionLabelDisplay(raw: string): string {
+  return raw.replace(/차시/g, '회차')
 }
 
 /** 계좌 지급 현황 상세 풀페이지 — 기본 정보(마스킹·표시값은 지급조서 산출 mock과 동일 규칙) */
@@ -216,18 +227,20 @@ export function getMockAccountPaymentStatusDetail(row: AccountPaymentRow): Accou
 export const MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET = 109_150_000
 
 /**
- * 30건 — 전부 지급조서 확인 완료(paymentOrderStatus: confirmed).
- * 계좌 지급 대기/완료만 교차 배치.
+ * 10건 — 전부 지급조서 확인 완료(paymentOrderStatus: confirmed).
+ * 2026년 5월 기준 데이터이며, 계좌 지급 4상태를 순환 배치.
  */
-export const mockAccountPaymentRows: AccountPaymentRow[] = Array.from({ length: 30 }, (_, i) => {
+export const mockAccountPaymentRows: AccountPaymentRow[] = Array.from({ length: 10 }, (_, i) => {
   const no = 206 - i
-  const accountPaymentStatus: AccountPaymentTransferStatus = i % 3 === 0 ? 'completed' : 'pending'
-  const baseM = 1 + (i % 12)
-  const year = i < 15 ? 2026 : 2025
-  const day = 5 + ((i * 7) % 24)
-  const transferScheduledDate = isoDate(year, baseM, Math.min(day, 28))
-
-  const sessionLabel = i % 4 === 0 ? `${2 + (i % 2)}차시` : `${2} ~ ${3 + (i % 2)}차시`
+  const statusCycle: AccountPaymentTransferStatus[] = [
+    'awaiting_confirmation',
+    'partial_confirmation',
+    'account_paid',
+    'payment_correction_requested',
+  ]
+  const accountPaymentStatus: AccountPaymentTransferStatus = statusCycle[i % statusCycle.length]!
+  const transferScheduledDate = isoDate(2026, 5, 2 + i * 2)
+  const sessionLabel = i % 3 === 0 ? `${2 + (i % 2)}차시` : `${2} ~ ${3 + (i % 2)}차시`
 
   return {
     id: `account-pay-${no}`,

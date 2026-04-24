@@ -85,6 +85,7 @@ function memberDeleteGuideDomain(kind: MemberListKind) {
         particleTargetNoun: '학교',
         domainLabel: '학교',
         singleTitle: '학교 삭제 안내',
+        bulkTitle: '학교 일괄 삭제 안내',
         confirmText: '학교 삭제',
       }
     case 'instructors':
@@ -93,6 +94,7 @@ function memberDeleteGuideDomain(kind: MemberListKind) {
         particleTargetNoun: '강사',
         domainLabel: '강사',
         singleTitle: '강사 삭제 안내',
+        bulkTitle: '강사 일괄 삭제 안내',
         confirmText: '강사 삭제',
       }
     default:
@@ -101,6 +103,7 @@ function memberDeleteGuideDomain(kind: MemberListKind) {
         particleTargetNoun: '회원',
         domainLabel: '회원',
         singleTitle: '회원 삭제 안내',
+        bulkTitle: '회원 일괄 삭제 안내',
         confirmText: '회원 삭제',
       }
   }
@@ -284,10 +287,12 @@ export function UserListPage() {
 
   const memberDeleteGuide = useMemo(() => {
     if (deleteTargets.length === 0) return null
+    const domain = memberDeleteGuideDomain(resolvedMemberListKind)
     const lines = buildMemberDeleteGuideLines(
       deleteTargets.map(target => displayNameForUserDelete(resolvedMemberListKind, target))
     )
-    return { title: '회원 삭제 안내', lines, confirmText: '회원 삭제' }
+    const title = deleteTargets.length >= 2 ? domain.bulkTitle : domain.singleTitle
+    return { title, lines, confirmText: domain.confirmText }
   }, [deleteTargets, resolvedMemberListKind])
 
   const userListFilterFields = useMemo(
@@ -772,7 +777,7 @@ export function UserListPage() {
                     ? '강사 등록'
                     : resolvedMemberListKind === 'admins'
                       ? '관리자 등록'
-                    : '회원 등록'}
+                      : '회원 등록'}
               </CmsButton>
             )}
           </>

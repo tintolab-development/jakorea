@@ -11,6 +11,7 @@ declare module '@toast-ui/editor' {
     usageStatistics?: boolean
     initialValue?: string
     placeholder?: string
+    toolbarItems?: Array<Array<string>>
     events?: {
       change?: () => void
       load?: (editor: Editor) => void

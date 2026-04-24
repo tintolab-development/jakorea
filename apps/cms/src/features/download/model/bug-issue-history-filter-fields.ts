@@ -5,7 +5,7 @@ export const bugIssueHistoryFilterFields: FilterFieldConfig[] = [
     key: 'userName',
     type: 'search',
     label: '사용자',
-    placeholder: '',
+    placeholder: '사용자를 입력하세요',
     width: '46%',
   },
   {

@@ -37,6 +37,62 @@
   color: var(--main-bk, #3d3d3d);
 }
 
+/* 관리자 권한 승인 상세: 관리자 권한 신청 목록과 동일 톤의 상태 텍스트 */
+.user-basic-info-section__permission-approval-status-list-tone {
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.user-basic-info-section__permission-approval-status-list-tone--pending {
+  color: var(--color-blue, #017eaf);
+}
+
+.user-basic-info-section__permission-approval-status-list-tone--approved {
+  color: #464646;
+}
+
+.user-basic-info-section__permission-approval-status-list-tone--rejected {
+  color: var(--color-red, #c32f4a);
+}
+
+.user-basic-info-section__permission-approval-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-basic-info-section__permission-approval-dropdown-wrap {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.user-basic-info-section__permission-approval-dropdown-wrap
+  .detail-info-form-inputs-separator {
+  margin-block: 0;
+  margin-inline: 0;
+}
+
+.user-basic-info-section__permission-approval-divider {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.4;
+}
+
+.user-basic-info-section__permission-approval-timestamp {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
 .user-basic-info-section__id1365-cell {
   display: inline-flex;
   align-items: center;
@@ -71,7 +127,7 @@
 }
 
 .user-basic-info-section__settlement-status--none {
-  color: #464646;
+  color: #333333;
 }
 
 .user-basic-info-section__settlement-status--application-rejected {
@@ -79,7 +135,7 @@
 }
 
 .user-basic-info-section__settlement-status--payment-correction-requested {
-  color: #7a2038;
+  color: #c32f4a;
 }
 
 /* 강의비 행 — 스펙: "유형 | 금액" */
@@ -157,4 +213,11 @@
 /* 조회 슬롯만 상단 정렬 — `--edit` 값 셀에는 적용되지 않음 */
 .user-basic-info-section .detail-info-form__field-content--view {
   align-items: flex-start;
+}
+
+/* 관리자 담당 프로그램 수 — `DetailInfoForm.Separator` 포함 한 줄 정렬 */
+.user-basic-info-section__admin-managed-programs {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
 }

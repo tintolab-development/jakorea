@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { message } from 'antd'
 import { CmsButton, CmsInput, CmsRadio, CmsSelect, ContentModal } from '@/shared/ui'
+import {
+  TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS,
+  type TextbookBusinessArea,
+} from '@/features/textbook/model/textbook-business-areas'
+import {
+  TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS,
+  type TextbookEducationTarget,
+} from '@/features/textbook/model/textbook-education-targets'
 import type { TextbookCreateInput } from '@/features/textbook/model/textbook.types'
 import './textbook-register-modal.css'
 
@@ -14,9 +22,16 @@ export interface TextbookRegisterModalProps {
   mode?: 'create' | 'edit'
 }
 
-type FormState = TextbookRegisterPayload
+type RegisterFormState = Omit<
+  TextbookCreateInput,
+  'businessArea' | 'textbookNameEn' | 'educationStages' | 'educationTarget'
+> & {
+  textbookName: string
+  businessArea: TextbookBusinessArea | ''
+  educationTarget: TextbookEducationTarget | ''
+}
 
-const emptyForm = (): FormState => ({
+const emptyForm = (): RegisterFormState => ({
   useStatus: 'USED',
   textbookName: '',
   businessArea: '',
@@ -31,7 +46,7 @@ export function TextbookRegisterModal({
   initialValues,
   mode = 'create',
 }: TextbookRegisterModalProps) {
-  const [form, setForm] = useState<FormState>(emptyForm)
+  const [form, setForm] = useState<RegisterFormState>(emptyForm)
 
   useEffect(() => {
     if (!open) return
@@ -59,9 +74,13 @@ export function TextbookRegisterModal({
       message.warning('필수 항목을 모두 선택해 주세요.')
       return
     }
+    const businessArea = form.businessArea
+    const educationTarget = form.educationTarget
     onSubmit({
       ...form,
       textbookName: form.textbookName.trim(),
+      businessArea,
+      educationTarget,
     })
   }
 
@@ -117,14 +136,14 @@ export function TextbookRegisterModal({
             inputSize="large"
             placeholder="사업 분야를 선택해 주세요."
             value={form.businessArea || undefined}
-            onChange={value => setForm(prev => ({ ...prev, businessArea: String(value ?? '') }))}
-            options={[
-              { label: '기업가정신', value: '기업가정신' },
-              { label: '금융교육', value: '금융교육' },
-              { label: '진로교육', value: '진로교육' },
-            ]}
+            onChange={value =>
+              setForm(prev => ({
+                ...prev,
+                businessArea: (value ?? '') as TextbookBusinessArea | '',
+              }))
+            }
+            options={TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS}
             style={{ width: '100%' }}
-            allowClear
           />
         </div>
 
@@ -136,15 +155,14 @@ export function TextbookRegisterModal({
             inputSize="large"
             placeholder="교육 대상을 선택해 주세요."
             value={form.educationTarget || undefined}
-            onChange={value => setForm(prev => ({ ...prev, educationTarget: String(value ?? '') }))}
-            options={[
-              { label: '초등학교', value: '초등학교' },
-              { label: '중학교', value: '중학교' },
-              { label: '고등학교', value: '고등학교' },
-              { label: '대학교', value: '대학교' },
-            ]}
+            onChange={value =>
+              setForm(prev => ({
+                ...prev,
+                educationTarget: (value ?? '') as TextbookEducationTarget | '',
+              }))
+            }
+            options={TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS}
             style={{ width: '100%' }}
-            allowClear
           />
         </div>
 
@@ -164,7 +182,6 @@ export function TextbookRegisterModal({
               { label: '3학년', value: '3학년' },
             ]}
             style={{ width: '100%' }}
-            allowClear
           />
         </div>
       </div>

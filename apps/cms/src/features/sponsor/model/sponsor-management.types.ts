@@ -28,7 +28,8 @@ export type SponsorContactRow = {
   contactType: SponsorContactType
 }
 
-export type SponsorProgramParticipantType = 'school' | 'individual' | 'volunteer'
+/** 후원사 상세 > 프로그램 진행 이력: 학교/기관·개인 학습자만 (봉사자 구분 없음) */
+export type SponsorProgramParticipantType = 'school' | 'individual'
 export type SponsorProgramEducationTarget =
   | 'elementary'
   | 'middle'
@@ -38,6 +39,8 @@ export type SponsorProgramEducationTarget =
 
 export type SponsorProgramHistoryRow = {
   id: string
+  /** CMS 프로그램 상세(목록 경로 + programId 쿼리) 이동용 */
+  programId: string
   title: string
   year: number
   lifecycleStatus: ProgramLifecycleStatus

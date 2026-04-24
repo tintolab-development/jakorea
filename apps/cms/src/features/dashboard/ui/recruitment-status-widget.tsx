@@ -22,6 +22,7 @@ const { Text } = Typography
 
 const WIDGET_KEY = 'recruitment-status-widget'
 const EMPTY_IDS: string[] = []
+const recruitmentStatusCache = new Map<string, Program[]>()
 
 export function RecruitmentStatusWidget() {
   const cardRef = useRef<HTMLDivElement>(null)
@@ -31,15 +32,26 @@ export function RecruitmentStatusWidget() {
   const [programs, setPrograms] = useState<Program[]>([])
   const [loading, setLoading] = useState(true)
   const equalWidth = halfColumn ? '25%' : undefined
+  const allowedProgramIdsKey = allowedProgramIds.join(',')
 
   useEffect(() => {
+    const cached = recruitmentStatusCache.get(allowedProgramIdsKey)
+    if (cached) {
+      setPrograms(cached)
+      setLoading(false)
+      return
+    }
+
     let cancelled = false
     setLoading(true)
     getRecruitmentStatusList(
       allowedProgramIds.length > 0 ? { programIds: allowedProgramIds } : undefined
     )
       .then(data => {
-        if (!cancelled) setPrograms(data)
+        if (!cancelled) {
+          recruitmentStatusCache.set(allowedProgramIdsKey, data)
+          setPrograms(data)
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -47,7 +59,7 @@ export function RecruitmentStatusWidget() {
     return () => {
       cancelled = true
     }
-  }, [allowedProgramIds.length, allowedProgramIds.join(',')])
+  }, [allowedProgramIds.length, allowedProgramIds, allowedProgramIdsKey])
 
   const totalCount = programs.length
   useLayoutEffect(() => {
@@ -158,6 +170,11 @@ export function RecruitmentStatusWidget() {
         pagination={false}
         loading={loading}
         className="dashboard-widget-table__data"
+        onRow={() => ({
+          onClick: () => {
+            window.alert(WIDGET_MORE_ALERT_MESSAGE)
+          },
+        })}
       />
     </Card>
   )

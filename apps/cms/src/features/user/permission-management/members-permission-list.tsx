@@ -23,7 +23,10 @@ import {
   membersPermissionTablePageConfig,
   type MembersPermissionTableContext,
 } from './members-permission-table.config'
-import type { MemberPermissionApplicationRow } from '@/types/member-permission-application'
+import type {
+  MemberPermissionApplicationRow,
+  MemberPermissionApplicationStatus,
+} from '@/types/member-permission-application'
 import {
   mockMemberPermissionApplicationsAdmin,
   mockMemberPermissionApplicationsInstructor,
@@ -48,18 +51,6 @@ const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCatego
   ADMIN: '관리자',
 }
 
-const APPROVAL_STATUS_LABEL: Record<MemberPermissionApplicationRow['approvalStatus'], string> = {
-  PENDING: '승인 대기',
-  APPROVED: '승인 완료',
-  REJECTED: '신청 반려',
-}
-
-const APPROVAL_STATUS_CLASS: Record<MemberPermissionApplicationRow['approvalStatus'], string> = {
-  PENDING: 'members-permission-list__approval-status--pending',
-  APPROVED: 'members-permission-list__approval-status--approved',
-  REJECTED: 'members-permission-list__approval-status--rejected',
-}
-
 function maskedPhone(phone: string | undefined): string {
   const t = phone?.trim()
   if (!t) return '-'
@@ -74,6 +65,17 @@ function maskedEmail(email: string | undefined): string {
 
 function listTitle(memberType: 'instructor' | 'admin'): string {
   return memberType === 'instructor' ? '강사 권한 신청 목록' : '관리자 권한 신청 목록'
+}
+
+function memberPermissionApprovalStatusTextTag(status: MemberPermissionApplicationStatus) {
+  const base = 'members-permission-list__approval-status'
+  if (status === 'APPROVED') {
+    return <span className={`${base} ${base}--approved`}>승인 완료</span>
+  }
+  if (status === 'REJECTED') {
+    return <span className={`${base} ${base}--rejected`}>신청 반려</span>
+  }
+  return <span className={`${base} ${base}--pending`}>승인 대기</span>
 }
 
 export interface MembersPermissionListProps {
@@ -175,6 +177,7 @@ export const MembersPermissionList = forwardRef<
   const [bulkRejectBlockedSelectedCount, setBulkRejectBlockedSelectedCount] = useState<
     number | null
   >(null)
+
   useEffect(() => {
     setRows(baseRows)
     setBulkApproveBlockedSelectedCount(null)
@@ -224,20 +227,6 @@ export const MembersPermissionList = forwardRef<
     }),
     []
   )
-
-  const selectedKeySet = useMemo(
-    () => new Set(selectedRowKeys.map(k => String(k))),
-    [selectedRowKeys]
-  )
-
-  const selectedRows = useMemo(
-    () => tableData.filter(r => selectedKeySet.has(String(r.id))),
-    [tableData, selectedKeySet]
-  )
-
-  /** 선택 행이 있고 모두 승인 완료면 승인 버튼 숨김 */
-  const showListApproveButton =
-    selectedRows.length === 0 || !selectedRows.every(r => r.approvalStatus === 'APPROVED')
 
   /**
    * 선택 id → 전체 목록(rows)에서 승인 대기 행만 수집 ([신청 승인]용).
@@ -467,6 +456,15 @@ export const MembersPermissionList = forwardRef<
         render: (c: MemberPermissionApplicationRow['memberCategory']) => MEMBER_CATEGORY_LABEL[c],
       },
       {
+        title: '신청 유형',
+        dataIndex: 'applicationTypeLabel',
+        key: 'applicationTypeLabel',
+        width: 140,
+        align: 'center',
+        ellipsis: true,
+        render: (label: string) => (label?.trim() ? label : '-'),
+      },
+      {
         title: '권한 승인 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
@@ -478,11 +476,8 @@ export const MembersPermissionList = forwardRef<
         onCell: () => ({
           className: 'members-permission-list__col--approval-status',
         }),
-        render: (s: MemberPermissionApplicationRow['approvalStatus']) => (
-          <span className={`members-permission-list__approval-status ${APPROVAL_STATUS_CLASS[s]}`}>
-            {APPROVAL_STATUS_LABEL[s]}
-          </span>
-        ),
+        render: (_: unknown, record: MemberPermissionApplicationRow) =>
+          memberPermissionApprovalStatusTextTag(record.approvalStatus),
       },
       {
         title: '신청일',
@@ -525,9 +520,9 @@ export const MembersPermissionList = forwardRef<
       width: memberType === 'admin' ? '30%' : '20%',
       options: [
         { label: '전체', value: 'ALL' },
-        { label: APPROVAL_STATUS_LABEL.PENDING, value: 'PENDING' },
-        { label: APPROVAL_STATUS_LABEL.APPROVED, value: 'APPROVED' },
-        { label: APPROVAL_STATUS_LABEL.REJECTED, value: 'REJECTED' },
+        { label: '승인 대기', value: 'PENDING' },
+        { label: '승인 완료', value: 'APPROVED' },
+        { label: '신청 반려', value: 'REJECTED' },
       ],
     }
     const dateField: FilterFieldConfig = {
@@ -564,19 +559,21 @@ export const MembersPermissionList = forwardRef<
             onClick={bulkReject}
             disabled={!canWrite || selectedRowKeys.length === 0}
           >
-            {memberType === 'instructor' ? '승인 반려' : '신청 반려'}
+            신청 반려
           </CmsButton>
-          {showListApproveButton ? (
-            <CmsButton onClick={bulkApprove} disabled={!canWrite || selectedRowKeys.length === 0}>
-              신청 승인
-            </CmsButton>
-          ) : null}
+          <CmsButton
+            variant="secondary"
+            onClick={bulkApprove}
+            disabled={!canWrite || selectedRowKeys.length === 0}
+          >
+            신청 승인
+          </CmsButton>
           <PersonalInfoRevealButton
             ui="cms"
             labelMode="toggle"
             revealed={isSelectedRowPrivacyRevealed}
             cmsVariant={isSelectedRowPrivacyRevealed ? 'default' : 'primary'}
-            cmsSize="medium"
+            cmsSize="large"
             width={180}
             disabled={selectedRowKeys.length !== 1}
             onClick={() =>

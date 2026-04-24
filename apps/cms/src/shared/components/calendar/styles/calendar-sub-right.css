@@ -1,0 +1,112 @@
+.calendar-list {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: 400px;
+  box-sizing: border-box;
+  background: var(--color-bg-base);
+  border-radius: 16px;
+  border: 1px solid var(--color-border-light);
+  /* 상단: Empty 아이콘 클리핑 방지 + 리스트 스크롤 시 첫 줄 여유 */
+  padding: 20px var(--spacing-16) var(--spacing-16);
+  scroll-padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  overflow-y: auto;
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+}
+
+.calendar-list-item {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 10px 20px;
+  border: 1px solid #f0f0f0;
+  background: #fcfcfc;
+  cursor: pointer;
+  transition:
+    outline-color 0.15s ease,
+    outline-width 0.15s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+  border-radius: 6px;
+}
+
+.calendar-list-item:hover {
+  border: 2px solid var(--JA-mint-01, #01a1af) !important;
+  background: var(--default-WT, #fff) !important;
+  box-shadow:
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
+}
+
+.calendar-list-item:last-child {
+  margin-bottom: 0;
+}
+
+.calendar-list-item__column {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  width: 100%;
+}
+
+.calendar-list-item__head {
+  overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.calendar-list-item__desc {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.calendar-list-item__desc > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  font-size: var(--font-size-16);
+  color: var(--color-text-secondary);
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.calendar-list .ant-empty {
+  margin: 0 0 8px;
+  flex-shrink: 0;
+}
+
+.calendar-list .ant-empty-image {
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+
+.calendar-list .ant-empty-description {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.calendar-list--empty {
+  justify-content: center;
+  align-items: center;
+}
+
+.calendar-list--empty .ant-empty {
+  margin: 0;
+  text-align: center;
+}

@@ -1,4 +1,4 @@
-import type { Dayjs } from 'dayjs'
+import type { AdminPostsPendingDateRange } from '@/features/posts/lib/url-date-range-pending-sync'
 
 /** FAQ 관리 목록 — 필터 카드·URL 동기화용 */
 export type AdminFaqVisibilityFilter = 'ALL' | 'public' | 'private'
@@ -12,7 +12,7 @@ export interface AdminFaqPendingFilters extends Record<string, unknown> {
   author: string
   visibility: AdminFaqVisibilityFilter
   category: AdminFaqCategoryFilter
-  dateRange: [Dayjs, Dayjs] | null
+  dateRange: AdminPostsPendingDateRange
 }
 
 /** 카테고리 관리 모달 행 */

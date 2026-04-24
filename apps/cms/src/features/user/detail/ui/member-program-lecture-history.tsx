@@ -20,6 +20,7 @@ import type { Application, Program, UserHistory } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 import {
   getEffectiveEnrollmentDisplayStatus,
+  isProgramHistoryDeleteBlockedByDisplayStatus,
   type ProgramEnrollmentDisplayStatus,
 } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/components/status-badge'
@@ -41,9 +42,15 @@ import '@/features/program/ui/program-list.css'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import './member-program-lecture-history.css'
-import { CmsButton, DeleteGuideModal, buildProgramProgressHistoryDeleteGuide } from '@/shared/ui'
-import { CertificateBulkIssueReasonModal } from './certificate-bulk-issue-reason-modal'
-import { LectureReportSubmissionHistoryModal } from './lecture-report-submission-history-modal'
+import {
+  CmsButton,
+  DeleteGuideModal,
+  ProgramHistoryDeleteBlockedModal,
+  buildProgramProgressHistoryDeleteGuide,
+  type ProgramProgressHistoryDeleteDomain,
+} from '@/shared/ui'
+import { CertificateBulkIssueReasonModal } from './modal/certificate-bulk-issue-reason-modal'
+import { LectureReportSubmissionHistoryModal } from './modal/lecture-report-submission-history-modal'
 
 function programYear(programId: string): number | null {
   const p = programService.getByIdSync(programId)
@@ -142,6 +149,11 @@ function deriveVolunteerDisplayStatus(history: UserHistory): ProgramEnrollmentDi
   return getEffectiveEnrollmentDisplayStatus('submitted', undefined, program?.lifecycleStatus)
 }
 
+/** 이력 삭제 모달 — 수강 이력 테이블만 「프로그램 수강 이력」 문구 분기 */
+function programHistoryDeleteDomainForMode(mode: MemberProgramHistoryMode): ProgramProgressHistoryDeleteDomain {
+  return mode === 'studentEnrollment' || mode === 'schoolProgramParticipation' ? 'enrollment' : 'progress'
+}
+
 export function MemberProgramLectureHistory({
   applications = [],
   volunteerHistories = [],
@@ -149,17 +161,19 @@ export function MemberProgramLectureHistory({
   mode = 'instructorLecture',
   summaryTitle: summaryTitleProp,
   footnote: footnoteProp,
-  onRowClick,
+  onRowClick: _onRowClick,
   onViewLectureReport,
   onDownloadActivityReport,
   onOpenAttendance,
   onOpenAssignment,
   onDownloadCertificate,
-  onVolunteerRowClick,
+  onVolunteerRowClick: _onVolunteerRowClick,
   onVolunteerCertificateDownload,
   onBulkDelete,
   showCertificateBulkIssue = true,
 }: MemberProgramLectureHistoryProps) {
+  const historyDeleteDomain = useMemo(() => programHistoryDeleteDomainForMode(mode), [mode])
+
   const summaryTitle =
     summaryTitleProp ??
     (mode === 'studentEnrollment' || mode === 'schoolProgramParticipation'
@@ -244,6 +258,7 @@ export function MemberProgramLectureHistory({
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [deleteHistoryModalOpen, setDeleteHistoryModalOpen] = useState(false)
+  const [historyDeleteBlockedModalOpen, setHistoryDeleteBlockedModalOpen] = useState(false)
   const [certificateIssueModalOpen, setCertificateIssueModalOpen] = useState(false)
   const [certificateIssueTargetIds, setCertificateIssueTargetIds] = useState<string[]>([])
   const [lectureReportHistoryModalOpen, setLectureReportHistoryModalOpen] = useState(false)
@@ -263,8 +278,8 @@ export function MemberProgramLectureHistory({
     const titles = tableData
       .filter(row => keySet.has(String(row.id)))
       .map(row => programTitle(row.programId))
-    return buildProgramProgressHistoryDeleteGuide(titles)
-  }, [tableData, selectedRowKeys])
+    return buildProgramProgressHistoryDeleteGuide(titles, historyDeleteDomain)
+  }, [tableData, selectedRowKeys, historyDeleteDomain])
 
   const handleOpenHistoryDeleteModal = useCallback(() => {
     if (selectedRowKeys.length === 0) return
@@ -272,12 +287,12 @@ export function MemberProgramLectureHistory({
     const titles = tableData
       .filter(row => keySet.has(String(row.id)))
       .map(row => programTitle(row.programId))
-    if (titles.length === 0 || !buildProgramProgressHistoryDeleteGuide(titles)) {
+    if (titles.length === 0 || !buildProgramProgressHistoryDeleteGuide(titles, historyDeleteDomain)) {
       message.warning('선택한 이력을 찾을 수 없습니다.')
       return
     }
     setDeleteHistoryModalOpen(true)
-  }, [selectedRowKeys, tableData])
+  }, [selectedRowKeys, tableData, historyDeleteDomain])
 
   const handleHistoryDeleteCancel = useCallback(() => {
     setDeleteHistoryModalOpen(false)
@@ -286,6 +301,31 @@ export function MemberProgramLectureHistory({
   const handleHistoryDeleteConfirm = useCallback(() => {
     const ids = selectedRowKeys.map(String)
     if (ids.length === 0) return
+
+    const keySet = new Set(ids)
+    const selectedRecords = tableData.filter(row => keySet.has(String(row.id)))
+    const hasInProgress =
+      mode === 'volunteerProgram'
+        ? (selectedRecords as UserHistory[]).some(h =>
+            isProgramHistoryDeleteBlockedByDisplayStatus(deriveVolunteerDisplayStatus(h))
+          )
+        : (selectedRecords as Application[]).some(a => {
+            const program = programService.getByIdSync(a.programId)
+            const status = getEffectiveEnrollmentDisplayStatus(
+              a.status,
+              a.progressStatus,
+              program?.lifecycleStatus,
+              a.rejectionKind
+            )
+            return isProgramHistoryDeleteBlockedByDisplayStatus(status)
+          })
+
+    if (hasInProgress) {
+      setDeleteHistoryModalOpen(false)
+      setHistoryDeleteBlockedModalOpen(true)
+      return
+    }
+
     if (onBulkDelete) {
       onBulkDelete(ids)
     } else {
@@ -293,7 +333,7 @@ export function MemberProgramLectureHistory({
     }
     setSelectedRowKeys([])
     setDeleteHistoryModalOpen(false)
-  }, [onBulkDelete, selectedRowKeys])
+  }, [mode, onBulkDelete, selectedRowKeys, tableData])
 
   const columns: ColumnsType<Application> | ColumnsType<UserHistory> = useMemo(() => {
     if (mode === 'volunteerProgram') {
@@ -579,24 +619,25 @@ export function MemberProgramLectureHistory({
           ? '봉사 프로그램 참여 이력이 없습니다.'
           : '프로그램 강의 이력이 없습니다.'
 
-  const isVolunteerMode = mode === 'volunteerProgram'
   const tableDataSource: (Application | UserHistory)[] = tableData as (Application | UserHistory)[]
-  const hasTableRowClick = isVolunteerMode ? onVolunteerRowClick != null : onRowClick != null
 
   const tableOnRow = useMemo((): TableProps<Application | UserHistory>['onRow'] => {
-    if (!hasTableRowClick) return undefined
-    return record => ({
+    return _record => ({
       onClick: (e: MouseEvent<HTMLElement>) => {
         if (shouldIgnoreTableRowClick(e.target as HTMLElement)) return
-        if (mode === 'volunteerProgram' && onVolunteerRowClick) {
-          onVolunteerRowClick(record as UserHistory)
-        } else if (onRowClick) {
-          onRowClick(record as Application)
-        }
+        // TODO(program-detail): 행 클릭 시 프로그램 상세 페이지 연결 — 임시 비활성화
+        // if (mode === 'volunteerProgram' && _onVolunteerRowClick) {
+        //   _onVolunteerRowClick(_record as UserHistory)
+        // } else if (_onRowClick) {
+        //   _onRowClick(_record as Application)
+        // }
+        window.alert('준비 중입니다.')
       },
       style: { cursor: 'pointer' },
     })
-  }, [hasTableRowClick, mode, onVolunteerRowClick, onRowClick])
+    // 복구 시 onRowClick·onVolunteerRowClick·mode를 의존성에 포함할 것
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 임시: 상세 이동 비활성화로 핸들러 미사용
+  }, [])
 
   return (
     <>
@@ -711,6 +752,12 @@ export function MemberProgramLectureHistory({
           confirmVariant="delete"
           requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
           confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+        />
+      ) : null}
+      {historyDeleteBlockedModalOpen ? (
+        <ProgramHistoryDeleteBlockedModal
+          open
+          onClose={() => setHistoryDeleteBlockedModalOpen(false)}
         />
       ) : null}
       {showCertificateBulkIssue &&

@@ -10,8 +10,9 @@ import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detai
 import type { UserDetailFullpageDerived } from '@/features/user/detail/lib/use-user-detail-fullpage-derived'
 import type { InstructorPermissionRevokeNotifyTiming } from '@/features/user/detail/lib/use-user-detail-controller'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
-
 export interface UserDetailFullpageShellValue {
+  mode: 'default' | 'permission'
+  permissionRole?: 'instructor' | 'admin'
   displayUser: Omit<User, 'password'>
   tabState: TabState
   derived: UserDetailFullpageDerived
@@ -25,6 +26,9 @@ export interface UserDetailFullpageShellValue {
   onNavigateToLinkedUser?: (userId: string) => void
   modals: UseUserDetailModalsResult
   withdrawConfirmOpen: boolean
+  /** 학교(기관) 상세 — 소속 교사가 있을 때 삭제 시도 시 목록과 동일한 불가 안내 */
+  institutionDeleteBlockedOpen: boolean
+  onCloseInstitutionDeleteBlocked: () => void
   onProgressStatusChange: (
     app: Application,
     displayStatus: ProgramEnrollmentDisplayStatus
@@ -53,6 +57,10 @@ export interface UserDetailFullpageShellValue {
   onConfirmInstructorPermissionRevoke: (payload: {
     reason: string
     notifyTiming: InstructorPermissionRevokeNotifyTiming
+  }) => void
+  onPermissionResendNotification?: (ctx: {
+    userId: string
+    permissionRole: 'instructor' | 'admin'
   }) => void
 }
 

@@ -47,7 +47,6 @@ function SessionBlock({ sessionIndex }: { sessionIndex: number }) {
                   width={'48%'}
                   placeholder="IPS 유형"
                   options={ipsTypeOptions}
-                  allowClear
                 />
                 <CmsSelect
                   width={'48%'}

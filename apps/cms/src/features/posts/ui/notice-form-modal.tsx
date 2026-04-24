@@ -208,6 +208,7 @@ export function NoticeFormModal({
         open={deleteConfirmOpen}
         onCancel={() => setDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
+        preset="notice"
       />
       <ContentModal
         open={open}
@@ -254,7 +255,6 @@ export function NoticeFormModal({
                 rules={[{ required: true, message: '카테고리를 선택해 주세요.' }]}
               >
                 <CmsSelect
-                  allowClear
                   placeholder="카테고리 선택"
                   options={categorySelectOptions}
                   inputSize="large"

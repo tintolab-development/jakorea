@@ -37,17 +37,29 @@ export function shouldShowAdminRegisteredMemberDetailCaption(user: UserLike): bo
   return Boolean(user.registeredByAdmin && !user.identitySelfSignupCompletedAfterAdminRegistration)
 }
 
+/** CMS에 로그인한 운영 관리자(관리자 계정) 여부 — `AdminLevel` 무관 */
+export function isCmsAdminUser(currentUser: CurrentUserLike | null | undefined): boolean {
+  return currentUser?.role === 'ADMIN'
+}
+
 /**
- * 회원 상세 기본 탭 — 관리자 코멘트 섹션 노출.
- * 회원 권한 승인 **[권한 승인 현황]이 승인 완료(APPROVED)** 인 경우에만 노출한다.
+ * 대상 회원만 볼 때 — 권한 승인이 **승인 완료(APPROVED)** 인지.
+ * (`shouldShowAdminCommentSectionForViewer`에서 비관리자 로그인 주체용 방어 분기에 사용)
  */
 export function shouldShowAdminCommentSection(user: PermissionApprovalUserLike): boolean {
   return user.permissionApprovalStatus === 'APPROVED'
 }
 
-/** CMS에 로그인한 운영 관리자(관리자 계정) 여부 — `AdminLevel` 무관 */
-export function isCmsAdminUser(currentUser: CurrentUserLike | null | undefined): boolean {
-  return currentUser?.role === 'ADMIN'
+/**
+ * 회원 상세 기본 탭 — [관리자 코멘트] 블록 노출.
+ * CMS에 **관리자(`role === 'ADMIN'`)** 로 로그인한 경우 대상의 권한 승인 현황과 관계없이 항상 노출한다(열람 전용·편집 가능 여부는 별도).
+ * 그 외 로그인 주체에는 `shouldShowAdminCommentSection`과 동일하게 APPROVED일 때만 노출한다.
+ */
+export function shouldShowAdminCommentSectionForViewer(
+  currentUser: CurrentUserLike | null | undefined,
+  targetUser: PermissionApprovalUserLike
+): boolean {
+  return isCmsAdminUser(currentUser) || shouldShowAdminCommentSection(targetUser)
 }
 
 /** 마스터 관리자 여부 */

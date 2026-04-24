@@ -56,13 +56,15 @@
   width: 100%;
 }
 
-.account-payment-confirm-modal__footer-actions .app-button--large {
+.account-payment-confirm-modal__footer-actions .cms-button.cms-button--medium {
   min-width: 120px;
   width: auto;
 }
 
 /* teal-header-modal 푸터 기본 120×40 오버라이드 — 계좌 지급 완료 160×40 */
-.account-payment-confirm-modal.content-modal .teal-header-modal__footer .account-payment-confirm-modal__submit-btn.app-button {
+.account-payment-confirm-modal.content-modal
+  .teal-header-modal__footer
+  .account-payment-confirm-modal__submit-btn.cms-button.ant-btn {
   width: 160px !important;
   min-width: 160px !important;
   max-width: 160px !important;

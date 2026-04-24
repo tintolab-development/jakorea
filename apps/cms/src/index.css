@@ -137,11 +137,16 @@ body
   content: '*' !important;
 }
 
-/* 테이블 행 호버: 전체 영역 통일 (#01A1AF opacity 0.06). 선택된 Ant Table 행은 tr 배경으로 호버색 덮지 않음 */
+/* 테이블 행 호버: 기본은 미적용, 클릭 가능한 행/테이블에서만 노출 */
 table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
-  background: var(--color-table-row-hover) !important;
+  background: transparent !important;
 }
 
+table:not(.ant-picker-content) tr[class*='clickable']:hover:not(.ant-table-row-selected),
+table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-selected),
+[class*='--clickable'] .ant-table-tbody > tr:hover:not(.ant-table-row-selected) {
+  background: var(--color-table-row-hover) !important;
+}
 
 .table-header-actions {
   height: 100%;
@@ -198,7 +203,6 @@ table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
   line-height: 140%; /* 25.2px */
   padding: 0 10px 0 8px;
 }
-
 .info-section-desc {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard;
@@ -212,6 +216,10 @@ table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
 .detail-info-form--gap {
   margin-top: 32px;
 }
+.detail-info-form--gap-bottom {
+  margin-bottom: 52px;
+}
+
 .detail-info-form-inputs-wrapper {
   display: flex;
   flex-direction: row;
@@ -243,29 +251,13 @@ table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
   flex-shrink: 0;
 }
 
-.detail-info-form-inputs-separator {
-  display: inline-block;
-  width: 1px;
-  height: 13px;
-  margin: 0 12px;
-  padding: 0;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  align-self: center;
-  opacity: 0.5;
-  background: var(--default-BK, #3d3d3d);
-  vertical-align: middle;
-  font-size: 0;
-  line-height: 0;
-  overflow: hidden;
-  color: transparent;
-  user-select: none;
-}
-
 .text-decoration-underline {
   text-decoration: underline;
 }
 
+.nowrap {
+  white-space: nowrap;
+}
 .fs-16 {
   font-size: 16px;
 }
@@ -273,4 +265,13 @@ table:not(.ant-picker-content) tr:hover:not(.ant-table-row-selected) {
 .calendar-layout {
   display: flex;
   gap: 16px;
+}
+
+/* Toast UI Editor 본문 타이포 공통 */
+.toastui-editor-defaultUI .toastui-editor-contents,
+.toastui-editor-defaultUI .toastui-editor-contents p,
+.toastui-editor-defaultUI .toastui-editor-contents li,
+.toastui-editor-defaultUI .toastui-editor-contents td,
+.toastui-editor-defaultUI .toastui-editor-contents th {
+  font-size: 15px;
 }

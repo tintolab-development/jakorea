@@ -4,9 +4,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Alert, Checkbox, Tabs } from 'antd'
+import { Alert, Tabs } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { isMasterAdmin } from '@/shared/utils/permissions'
+import { CmsCheckbox } from '@/shared/ui'
 import type {
   AdminPermissionCategoryDef,
   AdminPermissionFlags,
@@ -16,20 +17,12 @@ import { ADMIN_PERMISSION_ROLE_TABS } from '@/types/admin-permission-settings-ui
 import {
   ADMIN_PERMISSION_CATEGORIES,
   ADMIN_PERMISSION_ROLE_LABELS,
+  PARTNER_UNCHECKED_PERMISSION_IDS,
+  PM_UNCHECKED_PERMISSION_IDS,
   createInitialPermissionsByRole,
   isValidRoleTab,
 } from './admin-permission-settings-ui-data'
 import './permission-customization-page.css'
-import { AppButton } from '@/shared/ui/app-button'
-
-function categoryCheckboxState(category: AdminPermissionCategoryDef, flags: AdminPermissionFlags) {
-  const ids = category.items.map(i => i.id)
-  const values = ids.map(id => flags[id] ?? false)
-  const allChecked = values.length > 0 && values.every(Boolean)
-  const noneChecked = values.every(v => !v)
-  const indeterminate = !allChecked && !noneChecked
-  return { allChecked, indeterminate }
-}
 
 interface CategoryCardsProps {
   role: AdminPermissionRoleTab
@@ -39,20 +32,39 @@ interface CategoryCardsProps {
 }
 
 function CategoryCards({ role, flags, onItemChange, onCategorySelectAll }: CategoryCardsProps) {
+  const isMasterRole = role === 'master'
+  const isPmRole = role === 'pm'
+  const isPartnerRole = role === 'partner'
+  const isViewerRole = role === 'viewer'
+  const isRoleLocked = isMasterRole || isPmRole || isPartnerRole || isViewerRole
+  const pmUncheckedSet = new Set<string>(PM_UNCHECKED_PERMISSION_IDS)
+  const partnerUncheckedSet = new Set<string>(PARTNER_UNCHECKED_PERMISSION_IDS)
+
+  const isItemChecked = (itemId: string) => {
+    if (isMasterRole) return true
+    if (isPmRole) return !pmUncheckedSet.has(itemId)
+    if (isPartnerRole) return !partnerUncheckedSet.has(itemId)
+    return flags[itemId] ?? false
+  }
+
   return (
     <div className="permission-customization-page__grid">
       {ADMIN_PERMISSION_CATEGORIES.map(category => {
-        const { allChecked, indeterminate } = categoryCheckboxState(category, flags)
+        const values = category.items.map(item => isItemChecked(item.id))
+        const allChecked = values.length > 0 && values.every(Boolean)
+        const noneChecked = values.every(v => !v)
+        const indeterminate = !allChecked && !noneChecked
         return (
           <div
             key={`${role}-${category.id}`}
             className="permission-customization-page__category-card"
           >
             <div className="permission-customization-page__card-head">
-              <Checkbox
+              <CmsCheckbox
                 className="permission-customization-page__card-head-checkbox"
                 checked={allChecked}
                 indeterminate={indeterminate}
+                disabled={isRoleLocked}
                 onChange={e => onCategorySelectAll(category, e.target.checked)}
               />
               <span className="permission-customization-page__card-head-title">
@@ -62,13 +74,14 @@ function CategoryCards({ role, flags, onItemChange, onCategorySelectAll }: Categ
             <div className="permission-customization-page__card-body">
               {category.items.map(item => (
                 <div key={item.id} className="permission-customization-page__item-row">
-                  <Checkbox
+                  <CmsCheckbox
                     className="permission-customization-page__item-checkbox"
-                    checked={flags[item.id] ?? false}
+                    checked={isItemChecked(item.id)}
+                    disabled={isRoleLocked}
                     onChange={e => onItemChange(item.id, e.target.checked)}
                   >
                     {item.label}
-                  </Checkbox>
+                  </CmsCheckbox>
                 </div>
               ))}
             </div>
@@ -137,10 +150,6 @@ export function PermissionCustomizationPage() {
     )
   }
 
-  const handlePersonalDetailClick = () => {
-    window.alert('준비 중입니다.')
-  }
-
   if (!user || !isMasterAdmin(user)) {
     return (
       <div style={{ padding: 24 }}>
@@ -160,11 +169,6 @@ export function PermissionCustomizationPage() {
         className="permission-customization-page__tabs"
         activeKey={activeRole}
         onChange={handleTabChange}
-        tabBarExtraContent={
-          <AppButton type="primary" size="filter-wide" onClick={handlePersonalDetailClick}>
-            개인정보 상세보기
-          </AppButton>
-        }
         items={ADMIN_PERMISSION_ROLE_TABS.map(tab => ({
           key: tab,
           label: ADMIN_PERMISSION_ROLE_LABELS[tab],

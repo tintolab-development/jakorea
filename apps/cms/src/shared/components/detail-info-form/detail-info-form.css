@@ -300,3 +300,26 @@
 .detail-info-form__name-block-cell--r2 {
   grid-area: nbR2;
 }
+
+/**
+ * Field·td 값 줄 인라인 세로 디바이더 (DetailInfoFormTdDivider / InputsSeparator)
+ * — opacity 0.5, default-BK, 1×13px, 양옆 12px (총 구간 간격 24px + 막대 1px)
+ */
+.detail-info-form-inputs-separator {
+  display: inline-block;
+  width: 1px;
+  height: 13px;
+  margin: 0 12px;
+  padding: 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  align-self: center;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
+  vertical-align: middle;
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
+  color: transparent;
+  user-select: none;
+}

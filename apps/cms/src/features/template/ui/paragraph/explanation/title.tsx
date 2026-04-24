@@ -1,19 +1,26 @@
 import dayjs, { type Dayjs } from 'dayjs'
-import type { SurveyDescriptionTitleWithPeriodParagraph } from '@/features/template/model/survey-draft.schema'
-import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
-import { CmsToggle } from '@/shared/ui/cms-toggle'
+import type { TitleWithPeriodParagraph } from '@/features/template/model/writing-form-draft.schema'
+import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
 import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
-import { SurveyParagraphCardActionsMinimal } from '@/features/template/ui/paragraph/shared/paragraph-actions'
+
+const DEFAULT_TITLE_PLACEHOLDER = '타이틀을 입력해 주세요'
+const DEFAULT_PERIOD_LABEL = '작성 기간'
 
 /** 설명글 제목형 */
 export function ExplanationTitle({
   paragraph,
   onChange,
   isEditMode,
+  titlePh = DEFAULT_TITLE_PLACEHOLDER,
+  periodLabel = DEFAULT_PERIOD_LABEL,
 }: {
-  paragraph: SurveyDescriptionTitleWithPeriodParagraph
-  onChange: (next: SurveyDescriptionTitleWithPeriodParagraph) => void
+  paragraph: TitleWithPeriodParagraph
+  onChange: (next: TitleWithPeriodParagraph) => void
   isEditMode: boolean
+  /** 제목 입력 placeholder (미지정 시 `타이틀을 입력해 주세요`) */
+  titlePh?: string
+  /** 기간 입력란 위 라벨 (미지정 시 `작성 기간`) */
+  periodLabel?: string
 }) {
   if (!isEditMode) {
     return null
@@ -25,14 +32,14 @@ export function ExplanationTitle({
   ]
 
   return (
-    <div className="survey-editor-body">
+    <div className="form-editor-body">
       <ParagraphInput
         type="title"
         isEditMode={isEditMode}
         required
         value={paragraph.surveyTitle}
         onChange={next => onChange({ ...paragraph, surveyTitle: next })}
-        placeholder="타이틀을 입력해 주세요"
+        placeholder={titlePh}
       />
 
       <ParagraphInput
@@ -44,47 +51,31 @@ export function ExplanationTitle({
       />
 
       {paragraph.showWritingPeriodOnForm ? (
-        <div>
-          <span>설문 기간</span>
-          <CmsDateRangePicker
-            width="100%"
-            value={rangeValue}
-            placeholder={['바로 시작', '마감 없음']}
-            onChange={dates => {
-              const start = dates?.[0] ?? null
-              const end = dates?.[1] ?? null
-              if (start && end) {
-                onChange({
-                  ...paragraph,
-                  startAt: start.toISOString(),
-                  endAt: end.toISOString(),
-                  periodMode: 'custom',
-                })
-              } else {
-                onChange({
-                  ...paragraph,
-                  startAt: null,
-                  endAt: null,
-                  periodMode: 'immediate',
-                })
-              }
-            }}
-          />
-        </div>
+        <ParagraphDatePicker
+          mode="range"
+          style={{ marginTop: '16px' }}
+          label={periodLabel}
+          value={rangeValue}
+          placeholder={['바로 시작', '마감 없음']}
+          onChange={([start, end]) => {
+            if (start && end) {
+              onChange({
+                ...paragraph,
+                startAt: start.toISOString(),
+                endAt: end.toISOString(),
+                periodMode: 'custom',
+              })
+            } else {
+              onChange({
+                ...paragraph,
+                startAt: null,
+                endAt: null,
+                periodMode: 'immediate',
+              })
+            }
+          }}
+        />
       ) : null}
-
-      <div>
-        <div>
-          <CmsToggle
-            label="작성 기간"
-            checked={paragraph.showWritingPeriodOnForm}
-            onChange={checked => onChange({ ...paragraph, showWritingPeriodOnForm: checked })}
-          />
-        </div>
-        <div>
-          <SurveyParagraphCardActionsMinimal />
-        </div>
-      </div>
     </div>
   )
 }

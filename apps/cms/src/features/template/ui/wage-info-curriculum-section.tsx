@@ -84,7 +84,6 @@ export function WageInfoCurriculumSection() {
               mode="multiple"
               placeholder="선택 (복수)"
               options={paymentItemOptions}
-              allowClear
             />
           }
           view="-"
@@ -97,7 +96,6 @@ export function WageInfoCurriculumSection() {
               mode="multiple"
               placeholder="선택 (복수)"
               options={deductionItemOptions}
-              allowClear
             />
           }
           view="-"

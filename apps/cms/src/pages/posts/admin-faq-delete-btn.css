@@ -1,17 +1,25 @@
-/* FAQ 목록·상세 — 삭제 버튼 라벨 타이포(수정 모달「FAQ 삭제」와 동일) */
-.admin-faq-delete-btn.ant-btn {
+/**
+ * FAQ 목록·상세 —「FAQ 삭제」/「삭제」버튼 라벨 텍스트 스펙
+ * color: #C32F4A; text-align: center; font-family: Pretendard; font-size: 14px;
+ * font-style: normal; font-weight: 600; line-height: 150%; /* 21px */
+ *
+ * `cms-button--large`+antd가 버튼 루트에 16px를 두고 ·ant ·span 규칙이 있어
+ * 단순 .cms-button__label 선언이 밀릴 수 있어 구체성·!important로 고정
+ */
+.admin-faq-delete-btn.cms-button.cms-button--delete.ant-btn {
   text-align: center;
 }
 
-.admin-faq-delete-btn .cms-button__label {
-  text-align: center;
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 150%;
+.admin-faq-delete-btn.cms-button.cms-button--delete.cms-button--large.ant-btn .cms-button__label,
+.admin-faq-delete-btn.cms-button.cms-button--delete.cms-button--medium.ant-btn .cms-button__label {
+  text-align: center !important;
+  font-family: Pretendard, var(--font-family-primary, sans-serif) !important;
+  font-size: 14px !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+  line-height: 150% !important; /* 21px */
 }
 
-.admin-faq-delete-btn.ant-btn:not(:disabled):not(.ant-btn-disabled) .cms-button__label {
+.admin-faq-delete-btn.cms-button.cms-button--delete.ant-btn:not(:disabled):not(.ant-btn-disabled) .cms-button__label {
   color: #c32f4a !important;
 }

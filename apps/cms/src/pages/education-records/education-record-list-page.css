@@ -35,16 +35,28 @@
 }
 
 .education-record-list-page__top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-12, 12px);
   width: 100%;
   min-width: 0;
   margin-bottom: var(--spacing-16, 16px);
+}
+
+.education-record-list-page__top-nav-actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
 }
 
 .education-record-list-page__tabs {
   display: flex;
   align-items: flex-end;
   gap: 0;
-  width: 100%;
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .education-record-list-page__tab {

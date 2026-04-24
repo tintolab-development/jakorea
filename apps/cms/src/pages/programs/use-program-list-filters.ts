@@ -28,13 +28,13 @@ export function useProgramListFilters(
 
   // 프로그램 타입 구분 (교육/경제교육/봉사)
   const programType = useMemo<'education' | 'economy' | 'volunteer' | 'all'>(() => {
-    if (location.pathname === '/programs/economy-education') return 'economy'
-    if (
-      location.pathname === '/programs/education' ||
-      location.pathname.startsWith('/programs/education/')
-    )
-      return 'education'
-    if (location.pathname === '/programs/volunteer') return 'volunteer'
+    const p = location.pathname.replace(/\/$/, '') || '/'
+    if (p === '/programs/economy-education' || p.startsWith('/programs/economy-education/'))
+      return 'economy'
+    if (p === '/programs/company-school' || p.startsWith('/programs/company-school/')) return 'economy'
+    if (p === '/programs/education' || p.startsWith('/programs/education/')) return 'education'
+    if (p === '/programs/general' || p.startsWith('/programs/general/')) return 'education'
+    if (p === '/programs/volunteer') return 'volunteer'
     return 'all'
   }, [location.pathname])
 
@@ -44,9 +44,17 @@ export function useProgramListFilters(
   const categoryTab = (params.category as ProgramCategory | 'all') || 'all'
 
   // 진행현황 단일 소스: URL params.status
-  const isStudentRecruitmentRoute = location.pathname === '/programs/education/student-recruitment'
+  const p = location.pathname.replace(/\/$/, '') || '/'
+  const isStudentRecruitmentRoute =
+    p === '/programs/education/student-recruitment' ||
+    p === '/programs/general/student-recruitment' ||
+    p === '/programs/company-school/student-recruitment' ||
+    p === '/programs/economy-education/student-recruitment'
   const isInstructorRecruitmentRoute =
-    location.pathname === '/programs/education/instructor-recruitment'
+    p === '/programs/education/instructor-recruitment' ||
+    p === '/programs/general/instructor-recruitment' ||
+    p === '/programs/company-school/instructor-recruitment' ||
+    p === '/programs/economy-education/instructor-recruitment'
   const economyStatusValues: EconomyStatusFilter[] = [
     'economy_scheduled',
     'economy_in_progress',

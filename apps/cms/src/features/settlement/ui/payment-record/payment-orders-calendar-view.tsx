@@ -1,6 +1,7 @@
 /**
  * 정산 관리 > 지급조서 확인 — 캘린더 뷰
- * 레이아웃: participating-institutions-calendar-view.css + 공통 ProgramCalendar
+ * CalendarMain(이벤트 모드) + CalendarSubRightSettlementList, 공통 정산 툴팁/리스트 UI
+ * 프로그램별·강사별 모두 **월간**만 (주간 토글 없음).
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -8,26 +9,27 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import { Checkbox } from 'antd'
 import {
-  PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST,
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminProcessingStatus,
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
 import {
-  PAYMENT_ORDER_STATUS_LIST_BG,
-  PAYMENT_ORDER_STATUS_LIST_BORDER,
-  PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR,
-} from '@/shared/constants/payment-order-status-list-colors'
+  settlementCalendarPrimaryTitle,
+  type InstructorSettlementInvoiceDetail,
+  type InstructorSettlementListRow,
+  type InstructorSettlementUiStatus,
+} from '@/data/mock/instructor-member-settlements'
 import {
-  SCHEDULE_COLORS,
-  type ScheduleColorPair,
-} from '@/features/program/ui/program-schedule-colors'
-import type { ProgramCalendarEventItem } from '@/shared/components/program-calendar'
-import { PaymentOrdersCalendarGrid } from './payment-orders-calendar-grid'
-import '@/features/program/ui/detail-modal/program-status/participating-institutions-calendar-view.css'
-import './payment-orders-calendar-view.css'
+  CalendarMain,
+  CalendarSubRightSettlementList,
+  settlementRowFromCalendarItem,
+  settlementEventStatusColorPair,
+  type CalendarItem,
+} from '@/shared/components/calendar'
+import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import '@/shared/components/calendar/styles/calendar.css'
+import '@/shared/components/program-calendar.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -57,12 +59,177 @@ function pickAnchorDateForExposure(
   return min ?? dayjs(rows[0].referenceDate)
 }
 
-function formatWonPlus(amount: number): string {
-  return `+${amount.toLocaleString('ko-KR')}원`
+function paymentOrderStatusToInstructorUiStatus(
+  s: PaymentOrderAdminProcessingStatus
+): InstructorSettlementUiStatus {
+  switch (s) {
+    case 'pending':
+      return 'awaiting_confirmation'
+    case 'confirmed':
+      return 'payment_statement_verified'
+    case 'correction':
+      return 'payment_correction_requested'
+    case 'application_rejected':
+      return 'application_rejected'
+    default:
+      return 'none'
+  }
 }
 
-function formatCalendarAmount(_status: PaymentOrderAdminProcessingStatus, amount: number): string {
-  return formatWonPlus(amount)
+function paymentStatusShortLabelForCalendarPreview(
+  s: PaymentOrderAdminProcessingStatus
+): string {
+  const uiStatus = paymentOrderStatusToInstructorUiStatus(s)
+  switch (uiStatus) {
+    case 'awaiting_confirmation':
+      return '확인 대기'
+    case 'partial_confirmation':
+      return '확인 중'
+    case 'payment_statement_verified':
+      return '확인 완료'
+    case 'account_paid':
+      return '계좌 지급'
+    case 'payment_correction_requested':
+      return '정정 요청'
+    case 'application_rejected':
+      return '신청 반려'
+    default:
+      return '확인 대기'
+  }
+}
+
+/** 지급조서 확인 캘린더 한정: 정정 요청은 핑크 대신 빨간 톤 */
+function paymentOrderCalendarStatusColorPair(status: InstructorSettlementUiStatus): ScheduleColorPair {
+  if (status === 'payment_correction_requested') {
+    return settlementEventStatusColorPair('application_rejected')
+  }
+  return settlementEventStatusColorPair(status)
+}
+
+function paymentOrderStatusShortLabelFromUiStatus(status: InstructorSettlementUiStatus): string {
+  switch (status) {
+    case 'awaiting_confirmation':
+      return '확인 대기'
+    case 'partial_confirmation':
+      return '확인 중'
+    case 'payment_statement_verified':
+      return '확인 완료'
+    case 'account_paid':
+      return '계좌 지급'
+    case 'payment_correction_requested':
+      return '정정 요청'
+    case 'application_rejected':
+      return '신청 반려'
+    default:
+      return '확인 대기'
+  }
+}
+
+/** 지급조서 확인 캘린더 한정: tooltip 상태 문구 축약 */
+function renderPaymentOrdersEventsTooltipContent({ events: dayEvents }: { events: CalendarItem[] }) {
+  return (
+    <div className="program-calendar-schedule-panel">
+      {dayEvents.map(ev => {
+        const row = settlementRowFromCalendarItem(ev)
+        const colors = paymentOrderCalendarStatusColorPair(row.status)
+        return (
+          <div key={String(ev.id)} className="instructor-settlement-preview">
+            <div className="instructor-settlement-preview__title">
+              {settlementCalendarPrimaryTitle(row)}
+            </div>
+            <div>
+              <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
+                {paymentOrderStatusShortLabelFromUiStatus(row.status)}
+              </span>
+              <span className="program-calendar-schedule-panel__text">
+                <span className="program-calendar-schedule-panel__sep">|</span> +
+                {row.scheduledAmount.toLocaleString()}원
+              </span>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function placeholderInvoiceForPaymentOrderCalendar(
+  programName: string,
+  institutionName: string,
+  lectureDateSessions: string,
+  amount: number,
+  status: InstructorSettlementUiStatus
+): InstructorSettlementInvoiceDetail {
+  return {
+    programName,
+    sessionProgress: '—',
+    operationPeriod: '—',
+    paymentStatementStatus: status,
+    expectedTransferDate: '—',
+    lectureFeeBasis: '—',
+    businessIncomeEarner: '해당 없음',
+    institutionName,
+    lectureDateSessions,
+    lineItems: [
+      {
+        key: 'estimated',
+        산정항목: '예상 정산',
+        항목설명: '지급조서 확인(관리) 캘린더',
+        정산금액: amount,
+        isPositive: true,
+      },
+    ],
+    withholdingRatePercent: 0,
+    withholdingAmount: 0,
+    totalFormulaLabel: '예상 정산',
+    totalAmount: amount,
+  }
+}
+
+function paymentEventToSettlementListRow(
+  ev: PaymentOrderCalendarEvent
+): InstructorSettlementListRow {
+  const uiStatus = paymentOrderStatusToInstructorUiStatus(ev.status)
+  const calendarDate = ev.date.format('YYYY-MM-DD')
+  const isProgramExposure = ev.exposure === 'program'
+  const programRow = ev.sourceProgramRow
+  const isProgram = isProgramExposure && programRow != null
+  const programNameForRow = isProgram
+    ? ev.bracketTitle
+    : ev.sourceInstructorRow
+      ? ev.cardSubtitle || ev.sourceInstructorRow.relatedProgramNames.join(', ') || '—'
+      : ev.bracketTitle
+  const institutionName = isProgram
+    ? `정산 대상 강사 ${programRow.instructorCount}명`
+    : ev.cardSubtitle || '—'
+  const invoiceProgramName = isProgram
+    ? programRow.programName
+    : ev.sourceInstructorRow?.relatedProgramNames[0] ?? ev.cardSubtitle ?? programNameForRow
+
+  return {
+    id: ev.id,
+    no: isProgram ? programRow.no : (ev.sourceInstructorRow?.no ?? 0),
+    programName: programNameForRow,
+    instructorName: isProgram
+      ? undefined
+      : ev.sourceInstructorRow
+        ? instructorDisplayTitle(ev.sourceInstructorRow.instructorName)
+        : undefined,
+    settlementListTitleVariant: isProgramExposure ? 'bracket-program' : 'plain-instructor',
+    institutionName,
+    lectureDateDisplay: ev.date.format('YYYY.MM.DD (ddd)'),
+    calendarDate,
+    status: uiStatus,
+    scheduledAmount: ev.amount,
+    detailAvailable: true,
+    invoice: placeholderInvoiceForPaymentOrderCalendar(
+      invoiceProgramName,
+      '—',
+      `${calendarDate} · ${ev.cardSubtitle || ''}`,
+      ev.amount,
+      uiStatus
+    ),
+  }
 }
 
 export interface PaymentOrderCalendarEvent {
@@ -145,7 +312,6 @@ function eventsFromInstructors(
   return out
 }
 
-/** 주간 격자 태그 파스텔 표면(이벤트 id 기준으로 안정적으로 순환) */
 const WEEK_GRID_PASTEL_SURFACES: Array<{ bg: string; border: string; text: string }> = [
   { bg: '#F0EEF9', border: '#E4DFF5', text: '#3d3d3d' },
   { bg: '#FFEDED', border: '#F5D9D9', text: '#3d3d3d' },
@@ -163,155 +329,6 @@ function hashWeekGridTone(id: string): number {
 
 function weekGridSurfaceForPaymentEvent(id: string): { bg: string; border: string; text: string } {
   return WEEK_GRID_PASTEL_SURFACES[hashWeekGridTone(id) % WEEK_GRID_PASTEL_SURFACES.length]
-}
-
-function toProgramCalendarItems(events: PaymentOrderCalendarEvent[]): ProgramCalendarEventItem[] {
-  return events.map(ev => ({
-    id: ev.id,
-    startDate: ev.date.format('YYYY-MM-DD'),
-    endDate: ev.date.format('YYYY-MM-DD'),
-    startTime: ev.startTime,
-    endTime: ev.endTime,
-    title: `${formatCalendarAmount(ev.status, ev.amount)} | ${PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST[ev.status]}`,
-    timeGridLabel: ev.weekGridLabel ?? ev.bracketTitle,
-    weekGridSurface: weekGridSurfaceForPaymentEvent(String(ev.id)),
-    originalItem: ev,
-  }))
-}
-
-function PaymentOrdersCalendarRightPanel({
-  exposure,
-  selectedDate,
-  eventsForSelectedDate,
-  onPaymentStatusDetailClick,
-}: {
-  exposure: PaymentOrdersCalendarExposure
-  selectedDate: Dayjs
-  eventsForSelectedDate: PaymentOrderCalendarEvent[]
-  onPaymentStatusDetailClick?: (payload: PaymentOrdersCalendarDetailClick) => void
-}) {
-  const [selectedCardIds, setSelectedCardIds] = useState<string[]>([])
-
-  const handleCardActivate = (ev: PaymentOrderCalendarEvent) => {
-    if (!onPaymentStatusDetailClick) return
-    if (ev.exposure === 'program' && ev.sourceProgramRow) {
-      onPaymentStatusDetailClick({ exposure: 'program', row: ev.sourceProgramRow })
-      return
-    }
-    if (ev.exposure === 'instructor' && ev.sourceInstructorRow) {
-      onPaymentStatusDetailClick({ exposure: 'instructor', row: ev.sourceInstructorRow })
-    }
-  }
-
-  const toggleSelected = (id: string) => {
-    setSelectedCardIds(prev =>
-      prev.includes(id) ? prev.filter(cardId => cardId !== id) : [...prev, id]
-    )
-  }
-
-  return (
-    <div className="payment-orders-calendar__calendar-right">
-      <div className="payment-orders-calendar__calendar-right-scroll">
-        {exposure !== 'instructor' && (
-          <div className="payment-orders-calendar__calendar-right-sticky-head">
-            <span className="payment-orders-calendar__calendar-right-sticky-date">
-              {selectedDate.format('YYYY.MM.DD')}
-            </span>
-            <span className="payment-orders-calendar__calendar-right-sticky-meta">
-              {eventsForSelectedDate.length}건
-            </span>
-          </div>
-        )}
-        <div className="payment-orders-calendar__calendar-right-cards">
-        {eventsForSelectedDate.map(ev => (
-          // 카드 클릭은 상세 열기, 체크박스는 선택 상태만 관리
-          <div
-            key={ev.id}
-            className={`payment-orders-calendar__card payment-orders-calendar__card--${ev.status} ${
-              selectedCardIds.includes(ev.id) ? 'payment-orders-calendar__card--selected' : ''
-            }`}
-            style={{
-              background: PAYMENT_ORDER_STATUS_LIST_BG[ev.status],
-              borderColor: PAYMENT_ORDER_STATUS_LIST_BORDER[ev.status],
-            }}
-          >
-            <div
-              className="payment-orders-calendar__card-main"
-              role="button"
-              tabIndex={0}
-              onClick={() => handleCardActivate(ev)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  handleCardActivate(ev)
-                }
-              }}
-            >
-              <div className="payment-orders-calendar__card-content">
-                <div className="payment-orders-calendar__card-title" title={ev.bracketTitle}>
-                  {ev.bracketTitle}
-                </div>
-                <div className="payment-orders-calendar__card-status-row">
-                  <span
-                    className={`payment-orders-calendar__card-status payment-orders-calendar__card-status--${ev.status}`}
-                    style={{ color: PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR[ev.status] }}
-                  >
-                    {PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST[ev.status]}
-                  </span>
-                  <span className="payment-orders-calendar__card-divider" aria-hidden />
-                  <span className="payment-orders-calendar__card-amount">
-                    {formatCalendarAmount(ev.status, ev.amount)}
-                  </span>
-                </div>
-              </div>
-              <div
-                className="payment-orders-calendar__card-checkbox"
-                onClick={e => e.stopPropagation()}
-              >
-                <Checkbox
-                  checked={selectedCardIds.includes(ev.id)}
-                  onChange={() => toggleSelected(ev.id)}
-                />
-              </div>
-            </div>
-          </div>
-        ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function PaymentOrderDayTooltipContent({ items }: { items: PaymentOrderCalendarEvent[] }) {
-  return (
-    <div className="payment-orders-calendar-tag-preview">
-      {items.map(ev => {
-        const isInstructor = ev.exposure === 'instructor'
-        const headline = isInstructor ? ev.bracketTitle : `[${ev.bracketTitle}]`
-        return (
-          <div key={ev.id} className="payment-orders-calendar-tag-preview__block">
-            <span className="payment-orders-calendar-tag-preview__title" title={headline}>
-              {headline}
-            </span>
-            <div className="payment-orders-calendar-tag-preview__row2">
-              <span
-                className="payment-orders-calendar-tag-preview__status"
-                style={{ color: PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR[ev.status] }}
-              >
-                {PAYMENT_ORDER_CALENDAR_STATUS_SHORT_LIST[ev.status]}
-              </span>
-              <span className="payment-orders-calendar-tag-preview__sep" aria-hidden>
-                |
-              </span>
-              <span className="payment-orders-calendar-tag-preview__amount">
-                {formatCalendarAmount(ev.status, ev.amount)}
-              </span>
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
 }
 
 export type PaymentOrdersCalendarDetailClick =
@@ -336,15 +353,23 @@ export interface PaymentOrdersCalendarViewProps {
   onPaymentStatusDetailClick?: (payload: PaymentOrdersCalendarDetailClick) => void
 }
 
-function resolvePaymentOrderEventColors(event: ProgramCalendarEventItem): ScheduleColorPair {
-  const ev = event.originalItem as PaymentOrderCalendarEvent
-  const { status } = ev
-  return {
-    ...SCHEDULE_COLORS[0],
-    text: PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR[status],
-    bg: PAYMENT_ORDER_STATUS_LIST_BG[status],
-    border: PAYMENT_ORDER_STATUS_LIST_BORDER[status],
-  } as ScheduleColorPair
+function resolveSelectedDateWithRange(
+  range: [Dayjs, Dayjs] | null | undefined,
+  anchor: Dayjs,
+  fallback?: Dayjs
+): Dayjs {
+  const from = range?.[0]
+  const to = range?.[1]
+  if (!from || !to) return fallback ?? anchor
+
+  const today = dayjs()
+  if (!today.isBefore(from, 'day') && !today.isAfter(to, 'day')) {
+    return today
+  }
+  if (fallback && !fallback.isBefore(from, 'day') && !fallback.isAfter(to, 'day')) {
+    return fallback
+  }
+  return from
 }
 
 function filterEventsByDateRange<T extends { date: Dayjs }>(
@@ -354,6 +379,18 @@ function filterEventsByDateRange<T extends { date: Dayjs }>(
   if (!range?.[0] || !range[1]) return items
   const [from, to] = range
   return items.filter(ev => !ev.date.isBefore(from, 'day') && !ev.date.isAfter(to, 'day'))
+}
+
+type CalendarMainEventRow = {
+  id: string
+  title: string
+  startDate: string
+  endDate: string
+  originalItem: InstructorSettlementListRow
+  startTime?: string
+  endTime?: string
+  timeGridLabel?: string
+  weekGridSurface?: { bg: string; border: string; text: string }
 }
 
 export function PaymentOrdersCalendarView({
@@ -369,11 +406,66 @@ export function PaymentOrdersCalendarView({
       exposure === 'program'
         ? eventsFromPrograms(programRows)
         : eventsFromInstructors(instructorRows)
-    /** 프로그램·강사: 상단 기간 필터가 있으면 그 구간 안의 출강일만 캘린더에 표시 */
     return filterEventsByDateRange(raw, filterDateRange)
   }, [exposure, programRows, instructorRows, filterDateRange])
 
-  const calendarItems = useMemo(() => toProgramCalendarItems(events), [events])
+  const eventById = useMemo(() => new Map(events.map(e => [e.id, e] as const)), [events])
+
+  const uniqueSettlementRows = useMemo(() => {
+    const m = new Map<string, InstructorSettlementListRow>()
+    for (const ev of events) {
+      const row = paymentEventToSettlementListRow(ev)
+      m.set(row.id, row)
+    }
+    return [...m.values()]
+  }, [events])
+
+  const calendarMainEvents = useMemo((): CalendarMainEventRow[] => {
+    return events.map(ev => {
+      const row = paymentEventToSettlementListRow(ev)
+      return {
+        id: ev.id,
+        title: `+${row.scheduledAmount.toLocaleString('ko-KR')}원 | ${paymentStatusShortLabelForCalendarPreview(
+          ev.status
+        )}`,
+        startDate: ev.date.format('YYYY-MM-DD'),
+        endDate: ev.date.format('YYYY-MM-DD'),
+        originalItem: row,
+        startTime: ev.startTime,
+        endTime: ev.endTime,
+        timeGridLabel: ev.weekGridLabel ?? ev.bracketTitle,
+        weekGridSurface: weekGridSurfaceForPaymentEvent(ev.id),
+      }
+    })
+  }, [events])
+
+  const overrideEventColorMap = useCallback((items: CalendarItem[]) => {
+    const map = new Map<string | number, ScheduleColorPair>()
+    for (const item of items) {
+      const ev = eventById.get(String(item.id))
+      if (!ev) continue
+      map.set(item.id, paymentOrderCalendarStatusColorPair(paymentOrderStatusToInstructorUiStatus(ev.status)))
+    }
+    return map
+  }, [eventById])
+
+  const resolveSettlementRowColors = useCallback(
+    (row: InstructorSettlementListRow): ScheduleColorPair | undefined => {
+      const ev = eventById.get(row.id)
+      if (!ev) return undefined
+      return paymentOrderCalendarStatusColorPair(paymentOrderStatusToInstructorUiStatus(ev.status))
+    },
+    [eventById]
+  )
+
+  const resolveSettlementBadgeLabel = useCallback(
+    (row: InstructorSettlementListRow): string | undefined => {
+      const ev = eventById.get(row.id)
+      if (!ev) return undefined
+      return paymentStatusShortLabelForCalendarPreview(ev.status)
+    },
+    [eventById]
+  )
 
   const anchor = useMemo(
     () => pickAnchorDateForExposure(exposure, programRows, instructorRows),
@@ -385,12 +477,9 @@ export function PaymentOrdersCalendarView({
     [filterDateRange, anchor]
   )
 
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(() => {
-    const from = filterDateRange?.[0]
-    const to = filterDateRange?.[1]
-    if (from && to) return from
-    return anchor
-  })
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(() =>
+    resolveSelectedDateWithRange(filterDateRange, anchor)
+  )
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => viewMonth)
 
   useEffect(() => {
@@ -399,142 +488,88 @@ export function PaymentOrdersCalendarView({
 
   useEffect(() => {
     setSelectedDate(prev => {
-      const from = filterDateRange?.[0]
-      const to = filterDateRange?.[1]
-      if (from && to) {
-        if (!prev.isBefore(from, 'day') && !prev.isAfter(to, 'day')) return prev
-        return from
-      }
-      return anchor
+      return resolveSelectedDateWithRange(filterDateRange, anchor, prev)
     })
   }, [filterDateRange, anchor])
-  const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
-  /** 프로그램·강사: 헤더에서 월간만 노출(주간 탭 숨김). `calendarMode`·주간 분기 로직은 유지 */
-  const effectiveCalendarMode = exposure === 'program' ? ('month' as const) : calendarMode
 
-  const eventsForSelectedDate = useMemo(
-    () => events.filter(ev => selectedDate.isSame(ev.date, 'day')),
-    [events, selectedDate]
-  )
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
+  /** 프로그램별·강사별 모두 월간만 사용 */
   const onSelectDate = useCallback(
     (date: Dayjs) => {
       setSelectedDate(date)
-      if (effectiveCalendarMode === 'week') {
-        setCurrentMonth(date)
-        onFilterDateRangeApply?.(oneMonthRangeMatchingFilter(date))
-      } else if (!date.isSame(currentMonth, 'month')) {
+      if (!date.isSame(currentMonth, 'month')) {
         setCurrentMonth(date.startOf('month'))
         onFilterDateRangeApply?.(oneMonthRangeMatchingFilter(date))
       }
     },
-    [effectiveCalendarMode, currentMonth, onFilterDateRangeApply]
+    [currentMonth, onFilterDateRangeApply]
   )
 
   const onMonthChange = useCallback(
     (next: Dayjs) => {
       setCurrentMonth(next)
       onFilterDateRangeApply?.(oneMonthRangeMatchingFilter(next))
-      if (effectiveCalendarMode === 'week') {
-        setSelectedDate(prev => {
-          const dow = prev.diff(prev.startOf('week'), 'day')
-          return next.startOf('week').add(dow, 'day')
-        })
-      }
     },
-    [effectiveCalendarMode, onFilterDateRangeApply]
-  )
-
-  const onModeChange = useCallback(
-    (mode: 'month' | 'week') => {
-      if (exposure === 'program') return
-      setCalendarMode(mode)
-      setSelectedDate(prev => {
-        if (mode === 'week') {
-          setCurrentMonth(prev)
-        } else {
-          setCurrentMonth(prev.startOf('month'))
-        }
-        return prev
-      })
-    },
-    [exposure]
-  )
-
-  const renderEventsTooltipContent = useCallback(
-    ({
-      events: tooltipEvents,
-    }: {
-      events: ProgramCalendarEventItem[]
-      colorMap: Map<string | number, ScheduleColorPair>
-    }) => (
-      <PaymentOrderDayTooltipContent
-        items={tooltipEvents.map(e => e.originalItem as PaymentOrderCalendarEvent)}
-      />
-    ),
-    []
+    [onFilterDateRangeApply]
   )
 
   const onTodayClick = useCallback(() => {
     const today = dayjs()
-    if (filterDateRange?.[0] && filterDateRange[1]) {
-      const [from, to] = filterDateRange
-      let d = today
-      if (d.isBefore(from, 'day')) d = from
-      else if (d.isAfter(to, 'day')) d = to
-      setSelectedDate(d)
-      setCurrentMonth(d.startOf('month'))
-      onFilterDateRangeApply?.(oneMonthRangeMatchingFilter(d))
-      return
-    }
     setSelectedDate(today)
-    if (effectiveCalendarMode === 'week') {
-      setCurrentMonth(today)
-    } else {
-      setCurrentMonth(today.startOf('month'))
-    }
+    setCurrentMonth(today.startOf('month'))
     onFilterDateRangeApply?.(oneMonthRangeMatchingFilter(today))
-  }, [filterDateRange, effectiveCalendarMode, onFilterDateRangeApply])
+  }, [onFilterDateRangeApply])
+
+  const handleSettlementRowClick = useCallback(
+    (row: InstructorSettlementListRow) => {
+      if (!onPaymentStatusDetailClick) return
+      const ev = eventById.get(row.id)
+      if (!ev) return
+      if (ev.exposure === 'program' && ev.sourceProgramRow) {
+        onPaymentStatusDetailClick({ exposure: 'program', row: ev.sourceProgramRow })
+        return
+      }
+      if (ev.exposure === 'instructor' && ev.sourceInstructorRow) {
+        onPaymentStatusDetailClick({ exposure: 'instructor', row: ev.sourceInstructorRow })
+      }
+    },
+    [eventById, onPaymentStatusDetailClick]
+  )
 
   return (
-    <div
-      className={[
-        'payment-orders-calendar-root',
-        exposure === 'instructor' ? 'payment-orders-calendar-root--instructor' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <div className="participating-institutions-calendar-layout">
-        <div className="participating-institutions-calendar-card">
-          <PaymentOrdersCalendarGrid
-            className="payment-orders-calendar__program-calendar"
-            selectedDate={selectedDate}
-            currentMonth={currentMonth}
-            mode={effectiveCalendarMode}
-            onSelectDate={onSelectDate}
-            onMonthChange={onMonthChange}
-            onModeChange={onModeChange}
-            onTodayClick={onTodayClick}
-            weekViewVariant={exposure === 'instructor' ? 'time-grid' : 'simple'}
-            scheduleOverlay="tooltip"
-            tooltipOverlayClassName="payment-orders-calendar-tooltip-overlay"
-            events={calendarItems}
-            resolveEventColors={resolvePaymentOrderEventColors}
-            eventsTooltipScope="full-day"
-            formatEventsOverflowText={n => `외 ${n}개의 항목`}
-            renderEventsTooltipContent={renderEventsTooltipContent}
-          />
-        </div>
-        <div className="participating-institutions-calendar-card participating-institutions-calendar-card--right payment-orders-calendar-card--right">
-          <PaymentOrdersCalendarRightPanel
-            key={`${exposure}-${selectedDate.format('YYYY-MM-DD')}`}
-            exposure={exposure}
-            selectedDate={selectedDate}
-            eventsForSelectedDate={eventsForSelectedDate}
-            onPaymentStatusDetailClick={onPaymentStatusDetailClick}
-          />
-        </div>
+    <div className="calendar-set">
+      <div className="calendar-main-container">
+        <CalendarMain
+          mode="month"
+          hideModeToggle
+          onModeChange={() => {}}
+          events={calendarMainEvents}
+          currentMonth={currentMonth}
+          selectedDate={selectedDate}
+          onSelectDate={onSelectDate}
+          onMonthChange={onMonthChange}
+          onTodayClick={onTodayClick}
+          selectedRowKeys={selectedRowKeys}
+          overrideEventColorMap={overrideEventColorMap}
+          eventsTooltipScope="full-day"
+          eventsTooltipTrigger="cell"
+          formatEventsOverflowText={n => `외 ${n}개의 항목`}
+        previewTooltipContent={renderPaymentOrdersEventsTooltipContent}
+          tooltipOverlayClassName="payment-orders-calendar-tooltip-overlay"
+        />
+      </div>
+      <div className="calendar-sub-right-list">
+        <CalendarSubRightSettlementList
+          key={`${exposure}-${selectedDate.format('YYYY-MM-DD')}`}
+          selectedDate={selectedDate}
+          rows={uniqueSettlementRows}
+          selectedRowKeys={selectedRowKeys}
+          onSelectionChange={setSelectedRowKeys}
+          onRowClick={handleSettlementRowClick}
+          resolveRowColors={resolveSettlementRowColors}
+          resolveBadgeLabel={resolveSettlementBadgeLabel}
+        />
       </div>
     </div>
   )

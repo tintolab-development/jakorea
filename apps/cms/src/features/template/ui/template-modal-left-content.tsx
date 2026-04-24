@@ -16,7 +16,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  TemplateFullpageModalCard,
+  ParagraphCard,
   TemplateFullpageModalCardDescription,
   TemplateFullpageModalCardTitle,
 } from './template-fullpage-modal'
@@ -68,22 +68,20 @@ interface LeftCardShellProps {
 
 function LeftCardShell({ card, selectedCardId, onSelectCard, actionSlot }: LeftCardShellProps) {
   return (
-    <TemplateFullpageModalCard
+    <ParagraphCard
       className={[
-        onSelectCard ? 'full-page-modal-card--selectable' : '',
-        selectedCardId === card.id ? 'full-page-modal-card--active' : '',
+        onSelectCard ? 'paragraph-card--selectable' : '',
+        selectedCardId === card.id ? 'paragraph-card--active' : '',
       ]
         .filter(Boolean)
         .join(' ')}
       onClick={onSelectCard ? () => onSelectCard(card.id) : undefined}
       actionSlot={actionSlot}
+      title={<TemplateFullpageModalCardTitle title={card.title} required={card.required} />}
+      description={<TemplateFullpageModalCardDescription>{card.description}</TemplateFullpageModalCardDescription>}
     >
-      <TemplateFullpageModalCardTitle title={card.title} required={card.required} />
-      <TemplateFullpageModalCardDescription>
-        {card.description}
-      </TemplateFullpageModalCardDescription>
       {card.children}
-    </TemplateFullpageModalCard>
+    </ParagraphCard>
   )
 }
 
@@ -121,7 +119,7 @@ function SortableLeftCard({ card, selectedCardId, onSelectCard }: SortableLeftCa
           <button
             ref={setActivatorNodeRef}
             type="button"
-            className="full-page-modal-card__drag-handle"
+            className="paragraph-card__drag-handle"
             aria-label="카드 순서 변경"
             onClick={event => event.stopPropagation()}
             {...attributes}

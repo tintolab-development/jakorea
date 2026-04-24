@@ -22,6 +22,7 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { type MemberListKind, DEFAULT_MEMBER_LIST_KIND } from '@/shared/config/member-list-kinds'
 import { getInstructorTypeDisplayLabel } from '@/entities/user/lib/matches-instructor-list-filters'
+import { ManagedProgramCountDisplay } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -78,18 +79,12 @@ function instructorTypeLabel(record: Row): string {
   return label || '-'
 }
 
-function adminProgramCountDisplay(record: Row): string {
-  const explicit = record.listMetrics?.managedProgramCount
-  if (explicit !== undefined && explicit !== null) return String(explicit)
-  return String(record.programRoles ? Object.keys(record.programRoles).length : 0)
-}
-
 function settlementStatusTextClass(statusLabel?: string): string {
   const normalized = statusLabel?.trim()
   switch (normalized) {
     case '확인 대기 중':
       return 'user-list__settlement-status user-list__settlement-status--awaiting-confirmation'
-    case '일부 확인 완료':
+    case '일부 지급 완료':
       return 'user-list__settlement-status user-list__settlement-status--partially-confirmed'
     case '지급조서 확인 완료':
       return 'user-list__settlement-status user-list__settlement-status--payment-statement-verified'
@@ -333,7 +328,8 @@ function columnsForKind(
         title: '담당 프로그램 수',
         key: 'programCount',
         align: 'center',
-        render: (_: unknown, r: Row) => adminProgramCountDisplay(r) + '개',
+        ellipsis: true,
+        render: (_: unknown, r: Row) => <ManagedProgramCountDisplay user={r} />,
       },
       {
         title: '가입일',

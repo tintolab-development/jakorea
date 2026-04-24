@@ -6,14 +6,17 @@
  * - 합계 탭은 공통 필터와 독립된(목업) 집계 뷰를 렌더
  */
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { App } from 'antd'
+import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { Divider } from '@/shared/components/divider'
 import { TableFilterGroup } from '@/shared/components/table-filter-group'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { mockPrograms } from '@/data/mock'
 import { createEducationRecordFilterFields } from '@/features/education-record/model/education-record-filter-fields'
+import { exportEducationRecordExcel } from '@/features/education-record/lib/education-record-export'
 import { educationRecordTablePageConfig } from '@/features/education-record/model/education-record-table.config'
 import type {
   EducationRecordTabKey,
@@ -23,6 +26,7 @@ import { getAvailableYears } from '@/features/education-record/lib/education-rec
 import { EducationRecordDataTab } from '@/features/education-record/ui/education-record-data-tab'
 import { EducationRecordSummaryTab } from '@/features/education-record/ui/education-record-summary-tab'
 import { EducationRecordTabNav } from '@/features/education-record/ui/education-record-tab-nav'
+import { CmsButton } from '@/shared/ui/cms-button'
 import './education-record-list-page.css'
 
 const TAB_PARAM = 'tab'
@@ -33,8 +37,10 @@ function parseTabKey(raw: string | null): EducationRecordTabKey {
 }
 
 export function EducationRecordListPage() {
+  const { message } = App.useApp()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
+  const [isExporting, setIsExporting] = useState(false)
 
   const availableYears = useMemo(() => getAvailableYears(mockPrograms), [])
   const context = useMemo<EducationRecordTableContext>(
@@ -93,6 +99,26 @@ export function EducationRecordListPage() {
     [setSearchParams]
   )
 
+  const handleExportExcel = useCallback(async () => {
+    if (isExporting) return
+    if (tableData.length === 0) {
+      message.warning('다운로드할 데이터가 없습니다.')
+      return
+    }
+    setIsExporting(true)
+    const hide = message.loading('엑셀 파일 생성 중입니다…', 0)
+    try {
+      await exportEducationRecordExcel(antdColumns, tableData, '실적데이터')
+      message.success(`엑셀 다운로드 완료 (${tableData.length.toLocaleString()}건)`)
+    } catch (error) {
+      console.error('[education-record] excel export failed', error)
+      message.error('엑셀 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+    } finally {
+      hide()
+      setIsExporting(false)
+    }
+  }, [antdColumns, isExporting, message, tableData])
+
   return (
     <div className="education-record-list-page">
       <div className="education-record-list-page__filter-card">
@@ -111,6 +137,19 @@ export function EducationRecordListPage() {
 
         <div className="education-record-list-page__top-nav">
           <EducationRecordTabNav activeTab={activeKey} onTabChange={handleTabChange} />
+          <div className="education-record-list-page__top-nav-actions">
+            <CmsButton
+              variant="primary"
+              icon={<DownloadOutlined />}
+              onClick={handleExportExcel}
+              loading={isExporting}
+              disabled={tableData.length === 0}
+              width={180}
+              style={{ height: 44 }}
+            >
+              엑셀 다운로드
+            </CmsButton>
+          </div>
         </div>
 
         {activeKey === 'data' ? (

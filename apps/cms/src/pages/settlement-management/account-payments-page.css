@@ -11,8 +11,10 @@
   gap: 0;
 }
 
-/* FilterTableLayout: 예전 `participating-institutions-section` 직계와 동일 flex 컬럼 (`program-status-participating-shared` 보완) */
-.account-payments-page.payment-orders-page .payment-orders-page__content-wrapper > .filter-table-layout {
+/* FilterTableLayout: 카드 내부 세로 플렉스(필터 → 구분선 → 툴바 → 본문) — 리스트 뷰만 */
+.account-payments-page.payment-orders-page
+  .payment-orders-page__content-wrapper
+  > .account-payments-page__filter-table.filter-table-layout {
   flex: 0 1 auto;
   min-height: 0;
   display: flex;
@@ -21,18 +23,31 @@
   overflow: visible;
 }
 
-/* 필터 ↔ 목록 사이 구분선 — 수동 `participating-institutions-section__divider`와 동일 #C4CDD1 */
-.account-payments-page.payment-orders-page
-  .payment-orders-page__filter-list-layout
-  .filter-table-layout__divider
-  .app-divider {
-  align-self: stretch;
-  width: 100%;
-  height: 1px;
-  min-height: 1px;
-  border: 0;
-  background: #c4cdd1;
-  background-color: #c4cdd1;
+/*
+ * 캘린더 뷰: 경제교육 프로그램 목록 캘린더와 동일 — FilterTableLayout(흰 카드) 밖에 툴바·캘린더만 둠
+ */
+
+.account-payments-page__calendar-toolbar.table-header-actions {
+  height: auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  margin-bottom: var(--spacing-16, 16px);
+}
+
+.account-payments-page__calendar-toolbar .table-header-title--wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-payments-page__calendar-toolbar-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-8, 8px);
+  flex-shrink: 0;
 }
 
 /* 요약 위젯(3카드) 상단 — 탭과 요약 사이 16px (education-record-list-page__top-nav 과 동일 역할) */
@@ -114,7 +129,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
   width: 100%;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 @media (max-width: 768px) {
@@ -210,21 +225,23 @@
   line-height: 165%;
 }
 
-/* 캘린더 뷰: 리스트와 동일 한 줄 헤딩 */
-.account-payments-page .payment-orders-page__calendar-heading {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 16px;
-}
-
-.account-payments-page__status-text--pending {
-  color: var(--color-green, #1e8c29);
+.account-payments-page__status-text--awaiting-confirmation {
+  color: var(--color-orange, #f07917);
   font-weight: 500;
 }
 
-.account-payments-page__status-text--completed {
+.account-payments-page__status-text--partial-confirmation {
+  color: var(--color-purple, #8457ce);
+  font-weight: 500;
+}
+
+.account-payments-page__status-text--account-paid {
   color: var(--color-blue, #017eaf);
+  font-weight: 500;
+}
+
+.account-payments-page__status-text--payment-correction-requested {
+  color: #e8007c;
   font-weight: 500;
 }
 

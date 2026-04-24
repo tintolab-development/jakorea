@@ -18,8 +18,8 @@ import {
 } from '@/features/template/lib/build-template-config'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
-import NewSurveyForm from '@/features/template/ui/new-survey-form'
-import NewAgreementForm from '@/features/template/ui/new-agreement-form'
+import NewAgreementForm from '@/features/template/ui/form-set/new-agreement-form'
+import NewSurveyForm from '@/features/template/ui/form-set/new-survey-form'
 
 type TemplateFormTabQuery = {
   mode?: string

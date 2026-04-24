@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Form, message } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import { getFaqCategorySelectOptions } from '@/features/posts/api/admin-faq-category-mock-store'
 import { createFaq, deleteFaq, updateFaq } from '@/features/posts/api/admin-faq-service'
-import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import type {
   FaqFormFieldValues,
   FaqFormModalProps,
@@ -11,13 +10,8 @@ import type {
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 
-const FAQ_EDITOR_HEIGHT = '240px'
-const FAQ_EDITOR_PLACEHOLDER = 'FAQ내용을 입력해주세요....'
-
 export type UseFaqFormModalResult = {
   form: FormInstance<FaqFormFieldValues>
-  editorHostRef: RefObject<HTMLDivElement | null>
-  getMarkdown: () => string
   categoryOptions: { label: string; value: string }[]
   handleSubmit: () => Promise<void>
   deleteConfirmOpen: boolean
@@ -48,32 +42,12 @@ export function useFaqFormModal({
   const isEdit = mode === 'edit' && faq != null
   const isBroken = mode === 'edit' && open && !faq
 
-  const initialMarkdown = useMemo(() => {
-    if (!open) return ''
-    if (isEdit && faq) return faq.answer ?? ''
-    return ''
-  }, [open, isEdit, faq])
-
-  const editorResetKey = useMemo(
-    () => (open ? `faq-${mode}-${faq?.id ?? 'new'}` : 'closed'),
-    [open, mode, faq?.id]
-  )
-
-  const { editorHostRef, getMarkdown } = useNoticeWysiwygEditor(
-    open,
-    initialMarkdown,
-    editorResetKey,
-    {
-      height: FAQ_EDITOR_HEIGHT,
-      placeholder: FAQ_EDITOR_PLACEHOLDER,
-    }
-  )
-
   useEffect(() => {
     if (!open) return
     if (isEdit && faq) {
       form.setFieldsValue({
         question: faq.question,
+        answer: faq.answer ?? '',
         category: faq.category,
         visibility: faq.status === 'published' ? 'public' : 'private',
       })
@@ -81,6 +55,7 @@ export function useFaqFormModal({
       form.resetFields()
       form.setFieldsValue({
         question: '',
+        answer: '',
         category: undefined,
         visibility: 'public',
       })
@@ -99,8 +74,8 @@ export function useFaqFormModal({
     if (!canWrite) return
     try {
       const v = await form.validateFields()
-      const answerMd = getMarkdown().trim()
-      if (!answerMd) {
+      const answer = v.answer.trim()
+      if (!answer) {
         message.warning('내용(답변)을 입력해주세요.')
         return
       }
@@ -113,7 +88,7 @@ export function useFaqFormModal({
         const updated = await updateFaq(faq.id, {
           category,
           question: v.question.trim(),
-          answer: answerMd,
+          answer,
           author,
           status,
         })
@@ -123,7 +98,7 @@ export function useFaqFormModal({
         const created = await createFaq({
           category,
           question: v.question.trim(),
-          answer: answerMd,
+          answer,
           author,
           status,
           createdAt: new Date().toISOString(),
@@ -144,7 +119,7 @@ export function useFaqFormModal({
           : '요청에 실패했습니다.'
       message.error(msg)
     }
-  }, [canWrite, form, getMarkdown, isEdit, faq, onCancel, onSuccess, user?.name])
+  }, [canWrite, form, isEdit, faq, onCancel, onSuccess, user?.name])
 
   const handleRequestDelete = useCallback(() => {
     if (!canWrite || !faq) return
@@ -169,8 +144,6 @@ export function useFaqFormModal({
 
   return {
     form,
-    editorHostRef,
-    getMarkdown,
     categoryOptions,
     handleSubmit,
     deleteConfirmOpen,

@@ -47,6 +47,8 @@ export function formatAppDatepickerRangePlain(value: Dayjs | null | undefined): 
   return value.format('YYYY. MM. DD')
 }
 
+const appDatePickerPopupContainer = () => document.body
+
 export interface AppDatePickerProps extends Omit<DatePickerProps, 'variant' | 'className'> {
   /** span.app-datepicker 래퍼 클래스 */
   className?: string
@@ -70,6 +72,7 @@ const AppDatePickerRender: ForwardRefRenderFunction<AppDatePickerRef, AppDatePic
   },
   ref
 ) => {
+  const { getPopupContainer, ...pickerRest } = rest
   const wrapperCn = [
     'app-datepicker',
     uiVariant === 'filter' && 'app-datepicker--filter',
@@ -92,7 +95,8 @@ const AppDatePickerRender: ForwardRefRenderFunction<AppDatePickerRef, AppDatePic
         suffixIcon={suffixIcon ?? null}
         inputReadOnly={inputReadOnly ?? true}
         placeholder={placeholder ?? DEFAULT_APP_DATE_PLACEHOLDER}
-        {...rest}
+        {...pickerRest}
+        getPopupContainer={getPopupContainer ?? appDatePickerPopupContainer}
       />
     </span>
   )
@@ -134,6 +138,7 @@ const AppDateRangePickerRender: ForwardRefRenderFunction<
     defaultPickerValue,
     onCalendarChange: _onCalendarChange,
     order: _order,
+    getPopupContainer,
     ...rest
   },
   ref
@@ -212,6 +217,8 @@ const AppDateRangePickerRender: ForwardRefRenderFunction<
     'variant' | 'className' | 'value' | 'onChange' | 'placeholder'
   >
 
+  const resolvedPopupContainer = getPopupContainer ?? appDatePickerPopupContainer
+
   return (
     <span className={wrapperCn} style={style}>
       <span className="app-datepicker__segment">
@@ -234,6 +241,7 @@ const AppDateRangePickerRender: ForwardRefRenderFunction<
           id={startId}
           defaultPickerValue={defaultStart}
           {...sharedPickerProps}
+          getPopupContainer={resolvedPopupContainer}
         />
       </span>
       <span className="app-datepicker__range-separator" aria-hidden>
@@ -258,6 +266,7 @@ const AppDateRangePickerRender: ForwardRefRenderFunction<
           id={endId}
           defaultPickerValue={defaultEnd}
           {...sharedPickerProps}
+          getPopupContainer={resolvedPopupContainer}
         />
       </span>
     </span>

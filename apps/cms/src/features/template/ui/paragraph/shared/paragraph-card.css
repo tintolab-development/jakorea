@@ -1,0 +1,183 @@
+/* 단락 카드 — FormEditor / 템플릿 미리보기 공통 */
+
+.paragraph-card {
+  position: relative;
+  display: flex;
+  padding: 20px;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  border-radius: 16px;
+  background: var(--main-WT, #fff);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+}
+
+.paragraph-card__header {
+  padding-left: 8px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+}
+
+.paragraph-card__header-title-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.paragraph-card__header-title-row > .paragraph-card__title-block {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  max-width: 100%;
+}
+
+.paragraph-card__header-title-row > .paragraph-card__action-slot-wrap {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: auto;
+  min-width: 0;
+}
+
+.paragraph-card__title-block,
+.paragraph-card__description-block {
+  width: 100%;
+}
+
+.paragraph-card__slot {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 16px;
+}
+
+.paragraph-card__footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.paragraph-card__toggles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.paragraph-card__actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: auto;
+}
+
+.paragraph-card__drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #b4b4b4;
+  cursor: grab;
+}
+
+.paragraph-card__drag-handle:active {
+  cursor: grabbing;
+}
+
+.paragraph-card--selectable {
+  cursor: pointer;
+}
+
+.paragraph-card--active {
+  border-radius: var(--16, 16px);
+  border: 1px solid var(--color-mint-01, #01a1af);
+  background: var(--main-WT, #fff);
+}
+
+.paragraph-card__title-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.paragraph-card__title {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+/* 설문 카드 등: 아웃라인 placeholder 문구 — ParagraphInput 기본 톤과 맞춤 */
+.paragraph-card__title.paragraph-card__title--placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-weight: 700;
+  line-height: 150%;
+}
+
+/* 카드 헤더 — `ParagraphInput`에 `titleClassName`으로 붙는 placeholder 톤 */
+.paragraph-card__title-block
+  .paragraph-input.paragraph-card__title--placeholder
+  .paragraph-input__view-text,
+.paragraph-card__title-block
+  .paragraph-input.paragraph-card__title--placeholder
+  .paragraph-input__placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-weight: 700;
+}
+
+.paragraph-card__title-block
+  .paragraph-input.paragraph-card__title--placeholder.paragraph-input--edit
+  .paragraph-input__shell
+  .ant-input::placeholder {
+  color: var(--gray-85969-d, #85969d);
+}
+
+.paragraph-card__required {
+  position: absolute;
+  left: -14px;
+  color: var(--color-red, #c32f4a);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+}
+
+.paragraph-card__description {
+  margin: 0;
+  color: var(--gray-85969-d, #85969d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}

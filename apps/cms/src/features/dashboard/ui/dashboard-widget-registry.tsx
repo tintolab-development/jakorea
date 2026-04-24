@@ -136,7 +136,7 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<Record<DashboardWidgetType, Dash
       variant="general"
       widgetKey={PROGRAM_SCHEDULE_WIDGET_KEYS.general}
       title="일반 프로그램 일정"
-      viewAllPath="/programs/education"
+      viewAllPath="/programs/general"
       user={p.user}
     />
   ),
@@ -145,7 +145,7 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<Record<DashboardWidgetType, Dash
       variant="economy"
       widgetKey={PROGRAM_SCHEDULE_WIDGET_KEYS.economy}
       title="경제 교육 프로그램 일정"
-      viewAllPath="/programs/economy-education"
+      viewAllPath="/programs/company-school"
       user={p.user}
     />
   ),

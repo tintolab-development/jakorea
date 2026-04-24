@@ -16,6 +16,11 @@
   overflow: hidden;
 }
 
+/* 본문 내 ModalSpecTable(조건·산정 기준 등) 외곽 라운드 */
+.settlement-item-setting-detail-modal .modal-spec-table {
+  border-radius: 8px;
+}
+
 /* 교통비: 산정 행 인풋·셀렉트·라디오 한 줄 세로 중앙 정렬 */
 .settlement-item-setting-detail-modal--transport .settlement-item-setting-detail-modal__basis-row {
   align-items: center;

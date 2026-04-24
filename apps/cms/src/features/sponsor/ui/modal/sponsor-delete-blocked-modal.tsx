@@ -13,7 +13,7 @@ export function SponsorDeleteBlockedModal({ open, onClose }: SponsorDeleteBlocke
       open={open}
       onCancel={onClose}
       title="후원사 삭제 불가"
-      width={800}
+      width={600}
       footer={
         <CmsButton variant="primary" size="medium" onClick={onClose}>
           확인

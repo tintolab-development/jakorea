@@ -316,6 +316,18 @@ export interface MenuItemConfig {
   enabled?: boolean // 활성화/비활성화 여부 (기본값: true)
 }
 
+/** 프로그램 관리 LNB 2뎁스 — 준비 중(사이드바 클릭 시 `FEATURE_COMING_SOON_ALERT`만) */
+export const PROGRAM_MANAGEMENT_LNB_PATHS = [
+  '/programs/general',
+  '/programs/company-school',
+  '/programs/ujat',
+  '/programs/gemini',
+] as const
+
+export function isProgramManagementLnbPath(key: string): boolean {
+  return (PROGRAM_MANAGEMENT_LNB_PATHS as readonly string[]).includes(key)
+}
+
 /**
  * 전체 메뉴 아이템 정의
  * IA 순서에 맞게 정리됨
@@ -330,7 +342,7 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
   },
 
-  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 [일반 교육 프로그램(→프로그램 목록), 수강 신청 현황, 강의 신청 현황, 경제 교육 프로그램] */
+  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 4분류 — 라우트는 준비 중(alert), 통합 목록·모달은 `/programs` */
   {
     key: 'programs-group',
     label: '프로그램 관리',
@@ -339,20 +351,32 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
     children: [
       {
-        key: '/programs/education',
-        label: '일반 교육 프로그램',
+        key: '/programs/general',
+        label: '일반 프로그램',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
-        blockedAdminLevels: ['GENERAL'],
       },
       {
-        key: '/programs/economy-education',
-        label: '경제 교육 프로그램',
+        key: '/programs/company-school',
+        label: '1사1교 프로그램',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
-        // 일반 교육과 달리 blockedAdminLevels 없음 → GENERAL 관리자도 접근 가능
+      },
+      {
+        key: '/programs/ujat',
+        label: 'UJAT 프로그램',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/programs/gemini',
+        label: 'Gemini 프로그램',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
       },
     ],
   },
@@ -526,7 +550,7 @@ const allMenuItems: MenuItemConfig[] = [
       },
       {
         key: '/admin/posts/inquiries',
-        label: '문의하기',
+        label: '문의내역',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
@@ -812,35 +836,26 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
     }
   }
 
-  // 프로그램 관리 > 일반 교육 프로그램: 하위 경로까지 메뉴 키 `/programs/education`과 동일 접근 정책
-  // (직접 URL 진입 시 비관리자 허용 방지 — 하위 경로는 메뉴에 없어 기본 허용으로 빠지던 문제 보완)
-  if (
-    normalizedPath === '/programs/education' ||
-    normalizedPath.startsWith('/programs/education/')
-  ) {
-    const educationProgramMenus = findAllMenuItemsByPath(allMenuItems, '/programs/education')
-    return educationProgramMenus.some(menuItem => {
-      if (menuItem.hidden === true) return false
-      if (menuItem.enabled === false) return false
-      if (isMenuPathBlockedForAdminLevel(menuItem, userRole, adminLevel)) return false
-      if (!menuItem.allowedRoles || menuItem.allowedRoles.length === 0) return true
-      return menuItem.allowedRoles.includes(userRole)
-    })
-  }
-
-  // 프로그램 관리 > 경제 교육 프로그램: 일반 교육과 분리 — blockedAdminLevels 없는 메뉴 정책 그대로(GENERAL 포함 허용)
-  if (
-    normalizedPath === '/programs/economy-education' ||
-    normalizedPath.startsWith('/programs/economy-education/')
-  ) {
-    const economyProgramMenus = findAllMenuItemsByPath(allMenuItems, '/programs/economy-education')
-    return economyProgramMenus.some(menuItem => {
-      if (menuItem.hidden === true) return false
-      if (menuItem.enabled === false) return false
-      if (isMenuPathBlockedForAdminLevel(menuItem, userRole, adminLevel)) return false
-      if (!menuItem.allowedRoles || menuItem.allowedRoles.length === 0) return true
-      return menuItem.allowedRoles.includes(userRole)
-    })
+  // 프로그램 관리 > 2뎁스 4분류(일반/1사1교/UJAT/Gemini) 및 레거시 `/programs/education`·`/programs/economy-education` 하위
+  const programCategoryByPrefix: { prefix: string; menuKey: string }[] = [
+    { prefix: '/programs/general', menuKey: '/programs/general' },
+    { prefix: '/programs/company-school', menuKey: '/programs/company-school' },
+    { prefix: '/programs/ujat', menuKey: '/programs/ujat' },
+    { prefix: '/programs/gemini', menuKey: '/programs/gemini' },
+    { prefix: '/programs/education', menuKey: '/programs/general' },
+    { prefix: '/programs/economy-education', menuKey: '/programs/company-school' },
+  ]
+  for (const { prefix, menuKey } of programCategoryByPrefix) {
+    if (normalizedPath === prefix || normalizedPath.startsWith(`${prefix}/`)) {
+      const programMenus = findAllMenuItemsByPath(allMenuItems, menuKey)
+      return programMenus.some(menuItem => {
+        if (menuItem.hidden === true) return false
+        if (menuItem.enabled === false) return false
+        if (isMenuPathBlockedForAdminLevel(menuItem, userRole, adminLevel)) return false
+        if (!menuItem.allowedRoles || menuItem.allowedRoles.length === 0) return true
+        return menuItem.allowedRoles.includes(userRole)
+      })
+    }
   }
 
   // Phase 0.1.5: 관리자 — 프로그램 영역은 아래 예외 규칙으로 먼저 허용
@@ -848,6 +863,10 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
   if (userRole === 'ADMIN') {
     if (normalizedPath === '/') return true
     const programsReserved = [
+      'general',
+      'company-school',
+      'ujat',
+      'gemini',
       'education',
       'economy-education',
       'my',
@@ -1218,30 +1237,97 @@ export function getBreadcrumbByPath(
     match = findMenuMatch(pathForMenuMatch)
   }
 
-  // 관리자: 교육 프로그램 하위 경로 (전체 프로그램 / 수강자 모집 / 수강 신청 현황) 브레드크럼
+  // 관리자: 일반 프로그램(레거시 education, 신규 general) 하위 경로 브레드크럼
   if (
     !match &&
     userRole === 'ADMIN' &&
-    (n === '/programs/education' || n.startsWith('/programs/education/'))
+    (n === '/programs/education' ||
+      n.startsWith('/programs/education/') ||
+      n === '/programs/general' ||
+      n.startsWith('/programs/general/'))
   ) {
     const listMatch =
-      findMenuMatchInItems('/programs/education', filteredItems) ||
-      findMenuMatch('/programs/education')
+      findMenuMatchInItems('/programs/general', filteredItems) ||
+      findMenuMatch('/programs/general')
     if (listMatch && listMatch.parent) {
+      const third = (p: string) =>
+        p === '/programs/education' ||
+        p === '/programs/education/' ||
+        p === '/programs/general' ||
+        p === '/programs/general/'
       let thirdLabel: string
-      if (n === '/programs/education' || n === '/programs/education/') {
+      if (third(n)) {
         thirdLabel = '전체 프로그램'
-      } else if (n === '/programs/education/student-recruitment') {
+      } else if (
+        n === '/programs/education/student-recruitment' ||
+        n === '/programs/general/student-recruitment'
+      ) {
         thirdLabel = '수강자 모집'
-      } else if (n === '/programs/education/instructor-recruitment') {
+      } else if (
+        n === '/programs/education/instructor-recruitment' ||
+        n === '/programs/general/instructor-recruitment'
+      ) {
         thirdLabel = '강의 신청 현황'
-      } else if (n === '/programs/education/enrollment') {
+      } else if (n === '/programs/education/enrollment' || n === '/programs/general/enrollment') {
         thirdLabel = '수강 신청 현황'
-      } else if (n === '/programs/education/schedule') {
+      } else if (n === '/programs/education/schedule' || n === '/programs/general/schedule') {
         thirdLabel = '프로그램 일정'
       } else {
         thirdLabel =
-          typeof listMatch.item.label === 'string' ? listMatch.item.label : '교육 프로그램'
+          typeof listMatch.item.label === 'string' ? listMatch.item.label : '일반 프로그램'
+      }
+      return [
+        toBreadcrumbItem(listMatch.parent),
+        toBreadcrumbItem(listMatch.item),
+        { label: thirdLabel },
+      ]
+    }
+  }
+
+  // 관리자: 1사1교(레거시 economy-education, 신규 company-school) 하위
+  if (
+    !match &&
+    userRole === 'ADMIN' &&
+    (n === '/programs/economy-education' ||
+      n.startsWith('/programs/economy-education/') ||
+      n === '/programs/company-school' ||
+      n.startsWith('/programs/company-school/'))
+  ) {
+    const listMatch =
+      findMenuMatchInItems('/programs/company-school', filteredItems) ||
+      findMenuMatch('/programs/company-school')
+    if (listMatch && listMatch.parent) {
+      let thirdLabel: string
+      if (
+        n === '/programs/economy-education' ||
+        n === '/programs/economy-education/' ||
+        n === '/programs/company-school' ||
+        n === '/programs/company-school/'
+      ) {
+        thirdLabel = '전체 프로그램'
+      } else if (
+        n === '/programs/economy-education/student-recruitment' ||
+        n === '/programs/company-school/student-recruitment'
+      ) {
+        thirdLabel = '수강자 모집'
+      } else if (
+        n === '/programs/economy-education/instructor-recruitment' ||
+        n === '/programs/company-school/instructor-recruitment'
+      ) {
+        thirdLabel = '강의 신청 현황'
+      } else if (
+        n === '/programs/economy-education/enrollment' ||
+        n === '/programs/company-school/enrollment'
+      ) {
+        thirdLabel = '수강 신청 현황'
+      } else if (
+        n === '/programs/economy-education/schedule' ||
+        n === '/programs/company-school/schedule'
+      ) {
+        thirdLabel = '프로그램 일정'
+      } else {
+        thirdLabel =
+          typeof listMatch.item.label === 'string' ? listMatch.item.label : '1사1교 프로그램'
       }
       return [
         toBreadcrumbItem(listMatch.parent),
@@ -1256,6 +1342,10 @@ export function getBreadcrumbByPath(
     'my',
     'favorites',
     'volunteer',
+    'general',
+    'company-school',
+    'ujat',
+    'gemini',
     'education',
     'economy-education',
     'new',
@@ -1267,17 +1357,23 @@ export function getBreadcrumbByPath(
     const firstSegment = segments[0]
     if (firstSegment && !programsReserved.includes(firstSegment)) {
       const listMatch =
-        findMenuMatchInItems('/programs/education', filteredItems) ||
-        findMenuMatch('/programs/education')
+        findMenuMatchInItems('/programs/general', filteredItems) ||
+        findMenuMatch('/programs/general')
+      const isEdit = segments[1] === 'edit'
+      if (listMatch && listMatch.depth === 2 && listMatch.parent) {
+        return [
+          toBreadcrumbItem(listMatch.parent),
+          toBreadcrumbItem(listMatch.item),
+          { label: isEdit ? '프로그램 수정' : '프로그램 상세' },
+        ]
+      }
       if (listMatch && listMatch.depth === 3 && listMatch.parent && listMatch.grandparent) {
-        const detailChain: BreadcrumbItem[] = [
+        return [
           toBreadcrumbItem(listMatch.grandparent),
           toBreadcrumbItem(listMatch.parent),
           toBreadcrumbItem(listMatch.item),
+          { label: isEdit ? '프로그램 수정' : '프로그램 상세' },
         ]
-        const isEdit = segments[1] === 'edit'
-        detailChain.push({ label: isEdit ? '프로그램 수정' : '프로그램 상세' })
-        return detailChain
       }
     }
   }

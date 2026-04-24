@@ -79,3 +79,25 @@
   line-height: 150%;
   opacity: 0.6;
 }
+
+/* 강사(강사만) 상세: 마지막 더블 행 우측 빈 절반 — 라벨 없이 값 영역만(DetailInfoForm 격자선 유지) */
+.user-consent-agreement-section__form.detail-info-form
+  .detail-info-form__row--double
+  > .user-consent-agreement-section__field--empty-half {
+  flex: 1 1 50%;
+  min-width: 0;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(48px, auto);
+  align-items: stretch;
+  min-height: 48px;
+}
+
+.user-consent-agreement-section__form.detail-info-form
+  .detail-info-form__row--double
+  > .user-consent-agreement-section__field--empty-half
+  .detail-info-form__field-content {
+  min-height: 48px;
+  background: #fff;
+}

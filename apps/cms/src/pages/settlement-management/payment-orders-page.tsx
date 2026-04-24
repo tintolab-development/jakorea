@@ -8,8 +8,6 @@ import { ViewModeController } from '@/shared/components/view-mode'
 import '@/shared/components/list-page/list-page-layout.css'
 import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/ui/detail-modal/program-status/program-progress-tab.css'
-import './payment-order-admin-status-tag.css'
-import './payment-orders-page.css'
 import { PaymentOrderDetailFullPageModal } from './payment-order-detail-fullpage-modal'
 import { usePaymentOrdersListPage } from './use-payment-orders-list-page'
 
@@ -31,39 +29,30 @@ export default function PaymentOrdersPage() {
   } = usePaymentOrdersListPage()
 
   return (
-    <div className="payment-orders-page">
-      <div className="payment-orders-page__content-wrapper">
-        <FilterTableLayout
-          className="payment-orders-page__filter-list-layout"
-          bordered={false}
-          cardStyle={{ marginBottom: 0 }}
-          fields={paymentOrdersFilterFields}
-          filters={{
-            exposureMode,
-            programName: pendingFilters.programName,
-            instructorName: pendingFilters.instructorName,
-            pendingPaymentBucket:
-              pendingFilters.pendingPaymentBucket === 'all'
-                ? undefined
-                : pendingFilters.pendingPaymentBucket,
-            dateRange: pendingFilters.dateRange,
-          }}
-          onFilterChange={handleFilterChange}
-          onSearch={handleSearch}
-        >
-          <div className="participating-institutions-section__below-divider">
-            <ViewModeController
-              value={viewMode}
-              onChange={setViewMode}
-              options={paymentOrdersViewModeOptions}
-              renderHeader={renderHeader}
-              renderContent={mode => (
-                <div className="list-page-layout__table-shell">{renderContent(mode)}</div>
-              )}
-            />
-          </div>
-        </FilterTableLayout>
-      </div>
+    <>
+      <FilterTableLayout
+        fields={paymentOrdersFilterFields}
+        filters={{
+          exposureMode,
+          programName: pendingFilters.programName,
+          instructorName: pendingFilters.instructorName,
+          pendingPaymentBucket:
+            pendingFilters.pendingPaymentBucket === 'all'
+              ? undefined
+              : pendingFilters.pendingPaymentBucket,
+          dateRange: pendingFilters.dateRange,
+        }}
+        onFilterChange={handleFilterChange}
+        onSearch={handleSearch}
+      >
+        <ViewModeController
+          value={viewMode}
+          onChange={setViewMode}
+          options={paymentOrdersViewModeOptions}
+          renderHeader={renderHeader}
+          renderContent={mode => <div>{renderContent(mode)}</div>}
+        />
+      </FilterTableLayout>
 
       <PaymentOrderDetailFullPageModal
         type={detailState?.type ?? 'program'}
@@ -72,6 +61,6 @@ export default function PaymentOrdersPage() {
         data={detailState?.data ?? null}
         listPageDateRange={appliedFromUrl.dateRange}
       />
-    </div>
+    </>
   )
 }

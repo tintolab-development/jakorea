@@ -96,7 +96,14 @@ export function instructorCareerSectionDescription(d: ApplicantInstructorRow): s
 }
 
 export function instructorQualificationsSectionDescription(d: ApplicantInstructorRow): string {
-  return (d.qualifications?.length ?? 0) > 0 ? `${d.qualifications?.length}개` : INSTRUCTOR_RESUME_NO_DATA
+  return (d.qualifications?.length ?? 0) > 0
+    ? `${d.qualifications?.length}개`
+    : INSTRUCTOR_RESUME_NO_DATA
+}
+
+export function instructorAwardsSectionDescription(d: ApplicantInstructorRow): string {
+  const n = d.awards?.length ?? 0
+  return n > 0 ? `${n}개` : INSTRUCTOR_RESUME_NO_DATA
 }
 
 export function InstructorResumeEducationCardBody({ d }: { d: ApplicantInstructorRow }) {
@@ -118,7 +125,9 @@ export function InstructorResumeEducationCardBody({ d }: { d: ApplicantInstructo
             : INSTRUCTOR_RESUME_NO_DATA
           return (
             <div key={idx} className="instructor-resume-row instructor-resume-row--career">
-              <span className="instructor-resume-row-left">{period || INSTRUCTOR_RESUME_NO_DATA}</span>
+              <span className="instructor-resume-row-left">
+                {period || INSTRUCTOR_RESUME_NO_DATA}
+              </span>
               <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
                 <span className="instructor-resume-emphasis">{schoolLabel}</span>
                 {item.major ? (
@@ -194,7 +203,9 @@ export function InstructorResumeQualificationsCardBody({ d }: { d: ApplicantInst
       {(d.qualifications?.length ?? 0) > 0 ? (
         d.qualifications?.map((item, idx) => (
           <div key={idx} className="instructor-resume-row">
-            <span className="instructor-resume-row-left">{item.year ?? INSTRUCTOR_RESUME_NO_DATA}</span>
+            <span className="instructor-resume-row-left">
+              {item.year ?? INSTRUCTOR_RESUME_NO_DATA}
+            </span>
             <span className="instructor-resume-row-right instructor-resume-row-right--black">
               {item.name ?? INSTRUCTOR_RESUME_NO_DATA}
             </span>
@@ -203,6 +214,70 @@ export function InstructorResumeQualificationsCardBody({ d }: { d: ApplicantInst
       ) : (
         <p className="instructor-resume-empty">{INSTRUCTOR_RESUME_NO_DATA}</p>
       )}
+    </div>
+  )
+}
+
+export function InstructorResumeAwardsCardBody({ d }: { d: ApplicantInstructorRow }) {
+  return (
+    <div className="instructor-resume-card">
+      {(d.awards?.length ?? 0) > 0 ? (
+        d.awards?.map((item, idx) => (
+          <div key={idx} className="instructor-resume-row">
+            <span className="instructor-resume-row-left">
+              {item.year ?? INSTRUCTOR_RESUME_NO_DATA}
+            </span>
+            <span className="instructor-resume-row-right instructor-resume-row-right--black">
+              {item.name ?? INSTRUCTOR_RESUME_NO_DATA}
+            </span>
+          </div>
+        ))
+      ) : (
+        <p className="instructor-resume-empty">{INSTRUCTOR_RESUME_NO_DATA}</p>
+      )}
+    </div>
+  )
+}
+
+const INSTRUCTOR_FREE_WRITING_SECTIONS: ReadonlyArray<{
+  title: string
+  getContent: (d: ApplicantInstructorRow) => string | undefined
+}> = [
+  { title: '1. 자기소개 및 지원동기', getContent: row => row.freeWriting1 },
+  {
+    title: '2. 청소년 경제 교육의 중요성에 대해 본인의 생각을 구체적으로 작성해주세요.',
+    getContent: row => row.freeWriting2,
+  },
+  {
+    title:
+      '3. 청소년과 소통할 때 가장 중요하다고 생각하는 점은 무엇이며, 이를 실천하기 위해 어떤 노력을 하는지 작성해주세요.',
+    getContent: row => row.freeWriting3,
+  },
+  {
+    title:
+      '4. 교육 중 예기치 않은 상황(예: 수업 분위기 저하, 참여도 부족 등)이 발생했을 때 대처한 사례가 있다면 공유해주세요.',
+    getContent: row => row.freeWriting4,
+  },
+]
+
+export function InstructorResumeFreeWritingSections({ d }: { d: ApplicantInstructorRow }) {
+  return (
+    <div className="instructor-resume-free-writing-stack">
+      {INSTRUCTOR_FREE_WRITING_SECTIONS.map((spec, idx) => {
+        const raw = spec.getContent(d)
+        const text = raw != null && String(raw).trim() !== '' ? raw : INSTRUCTOR_RESUME_NO_DATA
+        return (
+          <section
+            key={idx}
+            className="instructor-resume-section instructor-resume-section--free-writing"
+          >
+            <div className="info-section-title">{spec.title}</div>
+            <div className="instructor-resume-free-writing-card">
+              <p className="instructor-resume-free-writing-text">{text}</p>
+            </div>
+          </section>
+        )
+      })}
     </div>
   )
 }

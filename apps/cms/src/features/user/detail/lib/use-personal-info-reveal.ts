@@ -11,7 +11,7 @@ import {
   type SetStateAction,
 } from 'react'
 import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
-import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/user-personal-info-reveal-confirm-modal'
+import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/modal/user-personal-info-reveal-confirm-modal'
 
 export type PersonalInfoRevealControlMode =
   | 'toggleRemask'

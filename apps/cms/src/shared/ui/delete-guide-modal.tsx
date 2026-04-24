@@ -1,6 +1,8 @@
 /**
  * 삭제(파괴적 작업) 재확인 안내 모달 — ContentModal(카드형) 셸
  * 본문은 `lines` 문자열 배열로 전달 (문구는 `delete-guide-messages` 등에서 조합)
+ * - `[강조]` : 대괄호 포함·font-weight 700
+ * - `**강조**` : 대괄호 없이 font-weight 700
  */
 
 import { useEffect, useState } from 'react'
@@ -23,17 +25,26 @@ export interface DeleteGuideModalProps {
   zIndex?: number
 }
 
-function renderLineWithBoldBrackets(line: string) {
-  const parts = line.split(/(\[[^\]]+\])/g)
-  return parts.map((part, i) =>
-    /^\[.+\]$/.test(part) ? (
-      <strong key={i} className="delete-guide-modal__bold">
-        {part}
-      </strong>
-    ) : (
-      part
-    )
-  )
+function renderLineWithEmphasis(line: string) {
+  const parts = line.split(/(\*\*[^*]+\*\*|\[[^\]]+\])/g)
+  return parts.map((part, i) => {
+    if (part === '') return null
+    if (/^\*\*.+\*\*$/.test(part)) {
+      return (
+        <strong key={i} className="delete-guide-modal__bold">
+          {part.slice(2, -2)}
+        </strong>
+      )
+    }
+    if (/^\[.+\]$/.test(part)) {
+      return (
+        <strong key={i} className="delete-guide-modal__bold">
+          {part}
+        </strong>
+      )
+    }
+    return <span key={i}>{part}</span>
+  })
 }
 
 export function DeleteGuideModal({
@@ -85,7 +96,7 @@ export function DeleteGuideModal({
       <div className="delete-guide-modal__body">
         {lines.map((line, i) => (
           <span key={i} className="delete-guide-modal__line">
-            {renderLineWithBoldBrackets(line)}<br/>
+            {renderLineWithEmphasis(line)}<br/>
           </span>
         ))}
       </div>

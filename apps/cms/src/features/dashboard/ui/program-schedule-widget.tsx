@@ -6,7 +6,6 @@
 
 import { Card, List, Button, Empty, Popover } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
 import { useState, useMemo, useRef, useLayoutEffect, Fragment, type ReactElement } from 'react'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -29,7 +28,7 @@ import {
   buildResolvedScheduleColorMapForPrograms,
   type ScheduleColorPair,
 } from '@/features/program/ui/program-schedule-colors'
-import { getProgramAdminDetailInfoTabUrl } from '@/features/program/lib/program-admin-detail-url'
+import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import { SegmentedTab } from '@/shared/ui'
 import '@/shared/ui/widget-more-button.css'
 import '@/shared/components/program-calendar.css'
@@ -364,10 +363,9 @@ export function ProgramScheduleWidget({
   variant,
   widgetKey,
   title,
-  viewAllPath,
+  viewAllPath: _viewAllPath,
   user,
 }: ProgramScheduleWidgetProps) {
-  const navigate = useNavigate()
   const { cardRef, halfColumn } = useDashboardHalfColumnSlot()
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
@@ -477,10 +475,12 @@ export function ProgramScheduleWidget({
     }
   }
 
-  const handleViewAll = () => navigate(viewAllPath)
+  const handleViewAll = () => {
+    window.alert(WIDGET_MORE_ALERT_MESSAGE)
+  }
 
-  const handleEventClick = (event: ScheduleEvent) => {
-    navigate(getProgramAdminDetailInfoTabUrl(event.programId))
+  const handleEventClick = (_event: ScheduleEvent) => {
+    window.alert(WIDGET_MORE_ALERT_MESSAGE)
   }
 
   const headerTitle =

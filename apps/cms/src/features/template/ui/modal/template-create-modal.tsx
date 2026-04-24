@@ -161,7 +161,6 @@ export function TemplateCreateModal({
       </div>
 
       <CmsSelect
-        allowClear
         width={'100%'}
         placeholder="기본 구조로 사용할 양식을 선택해 주세요"
         options={selectOptions}

@@ -1,8 +1,9 @@
 import type { AdminFaq } from '@/data/mock/admin-faqs'
 
-/** FAQ 등록/수정 모달 — Ant Form 필드(답변은 Toast 에디터로 별도 처리) */
+/** FAQ 등록/수정 모달 — Ant Form 필드 */
 export type FaqFormFieldValues = {
   question: string
+  answer: string
   category: string
   visibility: 'public' | 'private'
 }

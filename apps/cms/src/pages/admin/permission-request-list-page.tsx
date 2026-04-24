@@ -22,6 +22,7 @@ import { UserDetailFullPageModal } from '@/pages/users/user-detail-fullpage-moda
 import { useUserStore } from '@/features/user/shared/model/user-store'
 import { userRoleToBasicInfoEntrySource } from '@/shared/config/member-list-kinds'
 import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpage-modal'
+import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 import { updateMockUserById } from '@/data/mock/users'
 import './permission-request-page.css'
 
@@ -60,7 +61,19 @@ type InstructorRejectModalState =
 
 type AdminApproveModalState = InstructorApproveModalState
 type AdminRejectModalState = InstructorRejectModalState
-type AdminApprovedCompleteState = InstructorApprovedCompleteState
+type AdminApprovedCompleteState =
+  | {
+      variant: 'single'
+      displayName: string
+      source: 'list' | 'detail'
+      approvedPermissionVariant: AdminPermissionTagVariant
+    }
+  | {
+      variant: 'bulk'
+      memberCount: number
+      source: 'list'
+      approvedPermissionVariant: AdminPermissionTagVariant
+    }
 type PermissionStatusResetConfirmState = {
   userId: string
   displayName: string
@@ -87,7 +100,6 @@ export function PermissionRequestListPage() {
     useState<AdminApprovedCompleteState | null>(null)
   const [permissionStatusResetConfirm, setPermissionStatusResetConfirm] =
     useState<PermissionStatusResetConfirmState | null>(null)
-
   const detailUser = useUserStore(state =>
     detailUserId ? (state.usersById[detailUserId] ?? null) : null
   )
@@ -120,6 +132,14 @@ export function PermissionRequestListPage() {
     setPermissionRole(null)
   }, [])
 
+  const syncDetailUserIfOpened = useCallback(
+    (userId: string) => {
+      if (!detailOpen || !detailUserId || detailUserId !== userId) return
+      void fetchUserById(userId)
+    },
+    [detailOpen, detailUserId, fetchUserById]
+  )
+
   const handlePermissionApprove = useCallback(
     (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
       if (ctx.permissionRole === 'instructor') {
@@ -148,7 +168,12 @@ export function PermissionRequestListPage() {
         })
         return
       }
-      updateMockUserById(ctx.userId, { permissionApprovalStatus: 'APPROVED' })
+      const nowIso = new Date().toISOString()
+      updateMockUserById(ctx.userId, {
+        permissionApprovalStatus: 'APPROVED',
+        permissionApprovalHandledAt: nowIso,
+        permissionNotificationResentAt: undefined,
+      })
       handleCloseDetail()
     },
     [detailUser, handleCloseDetail]
@@ -159,7 +184,13 @@ export function PermissionRequestListPage() {
       if (!instructorApproveModal) return
       if (instructorApproveModal.variant === 'single') {
         const { userId, source, displayName } = instructorApproveModal
-        updateMockUserById(userId, { permissionApprovalStatus: 'APPROVED' })
+        const nowIso = new Date().toISOString()
+        updateMockUserById(userId, {
+          permissionApprovalStatus: 'APPROVED',
+          permissionApprovalHandledAt: nowIso,
+          permissionNotificationResentAt: undefined,
+        })
+        syncDetailUserIfOpened(userId)
         instructorListRef.current?.applyInstructorPermissionApproved(userId)
         instructorListRef.current?.clearRowSelection()
         setInstructorApproveModal(null)
@@ -167,56 +198,72 @@ export function PermissionRequestListPage() {
         return
       }
       const { userIds, memberCount, source } = instructorApproveModal
+      const nowIso = new Date().toISOString()
       userIds.forEach(uid => {
-        updateMockUserById(uid, { permissionApprovalStatus: 'APPROVED' })
+        updateMockUserById(uid, {
+          permissionApprovalStatus: 'APPROVED',
+          permissionApprovalHandledAt: nowIso,
+          permissionNotificationResentAt: undefined,
+        })
         instructorListRef.current?.applyInstructorPermissionApproved(uid)
       })
       instructorListRef.current?.clearRowSelection()
       setInstructorApproveModal(null)
       setInstructorApprovedComplete({ variant: 'bulk', memberCount, source })
     },
-    [instructorApproveModal]
+    [instructorApproveModal, syncDetailUserIfOpened]
   )
 
   const handleAdminApproveModalConfirm = useCallback(
-    (_payload: InstructorPermissionApprovePayload) => {
+    (payload: InstructorPermissionApprovePayload) => {
       if (!adminApproveModal) return
+      const approvedPermissionVariant = (
+        payload.feeGrade === 'partner' || payload.feeGrade === 'viewer' ? payload.feeGrade : 'manager'
+      ) as AdminPermissionTagVariant
       if (adminApproveModal.variant === 'single') {
         const { userId, source, displayName } = adminApproveModal
-        updateMockUserById(userId, { permissionApprovalStatus: 'APPROVED' })
+        const nowIso = new Date().toISOString()
+        updateMockUserById(userId, {
+          permissionApprovalStatus: 'APPROVED',
+          permissionApprovalHandledAt: nowIso,
+          permissionNotificationResentAt: undefined,
+        })
+        syncDetailUserIfOpened(userId)
         adminListRef.current?.applyInstructorPermissionApproved(userId)
         adminListRef.current?.clearRowSelection()
         setAdminApproveModal(null)
-        setAdminApprovedComplete({ variant: 'single', displayName, source })
+        setAdminApprovedComplete({
+          variant: 'single',
+          displayName,
+          source,
+          approvedPermissionVariant,
+        })
         return
       }
       const { userIds, memberCount, source } = adminApproveModal
+      const nowIso = new Date().toISOString()
       userIds.forEach(uid => {
-        updateMockUserById(uid, { permissionApprovalStatus: 'APPROVED' })
+        updateMockUserById(uid, {
+          permissionApprovalStatus: 'APPROVED',
+          permissionApprovalHandledAt: nowIso,
+          permissionNotificationResentAt: undefined,
+        })
         adminListRef.current?.applyInstructorPermissionApproved(uid)
       })
       adminListRef.current?.clearRowSelection()
       setAdminApproveModal(null)
-      setAdminApprovedComplete({ variant: 'bulk', memberCount, source })
+      setAdminApprovedComplete({ variant: 'bulk', memberCount, source, approvedPermissionVariant })
     },
-    [adminApproveModal]
+    [adminApproveModal, syncDetailUserIfOpened]
   )
 
   const handleInstructorApprovedCompleteClose = useCallback(() => {
-    const source = instructorApprovedComplete?.source
     setInstructorApprovedComplete(null)
-    if (source === 'detail') {
-      handleCloseDetail()
-    }
-  }, [instructorApprovedComplete, handleCloseDetail])
+  }, [])
 
   const handleAdminApprovedCompleteClose = useCallback(() => {
-    const source = adminApprovedComplete?.source
     setAdminApprovedComplete(null)
-    if (source === 'detail') {
-      handleCloseDetail()
-    }
-  }, [adminApprovedComplete, handleCloseDetail])
+  }, [])
 
   const handlePermissionReject = useCallback(
     (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
@@ -246,7 +293,12 @@ export function PermissionRequestListPage() {
         })
         return
       }
-      updateMockUserById(ctx.userId, { permissionApprovalStatus: 'REJECTED' })
+      const nowIso = new Date().toISOString()
+      updateMockUserById(ctx.userId, {
+        permissionApprovalStatus: 'REJECTED',
+        permissionApprovalHandledAt: nowIso,
+        permissionNotificationResentAt: undefined,
+      })
       handleCloseDetail()
     },
     [detailUser, handleCloseDetail]
@@ -273,7 +325,12 @@ export function PermissionRequestListPage() {
     (_payload: { cancellationReason: string; notifyTiming: 'immediate' | 'manual' }) => {
     if (!permissionStatusResetConfirm) return
     const { userId, permissionRole } = permissionStatusResetConfirm
-    updateMockUserById(userId, { permissionApprovalStatus: 'PENDING' })
+    updateMockUserById(userId, {
+      permissionApprovalStatus: 'PENDING',
+      permissionApprovalHandledAt: undefined,
+      permissionNotificationResentAt: undefined,
+    })
+    syncDetailUserIfOpened(userId)
     if (permissionRole === 'instructor') {
       instructorListRef.current?.applyInstructorPermissionPending(userId)
     } else {
@@ -281,7 +338,7 @@ export function PermissionRequestListPage() {
     }
     setPermissionStatusResetConfirm(null)
     },
-    [permissionStatusResetConfirm]
+    [permissionStatusResetConfirm, syncDetailUserIfOpened]
   )
 
   const handleCancelPermissionResetToPending = useCallback(() => {
@@ -292,51 +349,78 @@ export function PermissionRequestListPage() {
     (_payload: InstructorPermissionRejectPayload) => {
       if (!instructorRejectModal) return
       if (instructorRejectModal.variant === 'single') {
-        const { userId, source } = instructorRejectModal
-        updateMockUserById(userId, { permissionApprovalStatus: 'REJECTED' })
+        const { userId } = instructorRejectModal
+        const nowIso = new Date().toISOString()
+        updateMockUserById(userId, {
+          permissionApprovalStatus: 'REJECTED',
+          permissionApprovalHandledAt: nowIso,
+          permissionNotificationResentAt: undefined,
+        })
+        syncDetailUserIfOpened(userId)
         instructorListRef.current?.applyInstructorPermissionRejected(userId)
         instructorListRef.current?.clearRowSelection()
         setInstructorRejectModal(null)
-        if (source === 'detail') {
-          handleCloseDetail()
-        }
         return
       }
       const { userIds } = instructorRejectModal
+      const nowIso = new Date().toISOString()
       userIds.forEach(uid => {
-        updateMockUserById(uid, { permissionApprovalStatus: 'REJECTED' })
+        updateMockUserById(uid, {
+          permissionApprovalStatus: 'REJECTED',
+          permissionApprovalHandledAt: nowIso,
+          permissionNotificationResentAt: undefined,
+        })
         instructorListRef.current?.applyInstructorPermissionRejected(uid)
       })
       instructorListRef.current?.clearRowSelection()
       setInstructorRejectModal(null)
     },
-    [instructorRejectModal, handleCloseDetail]
+    [instructorRejectModal, syncDetailUserIfOpened]
   )
 
   const handleAdminRejectModalConfirm = useCallback(
     (_payload: InstructorPermissionRejectPayload) => {
       if (!adminRejectModal) return
       if (adminRejectModal.variant === 'single') {
-        const { userId, source } = adminRejectModal
-        updateMockUserById(userId, { permissionApprovalStatus: 'REJECTED' })
+        const { userId } = adminRejectModal
+        const nowIso = new Date().toISOString()
+        updateMockUserById(userId, {
+          permissionApprovalStatus: 'REJECTED',
+          permissionApprovalHandledAt: nowIso,
+          permissionNotificationResentAt: undefined,
+        })
+        syncDetailUserIfOpened(userId)
         adminListRef.current?.applyInstructorPermissionRejected(userId)
         adminListRef.current?.clearRowSelection()
         setAdminRejectModal(null)
-        if (source === 'detail') {
-          handleCloseDetail()
-        }
         return
       }
       const { userIds } = adminRejectModal
+      const nowIso = new Date().toISOString()
       userIds.forEach(uid => {
-        updateMockUserById(uid, { permissionApprovalStatus: 'REJECTED' })
+        updateMockUserById(uid, {
+          permissionApprovalStatus: 'REJECTED',
+          permissionApprovalHandledAt: nowIso,
+          permissionNotificationResentAt: undefined,
+        })
         adminListRef.current?.applyInstructorPermissionRejected(uid)
       })
       adminListRef.current?.clearRowSelection()
       setAdminRejectModal(null)
     },
-    [adminRejectModal, handleCloseDetail]
+    [adminRejectModal, syncDetailUserIfOpened]
   )
+
+  const handlePermissionResendNotification = useCallback(
+    (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
+      updateMockUserById(ctx.userId, {
+        permissionNotificationResentAt: new Date().toISOString(),
+      })
+    },
+    []
+  )
+
+  const detailPermissionRole = permissionRole ?? undefined
 
   return (
     <div>
@@ -455,10 +539,11 @@ export function PermissionRequestListPage() {
         onClose={handleCloseDetail}
         basicInfoEntrySource={basicInfoEntrySource}
         mode="permission"
-        permissionRole={permissionRole ?? undefined}
+        permissionRole={detailPermissionRole}
         onPermissionApprove={handlePermissionApprove}
         onPermissionReject={handlePermissionReject}
         onPermissionResetToPending={handlePermissionResetToPending}
+        onPermissionResendNotification={handlePermissionResendNotification}
       />
 
       {instructorApproveModal ? (
@@ -571,6 +656,7 @@ export function PermissionRequestListPage() {
           open
           zIndex={INSTRUCTOR_PERMISSION_APPROVED_COMPLETE_MODAL_Z}
           onClose={handleAdminApprovedCompleteClose}
+          approvedPermissionVariant={adminApprovedComplete.approvedPermissionVariant}
           {...(adminApprovedComplete.variant === 'single'
             ? {
                 variant: 'single' as const,

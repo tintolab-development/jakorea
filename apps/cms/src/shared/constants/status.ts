@@ -391,6 +391,16 @@ export function getProgramEnrollmentDisplayLabel(
   return programEnrollmentDisplayConfig.labels[status as ProgramEnrollmentDisplayStatus] || status
 }
 
+/**
+ * 회원/후원사 프로그램 이력 삭제 제한 — 테이블·배지가 「프로그램 진행 중」(`EDUCATION_IN_PROGRESS`)으로 보일 때
+ * (삭제 확인 모달에서 [삭제] 확정 전 차단에 사용)
+ */
+export function isProgramHistoryDeleteBlockedByDisplayStatus(
+  displayStatus: ProgramEnrollmentDisplayStatus
+): boolean {
+  return displayStatus === 'EDUCATION_IN_PROGRESS'
+}
+
 export function getProgramEnrollmentDisplayColor(
   status: ProgramEnrollmentDisplayStatus | string
 ): string {

@@ -62,6 +62,13 @@ export function useTemplateEditor(
       previewStyle: 'vertical',
       usageStatistics: false,
       initialValue: watchedMarkdown || '',
+      toolbarItems: [
+        ['heading', 'bold', 'italic', 'strike'],
+        ['hr', 'quote'],
+        ['ul', 'ol', 'table'],
+        ['link', 'image'],
+        ['code', 'codeblock'],
+      ],
       events: {
         change: () => {
           const md = instance.getMarkdown()

@@ -84,6 +84,19 @@
   background-image: none !important;
 }
 
+/* FAQ 삭제 확인 — 너비 600px (preset faq) */
+.notice-delete-confirm-modal-wrap.faq-delete-confirm-modal-wrap .ant-modal.notice-delete-confirm-modal.faq-delete-confirm-modal {
+  width: min(600px, calc(100vw - 32px)) !important;
+  max-width: min(600px, calc(100vw - 32px)) !important;
+}
+
+/* 공지사항 삭제 확인 — 너비 600px (preset notice) */
+.notice-delete-confirm-modal-wrap.post-notice-delete-confirm-modal-wrap
+  .ant-modal.notice-delete-confirm-modal.post-notice-delete-confirm-modal {
+  width: min(600px, calc(100vw - 32px)) !important;
+  max-width: min(600px, calc(100vw - 32px)) !important;
+}
+
 /* 문의 삭제 확인 — 시안 600×230 (preset inquiry) */
 .notice-delete-confirm-modal-wrap.inquiry-delete-confirm-modal-wrap .ant-modal.notice-delete-confirm-modal.inquiry-delete-confirm-modal {
   width: min(600px, calc(100vw - 32px)) !important;

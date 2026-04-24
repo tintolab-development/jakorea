@@ -1,6 +1,6 @@
 /**
  * 정산 관리 > 계좌 지급 확인
- * 필터·테이블: 지급조서 확인과 동일 `FilterTableLayout` + 목록 헤더·테이블은 participating 클래스 유지
+ * 필터·목록: `FilterTableLayout` (`title`·`description`·`actions`) + 테이블·캘린더 본문
  */
 
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type Key } from 'react'
@@ -12,14 +12,15 @@ import {
   ACCOUNT_PAYMENT_STATUS_LABELS,
   MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET,
   mockAccountPaymentRows,
+  formatAccountPaymentSessionLabelDisplay,
   type AccountPaymentRow,
   type AccountPaymentTransferStatus,
 } from '@/data/mock/account-payments-list'
+import { ACCOUNT_PAYMENT_AGGREGATE_STATUSES } from '@/shared/constants/payment-order-aggregate-status'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui/cms-button'
 import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/ui/detail-modal/program-status/program-progress-tab.css'
-import './payment-orders-page.css'
 import './account-payments-page.css'
 import { AccountPaymentsCalendarView } from './account-payments-calendar-view'
 import {
@@ -28,7 +29,7 @@ import {
 } from '@/features/settlement/ui/account-payment-confirmation-modal'
 import { AccountPaymentCompleteSuccessModal } from '@/features/settlement/ui/account-payment-complete-success-modal'
 import { AccountPaymentStatusDetailFullPageModal } from './account-payment-status-detail-fullpage-modal'
-import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/instructor-payment-statement-blocked-modal'
+import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
 
 /** Fortune Sheet·ExcelJS 분리 — lazy 라우트 청크 과대로 인한 dev 동적 import 실패 완화 */
 const BulkTransferPreviewModal = lazy(async () => {
@@ -61,6 +62,9 @@ function getDefaultTransferDateRange(reference: Dayjs = dayjs()): [Dayjs, Dayjs]
 }
 
 const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토']
+
+/** `FilterTableLayout` 툴바 — 구 `AppButton` filter-wide 최소 폭에 맞춤 */
+const ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE = { minWidth: 180 } as const
 
 /** 세 번째 요약 위젯 — 이체 예정일 구간 표기 `YY. MM. DD ~ YY. MM. DD` */
 function formatYyMmDd(d: Dayjs): string {
@@ -101,9 +105,26 @@ function formatWon(amount: number): string {
 
 const statusSelectOptions: { value: AppliedAccountStatus; label: string }[] = [
   { value: 'all', label: '전체' },
-  { value: 'pending', label: ACCOUNT_PAYMENT_STATUS_LABELS.pending },
-  { value: 'completed', label: ACCOUNT_PAYMENT_STATUS_LABELS.completed },
+  ...ACCOUNT_PAYMENT_AGGREGATE_STATUSES.map(value => ({
+    value,
+    label: ACCOUNT_PAYMENT_STATUS_LABELS[value],
+  })),
 ]
+
+function getAccountPaymentStatusClassName(status: AccountPaymentTransferStatus): string {
+  switch (status) {
+    case 'awaiting_confirmation':
+      return 'account-payments-page__status-text--awaiting-confirmation'
+    case 'partial_confirmation':
+      return 'account-payments-page__status-text--partial-confirmation'
+    case 'account_paid':
+      return 'account-payments-page__status-text--account-paid'
+    case 'payment_correction_requested':
+      return 'account-payments-page__status-text--payment-correction-requested'
+    default:
+      return ''
+  }
+}
 
 function useCalendarYear(): number {
   const [y, setY] = useState(() => dayjs().year())
@@ -159,12 +180,15 @@ export default function AccountPaymentsPage() {
   const [bulkTransferPreviewOpen, setBulkTransferPreviewOpen] = useState(false)
   const [taxFilingPreviewOpen, setTaxFilingPreviewOpen] = useState(false)
   /** 대량이체·세금신고 미리보기에 넘길 행(툴바는 선택 완료 건만, 성공 모달 경로는 조회 결과 완료 건) */
-  const [issuedFormPreviewRows, setIssuedFormPreviewRows] = useState<AccountPaymentRow[] | null>(null)
-  const [accountFormIssueBlockedOpen, setAccountFormIssueBlockedOpen] = useState(false)
-  const [accountFormIssueBlockedVariant, setAccountFormIssueBlockedVariant] = useState<'single' | 'multi'>(
-    'multi'
+  const [issuedFormPreviewRows, setIssuedFormPreviewRows] = useState<AccountPaymentRow[] | null>(
+    null
   )
-  const [accountFormIssueBlockedSelectedCount, setAccountFormIssueBlockedSelectedCount] = useState(0)
+  const [accountFormIssueBlockedOpen, setAccountFormIssueBlockedOpen] = useState(false)
+  const [accountFormIssueBlockedVariant, setAccountFormIssueBlockedVariant] = useState<
+    'single' | 'multi'
+  >('multi')
+  const [accountFormIssueBlockedSelectedCount, setAccountFormIssueBlockedSelectedCount] =
+    useState(0)
   const [accountPaymentCompleteSuccessOpen, setAccountPaymentCompleteSuccessOpen] = useState(false)
   const [accountPaymentDetailRow, setAccountPaymentDetailRow] = useState<AccountPaymentRow | null>(
     null
@@ -248,7 +272,10 @@ export default function AccountPaymentsPage() {
     [applied]
   )
 
-  const filteredRows = useMemo(() => filterRows(accountPaymentRows, applied), [accountPaymentRows, applied])
+  const filteredRows = useMemo(
+    () => filterRows(accountPaymentRows, applied),
+    [accountPaymentRows, applied]
+  )
 
   const accountPaymentConfirmModalData = useMemo(() => {
     if (!accountPayConfirmSelection?.length) return null
@@ -260,7 +287,7 @@ export default function AccountPaymentsPage() {
     return accountPaymentRows
       .filter(
         r =>
-          r.accountPaymentStatus === 'completed' &&
+          r.accountPaymentStatus === 'account_paid' &&
           matchesDateRange(r.transferScheduledDate, range)
       )
       .reduce((s, r) => s + r.amount, 0)
@@ -273,7 +300,7 @@ export default function AccountPaymentsPage() {
       return { labelDateRange: null as string | null, amount: null as number | null }
     }
     const pendingSum = filteredRows
-      .filter(r => r.accountPaymentStatus === 'pending')
+      .filter(r => r.accountPaymentStatus === 'awaiting_confirmation')
       .reduce((s, r) => s + r.amount, 0)
     return {
       labelDateRange: formatSettlementPendingDateRangeOnly([range[0], range[1]]),
@@ -349,6 +376,7 @@ export default function AccountPaymentsPage() {
         key: 'sessionLabel',
         width: 120,
         align: 'center',
+        render: (v: string) => formatAccountPaymentSessionLabelDisplay(v),
       },
       {
         title: '계좌 지급 현황',
@@ -357,13 +385,7 @@ export default function AccountPaymentsPage() {
         width: 160,
         align: 'center',
         render: (s: AccountPaymentTransferStatus) => (
-          <span
-            className={
-              s === 'pending'
-                ? 'account-payments-page__status-text--pending'
-                : 'account-payments-page__status-text--completed'
-            }
-          >
+          <span className={getAccountPaymentStatusClassName(s)}>
             {ACCOUNT_PAYMENT_STATUS_LABELS[s]}
           </span>
         ),
@@ -406,7 +428,7 @@ export default function AccountPaymentsPage() {
       message.warning('선택한 항목을 찾을 수 없습니다.')
       return null
     }
-    if (picked.some(r => r.accountPaymentStatus === 'pending')) {
+    if (picked.some(r => r.accountPaymentStatus !== 'account_paid')) {
       setAccountFormIssueBlockedVariant(selectedRowKeys.length === 1 ? 'single' : 'multi')
       setAccountFormIssueBlockedSelectedCount(selectedRowKeys.length)
       setAccountFormIssueBlockedOpen(true)
@@ -449,14 +471,10 @@ export default function AccountPaymentsPage() {
 
   const handleAccountPaymentCompletedForRow = useCallback((rowId: string) => {
     setAccountPaymentRows(prev =>
-      prev.map(r =>
-        r.id === rowId ? { ...r, accountPaymentStatus: 'completed' as const } : r
-      )
+      prev.map(r => (r.id === rowId ? { ...r, accountPaymentStatus: 'account_paid' as const } : r))
     )
     setAccountPaymentDetailRow(prev =>
-      prev && prev.id === rowId
-        ? { ...prev, accountPaymentStatus: 'completed' as const }
-        : prev
+      prev && prev.id === rowId ? { ...prev, accountPaymentStatus: 'account_paid' as const } : prev
     )
     message.success('계좌 지급 완료 처리되었습니다.')
   }, [])
@@ -479,6 +497,80 @@ export default function AccountPaymentsPage() {
     setAccountPayConfirmSelection(picked)
   }, [filteredRows, selectedRowKeys])
 
+  const accountPaymentsFilterTableActions = useMemo(
+    () => (
+      <>
+        {viewMode === 'list' ? (
+          <CmsButton
+            variant="secondary"
+            size="large"
+            width="auto"
+            style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
+            icon={<CalendarOutlined />}
+            type="button"
+            onClick={() => setViewMode('calendar')}
+          >
+            캘린더 뷰로 보기
+          </CmsButton>
+        ) : (
+          <CmsButton
+            variant="secondary"
+            size="large"
+            width="auto"
+            style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
+            icon={<UnorderedListOutlined />}
+            type="button"
+            onClick={() => setViewMode('list')}
+          >
+            리스트 뷰로 보기
+          </CmsButton>
+        )}
+        <CmsButton
+          variant="primary"
+          size="large"
+          width="auto"
+          style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
+          icon={<DownloadOutlined />}
+          type="button"
+          disabled={selectedRowKeys.length === 0}
+          onClick={openBulkTransferPreview}
+        >
+          대량이체 양식 발급
+        </CmsButton>
+        <CmsButton
+          variant="primary"
+          size="large"
+          width="auto"
+          style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
+          icon={<DownloadOutlined />}
+          type="button"
+          disabled={selectedRowKeys.length === 0}
+          onClick={openTaxFilingPreview}
+        >
+          세금 신고 양식 발급
+        </CmsButton>
+        <CmsButton
+          variant="primary"
+          size="large"
+          width="auto"
+          style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
+          type="button"
+          disabled={selectedRowKeys.length === 0}
+          onClick={openAccountPaymentConfirmFromSelection}
+        >
+          일괄 지급 처리
+        </CmsButton>
+      </>
+    ),
+    [
+      viewMode,
+      selectedRowKeys.length,
+      openBulkTransferPreview,
+      openTaxFilingPreview,
+      openAccountPaymentConfirmFromSelection,
+    ]
+  )
+
   const handleAccountPaymentConfirmComplete = useCallback(() => {
     const selection = accountPayConfirmSelection
     if (!selection?.length) {
@@ -487,9 +579,7 @@ export default function AccountPaymentsPage() {
     }
     const ids = new Set(selection.map(r => r.id))
     setAccountPaymentRows(prev =>
-      prev.map(r =>
-        ids.has(r.id) ? { ...r, accountPaymentStatus: 'completed' as const } : r
-      )
+      prev.map(r => (ids.has(r.id) ? { ...r, accountPaymentStatus: 'account_paid' as const } : r))
     )
     setSelectedRowKeys(prev => prev.filter(k => !ids.has(String(k))))
     closeAccountPaymentConfirmModal()
@@ -502,7 +592,7 @@ export default function AccountPaymentsPage() {
 
   const handleIssueBulkTransferFromSuccessModal = useCallback(() => {
     setAccountPaymentCompleteSuccessOpen(false)
-    const completed = filteredRows.filter(r => r.accountPaymentStatus === 'completed')
+    const completed = filteredRows.filter(r => r.accountPaymentStatus === 'account_paid')
     if (completed.length === 0) {
       message.warning(
         '현재 조회 결과에 계좌 지급 완료 항목이 없습니다. 미리보기에는 열 헤더만 표시됩니다.'
@@ -543,7 +633,9 @@ export default function AccountPaymentsPage() {
 
       <div className="account-payments-page__summary-row" aria-label="정산 요약">
         <div className="account-payments-page__summary-card">
-          <span className="account-payments-page__card-label">{selectedYearScoped}년 예산 총액</span>
+          <span className="account-payments-page__card-label">
+            {selectedYearScoped}년 예산 총액
+          </span>
           <div className="account-payments-page__card-amount-row">
             <span className="account-payments-page__card-amount-num">
               {MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET.toLocaleString('ko-KR')}
@@ -590,94 +682,56 @@ export default function AccountPaymentsPage() {
       </div>
 
       <div className="payment-orders-page__content-wrapper">
-        <FilterTableLayout
-          className="payment-orders-page__filter-list-layout"
-          bordered={false}
-          cardStyle={{ marginBottom: 0 }}
-          fields={accountFilterFields}
-          filters={unifiedFilterValues}
-          onFilterChange={handleUnifiedFilterChange}
-          onSearch={handleSearch}
-        >
-          <div className="participating-institutions-section__below-divider">
-            <div className="participating-institutions-section__table-header">
-              <div>
-                <span className="table-title">계좌 지급 대상 목록</span>
-                <span className="table-description">총 {total}건</span>
+        {viewMode === 'list' ? (
+          <FilterTableLayout
+            className="account-payments-page__filter-table"
+            bordered={false}
+            cardStyle={{ marginBottom: 0 }}
+            fields={accountFilterFields}
+            filters={unifiedFilterValues}
+            onFilterChange={handleUnifiedFilterChange}
+            onSearch={handleSearch}
+            title="계좌 지급 대상 목록"
+            description={`총 ${total}건`}
+            actions={accountPaymentsFilterTableActions}
+          >
+            <Table<AccountPaymentRow>
+              className="cms-data-table"
+              rowKey="id"
+              columns={columns}
+              dataSource={filteredRows}
+              pagination={false}
+              rowSelection={rowSelection}
+              rowClassName={() => 'account-payments-page__table-row--clickable'}
+              onRow={record => ({
+                onClick: e => {
+                  const t = e.target as HTMLElement
+                  if (t.closest('.ant-table-selection-column')) return
+                  setAccountPaymentDetailRow(record)
+                },
+              })}
+            />
+          </FilterTableLayout>
+        ) : (
+          <div className="account-payments-page__calendar-without-card">
+            <div className="table-header-actions account-payments-page__calendar-toolbar">
+              <div className="table-header-title--wrapper">
+                <span className="table-title">예정 프로그램</span>
+                <span className="table-description">{`총 ${total}건`}</span>
               </div>
-              <div className="participating-institutions-section__table-actions">
-                {viewMode === 'list' ? (
-                  <AppButton
-                    variant="cancel"
-                    size="filter-wide"
-                    icon={<CalendarOutlined />}
-                    onClick={() => setViewMode('calendar')}
-                  >
-                    캘린더 뷰로 보기
-                  </AppButton>
-                ) : (
-                  <AppButton
-                    variant="cancel"
-                    size="filter-wide"
-                    icon={<UnorderedListOutlined />}
-                    onClick={() => setViewMode('list')}
-                  >
-                    리스트 뷰로 보기
-                  </AppButton>
-                )}
-                <AppButton
-                  variant="primary"
-                  size="filter-wide"
-                  icon={<DownloadOutlined />}
-                  disabled={selectedRowKeys.length === 0}
-                  onClick={openBulkTransferPreview}
-                >
-                  대량이체 양식 발급
-                </AppButton>
-                <AppButton
-                  variant="primary"
-                  size="filter-wide"
-                  icon={<DownloadOutlined />}
-                  disabled={selectedRowKeys.length === 0}
-                  onClick={openTaxFilingPreview}
-                >
-                  세금 신고 양식 발급
-                </AppButton>
-                <AppButton
-                  variant="primary"
-                  size="filter-wide"
-                  disabled={selectedRowKeys.length === 0}
-                  onClick={openAccountPaymentConfirmFromSelection}
-                >
-                  일괄 지급 처리
-                </AppButton>
+              <div className="account-payments-page__calendar-toolbar-actions">
+                {accountPaymentsFilterTableActions}
               </div>
             </div>
-
-            <div className="participating-institutions-section__table-wrap payment-orders-page__table-scroll-root">
-              {viewMode === 'calendar' ? (
-                <AccountPaymentsCalendarView key={appliedResetKey} rows={filteredRows} />
-              ) : (
-                <Table<AccountPaymentRow>
-                  className="cms-data-table"
-                  rowKey="id"
-                  columns={columns}
-                  dataSource={filteredRows}
-                  pagination={false}
-                  rowSelection={rowSelection}
-                  rowClassName={() => 'account-payments-page__table-row--clickable'}
-                  onRow={record => ({
-                    onClick: e => {
-                      const t = e.target as HTMLElement
-                      if (t.closest('.ant-table-selection-column')) return
-                      setAccountPaymentDetailRow(record)
-                    },
-                  })}
-                />
-              )}
-            </div>
+            <AccountPaymentsCalendarView
+              key={appliedResetKey}
+              rows={filteredRows}
+              selectedRowKeys={selectedRowKeys}
+              onSelectionChange={setSelectedRowKeys}
+              onAccountPaymentRowClick={setAccountPaymentDetailRow}
+            />
           </div>
-        </FilterTableLayout>
+        )}
       </div>
 
       <AccountPaymentConfirmationModal

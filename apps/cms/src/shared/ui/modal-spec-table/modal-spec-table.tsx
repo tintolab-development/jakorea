@@ -38,7 +38,7 @@ export function ModalSpecTable({ children, className, 'aria-label': ariaLabel }:
 }
 
 export interface ModalSpecTableRowProps {
-  label: string
+  label: ReactNode
   labelVariant: ModalSpecTableLabelVariant
   children: ReactNode
   className?: string

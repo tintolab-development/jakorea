@@ -6,15 +6,17 @@ import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   INSTRUCTOR_RESUME_NO_DATA,
+  InstructorResumeAwardsCardBody,
   InstructorResumeCareerCardBody,
   InstructorResumeEducationCardBody,
+  InstructorResumeFreeWritingSections,
   InstructorResumeQualificationsCardBody,
+  instructorAwardsSectionDescription,
   instructorCareerSectionDescription,
   instructorEducationSectionDescription,
   instructorQualificationsSectionDescription,
 } from '@/features/program/program-detail/ui/applicant-list/instructor-resume-blocks'
 import '@/features/program/program-detail/ui/applicant-list/applicant-instructor-resume.css'
-import './instructor-resume-detail-forms.css'
 
 function resumeSectionDescriptionNode(text: string) {
   const empty = text === INSTRUCTOR_RESUME_NO_DATA
@@ -31,13 +33,16 @@ function resumeSectionDescriptionNode(text: string) {
   )
 }
 
-export function InstructorResumeDetailForms({ instructor }: { instructor: ApplicantInstructorRow }) {
+export function InstructorResumeDetailForms({
+  instructor,
+}: {
+  instructor: ApplicantInstructorRow
+}) {
   return (
     <>
       <DetailInfoForm
         title="학력사항"
-        description={resumeSectionDescriptionNode(instructorEducationSectionDescription(instructor))}
-        className="instructor-resume-detail-forms__section"
+        message={resumeSectionDescriptionNode(instructorEducationSectionDescription(instructor))}
       >
         <DetailInfoForm.Row type="custom">
           <InstructorResumeEducationCardBody d={instructor} />
@@ -45,8 +50,8 @@ export function InstructorResumeDetailForms({ instructor }: { instructor: Applic
       </DetailInfoForm>
       <DetailInfoForm
         title="경력사항"
-        description={resumeSectionDescriptionNode(instructorCareerSectionDescription(instructor))}
-        className="instructor-resume-detail-forms__section"
+        className="detail-info-form--gap"
+        message={resumeSectionDescriptionNode(instructorCareerSectionDescription(instructor))}
       >
         <DetailInfoForm.Row type="custom">
           <InstructorResumeCareerCardBody d={instructor} />
@@ -54,15 +59,28 @@ export function InstructorResumeDetailForms({ instructor }: { instructor: Applic
       </DetailInfoForm>
       <DetailInfoForm
         title="자격 및 면허"
-        description={resumeSectionDescriptionNode(
+        className="detail-info-form--gap"
+        message={resumeSectionDescriptionNode(
           instructorQualificationsSectionDescription(instructor)
         )}
-        className="instructor-resume-detail-forms__section"
       >
         <DetailInfoForm.Row type="custom">
           <InstructorResumeQualificationsCardBody d={instructor} />
         </DetailInfoForm.Row>
       </DetailInfoForm>
+      <DetailInfoForm
+        title="수상 및 수료 내역"
+        className="detail-info-form--gap"
+        message={resumeSectionDescriptionNode(instructorAwardsSectionDescription(instructor))}
+      >
+        <DetailInfoForm.Row type="custom">
+          <InstructorResumeAwardsCardBody d={instructor} />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+
+      <div className="detail-info-form--gap detail-info-form--gap-bottom">
+        <InstructorResumeFreeWritingSections d={instructor} />
+      </div>
     </>
   )
 }

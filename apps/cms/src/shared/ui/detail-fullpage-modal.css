@@ -14,6 +14,12 @@
   --detail-fullpage-header-padding-x: 52px;
   --detail-fullpage-header-padding-bottom: 16px;
   --detail-fullpage-section-gap: 32px;
+  /* TealHeaderModal 공통 규칙(teal-header-modal.css)의 radius-8보다 후단에서 4면 직각 고정 */
+  border-radius: 0 !important;
+}
+
+.detail-fullpage-modal.ant-modal .ant-modal-content {
+  border-radius: 0 !important;
 }
 
 /**
@@ -60,6 +66,8 @@
   overflow-x: hidden;
   overflow-y: auto;
   background: var(--color-bg-base);
+
+  border-radius: 0 !important;
 }
 
 .detail-fullpage-modal__header {
@@ -134,12 +142,16 @@
  * `overflow-x: hidden`만 준 `__content`가 많은 엔진에서 sticky 조상으로 취급되어 우측 `position:sticky`가 무효화됨.
  * `clip`은 가로만 막고 스크롤 컨테이너를 만들지 않아 sticky가 `__main` 기준으로 동작함.
  */
-.detail-fullpage-modal__content:has(.instructor-payment-tab__calendar-view-container--no-inner-scroll) {
+.detail-fullpage-modal__content:has(
+  .instructor-payment-tab__calendar-view-container--no-inner-scroll
+) {
   overflow-x: clip;
 }
 
 @supports not (overflow-x: clip) {
-  .detail-fullpage-modal__content:has(.instructor-payment-tab__calendar-view-container--no-inner-scroll) {
+  .detail-fullpage-modal__content:has(
+    .instructor-payment-tab__calendar-view-container--no-inner-scroll
+  ) {
     overflow-x: visible;
   }
 }
@@ -425,6 +437,39 @@
 
 .detail-fullpage-modal .filter-table-layout {
   padding: 0 !important;
+}
+
+/**
+ * UnifiedFilterCard: `FilterFieldConfig.width`(% 등) 사용 시 Col 래퍼만 넓어지는 문제 방지.
+ * `table-filter-group`의 pct-width Col과 동일 토큰(`--filter-control-max-width` 등)으로 래퍼 상한 정렬.
+ */
+.detail-fullpage-modal
+  .unified-filter-card__fields-inner
+  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio) {
+  max-width: min(100%, var(--filter-control-max-width, 260px));
+  box-sizing: border-box;
+}
+
+.detail-fullpage-modal
+  .unified-filter-card__fields-inner
+  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio):has(
+    .app-datepicker--range-split
+  ) {
+  max-width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
+  );
+}
+
+.detail-fullpage-modal
+  .unified-filter-card__fields-inner
+  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio):has(
+    .unified-filter-card__address-region-selects
+  ) {
+  max-width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px))
+  );
 }
 
 /* 회원 상세 풀페이지 — 신청/수강 이력: 필터 미사용 시 슬롯 숨김 */

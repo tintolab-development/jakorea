@@ -17,10 +17,10 @@ export interface NoticeDeleteConfirmModalProps {
   line1?: string
   /** 본문 둘째 줄 (미지정 시 기본 문구) */
   line2?: string
-  /** ContentModal 가로(px). `preset="inquiry"`일 때 기본 600 */
+  /** ContentModal 가로(px). `inquiry` | `faq` | `notice`일 때 기본 600 */
   width?: number
-  /** `inquiry`: 문의 삭제 시안 600×230·버튼 라벨 커스텀용 클래스 */
-  preset?: 'default' | 'inquiry'
+  /** `inquiry`: 문의 삭제 600×230 · `faq` | `notice`: 600px 너비(각각 CSS 클래스) */
+  preset?: 'default' | 'inquiry' | 'faq' | 'notice'
   /** 확인(삭제) 버튼 라벨 (기본: 삭제) */
   confirmLabel?: string
 }
@@ -37,11 +37,16 @@ export function NoticeDeleteConfirmModal({
   preset = 'default',
   confirmLabel = '삭제',
 }: NoticeDeleteConfirmModalProps) {
-  const width = preset === 'inquiry' ? (widthProp ?? 600) : widthProp
+  const width =
+    preset === 'inquiry' || preset === 'faq' || preset === 'notice'
+      ? (widthProp ?? 600)
+      : widthProp
 
   const wrapClassName = [
     'notice-delete-confirm-modal-wrap',
     preset === 'inquiry' && 'inquiry-delete-confirm-modal-wrap',
+    preset === 'faq' && 'faq-delete-confirm-modal-wrap',
+    preset === 'notice' && 'post-notice-delete-confirm-modal-wrap',
   ]
     .filter(Boolean)
     .join(' ')
@@ -49,6 +54,8 @@ export function NoticeDeleteConfirmModal({
   const modalClassName = [
     'notice-delete-confirm-modal',
     preset === 'inquiry' && 'inquiry-delete-confirm-modal',
+    preset === 'faq' && 'faq-delete-confirm-modal',
+    preset === 'notice' && 'post-notice-delete-confirm-modal',
   ]
     .filter(Boolean)
     .join(' ')

@@ -63,7 +63,8 @@ const mockAdmins: User[] = [
     adminComment: '전사 관리자 운영 기준 확인 후 권한 변경 바랍니다.',
     listMetrics: {
       adminPermissionVariant: 'manager',
-      managedProgramCount: 1,
+      managedProgramInProgressCount: 5,
+      managedProgramCount: 7,
     },
   },
   {
@@ -88,6 +89,7 @@ const mockAdmins: User[] = [
     adminComment: 'PM/파트너 권한으로 담당 프로그램만 관리합니다.',
     listMetrics: {
       adminPermissionVariant: 'partner',
+      managedProgramInProgressCount: 0,
       managedProgramCount: 1,
     },
   },
@@ -115,6 +117,7 @@ const mockAdmins: User[] = [
     adminComment: '관리자 등록 계정(수정 가능) 테스트용입니다.',
     listMetrics: {
       adminPermissionVariant: 'viewer',
+      managedProgramInProgressCount: 0,
       managedProgramCount: 1,
     },
   },
@@ -199,6 +202,7 @@ const mockInstructors: User[] = [
     },
     listMetrics: {
       instructorTypeLabel: '2급 강사비',
+      permissionApplicationTypeLabel: '특강 강사',
       settlementStatusLabel: '확인 대기 중',
       jaEvaluationGrade: 'B',
       employmentStatusLabel: '전근',
@@ -1217,7 +1221,8 @@ const extraMockUsers: User[] = [
     },
     listMetrics: {
       instructorTypeLabel: '1급 강사비',
-      settlementStatusLabel: '일부 확인 완료',
+      permissionApplicationTypeLabel: '제미나이 강사단',
+      settlementStatusLabel: '일부 지급 완료',
       employmentStatusLabel: '재직 중',
       instructorAssignedGrade: '1학년',
     },
@@ -1243,6 +1248,7 @@ const extraMockUsers: User[] = [
     affiliation: 'JAKorea | 이전 담당',
     listMetrics: {
       adminPermissionVariant: 'viewer',
+      managedProgramInProgressCount: 0,
       managedProgramCount: 1,
     },
   },
@@ -1305,6 +1311,7 @@ const extraMockUsers: User[] = [
     adminComment: '관리자 등록 강사 데모 계정',
     listMetrics: {
       instructorTypeLabel: '1급 강사비',
+      permissionApplicationTypeLabel: 'JA 강사단',
       settlementStatusLabel: '확인 대기 중',
       jaEvaluationGrade: 'B',
       employmentStatusLabel: '재직 중',

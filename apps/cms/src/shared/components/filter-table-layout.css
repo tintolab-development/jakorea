@@ -38,7 +38,7 @@
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: var(--spacing-12);
+  gap: var(--filter-field-gap, var(--spacing-12, 12px));
   width: 100%;
   min-width: 0;
   margin-bottom: var(--spacing-16);
@@ -55,7 +55,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--spacing-12);
+  gap: var(--filter-field-gap, var(--spacing-12, 12px));
   flex-shrink: 0;
 }
 
@@ -79,4 +79,9 @@
 .filter-table-layout__table {
   width: 100%;
   min-width: 0;
+}
+
+/* 필터 미노출: 툴바가 카드 상단부터 오도록 상단 여백만 보정 */
+.filter-table-layout.filter-table-layout--without-filter .filter-table-layout__toolbar {
+  margin-top: 0;
 }

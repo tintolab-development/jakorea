@@ -1,6 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ColumnsType } from 'antd/es/table'
-import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
@@ -9,15 +8,14 @@ import type {
   AdminInquiryRow,
   AdminInquiryTableContext,
 } from '@/features/posts/model/admin-inquiry-management.types'
+import {
+  normalizeDateRangePickerValueToPending,
+  pendingDateRangeTupleEqual,
+  resolvePendingDateRangeFromUrl,
+  type UrlDateRangePendingSyncRef,
+} from '@/features/posts/lib/url-date-range-pending-sync'
 
-function dayjsPairEqual(
-  a: [Dayjs, Dayjs] | null | undefined,
-  b: [Dayjs, Dayjs] | null | undefined
-): boolean {
-  if (a == null && b == null) return true
-  if (a == null || b == null) return false
-  return a[0].valueOf() === b[0].valueOf() && a[1].valueOf() === b[1].valueOf()
-}
+const adminInquiryUrlDateRangeSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
 
 function parseStatus(raw: string | null): AdminInquiryPendingFilters['status'] {
   if (raw === 'PENDING' || raw === 'ANSWERED') return raw
@@ -156,10 +154,15 @@ export const adminInquiryManagementTablePageConfig: TablePageConfig<
       const assigneeName = searchParams.get('inq_asg') ?? ''
       const from = searchParams.get('inq_from')
       const to = searchParams.get('inq_to')
-      const dateRange =
-        from && to ? ([dayjs(from), dayjs(to)] as [Dayjs, Dayjs]) : null
 
       setPendingFilters(prev => {
+        const dateRange = resolvePendingDateRangeFromUrl({
+          ref: adminInquiryUrlDateRangeSyncRef,
+          from,
+          to,
+          prev: prev.dateRange,
+        }) as AdminInquiryPendingFilters['dateRange']
+
         const next: AdminInquiryPendingFilters = {
           status,
           category,
@@ -176,7 +179,7 @@ export const adminInquiryManagementTablePageConfig: TablePageConfig<
           prev.title === next.title &&
           prev.memberName === next.memberName &&
           prev.assigneeName === next.assigneeName &&
-          dayjsPairEqual(prev.dateRange, next.dateRange)
+          pendingDateRangeTupleEqual(prev.dateRange, next.dateRange)
         ) {
           return prev
         }
@@ -214,10 +217,7 @@ export const adminInquiryManagementTablePageConfig: TablePageConfig<
         return { ...prev, category: v }
       }
       if (key === 'dateRange') {
-        const range = Array.isArray(value) ? value : null
-        const dr =
-          range?.[0] && range?.[1] ? ([range[0], range[1]] as [Dayjs, Dayjs]) : null
-        return { ...prev, dateRange: dr }
+        return { ...prev, dateRange: normalizeDateRangePickerValueToPending(value) }
       }
       if (
         key === 'programName' ||

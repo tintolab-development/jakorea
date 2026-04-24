@@ -5,7 +5,8 @@
 import { useCallback, useId, useMemo, useState } from 'react'
 import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react'
 import { Checkbox, Input, Popover } from 'antd'
-import { CloseCircleFilled, DownOutlined } from '@ant-design/icons'
+import { CloseCircleFilled } from '@ant-design/icons'
+import { FilterSelectChevronIcon } from './icons/FilterSelectChevronIcon'
 import './app-multi-select.css'
 
 export interface AppMultiSelectOption {
@@ -202,7 +203,7 @@ export function AppMultiSelect({
               <CloseCircleFilled />
             </span>
           )}
-          <DownOutlined className="app-multi-select__chevron" />
+          <FilterSelectChevronIcon className="app-multi-select__chevron" />
         </button>
       </Popover>
     </div>

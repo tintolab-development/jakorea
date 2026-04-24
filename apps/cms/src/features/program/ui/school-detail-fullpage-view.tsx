@@ -62,6 +62,8 @@ import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrol
 import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import './detail-modal/program-status/participating-institutions-section.css'
 import './instructor-assignment-role-tag.css'
 import './instructor-assignment-status-text.css'
@@ -203,6 +205,8 @@ export function SchoolDetailFullpageView({
   onCancelApproval,
   onTextbookStatusChange,
 }: SchoolDetailFullpageViewProps) {
+  const currentUser = useAuthStore(state => state.user)
+  const showAdminCommentSection = isCmsAdminUser(currentUser)
   const [internalTab, setInternalTab] = useState<SchoolDetailTabKey>('application')
   const [cancelApprovalConfirmOpen, setCancelApprovalConfirmOpen] = useState(false)
   const activeTab = normalizeSchoolDetailTab(
@@ -862,22 +866,24 @@ export function SchoolDetailFullpageView({
       <div className="program-detail-fullpage-modal__content school-detail-fullpage-view__content">
         {activeTab === 'application' && (
           <div className="program-detail-fullpage-modal__info-tab">
-            <div className="program-detail-fullpage-modal__info-tab-block school-detail-fullpage-view__admin-comment-section">
-              <h3 className="program-detail-info-tab__section-title">관리자 코멘트</h3>
-              <div
-                className={`school-detail-fullpage-view__admin-comment-box ${
-                  !mergedDetail.adminComment?.trim()
-                    ? 'school-detail-fullpage-view__admin-comment-box--empty'
-                    : ''
-                }`}
-                role="region"
-                aria-label="관리자 코멘트"
-              >
-                {mergedDetail.adminComment?.trim()
-                  ? mergedDetail.adminComment
-                  : '등록된 코멘트가 없습니다.'}
+            {showAdminCommentSection ? (
+              <div className="program-detail-fullpage-modal__info-tab-block school-detail-fullpage-view__admin-comment-section">
+                <h3 className="program-detail-info-tab__section-title">관리자 코멘트</h3>
+                <div
+                  className={`school-detail-fullpage-view__admin-comment-box ${
+                    !mergedDetail.adminComment?.trim()
+                      ? 'school-detail-fullpage-view__admin-comment-box--empty'
+                      : ''
+                  }`}
+                  role="region"
+                  aria-label="관리자 코멘트"
+                >
+                  {mergedDetail.adminComment?.trim()
+                    ? mergedDetail.adminComment
+                    : '작성된 코멘트가 없습니다.'}
+                </div>
               </div>
-            </div>
+            ) : null}
             <div className="program-detail-fullpage-modal__info-tab-block">
               <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
               <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">

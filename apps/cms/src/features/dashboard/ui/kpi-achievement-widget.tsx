@@ -19,6 +19,7 @@ import './kpi-achievement-widget.css'
 const { Text } = Typography
 const WIDGET_KEY = 'kpi-achievement-widget'
 const EMPTY_IDS: string[] = []
+const kpiAchievementCache = new Map<string, ProgramKpiItem[]>()
 
 /** 목표 대비 달성률(%) — 초과 달성이어도 표시는 최대 100% (진행 바·뱃지·접근성 라벨 공통) */
 function getRate(achieved: number, target: number): number {
@@ -86,15 +87,26 @@ export function KpiAchievementWidget() {
     useDashboardSettingsStore(s => s.widgetProgramIds[WIDGET_KEY]) ?? EMPTY_IDS
   const [list, setList] = useState<ProgramKpiItem[]>([])
   const [loading, setLoading] = useState(true)
+  const allowedProgramIdsKey = allowedProgramIds.join(',')
 
   useEffect(() => {
+    const cached = kpiAchievementCache.get(allowedProgramIdsKey)
+    if (cached) {
+      setList(cached)
+      setLoading(false)
+      return
+    }
+
     let cancelled = false
     setLoading(true)
     const options =
       allowedProgramIds.length > 0 ? { programIds: allowedProgramIds } : undefined
     getKpiAchievementList(options)
       .then(data => {
-        if (!cancelled) setList(data)
+        if (!cancelled) {
+          kpiAchievementCache.set(allowedProgramIdsKey, data)
+          setList(data)
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -102,7 +114,7 @@ export function KpiAchievementWidget() {
     return () => {
       cancelled = true
     }
-  }, [allowedProgramIds.length, allowedProgramIds.join(',')])
+  }, [allowedProgramIds.length, allowedProgramIds, allowedProgramIdsKey])
 
   const totalCount = list.length
 

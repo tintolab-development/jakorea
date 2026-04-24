@@ -23,7 +23,6 @@ import type { DisplayItemMeta } from '@/features/dashboard/model/dashboard-widge
 import { isWidgetResizable } from '@/shared/config/dashboard-config'
 import {
   COL_SPAN_FULL,
-  COL_SPAN_HALF,
   computeDragEndResult,
   getInsertIndexFromPoint,
   type SlotRect,
@@ -72,7 +71,6 @@ export function useDashboardDnd({
 }: UseDashboardDndParams) {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [overlayRect, setOverlayRect] = useState<OverlayRect | null>(null)
-  const [dropInsertIndex, setDropInsertIndex] = useState<number | null>(null)
   const lastPointerRef = useRef({ x: 0, y: 0 })
   const lastDropIndexRef = useRef<number | null>(null)
   /** 드롭 시 over가 null이어도 직전에 올려둔 위젯으로 1:1 교환하기 위함 (DragOverlay가 포인터를 가릴 수 있음) */
@@ -104,7 +102,6 @@ export function useDashboardDnd({
     } else {
       setOverlayRect(null)
     }
-    setDropInsertIndex(null)
     lastDropIndexRef.current = null
     lastOverIdRef.current = null
     slotRectsCacheRef.current = []
@@ -158,7 +155,6 @@ export function useDashboardDnd({
       }
       if (nextIndex !== lastDropIndexRef.current) {
         lastDropIndexRef.current = nextIndex
-        setDropInsertIndex(nextIndex)
       }
     },
     [orderedIds, getSlotRects]
@@ -170,7 +166,6 @@ export function useDashboardDnd({
       const activeIdStr = active.id as string
       setActiveId(null)
       setOverlayRect(null)
-      setDropInsertIndex(null)
 
       if (!userRole) return
 
@@ -206,15 +201,8 @@ export function useDashboardDnd({
       // setOrderedIds 내부 reorderToAvoidTopGap 후처리를 유지해 상단 빈칸 보정 정책을 그대로 적용한다.
       setOrderedIds(userRole, next)
 
-      if (computed.shouldSplit && computed.splitTargetId) {
-        setWidgetWidth(userRole, computed.splitTargetId, COL_SPAN_HALF)
-        setWidgetWidth(userRole, activeIdStr, COL_SPAN_HALF)
-      } else if (computed.droppedInEmptySpace && !computed.skipShrinkActive) {
-        const activeColSpan = getEffectiveColSpan(activeIdStr)
-        if (activeColSpan === COL_SPAN_FULL && isWidgetResizable(activeIdStr)) {
-          setWidgetWidth(userRole, activeIdStr, COL_SPAN_HALF)
-        }
-      }
+      // QA 중 UI 안정성을 위해 DnD는 순서 이동만 처리하고,
+      // 위젯 너비(12/24)는 리사이즈 핸들에서만 변경한다.
       onLayoutSaved?.()
     },
     [
@@ -231,13 +219,11 @@ export function useDashboardDnd({
   const handleDragCancel = useCallback(() => {
     setActiveId(null)
     setOverlayRect(null)
-    setDropInsertIndex(null)
   }, [])
 
   return {
     activeId,
     overlayRect,
-    dropInsertIndex,
     sensors,
     handleDragStart,
     handleDragMove,
