@@ -208,8 +208,18 @@ export function TableFilterGroup({
     }
   }, [filterRowFields, filters, onFilterChange])
 
-  /** `table-filter-group.css` 의 `--table-filter-field-gap` 와 동일(px) — % 폭 colFlex 계산용 */
+  /** `%` 열 flex 계산용 — `filter-controls-common` 의 `--filter-field-gap`(기본 12px)과 동일하게 유지 */
   const interFieldGapPx = 12
+
+  /**
+   * `%` 열 flex 상한(px) — 래퍼 Col의 max-width·컨트롤 상한과 맞춤
+   * (단일 260 / 기간·이중 셀렉트는 2×260 + gap)
+   */
+  const pctColumnMaxCapPx = (field: FilterFieldConfig) => {
+    if (field.type === 'dateRange') return 540
+    if (field.type === 'addressRegion' || field.type === 'selectPair') return 540
+    return 260
+  }
 
   const colFlex = (field: FilterFieldConfig, defaultFlex: string, rowFieldCount = 1) => {
     if (field.width != null) {
@@ -217,7 +227,9 @@ export function TableFilterGroup({
         const pct = parseFloat(field.width) / 100
         if (!Number.isNaN(pct)) {
           const totalGaps = Math.max(0, rowFieldCount - 1) * interFieldGapPx
-          return `0 0 calc((100% - ${totalGaps}px) * ${pct})`
+          const basis = `calc((100% - ${totalGaps}px) * ${pct})`
+          const cap = pctColumnMaxCapPx(field)
+          return `0 1 min(${basis}, ${cap}px)`
         }
       }
       const w = typeof field.width === 'number' ? `${field.width}px` : field.width
@@ -226,8 +238,18 @@ export function TableFilterGroup({
     return field.flex ?? defaultFlex
   }
 
-  const colClassFor = (field: FilterFieldConfig) =>
-    field.width != null ? 'unified-filter-card__col--explicit-width' : undefined
+  const colClassName = (field: FilterFieldConfig) => {
+    if (field.width == null) return undefined
+    const parts = ['unified-filter-card__col--explicit-width']
+    if (typeof field.width === 'string' && field.width.trim().endsWith('%')) {
+      parts.push('table-filter-group__col--pct-width')
+      if (field.type === 'dateRange') parts.push('table-filter-group__col--date-range')
+      else if (field.type === 'addressRegion' || field.type === 'selectPair') {
+        parts.push('table-filter-group__col--wide')
+      }
+    }
+    return parts.join(' ')
+  }
 
   const maxRowFieldCount = useMemo(
     () => (resolvedRows.length > 0 ? Math.max(0, ...resolvedRows.map(r => r.length)) : 0),
@@ -431,7 +453,7 @@ export function TableFilterGroup({
         <Col
           key={field.key}
           flex={colFlex(field, '0 0 auto', rowFieldCount)}
-          className={['unified-filter-card__col--radio', colClassFor(field)].filter(Boolean).join(' ')}
+          className={['unified-filter-card__col--radio', colClassName(field)].filter(Boolean).join(' ')}
         >
           {inner}
         </Col>
@@ -440,7 +462,7 @@ export function TableFilterGroup({
 
     if (field.type === 'search') {
       return (
-        <Col key={field.key} flex={colFlex(field, '0 0 240px', rowFieldCount)} className={colClassFor(field)}>
+        <Col key={field.key} flex={colFlex(field, '0 0 240px', rowFieldCount)} className={colClassName(field)}>
           {inner}
         </Col>
       )
@@ -448,7 +470,7 @@ export function TableFilterGroup({
 
     if (field.type === 'select') {
       return (
-        <Col key={field.key} flex={colFlex(field, '1 1 300px', rowFieldCount)} className={colClassFor(field)}>
+        <Col key={field.key} flex={colFlex(field, '1 1 300px', rowFieldCount)} className={colClassName(field)}>
           {inner}
         </Col>
       )
@@ -456,7 +478,7 @@ export function TableFilterGroup({
 
     if (field.type === 'dateRange') {
       return (
-        <Col key={field.key} flex={colFlex(field, '1 1 360px', rowFieldCount)} className={colClassFor(field)}>
+        <Col key={field.key} flex={colFlex(field, '1 1 360px', rowFieldCount)} className={colClassName(field)}>
           {inner}
         </Col>
       )
@@ -464,7 +486,7 @@ export function TableFilterGroup({
 
     if (field.type === 'multiSelect') {
       return (
-        <Col key={field.key} flex={colFlex(field, '0 0 240px', rowFieldCount)} className={colClassFor(field)}>
+        <Col key={field.key} flex={colFlex(field, '0 0 240px', rowFieldCount)} className={colClassName(field)}>
           {inner}
         </Col>
       )
@@ -472,7 +494,7 @@ export function TableFilterGroup({
 
     if (field.type === 'addressRegion' || field.type === 'selectPair') {
       return (
-        <Col key={field.key} flex={colFlex(field, '1 1 320px', rowFieldCount)} className={colClassFor(field)}>
+        <Col key={field.key} flex={colFlex(field, '1 1 320px', rowFieldCount)} className={colClassName(field)}>
           {inner}
         </Col>
       )
@@ -511,7 +533,13 @@ export function TableFilterGroup({
 
   const fieldsBody =
     resolvedRows.length <= 1 ? (
-      <Row gutter={0} className="table-filter-group__fields-inner" align="bottom" wrap={false}>
+      <Row
+        gutter={0}
+        className="table-filter-group__fields-inner"
+        align="bottom"
+        justify="start"
+        wrap={false}
+      >
         {resolvedRows[0]?.map(field => renderFieldCol(field, resolvedRows[0].length)) ?? null}
       </Row>
     ) : (

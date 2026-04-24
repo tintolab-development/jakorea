@@ -1,5 +1,5 @@
 .table-filter-group__container {
-  --table-filter-field-gap: 12px;
+  --table-filter-field-gap: var(--filter-field-gap, 12px);
   display: flex;
   justify-content: flex-start;
   gap: var(--table-filter-field-gap);
@@ -73,7 +73,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--table-filter-field-gap);
   width: 100%;
 }
 
@@ -101,10 +101,45 @@
   min-width: 0;
 }
 
+/*
+ * `width: '25%'` 등 퍼센트 Col — 안쪽 컨트롤만 260px로 맞추면 래퍼(.ant-col)가 더 넓게 남음.
+ * 래퍼도 동일 토큰 상한(날짜·이중 셀렉트는 별도 상한).
+ */
+.table-filter-group__fields-inner.ant-row > .ant-col.table-filter-group__col--pct-width {
+  max-width: min(100%, var(--filter-control-max-width, 260px));
+  box-sizing: border-box;
+}
+
+.table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--pct-width.table-filter-group__col--wide {
+  max-width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px))
+  );
+}
+
+.table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--pct-width.table-filter-group__col--date-range {
+  max-width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
+  );
+}
+
 .table-filter-group__fields-inner .unified-filter-card__field {
   min-width: 0;
   width: 100%;
   max-width: 100%;
+}
+
+/*
+ * 필터 컨트롤 상한: filter-controls-common 의 --filter-control-max-width(260px)와 동일.
+ * width 100% + max-width min(100%, 260px) → 좁은 열/뷰포트에서는 100%만큼만, 넓은 열에서는 260px에서 멈춤.
+ */
+.table-filter-group__container .labeled-search-input {
+  max-width: min(100%, var(--filter-control-max-width, 260px));
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* unified-filter-card의 전역 select min-width(280px)가 table-filter-group에서 gap을 먹지 않도록 무효화 */
@@ -116,7 +151,42 @@
 .table-filter-group__grid-cell .ant-select {
   min-width: 0 !important;
   width: 100% !important;
-  max-width: 100%;
+  max-width: min(100%, var(--filter-control-max-width, 260px)) !important;
+}
+
+/* 단일 날짜: 컨트롤 하나당 상한 */
+.table-filter-group__fields-inner .cms-datepicker:not(.cms-datepicker--range-split),
+.table-filter-group__grid-cell .cms-datepicker:not(.cms-datepicker--range-split) {
+  max-width: min(100%, var(--filter-control-max-width, 260px));
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/*
+ * 기간(분리 UI): 바깥 래퍼는 두 칸 + 구분자까지 — 전체를 260px로 씌우면 칸마다 반으로 찌그러짐.
+ * 각 세그먼트는 아래에서 max 260px, 래퍼는 min(100%, 2×260 + gutter).
+ */
+.table-filter-group__fields-inner .cms-datepicker.cms-datepicker--range-split,
+.table-filter-group__grid-cell .cms-datepicker.cms-datepicker--range-split {
+  max-width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
+  );
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.table-filter-group__container .cms-datepicker--range-split .cms-datepicker__segment {
+  max-width: min(100%, var(--filter-control-max-width, 260px));
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.table-filter-group__fields-inner .app-multi-select,
+.table-filter-group__grid-cell .app-multi-select {
+  max-width: min(100%, var(--filter-control-max-width, 260px));
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .table-filter-group__grid-cell .unified-filter-card__field {
@@ -155,17 +225,14 @@
 }
 
 /*
- * 기간(분리 세그먼트): `width` prop 없이 style만 100%일 때도 세그먼트가 218px에 묶이지 않게
- * (CmsDateRangePicker는 `width` 지정 시 cms-datepicker--explicit-width와 동일 효과)
+ * 기간(분리 세그먼트): 기본 cms-datepicker 218px 상한은 필터에서 각 칸 260px까지 쓰도록
+ * table-filter-group__container .cms-datepicker__segment 규칙으로 통일(그리드·단행 공통).
  */
-.table-filter-group__grid-cell .cms-datepicker.cms-datepicker--range-split .cms-datepicker__segment {
-  max-width: none;
-}
 
 .table-filter-group__select-pair-selects,
 .table-filter-group__address-region-selects {
   display: flex;
-  gap: 8px;
+  gap: var(--filter-field-gap, 12px);
   width: 100%;
   min-width: 0;
 }

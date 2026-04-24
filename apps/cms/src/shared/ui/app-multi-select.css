@@ -80,8 +80,14 @@
 
 .app-multi-select__chevron {
   flex-shrink: 0;
-  font-size: 12px;
-  color: #85969d;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.app-multi-select__trigger--open .app-multi-select__chevron svg {
+  transform: rotate(180deg);
 }
 
 .app-multi-select__panel {
