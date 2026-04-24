@@ -18,10 +18,10 @@ export const isShortcutItemEnabled = (shortcutEnabled: Record<string, boolean>, 
 
 /** 바로가기 항목: id, label, path (대시보드 설정·메뉴 바로가기 위젯 공통) — 미구현 경로는 DASHBOARD_HOME_PATH */
 export const SHORTCUT_ITEMS: Array<{ id: string; label: string; path: string }> = [
-  { id: 'programs-general-education', label: '일반 프로그램', path: '/programs/education' },
-  { id: 'programs-economy', label: '1사1교 프로그램', path: '/programs/economy-education' },
-  { id: 'programs-gemini', label: '제미나이 프로그램', path: DASHBOARD_HOME_PATH },
-  { id: 'programs-ujat', label: 'UJAT 프로그램', path: '/programs/volunteer' },
+  { id: 'programs-general-education', label: '일반 프로그램', path: '/programs/general' },
+  { id: 'programs-economy', label: '1사1교 프로그램', path: '/programs/company-school' },
+  { id: 'programs-gemini', label: 'Gemini 프로그램', path: '/programs/gemini' },
+  { id: 'programs-ujat', label: 'UJAT 프로그램', path: '/programs/ujat' },
   { id: 'users-all', label: '전체 회원 관리', path: '/users/list?kind=all' },
   { id: 'users-school', label: '학교(교사)회원', path: '/users/list?kind=institutions' },
   { id: 'users-instructor', label: '강사 회원 관리', path: '/users/list?kind=instructors' },

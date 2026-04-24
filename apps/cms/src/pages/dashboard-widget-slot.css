@@ -312,29 +312,58 @@
   cursor: grabbing;
 }
 
-/* 너비 드래그 리사이즈 핸들: 우측 엣지, 슬롯 높이 기준 세로 중앙 (50%/100% 공통) */
+/* 너비 리사이즈 핸들(right:-16px)이 보더에 걸치도록 슬롯 밖 페인팅 허용 */
+.dashboard-widget-slot.dashboard-widget-slot--resizable-width {
+  overflow: visible;
+}
+
+.dashboard-widget-slot.dashboard-widget-slot--resizable-width[data-col-span='12']:has(.menu-shortcut-widget),
+.dashboard-widget-slot.dashboard-widget-slot--resizable-width[data-col-span='24']:has(.menu-shortcut-widget) {
+  overflow: visible;
+}
+
+.dashboard-widget-slot.dashboard-widget-slot--resizable-width:has(.kpi-achievement-widget) {
+  overflow: visible;
+}
+
+/* 너비 드래그 리사이즈 핸들: 우측 보더에 걸치게, 슬롯 세로 중앙 (50%/100% 공통) */
 .dashboard-widget-resize-handle {
   position: absolute;
   top: 50%;
-  right: var(--spacing-2);
+  right: -16px;
   transform: translateY(-50%);
-  width: 12px;
-  height: 40px;
-  cursor: col-resize;
   z-index: 30;
   display: flex;
   align-items: center;
-  justify-content: center;
-  opacity: 1;
+  gap: 10px;
+  padding: 6px;
+  border-radius: 50px;
+  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  background: #fff;
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  cursor: grab;
 }
 
-.dashboard-widget-resize-handle__bar {
-  width: 4px;
-  height: 40px;
+.dashboard-widget-resize-handle:active,
+.dashboard-widget-resize-handle.dashboard-widget-resize-handle--active {
+  cursor: grabbing;
+}
+
+.dashboard-widget-resize-handle__icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
-  border-radius: 20px;
-  opacity: 0.1;
-  background: var(--main-BK, #3d3d3d);
-  transition: background 0.15s;
+  aspect-ratio: 1 / 1;
+}
+
+/* 너비 조절: SVG 기본 방향이 좌우(↔). 90° 회전 시 세로(↕)로 보여 제거함 */
+.dashboard-widget-resize-handle__svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  aspect-ratio: 1 / 1;
 }
 
