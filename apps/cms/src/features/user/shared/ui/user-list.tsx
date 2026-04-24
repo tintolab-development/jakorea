@@ -84,7 +84,7 @@ function settlementStatusTextClass(statusLabel?: string): string {
   switch (normalized) {
     case '확인 대기 중':
       return 'user-list__settlement-status user-list__settlement-status--awaiting-confirmation'
-    case '일부 지급 완료':
+    case '확인 진행중':
       return 'user-list__settlement-status user-list__settlement-status--partially-confirmed'
     case '지급조서 확인 완료':
       return 'user-list__settlement-status user-list__settlement-status--payment-statement-verified'

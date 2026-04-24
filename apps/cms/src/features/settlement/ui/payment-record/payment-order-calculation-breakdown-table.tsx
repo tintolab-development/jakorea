@@ -245,7 +245,7 @@ export function PaymentOrderCalculationBreakdownTable({
       </div>
 
       <Table<PaymentOrderCalculationTableRow>
-        className="payment-order-calc-statement-modal__table"
+        className="payment-order-calc-statement-modal__table cms-data-table cms-data-table--skip-auto-no-col"
         rowKey="key"
         columns={columns}
         dataSource={tableRows}

@@ -29,6 +29,7 @@ import {
   SETTLEMENT_ROW_STATUS_LABELS,
 } from '@/data/mock/school-detail'
 import { SettlementDetailModal, type BankInfo } from './settlement-detail-modal'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 export interface TeacherSettlementTabProps {
   data: SettlementOverviewData
@@ -370,11 +371,11 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
               rowKey="id"
               pagination={false}
               size="middle"
-              className="settlement-tab__table"
+              className="settlement-tab__table cms-data-table"
               rowSelection={{
                 type: 'checkbox' as const,
                 ...rowSelection,
-                columnWidth: 48,
+                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                 renderCell: (_value, _record, _index, originNode) => (
                   <div className="settlement-tab__checkbox-cell">{originNode}</div>
                 ),

@@ -828,7 +828,7 @@ export function SchoolDetailModal({
                   }}
                   columns={instructorColumnsEdit}
                   dataSource={watchInstructors('instructors') ?? []}
-                  className="school-detail-modal__instructor-table"
+                  className="school-detail-modal__instructor-table cms-data-table cms-data-table--skip-auto-no-col"
                 />
               ) : (
                 <Table<SchoolDetailInstructorRow>
@@ -841,7 +841,7 @@ export function SchoolDetailModal({
                   }}
                   columns={instructorColumns}
                   dataSource={detail.instructors}
-                  className="school-detail-modal__instructor-table"
+                  className="school-detail-modal__instructor-table cms-data-table cms-data-table--skip-auto-no-col"
                 />
               )}
             </div>

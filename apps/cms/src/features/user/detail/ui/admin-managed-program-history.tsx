@@ -31,6 +31,7 @@ import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
+import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import {
   CmsButton,
   DeleteGuideModal,
@@ -356,6 +357,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
       >
         <Table<Program>
           rowSelection={{
+            columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             selectedRowKeys,
             onChange: keys => setSelectedRowKeys(keys),
           }}

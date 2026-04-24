@@ -20,6 +20,7 @@ import {
   mockPrograms,
   getGeneralEducationPrograms,
   getEconomyPrograms,
+  getUjatPrograms,
   getGeminiPrograms,
 } from '@/data/mock'
 import './dashboard-settings-modal.css'
@@ -54,6 +55,9 @@ function getProgramRowsForWidget(widgetKey: string): { id: string; title: string
   }
   if (widgetKey === 'program-schedule-economy-widget') {
     return getEconomyPrograms().map(p => ({ id: p.id, title: p.title }))
+  }
+  if (widgetKey === 'program-schedule-ujat-widget') {
+    return getUjatPrograms().map(p => ({ id: p.id, title: p.title }))
   }
   if (widgetKey === 'program-schedule-gemini-widget') {
     return getGeminiPrograms().map(p => ({ id: p.id, title: p.title }))

@@ -708,7 +708,7 @@ export function ProgramApplicantsTab({
                 </div>
               </div>
               <Table<ApplicantSchoolRow>
-                className="program-applicants-tab__table program-applicants-tab__table--clickable"
+                className="program-applicants-tab__table program-applicants-tab__table--clickable cms-data-table"
                 rowKey="id"
                 size="middle"
                 pagination={false}
@@ -766,7 +766,7 @@ export function ProgramApplicantsTab({
                 </div>
               </div>
               <Table<ApplicantInstructorRow>
-                className="program-applicants-tab__table program-applicants-tab__table--clickable"
+                className="program-applicants-tab__table program-applicants-tab__table--clickable cms-data-table"
                 rowKey="id"
                 size="middle"
                 pagination={false}

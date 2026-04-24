@@ -13,6 +13,7 @@ import {
   MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET,
   mockAccountPaymentRows,
   formatAccountPaymentSessionLabelDisplay,
+  isPaymentOrderStatementConfirmedForAccountPayments,
   type AccountPaymentRow,
   type AccountPaymentTransferStatus,
 } from '@/data/mock/account-payments-list'
@@ -90,6 +91,7 @@ function filterRows(rows: AccountPaymentRow[], applied: AppliedFilters): Account
   const qi = applied.instructorName.trim()
   const qp = applied.programName.trim()
   return rows.filter(row => {
+    if (!isPaymentOrderStatementConfirmedForAccountPayments(row)) return false
     if (qi && !row.instructorName.includes(qi)) return false
     if (qp && !row.programName.includes(qp)) return false
     if (applied.accountStatus !== 'all' && row.accountPaymentStatus !== applied.accountStatus)
@@ -195,7 +197,9 @@ export default function AccountPaymentsPage() {
   )
   /** mock 배열을 직접 수정하지 않도록 복사본 유지 — 계좌 지급 완료 시 상태 반영 */
   const [accountPaymentRows, setAccountPaymentRows] = useState<AccountPaymentRow[]>(() =>
-    mockAccountPaymentRows.map(r => ({ ...r }))
+    mockAccountPaymentRows
+      .filter(isPaymentOrderStatementConfirmedForAccountPayments)
+      .map(r => ({ ...r }))
   )
   const accountFilterFields = useMemo((): FilterFieldConfig[] => {
     const colWidth = '25%'

@@ -378,7 +378,7 @@ export function InstructorRecruitmentDetailModal({
           </div>
           <div className="instructor-recruitment-detail-modal__table-wrap">
             <Table<ApplicantInstructorRow>
-              className="instructor-recruitment-detail-modal__table instructor-recruitment-detail-modal__table--clickable"
+              className="instructor-recruitment-detail-modal__table instructor-recruitment-detail-modal__table--clickable cms-data-table"
               rowKey="id"
               dataSource={instructorList}
               columns={instructorColumns}

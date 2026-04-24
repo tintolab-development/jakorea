@@ -373,7 +373,7 @@ export function EnrollmentStatusDetailModal({
           </div>
           <div className="enrollment-status-detail-modal__table-wrap">
             <Table<ApplicantSchoolRow>
-              className="enrollment-status-detail-modal__table"
+              className="enrollment-status-detail-modal__table cms-data-table"
               rowKey="id"
               dataSource={schoolList}
               columns={schoolColumns}

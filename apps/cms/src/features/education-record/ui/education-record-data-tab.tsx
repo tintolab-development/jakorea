@@ -49,7 +49,7 @@ export function EducationRecordDataTab({
       <div className="list-page-layout__table-shell">
         <Table<Program>
           rowKey="id"
-          className="cms-data-table"
+          className="cms-data-table cms-data-table--skip-auto-no-col"
           columns={antdColumns}
           dataSource={tableData}
           pagination={false}

@@ -1,7 +1,7 @@
 import type { ColumnsType } from 'antd/es/table'
 import type { SponsorProgramHistoryRow } from '@/features/sponsor/model/sponsor-management.types'
 import { StatusBadge } from '@/shared/components/status-badge'
-import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { getEnrollmentDisplayStatusFromProgramLifecycle } from '@/shared/constants/status'
 
 const EDUCATION_TARGET_LABEL: Record<SponsorProgramHistoryRow['educationTarget'], string> = {
@@ -28,6 +28,7 @@ export function buildProgramHistoryColumns(
     {
       title: 'No.',
       key: 'no',
+      className: CMS_TABLE_NO_COL_CLASS,
       width: TABLE_COLUMN_WIDTHS.index,
       align: 'center',
       render: (_: unknown, __: SponsorProgramHistoryRow, index: number) => totalCount - index,

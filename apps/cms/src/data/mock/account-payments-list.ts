@@ -43,13 +43,23 @@ export interface AccountPaymentRow {
    * 계좌 지급 확인 화면에서 이체 예정일 필터·세 번째 요약 카드(구간 내 지급예정 금액 합) 집계에 사용.
    */
   transferScheduledDate: string
-  /** 목록은 항상 지급조서 확인 완료 건만 포함 */
+  /**
+   * 지급조서(강사·프로그램 라인) 처리 현황 — `confirmed` = 지급조서 확인 완료.
+   * 계좌 지급 확인 화면에는 이 값이 `confirmed`인 건만 노출(목·API 가정).
+   */
   paymentOrderStatus: Extract<PaymentOrderAdminProcessingStatus, 'confirmed'>
 }
 
 /** 계좌 지급 확인 — 목록·캘린더 등 `sessionLabel` UI 표시(차시 → 회차) */
 export function formatAccountPaymentSessionLabelDisplay(raw: string): string {
   return raw.replace(/차시/g, '회차')
+}
+
+/** 계좌 지급 확인 목록/캘린더: 지급조서 확인 완료(라인)인 경우만 노출 */
+export function isPaymentOrderStatementConfirmedForAccountPayments(
+  row: AccountPaymentRow
+): boolean {
+  return row.paymentOrderStatus === 'confirmed'
 }
 
 /** 계좌 지급 현황 상세 풀페이지 — 기본 정보(마스킹·표시값은 지급조서 산출 mock과 동일 규칙) */
@@ -227,31 +237,36 @@ export function getMockAccountPaymentStatusDetail(row: AccountPaymentRow): Accou
 export const MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET = 109_150_000
 
 /**
- * 10건 — 전부 지급조서 확인 완료(paymentOrderStatus: confirmed).
- * 2026년 5월 기준 데이터이며, 계좌 지급 4상태를 순환 배치.
+ * 10건 — `paymentOrderStatus`는 전부 `confirmed`(지급조서 확인 완료)만 사용.
+ * **목록/상태 열**의 `accountPaymentStatus`는 이후 **계좌 지급** 단계(지급 대기~정정) 데모용 순환이며,
+ * 지급조서 미확인 건이 아님(용어 혼동 방지).
+ * 2026년 5월 이체일 기준, 계좌 지급 4상태를 순환 배치.
  */
-export const mockAccountPaymentRows: AccountPaymentRow[] = Array.from({ length: 10 }, (_, i) => {
-  const no = 206 - i
-  const statusCycle: AccountPaymentTransferStatus[] = [
-    'awaiting_confirmation',
-    'partial_confirmation',
-    'account_paid',
-    'payment_correction_requested',
-  ]
-  const accountPaymentStatus: AccountPaymentTransferStatus = statusCycle[i % statusCycle.length]!
-  const transferScheduledDate = isoDate(2026, 5, 2 + i * 2)
-  const sessionLabel = i % 3 === 0 ? `${2 + (i % 2)}차시` : `${2} ~ ${3 + (i % 2)}차시`
+export const mockAccountPaymentRows: AccountPaymentRow[] = Array.from(
+  { length: 10 },
+  (_, i): AccountPaymentRow => {
+    const no = 206 - i
+    const statusCycle: AccountPaymentTransferStatus[] = [
+      'awaiting_confirmation',
+      'partial_confirmation',
+      'account_paid',
+      'payment_correction_requested',
+    ]
+    const accountPaymentStatus: AccountPaymentTransferStatus = statusCycle[i % statusCycle.length]!
+    const transferScheduledDate = isoDate(2026, 5, 2 + i * 2)
+    const sessionLabel = i % 3 === 0 ? `${2 + (i % 2)}차시` : `${2} ~ ${3 + (i % 2)}차시`
 
-  return {
-    id: `account-pay-${no}`,
-    no,
-    instructorName: instructorNames[i % instructorNames.length],
-    programName: programTitles[i % programTitles.length],
-    institutionName: institutionNames[i % institutionNames.length],
-    sessionLabel,
-    accountPaymentStatus,
-    amount: amounts[i % amounts.length],
-    transferScheduledDate,
-    paymentOrderStatus: 'confirmed',
+    return {
+      id: `account-pay-${no}`,
+      no,
+      instructorName: instructorNames[i % instructorNames.length],
+      programName: programTitles[i % programTitles.length],
+      institutionName: institutionNames[i % institutionNames.length],
+      sessionLabel,
+      accountPaymentStatus,
+      amount: amounts[i % amounts.length],
+      transferScheduledDate,
+      paymentOrderStatus: 'confirmed',
+    }
   }
-})
+).filter(isPaymentOrderStatementConfirmedForAccountPayments)

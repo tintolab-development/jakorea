@@ -148,28 +148,28 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* 체크박스 열: 너비 60px 고정, 행 높이는 시안 49px 유지 */
+/* 체크박스 열: 너비 68px(좌 패딩 8px 포함), 행 높이는 시안 49px 유지 */
 .applicant-details__table col.ant-table-selection-col {
-  width: var(--table-selection-column-width, 60px) !important;
-  min-width: var(--table-selection-column-width, 60px) !important;
+  width: var(--table-selection-column-width, 68px) !important;
+  min-width: var(--table-selection-column-width, 68px) !important;
 }
 .applicant-details__table .ant-table-thead > tr > th.ant-table-selection-column {
-  width: var(--table-selection-column-width, 60px) !important;
-  min-width: var(--table-selection-column-width, 60px) !important;
-  max-width: var(--table-selection-column-width, 60px) !important;
+  width: var(--table-selection-column-width, 68px) !important;
+  min-width: var(--table-selection-column-width, 68px) !important;
+  max-width: var(--table-selection-column-width, 68px) !important;
   height: 49px !important;
   min-height: 49px !important;
-  padding: 0 !important;
+  padding: 0 4px 0 8px !important;
   text-align: center !important;
   vertical-align: middle !important;
   box-sizing: border-box !important;
 }
 .applicant-details__table .ant-table-tbody > tr > td.ant-table-selection-column {
-  width: var(--table-selection-column-width, 60px) !important;
-  min-width: var(--table-selection-column-width, 60px) !important;
-  max-width: var(--table-selection-column-width, 60px) !important;
+  width: var(--table-selection-column-width, 68px) !important;
+  min-width: var(--table-selection-column-width, 68px) !important;
+  max-width: var(--table-selection-column-width, 68px) !important;
   min-height: 49px !important;
-  padding: 0 !important;
+  padding: 0 4px 0 8px !important;
   text-align: center !important;
   vertical-align: middle !important;
   box-sizing: border-box !important;

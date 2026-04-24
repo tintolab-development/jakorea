@@ -10,7 +10,7 @@ export const INSTRUCTOR_TYPE_FILTER_OPTIONS: { label: string; value: string }[] 
 export const INSTRUCTOR_SETTLEMENT_FILTER_OPTIONS: { label: string; value: string }[] = [
   { label: '전체', value: '' },
   { label: '확인 대기 중', value: '확인 대기 중' },
-  { label: '일부 지급 완료', value: '일부 지급 완료' },
+  { label: '확인 진행중', value: '확인 진행중' },
   { label: '지급조서 확인 완료', value: '지급조서 확인 완료' },
   { label: '계좌 지급 완료', value: '계좌 지급 완료' },
   { label: '해당 없음', value: '해당 없음' },
