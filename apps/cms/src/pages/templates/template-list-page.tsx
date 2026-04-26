@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Tabs } from 'antd'
 import TemplateFormTab from './template-form-tab'
@@ -42,12 +42,22 @@ export function TemplateListPage() {
   )
 
   const isFormManagementSection = location.pathname.startsWith(FORM_MANAGEMENT_BASE)
+  const isFormTestTablePath = location.pathname.startsWith('/templates/form-test/')
+  const showFormTopTabs = isFormManagementSection || isFormTestTablePath
   const activeFormTabFromPath = 'template-form'
 
   const tabParam = params.tab
-  const activeKey = tabParam || activeFormTabFromPath
+  const activeKey = isFormTestTablePath
+    ? 'form-test'
+    : tabParam || activeFormTabFromPath
 
   useEffect(() => {
+    if (isFormTestTablePath) {
+      if (tabParam !== 'form-test') {
+        setParams({ tab: 'form-test' })
+      }
+      return
+    }
     if (!isFormManagementSection) return
 
     const validKeys = new Set(formTabItems.map(t => t.key))
@@ -64,9 +74,16 @@ export function TemplateListPage() {
     formTabItems,
     tabParam,
     isFormManagementSection,
+    isFormTestTablePath,
   ])
 
   const handleFormTabChange = (key: string) => {
+    if (isFormTestTablePath) {
+      const sp = new URLSearchParams()
+      sp.set('tab', key)
+      navigate(`${FORM_MANAGEMENT_BASE}?${sp.toString()}`, { replace: true })
+      return
+    }
     const updates: Partial<FormManagementQuery> = { tab: key }
     if (key !== 'template-form') {
       updates.mode = undefined
@@ -83,7 +100,7 @@ export function TemplateListPage() {
 
   return (
     <>
-      {isFormManagementSection && (
+      {showFormTopTabs && (
         <>
           <Tabs
             className="template-list-page__tabs"
@@ -91,7 +108,7 @@ export function TemplateListPage() {
             onChange={handleFormTabChange}
             items={formTabItems.map(t => ({ key: t.key, label: t.label }))}
             tabBarExtraContent={
-              activeKey === 'template-form' ? (
+              isFormManagementSection && activeKey === 'template-form' ? (
                 <CmsButton type="button" onClick={() => setCreateModalOpen(true)}>
                   + 신규 템플릿
                 </CmsButton>
@@ -99,30 +116,34 @@ export function TemplateListPage() {
             }
             style={{ marginBottom: 20 }}
           />
-          <TemplateCreateModal
-            open={createModalOpen}
-            onCancel={() => setCreateModalOpen(false)}
-            onDirectRegister={target => {
-              setCreateModalOpen(false)
-              setParams({
-                tab: 'template-form',
-                mode: 'new',
-                type: target,
-                id: undefined,
-              })
-            }}
-            onDuplicateSuccess={newTemplateId => {
-              setCreateModalOpen(false)
-              setParams({
-                mode: 'edit',
-                id: newTemplateId,
-                type: undefined,
-              })
-            }}
-          />
+          {isFormManagementSection && (
+            <TemplateCreateModal
+              open={createModalOpen}
+              onCancel={() => setCreateModalOpen(false)}
+              onDirectRegister={target => {
+                setCreateModalOpen(false)
+                setParams({
+                  tab: 'template-form',
+                  mode: 'new',
+                  type: target,
+                  id: undefined,
+                })
+              }}
+              onDuplicateSuccess={newTemplateId => {
+                setCreateModalOpen(false)
+                setParams({
+                  mode: 'edit',
+                  id: newTemplateId,
+                  type: undefined,
+                })
+              }}
+            />
+          )}
         </>
       )}
-      {isFormManagementSection ? (
+      {isFormTestTablePath ? (
+        <Outlet />
+      ) : isFormManagementSection ? (
         activeKey === 'issuance-form' ? (
           <IssuanceFormTab />
         ) : activeKey === 'form-test' ? (
@@ -131,7 +152,7 @@ export function TemplateListPage() {
           <TemplateFormTab />
         )
       ) : (
-        <div />
+        <Outlet />
       )}
     </>
   )

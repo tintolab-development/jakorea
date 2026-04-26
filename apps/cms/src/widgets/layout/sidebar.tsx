@@ -126,6 +126,9 @@ export function Sidebar() {
     }
 
     if (user?.role === 'ADMIN' && path.startsWith('/templates/')) {
+      if (path.startsWith('/templates/form-test/')) {
+        return ['/templates/form-management']
+      }
       if (path.startsWith('/templates/form-management')) {
         return ['/templates/form-management']
       }
@@ -174,7 +177,6 @@ export function Sidebar() {
               return
             }
             if (
-              key === '/templates/form-management' ||
               key === '/templates/kakao-notification' ||
               key === '/templates/email-management'
             ) {

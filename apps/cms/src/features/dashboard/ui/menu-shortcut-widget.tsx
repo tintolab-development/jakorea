@@ -112,7 +112,7 @@ export function MenuShortcutWidget() {
                 type="button"
                 className="menu-shortcut-widget__item"
                 onClick={() => {
-                  if (isProgramShortcutItemId(item.id) || item.id === 'template-management') {
+                  if (isProgramShortcutItemId(item.id)) {
                     window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
                     return
                   }
