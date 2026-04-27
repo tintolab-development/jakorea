@@ -1,10 +1,15 @@
-import type { FormEditorKind, WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
+import type {
+  FormEditorKind,
+  HorizontalTableRowSelection,
+  WritingFormParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
 import { ClosingParagraphBody } from '@/features/template/ui/paragraph/explanation/closing-paragraph-body'
 import { ExplanationText } from '@/features/template/ui/paragraph/explanation/text'
 import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/title'
 import { AgreementPrivacyRowsBody } from '@/features/template/ui/paragraph/single-item/agreement-privacy-rows-paragraph-body'
 import { AgreementRichTextBody } from '@/features/template/ui/paragraph/single-item/agreement-rich-text-paragraph-body'
 import { AgreementTableConsentBody } from '@/features/template/ui/paragraph/single-item/agreement-table-consent-paragraph-body'
+import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/single-item/horizontal-table-paragraph-body'
 import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
 import { SubjectiveParagraphBody } from '@/features/template/ui/paragraph/single-item/subjective-paragraph-body'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
@@ -14,11 +19,17 @@ export type FormUpdateParagraph = (
   updater: (p: WritingFormParagraph) => WritingFormParagraph
 ) => void
 
+export type RenderFormParagraphBodyOptions = {
+  horizontalTableRowSelection?: HorizontalTableRowSelection | null
+  onHorizontalTableRowSelectionChange?: (next: HorizontalTableRowSelection | null) => void
+}
+
 export function renderFormParagraphBody(
   p: WritingFormParagraph,
   updateParagraph: FormUpdateParagraph,
   isParagraphSelected: boolean,
-  editorKind: FormEditorKind = 'survey'
+  editorKind: FormEditorKind = 'survey',
+  options?: RenderFormParagraphBodyOptions
 ) {
   switch (p.variant) {
     case 'survey_title_with_period':
@@ -79,6 +90,16 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isParagraphSelected}
+        />
+      )
+    case 'horizontal_table':
+      return (
+        <HorizontalTableParagraphBody
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+          tableRowSelection={options?.horizontalTableRowSelection}
+          onTableRowSelectionChange={options?.onHorizontalTableRowSelectionChange}
         />
       )
     case 'closing':
