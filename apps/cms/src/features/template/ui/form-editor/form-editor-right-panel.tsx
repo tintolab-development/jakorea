@@ -6,6 +6,7 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import type {
   FormEditorKind,
   FormTitleNumberingStyle,
+  HorizontalTableParagraph,
   HorizontalTableRowSelection,
   WritingFormDraft,
   WritingFormParagraph,
@@ -26,10 +27,18 @@ const TITLE_NUMBERING_OPTIONS: { value: FormTitleNumberingStyle; label: string }
 function paragraphKindLabel(p: WritingFormParagraph): string {
   if (p.kind === 'description') return '설명글'
   if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') return '설명글'
+  if (p.kind === 'single_item' && p.variant === 'horizontal_table') {
+    const t = p as HorizontalTableParagraph
+    return t.tableFlavor === 'field' ? '테이블_가로형 (필드 형)' : '테이블_가로형'
+  }
   return '단일항목'
 }
 
 function paragraphVariantLabel(p: WritingFormParagraph): string {
+  if (p.kind === 'single_item' && p.variant === 'horizontal_table') {
+    const t = p as HorizontalTableParagraph
+    return t.tableFlavor === 'field' ? '테이블_가로형 (필드 형)' : '테이블_가로형'
+  }
   switch (p.variant) {
     case 'survey_title_with_period':
       return '제목형'
@@ -47,8 +56,6 @@ function paragraphVariantLabel(p: WritingFormParagraph): string {
       return '개인정보 수집 항목형'
     case 'agreement_table_consent':
       return '표·동의 선택형'
-    case 'horizontal_table':
-      return '테이블 가로형'
     case 'closing':
       return '마무리글형'
   }
@@ -63,8 +70,8 @@ export interface FormEditorRightPanelProps {
   showTitleNumbering?: boolean
   /** 테이블 가로형: 헤더 행 선택 시 우측에 헤더 전용 필드 */
   horizontalTableRowSelection?: HorizontalTableRowSelection | null
-  /** 테이블 가로형: 데이터 행 삭제 후 캔버스 행 선택 해제 등 */
-  onHorizontalTableBodyRowDeleted?: () => void
+  /** 테이블 가로형: 데이터 행 삭제 후 포커스할 행 인덱스(이전 행) */
+  onHorizontalTableBodyRowDeleted?: (nextRowIndex: number) => void
 }
 
 export function FormEditorTitleNumberingField({
@@ -116,25 +123,41 @@ export function FormEditorRightPanel({
             <span className="form-editor-right-panel__section-title">{outline}</span>
             <Form.Item>
               <div className="form-editor-right-panel__kind-row">
-                <CmsSelect
-                  width="100%"
-                  value={paragraphKindLabel(active)}
-                  options={[
-                    { value: paragraphKindLabel(active), label: paragraphKindLabel(active) },
-                  ]}
-                  disabled
-                />
-                <CmsSelect
-                  width="100%"
-                  value={paragraphVariantLabel(active)}
-                  options={[
-                    {
-                      value: paragraphVariantLabel(active),
-                      label: paragraphVariantLabel(active),
-                    },
-                  ]}
-                  disabled
-                />
+                {active.kind === 'single_item' && active.variant === 'horizontal_table' ? (
+                  <CmsSelect
+                    width="100%"
+                    value={paragraphVariantLabel(active)}
+                    options={[
+                      {
+                        value: paragraphVariantLabel(active),
+                        label: paragraphVariantLabel(active),
+                      },
+                    ]}
+                    disabled
+                  />
+                ) : (
+                  <>
+                    <CmsSelect
+                      width="100%"
+                      value={paragraphKindLabel(active)}
+                      options={[
+                        { value: paragraphKindLabel(active), label: paragraphKindLabel(active) },
+                      ]}
+                      disabled
+                    />
+                    <CmsSelect
+                      width="100%"
+                      value={paragraphVariantLabel(active)}
+                      options={[
+                        {
+                          value: paragraphVariantLabel(active),
+                          label: paragraphVariantLabel(active),
+                        },
+                      ]}
+                      disabled
+                    />
+                  </>
+                )}
               </div>
             </Form.Item>
           </Form>
@@ -249,18 +272,18 @@ export function FormEditorRightPanel({
               <>
                 {horizontalTableRowSelection?.area === 'header' ? (
                   <FormEditorHorizontalTableHeaderFields
-                    paragraph={active}
+                    paragraph={active as HorizontalTableParagraph}
                     paragraphId={active.id}
                     updateParagraph={updateParagraph}
                   />
                 ) : horizontalTableRowSelection?.area === 'body' ? (
                   (() => {
                     const r = horizontalTableRowSelection.row
-                    const rowCount = Math.max(1, active.dataRows.length)
+                    const rowCount = Math.max(1, (active as HorizontalTableParagraph).dataRows.length)
                     if (r < 0 || r >= rowCount) return null
                     return (
                       <FormEditorHorizontalTableBodyFields
-                        paragraph={active}
+                        paragraph={active as HorizontalTableParagraph}
                         paragraphId={active.id}
                         rowIndex={r}
                         updateParagraph={updateParagraph}
@@ -269,20 +292,6 @@ export function FormEditorRightPanel({
                     )
                   })()
                 ) : null}
-                <Form.Item label="하단 텍스트">
-                  <CmsTextArea
-                    width="100%"
-                    value={active.bottomText}
-                    onChange={e =>
-                      updateParagraph(active.id, () => ({
-                        ...active,
-                        bottomText: e.target.value,
-                      }))
-                    }
-                    rows={3}
-                    placeholder="설명을 입력해 주세요"
-                  />
-                </Form.Item>
               </>
             ) : null}
 

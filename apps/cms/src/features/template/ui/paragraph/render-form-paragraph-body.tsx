@@ -1,7 +1,8 @@
-import type {
-  FormEditorKind,
-  HorizontalTableRowSelection,
-  WritingFormParagraph,
+import {
+  normalizeHorizontalTableParagraph,
+  type FormEditorKind,
+  type HorizontalTableRowSelection,
+  type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ClosingParagraphBody } from '@/features/template/ui/paragraph/explanation/closing-paragraph-body'
 import { ExplanationText } from '@/features/template/ui/paragraph/explanation/text'
@@ -92,16 +93,22 @@ export function renderFormParagraphBody(
           isEditMode={isParagraphSelected}
         />
       )
-    case 'horizontal_table':
+    case 'horizontal_table': {
+      const hp = normalizeHorizontalTableParagraph(
+        p as Extract<WritingFormParagraph, { variant: 'horizontal_table' }>
+      )
+      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지(텍스트형만 비선택 시 플레이스홀더 뷰) */
+      const isEditMode = isParagraphSelected || hp.tableFlavor === 'field'
       return (
         <HorizontalTableParagraphBody
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
+          isEditMode={isEditMode}
           tableRowSelection={options?.horizontalTableRowSelection}
           onTableRowSelectionChange={options?.onHorizontalTableRowSelectionChange}
         />
       )
+    }
     case 'closing':
       return (
         <ClosingParagraphBody

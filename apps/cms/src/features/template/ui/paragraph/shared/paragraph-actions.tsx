@@ -9,6 +9,10 @@ export type FormParagraphCardActionHandlers = {
   onDelete?: () => void
 }
 
+export type FormParagraphCardActionsProps = FormParagraphCardActionHandlers & {
+  disabled?: boolean
+}
+
 function stopCardClick(e: MouseEvent<HTMLElement>) {
   e.stopPropagation()
 }
@@ -17,7 +21,8 @@ export function FormParagraphCardActions({
   onAdd,
   onDuplicate,
   onDelete,
-}: FormParagraphCardActionHandlers = {}) {
+  disabled = false,
+}: FormParagraphCardActionsProps = {}) {
   return (
     <>
       <CmsButton
@@ -25,6 +30,7 @@ export function FormParagraphCardActions({
         type="button"
         size="large"
         icon={<FormEditorPlusIcon />}
+        disabled={disabled}
         onClick={e => {
           stopCardClick(e)
           onAdd?.()
@@ -37,6 +43,7 @@ export function FormParagraphCardActions({
         type="button"
         size="large"
         icon={<CopyOutlined />}
+        disabled={disabled}
         onClick={e => {
           stopCardClick(e)
           onDuplicate?.()
@@ -49,6 +56,7 @@ export function FormParagraphCardActions({
         type="button"
         size="large"
         icon={<DeleteOutlined />}
+        disabled={disabled}
         onClick={e => {
           stopCardClick(e)
           onDelete?.()
@@ -64,7 +72,8 @@ export function FormParagraphCardActionsMinimal({
   onAdd,
   onDuplicate,
   onDelete,
-}: FormParagraphCardActionHandlers = {}) {
+  disabled = false,
+}: FormParagraphCardActionsProps = {}) {
   return (
     <>
       <CmsButton
@@ -72,6 +81,7 @@ export function FormParagraphCardActionsMinimal({
         type="button"
         size="large"
         icon={<FormEditorPlusIcon />}
+        disabled={disabled}
         onClick={e => {
           stopCardClick(e)
           onAdd?.()
@@ -84,6 +94,7 @@ export function FormParagraphCardActionsMinimal({
         type="button"
         size="large"
         icon={<CopyOutlined />}
+        disabled={disabled}
         onClick={e => {
           stopCardClick(e)
           onDuplicate?.()
@@ -96,6 +107,7 @@ export function FormParagraphCardActionsMinimal({
         type="button"
         size="large"
         icon={<DeleteOutlined />}
+        disabled={disabled}
         onClick={e => {
           stopCardClick(e)
           onDelete?.()
