@@ -1,4 +1,6 @@
 import { Form } from 'antd'
+import { FormEditorMultipleChoiceItems } from '@/features/template/ui/form-editor/form-editor-multiple-choice-items'
+import { MULTIPLE_CHOICE_EDITOR_ITEMS_SURFACE_ID } from '@/features/template/ui/paragraph/single-item/multiple-choice'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -6,6 +8,7 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import type {
   FormEditorKind,
   FormTitleNumberingStyle,
+  MultipleChoiceParagraph,
   ShortEssayParagraph,
   WritingFormDraft,
   WritingFormParagraph,
@@ -73,7 +76,7 @@ export interface FormEditorRightPanelProps {
   updateParagraph: (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => void
   editorKind?: FormEditorKind
   showTitleNumbering?: boolean
-  shortEssayActiveItemId?: string | null
+  singleItemListActiveItemId?: string | null
 }
 
 export function FormEditorTitleNumberingField({
@@ -104,13 +107,17 @@ export function FormEditorRightPanel({
   updateParagraph,
   editorKind: _editorKind = 'survey',
   showTitleNumbering = true,
-  shortEssayActiveItemId,
+  singleItemListActiveItemId,
 }: FormEditorRightPanelProps) {
   const active = draft.paragraphs.find(p => p.id === activeParagraphId) ?? null
   const outline = active ? writingOutlineLabel(active) : ''
   const activeShortEssay =
     active && active.kind === 'single_item' && active.variant === 'short_essay'
       ? (active as ShortEssayParagraph)
+      : null
+  const activeMultipleChoice =
+    active && active.kind === 'single_item' && active.variant === 'multiple_choice'
+      ? (active as MultipleChoiceParagraph)
       : null
   const shortEssayItems =
     activeShortEssay?.items && activeShortEssay.items.length > 0
@@ -126,15 +133,19 @@ export function FormEditorRightPanel({
           ]
         : []
   const selectedShortEssayItem =
-    shortEssayActiveItemId == null
+    singleItemListActiveItemId == null
       ? null
-      : (shortEssayItems.find(item => item.id === shortEssayActiveItemId) ?? null)
+      : (shortEssayItems.find(item => item.id === singleItemListActiveItemId) ?? null)
   const shortEssayShowItemTitle =
     activeShortEssay == null
       ? false
       : shortEssayItems.length >= 2
         ? true
         : (activeShortEssay.showItemTitle ?? false)
+
+  const showMultipleChoiceItemsEditor =
+    activeMultipleChoice != null &&
+    singleItemListActiveItemId === MULTIPLE_CHOICE_EDITOR_ITEMS_SURFACE_ID
 
   return (
     <div className="form-editor-right-panel">
@@ -361,6 +372,28 @@ export function FormEditorRightPanel({
                     placeholder="답변을 입력해 주세요"
                   />
                 </Form.Item>
+              </>
+            ) : null}
+
+            {showMultipleChoiceItemsEditor && activeMultipleChoice ? (
+              <>
+                <Form.Item label="항목 유형">
+                  <CmsSelect
+                    width="100%"
+                    value={paragraphVariantLabel(activeMultipleChoice)}
+                    options={[
+                      {
+                        value: paragraphVariantLabel(activeMultipleChoice),
+                        label: paragraphVariantLabel(activeMultipleChoice),
+                      },
+                    ]}
+                    disabled
+                  />
+                </Form.Item>
+                <FormEditorMultipleChoiceItems
+                  paragraph={activeMultipleChoice}
+                  updateParagraph={updateParagraph}
+                />
               </>
             ) : null}
 

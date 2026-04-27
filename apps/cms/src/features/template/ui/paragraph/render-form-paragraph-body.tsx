@@ -27,8 +27,8 @@ export function renderFormParagraphBody(
   updateParagraph: FormUpdateParagraph,
   isParagraphSelected: boolean,
   editorKind: FormEditorKind = 'survey',
-  shortEssayActiveItemId?: string | null,
-  onSelectShortEssayItem?: (itemId: string | null) => void
+  singleItemListActiveItemId?: string | null,
+  onSelectSingleItemListItem?: (itemId: string | null) => void
 ) {
   switch (p.variant) {
     case 'survey_title_with_period':
@@ -105,8 +105,8 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isParagraphSelected}
-          activeItemId={shortEssayActiveItemId}
-          onSelectItem={onSelectShortEssayItem}
+          activeItemId={singleItemListActiveItemId}
+          onSelectItem={onSelectSingleItemListItem}
         />
       )
     case 'multiple_choice':
@@ -115,6 +115,8 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isParagraphSelected}
+          activeItemId={singleItemListActiveItemId}
+          onSelectItem={onSelectSingleItemListItem}
         />
       )
     case 'dropdown':

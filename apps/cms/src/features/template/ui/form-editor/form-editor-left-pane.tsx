@@ -19,6 +19,7 @@ import { getFormParagraphTitleNumberPrefix } from '@/features/template/lib/form-
 import type {
   FormEditorKind,
   FormTitleNumberingStyle,
+  MultipleChoiceParagraph,
   ShortEssayParagraph,
   TitleWithPeriodParagraph,
   WritingFormParagraph,
@@ -35,8 +36,9 @@ export interface FormEditorLeftPaneProps {
   onReorderMiddle: (activeId: string, overId: string) => void
   updateParagraph: (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => void
   editorKind?: FormEditorKind
-  shortEssayActiveItemId?: string | null
-  onSelectShortEssayItem?: (paragraphId: string, itemId: string | null) => void
+  /** 주관식·객관식 등 단일항목 리스트의 우측 패널/강조 연동용 */
+  singleItemListActiveItemId?: string | null
+  onSelectSingleItemListItem?: (paragraphId: string, itemId: string | null) => void
 }
 
 function isTitleWithPeriodParagraph(p: WritingFormParagraph): boolean {
@@ -214,6 +216,29 @@ function modalCardFooterToggles(
       )
     }
 
+    if (paragraph.variant === 'multiple_choice') {
+      const mc = paragraph as MultipleChoiceParagraph
+      toggles.push(
+        <CmsToggle
+          key="allow-multiple"
+          label="중복 선택"
+          checked={mc.allowMultiple ?? false}
+          onChange={checked =>
+            updateParagraph(mc.id, p => {
+              if (p.kind !== 'single_item' || p.variant !== 'multiple_choice') return p
+              return {
+                ...p,
+                allowMultiple: checked,
+                ...(checked
+                  ? { selectedPreviewSingleId: null }
+                  : { selectedPreviewMultipleIds: [] }),
+              }
+            })
+          }
+        />
+      )
+    }
+
     return (
       <div className="form-editor-card__toggles-row" onClick={event => event.stopPropagation()}>
         {toggles}
@@ -288,8 +313,8 @@ interface PinnedCardProps {
   onSelectCard: (id: string) => void
   updateParagraph: FormEditorLeftPaneProps['updateParagraph']
   editorKind: FormEditorKind
-  shortEssayActiveItemId?: string | null
-  onSelectShortEssayItem?: FormEditorLeftPaneProps['onSelectShortEssayItem']
+  singleItemListActiveItemId?: string | null
+  onSelectSingleItemListItem?: FormEditorLeftPaneProps['onSelectSingleItemListItem']
 }
 
 function PinnedFormCard({
@@ -300,8 +325,8 @@ function PinnedFormCard({
   onSelectCard,
   updateParagraph,
   editorKind,
-  shortEssayActiveItemId,
-  onSelectShortEssayItem,
+  singleItemListActiveItemId,
+  onSelectSingleItemListItem,
 }: PinnedCardProps) {
   const isSelected = selectedCardId === paragraph.id
   const hideCardHeading = isTitleWithPeriodParagraph(paragraph) && isSelected
@@ -335,9 +360,10 @@ function PinnedFormCard({
         updateParagraph,
         isSelected,
         editorKind,
-        shortEssayActiveItemId,
-        paragraph.variant === 'short_essay' && onSelectShortEssayItem
-          ? itemId => onSelectShortEssayItem(paragraph.id, itemId)
+        singleItemListActiveItemId,
+        (paragraph.variant === 'short_essay' || paragraph.variant === 'multiple_choice') &&
+          onSelectSingleItemListItem
+          ? itemId => onSelectSingleItemListItem(paragraph.id, itemId)
           : undefined
       )}
     </ParagraphCard>
@@ -352,8 +378,8 @@ interface SortableMiddleCardProps {
   onSelectCard: (id: string) => void
   updateParagraph: FormEditorLeftPaneProps['updateParagraph']
   editorKind: FormEditorKind
-  shortEssayActiveItemId?: string | null
-  onSelectShortEssayItem?: FormEditorLeftPaneProps['onSelectShortEssayItem']
+  singleItemListActiveItemId?: string | null
+  onSelectSingleItemListItem?: FormEditorLeftPaneProps['onSelectSingleItemListItem']
 }
 
 function SortableMiddleFormCard({
@@ -364,8 +390,8 @@ function SortableMiddleFormCard({
   onSelectCard,
   updateParagraph,
   editorKind,
-  shortEssayActiveItemId,
-  onSelectShortEssayItem,
+  singleItemListActiveItemId,
+  onSelectSingleItemListItem,
 }: SortableMiddleCardProps) {
   const {
     attributes,
@@ -430,9 +456,10 @@ function SortableMiddleFormCard({
           updateParagraph,
           isSelected,
           editorKind,
-          shortEssayActiveItemId,
-          paragraph.variant === 'short_essay' && onSelectShortEssayItem
-            ? itemId => onSelectShortEssayItem(paragraph.id, itemId)
+          singleItemListActiveItemId,
+          (paragraph.variant === 'short_essay' || paragraph.variant === 'multiple_choice') &&
+            onSelectSingleItemListItem
+            ? itemId => onSelectSingleItemListItem(paragraph.id, itemId)
             : undefined
         )}
       </ParagraphCard>
@@ -448,8 +475,8 @@ export function FormEditorLeftPane({
   onReorderMiddle,
   updateParagraph,
   editorKind = 'survey',
-  shortEssayActiveItemId,
-  onSelectShortEssayItem,
+  singleItemListActiveItemId,
+  onSelectSingleItemListItem,
 }: FormEditorLeftPaneProps) {
   const head = paragraphs[0]
   const tail = paragraphs[paragraphs.length - 1]
@@ -476,8 +503,8 @@ export function FormEditorLeftPane({
         onSelectCard={onSelectCard}
         updateParagraph={updateParagraph}
         editorKind={editorKind}
-        shortEssayActiveItemId={shortEssayActiveItemId}
-        onSelectShortEssayItem={onSelectShortEssayItem}
+        singleItemListActiveItemId={singleItemListActiveItemId}
+        onSelectSingleItemListItem={onSelectSingleItemListItem}
       />
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
@@ -491,8 +518,8 @@ export function FormEditorLeftPane({
               onSelectCard={onSelectCard}
               updateParagraph={updateParagraph}
               editorKind={editorKind}
-              shortEssayActiveItemId={shortEssayActiveItemId}
-              onSelectShortEssayItem={onSelectShortEssayItem}
+              singleItemListActiveItemId={singleItemListActiveItemId}
+              onSelectSingleItemListItem={onSelectSingleItemListItem}
             />
           ))}
         </SortableContext>
@@ -505,8 +532,8 @@ export function FormEditorLeftPane({
         onSelectCard={onSelectCard}
         updateParagraph={updateParagraph}
         editorKind={editorKind}
-        shortEssayActiveItemId={shortEssayActiveItemId}
-        onSelectShortEssayItem={onSelectShortEssayItem}
+        singleItemListActiveItemId={singleItemListActiveItemId}
+        onSelectSingleItemListItem={onSelectSingleItemListItem}
       />
     </div>
   )

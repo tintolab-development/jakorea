@@ -31,7 +31,7 @@ export function FormTestSingleItemFullpageModal({
   onClose,
 }: FormTestSingleItemFullpageModalProps) {
   const [draft, setDraft] = useState<WritingFormDraft>(() => createSingleItemPreviewDraft())
-  const [shortEssayActiveItemId, setShortEssayActiveItemId] = useState<string | null>(null)
+  const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
     DEFAULT_SURVEY_PARAGRAPH_IDS.title
   )
@@ -40,19 +40,13 @@ export function FormTestSingleItemFullpageModal({
     if (!open) return
     setDraft(createSingleItemPreviewDraft())
     setActiveParagraphId(DEFAULT_SURVEY_PARAGRAPH_IDS.title)
-    setShortEssayActiveItemId(null)
+    setSingleItemListActiveItemId(null)
   }, [open])
 
-  const handleSelectCard = useCallback(
-    (id: string) => {
-      setActiveParagraphId(prev => {
-        if (prev === id) return prev
-        setShortEssayActiveItemId(null)
-        return id
-      })
-    },
-    []
-  )
+  const handleSelectCard = useCallback((id: string) => {
+    setActiveParagraphId(id)
+    setSingleItemListActiveItemId(null)
+  }, [])
 
   const updateParagraph = useCallback(
     (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => {
@@ -119,8 +113,11 @@ export function FormTestSingleItemFullpageModal({
           onReorderMiddle={onReorderMiddle}
           updateParagraph={updateParagraph}
           editorKind="survey"
-          shortEssayActiveItemId={shortEssayActiveItemId}
-          onSelectShortEssayItem={(_paragraphId, itemId) => setShortEssayActiveItemId(itemId)}
+          singleItemListActiveItemId={singleItemListActiveItemId}
+          onSelectSingleItemListItem={(paragraphId, itemId) => {
+            setActiveParagraphId(paragraphId)
+            setSingleItemListActiveItemId(itemId)
+          }}
         />
       }
       rightNavigation={
@@ -146,7 +143,7 @@ export function FormTestSingleItemFullpageModal({
             updateParagraph={updateParagraph}
             editorKind="survey"
             showTitleNumbering={false}
-            shortEssayActiveItemId={shortEssayActiveItemId}
+            singleItemListActiveItemId={singleItemListActiveItemId}
           />
         </FormEditorFieldNav>
       }

@@ -61,6 +61,12 @@
 
 .paragraph-label-input
   .paragraph-label-input__textarea
+  .cms-textarea__control:hover:not(.cms-textarea__control--disabled) {
+  border-color: var(--table-line, #e0e0e0);
+}
+
+.paragraph-label-input
+  .paragraph-label-input__textarea
   .cms-textarea__control:focus-within:not(.cms-textarea__control--disabled) {
   border-color: var(--table-line, #e0e0e0);
   box-shadow: none;

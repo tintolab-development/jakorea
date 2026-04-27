@@ -272,3 +272,47 @@
 .form-editor-agreement-footer__bar--preview {
   opacity: 0.85;
 }
+
+/* 객관식 — 우측 패널 항목 수정 */
+.form-editor-mc-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.form-editor-mc-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.form-editor-mc-item__drag {
+  flex-shrink: 0;
+  width: 32px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #85969d;
+  cursor: grab;
+}
+
+.form-editor-mc-item__drag:active {
+  cursor: grabbing;
+}
+
+.form-editor-mc-item__field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.form-editor-mc-item__remove {
+  margin-top: 8px;
+}
+

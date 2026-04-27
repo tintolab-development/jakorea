@@ -136,10 +136,32 @@ export type ShortEssayParagraph = WritingFormParagraphBase & {
   bodyText: string
 }
 
+export interface MultipleChoiceItem {
+  id: string
+  label: string
+}
+
 export type MultipleChoiceParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'multiple_choice'
   answerRequired?: boolean
+  /** true면 미리보기가 체크박스(복수 선택) */
+  allowMultiple?: boolean
+  items: MultipleChoiceItem[]
+  /** 단일 선택 미리보기 */
+  selectedPreviewSingleId?: string | null
+  /** 복수 선택 미리보기 */
+  selectedPreviewMultipleIds?: string[]
+}
+
+/** 객관식형 기본 항목 4개 (스펙: 신규 시 한 세트) */
+export function createDefaultMultipleChoiceItems(): MultipleChoiceItem[] {
+  return [
+    { id: 'multiple-choice-item-1', label: 'text 1' },
+    { id: 'multiple-choice-item-2', label: 'text 2' },
+    { id: 'multiple-choice-item-3', label: 'text 3' },
+    { id: 'multiple-choice-item-4', label: 'text 4' },
+  ]
 }
 
 export type DropdownParagraph = WritingFormParagraphBase & {
@@ -451,6 +473,10 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       kind: 'single_item',
       variant: 'multiple_choice',
       answerRequired: true,
+      allowMultiple: false,
+      items: createDefaultMultipleChoiceItems(),
+      selectedPreviewSingleId: null,
+      selectedPreviewMultipleIds: [],
       requiredMark: true,
       paragraphTitle: '객관식형',
       paragraphDescription: '',
