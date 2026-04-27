@@ -120,6 +120,13 @@
   justify-content: flex-start;
 }
 
+.form-editor-card__toggles-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+}
+
 /* 우측 네비: 고정 행은 드래그 핸들 없이 동일 높이 유지 */
 .template-modal-nav-item--pinned {
   padding-right: 14px;

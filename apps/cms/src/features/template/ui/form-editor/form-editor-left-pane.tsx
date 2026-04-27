@@ -17,9 +17,9 @@ import {
 } from '@/features/template/ui/paragraph/shared/paragraph-actions'
 import { getFormParagraphTitleNumberPrefix } from '@/features/template/lib/form-title-numbering'
 import type {
-  AgreementExplanationTextParagraph,
   FormEditorKind,
   FormTitleNumberingStyle,
+  ShortEssayParagraph,
   TitleWithPeriodParagraph,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -166,20 +166,43 @@ function modalCardFooterToggles(
       />
     )
   }
-  if (paragraph.kind === 'single_item' && paragraph.variant === 'agreement_explanation_text') {
-    const textParagraph = paragraph as AgreementExplanationTextParagraph
-    return (
+  if (paragraph.kind === 'single_item') {
+    const answerRequired = paragraph.answerRequired ?? true
+    const toggles: ReactNode[] = [
       <CmsToggle
+        key="answer-required"
         label="답변 필수"
-        checked={textParagraph.answerRequired}
+        checked={answerRequired}
         onChange={checked =>
-          updateParagraph(textParagraph.id, p =>
-            p.kind === 'single_item' && p.variant === 'agreement_explanation_text'
-              ? { ...p, answerRequired: checked }
-              : p
+          updateParagraph(paragraph.id, p =>
+            p.kind === 'single_item' && p.id === paragraph.id ? { ...p, answerRequired: checked } : p
           )
         }
-      />
+      />,
+    ]
+
+    if (paragraph.variant === 'short_essay') {
+      const shortEssay = paragraph as ShortEssayParagraph
+      toggles.push(
+        <CmsToggle
+          key="item-title"
+          label="항목 타이틀"
+          checked={shortEssay.showItemTitle ?? false}
+          onChange={checked =>
+            updateParagraph(shortEssay.id, p =>
+              p.kind === 'single_item' && p.variant === 'short_essay'
+                ? { ...p, showItemTitle: checked }
+                : p
+            )
+          }
+        />
+      )
+    }
+
+    return (
+      <div className="form-editor-card__toggles-row" onClick={event => event.stopPropagation()}>
+        {toggles}
+      </div>
     )
   }
   return undefined

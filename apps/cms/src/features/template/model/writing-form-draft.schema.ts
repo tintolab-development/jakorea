@@ -46,12 +46,14 @@ export interface UserProfileField {
 export interface UserProfileParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'user_profile'
+  answerRequired?: boolean
   fields: UserProfileField[]
 }
 
 export interface ScoreSelectParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'score_select'
+  answerRequired?: boolean
   scaleMin: number
   scaleMax: number
   /** 척도 끝 라벨 등 — 키는 문자열 숫자 */
@@ -67,6 +69,7 @@ export interface SubjectiveItem {
 export interface SubjectiveParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'subjective'
+  answerRequired?: boolean
   items: SubjectiveItem[]
 }
 
@@ -82,6 +85,7 @@ export interface ClosingParagraph extends WritingFormParagraphBase {
 export interface AgreementRichTextParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'agreement_rich_text'
+  answerRequired?: boolean
   bodyPlaceholder: string
   bodyText: string
 }
@@ -106,6 +110,7 @@ export interface AgreementPrivacyRow {
 export interface AgreementPrivacyRowsParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'agreement_privacy_rows'
+  answerRequired?: boolean
   rows: AgreementPrivacyRow[]
 }
 
@@ -113,6 +118,7 @@ export interface AgreementPrivacyRowsParagraph extends WritingFormParagraphBase 
 export interface AgreementTableConsentParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'agreement_table_consent'
+  answerRequired?: boolean
   headerValues: [string, string, string]
   cellValues: [string, string, string]
   footerDescription: string
@@ -123,41 +129,50 @@ export interface AgreementTableConsentParagraph extends WritingFormParagraphBase
 export type ShortEssayParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'short_essay'
+  answerRequired?: boolean
+  showItemTitle?: boolean
 }
 
 export type MultipleChoiceParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'multiple_choice'
+  answerRequired?: boolean
 }
 
 export type DropdownParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'dropdown'
+  answerRequired?: boolean
 }
 
 export type DateTimeParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'date_time'
+  answerRequired?: boolean
 }
 
 export type StarRateParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'star_rate'
+  answerRequired?: boolean
 }
 
 export type ScaleTypeParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'scale_type'
+  answerRequired?: boolean
 }
 
 export type UserInfoParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'user_info'
+  answerRequired?: boolean
 }
 
 export type FileAttachmentParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'file_attachment'
+  answerRequired?: boolean
 }
 
 export type WritingFormParagraph =
@@ -342,6 +357,7 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.user,
         kind: 'single_item',
         variant: 'user_profile',
+        answerRequired: true,
         requiredMark: true,
         paragraphTitle: '설문자 정보',
         paragraphDescription: '',
@@ -352,6 +368,7 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.score,
         kind: 'single_item',
         variant: 'score_select',
+        answerRequired: true,
         requiredMark: true,
         paragraphTitle: '타이틀을 입력해 주세요',
         paragraphDescription: '',
@@ -368,6 +385,7 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.subjective,
         kind: 'single_item',
         variant: 'subjective',
+        answerRequired: true,
         requiredMark: true,
         paragraphTitle: '타이틀을 입력해 주세요',
         paragraphDescription: '구체적인 의견을 작성해 주세요.',
@@ -408,6 +426,8 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       id: 'short-essay',
       kind: 'single_item',
       variant: 'short_essay',
+      answerRequired: true,
+      showItemTitle: false,
       requiredMark: true,
       paragraphTitle: '주관식형',
       paragraphDescription: '',
@@ -417,6 +437,7 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       id: 'multiple-choice',
       kind: 'single_item',
       variant: 'multiple_choice',
+      answerRequired: true,
       requiredMark: true,
       paragraphTitle: '객관식형',
       paragraphDescription: '',
@@ -426,6 +447,7 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       id: 'dropdown',
       kind: 'single_item',
       variant: 'dropdown',
+      answerRequired: true,
       requiredMark: true,
       paragraphTitle: '드롭다운형',
       paragraphDescription: '',
@@ -435,6 +457,7 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       id: 'date-time',
       kind: 'single_item',
       variant: 'date_time',
+      answerRequired: true,
       requiredMark: true,
       paragraphTitle: '날짜/시간형',
       paragraphDescription: '',
@@ -444,6 +467,7 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       id: 'star-rate',
       kind: 'single_item',
       variant: 'star_rate',
+      answerRequired: true,
       requiredMark: true,
       paragraphTitle: '별점형',
       paragraphDescription: '',
@@ -453,6 +477,7 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       id: 'scale-type',
       kind: 'single_item',
       variant: 'scale_type',
+      answerRequired: true,
       requiredMark: true,
       paragraphTitle: '점수 선택형',
       paragraphDescription: '',
@@ -462,6 +487,7 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       id: 'user-info',
       kind: 'single_item',
       variant: 'user_info',
+      answerRequired: true,
       requiredMark: true,
       paragraphTitle: '사용자 정보형',
       paragraphDescription: '',
@@ -471,6 +497,7 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       id: 'file-attachment',
       kind: 'single_item',
       variant: 'file_attachment',
+      answerRequired: true,
       requiredMark: true,
       paragraphTitle: '파일 첨부형',
       paragraphDescription: '',
