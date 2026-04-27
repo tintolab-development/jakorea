@@ -1,0 +1,19 @@
+/* 양식 테스트 등 페이지에 삽입 시 — 풀페이지 모달과 동일한 좌·우 폭 */
+.horizontal-table-form-editor--embedded {
+  width: 100%;
+}
+
+.horizontal-table-form-editor--embedded .horizontal-table-form-editor__contents {
+  align-items: stretch;
+  min-height: min(720px, calc(100vh - 280px));
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.horizontal-table-form-editor--embedded .full-page-modal__left {
+  min-height: inherit;
+}
+
+.horizontal-table-form-editor--embedded .full-page-modal__right-wrap {
+  align-self: stretch;
+}

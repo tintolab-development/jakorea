@@ -1,0 +1,10 @@
+.form-test-table-components-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-sizing: border-box;
+}
+
+.form-test-table-components-page .horizontal-table-form-editor--embedded {
+  margin-top: 0;
+}

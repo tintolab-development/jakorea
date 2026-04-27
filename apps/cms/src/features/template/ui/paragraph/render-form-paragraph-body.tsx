@@ -1,4 +1,9 @@
-import type { FormEditorKind, WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
+import {
+  normalizeHorizontalTableParagraph,
+  type FormEditorKind,
+  type HorizontalTableRowSelection,
+  type WritingFormParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
 import { ClosingParagraphBody } from '@/features/template/ui/paragraph/explanation/closing-paragraph-body'
 import { ExplanationText } from '@/features/template/ui/paragraph/explanation/text'
 import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/title'
@@ -10,6 +15,7 @@ import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
 import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
 import { MultipleChoice } from '@/features/template/ui/paragraph/single-item/multiple-choice'
 import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-type'
+import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/single-item/horizontal-table-paragraph-body'
 import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
 import { ShortEssay } from '@/features/template/ui/paragraph/single-item/short-essay'
 import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate'
@@ -22,13 +28,19 @@ export type FormUpdateParagraph = (
   updater: (p: WritingFormParagraph) => WritingFormParagraph
 ) => void
 
+export type RenderFormParagraphBodyOptions = {
+  horizontalTableRowSelection?: HorizontalTableRowSelection | null
+  onHorizontalTableRowSelectionChange?: (next: HorizontalTableRowSelection | null) => void
+  singleItemListActiveItemId?: string | null
+  onSelectSingleItemListItem?: (itemId: string | null) => void
+}
+
 export function renderFormParagraphBody(
   p: WritingFormParagraph,
   updateParagraph: FormUpdateParagraph,
   isParagraphSelected: boolean,
   editorKind: FormEditorKind = 'survey',
-  singleItemListActiveItemId?: string | null,
-  onSelectSingleItemListItem?: (itemId: string | null) => void
+  options?: RenderFormParagraphBodyOptions
 ) {
   switch (p.variant) {
     case 'survey_title_with_period':
@@ -91,6 +103,22 @@ export function renderFormParagraphBody(
           isEditMode={isParagraphSelected}
         />
       )
+    case 'horizontal_table': {
+      const hp = normalizeHorizontalTableParagraph(
+        p as Extract<WritingFormParagraph, { variant: 'horizontal_table' }>
+      )
+      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지(텍스트형만 비선택 시 플레이스홀더 뷰) */
+      const isEditMode = isParagraphSelected || hp.tableFlavor === 'field'
+      return (
+        <HorizontalTableParagraphBody
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isEditMode}
+          tableRowSelection={options?.horizontalTableRowSelection}
+          onTableRowSelectionChange={options?.onHorizontalTableRowSelectionChange}
+        />
+      )
+    }
     case 'closing':
       return (
         <ClosingParagraphBody
@@ -105,8 +133,8 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isParagraphSelected}
-          activeItemId={singleItemListActiveItemId}
-          onSelectItem={onSelectSingleItemListItem}
+          activeItemId={options?.singleItemListActiveItemId}
+          onSelectItem={options?.onSelectSingleItemListItem}
         />
       )
     case 'multiple_choice':

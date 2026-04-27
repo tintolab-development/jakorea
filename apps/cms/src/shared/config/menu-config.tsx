@@ -935,6 +935,42 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
 }
 
 /**
+ * 메뉴 key는 `/templates/…` exact만 등록돼 있어, form-test·하위 URL 등은 매칭이 비어 null이 된다.
+ * 사이드바 `selectedKeys`와 동일한 prefix 규칙으로 1뎁스(템플릿 관리) / 2·3뎁스(리프)를 맞춘다.
+ */
+function getTemplatesPathCategoryNameWhenUnmatched(
+  normalizedPath: string,
+  depth: number | undefined
+): string | null {
+  if (normalizedPath !== '/templates' && !normalizedPath.startsWith('/templates/')) {
+    return null
+  }
+
+  const isFormSubtree =
+    normalizedPath === '/templates' ||
+    normalizedPath.startsWith('/templates/form-test/') ||
+    normalizedPath.startsWith('/templates/form-management') ||
+    normalizedPath.startsWith('/templates/program-forms')
+  const isKakao = normalizedPath.startsWith('/templates/kakao-notification')
+  const isEmail = normalizedPath.startsWith('/templates/email-management')
+
+  if (isFormSubtree) {
+    if (depth === 1) return '템플릿 관리'
+    return '폼 양식 관리'
+  }
+  if (isKakao) {
+    if (depth === 1) return '템플릿 관리'
+    return '카카오 알림톡 관리'
+  }
+  if (isEmail) {
+    if (depth === 1) return '템플릿 관리'
+    return '메일 관리'
+  }
+
+  return '템플릿 관리'
+}
+
+/**
  * 현재 경로에 해당하는 카테고리명 가져오기
  * @param path 경로
  * @param depth 가져올 뎁스 (1: 1뎁스, 2: 2뎁스, 3: 3뎁스, 기본값: 자동 감지 - 가장 구체적인 뎁스)
@@ -1044,6 +1080,10 @@ export function getCategoryNameByPath(
   }
 
   if (matches.length === 0) {
+    const templateTitle = getTemplatesPathCategoryNameWhenUnmatched(normalizedPath, depth)
+    if (templateTitle !== null) {
+      return templateTitle
+    }
     return null
   }
 

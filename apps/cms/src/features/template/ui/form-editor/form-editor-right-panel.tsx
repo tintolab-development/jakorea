@@ -10,6 +10,8 @@ import type {
   DateTimeParagraph,
   FormEditorKind,
   FormTitleNumberingStyle,
+  HorizontalTableParagraph,
+  HorizontalTableRowSelection,
   MultipleChoiceParagraph,
   ScaleTypeParagraph,
   ShortEssayParagraph,
@@ -17,6 +19,8 @@ import type {
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { writingOutlineLabel } from '@/features/template/model/writing-form-draft.schema'
+import { FormEditorHorizontalTableBodyFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-body-fields'
+import { FormEditorHorizontalTableHeaderFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-header-fields'
 import './form-editor.css'
 
 const DATE_TIME_FIELD_MODE_OPTIONS: { value: DateTimeFieldMode; label: string }[] = [
@@ -36,10 +40,18 @@ const TITLE_NUMBERING_OPTIONS: { value: FormTitleNumberingStyle; label: string }
 function paragraphKindLabel(p: WritingFormParagraph): string {
   if (p.kind === 'description') return '설명글'
   if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') return '설명글'
+  if (p.kind === 'single_item' && p.variant === 'horizontal_table') {
+    const t = p as HorizontalTableParagraph
+    return t.tableFlavor === 'field' ? '테이블_가로형 (필드 형)' : '테이블_가로형'
+  }
   return '단일항목'
 }
 
 function paragraphVariantLabel(p: WritingFormParagraph): string {
+  if (p.kind === 'single_item' && p.variant === 'horizontal_table') {
+    const t = p as HorizontalTableParagraph
+    return t.tableFlavor === 'field' ? '테이블_가로형 (필드 형)' : '테이블_가로형'
+  }
   switch (p.variant) {
     case 'survey_title_with_period':
       return '제목형'
@@ -86,6 +98,8 @@ export interface FormEditorRightPanelProps {
   editorKind?: FormEditorKind
   showTitleNumbering?: boolean
   singleItemListActiveItemId?: string | null
+  horizontalTableRowSelection?: HorizontalTableRowSelection | null
+  onHorizontalTableBodyRowDeleted?: (nextRowIndex: number) => void
 }
 
 export function FormEditorTitleNumberingField({
@@ -117,9 +131,12 @@ export function FormEditorRightPanel({
   editorKind: _editorKind = 'survey',
   showTitleNumbering = true,
   singleItemListActiveItemId,
+  horizontalTableRowSelection = null,
+  onHorizontalTableBodyRowDeleted,
 }: FormEditorRightPanelProps) {
   const active = draft.paragraphs.find(p => p.id === activeParagraphId) ?? null
   const outline = active ? writingOutlineLabel(active) : ''
+
   const activeShortEssay =
     active && active.kind === 'single_item' && active.variant === 'short_essay'
       ? (active as ShortEssayParagraph)
@@ -136,6 +153,7 @@ export function FormEditorRightPanel({
     active && active.kind === 'single_item' && active.variant === 'scale_type'
       ? (active as ScaleTypeParagraph)
       : null
+
   const shortEssayItems =
     activeShortEssay?.items && activeShortEssay.items.length > 0
       ? activeShortEssay.items
@@ -149,20 +167,18 @@ export function FormEditorRightPanel({
             },
           ]
         : []
+
   const selectedShortEssayItem =
     singleItemListActiveItemId == null
       ? null
       : (shortEssayItems.find(item => item.id === singleItemListActiveItemId) ?? null)
+
   const shortEssayShowItemTitle =
     activeShortEssay == null
       ? false
       : shortEssayItems.length >= 2
         ? true
         : (activeShortEssay.showItemTitle ?? false)
-
-  const showMultipleChoiceItemsEditor = activeMultipleChoice != null
-
-  const showScaleTypeItemsEditor = activeScaleType != null
 
   return (
     <div className="form-editor-right-panel">
@@ -179,25 +195,41 @@ export function FormEditorRightPanel({
             <span className="form-editor-right-panel__section-title">{outline}</span>
             <Form.Item>
               <div className="form-editor-right-panel__kind-row">
-                <CmsSelect
-                  width="100%"
-                  value={paragraphKindLabel(active)}
-                  options={[
-                    { value: paragraphKindLabel(active), label: paragraphKindLabel(active) },
-                  ]}
-                  disabled
-                />
-                <CmsSelect
-                  width="100%"
-                  value={paragraphVariantLabel(active)}
-                  options={[
-                    {
-                      value: paragraphVariantLabel(active),
-                      label: paragraphVariantLabel(active),
-                    },
-                  ]}
-                  disabled
-                />
+                {active.kind === 'single_item' && active.variant === 'horizontal_table' ? (
+                  <CmsSelect
+                    width="100%"
+                    value={paragraphVariantLabel(active)}
+                    options={[
+                      {
+                        value: paragraphVariantLabel(active),
+                        label: paragraphVariantLabel(active),
+                      },
+                    ]}
+                    disabled
+                  />
+                ) : (
+                  <>
+                    <CmsSelect
+                      width="100%"
+                      value={paragraphKindLabel(active)}
+                      options={[
+                        { value: paragraphKindLabel(active), label: paragraphKindLabel(active) },
+                      ]}
+                      disabled
+                    />
+                    <CmsSelect
+                      width="100%"
+                      value={paragraphVariantLabel(active)}
+                      options={[
+                        {
+                          value: paragraphVariantLabel(active),
+                          label: paragraphVariantLabel(active),
+                        },
+                      ]}
+                      disabled
+                    />
+                  </>
+                )}
               </div>
             </Form.Item>
           </Form>
@@ -331,8 +363,7 @@ export function FormEditorRightPanel({
                       value={selectedShortEssayItem.label ?? ''}
                       onChange={e =>
                         updateParagraph(activeShortEssay.id, cur => {
-                          if (cur.kind !== 'single_item' || cur.variant !== 'short_essay')
-                            return cur
+                          if (cur.kind !== 'single_item' || cur.variant !== 'short_essay') return cur
                           const items =
                             cur.items?.length && cur.items.length > 0
                               ? cur.items
@@ -393,7 +424,7 @@ export function FormEditorRightPanel({
               </>
             ) : null}
 
-            {showMultipleChoiceItemsEditor && activeMultipleChoice ? (
+            {activeMultipleChoice ? (
               <>
                 <Form.Item label="항목 유형">
                   <CmsSelect
@@ -415,11 +446,8 @@ export function FormEditorRightPanel({
               </>
             ) : null}
 
-            {showScaleTypeItemsEditor && activeScaleType ? (
-              <FormEditorScaleTypeItems
-                paragraph={activeScaleType}
-                updateParagraph={updateParagraph}
-              />
+            {activeScaleType ? (
+              <FormEditorScaleTypeItems paragraph={activeScaleType} updateParagraph={updateParagraph} />
             ) : null}
 
             {activeDateTime ? (
@@ -441,6 +469,33 @@ export function FormEditorRightPanel({
                   }
                 />
               </Form.Item>
+            ) : null}
+
+            {active.kind === 'single_item' && active.variant === 'horizontal_table' ? (
+              <>
+                {horizontalTableRowSelection?.area === 'header' ? (
+                  <FormEditorHorizontalTableHeaderFields
+                    paragraph={active as HorizontalTableParagraph}
+                    paragraphId={active.id}
+                    updateParagraph={updateParagraph}
+                  />
+                ) : horizontalTableRowSelection?.area === 'body' ? (
+                  (() => {
+                    const r = horizontalTableRowSelection.row
+                    const rowCount = Math.max(1, (active as HorizontalTableParagraph).dataRows.length)
+                    if (r < 0 || r >= rowCount) return null
+                    return (
+                      <FormEditorHorizontalTableBodyFields
+                        paragraph={active as HorizontalTableParagraph}
+                        paragraphId={active.id}
+                        rowIndex={r}
+                        updateParagraph={updateParagraph}
+                        onBodyRowDeleted={onHorizontalTableBodyRowDeleted}
+                      />
+                    )
+                  })()
+                ) : null}
+              </>
             ) : null}
 
             {active.kind === 'description' && active.variant === 'closing' ? (

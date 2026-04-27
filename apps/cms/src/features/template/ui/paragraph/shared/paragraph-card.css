@@ -7,6 +7,9 @@
   flex-direction: column;
   align-items: stretch;
   align-self: stretch;
+  box-sizing: border-box;
+  /* 활성 시에만 보더가 생기면 레이아웃이 밀리므로 비활성은 투명 1px로 동일 외곽선 유지 */
+  border: 1px solid transparent;
   border-radius: 16px;
   background: var(--main-WT, #fff);
   box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
@@ -114,7 +117,7 @@
 
 .paragraph-card--active {
   border-radius: var(--16, 16px);
-  border: 1px solid var(--color-mint-01, #01a1af);
+  border-color: var(--color-mint-01, #01a1af);
   background: var(--main-WT, #fff);
 }
 
