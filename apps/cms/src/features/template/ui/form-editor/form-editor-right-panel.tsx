@@ -1,6 +1,6 @@
 import { Form } from 'antd'
 import { FormEditorMultipleChoiceItems } from '@/features/template/ui/form-editor/form-editor-multiple-choice-items'
-import { MULTIPLE_CHOICE_EDITOR_ITEMS_SURFACE_ID } from '@/features/template/ui/paragraph/single-item/multiple-choice'
+import { FormEditorScaleTypeItems } from '@/features/template/ui/form-editor/form-editor-scale-type-items'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -11,6 +11,7 @@ import type {
   FormEditorKind,
   FormTitleNumberingStyle,
   MultipleChoiceParagraph,
+  ScaleTypeParagraph,
   ShortEssayParagraph,
   WritingFormDraft,
   WritingFormParagraph,
@@ -131,6 +132,10 @@ export function FormEditorRightPanel({
     active && active.kind === 'single_item' && active.variant === 'date_time'
       ? (active as DateTimeParagraph)
       : null
+  const activeScaleType =
+    active && active.kind === 'single_item' && active.variant === 'scale_type'
+      ? (active as ScaleTypeParagraph)
+      : null
   const shortEssayItems =
     activeShortEssay?.items && activeShortEssay.items.length > 0
       ? activeShortEssay.items
@@ -155,9 +160,9 @@ export function FormEditorRightPanel({
         ? true
         : (activeShortEssay.showItemTitle ?? false)
 
-  const showMultipleChoiceItemsEditor =
-    activeMultipleChoice != null &&
-    singleItemListActiveItemId === MULTIPLE_CHOICE_EDITOR_ITEMS_SURFACE_ID
+  const showMultipleChoiceItemsEditor = activeMultipleChoice != null
+
+  const showScaleTypeItemsEditor = activeScaleType != null
 
   return (
     <div className="form-editor-right-panel">
@@ -326,7 +331,8 @@ export function FormEditorRightPanel({
                       value={selectedShortEssayItem.label ?? ''}
                       onChange={e =>
                         updateParagraph(activeShortEssay.id, cur => {
-                          if (cur.kind !== 'single_item' || cur.variant !== 'short_essay') return cur
+                          if (cur.kind !== 'single_item' || cur.variant !== 'short_essay')
+                            return cur
                           const items =
                             cur.items?.length && cur.items.length > 0
                               ? cur.items
@@ -407,6 +413,13 @@ export function FormEditorRightPanel({
                   updateParagraph={updateParagraph}
                 />
               </>
+            ) : null}
+
+            {showScaleTypeItemsEditor && activeScaleType ? (
+              <FormEditorScaleTypeItems
+                paragraph={activeScaleType}
+                updateParagraph={updateParagraph}
+              />
             ) : null}
 
             {activeDateTime ? (

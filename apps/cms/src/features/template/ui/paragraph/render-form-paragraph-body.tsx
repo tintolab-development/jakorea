@@ -115,8 +115,6 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isParagraphSelected}
-          activeItemId={singleItemListActiveItemId}
-          onSelectItem={onSelectSingleItemListItem}
         />
       )
     case 'dropdown':

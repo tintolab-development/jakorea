@@ -1,12 +1,8 @@
-import type { MouseEvent } from 'react'
 import type { MultipleChoiceParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { createDefaultMultipleChoiceItems } from '@/features/template/model/writing-form-draft.schema'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import './multiple-choice.css'
-
-/** 항목 영역 선택 → 좌측 테두리·우측「항목 수정」연동 (실제 항목 id와 구분) */
-export const MULTIPLE_CHOICE_EDITOR_ITEMS_SURFACE_ID = '__mc_editor_items_surface__' as const
 
 function normalizeItems(paragraph: MultipleChoiceParagraph) {
   return paragraph.items?.length ? paragraph.items : createDefaultMultipleChoiceItems()
@@ -26,14 +22,10 @@ export function MultipleChoice({
   paragraph,
   onChange,
   isEditMode,
-  activeItemId,
-  onSelectItem,
 }: {
   paragraph: MultipleChoiceParagraph
   onChange: (next: MultipleChoiceParagraph) => void
   isEditMode: boolean
-  activeItemId?: string | null
-  onSelectItem?: (itemId: string | null) => void
 }) {
   const items = normalizeItems(paragraph)
   const allowMultiple = paragraph.allowMultiple ?? false
@@ -44,17 +36,9 @@ export function MultipleChoice({
     onChange(mergeParagraph(paragraph, partial))
   }
 
-  const itemsSurfaceSelected = activeItemId === MULTIPLE_CHOICE_EDITOR_ITEMS_SURFACE_ID
-
-  const handleItemsSurfaceClick = (event: MouseEvent) => {
-    if (!isEditMode) return
-    event.stopPropagation()
-    onSelectItem?.(MULTIPLE_CHOICE_EDITOR_ITEMS_SURFACE_ID)
-  }
-
   const bodyClass = [
     'multiple-choice-body',
-    itemsSurfaceSelected ? 'multiple-choice-body--selected' : '',
+    isEditMode ? 'multiple-choice-body--selected' : '',
   ]
     .filter(Boolean)
     .join(' ')
@@ -68,7 +52,7 @@ export function MultipleChoice({
     }
 
     return (
-      <div role="presentation" className={bodyClass} onClick={handleItemsSurfaceClick}>
+      <div role="presentation" className={bodyClass}>
         {items.map(item => (
           <div key={item.id} role="presentation" className="multiple-choice-row">
             <CmsCheckbox
@@ -83,7 +67,7 @@ export function MultipleChoice({
   }
 
   return (
-    <div role="presentation" className={bodyClass} onClick={handleItemsSurfaceClick}>
+    <div role="presentation" className={bodyClass}>
       <CmsRadioGroup
         className="multiple-choice-radio-group"
         value={singleId ?? undefined}

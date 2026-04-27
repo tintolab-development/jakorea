@@ -187,12 +187,33 @@ export type StarRateParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'star_rate'
   answerRequired?: boolean
+  /** 미리보기: 1–5까지 노란 별 개수, 없음·null이면 전부 회색 */
+  selectedPreviewStars?: number | null
+}
+
+export interface ScaleTypeItem {
+  id: string
+  label: string
 }
 
 export type ScaleTypeParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'scale_type'
   answerRequired?: boolean
+  items: ScaleTypeItem[]
+  /** 미리보기에서 강조(민트)되는 항목 id */
+  selectedPreviewItemId?: string | null
+}
+
+/** 점수 선택형 기본 5단계 (Likert 문구) */
+export function createDefaultScaleTypeItems(): ScaleTypeItem[] {
+  return [
+    { id: 'scale-type-item-1', label: '전혀 그렇지 않다' },
+    { id: 'scale-type-item-2', label: '그렇지 않다' },
+    { id: 'scale-type-item-3', label: '보통이다' },
+    { id: 'scale-type-item-4', label: '그렇다' },
+    { id: 'scale-type-item-5', label: '매우 그렇다' },
+  ]
 }
 
 export type UserInfoParagraph = WritingFormParagraphBase & {
@@ -516,6 +537,7 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       kind: 'single_item',
       variant: 'star_rate',
       answerRequired: true,
+      selectedPreviewStars: null,
       requiredMark: true,
       paragraphTitle: '별점형',
       paragraphDescription: '',
@@ -526,6 +548,8 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       kind: 'single_item',
       variant: 'scale_type',
       answerRequired: true,
+      items: createDefaultScaleTypeItems(),
+      selectedPreviewItemId: 'scale-type-item-5',
       requiredMark: true,
       paragraphTitle: '점수 선택형',
       paragraphDescription: '',

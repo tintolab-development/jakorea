@@ -11,9 +11,9 @@ import {
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  createDefaultMultipleChoiceItems,
-  type MultipleChoiceItem,
-  type MultipleChoiceParagraph,
+  createDefaultScaleTypeItems,
+  type ScaleTypeItem,
+  type ScaleTypeParagraph,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ItemAddButton } from '@/features/template/ui/paragraph/shared/item-add-button'
@@ -21,24 +21,25 @@ import { ItemDeleteButton } from '@/features/template/ui/paragraph/shared/item-d
 import { CmsInput } from '@/shared/ui/cms-input'
 import './form-editor.css'
 
-function prunePreviewIds(
-  paragraph: MultipleChoiceParagraph,
+function pruneSelectedAfterRemove(
+  paragraph: ScaleTypeParagraph,
   removedId: string
-): Pick<MultipleChoiceParagraph, 'selectedPreviewSingleId' | 'selectedPreviewMultipleIds'> {
-  const single =
-    paragraph.selectedPreviewSingleId === removedId ? null : paragraph.selectedPreviewSingleId
-  const multi = (paragraph.selectedPreviewMultipleIds ?? []).filter(id => id !== removedId)
-  return { selectedPreviewSingleId: single, selectedPreviewMultipleIds: multi }
+): Pick<ScaleTypeParagraph, 'selectedPreviewItemId'> {
+  const sel = paragraph.selectedPreviewItemId
+  if (sel !== removedId) return { selectedPreviewItemId: sel }
+  const list = paragraph.items?.length ? paragraph.items : createDefaultScaleTypeItems()
+  const remaining = list.filter(i => i.id !== removedId)
+  return { selectedPreviewItemId: remaining[0]?.id ?? null }
 }
 
-function SortableMcRow({
+function SortableScaleRow({
   item,
   index,
   showDelete,
   onLabelChange,
   onRemove,
 }: {
-  item: MultipleChoiceItem
+  item: ScaleTypeItem
   index: number
   showDelete: boolean
   onLabelChange: (id: string, label: string) => void
@@ -89,22 +90,22 @@ function SortableMcRow({
   )
 }
 
-export function FormEditorMultipleChoiceItems({
+export function FormEditorScaleTypeItems({
   paragraph,
   updateParagraph,
 }: {
-  paragraph: MultipleChoiceParagraph
+  paragraph: ScaleTypeParagraph
   updateParagraph: (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => void
 }) {
-  const items = paragraph.items?.length ? paragraph.items : createDefaultMultipleChoiceItems()
+  const items = paragraph.items?.length ? paragraph.items : createDefaultScaleTypeItems()
   const showDelete = items.length > 2
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     if (over == null || active.id === over.id) return
     updateParagraph(paragraph.id, cur => {
-      if (cur.kind !== 'single_item' || cur.variant !== 'multiple_choice') return cur
-      const list = cur.items?.length ? cur.items : createDefaultMultipleChoiceItems()
+      if (cur.kind !== 'single_item' || cur.variant !== 'scale_type') return cur
+      const list = cur.items?.length ? cur.items : createDefaultScaleTypeItems()
       const oldIndex = list.findIndex(i => i.id === String(active.id))
       const newIndex = list.findIndex(i => i.id === String(over.id))
       if (oldIndex < 0 || newIndex < 0) return cur
@@ -114,8 +115,8 @@ export function FormEditorMultipleChoiceItems({
 
   const setLabel = (id: string, label: string) => {
     updateParagraph(paragraph.id, cur => {
-      if (cur.kind !== 'single_item' || cur.variant !== 'multiple_choice') return cur
-      const list = cur.items?.length ? cur.items : createDefaultMultipleChoiceItems()
+      if (cur.kind !== 'single_item' || cur.variant !== 'scale_type') return cur
+      const list = cur.items?.length ? cur.items : createDefaultScaleTypeItems()
       return {
         ...cur,
         items: list.map(row => (row.id === id ? { ...row, label } : row)),
@@ -125,23 +126,23 @@ export function FormEditorMultipleChoiceItems({
 
   const removeItem = (id: string) => {
     updateParagraph(paragraph.id, cur => {
-      if (cur.kind !== 'single_item' || cur.variant !== 'multiple_choice') return cur
-      const list = cur.items?.length ? cur.items : createDefaultMultipleChoiceItems()
+      if (cur.kind !== 'single_item' || cur.variant !== 'scale_type') return cur
+      const list = cur.items?.length ? cur.items : createDefaultScaleTypeItems()
       if (list.length <= 2) return cur
       const nextItems = list.filter(row => row.id !== id)
-      return { ...cur, items: nextItems, ...prunePreviewIds(cur, id) }
+      return { ...cur, items: nextItems, ...pruneSelectedAfterRemove(cur, id) }
     })
   }
 
   const addItem = () => {
     updateParagraph(paragraph.id, cur => {
-      if (cur.kind !== 'single_item' || cur.variant !== 'multiple_choice') return cur
-      const list = cur.items?.length ? cur.items : createDefaultMultipleChoiceItems()
+      if (cur.kind !== 'single_item' || cur.variant !== 'scale_type') return cur
+      const list = cur.items?.length ? cur.items : createDefaultScaleTypeItems()
       const nextIndex = list.length + 1
-      const newId = `multiple-choice-item-${Date.now()}`
+      const newId = `scale-type-item-${Date.now()}`
       return {
         ...cur,
-        items: [...list, { id: newId, label: `text ${nextIndex}` }],
+        items: [...list, { id: newId, label: `항목 ${nextIndex}` }],
       }
     })
   }
@@ -153,7 +154,7 @@ export function FormEditorMultipleChoiceItems({
           <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
             <div className="form-editor-mc-items">
               {items.map((item, index) => (
-                <SortableMcRow
+                <SortableScaleRow
                   key={item.id}
                   item={item}
                   index={index}

@@ -1,0 +1,38 @@
+.star-rate-body {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.star-rate-body__star {
+  display: inline-flex;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  line-height: 0;
+  vertical-align: middle;
+}
+
+.star-rate-body__star:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.star-rate-body__star:not(:disabled) {
+  cursor: pointer;
+}
+
+.star-rate-body__star:not(:disabled):focus-visible {
+  outline: 2px solid var(--color-mint-01, #01a1af);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.star-rate-body__star svg {
+  display: block;
+  width: 40px;
+  height: 40px;
+}

@@ -382,8 +382,7 @@ function PinnedFormCard({
         isSelected,
         editorKind,
         singleItemListActiveItemId,
-        (paragraph.variant === 'short_essay' || paragraph.variant === 'multiple_choice') &&
-          onSelectSingleItemListItem
+        paragraph.variant === 'short_essay' && onSelectSingleItemListItem
           ? itemId => onSelectSingleItemListItem(paragraph.id, itemId)
           : undefined
       )}
@@ -478,8 +477,7 @@ function SortableMiddleFormCard({
           isSelected,
           editorKind,
           singleItemListActiveItemId,
-          (paragraph.variant === 'short_essay' || paragraph.variant === 'multiple_choice') &&
-            onSelectSingleItemListItem
+          paragraph.variant === 'short_essay' && onSelectSingleItemListItem
             ? itemId => onSelectSingleItemListItem(paragraph.id, itemId)
             : undefined
         )}

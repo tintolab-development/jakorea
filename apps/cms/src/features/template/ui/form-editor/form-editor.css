@@ -307,6 +307,22 @@
   cursor: grabbing;
 }
 
+.form-editor-mc-item__field-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-editor-mc-item__index {
+  flex-shrink: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
 .form-editor-mc-item__field {
   flex: 1 1 auto;
   min-width: 0;
