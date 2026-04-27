@@ -1,0 +1,240 @@
+/* 테이블 세로형(텍스트형) — 작성 양식 직접 등록 */
+.form-editor-vertical-table-wrap {
+  width: 100%;
+  max-width: 1404px;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-editor-vertical-table {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  /* 셀 선택 그림자는 바깥으로 */
+  overflow: visible;
+}
+
+/* 외곽 1px 보더 안쪽에 맞춘 모서리(선택 행은 셀 단위 8px 스트로크로 별도 처리) */
+.form-editor-vertical-table__row:first-child:not(
+    .form-editor-vertical-table__row--selected
+  )
+  .form-editor-vertical-table__stage:first-child
+  .form-editor-vertical-table__th {
+  border-top-left-radius: calc(var(--8, 8px) - 1px);
+}
+
+.form-editor-vertical-table__row:first-child:not(
+    .form-editor-vertical-table__row--selected
+  )
+  .form-editor-vertical-table__stage:last-child
+  .form-editor-vertical-table__td {
+  border-top-right-radius: calc(var(--8, 8px) - 1px);
+}
+
+.form-editor-vertical-table__row:last-child:not(
+    .form-editor-vertical-table__row--selected
+  )
+  .form-editor-vertical-table__stage:first-child
+  .form-editor-vertical-table__th {
+  border-bottom-left-radius: calc(var(--8, 8px) - 1px);
+}
+
+.form-editor-vertical-table__row:last-child:not(
+    .form-editor-vertical-table__row--selected
+  )
+  .form-editor-vertical-table__stage:last-child
+  .form-editor-vertical-table__td {
+  border-bottom-right-radius: calc(var(--8, 8px) - 1px);
+}
+
+.form-editor-vertical-table__row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  align-self: stretch;
+  cursor: pointer;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+}
+
+/* 행 구분은 셀 border-bottom만 사용(행 border-top과 겹치면 선이 두 겹으로 보임) */
+
+/* 행 선택: 스트로크는 각 th·td에만(스펙) — 행 래퍼는 쌓임만 */
+.form-editor-vertical-table__row.form-editor-vertical-table__row--selected {
+  position: relative;
+  z-index: 2;
+  border-color: transparent;
+  box-shadow: none;
+  background: transparent;
+}
+
+.form-editor-vertical-table__stage {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  flex: 1 1 0;
+  min-width: 0;
+  align-self: stretch;
+}
+
+/* 스테이지 우측 선은 마지막 td의 border-right로만 그림(stage+td 이중 방지) */
+
+/* th 텍스트 스펙 */
+.form-editor-vertical-table__th {
+  display: flex;
+  width: 200px;
+  min-width: 180px;
+  min-height: 54px;
+  padding: 12px 20px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-right: 1px solid var(--table-header-line, #ddd);
+  border-bottom: 1px solid var(--table-header-line, #ddd);
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
+  cursor: inherit;
+  color: var(--gray-85969-d, #85969d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+/* td 텍스트 스펙 · 좌측 정렬 */
+.form-editor-vertical-table__td {
+  display: flex;
+  min-width: 100px;
+  min-height: 54px;
+  padding: 12px 16px;
+  align-items: center;
+  gap: 16px;
+  flex: 1 0 0;
+  align-self: stretch;
+  box-sizing: border-box;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  cursor: inherit;
+  color: var(--gray-85969-d, #85969d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: left;
+}
+
+/* 테이블 외곽선과 겹쳐 이중으로 보이지 않게 */
+.form-editor-vertical-table__row:last-child .form-editor-vertical-table__th,
+.form-editor-vertical-table__row:last-child .form-editor-vertical-table__td {
+  border-bottom: none;
+}
+
+.form-editor-vertical-table__stage:last-child .form-editor-vertical-table__td {
+  border-right: none;
+}
+
+/* 행 선택 시 th·td 활성 스트로크(그리드 보더 제거 규칙 이후에 두어 마지막 행·열에서도 유지) */
+.form-editor-vertical-table__row--selected .form-editor-vertical-table__th,
+.form-editor-vertical-table__row--selected .form-editor-vertical-table__td {
+  position: relative;
+  z-index: 1;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--color-mint-01, #01a1af);
+  background: var(--main-WT, #fff);
+  box-shadow: 0 4px 24px 0 rgba(0, 89, 97, 0.2);
+}
+
+.form-editor-vertical-table__cell-input-shell {
+  width: 100%;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.form-editor-vertical-table__cell-input-shell--header {
+  justify-content: center;
+  text-align: center;
+}
+
+.form-editor-vertical-table__cell-input-shell--body {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.form-editor-vertical-table__cell-input-shell--header .ant-input {
+  text-align: center;
+  color: var(--gray-85969-d, #85969d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.form-editor-vertical-table__cell-input-shell--header .ant-input::placeholder {
+  color: var(--gray-85969-d, #85969d);
+  text-align: center;
+}
+
+.form-editor-vertical-table__cell-input-shell--body .ant-input {
+  text-align: left;
+  color: var(--gray-85969-d, #85969d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.form-editor-vertical-table__cell-input-shell--body .ant-input::placeholder {
+  color: var(--gray-85969-d, #85969d);
+  text-align: left;
+}
+
+.form-editor-vertical-table__cell-text {
+  width: 100%;
+  word-break: break-word;
+}
+
+.form-editor-vertical-table__cell-text--header {
+  color: var(--gray-85969-d, #85969d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.form-editor-vertical-table__cell-text--body {
+  color: var(--gray-85969-d, #85969d);
+  text-align: left;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.form-editor-vertical-table__cell-text--placeholder {
+  color: var(--gray-85969-d, #85969d);
+}
+
+.form-editor-vertical-table__bottom {
+  width: 100%;
+}
+
+.form-editor-vertical-table__bottom-input {
+  width: 100%;
+}

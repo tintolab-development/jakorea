@@ -1,5 +1,6 @@
 import {
   normalizeHorizontalTableParagraph,
+  normalizeVerticalTableParagraph,
   type FormEditorKind,
   type HorizontalTableRowSelection,
   type WritingFormParagraph,
@@ -11,6 +12,7 @@ import { AgreementPrivacyRowsBody } from '@/features/template/ui/paragraph/singl
 import { AgreementRichTextBody } from '@/features/template/ui/paragraph/single-item/agreement-rich-text-paragraph-body'
 import { AgreementTableConsentBody } from '@/features/template/ui/paragraph/single-item/agreement-table-consent-paragraph-body'
 import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/single-item/horizontal-table-paragraph-body'
+import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/single-item/vertical-table-paragraph-body'
 import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
 import { SubjectiveParagraphBody } from '@/features/template/ui/paragraph/single-item/subjective-paragraph-body'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
@@ -23,6 +25,9 @@ export type FormUpdateParagraph = (
 export type RenderFormParagraphBodyOptions = {
   horizontalTableRowSelection?: HorizontalTableRowSelection | null
   onHorizontalTableRowSelectionChange?: (next: HorizontalTableRowSelection | null) => void
+  /** 세로형 테이블 본문 행 선택(캔버스) — 폼 에디터에서 단일 전역 */
+  verticalTableRowSelection?: number | null
+  onVerticalTableRowSelectionChange?: (row: number | null) => void
 }
 
 export function renderFormParagraphBody(
@@ -106,6 +111,20 @@ export function renderFormParagraphBody(
           isEditMode={isEditMode}
           tableRowSelection={options?.horizontalTableRowSelection}
           onTableRowSelectionChange={options?.onHorizontalTableRowSelectionChange}
+        />
+      )
+    }
+    case 'vertical_table': {
+      const vp = normalizeVerticalTableParagraph(
+        p as Extract<WritingFormParagraph, { variant: 'vertical_table' }>
+      )
+      return (
+        <VerticalTableParagraphBody
+          paragraph={vp}
+          onChange={next => updateParagraph(p.id, () => normalizeVerticalTableParagraph(next))}
+          isEditMode={isParagraphSelected}
+          tableRowSelection={options?.verticalTableRowSelection}
+          onTableRowSelectionChange={options?.onVerticalTableRowSelectionChange}
         />
       )
     }

@@ -947,6 +947,25 @@
   overflow: visible;
 }
 
+/* 테이블 외곽 radius와 그리드 스트로크 정합(모서리에서 선이 잘리지 않도록) */
+.form-editor-horizontal-table__row--header .form-editor-horizontal-table__th:first-child {
+  border-top-left-radius: calc(var(--8, 8px) - 1px);
+}
+
+.form-editor-horizontal-table__row--header .form-editor-horizontal-table__th:last-child {
+  border-top-right-radius: calc(var(--8, 8px) - 1px);
+}
+
+.form-editor-horizontal-table__row:not(.form-editor-horizontal-table__row--header):last-child
+  .form-editor-horizontal-table__td:first-child {
+  border-bottom-left-radius: calc(var(--8, 8px) - 1px);
+}
+
+.form-editor-horizontal-table__row:not(.form-editor-horizontal-table__row--header):last-child
+  .form-editor-horizontal-table__td:last-child {
+  border-bottom-right-radius: calc(var(--8, 8px) - 1px);
+}
+
 .form-editor-horizontal-table__row {
   display: flex;
   flex-direction: row;

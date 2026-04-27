@@ -4,6 +4,7 @@ import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import {
   cloneHorizontalTableParagraph,
+  cloneVerticalTableParagraph,
   createDefaultHorizontalTableDraft,
   createHorizontalTableParagraph,
   DEFAULT_HORIZONTAL_TABLE_PARAGRAPH_IDS,
@@ -13,7 +14,9 @@ import {
   type HorizontalTableRowSelection,
   horizontalTableSetFlavor,
   normalizeHorizontalTableParagraph,
-  paragraphsAreOnlyHorizontalTables,
+  normalizeVerticalTableParagraph,
+  paragraphsAreOnlyTableLayoutParagraphs,
+  type VerticalTableParagraph,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -44,7 +47,13 @@ function stripTrailingClosingAfterHorizontalTablesOnly(paragraphs: WritingFormPa
   const last = paragraphs[paragraphs.length - 1]
   if (last?.kind !== 'description' || last.variant !== 'closing') return paragraphs
   const rest = paragraphs.slice(0, -1)
-  if (rest.every(p => p.kind === 'single_item' && p.variant === 'horizontal_table')) {
+  if (
+    rest.every(
+      p =>
+        p.kind === 'single_item' &&
+        (p.variant === 'horizontal_table' || p.variant === 'vertical_table')
+    )
+  ) {
     return rest
   }
   return paragraphs
@@ -56,6 +65,9 @@ function normalizeHorizontalTableDraft(d: WritingFormDraft): WritingFormDraft {
   paragraphs = paragraphs.map(p => {
     if (p.kind === 'single_item' && p.variant === 'horizontal_table') {
       return normalizeHorizontalTableParagraph(p)
+    }
+    if (p.kind === 'single_item' && p.variant === 'vertical_table') {
+      return normalizeVerticalTableParagraph(p)
     }
     return p
   })
@@ -121,6 +133,10 @@ export function HorizontalTableFormEditor({
   )
   const [horizontalTableRowSelectionsByParagraphId, setHorizontalTableRowSelectionsByParagraphId] =
     useState<Record<string, HorizontalTableRowSelection | null>>({})
+  const [verticalTableBodyRowSelection, setVerticalTableBodyRowSelection] = useState<{
+    paragraphId: string
+    row: number
+  } | null>(null)
   const previousActiveParagraphIdRef = useRef<string | null>(activeParagraphId)
 
   const onHorizontalTableRowSelectionChange = useCallback(
@@ -131,11 +147,21 @@ export function HorizontalTableFormEditor({
           const { [paragraphId]: _, ...rest } = prev
           return rest
         }
-        return { ...prev, [paragraphId]: next }
+        return { [paragraphId]: next }
       })
+      if (next != null) {
+        setVerticalTableBodyRowSelection(null)
+      }
     },
     []
   )
+
+  const onVerticalTableBodyRowSelectionChange = useCallback((paragraphId: string, row: number | null) => {
+    setVerticalTableBodyRowSelection(row == null ? null : { paragraphId, row })
+    if (row != null) {
+      setHorizontalTableRowSelectionsByParagraphId({})
+    }
+  }, [])
 
   useEffect(() => {
     const ids = new Set(draft.paragraphs.map(p => p.id))
@@ -150,6 +176,7 @@ export function HorizontalTableFormEditor({
       }
       return changed ? next : prev
     })
+    setVerticalTableBodyRowSelection(v => (v != null && !ids.has(v.paragraphId) ? null : v))
   }, [draft.paragraphs])
 
   useEffect(() => {
@@ -163,6 +190,7 @@ export function HorizontalTableFormEditor({
         return rest
       })
     }
+    setVerticalTableBodyRowSelection(null)
   }, [activeParagraphId])
 
   useEffect(() => {
@@ -187,7 +215,7 @@ export function HorizontalTableFormEditor({
     setDraft(prev => {
       const paras = prev.paragraphs
       if (paras.length < 2) return prev
-      if (paragraphsAreOnlyHorizontalTables(paras)) {
+      if (paragraphsAreOnlyTableLayoutParagraphs(paras)) {
         const oldIdx = paras.findIndex(p => p.id === activeId)
         const newIdx = paras.findIndex(p => p.id === overId)
         if (oldIdx === -1 || newIdx === -1) return prev
@@ -237,7 +265,14 @@ export function HorizontalTableFormEditor({
       const idx = prev.paragraphs.findIndex(p => p.id === paragraphId)
       if (idx === -1) return prev
       const p = prev.paragraphs[idx]
-      if (p.kind !== 'single_item' || p.variant !== 'horizontal_table') return prev
+      if (p.kind !== 'single_item') return prev
+      if (p.variant === 'vertical_table') {
+        const clone = cloneVerticalTableParagraph(p as VerticalTableParagraph, newId)
+        const next = [...prev.paragraphs]
+        next.splice(idx + 1, 0, clone)
+        return { ...prev, paragraphs: next }
+      }
+      if (p.variant !== 'horizontal_table') return prev
       const clone = cloneHorizontalTableParagraph(p as HorizontalTableParagraph, newId)
       const next = [...prev.paragraphs]
       next.splice(idx + 1, 0, clone)
@@ -249,10 +284,10 @@ export function HorizontalTableFormEditor({
   const onDeleteMiddleParagraph = useCallback((paragraphId: string) => {
     let nextActiveId: string | null = null
     setDraft(prev => {
-      const onlyTables = paragraphsAreOnlyHorizontalTables(prev.paragraphs)
+      const onlyTables = paragraphsAreOnlyTableLayoutParagraphs(prev.paragraphs)
       const middle = onlyTables ? prev.paragraphs : prev.paragraphs.slice(0, -1)
       if (middle.length <= 1) {
-        message.warning('가로형 테이블 단락은 최소 1개 이상 유지해야 합니다.')
+        message.warning('테이블 단락은 최소 1개 이상 유지해야 합니다.')
         return prev
       }
       if (!middle.some(p => p.id === paragraphId)) {
@@ -292,7 +327,7 @@ export function HorizontalTableFormEditor({
       id: p.id,
       displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
     })
-    if (paragraphsAreOnlyHorizontalTables(ps)) {
+    if (paragraphsAreOnlyTableLayoutParagraphs(ps)) {
       return {
         sortableMiddle: ps.map(line),
         pinnedBottom: null as { id: string; displayLine: string } | null,
@@ -332,6 +367,8 @@ export function HorizontalTableFormEditor({
       layout="three"
       horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
       onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+      verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+      onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
       middleParagraphActions={middleParagraphActions}
     />
   )

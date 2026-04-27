@@ -8,15 +8,18 @@ import {
   createDefaultHorizontalTableDraft,
   HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
   normalizeHorizontalTableParagraph,
+  normalizeVerticalTableParagraph,
   type HorizontalTableColumnField,
   type HorizontalTableFieldCellValue,
   type HorizontalTableParagraph,
+  type VerticalTableParagraph,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 import './form-test-table-components-page.css'
 
 const FORM_TEST_HT_TABLE_TEXT_ID = 'form-test-ht-table-text'
 const FORM_TEST_HT_TABLE_FIELD_ID = 'form-test-ht-table-field'
+const FORM_TEST_VT_TABLE_TEXT_ID = 'form-test-vt-table-text'
 
 const FORM_TEST_FIELD_COLUMN_HEADERS = [
   '주관식형',
@@ -50,6 +53,29 @@ const FORM_TEST_FIELD_FIRST_ROW: HorizontalTableFieldCellValue[] = [
   { kind: 'multiple', values: ['B', 'C'] },
 ]
 
+function buildFormTestVerticalTableParagraph(id: string): VerticalTableParagraph {
+  return normalizeVerticalTableParagraph({
+    id,
+    kind: 'single_item',
+    variant: 'vertical_table',
+    requiredMark: true,
+    paragraphTitle: '테이블_세로형(텍스트형)',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    rows: [
+      { stageCount: 1, headers: [''], cells: [''] },
+      {
+        stageCount: 2,
+        headers: ['', ''],
+        cells: ['', ''],
+      },
+    ],
+    bottomText: '',
+    showBottomText: false,
+    answerRequired: true,
+  })
+}
+
 function buildFormTestFieldTableParagraph(id: string): HorizontalTableParagraph {
   const colCount = FORM_TEST_FIELD_COLUMN_HEADERS.length
   return normalizeHorizontalTableParagraph({
@@ -75,7 +101,7 @@ function buildFormTestFieldTableParagraph(id: string): HorizontalTableParagraph 
       ),
     ],
     bottomText: '',
-    showBottomText: true,
+    showBottomText: false,
     answerRequired: true,
   })
 }
@@ -87,10 +113,11 @@ function createFormTestTableComponentsDraft(): WritingFormDraft {
 
   const tableText: HorizontalTableParagraph = { ...t0, id: FORM_TEST_HT_TABLE_TEXT_ID }
   const tableField = buildFormTestFieldTableParagraph(FORM_TEST_HT_TABLE_FIELD_ID)
+  const tableVertical = buildFormTestVerticalTableParagraph(FORM_TEST_VT_TABLE_TEXT_ID)
 
   return {
     ...base,
-    paragraphs: [tableText, tableField],
+    paragraphs: [tableText, tableField, tableVertical],
   }
 }
 

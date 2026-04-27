@@ -17,16 +17,18 @@ import {
 } from '@/features/template/ui/paragraph/shared/paragraph-actions'
 import { getFormParagraphTitleNumberPrefix } from '@/features/template/lib/form-title-numbering'
 import {
-  paragraphsAreOnlyHorizontalTables,
+  paragraphsAreOnlyTableLayoutParagraphs,
   type AgreementExplanationTextParagraph,
   type FormEditorKind,
   type FormTitleNumberingStyle,
   type HorizontalTableParagraph,
   type HorizontalTableRowSelection,
   type TitleWithPeriodParagraph,
+  type VerticalTableParagraph,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { HorizontalTableDimensionActions } from '@/features/template/ui/paragraph/shared/horizontal-table-dimension-actions'
+import { VerticalTableDimensionActions } from '@/features/template/ui/paragraph/shared/vertical-table-dimension-actions'
 import { renderFormParagraphBody } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import { restrictFormEditorListToVerticalAxis } from '@/features/template/ui/form-editor/dnd-restrict-vertical-axis'
@@ -50,6 +52,9 @@ export interface FormEditorLeftPaneProps {
     paragraphId: string,
     next: HorizontalTableRowSelection | null
   ) => void
+  /** 테이블 세로형: 본문 행 선택(캔버스) — 에디터에서 하나만 유지 */
+  verticalTableBodyRowSelection?: { paragraphId: string; row: number } | null
+  onVerticalTableBodyRowSelectionChange?: (paragraphId: string, row: number | null) => void
   /** 테이블 가로형 중간 단락: 추가·복제·삭제 */
   middleParagraphActions?: {
     onAddAfter: (paragraphId: string) => void
@@ -64,17 +69,38 @@ function renderFormEditorParagraphBody(
   isSelected: boolean,
   editorKind: FormEditorKind,
   rowSelectionsByParagraphId: FormEditorLeftPaneProps['horizontalTableRowSelectionsByParagraphId'],
-  onHorizontalTableRowSelectionChange: FormEditorLeftPaneProps['onHorizontalTableRowSelectionChange']
+  onHorizontalTableRowSelectionChange: FormEditorLeftPaneProps['onHorizontalTableRowSelectionChange'],
+  verticalTableBodyRowSelection: FormEditorLeftPaneProps['verticalTableBodyRowSelection'],
+  onVerticalTableBodyRowSelectionChange: FormEditorLeftPaneProps['onVerticalTableBodyRowSelectionChange']
 ) {
-  const opts =
+  const horizontalOpts =
     rowSelectionsByParagraphId !== undefined && onHorizontalTableRowSelectionChange !== undefined
       ? {
           horizontalTableRowSelection: rowSelectionsByParagraphId[paragraph.id] ?? null,
           onHorizontalTableRowSelectionChange: (next: HorizontalTableRowSelection | null) =>
             onHorizontalTableRowSelectionChange(paragraph.id, next),
         }
-      : undefined
-  return renderFormParagraphBody(paragraph, updateParagraph, isSelected, editorKind, opts)
+      : {}
+  const verticalOpts =
+    verticalTableBodyRowSelection !== undefined && onVerticalTableBodyRowSelectionChange !== undefined
+      ? {
+          verticalTableRowSelection:
+            verticalTableBodyRowSelection != null &&
+            verticalTableBodyRowSelection.paragraphId === paragraph.id
+              ? verticalTableBodyRowSelection.row
+              : null,
+          onVerticalTableRowSelectionChange: (row: number | null) =>
+            onVerticalTableBodyRowSelectionChange(paragraph.id, row),
+        }
+      : {}
+  const opts = { ...horizontalOpts, ...verticalOpts }
+  return renderFormParagraphBody(
+    paragraph,
+    updateParagraph,
+    isSelected,
+    editorKind,
+    Object.keys(opts).length > 0 ? opts : undefined
+  )
 }
 
 function isTitleWithPeriodParagraph(p: WritingFormParagraph): boolean {
@@ -163,7 +189,9 @@ function paragraphEditableHeading(
     const titleRequired =
       p.variant === 'horizontal_table'
         ? (p as HorizontalTableParagraph).answerRequired
-        : p.requiredMark
+        : p.variant === 'vertical_table'
+          ? (p as VerticalTableParagraph).answerRequired
+          : p.requiredMark
     return {
       isEditMode: isSelected,
       titleValue: p.paragraphTitle,
@@ -216,6 +244,37 @@ function modalCardFooterToggles(
           onChange={checked =>
             updateParagraph(ht.id, p =>
               p.kind === 'single_item' && p.variant === 'horizontal_table'
+                ? { ...p, showBottomText: checked }
+                : p
+            )
+          }
+        />
+      </>
+    )
+  }
+
+  if (paragraph.kind === 'single_item' && paragraph.variant === 'vertical_table') {
+    if (!isSelected) return undefined
+    const vt = paragraph as VerticalTableParagraph
+    return (
+      <>
+        <CmsToggle
+          label="답변 필수"
+          checked={vt.answerRequired}
+          onChange={checked =>
+            updateParagraph(vt.id, p =>
+              p.kind === 'single_item' && p.variant === 'vertical_table'
+                ? { ...p, answerRequired: checked }
+                : p
+            )
+          }
+        />
+        <CmsToggle
+          label="하단 설명"
+          checked={vt.showBottomText}
+          onChange={checked =>
+            updateParagraph(vt.id, p =>
+              p.kind === 'single_item' && p.variant === 'vertical_table'
                 ? { ...p, showBottomText: checked }
                 : p
             )
@@ -289,6 +348,26 @@ function modalCardFooterActions(
     )
   }
 
+  if (paragraph.kind === 'single_item' && paragraph.variant === 'vertical_table') {
+    if (!isSelected) return undefined
+    const vt = paragraph as VerticalTableParagraph
+    return (
+      <>
+        <VerticalTableDimensionActions
+          paragraph={vt}
+          onUpdate={next => updateParagraph(vt.id, () => next)}
+        />
+        {middleParagraphActions ? (
+          <FormParagraphCardActions
+            onAdd={() => middleParagraphActions.onAddAfter(vt.id)}
+            onDuplicate={() => middleParagraphActions.onDuplicate(vt.id)}
+            onDelete={() => middleParagraphActions.onDelete(vt.id)}
+          />
+        ) : null}
+      </>
+    )
+  }
+
   if (!isSelected) return undefined
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
     return <FormParagraphCardActionsMinimal />
@@ -312,6 +391,8 @@ interface PinnedCardProps {
   editorKind: FormEditorKind
   horizontalTableRowSelectionsByParagraphId: FormEditorLeftPaneProps['horizontalTableRowSelectionsByParagraphId']
   onHorizontalTableRowSelectionChange: FormEditorLeftPaneProps['onHorizontalTableRowSelectionChange']
+  verticalTableBodyRowSelection: FormEditorLeftPaneProps['verticalTableBodyRowSelection']
+  onVerticalTableBodyRowSelectionChange: FormEditorLeftPaneProps['onVerticalTableBodyRowSelectionChange']
   middleParagraphActions: FormEditorLeftPaneProps['middleParagraphActions']
 }
 
@@ -325,6 +406,8 @@ function PinnedFormCard({
   editorKind,
   horizontalTableRowSelectionsByParagraphId,
   onHorizontalTableRowSelectionChange,
+  verticalTableBodyRowSelection,
+  onVerticalTableBodyRowSelectionChange,
   middleParagraphActions,
 }: PinnedCardProps) {
   const isSelected = selectedCardId === paragraph.id
@@ -353,7 +436,9 @@ function PinnedFormCard({
         isSelected,
         editorKind,
         horizontalTableRowSelectionsByParagraphId,
-        onHorizontalTableRowSelectionChange
+        onHorizontalTableRowSelectionChange,
+        verticalTableBodyRowSelection,
+        onVerticalTableBodyRowSelectionChange
       )}
     </ParagraphCard>
   )
@@ -369,6 +454,8 @@ interface SortableMiddleCardProps {
   editorKind: FormEditorKind
   horizontalTableRowSelectionsByParagraphId: FormEditorLeftPaneProps['horizontalTableRowSelectionsByParagraphId']
   onHorizontalTableRowSelectionChange: FormEditorLeftPaneProps['onHorizontalTableRowSelectionChange']
+  verticalTableBodyRowSelection: FormEditorLeftPaneProps['verticalTableBodyRowSelection']
+  onVerticalTableBodyRowSelectionChange: FormEditorLeftPaneProps['onVerticalTableBodyRowSelectionChange']
   middleParagraphActions: FormEditorLeftPaneProps['middleParagraphActions']
 }
 
@@ -382,6 +469,8 @@ function SortableMiddleFormCard({
   editorKind,
   horizontalTableRowSelectionsByParagraphId,
   onHorizontalTableRowSelectionChange,
+  verticalTableBodyRowSelection,
+  onVerticalTableBodyRowSelectionChange,
   middleParagraphActions,
 }: SortableMiddleCardProps) {
   const {
@@ -441,7 +530,9 @@ function SortableMiddleFormCard({
           isSelected,
           editorKind,
           horizontalTableRowSelectionsByParagraphId,
-          onHorizontalTableRowSelectionChange
+          onHorizontalTableRowSelectionChange,
+          verticalTableBodyRowSelection,
+          onVerticalTableBodyRowSelectionChange
         )}
       </ParagraphCard>
     </div>
@@ -459,6 +550,8 @@ export function FormEditorLeftPane({
   layout = 'five',
   horizontalTableRowSelectionsByParagraphId,
   onHorizontalTableRowSelectionChange,
+  verticalTableBodyRowSelection,
+  onVerticalTableBodyRowSelectionChange,
   middleParagraphActions,
 }: FormEditorLeftPaneProps) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
@@ -469,7 +562,7 @@ export function FormEditorLeftPane({
   }
 
   if (layout === 'three') {
-    if (editorKind === 'horizontal_table' && paragraphsAreOnlyHorizontalTables(paragraphs)) {
+    if (editorKind === 'horizontal_table' && paragraphsAreOnlyTableLayoutParagraphs(paragraphs)) {
       const middle = paragraphs
       const sortableIds = middle.map(p => p.id)
       if (middle.length < 1) return null
@@ -494,6 +587,8 @@ export function FormEditorLeftPane({
                   editorKind={editorKind}
                   horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
                   onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+                  verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+                  onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
                   middleParagraphActions={middleParagraphActions}
                 />
               ))}
@@ -530,6 +625,8 @@ export function FormEditorLeftPane({
                 editorKind={editorKind}
                 horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
                 onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+                verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+                onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
                 middleParagraphActions={middleParagraphActions}
               />
             ))}
@@ -545,6 +642,8 @@ export function FormEditorLeftPane({
           editorKind={editorKind}
           horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
           onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+          verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+          onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
           middleParagraphActions={middleParagraphActions}
         />
       </div>
@@ -572,6 +671,8 @@ export function FormEditorLeftPane({
         editorKind={editorKind}
         horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
         onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+        verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+        onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
         middleParagraphActions={middleParagraphActions}
       />
       <DndContext
@@ -593,6 +694,8 @@ export function FormEditorLeftPane({
               editorKind={editorKind}
               horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
               onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+              verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+              onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
               middleParagraphActions={middleParagraphActions}
             />
           ))}
@@ -608,6 +711,8 @@ export function FormEditorLeftPane({
         editorKind={editorKind}
         horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
         onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+        verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+        onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
         middleParagraphActions={middleParagraphActions}
       />
     </div>

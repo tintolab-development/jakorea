@@ -224,6 +224,21 @@ export interface HorizontalTableParagraph extends WritingFormParagraphBase {
   answerRequired: boolean
 }
 
+/** 세로형 테이블 한 행: 1단(항목·입력 1쌍) 또는 2단(같은 행에 두 쌍, 폭 분배) */
+export type VerticalTableRow =
+  | { stageCount: 1; headers: [string]; cells: [string] }
+  | { stageCount: 2; headers: [string, string]; cells: [string, string] }
+
+/** 작성 양식 — 테이블 세로형(텍스트형만) */
+export interface VerticalTableParagraph extends WritingFormParagraphBase {
+  kind: 'single_item'
+  variant: 'vertical_table'
+  rows: VerticalTableRow[]
+  bottomText: string
+  showBottomText: boolean
+  answerRequired: boolean
+}
+
 function repairColumnField(f: HorizontalTableColumnField | undefined, _idx: number): HorizontalTableColumnField {
   if (f == null) return defaultColumnFieldForNewColumn()
   if (f.kind === 'dropdown' && (!f.options || f.options.length === 0)) {
@@ -476,6 +491,8 @@ export function normalizeHorizontalTableParagraph(p: HorizontalTableParagraph): 
       dataRows,
       columnFields: p.columnFields ?? [],
       fieldDataRows: p.fieldDataRows ?? [],
+      bottomText: p.bottomText ?? '',
+      showBottomText: Boolean(p.showBottomText),
     }
   }
   const fieldCols = ensureColumnFieldSlice({ ...p, columnHeaders: headers, dataRows, tableFlavor: 'field' } as HorizontalTableParagraph, colCount)
@@ -491,6 +508,8 @@ export function normalizeHorizontalTableParagraph(p: HorizontalTableParagraph): 
     dataRows,
     columnFields: fieldCols,
     fieldDataRows,
+    bottomText: p.bottomText ?? '',
+    showBottomText: Boolean(p.showBottomText),
   }
 }
 
@@ -578,6 +597,93 @@ export function horizontalTableSetFieldCellValue(
   return { ...n, columnFields: fieldCols, fieldDataRows: base }
 }
 
+function defaultVerticalTableRowSingle(): VerticalTableRow {
+  return { stageCount: 1, headers: [''], cells: [''] }
+}
+
+function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
+  if (raw != null && typeof raw === 'object' && 'stageCount' in raw) {
+    const sc = (raw as { stageCount?: number }).stageCount
+    if (sc === 2) {
+      const h = (raw as { headers?: string[] }).headers ?? []
+      const c = (raw as { cells?: string[] }).cells ?? []
+      return {
+        stageCount: 2,
+        headers: [h[0] ?? '', h[1] ?? ''],
+        cells: [c[0] ?? '', c[1] ?? ''],
+      }
+    }
+  }
+  const h =
+    raw != null && typeof raw === 'object' && 'headers' in raw
+      ? (raw as { headers?: string[] }).headers
+      : undefined
+  const c =
+    raw != null && typeof raw === 'object' && 'cells' in raw ? (raw as { cells?: string[] }).cells : undefined
+  return {
+    stageCount: 1,
+    headers: [h?.[0] ?? ''],
+    cells: [c?.[0] ?? ''],
+  }
+}
+
+export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): VerticalTableParagraph {
+  const rowsIn = p.rows ?? []
+  let rows = rowsIn.map(normalizeVerticalTableRow)
+  if (rows.length === 0) {
+    rows = [defaultVerticalTableRowSingle()]
+  }
+  return {
+    ...p,
+    variant: 'vertical_table',
+    rows,
+    bottomText: p.bottomText ?? '',
+    showBottomText: Boolean(p.showBottomText),
+    answerRequired: p.answerRequired !== false,
+  }
+}
+
+export function createVerticalTableParagraph(id: string): VerticalTableParagraph {
+  return normalizeVerticalTableParagraph({
+    id,
+    kind: 'single_item',
+    variant: 'vertical_table',
+    requiredMark: true,
+    paragraphTitle: '테이블_세로형(텍스트형)',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    rows: [defaultVerticalTableRowSingle()],
+    bottomText: '',
+    showBottomText: false,
+    answerRequired: true,
+  })
+}
+
+export function cloneVerticalTableParagraph(source: VerticalTableParagraph, newId: string): VerticalTableParagraph {
+  const n = normalizeVerticalTableParagraph(source)
+  return {
+    ...n,
+    id: newId,
+    rows: n.rows.map(r =>
+      r.stageCount === 2
+        ? {
+            stageCount: 2,
+            headers: [...r.headers] as [string, string],
+            cells: [...r.cells] as [string, string],
+          }
+        : { stageCount: 1, headers: [...r.headers] as [string], cells: [...r.cells] as [string] }
+    ),
+  }
+}
+
+export function verticalTableAddRow(p: VerticalTableParagraph): VerticalTableParagraph {
+  const n = normalizeVerticalTableParagraph(p)
+  return {
+    ...n,
+    rows: [...n.rows, defaultVerticalTableRowSingle()],
+  }
+}
+
 export type WritingFormParagraph =
   | TitleWithPeriodParagraph
   | UserProfileParagraph
@@ -588,6 +694,7 @@ export type WritingFormParagraph =
   | AgreementPrivacyRowsParagraph
   | AgreementTableConsentParagraph
   | HorizontalTableParagraph
+  | VerticalTableParagraph
   | ClosingParagraph
 
 export interface WritingFormDraft {
@@ -625,6 +732,17 @@ export function paragraphsAreOnlyHorizontalTables(paragraphs: WritingFormParagra
     paragraphs.length > 0 &&
     paragraphs.every(p => p.kind === 'single_item' && p.variant === 'horizontal_table')
   )
+}
+
+/** 직접 등록 테이블 레이아웃(가로형·세로형) 단락만 — 혼합 초안에서 DnD·네비 풀 너비 처리 */
+export function isTableLayoutParagraph(p: WritingFormParagraph): boolean {
+  return (
+    p.kind === 'single_item' && (p.variant === 'horizontal_table' || p.variant === 'vertical_table')
+  )
+}
+
+export function paragraphsAreOnlyTableLayoutParagraphs(paragraphs: WritingFormParagraph[]): boolean {
+  return paragraphs.length > 0 && paragraphs.every(isTableLayoutParagraph)
 }
 
 /** 직접 등록 — 신규 동의 양식 기본 단락 id */
@@ -850,6 +968,10 @@ export function writingOutlineLabel(p: WritingFormParagraph): string {
   if (p.kind === 'single_item' && p.variant === 'horizontal_table') {
     const t = p.paragraphTitle.trim()
     return t || '테이블_가로형'
+  }
+  if (p.kind === 'single_item' && p.variant === 'vertical_table') {
+    const t = p.paragraphTitle.trim()
+    return t || '테이블_세로형(텍스트형)'
   }
   const t = p.paragraphTitle.trim()
   return t || '타이틀을 입력해 주세요'

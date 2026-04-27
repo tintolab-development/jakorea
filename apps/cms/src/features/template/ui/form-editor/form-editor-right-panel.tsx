@@ -31,6 +31,9 @@ function paragraphKindLabel(p: WritingFormParagraph): string {
     const t = p as HorizontalTableParagraph
     return t.tableFlavor === 'field' ? '테이블_가로형 (필드 형)' : '테이블_가로형'
   }
+  if (p.kind === 'single_item' && p.variant === 'vertical_table') {
+    return '테이블_세로형(텍스트형)'
+  }
   return '단일항목'
 }
 
@@ -38,6 +41,9 @@ function paragraphVariantLabel(p: WritingFormParagraph): string {
   if (p.kind === 'single_item' && p.variant === 'horizontal_table') {
     const t = p as HorizontalTableParagraph
     return t.tableFlavor === 'field' ? '테이블_가로형 (필드 형)' : '테이블_가로형'
+  }
+  if (p.kind === 'single_item' && p.variant === 'vertical_table') {
+    return '테이블_세로형(텍스트형)'
   }
   switch (p.variant) {
     case 'survey_title_with_period':
@@ -123,7 +129,8 @@ export function FormEditorRightPanel({
             <span className="form-editor-right-panel__section-title">{outline}</span>
             <Form.Item>
               <div className="form-editor-right-panel__kind-row">
-                {active.kind === 'single_item' && active.variant === 'horizontal_table' ? (
+                {active.kind === 'single_item' &&
+                (active.variant === 'horizontal_table' || active.variant === 'vertical_table') ? (
                   <CmsSelect
                     width="100%"
                     value={paragraphVariantLabel(active)}
