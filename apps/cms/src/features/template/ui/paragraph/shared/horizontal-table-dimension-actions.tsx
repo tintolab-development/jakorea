@@ -9,9 +9,12 @@ import {
 export function HorizontalTableDimensionActions({
   paragraph,
   onUpdate,
+  disabled = false,
 }: {
   paragraph: HorizontalTableParagraph
   onUpdate: (next: HorizontalTableParagraph) => void
+  /** 카드 비선택 시 레이아웃 유지용(버튼만 비활성) */
+  disabled?: boolean
 }) {
   return (
     <div
@@ -27,6 +30,7 @@ export function HorizontalTableDimensionActions({
         type="button"
         size="large"
         icon={<FormEditorPlusIcon />}
+        disabled={disabled}
         title="테이블 최하단에 가로 한 줄(행)을 추가합니다."
         onClick={() => onUpdate(horizontalTableAddRow(paragraph))}
       >
@@ -38,6 +42,7 @@ export function HorizontalTableDimensionActions({
         type="button"
         size="large"
         icon={<FormEditorPlusIcon />}
+        disabled={disabled}
         title="테이블 가장 오른쪽에 세로 한 줄(열)을 추가합니다."
         onClick={() => onUpdate(horizontalTableAddColumn(paragraph))}
       >
