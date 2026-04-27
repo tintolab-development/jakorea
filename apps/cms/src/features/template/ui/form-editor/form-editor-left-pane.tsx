@@ -78,7 +78,8 @@ function renderFormEditorParagraphBody(
             onHorizontalTableRowSelectionChange(paragraph.id, next),
     singleItemListActiveItemId,
     onSelectSingleItemListItem:
-      paragraph.variant === 'short_essay' && onSelectSingleItemListItem
+      (paragraph.variant === 'short_essay' || paragraph.variant === 'multiple_choice') &&
+      onSelectSingleItemListItem
         ? (itemId: string | null) => onSelectSingleItemListItem(paragraph.id, itemId)
         : undefined,
   })

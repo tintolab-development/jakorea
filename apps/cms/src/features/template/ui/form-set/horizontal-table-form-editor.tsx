@@ -121,7 +121,13 @@ export function HorizontalTableFormEditor({
   )
   const [horizontalTableRowSelectionsByParagraphId, setHorizontalTableRowSelectionsByParagraphId] =
     useState<Record<string, HorizontalTableRowSelection | null>>({})
+  const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
   const previousActiveParagraphIdRef = useRef<string | null>(activeParagraphId)
+
+  const handleSelectParagraph = useCallback((id: string) => {
+    setActiveParagraphId(id)
+    setSingleItemListActiveItemId(null)
+  }, [])
 
   const onHorizontalTableRowSelectionChange = useCallback(
     (paragraphId: string, next: HorizontalTableRowSelection | null) => {
@@ -325,7 +331,7 @@ export function HorizontalTableFormEditor({
       paragraphs={draft.paragraphs}
       titleNumbering={draft.formSettings.titleNumbering}
       selectedCardId={activeParagraphId}
-      onSelectCard={setActiveParagraphId}
+      onSelectCard={handleSelectParagraph}
       onReorderMiddle={onReorderMiddle}
       updateParagraph={updateParagraph}
       editorKind="horizontal_table"
@@ -333,6 +339,11 @@ export function HorizontalTableFormEditor({
       horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
       onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
       middleParagraphActions={middleParagraphActions}
+      singleItemListActiveItemId={singleItemListActiveItemId}
+      onSelectSingleItemListItem={(paragraphId, itemId) => {
+        setActiveParagraphId(paragraphId)
+        setSingleItemListActiveItemId(itemId)
+      }}
     />
   )
 
@@ -342,7 +353,7 @@ export function HorizontalTableFormEditor({
       sortableMiddle={sortableMiddle}
       pinnedBottom={pinnedBottom}
       selectedItemId={activeParagraphId}
-      onSelectItem={setActiveParagraphId}
+      onSelectItem={handleSelectParagraph}
       onReorderMiddle={onReorderMiddle}
       fieldListBottomSlot={
         <FormEditorTitleNumberingField
@@ -358,6 +369,7 @@ export function HorizontalTableFormEditor({
         updateParagraph={updateParagraph}
         editorKind="horizontal_table"
         showTitleNumbering={false}
+        singleItemListActiveItemId={singleItemListActiveItemId}
         horizontalTableRowSelection={
           activeParagraphId != null
             ? (horizontalTableRowSelectionsByParagraphId[activeParagraphId] ?? null)

@@ -154,6 +154,9 @@ export type MultipleChoiceParagraph = WritingFormParagraphBase & {
   selectedPreviewMultipleIds?: string[]
 }
 
+/** 에디터 전용: 객관식 항목 영역 포커스(우측「항목 수정」·바디 선택 테두리). 실제 항목 id와 겹치지 않게 둠 */
+export const FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID = '__form_editor_multiple_choice_items__' as const
+
 /** 객관식형 기본 항목 4개 (스펙: 신규 시 한 세트) */
 export function createDefaultMultipleChoiceItems(): MultipleChoiceItem[] {
   return [

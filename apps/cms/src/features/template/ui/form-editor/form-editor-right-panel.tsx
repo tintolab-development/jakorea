@@ -18,7 +18,10 @@ import type {
   WritingFormDraft,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { writingOutlineLabel } from '@/features/template/model/writing-form-draft.schema'
+import {
+  FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID,
+  writingOutlineLabel,
+} from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorHorizontalTableBodyFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-body-fields'
 import { FormEditorHorizontalTableHeaderFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-header-fields'
 import './form-editor.css'
@@ -439,10 +442,13 @@ export function FormEditorRightPanel({
                     disabled
                   />
                 </Form.Item>
-                <FormEditorMultipleChoiceItems
-                  paragraph={activeMultipleChoice}
-                  updateParagraph={updateParagraph}
-                />
+                {singleItemListActiveItemId === FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID ||
+                singleItemListActiveItemId === undefined ? (
+                  <FormEditorMultipleChoiceItems
+                    paragraph={activeMultipleChoice}
+                    updateParagraph={updateParagraph}
+                  />
+                ) : null}
               </>
             ) : null}
 

@@ -1,4 +1,5 @@
 import {
+  FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID,
   normalizeHorizontalTableParagraph,
   type FormEditorKind,
   type HorizontalTableRowSelection,
@@ -137,14 +138,26 @@ export function renderFormParagraphBody(
           onSelectItem={options?.onSelectSingleItemListItem}
         />
       )
-    case 'multiple_choice':
+    case 'multiple_choice': {
+      const usesMcItemsFocus = options?.onSelectSingleItemListItem != null
+      const itemsEditActive = usesMcItemsFocus
+        ? isParagraphSelected &&
+          options?.singleItemListActiveItemId === FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID
+        : isParagraphSelected
       return (
         <MultipleChoice
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isParagraphSelected}
+          itemsEditActive={itemsEditActive}
+          onActivateItemsEditor={
+            usesMcItemsFocus
+              ? () => options!.onSelectSingleItemListItem!(FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID)
+              : undefined
+          }
         />
       )
+    }
     case 'dropdown':
       return (
         <Dropdown

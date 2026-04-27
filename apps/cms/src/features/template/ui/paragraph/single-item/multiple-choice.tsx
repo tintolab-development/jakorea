@@ -1,3 +1,4 @@
+import type { MouseEvent as ReactMouseEvent } from 'react'
 import type { MultipleChoiceParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { createDefaultMultipleChoiceItems } from '@/features/template/model/writing-form-draft.schema'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -21,11 +22,18 @@ function mergeParagraph(
 export function MultipleChoice({
   paragraph,
   onChange,
-  isEditMode,
+  isEditMode: _isEditMode,
+  itemsEditActive,
+  onActivateItemsEditor,
 }: {
   paragraph: MultipleChoiceParagraph
   onChange: (next: MultipleChoiceParagraph) => void
+  /** 단락 카드 선택 여부(미리보기 조작·추후 readOnly 연동용) */
   isEditMode: boolean
+  /** 항목 영역(라디오/체크박스 바디) 포커스 — 단락 카드만 선택된 상태와 구분 */
+  itemsEditActive: boolean
+  /** 항목 영역 클릭 시 우측「항목 수정」·선택 테두리 연동 */
+  onActivateItemsEditor?: () => void
 }) {
   const items = normalizeItems(paragraph)
   const allowMultiple = paragraph.allowMultiple ?? false
@@ -38,10 +46,16 @@ export function MultipleChoice({
 
   const bodyClass = [
     'multiple-choice-body',
-    isEditMode ? 'multiple-choice-body--selected' : '',
+    itemsEditActive ? 'multiple-choice-body--selected' : '',
   ]
     .filter(Boolean)
     .join(' ')
+
+  const handleBodyClick = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!onActivateItemsEditor) return
+    event.stopPropagation()
+    onActivateItemsEditor()
+  }
 
   if (allowMultiple) {
     const toggleMulti = (id: string, checked: boolean) => {
@@ -52,7 +66,7 @@ export function MultipleChoice({
     }
 
     return (
-      <div role="presentation" className={bodyClass}>
+      <div role="presentation" className={bodyClass} onClick={handleBodyClick}>
         {items.map(item => (
           <div key={item.id} role="presentation" className="multiple-choice-row">
             <CmsCheckbox
@@ -67,7 +81,7 @@ export function MultipleChoice({
   }
 
   return (
-    <div role="presentation" className={bodyClass}>
+    <div role="presentation" className={bodyClass} onClick={handleBodyClick}>
       <CmsRadioGroup
         className="multiple-choice-radio-group"
         value={singleId ?? undefined}
