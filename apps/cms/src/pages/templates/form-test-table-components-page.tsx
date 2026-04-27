@@ -1,22 +1,23 @@
 /**
- * 양식 테스트 > 테이블 컴포넌트 모음(가로형·세로형)
+ * 양식 테스트 > 테이블 컴포넌트(가로형)
  * — 폼/목록에 쓰는 테이블 UI를 한곳에 배치·검토하는 용도
  */
 
-import { Typography } from 'antd'
-import { TemplateListCard } from '@/features/template/ui/template-list-card'
+import { HorizontalTableFormEditor } from '@/features/template/ui/form-set/horizontal-table-form-editor'
+import './form-test-table-components-page.css'
 
 export function FormTestTableComponentsPage() {
   return (
-    <div className="template-form-tab__content">
-      <TemplateListCard
-        title="테이블 ( 가로형, 세로형 ) 모음"
-        description="템플릿·관리 화면에서 사용하는 테이블 컴포넌트를 이곳에 모아둡니다."
-      >
-        <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-          아래에 공통 Table 컴포넌트를 단계적으로 추가합니다.
-        </Typography.Paragraph>
-      </TemplateListCard>
+    <div className="template-form-tab__content form-test-table-components-page">
+      <section className="form-test-table-components-page__section" aria-labelledby="form-test-horizontal-table-heading">
+        <h2 id="form-test-horizontal-table-heading" className="form-test-table-components-page__section-title">
+          가로형 테이블 (에디터 · 커스텀 필드)
+        </h2>
+        <p className="form-test-table-components-page__section-desc">
+          작성 양식 신규 등록과 동일한 좌측 카드·우측 커스텀 필드 패널로 동작합니다.
+        </p>
+        <HorizontalTableFormEditor variant="embedded" />
+      </section>
     </div>
   )
 }

@@ -19,6 +19,7 @@ import {
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import NewAgreementForm from '@/features/template/ui/form-set/new-agreement-form'
+import NewHorizontalTableForm from '@/features/template/ui/form-set/new-horizontal-table-form'
 import NewSurveyForm from '@/features/template/ui/form-set/new-survey-form'
 
 type TemplateFormTabQuery = {
@@ -92,6 +93,9 @@ export default function TemplateFormTab() {
   }
   if (params.mode === 'new' && params.type === 'agreement') {
     return <NewAgreementForm />
+  }
+  if (params.mode === 'new' && params.type === 'horizontal_table') {
+    return <NewHorizontalTableForm />
   }
 
   return (

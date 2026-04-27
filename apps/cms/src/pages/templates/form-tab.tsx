@@ -22,7 +22,7 @@ export function FormTab() {
           title="양식 테스트"
           description="등록된 작성·발급 양식을 선택해 미리보기 및 입력 테스트를 수행할 수 있습니다."
         >
-            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
             <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
               준비 중입니다.
             </Typography.Paragraph>
