@@ -129,11 +129,7 @@ export function renderFormParagraphBody(
       )
     case 'date_time':
       return (
-        <DateTime
-          paragraph={p}
-          onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
-        />
+        <DateTime paragraph={p} onChange={next => updateParagraph(p.id, () => next)} />
       )
     case 'star_rate':
       return (

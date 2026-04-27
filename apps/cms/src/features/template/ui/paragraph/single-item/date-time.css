@@ -1,0 +1,25 @@
+.date-time-paragraph-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* ParagraphDatePicker 루트(div) — 피커 width(240px)에 맞춤 */
+.date-time-paragraph-body > div {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.date-time-paragraph-body > .cms-datepicker {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.date-time-paragraph-body__range-wrap {
+  flex: 0 0 auto;
+  max-width: 100%;
+}

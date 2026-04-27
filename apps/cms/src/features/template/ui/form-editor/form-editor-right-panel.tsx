@@ -6,6 +6,8 @@ import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type {
+  DateTimeFieldMode,
+  DateTimeParagraph,
   FormEditorKind,
   FormTitleNumberingStyle,
   MultipleChoiceParagraph,
@@ -15,6 +17,12 @@ import type {
 } from '@/features/template/model/writing-form-draft.schema'
 import { writingOutlineLabel } from '@/features/template/model/writing-form-draft.schema'
 import './form-editor.css'
+
+const DATE_TIME_FIELD_MODE_OPTIONS: { value: DateTimeFieldMode; label: string }[] = [
+  { value: 'date', label: '날짜' },
+  { value: 'time', label: '시간' },
+  { value: 'date_time', label: '날짜+시간' },
+]
 
 const TITLE_NUMBERING_OPTIONS: { value: FormTitleNumberingStyle; label: string }[] = [
   { value: 'numeric', label: '1, 2, 3' },
@@ -118,6 +126,10 @@ export function FormEditorRightPanel({
   const activeMultipleChoice =
     active && active.kind === 'single_item' && active.variant === 'multiple_choice'
       ? (active as MultipleChoiceParagraph)
+      : null
+  const activeDateTime =
+    active && active.kind === 'single_item' && active.variant === 'date_time'
+      ? (active as DateTimeParagraph)
       : null
   const shortEssayItems =
     activeShortEssay?.items && activeShortEssay.items.length > 0
@@ -395,6 +407,27 @@ export function FormEditorRightPanel({
                   updateParagraph={updateParagraph}
                 />
               </>
+            ) : null}
+
+            {activeDateTime ? (
+              <Form.Item label="유형">
+                <CmsSelect
+                  width="100%"
+                  value={activeDateTime.fieldMode ?? 'date'}
+                  options={DATE_TIME_FIELD_MODE_OPTIONS}
+                  onChange={v =>
+                    updateParagraph(activeDateTime.id, cur => {
+                      if (cur.kind !== 'single_item' || cur.variant !== 'date_time') return cur
+                      const mode = v as DateTimeFieldMode
+                      return {
+                        ...cur,
+                        fieldMode: mode,
+                        ...(mode === 'time' ? { periodEnabled: false } : {}),
+                      }
+                    })
+                  }
+                />
+              </Form.Item>
             ) : null}
 
             {active.kind === 'description' && active.variant === 'closing' ? (

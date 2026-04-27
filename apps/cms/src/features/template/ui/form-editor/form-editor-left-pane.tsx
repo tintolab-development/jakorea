@@ -17,6 +17,7 @@ import {
 } from '@/features/template/ui/paragraph/shared/paragraph-actions'
 import { getFormParagraphTitleNumberPrefix } from '@/features/template/lib/form-title-numbering'
 import type {
+  DateTimeParagraph,
   FormEditorKind,
   FormTitleNumberingStyle,
   MultipleChoiceParagraph,
@@ -237,6 +238,26 @@ function modalCardFooterToggles(
           }
         />
       )
+    }
+
+    if (paragraph.variant === 'date_time') {
+      const dt = paragraph as DateTimeParagraph
+      const mode = dt.fieldMode ?? 'date'
+      if (mode === 'date' || mode === 'date_time') {
+        toggles.push(
+          <CmsToggle
+            key="date-time-period"
+            label="기간"
+            checked={dt.periodEnabled ?? false}
+            onChange={checked =>
+              updateParagraph(dt.id, p => {
+                if (p.kind !== 'single_item' || p.variant !== 'date_time') return p
+                return { ...p, periodEnabled: checked }
+              })
+            }
+          />
+        )
+      }
     }
 
     return (

@@ -170,10 +170,17 @@ export type DropdownParagraph = WritingFormParagraphBase & {
   answerRequired?: boolean
 }
 
+/** 단일항목 날짜/시간형 — 우측 패널 유형 (기본: 날짜) */
+export type DateTimeFieldMode = 'date' | 'time' | 'date_time'
+
 export type DateTimeParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'date_time'
   answerRequired?: boolean
+  /** 날짜 / 시간 / 날짜+시간 */
+  fieldMode?: DateTimeFieldMode
+  /** 날짜·날짜+시간일 때 기간(시작~종료) */
+  periodEnabled?: boolean
 }
 
 export type StarRateParagraph = WritingFormParagraphBase & {
@@ -497,6 +504,8 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       kind: 'single_item',
       variant: 'date_time',
       answerRequired: true,
+      fieldMode: 'date',
+      periodEnabled: false,
       requiredMark: true,
       paragraphTitle: '날짜/시간형',
       paragraphDescription: '',
