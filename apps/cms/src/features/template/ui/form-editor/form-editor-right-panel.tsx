@@ -6,10 +6,13 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import type {
   FormEditorKind,
   FormTitleNumberingStyle,
+  HorizontalTableRowSelection,
   WritingFormDraft,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { writingOutlineLabel } from '@/features/template/model/writing-form-draft.schema'
+import { FormEditorHorizontalTableBodyFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-body-fields'
+import { FormEditorHorizontalTableHeaderFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-header-fields'
 import './form-editor.css'
 
 const TITLE_NUMBERING_OPTIONS: { value: FormTitleNumberingStyle; label: string }[] = [
@@ -44,6 +47,8 @@ function paragraphVariantLabel(p: WritingFormParagraph): string {
       return '개인정보 수집 항목형'
     case 'agreement_table_consent':
       return '표·동의 선택형'
+    case 'horizontal_table':
+      return '테이블 가로형'
     case 'closing':
       return '마무리글형'
   }
@@ -56,6 +61,10 @@ export interface FormEditorRightPanelProps {
   updateParagraph: (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => void
   editorKind?: FormEditorKind
   showTitleNumbering?: boolean
+  /** 테이블 가로형: 헤더 행 선택 시 우측에 헤더 전용 필드 */
+  horizontalTableRowSelection?: HorizontalTableRowSelection | null
+  /** 테이블 가로형: 데이터 행 삭제 후 캔버스 행 선택 해제 등 */
+  onHorizontalTableBodyRowDeleted?: () => void
 }
 
 export function FormEditorTitleNumberingField({
@@ -86,6 +95,8 @@ export function FormEditorRightPanel({
   updateParagraph,
   editorKind: _editorKind = 'survey',
   showTitleNumbering = true,
+  horizontalTableRowSelection = null,
+  onHorizontalTableBodyRowDeleted,
 }: FormEditorRightPanelProps) {
   const active = draft.paragraphs.find(p => p.id === activeParagraphId) ?? null
   const outline = active ? writingOutlineLabel(active) : ''
@@ -232,6 +243,47 @@ export function FormEditorRightPanel({
                   placeholder="설명을 입력해 주세요"
                 />
               </Form.Item>
+            ) : null}
+
+            {active.kind === 'single_item' && active.variant === 'horizontal_table' ? (
+              <>
+                {horizontalTableRowSelection?.area === 'header' ? (
+                  <FormEditorHorizontalTableHeaderFields
+                    paragraph={active}
+                    paragraphId={active.id}
+                    updateParagraph={updateParagraph}
+                  />
+                ) : horizontalTableRowSelection?.area === 'body' ? (
+                  (() => {
+                    const r = horizontalTableRowSelection.row
+                    const rowCount = Math.max(1, active.dataRows.length)
+                    if (r < 0 || r >= rowCount) return null
+                    return (
+                      <FormEditorHorizontalTableBodyFields
+                        paragraph={active}
+                        paragraphId={active.id}
+                        rowIndex={r}
+                        updateParagraph={updateParagraph}
+                        onBodyRowDeleted={onHorizontalTableBodyRowDeleted}
+                      />
+                    )
+                  })()
+                ) : null}
+                <Form.Item label="하단 텍스트">
+                  <CmsTextArea
+                    width="100%"
+                    value={active.bottomText}
+                    onChange={e =>
+                      updateParagraph(active.id, () => ({
+                        ...active,
+                        bottomText: e.target.value,
+                      }))
+                    }
+                    rows={3}
+                    placeholder="설명을 입력해 주세요"
+                  />
+                </Form.Item>
+              </>
             ) : null}
 
             {active.kind === 'description' && active.variant === 'closing' ? (
