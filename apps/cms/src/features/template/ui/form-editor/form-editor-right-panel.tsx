@@ -8,12 +8,14 @@ import type {
   FormTitleNumberingStyle,
   HorizontalTableParagraph,
   HorizontalTableRowSelection,
+  VerticalTableParagraph,
   WritingFormDraft,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { writingOutlineLabel } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorHorizontalTableBodyFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-body-fields'
 import { FormEditorHorizontalTableHeaderFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-header-fields'
+import { FormEditorVerticalTableRowFields } from '@/features/template/ui/form-editor/form-editor-vertical-table-row-fields'
 import './form-editor.css'
 
 const TITLE_NUMBERING_OPTIONS: { value: FormTitleNumberingStyle; label: string }[] = [
@@ -78,6 +80,10 @@ export interface FormEditorRightPanelProps {
   horizontalTableRowSelection?: HorizontalTableRowSelection | null
   /** 테이블 가로형: 데이터 행 삭제 후 포커스할 행 인덱스(이전 행) */
   onHorizontalTableBodyRowDeleted?: (nextRowIndex: number) => void
+  /** 테이블 세로형: 본문 행 선택 시 해당 행 인덱스 */
+  verticalTableBodyRowSelection?: { paragraphId: string; row: number } | null
+  /** 테이블 세로형: 행 삭제 후 포커스할 행 인덱스(이전 행) */
+  onVerticalTableBodyRowDeleted?: (nextRowIndex: number) => void
 }
 
 export function FormEditorTitleNumberingField({
@@ -101,6 +107,72 @@ export function FormEditorTitleNumberingField({
   )
 }
 
+function FormEditorHorizontalTableCustomFields({
+  paragraph,
+  rowSelection,
+  updateParagraph,
+  onBodyRowDeleted,
+}: {
+  paragraph: HorizontalTableParagraph
+  rowSelection: HorizontalTableRowSelection | null
+  updateParagraph: FormEditorRightPanelProps['updateParagraph']
+  onBodyRowDeleted?: (nextRowIndex: number) => void
+}) {
+  if (rowSelection?.area === 'header') {
+    return (
+      <FormEditorHorizontalTableHeaderFields
+        paragraph={paragraph}
+        paragraphId={paragraph.id}
+        updateParagraph={updateParagraph}
+      />
+    )
+  }
+
+  if (rowSelection?.area !== 'body') return null
+
+  const rowIndex = rowSelection.row
+  const rowCount = Math.max(1, paragraph.dataRows.length)
+  if (rowIndex < 0 || rowIndex >= rowCount) return null
+
+  return (
+    <FormEditorHorizontalTableBodyFields
+      paragraph={paragraph}
+      paragraphId={paragraph.id}
+      rowIndex={rowIndex}
+      updateParagraph={updateParagraph}
+      onBodyRowDeleted={onBodyRowDeleted}
+    />
+  )
+}
+
+function FormEditorVerticalTableCustomFields({
+  paragraph,
+  rowSelection,
+  updateParagraph,
+  onBodyRowDeleted,
+}: {
+  paragraph: VerticalTableParagraph
+  rowSelection: { paragraphId: string; row: number } | null
+  updateParagraph: FormEditorRightPanelProps['updateParagraph']
+  onBodyRowDeleted?: (nextRowIndex: number) => void
+}) {
+  if (rowSelection == null || rowSelection.paragraphId !== paragraph.id) return null
+
+  const rowIndex = rowSelection.row
+  const rowCount = Math.max(1, paragraph.rows.length)
+  if (rowIndex < 0 || rowIndex >= rowCount) return null
+
+  return (
+    <FormEditorVerticalTableRowFields
+      paragraph={paragraph}
+      paragraphId={paragraph.id}
+      rowIndex={rowIndex}
+      updateParagraph={updateParagraph}
+      onBodyRowDeleted={onBodyRowDeleted}
+    />
+  )
+}
+
 export function FormEditorRightPanel({
   draft,
   activeParagraphId,
@@ -110,6 +182,8 @@ export function FormEditorRightPanel({
   showTitleNumbering = true,
   horizontalTableRowSelection = null,
   onHorizontalTableBodyRowDeleted,
+  verticalTableBodyRowSelection = null,
+  onVerticalTableBodyRowDeleted,
 }: FormEditorRightPanelProps) {
   const active = draft.paragraphs.find(p => p.id === activeParagraphId) ?? null
   const outline = active ? writingOutlineLabel(active) : ''
@@ -212,7 +286,8 @@ export function FormEditorRightPanel({
             ) : null}
 
             {active.kind === 'single_item' &&
-            (active.variant === 'agreement_rich_text' || active.variant === 'agreement_explanation_text') ? (
+            (active.variant === 'agreement_rich_text' ||
+              active.variant === 'agreement_explanation_text') ? (
               <>
                 <Form.Item label="본문 placeholder">
                   <CmsInput
@@ -276,30 +351,21 @@ export function FormEditorRightPanel({
             ) : null}
 
             {active.kind === 'single_item' && active.variant === 'horizontal_table' ? (
-              <>
-                {horizontalTableRowSelection?.area === 'header' ? (
-                  <FormEditorHorizontalTableHeaderFields
-                    paragraph={active as HorizontalTableParagraph}
-                    paragraphId={active.id}
-                    updateParagraph={updateParagraph}
-                  />
-                ) : horizontalTableRowSelection?.area === 'body' ? (
-                  (() => {
-                    const r = horizontalTableRowSelection.row
-                    const rowCount = Math.max(1, (active as HorizontalTableParagraph).dataRows.length)
-                    if (r < 0 || r >= rowCount) return null
-                    return (
-                      <FormEditorHorizontalTableBodyFields
-                        paragraph={active as HorizontalTableParagraph}
-                        paragraphId={active.id}
-                        rowIndex={r}
-                        updateParagraph={updateParagraph}
-                        onBodyRowDeleted={onHorizontalTableBodyRowDeleted}
-                      />
-                    )
-                  })()
-                ) : null}
-              </>
+              <FormEditorHorizontalTableCustomFields
+                paragraph={active as HorizontalTableParagraph}
+                rowSelection={horizontalTableRowSelection}
+                updateParagraph={updateParagraph}
+                onBodyRowDeleted={onHorizontalTableBodyRowDeleted}
+              />
+            ) : null}
+
+            {active.kind === 'single_item' && active.variant === 'vertical_table' ? (
+              <FormEditorVerticalTableCustomFields
+                paragraph={active as VerticalTableParagraph}
+                rowSelection={verticalTableBodyRowSelection}
+                updateParagraph={updateParagraph}
+                onBodyRowDeleted={onVerticalTableBodyRowDeleted}
+              />
             ) : null}
 
             {active.kind === 'description' && active.variant === 'closing' ? (

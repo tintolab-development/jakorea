@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Input } from 'antd'
 import type { VerticalTableParagraph, VerticalTableRow } from '@/features/template/model/writing-form-draft.schema'
-import { normalizeVerticalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
+import {
+  normalizeVerticalTableParagraph,
+  verticalTableHeaderPlaceholder,
+} from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
 import '@/features/template/ui/paragraph/single-item/vertical-table-paragraph-body.css'
 
@@ -24,13 +27,6 @@ function isEventFromTableInteractive(target: EventTarget | null) {
       ].join(',')
     ) != null
   )
-}
-
-function verticalHeaderPlaceholder(rowIdx: number, stageIdx: number, stageCount: 1 | 2) {
-  if (stageCount === 1) {
-    return `${rowIdx + 1}. 항목명 입력`
-  }
-  return `${rowIdx + 1}-${stageIdx + 1}. 항목명 입력`
 }
 
 const VERTICAL_TABLE_CELL_PLACEHOLDER = '내용을 입력해 주세요'
@@ -128,7 +124,7 @@ export function VerticalTableParagraphBody({
   const renderStage = (row: VerticalTableRow, rowIdx: number, stageIdx: number) => {
     const header = row.headers[stageIdx] ?? ''
     const cell = row.cells[stageIdx] ?? ''
-    const hPh = verticalHeaderPlaceholder(rowIdx, stageIdx, row.stageCount)
+    const hPh = verticalTableHeaderPlaceholder(rowIdx, stageIdx, row.stageCount)
     const cPh = VERTICAL_TABLE_CELL_PLACEHOLDER
 
     return (
@@ -192,7 +188,7 @@ export function VerticalTableParagraphBody({
       <div className="form-editor-vertical-table" role="grid" aria-readonly={!isEditMode}>
         {p.rows.map((row, rowIdx) => (
           <div
-            key={`vr-${rowIdx}`}
+            key={`vr-${rowIdx}-sc${row.stageCount}`}
             className={[
               'form-editor-vertical-table__row',
               selectedRow === rowIdx ? 'form-editor-vertical-table__row--selected' : '',

@@ -19,7 +19,7 @@
   overflow: visible;
 }
 
-/* 외곽 1px 보더 안쪽에 맞춘 모서리(선택 행은 셀 단위 8px 스트로크로 별도 처리) */
+/* 외곽 1px 보더 안쪽에 맞춘 모서리(선택 행은 행 전체 박스 스트로크로 별도 처리) */
 .form-editor-vertical-table__row:first-child:not(
     .form-editor-vertical-table__row--selected
   )
@@ -52,6 +52,7 @@
   border-bottom-right-radius: calc(var(--8, 8px) - 1px);
 }
 
+/* 행에 투명 border를 두면 행마다 위·아래 1px씩 쌓여 행 사이에 흰 줄이 보임 → 기본은 무테두리 */
 .form-editor-vertical-table__row {
   display: flex;
   flex-direction: row;
@@ -59,18 +60,21 @@
   align-self: stretch;
   cursor: pointer;
   box-sizing: border-box;
-  border: 1px solid transparent;
+  border: none;
 }
 
-/* 행 구분은 셀 border-bottom만 사용(행 border-top과 겹치면 선이 두 겹으로 보임) */
+/* 행 구분은 셀 border-bottom만 사용 */
 
-/* 행 선택: 스트로크는 각 th·td에만(스펙) — 행 래퍼는 쌓임만 */
+/* 행 선택: 스트로크는 box-shadow 링(레이아웃에 칸 안 뜀) + 바깥 포커스 그림자 */
 .form-editor-vertical-table__row.form-editor-vertical-table__row--selected {
   position: relative;
   z-index: 2;
-  border-color: transparent;
-  box-shadow: none;
-  background: transparent;
+  border-radius: var(--8, 8px);
+  background: var(--main-WT, #fff);
+  box-shadow:
+    0 0 0 1px var(--color-mint-01, #01a1af),
+    0 4px 24px 0 rgba(0, 89, 97, 0.2);
+  overflow: hidden;
 }
 
 .form-editor-vertical-table__stage {
@@ -146,17 +150,6 @@
 
 .form-editor-vertical-table__stage:last-child .form-editor-vertical-table__td {
   border-right: none;
-}
-
-/* 행 선택 시 th·td 활성 스트로크(그리드 보더 제거 규칙 이후에 두어 마지막 행·열에서도 유지) */
-.form-editor-vertical-table__row--selected .form-editor-vertical-table__th,
-.form-editor-vertical-table__row--selected .form-editor-vertical-table__td {
-  position: relative;
-  z-index: 1;
-  border-radius: var(--8, 8px);
-  border: 1px solid var(--color-mint-01, #01a1af);
-  background: var(--main-WT, #fff);
-  box-shadow: 0 4px 24px 0 rgba(0, 89, 97, 0.2);
 }
 
 .form-editor-vertical-table__cell-input-shell {

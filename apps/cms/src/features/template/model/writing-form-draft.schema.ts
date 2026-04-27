@@ -684,6 +684,60 @@ export function verticalTableAddRow(p: VerticalTableParagraph): VerticalTablePar
   }
 }
 
+/** 데이터 행은 최소 1개 유지. 삭제 불가 시 `null`. */
+export function verticalTableRemoveRow(
+  p: VerticalTableParagraph,
+  rowIndex: number
+): VerticalTableParagraph | null {
+  const n = normalizeVerticalTableParagraph(p)
+  if (n.rows.length <= 1) return null
+  if (rowIndex < 0 || rowIndex >= n.rows.length) return n
+  return { ...n, rows: n.rows.filter((_, i) => i !== rowIndex) }
+}
+
+/**
+ * 선택 행의 1단/2단 전환.
+ * - 2단→1단: 좌측(첫 번째 th|td)만 유지, 우측 스테이지 데이터는 제거·비노출.
+ * - 1단→2단: 첫 쌍 유지, 두 번째 쌍은 빈 값으로 추가.
+ * 캔버스·우측 패널 넘버링은 각각 `verticalTableHeaderPlaceholder` / `verticalTablePanelStageTitle`로 `stageCount` 반영.
+ */
+export function verticalTableRowWithStageCount(row: VerticalTableRow, stageCount: 1 | 2): VerticalTableRow {
+  const base = normalizeVerticalTableRow(row)
+  const h0 = base.headers[0] ?? ''
+  const c0 = base.cells[0] ?? ''
+  if (stageCount === 1) {
+    return { stageCount: 1, headers: [h0], cells: [c0] }
+  }
+  if (base.stageCount === 2) {
+    return {
+      stageCount: 2,
+      headers: [h0, base.headers[1] ?? ''],
+      cells: [c0, base.cells[1] ?? ''],
+    }
+  }
+  return { stageCount: 2, headers: [h0, ''], cells: [c0, ''] }
+}
+
+/** 테이블 본문 th — 편집 placeholder (`1. 항목명 입력` / `2-1. 항목명 입력`) */
+export function verticalTableHeaderPlaceholder(
+  rowIdx: number,
+  stageIdx: number,
+  stageCount: 1 | 2
+): string {
+  if (stageCount === 1) return `${rowIdx + 1}. 항목명 입력`
+  return `${rowIdx + 1}-${stageIdx + 1}. 항목명 입력`
+}
+
+/** 우측 커스텀 필드 — 항목 블록 제목 (`1. 항목` / `2-1. 항목`) */
+export function verticalTablePanelStageTitle(
+  rowIdx: number,
+  stageIdx: number,
+  stageCount: 1 | 2
+): string {
+  if (stageCount === 1) return `${rowIdx + 1}. 항목`
+  return `${rowIdx + 1}-${stageIdx + 1}. 항목`
+}
+
 export type WritingFormParagraph =
   | TitleWithPeriodParagraph
   | UserProfileParagraph
