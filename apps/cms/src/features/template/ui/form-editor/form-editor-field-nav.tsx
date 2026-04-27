@@ -10,6 +10,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { restrictFormEditorListToVerticalAxis } from '@/features/template/ui/form-editor/dnd-restrict-vertical-axis'
 import './form-editor.css'
 
 export interface FormEditorFieldNavItem {
@@ -19,9 +20,11 @@ export interface FormEditorFieldNavItem {
 
 interface FormEditorFieldNavProps {
   sectionTitle: string
-  pinnedTop: FormEditorFieldNavItem
+  /** 가로형 등 상단 고정 항목이 없을 때 생략 */
+  pinnedTop?: FormEditorFieldNavItem | null
   sortableMiddle: FormEditorFieldNavItem[]
-  pinnedBottom: FormEditorFieldNavItem
+  /** 가로형(테이블만) 등 하단 고정 항이 없을 때 생략 */
+  pinnedBottom?: FormEditorFieldNavItem | null
   selectedItemId: string | null
   onSelectItem: (id: string) => void
   onReorderMiddle: (activeId: string, overId: string) => void
@@ -122,12 +125,19 @@ export function FormEditorFieldNav({
     <>
       <span className="full-page-modal__nav-title">{sectionTitle}</span>
       <div className="template-modal-nav-list">
-        <PinnedNavRow
-          item={pinnedTop}
-          selected={selectedItemId === pinnedTop.id}
-          onSelect={() => onSelectItem(pinnedTop.id)}
-        />
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        {pinnedTop != null && (
+          <PinnedNavRow
+            item={pinnedTop}
+            selected={selectedItemId === pinnedTop.id}
+            onSelect={() => onSelectItem(pinnedTop.id)}
+          />
+        )}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictFormEditorListToVerticalAxis]}
+          onDragEnd={handleDragEnd}
+        >
           <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
             {sortableMiddle.map(item => (
               <SortableNavRow
@@ -139,11 +149,13 @@ export function FormEditorFieldNav({
             ))}
           </SortableContext>
         </DndContext>
-        <PinnedNavRow
-          item={pinnedBottom}
-          selected={selectedItemId === pinnedBottom.id}
-          onSelect={() => onSelectItem(pinnedBottom.id)}
-        />
+        {pinnedBottom != null && (
+          <PinnedNavRow
+            item={pinnedBottom}
+            selected={selectedItemId === pinnedBottom.id}
+            onSelect={() => onSelectItem(pinnedBottom.id)}
+          />
+        )}
       </div>
       {fieldListBottomSlot}
       <hr className="template-modal-nav__children-divider" aria-hidden="true" />
