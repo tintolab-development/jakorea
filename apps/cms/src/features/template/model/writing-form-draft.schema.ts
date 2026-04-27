@@ -220,6 +220,10 @@ export type UserInfoParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'user_info'
   answerRequired?: boolean
+  /** 버튼형 노출 필드 목록(순서 유지) */
+  userFields?: Array<{ key: string; label: string }>
+  /** 미리보기에서 선택된 필드 key */
+  selectedUserFieldKeys?: string[]
 }
 
 export type FileAttachmentParagraph = WritingFormParagraphBase & {
