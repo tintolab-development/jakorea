@@ -1,9 +1,18 @@
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons'
 import { CmsButton } from '@/shared/ui/cms-button'
 
-export function FormParagraphCardActions() {
+export function FormParagraphCardActions({
+  onAddItem,
+}: {
+  onAddItem?: () => void
+}) {
   return (
     <div className="form-editor-card__actions">
+      {onAddItem ? (
+        <CmsButton variant="primary" type="button" onClick={onAddItem}>
+          + 항목 추가
+        </CmsButton>
+      ) : null}
       <CmsButton variant="primary" type="button" disabled>
         + 단락 추가
       </CmsButton>

@@ -31,6 +31,7 @@ export function FormTestSingleItemFullpageModal({
   onClose,
 }: FormTestSingleItemFullpageModalProps) {
   const [draft, setDraft] = useState<WritingFormDraft>(() => createSingleItemPreviewDraft())
+  const [shortEssayActiveItemId, setShortEssayActiveItemId] = useState<string | null>(null)
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
     DEFAULT_SURVEY_PARAGRAPH_IDS.title
   )
@@ -39,7 +40,19 @@ export function FormTestSingleItemFullpageModal({
     if (!open) return
     setDraft(createSingleItemPreviewDraft())
     setActiveParagraphId(DEFAULT_SURVEY_PARAGRAPH_IDS.title)
+    setShortEssayActiveItemId(null)
   }, [open])
+
+  const handleSelectCard = useCallback(
+    (id: string) => {
+      setActiveParagraphId(prev => {
+        if (prev === id) return prev
+        setShortEssayActiveItemId(null)
+        return id
+      })
+    },
+    []
+  )
 
   const updateParagraph = useCallback(
     (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => {
@@ -102,10 +115,12 @@ export function FormTestSingleItemFullpageModal({
           paragraphs={draft.paragraphs}
           titleNumbering={draft.formSettings.titleNumbering}
           selectedCardId={activeParagraphId}
-          onSelectCard={setActiveParagraphId}
+          onSelectCard={handleSelectCard}
           onReorderMiddle={onReorderMiddle}
           updateParagraph={updateParagraph}
           editorKind="survey"
+          shortEssayActiveItemId={shortEssayActiveItemId}
+          onSelectShortEssayItem={(_paragraphId, itemId) => setShortEssayActiveItemId(itemId)}
         />
       }
       rightNavigation={
@@ -115,7 +130,7 @@ export function FormTestSingleItemFullpageModal({
           sortableMiddle={sortableMiddle}
           pinnedBottom={pinnedBottom}
           selectedItemId={activeParagraphId}
-          onSelectItem={setActiveParagraphId}
+          onSelectItem={handleSelectCard}
           onReorderMiddle={onReorderMiddle}
           fieldListBottomSlot={
             <FormEditorTitleNumberingField
@@ -131,6 +146,7 @@ export function FormTestSingleItemFullpageModal({
             updateParagraph={updateParagraph}
             editorKind="survey"
             showTitleNumbering={false}
+            shortEssayActiveItemId={shortEssayActiveItemId}
           />
         </FormEditorFieldNav>
       }

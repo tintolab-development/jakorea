@@ -5,6 +5,29 @@
   gap: 6px;
   width: 100%;
   min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: var(--8, 8px);
+  background: var(--main-WT, #fff);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.paragraph-label-input:focus-within {
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--color-mint-01, #01a1af);
+  background: var(--main-WT, #fff);
+  padding: 10px 12px;
+  box-shadow: 0 4px 24px 0 rgba(0, 89, 97, 0.2);
+}
+
+.paragraph-label-input.short-essay-item--active {
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--color-mint-01, #01a1af);
+  background: var(--main-WT, #fff);
+  padding: 10px 12px;
+  box-shadow: 0 4px 24px 0 rgba(0, 89, 97, 0.2);
 }
 
 .paragraph-label-input__label {
@@ -32,11 +55,13 @@
   min-width: 0;
 }
 
+.paragraph-label-input .paragraph-label-input__textarea .cms-textarea__inner textarea.ant-input {
+  line-height: 28px;
+}
+
 .paragraph-label-input
   .paragraph-label-input__textarea
   .cms-textarea__control:focus-within:not(.cms-textarea__control--disabled) {
-  border-radius: var(--8, 8px);
-  border: 1px solid var(--color-mint-01, #01a1af);
-  background: var(--main-WT, #fff);
-  box-shadow: 0 4px 24px 0 rgba(0, 89, 97, 0.2);
+  border-color: var(--table-line, #e0e0e0);
+  box-shadow: none;
 }

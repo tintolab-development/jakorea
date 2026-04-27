@@ -1,0 +1,29 @@
+.short-essay-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.short-essay-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.short-essay-item-row .paragraph-label-input {
+  flex: 1 1 auto;
+}
+
+.short-essay-item-remove {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  margin-top: 40px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}

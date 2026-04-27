@@ -26,7 +26,9 @@ export function renderFormParagraphBody(
   p: WritingFormParagraph,
   updateParagraph: FormUpdateParagraph,
   isParagraphSelected: boolean,
-  editorKind: FormEditorKind = 'survey'
+  editorKind: FormEditorKind = 'survey',
+  shortEssayActiveItemId?: string | null,
+  onSelectShortEssayItem?: (itemId: string | null) => void
 ) {
   switch (p.variant) {
     case 'survey_title_with_period':
@@ -103,6 +105,8 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isParagraphSelected}
+          activeItemId={shortEssayActiveItemId}
+          onSelectItem={onSelectShortEssayItem}
         />
       )
     case 'multiple_choice':

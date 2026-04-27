@@ -35,6 +35,8 @@ export interface FormEditorLeftPaneProps {
   onReorderMiddle: (activeId: string, overId: string) => void
   updateParagraph: (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => void
   editorKind?: FormEditorKind
+  shortEssayActiveItemId?: string | null
+  onSelectShortEssayItem?: (paragraphId: string, itemId: string | null) => void
 }
 
 function isTitleWithPeriodParagraph(p: WritingFormParagraph): boolean {
@@ -101,7 +103,9 @@ function paragraphEditableHeading(
       titleValue: p.paragraphTitle,
       onTitleChange: (next: string) =>
         updateParagraph(p.id, cur =>
-          cur.kind === 'description' && cur.variant === 'closing' ? { ...cur, paragraphTitle: next } : cur
+          cur.kind === 'description' && cur.variant === 'closing'
+            ? { ...cur, paragraphTitle: next }
+            : cur
         ),
       titlePlaceholder: '타이틀을 입력해 주세요',
       titleRequired: p.requiredMark,
@@ -112,7 +116,9 @@ function paragraphEditableHeading(
       descriptionValue: p.paragraphDescription,
       onDescriptionChange: (next: string) =>
         updateParagraph(p.id, cur =>
-          cur.kind === 'description' && cur.variant === 'closing' ? { ...cur, paragraphDescription: next } : cur
+          cur.kind === 'description' && cur.variant === 'closing'
+            ? { ...cur, paragraphDescription: next }
+            : cur
         ),
       descriptionPlaceholder: '설명 입력',
     }
@@ -124,9 +130,11 @@ function paragraphEditableHeading(
       isEditMode: isSelected,
       titleValue: p.paragraphTitle,
       onTitleChange: (next: string) =>
-        updateParagraph(p.id, cur => (cur.kind === 'single_item' && cur.id === p.id ? { ...cur, paragraphTitle: next } : cur)),
+        updateParagraph(p.id, cur =>
+          cur.kind === 'single_item' && cur.id === p.id ? { ...cur, paragraphTitle: next } : cur
+        ),
       titlePlaceholder: '타이틀을 입력해 주세요',
-      titleRequired: p.requiredMark,
+      titleRequired: p.answerRequired ?? p.requiredMark,
       titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
         ? 'paragraph-card__title--placeholder'
         : undefined,
@@ -134,7 +142,9 @@ function paragraphEditableHeading(
       descriptionValue: p.paragraphDescription,
       onDescriptionChange: (next: string) =>
         updateParagraph(p.id, cur =>
-          cur.kind === 'single_item' && cur.id === p.id ? { ...cur, paragraphDescription: next } : cur
+          cur.kind === 'single_item' && cur.id === p.id
+            ? { ...cur, paragraphDescription: next }
+            : cur
         ),
       descriptionPlaceholder: '설명 입력',
     }
@@ -175,7 +185,9 @@ function modalCardFooterToggles(
         checked={answerRequired}
         onChange={checked =>
           updateParagraph(paragraph.id, p =>
-            p.kind === 'single_item' && p.id === paragraph.id ? { ...p, answerRequired: checked } : p
+            p.kind === 'single_item' && p.id === paragraph.id
+              ? { ...p, answerRequired: checked, requiredMark: checked }
+              : p
           )
         }
       />,
@@ -183,11 +195,14 @@ function modalCardFooterToggles(
 
     if (paragraph.variant === 'short_essay') {
       const shortEssay = paragraph as ShortEssayParagraph
+      const itemCount = shortEssay.items?.length ?? 1
+      const showItemTitle = itemCount >= 2 ? true : (shortEssay.showItemTitle ?? false)
       toggles.push(
         <CmsToggle
           key="item-title"
           label="항목 타이틀"
-          checked={shortEssay.showItemTitle ?? false}
+          checked={showItemTitle}
+          disabled={itemCount >= 2}
           onChange={checked =>
             updateParagraph(shortEssay.id, p =>
               p.kind === 'single_item' && p.variant === 'short_essay'
@@ -209,12 +224,54 @@ function modalCardFooterToggles(
 }
 
 /** 카드 하단 `actions` 슬롯 */
-function modalCardFooterActions(paragraph: WritingFormParagraph, isSelected: boolean): ReactNode {
+function modalCardFooterActions(
+  paragraph: WritingFormParagraph,
+  isSelected: boolean,
+  updateParagraph: FormEditorLeftPaneProps['updateParagraph']
+): ReactNode {
   if (!isSelected) return undefined
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
     return <FormParagraphCardActionsMinimal />
   }
   if (paragraph.kind === 'single_item') {
+    if (paragraph.variant === 'short_essay') {
+      return (
+        <FormParagraphCardActions
+          onAddItem={() =>
+            updateParagraph(paragraph.id, p => {
+              if (p.kind !== 'single_item' || p.variant !== 'short_essay') return p
+              const currentItems =
+                p.items?.length && p.items.length > 0
+                  ? p.items
+                  : [
+                      {
+                        id: 'short-essay-item-1',
+                        label: 'Title 01',
+                        placeholder: p.bodyPlaceholder,
+                        bodyText: p.bodyText,
+                      },
+                    ]
+              const nextIndex = currentItems.length + 1
+              const nextItems = [
+                ...currentItems,
+                {
+                  id: `short-essay-item-${nextIndex}`,
+                  label: `Title ${String(nextIndex).padStart(2, '0')}`,
+                  placeholder: p.bodyPlaceholder,
+                  bodyText: '',
+                },
+              ]
+              return {
+                ...p,
+                items: nextItems,
+                bodyText: nextItems[0]?.bodyText ?? '',
+                showItemTitle: true,
+              }
+            })
+          }
+        />
+      )
+    }
     return <FormParagraphCardActions />
   }
   if (isTitleWithPeriodParagraph(paragraph)) {
@@ -231,6 +288,8 @@ interface PinnedCardProps {
   onSelectCard: (id: string) => void
   updateParagraph: FormEditorLeftPaneProps['updateParagraph']
   editorKind: FormEditorKind
+  shortEssayActiveItemId?: string | null
+  onSelectShortEssayItem?: FormEditorLeftPaneProps['onSelectShortEssayItem']
 }
 
 function PinnedFormCard({
@@ -241,12 +300,21 @@ function PinnedFormCard({
   onSelectCard,
   updateParagraph,
   editorKind,
+  shortEssayActiveItemId,
+  onSelectShortEssayItem,
 }: PinnedCardProps) {
   const isSelected = selectedCardId === paragraph.id
   const hideCardHeading = isTitleWithPeriodParagraph(paragraph) && isSelected
   const editableHeading = hideCardHeading
     ? undefined
-    : paragraphEditableHeading(paragraph, paragraphs, titleNumbering, isSelected, updateParagraph, editorKind)
+    : paragraphEditableHeading(
+        paragraph,
+        paragraphs,
+        titleNumbering,
+        isSelected,
+        updateParagraph,
+        editorKind
+      )
 
   return (
     <ParagraphCard
@@ -260,9 +328,18 @@ function PinnedFormCard({
       onClick={() => onSelectCard(paragraph.id)}
       editableHeading={editableHeading}
       toggles={modalCardFooterToggles(paragraph, isSelected, updateParagraph)}
-      actions={modalCardFooterActions(paragraph, isSelected)}
+      actions={modalCardFooterActions(paragraph, isSelected, updateParagraph)}
     >
-      {renderFormParagraphBody(paragraph, updateParagraph, isSelected, editorKind)}
+      {renderFormParagraphBody(
+        paragraph,
+        updateParagraph,
+        isSelected,
+        editorKind,
+        shortEssayActiveItemId,
+        paragraph.variant === 'short_essay' && onSelectShortEssayItem
+          ? itemId => onSelectShortEssayItem(paragraph.id, itemId)
+          : undefined
+      )}
     </ParagraphCard>
   )
 }
@@ -275,6 +352,8 @@ interface SortableMiddleCardProps {
   onSelectCard: (id: string) => void
   updateParagraph: FormEditorLeftPaneProps['updateParagraph']
   editorKind: FormEditorKind
+  shortEssayActiveItemId?: string | null
+  onSelectShortEssayItem?: FormEditorLeftPaneProps['onSelectShortEssayItem']
 }
 
 function SortableMiddleFormCard({
@@ -285,6 +364,8 @@ function SortableMiddleFormCard({
   onSelectCard,
   updateParagraph,
   editorKind,
+  shortEssayActiveItemId,
+  onSelectShortEssayItem,
 }: SortableMiddleCardProps) {
   const {
     attributes,
@@ -300,7 +381,14 @@ function SortableMiddleFormCard({
   const hideCardHeading = isTitleWithPeriodParagraph(paragraph) && isSelected
   const editableHeading = hideCardHeading
     ? undefined
-    : paragraphEditableHeading(paragraph, paragraphs, titleNumbering, isSelected, updateParagraph, editorKind)
+    : paragraphEditableHeading(
+        paragraph,
+        paragraphs,
+        titleNumbering,
+        isSelected,
+        updateParagraph,
+        editorKind
+      )
 
   return (
     <div
@@ -335,9 +423,18 @@ function SortableMiddleFormCard({
         }
         editableHeading={editableHeading}
         toggles={modalCardFooterToggles(paragraph, isSelected, updateParagraph)}
-        actions={modalCardFooterActions(paragraph, isSelected)}
+        actions={modalCardFooterActions(paragraph, isSelected, updateParagraph)}
       >
-        {renderFormParagraphBody(paragraph, updateParagraph, isSelected, editorKind)}
+        {renderFormParagraphBody(
+          paragraph,
+          updateParagraph,
+          isSelected,
+          editorKind,
+          shortEssayActiveItemId,
+          paragraph.variant === 'short_essay' && onSelectShortEssayItem
+            ? itemId => onSelectShortEssayItem(paragraph.id, itemId)
+            : undefined
+        )}
       </ParagraphCard>
     </div>
   )
@@ -351,6 +448,8 @@ export function FormEditorLeftPane({
   onReorderMiddle,
   updateParagraph,
   editorKind = 'survey',
+  shortEssayActiveItemId,
+  onSelectShortEssayItem,
 }: FormEditorLeftPaneProps) {
   const head = paragraphs[0]
   const tail = paragraphs[paragraphs.length - 1]
@@ -377,6 +476,8 @@ export function FormEditorLeftPane({
         onSelectCard={onSelectCard}
         updateParagraph={updateParagraph}
         editorKind={editorKind}
+        shortEssayActiveItemId={shortEssayActiveItemId}
+        onSelectShortEssayItem={onSelectShortEssayItem}
       />
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
@@ -390,6 +491,8 @@ export function FormEditorLeftPane({
               onSelectCard={onSelectCard}
               updateParagraph={updateParagraph}
               editorKind={editorKind}
+              shortEssayActiveItemId={shortEssayActiveItemId}
+              onSelectShortEssayItem={onSelectShortEssayItem}
             />
           ))}
         </SortableContext>
@@ -402,6 +505,8 @@ export function FormEditorLeftPane({
         onSelectCard={onSelectCard}
         updateParagraph={updateParagraph}
         editorKind={editorKind}
+        shortEssayActiveItemId={shortEssayActiveItemId}
+        onSelectShortEssayItem={onSelectShortEssayItem}
       />
     </div>
   )

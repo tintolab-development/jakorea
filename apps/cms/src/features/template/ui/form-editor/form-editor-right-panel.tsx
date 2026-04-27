@@ -6,6 +6,7 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import type {
   FormEditorKind,
   FormTitleNumberingStyle,
+  ShortEssayParagraph,
   WritingFormDraft,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -72,6 +73,7 @@ export interface FormEditorRightPanelProps {
   updateParagraph: (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => void
   editorKind?: FormEditorKind
   showTitleNumbering?: boolean
+  shortEssayActiveItemId?: string | null
 }
 
 export function FormEditorTitleNumberingField({
@@ -102,9 +104,37 @@ export function FormEditorRightPanel({
   updateParagraph,
   editorKind: _editorKind = 'survey',
   showTitleNumbering = true,
+  shortEssayActiveItemId,
 }: FormEditorRightPanelProps) {
   const active = draft.paragraphs.find(p => p.id === activeParagraphId) ?? null
   const outline = active ? writingOutlineLabel(active) : ''
+  const activeShortEssay =
+    active && active.kind === 'single_item' && active.variant === 'short_essay'
+      ? (active as ShortEssayParagraph)
+      : null
+  const shortEssayItems =
+    activeShortEssay?.items && activeShortEssay.items.length > 0
+      ? activeShortEssay.items
+      : activeShortEssay
+        ? [
+            {
+              id: 'short-essay-item-1',
+              label: 'Title 01',
+              placeholder: activeShortEssay.bodyPlaceholder,
+              bodyText: activeShortEssay.bodyText,
+            },
+          ]
+        : []
+  const selectedShortEssayItem =
+    shortEssayActiveItemId == null
+      ? null
+      : (shortEssayItems.find(item => item.id === shortEssayActiveItemId) ?? null)
+  const shortEssayShowItemTitle =
+    activeShortEssay == null
+      ? false
+      : shortEssayItems.length >= 2
+        ? true
+        : (activeShortEssay.showItemTitle ?? false)
 
   return (
     <div className="form-editor-right-panel">
@@ -187,7 +217,8 @@ export function FormEditorRightPanel({
             ) : null}
 
             {active.kind === 'single_item' &&
-            (active.variant === 'agreement_rich_text' || active.variant === 'agreement_explanation_text') ? (
+            (active.variant === 'agreement_rich_text' ||
+              active.variant === 'agreement_explanation_text') ? (
               <>
                 <Form.Item label="본문 placeholder">
                   <CmsInput
@@ -248,6 +279,89 @@ export function FormEditorRightPanel({
                   placeholder="설명을 입력해 주세요"
                 />
               </Form.Item>
+            ) : null}
+
+            {activeShortEssay && selectedShortEssayItem ? (
+              <>
+                <Form.Item label="항목 유형">
+                  <CmsSelect
+                    width="100%"
+                    value={paragraphVariantLabel(activeShortEssay)}
+                    options={[
+                      {
+                        value: paragraphVariantLabel(activeShortEssay),
+                        label: paragraphVariantLabel(activeShortEssay),
+                      },
+                    ]}
+                    disabled
+                  />
+                </Form.Item>
+                {shortEssayShowItemTitle ? (
+                  <Form.Item label="항목명">
+                    <CmsInput
+                      width="100%"
+                      value={selectedShortEssayItem.label ?? ''}
+                      onChange={e =>
+                        updateParagraph(activeShortEssay.id, cur => {
+                          if (cur.kind !== 'single_item' || cur.variant !== 'short_essay') return cur
+                          const items =
+                            cur.items?.length && cur.items.length > 0
+                              ? cur.items
+                              : [
+                                  {
+                                    id: 'short-essay-item-1',
+                                    label: 'Title 01',
+                                    placeholder: cur.bodyPlaceholder,
+                                    bodyText: cur.bodyText,
+                                  },
+                                ]
+                          return {
+                            ...cur,
+                            items: items.map(item =>
+                              item.id === selectedShortEssayItem.id
+                                ? { ...item, label: e.target.value }
+                                : item
+                            ),
+                          }
+                        })
+                      }
+                      placeholder="항목명을 입력해 주세요"
+                    />
+                  </Form.Item>
+                ) : null}
+                <Form.Item label="입력창 안내 텍스트">
+                  <CmsInput
+                    width="100%"
+                    value={selectedShortEssayItem.placeholder ?? activeShortEssay.bodyPlaceholder}
+                    onChange={e =>
+                      updateParagraph(activeShortEssay.id, cur => {
+                        if (cur.kind !== 'single_item' || cur.variant !== 'short_essay') return cur
+                        const items =
+                          cur.items?.length && cur.items.length > 0
+                            ? cur.items
+                            : [
+                                {
+                                  id: 'short-essay-item-1',
+                                  label: 'Title 01',
+                                  placeholder: cur.bodyPlaceholder,
+                                  bodyText: cur.bodyText,
+                                },
+                              ]
+                        return {
+                          ...cur,
+                          bodyPlaceholder: e.target.value,
+                          items: items.map(item =>
+                            item.id === selectedShortEssayItem.id
+                              ? { ...item, placeholder: e.target.value }
+                              : item
+                          ),
+                        }
+                      })
+                    }
+                    placeholder="답변을 입력해 주세요"
+                  />
+                </Form.Item>
+              </>
             ) : null}
 
             {active.kind === 'description' && active.variant === 'closing' ? (

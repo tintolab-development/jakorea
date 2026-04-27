@@ -131,6 +131,9 @@ export type ShortEssayParagraph = WritingFormParagraphBase & {
   variant: 'short_essay'
   answerRequired?: boolean
   showItemTitle?: boolean
+  items?: Array<{ id: string; label?: string; placeholder?: string; bodyText: string }>
+  bodyPlaceholder: string
+  bodyText: string
 }
 
 export type MultipleChoiceParagraph = WritingFormParagraphBase & {
@@ -428,6 +431,16 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       variant: 'short_essay',
       answerRequired: true,
       showItemTitle: false,
+      items: [
+        {
+          id: 'short-essay-item-1',
+          label: 'Title 01',
+          placeholder: '답변을 입력해 주세요',
+          bodyText: '',
+        },
+      ],
+      bodyPlaceholder: '답변을 입력해 주세요',
+      bodyText: '',
       requiredMark: true,
       paragraphTitle: '주관식형',
       paragraphDescription: '',
