@@ -1,0 +1,4 @@
+/* 양식 테스트 > 단일 항목: 좌측 에디터 영역이 flex 안에서 스크롤되도록 */
+.form-test-single-item-fullpage-modal .full-page-modal__left {
+  min-height: 0;
+}

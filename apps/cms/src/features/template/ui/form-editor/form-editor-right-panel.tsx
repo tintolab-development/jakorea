@@ -46,6 +46,22 @@ function paragraphVariantLabel(p: WritingFormParagraph): string {
       return '표·동의 선택형'
     case 'closing':
       return '마무리글형'
+    case 'short_essay':
+      return '주관식형'
+    case 'multiple_choice':
+      return '객관식형'
+    case 'dropdown':
+      return '드롭다운형'
+    case 'date_time':
+      return '날짜/시간형'
+    case 'star_rate':
+      return '별점형'
+    case 'scale_type':
+      return '점수 선택형'
+    case 'user_info':
+      return '사용자 정보형'
+    case 'file_attachment':
+      return '파일 첨부형'
   }
 }
 

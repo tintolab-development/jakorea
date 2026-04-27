@@ -119,6 +119,47 @@ export interface AgreementTableConsentParagraph extends WritingFormParagraphBase
   selectedPreviewConsent: 'agree' | 'disagree'
 }
 
+/** 단일 항목 미리보기 전용(추후 스키마 정리 시 통합 가능) */
+export type ShortEssayParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'short_essay'
+}
+
+export type MultipleChoiceParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'multiple_choice'
+}
+
+export type DropdownParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'dropdown'
+}
+
+export type DateTimeParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'date_time'
+}
+
+export type StarRateParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'star_rate'
+}
+
+export type ScaleTypeParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'scale_type'
+}
+
+export type UserInfoParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'user_info'
+}
+
+export type FileAttachmentParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'file_attachment'
+}
+
 export type WritingFormParagraph =
   | TitleWithPeriodParagraph
   | UserProfileParagraph
@@ -128,6 +169,14 @@ export type WritingFormParagraph =
   | AgreementExplanationTextParagraph
   | AgreementPrivacyRowsParagraph
   | AgreementTableConsentParagraph
+  | ShortEssayParagraph
+  | MultipleChoiceParagraph
+  | DropdownParagraph
+  | DateTimeParagraph
+  | StarRateParagraph
+  | ScaleTypeParagraph
+  | UserInfoParagraph
+  | FileAttachmentParagraph
   | ClosingParagraph
 
 export interface WritingFormDraft {
@@ -249,6 +298,26 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
   }
 }
 
+/** 첫·마지막 단락 고정, 사이 middle만 재정렬 */
+export function reorderHeadMiddleTail(
+  paragraphs: WritingFormParagraph[],
+  activeId: string,
+  overId: string
+): WritingFormParagraph[] {
+  if (paragraphs.length < 3) return paragraphs
+  const head = paragraphs[0]!
+  const tail = paragraphs[paragraphs.length - 1]!
+  const middle = paragraphs.slice(1, -1)
+  const ids = middle.map(p => p.id)
+  const oldIndex = ids.indexOf(activeId)
+  const newIndex = ids.indexOf(overId)
+  if (oldIndex < 0 || newIndex < 0) return paragraphs
+  const nextMiddle = [...middle]
+  const [removed] = nextMiddle.splice(oldIndex, 1)
+  nextMiddle.splice(newIndex, 0, removed)
+  return [head, ...nextMiddle, tail]
+}
+
 export function createDefaultSurveyDraft(): WritingFormDraft {
   return {
     schemaVersion: 1,
@@ -319,24 +388,100 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
   }
 }
 
-/** 중간 3단락(인덱스 1–3)만 재정렬 */
+/** 기본 설문 5단락(인덱스 1–3 middle)만 재정렬 */
 export function reorderWritingFormMiddleParagraphs(
   paragraphs: WritingFormParagraph[],
   activeId: string,
   overId: string
 ): WritingFormParagraph[] {
   if (paragraphs.length !== 5) return paragraphs
-  const head = paragraphs[0]
-  const tail = paragraphs[4]
-  const middle = paragraphs.slice(1, 4)
-  const ids = middle.map(p => p.id)
-  const oldIndex = ids.indexOf(activeId)
-  const newIndex = ids.indexOf(overId)
-  if (oldIndex < 0 || newIndex < 0) return paragraphs
-  const nextMiddle = [...middle]
-  const [removed] = nextMiddle.splice(oldIndex, 1)
-  nextMiddle.splice(newIndex, 0, removed)
-  return [head, ...nextMiddle, tail]
+  return reorderHeadMiddleTail(paragraphs, activeId, overId)
+}
+
+/** `FormTestSingleItemFullpageModal` — 제목·8종 단일항목 스텁·마무리 */
+export function createSingleItemPreviewDraft(): WritingFormDraft {
+  const base = createDefaultSurveyDraft()
+  const title = base.paragraphs[0]!
+  const closing = base.paragraphs[4]!
+  const middle: WritingFormParagraph[] = [
+    {
+      id: 'short-essay',
+      kind: 'single_item',
+      variant: 'short_essay',
+      requiredMark: true,
+      paragraphTitle: '주관식형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'multiple-choice',
+      kind: 'single_item',
+      variant: 'multiple_choice',
+      requiredMark: true,
+      paragraphTitle: '객관식형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'dropdown',
+      kind: 'single_item',
+      variant: 'dropdown',
+      requiredMark: true,
+      paragraphTitle: '드롭다운형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'date-time',
+      kind: 'single_item',
+      variant: 'date_time',
+      requiredMark: true,
+      paragraphTitle: '날짜/시간형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'star-rate',
+      kind: 'single_item',
+      variant: 'star_rate',
+      requiredMark: true,
+      paragraphTitle: '별점형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'scale-type',
+      kind: 'single_item',
+      variant: 'scale_type',
+      requiredMark: true,
+      paragraphTitle: '점수 선택형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'user-info',
+      kind: 'single_item',
+      variant: 'user_info',
+      requiredMark: true,
+      paragraphTitle: '사용자 정보형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'file-attachment',
+      kind: 'single_item',
+      variant: 'file_attachment',
+      requiredMark: true,
+      paragraphTitle: '파일 첨부형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+  ]
+  return {
+    schemaVersion: 1,
+    formSettings: base.formSettings,
+    paragraphs: [title, ...middle, closing],
+  }
 }
 
 export function writingOutlineLabel(p: WritingFormParagraph): string {

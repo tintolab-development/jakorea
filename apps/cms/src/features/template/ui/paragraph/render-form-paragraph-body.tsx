@@ -5,8 +5,16 @@ import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/t
 import { AgreementPrivacyRowsBody } from '@/features/template/ui/paragraph/single-item/agreement-privacy-rows-paragraph-body'
 import { AgreementRichTextBody } from '@/features/template/ui/paragraph/single-item/agreement-rich-text-paragraph-body'
 import { AgreementTableConsentBody } from '@/features/template/ui/paragraph/single-item/agreement-table-consent-paragraph-body'
+import { DateTime } from '@/features/template/ui/paragraph/single-item/date-time'
+import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
+import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
+import { MultipleChoice } from '@/features/template/ui/paragraph/single-item/multiple-choice'
+import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-type'
 import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
+import { ShortEssay } from '@/features/template/ui/paragraph/single-item/short-essay'
+import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate'
 import { SubjectiveParagraphBody } from '@/features/template/ui/paragraph/single-item/subjective-paragraph-body'
+import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
 
 export type FormUpdateParagraph = (
@@ -84,6 +92,70 @@ export function renderFormParagraphBody(
     case 'closing':
       return (
         <ClosingParagraphBody
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+        />
+      )
+    case 'short_essay':
+      return (
+        <ShortEssay
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+        />
+      )
+    case 'multiple_choice':
+      return (
+        <MultipleChoice
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+        />
+      )
+    case 'dropdown':
+      return (
+        <Dropdown
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+        />
+      )
+    case 'date_time':
+      return (
+        <DateTime
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+        />
+      )
+    case 'star_rate':
+      return (
+        <StarRate
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+        />
+      )
+    case 'scale_type':
+      return (
+        <ScaleType
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+        />
+      )
+    case 'user_info':
+      return (
+        <UserInfo
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+        />
+      )
+    case 'file_attachment':
+      return (
+        <FileAttachment
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isParagraphSelected}

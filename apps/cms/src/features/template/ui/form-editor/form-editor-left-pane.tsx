@@ -330,8 +330,8 @@ export function FormEditorLeftPane({
   editorKind = 'survey',
 }: FormEditorLeftPaneProps) {
   const head = paragraphs[0]
-  const tail = paragraphs[4]
-  const middle = paragraphs.slice(1, 4)
+  const tail = paragraphs[paragraphs.length - 1]
+  const middle = paragraphs.slice(1, -1)
   const sortableIds = middle.map(p => p.id)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
 
@@ -340,7 +340,7 @@ export function FormEditorLeftPane({
     onReorderMiddle(String(active.id), String(over.id))
   }
 
-  if (!head || !tail || middle.length !== 3) {
+  if (!head || !tail || middle.length === 0) {
     return null
   }
 
