@@ -6,6 +6,14 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorHorizontalTableHintXIcon } from '@/features/template/ui/form-editor/form-editor-horizontal-table-hint-x-icon'
 import { FormEditorHorizontalTableHeaderDeleteIcon } from '@/features/template/ui/form-editor/form-editor-horizontal-table-header-delete-icon'
+import {
+  FormEditorCustomFieldPanel,
+  FormEditorFieldHint,
+  FormEditorFieldHintLine,
+  FormEditorFieldHintXInline,
+  FormEditorFieldList,
+  FormEditorFieldListItem,
+} from '@/features/template/ui/form-editor/form-editor-custom-field-panel'
 import { CmsInput } from '@/shared/ui/cms-input'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 
@@ -25,9 +33,7 @@ export function FormEditorHorizontalTableHeaderFields({
       if (cur.kind !== 'single_item' || cur.variant !== 'horizontal_table') return cur
       const next = horizontalTableRemoveColumn(cur, columnIndex)
       if (next == null) {
-        message.warning(
-          `열은 최소 ${HORIZONTAL_TABLE_MIN_COLUMN_COUNT}개 이상 유지해야 합니다.`
-        )
+        message.warning(`열은 최소 ${HORIZONTAL_TABLE_MIN_COLUMN_COUNT}개 이상 유지해야 합니다.`)
         return cur
       }
       return next
@@ -40,34 +46,35 @@ export function FormEditorHorizontalTableHeaderFields({
     : '테이블_가로형_항목 선택 시 (헤더)'
 
   return (
-    <div className="form-editor-horizontal-table-header-fields">
-      <h3 className="form-editor-horizontal-table-header-fields__title">{panelTitle}</h3>
-      <div className="form-editor-horizontal-table-header-fields__hint">
-        <span className="form-editor-horizontal-table-header-fields__hint-mark" aria-hidden>
-          *
-        </span>
-        <div className="form-editor-horizontal-table-header-fields__hint-body">
-          <p className="form-editor-horizontal-table-header-fields__hint-line">
+    <FormEditorCustomFieldPanel
+      className="form-editor-horizontal-table-header-fields"
+      titleClassName="form-editor-horizontal-table-header-fields__title"
+      title={panelTitle}
+      hint={
+        <FormEditorFieldHint tone="header">
+          <FormEditorFieldHintLine tone="header">
             <span>항목 옆</span>
-            <span
-              className="form-editor-horizontal-table-header-fields__hint-x-inline"
-              aria-hidden
-            >
+            <FormEditorFieldHintXInline tone="header">
               <FormEditorHorizontalTableHintXIcon />
-            </span>
+            </FormEditorFieldHintXInline>
             <span>아이콘 선택 시 해당 항목과 동일한 열의 항목이</span>
-          </p>
-          <p
-            className="form-editor-horizontal-table-header-fields__hint-line form-editor-horizontal-table-header-fields__hint-line--second"
-          >
+          </FormEditorFieldHintLine>
+          <FormEditorFieldHintLine tone="header" second>
             일괄 삭제됩니다. 헤더는 최소 1개 이상의 항목이 필수입니다.
-          </p>
-        </div>
-      </div>
-      <ul className="form-editor-horizontal-table-header-fields__list">
+          </FormEditorFieldHintLine>
+        </FormEditorFieldHint>
+      }
+    >
+      <FormEditorFieldList className="form-editor-horizontal-table-header-fields__list">
         {paragraph.columnHeaders.map((header, i) => (
-          <li key={`hdr-${i}`} className="form-editor-horizontal-table-header-fields__item">
-            <Form.Item className="form-editor-horizontal-table-header-fields__form-item" label={`${i + 1}. 항목`}>
+          <FormEditorFieldListItem
+            key={`hdr-${i}`}
+            className="form-editor-horizontal-table-header-fields__item"
+          >
+            <Form.Item
+              className="form-editor-horizontal-table-header-fields__form-item"
+              label={`${i + 1}. 항목`}
+            >
               <div className="form-editor-horizontal-table-header-fields__row">
                 <div className="form-editor-horizontal-table-header-fields__input-wrap">
                   <CmsInput
@@ -77,7 +84,8 @@ export function FormEditorHorizontalTableHeaderFields({
                     value={header}
                     onChange={e =>
                       updateParagraph(paragraphId, cur => {
-                        if (cur.kind !== 'single_item' || cur.variant !== 'horizontal_table') return cur
+                        if (cur.kind !== 'single_item' || cur.variant !== 'horizontal_table')
+                          return cur
                         const next = [...cur.columnHeaders]
                         while (next.length < colCount) next.push('')
                         next[i] = e.target.value
@@ -102,9 +110,9 @@ export function FormEditorHorizontalTableHeaderFields({
                 ) : null}
               </div>
             </Form.Item>
-          </li>
+          </FormEditorFieldListItem>
         ))}
-      </ul>
-    </div>
+      </FormEditorFieldList>
+    </FormEditorCustomFieldPanel>
   )
 }

@@ -325,16 +325,22 @@
   width: 100%;
 }
 
-/* 커스텀 필드 인풋: 44×260 스펙, 내부 gap 8px·패딩은 CmsInput large와 정렬 */
+/* 커스텀 필드 인풋: 기본 340px, 우측 삭제 아이콘이 있으면 310px */
 .form-editor-horizontal-table-header-fields__input-wrap {
   display: flex;
   height: 44px;
   min-width: 120px;
-  max-width: 260px;
-  width: 260px;
+  max-width: 340px;
+  width: 340px;
   flex: 1 0 0;
   align-items: center;
   box-sizing: border-box;
+}
+
+.form-editor-horizontal-table-header-fields__row:has(.form-editor-horizontal-table-header-fields__delete)
+  .form-editor-horizontal-table-header-fields__input-wrap {
+  width: 310px;
+  max-width: 310px;
 }
 
 .form-editor-horizontal-table-header-fields__input-wrap .form-editor-horizontal-table-header-fields__cms-input.cms-input {
@@ -350,7 +356,7 @@
   height: 44px;
   min-height: 44px;
   min-width: 120px;
-  max-width: 260px;
+  max-width: 100%;
   width: 100%;
   padding: 0 12px 0 14px;
   align-items: center;
@@ -402,6 +408,64 @@
 
 .form-editor-horizontal-table-header-fields__delete:not(:disabled):hover {
   opacity: 0.85;
+}
+
+/* 테이블 세로형 — 바디 행 선택 시 우측 커스텀 필드(가로형 바디 필드와 동일 gap·타이포·셀렉트 래퍼 재사용) */
+.form-editor-vertical-table-row-fields__structure {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 24px;
+  width: 100%;
+}
+
+.form-editor-vertical-table-row-fields__structure-label {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* 테이블 구조 — 라디오 행: 44px 높이, 좌우 8px, 옵션 간 16px (원–텍스트 6px는 medium 사이즈) */
+.form-editor-vertical-table-row-fields__structure-radios.app-radio-group {
+  display: flex;
+  height: 44px;
+  padding: 0 8px;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: nowrap;
+  box-sizing: border-box;
+}
+
+.form-editor-vertical-table-row-fields__list-wrap {
+  margin: 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--table-line, #e0e0e0);
+}
+
+/* 세로형 커스텀 필드: 블록 내 제목·드롭다운·항목명·내용 세로 간격 16px */
+.form-editor-vertical-table-row-fields .form-editor-horizontal-table-body-fields__item {
+  gap: 16px;
+  margin: 0;
+  padding-bottom: 32px;
+  /* 항목 간 디바이더: 내용 아래 32px → 선 → 다음 블록 위 32px (가로형 헤더 필드와 동일) */
+}
+
+.form-editor-vertical-table-row-fields .form-editor-horizontal-table-body-fields__item + .form-editor-horizontal-table-body-fields__item {
+  padding-top: 32px;
+}
+
+.form-editor-vertical-table-row-fields .form-editor-horizontal-table-body-fields__item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* 패딩으로 간격을 줄이므로 리스트 기본 gap 20px은 중복 방지 */
+.form-editor-vertical-table-row-fields .form-editor-horizontal-table-body-fields__list {
+  gap: 0;
 }
 
 /* 테이블 가로형 — 바디(td) 행 선택 시 우측 커스텀 필드 (헤더와 패널 분리) */
@@ -522,6 +586,7 @@
   line-height: 140%;
 }
 
+/* 유형 행: 드롭다운과 ⓧ 등 보조 컨트롤 사이 6px */
 .form-editor-horizontal-table-body-fields__type-row {
   display: flex;
   flex-direction: row;
@@ -531,17 +596,24 @@
   margin: 0;
 }
 
-/* 항목 유형 드롭다운: 310×44, 셀렉트 박스 스펙 */
+/* 항목 유형 드롭다운: 기본 340px, 우측 삭제 아이콘이 있으면 310px */
 .form-editor-horizontal-table-body-fields__select-wrap {
   display: flex;
-  flex: 1 0 0;
-  min-width: 120px;
-  max-width: 310px;
-  width: 310px;
+  flex: 0 0 auto;
+  width: 340px;
+  max-width: 340px;
+  min-width: 340px;
   min-height: 44px;
   height: 44px;
   align-items: center;
   box-sizing: border-box;
+}
+
+.form-editor-horizontal-table-body-fields__type-row:has(.form-editor-horizontal-table-body-fields__cell-clear)
+  .form-editor-horizontal-table-body-fields__select-wrap {
+  width: 310px;
+  max-width: 310px;
+  min-width: 310px;
 }
 
 /* CmsSelect 래퍼(span.cms-select)가 인풋 박스 — ant-select-selector는 보더 없음(전역 cms-select.css) */
@@ -645,6 +717,16 @@
   line-height: 150%; /* 21px */
 }
 
+.form-editor-horizontal-table-body-fields__date-preview .form-editor-horizontal-table__field-box.ant-picker {
+  width: 340px;
+  min-width: 340px;
+  max-width: 340px;
+}
+
+.form-editor-horizontal-table-body-fields__date-preview {
+  margin-bottom: 32px;
+}
+
 .form-editor-horizontal-table-body-fields__content-input .cms-input__inner .ant-input::placeholder {
   overflow: hidden;
   color: var(--gray-85969-d, #85969d);
@@ -669,7 +751,7 @@
   width: 100%;
 }
 
-/* 옵션 행: 유형 드롭다운과 동일(310×44 박스 + 19px ⓧ) + 넘버링 */
+/* 옵션 행: 유형 드롭다운과 동일(입력 310px + 19px ⓧ) + 넘버링 */
 .form-editor-horizontal-table-body-fields__option-type-row {
   display: flex;
   flex-direction: row;
@@ -680,13 +762,13 @@
   box-sizing: border-box;
 }
 
-/* 드롭다운 `__select-wrap`과 동일 310×44·패딩·보더, 내부에 1. + 인풋 */
+/* 우측 ⓧ 아이콘이 있는 옵션 입력: 310×44·패딩·보더, 내부에 1. + 인풋 */
 .form-editor-horizontal-table-body-fields__option-input-wrap {
   display: flex;
-  flex: 1 0 0;
-  min-width: 120px;
-  max-width: 310px;
+  flex: 0 0 auto;
   width: 310px;
+  max-width: 310px;
+  min-width: 310px;
   min-height: 44px;
   height: 44px;
   align-items: center;
