@@ -16,4 +16,13 @@
 
 .horizontal-table-form-editor--embedded .full-page-modal__right-wrap {
   align-self: stretch;
+  min-height: 0;
+}
+
+/* 테스트 탭: 우측 커스텀 필드 패널만 독립 스크롤로 고정해
+   th/td 선택 시 내용 길이에 따른 외부 레이아웃 흔들림을 방지 */
+.horizontal-table-form-editor--embedded .full-page-modal__right {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
