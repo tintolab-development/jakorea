@@ -1,5 +1,5 @@
-/** 설문·동의 직접 등록 에디터 공통 — 에디터 문맥(직렬화 키와 무관) */
-export type FormEditorKind = 'survey' | 'agreement'
+/** 설문·동의·테이블 가로형 직접 등록 에디터 공통 — 에디터 문맥(직렬화 키와 무관) */
+export type FormEditorKind = 'survey' | 'agreement' | 'horizontal_table'
 
 /** 우측 '타이틀 번호' — 저장값; 화면 접두는 `form-title-numbering`에서 파생 */
 export type FormTitleNumberingStyle = 'numeric' | 'alpha' | 'q_repeat' | 'q123' | 'none'
@@ -119,6 +119,121 @@ export interface AgreementTableConsentParagraph extends WritingFormParagraphBase
   selectedPreviewConsent: 'agree' | 'disagree'
 }
 
+/** 캔버스에서 선택된 테이블 행(헤더 행 vs 데이터 행) — 우측 커스텀 필드와 동기화 */
+export type HorizontalTableRowSelection =
+  | { area: 'header' }
+  | { area: 'body'; row: number }
+
+/** 작성 양식 — 테이블 가로형(가변 행·열, 각 dataRows[i] 길이는 columnHeaders와 동일) */
+export interface HorizontalTableParagraph extends WritingFormParagraphBase {
+  kind: 'single_item'
+  variant: 'horizontal_table'
+  columnHeaders: string[]
+  dataRows: string[][]
+  bottomText: string
+  showBottomText: boolean
+  answerRequired: boolean
+}
+
+/** 행 추가: 데이터 영역 **최하단**에 가로 한 줄(새 행)을 붙인다. */
+export function horizontalTableAddRow(p: HorizontalTableParagraph): HorizontalTableParagraph {
+  const colCount = Math.max(1, p.columnHeaders.length)
+  const normalizedRows = p.dataRows.map(r => {
+    const row = [...r]
+    while (row.length < colCount) row.push('')
+    return row.slice(0, colCount)
+  })
+  const newRow = Array.from({ length: colCount }, () => '')
+  return { ...p, dataRows: [...normalizedRows, newRow] }
+}
+
+/** 열 추가: 헤더·각 행의 **가장 우측**에 세로 한 줄(새 열)을 붙인다. */
+export function horizontalTableAddColumn(p: HorizontalTableParagraph): HorizontalTableParagraph {
+  const colCount = Math.max(1, p.columnHeaders.length)
+  const normalizedRows = p.dataRows.map(r => {
+    const row = [...r]
+    while (row.length < colCount) row.push('')
+    return row.slice(0, colCount)
+  })
+  const nextHeaders = [...p.columnHeaders, '']
+  const nextWidth = nextHeaders.length
+  const nextRows =
+    normalizedRows.length > 0
+      ? normalizedRows.map(r => [...r, ''])
+      : [Array.from({ length: nextWidth }, () => '')]
+  return { ...p, columnHeaders: nextHeaders, dataRows: nextRows }
+}
+
+/** 새 테이블 가로형 단락(중간 영역 추가·복제 시 사용) */
+export function createHorizontalTableParagraph(id: string): HorizontalTableParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'horizontal_table',
+    requiredMark: true,
+    paragraphTitle: '테이블_가로형',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    columnHeaders: ['', '', ''],
+    dataRows: [['', '', '']],
+    bottomText: '',
+    showBottomText: false,
+    answerRequired: true,
+  }
+}
+
+export function cloneHorizontalTableParagraph(
+  source: HorizontalTableParagraph,
+  newId: string
+): HorizontalTableParagraph {
+  return {
+    ...source,
+    id: newId,
+    columnHeaders: [...source.columnHeaders],
+    dataRows: source.dataRows.map(r => [...r]),
+  }
+}
+
+/** 열 삭제: 헤더·각 행에서 해당 인덱스 제거. 열이 1개뿐이면 `null`. */
+export function horizontalTableRemoveColumn(
+  p: HorizontalTableParagraph,
+  columnIndex: number
+): HorizontalTableParagraph | null {
+  const colCount = Math.max(1, p.columnHeaders.length)
+  if (colCount <= 1) return null
+  if (columnIndex < 0 || columnIndex >= colCount) return null
+
+  const nextHeaders = p.columnHeaders.filter((_, i) => i !== columnIndex)
+  const nextRows =
+    p.dataRows.length === 0
+      ? []
+      : p.dataRows.map(r => {
+          const row = [...r]
+          while (row.length < colCount) row.push('')
+          return row.filter((_, i) => i !== columnIndex)
+        })
+  return { ...p, columnHeaders: nextHeaders, dataRows: nextRows }
+}
+
+/** 데이터 행 삭제. 본문 행이 1줄뿐이면 `null`. */
+export function horizontalTableRemoveRow(
+  p: HorizontalTableParagraph,
+  rowIndex: number
+): HorizontalTableParagraph | null {
+  const colCount = Math.max(1, p.columnHeaders.length)
+  let rows = p.dataRows.map(r => {
+    const row = [...r]
+    while (row.length < colCount) row.push('')
+    return row.slice(0, colCount)
+  })
+  if (rows.length === 0) {
+    rows = [Array.from({ length: colCount }, () => '')]
+  }
+  if (rows.length <= 1) return null
+  if (rowIndex < 0 || rowIndex >= rows.length) return null
+  return { ...p, dataRows: rows.filter((_, i) => i !== rowIndex) }
+}
+
 export type WritingFormParagraph =
   | TitleWithPeriodParagraph
   | UserProfileParagraph
@@ -128,12 +243,13 @@ export type WritingFormParagraph =
   | AgreementExplanationTextParagraph
   | AgreementPrivacyRowsParagraph
   | AgreementTableConsentParagraph
+  | HorizontalTableParagraph
   | ClosingParagraph
 
 export interface WritingFormDraft {
   schemaVersion: 1
   formSettings: WritingFormSettings
-  /** 인덱스 0: 제목형(고정), 1–3: 중간(순서 변경 가능), 4: 마무리(고정) */
+  /** 설문·동의: 0 제목형, 1–3 중간(DnD), 4 마무리. 테이블 가로형: 0 제목형, 1 표, 2 마무리 */
   paragraphs: WritingFormParagraph[]
 }
 
@@ -152,6 +268,13 @@ export const DEFAULT_SURVEY_PARAGRAPH_IDS = {
   score: 'survey-paragraph-score',
   subjective: 'survey-paragraph-subjective',
   closing: 'survey-paragraph-closing',
+} as const
+
+/** 직접 등록 — 테이블 가로형 기본 단락 id */
+export const DEFAULT_HORIZONTAL_TABLE_PARAGRAPH_IDS = {
+  title: 'horizontal-table-paragraph-title',
+  table: 'horizontal-table-paragraph-table',
+  closing: 'horizontal-table-paragraph-closing',
 } as const
 
 /** 직접 등록 — 신규 동의 양식 기본 단락 id */
@@ -244,6 +367,54 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         participatesInTitleNumbering: false,
         body: '내용을 자세히 검토하신 후 동의 여부를 결정하여 주시기 바랍니다.',
         showAgreementFooter: true,
+      },
+    ],
+  }
+}
+
+export function createDefaultHorizontalTableDraft(): WritingFormDraft {
+  return {
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'numeric' },
+    paragraphs: [
+      {
+        id: DEFAULT_HORIZONTAL_TABLE_PARAGRAPH_IDS.title,
+        kind: 'description',
+        variant: 'survey_title_with_period',
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        surveyTitle: '',
+        surveyDescription: '',
+        periodMode: 'immediate',
+        startAt: null,
+        endAt: null,
+        showWritingPeriodOnForm: true,
+      },
+      {
+        id: DEFAULT_HORIZONTAL_TABLE_PARAGRAPH_IDS.table,
+        kind: 'single_item',
+        variant: 'horizontal_table',
+        requiredMark: true,
+        paragraphTitle: '테이블_가로형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        columnHeaders: ['', '', ''],
+        dataRows: [['', '', '']],
+        bottomText: '',
+        showBottomText: false,
+        answerRequired: true,
+      },
+      {
+        id: DEFAULT_HORIZONTAL_TABLE_PARAGRAPH_IDS.closing,
+        kind: 'description',
+        variant: 'closing',
+        requiredMark: false,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        body: '설문에 참여해 주셔서 감사합니다.',
       },
     ],
   }
@@ -347,6 +518,10 @@ export function writingOutlineLabel(p: WritingFormParagraph): string {
   if (p.kind === 'description' && p.variant === 'closing') {
     const t = p.body.trim().slice(0, 24)
     return t || '마무리글 없음'
+  }
+  if (p.kind === 'single_item' && p.variant === 'horizontal_table') {
+    const t = p.paragraphTitle.trim()
+    return t || '테이블_가로형'
   }
   const t = p.paragraphTitle.trim()
   return t || '타이틀을 입력해 주세요'
