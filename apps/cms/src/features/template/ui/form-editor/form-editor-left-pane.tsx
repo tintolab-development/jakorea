@@ -705,11 +705,11 @@ export function FormEditorLeftPane({
   }
 
   const head = paragraphs[0]
-  const tail = paragraphs[4]
-  const middle = paragraphs.slice(1, 4)
+  const tail = paragraphs[paragraphs.length - 1]
+  const middle = paragraphs.slice(1, -1)
   const sortableIds = middle.map(p => p.id)
 
-  if (!head || !tail || middle.length !== 3) return null
+  if (!head || !tail || middle.length < 1) return null
 
   return (
     <div className="form-editor-left">

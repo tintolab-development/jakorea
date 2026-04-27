@@ -50,13 +50,18 @@ export function UserInfo({
 
   return (
     <div
-      className={['user-info-grid', isEditMode ? 'user-info-grid--edit' : ''].filter(Boolean).join(' ')}
+      className={['user-info-grid', isEditMode ? 'user-info-grid--edit' : '']
+        .filter(Boolean)
+        .join(' ')}
     >
       {fields.map(field => (
         <button
           key={field.key}
           type="button"
-          className={['user-info-grid__item', selected.has(field.key) ? 'user-info-grid__item--selected' : '']
+          className={[
+            'user-info-grid__item',
+            selected.has(field.key) ? 'user-info-grid__item--selected' : '',
+          ]
             .filter(Boolean)
             .join(' ')}
           onClick={() => onToggle(field.key)}
