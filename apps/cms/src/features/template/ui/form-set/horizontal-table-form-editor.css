@@ -24,5 +24,12 @@
 .horizontal-table-form-editor--embedded .full-page-modal__right {
   min-height: 0;
   overflow-y: auto;
-  scrollbar-gutter: stable;
+  /* 내부 스크롤은 유지하되 스크롤바 UI는 숨김 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge legacy */
+}
+
+.horizontal-table-form-editor--embedded .full-page-modal__right::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
