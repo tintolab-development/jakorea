@@ -239,32 +239,33 @@ export async function patchUserBasicInfo(
   }
   user.updatedAt = new Date().toISOString()
 
-  const refreshed = await getUserById(userId)
+  const refreshed = snapshotUserWithoutPassword(userId)
   if (!refreshed) {
     throw new Error('사용자를 찾을 수 없습니다.')
   }
   return refreshed
 }
 
-export async function getUserById(userId: UUID): Promise<Omit<User, 'password'> | null> {
-  await new Promise(resolve => setTimeout(resolve, 200))
-
+/** getUserById와 동일 스냅샷 — mockUsers·이력만 반영(추가 왕복 지연 없음) */
+function snapshotUserWithoutPassword(userId: UUID): Omit<User, 'password'> | null {
   const user = mockUsers.find(u => u.id === userId)
   if (!user) {
     return null
   }
-
-  // 실제 참여이력 데이터에서 계산
   const userHistories = mockUserHistories.filter(
     h => h.userId === user.id && h.finalStatus !== 'CANCELLED'
   )
-
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { password, ...userWithoutPassword } = user
   return {
     ...userWithoutPassword,
     participationHistory: userHistories.length,
   }
+}
+
+export async function getUserById(userId: UUID): Promise<Omit<User, 'password'> | null> {
+  await new Promise(resolve => setTimeout(resolve, 200))
+  return snapshotUserWithoutPassword(userId)
 }
 
 /**
