@@ -46,12 +46,14 @@ export interface UserProfileField {
 export interface UserProfileParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'user_profile'
+  answerRequired?: boolean
   fields: UserProfileField[]
 }
 
 export interface ScoreSelectParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'score_select'
+  answerRequired?: boolean
   scaleMin: number
   scaleMax: number
   /** 척도 끝 라벨 등 — 키는 문자열 숫자 */
@@ -67,6 +69,7 @@ export interface SubjectiveItem {
 export interface SubjectiveParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'subjective'
+  answerRequired?: boolean
   items: SubjectiveItem[]
 }
 
@@ -78,12 +81,26 @@ export interface ClosingParagraph extends WritingFormParagraphBase {
   showAgreementFooter?: boolean
 }
 
-/** 동의서 일반 본문(카드 타이틀/설명 + 본문 영역) */
-export interface AgreementRichTextParagraph extends WritingFormParagraphBase {
-  kind: 'single_item'
-  variant: 'agreement_rich_text'
-  bodyPlaceholder: string
-  bodyText: string
+/** 동의 양식 하단 고정 시스템 행(날짜·서명) — CMS authoring / 응답 write에서 각각 표시 */
+export type AgreementSystemPreset = 'agreement_date' | 'agreement_signature'
+
+/** 시스템 날짜·서명 본문 표시 — authoring(작성/미리보기) vs write(응답 입력) */
+export type AgreementSystemBodyDisplayMode = 'authoring' | 'write'
+
+/** 설명글·기타형 — 시스템 등 본문 에디터 없음 */
+export interface SystemParagraph extends WritingFormParagraphBase {
+  kind: 'description'
+  variant: 'system'
+  /** 동의 양식 전용 고정 항목; 없으면 기타(빈 본문·설문 테스트용 등) */
+  systemPreset?: AgreementSystemPreset
+}
+
+export function isAgreementLockedSystemParagraph(p: WritingFormParagraph): boolean {
+  return (
+    p.kind === 'description' &&
+    p.variant === 'system' &&
+    (p.systemPreset === 'agreement_date' || p.systemPreset === 'agreement_signature')
+  )
 }
 
 /** 동의서 설명글·텍스트형 — 제목 / 설명 / 한 줄 본문 + 답변 필수 토글 */
@@ -96,27 +113,114 @@ export interface AgreementExplanationTextParagraph extends WritingFormParagraphB
   answerRequired: boolean
 }
 
-export interface AgreementPrivacyRow {
+/** 단일 항목 미리보기 전용(추후 스키마 정리 시 통합 가능) */
+export type ShortEssayParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'short_essay'
+  answerRequired?: boolean
+  showItemTitle?: boolean
+  items?: Array<{ id: string; label?: string; placeholder?: string; bodyText: string }>
+  bodyPlaceholder: string
+  bodyText: string
+}
+
+export interface MultipleChoiceItem {
   id: string
   label: string
-  placeholder: string
 }
 
-/** 개인정보 수집 고지 항목(불릿 + 라벨 + 입력) */
-export interface AgreementPrivacyRowsParagraph extends WritingFormParagraphBase {
+export type MultipleChoiceParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
-  variant: 'agreement_privacy_rows'
-  rows: AgreementPrivacyRow[]
+  variant: 'multiple_choice'
+  answerRequired?: boolean
+  /** true면 미리보기가 체크박스(복수 선택) */
+  allowMultiple?: boolean
+  items: MultipleChoiceItem[]
+  /** 단일 선택 미리보기 */
+  selectedPreviewSingleId?: string | null
+  /** 복수 선택 미리보기 */
+  selectedPreviewMultipleIds?: string[]
 }
 
-/** 표 형 고지 + 동의/비동의 라디오(미리보기) */
-export interface AgreementTableConsentParagraph extends WritingFormParagraphBase {
+/** 에디터 전용: 객관식 항목 영역 포커스(우측「항목 수정」·바디 선택 테두리). 실제 항목 id와 겹치지 않게 둠 */
+export const FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID = '__form_editor_multiple_choice_items__' as const
+
+/** 객관식형 기본 항목 4개 (스펙: 신규 시 한 세트) */
+export function createDefaultMultipleChoiceItems(): MultipleChoiceItem[] {
+  return [
+    { id: 'multiple-choice-item-1', label: 'text 1' },
+    { id: 'multiple-choice-item-2', label: 'text 2' },
+    { id: 'multiple-choice-item-3', label: 'text 3' },
+    { id: 'multiple-choice-item-4', label: 'text 4' },
+  ]
+}
+
+export type DropdownParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
-  variant: 'agreement_table_consent'
-  headerValues: [string, string, string]
-  cellValues: [string, string, string]
-  footerDescription: string
-  selectedPreviewConsent: 'agree' | 'disagree'
+  variant: 'dropdown'
+  answerRequired?: boolean
+}
+
+/** 단일항목 날짜/시간형 — 우측 패널 유형 (기본: 날짜) */
+export type DateTimeFieldMode = 'date' | 'time' | 'date_time'
+
+export type DateTimeParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'date_time'
+  answerRequired?: boolean
+  /** 날짜 / 시간 / 날짜+시간 */
+  fieldMode?: DateTimeFieldMode
+  /** 날짜·날짜+시간일 때 기간(시작~종료) */
+  periodEnabled?: boolean
+}
+
+export type StarRateParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'star_rate'
+  answerRequired?: boolean
+  /** 미리보기: 1–5까지 노란 별 개수, 없음·null이면 전부 회색 */
+  selectedPreviewStars?: number | null
+}
+
+export interface ScaleTypeItem {
+  id: string
+  label: string
+}
+
+export type ScaleTypeParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'scale_type'
+  answerRequired?: boolean
+  items: ScaleTypeItem[]
+  /** 미리보기에서 강조(민트)되는 항목 id */
+  selectedPreviewItemId?: string | null
+}
+
+/** 점수 선택형 기본 5단계 (Likert 문구) */
+export function createDefaultScaleTypeItems(): ScaleTypeItem[] {
+  return [
+    { id: 'scale-type-item-1', label: '전혀 그렇지 않다' },
+    { id: 'scale-type-item-2', label: '그렇지 않다' },
+    { id: 'scale-type-item-3', label: '보통이다' },
+    { id: 'scale-type-item-4', label: '그렇다' },
+    { id: 'scale-type-item-5', label: '매우 그렇다' },
+  ]
+}
+
+export type UserInfoParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'user_info'
+  answerRequired?: boolean
+  /** 버튼형 노출 필드 목록(순서 유지) */
+  userFields?: Array<{ key: string; label: string }>
+  /** 미리보기에서 선택된 필드 key */
+  selectedUserFieldKeys?: string[]
+}
+
+export type FileAttachmentParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'file_attachment'
+  answerRequired?: boolean
 }
 
 /** 캔버스에서 선택된 테이블 행(헤더 행 vs 데이터 행) — 에디터에서 단락 id별로 보관해 위젯마다 분리 */
@@ -838,18 +942,24 @@ export type WritingFormParagraph =
   | UserProfileParagraph
   | ScoreSelectParagraph
   | SubjectiveParagraph
-  | AgreementRichTextParagraph
   | AgreementExplanationTextParagraph
-  | AgreementPrivacyRowsParagraph
-  | AgreementTableConsentParagraph
+  | ShortEssayParagraph
+  | MultipleChoiceParagraph
+  | DropdownParagraph
+  | DateTimeParagraph
+  | StarRateParagraph
+  | ScaleTypeParagraph
+  | UserInfoParagraph
+  | FileAttachmentParagraph
   | HorizontalTableParagraph
   | VerticalTableParagraph
+  | SystemParagraph
   | ClosingParagraph
 
 export interface WritingFormDraft {
   schemaVersion: 1
   formSettings: WritingFormSettings
-  /** 설문·동의: 0 제목형, 1–3 중간(DnD), 4 마무리. 테이블 가로형: 가로형 단락만(1개 이상, DnD) */
+  /** 설문: 0 제목형, 1–3 중간(DnD), 4 마무리. 동의: 0 제목형, 1–2 중간(DnD), 3 마무리 등. 가로형: 가로형 단락만 */
   paragraphs: WritingFormParagraph[]
 }
 
@@ -894,12 +1004,13 @@ export function paragraphsAreOnlyTableLayoutParagraphs(paragraphs: WritingFormPa
   return paragraphs.length > 0 && paragraphs.every(isTableLayoutParagraph)
 }
 
-/** 직접 등록 — 신규 동의 양식 기본 단락 id */
+/** 직접 등록 — 신규 동의 양식 기본 단락 id (제목형·텍스트형·주관식형·시스템 2종·마무리글형) */
 export const DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS = {
   title: 'agreement-direct-paragraph-title',
   explanationText: 'agreement-direct-paragraph-explanation-text',
-  privacy: 'agreement-direct-paragraph-privacy',
-  table: 'agreement-direct-paragraph-table',
+  shortEssay: 'agreement-direct-paragraph-short-essay',
+  systemDate: 'agreement-direct-paragraph-system-date',
+  systemSignature: 'agreement-direct-paragraph-system-signature',
   closing: 'agreement-direct-paragraph-closing',
 } as const
 
@@ -921,7 +1032,7 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         periodMode: 'immediate',
         startAt: null,
         endAt: null,
-        showWritingPeriodOnForm: true,
+        showWritingPeriodOnForm: false,
       },
       {
         id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.explanationText,
@@ -931,48 +1042,62 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
-        bodyPlaceholder: '텍스트를 작성해 주세요',
+        bodyPlaceholder: '한 줄 안내를 입력해 주세요',
         bodyText: '',
         answerRequired: true,
       },
       {
-        id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.privacy,
+        id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.shortEssay,
         kind: 'single_item',
-        variant: 'agreement_privacy_rows',
+        variant: 'short_essay',
         requiredMark: true,
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
-        rows: [
+        answerRequired: true,
+        showItemTitle: true,
+        items: [
           {
-            id: 'agreement-privacy-row-1',
+            id: 'agreement-short-essay-item-1',
             label: '수집하는 개인정보 항목',
-            placeholder: 'ex) 이름, 연락처',
+            placeholder: '내용을 입력해 주세요',
+            bodyText: '',
           },
           {
-            id: 'agreement-privacy-row-2',
-            label: '수집 및 이용 목적',
-            placeholder: 'ex) 이벤트 진행 및 당첨자 안내',
+            id: 'agreement-short-essay-item-2',
+            label: '수집·이용 목적',
+            placeholder: '내용을 입력해 주세요',
+            bodyText: '',
           },
           {
-            id: 'agreement-privacy-row-3',
-            label: '보유 및 이용 기간',
-            placeholder: 'ex) 회원 탈퇴 후 1개월 또는 개인정보수집 동의일로부터 5년',
+            id: 'agreement-short-essay-item-3',
+            label: '보유·이용 기간',
+            placeholder: '내용을 입력해 주세요',
+            bodyText: '',
           },
         ],
+        bodyPlaceholder: '각 항목에 내용을 입력해 주세요',
+        bodyText: '',
       },
       {
-        id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.table,
-        kind: 'single_item',
-        variant: 'agreement_table_consent',
-        requiredMark: true,
-        paragraphTitle: '',
+        id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.systemDate,
+        kind: 'description',
+        variant: 'system',
+        systemPreset: 'agreement_date',
+        requiredMark: false,
+        paragraphTitle: '날짜 유형',
         paragraphDescription: '',
-        participatesInTitleNumbering: true,
-        headerValues: ['', '', ''],
-        cellValues: ['', '', ''],
-        footerDescription: '',
-        selectedPreviewConsent: 'agree',
+        participatesInTitleNumbering: false,
+      },
+      {
+        id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.systemSignature,
+        kind: 'description',
+        variant: 'system',
+        systemPreset: 'agreement_signature',
+        requiredMark: false,
+        paragraphTitle: '서명란 유형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
       },
       {
         id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.closing,
@@ -983,10 +1108,70 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         paragraphDescription: '',
         participatesInTitleNumbering: false,
         body: '내용을 자세히 검토하신 후 동의 여부를 결정하여 주시기 바랍니다.',
-        showAgreementFooter: true,
       },
     ],
   }
+}
+
+/**
+ * 동의 양식: 마지막이 마무리이고 그 앞이 서명·날짜 시스템 단락이면 하단 3개는 드래그 제외.
+ * 그 외: 첫 단락 + middle + 마지막 1개만 고정.
+ */
+export function getWritingFormHeadMiddlePinnedTail(paragraphs: WritingFormParagraph[]): {
+  head: WritingFormParagraph
+  middle: WritingFormParagraph[]
+  pinnedTail: WritingFormParagraph[]
+} | null {
+  if (paragraphs.length < 3) return null
+  const head = paragraphs[0]!
+  const n = paragraphs.length
+  const last = paragraphs[n - 1]!
+  const p2 = paragraphs[n - 2]
+  const p3 = paragraphs[n - 3]
+  const triplePinnedAgreement =
+    n >= 5 &&
+    last.kind === 'description' &&
+    last.variant === 'closing' &&
+    p2 != null &&
+    p2.kind === 'description' &&
+    p2.variant === 'system' &&
+    p2.systemPreset === 'agreement_signature' &&
+    p3 != null &&
+    p3.kind === 'description' &&
+    p3.variant === 'system' &&
+    p3.systemPreset === 'agreement_date'
+
+  if (triplePinnedAgreement) {
+    return {
+      head,
+      middle: paragraphs.slice(1, -3),
+      pinnedTail: paragraphs.slice(-3),
+    }
+  }
+  return {
+    head,
+    middle: paragraphs.slice(1, -1),
+    pinnedTail: [last],
+  }
+}
+
+/** 첫·마지막(또는 동의 하단 3고정) 단락 고정, 사이 middle만 재정렬 */
+export function reorderHeadMiddleTail(
+  paragraphs: WritingFormParagraph[],
+  activeId: string,
+  overId: string
+): WritingFormParagraph[] {
+  const split = getWritingFormHeadMiddlePinnedTail(paragraphs)
+  if (split == null) return paragraphs
+  const { head, middle, pinnedTail } = split
+  const ids = middle.map(p => p.id)
+  const oldIndex = ids.indexOf(activeId)
+  const newIndex = ids.indexOf(overId)
+  if (oldIndex < 0 || newIndex < 0) return paragraphs
+  const nextMiddle = [...middle]
+  const [removed] = nextMiddle.splice(oldIndex, 1)
+  nextMiddle.splice(newIndex, 0, removed)
+  return [head, ...nextMiddle, ...pinnedTail]
 }
 
 export function createDefaultHorizontalTableDraft(): WritingFormDraft {
@@ -1033,12 +1218,13 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         periodMode: 'immediate',
         startAt: null,
         endAt: null,
-        showWritingPeriodOnForm: true,
+        showWritingPeriodOnForm: false,
       },
       {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.user,
         kind: 'single_item',
         variant: 'user_profile',
+        answerRequired: true,
         requiredMark: true,
         paragraphTitle: '설문자 정보',
         paragraphDescription: '',
@@ -1049,6 +1235,7 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.score,
         kind: 'single_item',
         variant: 'score_select',
+        answerRequired: true,
         requiredMark: true,
         paragraphTitle: '타이틀을 입력해 주세요',
         paragraphDescription: '',
@@ -1065,6 +1252,7 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.subjective,
         kind: 'single_item',
         variant: 'subjective',
+        answerRequired: true,
         requiredMark: true,
         paragraphTitle: '타이틀을 입력해 주세요',
         paragraphDescription: '구체적인 의견을 작성해 주세요.',
@@ -1085,24 +1273,191 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
   }
 }
 
-/** 중간 3단락(인덱스 1–3)만 재정렬 */
+/** 첫·마지막 고정, 가운데 단락만 재정렬(설문 5단락·동의 4단락 등 공통) */
 export function reorderWritingFormMiddleParagraphs(
   paragraphs: WritingFormParagraph[],
   activeId: string,
   overId: string
 ): WritingFormParagraph[] {
-  if (paragraphs.length !== 5) return paragraphs
-  const head = paragraphs[0]
-  const tail = paragraphs[4]
-  const middle = paragraphs.slice(1, 4)
-  const ids = middle.map(p => p.id)
-  const oldIndex = ids.indexOf(activeId)
-  const newIndex = ids.indexOf(overId)
-  if (oldIndex < 0 || newIndex < 0) return paragraphs
-  const nextMiddle = [...middle]
-  const [removed] = nextMiddle.splice(oldIndex, 1)
-  nextMiddle.splice(newIndex, 0, removed)
-  return [head, ...nextMiddle, tail]
+  if (paragraphs.length < 3) return paragraphs
+  return reorderHeadMiddleTail(paragraphs, activeId, overId)
+}
+
+/** 양식 테스트 > 설명글 유형 — 제목형·텍스트형·기타·마무리글형 */
+export const DEFAULT_FORM_TEST_EXPLANATION_PARAGRAPH_IDS = {
+  title: 'form-test-explanation-title',
+  text: 'form-test-explanation-text',
+  system: 'form-test-explanation-system',
+  closing: 'form-test-explanation-closing',
+} as const
+
+export function createExplanationTypesPreviewDraft(): WritingFormDraft {
+  return {
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'numeric' },
+    paragraphs: [
+      {
+        id: DEFAULT_FORM_TEST_EXPLANATION_PARAGRAPH_IDS.title,
+        kind: 'description',
+        variant: 'survey_title_with_period',
+        requiredMark: true,
+        paragraphTitle: '제목형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        surveyTitle: '',
+        surveyDescription: '',
+        periodMode: 'immediate',
+        startAt: null,
+        endAt: null,
+        showWritingPeriodOnForm: false,
+      },
+      {
+        id: DEFAULT_FORM_TEST_EXPLANATION_PARAGRAPH_IDS.text,
+        kind: 'single_item',
+        variant: 'agreement_explanation_text',
+        requiredMark: true,
+        paragraphTitle: '텍스트형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        bodyPlaceholder: '텍스트를 작성해 주세요',
+        bodyText: '',
+        answerRequired: true,
+      },
+      {
+        id: DEFAULT_FORM_TEST_EXPLANATION_PARAGRAPH_IDS.system,
+        kind: 'description',
+        variant: 'system',
+        requiredMark: false,
+        paragraphTitle: '기타',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+      },
+      {
+        id: DEFAULT_FORM_TEST_EXPLANATION_PARAGRAPH_IDS.closing,
+        kind: 'description',
+        variant: 'closing',
+        requiredMark: false,
+        paragraphTitle: '마무리글형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        body: '설문에 참여해 주셔서 감사합니다.',
+      },
+    ],
+  }
+}
+
+/** `FormTestSingleItemFullpageModal` — 제목·8종 단일항목 스텁·마무리 */
+export function createSingleItemPreviewDraft(): WritingFormDraft {
+  const base = createDefaultSurveyDraft()
+  const title = base.paragraphs[0]!
+  const closing = base.paragraphs[4]!
+  const middle: WritingFormParagraph[] = [
+    {
+      id: 'short-essay',
+      kind: 'single_item',
+      variant: 'short_essay',
+      answerRequired: true,
+      showItemTitle: false,
+      items: [
+        {
+          id: 'short-essay-item-1',
+          label: 'Title 01',
+          placeholder: '답변을 입력해 주세요',
+          bodyText: '',
+        },
+      ],
+      bodyPlaceholder: '답변을 입력해 주세요',
+      bodyText: '',
+      requiredMark: true,
+      paragraphTitle: '주관식형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'multiple-choice',
+      kind: 'single_item',
+      variant: 'multiple_choice',
+      answerRequired: true,
+      allowMultiple: false,
+      items: createDefaultMultipleChoiceItems(),
+      selectedPreviewSingleId: null,
+      selectedPreviewMultipleIds: [],
+      requiredMark: true,
+      paragraphTitle: '객관식형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'dropdown',
+      kind: 'single_item',
+      variant: 'dropdown',
+      answerRequired: true,
+      requiredMark: true,
+      paragraphTitle: '드롭다운형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'date-time',
+      kind: 'single_item',
+      variant: 'date_time',
+      answerRequired: true,
+      fieldMode: 'date',
+      periodEnabled: false,
+      requiredMark: true,
+      paragraphTitle: '날짜/시간형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'star-rate',
+      kind: 'single_item',
+      variant: 'star_rate',
+      answerRequired: true,
+      selectedPreviewStars: null,
+      requiredMark: true,
+      paragraphTitle: '별점형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'scale-type',
+      kind: 'single_item',
+      variant: 'scale_type',
+      answerRequired: true,
+      items: createDefaultScaleTypeItems(),
+      selectedPreviewItemId: 'scale-type-item-5',
+      requiredMark: true,
+      paragraphTitle: '점수 선택형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'user-info',
+      kind: 'single_item',
+      variant: 'user_info',
+      answerRequired: true,
+      requiredMark: true,
+      paragraphTitle: '사용자 정보형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'file-attachment',
+      kind: 'single_item',
+      variant: 'file_attachment',
+      answerRequired: true,
+      requiredMark: true,
+      paragraphTitle: '파일 첨부형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+  ]
+  return {
+    schemaVersion: 1,
+    formSettings: base.formSettings,
+    paragraphs: [title, ...middle, closing],
+  }
 }
 
 export function writingOutlineLabel(p: WritingFormParagraph): string {
@@ -1110,9 +1465,23 @@ export function writingOutlineLabel(p: WritingFormParagraph): string {
     const t = p.surveyTitle.trim()
     return t || '타이틀을 입력해 주세요'
   }
+  if (p.kind === 'description' && p.variant === 'system') {
+    if (p.systemPreset === 'agreement_date') return '날짜 유형'
+    if (p.systemPreset === 'agreement_signature') return '서명란 유형'
+    const t = p.paragraphTitle.trim()
+    return t || '기타'
+  }
   if (p.kind === 'description' && p.variant === 'closing') {
     const t = p.body.trim().slice(0, 24)
     return t || '마무리글 없음'
+  }
+  if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') {
+    const t = p.paragraphTitle.trim()
+    return t || '설명 안내'
+  }
+  if (p.kind === 'single_item' && p.variant === 'short_essay') {
+    const t = p.paragraphTitle.trim()
+    return t || '동의 내용'
   }
   if (p.kind === 'single_item' && p.variant === 'horizontal_table') {
     const t = p.paragraphTitle.trim()

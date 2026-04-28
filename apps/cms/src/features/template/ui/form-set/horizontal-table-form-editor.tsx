@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { message } from 'antd'
 import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
 import {
@@ -71,6 +71,16 @@ export function HorizontalTableFormEditor({
     activeParagraphId,
   })
 
+  const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
+
+  const handleSelectParagraph = useCallback(
+    (id: string) => {
+      setActiveParagraphId(id)
+      setSingleItemListActiveItemId(null)
+    },
+    [setActiveParagraphId]
+  )
+
   const handlePreview = useCallback(() => {
     message.info('미리보기는 추후 연동 예정입니다.')
   }, [])
@@ -84,7 +94,7 @@ export function HorizontalTableFormEditor({
       paragraphs={draft.paragraphs}
       titleNumbering={draft.formSettings.titleNumbering}
       selectedCardId={activeParagraphId}
-      onSelectCard={setActiveParagraphId}
+      onSelectCard={handleSelectParagraph}
       onReorderMiddle={onReorderMiddle}
       updateParagraph={updateParagraph}
       editorKind="horizontal_table"
@@ -94,6 +104,11 @@ export function HorizontalTableFormEditor({
       verticalTableBodyRowSelection={verticalTableBodyRowSelection}
       onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
       middleParagraphActions={middleParagraphActions}
+      singleItemListActiveItemId={singleItemListActiveItemId}
+      onSelectSingleItemListItem={(paragraphId, itemId) => {
+        setActiveParagraphId(paragraphId)
+        setSingleItemListActiveItemId(itemId)
+      }}
     />
   )
 
@@ -103,7 +118,7 @@ export function HorizontalTableFormEditor({
       sortableMiddle={sortableMiddle}
       pinnedBottom={pinnedBottom}
       selectedItemId={activeParagraphId}
-      onSelectItem={setActiveParagraphId}
+      onSelectItem={handleSelectParagraph}
       onReorderMiddle={onReorderMiddle}
       fieldListBottomSlot={
         <FormEditorTitleNumberingField
@@ -119,6 +134,7 @@ export function HorizontalTableFormEditor({
         updateParagraph={updateParagraph}
         editorKind="horizontal_table"
         showTitleNumbering={false}
+        singleItemListActiveItemId={singleItemListActiveItemId}
         horizontalTableRowSelection={activeHorizontalTableRowSelection}
         onHorizontalTableBodyRowDeleted={focusHorizontalTableBodyRow}
         verticalTableBodyRowSelection={verticalTableBodyRowSelection}

@@ -1,0 +1,31 @@
+.paragraph-file-upload {
+  width: 100%;
+}
+
+.paragraph-file-upload__input {
+  display: none;
+}
+
+.paragraph-file-upload__content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.paragraph-file-upload__guide {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.paragraph-file-upload__guide-line {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}

@@ -22,6 +22,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [Type safety & consistency](./coding/type-safety-and-consistency.md) — no deprecated APIs  
 - [Refactoring principles](./coding/refactoring-principles.md)  
 - [Template feature implementation](./coding/template-management.md) — `features/template`, `pages/templates`  
+- [Form editor modes (view / edit / write)](./template/form-editor-modes.mdc) — 템플릿 양식 모드·설명글 예외  
 
 ## UI / UX
 
@@ -87,4 +88,4 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 
 ---
 
-**Last updated:** 2026-04-21
+**Last updated:** 2026-04-28

@@ -13,6 +13,17 @@
   padding-right: 4px;
 }
 
+.form-editor-left__system-fixed {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-top: -12px;
+}
+
+.form-editor-left__system-fixed-row {
+  width: 100%;
+}
+
 .form-editor-card .paragraph-card__header {
   gap: 4px;
 }
@@ -126,6 +137,13 @@
   justify-content: flex-start;
 }
 
+.form-editor-card__toggles-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+}
+
 /* 우측 네비: 고정 행은 드래그 핸들 없이 동일 높이 유지 */
 .template-modal-nav-item--pinned {
   padding-right: 14px;
@@ -166,6 +184,13 @@
   line-height: 140%; /* 25.2px */
   margin-bottom: 10px;
   display: block;
+}
+
+.form-editor-right-panel__system-hint {
+  color: var(--gray-85969-d, #85969d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .form-editor-right-panel__form {
@@ -895,81 +920,6 @@
   color: var(--main-BK, #3d3d3d);
 }
 
-/* 동의 양식 — 개인정보 항목 행 */
-.form-editor-agreement-privacy-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.form-editor-agreement-privacy-rows__row {
-  display: grid;
-  grid-template-columns: auto 1fr minmax(0, 2.5fr);
-  align-items: center;
-  gap: 8px 12px;
-}
-
-.form-editor-agreement-privacy-rows__bullet {
-  color: var(--main-BK, #3d3d3d);
-  font-weight: 700;
-}
-
-.form-editor-agreement-privacy-rows__label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--main-BK, #3d3d3d);
-  white-space: nowrap;
-}
-
-.form-editor-agreement-privacy-rows__input {
-  min-width: 0;
-}
-
-/* 동의 양식 — 표 + 동의 라디오 */
-.form-editor-agreement-table {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.form-editor-agreement-table__row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.form-editor-agreement-table__row--header {
-  background: #f4f6f7;
-}
-
-.form-editor-agreement-table__cell.ant-input {
-  border-radius: 0;
-  border: none;
-  border-right: 1px solid var(--table-line, #e0e0e0);
-}
-
-.form-editor-agreement-table__row .form-editor-agreement-table__cell:last-child {
-  border-right: none;
-}
-
-.form-editor-agreement-table__row:not(:last-child) .form-editor-agreement-table__cell {
-  border-bottom: 1px solid var(--table-line, #e0e0e0);
-}
-
-.form-editor-agreement-table__footer {
-  margin-top: 12px;
-  resize: vertical;
-}
-
-.form-editor-agreement-consent-radios {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px 24px;
-  margin-top: 4px;
-}
-
 /* 동의 양식 마무리 — 일자·서명 placeholder */
 .form-editor-agreement-footer__bar {
   margin-top: 12px;
@@ -985,6 +935,64 @@
   opacity: 0.85;
 }
 
+/* 객관식 — 우측 패널 항목 수정 */
+.form-editor-mc-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.form-editor-mc-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.form-editor-mc-item__drag {
+  flex-shrink: 0;
+  width: 32px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #85969d;
+  cursor: grab;
+}
+
+.form-editor-mc-item__drag:active {
+  cursor: grabbing;
+}
+
+.form-editor-mc-item__field-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-editor-mc-item__index {
+  flex-shrink: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.form-editor-mc-item__field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.form-editor-mc-item__remove {
+  margin-top: 8px;
+}
 /* 테이블 가로형 — 행·열 추가 버튼(푸터 `paragraph-card__actions-row` 안에서 나란히 배치) */
 .form-editor-horizontal-table-dimension-actions {
   display: flex;
@@ -1011,8 +1019,8 @@
 /* 테이블 가로형 — 작성 양식 직접 등록 */
 .form-editor-horizontal-table-wrap {
   width: 100%;
-  max-width: 1404px;
-  align-self: flex-start;
+  max-width: none;
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   gap: 16px;

@@ -1,0 +1,36 @@
+---
+description: /template 양식의 view·edit·write 모드와 설명글 단락 예외
+globs:
+  - "apps/cms/src/features/template/**/*.{ts,tsx}"
+  - "apps/cms/src/pages/templates/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# 양식 표시 모드 (view / edit / write)
+
+`/template`(템플릿) 경로로 **생성·수정**되는 양식은 이후 사용자에게 **배포**되어 **응답 데이터**를 받는다. 단락·필드 UI는 아래 세 모드를 구분해 설계한다.
+
+| 모드 | 의미 | CMS에서 대략 해당하는 상황 |
+|------|------|------------------------------|
+| **view** | 읽기·미선택 상태 | 양식 편집 중 해당 단락/카드 **미선택** · **미리보기** |
+| **edit** | 작성자가 양식 정의를 고침 | 편집 중 단락 **선택** 또는 **포커스** |
+| **write** | 배포된 양식에 응답자가 값을 입력 | LMS·응답 화면 등 **최종 사용자 입력** (CMS 에디터 밖) |
+
+## 코드와의 대응 (현재 CMS 템플릿 에디터)
+
+- 좌측 카드·단락 본문에 넘기는 `isEditMode` / `isParagraphSelected` 류 플래그는 **authoring 맥락에서의 view ↔ edit**에 가깝다. **write**는 별도 앱·라우트에서 동일 스키마를 소비할 때 구현한다.
+- 새 단락을 만들 때 **세 모드를 모두 고려할 필요는 없고**, “CMS에서는 view/edit만”, “응답 앱에서는 write”처럼 **렌더 진입점**을 나눈다.
+
+## 설명글(description) 단락
+
+**설명글**은 사용자 입력을 받지 않고 **양식에 대한 안내 문구**만 제공한다.
+
+- **write 모드는 존재하지 않는다.** (응답 스키마에 값을 쌓지 않음)
+- 설명글 계열 UI는 **view / edit(작성자 편집)** 만 다루면 된다.
+
+관련 구현: `paragraph/explanation/*`, `kind === 'description'` 단락, `ParagraphInput`의 `paragraph-input--view` / `paragraph-input--edit`.
+
+## 함께 볼 것
+
+- [template-management.md](../coding/template-management.md) — 템플릿 기능 경계
+- [paragraph-card-slots.mdc](./paragraph-card-slots.mdc) — 카드 슬롯·헤더

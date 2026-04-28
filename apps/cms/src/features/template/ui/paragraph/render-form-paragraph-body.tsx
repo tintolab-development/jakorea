@@ -1,20 +1,27 @@
 import {
+  FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID,
   normalizeHorizontalTableParagraph,
   normalizeVerticalTableParagraph,
+  type AgreementSystemBodyDisplayMode,
   type FormEditorKind,
   type HorizontalTableRowSelection,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { ClosingParagraphBody } from '@/features/template/ui/paragraph/explanation/closing-paragraph-body'
+import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
 import { ExplanationText } from '@/features/template/ui/paragraph/explanation/text'
 import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/title'
-import { AgreementPrivacyRowsBody } from '@/features/template/ui/paragraph/single-item/agreement-privacy-rows-paragraph-body'
-import { AgreementRichTextBody } from '@/features/template/ui/paragraph/single-item/agreement-rich-text-paragraph-body'
-import { AgreementTableConsentBody } from '@/features/template/ui/paragraph/single-item/agreement-table-consent-paragraph-body'
+import { DateTime } from '@/features/template/ui/paragraph/single-item/date-time'
+import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
+import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
+import { MultipleChoice } from '@/features/template/ui/paragraph/single-item/multiple-choice'
+import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-type'
 import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/single-item/horizontal-table-paragraph-body'
 import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/single-item/vertical-table-paragraph-body'
 import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
+import { ShortEssay } from '@/features/template/ui/paragraph/single-item/short-essay'
+import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate'
 import { SubjectiveParagraphBody } from '@/features/template/ui/paragraph/single-item/subjective-paragraph-body'
+import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
 
 export type FormUpdateParagraph = (
@@ -28,6 +35,12 @@ export type RenderFormParagraphBodyOptions = {
   /** 세로형 테이블 본문 행 선택(캔버스) — 폼 에디터에서 단일 전역 */
   verticalTableRowSelection?: number | null
   onVerticalTableRowSelectionChange?: (row: number | null) => void
+  singleItemListActiveItemId?: string | null
+  onSelectSingleItemListItem?: (itemId: string | null) => void
+  /** 동의 시스템 단락(날짜·서명) — 기본 authoring; 응답 앱에서 write 전달 */
+  agreementSystemDisplayMode?: AgreementSystemBodyDisplayMode
+  agreementSystemParticipantName?: string
+  agreementSystemNow?: Date
 }
 
 export function renderFormParagraphBody(
@@ -44,7 +57,6 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isParagraphSelected}
-          titlePh={editorKind === 'agreement' ? '동의서 제목 입력' : undefined}
           periodLabel={editorKind === 'survey' ? '설문 기간' : undefined}
         />
       )
@@ -66,33 +78,9 @@ export function renderFormParagraphBody(
       )
     case 'subjective':
       return <SubjectiveParagraphBody paragraph={p} isEditMode={isParagraphSelected} />
-    case 'agreement_rich_text':
-      return (
-        <AgreementRichTextBody
-          paragraph={p}
-          onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
-        />
-      )
     case 'agreement_explanation_text':
       return (
         <ExplanationText
-          paragraph={p}
-          onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
-        />
-      )
-    case 'agreement_privacy_rows':
-      return (
-        <AgreementPrivacyRowsBody
-          paragraph={p}
-          onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
-        />
-      )
-    case 'agreement_table_consent':
-      return (
-        <AgreementTableConsentBody
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isParagraphSelected}
@@ -128,9 +116,96 @@ export function renderFormParagraphBody(
         />
       )
     }
+    case 'system': {
+      if (
+        p.kind === 'description' &&
+        p.variant === 'system' &&
+        (p.systemPreset === 'agreement_date' || p.systemPreset === 'agreement_signature')
+      ) {
+        return (
+          <ExplanationSystem
+            paragraph={p}
+            onChange={next => updateParagraph(p.id, () => next)}
+            isEditMode={isParagraphSelected}
+            displayMode={options?.agreementSystemDisplayMode ?? 'authoring'}
+            participantName={options?.agreementSystemParticipantName}
+            now={options?.agreementSystemNow}
+          />
+        )
+      }
+      return null
+    }
     case 'closing':
+      return null
+    case 'short_essay':
       return (
-        <ClosingParagraphBody
+        <ShortEssay
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+          activeItemId={options?.singleItemListActiveItemId}
+          onSelectItem={options?.onSelectSingleItemListItem}
+        />
+      )
+    case 'multiple_choice': {
+      const usesMcItemsFocus = options?.onSelectSingleItemListItem != null
+      const itemsEditActive = usesMcItemsFocus
+        ? isParagraphSelected &&
+          options?.singleItemListActiveItemId === FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID
+        : isParagraphSelected
+      return (
+        <MultipleChoice
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+          itemsEditActive={itemsEditActive}
+          onActivateItemsEditor={
+            usesMcItemsFocus
+              ? () => options!.onSelectSingleItemListItem!(FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID)
+              : undefined
+          }
+        />
+      )
+    }
+    case 'dropdown':
+      return (
+        <Dropdown
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+        />
+      )
+    case 'date_time':
+      return (
+        <DateTime paragraph={p} onChange={next => updateParagraph(p.id, () => next)} />
+      )
+    case 'star_rate':
+      return (
+        <StarRate
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+        />
+      )
+    case 'scale_type':
+      return (
+        <ScaleType
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+        />
+      )
+    case 'user_info':
+      return (
+        <UserInfo
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isParagraphSelected}
+        />
+      )
+    case 'file_attachment':
+      return (
+        <FileAttachment
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isParagraphSelected}

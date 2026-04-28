@@ -7,6 +7,7 @@ export type FormParagraphCardActionHandlers = {
   onAdd?: () => void
   onDuplicate?: () => void
   onDelete?: () => void
+  onAddItem?: () => void
 }
 
 export type FormParagraphCardActionsProps = FormParagraphCardActionHandlers & {
@@ -21,10 +22,24 @@ export function FormParagraphCardActions({
   onAdd,
   onDuplicate,
   onDelete,
+  onAddItem,
   disabled = false,
 }: FormParagraphCardActionsProps = {}) {
   return (
     <>
+      {onAddItem ? (
+        <CmsButton
+          variant="primary"
+          type="button"
+          disabled={disabled}
+          onClick={e => {
+            stopCardClick(e)
+            onAddItem()
+          }}
+        >
+          + 항목 추가
+        </CmsButton>
+      ) : null}
       <CmsButton
         variant="secondary"
         type="button"

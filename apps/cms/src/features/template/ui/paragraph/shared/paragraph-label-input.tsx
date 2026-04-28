@@ -6,7 +6,7 @@ import './paragraph-label-input.css'
 
 export interface ParagraphLabelInputProps extends Omit<CmsTextAreaProps, 'label'> {
   /** 상단 라벨(앞에 · 구분자가 붙습니다) */
-  label: ReactNode
+  label?: ReactNode
 }
 
 function cn(...parts: Array<string | false | null | undefined>): string {
@@ -25,13 +25,21 @@ export function ParagraphLabelInput({
 
   return (
     <div className={cn('paragraph-label-input', className)}>
-      <label className="paragraph-label-input__label" htmlFor={controlId}>
-        <span className="paragraph-label-input__bullet" aria-hidden>
-          ·
-        </span>
-        {label}
-      </label>
-      <CmsTextArea {...rest} id={controlId} width={width} className="paragraph-label-input__textarea" />
+      {label != null && label !== '' ? (
+        <label className="paragraph-label-input__label" htmlFor={controlId}>
+          <span className="paragraph-label-input__bullet" aria-hidden>
+            ·
+          </span>
+          {label}
+        </label>
+      ) : null}
+      <CmsTextArea
+        {...rest}
+        id={controlId}
+        width={width}
+        className="paragraph-label-input__textarea"
+        rows={1}
+      />
     </div>
   )
 }

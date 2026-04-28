@@ -1,12 +1,10 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { message } from 'antd'
-import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import {
-  createDefaultSurveyDraft,
+  createSingleItemPreviewDraft,
   DEFAULT_SURVEY_PARAGRAPH_IDS,
-  reorderWritingFormMiddleParagraphs,
+  reorderHeadMiddleTail,
   type FormTitleNumberingStyle,
   type WritingFormDraft,
   type WritingFormParagraph,
@@ -17,24 +15,38 @@ import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
 } from '@/features/template/ui/form-editor/form-editor-right-panel'
+import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
+import './form-test-single-item-fullpage-modal.css'
 
-type NewSurveyFormQuery = {
-  mode?: string
-  type?: string
-  id?: string
+export interface FormTestSingleItemFullpageModalProps {
+  open: boolean
+  onClose: () => void
 }
 
-export default function NewSurveyForm() {
-  const { setParams } = useQueryParams<NewSurveyFormQuery>()
-  const [draft, setDraft] = useState<WritingFormDraft>(() => createDefaultSurveyDraft())
+/**
+ * 양식 테스트 > 단일 항목 — `NewSurveyForm`과 동일하게 `FormEditorLeftPane`로 제목·8종·마무리 단락을 렌더
+ */
+export function FormTestSingleItemFullpageModal({
+  open,
+  onClose,
+}: FormTestSingleItemFullpageModalProps) {
+  const [draft, setDraft] = useState<WritingFormDraft>(() => createSingleItemPreviewDraft())
+  const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
     DEFAULT_SURVEY_PARAGRAPH_IDS.title
   )
-  const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
 
-  const handleClose = useCallback(() => {
-    setParams({ mode: undefined, type: undefined, id: undefined })
-  }, [setParams])
+  useEffect(() => {
+    if (!open) return
+    setDraft(createSingleItemPreviewDraft())
+    setActiveParagraphId(DEFAULT_SURVEY_PARAGRAPH_IDS.title)
+    setSingleItemListActiveItemId(null)
+  }, [open])
+
+  const handleSelectCard = useCallback((id: string) => {
+    setActiveParagraphId(id)
+    setSingleItemListActiveItemId(null)
+  }, [])
 
   const updateParagraph = useCallback(
     (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => {
@@ -49,7 +61,7 @@ export default function NewSurveyForm() {
   const onReorderMiddle = useCallback((activeId: string, overId: string) => {
     setDraft(prev => ({
       ...prev,
-      paragraphs: reorderWritingFormMiddleParagraphs(prev.paragraphs, activeId, overId),
+      paragraphs: reorderHeadMiddleTail(prev.paragraphs, activeId, overId),
     }))
   }, [])
 
@@ -70,9 +82,9 @@ export default function NewSurveyForm() {
       displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
     })
     return {
-      pinnedTop: line(head),
+      pinnedTop: line(head!),
       sortableMiddle: middle.map(line),
-      pinnedBottom: line(tail),
+      pinnedBottom: line(tail!),
     }
   }, [draft])
 
@@ -84,24 +96,20 @@ export default function NewSurveyForm() {
     message.success('저장 API 연동 전입니다.')
   }, [])
 
-  const handleSelectParagraph = useCallback((id: string) => {
-    setActiveParagraphId(id)
-    setSingleItemListActiveItemId(null)
-  }, [])
-
   return (
     <TemplateFullpageModal
-      open
-      onClose={handleClose}
-      title="설문조사"
-      description="* 등록 시 최소 1개의 단락은 존재해야 합니다."
+      className="form-test-single-item-fullpage-modal"
+      open={open}
+      onClose={onClose}
+      title="단일 항목 모음"
+      description="* 양식 테스트용 미리보기입니다."
       templateTabType="writing"
       leftContent={
         <FormEditorLeftPane
           paragraphs={draft.paragraphs}
           titleNumbering={draft.formSettings.titleNumbering}
           selectedCardId={activeParagraphId}
-          onSelectCard={handleSelectParagraph}
+          onSelectCard={handleSelectCard}
           onReorderMiddle={onReorderMiddle}
           updateParagraph={updateParagraph}
           editorKind="survey"
@@ -119,7 +127,7 @@ export default function NewSurveyForm() {
           sortableMiddle={sortableMiddle}
           pinnedBottom={pinnedBottom}
           selectedItemId={activeParagraphId}
-          onSelectItem={handleSelectParagraph}
+          onSelectItem={handleSelectCard}
           onReorderMiddle={onReorderMiddle}
           fieldListBottomSlot={
             <FormEditorTitleNumberingField

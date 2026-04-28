@@ -1,0 +1,20 @@
+.short-essay-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.short-essay-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.short-essay-item-row .paragraph-label-input {
+  flex: 1 1 auto;
+}
+
+.short-essay-item-delete {
+  align-self: flex-start;
+  margin-top: 40px;
+}

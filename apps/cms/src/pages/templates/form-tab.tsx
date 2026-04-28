@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Space, Typography } from 'antd'
 import { TemplateListCard } from '@/features/template/ui/template-list-card'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { FormTestExplanationFullpageModal } from './form-test-explanation-fullpage-modal'
+import { FormTestSingleItemFullpageModal } from './form-test-single-item-fullpage-modal'
 import { FormTemplateFullpageModal } from './form-template-fullpage-modal'
 
 const FORM_TEST_TABLES_HREF = '/templates/form-test/tables'
@@ -14,6 +16,8 @@ const FORM_TEST_TABLES_HREF = '/templates/form-test/tables'
 export function FormTab() {
   const navigate = useNavigate()
   const [formModalOpen, setFormModalOpen] = useState(false)
+  const [singleItemModalOpen, setSingleItemModalOpen] = useState(false)
+  const [explanationModalOpen, setExplanationModalOpen] = useState(false)
 
   return (
     <>
@@ -40,6 +44,24 @@ export function FormTab() {
               variant="default"
               size="medium"
               width="100%"
+              onClick={() => setSingleItemModalOpen(true)}
+            >
+              단일 항목 모음
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="default"
+              size="medium"
+              width="100%"
+              onClick={() => setExplanationModalOpen(true)}
+            >
+              설명글 유형 모음
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="default"
+              size="medium"
+              width="100%"
               onClick={() => setFormModalOpen(true)}
             >
               폼 양식 관리
@@ -49,6 +71,14 @@ export function FormTab() {
       </div>
 
       <FormTemplateFullpageModal open={formModalOpen} onClose={() => setFormModalOpen(false)} />
+      <FormTestSingleItemFullpageModal
+        open={singleItemModalOpen}
+        onClose={() => setSingleItemModalOpen(false)}
+      />
+      <FormTestExplanationFullpageModal
+        open={explanationModalOpen}
+        onClose={() => setExplanationModalOpen(false)}
+      />
     </>
   )
 }
