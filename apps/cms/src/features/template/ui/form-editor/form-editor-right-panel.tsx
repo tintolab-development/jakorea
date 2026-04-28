@@ -20,14 +20,17 @@ import type {
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   DATE_TIME_FIELD_MODE_OPTIONS,
+  normalizeVerticalChoiceOptions,
   normalizeVerticalTableParagraph,
   verticalTableParagraphOutlineLabel,
+  verticalTableParagraphWithChoiceOptions,
   FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID,
   isAgreementLockedSystemParagraph,
   writingOutlineLabel,
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorHorizontalTableBodyFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-body-fields'
 import { FormEditorHorizontalTableHeaderFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-header-fields'
+import { FormEditorOptionListEditor } from '@/features/template/ui/form-editor/form-editor-option-list-editor'
 import { FormEditorVerticalTableRowFields } from '@/features/template/ui/form-editor/form-editor-vertical-table-row-fields'
 import './form-editor.css'
 
@@ -186,20 +189,47 @@ function FormEditorVerticalTableCustomFields({
   updateParagraph: FormEditorRightPanelProps['updateParagraph']
   onBodyRowDeleted?: (nextRowIndex: number) => void
 }) {
-  if (rowSelection == null || rowSelection.paragraphId !== paragraph.id) return null
+  const p = normalizeVerticalTableParagraph(paragraph)
+  const choiceFlavor =
+    p.verticalTableFlavor === 'single_choice' || p.verticalTableFlavor === 'multiple_choice'
 
-  const rowIndex = rowSelection.row
-  const rowCount = Math.max(1, paragraph.rows.length)
-  if (rowIndex < 0 || rowIndex >= rowCount) return null
+  const rowFields =
+    rowSelection != null &&
+    rowSelection.paragraphId === paragraph.id &&
+    rowSelection.row >= 0 &&
+    rowSelection.row < Math.max(1, p.rows.length) ? (
+      <FormEditorVerticalTableRowFields
+        paragraph={paragraph}
+        paragraphId={paragraph.id}
+        rowIndex={rowSelection.row}
+        updateParagraph={updateParagraph}
+        onBodyRowDeleted={onBodyRowDeleted}
+      />
+    ) : null
+
+  const choiceOptionsEditor = choiceFlavor ? (
+    <div className="form-editor-right-panel__field">
+      <FormEditorOptionListEditor
+        values={normalizeVerticalChoiceOptions(p.verticalChoiceOptions)}
+        onChange={options =>
+          updateParagraph(paragraph.id, cur => {
+            if (cur.kind !== 'single_item' || cur.variant !== 'vertical_table') return cur
+            return verticalTableParagraphWithChoiceOptions(cur as VerticalTableParagraph, options)
+          })
+        }
+        addLabel="+ 항목 추가"
+        addButtonIcon={false}
+      />
+    </div>
+  ) : null
+
+  if (!choiceFlavor && rowFields == null) return null
 
   return (
-    <FormEditorVerticalTableRowFields
-      paragraph={paragraph}
-      paragraphId={paragraph.id}
-      rowIndex={rowIndex}
-      updateParagraph={updateParagraph}
-      onBodyRowDeleted={onBodyRowDeleted}
-    />
+    <>
+      {choiceOptionsEditor}
+      {rowFields}
+    </>
   )
 }
 

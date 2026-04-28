@@ -25,6 +25,8 @@ import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/rende
 const VERTICAL_TABLE_TEXT_CELL_OPTIONS = [{ value: 'text', label: '텍스트형' }]
 const VERTICAL_TABLE_SUBJECTIVE_CELL_OPTIONS = [{ value: 'subjective', label: '주관식형' }]
 const VERTICAL_TABLE_DATETIME_CELL_OPTIONS = [{ value: 'dateTime', label: '날짜/시간형' }]
+const VERTICAL_TABLE_SINGLE_CELL_OPTIONS = [{ value: 'single_choice', label: '단일선택형' }]
+const VERTICAL_TABLE_MULTIPLE_CELL_OPTIONS = [{ value: 'multiple_choice', label: '다중선택형' }]
 
 type FormEditorVerticalTableRowFieldsProps = {
   paragraph: VerticalTableParagraph
@@ -69,13 +71,21 @@ function FormEditorVerticalTableRowFieldsBody({
       ? VERTICAL_TABLE_SUBJECTIVE_CELL_OPTIONS
       : p.verticalTableFlavor === 'date_time'
         ? VERTICAL_TABLE_DATETIME_CELL_OPTIONS
-        : VERTICAL_TABLE_TEXT_CELL_OPTIONS
+        : p.verticalTableFlavor === 'single_choice'
+          ? VERTICAL_TABLE_SINGLE_CELL_OPTIONS
+          : p.verticalTableFlavor === 'multiple_choice'
+            ? VERTICAL_TABLE_MULTIPLE_CELL_OPTIONS
+            : VERTICAL_TABLE_TEXT_CELL_OPTIONS
   const cellKindValue =
     p.verticalTableFlavor === 'subjective'
       ? 'subjective'
       : p.verticalTableFlavor === 'date_time'
         ? 'dateTime'
-        : 'text'
+        : p.verticalTableFlavor === 'single_choice'
+          ? 'single_choice'
+          : p.verticalTableFlavor === 'multiple_choice'
+            ? 'multiple_choice'
+            : 'text'
   const row = p.rows[rowIndex]!
   const stageCount: 1 | 2 = row.stageCount === 2 ? 2 : 1
   const stages = stageCount === 1 ? [0] : [0, 1]
@@ -248,7 +258,8 @@ function FormEditorVerticalTableRowFieldsBody({
                       placeholder={DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER}
                     />
                   </Form.Item>
-                ) : (
+                ) : p.verticalTableFlavor === 'single_choice' ||
+                  p.verticalTableFlavor === 'multiple_choice' ? null : (
                   <Form.Item
                     className="form-editor-horizontal-table-body-fields__content-form-item"
                     label="내용"

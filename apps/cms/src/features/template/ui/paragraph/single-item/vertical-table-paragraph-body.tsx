@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { DatePicker, Input, TimePicker } from 'antd'
+import type { RadioChangeEvent } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
@@ -12,10 +13,13 @@ import {
   DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER,
   effectiveVerticalCompositeTimeHint,
   effectiveVerticalRowDateTimeModes,
+  normalizeVerticalChoiceOptions,
   normalizeVerticalTableParagraph,
   verticalTableHeaderPlaceholder,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
+import '@/features/template/ui/form-editor/form-editor.css'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import '@/features/template/ui/paragraph/single-item/vertical-table-paragraph-body.css'
@@ -33,11 +37,13 @@ function isEventFromTableInteractive(target: EventTarget | null) {
         '.ant-picker',
         '.ant-picker-input',
         '.ant-checkbox',
+        '.ant-checkbox-wrapper',
+        '.ant-radio',
+        '.ant-radio-wrapper',
         'input',
         'textarea',
         'label',
         'button',
-        '.ant-radio',
       ].join(',')
     ) != null
   )
@@ -134,6 +140,10 @@ export function VerticalTableParagraphBody({
   onTableRowSelectionChange?: (row: number | null) => void
 }) {
   const p = useMemo(() => normalizeVerticalTableParagraph(paragraph), [paragraph])
+  const choiceOpts = useMemo(
+    () => normalizeVerticalChoiceOptions(p.verticalChoiceOptions),
+    [p.verticalChoiceOptions]
+  )
   const [internalRow, setInternalRow] = useState<number | null>(null)
   const isControlled = onTableRowSelectionChange != null
   const selectedRow = isControlled ? (controlledRow ?? null) : internalRow
@@ -186,6 +196,23 @@ export function VerticalTableParagraphBody({
     })
   }
 
+  const setMultipleChoiceStage = (rowIdx: number, stageIdx: number, values: string[]) => {
+    onChange({
+      ...p,
+      rows: replaceRowStage(p.rows, rowIdx, r => {
+        if (r.stageCount === 1) {
+          return { ...r, choiceMultipleSelections: [values] as [string[]] }
+        }
+        const cur0 = r.choiceMultipleSelections?.[0] ?? []
+        const cur1 = r.choiceMultipleSelections?.[1] ?? []
+        if (stageIdx === 0) {
+          return { ...r, choiceMultipleSelections: [values, cur1] as [string[], string[]] }
+        }
+        return { ...r, choiceMultipleSelections: [cur0, values] as [string[], string[]] }
+      }),
+    })
+  }
+
   const toggleRow = (rowIdx: number) => {
     setSelectedRow(selectedRow === rowIdx ? null : rowIdx)
   }
@@ -208,6 +235,8 @@ export function VerticalTableParagraphBody({
         : VERTICAL_TABLE_TEXT_CELL_PLACEHOLDER
 
     const isDateTime = p.verticalTableFlavor === 'date_time'
+    const isSingleChoice = p.verticalTableFlavor === 'single_choice'
+    const isMultipleChoice = p.verticalTableFlavor === 'multiple_choice'
     const dtModes = isDateTime ? effectiveVerticalRowDateTimeModes(row) : null
     const dtModeAtStage = dtModes ? (dtModes[stageIdx as 0 | 1] ?? 'date') : 'date'
 
@@ -377,6 +406,63 @@ export function VerticalTableParagraphBody({
               onClick={e => e.stopPropagation()}
             >
               {renderDateTimeBody()}
+            </div>
+          ) : isSingleChoice ? (
+            <div
+              className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body form-editor-vertical-table__cell-input-shell--body-choice"
+            >
+              <CmsRadioGroup
+                className="form-editor-horizontal-table__field-radios"
+                size="large"
+                value={cell.trim() !== '' ? cell : undefined}
+                onChange={(e: RadioChangeEvent) => {
+                  if (!isEditMode) return
+                  setCell(rowIdx, stageIdx, e.target.value)
+                }}
+                onFocus={() => setSelectedRow(rowIdx)}
+                disabled={!isEditMode}
+              >
+                {choiceOpts.map((o, i) => (
+                  <CmsRadio key={`${rowIdx}-${stageIdx}-${i}`} size="large" value={o}>
+                    {o}
+                  </CmsRadio>
+                ))}
+              </CmsRadioGroup>
+            </div>
+          ) : isMultipleChoice ? (
+            <div
+              className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body form-editor-vertical-table__cell-input-shell--body-choice"
+            >
+              <div
+                className="form-editor-horizontal-table__field-checks"
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
+                }}
+              >
+                {choiceOpts.map((o, i) => {
+                  const checked = (row.choiceMultipleSelections?.[stageIdx] ?? []).includes(o)
+                  return (
+                    <CmsCheckbox
+                      key={`${rowIdx}-${stageIdx}-${i}`}
+                      checkboxSize="large"
+                      className="form-editor-horizontal-table__field-check-label"
+                      checked={checked}
+                      disabled={!isEditMode}
+                      onChange={e => {
+                        if (!isEditMode) return
+                        const cur = row.choiceMultipleSelections?.[stageIdx] ?? []
+                        const s = new Set(cur)
+                        if (e.target.checked) s.add(o)
+                        else s.delete(o)
+                        setMultipleChoiceStage(rowIdx, stageIdx, [...s])
+                      }}
+                      onFocus={() => setSelectedRow(rowIdx)}
+                    >
+                      {o}
+                    </CmsCheckbox>
+                  )
+                })}
+              </div>
             </div>
           ) : isEditMode ? (
             <div

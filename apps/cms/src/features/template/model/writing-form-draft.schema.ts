@@ -255,7 +255,7 @@ export type HorizontalTableFieldCellValue =
   | { kind: 'subjective' | 'dropdown' | 'dateTime' | 'single'; value: string }
   | { kind: 'multiple'; values: string[] }
 
-export const HORIZONTAL_TABLE_MIN_COLUMN_COUNT = 2
+export const HORIZONTAL_TABLE_MIN_COLUMN_COUNT = 1
 
 /** 주관식 등 입력창 안내(플레이스홀더) 기본 문구 */
 export const HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER = '내용을 입력해 주세요'
@@ -355,7 +355,8 @@ export interface HorizontalTableParagraph extends WritingFormParagraphBase {
  * `dateTimeCompositeTimeHints`: 날짜/시간형 — 스테이지가 「날짜+시간」일 때 시간 픽커 안내 문자열 튜플(인덱스=스테이지).
  * `dateTimeStage0AuxTime`: 합성이 **첫 스테이지**에 놓일 때 시간(HH:mm) 값.
  * `dateTimeStage1Time`: 합성이 **둘째 스테이지**일 때 시간(HH:mm)·레거시.
- * 레거시 `dateTimeSingleStageMode`는 스테이지 1행에서 `dateTimeStageModes`로 승격. */
+ * 레거시 `dateTimeSingleStageMode`는 스테이지 1행에서 `dateTimeStageModes`로 승격.
+ * `choiceMultipleSelections`: 다중선택형(`multiple_choice`) — 스테이지별 선택값 배열(`length === stageCount`). */
 export type VerticalTableRow =
   | {
       stageCount: 1
@@ -370,6 +371,8 @@ export type VerticalTableRow =
       dateTimeCompositeTimeHints?: [string]
       dateTimeStage0AuxTime?: string
       dateTimeStage1Time?: string
+      /** 다중선택형 — 스테이지 1개일 때 길이 1 */
+      choiceMultipleSelections?: [string[]]
     }
   | {
       stageCount: 2
@@ -381,6 +384,8 @@ export type VerticalTableRow =
       dateTimeStage0AuxTime?: string
       /** 첫 번째 스테이지 유형이 합성이 아니고 둘째가 합성일 때 시간(HH:mm) — 과거 레거시 */
       dateTimeStage1Time?: string
+      /** 다중선택형 — 스테이지 2개 */
+      choiceMultipleSelections?: [string[], string[]]
     }
 
 /** 빈 문자열 가드 없이 우선 사용 — 주관식 td 기본 플레이스홀더 */
@@ -391,15 +396,23 @@ export const DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER = '내용을 입력해
  * - `text`: 테이블_세로형(텍스트형)
  * - `subjective`: 테이블_세로형(주관식형) — 행별 주관식(자유 서술) 입력
  * - `date_time`: 테이블_세로형(날짜/시간형)
+ * - `single_choice` / `multiple_choice`: 테이블_세로형(단일·다중 선택형) — `verticalChoiceOptions` 공통 선택지
  */
-export type VerticalTableFlavor = 'text' | 'subjective' | 'date_time'
+export type VerticalTableFlavor =
+  | 'text'
+  | 'subjective'
+  | 'date_time'
+  | 'single_choice'
+  | 'multiple_choice'
 
-/** 작성 양식 — 테이블 세로형 (`verticalTableFlavor`로 텍스트형 / 주관식형 / 날짜·시간형 구분) */
+/** 작성 양식 — 테이블 세로형 (`verticalTableFlavor`로 세부 유형 구분) */
 export interface VerticalTableParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'vertical_table'
   /** 생략·불명시는 `text`(기존 JSON 호환) */
   verticalTableFlavor: VerticalTableFlavor
+  /** 단일·다중 선택형 공통 선택지(생략 시 `['A','B','C']`) */
+  verticalChoiceOptions?: string[]
   rows: VerticalTableRow[]
   bottomText: string
   showBottomText: boolean
@@ -774,8 +787,109 @@ export function horizontalTableSetFieldCellValue(
   return { ...n, columnFields: fieldCols, fieldDataRows: base }
 }
 
-function defaultVerticalTableRowSingle(): VerticalTableRow {
+/** 세로형 단일·다중 선택 공통 선택지 (비어 있으면 정규화 시 기본값) */
+export function normalizeVerticalChoiceOptions(raw: unknown): string[] {
+  if (!Array.isArray(raw) || raw.length === 0) return [...DEFAULT_CHOICE_OPTIONS]
+  const opts = raw.map(x => String(x ?? '').trim()).filter(s => s.length > 0)
+  return opts.length > 0 ? opts : [...DEFAULT_CHOICE_OPTIONS]
+}
+
+function parseStringArrayUnknown(u: unknown): string[] {
+  if (!Array.isArray(u)) return []
+  return u.map(x => String(x ?? '').trim()).filter(s => s.length > 0)
+}
+
+function filterSelectionsByOptions(selected: string[], optionSet: string[]): string[] {
+  const set = new Set(optionSet)
+  return selected.filter(s => set.has(s))
+}
+
+function rehomeVerticalSingleCell(value: string, options: string[]): string {
+  const v = value.trim()
+  return v !== '' && options.includes(v) ? v : ''
+}
+
+export function coerceVerticalTableFlavor(raw: unknown): VerticalTableFlavor {
+  if (raw === 'subjective') return 'subjective'
+  if (raw === 'date_time') return 'date_time'
+  if (raw === 'single_choice') return 'single_choice'
+  if (raw === 'multiple_choice') return 'multiple_choice'
+  return 'text'
+}
+
+/** 새 행·빈 단락 초기화용 — 단락 flavor에 맞는 기본 행 */
+export function defaultVerticalTableRowForFlavor(flavor: VerticalTableFlavor): VerticalTableRow {
+  if (flavor === 'multiple_choice') {
+    return { stageCount: 1, headers: [''], cells: [''], choiceMultipleSelections: [[]] }
+  }
   return { stageCount: 1, headers: [''], cells: [''] }
+}
+
+function normalizeRowsForVerticalFlavor(
+  rows: VerticalTableRow[],
+  flavor: VerticalTableFlavor,
+  options: string[]
+): VerticalTableRow[] {
+  return rows.map(r => normalizeVerticalTableRowChoices(r, flavor, options))
+}
+
+function normalizeVerticalTableRowChoices(
+  row: VerticalTableRow,
+  flavor: VerticalTableFlavor,
+  options: string[]
+): VerticalTableRow {
+  const r = normalizeVerticalTableRow(row)
+  if (flavor === 'single_choice') {
+    if (r.stageCount === 1) {
+      return {
+        ...r,
+        cells: [rehomeVerticalSingleCell(r.cells[0] ?? '', options)],
+      }
+    }
+    return {
+      ...r,
+      cells: [
+        rehomeVerticalSingleCell(r.cells[0] ?? '', options),
+        rehomeVerticalSingleCell(r.cells[1] ?? '', options),
+      ],
+    }
+  }
+  if (flavor === 'multiple_choice') {
+    if (r.stageCount === 1) {
+      const prev = parseStringArrayUnknown(r.choiceMultipleSelections?.[0])
+      return {
+        ...r,
+        choiceMultipleSelections: [filterSelectionsByOptions(prev, options)],
+      }
+    }
+    const p0 = parseStringArrayUnknown(r.choiceMultipleSelections?.[0])
+    const p1 = parseStringArrayUnknown(r.choiceMultipleSelections?.[1])
+    return {
+      ...r,
+      choiceMultipleSelections: [
+        filterSelectionsByOptions(p0, options),
+        filterSelectionsByOptions(p1, options),
+      ],
+    }
+  }
+  const rest = r as VerticalTableRow & { choiceMultipleSelections?: unknown }
+  if (rest.choiceMultipleSelections !== undefined) {
+    const { choiceMultipleSelections: _drop, ...noChoice } = rest
+    return noChoice as VerticalTableRow
+  }
+  return r
+}
+
+/** 선택지 목록 변경 시 단락 전체 행 값 재맞춤 */
+export function verticalTableParagraphWithChoiceOptions(
+  p: VerticalTableParagraph,
+  nextOptions: string[]
+): VerticalTableParagraph {
+  const n = normalizeVerticalTableParagraph(p)
+  return normalizeVerticalTableParagraph({
+    ...n,
+    verticalChoiceOptions: normalizeVerticalChoiceOptions(nextOptions),
+  })
 }
 
 function isDateTimeFieldMode(x: unknown): x is DateTimeFieldMode {
@@ -790,6 +904,7 @@ export function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
         headers?: string[]
         cells?: string[]
         placeholderHints?: string[]
+        choiceMultipleSelections?: unknown
         dateTimeStage1Time?: unknown
         dateTimeStageModes?: unknown
         dateTimeCompositeTimeHints?: unknown
@@ -801,6 +916,10 @@ export function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
         stageCount: 2,
         headers: [h[0] ?? '', h[1] ?? ''],
         cells: [c[0] ?? '', c[1] ?? ''],
+      }
+      const cms2 = r.choiceMultipleSelections
+      if (Array.isArray(cms2) && cms2.length >= 2) {
+        row.choiceMultipleSelections = [parseStringArrayUnknown(cms2[0]), parseStringArrayUnknown(cms2[1])]
       }
       const ph = r.placeholderHints
       if (ph != null && ph.length >= 1) {
@@ -845,6 +964,12 @@ export function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
   }
   if (ph1 != null && ph1.length >= 1) {
     row1.placeholderHints = [ph1[0] ?? '']
+  }
+  if (raw != null && typeof raw === 'object') {
+    const cms1 = (raw as { choiceMultipleSelections?: unknown }).choiceMultipleSelections
+    if (Array.isArray(cms1) && cms1.length >= 1) {
+      row1.choiceMultipleSelections = [parseStringArrayUnknown(cms1[0])]
+    }
   }
   if (raw != null && typeof raw === 'object') {
     const rawObj = raw as {
@@ -918,21 +1043,19 @@ export function effectiveVerticalCompositeTimeHint(row: VerticalTableRow, stageI
 }
 
 export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): VerticalTableParagraph {
+  const verticalTableFlavor = coerceVerticalTableFlavor(p.verticalTableFlavor)
+  const verticalChoiceOptions = normalizeVerticalChoiceOptions(p.verticalChoiceOptions)
   const rowsIn = p.rows ?? []
   let rows = rowsIn.map(normalizeVerticalTableRow)
   if (rows.length === 0) {
-    rows = [defaultVerticalTableRowSingle()]
+    rows = [defaultVerticalTableRowForFlavor(verticalTableFlavor)]
   }
-  const verticalTableFlavor: VerticalTableFlavor =
-    p.verticalTableFlavor === 'subjective'
-      ? 'subjective'
-      : p.verticalTableFlavor === 'date_time'
-        ? 'date_time'
-        : 'text'
+  rows = normalizeRowsForVerticalFlavor(rows, verticalTableFlavor, verticalChoiceOptions)
   return {
     ...p,
     variant: 'vertical_table',
     verticalTableFlavor,
+    verticalChoiceOptions,
     rows,
     bottomText: p.bottomText ?? '',
     showBottomText: Boolean(p.showBottomText),
@@ -946,6 +1069,8 @@ export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): Vert
 export function verticalTableParagraphOutlineLabel(flavor: VerticalTableFlavor): string {
   if (flavor === 'subjective') return '테이블_세로형(주관식형)'
   if (flavor === 'date_time') return '테이블_세로형(날짜/시간형)'
+  if (flavor === 'single_choice') return '테이블_세로형(단일선택형)'
+  if (flavor === 'multiple_choice') return '테이블_세로형(다중선택형)'
   return '테이블_세로형(텍스트형)'
 }
 
@@ -962,7 +1087,11 @@ export function createVerticalTableParagraph(
     paragraphTitle: verticalTableParagraphOutlineLabel(flavor),
     paragraphDescription: '',
     participatesInTitleNumbering: true,
-    rows: [defaultVerticalTableRowSingle()],
+    rows: [defaultVerticalTableRowForFlavor(flavor)],
+    verticalChoiceOptions:
+      flavor === 'single_choice' || flavor === 'multiple_choice'
+        ? [...DEFAULT_CHOICE_OPTIONS]
+        : undefined,
     bottomText: '',
     showBottomText: false,
     showBottomConsent: false,
@@ -976,6 +1105,8 @@ export function cloneVerticalTableParagraph(source: VerticalTableParagraph, newI
   return {
     ...n,
     id: newId,
+    verticalChoiceOptions:
+      n.verticalChoiceOptions != null ? [...n.verticalChoiceOptions] : undefined,
     rows: n.rows.map(r => {
       if (r.stageCount === 2) {
         const out: VerticalTableRow = {
@@ -985,6 +1116,12 @@ export function cloneVerticalTableParagraph(source: VerticalTableParagraph, newI
         }
         if (r.placeholderHints) {
           out.placeholderHints = [...r.placeholderHints] as [string, string]
+        }
+        if (r.choiceMultipleSelections) {
+          out.choiceMultipleSelections = [
+            [...r.choiceMultipleSelections[0]],
+            [...r.choiceMultipleSelections[1]],
+          ]
         }
         if (r.dateTimeStage1Time !== undefined) {
           out.dateTimeStage1Time = r.dateTimeStage1Time
@@ -1011,6 +1148,9 @@ export function cloneVerticalTableParagraph(source: VerticalTableParagraph, newI
       if (r.placeholderHints) {
         out1.placeholderHints = [...r.placeholderHints] as [string]
       }
+      if (r.choiceMultipleSelections) {
+        out1.choiceMultipleSelections = [[...r.choiceMultipleSelections[0]]]
+      }
       if (r.dateTimeSingleStageMode !== undefined) {
         out1.dateTimeSingleStageMode = r.dateTimeSingleStageMode
       }
@@ -1035,7 +1175,7 @@ export function verticalTableAddRow(p: VerticalTableParagraph): VerticalTablePar
   const n = normalizeVerticalTableParagraph(p)
   return {
     ...n,
-    rows: [...n.rows, defaultVerticalTableRowSingle()],
+    rows: [...n.rows, defaultVerticalTableRowForFlavor(n.verticalTableFlavor)],
   }
 }
 
@@ -1056,7 +1196,71 @@ export function verticalTableRemoveRow(
  * - 1단→2단: 첫 쌍 유지, 두 번째 쌍은 빈 값으로 추가.
  * 캔버스·우측 패널 넘버링은 각각 `verticalTableHeaderPlaceholder` / `verticalTablePanelStageTitle`로 `stageCount` 반영.
  */
-export function verticalTableRowWithStageCount(row: VerticalTableRow, stageCount: 1 | 2): VerticalTableRow {
+export function verticalTableRowWithStageCount(
+  row: VerticalTableRow,
+  stageCount: 1 | 2,
+  flavor: VerticalTableFlavor
+): VerticalTableRow {
+  if (flavor !== 'date_time') {
+    const base = normalizeVerticalTableRow(row)
+    const b = base as VerticalTableRow
+    const h0 = b.headers[0] ?? ''
+    const c0 = b.cells[0] ?? ''
+    const ph0 = b.placeholderHints?.[0]
+    const ph1 = b.placeholderHints?.[1]
+
+    if (stageCount === 1) {
+      if (flavor === 'multiple_choice') {
+        const kept = parseStringArrayUnknown(b.choiceMultipleSelections?.[0])
+        const out: VerticalTableRow = {
+          stageCount: 1,
+          headers: [h0],
+          cells: [c0],
+          choiceMultipleSelections: [kept],
+        }
+        if (ph0 !== undefined || ph1 !== undefined || b.placeholderHints != null) {
+          out.placeholderHints = [ph0 ?? '']
+        }
+        return normalizeVerticalTableRow(out)
+      }
+      const out: VerticalTableRow = {
+        stageCount: 1,
+        headers: [h0],
+        cells: [c0],
+      }
+      if (ph0 !== undefined || ph1 !== undefined || b.placeholderHints != null) {
+        out.placeholderHints = [ph0 ?? '']
+      }
+      return normalizeVerticalTableRow(out)
+    }
+
+    if (flavor === 'multiple_choice') {
+      const first = parseStringArrayUnknown(b.choiceMultipleSelections?.[0])
+      const second =
+        b.stageCount === 2 ? parseStringArrayUnknown(b.choiceMultipleSelections?.[1]) : []
+      const out: VerticalTableRow = {
+        stageCount: 2,
+        headers: [h0, b.headers[1] ?? ''],
+        cells: [c0, b.cells[1] ?? ''],
+        choiceMultipleSelections: [first, second],
+      }
+      if (ph0 !== undefined || ph1 !== undefined || b.placeholderHints != null) {
+        out.placeholderHints = [ph0 ?? '', ph1 ?? '']
+      }
+      return normalizeVerticalTableRow(out)
+    }
+
+    const out: VerticalTableRow = {
+      stageCount: 2,
+      headers: [h0, b.headers[1] ?? ''],
+      cells: [c0, b.cells[1] ?? ''],
+    }
+    if (ph0 !== undefined || ph1 !== undefined || b.placeholderHints != null) {
+      out.placeholderHints = [ph0 ?? '', ph1 ?? '']
+    }
+    return normalizeVerticalTableRow(out)
+  }
+
   const base = normalizeVerticalTableRow(row)
   const b = base as VerticalTableRow
   const h0 = b.headers[0] ?? ''

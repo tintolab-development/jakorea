@@ -73,6 +73,13 @@ function mergeVerticalRow(prev: VerticalTableRow, next: VerticalTableRow): Verti
     ) {
       out.dateTimeStage1Time = p1.dateTimeStage1Time
     }
+    if (
+      p1?.choiceMultipleSelections != null &&
+      out.stageCount === 1 &&
+      n.choiceMultipleSelections == null
+    ) {
+      ;(out as VerticalTableRow).choiceMultipleSelections = [[...p1.choiceMultipleSelections[0]]]
+    }
     return normalizeVerticalTableRow(out) as VerticalTableRow
   }
   const p2 = p.stageCount === 2 ? p : null
@@ -109,6 +116,16 @@ function mergeVerticalRow(prev: VerticalTableRow, next: VerticalTableRow): Verti
   ) {
     out2.dateTimeStage0AuxTime = p2.dateTimeStage0AuxTime
   }
+  if (
+    p2?.choiceMultipleSelections != null &&
+    out2.stageCount === 2 &&
+    out2.choiceMultipleSelections === undefined
+  ) {
+    out2.choiceMultipleSelections = [
+      [...p2.choiceMultipleSelections[0]],
+      [...p2.choiceMultipleSelections[1]],
+    ]
+  }
   return normalizeVerticalTableRow(out2) as VerticalTableRow
 }
 
@@ -142,7 +159,10 @@ export function useVerticalTableRowFieldActions({
     (next: 1 | 2) => {
       updateParagraph(paragraphId, cur => {
         if (cur.kind !== 'single_item' || cur.variant !== 'vertical_table') return cur
-        return patchVerticalRow(cur, rowIndex, r => verticalTableRowWithStageCount(r, next))
+        const vtp = normalizeVerticalTableParagraph(cur as VerticalTableParagraph)
+        return patchVerticalRow(cur, rowIndex, r =>
+          verticalTableRowWithStageCount(r, next, vtp.verticalTableFlavor)
+        )
       })
     },
     [paragraphId, rowIndex, updateParagraph]

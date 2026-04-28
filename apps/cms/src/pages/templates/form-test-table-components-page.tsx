@@ -1,6 +1,6 @@
 /**
  * 양식 테스트 > 테이블 모음
- * — 가로형(텍스트·필드) + 세로형(텍스트·주관식·날짜/시간형); 우측 커스텀 필드는 선택된 단락 기준 하나만 둔다.
+ * — 가로형(텍스트·필드) + 세로형(텍스트·주관식·날짜/시간·단일·다중 선택); 우측 커스텀 필드는 선택된 단락 기준.
  */
 
 import { HorizontalTableFormEditor } from '@/features/template/ui/form-set/horizontal-table-form-editor'
@@ -53,11 +53,39 @@ const FORM_TEST_VT_DATETIME_DEMO_ROWS: VerticalTableRow[] = [
   },
 ]
 
+/** 양식 테스트 — 세로형 단일선택 데모(1단 · 2단 두 쌍) */
+const FORM_TEST_VT_SINGLE_CHOICE_DEMO_ROWS: VerticalTableRow[] = [
+  { stageCount: 1, headers: ['단일선택형'], cells: [''] },
+  {
+    stageCount: 2,
+    headers: ['단일선택형 02', '샘플 03'],
+    cells: ['', ''],
+  },
+]
+
+/** 양식 테스트 — 세로형 다중선택 데모 */
+const FORM_TEST_VT_MULTIPLE_CHOICE_DEMO_ROWS: VerticalTableRow[] = [
+  {
+    stageCount: 1,
+    headers: ['다중선택형'],
+    cells: [''],
+    choiceMultipleSelections: [[]],
+  },
+  {
+    stageCount: 2,
+    headers: ['다중선택형 02', '샘플 03'],
+    cells: ['', ''],
+    choiceMultipleSelections: [[], []],
+  },
+]
+
 const FORM_TEST_HT_TABLE_TEXT_ID = 'form-test-ht-table-text'
 const FORM_TEST_HT_TABLE_FIELD_ID = 'form-test-ht-table-field'
 const FORM_TEST_VT_TEXT_ID = 'form-test-vt-text'
 const FORM_TEST_VT_SUBJECTIVE_ID = 'form-test-vt-subjective'
 const FORM_TEST_VT_DATETIME_ID = 'form-test-vt-datetime'
+const FORM_TEST_VT_SINGLE_CHOICE_ID = 'form-test-vt-single-choice'
+const FORM_TEST_VT_MULTIPLE_CHOICE_ID = 'form-test-vt-multiple-choice'
 
 const FORM_TEST_FIELD_COLUMN_HEADERS = [
   '주관식형',
@@ -115,6 +143,9 @@ function buildFormTestVerticalParagraph(
     paragraphTitle: verticalTableParagraphOutlineLabel(flavor),
     paragraphDescription: '',
     participatesInTitleNumbering: true,
+    ...(flavor === 'single_choice' || flavor === 'multiple_choice'
+      ? { verticalChoiceOptions: ['A', 'B', 'C'] }
+      : {}),
     rows,
     bottomText: '',
     showBottomText: false,
@@ -172,10 +203,28 @@ function createFormTestTableComponentsDraft(): WritingFormDraft {
     'date_time',
     FORM_TEST_VT_DATETIME_DEMO_ROWS
   )
+  const vtSingleChoice = buildFormTestVerticalParagraph(
+    FORM_TEST_VT_SINGLE_CHOICE_ID,
+    'single_choice',
+    FORM_TEST_VT_SINGLE_CHOICE_DEMO_ROWS
+  )
+  const vtMultipleChoice = buildFormTestVerticalParagraph(
+    FORM_TEST_VT_MULTIPLE_CHOICE_ID,
+    'multiple_choice',
+    FORM_TEST_VT_MULTIPLE_CHOICE_DEMO_ROWS
+  )
 
   return {
     ...base,
-    paragraphs: [tableText, tableField, vtText, vtSubjective, vtDateTime],
+    paragraphs: [
+      tableText,
+      tableField,
+      vtText,
+      vtSubjective,
+      vtDateTime,
+      vtSingleChoice,
+      vtMultipleChoice,
+    ],
   }
 }
 
@@ -187,7 +236,7 @@ export function FormTestTableComponentsPage() {
       <HorizontalTableFormEditor
         variant="embedded"
         initialDraft={FORM_TEST_TABLE_DRAFT}
-        initialActiveParagraphId={FORM_TEST_VT_DATETIME_ID}
+        initialActiveParagraphId={FORM_TEST_VT_MULTIPLE_CHOICE_ID}
       />
     </div>
   )
