@@ -239,7 +239,9 @@ export function StatusDropdownCell<T extends string = string>({
       >
         {injectBadgeCellStyle(renderBadge(status), style)}
         {isUpdating ? (
-          <span className="status-dropdown-cell__status-updating"> …</span>
+          <span className="status-dropdown-cell__status-updating" aria-hidden>
+            …
+          </span>
         ) : null}
       </span>
     </Dropdown>
