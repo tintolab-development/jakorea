@@ -1,12 +1,19 @@
 import { useMemo, useState } from 'react'
-import { Input } from 'antd'
+import { DatePicker, Input, TimePicker } from 'antd'
+import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
 import type { VerticalTableParagraph, VerticalTableRow } from '@/features/template/model/writing-form-draft.schema'
 import {
+  DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER,
   normalizeVerticalTableParagraph,
   verticalTableHeaderPlaceholder,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
+import { DividerVertical } from '@/shared/components/divider-vertical'
 import '@/features/template/ui/paragraph/single-item/vertical-table-paragraph-body.css'
+
+dayjs.extend(customParseFormat)
 
 function isEventFromTableInteractive(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false
@@ -29,7 +36,37 @@ function isEventFromTableInteractive(target: EventTarget | null) {
   )
 }
 
-const VERTICAL_TABLE_CELL_PLACEHOLDER = '내용을 입력해 주세요'
+/** 텍스트형 세로 테이블 td 기본 안내(상수) */
+const VERTICAL_TABLE_TEXT_CELL_PLACEHOLDER = DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER
+
+const VT_DATE_PLACEHOLDER = '날짜를 선택해 주세요'
+const VT_TIME_PLACEHOLDER = '시간을 선택해 주세요'
+
+function verticalTableFieldPopupContainer(): HTMLElement {
+  return document.body
+}
+
+const verticalTablePickerPopupStyles = {
+  popup: {
+    root: { minWidth: 300 },
+  },
+} as const
+
+function toDayjs(mode: 'date' | 'time', raw: string): Dayjs | null {
+  if (!raw?.trim()) return null
+  if (mode === 'date') {
+    const d = dayjs(raw, 'YYYY-MM-DD', true)
+    return d.isValid() ? d : null
+  }
+  const d = dayjs(raw, 'HH:mm', true)
+  return d.isValid() ? d : null
+}
+
+function fromDayjs(mode: 'date' | 'time', d: Dayjs | null): string {
+  if (!d || !d.isValid()) return ''
+  if (mode === 'date') return d.format('YYYY-MM-DD')
+  return d.format('HH:mm')
+}
 
 function VerticalTableCellText({
   value,
@@ -94,11 +131,20 @@ export function VerticalTableParagraphBody({
       ...p,
       rows: replaceRowStage(p.rows, rowIdx, r => {
         if (r.stageCount === 1) {
-          return { stageCount: 1, headers: [value], cells: r.cells }
+          return { stageCount: 1, headers: [value], cells: r.cells, placeholderHints: r.placeholderHints }
         }
         const headers: [string, string] = [...r.headers]
         headers[stageIdx] = value
-        return { stageCount: 2, headers, cells: r.cells }
+        const next: VerticalTableRow = {
+          stageCount: 2,
+          headers,
+          cells: r.cells,
+          placeholderHints: r.placeholderHints,
+        }
+        if (r.dateTimeStage1Time !== undefined) {
+          next.dateTimeStage1Time = r.dateTimeStage1Time
+        }
+        return next
       }),
     })
   }
@@ -108,11 +154,30 @@ export function VerticalTableParagraphBody({
       ...p,
       rows: replaceRowStage(p.rows, rowIdx, r => {
         if (r.stageCount === 1) {
-          return { stageCount: 1, headers: r.headers, cells: [value] }
+          return { stageCount: 1, headers: r.headers, cells: [value], placeholderHints: r.placeholderHints }
         }
         const cells: [string, string] = [...r.cells]
         cells[stageIdx] = value
-        return { stageCount: 2, headers: r.headers, cells }
+        const next: VerticalTableRow = {
+          stageCount: 2,
+          headers: r.headers,
+          cells,
+          placeholderHints: r.placeholderHints,
+        }
+        if (r.dateTimeStage1Time !== undefined) {
+          next.dateTimeStage1Time = r.dateTimeStage1Time
+        }
+        return next
+      }),
+    })
+  }
+
+  const setDateTimeStage1Time = (rowIdx: number, value: string) => {
+    onChange({
+      ...p,
+      rows: replaceRowStage(p.rows, rowIdx, r => {
+        if (r.stageCount !== 2) return r
+        return { ...r, dateTimeStage1Time: value }
       }),
     })
   }
@@ -125,7 +190,86 @@ export function VerticalTableParagraphBody({
     const header = row.headers[stageIdx] ?? ''
     const cell = row.cells[stageIdx] ?? ''
     const hPh = verticalTableHeaderPlaceholder(rowIdx, stageIdx, row.stageCount)
-    const cPh = VERTICAL_TABLE_CELL_PLACEHOLDER
+    const hint = row.placeholderHints?.[stageIdx] ?? ''
+    const cPh =
+      p.verticalTableFlavor === 'subjective'
+        ? hint.trim() !== ''
+          ? hint
+          : DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER
+        : VERTICAL_TABLE_TEXT_CELL_PLACEHOLDER
+
+    const isDateTime = p.verticalTableFlavor === 'date_time'
+    const secondStageDatePh =
+      row.stageCount === 2 && stageIdx === 1 && hint.trim() !== '' ? hint : VT_DATE_PLACEHOLDER
+
+    const renderDateTimeBody = () => {
+      if (!isDateTime) return null
+
+      if (row.stageCount === 2 && stageIdx === 1) {
+        const timeVal = row.dateTimeStage1Time ?? ''
+        return (
+          <div className="form-editor-vertical-table__dt-composite">
+            <DatePicker
+              key={`vt-dt-d-${rowIdx}-${stageIdx}`}
+              rootClassName="form-editor-vertical-table__field-box form-editor-vertical-table__field-box--picker form-editor-vertical-table__dt-picker--fixed"
+              className="form-editor-vertical-table__dt-picker-inner"
+              needConfirm={false}
+              inputReadOnly
+              styles={verticalTablePickerPopupStyles}
+              getPopupContainer={verticalTableFieldPopupContainer}
+              value={toDayjs('date', cell)}
+              onChange={isEditMode ? d => setCell(rowIdx, stageIdx, fromDayjs('date', d)) : undefined}
+              onFocus={() => setSelectedRow(rowIdx)}
+              format="YYYY-MM-DD"
+              placeholder={secondStageDatePh}
+              disabled={!isEditMode}
+            />
+            <div className="form-editor-vertical-table__dt-divider-wrap">
+              <DividerVertical />
+            </div>
+            <TimePicker
+              key={`vt-dt-t-${rowIdx}-${stageIdx}`}
+              rootClassName="form-editor-vertical-table__field-box form-editor-vertical-table__field-box--picker form-editor-vertical-table__dt-picker--fixed"
+              className="form-editor-vertical-table__dt-picker-inner"
+              needConfirm={false}
+              inputReadOnly
+              styles={verticalTablePickerPopupStyles}
+              getPopupContainer={verticalTableFieldPopupContainer}
+              value={toDayjs('time', timeVal)}
+              onChange={isEditMode ? d => setDateTimeStage1Time(rowIdx, fromDayjs('time', d)) : undefined}
+              onFocus={() => setSelectedRow(rowIdx)}
+              format="HH:mm"
+              minuteStep={5}
+              placeholder={VT_TIME_PLACEHOLDER}
+              disabled={!isEditMode}
+            />
+          </div>
+        )
+      }
+
+      return (
+        <DatePicker
+          key={`vt-dt-${rowIdx}-${stageIdx}`}
+          rootClassName="form-editor-vertical-table__field-box form-editor-vertical-table__field-box--picker form-editor-vertical-table__dt-picker--full"
+          className="form-editor-vertical-table__dt-picker-inner"
+          needConfirm={false}
+          inputReadOnly
+          styles={verticalTablePickerPopupStyles}
+          getPopupContainer={verticalTableFieldPopupContainer}
+          value={toDayjs('date', cell)}
+          onChange={isEditMode ? d => setCell(rowIdx, stageIdx, fromDayjs('date', d)) : undefined}
+          onFocus={() => setSelectedRow(rowIdx)}
+          format="YYYY-MM-DD"
+          placeholder={VT_DATE_PLACEHOLDER}
+          disabled={!isEditMode}
+        />
+      )
+    }
+
+    const subjectiveShell =
+      p.verticalTableFlavor === 'subjective'
+        ? 'form-editor-vertical-table__cell-input-shell--body-subjective'
+        : ''
 
     return (
       <div key={`${rowIdx}-s-${stageIdx}`} className="form-editor-vertical-table__stage">
@@ -162,8 +306,32 @@ export function VerticalTableParagraphBody({
             toggleRow(rowIdx)
           }}
         >
-          {isEditMode ? (
-            <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
+          {isDateTime ? (
+            <div
+              className={[
+                'form-editor-vertical-table__cell-input-shell',
+                'form-editor-vertical-table__cell-input-shell--body',
+                row.stageCount === 2 && stageIdx === 1
+                  ? 'form-editor-vertical-table__cell-input-shell--body-dt-composite'
+                  : 'form-editor-vertical-table__cell-input-shell--body-dt-full',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onMouseDown={e => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}
+            >
+              {renderDateTimeBody()}
+            </div>
+          ) : isEditMode ? (
+            <div
+              className={[
+                'form-editor-vertical-table__cell-input-shell',
+                'form-editor-vertical-table__cell-input-shell--body',
+                subjectiveShell,
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
               <Input
                 variant="borderless"
                 value={cell}
@@ -176,7 +344,15 @@ export function VerticalTableParagraphBody({
               />
             </div>
           ) : (
-            <VerticalTableCellText value={cell} placeholder={cPh} variant="body" />
+            <>
+              {p.verticalTableFlavor === 'subjective' ? (
+                <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body form-editor-vertical-table__cell-input-shell--body-subjective">
+                  <VerticalTableCellText value={cell} placeholder={cPh} variant="body" />
+                </div>
+              ) : (
+                <VerticalTableCellText value={cell} placeholder={cPh} variant="body" />
+              )}
+            </>
           )}
         </div>
       </div>
