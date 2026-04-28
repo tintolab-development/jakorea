@@ -158,9 +158,12 @@ function paragraphEditableHeading(
         ),
       titlePlaceholder: titleWithPeriodPlaceholder(editorKind),
       titleRequired: p.requiredMark,
-      titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
-        ? 'paragraph-card__title--placeholder'
-        : undefined,
+      titleClassName: [
+        'paragraph-input-explanation-title',
+        formCardTitleUsesPlaceholderTone(paragraph) ? 'paragraph-card__title--placeholder' : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
       titleLeading: prefix,
       descriptionValue: p.surveyDescription,
       onDescriptionChange: (next: string) =>
@@ -169,8 +172,8 @@ function paragraphEditableHeading(
             ? { ...cur, surveyDescription: next }
             : cur
         ),
-      descriptionPlaceholder:
-        editorKind === 'agreement' ? '부가 설명을 입력해 주세요' : '설명 입력',
+      descriptionPlaceholder: '설명 입력',
+      descriptionClassName: 'paragraph-input-explanation-title',
     }
   }
 
@@ -196,8 +199,7 @@ function paragraphEditableHeading(
       showDescription: false,
       descriptionValue: p.paragraphDescription,
       onDescriptionChange: () => {},
-      descriptionPlaceholder:
-        editorKind === 'agreement' ? '부가 설명을 입력해 주세요' : '설명 입력',
+      descriptionPlaceholder: '설명 입력',
     }
   }
 
@@ -240,8 +242,7 @@ function paragraphEditableHeading(
             ? { ...cur, paragraphDescription: next }
             : cur
         ),
-      descriptionPlaceholder:
-        editorKind === 'agreement' ? '부가 설명을 입력해 주세요' : '설명 입력',
+      descriptionPlaceholder: '설명 입력',
     }
   }
 
@@ -273,8 +274,7 @@ function paragraphEditableHeading(
             ? { ...cur, paragraphDescription: next }
             : cur
         ),
-      descriptionPlaceholder:
-        editorKind === 'agreement' ? '부가 설명을 입력해 주세요' : '설명 입력',
+      descriptionPlaceholder: '설명 입력',
     }
   }
 
@@ -293,11 +293,11 @@ function modalCardFooterToggles(
       <>
         <CmsToggle
           label="답변 필수"
-          checked={ht.answerRequired}
+          checked={ht.answerRequired ?? ht.requiredMark}
           onChange={checked =>
             updateParagraph(ht.id, p =>
               p.kind === 'single_item' && p.variant === 'horizontal_table'
-                ? { ...p, answerRequired: checked }
+                ? { ...p, answerRequired: checked, requiredMark: checked }
                 : p
             )
           }
@@ -324,11 +324,11 @@ function modalCardFooterToggles(
       <>
         <CmsToggle
           label="답변 필수"
-          checked={vt.answerRequired}
+          checked={vt.answerRequired ?? vt.requiredMark}
           onChange={checked =>
             updateParagraph(vt.id, p =>
               p.kind === 'single_item' && p.variant === 'vertical_table'
-                ? { ...p, answerRequired: checked }
+                ? { ...p, answerRequired: checked, requiredMark: checked }
                 : p
             )
           }
@@ -372,7 +372,7 @@ function modalCardFooterToggles(
   }
 
   if (paragraph.kind === 'single_item') {
-    const answerRequired = paragraph.answerRequired ?? true
+    const answerRequired = paragraph.answerRequired ?? paragraph.requiredMark
     const toggles: ReactNode[] = [
       <CmsToggle
         key="answer-required"
@@ -617,6 +617,7 @@ function PinnedFormCard({
         'form-editor-card',
         'paragraph-card--selectable',
         selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
+        isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -711,6 +712,7 @@ function SortableMiddleFormCard({
           'form-editor-card',
           'paragraph-card--selectable',
           selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
+          isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
         ]
           .filter(Boolean)
           .join(' ')}

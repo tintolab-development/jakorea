@@ -143,7 +143,8 @@ export type MultipleChoiceParagraph = WritingFormParagraphBase & {
 }
 
 /** 에디터 전용: 객관식 항목 영역 포커스(우측「항목 수정」·바디 선택 테두리). 실제 항목 id와 겹치지 않게 둠 */
-export const FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID = '__form_editor_multiple_choice_items__' as const
+export const FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID =
+  '__form_editor_multiple_choice_items__' as const
 
 /** 객관식형 기본 항목 4개 (스펙: 신규 시 한 세트) */
 export function createDefaultMultipleChoiceItems(): MultipleChoiceItem[] {
@@ -224,9 +225,7 @@ export type FileAttachmentParagraph = WritingFormParagraphBase & {
 }
 
 /** 캔버스에서 선택된 테이블 행(헤더 행 vs 데이터 행) — 에디터에서 단락 id별로 보관해 위젯마다 분리 */
-export type HorizontalTableRowSelection =
-  | { area: 'header' }
-  | { area: 'body'; row: number }
+export type HorizontalTableRowSelection = { area: 'header' } | { area: 'body'; row: number }
 
 /** 텍스트형: 모든 셀 `Input` / 필드형: 열마다 입력 유형 + 필드 셀 값 */
 export type HorizontalTableFlavor = 'text' | 'field'
@@ -253,7 +252,9 @@ export const HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER = '내용을 입력해 
 const DEFAULT_DROPDOWN_OPTIONS = ['A', 'B', 'C'] as const
 const DEFAULT_CHOICE_OPTIONS = ['A', 'B', 'C'] as const
 
-export function defaultFieldForColumnKind(kind: HorizontalTableFieldColumnKind): HorizontalTableColumnField {
+export function defaultFieldForColumnKind(
+  kind: HorizontalTableFieldColumnKind
+): HorizontalTableColumnField {
   switch (kind) {
     case 'subjective':
       return { kind: 'subjective', placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER }
@@ -277,7 +278,9 @@ function defaultColumnFieldForNewColumn(): HorizontalTableColumnField {
   return defaultFieldForColumnKind('subjective')
 }
 
-export function createEmptyFieldCellValue(field: HorizontalTableColumnField): HorizontalTableFieldCellValue {
+export function createEmptyFieldCellValue(
+  field: HorizontalTableColumnField
+): HorizontalTableFieldCellValue {
   if (field.kind === 'multiple') {
     return { kind: 'multiple', values: [] }
   }
@@ -365,7 +368,10 @@ export interface VerticalTableParagraph extends WritingFormParagraphBase {
   answerRequired: boolean
 }
 
-function repairColumnField(f: HorizontalTableColumnField | undefined, _idx: number): HorizontalTableColumnField {
+function repairColumnField(
+  f: HorizontalTableColumnField | undefined,
+  _idx: number
+): HorizontalTableColumnField {
   if (f == null) return defaultColumnFieldForNewColumn()
   if (f.kind === 'dropdown' && (!f.options || f.options.length === 0)) {
     return { kind: 'dropdown', placeholder: f.placeholder, options: [...DEFAULT_DROPDOWN_OPTIONS] }
@@ -593,7 +599,9 @@ export function horizontalTableRemoveRow(
  * 로드·저장 JSON에 필드 누락이 있을 수 있어 보정.
  * (구버전: `tableFlavor` 없음 = 텍스트형)
  */
-export function normalizeHorizontalTableParagraph(p: HorizontalTableParagraph): HorizontalTableParagraph {
+export function normalizeHorizontalTableParagraph(
+  p: HorizontalTableParagraph
+): HorizontalTableParagraph {
   const tableFlavor: HorizontalTableFlavor = p.tableFlavor === 'field' ? 'field' : 'text'
   const colCount = Math.max(1, p.columnHeaders?.length ?? 0)
   const headers = (() => {
@@ -621,9 +629,18 @@ export function normalizeHorizontalTableParagraph(p: HorizontalTableParagraph): 
       showBottomText: Boolean(p.showBottomText),
     }
   }
-  const fieldCols = ensureColumnFieldSlice({ ...p, columnHeaders: headers, dataRows, tableFlavor: 'field' } as HorizontalTableParagraph, colCount)
+  const fieldCols = ensureColumnFieldSlice(
+    { ...p, columnHeaders: headers, dataRows, tableFlavor: 'field' } as HorizontalTableParagraph,
+    colCount
+  )
   const fieldDataRows = syncFieldDataRowsToTextRows(
-    { ...p, columnFields: fieldCols, columnHeaders: headers, dataRows, tableFlavor: 'field' } as HorizontalTableParagraph,
+    {
+      ...p,
+      columnFields: fieldCols,
+      columnHeaders: headers,
+      dataRows,
+      tableFlavor: 'field',
+    } as HorizontalTableParagraph,
     colCount,
     fieldCols
   )
@@ -754,7 +771,9 @@ function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
       ? (raw as { headers?: string[] }).headers
       : undefined
   const c =
-    raw != null && typeof raw === 'object' && 'cells' in raw ? (raw as { cells?: string[] }).cells : undefined
+    raw != null && typeof raw === 'object' && 'cells' in raw
+      ? (raw as { cells?: string[] }).cells
+      : undefined
   const ph1 =
     raw != null && typeof raw === 'object' && 'placeholderHints' in raw
       ? (raw as { placeholderHints?: string[] }).placeholderHints
@@ -820,7 +839,10 @@ export function createVerticalTableParagraph(
   })
 }
 
-export function cloneVerticalTableParagraph(source: VerticalTableParagraph, newId: string): VerticalTableParagraph {
+export function cloneVerticalTableParagraph(
+  source: VerticalTableParagraph,
+  newId: string
+): VerticalTableParagraph {
   const n = normalizeVerticalTableParagraph(source)
   return {
     ...n,
@@ -878,7 +900,10 @@ export function verticalTableRemoveRow(
  * - 1단→2단: 첫 쌍 유지, 두 번째 쌍은 빈 값으로 추가.
  * 캔버스·우측 패널 넘버링은 각각 `verticalTableHeaderPlaceholder` / `verticalTablePanelStageTitle`로 `stageCount` 반영.
  */
-export function verticalTableRowWithStageCount(row: VerticalTableRow, stageCount: 1 | 2): VerticalTableRow {
+export function verticalTableRowWithStageCount(
+  row: VerticalTableRow,
+  stageCount: 1 | 2
+): VerticalTableRow {
   const base = normalizeVerticalTableRow(row)
   const h0 = base.headers[0] ?? ''
   const c0 = base.cells[0] ?? ''
@@ -1000,7 +1025,9 @@ export function isTableLayoutParagraph(p: WritingFormParagraph): boolean {
   )
 }
 
-export function paragraphsAreOnlyTableLayoutParagraphs(paragraphs: WritingFormParagraph[]): boolean {
+export function paragraphsAreOnlyTableLayoutParagraphs(
+  paragraphs: WritingFormParagraph[]
+): boolean {
   return paragraphs.length > 0 && paragraphs.every(isTableLayoutParagraph)
 }
 
@@ -1060,19 +1087,19 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
           {
             id: 'agreement-short-essay-item-1',
             label: '수집하는 개인정보 항목',
-            placeholder: '내용을 입력해 주세요',
+            placeholder: 'ex) 이름, 연락처',
             bodyText: '',
           },
           {
             id: 'agreement-short-essay-item-2',
-            label: '수집·이용 목적',
-            placeholder: '내용을 입력해 주세요',
+            label: '수집 및 이용 목적',
+            placeholder: 'ex) 이벤트 진행 및 당첨자 안내',
             bodyText: '',
           },
           {
             id: 'agreement-short-essay-item-3',
-            label: '보유·이용 기간',
-            placeholder: '내용을 입력해 주세요',
+            label: '보유 및 이용 기간',
+            placeholder: 'ex) 회원 탈퇴 후 1개월 또는 개인정보수집 동의일로부터 5년',
             bodyText: '',
           },
         ],

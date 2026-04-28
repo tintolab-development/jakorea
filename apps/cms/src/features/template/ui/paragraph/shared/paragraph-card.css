@@ -16,12 +16,11 @@
 }
 
 .paragraph-card__header {
-  padding-left: 8px;
+  /* padding-left: 8px; */
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 12px;
   width: 100%;
 }
 
@@ -56,9 +55,25 @@
   left: -6px;
 }
 
+.paragraph-card__description-block {
+  margin-left: 32px;
+  width: calc(100% - 32px);
+  max-width: calc(100% - 32px);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .paragraph-card__title-block,
 .paragraph-card__description-block {
   width: 100%;
+}
+
+.paragraph-card__title-block .paragraph-input--view .paragraph-input__view-text,
+.paragraph-card__title-block .paragraph-input--view .paragraph-input__placeholder {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .paragraph-card__slot {
@@ -144,6 +159,16 @@
   line-height: 140%;
 }
 
+.paragraph-card--survey-title-with-period .paragraph-card__title {
+  font-size: 24px;
+}
+
+.paragraph-card--survey-title-with-period .paragraph-card__description-block {
+  margin-left: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
 /* 설문 카드 등: 아웃라인 placeholder 문구 — ParagraphInput 기본 톤과 맞춤 */
 .paragraph-card__title.paragraph-card__title--placeholder {
   color: var(--gray-85969-d, #85969d);
@@ -189,4 +214,8 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+}
+
+.paragraph-card--survey-title-with-period .paragraph-card__description {
+  font-size: 18px;
 }

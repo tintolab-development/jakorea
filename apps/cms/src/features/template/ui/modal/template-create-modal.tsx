@@ -64,7 +64,6 @@ export function TemplateCreateModal({
       return [
         { label: '설문 양식', value: 'survey' as const },
         { label: '동의 양식', value: 'agreement' as const },
-        { label: '테이블 가로형', value: 'horizontal_table' as const },
       ]
     }
     const category = kind as WritingTemplateCategory

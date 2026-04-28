@@ -136,6 +136,7 @@ export function FormEditorTitleNumberingField({
         className="form-editor-right-panel__select"
         value={value}
         options={TITLE_NUMBERING_OPTIONS}
+        withAllOption={false}
         onChange={v => onChange(v as FormTitleNumberingStyle)}
       />
     </div>
@@ -378,36 +379,6 @@ export function FormEditorRightPanel({
                   시스템 설정 항목입니다. 내용 추가·삭제·편집은 할 수 없습니다.
                 </span>
               </Form.Item>
-            ) : null}
-
-            {active.kind === 'single_item' && active.variant === 'agreement_explanation_text' ? (
-              <>
-                <Form.Item label="본문 placeholder">
-                  <CmsInput
-                    width="100%"
-                    value={active.bodyPlaceholder}
-                    onChange={e =>
-                      updateParagraph(active.id, () => ({
-                        ...active,
-                        bodyPlaceholder: e.target.value,
-                      }))
-                    }
-                    placeholder="텍스트를 작성해 주세요"
-                  />
-                </Form.Item>
-                <Form.Item label="본문(미리보기)">
-                  <CmsInput
-                    width="100%"
-                    value={active.bodyText}
-                    onChange={e =>
-                      updateParagraph(active.id, () => ({
-                        ...active,
-                        bodyText: e.target.value,
-                      }))
-                    }
-                  />
-                </Form.Item>
-              </>
             ) : null}
 
             {activeShortEssay && selectedShortEssayItem ? (

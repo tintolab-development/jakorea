@@ -52,6 +52,8 @@ export function renderFormParagraphBody(
 ) {
   switch (p.variant) {
     case 'survey_title_with_period':
+      if (!isParagraphSelected) return null
+      if (!(p.showWritingPeriodOnForm ?? false)) return null
       return (
         <ExplanationTitle
           paragraph={p}

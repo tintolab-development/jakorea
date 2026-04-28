@@ -15,6 +15,7 @@ export interface ParagraphCardEditableHeading {
   descriptionValue: string
   onDescriptionChange: (next: string) => void
   descriptionPlaceholder?: string
+  descriptionClassName?: string
   /** false면 카드 헤더에 설명란을 렌더하지 않음(제목만) */
   showDescription?: boolean
 }
@@ -73,6 +74,7 @@ export function ParagraphCard({
           value={h.descriptionValue}
           onChange={h.onDescriptionChange}
           placeholder={h.descriptionPlaceholder ?? '설명 입력'}
+          className={h.descriptionClassName}
         />
       )
 
