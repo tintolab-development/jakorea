@@ -22,7 +22,7 @@ import '@/features/template/ui/form-editor/form-editor.css'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { DividerVertical } from '@/shared/components/divider-vertical'
-import '@/features/template/ui/paragraph/single-item/vertical-table-paragraph-body.css'
+import '@/features/template/ui/paragraph/table/vertical-table-paragraph-body.css'
 
 dayjs.extend(customParseFormat)
 

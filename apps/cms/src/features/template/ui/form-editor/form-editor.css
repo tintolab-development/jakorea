@@ -1583,7 +1583,7 @@
   gap: 16px;
 }
 
-/* 테이블 하단 — 동의 여부 라디오 (203×40, 두 옵션 사이 16px). 세로형 vertical-table-paragraph-body.css 와 동일 */
+/* 테이블 하단 — 동의 여부 라디오 (203×40, 두 옵션 사이 16px). 세로형 paragraph/table/vertical-table-paragraph-body.css 와 동일 */
 .form-editor-table-bottom-consent.app-radio-group {
   box-sizing: border-box;
   width: 203px;
