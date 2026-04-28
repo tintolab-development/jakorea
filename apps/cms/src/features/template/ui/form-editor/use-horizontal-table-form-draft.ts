@@ -162,7 +162,13 @@ export function useHorizontalTableFormDraft({
       const next = [...prev.paragraphs]
       if (anchor.kind === 'single_item' && anchor.variant === 'vertical_table') {
         const v = normalizeVerticalTableParagraph(anchor as VerticalTableParagraph)
-        next.splice(idx + 1, 0, createVerticalTableParagraph(newId, v.verticalTableFlavor))
+        next.splice(
+          idx + 1,
+          0,
+          v.verticalTableFlavor === 'file_attachment'
+            ? createHorizontalTableParagraph(newId)
+            : createVerticalTableParagraph(newId, v.verticalTableFlavor)
+        )
       } else {
         let p: HorizontalTableParagraph = createHorizontalTableParagraph(newId)
         if (anchor.kind === 'single_item' && anchor.variant === 'horizontal_table') {
