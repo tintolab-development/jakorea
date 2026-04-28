@@ -397,6 +397,7 @@ export const DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER = '내용을 입력해
  * - `subjective`: 테이블_세로형(주관식형) — 행별 주관식(자유 서술) 입력
  * - `date_time`: 테이블_세로형(날짜/시간형)
  * - `single_choice` / `multiple_choice`: 테이블_세로형(단일·다중 선택형) — `verticalChoiceOptions` 공통 선택지
+ * - `file_attachment`: 테이블_세로형(파일첨부형) — 고정 1행, 행·열 추가 없음
  */
 export type VerticalTableFlavor =
   | 'text'
@@ -404,6 +405,10 @@ export type VerticalTableFlavor =
   | 'date_time'
   | 'single_choice'
   | 'multiple_choice'
+  | 'file_attachment'
+
+/** 파일첨부형 세로 테이블 좌측 th 기본 라벨 */
+export const DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL = '파일첨부형'
 
 /** 작성 양식 — 테이블 세로형 (`verticalTableFlavor`로 세부 유형 구분) */
 export interface VerticalTableParagraph extends WritingFormParagraphBase {
@@ -411,6 +416,11 @@ export interface VerticalTableParagraph extends WritingFormParagraphBase {
   variant: 'vertical_table'
   /** 생략·불명시는 `text`(기존 JSON 호환) */
   verticalTableFlavor: VerticalTableFlavor
+  /**
+   * `verticalTableFlavor === 'file_attachment'`일 때만 사용 — 좌측 th 표시 문구.
+   * 생략·빈 문자열이면 `DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL`.
+   */
+  verticalFileAttachmentHeaderLabel?: string
   /** 단일·다중 선택형 공통 선택지(생략 시 `['A','B','C']`) */
   verticalChoiceOptions?: string[]
   rows: VerticalTableRow[]
@@ -814,6 +824,7 @@ export function coerceVerticalTableFlavor(raw: unknown): VerticalTableFlavor {
   if (raw === 'date_time') return 'date_time'
   if (raw === 'single_choice') return 'single_choice'
   if (raw === 'multiple_choice') return 'multiple_choice'
+  if (raw === 'file_attachment') return 'file_attachment'
   return 'text'
 }
 
@@ -1050,13 +1061,29 @@ export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): Vert
   if (rows.length === 0) {
     rows = [defaultVerticalTableRowForFlavor(verticalTableFlavor)]
   }
+  if (verticalTableFlavor === 'file_attachment') {
+    rows = rows.slice(0, 1)
+    const r0 = rows[0] ?? defaultVerticalTableRowForFlavor('file_attachment')
+    if (r0.stageCount === 2) {
+      rows = [verticalTableRowWithStageCount(r0, 1, 'file_attachment')]
+    } else {
+      rows = [r0]
+    }
+  }
   rows = normalizeRowsForVerticalFlavor(rows, verticalTableFlavor, verticalChoiceOptions)
+  const verticalFileAttachmentHeaderLabel =
+    verticalTableFlavor === 'file_attachment'
+      ? (p.verticalFileAttachmentHeaderLabel ?? '').trim() !== ''
+        ? (p.verticalFileAttachmentHeaderLabel ?? '').trim()
+        : DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL
+      : undefined
   return {
     ...p,
     variant: 'vertical_table',
     verticalTableFlavor,
     verticalChoiceOptions,
     rows,
+    verticalFileAttachmentHeaderLabel,
     bottomText: p.bottomText ?? '',
     showBottomText: Boolean(p.showBottomText),
     showBottomConsent: Boolean(p.showBottomConsent),
@@ -1071,6 +1098,7 @@ export function verticalTableParagraphOutlineLabel(flavor: VerticalTableFlavor):
   if (flavor === 'date_time') return '테이블_세로형(날짜/시간형)'
   if (flavor === 'single_choice') return '테이블_세로형(단일선택형)'
   if (flavor === 'multiple_choice') return '테이블_세로형(다중선택형)'
+  if (flavor === 'file_attachment') return '테이블_세로형(파일첨부형)'
   return '테이블_세로형(텍스트형)'
 }
 
@@ -1092,6 +1120,9 @@ export function createVerticalTableParagraph(
       flavor === 'single_choice' || flavor === 'multiple_choice'
         ? [...DEFAULT_CHOICE_OPTIONS]
         : undefined,
+    ...(flavor === 'file_attachment'
+      ? { verticalFileAttachmentHeaderLabel: DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL }
+      : {}),
     bottomText: '',
     showBottomText: false,
     showBottomConsent: false,
@@ -1173,6 +1204,9 @@ export function cloneVerticalTableParagraph(source: VerticalTableParagraph, newI
 
 export function verticalTableAddRow(p: VerticalTableParagraph): VerticalTableParagraph {
   const n = normalizeVerticalTableParagraph(p)
+  if (n.verticalTableFlavor === 'file_attachment') {
+    return n
+  }
   return {
     ...n,
     rows: [...n.rows, defaultVerticalTableRowForFlavor(n.verticalTableFlavor)],

@@ -10,6 +10,7 @@ import type {
   VerticalTableRow,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
+  DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL,
   DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER,
   effectiveVerticalCompositeTimeHint,
   effectiveVerticalRowDateTimeModes,
@@ -18,6 +19,7 @@ import {
   verticalTableHeaderPlaceholder,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
+import { ParagraphFileUpload } from '@/features/template/ui/paragraph/shared/paragraph-file-upload'
 import '@/features/template/ui/form-editor/form-editor.css'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -501,6 +503,97 @@ export function VerticalTableParagraphBody({
     )
   }
 
+  const fileAttachmentHeaderLabel =
+    (p.verticalFileAttachmentHeaderLabel ?? '').trim() || DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL
+
+  const bottomSection =
+    p.showBottomText || p.showBottomConsent ? (
+      <div className="form-editor-vertical-table__bottom">
+        {p.showBottomText ? (
+          <ParagraphInput
+            type="description"
+            className="form-editor-vertical-table__bottom-input"
+            value={p.bottomText}
+            isEditMode={isEditMode}
+            onChange={next => onChange({ ...p, bottomText: next })}
+            placeholder="설명을 입력해 주세요"
+          />
+        ) : null}
+        {p.showBottomConsent ? (
+          <CmsRadioGroup
+            className="form-editor-table-bottom-consent"
+            size="large"
+            value={p.bottomConsent ?? 'agree'}
+            onChange={e => {
+              if (!isEditMode) return
+              onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
+            }}
+            style={isEditMode ? undefined : { pointerEvents: 'none' }}
+          >
+            <CmsRadio value="agree">동의</CmsRadio>
+            <CmsRadio value="disagree">동의하지 않음</CmsRadio>
+          </CmsRadioGroup>
+        ) : null}
+      </div>
+    ) : null
+
+  if (p.verticalTableFlavor === 'file_attachment') {
+    return (
+      <div className="form-editor-body form-editor-vertical-table-wrap">
+        <div className="form-editor-vertical-table" role="grid" aria-readonly={!isEditMode}>
+          <div
+            className={[
+              'form-editor-vertical-table__row',
+              'form-editor-vertical-table__row--file-attachment',
+              selectedRow === 0 ? 'form-editor-vertical-table__row--selected' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            role="row"
+            aria-selected={selectedRow === 0}
+          >
+            <div className="form-editor-vertical-table__stage">
+              <div
+                className="form-editor-vertical-table__th"
+                role="columnheader"
+                onClick={e => {
+                  if (isEventFromTableInteractive(e.target)) return
+                  toggleRow(0)
+                }}
+              >
+                <VerticalTableCellText
+                  value={fileAttachmentHeaderLabel}
+                  placeholder={DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL}
+                  variant="header"
+                />
+              </div>
+              <div
+                className="form-editor-vertical-table__td form-editor-vertical-table__td--file-upload"
+                role="gridcell"
+                onClick={e => {
+                  if (isEventFromTableInteractive(e.target)) return
+                  toggleRow(0)
+                }}
+              >
+                <div
+                  className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <ParagraphFileUpload
+                    accept=".jpg,.jpeg,.png"
+                    multiple
+                    disabled={!isEditMode}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {bottomSection}
+      </div>
+    )
+  }
+
   return (
     <div className="form-editor-body form-editor-vertical-table-wrap">
       <div className="form-editor-vertical-table" role="grid" aria-readonly={!isEditMode}>
@@ -523,35 +616,7 @@ export function VerticalTableParagraphBody({
         ))}
       </div>
 
-      {p.showBottomText || p.showBottomConsent ? (
-        <div className="form-editor-vertical-table__bottom">
-          {p.showBottomText ? (
-            <ParagraphInput
-              type="description"
-              className="form-editor-vertical-table__bottom-input"
-              value={p.bottomText}
-              isEditMode={isEditMode}
-              onChange={next => onChange({ ...p, bottomText: next })}
-              placeholder="설명을 입력해 주세요"
-            />
-          ) : null}
-          {p.showBottomConsent ? (
-            <CmsRadioGroup
-              className="form-editor-table-bottom-consent"
-              size="large"
-              value={p.bottomConsent ?? 'agree'}
-              onChange={e => {
-                if (!isEditMode) return
-                onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
-              }}
-              style={isEditMode ? undefined : { pointerEvents: 'none' }}
-            >
-              <CmsRadio value="agree">동의</CmsRadio>
-              <CmsRadio value="disagree">동의하지 않음</CmsRadio>
-            </CmsRadioGroup>
-          ) : null}
-        </div>
-      ) : null}
+      {bottomSection}
     </div>
   )
 }

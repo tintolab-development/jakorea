@@ -142,6 +142,15 @@
   text-align: left;
 }
 
+/* 파일첨부형 — 가이드 문구 여러 줄 대비 */
+.form-editor-vertical-table__td--file-upload {
+  align-items: flex-start;
+}
+
+.form-editor-vertical-table__td--file-upload .paragraph-file-upload {
+  width: 100%;
+}
+
 /* 테이블 외곽선과 겹쳐 이중으로 보이지 않게 */
 .form-editor-vertical-table__row:last-child .form-editor-vertical-table__th,
 .form-editor-vertical-table__row:last-child .form-editor-vertical-table__td {

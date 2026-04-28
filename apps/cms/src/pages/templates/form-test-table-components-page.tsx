@@ -1,6 +1,6 @@
 /**
  * 양식 테스트 > 테이블 모음
- * — 가로형(텍스트·필드) + 세로형(텍스트·주관식·날짜/시간·단일·다중 선택); 우측 커스텀 필드는 선택된 단락 기준.
+ * — 가로형(텍스트·필드) + 세로형(텍스트·주관식·날짜/시간·단일·다중 선택·파일첨부); 우측 커스텀 필드는 선택된 단락 기준.
  */
 
 import { HorizontalTableFormEditor } from '@/features/template/ui/form-set/horizontal-table-form-editor'
@@ -86,6 +86,7 @@ const FORM_TEST_VT_SUBJECTIVE_ID = 'form-test-vt-subjective'
 const FORM_TEST_VT_DATETIME_ID = 'form-test-vt-datetime'
 const FORM_TEST_VT_SINGLE_CHOICE_ID = 'form-test-vt-single-choice'
 const FORM_TEST_VT_MULTIPLE_CHOICE_ID = 'form-test-vt-multiple-choice'
+const FORM_TEST_VT_FILE_ATTACHMENT_ID = 'form-test-vt-file-attachment'
 
 const FORM_TEST_FIELD_COLUMN_HEADERS = [
   '주관식형',
@@ -126,14 +127,16 @@ function buildFormTestVerticalParagraph(
 ): VerticalTableParagraph {
   const rows =
     demoRows ??
-    ([
-      { stageCount: 1, headers: [''], cells: [''] },
-      {
-        stageCount: 2,
-        headers: ['', ''],
-        cells: ['', ''],
-      },
-    ] as VerticalTableParagraph['rows'])
+    (flavor === 'file_attachment'
+      ? ([{ stageCount: 1, headers: [''], cells: [''] }] as VerticalTableParagraph['rows'])
+      : ([
+          { stageCount: 1, headers: [''], cells: [''] },
+          {
+            stageCount: 2,
+            headers: ['', ''],
+            cells: ['', ''],
+          },
+        ] as VerticalTableParagraph['rows']))
   return normalizeVerticalTableParagraph({
     id,
     kind: 'single_item',
@@ -213,6 +216,10 @@ function createFormTestTableComponentsDraft(): WritingFormDraft {
     'multiple_choice',
     FORM_TEST_VT_MULTIPLE_CHOICE_DEMO_ROWS
   )
+  const vtFileAttachment = buildFormTestVerticalParagraph(
+    FORM_TEST_VT_FILE_ATTACHMENT_ID,
+    'file_attachment'
+  )
 
   return {
     ...base,
@@ -224,6 +231,7 @@ function createFormTestTableComponentsDraft(): WritingFormDraft {
       vtDateTime,
       vtSingleChoice,
       vtMultipleChoice,
+      vtFileAttachment,
     ],
   }
 }

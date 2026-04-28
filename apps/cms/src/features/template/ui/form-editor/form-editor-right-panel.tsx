@@ -193,7 +193,9 @@ function FormEditorVerticalTableCustomFields({
   const choiceFlavor =
     p.verticalTableFlavor === 'single_choice' || p.verticalTableFlavor === 'multiple_choice'
 
+  /** 파일첨부형: 우측 커스텀 필드 없음(th는 스키마 기본값·데이터만) */
   const rowFields =
+    p.verticalTableFlavor !== 'file_attachment' &&
     rowSelection != null &&
     rowSelection.paragraphId === paragraph.id &&
     rowSelection.row >= 0 &&

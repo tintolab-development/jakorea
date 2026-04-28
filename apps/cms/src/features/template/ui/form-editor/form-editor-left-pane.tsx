@@ -531,6 +531,15 @@ function modalCardFooterActions(
   if (paragraph.kind === 'single_item' && paragraph.variant === 'vertical_table') {
     if (!isSelected) return undefined
     const vt = paragraph as VerticalTableParagraph
+    if (vt.verticalTableFlavor === 'file_attachment') {
+      return middleParagraphActions ? (
+        <FormParagraphCardActions
+          onAdd={() => middleParagraphActions.onAddAfter(vt.id)}
+          onDuplicate={() => middleParagraphActions.onDuplicate(vt.id)}
+          onDelete={() => middleParagraphActions.onDelete(vt.id)}
+        />
+      ) : null
+    }
     return (
       <>
         <VerticalTableDimensionActions
