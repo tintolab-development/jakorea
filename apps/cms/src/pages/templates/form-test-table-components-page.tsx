@@ -1,25 +1,63 @@
 /**
- * 양식 테스트 > 테이블 가로형
- * — 한 에디터에서 텍스트형·필드형 가로형 테이블만 두 단락으로 두고, 우측 커스텀 필드는 선택된 단락 기준 하나만 둔다.
+ * 양식 테스트 > 테이블 모음
+ * — 가로형(텍스트·필드) + 세로형(텍스트·주관식·날짜/시간형); 우측 커스텀 필드는 선택된 단락 기준 하나만 둔다.
  */
 
 import { HorizontalTableFormEditor } from '@/features/template/ui/form-set/horizontal-table-form-editor'
 import {
+  DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER,
   createDefaultHorizontalTableDraft,
   HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
   normalizeHorizontalTableParagraph,
   normalizeVerticalTableParagraph,
+  verticalTableParagraphOutlineLabel,
   type HorizontalTableColumnField,
   type HorizontalTableFieldCellValue,
   type HorizontalTableParagraph,
+  type VerticalTableFlavor,
   type VerticalTableParagraph,
+  type VerticalTableRow,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 import './form-test-table-components-page.css'
 
+/** 양식 테스트 — 주관식 세로형 데모(스테이지별 항목명·플레이스홀더) */
+const FORM_TEST_VT_SUBJECTIVE_DEMO_ROWS: VerticalTableRow[] = [
+  {
+    stageCount: 1,
+    headers: ['주관식형'],
+    cells: [''],
+    placeholderHints: [DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER],
+  },
+  {
+    stageCount: 2,
+    headers: ['주관식형 02', '샘플 03'],
+    cells: ['', ''],
+    placeholderHints: [DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER, 'sample'],
+  },
+]
+
+/** 양식 테스트 — 날짜/시간형 세로형 데모(1단 날짜 · 2단 날짜 + 시간) */
+const FORM_TEST_VT_DATETIME_DEMO_ROWS: VerticalTableRow[] = [
+  {
+    stageCount: 1,
+    headers: ['날짜/시간형'],
+    cells: [''],
+  },
+  {
+    stageCount: 2,
+    headers: ['날짜/시간형 02', '샘플 03'],
+    cells: ['', ''],
+    placeholderHints: ['', 'sample'],
+    dateTimeStage1Time: '',
+  },
+]
+
 const FORM_TEST_HT_TABLE_TEXT_ID = 'form-test-ht-table-text'
 const FORM_TEST_HT_TABLE_FIELD_ID = 'form-test-ht-table-field'
-const FORM_TEST_VT_TABLE_TEXT_ID = 'form-test-vt-table-text'
+const FORM_TEST_VT_TEXT_ID = 'form-test-vt-text'
+const FORM_TEST_VT_SUBJECTIVE_ID = 'form-test-vt-subjective'
+const FORM_TEST_VT_DATETIME_ID = 'form-test-vt-datetime'
 
 const FORM_TEST_FIELD_COLUMN_HEADERS = [
   '주관식형',
@@ -53,23 +91,31 @@ const FORM_TEST_FIELD_FIRST_ROW: HorizontalTableFieldCellValue[] = [
   { kind: 'multiple', values: ['B', 'C'] },
 ]
 
-function buildFormTestVerticalTableParagraph(id: string): VerticalTableParagraph {
-  return normalizeVerticalTableParagraph({
-    id,
-    kind: 'single_item',
-    variant: 'vertical_table',
-    requiredMark: true,
-    paragraphTitle: '테이블_세로형(텍스트형)',
-    paragraphDescription: '',
-    participatesInTitleNumbering: true,
-    rows: [
+function buildFormTestVerticalParagraph(
+  id: string,
+  flavor: VerticalTableFlavor,
+  demoRows?: VerticalTableParagraph['rows']
+): VerticalTableParagraph {
+  const rows =
+    demoRows ??
+    ([
       { stageCount: 1, headers: [''], cells: [''] },
       {
         stageCount: 2,
         headers: ['', ''],
         cells: ['', ''],
       },
-    ],
+    ] as VerticalTableParagraph['rows'])
+  return normalizeVerticalTableParagraph({
+    id,
+    kind: 'single_item',
+    variant: 'vertical_table',
+    verticalTableFlavor: flavor,
+    requiredMark: true,
+    paragraphTitle: verticalTableParagraphOutlineLabel(flavor),
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    rows,
     bottomText: '',
     showBottomText: false,
     answerRequired: true,
@@ -113,11 +159,21 @@ function createFormTestTableComponentsDraft(): WritingFormDraft {
 
   const tableText: HorizontalTableParagraph = { ...t0, id: FORM_TEST_HT_TABLE_TEXT_ID }
   const tableField = buildFormTestFieldTableParagraph(FORM_TEST_HT_TABLE_FIELD_ID)
-  const tableVertical = buildFormTestVerticalTableParagraph(FORM_TEST_VT_TABLE_TEXT_ID)
+  const vtText = buildFormTestVerticalParagraph(FORM_TEST_VT_TEXT_ID, 'text')
+  const vtSubjective = buildFormTestVerticalParagraph(
+    FORM_TEST_VT_SUBJECTIVE_ID,
+    'subjective',
+    FORM_TEST_VT_SUBJECTIVE_DEMO_ROWS
+  )
+  const vtDateTime = buildFormTestVerticalParagraph(
+    FORM_TEST_VT_DATETIME_ID,
+    'date_time',
+    FORM_TEST_VT_DATETIME_DEMO_ROWS
+  )
 
   return {
     ...base,
-    paragraphs: [tableText, tableField, tableVertical],
+    paragraphs: [tableText, tableField, vtText, vtSubjective, vtDateTime],
   }
 }
 
@@ -129,7 +185,7 @@ export function FormTestTableComponentsPage() {
       <HorizontalTableFormEditor
         variant="embedded"
         initialDraft={FORM_TEST_TABLE_DRAFT}
-        initialActiveParagraphId={FORM_TEST_HT_TABLE_TEXT_ID}
+        initialActiveParagraphId={FORM_TEST_VT_DATETIME_ID}
       />
     </div>
   )
