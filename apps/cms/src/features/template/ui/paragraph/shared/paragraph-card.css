@@ -25,29 +25,35 @@
   width: 100%;
 }
 
+/* 드래그 핸들(타이틀 바로 왼쪽) + 타이틀 — 한 덩어리로 시작 정렬 */
 .paragraph-card__header-title-row {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
-  gap: 10px;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
   width: 100%;
   min-width: 0;
 }
 
 .paragraph-card__header-title-row > .paragraph-card__title-block {
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   min-width: 0;
   width: auto;
   max-width: 100%;
+  overflow: hidden;
 }
 
 .paragraph-card__header-title-row > .paragraph-card__action-slot-wrap {
   flex: 0 0 auto;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   width: auto;
   min-width: 0;
+  position: relative;
+  left: -6px;
 }
 
 .paragraph-card__title-block,

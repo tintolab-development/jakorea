@@ -22,7 +22,7 @@ export interface ParagraphCardEditableHeading {
 export interface ParagraphCardProps {
   className?: string
   onClick?: () => void
-  /** 카드 헤더 우측(예: 드래그 핸들) — 타이틀과 같은 줄에 정렬 */
+  /** 드래그 핸들 등 — 타이틀과 같은 줄, 타이틀 텍스트 바로 왼쪽 */
   actionSlot?: ReactNode
   /** 읽기 전용 헤더(미리보기 등). `editableHeading`이 있으면 무시됨 */
   title?: ReactNode
@@ -82,8 +82,8 @@ export function ParagraphCard({
         <>
           {actionSlot ? (
             <div className="paragraph-card__header-title-row">
-              <div className="paragraph-card__title-block">{titleInput}</div>
               <div className="paragraph-card__action-slot-wrap">{actionSlot}</div>
+              <div className="paragraph-card__title-block">{titleInput}</div>
             </div>
           ) : (
             <div className="paragraph-card__title-block">{titleInput}</div>
@@ -99,8 +99,8 @@ export function ParagraphCard({
       <>
         {actionSlot ? (
           <div className="paragraph-card__header-title-row">
-            <div className="paragraph-card__title-block">{title != null ? title : null}</div>
             <div className="paragraph-card__action-slot-wrap">{actionSlot}</div>
+            <div className="paragraph-card__title-block">{title != null ? title : null}</div>
           </div>
         ) : title != null ? (
           <div className="paragraph-card__title-block">{title}</div>
