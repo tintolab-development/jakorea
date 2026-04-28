@@ -87,6 +87,8 @@ function FormEditorVerticalTableRowFieldsBody({
             ? 'multiple_choice'
             : 'text'
   const row = p.rows[rowIndex]!
+  const rowCount = Math.max(1, p.rows.length)
+  const canDeleteRow = rowCount > 1
   const stageCount: 1 | 2 = row.stageCount === 2 ? 2 : 1
   const stages = stageCount === 1 ? [0] : [0, 1]
   const {
@@ -128,13 +130,15 @@ function FormEditorVerticalTableRowFieldsBody({
           </CmsRadioGroup>
         </div>
       }
-      onDeleteRow={deleteRow}
+      onDeleteRow={canDeleteRow ? deleteRow : undefined}
       hint={
-        <FormEditorFieldHint mark="＊">
-          <FormEditorFieldHintLine>
-            [행 삭제] 버튼을 누르면 선택된 행 항목이 일괄 삭제됩니다.
-          </FormEditorFieldHintLine>
-        </FormEditorFieldHint>
+        canDeleteRow ? (
+          <FormEditorFieldHint mark="＊">
+            <FormEditorFieldHintLine>
+              [행 삭제] 버튼을 누르면 선택된 행 항목이 일괄 삭제됩니다.
+            </FormEditorFieldHintLine>
+          </FormEditorFieldHint>
+        ) : null
       }
     >
       <div
