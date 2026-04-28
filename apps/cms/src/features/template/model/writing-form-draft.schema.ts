@@ -224,15 +224,33 @@ export interface HorizontalTableParagraph extends WritingFormParagraphBase {
   answerRequired: boolean
 }
 
-/** 세로형 테이블 한 행: 1단(항목·입력 1쌍) 또는 2단(같은 행에 두 쌍, 폭 분배) */
+/** 세로형 테이블 한 행: 1단(항목·입력 1쌍) 또는 2단(같은 행에 두 쌍, 폭 분배).
+ * `placeholderHints`: 주관식형(td) 플레이스홀더 「입력창 안내」— 스테이지별 1개·2개 튜플. 생략 시 본문에서 기본 문구 사용. */
 export type VerticalTableRow =
-  | { stageCount: 1; headers: [string]; cells: [string] }
-  | { stageCount: 2; headers: [string, string]; cells: [string, string] }
+  | { stageCount: 1; headers: [string]; cells: [string]; placeholderHints?: [string] }
+  | {
+      stageCount: 2
+      headers: [string, string]
+      cells: [string, string]
+      placeholderHints?: [string, string]
+    }
 
-/** 작성 양식 — 테이블 세로형(텍스트형만) */
+/** 빈 문자열 가드 없이 우선 사용 — 주관식 td 기본 플레이스홀더 */
+export const DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER = '내용을 입력해 주세요'
+
+/**
+ * 세로형 단락 종류.
+ * - `text`: 테이블_세로형(텍스트형)
+ * - `subjective`: 테이블_세로형(주관식형) — 행별 주관식(자유 서술) 입력
+ */
+export type VerticalTableFlavor = 'text' | 'subjective'
+
+/** 작성 양식 — 테이블 세로형 (`verticalTableFlavor`로 텍스트형 / 주관식형 구분) */
 export interface VerticalTableParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'vertical_table'
+  /** 생략·불명시는 `text`(기존 JSON 호환) */
+  verticalTableFlavor: VerticalTableFlavor
   rows: VerticalTableRow[]
   bottomText: string
   showBottomText: boolean
@@ -607,11 +625,16 @@ function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
     if (sc === 2) {
       const h = (raw as { headers?: string[] }).headers ?? []
       const c = (raw as { cells?: string[] }).cells ?? []
-      return {
+      const ph = (raw as { placeholderHints?: string[] }).placeholderHints
+      const row: VerticalTableRow = {
         stageCount: 2,
         headers: [h[0] ?? '', h[1] ?? ''],
         cells: [c[0] ?? '', c[1] ?? ''],
       }
+      if (ph != null && ph.length >= 1) {
+        row.placeholderHints = [ph[0] ?? '', ph[1] ?? '']
+      }
+      return row
     }
   }
   const h =
@@ -620,11 +643,19 @@ function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
       : undefined
   const c =
     raw != null && typeof raw === 'object' && 'cells' in raw ? (raw as { cells?: string[] }).cells : undefined
-  return {
+  const ph1 =
+    raw != null && typeof raw === 'object' && 'placeholderHints' in raw
+      ? (raw as { placeholderHints?: string[] }).placeholderHints
+      : undefined
+  const row1: VerticalTableRow = {
     stageCount: 1,
     headers: [h?.[0] ?? ''],
     cells: [c?.[0] ?? ''],
   }
+  if (ph1 != null && ph1.length >= 1) {
+    row1.placeholderHints = [ph1[0] ?? '']
+  }
+  return row1
 }
 
 export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): VerticalTableParagraph {
@@ -633,9 +664,12 @@ export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): Vert
   if (rows.length === 0) {
     rows = [defaultVerticalTableRowSingle()]
   }
+  const verticalTableFlavor: VerticalTableFlavor =
+    p.verticalTableFlavor === 'subjective' ? 'subjective' : 'text'
   return {
     ...p,
     variant: 'vertical_table',
+    verticalTableFlavor,
     rows,
     bottomText: p.bottomText ?? '',
     showBottomText: Boolean(p.showBottomText),
@@ -643,13 +677,22 @@ export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): Vert
   }
 }
 
-export function createVerticalTableParagraph(id: string): VerticalTableParagraph {
+/** 기본 제목 없을 때 우측 패널·아웃라인 등에 사용 */
+export function verticalTableParagraphOutlineLabel(flavor: VerticalTableFlavor): string {
+  return flavor === 'subjective' ? '테이블_세로형(주관식형)' : '테이블_세로형(텍스트형)'
+}
+
+export function createVerticalTableParagraph(
+  id: string,
+  flavor: VerticalTableFlavor = 'text'
+): VerticalTableParagraph {
   return normalizeVerticalTableParagraph({
     id,
     kind: 'single_item',
     variant: 'vertical_table',
+    verticalTableFlavor: flavor,
     requiredMark: true,
-    paragraphTitle: '테이블_세로형(텍스트형)',
+    paragraphTitle: verticalTableParagraphOutlineLabel(flavor),
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     rows: [defaultVerticalTableRowSingle()],
@@ -664,15 +707,28 @@ export function cloneVerticalTableParagraph(source: VerticalTableParagraph, newI
   return {
     ...n,
     id: newId,
-    rows: n.rows.map(r =>
-      r.stageCount === 2
-        ? {
-            stageCount: 2,
-            headers: [...r.headers] as [string, string],
-            cells: [...r.cells] as [string, string],
-          }
-        : { stageCount: 1, headers: [...r.headers] as [string], cells: [...r.cells] as [string] }
-    ),
+    rows: n.rows.map(r => {
+      if (r.stageCount === 2) {
+        const out: VerticalTableRow = {
+          stageCount: 2,
+          headers: [...r.headers] as [string, string],
+          cells: [...r.cells] as [string, string],
+        }
+        if (r.placeholderHints) {
+          out.placeholderHints = [...r.placeholderHints] as [string, string]
+        }
+        return out
+      }
+      const out1: VerticalTableRow = {
+        stageCount: 1,
+        headers: [...r.headers] as [string],
+        cells: [...r.cells] as [string],
+      }
+      if (r.placeholderHints) {
+        out1.placeholderHints = [...r.placeholderHints] as [string]
+      }
+      return out1
+    }),
   }
 }
 
@@ -705,17 +761,31 @@ export function verticalTableRowWithStageCount(row: VerticalTableRow, stageCount
   const base = normalizeVerticalTableRow(row)
   const h0 = base.headers[0] ?? ''
   const c0 = base.cells[0] ?? ''
+  const ph0 = base.placeholderHints?.[0]
+  const ph1 = base.placeholderHints?.[1]
   if (stageCount === 1) {
-    return { stageCount: 1, headers: [h0], cells: [c0] }
+    const r: VerticalTableRow = { stageCount: 1, headers: [h0], cells: [c0] }
+    if (ph0 !== undefined || ph1 !== undefined || base.placeholderHints != null) {
+      r.placeholderHints = [ph0 ?? '']
+    }
+    return r
   }
   if (base.stageCount === 2) {
-    return {
+    const r: VerticalTableRow = {
       stageCount: 2,
       headers: [h0, base.headers[1] ?? ''],
       cells: [c0, base.cells[1] ?? ''],
     }
+    if (ph0 !== undefined || ph1 !== undefined || base.placeholderHints != null) {
+      r.placeholderHints = [ph0 ?? '', ph1 ?? '']
+    }
+    return r
   }
-  return { stageCount: 2, headers: [h0, ''], cells: [c0, ''] }
+  const r: VerticalTableRow = { stageCount: 2, headers: [h0, ''], cells: [c0, ''] }
+  if (ph0 !== undefined || ph1 !== undefined || base.placeholderHints != null) {
+    r.placeholderHints = [ph0 ?? '', '']
+  }
+  return r
 }
 
 /** 테이블 본문 th — 편집 placeholder (`1. 항목명 입력` / `2-1. 항목명 입력`) */
@@ -1025,7 +1095,9 @@ export function writingOutlineLabel(p: WritingFormParagraph): string {
   }
   if (p.kind === 'single_item' && p.variant === 'vertical_table') {
     const t = p.paragraphTitle.trim()
-    return t || '테이블_세로형(텍스트형)'
+    if (t) return t
+    const vt = normalizeVerticalTableParagraph(p as VerticalTableParagraph)
+    return verticalTableParagraphOutlineLabel(vt.verticalTableFlavor)
   }
   const t = p.paragraphTitle.trim()
   return t || '타이틀을 입력해 주세요'
