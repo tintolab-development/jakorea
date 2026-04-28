@@ -225,7 +225,8 @@ export interface HorizontalTableParagraph extends WritingFormParagraphBase {
 }
 
 /** 세로형 테이블 한 행: 1단(항목·입력 1쌍) 또는 2단(같은 행에 두 쌍, 폭 분배).
- * `placeholderHints`: 주관식형(td) 플레이스홀더 「입력창 안내」— 스테이지별 1개·2개 튜플. 생략 시 본문에서 기본 문구 사용. */
+ * `placeholderHints`: 주관식·날짜/시간형(td) 플레이스홀더 「입력창 안내」— 스테이지별 1개·2개 튜플. 생략 시 본문에서 기본 문구 사용.
+ * `dateTimeStage1Time`: 날짜/시간형·2단일 때 두 번째 스테이지 td의 시간 픽커 값(`cells[1]`은 해당 스테이지 날짜). */
 export type VerticalTableRow =
   | { stageCount: 1; headers: [string]; cells: [string]; placeholderHints?: [string] }
   | {
@@ -233,6 +234,8 @@ export type VerticalTableRow =
       headers: [string, string]
       cells: [string, string]
       placeholderHints?: [string, string]
+      /** 날짜/시간형: 2단 우측 스테이지의 시간(HH:mm) */
+      dateTimeStage1Time?: string
     }
 
 /** 빈 문자열 가드 없이 우선 사용 — 주관식 td 기본 플레이스홀더 */
@@ -242,10 +245,11 @@ export const DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER = '내용을 입력해
  * 세로형 단락 종류.
  * - `text`: 테이블_세로형(텍스트형)
  * - `subjective`: 테이블_세로형(주관식형) — 행별 주관식(자유 서술) 입력
+ * - `date_time`: 테이블_세로형(날짜/시간형)
  */
-export type VerticalTableFlavor = 'text' | 'subjective'
+export type VerticalTableFlavor = 'text' | 'subjective' | 'date_time'
 
-/** 작성 양식 — 테이블 세로형 (`verticalTableFlavor`로 텍스트형 / 주관식형 구분) */
+/** 작성 양식 — 테이블 세로형 (`verticalTableFlavor`로 텍스트형 / 주관식형 / 날짜·시간형 구분) */
 export interface VerticalTableParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'vertical_table'
@@ -626,6 +630,7 @@ function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
       const h = (raw as { headers?: string[] }).headers ?? []
       const c = (raw as { cells?: string[] }).cells ?? []
       const ph = (raw as { placeholderHints?: string[] }).placeholderHints
+      const dtTime = (raw as { dateTimeStage1Time?: string }).dateTimeStage1Time
       const row: VerticalTableRow = {
         stageCount: 2,
         headers: [h[0] ?? '', h[1] ?? ''],
@@ -633,6 +638,9 @@ function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
       }
       if (ph != null && ph.length >= 1) {
         row.placeholderHints = [ph[0] ?? '', ph[1] ?? '']
+      }
+      if (typeof dtTime === 'string') {
+        row.dateTimeStage1Time = dtTime
       }
       return row
     }
@@ -665,7 +673,11 @@ export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): Vert
     rows = [defaultVerticalTableRowSingle()]
   }
   const verticalTableFlavor: VerticalTableFlavor =
-    p.verticalTableFlavor === 'subjective' ? 'subjective' : 'text'
+    p.verticalTableFlavor === 'subjective'
+      ? 'subjective'
+      : p.verticalTableFlavor === 'date_time'
+        ? 'date_time'
+        : 'text'
   return {
     ...p,
     variant: 'vertical_table',
@@ -679,7 +691,9 @@ export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): Vert
 
 /** 기본 제목 없을 때 우측 패널·아웃라인 등에 사용 */
 export function verticalTableParagraphOutlineLabel(flavor: VerticalTableFlavor): string {
-  return flavor === 'subjective' ? '테이블_세로형(주관식형)' : '테이블_세로형(텍스트형)'
+  if (flavor === 'subjective') return '테이블_세로형(주관식형)'
+  if (flavor === 'date_time') return '테이블_세로형(날짜/시간형)'
+  return '테이블_세로형(텍스트형)'
 }
 
 export function createVerticalTableParagraph(
@@ -716,6 +730,9 @@ export function cloneVerticalTableParagraph(source: VerticalTableParagraph, newI
         }
         if (r.placeholderHints) {
           out.placeholderHints = [...r.placeholderHints] as [string, string]
+        }
+        if (r.dateTimeStage1Time !== undefined) {
+          out.dateTimeStage1Time = r.dateTimeStage1Time
         }
         return out
       }
@@ -779,9 +796,17 @@ export function verticalTableRowWithStageCount(row: VerticalTableRow, stageCount
     if (ph0 !== undefined || ph1 !== undefined || base.placeholderHints != null) {
       r.placeholderHints = [ph0 ?? '', ph1 ?? '']
     }
+    if (base.dateTimeStage1Time !== undefined) {
+      r.dateTimeStage1Time = base.dateTimeStage1Time
+    }
     return r
   }
-  const r: VerticalTableRow = { stageCount: 2, headers: [h0, ''], cells: [c0, ''] }
+  const r: VerticalTableRow = {
+    stageCount: 2,
+    headers: [h0, ''],
+    cells: [c0, ''],
+    dateTimeStage1Time: '',
+  }
   if (ph0 !== undefined || ph1 !== undefined || base.placeholderHints != null) {
     r.placeholderHints = [ph0 ?? '', '']
   }
