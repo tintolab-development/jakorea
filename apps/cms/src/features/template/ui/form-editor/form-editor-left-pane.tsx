@@ -31,8 +31,8 @@ import {
   type VerticalTableParagraph,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { HorizontalTableDimensionActions } from '@/features/template/ui/paragraph/shared/horizontal-table-dimension-actions'
-import { VerticalTableDimensionActions } from '@/features/template/ui/paragraph/shared/vertical-table-dimension-actions'
+import { HorizontalTableDimensionActions } from '@/features/template/ui/paragraph/table/horizontal-table-dimension-actions'
+import { VerticalTableDimensionActions } from '@/features/template/ui/paragraph/table/vertical-table-dimension-actions'
 import {
   renderFormParagraphBody,
   type RenderFormParagraphBodyOptions,
