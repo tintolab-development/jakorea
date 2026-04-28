@@ -81,19 +81,26 @@ export interface ClosingParagraph extends WritingFormParagraphBase {
   showAgreementFooter?: boolean
 }
 
+/** 동의 양식 하단 고정 시스템 행(날짜·서명) — CMS authoring / 응답 write에서 각각 표시 */
+export type AgreementSystemPreset = 'agreement_date' | 'agreement_signature'
+
+/** 시스템 날짜·서명 본문 표시 — authoring(작성/미리보기) vs write(응답 입력) */
+export type AgreementSystemBodyDisplayMode = 'authoring' | 'write'
+
 /** 설명글·기타형 — 시스템 등 본문 에디터 없음 */
 export interface SystemParagraph extends WritingFormParagraphBase {
   kind: 'description'
   variant: 'system'
+  /** 동의 양식 전용 고정 항목; 없으면 기타(빈 본문·설문 테스트용 등) */
+  systemPreset?: AgreementSystemPreset
 }
 
-/** 동의서 일반 본문(카드 타이틀/설명 + 본문 영역) */
-export interface AgreementRichTextParagraph extends WritingFormParagraphBase {
-  kind: 'single_item'
-  variant: 'agreement_rich_text'
-  answerRequired?: boolean
-  bodyPlaceholder: string
-  bodyText: string
+export function isAgreementLockedSystemParagraph(p: WritingFormParagraph): boolean {
+  return (
+    p.kind === 'description' &&
+    p.variant === 'system' &&
+    (p.systemPreset === 'agreement_date' || p.systemPreset === 'agreement_signature')
+  )
 }
 
 /** 동의서 설명글·텍스트형 — 제목 / 설명 / 한 줄 본문 + 답변 필수 토글 */
@@ -104,31 +111,6 @@ export interface AgreementExplanationTextParagraph extends WritingFormParagraphB
   bodyText: string
   /** 카드 하단 토글 — 본문(답변) 필수 여부 */
   answerRequired: boolean
-}
-
-export interface AgreementPrivacyRow {
-  id: string
-  label: string
-  placeholder: string
-}
-
-/** 개인정보 수집 고지 항목(불릿 + 라벨 + 입력) */
-export interface AgreementPrivacyRowsParagraph extends WritingFormParagraphBase {
-  kind: 'single_item'
-  variant: 'agreement_privacy_rows'
-  answerRequired?: boolean
-  rows: AgreementPrivacyRow[]
-}
-
-/** 표 형 고지 + 동의/비동의 라디오(미리보기) */
-export interface AgreementTableConsentParagraph extends WritingFormParagraphBase {
-  kind: 'single_item'
-  variant: 'agreement_table_consent'
-  answerRequired?: boolean
-  headerValues: [string, string, string]
-  cellValues: [string, string, string]
-  footerDescription: string
-  selectedPreviewConsent: 'agree' | 'disagree'
 }
 
 /** 단일 항목 미리보기 전용(추후 스키마 정리 시 통합 가능) */
@@ -705,10 +687,7 @@ export type WritingFormParagraph =
   | UserProfileParagraph
   | ScoreSelectParagraph
   | SubjectiveParagraph
-  | AgreementRichTextParagraph
   | AgreementExplanationTextParagraph
-  | AgreementPrivacyRowsParagraph
-  | AgreementTableConsentParagraph
   | ShortEssayParagraph
   | MultipleChoiceParagraph
   | DropdownParagraph
@@ -724,7 +703,7 @@ export type WritingFormParagraph =
 export interface WritingFormDraft {
   schemaVersion: 1
   formSettings: WritingFormSettings
-  /** 설문·동의: 0 제목형, 1–3 중간(DnD), 4 마무리. 테이블 가로형: 가로형 단락만(1개 이상, DnD) */
+  /** 설문: 0 제목형, 1–3 중간(DnD), 4 마무리. 동의: 0 제목형, 1–2 중간(DnD), 3 마무리 등. 가로형: 가로형 단락만 */
   paragraphs: WritingFormParagraph[]
 }
 
@@ -758,12 +737,13 @@ export function paragraphsAreOnlyHorizontalTables(paragraphs: WritingFormParagra
   )
 }
 
-/** 직접 등록 — 신규 동의 양식 기본 단락 id */
+/** 직접 등록 — 신규 동의 양식 기본 단락 id (제목형·텍스트형·주관식형·시스템 2종·마무리글형) */
 export const DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS = {
   title: 'agreement-direct-paragraph-title',
   explanationText: 'agreement-direct-paragraph-explanation-text',
-  privacy: 'agreement-direct-paragraph-privacy',
-  table: 'agreement-direct-paragraph-table',
+  shortEssay: 'agreement-direct-paragraph-short-essay',
+  systemDate: 'agreement-direct-paragraph-system-date',
+  systemSignature: 'agreement-direct-paragraph-system-signature',
   closing: 'agreement-direct-paragraph-closing',
 } as const
 
@@ -795,48 +775,62 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
-        bodyPlaceholder: '텍스트를 작성해 주세요',
+        bodyPlaceholder: '한 줄 안내를 입력해 주세요',
         bodyText: '',
         answerRequired: true,
       },
       {
-        id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.privacy,
+        id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.shortEssay,
         kind: 'single_item',
-        variant: 'agreement_privacy_rows',
+        variant: 'short_essay',
         requiredMark: true,
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
-        rows: [
+        answerRequired: true,
+        showItemTitle: true,
+        items: [
           {
-            id: 'agreement-privacy-row-1',
+            id: 'agreement-short-essay-item-1',
             label: '수집하는 개인정보 항목',
-            placeholder: 'ex) 이름, 연락처',
+            placeholder: '내용을 입력해 주세요',
+            bodyText: '',
           },
           {
-            id: 'agreement-privacy-row-2',
-            label: '수집 및 이용 목적',
-            placeholder: 'ex) 이벤트 진행 및 당첨자 안내',
+            id: 'agreement-short-essay-item-2',
+            label: '수집·이용 목적',
+            placeholder: '내용을 입력해 주세요',
+            bodyText: '',
           },
           {
-            id: 'agreement-privacy-row-3',
-            label: '보유 및 이용 기간',
-            placeholder: 'ex) 회원 탈퇴 후 1개월 또는 개인정보수집 동의일로부터 5년',
+            id: 'agreement-short-essay-item-3',
+            label: '보유·이용 기간',
+            placeholder: '내용을 입력해 주세요',
+            bodyText: '',
           },
         ],
+        bodyPlaceholder: '각 항목에 내용을 입력해 주세요',
+        bodyText: '',
       },
       {
-        id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.table,
-        kind: 'single_item',
-        variant: 'agreement_table_consent',
-        requiredMark: true,
-        paragraphTitle: '',
+        id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.systemDate,
+        kind: 'description',
+        variant: 'system',
+        systemPreset: 'agreement_date',
+        requiredMark: false,
+        paragraphTitle: '날짜 유형',
         paragraphDescription: '',
-        participatesInTitleNumbering: true,
-        headerValues: ['', '', ''],
-        cellValues: ['', '', ''],
-        footerDescription: '',
-        selectedPreviewConsent: 'agree',
+        participatesInTitleNumbering: false,
+      },
+      {
+        id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.systemSignature,
+        kind: 'description',
+        variant: 'system',
+        systemPreset: 'agreement_signature',
+        requiredMark: false,
+        paragraphTitle: '서명란 유형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
       },
       {
         id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.closing,
@@ -847,22 +841,62 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         paragraphDescription: '',
         participatesInTitleNumbering: false,
         body: '내용을 자세히 검토하신 후 동의 여부를 결정하여 주시기 바랍니다.',
-        showAgreementFooter: true,
       },
     ],
   }
 }
 
-/** 첫·마지막 단락 고정, 사이 middle만 재정렬 */
+/**
+ * 동의 양식: 마지막이 마무리이고 그 앞이 서명·날짜 시스템 단락이면 하단 3개는 드래그 제외.
+ * 그 외: 첫 단락 + middle + 마지막 1개만 고정.
+ */
+export function getWritingFormHeadMiddlePinnedTail(paragraphs: WritingFormParagraph[]): {
+  head: WritingFormParagraph
+  middle: WritingFormParagraph[]
+  pinnedTail: WritingFormParagraph[]
+} | null {
+  if (paragraphs.length < 3) return null
+  const head = paragraphs[0]!
+  const n = paragraphs.length
+  const last = paragraphs[n - 1]!
+  const p2 = paragraphs[n - 2]
+  const p3 = paragraphs[n - 3]
+  const triplePinnedAgreement =
+    n >= 5 &&
+    last.kind === 'description' &&
+    last.variant === 'closing' &&
+    p2 != null &&
+    p2.kind === 'description' &&
+    p2.variant === 'system' &&
+    p2.systemPreset === 'agreement_signature' &&
+    p3 != null &&
+    p3.kind === 'description' &&
+    p3.variant === 'system' &&
+    p3.systemPreset === 'agreement_date'
+
+  if (triplePinnedAgreement) {
+    return {
+      head,
+      middle: paragraphs.slice(1, -3),
+      pinnedTail: paragraphs.slice(-3),
+    }
+  }
+  return {
+    head,
+    middle: paragraphs.slice(1, -1),
+    pinnedTail: [last],
+  }
+}
+
+/** 첫·마지막(또는 동의 하단 3고정) 단락 고정, 사이 middle만 재정렬 */
 export function reorderHeadMiddleTail(
   paragraphs: WritingFormParagraph[],
   activeId: string,
   overId: string
 ): WritingFormParagraph[] {
-  if (paragraphs.length < 3) return paragraphs
-  const head = paragraphs[0]!
-  const tail = paragraphs[paragraphs.length - 1]!
-  const middle = paragraphs.slice(1, -1)
+  const split = getWritingFormHeadMiddlePinnedTail(paragraphs)
+  if (split == null) return paragraphs
+  const { head, middle, pinnedTail } = split
   const ids = middle.map(p => p.id)
   const oldIndex = ids.indexOf(activeId)
   const newIndex = ids.indexOf(overId)
@@ -870,7 +904,7 @@ export function reorderHeadMiddleTail(
   const nextMiddle = [...middle]
   const [removed] = nextMiddle.splice(oldIndex, 1)
   nextMiddle.splice(newIndex, 0, removed)
-  return [head, ...nextMiddle, tail]
+  return [head, ...nextMiddle, ...pinnedTail]
 }
 
 export function createDefaultHorizontalTableDraft(): WritingFormDraft {
@@ -972,13 +1006,13 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
   }
 }
 
-/** 기본 설문 5단락(인덱스 1–3 middle)만 재정렬 */
+/** 첫·마지막 고정, 가운데 단락만 재정렬(설문 5단락·동의 4단락 등 공통) */
 export function reorderWritingFormMiddleParagraphs(
   paragraphs: WritingFormParagraph[],
   activeId: string,
   overId: string
 ): WritingFormParagraph[] {
-  if (paragraphs.length !== 5) return paragraphs
+  if (paragraphs.length < 3) return paragraphs
   return reorderHeadMiddleTail(paragraphs, activeId, overId)
 }
 
@@ -1165,12 +1199,22 @@ export function writingOutlineLabel(p: WritingFormParagraph): string {
     return t || '타이틀을 입력해 주세요'
   }
   if (p.kind === 'description' && p.variant === 'system') {
+    if (p.systemPreset === 'agreement_date') return '날짜 유형'
+    if (p.systemPreset === 'agreement_signature') return '서명란 유형'
     const t = p.paragraphTitle.trim()
     return t || '기타'
   }
   if (p.kind === 'description' && p.variant === 'closing') {
     const t = p.body.trim().slice(0, 24)
     return t || '마무리글 없음'
+  }
+  if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') {
+    const t = p.paragraphTitle.trim()
+    return t || '설명 안내'
+  }
+  if (p.kind === 'single_item' && p.variant === 'short_essay') {
+    const t = p.paragraphTitle.trim()
+    return t || '동의 내용'
   }
   if (p.kind === 'single_item' && p.variant === 'horizontal_table') {
     const t = p.paragraphTitle.trim()

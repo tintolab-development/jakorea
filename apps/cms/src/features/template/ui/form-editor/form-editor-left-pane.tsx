@@ -17,6 +17,8 @@ import {
 } from '@/features/template/ui/paragraph/shared/paragraph-actions'
 import { getFormParagraphTitleNumberPrefix } from '@/features/template/lib/form-title-numbering'
 import {
+  getWritingFormHeadMiddlePinnedTail,
+  isAgreementLockedSystemParagraph,
   paragraphsAreOnlyHorizontalTables,
   type DateTimeParagraph,
   type FormEditorKind,
@@ -29,7 +31,10 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { HorizontalTableDimensionActions } from '@/features/template/ui/paragraph/shared/horizontal-table-dimension-actions'
-import { renderFormParagraphBody } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import {
+  renderFormParagraphBody,
+  type RenderFormParagraphBodyOptions,
+} from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import { restrictFormEditorListToVerticalAxis } from '@/features/template/ui/form-editor/dnd-restrict-vertical-axis'
 import './form-editor.css'
@@ -57,6 +62,8 @@ export interface FormEditorLeftPaneProps {
     onDuplicate: (paragraphId: string) => void
     onDelete: (paragraphId: string) => void
   }
+  /** `renderFormParagraphBody`에 그대로 전달(동의 시스템 단락 write 모드 등) */
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
 }
 
 function renderFormEditorParagraphBody(
@@ -67,7 +74,8 @@ function renderFormEditorParagraphBody(
   rowSelectionsByParagraphId: FormEditorLeftPaneProps['horizontalTableRowSelectionsByParagraphId'],
   onHorizontalTableRowSelectionChange: FormEditorLeftPaneProps['onHorizontalTableRowSelectionChange'],
   singleItemListActiveItemId: FormEditorLeftPaneProps['singleItemListActiveItemId'],
-  onSelectSingleItemListItem: FormEditorLeftPaneProps['onSelectSingleItemListItem']
+  onSelectSingleItemListItem: FormEditorLeftPaneProps['onSelectSingleItemListItem'],
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
 ) {
   return renderFormParagraphBody(paragraph, updateParagraph, isSelected, editorKind, {
     horizontalTableRowSelection: rowSelectionsByParagraphId?.[paragraph.id] ?? null,
@@ -82,6 +90,7 @@ function renderFormEditorParagraphBody(
       onSelectSingleItemListItem
         ? (itemId: string | null) => onSelectSingleItemListItem(paragraph.id, itemId)
         : undefined,
+    ...paragraphBodyOptions,
   })
 }
 
@@ -95,6 +104,9 @@ function formCardTitleUsesPlaceholderTone(p: WritingFormParagraph): boolean {
   }
   if (p.kind === 'description' && p.variant === 'closing') {
     return !p.body.trim()
+  }
+  if (isAgreementLockedSystemParagraph(p)) {
+    return false
   }
   if (p.kind === 'description' && p.variant === 'system') {
     return !p.paragraphTitle.trim()
@@ -140,7 +152,8 @@ function paragraphEditableHeading(
             ? { ...cur, surveyDescription: next }
             : cur
         ),
-      descriptionPlaceholder: '설명 입력',
+      descriptionPlaceholder:
+        editorKind === 'agreement' ? '부가 설명을 입력해 주세요' : '설명 입력',
     }
   }
 
@@ -156,19 +169,38 @@ function paragraphEditableHeading(
         ),
       titlePlaceholder: '마무리 문구를 입력해 주세요',
       titleRequired: p.requiredMark,
-      titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
-        ? 'paragraph-card__title--placeholder'
-        : undefined,
+      titleClassName: [
+        'paragraph-input--closing-body',
+        formCardTitleUsesPlaceholderTone(paragraph) ? 'paragraph-card__title--placeholder' : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
       titleLeading: prefix,
       showDescription: false,
       descriptionValue: p.paragraphDescription,
       onDescriptionChange: () => {},
-      descriptionPlaceholder: '설명 입력',
+      descriptionPlaceholder:
+        editorKind === 'agreement' ? '부가 설명을 입력해 주세요' : '설명 입력',
     }
   }
 
   if (paragraph.kind === 'description' && paragraph.variant === 'system') {
     const p = paragraph
+    if (isAgreementLockedSystemParagraph(paragraph)) {
+      return {
+        isEditMode: false,
+        titleValue: p.paragraphTitle,
+        onTitleChange: () => {},
+        titlePlaceholder: '타이틀을 입력해 주세요',
+        titleRequired: p.requiredMark,
+        titleClassName: undefined,
+        titleLeading: prefix,
+        showDescription: false,
+        descriptionValue: '',
+        onDescriptionChange: () => {},
+        descriptionPlaceholder: '설명 입력',
+      }
+    }
     return {
       isEditMode: isSelected,
       titleValue: p.paragraphTitle,
@@ -191,7 +223,8 @@ function paragraphEditableHeading(
             ? { ...cur, paragraphDescription: next }
             : cur
         ),
-      descriptionPlaceholder: '설명 입력',
+      descriptionPlaceholder:
+        editorKind === 'agreement' ? '부가 설명을 입력해 주세요' : '설명 입력',
     }
   }
 
@@ -217,7 +250,8 @@ function paragraphEditableHeading(
             ? { ...cur, paragraphDescription: next }
             : cur
         ),
-      descriptionPlaceholder: '설명 입력',
+      descriptionPlaceholder:
+        editorKind === 'agreement' ? '부가 설명을 입력해 주세요' : '설명 입력',
     }
   }
 
@@ -402,6 +436,7 @@ function modalCardFooterActions(
 
   if (!isSelected) return undefined
   if (paragraph.kind === 'description' && paragraph.variant === 'system') {
+    if (isAgreementLockedSystemParagraph(paragraph)) return undefined
     return <FormParagraphCardActionsMinimal />
   }
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
@@ -470,6 +505,7 @@ interface PinnedCardProps {
   horizontalTableRowSelectionsByParagraphId: FormEditorLeftPaneProps['horizontalTableRowSelectionsByParagraphId']
   onHorizontalTableRowSelectionChange: FormEditorLeftPaneProps['onHorizontalTableRowSelectionChange']
   middleParagraphActions: FormEditorLeftPaneProps['middleParagraphActions']
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
 }
 
 function PinnedFormCard({
@@ -485,6 +521,7 @@ function PinnedFormCard({
   horizontalTableRowSelectionsByParagraphId,
   onHorizontalTableRowSelectionChange,
   middleParagraphActions,
+  paragraphBodyOptions,
 }: PinnedCardProps) {
   const isSelected = selectedCardId === paragraph.id
   const editableHeading = paragraphEditableHeading(
@@ -518,7 +555,8 @@ function PinnedFormCard({
         horizontalTableRowSelectionsByParagraphId,
         onHorizontalTableRowSelectionChange,
         singleItemListActiveItemId,
-        onSelectSingleItemListItem
+        onSelectSingleItemListItem,
+        paragraphBodyOptions
       )}
     </ParagraphCard>
   )
@@ -537,6 +575,7 @@ interface SortableMiddleCardProps {
   horizontalTableRowSelectionsByParagraphId: FormEditorLeftPaneProps['horizontalTableRowSelectionsByParagraphId']
   onHorizontalTableRowSelectionChange: FormEditorLeftPaneProps['onHorizontalTableRowSelectionChange']
   middleParagraphActions: FormEditorLeftPaneProps['middleParagraphActions']
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
 }
 
 function SortableMiddleFormCard({
@@ -552,6 +591,7 @@ function SortableMiddleFormCard({
   horizontalTableRowSelectionsByParagraphId,
   onHorizontalTableRowSelectionChange,
   middleParagraphActions,
+  paragraphBodyOptions,
 }: SortableMiddleCardProps) {
   const {
     attributes,
@@ -616,7 +656,8 @@ function SortableMiddleFormCard({
           horizontalTableRowSelectionsByParagraphId,
           onHorizontalTableRowSelectionChange,
           singleItemListActiveItemId,
-          onSelectSingleItemListItem
+          onSelectSingleItemListItem,
+          paragraphBodyOptions
         )}
       </ParagraphCard>
     </div>
@@ -637,6 +678,7 @@ export function FormEditorLeftPane({
   horizontalTableRowSelectionsByParagraphId,
   onHorizontalTableRowSelectionChange,
   middleParagraphActions,
+  paragraphBodyOptions,
 }: FormEditorLeftPaneProps) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
 
@@ -674,6 +716,7 @@ export function FormEditorLeftPane({
                   horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
                   onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
                   middleParagraphActions={middleParagraphActions}
+                  paragraphBodyOptions={paragraphBodyOptions}
                 />
               ))}
             </SortableContext>
@@ -711,6 +754,7 @@ export function FormEditorLeftPane({
                 horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
                 onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
                 middleParagraphActions={middleParagraphActions}
+                paragraphBodyOptions={paragraphBodyOptions}
               />
             ))}
           </SortableContext>
@@ -728,17 +772,20 @@ export function FormEditorLeftPane({
           horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
           onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
           middleParagraphActions={middleParagraphActions}
+          paragraphBodyOptions={paragraphBodyOptions}
         />
       </div>
     )
   }
 
-  const head = paragraphs[0]
-  const tail = paragraphs[paragraphs.length - 1]
-  const middle = paragraphs.slice(1, -1)
+  const split = getWritingFormHeadMiddlePinnedTail(paragraphs)
+  if (split == null) return null
+  const { head, middle, pinnedTail } = split
+  const pinnedSystemRows = pinnedTail.filter(isAgreementLockedSystemParagraph)
+  const pinnedCardTail = pinnedTail.filter(p => !isAgreementLockedSystemParagraph(p))
   const sortableIds = middle.map(p => p.id)
 
-  if (!head || !tail || middle.length < 1) return null
+  if (middle.length < 1) return null
 
   return (
     <div className="form-editor-left">
@@ -755,6 +802,7 @@ export function FormEditorLeftPane({
         horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
         onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
         middleParagraphActions={middleParagraphActions}
+        paragraphBodyOptions={paragraphBodyOptions}
       />
       <DndContext
         sensors={sensors}
@@ -778,24 +826,38 @@ export function FormEditorLeftPane({
               horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
               onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
               middleParagraphActions={middleParagraphActions}
+              paragraphBodyOptions={paragraphBodyOptions}
             />
           ))}
         </SortableContext>
       </DndContext>
-      <PinnedFormCard
-        paragraph={tail}
-        paragraphs={paragraphs}
-        titleNumbering={titleNumbering}
-        selectedCardId={selectedCardId}
-        onSelectCard={onSelectCard}
-        updateParagraph={updateParagraph}
-        editorKind={editorKind}
-        singleItemListActiveItemId={singleItemListActiveItemId}
-        onSelectSingleItemListItem={onSelectSingleItemListItem}
-        horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
-        onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
-        middleParagraphActions={middleParagraphActions}
-      />
+      {pinnedCardTail.map(p => (
+        <PinnedFormCard
+          key={p.id}
+          paragraph={p}
+          paragraphs={paragraphs}
+          titleNumbering={titleNumbering}
+          selectedCardId={selectedCardId}
+          onSelectCard={onSelectCard}
+          updateParagraph={updateParagraph}
+          editorKind={editorKind}
+          singleItemListActiveItemId={singleItemListActiveItemId}
+          onSelectSingleItemListItem={onSelectSingleItemListItem}
+          horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
+          onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+          middleParagraphActions={middleParagraphActions}
+          paragraphBodyOptions={paragraphBodyOptions}
+        />
+      ))}
+      {pinnedSystemRows.length > 0 ? (
+        <div className="form-editor-left__system-fixed">
+          {pinnedSystemRows.map(p => (
+            <div key={p.id} className="form-editor-left__system-fixed-row">
+              {renderFormParagraphBody(p, updateParagraph, false, editorKind, paragraphBodyOptions)}
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }

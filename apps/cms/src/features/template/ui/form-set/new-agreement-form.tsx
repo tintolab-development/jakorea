@@ -6,6 +6,8 @@ import { getFormNavDisplayLine } from '@/features/template/lib/form-title-number
 import {
   createDefaultDirectAgreementDraft,
   DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS,
+  getWritingFormHeadMiddlePinnedTail,
+  isAgreementLockedSystemParagraph,
   reorderWritingFormMiddleParagraphs,
   type FormTitleNumberingStyle,
   type WritingFormDraft,
@@ -61,18 +63,25 @@ export default function NewAgreementForm() {
   }, [])
 
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
-    const [head, ...rest] = draft.paragraphs
-    const tail = rest[rest.length - 1]
-    const middle = rest.slice(0, -1)
+    const split = getWritingFormHeadMiddlePinnedTail(draft.paragraphs)
     const { titleNumbering } = draft.formSettings
     const line = (p: WritingFormParagraph) => ({
       id: p.id,
       displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
     })
+    if (split == null) {
+      return {
+        pinnedTop: null,
+        sortableMiddle: [],
+        pinnedBottom: [] as Array<{ id: string; displayLine: string }>,
+      }
+    }
+    const { head, middle, pinnedTail } = split
+    const pinnedBottomCards = pinnedTail.filter(p => !isAgreementLockedSystemParagraph(p))
     return {
       pinnedTop: line(head),
       sortableMiddle: middle.map(line),
-      pinnedBottom: line(tail),
+      pinnedBottom: pinnedBottomCards.map(line),
     }
   }, [draft])
 

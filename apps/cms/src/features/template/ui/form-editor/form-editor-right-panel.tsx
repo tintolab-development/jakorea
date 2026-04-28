@@ -2,7 +2,6 @@ import { Form } from 'antd'
 import { FormEditorMultipleChoiceItems } from '@/features/template/ui/form-editor/form-editor-multiple-choice-items'
 import { FormEditorScaleTypeItems } from '@/features/template/ui/form-editor/form-editor-scale-type-items'
 import { CmsInput } from '@/shared/ui/cms-input'
-import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type {
@@ -20,6 +19,7 @@ import type {
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID,
+  isAgreementLockedSystemParagraph,
   writingOutlineLabel,
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorHorizontalTableBodyFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-body-fields'
@@ -51,6 +51,10 @@ function paragraphKindLabel(p: WritingFormParagraph): string {
 }
 
 function paragraphVariantLabel(p: WritingFormParagraph): string {
+  if (p.kind === 'description' && p.variant === 'system') {
+    if (p.systemPreset === 'agreement_date') return '날짜 유형'
+    if (p.systemPreset === 'agreement_signature') return '서명란 유형'
+  }
   if (p.kind === 'single_item' && p.variant === 'horizontal_table') {
     const t = p as HorizontalTableParagraph
     return t.tableFlavor === 'field' ? '테이블_가로형 (필드 형)' : '테이블_가로형'
@@ -64,14 +68,8 @@ function paragraphVariantLabel(p: WritingFormParagraph): string {
       return '점수 선택형'
     case 'subjective':
       return '주관식형'
-    case 'agreement_rich_text':
-      return '동의 본문형'
     case 'agreement_explanation_text':
       return '텍스트형'
-    case 'agreement_privacy_rows':
-      return '개인정보 수집 항목형'
-    case 'agreement_table_consent':
-      return '표·동의 선택형'
     case 'closing':
       return '마무리글형'
     case 'system':
@@ -287,9 +285,17 @@ export function FormEditorRightPanel({
               </>
             ) : null}
 
-            {active.kind === 'single_item' &&
-            (active.variant === 'agreement_rich_text' ||
-              active.variant === 'agreement_explanation_text') ? (
+            {active.kind === 'description' &&
+            active.variant === 'system' &&
+            isAgreementLockedSystemParagraph(active) ? (
+              <Form.Item>
+                <span className="form-editor-right-panel__system-hint">
+                  시스템 설정 항목입니다. 내용 추가·삭제·편집은 할 수 없습니다.
+                </span>
+              </Form.Item>
+            ) : null}
+
+            {active.kind === 'single_item' && active.variant === 'agreement_explanation_text' ? (
               <>
                 <Form.Item label="본문 placeholder">
                   <CmsInput
@@ -304,52 +310,19 @@ export function FormEditorRightPanel({
                     placeholder="텍스트를 작성해 주세요"
                   />
                 </Form.Item>
-                {active.variant === 'agreement_rich_text' ? (
-                  <Form.Item label="본문 초안(미리보기)">
-                    <CmsTextArea
-                      width="100%"
-                      value={active.bodyText}
-                      onChange={e =>
-                        updateParagraph(active.id, () => ({
-                          ...active,
-                          bodyText: e.target.value,
-                        }))
-                      }
-                      rows={4}
-                    />
-                  </Form.Item>
-                ) : (
-                  <Form.Item label="본문(미리보기)">
-                    <CmsInput
-                      width="100%"
-                      value={active.bodyText}
-                      onChange={e =>
-                        updateParagraph(active.id, () => ({
-                          ...active,
-                          bodyText: e.target.value,
-                        }))
-                      }
-                    />
-                  </Form.Item>
-                )}
+                <Form.Item label="본문(미리보기)">
+                  <CmsInput
+                    width="100%"
+                    value={active.bodyText}
+                    onChange={e =>
+                      updateParagraph(active.id, () => ({
+                        ...active,
+                        bodyText: e.target.value,
+                      }))
+                    }
+                  />
+                </Form.Item>
               </>
-            ) : null}
-
-            {active.kind === 'single_item' && active.variant === 'agreement_table_consent' ? (
-              <Form.Item label="하단 설명(원문)">
-                <CmsTextArea
-                  width="100%"
-                  value={active.footerDescription}
-                  onChange={e =>
-                    updateParagraph(active.id, () => ({
-                      ...active,
-                      footerDescription: e.target.value,
-                    }))
-                  }
-                  rows={3}
-                  placeholder="설명을 입력해 주세요"
-                />
-              </Form.Item>
             ) : null}
 
             {activeShortEssay && selectedShortEssayItem ? (

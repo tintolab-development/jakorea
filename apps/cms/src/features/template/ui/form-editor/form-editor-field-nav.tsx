@@ -23,8 +23,8 @@ interface FormEditorFieldNavProps {
   /** 가로형 등 상단 고정 항목이 없을 때 생략 */
   pinnedTop?: FormEditorFieldNavItem | null
   sortableMiddle: FormEditorFieldNavItem[]
-  /** 가로형(테이블만) 등 하단 고정 항이 없을 때 생략 */
-  pinnedBottom?: FormEditorFieldNavItem | null
+  /** 가로형(테이블만) 등 하단 고정 항이 없을 때 생략 — 동의 양식은 복수 고정(날짜·서명·마무리) */
+  pinnedBottom?: FormEditorFieldNavItem | FormEditorFieldNavItem[] | null
   selectedItemId: string | null
   onSelectItem: (id: string) => void
   onReorderMiddle: (activeId: string, overId: string) => void
@@ -113,6 +113,8 @@ export function FormEditorFieldNav({
   fieldListBottomSlot,
   children,
 }: FormEditorFieldNavProps) {
+  const pinnedBottomList =
+    pinnedBottom == null ? [] : Array.isArray(pinnedBottom) ? pinnedBottom : [pinnedBottom]
   const sortableIds = sortableMiddle.map(i => i.id)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
 
@@ -149,13 +151,14 @@ export function FormEditorFieldNav({
             ))}
           </SortableContext>
         </DndContext>
-        {pinnedBottom != null && (
+        {pinnedBottomList.map(item => (
           <PinnedNavRow
-            item={pinnedBottom}
-            selected={selectedItemId === pinnedBottom.id}
-            onSelect={() => onSelectItem(pinnedBottom.id)}
+            key={item.id}
+            item={item}
+            selected={selectedItemId === item.id}
+            onSelect={() => onSelectItem(item.id)}
           />
-        )}
+        ))}
       </div>
       {fieldListBottomSlot}
       <hr className="template-modal-nav__children-divider" aria-hidden="true" />

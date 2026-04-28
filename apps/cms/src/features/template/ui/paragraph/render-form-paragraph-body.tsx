@@ -1,15 +1,14 @@
 import {
   FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID,
   normalizeHorizontalTableParagraph,
+  type AgreementSystemBodyDisplayMode,
   type FormEditorKind,
   type HorizontalTableRowSelection,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
 import { ExplanationText } from '@/features/template/ui/paragraph/explanation/text'
 import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/title'
-import { AgreementPrivacyRowsBody } from '@/features/template/ui/paragraph/single-item/agreement-privacy-rows-paragraph-body'
-import { AgreementRichTextBody } from '@/features/template/ui/paragraph/single-item/agreement-rich-text-paragraph-body'
-import { AgreementTableConsentBody } from '@/features/template/ui/paragraph/single-item/agreement-table-consent-paragraph-body'
 import { DateTime } from '@/features/template/ui/paragraph/single-item/date-time'
 import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
 import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
@@ -33,6 +32,10 @@ export type RenderFormParagraphBodyOptions = {
   onHorizontalTableRowSelectionChange?: (next: HorizontalTableRowSelection | null) => void
   singleItemListActiveItemId?: string | null
   onSelectSingleItemListItem?: (itemId: string | null) => void
+  /** 동의 시스템 단락(날짜·서명) — 기본 authoring; 응답 앱에서 write 전달 */
+  agreementSystemDisplayMode?: AgreementSystemBodyDisplayMode
+  agreementSystemParticipantName?: string
+  agreementSystemNow?: Date
 }
 
 export function renderFormParagraphBody(
@@ -70,33 +73,9 @@ export function renderFormParagraphBody(
       )
     case 'subjective':
       return <SubjectiveParagraphBody paragraph={p} isEditMode={isParagraphSelected} />
-    case 'agreement_rich_text':
-      return (
-        <AgreementRichTextBody
-          paragraph={p}
-          onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
-        />
-      )
     case 'agreement_explanation_text':
       return (
         <ExplanationText
-          paragraph={p}
-          onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
-        />
-      )
-    case 'agreement_privacy_rows':
-      return (
-        <AgreementPrivacyRowsBody
-          paragraph={p}
-          onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
-        />
-      )
-    case 'agreement_table_consent':
-      return (
-        <AgreementTableConsentBody
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isParagraphSelected}
@@ -118,9 +97,25 @@ export function renderFormParagraphBody(
         />
       )
     }
-    case 'system':
-      /* 본문 없음 — `<Component />`를 넘기면 `children != null`로 슬롯만 생기므로 null 반환 */
+    case 'system': {
+      if (
+        p.kind === 'description' &&
+        p.variant === 'system' &&
+        (p.systemPreset === 'agreement_date' || p.systemPreset === 'agreement_signature')
+      ) {
+        return (
+          <ExplanationSystem
+            paragraph={p}
+            onChange={next => updateParagraph(p.id, () => next)}
+            isEditMode={isParagraphSelected}
+            displayMode={options?.agreementSystemDisplayMode ?? 'authoring'}
+            participantName={options?.agreementSystemParticipantName}
+            now={options?.agreementSystemNow}
+          />
+        )
+      }
       return null
+    }
     case 'closing':
       return null
     case 'short_essay':

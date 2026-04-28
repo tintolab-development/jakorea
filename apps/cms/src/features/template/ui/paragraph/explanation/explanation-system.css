@@ -1,0 +1,25 @@
+/* 동의 양식 설명글·기타형 시스템 행(날짜·서명) */
+
+.explanation-system-row {
+  width: 100%;
+  min-width: 0;
+}
+
+.explanation-system-pill {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 20px;
+  border-radius: var(--16, 16px);
+  background: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%),
+    #fff
+  );
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  font-family: Pretendard;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%; /* 33.6px */
+}
