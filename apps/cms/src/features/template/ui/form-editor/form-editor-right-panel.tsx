@@ -9,8 +9,10 @@ import type {
   DateTimeParagraph,
   FormEditorKind,
   FormTitleNumberingStyle,
+  HorizontalTableFlavor,
   HorizontalTableParagraph,
   HorizontalTableRowSelection,
+  VerticalTableFlavor,
   VerticalTableParagraph,
   MultipleChoiceParagraph,
   ScaleTypeParagraph,
@@ -19,7 +21,10 @@ import type {
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
+  createHorizontalTableParagraph,
+  createVerticalTableParagraph,
   DATE_TIME_FIELD_MODE_OPTIONS,
+  horizontalTableSetFlavor,
   normalizeVerticalChoiceOptions,
   normalizeVerticalTableParagraph,
   verticalTableParagraphOutlineLabel,
@@ -41,6 +46,88 @@ const TITLE_NUMBERING_OPTIONS: { value: FormTitleNumberingStyle; label: string }
   { value: 'q123', label: 'Q1, Q2, Q3' },
   { value: 'none', label: '미선택' },
 ]
+
+type TableDetailKind =
+  | 'horizontal_text'
+  | 'horizontal_field'
+  | 'vertical_text'
+  | 'vertical_subjective'
+  | 'vertical_date_time'
+  | 'vertical_single_choice'
+  | 'vertical_multiple_choice'
+  | 'vertical_file_attachment'
+
+const TABLE_KIND_OPTIONS = [{ value: 'table', label: '테이블' }] as const
+const TABLE_DETAIL_OPTIONS: { value: TableDetailKind; label: string }[] = [
+  { value: 'horizontal_text', label: '가로형' },
+  { value: 'horizontal_field', label: '가로형(필드형)' },
+  { value: 'vertical_text', label: '세로형(텍스트형)' },
+  { value: 'vertical_subjective', label: '세로형(주관식형)' },
+  { value: 'vertical_date_time', label: '세로형(날짜/시간형)' },
+  { value: 'vertical_single_choice', label: '세로형(단일선택형)' },
+  { value: 'vertical_multiple_choice', label: '세로형(다중선택형)' },
+  { value: 'vertical_file_attachment', label: '세로형(파일첨부형)' },
+]
+
+const GENERATED_TABLE_TITLES = new Set([
+  '테이블_가로형',
+  '테이블_가로형 (필드 형)',
+  verticalTableParagraphOutlineLabel('text'),
+  verticalTableParagraphOutlineLabel('subjective'),
+  verticalTableParagraphOutlineLabel('date_time'),
+  verticalTableParagraphOutlineLabel('single_choice'),
+  verticalTableParagraphOutlineLabel('multiple_choice'),
+  verticalTableParagraphOutlineLabel('file_attachment'),
+])
+
+function tableDetailKind(p: WritingFormParagraph): TableDetailKind | null {
+  if (p.kind !== 'single_item') return null
+  if (p.variant === 'horizontal_table') {
+    const flavor: HorizontalTableFlavor = p.tableFlavor === 'field' ? 'field' : 'text'
+    return flavor === 'field' ? 'horizontal_field' : 'horizontal_text'
+  }
+  if (p.variant === 'vertical_table') {
+    const vt = normalizeVerticalTableParagraph(p as VerticalTableParagraph)
+    return `vertical_${vt.verticalTableFlavor}` as TableDetailKind
+  }
+  return null
+}
+
+function createTableParagraphByDetail(
+  id: string,
+  detail: TableDetailKind
+): HorizontalTableParagraph | VerticalTableParagraph {
+  if (detail === 'horizontal_field') {
+    return {
+      ...horizontalTableSetFlavor(createHorizontalTableParagraph(id), 'field'),
+      paragraphTitle: '테이블_가로형 (필드 형)',
+    }
+  }
+  if (detail === 'horizontal_text') {
+    return createHorizontalTableParagraph(id)
+  }
+  return createVerticalTableParagraph(
+    id,
+    detail.replace('vertical_', '') as VerticalTableFlavor
+  )
+}
+
+function withPreservedTableCommonFields<T extends HorizontalTableParagraph | VerticalTableParagraph>(
+  next: T,
+  prev: HorizontalTableParagraph | VerticalTableParagraph
+): T {
+  const shouldUseNextTitle =
+    prev.paragraphTitle.trim() === '' || GENERATED_TABLE_TITLES.has(prev.paragraphTitle.trim())
+
+  return {
+    ...next,
+    requiredMark: prev.requiredMark,
+    paragraphTitle: shouldUseNextTitle ? next.paragraphTitle : prev.paragraphTitle,
+    paragraphDescription: prev.paragraphDescription,
+    participatesInTitleNumbering: prev.participatesInTitleNumbering,
+    answerRequired: prev.answerRequired,
+  }
+}
 
 function paragraphKindLabel(p: WritingFormParagraph): string {
   if (p.kind === 'description') return '설명글'
@@ -272,6 +359,7 @@ export function FormEditorRightPanel({
     active && active.kind === 'single_item' && active.variant === 'scale_type'
       ? (active as ScaleTypeParagraph)
       : null
+  const activeTableDetail = active ? tableDetailKind(active) : null
 
   const shortEssayItems =
     activeShortEssay?.items && activeShortEssay.items.length > 0
@@ -299,6 +387,18 @@ export function FormEditorRightPanel({
         ? true
         : (activeShortEssay.showItemTitle ?? false)
 
+  const handleTableDetailChange = (nextDetail: TableDetailKind) => {
+    if (!active || activeTableDetail == null || activeTableDetail === nextDetail) return
+    updateParagraph(active.id, cur => {
+      if (cur.kind !== 'single_item') return cur
+      if (cur.variant !== 'horizontal_table' && cur.variant !== 'vertical_table') return cur
+      return withPreservedTableCommonFields(
+        createTableParagraphByDetail(cur.id, nextDetail),
+        cur as HorizontalTableParagraph | VerticalTableParagraph
+      )
+    })
+  }
+
   return (
     <div className="form-editor-right-panel">
       {showTitleNumbering ? (
@@ -316,17 +416,21 @@ export function FormEditorRightPanel({
               <div className="form-editor-right-panel__kind-row">
                 {active.kind === 'single_item' &&
                 (active.variant === 'horizontal_table' || active.variant === 'vertical_table') ? (
-                  <CmsSelect
-                    width="100%"
-                    value={paragraphVariantLabel(active)}
-                    options={[
-                      {
-                        value: paragraphVariantLabel(active),
-                        label: paragraphVariantLabel(active),
-                      },
-                    ]}
-                    disabled
-                  />
+                  <>
+                    <CmsSelect
+                      width={165}
+                      value="table"
+                      options={[...TABLE_KIND_OPTIONS]}
+                      withAllOption={false}
+                    />
+                    <CmsSelect
+                      width={165}
+                      value={activeTableDetail ?? 'horizontal_text'}
+                      options={TABLE_DETAIL_OPTIONS}
+                      onChange={v => handleTableDetailChange(v as TableDetailKind)}
+                      withAllOption={false}
+                    />
+                  </>
                 ) : (
                   <>
                     <CmsSelect
