@@ -96,6 +96,9 @@ function formCardTitleUsesPlaceholderTone(p: WritingFormParagraph): boolean {
   if (p.kind === 'description' && p.variant === 'closing') {
     return !p.body.trim()
   }
+  if (p.kind === 'description' && p.variant === 'system') {
+    return !p.paragraphTitle.trim()
+  }
   return !p.paragraphTitle.trim()
 }
 
@@ -144,11 +147,34 @@ function paragraphEditableHeading(
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
     const p = paragraph
     return {
+      /* 카드 타이틀 줄 = 마무리 본문(body) — `ParagraphInput` title과 동일 UX, 우측 패널에는 유형만 */
+      isEditMode: isSelected,
+      titleValue: p.body,
+      onTitleChange: (next: string) =>
+        updateParagraph(p.id, cur =>
+          cur.kind === 'description' && cur.variant === 'closing' ? { ...cur, body: next } : cur
+        ),
+      titlePlaceholder: '마무리 문구를 입력해 주세요',
+      titleRequired: p.requiredMark,
+      titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
+        ? 'paragraph-card__title--placeholder'
+        : undefined,
+      titleLeading: prefix,
+      showDescription: false,
+      descriptionValue: p.paragraphDescription,
+      onDescriptionChange: () => {},
+      descriptionPlaceholder: '설명 입력',
+    }
+  }
+
+  if (paragraph.kind === 'description' && paragraph.variant === 'system') {
+    const p = paragraph
+    return {
       isEditMode: isSelected,
       titleValue: p.paragraphTitle,
       onTitleChange: (next: string) =>
         updateParagraph(p.id, cur =>
-          cur.kind === 'description' && cur.variant === 'closing'
+          cur.kind === 'description' && cur.variant === 'system'
             ? { ...cur, paragraphTitle: next }
             : cur
         ),
@@ -161,7 +187,7 @@ function paragraphEditableHeading(
       descriptionValue: p.paragraphDescription,
       onDescriptionChange: (next: string) =>
         updateParagraph(p.id, cur =>
-          cur.kind === 'description' && cur.variant === 'closing'
+          cur.kind === 'description' && cur.variant === 'system'
             ? { ...cur, paragraphDescription: next }
             : cur
         ),
@@ -240,7 +266,7 @@ function modalCardFooterToggles(
     return (
       <CmsToggle
         label="작성 기간"
-        checked={titleParagraph.showWritingPeriodOnForm}
+        checked={titleParagraph.showWritingPeriodOnForm ?? false}
         onChange={checked =>
           updateParagraph(titleParagraph.id, p =>
             p.kind === 'description' && p.variant === 'survey_title_with_period'
@@ -250,6 +276,11 @@ function modalCardFooterToggles(
         }
       />
     )
+  }
+
+  /* 마무리글형: 답변 필수 토글 없음(해당 없음). kind가 어긋나도 single_item용 답변 필수 토글 미노출 */
+  if (paragraph.variant === 'closing') {
+    return undefined
   }
 
   if (paragraph.kind === 'single_item') {
@@ -370,6 +401,9 @@ function modalCardFooterActions(
   }
 
   if (!isSelected) return undefined
+  if (paragraph.kind === 'description' && paragraph.variant === 'system') {
+    return <FormParagraphCardActionsMinimal />
+  }
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
     return <FormParagraphCardActionsMinimal />
   }
@@ -453,17 +487,14 @@ function PinnedFormCard({
   middleParagraphActions,
 }: PinnedCardProps) {
   const isSelected = selectedCardId === paragraph.id
-  const hideCardHeading = isTitleWithPeriodParagraph(paragraph) && isSelected
-  const editableHeading = hideCardHeading
-    ? undefined
-    : paragraphEditableHeading(
-        paragraph,
-        paragraphs,
-        titleNumbering,
-        isSelected,
-        updateParagraph,
-        editorKind
-      )
+  const editableHeading = paragraphEditableHeading(
+    paragraph,
+    paragraphs,
+    titleNumbering,
+    isSelected,
+    updateParagraph,
+    editorKind
+  )
 
   return (
     <ParagraphCard
@@ -533,17 +564,14 @@ function SortableMiddleFormCard({
   } = useSortable({ id: paragraph.id })
 
   const isSelected = selectedCardId === paragraph.id
-  const hideCardHeading = isTitleWithPeriodParagraph(paragraph) && isSelected
-  const editableHeading = hideCardHeading
-    ? undefined
-    : paragraphEditableHeading(
-        paragraph,
-        paragraphs,
-        titleNumbering,
-        isSelected,
-        updateParagraph,
-        editorKind
-      )
+  const editableHeading = paragraphEditableHeading(
+    paragraph,
+    paragraphs,
+    titleNumbering,
+    isSelected,
+    updateParagraph,
+    editorKind
+  )
 
   return (
     <div

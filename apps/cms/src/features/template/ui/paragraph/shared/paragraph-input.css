@@ -38,11 +38,13 @@
   flex-shrink: 0;
 }
 
-.paragraph-input--edit .paragraph-input__leading {
-  color: var(--paragraph-input-default);
+/* 타이틀 번호 접두(Q1, 1. …) — 본문이 비어 있어도 항상 본문색(#3d3d3d) */
+.paragraph-input--title .paragraph-input__leading {
+  color: var(--paragraph-input-filled);
 }
 
-.paragraph-input--view .paragraph-input__leading {
+.paragraph-input--edit.paragraph-input--description .paragraph-input__leading,
+.paragraph-input--view.paragraph-input--description .paragraph-input__leading {
   color: var(--paragraph-input-default);
 }
 
@@ -76,16 +78,12 @@
   color: var(--paragraph-input-default);
 }
 
-/* view + 비입력: 타이틀은 플레이스홀더 톤 고정 */
-.paragraph-input--view.paragraph-input--title:not(.paragraph-input--filled)
-  .paragraph-input__view-text,
-.paragraph-input--view.paragraph-input--title:not(.paragraph-input--filled)
-  .paragraph-input__leading {
+/* view + 비입력: 타이틀 본문·플레이스홀더만 회색(번호 접두는 위 규칙으로 본문색) */
+.paragraph-input--view.paragraph-input--title:not(.paragraph-input--filled) .paragraph-input__view-text {
   color: var(--gray-85969-d, #85969d);
 }
 
-.paragraph-input--view.paragraph-input--filled.paragraph-input--title .paragraph-input__view-text,
-.paragraph-input--view.paragraph-input--filled.paragraph-input--title .paragraph-input__leading {
+.paragraph-input--view.paragraph-input--filled.paragraph-input--title .paragraph-input__view-text {
   color: var(--paragraph-input-filled);
 }
 
@@ -171,7 +169,8 @@
   -webkit-text-fill-color: var(--gray-85969-d, #85969d);
 }
 
-.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit .paragraph-input__leading {
+.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit.paragraph-input--description
+  .paragraph-input__leading {
   color: var(--gray-85969-d, #85969d);
 }
 

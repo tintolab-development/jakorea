@@ -81,6 +81,12 @@ export interface ClosingParagraph extends WritingFormParagraphBase {
   showAgreementFooter?: boolean
 }
 
+/** 설명글·기타형 — 시스템 등 본문 에디터 없음 */
+export interface SystemParagraph extends WritingFormParagraphBase {
+  kind: 'description'
+  variant: 'system'
+}
+
 /** 동의서 일반 본문(카드 타이틀/설명 + 본문 영역) */
 export interface AgreementRichTextParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
@@ -712,6 +718,7 @@ export type WritingFormParagraph =
   | UserInfoParagraph
   | FileAttachmentParagraph
   | HorizontalTableParagraph
+  | SystemParagraph
   | ClosingParagraph
 
 export interface WritingFormDraft {
@@ -778,7 +785,7 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         periodMode: 'immediate',
         startAt: null,
         endAt: null,
-        showWritingPeriodOnForm: true,
+        showWritingPeriodOnForm: false,
       },
       {
         id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.explanationText,
@@ -910,7 +917,7 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         periodMode: 'immediate',
         startAt: null,
         endAt: null,
-        showWritingPeriodOnForm: true,
+        showWritingPeriodOnForm: false,
       },
       {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.user,
@@ -973,6 +980,69 @@ export function reorderWritingFormMiddleParagraphs(
 ): WritingFormParagraph[] {
   if (paragraphs.length !== 5) return paragraphs
   return reorderHeadMiddleTail(paragraphs, activeId, overId)
+}
+
+/** 양식 테스트 > 설명글 유형 — 제목형·텍스트형·기타·마무리글형 */
+export const DEFAULT_FORM_TEST_EXPLANATION_PARAGRAPH_IDS = {
+  title: 'form-test-explanation-title',
+  text: 'form-test-explanation-text',
+  system: 'form-test-explanation-system',
+  closing: 'form-test-explanation-closing',
+} as const
+
+export function createExplanationTypesPreviewDraft(): WritingFormDraft {
+  return {
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'numeric' },
+    paragraphs: [
+      {
+        id: DEFAULT_FORM_TEST_EXPLANATION_PARAGRAPH_IDS.title,
+        kind: 'description',
+        variant: 'survey_title_with_period',
+        requiredMark: true,
+        paragraphTitle: '제목형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        surveyTitle: '',
+        surveyDescription: '',
+        periodMode: 'immediate',
+        startAt: null,
+        endAt: null,
+        showWritingPeriodOnForm: false,
+      },
+      {
+        id: DEFAULT_FORM_TEST_EXPLANATION_PARAGRAPH_IDS.text,
+        kind: 'single_item',
+        variant: 'agreement_explanation_text',
+        requiredMark: true,
+        paragraphTitle: '텍스트형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        bodyPlaceholder: '텍스트를 작성해 주세요',
+        bodyText: '',
+        answerRequired: true,
+      },
+      {
+        id: DEFAULT_FORM_TEST_EXPLANATION_PARAGRAPH_IDS.system,
+        kind: 'description',
+        variant: 'system',
+        requiredMark: false,
+        paragraphTitle: '기타',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+      },
+      {
+        id: DEFAULT_FORM_TEST_EXPLANATION_PARAGRAPH_IDS.closing,
+        kind: 'description',
+        variant: 'closing',
+        requiredMark: false,
+        paragraphTitle: '마무리글형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        body: '설문에 참여해 주셔서 감사합니다.',
+      },
+    ],
+  }
 }
 
 /** `FormTestSingleItemFullpageModal` — 제목·8종 단일항목 스텁·마무리 */
@@ -1093,6 +1163,10 @@ export function writingOutlineLabel(p: WritingFormParagraph): string {
   if (p.kind === 'description' && p.variant === 'survey_title_with_period') {
     const t = p.surveyTitle.trim()
     return t || '타이틀을 입력해 주세요'
+  }
+  if (p.kind === 'description' && p.variant === 'system') {
+    const t = p.paragraphTitle.trim()
+    return t || '기타'
   }
   if (p.kind === 'description' && p.variant === 'closing') {
     const t = p.body.trim().slice(0, 24)

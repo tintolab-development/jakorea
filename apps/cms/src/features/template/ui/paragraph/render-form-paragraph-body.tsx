@@ -5,7 +5,6 @@ import {
   type HorizontalTableRowSelection,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { ClosingParagraphBody } from '@/features/template/ui/paragraph/explanation/closing-paragraph-body'
 import { ExplanationText } from '@/features/template/ui/paragraph/explanation/text'
 import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/title'
 import { AgreementPrivacyRowsBody } from '@/features/template/ui/paragraph/single-item/agreement-privacy-rows-paragraph-body'
@@ -50,7 +49,6 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isParagraphSelected}
-          titlePh={editorKind === 'agreement' ? '동의서 제목 입력' : undefined}
           periodLabel={editorKind === 'survey' ? '설문 기간' : undefined}
         />
       )
@@ -120,14 +118,11 @@ export function renderFormParagraphBody(
         />
       )
     }
+    case 'system':
+      /* 본문 없음 — `<Component />`를 넘기면 `children != null`로 슬롯만 생기므로 null 반환 */
+      return null
     case 'closing':
-      return (
-        <ClosingParagraphBody
-          paragraph={p}
-          onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
-        />
-      )
+      return null
     case 'short_essay':
       return (
         <ShortEssay

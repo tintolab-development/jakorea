@@ -15,6 +15,8 @@ export interface ParagraphCardEditableHeading {
   descriptionValue: string
   onDescriptionChange: (next: string) => void
   descriptionPlaceholder?: string
+  /** false면 카드 헤더에 설명란을 렌더하지 않음(제목만) */
+  showDescription?: boolean
 }
 
 export interface ParagraphCardProps {
@@ -74,6 +76,8 @@ export function ParagraphCard({
         />
       )
 
+      const showDescription = h.showDescription !== false
+
       return (
         <>
           {actionSlot ? (
@@ -84,7 +88,9 @@ export function ParagraphCard({
           ) : (
             <div className="paragraph-card__title-block">{titleInput}</div>
           )}
-          <div className="paragraph-card__description-block">{descriptionInput}</div>
+          {showDescription ? (
+            <div className="paragraph-card__description-block">{descriptionInput}</div>
+          ) : null}
         </>
       )
     }

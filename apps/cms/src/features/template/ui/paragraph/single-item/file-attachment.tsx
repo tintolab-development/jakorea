@@ -6,7 +6,14 @@ import './file-attachment.css'
 
 function FilePreviewIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -56,7 +63,6 @@ export function FileAttachment({
         <ParagraphFileUpload
           accept=".jpg,.jpeg,.png"
           multiple
-          disabled={!isEditMode}
           onFilesChange={files => setFileNames(prev => [...prev, ...files.map(file => file.name)])}
         />
       </div>

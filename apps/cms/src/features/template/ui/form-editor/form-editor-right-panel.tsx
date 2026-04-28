@@ -74,6 +74,8 @@ function paragraphVariantLabel(p: WritingFormParagraph): string {
       return '표·동의 선택형'
     case 'closing':
       return '마무리글형'
+    case 'system':
+      return '기타'
     case 'short_essay':
       return '주관식형'
     case 'multiple_choice':
@@ -138,7 +140,12 @@ export function FormEditorRightPanel({
   onHorizontalTableBodyRowDeleted,
 }: FormEditorRightPanelProps) {
   const active = draft.paragraphs.find(p => p.id === activeParagraphId) ?? null
-  const outline = active ? writingOutlineLabel(active) : ''
+  const outline =
+    active && active.kind === 'description' && active.variant === 'closing'
+      ? `${paragraphKindLabel(active)}_${paragraphVariantLabel(active)}`
+      : active
+        ? writingOutlineLabel(active)
+        : ''
 
   const activeShortEssay =
     active && active.kind === 'single_item' && active.variant === 'short_essay'
@@ -237,14 +244,15 @@ export function FormEditorRightPanel({
             </Form.Item>
           </Form>
 
-          <Form
-            layout="vertical"
-            className="form-editor-right-panel__form-items"
-            requiredMark={false}
-          >
+          {!(active.kind === 'description' && active.variant === 'closing') ? (
+            <Form
+              layout="vertical"
+              className="form-editor-right-panel__form-items"
+              requiredMark={false}
+            >
             {active.kind === 'description' && active.variant === 'survey_title_with_period' ? (
               <>
-                {active.showWritingPeriodOnForm ? (
+                {(active.showWritingPeriodOnForm ?? false) ? (
                   <>
                     <Form.Item label={'설문 시작일'}>
                       <CmsRadioGroup
@@ -504,22 +512,8 @@ export function FormEditorRightPanel({
               </>
             ) : null}
 
-            {active.kind === 'description' && active.variant === 'closing' ? (
-              <Form.Item label="마무리 문구">
-                <CmsTextArea
-                  width="100%"
-                  value={active.body}
-                  onChange={e =>
-                    updateParagraph(active.id, () => ({
-                      ...active,
-                      body: e.target.value,
-                    }))
-                  }
-                  rows={4}
-                />
-              </Form.Item>
-            ) : null}
-          </Form>
+            </Form>
+          ) : null}
         </>
       ) : null}
     </div>
