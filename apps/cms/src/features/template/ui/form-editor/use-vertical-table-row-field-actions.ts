@@ -65,11 +65,20 @@ export function useVerticalTableRowFieldActions({
         if (cur.kind !== 'single_item' || cur.variant !== 'vertical_table') return cur
         return patchVerticalRow(cur, rowIndex, r => {
           if (r.stageCount === 1) {
-            return { stageCount: 1, headers: [value], cells: r.cells }
+            return { stageCount: 1, headers: [value], cells: r.cells, placeholderHints: r.placeholderHints }
           }
           const headers: [string, string] = [...r.headers] as [string, string]
           headers[stageIdx] = value
-          return { stageCount: 2, headers, cells: r.cells }
+          const next: VerticalTableRow = {
+            stageCount: 2,
+            headers,
+            cells: r.cells,
+            placeholderHints: r.placeholderHints,
+          }
+          if (r.dateTimeStage1Time !== undefined) {
+            next.dateTimeStage1Time = r.dateTimeStage1Time
+          }
+          return next
         })
       })
     },
@@ -82,11 +91,54 @@ export function useVerticalTableRowFieldActions({
         if (cur.kind !== 'single_item' || cur.variant !== 'vertical_table') return cur
         return patchVerticalRow(cur, rowIndex, r => {
           if (r.stageCount === 1) {
-            return { stageCount: 1, headers: r.headers, cells: [value] }
+            return { stageCount: 1, headers: r.headers, cells: [value], placeholderHints: r.placeholderHints }
           }
           const cells: [string, string] = [...r.cells] as [string, string]
           cells[stageIdx] = value
-          return { stageCount: 2, headers: r.headers, cells }
+          const next: VerticalTableRow = {
+            stageCount: 2,
+            headers: r.headers,
+            cells,
+            placeholderHints: r.placeholderHints,
+          }
+          if (r.dateTimeStage1Time !== undefined) {
+            next.dateTimeStage1Time = r.dateTimeStage1Time
+          }
+          return next
+        })
+      })
+    },
+    [paragraphId, rowIndex, updateParagraph]
+  )
+
+  const setPlaceholderHint = useCallback(
+    (stageIdx: number, value: string) => {
+      updateParagraph(paragraphId, cur => {
+        if (cur.kind !== 'single_item' || cur.variant !== 'vertical_table') return cur
+        return patchVerticalRow(cur, rowIndex, r => {
+          if (r.stageCount === 1) {
+            return {
+              stageCount: 1,
+              headers: r.headers,
+              cells: r.cells,
+              placeholderHints: [value],
+            }
+          }
+          const hints: [string, string] = [
+            r.placeholderHints?.[0] ?? '',
+            r.placeholderHints?.[1] ?? '',
+          ]
+          hints[stageIdx] = value
+          const next: VerticalTableRow = {
+            stageCount: 2,
+            headers: r.headers,
+            cells: r.cells,
+            placeholderHints: hints,
+          }
+          if (r.dateTimeStage1Time !== undefined) {
+            next.dateTimeStage1Time = r.dateTimeStage1Time
+          }
+          return next
         })
       })
     },
@@ -98,5 +150,6 @@ export function useVerticalTableRowFieldActions({
     setStageCount,
     setHeader,
     setCell,
+    setPlaceholderHint,
   }
 }

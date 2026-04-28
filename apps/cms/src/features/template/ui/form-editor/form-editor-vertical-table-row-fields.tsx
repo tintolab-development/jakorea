@@ -4,8 +4,10 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import type { VerticalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
 import {
+  DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER,
   normalizeVerticalTableParagraph,
   verticalTablePanelStageTitle,
+  verticalTableParagraphOutlineLabel,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   FormEditorCustomFieldPanel,
@@ -18,7 +20,9 @@ import {
 import { useVerticalTableRowFieldActions } from '@/features/template/ui/form-editor/use-vertical-table-row-field-actions'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 
-const TEXT_TYPE_OPTIONS = [{ value: 'text', label: '텍스트형' }]
+const VERTICAL_TABLE_TEXT_CELL_OPTIONS = [{ value: 'text', label: '텍스트형' }]
+const VERTICAL_TABLE_SUBJECTIVE_CELL_OPTIONS = [{ value: 'subjective', label: '주관식형' }]
+const VERTICAL_TABLE_DATETIME_CELL_OPTIONS = [{ value: 'dateTime', label: '날짜/시간형' }]
 
 export function FormEditorVerticalTableRowFields({
   paragraph,
@@ -34,23 +38,37 @@ export function FormEditorVerticalTableRowFields({
   onBodyRowDeleted?: (nextRowIndex: number) => void
 }) {
   const p = normalizeVerticalTableParagraph(paragraph)
+  const flavorPrefix = verticalTableParagraphOutlineLabel(p.verticalTableFlavor)
+  const cellKindOptions =
+    p.verticalTableFlavor === 'subjective'
+      ? VERTICAL_TABLE_SUBJECTIVE_CELL_OPTIONS
+      : p.verticalTableFlavor === 'date_time'
+        ? VERTICAL_TABLE_DATETIME_CELL_OPTIONS
+        : VERTICAL_TABLE_TEXT_CELL_OPTIONS
+  const cellKindValue =
+    p.verticalTableFlavor === 'subjective'
+      ? 'subjective'
+      : p.verticalTableFlavor === 'date_time'
+        ? 'dateTime'
+        : 'text'
   const rowCount = Math.max(1, p.rows.length)
   if (rowIndex < 0 || rowIndex >= rowCount) return null
 
   const row = p.rows[rowIndex]!
   const stageCount: 1 | 2 = row.stageCount === 2 ? 2 : 1
   const stages = stageCount === 1 ? [0] : [0, 1]
-  const { deleteRow, setStageCount, setHeader, setCell } = useVerticalTableRowFieldActions({
-    paragraphId,
-    rowIndex,
-    updateParagraph,
-    onBodyRowDeleted,
-  })
+  const { deleteRow, setStageCount, setHeader, setCell, setPlaceholderHint } =
+    useVerticalTableRowFieldActions({
+      paragraphId,
+      rowIndex,
+      updateParagraph,
+      onBodyRowDeleted,
+    })
 
   return (
     <FormEditorCustomFieldPanel
       className="form-editor-horizontal-table-body-fields form-editor-vertical-table-row-fields"
-      title="테이블_세로형(텍스트형)_항목 선택 시"
+      title={`${flavorPrefix}_항목 선택 시`}
       beforeDelete={
         <div className="form-editor-vertical-table-row-fields__structure">
           <span className="form-editor-vertical-table-row-fields__structure-label">
@@ -95,8 +113,8 @@ export function FormEditorVerticalTableRowFields({
                   className="form-editor-horizontal-table-body-fields__cms-select"
                   inputSize="large"
                   width="100%"
-                  value="text"
-                  options={TEXT_TYPE_OPTIONS}
+                  value={cellKindValue}
+                  options={cellKindOptions}
                   disabled
                   withAllOption={false}
                 />
@@ -114,19 +132,35 @@ export function FormEditorVerticalTableRowFields({
                   placeholder="항목명을 입력해 주세요"
                 />
               </Form.Item>
-              <Form.Item
-                className="form-editor-horizontal-table-body-fields__content-form-item"
-                label="내용"
-              >
-                <CmsInput
-                  width="100%"
-                  inputSize="large"
-                  className="form-editor-horizontal-table-body-fields__content-input"
-                  value={row.cells[si] ?? ''}
-                  onChange={e => setCell(si, e.target.value)}
-                  placeholder="내용을 입력해 주세요"
-                />
-              </Form.Item>
+              {p.verticalTableFlavor === 'subjective' || p.verticalTableFlavor === 'date_time' ? (
+                <Form.Item
+                  className="form-editor-horizontal-table-body-fields__content-form-item"
+                  label="입력창 안내 텍스트"
+                >
+                  <CmsInput
+                    width="100%"
+                    inputSize="large"
+                    className="form-editor-horizontal-table-body-fields__content-input"
+                    value={row.placeholderHints?.[si] ?? ''}
+                    onChange={e => setPlaceholderHint(si, e.target.value)}
+                    placeholder={DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER}
+                  />
+                </Form.Item>
+              ) : (
+                <Form.Item
+                  className="form-editor-horizontal-table-body-fields__content-form-item"
+                  label="내용"
+                >
+                  <CmsInput
+                    width="100%"
+                    inputSize="large"
+                    className="form-editor-horizontal-table-body-fields__content-input"
+                    value={row.cells[si] ?? ''}
+                    onChange={e => setCell(si, e.target.value)}
+                    placeholder="내용을 입력해 주세요"
+                  />
+                </Form.Item>
+              )}
             </FormEditorFieldListItem>
           ))}
         </FormEditorFieldList>

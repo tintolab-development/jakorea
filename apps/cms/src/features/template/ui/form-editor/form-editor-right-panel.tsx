@@ -12,7 +12,11 @@ import type {
   WritingFormDraft,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { writingOutlineLabel } from '@/features/template/model/writing-form-draft.schema'
+import {
+  normalizeVerticalTableParagraph,
+  verticalTableParagraphOutlineLabel,
+  writingOutlineLabel,
+} from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorHorizontalTableBodyFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-body-fields'
 import { FormEditorHorizontalTableHeaderFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-header-fields'
 import { FormEditorVerticalTableRowFields } from '@/features/template/ui/form-editor/form-editor-vertical-table-row-fields'
@@ -34,7 +38,8 @@ function paragraphKindLabel(p: WritingFormParagraph): string {
     return t.tableFlavor === 'field' ? '테이블_가로형 (필드 형)' : '테이블_가로형'
   }
   if (p.kind === 'single_item' && p.variant === 'vertical_table') {
-    return '테이블_세로형(텍스트형)'
+    const vt = normalizeVerticalTableParagraph(p as VerticalTableParagraph)
+    return verticalTableParagraphOutlineLabel(vt.verticalTableFlavor)
   }
   return '단일항목'
 }
@@ -45,7 +50,8 @@ function paragraphVariantLabel(p: WritingFormParagraph): string {
     return t.tableFlavor === 'field' ? '테이블_가로형 (필드 형)' : '테이블_가로형'
   }
   if (p.kind === 'single_item' && p.variant === 'vertical_table') {
-    return '테이블_세로형(텍스트형)'
+    const vt = normalizeVerticalTableParagraph(p as VerticalTableParagraph)
+    return verticalTableParagraphOutlineLabel(vt.verticalTableFlavor)
   }
   switch (p.variant) {
     case 'survey_title_with_period':

@@ -6,6 +6,7 @@ import {
   cloneVerticalTableParagraph,
   createDefaultHorizontalTableDraft,
   createHorizontalTableParagraph,
+  createVerticalTableParagraph,
   DEFAULT_HORIZONTAL_TABLE_PARAGRAPH_IDS,
   type FormTitleNumberingStyle,
   type HorizontalTableFlavor,
@@ -159,17 +160,22 @@ export function useHorizontalTableFormDraft({
       if (idx === -1) return prev
       const anchor = prev.paragraphs[idx]!
       const next = [...prev.paragraphs]
-      let p: HorizontalTableParagraph = createHorizontalTableParagraph(newId)
-      if (anchor.kind === 'single_item' && anchor.variant === 'horizontal_table') {
-        const a = anchor as HorizontalTableParagraph
-        if (a.tableFlavor === 'field') {
-          p = {
-            ...horizontalTableSetFlavor(p, 'field'),
-            paragraphTitle: '테이블_가로형 (필드 형)',
+      if (anchor.kind === 'single_item' && anchor.variant === 'vertical_table') {
+        const v = normalizeVerticalTableParagraph(anchor as VerticalTableParagraph)
+        next.splice(idx + 1, 0, createVerticalTableParagraph(newId, v.verticalTableFlavor))
+      } else {
+        let p: HorizontalTableParagraph = createHorizontalTableParagraph(newId)
+        if (anchor.kind === 'single_item' && anchor.variant === 'horizontal_table') {
+          const a = anchor as HorizontalTableParagraph
+          if (a.tableFlavor === 'field') {
+            p = {
+              ...horizontalTableSetFlavor(p, 'field'),
+              paragraphTitle: '테이블_가로형 (필드 형)',
+            }
           }
         }
+        next.splice(idx + 1, 0, p)
       }
-      next.splice(idx + 1, 0, p)
       return { ...prev, paragraphs: next }
     })
     setActiveParagraphId(newId)
