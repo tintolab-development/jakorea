@@ -125,11 +125,13 @@ function isEventFromTableInteractive(target: EventTarget | null) {
       '.ant-picker',
       '.ant-picker-input',
       '.ant-checkbox',
+      '.ant-checkbox-wrapper',
+      '.ant-radio',
+      '.ant-radio-wrapper',
       'input',
       'textarea',
       'label',
       'button',
-      '.ant-radio',
     ].join(',')
   ) != null
 }
