@@ -19,6 +19,7 @@ import type {
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
+  DATE_TIME_FIELD_MODE_OPTIONS,
   normalizeVerticalTableParagraph,
   verticalTableParagraphOutlineLabel,
   FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID,
@@ -29,12 +30,6 @@ import { FormEditorHorizontalTableBodyFields } from '@/features/template/ui/form
 import { FormEditorHorizontalTableHeaderFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-header-fields'
 import { FormEditorVerticalTableRowFields } from '@/features/template/ui/form-editor/form-editor-vertical-table-row-fields'
 import './form-editor.css'
-
-const DATE_TIME_FIELD_MODE_OPTIONS: { value: DateTimeFieldMode; label: string }[] = [
-  { value: 'date', label: '날짜' },
-  { value: 'time', label: '시간' },
-  { value: 'date_time', label: '날짜+시간' },
-]
 
 const TITLE_NUMBERING_OPTIONS: { value: FormTitleNumberingStyle; label: string }[] = [
   { value: 'numeric', label: '1, 2, 3' },
@@ -527,7 +522,7 @@ export function FormEditorRightPanel({
                 <CmsSelect
                   width="100%"
                   value={activeDateTime.fieldMode ?? 'date'}
-                  options={DATE_TIME_FIELD_MODE_OPTIONS}
+                  options={[...DATE_TIME_FIELD_MODE_OPTIONS]}
                   onChange={v =>
                     updateParagraph(activeDateTime.id, cur => {
                       if (cur.kind !== 'single_item' || cur.variant !== 'date_time') return cur

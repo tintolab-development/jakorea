@@ -164,6 +164,16 @@ export type DropdownParagraph = WritingFormParagraphBase & {
 /** 단일항목 날짜/시간형 — 우측 패널 유형 (기본: 날짜) */
 export type DateTimeFieldMode = 'date' | 'time' | 'date_time'
 
+/** 세로형(날짜/시간형)·커스텀 필드·단독 date_time 패널과 동일 라벨 */
+export const DATE_TIME_FIELD_MODE_OPTIONS: readonly { value: DateTimeFieldMode; label: string }[] = [
+  { value: 'date', label: '날짜' },
+  { value: 'time', label: '시간' },
+  { value: 'date_time', label: '날짜+시간' },
+] as const
+
+/** 합성(날짜+시간) 시간 인풋 기본 플레이스홀더 — 본문·패널에서 공통 */
+export const VERTICAL_DT_COMPOSITE_TIME_PLACEHOLDER = '시간을 선택해 주세요'
+
 export type DateTimeParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'date_time'
@@ -312,6 +322,13 @@ export function rehomeFieldCellValue(
   return { kind: nextField.kind, value: '' }
 }
 
+/** 테이블 하단 설명 영역 — 동의 여부(미리보기·저장) */
+export type TableBottomConsent = 'agree' | 'disagree'
+
+export function normalizeTableBottomConsent(raw: unknown): TableBottomConsent {
+  return raw === 'disagree' ? 'disagree' : 'agree'
+}
+
 /** 작성 양식 — 테이블 가로형(가변 행·열, 각 dataRows[i] 길이는 columnHeaders와 동일) */
 export interface HorizontalTableParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
@@ -325,20 +342,44 @@ export interface HorizontalTableParagraph extends WritingFormParagraphBase {
   fieldDataRows: HorizontalTableFieldCellValue[][]
   bottomText: string
   showBottomText: boolean
+  /** 하단에 동의(라디오) 영역 노출 */
+  showBottomConsent: boolean
+  /** `showBottomConsent`일 때 동의 라디오 값 */
+  bottomConsent?: TableBottomConsent
   answerRequired: boolean
 }
 
 /** 세로형 테이블 한 행: 1단(항목·입력 1쌍) 또는 2단(같은 행에 두 쌍, 폭 분배).
- * `placeholderHints`: 주관식·날짜/시간형(td) 플레이스홀더 「입력창 안내」— 스테이지별 1개·2개 튜플. 생략 시 본문에서 기본 문구 사용.
- * `dateTimeStage1Time`: 날짜/시간형·2단일 때 두 번째 스테이지 td의 시간 픽커 값(`cells[1]`은 해당 스테이지 날짜). */
+ * `placeholderHints`: 주관식·날짜/시간형 「입력창 안내」— 스테이지별 문자열 튜플(날짜/날짜+시합성의 날짜 인풋에 사용 등).
+ * `dateTimeStageModes`: 날짜/시간형 — 스테이지별 「유형」(`length === stageCount`). 생략 시 `effectiveVerticalRowDateTimeModes`가 레거시·기본값으로 채움.
+ * `dateTimeCompositeTimeHints`: 날짜/시간형 — 스테이지가 「날짜+시간」일 때 시간 픽커 안내 문자열 튜플(인덱스=스테이지).
+ * `dateTimeStage0AuxTime`: 합성이 **첫 스테이지**에 놓일 때 시간(HH:mm) 값.
+ * `dateTimeStage1Time`: 합성이 **둘째 스테이지**일 때 시간(HH:mm)·레거시.
+ * 레거시 `dateTimeSingleStageMode`는 스테이지 1행에서 `dateTimeStageModes`로 승격. */
 export type VerticalTableRow =
-  | { stageCount: 1; headers: [string]; cells: [string]; placeholderHints?: [string] }
+  | {
+      stageCount: 1
+      headers: [string]
+      cells: [string]
+      placeholderHints?: [string]
+      /** 레거시 — `normalizeVerticalTableRow`가 `dateTimeStageModes:[x]` 로 승격 */
+      dateTimeSingleStageMode?: DateTimeFieldMode
+      /** 우선 사용; 없으면 `dateTimeSingleStageMode` 또는 기본 */
+      dateTimeStageModes?: [DateTimeFieldMode]
+      /** 합성(날짜+시간) 시 시간 인풋 안내(보통 `[t0]` 또는 생략) */
+      dateTimeCompositeTimeHints?: [string]
+      dateTimeStage0AuxTime?: string
+      dateTimeStage1Time?: string
+    }
   | {
       stageCount: 2
       headers: [string, string]
       cells: [string, string]
       placeholderHints?: [string, string]
-      /** 날짜/시간형: 2단 우측 스테이지의 시간(HH:mm) */
+      dateTimeStageModes?: [DateTimeFieldMode, DateTimeFieldMode]
+      dateTimeCompositeTimeHints?: [string, string]
+      dateTimeStage0AuxTime?: string
+      /** 첫 번째 스테이지 유형이 합성이 아니고 둘째가 합성일 때 시간(HH:mm) — 과거 레거시 */
       dateTimeStage1Time?: string
     }
 
@@ -362,6 +403,10 @@ export interface VerticalTableParagraph extends WritingFormParagraphBase {
   rows: VerticalTableRow[]
   bottomText: string
   showBottomText: boolean
+  /** 하단에 동의(라디오) 영역 노출 */
+  showBottomConsent: boolean
+  /** `showBottomConsent`일 때 동의 라디오 값 */
+  bottomConsent?: TableBottomConsent
   answerRequired: boolean
 }
 
@@ -513,6 +558,8 @@ export function createHorizontalTableParagraph(id: string): HorizontalTableParag
     fieldDataRows: [],
     bottomText: '',
     showBottomText: false,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
     answerRequired: true,
   }
 }
@@ -619,6 +666,8 @@ export function normalizeHorizontalTableParagraph(p: HorizontalTableParagraph): 
       fieldDataRows: p.fieldDataRows ?? [],
       bottomText: p.bottomText ?? '',
       showBottomText: Boolean(p.showBottomText),
+      showBottomConsent: Boolean(p.showBottomConsent),
+      bottomConsent: normalizeTableBottomConsent(p.bottomConsent),
     }
   }
   const fieldCols = ensureColumnFieldSlice({ ...p, columnHeaders: headers, dataRows, tableFlavor: 'field' } as HorizontalTableParagraph, colCount)
@@ -636,6 +685,8 @@ export function normalizeHorizontalTableParagraph(p: HorizontalTableParagraph): 
     fieldDataRows,
     bottomText: p.bottomText ?? '',
     showBottomText: Boolean(p.showBottomText),
+    showBottomConsent: Boolean(p.showBottomConsent),
+    bottomConsent: normalizeTableBottomConsent(p.bottomConsent),
   }
 }
 
@@ -727,24 +778,52 @@ function defaultVerticalTableRowSingle(): VerticalTableRow {
   return { stageCount: 1, headers: [''], cells: [''] }
 }
 
-function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
+function isDateTimeFieldMode(x: unknown): x is DateTimeFieldMode {
+  return x === 'date' || x === 'time' || x === 'date_time'
+}
+
+export function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
   if (raw != null && typeof raw === 'object' && 'stageCount' in raw) {
     const sc = (raw as { stageCount?: number }).stageCount
     if (sc === 2) {
-      const h = (raw as { headers?: string[] }).headers ?? []
-      const c = (raw as { cells?: string[] }).cells ?? []
-      const ph = (raw as { placeholderHints?: string[] }).placeholderHints
-      const dtTime = (raw as { dateTimeStage1Time?: string }).dateTimeStage1Time
+      const r = raw as {
+        headers?: string[]
+        cells?: string[]
+        placeholderHints?: string[]
+        dateTimeStage1Time?: unknown
+        dateTimeStageModes?: unknown
+        dateTimeCompositeTimeHints?: unknown
+        dateTimeStage0AuxTime?: unknown
+      }
+      const h = r.headers ?? []
+      const c = r.cells ?? []
       const row: VerticalTableRow = {
         stageCount: 2,
         headers: [h[0] ?? '', h[1] ?? ''],
         cells: [c[0] ?? '', c[1] ?? ''],
       }
+      const ph = r.placeholderHints
       if (ph != null && ph.length >= 1) {
         row.placeholderHints = [ph[0] ?? '', ph[1] ?? '']
       }
-      if (typeof dtTime === 'string') {
-        row.dateTimeStage1Time = dtTime
+      if (typeof r.dateTimeStage1Time === 'string') {
+        row.dateTimeStage1Time = r.dateTimeStage1Time
+      }
+      const sm = r.dateTimeStageModes
+      if (
+        Array.isArray(sm) &&
+        sm.length >= 2 &&
+        isDateTimeFieldMode(sm[0]) &&
+        isDateTimeFieldMode(sm[1])
+      ) {
+        row.dateTimeStageModes = [sm[0], sm[1]]
+      }
+      const cth = r.dateTimeCompositeTimeHints
+      if (Array.isArray(cth) && cth.length >= 1) {
+        row.dateTimeCompositeTimeHints = [String(cth[0] ?? ''), String(cth[1] ?? '')]
+      }
+      if (typeof r.dateTimeStage0AuxTime === 'string') {
+        row.dateTimeStage0AuxTime = r.dateTimeStage0AuxTime
       }
       return row
     }
@@ -767,7 +846,75 @@ function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
   if (ph1 != null && ph1.length >= 1) {
     row1.placeholderHints = [ph1[0] ?? '']
   }
+  if (raw != null && typeof raw === 'object') {
+    const rawObj = raw as {
+      dateTimeSingleStageMode?: unknown
+      dateTimeStageModes?: unknown
+      dateTimeCompositeTimeHints?: unknown
+      dateTimeStage0AuxTime?: unknown
+      dateTimeStage1Time?: unknown
+    }
+    const dm = rawObj.dateTimeSingleStageMode
+    if (dm === 'date' || dm === 'time' || dm === 'date_time') {
+      row1.dateTimeSingleStageMode = dm
+    }
+    const sms = rawObj.dateTimeStageModes
+    if (
+      Array.isArray(sms) &&
+      sms.length >= 1 &&
+      isDateTimeFieldMode((sms as unknown[])[0])
+    ) {
+      row1.dateTimeStageModes = [(sms as [DateTimeFieldMode])[0]]
+    }
+    const cth = rawObj.dateTimeCompositeTimeHints
+    if (
+      Array.isArray(cth) &&
+      cth.length >= 1 &&
+      typeof (cth as string[])[0] === 'string'
+    ) {
+      row1.dateTimeCompositeTimeHints = [(cth as string[])[0] ?? '']
+    }
+    if (typeof rawObj.dateTimeStage0AuxTime === 'string') {
+      row1.dateTimeStage0AuxTime = rawObj.dateTimeStage0AuxTime
+    }
+    if (typeof rawObj.dateTimeStage1Time === 'string') {
+      row1.dateTimeStage1Time = rawObj.dateTimeStage1Time
+    }
+  }
   return row1
+}
+
+/** 날짜/시간형 세로 테이블 행 — 스테이지별 우측 패널 「유형」 (레거시·생략 시 기본) */
+export function effectiveVerticalRowDateTimeModes(
+  row: VerticalTableRow
+): [DateTimeFieldMode] | [DateTimeFieldMode, DateTimeFieldMode] {
+  if (row.stageCount === 1) {
+    const dm = row.dateTimeStageModes
+    if (dm && dm.length >= 1 && isDateTimeFieldMode(dm[0])) {
+      return [dm[0]]
+    }
+    const legacy = row.dateTimeSingleStageMode
+    if (isDateTimeFieldMode(legacy)) {
+      return [legacy]
+    }
+    return ['date']
+  }
+  const dm = row.dateTimeStageModes
+  if (
+    dm &&
+    dm.length >= 2 &&
+    isDateTimeFieldMode(dm[0]) &&
+    isDateTimeFieldMode(dm[1])
+  ) {
+    return [dm[0], dm[1]]
+  }
+  return ['date', 'date_time']
+}
+
+/** 합성(날짜+시간) 스테이지의 시간 인풋 플레이스홀더 */
+export function effectiveVerticalCompositeTimeHint(row: VerticalTableRow, stageIdx: 0 | 1): string {
+  const h = row.dateTimeCompositeTimeHints?.[stageIdx] ?? ''
+  return h.trim() !== '' ? h : VERTICAL_DT_COMPOSITE_TIME_PLACEHOLDER
 }
 
 export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): VerticalTableParagraph {
@@ -789,6 +936,8 @@ export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): Vert
     rows,
     bottomText: p.bottomText ?? '',
     showBottomText: Boolean(p.showBottomText),
+    showBottomConsent: Boolean(p.showBottomConsent),
+    bottomConsent: normalizeTableBottomConsent(p.bottomConsent),
     answerRequired: p.answerRequired !== false,
   }
 }
@@ -816,6 +965,8 @@ export function createVerticalTableParagraph(
     rows: [defaultVerticalTableRowSingle()],
     bottomText: '',
     showBottomText: false,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
     answerRequired: true,
   })
 }
@@ -838,6 +989,18 @@ export function cloneVerticalTableParagraph(source: VerticalTableParagraph, newI
         if (r.dateTimeStage1Time !== undefined) {
           out.dateTimeStage1Time = r.dateTimeStage1Time
         }
+        if (r.dateTimeStageModes) {
+          out.dateTimeStageModes = [...r.dateTimeStageModes] as [
+            DateTimeFieldMode,
+            DateTimeFieldMode,
+          ]
+        }
+        if (r.dateTimeCompositeTimeHints) {
+          out.dateTimeCompositeTimeHints = [...r.dateTimeCompositeTimeHints] as [string, string]
+        }
+        if (r.dateTimeStage0AuxTime !== undefined) {
+          out.dateTimeStage0AuxTime = r.dateTimeStage0AuxTime
+        }
         return out
       }
       const out1: VerticalTableRow = {
@@ -847,6 +1010,21 @@ export function cloneVerticalTableParagraph(source: VerticalTableParagraph, newI
       }
       if (r.placeholderHints) {
         out1.placeholderHints = [...r.placeholderHints] as [string]
+      }
+      if (r.dateTimeSingleStageMode !== undefined) {
+        out1.dateTimeSingleStageMode = r.dateTimeSingleStageMode
+      }
+      if (r.dateTimeStage1Time !== undefined) {
+        out1.dateTimeStage1Time = r.dateTimeStage1Time
+      }
+      if (r.dateTimeStageModes !== undefined) {
+        out1.dateTimeStageModes = [...r.dateTimeStageModes] as [DateTimeFieldMode]
+      }
+      if (r.dateTimeCompositeTimeHints !== undefined) {
+        out1.dateTimeCompositeTimeHints = [...r.dateTimeCompositeTimeHints] as [string]
+      }
+      if (r.dateTimeStage0AuxTime !== undefined) {
+        out1.dateTimeStage0AuxTime = r.dateTimeStage0AuxTime
       }
       return out1
     }),
@@ -880,39 +1058,72 @@ export function verticalTableRemoveRow(
  */
 export function verticalTableRowWithStageCount(row: VerticalTableRow, stageCount: 1 | 2): VerticalTableRow {
   const base = normalizeVerticalTableRow(row)
-  const h0 = base.headers[0] ?? ''
-  const c0 = base.cells[0] ?? ''
-  const ph0 = base.placeholderHints?.[0]
-  const ph1 = base.placeholderHints?.[1]
+  const b = base as VerticalTableRow
+  const h0 = b.headers[0] ?? ''
+  const c0 = b.cells[0] ?? ''
+  const ph0 = b.placeholderHints?.[0]
+  const ph1 = b.placeholderHints?.[1]
+
   if (stageCount === 1) {
-    const r: VerticalTableRow = { stageCount: 1, headers: [h0], cells: [c0] }
-    if (ph0 !== undefined || ph1 !== undefined || base.placeholderHints != null) {
+    const modes = effectiveVerticalRowDateTimeModes(b)
+    const m0 = modes[0] ?? 'date'
+    const r: VerticalTableRow = {
+      stageCount: 1,
+      headers: [h0],
+      cells: [c0],
+      dateTimeStageModes: [m0],
+      dateTimeSingleStageMode: m0,
+    }
+    if (ph0 !== undefined || ph1 !== undefined || b.placeholderHints != null) {
       r.placeholderHints = [ph0 ?? '']
     }
+    if (b.stageCount === 1) {
+      if (b.dateTimeCompositeTimeHints) {
+        r.dateTimeCompositeTimeHints = [b.dateTimeCompositeTimeHints[0] ?? '']
+      }
+      if (b.dateTimeStage0AuxTime !== undefined) r.dateTimeStage0AuxTime = b.dateTimeStage0AuxTime
+      if (b.dateTimeStage1Time !== undefined) r.dateTimeStage1Time = b.dateTimeStage1Time
+    } else {
+      if (m0 === 'date_time') {
+        r.dateTimeCompositeTimeHints = [b.dateTimeCompositeTimeHints?.[0] ?? '']
+        r.dateTimeStage0AuxTime = b.dateTimeStage0AuxTime ?? ''
+      }
+    }
     return r
   }
-  if (base.stageCount === 2) {
+
+  if (b.stageCount === 2) {
     const r: VerticalTableRow = {
       stageCount: 2,
-      headers: [h0, base.headers[1] ?? ''],
-      cells: [c0, base.cells[1] ?? ''],
+      headers: [h0, b.headers[1] ?? ''],
+      cells: [c0, b.cells[1] ?? ''],
     }
-    if (ph0 !== undefined || ph1 !== undefined || base.placeholderHints != null) {
+    if (ph0 !== undefined || ph1 !== undefined || b.placeholderHints != null) {
       r.placeholderHints = [ph0 ?? '', ph1 ?? '']
     }
-    if (base.dateTimeStage1Time !== undefined) {
-      r.dateTimeStage1Time = base.dateTimeStage1Time
+    if (b.dateTimeStage1Time !== undefined) r.dateTimeStage1Time = b.dateTimeStage1Time
+    if (b.dateTimeStageModes) {
+      r.dateTimeStageModes = [...b.dateTimeStageModes] as [DateTimeFieldMode, DateTimeFieldMode]
     }
+    if (b.dateTimeCompositeTimeHints) {
+      r.dateTimeCompositeTimeHints = [...b.dateTimeCompositeTimeHints] as [string, string]
+    }
+    if (b.dateTimeStage0AuxTime !== undefined) r.dateTimeStage0AuxTime = b.dateTimeStage0AuxTime
     return r
   }
+
+  const m0 = effectiveVerticalRowDateTimeModes(b)[0]
   const r: VerticalTableRow = {
     stageCount: 2,
     headers: [h0, ''],
     cells: [c0, ''],
     dateTimeStage1Time: '',
+    dateTimeStageModes: [m0, 'date_time'],
+    placeholderHints: [ph0 ?? '', ''],
+    dateTimeCompositeTimeHints: [m0 === 'date_time' ? (b.dateTimeCompositeTimeHints?.[0] ?? '') : '', ''],
   }
-  if (ph0 !== undefined || ph1 !== undefined || base.placeholderHints != null) {
-    r.placeholderHints = [ph0 ?? '', '']
+  if (m0 === 'date_time') {
+    r.dateTimeStage0AuxTime = b.dateTimeStage0AuxTime ?? ''
   }
   return r
 }
@@ -1194,6 +1405,8 @@ export function createDefaultHorizontalTableDraft(): WritingFormDraft {
         fieldDataRows: [],
         bottomText: '',
         showBottomText: false,
+        showBottomConsent: false,
+        bottomConsent: 'agree',
         answerRequired: true,
       },
     ],
