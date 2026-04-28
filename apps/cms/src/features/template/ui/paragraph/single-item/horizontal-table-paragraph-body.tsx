@@ -9,6 +9,7 @@ import type {
   HorizontalTableFieldCellValue,
   HorizontalTableParagraph,
   HorizontalTableRowSelection,
+  TableBottomConsent,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   createEmptyFieldCellValue,
@@ -19,7 +20,7 @@ import {
   normalizeHorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
-import { CmsRadio } from '@/shared/ui/cms-radio'
+import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/features/template/ui/form-editor/form-editor.css'
 
@@ -572,16 +573,33 @@ export function HorizontalTableParagraphBody({
         ))}
       </div>
 
-      {p.showBottomText ? (
+      {p.showBottomText || p.showBottomConsent ? (
         <div className="form-editor-horizontal-table__bottom">
-          <ParagraphInput
-            type="description"
-            className="form-editor-horizontal-table__bottom-input"
-            value={p.bottomText}
-            isEditMode={isEditMode}
-            onChange={next => onChange({ ...p, bottomText: next })}
-            placeholder="설명을 입력해 주세요"
-          />
+          {p.showBottomText ? (
+            <ParagraphInput
+              type="description"
+              className="form-editor-horizontal-table__bottom-input"
+              value={p.bottomText}
+              isEditMode={isEditMode}
+              onChange={next => onChange({ ...p, bottomText: next })}
+              placeholder="설명을 입력해 주세요"
+            />
+          ) : null}
+          {p.showBottomConsent ? (
+            <CmsRadioGroup
+              className="form-editor-table-bottom-consent"
+              size="large"
+              value={p.bottomConsent ?? 'agree'}
+              onChange={e => {
+                if (!isEditMode) return
+                onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
+              }}
+              style={isEditMode ? undefined : { pointerEvents: 'none' }}
+            >
+              <CmsRadio value="agree">동의</CmsRadio>
+              <CmsRadio value="disagree">동의하지 않음</CmsRadio>
+            </CmsRadioGroup>
+          ) : null}
         </div>
       ) : null}
     </div>

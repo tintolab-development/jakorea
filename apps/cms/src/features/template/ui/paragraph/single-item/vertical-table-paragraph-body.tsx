@@ -3,13 +3,20 @@ import { DatePicker, Input, TimePicker } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
-import type { VerticalTableParagraph, VerticalTableRow } from '@/features/template/model/writing-form-draft.schema'
+import type {
+  TableBottomConsent,
+  VerticalTableParagraph,
+  VerticalTableRow,
+} from '@/features/template/model/writing-form-draft.schema'
 import {
   DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER,
+  effectiveVerticalCompositeTimeHint,
+  effectiveVerticalRowDateTimeModes,
   normalizeVerticalTableParagraph,
   verticalTableHeaderPlaceholder,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
+import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import '@/features/template/ui/paragraph/single-item/vertical-table-paragraph-body.css'
 
@@ -48,7 +55,8 @@ function verticalTableFieldPopupContainer(): HTMLElement {
 
 const verticalTablePickerPopupStyles = {
   popup: {
-    root: { minWidth: 300 },
+    /** 편집기·모달 위에 패널이 보이도록(기본 토큰보다 높여 안전하게) */
+    root: { minWidth: 300, zIndex: 3100 },
   },
 } as const
 
@@ -103,6 +111,14 @@ function replaceRowStage(
   return rows.map((r, i) => (i === rowIdx ? patch(r) : r))
 }
 
+/** 합성(날짜+시간)에서 시간 인풋에 바인딩할 HH:mm 문자열 */
+function verticalCompositeTimeValue(r: VerticalTableRow, stageIdx: number): string {
+  if (r.stageCount === 1) {
+    return r.dateTimeStage0AuxTime ?? r.dateTimeStage1Time ?? ''
+  }
+  return stageIdx === 0 ? (r.dateTimeStage0AuxTime ?? '') : (r.dateTimeStage1Time ?? '')
+}
+
 export function VerticalTableParagraphBody({
   paragraph,
   onChange,
@@ -131,20 +147,11 @@ export function VerticalTableParagraphBody({
       ...p,
       rows: replaceRowStage(p.rows, rowIdx, r => {
         if (r.stageCount === 1) {
-          return { stageCount: 1, headers: [value], cells: r.cells, placeholderHints: r.placeholderHints }
+          return { ...r, headers: [value] }
         }
         const headers: [string, string] = [...r.headers]
         headers[stageIdx] = value
-        const next: VerticalTableRow = {
-          stageCount: 2,
-          headers,
-          cells: r.cells,
-          placeholderHints: r.placeholderHints,
-        }
-        if (r.dateTimeStage1Time !== undefined) {
-          next.dateTimeStage1Time = r.dateTimeStage1Time
-        }
-        return next
+        return { ...r, headers }
       }),
     })
   }
@@ -154,29 +161,26 @@ export function VerticalTableParagraphBody({
       ...p,
       rows: replaceRowStage(p.rows, rowIdx, r => {
         if (r.stageCount === 1) {
-          return { stageCount: 1, headers: r.headers, cells: [value], placeholderHints: r.placeholderHints }
+          return { ...r, cells: [value] }
         }
         const cells: [string, string] = [...r.cells]
         cells[stageIdx] = value
-        const next: VerticalTableRow = {
-          stageCount: 2,
-          headers: r.headers,
-          cells,
-          placeholderHints: r.placeholderHints,
-        }
-        if (r.dateTimeStage1Time !== undefined) {
-          next.dateTimeStage1Time = r.dateTimeStage1Time
-        }
-        return next
+        return { ...r, cells }
       }),
     })
   }
 
-  const setDateTimeStage1Time = (rowIdx: number, value: string) => {
+  /** 합성(날짜+시간) 모드에서 시간(HH:mm) — 1단은 레거시 `dateTimeStage1Time`와 호환 */
+  const setVerticalCompositeTime = (rowIdx: number, stageIdx: number, value: string) => {
     onChange({
       ...p,
       rows: replaceRowStage(p.rows, rowIdx, r => {
-        if (r.stageCount !== 2) return r
+        if (r.stageCount === 1) {
+          return { ...r, dateTimeStage0AuxTime: value, dateTimeStage1Time: value }
+        }
+        if (stageIdx === 0) {
+          return { ...r, dateTimeStage0AuxTime: value }
+        }
         return { ...r, dateTimeStage1Time: value }
       }),
     })
@@ -184,6 +188,11 @@ export function VerticalTableParagraphBody({
 
   const toggleRow = (rowIdx: number) => {
     setSelectedRow(selectedRow === rowIdx ? null : rowIdx)
+  }
+
+  /** onFocus 타이밍에 행 선택 state를 갱신하면 리렌더로 피커가 닫히거나 패널이 열리지 않을 수 있어, 패널 open 이후 동기화 */
+  const notifyPickerRowFocused = (rowIdxFocus: number) => (pickerOpen: boolean) => {
+    if (pickerOpen) setSelectedRow(rowIdxFocus)
   }
 
   const renderStage = (row: VerticalTableRow, rowIdx: number, stageIdx: number) => {
@@ -199,68 +208,114 @@ export function VerticalTableParagraphBody({
         : VERTICAL_TABLE_TEXT_CELL_PLACEHOLDER
 
     const isDateTime = p.verticalTableFlavor === 'date_time'
-    const secondStageDatePh =
-      row.stageCount === 2 && stageIdx === 1 && hint.trim() !== '' ? hint : VT_DATE_PLACEHOLDER
+    const dtModes = isDateTime ? effectiveVerticalRowDateTimeModes(row) : null
+    const dtModeAtStage = dtModes ? (dtModes[stageIdx as 0 | 1] ?? 'date') : 'date'
+
+    const renderDateSingleStageBody = (
+      pickerKeySuffix: string,
+      datePlaceholder: string,
+      timeValForComposite: string,
+      timePlaceholder: string
+    ) => (
+      <div className="form-editor-vertical-table__dt-composite">
+        <DatePicker
+          key={`vt-dt-d-${rowIdx}-${stageIdx}-${pickerKeySuffix}`}
+          rootClassName="form-editor-vertical-table__field-box form-editor-vertical-table__field-box--picker form-editor-vertical-table__dt-picker--fixed"
+          className="form-editor-vertical-table__dt-picker-inner"
+          needConfirm={false}
+          styles={verticalTablePickerPopupStyles}
+          getPopupContainer={verticalTableFieldPopupContainer}
+          value={toDayjs('date', cell)}
+          onChange={isEditMode ? d => setCell(rowIdx, stageIdx, fromDayjs('date', d)) : undefined}
+          onOpenChange={notifyPickerRowFocused(rowIdx)}
+          format="YYYY-MM-DD"
+          placeholder={datePlaceholder}
+          disabled={!isEditMode}
+        />
+        <div className="form-editor-vertical-table__dt-divider-wrap">
+          <DividerVertical />
+        </div>
+        <TimePicker
+          key={`vt-dt-t-${rowIdx}-${stageIdx}-${pickerKeySuffix}`}
+          rootClassName="form-editor-vertical-table__field-box form-editor-vertical-table__field-box--picker form-editor-vertical-table__dt-picker--fixed"
+          className="form-editor-vertical-table__dt-picker-inner"
+          needConfirm={false}
+          styles={verticalTablePickerPopupStyles}
+          getPopupContainer={verticalTableFieldPopupContainer}
+          value={toDayjs('time', timeValForComposite)}
+          onChange={
+            isEditMode ? d => setVerticalCompositeTime(rowIdx, stageIdx, fromDayjs('time', d)) : undefined
+          }
+          onOpenChange={notifyPickerRowFocused(rowIdx)}
+          format="HH:mm"
+          minuteStep={5}
+          placeholder={timePlaceholder}
+          disabled={!isEditMode}
+        />
+      </div>
+    )
 
     const renderDateTimeBody = () => {
-      if (!isDateTime) return null
+      if (!isDateTime || !dtModes) return null
 
-      if (row.stageCount === 2 && stageIdx === 1) {
-        const timeVal = row.dateTimeStage1Time ?? ''
+      const hintDateOrTime =
+        hint.trim() !== ''
+          ? hint
+          : dtModeAtStage === 'time'
+            ? VT_TIME_PLACEHOLDER
+            : VT_DATE_PLACEHOLDER
+      const timePlaceholderComposite = effectiveVerticalCompositeTimeHint(
+        row,
+        stageIdx as 0 | 1
+      )
+
+      if (dtModeAtStage === 'time') {
         return (
-          <div className="form-editor-vertical-table__dt-composite">
-            <DatePicker
-              key={`vt-dt-d-${rowIdx}-${stageIdx}`}
-              rootClassName="form-editor-vertical-table__field-box form-editor-vertical-table__field-box--picker form-editor-vertical-table__dt-picker--fixed"
-              className="form-editor-vertical-table__dt-picker-inner"
-              needConfirm={false}
-              inputReadOnly
-              styles={verticalTablePickerPopupStyles}
-              getPopupContainer={verticalTableFieldPopupContainer}
-              value={toDayjs('date', cell)}
-              onChange={isEditMode ? d => setCell(rowIdx, stageIdx, fromDayjs('date', d)) : undefined}
-              onFocus={() => setSelectedRow(rowIdx)}
-              format="YYYY-MM-DD"
-              placeholder={secondStageDatePh}
-              disabled={!isEditMode}
-            />
-            <div className="form-editor-vertical-table__dt-divider-wrap">
-              <DividerVertical />
-            </div>
-            <TimePicker
-              key={`vt-dt-t-${rowIdx}-${stageIdx}`}
-              rootClassName="form-editor-vertical-table__field-box form-editor-vertical-table__field-box--picker form-editor-vertical-table__dt-picker--fixed"
-              className="form-editor-vertical-table__dt-picker-inner"
-              needConfirm={false}
-              inputReadOnly
-              styles={verticalTablePickerPopupStyles}
-              getPopupContainer={verticalTableFieldPopupContainer}
-              value={toDayjs('time', timeVal)}
-              onChange={isEditMode ? d => setDateTimeStage1Time(rowIdx, fromDayjs('time', d)) : undefined}
-              onFocus={() => setSelectedRow(rowIdx)}
-              format="HH:mm"
-              minuteStep={5}
-              placeholder={VT_TIME_PLACEHOLDER}
-              disabled={!isEditMode}
-            />
-          </div>
+          <TimePicker
+            key={`vt-dt-${rowIdx}-${stageIdx}-t`}
+            rootClassName="form-editor-vertical-table__field-box form-editor-vertical-table__field-box--picker form-editor-vertical-table__dt-picker--full"
+            className="form-editor-vertical-table__dt-picker-inner"
+            needConfirm={false}
+            styles={verticalTablePickerPopupStyles}
+            getPopupContainer={verticalTableFieldPopupContainer}
+            value={toDayjs('time', cell)}
+            onChange={
+              isEditMode ? d => setCell(rowIdx, stageIdx, fromDayjs('time', d)) : undefined
+            }
+            onOpenChange={notifyPickerRowFocused(rowIdx)}
+            format="HH:mm"
+            minuteStep={5}
+            placeholder={hintDateOrTime}
+            disabled={!isEditMode}
+          />
         )
       }
 
+      if (dtModeAtStage === 'date_time') {
+        const timeVal = verticalCompositeTimeValue(row, stageIdx)
+        const datePlaceholder = hint.trim() !== '' ? hint : VT_DATE_PLACEHOLDER
+        return renderDateSingleStageBody(
+          `composite-${stageIdx}`,
+          datePlaceholder,
+          timeVal,
+          timePlaceholderComposite
+        )
+      }
+
+      const datePlaceholder = hint.trim() !== '' ? hint : VT_DATE_PLACEHOLDER
       return (
         <DatePicker
           key={`vt-dt-${rowIdx}-${stageIdx}`}
           rootClassName="form-editor-vertical-table__field-box form-editor-vertical-table__field-box--picker form-editor-vertical-table__dt-picker--full"
           className="form-editor-vertical-table__dt-picker-inner"
           needConfirm={false}
-          inputReadOnly
           styles={verticalTablePickerPopupStyles}
           getPopupContainer={verticalTableFieldPopupContainer}
           value={toDayjs('date', cell)}
           onChange={isEditMode ? d => setCell(rowIdx, stageIdx, fromDayjs('date', d)) : undefined}
-          onFocus={() => setSelectedRow(rowIdx)}
+          onOpenChange={notifyPickerRowFocused(rowIdx)}
           format="YYYY-MM-DD"
-          placeholder={VT_DATE_PLACEHOLDER}
+          placeholder={datePlaceholder}
           disabled={!isEditMode}
         />
       )
@@ -270,6 +325,8 @@ export function VerticalTableParagraphBody({
       p.verticalTableFlavor === 'subjective'
         ? 'form-editor-vertical-table__cell-input-shell--body-subjective'
         : ''
+
+    const isDateTimeCompositeShell = isDateTime && dtModeAtStage === 'date_time'
 
     return (
       <div key={`${rowIdx}-s-${stageIdx}`} className="form-editor-vertical-table__stage">
@@ -311,13 +368,12 @@ export function VerticalTableParagraphBody({
               className={[
                 'form-editor-vertical-table__cell-input-shell',
                 'form-editor-vertical-table__cell-input-shell--body',
-                row.stageCount === 2 && stageIdx === 1
+                isDateTimeCompositeShell
                   ? 'form-editor-vertical-table__cell-input-shell--body-dt-composite'
                   : 'form-editor-vertical-table__cell-input-shell--body-dt-full',
               ]
                 .filter(Boolean)
                 .join(' ')}
-              onMouseDown={e => e.stopPropagation()}
               onClick={e => e.stopPropagation()}
             >
               {renderDateTimeBody()}
@@ -381,16 +437,33 @@ export function VerticalTableParagraphBody({
         ))}
       </div>
 
-      {p.showBottomText ? (
+      {p.showBottomText || p.showBottomConsent ? (
         <div className="form-editor-vertical-table__bottom">
-          <ParagraphInput
-            type="description"
-            className="form-editor-vertical-table__bottom-input"
-            value={p.bottomText}
-            isEditMode={isEditMode}
-            onChange={next => onChange({ ...p, bottomText: next })}
-            placeholder="설명을 입력해 주세요"
-          />
+          {p.showBottomText ? (
+            <ParagraphInput
+              type="description"
+              className="form-editor-vertical-table__bottom-input"
+              value={p.bottomText}
+              isEditMode={isEditMode}
+              onChange={next => onChange({ ...p, bottomText: next })}
+              placeholder="설명을 입력해 주세요"
+            />
+          ) : null}
+          {p.showBottomConsent ? (
+            <CmsRadioGroup
+              className="form-editor-table-bottom-consent"
+              size="large"
+              value={p.bottomConsent ?? 'agree'}
+              onChange={e => {
+                if (!isEditMode) return
+                onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
+              }}
+              style={isEditMode ? undefined : { pointerEvents: 'none' }}
+            >
+              <CmsRadio value="agree">동의</CmsRadio>
+              <CmsRadio value="disagree">동의하지 않음</CmsRadio>
+            </CmsRadioGroup>
+          ) : null}
         </div>
       ) : null}
     </div>

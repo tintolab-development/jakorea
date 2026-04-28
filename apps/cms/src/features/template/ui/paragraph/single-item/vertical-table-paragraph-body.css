@@ -287,10 +287,25 @@
 
 .form-editor-vertical-table__bottom {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .form-editor-vertical-table__bottom-input {
   width: 100%;
+}
+
+/* 하단 설명 — 동의 여부 라디오 (203×40, 두 옵션 사이 16px) */
+.form-editor-table-bottom-consent.app-radio-group {
+  box-sizing: border-box;
+  width: 203px;
+  min-width: 203px;
+  height: 40px;
+  min-height: 40px;
+  flex-wrap: nowrap !important;
+  gap: 16px !important;
+  align-items: center;
 }
 
 /* 날짜/시간형 — 피커 박스(가로형 필드형과 동일 톤, 세로형 전용 너비) */
@@ -394,9 +409,10 @@
 }
 
 .form-editor-vertical-table__dt-picker--full {
+  /* 1단(t가 매우 넓을 때) rc-picker flex가 input을 0으로 줄이는 경우 클릭이 먹지 않는 현상 방지 */
   width: 100% !important;
   max-width: 100% !important;
-  min-width: 0 !important;
+  min-width: min(280px, 100%) !important;
   flex: 1 1 auto;
 }
 

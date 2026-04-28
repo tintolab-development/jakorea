@@ -32,6 +32,12 @@
   min-height: 1.25em;
 }
 
+/* 푸터 좌측 토글(답변 필수·하단 설명 등)이 우측 액션과 flex 경쟁 시 폭 0으로 사라지지 않게 */
+.form-editor-card .paragraph-card__toggles {
+  flex-shrink: 0;
+  min-width: min-content;
+}
+
 .form-editor-placeholder {
   color: var(--color-text-placeholder, #bfbfbf);
 }
@@ -137,11 +143,24 @@
   justify-content: flex-start;
 }
 
+/* 단락 카드 푸터 토글 행 — 항목 간 간격 16px 통일 */
 .form-editor-card__toggles-row {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
+}
+
+/* 테이블 단락 푸터: 토글끼리 16px만 두고 콘텐츠 너비에 맞춤(203px 고정은 하단 동의 라디오 전용) */
+.form-editor-card__toggles-row--table-foot {
+  gap: 16px;
+  justify-content: flex-start;
+}
+
+.form-editor-card__table-footer-toggle-slot {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
 }
 
 /* 우측 네비: 고정 행은 드래그 핸들 없이 동일 높이 유지 */
@@ -462,6 +481,17 @@
   align-items: center;
   gap: 16px;
   flex-wrap: nowrap;
+  box-sizing: border-box;
+}
+
+/* 날짜/시간형 — 스테이지별 「유형」(날짜/시간/날짜+시간), 3옵션 줄바꿈 가능 */
+.form-editor-vertical-table-row-fields__datetime-mode-radios.app-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  min-height: 44px;
+  padding: 6px 0 4px;
   box-sizing: border-box;
 }
 
@@ -1547,6 +1577,21 @@
 .form-editor-horizontal-table__bottom {
   margin: 0;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 테이블 하단 — 동의 여부 라디오 (203×40, 두 옵션 사이 16px). 세로형 vertical-table-paragraph-body.css 와 동일 */
+.form-editor-table-bottom-consent.app-radio-group {
+  box-sizing: border-box;
+  width: 203px;
+  min-width: 203px;
+  height: 40px;
+  min-height: 40px;
+  flex-wrap: nowrap !important;
+  gap: 16px !important;
+  align-items: center;
 }
 
 .form-editor-horizontal-table__bottom-input.paragraph-input.paragraph-input--description {

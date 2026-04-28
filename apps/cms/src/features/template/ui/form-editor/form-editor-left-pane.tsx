@@ -290,30 +290,50 @@ function modalCardFooterToggles(
     if (!isSelected) return undefined
     const ht = paragraph as HorizontalTableParagraph
     return (
-      <>
-        <CmsToggle
-          label="답변 필수"
-          checked={ht.answerRequired}
-          onChange={checked =>
-            updateParagraph(ht.id, p =>
-              p.kind === 'single_item' && p.variant === 'horizontal_table'
-                ? { ...p, answerRequired: checked }
-                : p
-            )
-          }
-        />
-        <CmsToggle
-          label="하단 설명"
-          checked={ht.showBottomText}
-          onChange={checked =>
-            updateParagraph(ht.id, p =>
-              p.kind === 'single_item' && p.variant === 'horizontal_table'
-                ? { ...p, showBottomText: checked }
-                : p
-            )
-          }
-        />
-      </>
+      <div
+        className="form-editor-card__toggles-row form-editor-card__toggles-row--table-foot"
+        onClick={event => event.stopPropagation()}
+      >
+        <div className="form-editor-card__table-footer-toggle-slot">
+          <CmsToggle
+            label="답변 필수"
+            checked={ht.answerRequired}
+            onChange={checked =>
+              updateParagraph(ht.id, p =>
+                p.kind === 'single_item' && p.variant === 'horizontal_table'
+                  ? { ...p, answerRequired: checked }
+                  : p
+              )
+            }
+          />
+        </div>
+        <div className="form-editor-card__table-footer-toggle-slot">
+          <CmsToggle
+            label="하단 설명"
+            checked={ht.showBottomText}
+            onChange={checked =>
+              updateParagraph(ht.id, p =>
+                p.kind === 'single_item' && p.variant === 'horizontal_table'
+                  ? { ...p, showBottomText: checked }
+                  : p
+              )
+            }
+          />
+        </div>
+        <div className="form-editor-card__table-footer-toggle-slot">
+          <CmsToggle
+            label="동의 여부"
+            checked={ht.showBottomConsent}
+            onChange={checked =>
+              updateParagraph(ht.id, p =>
+                p.kind === 'single_item' && p.variant === 'horizontal_table'
+                  ? { ...p, showBottomConsent: checked }
+                  : p
+              )
+            }
+          />
+        </div>
+      </div>
     )
   }
 
@@ -321,30 +341,50 @@ function modalCardFooterToggles(
     if (!isSelected) return undefined
     const vt = paragraph as VerticalTableParagraph
     return (
-      <>
-        <CmsToggle
-          label="답변 필수"
-          checked={vt.answerRequired}
-          onChange={checked =>
-            updateParagraph(vt.id, p =>
-              p.kind === 'single_item' && p.variant === 'vertical_table'
-                ? { ...p, answerRequired: checked }
-                : p
-            )
-          }
-        />
-        <CmsToggle
-          label="하단 설명"
-          checked={vt.showBottomText}
-          onChange={checked =>
-            updateParagraph(vt.id, p =>
-              p.kind === 'single_item' && p.variant === 'vertical_table'
-                ? { ...p, showBottomText: checked }
-                : p
-            )
-          }
-        />
-      </>
+      <div
+        className="form-editor-card__toggles-row form-editor-card__toggles-row--table-foot"
+        onClick={event => event.stopPropagation()}
+      >
+        <div className="form-editor-card__table-footer-toggle-slot">
+          <CmsToggle
+            label="답변 필수"
+            checked={vt.answerRequired}
+            onChange={checked =>
+              updateParagraph(vt.id, p =>
+                p.kind === 'single_item' && p.variant === 'vertical_table'
+                  ? { ...p, answerRequired: checked }
+                  : p
+              )
+            }
+          />
+        </div>
+        <div className="form-editor-card__table-footer-toggle-slot">
+          <CmsToggle
+            label="하단 설명"
+            checked={vt.showBottomText}
+            onChange={checked =>
+              updateParagraph(vt.id, p =>
+                p.kind === 'single_item' && p.variant === 'vertical_table'
+                  ? { ...p, showBottomText: checked }
+                  : p
+              )
+            }
+          />
+        </div>
+        <div className="form-editor-card__table-footer-toggle-slot">
+          <CmsToggle
+            label="동의 여부"
+            checked={vt.showBottomConsent}
+            onChange={checked =>
+              updateParagraph(vt.id, p =>
+                p.kind === 'single_item' && p.variant === 'vertical_table'
+                  ? { ...p, showBottomConsent: checked }
+                  : p
+              )
+            }
+          />
+        </div>
+      </div>
     )
   }
 

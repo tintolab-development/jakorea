@@ -118,6 +118,7 @@ function buildFormTestVerticalParagraph(
     rows,
     bottomText: '',
     showBottomText: false,
+    showBottomConsent: false,
     answerRequired: true,
   })
 }
@@ -148,6 +149,7 @@ function buildFormTestFieldTableParagraph(id: string): HorizontalTableParagraph 
     ],
     bottomText: '',
     showBottomText: false,
+    showBottomConsent: false,
     answerRequired: true,
   })
 }
