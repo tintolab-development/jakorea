@@ -1,0 +1,56 @@
+.multiple-choice-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: var(--8, 8px);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    padding 0.15s ease;
+}
+
+/* 주관식 `short-essay-item--active` / `paragraph-label-input:focus-within` 와 동일 톤 */
+.multiple-choice-body--selected {
+  border: 1px solid var(--color-mint-01, #01a1af);
+  background: var(--main-WT, #fff);
+  padding: 10px 12px;
+  box-shadow: 0 4px 24px 0 rgba(0, 89, 97, 0.2);
+}
+
+/* CmsRadioGroup(.app-radio-group) 기본이 가로(row)라, 체크박스 모드와 같이 옵션을 세로로 쌓음 */
+.multiple-choice-body .multiple-choice-radio-group.app-radio-group {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+}
+
+.multiple-choice-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: default;
+  margin: 0;
+  padding: 4px 6px;
+  border-radius: 8px;
+}
+
+.multiple-choice-row__label {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--main-BK, #3d3d3d);
+  min-width: 0;
+}
+
+.multiple-choice-row .ant-radio-wrapper {
+  margin-inline-end: 0;
+  flex-shrink: 0;
+}
+
+.multiple-choice-row .cms-checkbox.ant-checkbox-wrapper {
+  flex-shrink: 0;
+}

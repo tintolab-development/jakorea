@@ -30,6 +30,7 @@ export default function NewSurveyForm() {
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
     DEFAULT_SURVEY_PARAGRAPH_IDS.title
   )
+  const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
 
   const handleClose = useCallback(() => {
     setParams({ mode: undefined, type: undefined, id: undefined })
@@ -83,6 +84,11 @@ export default function NewSurveyForm() {
     message.success('저장 API 연동 전입니다.')
   }, [])
 
+  const handleSelectParagraph = useCallback((id: string) => {
+    setActiveParagraphId(id)
+    setSingleItemListActiveItemId(null)
+  }, [])
+
   return (
     <TemplateFullpageModal
       open
@@ -95,10 +101,15 @@ export default function NewSurveyForm() {
           paragraphs={draft.paragraphs}
           titleNumbering={draft.formSettings.titleNumbering}
           selectedCardId={activeParagraphId}
-          onSelectCard={setActiveParagraphId}
+          onSelectCard={handleSelectParagraph}
           onReorderMiddle={onReorderMiddle}
           updateParagraph={updateParagraph}
           editorKind="survey"
+          singleItemListActiveItemId={singleItemListActiveItemId}
+          onSelectSingleItemListItem={(paragraphId, itemId) => {
+            setActiveParagraphId(paragraphId)
+            setSingleItemListActiveItemId(itemId)
+          }}
         />
       }
       rightNavigation={
@@ -108,7 +119,7 @@ export default function NewSurveyForm() {
           sortableMiddle={sortableMiddle}
           pinnedBottom={pinnedBottom}
           selectedItemId={activeParagraphId}
-          onSelectItem={setActiveParagraphId}
+          onSelectItem={handleSelectParagraph}
           onReorderMiddle={onReorderMiddle}
           fieldListBottomSlot={
             <FormEditorTitleNumberingField
@@ -124,6 +135,7 @@ export default function NewSurveyForm() {
             updateParagraph={updateParagraph}
             editorKind="survey"
             showTitleNumbering={false}
+            singleItemListActiveItemId={singleItemListActiveItemId}
           />
         </FormEditorFieldNav>
       }

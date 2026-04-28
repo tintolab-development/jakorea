@@ -127,6 +127,9 @@ const EducationRecordListPage = lazyLoad(
 const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
 const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-page'))
+const FormTestTableComponentsPage = lazyLoad(
+  () => import('@/pages/templates/form-test-table-components-page')
+)
 const TemplateSmsPage = lazyLoad(() => import('@/pages/templates/template-sms-page'))
 const TemplateEmailPage = lazyLoad(() => import('@/pages/templates/template-email-page'))
 const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-page'))
@@ -461,6 +464,10 @@ export const router = createBrowserRouter([
         path: 'templates',
         element: <TemplateListPage />,
         children: [
+          {
+            path: 'form-test/tables',
+            element: <FormTestTableComponentsPage />,
+          },
           {
             path: 'form-management',
             element: <TemplateFormTab />,

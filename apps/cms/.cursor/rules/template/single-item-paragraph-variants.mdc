@@ -1,0 +1,36 @@
+---
+description: CMS 설문 단일 항목(신규 스텁) — slug.tsx 파일명·8종 목록·미리보기 모달 전용
+globs:
+  - "apps/cms/src/features/template/ui/paragraph/single-item/**/*.tsx"
+  - "apps/cms/src/pages/templates/form-test-single-item-fullpage-modal.tsx"
+alwaysApply: false
+---
+
+# 단일 항목 8종 (slug → 파일명 `slug.tsx`)
+
+경로: `apps/cms/src/features/template/ui/paragraph/single-item/`
+
+신규 단일 항목 스텁은 **`{slug}.tsx`** 한 파일에 한 유형(예: `short-essay.tsx`). 기존 설문·동의용 `*-paragraph-body.tsx` 명명과는 **별도**로 둔다.
+
+| 한글 | slug | 파일 |
+| --- | --- | --- |
+| 주관식형 | `short-essay` | `short-essay.tsx` |
+| 객관식형 | `multiple-choice` | `multiple-choice.tsx` |
+| 드롭다운형 | `dropdown` | `dropdown.tsx` |
+| 날짜/시간형 | `date-time` | `date-time.tsx` |
+| 별점형 | `star-rate` | `star-rate.tsx` |
+| 점수 선택형 | `scale-type` | `scale-type.tsx` |
+| 사용자 정보형 | `user-info` | `user-info.tsx` |
+| 파일 첨부형 | `file-attachment` | `file-attachment.tsx` |
+
+export 컴포넌트명은 slug를 PascalCase로 매핑한다 (예: `short-essay` → `ShortEssay`, `date-time` → `DateTime`, `file-attachment` → `FileAttachment`).
+
+`writing-form-draft.schema.ts`의 `variant` 키는 직렬화 관례에 맞춰 스네이크 케이스(`short_essay`, `multiple_choice`, …)이며, 미리보기 초안은 `createSingleItemPreviewDraft()`에서 생성한다.
+
+## 바디 작성 시
+
+- [paragraph-card-slots.mdc](./paragraph-card-slots.mdc)와 동일: **카드 제목·설명은 바디에 넣지 않고** 슬롯(본문)만 담당한다.
+
+## 임시 미리보기
+
+- 8종을 한 화면에서 스크롤·우측 네비로 확인하는 용도는 `apps/cms/src/pages/templates/form-test-single-item-fullpage-modal.tsx` 전용이다. 추후 스키마·에디터 연동 시 삭제·이동할 수 있다.

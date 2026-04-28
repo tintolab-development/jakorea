@@ -9,6 +9,7 @@ interface ParagraphDatePickerBaseProps {
   width?: number | string
   className?: string
   style?: CSSProperties
+  disabled?: boolean
 }
 
 interface ParagraphDatePickerRangeProps extends ParagraphDatePickerBaseProps {
@@ -30,7 +31,7 @@ export type ParagraphDatePickerProps =
   | ParagraphDatePickerSingleProps
 
 export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
-  const { label, className, style, width = '500px' } = props
+  const { label, className, style, width = '500px', disabled } = props
 
   return (
     <div
@@ -43,6 +44,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           width={width}
           value={props.value}
           placeholder={props.placeholder}
+          disabled={disabled}
           onChange={dates => props.onChange([dates?.[0] ?? null, dates?.[1] ?? null])}
         />
       ) : (
@@ -50,6 +52,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           width={width}
           value={props.value}
           placeholder={props.placeholder}
+          disabled={disabled}
           onChange={date => props.onChange(date ?? null)}
         />
       )}

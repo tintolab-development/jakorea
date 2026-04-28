@@ -1,5 +1,5 @@
 import type { AgreementExplanationTextParagraph } from '@/features/template/model/writing-form-draft.schema'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
 import '@/features/template/ui/form-editor/form-editor.css'
 
 /** 설명글_텍스트형 — 카드 `title`/`description`은 `ParagraphCard`에서 처리, 슬롯에는 본문(한 줄)만 */
@@ -16,13 +16,14 @@ export function ExplanationText({
 
   return (
     <div className="form-editor-body">
-      <CmsInput
-        width="100%"
-        readOnly={!isEditMode}
+      <ParagraphInput
+        type="description"
+        className="paragraph-input--explanation-body"
+        isEditMode={isEditMode}
         value={paragraph.bodyText}
         placeholder={ph}
         onChange={
-          isEditMode ? e => onChange({ ...paragraph, bodyText: e.target.value }) : undefined
+          isEditMode ? next => onChange({ ...paragraph, bodyText: next }) : undefined
         }
       />
     </div>

@@ -6,6 +6,8 @@ import { getFormNavDisplayLine } from '@/features/template/lib/form-title-number
 import {
   createDefaultDirectAgreementDraft,
   DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS,
+  getWritingFormHeadMiddlePinnedTail,
+  isAgreementLockedSystemParagraph,
   reorderWritingFormMiddleParagraphs,
   type FormTitleNumberingStyle,
   type WritingFormDraft,
@@ -30,6 +32,7 @@ export default function NewAgreementForm() {
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
     DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.title
   )
+  const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
 
   const handleClose = useCallback(() => {
     setParams({ mode: undefined, type: undefined, id: undefined })
@@ -60,18 +63,25 @@ export default function NewAgreementForm() {
   }, [])
 
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
-    const [head, ...rest] = draft.paragraphs
-    const tail = rest[rest.length - 1]
-    const middle = rest.slice(0, -1)
+    const split = getWritingFormHeadMiddlePinnedTail(draft.paragraphs)
     const { titleNumbering } = draft.formSettings
     const line = (p: WritingFormParagraph) => ({
       id: p.id,
       displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
     })
+    if (split == null) {
+      return {
+        pinnedTop: null,
+        sortableMiddle: [],
+        pinnedBottom: [] as Array<{ id: string; displayLine: string }>,
+      }
+    }
+    const { head, middle, pinnedTail } = split
+    const pinnedBottomCards = pinnedTail.filter(p => !isAgreementLockedSystemParagraph(p))
     return {
       pinnedTop: line(head),
       sortableMiddle: middle.map(line),
-      pinnedBottom: line(tail),
+      pinnedBottom: pinnedBottomCards.map(line),
     }
   }, [draft])
 
@@ -81,6 +91,11 @@ export default function NewAgreementForm() {
 
   const handleSave = useCallback(() => {
     message.success('저장 API 연동 전입니다.')
+  }, [])
+
+  const handleSelectParagraph = useCallback((id: string) => {
+    setActiveParagraphId(id)
+    setSingleItemListActiveItemId(null)
   }, [])
 
   return (
@@ -95,10 +110,15 @@ export default function NewAgreementForm() {
           paragraphs={draft.paragraphs}
           titleNumbering={draft.formSettings.titleNumbering}
           selectedCardId={activeParagraphId}
-          onSelectCard={setActiveParagraphId}
+          onSelectCard={handleSelectParagraph}
           onReorderMiddle={onReorderMiddle}
           updateParagraph={updateParagraph}
           editorKind="agreement"
+          singleItemListActiveItemId={singleItemListActiveItemId}
+          onSelectSingleItemListItem={(paragraphId, itemId) => {
+            setActiveParagraphId(paragraphId)
+            setSingleItemListActiveItemId(itemId)
+          }}
         />
       }
       rightNavigation={
@@ -108,7 +128,7 @@ export default function NewAgreementForm() {
           sortableMiddle={sortableMiddle}
           pinnedBottom={pinnedBottom}
           selectedItemId={activeParagraphId}
-          onSelectItem={setActiveParagraphId}
+          onSelectItem={handleSelectParagraph}
           onReorderMiddle={onReorderMiddle}
           fieldListBottomSlot={
             <FormEditorTitleNumberingField
@@ -124,6 +144,7 @@ export default function NewAgreementForm() {
             updateParagraph={updateParagraph}
             editorKind="agreement"
             showTitleNumbering={false}
+            singleItemListActiveItemId={singleItemListActiveItemId}
           />
         </FormEditorFieldNav>
       }

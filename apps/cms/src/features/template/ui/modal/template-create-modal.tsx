@@ -17,7 +17,7 @@ import './template-create-modal.css'
 export interface TemplateCreateModalProps {
   open: boolean
   onCancel: () => void
-  onDirectRegister: (target: 'survey' | 'agreement') => void
+  onDirectRegister: (target: 'survey' | 'agreement' | 'horizontal_table') => void
   onDuplicateSuccess: (newTemplateId: string) => void
 }
 
@@ -27,7 +27,11 @@ function resolveSelection(
 ): TemplateCreateSelection | null {
   if (selectValue == null || selectValue === '') return null
   if (kind === 'direct') {
-    if (selectValue === 'survey' || selectValue === 'agreement') {
+    if (
+      selectValue === 'survey' ||
+      selectValue === 'agreement' ||
+      selectValue === 'horizontal_table'
+    ) {
       return { source: 'direct', target: selectValue }
     }
     return null
@@ -60,6 +64,7 @@ export function TemplateCreateModal({
       return [
         { label: '설문 양식', value: 'survey' as const },
         { label: '동의 양식', value: 'agreement' as const },
+        { label: '테이블 가로형', value: 'horizontal_table' as const },
       ]
     }
     const category = kind as WritingTemplateCategory
