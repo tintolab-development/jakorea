@@ -2,11 +2,16 @@ import { Form } from 'antd'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import type { DateTimeFieldMode, VerticalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
+import type {
+  DateTimeFieldMode,
+  VerticalTableParagraph,
+  VerticalTableStageKind,
+} from '@/features/template/model/writing-form-draft.schema'
 import {
   DATE_TIME_FIELD_MODE_OPTIONS,
   DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER,
   effectiveVerticalRowDateTimeModes,
+  effectiveVerticalStageKinds,
   normalizeVerticalTableParagraph,
   verticalTablePanelStageTitle,
   verticalTableParagraphOutlineLabel,
@@ -22,11 +27,13 @@ import {
 import { useVerticalTableRowFieldActions } from '@/features/template/ui/form-editor/use-vertical-table-row-field-actions'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 
-const VERTICAL_TABLE_TEXT_CELL_OPTIONS = [{ value: 'text', label: '텍스트형' }]
-const VERTICAL_TABLE_SUBJECTIVE_CELL_OPTIONS = [{ value: 'subjective', label: '주관식형' }]
-const VERTICAL_TABLE_DATETIME_CELL_OPTIONS = [{ value: 'dateTime', label: '날짜/시간형' }]
-const VERTICAL_TABLE_SINGLE_CELL_OPTIONS = [{ value: 'single_choice', label: '단일선택형' }]
-const VERTICAL_TABLE_MULTIPLE_CELL_OPTIONS = [{ value: 'multiple_choice', label: '다중선택형' }]
+const VERTICAL_TABLE_CELL_KIND_OPTIONS: { value: VerticalTableStageKind; label: string }[] = [
+  { value: 'text', label: '텍스트형' },
+  { value: 'subjective', label: '주관식형' },
+  { value: 'date_time', label: '날짜/시간형' },
+  { value: 'single_choice', label: '단일선택형' },
+  { value: 'multiple_choice', label: '다중선택형' },
+]
 
 type FormEditorVerticalTableRowFieldsProps = {
   paragraph: VerticalTableParagraph
@@ -66,26 +73,6 @@ function FormEditorVerticalTableRowFieldsBody({
 }: FormEditorVerticalTableRowFieldsProps) {
   const p = normalizeVerticalTableParagraph(paragraph)
   const flavorPrefix = verticalTableParagraphOutlineLabel(p.verticalTableFlavor)
-  const cellKindOptions =
-    p.verticalTableFlavor === 'subjective'
-      ? VERTICAL_TABLE_SUBJECTIVE_CELL_OPTIONS
-      : p.verticalTableFlavor === 'date_time'
-        ? VERTICAL_TABLE_DATETIME_CELL_OPTIONS
-        : p.verticalTableFlavor === 'single_choice'
-          ? VERTICAL_TABLE_SINGLE_CELL_OPTIONS
-          : p.verticalTableFlavor === 'multiple_choice'
-            ? VERTICAL_TABLE_MULTIPLE_CELL_OPTIONS
-            : VERTICAL_TABLE_TEXT_CELL_OPTIONS
-  const cellKindValue =
-    p.verticalTableFlavor === 'subjective'
-      ? 'subjective'
-      : p.verticalTableFlavor === 'date_time'
-        ? 'dateTime'
-        : p.verticalTableFlavor === 'single_choice'
-          ? 'single_choice'
-          : p.verticalTableFlavor === 'multiple_choice'
-            ? 'multiple_choice'
-            : 'text'
   const row = p.rows[rowIndex]!
   const rowCount = Math.max(1, p.rows.length)
   const canDeleteRow = rowCount > 1
@@ -96,6 +83,7 @@ function FormEditorVerticalTableRowFieldsBody({
     setStageCount,
     setHeader,
     setCell,
+    setStageKind,
     setPlaceholderHint,
     setCompositeTimeHint,
     setDateTimeStageMode,
@@ -148,8 +136,13 @@ function FormEditorVerticalTableRowFieldsBody({
         <FormEditorFieldList>
           {stages.map(si => {
             const dtModes =
-              p.verticalTableFlavor === 'date_time' ? effectiveVerticalRowDateTimeModes(row) : null
+              effectiveVerticalStageKinds(row, p.verticalTableFlavor)[si as 0 | 1] === 'date_time'
+                ? effectiveVerticalRowDateTimeModes(row)
+                : null
             const stageMode: DateTimeFieldMode | null = dtModes ? dtModes[si as 0 | 1] ?? 'date' : null
+            const stageKind = effectiveVerticalStageKinds(row, p.verticalTableFlavor)[
+              si as 0 | 1
+            ] ?? 'text'
 
             return (
               <FormEditorFieldListItem key={`vt-${rowIndex}-s-${si}`}>
@@ -161,9 +154,9 @@ function FormEditorVerticalTableRowFieldsBody({
                     className="form-editor-horizontal-table-body-fields__cms-select"
                     inputSize="large"
                     width="100%"
-                    value={cellKindValue}
-                    options={cellKindOptions}
-                    disabled
+                    value={stageKind}
+                    options={VERTICAL_TABLE_CELL_KIND_OPTIONS}
+                    onChange={v => setStageKind(si, v as VerticalTableStageKind)}
                     withAllOption={false}
                   />
                 </FormEditorFieldTypeRow>
@@ -180,7 +173,7 @@ function FormEditorVerticalTableRowFieldsBody({
                     placeholder="항목명을 입력해 주세요"
                   />
                 </Form.Item>
-                {p.verticalTableFlavor === 'date_time' && stageMode !== null ? (
+                {stageKind === 'date_time' && stageMode !== null ? (
                   <>
                     <Form.Item
                       className="form-editor-horizontal-table-body-fields__content-form-item"
@@ -248,7 +241,7 @@ function FormEditorVerticalTableRowFieldsBody({
                       </Form.Item>
                     )}
                   </>
-                ) : p.verticalTableFlavor === 'subjective' ? (
+                ) : stageKind === 'subjective' ? (
                   <Form.Item
                     className="form-editor-horizontal-table-body-fields__content-form-item"
                     label="입력창 안내 텍스트"
@@ -262,8 +255,8 @@ function FormEditorVerticalTableRowFieldsBody({
                       placeholder={DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER}
                     />
                   </Form.Item>
-                ) : p.verticalTableFlavor === 'single_choice' ||
-                  p.verticalTableFlavor === 'multiple_choice' ? null : (
+                ) : stageKind === 'single_choice' ||
+                  stageKind === 'multiple_choice' ? null : (
                   <Form.Item
                     className="form-editor-horizontal-table-body-fields__content-form-item"
                     label="내용"

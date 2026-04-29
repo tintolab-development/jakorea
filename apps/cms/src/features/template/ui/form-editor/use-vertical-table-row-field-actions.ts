@@ -4,9 +4,12 @@ import type {
   DateTimeFieldMode,
   VerticalTableParagraph,
   VerticalTableRow,
+  VerticalTableStageKind,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
+  coerceVerticalTableStageKind,
   effectiveVerticalRowDateTimeModes,
+  effectiveVerticalStageKinds,
   normalizeVerticalTableParagraph,
   normalizeVerticalTableRow,
   verticalTableRemoveRow,
@@ -37,6 +40,13 @@ function mergeVerticalRow(prev: VerticalTableRow, next: VerticalTableRow): Verti
       ...n,
       headers: n.headers,
       cells: n.cells,
+    }
+    if (
+      p1?.stageKinds !== undefined &&
+      out.stageCount === 1 &&
+      out.stageKinds === undefined
+    ) {
+      out.stageKinds = [...p1.stageKinds] as [VerticalTableStageKind]
     }
     if (
       p1?.dateTimeSingleStageMode !== undefined &&
@@ -87,6 +97,13 @@ function mergeVerticalRow(prev: VerticalTableRow, next: VerticalTableRow): Verti
     ...n,
     headers: n.headers,
     cells: n.cells,
+  }
+  if (
+    p2?.stageKinds !== undefined &&
+    out2.stageCount === 2 &&
+    out2.stageKinds === undefined
+  ) {
+    out2.stageKinds = [...p2.stageKinds] as [VerticalTableStageKind, VerticalTableStageKind]
   }
   if (
     p2?.dateTimeStageModes !== undefined &&
@@ -252,6 +269,42 @@ export function useVerticalTableRowFieldActions({
     [paragraphId, rowIndex, updateParagraph]
   )
 
+  const setStageKind = useCallback(
+    (stageIdx: number, kind: VerticalTableStageKind) => {
+      updateParagraph(paragraphId, cur => {
+        if (cur.kind !== 'single_item' || cur.variant !== 'vertical_table') return cur
+        const vtp = normalizeVerticalTableParagraph(cur as VerticalTableParagraph)
+        return patchVerticalRow(cur, rowIndex, r => {
+          const base = normalizeVerticalTableRow(r) as VerticalTableRow
+          const nextKind = coerceVerticalTableStageKind(kind)
+          const currentKinds = effectiveVerticalStageKinds(base, vtp.verticalTableFlavor)
+          if (base.stageCount === 1) {
+            const nextRow = mergeVerticalRow(base, {
+              stageCount: 1,
+              headers: base.headers,
+              cells: base.cells,
+              placeholderHints: base.placeholderHints,
+              stageKinds: [nextKind],
+            })
+            return nextRow
+          }
+          const nextKinds: [VerticalTableStageKind, VerticalTableStageKind] = [
+            stageIdx === 0 ? nextKind : currentKinds[0]!,
+            stageIdx === 1 ? nextKind : currentKinds[1]!,
+          ]
+          return mergeVerticalRow(base, {
+            stageCount: 2,
+            headers: base.headers,
+            cells: base.cells,
+            placeholderHints: base.placeholderHints,
+            stageKinds: nextKinds,
+          })
+        })
+      })
+    },
+    [paragraphId, rowIndex, updateParagraph]
+  )
+
   const setCompositeTimeHint = useCallback(
     (stageIdx: 0 | 1, value: string) => {
       updateParagraph(paragraphId, cur => {
@@ -331,6 +384,7 @@ export function useVerticalTableRowFieldActions({
     setStageCount,
     setHeader,
     setCell,
+    setStageKind,
     setPlaceholderHint,
     setCompositeTimeHint,
     setDateTimeStageMode,

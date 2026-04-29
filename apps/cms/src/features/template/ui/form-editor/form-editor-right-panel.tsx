@@ -9,10 +9,8 @@ import type {
   DateTimeParagraph,
   FormEditorKind,
   FormTitleNumberingStyle,
-  HorizontalTableFlavor,
   HorizontalTableParagraph,
   HorizontalTableRowSelection,
-  VerticalTableFlavor,
   VerticalTableParagraph,
   MultipleChoiceParagraph,
   ScaleTypeParagraph,
@@ -24,7 +22,7 @@ import {
   createHorizontalTableParagraph,
   createVerticalTableParagraph,
   DATE_TIME_FIELD_MODE_OPTIONS,
-  horizontalTableSetFlavor,
+  effectiveVerticalStageKinds,
   normalizeVerticalChoiceOptions,
   normalizeVerticalTableParagraph,
   verticalTableParagraphOutlineLabel,
@@ -47,26 +45,13 @@ const TITLE_NUMBERING_OPTIONS: { value: FormTitleNumberingStyle; label: string }
   { value: 'none', label: '미선택' },
 ]
 
-type TableDetailKind =
-  | 'horizontal_text'
-  | 'horizontal_field'
-  | 'vertical_text'
-  | 'vertical_subjective'
-  | 'vertical_date_time'
-  | 'vertical_single_choice'
-  | 'vertical_multiple_choice'
-  | 'vertical_file_attachment'
-
 const TABLE_KIND_OPTIONS = [{ value: 'table', label: '테이블' }] as const
-const TABLE_DETAIL_OPTIONS: { value: TableDetailKind; label: string }[] = [
-  { value: 'horizontal_text', label: '가로형' },
-  { value: 'horizontal_field', label: '가로형(필드형)' },
-  { value: 'vertical_text', label: '세로형(텍스트형)' },
-  { value: 'vertical_subjective', label: '세로형(주관식형)' },
-  { value: 'vertical_date_time', label: '세로형(날짜/시간형)' },
-  { value: 'vertical_single_choice', label: '세로형(단일선택형)' },
-  { value: 'vertical_multiple_choice', label: '세로형(다중선택형)' },
-  { value: 'vertical_file_attachment', label: '세로형(파일첨부형)' },
+
+/** 테이블 대분류 우측 패널 — 소분류는 가로·세로 방향만 전환(세부 유형은 캔버스·다른 설정에서 유지) */
+type TableOrientationKind = 'horizontal' | 'vertical'
+const TABLE_ORIENTATION_OPTIONS: { value: TableOrientationKind; label: string }[] = [
+  { value: 'horizontal', label: '가로형' },
+  { value: 'vertical', label: '세로형' },
 ]
 
 const GENERATED_TABLE_TITLES = new Set([
@@ -80,36 +65,11 @@ const GENERATED_TABLE_TITLES = new Set([
   verticalTableParagraphOutlineLabel('file_attachment'),
 ])
 
-function tableDetailKind(p: WritingFormParagraph): TableDetailKind | null {
+function tableOrientationFromParagraph(p: WritingFormParagraph): TableOrientationKind | null {
   if (p.kind !== 'single_item') return null
-  if (p.variant === 'horizontal_table') {
-    const flavor: HorizontalTableFlavor = p.tableFlavor === 'field' ? 'field' : 'text'
-    return flavor === 'field' ? 'horizontal_field' : 'horizontal_text'
-  }
-  if (p.variant === 'vertical_table') {
-    const vt = normalizeVerticalTableParagraph(p as VerticalTableParagraph)
-    return `vertical_${vt.verticalTableFlavor}` as TableDetailKind
-  }
+  if (p.variant === 'horizontal_table') return 'horizontal'
+  if (p.variant === 'vertical_table') return 'vertical'
   return null
-}
-
-function createTableParagraphByDetail(
-  id: string,
-  detail: TableDetailKind
-): HorizontalTableParagraph | VerticalTableParagraph {
-  if (detail === 'horizontal_field') {
-    return {
-      ...horizontalTableSetFlavor(createHorizontalTableParagraph(id), 'field'),
-      paragraphTitle: '테이블_가로형 (필드 형)',
-    }
-  }
-  if (detail === 'horizontal_text') {
-    return createHorizontalTableParagraph(id)
-  }
-  return createVerticalTableParagraph(
-    id,
-    detail.replace('vertical_', '') as VerticalTableFlavor
-  )
 }
 
 function withPreservedTableCommonFields<T extends HorizontalTableParagraph | VerticalTableParagraph>(
@@ -277,8 +237,22 @@ function FormEditorVerticalTableCustomFields({
   onBodyRowDeleted?: (nextRowIndex: number) => void
 }) {
   const p = normalizeVerticalTableParagraph(paragraph)
+  const selectedRow =
+    rowSelection?.paragraphId === paragraph.id &&
+    rowSelection.row >= 0 &&
+    rowSelection.row < Math.max(1, p.rows.length)
+      ? p.rows[rowSelection.row]
+      : null
+  const selectedRowHasChoiceStage =
+    selectedRow != null
+      ? effectiveVerticalStageKinds(selectedRow, p.verticalTableFlavor).some(
+          k => k === 'single_choice' || k === 'multiple_choice'
+        )
+      : false
   const choiceFlavor =
-    p.verticalTableFlavor === 'single_choice' || p.verticalTableFlavor === 'multiple_choice'
+    p.verticalTableFlavor === 'single_choice' ||
+    p.verticalTableFlavor === 'multiple_choice' ||
+    selectedRowHasChoiceStage
 
   /** 파일첨부형: 우측 커스텀 필드 없음(th는 스키마 기본값·데이터만) */
   const rowFields =
@@ -359,7 +333,7 @@ export function FormEditorRightPanel({
     active && active.kind === 'single_item' && active.variant === 'scale_type'
       ? (active as ScaleTypeParagraph)
       : null
-  const activeTableDetail = active ? tableDetailKind(active) : null
+  const activeTableOrientation = active ? tableOrientationFromParagraph(active) : null
 
   const shortEssayItems =
     activeShortEssay?.items && activeShortEssay.items.length > 0
@@ -387,15 +361,18 @@ export function FormEditorRightPanel({
         ? true
         : (activeShortEssay.showItemTitle ?? false)
 
-  const handleTableDetailChange = (nextDetail: TableDetailKind) => {
-    if (!active || activeTableDetail == null || activeTableDetail === nextDetail) return
+  const handleTableOrientationChange = (next: TableOrientationKind) => {
+    if (!active || activeTableOrientation == null || activeTableOrientation === next) return
     updateParagraph(active.id, cur => {
       if (cur.kind !== 'single_item') return cur
       if (cur.variant !== 'horizontal_table' && cur.variant !== 'vertical_table') return cur
-      return withPreservedTableCommonFields(
-        createTableParagraphByDetail(cur.id, nextDetail),
-        cur as HorizontalTableParagraph | VerticalTableParagraph
-      )
+      const prev = cur as HorizontalTableParagraph | VerticalTableParagraph
+      if (next === 'horizontal') {
+        if (cur.variant === 'horizontal_table') return cur
+        return withPreservedTableCommonFields(createHorizontalTableParagraph(cur.id), prev)
+      }
+      if (cur.variant === 'vertical_table') return cur
+      return withPreservedTableCommonFields(createVerticalTableParagraph(cur.id, 'text'), prev)
     })
   }
 
@@ -425,9 +402,9 @@ export function FormEditorRightPanel({
                     />
                     <CmsSelect
                       width={165}
-                      value={activeTableDetail ?? 'horizontal_text'}
-                      options={TABLE_DETAIL_OPTIONS}
-                      onChange={v => handleTableDetailChange(v as TableDetailKind)}
+                      value={activeTableOrientation ?? 'horizontal'}
+                      options={TABLE_ORIENTATION_OPTIONS}
+                      onChange={v => handleTableOrientationChange(v as TableOrientationKind)}
                       withAllOption={false}
                     />
                   </>

@@ -14,6 +14,7 @@ import {
   DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER,
   effectiveVerticalCompositeTimeHint,
   effectiveVerticalRowDateTimeModes,
+  effectiveVerticalStageKinds,
   normalizeVerticalChoiceOptions,
   normalizeVerticalTableParagraph,
   verticalTableHeaderPlaceholder,
@@ -229,16 +230,17 @@ export function VerticalTableParagraphBody({
     const cell = row.cells[stageIdx] ?? ''
     const hPh = verticalTableHeaderPlaceholder(rowIdx, stageIdx, row.stageCount)
     const hint = row.placeholderHints?.[stageIdx] ?? ''
+    const stageKind = effectiveVerticalStageKinds(row, p.verticalTableFlavor)[stageIdx as 0 | 1]
     const cPh =
-      p.verticalTableFlavor === 'subjective'
+      stageKind === 'subjective'
         ? hint.trim() !== ''
           ? hint
           : DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER
         : VERTICAL_TABLE_TEXT_CELL_PLACEHOLDER
 
-    const isDateTime = p.verticalTableFlavor === 'date_time'
-    const isSingleChoice = p.verticalTableFlavor === 'single_choice'
-    const isMultipleChoice = p.verticalTableFlavor === 'multiple_choice'
+    const isDateTime = stageKind === 'date_time'
+    const isSingleChoice = stageKind === 'single_choice'
+    const isMultipleChoice = stageKind === 'multiple_choice'
     const dtModes = isDateTime ? effectiveVerticalRowDateTimeModes(row) : null
     const dtModeAtStage = dtModes ? (dtModes[stageIdx as 0 | 1] ?? 'date') : 'date'
 
@@ -353,7 +355,7 @@ export function VerticalTableParagraphBody({
     }
 
     const subjectiveShell =
-      p.verticalTableFlavor === 'subjective'
+      stageKind === 'subjective'
         ? 'form-editor-vertical-table__cell-input-shell--body-subjective'
         : ''
 
@@ -489,7 +491,7 @@ export function VerticalTableParagraphBody({
             </div>
           ) : (
             <>
-              {p.verticalTableFlavor === 'subjective' ? (
+              {stageKind === 'subjective' ? (
                 <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body form-editor-vertical-table__cell-input-shell--body-subjective">
                   <VerticalTableCellText value={cell} placeholder={cPh} variant="body" />
                 </div>
