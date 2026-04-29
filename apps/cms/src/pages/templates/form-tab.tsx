@@ -37,7 +37,7 @@ export function FormTab() {
               width="100%"
               onClick={() => navigate(`${FORM_TEST_TABLES_HREF}?tab=form-test`)}
             >
-              테이블 ( 가로형, 세로형 ) 모음
+              테이블 가로형 (임시)
             </CmsButton>
             <CmsButton
               type="button"
