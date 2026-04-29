@@ -322,9 +322,9 @@ export function defaultFieldForColumnKind(kind: HorizontalTableFieldColumnKind):
   }
 }
 
-/** 필드형 열·빈 열 슬롯 기본: 주관식형 */
+/** 필드형 열·빈 열 슬롯 기본: 텍스트형 */
 function defaultColumnFieldForNewColumn(): HorizontalTableColumnField {
-  return defaultFieldForColumnKind('subjective')
+  return defaultFieldForColumnKind('text')
 }
 
 export function createEmptyFieldCellValue(field: HorizontalTableColumnField): HorizontalTableFieldCellValue {
@@ -624,7 +624,7 @@ export function horizontalTableAddColumn(p: HorizontalTableParagraph): Horizonta
     while (row.length < colCount) row.push('')
     return row.slice(0, colCount)
   })
-  const newHeaderSuffix = p.tableFlavor === 'field' ? '주관식형' : ''
+  const newHeaderSuffix = ''
   const nextHeaders = [...p.columnHeaders, newHeaderSuffix]
   const nextWidth = nextHeaders.length
   const nextTextRows =
@@ -662,7 +662,7 @@ export function horizontalTableAddColumn(p: HorizontalTableParagraph): Horizonta
       columnFields: nextColumnFields,
     }
   }
-  const newField = defaultFieldForColumnKind('subjective')
+  const newField = defaultFieldForColumnKind('text')
   const fieldCols = [...ensureColumnFieldSlice(p, colCount), newField]
   const oldSlices =
     p.cellColumnFields != null ? p.cellColumnFields.map(r => r.map(cloneColumnField)) : null
@@ -879,7 +879,7 @@ export function normalizeHorizontalTableParagraph(p: HorizontalTableParagraph): 
         nextDataRows = dataRows.map(() => Array.from({ length: colCount }, () => ''))
       }
     } else if (
-      hasDataInCells &&
+      !hasDataInCells &&
       ((nextColumnFields?.length ?? 0) > 0 || (nextCellMatrix != null && nextCellMatrix.length > 0))
     ) {
       nextDataRows = dataRows.map(() => Array.from({ length: colCount }, () => ''))
@@ -1096,9 +1096,7 @@ export function horizontalTableUpdateColumnField(
   const columnHeadersPatch = [...n.columnHeaders]
   while (columnHeadersPatch.length < colCount) columnHeadersPatch.push('')
   const colTemplateKind = repairColumnField(fieldCols[colIdx], colIdx).kind
-  if (colTemplateKind !== 'text') {
-    columnHeadersPatch[colIdx] = horizontalTableColumnFieldKindPublicLabel(colTemplateKind)
-  } else {
+  if (colTemplateKind === 'text') {
     clearHeaderIfAutoFieldKindLabel(columnHeadersPatch, colIdx)
   }
   const columnFieldsOut =
@@ -1156,9 +1154,7 @@ export function horizontalTableUpdateBodyCellColumnField(
 
   const columnHeadersPatch = [...n.columnHeaders]
   while (columnHeadersPatch.length < colCount) columnHeadersPatch.push('')
-  if (repaired.kind !== 'text') {
-    columnHeadersPatch[colIdx] = horizontalTableColumnFieldKindPublicLabel(repaired.kind)
-  } else {
+  if (repaired.kind === 'text') {
     clearHeaderIfAutoFieldKindLabel(columnHeadersPatch, colIdx)
   }
 

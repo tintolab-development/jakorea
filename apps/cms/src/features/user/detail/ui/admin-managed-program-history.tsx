@@ -86,6 +86,8 @@ function targetLevelLabel(p: Program): string {
     elementary: '초등학생',
     middle: '중학생',
     high: '고등학생',
+    university: '대학생',
+    adult: '성인',
   }
   if (!p.targetLevel) return '-'
   return map[p.targetLevel] ?? '-'

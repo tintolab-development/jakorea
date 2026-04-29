@@ -61,7 +61,7 @@ const programDetailEditSchemaBase = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   category: z.enum(['school', 'individual']),
-  targetLevel: z.enum(['elementary', 'middle', 'high']).optional(),
+  targetLevel: z.enum(['elementary', 'middle', 'high', 'university', 'adult']).optional(),
   district: z.string().optional(),
   type: z.enum(['online', 'offline', 'hybrid']),
   lifecycleStatus: programLifecycleStatusEnum.optional(),

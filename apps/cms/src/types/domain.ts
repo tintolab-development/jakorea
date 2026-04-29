@@ -52,7 +52,7 @@ export type ProgramCategory = 'school' | 'individual'
 export type IPSClassification = 'Prepare' | 'Succeed' | 'Inspire'
 
 // 대상 구분
-export type TargetLevel = 'elementary' | 'middle' | 'high'
+export type TargetLevel = 'elementary' | 'middle' | 'high' | 'university' | 'adult'
 
 // 기관 구분
 export type InstitutionType = 'inside_school' | 'outside_school'
@@ -117,7 +117,7 @@ export interface Program {
   schoolId?: UUID // 학교명 (기관) - Application을 통해 연결
   district?: string // 시군구 - School.region에서 추출
   ips?: IPSClassification // IPS 분류 (Prepare/Succeed/Inspire)
-  targetLevel?: TargetLevel // 대상 구분 (초/중/고)
+  targetLevel?: TargetLevel // 대상 구분 (초/중/고/대학생/성인)
   institutionType?: InstitutionType // 기관 구분 (학교 안/밖)
   // 프로그램 설정 정보
   ipOwned?: string // IP Owned (기본값: "JA")

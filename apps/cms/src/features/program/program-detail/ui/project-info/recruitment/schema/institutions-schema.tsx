@@ -1,6 +1,6 @@
 import { Controller } from 'react-hook-form'
 import type { UseFormReturn } from 'react-hook-form'
-import type { Program, ProgramLifecycleStatus } from '@/types/domain'
+import type { Program, ProgramLifecycleStatus, TargetLevel } from '@/types/domain'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import { AppInput } from '@/shared/ui/app-input'
@@ -94,9 +94,7 @@ export function createInstitutionsSchema({
                     <AppSelect
                       value={field.value ?? undefined}
                       options={TARGET_LEVEL_OPTIONS}
-                      onChange={v =>
-                        field.onChange((v as 'elementary' | 'middle' | 'high') || undefined)
-                      }
+                      onChange={v => field.onChange((v as TargetLevel) || undefined)}
                       placeholder="대상"
                       className="program-detail-info-tab__target-select"
                     />
