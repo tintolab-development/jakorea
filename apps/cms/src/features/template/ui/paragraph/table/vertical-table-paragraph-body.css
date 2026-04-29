@@ -142,6 +142,15 @@
   text-align: left;
 }
 
+/* 파일첨부형 — 가이드 문구 여러 줄 대비 */
+.form-editor-vertical-table__td--file-upload {
+  align-items: flex-start;
+}
+
+.form-editor-vertical-table__td--file-upload .paragraph-file-upload {
+  width: 100%;
+}
+
 /* 테이블 외곽선과 겹쳐 이중으로 보이지 않게 */
 .form-editor-vertical-table__row:last-child .form-editor-vertical-table__th,
 .form-editor-vertical-table__row:last-child .form-editor-vertical-table__td {
@@ -167,6 +176,16 @@
 .form-editor-vertical-table__cell-input-shell--body {
   justify-content: flex-start;
   text-align: left;
+}
+
+/* 단일·다중 선택: td 전체 높이까지 셸이 닿아 빈 영역 클릭 시에도 행 선택 가능 */
+.form-editor-vertical-table__td > .form-editor-vertical-table__cell-input-shell--body-choice {
+  align-self: stretch;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
 }
 
 .form-editor-vertical-table__cell-input-shell--header .ant-input {
@@ -287,10 +306,25 @@
 
 .form-editor-vertical-table__bottom {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .form-editor-vertical-table__bottom-input {
   width: 100%;
+}
+
+/* 하단 설명 — 동의 여부 라디오 (203×40, 두 옵션 사이 16px) */
+.form-editor-table-bottom-consent.app-radio-group {
+  box-sizing: border-box;
+  width: 203px;
+  min-width: 203px;
+  height: 40px;
+  min-height: 40px;
+  flex-wrap: nowrap !important;
+  gap: 16px !important;
+  align-items: center;
 }
 
 /* 날짜/시간형 — 피커 박스(가로형 필드형과 동일 톤, 세로형 전용 너비) */
@@ -394,9 +428,10 @@
 }
 
 .form-editor-vertical-table__dt-picker--full {
+  /* 1단(t가 매우 넓을 때) rc-picker flex가 input을 0으로 줄이는 경우 클릭이 먹지 않는 현상 방지 */
   width: 100% !important;
   max-width: 100% !important;
-  min-width: 0 !important;
+  min-width: min(280px, 100%) !important;
   flex: 1 1 auto;
 }
 

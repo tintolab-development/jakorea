@@ -26,6 +26,8 @@ export interface ContentModalProps {
   open: boolean
   onCancel: () => void
   title: string
+  /** 헤더 타이틀 영역 커스텀 — `TealHeaderModal` `titleContent`에 전달 */
+  titleContent?: ReactNode
   /** 헤더 타이틀 앞 접두사 (예: 아이콘) */
   titlePrefix?: ReactNode
   children: ReactNode
@@ -56,6 +58,7 @@ export function ContentModal({
   open,
   onCancel,
   title,
+  titleContent,
   titlePrefix,
   children,
   footer,
@@ -88,6 +91,7 @@ export function ContentModal({
       open={open}
       onCancel={onCancel}
       title={title}
+      titleContent={titleContent}
       titlePrefix={titlePrefix}
       size={size}
       width={width}

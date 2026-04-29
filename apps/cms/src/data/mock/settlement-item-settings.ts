@@ -27,6 +27,11 @@ export interface SettlementItemSettingRow {
   title: string
   description: string
   iconKey: SettlementItemSettingIconKey
+  /**
+   * 임시: 헤더·카드에 Tossface(`.tossface`)로 표시할 단일 문자.
+   * 미설정이면 `iconKey` SVG 아이콘 사용.
+   */
+  emojiOverride?: string | null
 }
 
 export interface SettlementItemSettingSection {

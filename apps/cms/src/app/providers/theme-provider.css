@@ -6,6 +6,8 @@
 
 /* Outfit 폰트 로드 */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+/* 토스페이스 — 공식 배포 CSS (unicode-range 분할 woff2) https://github.com/toss/tossface */
+@import url('https://cdn.jsdelivr.net/gh/toss/tossface/dist/tossface.css');
 /* Pretendard 폰트 로드 */
 @font-face {
   font-family: 'Pretendard';
@@ -13,6 +15,11 @@
   font-weight: 100 200 300 400 500 600 700 800 900;
   font-style: normal;
   font-display: swap;
+}
+
+/* Tossface 글리프는 위 tossface.css @font-face 참고. README와 동일한 유틸 클래스명 */
+.tossface {
+  font-family: Tossface, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
 }
 
 /* Source Han Serif K — `src/assets/fonts` 로컬 OTF (수료증 타이틀·기관명 등) */

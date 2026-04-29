@@ -62,18 +62,19 @@ export function FormEditorOptionListEditor({
                 placeholder="옵션"
               />
             </div>
-            <button
-              type="button"
-              className="form-editor-horizontal-table-body-fields__cell-clear"
-              disabled={!canRemoveRow}
-              aria-label={`${oi + 1}번 항목 삭제`}
-              onClick={e => {
-                e.stopPropagation()
-                remove(oi)
-              }}
-            >
-              <FormEditorHorizontalTableHeaderDeleteIcon />
-            </button>
+            {canRemoveRow ? (
+              <button
+                type="button"
+                className="form-editor-horizontal-table-body-fields__cell-clear"
+                aria-label={`${oi + 1}번 항목 삭제`}
+                onClick={e => {
+                  e.stopPropagation()
+                  remove(oi)
+                }}
+              >
+                <FormEditorHorizontalTableHeaderDeleteIcon />
+              </button>
+            ) : null}
           </div>
         </li>
       ))}

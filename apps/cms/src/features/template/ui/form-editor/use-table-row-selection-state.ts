@@ -87,10 +87,15 @@ export function useTableRowSelectionState({
   const focusHorizontalTableBodyRow = useCallback(
     (nextRowIndex: number) => {
       if (activeParagraphId == null) return
-      setHorizontalTableRowSelectionsByParagraphId(prev => ({
-        ...prev,
-        [activeParagraphId]: { area: 'body', row: nextRowIndex },
-      }))
+      setHorizontalTableRowSelectionsByParagraphId(prev => {
+        const prevSel = prev[activeParagraphId]
+        const col =
+          prevSel?.area === 'body' && typeof prevSel.col === 'number' ? prevSel.col : 0
+        return {
+          ...prev,
+          [activeParagraphId]: { area: 'body', row: nextRowIndex, col },
+        }
+      })
     },
     [activeParagraphId]
   )

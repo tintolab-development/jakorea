@@ -167,6 +167,8 @@ export const TARGET_LEVEL_LABEL: Record<string, string> = {
   elementary: '초등학교',
   middle: '중학교',
   high: '고등학교',
+  university: '대학(원)생',
+  adult: '성인',
 }
 
 export const LIFECYCLE_OPTIONS = PROGRAM_LIFECYCLE_STATUS_SELECT_ORDER.map(status => ({

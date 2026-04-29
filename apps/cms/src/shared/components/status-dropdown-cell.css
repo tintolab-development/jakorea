@@ -18,6 +18,16 @@
   vertical-align: middle;
 }
 
+/*
+ * cms-data-table 본문 td는 `padding: 10px 16px !important`(shared/cms-data-table.css)로
+ * 위 셀의 상하 0을 덮어씀 → tag-160 등 트리거(8px + 배지 ~33px + 8px) + 상하 20px 가 54px 행을 넘김.
+ * 상태 드롭다운 열만 상하 패딩을 제거해 행 높이 54px 스펙과 맞춤(좌우는 기존·열 타입별 규칙 유지).
+ */
+.cms-data-table .ant-table-tbody > tr > td.status-dropdown-cell__cell-status {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 .status-dropdown-cell__status-empty {
   color: var(--color-text-tertiary, #8c8c8c);
 }
@@ -29,6 +39,8 @@
   cursor: pointer;
   display: inline-flex;
   vertical-align: middle;
+  /* 로딩 시 "…" 를 absolute 로 두기 위해 — flex 자식이 되면 배지+말줄임 묶음이 재중앙 정렬되며 배지가 흔들림 */
+  position: relative;
   width: 136px;
   min-width: 136px;
   max-width: 136px;
@@ -584,12 +596,22 @@
 }
 
 .status-dropdown-cell__status-updating {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  inset-inline-end: 8px;
   flex-shrink: 0;
   color: var(--color-text-tertiary, #8c8c8c);
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   line-height: 150%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.status-dropdown-cell__status-trigger--tag-160 .status-dropdown-cell__status-updating {
+  inset-inline-end: 13px;
 }
 
 /* 권한·역할 등 커스텀 태그(span) — default(136px 래퍼)만. tag132·tag160·paymentOrderLine는 전용 블록 */

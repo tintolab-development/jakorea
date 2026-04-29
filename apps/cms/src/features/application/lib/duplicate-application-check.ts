@@ -64,7 +64,13 @@ function checkCase2(
     const existingApp = schoolPrograms[0]
     const programStartDate = dayjs(program.startDate).format('MM.DD')
     const targetLevel = program.targetLevel
-      ? { elementary: '초등학교', middle: '중학교', high: '고등학교' }[program.targetLevel] || ''
+      ? {
+          elementary: '초등학교',
+          middle: '중학교',
+          high: '고등학교',
+          university: '대학생',
+          adult: '성인',
+        }[program.targetLevel] || ''
       : ''
 
     return {

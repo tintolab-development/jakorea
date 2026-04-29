@@ -14,6 +14,8 @@ const TARGET_LEVEL_LABELS: Record<string, string> = {
   elementary: '초',
   middle: '중',
   high: '고',
+  university: '대학생',
+  adult: '성인',
 }
 
 const INSTITUTION_TYPE_LABELS: Record<string, string> = {

@@ -34,7 +34,7 @@ export const programSchema = z.object({
   schoolId: z.string().optional(),
   district: z.string().optional(),
   ips: z.enum(['Prepare', 'Succeed', 'Inspire']).optional(),
-  targetLevel: z.enum(['elementary', 'middle', 'high']).optional(),
+  targetLevel: z.enum(['elementary', 'middle', 'high', 'university', 'adult']).optional(),
   institutionType: z.enum(['inside_school', 'outside_school']).optional(),
   // 프로그램 설정 정보
   ipOwned: z.string().optional(),

@@ -19,22 +19,23 @@ import type {
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
+  createHorizontalTableParagraph,
+  createVerticalTableParagraph,
+  DATE_TIME_FIELD_MODE_OPTIONS,
+  effectiveVerticalStageKinds,
+  normalizeVerticalChoiceOptions,
   normalizeVerticalTableParagraph,
   verticalTableParagraphOutlineLabel,
+  verticalTableParagraphWithChoiceOptions,
   FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID,
   isAgreementLockedSystemParagraph,
   writingOutlineLabel,
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorHorizontalTableBodyFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-body-fields'
 import { FormEditorHorizontalTableHeaderFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-header-fields'
+import { FormEditorOptionListEditor } from '@/features/template/ui/form-editor/form-editor-option-list-editor'
 import { FormEditorVerticalTableRowFields } from '@/features/template/ui/form-editor/form-editor-vertical-table-row-fields'
 import './form-editor.css'
-
-const DATE_TIME_FIELD_MODE_OPTIONS: { value: DateTimeFieldMode; label: string }[] = [
-  { value: 'date', label: '날짜' },
-  { value: 'time', label: '시간' },
-  { value: 'date_time', label: '날짜+시간' },
-]
 
 const TITLE_NUMBERING_OPTIONS: { value: FormTitleNumberingStyle; label: string }[] = [
   { value: 'numeric', label: '1, 2, 3' },
@@ -43,6 +44,50 @@ const TITLE_NUMBERING_OPTIONS: { value: FormTitleNumberingStyle; label: string }
   { value: 'q123', label: 'Q1, Q2, Q3' },
   { value: 'none', label: '미선택' },
 ]
+
+const TABLE_KIND_OPTIONS = [{ value: 'table', label: '테이블' }] as const
+
+/** 테이블 대분류 우측 패널 — 소분류는 가로·세로 방향만 전환(세부 유형은 캔버스·다른 설정에서 유지) */
+type TableOrientationKind = 'horizontal' | 'vertical'
+const TABLE_ORIENTATION_OPTIONS: { value: TableOrientationKind; label: string }[] = [
+  { value: 'horizontal', label: '가로형' },
+  { value: 'vertical', label: '세로형' },
+]
+
+const GENERATED_TABLE_TITLES = new Set([
+  '테이블_가로형',
+  '테이블_가로형 (필드 형)',
+  verticalTableParagraphOutlineLabel('text'),
+  verticalTableParagraphOutlineLabel('subjective'),
+  verticalTableParagraphOutlineLabel('date_time'),
+  verticalTableParagraphOutlineLabel('single_choice'),
+  verticalTableParagraphOutlineLabel('multiple_choice'),
+  verticalTableParagraphOutlineLabel('file_attachment'),
+])
+
+function tableOrientationFromParagraph(p: WritingFormParagraph): TableOrientationKind | null {
+  if (p.kind !== 'single_item') return null
+  if (p.variant === 'horizontal_table') return 'horizontal'
+  if (p.variant === 'vertical_table') return 'vertical'
+  return null
+}
+
+function withPreservedTableCommonFields<T extends HorizontalTableParagraph | VerticalTableParagraph>(
+  next: T,
+  prev: HorizontalTableParagraph | VerticalTableParagraph
+): T {
+  const shouldUseNextTitle =
+    prev.paragraphTitle.trim() === '' || GENERATED_TABLE_TITLES.has(prev.paragraphTitle.trim())
+
+  return {
+    ...next,
+    requiredMark: prev.requiredMark,
+    paragraphTitle: shouldUseNextTitle ? next.paragraphTitle : prev.paragraphTitle,
+    paragraphDescription: prev.paragraphDescription,
+    participatesInTitleNumbering: prev.participatesInTitleNumbering,
+    answerRequired: prev.answerRequired,
+  }
+}
 
 function paragraphKindLabel(p: WritingFormParagraph): string {
   if (p.kind === 'description') return '설명글'
@@ -192,20 +237,63 @@ function FormEditorVerticalTableCustomFields({
   updateParagraph: FormEditorRightPanelProps['updateParagraph']
   onBodyRowDeleted?: (nextRowIndex: number) => void
 }) {
-  if (rowSelection == null || rowSelection.paragraphId !== paragraph.id) return null
+  const p = normalizeVerticalTableParagraph(paragraph)
+  const selectedRow =
+    rowSelection?.paragraphId === paragraph.id &&
+    rowSelection.row >= 0 &&
+    rowSelection.row < Math.max(1, p.rows.length)
+      ? p.rows[rowSelection.row]
+      : null
+  const selectedRowHasChoiceStage =
+    selectedRow != null
+      ? effectiveVerticalStageKinds(selectedRow, p.verticalTableFlavor).some(
+          k => k === 'single_choice' || k === 'multiple_choice'
+        )
+      : false
+  const choiceFlavor =
+    p.verticalTableFlavor === 'single_choice' ||
+    p.verticalTableFlavor === 'multiple_choice' ||
+    selectedRowHasChoiceStage
 
-  const rowIndex = rowSelection.row
-  const rowCount = Math.max(1, paragraph.rows.length)
-  if (rowIndex < 0 || rowIndex >= rowCount) return null
+  /** 파일첨부형: 우측 커스텀 필드 없음(th는 스키마 기본값·데이터만) */
+  const rowFields =
+    p.verticalTableFlavor !== 'file_attachment' &&
+    rowSelection != null &&
+    rowSelection.paragraphId === paragraph.id &&
+    rowSelection.row >= 0 &&
+    rowSelection.row < Math.max(1, p.rows.length) ? (
+      <FormEditorVerticalTableRowFields
+        paragraph={paragraph}
+        paragraphId={paragraph.id}
+        rowIndex={rowSelection.row}
+        updateParagraph={updateParagraph}
+        onBodyRowDeleted={onBodyRowDeleted}
+      />
+    ) : null
+
+  const choiceOptionsEditor = choiceFlavor ? (
+    <div className="form-editor-right-panel__field">
+      <FormEditorOptionListEditor
+        values={normalizeVerticalChoiceOptions(p.verticalChoiceOptions)}
+        onChange={options =>
+          updateParagraph(paragraph.id, cur => {
+            if (cur.kind !== 'single_item' || cur.variant !== 'vertical_table') return cur
+            return verticalTableParagraphWithChoiceOptions(cur as VerticalTableParagraph, options)
+          })
+        }
+        addLabel="+ 항목 추가"
+        addButtonIcon={false}
+      />
+    </div>
+  ) : null
+
+  if (!choiceFlavor && rowFields == null) return null
 
   return (
-    <FormEditorVerticalTableRowFields
-      paragraph={paragraph}
-      paragraphId={paragraph.id}
-      rowIndex={rowIndex}
-      updateParagraph={updateParagraph}
-      onBodyRowDeleted={onBodyRowDeleted}
-    />
+    <>
+      {choiceOptionsEditor}
+      {rowFields}
+    </>
   )
 }
 
@@ -246,6 +334,7 @@ export function FormEditorRightPanel({
     active && active.kind === 'single_item' && active.variant === 'scale_type'
       ? (active as ScaleTypeParagraph)
       : null
+  const activeTableOrientation = active ? tableOrientationFromParagraph(active) : null
 
   const shortEssayItems =
     activeShortEssay?.items && activeShortEssay.items.length > 0
@@ -273,6 +362,21 @@ export function FormEditorRightPanel({
         ? true
         : (activeShortEssay.showItemTitle ?? false)
 
+  const handleTableOrientationChange = (next: TableOrientationKind) => {
+    if (!active || activeTableOrientation == null || activeTableOrientation === next) return
+    updateParagraph(active.id, cur => {
+      if (cur.kind !== 'single_item') return cur
+      if (cur.variant !== 'horizontal_table' && cur.variant !== 'vertical_table') return cur
+      const prev = cur as HorizontalTableParagraph | VerticalTableParagraph
+      if (next === 'horizontal') {
+        if (cur.variant === 'horizontal_table') return cur
+        return withPreservedTableCommonFields(createHorizontalTableParagraph(cur.id), prev)
+      }
+      if (cur.variant === 'vertical_table') return cur
+      return withPreservedTableCommonFields(createVerticalTableParagraph(cur.id, 'text'), prev)
+    })
+  }
+
   return (
     <div className="form-editor-right-panel">
       {showTitleNumbering ? (
@@ -290,17 +394,21 @@ export function FormEditorRightPanel({
               <div className="form-editor-right-panel__kind-row">
                 {active.kind === 'single_item' &&
                 (active.variant === 'horizontal_table' || active.variant === 'vertical_table') ? (
-                  <CmsSelect
-                    width="100%"
-                    value={paragraphVariantLabel(active)}
-                    options={[
-                      {
-                        value: paragraphVariantLabel(active),
-                        label: paragraphVariantLabel(active),
-                      },
-                    ]}
-                    disabled
-                  />
+                  <>
+                    <CmsSelect
+                      width={165}
+                      value="table"
+                      options={[...TABLE_KIND_OPTIONS]}
+                      withAllOption={false}
+                    />
+                    <CmsSelect
+                      width={165}
+                      value={activeTableOrientation ?? 'horizontal'}
+                      options={TABLE_ORIENTATION_OPTIONS}
+                      onChange={v => handleTableOrientationChange(v as TableOrientationKind)}
+                      withAllOption={false}
+                    />
+                  </>
                 ) : (
                   <>
                     <CmsSelect
@@ -498,7 +606,7 @@ export function FormEditorRightPanel({
                 <CmsSelect
                   width="100%"
                   value={activeDateTime.fieldMode ?? 'date'}
-                  options={DATE_TIME_FIELD_MODE_OPTIONS}
+                  options={[...DATE_TIME_FIELD_MODE_OPTIONS]}
                   onChange={v =>
                     updateParagraph(activeDateTime.id, cur => {
                       if (cur.kind !== 'single_item' || cur.variant !== 'date_time') return cur

@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { message } from 'antd'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useModalState } from '@/shared/hooks/use-modal-state'
@@ -38,7 +38,7 @@ import {
 } from '@/shared/constants'
 import { useUserStore, selectSelectedUser } from '@/features/user/shared/model/user-store'
 import type { User } from '@/types/user'
-import type { CreateUserRequest } from '@/entities/user/api/user-service'
+import type { CreateUserRequest, GetUsersPageResult } from '@/entities/user/api/user-service'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -664,18 +664,34 @@ export function UserListPage() {
     async (ctx: { userId: string; nextPermission: AdminPermissionTagVariant }) => {
       setAdminPermissionChangingUserId(ctx.userId)
       try {
-        await patchUserBasicInfo(ctx.userId, {
+        const updated = await patchUserBasicInfo(ctx.userId, {
           listMetrics: { adminPermissionVariant: ctx.nextPermission },
         })
+        queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
+          { queryKey: ['users', 'list'] },
+          old => {
+            if (!old?.pages) return old
+            return {
+              ...old,
+              pages: old.pages.map(page => ({
+                ...page,
+                users: page.users.map(u => (u.id === updated.id ? updated : u)),
+              })),
+            }
+          }
+        )
+        if (drawerUser?.id === ctx.userId) {
+          setDrawerUser(updated)
+        }
+        setDetailBridgeUser(prev => (prev?.id === ctx.userId ? updated : prev))
         showSuccessMessage('관리자 권한 유형이 변경되었습니다.')
-        invalidateList()
       } catch (error) {
         handleError(error, { defaultMessage: '관리자 권한 유형 변경에 실패했습니다.' })
       } finally {
         setAdminPermissionChangingUserId(null)
       }
     },
-    [patchUserBasicInfo, invalidateList]
+    [patchUserBasicInfo, queryClient, drawerUser?.id, setDrawerUser, setDetailBridgeUser]
   )
 
   return (

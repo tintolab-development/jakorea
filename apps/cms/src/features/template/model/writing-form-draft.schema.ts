@@ -165,6 +165,17 @@ export type DropdownParagraph = WritingFormParagraphBase & {
 /** 단일항목 날짜/시간형 — 우측 패널 유형 (기본: 날짜) */
 export type DateTimeFieldMode = 'date' | 'time' | 'date_time'
 
+/** 세로형(날짜/시간형)·커스텀 필드·단독 date_time 패널과 동일 라벨 */
+export const DATE_TIME_FIELD_MODE_OPTIONS: readonly { value: DateTimeFieldMode; label: string }[] =
+  [
+    { value: 'date', label: '날짜' },
+    { value: 'time', label: '시간' },
+    { value: 'date_time', label: '날짜+시간' },
+  ] as const
+
+/** 합성(날짜+시간) 시간 인풋 기본 플레이스홀더 — 본문·패널에서 공통 */
+export const VERTICAL_DT_COMPOSITE_TIME_PLACEHOLDER = '시간을 선택해 주세요'
+
 export type DateTimeParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
   variant: 'date_time'
@@ -225,13 +236,17 @@ export type FileAttachmentParagraph = WritingFormParagraphBase & {
 }
 
 /** 캔버스에서 선택된 테이블 행(헤더 행 vs 데이터 행) — 에디터에서 단락 id별로 보관해 위젯마다 분리 */
-export type HorizontalTableRowSelection = { area: 'header' } | { area: 'body'; row: number }
+export type HorizontalTableRowSelection =
+  | { area: 'header' }
+  /** `col`: 본문 칸 단위 선택(미지정·레거시는 0으로 취급) */
+  | { area: 'body'; row: number; col?: number }
 
 /** 텍스트형: 모든 셀 `Input` / 필드형: 열마다 입력 유형 + 필드 셀 값 */
 export type HorizontalTableFlavor = 'text' | 'field'
 
 /** 열(칸) 단위 필드 정의 — 헤더는 별도 `columnHeaders` 텍스트 */
 export type HorizontalTableColumnField =
+  | { kind: 'text'; placeholder: string }
   | { kind: 'subjective'; placeholder: string }
   | { kind: 'dropdown'; placeholder: string; options: string[] }
   | { kind: 'dateTime'; dateTimeMode: 'date' | 'time' | 'dateTime'; placeholder: string }
@@ -240,11 +255,49 @@ export type HorizontalTableColumnField =
 
 export type HorizontalTableFieldColumnKind = HorizontalTableColumnField['kind']
 
+/** 우측 패널·테이블 th에 보이는 필드 유형명(항목명) — 비텍스트 열 헤더와 동일 */
+export function horizontalTableColumnFieldKindPublicLabel(
+  kind: HorizontalTableFieldColumnKind
+): string {
+  switch (kind) {
+    case 'text':
+      return '텍스트형'
+    case 'subjective':
+      return '주관식형'
+    case 'dropdown':
+      return '드롭다운형'
+    case 'dateTime':
+      return '날짜형'
+    case 'single':
+      return '단일 선택형'
+    case 'multiple':
+      return '다중 선택형'
+    default: {
+      const _x: never = kind
+      return _x
+    }
+  }
+}
+
+/** th에 넣은 필드 유형 안내 문구와 동일한 값이면, 유형을 텍스트형으로 바꿀 때 비움(사용자 입력 라벨은 유지) */
+const HORIZONTAL_TABLE_KIND_HEADER_LABELS = new Set(
+  (['text', 'subjective', 'dropdown', 'dateTime', 'single', 'multiple'] as const).map(k =>
+    horizontalTableColumnFieldKindPublicLabel(k)
+  )
+)
+
+function clearHeaderIfAutoFieldKindLabel(headers: string[], colIdx: number) {
+  const t = (headers[colIdx] ?? '').trim()
+  if (HORIZONTAL_TABLE_KIND_HEADER_LABELS.has(t)) {
+    headers[colIdx] = ''
+  }
+}
+
 export type HorizontalTableFieldCellValue =
-  | { kind: 'subjective' | 'dropdown' | 'dateTime' | 'single'; value: string }
+  | { kind: 'text' | 'subjective' | 'dropdown' | 'dateTime' | 'single'; value: string }
   | { kind: 'multiple'; values: string[] }
 
-export const HORIZONTAL_TABLE_MIN_COLUMN_COUNT = 2
+export const HORIZONTAL_TABLE_MIN_COLUMN_COUNT = 1
 
 /** 주관식 등 입력창 안내(플레이스홀더) 기본 문구 */
 export const HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER = '내용을 입력해 주세요'
@@ -256,6 +309,8 @@ export function defaultFieldForColumnKind(
   kind: HorizontalTableFieldColumnKind
 ): HorizontalTableColumnField {
   switch (kind) {
+    case 'text':
+      return { kind: 'text', placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER }
     case 'subjective':
       return { kind: 'subjective', placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER }
     case 'dropdown':
@@ -273,9 +328,9 @@ export function defaultFieldForColumnKind(
   }
 }
 
-/** 필드형 열·빈 열 슬롯 기본: 주관식형 */
+/** 필드형 열·빈 열 슬롯 기본: 텍스트형 */
 function defaultColumnFieldForNewColumn(): HorizontalTableColumnField {
-  return defaultFieldForColumnKind('subjective')
+  return defaultFieldForColumnKind('text')
 }
 
 export function createEmptyFieldCellValue(
@@ -309,10 +364,25 @@ export function rehomeFieldCellValue(
     if (value.value && nextField.options.includes(value.value)) return value
     return { kind: 'dropdown', value: '' }
   }
+  /** 텍스트형 ↔ 주관식형 — 둘 다 단일 문자열 값 */
+  if (
+    (nextField.kind === 'text' && (value.kind === 'text' || value.kind === 'subjective')) ||
+    (nextField.kind === 'subjective' && value.kind === 'text')
+  ) {
+    const s = value.value
+    return nextField.kind === 'text' ? { kind: 'text', value: s } : { kind: 'subjective', value: s }
+  }
   if (value.kind === nextField.kind) {
     return value
   }
   return { kind: nextField.kind, value: '' }
+}
+
+/** 테이블 하단 설명 영역 — 동의 여부(미리보기·저장) */
+export type TableBottomConsent = 'agree' | 'disagree'
+
+export function normalizeTableBottomConsent(raw: unknown): TableBottomConsent {
+  return raw === 'disagree' ? 'disagree' : 'agree'
 }
 
 /** 작성 양식 — 테이블 가로형(가변 행·열, 각 dataRows[i] 길이는 columnHeaders와 동일) */
@@ -323,26 +393,70 @@ export interface HorizontalTableParagraph extends WritingFormParagraphBase {
   tableFlavor: HorizontalTableFlavor
   columnHeaders: string[]
   dataRows: string[][]
-  /** `tableFlavor === 'field'`일 때만 — 열과 동일 길이 */
+  /** `tableFlavor === 'field'`일 때만 — 열과 동일 길이(새 행·열 기본·열 전체 변경 시 템플릿) */
   columnFields: HorizontalTableColumnField[]
+  /**
+   * 필드형일 때 행·셀마다 다른 열 정의가 필요할 때만 사용.
+   * 생략이면 모든 행에서 `columnFields[col]`을 그대로 사용한다.
+   */
+  cellColumnFields?: HorizontalTableColumnField[][]
   fieldDataRows: HorizontalTableFieldCellValue[][]
   bottomText: string
   showBottomText: boolean
+  /** 하단에 동의(라디오) 영역 노출 */
+  showBottomConsent: boolean
+  /** `showBottomConsent`일 때 동의 라디오 값 */
+  bottomConsent?: TableBottomConsent
   answerRequired: boolean
 }
 
+export type VerticalTableStageKind =
+  | 'text'
+  | 'subjective'
+  | 'date_time'
+  | 'single_choice'
+  | 'multiple_choice'
+
 /** 세로형 테이블 한 행: 1단(항목·입력 1쌍) 또는 2단(같은 행에 두 쌍, 폭 분배).
- * `placeholderHints`: 주관식·날짜/시간형(td) 플레이스홀더 「입력창 안내」— 스테이지별 1개·2개 튜플. 생략 시 본문에서 기본 문구 사용.
- * `dateTimeStage1Time`: 날짜/시간형·2단일 때 두 번째 스테이지 td의 시간 픽커 값(`cells[1]`은 해당 스테이지 날짜). */
+ * `stageKinds`: 단락 전체 flavor와 다르게 특정 스테이지(항목)만 다른 유형일 때 사용.
+ * `placeholderHints`: 주관식·날짜/시간형 「입력창 안내」— 스테이지별 문자열 튜플(날짜/날짜+시합성의 날짜 인풋에 사용 등).
+ * `dateTimeStageModes`: 날짜/시간형 — 스테이지별 「유형」(`length === stageCount`). 생략 시 `effectiveVerticalRowDateTimeModes`가 레거시·기본값으로 채움.
+ * `dateTimeCompositeTimeHints`: 날짜/시간형 — 스테이지가 「날짜+시간」일 때 시간 픽커 안내 문자열 튜플(인덱스=스테이지).
+ * `dateTimeStage0AuxTime`: 합성이 **첫 스테이지**에 놓일 때 시간(HH:mm) 값.
+ * `dateTimeStage1Time`: 합성이 **둘째 스테이지**일 때 시간(HH:mm)·레거시.
+ * 레거시 `dateTimeSingleStageMode`는 스테이지 1행에서 `dateTimeStageModes`로 승격.
+ * `choiceMultipleSelections`: 다중선택형(`multiple_choice`) — 스테이지별 선택값 배열(`length === stageCount`). */
 export type VerticalTableRow =
-  | { stageCount: 1; headers: [string]; cells: [string]; placeholderHints?: [string] }
+  | {
+      stageCount: 1
+      headers: [string]
+      cells: [string]
+      stageKinds?: [VerticalTableStageKind]
+      placeholderHints?: [string]
+      /** 레거시 — `normalizeVerticalTableRow`가 `dateTimeStageModes:[x]` 로 승격 */
+      dateTimeSingleStageMode?: DateTimeFieldMode
+      /** 우선 사용; 없으면 `dateTimeSingleStageMode` 또는 기본 */
+      dateTimeStageModes?: [DateTimeFieldMode]
+      /** 합성(날짜+시간) 시 시간 인풋 안내(보통 `[t0]` 또는 생략) */
+      dateTimeCompositeTimeHints?: [string]
+      dateTimeStage0AuxTime?: string
+      dateTimeStage1Time?: string
+      /** 다중선택형 — 스테이지 1개일 때 길이 1 */
+      choiceMultipleSelections?: [string[]]
+    }
   | {
       stageCount: 2
       headers: [string, string]
       cells: [string, string]
+      stageKinds?: [VerticalTableStageKind, VerticalTableStageKind]
       placeholderHints?: [string, string]
-      /** 날짜/시간형: 2단 우측 스테이지의 시간(HH:mm) */
+      dateTimeStageModes?: [DateTimeFieldMode, DateTimeFieldMode]
+      dateTimeCompositeTimeHints?: [string, string]
+      dateTimeStage0AuxTime?: string
+      /** 첫 번째 스테이지 유형이 합성이 아니고 둘째가 합성일 때 시간(HH:mm) — 과거 레거시 */
       dateTimeStage1Time?: string
+      /** 다중선택형 — 스테이지 2개 */
+      choiceMultipleSelections?: [string[], string[]]
     }
 
 /** 빈 문자열 가드 없이 우선 사용 — 주관식 td 기본 플레이스홀더 */
@@ -353,18 +467,34 @@ export const DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER = '내용을 입력해
  * - `text`: 테이블_세로형(텍스트형)
  * - `subjective`: 테이블_세로형(주관식형) — 행별 주관식(자유 서술) 입력
  * - `date_time`: 테이블_세로형(날짜/시간형)
+ * - `single_choice` / `multiple_choice`: 테이블_세로형(단일·다중 선택형) — `verticalChoiceOptions` 공통 선택지
+ * - `file_attachment`: 테이블_세로형(파일첨부형) — 고정 1행, 행·열 추가 없음
  */
-export type VerticalTableFlavor = 'text' | 'subjective' | 'date_time'
+export type VerticalTableFlavor = VerticalTableStageKind | 'file_attachment'
 
-/** 작성 양식 — 테이블 세로형 (`verticalTableFlavor`로 텍스트형 / 주관식형 / 날짜·시간형 구분) */
+/** 파일첨부형 세로 테이블 좌측 th 기본 라벨 */
+export const DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL = '파일첨부형'
+
+/** 작성 양식 — 테이블 세로형 (`verticalTableFlavor`로 세부 유형 구분) */
 export interface VerticalTableParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'vertical_table'
   /** 생략·불명시는 `text`(기존 JSON 호환) */
   verticalTableFlavor: VerticalTableFlavor
+  /**
+   * `verticalTableFlavor === 'file_attachment'`일 때만 사용 — 좌측 th 표시 문구.
+   * 생략·빈 문자열이면 `DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL`.
+   */
+  verticalFileAttachmentHeaderLabel?: string
+  /** 단일·다중 선택형 공통 선택지(생략 시 `['A','B','C']`) */
+  verticalChoiceOptions?: string[]
   rows: VerticalTableRow[]
   bottomText: string
   showBottomText: boolean
+  /** 하단에 동의(라디오) 영역 노출 */
+  showBottomConsent: boolean
+  /** `showBottomConsent`일 때 동의 라디오 값 */
+  bottomConsent?: TableBottomConsent
   answerRequired: boolean
 }
 
@@ -373,6 +503,14 @@ function repairColumnField(
   _idx: number
 ): HorizontalTableColumnField {
   if (f == null) return defaultColumnFieldForNewColumn()
+  if (f.kind === 'text') {
+    return {
+      kind: 'text',
+      placeholder: f.placeholder?.trim()
+        ? f.placeholder
+        : HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
+    }
+  }
   if (f.kind === 'dropdown' && (!f.options || f.options.length === 0)) {
     return { kind: 'dropdown', placeholder: f.placeholder, options: [...DEFAULT_DROPDOWN_OPTIONS] }
   }
@@ -419,6 +557,34 @@ function syncFieldDataRowsToTextRows(
   )
 }
 
+function getHorizontalTableRowFieldSlice(
+  p: HorizontalTableParagraph,
+  rowIdx: number,
+  colCount: number
+): HorizontalTableColumnField[] {
+  const fieldCols = ensureColumnFieldSlice(p, colCount)
+  const matrix = p.cellColumnFields
+  if (matrix != null && rowIdx >= 0 && rowIdx < matrix.length) {
+    const row = matrix[rowIdx]
+    if (row == null) {
+      return fieldCols
+    }
+    return Array.from({ length: colCount }, (_, c) => repairColumnField(row[c] ?? fieldCols[c], c))
+  }
+  return fieldCols
+}
+
+/** 필드형 가로표: (rowIdx, colIdx) 칸에 실제 적용되는 열 필드 정의 */
+export function getEffectiveHorizontalCellField(
+  p: HorizontalTableParagraph,
+  rowIdx: number,
+  colIdx: number
+): HorizontalTableColumnField {
+  const colCount = Math.max(1, p.columnHeaders.length)
+  const slice = getHorizontalTableRowFieldSlice(p, rowIdx, colCount)
+  return repairColumnField(slice[colIdx], colIdx)
+}
+
 /** 행 추가: 데이터 영역 **최하단**에 가로 한 줄(새 행)을 붙인다. */
 export function horizontalTableAddRow(p: HorizontalTableParagraph): HorizontalTableParagraph {
   const colCount = Math.max(1, p.columnHeaders.length)
@@ -430,18 +596,42 @@ export function horizontalTableAddRow(p: HorizontalTableParagraph): HorizontalTa
   const newTextRow = Array.from({ length: colCount }, () => '')
   const nextDataRows = [...normalizedRows, newTextRow]
   if (p.tableFlavor !== 'field') {
+    if (p.cellColumnFields != null && p.cellColumnFields.length > 0) {
+      const fieldCols =
+        (p.columnFields?.length ?? 0) > 0
+          ? ensureColumnFieldSlice(p, colCount)
+          : Array.from({ length: colCount }, () => defaultFieldForColumnKind('text'))
+      const newFieldRow = fieldCols.map(f => cloneColumnField(f))
+      return {
+        ...p,
+        dataRows: nextDataRows,
+        cellColumnFields: [
+          ...p.cellColumnFields.map(r => r.map(c => cloneColumnField(c))),
+          newFieldRow,
+        ],
+      }
+    }
     return { ...p, dataRows: nextDataRows }
   }
   const fieldCols = ensureColumnFieldSlice(p, colCount)
   const out: HorizontalTableFieldCellValue[][] = []
   for (let ri = 0; ri < normalizedRows.length; ri++) {
-    out.push(padFieldRow(p.fieldDataRows?.[ri], colCount, fieldCols))
+    const rowFields = getHorizontalTableRowFieldSlice(p, ri, colCount)
+    out.push(padFieldRow(p.fieldDataRows?.[ri], colCount, rowFields))
   }
   out.push(fieldCols.map(f => createEmptyFieldCellValue(f)))
+  const nextMatrix =
+    p.cellColumnFields != null
+      ? [
+          ...p.cellColumnFields.map(row => row.map(c => cloneColumnField(c))),
+          fieldCols.map(f => cloneColumnField(f)),
+        ]
+      : undefined
   return {
     ...p,
     dataRows: nextDataRows,
     columnFields: fieldCols,
+    cellColumnFields: nextMatrix,
     fieldDataRows: out,
   }
 }
@@ -454,7 +644,7 @@ export function horizontalTableAddColumn(p: HorizontalTableParagraph): Horizonta
     while (row.length < colCount) row.push('')
     return row.slice(0, colCount)
   })
-  const newHeaderSuffix = p.tableFlavor === 'field' ? '주관식형' : ''
+  const newHeaderSuffix = ''
   const nextHeaders = [...p.columnHeaders, newHeaderSuffix]
   const nextWidth = nextHeaders.length
   const nextTextRows =
@@ -462,20 +652,56 @@ export function horizontalTableAddColumn(p: HorizontalTableParagraph): Horizonta
       ? normalizedRows.map(r => [...r, ''])
       : [Array.from({ length: nextWidth }, () => '')]
   if (p.tableFlavor !== 'field') {
-    return { ...p, columnHeaders: nextHeaders, dataRows: nextTextRows }
+    const baseColCount = colCount
+    const newTextField = defaultFieldForColumnKind('text')
+    const prevCols =
+      (p.columnFields?.length ?? 0) > 0
+        ? ensureColumnFieldSlice(p, baseColCount)
+        : Array.from({ length: baseColCount }, () => defaultFieldForColumnKind('text'))
+    const nextColumnFields = [
+      ...prevCols.map((f, i) => repairColumnField(f, i)),
+      repairColumnField(newTextField, baseColCount),
+    ]
+    if (p.cellColumnFields != null && p.cellColumnFields.length > 0) {
+      const nextMatrix = p.cellColumnFields.map(row => [
+        ...row.map(c => cloneColumnField(c)),
+        cloneColumnField(newTextField),
+      ])
+      return {
+        ...p,
+        columnHeaders: nextHeaders,
+        dataRows: nextTextRows,
+        columnFields: nextColumnFields,
+        cellColumnFields: nextMatrix,
+      }
+    }
+    return {
+      ...p,
+      columnHeaders: nextHeaders,
+      dataRows: nextTextRows,
+      columnFields: nextColumnFields,
+    }
   }
-  const newField = defaultFieldForColumnKind('subjective')
+  const newField = defaultFieldForColumnKind('text')
   const fieldCols = [...ensureColumnFieldSlice(p, colCount), newField]
+  const oldSlices =
+    p.cellColumnFields != null ? p.cellColumnFields.map(r => r.map(cloneColumnField)) : null
   const nextFieldRows = nextTextRows.map((_, ri) => {
     const prevRow = p.fieldDataRows?.[ri]
-    const padded = padFieldRow(prevRow, colCount, fieldCols.slice(0, colCount))
+    const sliceForOld = oldSlices ? oldSlices[ri]! : ensureColumnFieldSlice(p, colCount)
+    const padded = padFieldRow(prevRow, colCount, sliceForOld)
     return [...padded, createEmptyFieldCellValue(newField)]
   })
+  const nextMatrix =
+    p.cellColumnFields != null
+      ? p.cellColumnFields.map(row => [...row.map(cloneColumnField), cloneColumnField(newField)])
+      : undefined
   return {
     ...p,
     columnHeaders: nextHeaders,
     dataRows: nextTextRows,
     columnFields: fieldCols,
+    cellColumnFields: nextMatrix,
     fieldDataRows: nextFieldRows,
   }
 }
@@ -519,6 +745,8 @@ export function createHorizontalTableParagraph(id: string): HorizontalTableParag
     fieldDataRows: [],
     bottomText: '',
     showBottomText: false,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
     answerRequired: true,
   }
 }
@@ -533,6 +761,7 @@ export function cloneHorizontalTableParagraph(
     columnHeaders: [...source.columnHeaders],
     dataRows: source.dataRows.map(r => [...r]),
     columnFields: (source.columnFields ?? []).map(cloneColumnField),
+    cellColumnFields: source.cellColumnFields?.map(r => r.map(cloneColumnField)),
     fieldDataRows: (source.fieldDataRows ?? []).map(r => r.map(cloneFieldCellValue)),
   }
 }
@@ -556,15 +785,25 @@ export function horizontalTableRemoveColumn(
           return row.filter((_, i) => i !== columnIndex)
         })
   if (p.tableFlavor !== 'field') {
-    return { ...p, columnHeaders: nextHeaders, dataRows: nextRows }
+    const nextColFields = (p.columnFields ?? []).filter((_, i) => i !== columnIndex)
+    const nextMatrix = p.cellColumnFields?.map(r => r.filter((_, i) => i !== columnIndex))
+    return {
+      ...p,
+      columnHeaders: nextHeaders,
+      dataRows: nextRows,
+      columnFields: nextColFields,
+      cellColumnFields: nextMatrix,
+    }
   }
   const nextFields = (p.columnFields ?? []).filter((_, i) => i !== columnIndex)
   const nextFieldRows = (p.fieldDataRows ?? []).map(r => r.filter((_, i) => i !== columnIndex))
+  const nextMatrix = p.cellColumnFields?.map(r => r.filter((_, i) => i !== columnIndex))
   return {
     ...p,
     columnHeaders: nextHeaders,
     dataRows: nextRows,
     columnFields: nextFields,
+    cellColumnFields: nextMatrix,
     fieldDataRows: nextFieldRows,
   }
 }
@@ -586,12 +825,14 @@ export function horizontalTableRemoveRow(
   if (rows.length <= 1) return null
   if (rowIndex < 0 || rowIndex >= rows.length) return null
   if (p.tableFlavor !== 'field') {
-    return { ...p, dataRows: rows.filter((_, i) => i !== rowIndex) }
+    const nextMatrix = p.cellColumnFields?.filter((_, i) => i !== rowIndex)
+    return { ...p, dataRows: rows.filter((_, i) => i !== rowIndex), cellColumnFields: nextMatrix }
   }
   return {
     ...p,
     dataRows: rows.filter((_, i) => i !== rowIndex),
     fieldDataRows: (p.fieldDataRows ?? []).filter((_, i) => i !== rowIndex),
+    cellColumnFields: p.cellColumnFields?.filter((_, i) => i !== rowIndex),
   }
 }
 
@@ -618,41 +859,136 @@ export function normalizeHorizontalTableParagraph(
     dataRows = [Array.from({ length: colCount }, () => '')]
   }
   if (tableFlavor === 'text') {
+    const rowCount = dataRows.length
+    const hasDataInCells = dataRows.some(r => r.some(c => String(c ?? '').trim().length > 0))
+    let nextDataRows = dataRows
+    let nextColumnFields = p.columnFields ?? []
+    let nextCellMatrix = p.cellColumnFields
+
+    if (hasDataInCells) {
+      if (rowCount <= 1) {
+        const row0 = dataRows[0] ?? Array.from({ length: colCount }, () => '')
+        nextColumnFields = Array.from({ length: colCount }, (_, ci) =>
+          repairColumnField(
+            {
+              kind: 'text' as const,
+              placeholder:
+                String(row0[ci] ?? '').trim().length > 0
+                  ? String(row0[ci] ?? '')
+                  : HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
+            },
+            ci
+          )
+        )
+        nextDataRows = [Array.from({ length: colCount }, () => '')]
+        nextCellMatrix = undefined
+      } else {
+        nextCellMatrix = dataRows.map(row =>
+          Array.from({ length: colCount }, (_, ci) =>
+            repairColumnField(
+              {
+                kind: 'text' as const,
+                placeholder:
+                  String(row[ci] ?? '').trim().length > 0
+                    ? String(row[ci] ?? '')
+                    : HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
+              },
+              ci
+            )
+          )
+        )
+        nextColumnFields = nextCellMatrix[0]!.map((f, i) => repairColumnField(f, i))
+        nextDataRows = dataRows.map(() => Array.from({ length: colCount }, () => ''))
+      }
+    } else if (
+      !hasDataInCells &&
+      ((nextColumnFields?.length ?? 0) > 0 || (nextCellMatrix != null && nextCellMatrix.length > 0))
+    ) {
+      nextDataRows = dataRows.map(() => Array.from({ length: colCount }, () => ''))
+    }
+
     return {
       ...p,
       tableFlavor: 'text',
       columnHeaders: headers,
-      dataRows,
-      columnFields: p.columnFields ?? [],
+      dataRows: nextDataRows,
+      columnFields: nextColumnFields,
       fieldDataRows: p.fieldDataRows ?? [],
+      cellColumnFields: nextCellMatrix,
       bottomText: p.bottomText ?? '',
       showBottomText: Boolean(p.showBottomText),
+      showBottomConsent: Boolean(p.showBottomConsent),
+      bottomConsent: normalizeTableBottomConsent(p.bottomConsent),
     }
   }
-  const fieldCols = ensureColumnFieldSlice(
-    { ...p, columnHeaders: headers, dataRows, tableFlavor: 'field' } as HorizontalTableParagraph,
-    colCount
-  )
-  const fieldDataRows = syncFieldDataRowsToTextRows(
-    {
+  /** `columnFields`가 비어 있으면 슬롯마다 주관식으로 채우지 않고 텍스트형 기본(필드형 최초·복구 시 한 셀만 바꿔도 전행 주관식 되는 문제 방지) */
+  const rawColumnFields = p.columnFields ?? []
+  const fieldCols =
+    rawColumnFields.length > 0
+      ? ensureColumnFieldSlice(
+          {
+            ...p,
+            columnHeaders: headers,
+            dataRows,
+            tableFlavor: 'field',
+          } as HorizontalTableParagraph,
+          colCount
+        )
+      : Array.from({ length: colCount }, () => defaultFieldForColumnKind('text'))
+  const rowCount = dataRows.length
+  const baseField: HorizontalTableParagraph = {
+    ...p,
+    columnHeaders: headers,
+    dataRows,
+    tableFlavor: 'field',
+    columnFields: fieldCols,
+  } as HorizontalTableParagraph
+
+  if (
+    p.cellColumnFields == null ||
+    (Array.isArray(p.cellColumnFields) && p.cellColumnFields.length === 0)
+  ) {
+    const fieldDataRowsOnlyCol = syncFieldDataRowsToTextRows(baseField, colCount, fieldCols)
+    return {
       ...p,
-      columnFields: fieldCols,
+      tableFlavor: 'field',
       columnHeaders: headers,
       dataRows,
-      tableFlavor: 'field',
-    } as HorizontalTableParagraph,
-    colCount,
-    fieldCols
+      columnFields: fieldCols,
+      fieldDataRows: fieldDataRowsOnlyCol,
+      cellColumnFields: undefined,
+      bottomText: p.bottomText ?? '',
+      showBottomText: Boolean(p.showBottomText),
+      showBottomConsent: Boolean(p.showBottomConsent),
+      bottomConsent: normalizeTableBottomConsent(p.bottomConsent),
+    }
+  }
+
+  const normMatrix = Array.from({ length: rowCount }, (_, ri) =>
+    Array.from({ length: colCount }, (_, ci) => {
+      const ex = p.cellColumnFields?.[ri]?.[ci]
+      return repairColumnField(ex ?? fieldCols[ci], ci)
+    })
   )
+  const fieldDataRowsMatrix = Array.from({ length: rowCount }, (_, ri) =>
+    padFieldRow(p.fieldDataRows?.[ri], colCount, normMatrix[ri]!).map((cell, ci) =>
+      rehomeFieldCellValue(cell, normMatrix[ri]![ci]!)
+    )
+  )
+  const columnFieldsSynced =
+    rowCount === 1 ? normMatrix[0]!.map((f, i) => repairColumnField(f, i)) : fieldCols
   return {
     ...p,
     tableFlavor: 'field',
     columnHeaders: headers,
     dataRows,
-    columnFields: fieldCols,
-    fieldDataRows,
+    columnFields: columnFieldsSynced,
+    fieldDataRows: fieldDataRowsMatrix,
+    cellColumnFields: normMatrix,
     bottomText: p.bottomText ?? '',
     showBottomText: Boolean(p.showBottomText),
+    showBottomConsent: Boolean(p.showBottomConsent),
+    bottomConsent: normalizeTableBottomConsent(p.bottomConsent),
   }
 }
 
@@ -667,7 +1003,11 @@ export function horizontalTableSetFlavor(
     return n
   }
   if (nextFlavor === 'field') {
-    const fieldCols = ensureColumnFieldSlice(n, colCount)
+    const existingCols = n.columnFields ?? []
+    const fieldCols =
+      existingCols.length > 0
+        ? ensureColumnFieldSlice(n, colCount)
+        : Array.from({ length: colCount }, () => defaultFieldForColumnKind('text'))
     const fieldDataRows = syncFieldDataRowsToTextRows(
       { ...n, tableFlavor: 'field', columnFields: fieldCols } as HorizontalTableParagraph,
       colCount,
@@ -695,26 +1035,163 @@ export function horizontalTableSetFlavor(
     dataRows,
     columnFields: [],
     fieldDataRows: [],
+    cellColumnFields: undefined,
   } as HorizontalTableParagraph)
 }
 
-/** 열 `colIdx`의 필드 정의 변경 — 모든 `fieldDataRows`에 해당 열 값 재맞춤 */
+/**
+ * 가로형 `tableFlavor: 'text'`일 때 우측 패널·열 유형 변경을 위해 필드형으로 승격.
+ * 각 열은 `kind: 'text'`로 두고 `dataRows` 문자열을 `fieldDataRows` 텍스트 셀 값으로 옮김.
+ */
+export function horizontalTablePromoteTextRowsToField(
+  p: HorizontalTableParagraph
+): HorizontalTableParagraph {
+  const n = normalizeHorizontalTableParagraph(p)
+  if (n.tableFlavor === 'field') return n
+  const colCount = Math.max(1, n.columnHeaders.length)
+  const headers = [...n.columnHeaders]
+  while (headers.length < colCount) headers.push('')
+  let dataRows = n.dataRows.map(r => {
+    const row = [...r]
+    while (row.length < colCount) row.push('')
+    return row.slice(0, colCount)
+  })
+  if (dataRows.length === 0) {
+    dataRows = [Array.from({ length: colCount }, () => '')]
+  }
+  const rowCount = dataRows.length
+  const matrix: HorizontalTableColumnField[][] = dataRows.map(textRow =>
+    Array.from({ length: colCount }, (_, ci) => {
+      const t = String(textRow[ci] ?? '').trim()
+      return repairColumnField(
+        {
+          kind: 'text' as const,
+          placeholder:
+            t.length > 0 ? String(textRow[ci] ?? '') : HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
+        },
+        ci
+      )
+    })
+  )
+  const fieldCols = matrix[0]!.map((f, i) => repairColumnField(f, i))
+  const fieldDataRows = dataRows.map(textRow =>
+    textRow.map(() => ({ kind: 'text' as const, value: '' }))
+  )
+  return normalizeHorizontalTableParagraph({
+    ...n,
+    tableFlavor: 'field',
+    columnHeaders: headers.slice(0, colCount),
+    dataRows,
+    columnFields: rowCount === 1 ? fieldCols : ensureColumnFieldSlice(n, colCount),
+    fieldDataRows,
+    cellColumnFields: rowCount === 1 ? undefined : matrix,
+  } as HorizontalTableParagraph)
+}
+
+/** 열 `colIdx`의 필드 정의 변경 — 해당 열 전체(모든 행)에 동일 정의 적용 후 값 재맞춤 */
 export function horizontalTableUpdateColumnField(
   p: HorizontalTableParagraph,
   colIdx: number,
   nextField: HorizontalTableColumnField
 ): HorizontalTableParagraph {
-  const n = normalizeHorizontalTableParagraph(p)
-  if (n.tableFlavor !== 'field') return n
+  let n = normalizeHorizontalTableParagraph(p)
+  if (n.tableFlavor !== 'field') {
+    n = horizontalTablePromoteTextRowsToField(n)
+  }
   const colCount = Math.max(1, n.columnHeaders.length)
   if (colIdx < 0 || colIdx >= colCount) return n
   const fieldCols = ensureColumnFieldSlice(n, colCount)
-  fieldCols[colIdx] = nextField
-  const nextRows = n.fieldDataRows.map(row => {
-    const padded = padFieldRow(row, colCount, fieldCols)
-    return padded.map((cell, c) => rehomeFieldCellValue(cell, fieldCols[c]!))
+  fieldCols[colIdx] = repairColumnField(nextField, colIdx)
+  const rowCount = Math.max(1, n.dataRows.length)
+  const colTemplate = fieldCols[colIdx]!
+  let matrix = n.cellColumnFields
+  if (matrix != null) {
+    matrix = Array.from({ length: rowCount }, (_, ri) => {
+      const prevRow = matrix![ri] ?? []
+      return Array.from({ length: colCount }, (_, ci) => {
+        if (ci === colIdx) return cloneColumnField(colTemplate)
+        return repairColumnField(prevRow[ci] ?? fieldCols[ci], ci)
+      })
+    })
+  }
+  const nextRows = Array.from({ length: rowCount }, (_, ri) => {
+    const rowFields = matrix != null ? matrix[ri]! : fieldCols
+    const padded = padFieldRow(n.fieldDataRows?.[ri], colCount, rowFields)
+    return padded.map((cell, c) => rehomeFieldCellValue(cell, rowFields[c]!))
   })
-  return { ...n, columnFields: fieldCols, fieldDataRows: nextRows }
+  const columnHeadersPatch = [...n.columnHeaders]
+  while (columnHeadersPatch.length < colCount) columnHeadersPatch.push('')
+  const colTemplateKind = repairColumnField(fieldCols[colIdx], colIdx).kind
+  if (colTemplateKind === 'text') {
+    clearHeaderIfAutoFieldKindLabel(columnHeadersPatch, colIdx)
+  }
+  const columnFieldsOut =
+    rowCount === 1 && matrix != null ? matrix[0]!.map((f, i) => repairColumnField(f, i)) : fieldCols
+  return {
+    ...n,
+    columnHeaders: columnHeadersPatch.slice(0, colCount),
+    columnFields: columnFieldsOut,
+    cellColumnFields: matrix ?? undefined,
+    fieldDataRows: nextRows,
+  }
+}
+
+/** 바디에서 선택한 `(rowIdx, colIdx)` 칸만 필드 정의 변경 — 다른 행의 같은 열은 유지 */
+export function horizontalTableUpdateBodyCellColumnField(
+  p: HorizontalTableParagraph,
+  rowIdx: number,
+  colIdx: number,
+  nextField: HorizontalTableColumnField
+): HorizontalTableParagraph {
+  let n = normalizeHorizontalTableParagraph(p)
+  if (n.tableFlavor !== 'field') {
+    n = horizontalTablePromoteTextRowsToField(n)
+  }
+  const colCount = Math.max(1, n.columnHeaders.length)
+  const rowCount = Math.max(1, n.dataRows.length)
+  if (colIdx < 0 || colIdx >= colCount || rowIdx < 0 || rowIdx >= rowCount) return n
+
+  const fieldCols = ensureColumnFieldSlice(n, colCount)
+  const repaired = repairColumnField(nextField, colIdx)
+
+  let matrix: HorizontalTableColumnField[][]
+  if (n.cellColumnFields == null) {
+    matrix = Array.from({ length: rowCount }, () => fieldCols.map(f => cloneColumnField(f)))
+  } else {
+    matrix = Array.from({ length: rowCount }, (_, ri) =>
+      Array.from({ length: colCount }, (_, ci) => {
+        const ex = n.cellColumnFields![ri]?.[ci]
+        return repairColumnField(ex ?? fieldCols[ci], ci)
+      })
+    )
+  }
+  const updatedRow = matrix[rowIdx]!.map((f, ci) =>
+    ci === colIdx ? repaired : cloneColumnField(f)
+  )
+  matrix = matrix.map((row, ri) => (ri === rowIdx ? updatedRow : row))
+
+  const fieldDataRows = Array.from({ length: rowCount }, (_, ri) =>
+    padFieldRow(n.fieldDataRows?.[ri], colCount, matrix[ri]!).map((cell, ci) =>
+      rehomeFieldCellValue(cell, matrix[ri]![ci]!)
+    )
+  )
+
+  const columnHeadersPatch = [...n.columnHeaders]
+  while (columnHeadersPatch.length < colCount) columnHeadersPatch.push('')
+  if (repaired.kind === 'text') {
+    clearHeaderIfAutoFieldKindLabel(columnHeadersPatch, colIdx)
+  }
+
+  const columnFieldsOut =
+    rowCount === 1 ? matrix[0]!.map((f, i) => repairColumnField(f, i)) : fieldCols
+
+  return {
+    ...n,
+    columnHeaders: columnHeadersPatch.slice(0, colCount),
+    columnFields: columnFieldsOut,
+    cellColumnFields: matrix,
+    fieldDataRows,
+  }
 }
 
 /** 필드 모드: 특정 셀 값(미리보기) 갱신 */
@@ -728,40 +1205,217 @@ export function horizontalTableSetFieldCellValue(
   if (n.tableFlavor !== 'field') return n
   const colCount = Math.max(1, n.columnHeaders.length)
   const fieldCols = ensureColumnFieldSlice(n, colCount)
-  const f = fieldCols[colIdx] ?? defaultColumnFieldForNewColumn()
   const rowCount = Math.max(1, n.dataRows.length, n.fieldDataRows.length)
   const base: HorizontalTableFieldCellValue[][] = Array.from({ length: rowCount }, (_, ri) =>
-    padFieldRow(n.fieldDataRows?.[ri], colCount, fieldCols)
+    padFieldRow(n.fieldDataRows?.[ri], colCount, getHorizontalTableRowFieldSlice(n, ri, colCount))
   )
   if (rowIdx < 0 || rowIdx >= base.length) return n
+  const rowFields = getHorizontalTableRowFieldSlice(n, rowIdx, colCount)
+  const f = rowFields[colIdx] ?? defaultColumnFieldForNewColumn()
   const row = [...base[rowIdx]!]
   row[colIdx] = rehomeFieldCellValue(value, f)
   base[rowIdx] = row
   return { ...n, columnFields: fieldCols, fieldDataRows: base }
 }
 
-function defaultVerticalTableRowSingle(): VerticalTableRow {
-  return { stageCount: 1, headers: [''], cells: [''] }
+/** 세로형 단일·다중 선택 공통 선택지 (비어 있으면 정규화 시 기본값) */
+export function normalizeVerticalChoiceOptions(raw: unknown): string[] {
+  if (!Array.isArray(raw) || raw.length === 0) return [...DEFAULT_CHOICE_OPTIONS]
+  const opts = raw.map(x => String(x ?? '').trim()).filter(s => s.length > 0)
+  return opts.length > 0 ? opts : [...DEFAULT_CHOICE_OPTIONS]
 }
 
-function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
+function parseStringArrayUnknown(u: unknown): string[] {
+  if (!Array.isArray(u)) return []
+  return u.map(x => String(x ?? '').trim()).filter(s => s.length > 0)
+}
+
+function filterSelectionsByOptions(selected: string[], optionSet: string[]): string[] {
+  const set = new Set(optionSet)
+  return selected.filter(s => set.has(s))
+}
+
+function rehomeVerticalSingleCell(value: string, options: string[]): string {
+  const v = value.trim()
+  return v !== '' && options.includes(v) ? v : ''
+}
+
+export function coerceVerticalTableFlavor(raw: unknown): VerticalTableFlavor {
+  if (raw === 'subjective') return 'subjective'
+  if (raw === 'date_time') return 'date_time'
+  if (raw === 'single_choice') return 'single_choice'
+  if (raw === 'multiple_choice') return 'multiple_choice'
+  if (raw === 'file_attachment') return 'file_attachment'
+  return 'text'
+}
+
+export function coerceVerticalTableStageKind(raw: unknown): VerticalTableStageKind {
+  if (raw === 'subjective') return 'subjective'
+  if (raw === 'date_time') return 'date_time'
+  if (raw === 'single_choice') return 'single_choice'
+  if (raw === 'multiple_choice') return 'multiple_choice'
+  return 'text'
+}
+
+function defaultVerticalStageKindForFlavor(flavor: VerticalTableFlavor): VerticalTableStageKind {
+  return flavor === 'file_attachment' ? 'text' : flavor
+}
+
+/** 새 행·빈 단락 초기화용 — 단락 flavor에 맞는 기본 행 */
+export function defaultVerticalTableRowForFlavor(flavor: VerticalTableFlavor): VerticalTableRow {
+  if (flavor === 'multiple_choice') {
+    return {
+      stageCount: 1,
+      headers: [''],
+      cells: [''],
+      stageKinds: [defaultVerticalStageKindForFlavor(flavor)],
+      choiceMultipleSelections: [[]],
+    }
+  }
+  return {
+    stageCount: 1,
+    headers: [''],
+    cells: [''],
+    stageKinds: [defaultVerticalStageKindForFlavor(flavor)],
+  }
+}
+
+/** 세로형 `text` 단락 기본 본문: 1행(1단) + 2행(2단) */
+function defaultVerticalTextTableInitialRows(): VerticalTableRow[] {
+  return [
+    { stageCount: 1, headers: [''], cells: [''], stageKinds: ['text'] },
+    { stageCount: 2, headers: ['', ''], cells: ['', ''], stageKinds: ['text', 'text'] },
+  ]
+}
+
+function normalizeRowsForVerticalFlavor(
+  rows: VerticalTableRow[],
+  flavor: VerticalTableFlavor,
+  options: string[]
+): VerticalTableRow[] {
+  return rows.map(r => normalizeVerticalTableRowChoices(r, flavor, options))
+}
+
+function normalizeVerticalTableRowChoices(
+  row: VerticalTableRow,
+  flavor: VerticalTableFlavor,
+  options: string[]
+): VerticalTableRow {
+  const base = normalizeVerticalTableRow(row)
+  const stageKinds = effectiveVerticalStageKinds(base, flavor)
+  const r = { ...base, stageKinds } as VerticalTableRow
+  if (flavor === 'single_choice') {
+    if (r.stageCount === 1) {
+      return {
+        ...r,
+        cells: [rehomeVerticalSingleCell(r.cells[0] ?? '', options)],
+      }
+    }
+    return {
+      ...r,
+      cells: [
+        rehomeVerticalSingleCell(r.cells[0] ?? '', options),
+        rehomeVerticalSingleCell(r.cells[1] ?? '', options),
+      ],
+    }
+  }
+  if (flavor === 'multiple_choice') {
+    if (r.stageCount === 1) {
+      const prev = parseStringArrayUnknown(r.choiceMultipleSelections?.[0])
+      return {
+        ...r,
+        choiceMultipleSelections: [filterSelectionsByOptions(prev, options)],
+      }
+    }
+    const p0 = parseStringArrayUnknown(r.choiceMultipleSelections?.[0])
+    const p1 = parseStringArrayUnknown(r.choiceMultipleSelections?.[1])
+    return {
+      ...r,
+      choiceMultipleSelections: [
+        filterSelectionsByOptions(p0, options),
+        filterSelectionsByOptions(p1, options),
+      ],
+    }
+  }
+  const rest = r as VerticalTableRow & { choiceMultipleSelections?: unknown }
+  if (rest.choiceMultipleSelections !== undefined) {
+    const { choiceMultipleSelections: _drop, ...noChoice } = rest
+    return noChoice as VerticalTableRow
+  }
+  return r
+}
+
+/** 선택지 목록 변경 시 단락 전체 행 값 재맞춤 */
+export function verticalTableParagraphWithChoiceOptions(
+  p: VerticalTableParagraph,
+  nextOptions: string[]
+): VerticalTableParagraph {
+  const n = normalizeVerticalTableParagraph(p)
+  return normalizeVerticalTableParagraph({
+    ...n,
+    verticalChoiceOptions: normalizeVerticalChoiceOptions(nextOptions),
+  })
+}
+
+function isDateTimeFieldMode(x: unknown): x is DateTimeFieldMode {
+  return x === 'date' || x === 'time' || x === 'date_time'
+}
+
+export function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
   if (raw != null && typeof raw === 'object' && 'stageCount' in raw) {
     const sc = (raw as { stageCount?: number }).stageCount
     if (sc === 2) {
-      const h = (raw as { headers?: string[] }).headers ?? []
-      const c = (raw as { cells?: string[] }).cells ?? []
-      const ph = (raw as { placeholderHints?: string[] }).placeholderHints
-      const dtTime = (raw as { dateTimeStage1Time?: string }).dateTimeStage1Time
+      const r = raw as {
+        headers?: string[]
+        cells?: string[]
+        stageKinds?: unknown[]
+        placeholderHints?: string[]
+        choiceMultipleSelections?: unknown
+        dateTimeStage1Time?: unknown
+        dateTimeStageModes?: unknown
+        dateTimeCompositeTimeHints?: unknown
+        dateTimeStage0AuxTime?: unknown
+      }
+      const h = r.headers ?? []
+      const c = r.cells ?? []
       const row: VerticalTableRow = {
         stageCount: 2,
         headers: [h[0] ?? '', h[1] ?? ''],
         cells: [c[0] ?? '', c[1] ?? ''],
       }
+      const sk = r.stageKinds
+      if (Array.isArray(sk) && sk.length >= 1) {
+        row.stageKinds = [coerceVerticalTableStageKind(sk[0]), coerceVerticalTableStageKind(sk[1])]
+      }
+      const cms2 = r.choiceMultipleSelections
+      if (Array.isArray(cms2) && cms2.length >= 2) {
+        row.choiceMultipleSelections = [
+          parseStringArrayUnknown(cms2[0]),
+          parseStringArrayUnknown(cms2[1]),
+        ]
+      }
+      const ph = r.placeholderHints
       if (ph != null && ph.length >= 1) {
         row.placeholderHints = [ph[0] ?? '', ph[1] ?? '']
       }
-      if (typeof dtTime === 'string') {
-        row.dateTimeStage1Time = dtTime
+      if (typeof r.dateTimeStage1Time === 'string') {
+        row.dateTimeStage1Time = r.dateTimeStage1Time
+      }
+      const sm = r.dateTimeStageModes
+      if (
+        Array.isArray(sm) &&
+        sm.length >= 2 &&
+        isDateTimeFieldMode(sm[0]) &&
+        isDateTimeFieldMode(sm[1])
+      ) {
+        row.dateTimeStageModes = [sm[0], sm[1]]
+      }
+      const cth = r.dateTimeCompositeTimeHints
+      if (Array.isArray(cth) && cth.length >= 1) {
+        row.dateTimeCompositeTimeHints = [String(cth[0] ?? ''), String(cth[1] ?? '')]
+      }
+      if (typeof r.dateTimeStage0AuxTime === 'string') {
+        row.dateTimeStage0AuxTime = r.dateTimeStage0AuxTime
       }
       return row
     }
@@ -778,36 +1432,137 @@ function normalizeVerticalTableRow(raw: unknown): VerticalTableRow {
     raw != null && typeof raw === 'object' && 'placeholderHints' in raw
       ? (raw as { placeholderHints?: string[] }).placeholderHints
       : undefined
+  const sk1 =
+    raw != null && typeof raw === 'object' && 'stageKinds' in raw
+      ? (raw as { stageKinds?: unknown[] }).stageKinds
+      : undefined
   const row1: VerticalTableRow = {
     stageCount: 1,
     headers: [h?.[0] ?? ''],
     cells: [c?.[0] ?? ''],
   }
+  if (Array.isArray(sk1) && sk1.length >= 1) {
+    row1.stageKinds = [coerceVerticalTableStageKind(sk1[0])]
+  }
   if (ph1 != null && ph1.length >= 1) {
     row1.placeholderHints = [ph1[0] ?? '']
+  }
+  if (raw != null && typeof raw === 'object') {
+    const cms1 = (raw as { choiceMultipleSelections?: unknown }).choiceMultipleSelections
+    if (Array.isArray(cms1) && cms1.length >= 1) {
+      row1.choiceMultipleSelections = [parseStringArrayUnknown(cms1[0])]
+    }
+  }
+  if (raw != null && typeof raw === 'object') {
+    const rawObj = raw as {
+      dateTimeSingleStageMode?: unknown
+      dateTimeStageModes?: unknown
+      dateTimeCompositeTimeHints?: unknown
+      dateTimeStage0AuxTime?: unknown
+      dateTimeStage1Time?: unknown
+    }
+    const dm = rawObj.dateTimeSingleStageMode
+    if (dm === 'date' || dm === 'time' || dm === 'date_time') {
+      row1.dateTimeSingleStageMode = dm
+    }
+    const sms = rawObj.dateTimeStageModes
+    if (Array.isArray(sms) && sms.length >= 1 && isDateTimeFieldMode((sms as unknown[])[0])) {
+      row1.dateTimeStageModes = [(sms as [DateTimeFieldMode])[0]]
+    }
+    const cth = rawObj.dateTimeCompositeTimeHints
+    if (Array.isArray(cth) && cth.length >= 1 && typeof (cth as string[])[0] === 'string') {
+      row1.dateTimeCompositeTimeHints = [(cth as string[])[0] ?? '']
+    }
+    if (typeof rawObj.dateTimeStage0AuxTime === 'string') {
+      row1.dateTimeStage0AuxTime = rawObj.dateTimeStage0AuxTime
+    }
+    if (typeof rawObj.dateTimeStage1Time === 'string') {
+      row1.dateTimeStage1Time = rawObj.dateTimeStage1Time
+    }
   }
   return row1
 }
 
+/** 날짜/시간형 세로 테이블 행 — 스테이지별 우측 패널 「유형」 (레거시·생략 시 기본) */
+export function effectiveVerticalRowDateTimeModes(
+  row: VerticalTableRow
+): [DateTimeFieldMode] | [DateTimeFieldMode, DateTimeFieldMode] {
+  if (row.stageCount === 1) {
+    const dm = row.dateTimeStageModes
+    if (dm && dm.length >= 1 && isDateTimeFieldMode(dm[0])) {
+      return [dm[0]]
+    }
+    const legacy = row.dateTimeSingleStageMode
+    if (isDateTimeFieldMode(legacy)) {
+      return [legacy]
+    }
+    return ['date']
+  }
+  const dm = row.dateTimeStageModes
+  if (dm && dm.length >= 2 && isDateTimeFieldMode(dm[0]) && isDateTimeFieldMode(dm[1])) {
+    return [dm[0], dm[1]]
+  }
+  return ['date', 'date_time']
+}
+
+export function effectiveVerticalStageKinds(
+  row: VerticalTableRow,
+  paragraphFlavor: VerticalTableFlavor
+): [VerticalTableStageKind] | [VerticalTableStageKind, VerticalTableStageKind] {
+  const fallback = defaultVerticalStageKindForFlavor(paragraphFlavor)
+  if (row.stageCount === 1) {
+    return [coerceVerticalTableStageKind(row.stageKinds?.[0] ?? fallback)]
+  }
+  return [
+    coerceVerticalTableStageKind(row.stageKinds?.[0] ?? fallback),
+    coerceVerticalTableStageKind(row.stageKinds?.[1] ?? fallback),
+  ]
+}
+
+/** 합성(날짜+시간) 스테이지의 시간 인풋 플레이스홀더 */
+export function effectiveVerticalCompositeTimeHint(row: VerticalTableRow, stageIdx: 0 | 1): string {
+  const h = row.dateTimeCompositeTimeHints?.[stageIdx] ?? ''
+  return h.trim() !== '' ? h : VERTICAL_DT_COMPOSITE_TIME_PLACEHOLDER
+}
+
 export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): VerticalTableParagraph {
+  const verticalTableFlavor = coerceVerticalTableFlavor(p.verticalTableFlavor)
+  const verticalChoiceOptions = normalizeVerticalChoiceOptions(p.verticalChoiceOptions)
   const rowsIn = p.rows ?? []
   let rows = rowsIn.map(normalizeVerticalTableRow)
   if (rows.length === 0) {
-    rows = [defaultVerticalTableRowSingle()]
+    rows =
+      verticalTableFlavor === 'text'
+        ? defaultVerticalTextTableInitialRows().map(normalizeVerticalTableRow)
+        : [normalizeVerticalTableRow(defaultVerticalTableRowForFlavor(verticalTableFlavor))]
   }
-  const verticalTableFlavor: VerticalTableFlavor =
-    p.verticalTableFlavor === 'subjective'
-      ? 'subjective'
-      : p.verticalTableFlavor === 'date_time'
-        ? 'date_time'
-        : 'text'
+  if (verticalTableFlavor === 'file_attachment') {
+    rows = rows.slice(0, 1)
+    const r0 = rows[0] ?? defaultVerticalTableRowForFlavor('file_attachment')
+    if (r0.stageCount === 2) {
+      rows = [verticalTableRowWithStageCount(r0, 1, 'file_attachment')]
+    } else {
+      rows = [r0]
+    }
+  }
+  rows = normalizeRowsForVerticalFlavor(rows, verticalTableFlavor, verticalChoiceOptions)
+  const verticalFileAttachmentHeaderLabel =
+    verticalTableFlavor === 'file_attachment'
+      ? (p.verticalFileAttachmentHeaderLabel ?? '').trim() !== ''
+        ? (p.verticalFileAttachmentHeaderLabel ?? '').trim()
+        : DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL
+      : undefined
   return {
     ...p,
     variant: 'vertical_table',
     verticalTableFlavor,
+    verticalChoiceOptions,
     rows,
+    verticalFileAttachmentHeaderLabel,
     bottomText: p.bottomText ?? '',
     showBottomText: Boolean(p.showBottomText),
+    showBottomConsent: Boolean(p.showBottomConsent),
+    bottomConsent: normalizeTableBottomConsent(p.bottomConsent),
     answerRequired: p.answerRequired !== false,
   }
 }
@@ -816,6 +1571,9 @@ export function normalizeVerticalTableParagraph(p: VerticalTableParagraph): Vert
 export function verticalTableParagraphOutlineLabel(flavor: VerticalTableFlavor): string {
   if (flavor === 'subjective') return '테이블_세로형(주관식형)'
   if (flavor === 'date_time') return '테이블_세로형(날짜/시간형)'
+  if (flavor === 'single_choice') return '테이블_세로형(단일선택형)'
+  if (flavor === 'multiple_choice') return '테이블_세로형(다중선택형)'
+  if (flavor === 'file_attachment') return '테이블_세로형(파일첨부형)'
   return '테이블_세로형(텍스트형)'
 }
 
@@ -832,9 +1590,21 @@ export function createVerticalTableParagraph(
     paragraphTitle: verticalTableParagraphOutlineLabel(flavor),
     paragraphDescription: '',
     participatesInTitleNumbering: true,
-    rows: [defaultVerticalTableRowSingle()],
+    rows:
+      flavor === 'text'
+        ? defaultVerticalTextTableInitialRows()
+        : [defaultVerticalTableRowForFlavor(flavor)],
+    verticalChoiceOptions:
+      flavor === 'single_choice' || flavor === 'multiple_choice'
+        ? [...DEFAULT_CHOICE_OPTIONS]
+        : undefined,
+    ...(flavor === 'file_attachment'
+      ? { verticalFileAttachmentHeaderLabel: DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL }
+      : {}),
     bottomText: '',
     showBottomText: false,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
     answerRequired: true,
   })
 }
@@ -847,6 +1617,8 @@ export function cloneVerticalTableParagraph(
   return {
     ...n,
     id: newId,
+    verticalChoiceOptions:
+      n.verticalChoiceOptions != null ? [...n.verticalChoiceOptions] : undefined,
     rows: n.rows.map(r => {
       if (r.stageCount === 2) {
         const out: VerticalTableRow = {
@@ -854,11 +1626,32 @@ export function cloneVerticalTableParagraph(
           headers: [...r.headers] as [string, string],
           cells: [...r.cells] as [string, string],
         }
+        if (r.stageKinds) {
+          out.stageKinds = [...r.stageKinds] as [VerticalTableStageKind, VerticalTableStageKind]
+        }
         if (r.placeholderHints) {
           out.placeholderHints = [...r.placeholderHints] as [string, string]
         }
+        if (r.choiceMultipleSelections) {
+          out.choiceMultipleSelections = [
+            [...r.choiceMultipleSelections[0]],
+            [...r.choiceMultipleSelections[1]],
+          ]
+        }
         if (r.dateTimeStage1Time !== undefined) {
           out.dateTimeStage1Time = r.dateTimeStage1Time
+        }
+        if (r.dateTimeStageModes) {
+          out.dateTimeStageModes = [...r.dateTimeStageModes] as [
+            DateTimeFieldMode,
+            DateTimeFieldMode,
+          ]
+        }
+        if (r.dateTimeCompositeTimeHints) {
+          out.dateTimeCompositeTimeHints = [...r.dateTimeCompositeTimeHints] as [string, string]
+        }
+        if (r.dateTimeStage0AuxTime !== undefined) {
+          out.dateTimeStage0AuxTime = r.dateTimeStage0AuxTime
         }
         return out
       }
@@ -867,8 +1660,29 @@ export function cloneVerticalTableParagraph(
         headers: [...r.headers] as [string],
         cells: [...r.cells] as [string],
       }
+      if (r.stageKinds) {
+        out1.stageKinds = [...r.stageKinds] as [VerticalTableStageKind]
+      }
       if (r.placeholderHints) {
         out1.placeholderHints = [...r.placeholderHints] as [string]
+      }
+      if (r.choiceMultipleSelections) {
+        out1.choiceMultipleSelections = [[...r.choiceMultipleSelections[0]]]
+      }
+      if (r.dateTimeSingleStageMode !== undefined) {
+        out1.dateTimeSingleStageMode = r.dateTimeSingleStageMode
+      }
+      if (r.dateTimeStage1Time !== undefined) {
+        out1.dateTimeStage1Time = r.dateTimeStage1Time
+      }
+      if (r.dateTimeStageModes !== undefined) {
+        out1.dateTimeStageModes = [...r.dateTimeStageModes] as [DateTimeFieldMode]
+      }
+      if (r.dateTimeCompositeTimeHints !== undefined) {
+        out1.dateTimeCompositeTimeHints = [...r.dateTimeCompositeTimeHints] as [string]
+      }
+      if (r.dateTimeStage0AuxTime !== undefined) {
+        out1.dateTimeStage0AuxTime = r.dateTimeStage0AuxTime
       }
       return out1
     }),
@@ -877,9 +1691,12 @@ export function cloneVerticalTableParagraph(
 
 export function verticalTableAddRow(p: VerticalTableParagraph): VerticalTableParagraph {
   const n = normalizeVerticalTableParagraph(p)
+  if (n.verticalTableFlavor === 'file_attachment') {
+    return n
+  }
   return {
     ...n,
-    rows: [...n.rows, defaultVerticalTableRowSingle()],
+    rows: [...n.rows, defaultVerticalTableRowForFlavor(n.verticalTableFlavor)],
   }
 }
 
@@ -902,42 +1719,148 @@ export function verticalTableRemoveRow(
  */
 export function verticalTableRowWithStageCount(
   row: VerticalTableRow,
-  stageCount: 1 | 2
+  stageCount: 1 | 2,
+  flavor: VerticalTableFlavor
 ): VerticalTableRow {
+  if (flavor !== 'date_time') {
+    const base = normalizeVerticalTableRow(row)
+    const b = base as VerticalTableRow
+    const h0 = b.headers[0] ?? ''
+    const c0 = b.cells[0] ?? ''
+    const ph0 = b.placeholderHints?.[0]
+    const ph1 = b.placeholderHints?.[1]
+    const stageKinds = effectiveVerticalStageKinds(b, flavor)
+
+    if (stageCount === 1) {
+      if (flavor === 'multiple_choice') {
+        const kept = parseStringArrayUnknown(b.choiceMultipleSelections?.[0])
+        const out: VerticalTableRow = {
+          stageCount: 1,
+          headers: [h0],
+          cells: [c0],
+          stageKinds: [stageKinds[0]],
+          choiceMultipleSelections: [kept],
+        }
+        if (ph0 !== undefined || ph1 !== undefined || b.placeholderHints != null) {
+          out.placeholderHints = [ph0 ?? '']
+        }
+        return normalizeVerticalTableRow(out)
+      }
+      const out: VerticalTableRow = {
+        stageCount: 1,
+        headers: [h0],
+        cells: [c0],
+        stageKinds: [stageKinds[0]],
+      }
+      if (ph0 !== undefined || ph1 !== undefined || b.placeholderHints != null) {
+        out.placeholderHints = [ph0 ?? '']
+      }
+      return normalizeVerticalTableRow(out)
+    }
+
+    if (flavor === 'multiple_choice') {
+      const first = parseStringArrayUnknown(b.choiceMultipleSelections?.[0])
+      const second =
+        b.stageCount === 2 ? parseStringArrayUnknown(b.choiceMultipleSelections?.[1]) : []
+      const out: VerticalTableRow = {
+        stageCount: 2,
+        headers: [h0, b.headers[1] ?? ''],
+        cells: [c0, b.cells[1] ?? ''],
+        stageKinds: [stageKinds[0], stageKinds[1] ?? defaultVerticalStageKindForFlavor(flavor)],
+        choiceMultipleSelections: [first, second],
+      }
+      if (ph0 !== undefined || ph1 !== undefined || b.placeholderHints != null) {
+        out.placeholderHints = [ph0 ?? '', ph1 ?? '']
+      }
+      return normalizeVerticalTableRow(out)
+    }
+
+    const out: VerticalTableRow = {
+      stageCount: 2,
+      headers: [h0, b.headers[1] ?? ''],
+      cells: [c0, b.cells[1] ?? ''],
+      stageKinds: [stageKinds[0], stageKinds[1] ?? defaultVerticalStageKindForFlavor(flavor)],
+    }
+    if (ph0 !== undefined || ph1 !== undefined || b.placeholderHints != null) {
+      out.placeholderHints = [ph0 ?? '', ph1 ?? '']
+    }
+    return normalizeVerticalTableRow(out)
+  }
+
   const base = normalizeVerticalTableRow(row)
-  const h0 = base.headers[0] ?? ''
-  const c0 = base.cells[0] ?? ''
-  const ph0 = base.placeholderHints?.[0]
-  const ph1 = base.placeholderHints?.[1]
+  const b = base as VerticalTableRow
+  const h0 = b.headers[0] ?? ''
+  const c0 = b.cells[0] ?? ''
+  const ph0 = b.placeholderHints?.[0]
+  const ph1 = b.placeholderHints?.[1]
+  const stageKinds = effectiveVerticalStageKinds(b, flavor)
+
   if (stageCount === 1) {
-    const r: VerticalTableRow = { stageCount: 1, headers: [h0], cells: [c0] }
-    if (ph0 !== undefined || ph1 !== undefined || base.placeholderHints != null) {
+    const modes = effectiveVerticalRowDateTimeModes(b)
+    const m0 = modes[0] ?? 'date'
+    const r: VerticalTableRow = {
+      stageCount: 1,
+      headers: [h0],
+      cells: [c0],
+      stageKinds: [stageKinds[0]],
+      dateTimeStageModes: [m0],
+      dateTimeSingleStageMode: m0,
+    }
+    if (ph0 !== undefined || ph1 !== undefined || b.placeholderHints != null) {
       r.placeholderHints = [ph0 ?? '']
     }
+    if (b.stageCount === 1) {
+      if (b.dateTimeCompositeTimeHints) {
+        r.dateTimeCompositeTimeHints = [b.dateTimeCompositeTimeHints[0] ?? '']
+      }
+      if (b.dateTimeStage0AuxTime !== undefined) r.dateTimeStage0AuxTime = b.dateTimeStage0AuxTime
+      if (b.dateTimeStage1Time !== undefined) r.dateTimeStage1Time = b.dateTimeStage1Time
+    } else {
+      if (m0 === 'date_time') {
+        r.dateTimeCompositeTimeHints = [b.dateTimeCompositeTimeHints?.[0] ?? '']
+        r.dateTimeStage0AuxTime = b.dateTimeStage0AuxTime ?? ''
+      }
+    }
     return r
   }
-  if (base.stageCount === 2) {
+
+  if (b.stageCount === 2) {
     const r: VerticalTableRow = {
       stageCount: 2,
-      headers: [h0, base.headers[1] ?? ''],
-      cells: [c0, base.cells[1] ?? ''],
+      headers: [h0, b.headers[1] ?? ''],
+      cells: [c0, b.cells[1] ?? ''],
+      stageKinds: [stageKinds[0], stageKinds[1] ?? defaultVerticalStageKindForFlavor(flavor)],
     }
-    if (ph0 !== undefined || ph1 !== undefined || base.placeholderHints != null) {
+    if (ph0 !== undefined || ph1 !== undefined || b.placeholderHints != null) {
       r.placeholderHints = [ph0 ?? '', ph1 ?? '']
     }
-    if (base.dateTimeStage1Time !== undefined) {
-      r.dateTimeStage1Time = base.dateTimeStage1Time
+    if (b.dateTimeStage1Time !== undefined) r.dateTimeStage1Time = b.dateTimeStage1Time
+    if (b.dateTimeStageModes) {
+      r.dateTimeStageModes = [...b.dateTimeStageModes] as [DateTimeFieldMode, DateTimeFieldMode]
     }
+    if (b.dateTimeCompositeTimeHints) {
+      r.dateTimeCompositeTimeHints = [...b.dateTimeCompositeTimeHints] as [string, string]
+    }
+    if (b.dateTimeStage0AuxTime !== undefined) r.dateTimeStage0AuxTime = b.dateTimeStage0AuxTime
     return r
   }
+
+  const m0 = effectiveVerticalRowDateTimeModes(b)[0]
   const r: VerticalTableRow = {
     stageCount: 2,
     headers: [h0, ''],
     cells: [c0, ''],
+    stageKinds: [stageKinds[0], defaultVerticalStageKindForFlavor(flavor)],
     dateTimeStage1Time: '',
+    dateTimeStageModes: [m0, 'date_time'],
+    placeholderHints: [ph0 ?? '', ''],
+    dateTimeCompositeTimeHints: [
+      m0 === 'date_time' ? (b.dateTimeCompositeTimeHints?.[0] ?? '') : '',
+      '',
+    ],
   }
-  if (ph0 !== undefined || ph1 !== undefined || base.placeholderHints != null) {
-    r.placeholderHints = [ph0 ?? '', '']
+  if (m0 === 'date_time') {
+    r.dateTimeStage0AuxTime = b.dateTimeStage0AuxTime ?? ''
   }
   return r
 }
@@ -1221,6 +2144,8 @@ export function createDefaultHorizontalTableDraft(): WritingFormDraft {
         fieldDataRows: [],
         bottomText: '',
         showBottomText: false,
+        showBottomConsent: false,
+        bottomConsent: 'agree',
         answerRequired: true,
       },
     ],

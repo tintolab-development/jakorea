@@ -8,9 +8,10 @@ import type {
   HorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
+  defaultFieldForColumnKind,
+  getEffectiveHorizontalCellField,
   HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
   HORIZONTAL_TABLE_MIN_COLUMN_COUNT,
-  defaultFieldForColumnKind,
   normalizeHorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorHorizontalTableHintXIcon } from '@/features/template/ui/form-editor/form-editor-horizontal-table-hint-x-icon'
@@ -29,79 +30,14 @@ import { FormEditorOptionListEditor } from '@/features/template/ui/form-editor/f
 import { useHorizontalTableBodyFieldActions } from '@/features/template/ui/form-editor/use-horizontal-table-body-field-actions'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 
-const TEXT_TYPE_OPTIONS = [{ value: 'text', label: '텍스트형' }]
-
 const FIELD_TYPE_OPTIONS: { value: HorizontalTableFieldColumnKind; label: string }[] = [
+  { value: 'text', label: '텍스트형' },
   { value: 'subjective', label: '주관식형' },
   { value: 'dropdown', label: '드롭다운형' },
-  { value: 'dateTime', label: '날짜/시간형' },
-  { value: 'single', label: '단일선택형' },
-  { value: 'multiple', label: '다중선택형' },
+  { value: 'dateTime', label: '날짜형' },
+  { value: 'single', label: '단일 선택형' },
+  { value: 'multiple', label: '다중 선택형' },
 ]
-
-function TextModeBodyFieldItem({
-  cell,
-  colIdx,
-  rowIndex,
-  removeColumn,
-  setTextCell,
-  colCount,
-}: {
-  cell: string
-  colIdx: number
-  rowIndex: number
-  removeColumn: (i: number) => void
-  setTextCell: (i: number, value: string) => void
-  colCount: number
-}) {
-  return (
-    <FormEditorFieldListItem>
-      <div className="form-editor-horizontal-table-body-fields__cell-title">
-        {colIdx + 1}-{rowIndex + 1}. 항목
-      </div>
-      <FormEditorFieldTypeRow
-        trailing={
-          colCount > HORIZONTAL_TABLE_MIN_COLUMN_COUNT ? (
-            <button
-              type="button"
-              className="form-editor-horizontal-table-body-fields__cell-clear"
-              aria-label={`${colIdx + 1}열 삭제`}
-              onClick={e => {
-                e.stopPropagation()
-                removeColumn(colIdx)
-              }}
-            >
-              <FormEditorHorizontalTableHeaderDeleteIcon />
-            </button>
-          ) : null
-        }
-      >
-        <CmsSelect
-          className="form-editor-horizontal-table-body-fields__cms-select"
-          inputSize="large"
-          width="100%"
-          value="text"
-          options={TEXT_TYPE_OPTIONS}
-          disabled
-          withAllOption={false}
-        />
-      </FormEditorFieldTypeRow>
-      <Form.Item
-        className="form-editor-horizontal-table-body-fields__content-form-item"
-        label="작성 내용"
-      >
-        <CmsInput
-          width="100%"
-          inputSize="large"
-          className="form-editor-horizontal-table-body-fields__content-input"
-          value={cell}
-          onChange={e => setTextCell(colIdx, e.target.value)}
-          placeholder={HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER}
-        />
-      </Form.Item>
-    </FormEditorFieldListItem>
-  )
-}
 
 function FieldModeConfigBlock({
   field,
@@ -123,7 +59,7 @@ function FieldModeConfigBlock({
   }
 
   return (
-    <FormEditorFieldListItem>
+    <FormEditorFieldListItem className="form-editor-horizontal-table-body-fields__item">
       <div className="form-editor-horizontal-table-body-fields__cell-title">
         {colIdx + 1}-{rowIndex + 1}. 항목
       </div>
@@ -157,7 +93,7 @@ function FieldModeConfigBlock({
         />
       </FormEditorFieldTypeRow>
 
-      {field.kind === 'subjective' ? (
+      {(field.kind === 'text' || field.kind === 'subjective') && (
         <Form.Item
           className="form-editor-horizontal-table-body-fields__content-form-item"
           label="입력창 안내 텍스트"
@@ -166,11 +102,17 @@ function FieldModeConfigBlock({
             width="100%"
             inputSize="large"
             value={field.placeholder}
-            onChange={e => setColumnField({ kind: 'subjective', placeholder: e.target.value })}
+            onChange={e =>
+              setColumnField(
+                field.kind === 'text'
+                  ? { kind: 'text', placeholder: e.target.value }
+                  : { kind: 'subjective', placeholder: e.target.value }
+              )
+            }
             placeholder={HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER}
           />
         </Form.Item>
-      ) : null}
+      )}
 
       {field.kind === 'dropdown' ? (
         <>
@@ -275,15 +217,12 @@ export function FormEditorHorizontalTableBodyFields({
   if (rows.length === 0) {
     rows.push(Array.from({ length: colCount }, () => ''))
   }
-  const cells = rows[rowIndex] ?? Array.from({ length: colCount }, () => '')
-  const fieldCols = p.columnFields
-  const { deleteRow, removeColumn, setTextCell, setColumnField } =
-    useHorizontalTableBodyFieldActions({
-      paragraphId,
-      rowIndex,
-      updateParagraph,
-      onBodyRowDeleted,
-    })
+  const { deleteRow, removeColumn, setColumnField } = useHorizontalTableBodyFieldActions({
+    paragraphId,
+    rowIndex,
+    updateParagraph,
+    onBodyRowDeleted,
+  })
 
   const isFieldFlavor = p.tableFlavor === 'field'
   const bodyPanelTitle = isFieldFlavor
@@ -307,32 +246,23 @@ export function FormEditorHorizontalTableBodyFields({
       }
     >
       <FormEditorFieldList>
-        {p.tableFlavor === 'text'
-          ? cells.map((cell, colIdx) => (
-              <TextModeBodyFieldItem
-                key={`text-body-${rowIndex}-${colIdx}`}
-                cell={cell}
-                colIdx={colIdx}
-                rowIndex={rowIndex}
-                removeColumn={removeColumn}
-                setTextCell={setTextCell}
-                colCount={colCount}
-              />
-            ))
-          : Array.from({ length: colCount }, (_, colIdx) => {
-              const field = fieldCols[colIdx] ?? defaultFieldForColumnKind('subjective')
-              return (
-                <FieldModeConfigBlock
-                  key={`field-body-${rowIndex}-${colIdx}`}
-                  field={field}
-                  colIdx={colIdx}
-                  rowIndex={rowIndex}
-                  removeColumn={removeColumn}
-                  setColumnFieldAt={setColumnField}
-                  colCount={colCount}
-                />
-              )
-            })}
+        {Array.from({ length: colCount }, (_, colIdx) => {
+          const field =
+            p.tableFlavor === 'field'
+              ? getEffectiveHorizontalCellField(p, rowIndex, colIdx)
+              : defaultFieldForColumnKind('text')
+          return (
+            <FieldModeConfigBlock
+              key={`field-body-${rowIndex}-${colIdx}`}
+              field={field}
+              colIdx={colIdx}
+              rowIndex={rowIndex}
+              removeColumn={removeColumn}
+              setColumnFieldAt={setColumnField}
+              colCount={colCount}
+            />
+          )
+        })}
       </FormEditorFieldList>
     </FormEditorCustomFieldPanel>
   )

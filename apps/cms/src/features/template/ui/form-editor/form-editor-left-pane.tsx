@@ -31,8 +31,8 @@ import {
   type VerticalTableParagraph,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { HorizontalTableDimensionActions } from '@/features/template/ui/paragraph/shared/horizontal-table-dimension-actions'
-import { VerticalTableDimensionActions } from '@/features/template/ui/paragraph/shared/vertical-table-dimension-actions'
+import { HorizontalTableDimensionActions } from '@/features/template/ui/paragraph/table/horizontal-table-dimension-actions'
+import { VerticalTableDimensionActions } from '@/features/template/ui/paragraph/table/vertical-table-dimension-actions'
 import {
   renderFormParagraphBody,
   type ParagraphBodyInteractionMode,
@@ -299,30 +299,50 @@ function modalCardFooterToggles(
     if (!isSelected) return undefined
     const ht = paragraph as HorizontalTableParagraph
     return (
-      <>
-        <CmsToggle
-          label="답변 필수"
-          checked={ht.answerRequired ?? ht.requiredMark}
-          onChange={checked =>
-            updateParagraph(ht.id, p =>
-              p.kind === 'single_item' && p.variant === 'horizontal_table'
-                ? { ...p, answerRequired: checked, requiredMark: checked }
-                : p
-            )
-          }
-        />
-        <CmsToggle
-          label="하단 설명"
-          checked={ht.showBottomText}
-          onChange={checked =>
-            updateParagraph(ht.id, p =>
-              p.kind === 'single_item' && p.variant === 'horizontal_table'
-                ? { ...p, showBottomText: checked }
-                : p
-            )
-          }
-        />
-      </>
+      <div
+        className="form-editor-card__toggles-row form-editor-card__toggles-row--table-foot"
+        onClick={event => event.stopPropagation()}
+      >
+        <div className="form-editor-card__table-footer-toggle-slot">
+          <CmsToggle
+            label="답변 필수"
+            checked={ht.answerRequired}
+            onChange={checked =>
+              updateParagraph(ht.id, p =>
+                p.kind === 'single_item' && p.variant === 'horizontal_table'
+                  ? { ...p, answerRequired: checked }
+                  : p
+              )
+            }
+          />
+        </div>
+        <div className="form-editor-card__table-footer-toggle-slot">
+          <CmsToggle
+            label="하단 설명"
+            checked={ht.showBottomText}
+            onChange={checked =>
+              updateParagraph(ht.id, p =>
+                p.kind === 'single_item' && p.variant === 'horizontal_table'
+                  ? { ...p, showBottomText: checked }
+                  : p
+              )
+            }
+          />
+        </div>
+        <div className="form-editor-card__table-footer-toggle-slot">
+          <CmsToggle
+            label="동의 여부"
+            checked={ht.showBottomConsent}
+            onChange={checked =>
+              updateParagraph(ht.id, p =>
+                p.kind === 'single_item' && p.variant === 'horizontal_table'
+                  ? { ...p, showBottomConsent: checked }
+                  : p
+              )
+            }
+          />
+        </div>
+      </div>
     )
   }
 
@@ -330,30 +350,50 @@ function modalCardFooterToggles(
     if (!isSelected) return undefined
     const vt = paragraph as VerticalTableParagraph
     return (
-      <>
-        <CmsToggle
-          label="답변 필수"
-          checked={vt.answerRequired ?? vt.requiredMark}
-          onChange={checked =>
-            updateParagraph(vt.id, p =>
-              p.kind === 'single_item' && p.variant === 'vertical_table'
-                ? { ...p, answerRequired: checked, requiredMark: checked }
-                : p
-            )
-          }
-        />
-        <CmsToggle
-          label="하단 설명"
-          checked={vt.showBottomText}
-          onChange={checked =>
-            updateParagraph(vt.id, p =>
-              p.kind === 'single_item' && p.variant === 'vertical_table'
-                ? { ...p, showBottomText: checked }
-                : p
-            )
-          }
-        />
-      </>
+      <div
+        className="form-editor-card__toggles-row form-editor-card__toggles-row--table-foot"
+        onClick={event => event.stopPropagation()}
+      >
+        <div className="form-editor-card__table-footer-toggle-slot">
+          <CmsToggle
+            label="답변 필수"
+            checked={vt.answerRequired}
+            onChange={checked =>
+              updateParagraph(vt.id, p =>
+                p.kind === 'single_item' && p.variant === 'vertical_table'
+                  ? { ...p, answerRequired: checked }
+                  : p
+              )
+            }
+          />
+        </div>
+        <div className="form-editor-card__table-footer-toggle-slot">
+          <CmsToggle
+            label="하단 설명"
+            checked={vt.showBottomText}
+            onChange={checked =>
+              updateParagraph(vt.id, p =>
+                p.kind === 'single_item' && p.variant === 'vertical_table'
+                  ? { ...p, showBottomText: checked }
+                  : p
+              )
+            }
+          />
+        </div>
+        <div className="form-editor-card__table-footer-toggle-slot">
+          <CmsToggle
+            label="동의 여부"
+            checked={vt.showBottomConsent}
+            onChange={checked =>
+              updateParagraph(vt.id, p =>
+                p.kind === 'single_item' && p.variant === 'vertical_table'
+                  ? { ...p, showBottomConsent: checked }
+                  : p
+              )
+            }
+          />
+        </div>
+      </div>
     )
   }
 
@@ -500,6 +540,15 @@ function modalCardFooterActions(
   if (paragraph.kind === 'single_item' && paragraph.variant === 'vertical_table') {
     if (!isSelected) return undefined
     const vt = paragraph as VerticalTableParagraph
+    if (vt.verticalTableFlavor === 'file_attachment') {
+      return middleParagraphActions ? (
+        <FormParagraphCardActions
+          onAdd={() => middleParagraphActions.onAddAfter(vt.id)}
+          onDuplicate={() => middleParagraphActions.onDuplicate(vt.id)}
+          onDelete={() => middleParagraphActions.onDelete(vt.id)}
+        />
+      ) : null
+    }
     return (
       <>
         <VerticalTableDimensionActions
@@ -635,7 +684,9 @@ function PinnedFormCard({
       onClick={showEditorChrome ? () => onSelectCard(paragraph.id) : undefined}
       editableHeading={editableHeading}
       toggles={
-        showEditorChrome ? modalCardFooterToggles(paragraph, isSelected, updateParagraph) : undefined
+        showEditorChrome
+          ? modalCardFooterToggles(paragraph, isSelected, updateParagraph)
+          : undefined
       }
       actions={
         showEditorChrome
@@ -753,7 +804,9 @@ function SortableMiddleFormCard({
         }
         editableHeading={editableHeading}
         toggles={
-          showEditorChrome ? modalCardFooterToggles(paragraph, isSelected, updateParagraph) : undefined
+          showEditorChrome
+            ? modalCardFooterToggles(paragraph, isSelected, updateParagraph)
+            : undefined
         }
         actions={
           showEditorChrome
@@ -838,7 +891,9 @@ export function FormEditorLeftPane({
                     editorKind={editorKind}
                     singleItemListActiveItemId={singleItemListActiveItemId}
                     onSelectSingleItemListItem={onSelectSingleItemListItem}
-                    horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
+                    horizontalTableRowSelectionsByParagraphId={
+                      horizontalTableRowSelectionsByParagraphId
+                    }
                     onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
                     verticalTableBodyRowSelection={verticalTableBodyRowSelection}
                     onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
@@ -862,7 +917,9 @@ export function FormEditorLeftPane({
                 editorKind={editorKind}
                 singleItemListActiveItemId={singleItemListActiveItemId}
                 onSelectSingleItemListItem={onSelectSingleItemListItem}
-                horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
+                horizontalTableRowSelectionsByParagraphId={
+                  horizontalTableRowSelectionsByParagraphId
+                }
                 onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
                 verticalTableBodyRowSelection={verticalTableBodyRowSelection}
                 onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
@@ -903,7 +960,9 @@ export function FormEditorLeftPane({
                   editorKind={editorKind}
                   singleItemListActiveItemId={singleItemListActiveItemId}
                   onSelectSingleItemListItem={onSelectSingleItemListItem}
-                  horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
+                  horizontalTableRowSelectionsByParagraphId={
+                    horizontalTableRowSelectionsByParagraphId
+                  }
                   onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
                   verticalTableBodyRowSelection={verticalTableBodyRowSelection}
                   onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
@@ -1008,7 +1067,9 @@ export function FormEditorLeftPane({
                 editorKind={editorKind}
                 singleItemListActiveItemId={singleItemListActiveItemId}
                 onSelectSingleItemListItem={onSelectSingleItemListItem}
-                horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
+                horizontalTableRowSelectionsByParagraphId={
+                  horizontalTableRowSelectionsByParagraphId
+                }
                 onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
                 verticalTableBodyRowSelection={verticalTableBodyRowSelection}
                 onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
@@ -1067,7 +1128,13 @@ export function FormEditorLeftPane({
         <div className="form-editor-left__system-fixed">
           {pinnedSystemRows.map(p => (
             <div key={p.id} className="form-editor-left__system-fixed-row">
-              {renderFormParagraphBody(p, updateParagraph, false, editorKind, mergedParagraphBodyOptions)}
+              {renderFormParagraphBody(
+                p,
+                updateParagraph,
+                false,
+                editorKind,
+                mergedParagraphBodyOptions
+              )}
             </div>
           ))}
         </div>

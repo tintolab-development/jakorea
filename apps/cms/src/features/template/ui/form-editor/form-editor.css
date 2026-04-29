@@ -31,6 +31,12 @@
   min-height: 1.25em;
 }
 
+/* 푸터 좌측 토글(답변 필수·하단 설명 등)이 우측 액션과 flex 경쟁 시 폭 0으로 사라지지 않게 */
+.form-editor-card .paragraph-card__toggles {
+  flex-shrink: 0;
+  min-width: min-content;
+}
+
 .form-editor-placeholder {
   color: var(--color-text-placeholder, #bfbfbf);
 }
@@ -136,11 +142,24 @@
   justify-content: flex-start;
 }
 
+/* 단락 카드 푸터 토글 행 — 항목 간 간격 16px 통일 */
 .form-editor-card__toggles-row {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
+}
+
+/* 테이블 단락 푸터: 토글끼리 16px만 두고 콘텐츠 너비에 맞춤(203px 고정은 하단 동의 라디오 전용) */
+.form-editor-card__toggles-row--table-foot {
+  gap: 16px;
+  justify-content: flex-start;
+}
+
+.form-editor-card__table-footer-toggle-slot {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
 }
 
 /* 우측 네비: 고정 행은 드래그 핸들 없이 동일 높이 유지 */
@@ -377,6 +396,28 @@
   flex: 1 0 0;
 }
 
+/* 필드형 비텍스트열: 입력이 아니라 레이블만 표시 — 포커스·커서 없음 */
+.form-editor-horizontal-table-header-fields__value-readonly {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px 0 14px;
+  overflow: hidden;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
+
 .form-editor-horizontal-table-header-fields__input-wrap
   .form-editor-horizontal-table-header-fields__cms-input.cms-input--large
   .cms-input__control {
@@ -465,6 +506,17 @@
   align-items: center;
   gap: 16px;
   flex-wrap: nowrap;
+  box-sizing: border-box;
+}
+
+/* 날짜/시간형 — 스테이지별 「유형」(날짜/시간/날짜+시간), 3옵션 줄바꿈 가능 */
+.form-editor-vertical-table-row-fields__datetime-mode-radios.app-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  min-height: 44px;
+  padding: 6px 0 4px;
   box-sizing: border-box;
 }
 
@@ -1161,8 +1213,9 @@
   align-items: center;
 }
 
-/* 단일·다중: 옵션 스택 자체를 셀 가운데에 수직 정렬 */
+/* 단일·다중: 옵션 그룹은 td 중앙 정렬 */
 .form-editor-horizontal-table__td--field.form-editor-horizontal-table__td--field-choices {
+  justify-content: center;
   align-items: center;
 }
 
@@ -1174,7 +1227,7 @@
   gap: 16px;
 }
 
-/* 단일·다중: 셸은 셀 높이만큼 늘리고 옵션 스택은 세로 가운데 정렬 */
+/* 단일·다중: 셸은 셀 너비를 채우되 옵션 그룹은 중앙 정렬 */
 .form-editor-horizontal-table__td--field
   > .form-editor-horizontal-table__cell-input-shell--field-choices {
   flex: 1 1 auto;
@@ -1191,7 +1244,7 @@
   box-sizing: border-box;
 }
 
-/* 가로형 필드형 — 인풋·셀렉트·피커 공통 박스 (249×40 디자인 기준, max-width 249px) */
+/* 가로형 필드형 — 인풋·셀렉트·피커 공통 박스 (고정 기준 폭) */
 .form-editor-horizontal-table__field-box {
   display: flex;
   height: 40px;
@@ -1210,6 +1263,82 @@
 
 .form-editor-horizontal-table__field-box--text {
   padding: 0 12px 0 14px;
+}
+
+.form-editor-horizontal-table__field-text-plain-input.ant-input {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  padding: 0 !important;
+  margin: 0;
+  text-align: center;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.form-editor-horizontal-table__field-text-plain-input.ant-input::placeholder {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.45;
+}
+
+.form-editor-horizontal-table__field-text-plain-input.ant-input:focus,
+.form-editor-horizontal-table__field-text-plain-input.ant-input-focused {
+  box-shadow: none !important;
+}
+
+/* 주관식형: 기본 높이는 다른 필드와 맞추고, 입력 내용이 길 때만 확장 */
+.form-editor-horizontal-table__field-box--subjective {
+  height: auto;
+  min-height: 40px;
+  align-items: center;
+  padding: 7px 12px 7px 14px;
+}
+
+.form-editor-horizontal-table__td--field-subjective {
+  align-items: center;
+}
+
+.form-editor-horizontal-table__cell-input-shell--field-subjective {
+  align-items: center;
+  align-self: center;
+  width: 100%;
+  max-width: 249px;
+}
+
+.form-editor-horizontal-table__field-subjective-input.ant-input {
+  flex: 1 0 0;
+  min-width: 0;
+  min-height: 24px !important;
+  padding: 0 !important;
+  margin: 0;
+  text-align: left;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  resize: none;
+}
+
+.form-editor-horizontal-table__field-subjective-input.ant-input::placeholder {
+  color: var(--main-BK, #3d3d3d);
+  opacity: 0.45;
+}
+
+.form-editor-horizontal-table__field-subjective-input.ant-input:focus,
+.form-editor-horizontal-table__field-subjective-input.ant-input-focused {
+  box-shadow: none !important;
 }
 
 .form-editor-horizontal-table__field-box--dropdown.ant-select .ant-select-selector {
@@ -1319,36 +1448,43 @@
   min-width: 0;
 }
 
-/* 단일선택 — 한 줄 최대 3개, 4번째부터 다음 줄 */
+/* 단일선택 — 기본은 좌측 정렬(세로형에서 사용), 가로형은 아래 override */
 .form-editor-horizontal-table__field-radios.ant-radio-group,
 .form-editor-horizontal-table__field-radios.app-radio-group.ant-radio-group {
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: wrap !important;
   align-items: center !important;
-  justify-content: center !important;
-  gap: 12px 0 !important;
+  justify-content: flex-start !important;
+  gap: 16px !important;
   width: 100% !important;
   max-width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
   line-height: 1.5 !important;
-  text-align: center;
+  text-align: left;
   box-sizing: border-box;
+}
+
+.form-editor-horizontal-table .form-editor-horizontal-table__field-radios.ant-radio-group,
+.form-editor-horizontal-table
+  .form-editor-horizontal-table__field-radios.app-radio-group.ant-radio-group {
+  justify-content: center !important;
+  text-align: center;
 }
 
 .form-editor-horizontal-table__field-radios .ant-radio-wrapper {
   --ht-choice-row-h: 24px;
   height: var(--ht-choice-row-h);
-  flex: 0 0 33.3333% !important;
-  max-width: 33.3333%;
+  flex: 0 0 auto !important;
+  max-width: none;
   min-width: 0;
   min-height: 0;
   margin: 0 !important;
   padding: 0 !important;
   display: flex !important;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   align-self: center;
   box-sizing: border-box;
   font-family: Pretendard, sans-serif;
@@ -1401,32 +1537,37 @@
   transform: translate(-50%, -50%) scale(1) !important;
 }
 
-/* 다중선택 — 한 줄 최대 3개, 4번째부터 다음 줄 */
+/* 다중선택 — 항목 간 16px 갭, td 내 좌측 정렬 */
 .form-editor-horizontal-table__field-checks {
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: wrap !important;
   align-items: center !important;
-  justify-content: center !important;
-  gap: 12px 0 !important;
+  justify-content: flex-start !important;
+  gap: 16px !important;
   width: 100% !important;
   max-width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
   line-height: 1.5 !important;
-  text-align: center;
+  text-align: left;
   box-sizing: border-box;
+}
+
+.form-editor-horizontal-table .form-editor-horizontal-table__field-checks {
+  justify-content: center !important;
+  text-align: center;
 }
 
 .form-editor-horizontal-table__field-check-label {
   height: 24px;
-  flex: 0 0 33.3333% !important;
-  max-width: 33.3333%;
+  flex: 0 0 auto !important;
+  max-width: none;
   min-width: 0;
   min-height: 0;
   display: flex !important;
   align-items: center !important;
-  justify-content: center !important;
+  justify-content: flex-start !important;
   align-self: center !important;
   box-sizing: border-box;
   gap: 8px;
@@ -1548,9 +1689,15 @@
   white-space: pre-wrap;
 }
 
+/* 보기 모드·필드형 잠금 th 등 편집 불가 헤더 텍스트 */
 .form-editor-horizontal-table__cell-text--header {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
   font-weight: 700;
-  color: var(--gray-85969-d, #85969d);
+  line-height: 150%;
 }
 
 .form-editor-horizontal-table__cell-text--body {
@@ -1571,6 +1718,21 @@
 .form-editor-horizontal-table__bottom {
   margin: 0;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 테이블 하단 — 동의 여부 라디오 (203×40, 두 옵션 사이 16px). 세로형 paragraph/table/vertical-table-paragraph-body.css 와 동일 */
+.form-editor-table-bottom-consent.app-radio-group {
+  box-sizing: border-box;
+  width: 203px;
+  min-width: 203px;
+  height: 40px;
+  min-height: 40px;
+  flex-wrap: nowrap !important;
+  gap: 16px !important;
+  align-items: center;
 }
 
 .form-editor-horizontal-table__bottom-input.paragraph-input.paragraph-input--description {
