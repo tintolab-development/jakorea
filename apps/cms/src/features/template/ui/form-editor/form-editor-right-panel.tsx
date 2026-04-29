@@ -7,12 +7,15 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import type {
   DateTimeFieldMode,
   DateTimeParagraph,
+  FileAttachmentParagraph,
   FormEditorKind,
   FormTitleNumberingStyle,
   HorizontalTableParagraph,
   HorizontalTableRowSelection,
   VerticalTableParagraph,
+  MultipleChoiceItem,
   MultipleChoiceParagraph,
+  ScaleTypeItem,
   ScaleTypeParagraph,
   ShortEssayParagraph,
   WritingFormDraft,
@@ -21,6 +24,8 @@ import type {
 import {
   createHorizontalTableParagraph,
   createVerticalTableParagraph,
+  createDefaultMultipleChoiceItems,
+  createDefaultScaleTypeItems,
   DATE_TIME_FIELD_MODE_OPTIONS,
   effectiveVerticalStageKinds,
   normalizeVerticalChoiceOptions,
@@ -45,49 +50,47 @@ const TITLE_NUMBERING_OPTIONS: { value: FormTitleNumberingStyle; label: string }
   { value: 'none', label: '미선택' },
 ]
 
-const TABLE_KIND_OPTIONS = [{ value: 'table', label: '테이블' }] as const
+type ParagraphKindSelectValue = 'single_item' | 'description' | 'table'
+type SingleItemDetailSelectValue =
+  | 'subjective'
+  | 'multiple_choice'
+  | 'date_only'
+  | 'time_only'
+  | 'star_rate'
+  | 'scale_type'
+  | 'user_info'
+  | 'file_attachment'
+type TableDetailSelectValue = 'horizontal_table' | 'vertical_table'
+type DescriptionDetailSelectValue = 'title' | 'text' | 'closing'
+type DetailSelectValue =
+  | SingleItemDetailSelectValue
+  | TableDetailSelectValue
+  | DescriptionDetailSelectValue
 
-/** 테이블 대분류 우측 패널 — 소분류는 가로·세로 방향만 전환(세부 유형은 캔버스·다른 설정에서 유지) */
-type TableOrientationKind = 'horizontal' | 'vertical'
-const TABLE_ORIENTATION_OPTIONS: { value: TableOrientationKind; label: string }[] = [
-  { value: 'horizontal', label: '가로형' },
-  { value: 'vertical', label: '세로형' },
+const PARAGRAPH_KIND_OPTIONS: { value: ParagraphKindSelectValue; label: string }[] = [
+  { value: 'single_item', label: '단일항목' },
+  { value: 'description', label: '설명글' },
+  { value: 'table', label: '테이블' },
 ]
-
-const GENERATED_TABLE_TITLES = new Set([
-  '테이블_가로형',
-  '테이블_가로형 (필드 형)',
-  verticalTableParagraphOutlineLabel('text'),
-  verticalTableParagraphOutlineLabel('subjective'),
-  verticalTableParagraphOutlineLabel('date_time'),
-  verticalTableParagraphOutlineLabel('single_choice'),
-  verticalTableParagraphOutlineLabel('multiple_choice'),
-  verticalTableParagraphOutlineLabel('file_attachment'),
-])
-
-function tableOrientationFromParagraph(p: WritingFormParagraph): TableOrientationKind | null {
-  if (p.kind !== 'single_item') return null
-  if (p.variant === 'horizontal_table') return 'horizontal'
-  if (p.variant === 'vertical_table') return 'vertical'
-  return null
-}
-
-function withPreservedTableCommonFields<T extends HorizontalTableParagraph | VerticalTableParagraph>(
-  next: T,
-  prev: HorizontalTableParagraph | VerticalTableParagraph
-): T {
-  const shouldUseNextTitle =
-    prev.paragraphTitle.trim() === '' || GENERATED_TABLE_TITLES.has(prev.paragraphTitle.trim())
-
-  return {
-    ...next,
-    requiredMark: prev.requiredMark,
-    paragraphTitle: shouldUseNextTitle ? next.paragraphTitle : prev.paragraphTitle,
-    paragraphDescription: prev.paragraphDescription,
-    participatesInTitleNumbering: prev.participatesInTitleNumbering,
-    answerRequired: prev.answerRequired,
-  }
-}
+const SINGLE_ITEM_DETAIL_OPTIONS: { value: SingleItemDetailSelectValue; label: string }[] = [
+  { value: 'subjective', label: '주관식형' },
+  { value: 'multiple_choice', label: '객관식형' },
+  { value: 'date_only', label: '날짜형' },
+  { value: 'time_only', label: '시간형' },
+  { value: 'star_rate', label: '별점형' },
+  { value: 'scale_type', label: '점수 선택형' },
+  { value: 'user_info', label: '사용자 정보형' },
+  { value: 'file_attachment', label: '파일 첨부형' },
+]
+const DESCRIPTION_DETAIL_OPTIONS: { value: DescriptionDetailSelectValue; label: string }[] = [
+  { value: 'title', label: '제목형' },
+  { value: 'text', label: '텍스트형' },
+  { value: 'closing', label: '마무리글형' },
+]
+const TABLE_DETAIL_OPTIONS: { value: TableDetailSelectValue; label: string }[] = [
+  { value: 'horizontal_table', label: '가로형' },
+  { value: 'vertical_table', label: '세로형' },
+]
 
 function paragraphKindLabel(p: WritingFormParagraph): string {
   if (p.kind === 'description') return '설명글'
@@ -147,6 +150,254 @@ function paragraphVariantLabel(p: WritingFormParagraph): string {
       return '사용자 정보형'
     case 'file_attachment':
       return '파일 첨부형'
+  }
+}
+
+function paragraphKindSelectValue(p: WritingFormParagraph): ParagraphKindSelectValue {
+  if (p.kind === 'single_item' && (p.variant === 'horizontal_table' || p.variant === 'vertical_table')) {
+    return 'table'
+  }
+  if (p.kind === 'description' || (p.kind === 'single_item' && p.variant === 'agreement_explanation_text')) {
+    return 'description'
+  }
+  return 'single_item'
+}
+
+function paragraphDetailSelectValue(p: WritingFormParagraph): DetailSelectValue {
+  if (p.kind === 'single_item' && p.variant === 'horizontal_table') return 'horizontal_table'
+  if (p.kind === 'single_item' && p.variant === 'vertical_table') return 'vertical_table'
+  if (p.kind === 'description' && p.variant === 'survey_title_with_period') return 'title'
+  if (p.kind === 'description' && p.variant === 'closing') return 'closing'
+  if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') return 'text'
+  if (p.kind === 'single_item' && p.variant === 'short_essay') return 'subjective'
+  if (p.kind === 'single_item' && p.variant === 'multiple_choice') return 'multiple_choice'
+  if (p.kind === 'single_item' && p.variant === 'date_time') {
+    return p.fieldMode === 'time' ? 'time_only' : 'date_only'
+  }
+  if (p.kind === 'single_item' && p.variant === 'star_rate') return 'star_rate'
+  if (p.kind === 'single_item' && p.variant === 'scale_type') return 'scale_type'
+  if (p.kind === 'single_item' && p.variant === 'user_info') return 'user_info'
+  if (p.kind === 'single_item' && p.variant === 'file_attachment') return 'file_attachment'
+  if (p.kind === 'description') return 'text'
+  return 'subjective'
+}
+
+function preserveParagraphCommonFields<T extends WritingFormParagraph>(
+  next: T,
+  prev: WritingFormParagraph
+): T {
+  const title = prev.paragraphTitle.trim()
+  const prevAnswerRequired =
+    prev.kind === 'single_item' ? (prev.answerRequired ?? prev.requiredMark) : prev.requiredMark
+  return {
+    ...next,
+    requiredMark: prev.requiredMark,
+    paragraphTitle: title === '' ? next.paragraphTitle : prev.paragraphTitle,
+    paragraphDescription: prev.paragraphDescription,
+    participatesInTitleNumbering: prev.participatesInTitleNumbering,
+    ...(next.kind === 'single_item' ? { answerRequired: prevAnswerRequired } : {}),
+  }
+}
+
+function createShortEssayDefault(id: string): ShortEssayParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'short_essay',
+    requiredMark: true,
+    paragraphTitle: '주관식형',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
+    showItemTitle: false,
+    items: [{ id: 'short-essay-item-1', label: 'Title 01', placeholder: '답변을 입력해 주세요', bodyText: '' }],
+    bodyPlaceholder: '답변을 입력해 주세요',
+    bodyText: '',
+  }
+}
+
+function createMultipleChoiceDefault(id: string): MultipleChoiceParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'multiple_choice',
+    requiredMark: true,
+    paragraphTitle: '객관식형',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
+    allowMultiple: false,
+    items: createDefaultMultipleChoiceItems().map((it: MultipleChoiceItem) => ({ ...it })),
+    selectedPreviewSingleId: null,
+    selectedPreviewMultipleIds: [],
+  }
+}
+
+function createDateTimeDefault(id: string, mode: DateTimeFieldMode): DateTimeParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'date_time',
+    requiredMark: true,
+    paragraphTitle: '날짜/시간형',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
+    fieldMode: mode,
+    periodEnabled: false,
+  }
+}
+
+function createStarRateDefault(id: string): WritingFormParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'star_rate',
+    requiredMark: true,
+    paragraphTitle: '별점형',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
+    selectedPreviewStars: null,
+  }
+}
+
+function createScaleTypeDefault(id: string): ScaleTypeParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'scale_type',
+    requiredMark: true,
+    paragraphTitle: '점수 선택형',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
+    items: createDefaultScaleTypeItems().map((it: ScaleTypeItem) => ({ ...it })),
+    selectedPreviewItemId: null,
+  }
+}
+
+function createUserInfoDefault(id: string): WritingFormParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'user_info',
+    requiredMark: true,
+    paragraphTitle: '사용자 정보형',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
+    userFields: [
+      { key: 'name', label: '이름' },
+      { key: 'gender', label: '성별' },
+      { key: 'birthDate', label: '생년월일' },
+      { key: 'phone', label: '연락처' },
+      { key: 'email', label: '이메일' },
+    ],
+    selectedUserFieldKeys: [],
+  }
+}
+
+function createFileAttachmentDefault(id: string): FileAttachmentParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'file_attachment',
+    requiredMark: true,
+    paragraphTitle: '파일 첨부형',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
+  }
+}
+
+function createDescriptionTitleDefault(id: string): WritingFormParagraph {
+  return {
+    id,
+    kind: 'description',
+    variant: 'survey_title_with_period',
+    requiredMark: true,
+    paragraphTitle: '',
+    paragraphDescription: '',
+    participatesInTitleNumbering: false,
+    surveyTitle: '',
+    surveyDescription: '',
+    periodMode: 'immediate',
+    startAt: null,
+    endAt: null,
+    showWritingPeriodOnForm: false,
+  }
+}
+
+function createDescriptionTextDefault(id: string): WritingFormParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'agreement_explanation_text',
+    requiredMark: true,
+    paragraphTitle: '텍스트형',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    bodyPlaceholder: '텍스트를 작성해 주세요',
+    bodyText: '',
+    answerRequired: true,
+  }
+}
+
+function createDescriptionClosingDefault(id: string): WritingFormParagraph {
+  return {
+    id,
+    kind: 'description',
+    variant: 'closing',
+    requiredMark: false,
+    paragraphTitle: '마무리글형',
+    paragraphDescription: '',
+    participatesInTitleNumbering: false,
+    body: '',
+  }
+}
+
+function convertParagraphByDetail(prev: WritingFormParagraph, detail: DetailSelectValue): WritingFormParagraph {
+  const id = prev.id
+  const keepTitle = (nextTitle: string) =>
+    prev.paragraphTitle.trim() === '' ? nextTitle : prev.paragraphTitle
+  switch (detail) {
+    case 'horizontal_table':
+      return preserveParagraphCommonFields(createHorizontalTableParagraph(id), prev)
+    case 'vertical_table':
+      return preserveParagraphCommonFields(createVerticalTableParagraph(id, 'text'), prev)
+    case 'subjective':
+      return preserveParagraphCommonFields(createShortEssayDefault(id), prev)
+    case 'multiple_choice':
+      return preserveParagraphCommonFields(createMultipleChoiceDefault(id), prev)
+    case 'date_only':
+      return preserveParagraphCommonFields(createDateTimeDefault(id, 'date'), prev)
+    case 'time_only':
+      return preserveParagraphCommonFields(createDateTimeDefault(id, 'time'), prev)
+    case 'star_rate':
+      return preserveParagraphCommonFields(createStarRateDefault(id), prev)
+    case 'scale_type':
+      return preserveParagraphCommonFields(createScaleTypeDefault(id), prev)
+    case 'user_info':
+      return preserveParagraphCommonFields(createUserInfoDefault(id), prev)
+    case 'file_attachment':
+      return preserveParagraphCommonFields(createFileAttachmentDefault(id), prev)
+    case 'title':
+      return {
+        ...createDescriptionTitleDefault(id),
+        paragraphTitle: keepTitle(''),
+        paragraphDescription: prev.paragraphDescription,
+      }
+    case 'text':
+      return preserveParagraphCommonFields(createDescriptionTextDefault(id), prev)
+    case 'closing':
+      return {
+        ...createDescriptionClosingDefault(id),
+        paragraphTitle: keepTitle('마무리글형'),
+        paragraphDescription: prev.paragraphDescription,
+      }
+    default:
+      return prev
   }
 }
 
@@ -334,7 +585,9 @@ export function FormEditorRightPanel({
     active && active.kind === 'single_item' && active.variant === 'scale_type'
       ? (active as ScaleTypeParagraph)
       : null
-  const activeTableOrientation = active ? tableOrientationFromParagraph(active) : null
+  const activeKindValue = active ? paragraphKindSelectValue(active) : null
+  const activeDetailValue = active ? paragraphDetailSelectValue(active) : null
+  const activeKindLocked = active ? isAgreementLockedSystemParagraph(active) : false
 
   const shortEssayItems =
     activeShortEssay?.items && activeShortEssay.items.length > 0
@@ -362,19 +615,29 @@ export function FormEditorRightPanel({
         ? true
         : (activeShortEssay.showItemTitle ?? false)
 
-  const handleTableOrientationChange = (next: TableOrientationKind) => {
-    if (!active || activeTableOrientation == null || activeTableOrientation === next) return
+  const handleKindChange = (next: ParagraphKindSelectValue) => {
+    if (!active || activeKindLocked) return
+    if (next === activeKindValue) return
     updateParagraph(active.id, cur => {
-      if (cur.kind !== 'single_item') return cur
-      if (cur.variant !== 'horizontal_table' && cur.variant !== 'vertical_table') return cur
-      const prev = cur as HorizontalTableParagraph | VerticalTableParagraph
-      if (next === 'horizontal') {
-        if (cur.variant === 'horizontal_table') return cur
-        return withPreservedTableCommonFields(createHorizontalTableParagraph(cur.id), prev)
+      if (next === 'table') {
+        if (
+          cur.kind === 'single_item' &&
+          (cur.variant === 'horizontal_table' || cur.variant === 'vertical_table')
+        ) {
+          return cur
+        }
+        return preserveParagraphCommonFields(createHorizontalTableParagraph(cur.id), cur)
       }
-      if (cur.variant === 'vertical_table') return cur
-      return withPreservedTableCommonFields(createVerticalTableParagraph(cur.id, 'text'), prev)
+      if (next === 'description') {
+        return convertParagraphByDetail(cur, 'text')
+      }
+      return convertParagraphByDetail(cur, 'subjective')
     })
+  }
+
+  const handleDetailChange = (next: DetailSelectValue) => {
+    if (!active || activeKindLocked) return
+    updateParagraph(active.id, cur => convertParagraphByDetail(cur, next))
   }
 
   return (
@@ -392,46 +655,28 @@ export function FormEditorRightPanel({
             <span className="form-editor-right-panel__section-title">{outline}</span>
             <Form.Item>
               <div className="form-editor-right-panel__kind-row">
-                {active.kind === 'single_item' &&
-                (active.variant === 'horizontal_table' || active.variant === 'vertical_table') ? (
-                  <>
-                    <CmsSelect
-                      width={165}
-                      value="table"
-                      options={[...TABLE_KIND_OPTIONS]}
-                      withAllOption={false}
-                    />
-                    <CmsSelect
-                      width={165}
-                      value={activeTableOrientation ?? 'horizontal'}
-                      options={TABLE_ORIENTATION_OPTIONS}
-                      onChange={v => handleTableOrientationChange(v as TableOrientationKind)}
-                      withAllOption={false}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <CmsSelect
-                      width="100%"
-                      value={paragraphKindLabel(active)}
-                      options={[
-                        { value: paragraphKindLabel(active), label: paragraphKindLabel(active) },
-                      ]}
-                      disabled
-                    />
-                    <CmsSelect
-                      width="100%"
-                      value={paragraphVariantLabel(active)}
-                      options={[
-                        {
-                          value: paragraphVariantLabel(active),
-                          label: paragraphVariantLabel(active),
-                        },
-                      ]}
-                      disabled
-                    />
-                  </>
-                )}
+                <>
+                  <CmsSelect
+                    width="100%"
+                    value={activeKindValue ?? paragraphKindLabel(active)}
+                    options={PARAGRAPH_KIND_OPTIONS}
+                    onChange={v => handleKindChange(v as ParagraphKindSelectValue)}
+                    disabled={activeKindLocked}
+                  />
+                  <CmsSelect
+                    width="100%"
+                    value={activeDetailValue ?? paragraphVariantLabel(active)}
+                    options={
+                      activeKindValue === 'table'
+                        ? TABLE_DETAIL_OPTIONS
+                        : activeKindValue === 'description'
+                          ? DESCRIPTION_DETAIL_OPTIONS
+                          : SINGLE_ITEM_DETAIL_OPTIONS
+                    }
+                    onChange={v => handleDetailChange(v as DetailSelectValue)}
+                    disabled={activeKindLocked}
+                  />
+                </>
               </div>
             </Form.Item>
           </Form>

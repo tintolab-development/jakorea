@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react'
+import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
+import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { TemplateListCard } from '@/features/template/ui/template-list-card'
 import './template-form-tab.css'
 import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
@@ -21,6 +23,7 @@ import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/wr
 import NewAgreementForm from '@/features/template/ui/form-set/new-agreement-form'
 import NewHorizontalTableForm from '@/features/template/ui/form-set/new-horizontal-table-form'
 import NewSurveyForm from '@/features/template/ui/form-set/new-survey-form'
+import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 
 type TemplateFormTabQuery = {
   mode?: string
@@ -31,6 +34,7 @@ type TemplateFormTabQuery = {
 export default function TemplateFormTab() {
   const { params, setParams } = useQueryParams<TemplateFormTabQuery>()
   const isPreviewOpen = params.mode === 'edit'
+  const { openWritingUserPreview } = useTemplateWritingPreview()
 
   const curriculumSections = useMemo(
     () => ({
@@ -87,6 +91,20 @@ export default function TemplateFormTab() {
     () => buildRightNavigationConfig(orderedLeftContentConfig),
     [orderedLeftContentConfig]
   )
+  const EMPTY_PREVIEW_DRAFT: WritingFormDraft = {
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'none' },
+    paragraphs: [],
+  }
+  const noopUpdateParagraph: FormUpdateParagraph = () => {}
+  const handlePreview = useCallback(() => {
+    openWritingUserPreview({
+      draft: EMPTY_PREVIEW_DRAFT,
+      updateParagraph: noopUpdateParagraph,
+      headerTitle: selectedTemplate?.templateName ?? '양식 미리보기',
+      editorKind: 'survey',
+    })
+  }, [openWritingUserPreview, selectedTemplate?.templateName])
 
   if (params.mode === 'new' && params.type === 'survey') {
     return <NewSurveyForm />
@@ -118,6 +136,7 @@ export default function TemplateFormTab() {
         title={selectedTemplate?.templateName ?? '양식 미리보기'}
         description="해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
         templateTabType="writing"
+        onPreview={handlePreview}
         leftContent={
           <TemplateModalLeftContent
             config={orderedLeftContentConfig}

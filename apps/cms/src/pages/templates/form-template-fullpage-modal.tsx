@@ -1,5 +1,7 @@
 import { useCallback, useRef } from 'react'
 import { message } from 'antd'
+import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
+import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
 import {
   type TemplateCustomFieldDef,
@@ -16,11 +18,10 @@ import {
 } from './form-certificate-preview'
 import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-overlay'
 import { saveFormTemplateSettings } from './form-template-api'
-import { FormCertificateDocumentPreviewModal } from './form-certificate-document-preview-modal'
-import { useFormCertificateDocumentPreviewModal } from './use-form-certificate-document-preview-modal'
 import { useFormCertificatePdfDownload } from './use-form-certificate-pdf-download'
 import { useFormCertificatePreviewProps } from './use-form-certificate-preview-props'
 import { useFormTemplateCertificateModalState } from './use-form-template-certificate-modal-state'
+import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 
 export interface FormTemplateFullpageModalProps {
   open: boolean
@@ -28,6 +29,7 @@ export interface FormTemplateFullpageModalProps {
 }
 
 export function FormTemplateFullpageModal({ open, onClose }: FormTemplateFullpageModalProps) {
+  const { openWritingUserPreview } = useTemplateWritingPreview()
   const modalState = useFormTemplateCertificateModalState(open)
   const {
     setOrgLogoFile,
@@ -48,9 +50,6 @@ export function FormTemplateFullpageModal({ open, onClose }: FormTemplateFullpag
   const { interactive: certificatePreviewProps, pdfExport: certificatePdfExportProps } =
     useFormCertificatePreviewProps(modalState)
 
-  const { open: documentPreviewOpen, openPreview, closePreview } =
-    useFormCertificateDocumentPreviewModal()
-
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
   const buildPdfFilename = useCallback(() => generateFilename('봉사활동인증서', 'pdf'), [])
 
@@ -58,6 +57,22 @@ export function FormTemplateFullpageModal({ open, onClose }: FormTemplateFullpag
     exportRootRef: pdfExportCanvasRef,
     buildFilename: buildPdfFilename,
   })
+
+  const EMPTY_PREVIEW_DRAFT: WritingFormDraft = {
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'none' },
+    paragraphs: [],
+  }
+  const noopUpdateParagraph: FormUpdateParagraph = () => {}
+
+  const handlePreview = useCallback(() => {
+    openWritingUserPreview({
+      draft: EMPTY_PREVIEW_DRAFT,
+      updateParagraph: noopUpdateParagraph,
+      headerTitle: '봉사활동인증서',
+      editorKind: 'survey',
+    })
+  }, [openWritingUserPreview])
 
   const handleSave = useCallback(async () => {
     const hideLoading = message.loading('저장 중…', 0)
@@ -86,7 +101,7 @@ export function FormTemplateFullpageModal({ open, onClose }: FormTemplateFullpag
       title="봉사활동인증서"
       description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
       templateTabType="issuance"
-      onPreview={openPreview}
+      onPreview={handlePreview}
       onSave={handleSave}
       onDownloadDocument={downloadPdf}
       downloadDocumentLoading={isPdfDownloading}
@@ -129,11 +144,6 @@ export function FormTemplateFullpageModal({ open, onClose }: FormTemplateFullpag
           }}
         />
       }
-    />
-    <FormCertificateDocumentPreviewModal
-      open={documentPreviewOpen}
-      onClose={closePreview}
-      previewProps={certificatePdfExportProps}
     />
     </>
   )

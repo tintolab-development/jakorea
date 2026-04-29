@@ -8,7 +8,6 @@ import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/rende
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import './template-preview-modal.css'
-import { CmsButton } from '@/shared/ui'
 
 export interface TemplatePreviewModalProps {
   open: boolean
@@ -65,16 +64,6 @@ export function TemplatePreviewModal({
         </header>
 
         <div className="template-preview-modal__body">
-          <div className="template-preview-modal__notice-wrapper">
-            <div className="template-preview-modal__notice">
-              <p className="template-preview-modal__notice-text">
-                현재 화면은 미리보기 화면입니다.
-              </p>
-              <CmsButton variant="secondary" onClick={onClose}>
-                미리보기 닫기
-              </CmsButton>
-            </div>
-          </div>
           <FormEditorLeftPane
             paragraphs={draft.paragraphs}
             titleNumbering={draft.formSettings.titleNumbering}

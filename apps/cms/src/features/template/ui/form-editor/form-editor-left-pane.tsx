@@ -40,6 +40,7 @@ import {
 } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import { restrictFormEditorListToVerticalAxis } from '@/features/template/ui/form-editor/dnd-restrict-vertical-axis'
+import { getLastMiddleParagraphId } from '@/features/template/lib/writing-form-middle-paragraph-mutations'
 import './form-editor.css'
 
 export type FormEditorLeftPaneLayout = 'five' | 'three'
@@ -63,7 +64,10 @@ export interface FormEditorLeftPaneProps {
   /** 테이블 세로형: 본문 행 선택(캔버스) — 에디터에서 하나만 유지 */
   verticalTableBodyRowSelection?: { paragraphId: string; row: number } | null
   onVerticalTableBodyRowSelectionChange?: (paragraphId: string, row: number | null) => void
-  /** 테이블 가로형 중간 단락: 추가·복제·삭제 */
+  /**
+   * 중간(middle) 단락 공통 액션 — `getWritingFormHeadMiddlePinnedTail` 기준.
+   * [단락 추가]는 설명글 텍스트형(`agreement_explanation_text`) 삽입, 복제 시 단락·하위 id 재발급.
+   */
   middleParagraphActions?: {
     onAddAfter: (paragraphId: string) => void
     onDuplicate: (paragraphId: string) => void
@@ -515,7 +519,8 @@ function modalCardFooterActions(
   paragraph: WritingFormParagraph,
   isSelected: boolean,
   updateParagraph: FormEditorLeftPaneProps['updateParagraph'],
-  middleParagraphActions: FormEditorLeftPaneProps['middleParagraphActions']
+  middleParagraphActions: FormEditorLeftPaneProps['middleParagraphActions'],
+  paragraphs: WritingFormParagraph[]
 ): ReactNode {
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
     if (!isSelected) return undefined
@@ -572,7 +577,23 @@ function modalCardFooterActions(
     return <FormParagraphCardActionsMinimal />
   }
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
-    return <FormParagraphCardActionsMinimal />
+    return middleParagraphActions ? (
+      <FormParagraphCardActionsMinimal
+        onAdd={() => {
+          const lastMid = getLastMiddleParagraphId(paragraphs)
+          if (lastMid != null) {
+            middleParagraphActions.onAddAfter(lastMid)
+            return
+          }
+          const split = getWritingFormHeadMiddlePinnedTail(paragraphs)
+          if (split != null) middleParagraphActions.onAddAfter(split.head.id)
+        }}
+        onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
+        onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
+      />
+    ) : (
+      <FormParagraphCardActionsMinimal />
+    )
   }
 
   if (paragraph.kind === 'single_item') {
@@ -611,14 +632,45 @@ function modalCardFooterActions(
               }
             })
           }
+          onAdd={
+            middleParagraphActions
+              ? () => middleParagraphActions.onAddAfter(paragraph.id)
+              : undefined
+          }
+          onDuplicate={
+            middleParagraphActions
+              ? () => middleParagraphActions.onDuplicate(paragraph.id)
+              : undefined
+          }
+          onDelete={
+            middleParagraphActions
+              ? () => middleParagraphActions.onDelete(paragraph.id)
+              : undefined
+          }
         />
       )
     }
-    return <FormParagraphCardActions />
+    return middleParagraphActions ? (
+      <FormParagraphCardActions
+        onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
+        onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
+        onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
+      />
+    ) : (
+      <FormParagraphCardActions />
+    )
   }
 
   if (isTitleWithPeriodParagraph(paragraph)) {
-    return <FormParagraphCardActionsMinimal />
+    return middleParagraphActions ? (
+      <FormParagraphCardActionsMinimal
+        onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
+        onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
+        onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
+      />
+    ) : (
+      <FormParagraphCardActionsMinimal />
+    )
   }
 
   return undefined
@@ -690,7 +742,13 @@ function PinnedFormCard({
       }
       actions={
         showEditorChrome
-          ? modalCardFooterActions(paragraph, isSelected, updateParagraph, middleParagraphActions)
+          ? modalCardFooterActions(
+              paragraph,
+              isSelected,
+              updateParagraph,
+              middleParagraphActions,
+              paragraphs
+            )
           : undefined
       }
     >
@@ -810,7 +868,13 @@ function SortableMiddleFormCard({
         }
         actions={
           showEditorChrome
-            ? modalCardFooterActions(paragraph, isSelected, updateParagraph, middleParagraphActions)
+            ? modalCardFooterActions(
+                paragraph,
+                isSelected,
+                updateParagraph,
+                middleParagraphActions,
+                paragraphs
+              )
             : undefined
         }
       >

@@ -23,6 +23,10 @@ alwaysApply: false
 
 - **에디터 조각** (`FormEditorLeftPane`, `form-editor-field-nav`, `paragraph/*` 등)은 기존처럼 `form-editor/` · `paragraph/` 등 **기능 단위 경로**에 둔다. `form-set`은 “한 화면으로 묶인 진입점” 전용이다.
 
+## Middle 단락 버튼 (추가·복제·삭제)
+
+- `new-survey-form` / `new-agreement-form` 은 `FormEditorLeftPane`에 **`middleParagraphActions`** 를 넘긴다. 상세·예외(가로형 테이블 전용 에디터)는 **`middle-paragraph-actions.mdc`** 를 본다.
+
 ## 라우트
 
 - `apps/cms/src/pages/templates/` 에서 `@/features/template/ui/form-set/...` 로 import 한다.

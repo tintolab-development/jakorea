@@ -99,6 +99,7 @@ export function FormTab() {
             editorKind="survey"
             singleItemListActiveItemId={singleItem.singleItemListActiveItemId}
             onSelectSingleItemListItem={singleItem.onSelectSingleItemListItem}
+            middleParagraphActions={singleItem.middleParagraphActions}
           />
         }
         rightNavigation={

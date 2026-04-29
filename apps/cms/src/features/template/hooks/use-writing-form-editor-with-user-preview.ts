@@ -9,6 +9,10 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import {
+  useWritingFormMiddleParagraphActions,
+  type MiddleParagraphActionsHandlers,
+} from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 
 export type UseWritingFormEditorWithUserPreviewOptions = {
   /** 편집 UI(풀페이지 등) 열림 */
@@ -43,6 +47,7 @@ export type WritingFormEditorWithUserPreviewResult = {
   onSelectSingleItemListItem: (paragraphId: string, itemId: string | null) => void
   handlePreview: () => void
   handleSave: () => void
+  middleParagraphActions: MiddleParagraphActionsHandlers
 }
 
 /**
@@ -159,6 +164,8 @@ export function useWritingFormEditorWithUserPreview(
     setSingleItemListActiveItemId(itemId)
   }, [])
 
+  const middleParagraphActions = useWritingFormMiddleParagraphActions(setDraft, setActiveParagraphId)
+
   return {
     headerTitle: previewHeaderTitle,
     draft,
@@ -174,5 +181,6 @@ export function useWritingFormEditorWithUserPreview(
     onSelectSingleItemListItem,
     handlePreview,
     handleSave,
+    middleParagraphActions,
   }
 }

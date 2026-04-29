@@ -1,6 +1,7 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { message } from 'antd'
 import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
+import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import {
   type HorizontalTableFlavor,
   type WritingFormDraft,
@@ -70,6 +71,8 @@ export function HorizontalTableFormEditor({
     paragraphs: draft.paragraphs,
     activeParagraphId,
   })
+  const { openWritingUserPreview, syncWritingUserPreviewSession, isWritingUserPreviewOpen } =
+    useTemplateWritingPreview()
 
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
 
@@ -81,9 +84,24 @@ export function HorizontalTableFormEditor({
     [setActiveParagraphId]
   )
 
+  const writingPreviewSession = useMemo(
+    () => ({
+      draft,
+      updateParagraph,
+      headerTitle: '테이블 가로형',
+      editorKind: 'horizontal_table' as const,
+    }),
+    [draft, updateParagraph]
+  )
+
+  useEffect(() => {
+    if (!isWritingUserPreviewOpen) return
+    syncWritingUserPreviewSession(writingPreviewSession)
+  }, [isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
+
   const handlePreview = useCallback(() => {
-    message.info('미리보기는 추후 연동 예정입니다.')
-  }, [])
+    openWritingUserPreview(writingPreviewSession)
+  }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
     message.success('저장 API 연동 전입니다.')

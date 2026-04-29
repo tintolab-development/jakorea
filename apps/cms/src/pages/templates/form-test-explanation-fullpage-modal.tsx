@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { message } from 'antd'
+import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import {
   createExplanationTypesPreviewDraft,
@@ -9,6 +10,7 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
 import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
 import {
@@ -35,6 +37,12 @@ export function FormTestExplanationFullpageModal({
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
     DEFAULT_FORM_TEST_EXPLANATION_PARAGRAPH_IDS.title
   )
+  const {
+    openWritingUserPreview,
+    syncWritingUserPreviewSession,
+    closeWritingUserPreview,
+    isWritingUserPreviewOpen,
+  } = useTemplateWritingPreview()
 
   useEffect(() => {
     if (!open) return
@@ -88,13 +96,35 @@ export function FormTestExplanationFullpageModal({
     }
   }, [draft])
 
+  const writingPreviewSession = useMemo(
+    () => ({
+      draft,
+      updateParagraph,
+      headerTitle: '설명글 유형 모음',
+      editorKind: 'survey' as const,
+    }),
+    [draft, updateParagraph]
+  )
+
+  useEffect(() => {
+    if (!isWritingUserPreviewOpen) return
+    syncWritingUserPreviewSession(writingPreviewSession)
+  }, [isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
+
+  useEffect(() => {
+    if (open) return
+    closeWritingUserPreview()
+  }, [open, closeWritingUserPreview])
+
   const handlePreview = useCallback(() => {
-    message.info('미리보기는 추후 연동 예정입니다.')
-  }, [])
+    openWritingUserPreview(writingPreviewSession)
+  }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
     message.success('저장 API 연동 전입니다.')
   }, [])
+
+  const middleParagraphActions = useWritingFormMiddleParagraphActions(setDraft, setActiveParagraphId)
 
   return (
     <TemplateFullpageModal
@@ -118,6 +148,7 @@ export function FormTestExplanationFullpageModal({
             setActiveParagraphId(paragraphId)
             setSingleItemListActiveItemId(itemId)
           }}
+          middleParagraphActions={middleParagraphActions}
         />
       }
       rightNavigation={

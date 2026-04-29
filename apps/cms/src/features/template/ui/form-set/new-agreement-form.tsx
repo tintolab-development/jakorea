@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { message } from 'antd'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import {
@@ -13,8 +14,10 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
 import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
+import { useTableRowSelectionState } from '@/features/template/ui/form-editor/use-table-row-selection-state'
 import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
@@ -30,13 +33,19 @@ export default function NewAgreementForm() {
   const { setParams } = useQueryParams<NewAgreementFormQuery>()
   const [draft, setDraft] = useState<WritingFormDraft>(() => createDefaultDirectAgreementDraft())
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
-    DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.title
+    DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.explanationText
   )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
 
   const handleClose = useCallback(() => {
     setParams({ mode: undefined, type: undefined, id: undefined })
   }, [setParams])
+  const {
+    openWritingUserPreview,
+    syncWritingUserPreviewSession,
+    closeWritingUserPreview,
+    isWritingUserPreviewOpen,
+  } = useTemplateWritingPreview()
 
   const updateParagraph = useCallback(
     (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => {
@@ -85,9 +94,30 @@ export default function NewAgreementForm() {
     }
   }, [draft])
 
+  const writingPreviewSession = useMemo(
+    () => ({
+      draft,
+      updateParagraph,
+      headerTitle: '동의 양식',
+      editorKind: 'agreement' as const,
+    }),
+    [draft, updateParagraph]
+  )
+
+  useEffect(() => {
+    if (!isWritingUserPreviewOpen) return
+    syncWritingUserPreviewSession(writingPreviewSession)
+  }, [isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
+
+  useEffect(() => {
+    return () => {
+      closeWritingUserPreview()
+    }
+  }, [closeWritingUserPreview])
+
   const handlePreview = useCallback(() => {
-    message.info('미리보기는 추후 연동 예정입니다.')
-  }, [])
+    openWritingUserPreview(writingPreviewSession)
+  }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
     message.success('저장 API 연동 전입니다.')
@@ -97,6 +127,20 @@ export default function NewAgreementForm() {
     setActiveParagraphId(id)
     setSingleItemListActiveItemId(null)
   }, [])
+
+  const middleParagraphActions = useWritingFormMiddleParagraphActions(setDraft, setActiveParagraphId)
+  const {
+    horizontalTableRowSelectionsByParagraphId,
+    verticalTableBodyRowSelection,
+    activeHorizontalTableRowSelection,
+    onHorizontalTableRowSelectionChange,
+    onVerticalTableBodyRowSelectionChange,
+    focusHorizontalTableBodyRow,
+    focusVerticalTableBodyRow,
+  } = useTableRowSelectionState({
+    paragraphs: draft.paragraphs,
+    activeParagraphId,
+  })
 
   return (
     <TemplateFullpageModal
@@ -119,6 +163,11 @@ export default function NewAgreementForm() {
             setActiveParagraphId(paragraphId)
             setSingleItemListActiveItemId(itemId)
           }}
+          horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
+          onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+          verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+          onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
+          middleParagraphActions={middleParagraphActions}
         />
       }
       rightNavigation={
@@ -145,6 +194,10 @@ export default function NewAgreementForm() {
             editorKind="agreement"
             showTitleNumbering={false}
             singleItemListActiveItemId={singleItemListActiveItemId}
+            horizontalTableRowSelection={activeHorizontalTableRowSelection}
+            onHorizontalTableBodyRowDeleted={focusHorizontalTableBodyRow}
+            verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+            onVerticalTableBodyRowDeleted={focusVerticalTableBodyRow}
           />
         </FormEditorFieldNav>
       }
