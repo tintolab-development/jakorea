@@ -6,8 +6,10 @@ import {
   createContext,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
+  type ChangeEvent,
   type DependencyList,
   type KeyboardEvent,
   type MutableRefObject,
@@ -25,7 +27,12 @@ import {
 } from '@/data/mock/settlement-item-setting-detail.mock'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui/app-button'
-import { SettlementItemSettingIcon } from './settlement-item-setting-icons'
+import {
+  SettlementItemSettingDescriptionEditIcon,
+  SettlementItemSettingIcon,
+  SettlementItemSettingTitleEditIcon,
+} from './settlement-item-setting-icons'
+import { SettlementItemTossfaceIconPickerTrigger } from './settlement-item-tossface-icon-picker'
 import './settlement-item-setting-detail-modal.css'
 import { AppInput } from '@/shared/ui/app-input'
 import { AppSelect } from '@/shared/ui/app-select'
@@ -151,6 +158,169 @@ function useRegisterSettlementDetailSnapshot(
       ref.current = null
     }
   }, [ref, ...deps])
+}
+
+function SettlementItemSettingDetailModalHeaderTitle({
+  value,
+  editing,
+  onChange,
+  onRequestEdit,
+  onCommitEdit,
+  restoreValueIfEmptyOnBlur,
+}: {
+  value: string
+  editing: boolean
+  onChange: (next: string) => void
+  onRequestEdit: () => void
+  onCommitEdit: () => void
+  /** 편집 종료(blur) 시 값이 비어 있으면 복구할 문자열 */
+  restoreValueIfEmptyOnBlur: string
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!editing) return
+    const id = window.setTimeout(() => {
+      inputRef.current?.focus({ preventScroll: true })
+    }, 0)
+    return () => window.clearTimeout(id)
+  }, [editing])
+
+  const handleBlur = () => {
+    if (value.trim() === '' && restoreValueIfEmptyOnBlur !== '') {
+      onChange(restoreValueIfEmptyOnBlur)
+    }
+    onCommitEdit()
+  }
+
+  return (
+    <div className="settlement-item-setting-detail-modal__header-title-row">
+      {editing ? (
+        <input
+          ref={inputRef}
+          type="text"
+          className="settlement-item-setting-detail-modal__header-title-field"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              handleBlur()
+            }
+          }}
+          aria-label="항목명"
+        />
+      ) : (
+        <span className="settlement-item-setting-detail-modal__header-title-text">{value}</span>
+      )}
+      <button
+        type="button"
+        className="settlement-item-setting-detail-modal__title-edit-btn"
+        onClick={onRequestEdit}
+        aria-label="항목명 수정"
+        aria-disabled={editing}
+        tabIndex={editing ? -1 : 0}
+        style={editing ? { pointerEvents: 'none' } : undefined}
+      >
+        <SettlementItemSettingTitleEditIcon />
+      </button>
+    </div>
+  )
+}
+
+function SettlementItemSettingDetailModalHeaderDescription({
+  value,
+  editing,
+  onChange,
+  onRequestEdit,
+  onCommitEdit,
+  restoreValueIfEmptyOnBlur,
+}: {
+  value: string
+  editing: boolean
+  onChange: (next: string) => void
+  onRequestEdit: () => void
+  onCommitEdit: () => void
+  restoreValueIfEmptyOnBlur: string
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  /** value 반영 직후 커서 복원( cols·높이 조정 등으로 선택이 초기화되는 것 방지 ) */
+  const pendingCaretRef = useRef<{ start: number; end: number } | null>(null)
+  const wasEditingRef = useRef(false)
+
+  useLayoutEffect(() => {
+    if (!editing) {
+      wasEditingRef.current = false
+      return
+    }
+    const el = textareaRef.current
+    if (!el) return
+
+    const entering = !wasEditingRef.current
+    wasEditingRef.current = true
+
+    const pending = pendingCaretRef.current
+    if (pending) {
+      pendingCaretRef.current = null
+      const max = el.value.length
+      el.setSelectionRange(
+        Math.min(Math.max(0, pending.start), max),
+        Math.min(Math.max(0, pending.end), max)
+      )
+    } else if (entering) {
+      el.focus({ preventScroll: true })
+      const len = el.value.length
+      el.setSelectionRange(len, len)
+    }
+  }, [editing, value])
+
+  const handleDescriptionChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    const el = e.target
+    pendingCaretRef.current = {
+      start: el.selectionStart ?? 0,
+      end: el.selectionEnd ?? 0,
+    }
+    onChange(el.value)
+  }
+
+  const handleBlur = () => {
+    if (value.trim() === '' && restoreValueIfEmptyOnBlur !== '') {
+      onChange(restoreValueIfEmptyOnBlur)
+    }
+    onCommitEdit()
+  }
+
+  const display = value.trim() !== '' ? value : '—'
+
+  return (
+    <span className="settlement-item-setting-detail-modal__header-description-row">
+      {editing ? (
+        <textarea
+          ref={textareaRef}
+          className="settlement-item-setting-detail-modal__header-description-field"
+          value={value}
+          onChange={handleDescriptionChange}
+          onBlur={handleBlur}
+          rows={1}
+          aria-label="항목 설명"
+        />
+      ) : (
+        <span className="settlement-item-setting-detail-modal__header-description-text">{display}</span>
+      )}
+      <button
+        type="button"
+        className="settlement-item-setting-detail-modal__description-edit-btn"
+        onClick={onRequestEdit}
+        aria-label="항목 설명 수정"
+        aria-disabled={editing}
+        tabIndex={editing ? -1 : 0}
+        style={editing ? { pointerEvents: 'none' } : undefined}
+      >
+        <SettlementItemSettingDescriptionEditIcon />
+      </button>
+    </span>
+  )
 }
 
 function buildInitialFormState(itemId: string) {
@@ -1758,6 +1928,11 @@ export interface SettlementItemSettingDetailModalProps {
   onCancel: () => void
   /** 저장 시 현재 항목 id 전달(연동용) */
   onSave?: (itemId: string) => void
+  /** 저장 시 카드 목록의 제목·설명·이모지(임시) 갱신 */
+  onSaveItemMeta?: (
+    itemId: string,
+    meta: { title: string; description: string; emojiOverride?: string | null }
+  ) => void
   item: SettlementItemSettingRow | null
 }
 
@@ -1765,10 +1940,26 @@ export function SettlementItemSettingDetailModal({
   open,
   onCancel,
   onSave,
+  onSaveItemMeta,
   item,
 }: SettlementItemSettingDetailModalProps) {
   const show = open && item !== null
   const snapshotRef = useRef<(() => SettlementItemSettingDetail) | null>(null)
+
+  const [headerTitle, setHeaderTitle] = useState('')
+  const [headerDescription, setHeaderDescription] = useState('')
+  const [headerEmoji, setHeaderEmoji] = useState<string | null>(null)
+  const [titleEditing, setTitleEditing] = useState(false)
+  const [descriptionEditing, setDescriptionEditing] = useState(false)
+
+  useEffect(() => {
+    if (!show || item == null) return
+    setHeaderTitle(item.title)
+    setHeaderDescription(item.description)
+    setHeaderEmoji(item.emojiOverride ?? null)
+    setTitleEditing(false)
+    setDescriptionEditing(false)
+  }, [show, item?.id, item?.title, item?.description, item?.emojiOverride])
 
   const handleSave = () => {
     if (!item) return
@@ -1776,24 +1967,67 @@ export function SettlementItemSettingDetailModal({
     if (snap) {
       saveSettlementItemSettingDetail(item.id, snap)
     }
+    const titleToSave = headerTitle.trim() !== '' ? headerTitle.trim() : item.title
+    onSaveItemMeta?.(item.id, {
+      title: titleToSave,
+      description: headerDescription,
+      emojiOverride: headerEmoji,
+    })
     onSave?.(item.id)
     void message.success('저장되었습니다.')
     onCancel()
   }
 
+  const modalTitleForAria =
+    item != null ? (headerTitle.trim() !== '' ? headerTitle : item.title) : ''
+
   return (
     <ContentModal
       open={show}
       onCancel={onCancel}
-      title={item?.title ?? ''}
-      titlePrefix={
+      title={modalTitleForAria}
+      titleContent={
         item ? (
-          <span className="settlement-item-setting-detail-modal__header-icon">
-            <SettlementItemSettingIcon iconKey={item.iconKey} />
-          </span>
+          <SettlementItemSettingDetailModalHeaderTitle
+            value={headerTitle}
+            editing={titleEditing}
+            onChange={setHeaderTitle}
+            onRequestEdit={() => setTitleEditing(true)}
+            onCommitEdit={() => setTitleEditing(false)}
+            restoreValueIfEmptyOnBlur={item.title}
+          />
         ) : undefined
       }
-      description={item?.description}
+      titlePrefix={
+        item ? (
+          <SettlementItemTossfaceIconPickerTrigger onPickEmoji={setHeaderEmoji}>
+            <span className="settlement-item-setting-detail-modal__header-icon">
+              {headerEmoji ? (
+                <span
+                  className="tossface settlement-item-setting-detail-modal__header-tossface"
+                  aria-hidden
+                >
+                  {headerEmoji}
+                </span>
+              ) : (
+                <SettlementItemSettingIcon iconKey={item.iconKey} />
+              )}
+            </span>
+          </SettlementItemTossfaceIconPickerTrigger>
+        ) : undefined
+      }
+      description={
+        item ? (
+          <SettlementItemSettingDetailModalHeaderDescription
+            value={headerDescription}
+            editing={descriptionEditing}
+            onChange={setHeaderDescription}
+            onRequestEdit={() => setDescriptionEditing(true)}
+            onCommitEdit={() => setDescriptionEditing(false)}
+            restoreValueIfEmptyOnBlur={item.description}
+          />
+        ) : undefined
+      }
       descriptionGap="compact"
       width={800}
       className={[

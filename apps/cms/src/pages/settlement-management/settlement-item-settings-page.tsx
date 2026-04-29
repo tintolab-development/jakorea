@@ -91,7 +91,13 @@ export default function SettlementItemSettingsPage() {
                     onClick={() => setSelectedItem(item)}
                   >
                     <div className="settlement-item-settings__card-icon" aria-hidden>
-                      <SettlementItemSettingIcon iconKey={item.iconKey} />
+                      {item.emojiOverride ? (
+                        <span className="tossface settlement-item-settings__card-tossface">
+                          {item.emojiOverride}
+                        </span>
+                      ) : (
+                        <SettlementItemSettingIcon iconKey={item.iconKey} />
+                      )}
                     </div>
                     <div className="settlement-item-settings__card-body">
                       <div className="settlement-item-settings__card-title-row">
@@ -135,6 +141,15 @@ export default function SettlementItemSettingsPage() {
         open={selectedItem !== null}
         item={selectedItem}
         onCancel={() => setSelectedItem(null)}
+        onSaveItemMeta={(itemId, meta) => {
+          setSections(prev =>
+            prev.map(section => ({
+              ...section,
+              items: section.items.map(i => (i.id === itemId ? { ...i, ...meta } : i)),
+            }))
+          )
+          setSelectedItem(cur => (cur?.id === itemId ? { ...cur, ...meta } : cur))
+        }}
       />
     </div>
   )
