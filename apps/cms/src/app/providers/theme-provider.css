@@ -15,6 +15,17 @@
   font-display: swap;
 }
 
+/* Tossface — 토스페이스 아이콘 글리프 (`public/fonts`) */
+@font-face {
+  font-family: 'Tossface';
+  src: url('/fonts/TossFaceFontMac.ttf') format('truetype');
+  font-display: swap;
+}
+
+.tossface {
+  font-family: 'Tossface', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+
 /* Source Han Serif K — `src/assets/fonts` 로컬 OTF (수료증 타이틀·기관명 등) */
 @font-face {
   font-family: 'Source Han Serif K';
