@@ -15,10 +15,10 @@
   font-display: swap;
 }
 
-/* Tossface — 토스페이스 아이콘 글리프 (`public/fonts`) */
+/* Tossface — 토스페이스 아이콘 글리프 웹용 (`public/fonts`) */
 @font-face {
   font-family: 'Tossface';
-  src: url('/fonts/TossFaceFontMac.ttf') format('truetype');
+  src: url('/fonts/TossFaceFontWeb.otf') format('opentype');
   font-display: swap;
 }
 
