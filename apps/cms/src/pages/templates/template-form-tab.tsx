@@ -97,14 +97,17 @@ export default function TemplateFormTab() {
     paragraphs: [],
   }
   const noopUpdateParagraph: FormUpdateParagraph = () => {}
+  const previewEditorKind =
+    selectedTemplate?.id.startsWith('agreement-') === true ? 'agreement' : 'survey'
+
   const handlePreview = useCallback(() => {
     openWritingUserPreview({
       draft: EMPTY_PREVIEW_DRAFT,
       updateParagraph: noopUpdateParagraph,
       headerTitle: selectedTemplate?.templateName ?? '양식 미리보기',
-      editorKind: 'survey',
+      editorKind: previewEditorKind,
     })
-  }, [openWritingUserPreview, selectedTemplate?.templateName])
+  }, [openWritingUserPreview, previewEditorKind, selectedTemplate?.templateName])
 
   if (params.mode === 'new' && params.type === 'survey') {
     return <NewSurveyForm />
@@ -124,6 +127,7 @@ export default function TemplateFormTab() {
             key={section.key}
             title={section.title}
             description={section.description}
+            headerInline
           >
             <TemplateTable rows={section.rows} onPreview={handleOpenTemplatePreview} />
           </TemplateListCard>

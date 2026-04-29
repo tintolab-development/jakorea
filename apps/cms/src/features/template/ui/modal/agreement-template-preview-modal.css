@@ -1,0 +1,186 @@
+.agreement-template-preview-modal.teal-header-modal--full .teal-header-modal__body {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.agreement-template-preview-modal__shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  align-items: center;
+}
+
+.agreement-template-preview-modal__header {
+  display: flex;
+  width: 100%;
+  max-width: none;
+  height: 64px;
+  padding: 16px 52px;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+}
+
+.agreement-template-preview-modal__title {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 26px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%; /* 31.2px */
+}
+
+.agreement-template-preview-modal__title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agreement-template-preview-modal__title-pen {
+  width: 24px;
+  height: 25px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.4;
+}
+
+.agreement-template-preview-modal__close {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.agreement-template-preview-modal__body {
+  display: flex;
+  width: 100%;
+  max-width: none;
+  padding: 32px 52px 52px 52px;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  background: #f4f6f6;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.agreement-template-preview-modal__toolbar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.agreement-template-preview-modal__notice {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.agreement-template-preview-modal__actions {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.agreement-template-preview-modal__action-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--8, 8px);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%; /* 24px */
+}
+
+.agreement-template-preview-modal__action-button--download {
+  width: 180px;
+  height: 44px;
+  padding: 6px 16px 6px 10px;
+  border: 1px solid var(--color-mint-01, #01a1af);
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+    #fff;
+  color: var(--color-mint-01, #01a1af);
+}
+
+.agreement-template-preview-modal__action-button--download .anticon {
+  width: 24px;
+  height: 24px;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.agreement-template-preview-modal__action-button--download .anticon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.agreement-template-preview-modal__action-button--change {
+  display: flex;
+  width: 140px;
+  height: 44px;
+  padding: 6px 16px;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  background: var(--color-mint-01, #01a1af);
+  color: var(--main-WT, #fff);
+}
+
+.agreement-template-preview-modal__preview-wrapper {
+  display: flex;
+  width: 1208px;
+  height: 1682px;
+  padding: 32px;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--16, 16px);
+  background: var(--gray-bdc-6-c-9, #bdc6c9);
+  box-shadow: 0 4px 32px 0 rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+}
+
+.agreement-template-preview-modal__preview-a4 {
+  width: 1146px;
+  height: 1618px;
+  flex-shrink: 0;
+  background: #fff;
+  overflow: auto;
+}
+
+.agreement-template-preview-modal__preview-a4 .form-editor-left {
+  width: 100%;
+  max-width: 100%;
+}
