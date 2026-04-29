@@ -17,6 +17,12 @@
   gap: 6px;
 }
 
+.template-list-card__header--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
 .info-section-description {
   color: var(--default-BK, #3d3d3d);
   font-size: 16px;
@@ -25,4 +31,8 @@
   line-height: 150%;
   opacity: 0.5;
   padding: 0 10px 0 8px;
+}
+
+.template-list-card__header--inline .info-section-description {
+  padding: 0;
 }
