@@ -306,6 +306,21 @@
   box-shadow: none;
 }
 
+/* 디스크립션 수정 모드: 텍스트 너비만큼 하단 민트 스트로크 — border·padding 없이 background만(수직 시프트·클리핑 방지) */
+.settlement-item-setting-detail-modal__header-description-field--editing {
+  flex: 0 0 auto;
+  width: fit-content;
+  max-width: min(100vw - 120px, 100%);
+  box-sizing: border-box;
+  padding-bottom: 0;
+  border-bottom: none;
+  background-color: transparent;
+  background-image: linear-gradient(var(--color-mint-01, #01A1AF), var(--color-mint-01, #01A1AF));
+  background-size: 100% 2px;
+  background-position: left bottom;
+  background-repeat: no-repeat;
+}
+
 /* 헤더: 제목은 내용 너비만 — 남는 공간을 제목 블록이 삼키지 않음 */
 .settlement-item-setting-detail-modal.content-modal .teal-header-modal__title {
   flex: 1 1 auto;
@@ -382,6 +397,23 @@
 .settlement-item-setting-detail-modal__header-title-field:focus {
   outline: none;
   box-shadow: none;
+}
+
+/*
+ * 타이틀 수정 모드: 입력 너비만큼 하단 민트 스트로크
+ * — border·padding 없이 background만 사용 (헤더 36px 고정 + ant-modal-content overflow:hidden 에서 border 시 클리핑됨, 수직 시프트 방지)
+ * — 시각적 두께: border-bottom: 2px solid 와 동일 2px 라인
+ */
+.settlement-item-setting-detail-modal__header-title-field--editing {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  padding-bottom: 0;
+  border-bottom: none;
+  background-color: transparent;
+  background-image: linear-gradient(var(--color-mint-01, #01A1AF), var(--color-mint-01, #01A1AF));
+  background-size: 100% 2px;
+  background-position: left bottom;
+  background-repeat: no-repeat;
 }
 
 .settlement-item-setting-detail-modal__section-stack {

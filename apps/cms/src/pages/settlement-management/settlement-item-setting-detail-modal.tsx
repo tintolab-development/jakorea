@@ -199,7 +199,7 @@ function SettlementItemSettingDetailModalHeaderTitle({
         <input
           ref={inputRef}
           type="text"
-          className="settlement-item-setting-detail-modal__header-title-field"
+          className="settlement-item-setting-detail-modal__header-title-field settlement-item-setting-detail-modal__header-title-field--editing"
           value={value}
           onChange={e => onChange(e.target.value)}
           onBlur={handleBlur}
@@ -298,7 +298,7 @@ function SettlementItemSettingDetailModalHeaderDescription({
       {editing ? (
         <textarea
           ref={textareaRef}
-          className="settlement-item-setting-detail-modal__header-description-field"
+          className="settlement-item-setting-detail-modal__header-description-field settlement-item-setting-detail-modal__header-description-field--editing"
           value={value}
           onChange={handleDescriptionChange}
           onBlur={handleBlur}
