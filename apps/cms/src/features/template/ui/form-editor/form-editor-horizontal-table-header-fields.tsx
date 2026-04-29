@@ -3,6 +3,7 @@ import type { HorizontalTableParagraph } from '@/features/template/model/writing
 import {
   HORIZONTAL_TABLE_MIN_COLUMN_COUNT,
   horizontalTableRemoveColumn,
+  normalizeHorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorHorizontalTableHintXIcon } from '@/features/template/ui/form-editor/form-editor-horizontal-table-hint-x-icon'
 import { FormEditorHorizontalTableHeaderDeleteIcon } from '@/features/template/ui/form-editor/form-editor-horizontal-table-header-delete-icon'
@@ -26,7 +27,8 @@ export function FormEditorHorizontalTableHeaderFields({
   paragraphId: string
   updateParagraph: FormUpdateParagraph
 }) {
-  const colCount = Math.max(1, paragraph.columnHeaders.length)
+  const pNorm = normalizeHorizontalTableParagraph(paragraph)
+  const colCount = Math.max(1, pNorm.columnHeaders.length)
 
   const removeCol = (columnIndex: number) => {
     updateParagraph(paragraphId, cur => {
@@ -40,7 +42,7 @@ export function FormEditorHorizontalTableHeaderFields({
     })
   }
 
-  const isFieldFlavor = paragraph.tableFlavor === 'field'
+  const isFieldFlavor = pNorm.tableFlavor === 'field'
   const panelTitle = isFieldFlavor
     ? '테이블_가로형(필드형)_항목 선택 시 (헤더)'
     : '테이블_가로형_항목 선택 시 (헤더)'
@@ -66,7 +68,7 @@ export function FormEditorHorizontalTableHeaderFields({
       }
     >
       <FormEditorFieldList className="form-editor-horizontal-table-header-fields__list">
-        {paragraph.columnHeaders.map((header, i) => (
+        {pNorm.columnHeaders.map((header, i) => (
           <FormEditorFieldListItem
             key={`hdr-${i}`}
             className="form-editor-horizontal-table-header-fields__item"

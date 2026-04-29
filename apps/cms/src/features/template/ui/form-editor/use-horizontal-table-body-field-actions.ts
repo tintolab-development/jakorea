@@ -5,7 +5,7 @@ import {
   HORIZONTAL_TABLE_MIN_COLUMN_COUNT,
   horizontalTableRemoveColumn,
   horizontalTableRemoveRow,
-  horizontalTableUpdateColumnField,
+  horizontalTableUpdateBodyCellColumnField,
 } from '@/features/template/model/writing-form-draft.schema'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 
@@ -50,35 +50,19 @@ export function useHorizontalTableBodyFieldActions({
     [paragraphId, updateParagraph]
   )
 
-  const setTextCell = useCallback(
-    (columnIndex: number, value: string) => {
+  const setColumnField = useCallback(
+    (columnIndex: number, nextField: HorizontalTableColumnField) => {
       updateParagraph(paragraphId, cur => {
         if (cur.kind !== 'single_item' || cur.variant !== 'horizontal_table') return cur
-        const nextRows = cur.dataRows.map(r => [...r])
-        const row = [...(nextRows[rowIndex] ?? [])]
-        while (row.length <= columnIndex) row.push('')
-        row[columnIndex] = value
-        nextRows[rowIndex] = row
-        return { ...cur, dataRows: nextRows }
+        return horizontalTableUpdateBodyCellColumnField(cur, rowIndex, columnIndex, nextField)
       })
     },
     [paragraphId, rowIndex, updateParagraph]
   )
 
-  const setColumnField = useCallback(
-    (columnIndex: number, nextField: HorizontalTableColumnField) => {
-      updateParagraph(paragraphId, cur => {
-        if (cur.kind !== 'single_item' || cur.variant !== 'horizontal_table') return cur
-        return horizontalTableUpdateColumnField(cur, columnIndex, nextField)
-      })
-    },
-    [paragraphId, updateParagraph]
-  )
-
   return {
     deleteRow,
     removeColumn,
-    setTextCell,
     setColumnField,
   }
 }
