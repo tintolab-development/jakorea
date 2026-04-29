@@ -1,6 +1,7 @@
 import { useEffect, useRef, type MouseEvent } from 'react'
 import type { ScaleTypeParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { createDefaultScaleTypeItems } from '@/features/template/model/writing-form-draft.schema'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
 import './scale-type.css'
 
 function normalizeItems(paragraph: ScaleTypeParagraph) {
@@ -11,30 +12,36 @@ function normalizeItems(paragraph: ScaleTypeParagraph) {
 export function ScaleType({
   paragraph,
   onChange,
-  isEditMode,
+  isCardSelected,
+  isBodyInteractive,
+  paragraphInteractionMode = 'authoring',
 }: {
   paragraph: ScaleTypeParagraph
   onChange: (next: ScaleTypeParagraph) => void
-  isEditMode: boolean
+  /** 단락 카드 선택 — authoring 시 카드 선택 진입에 따른 미리보기 정리 */
+  isCardSelected: boolean
+  /** 척도 클릭 — user 모드에서는 카드 비선택이어도 true일 수 있음 */
+  isBodyInteractive: boolean
+  paragraphInteractionMode?: ParagraphBodyInteractionMode
 }) {
   const items = normalizeItems(paragraph)
-  const prevEditModeRef = useRef(isEditMode)
-  const selectedId = isEditMode ? (paragraph.selectedPreviewItemId ?? null) : null
+  const prevCardSelectedRef = useRef(isCardSelected)
+  const selectedId = isBodyInteractive ? (paragraph.selectedPreviewItemId ?? null) : null
 
   useEffect(() => {
-    const wasEditMode = prevEditModeRef.current
-    if (!wasEditMode && isEditMode) {
+    const wasCardSelected = prevCardSelectedRef.current
+    if (paragraphInteractionMode === 'authoring' && !wasCardSelected && isCardSelected) {
       onChange({
         ...paragraph,
         items,
         selectedPreviewItemId: null,
       })
     }
-    prevEditModeRef.current = isEditMode
-  }, [isEditMode, items, onChange, paragraph])
+    prevCardSelectedRef.current = isCardSelected
+  }, [isCardSelected, paragraphInteractionMode, items, onChange, paragraph])
 
   const handleItemClick = (event: MouseEvent<HTMLButtonElement>, itemId: string) => {
-    if (!isEditMode) return
+    if (!isBodyInteractive) return
     event.stopPropagation()
     onChange({
       ...paragraph,
@@ -45,7 +52,9 @@ export function ScaleType({
 
   return (
     <div
-      className={['scale-type-bar', !isEditMode ? 'scale-type-bar--disabled' : ''].filter(Boolean).join(' ')}
+      className={['scale-type-bar', !isBodyInteractive ? 'scale-type-bar--disabled' : '']
+        .filter(Boolean)
+        .join(' ')}
       role="group"
       aria-label="점수 선택"
     >
@@ -53,7 +62,7 @@ export function ScaleType({
         <button
           key={item.id}
           type="button"
-          disabled={!isEditMode}
+          disabled={!isBodyInteractive}
           className={[
             'scale-type-item',
             selectedId === item.id ? 'scale-type-item--selected' : '',

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { StarRateParagraph } from '@/features/template/model/writing-form-draft.schema'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
 import './star-rate.css'
 
 const STAR_PATH =
@@ -35,24 +36,32 @@ function clampRating(n: number | null | undefined): number {
 export function StarRate({
   paragraph,
   onChange,
-  isEditMode,
+  isCardSelected,
+  isBodyInteractive,
+  paragraphInteractionMode = 'authoring',
 }: {
   paragraph: StarRateParagraph
   onChange?: (next: StarRateParagraph) => void
-  isEditMode: boolean
+  /** 단락 카드 선택 — authoring 시 카드 선택 진입에 따른 미리보기 정리 */
+  isCardSelected: boolean
+  /** 별 클릭·노란 별 표시 — user 모드에서는 카드 비선택이어도 true일 수 있음 */
+  isBodyInteractive: boolean
+  paragraphInteractionMode?: ParagraphBodyInteractionMode
 }) {
-  const prevIsEditMode = useRef(false)
+  /** 마운트 직후 `isCardSelected===true`여도 기존과 같이 “선택 진입”으로 한 번 잡히도록 false에서 시작 */
+  const prevCardSelected = useRef(false)
 
   useEffect(() => {
-    const enteringEdit = isEditMode && !prevIsEditMode.current
-    prevIsEditMode.current = isEditMode
-    if (!enteringEdit || !onChange) return
+    const enteringCardSelected = isCardSelected && !prevCardSelected.current
+    prevCardSelected.current = isCardSelected
+    if (paragraphInteractionMode !== 'authoring') return
+    if (!enteringCardSelected || !onChange) return
     if (paragraph.selectedPreviewStars == null) return
     onChange({ ...paragraph, selectedPreviewStars: null })
-  }, [isEditMode, onChange, paragraph])
+  }, [isCardSelected, paragraphInteractionMode, onChange, paragraph])
 
   const storedRating = clampRating(paragraph.selectedPreviewStars ?? null)
-  const displayRating = isEditMode ? storedRating : 0
+  const displayRating = isBodyInteractive ? storedRating : 0
 
   const setRating = (next: number) => {
     if (!onChange) return
@@ -69,11 +78,11 @@ export function StarRate({
             key={starIndex}
             type="button"
             className="star-rate-body__star"
-            disabled={!isEditMode}
+            disabled={!isBodyInteractive}
             aria-label={`${starIndex}점`}
             aria-pressed={filled}
             onClick={() => {
-              if (!isEditMode) return
+              if (!isBodyInteractive) return
               setRating(starIndex)
             }}
           >

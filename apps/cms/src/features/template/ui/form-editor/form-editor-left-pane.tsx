@@ -35,6 +35,7 @@ import { HorizontalTableDimensionActions } from '@/features/template/ui/paragrap
 import { VerticalTableDimensionActions } from '@/features/template/ui/paragraph/shared/vertical-table-dimension-actions'
 import {
   renderFormParagraphBody,
+  type ParagraphBodyInteractionMode,
   type RenderFormParagraphBodyOptions,
 } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
@@ -70,6 +71,14 @@ export interface FormEditorLeftPaneProps {
   }
   /** `renderFormParagraphBody`에 그대로 전달(동의 시스템 단락 write 모드 등) */
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
+  /**
+   * 단락 본문 상호작용 모드. `paragraphBodyOptions`와 병합되어 본문 렌더에 일관 적용된다.
+   * 동일 키가 `paragraphBodyOptions`에도 있으면 그쪽이 우선한다.
+   * 기본 authoring(템플릿 편집).
+   */
+  paragraphInteractionMode?: ParagraphBodyInteractionMode
+  /** false면 순서 변경·하단 토글·단락 액션·드래그 핸들 미노출(응답자 미리보기 등) */
+  showEditorChrome?: boolean
 }
 
 function renderFormEditorParagraphBody(
@@ -582,6 +591,7 @@ interface PinnedCardProps {
   onVerticalTableBodyRowSelectionChange: FormEditorLeftPaneProps['onVerticalTableBodyRowSelectionChange']
   middleParagraphActions: FormEditorLeftPaneProps['middleParagraphActions']
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
+  showEditorChrome?: boolean
 }
 
 function PinnedFormCard({
@@ -600,6 +610,7 @@ function PinnedFormCard({
   onVerticalTableBodyRowSelectionChange,
   middleParagraphActions,
   paragraphBodyOptions,
+  showEditorChrome = true,
 }: PinnedCardProps) {
   const isSelected = selectedCardId === paragraph.id
   const editableHeading = paragraphEditableHeading(
@@ -615,16 +626,22 @@ function PinnedFormCard({
     <ParagraphCard
       className={[
         'form-editor-card',
-        'paragraph-card--selectable',
-        selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
+        showEditorChrome ? 'paragraph-card--selectable' : '',
+        showEditorChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
         isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
       ]
         .filter(Boolean)
         .join(' ')}
-      onClick={() => onSelectCard(paragraph.id)}
+      onClick={showEditorChrome ? () => onSelectCard(paragraph.id) : undefined}
       editableHeading={editableHeading}
-      toggles={modalCardFooterToggles(paragraph, isSelected, updateParagraph)}
-      actions={modalCardFooterActions(paragraph, isSelected, updateParagraph, middleParagraphActions)}
+      toggles={
+        showEditorChrome ? modalCardFooterToggles(paragraph, isSelected, updateParagraph) : undefined
+      }
+      actions={
+        showEditorChrome
+          ? modalCardFooterActions(paragraph, isSelected, updateParagraph, middleParagraphActions)
+          : undefined
+      }
     >
       {renderFormEditorParagraphBody(
         paragraph,
@@ -659,6 +676,7 @@ interface SortableMiddleCardProps {
   onVerticalTableBodyRowSelectionChange: FormEditorLeftPaneProps['onVerticalTableBodyRowSelectionChange']
   middleParagraphActions: FormEditorLeftPaneProps['middleParagraphActions']
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
+  showEditorChrome?: boolean
 }
 
 function SortableMiddleFormCard({
@@ -677,6 +695,7 @@ function SortableMiddleFormCard({
   onVerticalTableBodyRowSelectionChange,
   middleParagraphActions,
   paragraphBodyOptions,
+  showEditorChrome = true,
 }: SortableMiddleCardProps) {
   const {
     attributes,
@@ -710,29 +729,37 @@ function SortableMiddleFormCard({
       <ParagraphCard
         className={[
           'form-editor-card',
-          'paragraph-card--selectable',
-          selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
+          showEditorChrome ? 'paragraph-card--selectable' : '',
+          showEditorChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
           isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
         ]
           .filter(Boolean)
           .join(' ')}
-        onClick={() => onSelectCard(paragraph.id)}
+        onClick={showEditorChrome ? () => onSelectCard(paragraph.id) : undefined}
         actionSlot={
-          <button
-            ref={setActivatorNodeRef}
-            type="button"
-            className="paragraph-card__drag-handle"
-            aria-label="카드 순서 변경"
-            onClick={event => event.stopPropagation()}
-            {...attributes}
-            {...listeners}
-          >
-            <MenuOutlined />
-          </button>
+          showEditorChrome ? (
+            <button
+              ref={setActivatorNodeRef}
+              type="button"
+              className="paragraph-card__drag-handle"
+              aria-label="카드 순서 변경"
+              onClick={event => event.stopPropagation()}
+              {...attributes}
+              {...listeners}
+            >
+              <MenuOutlined />
+            </button>
+          ) : undefined
         }
         editableHeading={editableHeading}
-        toggles={modalCardFooterToggles(paragraph, isSelected, updateParagraph)}
-        actions={modalCardFooterActions(paragraph, isSelected, updateParagraph, middleParagraphActions)}
+        toggles={
+          showEditorChrome ? modalCardFooterToggles(paragraph, isSelected, updateParagraph) : undefined
+        }
+        actions={
+          showEditorChrome
+            ? modalCardFooterActions(paragraph, isSelected, updateParagraph, middleParagraphActions)
+            : undefined
+        }
       >
         {renderFormEditorParagraphBody(
           paragraph,
@@ -769,7 +796,14 @@ export function FormEditorLeftPane({
   onVerticalTableBodyRowSelectionChange,
   middleParagraphActions,
   paragraphBodyOptions,
+  paragraphInteractionMode = 'authoring',
+  showEditorChrome = true,
 }: FormEditorLeftPaneProps) {
+  const mergedParagraphBodyOptions: RenderFormParagraphBodyOptions = {
+    paragraphInteractionMode,
+    ...paragraphBodyOptions,
+  }
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
@@ -784,6 +818,72 @@ export function FormEditorLeftPane({
       if (middle.length < 1) return null
       return (
         <div className="form-editor-left">
+          {showEditorChrome ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              modifiers={[restrictFormEditorListToVerticalAxis]}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+                {middle.map(p => (
+                  <SortableMiddleFormCard
+                    key={p.id}
+                    paragraph={p}
+                    paragraphs={paragraphs}
+                    titleNumbering={titleNumbering}
+                    selectedCardId={selectedCardId}
+                    onSelectCard={onSelectCard}
+                    updateParagraph={updateParagraph}
+                    editorKind={editorKind}
+                    singleItemListActiveItemId={singleItemListActiveItemId}
+                    onSelectSingleItemListItem={onSelectSingleItemListItem}
+                    horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
+                    onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+                    verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+                    onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
+                    middleParagraphActions={middleParagraphActions}
+                    paragraphBodyOptions={mergedParagraphBodyOptions}
+                    showEditorChrome={showEditorChrome}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          ) : (
+            middle.map(p => (
+              <PinnedFormCard
+                key={p.id}
+                paragraph={p}
+                paragraphs={paragraphs}
+                titleNumbering={titleNumbering}
+                selectedCardId={selectedCardId}
+                onSelectCard={onSelectCard}
+                updateParagraph={updateParagraph}
+                editorKind={editorKind}
+                singleItemListActiveItemId={singleItemListActiveItemId}
+                onSelectSingleItemListItem={onSelectSingleItemListItem}
+                horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
+                onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+                verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+                onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
+                middleParagraphActions={middleParagraphActions}
+                paragraphBodyOptions={mergedParagraphBodyOptions}
+                showEditorChrome={false}
+              />
+            ))
+          )}
+        </div>
+      )
+    }
+
+    const tail = paragraphs[paragraphs.length - 1]
+    const middle = paragraphs.slice(0, -1)
+    const sortableIds = middle.map(p => p.id)
+    if (!tail || middle.length < 1) return null
+
+    return (
+      <div className="form-editor-left">
+        {showEditorChrome ? (
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -808,51 +908,35 @@ export function FormEditorLeftPane({
                   verticalTableBodyRowSelection={verticalTableBodyRowSelection}
                   onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
                   middleParagraphActions={middleParagraphActions}
-                  paragraphBodyOptions={paragraphBodyOptions}
+                  paragraphBodyOptions={mergedParagraphBodyOptions}
+                  showEditorChrome={showEditorChrome}
                 />
               ))}
             </SortableContext>
           </DndContext>
-        </div>
-      )
-    }
-
-    const tail = paragraphs[paragraphs.length - 1]
-    const middle = paragraphs.slice(0, -1)
-    const sortableIds = middle.map(p => p.id)
-    if (!tail || middle.length < 1) return null
-
-    return (
-      <div className="form-editor-left">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          modifiers={[restrictFormEditorListToVerticalAxis]}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-            {middle.map(p => (
-              <SortableMiddleFormCard
-                key={p.id}
-                paragraph={p}
-                paragraphs={paragraphs}
-                titleNumbering={titleNumbering}
-                selectedCardId={selectedCardId}
-                onSelectCard={onSelectCard}
-                updateParagraph={updateParagraph}
-                editorKind={editorKind}
-                singleItemListActiveItemId={singleItemListActiveItemId}
-                onSelectSingleItemListItem={onSelectSingleItemListItem}
-                horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
-                onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
-                verticalTableBodyRowSelection={verticalTableBodyRowSelection}
-                onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
-                middleParagraphActions={middleParagraphActions}
-                paragraphBodyOptions={paragraphBodyOptions}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
+        ) : (
+          middle.map(p => (
+            <PinnedFormCard
+              key={p.id}
+              paragraph={p}
+              paragraphs={paragraphs}
+              titleNumbering={titleNumbering}
+              selectedCardId={selectedCardId}
+              onSelectCard={onSelectCard}
+              updateParagraph={updateParagraph}
+              editorKind={editorKind}
+              singleItemListActiveItemId={singleItemListActiveItemId}
+              onSelectSingleItemListItem={onSelectSingleItemListItem}
+              horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
+              onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+              verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+              onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
+              middleParagraphActions={middleParagraphActions}
+              paragraphBodyOptions={mergedParagraphBodyOptions}
+              showEditorChrome={false}
+            />
+          ))
+        )}
         <PinnedFormCard
           paragraph={tail}
           paragraphs={paragraphs}
@@ -868,7 +952,8 @@ export function FormEditorLeftPane({
           verticalTableBodyRowSelection={verticalTableBodyRowSelection}
           onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
           middleParagraphActions={middleParagraphActions}
-          paragraphBodyOptions={paragraphBodyOptions}
+          paragraphBodyOptions={mergedParagraphBodyOptions}
+          showEditorChrome={showEditorChrome}
         />
       </div>
     )
@@ -900,37 +985,63 @@ export function FormEditorLeftPane({
         verticalTableBodyRowSelection={verticalTableBodyRowSelection}
         onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
         middleParagraphActions={middleParagraphActions}
-        paragraphBodyOptions={paragraphBodyOptions}
+        paragraphBodyOptions={mergedParagraphBodyOptions}
+        showEditorChrome={showEditorChrome}
       />
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        modifiers={[restrictFormEditorListToVerticalAxis]}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-          {middle.map(p => (
-            <SortableMiddleFormCard
-              key={p.id}
-              paragraph={p}
-              paragraphs={paragraphs}
-              titleNumbering={titleNumbering}
-              selectedCardId={selectedCardId}
-              onSelectCard={onSelectCard}
-              updateParagraph={updateParagraph}
-              editorKind={editorKind}
-              singleItemListActiveItemId={singleItemListActiveItemId}
-              onSelectSingleItemListItem={onSelectSingleItemListItem}
-              horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
-              onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
-              verticalTableBodyRowSelection={verticalTableBodyRowSelection}
-              onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
-              middleParagraphActions={middleParagraphActions}
-              paragraphBodyOptions={paragraphBodyOptions}
-            />
-          ))}
-        </SortableContext>
-      </DndContext>
+      {showEditorChrome ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictFormEditorListToVerticalAxis]}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+            {middle.map(p => (
+              <SortableMiddleFormCard
+                key={p.id}
+                paragraph={p}
+                paragraphs={paragraphs}
+                titleNumbering={titleNumbering}
+                selectedCardId={selectedCardId}
+                onSelectCard={onSelectCard}
+                updateParagraph={updateParagraph}
+                editorKind={editorKind}
+                singleItemListActiveItemId={singleItemListActiveItemId}
+                onSelectSingleItemListItem={onSelectSingleItemListItem}
+                horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
+                onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+                verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+                onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
+                middleParagraphActions={middleParagraphActions}
+                paragraphBodyOptions={mergedParagraphBodyOptions}
+                showEditorChrome={showEditorChrome}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
+      ) : (
+        middle.map(p => (
+          <PinnedFormCard
+            key={p.id}
+            paragraph={p}
+            paragraphs={paragraphs}
+            titleNumbering={titleNumbering}
+            selectedCardId={selectedCardId}
+            onSelectCard={onSelectCard}
+            updateParagraph={updateParagraph}
+            editorKind={editorKind}
+            singleItemListActiveItemId={singleItemListActiveItemId}
+            onSelectSingleItemListItem={onSelectSingleItemListItem}
+            horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
+            onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+            verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+            onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
+            middleParagraphActions={middleParagraphActions}
+            paragraphBodyOptions={mergedParagraphBodyOptions}
+            showEditorChrome={false}
+          />
+        ))
+      )}
       {pinnedCardTail.map(p => (
         <PinnedFormCard
           key={p.id}
@@ -948,14 +1059,15 @@ export function FormEditorLeftPane({
           verticalTableBodyRowSelection={verticalTableBodyRowSelection}
           onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
           middleParagraphActions={middleParagraphActions}
-          paragraphBodyOptions={paragraphBodyOptions}
+          paragraphBodyOptions={mergedParagraphBodyOptions}
+          showEditorChrome={showEditorChrome}
         />
       ))}
       {pinnedSystemRows.length > 0 ? (
         <div className="form-editor-left__system-fixed">
           {pinnedSystemRows.map(p => (
             <div key={p.id} className="form-editor-left__system-fixed-row">
-              {renderFormParagraphBody(p, updateParagraph, false, editorKind, paragraphBodyOptions)}
+              {renderFormParagraphBody(p, updateParagraph, false, editorKind, mergedParagraphBodyOptions)}
             </div>
           ))}
         </div>

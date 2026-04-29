@@ -2,7 +2,9 @@
 description: CMS 설문 단일 항목(신규 스텁) — slug.tsx 파일명·8종 목록·미리보기 모달 전용
 globs:
   - "apps/cms/src/features/template/ui/paragraph/single-item/**/*.tsx"
-  - "apps/cms/src/pages/templates/form-test-single-item-fullpage-modal.tsx"
+  - "apps/cms/src/pages/templates/form-tab.tsx"
+  - "apps/cms/src/features/template/hooks/use-form-test-single-item-editor.ts"
+  - "apps/cms/src/features/template/hooks/use-writing-form-editor-with-user-preview.ts"
 alwaysApply: false
 ---
 
@@ -33,4 +35,4 @@ export 컴포넌트명은 slug를 PascalCase로 매핑한다 (예: `short-essay`
 
 ## 임시 미리보기
 
-- 8종을 한 화면에서 스크롤·우측 네비로 확인하는 용도는 `apps/cms/src/pages/templates/form-test-single-item-fullpage-modal.tsx` 전용이다. 추후 스키마·에디터 연동 시 삭제·이동할 수 있다.
+- 8종을 한 화면에서 스크롤·우측 네비로 확인하는 용도는 `form-tab.tsx` + `useFormTestSingleItemEditor`(내부에서 공용 `useWritingFormEditorWithUserPreview`)이다.

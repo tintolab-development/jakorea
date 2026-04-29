@@ -1,11 +1,19 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Space, Typography } from 'antd'
+import { useFormTestSingleItemEditor } from '@/features/template/hooks/use-form-test-single-item-editor'
+import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
+import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
+import {
+  FormEditorRightPanel,
+  FormEditorTitleNumberingField,
+} from '@/features/template/ui/form-editor/form-editor-right-panel'
+import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
 import { TemplateListCard } from '@/features/template/ui/template-list-card'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { FormTestExplanationFullpageModal } from './form-test-explanation-fullpage-modal'
-import { FormTestSingleItemFullpageModal } from './form-test-single-item-fullpage-modal'
 import { FormTemplateFullpageModal } from './form-template-fullpage-modal'
+import './form-test-single-item-fullpage-modal.css'
 
 const FORM_TEST_TABLES_HREF = '/templates/form-test/tables'
 
@@ -18,6 +26,8 @@ export function FormTab() {
   const [formModalOpen, setFormModalOpen] = useState(false)
   const [singleItemModalOpen, setSingleItemModalOpen] = useState(false)
   const [explanationModalOpen, setExplanationModalOpen] = useState(false)
+
+  const singleItem = useFormTestSingleItemEditor(singleItemModalOpen)
 
   return (
     <>
@@ -71,9 +81,55 @@ export function FormTab() {
       </div>
 
       <FormTemplateFullpageModal open={formModalOpen} onClose={() => setFormModalOpen(false)} />
-      <FormTestSingleItemFullpageModal
+      <TemplateFullpageModal
+        className="form-test-single-item-fullpage-modal"
         open={singleItemModalOpen}
         onClose={() => setSingleItemModalOpen(false)}
+        title={singleItem.headerTitle}
+        description="* 양식 테스트용 미리보기입니다."
+        templateTabType="writing"
+        leftContent={
+          <FormEditorLeftPane
+            paragraphs={singleItem.draft.paragraphs}
+            titleNumbering={singleItem.draft.formSettings.titleNumbering}
+            selectedCardId={singleItem.activeParagraphId}
+            onSelectCard={singleItem.handleSelectCard}
+            onReorderMiddle={singleItem.onReorderMiddle}
+            updateParagraph={singleItem.updateParagraph}
+            editorKind="survey"
+            singleItemListActiveItemId={singleItem.singleItemListActiveItemId}
+            onSelectSingleItemListItem={singleItem.onSelectSingleItemListItem}
+          />
+        }
+        rightNavigation={
+          <FormEditorFieldNav
+            sectionTitle="커스텀 필드"
+            pinnedTop={singleItem.pinnedTop}
+            sortableMiddle={singleItem.sortableMiddle}
+            pinnedBottom={singleItem.pinnedBottom}
+            selectedItemId={singleItem.activeParagraphId}
+            onSelectItem={singleItem.handleSelectCard}
+            onReorderMiddle={singleItem.onReorderMiddle}
+            fieldListBottomSlot={
+              <FormEditorTitleNumberingField
+                value={singleItem.draft.formSettings.titleNumbering}
+                onChange={singleItem.onTitleNumberingChange}
+              />
+            }
+          >
+            <FormEditorRightPanel
+              draft={singleItem.draft}
+              activeParagraphId={singleItem.activeParagraphId}
+              onTitleNumberingChange={singleItem.onTitleNumberingChange}
+              updateParagraph={singleItem.updateParagraph}
+              editorKind="survey"
+              showTitleNumbering={false}
+              singleItemListActiveItemId={singleItem.singleItemListActiveItemId}
+            />
+          </FormEditorFieldNav>
+        }
+        onPreview={singleItem.handlePreview}
+        onSave={singleItem.handleSave}
       />
       <FormTestExplanationFullpageModal
         open={explanationModalOpen}

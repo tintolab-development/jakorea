@@ -24,7 +24,7 @@ export interface FormTestExplanationFullpageModalProps {
 }
 
 /**
- * 양식 테스트 > 설명글 유형 — 제목형·텍스트형·기타·마무리글형 (`FormTestSingleItemFullpageModal`과 동일 패턴)
+ * 양식 테스트 > 설명글 유형 — 제목형·텍스트형·기타·마무리글형 (`FormTab` 단일 항목 모음과 동일 패턴)
  */
 export function FormTestExplanationFullpageModal({
   open,

@@ -23,11 +23,14 @@ import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate
 import { SubjectiveParagraphBody } from '@/features/template/ui/paragraph/single-item/subjective-paragraph-body'
 import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
 
 export type FormUpdateParagraph = (
   id: string,
   updater: (p: WritingFormParagraph) => WritingFormParagraph
 ) => void
+
+export type { ParagraphBodyInteractionMode }
 
 export type RenderFormParagraphBodyOptions = {
   horizontalTableRowSelection?: HorizontalTableRowSelection | null
@@ -41,6 +44,12 @@ export type RenderFormParagraphBodyOptions = {
   agreementSystemDisplayMode?: AgreementSystemBodyDisplayMode
   agreementSystemParticipantName?: string
   agreementSystemNow?: Date
+  /**
+   * 기본 authoring.
+   * - user: 카드 선택은 유지(우측 패널 등)하되, 본문 입력은 카드 비선택에서도 가능(`isBodyInteractive`).
+   * - user: 카드 전환 시 미리보기 초기화 등 편집 전용 부수 효과는 끔(단락 컴포넌트에서 `paragraphInteractionMode`로 분기).
+   */
+  paragraphInteractionMode?: ParagraphBodyInteractionMode
 }
 
 export function renderFormParagraphBody(
@@ -50,15 +59,18 @@ export function renderFormParagraphBody(
   editorKind: FormEditorKind = 'survey',
   options?: RenderFormParagraphBodyOptions
 ) {
+  const paragraphInteractionMode = options?.paragraphInteractionMode ?? 'authoring'
+  const isCardSelected = isParagraphSelected
+  const isBodyInteractive = paragraphInteractionMode === 'user' || isParagraphSelected
   switch (p.variant) {
     case 'survey_title_with_period':
-      if (!isParagraphSelected) return null
+      if (!isCardSelected && paragraphInteractionMode !== 'user') return null
       if (!(p.showWritingPeriodOnForm ?? false)) return null
       return (
         <ExplanationTitle
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
+          isEditMode={isBodyInteractive}
           periodLabel={editorKind === 'survey' ? '설문 기간' : undefined}
         />
       )
@@ -67,7 +79,7 @@ export function renderFormParagraphBody(
         <UserProfileParagraphBody
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
+          isEditMode={isBodyInteractive}
         />
       )
     case 'score_select':
@@ -75,17 +87,17 @@ export function renderFormParagraphBody(
         <ScoreSelectParagraphBody
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
+          isEditMode={isBodyInteractive}
         />
       )
     case 'subjective':
-      return <SubjectiveParagraphBody paragraph={p} isEditMode={isParagraphSelected} />
+      return <SubjectiveParagraphBody paragraph={p} isEditMode={isBodyInteractive} />
     case 'agreement_explanation_text':
       return (
         <ExplanationText
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
+          isEditMode={isBodyInteractive}
         />
       )
     case 'horizontal_table': {
@@ -93,7 +105,8 @@ export function renderFormParagraphBody(
         p as Extract<WritingFormParagraph, { variant: 'horizontal_table' }>
       )
       /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지(텍스트형만 비선택 시 플레이스홀더 뷰) */
-      const isEditMode = isParagraphSelected || hp.tableFlavor === 'field'
+      const isEditMode =
+        paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field'
       return (
         <HorizontalTableParagraphBody
           paragraph={p}
@@ -112,7 +125,7 @@ export function renderFormParagraphBody(
         <VerticalTableParagraphBody
           paragraph={vp}
           onChange={next => updateParagraph(p.id, () => normalizeVerticalTableParagraph(next))}
-          isEditMode={isParagraphSelected}
+          isEditMode={isBodyInteractive}
           tableRowSelection={options?.verticalTableRowSelection}
           onTableRowSelectionChange={options?.onVerticalTableRowSelectionChange}
         />
@@ -128,7 +141,7 @@ export function renderFormParagraphBody(
           <ExplanationSystem
             paragraph={p}
             onChange={next => updateParagraph(p.id, () => next)}
-            isEditMode={isParagraphSelected}
+            isEditMode={isBodyInteractive}
             displayMode={options?.agreementSystemDisplayMode ?? 'authoring'}
             participantName={options?.agreementSystemParticipantName}
             now={options?.agreementSystemNow}
@@ -144,7 +157,9 @@ export function renderFormParagraphBody(
         <ShortEssay
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
+          isCardSelected={isCardSelected}
+          isBodyInteractive={isBodyInteractive}
+          paragraphInteractionMode={paragraphInteractionMode}
           activeItemId={options?.singleItemListActiveItemId}
           onSelectItem={options?.onSelectSingleItemListItem}
         />
@@ -152,14 +167,16 @@ export function renderFormParagraphBody(
     case 'multiple_choice': {
       const usesMcItemsFocus = options?.onSelectSingleItemListItem != null
       const itemsEditActive = usesMcItemsFocus
-        ? isParagraphSelected &&
+        ? isCardSelected &&
           options?.singleItemListActiveItemId === FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID
-        : isParagraphSelected
+        : isCardSelected
       return (
         <MultipleChoice
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
+          isCardSelected={isCardSelected}
+          isBodyInteractive={isBodyInteractive}
+          paragraphInteractionMode={paragraphInteractionMode}
           itemsEditActive={itemsEditActive}
           onActivateItemsEditor={
             usesMcItemsFocus
@@ -174,19 +191,27 @@ export function renderFormParagraphBody(
         <Dropdown
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
+          isEditMode={isBodyInteractive}
         />
       )
     case 'date_time':
       return (
-        <DateTime paragraph={p} onChange={next => updateParagraph(p.id, () => next)} />
+        <DateTime
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isCardSelected={isCardSelected}
+          isBodyInteractive={isBodyInteractive}
+          paragraphInteractionMode={paragraphInteractionMode}
+        />
       )
     case 'star_rate':
       return (
         <StarRate
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
+          isCardSelected={isCardSelected}
+          isBodyInteractive={isBodyInteractive}
+          paragraphInteractionMode={paragraphInteractionMode}
         />
       )
     case 'scale_type':
@@ -194,7 +219,9 @@ export function renderFormParagraphBody(
         <ScaleType
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
+          isCardSelected={isCardSelected}
+          isBodyInteractive={isBodyInteractive}
+          paragraphInteractionMode={paragraphInteractionMode}
         />
       )
     case 'user_info':
@@ -202,7 +229,7 @@ export function renderFormParagraphBody(
         <UserInfo
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
+          isEditMode={isBodyInteractive}
         />
       )
     case 'file_attachment':
@@ -210,7 +237,7 @@ export function renderFormParagraphBody(
         <FileAttachment
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isParagraphSelected}
+          isEditMode={isBodyInteractive}
         />
       )
   }

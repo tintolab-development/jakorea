@@ -10,6 +10,7 @@ import { Tabs } from 'antd'
 import TemplateFormTab from './template-form-tab'
 import { FormTab } from './form-tab'
 import { IssuanceFormTab } from './issuance-form-tab'
+import { TemplateWritingPreviewProvider } from '@/features/template/context/template-writing-preview-context'
 import { TemplateCreateModal } from '@/features/template/ui/modal/template-create-modal'
 import './template-list-page.css'
 import './template-form-tab.css'
@@ -99,7 +100,8 @@ export function TemplateListPage() {
   }
 
   return (
-    <>
+    <TemplateWritingPreviewProvider>
+      <>
       {showFormTopTabs && (
         <>
           <Tabs
@@ -154,6 +156,7 @@ export function TemplateListPage() {
       ) : (
         <Outlet />
       )}
-    </>
+      </>
+    </TemplateWritingPreviewProvider>
   )
 }

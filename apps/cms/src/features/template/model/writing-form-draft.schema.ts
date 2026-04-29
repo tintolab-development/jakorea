@@ -1373,7 +1373,7 @@ export function createExplanationTypesPreviewDraft(): WritingFormDraft {
   }
 }
 
-/** `FormTestSingleItemFullpageModal` — 제목·8종 단일항목 스텁·마무리 */
+/** 양식 테스트 > 단일 항목 모음(`useFormTestSingleItemEditor` → `useWritingFormEditorWithUserPreview`) — 제목·8종 스텁·마무리 */
 export function createSingleItemPreviewDraft(): WritingFormDraft {
   const base = createDefaultSurveyDraft()
   const title = base.paragraphs[0]!

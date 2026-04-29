@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react'
 import type { ShortEssayParagraph } from '@/features/template/model/writing-form-draft.schema'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
 import { ItemDeleteButton } from '@/features/template/ui/paragraph/shared/item-delete-button'
 import { ParagraphLabelInput } from '@/features/template/ui/paragraph/shared/paragraph-label-input'
 import './short-essay.css'
@@ -7,16 +9,57 @@ import './short-essay.css'
 export function ShortEssay({
   paragraph,
   onChange,
-  isEditMode,
+  isCardSelected,
+  isBodyInteractive,
+  paragraphInteractionMode = 'authoring',
   activeItemId,
   onSelectItem,
 }: {
   paragraph: ShortEssayParagraph
   onChange: (next: ShortEssayParagraph) => void
-  isEditMode: boolean
+  /** 단락 카드 선택 — authoring 시 선택 해제에 따른 본문 클리어·항목 삭제 UI */
+  isCardSelected: boolean
+  /** 본문 입력 가능 — user 모드에서는 카드 비선택이어도 true일 수 있음 */
+  isBodyInteractive: boolean
+  /** user일 때는 카드 비선택으로 본문을 비우지 않음 */
+  paragraphInteractionMode?: ParagraphBodyInteractionMode
   activeItemId?: string | null
   onSelectItem?: (itemId: string | null) => void
 }) {
+  const paragraphRef = useRef(paragraph)
+  paragraphRef.current = paragraph
+
+  const prevCardSelected = useRef(isCardSelected)
+  useEffect(() => {
+    if (
+      paragraphInteractionMode === 'authoring' &&
+      prevCardSelected.current &&
+      !isCardSelected
+    ) {
+      const p = paragraphRef.current
+      const baseItems =
+        p.items && p.items.length > 0
+          ? p.items
+          : [
+              {
+                id: 'short-essay-item-1',
+                label: 'Title 01',
+                placeholder: p.bodyPlaceholder.trim() || '답변을 입력해 주세요',
+                bodyText: p.bodyText,
+              },
+            ]
+      const showItemTitle = baseItems.length >= 2 ? true : (p.showItemTitle ?? false)
+      const clearedItems = baseItems.map(item => ({ ...item, bodyText: '' }))
+      onChange({
+        ...p,
+        bodyText: '',
+        items: clearedItems,
+        showItemTitle,
+      })
+    }
+    prevCardSelected.current = isCardSelected
+  }, [isCardSelected, onChange, paragraphInteractionMode])
+
   const ph = paragraph.bodyPlaceholder.trim() || '답변을 입력해 주세요'
   const items =
     paragraph.items && paragraph.items.length > 0
@@ -79,9 +122,9 @@ export function ShortEssay({
               event.stopPropagation()
               handleItemClick(item.id)
             }}
-            onChange={isEditMode ? e => updateItemBodyText(item.id, e.target.value) : undefined}
+            onChange={isBodyInteractive ? e => updateItemBodyText(item.id, e.target.value) : undefined}
           />
-          {isEditMode && index > 0 ? (
+          {isCardSelected && index > 0 ? (
             <ItemDeleteButton
               className="item-delete-button short-essay-item-delete"
               aria-label={`항목 ${index + 1} 삭제`}

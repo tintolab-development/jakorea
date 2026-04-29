@@ -1,0 +1,151 @@
+/**
+ * 설문/양식 응답자(user) 모드 미리보기 — 풀페이지 모달
+ * 상단 청록 바 + 안내 바 + 본문(#F4F6F6) 카드 스택
+ */
+
+.template-preview-modal {
+  --template-preview-paragraph-column-max: 1080px;
+}
+
+.template-preview-modal.teal-header-modal--full .teal-header-modal__body {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.template-preview-modal__shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+}
+
+.template-preview-modal__title-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  background: var(--color-mint-01, #01a1af);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.04);
+  padding: 16px 52px;
+}
+
+.template-preview-modal__title-left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.template-preview-modal__title-text {
+  color: var(--main-WT, #fff);
+  font-family: Pretendard;
+  font-size: 26px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%; /* 31.2px */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.template-preview-modal__badge {
+  border-radius: 50px;
+  border: 1px solid var(--main-WT, #fff);
+  display: flex;
+  padding: 4px 12px;
+  align-items: center;
+  gap: 4px;
+  color: var(--main-WT, #fff);
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%; /* 21px */
+}
+
+.template-preview-modal__close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.template-preview-modal__close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.template-preview-modal__notice-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+.template-preview-modal__notice {
+  width: 100%;
+  max-width: 1080px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.template-preview-modal__notice-text {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--color-mint-01, #01a1af);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.template-preview-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  padding: 32px 52px 52px 52px;
+  background: #f4f6f6;
+  min-height: 1080px;
+  /* `full-page-modal__body`와 동일 — 스크롤바 유무로 가로 흔들림 방지 */
+  scrollbar-gutter: stable;
+}
+
+/* 단락 카드 열: 최대 1080px, 배경(#F4F6F6)은 화면 전폭 유지 */
+.template-preview-modal__body .form-editor-left {
+  flex: 0 1 auto;
+  align-self: center;
+  min-width: 0;
+  width: 100%;
+  max-width: var(--template-preview-paragraph-column-max, 1080px);
+  box-sizing: border-box;
+}
