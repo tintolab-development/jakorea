@@ -15,6 +15,8 @@ export interface TealHeaderModalProps {
   open: boolean
   onCancel: () => void
   title: string
+  /** 타이틀 영역 커스텀(지정 시 `title` 문자열 대신 표시, 접근성 보조용으로 `title`은 유지 권장) */
+  titleContent?: ReactNode
   /** 타이틀 문자열 앞에 노출 (예: 항목 아이콘) */
   titlePrefix?: ReactNode
   children: React.ReactNode
@@ -47,6 +49,7 @@ export function TealHeaderModal({
   open,
   onCancel,
   title,
+  titleContent,
   titlePrefix,
   children,
   footer,
@@ -101,7 +104,7 @@ export function TealHeaderModal({
             {titlePrefix != null ? (
               <span className="teal-header-modal__title-prefix">{titlePrefix}</span>
             ) : null}
-            <span className="teal-header-modal__title-text">{title}</span>
+            <span className="teal-header-modal__title-text">{titleContent ?? title}</span>
           </h2>
           <div className="teal-header-modal__header-actions">
             {headerExtra}
