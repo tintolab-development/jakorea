@@ -39,62 +39,70 @@ export const CURRICULUM_MODAL_SECTIONS = [
 
 export type CurriculumModalSectionTitle = (typeof CURRICULUM_MODAL_SECTIONS)[number]
 
-const createRows = (prefix: string, definitions: TemplateDefinition[]): TemplateRow[] =>
+const createRows = (
+  prefix: string,
+  definitions: TemplateDefinition[],
+  options?: { startNo?: number }
+): TemplateRow[] =>
   definitions.map((definition, index) => ({
     ...definition,
     key: `${prefix}-${index + 1}`,
-    no: index + 1,
+    no: (options?.startNo ?? 1) + index,
     creator: '시스템 생성',
     createdAt: '2026.09.15',
     updatedAt: '-',
   }))
 
 const registrationDefinitions: TemplateDefinition[] = [
-  {
-    id: 'registration-general-curriculum',
-    templateName: '일반 프로그램 등록 폼 (교육 커리큘럼 ver.)',
-    variant: 'curriculum',
-  },
-  {
-    id: 'registration-general-keywording',
-    templateName: '일반 프로그램 등록 폼 (교육 일정 ver.)',
-    variant: 'default',
-  },
+  { id: 'registration-general', templateName: '일반 프로그램 등록 폼', variant: 'default' },
   { id: 'registration-economy', templateName: '1사 1교 프로그램 등록 폼', variant: 'default' },
   { id: 'registration-keminior', templateName: 'Gemini 프로그램 등록 폼', variant: 'default' },
+  { id: 'registration-ujat', templateName: 'UJAT 프로그램 등록 폼', variant: 'default' },
+]
+
+const recruitmentDefinitions: TemplateDefinition[] = [
   {
-    id: 'registration-instructor-1',
-    templateName: '프로그램 참여자 모집 폼',
+    id: 'recruitment-participant-school',
+    templateName: '프로그램 참여자 모집 폼 (학교)',
     variant: 'default',
   },
   {
-    id: 'registration-instructor-2',
-    templateName: '프로그램 강사 모집 폼',
+    id: 'recruitment-participant-individual',
+    templateName: '프로그램 참여자 모집 폼 (개인)',
     variant: 'default',
   },
-  { id: 'registration-volunteer', templateName: '프로그램 봉사자 모집 폼', variant: 'volunteer' },
-  { id: 'registration-ujat-volunteer', templateName: 'UJAT 봉사자 모집 폼', variant: 'volunteer' },
+  { id: 'recruitment-instructor', templateName: '프로그램 강사 모집 폼', variant: 'default' },
+  { id: 'recruitment-volunteer', templateName: '프로그램 봉사자 모집 폼', variant: 'volunteer' },
 ]
 
 const applicationDefinitions: TemplateDefinition[] = [
   {
-    id: 'application-general-education',
-    templateName: '일반 프로그램 신청 폼 (교육 커리큘럼 ver.)',
+    id: 'application-general',
+    templateName: '일반 프로그램 신청 폼',
     variant: 'default',
   },
   {
-    id: 'application-general-lecture',
-    templateName: '일반 프로그램 신청 폼 (교육 일정 ver.)',
+    id: 'application-economy',
+    templateName: '1사 1교 프로그램 신청 폼',
     variant: 'default',
   },
-  { id: 'application-economy', templateName: '1사 1교 프로그램 신청 폼', variant: 'default' },
-  { id: 'application-keminior', templateName: 'Gemini 프로그램 신청 폼', variant: 'default' },
   {
-    id: 'application-instructor-1',
-    templateName: '프로그램 강사 신청 폼',
+    id: 'application-participant-school',
+    templateName: '프로그램 참여자 신청 폼 (학교)',
     variant: 'default',
   },
+  {
+    id: 'application-participant-individual',
+    templateName: '프로그램 참여자 신청 폼 (개인)',
+    variant: 'default',
+  },
+  { id: 'application-instructor', templateName: '프로그램 강사 신청 폼', variant: 'default' },
   { id: 'application-volunteer', templateName: '프로그램 봉사자 신청 폼', variant: 'volunteer' },
+  {
+    id: 'application-economy-participant',
+    templateName: '1사 1교 프로그램 참여자 신청 폼',
+    variant: 'default',
+  },
   { id: 'application-ujat-volunteer', templateName: 'UJAT 봉사자 신청 폼', variant: 'volunteer' },
 ]
 
@@ -123,6 +131,12 @@ export const writingSections: TemplateSection[] = [
   },
   {
     key: 'application',
+    title: '모집 양식',
+    description: '프로그램 등록 시 수정/편집이 가능한 양식입니다.',
+    rows: createRows('recruitment', recruitmentDefinitions, { startNo: 4 }),
+  },
+  {
+    key: 'application_form',
     title: '신청 양식',
     description: '프로그램 등록 시 수정/편집이 가능한 양식입니다.',
     rows: createRows('application', applicationDefinitions),

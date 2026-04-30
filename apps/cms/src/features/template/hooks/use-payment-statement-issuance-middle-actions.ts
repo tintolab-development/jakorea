@@ -1,16 +1,14 @@
 import { useCallback, useMemo, type Dispatch, type SetStateAction } from 'react'
 import { message } from 'antd'
 import {
+  createAgreementExplanationTextParagraphForInsert,
   duplicateMiddleParagraph,
   getLastMiddleParagraphId,
   insertMiddleParagraphAfter,
   pickActiveParagraphIdAfterMiddleDelete,
   removeMiddleParagraph,
 } from '@/features/template/lib/writing-form-middle-paragraph-mutations'
-import {
-  createPaymentStatementUserTitleParagraph,
-  PAYMENT_STATEMENT_SEED_PARAGRAPH_IDS,
-} from '@/features/template/model/payment-statement-issuance-draft'
+import { PAYMENT_STATEMENT_SEED_PARAGRAPH_IDS } from '@/features/template/model/payment-statement-issuance-draft'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 
 export type PaymentStatementIssuanceMiddleActions = {
@@ -29,7 +27,7 @@ export function usePaymentStatementIssuanceMiddleActions(
 ): PaymentStatementIssuanceMiddleActions {
   const appendBasicTitleParagraph = useCallback(() => {
     const newId = crypto.randomUUID()
-    const insert = createPaymentStatementUserTitleParagraph(newId)
+    const insert = createAgreementExplanationTextParagraphForInsert(newId)
     let inserted = false
     setDraft(prev => {
       const lastMid = getLastMiddleParagraphId(prev.paragraphs)

@@ -24,6 +24,11 @@ import NewAgreementForm from '@/features/template/ui/form-set/new-agreement-form
 import NewHorizontalTableForm from '@/features/template/ui/form-set/new-horizontal-table-form'
 import NewSurveyForm from '@/features/template/ui/form-set/new-survey-form'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
+import {
+  ProgramRegistrationEditorLeftColumn,
+  ProgramRegistrationEditorRightColumn,
+} from '@/features/template/ui/form-set/program-registration-form'
 
 type TemplateFormTabQuery = {
   mode?: string
@@ -99,15 +104,30 @@ export default function TemplateFormTab() {
   const noopUpdateParagraph: FormUpdateParagraph = () => {}
   const previewEditorKind =
     selectedTemplate?.id.startsWith('agreement-') === true ? 'agreement' : 'survey'
+  const isProgramRegistrationTemplate = selectedTemplate?.id === 'registration-general'
+  const programRegistrationVm = useProgramRegistrationEditor(
+    isPreviewOpen && isProgramRegistrationTemplate,
+    selectedTemplate?.templateName ?? '일반 프로그램 등록 폼'
+  )
 
   const handlePreview = useCallback(() => {
+    if (isProgramRegistrationTemplate) {
+      programRegistrationVm.handlePreview()
+      return
+    }
     openWritingUserPreview({
       draft: EMPTY_PREVIEW_DRAFT,
       updateParagraph: noopUpdateParagraph,
       headerTitle: selectedTemplate?.templateName ?? '양식 미리보기',
       editorKind: previewEditorKind,
     })
-  }, [openWritingUserPreview, previewEditorKind, selectedTemplate?.templateName])
+  }, [
+    isProgramRegistrationTemplate,
+    openWritingUserPreview,
+    previewEditorKind,
+    programRegistrationVm,
+    selectedTemplate?.templateName,
+  ])
 
   if (params.mode === 'new' && params.type === 'survey') {
     return <NewSurveyForm />
@@ -140,21 +160,30 @@ export default function TemplateFormTab() {
         description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
         templateTabType="writing"
         onPreview={handlePreview}
+        onSave={isProgramRegistrationTemplate ? programRegistrationVm.handleSave : undefined}
         leftContent={
-          <TemplateModalLeftContent
-            config={orderedLeftContentConfig}
-            selectedCardId={activeCardId}
-            onSelectCard={setActiveCardId}
-            onReorderCards={cards => applyOrderedCards(cards.map(card => card.id))}
-          />
+          isProgramRegistrationTemplate ? (
+            <ProgramRegistrationEditorLeftColumn vm={programRegistrationVm} />
+          ) : (
+            <TemplateModalLeftContent
+              config={orderedLeftContentConfig}
+              selectedCardId={activeCardId}
+              onSelectCard={setActiveCardId}
+              onReorderCards={cards => applyOrderedCards(cards.map(card => card.id))}
+            />
+          )
         }
         rightNavigation={
-          <TemplateModalRightNavigation
-            config={rightNavigationConfig}
-            selectedItemId={activeCardId}
-            onSelectItem={setActiveCardId}
-            onReorderItems={items => applyOrderedCards(items.map(item => item.id))}
-          />
+          isProgramRegistrationTemplate ? (
+            <ProgramRegistrationEditorRightColumn vm={programRegistrationVm} />
+          ) : (
+            <TemplateModalRightNavigation
+              config={rightNavigationConfig}
+              selectedItemId={activeCardId}
+              onSelectItem={setActiveCardId}
+              onReorderItems={items => applyOrderedCards(items.map(item => item.id))}
+            />
+          )
         }
       />
     </>
