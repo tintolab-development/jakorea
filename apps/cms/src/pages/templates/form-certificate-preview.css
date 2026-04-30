@@ -496,3 +496,49 @@
   overflow: visible;
 }
 
+/* 인증서/수료증 전용 미리보기 — 좌측 편집 화면과 같은 캔버스를 A4 프레임 안에 축소 표시 */
+.form-certificate-user-preview-modal {
+  --template-preview-a4-width: min(668px, calc((100vh - 180px) * 1208 / 1682));
+  --template-preview-a4-scale: calc(var(--template-preview-a4-width) / 1208px);
+}
+
+.form-certificate-user-preview-modal .template-preview-modal__notice {
+  justify-content: center;
+}
+
+.form-certificate-user-preview-modal .template-preview-modal__notice-text-wrap {
+  width: var(--template-preview-notice-text-width, 890px);
+  flex: 0 0 auto;
+}
+
+.form-certificate-user-preview-modal.template-preview-modal:has(.template-preview-modal__a4-stage) .template-preview-modal__body {
+  overflow-y: auto;
+  padding-top: 18px;
+  padding-bottom: 32px;
+}
+
+.form-certificate-user-preview-modal .template-preview-modal__pages {
+  flex: 0 0 auto;
+}
+
+.form-certificate-user-preview-modal .template-preview-modal__a4-stage {
+  width: var(--template-preview-a4-width);
+  flex: 0 0 auto;
+}
+
+.form-certificate-user-preview-modal .template-preview-modal__a4-frame {
+  aspect-ratio: 1208 / 1682;
+  width: var(--template-preview-a4-width);
+  height: calc(var(--template-preview-a4-width) * 1682 / 1208);
+  transform: none;
+}
+
+.form-certificate-user-preview-modal .template-preview-modal__a4-scale-inner {
+  width: 1208px;
+  height: 1682px;
+}
+
+.form-certificate-user-preview-modal .form-certificate-preview {
+  width: 1208px;
+}
+
