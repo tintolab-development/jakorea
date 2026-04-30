@@ -1,14 +1,29 @@
-import { Table } from 'antd'
+import { message, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
+import {
+  getA4DocumentTitle,
+  getA4PreviewParagraphs,
+} from '@/features/template/lib/a4-document-preview'
+import {
+  collectFormDocumentPdfPageElements,
+  downloadFormDocumentPdfFromPageElements,
+} from '@/features/template/lib/generate-form-document-pdf'
+import { useA4ParagraphPages } from '@/features/template/hooks/use-a4-paragraph-pages'
 import {
   createDefaultSurveyDraft,
   createSingleItemPreviewDraft,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
+import {
+  getPaymentStatementA4ParagraphGap,
+  PAYMENT_STATEMENT_A4_HIDDEN_PARAGRAPH_IDS,
+} from '@/features/template/model/payment-statement-issuance-a4-preview'
 import { TemplateListCard } from '@/features/template/ui/template-list-card'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { A4DocumentPageLayout } from '@/features/template/ui/layout'
+import { FormDocumentPreviewBody } from '@/features/template/ui/document-preview'
 import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import {
@@ -26,9 +41,16 @@ import {
   PaymentStatementIssuanceEditorLeftColumn,
   PaymentStatementIssuanceEditorRightColumn,
 } from '@/features/template/ui/form-set/payment-statement-issuance'
+import { PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-config'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-overlay'
 
 const PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME = '지급조서(발급용)'
+
+function safePdfFileName(title: string): string {
+  const base = title.trim().replace(/[^\w가-힣-]+/gu, '_').replace(/_+/g, '_').slice(0, 80) || 'form'
+  return `${base}.pdf`
+}
 
 type IssuanceFormTabQuery = {
   mode?: string
@@ -155,6 +177,33 @@ export function IssuanceFormTab() {
     isPreviewOpen && isPaymentStatementIssuance,
     selectedTemplate?.templateName ?? PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME
   )
+  const paymentStatementPdfHostRef = useRef<HTMLDivElement>(null)
+  const [paymentStatementPdfLoading, setPaymentStatementPdfLoading] = useState(false)
+  const paymentStatementPreviewParagraphs = useMemo(
+    () =>
+      getA4PreviewParagraphs(
+        paymentStatementVm.draft.paragraphs,
+        PAYMENT_STATEMENT_A4_HIDDEN_PARAGRAPH_IDS
+      ),
+    [paymentStatementVm.draft.paragraphs]
+  )
+  const paymentStatementA4Title = useMemo(
+    () => getA4DocumentTitle(paymentStatementVm.draft, selectedTemplate?.templateName ?? PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME),
+    [paymentStatementVm.draft, selectedTemplate?.templateName]
+  )
+  const {
+    pages: paymentStatementPdfPages,
+    overflowParagraphIds: paymentStatementPdfOverflowParagraphIds,
+    measureLayer: paymentStatementPdfMeasureLayer,
+  } = useA4ParagraphPages({
+    allParagraphs: paymentStatementPreviewParagraphs,
+    titleNumbering: paymentStatementVm.draft.formSettings.titleNumbering,
+    editorKind: 'horizontal_table',
+    enabled: isPreviewOpen && isPaymentStatementIssuance,
+    paragraphBodyOptions: PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS,
+    renderMode: 'contentOnly',
+    paragraphGapPx: getPaymentStatementA4ParagraphGap,
+  })
 
   const openTemplatePreview = useCallback(
     (row: IssuanceTemplateRow) => {
@@ -267,8 +316,26 @@ export function IssuanceFormTab() {
     handleOpenUserPreview()
   }
 
+  const handleDownloadPaymentStatementDocument = useCallback(async () => {
+    const root = paymentStatementPdfHostRef.current
+    if (root == null) return
+    setPaymentStatementPdfLoading(true)
+    try {
+      const pageEls = collectFormDocumentPdfPageElements(root)
+      await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(paymentStatementA4Title))
+      message.success('PDF가 저장되었습니다')
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'PDF 생성에 실패했습니다'
+      message.error(msg)
+    } finally {
+      setPaymentStatementPdfLoading(false)
+    }
+  }, [paymentStatementA4Title])
+
   return (
     <>
+      <FormCertificatePdfExportOverlay visible={paymentStatementPdfLoading} />
+      {isPreviewOpen && isPaymentStatementIssuance ? paymentStatementPdfMeasureLayer : null}
       <div className="template-form-tab__content">
         <TemplateListCard
           title="보고 양식"
@@ -306,6 +373,10 @@ export function IssuanceFormTab() {
         templateTabType="issuance"
         onPreview={handleModalPreview}
         onSave={isPaymentStatementIssuance ? paymentStatementVm.handleSave : undefined}
+        onDownloadDocument={
+          isPaymentStatementIssuance ? () => void handleDownloadPaymentStatementDocument() : undefined
+        }
+        downloadDocumentLoading={isPaymentStatementIssuance ? paymentStatementPdfLoading : false}
         leftContent={
           isPaymentStatementIssuance ? (
             <PaymentStatementIssuanceEditorLeftColumn vm={paymentStatementVm} />
@@ -336,6 +407,44 @@ export function IssuanceFormTab() {
           )
         }
       />
+      {isPreviewOpen && isPaymentStatementIssuance ? (
+        <div
+          ref={paymentStatementPdfHostRef}
+          style={{
+            position: 'fixed',
+            left: -20000,
+            top: 0,
+            width: 1464,
+            display: 'flex',
+            flexDirection: 'column',
+            pointerEvents: 'none',
+            zIndex: -1,
+          }}
+          aria-hidden={true}
+        >
+          {paymentStatementPdfPages.map((pageParagraphs, pageIndex) => (
+            <A4DocumentPageLayout
+              key={pageIndex}
+              title={paymentStatementA4Title}
+              pageIndex={pageIndex}
+              pdfCapture
+            >
+              <div style={{ width: '100%', paddingBottom: 16, boxSizing: 'border-box' }}>
+                <FormDocumentPreviewBody
+                  paragraphs={pageParagraphs}
+                  allParagraphs={paymentStatementPreviewParagraphs}
+                  titleNumbering={paymentStatementVm.draft.formSettings.titleNumbering}
+                  editorKind="horizontal_table"
+                  overflowParagraphIds={paymentStatementPdfOverflowParagraphIds}
+                  paragraphBodyOptions={PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS}
+                  renderMode="contentOnly"
+                  paragraphGapPx={getPaymentStatementA4ParagraphGap}
+                />
+              </div>
+            </A4DocumentPageLayout>
+          ))}
+        </div>
+      ) : null}
     </>
   )
 }
