@@ -1,11 +1,19 @@
 import { DownloadOutlined } from '@ant-design/icons'
+import { message } from 'antd'
+import { useCallback, useRef, useState } from 'react'
 import type {
   FormEditorKind,
   WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
-import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { A4DocumentPageLayout } from '@/features/template/ui/layout'
+import { useA4ParagraphPages } from '@/features/template/hooks/use-a4-paragraph-pages'
+import { FormDocumentPreviewBody } from '@/features/template/ui/document-preview'
+import {
+  collectFormDocumentPdfPageElements,
+  downloadFormDocumentPdfFromPageElements,
+} from '@/features/template/lib/generate-form-document-pdf'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import './agreement-template-preview-modal.css'
 
@@ -19,6 +27,11 @@ export interface AgreementTemplatePreviewModalProps {
   zIndex?: number
 }
 
+function safePdfFileName(title: string): string {
+  const base = title.trim().replace(/[^\w가-힣-]+/gu, '_').replace(/_+/g, '_').slice(0, 80) || 'form'
+  return `${base}.pdf`
+}
+
 export function AgreementTemplatePreviewModal({
   open,
   onClose,
@@ -28,6 +41,33 @@ export function AgreementTemplatePreviewModal({
   editorKind = 'agreement',
   zIndex = 1100,
 }: AgreementTemplatePreviewModalProps) {
+  void updateParagraph
+  const { pages, overflowParagraphIds, measureLayer } = useA4ParagraphPages({
+    allParagraphs: draft.paragraphs,
+    titleNumbering: draft.formSettings.titleNumbering,
+    editorKind,
+    enabled: open,
+  })
+
+  const pdfHostRef = useRef<HTMLDivElement>(null)
+  const [pdfLoading, setPdfLoading] = useState(false)
+
+  const handlePdfDownload = useCallback(async () => {
+    const root = pdfHostRef.current
+    if (root == null) return
+    setPdfLoading(true)
+    try {
+      const pageEls = collectFormDocumentPdfPageElements(root)
+      await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(headerTitle))
+      message.success('PDF가 저장되었습니다')
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'PDF 생성에 실패했습니다'
+      message.error(msg)
+    } finally {
+      setPdfLoading(false)
+    }
+  }, [headerTitle])
+
   return (
     <TealHeaderModal
       open={open}
@@ -38,6 +78,7 @@ export function AgreementTemplatePreviewModal({
       className="agreement-template-preview-modal teal-header-modal--full"
       zIndex={zIndex}
     >
+      {measureLayer}
       <div className="agreement-template-preview-modal__shell">
         <header className="agreement-template-preview-modal__header">
           <div className="agreement-template-preview-modal__title-wrap">
@@ -70,7 +111,8 @@ export function AgreementTemplatePreviewModal({
               <button
                 type="button"
                 className="agreement-template-preview-modal__action-button agreement-template-preview-modal__action-button--download"
-                disabled
+                onClick={() => void handlePdfDownload()}
+                disabled={pdfLoading || pages.length === 0}
               >
                 <DownloadOutlined />
                 문서 다운로드
@@ -86,19 +128,30 @@ export function AgreementTemplatePreviewModal({
           </div>
 
           <div className="agreement-template-preview-modal__preview-wrapper">
-            <div className="agreement-template-preview-modal__preview-a4">
-              <FormEditorLeftPane
-                paragraphs={draft.paragraphs}
-                titleNumbering={draft.formSettings.titleNumbering}
-                selectedCardId={null}
-                onSelectCard={() => {}}
-                onReorderMiddle={() => {}}
-                updateParagraph={updateParagraph}
-                editorKind={editorKind}
-                singleItemListActiveItemId={null}
-                paragraphInteractionMode="user"
-                showEditorChrome={false}
-              />
+            <div className="agreement-template-preview-modal__a4-stage">
+              <div ref={pdfHostRef} className="agreement-template-preview-modal__a4-stack">
+                {pages.map((pageParagraphs, pageIndex) => (
+                  <div key={pageIndex} className="agreement-template-preview-modal__a4-frame">
+                    <div className="agreement-template-preview-modal__a4-scale-inner">
+                      <A4DocumentPageLayout
+                        title={headerTitle}
+                        pageIndex={pageIndex}
+                        pdfCapture
+                      >
+                        <div className="agreement-template-preview-modal__a4-text-content">
+                          <FormDocumentPreviewBody
+                            paragraphs={pageParagraphs}
+                            allParagraphs={draft.paragraphs}
+                            titleNumbering={draft.formSettings.titleNumbering}
+                            editorKind={editorKind}
+                            overflowParagraphIds={overflowParagraphIds}
+                          />
+                        </div>
+                      </A4DocumentPageLayout>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

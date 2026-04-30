@@ -7,6 +7,11 @@
   overflow: hidden;
 }
 
+.agreement-template-preview-modal {
+  --template-preview-a4-width: 616.105px;
+  --template-preview-a4-scale: calc(616.105 / 1464);
+}
+
 .agreement-template-preview-modal__shell {
   display: flex;
   flex-direction: column;
@@ -161,26 +166,60 @@
 
 .agreement-template-preview-modal__preview-wrapper {
   display: flex;
-  width: 1208px;
-  height: 1682px;
-  padding: 32px;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  border-radius: var(--16, 16px);
-  background: var(--gray-bdc-6-c-9, #bdc6c9);
-  box-shadow: 0 4px 32px 0 rgba(0, 0, 0, 0.12);
+  width: 100%;
+  max-width: var(--template-preview-content-max-width, 1404px);
+  flex: 1 0 0;
+  min-height: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
-.agreement-template-preview-modal__preview-a4 {
-  width: 1146px;
-  height: 1618px;
-  flex-shrink: 0;
-  background: #fff;
-  overflow: auto;
+.agreement-template-preview-modal__a4-stage {
+  width: var(--template-preview-a4-width, 616.105px);
+  flex: 1 0 0;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  box-sizing: border-box;
 }
 
-.agreement-template-preview-modal__preview-a4 .form-editor-left {
+.agreement-template-preview-modal__a4-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
   width: 100%;
+  flex: 1 0 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 24px;
+  box-sizing: border-box;
+}
+
+.agreement-template-preview-modal__a4-frame {
+  width: var(--template-preview-a4-width, 616.105px);
+  flex: 0 0 auto;
+  aspect-ratio: 65 / 92;
+  height: calc(var(--template-preview-a4-width, 616.105px) * 92 / 65);
   max-width: 100%;
+  overflow: hidden;
+  border-radius: 0;
+  box-shadow: none;
+  background: #fff;
+}
+
+.agreement-template-preview-modal__a4-scale-inner {
+  width: 1464px;
+  height: 2072px;
+  transform-origin: top left;
+  transform: scale(var(--template-preview-a4-scale));
+}
+
+.agreement-template-preview-modal__a4-text-content {
+  width: 100%;
+  padding-bottom: 16px;
+  box-sizing: border-box;
 }
