@@ -23,7 +23,8 @@ import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/singl
 import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
 import { SubjectiveParagraphBody } from '@/features/template/ui/paragraph/single-item/subjective-paragraph-body'
 import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
-import { DateTime } from '@/features/template/ui/paragraph/single-item/date-time'
+import { DateField } from '@/features/template/ui/paragraph/single-item/date'
+import { TimeField } from '@/features/template/ui/paragraph/single-item/time'
 import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate'
 import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-type'
 import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
@@ -157,11 +158,19 @@ function renderBody(
       return <ScoreSelectParagraphBody paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
     case 'dropdown':
       return <Dropdown paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
-    case 'date_time':
+    case 'date':
       return (
-        <DateTime
+        <DateField
           paragraph={p}
-          onChange={noopOnParagraphChange}
+          isCardSelected={false}
+          isBodyInteractive={false}
+          paragraphInteractionMode="user"
+        />
+      )
+    case 'time':
+      return (
+        <TimeField
+          paragraph={p}
           isCardSelected={false}
           isBodyInteractive={false}
           paragraphInteractionMode="user"

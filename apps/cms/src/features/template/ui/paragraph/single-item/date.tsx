@@ -15,7 +15,7 @@ type RangeValue = [Dayjs | null, Dayjs | null]
 export function DateField({
   paragraph,
   isCardSelected = true,
-  isBodyInteractive: _isBodyInteractive = true,
+  isBodyInteractive = true,
   paragraphInteractionMode = 'authoring',
 }: {
   paragraph: DateParagraph
@@ -76,6 +76,7 @@ export function DateField({
           onChange={setSingleDate}
           placeholder="날짜 선택"
           width={PICKER_WIDTH}
+          disabled={!isBodyInteractive}
         />
       ) : (
         <ParagraphDatePicker
@@ -94,6 +95,7 @@ export function DateField({
             setSingleDate(d)
             setRange([d.startOf('day'), d.endOf('day')])
           }}
+          disabled={!isBodyInteractive}
         />
       )}
     </div>
