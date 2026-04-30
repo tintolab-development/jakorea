@@ -150,8 +150,7 @@
   background: #f4f6f6;
   overflow-y: auto;
   box-sizing: border-box;
-  /* 스크롤바 유무에 따라 가로폭이 바뀌면서 body-header(설명·버튼)가 미세하게 움직이는 것 방지 */
-  scrollbar-gutter: stable;
+  /* 우측 미세 공백(스크롤바 reserved gutter) 방지: 양식 상세 풀페이지는 가로 폭 우선 */
 }
 
 /* 하단 52px 스페이서 — ::after 대신 실제 DOM 요소로 보장 */

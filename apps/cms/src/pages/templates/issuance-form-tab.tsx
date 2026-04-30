@@ -1,9 +1,16 @@
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useMemo, useState } from 'react'
+import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
+import {
+  createDefaultSurveyDraft,
+  createSingleItemPreviewDraft,
+  type WritingFormDraft,
+} from '@/features/template/model/writing-form-draft.schema'
 import { TemplateListCard } from '@/features/template/ui/template-list-card'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
+import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import {
   mergeLeftCardOrderByDragIds,
   normalizeLeftCardOrder,
@@ -28,22 +35,90 @@ const issuanceRows: IssuanceTemplateRow[] = [
   {
     key: 'issuance-1',
     no: 1,
-    templateName: '수료증 발급 안내문',
+    templateName: 'UJAT 결과리포트',
     creator: '시스템 생성',
-    createdAt: '2026. 09. 15',
+    createdAt: '2025. 09. 15',
     updatedAt: '-',
   },
   {
     key: 'issuance-2',
     no: 2,
-    templateName: '활동확인서 발급 요청서',
+    templateName: 'UJAT 교육일지',
     creator: '시스템 생성',
-    createdAt: '2026. 09. 15',
+    createdAt: '2025. 09. 15',
+    updatedAt: '-',
+  },
+  {
+    key: 'issuance-3',
+    no: 3,
+    templateName: '강의보고서',
+    creator: '시스템 생성',
+    createdAt: '2025. 09. 15',
+    updatedAt: '-',
+  },
+  {
+    key: 'issuance-4',
+    no: 4,
+    templateName: '정산 신청서',
+    creator: '시스템 생성',
+    createdAt: '2025. 09. 15',
+    updatedAt: '-',
+  },
+  {
+    key: 'issuance-5',
+    no: 5,
+    templateName: '결과보고서',
+    creator: '시스템 생성',
+    createdAt: '2025. 09. 15',
+    updatedAt: '-',
+  },
+]
+
+const documentRows: IssuanceTemplateRow[] = [
+  {
+    key: 'document-1',
+    no: 1,
+    templateName: '지출증빙서류(필수폼)',
+    creator: '시스템 생성',
+    createdAt: '2025. 09. 15',
+    updatedAt: '-',
+  },
+  {
+    key: 'document-2',
+    no: 2,
+    templateName: '휴가 인증서',
+    creator: '시스템 생성',
+    createdAt: '2025. 09. 15',
+    updatedAt: '-',
+  },
+  {
+    key: 'document-3',
+    no: 3,
+    templateName: '수료증',
+    creator: '시스템 생성',
+    createdAt: '2025. 09. 15',
+    updatedAt: '-',
+  },
+  {
+    key: 'document-4',
+    no: 4,
+    templateName: '감사 활동 인증서',
+    creator: '시스템 생성',
+    createdAt: '2025. 09. 15',
+    updatedAt: '-',
+  },
+  {
+    key: 'document-5',
+    no: 5,
+    templateName: '봉사 활동 인증서',
+    creator: '시스템 생성',
+    createdAt: '2025. 09. 15',
     updatedAt: '-',
   },
 ]
 
 export function IssuanceFormTab() {
+  const { openWritingUserPreview } = useTemplateWritingPreview()
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<IssuanceTemplateRow | null>(null)
 
@@ -118,18 +193,49 @@ export function IssuanceFormTab() {
     setOrderedLeftContentConfig(prev => mergeLeftCardOrderByDragIds(prev, orderedIds))
   }
 
+  const multiPageTemplateNames = new Set(['정산 신청서', '결과보고서', '강의보고서'])
+  const getIssuancePreviewDraft = (templateName?: string): WritingFormDraft => {
+    if (templateName != null && multiPageTemplateNames.has(templateName)) {
+      return createSingleItemPreviewDraft()
+    }
+    return createDefaultSurveyDraft()
+  }
+  const noopUpdateParagraph: FormUpdateParagraph = () => {}
+  const handleOpenUserPreview = () => {
+    openWritingUserPreview({
+      draft: getIssuancePreviewDraft(selectedTemplate?.templateName),
+      updateParagraph: noopUpdateParagraph,
+      headerTitle: selectedTemplate?.templateName ?? '발급 양식 미리보기',
+      editorKind: 'survey',
+    })
+  }
+
   return (
     <>
       <div className="template-form-tab__content">
         <TemplateListCard
-          title="발급 양식"
-          description="발급 요청 및 안내에 사용하는 기본 양식입니다."
+          title="보고 양식"
+          description="모든 프로그램에 동일한 구조로 노출되는 양식입니다."
+          headerInline
         >
           <Table
             className="cms-data-table"
             rowKey="key"
             columns={issuanceColumns}
             dataSource={issuanceRows}
+            pagination={false}
+          />
+        </TemplateListCard>
+        <TemplateListCard
+          title="서류 양식"
+          description="모든 프로그램에 동일한 구조로 노출되는 양식입니다."
+          headerInline
+        >
+          <Table
+            className="cms-data-table"
+            rowKey="key"
+            columns={issuanceColumns}
+            dataSource={documentRows}
             pagination={false}
           />
         </TemplateListCard>
@@ -141,6 +247,7 @@ export function IssuanceFormTab() {
         title={selectedTemplate?.templateName ?? '발급 양식 미리보기'}
         description="발급 양식은 문서별 기본 설정과 출력 옵션을 공통으로 사용합니다."
         templateTabType="issuance"
+        onPreview={handleOpenUserPreview}
         leftContent={
           <TemplateModalLeftContent
             config={orderedLeftContentConfig}

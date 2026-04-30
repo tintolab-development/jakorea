@@ -5,12 +5,25 @@ interface TemplateListCardProps {
   title: string
   description: string
   children: ReactNode
+  headerInline?: boolean
 }
 
-export function TemplateListCard({ title, description, children }: TemplateListCardProps) {
+export function TemplateListCard({
+  title,
+  description,
+  children,
+  headerInline = false,
+}: TemplateListCardProps) {
+  const headerClassName = [
+    'template-list-card__header',
+    headerInline ? 'template-list-card__header--inline' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <section className="template-list-card">
-      <div className="template-list-card__header">
+      <div className={headerClassName}>
         <span className="info-section-title">{title}</span>
         <span className="info-section-description">{description}</span>
       </div>
