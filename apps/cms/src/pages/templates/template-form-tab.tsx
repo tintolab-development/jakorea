@@ -127,7 +127,6 @@ export default function TemplateFormTab() {
             key={section.key}
             title={section.title}
             description={section.description}
-            headerInline
           >
             <TemplateTable rows={section.rows} onPreview={handleOpenTemplatePreview} />
           </TemplateListCard>

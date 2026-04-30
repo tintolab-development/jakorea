@@ -10,7 +10,8 @@ import {
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
 import { ExplanationText } from '@/features/template/ui/paragraph/explanation/text'
 import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/title'
-import { DateTime } from '@/features/template/ui/paragraph/single-item/date-time'
+import { DateField } from '@/features/template/ui/paragraph/single-item/date'
+import { TimeField } from '@/features/template/ui/paragraph/single-item/time'
 import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
 import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
 import { MultipleChoice } from '@/features/template/ui/paragraph/single-item/multiple-choice'
@@ -194,9 +195,19 @@ export function renderFormParagraphBody(
           isEditMode={isBodyInteractive}
         />
       )
-    case 'date_time':
+    case 'date':
       return (
-        <DateTime
+        <DateField
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isCardSelected={isCardSelected}
+          isBodyInteractive={isBodyInteractive}
+          paragraphInteractionMode={paragraphInteractionMode}
+        />
+      )
+    case 'time':
+      return (
+        <TimeField
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isCardSelected={isCardSelected}

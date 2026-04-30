@@ -4,6 +4,7 @@ import type { TemplateWritingUserPreviewSession } from '@/features/template/cont
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import type { FormEditorKind } from '@/features/template/model/writing-form-draft.schema'
 import {
+  normalizeWritingFormDraft,
   reorderHeadMiddleTail,
   type FormTitleNumberingStyle,
   type WritingFormDraft,
@@ -73,15 +74,17 @@ export function useWritingFormEditorWithUserPreview(
     isWritingUserPreviewOpen,
   } = useTemplateWritingPreview()
 
-  const [draft, setDraft] = useState<WritingFormDraft>(() => getInitialDraft())
+  const [draft, setDraft] = useState<WritingFormDraft>(() =>
+    normalizeWritingFormDraft(getInitialDraft())
+  )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(() =>
-    getDefaultActiveParagraphId(getInitialDraft())
+    getDefaultActiveParagraphId(normalizeWritingFormDraft(getInitialDraft()))
   )
 
   useEffect(() => {
     if (!open) return
-    const next = getInitialDraft()
+    const next = normalizeWritingFormDraft(getInitialDraft())
     setDraft(next)
     setActiveParagraphId(getDefaultActiveParagraphId(next))
     setSingleItemListActiveItemId(null)

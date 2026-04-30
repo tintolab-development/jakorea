@@ -62,15 +62,15 @@ function dateTimeFieldPlaceholder(
 }
 
 /** 캔버스 테이블 셀 전용 — 우측 커스텀 필드는 비번호 고정 문구 유지 */
-function tableHeaderPlaceholder(colIndex: number) {
-  return `${colIndex + 1}. 항목명을 입력해 주세요`
+function tableHeaderPlaceholder(_colIndex: number) {
+  return '항목명을 입력해 주세요'
 }
 
-function tableCellPlaceholder(colIndex: number, rowIndex: number) {
-  return `${colIndex + 1}-${rowIndex + 1}. 내용을 입력해 주세요`
+function tableCellPlaceholder(_colIndex: number, _rowIndex: number) {
+  return '텍스트를 입력해 주세요'
 }
 
-/** 필드형·비편집: 텍스트형 기본값은 기존 번호형 td placeholder를 유지 */
+/** 필드형·비편집: 텍스트형은 기본 안내 문구·셀별 placeholder 조합 */
 function fieldNonEditCellPlaceholder(
   field: HorizontalTableColumnField,
   colIdx: number,

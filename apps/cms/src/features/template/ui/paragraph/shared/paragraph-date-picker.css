@@ -1,0 +1,471 @@
+/**
+ * 단락 날짜 선택 — 인풋 하단(또는 상단) 커스텀 캘린더 패널
+ */
+
+.paragraph-date-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.paragraph-date-picker__trigger {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  min-width: 0;
+  vertical-align: middle;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  transition: border-color 0.15s ease;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  padding: 0 12px 0 14px;
+  height: 44px;
+}
+
+.paragraph-date-picker__trigger:hover:not(.paragraph-date-picker__trigger--disabled) {
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+.paragraph-date-picker__trigger:focus-visible {
+  outline: 2px solid var(--color-mint-01, #01a1af);
+  outline-offset: 1px;
+}
+
+.paragraph-date-picker__trigger--disabled {
+  border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  background-image: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.1) 0%, rgba(61, 61, 61, 0.1) 100%)
+  );
+  cursor: not-allowed;
+}
+
+.paragraph-date-picker__trigger-icon {
+  margin-inline-end: 8px;
+  color: rgba(61, 61, 61, 0.45);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.paragraph-date-picker__trigger--disabled .paragraph-date-picker__trigger-icon {
+  color: rgba(61, 61, 61, 0.25);
+}
+
+.paragraph-date-picker__trigger-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--main-BK, #3d3d3d);
+}
+
+/* 트리거: 기간 확정 후 CmsInput ~ CmsInput (중첩 포커스 방지: 바깥은 div role=button) */
+.paragraph-date-picker__trigger--range-surface {
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  height: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.paragraph-date-picker__trigger--range-surface:hover:not(
+    .paragraph-date-picker__trigger--disabled
+  ) {
+  border-color: transparent;
+}
+
+.paragraph-date-picker:has(.paragraph-date-picker__trigger--range-surface) {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.paragraph-date-picker:has(.paragraph-date-picker__trigger--range-surface)
+  .paragraph-date-picker__trigger--range-surface {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.paragraph-date-picker__trigger-range-pair {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* 트리거 인풋 고정 너비: 날짜 240px, 시간 160px */
+.paragraph-date-picker__trigger-input--date.cms-input {
+  flex: 0 0 240px;
+  width: 240px;
+  min-width: 240px;
+  max-width: 240px;
+  pointer-events: none;
+}
+
+.paragraph-date-picker__trigger-input--date.cms-input .cms-input__control {
+  width: 100%;
+}
+
+.paragraph-date-picker__trigger-input--time.cms-input {
+  flex: 0 0 160px;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  pointer-events: none;
+}
+
+.paragraph-date-picker__trigger-input--time.cms-input .cms-input__control {
+  width: 100%;
+}
+
+/* 클릭은 트리거( role=button )로 모아 팝업 오픈 */
+.paragraph-date-picker__trigger-range-pair .paragraph-date-picker__trigger-range-input {
+  pointer-events: none;
+}
+
+.paragraph-date-picker__trigger-range-wave {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
+  color: rgba(61, 61, 61, 0.45);
+}
+
+/* 트리거: 기간 off + 시간 on — 날짜 CmsInput (gap 8) 시간 CmsInput */
+.paragraph-date-picker__trigger-datetime-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.paragraph-date-picker__trigger--single-datetime .paragraph-date-picker__trigger-datetime-row {
+  /* 240 + 8 + 160 */
+  min-width: min(408px, 100%);
+  max-width: 100%;
+}
+
+/* 트리거: 기간 on + 시간 on — (날짜|시간) 행 × 2 + 가운데 ~ */
+.paragraph-date-picker__trigger--range-datetime {
+  align-items: flex-start;
+  /* 달력 아이콘 없을 때 다른 트리거와 비슷한 시작 여백 */
+  padding-inline-start: 12px;
+}
+
+.paragraph-date-picker__trigger-range-datetime {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 0 1 auto;
+  width: auto;
+  /* 행1: 240 + 8 + 160 + 8 + ~ */
+  min-width: min(432px, 100%);
+  max-width: 100%;
+}
+
+/* 기간+시간 트리거: 시작일·시작 시간 뒤에 ~ */
+.paragraph-date-picker__trigger-range-wave-inline {
+  flex-shrink: 0;
+  align-self: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
+  color: rgba(61, 61, 61, 0.45);
+}
+
+.paragraph-date-picker__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1055;
+  background: transparent;
+}
+
+.paragraph-date-picker__popover {
+  position: fixed;
+  z-index: 1060;
+  box-sizing: border-box;
+  width: min(100vw - 24px, 640px);
+  max-height: min(90vh, 520px);
+  border-radius: 12px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.paragraph-date-picker__popover.paragraph-date-picker__popover--with-time {
+  /* 캘린더(~300px) + 우측 495px */
+  width: min(100vw - 24px, 795px);
+  /* 시간 셀렉트 드롭다운이 `getPopupContainer`로 팝오버 내부에 붙을 때 잘리지 않도록 */
+  overflow: visible;
+}
+
+.paragraph-date-picker__popover--with-time .paragraph-date-picker__popover-side {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  /* 데스크톱 495px, 좁은 뷰포트에서는 캘린더(최소 260px) 제외 후 남은 폭 */
+  width: min(495px, calc(100vw - 24px - 260px));
+  min-width: 0;
+}
+
+.paragraph-date-picker__popover-body {
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  min-height: 0;
+}
+
+.paragraph-date-picker__popover-calendar {
+  flex: 0 0 auto;
+  width: min(100%, 300px);
+  min-width: 260px;
+  padding: 0;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+/* `CalendarMini` + `calendar-mini.css` — 팝오버 안에서는 카드 그림자·여백만 살짝 줄임 */
+.paragraph-date-picker__popover-calendar-mini.calendar-mini {
+  box-shadow: none;
+  max-height: none;
+  padding: 20px;
+  width: 300px;
+  min-height: 312px;
+  box-sizing: border-box;
+}
+
+.paragraph-date-picker__popover-side {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  min-height: 312px;
+  box-sizing: border-box;
+  flex-direction: column;
+  padding: 16px;
+  gap: 24px;
+}
+
+/* `CmsInput` 루트 — 팝오버 우측 전체 너비 */
+.paragraph-date-picker__popover-input.cms-input {
+  display: block;
+  width: 100%;
+}
+
+/* 스크린샷과 동일: 민트 테두리 고정(읽기 전용 미리보기) */
+.paragraph-date-picker__popover-input .cms-input__control {
+  border-color: var(--color-mint-01, #01a1af);
+  pointer-events: none;
+}
+
+.paragraph-date-picker__popover-input .cms-input__inner .ant-input {
+  cursor: default;
+}
+
+/* 기간 ON: 라벨 + 인풋 그룹 (라벨–인풋 4px, 그룹 간 16px) */
+.paragraph-date-picker__popover-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.paragraph-date-picker__popover-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.paragraph-date-picker__popover-field:focus-visible {
+  outline: 2px solid var(--color-mint-01, #01a1af);
+  outline-offset: 2px;
+}
+
+.paragraph-date-picker__popover-field-label {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.paragraph-date-picker__popover-input--active .cms-input__control {
+  border-color: var(--color-mint-01, #01a1af);
+  box-shadow: 0 0 0 2px rgba(1, 161, 175, 0.2);
+}
+
+.paragraph-date-picker__popover-fields
+  .paragraph-date-picker__popover-input:not(.paragraph-date-picker__popover-input--active)
+  .cms-input__control {
+  border-color: var(--table-line, #e0e0e0);
+  box-shadow: none;
+}
+
+.paragraph-date-picker__popover-fields .paragraph-date-picker__popover-input .cms-input__control {
+  pointer-events: none;
+}
+
+.paragraph-date-picker__popover-datetime-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.paragraph-date-picker__popover-datetime-row .paragraph-date-picker__popover-input.cms-input {
+  flex: 1 1 42%;
+  min-width: 0;
+}
+
+.paragraph-date-picker__popover-datetime-row .paragraph-time-picker__row {
+  flex: 0 0 auto;
+}
+
+.paragraph-date-picker__popover-date-time-sep {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 44px;
+  color: rgba(61, 61, 61, 0.35);
+  user-select: none;
+}
+
+.paragraph-date-picker__popover-time-error {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: #cf1322;
+}
+
+/* `paragraph-time-picker` 셀렉트 — 날짜 팝오버 내 동일 정렬 */
+.paragraph-date-picker__popover .paragraph-time-picker__select-wrap.cms-select--large {
+  gap: 0;
+  padding: 0;
+}
+
+.paragraph-date-picker__popover
+  .paragraph-time-picker__select-wrap.cms-select--large
+  .ant-select
+  .ant-select-selector {
+  padding-left: 10px !important;
+  padding-right: 26px !important;
+}
+
+.paragraph-date-picker__popover .paragraph-time-picker__select-wrap .ant-select-arrow {
+  inset-inline-end: 10px !important;
+}
+
+/* 기간 구간 — `CalendarMini` 범위 클래스 (단락 피커 팝오버만) */
+.paragraph-date-picker__popover-calendar-mini .calendar-mini-cell--range-start {
+  border-radius: var(--8, 8px) !important;
+  background: linear-gradient(0deg, #a4dadd 0%, #a4dadd 100%), #fff !important;
+}
+
+.paragraph-date-picker__popover-calendar-mini .calendar-mini-cell--range-start .calendar-mini-date,
+.paragraph-date-picker__popover-calendar-mini
+  .calendar-mini-cell--range-middle
+  .calendar-mini-date {
+  color: var(--main-BK, #3d3d3d);
+}
+
+.paragraph-date-picker__popover-calendar-mini .calendar-mini-cell--range-middle {
+  border-radius: 0 !important;
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%), #fff !important;
+}
+
+.paragraph-date-picker__popover-calendar-mini .calendar-mini-cell--range-end,
+.paragraph-date-picker__popover-calendar-mini .calendar-mini-cell--range-single {
+  border-radius: var(--8, 8px) !important;
+  background-color: var(--color-mint-01, #01a1af) !important;
+}
+
+.paragraph-date-picker__popover-calendar-mini .calendar-mini-cell--range-end .calendar-mini-date,
+.paragraph-date-picker__popover-calendar-mini
+  .calendar-mini-cell--range-single
+  .calendar-mini-date {
+  color: var(--main-WT, #fff);
+}
+
+/* 일정 배경과 겹칠 때도 구간 스타일 우선 */
+.paragraph-date-picker__popover-calendar-mini
+  .calendar-mini-cell--range-start.calendar-mini-cell--has-schedule {
+  background: linear-gradient(0deg, #a4dadd 0%, #a4dadd 100%), #fff !important;
+}
+
+.paragraph-date-picker__popover-calendar-mini
+  .calendar-mini-cell--range-middle.calendar-mini-cell--has-schedule {
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%), #fff !important;
+}
+
+.paragraph-date-picker__popover-calendar-mini
+  .calendar-mini-cell--range-end.calendar-mini-cell--has-schedule,
+.paragraph-date-picker__popover-calendar-mini
+  .calendar-mini-cell--range-single.calendar-mini-cell--has-schedule {
+  background-color: var(--color-mint-01, #01a1af) !important;
+}
+
+.paragraph-date-picker__popover-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.paragraph-date-picker__popover-toggles {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  min-width: 0;
+}
+
+.paragraph-date-picker__popover-actions {
+  flex-shrink: 0;
+}
+
+/* 단락 날짜 피커 팝오버 내 `CalendarMini`만 — 선택일: 민트 + 8px 라운드(원형 미니 캘린더 기본과 구분) */
+.paragraph-date-picker__popover-calendar-mini .calendar-mini-cell--selected {
+  border-radius: var(--8, 8px) !important;
+  background-color: var(--color-mint-01, #01a1af) !important;
+}
+
+.paragraph-date-picker__popover-calendar-mini
+  .calendar-mini-cell--has-schedule.calendar-mini-cell--selected {
+  border-radius: var(--8, 8px) !important;
+  background-color: var(--color-mint-01, #01a1af) !important;
+}
+
+.paragraph-date-picker__popover-calendar-mini .calendar-mini-cell--selected .calendar-mini-date {
+  color: var(--main-WT, #fff);
+}

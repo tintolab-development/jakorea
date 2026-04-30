@@ -162,10 +162,10 @@ export type DropdownParagraph = WritingFormParagraphBase & {
   answerRequired?: boolean
 }
 
-/** 단일항목 날짜/시간형 — 우측 패널 유형 (기본: 날짜) */
+/** 세로형(날짜/시간형) 스테이지·가로형 dateTime 열 등 — 스테이지별 입력 유형 */
 export type DateTimeFieldMode = 'date' | 'time' | 'date_time'
 
-/** 세로형(날짜/시간형)·커스텀 필드·단독 date_time 패널과 동일 라벨 */
+/** 세로형 날짜/시간형 스테이지·커스텀 필드용 라벨 */
 export const DATE_TIME_FIELD_MODE_OPTIONS: readonly { value: DateTimeFieldMode; label: string }[] =
   [
     { value: 'date', label: '날짜' },
@@ -176,14 +176,18 @@ export const DATE_TIME_FIELD_MODE_OPTIONS: readonly { value: DateTimeFieldMode; 
 /** 합성(날짜+시간) 시간 인풋 기본 플레이스홀더 — 본문·패널에서 공통 */
 export const VERTICAL_DT_COMPOSITE_TIME_PLACEHOLDER = '시간을 선택해 주세요'
 
-export type DateTimeParagraph = WritingFormParagraphBase & {
+export type DateParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
-  variant: 'date_time'
+  variant: 'date'
   answerRequired?: boolean
-  /** 날짜 / 시간 / 날짜+시간 */
-  fieldMode?: DateTimeFieldMode
-  /** 날짜·날짜+시간일 때 기간(시작~종료) */
+  /** 기간(시작~종료) */
   periodEnabled?: boolean
+}
+
+export type TimeParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'time'
+  answerRequired?: boolean
 }
 
 export type StarRateParagraph = WritingFormParagraphBase & {
@@ -300,7 +304,7 @@ export type HorizontalTableFieldCellValue =
 export const HORIZONTAL_TABLE_MIN_COLUMN_COUNT = 1
 
 /** 주관식 등 입력창 안내(플레이스홀더) 기본 문구 */
-export const HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER = '내용을 입력해 주세요'
+export const HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER = '텍스트를 입력해 주세요'
 
 const DEFAULT_DROPDOWN_OPTIONS = ['A', 'B', 'C'] as const
 const DEFAULT_CHOICE_OPTIONS = ['A', 'B', 'C'] as const
@@ -735,7 +739,7 @@ export function createHorizontalTableParagraph(id: string): HorizontalTableParag
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '테이블_가로형',
+    paragraphTitle: '',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
@@ -744,8 +748,8 @@ export function createHorizontalTableParagraph(id: string): HorizontalTableParag
     columnFields: [],
     fieldDataRows: [],
     bottomText: '',
-    showBottomText: false,
-    showBottomConsent: false,
+    showBottomText: true,
+    showBottomConsent: true,
     bottomConsent: 'agree',
     answerRequired: true,
   }
@@ -1587,7 +1591,8 @@ export function createVerticalTableParagraph(
     variant: 'vertical_table',
     verticalTableFlavor: flavor,
     requiredMark: true,
-    paragraphTitle: verticalTableParagraphOutlineLabel(flavor),
+    /** 비우면 카드·네비는 `타이틀을 입력해 주세요` 플레이스홀더 톤(유형명 자동 노출 없음) */
+    paragraphTitle: '',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     rows:
@@ -1603,7 +1608,7 @@ export function createVerticalTableParagraph(
       : {}),
     bottomText: '',
     showBottomText: false,
-    showBottomConsent: false,
+    showBottomConsent: true,
     bottomConsent: 'agree',
     answerRequired: true,
   })
@@ -1894,7 +1899,8 @@ export type WritingFormParagraph =
   | ShortEssayParagraph
   | MultipleChoiceParagraph
   | DropdownParagraph
-  | DateTimeParagraph
+  | DateParagraph
+  | TimeParagraph
   | StarRateParagraph
   | ScaleTypeParagraph
   | UserInfoParagraph
@@ -1909,6 +1915,40 @@ export interface WritingFormDraft {
   formSettings: WritingFormSettings
   /** 설문: 0 제목형, 1–3 중간(DnD), 4 마무리. 동의: 0 제목형, 1–2 중간(DnD), 3 마무리 등. 가로형: 가로형 단락만 */
   paragraphs: WritingFormParagraph[]
+}
+
+/** 레거시 직렬화 `variant: date_time` + `fieldMode` — 런타임 마이그레이션용 */
+type LegacySingleItemDateTimeParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'date_time'
+  fieldMode?: DateTimeFieldMode
+  periodEnabled?: boolean
+}
+
+/** 저장 JSON에 남아 있을 수 있는 단일항목 `date_time` → `date` | `time` */
+export function migrateLegacySingleItemDateTimeParagraph(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (p.kind !== 'single_item') return p
+  if ((p as { variant: string }).variant !== 'date_time') return p
+  const l = p as unknown as LegacySingleItemDateTimeParagraph
+  const mode = l.fieldMode ?? 'date'
+  const { fieldMode: _fm, variant: _v, ...rest } = l
+  if (mode === 'time') {
+    return { ...rest, variant: 'time' } as TimeParagraph
+  }
+  return {
+    ...rest,
+    variant: 'date',
+    periodEnabled: l.periodEnabled ?? false,
+  } as DateParagraph
+}
+
+export function normalizeWritingFormDraft(draft: WritingFormDraft): WritingFormDraft {
+  return {
+    ...draft,
+    paragraphs: draft.paragraphs.map(migrateLegacySingleItemDateTimeParagraph),
+  }
 }
 
 const DEFAULT_USER_FIELDS: UserProfileField[] = [
@@ -1954,11 +1994,13 @@ export function paragraphsAreOnlyTableLayoutParagraphs(
   return paragraphs.length > 0 && paragraphs.every(isTableLayoutParagraph)
 }
 
-/** 직접 등록 — 신규 동의 양식 기본 단락 id (제목형·텍스트형·주관식형·시스템 2종·마무리글형) */
+/** 직접 등록 — 신규 동의 양식 기본 단락 id (제목형·텍스트형·주관식형·테이블 세로·가로·시스템 2종·마무리글형) */
 export const DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS = {
   title: 'agreement-direct-paragraph-title',
   explanationText: 'agreement-direct-paragraph-explanation-text',
   shortEssay: 'agreement-direct-paragraph-short-essay',
+  verticalTableText: 'agreement-direct-paragraph-vertical-table-text',
+  horizontalTable: 'agreement-direct-paragraph-horizontal-table',
   systemDate: 'agreement-direct-paragraph-system-date',
   systemSignature: 'agreement-direct-paragraph-system-signature',
   closing: 'agreement-direct-paragraph-closing',
@@ -2029,6 +2071,11 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         bodyPlaceholder: '각 항목에 내용을 입력해 주세요',
         bodyText: '',
       },
+      createVerticalTableParagraph(
+        DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.verticalTableText,
+        'text'
+      ),
+      createHorizontalTableParagraph(DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.horizontalTable),
       {
         id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.systemDate,
         kind: 'description',
@@ -2134,7 +2181,7 @@ export function createDefaultHorizontalTableDraft(): WritingFormDraft {
         kind: 'single_item',
         variant: 'horizontal_table',
         requiredMark: true,
-        paragraphTitle: '테이블_가로형',
+        paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
         tableFlavor: 'text',
@@ -2143,8 +2190,8 @@ export function createDefaultHorizontalTableDraft(): WritingFormDraft {
         columnFields: [],
         fieldDataRows: [],
         bottomText: '',
-        showBottomText: false,
-        showBottomConsent: false,
+        showBottomText: true,
+        showBottomConsent: true,
         bottomConsent: 'agree',
         answerRequired: true,
       },
@@ -2298,7 +2345,7 @@ export function createExplanationTypesPreviewDraft(): WritingFormDraft {
   }
 }
 
-/** 양식 테스트 > 단일 항목 모음(`useFormTestSingleItemEditor` → `useWritingFormEditorWithUserPreview`) — 제목·8종 스텁·마무리 */
+/** 양식 테스트 > 단일 항목 모음(`useFormTestSingleItemEditor` → `useWritingFormEditorWithUserPreview`) — 제목·9종 스텁·마무리 */
 export function createSingleItemPreviewDraft(): WritingFormDraft {
   const base = createDefaultSurveyDraft()
   const title = base.paragraphs[0]!
@@ -2350,14 +2397,23 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       participatesInTitleNumbering: true,
     },
     {
-      id: 'date-time',
+      id: 'date',
       kind: 'single_item',
-      variant: 'date_time',
+      variant: 'date',
       answerRequired: true,
-      fieldMode: 'date',
       periodEnabled: false,
       requiredMark: true,
-      paragraphTitle: '날짜/시간형',
+      paragraphTitle: '날짜형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'time',
+      kind: 'single_item',
+      variant: 'time',
+      answerRequired: true,
+      requiredMark: true,
+      paragraphTitle: '시간형',
       paragraphDescription: '',
       participatesInTitleNumbering: true,
     },
@@ -2437,13 +2493,13 @@ export function writingOutlineLabel(p: WritingFormParagraph): string {
   }
   if (p.kind === 'single_item' && p.variant === 'horizontal_table') {
     const t = p.paragraphTitle.trim()
-    return t || '테이블_가로형'
+    if (t) return t
+    return '타이틀을 입력해 주세요'
   }
   if (p.kind === 'single_item' && p.variant === 'vertical_table') {
     const t = p.paragraphTitle.trim()
     if (t) return t
-    const vt = normalizeVerticalTableParagraph(p as VerticalTableParagraph)
-    return verticalTableParagraphOutlineLabel(vt.verticalTableFlavor)
+    return '타이틀을 입력해 주세요'
   }
   const t = p.paragraphTitle.trim()
   return t || '타이틀을 입력해 주세요'

@@ -5,8 +5,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type {
-  DateTimeFieldMode,
-  DateTimeParagraph,
+  DateParagraph,
   FileAttachmentParagraph,
   FormEditorKind,
   FormTitleNumberingStyle,
@@ -26,7 +25,6 @@ import {
   createVerticalTableParagraph,
   createDefaultMultipleChoiceItems,
   createDefaultScaleTypeItems,
-  DATE_TIME_FIELD_MODE_OPTIONS,
   effectiveVerticalStageKinds,
   normalizeVerticalChoiceOptions,
   normalizeVerticalTableParagraph,
@@ -140,8 +138,10 @@ function paragraphVariantLabel(p: WritingFormParagraph): string {
       return '객관식형'
     case 'dropdown':
       return '드롭다운형'
-    case 'date_time':
-      return '날짜/시간형'
+    case 'date':
+      return '날짜형'
+    case 'time':
+      return '시간형'
     case 'star_rate':
       return '별점형'
     case 'scale_type':
@@ -171,9 +171,8 @@ function paragraphDetailSelectValue(p: WritingFormParagraph): DetailSelectValue 
   if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') return 'text'
   if (p.kind === 'single_item' && p.variant === 'short_essay') return 'subjective'
   if (p.kind === 'single_item' && p.variant === 'multiple_choice') return 'multiple_choice'
-  if (p.kind === 'single_item' && p.variant === 'date_time') {
-    return p.fieldMode === 'time' ? 'time_only' : 'date_only'
-  }
+  if (p.kind === 'single_item' && p.variant === 'date') return 'date_only'
+  if (p.kind === 'single_item' && p.variant === 'time') return 'time_only'
   if (p.kind === 'single_item' && p.variant === 'star_rate') return 'star_rate'
   if (p.kind === 'single_item' && p.variant === 'scale_type') return 'scale_type'
   if (p.kind === 'single_item' && p.variant === 'user_info') return 'user_info'
@@ -233,18 +232,30 @@ function createMultipleChoiceDefault(id: string): MultipleChoiceParagraph {
   }
 }
 
-function createDateTimeDefault(id: string, mode: DateTimeFieldMode): DateTimeParagraph {
+function createDateDefault(id: string): DateParagraph {
   return {
     id,
     kind: 'single_item',
-    variant: 'date_time',
+    variant: 'date',
     requiredMark: true,
-    paragraphTitle: '날짜/시간형',
+    paragraphTitle: '날짜형',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     answerRequired: true,
-    fieldMode: mode,
     periodEnabled: false,
+  }
+}
+
+function createTimeDefault(id: string): WritingFormParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'time',
+    requiredMark: true,
+    paragraphTitle: '시간형',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
   }
 }
 
@@ -371,9 +382,9 @@ function convertParagraphByDetail(prev: WritingFormParagraph, detail: DetailSele
     case 'multiple_choice':
       return preserveParagraphCommonFields(createMultipleChoiceDefault(id), prev)
     case 'date_only':
-      return preserveParagraphCommonFields(createDateTimeDefault(id, 'date'), prev)
+      return preserveParagraphCommonFields(createDateDefault(id), prev)
     case 'time_only':
-      return preserveParagraphCommonFields(createDateTimeDefault(id, 'time'), prev)
+      return preserveParagraphCommonFields(createTimeDefault(id), prev)
     case 'star_rate':
       return preserveParagraphCommonFields(createStarRateDefault(id), prev)
     case 'scale_type':
@@ -576,10 +587,6 @@ export function FormEditorRightPanel({
   const activeMultipleChoice =
     active && active.kind === 'single_item' && active.variant === 'multiple_choice'
       ? (active as MultipleChoiceParagraph)
-      : null
-  const activeDateTime =
-    active && active.kind === 'single_item' && active.variant === 'date_time'
-      ? (active as DateTimeParagraph)
       : null
   const activeScaleType =
     active && active.kind === 'single_item' && active.variant === 'scale_type'
@@ -844,27 +851,6 @@ export function FormEditorRightPanel({
 
             {activeScaleType ? (
               <FormEditorScaleTypeItems paragraph={activeScaleType} updateParagraph={updateParagraph} />
-            ) : null}
-
-            {activeDateTime ? (
-              <Form.Item label="유형">
-                <CmsSelect
-                  width="100%"
-                  value={activeDateTime.fieldMode ?? 'date'}
-                  options={[...DATE_TIME_FIELD_MODE_OPTIONS]}
-                  onChange={v =>
-                    updateParagraph(activeDateTime.id, cur => {
-                      if (cur.kind !== 'single_item' || cur.variant !== 'date_time') return cur
-                      const mode = v as DateTimeFieldMode
-                      return {
-                        ...cur,
-                        fieldMode: mode,
-                        ...(mode === 'time' ? { periodEnabled: false } : {}),
-                      }
-                    })
-                  }
-                />
-              </Form.Item>
             ) : null}
 
             {active.kind === 'single_item' && active.variant === 'horizontal_table' ? (
