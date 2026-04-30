@@ -9,7 +9,10 @@ import {
 import type { FormEditorKind } from '@/features/template/model/writing-form-draft.schema'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { TemplatePreviewModal } from '@/features/template/ui/modal/template-preview-modal'
-import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import type {
+  FormUpdateParagraph,
+  RenderFormParagraphBodyOptions,
+} from '@/features/template/ui/paragraph/render-form-paragraph-body'
 
 /** `/templates` 하위에서 공유하는 작성 양식 user 미리보기 세션 */
 export type TemplateWritingUserPreviewSession = {
@@ -18,6 +21,9 @@ export type TemplateWritingUserPreviewSession = {
   headerTitle: string
   editorKind?: FormEditorKind
   zIndex?: number
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+  /** FormEditorLeftPane — 단락 필수(*)·답변 필수 토글 등 숨김 */
+  hideParagraphRequiredChrome?: boolean
 }
 
 export type TemplateWritingPreviewContextValue = {
@@ -73,6 +79,8 @@ export function TemplateWritingPreviewProvider({ children }: { children: ReactNo
           updateParagraph={session.updateParagraph}
           editorKind={session.editorKind ?? 'survey'}
           zIndex={session.zIndex}
+          paragraphBodyOptions={session.paragraphBodyOptions}
+          hideParagraphRequiredChrome={session.hideParagraphRequiredChrome}
         />
       ) : null}
     </TemplateWritingPreviewContext.Provider>

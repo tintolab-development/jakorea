@@ -188,10 +188,12 @@
   flex-shrink: 0;
 }
 
+/* 자연 높이로 키워서 부모 `.full-page-modal__body`(overflow-y: auto)가 세로 스크롤을 담당.
+   stretch: 좌·우 열을 동일 높이로 맞춰 우측 커스텀 필드 카드가 좌측 양식 길이만큼 늘어남(sticky 없음) */
 .full-page-modal__contents {
   display: flex;
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: auto;
   width: 100%;
   max-width: none;
   align-items: stretch;
@@ -202,33 +204,36 @@
 .full-page-modal__left {
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  overflow: hidden;
 }
 
-.full-page-modal__left > * {
-  min-height: 0;
+.full-page-modal .form-editor-left {
+  flex: none;
+  overflow: visible;
+  scrollbar-gutter: auto;
+  padding-right: 0;
 }
 
 .full-page-modal__right-wrap {
   display: flex;
+  flex-direction: column;
   align-self: stretch;
   width: 380px;
   flex: 0 0 380px;
+  min-height: 0;
 }
 
 .full-page-modal__right {
-  position: sticky;
-  top: 0;
   display: flex;
-  height: 100%;
-  width: 380px;
-  padding: 20px;
+  flex: 1 1 auto;
   flex-direction: column;
   align-items: flex-start;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0;
+  padding: 20px;
   border-radius: 16px;
   background: var(--main-WT, #fff);
   box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
@@ -318,6 +323,10 @@
   color: #b4b4b4;
   cursor: grab;
   flex-shrink: 0;
+}
+
+.template-modal-nav-item__handle .anticon {
+  font-size: 14px;
 }
 
 .template-modal-nav-item__handle:active {

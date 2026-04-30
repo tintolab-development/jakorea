@@ -137,7 +137,7 @@ export default function TemplateFormTab() {
         open={isPreviewOpen}
         onClose={handleCloseTemplatePreview}
         title={selectedTemplate?.templateName ?? '양식 미리보기'}
-        description="해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
+        description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
         templateTabType="writing"
         onPreview={handlePreview}
         leftContent={

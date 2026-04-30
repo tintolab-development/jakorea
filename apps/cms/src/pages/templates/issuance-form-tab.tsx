@@ -1,6 +1,6 @@
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import {
   createDefaultSurveyDraft,
@@ -21,6 +21,19 @@ import {
   TemplateModalRightNavigation,
   type TemplateModalRightNavigationConfig,
 } from '@/features/template/ui/template-modal-right-navigation'
+import { usePaymentStatementIssuanceEditor } from '@/features/template/hooks/use-payment-statement-issuance-editor'
+import {
+  PaymentStatementIssuanceEditorLeftColumn,
+  PaymentStatementIssuanceEditorRightColumn,
+} from '@/features/template/ui/form-set/payment-statement-issuance'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
+
+const PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME = '지급조서(발급용)'
+
+type IssuanceFormTabQuery = {
+  mode?: string
+  id?: string
+}
 
 interface IssuanceTemplateRow {
   key: string
@@ -76,8 +89,16 @@ const issuanceRows: IssuanceTemplateRow[] = [
 
 const documentRows: IssuanceTemplateRow[] = [
   {
-    key: 'document-1',
+    key: 'document-payment-order-issue',
     no: 1,
+    templateName: PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME,
+    creator: '시스템 생성',
+    createdAt: '2025. 09. 15',
+    updatedAt: '-',
+  },
+  {
+    key: 'document-1',
+    no: 2,
     templateName: '지출증빙서류(필수폼)',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
@@ -85,7 +106,7 @@ const documentRows: IssuanceTemplateRow[] = [
   },
   {
     key: 'document-2',
-    no: 2,
+    no: 3,
     templateName: '휴가 인증서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
@@ -93,7 +114,7 @@ const documentRows: IssuanceTemplateRow[] = [
   },
   {
     key: 'document-3',
-    no: 3,
+    no: 4,
     templateName: '수료증',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
@@ -101,7 +122,7 @@ const documentRows: IssuanceTemplateRow[] = [
   },
   {
     key: 'document-4',
-    no: 4,
+    no: 5,
     templateName: '감사 활동 인증서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
@@ -109,7 +130,7 @@ const documentRows: IssuanceTemplateRow[] = [
   },
   {
     key: 'document-5',
-    no: 5,
+    no: 6,
     templateName: '봉사 활동 인증서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
@@ -117,20 +138,48 @@ const documentRows: IssuanceTemplateRow[] = [
   },
 ]
 
+const issuanceRowsByKey = new Map<string, IssuanceTemplateRow>(
+  [...issuanceRows, ...documentRows].map(row => [row.key, row])
+)
+
 export function IssuanceFormTab() {
   const { openWritingUserPreview } = useTemplateWritingPreview()
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const { params, setParams } = useQueryParams<IssuanceFormTabQuery>()
+  const isPreviewOpen = params.mode === 'edit'
   const [selectedTemplate, setSelectedTemplate] = useState<IssuanceTemplateRow | null>(null)
 
-  const openTemplatePreview = (row: IssuanceTemplateRow) => {
-    setSelectedTemplate(row)
-    setIsPreviewOpen(true)
-  }
+  const isPaymentStatementIssuance =
+    selectedTemplate?.templateName === PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME
 
-  const closeTemplatePreview = () => {
-    setIsPreviewOpen(false)
+  const paymentStatementVm = usePaymentStatementIssuanceEditor(
+    isPreviewOpen && isPaymentStatementIssuance,
+    selectedTemplate?.templateName ?? PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME
+  )
+
+  const openTemplatePreview = useCallback(
+    (row: IssuanceTemplateRow) => {
+      setParams({ mode: 'edit', id: row.key })
+    },
+    [setParams]
+  )
+
+  const closeTemplatePreview = useCallback(() => {
+    setParams({ mode: undefined, id: undefined })
+  }, [setParams])
+
+  useEffect(() => {
+    if (params.mode !== 'edit' || params.id == null || params.id === '') {
+      setSelectedTemplate(null)
+      return
+    }
+    const row = issuanceRowsByKey.get(params.id)
+    if (row != null) {
+      setSelectedTemplate(row)
+      return
+    }
+    setParams({ mode: undefined, id: undefined })
     setSelectedTemplate(null)
-  }
+  }, [params.mode, params.id, setParams])
 
   const issuanceColumns: ColumnsType<IssuanceTemplateRow> = [
     { title: 'No.', dataIndex: 'no', key: 'no', width: 88, align: 'center' },
@@ -210,6 +259,14 @@ export function IssuanceFormTab() {
     })
   }
 
+  const handleModalPreview = () => {
+    if (isPaymentStatementIssuance) {
+      paymentStatementVm.handlePreview()
+      return
+    }
+    handleOpenUserPreview()
+  }
+
   return (
     <>
       <div className="template-form-tab__content">
@@ -245,29 +302,38 @@ export function IssuanceFormTab() {
         open={isPreviewOpen}
         onClose={closeTemplatePreview}
         title={selectedTemplate?.templateName ?? '발급 양식 미리보기'}
-        description="발급 양식은 문서별 기본 설정과 출력 옵션을 공통으로 사용합니다."
+        description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
         templateTabType="issuance"
-        onPreview={handleOpenUserPreview}
+        onPreview={handleModalPreview}
+        onSave={isPaymentStatementIssuance ? paymentStatementVm.handleSave : undefined}
         leftContent={
-          <TemplateModalLeftContent
-            config={orderedLeftContentConfig}
-            selectedCardId={activeCardId}
-            onSelectCard={setActiveCardId}
-            onReorderCards={cards => applyOrderedCards(cards.map(card => card.id))}
-          />
+          isPaymentStatementIssuance ? (
+            <PaymentStatementIssuanceEditorLeftColumn vm={paymentStatementVm} />
+          ) : (
+            <TemplateModalLeftContent
+              config={orderedLeftContentConfig}
+              selectedCardId={activeCardId}
+              onSelectCard={setActiveCardId}
+              onReorderCards={cards => applyOrderedCards(cards.map(card => card.id))}
+            />
+          )
         }
         rightNavigation={
-          <TemplateModalRightNavigation
-            config={rightNavigationConfig}
-            selectedItemId={activeCardId}
-            onSelectItem={setActiveCardId}
-            onReorderItems={items => applyOrderedCards(items.map(item => item.id))}
-          >
-            <span className="full-page-modal__nav-title">문서 설정</span>
-            <CmsButton variant="default" size="medium" width="100%">
-              시트 내 필드
-            </CmsButton>
-          </TemplateModalRightNavigation>
+          isPaymentStatementIssuance ? (
+            <PaymentStatementIssuanceEditorRightColumn vm={paymentStatementVm} />
+          ) : (
+            <TemplateModalRightNavigation
+              config={rightNavigationConfig}
+              selectedItemId={activeCardId}
+              onSelectItem={setActiveCardId}
+              onReorderItems={items => applyOrderedCards(items.map(item => item.id))}
+            >
+              <span className="full-page-modal__nav-title">문서 설정</span>
+              <CmsButton variant="default" size="medium" width="100%">
+                시트 내 필드
+              </CmsButton>
+            </TemplateModalRightNavigation>
+          )
         }
       />
     </>

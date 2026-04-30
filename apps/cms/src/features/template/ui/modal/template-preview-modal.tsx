@@ -7,7 +7,10 @@ import type {
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
 import { A4DocumentPageLayout } from '@/features/template/ui/layout'
-import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import type {
+  FormUpdateParagraph,
+  RenderFormParagraphBodyOptions,
+} from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import { AgreementTemplatePreviewModal } from '@/features/template/ui/modal/agreement-template-preview-modal'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { useA4ParagraphPages } from '@/features/template/hooks/use-a4-paragraph-pages'
@@ -32,6 +35,9 @@ export interface TemplatePreviewModalProps {
    * @default 1100
    */
   zIndex?: number
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+  /** 지급조서 발급 미리보기 등 — 단락 필수 UI 숨김 */
+  hideParagraphRequiredChrome?: boolean
 }
 
 function safePdfFileName(title: string): string {
@@ -51,6 +57,8 @@ export function TemplatePreviewModal({
   updateParagraph,
   editorKind = 'survey',
   zIndex = 1100,
+  paragraphBodyOptions,
+  hideParagraphRequiredChrome,
 }: TemplatePreviewModalProps) {
   const isReportPreviewLayout = editorKind === 'survey'
   const isAgreementPreviewLayout = editorKind === 'agreement'
@@ -196,6 +204,8 @@ export function TemplatePreviewModal({
                 singleItemListActiveItemId={null}
                 paragraphInteractionMode="user"
                 showEditorChrome={false}
+                paragraphBodyOptions={paragraphBodyOptions}
+                hideParagraphRequiredChrome={hideParagraphRequiredChrome}
               />
             )}
           </div>
