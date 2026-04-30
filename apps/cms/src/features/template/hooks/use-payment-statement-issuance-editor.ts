@@ -8,6 +8,10 @@ import {
   PAYMENT_STATEMENT_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/payment-statement-issuance-draft'
 import {
+  getPaymentStatementA4ParagraphGap,
+  PAYMENT_STATEMENT_A4_HIDDEN_PARAGRAPH_IDS,
+} from '@/features/template/model/payment-statement-issuance-a4-preview'
+import {
   getWritingFormHeadMiddlePinnedTail,
   normalizeWritingFormDraft,
   reorderWritingFormMiddleParagraphs,
@@ -119,8 +123,12 @@ export function usePaymentStatementIssuanceEditor(active: boolean, previewHeader
       updateParagraph,
       headerTitle: previewHeaderTitle,
       editorKind: 'horizontal_table' as const,
+      previewLayout: 'a4-document' as const,
       paragraphBodyOptions: PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS,
       hideParagraphRequiredChrome: true as const,
+      a4HiddenParagraphIds: PAYMENT_STATEMENT_A4_HIDDEN_PARAGRAPH_IDS,
+      a4RenderMode: 'contentOnly' as const,
+      a4ParagraphGapPx: getPaymentStatementA4ParagraphGap,
     }),
     [draft, previewHeaderTitle, updateParagraph]
   )

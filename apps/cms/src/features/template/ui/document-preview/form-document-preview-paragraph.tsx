@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type {
   ClosingParagraph,
   FormEditorKind,
@@ -14,6 +14,8 @@ import {
   normalizeHorizontalTableParagraph,
   type HorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import type { FormDocumentPreviewRenderMode } from '@/features/template/lib/a4-document-preview'
+import { getDocumentPreviewParagraphViewModel } from '@/features/template/lib/a4-document-preview'
 import { getFormParagraphDisplayTitle } from '@/features/template/lib/form-title-numbering'
 import { ParagraphCard } from '@/features/template/ui/paragraph/shared/paragraph-card'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
@@ -30,6 +32,7 @@ import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-ty
 import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
 import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import './form-document-preview-body.css'
 
 function noopOnParagraphChange<T>(_next: T): void {}
@@ -97,12 +100,18 @@ function DocumentShortEssayReadonly({ paragraph }: { paragraph: ShortEssayParagr
   )
 }
 
-function SurveyTitleDocumentReadonly({ paragraph }: { paragraph: TitleWithPeriodParagraph }) {
+function SurveyTitleDocumentReadonly({
+  paragraph,
+  showWritingPeriod = true,
+}: {
+  paragraph: TitleWithPeriodParagraph
+  showWritingPeriod?: boolean
+}) {
   /** 카드 타이틀에 `surveyTitle`이 오르므로 본문에는 설명·기간만 */
   const bits: string[] = []
   const desc = paragraph.surveyDescription.trim()
   if (desc.length > 0) bits.push(desc)
-  if (paragraph.showWritingPeriodOnForm) {
+  if (showWritingPeriod && paragraph.showWritingPeriodOnForm) {
     const a = paragraph.startAt ? dayjs(paragraph.startAt).format('YYYY-MM-DD') : '—'
     const b = paragraph.endAt ? dayjs(paragraph.endAt).format('YYYY-MM-DD') : '—'
     bits.push(`작성 기간: ${a} ~ ${b}`)
@@ -114,11 +123,18 @@ function SurveyTitleDocumentReadonly({ paragraph }: { paragraph: TitleWithPeriod
 function renderBody(
   p: WritingFormParagraph,
   _allParagraphs: WritingFormParagraph[],
-  _editorKind: FormEditorKind
+  _editorKind: FormEditorKind,
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions,
+  showWritingPeriod = true
 ): ReactNode {
   switch (p.variant) {
     case 'survey_title_with_period':
-      return <SurveyTitleDocumentReadonly paragraph={p as TitleWithPeriodParagraph} />
+      return (
+        <SurveyTitleDocumentReadonly
+          paragraph={p as TitleWithPeriodParagraph}
+          showWritingPeriod={showWritingPeriod}
+        />
+      )
     case 'agreement_explanation_text': {
       const ph = p.bodyPlaceholder.trim() || '텍스트를 작성해 주세요'
       const text = p.bodyText.trim() || ph
@@ -130,6 +146,9 @@ function renderBody(
           paragraph={normalizeHorizontalTableParagraph(p as HorizontalTableParagraph)}
           onChange={noopOnParagraphChange}
           isEditMode={false}
+          paymentStatementBasicInfoValues={paragraphBodyOptions?.paymentStatementBasicInfoValues}
+          lectureFeeCalculationValues={paragraphBodyOptions?.lectureFeeCalculationValues}
+          paymentStatementCalculationLines={paragraphBodyOptions?.paymentStatementCalculationLines}
         />
       )
     case 'vertical_table':
@@ -215,6 +234,9 @@ export interface FormDocumentPreviewParagraphProps {
   titleNumbering: FormTitleNumberingStyle
   editorKind: FormEditorKind
   overflow?: boolean
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+  renderMode?: FormDocumentPreviewRenderMode
+  style?: CSSProperties
 }
 
 export function FormDocumentPreviewParagraph({
@@ -223,14 +245,18 @@ export function FormDocumentPreviewParagraph({
   titleNumbering,
   editorKind,
   overflow = false,
+  paragraphBodyOptions,
+  renderMode = 'card',
+  style,
 }: FormDocumentPreviewParagraphProps) {
   const displayTitle = getFormParagraphDisplayTitle(allParagraphs, paragraph, titleNumbering)
+  const viewModel = getDocumentPreviewParagraphViewModel(paragraph, displayTitle, renderMode)
   const { title, description } = readOnlyTitleBlock(
     displayTitle,
-    paragraph.paragraphDescription?.trim() || undefined
+    viewModel.description
   )
 
-  if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
+  if (renderMode === 'card' && paragraph.kind === 'description' && paragraph.variant === 'closing') {
     const c = paragraph as ClosingParagraph
     const head = readOnlyTitleBlock(displayTitle, undefined)
     return (
@@ -243,6 +269,7 @@ export function FormDocumentPreviewParagraph({
           .filter(Boolean)
           .join(' ')}
         data-paragraph-id={paragraph.id}
+        style={style}
       >
         <div className="paragraph-card__header">
           <div className="paragraph-card__title-block">{head.title}</div>
@@ -254,7 +281,41 @@ export function FormDocumentPreviewParagraph({
     )
   }
 
-  const body = renderBody(paragraph, allParagraphs, editorKind)
+  const body = renderBody(
+    paragraph,
+    allParagraphs,
+    editorKind,
+    paragraphBodyOptions,
+    viewModel.showWritingPeriod
+  )
+
+  if (renderMode === 'contentOnly') {
+    return (
+      <div
+        className={[
+          'form-document-preview-paragraph',
+          'form-document-preview-paragraph--content-only',
+          viewModel.isClosing ? 'form-document-preview-paragraph--content-only-closing' : '',
+          viewModel.isClosingSignature ? 'form-document-preview-paragraph--content-only-closing-signature' : '',
+          overflow ? 'form-document-preview-paragraph--overflow' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        data-paragraph-id={paragraph.id}
+        style={style}
+      >
+        {viewModel.showHeader ? (
+          <div className="form-document-preview-paragraph__content-header">
+            <div className="form-document-preview-paragraph__title-text">{viewModel.title}</div>
+            {description != null ? (
+              <div className="form-document-preview-paragraph__description-text">{description}</div>
+            ) : null}
+          </div>
+        ) : null}
+        <div className="form-document-preview-paragraph__content-slot">{body}</div>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -265,6 +326,7 @@ export function FormDocumentPreviewParagraph({
         .filter(Boolean)
         .join(' ')}
       data-paragraph-id={paragraph.id}
+      style={style}
     >
       <ParagraphCard title={title} description={description}>
         {body}
