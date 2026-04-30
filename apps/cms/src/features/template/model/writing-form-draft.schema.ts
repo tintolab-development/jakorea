@@ -304,7 +304,7 @@ export type HorizontalTableFieldCellValue =
 export const HORIZONTAL_TABLE_MIN_COLUMN_COUNT = 1
 
 /** 주관식 등 입력창 안내(플레이스홀더) 기본 문구 */
-export const HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER = '내용을 입력해 주세요'
+export const HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER = '텍스트를 입력해 주세요'
 
 const DEFAULT_DROPDOWN_OPTIONS = ['A', 'B', 'C'] as const
 const DEFAULT_CHOICE_OPTIONS = ['A', 'B', 'C'] as const
@@ -739,7 +739,7 @@ export function createHorizontalTableParagraph(id: string): HorizontalTableParag
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '테이블_가로형',
+    paragraphTitle: '',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
@@ -748,8 +748,8 @@ export function createHorizontalTableParagraph(id: string): HorizontalTableParag
     columnFields: [],
     fieldDataRows: [],
     bottomText: '',
-    showBottomText: false,
-    showBottomConsent: false,
+    showBottomText: true,
+    showBottomConsent: true,
     bottomConsent: 'agree',
     answerRequired: true,
   }
@@ -1591,7 +1591,8 @@ export function createVerticalTableParagraph(
     variant: 'vertical_table',
     verticalTableFlavor: flavor,
     requiredMark: true,
-    paragraphTitle: verticalTableParagraphOutlineLabel(flavor),
+    /** 비우면 카드·네비는 `타이틀을 입력해 주세요` 플레이스홀더 톤(유형명 자동 노출 없음) */
+    paragraphTitle: '',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     rows:
@@ -1607,7 +1608,7 @@ export function createVerticalTableParagraph(
       : {}),
     bottomText: '',
     showBottomText: false,
-    showBottomConsent: false,
+    showBottomConsent: true,
     bottomConsent: 'agree',
     answerRequired: true,
   })
@@ -1993,11 +1994,13 @@ export function paragraphsAreOnlyTableLayoutParagraphs(
   return paragraphs.length > 0 && paragraphs.every(isTableLayoutParagraph)
 }
 
-/** 직접 등록 — 신규 동의 양식 기본 단락 id (제목형·텍스트형·주관식형·시스템 2종·마무리글형) */
+/** 직접 등록 — 신규 동의 양식 기본 단락 id (제목형·텍스트형·주관식형·테이블 세로·가로·시스템 2종·마무리글형) */
 export const DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS = {
   title: 'agreement-direct-paragraph-title',
   explanationText: 'agreement-direct-paragraph-explanation-text',
   shortEssay: 'agreement-direct-paragraph-short-essay',
+  verticalTableText: 'agreement-direct-paragraph-vertical-table-text',
+  horizontalTable: 'agreement-direct-paragraph-horizontal-table',
   systemDate: 'agreement-direct-paragraph-system-date',
   systemSignature: 'agreement-direct-paragraph-system-signature',
   closing: 'agreement-direct-paragraph-closing',
@@ -2068,6 +2071,11 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         bodyPlaceholder: '각 항목에 내용을 입력해 주세요',
         bodyText: '',
       },
+      createVerticalTableParagraph(
+        DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.verticalTableText,
+        'text'
+      ),
+      createHorizontalTableParagraph(DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.horizontalTable),
       {
         id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.systemDate,
         kind: 'description',
@@ -2173,7 +2181,7 @@ export function createDefaultHorizontalTableDraft(): WritingFormDraft {
         kind: 'single_item',
         variant: 'horizontal_table',
         requiredMark: true,
-        paragraphTitle: '테이블_가로형',
+        paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
         tableFlavor: 'text',
@@ -2182,8 +2190,8 @@ export function createDefaultHorizontalTableDraft(): WritingFormDraft {
         columnFields: [],
         fieldDataRows: [],
         bottomText: '',
-        showBottomText: false,
-        showBottomConsent: false,
+        showBottomText: true,
+        showBottomConsent: true,
         bottomConsent: 'agree',
         answerRequired: true,
       },
@@ -2485,13 +2493,13 @@ export function writingOutlineLabel(p: WritingFormParagraph): string {
   }
   if (p.kind === 'single_item' && p.variant === 'horizontal_table') {
     const t = p.paragraphTitle.trim()
-    return t || '테이블_가로형'
+    if (t) return t
+    return '타이틀을 입력해 주세요'
   }
   if (p.kind === 'single_item' && p.variant === 'vertical_table') {
     const t = p.paragraphTitle.trim()
     if (t) return t
-    const vt = normalizeVerticalTableParagraph(p as VerticalTableParagraph)
-    return verticalTableParagraphOutlineLabel(vt.verticalTableFlavor)
+    return '타이틀을 입력해 주세요'
   }
   const t = p.paragraphTitle.trim()
   return t || '타이틀을 입력해 주세요'

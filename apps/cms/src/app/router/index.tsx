@@ -61,7 +61,7 @@ function ProgramsSubpathRedirect({ toBase }: { toBase: string }) {
   const to = rest ? `${toBase}/${rest}` : toBase
   return <Navigate to={`${to}${search}`} replace />
 }
-import TemplateFormTab from '@/pages/templates/template-form-tab'
+import TemplatesFormManagementOutlet from '@/pages/templates/templates-form-management-outlet'
 import {
   RedirectLegacyTemplatesEmail,
   RedirectLegacyTemplatesKakaoAlimtalk,
@@ -470,7 +470,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'form-management',
-            element: <TemplateFormTab />,
+            element: <TemplatesFormManagementOutlet />,
           },
           { path: 'kakao-notification', element: <TemplateSmsPage /> },
           { path: 'email-management', element: <TemplateEmailPage /> },

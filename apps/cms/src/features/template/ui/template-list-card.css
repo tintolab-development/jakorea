@@ -12,25 +12,13 @@
 
 .template-list-card__header {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+  align-items: flex-end;
 }
 
 .template-list-card__header--inline {
   flex-direction: row;
   align-items: center;
   gap: 8px;
-}
-
-.info-section-description {
-  color: var(--default-BK, #3d3d3d);
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.5;
-  padding: 0 10px 0 8px;
 }
 
 .template-list-card__header--inline .info-section-description {

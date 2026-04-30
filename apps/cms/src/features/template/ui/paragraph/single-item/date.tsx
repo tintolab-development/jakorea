@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import type { DateParagraph } from '@/features/template/model/writing-form-draft.schema'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
 import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
+import { dateRangeUsesClockTime } from '@/features/template/ui/paragraph/shared/writing-form-period-date-picker-field'
 import './date.css'
 
 const PICKER_WIDTH = 240
@@ -48,6 +50,23 @@ export function DateField({
   }, [isCardSelected, paragraphInteractionMode])
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  const anchorDate = useMemo(
+    () => range[0] ?? range[1] ?? singleDate ?? dayjs(),
+    [range, singleDate]
+  )
+
+  const appliedSurfaceRange = useMemo((): [Dayjs, Dayjs] | null => {
+    if (range[0] != null && range[1] != null && range[0].isValid() && range[1].isValid()) {
+      return [range[0], range[1]]
+    }
+    return null
+  }, [range])
+
+  const appliedSurfaceWithTime = useMemo(() => {
+    if (appliedSurfaceRange == null) return false
+    return dateRangeUsesClockTime(appliedSurfaceRange[0], appliedSurfaceRange[1])
+  }, [appliedSurfaceRange])
+
   return (
     <div key={layoutKey} className="date-field-paragraph-body">
       {!periodEnabled ? (
@@ -61,11 +80,20 @@ export function DateField({
       ) : (
         <ParagraphDatePicker
           className="date-field-paragraph-body__range-wrap"
-          mode="range"
-          value={range}
-          onChange={setRange}
-          placeholder={['시작일 선택', '종료일 선택']}
+          mode="single"
+          value={anchorDate}
+          placeholder="날짜 선택"
           width={PICKER_WIDTH * 2 + 20}
+          showPopoverPeriodToggle
+          preferPeriodModeInPopover
+          appliedSurfaceRange={appliedSurfaceRange}
+          appliedSurfaceWithTime={appliedSurfaceWithTime}
+          onRangeChange={next => setRange(next)}
+          onChange={d => {
+            if (d == null) return
+            setSingleDate(d)
+            setRange([d.startOf('day'), d.endOf('day')])
+          }}
         />
       )}
     </div>

@@ -25,7 +25,7 @@ export function TemplateListCard({
     <section className="template-list-card">
       <div className={headerClassName}>
         <span className="info-section-title">{title}</span>
-        <span className="info-section-description">{description}</span>
+        <span className="info-section-desc">{description}</span>
       </div>
       {children}
     </section>

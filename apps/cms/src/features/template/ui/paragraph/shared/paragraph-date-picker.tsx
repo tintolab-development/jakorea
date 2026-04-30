@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode, RefObject } from 'react'
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CalendarOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
@@ -56,6 +56,18 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
   onRangeChange?: (range: [Dayjs, Dayjs]) => void
   /** false면 모달 하단에서 기간 토글 숨김(기본 true) */
   showPopoverPeriodToggle?: boolean
+  /**
+   * 부모에 저장된 기간 — 트리거 표면·모달 재오픈 시 반영(설문 제목형 `startAt`/`endAt` 등).
+   * `ParagraphDatePickerSingleInner` 내부 `surfaceRange`와 동기화된다.
+   */
+  appliedSurfaceRange?: [Dayjs, Dayjs] | null
+  /** `appliedSurfaceRange`가 시간 포함으로 확정된 경우 */
+  appliedSurfaceWithTime?: boolean
+  /**
+   * true면 모달을 열 때 기간 선택(시작/종료)을 기본 ON(단일 날짜 선택이 아님).
+   * 설문 제목형「작성 기간」ON·날짜형 `periodEnabled` 등.
+   */
+  preferPeriodModeInPopover?: boolean
 }
 
 export type ParagraphDatePickerProps =
@@ -78,6 +90,9 @@ interface ParagraphDatePickerSingleInnerProps {
   placeholder?: string
   width?: number | string
   disabled?: boolean
+  appliedSurfaceRange?: [Dayjs, Dayjs] | null
+  appliedSurfaceWithTime?: boolean
+  preferPeriodModeInPopover?: boolean
 }
 
 function ParagraphDatePickerSingleInner({
@@ -89,6 +104,9 @@ function ParagraphDatePickerSingleInner({
   placeholder,
   width,
   disabled,
+  appliedSurfaceRange,
+  appliedSurfaceWithTime = false,
+  preferPeriodModeInPopover = false,
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -126,6 +144,39 @@ function ParagraphDatePickerSingleInner({
       onChange(dayjs())
     }
   }, [value, onChange])
+
+  const appliedSurfaceSyncKey = useMemo(() => {
+    if (appliedSurfaceRange == null) return 'none'
+    const [a, b] = appliedSurfaceRange
+    if (!a?.isValid() || !b?.isValid()) return 'none'
+    return `${a.valueOf()}_${b.valueOf()}_${appliedSurfaceWithTime ? 't' : ''}`
+  }, [appliedSurfaceRange, appliedSurfaceWithTime])
+
+  useEffect(() => {
+    if (open) return
+    if (appliedSurfaceRange != null && appliedSurfaceRange[0]?.isValid() && appliedSurfaceRange[1]?.isValid()) {
+      setSurfaceRange([appliedSurfaceRange[0], appliedSurfaceRange[1]])
+      const withTime = Boolean(appliedSurfaceWithTime)
+      setSurfaceAppliedWithTime(withTime)
+      if (withTime) {
+        setTimeOn(true)
+        const ta = dayjsTimeParts(appliedSurfaceRange[0])
+        const tb = dayjsTimeParts(appliedSurfaceRange[1])
+        setStartHour(ta.h)
+        setStartMinute(ta.m)
+        setStartMer(ta.mer)
+        setEndHour(tb.h)
+        setEndMinute(tb.m)
+        setEndMer(tb.mer)
+      } else {
+        setTimeOn(false)
+      }
+    } else {
+      setSurfaceRange(null)
+      setSurfaceAppliedWithTime(false)
+      setTimeOn(false)
+    }
+  }, [open, appliedSurfaceSyncKey, appliedSurfaceRange, appliedSurfaceWithTime])
 
   const effectiveValue = value ?? dayjs()
   const displayText = formatAppDatepickerDisplay(effectiveValue)
@@ -224,8 +275,14 @@ function ParagraphDatePickerSingleInner({
       setEndHour(tb.h)
       setEndMinute(tb.m)
       setEndMer(tb.mer)
+      setTimeOn(surfaceAppliedWithTime)
     } else {
-      setPeriodOn(false)
+      setTimeOn(false)
+      if (preferPeriodModeInPopover && showPopoverPeriodToggle) {
+        setPeriodOn(true)
+      } else {
+        setPeriodOn(false)
+      }
       setRangeStart(d)
       setRangeEnd(d.add(1, 'day'))
       setRangeFocus('start')
@@ -790,6 +847,9 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           placeholder={props.placeholder}
           width={width}
           disabled={disabled}
+          appliedSurfaceRange={props.appliedSurfaceRange}
+          appliedSurfaceWithTime={props.appliedSurfaceWithTime}
+          preferPeriodModeInPopover={props.preferPeriodModeInPopover ?? false}
         />
       )}
     </div>

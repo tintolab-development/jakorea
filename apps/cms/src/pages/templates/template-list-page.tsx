@@ -7,9 +7,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Tabs } from 'antd'
-import TemplateFormTab from './template-form-tab'
-import { FormTab } from './form-tab'
-import { IssuanceFormTab } from './issuance-form-tab'
 import { TemplateWritingPreviewProvider } from '@/features/template/context/template-writing-preview-context'
 import { TemplateCreateModal } from '@/features/template/ui/modal/template-create-modal'
 import './template-list-page.css'
@@ -33,17 +30,26 @@ export function TemplateListPage() {
   const { params, setParams } = useQueryParams<FormManagementQuery>()
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
-  const formTabItems = useMemo(
+  const baseFormTabItems = useMemo(
     () => [
       { key: 'template-form', label: '작성 양식', path: FORM_MANAGEMENT_BASE },
       { key: 'issuance-form', label: '발급 양식', path: FORM_MANAGEMENT_BASE },
-      { key: 'form-test', label: '양식 테스트', path: FORM_MANAGEMENT_BASE },
     ],
     []
   )
 
   const isFormManagementSection = location.pathname.startsWith(FORM_MANAGEMENT_BASE)
   const isFormTestTablePath = location.pathname.startsWith('/templates/form-test/')
+  const formTabItems = useMemo(
+    () =>
+      isFormTestTablePath
+        ? [
+            ...baseFormTabItems,
+            { key: 'form-test', label: '양식 테스트', path: FORM_MANAGEMENT_BASE },
+          ]
+        : baseFormTabItems,
+    [baseFormTabItems, isFormTestTablePath]
+  )
   const showFormTopTabs = isFormManagementSection || isFormTestTablePath
   const activeFormTabFromPath = 'template-form'
 
@@ -143,19 +149,8 @@ export function TemplateListPage() {
           )}
         </>
       )}
-      {isFormTestTablePath ? (
-        <Outlet />
-      ) : isFormManagementSection ? (
-        activeKey === 'issuance-form' ? (
-          <IssuanceFormTab />
-        ) : activeKey === 'form-test' ? (
-          <FormTab />
-        ) : (
-          <TemplateFormTab />
-        )
-      ) : (
-        <Outlet />
-      )}
+      {/* 자식 라우트(`form-management` 등)는 반드시 Outlet으로만 마운트 — 인라인 중복 시 Provider 밖에서 렌더될 수 있음(RR7) */}
+      <Outlet />
       </>
     </TemplateWritingPreviewProvider>
   )
