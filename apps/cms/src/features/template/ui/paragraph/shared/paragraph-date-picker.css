@@ -478,3 +478,83 @@
 .paragraph-date-picker__popover-calendar-mini .calendar-mini-cell--selected .calendar-mini-date {
   color: var(--main-WT, #fff);
 }
+
+/* 설문 제목형 작성 기간 — 듀얼 240×44 트리거 + ~ (바깥 셸은 투명, 셀별 테두리) */
+.paragraph-date-picker__trigger--dual-shell {
+  box-sizing: border-box;
+  gap: 8px;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.paragraph-date-picker__trigger--dual-shell:hover:not(.paragraph-date-picker__trigger--disabled) {
+  border-color: transparent;
+}
+
+.paragraph-date-picker__trigger-dual-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.paragraph-date-picker__trigger-dual-cell {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 240px;
+  width: 240px;
+  min-width: 240px;
+  max-width: 240px;
+  height: 44px;
+  padding: 0 12px 0 14px;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+}
+
+.paragraph-date-picker__trigger--dual-shell:hover:not(.paragraph-date-picker__trigger--disabled)
+  .paragraph-date-picker__trigger-dual-cell {
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+.paragraph-date-picker__trigger--dual-shell.paragraph-date-picker__trigger--disabled
+  .paragraph-date-picker__trigger-dual-cell {
+  border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  background-image: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.1) 0%, rgba(61, 61, 61, 0.1) 100%)
+  );
+}
+
+.paragraph-date-picker__trigger-dual-cell .paragraph-date-picker__trigger-icon {
+  margin-inline-end: 8px;
+}
+
+.paragraph-date-picker__trigger-dual-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--main-BK, #3d3d3d);
+}
+
+.paragraph-date-picker__trigger--dual-shell.paragraph-date-picker__trigger--disabled
+  .paragraph-date-picker__trigger-dual-text {
+  color: rgba(61, 61, 61, 0.35);
+}
+
+.paragraph-date-picker__trigger-dual-wave {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
+  color: rgba(61, 61, 61, 0.45);
+}

@@ -149,7 +149,7 @@ export function TemplateFullpageModal({
               <CmsButton variant="secondary" onClick={onPreview}>
                 미리보기
               </CmsButton>
-              <CmsButton onClick={onSave}>저장</CmsButton>
+              <CmsButton onClick={() => onSave?.()}>저장</CmsButton>
             </div>
           </div>
 

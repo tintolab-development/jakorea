@@ -25,6 +25,9 @@ import { SubjectiveParagraphBody } from '@/features/template/ui/paragraph/single
 import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
+import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
+import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
+import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
 
 export type FormUpdateParagraph = (
   id: string,
@@ -51,6 +54,14 @@ export type RenderFormParagraphBodyOptions = {
    * - user: 카드 전환 시 미리보기 초기화 등 편집 전용 부수 효과는 끔(단락 컴포넌트에서 `paragraphInteractionMode`로 분기).
    */
   paragraphInteractionMode?: ParagraphBodyInteractionMode
+  /** id 포함 시 본문·표 편집 비활성(템플릿 고정 단락) */
+  structureLockedParagraphIds?: ReadonlySet<string>
+  /** 지급조서(발급용) 고정 단락 미리 채움 — 목 또는 발급 대상 회원 매핑 */
+  paymentStatementBasicInfoValues?: Partial<PaymentStatementBasicInfoAutofillValues>
+  /** 강의비 산출 정보 단락 미리 채움 */
+  lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
+  /** 강의비 산출 내역 단락 — 발급용 테이블 목·실데이터 */
+  paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
 }
 
 export function renderFormParagraphBody(
@@ -62,16 +73,20 @@ export function renderFormParagraphBody(
 ) {
   const paragraphInteractionMode = options?.paragraphInteractionMode ?? 'authoring'
   const isCardSelected = isParagraphSelected
-  const isBodyInteractive = paragraphInteractionMode === 'user' || isParagraphSelected
+  const structureLocked = options?.structureLockedParagraphIds?.has(p.id) ?? false
+  const isBodyInteractive =
+    !structureLocked && (paragraphInteractionMode === 'user' || isParagraphSelected)
   switch (p.variant) {
     case 'survey_title_with_period':
       if (!isCardSelected && paragraphInteractionMode !== 'user') return null
       if (!(p.showWritingPeriodOnForm ?? false)) return null
+      /** 구조 잠금은 표·복제 등에만 적용 — 제목형「작성 기간」슬롯은 카드 선택 시 편집 가능(발급용 시드 등) */
+      const titlePeriodEditMode = paragraphInteractionMode === 'user' || isParagraphSelected
       return (
         <ExplanationTitle
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isBodyInteractive}
+          isEditMode={titlePeriodEditMode}
           periodLabel={editorKind === 'survey' ? '설문 기간' : undefined}
         />
       )
@@ -105,9 +120,10 @@ export function renderFormParagraphBody(
       const hp = normalizeHorizontalTableParagraph(
         p as Extract<WritingFormParagraph, { variant: 'horizontal_table' }>
       )
-      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지(텍스트형만 비선택 시 플레이스홀더 뷰) */
+      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지(텍스트형만 비선택 시 플레이스홀더 뷰). 템플릿 잠금 시 편집 불가 */
       const isEditMode =
-        paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field'
+        !structureLocked &&
+        (paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field')
       return (
         <HorizontalTableParagraphBody
           paragraph={p}
@@ -115,6 +131,9 @@ export function renderFormParagraphBody(
           isEditMode={isEditMode}
           tableRowSelection={options?.horizontalTableRowSelection}
           onTableRowSelectionChange={options?.onHorizontalTableRowSelectionChange}
+          paymentStatementBasicInfoValues={options?.paymentStatementBasicInfoValues}
+          lectureFeeCalculationValues={options?.lectureFeeCalculationValues}
+          paymentStatementCalculationLines={options?.paymentStatementCalculationLines}
         />
       )
     }

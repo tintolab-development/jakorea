@@ -5,6 +5,10 @@ import './paragraph-card.css'
 /** 카드 헤더 제목·설명 — `ParagraphInput`으로 편집, 스키마 필드와 상위 `updateParagraph`에서 동기화 */
 export interface ParagraphCardEditableHeading {
   isEditMode: boolean
+  /** 미지정 시 `isEditMode`와 동일 */
+  titleIsEditMode?: boolean
+  /** 미지정 시 `isEditMode`와 동일 — 구조 잠금 단락에서 제목만 잠그고 설명은 편집할 때 사용 */
+  descriptionIsEditMode?: boolean
   titleValue: string
   onTitleChange: (next: string) => void
   titlePlaceholder?: string
@@ -23,6 +27,8 @@ export interface ParagraphCardEditableHeading {
 export interface ParagraphCardProps {
   className?: string
   onClick?: () => void
+  /** DOM·스코프 스타일용 (`data-paragraph-id`) */
+  dataParagraphId?: string
   /** 드래그 핸들 등 — 타이틀과 같은 줄, 타이틀 텍스트 바로 왼쪽 */
   actionSlot?: ReactNode
   /** 읽기 전용 헤더(미리보기 등). `editableHeading`이 있으면 무시됨 */
@@ -42,6 +48,7 @@ export interface ParagraphCardProps {
 export function ParagraphCard({
   className,
   onClick,
+  dataParagraphId,
   actionSlot,
   title,
   description,
@@ -55,10 +62,12 @@ export function ParagraphCard({
   const renderHeading = () => {
     if (editableHeading) {
       const h = editableHeading
+      const titleEditMode = h.titleIsEditMode ?? h.isEditMode
+      const descriptionEditMode = h.descriptionIsEditMode ?? h.isEditMode
       const titleInput = (
         <ParagraphInput
           type="title"
-          isEditMode={h.isEditMode}
+          isEditMode={titleEditMode}
           required={h.titleRequired}
           value={h.titleValue}
           onChange={h.onTitleChange}
@@ -70,7 +79,7 @@ export function ParagraphCard({
       const descriptionInput = (
         <ParagraphInput
           type="description"
-          isEditMode={h.isEditMode}
+          isEditMode={descriptionEditMode}
           value={h.descriptionValue}
           onChange={h.onDescriptionChange}
           placeholder={h.descriptionPlaceholder ?? '설명 입력'}
@@ -115,7 +124,11 @@ export function ParagraphCard({
   }
 
   return (
-    <section className={['paragraph-card', className].filter(Boolean).join(' ')} onClick={onClick}>
+    <section
+      className={['paragraph-card', className].filter(Boolean).join(' ')}
+      onClick={onClick}
+      data-paragraph-id={dataParagraphId}
+    >
       <div className="paragraph-card__header">{renderHeading()}</div>
       {children != null ? <div className="paragraph-card__slot">{children}</div> : null}
       {showFooter ? (

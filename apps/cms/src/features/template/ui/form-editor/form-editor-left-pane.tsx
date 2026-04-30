@@ -82,6 +82,17 @@ export interface FormEditorLeftPaneProps {
   paragraphInteractionMode?: ParagraphBodyInteractionMode
   /** false면 순서 변경·하단 토글·단락 액션·드래그 핸들 미노출(응답자 미리보기 등) */
   showEditorChrome?: boolean
+  /** 포함된 단락 id — 표 구조·카드 액션·드래그·본문 편집 잠금 */
+  structureLockedParagraphIds?: ReadonlySet<string>
+  /** 해당 id 단락은 드래그(햄버거) 핸들 비노출 — 지급조서 1번 제목형 등 */
+  hideDragHandleForParagraphIds?: ReadonlySet<string>
+  /** true면 필수(*)·하단 답변 필수 등 단락 필수 관련 토글·표시 숨김(지급조서 발급 편집 등) */
+  hideParagraphRequiredChrome?: boolean
+  /**
+   * 카드 「설명 입력」에 추가할 class — 발급용에서 `paragraph-input-explanation-title`을 주면
+   * 18px 기준으로 너비·하단 스트로크가 텍스트 길이에 맞는다.
+   */
+  headingDescriptionExtraClassName?: string
 }
 
 function renderFormEditorParagraphBody(
@@ -123,6 +134,29 @@ function renderFormEditorParagraphBody(
   })
 }
 
+/** 발급용 등 — 단락 카드 제목의 필수(*) 표시 제거 */
+function withoutTitleRequired<T extends { titleRequired?: boolean }>(
+  heading: T | undefined,
+  hideParagraphRequiredChrome?: boolean
+): T | undefined {
+  if (!heading || !hideParagraphRequiredChrome) return heading
+  return { ...heading, titleRequired: false }
+}
+
+/** 단락 헤더 설명 class 병합 — extra가 있으면 base에 없는 토큰만 덧붙임 */
+function mergeHeadingDescriptionClassName(
+  base: string | undefined,
+  extra: string | undefined
+): string | undefined {
+  if (extra == null || extra === '') return base
+  const baseParts = (base ?? '').split(/\s+/).filter(Boolean)
+  const merged = [...baseParts]
+  for (const p of extra.split(/\s+/).filter(Boolean)) {
+    if (!merged.includes(p)) merged.push(p)
+  }
+  return merged.length ? merged.join(' ') : undefined
+}
+
 function isTitleWithPeriodParagraph(p: WritingFormParagraph): boolean {
   return p.kind === 'description' && p.variant === 'survey_title_with_period'
 }
@@ -153,9 +187,101 @@ function paragraphEditableHeading(
   titleNumbering: FormTitleNumberingStyle,
   isSelected: boolean,
   updateParagraph: FormEditorLeftPaneProps['updateParagraph'],
-  editorKind: FormEditorKind
+  editorKind: FormEditorKind,
+  structureLockedParagraphIds?: ReadonlySet<string>,
+  headingDescriptionExtraClassName?: string
 ) {
+  const descCls = (base?: string) =>
+    mergeHeadingDescriptionClassName(base, headingDescriptionExtraClassName)
   const prefix = getFormParagraphTitleNumberPrefix(paragraphs, paragraph, titleNumbering)
+  const locked = structureLockedParagraphIds?.has(paragraph.id) ?? false
+
+  if (locked) {
+    if (paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period') {
+      const p = paragraph as TitleWithPeriodParagraph
+      return {
+        isEditMode: false,
+        titleIsEditMode: false,
+        descriptionIsEditMode: true,
+        titleValue: p.surveyTitle,
+        onTitleChange: () => {},
+        titlePlaceholder: titleWithPeriodPlaceholder(editorKind),
+        titleRequired: p.requiredMark,
+        titleClassName: [
+          'paragraph-input-explanation-title',
+          formCardTitleUsesPlaceholderTone(paragraph) ? 'paragraph-card__title--placeholder' : '',
+        ]
+          .filter(Boolean)
+          .join(' '),
+        titleLeading: prefix,
+        descriptionValue: p.surveyDescription,
+        onDescriptionChange: (next: string) =>
+          updateParagraph(p.id, cur =>
+            cur.kind === 'description' && cur.variant === 'survey_title_with_period'
+              ? { ...cur, surveyDescription: next }
+              : cur
+          ),
+        descriptionPlaceholder: '설명 입력',
+        descriptionClassName: descCls('paragraph-input-explanation-title'),
+      }
+    }
+    if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
+      const p = paragraph
+      return {
+        isEditMode: false,
+        titleIsEditMode: true,
+        titleValue: p.body,
+        onTitleChange: (next: string) =>
+          updateParagraph(p.id, cur =>
+            cur.kind === 'description' && cur.variant === 'closing' ? { ...cur, body: next } : cur
+          ),
+        titlePlaceholder: '마무리 문구를 입력해 주세요',
+        titleRequired: p.requiredMark,
+        titleClassName: [
+          'paragraph-input--closing-body',
+          formCardTitleUsesPlaceholderTone(paragraph) ? 'paragraph-card__title--placeholder' : '',
+        ]
+          .filter(Boolean)
+          .join(' '),
+        titleLeading: prefix,
+        showDescription: false,
+        descriptionValue: p.paragraphDescription,
+        onDescriptionChange: () => {},
+        descriptionPlaceholder: '설명 입력',
+      }
+    }
+    if (paragraph.kind === 'single_item') {
+      const p = paragraph
+      const titleRequired =
+        p.variant === 'horizontal_table'
+          ? (p as HorizontalTableParagraph).answerRequired
+          : p.variant === 'vertical_table'
+            ? (p as VerticalTableParagraph).answerRequired
+            : (p.answerRequired ?? p.requiredMark)
+      return {
+        isEditMode: false,
+        titleIsEditMode: false,
+        descriptionIsEditMode: true,
+        titleValue: p.paragraphTitle,
+        onTitleChange: () => {},
+        titlePlaceholder: '타이틀을 입력해 주세요',
+        titleRequired,
+        titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
+          ? 'paragraph-card__title--placeholder'
+          : undefined,
+        titleLeading: prefix,
+        descriptionValue: p.paragraphDescription,
+        onDescriptionChange: (next: string) =>
+          updateParagraph(p.id, cur =>
+            cur.kind === 'single_item' && cur.id === p.id
+              ? { ...cur, paragraphDescription: next }
+              : cur
+          ),
+        descriptionPlaceholder: '설명 입력',
+        descriptionClassName: descCls(),
+      }
+    }
+  }
 
   if (paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period') {
     const p = paragraph as TitleWithPeriodParagraph
@@ -185,7 +311,7 @@ function paragraphEditableHeading(
             : cur
         ),
       descriptionPlaceholder: '설명 입력',
-      descriptionClassName: 'paragraph-input-explanation-title',
+      descriptionClassName: descCls('paragraph-input-explanation-title'),
     }
   }
 
@@ -255,6 +381,7 @@ function paragraphEditableHeading(
             : cur
         ),
       descriptionPlaceholder: '설명 입력',
+      descriptionClassName: descCls(),
     }
   }
 
@@ -287,6 +414,7 @@ function paragraphEditableHeading(
             : cur
         ),
       descriptionPlaceholder: '설명 입력',
+      descriptionClassName: descCls(),
     }
   }
 
@@ -296,9 +424,21 @@ function paragraphEditableHeading(
 function modalCardFooterToggles(
   paragraph: WritingFormParagraph,
   isSelected: boolean,
-  updateParagraph: FormEditorLeftPaneProps['updateParagraph']
+  updateParagraph: FormEditorLeftPaneProps['updateParagraph'],
+  structureLockedParagraphIds?: ReadonlySet<string>,
+  hideParagraphRequiredChrome?: boolean
 ): ReactNode {
-  if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
+  const structureLocked = structureLockedParagraphIds?.has(paragraph.id) ?? false
+  /* 잠금 단락은 기본적으로 하단 토글 숨김 — 제목형(작성 기간)만 예외로 좌측 스위치 유지(단락 액션과 같은 줄) */
+  if (structureLocked && !isTitleWithPeriodParagraph(paragraph)) {
+    return undefined
+  }
+
+  if (
+    !hideParagraphRequiredChrome &&
+    paragraph.kind === 'single_item' &&
+    paragraph.variant === 'horizontal_table'
+  ) {
     if (!isSelected) return undefined
     const ht = paragraph as HorizontalTableParagraph
     return (
@@ -349,7 +489,11 @@ function modalCardFooterToggles(
     )
   }
 
-  if (paragraph.kind === 'single_item' && paragraph.variant === 'vertical_table') {
+  if (
+    !hideParagraphRequiredChrome &&
+    paragraph.kind === 'single_item' &&
+    paragraph.variant === 'vertical_table'
+  ) {
     if (!isSelected) return undefined
     const vt = paragraph as VerticalTableParagraph
     return (
@@ -400,23 +544,28 @@ function modalCardFooterToggles(
     )
   }
 
-  if (!isSelected) return undefined
   if (isTitleWithPeriodParagraph(paragraph)) {
     const titleParagraph = paragraph as TitleWithPeriodParagraph
     return (
-      <CmsToggle
-        label="작성 기간"
-        checked={titleParagraph.showWritingPeriodOnForm ?? false}
-        onChange={checked =>
-          updateParagraph(titleParagraph.id, p =>
-            p.kind === 'description' && p.variant === 'survey_title_with_period'
-              ? { ...p, showWritingPeriodOnForm: checked }
-              : p
-          )
-        }
-      />
+      <div className="form-editor-card__toggles-row" onClick={event => event.stopPropagation()}>
+        <CmsToggle
+          label="작성 기간"
+          checked={titleParagraph.showWritingPeriodOnForm ?? false}
+          onChange={checked =>
+            updateParagraph(titleParagraph.id, p =>
+              p.kind === 'description' && p.variant === 'survey_title_with_period'
+                ? { ...p, showWritingPeriodOnForm: checked }
+                : p
+            )
+          }
+        />
+      </div>
     )
   }
+
+  if (hideParagraphRequiredChrome) return undefined
+
+  if (!isSelected) return undefined
 
   /* 마무리글형: 답변 필수 토글 없음(해당 없음). kind가 어긋나도 single_item용 답변 필수 토글 미노출 */
   if (paragraph.variant === 'closing') {
@@ -499,24 +648,35 @@ function modalCardFooterActions(
   isSelected: boolean,
   updateParagraph: FormEditorLeftPaneProps['updateParagraph'],
   middleParagraphActions: FormEditorLeftPaneProps['middleParagraphActions'],
-  paragraphs: WritingFormParagraph[]
+  paragraphs: WritingFormParagraph[],
+  structureLockedParagraphIds?: ReadonlySet<string>
 ): ReactNode {
+  const structureLocked = structureLockedParagraphIds?.has(paragraph.id) ?? false
+
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
     if (!isSelected) return undefined
     const tableParagraph = paragraph as HorizontalTableParagraph
-    return (
-      <>
+    const dimensionActions =
+      !structureLocked ? (
         <HorizontalTableDimensionActions
           paragraph={tableParagraph}
           onUpdate={next => updateParagraph(tableParagraph.id, () => next)}
         />
-        {middleParagraphActions ? (
-          <FormParagraphCardActions
-            onAdd={() => middleParagraphActions.onAddAfter(tableParagraph.id)}
-            onDuplicate={() => middleParagraphActions.onDuplicate(tableParagraph.id)}
-            onDelete={() => middleParagraphActions.onDelete(tableParagraph.id)}
-          />
-        ) : null}
+      ) : null
+    const paragraphActions = middleParagraphActions ? (
+      <FormParagraphCardActions
+        duplicateDisabled={structureLocked}
+        deleteDisabled={structureLocked}
+        onAdd={() => middleParagraphActions.onAddAfter(tableParagraph.id)}
+        onDuplicate={() => middleParagraphActions.onDuplicate(tableParagraph.id)}
+        onDelete={() => middleParagraphActions.onDelete(tableParagraph.id)}
+      />
+    ) : null
+    if (!dimensionActions && !paragraphActions) return undefined
+    return (
+      <>
+        {dimensionActions}
+        {paragraphActions}
       </>
     )
   }
@@ -527,25 +687,35 @@ function modalCardFooterActions(
     if (vt.verticalTableFlavor === 'file_attachment') {
       return middleParagraphActions ? (
         <FormParagraphCardActions
+          duplicateDisabled={structureLocked}
+          deleteDisabled={structureLocked}
           onAdd={() => middleParagraphActions.onAddAfter(vt.id)}
           onDuplicate={() => middleParagraphActions.onDuplicate(vt.id)}
           onDelete={() => middleParagraphActions.onDelete(vt.id)}
         />
       ) : null
     }
-    return (
-      <>
+    const dimensionActions =
+      !structureLocked ? (
         <VerticalTableDimensionActions
           paragraph={vt}
           onUpdate={next => updateParagraph(vt.id, () => next)}
         />
-        {middleParagraphActions ? (
-          <FormParagraphCardActions
-            onAdd={() => middleParagraphActions.onAddAfter(vt.id)}
-            onDuplicate={() => middleParagraphActions.onDuplicate(vt.id)}
-            onDelete={() => middleParagraphActions.onDelete(vt.id)}
-          />
-        ) : null}
+      ) : null
+    const paragraphActions = middleParagraphActions ? (
+      <FormParagraphCardActions
+        duplicateDisabled={structureLocked}
+        deleteDisabled={structureLocked}
+        onAdd={() => middleParagraphActions.onAddAfter(vt.id)}
+        onDuplicate={() => middleParagraphActions.onDuplicate(vt.id)}
+        onDelete={() => middleParagraphActions.onDelete(vt.id)}
+      />
+    ) : null
+    if (!dimensionActions && !paragraphActions) return undefined
+    return (
+      <>
+        {dimensionActions}
+        {paragraphActions}
       </>
     )
   }
@@ -558,6 +728,8 @@ function modalCardFooterActions(
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
     return middleParagraphActions ? (
       <FormParagraphCardActionsMinimal
+        duplicateDisabled={structureLocked}
+        deleteDisabled={structureLocked}
         onAdd={() => {
           const lastMid = getLastMiddleParagraphId(paragraphs)
           if (lastMid != null) {
@@ -579,6 +751,8 @@ function modalCardFooterActions(
     if (paragraph.variant === 'short_essay') {
       return (
         <FormParagraphCardActions
+          duplicateDisabled={structureLocked}
+          deleteDisabled={structureLocked}
           onAddItem={() =>
             updateParagraph(paragraph.id, p => {
               if (p.kind !== 'single_item' || p.variant !== 'short_essay') return p
@@ -631,6 +805,8 @@ function modalCardFooterActions(
     }
     return middleParagraphActions ? (
       <FormParagraphCardActions
+        duplicateDisabled={structureLocked}
+        deleteDisabled={structureLocked}
         onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
         onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
         onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
@@ -643,6 +819,8 @@ function modalCardFooterActions(
   if (isTitleWithPeriodParagraph(paragraph)) {
     return middleParagraphActions ? (
       <FormParagraphCardActionsMinimal
+        duplicateDisabled={structureLocked}
+        deleteDisabled={structureLocked}
         onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
         onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
         onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
@@ -653,6 +831,18 @@ function modalCardFooterActions(
   }
 
   return undefined
+}
+
+/** 고정·구조 잠금 단락 — 순서 변경은 불가하나 양식 테스트와 동일한 햄버거 아이콘 노출 */
+function ParagraphCardDragHandleNonInteractive() {
+  return (
+    <span
+      className="paragraph-card__drag-handle paragraph-card__drag-handle--non-interactive"
+      aria-hidden
+    >
+      <MenuOutlined />
+    </span>
+  )
 }
 
 interface PinnedCardProps {
@@ -672,6 +862,10 @@ interface PinnedCardProps {
   middleParagraphActions: FormEditorLeftPaneProps['middleParagraphActions']
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   showEditorChrome?: boolean
+  structureLockedParagraphIds?: ReadonlySet<string>
+  hideDragHandleForParagraphIds?: ReadonlySet<string>
+  hideParagraphRequiredChrome?: boolean
+  headingDescriptionExtraClassName?: string
 }
 
 function PinnedFormCard({
@@ -691,19 +885,30 @@ function PinnedFormCard({
   middleParagraphActions,
   paragraphBodyOptions,
   showEditorChrome = true,
+  structureLockedParagraphIds,
+  hideDragHandleForParagraphIds,
+  hideParagraphRequiredChrome,
+  headingDescriptionExtraClassName,
 }: PinnedCardProps) {
   const isSelected = selectedCardId === paragraph.id
-  const editableHeading = paragraphEditableHeading(
-    paragraph,
-    paragraphs,
-    titleNumbering,
-    isSelected,
-    updateParagraph,
-    editorKind
+  const hideDragHandle = hideDragHandleForParagraphIds?.has(paragraph.id) ?? false
+  const editableHeading = withoutTitleRequired(
+    paragraphEditableHeading(
+      paragraph,
+      paragraphs,
+      titleNumbering,
+      isSelected,
+      updateParagraph,
+      editorKind,
+      structureLockedParagraphIds,
+      headingDescriptionExtraClassName
+    ),
+    hideParagraphRequiredChrome
   )
 
   return (
     <ParagraphCard
+      dataParagraphId={paragraph.id}
       className={[
         'form-editor-card',
         showEditorChrome ? 'paragraph-card--selectable' : '',
@@ -713,10 +918,19 @@ function PinnedFormCard({
         .filter(Boolean)
         .join(' ')}
       onClick={showEditorChrome ? () => onSelectCard(paragraph.id) : undefined}
+      actionSlot={
+        showEditorChrome && !hideDragHandle ? <ParagraphCardDragHandleNonInteractive /> : undefined
+      }
       editableHeading={editableHeading}
       toggles={
         showEditorChrome
-          ? modalCardFooterToggles(paragraph, isSelected, updateParagraph)
+          ? modalCardFooterToggles(
+              paragraph,
+              isSelected,
+              updateParagraph,
+              structureLockedParagraphIds,
+              hideParagraphRequiredChrome
+            )
           : undefined
       }
       actions={
@@ -726,7 +940,8 @@ function PinnedFormCard({
               isSelected,
               updateParagraph,
               middleParagraphActions,
-              paragraphs
+              paragraphs,
+              structureLockedParagraphIds
             )
           : undefined
       }
@@ -765,6 +980,10 @@ interface SortableMiddleCardProps {
   middleParagraphActions: FormEditorLeftPaneProps['middleParagraphActions']
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   showEditorChrome?: boolean
+  structureLockedParagraphIds?: ReadonlySet<string>
+  hideDragHandleForParagraphIds?: ReadonlySet<string>
+  hideParagraphRequiredChrome?: boolean
+  headingDescriptionExtraClassName?: string
 }
 
 function SortableMiddleFormCard({
@@ -784,7 +1003,13 @@ function SortableMiddleFormCard({
   middleParagraphActions,
   paragraphBodyOptions,
   showEditorChrome = true,
+  structureLockedParagraphIds,
+  hideDragHandleForParagraphIds,
+  hideParagraphRequiredChrome,
+  headingDescriptionExtraClassName,
 }: SortableMiddleCardProps) {
+  const isStructureLocked = structureLockedParagraphIds?.has(paragraph.id) ?? false
+  const hideDragHandle = hideDragHandleForParagraphIds?.has(paragraph.id) ?? false
   const {
     attributes,
     listeners,
@@ -793,16 +1018,21 @@ function SortableMiddleFormCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: paragraph.id })
+  } = useSortable({ id: paragraph.id, disabled: isStructureLocked })
 
   const isSelected = selectedCardId === paragraph.id
-  const editableHeading = paragraphEditableHeading(
-    paragraph,
-    paragraphs,
-    titleNumbering,
-    isSelected,
-    updateParagraph,
-    editorKind
+  const editableHeading = withoutTitleRequired(
+    paragraphEditableHeading(
+      paragraph,
+      paragraphs,
+      titleNumbering,
+      isSelected,
+      updateParagraph,
+      editorKind,
+      structureLockedParagraphIds,
+      headingDescriptionExtraClassName
+    ),
+    hideParagraphRequiredChrome
   )
 
   return (
@@ -815,6 +1045,7 @@ function SortableMiddleFormCard({
       }}
     >
       <ParagraphCard
+        dataParagraphId={paragraph.id}
         className={[
           'form-editor-card',
           showEditorChrome ? 'paragraph-card--selectable' : '',
@@ -825,7 +1056,7 @@ function SortableMiddleFormCard({
           .join(' ')}
         onClick={showEditorChrome ? () => onSelectCard(paragraph.id) : undefined}
         actionSlot={
-          showEditorChrome ? (
+          showEditorChrome && !hideDragHandle ? (
             <button
               ref={setActivatorNodeRef}
               type="button"
@@ -842,7 +1073,13 @@ function SortableMiddleFormCard({
         editableHeading={editableHeading}
         toggles={
           showEditorChrome
-            ? modalCardFooterToggles(paragraph, isSelected, updateParagraph)
+            ? modalCardFooterToggles(
+                paragraph,
+                isSelected,
+                updateParagraph,
+                structureLockedParagraphIds,
+                hideParagraphRequiredChrome
+              )
             : undefined
         }
         actions={
@@ -852,7 +1089,8 @@ function SortableMiddleFormCard({
                 isSelected,
                 updateParagraph,
                 middleParagraphActions,
-                paragraphs
+                paragraphs,
+                structureLockedParagraphIds
               )
             : undefined
         }
@@ -894,10 +1132,16 @@ export function FormEditorLeftPane({
   paragraphBodyOptions,
   paragraphInteractionMode = 'authoring',
   showEditorChrome = true,
+  structureLockedParagraphIds,
+  hideDragHandleForParagraphIds,
+  hideParagraphRequiredChrome,
+  headingDescriptionExtraClassName,
 }: FormEditorLeftPaneProps) {
   const mergedParagraphBodyOptions: RenderFormParagraphBodyOptions = {
-    paragraphInteractionMode,
     ...paragraphBodyOptions,
+    paragraphInteractionMode,
+    structureLockedParagraphIds:
+      paragraphBodyOptions?.structureLockedParagraphIds ?? structureLockedParagraphIds,
   }
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
@@ -942,6 +1186,10 @@ export function FormEditorLeftPane({
                     onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
                     middleParagraphActions={middleParagraphActions}
                     paragraphBodyOptions={mergedParagraphBodyOptions}
+                    structureLockedParagraphIds={structureLockedParagraphIds}
+                    hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
+                    hideParagraphRequiredChrome={hideParagraphRequiredChrome}
+                    headingDescriptionExtraClassName={headingDescriptionExtraClassName}
                     showEditorChrome={showEditorChrome}
                   />
                 ))}
@@ -968,6 +1216,10 @@ export function FormEditorLeftPane({
                 onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
                 middleParagraphActions={middleParagraphActions}
                 paragraphBodyOptions={mergedParagraphBodyOptions}
+                structureLockedParagraphIds={structureLockedParagraphIds}
+                hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
+                hideParagraphRequiredChrome={hideParagraphRequiredChrome}
+                headingDescriptionExtraClassName={headingDescriptionExtraClassName}
                 showEditorChrome={false}
               />
             ))
@@ -1011,6 +1263,10 @@ export function FormEditorLeftPane({
                   onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
                   middleParagraphActions={middleParagraphActions}
                   paragraphBodyOptions={mergedParagraphBodyOptions}
+                  structureLockedParagraphIds={structureLockedParagraphIds}
+                  hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
+                  hideParagraphRequiredChrome={hideParagraphRequiredChrome}
+                  headingDescriptionExtraClassName={headingDescriptionExtraClassName}
                   showEditorChrome={showEditorChrome}
                 />
               ))}
@@ -1035,6 +1291,10 @@ export function FormEditorLeftPane({
               onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
               middleParagraphActions={middleParagraphActions}
               paragraphBodyOptions={mergedParagraphBodyOptions}
+              structureLockedParagraphIds={structureLockedParagraphIds}
+              hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
+              hideParagraphRequiredChrome={hideParagraphRequiredChrome}
+              headingDescriptionExtraClassName={headingDescriptionExtraClassName}
               showEditorChrome={false}
             />
           ))
@@ -1055,6 +1315,10 @@ export function FormEditorLeftPane({
           onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
           middleParagraphActions={middleParagraphActions}
           paragraphBodyOptions={mergedParagraphBodyOptions}
+          structureLockedParagraphIds={structureLockedParagraphIds}
+          hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
+          hideParagraphRequiredChrome={hideParagraphRequiredChrome}
+          headingDescriptionExtraClassName={headingDescriptionExtraClassName}
           showEditorChrome={showEditorChrome}
         />
       </div>
@@ -1088,6 +1352,10 @@ export function FormEditorLeftPane({
         onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
         middleParagraphActions={middleParagraphActions}
         paragraphBodyOptions={mergedParagraphBodyOptions}
+        structureLockedParagraphIds={structureLockedParagraphIds}
+        hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
+        hideParagraphRequiredChrome={hideParagraphRequiredChrome}
+        headingDescriptionExtraClassName={headingDescriptionExtraClassName}
         showEditorChrome={showEditorChrome}
       />
       {showEditorChrome ? (
@@ -1118,6 +1386,10 @@ export function FormEditorLeftPane({
                 onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
                 middleParagraphActions={middleParagraphActions}
                 paragraphBodyOptions={mergedParagraphBodyOptions}
+                structureLockedParagraphIds={structureLockedParagraphIds}
+                hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
+                hideParagraphRequiredChrome={hideParagraphRequiredChrome}
+                headingDescriptionExtraClassName={headingDescriptionExtraClassName}
                 showEditorChrome={showEditorChrome}
               />
             ))}
@@ -1142,6 +1414,10 @@ export function FormEditorLeftPane({
             onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
             middleParagraphActions={middleParagraphActions}
             paragraphBodyOptions={mergedParagraphBodyOptions}
+            structureLockedParagraphIds={structureLockedParagraphIds}
+            hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
+            hideParagraphRequiredChrome={hideParagraphRequiredChrome}
+            headingDescriptionExtraClassName={headingDescriptionExtraClassName}
             showEditorChrome={false}
           />
         ))
@@ -1164,6 +1440,10 @@ export function FormEditorLeftPane({
           onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
           middleParagraphActions={middleParagraphActions}
           paragraphBodyOptions={mergedParagraphBodyOptions}
+          structureLockedParagraphIds={structureLockedParagraphIds}
+          hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
+          hideParagraphRequiredChrome={hideParagraphRequiredChrome}
+          headingDescriptionExtraClassName={headingDescriptionExtraClassName}
           showEditorChrome={showEditorChrome}
         />
       ))}

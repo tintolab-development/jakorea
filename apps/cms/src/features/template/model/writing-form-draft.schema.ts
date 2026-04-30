@@ -2137,6 +2137,24 @@ export function getWritingFormHeadMiddlePinnedTail(paragraphs: WritingFormParagr
       pinnedTail: paragraphs.slice(-3),
     }
   }
+
+  /** 마지막 두 단락이 연속 마무리글형이면 함께 고정(지급조서 발급용 일자·서명 분리 등) */
+  const doubleClosingTail =
+    n >= 4 &&
+    last.kind === 'description' &&
+    last.variant === 'closing' &&
+    p2 != null &&
+    p2.kind === 'description' &&
+    p2.variant === 'closing'
+
+  if (doubleClosingTail) {
+    return {
+      head,
+      middle: paragraphs.slice(1, -2),
+      pinnedTail: paragraphs.slice(-2),
+    }
+  }
+
   return {
     head,
     middle: paragraphs.slice(1, -1),

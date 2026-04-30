@@ -88,11 +88,12 @@ export function TemplateListPage() {
       navigate(`${FORM_MANAGEMENT_BASE}?${sp.toString()}`, { replace: true })
       return
     }
-    const updates: Partial<FormManagementQuery> = { tab: key }
-    if (key !== 'template-form') {
-      updates.mode = undefined
-      updates.type = undefined
-      updates.id = undefined
+    const updates: Partial<FormManagementQuery> = {
+      tab: key,
+      // 탭 이동 시 작성·발급 상세 모달·신규 작성용 쿼리 제거 (탭 간 mode/id 누수 방지)
+      mode: undefined,
+      type: undefined,
+      id: undefined,
     }
     setParams(updates)
 

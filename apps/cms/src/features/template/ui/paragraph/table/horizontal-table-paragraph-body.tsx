@@ -20,6 +20,10 @@ import {
   normalizeHorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
+import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
+import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
+import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
+import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -359,6 +363,9 @@ export function HorizontalTableParagraphBody({
   isEditMode,
   tableRowSelection: controlledSelection,
   onTableRowSelectionChange,
+  paymentStatementBasicInfoValues,
+  lectureFeeCalculationValues,
+  paymentStatementCalculationLines,
 }: {
   paragraph: HorizontalTableParagraph
   onChange: (next: HorizontalTableParagraph) => void
@@ -366,8 +373,22 @@ export function HorizontalTableParagraphBody({
   /** 있으면 상위(우측 패널)와 행 선택 동기화 */
   tableRowSelection?: HorizontalTableRowSelection | null
   onTableRowSelectionChange?: (next: HorizontalTableRowSelection | null) => void
+  paymentStatementBasicInfoValues?: Partial<PaymentStatementBasicInfoAutofillValues>
+  lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
+  paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
 }) {
   const p = useMemo(() => normalizeHorizontalTableParagraph(paragraph), [paragraph])
+
+  const paymentStatementBody = renderPaymentStatementIssuanceParagraphBody({
+    paragraph: p,
+    values: {
+      basicInfo: paymentStatementBasicInfoValues,
+      lectureFeeCalculation: lectureFeeCalculationValues,
+      calculationLines: paymentStatementCalculationLines,
+    },
+  })
+  if (paymentStatementBody != null) return paymentStatementBody
+
   const [internalSelection, setInternalSelection] = useState<HorizontalTableRowSelection | null>(null)
   const isControlled = onTableRowSelectionChange != null
   const selection = isControlled ? (controlledSelection ?? null) : internalSelection

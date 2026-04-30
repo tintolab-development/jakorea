@@ -245,7 +245,52 @@
 .paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--description
   .paragraph-input__shell
   textarea.ant-input {
+  font-family: Pretendard, sans-serif !important;
   font-size: 18px !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+  color: var(--gray-85969-d, #85969d) !important;
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  opacity: 0.6 !important;
+}
+
+.paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--description
+  .paragraph-input__shell--focused
+  .ant-input,
+.paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--description
+  .paragraph-input__shell--focused
+  textarea.ant-input {
+  color: var(--gray-85969-d, #85969d) !important;
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  opacity: 0.6 !important;
+}
+
+.paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--description
+  .paragraph-input__shell
+  .ant-input::placeholder,
+.paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--description
+  .paragraph-input__shell
+  textarea.ant-input::placeholder {
+  color: var(--gray-85969-d, #85969d);
+  opacity: 0.6;
+}
+
+.paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+  .paragraph-input__shell
+  .ant-input,
+.paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+  .paragraph-input__shell
+  textarea.ant-input,
+.paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+  .paragraph-input__shell--focused
+  .ant-input,
+.paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+  .paragraph-input__shell--focused
+  textarea.ant-input {
+  color: var(--gray-85969-d, #85969d) !important;
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  opacity: 0.6 !important;
 }
 
 /* 설명글_텍스트형 본문: edit에서 포커스 없어도 입력·placeholder 메트릭 20px/500/150% */

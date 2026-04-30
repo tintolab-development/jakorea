@@ -6,11 +6,13 @@ import {
   dateRangeUsesClockTime,
 } from '@/features/template/ui/paragraph/shared/writing-form-period-date-picker-field'
 
+import './explanation-title-period.css'
+
 const DEFAULT_PERIOD_LABEL = '작성 기간'
 
 /**
  * 설명글 제목형 — 카드 타이틀·설명은 `ParagraphCard`(`paragraphEditableHeading`)에서 처리.
- * 본문 슬롯: 「작성 기간」ON 시 단일항목 날짜형과 동일한 트리거 + 모달(`ParagraphDatePicker` single).
+ * 본문 슬롯: 「작성 기간」ON 시 기간 피커 + 모달(`ParagraphDatePicker` single).
  */
 export function ExplanationTitle({
   paragraph,
@@ -55,30 +57,34 @@ export function ExplanationTitle({
   }
 
   return (
-    <div className="form-editor-body" style={{ padding: '0 8px' }}>
-      <WritingFormPeriodDatePickerField
-        style={{ marginTop: 0 }}
-        label={periodLabel}
-        anchorDate={anchorDate}
-        appliedSurfaceRange={appliedSurfaceRange}
-        appliedSurfaceWithTime={appliedSurfaceWithTime}
-        onCommitRange={([a, b]) => {
-          onChange({
-            ...paragraph,
-            startAt: a.toISOString(),
-            endAt: b.toISOString(),
-            periodMode: 'custom',
-          })
-        }}
-        onCommitSingleDay={d => {
-          onChange({
-            ...paragraph,
-            startAt: d.startOf('day').toISOString(),
-            endAt: d.endOf('day').toISOString(),
-            periodMode: 'custom',
-          })
-        }}
-      />
+    <div className="explanation-title-period">
+      <div className="explanation-title-period__row">
+        <span className="explanation-title-period__label">{periodLabel}</span>
+        <div className="explanation-title-period__picker">
+          <WritingFormPeriodDatePickerField
+            style={{ marginTop: 0 }}
+            anchorDate={anchorDate}
+            appliedSurfaceRange={appliedSurfaceRange}
+            appliedSurfaceWithTime={appliedSurfaceWithTime}
+            onCommitRange={([a, b]) => {
+              onChange({
+                ...paragraph,
+                startAt: a.toISOString(),
+                endAt: b.toISOString(),
+                periodMode: 'custom',
+              })
+            }}
+            onCommitSingleDay={d => {
+              onChange({
+                ...paragraph,
+                startAt: d.startOf('day').toISOString(),
+                endAt: d.endOf('day').toISOString(),
+                periodMode: 'custom',
+              })
+            }}
+          />
+        </div>
+      </div>
     </div>
   )
 }
