@@ -46,11 +46,6 @@ function isImageUploadField(field: TemplateCustomFieldDef | null): boolean {
   return field !== null && IMAGE_UPLOAD_FIELD_NAMES.has(field.name)
 }
 
-/** 이미지 필드가 아닌 텍스트 편집 항목 — 흑백 색 선택 UI 대상 */
-function isTextColorField(field: TemplateCustomFieldDef | null): boolean {
-  return field !== null && !isImageUploadField(field)
-}
-
 const MULTILINE_TEXT_FIELD_NAMES = new Set(['bodyContent'])
 
 /** 참여자 정보 캔버스 행 라벨(순서 = `participantInfo` 줄·체크박스 인덱스와 동일) */
@@ -75,25 +70,6 @@ export const DEFAULT_PARTICIPANT_ROW_VISIBILITY: boolean[] = createDefaultPartic
 /** 타이틀명(titleName) — 한글 기준 최대 글자 수(유니코드 스칼라 단위) */
 export const TEMPLATE_FIELD_TITLE_NAME_MAX_LENGTH = 9
 
-/** 수료증 미리보기 텍스트 — 흑백 전용(폼 닷 UI와 동일 값) */
-export const TEMPLATE_FIELD_TEXT_COLOR_BLACK = '#000000'
-export const TEMPLATE_FIELD_TEXT_COLOR_WHITE = '#ffffff'
-
-/**
- * 필드별 기본 텍스트 색(미리보기).
- * 상단·본문·회장명·참여자는 어두운 바탕 대비 검정, 하단 푸터(배경 어두운 영역)는 흰색.
- */
-export const DEFAULT_TEMPLATE_FIELD_TEXT_COLORS: Record<string, string> = {
-  titleName: TEMPLATE_FIELD_TEXT_COLOR_BLACK,
-  bodyContent: TEMPLATE_FIELD_TEXT_COLOR_BLACK,
-  chairmanName: TEMPLATE_FIELD_TEXT_COLOR_BLACK,
-  participantInfo: TEMPLATE_FIELD_TEXT_COLOR_BLACK,
-  orgAddress: TEMPLATE_FIELD_TEXT_COLOR_WHITE,
-  orgPhone: TEMPLATE_FIELD_TEXT_COLOR_WHITE,
-  orgFax: TEMPLATE_FIELD_TEXT_COLOR_WHITE,
-  orgWebsite: TEMPLATE_FIELD_TEXT_COLOR_WHITE,
-}
-
 function sliceTitleNameToMax(value: string): string {
   return [...value].slice(0, TEMPLATE_FIELD_TITLE_NAME_MAX_LENGTH).join('')
 }
@@ -101,16 +77,17 @@ function sliceTitleNameToMax(value: string): string {
 const DEFAULT_CUSTOM_FIELDS: TemplateCustomFieldDef[] = [
   { name: 'titleName', label: '타이틀명' },
   { name: 'bodyContent', label: '본문 내용' },
-  { name: 'chairmanName', label: '회장명' },
-  { name: 'chairmanSeal', label: '회장 직인' },
-  { name: 'orgAddress', label: '기관 주소지' },
-  { name: 'orgPhone', label: '기관 전화번호' },
-  { name: 'orgFax', label: '기관 팩스번호' },
-  { name: 'orgWebsite', label: '기관 홈페이지 주소' },
-  { name: 'orgLogo', label: '기관 로고' },
-  { name: 'orgLogo02', label: '기관 로고 02' },
   { name: 'certificateBackground', label: '수료증 배경' },
-  { name: 'participantInfo', label: '참여자 정보' },
+  // 임시 숨김: 인증서 발급양식 상세에서 사용 범위 확정 후 다시 노출
+  // { name: 'chairmanName', label: '회장명' },
+  // { name: 'chairmanSeal', label: '회장 직인' },
+  // { name: 'orgAddress', label: '기관 주소지' },
+  // { name: 'orgPhone', label: '기관 전화번호' },
+  // { name: 'orgFax', label: '기관 팩스번호' },
+  // { name: 'orgWebsite', label: '기관 홈페이지 주소' },
+  // { name: 'orgLogo', label: '기관 로고' },
+  // { name: 'orgLogo02', label: '기관 로고 02' },
+  // { name: 'participantInfo', label: '참여자 정보' },
 ]
 
 /** 텍스트 편집 인풋 기본값 — 좌측 미리보기 예시와 동일한 카피(이미지 필드는 썸네일 기본 에셋 사용) */
@@ -143,9 +120,6 @@ export interface TemplateCustomFieldsFormProps {
   /** 참여자 정보 — 행별 표시 여부(캔버스와 동기화). 길이는 `PARTICIPANT_INFO_ROW_COUNT` */
   participantRowVisibility?: boolean[]
   onParticipantRowVisibilityChange?: (index: number, checked: boolean) => void
-  /** 필드별 미리보기 텍스트 색(흑백) — `DEFAULT_TEMPLATE_FIELD_TEXT_COLORS`와 동일 키 */
-  fieldTextColors?: Record<string, string>
-  onFieldTextColorChange?: (fieldName: string, color: string) => void
 }
 
 export function TemplateCustomFieldsForm({
@@ -158,8 +132,6 @@ export function TemplateCustomFieldsForm({
   onLogoUploadResult,
   participantRowVisibility,
   onParticipantRowVisibilityChange,
-  fieldTextColors,
-  onFieldTextColorChange,
 }: TemplateCustomFieldsFormProps) {
   const [activeField, setActiveField] = useState<TemplateCustomFieldDef | null>(() => {
     if (selectedFieldName === undefined || selectedFieldName === null || selectedFieldName === '')
@@ -303,61 +275,6 @@ export function TemplateCustomFieldsForm({
       ? participantRowVisibility
       : createDefaultParticipantRowVisibility()
 
-  const activeTextColor =
-    activeField && fieldTextColors && isTextColorField(activeField)
-      ? (fieldTextColors[activeField.name] ?? DEFAULT_TEMPLATE_FIELD_TEXT_COLORS[activeField.name])
-      : undefined
-
-  const handleTextColorDotClick = useCallback(
-    (color: string) => {
-      if (!activeField || !isTextColorField(activeField)) return
-      onFieldTextColorChange?.(activeField.name, color)
-    },
-    [activeField, onFieldTextColorChange]
-  )
-
-  const textColorDots =
-    activeField && fieldTextColors != null && isTextColorField(activeField) ? (
-      <div
-        className="template-custom-fields-form__text-color-dots"
-        role="radiogroup"
-        aria-label={`${activeField.label} 텍스트 색`}
-      >
-        <button
-          type="button"
-          role="radio"
-          aria-checked={activeTextColor === TEMPLATE_FIELD_TEXT_COLOR_BLACK}
-          className={[
-            'template-custom-fields-form__text-color-dot',
-            'template-custom-fields-form__text-color-dot--black',
-            activeTextColor === TEMPLATE_FIELD_TEXT_COLOR_BLACK
-              ? 'template-custom-fields-form__text-color-dot--selected'
-              : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-          onClick={() => handleTextColorDotClick(TEMPLATE_FIELD_TEXT_COLOR_BLACK)}
-          title="검정"
-        />
-        <button
-          type="button"
-          role="radio"
-          aria-checked={activeTextColor === TEMPLATE_FIELD_TEXT_COLOR_WHITE}
-          className={[
-            'template-custom-fields-form__text-color-dot',
-            'template-custom-fields-form__text-color-dot--white',
-            activeTextColor === TEMPLATE_FIELD_TEXT_COLOR_WHITE
-              ? 'template-custom-fields-form__text-color-dot--selected'
-              : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-          onClick={() => handleTextColorDotClick(TEMPLATE_FIELD_TEXT_COLOR_WHITE)}
-          title="흰색"
-        />
-      </div>
-    ) : null
-
   return (
     <div className="template-custom-fields-form">
       {/* 상단 섹션: 커스텀 필드 */}
@@ -424,39 +341,32 @@ export function TemplateCustomFieldsForm({
                   </label>
                 ))}
               </div>
-              {textColorDots}
             </>
           ) : activeField && MULTILINE_TEXT_FIELD_NAMES.has(activeField.name) ? (
-            <>
-              <Input.TextArea
-                className="template-custom-fields-form__secondary-textarea"
-                value={secondaryValue}
-                onChange={handleInputChange}
-                placeholder={activeField ? '입력하세요' : '위에서 항목을 선택하세요'}
-                disabled={!activeField}
-                aria-label={activeField ? `${activeField.label} 입력` : '항목 선택 후 입력'}
-                autoSize={{
-                  minRows: 3,
-                  maxRows: 16,
-                }}
-              />
-              {textColorDots}
-            </>
+            <Input.TextArea
+              className="template-custom-fields-form__secondary-textarea"
+              value={secondaryValue}
+              onChange={handleInputChange}
+              placeholder={activeField ? '입력하세요' : '위에서 항목을 선택하세요'}
+              disabled={!activeField}
+              aria-label={activeField ? `${activeField.label} 입력` : '항목 선택 후 입력'}
+              autoSize={{
+                minRows: 3,
+                maxRows: 16,
+              }}
+            />
           ) : (
-            <>
-              <Input
-                className="template-custom-fields-form__secondary-input"
-                value={secondaryValue}
-                onChange={handleInputChange}
-                placeholder={activeField ? '입력하세요' : '위에서 항목을 선택하세요'}
-                disabled={!activeField}
-                aria-label={activeField ? `${activeField.label} 입력` : '항목 선택 후 입력'}
-                maxLength={
-                  activeField?.name === 'titleName' ? TEMPLATE_FIELD_TITLE_NAME_MAX_LENGTH : undefined
-                }
-              />
-              {textColorDots}
-            </>
+            <Input
+              className="template-custom-fields-form__secondary-input"
+              value={secondaryValue}
+              onChange={handleInputChange}
+              placeholder={activeField ? '입력하세요' : '위에서 항목을 선택하세요'}
+              disabled={!activeField}
+              aria-label={activeField ? `${activeField.label} 입력` : '항목 선택 후 입력'}
+              maxLength={
+                activeField?.name === 'titleName' ? TEMPLATE_FIELD_TITLE_NAME_MAX_LENGTH : undefined
+              }
+            />
           )}
         </div>
       </div>
