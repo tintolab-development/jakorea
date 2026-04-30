@@ -42,10 +42,18 @@ import {
   PaymentStatementIssuanceEditorRightColumn,
 } from '@/features/template/ui/form-set/payment-statement-issuance'
 import { PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-config'
+import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-custom-fields-form'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-overlay'
+import { FormTemplateFullpageModal } from './form-template-fullpage-modal'
 
 const PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME = '지급조서(발급용)'
+const CERTIFICATE_ISSUANCE_TEMPLATE_NAMES = new Set([
+  '휴가 인증서',
+  '수료증',
+  '감사 활동 인증서',
+  '봉사 활동 인증서',
+])
 
 function safePdfFileName(title: string): string {
   const base = title.trim().replace(/[^\w가-힣-]+/gu, '_').replace(/_+/g, '_').slice(0, 80) || 'form'
@@ -172,6 +180,16 @@ export function IssuanceFormTab() {
 
   const isPaymentStatementIssuance =
     selectedTemplate?.templateName === PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME
+  const isCertificateIssuance =
+    selectedTemplate != null && CERTIFICATE_ISSUANCE_TEMPLATE_NAMES.has(selectedTemplate.templateName)
+  const certificateInitialStringValues = useMemo(() => {
+    if (!isCertificateIssuance || selectedTemplate == null) return undefined
+    return {
+      ...DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,
+      titleName: selectedTemplate.templateName,
+    }
+  }, [isCertificateIssuance, selectedTemplate])
+  const certificateIssueDate = useMemo(() => new Date(), [selectedTemplate?.key])
 
   const paymentStatementVm = usePaymentStatementIssuanceEditor(
     isPreviewOpen && isPaymentStatementIssuance,
@@ -366,7 +384,7 @@ export function IssuanceFormTab() {
       </div>
 
       <TemplateFullpageModal
-        open={isPreviewOpen}
+        open={isPreviewOpen && !isCertificateIssuance}
         onClose={closeTemplatePreview}
         title={selectedTemplate?.templateName ?? '발급 양식 미리보기'}
         description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
@@ -406,6 +424,14 @@ export function IssuanceFormTab() {
             </TemplateModalRightNavigation>
           )
         }
+      />
+      <FormTemplateFullpageModal
+        open={isPreviewOpen && isCertificateIssuance}
+        onClose={closeTemplatePreview}
+        title={selectedTemplate?.templateName ?? '인증서'}
+        initialStringValues={certificateInitialStringValues}
+        issueDate={certificateIssueDate}
+        buildFilenameTitle={selectedTemplate?.templateName}
       />
       {isPreviewOpen && isPaymentStatementIssuance ? (
         <div
