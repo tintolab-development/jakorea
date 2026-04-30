@@ -7,6 +7,8 @@ export interface A4DocumentPageLayoutProps {
   pageIndex: number
   children: ReactNode
   className?: string
+  /** true이면 `data-form-document-pdf-page` 속성 부여(html2canvas 등) */
+  pdfCapture?: boolean
 }
 
 function FirstPageTitleIcon() {
@@ -96,11 +98,15 @@ export function A4DocumentPageLayout({
   pageIndex,
   children,
   className,
+  pdfCapture = false,
 }: A4DocumentPageLayoutProps) {
   const isFirstPage = pageIndex === 0
   const clipPathId = `a4-document-page-layout-brand-logo-${useId().replace(/:/g, '')}`
   return (
-    <section className={['a4-document-page-layout', className].filter(Boolean).join(' ')}>
+    <section
+      className={['a4-document-page-layout', className].filter(Boolean).join(' ')}
+      {...(pdfCapture ? { 'data-form-document-pdf-page': '' } : {})}
+    >
       {isFirstPage ? (
         <header className="a4-document-page-layout__header">
           <div className="a4-document-page-layout__header-left">
