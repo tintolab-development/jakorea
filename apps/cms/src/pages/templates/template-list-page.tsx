@@ -41,14 +41,11 @@ export function TemplateListPage() {
   const isFormManagementSection = location.pathname.startsWith(FORM_MANAGEMENT_BASE)
   const isFormTestTablePath = location.pathname.startsWith('/templates/form-test/')
   const formTabItems = useMemo(
-    () =>
-      isFormTestTablePath
-        ? [
-            ...baseFormTabItems,
-            { key: 'form-test', label: '양식 테스트', path: FORM_MANAGEMENT_BASE },
-          ]
-        : baseFormTabItems,
-    [baseFormTabItems, isFormTestTablePath]
+    () => [
+      ...baseFormTabItems,
+      { key: 'form-test', label: '양식 테스트', path: FORM_MANAGEMENT_BASE },
+    ],
+    [baseFormTabItems]
   )
   const showFormTopTabs = isFormManagementSection || isFormTestTablePath
   const activeFormTabFromPath = 'template-form'
