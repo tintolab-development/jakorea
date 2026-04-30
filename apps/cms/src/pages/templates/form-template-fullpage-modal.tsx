@@ -1,7 +1,5 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { message } from 'antd'
-import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
-import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
 import {
   type TemplateCustomFieldDef,
@@ -12,6 +10,7 @@ import {
   TEMPLATE_FIELD_ORG_LOGO_02,
 } from '@/features/template/ui/template-custom-fields-form'
 import { generateFilename } from '@/shared/utils/file-download'
+import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import {
   FormCertificatePreview,
   FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS,
@@ -21,16 +20,26 @@ import { saveFormTemplateSettings } from './form-template-api'
 import { useFormCertificatePdfDownload } from './use-form-certificate-pdf-download'
 import { useFormCertificatePreviewProps } from './use-form-certificate-preview-props'
 import { useFormTemplateCertificateModalState } from './use-form-template-certificate-modal-state'
-import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import '@/features/template/ui/modal/template-preview-modal.css'
 
 export interface FormTemplateFullpageModalProps {
   open: boolean
   onClose: () => void
+  title?: string
+  initialStringValues?: Record<string, string>
+  issueDate?: Date
+  buildFilenameTitle?: string
 }
 
-export function FormTemplateFullpageModal({ open, onClose }: FormTemplateFullpageModalProps) {
-  const { openWritingUserPreview } = useTemplateWritingPreview()
-  const modalState = useFormTemplateCertificateModalState(open)
+export function FormTemplateFullpageModal({
+  open,
+  onClose,
+  title = '봉사활동인증서',
+  initialStringValues,
+  issueDate,
+  buildFilenameTitle,
+}: FormTemplateFullpageModalProps) {
+  const modalState = useFormTemplateCertificateModalState(open, initialStringValues)
   const {
     setOrgLogoFile,
     setOrgLogo02File,
@@ -43,36 +52,26 @@ export function FormTemplateFullpageModal({ open, onClose }: FormTemplateFullpag
     setStringPreviewValues,
     participantRowVisibility,
     setParticipantRowVisibility,
-    fieldTextColors,
-    setFieldTextColors,
   } = modalState
 
   const { interactive: certificatePreviewProps, pdfExport: certificatePdfExportProps } =
-    useFormCertificatePreviewProps(modalState)
+    useFormCertificatePreviewProps(modalState, issueDate)
 
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
-  const buildPdfFilename = useCallback(() => generateFilename('봉사활동인증서', 'pdf'), [])
+  const [certificatePreviewOpen, setCertificatePreviewOpen] = useState(false)
+  const buildPdfFilename = useCallback(
+    () => generateFilename(buildFilenameTitle ?? title, 'pdf'),
+    [buildFilenameTitle, title]
+  )
 
   const { downloadPdf, isDownloading: isPdfDownloading } = useFormCertificatePdfDownload({
     exportRootRef: pdfExportCanvasRef,
     buildFilename: buildPdfFilename,
   })
 
-  const EMPTY_PREVIEW_DRAFT: WritingFormDraft = {
-    schemaVersion: 1,
-    formSettings: { titleNumbering: 'none' },
-    paragraphs: [],
-  }
-  const noopUpdateParagraph: FormUpdateParagraph = () => {}
-
   const handlePreview = useCallback(() => {
-    openWritingUserPreview({
-      draft: EMPTY_PREVIEW_DRAFT,
-      updateParagraph: noopUpdateParagraph,
-      headerTitle: '봉사활동인증서',
-      editorKind: 'survey',
-    })
-  }, [openWritingUserPreview])
+    setCertificatePreviewOpen(true)
+  }, [])
 
   const handleSave = useCallback(async () => {
     const hideLoading = message.loading('저장 중…', 0)
@@ -94,11 +93,58 @@ export function FormTemplateFullpageModal({ open, onClose }: FormTemplateFullpag
   return (
     <>
     <FormCertificatePdfExportOverlay visible={isPdfDownloading} />
+    <TealHeaderModal
+      open={certificatePreviewOpen}
+      onCancel={() => setCertificatePreviewOpen(false)}
+      title=""
+      size="full"
+      hideHeader
+      className="template-preview-modal teal-header-modal--full form-certificate-user-preview-modal"
+      zIndex={1100}
+    >
+      <div className="template-preview-modal__shell">
+        <header className="template-preview-modal__title-row">
+          <div className="template-preview-modal__title-left">
+            <span className="template-preview-modal__title-text">{title}</span>
+            <span className="template-preview-modal__badge">미리보기</span>
+          </div>
+        </header>
+
+        <div className="template-preview-modal__body">
+          <div className="template-preview-modal__notice">
+            <div className="template-preview-modal__notice-text-wrap">
+              <p className="template-preview-modal__notice-text">
+                현재 화면은 미리보기 화면입니다.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="template-preview-modal__notice-close-btn"
+              onClick={() => setCertificatePreviewOpen(false)}
+            >
+              미리보기 닫기
+            </button>
+          </div>
+
+          <div className="template-preview-modal__pages">
+            <div className="template-preview-modal__a4-stage">
+              <div className="template-preview-modal__a4-stack">
+                <div className="template-preview-modal__a4-frame">
+                  <div className="template-preview-modal__a4-scale-inner">
+                    <FormCertificatePreview {...certificatePdfExportProps} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </TealHeaderModal>
     <TemplateFullpageModal
       className="form-template-fullpage-modal"
       open={open}
       onClose={onClose}
-      title="봉사활동인증서"
+      title={title}
       description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
       templateTabType="issuance"
       onPreview={handlePreview}
@@ -115,7 +161,8 @@ export function FormTemplateFullpageModal({ open, onClose }: FormTemplateFullpag
       }
       rightNavigation={
         <TemplateCustomFieldsForm
-          key={open ? 'form-template-fields' : 'form-template-fields-closed'}
+          key={open ? `form-template-fields-${title}` : 'form-template-fields-closed'}
+          initialStringValues={initialStringValues}
           selectedFieldName={activeFieldName}
           onFieldClick={field => setActiveFieldName(field?.name ?? null)}
           onSecondaryValueChange={(field: TemplateCustomFieldDef, value: string) => {
@@ -137,10 +184,6 @@ export function FormTemplateFullpageModal({ open, onClose }: FormTemplateFullpag
               next[index] = checked
               return next
             })
-          }}
-          fieldTextColors={fieldTextColors}
-          onFieldTextColorChange={(fieldName, color) => {
-            setFieldTextColors(prev => ({ ...prev, [fieldName]: color }))
           }}
         />
       }
