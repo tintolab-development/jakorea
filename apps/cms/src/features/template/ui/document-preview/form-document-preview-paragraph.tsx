@@ -125,6 +125,7 @@ function renderBody(
   _allParagraphs: WritingFormParagraph[],
   _editorKind: FormEditorKind,
   paragraphBodyOptions?: RenderFormParagraphBodyOptions,
+  renderMode: FormDocumentPreviewRenderMode = 'card',
   showWritingPeriod = true
 ): ReactNode {
   switch (p.variant) {
@@ -149,6 +150,10 @@ function renderBody(
           paymentStatementBasicInfoValues={paragraphBodyOptions?.paymentStatementBasicInfoValues}
           lectureFeeCalculationValues={paragraphBodyOptions?.lectureFeeCalculationValues}
           paymentStatementCalculationLines={paragraphBodyOptions?.paymentStatementCalculationLines}
+          paymentStatementDisplayMode={
+            paragraphBodyOptions?.paymentStatementDisplayMode ??
+            (renderMode === 'contentOnly' ? 'document' : undefined)
+          }
         />
       )
     case 'vertical_table':
@@ -286,6 +291,7 @@ export function FormDocumentPreviewParagraph({
     allParagraphs,
     editorKind,
     paragraphBodyOptions,
+    renderMode,
     viewModel.showWritingPeriod
   )
 
