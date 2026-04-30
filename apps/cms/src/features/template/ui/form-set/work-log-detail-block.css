@@ -1,0 +1,92 @@
+/* 근무일지 단락 — 발급용 정적 이중 테이블 (DetailInfoForm 격자 톤 정렬)
+ * 상단 표 설계 너비 1364px, 하단 표 1384px 기준 — 블록 max-width로 A4 본문 폭에 맞춤·중앙 정렬 */
+.work-log-detail-block {
+  width: 100%;
+  max-width: 1384px;
+  min-width: 0;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+.work-log-detail-block__table-radius {
+  border-radius: var(--8, 8px);
+  overflow: hidden;
+}
+
+.work-log-detail-block__main-table,
+.work-log-detail-block__totals-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.work-log-detail-block__main-table {
+  width: 100%;
+}
+
+/* 100 + 291×4 + 100 = 1364 — 비율 유지해 컨테이너 너비에 맞춤 */
+.work-log-detail-block__col--date {
+  width: 7.331378304%;
+}
+
+.work-log-detail-block__col--wide {
+  width: 21.334309383%;
+}
+
+.work-log-detail-block__th-main {
+  box-sizing: border-box;
+  height: 54px;
+  padding: 0 8px;
+  text-align: center;
+  vertical-align: middle;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  color: var(--main-BK, #3d3d3d);
+  background: #f5f6f7;
+  border: 1px solid var(--table-line, #e0e0e0);
+}
+
+.work-log-detail-block__td-main {
+  box-sizing: border-box;
+  height: 54px;
+  padding: 0;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: #fff;
+}
+
+.work-log-detail-block__totals-table {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.work-log-detail-block__col--total {
+  width: 50%;
+}
+
+.work-log-detail-block__th-total {
+  box-sizing: border-box;
+  height: 64px;
+  padding: 0 8px;
+  text-align: center;
+  vertical-align: middle;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  color: var(--main-BK, #3d3d3d);
+  background: #f5f6f7;
+  border: 1px solid var(--table-line, #e0e0e0);
+}
+
+.work-log-detail-block__td-total {
+  box-sizing: border-box;
+  height: 54px;
+  padding: 0;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: #fff;
+}
