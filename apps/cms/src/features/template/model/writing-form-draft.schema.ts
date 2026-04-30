@@ -162,10 +162,10 @@ export type DropdownParagraph = WritingFormParagraphBase & {
   answerRequired?: boolean
 }
 
-/** 단일항목 날짜/시간형 — 우측 패널 유형 (기본: 날짜) */
+/** 세로형(날짜/시간형) 스테이지·가로형 dateTime 열 등 — 스테이지별 입력 유형 */
 export type DateTimeFieldMode = 'date' | 'time' | 'date_time'
 
-/** 세로형(날짜/시간형)·커스텀 필드·단독 date_time 패널과 동일 라벨 */
+/** 세로형 날짜/시간형 스테이지·커스텀 필드용 라벨 */
 export const DATE_TIME_FIELD_MODE_OPTIONS: readonly { value: DateTimeFieldMode; label: string }[] =
   [
     { value: 'date', label: '날짜' },
@@ -176,14 +176,18 @@ export const DATE_TIME_FIELD_MODE_OPTIONS: readonly { value: DateTimeFieldMode; 
 /** 합성(날짜+시간) 시간 인풋 기본 플레이스홀더 — 본문·패널에서 공통 */
 export const VERTICAL_DT_COMPOSITE_TIME_PLACEHOLDER = '시간을 선택해 주세요'
 
-export type DateTimeParagraph = WritingFormParagraphBase & {
+export type DateParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
-  variant: 'date_time'
+  variant: 'date'
   answerRequired?: boolean
-  /** 날짜 / 시간 / 날짜+시간 */
-  fieldMode?: DateTimeFieldMode
-  /** 날짜·날짜+시간일 때 기간(시작~종료) */
+  /** 기간(시작~종료) */
   periodEnabled?: boolean
+}
+
+export type TimeParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'time'
+  answerRequired?: boolean
 }
 
 export type StarRateParagraph = WritingFormParagraphBase & {
@@ -1894,7 +1898,8 @@ export type WritingFormParagraph =
   | ShortEssayParagraph
   | MultipleChoiceParagraph
   | DropdownParagraph
-  | DateTimeParagraph
+  | DateParagraph
+  | TimeParagraph
   | StarRateParagraph
   | ScaleTypeParagraph
   | UserInfoParagraph
@@ -1909,6 +1914,40 @@ export interface WritingFormDraft {
   formSettings: WritingFormSettings
   /** 설문: 0 제목형, 1–3 중간(DnD), 4 마무리. 동의: 0 제목형, 1–2 중간(DnD), 3 마무리 등. 가로형: 가로형 단락만 */
   paragraphs: WritingFormParagraph[]
+}
+
+/** 레거시 직렬화 `variant: date_time` + `fieldMode` — 런타임 마이그레이션용 */
+type LegacySingleItemDateTimeParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'date_time'
+  fieldMode?: DateTimeFieldMode
+  periodEnabled?: boolean
+}
+
+/** 저장 JSON에 남아 있을 수 있는 단일항목 `date_time` → `date` | `time` */
+export function migrateLegacySingleItemDateTimeParagraph(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (p.kind !== 'single_item') return p
+  if ((p as { variant: string }).variant !== 'date_time') return p
+  const l = p as unknown as LegacySingleItemDateTimeParagraph
+  const mode = l.fieldMode ?? 'date'
+  const { fieldMode: _fm, variant: _v, ...rest } = l
+  if (mode === 'time') {
+    return { ...rest, variant: 'time' } as TimeParagraph
+  }
+  return {
+    ...rest,
+    variant: 'date',
+    periodEnabled: l.periodEnabled ?? false,
+  } as DateParagraph
+}
+
+export function normalizeWritingFormDraft(draft: WritingFormDraft): WritingFormDraft {
+  return {
+    ...draft,
+    paragraphs: draft.paragraphs.map(migrateLegacySingleItemDateTimeParagraph),
+  }
 }
 
 const DEFAULT_USER_FIELDS: UserProfileField[] = [
@@ -2298,7 +2337,7 @@ export function createExplanationTypesPreviewDraft(): WritingFormDraft {
   }
 }
 
-/** 양식 테스트 > 단일 항목 모음(`useFormTestSingleItemEditor` → `useWritingFormEditorWithUserPreview`) — 제목·8종 스텁·마무리 */
+/** 양식 테스트 > 단일 항목 모음(`useFormTestSingleItemEditor` → `useWritingFormEditorWithUserPreview`) — 제목·9종 스텁·마무리 */
 export function createSingleItemPreviewDraft(): WritingFormDraft {
   const base = createDefaultSurveyDraft()
   const title = base.paragraphs[0]!
@@ -2350,14 +2389,23 @@ export function createSingleItemPreviewDraft(): WritingFormDraft {
       participatesInTitleNumbering: true,
     },
     {
-      id: 'date-time',
+      id: 'date',
       kind: 'single_item',
-      variant: 'date_time',
+      variant: 'date',
       answerRequired: true,
-      fieldMode: 'date',
       periodEnabled: false,
       requiredMark: true,
-      paragraphTitle: '날짜/시간형',
+      paragraphTitle: '날짜형',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+    },
+    {
+      id: 'time',
+      kind: 'single_item',
+      variant: 'time',
+      answerRequired: true,
+      requiredMark: true,
+      paragraphTitle: '시간형',
       paragraphDescription: '',
       participatesInTitleNumbering: true,
     },

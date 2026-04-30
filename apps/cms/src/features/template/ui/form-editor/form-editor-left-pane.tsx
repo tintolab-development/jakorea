@@ -20,7 +20,6 @@ import {
   getWritingFormHeadMiddlePinnedTail,
   isAgreementLockedSystemParagraph,
   paragraphsAreOnlyTableLayoutParagraphs,
-  type DateTimeParagraph,
   type FormEditorKind,
   type FormTitleNumberingStyle,
   type HorizontalTableParagraph,
@@ -483,26 +482,6 @@ function modalCardFooterToggles(
           }
         />
       )
-    }
-
-    if (paragraph.variant === 'date_time') {
-      const dt = paragraph as DateTimeParagraph
-      const mode = dt.fieldMode ?? 'date'
-      if (mode === 'date' || mode === 'date_time') {
-        toggles.push(
-          <CmsToggle
-            key="date-time-period"
-            label="기간"
-            checked={dt.periodEnabled ?? false}
-            onChange={checked =>
-              updateParagraph(dt.id, p => {
-                if (p.kind !== 'single_item' || p.variant !== 'date_time') return p
-                return { ...p, periodEnabled: checked }
-              })
-            }
-          />
-        )
-      }
     }
 
     return (

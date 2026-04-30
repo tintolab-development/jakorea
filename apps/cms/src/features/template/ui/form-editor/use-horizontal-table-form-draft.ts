@@ -14,6 +14,7 @@ import {
   horizontalTableSetFlavor,
   normalizeHorizontalTableParagraph,
   normalizeVerticalTableParagraph,
+  normalizeWritingFormDraft,
   paragraphsAreOnlyTableLayoutParagraphs,
   type VerticalTableParagraph,
   type WritingFormDraft,
@@ -67,7 +68,7 @@ function normalizeHorizontalTableDraft(d: WritingFormDraft): WritingFormDraft {
     }
     return p
   })
-  return { ...d, paragraphs }
+  return normalizeWritingFormDraft({ ...d, paragraphs })
 }
 
 function createInitialHorizontalTableDraft(tableFlavor: HorizontalTableFlavor): WritingFormDraft {

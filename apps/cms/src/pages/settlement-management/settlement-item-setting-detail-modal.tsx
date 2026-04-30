@@ -27,10 +27,10 @@ import {
 } from '@/data/mock/settlement-item-setting-detail.mock'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui/app-button'
+import { CmsInputIconClick } from '@/shared/ui/cms-input-iconclick'
 import {
   SettlementItemSettingDescriptionEditIcon,
   SettlementItemSettingIcon,
-  SettlementItemSettingTitleEditIcon,
 } from './settlement-item-setting-icons'
 import { SettlementItemTossfaceIconPickerTrigger } from './settlement-item-tossface-icon-picker'
 import './settlement-item-setting-detail-modal.css'
@@ -176,56 +176,21 @@ function SettlementItemSettingDetailModalHeaderTitle({
   /** 편집 종료(blur) 시 값이 비어 있으면 복구할 문자열 */
   restoreValueIfEmptyOnBlur: string
 }) {
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (!editing) return
-    const id = window.setTimeout(() => {
-      inputRef.current?.focus({ preventScroll: true })
-    }, 0)
-    return () => window.clearTimeout(id)
-  }, [editing])
-
-  const handleBlur = () => {
-    if (value.trim() === '' && restoreValueIfEmptyOnBlur !== '') {
-      onChange(restoreValueIfEmptyOnBlur)
-    }
-    onCommitEdit()
-  }
-
   return (
-    <div className="settlement-item-setting-detail-modal__header-title-row">
-      {editing ? (
-        <input
-          ref={inputRef}
-          type="text"
-          className="settlement-item-setting-detail-modal__header-title-field settlement-item-setting-detail-modal__header-title-field--editing"
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={e => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              handleBlur()
-            }
-          }}
-          aria-label="항목명"
-        />
-      ) : (
-        <span className="settlement-item-setting-detail-modal__header-title-text">{value}</span>
-      )}
-      <button
-        type="button"
-        className="settlement-item-setting-detail-modal__title-edit-btn"
-        onClick={onRequestEdit}
-        aria-label="항목명 수정"
-        aria-disabled={editing}
-        tabIndex={editing ? -1 : 0}
-        style={editing ? { pointerEvents: 'none' } : undefined}
-      >
-        <SettlementItemSettingTitleEditIcon />
-      </button>
-    </div>
+    <CmsInputIconClick
+      value={value}
+      editing={editing}
+      onChange={onChange}
+      onRequestEdit={onRequestEdit}
+      onCommitEdit={onCommitEdit}
+      restoreValueIfEmptyOnBlur={restoreValueIfEmptyOnBlur}
+      inputAriaLabel="항목명"
+      editButtonAriaLabel="항목명 수정"
+      containerClassName="settlement-item-setting-detail-modal__header-title-row"
+      inputClassName="settlement-item-setting-detail-modal__header-title-field settlement-item-setting-detail-modal__header-title-field--editing"
+      textClassName="settlement-item-setting-detail-modal__header-title-text"
+      editButtonClassName="settlement-item-setting-detail-modal__title-edit-btn"
+    />
   )
 }
 

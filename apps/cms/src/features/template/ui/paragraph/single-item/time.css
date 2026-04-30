@@ -1,0 +1,14 @@
+.time-field-paragraph-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.time-field-paragraph-body > .cms-datepicker {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
