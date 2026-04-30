@@ -5,6 +5,7 @@
 
 import { SearchOutlined } from '@ant-design/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -56,27 +57,49 @@ const AFFILIATION_OPTIONS = [
 export type PaymentStatementBasicInfoDetailFormProps = {
   values?: Partial<PaymentStatementBasicInfoAutofillValues>
   className?: string
+  displayMode?: PaymentStatementIssuanceParagraphDisplayMode
+}
+
+function textOrDash(value: string): string {
+  return value.trim() || '-'
+}
+
+function optionLabel(
+  options: Array<{ value: string; label: string }>,
+  value: string
+): string {
+  return options.find(option => option.value === value)?.label ?? value
 }
 
 export function PaymentStatementBasicInfoDetailForm({
   values: valuesProp,
   className,
+  displayMode = 'editor',
 }: PaymentStatementBasicInfoDetailFormProps) {
   const v = { ...EMPTY, ...valuesProp }
+  const isDocumentMode = displayMode === 'document'
 
   const rowDash = <span className="payment-statement-basic-info-detail-form__dash">-</span>
+  const residentNumber = [v.residentFront, v.residentBack].filter(Boolean).join('-')
+  const affiliationText = v.noAffiliation
+    ? '소속 없음'
+    : textOrDash(optionLabel(AFFILIATION_OPTIONS, v.affiliation))
+  const addressText = [v.addressRoad, v.addressDetail].filter(Boolean).join(' ')
+  const accountText = [optionLabel(BANK_OPTIONS, v.bankName), v.accountNumber, v.accountHolder]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
     <DetailInfoForm
       title="지급조서 기본 정보"
       hideHeader
-      mode="edit"
+      mode={isDocumentMode ? 'view' : 'edit'}
       className={['payment-statement-basic-info-detail-form', className].filter(Boolean).join(' ')}
     >
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="성명"
-          view="-"
+          view={textOrDash(v.nameKo)}
           edit={
             <CmsInput
               disabled
@@ -90,7 +113,7 @@ export function PaymentStatementBasicInfoDetailForm({
         />
         <DetailInfoForm.Field
           label="영문 성명"
-          view="-"
+          view={textOrDash(v.nameEn)}
           edit={
             <CmsInput
               disabled
@@ -107,7 +130,7 @@ export function PaymentStatementBasicInfoDetailForm({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="주민등록번호"
-          view="-"
+          view={textOrDash(residentNumber)}
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap payment-statement-basic-info-detail-form__resident">
               <CmsInput
@@ -132,7 +155,7 @@ export function PaymentStatementBasicInfoDetailForm({
         />
         <DetailInfoForm.Field
           label="소속"
-          view="-"
+          view={affiliationText}
           edit={
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__affiliation">
               <CmsSelect
@@ -158,7 +181,7 @@ export function PaymentStatementBasicInfoDetailForm({
         <DetailInfoForm.Field
           label="자택 주소"
           fullRow
-          view="-"
+          view={textOrDash(addressText)}
           edit={
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__address">
               <CmsInput
@@ -190,7 +213,7 @@ export function PaymentStatementBasicInfoDetailForm({
         <DetailInfoForm.Field
           label="정산 계좌 정보"
           fullRow
-          view="-"
+          view={textOrDash(accountText)}
           edit={
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__account">
               <CmsSelect
@@ -229,7 +252,7 @@ export function PaymentStatementBasicInfoDetailForm({
         <DetailInfoForm.Field
           label="지급 목적"
           fullRow
-          view="-"
+          view={textOrDash(v.paymentPurpose)}
           edit={
             <CmsInput
               disabled

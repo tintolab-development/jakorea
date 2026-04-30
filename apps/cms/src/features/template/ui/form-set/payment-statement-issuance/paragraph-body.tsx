@@ -3,6 +3,7 @@ import { PAYMENT_STATEMENT_ISSUANCE_IDS } from '@/features/template/model/paymen
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
+import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/basic-info-paragraph'
 import { CalculationLinesParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/calculation-lines-paragraph'
 import { LectureFeeCalculationParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/lecture-fee-calculation-paragraph'
@@ -17,17 +18,19 @@ export interface PaymentStatementIssuanceParagraphBodyValues {
 interface RenderPaymentStatementIssuanceParagraphBodyParams {
   paragraph: HorizontalTableParagraph
   values?: PaymentStatementIssuanceParagraphBodyValues
+  displayMode?: PaymentStatementIssuanceParagraphDisplayMode
 }
 
 export function renderPaymentStatementIssuanceParagraphBody({
   paragraph,
   values,
+  displayMode = 'editor',
 }: RenderPaymentStatementIssuanceParagraphBodyParams) {
   switch (paragraph.id) {
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableBasic:
-      return <BasicInfoParagraph values={values?.basicInfo} />
+      return <BasicInfoParagraph values={values?.basicInfo} displayMode={displayMode} />
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableCalcInfo:
-      return <LectureFeeCalculationParagraph values={values?.lectureFeeCalculation} />
+      return <LectureFeeCalculationParagraph values={values?.lectureFeeCalculation} displayMode={displayMode} />
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableCalcLines:
       return <CalculationLinesParagraph lines={values?.calculationLines} />
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableWorkLog:

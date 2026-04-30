@@ -23,6 +23,7 @@ import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragrap
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
+import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -366,6 +367,7 @@ export function HorizontalTableParagraphBody({
   paymentStatementBasicInfoValues,
   lectureFeeCalculationValues,
   paymentStatementCalculationLines,
+  paymentStatementDisplayMode,
 }: {
   paragraph: HorizontalTableParagraph
   onChange: (next: HorizontalTableParagraph) => void
@@ -376,6 +378,7 @@ export function HorizontalTableParagraphBody({
   paymentStatementBasicInfoValues?: Partial<PaymentStatementBasicInfoAutofillValues>
   lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
   paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
+  paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
 }) {
   const p = useMemo(() => normalizeHorizontalTableParagraph(paragraph), [paragraph])
 
@@ -386,6 +389,7 @@ export function HorizontalTableParagraphBody({
       lectureFeeCalculation: lectureFeeCalculationValues,
       calculationLines: paymentStatementCalculationLines,
     },
+    displayMode: paymentStatementDisplayMode,
   })
   if (paymentStatementBody != null) return paymentStatementBody
 

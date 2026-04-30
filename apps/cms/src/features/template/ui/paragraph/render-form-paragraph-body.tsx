@@ -28,6 +28,7 @@ import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragr
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
+import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 
 export type FormUpdateParagraph = (
   id: string,
@@ -62,6 +63,8 @@ export type RenderFormParagraphBodyOptions = {
   lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
   /** 강의비 산출 내역 단락 — 발급용 테이블 목·실데이터 */
   paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
+  /** 지급조서 A4 문서 렌더링 시 disabled 입력 UI를 정적 텍스트로 전환 */
+  paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
 }
 
 export function renderFormParagraphBody(
@@ -134,6 +137,7 @@ export function renderFormParagraphBody(
           paymentStatementBasicInfoValues={options?.paymentStatementBasicInfoValues}
           lectureFeeCalculationValues={options?.lectureFeeCalculationValues}
           paymentStatementCalculationLines={options?.paymentStatementCalculationLines}
+          paymentStatementDisplayMode={options?.paymentStatementDisplayMode}
         />
       )
     }

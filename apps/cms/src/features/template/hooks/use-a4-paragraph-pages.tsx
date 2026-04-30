@@ -6,7 +6,12 @@ import {
   A4_DOCUMENT_CONTENT_INNER_WIDTH_PX,
   A4_DOCUMENT_PARAGRAPH_GAP_PX,
 } from '@/features/template/lib/a4-document-pagination-constants'
+import type {
+  FormDocumentPreviewParagraphGapResolver,
+  FormDocumentPreviewRenderMode,
+} from '@/features/template/lib/a4-document-preview'
 import { FormDocumentPreviewBody } from '@/features/template/ui/document-preview/form-document-preview-body'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 
 export interface UseA4ParagraphPagesArgs {
   allParagraphs: WritingFormParagraph[]
@@ -14,6 +19,9 @@ export interface UseA4ParagraphPagesArgs {
   editorKind: FormEditorKind
   /** false이면 측정 생략, 단일 페이지로 전체 단락 반환 */
   enabled: boolean
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+  renderMode?: FormDocumentPreviewRenderMode
+  paragraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
 }
 
 export interface UseA4ParagraphPagesResult {
@@ -25,7 +33,8 @@ export interface UseA4ParagraphPagesResult {
 function packParagraphsByHeights(
   allParagraphs: WritingFormParagraph[],
   heights: Map<string, number>,
-  enabled: boolean
+  enabled: boolean,
+  paragraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
 ): { pages: WritingFormParagraph[][]; overflow: Set<string> } {
   if (!enabled || allParagraphs.length === 0) {
     return { pages: [allParagraphs], overflow: new Set() }
@@ -55,7 +64,12 @@ function packParagraphsByHeights(
     if (h > maxH) {
       overflow.add(p.id)
     }
-    const gap = page.length > 0 ? A4_DOCUMENT_PARAGRAPH_GAP_PX : 0
+    const gap =
+      page.length > 0
+        ? typeof paragraphGapPx === 'number'
+          ? paragraphGapPx
+          : paragraphGapPx?.(p, page.length, page) ?? A4_DOCUMENT_PARAGRAPH_GAP_PX
+        : 0
     if (page.length > 0 && used + gap + h > maxH) {
       flushPage()
     }
@@ -77,6 +91,9 @@ export function useA4ParagraphPages({
   titleNumbering,
   editorKind,
   enabled,
+  paragraphBodyOptions,
+  renderMode = 'card',
+  paragraphGapPx,
 }: UseA4ParagraphPagesArgs): UseA4ParagraphPagesResult {
   const paragraphIdsKey = useMemo(() => allParagraphs.map(p => p.id).join('\0'), [allParagraphs])
 
@@ -113,13 +130,18 @@ export function useA4ParagraphPages({
       if (id == null || id === '') return
       next.set(id, (node as HTMLElement).offsetHeight)
     })
-    const { pages: nextPages, overflow } = packParagraphsByHeights(allParagraphs, next, enabled)
+    const { pages: nextPages, overflow } = packParagraphsByHeights(
+      allParagraphs,
+      next,
+      enabled,
+      paragraphGapPx
+    )
     setPacked({
       pages: nextPages,
       overflowIds: overflow,
       paragraphIdsKey: allParagraphs.map(p => p.id).join('\0'),
     })
-  }, [allParagraphs, enabled])
+  }, [allParagraphs, enabled, paragraphGapPx])
 
   useLayoutEffect(() => {
     if (!enabled) {
@@ -138,7 +160,15 @@ export function useA4ParagraphPages({
     return () => {
       cancelled = true
     }
-  }, [allParagraphs, enabled, runMeasure, titleNumbering, editorKind])
+  }, [
+    allParagraphs,
+    enabled,
+    runMeasure,
+    titleNumbering,
+    editorKind,
+    paragraphBodyOptions,
+    renderMode,
+  ])
 
   const measureLayer = useMemo(
     () => (
@@ -161,10 +191,13 @@ export function useA4ParagraphPages({
           allParagraphs={allParagraphs}
           titleNumbering={titleNumbering}
           editorKind={editorKind}
+          paragraphBodyOptions={paragraphBodyOptions}
+          renderMode={renderMode}
+          paragraphGapPx={paragraphGapPx}
         />
       </div>
     ),
-    [allParagraphs, titleNumbering, editorKind]
+    [allParagraphs, titleNumbering, editorKind, paragraphBodyOptions, renderMode, paragraphGapPx]
   )
 
   return { pages, overflowParagraphIds, measureLayer }

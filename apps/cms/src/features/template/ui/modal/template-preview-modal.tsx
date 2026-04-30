@@ -1,6 +1,5 @@
-import { DownloadOutlined } from '@ant-design/icons'
-import { message } from 'antd'
-import { useCallback, useRef, useState } from 'react'
+import { useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import type {
   FormEditorKind,
   WritingFormDraft,
@@ -12,15 +11,28 @@ import type {
   RenderFormParagraphBodyOptions,
 } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import { AgreementTemplatePreviewModal } from '@/features/template/ui/modal/agreement-template-preview-modal'
+import { TemplatePreviewPageNavigator } from '@/features/template/ui/modal/template-preview-page-navigator'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { useA4ParagraphPages } from '@/features/template/hooks/use-a4-paragraph-pages'
 import { FormDocumentPreviewBody } from '@/features/template/ui/document-preview'
+import type {
+  FormDocumentPreviewParagraphGapResolver,
+  FormDocumentPreviewRenderMode,
+} from '@/features/template/lib/a4-document-preview'
 import {
-  collectFormDocumentPdfPageElements,
-  downloadFormDocumentPdfFromPageElements,
-} from '@/features/template/lib/generate-form-document-pdf'
+  getA4DocumentTitle,
+  getA4PreviewParagraphs,
+} from '@/features/template/lib/a4-document-preview'
+import type { TemplateWritingPreviewLayout } from '@/features/template/context/template-writing-preview-context'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import './template-preview-modal.css'
+
+const PREVIEW_PAGE_QUERY_PARAM = 'previewPage'
+
+function readPreviewPage(searchParams: URLSearchParams): number {
+  const value = Number(searchParams.get(PREVIEW_PAGE_QUERY_PARAM))
+  return Number.isInteger(value) && value > 0 ? value : 1
+}
 
 export interface TemplatePreviewModalProps {
   open: boolean
@@ -35,14 +47,13 @@ export interface TemplatePreviewModalProps {
    * @default 1100
    */
   zIndex?: number
+  previewLayout?: TemplateWritingPreviewLayout
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   /** 지급조서 발급 미리보기 등 — 단락 필수 UI 숨김 */
   hideParagraphRequiredChrome?: boolean
-}
-
-function safePdfFileName(title: string): string {
-  const base = title.trim().replace(/[^\w가-힣-]+/gu, '_').replace(/_+/g, '_').slice(0, 80) || 'form'
-  return `${base}.pdf`
+  a4HiddenParagraphIds?: ReadonlySet<string>
+  a4RenderMode?: FormDocumentPreviewRenderMode
+  a4ParagraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
 }
 
 /**
@@ -57,49 +68,73 @@ export function TemplatePreviewModal({
   updateParagraph,
   editorKind = 'survey',
   zIndex = 1100,
+  previewLayout = 'default',
   paragraphBodyOptions,
   hideParagraphRequiredChrome,
+  a4HiddenParagraphIds,
+  a4RenderMode = 'card',
+  a4ParagraphGapPx,
 }: TemplatePreviewModalProps) {
+  const [searchParams, setSearchParams] = useSearchParams()
   const isReportPreviewLayout = editorKind === 'survey'
+  const isA4DocumentPreviewLayout = isReportPreviewLayout || previewLayout === 'a4-document'
   const isAgreementPreviewLayout = editorKind === 'agreement'
   const isHorizontalTablePreviewLayout = editorKind === 'horizontal_table'
-  const isFormPreviewLayout = isReportPreviewLayout || isAgreementPreviewLayout
+  const isFormPreviewLayout = isA4DocumentPreviewLayout || isAgreementPreviewLayout
   const modalClassName = [
     'template-preview-modal',
     'teal-header-modal--full',
     isFormPreviewLayout ? 'template-preview-modal--form-layout' : '',
-    isReportPreviewLayout ? 'template-preview-modal--agreement-layout' : '',
-    isReportPreviewLayout ? 'template-preview-modal--survey-layout' : '',
+    isA4DocumentPreviewLayout ? 'template-preview-modal--agreement-layout' : '',
+    isA4DocumentPreviewLayout ? 'template-preview-modal--survey-layout' : '',
     isHorizontalTablePreviewLayout ? 'template-preview-modal--horizontal-table-layout' : '',
   ]
     .filter(Boolean)
     .join(' ')
 
+  const previewParagraphs = useMemo(
+    () => getA4PreviewParagraphs(draft.paragraphs, a4HiddenParagraphIds),
+    [a4HiddenParagraphIds, draft.paragraphs]
+  )
+  const a4DocumentTitle = useMemo(
+    () => (isA4DocumentPreviewLayout ? getA4DocumentTitle(draft, headerTitle) : headerTitle),
+    [draft, headerTitle, isA4DocumentPreviewLayout]
+  )
+
   const { pages: pagedParagraphs, overflowParagraphIds, measureLayer } = useA4ParagraphPages({
-    allParagraphs: draft.paragraphs,
+    allParagraphs: previewParagraphs,
     titleNumbering: draft.formSettings.titleNumbering,
     editorKind,
-    enabled: open && isReportPreviewLayout,
+    enabled: open && isA4DocumentPreviewLayout,
+    paragraphBodyOptions,
+    renderMode: a4RenderMode,
+    paragraphGapPx: a4ParagraphGapPx,
   })
+  const pageCount = pagedParagraphs.length
+  const showPageNavigator = isA4DocumentPreviewLayout && pageCount > 1
+  const safeActivePage = Math.min(readPreviewPage(searchParams), Math.max(1, pageCount))
+  const safeActivePageIndex = safeActivePage - 1
+  const activePageParagraphs = pagedParagraphs[safeActivePageIndex] ?? []
 
-  const pdfHostRef = useRef<HTMLDivElement>(null)
-  const [pdfLoading, setPdfLoading] = useState(false)
-
-  const handleSurveyPdfDownload = useCallback(async () => {
-    const root = pdfHostRef.current
-    if (root == null) return
-    setPdfLoading(true)
-    try {
-      const pageEls = collectFormDocumentPdfPageElements(root)
-      await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(headerTitle))
-      message.success('PDF가 저장되었습니다')
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'PDF 생성에 실패했습니다'
-      message.error(msg)
-    } finally {
-      setPdfLoading(false)
+  const setPreviewPageParam = (page: number | null) => {
+    const next = new URLSearchParams(searchParams)
+    if (page == null || page <= 1) {
+      next.delete(PREVIEW_PAGE_QUERY_PARAM)
+    } else {
+      next.set(PREVIEW_PAGE_QUERY_PARAM, String(page))
     }
-  }, [headerTitle])
+    setSearchParams(next, { replace: true })
+  }
+
+  const handleClose = () => {
+    setPreviewPageParam(null)
+    onClose()
+  }
+
+  const handlePageChange = (page: number) => {
+    const nextPage = Math.min(Math.max(1, page), pageCount)
+    setPreviewPageParam(nextPage)
+  }
 
   if (isAgreementPreviewLayout) {
     return (
@@ -118,37 +153,24 @@ export function TemplatePreviewModal({
   return (
     <TealHeaderModal
       open={open}
-      onCancel={onClose}
+      onCancel={handleClose}
       title=""
       size="full"
       hideHeader
       className={modalClassName}
       zIndex={zIndex}
     >
-      {isReportPreviewLayout ? measureLayer : null}
+      {isA4DocumentPreviewLayout ? measureLayer : null}
       <div className="template-preview-modal__shell">
         <header className="template-preview-modal__title-row">
           <div className="template-preview-modal__title-left">
             <span className="template-preview-modal__title-text">{headerTitle}</span>
             <span className="template-preview-modal__badge">미리보기</span>
           </div>
-          {isReportPreviewLayout ? (
-            <div className="template-preview-modal__title-actions">
-              <button
-                type="button"
-                className="template-preview-modal__pdf-button"
-                onClick={() => void handleSurveyPdfDownload()}
-                disabled={pdfLoading || pagedParagraphs.length === 0}
-              >
-                <DownloadOutlined />
-                PDF 다운로드
-              </button>
-            </div>
-          ) : null}
         </header>
 
         <div className="template-preview-modal__body">
-          {isReportPreviewLayout ? (
+          {isA4DocumentPreviewLayout ? (
             <div className="template-preview-modal__notice">
               <div className="template-preview-modal__notice-text-wrap">
                 <p className="template-preview-modal__notice-text">
@@ -158,7 +180,7 @@ export function TemplatePreviewModal({
               <button
                 type="button"
                 className="template-preview-modal__notice-close-btn"
-                onClick={onClose}
+                onClick={handleClose}
               >
                 미리보기 닫기
               </button>
@@ -166,31 +188,39 @@ export function TemplatePreviewModal({
           ) : null}
 
           <div className={isFormPreviewLayout ? 'template-preview-modal__pages' : 'template-preview-modal__content'}>
-            {isReportPreviewLayout ? (
+            {isA4DocumentPreviewLayout ? (
               <div className="template-preview-modal__a4-stage">
-                <div ref={pdfHostRef} className="template-preview-modal__a4-stack">
-                  {pagedParagraphs.map((pageParagraphs, pageIndex) => (
-                    <div key={pageIndex} className="template-preview-modal__a4-frame">
-                      <div className="template-preview-modal__a4-scale-inner">
-                        <A4DocumentPageLayout
-                          title={headerTitle}
-                          pageIndex={pageIndex}
-                          pdfCapture
-                        >
-                          <div className="template-preview-modal__a4-text-content">
-                            <FormDocumentPreviewBody
-                              paragraphs={pageParagraphs}
-                              allParagraphs={draft.paragraphs}
-                              titleNumbering={draft.formSettings.titleNumbering}
-                              editorKind={editorKind}
-                              overflowParagraphIds={overflowParagraphIds}
-                            />
-                          </div>
-                        </A4DocumentPageLayout>
-                      </div>
+                <div className="template-preview-modal__a4-stack">
+                  <div key={safeActivePageIndex} className="template-preview-modal__a4-frame">
+                    <div className="template-preview-modal__a4-scale-inner">
+                      <A4DocumentPageLayout
+                        title={a4DocumentTitle}
+                        pageIndex={safeActivePageIndex}
+                        pdfCapture
+                      >
+                        <div className="template-preview-modal__a4-text-content">
+                          <FormDocumentPreviewBody
+                            paragraphs={activePageParagraphs}
+                            allParagraphs={previewParagraphs}
+                            titleNumbering={draft.formSettings.titleNumbering}
+                            editorKind={editorKind}
+                            overflowParagraphIds={overflowParagraphIds}
+                            paragraphBodyOptions={paragraphBodyOptions}
+                            renderMode={a4RenderMode}
+                            paragraphGapPx={a4ParagraphGapPx}
+                          />
+                        </div>
+                      </A4DocumentPageLayout>
                     </div>
-                  ))}
+                  </div>
                 </div>
+                {showPageNavigator ? (
+                  <TemplatePreviewPageNavigator
+                    currentPage={safeActivePage}
+                    totalPages={pageCount}
+                    onPageChange={handlePageChange}
+                  />
+                ) : null}
               </div>
             ) : (
               <FormEditorLeftPane

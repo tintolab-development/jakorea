@@ -13,6 +13,12 @@ import type {
   FormUpdateParagraph,
   RenderFormParagraphBodyOptions,
 } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import type {
+  FormDocumentPreviewParagraphGapResolver,
+  FormDocumentPreviewRenderMode,
+} from '@/features/template/lib/a4-document-preview'
+
+export type TemplateWritingPreviewLayout = 'default' | 'a4-document'
 
 /** `/templates` 하위에서 공유하는 작성 양식 user 미리보기 세션 */
 export type TemplateWritingUserPreviewSession = {
@@ -21,9 +27,13 @@ export type TemplateWritingUserPreviewSession = {
   headerTitle: string
   editorKind?: FormEditorKind
   zIndex?: number
+  previewLayout?: TemplateWritingPreviewLayout
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   /** FormEditorLeftPane — 단락 필수(*)·답변 필수 토글 등 숨김 */
   hideParagraphRequiredChrome?: boolean
+  a4HiddenParagraphIds?: ReadonlySet<string>
+  a4RenderMode?: FormDocumentPreviewRenderMode
+  a4ParagraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
 }
 
 export type TemplateWritingPreviewContextValue = {
@@ -79,8 +89,12 @@ export function TemplateWritingPreviewProvider({ children }: { children: ReactNo
           updateParagraph={session.updateParagraph}
           editorKind={session.editorKind ?? 'survey'}
           zIndex={session.zIndex}
+          previewLayout={session.previewLayout}
           paragraphBodyOptions={session.paragraphBodyOptions}
           hideParagraphRequiredChrome={session.hideParagraphRequiredChrome}
+          a4HiddenParagraphIds={session.a4HiddenParagraphIds}
+          a4RenderMode={session.a4RenderMode}
+          a4ParagraphGapPx={session.a4ParagraphGapPx}
         />
       ) : null}
     </TemplateWritingPreviewContext.Provider>

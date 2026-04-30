@@ -4,6 +4,7 @@
  */
 
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { CmsInput } from '@/shared/ui/cms-input'
 import './lecture-fee-calculation-detail-form.css'
 
@@ -43,6 +44,16 @@ const EMPTY: LectureFeeCalculationAutofillValues = {
 export type LectureFeeCalculationDetailFormProps = {
   values?: Partial<LectureFeeCalculationAutofillValues>
   className?: string
+  displayMode?: PaymentStatementIssuanceParagraphDisplayMode
+}
+
+function textOrDash(value: string): string {
+  return value.trim() || '-'
+}
+
+function joinText(parts: string[], separator = ' · '): string {
+  const text = parts.filter(part => part.trim().length > 0).join(separator)
+  return textOrDash(text)
 }
 
 function InlineTextPair({ left, right }: { left: string; right: string }) {
@@ -87,20 +98,26 @@ function IssuancePaymentItemMark({ checked, label }: { checked: boolean; label: 
 export function LectureFeeCalculationDetailForm({
   values: valuesProp,
   className,
+  displayMode = 'editor',
 }: LectureFeeCalculationDetailFormProps) {
   const v = { ...EMPTY, ...valuesProp }
+  const isDocumentMode = displayMode === 'document'
+  const paymentItems = [
+    v.transportFee ? '교통비' : '',
+    v.lodgingFee ? '숙박비' : '',
+  ]
 
   return (
     <DetailInfoForm
       title="강의비 산출 정보"
       hideHeader
-      mode="edit"
+      mode={isDocumentMode ? 'view' : 'edit'}
       className={['lecture-fee-calculation-detail-form', className].filter(Boolean).join(' ')}
     >
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="강의비 유형"
-          view="-"
+          view={textOrDash(v.lectureFeeType)}
           edit={
             <CmsInput
               disabled
@@ -113,7 +130,7 @@ export function LectureFeeCalculationDetailForm({
         />
         <DetailInfoForm.Field
           label="강사비 책정"
-          view="-"
+          view={joinText([v.feeBasisLeft, v.feeBasisRight])}
           edit={<InlineTextPair left={v.feeBasisLeft} right={v.feeBasisRight} />}
         />
       </DetailInfoForm.Row>
@@ -121,14 +138,14 @@ export function LectureFeeCalculationDetailForm({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="사업소득자 여부"
-          view="-"
+          view={joinText([v.businessIncomeLeft, v.businessIncomeRight])}
           edit={
             <InlineTextPair left={v.businessIncomeLeft} right={v.businessIncomeRight} />
           }
         />
         <DetailInfoForm.Field
           label="교육 진행 차시"
-          view="-"
+          view={joinText([v.sessionCount, v.sessionHours])}
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap lecture-fee-calculation-detail-form__session">
               <CmsInput
@@ -156,7 +173,7 @@ export function LectureFeeCalculationDetailForm({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="지급 항목 여부"
-          view="-"
+          view={joinText(paymentItems)}
           edit={
             <div className="detail-info-form-inputs-wrapper lecture-fee-calculation-detail-form__payment-items">
               <IssuancePaymentItemMark checked={v.transportFee} label="교통비" />
@@ -166,7 +183,7 @@ export function LectureFeeCalculationDetailForm({
         />
         <DetailInfoForm.Field
           label="총 학생 수"
-          view="-"
+          view={textOrDash(v.totalStudents ? `${v.totalStudents}명` : '')}
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap lecture-fee-calculation-detail-form__student-count">
               <CmsInput
@@ -186,7 +203,7 @@ export function LectureFeeCalculationDetailForm({
         <DetailInfoForm.Field
           label="총 강의비"
           colSpan={2}
-          view="-"
+          view={textOrDash(v.totalLectureFee ? `${v.totalLectureFee}원` : '')}
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap lecture-fee-calculation-detail-form__total-fee">
               <CmsInput

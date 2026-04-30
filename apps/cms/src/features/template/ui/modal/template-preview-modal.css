@@ -8,8 +8,11 @@
   --template-preview-content-max-width: 1404px;
   --template-preview-text-start-x: 440px;
   --template-preview-notice-text-width: 890px;
-  --template-preview-a4-width: 616.105px;
-  --template-preview-a4-scale: calc(616.105 / 1464);
+  /* 디자인 캔버스 1464px → 표시 너비 비율로 스케일 (비율 유지) */
+  --template-preview-a4-width: 668px;
+  --template-preview-a4-scale: calc(668 / 1464);
+  /* 하단 고정 페이지 나비 높이의 약 1/2만큼 용지 하단이 같은 영역으로 내려가 겹침 */
+  --template-preview-a4-nav-overlap-half: 26px;
   --template-preview-layout-width: 1920px;
 }
 
@@ -186,9 +189,17 @@
   min-height: 1080px;
 }
 
+/* A4 미리보기는 페이지 네비게이션으로 이동하므로 내부 세로 스크롤을 만들지 않는다. */
+.template-preview-modal:has(.template-preview-modal__a4-stage) .template-preview-modal__body {
+  overflow-y: hidden;
+  min-height: 0;
+  padding-bottom: 52px;
+}
+
 .template-preview-modal__pages {
   width: 100%;
   max-width: var(--template-preview-content-max-width, 1404px);
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -217,15 +228,16 @@
   align-items: center;
   gap: 24px;
   width: 100%;
-  flex: 1 0 0;
+  flex: 0 0 auto;
   min-height: 0;
-  overflow-y: auto;
-  padding-bottom: 24px;
+  overflow-x: visible;
+  overflow-y: hidden;
+  padding-bottom: 0;
   box-sizing: border-box;
 }
 
 .template-preview-modal__a4-stage {
-  width: var(--template-preview-a4-width, 616.105px);
+  width: var(--template-preview-a4-width, 668px);
   flex: 1 0 0;
   min-height: 0;
   display: flex;
@@ -234,18 +246,20 @@
   padding-bottom: 0;
   box-sizing: border-box;
   position: relative;
+  overflow: visible;
 }
 
 .template-preview-modal__a4-frame {
-  width: var(--template-preview-a4-width, 616.105px);
+  width: var(--template-preview-a4-width, 668px);
   flex: 0 0 auto;
   aspect-ratio: 65 / 92;
-  height: calc(var(--template-preview-a4-width, 616.105px) * 92 / 65);
-  max-width: 100%;
+  height: calc(var(--template-preview-a4-width, 668px) * 92 / 65);
+  max-width: none;
   overflow: hidden;
   border-radius: 0;
   box-shadow: none;
   background: #fff;
+  transform: translateY(var(--template-preview-a4-nav-overlap-half, 26px));
 }
 
 .template-preview-modal__a4-scale-inner {
