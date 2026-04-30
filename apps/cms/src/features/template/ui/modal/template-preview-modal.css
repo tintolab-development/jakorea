@@ -189,14 +189,17 @@
   min-height: 1080px;
 }
 
-/* A4 용지 translateY 겹침이 스크롤 영역 밖에서 잘리지 않도록 하단 여백 보강 */
+/* A4 미리보기는 페이지 네비게이션으로 이동하므로 내부 세로 스크롤을 만들지 않는다. */
 .template-preview-modal:has(.template-preview-modal__a4-stage) .template-preview-modal__body {
-  padding-bottom: calc(52px + var(--template-preview-a4-nav-overlap-half, 26px));
+  overflow-y: hidden;
+  min-height: 0;
+  padding-bottom: 52px;
 }
 
 .template-preview-modal__pages {
   width: 100%;
   max-width: var(--template-preview-content-max-width, 1404px);
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -225,11 +228,11 @@
   align-items: center;
   gap: 24px;
   width: 100%;
-  flex: 1 0 0;
+  flex: 0 0 auto;
   min-height: 0;
   overflow-x: visible;
-  overflow-y: auto;
-  padding-bottom: calc(24px + var(--template-preview-a4-nav-overlap-half, 26px));
+  overflow-y: hidden;
+  padding-bottom: 0;
   box-sizing: border-box;
 }
 
@@ -251,7 +254,7 @@
   flex: 0 0 auto;
   aspect-ratio: 65 / 92;
   height: calc(var(--template-preview-a4-width, 668px) * 92 / 65);
-  max-width: 100%;
+  max-width: none;
   overflow: hidden;
   border-radius: 0;
   box-shadow: none;
