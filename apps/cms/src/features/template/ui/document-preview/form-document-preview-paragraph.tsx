@@ -1,0 +1,265 @@
+import dayjs from 'dayjs'
+import type { ReactNode } from 'react'
+import type {
+  ClosingParagraph,
+  FormEditorKind,
+  FormTitleNumberingStyle,
+  MultipleChoiceParagraph,
+  ShortEssayParagraph,
+  TitleWithPeriodParagraph,
+  WritingFormParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
+import {
+  isAgreementLockedSystemParagraph,
+  normalizeHorizontalTableParagraph,
+  type HorizontalTableParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
+import { getFormParagraphDisplayTitle } from '@/features/template/lib/form-title-numbering'
+import { ParagraphCard } from '@/features/template/ui/paragraph/shared/paragraph-card'
+import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
+import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/table/horizontal-table-paragraph-body'
+import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/table/vertical-table-paragraph-body'
+import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
+import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
+import { SubjectiveParagraphBody } from '@/features/template/ui/paragraph/single-item/subjective-paragraph-body'
+import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
+import { DateTime } from '@/features/template/ui/paragraph/single-item/date-time'
+import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate'
+import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-type'
+import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
+import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
+import '@/features/template/ui/paragraph/shared/paragraph-card.css'
+import './form-document-preview-body.css'
+
+function noopOnParagraphChange<T>(_next: T): void {}
+
+function readOnlyTitleBlock(displayTitle: string, description?: string): { title: ReactNode; description?: ReactNode } {
+  return {
+    title: <span className="form-document-preview-paragraph__title-text">{displayTitle}</span>,
+    description:
+      description != null && description.trim().length > 0 ? (
+        <span className="form-document-preview-paragraph__description-text">{description}</span>
+      ) : undefined,
+  }
+}
+
+function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoiceParagraph }) {
+  const items = paragraph.items?.length ? paragraph.items : []
+  const allowMultiple = paragraph.allowMultiple ?? false
+  const singleId = paragraph.selectedPreviewSingleId ?? null
+  const multi = new Set(paragraph.selectedPreviewMultipleIds ?? [])
+  return (
+    <div className="form-document-preview-multiple-choice">
+      {items.map(item => {
+        const checked = allowMultiple ? multi.has(item.id) : singleId === item.id
+        const mark = allowMultiple ? (checked ? '☑' : '☐') : checked ? '●' : '○'
+        return (
+          <div key={item.id} className="form-document-preview-multiple-choice__row">
+            <span className="form-document-preview-multiple-choice__mark" aria-hidden>
+              {mark}
+            </span>
+            <span>{item.label}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function DocumentShortEssayReadonly({ paragraph }: { paragraph: ShortEssayParagraph }) {
+  const ph = paragraph.bodyPlaceholder.trim() || '답변을 입력해 주세요'
+  const items =
+    paragraph.items && paragraph.items.length > 0
+      ? paragraph.items
+      : [
+          {
+            id: 'short-essay-item-1',
+            label: 'Title 01',
+            placeholder: ph,
+            bodyText: paragraph.bodyText,
+          },
+        ]
+  const showItemTitle = items.length >= 2 ? true : (paragraph.showItemTitle ?? false)
+  return (
+    <div className="form-editor-body">
+      {items.map((item, index) => (
+        <div key={item.id} className="form-document-preview-paragraph__body-text" style={{ marginBottom: 12 }}>
+          {showItemTitle ? (
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>
+              {item.label ?? `Title ${String(index + 1).padStart(2, '0')}`}
+            </div>
+          ) : null}
+          <div>{item.bodyText.trim() || item.placeholder || ph}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function SurveyTitleDocumentReadonly({ paragraph }: { paragraph: TitleWithPeriodParagraph }) {
+  /** 카드 타이틀에 `surveyTitle`이 오르므로 본문에는 설명·기간만 */
+  const bits: string[] = []
+  const desc = paragraph.surveyDescription.trim()
+  if (desc.length > 0) bits.push(desc)
+  if (paragraph.showWritingPeriodOnForm) {
+    const a = paragraph.startAt ? dayjs(paragraph.startAt).format('YYYY-MM-DD') : '—'
+    const b = paragraph.endAt ? dayjs(paragraph.endAt).format('YYYY-MM-DD') : '—'
+    bits.push(`작성 기간: ${a} ~ ${b}`)
+  }
+  if (bits.length === 0) return null
+  return <div className="form-document-preview-paragraph__body-text">{bits.join('\n\n')}</div>
+}
+
+function renderBody(
+  p: WritingFormParagraph,
+  _allParagraphs: WritingFormParagraph[],
+  _editorKind: FormEditorKind
+): ReactNode {
+  switch (p.variant) {
+    case 'survey_title_with_period':
+      return <SurveyTitleDocumentReadonly paragraph={p as TitleWithPeriodParagraph} />
+    case 'agreement_explanation_text': {
+      const ph = p.bodyPlaceholder.trim() || '텍스트를 작성해 주세요'
+      const text = p.bodyText.trim() || ph
+      return <div className="form-document-preview-paragraph__body-text">{text}</div>
+    }
+    case 'horizontal_table':
+      return (
+        <HorizontalTableParagraphBody
+          paragraph={normalizeHorizontalTableParagraph(p as HorizontalTableParagraph)}
+          onChange={noopOnParagraphChange}
+          isEditMode={false}
+        />
+      )
+    case 'vertical_table':
+      return <VerticalTableParagraphBody paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+    case 'multiple_choice':
+      return <DocumentMultipleChoiceReadonly paragraph={p as MultipleChoiceParagraph} />
+    case 'short_essay':
+      return <DocumentShortEssayReadonly paragraph={p as ShortEssayParagraph} />
+    case 'subjective':
+      return <SubjectiveParagraphBody paragraph={p} isEditMode={false} />
+    case 'system':
+      if (isAgreementLockedSystemParagraph(p)) {
+        return (
+          <ExplanationSystem
+            paragraph={p}
+            onChange={noopOnParagraphChange}
+            isEditMode={false}
+            displayMode="authoring"
+          />
+        )
+      }
+      return null
+    case 'user_profile':
+      return <UserProfileParagraphBody paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+    case 'score_select':
+      return <ScoreSelectParagraphBody paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+    case 'dropdown':
+      return <Dropdown paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+    case 'date_time':
+      return (
+        <DateTime
+          paragraph={p}
+          onChange={noopOnParagraphChange}
+          isCardSelected={false}
+          isBodyInteractive={false}
+          paragraphInteractionMode="user"
+        />
+      )
+    case 'star_rate':
+      return (
+        <StarRate
+          paragraph={p}
+          onChange={noopOnParagraphChange}
+          isCardSelected={false}
+          isBodyInteractive={false}
+          paragraphInteractionMode="user"
+        />
+      )
+    case 'scale_type':
+      return (
+        <ScaleType
+          paragraph={p}
+          onChange={noopOnParagraphChange}
+          isCardSelected={false}
+          isBodyInteractive={false}
+          paragraphInteractionMode="user"
+        />
+      )
+    case 'user_info':
+      return <UserInfo paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+    case 'file_attachment':
+      return <FileAttachment paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+    case 'closing': {
+      const c = p as ClosingParagraph
+      return <div className="form-document-preview-paragraph__body-text">{c.body.trim() || ' '}</div>
+    }
+    default:
+      return null
+  }
+}
+
+export interface FormDocumentPreviewParagraphProps {
+  paragraph: WritingFormParagraph
+  allParagraphs: WritingFormParagraph[]
+  titleNumbering: FormTitleNumberingStyle
+  editorKind: FormEditorKind
+  overflow?: boolean
+}
+
+export function FormDocumentPreviewParagraph({
+  paragraph,
+  allParagraphs,
+  titleNumbering,
+  editorKind,
+  overflow = false,
+}: FormDocumentPreviewParagraphProps) {
+  const displayTitle = getFormParagraphDisplayTitle(allParagraphs, paragraph, titleNumbering)
+  const { title, description } = readOnlyTitleBlock(
+    displayTitle,
+    paragraph.paragraphDescription?.trim() || undefined
+  )
+
+  if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
+    const c = paragraph as ClosingParagraph
+    const head = readOnlyTitleBlock(displayTitle, undefined)
+    return (
+      <div
+        className={[
+          'form-document-preview-paragraph',
+          'paragraph-card',
+          overflow ? 'form-document-preview-paragraph--overflow' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        data-paragraph-id={paragraph.id}
+      >
+        <div className="paragraph-card__header">
+          <div className="paragraph-card__title-block">{head.title}</div>
+        </div>
+        <div className="paragraph-card__slot">
+          <div className="form-document-preview-paragraph__body-text">{c.body.trim() || ' '}</div>
+        </div>
+      </div>
+    )
+  }
+
+  const body = renderBody(paragraph, allParagraphs, editorKind)
+
+  return (
+    <div
+      className={[
+        'form-document-preview-paragraph',
+        overflow ? 'form-document-preview-paragraph--overflow' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      data-paragraph-id={paragraph.id}
+    >
+      <ParagraphCard title={title} description={description}>
+        {body}
+      </ParagraphCard>
+    </div>
+  )
+}
