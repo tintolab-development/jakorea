@@ -1,0 +1,171 @@
+import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import type { FormEditorKind, FormTitleNumberingStyle, WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
+import {
+  A4_DOCUMENT_CONTINUATION_PAGE_BODY_MAX_PX,
+  A4_DOCUMENT_FIRST_PAGE_BODY_MAX_PX,
+  A4_DOCUMENT_CONTENT_INNER_WIDTH_PX,
+  A4_DOCUMENT_PARAGRAPH_GAP_PX,
+} from '@/features/template/lib/a4-document-pagination-constants'
+import { FormDocumentPreviewBody } from '@/features/template/ui/document-preview/form-document-preview-body'
+
+export interface UseA4ParagraphPagesArgs {
+  allParagraphs: WritingFormParagraph[]
+  titleNumbering: FormTitleNumberingStyle
+  editorKind: FormEditorKind
+  /** false이면 측정 생략, 단일 페이지로 전체 단락 반환 */
+  enabled: boolean
+}
+
+export interface UseA4ParagraphPagesResult {
+  pages: WritingFormParagraph[][]
+  overflowParagraphIds: ReadonlySet<string>
+  measureLayer: ReactNode
+}
+
+function packParagraphsByHeights(
+  allParagraphs: WritingFormParagraph[],
+  heights: Map<string, number>,
+  enabled: boolean
+): { pages: WritingFormParagraph[][]; overflow: Set<string> } {
+  if (!enabled || allParagraphs.length === 0) {
+    return { pages: [allParagraphs], overflow: new Set() }
+  }
+
+  const overflow = new Set<string>()
+  const out: WritingFormParagraph[][] = []
+  let page: WritingFormParagraph[] = []
+  let used = 0
+  let isFirstPage = true
+
+  const maxFor = () =>
+    isFirstPage ? A4_DOCUMENT_FIRST_PAGE_BODY_MAX_PX : A4_DOCUMENT_CONTINUATION_PAGE_BODY_MAX_PX
+
+  const flushPage = () => {
+    if (page.length > 0) {
+      out.push(page)
+      page = []
+      used = 0
+      isFirstPage = false
+    }
+  }
+
+  for (const p of allParagraphs) {
+    const h = heights.get(p.id) ?? 0
+    const maxH = maxFor()
+    if (h > maxH) {
+      overflow.add(p.id)
+    }
+    const gap = page.length > 0 ? A4_DOCUMENT_PARAGRAPH_GAP_PX : 0
+    if (page.length > 0 && used + gap + h > maxH) {
+      flushPage()
+    }
+    page.push(p)
+    used += gap + h
+  }
+  flushPage()
+  if (out.length === 0) {
+    out.push([])
+  }
+  return { pages: out, overflow }
+}
+
+/**
+ * 문서 미리보기와 동일 마크업으로 단락 높이를 재어, A4 본문 최대 높이 기준으로 페이지를 나눈다.
+ */
+export function useA4ParagraphPages({
+  allParagraphs,
+  titleNumbering,
+  editorKind,
+  enabled,
+}: UseA4ParagraphPagesArgs): UseA4ParagraphPagesResult {
+  const paragraphIdsKey = useMemo(() => allParagraphs.map(p => p.id).join('\0'), [allParagraphs])
+
+  const [packed, setPacked] = useState<{
+    pages: WritingFormParagraph[][]
+    overflowIds: ReadonlySet<string>
+    paragraphIdsKey: string
+  } | null>(null)
+  const measureRootRef = useRef<HTMLDivElement>(null)
+
+  const pages = useMemo(() => {
+    if (!enabled) {
+      return [allParagraphs]
+    }
+    if (packed != null && packed.paragraphIdsKey === paragraphIdsKey && packed.pages.length > 0) {
+      return packed.pages
+    }
+    return [allParagraphs]
+  }, [enabled, allParagraphs, packed, paragraphIdsKey])
+
+  const overflowParagraphIds = useMemo(() => {
+    if (!enabled || packed == null || packed.paragraphIdsKey !== paragraphIdsKey) {
+      return new Set<string>()
+    }
+    return packed.overflowIds
+  }, [enabled, packed, paragraphIdsKey])
+
+  const runMeasure = useCallback(() => {
+    const root = measureRootRef.current
+    if (root == null || !enabled) return
+    const next = new Map<string, number>()
+    root.querySelectorAll('[data-paragraph-id]').forEach(node => {
+      const id = node.getAttribute('data-paragraph-id')
+      if (id == null || id === '') return
+      next.set(id, (node as HTMLElement).offsetHeight)
+    })
+    const { pages: nextPages, overflow } = packParagraphsByHeights(allParagraphs, next, enabled)
+    setPacked({
+      pages: nextPages,
+      overflowIds: overflow,
+      paragraphIdsKey: allParagraphs.map(p => p.id).join('\0'),
+    })
+  }, [allParagraphs, enabled])
+
+  useLayoutEffect(() => {
+    if (!enabled) {
+      return
+    }
+    let cancelled = false
+    const tick = () => {
+      if (cancelled) return
+      runMeasure()
+    }
+    void document.fonts.ready.then(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(tick)
+      })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [allParagraphs, enabled, runMeasure, titleNumbering, editorKind])
+
+  const measureLayer = useMemo(
+    () => (
+      <div
+        ref={measureRootRef}
+        aria-hidden={true}
+        className="use-a4-paragraph-pages__measure-root"
+        style={{
+          position: 'fixed',
+          left: -20000,
+          top: 0,
+          width: A4_DOCUMENT_CONTENT_INNER_WIDTH_PX,
+          visibility: 'hidden',
+          pointerEvents: 'none',
+          zIndex: -1,
+        }}
+      >
+        <FormDocumentPreviewBody
+          paragraphs={allParagraphs}
+          allParagraphs={allParagraphs}
+          titleNumbering={titleNumbering}
+          editorKind={editorKind}
+        />
+      </div>
+    ),
+    [allParagraphs, titleNumbering, editorKind]
+  )
+
+  return { pages, overflowParagraphIds, measureLayer }
+}
