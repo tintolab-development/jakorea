@@ -12,6 +12,12 @@ export type FormParagraphCardActionHandlers = {
 
 export type FormParagraphCardActionsProps = FormParagraphCardActionHandlers & {
   disabled?: boolean
+  /** true면 「단락 추가」만 비활성 (`disabled`와 함께 적용) */
+  addDisabled?: boolean
+  /** true면 「단락 복제」만 비활성 (`disabled`와 함께 적용) — 기본 템플릿 고정 단락 등 */
+  duplicateDisabled?: boolean
+  /** true면 「단락 삭제」만 비활성 (`disabled`와 함께 적용) */
+  deleteDisabled?: boolean
 }
 
 function stopCardClick(e: MouseEvent<HTMLElement>) {
@@ -24,14 +30,20 @@ export function FormParagraphCardActions({
   onDelete,
   onAddItem,
   disabled = false,
+  addDisabled = false,
+  duplicateDisabled = false,
+  deleteDisabled = false,
 }: FormParagraphCardActionsProps = {}) {
+  const addOff = disabled || addDisabled
+  const dupOff = disabled || duplicateDisabled
+  const delOff = disabled || deleteDisabled
   return (
     <>
       {onAddItem ? (
         <CmsButton
           variant="primary"
           type="button"
-          disabled={disabled}
+          disabled={addOff}
           onClick={e => {
             stopCardClick(e)
             onAddItem()
@@ -45,7 +57,7 @@ export function FormParagraphCardActions({
         type="button"
         size="large"
         icon={<FormEditorPlusIcon />}
-        disabled={disabled}
+        disabled={addOff}
         onClick={e => {
           stopCardClick(e)
           onAdd?.()
@@ -58,7 +70,7 @@ export function FormParagraphCardActions({
         type="button"
         size="large"
         icon={<CopyOutlined />}
-        disabled={disabled}
+        disabled={dupOff}
         onClick={e => {
           stopCardClick(e)
           onDuplicate?.()
@@ -71,7 +83,7 @@ export function FormParagraphCardActions({
         type="button"
         size="large"
         icon={<DeleteOutlined />}
-        disabled={disabled}
+        disabled={delOff}
         onClick={e => {
           stopCardClick(e)
           onDelete?.()
@@ -88,7 +100,13 @@ export function FormParagraphCardActionsMinimal({
   onDuplicate,
   onDelete,
   disabled = false,
+  addDisabled = false,
+  duplicateDisabled = false,
+  deleteDisabled = false,
 }: FormParagraphCardActionsProps = {}) {
+  const addOff = disabled || addDisabled
+  const dupOff = disabled || duplicateDisabled
+  const delOff = disabled || deleteDisabled
   return (
     <>
       <CmsButton
@@ -96,7 +114,7 @@ export function FormParagraphCardActionsMinimal({
         type="button"
         size="large"
         icon={<FormEditorPlusIcon />}
-        disabled={disabled}
+        disabled={addOff}
         onClick={e => {
           stopCardClick(e)
           onAdd?.()
@@ -109,7 +127,7 @@ export function FormParagraphCardActionsMinimal({
         type="button"
         size="large"
         icon={<CopyOutlined />}
-        disabled={disabled}
+        disabled={dupOff}
         onClick={e => {
           stopCardClick(e)
           onDuplicate?.()
@@ -122,7 +140,7 @@ export function FormParagraphCardActionsMinimal({
         type="button"
         size="large"
         icon={<DeleteOutlined />}
-        disabled={disabled}
+        disabled={delOff}
         onClick={e => {
           stopCardClick(e)
           onDelete?.()

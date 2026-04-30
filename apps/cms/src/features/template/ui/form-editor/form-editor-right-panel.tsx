@@ -426,6 +426,8 @@ export interface FormEditorRightPanelProps {
   verticalTableBodyRowSelection?: { paragraphId: string; row: number } | null
   /** 테이블 세로형: 행 삭제 후 포커스할 행 인덱스(이전 행) */
   onVerticalTableBodyRowDeleted?: (nextRowIndex: number) => void
+  /** 템플릿 고정 단락 — 우측 커스텀 필드 편집 비활성 */
+  structureLockedParagraphIds?: ReadonlySet<string>
 }
 
 export function FormEditorTitleNumberingField({
@@ -571,8 +573,25 @@ export function FormEditorRightPanel({
   onHorizontalTableBodyRowDeleted,
   verticalTableBodyRowSelection = null,
   onVerticalTableBodyRowDeleted,
+  structureLockedParagraphIds,
 }: FormEditorRightPanelProps) {
   const active = draft.paragraphs.find(p => p.id === activeParagraphId) ?? null
+  const structureLockedActive =
+    activeParagraphId != null && (structureLockedParagraphIds?.has(activeParagraphId) ?? false)
+
+  if (active != null && structureLockedActive) {
+    return (
+      <div className="form-editor-right-panel">
+        {showTitleNumbering ? (
+          <FormEditorTitleNumberingField
+            value={draft.formSettings.titleNumbering}
+            onChange={onTitleNumberingChange}
+          />
+        ) : null}
+      </div>
+    )
+  }
+
   const outline =
     active && active.kind === 'description' && active.variant === 'closing'
       ? `${paragraphKindLabel(active)}_${paragraphVariantLabel(active)}`

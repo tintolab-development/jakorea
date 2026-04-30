@@ -13,6 +13,10 @@ export function dateRangeUsesClockTime(a: Dayjs, b: Dayjs): boolean {
 
 type WritingFormPeriodDatePickerFieldProps = {
   label?: ReactNode
+  /** true면 즉시시작 프리셋 또는 확정 기간을 240×44 듀얼 트리거(~)로 표시 */
+  dualImmediateTriggers?: boolean
+  /** `periodMode === 'immediate'` 이고 확정 범위 없을 때 각 트리거에 표시할 문구 */
+  immediatePresetLabels?: [string, string] | null
   className?: string
   style?: CSSProperties
   width?: number | string
@@ -31,6 +35,8 @@ type WritingFormPeriodDatePickerFieldProps = {
  */
 export function WritingFormPeriodDatePickerField({
   label,
+  dualImmediateTriggers = false,
+  immediatePresetLabels = null,
   className,
   style,
   width = WRITING_FORM_PERIOD_PICKER_WIDTH,
@@ -47,7 +53,9 @@ export function WritingFormPeriodDatePickerField({
       className={className}
       style={style}
       label={label}
-      width={width}
+      width={dualImmediateTriggers ? undefined : width}
+      dualImmediateTriggers={dualImmediateTriggers}
+      immediatePresetLabels={immediatePresetLabels}
       value={anchorDate}
       placeholder={placeholder}
       showPopoverPeriodToggle

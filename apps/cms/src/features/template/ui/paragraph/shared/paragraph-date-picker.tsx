@@ -68,6 +68,10 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
    * 설문 제목형「작성 기간」ON·날짜형 `periodEnabled` 등.
    */
   preferPeriodModeInPopover?: boolean
+  /** 듀얼 트리거(~): 각 240×44 박스, 즉시시작 프리셋 또는 확정 기간 표시 */
+  dualImmediateTriggers?: boolean
+  /** 확정 범위 없을 때 좌·우 트리거에 표시할 프리셋 문구(설문 제목형 `periodMode === 'immediate'`) */
+  immediatePresetLabels?: [string, string] | null
 }
 
 export type ParagraphDatePickerProps =
@@ -93,6 +97,8 @@ interface ParagraphDatePickerSingleInnerProps {
   appliedSurfaceRange?: [Dayjs, Dayjs] | null
   appliedSurfaceWithTime?: boolean
   preferPeriodModeInPopover?: boolean
+  dualImmediateTriggers?: boolean
+  immediatePresetLabels?: [string, string] | null
 }
 
 function ParagraphDatePickerSingleInner({
@@ -107,6 +113,8 @@ function ParagraphDatePickerSingleInner({
   appliedSurfaceRange,
   appliedSurfaceWithTime = false,
   preferPeriodModeInPopover = false,
+  dualImmediateTriggers = false,
+  immediatePresetLabels = null,
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -372,6 +380,7 @@ function ParagraphDatePickerSingleInner({
   }
 
   const widthStyle = toWidthStyle(width)
+  const triggerWidthStyle = dualImmediateTriggers ? undefined : widthStyle
 
   const popover = open
     ? createPortal(
@@ -668,13 +677,17 @@ function ParagraphDatePickerSingleInner({
       )
     : null
 
-  const triggerSurfaceExpanded = surfaceRange != null || surfaceAppliedWithTime
+  const triggerSurfaceExpanded =
+    dualImmediateTriggers ? false : surfaceRange != null || surfaceAppliedWithTime
 
   const triggerClassName = [
     'paragraph-date-picker__trigger',
-    triggerSurfaceExpanded ? 'paragraph-date-picker__trigger--range-surface' : '',
-    surfaceRange && surfaceAppliedWithTime ? 'paragraph-date-picker__trigger--range-datetime' : '',
-    surfaceAppliedWithTime && !surfaceRange
+    dualImmediateTriggers ? 'paragraph-date-picker__trigger--dual-shell' : '',
+    !dualImmediateTriggers && triggerSurfaceExpanded ? 'paragraph-date-picker__trigger--range-surface' : '',
+    !dualImmediateTriggers && surfaceRange && surfaceAppliedWithTime
+      ? 'paragraph-date-picker__trigger--range-datetime'
+      : '',
+    !dualImmediateTriggers && surfaceAppliedWithTime && !surfaceRange
       ? 'paragraph-date-picker__trigger--single-datetime'
       : '',
     disabled ? 'paragraph-date-picker__trigger--disabled' : '',
@@ -689,19 +702,27 @@ function ParagraphDatePickerSingleInner({
         role="button"
         tabIndex={disabled ? -1 : 0}
         className={triggerClassName}
-        style={{ ...widthStyle }}
+        style={{ ...triggerWidthStyle }}
         aria-disabled={disabled}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         aria-label={
-          surfaceRange && surfaceAppliedWithTime
-            ? `시작 ${formatAppDatepickerDisplay(surfaceRange[0])} ${formatTriggerClock(surfaceRange[0])}, 종료 ${formatAppDatepickerDisplay(surfaceRange[1])} ${formatTriggerClock(surfaceRange[1])}`
-            : surfaceRange
-              ? `시작 ${formatAppDatepickerDisplay(surfaceRange[0])}, 종료 ${formatAppDatepickerDisplay(surfaceRange[1])}`
-              : surfaceAppliedWithTime
-                ? `${formatAppDatepickerDisplay(effectiveValue)} ${formatTriggerClock(effectiveValue)}`
-                : undefined
+          dualImmediateTriggers
+            ? surfaceRange && surfaceAppliedWithTime
+              ? `시작 ${formatAppDatepickerDisplay(surfaceRange[0])} ${formatTriggerClock(surfaceRange[0])}, 종료 ${formatAppDatepickerDisplay(surfaceRange[1])} ${formatTriggerClock(surfaceRange[1])}`
+              : surfaceRange
+                ? `시작 ${formatAppDatepickerDisplay(surfaceRange[0])}, 종료 ${formatAppDatepickerDisplay(surfaceRange[1])}`
+                : immediatePresetLabels
+                  ? `시작 ${immediatePresetLabels[0]}, 종료 ${immediatePresetLabels[1]}`
+                  : '작성 기간 선택'
+            : surfaceRange && surfaceAppliedWithTime
+              ? `시작 ${formatAppDatepickerDisplay(surfaceRange[0])} ${formatTriggerClock(surfaceRange[0])}, 종료 ${formatAppDatepickerDisplay(surfaceRange[1])} ${formatTriggerClock(surfaceRange[1])}`
+              : surfaceRange
+                ? `시작 ${formatAppDatepickerDisplay(surfaceRange[0])}, 종료 ${formatAppDatepickerDisplay(surfaceRange[1])}`
+                : surfaceAppliedWithTime
+                  ? `${formatAppDatepickerDisplay(effectiveValue)} ${formatTriggerClock(effectiveValue)}`
+                  : undefined
         }
         onClick={() => {
           if (disabled) return
@@ -715,10 +736,80 @@ function ParagraphDatePickerSingleInner({
           }
         }}
       >
-        {!(surfaceRange && surfaceAppliedWithTime) ? (
-          <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
-        ) : null}
-        {surfaceRange && surfaceAppliedWithTime ? (
+        {dualImmediateTriggers ? (
+          <span className="paragraph-date-picker__trigger-dual-row">
+            {surfaceRange && surfaceAppliedWithTime ? (
+              <>
+                <span className="paragraph-date-picker__trigger-dual-cell">
+                  <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+                  <span className="paragraph-date-picker__trigger-dual-text">
+                    {`${formatAppDatepickerDisplay(surfaceRange[0])} ${formatTriggerClock(surfaceRange[0])}`}
+                  </span>
+                </span>
+                <span className="paragraph-date-picker__trigger-dual-wave" aria-hidden>
+                  ~
+                </span>
+                <span className="paragraph-date-picker__trigger-dual-cell">
+                  <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+                  <span className="paragraph-date-picker__trigger-dual-text">
+                    {`${formatAppDatepickerDisplay(surfaceRange[1])} ${formatTriggerClock(surfaceRange[1])}`}
+                  </span>
+                </span>
+              </>
+            ) : surfaceRange ? (
+              <>
+                <span className="paragraph-date-picker__trigger-dual-cell">
+                  <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+                  <span className="paragraph-date-picker__trigger-dual-text">
+                    {formatAppDatepickerDisplay(surfaceRange[0])}
+                  </span>
+                </span>
+                <span className="paragraph-date-picker__trigger-dual-wave" aria-hidden>
+                  ~
+                </span>
+                <span className="paragraph-date-picker__trigger-dual-cell">
+                  <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+                  <span className="paragraph-date-picker__trigger-dual-text">
+                    {formatAppDatepickerDisplay(surfaceRange[1])}
+                  </span>
+                </span>
+              </>
+            ) : immediatePresetLabels ? (
+              <>
+                <span className="paragraph-date-picker__trigger-dual-cell">
+                  <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+                  <span className="paragraph-date-picker__trigger-dual-text">{immediatePresetLabels[0]}</span>
+                </span>
+                <span className="paragraph-date-picker__trigger-dual-wave" aria-hidden>
+                  ~
+                </span>
+                <span className="paragraph-date-picker__trigger-dual-cell">
+                  <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+                  <span className="paragraph-date-picker__trigger-dual-text">{immediatePresetLabels[1]}</span>
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="paragraph-date-picker__trigger-dual-cell">
+                  <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+                  <span className="paragraph-date-picker__trigger-dual-text">{placeholder ?? '날짜 선택'}</span>
+                </span>
+                <span className="paragraph-date-picker__trigger-dual-wave" aria-hidden>
+                  ~
+                </span>
+                <span className="paragraph-date-picker__trigger-dual-cell">
+                  <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+                  <span className="paragraph-date-picker__trigger-dual-text">{placeholder ?? '날짜 선택'}</span>
+                </span>
+              </>
+            )}
+          </span>
+        ) : (
+          <>
+            {!(surfaceRange && surfaceAppliedWithTime) ? (
+              <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+            ) : null}
+            {surfaceRange && surfaceAppliedWithTime ? (
           <div className="paragraph-date-picker__trigger-range-datetime">
             <div className="paragraph-date-picker__trigger-datetime-row">
               <CmsInput
@@ -812,6 +903,8 @@ function ParagraphDatePickerSingleInner({
             {displayText || (placeholder ?? '')}
           </span>
         )}
+          </>
+        )}
       </div>
       {popover}
     </>
@@ -819,8 +912,15 @@ function ParagraphDatePickerSingleInner({
 }
 
 export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
-  const { label, className, style, width = '500px', disabled } = props
+  const { label, className, style, disabled } = props
   const rootRef = useRef<HTMLDivElement>(null)
+
+  const width =
+    props.mode === 'range'
+      ? props.width ?? '500px'
+      : props.dualImmediateTriggers
+        ? props.width
+        : props.width ?? '500px'
 
   return (
     <div
@@ -850,6 +950,8 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           appliedSurfaceRange={props.appliedSurfaceRange}
           appliedSurfaceWithTime={props.appliedSurfaceWithTime}
           preferPeriodModeInPopover={props.preferPeriodModeInPopover ?? false}
+          dualImmediateTriggers={props.dualImmediateTriggers ?? false}
+          immediatePresetLabels={props.immediatePresetLabels}
         />
       )}
     </div>
