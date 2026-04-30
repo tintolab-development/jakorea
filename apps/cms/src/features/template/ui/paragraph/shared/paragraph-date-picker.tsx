@@ -1,5 +1,9 @@
 import type { CSSProperties, ReactNode, RefObject } from 'react'
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
+
+function cn(...parts: Array<string | false | null | undefined>): string {
+  return parts.filter(Boolean).join(' ')
+}
 import { createPortal } from 'react-dom'
 import { CalendarOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
@@ -25,6 +29,56 @@ function dayjsTimeParts(d: Dayjs): { h: string; m: string; mer: 'AM' | 'PM' } {
 
 function formatTriggerClock(d: Dayjs): string {
   return d.format('HH:mm')
+}
+
+/** 트리거 한 줄 표시 (이미지 시안: 동일일 일정은 날짜 한 번 + `시작 ~ 종료시`) */
+function formatParagraphDatePickerTriggerDisplay(
+  value: Dayjs | null,
+  surfaceRange: [Dayjs, Dayjs] | null,
+  surfaceAppliedWithTime: boolean
+): string | null {
+  const empty = value == null && surfaceRange == null && !surfaceAppliedWithTime
+  if (empty) return null
+
+  const eff = value ?? dayjs()
+
+  if (surfaceRange != null && surfaceAppliedWithTime) {
+    const [a, b] = surfaceRange
+    const da = formatAppDatepickerDisplay(a)
+    const db = formatAppDatepickerDisplay(b)
+    const ta = formatTriggerClock(a)
+    const tb = formatTriggerClock(b)
+    if (a.isSame(b, 'day')) {
+      return `${da} ${ta} ~ ${tb}`
+    }
+    return `${da} ${ta} ~ ${db} ${tb}`
+  }
+  if (surfaceRange != null) {
+    return `${formatAppDatepickerDisplay(surfaceRange[0])} ~ ${formatAppDatepickerDisplay(surfaceRange[1])}`
+  }
+  if (surfaceAppliedWithTime) {
+    return `${formatAppDatepickerDisplay(eff)} ${formatTriggerClock(eff)}`
+  }
+  return formatAppDatepickerDisplay(eff)
+}
+
+export type ParagraphDatePresetMode = 'date' | 'period' | 'schedule'
+
+const PARAGRAPH_DATE_PRESET_PLACEHOLDERS: Record<ParagraphDatePresetMode, string> = {
+  date: '날짜를 선택하세요',
+  period: '기간을 선택하세요',
+  schedule: '일정을 선택하세요',
+}
+
+export function resolveParagraphDatePresetMode(props: {
+  presetMode?: ParagraphDatePresetMode
+  showPopoverPeriodToggle?: boolean
+  preferPeriodModeInPopover?: boolean
+}): ParagraphDatePresetMode {
+  if (props.presetMode != null) return props.presetMode
+  if (props.showPopoverPeriodToggle === false) return 'date'
+  if (props.preferPeriodModeInPopover) return 'period'
+  return 'schedule'
 }
 
 /** `CalendarMini` 일정 점 표시 없음 — 빈 Set 재사용 */
@@ -54,7 +108,19 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
   placeholder?: string
   /** 기간 ON 후 [설정] 시 `[시작, 종료]`(정렬됨) — 선택 */
   onRangeChange?: (range: [Dayjs, Dayjs]) => void
-  /** false면 모달 하단에서 기간 토글 숨김(기본 true) */
+  /**
+   * 날짜 / 기간 / 일정 — `customizable`이 false일 때 기간 UI 고정·placeholder 기본값에 사용.
+   * 미지정 시 `showPopoverPeriodToggle`·`preferPeriodModeInPopover`로 추론.
+   */
+  presetMode?: ParagraphDatePresetMode
+  /**
+   * true: 기간·시간 토글 모두 표시, 모달 열 때 둘 다 off에서 시작(저장된 surface 복원 시 제외).
+   * false: `presetMode`에 따라 기간 토글 노출 여부가 달라짐(날짜·기간: 시간 토글만 / 일정: 둘 다).
+   */
+  customizable?: boolean
+  /**
+   * @deprecated `presetMode`로 대체 권장. false면 `presetMode: 'date'`와 동일한 토글·캘린더 동작.
+   */
   showPopoverPeriodToggle?: boolean
   /**
    * 부모에 저장된 기간 — 트리거 표면·모달 재오픈 시 반영(설문 제목형 `startAt`/`endAt` 등).
@@ -64,8 +130,8 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
   /** `appliedSurfaceRange`가 시간 포함으로 확정된 경우 */
   appliedSurfaceWithTime?: boolean
   /**
-   * true면 모달을 열 때 기간 선택(시작/종료)을 기본 ON(단일 날짜 선택이 아님).
-   * 설문 제목형「작성 기간」ON·날짜형 `periodEnabled` 등.
+   * `presetMode: 'schedule'`이고 `customizable`이 false일 때, 모달을 열 때 기간 선택 UI를 기본 ON으로 할지.
+   * `presetMode: 'period'`일 때는 항상 기간 ON.
    */
   preferPeriodModeInPopover?: boolean
 }
@@ -86,7 +152,8 @@ interface ParagraphDatePickerSingleInnerProps {
   value: Dayjs | null
   onChange: (next: Dayjs | null) => void
   onRangeChange?: (range: [Dayjs, Dayjs]) => void
-  showPopoverPeriodToggle: boolean
+  presetMode: ParagraphDatePresetMode
+  customizable: boolean
   placeholder?: string
   width?: number | string
   disabled?: boolean
@@ -100,7 +167,8 @@ function ParagraphDatePickerSingleInner({
   value,
   onChange,
   onRangeChange,
-  showPopoverPeriodToggle,
+  presetMode,
+  customizable,
   placeholder,
   width,
   disabled,
@@ -138,6 +206,15 @@ function ParagraphDatePickerSingleInner({
   const [endMinute, setEndMinute] = useState('0')
   const [endMer, setEndMer] = useState<'AM' | 'PM'>('AM')
 
+  const showPeriodToggleInFooter = customizable || presetMode === 'schedule'
+
+  const isRangeCalendarMode = useMemo(() => {
+    if (customizable) return periodOn
+    if (presetMode === 'date') return false
+    if (presetMode === 'period') return true
+    return periodOn
+  }, [customizable, presetMode, periodOn])
+
   /** 기본값: 오늘 — 부모 값이 null이면 동기화 */
   useEffect(() => {
     if (value == null) {
@@ -145,16 +222,24 @@ function ParagraphDatePickerSingleInner({
     }
   }, [value, onChange])
 
+  const hasExternalSurfaceControl = appliedSurfaceRange !== undefined
+
   const appliedSurfaceSyncKey = useMemo(() => {
+    if (!hasExternalSurfaceControl) return 'uncontrolled'
     if (appliedSurfaceRange == null) return 'none'
     const [a, b] = appliedSurfaceRange
     if (!a?.isValid() || !b?.isValid()) return 'none'
     return `${a.valueOf()}_${b.valueOf()}_${appliedSurfaceWithTime ? 't' : ''}`
-  }, [appliedSurfaceRange, appliedSurfaceWithTime])
+  }, [hasExternalSurfaceControl, appliedSurfaceRange, appliedSurfaceWithTime])
 
   useEffect(() => {
     if (open) return
-    if (appliedSurfaceRange != null && appliedSurfaceRange[0]?.isValid() && appliedSurfaceRange[1]?.isValid()) {
+    if (!hasExternalSurfaceControl) return
+    if (
+      appliedSurfaceRange != null &&
+      appliedSurfaceRange[0]?.isValid() &&
+      appliedSurfaceRange[1]?.isValid()
+    ) {
       setSurfaceRange([appliedSurfaceRange[0], appliedSurfaceRange[1]])
       const withTime = Boolean(appliedSurfaceWithTime)
       setSurfaceAppliedWithTime(withTime)
@@ -176,10 +261,22 @@ function ParagraphDatePickerSingleInner({
       setSurfaceAppliedWithTime(false)
       setTimeOn(false)
     }
-  }, [open, appliedSurfaceSyncKey, appliedSurfaceRange, appliedSurfaceWithTime])
+  }, [
+    open,
+    hasExternalSurfaceControl,
+    appliedSurfaceSyncKey,
+    appliedSurfaceRange,
+    appliedSurfaceWithTime,
+  ])
 
-  const effectiveValue = value ?? dayjs()
-  const displayText = formatAppDatepickerDisplay(effectiveValue)
+  const effectivePlaceholder = placeholder ?? PARAGRAPH_DATE_PRESET_PLACEHOLDERS[presetMode]
+
+  const triggerDisplayText = formatParagraphDatePickerTriggerDisplay(
+    value,
+    surfaceRange,
+    surfaceAppliedWithTime
+  )
+  const triggerIsEmpty = triggerDisplayText == null
 
   const updatePopoverPosition = useCallback(() => {
     const trigger = triggerRef.current
@@ -188,7 +285,7 @@ function ParagraphDatePickerSingleInner({
 
     const rect = trigger.getBoundingClientRect()
     const popH = pop.offsetHeight || 400
-    const popW = pop.offsetWidth || 600
+    const popW = pop.offsetWidth || 500
     const vw = window.innerWidth
     const vh = window.innerHeight
     const scrollX = window.scrollX
@@ -228,7 +325,7 @@ function ParagraphDatePickerSingleInner({
       window.removeEventListener('resize', onWin)
       window.removeEventListener('scroll', onWin, true)
     }
-  }, [open, periodOn, timeOn, schedulePosition])
+  }, [open, isRangeCalendarMode, timeOn, schedulePosition])
 
   useEffect(() => {
     if (!open) return
@@ -253,15 +350,24 @@ function ParagraphDatePickerSingleInner({
 
   const handleOpen = () => {
     if (disabled) return
-    if (!showPopoverPeriodToggle) {
+
+    const allowSurfaceRestore = presetMode === 'period' || presetMode === 'schedule' || customizable
+    const useSurface = !!(surfaceRange && allowSurfaceRestore)
+
+    if (presetMode === 'date' && !customizable) {
       setPeriodOn(false)
       setSurfaceRange(null)
     }
+
+    if (customizable && !useSurface) {
+      setPeriodOn(false)
+      setTimeOn(false)
+    }
+
     const d = value ?? dayjs()
     setDraft(d)
     setCalendarMonth(d.startOf('month'))
 
-    const useSurface = !!(surfaceRange && showPopoverPeriodToggle)
     if (useSurface) {
       setPeriodOn(true)
       setRangeStart(surfaceRange![0])
@@ -277,12 +383,6 @@ function ParagraphDatePickerSingleInner({
       setEndMer(tb.mer)
       setTimeOn(surfaceAppliedWithTime)
     } else {
-      setTimeOn(false)
-      if (preferPeriodModeInPopover && showPopoverPeriodToggle) {
-        setPeriodOn(true)
-      } else {
-        setPeriodOn(false)
-      }
       setRangeStart(d)
       setRangeEnd(d.add(1, 'day'))
       setRangeFocus('start')
@@ -294,6 +394,16 @@ function ParagraphDatePickerSingleInner({
       setEndHour(tb.h)
       setEndMinute(tb.m)
       setEndMer(tb.mer)
+
+      if (customizable) {
+        /* period/time already false above */
+      } else if (presetMode === 'period') {
+        setPeriodOn(true)
+        setTimeOn(false)
+      } else {
+        setPeriodOn(presetMode === 'schedule' && preferPeriodModeInPopover)
+        setTimeOn(false)
+      }
     }
 
     const tSingle = dayjsTimeParts(d)
@@ -306,23 +416,13 @@ function ParagraphDatePickerSingleInner({
   }
 
   const handleApply = () => {
-    if (periodOn && showPopoverPeriodToggle) {
+    if (isRangeCalendarMode) {
       const sDay = rangeStart.isBefore(rangeEnd, 'day') ? rangeStart : rangeEnd
       const eDay = rangeStart.isBefore(rangeEnd, 'day') ? rangeEnd : rangeStart
 
       if (timeOn) {
-        const start = buildTime(
-          sDay,
-          parseNum(startHour, 12),
-          parseNum(startMinute, 0),
-          startMer
-        )
-        const end = buildTime(
-          eDay,
-          parseNum(endHour, 12),
-          parseNum(endMinute, 0),
-          endMer
-        )
+        const start = buildTime(sDay, parseNum(startHour, 12), parseNum(startMinute, 0), startMer)
+        const end = buildTime(eDay, parseNum(endHour, 12), parseNum(endMinute, 0), endMer)
         if (!end.isAfter(start)) {
           setInvalidTimeRange(true)
           return
@@ -341,9 +441,7 @@ function ParagraphDatePickerSingleInner({
         setSurfaceAppliedWithTime(false)
       }
     } else if (timeOn) {
-      onChange(
-        buildTime(draft, parseNum(singleHour, 12), parseNum(singleMinute, 0), singleMer)
-      )
+      onChange(buildTime(draft, parseNum(singleHour, 12), parseNum(singleMinute, 0), singleMer))
       setSurfaceRange(null)
       setSurfaceAppliedWithTime(true)
     } else {
@@ -356,7 +454,7 @@ function ParagraphDatePickerSingleInner({
 
   const handleCalendarSelect = (next: Dayjs) => {
     setInvalidTimeRange(false)
-    if (periodOn && showPopoverPeriodToggle) {
+    if (isRangeCalendarMode) {
       if (rangeFocus === 'start') {
         setRangeStart(next)
         if (rangeEnd.isBefore(next, 'day')) setRangeEnd(next)
@@ -372,6 +470,7 @@ function ParagraphDatePickerSingleInner({
   }
 
   const widthStyle = toWidthStyle(width)
+  const triggerWidthStyle = customizable && surfaceRange != null ? { width: '500px' } : widthStyle
 
   const popover = open
     ? createPortal(
@@ -397,25 +496,19 @@ function ParagraphDatePickerSingleInner({
                   <CalendarMini
                     currentMonth={calendarMonth}
                     selectedDate={
-                      periodOn && showPopoverPeriodToggle
-                        ? rangeFocus === 'start'
-                          ? rangeStart
-                          : rangeEnd
-                        : draft
+                      isRangeCalendarMode ? (rangeFocus === 'start' ? rangeStart : rangeEnd) : draft
                     }
                     onMonthChange={setCalendarMonth}
                     onSelectDate={handleCalendarSelect}
                     programDates={PARAGRAPH_DATE_PICKER_EMPTY_SCHEDULES}
                     rangeSelection={
-                      periodOn && showPopoverPeriodToggle
-                        ? { start: rangeStart, end: rangeEnd }
-                        : null
+                      isRangeCalendarMode ? { start: rangeStart, end: rangeEnd } : null
                     }
                   />
                 </div>
               </div>
               <div className="paragraph-date-picker__popover-side">
-                {periodOn && showPopoverPeriodToggle ? (
+                {isRangeCalendarMode ? (
                   <div className="paragraph-date-picker__popover-fields">
                     <div
                       className="paragraph-date-picker__popover-field"
@@ -497,7 +590,9 @@ function ParagraphDatePickerSingleInner({
                         <CmsInput
                           className={[
                             'paragraph-date-picker__popover-input',
-                            rangeFocus === 'end' ? 'paragraph-date-picker__popover-input--active' : '',
+                            rangeFocus === 'end'
+                              ? 'paragraph-date-picker__popover-input--active'
+                              : '',
                           ]
                             .filter(Boolean)
                             .join(' ')}
@@ -591,7 +686,7 @@ function ParagraphDatePickerSingleInner({
                 ) : null}
                 <div className="paragraph-date-picker__popover-footer">
                   <div className="paragraph-date-picker__popover-toggles">
-                    {showPopoverPeriodToggle ? (
+                    {showPeriodToggleInFooter ? (
                       <CmsToggle
                         label="기간"
                         checked={periodOn}
@@ -623,7 +718,7 @@ function ParagraphDatePickerSingleInner({
                       onChange={next => {
                         setTimeOn(next)
                         setInvalidTimeRange(false)
-                        if (next && periodOn && showPopoverPeriodToggle) {
+                        if (next && isRangeCalendarMode) {
                           const t1 = dayjsTimeParts(rangeStart)
                           setStartHour(t1.h)
                           setStartMinute(t1.m)
@@ -668,19 +763,7 @@ function ParagraphDatePickerSingleInner({
       )
     : null
 
-  const triggerSurfaceExpanded = surfaceRange != null || surfaceAppliedWithTime
-
-  const triggerClassName = [
-    'paragraph-date-picker__trigger',
-    triggerSurfaceExpanded ? 'paragraph-date-picker__trigger--range-surface' : '',
-    surfaceRange && surfaceAppliedWithTime ? 'paragraph-date-picker__trigger--range-datetime' : '',
-    surfaceAppliedWithTime && !surfaceRange
-      ? 'paragraph-date-picker__trigger--single-datetime'
-      : '',
-    disabled ? 'paragraph-date-picker__trigger--disabled' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
+  const triggerAriaLabel = triggerDisplayText ?? effectivePlaceholder
 
   return (
     <>
@@ -688,21 +771,16 @@ function ParagraphDatePickerSingleInner({
         ref={triggerRef}
         role="button"
         tabIndex={disabled ? -1 : 0}
-        className={triggerClassName}
-        style={{ ...widthStyle }}
+        className={cn(
+          'paragraph-date-picker__trigger',
+          disabled && 'paragraph-date-picker__trigger--disabled'
+        )}
+        style={{ ...triggerWidthStyle }}
         aria-disabled={disabled}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
-        aria-label={
-          surfaceRange && surfaceAppliedWithTime
-            ? `시작 ${formatAppDatepickerDisplay(surfaceRange[0])} ${formatTriggerClock(surfaceRange[0])}, 종료 ${formatAppDatepickerDisplay(surfaceRange[1])} ${formatTriggerClock(surfaceRange[1])}`
-            : surfaceRange
-              ? `시작 ${formatAppDatepickerDisplay(surfaceRange[0])}, 종료 ${formatAppDatepickerDisplay(surfaceRange[1])}`
-              : surfaceAppliedWithTime
-                ? `${formatAppDatepickerDisplay(effectiveValue)} ${formatTriggerClock(effectiveValue)}`
-                : undefined
-        }
+        aria-label={triggerAriaLabel}
         onClick={() => {
           if (disabled) return
           handleOpen()
@@ -715,103 +793,15 @@ function ParagraphDatePickerSingleInner({
           }
         }}
       >
-        {!(surfaceRange && surfaceAppliedWithTime) ? (
-          <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
-        ) : null}
-        {surfaceRange && surfaceAppliedWithTime ? (
-          <div className="paragraph-date-picker__trigger-range-datetime">
-            <div className="paragraph-date-picker__trigger-datetime-row">
-              <CmsInput
-                className="paragraph-date-picker__trigger-range-input paragraph-date-picker__trigger-input--date"
-                inputSize="large"
-                readOnly
-                tabIndex={-1}
-                value={formatAppDatepickerDisplay(surfaceRange[0])}
-                aria-label="시작일"
-                disabled={disabled}
-              />
-              <CmsInput
-                className="paragraph-date-picker__trigger-range-input paragraph-date-picker__trigger-input--time"
-                inputSize="large"
-                readOnly
-                tabIndex={-1}
-                value={formatTriggerClock(surfaceRange[0])}
-                aria-label="시작 시간"
-                disabled={disabled}
-              />
-              <span className="paragraph-date-picker__trigger-range-wave-inline" aria-hidden>
-                ~
-              </span>
-            </div>
-            <div className="paragraph-date-picker__trigger-datetime-row">
-              <CmsInput
-                className="paragraph-date-picker__trigger-range-input paragraph-date-picker__trigger-input--date"
-                inputSize="large"
-                readOnly
-                tabIndex={-1}
-                value={formatAppDatepickerDisplay(surfaceRange[1])}
-                aria-label="종료일"
-                disabled={disabled}
-              />
-              <CmsInput
-                className="paragraph-date-picker__trigger-range-input paragraph-date-picker__trigger-input--time"
-                inputSize="large"
-                readOnly
-                tabIndex={-1}
-                value={formatTriggerClock(surfaceRange[1])}
-                aria-label="종료 시간"
-                disabled={disabled}
-              />
-            </div>
-          </div>
-        ) : surfaceRange ? (
-          <span className="paragraph-date-picker__trigger-range-pair">
-            <CmsInput
-              className="paragraph-date-picker__trigger-range-input paragraph-date-picker__trigger-input--date"
-              inputSize="large"
-              readOnly
-              tabIndex={-1}
-              value={formatAppDatepickerDisplay(surfaceRange[0])}
-              aria-label="시작일"
-              disabled={disabled}
-            />
-            <span className="paragraph-date-picker__trigger-range-wave">~</span>
-            <CmsInput
-              className="paragraph-date-picker__trigger-range-input paragraph-date-picker__trigger-input--date"
-              inputSize="large"
-              readOnly
-              tabIndex={-1}
-              value={formatAppDatepickerDisplay(surfaceRange[1])}
-              aria-label="종료일"
-              disabled={disabled}
-            />
-          </span>
-        ) : surfaceAppliedWithTime ? (
-          <span className="paragraph-date-picker__trigger-datetime-row">
-            <CmsInput
-              className="paragraph-date-picker__trigger-range-input paragraph-date-picker__trigger-input--date"
-              inputSize="large"
-              readOnly
-              tabIndex={-1}
-              value={formatAppDatepickerDisplay(effectiveValue)}
-              aria-label="선택한 날짜"
-              disabled={disabled}
-            />
-            <CmsInput
-              className="paragraph-date-picker__trigger-range-input paragraph-date-picker__trigger-input--time"
-              inputSize="large"
-              readOnly
-              tabIndex={-1}
-              value={formatTriggerClock(effectiveValue)}
-              aria-label="선택한 시간"
-              disabled={disabled}
-            />
-          </span>
-        ) : (
-          <span className="paragraph-date-picker__trigger-text">
-            {displayText || (placeholder ?? '')}
-          </span>
-        )}
+        <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+        <span
+          className={cn(
+            'paragraph-date-picker__trigger-text',
+            triggerIsEmpty && 'paragraph-date-picker__trigger-text--placeholder'
+          )}
+        >
+          {triggerIsEmpty ? effectivePlaceholder : triggerDisplayText}
+        </span>
       </div>
       {popover}
     </>
@@ -819,8 +809,19 @@ function ParagraphDatePickerSingleInner({
 }
 
 export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
-  const { label, className, style, width = '500px', disabled } = props
+  const { label, className, style, disabled } = props
   const rootRef = useRef<HTMLDivElement>(null)
+
+  const singlePresetMode =
+    props.mode === 'single'
+      ? resolveParagraphDatePresetMode({
+          presetMode: props.presetMode,
+          showPopoverPeriodToggle: props.showPopoverPeriodToggle,
+          preferPeriodModeInPopover: props.preferPeriodModeInPopover,
+        })
+      : 'date'
+  const singleCustomizable = props.mode === 'single' ? Boolean(props.customizable) : false
+  const resolvedWidth = props.width ?? '500px'
 
   return (
     <div
@@ -831,7 +832,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
       {label != null ? <span className="fs-16 nowrap">{label}</span> : null}
       {props.mode === 'range' ? (
         <CmsDateRangePicker
-          width={width}
+          width={resolvedWidth}
           value={props.value}
           placeholder={props.placeholder}
           disabled={disabled}
@@ -843,9 +844,10 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           value={props.value}
           onChange={props.onChange}
           onRangeChange={props.onRangeChange}
-          showPopoverPeriodToggle={props.showPopoverPeriodToggle ?? true}
+          presetMode={singlePresetMode}
+          customizable={singleCustomizable}
           placeholder={props.placeholder}
-          width={width}
+          width={resolvedWidth}
           disabled={disabled}
           appliedSurfaceRange={props.appliedSurfaceRange}
           appliedSurfaceWithTime={props.appliedSurfaceWithTime}

@@ -39,18 +39,18 @@ export function WritingFormPeriodDatePickerField({
   appliedSurfaceWithTime = false,
   onCommitRange,
   onCommitSingleDay,
-  placeholder = '날짜 선택',
+  placeholder,
 }: WritingFormPeriodDatePickerFieldProps) {
   return (
     <ParagraphDatePicker
       mode="single"
+      presetMode="period"
       className={className}
       style={style}
       label={label}
       width={width}
       value={anchorDate}
       placeholder={placeholder}
-      showPopoverPeriodToggle
       preferPeriodModeInPopover
       appliedSurfaceRange={appliedSurfaceRange}
       appliedSurfaceWithTime={appliedSurfaceWithTime}
