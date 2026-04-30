@@ -67,6 +67,15 @@
   color: var(--main-BK, #3d3d3d);
 }
 
+.paragraph-date-picker__trigger-text.paragraph-date-picker__trigger-text--placeholder {
+  color: rgba(61, 61, 61, 0.45);
+  font-weight: 400;
+}
+
+.paragraph-date-picker__trigger--disabled .paragraph-date-picker__trigger-text--placeholder {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+}
+
 /* 트리거: 기간 확정 후 CmsInput ~ CmsInput (중첩 포커스 방지: 바깥은 div role=button) */
 .paragraph-date-picker__trigger--range-surface {
   align-items: center;

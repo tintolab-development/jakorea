@@ -29,6 +29,7 @@ import type { PaymentStatementCalculationLinesViewModel } from '@/features/templ
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
+import type { ProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/program-registration-form/paragraph-body'
 
 export type FormUpdateParagraph = (
   id: string,
@@ -65,6 +66,8 @@ export type RenderFormParagraphBodyOptions = {
   paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
   /** 지급조서 A4 문서 렌더링 시 disabled 입력 UI를 정적 텍스트로 전환 */
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
+  /** 일반 프로그램 등록폼 전용 단락 본문 상태 */
+  programRegistration?: ProgramRegistrationParagraphBodyOptions
 }
 
 export function renderFormParagraphBody(
@@ -138,6 +141,7 @@ export function renderFormParagraphBody(
           lectureFeeCalculationValues={options?.lectureFeeCalculationValues}
           paymentStatementCalculationLines={options?.paymentStatementCalculationLines}
           paymentStatementDisplayMode={options?.paymentStatementDisplayMode}
+          programRegistration={options?.programRegistration}
         />
       )
     }

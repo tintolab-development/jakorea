@@ -33,12 +33,6 @@ export function TemplateTable({ rows, onPreview }: TemplateTableProps) {
   )
 
   return (
-    <Table
-      className="cms-data-table"
-      rowKey="key"
-      columns={columns}
-      dataSource={rows}
-      pagination={false}
-    />
+    <Table className="cms-data-table" rowKey="key" columns={columns} dataSource={rows} pagination={false} />
   )
 }

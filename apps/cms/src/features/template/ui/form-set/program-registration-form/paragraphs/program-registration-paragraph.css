@@ -1,0 +1,13 @@
+.program-registration-paragraph .detail-info-form__body {
+  gap: 0;
+}
+
+.program-registration-paragraph .detail-info-form__field {
+  min-height: 60px;
+}
+
+.program-registration-paragraph .detail-info-form__field-label,
+.program-registration-paragraph .detail-info-form__field-content {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}

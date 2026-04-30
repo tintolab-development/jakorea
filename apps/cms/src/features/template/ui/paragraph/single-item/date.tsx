@@ -72,9 +72,10 @@ export function DateField({
       {!periodEnabled ? (
         <ParagraphDatePicker
           mode="single"
+          presetMode="date"
+          customizable
           value={singleDate}
           onChange={setSingleDate}
-          placeholder="날짜 선택"
           width={PICKER_WIDTH}
           disabled={!isBodyInteractive}
         />
@@ -82,10 +83,10 @@ export function DateField({
         <ParagraphDatePicker
           className="date-field-paragraph-body__range-wrap"
           mode="single"
+          presetMode="period"
+          customizable
           value={anchorDate}
-          placeholder="날짜 선택"
           width={PICKER_WIDTH * 2 + 20}
-          showPopoverPeriodToggle
           preferPeriodModeInPopover
           appliedSurfaceRange={appliedSurfaceRange}
           appliedSurfaceWithTime={appliedSurfaceWithTime}

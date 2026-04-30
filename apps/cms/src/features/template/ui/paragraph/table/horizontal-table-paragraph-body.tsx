@@ -25,6 +25,10 @@ import type { PaymentStatementBasicInfoAutofillValues } from '@/features/templat
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
+import {
+  renderProgramRegistrationParagraphBody,
+  type ProgramRegistrationParagraphBodyOptions,
+} from '@/features/template/ui/form-set/program-registration-form/paragraph-body'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -368,6 +372,7 @@ export function HorizontalTableParagraphBody({
   lectureFeeCalculationValues,
   paymentStatementCalculationLines,
   paymentStatementDisplayMode,
+  programRegistration,
 }: {
   paragraph: HorizontalTableParagraph
   onChange: (next: HorizontalTableParagraph) => void
@@ -379,8 +384,12 @@ export function HorizontalTableParagraphBody({
   lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
   paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
+  programRegistration?: ProgramRegistrationParagraphBodyOptions
 }) {
   const p = useMemo(() => normalizeHorizontalTableParagraph(paragraph), [paragraph])
+
+  const programRegistrationBody = renderProgramRegistrationParagraphBody(p, programRegistration)
+  if (programRegistrationBody != null) return programRegistrationBody
 
   const paymentStatementBody = renderPaymentStatementIssuanceParagraphBody({
     paragraph: p,

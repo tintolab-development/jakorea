@@ -220,6 +220,15 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
   margin-bottom: 52px;
 }
 
+.detail-info-form--text {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+}
+
 .detail-info-form-inputs-wrapper {
   display: flex;
   flex-direction: row;
@@ -260,6 +269,9 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
 }
 .fs-16 {
   font-size: 16px;
+}
+.mr-6 {
+  margin-right: 6px;
 }
 
 .calendar-layout {

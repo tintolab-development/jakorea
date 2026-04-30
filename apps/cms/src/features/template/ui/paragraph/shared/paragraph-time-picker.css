@@ -50,58 +50,10 @@
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
 }
 
-.paragraph-time-picker__trigger:disabled .paragraph-time-picker__trigger-range-wave {
-  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
-}
-
-/* 종료 시간 구간 확정 후 — 바깥 테두리는 제거하고 `CmsInput` 두 칸 + `~` (`paragraph-date-picker` 트리거와 동일 패턴) */
-.cms-datepicker.paragraph-time-picker--range-surface.cms-datepicker--large {
-  min-width: 260px;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-  height: auto;
-  min-height: 44px;
-}
-
-.paragraph-time-picker__trigger--range-surface {
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  height: auto;
-  padding: 0;
-  border: none;
-  background: transparent;
-}
-
-.paragraph-time-picker__trigger-range-pair {
-  display: flex;
-  flex: 1 1 auto;
-  align-items: center;
-  min-width: 360px;
-  gap: 8px;
-}
-
-/* 클릭은 버튼으로 모아 팝업 오픈 — 읽기 전용 인풋은 포인터 통과 */
-.paragraph-time-picker__trigger-range-pair .paragraph-time-picker__trigger-range-input {
-  flex: 1 1 0;
-  min-width: 0;
-  pointer-events: none;
-}
-
-.paragraph-time-picker__trigger-range-pair
-  .paragraph-time-picker__trigger-range-input
-  .cms-input__control {
-  width: 100%;
-}
-
-.paragraph-time-picker__trigger-range-wave {
-  flex-shrink: 0;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1;
+/* 입력 전 — `cms-datepicker` 인풋 placeholder 톤과 맞춤 */
+.paragraph-time-picker__trigger-text.paragraph-time-picker__trigger-text--placeholder {
   color: rgba(61, 61, 61, 0.45);
+  font-weight: 400;
 }
 
 .paragraph-time-picker__backdrop {
