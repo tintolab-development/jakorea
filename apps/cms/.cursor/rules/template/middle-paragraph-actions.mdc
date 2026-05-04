@@ -1,7 +1,7 @@
 ---
 description: CMS /templates — middle 단락 추가·복제·삭제 공통(설명글 텍스트형 삽입·id 재발급)
 globs:
-  - "apps/cms/src/features/template/ui/form-editor/form-editor-left-pane.tsx"
+  - "apps/cms/src/features/template/ui/form-editor/form-editor-left-panel.tsx"
   - "apps/cms/src/features/template/lib/writing-form-middle-paragraph-mutations.ts"
   - "apps/cms/src/features/template/hooks/use-writing-form-middle-paragraph-actions.ts"
   - "apps/cms/src/features/template/hooks/use-writing-form-editor-with-user-preview.ts"
@@ -26,11 +26,11 @@ alwaysApply: false
 
 ## 공통 적용 (CMS `/templates` 작성·설문 에디터)
 
-- `FormEditorLeftPane`에 **`middleParagraphActions`** (`onAddAfter` / `onDuplicate` / `onDelete`)를 넘긴다.
+- `FormEditorLeftPanel`에 **`middleParagraphActions`** (`onAddAfter` / `onDuplicate` / `onDelete`)를 넘긴다.
 - 로컬 `setDraft` + `setActiveParagraphId`를 묶은 훅: **`useWritingFormMiddleParagraphActions`**. `useWritingFormEditorWithUserPreview`를 쓰는 화면은 반환값 `middleParagraphActions`를 그대로 전달한다.
 - **예외 (의도적 분리)**: **가로형 테이블 전용 에디터** `horizontal-table-form-editor.tsx` + **`useHorizontalTableFormDraft`** 는 테이블 단락 전용 middle 동작을 유지한다. 여기를 일반 설문 훅으로 바꾸지 않는다.
 
 ## 신규 `/templates` 화면 체크리스트
 
-- `FormEditorLeftPane`를 쓰고 **작성 크롬**(`showEditorChrome !== false`)이면, 설문·동의와 동일하게 **`useWritingFormMiddleParagraphActions`**(또는 위 훅을 포함한 상위 훅)으로 `middleParagraphActions`를 연결한다.
+- `FormEditorLeftPanel`를 쓰고 **작성 크롬**(`showEditorChrome !== false`)이면, 설문·동의와 동일하게 **`useWritingFormMiddleParagraphActions`**(또는 위 훅을 포함한 상위 훅)으로 `middleParagraphActions`를 연결한다.
 - 미리보기 전용(크롬 숨김)이면 생략 가능하다.
