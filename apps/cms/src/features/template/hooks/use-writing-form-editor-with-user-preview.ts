@@ -4,6 +4,7 @@ import type { TemplateWritingUserPreviewSession } from '@/features/template/cont
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import type { FormEditorKind } from '@/features/template/model/writing-form-draft.schema'
 import {
+  getWritingFormHeadMiddlePinnedTail,
   normalizeWritingFormDraft,
   reorderHeadMiddleTail,
   type FormTitleNumberingStyle,
@@ -30,14 +31,16 @@ export type UseWritingFormEditorWithUserPreviewOptions = {
   onSave?: () => void
 }
 
+export type FormEditorNavLine = { id: string; displayLine: string }
+
 export type WritingFormEditorWithUserPreviewResult = {
   headerTitle: string
   draft: WritingFormDraft
   activeParagraphId: string | null
   singleItemListActiveItemId: string | null
-  pinnedTop: { id: string; displayLine: string }
-  sortableMiddle: { id: string; displayLine: string }[]
-  pinnedBottom: { id: string; displayLine: string }
+  pinnedTop: FormEditorNavLine | null
+  sortableMiddle: FormEditorNavLine[]
+  pinnedBottom: FormEditorNavLine | FormEditorNavLine[] | null
   handleSelectCard: (id: string) => void
   onReorderMiddle: (activeId: string, overId: string) => void
   onTitleNumberingChange: (style: FormTitleNumberingStyle) => void
@@ -139,18 +142,25 @@ export function useWritingFormEditorWithUserPreview(
   }, [])
 
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
-    const [head, ...rest] = draft.paragraphs
-    const tail = rest[rest.length - 1]
-    const middle = rest.slice(0, -1)
     const { titleNumbering } = draft.formSettings
     const line = (p: WritingFormParagraph) => ({
       id: p.id,
       displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
     })
+    const split = getWritingFormHeadMiddlePinnedTail(draft.paragraphs)
+    if (split == null) {
+      return {
+        pinnedTop: null as ReturnType<typeof line> | null,
+        sortableMiddle: [] as ReturnType<typeof line>[],
+        pinnedBottom: null as ReturnType<typeof line> | ReturnType<typeof line>[] | null,
+      }
+    }
+    const { head, middle, pinnedTail } = split
+    const bottomLines = pinnedTail.map(line)
     return {
-      pinnedTop: line(head!),
+      pinnedTop: line(head),
       sortableMiddle: middle.map(line),
-      pinnedBottom: line(tail!),
+      pinnedBottom: bottomLines.length === 1 ? bottomLines[0]! : bottomLines.length > 1 ? bottomLines : null,
     }
   }, [draft])
 
