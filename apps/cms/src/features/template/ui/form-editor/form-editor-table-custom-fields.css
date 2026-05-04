@@ -1,0 +1,838 @@
+/**
+ * 우측 패널 — 가로·세로 테이블 커스텀 필드, 객관식 항목, 행·열 추가 등
+ * @see form-editor.css (진입점)
+ */
+
+/* 테이블 가로형 — 헤더 행 선택 시 우측 커스텀 필드 */
+.form-editor-horizontal-table-header-fields {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.form-editor-horizontal-table-header-fields__title,
+.form-editor-horizontal-table-body-fields__title {
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%; /* 28px */
+}
+
+.form-editor-horizontal-table-header-fields__title {
+  margin: 0 0 8px;
+}
+
+/* 타이틀 → 행 삭제 버튼 vertical gap 16px */
+.form-editor-horizontal-table-body-fields__title {
+  margin: 0 0 16px;
+}
+
+.form-editor-horizontal-table-header-fields__hint {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-85969-d, #85969d);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.form-editor-horizontal-table-header-fields__hint-mark {
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.form-editor-horizontal-table-header-fields__hint-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.form-editor-horizontal-table-header-fields__hint-line {
+  margin: 0;
+  padding: 0;
+  line-height: 1.4;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* 첫·둘째 줄 사이만 좁힘(둘째 줄 line-height 1) */
+.form-editor-horizontal-table-header-fields__hint-line--second {
+  line-height: 1;
+  margin: 0;
+  padding: 0;
+}
+
+.form-editor-horizontal-table-header-fields__hint-x-inline {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 2px;
+  vertical-align: -0.2em;
+}
+
+/* 헤더/바디 힌트 공통 ⓧ (부모 color) */
+.form-editor-horizontal-table-hint-x-icon {
+  flex-shrink: 0;
+  display: block;
+}
+
+.form-editor-horizontal-table-header-fields__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.form-editor-horizontal-table-header-fields__item {
+  margin: 0;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.form-editor-horizontal-table-header-fields__item
+  + .form-editor-horizontal-table-header-fields__item {
+  padding-top: 32px;
+}
+
+.form-editor-horizontal-table-header-fields__item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.form-editor-horizontal-table-header-fields__form-item.ant-form-item {
+  margin-bottom: 0 !important;
+}
+
+/* N. 항목 라벨 타이포 · 라벨–인풋 간격 10px */
+.form-editor-horizontal-table-header-fields__form-item.ant-form-item .ant-form-item-label {
+  padding-bottom: 0 !important;
+  margin-bottom: 10px;
+}
+
+.form-editor-horizontal-table-header-fields__form-item.ant-form-item .ant-form-item-label > label {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 140%;
+}
+
+.form-editor-horizontal-table-header-fields__row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+/* 커스텀 필드 인풋: 기본 340px, 우측 삭제 아이콘이 있으면 310px */
+.form-editor-horizontal-table-header-fields__input-wrap {
+  display: flex;
+  height: 44px;
+  min-width: 120px;
+  max-width: 340px;
+  width: 340px;
+  flex: 1 0 0;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.form-editor-horizontal-table-header-fields__row:has(
+    .form-editor-horizontal-table-header-fields__delete
+  )
+  .form-editor-horizontal-table-header-fields__input-wrap {
+  width: 310px;
+  max-width: 310px;
+}
+
+.form-editor-horizontal-table-header-fields__input-wrap
+  .form-editor-horizontal-table-header-fields__cms-input.cms-input {
+  width: 100%;
+  min-width: 0;
+  flex: 1 0 0;
+}
+
+/* 필드형 비텍스트열: 입력이 아니라 레이블만 표시 — 포커스·커서 없음 */
+.form-editor-horizontal-table-header-fields__value-readonly {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px 0 14px;
+  overflow: hidden;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.form-editor-horizontal-table-header-fields__input-wrap
+  .form-editor-horizontal-table-header-fields__cms-input.cms-input--large
+  .cms-input__control {
+  display: flex;
+  height: 44px;
+  min-height: 44px;
+  min-width: 120px;
+  max-width: 100%;
+  width: 100%;
+  padding: 0 12px 0 14px;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.form-editor-horizontal-table-header-fields__input-wrap
+  .form-editor-horizontal-table-header-fields__cms-input
+  .cms-input__inner
+  .ant-input::placeholder {
+  overflow: hidden;
+  color: var(--gray-85969-d, #85969d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.form-editor-horizontal-table-header-fields__input-wrap
+  .form-editor-horizontal-table-header-fields__cms-input
+  .cms-input__inner
+  .ant-input {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.form-editor-horizontal-table-header-fields__delete {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.form-editor-horizontal-table-header-fields__delete:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.form-editor-horizontal-table-header-fields__delete:not(:disabled):hover {
+  opacity: 0.85;
+}
+
+/* 테이블 세로형 — 바디 행 선택 시 우측 커스텀 필드(가로형 바디 필드와 동일 gap·타이포·셀렉트 래퍼 재사용) */
+.form-editor-vertical-table-row-fields__structure {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 24px;
+  width: 100%;
+}
+
+.form-editor-vertical-table-row-fields__structure-label {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* 테이블 구조 — 라디오 행: 44px 높이, 좌우 8px, 옵션 간 16px (원–텍스트 6px는 medium 사이즈) */
+.form-editor-vertical-table-row-fields__structure-radios.app-radio-group {
+  display: flex;
+  height: 44px;
+  padding: 0 8px;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: nowrap;
+  box-sizing: border-box;
+}
+
+/* 날짜/시간형 — 스테이지별 「유형」(날짜/시간/날짜+시간), 3옵션 줄바꿈 가능 */
+.form-editor-vertical-table-row-fields__datetime-mode-radios.app-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  min-height: 44px;
+  padding: 6px 0 4px;
+  box-sizing: border-box;
+}
+
+.form-editor-vertical-table-row-fields__list-wrap {
+  margin: 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--table-line, #e0e0e0);
+}
+
+/* 세로형 커스텀 필드: 블록 내 제목·드롭다운·항목명·내용 세로 간격 16px */
+.form-editor-vertical-table-row-fields .form-editor-horizontal-table-body-fields__item {
+  gap: 16px;
+  margin: 0;
+  padding-bottom: 32px;
+  /* 항목 간 디바이더: 내용 아래 32px → 선 → 다음 블록 위 32px (가로형 헤더 필드와 동일) */
+}
+
+.form-editor-vertical-table-row-fields
+  .form-editor-horizontal-table-body-fields__item
+  + .form-editor-horizontal-table-body-fields__item {
+  padding-top: 32px;
+}
+
+.form-editor-vertical-table-row-fields .form-editor-horizontal-table-body-fields__item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* 패딩으로 간격을 줄이므로 리스트 기본 gap 20px은 중복 방지 */
+.form-editor-vertical-table-row-fields .form-editor-horizontal-table-body-fields__list {
+  gap: 0;
+}
+
+/* 테이블 가로형 — 바디(td) 행 선택 시 우측 커스텀 필드 (헤더와 패널 분리) */
+.form-editor-horizontal-table-body-fields {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.form-editor-horizontal-table-body-fields__hint {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 16px;
+  color: var(--main-BK, #3d3d3d);
+  opacity: 0.6;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.form-editor-horizontal-table-body-fields__hint-mark {
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.form-editor-horizontal-table-body-fields__hint-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.form-editor-horizontal-table-body-fields__hint-line {
+  margin: 0;
+  padding: 0;
+  line-height: 1.4;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* 본문 중앙 ⓧ 아이콘(인라인) */
+.form-editor-horizontal-table-body-fields__hint-x-inline {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 2px;
+  vertical-align: -0.2em;
+}
+
+.form-editor-horizontal-table-body-fields__row-delete {
+  display: flex;
+  height: 40px;
+  padding: 6px 16px 6px 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 16px;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--color-red, #c32f4a);
+  background: var(
+    --color-bg-red,
+    linear-gradient(0deg, rgba(195, 47, 74, 0.1) 0%, rgba(195, 47, 74, 0.1) 100%),
+    #fff
+  );
+  cursor: pointer;
+  font: inherit;
+}
+
+.form-editor-horizontal-table-body-fields__row-delete-label {
+  color: var(--color-red, #c32f4a);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.form-editor-horizontal-table-body-fields__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* 1-1·2-1·3-1 항목 블록 사이 세로 간격 */
+}
+
+.form-editor-horizontal-table-body-fields__item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* 항목 내 아이템(제목·타입·폼) 세로 간격 */
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.form-editor-horizontal-table-body-fields__item:last-child {
+  border-bottom: none;
+}
+
+.form-editor-horizontal-table-body-fields__cell-title {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 140%;
+}
+
+/* 유형 행: 드롭다운과 ⓧ 등 보조 컨트롤 사이 6px */
+.form-editor-horizontal-table-body-fields__type-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin: 0;
+}
+
+/* 항목 유형 드롭다운: 기본 340px, 우측 삭제 아이콘이 있으면 310px */
+.form-editor-horizontal-table-body-fields__select-wrap {
+  display: flex;
+  flex: 0 0 auto;
+  width: 340px;
+  max-width: 340px;
+  min-width: 340px;
+  min-height: 44px;
+  height: 44px;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.form-editor-horizontal-table-body-fields__type-row:has(
+    .form-editor-horizontal-table-body-fields__cell-clear
+  )
+  .form-editor-horizontal-table-body-fields__select-wrap {
+  width: 310px;
+  max-width: 310px;
+  min-width: 310px;
+}
+
+/* CmsSelect 래퍼(span.cms-select)가 인풋 박스 — ant-select-selector는 보더 없음(전역 cms-select.css) */
+.form-editor-horizontal-table-body-fields__select-wrap
+  .form-editor-horizontal-table-body-fields__cms-select.cms-select {
+  display: flex;
+  min-width: 120px;
+  width: 100%;
+  flex: 1 0 0;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  padding: 0 12px 0 14px;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+}
+
+/* 이 패널: 호버/포커스 시에도 중립 보더(스펙 #E0E0E0) */
+.form-editor-horizontal-table-body-fields__select-wrap
+  .form-editor-horizontal-table-body-fields__cms-select.cms-select:hover:not(.cms-select--disabled),
+.form-editor-horizontal-table-body-fields__select-wrap
+  .form-editor-horizontal-table-body-fields__cms-select.cms-select:focus-within:not(
+    .cms-select--disabled
+  ),
+.form-editor-horizontal-table-body-fields__select-wrap
+  .form-editor-horizontal-table-body-fields__cms-select.cms-select:has(.ant-select-open):not(
+    .cms-select--disabled
+  ) {
+  border-color: var(--table-line, #e0e0e0);
+}
+
+/* 텍스트형 드롭다운 우측 화살표 24×24 */
+.form-editor-horizontal-table-body-fields__select-wrap
+  .form-editor-horizontal-table-body-fields__cms-select.cms-select
+  .ant-select-arrow {
+  width: 24px;
+  height: 24px;
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-editor-horizontal-table-body-fields__select-wrap
+  .form-editor-horizontal-table-body-fields__cms-select.cms-select
+  .ant-select-arrow
+  .anticon {
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
+}
+
+.form-editor-horizontal-table-body-fields__select-wrap
+  .form-editor-horizontal-table-body-fields__cms-select.cms-select
+  .ant-select-arrow
+  svg {
+  width: 24px;
+  height: 24px;
+}
+
+.form-editor-horizontal-table-body-fields__cell-clear {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.form-editor-horizontal-table-body-fields__cell-clear:hover {
+  opacity: 0.85;
+}
+
+.form-editor-horizontal-table-body-fields__cell-clear:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.form-editor-horizontal-table-body-fields__content-form-item.ant-form-item {
+  margin-bottom: 0 !important;
+}
+
+.form-editor-horizontal-table-body-fields__content-form-item.ant-form-item .ant-form-item-label {
+  padding-bottom: 0 !important;
+  margin-bottom: 10px;
+}
+
+.form-editor-horizontal-table-body-fields__content-form-item.ant-form-item
+  .ant-form-item-label
+  > label {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+}
+
+.form-editor-horizontal-table-body-fields__date-preview
+  .form-editor-horizontal-table__field-box.ant-picker {
+  width: 340px;
+  min-width: 340px;
+  max-width: 340px;
+}
+
+.form-editor-horizontal-table-body-fields__date-preview {
+  margin-bottom: 32px;
+}
+
+.form-editor-horizontal-table-body-fields__content-input .cms-input__inner .ant-input::placeholder {
+  overflow: hidden;
+  color: var(--gray-85969-d, #85969d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.form-editor-horizontal-table-body-fields__option-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* 옵션 행(선택지) 세로 간격 */
+}
+
+.form-editor-horizontal-table-body-fields__option-row {
+  width: 100%;
+}
+
+/* 옵션 행: 유형 드롭다운과 동일(입력 310px + 19px ⓧ) + 넘버링 */
+.form-editor-horizontal-table-body-fields__option-type-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* 우측 ⓧ 아이콘이 있는 옵션 입력: 310×44·패딩·보더, 내부에 1. + 인풋 */
+.form-editor-horizontal-table-body-fields__option-input-wrap {
+  display: flex;
+  flex: 0 0 auto;
+  width: 310px;
+  max-width: 310px;
+  min-width: 310px;
+  min-height: 44px;
+  height: 44px;
+  align-items: center;
+  box-sizing: border-box;
+  gap: 8px;
+  padding: 0 12px 0 14px;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+}
+
+.form-editor-horizontal-table-body-fields__option-index {
+  flex-shrink: 0;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--main-BK, #3d3d3d);
+  white-space: nowrap;
+}
+
+/* CmsInput 이중 박스 제거: 외곽 `option-input-wrap`에만 보더 */
+.form-editor-horizontal-table-body-fields__option-cms-input.cms-input {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  height: 100%;
+  align-items: center;
+  align-self: stretch;
+}
+
+.form-editor-horizontal-table-body-fields__option-cms-input.cms-input .cms-input__control {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 44px;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: none;
+}
+
+.form-editor-horizontal-table-body-fields__option-cms-input.cms-input .cms-input__control:hover,
+.form-editor-horizontal-table-body-fields__option-cms-input.cms-input
+  .cms-input__control:focus-within {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.form-editor-horizontal-table-body-fields__option-list > li:last-child {
+  width: 100%;
+  align-self: stretch;
+}
+
+.form-editor-horizontal-table-body-fields__option-add.cms-button.ant-btn {
+  width: 100% !important;
+  max-width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 6px 16px 6px 10px !important;
+  gap: 4px !important;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 150%;
+  color: var(--color-mint-01, #01a1af) !important;
+  text-align: center;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--color-mint-01, #01a1af) !important;
+  background-color: #fff !important;
+  background-image: linear-gradient(
+    0deg,
+    rgba(1, 161, 175, 0.06) 0%,
+    rgba(1, 161, 175, 0.06) 100%
+  ) !important;
+  box-sizing: border-box;
+}
+
+.form-editor-horizontal-table-body-fields__option-add.cms-button.ant-btn:not(:disabled):not(
+    .ant-btn-disabled
+  ):hover,
+.form-editor-horizontal-table-body-fields__option-add.cms-button.ant-btn:not(:disabled):not(
+    .ant-btn-disabled
+  ):focus,
+.form-editor-horizontal-table-body-fields__option-add.cms-button.ant-btn:not(:disabled):not(
+    .ant-btn-disabled
+  ):active {
+  color: var(--color-mint-01, #01a1af) !important;
+  border-color: var(--color-mint-01, #01a1af) !important;
+  background-color: #fff !important;
+  background-image: linear-gradient(
+    0deg,
+    rgba(1, 161, 175, 0.06) 0%,
+    rgba(1, 161, 175, 0.06) 100%
+  ) !important;
+  box-shadow: none !important;
+}
+
+/* + 아이콘 영역 20×20(경로 11×11, svg로 스케일) */
+.form-editor-horizontal-table-body-fields__option-add
+  .form-editor-horizontal-table-body-fields__option-add-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--color-mint-01, #01a1af);
+}
+
+.form-editor-horizontal-table-body-fields__option-add
+  .form-editor-horizontal-table-body-fields__option-add-icon
+  svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.form-editor-horizontal-table-body-fields__checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-editor-horizontal-table-body-fields__checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--main-BK, #3d3d3d);
+}
+
+/* 동의 양식 마무리 — 일자·서명 placeholder */
+.form-editor-agreement-footer__bar {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #eef1f3;
+  color: #85969d;
+  font-size: 14px;
+  text-align: center;
+}
+
+.form-editor-agreement-footer__bar--preview {
+  opacity: 0.85;
+}
+
+/* 객관식 — 우측 패널 항목 수정 */
+.form-editor-mc-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.form-editor-mc-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.form-editor-mc-item__drag {
+  flex-shrink: 0;
+  width: 32px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #85969d;
+  cursor: grab;
+}
+
+.form-editor-mc-item__drag:active {
+  cursor: grabbing;
+}
+
+.form-editor-mc-item__field-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-editor-mc-item__index {
+  flex-shrink: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.form-editor-mc-item__field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.form-editor-mc-item__remove {
+  margin-top: 8px;
+}

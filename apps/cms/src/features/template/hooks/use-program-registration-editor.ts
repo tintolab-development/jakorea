@@ -11,8 +11,9 @@ import {
 } from '@/features/template/lib/writing-form-middle-paragraph-mutations'
 import {
   createProgramRegistrationDraft,
+  getProgramRegistrationSeedParagraphIds,
   PROGRAM_REGISTRATION_IDS,
-  PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS,
+  type ProgramRegistrationFormVariant,
 } from '@/features/template/model/program-registration-draft'
 import {
   normalizeWritingFormDraft,
@@ -34,18 +35,10 @@ type ProgramRegistrationParticipantState = {
   organization: boolean
 }
 
-function enforceSeedParagraphRequired(paragraph: WritingFormParagraph): WritingFormParagraph {
-  if (!PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(paragraph.id)) return paragraph
-  return {
-    ...paragraph,
-    requiredMark: true,
-    answerRequired: true,
-  } as WritingFormParagraph
-}
-
 function useProgramRegistrationMiddleActions(
   setDraft: Dispatch<SetStateAction<WritingFormDraft>>,
-  setActiveParagraphId: Dispatch<SetStateAction<string | null>>
+  setActiveParagraphId: Dispatch<SetStateAction<string | null>>,
+  seedParagraphIds: ReadonlySet<string>
 ) {
   const appendBasicTitleParagraph = useCallback((paragraphId?: string) => {
     const newId = crypto.randomUUID()
@@ -71,7 +64,7 @@ function useProgramRegistrationMiddleActions(
 
   const onDuplicate = useCallback(
     (paragraphId: string) => {
-      if (PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(paragraphId)) {
+      if (seedParagraphIds.has(paragraphId)) {
         message.warning('기본 단락은 복제할 수 없습니다.')
         return
       }
@@ -88,12 +81,12 @@ function useProgramRegistrationMiddleActions(
       })
       if (duplicated) setActiveParagraphId(newId)
     },
-    [setDraft, setActiveParagraphId]
+    [setDraft, setActiveParagraphId, seedParagraphIds]
   )
 
   const onDelete = useCallback(
     (paragraphId: string) => {
-      if (PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(paragraphId)) {
+      if (seedParagraphIds.has(paragraphId)) {
         message.warning('기본 단락은 삭제할 수 없습니다.')
         return
       }
@@ -109,7 +102,7 @@ function useProgramRegistrationMiddleActions(
       })
       if (nextActive != null) setActiveParagraphId(nextActive)
     },
-    [setDraft, setActiveParagraphId]
+    [setDraft, setActiveParagraphId, seedParagraphIds]
   )
 
   return useMemo(
@@ -126,6 +119,8 @@ function useProgramRegistrationMiddleActions(
 export type UseProgramRegistrationEditorOptions = {
   /** 템플릿 편집 등: 커리큘럼 차시·회차 추가 버튼 비활성·노출 블록 1개로 고정 */
   restrictCurriculumSessionStructure?: boolean
+  /** `economy`: 1사 1교 등록 폼 시드(프로그램 유형 설정 단락 없음) */
+  programRegistrationFormVariant?: ProgramRegistrationFormVariant
 }
 
 export function useProgramRegistrationEditor(
@@ -135,11 +130,19 @@ export function useProgramRegistrationEditor(
 ) {
   const restrictCurriculumSessionStructure =
     editorOptions?.restrictCurriculumSessionStructure === true
+  const programRegistrationFormVariant: ProgramRegistrationFormVariant =
+    editorOptions?.programRegistrationFormVariant ?? 'general'
+  const seedParagraphIds = useMemo(
+    () => getProgramRegistrationSeedParagraphIds(programRegistrationFormVariant),
+    [programRegistrationFormVariant]
+  )
+
   const [draft, setDraft] = useState<WritingFormDraft>(() =>
-    normalizeWritingFormDraft(createProgramRegistrationDraft())
+    normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant))
   )
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(() =>
-    normalizeWritingFormDraft(createProgramRegistrationDraft()).paragraphs[0]?.id ?? null
+    normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant))
+      .paragraphs[0]?.id ?? null
   )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
   const [participant, setParticipant] = useState<ProgramRegistrationParticipantState>({
@@ -168,11 +171,15 @@ export function useProgramRegistrationEditor(
 
   useEffect(() => {
     if (!active) return
-    const next = normalizeWritingFormDraft(createProgramRegistrationDraft())
+    const next = normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant))
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)
-    setParticipant({ individual: true, organization: false })
+    setParticipant(
+      programRegistrationFormVariant === 'economy'
+        ? { individual: false, organization: true }
+        : { individual: true, organization: false }
+    )
     setSessionRoundType('single')
     setEducationFormScheduleDetail('common')
     setParticipationScheduleDetail('common')
@@ -183,7 +190,7 @@ export function useProgramRegistrationEditor(
     setScheduleCurriculumDetailCount(2)
     setScheduleCurriculumGroupCount(2)
     setScheduleCurriculumPreEducation(false)
-  }, [active, restrictCurriculumSessionStructure])
+  }, [active, programRegistrationFormVariant, restrictCurriculumSessionStructure])
 
   useEffect(() => {
     if (!active) closeWritingUserPreview()
@@ -193,12 +200,17 @@ export function useProgramRegistrationEditor(
     (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => {
       setDraft(prev => ({
         ...prev,
-        paragraphs: prev.paragraphs.map(p =>
-          p.id === id ? enforceSeedParagraphRequired(updater(p)) : p
-        ),
+        paragraphs: prev.paragraphs.map(p => {
+          if (p.id !== id) return p
+          let next = updater(p)
+          if (seedParagraphIds.has(id)) {
+            next = { ...next, requiredMark: true, answerRequired: true } as WritingFormParagraph
+          }
+          return next
+        }),
       }))
     },
-    []
+    [seedParagraphIds]
   )
 
   const onReorderMiddle = useCallback((dragId: string, overId: string) => {
@@ -224,7 +236,11 @@ export function useProgramRegistrationEditor(
     }))
   }, [])
 
-  const middleParagraphActions = useProgramRegistrationMiddleActions(setDraft, setActiveParagraphId)
+  const middleParagraphActions = useProgramRegistrationMiddleActions(
+    setDraft,
+    setActiveParagraphId,
+    seedParagraphIds
+  )
 
   const {
     horizontalTableRowSelectionsByParagraphId,
@@ -288,6 +304,7 @@ export function useProgramRegistrationEditor(
   }, [restrictCurriculumSessionStructure])
 
   const onProgramTypeChange = useCallback((next: ProgramRegistrationType) => {
+    if (programRegistrationFormVariant === 'economy' && next !== 'curriculum') return
     setProgramType(next)
     setDraft(prev => ({
       ...prev,
@@ -309,7 +326,7 @@ export function useProgramRegistrationEditor(
         }
       }),
     }))
-  }, [])
+  }, [programRegistrationFormVariant])
 
   const onAddScheduleCurriculumDetail = useCallback(() => {
     setScheduleCurriculumDetailCount(c => Math.min(c + 1, 99))
@@ -348,6 +365,7 @@ export function useProgramRegistrationEditor(
           : curriculumChartSessionCount,
         onAddCurriculumChartSession,
         restrictCurriculumSessionStructure,
+        programRegistrationFormVariant,
         scheduleCurriculumDetailCount,
         onAddScheduleCurriculumDetail,
         scheduleCurriculumGroupCount,
@@ -380,6 +398,7 @@ export function useProgramRegistrationEditor(
       scheduleCurriculumPreEducation,
       sessionRoundType,
       restrictCurriculumSessionStructure,
+      programRegistrationFormVariant,
     ]
   )
 
@@ -429,7 +448,7 @@ export function useProgramRegistrationEditor(
     draft,
     activeParagraphId,
     singleItemListActiveItemId,
-    structureLockedParagraphIds: PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS,
+    structureLockedParagraphIds: seedParagraphIds,
     pinnedTop,
     sortableMiddle,
     pinnedBottom,

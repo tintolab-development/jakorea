@@ -1,4 +1,13 @@
-/** IPS 유형 1차(대분류) — `ProgramRegistrationIpsTypeFields` 1번 셀렉트 */
+/**
+ * IPS 유형 2차 옵션 및 교육과정·IP·Course Delivered 등 (1차 IPS 옵션 조합).
+ * 교육 과정 / IP Owned / Course Delivered By 값·라벨은 `template-form-select-options` 단일 출처.
+ */
+import {
+  TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
+  TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
+  TEMPLATE_FORM_IP_OWNED_OPTIONS,
+} from '@/features/template/lib/template-form-select-options'
+
 export type ProgramRegistrationIpsCategory = 'succeed' | 'inspire' | 'prepare'
 
 /** 드롭다운 표시 순서 고정: Inspire → Prepare → Succeed */
@@ -14,23 +23,11 @@ const PROGRAM_REGISTRATION_IPS_CATEGORY_LABEL: Record<ProgramRegistrationIpsCate
   succeed: 'Succeed',
 }
 
-export const PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS = [
-  { value: 'traditional_paper', label: 'Traditional (Paper)' },
-  { value: 'digital_computer', label: 'Digital (Computer)' },
-  { value: 'blended_paper_computer', label: 'Blended (Paper & Computer)' },
-] as const
+export const PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS = TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS
 
-export const PROGRAM_REGISTRATION_IP_OWNED_OPTIONS = [
-  { value: 'ja', label: 'JA' },
-  { value: 'partner', label: 'Partner' },
-  { value: 'jointly', label: 'Jointly' },
-] as const
+export const PROGRAM_REGISTRATION_IP_OWNED_OPTIONS = TEMPLATE_FORM_IP_OWNED_OPTIONS
 
-export const PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS = [
-  { value: 'ja', label: 'JA' },
-  { value: 'partner', label: 'Partner' },
-  { value: 'jointly', label: 'Jointly' },
-] as const
+export const PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS = TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS
 
 export const PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS: {
   value: ProgramRegistrationIpsCategory

@@ -376,7 +376,8 @@ function paragraphEditableHeading(
         isEditMode: false,
         /* 가로형 에디터에서만: 구조 잠금이어도 카드 헤더 제목은 시드 기본값을 바꿀 수 있게 */
         titleIsEditMode: editorKind === 'horizontal_table' && isSelected,
-        descriptionIsEditMode: true,
+        /* 미선택 시 설명란이 항상 편집 모드면 입력 셸이 클릭 전파를 막아 카드 선택·우측 패널 갱신이 안 됨 */
+        descriptionIsEditMode: editorKind === 'horizontal_table' && isSelected,
         titleValue: p.paragraphTitle,
         onTitleChange:
           editorKind === 'horizontal_table'

@@ -3,6 +3,7 @@ import { settlementItemSettingSections } from '@/data/mock/settlement-item-setti
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { AppMultiSelect, type AppMultiSelectOption } from '@/shared/ui/app-multi-select'
 import { CmsInput } from '@/shared/ui/cms-input'
+import './program-registration-paragraph.css'
 
 export function ProgramRegistrationWageInfoParagraph() {
   const [paymentItemValues, setPaymentItemValues] = useState<string[]>([])
@@ -16,7 +17,7 @@ export function ProgramRegistrationWageInfoParagraph() {
   }, [])
 
   return (
-    <DetailInfoForm title="임금 정보" hideHeader mode="edit">
+    <DetailInfoForm title="임금 정보" hideHeader mode="edit" className="program-registration-paragraph">
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="1급 강사비"

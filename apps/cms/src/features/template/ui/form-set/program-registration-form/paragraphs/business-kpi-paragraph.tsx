@@ -2,13 +2,16 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import './program-registration-paragraph.css'
 
-type ProgramRegistrationBusinessKpiParagraphProps = {
-  participantOrganization?: boolean
+export type ProgramRegistrationBusinessKpiParagraphProps = {
+  /** 교육진행자 최종 인원 — 봉사자 입력란 */
+  volunteerDisabled?: boolean
+  volunteerPlaceholder?: string
 }
 
 export function ProgramRegistrationBusinessKpiParagraph({
-  participantOrganization = false,
-}: ProgramRegistrationBusinessKpiParagraphProps) {
+  volunteerDisabled = false,
+  volunteerPlaceholder = '목표값 입력',
+}: ProgramRegistrationBusinessKpiParagraphProps = {}) {
   return (
     <DetailInfoForm
       title="사업 KPI 목표"
@@ -30,7 +33,12 @@ export function ProgramRegistrationBusinessKpiParagraph({
               <CmsInput inputSize="medium" placeholder="목표값 입력" width={120} />
               <DetailInfoForm.InputsSeparator />
               <span className="detail-info-form--text mr-6">봉사자</span>
-              <CmsInput inputSize="medium" placeholder="목표값 입력" width={120} />
+              <CmsInput
+                disabled={volunteerDisabled}
+                inputSize="medium"
+                placeholder={volunteerPlaceholder}
+                width={120}
+              />
             </div>
           }
           view="-"
@@ -39,26 +47,12 @@ export function ProgramRegistrationBusinessKpiParagraph({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="최종 파견 학교 수"
-          edit={
-            <CmsInput
-              disabled={!participantOrganization}
-              inputSize="medium"
-              placeholder={participantOrganization ? '목표값 입력' : '해당 없음'}
-              width={120}
-            />
-          }
+          edit={<CmsInput inputSize="medium" placeholder="목표값 입력" width={120} />}
           view="-"
         />
         <DetailInfoForm.Field
           label="최종 파견 학급 수"
-          edit={
-            <CmsInput
-              disabled={!participantOrganization}
-              inputSize="medium"
-              placeholder={participantOrganization ? '목표값 입력' : '해당 없음'}
-              width={120}
-            />
-          }
+          edit={<CmsInput inputSize="medium" placeholder="목표값 입력" width={120} />}
           view="-"
         />
       </DetailInfoForm.Row>

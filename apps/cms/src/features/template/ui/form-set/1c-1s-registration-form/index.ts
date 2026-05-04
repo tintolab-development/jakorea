@@ -1,0 +1,4 @@
+export { OneCOneSRegistrationBasicInfoParagraph } from './paragraphs/basic-info-paragraph'
+export { OneCOneSRegistrationBusinessKpiParagraph } from './paragraphs/business-kpi-paragraph'
+export { OneCOneSRegistrationWageInfoParagraph } from './paragraphs/wage-info-paragraph'
+export { OneCOneSRegistrationEducationScheduleSettingsParagraph } from './paragraphs/education-schedule-settings-paragraph'

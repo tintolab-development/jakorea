@@ -1,5 +1,14 @@
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
-import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
+import {
+  PROGRAM_REGISTRATION_IDS,
+  type ProgramRegistrationFormVariant,
+} from '@/features/template/model/program-registration-draft'
+import {
+  OneCOneSRegistrationBasicInfoParagraph,
+  OneCOneSRegistrationBusinessKpiParagraph,
+  OneCOneSRegistrationEducationScheduleSettingsParagraph,
+  OneCOneSRegistrationWageInfoParagraph,
+} from '@/features/template/ui/form-set/1c-1s-registration-form'
 import { ProgramRegistrationBasicInfoParagraph } from '@/features/template/ui/form-set/program-registration-form/paragraphs/basic-info-paragraph'
 import { ProgramRegistrationBusinessKpiParagraph } from '@/features/template/ui/form-set/program-registration-form/paragraphs/business-kpi-paragraph'
 import { ProgramRegistrationEducationCurriculumParagraph } from '@/features/template/ui/form-set/program-registration-form/paragraphs/education-curriculum-paragraph'
@@ -45,6 +54,8 @@ export interface ProgramRegistrationParagraphBodyOptions {
    * 프로그램 관리 등 실제 등록 폼에서는 false(또는 생략).
    */
   restrictCurriculumSessionStructure?: boolean
+  /** `economy`: 1사 1교 — `form-set/1c-1s-registration-form` 단락 컴포넌트로 렌더 */
+  programRegistrationFormVariant?: ProgramRegistrationFormVariant
   /** 교육 진행 구조 일정형 — 세부 일정 블록 수·추가 */
   scheduleCurriculumDetailCount: number
   onAddScheduleCurriculumDetail: () => void
@@ -62,7 +73,13 @@ export function renderProgramRegistrationParagraphBody(
 ) {
   switch (paragraph.id) {
     case PROGRAM_REGISTRATION_IDS.basicInfo:
-      return options == null ? null : (
+      return options == null ? null : options.programRegistrationFormVariant === 'economy' ? (
+        <OneCOneSRegistrationBasicInfoParagraph
+          participant={options.participant}
+          onIndividualChange={options.onIndividualChange}
+          onOrganizationChange={options.onOrganizationChange}
+        />
+      ) : (
         <ProgramRegistrationBasicInfoParagraph
           participant={options.participant}
           onIndividualChange={options.onIndividualChange}
@@ -70,13 +87,17 @@ export function renderProgramRegistrationParagraphBody(
         />
       )
     case PROGRAM_REGISTRATION_IDS.businessKpi:
-      return (
-        <ProgramRegistrationBusinessKpiParagraph
-          participantOrganization={options?.participant.organization ?? false}
-        />
+      return options?.programRegistrationFormVariant === 'economy' ? (
+        <OneCOneSRegistrationBusinessKpiParagraph />
+      ) : (
+        <ProgramRegistrationBusinessKpiParagraph />
       )
     case PROGRAM_REGISTRATION_IDS.wageInfo:
-      return <ProgramRegistrationWageInfoParagraph />
+      return options?.programRegistrationFormVariant === 'economy' ? (
+        <OneCOneSRegistrationWageInfoParagraph />
+      ) : (
+        <ProgramRegistrationWageInfoParagraph />
+      )
     case PROGRAM_REGISTRATION_IDS.typeSettings:
       return options == null ? null : (
         <ProgramRegistrationTypeSettingsParagraph
@@ -120,7 +141,11 @@ export function renderProgramRegistrationParagraphBody(
         />
       )
     case PROGRAM_REGISTRATION_IDS.educationScheduleSettings:
-      return <ProgramRegistrationEducationScheduleSettingsParagraph />
+      return options?.programRegistrationFormVariant === 'economy' ? (
+        <OneCOneSRegistrationEducationScheduleSettingsParagraph />
+      ) : (
+        <ProgramRegistrationEducationScheduleSettingsParagraph />
+      )
     default:
       return null
   }
