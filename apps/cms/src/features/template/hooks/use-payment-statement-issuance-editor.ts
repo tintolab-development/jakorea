@@ -134,9 +134,11 @@ export function usePaymentStatementIssuanceEditor(active: boolean, previewHeader
   )
 
   useEffect(() => {
-    if (!isWritingUserPreviewOpen) return
+    // 다른 발급 양식(설문 미리보기 등)이 열려 있을 때도 이 훅은 마운트되어 있으므로,
+    // 비활성 상태에서 동기화하면 지급조서 draft가 전역 미리보기 세션을 덮어쓴다.
+    if (!active || !isWritingUserPreviewOpen) return
     syncWritingUserPreviewSession(writingPreviewSession)
-  }, [isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
+  }, [active, isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
 
   const handlePreview = useCallback(() => {
     openWritingUserPreview(writingPreviewSession)

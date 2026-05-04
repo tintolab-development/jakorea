@@ -111,7 +111,6 @@ export function TemplatePreviewModal({
     paragraphGapPx: a4ParagraphGapPx,
   })
   const pageCount = pagedParagraphs.length
-  const showPageNavigator = isA4DocumentPreviewLayout && pageCount > 1
   const safeActivePage = Math.min(readPreviewPage(searchParams), Math.max(1, pageCount))
   const safeActivePageIndex = safeActivePage - 1
   const activePageParagraphs = pagedParagraphs[safeActivePageIndex] ?? []
@@ -214,13 +213,11 @@ export function TemplatePreviewModal({
                     </div>
                   </div>
                 </div>
-                {showPageNavigator ? (
-                  <TemplatePreviewPageNavigator
-                    currentPage={safeActivePage}
-                    totalPages={pageCount}
-                    onPageChange={handlePageChange}
-                  />
-                ) : null}
+                <TemplatePreviewPageNavigator
+                  currentPage={safeActivePage}
+                  totalPages={pageCount}
+                  onPageChange={handlePageChange}
+                />
               </div>
             ) : (
               <FormEditorLeftPane

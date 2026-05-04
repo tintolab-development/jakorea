@@ -51,7 +51,7 @@ const PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME = '지급조서(발급용)'
 const CERTIFICATE_ISSUANCE_TEMPLATE_NAMES = new Set([
   '휴가 인증서',
   '수료증',
-  '감사 활동 인증서',
+  '강사 활동 인증서',
   '봉사 활동 인증서',
 ])
 
@@ -153,7 +153,7 @@ const documentRows: IssuanceTemplateRow[] = [
   {
     key: 'document-4',
     no: 5,
-    templateName: '감사 활동 인증서',
+    templateName: '강사 활동 인증서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
     updatedAt: '-',

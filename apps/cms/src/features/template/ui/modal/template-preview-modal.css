@@ -4,16 +4,20 @@
  */
 
 .template-preview-modal {
-  --template-preview-paragraph-column-max: 1080px;
+  --template-preview-paragraph-column-max: 1254px;
+  /* 텍스트(1254) + 간격(10) + 닫기(140) — A4 표시 너비와 동일 */
   --template-preview-content-max-width: 1404px;
-  --template-preview-text-start-x: 440px;
-  --template-preview-notice-text-width: 890px;
-  /* 디자인 캔버스 1464px → 표시 너비 비율로 스케일 (비율 유지) */
-  --template-preview-a4-width: 668px;
-  --template-preview-a4-scale: calc(668 / 1464);
-  /* 하단 고정 페이지 나비 높이의 약 1/2만큼 용지 하단이 같은 영역으로 내려가 겹침 */
-  --template-preview-a4-nav-overlap-half: 26px;
+  --template-preview-notice-text-width: 1254px;
+  /* 디자인 캔버스(1464px) → 화면 표시 너비(var(--template-preview-content-max-width))로 스케일 */
+  --template-preview-a4-design-page-width: 1464px;
+  --template-preview-a4-display-width: var(--template-preview-content-max-width, 1404px);
+  --template-preview-a4-width: var(--template-preview-a4-display-width);
+  --template-preview-a4-scale: calc(
+    var(--template-preview-a4-display-width) / var(--template-preview-a4-design-page-width)
+  );
   --template-preview-layout-width: 1920px;
+  /* 안내(텍스트+버튼) 줄 ↔ A4 미리보기 사이 */
+  --template-preview-notice-to-a4-gap: 16px;
 }
 
 .template-preview-modal.teal-header-modal--full .teal-header-modal__body {
@@ -123,13 +127,14 @@
   display: flex;
   height: 44px;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   box-sizing: border-box;
 }
 
 .template-preview-modal__notice-text-wrap {
   display: flex;
-  width: var(--template-preview-notice-text-width, 890px);
+  width: var(--template-preview-notice-text-width, 1254px);
   max-width: none;
   height: 44px;
   justify-content: flex-start;
@@ -189,11 +194,18 @@
   min-height: 1080px;
 }
 
-/* A4 미리보기는 페이지 네비게이션으로 이동하므로 내부 세로 스크롤을 만들지 않는다. */
+/* A4: 본문만 세로 스크롤 · 상단 타이틀/안내는 고정 · 하단 네비(고정)에 가리지 않도록 여백 */
 .template-preview-modal:has(.template-preview-modal__a4-stage) .template-preview-modal__body {
-  overflow-y: hidden;
+  overflow-y: auto;
   min-height: 0;
-  padding-bottom: 52px;
+  /* padding-bottom + 스크롤 시 하단 고정 페이지 네비(약 60px) 여유 */
+  padding-bottom: calc(52px + 64px);
+  gap: var(--template-preview-notice-to-a4-gap, 16px);
+}
+
+.template-preview-modal:has(.template-preview-modal__a4-stage) .template-preview-modal__pages {
+  flex: 0 0 auto;
+  min-height: auto;
 }
 
 .template-preview-modal__pages {
@@ -212,13 +224,13 @@
   width: 100%;
 }
 
-/* 단락 카드 열: 최대 1080px, 배경(#F4F6F6)은 화면 전폭 유지 */
+/* 단락 카드 열: 최대 1254px, 배경(#F4F6F6)은 화면 전폭 유지 */
 .template-preview-modal__pages .form-editor-left {
   flex: 0 1 auto;
   align-self: center;
   min-width: 0;
   width: 100%;
-  max-width: var(--template-preview-paragraph-column-max, 1080px);
+  max-width: var(--template-preview-paragraph-column-max, 1254px);
   box-sizing: border-box;
 }
 
@@ -231,14 +243,14 @@
   flex: 0 0 auto;
   min-height: 0;
   overflow-x: visible;
-  overflow-y: hidden;
+  overflow-y: visible;
   padding-bottom: 0;
   box-sizing: border-box;
 }
 
 .template-preview-modal__a4-stage {
-  width: var(--template-preview-a4-width, 668px);
-  flex: 1 0 0;
+  width: var(--template-preview-a4-width, 1404px);
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   justify-content: center;
@@ -250,20 +262,19 @@
 }
 
 .template-preview-modal__a4-frame {
-  width: var(--template-preview-a4-width, 668px);
+  width: var(--template-preview-a4-width, 1404px);
   flex: 0 0 auto;
   aspect-ratio: 65 / 92;
-  height: calc(var(--template-preview-a4-width, 668px) * 92 / 65);
+  height: calc(var(--template-preview-a4-width, 1404px) * 92 / 65);
   max-width: none;
   overflow: hidden;
   border-radius: 0;
   box-shadow: none;
   background: #fff;
-  transform: translateY(var(--template-preview-a4-nav-overlap-half, 26px));
 }
 
 .template-preview-modal__a4-scale-inner {
-  width: 1464px;
+  width: var(--template-preview-a4-design-page-width, 1464px);
   height: 2072px;
   transform-origin: top left;
   transform: scale(var(--template-preview-a4-scale));
@@ -326,15 +337,11 @@
 
 .template-preview-modal__content .form-editor-left {
   width: 100%;
-  max-width: var(--template-preview-paragraph-column-max, 1080px);
+  max-width: var(--template-preview-paragraph-column-max, 1254px);
   margin: 0 auto;
 }
 
 .template-preview-modal--form-layout .template-preview-modal__body {
   flex: 1 0 0;
   align-items: center;
-}
-
-.template-preview-modal--form-layout .template-preview-modal__notice {
-  padding-left: max(0px, calc(var(--template-preview-text-start-x, 440px) - 52px));
 }
