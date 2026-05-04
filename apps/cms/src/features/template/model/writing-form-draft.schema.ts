@@ -124,6 +124,17 @@ export type ShortEssayParagraph = WritingFormParagraphBase & {
   bodyText: string
 }
 
+/** N차시 교육 계획 등 — `short_essay`와 동일 필드 모양, 전용 variant·UI */
+export type SessionPlanShortEssayParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'session_plan_short_essay'
+  answerRequired?: boolean
+  showItemTitle?: boolean
+  items?: Array<{ id: string; label?: string; placeholder?: string; bodyText: string }>
+  bodyPlaceholder: string
+  bodyText: string
+}
+
 export interface MultipleChoiceItem {
   id: string
   label: string
@@ -1897,6 +1908,7 @@ export type WritingFormParagraph =
   | SubjectiveParagraph
   | AgreementExplanationTextParagraph
   | ShortEssayParagraph
+  | SessionPlanShortEssayParagraph
   | MultipleChoiceParagraph
   | DropdownParagraph
   | DateParagraph
@@ -1959,6 +1971,33 @@ export const DEFAULT_SURVEY_PARAGRAPH_IDS = {
   subjective: 'survey-paragraph-subjective',
   closing: 'survey-paragraph-closing',
 } as const
+
+/** 발급 양식 > UJAT 교육계획서 시드 단락 id — 구조 잠금·초기 선택에 사용 */
+export const UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS = {
+  title: 'ujat-edu-plan-title',
+  explanationText: 'ujat-edu-plan-explanation-text',
+  volunteerInfo: 'ujat-edu-plan-volunteer-info',
+  session1: 'ujat-edu-plan-session-1',
+  session2: 'ujat-edu-plan-session-2',
+  session3: 'ujat-edu-plan-session-3',
+  session4: 'ujat-edu-plan-session-4',
+} as const
+
+/** UJAT 교육계획서 템플릿 고정 단락 — 삭제·복제·순서 변경 불가 */
+export const UJAT_EDUCATION_PLAN_SEED_PARAGRAPH_IDS = new Set<string>([
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.title,
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.explanationText,
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.volunteerInfo,
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session1,
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session2,
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session3,
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session4,
+])
+
+/** 제목형(1번) — 드래그 핸들 미노출. 지급조서 `PAYMENT_STATEMENT_ISSUANCE_HIDDEN_DRAG_HANDLE_IDS`와 동일 UX */
+export const UJAT_EDUCATION_PLAN_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
+  UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.title,
+])
 
 /** 직접 등록 — 테이블 가로형 기본 단락 id(가로형 테이블만; 마무리/설문형 단락 없음) */
 export const DEFAULT_HORIZONTAL_TABLE_PARAGRAPH_IDS = {
@@ -2155,6 +2194,18 @@ export function getWritingFormHeadMiddlePinnedTail(paragraphs: WritingFormParagr
     }
   }
 
+  /** 마지막이 마무리글형이 아니면 하단 고정 tail 없음 — head만 고정(예: UJAT 교육계획서) */
+  const lastIsClosingParagraph =
+    last.kind === 'description' && last.variant === 'closing'
+
+  if (!lastIsClosingParagraph) {
+    return {
+      head,
+      middle: paragraphs.slice(1),
+      pinnedTail: [],
+    }
+  }
+
   return {
     head,
     middle: paragraphs.slice(1, -1),
@@ -2302,6 +2353,118 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         participatesInTitleNumbering: false,
         body: '설문에 참여해 주셔서 감사합니다.',
       },
+    ],
+  }
+}
+
+const UJAT_EDU_PLAN_USER_FIELDS: Array<{ key: string; label: string }> = [
+  { key: 'name', label: '이름' },
+  { key: 'gender', label: '성별' },
+  { key: 'birthDate', label: '생년월일' },
+  { key: 'phone', label: '연락처' },
+  { key: 'email', label: '이메일' },
+  { key: 'addressRegion', label: '자택 주소(지번)' },
+  { key: 'addressDetail', label: '자택 주소(도로명)' },
+  { key: 'affiliation', label: '소속' },
+  { key: 'applicantType', label: '신청자 유형' },
+  { key: 'programName', label: '프로그램' },
+  { key: 'period', label: '활동 일정' },
+  { key: 'institutionName', label: '기관명' },
+  { key: 'institutionRegion', label: '기관 소재지' },
+  { key: 'educationTarget', label: '교육 대상' },
+  { key: 'educationGrade', label: '교육 학년' },
+  { key: 'teamName', label: '팀 명' },
+  { key: 'teamPartnerName', label: '팀원 명' },
+]
+
+function createUjatEducationPlanSessionParagraph(
+  id: string,
+  sessionIndex: number
+): SessionPlanShortEssayParagraph {
+  const n = sessionIndex
+  const ph = '자유롭게 작성해 주세요'
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'session_plan_short_essay',
+    answerRequired: true,
+    requiredMark: true,
+    paragraphTitle: `${n}차시 교육 계획`,
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    showItemTitle: true,
+    items: [
+      { id: `${id}-intro`, label: '도입', placeholder: ph, bodyText: '' },
+      { id: `${id}-body`, label: '전개', placeholder: ph, bodyText: '' },
+      { id: `${id}-outro`, label: '마무리', placeholder: ph, bodyText: '' },
+    ],
+    bodyPlaceholder: ph,
+    bodyText: '',
+  }
+}
+
+/** 발급 양식 > UJAT 교육계획서 — 기존 단락 variant만으로 구성된 시드 초안 */
+export function createUjatEducationPlanIssuanceDraft(): WritingFormDraft {
+  const selectedKeys = UJAT_EDU_PLAN_USER_FIELDS.map(f => f.key)
+  return {
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'numeric' },
+    paragraphs: [
+      {
+        id: UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.title,
+        kind: 'description',
+        variant: 'survey_title_with_period',
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        surveyTitle: 'JA KOREA 대학생경제교육봉사단(UJAT) 교육계획서',
+        surveyDescription: '',
+        periodMode: 'immediate',
+        startAt: null,
+        endAt: null,
+        showWritingPeriodOnForm: false,
+      },
+      {
+        id: UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.explanationText,
+        kind: 'single_item',
+        variant: 'agreement_explanation_text',
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        bodyPlaceholder: '텍스트를 작성해 주세요',
+        bodyText: '',
+        answerRequired: true,
+      },
+      {
+        id: UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.volunteerInfo,
+        kind: 'single_item',
+        variant: 'user_info',
+        answerRequired: true,
+        requiredMark: true,
+        paragraphTitle: '봉사자 정보',
+        paragraphDescription: '노출할 항목을 선택합니다. (실제 응답 시 자동 매핑)',
+        participatesInTitleNumbering: true,
+        userFields: UJAT_EDU_PLAN_USER_FIELDS,
+        selectedUserFieldKeys: selectedKeys,
+      },
+      createUjatEducationPlanSessionParagraph(
+        UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session1,
+        1
+      ),
+      createUjatEducationPlanSessionParagraph(
+        UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session2,
+        2
+      ),
+      createUjatEducationPlanSessionParagraph(
+        UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session3,
+        3
+      ),
+      createUjatEducationPlanSessionParagraph(
+        UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session4,
+        4
+      ),
     ],
   }
 }
@@ -2521,7 +2684,10 @@ export function writingOutlineLabel(p: WritingFormParagraph): string {
     const t = p.paragraphTitle.trim()
     return t || '설명 안내'
   }
-  if (p.kind === 'single_item' && p.variant === 'short_essay') {
+  if (
+    p.kind === 'single_item' &&
+    (p.variant === 'short_essay' || p.variant === 'session_plan_short_essay')
+  ) {
     const t = p.paragraphTitle.trim()
     return t || '동의 내용'
   }

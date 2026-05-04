@@ -6,6 +6,7 @@ import {
   type HorizontalTableParagraph,
   type MultipleChoiceParagraph,
   type ScaleTypeParagraph,
+  type SessionPlanShortEssayParagraph,
   type ShortEssayParagraph,
   type SubjectiveParagraph,
   type UserInfoParagraph,
@@ -46,8 +47,9 @@ export function cloneWritingFormParagraphWithNewParagraphId(
       return cloneHorizontalTableParagraph(p as HorizontalTableParagraph, newParagraphId)
     case 'vertical_table':
       return cloneVerticalTableParagraph(p as VerticalTableParagraph, newParagraphId)
-    case 'short_essay': {
-      const s = p as ShortEssayParagraph
+    case 'short_essay':
+    case 'session_plan_short_essay': {
+      const s = p as ShortEssayParagraph | SessionPlanShortEssayParagraph
       const items = (s.items ?? []).map(it => ({
         ...it,
         id: crypto.randomUUID(),
