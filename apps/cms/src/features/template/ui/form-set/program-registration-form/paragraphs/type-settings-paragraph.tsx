@@ -22,6 +22,7 @@ const PROGRAM_REGISTRATION_MULTI_COMMON_PARTICIPATION_OPTIONS = [
 
 type ProgramRegistrationTypeSettingsParagraphProps = {
   programType: ProgramRegistrationType
+  onProgramTypeChange: (value: ProgramRegistrationType) => void
   /** 참여자 유형 학교/기관 — 교육 형태에 「참여자 선택」 포함 */
   participantOrganization: boolean
   sessionRoundType: ProgramRegistrationSessionRoundType
@@ -85,6 +86,7 @@ function ScheduleDetailRadioRow({
 
 export function ProgramRegistrationTypeSettingsParagraph({
   programType,
+  onProgramTypeChange,
   participantOrganization,
   sessionRoundType,
   onSessionRoundTypeChange,
@@ -121,11 +123,13 @@ export function ProgramRegistrationTypeSettingsParagraph({
           <DetailInfoForm.Field
             label="교육 진행 구조"
             edit={
-              <CmsRadioGroup size="large" value={programType}>
+              <CmsRadioGroup
+                size="large"
+                value={programType}
+                onChange={e => onProgramTypeChange(e.target.value as ProgramRegistrationType)}
+              >
                 <CmsRadio value="curriculum">커리큘럼형</CmsRadio>
-                <CmsRadio value="schedule" disabled>
-                  일정형
-                </CmsRadio>
+                <CmsRadio value="schedule">일정형</CmsRadio>
               </CmsRadioGroup>
             }
             view={programType === 'curriculum' ? '커리큘럼형' : '일정형'}

@@ -11,11 +11,13 @@ import {
 } from '@/features/template/lib/writing-form-middle-paragraph-mutations'
 import {
   createProgramRegistrationDraft,
+  PROGRAM_REGISTRATION_IDS,
   PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-registration-draft'
 import {
   normalizeWritingFormDraft,
   type FormTitleNumberingStyle,
+  type HorizontalTableParagraph,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -133,7 +135,7 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
     individual: true,
     organization: false,
   })
-  const [programType] = useState<ProgramRegistrationType>('curriculum')
+  const [programType, setProgramType] = useState<ProgramRegistrationType>('curriculum')
   const [sessionRoundType, setSessionRoundType] = useState<ProgramRegistrationSessionRoundType>('single')
   const [educationFormScheduleDetail, setEducationFormScheduleDetail] =
     useState<ProgramRegistrationScheduleDetailKind>('common')
@@ -142,6 +144,9 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
   const [ipsScheduleDetail, setIpsScheduleDetail] = useState<ProgramRegistrationScheduleDetailKind>('common')
   const [curriculumSessionCount, setCurriculumSessionCount] = useState(2)
   const [curriculumChartSessionCount, setCurriculumChartSessionCount] = useState(2)
+  const [scheduleCurriculumDetailCount, setScheduleCurriculumDetailCount] = useState(2)
+  const [scheduleCurriculumGroupCount, setScheduleCurriculumGroupCount] = useState(2)
+  const [scheduleCurriculumPreEducation, setScheduleCurriculumPreEducation] = useState(false)
 
   const {
     openWritingUserPreview,
@@ -163,6 +168,10 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
     setIpsScheduleDetail('common')
     setCurriculumSessionCount(2)
     setCurriculumChartSessionCount(2)
+    setProgramType('curriculum')
+    setScheduleCurriculumDetailCount(2)
+    setScheduleCurriculumGroupCount(2)
+    setScheduleCurriculumPreEducation(false)
   }, [active])
 
   useEffect(() => {
@@ -264,11 +273,48 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
     setCurriculumChartSessionCount(c => Math.min(c + 1, 16))
   }, [])
 
+  const onProgramTypeChange = useCallback((next: ProgramRegistrationType) => {
+    setProgramType(next)
+    setDraft(prev => ({
+      ...prev,
+      paragraphs: prev.paragraphs.map(p => {
+        if (p.id !== PROGRAM_REGISTRATION_IDS.educationCurriculum) return p
+        if (p.kind !== 'single_item' || p.variant !== 'horizontal_table') return p
+        const ht = p as HorizontalTableParagraph
+        if (next === 'schedule') {
+          return {
+            ...ht,
+            paragraphTitle: '교육 진행 (일정형)',
+            paragraphDescription: '세부 일정 별 정보를 입력해 주세요',
+          }
+        }
+        return {
+          ...ht,
+          paragraphTitle: '교육 진행 (커리큘럼)',
+          paragraphDescription: '차시 별 정보를 입력해 주세요',
+        }
+      }),
+    }))
+  }, [])
+
+  const onAddScheduleCurriculumDetail = useCallback(() => {
+    setScheduleCurriculumDetailCount(c => Math.min(c + 1, 99))
+  }, [])
+
+  const onAddScheduleCurriculumGroup = useCallback(() => {
+    setScheduleCurriculumGroupCount(c => Math.min(c + 1, 8))
+  }, [])
+
+  const onScheduleCurriculumPreEducationChange = useCallback((checked: boolean) => {
+    setScheduleCurriculumPreEducation(checked)
+  }, [])
+
   const paragraphBodyOptions = useMemo(
     () =>
       buildProgramRegistrationParagraphBodyOptions({
         participant,
         programType,
+        onProgramTypeChange,
         onIndividualChange,
         onOrganizationChange,
         sessionRoundType,
@@ -283,6 +329,12 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
         onAddCurriculumSession,
         curriculumChartSessionCount,
         onAddCurriculumChartSession,
+        scheduleCurriculumDetailCount,
+        onAddScheduleCurriculumDetail,
+        scheduleCurriculumGroupCount,
+        onAddScheduleCurriculumGroup,
+        scheduleCurriculumPreEducation,
+        onScheduleCurriculumPreEducationChange,
       }),
     [
       curriculumChartSessionCount,
@@ -291,15 +343,22 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
       ipsScheduleDetail,
       onAddCurriculumChartSession,
       onAddCurriculumSession,
+      onAddScheduleCurriculumDetail,
+      onAddScheduleCurriculumGroup,
+      onScheduleCurriculumPreEducationChange,
       onEducationFormScheduleDetailChange,
       onIpsScheduleDetailChange,
       onIndividualChange,
       onOrganizationChange,
       onParticipationScheduleDetailChange,
+      onProgramTypeChange,
       onSessionRoundTypeChange,
       participant,
       participationScheduleDetail,
       programType,
+      scheduleCurriculumDetailCount,
+      scheduleCurriculumGroupCount,
+      scheduleCurriculumPreEducation,
       sessionRoundType,
     ]
   )

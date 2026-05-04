@@ -62,3 +62,49 @@
   > .cms-select {
   min-width: 0;
 }
+
+/* 프로그램 등록 — 교육 진행(일정형) 카드 헤더 우측 버튼 묶음 */
+.program-registration-paragraph__card-title-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: min(520px, 100%);
+}
+
+/* 교육 진행 (일정형) — 세부 일정 블록 */
+.program-registration-schedule-curriculum__block {
+  margin-bottom: 20px;
+}
+
+.program-registration-schedule-curriculum__block:last-child {
+  margin-bottom: 0;
+}
+
+.program-registration-schedule-curriculum__session-heading {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  margin-bottom: 8px;
+}
+
+.program-registration-schedule-curriculum__session-panel {
+  border: 1px solid rgba(61, 61, 61, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--main-WT, #fff);
+}
+
+.program-registration-schedule-curriculum__time-groups {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}

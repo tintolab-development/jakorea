@@ -42,8 +42,8 @@ type ProgramRegistrationCurriculumMultiSessionRowPlan =
   | 'p_eduPer_piAllCommon'
   | 'p_eduPer_piAnyPer'
 
-/** IPS 일정 별 상이 + 교육·참여 모두 일정 공통 — 커리큘럼에서 참여 방식 행 미노출 */
-function shouldHideCurriculumParticipationRowForCommonEduPartWithIpsPerSchedule(
+/** IPS 일정 별 상이 + 교육·참여 모두 일정 공통 — 커리큘럼·일정형에서 참여 방식 행 미노출 */
+export function shouldHideCurriculumParticipationRowForCommonEduPartWithIpsPerSchedule(
   educationFormScheduleDetail: ProgramRegistrationScheduleDetailKind,
   participationScheduleDetail: ProgramRegistrationScheduleDetailKind,
   ipsScheduleDetail: ProgramRegistrationScheduleDetailKind
@@ -55,7 +55,7 @@ function shouldHideCurriculumParticipationRowForCommonEduPartWithIpsPerSchedule(
   )
 }
 
-function getProgramRegistrationCurriculumMultiSessionRowPlan(
+export function getProgramRegistrationCurriculumMultiSessionRowPlan(
   educationFormScheduleDetail: ProgramRegistrationScheduleDetailKind,
   participationScheduleDetail: ProgramRegistrationScheduleDetailKind,
   ipsScheduleDetail: ProgramRegistrationScheduleDetailKind
