@@ -104,10 +104,18 @@ export default function TemplateFormTab() {
   const noopUpdateParagraph: FormUpdateParagraph = () => {}
   const previewEditorKind =
     selectedTemplate?.id.startsWith('agreement-') === true ? 'agreement' : 'survey'
-  const isProgramRegistrationTemplate = selectedTemplate?.id === 'registration-general'
+  const programRegistrationFormVariant =
+    selectedTemplate?.id === 'registration-economy' ? 'economy' : 'general'
+  const isProgramRegistrationTemplate =
+    selectedTemplate?.id === 'registration-general' ||
+    selectedTemplate?.id === 'registration-economy'
   const programRegistrationVm = useProgramRegistrationEditor(
     isPreviewOpen && isProgramRegistrationTemplate,
-    selectedTemplate?.templateName ?? '일반 프로그램 등록 폼'
+    selectedTemplate?.templateName ?? '일반 프로그램 등록 폼',
+    {
+      restrictCurriculumSessionStructure: true,
+      programRegistrationFormVariant,
+    }
   )
 
   const handlePreview = useCallback(() => {

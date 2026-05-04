@@ -14,5 +14,5 @@ export const A4_DOCUMENT_CONTINUATION_PAGE_BODY_MAX_PX = A4_DOCUMENT_DESIGN_INNE
 /** `.a4-document-page-layout` 콘텐츠 가로(1464 - 좌우 padding 100*2) */
 export const A4_DOCUMENT_CONTENT_INNER_WIDTH_PX = 1464 - 200
 
-/** `form-editor-left` 카드 스택 gap과 맞춤 (`form-editor.css` .form-editor-left gap: 32px) */
+/** `form-editor-left` 카드 스택 gap과 맞춤 (`form-editor-core.css` .form-editor-left gap: 32px) */
 export const A4_DOCUMENT_PARAGRAPH_GAP_PX = 32

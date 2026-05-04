@@ -1,4 +1,4 @@
-import { MenuOutlined } from '@ant-design/icons'
+import { ClockCircleOutlined, MenuOutlined, PlusOutlined } from '@ant-design/icons'
 import type { ReactNode } from 'react'
 import {
   DndContext,
@@ -148,7 +148,7 @@ function withoutTitleRequired<T extends { titleRequired?: boolean }>(
   return { ...heading, titleRequired: false }
 }
 
-/** 프로그램 등록 — 커리큘럼 단락: 카드 제목 줄 우측에 회차/차시 추가 (본문 DetailInfoForm 밖) */
+/** 프로그램 등록 — 교육 진행 단락: 카드 제목 줄 우측 액션 (본문 DetailInfoForm 밖) */
 function withProgramRegistrationCurriculumTitleTrailing(
   heading: ParagraphCardEditableHeading,
   paragraph: WritingFormParagraph,
@@ -158,7 +158,82 @@ function withProgramRegistrationCurriculumTitleTrailing(
   if (paragraph.id !== PROGRAM_REGISTRATION_IDS.educationCurriculum || pr == null) {
     return heading
   }
+  if (pr.programType === 'schedule') {
+    const isScheduleMultiAllPer =
+      pr.sessionRoundType === 'multi' &&
+      pr.educationFormScheduleDetail === 'perSchedule' &&
+      pr.participationScheduleDetail === 'perSchedule' &&
+      pr.ipsScheduleDetail === 'perSchedule'
+
+    if (isScheduleMultiAllPer) {
+      return {
+        ...heading,
+        titleTrailing: (
+          <div
+            className="program-registration-paragraph__card-title-actions"
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => e.stopPropagation()}
+            role="presentation"
+          >
+            <CmsToggle
+              label="사전 교육"
+              checked={pr.scheduleCurriculumPreEducation}
+              onChange={pr.onScheduleCurriculumPreEducationChange}
+            />
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="medium"
+              width={160}
+              icon={<PlusOutlined aria-hidden />}
+              onClick={e => {
+                e.stopPropagation()
+                pr.onAddScheduleCurriculumDetail()
+              }}
+            >
+              강의 행사 일정 추가
+            </CmsButton>
+          </div>
+        ),
+      }
+    }
+
+    return {
+      ...heading,
+      titleTrailing: (
+        <div className="program-registration-paragraph__card-title-actions">
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="medium"
+            width={160}
+            icon={<ClockCircleOutlined aria-hidden />}
+            onClick={e => {
+              e.stopPropagation()
+              pr.onAddScheduleCurriculumGroup()
+            }}
+          >
+            진행 그룹 구분 추가
+          </CmsButton>
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="medium"
+            width={160}
+            icon={<PlusOutlined aria-hidden />}
+            onClick={e => {
+              e.stopPropagation()
+              pr.onAddScheduleCurriculumDetail()
+            }}
+          >
+            강의 세부 일정 추가
+          </CmsButton>
+        </div>
+      ),
+    }
+  }
   const isMulti = pr.sessionRoundType === 'multi'
+  const curriculumAddDisabled = pr.restrictCurriculumSessionStructure === true
   return {
     ...heading,
     titleTrailing: (
@@ -167,13 +242,16 @@ function withProgramRegistrationCurriculumTitleTrailing(
         variant="secondary"
         size="medium"
         width={isMulti ? 160 : 180}
+        disabled={curriculumAddDisabled}
+        icon={<PlusOutlined aria-hidden />}
         onClick={e => {
           e.stopPropagation()
+          if (curriculumAddDisabled) return
           if (isMulti) pr.onAddCurriculumSession()
           else pr.onAddCurriculumChartSession()
         }}
       >
-        {isMulti ? '+ 강의 진행 회차 추가' : '+ 강의 진행 차시 추가'}
+        {isMulti ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
       </CmsButton>
     ),
   }
@@ -298,7 +376,8 @@ function paragraphEditableHeading(
         isEditMode: false,
         /* 가로형 에디터에서만: 구조 잠금이어도 카드 헤더 제목은 시드 기본값을 바꿀 수 있게 */
         titleIsEditMode: editorKind === 'horizontal_table' && isSelected,
-        descriptionIsEditMode: true,
+        /* 미선택 시 설명란이 항상 편집 모드면 입력 셸이 클릭 전파를 막아 카드 선택·우측 패널 갱신이 안 됨 */
+        descriptionIsEditMode: editorKind === 'horizontal_table' && isSelected,
         titleValue: p.paragraphTitle,
         onTitleChange:
           editorKind === 'horizontal_table'

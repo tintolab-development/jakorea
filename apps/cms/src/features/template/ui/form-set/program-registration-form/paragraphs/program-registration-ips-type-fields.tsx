@@ -16,34 +16,39 @@ export type ProgramRegistrationIpsTypeValue = {
 export type ProgramRegistrationIpsTypeFieldsProps = {
   value: ProgramRegistrationIpsTypeValue
   onChange: (next: ProgramRegistrationIpsTypeValue) => void
+  /** true면 1·2차 IPS 셀렉트 모두 비활성 (값은 `value` 그대로 표시) */
+  disabled?: boolean
 }
 
 export function ProgramRegistrationIpsTypeFields({
   value,
   onChange,
+  disabled = false,
 }: ProgramRegistrationIpsTypeFieldsProps) {
   const { category, detail } = value
 
   const handleCategoryChange = (v: unknown) => {
+    if (disabled) return
     const nextCategory = String(v ?? '') as ProgramRegistrationIpsCategory | ''
     const nextDetail = nextCategory === 'prepare' ? 'none' : ''
     onChange({ category: nextCategory, detail: nextDetail })
   }
 
   const handleDetailChange = (v: unknown) => {
+    if (disabled) return
     onChange({ ...value, detail: String(v ?? '') })
   }
 
-  let secondaryPlaceholder = 'IPS 유형을 먼저 선택하세요'
+  let secondaryPlaceholder = 'IPS를 먼저 선택하세요'
   let secondaryOptions: { value: string; label: string }[] = []
   let secondaryDisabled = true
 
   if (category === 'succeed') {
-    secondaryPlaceholder = '프로그램 종류'
+    secondaryPlaceholder = '프로그램 종류를 선택하세요'
     secondaryOptions = [...PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS]
     secondaryDisabled = false
   } else if (category === 'inspire') {
-    secondaryPlaceholder = '프로그램 채널'
+    secondaryPlaceholder = '프로그램 채널을 선택하세요'
     secondaryOptions = [...PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS]
     secondaryDisabled = false
   } else if (category === 'prepare') {
@@ -52,18 +57,24 @@ export function ProgramRegistrationIpsTypeFields({
     secondaryDisabled = true
   }
 
+  const firstSelectPlaceholder = 'IPS를 선택하세요'
+
   const secondaryValue =
     category === '' ? undefined : category === 'prepare' ? 'none' : detail || undefined
+
+  const primaryDisabled = disabled
+  const secondarySelectDisabled = disabled || secondaryDisabled
 
   return (
     <div className="detail-info-form-inputs-wrapper">
       <CmsSelect
         inputSize="medium"
         withAllOption={false}
-        placeholder="IPS 유형"
+        placeholder={firstSelectPlaceholder}
         width={120}
         options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
         value={category || undefined}
+        disabled={primaryDisabled}
         onChange={handleCategoryChange}
       />
       <DetailInfoForm.InputsSeparator />
@@ -71,10 +82,10 @@ export function ProgramRegistrationIpsTypeFields({
         inputSize="medium"
         withAllOption={false}
         placeholder={secondaryPlaceholder}
-        width={260}
+        width={360}
         options={secondaryOptions}
         value={secondaryValue}
-        disabled={secondaryDisabled}
+        disabled={secondarySelectDisabled}
         onChange={handleDetailChange}
       />
     </div>

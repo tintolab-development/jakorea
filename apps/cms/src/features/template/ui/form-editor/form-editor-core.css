@@ -1,0 +1,255 @@
+/**
+ * 폼 에디터 — 레이아웃·좌측 패널·단락 카드 크롬·우측 커스텀 패널 공통
+ * @see form-editor.css (진입점)
+ */
+
+.form-editor-left {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  /* 스크롤바 유무로 가로폭이 바뀌며 테이블·포커스 링이 흔들리는 현상 방지 */
+  scrollbar-gutter: stable;
+  padding-right: 4px;
+}
+
+.form-editor-left__system-fixed {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.form-editor-left__system-fixed-row {
+  width: 100%;
+}
+
+.form-editor-card .paragraph-card__header {
+  gap: 4px;
+}
+
+.form-editor-card .paragraph-card__description {
+  min-height: 1.25em;
+}
+
+/* 푸터 좌측 토글(답변 필수·하단 설명 등)이 우측 액션과 flex 경쟁 시 폭 0으로 사라지지 않게 */
+.form-editor-card .paragraph-card__toggles {
+  flex-shrink: 0;
+  min-width: min-content;
+}
+
+.form-editor-placeholder {
+  color: var(--color-text-placeholder, #bfbfbf);
+}
+
+.form-editor-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-editor-field--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-editor-field__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--main-BK, #3d3d3d);
+}
+
+.form-editor-range {
+  width: 100%;
+  max-width: 100%;
+}
+
+.form-editor-user-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+@media (max-width: 900px) {
+  .form-editor-user-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.form-editor-user-grid__cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--main-BK, #3d3d3d);
+  cursor: pointer;
+}
+
+.form-editor-likert__labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #6f7f86;
+  margin-bottom: 8px;
+}
+
+.form-editor-likert__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.form-editor-likert__btn {
+  min-width: 44px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--main-BK, #3d3d3d);
+  cursor: pointer;
+}
+
+.form-editor-likert__btn:hover {
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+.form-editor-likert__btn--active {
+  border-color: var(--color-mint-01, #01a1af);
+  background: rgba(1, 161, 175, 0.12);
+  color: var(--color-mint-01, #01a1af);
+}
+
+.form-editor-subjective.ant-input {
+  resize: vertical;
+}
+
+.form-editor-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.form-editor-card__actions--minimal {
+  justify-content: flex-start;
+}
+
+/* 단락 카드 푸터 토글 행 — 항목 간 간격 16px 통일 */
+.form-editor-card__toggles-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+/* 테이블 단락 푸터: 토글끼리 16px만 두고 콘텐츠 너비에 맞춤(203px 고정은 하단 동의 라디오 전용) */
+.form-editor-card__toggles-row--table-foot {
+  gap: 16px;
+  justify-content: flex-start;
+}
+
+.form-editor-card__table-footer-toggle-slot {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+/* 우측 네비: 고정 행은 드래그 핸들 없이 동일 높이 유지 */
+.template-modal-nav-item--pinned {
+  padding-right: 14px;
+}
+
+.form-editor-right-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: stretch;
+}
+
+.form-editor-right-panel__form-items .ant-form-item {
+  margin-bottom: 20px !important;
+}
+
+.form-editor-right-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.form-editor-right-panel__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--main-BK, #3d3d3d);
+}
+
+.form-editor-right-panel__select {
+  width: 100%;
+}
+
+.form-editor-right-panel__section-title {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%; /* 25.2px */
+  margin-bottom: 10px;
+  display: block;
+}
+
+.form-editor-right-panel__system-hint {
+  color: var(--gray-85969-d, #85969d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.form-editor-right-panel__structure-locked-hint {
+  margin: 16px 0 0;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--main-BK, #3d3d3d);
+  opacity: 0.6;
+}
+
+.form-editor-right-panel__structure-locked-hint-mark {
+  color: var(--ant-color-error, #ff4d4f);
+  margin-right: 2px;
+}
+
+.form-editor-right-panel__form {
+  width: 100%;
+}
+
+.form-editor-right-panel__form .ant-form-item {
+  margin-bottom: 24px;
+}
+
+.form-editor-right-panel__kind-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  align-items: flex-start;
+}
+
+.form-editor-right-panel__horizontal-table-type {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
