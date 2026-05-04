@@ -14,6 +14,8 @@ import { useA4ParagraphPages } from '@/features/template/hooks/use-a4-paragraph-
 import {
   createDefaultSurveyDraft,
   createSingleItemPreviewDraft,
+  createUjatEducationPlanIssuanceDraft,
+  UJAT_EDUCATION_PLAN_HIDDEN_DRAG_HANDLE_IDS,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
@@ -37,6 +39,13 @@ import {
   type TemplateModalRightNavigationConfig,
 } from '@/features/template/ui/template-modal-right-navigation'
 import { usePaymentStatementIssuanceEditor } from '@/features/template/hooks/use-payment-statement-issuance-editor'
+import { useUjatEducationPlanIssuanceEditor } from '@/features/template/hooks/use-ujat-education-plan-issuance-editor'
+import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
+import {
+  FormEditorRightPanel,
+  FormEditorTitleNumberingField,
+} from '@/features/template/ui/form-editor/form-editor-right-panel'
 import {
   PaymentStatementIssuanceEditorLeftColumn,
   PaymentStatementIssuanceEditorRightColumn,
@@ -46,8 +55,10 @@ import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-overlay'
 import { FormTemplateFullpageModal } from './form-template-fullpage-modal'
+import './form-test-single-item-fullpage-modal.css'
 
 const PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME = '지급조서(발급용)'
+const UJAT_EDUCATION_PLAN_TEMPLATE_NAME = 'UJAT 교육계획서'
 const CERTIFICATE_ISSUANCE_TEMPLATE_NAMES = new Set([
   '휴가 인증서',
   '수료증',
@@ -86,7 +97,7 @@ const issuanceRows: IssuanceTemplateRow[] = [
   {
     key: 'issuance-2',
     no: 2,
-    templateName: 'UJAT 교육일지',
+    templateName: 'UJAT 교육계획서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
     updatedAt: '-',
@@ -180,6 +191,7 @@ export function IssuanceFormTab() {
 
   const isPaymentStatementIssuance =
     selectedTemplate?.templateName === PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME
+  const isUjatEducationPlan = selectedTemplate?.templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME
   const isCertificateIssuance =
     selectedTemplate != null && CERTIFICATE_ISSUANCE_TEMPLATE_NAMES.has(selectedTemplate.templateName)
   const certificateInitialStringValues = useMemo(() => {
@@ -194,6 +206,9 @@ export function IssuanceFormTab() {
   const paymentStatementVm = usePaymentStatementIssuanceEditor(
     isPreviewOpen && isPaymentStatementIssuance,
     selectedTemplate?.templateName ?? PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME
+  )
+  const ujatEducationPlanVm = useUjatEducationPlanIssuanceEditor(
+    Boolean(isPreviewOpen && !isCertificateIssuance && isUjatEducationPlan)
   )
   const paymentStatementPdfHostRef = useRef<HTMLDivElement>(null)
   const [paymentStatementPdfLoading, setPaymentStatementPdfLoading] = useState(false)
@@ -311,6 +326,9 @@ export function IssuanceFormTab() {
 
   const multiPageTemplateNames = new Set(['정산 신청서', '결과보고서', '강의보고서'])
   const getIssuancePreviewDraft = (templateName?: string): WritingFormDraft => {
+    if (templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME) {
+      return createUjatEducationPlanIssuanceDraft()
+    }
     if (templateName != null && multiPageTemplateNames.has(templateName)) {
       return createSingleItemPreviewDraft()
     }
@@ -329,6 +347,10 @@ export function IssuanceFormTab() {
   const handleModalPreview = () => {
     if (isPaymentStatementIssuance) {
       paymentStatementVm.handlePreview()
+      return
+    }
+    if (isUjatEducationPlan) {
+      ujatEducationPlanVm.handlePreview()
       return
     }
     handleOpenUserPreview()
@@ -384,13 +406,20 @@ export function IssuanceFormTab() {
       </div>
 
       <TemplateFullpageModal
+        className={isUjatEducationPlan ? 'form-test-single-item-fullpage-modal' : undefined}
         open={isPreviewOpen && !isCertificateIssuance}
         onClose={closeTemplatePreview}
         title={selectedTemplate?.templateName ?? '발급 양식 미리보기'}
         description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
         templateTabType="issuance"
         onPreview={handleModalPreview}
-        onSave={isPaymentStatementIssuance ? paymentStatementVm.handleSave : undefined}
+        onSave={
+          isPaymentStatementIssuance
+            ? paymentStatementVm.handleSave
+            : isUjatEducationPlan
+              ? ujatEducationPlanVm.handleSave
+              : undefined
+        }
         onDownloadDocument={
           isPaymentStatementIssuance ? () => void handleDownloadPaymentStatementDocument() : undefined
         }
@@ -398,6 +427,23 @@ export function IssuanceFormTab() {
         leftContent={
           isPaymentStatementIssuance ? (
             <PaymentStatementIssuanceEditorLeftColumn vm={paymentStatementVm} />
+          ) : isUjatEducationPlan ? (
+            <FormEditorLeftPanel
+              paragraphs={ujatEducationPlanVm.draft.paragraphs}
+              titleNumbering={ujatEducationPlanVm.draft.formSettings.titleNumbering}
+              selectedCardId={ujatEducationPlanVm.activeParagraphId}
+              onSelectCard={ujatEducationPlanVm.handleSelectCard}
+              onReorderMiddle={ujatEducationPlanVm.onReorderMiddle}
+              updateParagraph={ujatEducationPlanVm.updateParagraph}
+              editorKind="survey"
+              singleItemListActiveItemId={ujatEducationPlanVm.singleItemListActiveItemId}
+              onSelectSingleItemListItem={ujatEducationPlanVm.onSelectSingleItemListItem}
+              middleParagraphActions={ujatEducationPlanVm.middleParagraphActions}
+              structureLockedParagraphIds={ujatEducationPlanVm.structureLockedParagraphIds}
+              hideDragHandleForParagraphIds={UJAT_EDUCATION_PLAN_HIDDEN_DRAG_HANDLE_IDS}
+              hideParagraphRequiredChrome
+              headingDescriptionExtraClassName="paragraph-input-explanation-title"
+            />
           ) : (
             <TemplateModalLeftContent
               config={orderedLeftContentConfig}
@@ -410,6 +456,33 @@ export function IssuanceFormTab() {
         rightNavigation={
           isPaymentStatementIssuance ? (
             <PaymentStatementIssuanceEditorRightColumn vm={paymentStatementVm} />
+          ) : isUjatEducationPlan ? (
+            <FormEditorFieldNav
+              sectionTitle="커스텀 필드"
+              pinnedTop={ujatEducationPlanVm.pinnedTop}
+              sortableMiddle={ujatEducationPlanVm.sortableMiddle}
+              pinnedBottom={ujatEducationPlanVm.pinnedBottom}
+              selectedItemId={ujatEducationPlanVm.activeParagraphId}
+              onSelectItem={ujatEducationPlanVm.handleSelectCard}
+              onReorderMiddle={ujatEducationPlanVm.onReorderMiddle}
+              fieldListBottomSlot={
+                <FormEditorTitleNumberingField
+                  value={ujatEducationPlanVm.draft.formSettings.titleNumbering}
+                  onChange={ujatEducationPlanVm.onTitleNumberingChange}
+                />
+              }
+            >
+              <FormEditorRightPanel
+                draft={ujatEducationPlanVm.draft}
+                activeParagraphId={ujatEducationPlanVm.activeParagraphId}
+                onTitleNumberingChange={ujatEducationPlanVm.onTitleNumberingChange}
+                updateParagraph={ujatEducationPlanVm.updateParagraph}
+                editorKind="survey"
+                showTitleNumbering={false}
+                singleItemListActiveItemId={ujatEducationPlanVm.singleItemListActiveItemId}
+                structureLockedParagraphIds={ujatEducationPlanVm.structureLockedParagraphIds}
+              />
+            </FormEditorFieldNav>
           ) : (
             <TemplateModalRightNavigation
               config={rightNavigationConfig}
