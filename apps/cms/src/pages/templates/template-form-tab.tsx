@@ -107,7 +107,8 @@ export default function TemplateFormTab() {
   const isProgramRegistrationTemplate = selectedTemplate?.id === 'registration-general'
   const programRegistrationVm = useProgramRegistrationEditor(
     isPreviewOpen && isProgramRegistrationTemplate,
-    selectedTemplate?.templateName ?? '일반 프로그램 등록 폼'
+    selectedTemplate?.templateName ?? '일반 프로그램 등록 폼',
+    { restrictCurriculumSessionStructure: true }
   )
 
   const handlePreview = useCallback(() => {

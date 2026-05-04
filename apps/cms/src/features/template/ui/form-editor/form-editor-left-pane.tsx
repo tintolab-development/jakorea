@@ -233,6 +233,7 @@ function withProgramRegistrationCurriculumTitleTrailing(
     }
   }
   const isMulti = pr.sessionRoundType === 'multi'
+  const curriculumAddDisabled = pr.restrictCurriculumSessionStructure === true
   return {
     ...heading,
     titleTrailing: (
@@ -241,9 +242,11 @@ function withProgramRegistrationCurriculumTitleTrailing(
         variant="secondary"
         size="medium"
         width={isMulti ? 160 : 180}
+        disabled={curriculumAddDisabled}
         icon={<PlusOutlined aria-hidden />}
         onClick={e => {
           e.stopPropagation()
+          if (curriculumAddDisabled) return
           if (isMulti) pr.onAddCurriculumSession()
           else pr.onAddCurriculumChartSession()
         }}

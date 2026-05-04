@@ -123,7 +123,18 @@ function useProgramRegistrationMiddleActions(
   )
 }
 
-export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle: string) {
+export type UseProgramRegistrationEditorOptions = {
+  /** 템플릿 편집 등: 커리큘럼 차시·회차 추가 버튼 비활성·노출 블록 1개로 고정 */
+  restrictCurriculumSessionStructure?: boolean
+}
+
+export function useProgramRegistrationEditor(
+  active: boolean,
+  previewHeaderTitle: string,
+  editorOptions?: UseProgramRegistrationEditorOptions
+) {
+  const restrictCurriculumSessionStructure =
+    editorOptions?.restrictCurriculumSessionStructure === true
   const [draft, setDraft] = useState<WritingFormDraft>(() =>
     normalizeWritingFormDraft(createProgramRegistrationDraft())
   )
@@ -166,13 +177,13 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
     setEducationFormScheduleDetail('common')
     setParticipationScheduleDetail('common')
     setIpsScheduleDetail('common')
-    setCurriculumSessionCount(2)
-    setCurriculumChartSessionCount(2)
+    setCurriculumSessionCount(restrictCurriculumSessionStructure ? 1 : 2)
+    setCurriculumChartSessionCount(restrictCurriculumSessionStructure ? 1 : 2)
     setProgramType('curriculum')
     setScheduleCurriculumDetailCount(2)
     setScheduleCurriculumGroupCount(2)
     setScheduleCurriculumPreEducation(false)
-  }, [active])
+  }, [active, restrictCurriculumSessionStructure])
 
   useEffect(() => {
     if (!active) closeWritingUserPreview()
@@ -249,9 +260,10 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
 
   const onSessionRoundTypeChange = useCallback((value: ProgramRegistrationSessionRoundType) => {
     setSessionRoundType(value)
-    if (value === 'multi') setCurriculumSessionCount(2)
-    if (value === 'single') setCurriculumChartSessionCount(2)
-  }, [])
+    const defaultCount = restrictCurriculumSessionStructure ? 1 : 2
+    if (value === 'multi') setCurriculumSessionCount(defaultCount)
+    if (value === 'single') setCurriculumChartSessionCount(defaultCount)
+  }, [restrictCurriculumSessionStructure])
 
   const onEducationFormScheduleDetailChange = useCallback((value: ProgramRegistrationScheduleDetailKind) => {
     setEducationFormScheduleDetail(value)
@@ -266,12 +278,14 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
   }, [])
 
   const onAddCurriculumSession = useCallback(() => {
+    if (restrictCurriculumSessionStructure) return
     setCurriculumSessionCount(c => c + 1)
-  }, [])
+  }, [restrictCurriculumSessionStructure])
 
   const onAddCurriculumChartSession = useCallback(() => {
+    if (restrictCurriculumSessionStructure) return
     setCurriculumChartSessionCount(c => Math.min(c + 1, 16))
-  }, [])
+  }, [restrictCurriculumSessionStructure])
 
   const onProgramTypeChange = useCallback((next: ProgramRegistrationType) => {
     setProgramType(next)
@@ -325,10 +339,15 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
         onParticipationScheduleDetailChange,
         ipsScheduleDetail,
         onIpsScheduleDetailChange,
-        curriculumSessionCount,
+        curriculumSessionCount: restrictCurriculumSessionStructure
+          ? 1
+          : curriculumSessionCount,
         onAddCurriculumSession,
-        curriculumChartSessionCount,
+        curriculumChartSessionCount: restrictCurriculumSessionStructure
+          ? 1
+          : curriculumChartSessionCount,
         onAddCurriculumChartSession,
+        restrictCurriculumSessionStructure,
         scheduleCurriculumDetailCount,
         onAddScheduleCurriculumDetail,
         scheduleCurriculumGroupCount,
@@ -360,6 +379,7 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
       scheduleCurriculumGroupCount,
       scheduleCurriculumPreEducation,
       sessionRoundType,
+      restrictCurriculumSessionStructure,
     ]
   )
 
