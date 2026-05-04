@@ -10,7 +10,10 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ParagraphCard } from '@/features/template/ui/template-fullpage-modal'
+import {
+  ParagraphCard,
+  type ParagraphCardEditableHeading,
+} from '@/features/template/ui/template-fullpage-modal'
 import {
   FormParagraphCardActions,
   FormParagraphCardActionsMinimal,
@@ -37,6 +40,8 @@ import {
   type ParagraphBodyInteractionMode,
   type RenderFormParagraphBodyOptions,
 } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import { restrictFormEditorListToVerticalAxis } from '@/features/template/ui/form-editor/dnd-restrict-vertical-axis'
 import { getLastMiddleParagraphId } from '@/features/template/lib/writing-form-middle-paragraph-mutations'
@@ -141,6 +146,37 @@ function withoutTitleRequired<T extends { titleRequired?: boolean }>(
 ): T | undefined {
   if (!heading || !hideParagraphRequiredChrome) return heading
   return { ...heading, titleRequired: false }
+}
+
+/** 프로그램 등록 — 커리큘럼 단락: 카드 제목 줄 우측에 회차/차시 추가 (본문 DetailInfoForm 밖) */
+function withProgramRegistrationCurriculumTitleTrailing(
+  heading: ParagraphCardEditableHeading,
+  paragraph: WritingFormParagraph,
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+): ParagraphCardEditableHeading {
+  const pr = paragraphBodyOptions?.programRegistration
+  if (paragraph.id !== PROGRAM_REGISTRATION_IDS.educationCurriculum || pr == null) {
+    return heading
+  }
+  const isMulti = pr.sessionRoundType === 'multi'
+  return {
+    ...heading,
+    titleTrailing: (
+      <CmsButton
+        type="button"
+        variant="secondary"
+        size="medium"
+        width={isMulti ? 160 : 180}
+        onClick={e => {
+          e.stopPropagation()
+          if (isMulti) pr.onAddCurriculumSession()
+          else pr.onAddCurriculumChartSession()
+        }}
+      >
+        {isMulti ? '+ 강의 진행 회차 추가' : '+ 강의 진행 차시 추가'}
+      </CmsButton>
+    ),
+  }
 }
 
 /** 단락 헤더 설명 class 병합 — extra가 있으면 base에 없는 토큰만 덧붙임 */
@@ -260,10 +296,19 @@ function paragraphEditableHeading(
             : (p.answerRequired ?? p.requiredMark)
       return {
         isEditMode: false,
-        titleIsEditMode: false,
+        /* 가로형 에디터에서만: 구조 잠금이어도 카드 헤더 제목은 시드 기본값을 바꿀 수 있게 */
+        titleIsEditMode: editorKind === 'horizontal_table' && isSelected,
         descriptionIsEditMode: true,
         titleValue: p.paragraphTitle,
-        onTitleChange: () => {},
+        onTitleChange:
+          editorKind === 'horizontal_table'
+            ? (next: string) =>
+                updateParagraph(p.id, cur =>
+                  cur.kind === 'single_item' && cur.id === p.id
+                    ? { ...cur, paragraphTitle: next }
+                    : cur
+                )
+            : () => {},
         titlePlaceholder: '타이틀을 입력해 주세요',
         titleRequired,
         titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
@@ -656,13 +701,12 @@ function modalCardFooterActions(
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
     if (!isSelected) return undefined
     const tableParagraph = paragraph as HorizontalTableParagraph
-    const dimensionActions =
-      !structureLocked ? (
-        <HorizontalTableDimensionActions
-          paragraph={tableParagraph}
-          onUpdate={next => updateParagraph(tableParagraph.id, () => next)}
-        />
-      ) : null
+    const dimensionActions = !structureLocked ? (
+      <HorizontalTableDimensionActions
+        paragraph={tableParagraph}
+        onUpdate={next => updateParagraph(tableParagraph.id, () => next)}
+      />
+    ) : null
     const paragraphActions = middleParagraphActions ? (
       <FormParagraphCardActions
         duplicateDisabled={structureLocked}
@@ -695,13 +739,12 @@ function modalCardFooterActions(
         />
       ) : null
     }
-    const dimensionActions =
-      !structureLocked ? (
-        <VerticalTableDimensionActions
-          paragraph={vt}
-          onUpdate={next => updateParagraph(vt.id, () => next)}
-        />
-      ) : null
+    const dimensionActions = !structureLocked ? (
+      <VerticalTableDimensionActions
+        paragraph={vt}
+        onUpdate={next => updateParagraph(vt.id, () => next)}
+      />
+    ) : null
     const paragraphActions = middleParagraphActions ? (
       <FormParagraphCardActions
         duplicateDisabled={structureLocked}
@@ -796,9 +839,7 @@ function modalCardFooterActions(
               : undefined
           }
           onDelete={
-            middleParagraphActions
-              ? () => middleParagraphActions.onDelete(paragraph.id)
-              : undefined
+            middleParagraphActions ? () => middleParagraphActions.onDelete(paragraph.id) : undefined
           }
         />
       )
@@ -892,7 +933,7 @@ function PinnedFormCard({
 }: PinnedCardProps) {
   const isSelected = selectedCardId === paragraph.id
   const hideDragHandle = hideDragHandleForParagraphIds?.has(paragraph.id) ?? false
-  const editableHeading = withoutTitleRequired(
+  const editableHeadingBase = withoutTitleRequired(
     paragraphEditableHeading(
       paragraph,
       paragraphs,
@@ -904,6 +945,11 @@ function PinnedFormCard({
       headingDescriptionExtraClassName
     ),
     hideParagraphRequiredChrome
+  )
+  const editableHeading = withProgramRegistrationCurriculumTitleTrailing(
+    editableHeadingBase as ParagraphCardEditableHeading,
+    paragraph,
+    paragraphBodyOptions
   )
 
   return (
@@ -1021,7 +1067,7 @@ function SortableMiddleFormCard({
   } = useSortable({ id: paragraph.id, disabled: isStructureLocked })
 
   const isSelected = selectedCardId === paragraph.id
-  const editableHeading = withoutTitleRequired(
+  const editableHeadingBase = withoutTitleRequired(
     paragraphEditableHeading(
       paragraph,
       paragraphs,
@@ -1033,6 +1079,11 @@ function SortableMiddleFormCard({
       headingDescriptionExtraClassName
     ),
     hideParagraphRequiredChrome
+  )
+  const editableHeading = withProgramRegistrationCurriculumTitleTrailing(
+    editableHeadingBase as ParagraphCardEditableHeading,
+    paragraph,
+    paragraphBodyOptions
   )
 
   return (

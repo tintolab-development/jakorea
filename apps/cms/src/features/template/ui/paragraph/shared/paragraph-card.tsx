@@ -16,6 +16,8 @@ export interface ParagraphCardEditableHeading {
   /** 예: `paragraph-card__title--placeholder` */
   titleClassName?: string
   titleLeading?: ReactNode
+  /** 제목 입력 우측(예: 단락별 액션 버튼) — `paragraph-card__title-block` 맨 오른쪽 */
+  titleTrailing?: ReactNode
   descriptionValue: string
   onDescriptionChange: (next: string) => void
   descriptionPlaceholder?: string
@@ -89,15 +91,25 @@ export function ParagraphCard({
 
       const showDescription = h.showDescription !== false
 
+      const titleBlock =
+        h.titleTrailing != null ? (
+          <div className="paragraph-card__title-block paragraph-card__title-block--with-trailing">
+            <div className="paragraph-card__title-main">{titleInput}</div>
+            <div className="paragraph-card__title-trailing">{h.titleTrailing}</div>
+          </div>
+        ) : (
+          <div className="paragraph-card__title-block">{titleInput}</div>
+        )
+
       return (
         <>
           {actionSlot ? (
             <div className="paragraph-card__header-title-row">
               <div className="paragraph-card__action-slot-wrap">{actionSlot}</div>
-              <div className="paragraph-card__title-block">{titleInput}</div>
+              {titleBlock}
             </div>
           ) : (
-            <div className="paragraph-card__title-block">{titleInput}</div>
+            titleBlock
           )}
           {showDescription ? (
             <div className="paragraph-card__description-block">{descriptionInput}</div>

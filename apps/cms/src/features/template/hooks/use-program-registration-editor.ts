@@ -20,7 +20,11 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/use-table-row-selection-state'
-import type { ProgramRegistrationType } from '@/features/template/ui/form-set/program-registration-form/paragraph-body'
+import type {
+  ProgramRegistrationScheduleDetailKind,
+  ProgramRegistrationSessionRoundType,
+  ProgramRegistrationType,
+} from '@/features/template/ui/form-set/program-registration-form/paragraph-body'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/program-registration-form/paragraph-config'
 
 type ProgramRegistrationParticipantState = {
@@ -130,6 +134,14 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
     organization: false,
   })
   const [programType] = useState<ProgramRegistrationType>('curriculum')
+  const [sessionRoundType, setSessionRoundType] = useState<ProgramRegistrationSessionRoundType>('single')
+  const [educationFormScheduleDetail, setEducationFormScheduleDetail] =
+    useState<ProgramRegistrationScheduleDetailKind>('common')
+  const [participationScheduleDetail, setParticipationScheduleDetail] =
+    useState<ProgramRegistrationScheduleDetailKind>('common')
+  const [ipsScheduleDetail, setIpsScheduleDetail] = useState<ProgramRegistrationScheduleDetailKind>('common')
+  const [curriculumSessionCount, setCurriculumSessionCount] = useState(2)
+  const [curriculumChartSessionCount, setCurriculumChartSessionCount] = useState(2)
 
   const {
     openWritingUserPreview,
@@ -145,6 +157,12 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)
     setParticipant({ individual: true, organization: false })
+    setSessionRoundType('single')
+    setEducationFormScheduleDetail('common')
+    setParticipationScheduleDetail('common')
+    setIpsScheduleDetail('common')
+    setCurriculumSessionCount(2)
+    setCurriculumChartSessionCount(2)
   }, [active])
 
   useEffect(() => {
@@ -207,17 +225,43 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
   }, [])
 
   const onIndividualChange = useCallback((checked: boolean) => {
-    setParticipant(prev => {
+    setParticipant(() => {
       if (checked) return { individual: true, organization: false }
-      return { ...prev, individual: false }
+      return { individual: false, organization: true }
     })
   }, [])
 
   const onOrganizationChange = useCallback((checked: boolean) => {
-    setParticipant(prev => {
+    setParticipant(() => {
       if (checked) return { individual: false, organization: true }
-      return { ...prev, organization: false }
+      return { individual: true, organization: false }
     })
+  }, [])
+
+  const onSessionRoundTypeChange = useCallback((value: ProgramRegistrationSessionRoundType) => {
+    setSessionRoundType(value)
+    if (value === 'multi') setCurriculumSessionCount(2)
+    if (value === 'single') setCurriculumChartSessionCount(2)
+  }, [])
+
+  const onEducationFormScheduleDetailChange = useCallback((value: ProgramRegistrationScheduleDetailKind) => {
+    setEducationFormScheduleDetail(value)
+  }, [])
+
+  const onParticipationScheduleDetailChange = useCallback((value: ProgramRegistrationScheduleDetailKind) => {
+    setParticipationScheduleDetail(value)
+  }, [])
+
+  const onIpsScheduleDetailChange = useCallback((value: ProgramRegistrationScheduleDetailKind) => {
+    setIpsScheduleDetail(value)
+  }, [])
+
+  const onAddCurriculumSession = useCallback(() => {
+    setCurriculumSessionCount(c => c + 1)
+  }, [])
+
+  const onAddCurriculumChartSession = useCallback(() => {
+    setCurriculumChartSessionCount(c => Math.min(c + 1, 16))
   }, [])
 
   const paragraphBodyOptions = useMemo(
@@ -227,8 +271,37 @@ export function useProgramRegistrationEditor(active: boolean, previewHeaderTitle
         programType,
         onIndividualChange,
         onOrganizationChange,
+        sessionRoundType,
+        onSessionRoundTypeChange,
+        educationFormScheduleDetail,
+        onEducationFormScheduleDetailChange,
+        participationScheduleDetail,
+        onParticipationScheduleDetailChange,
+        ipsScheduleDetail,
+        onIpsScheduleDetailChange,
+        curriculumSessionCount,
+        onAddCurriculumSession,
+        curriculumChartSessionCount,
+        onAddCurriculumChartSession,
       }),
-    [onIndividualChange, onOrganizationChange, participant, programType]
+    [
+      curriculumChartSessionCount,
+      curriculumSessionCount,
+      educationFormScheduleDetail,
+      ipsScheduleDetail,
+      onAddCurriculumChartSession,
+      onAddCurriculumSession,
+      onEducationFormScheduleDetailChange,
+      onIpsScheduleDetailChange,
+      onIndividualChange,
+      onOrganizationChange,
+      onParticipationScheduleDetailChange,
+      onSessionRoundTypeChange,
+      participant,
+      participationScheduleDetail,
+      programType,
+      sessionRoundType,
+    ]
   )
 
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {

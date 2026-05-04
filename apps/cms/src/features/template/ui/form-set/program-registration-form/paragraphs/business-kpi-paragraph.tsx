@@ -2,7 +2,13 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import './program-registration-paragraph.css'
 
-export function ProgramRegistrationBusinessKpiParagraph() {
+type ProgramRegistrationBusinessKpiParagraphProps = {
+  participantOrganization?: boolean
+}
+
+export function ProgramRegistrationBusinessKpiParagraph({
+  participantOrganization = false,
+}: ProgramRegistrationBusinessKpiParagraphProps) {
   return (
     <DetailInfoForm
       title="사업 KPI 목표"
@@ -13,18 +19,18 @@ export function ProgramRegistrationBusinessKpiParagraph() {
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="참여자 최종 인원"
-          edit={<CmsInput disabled inputSize="medium" placeholder="목표값 입력" width={120} />}
+          edit={<CmsInput inputSize="medium" placeholder="목표값 입력" width={120} />}
           view="-"
         />
         <DetailInfoForm.Field
           label="교육진행자 최종 인원"
           edit={
-            <div className="program-registration-paragraph__inline">
+            <div className="detail-info-form-inputs-wrapper">
               <span className="detail-info-form--text mr-6">강사</span>
-              <CmsInput disabled inputSize="medium" placeholder="목표값 입력" width={120} />
+              <CmsInput inputSize="medium" placeholder="목표값 입력" width={120} />
               <DetailInfoForm.InputsSeparator />
               <span className="detail-info-form--text mr-6">봉사자</span>
-              <CmsInput disabled inputSize="medium" placeholder="목표값 입력" width={120} />
+              <CmsInput inputSize="medium" placeholder="목표값 입력" width={120} />
             </div>
           }
           view="-"
@@ -32,13 +38,27 @@ export function ProgramRegistrationBusinessKpiParagraph() {
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
-          label="최초 편성 건수"
-          edit={<CmsInput disabled inputSize="medium" placeholder="해당 없음" width={120} />}
+          label="최종 파견 학교 수"
+          edit={
+            <CmsInput
+              disabled={!participantOrganization}
+              inputSize="medium"
+              placeholder={participantOrganization ? '목표값 입력' : '해당 없음'}
+              width={120}
+            />
+          }
           view="-"
         />
         <DetailInfoForm.Field
-          label="최종 편성 건수"
-          edit={<CmsInput disabled inputSize="medium" placeholder="해당 없음" width={120} />}
+          label="최종 파견 학급 수"
+          edit={
+            <CmsInput
+              disabled={!participantOrganization}
+              inputSize="medium"
+              placeholder={participantOrganization ? '목표값 입력' : '해당 없음'}
+              width={120}
+            />
+          }
           view="-"
         />
       </DetailInfoForm.Row>

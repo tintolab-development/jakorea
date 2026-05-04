@@ -1,10 +1,61 @@
+import { useMemo, useState } from 'react'
+import type { Dayjs } from 'dayjs'
+import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { CmsSelect } from '@/shared/ui/cms-select'
 import './program-registration-paragraph.css'
 
+type EducationScheduleMode = 'date' | 'period'
+
+const EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER =
+  '교육 진행 일정을 선택해 주세요. (해당 란에는 선택한 날짜가 노출됩니다.)'
+
+function isValidDayjs(d: Dayjs | null | undefined): d is Dayjs {
+  return d != null && d.isValid()
+}
+
 export function ProgramRegistrationEducationScheduleSettingsParagraph() {
+  const [scheduleMode, setScheduleMode] = useState<EducationScheduleMode>('date')
+  const [singleDate, setSingleDate] = useState<Dayjs | null>(null)
+  const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null])
+
+  const educationSchedulePreview = useMemo(() => {
+    if (scheduleMode === 'period') {
+      const [start, end] = dateRange
+      if (isValidDayjs(start) && isValidDayjs(end)) {
+        return (
+          <div className="detail-info-form-inputs-wrapper-no-gap">
+            <span className="detail-info-form--text nowrap">
+              {formatAppDatepickerDisplay(start)}
+            </span>
+            <DetailInfoForm.InputsSeparator />
+            <span className="detail-info-form--text nowrap">
+              {formatAppDatepickerDisplay(end)}
+            </span>
+          </div>
+        )
+      }
+      return (
+        <span className="program-registration-paragraph__schedule-preview-placeholder">
+          {EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER}
+        </span>
+      )
+    }
+
+    if (isValidDayjs(singleDate)) {
+      return (
+        <span className="detail-info-form--text">{formatAppDatepickerDisplay(singleDate)}</span>
+      )
+    }
+
+    return (
+      <span className="program-registration-paragraph__schedule-preview-placeholder">
+        {EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER}
+      </span>
+    )
+  }, [scheduleMode, dateRange, singleDate])
+
   return (
     <DetailInfoForm
       title="교육 진행 일정 설정"
@@ -12,16 +63,17 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph() {
       mode="edit"
       className="program-registration-paragraph"
     >
-      <p className="program-registration-paragraph__guide">
-        교육이 실행되는 일정을 상세하게 정해주세요.
-      </p>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="교육 진행 방식"
           edit={
             <div className="program-registration-paragraph__schedule-inline">
-              <CmsRadioGroup size="large" value="weekly">
-                <CmsRadio value="weekly">주기 지정</CmsRadio>
+              <CmsRadioGroup
+                size="large"
+                value={scheduleMode}
+                onChange={e => setScheduleMode(e.target.value as EducationScheduleMode)}
+              >
+                <CmsRadio value="date">날짜 지정</CmsRadio>
                 <CmsRadio value="period">기간 지정</CmsRadio>
               </CmsRadioGroup>
             </div>
@@ -31,7 +83,25 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph() {
         <DetailInfoForm.Field
           label="교육 진행 일정 선택"
           edit={
-            <CmsSelect disabled withAllOption={false} inputSize="medium" placeholder="날짜를 선택하세요" width="100%" />
+            scheduleMode === 'date' ? (
+              <ParagraphDatePicker
+                mode="single"
+                presetMode="date"
+                customizable={false}
+                suppressAutoTodayWhenEmpty
+                value={singleDate}
+                onChange={setSingleDate}
+                width={240}
+              />
+            ) : (
+              <ParagraphDatePicker
+                mode="range"
+                value={dateRange}
+                onChange={setDateRange}
+                width={360}
+                placeholder={['시작일', '종료일']}
+              />
+            )
           }
           view="-"
         />
@@ -40,15 +110,8 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph() {
         <DetailInfoForm.Field
           label="교육 진행 예정일"
           fullRow
-          edit={
-            <CmsInput
-              disabled
-              inputSize="large"
-              value="26년 4월 20일(월) 9:30 ~ 12:20   |   26년 4월 27일(월) 13:00 ~ 15:50"
-              width="100%"
-            />
-          }
-          view="-"
+          readOnlyDisplay
+          view={educationSchedulePreview}
         />
       </DetailInfoForm.Row>
     </DetailInfoForm>

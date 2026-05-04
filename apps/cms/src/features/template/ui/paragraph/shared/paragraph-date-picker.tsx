@@ -9,7 +9,7 @@ import { CalendarOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { CalendarMini } from '@/shared/components/calendar'
-import { CmsDateRangePicker, formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
+import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
@@ -134,6 +134,11 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
    * `presetMode: 'period'`일 때는 항상 기간 ON.
    */
   preferPeriodModeInPopover?: boolean
+  /**
+   * true면 부모 `value`가 null일 때 오늘로 `onChange`를 호출하지 않음(빈 값 유지).
+   * 기본 false — 기존 단일 날짜형은 null이면 오늘로 동기화.
+   */
+  suppressAutoTodayWhenEmpty?: boolean
 }
 
 export type ParagraphDatePickerProps =
@@ -160,6 +165,7 @@ interface ParagraphDatePickerSingleInnerProps {
   appliedSurfaceRange?: [Dayjs, Dayjs] | null
   appliedSurfaceWithTime?: boolean
   preferPeriodModeInPopover?: boolean
+  suppressAutoTodayWhenEmpty?: boolean
 }
 
 function ParagraphDatePickerSingleInner({
@@ -175,6 +181,7 @@ function ParagraphDatePickerSingleInner({
   appliedSurfaceRange,
   appliedSurfaceWithTime = false,
   preferPeriodModeInPopover = false,
+  suppressAutoTodayWhenEmpty = false,
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -215,12 +222,17 @@ function ParagraphDatePickerSingleInner({
     return periodOn
   }, [customizable, presetMode, periodOn])
 
-  /** 기본값: 오늘 — 부모 값이 null이면 동기화 */
+  /**
+   * 기본값: 오늘 — 단일 날짜 모드에서만 부모 `value`가 null이면 동기화.
+   * `presetMode: 'period'` + `customizable: false`(기간 고정)는 부모가 튜플로만 들고 가므로 여기서 오늘로 채우지 않음.
+   * `suppressAutoTodayWhenEmpty`면 null 유지.
+   */
   useEffect(() => {
-    if (value == null) {
-      onChange(dayjs())
-    }
-  }, [value, onChange])
+    if (value != null) return
+    if (presetMode === 'period' && !customizable) return
+    if (suppressAutoTodayWhenEmpty) return
+    onChange(dayjs())
+  }, [value, onChange, presetMode, customizable, suppressAutoTodayWhenEmpty])
 
   const hasExternalSurfaceControl = appliedSurfaceRange !== undefined
 
@@ -808,6 +820,62 @@ function ParagraphDatePickerSingleInner({
   )
 }
 
+/** `mode: 'range'` — Ant 분할 RangePicker 대신 기간 프리셋 단일 피커(동일 포털 모달)로 노출·레이어 충돌 방지 */
+function ParagraphDatePickerRangeBridge({
+  rootRef,
+  value,
+  onChange,
+  placeholder,
+  width,
+  disabled,
+}: {
+  rootRef: RefObject<HTMLDivElement | null>
+  value: ParagraphRangeValue
+  onChange: (next: ParagraphRangeValue) => void
+  placeholder?: [string, string]
+  width?: number | string
+  disabled?: boolean
+}) {
+  const valueRef = useRef(value)
+  valueRef.current = value
+
+  const [start, end] = value
+  const anchor = start ?? end ?? null
+  const appliedSurfaceRange =
+    start != null && end != null && start.isValid() && end.isValid()
+      ? ([start, end] as [Dayjs, Dayjs])
+      : null
+
+  const mergedPlaceholder =
+    placeholder != null && placeholder.length >= 2
+      ? `${placeholder[0]} ~ ${placeholder[1]}`
+      : undefined
+
+  return (
+    <ParagraphDatePickerSingleInner
+      rootRef={rootRef}
+      value={anchor}
+      onChange={next => {
+        const [, e] = valueRef.current
+        onChange([next, e])
+      }}
+      onRangeChange={range => {
+        valueRef.current = [range[0], range[1]]
+        onChange([range[0], range[1]])
+      }}
+      presetMode="period"
+      customizable={false}
+      placeholder={mergedPlaceholder}
+      width={width}
+      disabled={disabled}
+      appliedSurfaceRange={appliedSurfaceRange}
+      appliedSurfaceWithTime={false}
+      preferPeriodModeInPopover={false}
+      suppressAutoTodayWhenEmpty={false}
+    />
+  )
+}
+
 export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
   const { label, className, style, disabled } = props
   const rootRef = useRef<HTMLDivElement>(null)
@@ -827,16 +895,17 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
     <div
       ref={rootRef}
       className={['paragraph-date-picker', className].filter(Boolean).join(' ')}
-      style={{ display: 'flex', alignItems: 'center', gap: '8px', ...style }}
+      style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, ...style }}
     >
       {label != null ? <span className="fs-16 nowrap">{label}</span> : null}
       {props.mode === 'range' ? (
-        <CmsDateRangePicker
-          width={resolvedWidth}
+        <ParagraphDatePickerRangeBridge
+          rootRef={rootRef}
           value={props.value}
+          onChange={props.onChange}
           placeholder={props.placeholder}
+          width={resolvedWidth}
           disabled={disabled}
-          onChange={dates => props.onChange([dates?.[0] ?? null, dates?.[1] ?? null])}
         />
       ) : (
         <ParagraphDatePickerSingleInner
@@ -852,6 +921,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           appliedSurfaceRange={props.appliedSurfaceRange}
           appliedSurfaceWithTime={props.appliedSurfaceWithTime}
           preferPeriodModeInPopover={props.preferPeriodModeInPopover ?? false}
+          suppressAutoTodayWhenEmpty={Boolean(props.suppressAutoTodayWhenEmpty)}
         />
       )}
     </div>

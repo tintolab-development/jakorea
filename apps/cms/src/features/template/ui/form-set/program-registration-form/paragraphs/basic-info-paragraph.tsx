@@ -1,10 +1,45 @@
+import { useMemo, useState } from 'react'
+import type { CheckboxChangeEvent } from 'antd/es/checkbox'
+import dayjs from 'dayjs'
+import type { Dayjs } from 'dayjs'
+import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
+import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/program-registration-form/paragraph-body'
+import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
+import { dateRangeUsesClockTime } from '@/features/template/ui/paragraph/shared/writing-form-period-date-picker-field'
+import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
+import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import './program-registration-paragraph.css'
+
+type OrganizationSurveyItemId =
+  | 'survey'
+  | 'student_satisfaction'
+  | 'teacher_satisfaction'
+  | 'lecture_evaluation'
+
+type IndividualSurveyItemId = 'survey' | 'satisfaction' | 'lecture_evaluation'
+
+function initialOrganizationSurveyItems(): Record<OrganizationSurveyItemId, boolean> {
+  return {
+    survey: false,
+    student_satisfaction: false,
+    teacher_satisfaction: false,
+    lecture_evaluation: false,
+  }
+}
+
+function initialIndividualSurveyItems(): Record<IndividualSurveyItemId, boolean> {
+  return {
+    survey: false,
+    satisfaction: false,
+    lecture_evaluation: false,
+  }
+}
 
 type ProgramRegistrationBasicInfoParagraphProps = {
   participant: ProgramRegistrationParticipantState
@@ -17,6 +52,62 @@ export function ProgramRegistrationBasicInfoParagraph({
   onIndividualChange,
   onOrganizationChange,
 }: ProgramRegistrationBasicInfoParagraphProps) {
+  const [operationAnchorDate, setOperationAnchorDate] = useState<Dayjs | null>(dayjs())
+  const [operationRange, setOperationRange] = useState<[Dayjs, Dayjs] | null>(null)
+  const operationRangeWithTime = useMemo(
+    () =>
+      operationRange == null ? false : dateRangeUsesClockTime(operationRange[0], operationRange[1]),
+    [operationRange]
+  )
+
+  const [sponsorId, setSponsorId] = useState<string>('')
+  /** 후원사 상세 담당자 행 `SponsorContactRow.id` (목 데이터; 추후 API 값으로 교체) */
+  const [managerContactId, setManagerContactId] = useState<string>('')
+  const [detailedProgramId, setDetailedProgramId] = useState<string>('')
+  const [organizationSurveyItems, setOrganizationSurveyItems] = useState<
+    Record<OrganizationSurveyItemId, boolean>
+  >(initialOrganizationSurveyItems)
+  const [individualSurveyItems, setIndividualSurveyItems] = useState<
+    Record<IndividualSurveyItemId, boolean>
+  >(initialIndividualSurveyItems)
+
+  const toggleOrganizationSurveyItem =
+    (id: OrganizationSurveyItemId) => (e: CheckboxChangeEvent) => {
+      setOrganizationSurveyItems(prev => ({ ...prev, [id]: e.target.checked }))
+    }
+
+  const toggleIndividualSurveyItem = (id: IndividualSurveyItemId) => (e: CheckboxChangeEvent) => {
+    setIndividualSurveyItems(prev => ({ ...prev, [id]: e.target.checked }))
+  }
+
+  /** `/sponsor` 후원사 관리 목록과 동일 mock (`mockSponsorManagementListRows`) */
+  const sponsorOptions = useMemo(
+    () => mockSponsorManagementListRows.map(s => ({ value: s.id, label: s.name })),
+    []
+  )
+
+  const selectedSponsor = useMemo<SponsorManagementRow | null>(
+    () => mockSponsorManagementListRows.find(s => s.id === sponsorId) ?? null,
+    [sponsorId]
+  )
+
+  const managerOptions = useMemo(() => {
+    if (!selectedSponsor) return []
+    return getSponsorDetailContactsNormalized(selectedSponsor).map(c => ({
+      value: c.id,
+      label: c.name,
+    }))
+  }, [selectedSponsor])
+
+  const detailedProgramOptions = useMemo(
+    () =>
+      mockDetailedProgramManagementListRows.map(row => ({
+        value: row.id,
+        label: row.name,
+      })),
+    []
+  )
+
   return (
     <>
       <DetailInfoForm
@@ -30,8 +121,7 @@ export function ProgramRegistrationBasicInfoParagraph({
             label="대표 프로그램(국문)"
             edit={
               <CmsInput
-                disabled
-                inputSize="large"
+                inputSize="medium"
                 placeholder="대표 프로그램명을 입력하세요"
                 width="100%"
               />
@@ -42,9 +132,8 @@ export function ProgramRegistrationBasicInfoParagraph({
             label="대표 프로그램(영문)"
             edit={
               <CmsInput
-                disabled
-                inputSize="large"
-                placeholder="상세 프로그램명을 입력하세요"
+                inputSize="medium"
+                placeholder="대표 프로그램명을 입력하세요"
                 width="100%"
               />
             }
@@ -53,12 +142,11 @@ export function ProgramRegistrationBasicInfoParagraph({
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="공공 프로그램명"
+            label="공고용 프로그램명"
             edit={
               <CmsInput
-                disabled
-                inputSize="large"
-                placeholder="모집 시 노출할 프로그램명을 입력하세요"
+                inputSize="medium"
+                placeholder="모집 시 노출될 프로그램명을 입력하세요"
                 width="100%"
               />
             }
@@ -67,13 +155,17 @@ export function ProgramRegistrationBasicInfoParagraph({
           <DetailInfoForm.Field
             label="세부 프로그램명"
             edit={
-              <CmsSelect
-                disabled
-                withAllOption={false}
-                inputSize="medium"
-                placeholder="상세 프로그램명을 선택하세요"
-                width="100%"
-              />
+              <div className="detail-info-form-inputs-wrapper-no-gap">
+                <CmsSelect
+                  withAllOption={false}
+                  inputSize="medium"
+                  placeholder="세부 프로그램명을 선택하세요"
+                  width="100%"
+                  options={detailedProgramOptions}
+                  value={detailedProgramId}
+                  onChange={v => setDetailedProgramId(String(v ?? ''))}
+                />
+              </div>
             }
             view="-"
           />
@@ -82,33 +174,36 @@ export function ProgramRegistrationBasicInfoParagraph({
           <DetailInfoForm.Field
             label="사업 운영 기간"
             edit={
-              <CmsInput
-                disabled
-                inputSize="large"
-                placeholder="사업 운영 기간을 선택하세요"
-                width="100%"
-              />
+              <div className="detail-info-form-inputs-wrapper-no-gap">
+                <ParagraphDatePicker
+                  mode="single"
+                  presetMode="period"
+                  value={operationAnchorDate}
+                  width="100%"
+                  placeholder="사업 운영 기간을 선택하세요"
+                  preferPeriodModeInPopover
+                  appliedSurfaceRange={operationRange}
+                  appliedSurfaceWithTime={operationRangeWithTime}
+                  onRangeChange={range => setOperationRange(range)}
+                  onChange={next => {
+                    if (next == null) return
+                    setOperationAnchorDate(next)
+                  }}
+                />
+              </div>
             }
             view="-"
           />
           <DetailInfoForm.Field
             label="프로그램 진행 현황"
-            edit={
-              <CmsInput
-                disabled
-                inputSize="large"
-                value="일정에 따라 진행 현황이 자동으로 반영됩니다."
-                width="100%"
-              />
-            }
-            view="-"
+            view="일정에 따라 진행 현황이 자동으로 반영됩니다."
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="참여자 유형"
             edit={
-              <div className="program-registration-paragraph__inline">
+              <div className="detail-info-form-inputs-wrapper">
                 <CmsCheckbox
                   checkboxSize="large"
                   checked={participant.individual}
@@ -134,13 +229,12 @@ export function ProgramRegistrationBasicInfoParagraph({
           <DetailInfoForm.Field
             label="사업 분야"
             edit={
-              <div className="program-registration-paragraph__inline">
+              <div className="detail-info-form-inputs-wrapper">
                 <CmsSelect
-                  disabled
                   withAllOption={false}
                   inputSize="medium"
                   placeholder="전체"
-                  width={160}
+                  width={240}
                 />
               </div>
             }
@@ -151,26 +245,39 @@ export function ProgramRegistrationBasicInfoParagraph({
           <DetailInfoForm.Field
             label="후원사"
             edit={
-              <CmsSelect
-                disabled
-                withAllOption={false}
-                inputSize="medium"
-                placeholder="전체"
-                width={160}
-              />
+              <div className="detail-info-form-inputs-wrapper-no-gap">
+                <CmsSelect
+                  withAllOption={false}
+                  inputSize="medium"
+                  placeholder="후원사를 선택하세요"
+                  width="100%"
+                  options={sponsorOptions}
+                  value={sponsorId}
+                  onChange={v => {
+                    const next = String(v ?? '')
+                    setSponsorId(next)
+                    setManagerContactId('')
+                  }}
+                />
+              </div>
             }
             view="-"
           />
           <DetailInfoForm.Field
             label="후원사 담당자"
             edit={
-              <CmsSelect
-                disabled
-                withAllOption={false}
-                inputSize="medium"
-                placeholder="전체"
-                width={160}
-              />
+              <div className="detail-info-form-inputs-wrapper-no-gap">
+                <CmsSelect
+                  withAllOption={false}
+                  inputSize="medium"
+                  placeholder="후원사 담당자를 선택하세요"
+                  width="100%"
+                  options={managerOptions}
+                  value={managerContactId}
+                  disabled={!sponsorId || managerOptions.length === 0}
+                  onChange={v => setManagerContactId(String(v ?? ''))}
+                />
+              </div>
             }
             view="-"
           />
@@ -180,18 +287,14 @@ export function ProgramRegistrationBasicInfoParagraph({
             label="교육 장소"
             fullRow
             edit={
-              <div className="program-registration-paragraph__inline">
-                <CmsRadioGroup size="large" value="existing">
-                  <CmsRadio value="existing">기존 값</CmsRadio>
-                  <CmsRadio value="new" disabled>
-                    기본 값
-                  </CmsRadio>
-                  <CmsRadio value="other" disabled>
-                    기타(직접입력)
-                  </CmsRadio>
+              <div className="detail-info-form-inputs-wrapper">
+                <CmsRadioGroup size="large" value="inside">
+                  <CmsRadio value="inside">기관 안</CmsRadio>
+                  <CmsRadio value="outside">기관 밖</CmsRadio>
+                  <CmsRadio value="other">기타(직접입력)</CmsRadio>
                 </CmsRadioGroup>
+                <DetailInfoForm.InputsSeparator />
                 <CmsInput
-                  disabled
                   inputSize="medium"
                   placeholder="교육이 진행될 상세 장소를 입력해 주세요"
                   width={360}
@@ -206,16 +309,63 @@ export function ProgramRegistrationBasicInfoParagraph({
             label="설문 진행 항목"
             fullRow
             edit={
-              <div className="program-registration-paragraph__inline">
-                <CmsCheckbox checkboxSize="large" checked={true} disabled>
-                  설문조사
-                </CmsCheckbox>
-                <CmsCheckbox checkboxSize="large" checked={true} disabled>
-                  만족도조사
-                </CmsCheckbox>
-                <CmsCheckbox checkboxSize="large" checked={true} disabled>
-                  강의평가
-                </CmsCheckbox>
+              <div className="detail-info-form-inputs-wrapper">
+                {participant.organization ? (
+                  <>
+                    <CmsCheckbox
+                      checkboxSize="large"
+                      checked={organizationSurveyItems.survey}
+                      onChange={toggleOrganizationSurveyItem('survey')}
+                    >
+                      설문조사
+                    </CmsCheckbox>
+                    <CmsCheckbox
+                      checkboxSize="large"
+                      checked={organizationSurveyItems.student_satisfaction}
+                      onChange={toggleOrganizationSurveyItem('student_satisfaction')}
+                    >
+                      학생 만족도조사
+                    </CmsCheckbox>
+                    <CmsCheckbox
+                      checkboxSize="large"
+                      checked={organizationSurveyItems.teacher_satisfaction}
+                      onChange={toggleOrganizationSurveyItem('teacher_satisfaction')}
+                    >
+                      교사 만족도조사
+                    </CmsCheckbox>
+                    <CmsCheckbox
+                      checkboxSize="large"
+                      checked={organizationSurveyItems.lecture_evaluation}
+                      onChange={toggleOrganizationSurveyItem('lecture_evaluation')}
+                    >
+                      강의평가
+                    </CmsCheckbox>
+                  </>
+                ) : (
+                  <>
+                    <CmsCheckbox
+                      checkboxSize="large"
+                      checked={individualSurveyItems.survey}
+                      onChange={toggleIndividualSurveyItem('survey')}
+                    >
+                      설문조사
+                    </CmsCheckbox>
+                    <CmsCheckbox
+                      checkboxSize="large"
+                      checked={individualSurveyItems.satisfaction}
+                      onChange={toggleIndividualSurveyItem('satisfaction')}
+                    >
+                      만족도조사
+                    </CmsCheckbox>
+                    <CmsCheckbox
+                      checkboxSize="large"
+                      checked={individualSurveyItems.lecture_evaluation}
+                      onChange={toggleIndividualSurveyItem('lecture_evaluation')}
+                    >
+                      강의평가
+                    </CmsCheckbox>
+                  </>
+                )}
               </div>
             }
             view="-"
@@ -227,26 +377,14 @@ export function ProgramRegistrationBasicInfoParagraph({
           <DetailInfoForm.Field
             label="교육 과정"
             edit={
-              <CmsSelect
-                disabled
-                withAllOption={false}
-                inputSize="medium"
-                placeholder="전체"
-                width={220}
-              />
+              <CmsSelect withAllOption={false} inputSize="medium" placeholder="전체" width={240} />
             }
             view="-"
           />
           <DetailInfoForm.Field
             label="IP Owned"
             edit={
-              <CmsSelect
-                disabled
-                withAllOption={false}
-                inputSize="medium"
-                placeholder="전체"
-                width={220}
-              />
+              <CmsSelect withAllOption={false} inputSize="medium" placeholder="전체" width={240} />
             }
             view="-"
           />
@@ -255,13 +393,7 @@ export function ProgramRegistrationBasicInfoParagraph({
           <DetailInfoForm.Field
             label="Course Delivered By"
             edit={
-              <CmsSelect
-                disabled
-                withAllOption={false}
-                inputSize="medium"
-                placeholder="전체"
-                width={220}
-              />
+              <CmsSelect withAllOption={false} inputSize="medium" placeholder="전체" width={240} />
             }
             view="-"
           />

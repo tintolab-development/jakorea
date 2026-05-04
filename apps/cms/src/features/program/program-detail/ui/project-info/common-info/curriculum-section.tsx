@@ -76,7 +76,7 @@ function CurriculumReadonlyDisplay({
       {duration} ({deliveryLabel})
       {description ? (
         <>
-          <DetailInfoForm.TdDivider />
+          <DetailInfoForm.InputsSeparator />
           {description}
         </>
       ) : null}
@@ -151,7 +151,7 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
                         options={ROUND_DELIVERY_OPTIONS}
                         onChange={e => updateRoundDeliveryType(roundIndex, e.target.value)}
                       />
-                      <DetailInfoForm.TdDivider />
+                      <DetailInfoForm.InputsSeparator />
                       <CmsInput
                         value={duration}
                         onChange={e =>
@@ -159,7 +159,7 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
                         }
                         placeholder="1시간"
                       />
-                      <DetailInfoForm.TdDivider />
+                      <DetailInfoForm.InputsSeparator />
                       <CmsInput
                         value={description}
                         onChange={e => updateRoundCurriculum(roundIndex, duration, e.target.value)}

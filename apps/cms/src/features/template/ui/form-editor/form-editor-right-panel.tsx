@@ -438,7 +438,10 @@ export interface FormEditorRightPanelProps {
   verticalTableBodyRowSelection?: { paragraphId: string; row: number } | null
   /** 테이블 세로형: 행 삭제 후 포커스할 행 인덱스(이전 행) */
   onVerticalTableBodyRowDeleted?: (nextRowIndex: number) => void
-  /** 템플릿 고정 단락 — 우측 커스텀 필드 편집 비활성 */
+  /**
+   * 템플릿 고정 단락 — 우측 커스텀 필드 대부분 비활성.
+   * `editorKind === 'horizontal_table'`이면 가로형 단락에 한해 단락 제목·설명 및 표 셀 편집은 유지.
+   */
   structureLockedParagraphIds?: ReadonlySet<string>
 }
 
@@ -578,7 +581,7 @@ export function FormEditorRightPanel({
   activeParagraphId,
   onTitleNumberingChange,
   updateParagraph,
-  editorKind: _editorKind = 'survey',
+  editorKind = 'survey',
   showTitleNumbering = true,
   singleItemListActiveItemId,
   horizontalTableRowSelection = null,
@@ -592,6 +595,69 @@ export function FormEditorRightPanel({
     activeParagraphId != null && (structureLockedParagraphIds?.has(activeParagraphId) ?? false)
 
   if (active != null && structureLockedActive) {
+    const horizontalTableLockedEditableHeader =
+      editorKind === 'horizontal_table' &&
+      active.kind === 'single_item' &&
+      active.variant === 'horizontal_table'
+
+    if (horizontalTableLockedEditableHeader) {
+      const ht = active as HorizontalTableParagraph
+      const outline = writingOutlineLabel(active)
+      return (
+        <div className="form-editor-right-panel">
+          {showTitleNumbering ? (
+            <FormEditorTitleNumberingField
+              value={draft.formSettings.titleNumbering}
+              onChange={onTitleNumberingChange}
+            />
+          ) : null}
+          <Form layout="vertical" className="form-editor-right-panel__form" requiredMark={false}>
+            <span className="form-editor-right-panel__section-title">{outline}</span>
+          </Form>
+          <Form layout="vertical" className="form-editor-right-panel__form-items" requiredMark={false}>
+            <Form.Item label="단락 제목">
+              <CmsInput
+                width="100%"
+                value={ht.paragraphTitle}
+                onChange={e =>
+                  updateParagraph(ht.id, cur =>
+                    cur.kind === 'single_item' &&
+                    cur.id === ht.id &&
+                    cur.variant === 'horizontal_table'
+                      ? { ...cur, paragraphTitle: e.target.value }
+                      : cur
+                  )
+                }
+                placeholder="타이틀을 입력해 주세요"
+              />
+            </Form.Item>
+            <Form.Item label="단락 설명">
+              <CmsInput
+                width="100%"
+                value={ht.paragraphDescription}
+                onChange={e =>
+                  updateParagraph(ht.id, cur =>
+                    cur.kind === 'single_item' &&
+                    cur.id === ht.id &&
+                    cur.variant === 'horizontal_table'
+                      ? { ...cur, paragraphDescription: e.target.value }
+                      : cur
+                  )
+                }
+                placeholder="설명 입력"
+              />
+            </Form.Item>
+            <FormEditorHorizontalTableCustomFields
+              paragraph={ht}
+              rowSelection={horizontalTableRowSelection}
+              updateParagraph={updateParagraph}
+              onBodyRowDeleted={onHorizontalTableBodyRowDeleted}
+            />
+          </Form>
+        </div>
+      )
+    }
+
     return (
       <div className="form-editor-right-panel">
         {showTitleNumbering ? (

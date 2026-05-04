@@ -145,7 +145,7 @@ export function PermissionApprovalStatusWithResend({
     <span className="user-basic-info-section__permission-approval-meta">
       <span className="user-basic-info-section__permission-approval-dropdown-wrap">
         {tone}
-        <DetailInfoForm.TdDivider />
+        <DetailInfoForm.InputsSeparator />
         {resend}
       </span>
       <span className="user-basic-info-section__permission-approval-timestamp">

@@ -19,14 +19,18 @@ export const PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS = new Set<string>(
   Object.values(PROGRAM_REGISTRATION_IDS)
 )
 
-function createSeedParagraph(id: string, title: string): HorizontalTableParagraph {
+function createSeedParagraph(
+  id: string,
+  title: string,
+  paragraphDescription: string = '설명 입력'
+): HorizontalTableParagraph {
   return normalizeHorizontalTableParagraph({
     id,
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
     paragraphTitle: title,
-    paragraphDescription: '설명 입력',
+    paragraphDescription,
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['항목', '내용'],
@@ -50,8 +54,16 @@ export function createProgramRegistrationDraft(): WritingFormDraft {
       createSeedParagraph(PROGRAM_REGISTRATION_IDS.businessKpi, '사업 KPI 목표'),
       createSeedParagraph(PROGRAM_REGISTRATION_IDS.wageInfo, '임금 정보'),
       createSeedParagraph(PROGRAM_REGISTRATION_IDS.typeSettings, '프로그램 유형 설정'),
-      createSeedParagraph(PROGRAM_REGISTRATION_IDS.educationCurriculum, '교육 진행 (커리큘럼)'),
-      createSeedParagraph(PROGRAM_REGISTRATION_IDS.educationScheduleSettings, '교육 진행 일정 설정'),
+      createSeedParagraph(
+        PROGRAM_REGISTRATION_IDS.educationCurriculum,
+        '교육 진행 (커리큘럼)',
+        '차시 별 정보를 입력해 주세요'
+      ),
+      createSeedParagraph(
+        PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
+        '교육 진행 일정 설정',
+        '교육이 실행되는 일정을 상세하게 정해주세요.'
+      ),
     ],
   })
 }

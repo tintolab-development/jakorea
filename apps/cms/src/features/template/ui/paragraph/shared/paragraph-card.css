@@ -68,8 +68,31 @@
   width: 100%;
 }
 
+.paragraph-card__title-block--with-trailing {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.paragraph-card__title-main {
+  flex: 1 1 0%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.paragraph-card__title-trailing {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+}
+
 .paragraph-card__title-block .paragraph-input--view .paragraph-input__view-text,
-.paragraph-card__title-block .paragraph-input--view .paragraph-input__placeholder {
+.paragraph-card__title-block .paragraph-input--view .paragraph-input__placeholder,
+.paragraph-card__title-main .paragraph-input--view .paragraph-input__view-text,
+.paragraph-card__title-main .paragraph-input--view .paragraph-input__placeholder {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
