@@ -9,6 +9,7 @@ import {
   TEMPLATE_FIELD_ORG_LOGO,
   TEMPLATE_FIELD_ORG_LOGO_02,
 } from '@/features/template/ui/template-custom-fields-form'
+import { TemplatePreviewPageNavigator } from '@/features/template/ui/modal/template-preview-page-navigator'
 import { generateFilename } from '@/shared/utils/file-download'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import {
@@ -99,7 +100,7 @@ export function FormTemplateFullpageModal({
       title=""
       size="full"
       hideHeader
-      className="template-preview-modal teal-header-modal--full form-certificate-user-preview-modal"
+      className="template-preview-modal template-preview-modal--form-layout teal-header-modal--full form-certificate-user-preview-modal"
       zIndex={1100}
     >
       <div className="template-preview-modal__shell">
@@ -135,6 +136,7 @@ export function FormTemplateFullpageModal({
                   </div>
                 </div>
               </div>
+              <TemplatePreviewPageNavigator currentPage={1} totalPages={1} onPageChange={() => {}} />
             </div>
           </div>
         </div>
