@@ -32,10 +32,14 @@
 
 .paragraph-label-input__label {
   margin: 0;
+  align-self: flex-start;
+  width: 100%;
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
+  justify-content: flex-start;
   gap: 0.25em;
+  text-align: left;
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 18px;
@@ -71,6 +75,14 @@
   min-height: 24px !important;
   height: auto !important;
   line-height: 24px !important;
+}
+
+.paragraph-label-input
+  .paragraph-label-input__textarea
+  .cms-textarea__inner
+  textarea.ant-input::placeholder {
+  line-height: 150% !important;
+  font-size: 15px;
 }
 
 .paragraph-label-input

@@ -209,10 +209,11 @@
   font-size: 24px;
 }
 
+/* 제목형 + 설명: 기본 카드와 동일 들여쓰기 — 타이틀 본문(필수 표시·번호 접두 제외 영역)과 정렬 */
 .paragraph-card--survey-title-with-period .paragraph-card__description-block {
-  margin-left: 0;
-  width: 100%;
-  max-width: 100%;
+  margin-left: 32px;
+  width: calc(100% - 32px);
+  max-width: calc(100% - 32px);
 }
 
 /* 설문 카드 등: 아웃라인 placeholder 문구 — ParagraphInput 기본 톤과 맞춤 */
