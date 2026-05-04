@@ -16,6 +16,7 @@ import type {
   MultipleChoiceParagraph,
   ScaleTypeItem,
   ScaleTypeParagraph,
+  SessionPlanShortEssayParagraph,
   ShortEssayParagraph,
   WritingFormDraft,
   WritingFormParagraph,
@@ -51,6 +52,7 @@ const TITLE_NUMBERING_OPTIONS: { value: FormTitleNumberingStyle; label: string }
 type ParagraphKindSelectValue = 'single_item' | 'description' | 'table'
 type SingleItemDetailSelectValue =
   | 'subjective'
+  | 'session_plan_short_essay'
   | 'multiple_choice'
   | 'date_only'
   | 'time_only'
@@ -72,6 +74,7 @@ const PARAGRAPH_KIND_OPTIONS: { value: ParagraphKindSelectValue; label: string }
 ]
 const SINGLE_ITEM_DETAIL_OPTIONS: { value: SingleItemDetailSelectValue; label: string }[] = [
   { value: 'subjective', label: '주관식형' },
+  { value: 'session_plan_short_essay', label: '교육계획 차시형' },
   { value: 'multiple_choice', label: '객관식형' },
   { value: 'date_only', label: '날짜형' },
   { value: 'time_only', label: '시간형' },
@@ -134,6 +137,8 @@ function paragraphVariantLabel(p: WritingFormParagraph): string {
       return '기타'
     case 'short_essay':
       return '주관식형'
+    case 'session_plan_short_essay':
+      return '교육계획 차시형'
     case 'multiple_choice':
       return '객관식형'
     case 'dropdown':
@@ -175,6 +180,8 @@ function paragraphDetailSelectValue(p: WritingFormParagraph): DetailSelectValue 
   if (p.kind === 'description' && p.variant === 'survey_title_with_period') return 'title'
   if (p.kind === 'description' && p.variant === 'closing') return 'closing'
   if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') return 'text'
+  if (p.kind === 'single_item' && p.variant === 'session_plan_short_essay')
+    return 'session_plan_short_essay'
   if (p.kind === 'single_item' && p.variant === 'short_essay') return 'subjective'
   if (p.kind === 'single_item' && p.variant === 'multiple_choice') return 'multiple_choice'
   if (p.kind === 'single_item' && p.variant === 'date') return 'date_only'
@@ -224,6 +231,28 @@ function createShortEssayDefault(id: string): ShortEssayParagraph {
       },
     ],
     bodyPlaceholder: '답변을 입력해 주세요',
+    bodyText: '',
+  }
+}
+
+function createSessionPlanShortEssayDefault(id: string): SessionPlanShortEssayParagraph {
+  const ph = '자유롭게 작성해 주세요'
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'session_plan_short_essay',
+    requiredMark: true,
+    paragraphTitle: '차시 교육 계획',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
+    showItemTitle: true,
+    items: [
+      { id: `${id}-intro`, label: '도입', placeholder: ph, bodyText: '' },
+      { id: `${id}-body`, label: '전개', placeholder: ph, bodyText: '' },
+      { id: `${id}-outro`, label: '마무리', placeholder: ph, bodyText: '' },
+    ],
+    bodyPlaceholder: ph,
     bodyText: '',
   }
 }
@@ -407,6 +436,8 @@ function convertParagraphByDetail(
       return preserveParagraphCommonFields(createVerticalTableParagraph(id, 'text'), prev)
     case 'subjective':
       return preserveParagraphCommonFields(createShortEssayDefault(id), prev)
+    case 'session_plan_short_essay':
+      return preserveParagraphCommonFields(createSessionPlanShortEssayDefault(id), prev)
     case 'multiple_choice':
       return preserveParagraphCommonFields(createMultipleChoiceDefault(id), prev)
     case 'date_only':
@@ -711,9 +742,11 @@ export function FormEditorRightPanel({
         ? writingOutlineLabel(active)
         : ''
 
-  const activeShortEssay =
-    active && active.kind === 'single_item' && active.variant === 'short_essay'
-      ? (active as ShortEssayParagraph)
+  const activeShortEssay: ShortEssayParagraph | SessionPlanShortEssayParagraph | null =
+    active &&
+    active.kind === 'single_item' &&
+    (active.variant === 'short_essay' || active.variant === 'session_plan_short_essay')
+      ? (active as ShortEssayParagraph | SessionPlanShortEssayParagraph)
       : null
   const activeMultipleChoice =
     active && active.kind === 'single_item' && active.variant === 'multiple_choice'
@@ -733,7 +766,10 @@ export function FormEditorRightPanel({
       : activeShortEssay
         ? [
             {
-              id: 'short-essay-item-1',
+              id:
+                activeShortEssay.variant === 'session_plan_short_essay'
+                  ? 'session-plan-item-1'
+                  : 'short-essay-item-1',
               label: 'Title 01',
               placeholder: activeShortEssay.bodyPlaceholder,
               bodyText: activeShortEssay.bodyText,
@@ -894,14 +930,21 @@ export function FormEditorRightPanel({
                         value={selectedShortEssayItem.label ?? ''}
                         onChange={e =>
                           updateParagraph(activeShortEssay.id, cur => {
-                            if (cur.kind !== 'single_item' || cur.variant !== 'short_essay')
+                            if (
+                              cur.kind !== 'single_item' ||
+                              (cur.variant !== 'short_essay' &&
+                                cur.variant !== 'session_plan_short_essay')
+                            )
                               return cur
                             const items =
                               cur.items?.length && cur.items.length > 0
                                 ? cur.items
                                 : [
                                     {
-                                      id: 'short-essay-item-1',
+                                      id:
+                                        cur.variant === 'session_plan_short_essay'
+                                          ? 'session-plan-item-1'
+                                          : 'short-essay-item-1',
                                       label: 'Title 01',
                                       placeholder: cur.bodyPlaceholder,
                                       bodyText: cur.bodyText,
@@ -927,14 +970,21 @@ export function FormEditorRightPanel({
                       value={selectedShortEssayItem.placeholder ?? activeShortEssay.bodyPlaceholder}
                       onChange={e =>
                         updateParagraph(activeShortEssay.id, cur => {
-                          if (cur.kind !== 'single_item' || cur.variant !== 'short_essay')
+                          if (
+                            cur.kind !== 'single_item' ||
+                            (cur.variant !== 'short_essay' &&
+                              cur.variant !== 'session_plan_short_essay')
+                          )
                             return cur
                           const items =
                             cur.items?.length && cur.items.length > 0
                               ? cur.items
                               : [
                                   {
-                                    id: 'short-essay-item-1',
+                                    id:
+                                      cur.variant === 'session_plan_short_essay'
+                                        ? 'session-plan-item-1'
+                                        : 'short-essay-item-1',
                                     label: 'Title 01',
                                     placeholder: cur.bodyPlaceholder,
                                     bodyText: cur.bodyText,

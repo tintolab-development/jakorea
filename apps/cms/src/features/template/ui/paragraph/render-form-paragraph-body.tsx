@@ -19,6 +19,7 @@ import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-ty
 import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/table/horizontal-table-paragraph-body'
 import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/table/vertical-table-paragraph-body'
 import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
+import { SessionPlanShortEssay } from '@/features/template/ui/paragraph/single-item/session-plan-short-essay'
 import { ShortEssay } from '@/features/template/ui/paragraph/single-item/short-essay'
 import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate'
 import { SubjectiveParagraphBody } from '@/features/template/ui/paragraph/single-item/subjective-paragraph-body'
@@ -80,14 +81,20 @@ export function renderFormParagraphBody(
   const paragraphInteractionMode = options?.paragraphInteractionMode ?? 'authoring'
   const isCardSelected = isParagraphSelected
   const structureLocked = options?.structureLockedParagraphIds?.has(p.id) ?? false
-  const isBodyInteractive =
-    !structureLocked && (paragraphInteractionMode === 'user' || isParagraphSelected)
+  /**
+   * 구조 잠금: 작성(authoring)에서는 카드 선택만으로는 본문 편집 불가.
+   * 미리보기(`user`)에서는 잠긴 시드도 입력 가능.
+   */
+  const isBodyInteractive = structureLocked
+    ? paragraphInteractionMode === 'user'
+    : paragraphInteractionMode === 'user' || isParagraphSelected
   switch (p.variant) {
     case 'survey_title_with_period':
       if (!isCardSelected && paragraphInteractionMode !== 'user') return null
       if (!(p.showWritingPeriodOnForm ?? false)) return null
-      /** 구조 잠금은 표·복제 등에만 적용 — 제목형「작성 기간」슬롯은 카드 선택 시 편집 가능(발급용 시드 등) */
-      const titlePeriodEditMode = paragraphInteractionMode === 'user' || isParagraphSelected
+      const titlePeriodEditMode = structureLocked
+        ? paragraphInteractionMode === 'user'
+        : paragraphInteractionMode === 'user' || isParagraphSelected
       return (
         <ExplanationTitle
           paragraph={p}
@@ -126,9 +133,9 @@ export function renderFormParagraphBody(
       const hp = normalizeHorizontalTableParagraph(
         p as Extract<WritingFormParagraph, { variant: 'horizontal_table' }>
       )
-      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지(텍스트형만 비선택 시 플레이스홀더 뷰). 템플릿 잠금 시 편집 불가 */
+      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 구조 잠금 시 작성 모드에서는 편집 불가, 미리보기(user)는 예외 */
       const isEditMode =
-        !structureLocked &&
+        (!structureLocked || paragraphInteractionMode === 'user') &&
         (paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field')
       return (
         <HorizontalTableParagraphBody
@@ -183,6 +190,18 @@ export function renderFormParagraphBody(
     case 'short_essay':
       return (
         <ShortEssay
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isCardSelected={isCardSelected}
+          isBodyInteractive={isBodyInteractive}
+          paragraphInteractionMode={paragraphInteractionMode}
+          activeItemId={options?.singleItemListActiveItemId}
+          onSelectItem={options?.onSelectSingleItemListItem}
+        />
+      )
+    case 'session_plan_short_essay':
+      return (
+        <SessionPlanShortEssay
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isCardSelected={isCardSelected}

@@ -5,7 +5,7 @@ import { ItemDeleteButton } from '@/features/template/ui/paragraph/shared/item-d
 import { ParagraphLabelInput } from '@/features/template/ui/paragraph/shared/paragraph-label-input'
 import './short-essay.css'
 
-/** 주관식형 (short-essay) — 단락 바디 슬롯 (추후 본문 연동) */
+/** 주관식형 (short_essay) — 단락 바디 슬롯 */
 export function ShortEssay({
   paragraph,
   onChange,
@@ -17,11 +17,8 @@ export function ShortEssay({
 }: {
   paragraph: ShortEssayParagraph
   onChange: (next: ShortEssayParagraph) => void
-  /** 단락 카드 선택 — authoring 시 선택 해제에 따른 본문 클리어·항목 삭제 UI */
   isCardSelected: boolean
-  /** 본문 입력 가능 — user 모드에서는 카드 비선택이어도 true일 수 있음 */
   isBodyInteractive: boolean
-  /** user일 때는 카드 비선택으로 본문을 비우지 않음 */
   paragraphInteractionMode?: ParagraphBodyInteractionMode
   activeItemId?: string | null
   onSelectItem?: (itemId: string | null) => void

@@ -5,6 +5,7 @@ import type {
   FormEditorKind,
   FormTitleNumberingStyle,
   MultipleChoiceParagraph,
+  SessionPlanShortEssayParagraph,
   ShortEssayParagraph,
   TitleWithPeriodParagraph,
   WritingFormParagraph,
@@ -70,14 +71,25 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
   )
 }
 
-function DocumentShortEssayReadonly({ paragraph }: { paragraph: ShortEssayParagraph }) {
-  const ph = paragraph.bodyPlaceholder.trim() || '답변을 입력해 주세요'
+function DocumentShortEssayReadonly({
+  paragraph,
+}: {
+  paragraph: ShortEssayParagraph | SessionPlanShortEssayParagraph
+}) {
+  const ph =
+    paragraph.bodyPlaceholder.trim() ||
+    (paragraph.variant === 'session_plan_short_essay'
+      ? '자유롭게 작성해 주세요'
+      : '답변을 입력해 주세요')
   const items =
     paragraph.items && paragraph.items.length > 0
       ? paragraph.items
       : [
           {
-            id: 'short-essay-item-1',
+            id:
+              paragraph.variant === 'session_plan_short_essay'
+                ? 'session-plan-item-1'
+                : 'short-essay-item-1',
             label: 'Title 01',
             placeholder: ph,
             bodyText: paragraph.bodyText,
@@ -162,6 +174,8 @@ function renderBody(
       return <DocumentMultipleChoiceReadonly paragraph={p as MultipleChoiceParagraph} />
     case 'short_essay':
       return <DocumentShortEssayReadonly paragraph={p as ShortEssayParagraph} />
+    case 'session_plan_short_essay':
+      return <DocumentShortEssayReadonly paragraph={p as SessionPlanShortEssayParagraph} />
     case 'subjective':
       return <SubjectiveParagraphBody paragraph={p} isEditMode={false} />
     case 'system':
