@@ -122,6 +122,7 @@
   border: none !important;
   box-shadow: none !important;
   background: transparent !important;
+  font-family: Pretendard, sans-serif;
   font-weight: 500;
   line-height: 150%;
   color: var(--main-BK, #3d3d3d);
@@ -129,9 +130,36 @@
   overflow: auto;
 }
 
+/* placeholder 타이포 스펙 (인풋 값과 동일 Pretendard·500·150%) */
 .cms-textarea__inner textarea.ant-input::placeholder {
+  overflow: hidden;
   color: var(--gray-85969-d, #85969d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-style: normal;
   font-weight: 500;
+  line-height: 150%;
+}
+
+/* rows=1: 컨트롤 안 세로 중앙·한 줄 말줄임(멀티줄은 기본 resize 유지) */
+.cms-textarea--rows-1 .cms-textarea__control {
+  align-items: center;
+}
+
+.cms-textarea--rows-1 .cms-textarea__inner {
+  align-items: center;
+}
+
+.cms-textarea--rows-1 .cms-textarea__inner textarea.ant-input {
+  resize: none;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cms-textarea--rows-1 .cms-textarea__inner textarea.ant-input::placeholder {
+  white-space: nowrap;
 }
 
 .cms-textarea__control--disabled .cms-textarea__inner textarea.ant-input {

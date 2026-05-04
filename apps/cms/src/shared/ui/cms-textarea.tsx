@@ -42,10 +42,14 @@ export const CmsTextArea = forwardRef<TextAreaRef, CmsTextAreaProps>(
         ? { width: typeof width === 'number' ? `${width}px` : width }
         : undefined
 
+    const { rows, ...textareaRest } = rest
+    const singleLineRows = rows === 1
+
     const rootCn = [
       'cms-textarea',
       `cms-textarea--${inputSize}`,
       hasExplicitWidth && 'cms-textarea--explicit-width',
+      singleLineRows && 'cms-textarea--rows-1',
       className,
     ]
       .filter(Boolean)
@@ -67,7 +71,8 @@ export const CmsTextArea = forwardRef<TextAreaRef, CmsTextAreaProps>(
               disabled={disabled}
               rootClassName={rootClassName}
               variant="borderless"
-              {...rest}
+              rows={rows}
+              {...textareaRest}
             />
           </span>
         </span>
