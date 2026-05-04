@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Space, Typography } from 'antd'
 import { useFormTestSingleItemEditor } from '@/features/template/hooks/use-form-test-single-item-editor'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
-import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
 import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
@@ -89,7 +89,7 @@ export function FormTab() {
         description="* 양식 테스트용 미리보기입니다."
         templateTabType="writing"
         leftContent={
-          <FormEditorLeftPane
+          <FormEditorLeftPanel
             paragraphs={singleItem.draft.paragraphs}
             titleNumbering={singleItem.draft.formSettings.titleNumbering}
             selectedCardId={singleItem.activeParagraphId}

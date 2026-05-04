@@ -7,7 +7,7 @@ import {
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
-import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
 import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
@@ -108,7 +108,7 @@ export function HorizontalTableFormEditor({
   }, [])
 
   const leftPane = (
-    <FormEditorLeftPane
+    <FormEditorLeftPanel
       paragraphs={draft.paragraphs}
       titleNumbering={draft.formSettings.titleNumbering}
       selectedCardId={activeParagraphId}

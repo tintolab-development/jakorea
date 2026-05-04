@@ -4,7 +4,7 @@ import type {
   FormEditorKind,
   WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
-import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
 import { A4DocumentPageLayout } from '@/features/template/ui/layout'
 import type {
   FormUpdateParagraph,
@@ -220,7 +220,7 @@ export function TemplatePreviewModal({
                 />
               </div>
             ) : (
-              <FormEditorLeftPane
+              <FormEditorLeftPanel
                 paragraphs={draft.paragraphs}
                 titleNumbering={draft.formSettings.titleNumbering}
                 selectedCardId={null}

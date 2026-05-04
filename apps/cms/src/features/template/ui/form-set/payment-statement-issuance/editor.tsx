@@ -1,6 +1,6 @@
 import type { PaymentStatementIssuanceEditorViewModel } from '@/features/template/hooks/use-payment-statement-issuance-editor'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
-import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
 import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
@@ -18,7 +18,7 @@ export function PaymentStatementIssuanceEditorLeftColumn({
 }) {
   return (
     <div className="payment-statement-issuance-editor">
-      <FormEditorLeftPane
+      <FormEditorLeftPanel
         paragraphs={vm.draft.paragraphs}
         titleNumbering={vm.draft.formSettings.titleNumbering}
         selectedCardId={vm.activeParagraphId}

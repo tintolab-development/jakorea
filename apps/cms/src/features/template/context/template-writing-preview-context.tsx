@@ -29,7 +29,7 @@ export type TemplateWritingUserPreviewSession = {
   zIndex?: number
   previewLayout?: TemplateWritingPreviewLayout
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
-  /** FormEditorLeftPane — 단락 필수(*)·답변 필수 토글 등 숨김 */
+  /** FormEditorLeftPanel — 단락 필수(*)·답변 필수 토글 등 숨김 */
   hideParagraphRequiredChrome?: boolean
   a4HiddenParagraphIds?: ReadonlySet<string>
   a4RenderMode?: FormDocumentPreviewRenderMode

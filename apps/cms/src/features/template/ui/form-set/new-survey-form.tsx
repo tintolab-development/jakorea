@@ -14,7 +14,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
-import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/use-table-row-selection-state'
 import {
   FormEditorRightPanel,
@@ -141,7 +141,7 @@ export default function NewSurveyForm() {
       description="* 등록 시 제목과 마무리글, 설문자 정보를 제외하고 최소 1개 이상의 단락이 존재해야 합니다."
       templateTabType="writing"
       leftContent={
-        <FormEditorLeftPane
+        <FormEditorLeftPanel
           paragraphs={draft.paragraphs}
           titleNumbering={draft.formSettings.titleNumbering}
           selectedCardId={activeParagraphId}

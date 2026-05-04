@@ -1,6 +1,6 @@
 import type { ProgramRegistrationEditorViewModel } from '@/features/template/hooks/use-program-registration-editor'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
-import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
 import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
@@ -12,7 +12,7 @@ export function ProgramRegistrationEditorLeftColumn({
   vm: ProgramRegistrationEditorViewModel
 }) {
   return (
-    <FormEditorLeftPane
+    <FormEditorLeftPanel
       paragraphs={vm.draft.paragraphs}
       titleNumbering={vm.draft.formSettings.titleNumbering}
       selectedCardId={vm.activeParagraphId}

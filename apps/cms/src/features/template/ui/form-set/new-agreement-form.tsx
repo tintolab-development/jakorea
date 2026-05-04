@@ -16,7 +16,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
-import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/use-table-row-selection-state'
 import {
   FormEditorRightPanel,
@@ -150,7 +150,7 @@ export default function NewAgreementForm() {
       description="* 등록 시 최소 1개의 단락은 존재해야 하며, 동의 양식은 화면 전반에 동일한 구조로 노출될 수 있습니다."
       templateTabType="writing"
       leftContent={
-        <FormEditorLeftPane
+        <FormEditorLeftPanel
           paragraphs={draft.paragraphs}
           titleNumbering={draft.formSettings.titleNumbering}
           selectedCardId={activeParagraphId}
