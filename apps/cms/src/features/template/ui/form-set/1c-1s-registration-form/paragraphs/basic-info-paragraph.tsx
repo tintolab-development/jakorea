@@ -31,6 +31,7 @@ import {
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/program-registration-form/paragraphs/program-registration-ips-type-fields'
 import '@/features/template/ui/form-set/program-registration-form/paragraphs/program-registration-paragraph.css'
+import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '../../program-registration-form/paragraphs/program-registration-ips-options'
 
 const REP_KO = '1사1교 경제금융교육'
 const REP_EN = '1 Company 1 School Economics and Finance Education'
@@ -67,7 +68,9 @@ function initialOrganizationSurveyItemsAllOn(): Record<OrganizationSurveyItemId,
   }
 }
 
-function participantTypeLabel(value: (typeof TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS)[number]['value']) {
+function participantTypeLabel(
+  value: (typeof TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS)[number]['value']
+) {
   return TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.find(o => o.value === value)?.label ?? value
 }
 
@@ -113,12 +116,18 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     }
 
   const sponsorOptions = useMemo(
-    () => [{ value: ALL_VALUE, label: '전체' }, ...mockSponsorManagementListRows.map(s => ({ value: s.id, label: s.name }))],
+    () => [
+      { value: ALL_VALUE, label: '전체' },
+      ...mockSponsorManagementListRows.map(s => ({ value: s.id, label: s.name })),
+    ],
     []
   )
 
   const selectedSponsor = useMemo<SponsorManagementRow | null>(
-    () => (sponsorId === ALL_VALUE ? null : mockSponsorManagementListRows.find(s => s.id === sponsorId) ?? null),
+    () =>
+      sponsorId === ALL_VALUE
+        ? null
+        : (mockSponsorManagementListRows.find(s => s.id === sponsorId) ?? null),
     [sponsorId]
   )
 
@@ -201,6 +210,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
                   withAllOption={false}
+                  disabled
                   inputSize="medium"
                   placeholder="세부 프로그램명을 선택하세요"
                   width="100%"
@@ -240,7 +250,11 @@ export function OneCOneSRegistrationBasicInfoParagraph({
           <DetailInfoForm.Field
             label="프로그램 진행 현황"
             readOnlyDisplay
-            view={PROGRAM_PROGRESS_STATIC_VIEW}
+            view={
+              <span className="program-registration-paragraph__program-progress-hint">
+                {PROGRAM_PROGRESS_STATIC_VIEW}
+              </span>
+            }
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
@@ -379,8 +393,10 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             view="-"
           />
         </DetailInfoForm.Row>
+      </DetailInfoForm>
 
-        {/* ── 하단: 교육 과정 · IP · Course · Partner · IPS ── */}
+      {/* ── 하단: 교육 과정 · IP · Course · Partner · IPS ── */}
+      <DetailInfoForm title="교육 과정 · IP · Course · Partner · IPS" hideHeader mode="edit">
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="교육 과정"
@@ -390,7 +406,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   withAllOption={false}
                   inputSize="medium"
                   placeholder="교육 과정을 선택하세요"
-                  width="100%"
+                  width={240}
                   options={educationCourseSelectOptions}
                   value={educationCourse}
                   onChange={v => setEducationCourse(String(v ?? ''))}
@@ -407,7 +423,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   withAllOption={false}
                   inputSize="medium"
                   disabled
-                  width="100%"
+                  width={240}
                   options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
                   value="ja"
                 />
@@ -425,7 +441,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   withAllOption={false}
                   inputSize="medium"
                   disabled
-                  width="100%"
+                  width={240}
                   options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
                   value="ja"
                 />
@@ -453,8 +469,13 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             label="IPS 유형"
             fullRow
             edit={
-              <ProgramRegistrationIpsTypeFields
-                value={IPS_PREPARE_FIXED}
+              <CmsSelect
+                withAllOption={false}
+                inputSize="medium"
+                placeholder="IPS 유형을 선택하세요"
+                width={240}
+                options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
+                value={IPS_PREPARE_FIXED.category}
                 onChange={() => {}}
                 disabled
               />

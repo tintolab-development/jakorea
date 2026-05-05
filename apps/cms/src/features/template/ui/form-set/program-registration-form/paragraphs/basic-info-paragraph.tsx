@@ -311,7 +311,7 @@ export function ProgramRegistrationBasicInfoParagraph({
           <DetailInfoForm.Field
             label="프로그램 진행 현황"
             edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
+              <div className="detail-info-form-inputs-wrapper-no-gap program-registration-paragraph__program-progress-hint">
                 <CmsSelect
                   withAllOption={false}
                   inputSize="medium"
