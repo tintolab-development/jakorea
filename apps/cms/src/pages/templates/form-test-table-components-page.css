@@ -5,6 +5,19 @@
   box-sizing: border-box;
 }
 
+.form-test-table-components-page__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.form-test-table-components-page__editor-wrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .form-test-table-components-page .horizontal-table-form-editor--embedded {
   margin-top: 0;
 }

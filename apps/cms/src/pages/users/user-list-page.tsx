@@ -4,7 +4,7 @@
  * 회원 목록: React Query useInfiniteQuery + 15명씩 무한 스크롤
  */
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
 import { message } from 'antd'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
@@ -300,24 +300,35 @@ export function UserListPage() {
     [resolvedMemberListKind]
   )
 
+  // URL에서 id가 빠지면(뒤로가기 등) 풀페이지·드로어를 같은 페인트 전에 닫음 — 안 닫히는 현상 방지
+  useLayoutEffect(() => {
+    const targetId = params.id?.trim()
+    if (targetId) return
+    if (pendingOpenedUserIdRef.current != null && (detailBridgeUser || drawerOpen || drawerUser)) {
+      return
+    }
+    pendingOpenedUserIdRef.current = null
+    setDetailBridgeUser(null)
+    if (drawerOpen || drawerUser || selectedUser) {
+      closeDrawer()
+      clearSelectedUserId(null)
+    }
+  }, [
+    params.id,
+    detailBridgeUser,
+    drawerOpen,
+    drawerUser,
+    selectedUser,
+    closeDrawer,
+    clearSelectedUserId,
+  ])
+
   // URL(id) 기반 모달 상태 복원: 새로고침/직접 진입 시 상세 모달 유지
   useEffect(() => {
     let cancelled = false
     const targetId = params.id?.trim()
 
-    if (!targetId) {
-      // 클릭 직후 handleView는 detailBridgeUser·openDrawer를 먼저 반영하고,
-      // React Router의 `id` 쿼리는 다음 틱에 올 수 있음. 이때 !targetId로 닫으면 첫 클릭이 무효화됨.
-      if (detailBridgeUser && (drawerOpen || drawerUser)) {
-        return
-      }
-      setDetailBridgeUser(null)
-      if (drawerOpen || drawerUser || selectedUser) {
-        closeDrawer()
-        clearSelectedUserId(null)
-      }
-      return
-    }
+    if (!targetId) return
 
     if (pendingOpenedUserIdRef.current) {
       if (targetId === pendingOpenedUserIdRef.current) {
@@ -365,11 +376,10 @@ export function UserListPage() {
     }
   }, [
     params.id,
-    detailBridgeUser,
-    drawerOpen,
-    drawerUser,
     selectedUser,
     listUsers,
+    drawerOpen,
+    drawerUser,
     closeDrawer,
     clearSelectedUserId,
     setSelectedUserId,
@@ -414,16 +424,19 @@ export function UserListPage() {
 
   // 사용자 상세 보기
   const handleView = useCallback(
-    (user: Omit<User, 'password'>) => {
+    (user: Omit<User, 'password'>, opts?: { replace?: boolean }) => {
       pendingOpenedUserIdRef.current = user.id
       setDetailBridgeUser(user)
       setSelectedUserId(user.id) // 스토어에 ID만 저장
       openDrawer(user)
-      setParams({
-        id: user.id,
-        lnb: 'detail-info',
-        [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
-      })
+      setParams(
+        {
+          id: user.id,
+          lnb: 'detail-info',
+          [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
+        },
+        { replace: opts?.replace ?? false }
+      )
     },
     [setSelectedUserId, openDrawer, setParams]
   )
@@ -469,11 +482,14 @@ export function UserListPage() {
     setDrawerUser(null)
     closeDrawer()
     clearSelectedUserId(null)
-    setParams({
-      id: undefined,
-      lnb: undefined,
-      [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
-    })
+    setParams(
+      {
+        id: undefined,
+        lnb: undefined,
+        [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
+      },
+      { replace: true }
+    )
   }, [closeDrawer, clearSelectedUserId, setParams, setDrawerUser])
 
   /** 풀페이지 X — 학교→교사 drill-down 중이면 학교 상세로, 아니면 목록으로 */
@@ -481,7 +497,7 @@ export function UserListPage() {
     const back = schoolDetailReturnUserRef.current
     if (back) {
       schoolDetailReturnUserRef.current = null
-      handleView(back)
+      handleView(back, { replace: true })
       return
     }
     flushUserDetailModal()
