@@ -42,6 +42,7 @@ export function renderFormEditorParagraphBody(
     onSelectSingleItemListItem:
       (paragraph.variant === 'short_essay' ||
         paragraph.variant === 'session_plan_short_essay' ||
+        paragraph.variant === 'subjective' ||
         paragraph.variant === 'multiple_choice') &&
       onSelectSingleItemListItem
         ? (itemId: string | null) => onSelectSingleItemListItem(paragraph.id, itemId)

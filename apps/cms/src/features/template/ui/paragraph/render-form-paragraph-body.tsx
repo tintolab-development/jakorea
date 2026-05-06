@@ -5,6 +5,7 @@ import {
   type AgreementSystemBodyDisplayMode,
   type FormEditorKind,
   type HorizontalTableRowSelection,
+  type SubjectiveParagraph,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
@@ -20,9 +21,12 @@ import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/t
 import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/table/vertical-table-paragraph-body'
 import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
 import { SessionPlanShortEssay } from '@/features/template/ui/paragraph/single-item/session-plan-short-essay'
-import { ShortEssay } from '@/features/template/ui/paragraph/single-item/short-essay'
+import {
+  mergeSubjectiveFromShortEssayEdit,
+  ShortEssay,
+  subjectiveParagraphToShortEssayView,
+} from '@/features/template/ui/paragraph/single-item/short-essay'
 import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate'
-import { SubjectiveParagraphBody } from '@/features/template/ui/paragraph/single-item/subjective-paragraph-body'
 import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
@@ -69,6 +73,13 @@ export type RenderFormParagraphBodyOptions = {
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
   /** 일반 프로그램 등록폼 전용 단락 본문 상태 */
   programRegistration?: ProgramRegistrationParagraphBodyOptions
+  /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
+  programApplicationFormInstitution?: boolean
+  /**
+   * 구조 잠금 + 작성(authoring)일 때도 객관식·가로형 하단 동의 라디오 등 선택 UI만 조작 가능(미리 체크).
+   * 프로그램 참여자 신청 폼 등 고정 단락 템플릿용.
+   */
+  structureLockedAuthoringChoicePreview?: boolean
 }
 
 export function renderFormParagraphBody(
@@ -88,6 +99,10 @@ export function renderFormParagraphBody(
   const isBodyInteractive = structureLocked
     ? paragraphInteractionMode === 'user'
     : paragraphInteractionMode === 'user' || isParagraphSelected
+  const lockedAuthoringChoicePreview =
+    structureLocked &&
+    paragraphInteractionMode === 'authoring' &&
+    options?.structureLockedAuthoringChoicePreview === true
   switch (p.variant) {
     case 'survey_title_with_period':
       if (!isCardSelected && paragraphInteractionMode !== 'user') return null
@@ -119,8 +134,21 @@ export function renderFormParagraphBody(
           isEditMode={isBodyInteractive}
         />
       )
-    case 'subjective':
-      return <SubjectiveParagraphBody paragraph={p} isEditMode={isBodyInteractive} />
+    case 'subjective': {
+      const sp = p as SubjectiveParagraph
+      const view = subjectiveParagraphToShortEssayView(sp)
+      return (
+        <ShortEssay
+          paragraph={view}
+          onChange={next => updateParagraph(sp.id, () => mergeSubjectiveFromShortEssayEdit(sp, next))}
+          isCardSelected={isCardSelected}
+          isBodyInteractive={isBodyInteractive}
+          paragraphInteractionMode={paragraphInteractionMode}
+          activeItemId={options?.singleItemListActiveItemId}
+          onSelectItem={options?.onSelectSingleItemListItem}
+        />
+      )
+    }
     case 'agreement_explanation_text':
       return (
         <ExplanationText
@@ -137,11 +165,14 @@ export function renderFormParagraphBody(
       const isEditMode =
         (!structureLocked || paragraphInteractionMode === 'user') &&
         (paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field')
+      const tableCanvasInteractive = !structureLocked || paragraphInteractionMode === 'user'
       return (
         <HorizontalTableParagraphBody
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isEditMode}
+          tableCanvasInteractive={tableCanvasInteractive}
+          bottomConsentPreviewInAuthoring={lockedAuthoringChoicePreview}
           tableRowSelection={options?.horizontalTableRowSelection}
           onTableRowSelectionChange={options?.onHorizontalTableRowSelectionChange}
           paymentStatementBasicInfoValues={options?.paymentStatementBasicInfoValues}
@@ -149,6 +180,7 @@ export function renderFormParagraphBody(
           paymentStatementCalculationLines={options?.paymentStatementCalculationLines}
           paymentStatementDisplayMode={options?.paymentStatementDisplayMode}
           programRegistration={options?.programRegistration}
+          programApplicationFormInstitution={options?.programApplicationFormInstitution}
         />
       )
     }
@@ -222,7 +254,7 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isCardSelected={isCardSelected}
-          isBodyInteractive={isBodyInteractive}
+          isBodyInteractive={isBodyInteractive || lockedAuthoringChoicePreview}
           paragraphInteractionMode={paragraphInteractionMode}
           itemsEditActive={itemsEditActive}
           onActivateItemsEditor={

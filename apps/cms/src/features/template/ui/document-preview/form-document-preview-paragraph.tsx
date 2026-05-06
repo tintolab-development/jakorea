@@ -7,6 +7,7 @@ import type {
   MultipleChoiceParagraph,
   SessionPlanShortEssayParagraph,
   ShortEssayParagraph,
+  SubjectiveParagraph,
   TitleWithPeriodParagraph,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -24,7 +25,7 @@ import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/t
 import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/table/vertical-table-paragraph-body'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
 import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
-import { SubjectiveParagraphBody } from '@/features/template/ui/paragraph/single-item/subjective-paragraph-body'
+import { subjectiveParagraphToShortEssayView } from '@/features/template/ui/paragraph/single-item/short-essay'
 import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
 import { DateField } from '@/features/template/ui/paragraph/single-item/date'
 import { TimeField } from '@/features/template/ui/paragraph/single-item/time'
@@ -159,6 +160,7 @@ function renderBody(
           paragraph={normalizeHorizontalTableParagraph(p as HorizontalTableParagraph)}
           onChange={noopOnParagraphChange}
           isEditMode={false}
+          tableCanvasInteractive={false}
           paymentStatementBasicInfoValues={paragraphBodyOptions?.paymentStatementBasicInfoValues}
           lectureFeeCalculationValues={paragraphBodyOptions?.lectureFeeCalculationValues}
           paymentStatementCalculationLines={paragraphBodyOptions?.paymentStatementCalculationLines}
@@ -166,6 +168,7 @@ function renderBody(
             paragraphBodyOptions?.paymentStatementDisplayMode ??
             (renderMode === 'contentOnly' ? 'document' : undefined)
           }
+          programApplicationFormInstitution={paragraphBodyOptions?.programApplicationFormInstitution}
         />
       )
     case 'vertical_table':
@@ -177,7 +180,11 @@ function renderBody(
     case 'session_plan_short_essay':
       return <DocumentShortEssayReadonly paragraph={p as SessionPlanShortEssayParagraph} />
     case 'subjective':
-      return <SubjectiveParagraphBody paragraph={p} isEditMode={false} />
+      return (
+        <DocumentShortEssayReadonly
+          paragraph={subjectiveParagraphToShortEssayView(p as SubjectiveParagraph)}
+        />
+      )
     case 'system':
       if (isAgreementLockedSystemParagraph(p)) {
         return (

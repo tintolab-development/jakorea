@@ -204,7 +204,6 @@ export function SortableMiddleFormCard({
   hideParagraphRequiredChrome,
   headingDescriptionExtraClassName,
 }: SortableMiddleCardProps) {
-  const isStructureLocked = structureLockedParagraphIds?.has(paragraph.id) ?? false
   const hideDragHandle = hideDragHandleForParagraphIds?.has(paragraph.id) ?? false
   const {
     attributes,
@@ -214,7 +213,7 @@ export function SortableMiddleFormCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: paragraph.id, disabled: isStructureLocked })
+  } = useSortable({ id: paragraph.id })
 
   const isSelected = selectedCardId === paragraph.id
   const editableHeadingBase = withoutTitleRequired(

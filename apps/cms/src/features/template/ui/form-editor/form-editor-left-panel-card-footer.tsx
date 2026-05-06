@@ -358,7 +358,10 @@ export function modalCardFooterActions(
         <FormParagraphCardActions
           duplicateDisabled={structureLocked}
           deleteDisabled={structureLocked}
-          onAddItem={() =>
+          onAddItem={
+            structureLocked
+              ? undefined
+              : () =>
             updateParagraph(paragraph.id, p => {
               if (
                 p.kind !== 'single_item' ||
@@ -422,7 +425,11 @@ export function modalCardFooterActions(
         onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
       />
     ) : (
-      <FormParagraphCardActions />
+      <FormParagraphCardActions
+        duplicateDisabled={structureLocked}
+        deleteDisabled={structureLocked}
+        addDisabled={structureLocked}
+      />
     )
   }
 

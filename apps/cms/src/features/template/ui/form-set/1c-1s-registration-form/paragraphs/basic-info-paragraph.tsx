@@ -26,10 +26,7 @@ import {
   TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS,
   withDetailedProgramNoneOption,
 } from '@/features/template/lib/template-form-select-options'
-import {
-  ProgramRegistrationIpsTypeFields,
-  type ProgramRegistrationIpsTypeValue,
-} from '@/features/template/ui/form-set/program-registration-form/paragraphs/program-registration-ips-type-fields'
+import { type ProgramRegistrationIpsTypeValue } from '@/features/template/ui/form-set/program-registration-form/paragraphs/program-registration-ips-type-fields'
 import '@/features/template/ui/form-set/program-registration-form/paragraphs/program-registration-paragraph.css'
 import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '../../program-registration-form/paragraphs/program-registration-ips-options'
 

@@ -486,8 +486,8 @@ export interface FormEditorRightPanelProps {
   /** 테이블 세로형: 행 삭제 후 포커스할 행 인덱스(이전 행) */
   onVerticalTableBodyRowDeleted?: (nextRowIndex: number) => void
   /**
-   * 템플릿 고정 단락 — 우측 커스텀 필드 대부분 비활성.
-   * `editorKind === 'horizontal_table'`이면 가로형 단락에 한해 단락 제목·설명 및 표 셀 편집은 유지.
+   * 템플릿 고정 단락 — 우측에서 단락 유형·커스텀 필드 편집 UI를 숨기고 읽기 전용 안내만 노출.
+   * 가로형 테이블도 동일(잠금 시 `FormEditorHorizontalTableCustomFields` 비노출).
    */
   structureLockedParagraphIds?: ReadonlySet<string>
 }
@@ -676,7 +676,7 @@ export function FormEditorRightPanel({
   activeParagraphId,
   onTitleNumberingChange,
   updateParagraph,
-  editorKind = 'survey',
+  editorKind: _editorKind = 'survey',
   showTitleNumbering = true,
   singleItemListActiveItemId,
   horizontalTableRowSelection = null,
@@ -690,38 +690,6 @@ export function FormEditorRightPanel({
     activeParagraphId != null && (structureLockedParagraphIds?.has(activeParagraphId) ?? false)
 
   if (active != null && structureLockedActive) {
-    const horizontalTableLockedEditableHeader =
-      editorKind === 'horizontal_table' &&
-      active.kind === 'single_item' &&
-      active.variant === 'horizontal_table'
-
-    if (horizontalTableLockedEditableHeader) {
-      const ht = active as HorizontalTableParagraph
-      return (
-        <div className="form-editor-right-panel">
-          {showTitleNumbering ? (
-            <FormEditorTitleNumberingField
-              value={draft.formSettings.titleNumbering}
-              onChange={onTitleNumberingChange}
-            />
-          ) : null}
-          <StructureLockedParagraphMeta paragraph={active} />
-          <Form
-            layout="vertical"
-            className="form-editor-right-panel__form-items"
-            requiredMark={false}
-          >
-            <FormEditorHorizontalTableCustomFields
-              paragraph={ht}
-              rowSelection={horizontalTableRowSelection}
-              updateParagraph={updateParagraph}
-              onBodyRowDeleted={onHorizontalTableBodyRowDeleted}
-            />
-          </Form>
-        </div>
-      )
-    }
-
     return (
       <div className="form-editor-right-panel">
         {showTitleNumbering ? (

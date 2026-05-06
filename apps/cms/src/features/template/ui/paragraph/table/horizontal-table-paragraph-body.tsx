@@ -25,6 +25,7 @@ import type { PaymentStatementBasicInfoAutofillValues } from '@/features/templat
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
+import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/program-application-form-institution/paragraph-body'
 import {
   renderProgramRegistrationParagraphBody,
   type ProgramRegistrationParagraphBodyOptions,
@@ -366,6 +367,10 @@ export function HorizontalTableParagraphBody({
   paragraph,
   onChange,
   isEditMode,
+  /** false: 구조 잠금·작성 모드 등 — 격자 클릭·행 선택·셀 포커스·편집 비활성 */
+  tableCanvasInteractive = true,
+  /** 구조 잠금 작성 중에도 하단 동의 라디오만 조작 가능 */
+  bottomConsentPreviewInAuthoring = false,
   tableRowSelection: controlledSelection,
   onTableRowSelectionChange,
   paymentStatementBasicInfoValues,
@@ -373,10 +378,13 @@ export function HorizontalTableParagraphBody({
   paymentStatementCalculationLines,
   paymentStatementDisplayMode,
   programRegistration,
+  programApplicationFormInstitution,
 }: {
   paragraph: HorizontalTableParagraph
   onChange: (next: HorizontalTableParagraph) => void
   isEditMode: boolean
+  tableCanvasInteractive?: boolean
+  bottomConsentPreviewInAuthoring?: boolean
   /** 있으면 상위(우측 패널)와 행 선택 동기화 */
   tableRowSelection?: HorizontalTableRowSelection | null
   onTableRowSelectionChange?: (next: HorizontalTableRowSelection | null) => void
@@ -385,11 +393,19 @@ export function HorizontalTableParagraphBody({
   paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
   programRegistration?: ProgramRegistrationParagraphBodyOptions
+  /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
+  programApplicationFormInstitution?: boolean
 }) {
   const p = useMemo(() => normalizeHorizontalTableParagraph(paragraph), [paragraph])
 
   const programRegistrationBody = renderProgramRegistrationParagraphBody(p, programRegistration)
   if (programRegistrationBody != null) return programRegistrationBody
+
+  const programApplicationFormInstitutionBody = renderProgramApplicationFormInstitutionParagraphBody(
+    p,
+    programApplicationFormInstitution
+  )
+  if (programApplicationFormInstitutionBody != null) return programApplicationFormInstitutionBody
 
   const paymentStatementBody = renderPaymentStatementIssuanceParagraphBody({
     paragraph: p,
@@ -472,24 +488,29 @@ export function HorizontalTableParagraphBody({
   }
 
   const isField = p.tableFlavor === 'field'
+  const canvasInteractive = tableCanvasInteractive
+  const effectiveEditMode = isEditMode && canvasInteractive
+  const bottomConsentInteractive = effectiveEditMode || bottomConsentPreviewInAuthoring
 
   return (
     <div className="form-editor-body form-editor-horizontal-table-wrap">
       <div
         className="form-editor-horizontal-table"
         role="grid"
-        aria-readonly={!isEditMode}
+        aria-readonly={!effectiveEditMode}
       >
         <div
           className={[
             'form-editor-horizontal-table__row',
             'form-editor-horizontal-table__row--header',
-            isHeaderRowSelected() ? 'form-editor-horizontal-table__row--selected' : '',
+            canvasInteractive && isHeaderRowSelected()
+              ? 'form-editor-horizontal-table__row--selected'
+              : '',
           ]
             .filter(Boolean)
             .join(' ')}
           role="row"
-          aria-selected={isHeaderRowSelected()}
+          aria-selected={canvasInteractive && isHeaderRowSelected()}
         >
           {headers.map((h, i) => {
             const headerFieldLocked =
@@ -499,12 +520,16 @@ export function HorizontalTableParagraphBody({
               key={`h-${i}`}
               className="form-editor-horizontal-table__th"
               role="columnheader"
-              onClick={e => {
-                if (isEventFromTableInteractive(e.target)) return
-                toggleHeaderRow()
-              }}
+              onClick={
+                canvasInteractive
+                  ? e => {
+                      if (isEventFromTableInteractive(e.target)) return
+                      toggleHeaderRow()
+                    }
+                  : undefined
+              }
             >
-              {isEditMode && !headerFieldLocked ? (
+              {effectiveEditMode && !headerFieldLocked ? (
                 <div className="form-editor-horizontal-table__cell-input-shell form-editor-horizontal-table__cell-input-shell--header">
                   <Input
                     variant="borderless"
@@ -533,12 +558,14 @@ export function HorizontalTableParagraphBody({
             key={`r-${rowIdx}`}
             className={[
               'form-editor-horizontal-table__row',
-              isBodyRowSelected(rowIdx) ? 'form-editor-horizontal-table__row--selected' : '',
+              canvasInteractive && isBodyRowSelected(rowIdx)
+                ? 'form-editor-horizontal-table__row--selected'
+                : '',
             ]
               .filter(Boolean)
               .join(' ')}
             role="row"
-            aria-selected={isBodyRowSelected(rowIdx)}
+            aria-selected={canvasInteractive && isBodyRowSelected(rowIdx)}
           >
             {Array.from({ length: colCount }, (_, colIdx) => {
               if (!isField) {
@@ -549,12 +576,16 @@ export function HorizontalTableParagraphBody({
                     className="form-editor-horizontal-table__td"
                     role="gridcell"
                     aria-selected={false}
-                    onClick={e => {
-                      if (isEventFromTableInteractive(e.target)) return
-                      toggleBodyCellSelection(rowIdx, colIdx)
-                    }}
+                    onClick={
+                      canvasInteractive
+                        ? e => {
+                            if (isEventFromTableInteractive(e.target)) return
+                            toggleBodyCellSelection(rowIdx, colIdx)
+                          }
+                        : undefined
+                    }
                   >
-                    {isEditMode ? (
+                    {effectiveEditMode ? (
                       <div className="form-editor-horizontal-table__cell-input-shell form-editor-horizontal-table__cell-input-shell--body">
                         <Input
                           variant="borderless"
@@ -590,19 +621,25 @@ export function HorizontalTableParagraphBody({
                   className={[
                     'form-editor-horizontal-table__td',
                     'form-editor-horizontal-table__td--field',
-                    isEditMode && isChoiceField && 'form-editor-horizontal-table__td--field-choices',
-                    isEditMode && isSubjectiveField && 'form-editor-horizontal-table__td--field-subjective',
+                    effectiveEditMode && isChoiceField && 'form-editor-horizontal-table__td--field-choices',
+                    effectiveEditMode &&
+                      isSubjectiveField &&
+                      'form-editor-horizontal-table__td--field-subjective',
                   ]
                     .filter(Boolean)
                     .join(' ')}
                   role="gridcell"
                   aria-selected={false}
-                  onClick={e => {
-                    if (isEventFromTableInteractive(e.target)) return
-                    toggleBodyCellSelection(rowIdx, colIdx)
-                  }}
+                  onClick={
+                    canvasInteractive
+                      ? e => {
+                          if (isEventFromTableInteractive(e.target)) return
+                          toggleBodyCellSelection(rowIdx, colIdx)
+                        }
+                      : undefined
+                  }
                 >
-                  {isEditMode ? (
+                  {effectiveEditMode ? (
                     <div
                       className={[
                         'form-editor-horizontal-table__cell-input-shell',
@@ -620,7 +657,7 @@ export function HorizontalTableParagraphBody({
                         cell={cell}
                         rowIdx={rowIdx}
                         colIdx={colIdx}
-                        isEditMode={isEditMode}
+                        isEditMode={effectiveEditMode}
                         ph={ph}
                         onFieldChange={v =>
                           onChange(horizontalTableSetFieldCellValue(p, rowIdx, colIdx, v))
@@ -649,7 +686,7 @@ export function HorizontalTableParagraphBody({
               type="description"
               className="form-editor-horizontal-table__bottom-input"
               value={p.bottomText}
-              isEditMode={isEditMode}
+              isEditMode={effectiveEditMode}
               onChange={next => onChange({ ...p, bottomText: next })}
               placeholder="설명을 입력해 주세요"
             />
@@ -660,10 +697,10 @@ export function HorizontalTableParagraphBody({
               size="large"
               value={p.bottomConsent ?? 'agree'}
               onChange={e => {
-                if (!isEditMode) return
+                if (!bottomConsentInteractive) return
                 onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
               }}
-              style={isEditMode ? undefined : { pointerEvents: 'none' }}
+              style={bottomConsentInteractive ? undefined : { pointerEvents: 'none' }}
             >
               <CmsRadio value="agree">동의</CmsRadio>
               <CmsRadio value="disagree">동의하지 않음</CmsRadio>

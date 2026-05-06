@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react'
-import type { ShortEssayParagraph } from '@/features/template/model/writing-form-draft.schema'
+import type {
+  ShortEssayParagraph,
+  SubjectiveParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
 import { ItemDeleteButton } from '@/features/template/ui/paragraph/shared/item-delete-button'
 import { ParagraphLabelInput } from '@/features/template/ui/paragraph/shared/paragraph-label-input'
@@ -135,4 +138,63 @@ export function ShortEssay({
       ))}
     </div>
   )
+}
+
+/** 단일항목 `subjective` — 스키마는 `items: { id, placeholder }[]`만 두고 UI는 `short_essay`와 공유 */
+export function subjectiveParagraphToShortEssayView(p: SubjectiveParagraph): ShortEssayParagraph {
+  const ph0 = p.items[0]?.placeholder?.trim() ?? ''
+  const bodyPlaceholder = ph0.length > 0 ? ph0 : '답변을 입력해 주세요'
+  const mappedItems =
+    p.items.length > 0
+      ? p.items.map((it, i) => ({
+          id: it.id,
+          label: `Title ${String(i + 1).padStart(2, '0')}`,
+          placeholder: it.placeholder.trim() ? it.placeholder : bodyPlaceholder,
+          bodyText: '',
+        }))
+      : [
+          {
+            id: `${p.id}-subjective-mapped-1`,
+            label: 'Title 01',
+            placeholder: bodyPlaceholder,
+            bodyText: '',
+          },
+        ]
+  return {
+    ...p,
+    variant: 'short_essay',
+    bodyPlaceholder,
+    bodyText: '',
+    showItemTitle: mappedItems.length >= 2 ? true : false,
+    items: mappedItems,
+  }
+}
+
+export function mergeSubjectiveFromShortEssayEdit(
+  original: SubjectiveParagraph,
+  next: ShortEssayParagraph
+): SubjectiveParagraph {
+  const nextItems =
+    next.items != null && next.items.length > 0
+      ? next.items.map((it, i) => ({
+          id: it.id || original.items[i]?.id || `${next.id}-item-${i + 1}`,
+          placeholder: (
+            it.placeholder?.trim() ||
+            next.bodyPlaceholder.trim() ||
+            original.items[i]?.placeholder?.trim() ||
+            '답변을 입력해 주세요'
+          ).trim(),
+        }))
+      : original.items.map(it => ({ ...it }))
+  return {
+    ...original,
+    requiredMark: next.requiredMark,
+    paragraphTitle: next.paragraphTitle,
+    paragraphDescription: next.paragraphDescription,
+    participatesInTitleNumbering: next.participatesInTitleNumbering,
+    answerRequired: next.answerRequired,
+    kind: 'single_item',
+    variant: 'subjective',
+    items: nextItems,
+  }
 }

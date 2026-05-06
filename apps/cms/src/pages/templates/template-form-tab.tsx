@@ -24,7 +24,19 @@ import NewAgreementForm from '@/features/template/ui/form-set/new-agreement-form
 import NewHorizontalTableForm from '@/features/template/ui/form-set/new-horizontal-table-form'
 import NewSurveyForm from '@/features/template/ui/form-set/new-survey-form'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import {
+  useProgramParticipantApplicationEditor,
+  type ProgramParticipantApplicationEditorVariant,
+} from '@/features/template/hooks/use-program-participant-application-editor'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
+import {
+  ProgramParticipantApplicationEditorLeftColumn,
+  ProgramParticipantApplicationEditorRightColumn,
+} from '@/features/template/ui/form-set/program-application-form-individual'
+import {
+  ProgramApplicationFormInstitutionEditorLeftColumn,
+  ProgramApplicationFormInstitutionEditorRightColumn,
+} from '@/features/template/ui/form-set/program-application-form-institution'
 import {
   ProgramRegistrationEditorLeftColumn,
   ProgramRegistrationEditorRightColumn,
@@ -35,6 +47,14 @@ type TemplateFormTabQuery = {
   type?: string
   id?: string
 }
+
+const EMPTY_PREVIEW_DRAFT: WritingFormDraft = {
+  schemaVersion: 1,
+  formSettings: { titleNumbering: 'none' },
+  paragraphs: [],
+}
+
+const noopUpdateParagraph: FormUpdateParagraph = () => {}
 
 export default function TemplateFormTab() {
   const { params, setParams } = useQueryParams<TemplateFormTabQuery>()
@@ -96,12 +116,6 @@ export default function TemplateFormTab() {
     () => buildRightNavigationConfig(orderedLeftContentConfig),
     [orderedLeftContentConfig]
   )
-  const EMPTY_PREVIEW_DRAFT: WritingFormDraft = {
-    schemaVersion: 1,
-    formSettings: { titleNumbering: 'none' },
-    paragraphs: [],
-  }
-  const noopUpdateParagraph: FormUpdateParagraph = () => {}
   const previewEditorKind =
     selectedTemplate?.id.startsWith('agreement-') === true ? 'agreement' : 'survey'
   const programRegistrationFormVariant =
@@ -109,6 +123,11 @@ export default function TemplateFormTab() {
   const isProgramRegistrationTemplate =
     selectedTemplate?.id === 'registration-general' ||
     selectedTemplate?.id === 'registration-economy'
+  const isProgramParticipantApplicationTemplate =
+    selectedTemplate?.id === 'application-participant-school' ||
+    selectedTemplate?.id === 'application-participant-individual'
+  const programParticipantApplicationVariant: ProgramParticipantApplicationEditorVariant =
+    selectedTemplate?.id === 'application-participant-school' ? 'institution' : 'individual'
   const programRegistrationVm = useProgramRegistrationEditor(
     isPreviewOpen && isProgramRegistrationTemplate,
     selectedTemplate?.templateName ?? '일반 프로그램 등록 폼',
@@ -117,10 +136,19 @@ export default function TemplateFormTab() {
       programRegistrationFormVariant,
     }
   )
+  const programParticipantApplicationVm = useProgramParticipantApplicationEditor(
+    isPreviewOpen && isProgramParticipantApplicationTemplate,
+    selectedTemplate?.templateName ?? '프로그램 참여자 신청 폼',
+    programParticipantApplicationVariant
+  )
 
   const handlePreview = useCallback(() => {
     if (isProgramRegistrationTemplate) {
       programRegistrationVm.handlePreview()
+      return
+    }
+    if (isProgramParticipantApplicationTemplate) {
+      programParticipantApplicationVm.handlePreview()
       return
     }
     openWritingUserPreview({
@@ -130,9 +158,11 @@ export default function TemplateFormTab() {
       editorKind: previewEditorKind,
     })
   }, [
+    isProgramParticipantApplicationTemplate,
     isProgramRegistrationTemplate,
     openWritingUserPreview,
     previewEditorKind,
+    programParticipantApplicationVm,
     programRegistrationVm,
     selectedTemplate?.templateName,
   ])
@@ -168,10 +198,22 @@ export default function TemplateFormTab() {
         description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
         templateTabType="writing"
         onPreview={handlePreview}
-        onSave={isProgramRegistrationTemplate ? programRegistrationVm.handleSave : undefined}
+        onSave={
+          isProgramRegistrationTemplate
+            ? programRegistrationVm.handleSave
+            : isProgramParticipantApplicationTemplate
+              ? programParticipantApplicationVm.handleSave
+              : undefined
+        }
         leftContent={
           isProgramRegistrationTemplate ? (
             <ProgramRegistrationEditorLeftColumn vm={programRegistrationVm} />
+          ) : isProgramParticipantApplicationTemplate ? (
+            programParticipantApplicationVariant === 'institution' ? (
+              <ProgramApplicationFormInstitutionEditorLeftColumn vm={programParticipantApplicationVm} />
+            ) : (
+              <ProgramParticipantApplicationEditorLeftColumn vm={programParticipantApplicationVm} />
+            )
           ) : (
             <TemplateModalLeftContent
               config={orderedLeftContentConfig}
@@ -184,6 +226,12 @@ export default function TemplateFormTab() {
         rightNavigation={
           isProgramRegistrationTemplate ? (
             <ProgramRegistrationEditorRightColumn vm={programRegistrationVm} />
+          ) : isProgramParticipantApplicationTemplate ? (
+            programParticipantApplicationVariant === 'institution' ? (
+              <ProgramApplicationFormInstitutionEditorRightColumn vm={programParticipantApplicationVm} />
+            ) : (
+              <ProgramParticipantApplicationEditorRightColumn vm={programParticipantApplicationVm} />
+            )
           ) : (
             <TemplateModalRightNavigation
               config={rightNavigationConfig}
