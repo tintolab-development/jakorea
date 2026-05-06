@@ -239,7 +239,16 @@ export function SortableMiddleFormCard({
     <div
       ref={setNodeRef}
       style={{
-        transform: CSS.Transform.toString(transform),
+        // DndContext가 over·active rect 비율로 scaleX/Y를 넣을 수 있어, 동일 폭 리스트에서 카드가 가로로 찌그러짐 → 이동만 반영
+        transform:
+          transform != null
+            ? CSS.Translate.toString({
+                x: transform.x,
+                y: transform.y,
+                scaleX: 1,
+                scaleY: 1,
+              })
+            : undefined,
         transition,
         opacity: isDragging ? 0.7 : 1,
       }}

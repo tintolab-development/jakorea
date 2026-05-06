@@ -23,6 +23,7 @@ import type {
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   createHorizontalTableParagraph,
+  createLectureReportProgramProgressParagraph,
   createVerticalTableParagraph,
   createDefaultMultipleChoiceItems,
   createDefaultScaleTypeItems,
@@ -60,6 +61,8 @@ type SingleItemDetailSelectValue =
   | 'scale_type'
   | 'user_info'
   | 'file_attachment'
+  | 'ujat_journal_education_info'
+  | 'lecture_report_program_progress'
 type TableDetailSelectValue = 'horizontal_table' | 'vertical_table'
 type DescriptionDetailSelectValue = 'title' | 'text' | 'closing'
 type DetailSelectValue =
@@ -82,6 +85,8 @@ const SINGLE_ITEM_DETAIL_OPTIONS: { value: SingleItemDetailSelectValue; label: s
   { value: 'scale_type', label: '점수 선택형' },
   { value: 'user_info', label: '사용자 정보형' },
   { value: 'file_attachment', label: '파일 첨부형' },
+  { value: 'ujat_journal_education_info', label: 'UJAT 교육 정보(교육일지)' },
+  { value: 'lecture_report_program_progress', label: '강의보고서 프로그램 진행 정보' },
 ]
 const DESCRIPTION_DETAIL_OPTIONS: { value: DescriptionDetailSelectValue; label: string }[] = [
   { value: 'title', label: '제목형' },
@@ -155,6 +160,10 @@ function paragraphVariantLabel(p: WritingFormParagraph): string {
       return '사용자 정보형'
     case 'file_attachment':
       return '파일 첨부형'
+    case 'ujat_journal_education_info':
+      return 'UJAT 교육 정보(교육일지)'
+    case 'lecture_report_program_progress':
+      return '강의보고서 프로그램 진행 정보'
   }
 }
 
@@ -190,6 +199,10 @@ function paragraphDetailSelectValue(p: WritingFormParagraph): DetailSelectValue 
   if (p.kind === 'single_item' && p.variant === 'scale_type') return 'scale_type'
   if (p.kind === 'single_item' && p.variant === 'user_info') return 'user_info'
   if (p.kind === 'single_item' && p.variant === 'file_attachment') return 'file_attachment'
+  if (p.kind === 'single_item' && p.variant === 'ujat_journal_education_info')
+    return 'ujat_journal_education_info'
+  if (p.kind === 'single_item' && p.variant === 'lecture_report_program_progress')
+    return 'lecture_report_program_progress'
   if (p.kind === 'description') return 'text'
   return 'subjective'
 }
@@ -452,6 +465,8 @@ function convertParagraphByDetail(
       return preserveParagraphCommonFields(createUserInfoDefault(id), prev)
     case 'file_attachment':
       return preserveParagraphCommonFields(createFileAttachmentDefault(id), prev)
+    case 'lecture_report_program_progress':
+      return preserveParagraphCommonFields(createLectureReportProgramProgressParagraph(id), prev)
     case 'title':
       return {
         ...createDescriptionTitleDefault(id),

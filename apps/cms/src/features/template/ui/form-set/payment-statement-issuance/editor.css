@@ -187,7 +187,7 @@
 .payment-statement-issuance-editor .paragraph-input--description.paragraph-input--view .paragraph-input__placeholder {
   color: var(--gray-85969-d, #85969d);
   font-family: Pretendard, sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
@@ -201,7 +201,7 @@
   .paragraph-input--description.paragraph-input--view.paragraph-input--filled
   .paragraph-input__leading {
   color: var(--gray-85969-d, #85969d);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 150%;
   opacity: 0.6;
@@ -215,7 +215,7 @@
   color: var(--gray-85969-d, #85969d) !important;
   -webkit-text-fill-color: var(--gray-85969-d, #85969d);
   font-family: Pretendard, sans-serif !important;
-  font-size: 18px !important;
+  font-size: 16px !important;
   font-style: normal !important;
   font-weight: 500 !important;
   line-height: 150% !important;

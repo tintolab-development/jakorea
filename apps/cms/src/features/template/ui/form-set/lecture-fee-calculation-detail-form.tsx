@@ -41,10 +41,14 @@ const EMPTY: LectureFeeCalculationAutofillValues = {
   totalLectureFee: '',
 }
 
+export type LectureFeeCalculationFeeLayout = 'payment_statement' | 'settlement_application'
+
 export type LectureFeeCalculationDetailFormProps = {
   values?: Partial<LectureFeeCalculationAutofillValues>
   className?: string
   displayMode?: PaymentStatementIssuanceParagraphDisplayMode
+  /** 정산 신청서는 지급 항목·총 학생 수 행 없이 총 강의비만 전행 폭으로 표시 */
+  feeLayout?: LectureFeeCalculationFeeLayout
 }
 
 function textOrDash(value: string): string {
@@ -99,9 +103,11 @@ export function LectureFeeCalculationDetailForm({
   values: valuesProp,
   className,
   displayMode = 'editor',
+  feeLayout = 'payment_statement',
 }: LectureFeeCalculationDetailFormProps) {
   const v = { ...EMPTY, ...valuesProp }
   const isDocumentMode = displayMode === 'document'
+  const isSettlementLayout = feeLayout === 'settlement_application'
   const paymentItems = [
     v.transportFee ? '교통비' : '',
     v.lodgingFee ? '숙박비' : '',
@@ -170,34 +176,36 @@ export function LectureFeeCalculationDetailForm({
         />
       </DetailInfoForm.Row>
 
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="지급 항목 여부"
-          view={joinText(paymentItems)}
-          edit={
-            <div className="detail-info-form-inputs-wrapper lecture-fee-calculation-detail-form__payment-items">
-              <IssuancePaymentItemMark checked={v.transportFee} label="교통비" />
-              <IssuancePaymentItemMark checked={v.lodgingFee} label="숙박비" />
-            </div>
-          }
-        />
-        <DetailInfoForm.Field
-          label="총 학생 수"
-          view={textOrDash(v.totalStudents ? `${v.totalStudents}명` : '')}
-          edit={
-            <div className="detail-info-form-inputs-wrapper-no-gap lecture-fee-calculation-detail-form__student-count">
-              <CmsInput
-                disabled
-                inputSize="medium"
-                value={v.totalStudents}
-                width={LECTURE_FEE_INPUT_WIDTH_PX}
-                aria-label="총 학생 수"
-              />
-              <span className="lecture-fee-calculation-detail-form__suffix">명</span>
-            </div>
-          }
-        />
-      </DetailInfoForm.Row>
+      {!isSettlementLayout ? (
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="지급 항목 여부"
+            view={joinText(paymentItems)}
+            edit={
+              <div className="detail-info-form-inputs-wrapper lecture-fee-calculation-detail-form__payment-items">
+                <IssuancePaymentItemMark checked={v.transportFee} label="교통비" />
+                <IssuancePaymentItemMark checked={v.lodgingFee} label="숙박비" />
+              </div>
+            }
+          />
+          <DetailInfoForm.Field
+            label="총 학생 수"
+            view={textOrDash(v.totalStudents ? `${v.totalStudents}명` : '')}
+            edit={
+              <div className="detail-info-form-inputs-wrapper-no-gap lecture-fee-calculation-detail-form__student-count">
+                <CmsInput
+                  disabled
+                  inputSize="medium"
+                  value={v.totalStudents}
+                  width={LECTURE_FEE_INPUT_WIDTH_PX}
+                  aria-label="총 학생 수"
+                />
+                <span className="lecture-fee-calculation-detail-form__suffix">명</span>
+              </div>
+            }
+          />
+        </DetailInfoForm.Row>
+      ) : null}
 
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field

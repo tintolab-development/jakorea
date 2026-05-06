@@ -23,8 +23,11 @@ export type PaymentStatementIssuanceMiddleActions = {
  */
 export function usePaymentStatementIssuanceMiddleActions(
   setDraft: Dispatch<SetStateAction<WritingFormDraft>>,
-  setActiveParagraphId: Dispatch<SetStateAction<string | null>>
+  setActiveParagraphId: Dispatch<SetStateAction<string | null>>,
+  options?: { lockedParagraphIds?: ReadonlySet<string> }
 ): PaymentStatementIssuanceMiddleActions {
+  const lockedParagraphIds = options?.lockedParagraphIds ?? PAYMENT_STATEMENT_SEED_PARAGRAPH_IDS
+
   const appendBasicTitleParagraph = useCallback(() => {
     const newId = crypto.randomUUID()
     const insert = createAgreementExplanationTextParagraphForInsert(newId)
@@ -49,7 +52,7 @@ export function usePaymentStatementIssuanceMiddleActions(
 
   const onDuplicate = useCallback(
     (paragraphId: string) => {
-      if (PAYMENT_STATEMENT_SEED_PARAGRAPH_IDS.has(paragraphId)) {
+      if (lockedParagraphIds.has(paragraphId)) {
         message.warning('템플릿 단락은 복제할 수 없습니다.')
         return
       }
@@ -66,12 +69,12 @@ export function usePaymentStatementIssuanceMiddleActions(
       })
       if (duplicated) setActiveParagraphId(newId)
     },
-    [setDraft, setActiveParagraphId]
+    [lockedParagraphIds, setDraft, setActiveParagraphId]
   )
 
   const onDelete = useCallback(
     (paragraphId: string) => {
-      if (PAYMENT_STATEMENT_SEED_PARAGRAPH_IDS.has(paragraphId)) {
+      if (lockedParagraphIds.has(paragraphId)) {
         message.warning('템플릿 단락은 삭제할 수 없습니다.')
         return
       }
@@ -87,7 +90,7 @@ export function usePaymentStatementIssuanceMiddleActions(
       })
       if (nextActive != null) setActiveParagraphId(nextActive)
     },
-    [setDraft, setActiveParagraphId]
+    [lockedParagraphIds, setDraft, setActiveParagraphId]
   )
 
   return useMemo(

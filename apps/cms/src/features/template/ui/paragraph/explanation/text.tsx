@@ -12,7 +12,9 @@ export function ExplanationText({
   onChange: (next: AgreementExplanationTextParagraph) => void
   isEditMode: boolean
 }) {
-  const ph = paragraph.bodyPlaceholder.trim() || '텍스트를 작성해 주세요'
+  const ph =
+    (typeof paragraph.bodyPlaceholder === 'string' ? paragraph.bodyPlaceholder.trim() : '') ||
+    '텍스트를 작성해 주세요'
 
   return (
     <div className="form-editor-body">
