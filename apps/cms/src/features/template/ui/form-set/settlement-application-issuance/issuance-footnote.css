@@ -1,0 +1,12 @@
+/* 정산 신청서 — 단락 하단 안내(시드 bottomText) */
+
+.settlement-application-issuance-footnote {
+  margin-top: 12px;
+  color: #85969d;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+  white-space: pre-wrap;
+}

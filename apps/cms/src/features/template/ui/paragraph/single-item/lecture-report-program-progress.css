@@ -1,0 +1,90 @@
+/* 강의보고서 — 프로그램 진행 정보(세로 테이블 톤과 정렬, UJAT 교육일지 교육 정보와 동일 계열) */
+.lecture-report-prog-info__input {
+  width: 100%;
+}
+
+.lecture-report-prog-info__time-session-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.lecture-report-prog-info__time-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lecture-report-prog-info__class-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lecture-report-prog-info__session-wrap,
+.lecture-report-prog-info__count-wrap {
+  box-sizing: border-box;
+  width: 112px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  overflow: hidden;
+}
+
+.lecture-report-prog-info__session-input.ant-input {
+  padding: 0 !important;
+}
+
+.lecture-report-prog-info__divider {
+  width: 1px;
+  height: 13px;
+  flex-shrink: 0;
+  opacity: 0.5;
+  background: var(--main-BK, #3d3d3d);
+  margin: 0 8px;
+}
+
+.lecture-report-prog-info .lecture-report-prog-info__dt-picker.ant-picker .ant-picker-input {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.lecture-report-prog-info .lecture-report-prog-info__dt-picker.ant-picker .ant-picker-suffix {
+  order: -1 !important;
+  margin-inline-start: 0 !important;
+  margin-inline-end: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+.lecture-report-prog-info .lecture-report-prog-info__dt-picker.ant-picker .ant-picker-input > input {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.lecture-report-prog-info .lecture-report-prog-info__time-picker.ant-picker .ant-picker-input {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.lecture-report-prog-info .lecture-report-prog-info__time-picker.ant-picker .ant-picker-suffix {
+  order: -1 !important;
+  margin-inline-start: 0 !important;
+  margin-inline-end: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+.lecture-report-prog-info .lecture-report-prog-info__time-picker.ant-picker .ant-picker-input > input {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
