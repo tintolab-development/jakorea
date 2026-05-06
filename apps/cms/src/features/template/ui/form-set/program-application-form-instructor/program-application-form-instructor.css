@@ -1,0 +1,175 @@
+.program-application-form-instructor__file-cell {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.program-application-form-instructor__file-cell
+  .program-application-form-instructor__file-upload-trigger.paragraph-file-upload {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.program-application-form-instructor__file-cell
+  .program-application-form-instructor__file-upload-trigger
+  .paragraph-file-upload__content {
+  width: auto;
+}
+
+.program-application-form-instructor__file-attached {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.program-application-form-instructor__file-attached-icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--main-BK, #3d3d3d);
+}
+
+.program-application-form-instructor__mock-file-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--main-BK, #3d3d3d);
+  word-break: break-all;
+  min-width: 0;
+}
+
+.program-application-form-instructor__available-schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.program-application-form-instructor__available-schedule-top {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.program-application-form-instructor__calendar-wrap {
+  width: 360px !important;
+  min-width: 360px;
+  max-width: 360px;
+}
+
+.program-application-form-instructor__session-grid {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  width: calc(100% - 380px);
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+
+.program-application-form-instructor__session-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  text-align: left;
+  border-radius: var(--8, 8px);
+  border: 1px solid rgba(61, 61, 61, 0.16);
+  background: var(--main-WT, #fff);
+  cursor: pointer;
+}
+
+.program-application-form-instructor__session-card-line {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.program-application-form-instructor__session-card-line--primary {
+  color: var(--default-BK, #3d3d3d);
+}
+
+.program-application-form-instructor__session-card-line--secondary {
+  color: rgba(61, 61, 61, 0.65);
+}
+
+.program-application-form-instructor__session-card--selected
+  .program-application-form-instructor__session-card-line--primary {
+  color: var(--color-mint-01, #01a1af);
+}
+
+.program-application-form-instructor__session-card:hover {
+  border: 1px solid var(--color-mint-01, #01a1af);
+  background: linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff;
+}
+
+.program-application-form-instructor__session-card--selected {
+  border: 1px solid var(--color-mint-01, #01a1af);
+  background: linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff;
+}
+
+.program-application-form-instructor__summary-text--placeholder {
+  display: inline;
+  font-size: 14px;
+  line-height: 150%;
+  color: rgba(61, 61, 61, 0.45);
+  vertical-align: middle;
+}
+
+/**
+ * DetailInfoForm 값 칸 — `field-content--edit > *`의 display:flex를 덮고
+ * 인라인 줄바꿈 + `DetailInfoForm.TdDivider`(detail-info-form-inputs-separator)로 구간 구분
+ */
+.program-application-form-instructor__field-summary-wrap {
+  font-size: 0;
+  text-align: left;
+}
+
+.detail-info-form__field-content--edit > .program-application-form-instructor__field-summary-wrap,
+.detail-info-form__field-content--view > .program-application-form-instructor__field-summary-wrap {
+  display: block;
+  margin-block: 0;
+  width: 100%;
+  min-width: 0;
+  line-height: 0;
+}
+
+.program-application-form-instructor__summary-inline-text {
+  display: inline;
+  font-size: 14px;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  vertical-align: middle;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* 강의 진행 불가 일정 — 날짜 단독(일정 선택) paragraph-date-picker 트리거 폭 (에디터·미리보기 공통, 단락 id 스코프) */
+.paragraph-card[data-paragraph-id='program-instructor-application-seed-unavailable-dates']
+  .paragraph-date-picker.form-editor-vertical-table__dt-paragraph-date-picker.form-editor-vertical-table__dt-picker--full {
+  width: 260px !important;
+  max-width: 260px !important;
+  min-width: 260px !important;
+  flex: 0 0 260px;
+}

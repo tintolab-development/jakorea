@@ -12,6 +12,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
+import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/form-editor-left-panel.types'
@@ -130,6 +131,48 @@ export function withProgramRegistrationCurriculumTitleTrailing(
       >
         {isMulti ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
       </CmsButton>
+    ),
+  }
+}
+
+/** 프로그램 강사 신청 폼 — 강의 불가 일정 단락: 카드 제목 줄 우측「강의 불가 일자 추가」 */
+export function withProgramApplicationFormInstructorTitleTrailing(
+  heading: ParagraphCardEditableHeading,
+  paragraph: WritingFormParagraph,
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+): ParagraphCardEditableHeading {
+  const opts = paragraphBodyOptions?.programApplicationFormInstructor
+  if (
+    paragraph.id !== PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.unavailableDates ||
+    opts?.enabled !== true
+  ) {
+    return heading
+  }
+  return {
+    ...heading,
+    titleTrailing: (
+      <div
+        className="program-registration-paragraph__card-title-actions"
+        onClick={e => e.stopPropagation()}
+        onKeyDown={e => e.stopPropagation()}
+        role="presentation"
+      >
+        <CmsButton
+          type="button"
+          variant="secondary"
+          size="medium"
+          width={180}
+          disabled={opts.disableUnavailableDateRowAddButton === true}
+          icon={<PlusOutlined aria-hidden />}
+          onClick={e => {
+            e.stopPropagation()
+            if (opts.disableUnavailableDateRowAddButton === true) return
+            opts.onAddUnavailableDateRow()
+          }}
+        >
+          강의 불가 일자 추가
+        </CmsButton>
+      </div>
     ),
   }
 }

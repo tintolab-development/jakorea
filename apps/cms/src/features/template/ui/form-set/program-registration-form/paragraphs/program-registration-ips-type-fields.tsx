@@ -57,7 +57,7 @@ export function ProgramRegistrationIpsTypeFields({
     secondaryDisabled = true
   }
 
-  const firstSelectPlaceholder = 'IPS를 선택하세요'
+  const firstSelectPlaceholder = 'IPS 유형'
 
   const secondaryValue =
     category === '' ? undefined : category === 'prepare' ? 'none' : detail || undefined

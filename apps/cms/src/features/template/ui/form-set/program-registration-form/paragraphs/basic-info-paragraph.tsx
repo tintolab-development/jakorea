@@ -16,9 +16,7 @@ import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-s
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
-  TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS,
   TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS,
-  TEMPLATE_FORM_PROGRAM_PROGRESS_OPTIONS,
   withDetailedProgramNoneOption,
 } from '@/features/template/lib/template-form-select-options'
 import {
@@ -26,11 +24,10 @@ import {
   PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
   PROGRAM_REGISTRATION_IP_OWNED_OPTIONS,
 } from '@/features/template/ui/form-set/program-registration-form/paragraphs/program-registration-ips-options'
-import {
-  ProgramRegistrationIpsTypeFields,
-  type ProgramRegistrationIpsTypeValue,
-} from '@/features/template/ui/form-set/program-registration-form/paragraphs/program-registration-ips-type-fields'
+import '@/features/template/ui/form-editor/form-editor.css'
 import './program-registration-paragraph.css'
+
+const PROGRAM_PROGRESS_STATIC_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
 
 type OrganizationSurveyItemId =
   | 'survey'
@@ -75,8 +72,7 @@ export function ProgramRegistrationBasicInfoParagraph({
   onOrganizationChange,
 }: ProgramRegistrationBasicInfoParagraphProps) {
   const [businessField, setBusinessField] = useState('')
-  const [programProgress, setProgramProgress] = useState('')
-  const [educationRecruitmentTarget, setEducationRecruitmentTarget] = useState('')
+  const [partnerInvolvement, setPartnerInvolvement] = useState<'yes' | 'no'>('yes')
   const [operationAnchorDate, setOperationAnchorDate] = useState<Dayjs | null>(dayjs())
   const [operationRange, setOperationRange] = useState<[Dayjs, Dayjs] | null>(null)
   const operationRangeWithTime = useMemo(
@@ -92,10 +88,6 @@ export function ProgramRegistrationBasicInfoParagraph({
   const [educationCourse, setEducationCourse] = useState('')
   const [ipOwned, setIpOwned] = useState('')
   const [courseDeliveredBy, setCourseDeliveredBy] = useState('')
-  const [ipsType, setIpsType] = useState<ProgramRegistrationIpsTypeValue>({
-    category: '',
-    detail: '',
-  })
   const [organizationSurveyItems, setOrganizationSurveyItems] = useState<
     Record<OrganizationSurveyItemId, boolean>
   >(initialOrganizationSurveyItems)
@@ -145,14 +137,14 @@ export function ProgramRegistrationBasicInfoParagraph({
   return (
     <>
       <DetailInfoForm
-        title="기본 정보"
+        title="기본 정보*"
         hideHeader
         mode="edit"
         className="program-registration-paragraph"
       >
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="대표 프로그램(국문)"
+            label="대표 프로그램명 (국문)"
             edit={
               <CmsInput
                 inputSize="medium"
@@ -163,11 +155,11 @@ export function ProgramRegistrationBasicInfoParagraph({
             view="-"
           />
           <DetailInfoForm.Field
-            label="대표 프로그램(영문)"
+            label="대표 프로그램명 (영문)"
             edit={
               <CmsInput
                 inputSize="medium"
-                placeholder="대표 프로그램명을 입력하세요"
+                placeholder="상세 프로그램명을 입력하세요"
                 width="100%"
               />
             }
@@ -206,68 +198,7 @@ export function ProgramRegistrationBasicInfoParagraph({
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="교육 과정"
-            edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
-                <CmsSelect
-                  withAllOption={false}
-                  inputSize="medium"
-                  placeholder="교육 과정을 선택하세요"
-                  width="100%"
-                  options={[...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]}
-                  value={educationCourse || undefined}
-                  onChange={v => setEducationCourse(String(v ?? ''))}
-                />
-              </div>
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label="IP Owned"
-            edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
-                <CmsSelect
-                  withAllOption={false}
-                  inputSize="medium"
-                  placeholder="IP Owned를 선택하세요"
-                  width="100%"
-                  options={[...PROGRAM_REGISTRATION_IP_OWNED_OPTIONS]}
-                  value={ipOwned || undefined}
-                  onChange={v => setIpOwned(String(v ?? ''))}
-                />
-              </div>
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="Course Delivered By"
-            edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
-                <CmsSelect
-                  withAllOption={false}
-                  inputSize="medium"
-                  placeholder="Course Delivered By를 선택하세요"
-                  width="100%"
-                  options={[...PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS]}
-                  value={courseDeliveredBy || undefined}
-                  onChange={v => setCourseDeliveredBy(String(v ?? ''))}
-                />
-              </div>
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label="IPS"
-            edit={<ProgramRegistrationIpsTypeFields value={ipsType} onChange={setIpsType} />}
-            view="-"
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
             label="사업 운영 기간"
-            fullRow
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <ParagraphDatePicker
@@ -289,41 +220,14 @@ export function ProgramRegistrationBasicInfoParagraph({
             }
             view="-"
           />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="교육 대상(모집 대상)"
-            edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
-                <CmsSelect
-                  withAllOption={false}
-                  inputSize="medium"
-                  placeholder="교육 대상을 선택하세요"
-                  width="100%"
-                  options={[...TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS]}
-                  value={educationRecruitmentTarget || undefined}
-                  onChange={v => setEducationRecruitmentTarget(String(v ?? ''))}
-                />
-              </div>
-            }
-            view="-"
-          />
           <DetailInfoForm.Field
             label="프로그램 진행 현황"
-            edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap program-registration-paragraph__program-progress-hint">
-                <CmsSelect
-                  withAllOption={false}
-                  inputSize="medium"
-                  placeholder="진행 현황을 선택하세요"
-                  width="100%"
-                  options={[...TEMPLATE_FORM_PROGRAM_PROGRESS_OPTIONS]}
-                  value={programProgress || undefined}
-                  onChange={v => setProgramProgress(String(v ?? ''))}
-                />
-              </div>
+            readOnlyDisplay
+            view={
+              <span className="form-editor-template-field-hint-text">
+                {PROGRAM_PROGRESS_STATIC_HINT}
+              </span>
             }
-            view="-"
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
@@ -360,10 +264,9 @@ export function ProgramRegistrationBasicInfoParagraph({
             edit={
               <div className="detail-info-form-inputs-wrapper">
                 <CmsSelect
-                  withAllOption={false}
                   inputSize="medium"
                   placeholder="사업 분야를 선택하세요"
-                  width={240}
+                  width="100%"
                   options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
                   value={businessField || undefined}
                   onChange={v => setBusinessField(String(v ?? ''))}
@@ -400,7 +303,6 @@ export function ProgramRegistrationBasicInfoParagraph({
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
-                  withAllOption={false}
                   inputSize="medium"
                   placeholder="후원사 담당자를 선택하세요"
                   width="100%"
@@ -498,6 +400,77 @@ export function ProgramRegistrationBasicInfoParagraph({
                     </CmsCheckbox>
                   </>
                 )}
+              </div>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+
+      <DetailInfoForm title="" hideHeader mode="edit">
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="교육 과정"
+            edit={
+              <div className="detail-info-form-inputs-wrapper-no-gap">
+                <CmsSelect
+                  inputSize="medium"
+                  placeholder="교육 과정을 선택하세요"
+                  width="100%"
+                  options={[...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]}
+                  value={educationCourse || undefined}
+                  onChange={v => setEducationCourse(String(v ?? ''))}
+                />
+              </div>
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label="IP Owned"
+            edit={
+              <div className="detail-info-form-inputs-wrapper-no-gap">
+                <CmsSelect
+                  inputSize="medium"
+                  placeholder="IP Owned를 선택하세요"
+                  width="100%"
+                  options={[...PROGRAM_REGISTRATION_IP_OWNED_OPTIONS]}
+                  value={ipOwned || undefined}
+                  onChange={v => setIpOwned(String(v ?? ''))}
+                />
+              </div>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="Course Delivered By"
+            edit={
+              <div className="detail-info-form-inputs-wrapper-no-gap">
+                <CmsSelect
+                  inputSize="medium"
+                  placeholder="Course Delivered By를 선택하세요"
+                  width="100%"
+                  options={[...PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS]}
+                  value={courseDeliveredBy || undefined}
+                  onChange={v => setCourseDeliveredBy(String(v ?? ''))}
+                />
+              </div>
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label="Partner Involvement"
+            edit={
+              <div className="detail-info-form-inputs-wrapper">
+                <CmsRadioGroup
+                  size="large"
+                  value={partnerInvolvement}
+                  onChange={e => setPartnerInvolvement(e.target.value as 'yes' | 'no')}
+                >
+                  <CmsRadio value="yes">Yes</CmsRadio>
+                  <CmsRadio value="no">No</CmsRadio>
+                </CmsRadioGroup>
               </div>
             }
             view="-"

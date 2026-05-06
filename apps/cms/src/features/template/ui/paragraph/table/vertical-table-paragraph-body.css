@@ -435,6 +435,14 @@
   flex: 1 1 auto;
 }
 
+/* Ant DatePicker 대신 ParagraphDatePicker — 세로표 td 안에서 동일 폭·최소 클릭 영역 */
+.form-editor-vertical-table__cell-input-shell--body-dt-full
+  .paragraph-date-picker.form-editor-vertical-table__dt-paragraph-date-picker.form-editor-vertical-table__dt-picker--full {
+  flex: 1 1 auto;
+  min-width: min(280px, 100%);
+  max-width: 100%;
+}
+
 /* 너비 여유 있을 때 최대 221px, 좁은 2단 td에서는 같은 행 안에서 줄어듦 */
 .form-editor-vertical-table__dt-picker--fixed {
   flex: 1 1 0;

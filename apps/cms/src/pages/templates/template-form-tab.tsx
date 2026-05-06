@@ -38,6 +38,10 @@ import {
   ProgramApplicationFormInstitutionEditorRightColumn,
 } from '@/features/template/ui/form-set/program-application-form-institution'
 import {
+  ProgramApplicationFormInstructorEditorLeftColumn,
+  ProgramApplicationFormInstructorEditorRightColumn,
+} from '@/features/template/ui/form-set/program-application-form-instructor'
+import {
   ProgramRegistrationEditorLeftColumn,
   ProgramRegistrationEditorRightColumn,
 } from '@/features/template/ui/form-set/program-registration-form'
@@ -126,6 +130,7 @@ export default function TemplateFormTab() {
   const isProgramParticipantApplicationTemplate =
     selectedTemplate?.id === 'application-participant-school' ||
     selectedTemplate?.id === 'application-participant-individual'
+  const isProgramInstructorApplicationTemplate = selectedTemplate?.id === 'application-instructor'
   const programParticipantApplicationVariant: ProgramParticipantApplicationEditorVariant =
     selectedTemplate?.id === 'application-participant-school' ? 'institution' : 'individual'
   const programRegistrationVm = useProgramRegistrationEditor(
@@ -137,9 +142,12 @@ export default function TemplateFormTab() {
     }
   )
   const programParticipantApplicationVm = useProgramParticipantApplicationEditor(
-    isPreviewOpen && isProgramParticipantApplicationTemplate,
-    selectedTemplate?.templateName ?? '프로그램 참여자 신청 폼',
-    programParticipantApplicationVariant
+    isPreviewOpen &&
+      (isProgramParticipantApplicationTemplate || isProgramInstructorApplicationTemplate),
+    isProgramInstructorApplicationTemplate
+      ? (selectedTemplate?.templateName ?? '프로그램 강사 신청 폼')
+      : (selectedTemplate?.templateName ?? '프로그램 참여자 신청 폼'),
+    isProgramInstructorApplicationTemplate ? 'instructor' : programParticipantApplicationVariant
   )
 
   const handlePreview = useCallback(() => {
@@ -147,7 +155,7 @@ export default function TemplateFormTab() {
       programRegistrationVm.handlePreview()
       return
     }
-    if (isProgramParticipantApplicationTemplate) {
+    if (isProgramParticipantApplicationTemplate || isProgramInstructorApplicationTemplate) {
       programParticipantApplicationVm.handlePreview()
       return
     }
@@ -158,6 +166,7 @@ export default function TemplateFormTab() {
       editorKind: previewEditorKind,
     })
   }, [
+    isProgramInstructorApplicationTemplate,
     isProgramParticipantApplicationTemplate,
     isProgramRegistrationTemplate,
     openWritingUserPreview,
@@ -201,13 +210,15 @@ export default function TemplateFormTab() {
         onSave={
           isProgramRegistrationTemplate
             ? programRegistrationVm.handleSave
-            : isProgramParticipantApplicationTemplate
+            : isProgramParticipantApplicationTemplate || isProgramInstructorApplicationTemplate
               ? programParticipantApplicationVm.handleSave
               : undefined
         }
         leftContent={
           isProgramRegistrationTemplate ? (
             <ProgramRegistrationEditorLeftColumn vm={programRegistrationVm} />
+          ) : isProgramInstructorApplicationTemplate ? (
+            <ProgramApplicationFormInstructorEditorLeftColumn vm={programParticipantApplicationVm} />
           ) : isProgramParticipantApplicationTemplate ? (
             programParticipantApplicationVariant === 'institution' ? (
               <ProgramApplicationFormInstitutionEditorLeftColumn vm={programParticipantApplicationVm} />
@@ -226,6 +237,8 @@ export default function TemplateFormTab() {
         rightNavigation={
           isProgramRegistrationTemplate ? (
             <ProgramRegistrationEditorRightColumn vm={programRegistrationVm} />
+          ) : isProgramInstructorApplicationTemplate ? (
+            <ProgramApplicationFormInstructorEditorRightColumn vm={programParticipantApplicationVm} />
           ) : isProgramParticipantApplicationTemplate ? (
             programParticipantApplicationVariant === 'institution' ? (
               <ProgramApplicationFormInstitutionEditorRightColumn vm={programParticipantApplicationVm} />

@@ -21,6 +21,11 @@ import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/t
 import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/table/vertical-table-paragraph-body'
 import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
 import { SessionPlanShortEssay } from '@/features/template/ui/paragraph/single-item/session-plan-short-essay'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
+import { ProgramApplicationFormInstitutionScheduleParagraph } from '@/features/template/ui/form-set/program-application-form-institution/paragraphs/institution-schedule-paragraph'
+import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
+import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
+import { ProgramApplicationFormIndividualScheduleParagraph } from '@/features/template/ui/form-set/program-application-form-individual/paragraphs/individual-schedule-paragraph'
 import {
   mergeSubjectiveFromShortEssayEdit,
   ShortEssay,
@@ -35,6 +40,9 @@ import type { PaymentStatementBasicInfoAutofillValues } from '@/features/templat
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import type { ProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/program-registration-form/paragraph-body'
+import type { ProgramApplicationFormInstructorBodyOptions } from '@/features/template/ui/form-set/program-application-form-instructor/paragraph-body'
+
+export type { ProgramApplicationFormInstructorBodyOptions }
 
 export type FormUpdateParagraph = (
   id: string,
@@ -75,6 +83,10 @@ export type RenderFormParagraphBodyOptions = {
   programRegistration?: ProgramRegistrationParagraphBodyOptions
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
+  /** 프로그램 참여자 신청 폼 (개인) 템플릿 편집용 UI */
+  programApplicationFormIndividual?: boolean
+  /** 프로그램 강사 신청 폼 시드 단락 — 전용 본문·제목 행 액션 */
+  programApplicationFormInstructor?: ProgramApplicationFormInstructorBodyOptions
   /**
    * 구조 잠금 + 작성(authoring)일 때도 객관식·가로형 하단 동의 라디오 등 선택 UI만 조작 가능(미리 체크).
    * 프로그램 참여자 신청 폼 등 고정 단락 템플릿용.
@@ -181,18 +193,38 @@ export function renderFormParagraphBody(
           paymentStatementDisplayMode={options?.paymentStatementDisplayMode}
           programRegistration={options?.programRegistration}
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
+          programApplicationFormInstructor={
+            options?.programApplicationFormInstructor == null
+              ? undefined
+              : {
+                  ...options.programApplicationFormInstructor,
+                  isTemplateAuthoringMode: paragraphInteractionMode === 'authoring',
+                }
+          }
         />
       )
     }
     case 'vertical_table': {
-      const vp = normalizeVerticalTableParagraph(
+      const normalizedVp = normalizeVerticalTableParagraph(
         p as Extract<WritingFormParagraph, { variant: 'vertical_table' }>
       )
+      const shouldUseInstructorUnavailableDatesAuthoringExample =
+        paragraphInteractionMode === 'authoring' &&
+        p.id === PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.unavailableDates &&
+        options?.programApplicationFormInstructor?.authoringUnavailableDatesExampleRowOnly === true
+      const vp = shouldUseInstructorUnavailableDatesAuthoringExample
+        ? normalizeVerticalTableParagraph({
+            ...normalizedVp,
+            rows: normalizedVp.rows.slice(0, 1),
+          })
+        : normalizedVp
+      const dateTimeCellsInteractive = isBodyInteractive || lockedAuthoringChoicePreview
       return (
         <VerticalTableParagraphBody
           paragraph={vp}
           onChange={next => updateParagraph(p.id, () => normalizeVerticalTableParagraph(next))}
           isEditMode={isBodyInteractive}
+          dateTimeCellsInteractive={dateTimeCellsInteractive}
           tableRowSelection={options?.verticalTableRowSelection}
           onTableRowSelectionChange={options?.onVerticalTableRowSelectionChange}
         />
@@ -244,6 +276,18 @@ export function renderFormParagraphBody(
         />
       )
     case 'multiple_choice': {
+      if (
+        options?.programApplicationFormInstitution === true &&
+        p.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
+      ) {
+        return <ProgramApplicationFormInstitutionScheduleParagraph />
+      }
+      if (
+        options?.programApplicationFormIndividual === true &&
+        p.id === PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice
+      ) {
+        return <ProgramApplicationFormIndividualScheduleParagraph />
+      }
       const usesMcItemsFocus = options?.onSelectSingleItemListItem != null
       const itemsEditActive = usesMcItemsFocus
         ? isCardSelected &&

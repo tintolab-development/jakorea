@@ -27,6 +27,7 @@ import {
   withDetailedProgramNoneOption,
 } from '@/features/template/lib/template-form-select-options'
 import { type ProgramRegistrationIpsTypeValue } from '@/features/template/ui/form-set/program-registration-form/paragraphs/program-registration-ips-type-fields'
+import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-set/program-registration-form/paragraphs/program-registration-paragraph.css'
 import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '../../program-registration-form/paragraphs/program-registration-ips-options'
 
@@ -248,7 +249,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             label="프로그램 진행 현황"
             readOnlyDisplay
             view={
-              <span className="program-registration-paragraph__program-progress-hint">
+              <span className="form-editor-template-field-hint-text">
                 {PROGRAM_PROGRESS_STATIC_VIEW}
               </span>
             }

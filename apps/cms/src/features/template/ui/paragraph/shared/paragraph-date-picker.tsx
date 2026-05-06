@@ -139,6 +139,8 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
    * 기본 false — 기존 단일 날짜형은 null이면 오늘로 동기화.
    */
   suppressAutoTodayWhenEmpty?: boolean
+  /** 모달(포털) 열림·닫힘 — 테이블 행 포커스 등 상위 동기화용 */
+  onOpenChange?: (open: boolean) => void
 }
 
 export type ParagraphDatePickerProps =
@@ -166,6 +168,7 @@ interface ParagraphDatePickerSingleInnerProps {
   appliedSurfaceWithTime?: boolean
   preferPeriodModeInPopover?: boolean
   suppressAutoTodayWhenEmpty?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 function ParagraphDatePickerSingleInner({
@@ -182,12 +185,19 @@ function ParagraphDatePickerSingleInner({
   appliedSurfaceWithTime = false,
   preferPeriodModeInPopover = false,
   suppressAutoTodayWhenEmpty = false,
+  onOpenChange,
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
 
   const [open, setOpen] = useState(false)
+  const onOpenChangeRef = useRef(onOpenChange)
+  onOpenChangeRef.current = onOpenChange
+
+  useEffect(() => {
+    onOpenChangeRef.current?.(open)
+  }, [open])
   const [draft, setDraft] = useState<Dayjs>(() => value ?? dayjs())
   const [calendarMonth, setCalendarMonth] = useState<Dayjs>(() =>
     (value ?? dayjs()).startOf('month')
@@ -922,6 +932,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           appliedSurfaceWithTime={props.appliedSurfaceWithTime}
           preferPeriodModeInPopover={props.preferPeriodModeInPopover ?? false}
           suppressAutoTodayWhenEmpty={Boolean(props.suppressAutoTodayWhenEmpty)}
+          onOpenChange={props.mode === 'single' ? props.onOpenChange : undefined}
         />
       )}
     </div>

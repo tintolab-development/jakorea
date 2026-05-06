@@ -1,24 +1,26 @@
 import {
   HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
   normalizeHorizontalTableParagraph,
+  normalizeVerticalTableParagraph,
   normalizeWritingFormDraft,
   type HorizontalTableParagraph,
-  type MultipleChoiceParagraph,
+  type VerticalTableParagraph,
+  type VerticalTableRow,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 
-/** 프로그램 참여자 신청 폼 (학교) — 시드 단락 ID (개인용 ID와 절대 공유하지 않음) */
-export const PROGRAM_APPLICATION_FORM_INSTITUTION_IDS = {
-  personalInfoCollection: 'program-application-institution-seed-personal-info',
-  thirdPartyConsent: 'program-application-institution-seed-third-party',
-  basicInfo: 'program-application-institution-seed-basic-info',
-  guidance: 'program-application-institution-seed-guidance',
-  scheduleChoice: 'program-application-institution-seed-schedule',
+/** 프로그램 강사 신청 폼 — 시드 단락 ID */
+export const PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS = {
+  personalInfoCollection: 'program-instructor-application-seed-personal-info',
+  thirdPartyConsent: 'program-instructor-application-seed-third-party',
+  crimeRecord: 'program-instructor-application-seed-crime-record',
+  unavailableDates: 'program-instructor-application-seed-unavailable-dates',
+  availableSchedule: 'program-instructor-application-seed-available-schedule',
 } as const
 
-export const PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS = new Set<string>(
-  Object.values(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS)
+export const PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS = new Set<string>(
+  Object.values(PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS)
 )
 
 const PERSONAL_INFO_COLLECTION_BOTTOM =
@@ -27,7 +29,7 @@ const PERSONAL_INFO_COLLECTION_BOTTOM =
 const PERSONAL_INFO_THIRD_PARTY_BOTTOM =
   '위의 개인정보 제3자 정보 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.'
 
-function createInstitutionPersonalInfoHorizontalTable(): HorizontalTableParagraph {
+function createInstructorPersonalInfoHorizontalTable(): HorizontalTableParagraph {
   const colCount = 3
   const columnFields = Array.from({ length: colCount }, () => ({
     kind: 'text' as const,
@@ -36,7 +38,7 @@ function createInstitutionPersonalInfoHorizontalTable(): HorizontalTableParagrap
   const bodyRow = [
     {
       kind: 'text' as const,
-      value: '이름, 학교명, 학교 소재지, 개인 연락처, 이메일',
+      value: '이름, 연락처(휴대전화번호), 이메일',
     },
     {
       kind: 'text' as const,
@@ -49,7 +51,7 @@ function createInstitutionPersonalInfoHorizontalTable(): HorizontalTableParagrap
     },
   ]
   return normalizeHorizontalTableParagraph({
-    id: PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.personalInfoCollection,
+    id: PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.personalInfoCollection,
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
@@ -69,7 +71,7 @@ function createInstitutionPersonalInfoHorizontalTable(): HorizontalTableParagrap
   })
 }
 
-function createInstitutionThirdPartyHorizontalTable(): HorizontalTableParagraph {
+function createInstructorThirdPartyHorizontalTable(): HorizontalTableParagraph {
   const colCount = 4
   const columnFields = [
     { kind: 'text' as const, placeholder: '제공받는 곳을 입력해 주세요' },
@@ -81,16 +83,16 @@ function createInstitutionThirdPartyHorizontalTable(): HorizontalTableParagraph 
     { kind: 'text' as const, value: '' },
     {
       kind: 'text' as const,
-      value: '이름, 학교명, 학교 소재지, 개인 연락처, 이메일',
+      value: '이름, 연락처(휴대전화번호), 이메일',
     },
     {
       kind: 'text' as const,
       value: 'JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내',
     },
-    { kind: 'text' as const, value: '5년' },
+    { kind: 'text' as const, value: '1년' },
   ]
   return normalizeHorizontalTableParagraph({
-    id: PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent,
+    id: PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.thirdPartyConsent,
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
@@ -110,19 +112,15 @@ function createInstitutionThirdPartyHorizontalTable(): HorizontalTableParagraph 
   })
 }
 
-/** 프로그램 등록 폼 시드와 동일 — 본문은 `renderProgramApplicationFormInstitutionParagraphBody`로 대체 */
-function createInstitutionSeedHorizontalTable(
-  id: string,
-  title: string,
-  paragraphDescription: string
-): HorizontalTableParagraph {
+/** 본문은 `InstructorCrimeRecordParagraph`로 대체 — 카드 메타만 유지 */
+function createInstructorCrimeRecordPlaceholderTable(): HorizontalTableParagraph {
   return normalizeHorizontalTableParagraph({
-    id,
+    id: PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.crimeRecord,
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: title,
-    paragraphDescription,
+    paragraphTitle: '성범죄 경력 조회서 제출',
+    paragraphDescription: '학교에 전달할 성범죄 경력 조회서 파일을 제출해 주세요.',
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['항목', '내용'],
@@ -137,41 +135,63 @@ function createInstitutionSeedHorizontalTable(
   })
 }
 
-function createInstitutionScheduleMultipleChoice(): MultipleChoiceParagraph {
-  return {
-    id: PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice,
+function createUnavailableDatesVerticalTable(): VerticalTableParagraph {
+  const row = (label: string): VerticalTableRow => ({
+    stageCount: 1,
+    headers: [label],
+    cells: [''],
+    stageKinds: ['date_time'],
+    dateTimeSingleStageMode: 'date',
+    placeholderHints: ['일정 선택'],
+  })
+  return normalizeVerticalTableParagraph({
+    id: PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.unavailableDates,
     kind: 'single_item',
-    variant: 'multiple_choice',
+    variant: 'vertical_table',
+    verticalTableFlavor: 'date_time',
     requiredMark: true,
-    paragraphTitle: '진행 희망 교육 일정',
-    paragraphDescription: '프로그램 등록/모집 폼 설정값에 따라 노출 내용이 상이합니다.',
+    paragraphTitle: '강의 진행 불가 일정',
+    paragraphDescription: '강의 진행이 불가한 일정을 모두 선택해 주세요.',
     participatesInTitleNumbering: true,
+    rows: [row('강의 불가 일정 01'), row('강의 불가 일정 02')],
+    bottomText: '',
+    showBottomText: false,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
     answerRequired: true,
-    allowMultiple: true,
-    items: [
-      { id: 'institution-schedule-slot-1', label: '26년 4월 20일(일) 9:30 ~ 12:20' },
-      { id: 'institution-schedule-slot-2', label: '26년 4월 27일(월) 13:00 ~ 15:50' },
-    ],
-    selectedPreviewSingleId: null,
-    selectedPreviewMultipleIds: [],
-  }
+  })
 }
 
-export function createProgramApplicationFormInstitutionDraft(): WritingFormDraft {
+/** 본문은 `InstructorAvailableScheduleParagraph`로 대체 */
+function createAvailableSchedulePlaceholderTable(): HorizontalTableParagraph {
+  return normalizeHorizontalTableParagraph({
+    id: PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
+    kind: 'single_item',
+    variant: 'horizontal_table',
+    requiredMark: true,
+    paragraphTitle: '강의 진행 가능 일정',
+    paragraphDescription: '강의 진행이 가능한 일정을 모두 선택해 주세요.',
+    participatesInTitleNumbering: true,
+    tableFlavor: 'text',
+    columnHeaders: ['강의 진행 가능일', ''],
+    dataRows: [['', '']],
+    columnFields: [],
+    fieldDataRows: [],
+    bottomText: '',
+    showBottomText: false,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
+    answerRequired: true,
+  })
+}
+
+export function createProgramApplicationFormInstructorDraft(): WritingFormDraft {
   const paragraphs: WritingFormParagraph[] = [
-    createInstitutionPersonalInfoHorizontalTable(),
-    createInstitutionThirdPartyHorizontalTable(),
-    createInstitutionSeedHorizontalTable(
-      PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo,
-      '기본 정보',
-      '설명 입력'
-    ),
-    createInstitutionSeedHorizontalTable(
-      PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance,
-      '안내 사항',
-      '강사님들에게 제공 또는 요청할 사전 정보를 작성해 주세요.'
-    ),
-    createInstitutionScheduleMultipleChoice(),
+    createInstructorPersonalInfoHorizontalTable(),
+    createInstructorThirdPartyHorizontalTable(),
+    createInstructorCrimeRecordPlaceholderTable(),
+    createUnavailableDatesVerticalTable(),
+    createAvailableSchedulePlaceholderTable(),
   ]
   return normalizeWritingFormDraft({
     schemaVersion: 1,

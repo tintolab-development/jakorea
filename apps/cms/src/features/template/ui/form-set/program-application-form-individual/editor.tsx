@@ -32,6 +32,7 @@ export function ProgramParticipantApplicationEditorLeftColumn({
       paragraphBodyOptions={{
         structureLockedParagraphIds: vm.structureLockedParagraphIds,
         structureLockedAuthoringChoicePreview: true,
+        programApplicationFormIndividual: true,
       }}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />

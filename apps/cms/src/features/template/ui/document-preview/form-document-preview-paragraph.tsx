@@ -169,6 +169,7 @@ function renderBody(
             (renderMode === 'contentOnly' ? 'document' : undefined)
           }
           programApplicationFormInstitution={paragraphBodyOptions?.programApplicationFormInstitution}
+          programApplicationFormInstructor={paragraphBodyOptions?.programApplicationFormInstructor}
         />
       )
     case 'vertical_table':

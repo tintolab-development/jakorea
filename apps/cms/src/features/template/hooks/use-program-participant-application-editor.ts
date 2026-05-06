@@ -14,12 +14,20 @@ import {
   PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-institution-draft'
 import {
+  createProgramApplicationFormInstructorDraft,
+  PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS,
+  PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/program-application-form-instructor-draft'
+import {
   createProgramParticipantApplicationDraft,
   PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-individual-draft'
 import {
+  normalizeVerticalTableParagraph,
   normalizeWritingFormDraft,
+  verticalTableAddRow,
   type FormTitleNumberingStyle,
+  type VerticalTableParagraph,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -109,20 +117,31 @@ function useParticipantApplicationMiddleActions(
   )
 }
 
-export type ProgramParticipantApplicationEditorVariant = 'individual' | 'institution'
+export type ProgramParticipantApplicationEditorVariant = 'individual' | 'institution' | 'instructor'
+
+function renumberInstructorUnavailableDateRows(p: VerticalTableParagraph): VerticalTableParagraph {
+  return {
+    ...p,
+    rows: p.rows.map((r, i) => {
+      const label = `강의 불가 일정 ${String(i + 1).padStart(2, '0')}`
+      if (r.stageCount === 2) {
+        return { ...r, headers: [label, r.headers[1] ?? ''] as [string, string] }
+      }
+      return { ...r, headers: [label] as [string] }
+    }),
+  }
+}
 
 export function useProgramParticipantApplicationEditor(
   active: boolean,
   previewHeaderTitle: string,
   variant: ProgramParticipantApplicationEditorVariant = 'individual'
 ) {
-  const seedParagraphIds = useMemo(
-    () =>
-      variant === 'institution'
-        ? PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
-        : PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS,
-    [variant]
-  )
+  const seedParagraphIds = useMemo(() => {
+    if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'instructor') return PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
+    return PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS
+  }, [variant])
 
   const [draft, setDraft] = useState<WritingFormDraft>(() =>
     normalizeWritingFormDraft(createProgramParticipantApplicationDraft())
@@ -145,7 +164,9 @@ export function useProgramParticipantApplicationEditor(
     const next = normalizeWritingFormDraft(
       variant === 'institution'
         ? createProgramApplicationFormInstitutionDraft()
-        : createProgramParticipantApplicationDraft()
+        : variant === 'instructor'
+          ? createProgramApplicationFormInstructorDraft()
+          : createProgramParticipantApplicationDraft()
     )
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
@@ -234,6 +255,37 @@ export function useProgramParticipantApplicationEditor(
     }
   }, [draft])
 
+  const onAddUnavailableDateRow = useCallback(() => {
+    setDraft(prev => ({
+      ...prev,
+      paragraphs: prev.paragraphs.map(p => {
+        if (p.id !== PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.unavailableDates) return p
+        if (p.kind !== 'single_item' || p.variant !== 'vertical_table') return p
+        const vt = p as VerticalTableParagraph
+        const added = verticalTableAddRow(vt)
+        return normalizeVerticalTableParagraph(renumberInstructorUnavailableDateRows(added))
+      }),
+    }))
+  }, [])
+
+  const programApplicationFormInstructorOptions = useMemo(
+    () =>
+      variant === 'instructor'
+        ? {
+            enabled: true as const,
+            onAddUnavailableDateRow,
+            disableUnavailableDateRowAddButton: true,
+            authoringUnavailableDatesExampleRowOnly: true,
+          }
+        : {
+            enabled: false as const,
+            onAddUnavailableDateRow: () => {},
+            disableUnavailableDateRowAddButton: false,
+            authoringUnavailableDatesExampleRowOnly: false,
+          },
+    [variant, onAddUnavailableDateRow]
+  )
+
   const writingPreviewSession = useMemo(
     () => ({
       draft,
@@ -244,9 +296,11 @@ export function useProgramParticipantApplicationEditor(
         structureLockedParagraphIds: seedParagraphIds,
         structureLockedAuthoringChoicePreview: true,
         programApplicationFormInstitution: variant === 'institution',
+        programApplicationFormIndividual: variant === 'individual',
+        programApplicationFormInstructor: programApplicationFormInstructorOptions,
       },
     }),
-    [draft, previewHeaderTitle, seedParagraphIds, updateParagraph, variant]
+    [draft, previewHeaderTitle, programApplicationFormInstructorOptions, seedParagraphIds, updateParagraph, variant]
   )
 
   useEffect(() => {
@@ -290,6 +344,7 @@ export function useProgramParticipantApplicationEditor(
     handlePreview,
     handleSave,
     onSelectSingleItemListItem,
+    programApplicationFormInstructorOptions,
   }
 }
 

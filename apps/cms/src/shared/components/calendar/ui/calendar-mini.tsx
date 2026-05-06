@@ -88,7 +88,7 @@ export function CalendarMini({
   }
 
   return (
-    <div className="calendar-mini-container">
+    <div className="calendar-mini">
       <div className="calendar-mini-header">
         <button type="button" className="calendar-mini-nav-btn" onClick={handlePrevMonth}>
           <LeftOutlined />

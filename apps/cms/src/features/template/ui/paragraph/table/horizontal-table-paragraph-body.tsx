@@ -27,6 +27,10 @@ import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/te
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
 import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/program-application-form-institution/paragraph-body'
 import {
+  renderProgramApplicationFormInstructorParagraphBody,
+  type ProgramApplicationFormInstructorBodyOptions,
+} from '@/features/template/ui/form-set/program-application-form-instructor/paragraph-body'
+import {
   renderProgramRegistrationParagraphBody,
   type ProgramRegistrationParagraphBodyOptions,
 } from '@/features/template/ui/form-set/program-registration-form/paragraph-body'
@@ -379,6 +383,7 @@ export function HorizontalTableParagraphBody({
   paymentStatementDisplayMode,
   programRegistration,
   programApplicationFormInstitution,
+  programApplicationFormInstructor,
 }: {
   paragraph: HorizontalTableParagraph
   onChange: (next: HorizontalTableParagraph) => void
@@ -395,6 +400,7 @@ export function HorizontalTableParagraphBody({
   programRegistration?: ProgramRegistrationParagraphBodyOptions
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
+  programApplicationFormInstructor?: ProgramApplicationFormInstructorBodyOptions
 }) {
   const p = useMemo(() => normalizeHorizontalTableParagraph(paragraph), [paragraph])
 
@@ -406,6 +412,12 @@ export function HorizontalTableParagraphBody({
     programApplicationFormInstitution
   )
   if (programApplicationFormInstitutionBody != null) return programApplicationFormInstitutionBody
+
+  const programApplicationFormInstructorBody = renderProgramApplicationFormInstructorParagraphBody(
+    p,
+    programApplicationFormInstructor
+  )
+  if (programApplicationFormInstructorBody != null) return programApplicationFormInstructorBody
 
   const paymentStatementBody = renderPaymentStatementIssuanceParagraphBody({
     paragraph: p,

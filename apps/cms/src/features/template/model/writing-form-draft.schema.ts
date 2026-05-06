@@ -1287,6 +1287,16 @@ export function defaultVerticalTableRowForFlavor(flavor: VerticalTableFlavor): V
       choiceMultipleSelections: [[]],
     }
   }
+  if (flavor === 'date_time') {
+    return {
+      stageCount: 1,
+      headers: [''],
+      cells: [''],
+      stageKinds: ['date_time'],
+      dateTimeSingleStageMode: 'date',
+      placeholderHints: ['일정 선택'],
+    }
+  }
   return {
     stageCount: 1,
     headers: [''],
