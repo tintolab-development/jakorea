@@ -54,8 +54,17 @@ function ThumbnailPlaceholderSvg() {
 
 const THUMB_UPLOAD_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 
-/** 프로그램 참여자 모집 폼 (학교) — 상세 정보 (`공지사항 등록` Toast UI 에디터 재사용) */
-export function ApplicantRecruitDetailInfoParagraph() {
+export type ApplicantRecruitDetailInfoParagraphProps = {
+  /** 학교·개인 모집 폼 등 템플릿 전환 시 에디터 인스턴스 구분용 */
+  wysiwygResetKey?: string
+}
+
+const DEFAULT_APPLICANT_RECRUIT_DETAIL_WYSIWYG_KEY = 'applicant-recruit-institution-extra-body'
+
+/** 프로그램 참여자 모집 폼 — 상세 정보 (`공지사항 등록` Toast UI 에디터 재사용) */
+export function ApplicantRecruitDetailInfoParagraph({
+  wysiwygResetKey = DEFAULT_APPLICANT_RECRUIT_DETAIL_WYSIWYG_KEY,
+}: ApplicantRecruitDetailInfoParagraphProps = {}) {
   const [thumbObjectUrl, setThumbObjectUrl] = useState<string | null>(null)
 
   const revokeThumb = useCallback((url: string | null) => {
@@ -78,7 +87,7 @@ export function ApplicantRecruitDetailInfoParagraph() {
   const { editorHostRef } = useNoticeWysiwygEditor(
     true,
     '',
-    'applicant-recruit-institution-extra-body',
+    wysiwygResetKey,
     {
       placeholder: '내용을 작성하세요',
     }

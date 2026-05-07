@@ -177,6 +177,7 @@ function renderBody(
           }
           programApplicationFormInstitution={paragraphBodyOptions?.programApplicationFormInstitution}
           applicantRecruitFormInstitution={paragraphBodyOptions?.applicantRecruitFormInstitution}
+          applicantRecruitFormIndividual={paragraphBodyOptions?.applicantRecruitFormIndividual}
           programApplicationFormInstructor={paragraphBodyOptions?.programApplicationFormInstructor}
         />
       )

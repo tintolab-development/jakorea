@@ -10,6 +10,10 @@ import {
   removeMiddleParagraph,
 } from '@/features/template/lib/writing-form-middle-paragraph-mutations'
 import {
+  createApplicantRecruitFormIndividualDraft,
+  APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/applicant-recruit-form-individual-draft'
+import {
   createApplicantRecruitFormInstitutionDraft,
   APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/applicant-recruit-form-institution-draft'
@@ -129,6 +133,7 @@ export type ProgramParticipantApplicationEditorVariant =
   | 'individual'
   | 'institution'
   | 'applicant-recruit-institution'
+  | 'applicant-recruit-individual'
   | 'instructor'
   | 'volunteer'
 
@@ -154,6 +159,8 @@ export function useProgramParticipantApplicationEditor(
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'applicant-recruit-institution')
       return APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'applicant-recruit-individual')
+      return APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS
     if (variant === 'instructor') return PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
     if (variant === 'volunteer') return PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
     return PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS
@@ -182,11 +189,13 @@ export function useProgramParticipantApplicationEditor(
         ? createProgramApplicationFormInstitutionDraft()
         : variant === 'applicant-recruit-institution'
           ? createApplicantRecruitFormInstitutionDraft()
-        : variant === 'instructor'
-          ? createProgramApplicationFormInstructorDraft()
-          : variant === 'volunteer'
-            ? createProgramApplicationFormVolunteerDraft()
-          : createProgramParticipantApplicationDraft()
+          : variant === 'applicant-recruit-individual'
+            ? createApplicantRecruitFormIndividualDraft()
+            : variant === 'instructor'
+              ? createProgramApplicationFormInstructorDraft()
+              : variant === 'volunteer'
+                ? createProgramApplicationFormVolunteerDraft()
+                : createProgramParticipantApplicationDraft()
     )
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
@@ -324,6 +333,7 @@ export function useProgramParticipantApplicationEditor(
         structureLockedAuthoringChoicePreview: true,
         programApplicationFormInstitution: variant === 'institution',
         applicantRecruitFormInstitution: variant === 'applicant-recruit-institution',
+        applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
         programApplicationFormIndividual: variant === 'individual',
         programApplicationFormInstructor: programApplicationFormInstructorOptions,
           programApplicationFormVolunteer: programApplicationFormVolunteerOptions,

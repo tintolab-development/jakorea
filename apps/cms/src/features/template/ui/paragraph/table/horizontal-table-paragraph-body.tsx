@@ -25,6 +25,7 @@ import type { PaymentStatementBasicInfoAutofillValues } from '@/features/templat
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
+import { renderApplicantRecruitFormIndividualParagraphBody } from '@/features/template/ui/form-set/applicant-recruit-form-individual/paragraph-body'
 import { renderApplicantRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/applicant-recruit-form-institution/paragraph-body'
 import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/program-application-form-institution/paragraph-body'
 import {
@@ -389,6 +390,7 @@ export function HorizontalTableParagraphBody({
   programRegistration,
   programApplicationFormInstitution,
   applicantRecruitFormInstitution,
+  applicantRecruitFormIndividual,
   programApplicationFormInstructor,
   programApplicationFormVolunteer,
 }: {
@@ -409,6 +411,8 @@ export function HorizontalTableParagraphBody({
   programApplicationFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   applicantRecruitFormInstitution?: boolean
+  /** 프로그램 참여자 모집 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
+  applicantRecruitFormIndividual?: boolean
   programApplicationFormInstructor?: ProgramApplicationFormInstructorBodyOptions
   programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
 }) {
@@ -446,6 +450,12 @@ export function HorizontalTableParagraphBody({
 
   const programRegistrationBody = renderProgramRegistrationParagraphBody(p, programRegistration)
   if (programRegistrationBody != null) return programRegistrationBody
+
+  const applicantRecruitFormIndividualBody = renderApplicantRecruitFormIndividualParagraphBody(
+    p,
+    applicantRecruitFormIndividual
+  )
+  if (applicantRecruitFormIndividualBody != null) return applicantRecruitFormIndividualBody
 
   const applicantRecruitFormInstitutionBody = renderApplicantRecruitFormInstitutionParagraphBody(
     p,
