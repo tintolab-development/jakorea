@@ -49,11 +49,19 @@ import {
   ProgramRegistrationEditorLeftColumn,
   ProgramRegistrationEditorRightColumn,
 } from '@/features/template/ui/form-set/program-registration-form'
+import { CrimeRecordConsentDocumentFullpageModal } from '@/features/template/ui/crime-record-consent-document-fullpage-modal'
+import {
+  TEMPLATE_USER_PREVIEW_ACTIVE,
+} from '@/features/template/lib/template-user-preview-url'
+import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
+
+const AGREEMENT_CRIME_TEMPLATE_ID = 'agreement-crime'
 
 type TemplateFormTabQuery = {
   mode?: string
   type?: string
   id?: string
+  userPreview?: string
 }
 
 const EMPTY_PREVIEW_DRAFT: WritingFormDraft = {
@@ -67,7 +75,11 @@ const noopUpdateParagraph: FormUpdateParagraph = () => {}
 export default function TemplateFormTab() {
   const { params, setParams } = useQueryParams<TemplateFormTabQuery>()
   const isPreviewOpen = params.mode === 'edit'
-  const { openWritingUserPreview } = useTemplateWritingPreview()
+  const {
+    openWritingUserPreview,
+    closeWritingUserPreview,
+    isWritingUserPreviewOpen,
+  } = useTemplateWritingPreview()
 
   const curriculumSections = useMemo(
     () => ({
@@ -102,13 +114,16 @@ export default function TemplateFormTab() {
 
   const handleOpenTemplatePreview = useCallback(
     (row: TemplateRow) => {
-      setParams({ mode: 'edit', id: row.id, type: undefined })
+      setParams(
+        { mode: 'edit', id: row.id, type: undefined, userPreview: undefined },
+        { replace: false }
+      )
     },
     [setParams]
   )
 
   const handleCloseTemplatePreview = useCallback(() => {
-    setParams({ mode: undefined, id: undefined, type: undefined })
+    setParams({ mode: undefined, id: undefined, type: undefined, userPreview: undefined })
   }, [setParams])
 
   useEffect(() => {
@@ -165,7 +180,53 @@ export default function TemplateFormTab() {
       : programParticipantApplicationVariant
   )
 
+  const isCrimeConsentDetail =
+    isPreviewOpen && selectedTemplate?.id === AGREEMENT_CRIME_TEMPLATE_ID
+
+  useWritingUserPreviewUrlAuxiliarySync(
+    params,
+    setParams,
+    isWritingUserPreviewOpen,
+    closeWritingUserPreview
+  )
+
+  /** 직접 입력/앞으로가기 등 URL에 userPreview가 있으면 미리보기 오픈 */
+  useEffect(() => {
+    if (params.userPreview !== TEMPLATE_USER_PREVIEW_ACTIVE) return
+    if (params.mode !== 'edit') return
+    if (isCrimeConsentDetail) return
+    if (!selectedTemplate) return
+    if (isWritingUserPreviewOpen) return
+
+    if (isProgramRegistrationTemplate) {
+      programRegistrationVm.handlePreview()
+      return
+    }
+    if (isProgramParticipantApplicationTemplate) {
+      programParticipantApplicationVm.handlePreview()
+      return
+    }
+    openWritingUserPreview({
+      draft: EMPTY_PREVIEW_DRAFT,
+      updateParagraph: noopUpdateParagraph,
+      headerTitle: selectedTemplate.templateName ?? '양식 미리보기',
+      editorKind: selectedTemplate.id.startsWith('agreement-') === true ? 'agreement' : 'survey',
+    })
+  }, [
+    params.userPreview,
+    params.mode,
+    isCrimeConsentDetail,
+    selectedTemplate,
+    isWritingUserPreviewOpen,
+    isProgramRegistrationTemplate,
+    isProgramParticipantApplicationTemplate,
+    programRegistrationVm,
+    programParticipantApplicationVm,
+    openWritingUserPreview,
+  ])
+
   const handlePreview = useCallback(() => {
+    setParams({ userPreview: TEMPLATE_USER_PREVIEW_ACTIVE }, { replace: false })
     if (isProgramRegistrationTemplate) {
       programRegistrationVm.handlePreview()
       return
@@ -194,6 +255,7 @@ export default function TemplateFormTab() {
     programParticipantApplicationVm,
     programRegistrationVm,
     selectedTemplate?.templateName,
+    setParams,
   ])
 
   if (params.mode === 'new' && params.type === 'survey') {
@@ -220,8 +282,13 @@ export default function TemplateFormTab() {
         ))}
       </div>
 
+      <CrimeRecordConsentDocumentFullpageModal
+        open={isCrimeConsentDetail}
+        onClose={handleCloseTemplatePreview}
+      />
+
       <TemplateFullpageModal
-        open={isPreviewOpen}
+        open={isPreviewOpen && !isCrimeConsentDetail}
         onClose={handleCloseTemplatePreview}
         title={selectedTemplate?.templateName ?? '양식 미리보기'}
         description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."

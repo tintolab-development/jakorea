@@ -49,10 +49,11 @@ export function ParagraphInput({
   className,
 }: ParagraphInputProps) {
   const [focused, setFocused] = useState(false)
-  const filled = value.trim().length > 0
+  const safeValue = typeof value === 'string' ? value : ''
+  const filled = safeValue.trim().length > 0
   const isExplanationTitle = className?.includes('paragraph-input-explanation-title') ?? false
   const isExplanationBody = className?.includes('paragraph-input--explanation-body') ?? false
-  const widthSource = filled ? value : (placeholder ?? '')
+  const widthSource = filled ? safeValue : (placeholder ?? '')
   const dynamicWidthPx = useMemo(() => {
     const source = widthSource.length > 0 ? widthSource : ' '
     const measured = measureTextWidthPx(source, type, isExplanationTitle)
@@ -83,7 +84,7 @@ export function ParagraphInput({
           <span className="paragraph-input__main">
             <span className="paragraph-input__view-text" style={dynamicWidthStyle}>
               {filled ? (
-                value
+                safeValue
               ) : (
                 <span className="paragraph-input__placeholder">{placeholder ?? ''}</span>
               )}
@@ -113,7 +114,7 @@ export function ParagraphInput({
           <div className={shellClass} style={dynamicWidthStyle}>
             <Input
               disabled={disabled}
-              value={value}
+              value={safeValue}
               onChange={e => onChange?.(e.target.value)}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}

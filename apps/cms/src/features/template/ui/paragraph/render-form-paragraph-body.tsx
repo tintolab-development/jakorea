@@ -6,6 +6,8 @@ import {
   type FormEditorKind,
   type HorizontalTableRowSelection,
   type SubjectiveParagraph,
+  type LectureReportProgramProgressParagraph,
+  type UjatJournalEducationInfoParagraph,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
@@ -33,6 +35,11 @@ import {
 } from '@/features/template/ui/paragraph/single-item/short-essay'
 import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate'
 import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
+import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
+import {
+  UjatJournalEducationInfo,
+  type UjatJournalEducationInfoAutofill,
+} from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
@@ -90,6 +97,8 @@ export type RenderFormParagraphBodyOptions = {
   programApplicationFormInstructor?: ProgramApplicationFormInstructorBodyOptions
   /** 프로그램 봉사자 신청 폼 시드 단락 — 전용 본문 */
   programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
+  /** UJAT 교육일지 교육 정보 단락 — 담당 학교명 등 자동 표시 */
+  ujatJournalEducationInfoAutofill?: UjatJournalEducationInfoAutofill | null
   /**
    * 구조 잠금 + 작성(authoring)일 때도 객관식·가로형 하단 동의 라디오 등 선택 UI만 조작 가능(미리 체크).
    * 프로그램 참여자 신청 폼 등 고정 단락 템플릿용.
@@ -155,7 +164,9 @@ export function renderFormParagraphBody(
       return (
         <ShortEssay
           paragraph={view}
-          onChange={next => updateParagraph(sp.id, () => mergeSubjectiveFromShortEssayEdit(sp, next))}
+          onChange={next =>
+            updateParagraph(sp.id, () => mergeSubjectiveFromShortEssayEdit(sp, next))
+          }
           isCardSelected={isCardSelected}
           isBodyInteractive={isBodyInteractive}
           paragraphInteractionMode={paragraphInteractionMode}
@@ -212,6 +223,27 @@ export function renderFormParagraphBody(
                   isTemplateAuthoringMode: paragraphInteractionMode === 'authoring',
                 }
           }
+        />
+      )
+    }
+    case 'ujat_journal_education_info': {
+      const jp = p as UjatJournalEducationInfoParagraph
+      return (
+        <UjatJournalEducationInfo
+          paragraph={jp}
+          onChange={next => updateParagraph(jp.id, () => next)}
+          isEditMode={isBodyInteractive}
+          autofill={options?.ujatJournalEducationInfoAutofill}
+        />
+      )
+    }
+    case 'lecture_report_program_progress': {
+      const lr = p as LectureReportProgramProgressParagraph
+      return (
+        <LectureReportProgramProgress
+          paragraph={lr}
+          onChange={next => updateParagraph(lr.id, () => next)}
+          isEditMode={isBodyInteractive}
         />
       )
     }
@@ -314,7 +346,8 @@ export function renderFormParagraphBody(
           itemsEditActive={itemsEditActive}
           onActivateItemsEditor={
             usesMcItemsFocus
-              ? () => options!.onSelectSingleItemListItem!(FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID)
+              ? () =>
+                  options!.onSelectSingleItemListItem!(FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID)
               : undefined
           }
         />

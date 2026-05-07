@@ -410,6 +410,36 @@ export function HorizontalTableParagraphBody({
 }) {
   const p = useMemo(() => normalizeHorizontalTableParagraph(paragraph), [paragraph])
 
+  const [internalSelection, setInternalSelection] = useState<HorizontalTableRowSelection | null>(null)
+  const isControlled = onTableRowSelectionChange != null
+  const selection = isControlled ? (controlledSelection ?? null) : internalSelection
+  const setSelection = (next: HorizontalTableRowSelection | null) => {
+    if (isControlled) onTableRowSelectionChange(next)
+    else setInternalSelection(next)
+  }
+
+  const layout = useMemo(() => {
+    const colCount = Math.max(1, p.columnHeaders.length)
+    const headers = p.columnHeaders.slice(0, colCount)
+    while (headers.length < colCount) headers.push('')
+    const rows = p.dataRows.map(r => {
+      const row = [...r]
+      while (row.length < colCount) row.push('')
+      return row.slice(0, colCount)
+    })
+    if (rows.length === 0) {
+      rows.push(Array.from({ length: colCount }, () => ''))
+    }
+    return { colCount, headers, rows }
+  }, [p.columnHeaders, p.dataRows])
+
+  const activeSelection = useMemo((): HorizontalTableRowSelection | null => {
+    if (selection == null) return null
+    if (selection.area === 'header') return selection
+    if (selection.row < 0 || selection.row >= layout.rows.length) return null
+    return selection
+  }, [selection, layout.rows.length])
+
   const programRegistrationBody = renderProgramRegistrationParagraphBody(p, programRegistration)
   if (programRegistrationBody != null) return programRegistrationBody
 
@@ -442,33 +472,7 @@ export function HorizontalTableParagraphBody({
   })
   if (paymentStatementBody != null) return paymentStatementBody
 
-  const [internalSelection, setInternalSelection] = useState<HorizontalTableRowSelection | null>(null)
-  const isControlled = onTableRowSelectionChange != null
-  const selection = isControlled ? (controlledSelection ?? null) : internalSelection
-  const setSelection = (next: HorizontalTableRowSelection | null) => {
-    if (isControlled) onTableRowSelectionChange(next)
-    else setInternalSelection(next)
-  }
-
-  const colCount = Math.max(1, p.columnHeaders.length)
-  const headers = p.columnHeaders.slice(0, colCount)
-  while (headers.length < colCount) headers.push('')
-
-  const rows = p.dataRows.map(r => {
-    const row = [...r]
-    while (row.length < colCount) row.push('')
-    return row.slice(0, colCount)
-  })
-  if (rows.length === 0) {
-    rows.push(Array.from({ length: colCount }, () => ''))
-  }
-
-  const activeSelection = useMemo((): HorizontalTableRowSelection | null => {
-    if (selection == null) return null
-    if (selection.area === 'header') return selection
-    if (selection.row < 0 || selection.row >= rows.length) return null
-    return selection
-  }, [selection, rows.length])
+  const { colCount, headers, rows } = layout
 
   const isHeaderRowSelected = () => activeSelection?.area === 'header'
 

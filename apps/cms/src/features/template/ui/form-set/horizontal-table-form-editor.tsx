@@ -22,6 +22,10 @@ export interface HorizontalTableFormEditorProps {
   variant: HorizontalTableFormEditorVariant
   /** fullpage-modal 전용: 닫기 시 호출 */
   onClose?: () => void
+  /** 미리보기 직전에 호출 — URL에 userPreview push 등 */
+  onBeforeUserPreview?: () => void
+  /** URL에 userPreview=1일 때(뒤로가기·직접 입력 복원) 모달이 닫혀 있으면 미리보기 오픈 */
+  urlUserPreviewActive?: boolean
   /**
    * 최초 마운트 시 기본 테이블 단락 `tableFlavor`.
    * `initialDraft`가 있으면 이 값은 초기 state 생성에 쓰이지 않음(동일 draft 안에서 여러 가로형 단락을 두는 경우 등).
@@ -40,6 +44,8 @@ export interface HorizontalTableFormEditorProps {
 export function HorizontalTableFormEditor({
   variant,
   onClose,
+  onBeforeUserPreview,
+  urlUserPreviewActive = false,
   initialTableFlavor = 'text',
   initialDraft,
   initialActiveParagraphId,
@@ -99,9 +105,21 @@ export function HorizontalTableFormEditor({
     syncWritingUserPreviewSession(writingPreviewSession)
   }, [isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
 
-  const handlePreview = useCallback(() => {
+  useEffect(() => {
+    if (!urlUserPreviewActive) return
+    if (isWritingUserPreviewOpen) return
     openWritingUserPreview(writingPreviewSession)
-  }, [openWritingUserPreview, writingPreviewSession])
+  }, [
+    urlUserPreviewActive,
+    isWritingUserPreviewOpen,
+    openWritingUserPreview,
+    writingPreviewSession,
+  ])
+
+  const handlePreview = useCallback(() => {
+    onBeforeUserPreview?.()
+    openWritingUserPreview(writingPreviewSession)
+  }, [onBeforeUserPreview, openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
     message.success('저장 API 연동 전입니다.')

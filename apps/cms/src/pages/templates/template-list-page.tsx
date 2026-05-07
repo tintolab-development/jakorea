@@ -20,6 +20,9 @@ type FormManagementQuery = {
   mode?: string
   type?: string
   id?: string
+  userPreview?: string
+  /** 양식 테스트 > 테이블 데모 상세 키 */
+  ftDemo?: string
 }
 // const KAKAO_NOTIFICATION = '/templates/kakao-notification'
 // const EMAIL_MANAGEMENT = '/templates/email-management'
@@ -94,6 +97,8 @@ export function TemplateListPage() {
       mode: undefined,
       type: undefined,
       id: undefined,
+      userPreview: undefined,
+      ftDemo: undefined,
     }
     setParams(updates)
 
@@ -128,20 +133,28 @@ export function TemplateListPage() {
               onCancel={() => setCreateModalOpen(false)}
               onDirectRegister={target => {
                 setCreateModalOpen(false)
-                setParams({
-                  tab: 'template-form',
-                  mode: 'new',
-                  type: target,
-                  id: undefined,
-                })
+                setParams(
+                  {
+                    tab: 'template-form',
+                    mode: 'new',
+                    type: target,
+                    id: undefined,
+                    userPreview: undefined,
+                  },
+                  { replace: false }
+                )
               }}
               onDuplicateSuccess={newTemplateId => {
                 setCreateModalOpen(false)
-                setParams({
-                  mode: 'edit',
-                  id: newTemplateId,
-                  type: undefined,
-                })
+                setParams(
+                  {
+                    mode: 'edit',
+                    id: newTemplateId,
+                    type: undefined,
+                    userPreview: undefined,
+                  },
+                  { replace: false }
+                )
               }}
             />
           )}

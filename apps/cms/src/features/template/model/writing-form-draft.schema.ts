@@ -250,6 +250,53 @@ export type FileAttachmentParagraph = WritingFormParagraphBase & {
   answerRequired?: boolean
 }
 
+/** UJAT 교육일지 4번 단락 — 학교명(시스템)·학년·반·수업일(전용 레이아웃) */
+export type UjatJournalEducationInfoParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'ujat_journal_education_info'
+  answerRequired?: boolean
+  /** API·연동 전 목/미리보기용 기본 학교명 */
+  schoolDisplayFallback?: string
+  grade: string
+  classSection: string
+  prepDate: string
+  sessionDate: string
+}
+
+/** 강의보고서 — 프로그램 진행 정보(2단×4행) 전용 레이아웃 */
+export type LectureReportProgramProgressParagraph = WritingFormParagraphBase & {
+  kind: 'single_item'
+  variant: 'lecture_report_program_progress'
+  answerRequired?: boolean
+  programName: string
+  finalInstructorCount: string
+  institutionName: string
+  institutionLocation: string
+  educationDate: string
+  sessionTime: string
+  sessionIndex: string
+  educationTarget: string
+  classLabel: string
+  studentCount: string
+}
+
+/** 담당 학년 드롭다운 (1~6학년) */
+export const UJAT_JOURNAL_EDUCATION_INFO_GRADE_OPTIONS: Array<{ value: string; label: string }> =
+  Array.from({ length: 6 }, (_, i) => ({
+    value: String(i + 1),
+    label: `${i + 1}학년`,
+  }))
+
+/** 담당 반 드롭다운 */
+export const UJAT_JOURNAL_EDUCATION_INFO_CLASS_OPTIONS: Array<{ value: string; label: string }> =
+  Array.from({ length: 20 }, (_, i) => ({
+    value: String(i + 1),
+    label: `${i + 1}반`,
+  }))
+
+/** 목·CMS 미리보기 — 기관 연동 전 담당 학교명 샘플 */
+export const UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME = 'JA초등학교'
+
 /** 캔버스에서 선택된 테이블 행(헤더 행 vs 데이터 행) — 에디터에서 단락 id별로 보관해 위젯마다 분리 */
 export type HorizontalTableRowSelection =
   | { area: 'header' }
@@ -1927,6 +1974,8 @@ export type WritingFormParagraph =
   | ScaleTypeParagraph
   | UserInfoParagraph
   | FileAttachmentParagraph
+  | UjatJournalEducationInfoParagraph
+  | LectureReportProgramProgressParagraph
   | HorizontalTableParagraph
   | VerticalTableParagraph
   | SystemParagraph
@@ -1966,10 +2015,51 @@ export function migrateLegacySingleItemDateTimeParagraph(
   } as DateParagraph
 }
 
+export function normalizeUjatJournalEducationInfoParagraph(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (p.kind !== 'single_item' || p.variant !== 'ujat_journal_education_info') return p
+  const x = p as UjatJournalEducationInfoParagraph
+  return {
+    ...x,
+    schoolDisplayFallback: x.schoolDisplayFallback?.trim() ?? '',
+    grade: x.grade ?? '',
+    classSection: x.classSection ?? '',
+    prepDate: x.prepDate ?? '',
+    sessionDate: x.sessionDate ?? '',
+    answerRequired: x.answerRequired !== false,
+  }
+}
+
+export function normalizeLectureReportProgramProgressParagraph(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (p.kind !== 'single_item' || p.variant !== 'lecture_report_program_progress') return p
+  const x = p as LectureReportProgramProgressParagraph
+  return {
+    ...x,
+    programName: x.programName ?? '',
+    finalInstructorCount: x.finalInstructorCount ?? '',
+    institutionName: x.institutionName ?? '',
+    institutionLocation: x.institutionLocation ?? '',
+    educationDate: x.educationDate ?? '',
+    sessionTime: x.sessionTime ?? '',
+    sessionIndex: x.sessionIndex ?? '',
+    educationTarget: x.educationTarget ?? '',
+    classLabel: x.classLabel ?? '',
+    studentCount: x.studentCount ?? '',
+    answerRequired: x.answerRequired !== false,
+  }
+}
+
 export function normalizeWritingFormDraft(draft: WritingFormDraft): WritingFormDraft {
   return {
     ...draft,
-    paragraphs: draft.paragraphs.map(migrateLegacySingleItemDateTimeParagraph),
+    paragraphs: draft.paragraphs.map(p =>
+      normalizeLectureReportProgramProgressParagraph(
+        normalizeUjatJournalEducationInfoParagraph(migrateLegacySingleItemDateTimeParagraph(p))
+      )
+    ),
   }
 }
 
@@ -2007,6 +2097,63 @@ export const UJAT_EDUCATION_PLAN_SEED_PARAGRAPH_IDS = new Set<string>([
 /** 제목형(1번) — 드래그 핸들 미노출. 지급조서 `PAYMENT_STATEMENT_ISSUANCE_HIDDEN_DRAG_HANDLE_IDS`와 동일 UX */
 export const UJAT_EDUCATION_PLAN_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
   UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.title,
+])
+
+/** 발급 양식 > UJAT 교육일지 시드 단락 id — 교육계획서와 동일 레이아웃, id만 분리 */
+export const UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS = {
+  title: 'ujat-edu-journal-title',
+  explanationText: 'ujat-edu-journal-explanation-text',
+  volunteerInfo: 'ujat-edu-journal-volunteer-info',
+  /** 4번 단락 — 2단(2열)×2행 교육 정보 세로 테이블 */
+  educationInfo: 'ujat-edu-journal-education-info',
+  session1: 'ujat-edu-journal-session-1',
+  session2: 'ujat-edu-journal-session-2',
+  session3: 'ujat-edu-journal-session-3',
+  session4: 'ujat-edu-journal-session-4',
+  contentFeedback: 'ujat-edu-journal-content-feedback',
+  educationPhotos: 'ujat-edu-journal-education-photos',
+} as const
+
+/** UJAT 교육일지 템플릿 고정 단락 — 삭제·복제·순서 변경 불가 */
+export const UJAT_EDUCATION_JOURNAL_SEED_PARAGRAPH_IDS = new Set<string>([
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.title,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.explanationText,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.educationInfo,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.session1,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.session2,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.session3,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.session4,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.contentFeedback,
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.educationPhotos,
+])
+
+export const UJAT_EDUCATION_JOURNAL_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
+  UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.title,
+])
+
+/** 발급 양식 > 강의보고서 시드 단락 id */
+export const LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS = {
+  title: 'lecture-report-title',
+  programProgress: 'lecture-report-program-progress',
+  educationContent: 'lecture-report-education-content',
+  educationOperation: 'lecture-report-education-operation',
+  overallEvaluation: 'lecture-report-overall-evaluation',
+  educationPhotos: 'lecture-report-education-photos',
+} as const
+
+/** 강의보고서 템플릿 고정 단락 — 삭제·복제·순서 변경 불가 */
+export const LECTURE_REPORT_SEED_PARAGRAPH_IDS = new Set<string>([
+  LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.title,
+  LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.programProgress,
+  LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.educationContent,
+  LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.educationOperation,
+  LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.overallEvaluation,
+  LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.educationPhotos,
+])
+
+export const LECTURE_REPORT_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
+  LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.title,
 ])
 
 /** 직접 등록 — 테이블 가로형 기본 단락 id(가로형 테이블만; 마무리/설문형 단락 없음) */
@@ -2387,11 +2534,10 @@ const UJAT_EDU_PLAN_USER_FIELDS: Array<{ key: string; label: string }> = [
   { key: 'teamPartnerName', label: '팀원 명' },
 ]
 
-function createUjatEducationPlanSessionParagraph(
+function createUjatEducationIssuanceSessionParagraph(
   id: string,
-  sessionIndex: number
+  paragraphTitle: string
 ): SessionPlanShortEssayParagraph {
-  const n = sessionIndex
   const ph = '자유롭게 작성해 주세요'
   return {
     id,
@@ -2399,7 +2545,7 @@ function createUjatEducationPlanSessionParagraph(
     variant: 'session_plan_short_essay',
     answerRequired: true,
     requiredMark: true,
-    paragraphTitle: `${n}차시 교육 계획`,
+    paragraphTitle,
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     showItemTitle: true,
@@ -2413,22 +2559,57 @@ function createUjatEducationPlanSessionParagraph(
   }
 }
 
-/** 발급 양식 > UJAT 교육계획서 — 기존 단락 variant만으로 구성된 시드 초안 */
-export function createUjatEducationPlanIssuanceDraft(): WritingFormDraft {
+type UjatEducationIssuanceParagraphIds = {
+  title: string
+  explanationText: string
+  volunteerInfo: string
+  session1: string
+  session2: string
+  session3: string
+  session4: string
+}
+
+/** UJAT 교육일지 4번 단락 — 전용 UI(학교 비활성·학년/반·일자) */
+function createUjatJournalEducationInfoParagraph(id: string): UjatJournalEducationInfoParagraph {
+  return normalizeUjatJournalEducationInfoParagraph({
+    id,
+    kind: 'single_item',
+    variant: 'ujat_journal_education_info',
+    requiredMark: true,
+    paragraphTitle: '교육 정보',
+    paragraphDescription: '설명 입력',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
+    schoolDisplayFallback: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME,
+    grade: '',
+    classSection: '',
+    prepDate: '',
+    sessionDate: '',
+  }) as UjatJournalEducationInfoParagraph
+}
+
+/** UJAT 교육계획서·교육일지 공통 시드(단락 id·문서 제목·차시 타이틀만 다름) */
+function createUjatEducationIssuanceDraft(
+  ids: UjatEducationIssuanceParagraphIds,
+  surveyTitle: string,
+  getSessionParagraphTitle: (sessionIndex: number) => string,
+  options?: { paragraphsAfterVolunteer?: WritingFormParagraph[] }
+): WritingFormDraft {
   const selectedKeys = UJAT_EDU_PLAN_USER_FIELDS.map(f => f.key)
+  const afterVolunteer = options?.paragraphsAfterVolunteer ?? []
   return {
     schemaVersion: 1,
     formSettings: { titleNumbering: 'numeric' },
     paragraphs: [
       {
-        id: UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.title,
+        id: ids.title,
         kind: 'description',
         variant: 'survey_title_with_period',
         requiredMark: true,
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
-        surveyTitle: 'JA KOREA 대학생경제교육봉사단(UJAT) 교육계획서',
+        surveyTitle,
         surveyDescription: '',
         periodMode: 'immediate',
         startAt: null,
@@ -2436,7 +2617,7 @@ export function createUjatEducationPlanIssuanceDraft(): WritingFormDraft {
         showWritingPeriodOnForm: false,
       },
       {
-        id: UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.explanationText,
+        id: ids.explanationText,
         kind: 'single_item',
         variant: 'agreement_explanation_text',
         requiredMark: true,
@@ -2448,7 +2629,7 @@ export function createUjatEducationPlanIssuanceDraft(): WritingFormDraft {
         answerRequired: true,
       },
       {
-        id: UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.volunteerInfo,
+        id: ids.volunteerInfo,
         kind: 'single_item',
         variant: 'user_info',
         answerRequired: true,
@@ -2459,22 +2640,202 @@ export function createUjatEducationPlanIssuanceDraft(): WritingFormDraft {
         userFields: UJAT_EDU_PLAN_USER_FIELDS,
         selectedUserFieldKeys: selectedKeys,
       },
-      createUjatEducationPlanSessionParagraph(
-        UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session1,
-        1
+      ...afterVolunteer,
+      createUjatEducationIssuanceSessionParagraph(ids.session1, getSessionParagraphTitle(1)),
+      createUjatEducationIssuanceSessionParagraph(ids.session2, getSessionParagraphTitle(2)),
+      createUjatEducationIssuanceSessionParagraph(ids.session3, getSessionParagraphTitle(3)),
+      createUjatEducationIssuanceSessionParagraph(ids.session4, getSessionParagraphTitle(4)),
+    ],
+  }
+}
+
+/** 발급 양식 > UJAT 교육계획서 — 기존 단락 variant만으로 구성된 시드 초안 */
+export function createUjatEducationPlanIssuanceDraft(): WritingFormDraft {
+  return createUjatEducationIssuanceDraft(
+    UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS,
+    'JA KOREA 대학생경제교육봉사단(UJAT) 교육계획서',
+    n => `${n}차시 교육 계획`
+  )
+}
+
+function createUjatEducationJournalContentFeedbackParagraph(
+  id: string
+): ShortEssayParagraph {
+  const ph = '자유롭게 작성해 주세요'
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'short_essay',
+    answerRequired: true,
+    requiredMark: true,
+    paragraphTitle: '교육 내용 피드백',
+    paragraphDescription: '잘된 점과 어려웠던 점, 기타 사항을 작성해 주세요',
+    participatesInTitleNumbering: true,
+    showItemTitle: false,
+    items: [
+      {
+        id: `${id}-item-1`,
+        label: '',
+        placeholder: ph,
+        bodyText: '',
+      },
+    ],
+    bodyPlaceholder: ph,
+    bodyText: '',
+  }
+}
+
+function createUjatEducationJournalEducationPhotosParagraph(
+  id: string
+): FileAttachmentParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'file_attachment',
+    answerRequired: true,
+    requiredMark: true,
+    paragraphTitle: '교육 사진',
+    paragraphDescription: '교육 당일 사진을 2장 이상 첨부해 주세요',
+    participatesInTitleNumbering: true,
+  }
+}
+
+/** 발급 양식 > UJAT 교육일지 — 교육계획서와 동일 단락 구성 + 4번 교육 정보(2단×2행) 테이블 + 피드백·사진 첨부 */
+export function createUjatEducationJournalIssuanceDraft(): WritingFormDraft {
+  const base = createUjatEducationIssuanceDraft(
+    UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS,
+    'JA KOREA 대학생경제교육봉사단(UJAT) 교육일지',
+    n => `${n}차시 교육 일지`,
+    {
+      paragraphsAfterVolunteer: [
+        createUjatJournalEducationInfoParagraph(UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.educationInfo),
+      ],
+    }
+  )
+  return {
+    ...base,
+    paragraphs: [
+      ...base.paragraphs,
+      createUjatEducationJournalContentFeedbackParagraph(
+        UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.contentFeedback
       ),
-      createUjatEducationPlanSessionParagraph(
-        UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session2,
-        2
+      createUjatEducationJournalEducationPhotosParagraph(
+        UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.educationPhotos
       ),
-      createUjatEducationPlanSessionParagraph(
-        UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session3,
-        3
+    ],
+  }
+}
+
+export function createLectureReportProgramProgressParagraph(
+  id: string
+): LectureReportProgramProgressParagraph {
+  return normalizeLectureReportProgramProgressParagraph({
+    id,
+    kind: 'single_item',
+    variant: 'lecture_report_program_progress',
+    requiredMark: true,
+    paragraphTitle: '프로그램 진행 정보',
+    paragraphDescription: '설명 입력',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
+    programName: '',
+    finalInstructorCount: '',
+    institutionName: '',
+    institutionLocation: '',
+    educationDate: '',
+    sessionTime: '',
+    sessionIndex: '',
+    educationTarget: '',
+    classLabel: '',
+    studentCount: '',
+  }) as LectureReportProgramProgressParagraph
+}
+
+/** 발급 양식 > 강의보고서 — 제목·프로그램 진행(2단×4행)·교육계획 차시형 본문·사진 */
+export function createLectureReportIssuanceDraft(): WritingFormDraft {
+  const ph = '자유롭게 작성해 주세요'
+  const ids = LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS
+
+  function lectureReportSessionParagraph(
+    id: string,
+    paragraphTitle: string,
+    paragraphDescription: string,
+    itemLabels: string[]
+  ): SessionPlanShortEssayParagraph {
+    return {
+      id,
+      kind: 'single_item',
+      variant: 'session_plan_short_essay',
+      answerRequired: true,
+      requiredMark: true,
+      paragraphTitle,
+      paragraphDescription,
+      participatesInTitleNumbering: true,
+      showItemTitle: true,
+      items: itemLabels.map((label, i) => ({
+        id: `${id}-item-${i + 1}`,
+        label,
+        placeholder: ph,
+        bodyText: '',
+      })),
+      bodyPlaceholder: ph,
+      bodyText: '',
+    }
+  }
+
+  return {
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'numeric' },
+    paragraphs: [
+      {
+        id: ids.title,
+        kind: 'description',
+        variant: 'survey_title_with_period',
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        surveyTitle: 'JA KOREA 「강의명」 강의보고서',
+        surveyDescription: '',
+        periodMode: 'immediate',
+        startAt: null,
+        endAt: null,
+        showWritingPeriodOnForm: true,
+      },
+      createLectureReportProgramProgressParagraph(ids.programProgress),
+      lectureReportSessionParagraph(
+        ids.educationContent,
+        '교육 내용',
+        '',
+        ['도입', '전개', '마무리']
       ),
-      createUjatEducationPlanSessionParagraph(
-        UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.session4,
-        4
-      ),
+      lectureReportSessionParagraph(ids.educationOperation, '교육 운영', '', [
+        '전반적인 학생들의 교육 참여도는 어떠했나요?',
+        '교육 콘텐츠 난이도 적합성은 어떠했나요?',
+        '강의 진행 중 이슈 및 특이사항이 있었나요?',
+      ]),
+      {
+        id: ids.overallEvaluation,
+        kind: 'single_item',
+        variant: 'session_plan_short_essay',
+        answerRequired: true,
+        requiredMark: true,
+        paragraphTitle: '강의 종합 평가 및 개선점',
+        paragraphDescription: 'ex) 강의 총평, 잘 된 점, 아쉬운 점, 개선 방향 등',
+        participatesInTitleNumbering: true,
+        showItemTitle: false,
+        items: [
+          {
+            id: `${ids.overallEvaluation}-item-1`,
+            label: '',
+            placeholder: ph,
+            bodyText: '',
+          },
+        ],
+        bodyPlaceholder: ph,
+        bodyText: '',
+      },
+      createUjatEducationJournalEducationPhotosParagraph(ids.educationPhotos),
     ],
   }
 }
@@ -2700,6 +3061,16 @@ export function writingOutlineLabel(p: WritingFormParagraph): string {
   ) {
     const t = p.paragraphTitle.trim()
     return t || '동의 내용'
+  }
+  if (p.kind === 'single_item' && p.variant === 'ujat_journal_education_info') {
+    const t = p.paragraphTitle.trim()
+    if (t) return t
+    return '교육 정보'
+  }
+  if (p.kind === 'single_item' && p.variant === 'lecture_report_program_progress') {
+    const t = p.paragraphTitle.trim()
+    if (t) return t
+    return '프로그램 진행 정보'
   }
   if (p.kind === 'single_item' && p.variant === 'horizontal_table') {
     const t = p.paragraphTitle.trim()

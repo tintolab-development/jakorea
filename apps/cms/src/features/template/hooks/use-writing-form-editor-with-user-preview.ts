@@ -15,6 +15,7 @@ import {
   useWritingFormMiddleParagraphActions,
   type MiddleParagraphActionsHandlers,
 } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 
 export type UseWritingFormEditorWithUserPreviewOptions = {
   /** 편집 UI(풀페이지 등) 열림 */
@@ -28,6 +29,8 @@ export type UseWritingFormEditorWithUserPreviewOptions = {
   editorKind?: FormEditorKind
   /** 미리보기 모달 z-index (선택) */
   previewZIndex?: number
+  /** 사용자 미리보기(`TemplatePreviewModal`) 본문 옵션 — UJAT 교육일지 학교명 자동 표시 등 */
+  previewParagraphBodyOptions?: RenderFormParagraphBodyOptions
   onSave?: () => void
 }
 
@@ -67,6 +70,7 @@ export function useWritingFormEditorWithUserPreview(
     previewHeaderTitle,
     editorKind = 'survey',
     previewZIndex,
+    previewParagraphBodyOptions,
     onSave,
   } = options
 
@@ -119,8 +123,9 @@ export function useWritingFormEditorWithUserPreview(
       headerTitle: previewHeaderTitle,
       editorKind,
       zIndex: previewZIndex,
+      paragraphBodyOptions: previewParagraphBodyOptions,
     }
-  }, [draft, updateParagraph, previewHeaderTitle, editorKind, previewZIndex])
+  }, [draft, updateParagraph, previewHeaderTitle, editorKind, previewZIndex, previewParagraphBodyOptions])
 
   useEffect(() => {
     if (!isWritingUserPreviewOpen) return

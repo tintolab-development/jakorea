@@ -4,6 +4,7 @@
  */
 
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Spin, Table, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
@@ -63,6 +64,9 @@ function getDefaultTransferDateRange(reference: Dayjs = dayjs()): [Dayjs, Dayjs]
 }
 
 const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토']
+
+/** 계좌 지급 풀페이지 상세 — URL 동기화(뒤로가기로 목록 복귀) */
+const AP_DETAIL_ID = 'ap_detail'
 
 /** `FilterTableLayout` 툴바 — 구 `AppButton` filter-wide 최소 폭에 맞춤 */
 const ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE = { minWidth: 180 } as const
@@ -148,6 +152,7 @@ function useCalendarYear(): number {
 }
 
 export default function AccountPaymentsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const calendarYear = useCalendarYear()
   const tabYears = useMemo(
     () => [calendarYear, calendarYear - 1, calendarYear - 2, calendarYear - 3],
@@ -192,15 +197,18 @@ export default function AccountPaymentsPage() {
   const [accountFormIssueBlockedSelectedCount, setAccountFormIssueBlockedSelectedCount] =
     useState(0)
   const [accountPaymentCompleteSuccessOpen, setAccountPaymentCompleteSuccessOpen] = useState(false)
-  const [accountPaymentDetailRow, setAccountPaymentDetailRow] = useState<AccountPaymentRow | null>(
-    null
-  )
   /** mock 배열을 직접 수정하지 않도록 복사본 유지 — 계좌 지급 완료 시 상태 반영 */
   const [accountPaymentRows, setAccountPaymentRows] = useState<AccountPaymentRow[]>(() =>
     mockAccountPaymentRows
       .filter(isPaymentOrderStatementConfirmedForAccountPayments)
       .map(r => ({ ...r }))
   )
+
+  const accountPaymentDetailRow = useMemo(() => {
+    const id = searchParams.get(AP_DETAIL_ID)?.trim()
+    if (!id) return null
+    return accountPaymentRows.find(r => r.id === id) ?? null
+  }, [searchParams, accountPaymentRows])
   const accountFilterFields = useMemo((): FilterFieldConfig[] => {
     const colWidth = '25%'
     return [
@@ -470,15 +478,27 @@ export default function AccountPaymentsPage() {
   }, [])
 
   const closeAccountPaymentDetail = useCallback(() => {
-    setAccountPaymentDetailRow(null)
-  }, [])
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete(AP_DETAIL_ID)
+      return next
+    }, { replace: true })
+  }, [setSearchParams])
+
+  const openAccountPaymentDetail = useCallback(
+    (row: AccountPaymentRow) => {
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        next.set(AP_DETAIL_ID, row.id)
+        return next
+      }, { replace: false })
+    },
+    [setSearchParams]
+  )
 
   const handleAccountPaymentCompletedForRow = useCallback((rowId: string) => {
     setAccountPaymentRows(prev =>
       prev.map(r => (r.id === rowId ? { ...r, accountPaymentStatus: 'account_paid' as const } : r))
-    )
-    setAccountPaymentDetailRow(prev =>
-      prev && prev.id === rowId ? { ...prev, accountPaymentStatus: 'account_paid' as const } : prev
     )
     message.success('계좌 지급 완료 처리되었습니다.')
   }, [])
@@ -711,7 +731,7 @@ export default function AccountPaymentsPage() {
                 onClick: e => {
                   const t = e.target as HTMLElement
                   if (t.closest('.ant-table-selection-column')) return
-                  setAccountPaymentDetailRow(record)
+                  openAccountPaymentDetail(record)
                 },
               })}
             />
@@ -732,7 +752,7 @@ export default function AccountPaymentsPage() {
               rows={filteredRows}
               selectedRowKeys={selectedRowKeys}
               onSelectionChange={setSelectedRowKeys}
-              onAccountPaymentRowClick={setAccountPaymentDetailRow}
+              onAccountPaymentRowClick={openAccountPaymentDetail}
             />
           </div>
         )}

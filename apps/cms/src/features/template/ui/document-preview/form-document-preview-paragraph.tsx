@@ -9,6 +9,8 @@ import type {
   ShortEssayParagraph,
   SubjectiveParagraph,
   TitleWithPeriodParagraph,
+  LectureReportProgramProgressParagraph,
+  UjatJournalEducationInfoParagraph,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
@@ -33,18 +35,25 @@ import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate
 import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-type'
 import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
 import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
+import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
+import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import './form-document-preview-body.css'
 
 function noopOnParagraphChange<T>(_next: T): void {}
 
+function safeTrim(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
 function readOnlyTitleBlock(displayTitle: string, description?: string): { title: ReactNode; description?: ReactNode } {
+  const trimmedDescription = safeTrim(description)
   return {
     title: <span className="form-document-preview-paragraph__title-text">{displayTitle}</span>,
     description:
-      description != null && description.trim().length > 0 ? (
-        <span className="form-document-preview-paragraph__description-text">{description}</span>
+      trimmedDescription.length > 0 ? (
+        <span className="form-document-preview-paragraph__description-text">{trimmedDescription}</span>
       ) : undefined,
   }
 }
@@ -77,11 +86,9 @@ function DocumentShortEssayReadonly({
 }: {
   paragraph: ShortEssayParagraph | SessionPlanShortEssayParagraph
 }) {
-  const ph =
-    paragraph.bodyPlaceholder.trim() ||
-    (paragraph.variant === 'session_plan_short_essay'
-      ? '자유롭게 작성해 주세요'
-      : '답변을 입력해 주세요')
+  const ph = safeTrim(paragraph.bodyPlaceholder) || (paragraph.variant === 'session_plan_short_essay'
+    ? '자유롭게 작성해 주세요'
+    : '답변을 입력해 주세요')
   const items =
     paragraph.items && paragraph.items.length > 0
       ? paragraph.items
@@ -106,7 +113,7 @@ function DocumentShortEssayReadonly({
               {item.label ?? `Title ${String(index + 1).padStart(2, '0')}`}
             </div>
           ) : null}
-          <div>{item.bodyText.trim() || item.placeholder || ph}</div>
+          <div>{safeTrim(item.bodyText) || item.placeholder || ph}</div>
         </div>
       ))}
     </div>
@@ -122,7 +129,7 @@ function SurveyTitleDocumentReadonly({
 }) {
   /** 카드 타이틀에 `surveyTitle`이 오르므로 본문에는 설명·기간만 */
   const bits: string[] = []
-  const desc = paragraph.surveyDescription.trim()
+  const desc = safeTrim(paragraph.surveyDescription)
   if (desc.length > 0) bits.push(desc)
   if (showWritingPeriod && paragraph.showWritingPeriodOnForm) {
     const a = paragraph.startAt ? dayjs(paragraph.startAt).format('YYYY-MM-DD') : '—'
@@ -150,8 +157,8 @@ function renderBody(
         />
       )
     case 'agreement_explanation_text': {
-      const ph = p.bodyPlaceholder.trim() || '텍스트를 작성해 주세요'
-      const text = p.bodyText.trim() || ph
+      const ph = safeTrim(p.bodyPlaceholder) || '텍스트를 작성해 주세요'
+      const text = safeTrim(p.bodyText) || ph
       return <div className="form-document-preview-paragraph__body-text">{text}</div>
     }
     case 'horizontal_table':
@@ -170,6 +177,23 @@ function renderBody(
           }
           programApplicationFormInstitution={paragraphBodyOptions?.programApplicationFormInstitution}
           programApplicationFormInstructor={paragraphBodyOptions?.programApplicationFormInstructor}
+        />
+      )
+    case 'ujat_journal_education_info':
+      return (
+        <UjatJournalEducationInfo
+          paragraph={p as UjatJournalEducationInfoParagraph}
+          onChange={noopOnParagraphChange}
+          isEditMode={false}
+          autofill={paragraphBodyOptions?.ujatJournalEducationInfoAutofill}
+        />
+      )
+    case 'lecture_report_program_progress':
+      return (
+        <LectureReportProgramProgress
+          paragraph={p as LectureReportProgramProgressParagraph}
+          onChange={noopOnParagraphChange}
+          isEditMode={false}
         />
       )
     case 'vertical_table':
@@ -248,7 +272,7 @@ function renderBody(
       return <FileAttachment paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
     case 'closing': {
       const c = p as ClosingParagraph
-      return <div className="form-document-preview-paragraph__body-text">{c.body.trim() || ' '}</div>
+      return <div className="form-document-preview-paragraph__body-text">{safeTrim(c.body) || ' '}</div>
     }
     default:
       return null
@@ -302,7 +326,7 @@ export function FormDocumentPreviewParagraph({
           <div className="paragraph-card__title-block">{head.title}</div>
         </div>
         <div className="paragraph-card__slot">
-          <div className="form-document-preview-paragraph__body-text">{c.body.trim() || ' '}</div>
+          <div className="form-document-preview-paragraph__body-text">{safeTrim(c.body) || ' '}</div>
         </div>
       </div>
     )

@@ -52,9 +52,12 @@
   color: var(--paragraph-input-filled);
 }
 
-.paragraph-input--edit.paragraph-input--description .paragraph-input__leading,
-.paragraph-input--view.paragraph-input--description .paragraph-input__leading {
-  color: var(--paragraph-input-default);
+.paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body)
+  .paragraph-input__leading,
+.paragraph-input--view.paragraph-input--description:not(.paragraph-input--explanation-body)
+  .paragraph-input__leading {
+  color: var(--gray-85969-d, #85969d);
+  opacity: 0.6;
 }
 
 .paragraph-input__shell {
@@ -115,9 +118,13 @@
   opacity: 1 !important;
 }
 
-.paragraph-input--description {
+/* 단락 카드 「설명 입력」줄 — 설명글 텍스트형 본문( --explanation-body ) 제외 */
+.paragraph-input--description:not(.paragraph-input--explanation-body) {
+  font-family: Pretendard, sans-serif;
   font-size: 16px;
+  font-style: normal;
   font-weight: 500;
+  line-height: 150%;
 }
 
 .paragraph-input.paragraph-input-explanation-title.paragraph-input--title {
@@ -127,8 +134,9 @@
 }
 
 .paragraph-input.paragraph-input-explanation-title.paragraph-input--description {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
+  line-height: 150%;
 }
 
 /* ---- view mode ---- */
@@ -161,11 +169,34 @@
   color: var(--paragraph-input-filled);
 }
 
-.paragraph-input--view.paragraph-input--filled.paragraph-input--description
+.paragraph-input--view.paragraph-input--filled.paragraph-input--description:not(
+    .paragraph-input--explanation-body
+  )
   .paragraph-input__view-text,
-.paragraph-input--view.paragraph-input--filled.paragraph-input--description
+.paragraph-input--view.paragraph-input--filled.paragraph-input--description:not(
+    .paragraph-input--explanation-body
+  )
   .paragraph-input__leading {
-  color: var(--paragraph-input-filled);
+  color: var(--gray-85969-d, #85969d);
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  opacity: 0.6;
+}
+
+.paragraph-input--view.paragraph-input--description:not(.paragraph-input--explanation-body):not(
+    .paragraph-input--filled
+  )
+  .paragraph-input__view-text,
+.paragraph-input--view.paragraph-input--description:not(.paragraph-input--explanation-body):not(
+    .paragraph-input--filled
+  )
+  .paragraph-input__placeholder {
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--gray-85969-d, #85969d);
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
   opacity: 0.6;
 }
 
@@ -233,10 +264,20 @@
   opacity: 1 !important;
 }
 
-.paragraph-input--edit.paragraph-input--description .paragraph-input__shell .ant-input,
-.paragraph-input--edit.paragraph-input--description .paragraph-input__shell textarea.ant-input {
+.paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body)
+  .paragraph-input__shell
+  .ant-input,
+.paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body)
+  .paragraph-input__shell
+  textarea.ant-input {
+  font-family: Pretendard, sans-serif !important;
   font-size: 16px !important;
+  font-style: normal !important;
   font-weight: 500 !important;
+  line-height: 150% !important;
+  color: var(--gray-85969-d, #85969d) !important;
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  opacity: 0.6 !important;
 }
 
 .paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--description
@@ -246,7 +287,7 @@
   .paragraph-input__shell
   textarea.ant-input {
   font-family: Pretendard, sans-serif !important;
-  font-size: 18px !important;
+  font-size: 16px !important;
   font-style: normal !important;
   font-weight: 500 !important;
   line-height: 150% !important;
@@ -325,25 +366,27 @@
   -webkit-text-fill-color: var(--paragraph-input-filled);
 }
 
-.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--description:not(
+    .paragraph-input--explanation-body
+  )
   .paragraph-input__shell
   .ant-input,
-.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--description:not(
+    .paragraph-input--explanation-body
+  )
   .paragraph-input__shell
   textarea.ant-input {
-  color: var(--paragraph-input-filled) !important;
-  opacity: 0.6;
-  -webkit-text-fill-color: rgba(61, 61, 61, 0.6);
+  color: var(--gray-85969-d, #85969d) !important;
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  opacity: 0.6 !important;
 }
 
 .paragraph-input--edit.paragraph-input--filled.paragraph-input--title .paragraph-input__leading,
-.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--description:not(
+    .paragraph-input--explanation-body
+  )
   .paragraph-input__leading {
-  color: var(--paragraph-input-filled);
-}
-
-.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
-  .paragraph-input__leading {
+  color: var(--gray-85969-d, #85969d);
   opacity: 0.6;
 }
 
@@ -361,6 +404,19 @@
   -webkit-text-fill-color: var(--gray-85969-d, #85969d);
 }
 
+.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit.paragraph-input--description:not(
+    .paragraph-input--explanation-body
+  )
+  .paragraph-input__shell
+  input.ant-input,
+.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit.paragraph-input--description:not(
+    .paragraph-input--explanation-body
+  )
+  .paragraph-input__shell
+  textarea.ant-input {
+  opacity: 0.6 !important;
+}
+
 /* 마무리글형 edit·비입력: 위 회색 규칙 이후에 본문색(#3D3D3D) 재적용(입력 글자만; placeholder는 아래 ::placeholder) */
 .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--title:not(
     .paragraph-input--filled
@@ -376,9 +432,12 @@
   -webkit-text-fill-color: var(--main-BK, #3d3d3d);
 }
 
-.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit.paragraph-input--description
+.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit.paragraph-input--description:not(
+    .paragraph-input--explanation-body
+  )
   .paragraph-input__leading {
   color: var(--gray-85969-d, #85969d);
+  opacity: 0.6;
 }
 
 /* 입력값이 있을 때만 포커스·일반 모두 본문색(설명은 0.6) */
@@ -391,14 +450,19 @@
   color: var(--paragraph-input-filled) !important;
 }
 
-.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--description:not(
+     .paragraph-input--explanation-body
+   )
   .paragraph-input__shell--focused
   .ant-input,
-.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--description:not(
+     .paragraph-input--explanation-body
+   )
   .paragraph-input__shell--focused
   textarea.ant-input {
-  color: var(--paragraph-input-filled) !important;
-  opacity: 0.6;
+  color: var(--gray-85969-d, #85969d) !important;
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  opacity: 0.6 !important;
 }
 
 .paragraph-input--edit.paragraph-input--filled.paragraph-input--title
@@ -407,10 +471,12 @@
   color: var(--paragraph-input-filled);
 }
 
-.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--description:not(
+    .paragraph-input--explanation-body
+  )
   .paragraph-input__row:has(.paragraph-input__shell--focused)
   .paragraph-input__leading {
-  color: var(--paragraph-input-filled);
+  color: var(--gray-85969-d, #85969d);
   opacity: 0.6;
 }
 
@@ -423,6 +489,19 @@
   color: var(--gray-85969-d, #85969d) !important;
   opacity: 1 !important;
   -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+}
+
+.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit.paragraph-input--description:not(
+    .paragraph-input--explanation-body
+  )
+  .paragraph-input__shell
+  .ant-input::placeholder,
+.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit.paragraph-input--description:not(
+    .paragraph-input--explanation-body
+  )
+  .paragraph-input__shell
+  textarea.ant-input::placeholder {
+  opacity: 0.6 !important;
 }
 
 .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--title:not(
@@ -444,6 +523,21 @@
   textarea.ant-input::placeholder {
   color: var(--paragraph-input-default) !important;
   opacity: 1 !important;
+}
+
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--description:not(
+    .paragraph-input--explanation-body
+  )
+  .paragraph-input__shell
+  .ant-input::placeholder,
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--description:not(
+    .paragraph-input--explanation-body
+  )
+  .paragraph-input__shell
+  textarea.ant-input::placeholder {
+  color: var(--gray-85969-d, #85969d) !important;
+  opacity: 0.6 !important;
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
 }
 
 /* 설명글_텍스트형 본문 — view: 비선택(placeholder)도 20px/500/150% 메트릭 */
