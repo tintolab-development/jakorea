@@ -18,6 +18,14 @@ import {
   APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/applicant-recruit-form-institution-draft'
 import {
+  createRecruitFormInstructorDraft,
+  RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/recruit-form-instructor-draft'
+import {
+  createRecruitFormVolunteerDraft,
+  RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/recruit-form-volunteer-draft'
+import {
   createProgramApplicationFormInstitutionDraft,
   PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-institution-draft'
@@ -134,6 +142,8 @@ export type ProgramParticipantApplicationEditorVariant =
   | 'institution'
   | 'applicant-recruit-institution'
   | 'applicant-recruit-individual'
+  | 'recruit-instructor'
+  | 'recruit-volunteer'
   | 'instructor'
   | 'volunteer'
 
@@ -161,6 +171,8 @@ export function useProgramParticipantApplicationEditor(
       return APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'applicant-recruit-individual')
       return APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS
+    if (variant === 'recruit-instructor') return RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
+    if (variant === 'recruit-volunteer') return RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
     if (variant === 'instructor') return PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
     if (variant === 'volunteer') return PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
     return PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS
@@ -191,6 +203,10 @@ export function useProgramParticipantApplicationEditor(
           ? createApplicantRecruitFormInstitutionDraft()
           : variant === 'applicant-recruit-individual'
             ? createApplicantRecruitFormIndividualDraft()
+        : variant === 'recruit-instructor'
+          ? createRecruitFormInstructorDraft()
+          : variant === 'recruit-volunteer'
+            ? createRecruitFormVolunteerDraft()
             : variant === 'instructor'
               ? createProgramApplicationFormInstructorDraft()
               : variant === 'volunteer'
@@ -316,7 +332,7 @@ export function useProgramParticipantApplicationEditor(
   )
   const programApplicationFormVolunteerOptions = useMemo(
     () =>
-      variant === 'volunteer'
+      variant === 'volunteer' || variant === 'recruit-volunteer'
         ? { enabled: true as const }
         : { enabled: false as const },
     [variant]
@@ -334,9 +350,11 @@ export function useProgramParticipantApplicationEditor(
         programApplicationFormInstitution: variant === 'institution',
         applicantRecruitFormInstitution: variant === 'applicant-recruit-institution',
         applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
+        recruitFormInstructor: variant === 'recruit-instructor',
+        recruitFormVolunteer: variant === 'recruit-volunteer',
         programApplicationFormIndividual: variant === 'individual',
         programApplicationFormInstructor: programApplicationFormInstructorOptions,
-          programApplicationFormVolunteer: programApplicationFormVolunteerOptions,
+        programApplicationFormVolunteer: programApplicationFormVolunteerOptions,
       },
     }),
     [

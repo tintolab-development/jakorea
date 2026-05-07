@@ -68,7 +68,7 @@
 }
 
 .paragraph-date-picker__trigger-text.paragraph-date-picker__trigger-text--placeholder {
-  color: rgba(61, 61, 61, 0.45);
+  color: var(--gray-85969-d, #85969d);
   font-weight: 400;
 }
 

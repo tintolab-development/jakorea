@@ -27,6 +27,8 @@ import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/te
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
 import { renderApplicantRecruitFormIndividualParagraphBody } from '@/features/template/ui/form-set/applicant-recruit-form-individual/paragraph-body'
 import { renderApplicantRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/applicant-recruit-form-institution/paragraph-body'
+import { renderRecruitFormInstructorParagraphBody } from '@/features/template/ui/form-set/recruit-form-instructor/paragraph-body'
+import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form-volunteer/paragraph-body'
 import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/program-application-form-institution/paragraph-body'
 import {
   renderProgramApplicationFormInstructorParagraphBody,
@@ -391,6 +393,8 @@ export function HorizontalTableParagraphBody({
   programApplicationFormInstitution,
   applicantRecruitFormInstitution,
   applicantRecruitFormIndividual,
+  recruitFormInstructor,
+  recruitFormVolunteer,
   programApplicationFormInstructor,
   programApplicationFormVolunteer,
 }: {
@@ -413,6 +417,10 @@ export function HorizontalTableParagraphBody({
   applicantRecruitFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
   applicantRecruitFormIndividual?: boolean
+  /** 프로그램 강사 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  recruitFormInstructor?: boolean
+  /** 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  recruitFormVolunteer?: boolean
   programApplicationFormInstructor?: ProgramApplicationFormInstructorBodyOptions
   programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
 }) {
@@ -462,6 +470,12 @@ export function HorizontalTableParagraphBody({
     applicantRecruitFormInstitution
   )
   if (applicantRecruitFormInstitutionBody != null) return applicantRecruitFormInstitutionBody
+
+  const recruitFormInstructorBody = renderRecruitFormInstructorParagraphBody(p, recruitFormInstructor)
+  if (recruitFormInstructorBody != null) return recruitFormInstructorBody
+
+  const recruitFormVolunteerBody = renderRecruitFormVolunteerParagraphBody(p, recruitFormVolunteer)
+  if (recruitFormVolunteerBody != null) return recruitFormVolunteerBody
 
   const programApplicationFormInstitutionBody = renderProgramApplicationFormInstitutionParagraphBody(
     p,

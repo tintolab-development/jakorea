@@ -10,13 +10,12 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-editor/form-editor.css'
 
 const RECRUIT_PROGRESS_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
+const MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 
 const INTERVIEW_OPTIONS = [
   { label: '면접 있음', value: 'yes' },
   { label: '면접 없음', value: 'no' },
 ] as const
-
-const MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 
 const inquiryColumnStyle: CSSProperties = {
   display: 'flex',
@@ -42,9 +41,9 @@ function InquiryContactColumn({ label, placeholder }: { label: string; placehold
   )
 }
 
-/** 프로그램 참여자 모집 폼 (개인) — 참여자 모집 정보 */
-export function ApplicantRecruitIndividualParticipantInfoParagraph() {
-  const [interviewRequired, setInterviewRequired] = useState<string>('no')
+/** 프로그램 봉사자 모집 폼 — 봉사자 모집 정보 */
+export function RecruitFormVolunteerInfoParagraph() {
+  const [interviewRequired, setInterviewRequired] = useState<string>('yes')
 
   const [programAnchor, setProgramAnchor] = useState<Dayjs | null>(null)
   const [programRange, setProgramRange] = useState<[Dayjs, Dayjs] | null>(null)
@@ -60,14 +59,24 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
     [recruitRange]
   )
 
+  const [docDeadlineDate, setDocDeadlineDate] = useState<Dayjs | null>(null)
+  const [interviewAnchor, setInterviewAnchor] = useState<Dayjs | null>(null)
+  const [interviewRange, setInterviewRange] = useState<[Dayjs, Dayjs] | null>(null)
+  const interviewRangeWithTime = useMemo(
+    () =>
+      interviewRange == null
+        ? false
+        : dateRangeUsesClockTime(interviewRange[0], interviewRange[1]),
+    [interviewRange]
+  )
   const [finalAnnounceDate, setFinalAnnounceDate] = useState<Dayjs | null>(null)
 
   return (
     <>
-      <DetailInfoForm title="참여자 면접 유무" hideHeader mode="edit">
+      <DetailInfoForm title="봉사자 면접 유무" hideHeader mode="edit">
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="참여자 면접 유무"
+            label="봉사자 면접 유무"
             fullRow
             edit={
               <CmsRadioGroup
@@ -85,7 +94,8 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
-      <DetailInfoForm title="참여자 모집 정보" hideHeader mode="edit">
+
+      <DetailInfoForm title="봉사자 모집 정보" hideHeader mode="edit">
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="프로그램 운영 기간"
@@ -111,17 +121,15 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
             view="-"
           />
           <DetailInfoForm.Field
-            label="참여자 모집 현황"
+            label="봉사자 모집 현황"
             readOnlyDisplay
-            view={
-              <span className="form-editor-template-field-hint-text">{RECRUIT_PROGRESS_HINT}</span>
-            }
+            view={<span className="form-editor-template-field-hint-text">{RECRUIT_PROGRESS_HINT}</span>}
           />
         </DetailInfoForm.Row>
 
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="교육 대상"
+            label="모집 대상"
             edit={
               <CmsSelect
                 inputSize="medium"
@@ -133,17 +141,15 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
             view="-"
           />
           <DetailInfoForm.Field
-            label="교육 대상 상세"
-            edit={
-              <CmsInput inputSize="medium" width="100%" placeholder="상세 교육 대상을 입력하세요" />
-            }
+            label="모집 대상 상세"
+            edit={<CmsInput inputSize="medium" width="100%" placeholder="상세 모집 대상을 입력하세요" />}
             view="-"
           />
         </DetailInfoForm.Row>
 
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="참여자 모집 기간"
+            label="봉사자 모집 기간"
             edit={
               <div className={MAX_SUFFIX_CLASS}>
                 <ParagraphDatePicker
@@ -159,6 +165,50 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
                   onChange={next => {
                     if (next == null) return
                     setRecruitAnchor(next)
+                  }}
+                />
+              </div>
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label="1차 서류합격 발표"
+            edit={
+              <div className={MAX_SUFFIX_CLASS}>
+                <ParagraphDatePicker
+                  mode="single"
+                  presetMode="date"
+                  value={docDeadlineDate}
+                  placeholder="발표일"
+                  suppressAutoTodayWhenEmpty
+                  onChange={next => setDocDeadlineDate(next)}
+                />
+                <DetailInfoForm.InputsSeparator />
+                <CmsInput inputSize="medium" placeholder="발표 방법 안내" />
+              </div>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="2차 면접 기간"
+            edit={
+              <div className={MAX_SUFFIX_CLASS}>
+                <ParagraphDatePicker
+                  mode="single"
+                  presetMode="period"
+                  value={interviewAnchor}
+                  width="100%"
+                  placeholder="면접 기간을 선택하세요"
+                  preferPeriodModeInPopover
+                  appliedSurfaceRange={interviewRange}
+                  appliedSurfaceWithTime={interviewRangeWithTime}
+                  onRangeChange={range => setInterviewRange(range)}
+                  onChange={next => {
+                    if (next == null) return
+                    setInterviewAnchor(next)
                   }}
                 />
               </div>
@@ -206,11 +256,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
           <DetailInfoForm.Field
             label="비고"
             edit={
-              <CmsInput
-                inputSize="medium"
-                width="100%"
-                placeholder="비고란을 작성하세요 (없으면 -로 입력)"
-              />
+              <CmsInput inputSize="medium" width="100%" placeholder="비고란을 작성하세요 (없으면 -로 입력)" />
             }
             view="-"
           />
@@ -219,3 +265,4 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
     </>
   )
 }
+

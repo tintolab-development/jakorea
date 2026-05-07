@@ -77,16 +77,6 @@ const recruitmentDefinitions: TemplateDefinition[] = [
 
 const applicationDefinitions: TemplateDefinition[] = [
   {
-    id: 'application-general',
-    templateName: '일반 프로그램 신청 폼',
-    variant: 'default',
-  },
-  {
-    id: 'application-economy',
-    templateName: '1사 1교 프로그램 신청 폼',
-    variant: 'default',
-  },
-  {
     id: 'application-participant-school',
     templateName: '프로그램 참여자 신청 폼 (학교)',
     variant: 'default',
@@ -99,11 +89,25 @@ const applicationDefinitions: TemplateDefinition[] = [
   { id: 'application-instructor', templateName: '프로그램 강사 신청 폼', variant: 'default' },
   { id: 'application-volunteer', templateName: '프로그램 봉사자 신청 폼', variant: 'volunteer' },
   {
-    id: 'application-economy-participant',
-    templateName: '1사 1교 프로그램 참여자 신청 폼',
+    id: 'application-economy',
+    templateName: '1사 1교 프로그램 학교 신청 폼',
     variant: 'default',
   },
-  { id: 'application-ujat-volunteer', templateName: 'UJAT 봉사자 신청 폼', variant: 'volunteer' },
+  {
+    id: 'application-gemini-instructor',
+    templateName: 'Gemini 프로그램 강사 신청 폼',
+    variant: 'default',
+  },
+  {
+    id: 'application-ujat-school',
+    templateName: 'UJAT 프로그램 학교 신청 폼',
+    variant: 'default',
+  },
+  {
+    id: 'application-ujat-volunteer',
+    templateName: 'UJAT 프로그램 봉사자 신청 폼',
+    variant: 'volunteer',
+  },
 ]
 
 const surveyDefinitions: TemplateDefinition[] = [
