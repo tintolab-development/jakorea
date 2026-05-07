@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
-import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import {
+  AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS,
+  createAgreementNoticeDraft,
+  createEducatorFacilitatorPledgeDraft,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
+  type WritingFormDraft,
+} from '@/features/template/model/writing-form-draft.schema'
 import { TemplateListCard } from '@/features/template/ui/template-list-card'
 import './template-form-tab.css'
 import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
@@ -20,7 +28,9 @@ import {
 } from '@/features/template/lib/build-template-config'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
-import NewAgreementForm from '@/features/template/ui/form-set/new-agreement-form'
+import NewAgreementForm, {
+  AgreementWritingFormShell,
+} from '@/features/template/ui/form-set/new-agreement-form'
 import NewHorizontalTableForm from '@/features/template/ui/form-set/new-horizontal-table-form'
 import NewSurveyForm from '@/features/template/ui/form-set/new-survey-form'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
@@ -229,6 +239,14 @@ export default function TemplateFormTab() {
     setParams,
   ])
 
+  const agreementExpenseRow = useMemo(
+    () =>
+      params.mode === 'edit' && params.id === 'agreement-expense'
+        ? findWritingTemplateRowByDefinitionId('agreement-expense')
+        : undefined,
+    [params.mode, params.id]
+  )
+
   if (params.mode === 'new' && params.type === 'survey') {
     return <NewSurveyForm />
   }
@@ -237,6 +255,36 @@ export default function TemplateFormTab() {
   }
   if (params.mode === 'new' && params.type === 'horizontal_table') {
     return <NewHorizontalTableForm />
+  }
+
+  if (params.mode === 'edit' && params.id === 'agreement-expense' && agreementExpenseRow) {
+    return (
+      <AgreementWritingFormShell
+        initialDraft={createEducatorFacilitatorPledgeDraft}
+        defaultActiveParagraphId={EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.intro}
+        modalTitle={agreementExpenseRow.templateName}
+        modalDescription="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
+        writingPreviewHeaderTitle={agreementExpenseRow.templateName}
+        onClose={handleCloseTemplatePreview}
+      />
+    )
+  }
+
+  if (params.mode === 'edit' && params.id === 'agreement-notice') {
+    const agreementNoticeRow = findWritingTemplateRowByDefinitionId('agreement-notice')
+    const noticeTitle = agreementNoticeRow?.templateName ?? '행정정보 공동이용 사전동의서'
+    return (
+      <AgreementWritingFormShell
+        initialDraft={createAgreementNoticeDraft}
+        defaultActiveParagraphId={AGREEMENT_NOTICE_PARAGRAPH_IDS.title}
+        modalTitle={noticeTitle}
+        modalDescription="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
+        writingPreviewHeaderTitle={noticeTitle}
+        structureLockedParagraphIds={AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS}
+        hideDragHandleForParagraphIds={AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS}
+        onClose={handleCloseTemplatePreview}
+      />
+    )
   }
 
   return (

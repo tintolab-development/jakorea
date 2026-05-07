@@ -1,0 +1,80 @@
+import { Input, Radio } from 'antd'
+import type { IdTypeWithInputParagraph } from '@/features/template/model/writing-form-draft.schema'
+import '@/features/template/ui/form-editor/form-editor.css'
+import './id-type-with-input.css'
+
+const INPUT_PLACEHOLDER_BY_OPTION_ID: Record<string, string> = {
+  'agreement-notice-id-resident': '주민등록번호를 입력해 주세요',
+  'agreement-notice-id-passport': '여권번호를 입력해 주세요',
+  'agreement-notice-id-driver': '운전면허번호를 입력해 주세요',
+  'agreement-notice-id-alien': '외국인등록번호를 입력해 주세요',
+}
+
+function placeholderForOption(optionId: string, fallback: string): string {
+  return INPUT_PLACEHOLDER_BY_OPTION_ID[optionId] ?? fallback
+}
+
+/** 동의 양식 — 식별번호 유형(라디오) + 단일 텍스트 입력 */
+export function IdTypeWithInput({
+  paragraph,
+  onChange,
+  isEditMode,
+}: {
+  paragraph: IdTypeWithInputParagraph
+  onChange: (next: IdTypeWithInputParagraph) => void
+  isEditMode: boolean
+}) {
+  const options = paragraph.options?.length ? paragraph.options : []
+  const selectedId =
+    paragraph.selectedOptionId != null &&
+    options.some(o => o.id === paragraph.selectedOptionId)
+      ? paragraph.selectedOptionId
+      : (options[0]?.id ?? null)
+
+  const ph =
+    selectedId != null
+      ? placeholderForOption(selectedId, paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요')
+      : paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요'
+
+  const setSelected = (nextId: string) => {
+    onChange({
+      ...paragraph,
+      selectedOptionId: nextId,
+      inputPlaceholder: placeholderForOption(
+        nextId,
+        paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요'
+      ),
+      inputValue: '',
+    })
+  }
+
+  return (
+    <div className="form-editor-body id-type-with-input">
+      <Radio.Group
+        className="id-type-with-input__radios"
+        value={selectedId ?? undefined}
+        onChange={e => {
+          if (!isEditMode) return
+          setSelected(String(e.target.value))
+        }}
+        disabled={!isEditMode}
+      >
+        {options.map(opt => (
+          <Radio key={opt.id} value={opt.id} className="id-type-with-input__radio">
+            {opt.label}
+          </Radio>
+        ))}
+      </Radio.Group>
+      <Input
+        className="id-type-with-input__input paragraph-input--explanation-body"
+        value={paragraph.inputValue}
+        placeholder={ph}
+        onChange={e => {
+          if (!isEditMode) return
+          onChange({ ...paragraph, inputValue: e.target.value, inputPlaceholder: ph })
+        }}
+        disabled={!isEditMode}
+      />
+    </div>
+  )
+}

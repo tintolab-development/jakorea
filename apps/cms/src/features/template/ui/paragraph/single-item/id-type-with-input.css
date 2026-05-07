@@ -1,0 +1,19 @@
+.id-type-with-input {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.id-type-with-input__radios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.id-type-with-input__radio {
+  margin-inline-end: 0;
+}
+
+.id-type-with-input__input {
+  max-width: 100%;
+}

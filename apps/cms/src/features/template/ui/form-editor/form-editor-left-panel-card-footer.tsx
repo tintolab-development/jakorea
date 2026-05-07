@@ -172,6 +172,10 @@ export function modalCardFooterToggles(
     return undefined
   }
 
+  if (paragraph.kind === 'description' && paragraph.variant === 'static_description_lines') {
+    return undefined
+  }
+
   if (paragraph.kind === 'single_item') {
     const answerRequired = paragraph.answerRequired ?? paragraph.requiredMark
     const toggles: ReactNode[] = [
@@ -434,6 +438,20 @@ export function modalCardFooterActions(
   }
 
   if (isTitleWithPeriodParagraph(paragraph)) {
+    return middleParagraphActions ? (
+      <FormParagraphCardActionsMinimal
+        duplicateDisabled={structureLocked}
+        deleteDisabled={structureLocked}
+        onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
+        onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
+        onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
+      />
+    ) : (
+      <FormParagraphCardActionsMinimal />
+    )
+  }
+
+  if (paragraph.kind === 'description' && paragraph.variant === 'static_description_lines') {
     return middleParagraphActions ? (
       <FormParagraphCardActionsMinimal
         duplicateDisabled={structureLocked}

@@ -113,6 +113,30 @@ export interface AgreementExplanationTextParagraph extends WritingFormParagraphB
   answerRequired: boolean
 }
 
+export interface IdTypeWithInputOption {
+  id: string
+  label: string
+}
+
+/** 신원 식별번호 유형 선택 + 입력 — 동의 양식 전용 */
+export interface IdTypeWithInputParagraph extends WritingFormParagraphBase {
+  kind: 'single_item'
+  variant: 'id_type_with_input'
+  options: IdTypeWithInputOption[]
+  selectedOptionId: string | null
+  /** 입력창 placeholder(유형 전환 시 UI에서 갱신 가능) */
+  inputPlaceholder: string
+  inputValue: string
+  answerRequired: boolean
+}
+
+/** 다중 줄 정적 설명(본문 편집 없음) — 동의 양식 전용 */
+export interface StaticDescriptionLinesParagraph extends WritingFormParagraphBase {
+  kind: 'description'
+  variant: 'static_description_lines'
+  lines: string[]
+}
+
 /** 단일 항목 미리보기 전용(추후 스키마 정리 시 통합 가능) */
 export type ShortEssayParagraph = WritingFormParagraphBase & {
   kind: 'single_item'
@@ -1954,6 +1978,8 @@ export type WritingFormParagraph =
   | ScoreSelectParagraph
   | SubjectiveParagraph
   | AgreementExplanationTextParagraph
+  | IdTypeWithInputParagraph
+  | StaticDescriptionLinesParagraph
   | ShortEssayParagraph
   | SessionPlanShortEssayParagraph
   | MultipleChoiceParagraph
@@ -2145,6 +2171,211 @@ export const LECTURE_REPORT_SEED_PARAGRAPH_IDS = new Set<string>([
 export const LECTURE_REPORT_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
   LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.title,
 ])
+/** 동의 양식 > 행정정보 공동이용 사전동의서 — 시드 단락 id */
+export const AGREEMENT_NOTICE_PARAGRAPH_IDS = {
+  title: 'agreement-notice-title',
+  institution: 'agreement-notice-institution',
+  purpose: 'agreement-notice-purpose',
+  table: 'agreement-notice-table',
+  idType: 'agreement-notice-id-type',
+  consentStatic: 'agreement-notice-consent-static',
+  subject: 'agreement-notice-subject',
+  systemDate: 'agreement-notice-system-date',
+  systemSignature: 'agreement-notice-system-signature',
+  closing: 'agreement-notice-closing',
+} as const
+
+/** 템플릿 고정 단락 — 삭제·복제·순서 변경 불가 */
+export const AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS = new Set<string>([
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.title,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.institution,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.table,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.idType,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.consentStatic,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.subject,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.closing,
+])
+
+export const AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.title,
+])
+
+export function createDefaultIdTypeWithInputOptions(): IdTypeWithInputOption[] {
+  return [
+    { id: 'agreement-notice-id-resident', label: '주민등록번호' },
+    { id: 'agreement-notice-id-passport', label: '여권번호' },
+    { id: 'agreement-notice-id-driver', label: '운전면허번호' },
+    { id: 'agreement-notice-id-alien', label: '외국인등록번호' },
+  ]
+}
+
+const AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT =
+  'ㆍ 이용기관은 본인의 위 공동이용 행정정보를 「전자정부법」 제36조제2항에 따라 타 기관에 제공할 수 있으며, 본인의 동의 없이 목적 외의 용도로 이용하거나 제3자에게 제공할 수 없습니다.'
+
+const AGREEMENT_NOTICE_CONSENT_LINES = [
+  '○ 본인은 위 사무의 처리를 위하여 「전자정부법」 제36조제1항에 따른 행정정보의 공동이용에 관한 사항을 안내받았으며, 이에 동의합니다.',
+  'ㆍ 만일, 본인이 위 행정정보 이용에 대해 동의하지 않는 경우 이용기관은 본인에 대한 위 사무를 처리할 수 없습니다.',
+] as const
+
+/** 동의 양식 목록 > 행정정보 공동이용 사전동의서 — 편집 시드 초안 */
+export function createAgreementNoticeDraft(): WritingFormDraft {
+  const tableSeed: HorizontalTableParagraph = normalizeHorizontalTableParagraph({
+    id: AGREEMENT_NOTICE_PARAGRAPH_IDS.table,
+    kind: 'single_item',
+    variant: 'horizontal_table',
+    requiredMark: true,
+    paragraphTitle: '공동이용 행정정보(구비서류)',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    tableFlavor: 'text',
+    columnHeaders: ['연번', '행정정보명', '연번', '행정정보명'],
+    dataRows: [['1', '성범죄경력 및 아동학대관련 범죄전력 조회', '', '']],
+    columnFields: [],
+    fieldDataRows: [],
+    bottomText: AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT,
+    showBottomText: true,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
+    answerRequired: true,
+  })
+
+  return {
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'numeric' },
+    paragraphs: [
+      {
+        id: AGREEMENT_NOTICE_PARAGRAPH_IDS.title,
+        kind: 'description',
+        variant: 'survey_title_with_period',
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        surveyTitle: '행정정보 공동이용 사전동의서',
+        surveyDescription: '',
+        periodMode: 'immediate',
+        startAt: null,
+        endAt: null,
+        showWritingPeriodOnForm: true,
+      },
+      {
+        id: AGREEMENT_NOTICE_PARAGRAPH_IDS.institution,
+        kind: 'single_item',
+        variant: 'agreement_explanation_text',
+        requiredMark: true,
+        paragraphTitle: '이용기관 명칭',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        bodyPlaceholder: '이용기관 명칭을 입력해 주세요',
+        bodyText: '',
+        answerRequired: true,
+      },
+      {
+        id: AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose,
+        kind: 'single_item',
+        variant: 'agreement_explanation_text',
+        requiredMark: true,
+        paragraphTitle: '이용사무(이용목적)',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        bodyPlaceholder: '이용 목적을 입력해 주세요',
+        bodyText: '범죄경력의 유무 조회',
+        answerRequired: true,
+      },
+      tableSeed,
+      {
+        id: AGREEMENT_NOTICE_PARAGRAPH_IDS.idType,
+        kind: 'single_item',
+        variant: 'id_type_with_input',
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        options: createDefaultIdTypeWithInputOptions(),
+        selectedOptionId: 'agreement-notice-id-resident',
+        inputPlaceholder: '주민등록번호를 입력해 주세요',
+        inputValue: '',
+        answerRequired: true,
+      },
+      {
+        id: AGREEMENT_NOTICE_PARAGRAPH_IDS.consentStatic,
+        kind: 'description',
+        variant: 'static_description_lines',
+        requiredMark: true,
+        paragraphTitle: '정보주체(본인) 동의사항',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        lines: [...AGREEMENT_NOTICE_CONSENT_LINES],
+      },
+      {
+        id: AGREEMENT_NOTICE_PARAGRAPH_IDS.subject,
+        kind: 'single_item',
+        variant: 'short_essay',
+        requiredMark: true,
+        paragraphTitle: '대상자 본인',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        answerRequired: true,
+        showItemTitle: true,
+        items: [
+          {
+            id: 'agreement-notice-subj-name',
+            label: '성명',
+            placeholder: '성명을 입력해 주세요',
+            bodyText: '',
+          },
+          {
+            id: 'agreement-notice-subj-birth',
+            label: '생년월일',
+            placeholder: '생년월일 8자리를 입력해 주세요',
+            bodyText: '',
+          },
+          {
+            id: 'agreement-notice-subj-phone',
+            label: '전화번호',
+            placeholder: '전화번호를 입력해 주세요',
+            bodyText: '',
+          },
+        ],
+        bodyPlaceholder: '답변을 입력해 주세요',
+        bodyText: '',
+      },
+      {
+        id: AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
+        kind: 'description',
+        variant: 'system',
+        systemPreset: 'agreement_date',
+        requiredMark: false,
+        paragraphTitle: '날짜 유형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+      },
+      {
+        id: AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature,
+        kind: 'description',
+        variant: 'system',
+        systemPreset: 'agreement_signature',
+        requiredMark: false,
+        paragraphTitle: '서명란 유형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+      },
+      {
+        id: AGREEMENT_NOTICE_PARAGRAPH_IDS.closing,
+        kind: 'description',
+        variant: 'closing',
+        requiredMark: false,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        body: '',
+      },
+    ],
+  }
+}
 
 /** 직접 등록 — 테이블 가로형 기본 단락 id(가로형 테이블만; 마무리/설문형 단락 없음) */
 export const DEFAULT_HORIZONTAL_TABLE_PARAGRAPH_IDS = {
@@ -2276,6 +2507,150 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
       },
       {
         id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.closing,
+        kind: 'description',
+        variant: 'closing',
+        requiredMark: false,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        body: '내용을 자세히 검토하신 후 동의 여부를 결정하여 주시기 바랍니다.',
+      },
+    ],
+  }
+}
+
+/** 폼 관리 > 교육진행자 동의 서약서(안) — 시드 단락 id */
+export const EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS = {
+  title: 'agreement-expense-pledge-title',
+  intro: 'agreement-expense-pledge-intro',
+  clause1: 'agreement-expense-pledge-clause-1',
+  clause2: 'agreement-expense-pledge-clause-2',
+  clause3: 'agreement-expense-pledge-clause-3',
+  clause4: 'agreement-expense-pledge-clause-4',
+  violationClosing: 'agreement-expense-pledge-violation-closing',
+  systemDate: 'agreement-expense-pledge-system-date',
+  systemSignature: 'agreement-expense-pledge-system-signature',
+  closing: 'agreement-expense-pledge-closing',
+} as const
+
+const PLEDGE_MC_OPTIONS_BASE = 'pledge-mc' as const
+
+function createPledgeClauseMultipleChoice(
+  id: string,
+  clauseKey: string,
+  paragraphTitle: string,
+  paragraphDescription: string
+): MultipleChoiceParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'multiple_choice',
+    requiredMark: true,
+    paragraphTitle,
+    paragraphDescription,
+    participatesInTitleNumbering: true,
+    answerRequired: true,
+    allowMultiple: false,
+    items: [
+      { id: `${PLEDGE_MC_OPTIONS_BASE}-${clauseKey}-agree`, label: '동의' },
+      { id: `${PLEDGE_MC_OPTIONS_BASE}-${clauseKey}-disagree`, label: '동의하지 않음' },
+    ],
+    selectedPreviewSingleId: null,
+    selectedPreviewMultipleIds: [],
+  }
+}
+
+/** 폼 관리 > 교육진행자 동의 서약서(안) — 목록 상세·단락 에디터 시드 초안 */
+export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
+  return {
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'numeric' },
+    paragraphs: [
+      {
+        id: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.title,
+        kind: 'description',
+        variant: 'survey_title_with_period',
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        surveyTitle: 'JA Korea 교육진행자 서약서(안)',
+        surveyDescription: '',
+        periodMode: 'immediate',
+        startAt: null,
+        endAt: null,
+        showWritingPeriodOnForm: false,
+      },
+      {
+        id: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.intro,
+        kind: 'single_item',
+        variant: 'agreement_explanation_text',
+        requiredMark: false,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        bodyPlaceholder: '한 줄 안내를 입력해 주세요',
+        bodyText:
+          '본인은 JA Korea의 교육사업에 참여함에 있어, 다음 사항을 준수할 것을 서약합니다.',
+        answerRequired: false,
+      },
+      createPledgeClauseMultipleChoice(
+        EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause1,
+        '1',
+        '아동·청소년 보호와 성범죄 예방',
+        '교육 대상이 아동·청소년인 경우, 관련 법령과 윤리 기준을 준수하며, 모든 수강생이 안전하고 존중받는 환경에서 학습할 수 있도록 최선을 다하겠습니다.'
+      ),
+      createPledgeClauseMultipleChoice(
+        EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause2,
+        '2',
+        '종교적 정치적 중립성 유지',
+        '교육 내용 및 발언에 있어 종교적·정치적으로 편향이나 특정 종교·이념·정당을 지지·비판하는 내용을 포함하지 않겠습니다.'
+      ),
+      createPledgeClauseMultipleChoice(
+        EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause3,
+        '3',
+        '개인정보 보호',
+        '교육과정 중 알게 된 관련인의 개인정보를 외부에 유출하거나 무단으로 사용하지 않겠습니다.'
+      ),
+      createPledgeClauseMultipleChoice(
+        EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause4,
+        '4',
+        '품위 유지 및 성실한 교육 수행',
+        '교육 강사로서 사회적 물의를 일으키지 않으며, 성실하고 책임감 있게 교육 활동에 임하겠습니다.'
+      ),
+      {
+        id: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.violationClosing,
+        kind: 'description',
+        variant: 'closing',
+        requiredMark: false,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        body:
+          '본 서약을 위반할 경우, 재단의 교육사업과 관련한 강사 자격이 제한되거나 향후 활동에 불이익이 있을 수 있음을 인지하고 이에 동의합니다.',
+      },
+      {
+        id: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemDate,
+        kind: 'description',
+        variant: 'system',
+        systemPreset: 'agreement_date',
+        requiredMark: false,
+        paragraphTitle: '날짜 유형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+      },
+      {
+        id: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemSignature,
+        kind: 'description',
+        variant: 'system',
+        systemPreset: 'agreement_signature',
+        requiredMark: false,
+        paragraphTitle: '서명란 유형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+      },
+      {
+        id: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.closing,
         kind: 'description',
         variant: 'closing',
         requiredMark: false,
@@ -3040,6 +3415,14 @@ export function writingOutlineLabel(p: WritingFormParagraph): string {
   if (p.kind === 'description' && p.variant === 'closing') {
     const t = p.body.trim().slice(0, 24)
     return t || '마무리글 없음'
+  }
+  if (p.kind === 'description' && p.variant === 'static_description_lines') {
+    const t = p.paragraphTitle.trim()
+    return t || '동의 안내'
+  }
+  if (p.kind === 'single_item' && p.variant === 'id_type_with_input') {
+    const t = p.paragraphTitle.trim()
+    return t || '신원 확인'
   }
   if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') {
     const t = p.paragraphTitle.trim()

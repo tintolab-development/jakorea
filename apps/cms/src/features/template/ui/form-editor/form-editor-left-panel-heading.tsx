@@ -159,6 +159,9 @@ export function formCardTitleUsesPlaceholderTone(p: WritingFormParagraph): boole
   if (p.kind === 'description' && p.variant === 'closing') {
     return !p.body.trim()
   }
+  if (p.kind === 'description' && p.variant === 'static_description_lines') {
+    return !p.paragraphTitle.trim()
+  }
   if (isAgreementLockedSystemParagraph(p)) {
     return false
   }
@@ -209,6 +212,26 @@ export function paragraphEditableHeading(
         onDescriptionChange: () => {},
         descriptionPlaceholder: '설명 입력',
         descriptionClassName: descCls('paragraph-input-explanation-title'),
+      }
+    }
+    if (paragraph.kind === 'description' && paragraph.variant === 'static_description_lines') {
+      const p = paragraph
+      return {
+        isEditMode: false,
+        titleIsEditMode: false,
+        descriptionIsEditMode: false,
+        titleValue: p.paragraphTitle,
+        onTitleChange: () => {},
+        titlePlaceholder: '타이틀을 입력해 주세요',
+        titleRequired: p.requiredMark,
+        titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
+          ? 'paragraph-card__title--placeholder'
+          : undefined,
+        titleLeading: prefix,
+        descriptionValue: p.paragraphDescription,
+        onDescriptionChange: () => {},
+        descriptionPlaceholder: '설명 입력',
+        descriptionClassName: descCls(),
       }
     }
     if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
@@ -310,6 +333,35 @@ export function paragraphEditableHeading(
         ),
       descriptionPlaceholder: '설명 입력',
       descriptionClassName: descCls('paragraph-input-explanation-title'),
+    }
+  }
+
+  if (paragraph.kind === 'description' && paragraph.variant === 'static_description_lines') {
+    const p = paragraph
+    return {
+      isEditMode: isSelected,
+      titleValue: p.paragraphTitle,
+      onTitleChange: (next: string) =>
+        updateParagraph(p.id, cur =>
+          cur.kind === 'description' && cur.variant === 'static_description_lines'
+            ? { ...cur, paragraphTitle: next }
+            : cur
+        ),
+      titlePlaceholder: '타이틀을 입력해 주세요',
+      titleRequired: p.requiredMark,
+      titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
+        ? 'paragraph-card__title--placeholder'
+        : undefined,
+      titleLeading: prefix,
+      descriptionValue: p.paragraphDescription,
+      onDescriptionChange: (next: string) =>
+        updateParagraph(p.id, cur =>
+          cur.kind === 'description' && cur.variant === 'static_description_lines'
+            ? { ...cur, paragraphDescription: next }
+            : cur
+        ),
+      descriptionPlaceholder: '설명 입력',
+      descriptionClassName: descCls(),
     }
   }
 
