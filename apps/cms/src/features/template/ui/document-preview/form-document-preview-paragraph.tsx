@@ -176,6 +176,7 @@ function renderBody(
             (renderMode === 'contentOnly' ? 'document' : undefined)
           }
           programApplicationFormInstitution={paragraphBodyOptions?.programApplicationFormInstitution}
+          applicantRecruitFormInstitution={paragraphBodyOptions?.applicantRecruitFormInstitution}
           programApplicationFormInstructor={paragraphBodyOptions?.programApplicationFormInstructor}
         />
       )

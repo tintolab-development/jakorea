@@ -1,4 +1,4 @@
-import { useRef, type ChangeEvent } from 'react'
+import { useRef, type ChangeEvent, type CSSProperties } from 'react'
 import { CmsButton } from '@/shared/ui/cms-button'
 import './paragraph-file-upload.css'
 
@@ -9,6 +9,7 @@ export interface ParagraphFileUploadProps {
   buttonLabel?: string
   guideLines?: string[]
   className?: string
+  style?: CSSProperties
   onFilesChange?: (files: File[]) => void
 }
 
@@ -23,6 +24,7 @@ export function ParagraphFileUpload({
     '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
   ],
   className,
+  style,
   onFilesChange,
 }: ParagraphFileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -36,7 +38,10 @@ export function ParagraphFileUpload({
   }
 
   return (
-    <div className={['paragraph-file-upload', className].filter(Boolean).join(' ')}>
+    <div
+      className={['paragraph-file-upload', className].filter(Boolean).join(' ')}
+      style={style}
+    >
       {!disabled ? (
         <input
           ref={inputRef}

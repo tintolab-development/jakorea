@@ -10,6 +10,10 @@ import {
   removeMiddleParagraph,
 } from '@/features/template/lib/writing-form-middle-paragraph-mutations'
 import {
+  createApplicantRecruitFormInstitutionDraft,
+  APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/applicant-recruit-form-institution-draft'
+import {
   createProgramApplicationFormInstitutionDraft,
   PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-institution-draft'
@@ -124,6 +128,7 @@ function useParticipantApplicationMiddleActions(
 export type ProgramParticipantApplicationEditorVariant =
   | 'individual'
   | 'institution'
+  | 'applicant-recruit-institution'
   | 'instructor'
   | 'volunteer'
 
@@ -147,6 +152,8 @@ export function useProgramParticipantApplicationEditor(
 ) {
   const seedParagraphIds = useMemo(() => {
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'applicant-recruit-institution')
+      return APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'instructor') return PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
     if (variant === 'volunteer') return PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
     return PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS
@@ -173,6 +180,8 @@ export function useProgramParticipantApplicationEditor(
     const next = normalizeWritingFormDraft(
       variant === 'institution'
         ? createProgramApplicationFormInstitutionDraft()
+        : variant === 'applicant-recruit-institution'
+          ? createApplicantRecruitFormInstitutionDraft()
         : variant === 'instructor'
           ? createProgramApplicationFormInstructorDraft()
           : variant === 'volunteer'
@@ -314,6 +323,7 @@ export function useProgramParticipantApplicationEditor(
         structureLockedParagraphIds: seedParagraphIds,
         structureLockedAuthoringChoicePreview: true,
         programApplicationFormInstitution: variant === 'institution',
+        applicantRecruitFormInstitution: variant === 'applicant-recruit-institution',
         programApplicationFormIndividual: variant === 'individual',
         programApplicationFormInstructor: programApplicationFormInstructorOptions,
           programApplicationFormVolunteer: programApplicationFormVolunteerOptions,

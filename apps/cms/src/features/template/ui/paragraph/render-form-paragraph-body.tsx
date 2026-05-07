@@ -91,6 +91,8 @@ export type RenderFormParagraphBodyOptions = {
   programRegistration?: ProgramRegistrationParagraphBodyOptions
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
+  /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
+  applicantRecruitFormInstitution?: boolean
   /** 프로그램 참여자 신청 폼 (개인) 템플릿 편집용 UI */
   programApplicationFormIndividual?: boolean
   /** 프로그램 강사 신청 폼 시드 단락 — 전용 본문·제목 행 액션 */
@@ -207,6 +209,7 @@ export function renderFormParagraphBody(
           paymentStatementDisplayMode={options?.paymentStatementDisplayMode}
           programRegistration={options?.programRegistration}
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
+          applicantRecruitFormInstitution={options?.applicantRecruitFormInstitution}
           programApplicationFormInstructor={
             options?.programApplicationFormInstructor == null
               ? undefined

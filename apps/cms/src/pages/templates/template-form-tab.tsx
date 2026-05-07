@@ -34,6 +34,10 @@ import {
   ProgramParticipantApplicationEditorRightColumn,
 } from '@/features/template/ui/form-set/program-application-form-individual'
 import {
+  ApplicantRecruitFormInstitutionEditorLeftColumn,
+  ApplicantRecruitFormInstitutionEditorRightColumn,
+} from '@/features/template/ui/form-set/applicant-recruit-form-institution'
+import {
   ProgramApplicationFormInstitutionEditorLeftColumn,
   ProgramApplicationFormInstitutionEditorRightColumn,
 } from '@/features/template/ui/form-set/program-application-form-institution'
@@ -131,8 +135,13 @@ export default function TemplateFormTab() {
       closeTemplatePreview()
       return
     }
-    const row = findWritingTemplateRowByDefinitionId(params.id)
-    if (row) openTemplatePreview(row)
+    const normalizedId = params.id.trim()
+    const row = findWritingTemplateRowByDefinitionId(normalizedId)
+    if (row) {
+      openTemplatePreview(row)
+      return
+    }
+    closeTemplatePreview()
   }, [params.mode, params.id, closeTemplatePreview, openTemplatePreview])
 
   const rightNavigationConfig = useMemo(
@@ -146,6 +155,8 @@ export default function TemplateFormTab() {
   const isProgramRegistrationTemplate =
     selectedTemplate?.id === 'registration-general' ||
     selectedTemplate?.id === 'registration-economy'
+  const isApplicantRecruitInstitutionTemplate =
+    selectedTemplate?.id === 'recruitment-participant-school'
   const isProgramParticipantApplicationTemplate =
     selectedTemplate?.id === 'application-participant-school' ||
     selectedTemplate?.id === 'application-participant-individual'
@@ -165,19 +176,24 @@ export default function TemplateFormTab() {
   )
   const programParticipantApplicationVm = useProgramParticipantApplicationEditor(
     isPreviewOpen &&
-      (isProgramParticipantApplicationTemplate ||
+      (isApplicantRecruitInstitutionTemplate ||
+        isProgramParticipantApplicationTemplate ||
         isProgramInstructorApplicationTemplate ||
         isProgramVolunteerApplicationTemplate),
     isProgramInstructorApplicationTemplate
       ? (selectedTemplate?.templateName ?? '프로그램 강사 신청 폼')
       : isProgramVolunteerApplicationTemplate
         ? (selectedTemplate?.templateName ?? '프로그램 봉사자 신청 폼')
-      : (selectedTemplate?.templateName ?? '프로그램 참여자 신청 폼'),
+        : isApplicantRecruitInstitutionTemplate
+          ? (selectedTemplate?.templateName ?? '프로그램 참여자 모집 폼 (학교)')
+          : (selectedTemplate?.templateName ?? '프로그램 참여자 신청 폼'),
     isProgramInstructorApplicationTemplate
       ? 'instructor'
       : isProgramVolunteerApplicationTemplate
         ? 'volunteer'
-      : programParticipantApplicationVariant
+        : isApplicantRecruitInstitutionTemplate
+          ? 'applicant-recruit-institution'
+          : programParticipantApplicationVariant
   )
 
   const isCrimeConsentDetail =
@@ -202,7 +218,12 @@ export default function TemplateFormTab() {
       programRegistrationVm.handlePreview()
       return
     }
-    if (isProgramParticipantApplicationTemplate) {
+    if (
+      isApplicantRecruitInstitutionTemplate ||
+      isProgramParticipantApplicationTemplate ||
+      isProgramInstructorApplicationTemplate ||
+      isProgramVolunteerApplicationTemplate
+    ) {
       programParticipantApplicationVm.handlePreview()
       return
     }
@@ -219,7 +240,10 @@ export default function TemplateFormTab() {
     selectedTemplate,
     isWritingUserPreviewOpen,
     isProgramRegistrationTemplate,
+    isApplicantRecruitInstitutionTemplate,
     isProgramParticipantApplicationTemplate,
+    isProgramInstructorApplicationTemplate,
+    isProgramVolunteerApplicationTemplate,
     programRegistrationVm,
     programParticipantApplicationVm,
     openWritingUserPreview,
@@ -232,6 +256,7 @@ export default function TemplateFormTab() {
       return
     }
     if (
+      isApplicantRecruitInstitutionTemplate ||
       isProgramParticipantApplicationTemplate ||
       isProgramInstructorApplicationTemplate ||
       isProgramVolunteerApplicationTemplate
@@ -247,6 +272,7 @@ export default function TemplateFormTab() {
     })
   }, [
     isProgramInstructorApplicationTemplate,
+    isApplicantRecruitInstitutionTemplate,
     isProgramParticipantApplicationTemplate,
     isProgramVolunteerApplicationTemplate,
     isProgramRegistrationTemplate,
@@ -288,7 +314,7 @@ export default function TemplateFormTab() {
       />
 
       <TemplateFullpageModal
-        open={isPreviewOpen && !isCrimeConsentDetail}
+        open={isPreviewOpen && !isCrimeConsentDetail && selectedTemplate != null}
         onClose={handleCloseTemplatePreview}
         title={selectedTemplate?.templateName ?? '양식 미리보기'}
         description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
@@ -297,8 +323,10 @@ export default function TemplateFormTab() {
         onSave={
           isProgramRegistrationTemplate
             ? programRegistrationVm.handleSave
-            : isProgramParticipantApplicationTemplate || isProgramInstructorApplicationTemplate
-              || isProgramVolunteerApplicationTemplate
+            : isApplicantRecruitInstitutionTemplate ||
+                isProgramParticipantApplicationTemplate ||
+                isProgramInstructorApplicationTemplate ||
+                isProgramVolunteerApplicationTemplate
               ? programParticipantApplicationVm.handleSave
               : undefined
         }
@@ -309,6 +337,8 @@ export default function TemplateFormTab() {
             <ProgramApplicationFormInstructorEditorLeftColumn vm={programParticipantApplicationVm} />
           ) : isProgramVolunteerApplicationTemplate ? (
             <ProgramApplicationFormVolunteerEditorLeftColumn vm={programParticipantApplicationVm} />
+          ) : isApplicantRecruitInstitutionTemplate ? (
+            <ApplicantRecruitFormInstitutionEditorLeftColumn vm={programParticipantApplicationVm} />
           ) : isProgramParticipantApplicationTemplate ? (
             programParticipantApplicationVariant === 'institution' ? (
               <ProgramApplicationFormInstitutionEditorLeftColumn vm={programParticipantApplicationVm} />
@@ -331,6 +361,8 @@ export default function TemplateFormTab() {
             <ProgramApplicationFormInstructorEditorRightColumn vm={programParticipantApplicationVm} />
           ) : isProgramVolunteerApplicationTemplate ? (
             <ProgramApplicationFormVolunteerEditorRightColumn vm={programParticipantApplicationVm} />
+          ) : isApplicantRecruitInstitutionTemplate ? (
+            <ApplicantRecruitFormInstitutionEditorRightColumn vm={programParticipantApplicationVm} />
           ) : isProgramParticipantApplicationTemplate ? (
             programParticipantApplicationVariant === 'institution' ? (
               <ProgramApplicationFormInstitutionEditorRightColumn vm={programParticipantApplicationVm} />
