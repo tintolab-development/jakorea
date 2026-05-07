@@ -17,6 +17,7 @@ import {
   isTitleWithPeriodParagraph,
   paragraphEditableHeading,
   withProgramApplicationFormInstructorTitleTrailing,
+  withProgramApplicationFormVolunteerTitleTrailing,
   withProgramRegistrationCurriculumTitleTrailing,
   withoutTitleRequired,
 } from '@/features/template/ui/form-editor/form-editor-left-panel-heading'
@@ -97,9 +98,13 @@ export function PinnedFormCard({
     ),
     hideParagraphRequiredChrome
   )
-  const editableHeading = withProgramApplicationFormInstructorTitleTrailing(
-    withProgramRegistrationCurriculumTitleTrailing(
-      editableHeadingBase as ParagraphCardEditableHeading,
+  const editableHeading = withProgramApplicationFormVolunteerTitleTrailing(
+    withProgramApplicationFormInstructorTitleTrailing(
+      withProgramRegistrationCurriculumTitleTrailing(
+        editableHeadingBase as ParagraphCardEditableHeading,
+        paragraph,
+        paragraphBodyOptions
+      ),
       paragraph,
       paragraphBodyOptions
     ),
@@ -234,9 +239,13 @@ export function SortableMiddleFormCard({
     ),
     hideParagraphRequiredChrome
   )
-  const editableHeading = withProgramApplicationFormInstructorTitleTrailing(
-    withProgramRegistrationCurriculumTitleTrailing(
-      editableHeadingBase as ParagraphCardEditableHeading,
+  const editableHeading = withProgramApplicationFormVolunteerTitleTrailing(
+    withProgramApplicationFormInstructorTitleTrailing(
+      withProgramRegistrationCurriculumTitleTrailing(
+        editableHeadingBase as ParagraphCardEditableHeading,
+        paragraph,
+        paragraphBodyOptions
+      ),
       paragraph,
       paragraphBodyOptions
     ),

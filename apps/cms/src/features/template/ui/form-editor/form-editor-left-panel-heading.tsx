@@ -13,6 +13,8 @@ import {
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
+import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
+import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/form-editor-left-panel.types'
@@ -171,6 +173,45 @@ export function withProgramApplicationFormInstructorTitleTrailing(
           }}
         >
           강의 불가 일자 추가
+        </CmsButton>
+      </div>
+    ),
+  }
+}
+
+/** 프로그램 봉사자 신청 폼 — 면접 진행 가능 일정 단락: 카드 제목 줄 우측「예외 일정 추가」 */
+export function withProgramApplicationFormVolunteerTitleTrailing(
+  heading: ParagraphCardEditableHeading,
+  paragraph: WritingFormParagraph,
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+): ParagraphCardEditableHeading {
+  const opts = paragraphBodyOptions?.programApplicationFormVolunteer
+  const isVolunteerInterviewSchedule =
+    paragraph.id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule ||
+    paragraph.id === RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule
+
+  if (!isVolunteerInterviewSchedule || opts?.enabled !== true) {
+    return heading
+  }
+
+  return {
+    ...heading,
+    titleTrailing: (
+      <div
+        className="volunteer-interview-available-schedule__card-title-actions"
+        onClick={e => e.stopPropagation()}
+        onKeyDown={e => e.stopPropagation()}
+        role="presentation"
+      >
+        <CmsButton
+          type="button"
+          variant="secondary"
+          size="medium"
+          width={160}
+          icon={<PlusOutlined aria-hidden />}
+          onClick={e => e.stopPropagation()}
+        >
+          예외 일정 추가
         </CmsButton>
       </div>
     ),
