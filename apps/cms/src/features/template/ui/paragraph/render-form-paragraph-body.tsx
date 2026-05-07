@@ -11,12 +11,14 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
+import { StaticDescriptionLines } from '@/features/template/ui/paragraph/explanation/static-description-lines'
 import { ExplanationText } from '@/features/template/ui/paragraph/explanation/text'
 import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/title'
 import { DateField } from '@/features/template/ui/paragraph/single-item/date'
 import { TimeField } from '@/features/template/ui/paragraph/single-item/time'
 import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
 import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
+import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { MultipleChoice } from '@/features/template/ui/paragraph/single-item/multiple-choice'
 import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-type'
 import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/table/horizontal-table-paragraph-body'
@@ -306,6 +308,9 @@ export function renderFormParagraphBody(
     }
     case 'closing':
       return null
+    case 'static_description_lines':
+      if (p.kind !== 'description' || p.variant !== 'static_description_lines') return null
+      return <StaticDescriptionLines paragraph={p} />
     case 'short_essay':
       return (
         <ShortEssay
@@ -424,6 +429,15 @@ export function renderFormParagraphBody(
     case 'file_attachment':
       return (
         <FileAttachment
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isBodyInteractive}
+        />
+      )
+    case 'id_type_with_input':
+      if (p.kind !== 'single_item' || p.variant !== 'id_type_with_input') return null
+      return (
+        <IdTypeWithInput
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isBodyInteractive}

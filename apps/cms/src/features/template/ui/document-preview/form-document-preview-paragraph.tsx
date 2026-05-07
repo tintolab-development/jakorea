@@ -23,6 +23,7 @@ import { getDocumentPreviewParagraphViewModel } from '@/features/template/lib/a4
 import { getFormParagraphDisplayTitle } from '@/features/template/lib/form-title-numbering'
 import { ParagraphCard } from '@/features/template/ui/paragraph/shared/paragraph-card'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
+import { StaticDescriptionLines } from '@/features/template/ui/paragraph/explanation/static-description-lines'
 import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/table/horizontal-table-paragraph-body'
 import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/table/vertical-table-paragraph-body'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
@@ -37,6 +38,7 @@ import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info
 import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
 import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
 import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
+import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import './form-document-preview-body.css'
@@ -272,6 +274,18 @@ function renderBody(
       return <UserInfo paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
     case 'file_attachment':
       return <FileAttachment paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+    case 'static_description_lines':
+      if (p.kind !== 'description' || p.variant !== 'static_description_lines') return null
+      return <StaticDescriptionLines paragraph={p} />
+    case 'id_type_with_input':
+      if (p.kind !== 'single_item' || p.variant !== 'id_type_with_input') return null
+      return (
+        <IdTypeWithInput
+          paragraph={p}
+          onChange={noopOnParagraphChange}
+          isEditMode={false}
+        />
+      )
     case 'closing': {
       const c = p as ClosingParagraph
       return <div className="form-document-preview-paragraph__body-text">{safeTrim(c.body) || ' '}</div>

@@ -27,6 +27,7 @@ import {
   createVerticalTableParagraph,
   createDefaultMultipleChoiceItems,
   createDefaultScaleTypeItems,
+  createDefaultIdTypeWithInputOptions,
   effectiveVerticalStageKinds,
   normalizeVerticalChoiceOptions,
   normalizeVerticalTableParagraph,
@@ -63,8 +64,9 @@ type SingleItemDetailSelectValue =
   | 'file_attachment'
   | 'ujat_journal_education_info'
   | 'lecture_report_program_progress'
+  | 'id_type_with_input'
 type TableDetailSelectValue = 'horizontal_table' | 'vertical_table'
-type DescriptionDetailSelectValue = 'title' | 'text' | 'closing'
+type DescriptionDetailSelectValue = 'title' | 'text' | 'closing' | 'static_description_lines'
 type DetailSelectValue =
   | SingleItemDetailSelectValue
   | TableDetailSelectValue
@@ -87,11 +89,13 @@ const SINGLE_ITEM_DETAIL_OPTIONS: { value: SingleItemDetailSelectValue; label: s
   { value: 'file_attachment', label: '파일 첨부형' },
   { value: 'ujat_journal_education_info', label: 'UJAT 교육 정보(교육일지)' },
   { value: 'lecture_report_program_progress', label: '강의보고서 프로그램 진행 정보' },
+  { value: 'id_type_with_input', label: '식별번호 입력' },
 ]
 const DESCRIPTION_DETAIL_OPTIONS: { value: DescriptionDetailSelectValue; label: string }[] = [
   { value: 'title', label: '제목형' },
   { value: 'text', label: '텍스트형' },
   { value: 'closing', label: '마무리글형' },
+  { value: 'static_description_lines', label: '정적 설명(다줄)' },
 ]
 const TABLE_DETAIL_OPTIONS: { value: TableDetailSelectValue; label: string }[] = [
   { value: 'horizontal_table', label: '가로형' },
@@ -164,6 +168,10 @@ function paragraphVariantLabel(p: WritingFormParagraph): string {
       return 'UJAT 교육 정보(교육일지)'
     case 'lecture_report_program_progress':
       return '강의보고서 프로그램 진행 정보'
+    case 'static_description_lines':
+      return '정적 설명(다줄)'
+    case 'id_type_with_input':
+      return '식별번호 입력'
   }
 }
 
@@ -188,6 +196,8 @@ function paragraphDetailSelectValue(p: WritingFormParagraph): DetailSelectValue 
   if (p.kind === 'single_item' && p.variant === 'vertical_table') return 'vertical_table'
   if (p.kind === 'description' && p.variant === 'survey_title_with_period') return 'title'
   if (p.kind === 'description' && p.variant === 'closing') return 'closing'
+  if (p.kind === 'description' && p.variant === 'static_description_lines')
+    return 'static_description_lines'
   if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') return 'text'
   if (p.kind === 'single_item' && p.variant === 'session_plan_short_essay')
     return 'session_plan_short_essay'
@@ -203,6 +213,7 @@ function paragraphDetailSelectValue(p: WritingFormParagraph): DetailSelectValue 
     return 'ujat_journal_education_info'
   if (p.kind === 'single_item' && p.variant === 'lecture_report_program_progress')
     return 'lecture_report_program_progress'
+  if (p.kind === 'single_item' && p.variant === 'id_type_with_input') return 'id_type_with_input'
   if (p.kind === 'description') return 'text'
   return 'subjective'
 }
@@ -481,6 +492,40 @@ function convertParagraphByDetail(
         paragraphTitle: keepTitle('마무리글형'),
         paragraphDescription: prev.paragraphDescription,
       }
+    case 'static_description_lines':
+      return preserveParagraphCommonFields(
+        {
+          id,
+          kind: 'description',
+          variant: 'static_description_lines',
+          requiredMark: prev.requiredMark,
+          paragraphTitle: prev.paragraphTitle,
+          paragraphDescription: prev.paragraphDescription,
+          participatesInTitleNumbering: prev.participatesInTitleNumbering,
+          lines: [''],
+        },
+        prev
+      )
+    case 'id_type_with_input': {
+      const opts = createDefaultIdTypeWithInputOptions()
+      return preserveParagraphCommonFields(
+        {
+          id,
+          kind: 'single_item',
+          variant: 'id_type_with_input',
+          requiredMark: true,
+          paragraphTitle: prev.paragraphTitle,
+          paragraphDescription: prev.paragraphDescription,
+          participatesInTitleNumbering: prev.participatesInTitleNumbering,
+          options: opts,
+          selectedOptionId: opts[0]?.id ?? null,
+          inputPlaceholder: '주민등록번호를 입력해 주세요',
+          inputValue: '',
+          answerRequired: true,
+        },
+        prev
+      )
+    }
     default:
       return prev
   }

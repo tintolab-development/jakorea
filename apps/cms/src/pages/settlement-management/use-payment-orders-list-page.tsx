@@ -2,7 +2,14 @@
  * 정산 관리 > 지급조서 확인 목록 — URL·필터·테이블 데이터·상세 모달 상태
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+} from 'react'
 import { flushSync } from 'react-dom'
 import type { Dayjs } from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -257,7 +264,6 @@ export function usePaymentOrdersListPage() {
     ],
     []
   )
-
   const instructorColumns: ColumnsType<PaymentOrderAdminInstructorRow> = useMemo(
     () => [
       {

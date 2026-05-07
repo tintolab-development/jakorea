@@ -1,4 +1,7 @@
-import type { AgreementExplanationTextParagraph } from '@/features/template/model/writing-form-draft.schema'
+import type {
+  AgreementExplanationTextParagraph,
+  IdTypeWithInputParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
 import {
   cloneHorizontalTableParagraph,
   cloneVerticalTableParagraph,
@@ -110,6 +113,14 @@ export function cloneWritingFormParagraphWithNewParagraphId(
         ...ui,
         id: newParagraphId,
         userFields: ui.userFields?.map(x => ({ ...x })),
+      }
+    }
+    case 'id_type_with_input': {
+      const x = p as IdTypeWithInputParagraph
+      return {
+        ...x,
+        id: newParagraphId,
+        options: x.options.map(o => ({ ...o })),
       }
     }
     default:
