@@ -31,6 +31,10 @@ import {
   type ProgramApplicationFormInstructorBodyOptions,
 } from '@/features/template/ui/form-set/program-application-form-instructor/paragraph-body'
 import {
+  renderProgramApplicationFormVolunteerParagraphBody,
+  type ProgramApplicationFormVolunteerBodyOptions,
+} from '@/features/template/ui/form-set/program-application-form-volunteer/paragraph-body'
+import {
   renderProgramRegistrationParagraphBody,
   type ProgramRegistrationParagraphBodyOptions,
 } from '@/features/template/ui/form-set/program-registration-form/paragraph-body'
@@ -384,6 +388,7 @@ export function HorizontalTableParagraphBody({
   programRegistration,
   programApplicationFormInstitution,
   programApplicationFormInstructor,
+  programApplicationFormVolunteer,
 }: {
   paragraph: HorizontalTableParagraph
   onChange: (next: HorizontalTableParagraph) => void
@@ -401,6 +406,7 @@ export function HorizontalTableParagraphBody({
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
   programApplicationFormInstructor?: ProgramApplicationFormInstructorBodyOptions
+  programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
 }) {
   const p = useMemo(() => normalizeHorizontalTableParagraph(paragraph), [paragraph])
 
@@ -418,6 +424,12 @@ export function HorizontalTableParagraphBody({
     programApplicationFormInstructor
   )
   if (programApplicationFormInstructorBody != null) return programApplicationFormInstructorBody
+
+  const programApplicationFormVolunteerBody = renderProgramApplicationFormVolunteerParagraphBody(
+    p,
+    programApplicationFormVolunteer
+  )
+  if (programApplicationFormVolunteerBody != null) return programApplicationFormVolunteerBody
 
   const paymentStatementBody = renderPaymentStatementIssuanceParagraphBody({
     paragraph: p,

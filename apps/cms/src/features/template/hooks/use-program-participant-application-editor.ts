@@ -19,6 +19,10 @@ import {
   PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-instructor-draft'
 import {
+  createProgramApplicationFormVolunteerDraft,
+  PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/program-application-form-volunteer-draft'
+import {
   createProgramParticipantApplicationDraft,
   PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-individual-draft'
@@ -117,7 +121,11 @@ function useParticipantApplicationMiddleActions(
   )
 }
 
-export type ProgramParticipantApplicationEditorVariant = 'individual' | 'institution' | 'instructor'
+export type ProgramParticipantApplicationEditorVariant =
+  | 'individual'
+  | 'institution'
+  | 'instructor'
+  | 'volunteer'
 
 function renumberInstructorUnavailableDateRows(p: VerticalTableParagraph): VerticalTableParagraph {
   return {
@@ -140,6 +148,7 @@ export function useProgramParticipantApplicationEditor(
   const seedParagraphIds = useMemo(() => {
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'instructor') return PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
+    if (variant === 'volunteer') return PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
     return PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS
   }, [variant])
 
@@ -166,6 +175,8 @@ export function useProgramParticipantApplicationEditor(
         ? createProgramApplicationFormInstitutionDraft()
         : variant === 'instructor'
           ? createProgramApplicationFormInstructorDraft()
+          : variant === 'volunteer'
+            ? createProgramApplicationFormVolunteerDraft()
           : createProgramParticipantApplicationDraft()
     )
     setDraft(next)
@@ -285,6 +296,13 @@ export function useProgramParticipantApplicationEditor(
           },
     [variant, onAddUnavailableDateRow]
   )
+  const programApplicationFormVolunteerOptions = useMemo(
+    () =>
+      variant === 'volunteer'
+        ? { enabled: true as const }
+        : { enabled: false as const },
+    [variant]
+  )
 
   const writingPreviewSession = useMemo(
     () => ({
@@ -298,9 +316,18 @@ export function useProgramParticipantApplicationEditor(
         programApplicationFormInstitution: variant === 'institution',
         programApplicationFormIndividual: variant === 'individual',
         programApplicationFormInstructor: programApplicationFormInstructorOptions,
+          programApplicationFormVolunteer: programApplicationFormVolunteerOptions,
       },
     }),
-    [draft, previewHeaderTitle, programApplicationFormInstructorOptions, seedParagraphIds, updateParagraph, variant]
+    [
+      draft,
+      previewHeaderTitle,
+      programApplicationFormInstructorOptions,
+      programApplicationFormVolunteerOptions,
+      seedParagraphIds,
+      updateParagraph,
+      variant,
+    ]
   )
 
   useEffect(() => {
@@ -345,6 +372,7 @@ export function useProgramParticipantApplicationEditor(
     handleSave,
     onSelectSingleItemListItem,
     programApplicationFormInstructorOptions,
+    programApplicationFormVolunteerOptions,
   }
 }
 

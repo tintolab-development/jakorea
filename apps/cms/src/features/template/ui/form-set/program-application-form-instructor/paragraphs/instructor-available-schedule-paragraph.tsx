@@ -34,8 +34,10 @@ function slotDisplaySegment(slot: ScheduleSlot): string {
 /** 강의 진행 가능 일정 — 상단: 캘린더 + 세션 카드(복수 선택) / 하단: 선택 요약 */
 export function InstructorAvailableScheduleParagraph({
   isTemplateAuthoringMode = false,
+  summaryFieldLabel = '강의 진행 가능일',
 }: {
   isTemplateAuthoringMode?: boolean
+  summaryFieldLabel?: string
 }) {
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => dayjs('2026-03-01'))
   /** 캘린더에서 강조할 날짜(포커스) — 복수 선택과 별개 */
@@ -136,7 +138,7 @@ export function InstructorAvailableScheduleParagraph({
       <DetailInfoForm title="" hideHeader mode="edit">
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="강의 진행 가능일"
+            label={summaryFieldLabel}
             edit={scheduleSummaryBlock}
             view={scheduleSummaryBlock}
           />

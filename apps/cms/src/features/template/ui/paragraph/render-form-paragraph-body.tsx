@@ -41,6 +41,7 @@ import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import type { ProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/program-registration-form/paragraph-body'
 import type { ProgramApplicationFormInstructorBodyOptions } from '@/features/template/ui/form-set/program-application-form-instructor/paragraph-body'
+import type { ProgramApplicationFormVolunteerBodyOptions } from '@/features/template/ui/form-set/program-application-form-volunteer/paragraph-body'
 
 export type { ProgramApplicationFormInstructorBodyOptions }
 
@@ -87,6 +88,8 @@ export type RenderFormParagraphBodyOptions = {
   programApplicationFormIndividual?: boolean
   /** 프로그램 강사 신청 폼 시드 단락 — 전용 본문·제목 행 액션 */
   programApplicationFormInstructor?: ProgramApplicationFormInstructorBodyOptions
+  /** 프로그램 봉사자 신청 폼 시드 단락 — 전용 본문 */
+  programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
   /**
    * 구조 잠금 + 작성(authoring)일 때도 객관식·가로형 하단 동의 라디오 등 선택 UI만 조작 가능(미리 체크).
    * 프로그램 참여자 신청 폼 등 고정 단락 템플릿용.
@@ -198,6 +201,14 @@ export function renderFormParagraphBody(
               ? undefined
               : {
                   ...options.programApplicationFormInstructor,
+                  isTemplateAuthoringMode: paragraphInteractionMode === 'authoring',
+                }
+          }
+          programApplicationFormVolunteer={
+            options?.programApplicationFormVolunteer == null
+              ? undefined
+              : {
+                  ...options.programApplicationFormVolunteer,
                   isTemplateAuthoringMode: paragraphInteractionMode === 'authoring',
                 }
           }
