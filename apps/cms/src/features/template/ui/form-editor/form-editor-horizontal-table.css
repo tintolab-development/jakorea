@@ -745,3 +745,24 @@
 .form-editor-horizontal-table__bottom-input.paragraph-input--edit .paragraph-input__shell--focused {
   border-bottom-color: var(--paragraph-input-mint, var(--color-mint-01, #01a1af));
 }
+
+/* 다중 줄 본문(\n 포함) 보텀텍스트가 한 줄 폭 측정값에 끌려 끝없이 늘어나지 않도록 100% 폭 고정 */
+.form-editor-horizontal-table__bottom-input .paragraph-input__row,
+.form-editor-horizontal-table__bottom-input .paragraph-input__main,
+.form-editor-horizontal-table__bottom-input .paragraph-input__view-text,
+.form-editor-horizontal-table__bottom-input .paragraph-input__shell {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* 행정정보 공동이용 사전 동의서 — 공동이용 행정정보 표 연번 컬럼 100×54 (1·3번째 컬럼) */
+.paragraph-card[data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__row
+  > *:nth-child(1),
+.paragraph-card[data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__row
+  > *:nth-child(3) {
+  flex: 0 0 100px;
+  min-width: 100px;
+  max-width: 100px;
+}
