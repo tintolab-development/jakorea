@@ -30,6 +30,14 @@ import {
   RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/recruit-form-volunteer-draft'
 import {
+  createUjatRecruitFormVolunteerDraft,
+  UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/ujat-recruit-form-volunteer-draft'
+import {
+  createUjatProgramApplicationFormInstitutionDraft,
+  UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/ujat-program-application-form-institution-draft'
+import {
   createProgramApplicationFormInstitutionDraft,
   PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-institution-draft'
@@ -144,11 +152,13 @@ function useParticipantApplicationMiddleActions(
 export type ProgramParticipantApplicationEditorVariant =
   | 'individual'
   | 'institution'
+  | 'ujat-application-institution'
   | 'applicant-recruit-institution'
   | 'ujat-recruit-institution'
   | 'applicant-recruit-individual'
   | 'recruit-instructor'
   | 'recruit-volunteer'
+  | 'ujat-recruit-volunteer'
   | 'instructor'
   | 'volunteer'
 
@@ -172,6 +182,8 @@ export function useProgramParticipantApplicationEditor(
 ) {
   const seedParagraphIds = useMemo(() => {
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'ujat-application-institution')
+      return UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'applicant-recruit-institution')
       return APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'ujat-recruit-institution')
@@ -180,6 +192,7 @@ export function useProgramParticipantApplicationEditor(
       return APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS
     if (variant === 'recruit-instructor') return RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
     if (variant === 'recruit-volunteer') return RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
+    if (variant === 'ujat-recruit-volunteer') return UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
     if (variant === 'instructor') return PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
     if (variant === 'volunteer') return PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
     return PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS
@@ -206,6 +219,8 @@ export function useProgramParticipantApplicationEditor(
     const next = normalizeWritingFormDraft(
       variant === 'institution'
         ? createProgramApplicationFormInstitutionDraft()
+        : variant === 'ujat-application-institution'
+          ? createUjatProgramApplicationFormInstitutionDraft()
         : variant === 'applicant-recruit-institution'
           ? createApplicantRecruitFormInstitutionDraft()
           : variant === 'ujat-recruit-institution'
@@ -216,6 +231,8 @@ export function useProgramParticipantApplicationEditor(
           ? createRecruitFormInstructorDraft()
           : variant === 'recruit-volunteer'
             ? createRecruitFormVolunteerDraft()
+          : variant === 'ujat-recruit-volunteer'
+            ? createUjatRecruitFormVolunteerDraft()
             : variant === 'instructor'
               ? createProgramApplicationFormInstructorDraft()
               : variant === 'volunteer'

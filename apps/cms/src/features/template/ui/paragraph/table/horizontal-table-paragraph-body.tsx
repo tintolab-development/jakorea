@@ -30,6 +30,7 @@ import { renderApplicantRecruitFormInstitutionParagraphBody } from '@/features/t
 import { renderUjatRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/paragraph-body'
 import { renderRecruitFormInstructorParagraphBody } from '@/features/template/ui/form-set/recruit-form/recruit-form-instructor/paragraph-body'
 import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/recruit-form-volunteer/paragraph-body'
+import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraph-body'
 import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/institution/paragraph-body'
 import {
   renderProgramApplicationFormInstructorParagraphBody,
@@ -399,6 +400,7 @@ export function HorizontalTableParagraphBody({
   applicantRecruitFormIndividual,
   recruitFormInstructor,
   recruitFormVolunteer,
+  ujatRecruitFormVolunteer,
   programApplicationFormInstructor,
   programApplicationFormVolunteer,
 }: {
@@ -428,6 +430,8 @@ export function HorizontalTableParagraphBody({
   recruitFormInstructor?: boolean
   /** 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   recruitFormVolunteer?: boolean
+  /** UJAT 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatRecruitFormVolunteer?: boolean
   programApplicationFormInstructor?: ProgramApplicationFormInstructorBodyOptions
   programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
 }) {
@@ -495,6 +499,12 @@ export function HorizontalTableParagraphBody({
 
   const recruitFormVolunteerBody = renderRecruitFormVolunteerParagraphBody(p, recruitFormVolunteer)
   if (recruitFormVolunteerBody != null) return recruitFormVolunteerBody
+
+  const ujatRecruitFormVolunteerBody = renderUjatRecruitFormVolunteerParagraphBody(
+    p,
+    ujatRecruitFormVolunteer
+  )
+  if (ujatRecruitFormVolunteerBody != null) return ujatRecruitFormVolunteerBody
 
   const programApplicationFormInstitutionBody = renderProgramApplicationFormInstitutionParagraphBody(
     p,
