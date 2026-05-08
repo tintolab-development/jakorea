@@ -30,9 +30,11 @@ import {
   renderProgramRegistrationParagraphBody,
   type ProgramRegistrationParagraphBodyOptions,
 } from '@/features/template/ui/form-set/program-registration-form/paragraph-body'
+import { IdTypeWithInputBody } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/features/template/ui/form-editor/form-editor.css'
+import '@/features/template/ui/form-editor/form-editor-horizontal-table.css'
 
 dayjs.extend(customParseFormat)
 
@@ -227,9 +229,7 @@ function FieldTableBodyCell({
           variant="borderless"
           className="form-editor-horizontal-table__field-text-input"
           value={essayValue}
-          placeholder={
-            field.placeholder?.trim() ? field.placeholder : HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER
-          }
+          placeholder={ph}
           onChange={e => onFieldChange({ kind: 'subjective', value: e.target.value })}
           onFocus={onSelectBodyRow}
           onKeyDown={e => {
@@ -254,7 +254,7 @@ function FieldTableBodyCell({
         onFocus={onSelectBodyRow}
         format="HH:mm"
         minuteStep={5}
-        placeholder={dateTimeFieldPlaceholder(field)}
+        placeholder={ph}
       />
     )
   }
@@ -272,7 +272,7 @@ function FieldTableBodyCell({
         onChange={d => onFieldChange({ kind: 'dateTime', value: fromDayjs('date', d) })}
         onFocus={onSelectBodyRow}
         format="YYYY-MM-DD"
-        placeholder={dateTimeFieldPlaceholder(field)}
+        placeholder={ph}
       />
     )
   }
@@ -291,7 +291,7 @@ function FieldTableBodyCell({
         onChange={d => onFieldChange({ kind: 'dateTime', value: fromDayjs('dateTime', d) })}
         onFocus={onSelectBodyRow}
         format="YYYY-MM-DD HH:mm"
-        placeholder={dateTimeFieldPlaceholder(field)}
+        placeholder={ph}
       />
     )
   }
@@ -302,9 +302,7 @@ function FieldTableBodyCell({
         className="form-editor-horizontal-table__field-select form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--dropdown"
         value={cell.kind === 'dropdown' && cell.value ? cell.value : undefined}
         options={field.options.map(o => ({ value: o, label: o }))}
-        placeholder={
-          field.placeholder?.trim() ? field.placeholder : HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER
-        }
+        placeholder={ph}
         onChange={v => onFieldChange({ kind: 'dropdown', value: (v as string) ?? '' })}
         onFocus={onSelectBodyRow}
         getPopupContainer={horizontalTableFieldPopupContainer}
@@ -496,6 +494,13 @@ export function HorizontalTableParagraphBody({
   const effectiveEditMode = isEditMode && canvasInteractive
   const bottomConsentInteractive = effectiveEditMode || bottomConsentPreviewInAuthoring
 
+  const isAgreementNoticeTable = p.id === 'agreement-notice-table'
+  const isAgreementPortraitTable =
+    p.id === 'agreement-portrait-personal-consent-table' ||
+    p.id === 'agreement-portrait-delegated-consent-table' ||
+    p.id === 'agreement-portrait-usage-table'
+  const suppressPlaceholderText = isAgreementNoticeTable || isAgreementPortraitTable
+
   return (
     <div className="form-editor-body form-editor-horizontal-table-wrap">
       <div
@@ -519,6 +524,7 @@ export function HorizontalTableParagraphBody({
           {headers.map((h, i) => {
             const headerFieldLocked =
               isField && getEffectiveHorizontalCellField(p, 0, i).kind !== 'text'
+            const ph = suppressPlaceholderText ? '' : tableHeaderPlaceholder(i)
             return (
             <div
               key={`h-${i}`}
@@ -538,7 +544,7 @@ export function HorizontalTableParagraphBody({
                   <Input
                     variant="borderless"
                     value={h ?? ''}
-                    placeholder={tableHeaderPlaceholder(i)}
+                    placeholder={ph}
                     onChange={e => setHeaderValue(i, e.target.value)}
                     onFocus={() => setSelection({ area: 'header' })}
                     onKeyDown={e => {
@@ -549,7 +555,7 @@ export function HorizontalTableParagraphBody({
               ) : (
                 <HorizontalTableCellText
                   value={h ?? ''}
-                  placeholder={tableHeaderPlaceholder(i)}
+                  placeholder={ph}
                   variant="header"
                 />
               )}
@@ -574,6 +580,7 @@ export function HorizontalTableParagraphBody({
             {Array.from({ length: colCount }, (_, colIdx) => {
               if (!isField) {
                 const cell = cells[colIdx] ?? ''
+                const ph = suppressPlaceholderText ? '' : tableCellPlaceholder(colIdx, rowIdx)
                 return (
                   <div
                     key={`c-${rowIdx}-${colIdx}`}
@@ -594,7 +601,7 @@ export function HorizontalTableParagraphBody({
                         <Input
                           variant="borderless"
                           value={cell}
-                          placeholder={tableCellPlaceholder(colIdx, rowIdx)}
+                          placeholder={ph}
                           onChange={e => setTextCellValue(rowIdx, colIdx, e.target.value)}
                           onFocus={() => focusBodyCell(rowIdx, colIdx)}
                           onKeyDown={e => {
@@ -605,7 +612,7 @@ export function HorizontalTableParagraphBody({
                     ) : (
                       <HorizontalTableCellText
                         value={cell}
-                        placeholder={tableCellPlaceholder(colIdx, rowIdx)}
+                        placeholder={ph}
                         variant="body"
                       />
                     )}
@@ -616,7 +623,9 @@ export function HorizontalTableParagraphBody({
               const field = getEffectiveHorizontalCellField(p, rowIdx, colIdx)
               const fieldRow = p.fieldDataRows?.[rowIdx] ?? []
               const cell = fieldRow[colIdx] ?? createEmptyFieldCellValue(field)
-              const ph = fieldNonEditCellPlaceholder(field, colIdx, rowIdx)
+              const ph = suppressPlaceholderText
+                ? ''
+                : fieldNonEditCellPlaceholder(field, colIdx, rowIdx)
               const isChoiceField = field.kind === 'single' || field.kind === 'multiple'
               const isSubjectiveField = field.kind === 'subjective'
               return (
@@ -683,7 +692,7 @@ export function HorizontalTableParagraphBody({
         ))}
       </div>
 
-      {p.showBottomText || p.showBottomConsent ? (
+      {p.showBottomText || p.showBottomConsent || p.idTypeWithInput ? (
         <div className="form-editor-horizontal-table__bottom">
           {p.showBottomText ? (
             <ParagraphInput
@@ -693,6 +702,14 @@ export function HorizontalTableParagraphBody({
               isEditMode={effectiveEditMode}
               onChange={next => onChange({ ...p, bottomText: next })}
               placeholder="설명을 입력해 주세요"
+            />
+          ) : null}
+          {p.idTypeWithInput ? (
+            <IdTypeWithInputBody
+              paragraph={p.idTypeWithInput}
+              onChange={next => onChange({ ...p, idTypeWithInput: next })}
+              isEditMode={effectiveEditMode}
+              documentMode={paymentStatementDisplayMode === 'document'}
             />
           ) : null}
           {p.showBottomConsent ? (

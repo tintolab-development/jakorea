@@ -23,6 +23,12 @@ import {
   FormEditorTitleNumberingField,
 } from '@/features/template/ui/form-editor/form-editor-right-panel'
 
+import {
+  type FormDocumentPreviewParagraphGapResolver,
+  type FormDocumentPreviewRenderMode,
+} from '@/features/template/lib/a4-document-preview'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+
 type NewAgreementFormQuery = {
   mode?: string
   type?: string
@@ -43,6 +49,16 @@ export type AgreementWritingFormShellProps = {
   structureLockedParagraphIds?: ReadonlySet<string>
   /** 제목형 등 — 드래그 핸들 비노출 */
   hideDragHandleForParagraphIds?: ReadonlySet<string>
+  /** A4 미리보기 레이아웃 사용 여부 */
+  previewLayout?: 'default' | 'a4-document'
+  /** A4 미리보기 시 숨길 단락 id */
+  a4HiddenParagraphIds?: ReadonlySet<string>
+  /** A4 미리보기 렌더링 모드 */
+  a4RenderMode?: FormDocumentPreviewRenderMode
+  /** A4 미리보기 단락 간격 */
+  a4ParagraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
+  /** 단락 본문 옵션 */
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
 }
 
 export function AgreementWritingFormShell({
@@ -54,6 +70,11 @@ export function AgreementWritingFormShell({
   writingPreviewHeaderTitle = '동의 양식',
   structureLockedParagraphIds,
   hideDragHandleForParagraphIds,
+  previewLayout = 'default',
+  a4HiddenParagraphIds,
+  a4RenderMode,
+  a4ParagraphGapPx,
+  paragraphBodyOptions,
 }: AgreementWritingFormShellProps) {
   const [draft, setDraft] = useState<WritingFormDraft>(() =>
     typeof initialDraft === 'function' ? initialDraft() : initialDraft
@@ -80,6 +101,13 @@ export function AgreementWritingFormShell({
     },
     []
   )
+
+  useEffect(() => {
+    const nextDraft = typeof initialDraft === 'function' ? initialDraft() : initialDraft
+    setDraft(nextDraft)
+    setActiveParagraphId(defaultActiveParagraphId ?? nextDraft.paragraphs[0]?.id ?? null)
+    setSingleItemListActiveItemId(null)
+  }, [initialDraft, defaultActiveParagraphId])
 
   const onReorderMiddle = useCallback((activeId: string, overId: string) => {
     setDraft(prev => ({
@@ -124,8 +152,23 @@ export function AgreementWritingFormShell({
       updateParagraph,
       headerTitle: writingPreviewHeaderTitle,
       editorKind: 'agreement' as const,
+      previewLayout,
+      a4HiddenParagraphIds,
+      a4RenderMode,
+      a4ParagraphGapPx,
+      paragraphBodyOptions,
+      hideParagraphRequiredChrome: previewLayout === 'a4-document',
     }),
-    [draft, updateParagraph, writingPreviewHeaderTitle]
+    [
+      draft,
+      updateParagraph,
+      writingPreviewHeaderTitle,
+      previewLayout,
+      a4HiddenParagraphIds,
+      a4RenderMode,
+      a4ParagraphGapPx,
+      paragraphBodyOptions,
+    ]
   )
 
   useEffect(() => {
@@ -194,6 +237,7 @@ export function AgreementWritingFormShell({
           middleParagraphActions={middleParagraphActions}
           structureLockedParagraphIds={structureLockedParagraphIds}
           hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
+          paragraphBodyOptions={paragraphBodyOptions}
         />
       }
       rightNavigation={

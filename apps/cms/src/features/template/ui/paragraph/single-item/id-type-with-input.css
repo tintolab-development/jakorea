@@ -4,7 +4,7 @@
 .id-type-with-input {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 16px;
 }
@@ -12,19 +12,41 @@
 .id-type-with-input__radios {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 8px 16px;
+  gap: 16px;
 }
 
 .id-type-with-input__radio {
   margin-inline-end: 0;
 }
 
-.id-type-with-input__input {
-  flex: 1 1 auto;
-  min-width: 240px;
-  max-width: 100%;
+.id-type-with-input__input.ant-input {
+  display: flex;
+  width: 280px;
+  height: 44px;
+  min-width: 120px;
+  padding: 0 12px 0 14px;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  flex: 0 0 auto;
+}
+
+/* 문서 모드 — ●/○ 텍스트 레이블 (A4 미리보기) */
+.id-type-with-input__doc-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
 }
 
 /* 입력 텍스트·placeholder 공통 스펙 — 16px / 500 / 150%, #3D3D3D */

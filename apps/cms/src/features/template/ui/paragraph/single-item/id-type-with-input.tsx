@@ -14,15 +14,18 @@ function placeholderForOption(optionId: string, fallback: string): string {
   return INPUT_PLACEHOLDER_BY_OPTION_ID[optionId] ?? fallback
 }
 
-/** 동의 양식 — 식별번호 유형(라디오) + 단일 텍스트 입력 */
-export function IdTypeWithInput({
+/** 동의 양식 — 식별번호 유형(라디오) + 단일 텍스트 입력 본문 */
+export function IdTypeWithInputBody({
   paragraph,
   onChange,
   isEditMode,
+  documentMode = false,
 }: {
   paragraph: IdTypeWithInputParagraph
   onChange: (next: IdTypeWithInputParagraph) => void
   isEditMode: boolean
+  /** A4 문서 미리보기 모드 */
+  documentMode?: boolean
 }) {
   const options = paragraph.options?.length ? paragraph.options : []
   const selectedId =
@@ -35,6 +38,8 @@ export function IdTypeWithInput({
     selectedId != null
       ? placeholderForOption(selectedId, paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요')
       : paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요'
+  const inputValueForView = documentMode ? '' : paragraph.inputValue
+  const inputPlaceholderForView = documentMode ? '' : ph
 
   const setSelected = (nextId: string) => {
     onChange({
@@ -49,15 +54,20 @@ export function IdTypeWithInput({
   }
 
   return (
-    <div className="form-editor-body id-type-with-input">
+    <div className="id-type-with-input">
       <Radio.Group
-        className="id-type-with-input__radios"
+        className={[
+          'id-type-with-input__radios',
+          documentMode ? 'id-type-with-input__radios--document-ui' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         value={selectedId ?? undefined}
         onChange={e => {
           if (!isEditMode) return
           setSelected(String(e.target.value))
         }}
-        disabled={!isEditMode}
+        disabled={documentMode || !isEditMode}
       >
         {options.map(opt => (
           <Radio key={opt.id} value={opt.id} className="id-type-with-input__radio">
@@ -67,13 +77,34 @@ export function IdTypeWithInput({
       </Radio.Group>
       <Input
         className="id-type-with-input__input paragraph-input--explanation-body"
-        value={paragraph.inputValue}
-        placeholder={ph}
+        value={inputValueForView}
+        placeholder={inputPlaceholderForView}
         onChange={e => {
           if (!isEditMode) return
           onChange({ ...paragraph, inputValue: e.target.value, inputPlaceholder: ph })
         }}
-        disabled={!isEditMode}
+        disabled={documentMode}
+      />
+    </div>
+  )
+}
+
+/** 동의 양식 — 식별번호 유형(라디오) + 단일 텍스트 입력 */
+export function IdTypeWithInput({
+  paragraph,
+  onChange,
+  isEditMode,
+}: {
+  paragraph: IdTypeWithInputParagraph
+  onChange: (next: IdTypeWithInputParagraph) => void
+  isEditMode: boolean
+}) {
+  return (
+    <div className="form-editor-body">
+      <IdTypeWithInputBody
+        paragraph={paragraph}
+        onChange={onChange}
+        isEditMode={isEditMode}
       />
     </div>
   )
