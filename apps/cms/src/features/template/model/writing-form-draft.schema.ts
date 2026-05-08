@@ -2182,7 +2182,6 @@ export const AGREEMENT_NOTICE_PARAGRAPH_IDS = {
   subject: 'agreement-notice-subject',
   systemDate: 'agreement-notice-system-date',
   systemSignature: 'agreement-notice-system-signature',
-  closing: 'agreement-notice-closing',
 } as const
 
 /** 템플릿 고정 단락 — 삭제·복제·순서 변경 불가 */
@@ -2196,7 +2195,6 @@ export const AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS = new Set<string>([
   AGREEMENT_NOTICE_PARAGRAPH_IDS.subject,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature,
-  AGREEMENT_NOTICE_PARAGRAPH_IDS.closing,
 ])
 
 export const AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
@@ -2213,11 +2211,11 @@ export function createDefaultIdTypeWithInputOptions(): IdTypeWithInputOption[] {
 }
 
 const AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT =
-  'ㆍ 이용기관은 본인의 위 공동이용 행정정보를 「전자정부법」 제36조제2항에 따라 타 기관에 제공할 수 있으며, 본인의 동의 없이 목적 외의 용도로 이용하거나 제3자에게 제공할 수 없습니다.'
+  '※ 이용기관은 본인이 동의한 위 공동이용 행정정보를 확인하기 위해 「개인정보 보호법」 시행령 제19조에 따라 주민등록번호, 여권번호, 운전면허의 면허번호 또는 외국인등록번호가 포함된 행정정보를 처리할 수 있습니다.\n이용기관이 요청하는 경우 기재하여 주십시오(필요시 기재사항)'
 
 const AGREEMENT_NOTICE_CONSENT_LINES = [
-  '○ 본인은 위 사무의 처리를 위하여 「전자정부법」 제36조제1항에 따른 행정정보의 공동이용에 관한 사항을 안내받았으며, 이에 동의합니다.',
-  'ㆍ 만일, 본인이 위 행정정보 이용에 대해 동의하지 않는 경우 이용기관은 본인에 대한 위 사무를 처리할 수 없습니다.',
+  '○ 본인은 위 사무의 처리를 위하여 「전자정부법」 제36조에 따른 행정정보 공동이용을 통해 이용기관의 업무처리담당자가 전자적으로 본인의 구비서류(공동이용 행정정보)를 확인하는 것에 동의합니다.',
+  '* 만일, 본인이 위 행정정보 이용에 대해 동의를 하지 아니할 경우에도 불이익은 없습니다. 다만, 동의하지 아니한 경우에는 본인이 해당 구비서류를 제출하여야 합니다.',
 ] as const
 
 /** 동의 양식 목록 > 행정정보 공동이용 사전동의서 — 편집 시드 초안 */
@@ -2232,7 +2230,12 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['연번', '행정정보명', '연번', '행정정보명'],
-    dataRows: [['1', '성범죄경력 및 아동학대관련 범죄전력 조회', '', '']],
+    dataRows: [
+      ['1', '성범죄경력 및 아동학대관련 범죄전력 조회', '', ''],
+      ['', '', '', ''],
+      ['', '', '', ''],
+      ['', '', '', ''],
+    ],
     columnFields: [],
     fieldDataRows: [],
     bottomText: AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT,
@@ -2282,7 +2285,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         paragraphDescription: '',
         participatesInTitleNumbering: true,
         bodyPlaceholder: '이용 목적을 입력해 주세요',
-        bodyText: '범죄경력의 유무 조회',
+        bodyText: '범죄경력 유무 조회',
         answerRequired: true,
       },
       tableSeed,
@@ -2362,16 +2365,6 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         paragraphTitle: '서명란 유형',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
-      },
-      {
-        id: AGREEMENT_NOTICE_PARAGRAPH_IDS.closing,
-        kind: 'description',
-        variant: 'closing',
-        requiredMark: false,
-        paragraphTitle: '',
-        paragraphDescription: '',
-        participatesInTitleNumbering: false,
-        body: '',
       },
     ],
   }
@@ -2665,6 +2658,7 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
 
 /**
  * 동의 양식: 마지막이 마무리이고 그 앞이 서명·날짜 시스템 단락이면 하단 3개는 드래그 제외.
+ * 동의 양식(agreement-notice 등): 마지막 두 단락이 [agreement_date, agreement_signature]면 그 둘만 핀드 테일.
  * 그 외: 첫 단락 + middle + 마지막 1개만 고정.
  */
 export function getWritingFormHeadMiddlePinnedTail(paragraphs: WritingFormParagraph[]): {
@@ -2696,6 +2690,25 @@ export function getWritingFormHeadMiddlePinnedTail(paragraphs: WritingFormParagr
       head,
       middle: paragraphs.slice(1, -3),
       pinnedTail: paragraphs.slice(-3),
+    }
+  }
+
+  /** 마지막 두 단락이 [agreement_date, agreement_signature]이면 둘 다 핀드 테일(마무리 단락 없는 동의서) */
+  const doublePinnedAgreementSystem =
+    n >= 4 &&
+    last.kind === 'description' &&
+    last.variant === 'system' &&
+    last.systemPreset === 'agreement_signature' &&
+    p2 != null &&
+    p2.kind === 'description' &&
+    p2.variant === 'system' &&
+    p2.systemPreset === 'agreement_date'
+
+  if (doublePinnedAgreementSystem) {
+    return {
+      head,
+      middle: paragraphs.slice(1, -2),
+      pinnedTail: paragraphs.slice(-2),
     }
   }
 
