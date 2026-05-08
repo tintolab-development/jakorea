@@ -128,9 +128,10 @@ export function useWritingFormEditorWithUserPreview(
   }, [draft, updateParagraph, previewHeaderTitle, editorKind, previewZIndex, previewParagraphBodyOptions])
 
   useEffect(() => {
+    if (!open) return
     if (!isWritingUserPreviewOpen) return
     syncWritingUserPreviewSession(writingPreviewSession)
-  }, [isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
+  }, [open, isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
 
   const onReorderMiddle = useCallback((activeId: string, overId: string) => {
     setDraft(prev => ({

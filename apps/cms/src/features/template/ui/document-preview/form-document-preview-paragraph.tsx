@@ -83,6 +83,30 @@ function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoi
   )
 }
 
+function DocumentShortEssayTableReadonly({ paragraph }: { paragraph: ShortEssayParagraph }) {
+  const items = paragraph.items && paragraph.items.length > 0 ? paragraph.items : []
+  return (
+    <div className="form-editor-body">
+      <table className="form-document-short-essay-table">
+        <thead>
+          <tr>
+            {items.map(item => (
+              <th key={item.id}>{item.label ?? ''}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            {items.map(item => (
+              <td key={item.id}>{safeTrim(item.bodyText) || ''}</td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 function DocumentShortEssayReadonly({
   paragraph,
 }: {
@@ -201,8 +225,13 @@ function renderBody(
       return <VerticalTableParagraphBody paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
     case 'multiple_choice':
       return <DocumentMultipleChoiceReadonly paragraph={p as MultipleChoiceParagraph} />
-    case 'short_essay':
-      return <DocumentShortEssayReadonly paragraph={p as ShortEssayParagraph} />
+    case 'short_essay': {
+      const shortEssayP = p as ShortEssayParagraph
+      if (renderMode === 'contentOnly' && (shortEssayP.items?.length ?? 0) >= 2) {
+        return <DocumentShortEssayTableReadonly paragraph={shortEssayP} />
+      }
+      return <DocumentShortEssayReadonly paragraph={shortEssayP} />
+    }
     case 'session_plan_short_essay':
       return <DocumentShortEssayReadonly paragraph={p as SessionPlanShortEssayParagraph} />
     case 'subjective':
@@ -218,7 +247,7 @@ function renderBody(
             paragraph={p}
             onChange={noopOnParagraphChange}
             isEditMode={false}
-            displayMode="authoring"
+            displayMode={renderMode === 'contentOnly' ? 'document' : 'authoring'}
           />
         )
       }
@@ -372,9 +401,6 @@ export function FormDocumentPreviewParagraph({
         {viewModel.showHeader ? (
           <div className="form-document-preview-paragraph__content-header">
             <div className="form-document-preview-paragraph__title-text">{viewModel.title}</div>
-            {description != null ? (
-              <div className="form-document-preview-paragraph__description-text">{description}</div>
-            ) : null}
           </div>
         ) : null}
         <div className="form-document-preview-paragraph__content-slot">{body}</div>

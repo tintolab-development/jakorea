@@ -88,6 +88,11 @@ import {
   TEMPLATE_USER_PREVIEW_ACTIVE,
 } from '@/features/template/lib/template-user-preview-url'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
+import {
+  createContentOnlyA4PreviewOptions,
+  isCertificateIssuanceTemplateName,
+  shouldUseA4PreviewForIssuanceTemplate,
+} from '@/features/template/lib/a4-preview-template-options'
 import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-overlay'
 import { FormTemplateFullpageModal } from './form-template-fullpage-modal'
 import './form-test-single-item-fullpage-modal.css'
@@ -107,13 +112,6 @@ const UJAT_STRUCTURED_ISSUANCE_HIDDEN_DRAG_HANDLES: Record<
   plan: UJAT_EDUCATION_PLAN_HIDDEN_DRAG_HANDLE_IDS,
   journal: UJAT_EDUCATION_JOURNAL_HIDDEN_DRAG_HANDLE_IDS,
 }
-const CERTIFICATE_ISSUANCE_TEMPLATE_NAMES = new Set([
-  '휴가 인증서',
-  '수료증',
-  '강사 활동 인증서',
-  '봉사 활동 인증서',
-])
-
 const MULTI_PAGE_ISSUANCE_PREVIEW_TEMPLATE_NAMES = new Set(['결과보고서'])
 
 function getIssuanceUserPreviewDraft(templateName?: string): WritingFormDraft {
@@ -305,7 +303,7 @@ export function IssuanceFormTab() {
   const isSettlementApplicationIssuance =
     selectedTemplate?.templateName === SETTLEMENT_APPLICATION_TEMPLATE_NAME
   const isCertificateIssuance =
-    selectedTemplate != null && CERTIFICATE_ISSUANCE_TEMPLATE_NAMES.has(selectedTemplate.templateName)
+    selectedTemplate != null && isCertificateIssuanceTemplateName(selectedTemplate.templateName)
   const certificateInitialStringValues = useMemo(() => {
     if (!isCertificateIssuance || selectedTemplate == null) return undefined
     return {
@@ -518,6 +516,8 @@ export function IssuanceFormTab() {
   const noopUpdateParagraph: FormUpdateParagraph = () => {}
   const handleOpenUserPreview = useCallback(() => {
     if (selectedTemplate == null) return
+    const useA4Preview = shouldUseA4PreviewForIssuanceTemplate(selectedTemplate.templateName)
+    const baseA4Options = useA4Preview ? createContentOnlyA4PreviewOptions() : undefined
     const isJournalPreview = selectedTemplate.templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
     const isSettlementPreview =
       selectedTemplate.templateName === SETTLEMENT_APPLICATION_TEMPLATE_NAME
@@ -529,7 +529,7 @@ export function IssuanceFormTab() {
       updateParagraph: noopUpdateParagraph,
       headerTitle: selectedTemplate.templateName ?? '발급 양식 미리보기',
       editorKind: isSettlementPreview || isPreConsentPreview ? 'horizontal_table' : 'survey',
-      previewLayout: isSettlementPreview || isPreConsentPreview ? 'a4-document' : undefined,
+      previewLayout: baseA4Options?.previewLayout,
       paragraphBodyOptions: isJournalPreview
         ? {
             ujatJournalEducationInfoAutofill: {
@@ -541,18 +541,18 @@ export function IssuanceFormTab() {
           : isPreConsentPreview
             ? PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS
           : undefined,
-      hideParagraphRequiredChrome: isSettlementPreview || isPreConsentPreview ? true : undefined,
       a4HiddenParagraphIds: isSettlementPreview
         ? SETTLEMENT_APPLICATION_A4_HIDDEN_PARAGRAPH_IDS
         : isPreConsentPreview
           ? PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS
         : undefined,
-      a4RenderMode: isSettlementPreview || isPreConsentPreview ? 'contentOnly' : undefined,
+      a4RenderMode: baseA4Options?.a4RenderMode,
       a4ParagraphGapPx: isSettlementPreview
         ? getSettlementApplicationA4ParagraphGap
         : isPreConsentPreview
           ? getPaymentStatementPreConsentA4ParagraphGap
           : undefined,
+      hideParagraphRequiredChrome: baseA4Options?.hideParagraphRequiredChrome,
     })
   }, [selectedTemplate, openWritingUserPreview])
 

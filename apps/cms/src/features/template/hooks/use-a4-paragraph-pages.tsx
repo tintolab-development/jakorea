@@ -96,11 +96,21 @@ export function useA4ParagraphPages({
   paragraphGapPx,
 }: UseA4ParagraphPagesArgs): UseA4ParagraphPagesResult {
   const paragraphIdsKey = useMemo(() => allParagraphs.map(p => p.id).join('\0'), [allParagraphs])
+  const paginationConfigKey = useMemo(() => {
+    const gapKind =
+      paragraphGapPx == null
+        ? 'none'
+        : typeof paragraphGapPx === 'number'
+          ? `n:${paragraphGapPx}`
+          : 'resolver'
+    return `${renderMode}|${gapKind}`
+  }, [paragraphGapPx, renderMode])
+  const packedCacheKey = `${paragraphIdsKey}|${paginationConfigKey}`
 
   const [packed, setPacked] = useState<{
     pages: WritingFormParagraph[][]
     overflowIds: ReadonlySet<string>
-    paragraphIdsKey: string
+    cacheKey: string
   } | null>(null)
   const measureRootRef = useRef<HTMLDivElement>(null)
 
@@ -108,18 +118,18 @@ export function useA4ParagraphPages({
     if (!enabled) {
       return [allParagraphs]
     }
-    if (packed != null && packed.paragraphIdsKey === paragraphIdsKey && packed.pages.length > 0) {
+    if (packed != null && packed.cacheKey === packedCacheKey && packed.pages.length > 0) {
       return packed.pages
     }
     return [allParagraphs]
-  }, [enabled, allParagraphs, packed, paragraphIdsKey])
+  }, [enabled, allParagraphs, packed, packedCacheKey])
 
   const overflowParagraphIds = useMemo(() => {
-    if (!enabled || packed == null || packed.paragraphIdsKey !== paragraphIdsKey) {
+    if (!enabled || packed == null || packed.cacheKey !== packedCacheKey) {
       return new Set<string>()
     }
     return packed.overflowIds
-  }, [enabled, packed, paragraphIdsKey])
+  }, [enabled, packed, packedCacheKey])
 
   const runMeasure = useCallback(() => {
     const root = measureRootRef.current
@@ -139,9 +149,9 @@ export function useA4ParagraphPages({
     setPacked({
       pages: nextPages,
       overflowIds: overflow,
-      paragraphIdsKey: allParagraphs.map(p => p.id).join('\0'),
+      cacheKey: `${allParagraphs.map(p => p.id).join('\0')}|${paginationConfigKey}`,
     })
-  }, [allParagraphs, enabled, paragraphGapPx])
+  }, [allParagraphs, enabled, paragraphGapPx, paginationConfigKey])
 
   useLayoutEffect(() => {
     if (!enabled) {
