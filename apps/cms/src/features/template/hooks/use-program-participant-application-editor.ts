@@ -18,6 +18,10 @@ import {
   APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/applicant-recruit-form-institution-draft'
 import {
+  createUjatRecruitFormInstitutionDraft,
+  UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/ujat-recruit-form-institution-draft'
+import {
   createRecruitFormInstructorDraft,
   RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/recruit-form-instructor-draft'
@@ -141,6 +145,7 @@ export type ProgramParticipantApplicationEditorVariant =
   | 'individual'
   | 'institution'
   | 'applicant-recruit-institution'
+  | 'ujat-recruit-institution'
   | 'applicant-recruit-individual'
   | 'recruit-instructor'
   | 'recruit-volunteer'
@@ -169,6 +174,8 @@ export function useProgramParticipantApplicationEditor(
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'applicant-recruit-institution')
       return APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'ujat-recruit-institution')
+      return UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'applicant-recruit-individual')
       return APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS
     if (variant === 'recruit-instructor') return RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
@@ -201,6 +208,8 @@ export function useProgramParticipantApplicationEditor(
         ? createProgramApplicationFormInstitutionDraft()
         : variant === 'applicant-recruit-institution'
           ? createApplicantRecruitFormInstitutionDraft()
+          : variant === 'ujat-recruit-institution'
+            ? createUjatRecruitFormInstitutionDraft()
           : variant === 'applicant-recruit-individual'
             ? createApplicantRecruitFormIndividualDraft()
         : variant === 'recruit-instructor'

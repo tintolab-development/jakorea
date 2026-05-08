@@ -73,6 +73,12 @@ const recruitmentDefinitions: TemplateDefinition[] = [
   },
   { id: 'recruitment-instructor', templateName: '프로그램 강사 모집 폼', variant: 'default' },
   { id: 'recruitment-volunteer', templateName: '프로그램 봉사자 모집 폼', variant: 'volunteer' },
+  { id: 'recruitment-ujat-school', templateName: 'UJAT 프로그램 학교 모집 폼', variant: 'default' },
+  {
+    id: 'recruitment-ujat-volunteer',
+    templateName: 'UJAT 프로그램 봉사자 모집 폼',
+    variant: 'volunteer',
+  },
 ]
 
 const applicationDefinitions: TemplateDefinition[] = [

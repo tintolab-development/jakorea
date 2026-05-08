@@ -97,6 +97,8 @@ export type RenderFormParagraphBodyOptions = {
   programApplicationFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   applicantRecruitFormInstitution?: boolean
+  /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatRecruitFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
   applicantRecruitFormIndividual?: boolean
   /** 프로그램 강사 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
@@ -221,6 +223,7 @@ export function renderFormParagraphBody(
           ujatProgramRegistration={options?.ujatProgramRegistration}
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
           applicantRecruitFormInstitution={options?.applicantRecruitFormInstitution}
+          ujatRecruitFormInstitution={options?.ujatRecruitFormInstitution}
           applicantRecruitFormIndividual={options?.applicantRecruitFormIndividual}
           recruitFormInstructor={options?.recruitFormInstructor}
           recruitFormVolunteer={options?.recruitFormVolunteer}

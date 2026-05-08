@@ -52,6 +52,10 @@ import {
   ApplicantRecruitFormInstitutionEditorRightColumn,
 } from '@/features/template/ui/form-set/recruit-form/applicant-recruit-form-institution'
 import {
+  UjatRecruitFormInstitutionEditorLeftColumn,
+  UjatRecruitFormInstitutionEditorRightColumn,
+} from '@/features/template/ui/form-set/recruit-form/UJAT-institution'
+import {
   RecruitFormInstructorEditorLeftColumn,
   RecruitFormInstructorEditorRightColumn,
 } from '@/features/template/ui/form-set/recruit-form/recruit-form-instructor'
@@ -178,12 +182,14 @@ export default function TemplateFormTab() {
     selectedTemplate?.id === 'registration-general' ||
     selectedTemplate?.id === 'registration-economy'
   const isUjatProgramRegistrationTemplate = selectedTemplate?.id === 'registration-ujat'
-  const isApplicantRecruitInstitutionTemplate =
-    selectedTemplate?.id === 'recruitment-participant-school'
+  const isApplicantRecruitInstitutionTemplate = selectedTemplate?.id === 'recruitment-participant-school'
+  const isUjatRecruitInstitutionTemplate = selectedTemplate?.id === 'recruitment-ujat-school'
   const isApplicantRecruitIndividualTemplate =
     selectedTemplate?.id === 'recruitment-participant-individual'
   const isRecruitFormInstructorTemplate = selectedTemplate?.id === 'recruitment-instructor'
-  const isRecruitFormVolunteerTemplate = selectedTemplate?.id === 'recruitment-volunteer'
+  const isRecruitFormVolunteerTemplate =
+    selectedTemplate?.id === 'recruitment-volunteer' ||
+    selectedTemplate?.id === 'recruitment-ujat-volunteer'
   const isProgramParticipantApplicationTemplate =
     selectedTemplate?.id === 'application-participant-school' ||
     selectedTemplate?.id === 'application-participant-individual'
@@ -208,6 +214,7 @@ export default function TemplateFormTab() {
   const programParticipantApplicationVm = useProgramParticipantApplicationEditor(
     isPreviewOpen &&
       (isApplicantRecruitInstitutionTemplate ||
+        isUjatRecruitInstitutionTemplate ||
         isApplicantRecruitIndividualTemplate ||
         isRecruitFormInstructorTemplate ||
         isRecruitFormVolunteerTemplate ||
@@ -218,7 +225,9 @@ export default function TemplateFormTab() {
       ? (selectedTemplate?.templateName ?? '프로그램 강사 신청 폼')
       : isProgramVolunteerApplicationTemplate
         ? (selectedTemplate?.templateName ?? '프로그램 봉사자 신청 폼')
-        : isApplicantRecruitInstitutionTemplate
+        : isUjatRecruitInstitutionTemplate
+          ? (selectedTemplate?.templateName ?? 'UJAT 프로그램 학교 모집 폼')
+          : isApplicantRecruitInstitutionTemplate
           ? (selectedTemplate?.templateName ?? '프로그램 참여자 모집 폼 (학교)')
           : isApplicantRecruitIndividualTemplate
             ? (selectedTemplate?.templateName ?? '프로그램 참여자 모집 폼 (개인)')
@@ -231,7 +240,9 @@ export default function TemplateFormTab() {
       ? 'instructor'
       : isProgramVolunteerApplicationTemplate
         ? 'volunteer'
-        : isApplicantRecruitInstitutionTemplate
+        : isUjatRecruitInstitutionTemplate
+          ? 'ujat-recruit-institution'
+          : isApplicantRecruitInstitutionTemplate
           ? 'applicant-recruit-institution'
           : isApplicantRecruitIndividualTemplate
             ? 'applicant-recruit-individual'
@@ -269,6 +280,7 @@ export default function TemplateFormTab() {
     }
     if (
       isApplicantRecruitInstitutionTemplate ||
+      isUjatRecruitInstitutionTemplate ||
       isApplicantRecruitIndividualTemplate ||
       isRecruitFormInstructorTemplate ||
       isProgramParticipantApplicationTemplate ||
@@ -294,6 +306,7 @@ export default function TemplateFormTab() {
     isUjatProgramRegistrationTemplate,
     ujatProgramRegistrationVm,
     isApplicantRecruitInstitutionTemplate,
+    isUjatRecruitInstitutionTemplate,
     isApplicantRecruitIndividualTemplate,
     isRecruitFormInstructorTemplate,
     isProgramParticipantApplicationTemplate,
@@ -316,6 +329,7 @@ export default function TemplateFormTab() {
     }
     if (
       isApplicantRecruitInstitutionTemplate ||
+      isUjatRecruitInstitutionTemplate ||
       isApplicantRecruitIndividualTemplate ||
       isRecruitFormInstructorTemplate ||
       isProgramParticipantApplicationTemplate ||
@@ -334,6 +348,7 @@ export default function TemplateFormTab() {
   }, [
     isProgramInstructorApplicationTemplate,
     isApplicantRecruitInstitutionTemplate,
+    isUjatRecruitInstitutionTemplate,
     isApplicantRecruitIndividualTemplate,
     isRecruitFormInstructorTemplate,
     isProgramParticipantApplicationTemplate,
@@ -429,6 +444,7 @@ export default function TemplateFormTab() {
             : isUjatProgramRegistrationTemplate
               ? ujatProgramRegistrationVm.handleSave
               : isApplicantRecruitInstitutionTemplate ||
+                  isUjatRecruitInstitutionTemplate ||
                   isApplicantRecruitIndividualTemplate ||
                   isRecruitFormInstructorTemplate ||
                   isRecruitFormVolunteerTemplate ||
@@ -455,6 +471,8 @@ export default function TemplateFormTab() {
             <RecruitFormVolunteerEditorLeftColumn vm={programParticipantApplicationVm} />
           ) : isRecruitFormInstructorTemplate ? (
             <RecruitFormInstructorEditorLeftColumn vm={programParticipantApplicationVm} />
+          ) : isUjatRecruitInstitutionTemplate ? (
+            <UjatRecruitFormInstitutionEditorLeftColumn vm={programParticipantApplicationVm} />
           ) : isApplicantRecruitInstitutionTemplate ? (
             <ApplicantRecruitFormInstitutionEditorLeftColumn vm={programParticipantApplicationVm} />
           ) : isProgramParticipantApplicationTemplate ? (
@@ -493,6 +511,8 @@ export default function TemplateFormTab() {
             <RecruitFormVolunteerEditorRightColumn vm={programParticipantApplicationVm} />
           ) : isRecruitFormInstructorTemplate ? (
             <RecruitFormInstructorEditorRightColumn vm={programParticipantApplicationVm} />
+          ) : isUjatRecruitInstitutionTemplate ? (
+            <UjatRecruitFormInstitutionEditorRightColumn vm={programParticipantApplicationVm} />
           ) : isApplicantRecruitInstitutionTemplate ? (
             <ApplicantRecruitFormInstitutionEditorRightColumn
               vm={programParticipantApplicationVm}

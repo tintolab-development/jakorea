@@ -27,6 +27,7 @@ import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/te
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
 import { renderApplicantRecruitFormIndividualParagraphBody } from '@/features/template/ui/form-set/recruit-form/applicant-recruit-form-individual/paragraph-body'
 import { renderApplicantRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/applicant-recruit-form-institution/paragraph-body'
+import { renderUjatRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/paragraph-body'
 import { renderRecruitFormInstructorParagraphBody } from '@/features/template/ui/form-set/recruit-form/recruit-form-instructor/paragraph-body'
 import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/recruit-form-volunteer/paragraph-body'
 import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/institution/paragraph-body'
@@ -394,6 +395,7 @@ export function HorizontalTableParagraphBody({
   ujatProgramRegistration,
   programApplicationFormInstitution,
   applicantRecruitFormInstitution,
+  ujatRecruitFormInstitution,
   applicantRecruitFormIndividual,
   recruitFormInstructor,
   recruitFormVolunteer,
@@ -418,6 +420,8 @@ export function HorizontalTableParagraphBody({
   programApplicationFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   applicantRecruitFormInstitution?: boolean
+  /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatRecruitFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
   applicantRecruitFormIndividual?: boolean
   /** 프로그램 강사 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
@@ -479,6 +483,12 @@ export function HorizontalTableParagraphBody({
     applicantRecruitFormInstitution
   )
   if (applicantRecruitFormInstitutionBody != null) return applicantRecruitFormInstitutionBody
+
+  const ujatRecruitFormInstitutionBody = renderUjatRecruitFormInstitutionParagraphBody(
+    p,
+    ujatRecruitFormInstitution
+  )
+  if (ujatRecruitFormInstitutionBody != null) return ujatRecruitFormInstitutionBody
 
   const recruitFormInstructorBody = renderRecruitFormInstructorParagraphBody(p, recruitFormInstructor)
   if (recruitFormInstructorBody != null) return recruitFormInstructorBody
