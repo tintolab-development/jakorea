@@ -146,6 +146,8 @@ export type ShortEssayParagraph = WritingFormParagraphBase & {
   items?: Array<{ id: string; label?: string; placeholder?: string; bodyText: string }>
   bodyPlaceholder: string
   bodyText: string
+  /** 항목 입력 줄 수 — 1: 한 줄 입력(44px), 그 외/미지정: 기본 멀티라인(5줄). 동의 양식 짧은 라벨(성명·생년월일·전화번호 등)에 사용 */
+  itemInputRows?: 1 | 5
 }
 
 /** N차시 교육 계획 등 — `short_essay`와 동일 필드 모양, 전용 variant·UI */
@@ -2323,6 +2325,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         participatesInTitleNumbering: true,
         answerRequired: true,
         showItemTitle: true,
+        itemInputRows: 1,
         items: [
           {
             id: 'agreement-notice-subj-name',
