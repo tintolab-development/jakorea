@@ -1,0 +1,104 @@
+.direct-unavailable-date-modal__description {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%; /* 24px */
+}
+
+.direct-unavailable-date-modal .content-modal__description {
+  margin-bottom: 28px;
+}
+
+.direct-unavailable-date-modal__body {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.direct-unavailable-date-modal__calendar {
+  flex: 0 0 300px;
+  box-sizing: border-box;
+  min-height: 0;
+  padding: 1px;
+  border-radius: var(--16, 16px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: #fff;
+  overflow: hidden;
+}
+
+.direct-unavailable-date-modal__calendar .calendar-mini {
+  box-shadow: none;
+  max-height: none;
+  border-radius: 15px;
+}
+
+.direct-unavailable-date-modal__selected {
+  flex: 0 0 220px;
+  width: 220px;
+  box-sizing: border-box;
+  min-height: 0;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.direct-unavailable-date-modal__chip {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+}
+
+.direct-unavailable-date-modal__chip-remove {
+  width: 15.833px;
+  height: 15.833px;
+  aspect-ratio: 1 / 1;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  fill: var(--gray-bdc-6-c-9, #bdc6c9);
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.direct-unavailable-date-modal__chip-remove svg {
+  width: 15.833px;
+  height: 15.833px;
+  aspect-ratio: 1 / 1;
+  display: block;
+}
+
+.direct-unavailable-date-modal__selected-empty {
+  color: rgba(61, 61, 61, 0.5);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.direct-unavailable-date-modal__footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  width: 100%;
+}

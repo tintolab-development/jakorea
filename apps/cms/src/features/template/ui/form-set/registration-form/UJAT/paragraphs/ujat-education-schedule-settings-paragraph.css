@@ -1,0 +1,40 @@
+.ujat-education-schedule-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ujat-education-schedule-settings__subheading {
+  margin-bottom: 4px;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.ujat-education-schedule-settings__range-picker {
+  max-width: 420px;
+}
+
+.ujat-education-schedule-settings__unavailable-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  border-radius: var(--4, 4px);
+  border: 1px solid rgba(195, 47, 74, 0.1);
+  background: var(
+    --color-bg-red,
+    linear-gradient(0deg, rgba(195, 47, 74, 0.1) 0%, rgba(195, 47, 74, 0.1) 100%),
+    #fff
+  );
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+}

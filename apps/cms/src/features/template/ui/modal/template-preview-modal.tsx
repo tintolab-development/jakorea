@@ -26,7 +26,7 @@ import {
 import type { TemplateWritingPreviewLayout } from '@/features/template/context/template-writing-preview-context'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 /** 강사 신청 폼 등 `data-paragraph-id` 스코프 스타일(불가 일정 DatePicker 폭 등) — 미리보기 단독 열림에도 적용 */
-import '@/features/template/ui/form-set/program-application-form-instructor/program-application-form-instructor.css'
+import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
 import './template-preview-modal.css'
 
 const PREVIEW_PAGE_QUERY_PARAM = 'previewPage'

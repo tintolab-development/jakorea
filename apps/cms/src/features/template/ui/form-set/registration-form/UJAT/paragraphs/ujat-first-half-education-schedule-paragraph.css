@@ -1,0 +1,56 @@
+/**
+ * UJAT 상반기 교육 일정 단락 — 서브블록·진행 일정 행 레이아웃
+ */
+
+/* ■ 사전 교육 등 서브섹션 타이틀 */
+.ujat-first-half-schedule__subheading {
+  margin-bottom: 4px;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.ujat-first-half-schedule__schedule-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.detail-info-form-inputs-wrapper.ujat-first-half-schedule__schedule-row {
+  flex-wrap: nowrap;
+  align-items: center;
+  width: 100%;
+}
+
+.ujat-first-half-schedule__date-picker-grow {
+  flex: 1 1 auto;
+  min-width: 160px;
+}
+
+.ujat-first-half-schedule__range-picker {
+  max-width: 480px;
+}
+
+.ujat-first-half-schedule__add-row-button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(1, 161, 175, 0.1);
+  fill: var(
+    --color-bg-mint,
+    linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%), #fff
+  );
+  stroke-width: 1px;
+  stroke: rgba(1, 161, 175, 0.1);
+  background: transparent;
+  cursor: pointer;
+}
+
+.ujat-first-half-schedule__add-row-button svg {
+  display: block;
+}

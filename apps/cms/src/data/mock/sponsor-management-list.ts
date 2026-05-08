@@ -17,6 +17,7 @@ const SCREENSHOT_LEADING: Array<{
   organizationKind: SponsorOrganizationKind
   sponsorshipStatus: SponsorSponsorshipStatus
 }> = [
+  { name: '제이에이코리아', organizationKind: 'foundation', sponsorshipStatus: 'active' },
   { name: '스타벅스', organizationKind: 'corporate', sponsorshipStatus: 'active' },
   { name: '삼성꿈장학재단', organizationKind: 'foundation', sponsorshipStatus: 'active' },
   { name: '한국청소년활동진흥원', organizationKind: 'foundation', sponsorshipStatus: 'active' },
@@ -114,6 +115,7 @@ const FILLER_BASE = [
 const KIND_CYCLE: SponsorOrganizationKind[] = ['corporate', 'foundation']
 
 const SPONSOR_ENGLISH_NAME_MAP: Record<string, string> = {
+  제이에이코리아: 'JA KOREA',
   스타벅스: 'STARBUCKS',
   삼성꿈장학재단: 'SAMSUNG DREAM SCHOLARSHIP FOUNDATION',
   한국청소년활동진흥원: 'KOREA YOUTH ACTIVITY PROMOTION AGENCY',

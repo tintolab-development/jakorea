@@ -26,10 +26,10 @@ import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/tab
 import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
 import { SessionPlanShortEssay } from '@/features/template/ui/paragraph/single-item/session-plan-short-essay'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
-import { ProgramApplicationFormInstitutionScheduleParagraph } from '@/features/template/ui/form-set/program-application-form-institution/paragraphs/institution-schedule-paragraph'
+import { ProgramApplicationFormInstitutionScheduleParagraph } from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-schedule-paragraph'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
-import { ProgramApplicationFormIndividualScheduleParagraph } from '@/features/template/ui/form-set/program-application-form-individual/paragraphs/individual-schedule-paragraph'
+import { ProgramApplicationFormIndividualScheduleParagraph } from '@/features/template/ui/form-set/application-form/individual/paragraphs/individual-schedule-paragraph'
 import {
   mergeSubjectiveFromShortEssayEdit,
   ShortEssay,
@@ -48,9 +48,9 @@ import type { PaymentStatementCalculationLinesViewModel } from '@/features/templ
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
-import type { ProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/program-registration-form/paragraph-body'
-import type { ProgramApplicationFormInstructorBodyOptions } from '@/features/template/ui/form-set/program-application-form-instructor/paragraph-body'
-import type { ProgramApplicationFormVolunteerBodyOptions } from '@/features/template/ui/form-set/program-application-form-volunteer/paragraph-body'
+import type { ProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import type { ProgramApplicationFormInstructorBodyOptions } from '@/features/template/ui/form-set/application-form/instructor/paragraph-body'
+import type { ProgramApplicationFormVolunteerBodyOptions } from '@/features/template/ui/form-set/application-form/volunteer/paragraph-body'
 
 export type { ProgramApplicationFormInstructorBodyOptions }
 
@@ -91,6 +91,8 @@ export type RenderFormParagraphBodyOptions = {
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
   /** 일반 프로그램 등록폼 전용 단락 본문 상태 */
   programRegistration?: ProgramRegistrationParagraphBodyOptions
+  /** UJAT 프로그램 등록 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatProgramRegistration?: boolean
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
@@ -216,6 +218,7 @@ export function renderFormParagraphBody(
           paymentStatementCalculationLines={options?.paymentStatementCalculationLines}
           paymentStatementDisplayMode={options?.paymentStatementDisplayMode}
           programRegistration={options?.programRegistration}
+          ujatProgramRegistration={options?.ujatProgramRegistration}
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
           applicantRecruitFormInstitution={options?.applicantRecruitFormInstitution}
           applicantRecruitFormIndividual={options?.applicantRecruitFormIndividual}

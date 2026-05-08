@@ -25,23 +25,24 @@ import type { PaymentStatementBasicInfoAutofillValues } from '@/features/templat
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
-import { renderApplicantRecruitFormIndividualParagraphBody } from '@/features/template/ui/form-set/applicant-recruit-form-individual/paragraph-body'
-import { renderApplicantRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/applicant-recruit-form-institution/paragraph-body'
-import { renderRecruitFormInstructorParagraphBody } from '@/features/template/ui/form-set/recruit-form-instructor/paragraph-body'
-import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form-volunteer/paragraph-body'
-import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/program-application-form-institution/paragraph-body'
+import { renderApplicantRecruitFormIndividualParagraphBody } from '@/features/template/ui/form-set/recruit-form/applicant-recruit-form-individual/paragraph-body'
+import { renderApplicantRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/applicant-recruit-form-institution/paragraph-body'
+import { renderRecruitFormInstructorParagraphBody } from '@/features/template/ui/form-set/recruit-form/recruit-form-instructor/paragraph-body'
+import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/recruit-form-volunteer/paragraph-body'
+import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/institution/paragraph-body'
 import {
   renderProgramApplicationFormInstructorParagraphBody,
   type ProgramApplicationFormInstructorBodyOptions,
-} from '@/features/template/ui/form-set/program-application-form-instructor/paragraph-body'
+} from '@/features/template/ui/form-set/application-form/instructor/paragraph-body'
 import {
   renderProgramApplicationFormVolunteerParagraphBody,
   type ProgramApplicationFormVolunteerBodyOptions,
-} from '@/features/template/ui/form-set/program-application-form-volunteer/paragraph-body'
+} from '@/features/template/ui/form-set/application-form/volunteer/paragraph-body'
 import {
   renderProgramRegistrationParagraphBody,
   type ProgramRegistrationParagraphBodyOptions,
-} from '@/features/template/ui/form-set/program-registration-form/paragraph-body'
+} from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import { renderUjatProgramRegistrationParagraphBody } from '@/features/template/ui/form-set/registration-form/UJAT/paragraph-body'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -390,6 +391,7 @@ export function HorizontalTableParagraphBody({
   paymentStatementCalculationLines,
   paymentStatementDisplayMode,
   programRegistration,
+  ujatProgramRegistration,
   programApplicationFormInstitution,
   applicantRecruitFormInstitution,
   applicantRecruitFormIndividual,
@@ -411,6 +413,7 @@ export function HorizontalTableParagraphBody({
   paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
   programRegistration?: ProgramRegistrationParagraphBodyOptions
+  ujatProgramRegistration?: boolean
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
@@ -458,6 +461,12 @@ export function HorizontalTableParagraphBody({
 
   const programRegistrationBody = renderProgramRegistrationParagraphBody(p, programRegistration)
   if (programRegistrationBody != null) return programRegistrationBody
+
+  const ujatProgramRegistrationBody = renderUjatProgramRegistrationParagraphBody(
+    p,
+    ujatProgramRegistration
+  )
+  if (ujatProgramRegistrationBody != null) return ujatProgramRegistrationBody
 
   const applicantRecruitFormIndividualBody = renderApplicantRecruitFormIndividualParagraphBody(
     p,
