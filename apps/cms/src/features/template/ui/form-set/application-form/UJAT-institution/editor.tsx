@@ -34,6 +34,7 @@ export function UjatProgramApplicationFormInstitutionEditorLeftColumn({
         paragraphBodyOptions={{
           structureLockedParagraphIds: vm.structureLockedParagraphIds,
           structureLockedAuthoringChoicePreview: true,
+          ujatProgramApplicationFormInstitution: true,
         }}
         headingDescriptionExtraClassName="paragraph-input-explanation-title"
       />

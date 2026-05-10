@@ -374,6 +374,7 @@ export function useProgramParticipantApplicationEditor(
         structureLockedParagraphIds: seedParagraphIds,
         structureLockedAuthoringChoicePreview: true,
         programApplicationFormInstitution: variant === 'institution',
+        ujatProgramApplicationFormInstitution: variant === 'ujat-application-institution',
         applicantRecruitFormInstitution: variant === 'applicant-recruit-institution',
         applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
         recruitFormInstructor: variant === 'recruit-instructor',

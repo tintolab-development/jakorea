@@ -32,6 +32,7 @@ import { renderRecruitFormInstructorParagraphBody } from '@/features/template/ui
 import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/recruit-form-volunteer/paragraph-body'
 import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraph-body'
 import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/institution/paragraph-body'
+import { renderUjatProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraph-body'
 import {
   renderProgramApplicationFormInstructorParagraphBody,
   type ProgramApplicationFormInstructorBodyOptions,
@@ -395,6 +396,7 @@ export function HorizontalTableParagraphBody({
   programRegistration,
   ujatProgramRegistration,
   programApplicationFormInstitution,
+  ujatProgramApplicationFormInstitution,
   applicantRecruitFormInstitution,
   ujatRecruitFormInstitution,
   applicantRecruitFormIndividual,
@@ -420,6 +422,8 @@ export function HorizontalTableParagraphBody({
   ujatProgramRegistration?: boolean
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
+  /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatProgramApplicationFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   applicantRecruitFormInstitution?: boolean
   /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
@@ -511,6 +515,11 @@ export function HorizontalTableParagraphBody({
     programApplicationFormInstitution
   )
   if (programApplicationFormInstitutionBody != null) return programApplicationFormInstitutionBody
+
+  const ujatProgramApplicationFormInstitutionBody =
+    renderUjatProgramApplicationFormInstitutionParagraphBody(p, ujatProgramApplicationFormInstitution)
+  if (ujatProgramApplicationFormInstitutionBody != null)
+    return ujatProgramApplicationFormInstitutionBody
 
   const programApplicationFormInstructorBody = renderProgramApplicationFormInstructorParagraphBody(
     p,

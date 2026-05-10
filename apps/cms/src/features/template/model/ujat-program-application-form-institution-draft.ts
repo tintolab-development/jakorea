@@ -11,6 +11,9 @@ import {
 export const UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS = {
   personalInfoCollection: 'ujat-program-application-institution-seed-personal-info',
   thirdPartyConsent: 'ujat-program-application-institution-seed-third-party',
+  applicationRegion: 'ujat-program-application-institution-seed-application-region',
+  basicInfo: 'ujat-program-application-institution-seed-basic-info',
+  gradeApplicationInfo: 'ujat-program-application-institution-seed-grade-application-info',
 } as const
 
 export const UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS = new Set<string>(
@@ -101,10 +104,51 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
   })
 }
 
+function createSeedHorizontalTable(
+  id: string,
+  paragraphTitle: string,
+  paragraphDescription: string
+): HorizontalTableParagraph {
+  return normalizeHorizontalTableParagraph({
+    id,
+    kind: 'single_item',
+    variant: 'horizontal_table',
+    requiredMark: true,
+    paragraphTitle,
+    paragraphDescription,
+    participatesInTitleNumbering: true,
+    tableFlavor: 'text',
+    columnHeaders: ['항목', '내용'],
+    dataRows: [['', '']],
+    columnFields: [],
+    fieldDataRows: [],
+    bottomText: '',
+    showBottomText: false,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
+    answerRequired: true,
+  })
+}
+
 export function createUjatProgramApplicationFormInstitutionDraft(): WritingFormDraft {
   const paragraphs: WritingFormParagraph[] = [
     createPersonalInfoCollectionParagraph(),
     createThirdPartyConsentParagraph(),
+    createSeedHorizontalTable(
+      UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.applicationRegion,
+      '신청 지역',
+      '설명 입력'
+    ),
+    createSeedHorizontalTable(
+      UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo,
+      '기본 정보',
+      '설명 입력'
+    ),
+    createSeedHorizontalTable(
+      UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeApplicationInfo,
+      '학년 별 신청 정보',
+      '학교에서 신청하는 모든 신청 학년 별 학급 수 및 반 별 학생 수를 작성해주세요.'
+    ),
   ]
   return normalizeWritingFormDraft({
     schemaVersion: 1,
