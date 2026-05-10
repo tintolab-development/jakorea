@@ -745,3 +745,42 @@
 .form-editor-horizontal-table__bottom-input.paragraph-input--edit .paragraph-input__shell--focused {
   border-bottom-color: var(--paragraph-input-mint, var(--color-mint-01, #01a1af));
 }
+
+/* 다중 줄 본문(\n 포함) 보텀텍스트가 한 줄 폭 측정값에 끌려 끝없이 늘어나지 않도록 100% 폭 고정 */
+.form-editor-horizontal-table__bottom-input .paragraph-input__row,
+.form-editor-horizontal-table__bottom-input .paragraph-input__main,
+.form-editor-horizontal-table__bottom-input .paragraph-input__view-text,
+.form-editor-horizontal-table__bottom-input .paragraph-input__shell {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* 행정정보 공동이용 사전 동의서 — 공동이용 행정정보 표 연번 컬럼 100×54 (1·3번째 컬럼) */
+[data-paragraph-id='agreement-notice-table'] .form-editor-horizontal-table__row > *:nth-child(1),
+[data-paragraph-id='agreement-notice-table'] .form-editor-horizontal-table__row > *:nth-child(3) {
+  flex: 0 0 100px;
+  min-width: 100px;
+  max-width: 100px;
+}
+
+/* 초상권 동의서(1번 섹션) — 4열 표에서 항목 컬럼 폭 고정 */
+[data-paragraph-id='agreement-portrait-personal-consent-table']
+  .form-editor-horizontal-table__row
+  > *:nth-child(1),
+[data-paragraph-id='agreement-portrait-personal-consent-table']
+  .form-editor-horizontal-table__row
+  > *:nth-child(3) {
+  flex: 0 0 120px;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+/* 초상권 동의서(2/3번 섹션) — 2열 표에서 좌측 항목 폭 고정 */
+[data-paragraph-id='agreement-portrait-delegated-consent-table']
+  .form-editor-horizontal-table__row
+  > *:nth-child(1),
+[data-paragraph-id='agreement-portrait-usage-table'] .form-editor-horizontal-table__row > *:nth-child(1) {
+  flex: 0 0 180px;
+  min-width: 180px;
+  max-width: 180px;
+}

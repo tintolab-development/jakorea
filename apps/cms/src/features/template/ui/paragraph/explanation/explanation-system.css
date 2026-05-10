@@ -23,3 +23,42 @@
   font-weight: 700;
   line-height: 140%; /* 33.6px */
 }
+
+.explanation-system--document .explanation-system-pill {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #000;
+  text-align: right;
+  font-size: 20px;
+  line-height: 150%;
+}
+
+.explanation-system-signature-document {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 120px;
+  width: 100%;
+}
+
+.explanation-system-signature-document__name {
+  color: #000;
+  text-align: right;
+  font-family: Pretendard, sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+}
+
+.explanation-system-signature-document__mark {
+  color: #666;
+  text-align: right;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+}

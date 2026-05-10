@@ -85,7 +85,7 @@ export interface ClosingParagraph extends WritingFormParagraphBase {
 export type AgreementSystemPreset = 'agreement_date' | 'agreement_signature'
 
 /** 시스템 날짜·서명 본문 표시 — authoring(작성/미리보기) vs write(응답 입력) */
-export type AgreementSystemBodyDisplayMode = 'authoring' | 'write'
+export type AgreementSystemBodyDisplayMode = 'authoring' | 'write' | 'document'
 
 /** 설명글·기타형 — 시스템 등 본문 에디터 없음 */
 export interface SystemParagraph extends WritingFormParagraphBase {
@@ -146,6 +146,8 @@ export type ShortEssayParagraph = WritingFormParagraphBase & {
   items?: Array<{ id: string; label?: string; placeholder?: string; bodyText: string }>
   bodyPlaceholder: string
   bodyText: string
+  /** 항목 입력 줄 수 — 1: 한 줄 입력(44px), 그 외/미지정: 기본 멀티라인(5줄). 동의 양식 짧은 라벨(성명·생년월일·전화번호 등)에 사용 */
+  itemInputRows?: 1 | 5
 }
 
 /** N차시 교육 계획 등 — `short_essay`와 동일 필드 모양, 전용 variant·UI */
@@ -493,6 +495,8 @@ export interface HorizontalTableParagraph extends WritingFormParagraphBase {
   showBottomConsent: boolean
   /** `showBottomConsent`일 때 동의 라디오 값 */
   bottomConsent?: TableBottomConsent
+  /** 하단에 식별번호 입력 영역 노출 — 행정정보 공동이용 사전 동의서 전용 */
+  idTypeWithInput?: IdTypeWithInputParagraph | null
   answerRequired: boolean
 }
 
@@ -1005,6 +1009,7 @@ export function normalizeHorizontalTableParagraph(
       showBottomText: Boolean(p.showBottomText),
       showBottomConsent: Boolean(p.showBottomConsent),
       bottomConsent: normalizeTableBottomConsent(p.bottomConsent),
+      idTypeWithInput: p.idTypeWithInput ?? null,
     }
   }
   /** `columnFields`가 비어 있으면 슬롯마다 주관식으로 채우지 않고 텍스트형 기본(필드형 최초·복구 시 한 셀만 바꿔도 전행 주관식 되는 문제 방지) */
@@ -1047,6 +1052,7 @@ export function normalizeHorizontalTableParagraph(
       showBottomText: Boolean(p.showBottomText),
       showBottomConsent: Boolean(p.showBottomConsent),
       bottomConsent: normalizeTableBottomConsent(p.bottomConsent),
+      idTypeWithInput: p.idTypeWithInput ?? null,
     }
   }
 
@@ -1075,6 +1081,7 @@ export function normalizeHorizontalTableParagraph(
     showBottomText: Boolean(p.showBottomText),
     showBottomConsent: Boolean(p.showBottomConsent),
     bottomConsent: normalizeTableBottomConsent(p.bottomConsent),
+    idTypeWithInput: p.idTypeWithInput ?? null,
   }
 }
 
@@ -2192,7 +2199,6 @@ export const AGREEMENT_NOTICE_PARAGRAPH_IDS = {
   subject: 'agreement-notice-subject',
   systemDate: 'agreement-notice-system-date',
   systemSignature: 'agreement-notice-system-signature',
-  closing: 'agreement-notice-closing',
 } as const
 
 /** 템플릿 고정 단락 — 삭제·복제·순서 변경 불가 */
@@ -2206,7 +2212,6 @@ export const AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS = new Set<string>([
   AGREEMENT_NOTICE_PARAGRAPH_IDS.subject,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature,
-  AGREEMENT_NOTICE_PARAGRAPH_IDS.closing,
 ])
 
 export const AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
@@ -2223,15 +2228,16 @@ export function createDefaultIdTypeWithInputOptions(): IdTypeWithInputOption[] {
 }
 
 const AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT =
-  'ㆍ 이용기관은 본인의 위 공동이용 행정정보를 「전자정부법」 제36조제2항에 따라 타 기관에 제공할 수 있으며, 본인의 동의 없이 목적 외의 용도로 이용하거나 제3자에게 제공할 수 없습니다.'
+  '※ 이용기관은 본인이 동의한 위 공동이용 행정정보를 확인하기 위해 「개인정보 보호법」 시행령 제19조에 따라 주민등록번호, 여권번호, 운전면허의 면허번호 또는 외국인등록번호가 포함된 행정정보를 처리할 수 있습니다.\n이용기관이 요청하는 경우 기재하여 주십시오(필요시 기재사항)'
 
 const AGREEMENT_NOTICE_CONSENT_LINES = [
-  '○ 본인은 위 사무의 처리를 위하여 「전자정부법」 제36조제1항에 따른 행정정보의 공동이용에 관한 사항을 안내받았으며, 이에 동의합니다.',
-  'ㆍ 만일, 본인이 위 행정정보 이용에 대해 동의하지 않는 경우 이용기관은 본인에 대한 위 사무를 처리할 수 없습니다.',
+  '○ 본인은 위 사무의 처리를 위하여 「전자정부법」 제36조에 따른 행정정보 공동이용을 통해 이용기관의 업무처리담당자가 전자적으로 본인의 구비서류(공동이용 행정정보)를 확인하는 것에 동의합니다.',
+  '* 만일, 본인이 위 행정정보 이용에 대해 동의를 하지 아니할 경우에도 불이익은 없습니다. 다만, 동의하지 아니한 경우에는 본인이 해당 구비서류를 제출하여야 합니다.',
 ] as const
 
 /** 동의 양식 목록 > 행정정보 공동이용 사전동의서 — 편집 시드 초안 */
 export function createAgreementNoticeDraft(): WritingFormDraft {
+  const idTypeOpts = createDefaultIdTypeWithInputOptions()
   const tableSeed: HorizontalTableParagraph = normalizeHorizontalTableParagraph({
     id: AGREEMENT_NOTICE_PARAGRAPH_IDS.table,
     kind: 'single_item',
@@ -2242,13 +2248,32 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['연번', '행정정보명', '연번', '행정정보명'],
-    dataRows: [['1', '성범죄경력 및 아동학대관련 범죄전력 조회', '', '']],
+    dataRows: [
+      ['1', '성범죄경력 및 아동학대관련 범죄전력 조회', '', ''],
+      ['', '', '', ''],
+      ['', '', '', ''],
+      ['', '', '', ''],
+    ],
     columnFields: [],
     fieldDataRows: [],
     bottomText: AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT,
     showBottomText: true,
     showBottomConsent: false,
     bottomConsent: 'agree',
+    idTypeWithInput: {
+      id: AGREEMENT_NOTICE_PARAGRAPH_IDS.idType,
+      kind: 'single_item',
+      variant: 'id_type_with_input',
+      requiredMark: true,
+      paragraphTitle: '',
+      paragraphDescription: '',
+      participatesInTitleNumbering: true,
+      options: idTypeOpts,
+      selectedOptionId: idTypeOpts[0]?.id ?? null,
+      inputPlaceholder: '주민등록번호를 입력해 주세요',
+      inputValue: '',
+      answerRequired: true,
+    },
     answerRequired: true,
   })
 
@@ -2292,24 +2317,10 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         paragraphDescription: '',
         participatesInTitleNumbering: true,
         bodyPlaceholder: '이용 목적을 입력해 주세요',
-        bodyText: '범죄경력의 유무 조회',
+        bodyText: '범죄경력 유무 조회',
         answerRequired: true,
       },
       tableSeed,
-      {
-        id: AGREEMENT_NOTICE_PARAGRAPH_IDS.idType,
-        kind: 'single_item',
-        variant: 'id_type_with_input',
-        requiredMark: true,
-        paragraphTitle: '',
-        paragraphDescription: '',
-        participatesInTitleNumbering: true,
-        options: createDefaultIdTypeWithInputOptions(),
-        selectedOptionId: 'agreement-notice-id-resident',
-        inputPlaceholder: '주민등록번호를 입력해 주세요',
-        inputValue: '',
-        answerRequired: true,
-      },
       {
         id: AGREEMENT_NOTICE_PARAGRAPH_IDS.consentStatic,
         kind: 'description',
@@ -2327,9 +2338,10 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         requiredMark: true,
         paragraphTitle: '대상자 본인',
         paragraphDescription: '',
-        participatesInTitleNumbering: true,
+        participatesInTitleNumbering: false,
         answerRequired: true,
         showItemTitle: true,
+        itemInputRows: 1,
         items: [
           {
             id: 'agreement-notice-subj-name',
@@ -2373,15 +2385,228 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         paragraphDescription: '',
         participatesInTitleNumbering: false,
       },
+    ],
+  }
+}
+
+/** 동의 양식 > 초상권 수집·이용 동의서 — 시드 단락 id */
+export const AGREEMENT_PORTRAIT_PARAGRAPH_IDS = {
+  title: 'agreement-portrait-title',
+  intro: 'agreement-portrait-intro',
+  personalConsentTable: 'agreement-portrait-personal-consent-table',
+  delegatedConsentTable: 'agreement-portrait-delegated-consent-table',
+  portraitUsageTable: 'agreement-portrait-usage-table',
+  confirmationClosing: 'agreement-portrait-confirmation-closing',
+  systemDate: 'agreement-portrait-system-date',
+  systemSignature: 'agreement-portrait-system-signature',
+} as const
+
+/** 템플릿 고정 단락 — 삭제·복제·순서 변경 불가 */
+export const AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS = new Set<string>([
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS.title,
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS.intro,
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable,
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS.delegatedConsentTable,
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable,
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS.confirmationClosing,
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS.systemDate,
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS.systemSignature,
+])
+
+export const AGREEMENT_PORTRAIT_HIDDEN_DRAG_HANDLE_IDS = new Set<string>(
+  AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS
+)
+
+const AGREEMENT_PORTRAIT_INTRO_TEXT =
+  '아래 사항에 동의할 경우, 명시된 사용 용도에 한하여 글과 함께 저작물을 제작하는 형태로 초상권을 사용할 권리를 촬영자에게 부여합니다.\n또한, 저작물에 대한 소유권을 주장하지 않으며 저작물에 대한 소유권 및 저작권이 JA Korea에 있음을 확인합니다.'
+
+const AGREEMENT_PORTRAIT_PERSONAL_CONSENT_QUESTION =
+  '위 동의서를 거부할 수 있으며, 동의하지 않을 경우 수집 참여가 제한될 수 있습니다. 위 개인정보 및 초상권 수집·이용에 동의하십니까?'
+
+const AGREEMENT_PORTRAIT_DELEGATED_CONSENT_QUESTION =
+  '위 개인정보 및 초상권 수집·이용에 동의하십니까?'
+
+const AGREEMENT_PORTRAIT_USAGE_CONSENT_QUESTION =
+  '위와 같은 초상권 활용에 동의하십니까?'
+
+/** 동의 양식 목록 > 초상권 수집·이용 동의서 — 편집 시드 초안 */
+export function createAgreementPortraitDraft(): WritingFormDraft {
+  return {
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'numeric' },
+    paragraphs: [
       {
-        id: AGREEMENT_NOTICE_PARAGRAPH_IDS.closing,
+        id: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.title,
+        kind: 'description',
+        variant: 'survey_title_with_period',
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        surveyTitle: '초상권 수집·이용 동의서',
+        surveyDescription: '',
+        periodMode: 'immediate',
+        startAt: null,
+        endAt: null,
+        showWritingPeriodOnForm: false,
+      },
+      {
+        id: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.intro,
+        kind: 'single_item',
+        variant: 'agreement_explanation_text',
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        bodyPlaceholder: '한 줄 안내를 입력해 주세요',
+        bodyText: AGREEMENT_PORTRAIT_INTRO_TEXT,
+        answerRequired: true,
+      },
+      normalizeVerticalTableParagraph({
+        id: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable,
+        kind: 'single_item',
+        variant: 'vertical_table',
+        requiredMark: true,
+        paragraphTitle: '개인정보 및 초상권 수집·이용 동의',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        verticalTableFlavor: 'text',
+        rows: [
+          {
+            stageCount: 2,
+            headers: ['성명', '소속'],
+            cells: ['한글 성명', '소속 / 소속 없음'],
+          },
+          {
+            stageCount: 1,
+            headers: ['수집 항목'],
+            cells: ['이름, 소속, 사진, 영상'],
+          },
+          {
+            stageCount: 1,
+            headers: ['수집 목적'],
+            cells: [
+              '홍보 콘텐츠 제작·게시, 저작물의 정보 이용\n- 온라인(디지털 매체) 콘텐츠 제작: 홈페이지, SNS 게시물\n- 간행물(인쇄/출판/제작물) 제작: 리플렛, 활동북, 브로슈어, 기념보고서, 아뉴얼리포트 등',
+            ],
+          },
+          {
+            stageCount: 1,
+            headers: ['보유 기간'],
+            cells: ['10년'],
+          },
+        ],
+        bottomText: AGREEMENT_PORTRAIT_PERSONAL_CONSENT_QUESTION,
+        showBottomText: true,
+        showBottomConsent: true,
+        bottomConsent: 'agree',
+        answerRequired: true,
+      }),
+      normalizeVerticalTableParagraph({
+        id: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.delegatedConsentTable,
+        kind: 'single_item',
+        variant: 'vertical_table',
+        requiredMark: true,
+        paragraphTitle: '개인정보처리위탁 제공 동의',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        verticalTableFlavor: 'text',
+        rows: [
+          {
+            stageCount: 1,
+            headers: ['위탁 업체'],
+            cells: ['홍보 관련 위탁 업체'],
+          },
+          {
+            stageCount: 1,
+            headers: ['위탁 업무'],
+            cells: [
+              'JA Korea 사업 수행 및 관리: 대내외 보고서 작성, 활동영상 및 자료 제작\nJA Korea 프로그램 홍보를 위한 온라인 매체 게시 및 인쇄물 발간\n- 온라인 매체: 홈페이지 및 SNS 이미지/영상 포맷 게시물\n- 인쇄물: 리플렛, 활동북, 브로슈어, 기념보고서, 사례집, 아카이브자료 등',
+            ],
+          },
+          {
+            stageCount: 1,
+            headers: ['위탁 기간'],
+            cells: ['개인정보 수집 시 동의기간 또는 위탁계약 종료 시까지'],
+          },
+        ],
+        bottomText: AGREEMENT_PORTRAIT_DELEGATED_CONSENT_QUESTION,
+        showBottomText: true,
+        showBottomConsent: true,
+        bottomConsent: 'agree',
+        answerRequired: true,
+      }),
+      normalizeVerticalTableParagraph({
+        id: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable,
+        kind: 'single_item',
+        variant: 'vertical_table',
+        requiredMark: true,
+        paragraphTitle: '초상권 제공·이용 동의',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        verticalTableFlavor: 'text',
+        rows: [
+          {
+            stageCount: 1,
+            headers: ['초상권 이용 목적'],
+            cells: ['1) JA Korea 온라인 게시\n2) JA Korea 보고자료 작성\n3) JA Korea 대내외 홍보자료 활용'],
+          },
+          {
+            stageCount: 1,
+            headers: ['초상권 수집 범위 및 이용기간'],
+            cells: [
+              '1) 초상권 수집 범위: 본 프로그램 참여 중 촬영되는 사진 및 동영상 일체\n2) 사진 및 동영상 자료의 보유 및 이용기간\n- 보유 및 이용기간: 사진 및 동영상 촬영일로부터 5년까지 보유 및 이용\n(단, 홍보자료로 제작된 사진 및 동영상의 경우 활용이 지속될 수 있음)',
+            ],
+          },
+          {
+            stageCount: 1,
+            headers: ['초상권 사용 범위'],
+            cells: [
+              '1) 간행물(인쇄/출판/제작물): 리플렛, 활동북, 브로슈어, 기념보고서, 사례집, 아뉴얼리포트 등\n2) 온라인(디지털 매체): 홈페이지, SNS 게시물 등',
+            ],
+          },
+          {
+            stageCount: 1,
+            headers: ['초상권 이용·활용 동의 거부'],
+            cells: [
+              '위 사항은 JA Korea 프로그램 관련 초상권 이용 및 활용 동의에 관한 사항이며, 귀하는 이를 거부할 수 있습니다. 개인정보, 초상권 수집 이용에 대한 동의를 거부할 권리가 있으며, 동의 거부 시 관련 홍보물 제작에서 제외됩니다.',
+            ],
+          },
+        ],
+        bottomText: AGREEMENT_PORTRAIT_USAGE_CONSENT_QUESTION,
+        showBottomText: true,
+        showBottomConsent: true,
+        bottomConsent: 'agree',
+        answerRequired: true,
+      }),
+      {
+        id: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.confirmationClosing,
         kind: 'description',
         variant: 'closing',
         requiredMark: false,
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
-        body: '',
+        body: '위와 같은 개인정보 및 초상권 활용에 대한 내용을 모두 확인했습니다.',
+      },
+      {
+        id: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.systemDate,
+        kind: 'description',
+        variant: 'system',
+        systemPreset: 'agreement_date',
+        requiredMark: false,
+        paragraphTitle: '날짜 유형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+      },
+      {
+        id: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.systemSignature,
+        kind: 'description',
+        variant: 'system',
+        systemPreset: 'agreement_signature',
+        requiredMark: false,
+        paragraphTitle: '서명란 유형',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
       },
     ],
   }
@@ -2675,6 +2900,7 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
 
 /**
  * 동의 양식: 마지막이 마무리이고 그 앞이 서명·날짜 시스템 단락이면 하단 3개는 드래그 제외.
+ * 동의 양식(agreement-notice 등): 마지막 두 단락이 [agreement_date, agreement_signature]면 그 둘만 핀드 테일.
  * 그 외: 첫 단락 + middle + 마지막 1개만 고정.
  */
 export function getWritingFormHeadMiddlePinnedTail(paragraphs: WritingFormParagraph[]): {
@@ -2706,6 +2932,25 @@ export function getWritingFormHeadMiddlePinnedTail(paragraphs: WritingFormParagr
       head,
       middle: paragraphs.slice(1, -3),
       pinnedTail: paragraphs.slice(-3),
+    }
+  }
+
+  /** 마지막 두 단락이 [agreement_date, agreement_signature]이면 둘 다 핀드 테일(마무리 단락 없는 동의서) */
+  const doublePinnedAgreementSystem =
+    n >= 4 &&
+    last.kind === 'description' &&
+    last.variant === 'system' &&
+    last.systemPreset === 'agreement_signature' &&
+    p2 != null &&
+    p2.kind === 'description' &&
+    p2.variant === 'system' &&
+    p2.systemPreset === 'agreement_date'
+
+  if (doublePinnedAgreementSystem) {
+    return {
+      head,
+      middle: paragraphs.slice(1, -2),
+      pinnedTail: paragraphs.slice(-2),
     }
   }
 

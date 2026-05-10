@@ -38,17 +38,29 @@ export function ExplanationSystem({
 
   const bodyText =
     preset === 'agreement_date'
-      ? displayMode === 'write'
+      ? displayMode === 'write' || displayMode === 'document'
         ? formatKoreanFullDate(now ?? new Date())
         : AUTHORING_DATE_LABEL
       : displayMode === 'write'
         ? `동의자 : ${(participantName ?? '').trim() || '000'} (서명)`
         : AUTHORING_SIGNATURE_LABEL
 
+  const documentSignatureBody =
+    preset === 'agreement_signature' && displayMode === 'document' ? (
+      <div className="explanation-system-signature-document">
+        <span className="explanation-system-signature-document__name">동의자</span>
+        <span className="explanation-system-signature-document__mark">(서명)</span>
+      </div>
+    ) : null
+
   return (
-    <div className="form-editor-body">
+    <div
+      className={['form-editor-body', displayMode === 'document' ? 'explanation-system--document' : '']
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="explanation-system-row">
-        <div className="explanation-system-pill">{bodyText}</div>
+        <div className="explanation-system-pill">{documentSignatureBody ?? bodyText}</div>
       </div>
     </div>
   )

@@ -137,7 +137,7 @@ export function TemplatePreviewModal({
     setPreviewPageParam(nextPage)
   }
 
-  if (isAgreementPreviewLayout) {
+  if (isAgreementPreviewLayout && previewLayout !== 'a4-document') {
     return (
       <AgreementTemplatePreviewModal
         open={open}

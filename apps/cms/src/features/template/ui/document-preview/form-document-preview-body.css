@@ -106,3 +106,26 @@
   width: 1.1em;
   text-align: center;
 }
+
+/* short_essay 가로 테이블 — contentOnly 모드 (A4 미리보기) */
+.form-document-short-essay-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.form-document-short-essay-table th,
+.form-document-short-essay-table td {
+  border: 1px solid var(--table-line, #e0e0e0);
+  padding: 12px 16px;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.form-document-short-essay-table th {
+  font-weight: 600;
+  background: var(--table-header, #f5f5f5);
+}

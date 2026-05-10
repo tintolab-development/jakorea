@@ -4,11 +4,23 @@ import {
   AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS,
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
   AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS,
+  AGREEMENT_PORTRAIT_HIDDEN_DRAG_HANDLE_IDS,
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
+  AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS,
   createAgreementNoticeDraft,
+  createAgreementPortraitDraft,
   createEducatorFacilitatorPledgeDraft,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
+import {
+  AGREEMENT_NOTICE_A4_HIDDEN_PARAGRAPH_IDS,
+  getAgreementNoticeA4ParagraphGap,
+} from '@/features/template/model/agreement-notice-a4-preview'
+import {
+  AGREEMENT_PORTRAIT_A4_HIDDEN_PARAGRAPH_IDS,
+  getAgreementPortraitA4ParagraphGap,
+} from '@/features/template/model/agreement-portrait-a4-preview'
 import { TemplateListCard } from '@/features/template/ui/template-list-card'
 import './template-form-tab.css'
 import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
@@ -95,6 +107,10 @@ import {
 import { CrimeRecordConsentDocumentFullpageModal } from '@/features/template/ui/crime-record-consent-document-fullpage-modal'
 import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
+import {
+  createContentOnlyA4PreviewOptions,
+  shouldUseA4PreviewForWritingTemplate,
+} from '@/features/template/lib/a4-preview-template-options'
 
 const AGREEMENT_CRIME_TEMPLATE_ID = 'agreement-crime'
 
@@ -190,7 +206,8 @@ export default function TemplateFormTab() {
     selectedTemplate?.id === 'registration-general' ||
     selectedTemplate?.id === 'registration-economy'
   const isUjatProgramRegistrationTemplate = selectedTemplate?.id === 'registration-ujat'
-  const isApplicantRecruitInstitutionTemplate = selectedTemplate?.id === 'recruitment-participant-school'
+  const isApplicantRecruitInstitutionTemplate =
+    selectedTemplate?.id === 'recruitment-participant-school'
   const isUjatRecruitInstitutionTemplate = selectedTemplate?.id === 'recruitment-ujat-school'
   const isApplicantRecruitIndividualTemplate =
     selectedTemplate?.id === 'recruitment-participant-individual'
@@ -200,11 +217,13 @@ export default function TemplateFormTab() {
   const isProgramParticipantApplicationTemplate =
     selectedTemplate?.id === 'application-participant-school' ||
     selectedTemplate?.id === 'application-participant-individual'
-  const isUjatProgramApplicationInstitutionTemplate = selectedTemplate?.id === 'application-ujat-school'
+  const isUjatProgramApplicationInstitutionTemplate =
+    selectedTemplate?.id === 'application-ujat-school'
   const isProgramInstructorApplicationTemplate = selectedTemplate?.id === 'application-instructor'
   const isProgramVolunteerApplicationTemplate =
     selectedTemplate?.id === 'application-volunteer' ||
     selectedTemplate?.id === 'application-ujat-volunteer'
+  const useA4PreviewForWritingTemplate = shouldUseA4PreviewForWritingTemplate(selectedTemplate?.id)
   const programParticipantApplicationVariant: ProgramParticipantApplicationEditorVariant =
     selectedTemplate?.id === 'application-participant-school' ? 'institution' : 'individual'
   const programRegistrationVm = useProgramRegistrationEditor(
@@ -287,6 +306,14 @@ export default function TemplateFormTab() {
     if (isCrimeConsentDetail) return
     if (!selectedTemplate) return
     if (isWritingUserPreviewOpen) return
+    // agreement-notice·agreement-expense·agreement-portrait는 AgreementWritingFormShell이 직접 미리보기 제어
+    if (
+      params.id === 'agreement-notice' ||
+      params.id === 'agreement-expense' ||
+      params.id === 'agreement-portrait'
+    ) {
+      return
+    }
 
     if (isProgramRegistrationTemplate) {
       programRegistrationVm.handlePreview()
@@ -311,15 +338,22 @@ export default function TemplateFormTab() {
       programParticipantApplicationVm.handlePreview()
       return
     }
+    const genericA4Options = shouldUseA4PreviewForWritingTemplate(selectedTemplate.id)
+      ? createContentOnlyA4PreviewOptions()
+      : undefined
     openWritingUserPreview({
       draft: EMPTY_PREVIEW_DRAFT,
       updateParagraph: noopUpdateParagraph,
       headerTitle: selectedTemplate.templateName ?? '양식 미리보기',
       editorKind: selectedTemplate.id.startsWith('agreement-') === true ? 'agreement' : 'survey',
+      previewLayout: genericA4Options?.previewLayout,
+      a4RenderMode: genericA4Options?.a4RenderMode,
+      hideParagraphRequiredChrome: genericA4Options?.hideParagraphRequiredChrome,
     })
   }, [
     params.userPreview,
     params.mode,
+    params.id,
     isCrimeConsentDetail,
     selectedTemplate,
     isWritingUserPreviewOpen,
@@ -366,11 +400,17 @@ export default function TemplateFormTab() {
       programParticipantApplicationVm.handlePreview()
       return
     }
+    const genericA4Options = useA4PreviewForWritingTemplate
+      ? createContentOnlyA4PreviewOptions()
+      : undefined
     openWritingUserPreview({
       draft: EMPTY_PREVIEW_DRAFT,
       updateParagraph: noopUpdateParagraph,
       headerTitle: selectedTemplate?.templateName ?? '양식 미리보기',
       editorKind: previewEditorKind,
+      previewLayout: genericA4Options?.previewLayout,
+      a4RenderMode: genericA4Options?.a4RenderMode,
+      hideParagraphRequiredChrome: genericA4Options?.hideParagraphRequiredChrome,
     })
   }, [
     isProgramInstructorApplicationTemplate,
@@ -391,6 +431,7 @@ export default function TemplateFormTab() {
     programParticipantApplicationVm,
     programRegistrationVm,
     selectedTemplate?.templateName,
+    useA4PreviewForWritingTemplate,
     setParams,
   ])
 
@@ -420,6 +461,8 @@ export default function TemplateFormTab() {
         modalTitle={agreementExpenseRow.templateName}
         modalDescription="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
         writingPreviewHeaderTitle={agreementExpenseRow.templateName}
+        previewLayout="a4-document"
+        a4RenderMode="contentOnly"
         onClose={handleCloseTemplatePreview}
       />
     )
@@ -437,6 +480,31 @@ export default function TemplateFormTab() {
         writingPreviewHeaderTitle={noticeTitle}
         structureLockedParagraphIds={AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS}
         hideDragHandleForParagraphIds={AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS}
+        previewLayout="a4-document"
+        a4HiddenParagraphIds={AGREEMENT_NOTICE_A4_HIDDEN_PARAGRAPH_IDS}
+        a4RenderMode="contentOnly"
+        a4ParagraphGapPx={getAgreementNoticeA4ParagraphGap}
+        onClose={handleCloseTemplatePreview}
+      />
+    )
+  }
+
+  if (params.mode === 'edit' && params.id === 'agreement-portrait') {
+    const agreementPortraitRow = findWritingTemplateRowByDefinitionId('agreement-portrait')
+    const portraitTitle = agreementPortraitRow?.templateName ?? '초상권 수집·이용 동의'
+    return (
+      <AgreementWritingFormShell
+        initialDraft={createAgreementPortraitDraft}
+        defaultActiveParagraphId={AGREEMENT_PORTRAIT_PARAGRAPH_IDS.title}
+        modalTitle={portraitTitle}
+        modalDescription="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
+        writingPreviewHeaderTitle={portraitTitle}
+        structureLockedParagraphIds={AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS}
+        hideDragHandleForParagraphIds={AGREEMENT_PORTRAIT_HIDDEN_DRAG_HANDLE_IDS}
+        previewLayout="a4-document"
+        a4HiddenParagraphIds={AGREEMENT_PORTRAIT_A4_HIDDEN_PARAGRAPH_IDS}
+        a4RenderMode="contentOnly"
+        a4ParagraphGapPx={getAgreementPortraitA4ParagraphGap}
         onClose={handleCloseTemplatePreview}
       />
     )
@@ -498,7 +566,9 @@ export default function TemplateFormTab() {
           ) : isProgramVolunteerApplicationTemplate ? (
             <ProgramApplicationFormVolunteerEditorLeftColumn vm={programParticipantApplicationVm} />
           ) : isUjatProgramApplicationInstitutionTemplate ? (
-            <UjatProgramApplicationFormInstitutionEditorLeftColumn vm={programParticipantApplicationVm} />
+            <UjatProgramApplicationFormInstitutionEditorLeftColumn
+              vm={programParticipantApplicationVm}
+            />
           ) : isApplicantRecruitIndividualTemplate ? (
             <ApplicantRecruitFormIndividualEditorLeftColumn vm={programParticipantApplicationVm} />
           ) : isRecruitFormVolunteerTemplate ? (

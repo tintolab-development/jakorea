@@ -59,11 +59,18 @@ export function getDocumentPreviewParagraphViewModel(
   renderMode: FormDocumentPreviewRenderMode
 ): FormDocumentPreviewParagraphViewModel {
   const isClosing = paragraph.kind === 'description' && paragraph.variant === 'closing'
+  const isSystem = paragraph.kind === 'description' && paragraph.variant === 'system'
+  const isUntitledAgreementExplanation =
+    paragraph.kind === 'single_item' &&
+    paragraph.variant === 'agreement_explanation_text' &&
+    paragraph.paragraphTitle.trim().length === 0
 
   return {
     title: getDocumentPreviewParagraphTitle(paragraph, displayTitle),
     description: paragraph.paragraphDescription?.trim() || undefined,
-    showHeader: renderMode !== 'contentOnly' || !isClosing,
+    showHeader:
+      renderMode !== 'contentOnly' ||
+      (!isClosing && !isSystem && !isUntitledAgreementExplanation),
     showWritingPeriod: renderMode !== 'contentOnly',
     isClosing,
     isClosingSignature: isClosing && paragraph.id.includes('closing-signature'),
