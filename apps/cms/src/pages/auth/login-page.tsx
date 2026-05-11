@@ -26,7 +26,7 @@ const { Text } = Typography
 const TEST_ACCOUNTS = {
   admin: {
     email: 'admin1@jakorea.org',
-    password: 'admin123!',
+    password: 'admin1234!',
   },
   instructor: {
     email: 'instructor1@example.com',
