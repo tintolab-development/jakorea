@@ -24,6 +24,7 @@ import type { PaymentStatementCalculationLinesViewModel } from '@/features/templ
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
+import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
 import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/program-application-form-institution/paragraph-body'
 import {
@@ -499,10 +500,26 @@ export function HorizontalTableParagraphBody({
     p.id === 'agreement-portrait-personal-consent-table' ||
     p.id === 'agreement-portrait-delegated-consent-table' ||
     p.id === 'agreement-portrait-usage-table'
-  const suppressPlaceholderText = isAgreementNoticeTable || isAgreementPortraitTable
+  const isPaymentStatementPreConsentP1 = p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p1Collection
+  const isPaymentStatementPreConsentThirdPartyTable =
+    p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p3ThirdParty ||
+    p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p4RrnThirdParty
+  const suppressPlaceholderText =
+    isAgreementNoticeTable || isAgreementPortraitTable || isPaymentStatementPreConsentP1
 
   return (
-    <div className="form-editor-body form-editor-horizontal-table-wrap">
+    <div
+      className={[
+        'form-editor-body',
+        'form-editor-horizontal-table-wrap',
+        isPaymentStatementPreConsentP1 ? 'form-editor-horizontal-table-wrap--payment-pre-consent-p1' : '',
+        isPaymentStatementPreConsentThirdPartyTable
+          ? 'form-editor-horizontal-table-wrap--payment-pre-consent-third-party'
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div
         className="form-editor-horizontal-table"
         role="grid"
