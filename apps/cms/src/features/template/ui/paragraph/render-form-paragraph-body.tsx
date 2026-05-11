@@ -14,6 +14,7 @@ import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/
 import { StaticDescriptionLines } from '@/features/template/ui/paragraph/explanation/static-description-lines'
 import { ExplanationText } from '@/features/template/ui/paragraph/explanation/text'
 import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/title'
+import { PaymentPreConsentFixedBlock } from '@/features/template/ui/paragraph/explanation/payment-pre-consent-fixed-block'
 import { DateField } from '@/features/template/ui/paragraph/single-item/date'
 import { TimeField } from '@/features/template/ui/paragraph/single-item/time'
 import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
@@ -76,6 +77,8 @@ export type RenderFormParagraphBodyOptions = {
   structureLockedParagraphIds?: ReadonlySet<string>
   /** 지급조서(발급용) 고정 단락 미리 채움 — 목 또는 발급 대상 회원 매핑 */
   paymentStatementBasicInfoValues?: Partial<PaymentStatementBasicInfoAutofillValues>
+  /** true: 지급조서 기본정보에서 「지급 목적」만 비활성, 나머지 필드는 편집 가능(사전 동의 템플릿 등) */
+  paymentStatementBasicInfoOnlyPaymentPurposeLocked?: boolean
   /** 강의비 산출 정보 단락 미리 채움 */
   lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
   /** 강의비 산출 내역 단락 — 발급용 테이블 목·실데이터 */
@@ -167,11 +170,15 @@ export function renderFormParagraphBody(
          응답자가 채우는 영역이므로 편집 화면에서는 Disabled 입력 박스로 통일.
          `bodyText`가 비어 있으면 빈 박스(이용기관 명칭), 채워져 있으면 같은 박스 안에 default 텍스트 노출(이용사무). */
       const explanationBodyDisplayMode =
-        paragraphInteractionMode === 'authoring' &&
-        structureLocked &&
-        (p.paragraphTitle?.trim().length ?? 0) > 0
-          ? 'disabled-placeholder'
-          : 'input'
+        p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.intro ||
+        p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine ||
+        p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm
+          ? 'static-body'
+          : paragraphInteractionMode === 'authoring' &&
+              structureLocked &&
+              (p.paragraphTitle?.trim().length ?? 0) > 0
+            ? 'disabled-placeholder'
+            : 'input'
       return (
         <ExplanationText
           paragraph={p}
@@ -235,6 +242,7 @@ export function renderFormParagraphBody(
           <BasicInfoParagraph
             values={options?.paymentStatementBasicInfoValues}
             displayMode={options?.paymentStatementDisplayMode ?? 'editor'}
+            onlyPaymentPurposeLocked={options?.paymentStatementBasicInfoOnlyPaymentPurposeLocked}
           />
         )
       }
@@ -271,6 +279,13 @@ export function renderFormParagraphBody(
       return null
     }
     case 'closing':
+      if (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingRecipient) {
+        return (
+          <div className="form-editor-body">
+            <PaymentPreConsentFixedBlock tone="disabled">{p.body}</PaymentPreConsentFixedBlock>
+          </div>
+        )
+      }
       return null
     case 'static_description_lines':
       if (p.kind !== 'description' || p.variant !== 'static_description_lines') return null
