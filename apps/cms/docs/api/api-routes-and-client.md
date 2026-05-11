@@ -22,7 +22,7 @@ Mock 시대 API 요약(엔티티별 mock 서비스): [api-spec-mock.md](../../.c
 
 **프록시 사용 시:** DevTools에는 **항상 `localhost:3000`** 만 보이는 것이 정상입니다. Postman처럼 ngrok 호스트가 보이게 하려면 `VITE_API_BASE_URL`만 ngrok으로 두고 `VITE_API_SERVER`는 비웁니다.
 
-**`VITE_REAL_API_MODULES`:** 미설정·빈 문자열이면 레거시 동작으로, 백엔드 URL이 있을 때 **`adminAuth`(관리자 이메일 로그인)** 만 실 API. 다른 도메인은 mock 유지. 명시적으로 `adminAuth,textbooks`처럼 넣으면 **목록에 있는 키만** 실 호출.
+**`VITE_REAL_API_MODULES`:** 미설정·빈 문자열이면 백엔드 URL이 있어도 **모든 모듈 mock** (관리자 이메일 로그인은 mock + MFA 플로). `adminAuth,textbooks`처럼 넣으면 **목록에 있는 키만** 실 호출.
 
 ---
 

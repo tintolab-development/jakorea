@@ -54,7 +54,7 @@ function mapRemoteAdminLoginToLoginResponse(
 /**
  * 로그인 API
  * Phase 0.5.1: MFA 지원 추가
- * 관리자 이메일 로그인: `isRealApiModuleEnabled('adminAuth')` 일 때만 `fetchAdminLogin` (점진 전환용 `VITE_REAL_API_MODULES`).
+ * 관리자 이메일 로그인: `VITE_REAL_API_MODULES`에 `adminAuth`가 있을 때만 `fetchAdminLogin`; 그 외는 mock(`validateLogin` + MFA).
  */
 export async function login(
   request: LoginRequest
@@ -66,7 +66,7 @@ export async function login(
 
   if (import.meta.env.DEV) {
     const hintRemote =
-      '실 API 경로를 쓰려면 `.env`에 `VITE_API_SERVER` 또는 `VITE_API_BASE_URL` 과 함께 `VITE_REAL_API_MODULES`(미설정이면 레거시로 adminAuth만 활성)·`adminAuth` 를 확인하고 dev 재시작하세요.'
+      '실 관리자 로그인 API를 쓰려면 `.env`에 `VITE_API_SERVER` 또는 `VITE_API_BASE_URL` 과 `VITE_REAL_API_MODULES=adminAuth` 를 넣고 dev 재시작하세요. (미설정이면 mock 로그인 + MFA 유지)'
     console.info(`[CMS auth] Mock 로그인 — 브라우저 Network 에는 요청이 없습니다. ${hintRemote}`)
   }
 

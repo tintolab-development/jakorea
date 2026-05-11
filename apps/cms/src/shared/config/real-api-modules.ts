@@ -4,8 +4,8 @@
  * `VITE_API_BASE_URL` / `VITE_API_SERVER` 등으로 백엔드가 설정돼 있어도,
  * `VITE_REAL_API_MODULES`에 **나열된 모듈만** 실 API를 탄다 (존재·검증된 엔드포인트부터 키를 추가).
  *
- * - **목록 미설정(환경변수 없음·빈 문자열)** : 레거시 동작 — `adminAuth`(관리자 로그인)만 원격 설정 시 실 API.
- * - **목록 설정** : 예 `adminAuth,textbooks` — 쉼표로 구분한 키만 실 API, 나머지는 계속 mock.
+ * - **목록 미설정(환경변수 없음·빈 문자열)** : 원격 URL이 있어도 **전부 mock** (관리자 이메일 로그인 포함 — MFA mock 플로우 유지).
+ * - **목록 설정** : 예 `adminAuth,textbooks` — 쉼표로 구분한 키만 실 API, 나머지는 mock.
  *
  * 새 도메인을 실 API로 붙일 때: 아래 `RealApiModule` 유니온에 키를 추가하고, 해당 서비스에서 `isRealApiModuleEnabled(...)` 호출.
  */
@@ -39,7 +39,7 @@ export function isRealApiModuleEnabled(module: RealApiModule): boolean {
 
   const explicit = explicitModuleSet()
   if (explicit === null) {
-    return module === 'adminAuth'
+    return false
   }
 
   return explicit.has(module)

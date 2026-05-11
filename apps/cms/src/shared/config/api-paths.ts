@@ -11,7 +11,7 @@ const trimEnv = (value: string | undefined, fallback: string): string =>
 /** 관리자 인증·인가 (`/api/admin/auth/...`) — Vite 프록시도 `/api`로만 전달됨 */
 export const adminAuthPaths = {
   /** env `VITE_ADMIN_AUTH_API_PREFIX` 로 prefix 덮어쓰기 가능 (기본 `/api/admin/auth`) */
-  prefix: trimEnv(import.meta.env.VITE_ADMIN_AUTH_API_PREFIX as string | undefined, '/api/admin/auth'),
+  prefix: trimEnv(import.meta.env.VITE_ADMIN_AUTH_API_PREFIX as string | undefined, '/api/auth'),
   login: () => `${adminAuthPaths.prefix}/login`,
   logout: () => `${adminAuthPaths.prefix}/logout`,
   refresh: () => `${adminAuthPaths.prefix}/refresh`,

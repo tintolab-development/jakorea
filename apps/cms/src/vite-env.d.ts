@@ -9,8 +9,8 @@ interface ImportMetaEnv {
   readonly VITE_KAKAO_CLIENT_SECRET?: string
   readonly VITE_OAUTH_EXCHANGE_MODE?: string
   /**
-   * 쉼표 구분 실 API 모듈 키 (`shared/config/real-api-modules`). 미설정 시 `adminAuth`만 레거시로 실 API.
-   * 예: `adminAuth` | `adminAuth,textbooks`
+   * 쉼표 구분 실 API 모듈 키 (`shared/config/real-api-modules`). 미설정·빈 값이면 원격 URL이 있어도 전부 mock.
+   * 관리자 이메일 로그인을 실 API로 쓰려면 `adminAuth` 포함. 예: `adminAuth` | `adminAuth,textbooks`
    */
   readonly VITE_REAL_API_MODULES?: string
   readonly VITE_API_BASE_URL?: string
