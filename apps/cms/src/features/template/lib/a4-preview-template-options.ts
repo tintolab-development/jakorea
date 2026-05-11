@@ -8,7 +8,6 @@ const CERTIFICATE_ISSUANCE_TEMPLATE_NAMES = new Set([
 ])
 
 const AGREEMENT_WRITING_TEMPLATE_IDS = new Set([
-  'agreement-personal',
   'agreement-third-party',
   'agreement-notice',
   'agreement-expense',
