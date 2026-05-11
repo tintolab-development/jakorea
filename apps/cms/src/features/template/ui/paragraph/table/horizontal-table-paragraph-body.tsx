@@ -19,6 +19,7 @@ import {
   horizontalTableSetFieldCellValue,
   normalizeHorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import { PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS } from '@/features/template/lib/personal-info-horizontal-table-disclaimer-paragraph-ids'
 import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
@@ -26,11 +27,33 @@ import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
-import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/program-application-form-institution/paragraph-body'
+import { renderApplicantRecruitFormIndividualParagraphBody } from '@/features/template/ui/form-set/recruit-form/applicant-recruit-form-individual/paragraph-body'
+import { renderApplicantRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/applicant-recruit-form-institution/paragraph-body'
+import { renderUjatRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/paragraph-body'
+import { renderRecruitFormInstructorParagraphBody } from '@/features/template/ui/form-set/recruit-form/recruit-form-instructor/paragraph-body'
+import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/recruit-form-volunteer/paragraph-body'
+import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraph-body'
+import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/institution/paragraph-body'
+import { renderUjatProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraph-body'
+import { renderUjatProgramApplicationFormVolunteerParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraph-body'
+import {
+  renderProgramApplicationFormInstructorParagraphBody,
+  type ProgramApplicationFormInstructorBodyOptions,
+} from '@/features/template/ui/form-set/application-form/instructor/paragraph-body'
+import {
+  renderProgramApplicationFormVolunteerParagraphBody,
+  type ProgramApplicationFormVolunteerBodyOptions,
+} from '@/features/template/ui/form-set/application-form/volunteer/paragraph-body'
 import {
   renderProgramRegistrationParagraphBody,
   type ProgramRegistrationParagraphBodyOptions,
-} from '@/features/template/ui/form-set/program-registration-form/paragraph-body'
+} from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import { renderUjatProgramRegistrationParagraphBody } from '@/features/template/ui/form-set/registration-form/UJAT/paragraph-body'
+import type {
+  UjatProgramApplicationGradeClassTimeParagraphOptions,
+  UjatProgramApplicationGradeInfoParagraphOptions,
+} from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-program-application-institution-body-options'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
 import { IdTypeWithInputBody } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -136,23 +159,25 @@ function HorizontalTableCellText({
 
 function isEventFromTableInteractive(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false
-  return target.closest(
-    [
-      '.ant-input',
-      '.ant-select',
-      '.ant-select-selector',
-      '.ant-picker',
-      '.ant-picker-input',
-      '.ant-checkbox',
-      '.ant-checkbox-wrapper',
-      '.ant-radio',
-      '.ant-radio-wrapper',
-      'input',
-      'textarea',
-      'label',
-      'button',
-    ].join(',')
-  ) != null
+  return (
+    target.closest(
+      [
+        '.ant-input',
+        '.ant-select',
+        '.ant-select-selector',
+        '.ant-picker',
+        '.ant-picker-input',
+        '.ant-checkbox',
+        '.ant-checkbox-wrapper',
+        '.ant-radio',
+        '.ant-radio-wrapper',
+        'input',
+        'textarea',
+        'label',
+        'button',
+      ].join(',')
+    ) != null
+  )
 }
 
 function rehomeForDisplay(
@@ -163,10 +188,7 @@ function rehomeForDisplay(
   return createEmptyFieldCellValue(f)
 }
 
-function toDayjs(
-  mode: 'date' | 'time' | 'dateTime',
-  raw: string
-): Dayjs | null {
+function toDayjs(mode: 'date' | 'time' | 'dateTime', raw: string): Dayjs | null {
   if (!raw?.trim()) return null
   if (mode === 'date') {
     const d = dayjs(raw, 'YYYY-MM-DD', true)
@@ -180,10 +202,7 @@ function toDayjs(
   return d.isValid() ? d : null
 }
 
-function fromDayjs(
-  mode: 'date' | 'time' | 'dateTime',
-  d: Dayjs | null
-): string {
+function fromDayjs(mode: 'date' | 'time' | 'dateTime', d: Dayjs | null): string {
   if (!d || !d.isValid()) return ''
   if (mode === 'date') return d.format('YYYY-MM-DD')
   if (mode === 'time') return d.format('HH:mm')
@@ -377,7 +396,21 @@ export function HorizontalTableParagraphBody({
   paymentStatementCalculationLines,
   paymentStatementDisplayMode,
   programRegistration,
+  ujatProgramRegistration,
   programApplicationFormInstitution,
+  ujatProgramApplicationFormInstitution,
+  ujatProgramApplicationFormVolunteer,
+  ujatProgramApplicationGradeInfo,
+  ujatProgramApplicationGradeClassTime,
+  applicantRecruitFormInstitution,
+  ujatRecruitFormInstitution,
+  applicantRecruitFormIndividual,
+  recruitFormInstructor,
+  recruitFormVolunteer,
+  ujatRecruitFormVolunteer,
+  programApplicationFormInstructor,
+  programApplicationFormVolunteer,
+  paragraphInteractionMode = 'authoring',
 }: {
   paragraph: HorizontalTableParagraph
   onChange: (next: HorizontalTableParagraph) => void
@@ -392,12 +425,36 @@ export function HorizontalTableParagraphBody({
   paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
   programRegistration?: ProgramRegistrationParagraphBodyOptions
+  ujatProgramRegistration?: boolean
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
+  /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatProgramApplicationFormInstitution?: boolean
+  /** UJAT 프로그램 봉사자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatProgramApplicationFormVolunteer?: boolean
+  ujatProgramApplicationGradeInfo?: UjatProgramApplicationGradeInfoParagraphOptions
+  ujatProgramApplicationGradeClassTime?: UjatProgramApplicationGradeClassTimeParagraphOptions
+  /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
+  applicantRecruitFormInstitution?: boolean
+  /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatRecruitFormInstitution?: boolean
+  /** 프로그램 참여자 모집 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
+  applicantRecruitFormIndividual?: boolean
+  /** 프로그램 강사 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  recruitFormInstructor?: boolean
+  /** 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  recruitFormVolunteer?: boolean
+  /** UJAT 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatRecruitFormVolunteer?: boolean
+  programApplicationFormInstructor?: ProgramApplicationFormInstructorBodyOptions
+  programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
+  paragraphInteractionMode?: ParagraphBodyInteractionMode
 }) {
   const p = useMemo(() => normalizeHorizontalTableParagraph(paragraph), [paragraph])
 
-  const [internalSelection, setInternalSelection] = useState<HorizontalTableRowSelection | null>(null)
+  const [internalSelection, setInternalSelection] = useState<HorizontalTableRowSelection | null>(
+    null
+  )
   const isControlled = onTableRowSelectionChange != null
   const selection = isControlled ? (controlledSelection ?? null) : internalSelection
   const setSelection = (next: HorizontalTableRowSelection | null) => {
@@ -430,11 +487,75 @@ export function HorizontalTableParagraphBody({
   const programRegistrationBody = renderProgramRegistrationParagraphBody(p, programRegistration)
   if (programRegistrationBody != null) return programRegistrationBody
 
-  const programApplicationFormInstitutionBody = renderProgramApplicationFormInstitutionParagraphBody(
+  const ujatProgramRegistrationBody = renderUjatProgramRegistrationParagraphBody(
     p,
-    programApplicationFormInstitution
+    ujatProgramRegistration
   )
+  if (ujatProgramRegistrationBody != null) return ujatProgramRegistrationBody
+
+  const applicantRecruitFormIndividualBody = renderApplicantRecruitFormIndividualParagraphBody(
+    p,
+    applicantRecruitFormIndividual
+  )
+  if (applicantRecruitFormIndividualBody != null) return applicantRecruitFormIndividualBody
+
+  const applicantRecruitFormInstitutionBody = renderApplicantRecruitFormInstitutionParagraphBody(
+    p,
+    applicantRecruitFormInstitution
+  )
+  if (applicantRecruitFormInstitutionBody != null) return applicantRecruitFormInstitutionBody
+
+  const ujatRecruitFormInstitutionBody = renderUjatRecruitFormInstitutionParagraphBody(
+    p,
+    ujatRecruitFormInstitution
+  )
+  if (ujatRecruitFormInstitutionBody != null) return ujatRecruitFormInstitutionBody
+
+  const recruitFormInstructorBody = renderRecruitFormInstructorParagraphBody(
+    p,
+    recruitFormInstructor
+  )
+  if (recruitFormInstructorBody != null) return recruitFormInstructorBody
+
+  const recruitFormVolunteerBody = renderRecruitFormVolunteerParagraphBody(p, recruitFormVolunteer)
+  if (recruitFormVolunteerBody != null) return recruitFormVolunteerBody
+
+  const ujatRecruitFormVolunteerBody = renderUjatRecruitFormVolunteerParagraphBody(
+    p,
+    ujatRecruitFormVolunteer
+  )
+  if (ujatRecruitFormVolunteerBody != null) return ujatRecruitFormVolunteerBody
+
+  const programApplicationFormInstitutionBody =
+    renderProgramApplicationFormInstitutionParagraphBody(p, programApplicationFormInstitution)
   if (programApplicationFormInstitutionBody != null) return programApplicationFormInstitutionBody
+
+  const ujatProgramApplicationFormInstitutionBody =
+    renderUjatProgramApplicationFormInstitutionParagraphBody(
+      p,
+      ujatProgramApplicationFormInstitution,
+      ujatProgramApplicationGradeInfo,
+      ujatProgramApplicationGradeClassTime,
+      paragraphInteractionMode
+    )
+  if (ujatProgramApplicationFormInstitutionBody != null)
+    return ujatProgramApplicationFormInstitutionBody
+
+  const ujatProgramApplicationFormVolunteerBody =
+    renderUjatProgramApplicationFormVolunteerParagraphBody(p, ujatProgramApplicationFormVolunteer)
+  if (ujatProgramApplicationFormVolunteerBody != null) return ujatProgramApplicationFormVolunteerBody
+
+  const programApplicationFormInstructorBody = renderProgramApplicationFormInstructorParagraphBody(
+    p,
+    programApplicationFormInstructor
+  )
+  if (programApplicationFormInstructorBody != null) return programApplicationFormInstructorBody
+
+  const programApplicationFormVolunteerBody = renderProgramApplicationFormVolunteerParagraphBody(
+    p,
+    programApplicationFormVolunteer
+  )
+  if (programApplicationFormVolunteerBody != null) return programApplicationFormVolunteerBody
 
   const paymentStatementBody = renderPaymentStatementIssuanceParagraphBody({
     paragraph: p,
@@ -543,40 +664,36 @@ export function HorizontalTableParagraphBody({
               isField && getEffectiveHorizontalCellField(p, 0, i).kind !== 'text'
             const ph = suppressPlaceholderText ? '' : tableHeaderPlaceholder(i)
             return (
-            <div
-              key={`h-${i}`}
-              className="form-editor-horizontal-table__th"
-              role="columnheader"
-              onClick={
-                canvasInteractive
-                  ? e => {
-                      if (isEventFromTableInteractive(e.target)) return
-                      toggleHeaderRow()
-                    }
-                  : undefined
-              }
-            >
-              {effectiveEditMode && !headerFieldLocked ? (
-                <div className="form-editor-horizontal-table__cell-input-shell form-editor-horizontal-table__cell-input-shell--header">
-                  <Input
-                    variant="borderless"
-                    value={h ?? ''}
-                    placeholder={ph}
-                    onChange={e => setHeaderValue(i, e.target.value)}
-                    onFocus={() => setSelection({ area: 'header' })}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
-                    }}
-                  />
-                </div>
-              ) : (
-                <HorizontalTableCellText
-                  value={h ?? ''}
-                  placeholder={ph}
-                  variant="header"
-                />
-              )}
-            </div>
+              <div
+                key={`h-${i}`}
+                className="form-editor-horizontal-table__th"
+                role="columnheader"
+                onClick={
+                  canvasInteractive
+                    ? e => {
+                        if (isEventFromTableInteractive(e.target)) return
+                        toggleHeaderRow()
+                      }
+                    : undefined
+                }
+              >
+                {effectiveEditMode && !headerFieldLocked ? (
+                  <div className="form-editor-horizontal-table__cell-input-shell form-editor-horizontal-table__cell-input-shell--header">
+                    <Input
+                      variant="borderless"
+                      value={h ?? ''}
+                      placeholder={ph}
+                      onChange={e => setHeaderValue(i, e.target.value)}
+                      onFocus={() => setSelection({ area: 'header' })}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <HorizontalTableCellText value={h ?? ''} placeholder={ph} variant="header" />
+                )}
+              </div>
             )
           })}
         </div>
@@ -627,11 +744,7 @@ export function HorizontalTableParagraphBody({
                         />
                       </div>
                     ) : (
-                      <HorizontalTableCellText
-                        value={cell}
-                        placeholder={ph}
-                        variant="body"
-                      />
+                      <HorizontalTableCellText value={cell} placeholder={ph} variant="body" />
                     )}
                   </div>
                 )
@@ -651,7 +764,9 @@ export function HorizontalTableParagraphBody({
                   className={[
                     'form-editor-horizontal-table__td',
                     'form-editor-horizontal-table__td--field',
-                    effectiveEditMode && isChoiceField && 'form-editor-horizontal-table__td--field-choices',
+                    effectiveEditMode &&
+                      isChoiceField &&
+                      'form-editor-horizontal-table__td--field-choices',
                     effectiveEditMode &&
                       isSubjectiveField &&
                       'form-editor-horizontal-table__td--field-subjective',
@@ -675,7 +790,8 @@ export function HorizontalTableParagraphBody({
                         'form-editor-horizontal-table__cell-input-shell',
                         'form-editor-horizontal-table__cell-input-shell--body',
                         'form-editor-horizontal-table__cell-input-shell--field',
-                        isChoiceField && 'form-editor-horizontal-table__cell-input-shell--field-choices',
+                        isChoiceField &&
+                          'form-editor-horizontal-table__cell-input-shell--field-choices',
                         isSubjectiveField &&
                           'form-editor-horizontal-table__cell-input-shell--field-subjective',
                       ]
@@ -712,14 +828,18 @@ export function HorizontalTableParagraphBody({
       {p.showBottomText || p.showBottomConsent || p.idTypeWithInput ? (
         <div className="form-editor-horizontal-table__bottom">
           {p.showBottomText ? (
-            <ParagraphInput
-              type="description"
-              className="form-editor-horizontal-table__bottom-input"
-              value={p.bottomText}
-              isEditMode={effectiveEditMode}
-              onChange={next => onChange({ ...p, bottomText: next })}
-              placeholder="설명을 입력해 주세요"
-            />
+            PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS.has(p.id) ? (
+              <div className="detail-info-form--text">{p.bottomText}</div>
+            ) : (
+              <ParagraphInput
+                type="description"
+                className="form-editor-horizontal-table__bottom-input"
+                value={p.bottomText}
+                isEditMode={effectiveEditMode}
+                onChange={next => onChange({ ...p, bottomText: next })}
+                placeholder="설명을 입력해 주세요"
+              />
+            )
           ) : null}
           {p.idTypeWithInput ? (
             <IdTypeWithInputBody

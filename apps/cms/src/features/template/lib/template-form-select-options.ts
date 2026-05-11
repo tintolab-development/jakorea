@@ -40,7 +40,7 @@ export const TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS: TemplateFormSel
   { value: 'elementary', label: '초등학생' },
   { value: 'middle', label: '중학생' },
   { value: 'high', label: '고등학생' },
-  { value: 'university', label: '대학생' },
+  { value: 'university', label: '대학(원)생' },
   { value: 'adult', label: '성인' },
 ]
 

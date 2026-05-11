@@ -144,8 +144,7 @@ function createInstitutionScheduleMultipleChoice(): MultipleChoiceParagraph {
     variant: 'multiple_choice',
     requiredMark: true,
     paragraphTitle: '진행 희망 교육 일정',
-    paragraphDescription:
-      '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.',
+    paragraphDescription: '프로그램 등록/모집 폼 설정값에 따라 노출 내용이 상이합니다.',
     participatesInTitleNumbering: true,
     answerRequired: true,
     allowMultiple: true,

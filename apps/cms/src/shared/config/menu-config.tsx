@@ -511,20 +511,6 @@ const allMenuItems: MenuItemConfig[] = [
         enabled: true,
         allowedRoles: ['ADMIN'],
       },
-      {
-        key: '/templates/kakao-notification',
-        label: '카카오 알림톡 관리',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
-      {
-        key: '/templates/email-management',
-        label: '메일 관리',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
     ],
   },
   {
@@ -951,22 +937,11 @@ function getTemplatesPathCategoryNameWhenUnmatched(
     normalizedPath.startsWith('/templates/form-test/') ||
     normalizedPath.startsWith('/templates/form-management') ||
     normalizedPath.startsWith('/templates/program-forms')
-  const isKakao = normalizedPath.startsWith('/templates/kakao-notification')
-  const isEmail = normalizedPath.startsWith('/templates/email-management')
 
   if (isFormSubtree) {
     if (depth === 1) return '템플릿 관리'
     return '폼 양식 관리'
   }
-  if (isKakao) {
-    if (depth === 1) return '템플릿 관리'
-    return '카카오 알림톡 관리'
-  }
-  if (isEmail) {
-    if (depth === 1) return '템플릿 관리'
-    return '메일 관리'
-  }
-
   return '템플릿 관리'
 }
 

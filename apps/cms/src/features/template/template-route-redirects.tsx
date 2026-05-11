@@ -9,14 +9,3 @@ export function RedirectLegacyTemplatesProgramForms() {
   return <Navigate to={`/templates/form-management${search}`} replace />
 }
 
-export function RedirectLegacyTemplatesSms() {
-  return <Navigate to="/templates/kakao-notification" replace />
-}
-
-export function RedirectLegacyTemplatesEmail() {
-  return <Navigate to="/templates/email-management" replace />
-}
-
-export function RedirectLegacyTemplatesKakaoAlimtalk() {
-  return <Navigate to="/templates/kakao-notification" replace />
-}

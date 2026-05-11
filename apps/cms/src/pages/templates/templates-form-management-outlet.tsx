@@ -2,7 +2,9 @@
  * `/templates/form-management` 전용 — 라우터 `<Outlet />`과 동기화되어
  * `TemplateWritingPreviewProvider` 안에서만 마운트되도록 한다.
  */
+import type { ReactElement } from 'react'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
+import { TemplateWritingPreviewProvider } from '@/features/template/context/template-writing-preview-context'
 import TemplateFormTab from './template-form-tab'
 import { IssuanceFormTab } from './issuance-form-tab'
 import { FormTab } from './form-tab'
@@ -15,11 +17,13 @@ export default function TemplatesFormManagementOutlet() {
   const { params } = useQueryParams<FormManagementQuery>()
   const tab = params.tab
 
+  let content: ReactElement
   if (tab === 'issuance-form') {
-    return <IssuanceFormTab />
+    content = <IssuanceFormTab />
+  } else if (tab === 'form-test') {
+    content = <FormTab />
+  } else {
+    content = <TemplateFormTab />
   }
-  if (tab === 'form-test') {
-    return <FormTab />
-  }
-  return <TemplateFormTab />
+  return <TemplateWritingPreviewProvider>{content}</TemplateWritingPreviewProvider>
 }

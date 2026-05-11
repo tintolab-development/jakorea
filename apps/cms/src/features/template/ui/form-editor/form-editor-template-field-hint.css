@@ -1,0 +1,12 @@
+/**
+ * 템플릿 폼 — 자동 반영 등 읽기 전용 안내 문구
+ * (설문·동의 에디터, 프로그램 등록 기본 정보 등 공통)
+ */
+.form-editor-template-field-hint-text {
+  color: var(--gray-85969-d, #85969d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+}

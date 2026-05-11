@@ -16,7 +16,11 @@ import { renderFormEditorParagraphBody } from '@/features/template/ui/form-edito
 import {
   isTitleWithPeriodParagraph,
   paragraphEditableHeading,
+  withProgramApplicationFormInstructorTitleTrailing,
+  withProgramApplicationFormVolunteerTitleTrailing,
   withProgramRegistrationCurriculumTitleTrailing,
+  withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing,
+  withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing,
   withoutTitleRequired,
 } from '@/features/template/ui/form-editor/form-editor-left-panel-heading'
 import {
@@ -96,8 +100,24 @@ export function PinnedFormCard({
     ),
     hideParagraphRequiredChrome
   )
-  const editableHeading = withProgramRegistrationCurriculumTitleTrailing(
-    editableHeadingBase as ParagraphCardEditableHeading,
+  const editableHeading = withProgramApplicationFormVolunteerTitleTrailing(
+    withProgramApplicationFormInstructorTitleTrailing(
+      withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+        withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+          withProgramRegistrationCurriculumTitleTrailing(
+            editableHeadingBase as ParagraphCardEditableHeading,
+            paragraph,
+            paragraphBodyOptions
+          ),
+          paragraph,
+          paragraphBodyOptions
+        ),
+        paragraph,
+        paragraphBodyOptions
+      ),
+      paragraph,
+      paragraphBodyOptions
+    ),
     paragraph,
     paragraphBodyOptions
   )
@@ -229,8 +249,24 @@ export function SortableMiddleFormCard({
     ),
     hideParagraphRequiredChrome
   )
-  const editableHeading = withProgramRegistrationCurriculumTitleTrailing(
-    editableHeadingBase as ParagraphCardEditableHeading,
+  const editableHeading = withProgramApplicationFormVolunteerTitleTrailing(
+    withProgramApplicationFormInstructorTitleTrailing(
+      withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+        withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+          withProgramRegistrationCurriculumTitleTrailing(
+            editableHeadingBase as ParagraphCardEditableHeading,
+            paragraph,
+            paragraphBodyOptions
+          ),
+          paragraph,
+          paragraphBodyOptions
+        ),
+        paragraph,
+        paragraphBodyOptions
+      ),
+      paragraph,
+      paragraphBodyOptions
+    ),
     paragraph,
     paragraphBodyOptions
   )

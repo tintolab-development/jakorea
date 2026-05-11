@@ -24,8 +24,6 @@ type FormManagementQuery = {
   /** 양식 테스트 > 테이블 데모 상세 키 */
   ftDemo?: string
 }
-// const KAKAO_NOTIFICATION = '/templates/kakao-notification'
-// const EMAIL_MANAGEMENT = '/templates/email-management'
 
 export function TemplateListPage() {
   const location = useLocation()

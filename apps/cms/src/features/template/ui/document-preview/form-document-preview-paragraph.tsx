@@ -202,6 +202,9 @@ function renderBody(
             (renderMode === 'contentOnly' ? 'document' : undefined)
           }
           programApplicationFormInstitution={paragraphBodyOptions?.programApplicationFormInstitution}
+          applicantRecruitFormInstitution={paragraphBodyOptions?.applicantRecruitFormInstitution}
+          applicantRecruitFormIndividual={paragraphBodyOptions?.applicantRecruitFormIndividual}
+          programApplicationFormInstructor={paragraphBodyOptions?.programApplicationFormInstructor}
         />
       )
     case 'ujat_journal_education_info':

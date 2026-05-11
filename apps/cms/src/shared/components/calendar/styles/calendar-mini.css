@@ -143,6 +143,21 @@
   visibility: hidden;
 }
 
+.calendar-mini .ant-picker-cell-disabled,
+.calendar-mini .ant-picker-cell-disabled::before,
+.calendar-mini .ant-picker-cell-disabled .ant-picker-calendar-date,
+.calendar-mini .ant-picker-cell-disabled .calendar-mini-cell {
+  background: transparent !important;
+}
+
+.calendar-mini .ant-picker-cell-disabled .calendar-mini-cell {
+  cursor: not-allowed;
+}
+
+.calendar-mini .ant-picker-cell-disabled .calendar-mini-date {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+}
+
 .calendar-mini .ant-picker-calendar .ant-picker-date-panel .ant-picker-content th {
   color: var(--color-text-secondary);
   text-align: center;

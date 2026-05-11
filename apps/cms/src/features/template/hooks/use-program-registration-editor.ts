@@ -27,8 +27,8 @@ import type {
   ProgramRegistrationScheduleDetailKind,
   ProgramRegistrationSessionRoundType,
   ProgramRegistrationType,
-} from '@/features/template/ui/form-set/program-registration-form/paragraph-body'
-import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/program-registration-form/paragraph-config'
+} from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
 
 type ProgramRegistrationParticipantState = {
   individual: boolean

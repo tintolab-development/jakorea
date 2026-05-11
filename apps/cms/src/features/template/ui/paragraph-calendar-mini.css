@@ -1,0 +1,144 @@
+/**
+ * 템플릿 페이지 전용 CalendarMini 래퍼 스타일.
+ * `.paragraph-calendar-mini` 스코프 안에서만 `.calendar-mini*` 룰을 덮어쓴다.
+ * 공유 컴포넌트(.calendar-mini)의 기본 스타일은 다른 사용처에 영향 없음.
+ */
+
+.paragraph-calendar-mini {
+  width: 360px;
+  box-sizing: border-box;
+}
+
+.paragraph-calendar-mini--small {
+  width: 300px;
+}
+
+.paragraph-calendar-mini .calendar-mini {
+  box-sizing: border-box;
+  width: 100%;
+  max-height: none;
+  box-shadow: none;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+}
+
+/* 기본 셀 — 40x40 정사각, 토큰 폰트 */
+.paragraph-calendar-mini .calendar-mini-cell {
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--8, 8px);
+}
+
+/* 날짜 셀 행 간 간격 15px */
+.paragraph-calendar-mini .calendar-mini .ant-picker-content tbody .ant-picker-cell {
+  padding-top: 15px;
+}
+
+.paragraph-calendar-mini--small .calendar-mini .ant-picker-content tbody .ant-picker-cell {
+  padding-top: 13px;
+}
+
+/* 요일 헤더(SUN ~ SAT) — 공유 CSS의 padding-bottom 제거 */
+.paragraph-calendar-mini
+  .calendar-mini
+  .ant-picker-calendar
+  .ant-picker-date-panel
+  .ant-picker-content
+  th {
+  padding-bottom: 0;
+}
+
+.paragraph-calendar-mini .calendar-mini-date {
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+}
+
+/* 이벤트/스케줄 있는 날짜 */
+.paragraph-calendar-mini .calendar-mini-cell--has-schedule {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--8, 8px);
+  background: var(
+    --color-bg-mint,
+    linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%),
+    #fff
+  );
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+}
+
+.paragraph-calendar-mini .calendar-mini-cell--has-schedule .calendar-mini-date {
+  color: var(--main-BK, #3d3d3d);
+}
+
+.paragraph-calendar-mini--small .calendar-mini-cell--has-schedule {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  display: flex;
+  width: 30px;
+  height: 30px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  aspect-ratio: 1 / 1;
+}
+
+/* 비활성 날짜 — antd가 disabledDate에 따라 td에 .ant-picker-cell-disabled 부여 */
+.paragraph-calendar-mini .ant-picker-cell-disabled,
+.paragraph-calendar-mini .ant-picker-cell-disabled::before,
+.paragraph-calendar-mini .ant-picker-cell-disabled .ant-picker-calendar-date,
+.paragraph-calendar-mini .ant-picker-cell-disabled .calendar-mini-cell {
+  background: transparent !important;
+}
+
+.paragraph-calendar-mini .ant-picker-cell-disabled .calendar-mini-cell {
+  cursor: not-allowed;
+}
+
+.paragraph-calendar-mini .ant-picker-cell-disabled .calendar-mini-date {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  text-align: center;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+}
+
+/* 현재 클릭(선택) 중인 날짜 — schedule 보더보다 우선 */
+.paragraph-calendar-mini .calendar-mini-cell--selected,
+.paragraph-calendar-mini .calendar-mini-cell--has-schedule.calendar-mini-cell--selected {
+  background: var(--color-mint-01, #01a1af) !important;
+  border-radius: var(--8, 8px);
+  width: 40px;
+  height: 40px;
+}
+
+.paragraph-calendar-mini--small .calendar-mini-cell,
+.paragraph-calendar-mini--small .calendar-mini-cell--selected,
+.paragraph-calendar-mini--small .calendar-mini-cell--has-schedule.calendar-mini-cell--selected {
+  width: 30px;
+  height: 30px;
+}
+
+.paragraph-calendar-mini .calendar-mini-cell--selected .calendar-mini-date {
+  color: #ffffff;
+}
