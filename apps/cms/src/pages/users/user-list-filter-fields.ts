@@ -49,12 +49,12 @@ const MEMBER_ROLE_SELECT_FIELD: FilterFieldConfig = {
 }
 
 const INSTITUTION_FIELDS: FilterFieldConfig[] = [
-  searchField('기관명', '기관명을 입력하세요', '30%'),
+  searchField('기관명', '기관명을 입력하세요', '34%'),
   {
     key: 'institutionAddress',
     type: 'addressRegion',
     label: '기관 소재지',
-    width: '30%',
+    width: '22%',
     addressRegion: {
       sidoKey: 'institutionSido',
       sigunguKey: 'institutionSigungu',
@@ -64,7 +64,7 @@ const INSTITUTION_FIELDS: FilterFieldConfig[] = [
       sigunguPlaceholder: '시/군/구',
     },
   },
-  dateRangeField('등록 시기', '40%'),
+  dateRangeField('등록 시기', '44%'),
 ]
 
 const INSTRUCTOR_FIELDS: FilterFieldConfig[] = [
