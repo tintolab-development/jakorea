@@ -54,16 +54,17 @@ function createP1CollectionTable(): HorizontalTableParagraph {
   const bodyRow: HorizontalTableFieldCellValue[] = [
     {
       kind: 'text',
-      value: '성명, 연락처, 이메일, 소속, 계좌정보 등 지급 및 정산에 필요한 정보',
-    },
-    {
-      kind: 'text',
-      value: '지급조서 작성, 지급 대상 확인, 세무·회계 처리 및 관련 안내',
+      value:
+        '성명, 생년월일, 주소, 전화번호, e-mail,\n계좌정보(은행, 계좌번호, 예금주)',
     },
     {
       kind: 'text',
       value:
-        '수집·이용 목적 달성 시까지. 관련 법령에 따라 보존이 필요한 경우 해당 기간까지 보관 후 지체 없이 파기',
+        '강사비, 회의비 등 목적에 맞게 사용 지급 및\n강사관리 및 사업에 필요한 업무처리',
+    },
+    {
+      kind: 'text',
+      value: '10년',
     },
   ]
   return normalizeHorizontalTableParagraph({
@@ -71,11 +72,11 @@ function createP1CollectionTable(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '1. 개인정보 수집·이용',
+    paragraphTitle: '개인정보 수집‧이용',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
-    columnHeaders: ['항목', '수집·이용 목적', '보유기간'],
+    columnHeaders: ['항목', '수집‧이용 목적', '보유기간'],
     dataRows: [Array.from({ length: colCount }, () => '')],
     columnFields,
     fieldDataRows: [bodyRow],
@@ -113,7 +114,7 @@ function createP2RrnCollectionTable(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '2. 고유식별번호(주민등록번호) 수집·이용',
+    paragraphTitle: '고유식별번호(주민등록번호) 수집·이용',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
@@ -157,7 +158,7 @@ function createP3ThirdPartyTable(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '3. 개인정보 제3자 제공·이용',
+    paragraphTitle: '개인정보 제3자 제공·이용',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
@@ -201,7 +202,7 @@ function createP4RrnThirdPartyTable(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '4. 고유식별번호 제3자 제공·이용',
+    paragraphTitle: '고유식별번호 제3자 제공·이용',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
@@ -238,12 +239,12 @@ const intro: AgreementExplanationTextParagraph = {
   kind: 'single_item',
   variant: 'agreement_explanation_text',
   requiredMark: false,
-  paragraphTitle: '',
+  paragraphTitle: '개인정보 수집‧이용 및 제공 동의서',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
   bodyPlaceholder: '',
   bodyText:
-    '「개인정보 보호법」 등 관련 법령에 따라 개인정보를 수집·이용 및 제3자에게 제공하고자 합니다. 아래 내용을 충분히 확인하신 후 동의 여부를 선택해 주시기 바랍니다.',
+    'JA KOREA (이하 "기관"이라 함)는 「개인정보 보호법」 제15조 및 22조에 의거하여 개인정보 수집 및 이용에 관한 정보주체의 동의절차를 준수하며,\n개인정보 제공자가 동의한 이용목적 외의 용도로는 이용, 제공되지 않습니다. 제공된 개인정보는 개인정보 관리책임자를 통해 열람, 정정, 삭제 등을 요구할 수 있습니다.',
   answerRequired: false,
 }
 
@@ -257,7 +258,7 @@ const midConsentLine: AgreementExplanationTextParagraph = {
   participatesInTitleNumbering: false,
   bodyPlaceholder: '',
   bodyText:
-    '위 개인정보 수집·이용, 고유식별번호 수집·이용, 제3자 제공에 관한 사항을 확인하였으며 이에 동의합니다.',
+    '상기 본인은 위와 같이 「개인정보보호법」등 관련 법규에 의거하여 개인정보 수집 및 활용에 동의합니다.',
   answerRequired: false,
 }
 
@@ -289,7 +290,7 @@ const paymentRecord = normalizeVerticalTableParagraph({
   variant: 'vertical_table',
   verticalTableFlavor: 'text',
   requiredMark: true,
-  paragraphTitle: '5. 지급조서',
+  paragraphTitle: '지급조서',
   paragraphDescription: '',
   participatesInTitleNumbering: true,
   rows: [{ stageCount: 1, headers: [''], cells: [''], stageKinds: ['text'] }],
@@ -310,7 +311,7 @@ const finalConfirm: AgreementExplanationTextParagraph = {
   participatesInTitleNumbering: false,
   bodyPlaceholder: '',
   bodyText:
-    '본인은 상기 지급조서에 기재된 내용이 사실과 다름없음을 확인하며, 지급 대상으로 확정될 경우 지급 금액을 정당하게 수령함을 확인합니다.',
+    '본인은 본 비용 지급 목적의 활동에 참여하였으며 상기 내용을 바탕으로 금액을 수령함을 확인합니다.',
   answerRequired: false,
 }
 

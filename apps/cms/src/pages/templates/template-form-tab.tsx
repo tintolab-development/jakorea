@@ -21,6 +21,19 @@ import {
   AGREEMENT_PORTRAIT_A4_HIDDEN_PARAGRAPH_IDS,
   getAgreementPortraitA4ParagraphGap,
 } from '@/features/template/model/agreement-portrait-a4-preview'
+import {
+  createPaymentStatementPreConsentDraft,
+  PAYMENT_STATEMENT_PRE_CONSENT_IDS,
+  PAYMENT_STATEMENT_PRE_CONSENT_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/payment-statement-pre-consent-draft'
+import {
+  getPaymentStatementPreConsentA4ParagraphGap,
+  PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS,
+} from '@/features/template/model/payment-statement-pre-consent-a4-preview'
+import {
+  PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
+  PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
+} from '@/features/template/ui/form-set/payment-statement-pre-consent/paragraph-config'
 import { TemplateListCard } from '@/features/template/ui/template-list-card'
 import './template-form-tab.css'
 import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
@@ -74,6 +87,7 @@ import {
 } from '@/features/template/lib/a4-preview-template-options'
 
 const AGREEMENT_CRIME_TEMPLATE_ID = 'agreement-crime'
+const AGREEMENT_PAYMENT_STATEMENT_PRE_CONSENT_ID = 'agreement-third-party'
 
 type TemplateFormTabQuery = {
   mode?: string
@@ -205,7 +219,8 @@ export default function TemplateFormTab() {
     if (
       params.id === 'agreement-notice' ||
       params.id === 'agreement-expense' ||
-      params.id === 'agreement-portrait'
+      params.id === 'agreement-portrait' ||
+      params.id === AGREEMENT_PAYMENT_STATEMENT_PRE_CONSENT_ID
     ) {
       return
     }
@@ -348,6 +363,28 @@ export default function TemplateFormTab() {
         a4HiddenParagraphIds={AGREEMENT_PORTRAIT_A4_HIDDEN_PARAGRAPH_IDS}
         a4RenderMode="contentOnly"
         a4ParagraphGapPx={getAgreementPortraitA4ParagraphGap}
+        onClose={handleCloseTemplatePreview}
+      />
+    )
+  }
+
+  if (params.mode === 'edit' && params.id === AGREEMENT_PAYMENT_STATEMENT_PRE_CONSENT_ID) {
+    const preConsentRow = findWritingTemplateRowByDefinitionId(AGREEMENT_PAYMENT_STATEMENT_PRE_CONSENT_ID)
+    const preConsentTitle = preConsentRow?.templateName ?? '지급조서 사전 동의서'
+    return (
+      <AgreementWritingFormShell
+        initialDraft={createPaymentStatementPreConsentDraft}
+        defaultActiveParagraphId={PAYMENT_STATEMENT_PRE_CONSENT_IDS.title}
+        modalTitle={preConsentTitle}
+        modalDescription="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
+        writingPreviewHeaderTitle={preConsentTitle}
+        structureLockedParagraphIds={PAYMENT_STATEMENT_PRE_CONSENT_SEED_PARAGRAPH_IDS}
+        hideDragHandleForParagraphIds={PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS}
+        previewLayout="a4-document"
+        a4HiddenParagraphIds={PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS}
+        a4RenderMode="contentOnly"
+        a4ParagraphGapPx={getPaymentStatementPreConsentA4ParagraphGap}
+        paragraphBodyOptions={PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS}
         onClose={handleCloseTemplatePreview}
       />
     )
