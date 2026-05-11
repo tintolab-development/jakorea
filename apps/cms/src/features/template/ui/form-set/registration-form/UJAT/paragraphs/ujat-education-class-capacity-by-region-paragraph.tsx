@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
-import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
-
-type SemesterKey = 'first' | 'second'
+import './ujat-education-class-capacity-by-region-paragraph.css'
 
 const REGION_ROWS = [
   { left: '서울', right: '경기(남부)' },
@@ -12,176 +10,139 @@ const REGION_ROWS = [
   { left: '광주', right: '전북(전주)' },
 ] as const
 
+type SemesterKey = 'first' | 'second'
+type CapacityField = 'classCount' | 'volunteerCount'
+type RegionName = (typeof REGION_ROWS)[number]['left'] | (typeof REGION_ROWS)[number]['right']
+type RegionCapacityValues = Partial<Record<CapacityField, string>>
+type SemesterCapacityValues = Partial<Record<RegionName, RegionCapacityValues>>
+
 const SEMESTER_TITLES: Record<SemesterKey, string> = {
   first: '■ 상반기 (1학기)',
   second: '■ 하반기 (2학기)',
 }
 
-function RegionClassCapacityRows({
-  semester,
+function RegionCapacityInputs({
+  region,
   values,
   onChange,
 }: {
-  semester: SemesterKey
-  values: Record<string, string>
-  onChange: (region: string, value: string) => void
-}) {
-  return REGION_ROWS.map((row, rowIndex) => {
-    const isLast = rowIndex === REGION_ROWS.length - 1
-    return (
-      <div
-        key={`${semester}-${row.left}-${row.right}`}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '140px minmax(0,1fr) 140px minmax(0,1fr)',
-          borderBottom: isLast ? 'none' : '1px solid var(--table-line, #e0e0e0)',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '12px 8px',
-            fontSize: 16,
-            fontWeight: 700,
-            color: 'var(--default-BK, #3d3d3d)',
-            background: '#f5f6f7',
-            borderRight: '1px solid var(--table-line, #e0e0e0)',
-          }}
-        >
-          {row.left}
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '8px 12px',
-            borderRight: '1px solid var(--table-line, #e0e0e0)',
-            minWidth: 0,
-          }}
-        >
-          <CmsInput
-            inputSize="medium"
-            width={88}
-            placeholder="최대 학급 수"
-            value={values[row.left] ?? ''}
-            onChange={e => onChange(row.left, e.target.value)}
-          />
-          <span style={{ color: 'var(--default-BK, #3d3d3d)', fontSize: 16, lineHeight: '140%' }}>
-            개 학급
-          </span>
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '12px 8px',
-            fontSize: 16,
-            fontWeight: 700,
-            color: 'var(--default-BK, #3d3d3d)',
-            background: '#f5f6f7',
-            borderRight: '1px solid var(--table-line, #e0e0e0)',
-          }}
-        >
-          {row.right}
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '8px 12px',
-            minWidth: 0,
-          }}
-        >
-          <CmsInput
-            inputSize="medium"
-            width={88}
-            placeholder="최대 학급 수"
-            value={values[row.right] ?? ''}
-            onChange={e => onChange(row.right, e.target.value)}
-          />
-          <span style={{ color: 'var(--default-BK, #3d3d3d)', fontSize: 16, lineHeight: '140%' }}>
-            개 학급
-          </span>
-        </div>
-      </div>
-    )
-  })
-}
-
-function SemesterClassCapacityDetailInfoForm({
-  semester,
-  values,
-  onChange,
-}: {
-  semester: SemesterKey
-  values: Record<string, string>
-  onChange: (region: string, value: string) => void
+  region: RegionName
+  values?: RegionCapacityValues
+  onChange: (region: RegionName, field: CapacityField, value: string) => void
 }) {
   return (
-    <div>
-      <div
-        style={{
-          marginBottom: 8,
-          color: 'var(--main-BK, #3d3d3d)',
-          fontSize: 16,
-          fontWeight: 700,
-          lineHeight: '150%',
-        }}
-      >
+    <div className="ujat-education-class-capacity__inputs">
+      <CmsInput
+        inputSize="medium"
+        width={120}
+        placeholder="최대 학급 수"
+        value={values?.classCount ?? ''}
+        onChange={e => onChange(region, 'classCount', e.target.value)}
+      />
+      <span className="ujat-education-class-capacity__unit">개 학급</span>
+      <DetailInfoForm.InputsSeparator />
+      <CmsInput
+        inputSize="medium"
+        width={120}
+        placeholder="최대 봉사자 수"
+        value={values?.volunteerCount ?? ''}
+        onChange={e => onChange(region, 'volunteerCount', e.target.value)}
+      />
+      <span className="ujat-education-class-capacity__unit">명</span>
+    </div>
+  )
+}
+
+function SemesterClassCapacityTable({
+  semester,
+  values,
+  onChange,
+}: {
+  semester: SemesterKey
+  values: SemesterCapacityValues
+  onChange: (region: RegionName, field: CapacityField, value: string) => void
+}) {
+  return (
+    <div className="ujat-education-class-capacity__semester">
+      <div className="ujat-education-class-capacity__semester-title">
         {SEMESTER_TITLES[semester]}
       </div>
       <DetailInfoForm
         title={SEMESTER_TITLES[semester]}
         hideHeader
         mode="edit"
-        className="program-registration-paragraph"
+        className="ujat-education-class-capacity__form"
       >
-        <DetailInfoForm.Row type="custom">
-          <div style={{ width: '100%' }}>
-            <RegionClassCapacityRows semester={semester} values={values} onChange={onChange} />
-          </div>
-        </DetailInfoForm.Row>
+        {REGION_ROWS.map(row => (
+          <DetailInfoForm.Row key={`${semester}-${row.left}-${row.right}`} type="double">
+            <DetailInfoForm.Field
+              label={row.left}
+              edit={
+                <RegionCapacityInputs
+                  region={row.left}
+                  values={values[row.left]}
+                  onChange={onChange}
+                />
+              }
+              view="-"
+            />
+            <DetailInfoForm.Field
+              label={row.right}
+              edit={
+                <RegionCapacityInputs
+                  region={row.right}
+                  values={values[row.right]}
+                  onChange={onChange}
+                />
+              }
+              view="-"
+            />
+          </DetailInfoForm.Row>
+        ))}
       </DetailInfoForm>
     </div>
   )
 }
 
-/** 지역 별 교육 진행 가능 학급 수 설정 */
+/** 지역 별 교육 진행 가능 학급 및 봉사단 수 설정 */
 export function UjatEducationClassCapacityByRegionParagraph() {
   const [valuesBySemester, setValuesBySemester] = useState<{
-    first: Record<string, string>
-    second: Record<string, string>
+    first: SemesterCapacityValues
+    second: SemesterCapacityValues
   }>({
     first: {},
     second: {},
   })
 
-  const updateValue = (semester: SemesterKey, region: string, value: string) => {
+  const updateValue = (
+    semester: SemesterKey,
+    region: RegionName,
+    field: CapacityField,
+    value: string
+  ) => {
     setValuesBySemester(prev => ({
       ...prev,
       [semester]: {
         ...prev[semester],
-        [region]: value,
+        [region]: {
+          ...prev[semester][region],
+          [field]: value,
+        },
       },
     }))
   }
 
   return (
-    <div className="paragraph-card__slot">
-      <SemesterClassCapacityDetailInfoForm
+    <div className="paragraph-card__slot ujat-education-class-capacity">
+      <SemesterClassCapacityTable
         semester="first"
         values={valuesBySemester.first}
-        onChange={(region, value) => updateValue('first', region, value)}
+        onChange={(region, field, value) => updateValue('first', region, field, value)}
       />
-      <SemesterClassCapacityDetailInfoForm
+      <SemesterClassCapacityTable
         semester="second"
         values={valuesBySemester.second}
-        onChange={(region, value) => updateValue('second', region, value)}
+        onChange={(region, field, value) => updateValue('second', region, field, value)}
       />
     </div>
   )

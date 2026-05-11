@@ -48,7 +48,6 @@ import {
   type ProgramRegistrationParagraphBodyOptions,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { renderUjatProgramRegistrationParagraphBody } from '@/features/template/ui/form-set/registration-form/UJAT/paragraph-body'
-import type { UjatGradeWiseClassTimeParagraphOptions } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-body-options'
 import type {
   UjatProgramApplicationGradeClassTimeParagraphOptions,
   UjatProgramApplicationGradeInfoParagraphOptions,
@@ -397,7 +396,6 @@ export function HorizontalTableParagraphBody({
   paymentStatementDisplayMode,
   programRegistration,
   ujatProgramRegistration,
-  ujatGradeWiseClassTime,
   programApplicationFormInstitution,
   ujatProgramApplicationFormInstitution,
   ujatProgramApplicationFormVolunteer,
@@ -427,7 +425,6 @@ export function HorizontalTableParagraphBody({
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
   programRegistration?: ProgramRegistrationParagraphBodyOptions
   ujatProgramRegistration?: boolean
-  ujatGradeWiseClassTime?: UjatGradeWiseClassTimeParagraphOptions
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
   /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
@@ -491,8 +488,7 @@ export function HorizontalTableParagraphBody({
 
   const ujatProgramRegistrationBody = renderUjatProgramRegistrationParagraphBody(
     p,
-    ujatProgramRegistration,
-    ujatGradeWiseClassTime
+    ujatProgramRegistration
   )
   if (ujatProgramRegistrationBody != null) return ujatProgramRegistrationBody
 

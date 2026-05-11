@@ -13,7 +13,6 @@ import {
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/ujat-program-application-form-institution-draft'
 import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
-import { UJAT_REGISTRATION_GRADE_WISE_CLASS_TIME_ID } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-section-ids'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
@@ -202,36 +201,6 @@ export function withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrai
           e.stopPropagation()
           if (!classTimeAddEnabled) return
           o.onAddClassTimeBlock()
-        }}
-      >
-        수업 진행 시간 추가
-      </CmsButton>
-    ),
-  }
-}
-
-/** UJAT 프로그램 등록 폼 — 학년 별 수업 시간 단락: 카드 제목 줄 우측「수업 진행 시간 추가」(일반 등록 교육 진행과 동일 위치) */
-export function withUjatProgramRegistrationGradeWiseClassTimeTitleTrailing(
-  heading: ParagraphCardEditableHeading,
-  paragraph: WritingFormParagraph,
-  paragraphBodyOptions?: RenderFormParagraphBodyOptions
-): ParagraphCardEditableHeading {
-  const o = paragraphBodyOptions?.ujatGradeWiseClassTime
-  if (paragraph.id !== UJAT_REGISTRATION_GRADE_WISE_CLASS_TIME_ID || o == null) {
-    return heading
-  }
-  return {
-    ...heading,
-    titleTrailing: (
-      <CmsButton
-        type="button"
-        variant="secondary"
-        size="medium"
-        width={180}
-        icon={<PlusOutlined aria-hidden />}
-        onClick={e => {
-          e.stopPropagation()
-          o.onAddLessonTime()
         }}
       >
         수업 진행 시간 추가

@@ -21,7 +21,6 @@ import {
   withProgramRegistrationCurriculumTitleTrailing,
   withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing,
   withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing,
-  withUjatProgramRegistrationGradeWiseClassTimeTitleTrailing,
   withoutTitleRequired,
 } from '@/features/template/ui/form-editor/form-editor-left-panel-heading'
 import {
@@ -103,14 +102,10 @@ export function PinnedFormCard({
   )
   const editableHeading = withProgramApplicationFormVolunteerTitleTrailing(
     withProgramApplicationFormInstructorTitleTrailing(
-        withUjatProgramRegistrationGradeWiseClassTimeTitleTrailing(
-        withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
-          withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
-            withProgramRegistrationCurriculumTitleTrailing(
-              editableHeadingBase as ParagraphCardEditableHeading,
-              paragraph,
-              paragraphBodyOptions
-            ),
+      withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+        withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+          withProgramRegistrationCurriculumTitleTrailing(
+            editableHeadingBase as ParagraphCardEditableHeading,
             paragraph,
             paragraphBodyOptions
           ),
@@ -256,14 +251,10 @@ export function SortableMiddleFormCard({
   )
   const editableHeading = withProgramApplicationFormVolunteerTitleTrailing(
     withProgramApplicationFormInstructorTitleTrailing(
-        withUjatProgramRegistrationGradeWiseClassTimeTitleTrailing(
-        withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
-          withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
-            withProgramRegistrationCurriculumTitleTrailing(
-              editableHeadingBase as ParagraphCardEditableHeading,
-              paragraph,
-              paragraphBodyOptions
-            ),
+      withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+        withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+          withProgramRegistrationCurriculumTitleTrailing(
+            editableHeadingBase as ParagraphCardEditableHeading,
             paragraph,
             paragraphBodyOptions
           ),

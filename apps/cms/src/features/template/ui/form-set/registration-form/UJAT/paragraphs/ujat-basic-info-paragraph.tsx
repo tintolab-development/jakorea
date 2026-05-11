@@ -76,7 +76,7 @@ export function UjatBasicInfoParagraph() {
   const programManagementName = UJAT_PROGRAM_MANAGEMENT_DEFAULT
   const detailedProgramId = DETAILED_PROGRAM_UJAT_VALUE
 
-  const [operationAnchorDate, setOperationAnchorDate] = useState<Dayjs | null>(dayjs())
+  const [operationAnchorDate, setOperationAnchorDate] = useState<Dayjs | null>(null)
   const [operationRange, setOperationRange] = useState<[Dayjs, Dayjs] | null>(null)
   const operationRangeWithTime = useMemo(
     () =>
@@ -250,6 +250,7 @@ export function UjatBasicInfoParagraph() {
                 <CmsCheckbox
                   checkboxSize="large"
                   checked={individualChecked}
+                  disabled
                   onChange={e => setIndividualChecked(e.target.checked)}
                 >
                   {participantTypeLabel('individual')}
@@ -264,6 +265,7 @@ export function UjatBasicInfoParagraph() {
                 <CmsCheckbox
                   checkboxSize="large"
                   checked={teacherChecked}
+                  disabled
                   onChange={e => setTeacherChecked(e.target.checked)}
                 >
                   {participantTypeLabel('teacher_instructor')}

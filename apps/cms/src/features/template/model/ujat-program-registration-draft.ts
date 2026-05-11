@@ -79,11 +79,6 @@ export function createUjatProgramRegistrationDraft(): WritingFormDraft {
         UJAT_REGISTRATION_SECTION_META.educationClassCapacityByRegion.title,
         UJAT_REGISTRATION_SECTION_META.educationClassCapacityByRegion.description
       ),
-      createSeedParagraph(
-        UJAT_PROGRAM_REGISTRATION_IDS[7],
-        UJAT_REGISTRATION_SECTION_META.gradeWiseClassTime.title,
-        UJAT_REGISTRATION_SECTION_META.gradeWiseClassTime.description
-      ),
     ],
   })
 }

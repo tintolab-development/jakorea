@@ -9,6 +9,10 @@
   box-sizing: border-box;
 }
 
+.paragraph-calendar-mini--small {
+  width: 300px;
+}
+
 .paragraph-calendar-mini .calendar-mini {
   box-sizing: border-box;
   width: 100%;
@@ -30,6 +34,10 @@
 /* 날짜 셀 행 간 간격 15px */
 .paragraph-calendar-mini .calendar-mini .ant-picker-content tbody .ant-picker-cell {
   padding-top: 15px;
+}
+
+.paragraph-calendar-mini--small .calendar-mini .ant-picker-content tbody .ant-picker-cell {
+  padding-top: 13px;
 }
 
 /* 요일 헤더(SUN ~ SAT) — 공유 CSS의 padding-bottom 제거 */
@@ -75,6 +83,24 @@
   color: var(--main-BK, #3d3d3d);
 }
 
+.paragraph-calendar-mini--small .calendar-mini-cell--has-schedule {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  display: flex;
+  width: 30px;
+  height: 30px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  aspect-ratio: 1 / 1;
+}
+
 /* 비활성 날짜 — antd가 disabledDate에 따라 td에 .ant-picker-cell-disabled 부여 */
 .paragraph-calendar-mini .ant-picker-cell-disabled,
 .paragraph-calendar-mini .ant-picker-cell-disabled::before,
@@ -104,6 +130,13 @@
   border-radius: var(--8, 8px);
   width: 40px;
   height: 40px;
+}
+
+.paragraph-calendar-mini--small .calendar-mini-cell,
+.paragraph-calendar-mini--small .calendar-mini-cell--selected,
+.paragraph-calendar-mini--small .calendar-mini-cell--has-schedule.calendar-mini-cell--selected {
+  width: 30px;
+  height: 30px;
 }
 
 .paragraph-calendar-mini .calendar-mini-cell--selected .calendar-mini-date {

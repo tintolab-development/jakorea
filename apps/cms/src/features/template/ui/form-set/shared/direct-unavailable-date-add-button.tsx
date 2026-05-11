@@ -1,10 +1,49 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { CalendarMini } from '@/shared/components/calendar/ui/calendar-mini'
+import { ParagraphCalendarMini } from '@/features/template/ui/paragraph-calendar-mini'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import './direct-unavailable-date-add-button.css'
+
+const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+
+function findNextEnabledDate(date: Dayjs, disabledDate?: (date: Dayjs) => boolean): Dayjs {
+  if (!disabledDate || !disabledDate(date)) return date
+
+  for (let offset = 1; offset <= 366; offset += 1) {
+    const next = date.add(offset, 'day')
+    if (!disabledDate(next)) return next
+  }
+
+  return date
+}
+
+function areSameStringArray(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((value, index) => value === b[index])
+}
+
+function filterEnabledDateValues(
+  values: string[],
+  disabledDate?: (date: Dayjs) => boolean
+): string[] {
+  if (!disabledDate) return values
+
+  return values.filter(value => {
+    if (!ISO_DATE_PATTERN.test(value)) return true
+    return !disabledDate(dayjs(value))
+  })
+}
+
+function formatUnavailableDateLabel(value: string): string {
+  if (!ISO_DATE_PATTERN.test(value)) return value
+
+  const date = dayjs(value)
+  if (!date.isValid()) return value
+
+  return `${date.format('YY년 M월 D일')}(${WEEKDAYS_KO[date.day()]})`
+}
 
 function DirectUnavailableDateAddIcon() {
   return (
@@ -40,25 +79,48 @@ function DirectUnavailableDateAddIcon() {
 export function DirectUnavailableDateAddButton({
   onClick,
   disabled,
+  disabledDate,
+  initialCalendarDate,
   onApplyDatesChange,
 }: {
   onClick?: () => void
   disabled?: boolean
+  disabledDate?: (date: Dayjs) => boolean
+  initialCalendarDate?: Dayjs | null
   onApplyDatesChange?: (dates: string[]) => void
 }) {
   const [open, setOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(() => dayjs().startOf('month'))
   const [selectedDate, setSelectedDate] = useState(() => dayjs())
   const [selectedDates, setSelectedDates] = useState<string[]>(['모든 공휴일'])
+  const [appliedDates, setAppliedDates] = useState<string[]>([])
+
+  useEffect(() => {
+    if (!disabledDate) return
+
+    setSelectedDates(prev => {
+      const next = filterEnabledDateValues(prev, disabledDate)
+      return areSameStringArray(prev, next) ? prev : next
+    })
+    setAppliedDates(prev => {
+      const next = filterEnabledDateValues(prev, disabledDate)
+      return areSameStringArray(prev, next) ? prev : next
+    })
+  }, [disabledDate])
 
   const selectedDateSet = useMemo(
     () =>
       new Set(
         selectedDates
-          .filter(v => /^\d{4}-\d{2}-\d{2}$/.test(v))
+          .filter(v => ISO_DATE_PATTERN.test(v))
           .map(v => dayjs(v).format('YYYY-MM-DD'))
       ),
     [selectedDates]
+  )
+
+  const appliedDateText = useMemo(
+    () => appliedDates.map(formatUnavailableDateLabel).join(', '),
+    [appliedDates]
   )
 
   const closeModal = () => setOpen(false)
@@ -68,33 +130,42 @@ export function DirectUnavailableDateAddButton({
   }
 
   const handleCalendarSelect = (d: Dayjs) => {
+    if (disabledDate?.(d)) return
+
     setSelectedDate(d)
     const key = d.format('YYYY-MM-DD')
     setSelectedDates(prev => (prev.includes(key) ? prev.filter(v => v !== key) : [...prev, key]))
   }
 
   const displayTags = selectedDates.map(v =>
-    /^\d{4}-\d{2}-\d{2}$/.test(v) ? dayjs(v).format('YY년 M월 D일') : v
+    ISO_DATE_PATTERN.test(v) ? dayjs(v).format('YY년 M월 D일') : v
   )
 
   return (
     <>
-      <CmsButton
-        type="button"
-        size="medium"
-        width={180}
-        disabled={disabled}
-        icon={<DirectUnavailableDateAddIcon />}
-        onClick={() => {
-          onClick?.()
-          const today = dayjs()
-          setCurrentMonth(today.startOf('month'))
-          setSelectedDate(today)
-          setOpen(true)
-        }}
-      >
-        진행 불가일 직접 추가
-      </CmsButton>
+      <div className="direct-unavailable-date-add-button">
+        <CmsButton
+          type="button"
+          size="medium"
+          width={180}
+          disabled={disabled}
+          icon={<DirectUnavailableDateAddIcon />}
+          onClick={() => {
+            onClick?.()
+            const initialDate = findNextEnabledDate(initialCalendarDate ?? dayjs(), disabledDate)
+            setCurrentMonth(initialDate.startOf('month'))
+            setSelectedDate(initialDate)
+            setOpen(true)
+          }}
+        >
+          진행 불가일 직접 추가
+        </CmsButton>
+        {appliedDateText ? (
+          <span className="direct-unavailable-date-add-button__selected-dates">
+            {appliedDateText}
+          </span>
+        ) : null}
+      </div>
 
       <ContentModal
         open={open}
@@ -125,7 +196,13 @@ export function DirectUnavailableDateAddButton({
               size="medium"
               width={120}
               onClick={() => {
-                onApplyDatesChange?.(selectedDates.filter(v => v !== '모든 공휴일'))
+                const nextDates = selectedDates.filter(v => {
+                  if (v === '모든 공휴일') return false
+                  if (!disabledDate || !ISO_DATE_PATTERN.test(v)) return true
+                  return !disabledDate(dayjs(v))
+                })
+                setAppliedDates(nextDates)
+                onApplyDatesChange?.(nextDates)
                 closeModal()
               }}
             >
@@ -136,12 +213,14 @@ export function DirectUnavailableDateAddButton({
       >
         <div className="direct-unavailable-date-modal__body">
           <div className="direct-unavailable-date-modal__calendar">
-            <CalendarMini
+            <ParagraphCalendarMini
+              size="small"
               currentMonth={currentMonth}
               selectedDate={selectedDate}
               onMonthChange={setCurrentMonth}
               onSelectDate={handleCalendarSelect}
               programDates={selectedDateSet}
+              disabledDate={disabledDate}
             />
           </div>
           <div className="direct-unavailable-date-modal__selected">

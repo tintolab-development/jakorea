@@ -28,11 +28,7 @@ export const UJAT_REGISTRATION_SECTION_META = {
     description: '교육이 진행되는 일정을 설정해 주세요.',
   },
   educationClassCapacityByRegion: {
-    title: '지역 별 교육 진행 가능 학급 수',
-    description: '지역 별 교육 진행 가능 학급 수를 설정해 주세요.',
-  },
-  gradeWiseClassTime: {
-    title: '학년 별 수업 시간',
-    description: '',
+    title: '지역 별 교육 진행 가능 학급 및 봉사단 수',
+    description: '지역 별로 상반기/하반기 교육 진행 가능한 최대 학급 수와 봉사단 수를 설정해 주세요.',
   },
 } as const

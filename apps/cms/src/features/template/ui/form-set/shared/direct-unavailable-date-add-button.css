@@ -1,3 +1,31 @@
+.direct-unavailable-date-add-button {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.direct-unavailable-date-add-button__selected-dates {
+  display: flex;
+  padding: 4px 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--4, 4px);
+  border: 1px solid rgba(195, 47, 74, 0.1);
+  background: var(
+    --color-bg-red,
+    linear-gradient(0deg, rgba(195, 47, 74, 0.1) 0%, rgba(195, 47, 74, 0.1) 100%),
+    #fff
+  );
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+}
+
 .direct-unavailable-date-modal__description {
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard;
@@ -21,17 +49,6 @@
   flex: 0 0 300px;
   box-sizing: border-box;
   min-height: 0;
-  padding: 1px;
-  border-radius: var(--16, 16px);
-  border: 1px solid var(--table-line, #e0e0e0);
-  background: #fff;
-  overflow: hidden;
-}
-
-.direct-unavailable-date-modal__calendar .calendar-mini {
-  box-shadow: none;
-  max-height: none;
-  border-radius: 15px;
 }
 
 .direct-unavailable-date-modal__selected {

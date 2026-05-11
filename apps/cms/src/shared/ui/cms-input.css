@@ -122,7 +122,7 @@
 
 .cms-input--medium .cms-input__inner .ant-input,
 .cms-input--medium .cms-input__inner .ant-input-affix-wrapper .ant-input {
-  font-size: 15px;
+  font-size: 15px !important;
 }
 
 .cms-input--small .cms-input__inner .ant-input,
@@ -174,10 +174,7 @@
 }
 
 .cms-input__control--disabled .cms-input__inner .ant-input::placeholder,
-.cms-input__control--disabled
-  .cms-input__inner
-  .ant-input-affix-wrapper
-  .ant-input::placeholder {
+.cms-input__control--disabled .cms-input__inner .ant-input-affix-wrapper .ant-input::placeholder {
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
 }
 

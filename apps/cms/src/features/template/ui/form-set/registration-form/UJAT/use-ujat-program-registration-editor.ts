@@ -26,15 +26,12 @@ export function useUjatProgramRegistrationEditor(active: boolean, previewHeaderT
   )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
 
-  const [gradeWiseLessonTimeSlotCount, setGradeWiseLessonTimeSlotCount] = useState(1)
-
   useEffect(() => {
     if (!active) return
     const next = normalizeWritingFormDraft(createUjatProgramRegistrationDraft())
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)
-    setGradeWiseLessonTimeSlotCount(1)
   }, [active])
 
   useEffect(() => {
@@ -99,20 +96,12 @@ export function useUjatProgramRegistrationEditor(active: boolean, previewHeaderT
     setSingleItemListActiveItemId(null)
   }, [])
 
-  const onAddGradeWiseLessonTime = useCallback(() => {
-    setGradeWiseLessonTimeSlotCount(c => c + 1)
-  }, [])
-
   const paragraphBodyOptions = useMemo(
     () => ({
       ujatProgramRegistration: true,
-      ujatGradeWiseClassTime: {
-        lessonTimeSlotCount: gradeWiseLessonTimeSlotCount,
-        onAddLessonTime: onAddGradeWiseLessonTime,
-      },
       structureLockedAuthoringChoicePreview: true,
     }),
-    [gradeWiseLessonTimeSlotCount, onAddGradeWiseLessonTime]
+    []
   )
 
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {

@@ -56,7 +56,6 @@ const createRows = (
 const registrationDefinitions: TemplateDefinition[] = [
   { id: 'registration-general', templateName: '일반 프로그램 등록 폼', variant: 'default' },
   { id: 'registration-economy', templateName: '1사 1교 프로그램 등록 폼', variant: 'default' },
-  { id: 'registration-keminior', templateName: 'Gemini 프로그램 등록 폼', variant: 'default' },
   { id: 'registration-ujat', templateName: 'UJAT 프로그램 등록 폼', variant: 'default' },
 ]
 
@@ -100,8 +99,13 @@ const applicationDefinitions: TemplateDefinition[] = [
     variant: 'default',
   },
   {
-    id: 'application-gemini-instructor',
-    templateName: 'Gemini 프로그램 강사 신청 폼',
+    id: 'application-gemini-visiting-training-instructor',
+    templateName: 'Gemini 찾아가는 연수 강사 신청 폼',
+    variant: 'default',
+  },
+  {
+    id: 'application-gemini-visiting-training-school',
+    templateName: 'Gemini 찾아가는 연수 학교 신청 폼',
     variant: 'default',
   },
   {

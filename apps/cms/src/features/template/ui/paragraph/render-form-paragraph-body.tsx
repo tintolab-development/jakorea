@@ -51,7 +51,6 @@ import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/te
 import type { ProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { ProgramApplicationFormInstructorBodyOptions } from '@/features/template/ui/form-set/application-form/instructor/paragraph-body'
 import type { ProgramApplicationFormVolunteerBodyOptions } from '@/features/template/ui/form-set/application-form/volunteer/paragraph-body'
-import type { UjatGradeWiseClassTimeParagraphOptions } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-body-options'
 import type {
   UjatProgramApplicationGradeClassTimeParagraphOptions,
   UjatProgramApplicationGradeInfoParagraphOptions,
@@ -59,7 +58,6 @@ import type {
 
 export type { ProgramApplicationFormInstructorBodyOptions }
 export type { ProgramApplicationFormVolunteerBodyOptions }
-export type { UjatGradeWiseClassTimeParagraphOptions }
 export type { UjatProgramApplicationGradeClassTimeParagraphOptions }
 export type { UjatProgramApplicationGradeInfoParagraphOptions }
 
@@ -102,8 +100,6 @@ export type RenderFormParagraphBodyOptions = {
   programRegistration?: ProgramRegistrationParagraphBodyOptions
   /** UJAT 프로그램 등록 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramRegistration?: boolean
-  /** UJAT 프로그램 등록 폼 — 학년 별 수업 시간(본문 행 수·카드 헤더「수업 진행 시간 추가」) */
-  ujatGradeWiseClassTime?: UjatGradeWiseClassTimeParagraphOptions
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
   /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
@@ -253,7 +249,6 @@ export function renderFormParagraphBody(
           paymentStatementDisplayMode={options?.paymentStatementDisplayMode}
           programRegistration={options?.programRegistration}
           ujatProgramRegistration={options?.ujatProgramRegistration}
-          ujatGradeWiseClassTime={options?.ujatGradeWiseClassTime}
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
           ujatProgramApplicationFormInstitution={options?.ujatProgramApplicationFormInstitution}
           ujatProgramApplicationFormVolunteer={options?.ujatProgramApplicationFormVolunteer}
