@@ -4,7 +4,6 @@
  */
 import { useMemo, useState } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
-import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
 import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
