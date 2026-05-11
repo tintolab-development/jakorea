@@ -19,6 +19,7 @@ import {
   horizontalTableSetFieldCellValue,
   normalizeHorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import { PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS } from '@/features/template/lib/personal-info-horizontal-table-disclaimer-paragraph-ids'
 import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
@@ -33,6 +34,7 @@ import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/
 import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraph-body'
 import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/institution/paragraph-body'
 import { renderUjatProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraph-body'
+import { renderUjatProgramApplicationFormVolunteerParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraph-body'
 import {
   renderProgramApplicationFormInstructorParagraphBody,
   type ProgramApplicationFormInstructorBodyOptions,
@@ -398,6 +400,7 @@ export function HorizontalTableParagraphBody({
   ujatGradeWiseClassTime,
   programApplicationFormInstitution,
   ujatProgramApplicationFormInstitution,
+  ujatProgramApplicationFormVolunteer,
   ujatProgramApplicationGradeInfo,
   ujatProgramApplicationGradeClassTime,
   applicantRecruitFormInstitution,
@@ -429,6 +432,8 @@ export function HorizontalTableParagraphBody({
   programApplicationFormInstitution?: boolean
   /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramApplicationFormInstitution?: boolean
+  /** UJAT 프로그램 봉사자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatProgramApplicationFormVolunteer?: boolean
   ujatProgramApplicationGradeInfo?: UjatProgramApplicationGradeInfoParagraphOptions
   ujatProgramApplicationGradeClassTime?: UjatProgramApplicationGradeClassTimeParagraphOptions
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
@@ -538,6 +543,10 @@ export function HorizontalTableParagraphBody({
     )
   if (ujatProgramApplicationFormInstitutionBody != null)
     return ujatProgramApplicationFormInstitutionBody
+
+  const ujatProgramApplicationFormVolunteerBody =
+    renderUjatProgramApplicationFormVolunteerParagraphBody(p, ujatProgramApplicationFormVolunteer)
+  if (ujatProgramApplicationFormVolunteerBody != null) return ujatProgramApplicationFormVolunteerBody
 
   const programApplicationFormInstructorBody = renderProgramApplicationFormInstructorParagraphBody(
     p,
@@ -802,14 +811,18 @@ export function HorizontalTableParagraphBody({
       {p.showBottomText || p.showBottomConsent || p.idTypeWithInput ? (
         <div className="form-editor-horizontal-table__bottom">
           {p.showBottomText ? (
-            <ParagraphInput
-              type="description"
-              className="form-editor-horizontal-table__bottom-input"
-              value={p.bottomText}
-              isEditMode={effectiveEditMode}
-              onChange={next => onChange({ ...p, bottomText: next })}
-              placeholder="설명을 입력해 주세요"
-            />
+            PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS.has(p.id) ? (
+              <div className="detail-info-form--text">{p.bottomText}</div>
+            ) : (
+              <ParagraphInput
+                type="description"
+                className="form-editor-horizontal-table__bottom-input"
+                value={p.bottomText}
+                isEditMode={effectiveEditMode}
+                onChange={next => onChange({ ...p, bottomText: next })}
+                placeholder="설명을 입력해 주세요"
+              />
+            )
           ) : null}
           {p.idTypeWithInput ? (
             <IdTypeWithInputBody

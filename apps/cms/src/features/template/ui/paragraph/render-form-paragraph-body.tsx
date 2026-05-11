@@ -108,6 +108,8 @@ export type RenderFormParagraphBodyOptions = {
   programApplicationFormInstitution?: boolean
   /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramApplicationFormInstitution?: boolean
+  /** UJAT 프로그램 봉사자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatProgramApplicationFormVolunteer?: boolean
   /** UJAT 프로그램 학교 신청 폼 — 학년 별 신청 정보(블록 수·카드 헤더「+ 신청 학년 추가」) */
   ujatProgramApplicationGradeInfo?: UjatProgramApplicationGradeInfoParagraphOptions
   /** UJAT 프로그램 학교 신청 폼 — 학년 별 수업 시간(블록·카드 헤더「수업 진행 시간 추가」) */
@@ -254,6 +256,7 @@ export function renderFormParagraphBody(
           ujatGradeWiseClassTime={options?.ujatGradeWiseClassTime}
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
           ujatProgramApplicationFormInstitution={options?.ujatProgramApplicationFormInstitution}
+          ujatProgramApplicationFormVolunteer={options?.ujatProgramApplicationFormVolunteer}
           ujatProgramApplicationGradeInfo={options?.ujatProgramApplicationGradeInfo}
           ujatProgramApplicationGradeClassTime={options?.ujatProgramApplicationGradeClassTime}
           applicantRecruitFormInstitution={options?.applicantRecruitFormInstitution}

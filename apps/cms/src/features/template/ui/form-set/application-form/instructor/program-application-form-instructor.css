@@ -126,14 +126,6 @@
   background: linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff;
 }
 
-.program-application-form-instructor__summary-text--placeholder {
-  display: inline;
-  font-size: 14px;
-  line-height: 150%;
-  color: rgba(61, 61, 61, 0.45);
-  vertical-align: middle;
-}
-
 /**
  * DetailInfoForm 값 칸 — `field-content--edit > *`의 display:flex를 덮고
  * 인라인 줄바꿈 + `DetailInfoForm.TdDivider`(detail-info-form-inputs-separator)로 구간 구분

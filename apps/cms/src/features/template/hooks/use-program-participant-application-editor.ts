@@ -38,6 +38,10 @@ import {
   UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/ujat-program-application-form-institution-draft'
 import {
+  createUjatProgramApplicationFormVolunteerDraft,
+  UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/ujat-program-application-form-volunteer-draft'
+import {
   createProgramApplicationFormInstitutionDraft,
   PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-institution-draft'
@@ -153,6 +157,7 @@ export type ProgramParticipantApplicationEditorVariant =
   | 'individual'
   | 'institution'
   | 'ujat-application-institution'
+  | 'ujat-application-volunteer'
   | 'applicant-recruit-institution'
   | 'ujat-recruit-institution'
   | 'applicant-recruit-individual'
@@ -184,6 +189,8 @@ export function useProgramParticipantApplicationEditor(
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'ujat-application-institution')
       return UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'ujat-application-volunteer')
+      return UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
     if (variant === 'applicant-recruit-institution')
       return APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'ujat-recruit-institution')
@@ -230,6 +237,8 @@ export function useProgramParticipantApplicationEditor(
         ? createProgramApplicationFormInstitutionDraft()
         : variant === 'ujat-application-institution'
           ? createUjatProgramApplicationFormInstitutionDraft()
+        : variant === 'ujat-application-volunteer'
+          ? createUjatProgramApplicationFormVolunteerDraft()
         : variant === 'applicant-recruit-institution'
           ? createApplicantRecruitFormInstitutionDraft()
           : variant === 'ujat-recruit-institution'
@@ -474,6 +483,7 @@ export function useProgramParticipantApplicationEditor(
         structureLockedAuthoringChoicePreview: true,
         programApplicationFormInstitution: variant === 'institution',
         ujatProgramApplicationFormInstitution: variant === 'ujat-application-institution',
+        ujatProgramApplicationFormVolunteer: variant === 'ujat-application-volunteer',
         ujatProgramApplicationGradeInfo,
         ujatProgramApplicationGradeClassTime,
         applicantRecruitFormInstitution: variant === 'applicant-recruit-institution',

@@ -20,6 +20,8 @@ interface CalendarMiniProps {
   programDates: Set<string>
   /** 구간 선택 UI — 지정 시 해당 구간 셀에 범위 전용 클래스(스타일은 소비측 CSS) */
   rangeSelection?: { start: Dayjs; end: Dayjs } | null
+  /** 비활성 날짜 판정 — true 반환 시 antd가 셀 비활성(클릭/선택 차단) + `.ant-picker-cell-disabled` 부여 */
+  disabledDate?: (date: Dayjs) => boolean
 }
 
 export function CalendarMini({
@@ -29,6 +31,7 @@ export function CalendarMini({
   onSelectDate,
   programDates,
   rangeSelection = null,
+  disabledDate,
 }: CalendarMiniProps) {
   const handlePrevMonth = () => {
     onMonthChange(currentMonth.subtract(1, 'month'))
@@ -104,8 +107,12 @@ export function CalendarMini({
         locale={enUS}
         fullCellRender={dateFullCellRender}
         headerRender={() => null}
+        disabledDate={disabledDate}
         onSelect={(date, { source }) => {
-          if (source === 'date') onSelectDate(date)
+          if (source === 'date') {
+            if (disabledDate?.(date)) return
+            onSelectDate(date)
+          }
         }}
       />
     </div>

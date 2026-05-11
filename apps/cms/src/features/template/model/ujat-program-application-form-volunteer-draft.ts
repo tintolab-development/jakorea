@@ -8,32 +8,29 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 
-/** UJAT 프로그램 학교 신청 폼 — 시드 단락 ID */
-export const UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS = {
-  personalInfoCollection: 'ujat-program-application-institution-seed-personal-info',
-  thirdPartyConsent: 'ujat-program-application-institution-seed-third-party',
-  applicationRegion: 'ujat-program-application-institution-seed-application-region',
-  basicInfo: 'ujat-program-application-institution-seed-basic-info',
-  gradeApplicationInfo: 'ujat-program-application-institution-seed-grade-application-info',
-  gradeClassTime: 'ujat-program-application-institution-seed-grade-class-time',
-  preferredEducationSchedule: 'ujat-program-application-institution-seed-preferred-education-schedule',
+/** UJAT 프로그램 봉사자 신청 폼 — 시드 단락 ID */
+export const UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS = {
+  personalInfoCollection: 'ujat-program-application-volunteer-seed-personal-info',
+  thirdPartyConsent: 'ujat-program-application-volunteer-seed-third-party',
+  basicInfo: 'ujat-program-application-volunteer-seed-basic-info',
+  previousTerm: 'ujat-program-application-volunteer-seed-previous-term',
+  preferredRegion: 'ujat-program-application-volunteer-seed-preferred-region',
+  educationExperience: 'ujat-program-application-volunteer-seed-education-experience',
+  interviewSchedule: 'ujat-program-application-volunteer-seed-interview-schedule',
+  freeTextItems: 'ujat-program-application-volunteer-seed-free-text-items',
   /** 제출 전 확인 — 객관식 단일 선택지(항목 1개 예외 허용) */
-  submitConfirmation: 'ujat-program-application-institution-seed-submit-confirmation',
+  submitConfirmation: 'ujat-program-application-volunteer-seed-submit-confirmation',
 } as const
 
-const PREFERRED_EDUCATION_SCHEDULE_DESCRIPTION =
-  '* 금요일 1교시~4교시에 진행되며, 4교시 모두 교육 진행이 가능해야 합니다.\n' +
-  '* 참여 가능한 모든 일정을 선택해 주시면, 선택해 주신 일정 중에서 조정하여 교육이 진행될 예정입니다.'
-
-export const UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS = new Set<string>(
-  Object.values(UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS)
+export const UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS = new Set<string>(
+  Object.values(UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS)
 )
 
 /** 객관식 최소 2항 규칙 예외 — 시드 단락만 1항 유지 */
-export function isUjatProgramApplicationInstitutionSingleOptionMultipleChoiceSeed(
+export function isUjatProgramApplicationVolunteerSingleOptionMultipleChoiceSeed(
   paragraphId: string
 ): boolean {
-  return paragraphId === UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.submitConfirmation
+  return paragraphId === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.submitConfirmation
 }
 
 const PERSONAL_INFO_COLLECTION_BOTTOM =
@@ -49,7 +46,7 @@ function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
     placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
   }))
   return normalizeHorizontalTableParagraph({
-    id: UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.personalInfoCollection,
+    id: UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.personalInfoCollection,
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
@@ -62,10 +59,10 @@ function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
     columnFields,
     fieldDataRows: [
       [
-        { kind: 'text', value: '이름, 연락처, 학교명, 학교 주소, 이메일 등' },
+        { kind: 'text', value: '이름, 연락처, 성별, 학년, 이메일, 소속(학교)' },
         {
           kind: 'text',
-          value: 'JA 프로그램의 참가자 선발 및 프로그램 진행에 필요한 정보 안내',
+          value: 'JA 프로그램 봉사활동 안내 및 진행에 필요한 정보 안내',
         },
         {
           kind: 'text',
@@ -85,7 +82,7 @@ function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
 function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
   const colCount = 4
   return normalizeHorizontalTableParagraph({
-    id: UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent,
+    id: UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent,
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
@@ -103,13 +100,13 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
     ],
     fieldDataRows: [
       [
-        { kind: 'text', value: '제공받는 곳을 입력해 주세요' },
-        { kind: 'text', value: '이름, 학교명, 학교주소, 개인 연락처, e-mail' },
+        { kind: 'text', value: '배정된 교육 대상 학교' },
+        { kind: 'text', value: '이름, 연락처, 성별, 학년, 이메일, 소속(학교)' },
         {
           kind: 'text',
-          value: 'JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내',
+          value: 'JA 프로그램 봉사활동 안내 및\n프로그램 진행에 필요한 정보 안내',
         },
-        { kind: 'text', value: '5년' },
+        { kind: 'text', value: '해당 프로그램이 진행되는 기간' },
       ],
     ],
     bottomText: PERSONAL_INFO_THIRD_PARTY_BOTTOM,
@@ -121,25 +118,24 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
 }
 
 const SUBMIT_CONFIRMATION_OPTION_ID =
-  'ujat-program-application-institution-submit-confirmation-yes' as const
+  'ujat-program-application-volunteer-submit-confirmation-yes' as const
 
 function createSubmitConfirmationMultipleChoiceParagraph(): MultipleChoiceParagraph {
   return {
-    id: UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.submitConfirmation,
+    id: UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.submitConfirmation,
     kind: 'single_item',
     variant: 'multiple_choice',
     requiredMark: true,
     paragraphTitle: '상기 내용 모두 확인하였으며 현재 답변으로 제출합니다.',
     paragraphDescription:
-      '*신청 학년 정보 및 교육 일정은 추후 수정이 가능하며, 교육자 배정 과정에서 조정될 수 있습니다.',
+      '*지원서 제출 후 수정이 불가하며, 지원자의 부주의로 잘못 작성하였을 경우 발생하는 불이익은 운영사무국에서 책임지지 않습니다.',
     participatesInTitleNumbering: true,
     answerRequired: true,
     allowMultiple: false,
     items: [
       {
         id: SUBMIT_CONFIRMATION_OPTION_ID,
-        label:
-          '네, 상기 내용 모두 확인하였으며, 2026년 JA Korea 초등 경제교육 대상 학교에 지원합니다.',
+        label: '네, 상기 내용 모두 확인하였으며, 대학생경제교육봉사단 UJAT N기로 지원합니다.',
       },
     ],
     selectedPreviewSingleId: null,
@@ -173,34 +169,39 @@ function createSeedHorizontalTable(
   })
 }
 
-export function createUjatProgramApplicationFormInstitutionDraft(): WritingFormDraft {
+export function createUjatProgramApplicationFormVolunteerDraft(): WritingFormDraft {
   const paragraphs: WritingFormParagraph[] = [
     createPersonalInfoCollectionParagraph(),
     createThirdPartyConsentParagraph(),
     createSeedHorizontalTable(
-      UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.applicationRegion,
-      '신청 지역',
-      '설명 입력'
-    ),
-    createSeedHorizontalTable(
-      UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo,
+      UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.basicInfo,
       '기본 정보',
-      '설명 입력'
+      '학년은 202N년 N학기 기준으로 기재해 주세요.'
     ),
     createSeedHorizontalTable(
-      UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeApplicationInfo,
-      '학년 별 신청 정보',
-      '학교에서 신청하는 모든 신청 학년 별 학급 수 및 반 별 학생 수를 작성해주세요.'
+      UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm,
+      '이전 UJAT 활동 기수',
+      '이전에 UJAT 활동한 활동 기수 기재 및 해당 기수의 UJAT 수료증 이미지 파일을 첨부해야 수료증 전형으로 서류전형 통과가 가능합니다.'
     ),
     createSeedHorizontalTable(
-      UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeClassTime,
-      '학년 별 수업 시간',
-      '신청 학년 별 수업 진행 시간을 작성해주세요.'
+      UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.preferredRegion,
+      '희망 교육 활동 지역',
+      '금요일 오전 활동이 가능한 지역을 선택해 주세요.'
     ),
     createSeedHorizontalTable(
-      UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
-      '진행 희망 교육 일정',
-      PREFERRED_EDUCATION_SCHEDULE_DESCRIPTION
+      UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.educationExperience,
+      '교육 진행 경험 여부',
+      '교육봉사, 강사 아르바이트 등 교육 진행 경험 여부를 선택해 주세요.'
+    ),
+    createSeedHorizontalTable(
+      UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule,
+      '면접 진행 가능 일정',
+      '서류 합격 시 면접이 진행됩니다. 면접 진행이 가능한 일정을 모두 선택해 주세요.'
+    ),
+    createSeedHorizontalTable(
+      UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems,
+      '자유 작성 항목',
+      '1~4번 문항은 자유롭게 작성가능합니다.'
     ),
     createSubmitConfirmationMultipleChoiceParagraph(),
   ]

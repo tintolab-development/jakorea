@@ -187,6 +187,7 @@ export function withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrai
   ) {
     return heading
   }
+  const classTimeAddEnabled = paragraphBodyOptions?.paragraphInteractionMode === 'user'
   return {
     ...heading,
     titleTrailing: (
@@ -196,8 +197,10 @@ export function withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrai
         size="medium"
         width={160}
         icon={<PlusOutlined aria-hidden />}
+        disabled={!classTimeAddEnabled}
         onClick={e => {
           e.stopPropagation()
+          if (!classTimeAddEnabled) return
           o.onAddClassTimeBlock()
         }}
       >
