@@ -10,16 +10,60 @@ import {
   removeMiddleParagraph,
 } from '@/features/template/lib/writing-form-middle-paragraph-mutations'
 import {
+  createApplicantRecruitFormIndividualDraft,
+  APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/applicant-recruit-form-individual-draft'
+import {
+  createApplicantRecruitFormInstitutionDraft,
+  APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/applicant-recruit-form-institution-draft'
+import {
+  createUjatRecruitFormInstitutionDraft,
+  UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/ujat-recruit-form-institution-draft'
+import {
+  createRecruitFormInstructorDraft,
+  RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/recruit-form-instructor-draft'
+import {
+  createRecruitFormVolunteerDraft,
+  RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/recruit-form-volunteer-draft'
+import {
+  createUjatRecruitFormVolunteerDraft,
+  UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/ujat-recruit-form-volunteer-draft'
+import {
+  createUjatProgramApplicationFormInstitutionDraft,
+  UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/ujat-program-application-form-institution-draft'
+import {
+  createUjatProgramApplicationFormVolunteerDraft,
+  UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/ujat-program-application-form-volunteer-draft'
+import {
   createProgramApplicationFormInstitutionDraft,
   PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-institution-draft'
+import {
+  createProgramApplicationFormInstructorDraft,
+  PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS,
+  PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/program-application-form-instructor-draft'
+import {
+  createProgramApplicationFormVolunteerDraft,
+  PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/program-application-form-volunteer-draft'
 import {
   createProgramParticipantApplicationDraft,
   PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-individual-draft'
 import {
+  normalizeVerticalTableParagraph,
   normalizeWritingFormDraft,
+  verticalTableAddRow,
   type FormTitleNumberingStyle,
+  type VerticalTableParagraph,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -109,20 +153,57 @@ function useParticipantApplicationMiddleActions(
   )
 }
 
-export type ProgramParticipantApplicationEditorVariant = 'individual' | 'institution'
+export type ProgramParticipantApplicationEditorVariant =
+  | 'individual'
+  | 'institution'
+  | 'ujat-application-institution'
+  | 'ujat-application-volunteer'
+  | 'applicant-recruit-institution'
+  | 'ujat-recruit-institution'
+  | 'applicant-recruit-individual'
+  | 'recruit-instructor'
+  | 'recruit-volunteer'
+  | 'ujat-recruit-volunteer'
+  | 'instructor'
+  | 'volunteer'
+
+function renumberInstructorUnavailableDateRows(p: VerticalTableParagraph): VerticalTableParagraph {
+  return {
+    ...p,
+    rows: p.rows.map((r, i) => {
+      const label = `강의 불가 일정 ${String(i + 1).padStart(2, '0')}`
+      if (r.stageCount === 2) {
+        return { ...r, headers: [label, r.headers[1] ?? ''] as [string, string] }
+      }
+      return { ...r, headers: [label] as [string] }
+    }),
+  }
+}
 
 export function useProgramParticipantApplicationEditor(
   active: boolean,
   previewHeaderTitle: string,
   variant: ProgramParticipantApplicationEditorVariant = 'individual'
 ) {
-  const seedParagraphIds = useMemo(
-    () =>
-      variant === 'institution'
-        ? PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
-        : PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS,
-    [variant]
-  )
+  const seedParagraphIds = useMemo(() => {
+    if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'ujat-application-institution')
+      return UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'ujat-application-volunteer')
+      return UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
+    if (variant === 'applicant-recruit-institution')
+      return APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'ujat-recruit-institution')
+      return UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'applicant-recruit-individual')
+      return APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS
+    if (variant === 'recruit-instructor') return RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
+    if (variant === 'recruit-volunteer') return RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
+    if (variant === 'ujat-recruit-volunteer') return UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
+    if (variant === 'instructor') return PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
+    if (variant === 'volunteer') return PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
+    return PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS
+  }, [variant])
 
   const [draft, setDraft] = useState<WritingFormDraft>(() =>
     normalizeWritingFormDraft(createProgramParticipantApplicationDraft())
@@ -131,6 +212,15 @@ export function useProgramParticipantApplicationEditor(
     normalizeWritingFormDraft(createProgramParticipantApplicationDraft()).paragraphs[0]?.id ?? null
   )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
+  const [ujatGradeApplicationBlockIds, setUjatGradeApplicationBlockIds] = useState<string[]>(() => [
+    crypto.randomUUID(),
+  ])
+  const [ujatApplicationGradeByBlockId, setUjatApplicationGradeByBlockId] = useState<
+    Record<string, string | undefined>
+  >({})
+  const [ujatGradeClassTimeBlockIds, setUjatGradeClassTimeBlockIds] = useState<string[]>(() => [
+    crypto.randomUUID(),
+  ])
 
   const {
     openWritingUserPreview,
@@ -145,11 +235,36 @@ export function useProgramParticipantApplicationEditor(
     const next = normalizeWritingFormDraft(
       variant === 'institution'
         ? createProgramApplicationFormInstitutionDraft()
-        : createProgramParticipantApplicationDraft()
+        : variant === 'ujat-application-institution'
+          ? createUjatProgramApplicationFormInstitutionDraft()
+        : variant === 'ujat-application-volunteer'
+          ? createUjatProgramApplicationFormVolunteerDraft()
+        : variant === 'applicant-recruit-institution'
+          ? createApplicantRecruitFormInstitutionDraft()
+          : variant === 'ujat-recruit-institution'
+            ? createUjatRecruitFormInstitutionDraft()
+          : variant === 'applicant-recruit-individual'
+            ? createApplicantRecruitFormIndividualDraft()
+        : variant === 'recruit-instructor'
+          ? createRecruitFormInstructorDraft()
+          : variant === 'recruit-volunteer'
+            ? createRecruitFormVolunteerDraft()
+          : variant === 'ujat-recruit-volunteer'
+            ? createUjatRecruitFormVolunteerDraft()
+            : variant === 'instructor'
+              ? createProgramApplicationFormInstructorDraft()
+              : variant === 'volunteer'
+                ? createProgramApplicationFormVolunteerDraft()
+                : createProgramParticipantApplicationDraft()
     )
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)
+    if (variant === 'ujat-application-institution') {
+      setUjatGradeApplicationBlockIds([crypto.randomUUID()])
+      setUjatApplicationGradeByBlockId({})
+      setUjatGradeClassTimeBlockIds([crypto.randomUUID()])
+    }
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [active, variant])
 
@@ -221,6 +336,91 @@ export function useProgramParticipantApplicationEditor(
     setSingleItemListActiveItemId(null)
   }, [])
 
+  const onApplicationGradeByBlockChange = useCallback((blockId: string, grade: string | undefined) => {
+    setUjatApplicationGradeByBlockId(prev => ({ ...prev, [blockId]: grade }))
+  }, [])
+
+  const onAddUjatGradeApplicationBlock = useCallback(() => {
+    setUjatGradeApplicationBlockIds(ids => [...ids, crypto.randomUUID()])
+  }, [])
+
+  const onRemoveUjatGradeApplicationBlockAtIndex = useCallback((index: number) => {
+    if (index < 1) return
+    setUjatGradeApplicationBlockIds(prev => {
+      if (prev.length <= 1 || index < 0 || index >= prev.length) return prev
+      const removedId = prev[index]
+      if (removedId != null) {
+        setUjatApplicationGradeByBlockId(g => {
+          const next = { ...g }
+          delete next[removedId]
+          return next
+        })
+      }
+      return prev.filter((_, i) => i !== index)
+    })
+  }, [])
+
+  const onAddUjatGradeClassTimeBlock = useCallback(() => {
+    setUjatGradeClassTimeBlockIds(ids => [...ids, crypto.randomUUID()])
+  }, [])
+
+  const onRemoveUjatGradeClassTimeBlockAtIndex = useCallback((index: number) => {
+    if (index < 1) return
+    setUjatGradeClassTimeBlockIds(prev => {
+      if (prev.length <= 1 || index < 0 || index >= prev.length) return prev
+      return prev.filter((_, i) => i !== index)
+    })
+  }, [])
+
+  const applicationGradeValuesForClassTime = useMemo(() => {
+    const vals = Object.values(ujatApplicationGradeByBlockId).filter(
+      (v): v is string => typeof v === 'string' && v.length > 0
+    )
+    const uniq = [...new Set(vals)]
+    uniq.sort((a, b) => Number(a) - Number(b))
+    return uniq
+  }, [ujatApplicationGradeByBlockId])
+
+  const ujatProgramApplicationGradeInfo = useMemo(
+    () =>
+      variant === 'ujat-application-institution'
+        ? {
+            applicationGradeBlockIds: ujatGradeApplicationBlockIds,
+            applicationGradeByBlockId: ujatApplicationGradeByBlockId,
+            onApplicationGradeByBlockChange: onApplicationGradeByBlockChange,
+            onAddApplicationGrade: onAddUjatGradeApplicationBlock,
+            onRemoveApplicationGradeAtIndex: onRemoveUjatGradeApplicationBlockAtIndex,
+          }
+        : undefined,
+    [
+      variant,
+      ujatGradeApplicationBlockIds,
+      ujatApplicationGradeByBlockId,
+      onApplicationGradeByBlockChange,
+      onAddUjatGradeApplicationBlock,
+      onRemoveUjatGradeApplicationBlockAtIndex,
+    ]
+  )
+
+  const ujatProgramApplicationGradeClassTime = useMemo(
+    () =>
+      variant === 'ujat-application-institution'
+        ? {
+            classTimeBlockIds: ujatGradeClassTimeBlockIds,
+            onAddClassTimeBlock: onAddUjatGradeClassTimeBlock,
+            onRemoveClassTimeBlockAtIndex: onRemoveUjatGradeClassTimeBlockAtIndex,
+            applicationGradeValuesForClassTime,
+          }
+        : undefined,
+    [
+      variant,
+      ujatGradeClassTimeBlockIds,
+      onAddUjatGradeClassTimeBlock,
+      onRemoveUjatGradeClassTimeBlockAtIndex,
+      applicationGradeValuesForClassTime,
+    ]
+  )
+
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
     const { titleNumbering } = draft.formSettings
     const line = (p: WritingFormParagraph) => ({
@@ -234,6 +434,44 @@ export function useProgramParticipantApplicationEditor(
     }
   }, [draft])
 
+  const onAddUnavailableDateRow = useCallback(() => {
+    setDraft(prev => ({
+      ...prev,
+      paragraphs: prev.paragraphs.map(p => {
+        if (p.id !== PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.unavailableDates) return p
+        if (p.kind !== 'single_item' || p.variant !== 'vertical_table') return p
+        const vt = p as VerticalTableParagraph
+        const added = verticalTableAddRow(vt)
+        return normalizeVerticalTableParagraph(renumberInstructorUnavailableDateRows(added))
+      }),
+    }))
+  }, [])
+
+  const programApplicationFormInstructorOptions = useMemo(
+    () =>
+      variant === 'instructor'
+        ? {
+            enabled: true as const,
+            onAddUnavailableDateRow,
+            disableUnavailableDateRowAddButton: true,
+            authoringUnavailableDatesExampleRowOnly: true,
+          }
+        : {
+            enabled: false as const,
+            onAddUnavailableDateRow: () => {},
+            disableUnavailableDateRowAddButton: false,
+            authoringUnavailableDatesExampleRowOnly: false,
+          },
+    [variant, onAddUnavailableDateRow]
+  )
+  const programApplicationFormVolunteerOptions = useMemo(
+    () =>
+      variant === 'volunteer' || variant === 'recruit-volunteer'
+        ? { enabled: true as const }
+        : { enabled: false as const },
+    [variant]
+  )
+
   const writingPreviewSession = useMemo(
     () => ({
       draft,
@@ -244,9 +482,30 @@ export function useProgramParticipantApplicationEditor(
         structureLockedParagraphIds: seedParagraphIds,
         structureLockedAuthoringChoicePreview: true,
         programApplicationFormInstitution: variant === 'institution',
+        ujatProgramApplicationFormInstitution: variant === 'ujat-application-institution',
+        ujatProgramApplicationFormVolunteer: variant === 'ujat-application-volunteer',
+        ujatProgramApplicationGradeInfo,
+        ujatProgramApplicationGradeClassTime,
+        applicantRecruitFormInstitution: variant === 'applicant-recruit-institution',
+        applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
+        recruitFormInstructor: variant === 'recruit-instructor',
+        recruitFormVolunteer: variant === 'recruit-volunteer',
+        programApplicationFormIndividual: variant === 'individual',
+        programApplicationFormInstructor: programApplicationFormInstructorOptions,
+        programApplicationFormVolunteer: programApplicationFormVolunteerOptions,
       },
     }),
-    [draft, previewHeaderTitle, seedParagraphIds, updateParagraph, variant]
+    [
+      draft,
+      previewHeaderTitle,
+      programApplicationFormInstructorOptions,
+      programApplicationFormVolunteerOptions,
+      seedParagraphIds,
+      updateParagraph,
+      variant,
+      ujatProgramApplicationGradeInfo,
+      ujatProgramApplicationGradeClassTime,
+    ]
   )
 
   useEffect(() => {
@@ -291,6 +550,10 @@ export function useProgramParticipantApplicationEditor(
     handlePreview,
     handleSave,
     onSelectSingleItemListItem,
+    programApplicationFormInstructorOptions,
+    programApplicationFormVolunteerOptions,
+    ujatProgramApplicationGradeInfo,
+    ujatProgramApplicationGradeClassTime,
   }
 }
 

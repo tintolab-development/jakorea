@@ -56,7 +56,6 @@ const createRows = (
 const registrationDefinitions: TemplateDefinition[] = [
   { id: 'registration-general', templateName: '일반 프로그램 등록 폼', variant: 'default' },
   { id: 'registration-economy', templateName: '1사 1교 프로그램 등록 폼', variant: 'default' },
-  { id: 'registration-keminior', templateName: 'Gemini 프로그램 등록 폼', variant: 'default' },
   { id: 'registration-ujat', templateName: 'UJAT 프로그램 등록 폼', variant: 'default' },
 ]
 
@@ -73,19 +72,15 @@ const recruitmentDefinitions: TemplateDefinition[] = [
   },
   { id: 'recruitment-instructor', templateName: '프로그램 강사 모집 폼', variant: 'default' },
   { id: 'recruitment-volunteer', templateName: '프로그램 봉사자 모집 폼', variant: 'volunteer' },
+  { id: 'recruitment-ujat-school', templateName: 'UJAT 프로그램 학교 모집 폼', variant: 'default' },
+  {
+    id: 'recruitment-ujat-volunteer',
+    templateName: 'UJAT 프로그램 봉사자 모집 폼',
+    variant: 'volunteer',
+  },
 ]
 
 const applicationDefinitions: TemplateDefinition[] = [
-  {
-    id: 'application-general',
-    templateName: '일반 프로그램 신청 폼',
-    variant: 'default',
-  },
-  {
-    id: 'application-economy',
-    templateName: '1사 1교 프로그램 신청 폼',
-    variant: 'default',
-  },
   {
     id: 'application-participant-school',
     templateName: '프로그램 참여자 신청 폼 (학교)',
@@ -99,11 +94,30 @@ const applicationDefinitions: TemplateDefinition[] = [
   { id: 'application-instructor', templateName: '프로그램 강사 신청 폼', variant: 'default' },
   { id: 'application-volunteer', templateName: '프로그램 봉사자 신청 폼', variant: 'volunteer' },
   {
-    id: 'application-economy-participant',
-    templateName: '1사 1교 프로그램 참여자 신청 폼',
+    id: 'application-economy',
+    templateName: '1사 1교 프로그램 학교 신청 폼',
     variant: 'default',
   },
-  { id: 'application-ujat-volunteer', templateName: 'UJAT 봉사자 신청 폼', variant: 'volunteer' },
+  {
+    id: 'application-gemini-visiting-training-instructor',
+    templateName: 'Gemini 찾아가는 연수 강사 신청 폼',
+    variant: 'default',
+  },
+  {
+    id: 'application-gemini-visiting-training-school',
+    templateName: 'Gemini 찾아가는 연수 학교 신청 폼',
+    variant: 'default',
+  },
+  {
+    id: 'application-ujat-school',
+    templateName: 'UJAT 프로그램 학교 신청 폼',
+    variant: 'default',
+  },
+  {
+    id: 'application-ujat-volunteer',
+    templateName: 'UJAT 프로그램 봉사자 신청 폼',
+    variant: 'volunteer',
+  },
 ]
 
 const surveyDefinitions: TemplateDefinition[] = [

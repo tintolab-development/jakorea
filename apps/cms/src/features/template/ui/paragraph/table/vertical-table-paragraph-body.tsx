@@ -21,6 +21,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
 import { ParagraphFileUpload } from '@/features/template/ui/paragraph/shared/paragraph-file-upload'
+import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
 import '@/features/template/ui/form-editor/form-editor.css'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -39,6 +40,9 @@ function isEventFromTableInteractive(target: EventTarget | null) {
         '.ant-select-selector',
         '.ant-picker',
         '.ant-picker-input',
+        '.paragraph-date-picker',
+        '.paragraph-date-picker__backdrop',
+        '.paragraph-date-picker__popover',
         '.ant-checkbox',
         '.ant-checkbox-wrapper',
         '.ant-radio',
@@ -132,16 +136,23 @@ export function VerticalTableParagraphBody({
   paragraph,
   onChange,
   isEditMode,
+  dateTimeCellsInteractive: dateTimeCellsInteractiveProp,
   tableRowSelection: controlledRow,
   onTableRowSelectionChange,
 }: {
   paragraph: VerticalTableParagraph
   onChange: (next: VerticalTableParagraph) => void
   isEditMode: boolean
+  /**
+   * 날짜·시간 셀(DatePicker/TimePicker)만 별도 활성화.
+   * 구조 잠금 작성 모드에서 행 라벨(th)은 읽기 전용으로 두고 값만 고를 때 사용.
+   */
+  dateTimeCellsInteractive?: boolean
   /** 있으면 상위와 본문 행 선택 동기화(다른 위젯 th/td 선택 시 단일 포커스) */
   tableRowSelection?: number | null
   onTableRowSelectionChange?: (row: number | null) => void
 }) {
+  const dtCellsInteractive = dateTimeCellsInteractiveProp ?? isEditMode
   const p = useMemo(() => normalizeVerticalTableParagraph(paragraph), [paragraph])
   const choiceOpts = useMemo(
     () => normalizeVerticalChoiceOptions(p.verticalChoiceOptions),
@@ -243,6 +254,8 @@ export function VerticalTableParagraphBody({
     const isMultipleChoice = stageKind === 'multiple_choice'
     const dtModes = isDateTime ? effectiveVerticalRowDateTimeModes(row) : null
     const dtModeAtStage = dtModes ? (dtModes[stageIdx as 0 | 1] ?? 'date') : 'date'
+    const defaultDatePlaceholder =
+      p.verticalTableFlavor === 'date_time' ? '일정 선택' : VT_DATE_PLACEHOLDER
 
     const renderDateSingleStageBody = (
       pickerKeySuffix: string,
@@ -259,11 +272,11 @@ export function VerticalTableParagraphBody({
           styles={verticalTablePickerPopupStyles}
           getPopupContainer={verticalTableFieldPopupContainer}
           value={toDayjs('date', cell)}
-          onChange={isEditMode ? d => setCell(rowIdx, stageIdx, fromDayjs('date', d)) : undefined}
+          onChange={dtCellsInteractive ? d => setCell(rowIdx, stageIdx, fromDayjs('date', d)) : undefined}
           onOpenChange={notifyPickerRowFocused(rowIdx)}
           format="YYYY-MM-DD"
           placeholder={datePlaceholder}
-          disabled={!isEditMode}
+          disabled={!dtCellsInteractive}
         />
         <div className="form-editor-vertical-table__dt-divider-wrap">
           <DividerVertical />
@@ -277,13 +290,15 @@ export function VerticalTableParagraphBody({
           getPopupContainer={verticalTableFieldPopupContainer}
           value={toDayjs('time', timeValForComposite)}
           onChange={
-            isEditMode ? d => setVerticalCompositeTime(rowIdx, stageIdx, fromDayjs('time', d)) : undefined
+            dtCellsInteractive
+              ? d => setVerticalCompositeTime(rowIdx, stageIdx, fromDayjs('time', d))
+              : undefined
           }
           onOpenChange={notifyPickerRowFocused(rowIdx)}
           format="HH:mm"
           minuteStep={5}
           placeholder={timePlaceholder}
-          disabled={!isEditMode}
+          disabled={!dtCellsInteractive}
         />
       </div>
     )
@@ -313,20 +328,20 @@ export function VerticalTableParagraphBody({
             getPopupContainer={verticalTableFieldPopupContainer}
             value={toDayjs('time', cell)}
             onChange={
-              isEditMode ? d => setCell(rowIdx, stageIdx, fromDayjs('time', d)) : undefined
+              dtCellsInteractive ? d => setCell(rowIdx, stageIdx, fromDayjs('time', d)) : undefined
             }
             onOpenChange={notifyPickerRowFocused(rowIdx)}
             format="HH:mm"
             minuteStep={5}
             placeholder={hintDateOrTime}
-            disabled={!isEditMode}
+            disabled={!dtCellsInteractive}
           />
         )
       }
 
       if (dtModeAtStage === 'date_time') {
         const timeVal = verticalCompositeTimeValue(row, stageIdx)
-        const datePlaceholder = hint.trim() !== '' ? hint : VT_DATE_PLACEHOLDER
+        const datePlaceholder = hint.trim() !== '' ? hint : defaultDatePlaceholder
         return renderDateSingleStageBody(
           `composite-${stageIdx}`,
           datePlaceholder,
@@ -335,21 +350,30 @@ export function VerticalTableParagraphBody({
         )
       }
 
-      const datePlaceholder = hint.trim() !== '' ? hint : VT_DATE_PLACEHOLDER
+      const datePlaceholder = hint.trim() !== '' ? hint : defaultDatePlaceholder
       return (
-        <DatePicker
+        <ParagraphDatePicker
           key={`vt-dt-${rowIdx}-${stageIdx}`}
-          rootClassName="form-editor-vertical-table__field-box form-editor-vertical-table__field-box--picker form-editor-vertical-table__dt-picker--full"
-          className="form-editor-vertical-table__dt-picker-inner"
-          needConfirm={false}
-          styles={verticalTablePickerPopupStyles}
-          getPopupContainer={verticalTableFieldPopupContainer}
+          mode="single"
+          presetMode="date"
+          customizable={false}
+          className={[
+            'form-editor-vertical-table__dt-paragraph-date-picker',
+            'form-editor-vertical-table__field-box',
+            'form-editor-vertical-table__field-box--picker',
+            'form-editor-vertical-table__dt-picker--full',
+          ].join(' ')}
           value={toDayjs('date', cell)}
-          onChange={isEditMode ? d => setCell(rowIdx, stageIdx, fromDayjs('date', d)) : undefined}
+          onChange={
+            dtCellsInteractive
+              ? next => setCell(rowIdx, stageIdx, fromDayjs('date', next))
+              : () => {}
+          }
           onOpenChange={notifyPickerRowFocused(rowIdx)}
-          format="YYYY-MM-DD"
           placeholder={datePlaceholder}
-          disabled={!isEditMode}
+          disabled={!dtCellsInteractive}
+          suppressAutoTodayWhenEmpty
+          width="100%"
         />
       )
     }

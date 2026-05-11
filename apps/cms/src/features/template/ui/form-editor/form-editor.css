@@ -3,5 +3,6 @@
  * 스타일은 partial로 분리되어 있으며, 아래 import 순서(캐스케이드 의존)를 바꾸지 않는다.
  */
 @import './form-editor-core.css';
+@import './form-editor-template-field-hint.css';
 @import './form-editor-table-custom-fields.css';
 @import './form-editor-horizontal-table.css';

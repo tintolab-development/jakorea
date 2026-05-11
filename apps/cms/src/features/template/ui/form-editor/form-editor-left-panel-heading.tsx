@@ -11,7 +11,11 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/ujat-program-application-form-institution-draft'
 import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
+import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
+import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
+import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/form-editor-left-panel.types'
@@ -130,6 +134,158 @@ export function withProgramRegistrationCurriculumTitleTrailing(
       >
         {isMulti ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
       </CmsButton>
+    ),
+  }
+}
+
+/** UJAT 프로그램 학교 신청 폼 — 학년 별 신청 정보 단락: 카드 제목 줄 우측「+ 신청 학년 추가」 */
+export function withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+  heading: ParagraphCardEditableHeading,
+  paragraph: WritingFormParagraph,
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+): ParagraphCardEditableHeading {
+  const o = paragraphBodyOptions?.ujatProgramApplicationGradeInfo
+  if (
+    paragraphBodyOptions?.ujatProgramApplicationFormInstitution !== true ||
+    paragraph.id !== UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeApplicationInfo ||
+    o == null
+  ) {
+    return heading
+  }
+  return {
+    ...heading,
+    titleTrailing: (
+      <CmsButton
+        type="button"
+        variant="secondary"
+        size="medium"
+        width={160}
+        icon={<PlusOutlined aria-hidden />}
+        onClick={e => {
+          e.stopPropagation()
+          o.onAddApplicationGrade()
+        }}
+      >
+        신청 학년 추가
+      </CmsButton>
+    ),
+  }
+}
+
+/** UJAT 프로그램 학교 신청 폼 — 학년 별 수업 시간 단락: 카드 제목 줄 우측「수업 진행 시간 추가」 */
+export function withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+  heading: ParagraphCardEditableHeading,
+  paragraph: WritingFormParagraph,
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+): ParagraphCardEditableHeading {
+  const o = paragraphBodyOptions?.ujatProgramApplicationGradeClassTime
+  if (
+    paragraphBodyOptions?.ujatProgramApplicationFormInstitution !== true ||
+    paragraph.id !== UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeClassTime ||
+    o == null
+  ) {
+    return heading
+  }
+  const classTimeAddEnabled = paragraphBodyOptions?.paragraphInteractionMode === 'user'
+  return {
+    ...heading,
+    titleTrailing: (
+      <CmsButton
+        type="button"
+        variant="secondary"
+        size="medium"
+        width={160}
+        icon={<PlusOutlined aria-hidden />}
+        disabled={!classTimeAddEnabled}
+        onClick={e => {
+          e.stopPropagation()
+          if (!classTimeAddEnabled) return
+          o.onAddClassTimeBlock()
+        }}
+      >
+        수업 진행 시간 추가
+      </CmsButton>
+    ),
+  }
+}
+
+/** 프로그램 강사 신청 폼 — 강의 불가 일정 단락: 카드 제목 줄 우측「강의 불가 일자 추가」 */
+export function withProgramApplicationFormInstructorTitleTrailing(
+  heading: ParagraphCardEditableHeading,
+  paragraph: WritingFormParagraph,
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+): ParagraphCardEditableHeading {
+  const opts = paragraphBodyOptions?.programApplicationFormInstructor
+  if (
+    paragraph.id !== PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.unavailableDates ||
+    opts?.enabled !== true
+  ) {
+    return heading
+  }
+  return {
+    ...heading,
+    titleTrailing: (
+      <div
+        className="program-registration-paragraph__card-title-actions"
+        onClick={e => e.stopPropagation()}
+        onKeyDown={e => e.stopPropagation()}
+        role="presentation"
+      >
+        <CmsButton
+          type="button"
+          variant="secondary"
+          size="medium"
+          width={180}
+          disabled={opts.disableUnavailableDateRowAddButton === true}
+          icon={<PlusOutlined aria-hidden />}
+          onClick={e => {
+            e.stopPropagation()
+            if (opts.disableUnavailableDateRowAddButton === true) return
+            opts.onAddUnavailableDateRow()
+          }}
+        >
+          강의 불가 일자 추가
+        </CmsButton>
+      </div>
+    ),
+  }
+}
+
+/** 프로그램 봉사자 신청 폼 — 면접 진행 가능 일정 단락: 카드 제목 줄 우측「예외 일정 추가」 */
+export function withProgramApplicationFormVolunteerTitleTrailing(
+  heading: ParagraphCardEditableHeading,
+  paragraph: WritingFormParagraph,
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+): ParagraphCardEditableHeading {
+  const opts = paragraphBodyOptions?.programApplicationFormVolunteer
+  const isVolunteerInterviewSchedule =
+    paragraph.id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule ||
+    paragraph.id === RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule
+
+  if (!isVolunteerInterviewSchedule || opts?.enabled !== true) {
+    return heading
+  }
+
+  return {
+    ...heading,
+    titleTrailing: (
+      <div
+        className="volunteer-interview-available-schedule__card-title-actions"
+        onClick={e => e.stopPropagation()}
+        onKeyDown={e => e.stopPropagation()}
+        role="presentation"
+      >
+        <CmsButton
+          type="button"
+          variant="secondary"
+          size="medium"
+          width={160}
+          icon={<PlusOutlined aria-hidden />}
+          onClick={e => e.stopPropagation()}
+        >
+          예외 일정 추가
+        </CmsButton>
+      </div>
     ),
   }
 }
@@ -265,7 +421,10 @@ export function paragraphEditableHeading(
             ? (p as VerticalTableParagraph).answerRequired
             : (p.answerRequired ?? p.requiredMark)
       const horizontalLockedHeaderEditable =
-        locked && isSelected && p.variant === 'horizontal_table' && editorKind === 'horizontal_table'
+        locked &&
+        isSelected &&
+        p.variant === 'horizontal_table' &&
+        editorKind === 'horizontal_table'
       const titleIsEditMode = horizontalLockedHeaderEditable
       const descriptionIsEditMode = horizontalLockedHeaderEditable
       return {
@@ -273,15 +432,14 @@ export function paragraphEditableHeading(
         titleIsEditMode,
         descriptionIsEditMode,
         titleValue: p.paragraphTitle,
-        onTitleChange:
-          titleIsEditMode
-            ? (next: string) =>
-                updateParagraph(p.id, cur =>
-                  cur.kind === 'single_item' && cur.id === p.id
-                    ? { ...cur, paragraphTitle: next }
-                    : cur
-                )
-            : () => {},
+        onTitleChange: titleIsEditMode
+          ? (next: string) =>
+              updateParagraph(p.id, cur =>
+                cur.kind === 'single_item' && cur.id === p.id
+                  ? { ...cur, paragraphTitle: next }
+                  : cur
+              )
+          : () => {},
         titlePlaceholder: '타이틀을 입력해 주세요',
         titleRequired,
         titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
@@ -289,15 +447,14 @@ export function paragraphEditableHeading(
           : undefined,
         titleLeading: prefix,
         descriptionValue: p.paragraphDescription,
-        onDescriptionChange:
-          descriptionIsEditMode
-            ? (next: string) =>
-                updateParagraph(p.id, cur =>
-                  cur.kind === 'single_item' && cur.id === p.id
-                    ? { ...cur, paragraphDescription: next }
-                    : cur
-                )
-            : () => {},
+        onDescriptionChange: descriptionIsEditMode
+          ? (next: string) =>
+              updateParagraph(p.id, cur =>
+                cur.kind === 'single_item' && cur.id === p.id
+                  ? { ...cur, paragraphDescription: next }
+                  : cur
+              )
+          : () => {},
         descriptionPlaceholder: '설명 입력',
         descriptionClassName: descCls(),
       }
