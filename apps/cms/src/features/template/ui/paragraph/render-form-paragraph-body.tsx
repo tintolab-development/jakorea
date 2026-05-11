@@ -23,6 +23,8 @@ import { MultipleChoice } from '@/features/template/ui/paragraph/single-item/mul
 import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-type'
 import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/table/horizontal-table-paragraph-body'
 import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/table/vertical-table-paragraph-body'
+import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/basic-info-paragraph'
 import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
 import { SessionPlanShortEssay } from '@/features/template/ui/paragraph/single-item/session-plan-short-essay'
 import {
@@ -228,6 +230,14 @@ export function renderFormParagraphBody(
       )
     }
     case 'vertical_table': {
+      if (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord) {
+        return (
+          <BasicInfoParagraph
+            values={options?.paymentStatementBasicInfoValues}
+            displayMode={options?.paymentStatementDisplayMode ?? 'editor'}
+          />
+        )
+      }
       const vp = normalizeVerticalTableParagraph(
         p as Extract<WritingFormParagraph, { variant: 'vertical_table' }>
       )

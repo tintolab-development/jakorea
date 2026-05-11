@@ -1,62 +1,217 @@
-import dayjs from 'dayjs'
 import {
+  HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
   normalizeHorizontalTableParagraph,
+  normalizeVerticalTableParagraph,
   normalizeWritingFormDraft,
   type AgreementExplanationTextParagraph,
   type ClosingParagraph,
+  type HorizontalTableFieldCellValue,
   type HorizontalTableParagraph,
   type TitleWithPeriodParagraph,
   type WritingFormDraft,
+  type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 
 export const PAYMENT_STATEMENT_PRE_CONSENT_IDS = {
   title: 'payment-statement-pre-consent-seed-title',
-  tableBasic: 'payment-statement-pre-consent-seed-table-basic',
-  tableCalcInfo: 'payment-statement-pre-consent-seed-table-calc-info',
-  tableCalcLines: 'payment-statement-pre-consent-seed-table-calc-lines',
-  tableWorkLog: 'payment-statement-pre-consent-seed-table-work-log',
-  consentNotice: 'payment-statement-pre-consent-seed-consent-notice',
-  closingDate: 'payment-statement-pre-consent-seed-closing-date',
-  closingSignature: 'payment-statement-pre-consent-seed-closing-signature',
+  intro: 'payment-statement-pre-consent-seed-intro',
+  p1Collection: 'payment-statement-pre-consent-seed-p1-collection',
+  p2RrnCollection: 'payment-statement-pre-consent-seed-p2-rrn-collection',
+  p3ThirdParty: 'payment-statement-pre-consent-seed-p3-third-party',
+  p4RrnThirdParty: 'payment-statement-pre-consent-seed-p4-rrn-third-party',
+  midConsentLine: 'payment-statement-pre-consent-seed-mid-consent-line',
+  midDate: 'payment-statement-pre-consent-seed-mid-date',
+  midSignature: 'payment-statement-pre-consent-seed-mid-signature',
+  paymentRecord: 'payment-statement-pre-consent-seed-payment-record',
+  finalConfirm: 'payment-statement-pre-consent-seed-final-confirm',
+  tailDate: 'payment-statement-pre-consent-seed-tail-date',
+  tailSignature: 'payment-statement-pre-consent-seed-tail-signature',
+  closingRecipient: 'payment-statement-pre-consent-seed-closing-recipient',
 } as const
 
-export const PAYMENT_STATEMENT_PRE_CONSENT_SEED_PARAGRAPH_IDS = new Set<string>([
-  PAYMENT_STATEMENT_PRE_CONSENT_IDS.title,
-  PAYMENT_STATEMENT_PRE_CONSENT_IDS.tableBasic,
-  PAYMENT_STATEMENT_PRE_CONSENT_IDS.tableCalcInfo,
-  PAYMENT_STATEMENT_PRE_CONSENT_IDS.tableCalcLines,
-  PAYMENT_STATEMENT_PRE_CONSENT_IDS.tableWorkLog,
-  PAYMENT_STATEMENT_PRE_CONSENT_IDS.consentNotice,
-  PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingDate,
-  PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingSignature,
-])
+export const PAYMENT_STATEMENT_PRE_CONSENT_SEED_PARAGRAPH_IDS = new Set<string>(
+  Object.values(PAYMENT_STATEMENT_PRE_CONSENT_IDS)
+)
 
-function dateLabel(now = new Date()): string {
-  return dayjs(now).format('YYYY년 MM월 DD일')
-}
+const P1_BOTTOM =
+  '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 다만 동의하지 않을 경우 본 지급조서 사전 동의 절차를 진행할 수 없습니다.'
 
-function htText(
-  id: string,
-  paragraphTitle: string,
-  columnHeaders: string[],
-  dataRows: string[][]
-): HorizontalTableParagraph {
+const P2_BOTTOM =
+  '위의 고유식별번호(주민등록번호) 수집·이용에 대한 동의를 거부할 권리가 있습니다. 다만 동의하지 않을 경우 본 지급조서 사전 동의 절차를 진행할 수 없습니다.'
+
+const P3_BOTTOM =
+  '위의 개인정보 제3자 제공에 대한 동의를 거부할 권리가 있습니다. 다만 동의하지 않을 경우 본 지급조서 사전 동의 절차를 진행할 수 없습니다.'
+
+const P4_BOTTOM =
+  '위의 고유식별번호 제3자 제공에 대한 동의를 거부할 권리가 있습니다. 다만 동의하지 않을 경우 본 지급조서 사전 동의 절차를 진행할 수 없습니다.'
+
+function createP1CollectionTable(): HorizontalTableParagraph {
+  const colCount = 3
+  const columnFields = Array.from({ length: colCount }, () => ({
+    kind: 'text' as const,
+    placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
+  }))
+  const bodyRow: HorizontalTableFieldCellValue[] = [
+    {
+      kind: 'text',
+      value: '성명, 연락처, 이메일, 소속, 계좌정보 등 지급 및 정산에 필요한 정보',
+    },
+    {
+      kind: 'text',
+      value: '지급조서 작성, 지급 대상 확인, 세무·회계 처리 및 관련 안내',
+    },
+    {
+      kind: 'text',
+      value:
+        '수집·이용 목적 달성 시까지. 관련 법령에 따라 보존이 필요한 경우 해당 기간까지 보관 후 지체 없이 파기',
+    },
+  ]
   return normalizeHorizontalTableParagraph({
-    id,
+    id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.p1Collection,
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle,
+    paragraphTitle: '1. 개인정보 수집·이용',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
-    tableFlavor: 'text',
-    columnHeaders,
-    dataRows,
-    columnFields: [],
-    fieldDataRows: [],
-    bottomText: '',
-    showBottomText: false,
-    showBottomConsent: false,
+    tableFlavor: 'field',
+    columnHeaders: ['항목', '수집·이용 목적', '보유기간'],
+    dataRows: [Array.from({ length: colCount }, () => '')],
+    columnFields,
+    fieldDataRows: [bodyRow],
+    bottomText: P1_BOTTOM,
+    showBottomText: true,
+    showBottomConsent: true,
+    bottomConsent: 'agree',
+    answerRequired: true,
+  })
+}
+
+function createP2RrnCollectionTable(): HorizontalTableParagraph {
+  const colCount = 3
+  const columnFields = Array.from({ length: colCount }, () => ({
+    kind: 'text' as const,
+    placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
+  }))
+  const bodyRow: HorizontalTableFieldCellValue[] = [
+    {
+      kind: 'text',
+      value: '주민등록번호',
+    },
+    {
+      kind: 'text',
+      value: '소득 지급 및 원천징수 등 세무 신고·관리',
+    },
+    {
+      kind: 'text',
+      value:
+        '수집·이용 목적 달성 시까지. 관련 법령에 따라 보존이 필요한 경우 해당 기간까지 보관 후 지체 없이 파기',
+    },
+  ]
+  return normalizeHorizontalTableParagraph({
+    id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.p2RrnCollection,
+    kind: 'single_item',
+    variant: 'horizontal_table',
+    requiredMark: true,
+    paragraphTitle: '2. 고유식별번호(주민등록번호) 수집·이용',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    tableFlavor: 'field',
+    columnHeaders: ['항목', '수집·이용 목적', '보유기간'],
+    dataRows: [Array.from({ length: colCount }, () => '')],
+    columnFields,
+    fieldDataRows: [bodyRow],
+    bottomText: P2_BOTTOM,
+    showBottomText: true,
+    showBottomConsent: true,
+    bottomConsent: 'agree',
+    answerRequired: true,
+  })
+}
+
+function createP3ThirdPartyTable(): HorizontalTableParagraph {
+  const colCount = 4
+  const columnFields = [
+    { kind: 'text' as const, placeholder: '제공받는 곳을 입력해 주세요' },
+    { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
+    { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
+    { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
+  ]
+  const bodyRow: HorizontalTableFieldCellValue[] = [
+    { kind: 'text', value: '국세청 등 관계 기관' },
+    {
+      kind: 'text',
+      value: '성명, 연락처, 이메일, 소속, 계좌정보 등',
+    },
+    {
+      kind: 'text',
+      value: '세무 신고·공제·환급 및 관련 법령에 따른 업무 수행',
+    },
+    {
+      kind: 'text',
+      value: '제공 목적 달성 시 또는 관련 법령에 따른 보존 기간',
+    },
+  ]
+  return normalizeHorizontalTableParagraph({
+    id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.p3ThirdParty,
+    kind: 'single_item',
+    variant: 'horizontal_table',
+    requiredMark: true,
+    paragraphTitle: '3. 개인정보 제3자 제공·이용',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    tableFlavor: 'field',
+    columnHeaders: ['제공받는 곳', '항목', '제공목적', '제공받는 자의 보유기간'],
+    dataRows: [Array.from({ length: colCount }, () => '')],
+    columnFields,
+    fieldDataRows: [bodyRow],
+    bottomText: P3_BOTTOM,
+    showBottomText: true,
+    showBottomConsent: true,
+    bottomConsent: 'agree',
+    answerRequired: true,
+  })
+}
+
+function createP4RrnThirdPartyTable(): HorizontalTableParagraph {
+  const colCount = 4
+  const columnFields = [
+    { kind: 'text' as const, placeholder: '제공받는 곳을 입력해 주세요' },
+    { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
+    { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
+    { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
+  ]
+  const bodyRow: HorizontalTableFieldCellValue[] = [
+    { kind: 'text', value: '국세청 등 관계 기관' },
+    {
+      kind: 'text',
+      value: '주민등록번호',
+    },
+    {
+      kind: 'text',
+      value: '소득 지급 및 원천징수 등 세무 신고·관리',
+    },
+    {
+      kind: 'text',
+      value: '제공 목적 달성 시 또는 관련 법령에 따른 보존 기간',
+    },
+  ]
+  return normalizeHorizontalTableParagraph({
+    id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.p4RrnThirdParty,
+    kind: 'single_item',
+    variant: 'horizontal_table',
+    requiredMark: true,
+    paragraphTitle: '4. 고유식별번호 제3자 제공·이용',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    tableFlavor: 'field',
+    columnHeaders: ['제공받는 곳', '항목', '제공목적', '제공받는 자의 보유기간'],
+    dataRows: [Array.from({ length: colCount }, () => '')],
+    columnFields,
+    fieldDataRows: [bodyRow],
+    bottomText: P4_BOTTOM,
+    showBottomText: true,
+    showBottomConsent: true,
     bottomConsent: 'agree',
     answerRequired: true,
   })
@@ -70,7 +225,7 @@ const seedTitle: TitleWithPeriodParagraph = {
   paragraphTitle: '',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
-  surveyTitle: 'JA KOREA 지급조서 사전 동의서',
+  surveyTitle: '지급조서 사전 동의서',
   surveyDescription: '',
   periodMode: 'immediate',
   startAt: null,
@@ -78,70 +233,8 @@ const seedTitle: TitleWithPeriodParagraph = {
   showWritingPeriodOnForm: false,
 }
 
-const tableBasic = htText(
-  PAYMENT_STATEMENT_PRE_CONSENT_IDS.tableBasic,
-  '지급조서 기본 정보',
-  ['항목', '내용'],
-  [
-    ['성명', ''],
-    ['영문 성명', ''],
-    ['주민등록번호', ''],
-    ['소속', ''],
-    ['자택 주소', ''],
-    ['정산 계좌 정보', '은행 · 계좌번호 · 예금주'],
-    ['지급 목적', ''],
-  ]
-)
-
-const tableCalcInfo = htText(
-  PAYMENT_STATEMENT_PRE_CONSENT_IDS.tableCalcInfo,
-  '강의비 산출 정보',
-  ['항목', '내용'],
-  [
-    ['강사료 유형', ''],
-    ['강사료 책정', ''],
-    ['사업소득자 여부', ''],
-    ['교육 진행 차시', ''],
-    ['지급 항목 여부', '교통비 · 숙박비 등'],
-    ['총 학생 수', ''],
-    ['총 강의료', ''],
-  ]
-)
-
-const tableCalcLines = htText(
-  PAYMENT_STATEMENT_PRE_CONSENT_IDS.tableCalcLines,
-  '강의비 산출 내역',
-  ['참여 기관명', '강의 진행 일자', '지급/공제', '구분', '항목명', '금액'],
-  [
-    ['○○고등학교', '2025-09-01', '지급', '강사료', '강사료', '500,000'],
-    ['○○고등학교', '2025-09-02', '지급', '비목', '교통비', '50,000'],
-    ['○○고등학교', '2025-09-03', '지급', '비목', '숙박비', '100,000'],
-    ['', '', '', '합계', '강사료+교통비+숙박비-원천징수', '650,000'],
-  ]
-)
-
-const tableWorkLog = normalizeHorizontalTableParagraph({
-  id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.tableWorkLog,
-  kind: 'single_item',
-  variant: 'horizontal_table',
-  requiredMark: true,
-  paragraphTitle: '근무일지',
-  paragraphDescription: '설명 입력',
-  participatesInTitleNumbering: true,
-  tableFlavor: 'text',
-  columnHeaders: ['날짜', '근무자(인)', '확인자(인)', '날짜', '근무자(인)', '확인자(인)'],
-  dataRows: Array.from({ length: 16 }, () => ['', '', '', '', '', '']),
-  columnFields: [],
-  fieldDataRows: [],
-  bottomText: '',
-  showBottomText: false,
-  showBottomConsent: false,
-  bottomConsent: 'agree',
-  answerRequired: true,
-})
-
-const consentNotice: AgreementExplanationTextParagraph = {
-  id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.consentNotice,
+const intro: AgreementExplanationTextParagraph = {
+  id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.intro,
   kind: 'single_item',
   variant: 'agreement_explanation_text',
   requiredMark: false,
@@ -150,45 +243,129 @@ const consentNotice: AgreementExplanationTextParagraph = {
   participatesInTitleNumbering: false,
   bodyPlaceholder: '',
   bodyText:
-    '상기 기재한 내용은 사실과 다름이 없으며, 지급조서 발급을 위한 개인정보 및 정산정보 활용에 동의합니다.',
+    '「개인정보 보호법」 등 관련 법령에 따라 개인정보를 수집·이용 및 제3자에게 제공하고자 합니다. 아래 내용을 충분히 확인하신 후 동의 여부를 선택해 주시기 바랍니다.',
   answerRequired: false,
 }
 
-const seedClosingSignature: ClosingParagraph = {
-  id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingSignature,
+const midConsentLine: AgreementExplanationTextParagraph = {
+  id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine,
+  kind: 'single_item',
+  variant: 'agreement_explanation_text',
+  requiredMark: false,
+  paragraphTitle: '',
+  paragraphDescription: '',
+  participatesInTitleNumbering: false,
+  bodyPlaceholder: '',
+  bodyText:
+    '위 개인정보 수집·이용, 고유식별번호 수집·이용, 제3자 제공에 관한 사항을 확인하였으며 이에 동의합니다.',
+  answerRequired: false,
+}
+
+const midDate: WritingFormParagraph = {
+  id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.midDate,
+  kind: 'description',
+  variant: 'system',
+  systemPreset: 'agreement_date',
+  requiredMark: false,
+  paragraphTitle: '날짜 유형',
+  paragraphDescription: '',
+  participatesInTitleNumbering: false,
+}
+
+const midSignature: WritingFormParagraph = {
+  id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.midSignature,
+  kind: 'description',
+  variant: 'system',
+  systemPreset: 'agreement_signature',
+  requiredMark: false,
+  paragraphTitle: '서명란 유형',
+  paragraphDescription: '',
+  participatesInTitleNumbering: false,
+}
+
+const paymentRecord = normalizeVerticalTableParagraph({
+  id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord,
+  kind: 'single_item',
+  variant: 'vertical_table',
+  verticalTableFlavor: 'text',
+  requiredMark: true,
+  paragraphTitle: '5. 지급조서',
+  paragraphDescription: '',
+  participatesInTitleNumbering: true,
+  rows: [{ stageCount: 1, headers: [''], cells: [''], stageKinds: ['text'] }],
+  bottomText: '',
+  showBottomText: false,
+  showBottomConsent: false,
+  bottomConsent: 'agree',
+  answerRequired: true,
+})
+
+const finalConfirm: AgreementExplanationTextParagraph = {
+  id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm,
+  kind: 'single_item',
+  variant: 'agreement_explanation_text',
+  requiredMark: false,
+  paragraphTitle: '',
+  paragraphDescription: '',
+  participatesInTitleNumbering: false,
+  bodyPlaceholder: '',
+  bodyText:
+    '본인은 상기 지급조서에 기재된 내용이 사실과 다름없음을 확인하며, 지급 대상으로 확정될 경우 지급 금액을 정당하게 수령함을 확인합니다.',
+  answerRequired: false,
+}
+
+const tailDate: WritingFormParagraph = {
+  id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailDate,
+  kind: 'description',
+  variant: 'system',
+  systemPreset: 'agreement_date',
+  requiredMark: false,
+  paragraphTitle: '날짜 유형',
+  paragraphDescription: '',
+  participatesInTitleNumbering: false,
+}
+
+const tailSignature: WritingFormParagraph = {
+  id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature,
+  kind: 'description',
+  variant: 'system',
+  systemPreset: 'agreement_signature',
+  requiredMark: false,
+  paragraphTitle: '서명란 유형',
+  paragraphDescription: '',
+  participatesInTitleNumbering: false,
+}
+
+const closingRecipient: ClosingParagraph = {
+  id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingRecipient,
   kind: 'description',
   variant: 'closing',
   requiredMark: false,
   paragraphTitle: '',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
-  body: '사단법인 JA KOREA 회장 이은형',
+  body: 'JA KOREA 귀하',
 }
 
 export function createPaymentStatementPreConsentDraft(): WritingFormDraft {
-  const seedClosingDate: ClosingParagraph = {
-    id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingDate,
-    kind: 'description',
-    variant: 'closing',
-    requiredMark: false,
-    paragraphTitle: '',
-    paragraphDescription: '',
-    participatesInTitleNumbering: false,
-    body: dateLabel(),
-  }
-
   return normalizeWritingFormDraft({
     schemaVersion: 1,
     formSettings: { titleNumbering: 'numeric' },
     paragraphs: [
       seedTitle,
-      tableBasic,
-      tableCalcInfo,
-      tableCalcLines,
-      tableWorkLog,
-      consentNotice,
-      seedClosingDate,
-      seedClosingSignature,
+      intro,
+      createP1CollectionTable(),
+      createP2RrnCollectionTable(),
+      createP3ThirdPartyTable(),
+      createP4RrnThirdPartyTable(),
+      midConsentLine,
+      midDate,
+      midSignature,
+      paymentRecord,
+      finalConfirm,
+      tailDate,
+      tailSignature,
+      closingRecipient,
     ],
   })
 }
