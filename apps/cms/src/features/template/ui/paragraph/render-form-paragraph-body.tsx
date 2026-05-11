@@ -51,8 +51,17 @@ import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/te
 import type { ProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { ProgramApplicationFormInstructorBodyOptions } from '@/features/template/ui/form-set/application-form/instructor/paragraph-body'
 import type { ProgramApplicationFormVolunteerBodyOptions } from '@/features/template/ui/form-set/application-form/volunteer/paragraph-body'
+import type { UjatGradeWiseClassTimeParagraphOptions } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-body-options'
+import type {
+  UjatProgramApplicationGradeClassTimeParagraphOptions,
+  UjatProgramApplicationGradeInfoParagraphOptions,
+} from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-program-application-institution-body-options'
 
 export type { ProgramApplicationFormInstructorBodyOptions }
+export type { ProgramApplicationFormVolunteerBodyOptions }
+export type { UjatGradeWiseClassTimeParagraphOptions }
+export type { UjatProgramApplicationGradeClassTimeParagraphOptions }
+export type { UjatProgramApplicationGradeInfoParagraphOptions }
 
 export type FormUpdateParagraph = (
   id: string,
@@ -93,10 +102,16 @@ export type RenderFormParagraphBodyOptions = {
   programRegistration?: ProgramRegistrationParagraphBodyOptions
   /** UJAT 프로그램 등록 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramRegistration?: boolean
+  /** UJAT 프로그램 등록 폼 — 학년 별 수업 시간(본문 행 수·카드 헤더「수업 진행 시간 추가」) */
+  ujatGradeWiseClassTime?: UjatGradeWiseClassTimeParagraphOptions
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
   /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramApplicationFormInstitution?: boolean
+  /** UJAT 프로그램 학교 신청 폼 — 학년 별 신청 정보(블록 수·카드 헤더「+ 신청 학년 추가」) */
+  ujatProgramApplicationGradeInfo?: UjatProgramApplicationGradeInfoParagraphOptions
+  /** UJAT 프로그램 학교 신청 폼 — 학년 별 수업 시간(블록·카드 헤더「수업 진행 시간 추가」) */
+  ujatProgramApplicationGradeClassTime?: UjatProgramApplicationGradeClassTimeParagraphOptions
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   applicantRecruitFormInstitution?: boolean
   /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
@@ -236,8 +251,11 @@ export function renderFormParagraphBody(
           paymentStatementDisplayMode={options?.paymentStatementDisplayMode}
           programRegistration={options?.programRegistration}
           ujatProgramRegistration={options?.ujatProgramRegistration}
+          ujatGradeWiseClassTime={options?.ujatGradeWiseClassTime}
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
           ujatProgramApplicationFormInstitution={options?.ujatProgramApplicationFormInstitution}
+          ujatProgramApplicationGradeInfo={options?.ujatProgramApplicationGradeInfo}
+          ujatProgramApplicationGradeClassTime={options?.ujatProgramApplicationGradeClassTime}
           applicantRecruitFormInstitution={options?.applicantRecruitFormInstitution}
           ujatRecruitFormInstitution={options?.ujatRecruitFormInstitution}
           applicantRecruitFormIndividual={options?.applicantRecruitFormIndividual}
@@ -260,6 +278,7 @@ export function renderFormParagraphBody(
                   isTemplateAuthoringMode: paragraphInteractionMode === 'authoring',
                 }
           }
+          paragraphInteractionMode={paragraphInteractionMode}
         />
       )
     }

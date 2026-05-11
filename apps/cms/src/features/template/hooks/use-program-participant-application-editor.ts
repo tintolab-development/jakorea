@@ -205,6 +205,15 @@ export function useProgramParticipantApplicationEditor(
     normalizeWritingFormDraft(createProgramParticipantApplicationDraft()).paragraphs[0]?.id ?? null
   )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
+  const [ujatGradeApplicationBlockIds, setUjatGradeApplicationBlockIds] = useState<string[]>(() => [
+    crypto.randomUUID(),
+  ])
+  const [ujatApplicationGradeByBlockId, setUjatApplicationGradeByBlockId] = useState<
+    Record<string, string | undefined>
+  >({})
+  const [ujatGradeClassTimeBlockIds, setUjatGradeClassTimeBlockIds] = useState<string[]>(() => [
+    crypto.randomUUID(),
+  ])
 
   const {
     openWritingUserPreview,
@@ -242,6 +251,11 @@ export function useProgramParticipantApplicationEditor(
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)
+    if (variant === 'ujat-application-institution') {
+      setUjatGradeApplicationBlockIds([crypto.randomUUID()])
+      setUjatApplicationGradeByBlockId({})
+      setUjatGradeClassTimeBlockIds([crypto.randomUUID()])
+    }
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [active, variant])
 
@@ -313,6 +327,91 @@ export function useProgramParticipantApplicationEditor(
     setSingleItemListActiveItemId(null)
   }, [])
 
+  const onApplicationGradeByBlockChange = useCallback((blockId: string, grade: string | undefined) => {
+    setUjatApplicationGradeByBlockId(prev => ({ ...prev, [blockId]: grade }))
+  }, [])
+
+  const onAddUjatGradeApplicationBlock = useCallback(() => {
+    setUjatGradeApplicationBlockIds(ids => [...ids, crypto.randomUUID()])
+  }, [])
+
+  const onRemoveUjatGradeApplicationBlockAtIndex = useCallback((index: number) => {
+    if (index < 1) return
+    setUjatGradeApplicationBlockIds(prev => {
+      if (prev.length <= 1 || index < 0 || index >= prev.length) return prev
+      const removedId = prev[index]
+      if (removedId != null) {
+        setUjatApplicationGradeByBlockId(g => {
+          const next = { ...g }
+          delete next[removedId]
+          return next
+        })
+      }
+      return prev.filter((_, i) => i !== index)
+    })
+  }, [])
+
+  const onAddUjatGradeClassTimeBlock = useCallback(() => {
+    setUjatGradeClassTimeBlockIds(ids => [...ids, crypto.randomUUID()])
+  }, [])
+
+  const onRemoveUjatGradeClassTimeBlockAtIndex = useCallback((index: number) => {
+    if (index < 1) return
+    setUjatGradeClassTimeBlockIds(prev => {
+      if (prev.length <= 1 || index < 0 || index >= prev.length) return prev
+      return prev.filter((_, i) => i !== index)
+    })
+  }, [])
+
+  const applicationGradeValuesForClassTime = useMemo(() => {
+    const vals = Object.values(ujatApplicationGradeByBlockId).filter(
+      (v): v is string => typeof v === 'string' && v.length > 0
+    )
+    const uniq = [...new Set(vals)]
+    uniq.sort((a, b) => Number(a) - Number(b))
+    return uniq
+  }, [ujatApplicationGradeByBlockId])
+
+  const ujatProgramApplicationGradeInfo = useMemo(
+    () =>
+      variant === 'ujat-application-institution'
+        ? {
+            applicationGradeBlockIds: ujatGradeApplicationBlockIds,
+            applicationGradeByBlockId: ujatApplicationGradeByBlockId,
+            onApplicationGradeByBlockChange: onApplicationGradeByBlockChange,
+            onAddApplicationGrade: onAddUjatGradeApplicationBlock,
+            onRemoveApplicationGradeAtIndex: onRemoveUjatGradeApplicationBlockAtIndex,
+          }
+        : undefined,
+    [
+      variant,
+      ujatGradeApplicationBlockIds,
+      ujatApplicationGradeByBlockId,
+      onApplicationGradeByBlockChange,
+      onAddUjatGradeApplicationBlock,
+      onRemoveUjatGradeApplicationBlockAtIndex,
+    ]
+  )
+
+  const ujatProgramApplicationGradeClassTime = useMemo(
+    () =>
+      variant === 'ujat-application-institution'
+        ? {
+            classTimeBlockIds: ujatGradeClassTimeBlockIds,
+            onAddClassTimeBlock: onAddUjatGradeClassTimeBlock,
+            onRemoveClassTimeBlockAtIndex: onRemoveUjatGradeClassTimeBlockAtIndex,
+            applicationGradeValuesForClassTime,
+          }
+        : undefined,
+    [
+      variant,
+      ujatGradeClassTimeBlockIds,
+      onAddUjatGradeClassTimeBlock,
+      onRemoveUjatGradeClassTimeBlockAtIndex,
+      applicationGradeValuesForClassTime,
+    ]
+  )
+
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
     const { titleNumbering } = draft.formSettings
     const line = (p: WritingFormParagraph) => ({
@@ -375,6 +474,8 @@ export function useProgramParticipantApplicationEditor(
         structureLockedAuthoringChoicePreview: true,
         programApplicationFormInstitution: variant === 'institution',
         ujatProgramApplicationFormInstitution: variant === 'ujat-application-institution',
+        ujatProgramApplicationGradeInfo,
+        ujatProgramApplicationGradeClassTime,
         applicantRecruitFormInstitution: variant === 'applicant-recruit-institution',
         applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
         recruitFormInstructor: variant === 'recruit-instructor',
@@ -392,6 +493,8 @@ export function useProgramParticipantApplicationEditor(
       seedParagraphIds,
       updateParagraph,
       variant,
+      ujatProgramApplicationGradeInfo,
+      ujatProgramApplicationGradeClassTime,
     ]
   )
 
@@ -439,6 +542,8 @@ export function useProgramParticipantApplicationEditor(
     onSelectSingleItemListItem,
     programApplicationFormInstructorOptions,
     programApplicationFormVolunteerOptions,
+    ujatProgramApplicationGradeInfo,
+    ujatProgramApplicationGradeClassTime,
   }
 }
 

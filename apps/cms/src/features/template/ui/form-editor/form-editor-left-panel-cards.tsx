@@ -19,6 +19,9 @@ import {
   withProgramApplicationFormInstructorTitleTrailing,
   withProgramApplicationFormVolunteerTitleTrailing,
   withProgramRegistrationCurriculumTitleTrailing,
+  withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing,
+  withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing,
+  withUjatProgramRegistrationGradeWiseClassTimeTitleTrailing,
   withoutTitleRequired,
 } from '@/features/template/ui/form-editor/form-editor-left-panel-heading'
 import {
@@ -100,8 +103,20 @@ export function PinnedFormCard({
   )
   const editableHeading = withProgramApplicationFormVolunteerTitleTrailing(
     withProgramApplicationFormInstructorTitleTrailing(
-      withProgramRegistrationCurriculumTitleTrailing(
-        editableHeadingBase as ParagraphCardEditableHeading,
+        withUjatProgramRegistrationGradeWiseClassTimeTitleTrailing(
+        withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+          withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+            withProgramRegistrationCurriculumTitleTrailing(
+              editableHeadingBase as ParagraphCardEditableHeading,
+              paragraph,
+              paragraphBodyOptions
+            ),
+            paragraph,
+            paragraphBodyOptions
+          ),
+          paragraph,
+          paragraphBodyOptions
+        ),
         paragraph,
         paragraphBodyOptions
       ),
@@ -241,8 +256,20 @@ export function SortableMiddleFormCard({
   )
   const editableHeading = withProgramApplicationFormVolunteerTitleTrailing(
     withProgramApplicationFormInstructorTitleTrailing(
-      withProgramRegistrationCurriculumTitleTrailing(
-        editableHeadingBase as ParagraphCardEditableHeading,
+        withUjatProgramRegistrationGradeWiseClassTimeTitleTrailing(
+        withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+          withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+            withProgramRegistrationCurriculumTitleTrailing(
+              editableHeadingBase as ParagraphCardEditableHeading,
+              paragraph,
+              paragraphBodyOptions
+            ),
+            paragraph,
+            paragraphBodyOptions
+          ),
+          paragraph,
+          paragraphBodyOptions
+        ),
         paragraph,
         paragraphBodyOptions
       ),

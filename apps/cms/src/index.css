@@ -220,6 +220,15 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
   margin-bottom: 52px;
 }
 
+.detail-info-form--text-bold {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 24px */
+  margin-bottom: 4px;
+}
 .detail-info-form--text {
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard;

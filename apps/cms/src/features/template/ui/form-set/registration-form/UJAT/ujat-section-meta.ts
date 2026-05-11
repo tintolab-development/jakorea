@@ -31,4 +31,8 @@ export const UJAT_REGISTRATION_SECTION_META = {
     title: '지역 별 교육 진행 가능 학급 수',
     description: '지역 별 교육 진행 가능 학급 수를 설정해 주세요.',
   },
+  gradeWiseClassTime: {
+    title: '학년 별 수업 시간',
+    description: '',
+  },
 } as const

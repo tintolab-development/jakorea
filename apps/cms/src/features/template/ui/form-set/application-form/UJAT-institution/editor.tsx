@@ -35,6 +35,12 @@ export function UjatProgramApplicationFormInstitutionEditorLeftColumn({
           structureLockedParagraphIds: vm.structureLockedParagraphIds,
           structureLockedAuthoringChoicePreview: true,
           ujatProgramApplicationFormInstitution: true,
+          ...(vm.ujatProgramApplicationGradeInfo != null
+            ? { ujatProgramApplicationGradeInfo: vm.ujatProgramApplicationGradeInfo }
+            : {}),
+          ...(vm.ujatProgramApplicationGradeClassTime != null
+            ? { ujatProgramApplicationGradeClassTime: vm.ujatProgramApplicationGradeClassTime }
+            : {}),
         }}
         headingDescriptionExtraClassName="paragraph-input-explanation-title"
       />

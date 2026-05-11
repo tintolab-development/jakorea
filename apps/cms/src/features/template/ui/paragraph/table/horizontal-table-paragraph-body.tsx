@@ -46,6 +46,12 @@ import {
   type ProgramRegistrationParagraphBodyOptions,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { renderUjatProgramRegistrationParagraphBody } from '@/features/template/ui/form-set/registration-form/UJAT/paragraph-body'
+import type { UjatGradeWiseClassTimeParagraphOptions } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-body-options'
+import type {
+  UjatProgramApplicationGradeClassTimeParagraphOptions,
+  UjatProgramApplicationGradeInfoParagraphOptions,
+} from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-program-application-institution-body-options'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
 import { IdTypeWithInputBody } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -389,8 +395,11 @@ export function HorizontalTableParagraphBody({
   paymentStatementDisplayMode,
   programRegistration,
   ujatProgramRegistration,
+  ujatGradeWiseClassTime,
   programApplicationFormInstitution,
   ujatProgramApplicationFormInstitution,
+  ujatProgramApplicationGradeInfo,
+  ujatProgramApplicationGradeClassTime,
   applicantRecruitFormInstitution,
   ujatRecruitFormInstitution,
   applicantRecruitFormIndividual,
@@ -399,6 +408,7 @@ export function HorizontalTableParagraphBody({
   ujatRecruitFormVolunteer,
   programApplicationFormInstructor,
   programApplicationFormVolunteer,
+  paragraphInteractionMode = 'authoring',
 }: {
   paragraph: HorizontalTableParagraph
   onChange: (next: HorizontalTableParagraph) => void
@@ -414,10 +424,13 @@ export function HorizontalTableParagraphBody({
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
   programRegistration?: ProgramRegistrationParagraphBodyOptions
   ujatProgramRegistration?: boolean
+  ujatGradeWiseClassTime?: UjatGradeWiseClassTimeParagraphOptions
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
   /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramApplicationFormInstitution?: boolean
+  ujatProgramApplicationGradeInfo?: UjatProgramApplicationGradeInfoParagraphOptions
+  ujatProgramApplicationGradeClassTime?: UjatProgramApplicationGradeClassTimeParagraphOptions
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   applicantRecruitFormInstitution?: boolean
   /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
@@ -432,6 +445,7 @@ export function HorizontalTableParagraphBody({
   ujatRecruitFormVolunteer?: boolean
   programApplicationFormInstructor?: ProgramApplicationFormInstructorBodyOptions
   programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
+  paragraphInteractionMode?: ParagraphBodyInteractionMode
 }) {
   const p = useMemo(() => normalizeHorizontalTableParagraph(paragraph), [paragraph])
 
@@ -472,7 +486,8 @@ export function HorizontalTableParagraphBody({
 
   const ujatProgramRegistrationBody = renderUjatProgramRegistrationParagraphBody(
     p,
-    ujatProgramRegistration
+    ujatProgramRegistration,
+    ujatGradeWiseClassTime
   )
   if (ujatProgramRegistrationBody != null) return ujatProgramRegistrationBody
 
@@ -516,7 +531,10 @@ export function HorizontalTableParagraphBody({
   const ujatProgramApplicationFormInstitutionBody =
     renderUjatProgramApplicationFormInstitutionParagraphBody(
       p,
-      ujatProgramApplicationFormInstitution
+      ujatProgramApplicationFormInstitution,
+      ujatProgramApplicationGradeInfo,
+      ujatProgramApplicationGradeClassTime,
+      paragraphInteractionMode
     )
   if (ujatProgramApplicationFormInstitutionBody != null)
     return ujatProgramApplicationFormInstitutionBody

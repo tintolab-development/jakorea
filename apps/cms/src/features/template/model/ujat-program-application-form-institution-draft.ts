@@ -14,7 +14,13 @@ export const UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS = {
   applicationRegion: 'ujat-program-application-institution-seed-application-region',
   basicInfo: 'ujat-program-application-institution-seed-basic-info',
   gradeApplicationInfo: 'ujat-program-application-institution-seed-grade-application-info',
+  gradeClassTime: 'ujat-program-application-institution-seed-grade-class-time',
+  preferredEducationSchedule: 'ujat-program-application-institution-seed-preferred-education-schedule',
 } as const
+
+const PREFERRED_EDUCATION_SCHEDULE_DESCRIPTION =
+  '* 금요일 1교시~4교시에 진행되며, 4교시 모두 교육 진행이 가능해야 합니다.\n' +
+  '* 참여 가능한 모든 일정을 선택해 주시면, 선택해 주신 일정 중에서 조정하여 교육이 진행될 예정입니다.'
 
 export const UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS = new Set<string>(
   Object.values(UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS)
@@ -148,6 +154,16 @@ export function createUjatProgramApplicationFormInstitutionDraft(): WritingFormD
       UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeApplicationInfo,
       '학년 별 신청 정보',
       '학교에서 신청하는 모든 신청 학년 별 학급 수 및 반 별 학생 수를 작성해주세요.'
+    ),
+    createSeedHorizontalTable(
+      UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeClassTime,
+      '학년 별 수업 시간',
+      '신청 학년 별 수업 진행 시간을 작성해주세요.'
+    ),
+    createSeedHorizontalTable(
+      UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
+      '진행 희망 교육 일정',
+      PREFERRED_EDUCATION_SCHEDULE_DESCRIPTION
     ),
   ]
   return normalizeWritingFormDraft({

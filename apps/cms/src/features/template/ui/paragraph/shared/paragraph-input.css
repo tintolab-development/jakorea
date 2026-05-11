@@ -118,6 +118,27 @@
   opacity: 1 !important;
 }
 
+/* 단락 카드 설명 — `\n` 개행 반영(타이틀 옆 한 줄 측정 레이아웃과 분리) */
+.paragraph-input--description-multiline .paragraph-input__row {
+  align-items: flex-start;
+}
+
+.paragraph-input--description-multiline .paragraph-input__main {
+  flex: 1 1 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.paragraph-input--description-multiline.paragraph-input--view .paragraph-input__view-text {
+  width: 100% !important;
+  white-space: pre-line;
+}
+
+.paragraph-input--description-multiline.paragraph-input--edit .paragraph-input__shell {
+  width: 100% !important;
+  max-width: 100%;
+}
+
 /* 단락 카드 「설명 입력」줄 — 설명글 텍스트형 본문( --explanation-body ) 제외 */
 .paragraph-input--description:not(.paragraph-input--explanation-body) {
   font-family: Pretendard, sans-serif;

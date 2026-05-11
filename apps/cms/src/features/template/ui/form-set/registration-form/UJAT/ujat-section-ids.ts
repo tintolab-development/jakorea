@@ -1,3 +1,6 @@
+/** UJAT 프로그램 등록 폼 — 학년 별 수업 시간 단락 id */
+export const UJAT_REGISTRATION_GRADE_WISE_CLASS_TIME_ID = 'ujat-reg-grade-wise-class-time' as const
+
 /** UJAT 프로그램 등록 폼 — 단락 id (시드 단락·네비와 동일) */
 export const UJAT_REGISTRATION_SECTION_IDS = [
   'ujat-reg-basic',
@@ -7,6 +10,7 @@ export const UJAT_REGISTRATION_SECTION_IDS = [
   'ujat-reg-second-half-education-schedule',
   'ujat-reg-education-schedule-settings',
   'ujat-reg-education-class-capacity-by-region',
+  UJAT_REGISTRATION_GRADE_WISE_CLASS_TIME_ID,
 ] as const
 
 export type UjatRegistrationSectionId = (typeof UJAT_REGISTRATION_SECTION_IDS)[number]
@@ -19,4 +23,5 @@ export const UJAT_REGISTRATION_SECTION_LABELS: Record<UjatRegistrationSectionId,
   'ujat-reg-second-half-education-schedule': '하반기 교육 일정',
   'ujat-reg-education-schedule-settings': '교육 진행 일정 설정',
   'ujat-reg-education-class-capacity-by-region': '지역 별 교육 진행 가능 학급 수',
+  [UJAT_REGISTRATION_GRADE_WISE_CLASS_TIME_ID]: '학년 별 수업 시간',
 }
