@@ -48,6 +48,8 @@ import type { PaymentStatementCalculationLinesViewModel } from '@/features/templ
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
+import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/basic-info-paragraph'
 import type { ProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { ProgramApplicationFormInstructorBodyOptions } from '@/features/template/ui/form-set/application-form/instructor/paragraph-body'
 import type { ProgramApplicationFormVolunteerBodyOptions } from '@/features/template/ui/form-set/application-form/volunteer/paragraph-body'
@@ -307,6 +309,15 @@ export function renderFormParagraphBody(
       )
     }
     case 'vertical_table': {
+      if (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord) {
+        return (
+          <BasicInfoParagraph
+            values={options?.paymentStatementBasicInfoValues}
+            displayMode={options?.paymentStatementDisplayMode ?? 'editor'}
+            onlyPaymentPurposeLocked={options?.paymentStatementBasicInfoOnlyPaymentPurposeLocked}
+          />
+        )
+      }
       const normalizedVp = normalizeVerticalTableParagraph(
         p as Extract<WritingFormParagraph, { variant: 'vertical_table' }>
       )
