@@ -1,3 +1,4 @@
+import { message } from 'antd'
 import { useCallback, useEffect, useMemo } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import {
@@ -9,7 +10,9 @@ import {
   AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS,
   createAgreementNoticeDraft,
   createAgreementPortraitDraft,
+  createDefaultSurveyDraft,
   createEducatorFacilitatorPledgeDraft,
+  DEFAULT_SURVEY_PARAGRAPH_IDS,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -58,6 +61,14 @@ import NewAgreementForm, {
 } from '@/features/template/ui/form-set/new-agreement-form'
 import NewHorizontalTableForm from '@/features/template/ui/form-set/new-horizontal-table-form'
 import NewSurveyForm from '@/features/template/ui/form-set/new-survey-form'
+import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
+import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
+import {
+  FormEditorRightPanel,
+  FormEditorTitleNumberingField,
+} from '@/features/template/ui/form-editor/form-editor-right-panel'
+import { useTableRowSelectionState } from '@/features/template/ui/form-editor/use-table-row-selection-state'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import {
   useProgramParticipantApplicationEditor,
@@ -122,7 +133,10 @@ import {
   useUjatProgramRegistrationEditor,
 } from '@/features/template/ui/form-set/registration-form/UJAT'
 import { CrimeRecordConsentDocumentFullpageModal } from '@/features/template/ui/crime-record-consent-document-fullpage-modal'
-import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
+import {
+  AGREEMENT_WRITING_FORM_SHELL_TEMPLATE_IDS,
+  TEMPLATE_USER_PREVIEW_ACTIVE,
+} from '@/features/template/lib/template-user-preview-url'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import {
   createContentOnlyA4PreviewOptions,
@@ -313,14 +327,56 @@ export default function TemplateFormTab() {
                         : programParticipantApplicationVariant
   )
 
+  const isWritingSurveyListTemplate = useMemo(
+    () =>
+      Boolean(isPreviewOpen && selectedTemplate != null && selectedTemplate.id.startsWith('survey-')),
+    [isPreviewOpen, selectedTemplate]
+  )
+
+  const getSurveyListInitialDraft = useCallback((): WritingFormDraft => {
+    const base = createDefaultSurveyDraft()
+    const name = selectedTemplate?.templateName?.trim()
+    if (name == null || name === '') return base
+    return {
+      ...base,
+      paragraphs: base.paragraphs.map(p =>
+        p.id === DEFAULT_SURVEY_PARAGRAPH_IDS.title ? { ...p, surveyTitle: name } : p
+      ),
+    }
+  }, [selectedTemplate?.templateName])
+
+  const getSurveyListDefaultParagraphId = useCallback((_draft: WritingFormDraft) => {
+    return DEFAULT_SURVEY_PARAGRAPH_IDS.title
+  }, [])
+
+  const surveyListEditor = useWritingFormEditorWithUserPreview({
+    open: isWritingSurveyListTemplate,
+    getInitialDraft: getSurveyListInitialDraft,
+    getDefaultActiveParagraphId: getSurveyListDefaultParagraphId,
+    previewHeaderTitle: selectedTemplate?.templateName ?? '설문',
+    editorKind: 'survey',
+    onSave: () => {
+      message.success('저장 API 연동 전입니다.')
+    },
+  })
+
+  const surveyTableRowSelection = useTableRowSelectionState({
+    paragraphs: isWritingSurveyListTemplate ? surveyListEditor.draft.paragraphs : [],
+    activeParagraphId: isWritingSurveyListTemplate ? surveyListEditor.activeParagraphId : null,
+  })
+
   const isCrimeConsentDetail = isPreviewOpen && selectedTemplate?.id === AGREEMENT_CRIME_TEMPLATE_ID
 
-  useWritingUserPreviewUrlAuxiliarySync(
-    params,
-    setParams,
-    isWritingUserPreviewOpen,
-    closeWritingUserPreview
-  )
+  const suppressInactiveUserPreviewStrip = useMemo(() => {
+    if (params.mode !== 'edit' || params.id == null || params.id.trim() === '') return false
+    const id = params.id.trim()
+    if (AGREEMENT_WRITING_FORM_SHELL_TEMPLATE_IDS.has(id)) return true
+    return id.startsWith('survey-')
+  }, [params.mode, params.id])
+
+  useWritingUserPreviewUrlAuxiliarySync(params, setParams, isWritingUserPreviewOpen, closeWritingUserPreview, {
+    suppressInactiveUserPreviewStrip,
+  })
 
   /** 직접 입력/앞으로가기 등 URL에 userPreview가 있으면 미리보기 오픈 */
   useEffect(() => {
@@ -363,6 +419,10 @@ export default function TemplateFormTab() {
       programParticipantApplicationVm.handlePreview()
       return
     }
+    if (isWritingSurveyListTemplate) {
+      surveyListEditor.handlePreview()
+      return
+    }
     const genericA4Options = shouldUseA4PreviewForWritingTemplate(selectedTemplate.id)
       ? createContentOnlyA4PreviewOptions()
       : undefined
@@ -399,6 +459,8 @@ export default function TemplateFormTab() {
     programRegistrationVm,
     programParticipantApplicationVm,
     openWritingUserPreview,
+    isWritingSurveyListTemplate,
+    surveyListEditor,
   ])
 
   const handlePreview = useCallback(() => {
@@ -425,6 +487,10 @@ export default function TemplateFormTab() {
       isProgramVolunteerApplicationTemplate
     ) {
       programParticipantApplicationVm.handlePreview()
+      return
+    }
+    if (isWritingSurveyListTemplate) {
+      surveyListEditor.handlePreview()
       return
     }
     const genericA4Options = useA4PreviewForWritingTemplate
@@ -461,6 +527,8 @@ export default function TemplateFormTab() {
     selectedTemplate?.templateName,
     useA4PreviewForWritingTemplate,
     setParams,
+    isWritingSurveyListTemplate,
+    surveyListEditor,
   ])
 
   const agreementExpenseRow = useMemo(
@@ -485,7 +553,7 @@ export default function TemplateFormTab() {
     return (
       <AgreementWritingFormShell
         initialDraft={createEducatorFacilitatorPledgeDraft}
-        defaultActiveParagraphId={EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.intro}
+        defaultActiveParagraphId={EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.title}
         modalTitle={agreementExpenseRow.templateName}
         modalDescription="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
         writingPreviewHeaderTitle={agreementExpenseRow.templateName}
@@ -591,19 +659,21 @@ export default function TemplateFormTab() {
             ? programRegistrationVm.handleSave
             : isUjatProgramRegistrationTemplate
               ? ujatProgramRegistrationVm.handleSave
-              : isApplicantRecruitInstitutionTemplate ||
-                  isUjatRecruitInstitutionTemplate ||
-                  isApplicantRecruitIndividualTemplate ||
-                  isRecruitFormInstructorTemplate ||
-                  isRecruitFormVolunteerTemplate ||
-                  isUjatRecruitFormVolunteerTemplate ||
-                  isUjatProgramApplicationInstitutionTemplate ||
-                  isUjatProgramApplicationVolunteerTemplate ||
-                  isProgramParticipantApplicationTemplate ||
-                  isProgramInstructorApplicationTemplate ||
-                  isProgramVolunteerApplicationTemplate
-                ? programParticipantApplicationVm.handleSave
-                : undefined
+              : isWritingSurveyListTemplate
+                ? surveyListEditor.handleSave
+                : isApplicantRecruitInstitutionTemplate ||
+                    isUjatRecruitInstitutionTemplate ||
+                    isApplicantRecruitIndividualTemplate ||
+                    isRecruitFormInstructorTemplate ||
+                    isRecruitFormVolunteerTemplate ||
+                    isUjatRecruitFormVolunteerTemplate ||
+                    isUjatProgramApplicationInstitutionTemplate ||
+                    isUjatProgramApplicationVolunteerTemplate ||
+                    isProgramParticipantApplicationTemplate ||
+                    isProgramInstructorApplicationTemplate ||
+                    isProgramVolunteerApplicationTemplate
+                  ? programParticipantApplicationVm.handleSave
+                  : undefined
         }
         leftContent={
           isUjatProgramRegistrationTemplate ? (
@@ -644,6 +714,29 @@ export default function TemplateFormTab() {
             ) : (
               <ProgramParticipantApplicationEditorLeftColumn vm={programParticipantApplicationVm} />
             )
+          ) : isWritingSurveyListTemplate ? (
+            <FormEditorLeftPanel
+              paragraphs={surveyListEditor.draft.paragraphs}
+              titleNumbering={surveyListEditor.draft.formSettings.titleNumbering}
+              selectedCardId={surveyListEditor.activeParagraphId}
+              onSelectCard={surveyListEditor.handleSelectCard}
+              onReorderMiddle={surveyListEditor.onReorderMiddle}
+              updateParagraph={surveyListEditor.updateParagraph}
+              editorKind="survey"
+              singleItemListActiveItemId={surveyListEditor.singleItemListActiveItemId}
+              onSelectSingleItemListItem={surveyListEditor.onSelectSingleItemListItem}
+              horizontalTableRowSelectionsByParagraphId={
+                surveyTableRowSelection.horizontalTableRowSelectionsByParagraphId
+              }
+              onHorizontalTableRowSelectionChange={
+                surveyTableRowSelection.onHorizontalTableRowSelectionChange
+              }
+              verticalTableBodyRowSelection={surveyTableRowSelection.verticalTableBodyRowSelection}
+              onVerticalTableBodyRowSelectionChange={
+                surveyTableRowSelection.onVerticalTableBodyRowSelectionChange
+              }
+              middleParagraphActions={surveyListEditor.middleParagraphActions}
+            />
           ) : (
             <TemplateModalLeftContent
               config={orderedLeftContentConfig}
@@ -698,6 +791,36 @@ export default function TemplateFormTab() {
                 vm={programParticipantApplicationVm}
               />
             )
+          ) : isWritingSurveyListTemplate ? (
+            <FormEditorFieldNav
+              sectionTitle="커스텀 필드"
+              pinnedTop={surveyListEditor.pinnedTop}
+              sortableMiddle={surveyListEditor.sortableMiddle}
+              pinnedBottom={surveyListEditor.pinnedBottom}
+              selectedItemId={surveyListEditor.activeParagraphId}
+              onSelectItem={surveyListEditor.handleSelectCard}
+              onReorderMiddle={surveyListEditor.onReorderMiddle}
+              fieldListBottomSlot={
+                <FormEditorTitleNumberingField
+                  value={surveyListEditor.draft.formSettings.titleNumbering}
+                  onChange={surveyListEditor.onTitleNumberingChange}
+                />
+              }
+            >
+              <FormEditorRightPanel
+                draft={surveyListEditor.draft}
+                activeParagraphId={surveyListEditor.activeParagraphId}
+                onTitleNumberingChange={surveyListEditor.onTitleNumberingChange}
+                updateParagraph={surveyListEditor.updateParagraph}
+                editorKind="survey"
+                showTitleNumbering={false}
+                singleItemListActiveItemId={surveyListEditor.singleItemListActiveItemId}
+                horizontalTableRowSelection={surveyTableRowSelection.activeHorizontalTableRowSelection}
+                onHorizontalTableBodyRowDeleted={surveyTableRowSelection.focusHorizontalTableBodyRow}
+                verticalTableBodyRowSelection={surveyTableRowSelection.verticalTableBodyRowSelection}
+                onVerticalTableBodyRowDeleted={surveyTableRowSelection.focusVerticalTableBodyRow}
+              />
+            </FormEditorFieldNav>
           ) : (
             <TemplateModalRightNavigation
               config={rightNavigationConfig}
