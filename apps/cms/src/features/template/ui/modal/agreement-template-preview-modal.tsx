@@ -1,6 +1,6 @@
 import { DownloadOutlined } from '@ant-design/icons'
 import { message } from 'antd'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type {
   FormEditorKind,
   WritingFormDraft,
@@ -25,6 +25,7 @@ export interface AgreementTemplatePreviewModalProps {
   updateParagraph: FormUpdateParagraph
   editorKind?: FormEditorKind
   zIndex?: number
+  focusedParagraphId?: string | null
 }
 
 function safePdfFileName(title: string): string {
@@ -40,14 +41,32 @@ export function AgreementTemplatePreviewModal({
   updateParagraph,
   editorKind = 'agreement',
   zIndex = 1100,
+  focusedParagraphId = null,
 }: AgreementTemplatePreviewModalProps) {
   void updateParagraph
+  const previewScrollRef = useRef<HTMLDivElement>(null)
   const { pages, overflowParagraphIds, measureLayer } = useA4ParagraphPages({
     allParagraphs: draft.paragraphs,
     titleNumbering: draft.formSettings.titleNumbering,
     editorKind,
     enabled: open,
   })
+
+  const focusInAnyPage = useMemo(
+    () =>
+      focusedParagraphId != null &&
+      focusedParagraphId !== '' &&
+      draft.paragraphs.some(p => p.id === focusedParagraphId),
+    [focusedParagraphId, draft.paragraphs]
+  )
+
+  useLayoutEffect(() => {
+    if (!open || !focusInAnyPage || focusedParagraphId == null || focusedParagraphId === '') return
+    const root = previewScrollRef.current
+    if (root == null) return
+    const el = root.querySelector(`[data-paragraph-id="${CSS.escape(focusedParagraphId)}"]`)
+    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [open, focusInAnyPage, focusedParagraphId, pages])
 
   const pdfHostRef = useRef<HTMLDivElement>(null)
   const [pdfLoading, setPdfLoading] = useState(false)
@@ -102,7 +121,7 @@ export function AgreementTemplatePreviewModal({
           </button>
         </header>
 
-        <div className="agreement-template-preview-modal__body">
+        <div ref={previewScrollRef} className="agreement-template-preview-modal__body">
           <div className="agreement-template-preview-modal__toolbar">
             <p className="agreement-template-preview-modal__notice">
               * 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다.
@@ -145,6 +164,7 @@ export function AgreementTemplatePreviewModal({
                             titleNumbering={draft.formSettings.titleNumbering}
                             editorKind={editorKind}
                             overflowParagraphIds={overflowParagraphIds}
+                            focusedParagraphId={focusedParagraphId}
                           />
                         </div>
                       </A4DocumentPageLayout>

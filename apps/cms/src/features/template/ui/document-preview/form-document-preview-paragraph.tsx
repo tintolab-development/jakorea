@@ -333,6 +333,8 @@ export interface FormDocumentPreviewParagraphProps {
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   renderMode?: FormDocumentPreviewRenderMode
   style?: CSSProperties
+  /** 작성 화면에서 선택한 단락과 동기화된 강조 */
+  isAuthoringSyncFocused?: boolean
 }
 
 export function FormDocumentPreviewParagraph({
@@ -344,6 +346,7 @@ export function FormDocumentPreviewParagraph({
   paragraphBodyOptions,
   renderMode = 'card',
   style,
+  isAuthoringSyncFocused = false,
 }: FormDocumentPreviewParagraphProps) {
   const displayTitle = getFormParagraphDisplayTitle(allParagraphs, paragraph, titleNumbering)
   const viewModel = getDocumentPreviewParagraphViewModel(paragraph, displayTitle, renderMode)
@@ -361,6 +364,7 @@ export function FormDocumentPreviewParagraph({
           'form-document-preview-paragraph',
           'paragraph-card',
           overflow ? 'form-document-preview-paragraph--overflow' : '',
+          isAuthoringSyncFocused ? 'form-document-preview-paragraph--authoring-sync-focus' : '',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -395,6 +399,7 @@ export function FormDocumentPreviewParagraph({
           viewModel.isClosing ? 'form-document-preview-paragraph--content-only-closing' : '',
           viewModel.isClosingSignature ? 'form-document-preview-paragraph--content-only-closing-signature' : '',
           overflow ? 'form-document-preview-paragraph--overflow' : '',
+          isAuthoringSyncFocused ? 'form-document-preview-paragraph--authoring-sync-focus' : '',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -416,6 +421,7 @@ export function FormDocumentPreviewParagraph({
       className={[
         'form-document-preview-paragraph',
         overflow ? 'form-document-preview-paragraph--overflow' : '',
+        isAuthoringSyncFocused ? 'form-document-preview-paragraph--authoring-sync-focus' : '',
       ]
         .filter(Boolean)
         .join(' ')}

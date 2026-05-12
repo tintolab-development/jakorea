@@ -34,6 +34,10 @@ export type TemplateWritingUserPreviewSession = {
   a4HiddenParagraphIds?: ReadonlySet<string>
   a4RenderMode?: FormDocumentPreviewRenderMode
   a4ParagraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
+  /**
+   * 작성 화면에서 선택 중인 단락 id — 미리보기에서 해당 단락으로 페이지·스크롤·강조 동기화
+   */
+  focusedParagraphId?: string | null
 }
 
 export type TemplateWritingPreviewContextValue = {
@@ -95,6 +99,7 @@ export function TemplateWritingPreviewProvider({ children }: { children: ReactNo
           a4HiddenParagraphIds={session.a4HiddenParagraphIds}
           a4RenderMode={session.a4RenderMode}
           a4ParagraphGapPx={session.a4ParagraphGapPx}
+          focusedParagraphId={session.focusedParagraphId}
         />
       ) : null}
     </TemplateWritingPreviewContext.Provider>

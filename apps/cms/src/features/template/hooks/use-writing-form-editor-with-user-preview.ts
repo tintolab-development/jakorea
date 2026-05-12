@@ -124,8 +124,17 @@ export function useWritingFormEditorWithUserPreview(
       editorKind,
       zIndex: previewZIndex,
       paragraphBodyOptions: previewParagraphBodyOptions,
+      focusedParagraphId: activeParagraphId,
     }
-  }, [draft, updateParagraph, previewHeaderTitle, editorKind, previewZIndex, previewParagraphBodyOptions])
+  }, [
+    draft,
+    updateParagraph,
+    previewHeaderTitle,
+    editorKind,
+    previewZIndex,
+    previewParagraphBodyOptions,
+    activeParagraphId,
+  ])
 
   useEffect(() => {
     if (!open) return

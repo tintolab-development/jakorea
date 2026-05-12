@@ -15,6 +15,13 @@
   min-width: 0;
 }
 
+.form-document-preview-paragraph--authoring-sync-focus {
+  outline: 2px solid var(--color-mint-01, #01a1af);
+  outline-offset: 4px;
+  border-radius: 4px;
+  transition: outline-color 0.15s ease;
+}
+
 .form-document-preview-paragraph--content-only {
   display: flex;
   flex-direction: column;
