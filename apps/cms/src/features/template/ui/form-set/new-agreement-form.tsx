@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { message } from 'antd'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
@@ -16,12 +16,18 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
-import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/use-table-row-selection-state'
 import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
 } from '@/features/template/ui/form-editor/form-editor-right-panel'
+
+import {
+  type FormDocumentPreviewParagraphGapResolver,
+  type FormDocumentPreviewRenderMode,
+} from '@/features/template/lib/a4-document-preview'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 
 type NewAgreementFormQuery = {
   mode?: string
@@ -29,17 +35,56 @@ type NewAgreementFormQuery = {
   id?: string
 }
 
-export default function NewAgreementForm() {
-  const { setParams } = useQueryParams<NewAgreementFormQuery>()
-  const [draft, setDraft] = useState<WritingFormDraft>(() => createDefaultDirectAgreementDraft())
-  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
-    DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.explanationText
-  )
-  const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
+export type AgreementWritingFormShellProps = {
+  /** 초안 — 매 렌더 새 객체를 넘기지 말고 팩토리 또는 메모된 값 사용 권장 */
+  initialDraft: WritingFormDraft | (() => WritingFormDraft)
+  /** 최초 선택 단락 id — 생략 시 초안의 첫 단락 id */
+  defaultActiveParagraphId?: string | null
+  modalTitle: ReactNode
+  modalDescription?: ReactNode
+  onClose: () => void
+  /** 미리보기 컨텍스트 헤더 — 생략 시 `동의 양식` */
+  writingPreviewHeaderTitle?: string
+  /** 고정 템플릿 단락 — 표 구조·드래그·본문 편집 잠금 등 */
+  structureLockedParagraphIds?: ReadonlySet<string>
+  /** 제목형 등 — 드래그 핸들 비노출 */
+  hideDragHandleForParagraphIds?: ReadonlySet<string>
+  /** A4 미리보기 레이아웃 사용 여부 */
+  previewLayout?: 'default' | 'a4-document'
+  /** A4 미리보기 시 숨길 단락 id */
+  a4HiddenParagraphIds?: ReadonlySet<string>
+  /** A4 미리보기 렌더링 모드 */
+  a4RenderMode?: FormDocumentPreviewRenderMode
+  /** A4 미리보기 단락 간격 */
+  a4ParagraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
+  /** 단락 본문 옵션 */
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+}
 
-  const handleClose = useCallback(() => {
-    setParams({ mode: undefined, type: undefined, id: undefined })
-  }, [setParams])
+export function AgreementWritingFormShell({
+  initialDraft,
+  defaultActiveParagraphId,
+  modalTitle,
+  modalDescription = '* 등록 시 최소 1개의 단락은 존재해야 하며, 동의 양식은 화면 전반에 동일한 구조로 노출될 수 있습니다.',
+  onClose,
+  writingPreviewHeaderTitle = '동의 양식',
+  structureLockedParagraphIds,
+  hideDragHandleForParagraphIds,
+  previewLayout = 'default',
+  a4HiddenParagraphIds,
+  a4RenderMode,
+  a4ParagraphGapPx,
+  paragraphBodyOptions,
+}: AgreementWritingFormShellProps) {
+  const [draft, setDraft] = useState<WritingFormDraft>(() =>
+    typeof initialDraft === 'function' ? initialDraft() : initialDraft
+  )
+  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(() => {
+    if (defaultActiveParagraphId != null) return defaultActiveParagraphId
+    const d = typeof initialDraft === 'function' ? initialDraft() : initialDraft
+    return d.paragraphs[0]?.id ?? null
+  })
+  const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
   const {
     openWritingUserPreview,
     syncWritingUserPreviewSession,
@@ -56,6 +101,13 @@ export default function NewAgreementForm() {
     },
     []
   )
+
+  useEffect(() => {
+    const nextDraft = typeof initialDraft === 'function' ? initialDraft() : initialDraft
+    setDraft(nextDraft)
+    setActiveParagraphId(defaultActiveParagraphId ?? nextDraft.paragraphs[0]?.id ?? null)
+    setSingleItemListActiveItemId(null)
+  }, [initialDraft, defaultActiveParagraphId])
 
   const onReorderMiddle = useCallback((activeId: string, overId: string) => {
     setDraft(prev => ({
@@ -98,10 +150,25 @@ export default function NewAgreementForm() {
     () => ({
       draft,
       updateParagraph,
-      headerTitle: '동의 양식',
+      headerTitle: writingPreviewHeaderTitle,
       editorKind: 'agreement' as const,
+      previewLayout,
+      a4HiddenParagraphIds,
+      a4RenderMode,
+      a4ParagraphGapPx,
+      paragraphBodyOptions,
+      hideParagraphRequiredChrome: previewLayout === 'a4-document',
     }),
-    [draft, updateParagraph]
+    [
+      draft,
+      updateParagraph,
+      writingPreviewHeaderTitle,
+      previewLayout,
+      a4HiddenParagraphIds,
+      a4RenderMode,
+      a4ParagraphGapPx,
+      paragraphBodyOptions,
+    ]
   )
 
   useEffect(() => {
@@ -145,12 +212,12 @@ export default function NewAgreementForm() {
   return (
     <TemplateFullpageModal
       open
-      onClose={handleClose}
-      title="동의 양식"
-      description="* 등록 시 최소 1개의 단락은 존재해야 하며, 동의 양식은 화면 전반에 동일한 구조로 노출될 수 있습니다."
+      onClose={onClose}
+      title={modalTitle}
+      description={modalDescription}
       templateTabType="writing"
       leftContent={
-        <FormEditorLeftPane
+        <FormEditorLeftPanel
           paragraphs={draft.paragraphs}
           titleNumbering={draft.formSettings.titleNumbering}
           selectedCardId={activeParagraphId}
@@ -168,6 +235,9 @@ export default function NewAgreementForm() {
           verticalTableBodyRowSelection={verticalTableBodyRowSelection}
           onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
           middleParagraphActions={middleParagraphActions}
+          structureLockedParagraphIds={structureLockedParagraphIds}
+          hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
+          paragraphBodyOptions={paragraphBodyOptions}
         />
       }
       rightNavigation={
@@ -198,11 +268,28 @@ export default function NewAgreementForm() {
             onHorizontalTableBodyRowDeleted={focusHorizontalTableBodyRow}
             verticalTableBodyRowSelection={verticalTableBodyRowSelection}
             onVerticalTableBodyRowDeleted={focusVerticalTableBodyRow}
+            structureLockedParagraphIds={structureLockedParagraphIds}
           />
         </FormEditorFieldNav>
       }
       onPreview={handlePreview}
       onSave={handleSave}
+    />
+  )
+}
+
+export default function NewAgreementForm() {
+  const { setParams } = useQueryParams<NewAgreementFormQuery>()
+  const handleClose = useCallback(() => {
+    setParams({ mode: undefined, type: undefined, id: undefined })
+  }, [setParams])
+
+  return (
+    <AgreementWritingFormShell
+      initialDraft={createDefaultDirectAgreementDraft}
+      defaultActiveParagraphId={DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.explanationText}
+      modalTitle="동의 양식"
+      onClose={handleClose}
     />
   )
 }

@@ -16,15 +16,18 @@ import type {
   MultipleChoiceParagraph,
   ScaleTypeItem,
   ScaleTypeParagraph,
+  SessionPlanShortEssayParagraph,
   ShortEssayParagraph,
   WritingFormDraft,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   createHorizontalTableParagraph,
+  createLectureReportProgramProgressParagraph,
   createVerticalTableParagraph,
   createDefaultMultipleChoiceItems,
   createDefaultScaleTypeItems,
+  createDefaultIdTypeWithInputOptions,
   effectiveVerticalStageKinds,
   normalizeVerticalChoiceOptions,
   normalizeVerticalTableParagraph,
@@ -51,6 +54,7 @@ const TITLE_NUMBERING_OPTIONS: { value: FormTitleNumberingStyle; label: string }
 type ParagraphKindSelectValue = 'single_item' | 'description' | 'table'
 type SingleItemDetailSelectValue =
   | 'subjective'
+  | 'session_plan_short_essay'
   | 'multiple_choice'
   | 'date_only'
   | 'time_only'
@@ -58,8 +62,11 @@ type SingleItemDetailSelectValue =
   | 'scale_type'
   | 'user_info'
   | 'file_attachment'
+  | 'ujat_journal_education_info'
+  | 'lecture_report_program_progress'
+  | 'id_type_with_input'
 type TableDetailSelectValue = 'horizontal_table' | 'vertical_table'
-type DescriptionDetailSelectValue = 'title' | 'text' | 'closing'
+type DescriptionDetailSelectValue = 'title' | 'text' | 'closing' | 'static_description_lines'
 type DetailSelectValue =
   | SingleItemDetailSelectValue
   | TableDetailSelectValue
@@ -72,6 +79,7 @@ const PARAGRAPH_KIND_OPTIONS: { value: ParagraphKindSelectValue; label: string }
 ]
 const SINGLE_ITEM_DETAIL_OPTIONS: { value: SingleItemDetailSelectValue; label: string }[] = [
   { value: 'subjective', label: '주관식형' },
+  { value: 'session_plan_short_essay', label: '교육계획 차시형' },
   { value: 'multiple_choice', label: '객관식형' },
   { value: 'date_only', label: '날짜형' },
   { value: 'time_only', label: '시간형' },
@@ -79,11 +87,15 @@ const SINGLE_ITEM_DETAIL_OPTIONS: { value: SingleItemDetailSelectValue; label: s
   { value: 'scale_type', label: '점수 선택형' },
   { value: 'user_info', label: '사용자 정보형' },
   { value: 'file_attachment', label: '파일 첨부형' },
+  { value: 'ujat_journal_education_info', label: 'UJAT 교육 정보(교육일지)' },
+  { value: 'lecture_report_program_progress', label: '강의보고서 프로그램 진행 정보' },
+  { value: 'id_type_with_input', label: '식별번호 입력' },
 ]
 const DESCRIPTION_DETAIL_OPTIONS: { value: DescriptionDetailSelectValue; label: string }[] = [
   { value: 'title', label: '제목형' },
   { value: 'text', label: '텍스트형' },
   { value: 'closing', label: '마무리글형' },
+  { value: 'static_description_lines', label: '정적 설명(다줄)' },
 ]
 const TABLE_DETAIL_OPTIONS: { value: TableDetailSelectValue; label: string }[] = [
   { value: 'horizontal_table', label: '가로형' },
@@ -134,6 +146,8 @@ function paragraphVariantLabel(p: WritingFormParagraph): string {
       return '기타'
     case 'short_essay':
       return '주관식형'
+    case 'session_plan_short_essay':
+      return '교육계획 차시형'
     case 'multiple_choice':
       return '객관식형'
     case 'dropdown':
@@ -150,14 +164,28 @@ function paragraphVariantLabel(p: WritingFormParagraph): string {
       return '사용자 정보형'
     case 'file_attachment':
       return '파일 첨부형'
+    case 'ujat_journal_education_info':
+      return 'UJAT 교육 정보(교육일지)'
+    case 'lecture_report_program_progress':
+      return '강의보고서 프로그램 진행 정보'
+    case 'static_description_lines':
+      return '정적 설명(다줄)'
+    case 'id_type_with_input':
+      return '식별번호 입력'
   }
 }
 
 function paragraphKindSelectValue(p: WritingFormParagraph): ParagraphKindSelectValue {
-  if (p.kind === 'single_item' && (p.variant === 'horizontal_table' || p.variant === 'vertical_table')) {
+  if (
+    p.kind === 'single_item' &&
+    (p.variant === 'horizontal_table' || p.variant === 'vertical_table')
+  ) {
     return 'table'
   }
-  if (p.kind === 'description' || (p.kind === 'single_item' && p.variant === 'agreement_explanation_text')) {
+  if (
+    p.kind === 'description' ||
+    (p.kind === 'single_item' && p.variant === 'agreement_explanation_text')
+  ) {
     return 'description'
   }
   return 'single_item'
@@ -168,7 +196,11 @@ function paragraphDetailSelectValue(p: WritingFormParagraph): DetailSelectValue 
   if (p.kind === 'single_item' && p.variant === 'vertical_table') return 'vertical_table'
   if (p.kind === 'description' && p.variant === 'survey_title_with_period') return 'title'
   if (p.kind === 'description' && p.variant === 'closing') return 'closing'
+  if (p.kind === 'description' && p.variant === 'static_description_lines')
+    return 'static_description_lines'
   if (p.kind === 'single_item' && p.variant === 'agreement_explanation_text') return 'text'
+  if (p.kind === 'single_item' && p.variant === 'session_plan_short_essay')
+    return 'session_plan_short_essay'
   if (p.kind === 'single_item' && p.variant === 'short_essay') return 'subjective'
   if (p.kind === 'single_item' && p.variant === 'multiple_choice') return 'multiple_choice'
   if (p.kind === 'single_item' && p.variant === 'date') return 'date_only'
@@ -177,6 +209,11 @@ function paragraphDetailSelectValue(p: WritingFormParagraph): DetailSelectValue 
   if (p.kind === 'single_item' && p.variant === 'scale_type') return 'scale_type'
   if (p.kind === 'single_item' && p.variant === 'user_info') return 'user_info'
   if (p.kind === 'single_item' && p.variant === 'file_attachment') return 'file_attachment'
+  if (p.kind === 'single_item' && p.variant === 'ujat_journal_education_info')
+    return 'ujat_journal_education_info'
+  if (p.kind === 'single_item' && p.variant === 'lecture_report_program_progress')
+    return 'lecture_report_program_progress'
+  if (p.kind === 'single_item' && p.variant === 'id_type_with_input') return 'id_type_with_input'
   if (p.kind === 'description') return 'text'
   return 'subjective'
 }
@@ -209,8 +246,37 @@ function createShortEssayDefault(id: string): ShortEssayParagraph {
     participatesInTitleNumbering: true,
     answerRequired: true,
     showItemTitle: false,
-    items: [{ id: 'short-essay-item-1', label: 'Title 01', placeholder: '답변을 입력해 주세요', bodyText: '' }],
+    items: [
+      {
+        id: 'short-essay-item-1',
+        label: 'Title 01',
+        placeholder: '답변을 입력해 주세요',
+        bodyText: '',
+      },
+    ],
     bodyPlaceholder: '답변을 입력해 주세요',
+    bodyText: '',
+  }
+}
+
+function createSessionPlanShortEssayDefault(id: string): SessionPlanShortEssayParagraph {
+  const ph = '자유롭게 작성해 주세요'
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'session_plan_short_essay',
+    requiredMark: true,
+    paragraphTitle: '차시 교육 계획',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    answerRequired: true,
+    showItemTitle: true,
+    items: [
+      { id: `${id}-intro`, label: '도입', placeholder: ph, bodyText: '' },
+      { id: `${id}-body`, label: '전개', placeholder: ph, bodyText: '' },
+      { id: `${id}-outro`, label: '마무리', placeholder: ph, bodyText: '' },
+    ],
+    bodyPlaceholder: ph,
     bodyText: '',
   }
 }
@@ -304,6 +370,18 @@ function createUserInfoDefault(id: string): WritingFormParagraph {
       { key: 'birthDate', label: '생년월일' },
       { key: 'phone', label: '연락처' },
       { key: 'email', label: '이메일' },
+      { key: 'addressRegion', label: '자택 주소지(지역)' },
+      { key: 'addressDetail', label: '자택 주소지(상세)' },
+      { key: 'affiliation', label: '소속' },
+      { key: 'applicantType', label: '신청자 유형' },
+      { key: 'programName', label: '프로그램명' },
+      { key: 'period', label: '교육 진행 일정(진행 기간)' },
+      { key: 'institutionName', label: '기관명' },
+      { key: 'institutionRegion', label: '기관 소재지(시군구)' },
+      { key: 'educationTarget', label: '교육 대상(담당 대상)' },
+      { key: 'educationGrade', label: '교육 학년(담당 학년)' },
+      { key: 'teamName', label: '팀 명' },
+      { key: 'teamPartnerName', label: '팀원/파트너 명' },
     ],
     selectedUserFieldKeys: [],
   }
@@ -368,7 +446,10 @@ function createDescriptionClosingDefault(id: string): WritingFormParagraph {
   }
 }
 
-function convertParagraphByDetail(prev: WritingFormParagraph, detail: DetailSelectValue): WritingFormParagraph {
+function convertParagraphByDetail(
+  prev: WritingFormParagraph,
+  detail: DetailSelectValue
+): WritingFormParagraph {
   const id = prev.id
   const keepTitle = (nextTitle: string) =>
     prev.paragraphTitle.trim() === '' ? nextTitle : prev.paragraphTitle
@@ -379,6 +460,8 @@ function convertParagraphByDetail(prev: WritingFormParagraph, detail: DetailSele
       return preserveParagraphCommonFields(createVerticalTableParagraph(id, 'text'), prev)
     case 'subjective':
       return preserveParagraphCommonFields(createShortEssayDefault(id), prev)
+    case 'session_plan_short_essay':
+      return preserveParagraphCommonFields(createSessionPlanShortEssayDefault(id), prev)
     case 'multiple_choice':
       return preserveParagraphCommonFields(createMultipleChoiceDefault(id), prev)
     case 'date_only':
@@ -393,6 +476,8 @@ function convertParagraphByDetail(prev: WritingFormParagraph, detail: DetailSele
       return preserveParagraphCommonFields(createUserInfoDefault(id), prev)
     case 'file_attachment':
       return preserveParagraphCommonFields(createFileAttachmentDefault(id), prev)
+    case 'lecture_report_program_progress':
+      return preserveParagraphCommonFields(createLectureReportProgramProgressParagraph(id), prev)
     case 'title':
       return {
         ...createDescriptionTitleDefault(id),
@@ -407,6 +492,40 @@ function convertParagraphByDetail(prev: WritingFormParagraph, detail: DetailSele
         paragraphTitle: keepTitle('마무리글형'),
         paragraphDescription: prev.paragraphDescription,
       }
+    case 'static_description_lines':
+      return preserveParagraphCommonFields(
+        {
+          id,
+          kind: 'description',
+          variant: 'static_description_lines',
+          requiredMark: prev.requiredMark,
+          paragraphTitle: prev.paragraphTitle,
+          paragraphDescription: prev.paragraphDescription,
+          participatesInTitleNumbering: prev.participatesInTitleNumbering,
+          lines: [''],
+        },
+        prev
+      )
+    case 'id_type_with_input': {
+      const opts = createDefaultIdTypeWithInputOptions()
+      return preserveParagraphCommonFields(
+        {
+          id,
+          kind: 'single_item',
+          variant: 'id_type_with_input',
+          requiredMark: true,
+          paragraphTitle: prev.paragraphTitle,
+          paragraphDescription: prev.paragraphDescription,
+          participatesInTitleNumbering: prev.participatesInTitleNumbering,
+          options: opts,
+          selectedOptionId: opts[0]?.id ?? null,
+          inputPlaceholder: '주민등록번호를 입력해 주세요',
+          inputValue: '',
+          answerRequired: true,
+        },
+        prev
+      )
+    }
     default:
       return prev
   }
@@ -426,6 +545,11 @@ export interface FormEditorRightPanelProps {
   verticalTableBodyRowSelection?: { paragraphId: string; row: number } | null
   /** 테이블 세로형: 행 삭제 후 포커스할 행 인덱스(이전 행) */
   onVerticalTableBodyRowDeleted?: (nextRowIndex: number) => void
+  /**
+   * 템플릿 고정 단락 — 우측에서 단락 유형·커스텀 필드 편집 UI를 숨기고 읽기 전용 안내만 노출.
+   * 가로형 테이블도 동일(잠금 시 `FormEditorHorizontalTableCustomFields` 비노출).
+   */
+  structureLockedParagraphIds?: ReadonlySet<string>
 }
 
 export function FormEditorTitleNumberingField({
@@ -559,6 +683,54 @@ function FormEditorVerticalTableCustomFields({
   )
 }
 
+/** 템플릿 고정 단락 — 유형·레이아웃은 읽기 전용으로만 표시 */
+function StructureLockedParagraphMeta({ paragraph }: { paragraph: WritingFormParagraph }) {
+  const outline =
+    paragraph.kind === 'description' && paragraph.variant === 'closing'
+      ? `${paragraphKindLabel(paragraph)}_${paragraphVariantLabel(paragraph)}`
+      : writingOutlineLabel(paragraph)
+  const kindValue = paragraphKindSelectValue(paragraph)
+  const detailValue = paragraphDetailSelectValue(paragraph)
+  const noop = () => {}
+
+  return (
+    <>
+      <Form layout="vertical" className="form-editor-right-panel__form" requiredMark={false}>
+        <span className="form-editor-right-panel__section-title">{outline}</span>
+        <Form.Item>
+          <div className="form-editor-right-panel__kind-row">
+            <CmsSelect
+              width="100%"
+              value={kindValue}
+              options={PARAGRAPH_KIND_OPTIONS}
+              withAllOption={false}
+              onChange={noop}
+              disabled
+            />
+            <CmsSelect
+              width="100%"
+              value={detailValue}
+              options={
+                kindValue === 'table'
+                  ? TABLE_DETAIL_OPTIONS
+                  : kindValue === 'description'
+                    ? DESCRIPTION_DETAIL_OPTIONS
+                    : SINGLE_ITEM_DETAIL_OPTIONS
+              }
+              withAllOption={false}
+              onChange={noop}
+              disabled
+            />
+          </div>
+        </Form.Item>
+        <span className="form-editor-right-panel__structure-locked-hint">
+          * 해당 단락은 수정 및 삭제가 불가합니다.
+        </span>
+      </Form>
+    </>
+  )
+}
+
 export function FormEditorRightPanel({
   draft,
   activeParagraphId,
@@ -571,8 +743,26 @@ export function FormEditorRightPanel({
   onHorizontalTableBodyRowDeleted,
   verticalTableBodyRowSelection = null,
   onVerticalTableBodyRowDeleted,
+  structureLockedParagraphIds,
 }: FormEditorRightPanelProps) {
   const active = draft.paragraphs.find(p => p.id === activeParagraphId) ?? null
+  const structureLockedActive =
+    activeParagraphId != null && (structureLockedParagraphIds?.has(activeParagraphId) ?? false)
+
+  if (active != null && structureLockedActive) {
+    return (
+      <div className="form-editor-right-panel">
+        {showTitleNumbering ? (
+          <FormEditorTitleNumberingField
+            value={draft.formSettings.titleNumbering}
+            onChange={onTitleNumberingChange}
+          />
+        ) : null}
+        <StructureLockedParagraphMeta paragraph={active} />
+      </div>
+    )
+  }
+
   const outline =
     active && active.kind === 'description' && active.variant === 'closing'
       ? `${paragraphKindLabel(active)}_${paragraphVariantLabel(active)}`
@@ -580,9 +770,11 @@ export function FormEditorRightPanel({
         ? writingOutlineLabel(active)
         : ''
 
-  const activeShortEssay =
-    active && active.kind === 'single_item' && active.variant === 'short_essay'
-      ? (active as ShortEssayParagraph)
+  const activeShortEssay: ShortEssayParagraph | SessionPlanShortEssayParagraph | null =
+    active &&
+    active.kind === 'single_item' &&
+    (active.variant === 'short_essay' || active.variant === 'session_plan_short_essay')
+      ? (active as ShortEssayParagraph | SessionPlanShortEssayParagraph)
       : null
   const activeMultipleChoice =
     active && active.kind === 'single_item' && active.variant === 'multiple_choice'
@@ -602,7 +794,10 @@ export function FormEditorRightPanel({
       : activeShortEssay
         ? [
             {
-              id: 'short-essay-item-1',
+              id:
+                activeShortEssay.variant === 'session_plan_short_essay'
+                  ? 'session-plan-item-1'
+                  : 'short-essay-item-1',
               label: 'Title 01',
               placeholder: activeShortEssay.bodyPlaceholder,
               bodyText: activeShortEssay.bodyText,
@@ -694,82 +889,130 @@ export function FormEditorRightPanel({
               className="form-editor-right-panel__form-items"
               requiredMark={false}
             >
-            {active.kind === 'description' && active.variant === 'survey_title_with_period' ? (
-              <>
-                {(active.showWritingPeriodOnForm ?? false) ? (
-                  <>
-                    <Form.Item label={'설문 시작일'}>
-                      <CmsRadioGroup
-                        value={active.periodMode}
-                        onChange={e =>
-                          updateParagraph(active.id, () => ({
-                            ...active,
-                            periodMode: e.target.value,
-                          }))
-                        }
-                      >
-                        <CmsRadio value="immediate">바로 시작</CmsRadio>
-                        <CmsRadio value="custom">직접 설정</CmsRadio>
-                      </CmsRadioGroup>
-                    </Form.Item>
-                    <Form.Item label={'설문 종료일'}>
-                      <CmsRadioGroup
-                        value={active.periodMode}
-                        onChange={e =>
-                          updateParagraph(active.id, () => ({
-                            ...active,
-                            periodMode: e.target.value,
-                          }))
-                        }
-                      >
-                        <CmsRadio value="immediate">마감 없음</CmsRadio>
-                        <CmsRadio value="custom">직접 설정</CmsRadio>
-                      </CmsRadioGroup>
-                    </Form.Item>
-                  </>
-                ) : null}
-              </>
-            ) : null}
+              {active.kind === 'description' && active.variant === 'survey_title_with_period' ? (
+                <>
+                  {(active.showWritingPeriodOnForm ?? false) ? (
+                    <>
+                      <Form.Item label={'설문 시작일'}>
+                        <CmsRadioGroup
+                          value={active.periodMode}
+                          onChange={e =>
+                            updateParagraph(active.id, () => ({
+                              ...active,
+                              periodMode: e.target.value,
+                            }))
+                          }
+                        >
+                          <CmsRadio value="immediate">바로 시작</CmsRadio>
+                          <CmsRadio value="custom">직접 설정</CmsRadio>
+                        </CmsRadioGroup>
+                      </Form.Item>
+                      <Form.Item label={'설문 종료일'}>
+                        <CmsRadioGroup
+                          value={active.periodMode}
+                          onChange={e =>
+                            updateParagraph(active.id, () => ({
+                              ...active,
+                              periodMode: e.target.value,
+                            }))
+                          }
+                        >
+                          <CmsRadio value="immediate">마감 없음</CmsRadio>
+                          <CmsRadio value="custom">직접 설정</CmsRadio>
+                        </CmsRadioGroup>
+                      </Form.Item>
+                    </>
+                  ) : null}
+                </>
+              ) : null}
 
-            {active.kind === 'description' &&
-            active.variant === 'system' &&
-            isAgreementLockedSystemParagraph(active) ? (
-              <Form.Item>
-                <span className="form-editor-right-panel__system-hint">
-                  시스템 설정 항목입니다. 내용 추가·삭제·편집은 할 수 없습니다.
-                </span>
-              </Form.Item>
-            ) : null}
-
-            {activeShortEssay && selectedShortEssayItem ? (
-              <>
-                <Form.Item label="항목 유형">
-                  <CmsSelect
-                    width="100%"
-                    value={paragraphVariantLabel(activeShortEssay)}
-                    options={[
-                      {
-                        value: paragraphVariantLabel(activeShortEssay),
-                        label: paragraphVariantLabel(activeShortEssay),
-                      },
-                    ]}
-                    disabled
-                  />
+              {active.kind === 'description' &&
+              active.variant === 'system' &&
+              isAgreementLockedSystemParagraph(active) ? (
+                <Form.Item>
+                  <span className="form-editor-right-panel__system-hint">
+                    시스템 설정 항목입니다. 내용 추가·삭제·편집은 할 수 없습니다.
+                  </span>
                 </Form.Item>
-                {shortEssayShowItemTitle ? (
-                  <Form.Item label="항목명">
+              ) : null}
+
+              {activeShortEssay && selectedShortEssayItem ? (
+                <>
+                  <Form.Item label="항목 유형">
+                    <CmsSelect
+                      width="100%"
+                      value={paragraphVariantLabel(activeShortEssay)}
+                      options={[
+                        {
+                          value: paragraphVariantLabel(activeShortEssay),
+                          label: paragraphVariantLabel(activeShortEssay),
+                        },
+                      ]}
+                      disabled
+                    />
+                  </Form.Item>
+                  {shortEssayShowItemTitle ? (
+                    <Form.Item label="항목명">
+                      <CmsInput
+                        width="100%"
+                        value={selectedShortEssayItem.label ?? ''}
+                        onChange={e =>
+                          updateParagraph(activeShortEssay.id, cur => {
+                            if (
+                              cur.kind !== 'single_item' ||
+                              (cur.variant !== 'short_essay' &&
+                                cur.variant !== 'session_plan_short_essay')
+                            )
+                              return cur
+                            const items =
+                              cur.items?.length && cur.items.length > 0
+                                ? cur.items
+                                : [
+                                    {
+                                      id:
+                                        cur.variant === 'session_plan_short_essay'
+                                          ? 'session-plan-item-1'
+                                          : 'short-essay-item-1',
+                                      label: 'Title 01',
+                                      placeholder: cur.bodyPlaceholder,
+                                      bodyText: cur.bodyText,
+                                    },
+                                  ]
+                            return {
+                              ...cur,
+                              items: items.map(item =>
+                                item.id === selectedShortEssayItem.id
+                                  ? { ...item, label: e.target.value }
+                                  : item
+                              ),
+                            }
+                          })
+                        }
+                        placeholder="항목명을 입력해 주세요"
+                      />
+                    </Form.Item>
+                  ) : null}
+                  <Form.Item label="입력창 안내 텍스트">
                     <CmsInput
                       width="100%"
-                      value={selectedShortEssayItem.label ?? ''}
+                      value={selectedShortEssayItem.placeholder ?? activeShortEssay.bodyPlaceholder}
                       onChange={e =>
                         updateParagraph(activeShortEssay.id, cur => {
-                          if (cur.kind !== 'single_item' || cur.variant !== 'short_essay') return cur
+                          if (
+                            cur.kind !== 'single_item' ||
+                            (cur.variant !== 'short_essay' &&
+                              cur.variant !== 'session_plan_short_essay')
+                          )
+                            return cur
                           const items =
                             cur.items?.length && cur.items.length > 0
                               ? cur.items
                               : [
                                   {
-                                    id: 'short-essay-item-1',
+                                    id:
+                                      cur.variant === 'session_plan_short_essay'
+                                        ? 'session-plan-item-1'
+                                        : 'short-essay-item-1',
                                     label: 'Title 01',
                                     placeholder: cur.bodyPlaceholder,
                                     bodyText: cur.bodyText,
@@ -777,100 +1020,70 @@ export function FormEditorRightPanel({
                                 ]
                           return {
                             ...cur,
+                            bodyPlaceholder: e.target.value,
                             items: items.map(item =>
                               item.id === selectedShortEssayItem.id
-                                ? { ...item, label: e.target.value }
+                                ? { ...item, placeholder: e.target.value }
                                 : item
                             ),
                           }
                         })
                       }
-                      placeholder="항목명을 입력해 주세요"
+                      placeholder="답변을 입력해 주세요"
                     />
                   </Form.Item>
-                ) : null}
-                <Form.Item label="입력창 안내 텍스트">
-                  <CmsInput
-                    width="100%"
-                    value={selectedShortEssayItem.placeholder ?? activeShortEssay.bodyPlaceholder}
-                    onChange={e =>
-                      updateParagraph(activeShortEssay.id, cur => {
-                        if (cur.kind !== 'single_item' || cur.variant !== 'short_essay') return cur
-                        const items =
-                          cur.items?.length && cur.items.length > 0
-                            ? cur.items
-                            : [
-                                {
-                                  id: 'short-essay-item-1',
-                                  label: 'Title 01',
-                                  placeholder: cur.bodyPlaceholder,
-                                  bodyText: cur.bodyText,
-                                },
-                              ]
-                        return {
-                          ...cur,
-                          bodyPlaceholder: e.target.value,
-                          items: items.map(item =>
-                            item.id === selectedShortEssayItem.id
-                              ? { ...item, placeholder: e.target.value }
-                              : item
-                          ),
-                        }
-                      })
-                    }
-                    placeholder="답변을 입력해 주세요"
-                  />
-                </Form.Item>
-              </>
-            ) : null}
+                </>
+              ) : null}
 
-            {activeMultipleChoice ? (
-              <>
-                <Form.Item label="항목 유형">
-                  <CmsSelect
-                    width="100%"
-                    value={paragraphVariantLabel(activeMultipleChoice)}
-                    options={[
-                      {
-                        value: paragraphVariantLabel(activeMultipleChoice),
-                        label: paragraphVariantLabel(activeMultipleChoice),
-                      },
-                    ]}
-                    disabled
-                  />
-                </Form.Item>
-                {singleItemListActiveItemId === FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID ||
-                singleItemListActiveItemId === undefined ? (
-                  <FormEditorMultipleChoiceItems
-                    paragraph={activeMultipleChoice}
-                    updateParagraph={updateParagraph}
-                  />
-                ) : null}
-              </>
-            ) : null}
+              {activeMultipleChoice ? (
+                <>
+                  <Form.Item label="항목 유형">
+                    <CmsSelect
+                      width="100%"
+                      value={paragraphVariantLabel(activeMultipleChoice)}
+                      options={[
+                        {
+                          value: paragraphVariantLabel(activeMultipleChoice),
+                          label: paragraphVariantLabel(activeMultipleChoice),
+                        },
+                      ]}
+                      disabled
+                    />
+                  </Form.Item>
+                  {singleItemListActiveItemId === FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID ||
+                  singleItemListActiveItemId === undefined ? (
+                    <FormEditorMultipleChoiceItems
+                      paragraph={activeMultipleChoice}
+                      updateParagraph={updateParagraph}
+                    />
+                  ) : null}
+                </>
+              ) : null}
 
-            {activeScaleType ? (
-              <FormEditorScaleTypeItems paragraph={activeScaleType} updateParagraph={updateParagraph} />
-            ) : null}
+              {activeScaleType ? (
+                <FormEditorScaleTypeItems
+                  paragraph={activeScaleType}
+                  updateParagraph={updateParagraph}
+                />
+              ) : null}
 
-            {active.kind === 'single_item' && active.variant === 'horizontal_table' ? (
-              <FormEditorHorizontalTableCustomFields
-                paragraph={active as HorizontalTableParagraph}
-                rowSelection={horizontalTableRowSelection}
-                updateParagraph={updateParagraph}
-                onBodyRowDeleted={onHorizontalTableBodyRowDeleted}
-              />
-            ) : null}
+              {active.kind === 'single_item' && active.variant === 'horizontal_table' ? (
+                <FormEditorHorizontalTableCustomFields
+                  paragraph={active as HorizontalTableParagraph}
+                  rowSelection={horizontalTableRowSelection}
+                  updateParagraph={updateParagraph}
+                  onBodyRowDeleted={onHorizontalTableBodyRowDeleted}
+                />
+              ) : null}
 
-            {active.kind === 'single_item' && active.variant === 'vertical_table' ? (
-              <FormEditorVerticalTableCustomFields
-                paragraph={active as VerticalTableParagraph}
-                rowSelection={verticalTableBodyRowSelection}
-                updateParagraph={updateParagraph}
-                onBodyRowDeleted={onVerticalTableBodyRowDeleted}
-              />
-            ) : null}
-
+              {active.kind === 'single_item' && active.variant === 'vertical_table' ? (
+                <FormEditorVerticalTableCustomFields
+                  paragraph={active as VerticalTableParagraph}
+                  rowSelection={verticalTableBodyRowSelection}
+                  updateParagraph={updateParagraph}
+                  onBodyRowDeleted={onVerticalTableBodyRowDeleted}
+                />
+              ) : null}
             </Form>
           ) : null}
         </>

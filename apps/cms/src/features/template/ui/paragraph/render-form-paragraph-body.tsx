@@ -5,26 +5,63 @@ import {
   type AgreementSystemBodyDisplayMode,
   type FormEditorKind,
   type HorizontalTableRowSelection,
+  type SubjectiveParagraph,
+  type LectureReportProgramProgressParagraph,
+  type UjatJournalEducationInfoParagraph,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
+import { StaticDescriptionLines } from '@/features/template/ui/paragraph/explanation/static-description-lines'
 import { ExplanationText } from '@/features/template/ui/paragraph/explanation/text'
 import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/title'
 import { DateField } from '@/features/template/ui/paragraph/single-item/date'
 import { TimeField } from '@/features/template/ui/paragraph/single-item/time'
 import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
 import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
+import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { MultipleChoice } from '@/features/template/ui/paragraph/single-item/multiple-choice'
 import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-type'
 import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/table/horizontal-table-paragraph-body'
 import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/table/vertical-table-paragraph-body'
 import { ScoreSelectParagraphBody } from '@/features/template/ui/paragraph/single-item/score-select-paragraph-body'
-import { ShortEssay } from '@/features/template/ui/paragraph/single-item/short-essay'
+import { SessionPlanShortEssay } from '@/features/template/ui/paragraph/single-item/session-plan-short-essay'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
+import { ProgramApplicationFormInstitutionScheduleParagraph } from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-schedule-paragraph'
+import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
+import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
+import { ProgramApplicationFormIndividualScheduleParagraph } from '@/features/template/ui/form-set/application-form/individual/paragraphs/individual-schedule-paragraph'
+import {
+  mergeSubjectiveFromShortEssayEdit,
+  ShortEssay,
+  subjectiveParagraphToShortEssayView,
+} from '@/features/template/ui/paragraph/single-item/short-essay'
 import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate'
-import { SubjectiveParagraphBody } from '@/features/template/ui/paragraph/single-item/subjective-paragraph-body'
 import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
+import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
+import {
+  UjatJournalEducationInfo,
+  type UjatJournalEducationInfoAutofill,
+} from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
+import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
+import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
+import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
+import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
+import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/basic-info-paragraph'
+import type { ProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import type { ProgramApplicationFormInstructorBodyOptions } from '@/features/template/ui/form-set/application-form/instructor/paragraph-body'
+import type { ProgramApplicationFormVolunteerBodyOptions } from '@/features/template/ui/form-set/application-form/volunteer/paragraph-body'
+import type {
+  UjatProgramApplicationGradeClassTimeParagraphOptions,
+  UjatProgramApplicationGradeInfoParagraphOptions,
+} from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-program-application-institution-body-options'
+
+export type { ProgramApplicationFormInstructorBodyOptions }
+export type { ProgramApplicationFormVolunteerBodyOptions }
+export type { UjatProgramApplicationGradeClassTimeParagraphOptions }
+export type { UjatProgramApplicationGradeInfoParagraphOptions }
 
 export type FormUpdateParagraph = (
   id: string,
@@ -51,6 +88,57 @@ export type RenderFormParagraphBodyOptions = {
    * - user: 카드 전환 시 미리보기 초기화 등 편집 전용 부수 효과는 끔(단락 컴포넌트에서 `paragraphInteractionMode`로 분기).
    */
   paragraphInteractionMode?: ParagraphBodyInteractionMode
+  /** id 포함 시 본문·표 편집 비활성(템플릿 고정 단락) */
+  structureLockedParagraphIds?: ReadonlySet<string>
+  /** 지급조서(발급용) 고정 단락 미리 채움 — 목 또는 발급 대상 회원 매핑 */
+  paymentStatementBasicInfoValues?: Partial<PaymentStatementBasicInfoAutofillValues>
+  /** true: 지급조서 기본정보에서 「지급 목적」만 비활성, 나머지 필드는 편집 가능(사전 동의 템플릿 등) */
+  paymentStatementBasicInfoOnlyPaymentPurposeLocked?: boolean
+  /** 강의비 산출 정보 단락 미리 채움 */
+  lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
+  /** 강의비 산출 내역 단락 — 발급용 테이블 목·실데이터 */
+  paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
+  /** 지급조서 A4 문서 렌더링 시 disabled 입력 UI를 정적 텍스트로 전환 */
+  paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
+  /** 일반 프로그램 등록폼 전용 단락 본문 상태 */
+  programRegistration?: ProgramRegistrationParagraphBodyOptions
+  /** UJAT 프로그램 등록 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatProgramRegistration?: boolean
+  /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
+  programApplicationFormInstitution?: boolean
+  /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatProgramApplicationFormInstitution?: boolean
+  /** UJAT 프로그램 봉사자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatProgramApplicationFormVolunteer?: boolean
+  /** UJAT 프로그램 학교 신청 폼 — 학년 별 신청 정보(블록 수·카드 헤더「+ 신청 학년 추가」) */
+  ujatProgramApplicationGradeInfo?: UjatProgramApplicationGradeInfoParagraphOptions
+  /** UJAT 프로그램 학교 신청 폼 — 학년 별 수업 시간(블록·카드 헤더「수업 진행 시간 추가」) */
+  ujatProgramApplicationGradeClassTime?: UjatProgramApplicationGradeClassTimeParagraphOptions
+  /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
+  applicantRecruitFormInstitution?: boolean
+  /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatRecruitFormInstitution?: boolean
+  /** 프로그램 참여자 모집 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
+  applicantRecruitFormIndividual?: boolean
+  /** 프로그램 강사 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  recruitFormInstructor?: boolean
+  /** 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  recruitFormVolunteer?: boolean
+  /** UJAT 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  ujatRecruitFormVolunteer?: boolean
+  /** 프로그램 참여자 신청 폼 (개인) 템플릿 편집용 UI */
+  programApplicationFormIndividual?: boolean
+  /** 프로그램 강사 신청 폼 시드 단락 — 전용 본문·제목 행 액션 */
+  programApplicationFormInstructor?: ProgramApplicationFormInstructorBodyOptions
+  /** 프로그램 봉사자 신청 폼 시드 단락 — 전용 본문 */
+  programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
+  /** UJAT 교육일지 교육 정보 단락 — 담당 학교명 등 자동 표시 */
+  ujatJournalEducationInfoAutofill?: UjatJournalEducationInfoAutofill | null
+  /**
+   * 구조 잠금 + 작성(authoring)일 때도 객관식·가로형 하단 동의 라디오 등 선택 UI만 조작 가능(미리 체크).
+   * 프로그램 참여자 신청 폼 등 고정 단락 템플릿용.
+   */
+  structureLockedAuthoringChoicePreview?: boolean
 }
 
 export function renderFormParagraphBody(
@@ -62,16 +150,30 @@ export function renderFormParagraphBody(
 ) {
   const paragraphInteractionMode = options?.paragraphInteractionMode ?? 'authoring'
   const isCardSelected = isParagraphSelected
-  const isBodyInteractive = paragraphInteractionMode === 'user' || isParagraphSelected
+  const structureLocked = options?.structureLockedParagraphIds?.has(p.id) ?? false
+  /**
+   * 구조 잠금: 작성(authoring)에서는 카드 선택만으로는 본문 편집 불가.
+   * 미리보기(`user`)에서는 잠긴 시드도 입력 가능.
+   */
+  const isBodyInteractive = structureLocked
+    ? paragraphInteractionMode === 'user'
+    : paragraphInteractionMode === 'user' || isParagraphSelected
+  const lockedAuthoringChoicePreview =
+    structureLocked &&
+    paragraphInteractionMode === 'authoring' &&
+    options?.structureLockedAuthoringChoicePreview === true
   switch (p.variant) {
     case 'survey_title_with_period':
       if (!isCardSelected && paragraphInteractionMode !== 'user') return null
       if (!(p.showWritingPeriodOnForm ?? false)) return null
+      const titlePeriodEditMode = structureLocked
+        ? paragraphInteractionMode === 'user'
+        : paragraphInteractionMode === 'user' || isParagraphSelected
       return (
         <ExplanationTitle
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isBodyInteractive}
+          isEditMode={titlePeriodEditMode}
           periodLabel={editorKind === 'survey' ? '설문 기간' : undefined}
         />
       )
@@ -91,42 +193,151 @@ export function renderFormParagraphBody(
           isEditMode={isBodyInteractive}
         />
       )
-    case 'subjective':
-      return <SubjectiveParagraphBody paragraph={p} isEditMode={isBodyInteractive} />
-    case 'agreement_explanation_text':
+    case 'subjective': {
+      const sp = p as SubjectiveParagraph
+      const view = subjectiveParagraphToShortEssayView(sp)
+      return (
+        <ShortEssay
+          paragraph={view}
+          onChange={next =>
+            updateParagraph(sp.id, () => mergeSubjectiveFromShortEssayEdit(sp, next))
+          }
+          isCardSelected={isCardSelected}
+          isBodyInteractive={isBodyInteractive}
+          paragraphInteractionMode={paragraphInteractionMode}
+          activeItemId={options?.singleItemListActiveItemId}
+          onSelectItem={options?.onSelectSingleItemListItem}
+        />
+      )
+    }
+    case 'agreement_explanation_text': {
+      /* 작성(authoring) + 구조 잠금 + 라벨 있는 설명글_텍스트형 (예: 행정정보 공동이용 동의서의 이용기관 명칭/이용사무) —
+         응답자가 채우는 영역이므로 편집 화면에서는 Disabled 입력 박스로 통일.
+         `bodyText`가 비어 있으면 빈 박스(이용기관 명칭), 채워져 있으면 같은 박스 안에 default 텍스트 노출(이용사무). */
+      const explanationBodyDisplayMode =
+        paragraphInteractionMode === 'authoring' &&
+        structureLocked &&
+        (p.paragraphTitle?.trim().length ?? 0) > 0
+          ? 'disabled-placeholder'
+          : 'input'
       return (
         <ExplanationText
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isBodyInteractive}
+          bodyDisplayMode={explanationBodyDisplayMode}
         />
       )
+    }
     case 'horizontal_table': {
       const hp = normalizeHorizontalTableParagraph(
         p as Extract<WritingFormParagraph, { variant: 'horizontal_table' }>
       )
-      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지(텍스트형만 비선택 시 플레이스홀더 뷰) */
+      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 구조 잠금 시 작성 모드에서는 편집 불가, 미리보기(user)는 예외 */
       const isEditMode =
-        paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field'
+        (!structureLocked || paragraphInteractionMode === 'user') &&
+        (paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field')
+      const tableCanvasInteractive = !structureLocked || paragraphInteractionMode === 'user'
       return (
         <HorizontalTableParagraphBody
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isEditMode}
+          tableCanvasInteractive={tableCanvasInteractive}
+          bottomConsentPreviewInAuthoring={lockedAuthoringChoicePreview}
           tableRowSelection={options?.horizontalTableRowSelection}
           onTableRowSelectionChange={options?.onHorizontalTableRowSelectionChange}
+          paymentStatementBasicInfoValues={options?.paymentStatementBasicInfoValues}
+          paymentStatementBasicInfoOnlyPaymentPurposeLocked={
+            options?.paymentStatementBasicInfoOnlyPaymentPurposeLocked
+          }
+          lectureFeeCalculationValues={options?.lectureFeeCalculationValues}
+          paymentStatementCalculationLines={options?.paymentStatementCalculationLines}
+          paymentStatementDisplayMode={options?.paymentStatementDisplayMode}
+          programRegistration={options?.programRegistration}
+          ujatProgramRegistration={options?.ujatProgramRegistration}
+          programApplicationFormInstitution={options?.programApplicationFormInstitution}
+          ujatProgramApplicationFormInstitution={options?.ujatProgramApplicationFormInstitution}
+          ujatProgramApplicationFormVolunteer={options?.ujatProgramApplicationFormVolunteer}
+          ujatProgramApplicationGradeInfo={options?.ujatProgramApplicationGradeInfo}
+          ujatProgramApplicationGradeClassTime={options?.ujatProgramApplicationGradeClassTime}
+          applicantRecruitFormInstitution={options?.applicantRecruitFormInstitution}
+          ujatRecruitFormInstitution={options?.ujatRecruitFormInstitution}
+          applicantRecruitFormIndividual={options?.applicantRecruitFormIndividual}
+          recruitFormInstructor={options?.recruitFormInstructor}
+          recruitFormVolunteer={options?.recruitFormVolunteer}
+          ujatRecruitFormVolunteer={options?.ujatRecruitFormVolunteer}
+          programApplicationFormInstructor={
+            options?.programApplicationFormInstructor == null
+              ? undefined
+              : {
+                  ...options.programApplicationFormInstructor,
+                  isTemplateAuthoringMode: paragraphInteractionMode === 'authoring',
+                }
+          }
+          programApplicationFormVolunteer={
+            options?.programApplicationFormVolunteer == null
+              ? undefined
+              : {
+                  ...options.programApplicationFormVolunteer,
+                  isTemplateAuthoringMode: paragraphInteractionMode === 'authoring',
+                }
+          }
+          paragraphInteractionMode={paragraphInteractionMode}
+        />
+      )
+    }
+    case 'ujat_journal_education_info': {
+      const jp = p as UjatJournalEducationInfoParagraph
+      return (
+        <UjatJournalEducationInfo
+          paragraph={jp}
+          onChange={next => updateParagraph(jp.id, () => next)}
+          isEditMode={isBodyInteractive}
+          autofill={options?.ujatJournalEducationInfoAutofill}
+        />
+      )
+    }
+    case 'lecture_report_program_progress': {
+      const lr = p as LectureReportProgramProgressParagraph
+      return (
+        <LectureReportProgramProgress
+          paragraph={lr}
+          onChange={next => updateParagraph(lr.id, () => next)}
+          isEditMode={isBodyInteractive}
         />
       )
     }
     case 'vertical_table': {
-      const vp = normalizeVerticalTableParagraph(
+      if (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord) {
+        return (
+          <BasicInfoParagraph
+            values={options?.paymentStatementBasicInfoValues}
+            displayMode={options?.paymentStatementDisplayMode ?? 'editor'}
+            onlyPaymentPurposeLocked={options?.paymentStatementBasicInfoOnlyPaymentPurposeLocked}
+          />
+        )
+      }
+      const normalizedVp = normalizeVerticalTableParagraph(
         p as Extract<WritingFormParagraph, { variant: 'vertical_table' }>
       )
+      const shouldUseInstructorUnavailableDatesAuthoringExample =
+        paragraphInteractionMode === 'authoring' &&
+        p.id === PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.unavailableDates &&
+        options?.programApplicationFormInstructor?.authoringUnavailableDatesExampleRowOnly === true
+      const vp = shouldUseInstructorUnavailableDatesAuthoringExample
+        ? normalizeVerticalTableParagraph({
+            ...normalizedVp,
+            rows: normalizedVp.rows.slice(0, 1),
+          })
+        : normalizedVp
+      const dateTimeCellsInteractive = isBodyInteractive || lockedAuthoringChoicePreview
       return (
         <VerticalTableParagraphBody
           paragraph={vp}
           onChange={next => updateParagraph(p.id, () => normalizeVerticalTableParagraph(next))}
           isEditMode={isBodyInteractive}
+          dateTimeCellsInteractive={dateTimeCellsInteractive}
           tableRowSelection={options?.verticalTableRowSelection}
           onTableRowSelectionChange={options?.onVerticalTableRowSelectionChange}
         />
@@ -153,6 +364,9 @@ export function renderFormParagraphBody(
     }
     case 'closing':
       return null
+    case 'static_description_lines':
+      if (p.kind !== 'description' || p.variant !== 'static_description_lines') return null
+      return <StaticDescriptionLines paragraph={p} />
     case 'short_essay':
       return (
         <ShortEssay
@@ -165,7 +379,31 @@ export function renderFormParagraphBody(
           onSelectItem={options?.onSelectSingleItemListItem}
         />
       )
+    case 'session_plan_short_essay':
+      return (
+        <SessionPlanShortEssay
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isCardSelected={isCardSelected}
+          isBodyInteractive={isBodyInteractive}
+          paragraphInteractionMode={paragraphInteractionMode}
+          activeItemId={options?.singleItemListActiveItemId}
+          onSelectItem={options?.onSelectSingleItemListItem}
+        />
+      )
     case 'multiple_choice': {
+      if (
+        options?.programApplicationFormInstitution === true &&
+        p.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
+      ) {
+        return <ProgramApplicationFormInstitutionScheduleParagraph />
+      }
+      if (
+        options?.programApplicationFormIndividual === true &&
+        p.id === PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice
+      ) {
+        return <ProgramApplicationFormIndividualScheduleParagraph />
+      }
       const usesMcItemsFocus = options?.onSelectSingleItemListItem != null
       const itemsEditActive = usesMcItemsFocus
         ? isCardSelected &&
@@ -176,12 +414,13 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isCardSelected={isCardSelected}
-          isBodyInteractive={isBodyInteractive}
+          isBodyInteractive={isBodyInteractive || lockedAuthoringChoicePreview}
           paragraphInteractionMode={paragraphInteractionMode}
           itemsEditActive={itemsEditActive}
           onActivateItemsEditor={
             usesMcItemsFocus
-              ? () => options!.onSelectSingleItemListItem!(FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID)
+              ? () =>
+                  options!.onSelectSingleItemListItem!(FORM_EDITOR_MULTIPLE_CHOICE_ITEMS_FOCUS_ID)
               : undefined
           }
         />
@@ -246,6 +485,15 @@ export function renderFormParagraphBody(
     case 'file_attachment':
       return (
         <FileAttachment
+          paragraph={p}
+          onChange={next => updateParagraph(p.id, () => next)}
+          isEditMode={isBodyInteractive}
+        />
+      )
+    case 'id_type_with_input':
+      if (p.kind !== 'single_item' || p.variant !== 'id_type_with_input') return null
+      return (
+        <IdTypeWithInput
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isBodyInteractive}

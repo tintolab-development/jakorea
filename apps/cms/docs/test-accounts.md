@@ -10,7 +10,7 @@
 
 | 이메일 | 비밀번호 | 이름 | 권한 레벨 | 프로그램 역할 |
 |--------|---------|------|----------|-------------|
-| `admin1@jakorea.org` | `admin123!` | 김관리 | MASTER | OWNER |
+| `admin1@jakorea.org` | `admin1234!` | 김관리 | MASTER | OWNER |
 | `admin2@jakorea.org` | `admin123!` | 이운영 | ADMIN | PARTNER |
 | `admin3@jakorea.org` | `admin123!` | 박시스템 | GENERAL | ASSISTANT |
 | `admin.inactive@jakorea.org` | `admin123!` | 비활성관리자 | GENERAL | ASSISTANT (비활성) |
@@ -57,7 +57,7 @@ import { mockUsers, getUserByEmail } from '@/data/mock/users'
 
 // 이메일로 사용자 찾기
 const user = getUserByEmail('admin1@jakorea.org')
-console.log(user) // { email: 'admin1@jakorea.org', password: 'admin123!', ... }
+console.log(user) // { email: 'admin1@jakorea.org', password: 'admin1234!', ... }
 ```
 
 ### 2. 브라우저 콘솔에서 확인

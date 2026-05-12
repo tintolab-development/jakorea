@@ -6,6 +6,14 @@
 import { useSearchParams } from 'react-router-dom'
 import { useCallback, useMemo } from 'react'
 
+export type SetQueryParamsOptions = {
+  /**
+   * false이면 히스토리에 엔트리를 추가(push). 모달·오버레이를 URL과 맞출 때 뒤로가기로 닫으려면 `replace: false` 사용.
+   * @default true
+   */
+  replace?: boolean
+}
+
 export function useQueryParams<T extends Record<string, string | undefined> = Record<string, string | undefined>>() {
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -37,7 +45,8 @@ export function useQueryParams<T extends Record<string, string | undefined> = Re
   )
 
   const setParams = useCallback(
-    (updates: Partial<T>) => {
+    (updates: Partial<T>, options?: SetQueryParamsOptions) => {
+      const replace = options?.replace ?? true
       setSearchParams(prev => {
         const newParams = new URLSearchParams(prev)
         Object.entries(updates).forEach(([key, value]) => {
@@ -48,7 +57,7 @@ export function useQueryParams<T extends Record<string, string | undefined> = Re
           }
         })
         return newParams
-      }, { replace: true })
+      }, { replace })
     },
     [setSearchParams]
   )

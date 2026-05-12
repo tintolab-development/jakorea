@@ -4,6 +4,7 @@ import type { TemplateWritingUserPreviewSession } from '@/features/template/cont
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import type { FormEditorKind } from '@/features/template/model/writing-form-draft.schema'
 import {
+  getWritingFormHeadMiddlePinnedTail,
   normalizeWritingFormDraft,
   reorderHeadMiddleTail,
   type FormTitleNumberingStyle,
@@ -14,6 +15,7 @@ import {
   useWritingFormMiddleParagraphActions,
   type MiddleParagraphActionsHandlers,
 } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 
 export type UseWritingFormEditorWithUserPreviewOptions = {
   /** 편집 UI(풀페이지 등) 열림 */
@@ -27,17 +29,21 @@ export type UseWritingFormEditorWithUserPreviewOptions = {
   editorKind?: FormEditorKind
   /** 미리보기 모달 z-index (선택) */
   previewZIndex?: number
+  /** 사용자 미리보기(`TemplatePreviewModal`) 본문 옵션 — UJAT 교육일지 학교명 자동 표시 등 */
+  previewParagraphBodyOptions?: RenderFormParagraphBodyOptions
   onSave?: () => void
 }
+
+export type FormEditorNavLine = { id: string; displayLine: string }
 
 export type WritingFormEditorWithUserPreviewResult = {
   headerTitle: string
   draft: WritingFormDraft
   activeParagraphId: string | null
   singleItemListActiveItemId: string | null
-  pinnedTop: { id: string; displayLine: string }
-  sortableMiddle: { id: string; displayLine: string }[]
-  pinnedBottom: { id: string; displayLine: string }
+  pinnedTop: FormEditorNavLine | null
+  sortableMiddle: FormEditorNavLine[]
+  pinnedBottom: FormEditorNavLine | FormEditorNavLine[] | null
   handleSelectCard: (id: string) => void
   onReorderMiddle: (activeId: string, overId: string) => void
   onTitleNumberingChange: (style: FormTitleNumberingStyle) => void
@@ -64,6 +70,7 @@ export function useWritingFormEditorWithUserPreview(
     previewHeaderTitle,
     editorKind = 'survey',
     previewZIndex,
+    previewParagraphBodyOptions,
     onSave,
   } = options
 
@@ -116,13 +123,15 @@ export function useWritingFormEditorWithUserPreview(
       headerTitle: previewHeaderTitle,
       editorKind,
       zIndex: previewZIndex,
+      paragraphBodyOptions: previewParagraphBodyOptions,
     }
-  }, [draft, updateParagraph, previewHeaderTitle, editorKind, previewZIndex])
+  }, [draft, updateParagraph, previewHeaderTitle, editorKind, previewZIndex, previewParagraphBodyOptions])
 
   useEffect(() => {
+    if (!open) return
     if (!isWritingUserPreviewOpen) return
     syncWritingUserPreviewSession(writingPreviewSession)
-  }, [isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
+  }, [open, isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
 
   const onReorderMiddle = useCallback((activeId: string, overId: string) => {
     setDraft(prev => ({
@@ -139,18 +148,25 @@ export function useWritingFormEditorWithUserPreview(
   }, [])
 
   const { pinnedTop, sortableMiddle, pinnedBottom } = useMemo(() => {
-    const [head, ...rest] = draft.paragraphs
-    const tail = rest[rest.length - 1]
-    const middle = rest.slice(0, -1)
     const { titleNumbering } = draft.formSettings
     const line = (p: WritingFormParagraph) => ({
       id: p.id,
       displayLine: getFormNavDisplayLine(draft.paragraphs, p, titleNumbering),
     })
+    const split = getWritingFormHeadMiddlePinnedTail(draft.paragraphs)
+    if (split == null) {
+      return {
+        pinnedTop: null as ReturnType<typeof line> | null,
+        sortableMiddle: [] as ReturnType<typeof line>[],
+        pinnedBottom: null as ReturnType<typeof line> | ReturnType<typeof line>[] | null,
+      }
+    }
+    const { head, middle, pinnedTail } = split
+    const bottomLines = pinnedTail.map(line)
     return {
-      pinnedTop: line(head!),
+      pinnedTop: line(head),
       sortableMiddle: middle.map(line),
-      pinnedBottom: line(tail!),
+      pinnedBottom: bottomLines.length === 1 ? bottomLines[0]! : bottomLines.length > 1 ? bottomLines : null,
     }
   }, [draft])
 

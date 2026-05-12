@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -8,7 +9,16 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 
 const [periodWidthStart, periodWidthEnd] = FORM_INPUTS_2_WIDTHS
 
+const BASIC_INFO_CURRICULUM_SURVEY_OPTIONS = [
+  '설문조사',
+  '학생 만족도조사',
+  '교사 만족도조사',
+  '강의평가',
+] as const
+
 export function BasicInfoCurriculumSection() {
+  const [surveyProgressChecked, setSurveyProgressChecked] = useState<string[]>([])
+
   return (
     <>
       <DetailInfoForm title="기본 정보" hideHeader mode="edit">
@@ -149,7 +159,9 @@ export function BasicInfoCurriculumSection() {
             edit={
               <CmsCheckbox.Group
                 checkboxSize="medium"
-                options={['설문조사', '학생 만족도조사', '교사 만족도조사', '강의평가']}
+                options={[...BASIC_INFO_CURRICULUM_SURVEY_OPTIONS]}
+                value={surveyProgressChecked}
+                onChange={v => setSurveyProgressChecked(v as string[])}
               />
             }
             view="-"

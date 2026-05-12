@@ -1,0 +1,56 @@
+.ujat-education-class-capacity {
+  gap: 16px;
+}
+
+.ujat-education-class-capacity__semester {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-education-class-capacity__semester-title {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.ujat-education-class-capacity__form .detail-info-form__field {
+  --detail-info-label-w: 140px !important;
+}
+
+.ujat-education-class-capacity__form .detail-info-form__field-label {
+  width: var(--detail-info-label-w);
+  min-width: var(--detail-info-label-w);
+  max-width: var(--detail-info-label-w);
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  line-height: 150%;
+}
+
+.ujat-education-class-capacity__form .detail-info-form__field-content {
+  padding: 8px 10px;
+}
+
+.ujat-education-class-capacity__inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ujat-education-class-capacity__unit {
+  flex: 0 0 auto;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}

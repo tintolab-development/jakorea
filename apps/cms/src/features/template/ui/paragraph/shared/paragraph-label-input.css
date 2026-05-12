@@ -32,10 +32,14 @@
 
 .paragraph-label-input__label {
   margin: 0;
+  align-self: flex-start;
+  width: 100%;
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
+  justify-content: flex-start;
   gap: 0.25em;
+  text-align: left;
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 18px;
@@ -55,17 +59,21 @@
   min-width: 0;
 }
 
-/* rows=1: 컨트롤(min-height 44px) 안에서 한 줄·placeholder가 세로 중앙에 오도록
- * (기본 stretch면 textarea가 높이를 채워 placeholder가 상단에 붙음) */
-.paragraph-label-input .paragraph-label-input__textarea .cms-textarea__control {
+/* rows=1 전용: 한 줄 입력형일 때만 세로 중앙 정렬 (`CmsTextArea`의 `cms-textarea--rows-1`) */
+.paragraph-label-input
+  .paragraph-label-input__textarea.cms-textarea--rows-1
+  .cms-textarea__control {
   align-items: center;
 }
 
-.paragraph-label-input .paragraph-label-input__textarea .cms-textarea__inner {
+.paragraph-label-input .paragraph-label-input__textarea.cms-textarea--rows-1 .cms-textarea__inner {
   align-items: center;
 }
 
-.paragraph-label-input .paragraph-label-input__textarea .cms-textarea__inner textarea.ant-input {
+.paragraph-label-input
+  .paragraph-label-input__textarea.cms-textarea--rows-1
+  .cms-textarea__inner
+  textarea.ant-input {
   flex: 0 1 auto !important;
   align-self: center;
   min-height: 24px !important;
@@ -74,8 +82,14 @@
 }
 
 .paragraph-label-input
-  .paragraph-label-input__textarea
-  .cms-textarea__control:hover:not(.cms-textarea__control--disabled) {
+  .paragraph-label-input__textarea.cms-textarea--rows-1
+  .cms-textarea__inner
+  textarea.ant-input::placeholder {
+  line-height: 150% !important;
+  font-size: 15px;
+}
+
+.paragraph-label-input .paragraph-label-input__textarea .cms-textarea__control:hover:not(.cms-textarea__control--disabled) {
   border-color: var(--table-line, #e0e0e0);
 }
 

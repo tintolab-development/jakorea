@@ -5,7 +5,6 @@ import { ClockCircleOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import '@/shared/ui/cms-datepicker.css'
@@ -206,7 +205,14 @@ export function ParagraphTimePicker({
       ? { width: typeof width === 'number' ? `${width}px` : width }
       : undefined
 
-  const displayText = value != null ? value.format('HH:mm') : ''
+  /** 트리거 표시: 미입력 → placeholder / 시작만 → HH:mm / 범위 확정 → `HH:mm ~ HH:mm` */
+  const triggerDisplay =
+    surfaceTimeRange != null
+      ? `${surfaceTimeRange[0].format('HH:mm')} ~ ${surfaceTimeRange[1].format('HH:mm')}`
+      : value != null
+        ? value.format('HH:mm')
+        : null
+  const triggerIsPlaceholder = triggerDisplay == null
 
   useEffect(() => {
     if (value == null) {
@@ -464,7 +470,6 @@ export function ParagraphTimePicker({
           'cms-datepicker--large',
           hasExplicitWidth && 'cms-datepicker--explicit-width',
           disabled && 'cms-datepicker--disabled',
-          surfaceTimeRange && 'paragraph-time-picker--range-surface',
           className
         )}
         style={{ ...widthStyle, ...style }}
@@ -472,10 +477,7 @@ export function ParagraphTimePicker({
         <button
           ref={triggerRef}
           type="button"
-          className={cn(
-            'paragraph-time-picker__trigger',
-            surfaceTimeRange && 'paragraph-time-picker__trigger--range-surface'
-          )}
+          className="paragraph-time-picker__trigger"
           disabled={disabled}
           onClick={handleOpen}
           aria-haspopup="dialog"
@@ -488,33 +490,14 @@ export function ParagraphTimePicker({
           }
         >
           <ClockCircleOutlined className="paragraph-time-picker__trigger-icon cms-datepicker__calendar-icon" aria-hidden />
-          {surfaceTimeRange ? (
-            <span className="paragraph-time-picker__trigger-range-pair">
-              <CmsInput
-                className="paragraph-time-picker__trigger-range-input"
-                inputSize="large"
-                readOnly
-                tabIndex={-1}
-                value={surfaceTimeRange[0].format('HH:mm')}
-                aria-label="시작 시간"
-                disabled={disabled}
-              />
-              <span className="paragraph-time-picker__trigger-range-wave" aria-hidden>
-                ~
-              </span>
-              <CmsInput
-                className="paragraph-time-picker__trigger-range-input"
-                inputSize="large"
-                readOnly
-                tabIndex={-1}
-                value={surfaceTimeRange[1].format('HH:mm')}
-                aria-label="종료 시간"
-                disabled={disabled}
-              />
-            </span>
-          ) : (
-            <span className="paragraph-time-picker__trigger-text">{displayText || placeholder}</span>
-          )}
+          <span
+            className={cn(
+              'paragraph-time-picker__trigger-text',
+              triggerIsPlaceholder && 'paragraph-time-picker__trigger-text--placeholder'
+            )}
+          >
+            {triggerIsPlaceholder ? placeholder : triggerDisplay}
+          </span>
         </button>
       </span>
       {popover}

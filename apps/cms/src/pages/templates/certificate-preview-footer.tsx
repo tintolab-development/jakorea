@@ -15,6 +15,7 @@ export interface CertificatePreviewFooterProps {
   orgWebsite: string
   fieldTextColors?: Record<string, string>
   onRegionClick?: (fieldName: string) => void
+  showEditChrome?: boolean
 }
 
 export function CertificatePreviewFooter({
@@ -25,6 +26,7 @@ export function CertificatePreviewFooter({
   orgWebsite,
   fieldTextColors,
   onRegionClick,
+  showEditChrome = true,
 }: CertificatePreviewFooterProps) {
   const orgAddressColor = fieldTextColors?.orgAddress
   const orgPhoneColor = fieldTextColors?.orgPhone
@@ -39,70 +41,70 @@ export function CertificatePreviewFooter({
         사단법인 제이에이코리아
       </span>
       <span
-        role="button"
-        tabIndex={0}
+        role={showEditChrome ? 'button' : undefined}
+        tabIndex={showEditChrome ? 0 : undefined}
         className={cn(
           `${P}__footer-field-wrap`,
           `${P}__footer-field-wrap--address`,
-          HANDLE_DOT,
-          region === 'footerAddress' && FRAME_ACTIVE,
+          showEditChrome && HANDLE_DOT,
+          showEditChrome && region === 'footerAddress' && FRAME_ACTIVE,
           shouldDimFooterPart(region, 'footerAddress') && FRAME_DIMMED
         )}
         aria-label="기관 주소지 편집"
         data-template-field="orgAddress"
         style={orgAddressColor ? { color: orgAddressColor } : undefined}
-        {...getRegionActivationHandlers('orgAddress', onRegionClick)}
+        {...(showEditChrome ? getRegionActivationHandlers('orgAddress', onRegionClick) : {})}
       >
         {orgAddress}
       </span>
       <span
-        role="button"
-        tabIndex={0}
+        role={showEditChrome ? 'button' : undefined}
+        tabIndex={showEditChrome ? 0 : undefined}
         className={cn(
           `${P}__footer-field-wrap`,
           `${P}__footer-field-wrap--tel`,
-          HANDLE_DOT,
-          region === 'footerPhone' && FRAME_ACTIVE,
+          showEditChrome && HANDLE_DOT,
+          showEditChrome && region === 'footerPhone' && FRAME_ACTIVE,
           shouldDimFooterPart(region, 'footerPhone') && FRAME_DIMMED
         )}
         aria-label="기관 전화번호 편집"
         data-template-field="orgPhone"
         style={orgPhoneColor ? { color: orgPhoneColor } : undefined}
-        {...getRegionActivationHandlers('orgPhone', onRegionClick)}
+        {...(showEditChrome ? getRegionActivationHandlers('orgPhone', onRegionClick) : {})}
       >
         {orgPhone}
       </span>
       <span
-        role="button"
-        tabIndex={0}
+        role={showEditChrome ? 'button' : undefined}
+        tabIndex={showEditChrome ? 0 : undefined}
         className={cn(
           `${P}__footer-field-wrap`,
           `${P}__footer-field-wrap--fax`,
-          HANDLE_DOT,
-          region === 'footerFax' && FRAME_ACTIVE,
+          showEditChrome && HANDLE_DOT,
+          showEditChrome && region === 'footerFax' && FRAME_ACTIVE,
           shouldDimFooterPart(region, 'footerFax') && FRAME_DIMMED
         )}
         aria-label="기관 팩스번호 편집"
         data-template-field="orgFax"
         style={orgFaxColor ? { color: orgFaxColor } : undefined}
-        {...getRegionActivationHandlers('orgFax', onRegionClick)}
+        {...(showEditChrome ? getRegionActivationHandlers('orgFax', onRegionClick) : {})}
       >
         {orgFax}
       </span>
       <span
-        role="button"
-        tabIndex={0}
+        role={showEditChrome ? 'button' : undefined}
+        tabIndex={showEditChrome ? 0 : undefined}
         className={cn(
           `${P}__footer-field-wrap`,
           `${P}__footer-field-wrap--link`,
-          HANDLE_DOT,
-          region === 'footerWebsite' && FRAME_ACTIVE,
+          showEditChrome && HANDLE_DOT,
+          showEditChrome && region === 'footerWebsite' && FRAME_ACTIVE,
           shouldDimFooterPart(region, 'footerWebsite') && FRAME_DIMMED
         )}
         aria-label="기관 홈페이지 주소 편집"
         data-template-field="orgWebsite"
         style={orgWebsiteColor ? { color: orgWebsiteColor } : undefined}
-        {...getRegionActivationHandlers('orgWebsite', onRegionClick)}
+        {...(showEditChrome ? getRegionActivationHandlers('orgWebsite', onRegionClick) : {})}
       >
         {orgWebsite}
       </span>

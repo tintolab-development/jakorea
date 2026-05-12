@@ -1,13 +1,40 @@
-import { CloseOutlined } from '@ant-design/icons'
+import { useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import type {
   FormEditorKind,
   WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
-import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
-import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
+import { A4DocumentPageLayout } from '@/features/template/ui/layout'
+import type {
+  FormUpdateParagraph,
+  RenderFormParagraphBodyOptions,
+} from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import { AgreementTemplatePreviewModal } from '@/features/template/ui/modal/agreement-template-preview-modal'
+import { TemplatePreviewPageNavigator } from '@/features/template/ui/modal/template-preview-page-navigator'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { useA4ParagraphPages } from '@/features/template/hooks/use-a4-paragraph-pages'
+import { FormDocumentPreviewBody } from '@/features/template/ui/document-preview'
+import type {
+  FormDocumentPreviewParagraphGapResolver,
+  FormDocumentPreviewRenderMode,
+} from '@/features/template/lib/a4-document-preview'
+import {
+  getA4DocumentTitle,
+  getA4PreviewParagraphs,
+} from '@/features/template/lib/a4-document-preview'
+import type { TemplateWritingPreviewLayout } from '@/features/template/context/template-writing-preview-context'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
+/** 강사 신청 폼 등 `data-paragraph-id` 스코프 스타일(불가 일정 DatePicker 폭 등) — 미리보기 단독 열림에도 적용 */
+import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
 import './template-preview-modal.css'
+
+const PREVIEW_PAGE_QUERY_PARAM = 'previewPage'
+
+function readPreviewPage(searchParams: URLSearchParams): number {
+  const value = Number(searchParams.get(PREVIEW_PAGE_QUERY_PARAM))
+  return Number.isInteger(value) && value > 0 ? value : 1
+}
 
 export interface TemplatePreviewModalProps {
   open: boolean
@@ -22,11 +49,18 @@ export interface TemplatePreviewModalProps {
    * @default 1100
    */
   zIndex?: number
+  previewLayout?: TemplateWritingPreviewLayout
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+  /** 지급조서 발급 미리보기 등 — 단락 필수 UI 숨김 */
+  hideParagraphRequiredChrome?: boolean
+  a4HiddenParagraphIds?: ReadonlySet<string>
+  a4RenderMode?: FormDocumentPreviewRenderMode
+  a4ParagraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
 }
 
 /**
  * 작성 화면과 별도로, 응답자(user) 관점 레이아웃으로 단락을 렌더하는 풀페이지 미리보기.
- * 본문은 `FormEditorLeftPane`의 `paragraphInteractionMode="user"` + 크롬 비표시로 구성한다.
+ * 설문 A4: 읽기 전용 문서 표현 + 높이 기준 페이지 분할.
  */
 export function TemplatePreviewModal({
   open,
@@ -36,46 +70,174 @@ export function TemplatePreviewModal({
   updateParagraph,
   editorKind = 'survey',
   zIndex = 1100,
+  previewLayout = 'default',
+  paragraphBodyOptions,
+  hideParagraphRequiredChrome,
+  a4HiddenParagraphIds,
+  a4RenderMode = 'card',
+  a4ParagraphGapPx,
 }: TemplatePreviewModalProps) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const isReportPreviewLayout = editorKind === 'survey'
+  const isA4DocumentPreviewLayout = isReportPreviewLayout || previewLayout === 'a4-document'
+  const isAgreementPreviewLayout = editorKind === 'agreement'
+  const isHorizontalTablePreviewLayout = editorKind === 'horizontal_table'
+  const isFormPreviewLayout = isA4DocumentPreviewLayout || isAgreementPreviewLayout
+  const modalClassName = [
+    'template-preview-modal',
+    'teal-header-modal--full',
+    isFormPreviewLayout ? 'template-preview-modal--form-layout' : '',
+    isA4DocumentPreviewLayout ? 'template-preview-modal--agreement-layout' : '',
+    isA4DocumentPreviewLayout ? 'template-preview-modal--survey-layout' : '',
+    isHorizontalTablePreviewLayout ? 'template-preview-modal--horizontal-table-layout' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const previewParagraphs = useMemo(
+    () => getA4PreviewParagraphs(draft.paragraphs, a4HiddenParagraphIds),
+    [a4HiddenParagraphIds, draft.paragraphs]
+  )
+  const a4DocumentTitle = useMemo(
+    () => (isA4DocumentPreviewLayout ? getA4DocumentTitle(draft, headerTitle) : headerTitle),
+    [draft, headerTitle, isA4DocumentPreviewLayout]
+  )
+
+  const { pages: pagedParagraphs, overflowParagraphIds, measureLayer } = useA4ParagraphPages({
+    allParagraphs: previewParagraphs,
+    titleNumbering: draft.formSettings.titleNumbering,
+    editorKind,
+    enabled: open && isA4DocumentPreviewLayout,
+    paragraphBodyOptions,
+    renderMode: a4RenderMode,
+    paragraphGapPx: a4ParagraphGapPx,
+  })
+  const pageCount = pagedParagraphs.length
+  const safeActivePage = Math.min(readPreviewPage(searchParams), Math.max(1, pageCount))
+  const safeActivePageIndex = safeActivePage - 1
+  const activePageParagraphs = pagedParagraphs[safeActivePageIndex] ?? []
+
+  const setPreviewPageParam = (page: number | null) => {
+    const next = new URLSearchParams(searchParams)
+    if (page == null || page <= 1) {
+      next.delete(PREVIEW_PAGE_QUERY_PARAM)
+    } else {
+      next.set(PREVIEW_PAGE_QUERY_PARAM, String(page))
+    }
+    setSearchParams(next, { replace: true })
+  }
+
+  const handleClose = () => {
+    setPreviewPageParam(null)
+    onClose()
+  }
+
+  const handlePageChange = (page: number) => {
+    const nextPage = Math.min(Math.max(1, page), pageCount)
+    setPreviewPageParam(nextPage)
+  }
+
+  if (isAgreementPreviewLayout && previewLayout !== 'a4-document') {
+    return (
+      <AgreementTemplatePreviewModal
+        open={open}
+        onClose={onClose}
+        headerTitle={headerTitle}
+        draft={draft}
+        updateParagraph={updateParagraph}
+        editorKind={editorKind}
+        zIndex={zIndex}
+      />
+    )
+  }
+
   return (
     <TealHeaderModal
       open={open}
-      onCancel={onClose}
+      onCancel={handleClose}
       title=""
       size="full"
       hideHeader
-      className="template-preview-modal teal-header-modal--full"
+      className={modalClassName}
       zIndex={zIndex}
     >
+      {isA4DocumentPreviewLayout ? measureLayer : null}
       <div className="template-preview-modal__shell">
         <header className="template-preview-modal__title-row">
           <div className="template-preview-modal__title-left">
             <span className="template-preview-modal__title-text">{headerTitle}</span>
             <span className="template-preview-modal__badge">미리보기</span>
           </div>
-          <button
-            type="button"
-            className="template-preview-modal__close"
-            onClick={onClose}
-            aria-label="닫기"
-          >
-            <CloseOutlined />
-          </button>
         </header>
 
         <div className="template-preview-modal__body">
-          <FormEditorLeftPane
-            paragraphs={draft.paragraphs}
-            titleNumbering={draft.formSettings.titleNumbering}
-            selectedCardId={null}
-            onSelectCard={() => {}}
-            onReorderMiddle={() => {}}
-            updateParagraph={updateParagraph}
-            editorKind={editorKind}
-            singleItemListActiveItemId={null}
-            paragraphInteractionMode="user"
-            showEditorChrome={false}
-          />
+          {isA4DocumentPreviewLayout ? (
+            <div className="template-preview-modal__notice">
+              <div className="template-preview-modal__notice-text-wrap">
+                <p className="template-preview-modal__notice-text">
+                  현재 화면은 미리보기 화면입니다.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="template-preview-modal__notice-close-btn"
+                onClick={handleClose}
+              >
+                미리보기 닫기
+              </button>
+            </div>
+          ) : null}
+
+          <div className={isFormPreviewLayout ? 'template-preview-modal__pages' : 'template-preview-modal__content'}>
+            {isA4DocumentPreviewLayout ? (
+              <div className="template-preview-modal__a4-stage">
+                <div className="template-preview-modal__a4-stack">
+                  <div key={safeActivePageIndex} className="template-preview-modal__a4-frame">
+                    <div className="template-preview-modal__a4-scale-inner">
+                      <A4DocumentPageLayout
+                        title={a4DocumentTitle}
+                        pageIndex={safeActivePageIndex}
+                        pdfCapture
+                      >
+                        <div className="template-preview-modal__a4-text-content">
+                          <FormDocumentPreviewBody
+                            paragraphs={activePageParagraphs}
+                            allParagraphs={previewParagraphs}
+                            titleNumbering={draft.formSettings.titleNumbering}
+                            editorKind={editorKind}
+                            overflowParagraphIds={overflowParagraphIds}
+                            paragraphBodyOptions={paragraphBodyOptions}
+                            renderMode={a4RenderMode}
+                            paragraphGapPx={a4ParagraphGapPx}
+                          />
+                        </div>
+                      </A4DocumentPageLayout>
+                    </div>
+                  </div>
+                </div>
+                <TemplatePreviewPageNavigator
+                  currentPage={safeActivePage}
+                  totalPages={pageCount}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            ) : (
+              <FormEditorLeftPanel
+                paragraphs={draft.paragraphs}
+                titleNumbering={draft.formSettings.titleNumbering}
+                selectedCardId={null}
+                onSelectCard={() => {}}
+                onReorderMiddle={() => {}}
+                updateParagraph={updateParagraph}
+                editorKind={editorKind}
+                singleItemListActiveItemId={null}
+                paragraphInteractionMode="user"
+                showEditorChrome={false}
+                paragraphBodyOptions={paragraphBodyOptions}
+                hideParagraphRequiredChrome={hideParagraphRequiredChrome}
+              />
+            )}
+          </div>
         </div>
       </div>
     </TealHeaderModal>

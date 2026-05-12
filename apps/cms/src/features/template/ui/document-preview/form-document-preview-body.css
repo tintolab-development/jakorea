@@ -1,0 +1,131 @@
+.form-document-preview-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--form-document-preview-gap, 32px);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.form-document-preview-body--custom-gaps {
+  gap: 0;
+}
+
+.form-document-preview-paragraph {
+  min-width: 0;
+}
+
+.form-document-preview-paragraph--content-only {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.form-document-preview-paragraph__content-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.form-document-preview-paragraph__content-slot {
+  width: 100%;
+  min-width: 0;
+}
+
+.form-document-preview-paragraph--content-only-closing .form-document-preview-paragraph__body-text {
+  color: #000;
+  text-align: right;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.form-document-preview-paragraph--content-only-closing-signature
+  .form-document-preview-paragraph__body-text {
+  font-size: 24px;
+}
+
+.form-document-preview-paragraph--overflow .paragraph-card__slot {
+  max-height: var(--form-document-preview-overflow-max, 1650px);
+  overflow-y: auto;
+}
+
+.form-document-preview-paragraph--content-only.form-document-preview-paragraph--overflow
+  .form-document-preview-paragraph__content-slot {
+  max-height: var(--form-document-preview-overflow-max, 1650px);
+  overflow-y: auto;
+}
+
+.form-document-preview-paragraph__title-text {
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 150%;
+  color: var(--color-text-primary, #1f1f1f);
+  white-space: pre-wrap;
+}
+
+.form-document-preview-paragraph__description-text {
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 150%;
+  color: var(--color-text-secondary, #595959);
+  white-space: pre-wrap;
+}
+
+.form-document-preview-paragraph__body-text {
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  line-height: 160%;
+  color: var(--color-text-primary, #1f1f1f);
+  white-space: pre-wrap;
+}
+
+.form-document-preview-multiple-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-document-preview-multiple-choice__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 150%;
+}
+
+.form-document-preview-multiple-choice__mark {
+  flex-shrink: 0;
+  width: 1.1em;
+  text-align: center;
+}
+
+/* short_essay 가로 테이블 — contentOnly 모드 (A4 미리보기) */
+.form-document-short-essay-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.form-document-short-essay-table th,
+.form-document-short-essay-table td {
+  border: 1px solid var(--table-line, #e0e0e0);
+  padding: 12px 16px;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.form-document-short-essay-table th {
+  font-weight: 600;
+  background: var(--table-header, #f5f5f5);
+}

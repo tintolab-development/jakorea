@@ -1,11 +1,14 @@
 import { useEffect, useRef } from 'react'
-import type { ShortEssayParagraph } from '@/features/template/model/writing-form-draft.schema'
+import type {
+  ShortEssayParagraph,
+  SubjectiveParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
 import { ItemDeleteButton } from '@/features/template/ui/paragraph/shared/item-delete-button'
 import { ParagraphLabelInput } from '@/features/template/ui/paragraph/shared/paragraph-label-input'
 import './short-essay.css'
 
-/** 주관식형 (short-essay) — 단락 바디 슬롯 (추후 본문 연동) */
+/** 주관식형 (short_essay) — 단락 바디 슬롯 */
 export function ShortEssay({
   paragraph,
   onChange,
@@ -17,11 +20,8 @@ export function ShortEssay({
 }: {
   paragraph: ShortEssayParagraph
   onChange: (next: ShortEssayParagraph) => void
-  /** 단락 카드 선택 — authoring 시 선택 해제에 따른 본문 클리어·항목 삭제 UI */
   isCardSelected: boolean
-  /** 본문 입력 가능 — user 모드에서는 카드 비선택이어도 true일 수 있음 */
   isBodyInteractive: boolean
-  /** user일 때는 카드 비선택으로 본문을 비우지 않음 */
   paragraphInteractionMode?: ParagraphBodyInteractionMode
   activeItemId?: string | null
   onSelectItem?: (itemId: string | null) => void
@@ -73,6 +73,7 @@ export function ShortEssay({
           },
         ]
   const showItemTitle = items.length >= 2 ? true : (paragraph.showItemTitle ?? false)
+  const itemInputRows = paragraph.itemInputRows ?? 5
 
   const updateItemBodyText = (id: string, bodyText: string) => {
     const nextItems = items.map(item => (item.id === id ? { ...item, bodyText } : item))
@@ -118,6 +119,7 @@ export function ShortEssay({
             className={activeItemId === item.id ? 'short-essay-item--active' : undefined}
             value={item.bodyText}
             placeholder={item.placeholder ?? ph}
+            rows={itemInputRows}
             onClick={event => {
               event.stopPropagation()
               handleItemClick(item.id)
@@ -138,4 +140,63 @@ export function ShortEssay({
       ))}
     </div>
   )
+}
+
+/** 단일항목 `subjective` — 스키마는 `items: { id, placeholder }[]`만 두고 UI는 `short_essay`와 공유 */
+export function subjectiveParagraphToShortEssayView(p: SubjectiveParagraph): ShortEssayParagraph {
+  const ph0 = p.items[0]?.placeholder?.trim() ?? ''
+  const bodyPlaceholder = ph0.length > 0 ? ph0 : '답변을 입력해 주세요'
+  const mappedItems =
+    p.items.length > 0
+      ? p.items.map((it, i) => ({
+          id: it.id,
+          label: `Title ${String(i + 1).padStart(2, '0')}`,
+          placeholder: it.placeholder.trim() ? it.placeholder : bodyPlaceholder,
+          bodyText: '',
+        }))
+      : [
+          {
+            id: `${p.id}-subjective-mapped-1`,
+            label: 'Title 01',
+            placeholder: bodyPlaceholder,
+            bodyText: '',
+          },
+        ]
+  return {
+    ...p,
+    variant: 'short_essay',
+    bodyPlaceholder,
+    bodyText: '',
+    showItemTitle: mappedItems.length >= 2 ? true : false,
+    items: mappedItems,
+  }
+}
+
+export function mergeSubjectiveFromShortEssayEdit(
+  original: SubjectiveParagraph,
+  next: ShortEssayParagraph
+): SubjectiveParagraph {
+  const nextItems =
+    next.items != null && next.items.length > 0
+      ? next.items.map((it, i) => ({
+          id: it.id || original.items[i]?.id || `${next.id}-item-${i + 1}`,
+          placeholder: (
+            it.placeholder?.trim() ||
+            next.bodyPlaceholder.trim() ||
+            original.items[i]?.placeholder?.trim() ||
+            '답변을 입력해 주세요'
+          ).trim(),
+        }))
+      : original.items.map(it => ({ ...it }))
+  return {
+    ...original,
+    requiredMark: next.requiredMark,
+    paragraphTitle: next.paragraphTitle,
+    paragraphDescription: next.paragraphDescription,
+    participatesInTitleNumbering: next.participatesInTitleNumbering,
+    answerRequired: next.answerRequired,
+    kind: 'single_item',
+    variant: 'subjective',
+    items: nextItems,
+  }
 }

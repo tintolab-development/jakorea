@@ -132,12 +132,6 @@ export function Sidebar() {
       if (path.startsWith('/templates/form-management')) {
         return ['/templates/form-management']
       }
-      if (path.startsWith('/templates/kakao-notification')) {
-        return ['/templates/kakao-notification']
-      }
-      if (path.startsWith('/templates/email-management')) {
-        return ['/templates/email-management']
-      }
     }
 
     // ADMIN: 게시글 관리 — 상세 URL에서도 목록 메뉴 키로 하이라이트
@@ -173,13 +167,6 @@ export function Sidebar() {
             // 기존: if (typeof key === 'string' && key.startsWith('/')) navigate(key)
             if (typeof key !== 'string' || !key.startsWith('/')) return
             if (isProgramManagementLnbPath(key)) {
-              window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-              return
-            }
-            if (
-              key === '/templates/kakao-notification' ||
-              key === '/templates/email-management'
-            ) {
               window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
               return
             }

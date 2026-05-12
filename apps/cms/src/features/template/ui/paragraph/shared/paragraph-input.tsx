@@ -49,25 +49,32 @@ export function ParagraphInput({
   className,
 }: ParagraphInputProps) {
   const [focused, setFocused] = useState(false)
-  const filled = value.trim().length > 0
+  const safeValue = typeof value === 'string' ? value : ''
+  const filled = safeValue.trim().length > 0
   const isExplanationTitle = className?.includes('paragraph-input-explanation-title') ?? false
   const isExplanationBody = className?.includes('paragraph-input--explanation-body') ?? false
-  const widthSource = filled ? value : (placeholder ?? '')
+  /** 단락 카드 설명(설명글_텍스트형 본문 제외) — `\n` 개행·여러 줄 편집 */
+  const isMultilineCardDescription = type === 'description' && !isExplanationBody
+  const widthSource = filled ? safeValue : (placeholder ?? '')
   const dynamicWidthPx = useMemo(() => {
+    if (isMultilineCardDescription) return 0
     const source = widthSource.length > 0 ? widthSource : ' '
     const measured = measureTextWidthPx(source, type, isExplanationTitle)
     return Math.max(measured + 2, 1)
-  }, [widthSource, type, isExplanationTitle])
-  const dynamicWidthStyle: CSSProperties = {
-    width: isExplanationBody ? '100%' : `${dynamicWidthPx}px`,
-    maxWidth: '100%',
-  }
+  }, [widthSource, type, isExplanationTitle, isMultilineCardDescription])
+  const dynamicWidthStyle: CSSProperties = isMultilineCardDescription
+    ? { width: '100%', minWidth: 0, maxWidth: '100%' }
+    : {
+        width: isExplanationBody ? '100%' : `${dynamicWidthPx}px`,
+        maxWidth: '100%',
+      }
 
   const rootClass = cn(
     'paragraph-input',
     type === 'title' ? 'paragraph-input--title' : 'paragraph-input--description',
     isEditMode ? 'paragraph-input--edit' : 'paragraph-input--view',
     filled && 'paragraph-input--filled',
+    isMultilineCardDescription && 'paragraph-input--description-multiline',
     className
   )
 
@@ -83,7 +90,7 @@ export function ParagraphInput({
           <span className="paragraph-input__main">
             <span className="paragraph-input__view-text" style={dynamicWidthStyle}>
               {filled ? (
-                value
+                safeValue
               ) : (
                 <span className="paragraph-input__placeholder">{placeholder ?? ''}</span>
               )}
@@ -111,15 +118,28 @@ export function ParagraphInput({
         {row}
         <span className="paragraph-input__main">
           <div className={shellClass} style={dynamicWidthStyle}>
-            <Input
-              disabled={disabled}
-              value={value}
-              onChange={e => onChange?.(e.target.value)}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
-              placeholder={placeholder}
-              variant="borderless"
-            />
+            {isMultilineCardDescription ? (
+              <Input.TextArea
+                disabled={disabled}
+                value={safeValue}
+                onChange={e => onChange?.(e.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                placeholder={placeholder}
+                variant="borderless"
+                autoSize={{ minRows: 1, maxRows: 12 }}
+              />
+            ) : (
+              <Input
+                disabled={disabled}
+                value={safeValue}
+                onChange={e => onChange?.(e.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                placeholder={placeholder}
+                variant="borderless"
+              />
+            )}
           </div>
           {required ? (
             <span className="paragraph-input__required" aria-hidden>

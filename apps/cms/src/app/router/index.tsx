@@ -61,12 +61,9 @@ function ProgramsSubpathRedirect({ toBase }: { toBase: string }) {
   const to = rest ? `${toBase}/${rest}` : toBase
   return <Navigate to={`${to}${search}`} replace />
 }
-import TemplateFormTab from '@/pages/templates/template-form-tab'
+import TemplatesFormManagementOutlet from '@/pages/templates/templates-form-management-outlet'
 import {
-  RedirectLegacyTemplatesEmail,
-  RedirectLegacyTemplatesKakaoAlimtalk,
   RedirectLegacyTemplatesProgramForms,
-  RedirectLegacyTemplatesSms,
 } from '@/features/template/template-route-redirects'
 
 // 대시보드 (즉시 로드 - 첫 화면)
@@ -89,6 +86,9 @@ const TextbookPage = lazyLoad(() => import('@/pages/data-management/textbook-pag
 const DetailedProgramPage = lazyLoad(() => import('@/pages/data-management/detailed-program-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
+const UjatProgramRegistrationPage = lazyLoad(
+  () => import('@/pages/programs/ujat-program-registration-page')
+)
 const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
 const ProgramApplicationCompletePage = lazyLoad(
   () => import('@/pages/programs/program-application-complete-page')
@@ -130,8 +130,6 @@ const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-
 const FormTestTableComponentsPage = lazyLoad(
   () => import('@/pages/templates/form-test-table-components-page')
 )
-const TemplateSmsPage = lazyLoad(() => import('@/pages/templates/template-sms-page'))
-const TemplateEmailPage = lazyLoad(() => import('@/pages/templates/template-email-page'))
 const AdminCategoryPage = lazyLoad(() => import('@/pages/posts/admin-category-page'))
 const AdminNoticeListPage = lazyLoad(() => import('@/pages/posts/admin-notice-list-page'))
 const AdminNoticeDetailPage = lazyLoad(() => import('@/pages/posts/admin-notice-detail-page'))
@@ -267,8 +265,8 @@ export const router = createBrowserRouter([
           { path: 'general/*', element: programCategoryPreparing },
           { path: 'company-school', element: programCategoryPreparing },
           { path: 'company-school/*', element: programCategoryPreparing },
-          { path: 'ujat', element: programCategoryPreparing },
-          { path: 'ujat/*', element: programCategoryPreparing },
+          { path: 'ujat', element: <UjatProgramRegistrationPage /> },
+          { path: 'ujat/*', element: <UjatProgramRegistrationPage /> },
           { path: 'gemini', element: programCategoryPreparing },
           { path: 'gemini/*', element: programCategoryPreparing },
           { path: 'volunteer', element: <ProgramListPage /> }, // 봉사 프로그램 (기존 경로 유지)
@@ -470,10 +468,8 @@ export const router = createBrowserRouter([
           },
           {
             path: 'form-management',
-            element: <TemplateFormTab />,
+            element: <TemplatesFormManagementOutlet />,
           },
-          { path: 'kakao-notification', element: <TemplateSmsPage /> },
-          { path: 'email-management', element: <TemplateEmailPage /> },
           {
             path: 'banner',
             element: (
@@ -486,9 +482,6 @@ export const router = createBrowserRouter([
           // 구 경로 호환 (쿼리 보존)
           { path: 'program-forms', element: <RedirectLegacyTemplatesProgramForms /> },
           { path: 'program-forms/*', element: <RedirectLegacyTemplatesProgramForms /> },
-          { path: 'sms', element: <RedirectLegacyTemplatesSms /> },
-          { path: 'kakao-alimtalk', element: <RedirectLegacyTemplatesKakaoAlimtalk /> },
-          { path: 'email', element: <RedirectLegacyTemplatesEmail /> },
           { index: true, element: <Navigate to="form-management" replace /> },
         ],
       },

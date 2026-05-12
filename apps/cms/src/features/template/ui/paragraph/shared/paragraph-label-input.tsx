@@ -18,6 +18,8 @@ export function ParagraphLabelInput({
   className,
   id: idProp,
   width = '100%',
+  /** 단일항목 주관식 등 — `rows={1}`은 한 줄 입력형; 기본은 여러 줄 `CmsTextArea` */
+  rows = 5,
   ...rest
 }: ParagraphLabelInputProps) {
   const uid = useId()
@@ -38,7 +40,7 @@ export function ParagraphLabelInput({
         id={controlId}
         width={width}
         className="paragraph-label-input__textarea"
-        rows={1}
+        rows={rows ? rows : 1}
       />
     </div>
   )

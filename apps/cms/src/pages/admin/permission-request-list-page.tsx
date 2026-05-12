@@ -2,7 +2,8 @@
  * 권한 승인 — 강사·관리자 탭, 회원 권한 신청 목록
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Tabs } from 'antd'
 import {
   MembersPermissionList,
@@ -31,6 +32,10 @@ const INSTRUCTOR_PERMISSION_APPROVE_MODAL_Z = 1150
 const INSTRUCTOR_PERMISSION_REJECT_MODAL_Z = 2100
 const INSTRUCTOR_PERMISSION_APPROVED_COMPLETE_MODAL_Z = 1160
 const PERMISSION_STATUS_RESET_CONFIRM_MODAL_Z = 1160
+
+/** 권한 승인 — 회원 풀페이지 상세 URL (`replace: false`로 열어 뒤로가기 복귀) */
+const PR_DETAIL_USER = 'pr_detail_user'
+const PR_DETAIL_ROLE = 'pr_detail_role'
 
 type InstructorApproveModalState =
   | {
@@ -82,12 +87,23 @@ type PermissionStatusResetConfirmState = {
 }
 
 export function PermissionRequestListPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const fetchUserById = useUserStore(s => s.fetchUserById)
   const instructorListRef = useRef<MembersPermissionListHandle>(null)
   const adminListRef = useRef<MembersPermissionListHandle>(null)
-  const [detailUserId, setDetailUserId] = useState<string | null>(null)
-  const [detailOpen, setDetailOpen] = useState(false)
-  const [permissionRole, setPermissionRole] = useState<UserDetailPermissionRole | null>(null)
+
+  const urlPermissionRole = useMemo((): UserDetailPermissionRole | null => {
+    const r = searchParams.get(PR_DETAIL_ROLE)
+    return r === 'instructor' || r === 'admin' ? r : null
+  }, [searchParams])
+
+  const detailUserId = useMemo(() => {
+    const id = searchParams.get(PR_DETAIL_USER)?.trim()
+    return id && id.length > 0 ? id : null
+  }, [searchParams])
+
+  const detailOpen = detailUserId != null && urlPermissionRole != null
+  const permissionRole = urlPermissionRole
   const [instructorApproveModal, setInstructorApproveModal] =
     useState<InstructorApproveModalState | null>(null)
   const [instructorApprovedComplete, setInstructorApprovedComplete] =
@@ -104,6 +120,11 @@ export function PermissionRequestListPage() {
     detailUserId ? (state.usersById[detailUserId] ?? null) : null
   )
 
+  useEffect(() => {
+    if (!detailUserId || !urlPermissionRole) return
+    void fetchUserById(detailUserId)
+  }, [detailUserId, urlPermissionRole, fetchUserById])
+
   const basicInfoEntrySource = useMemo(
     () => (detailUser ? userRoleToBasicInfoEntrySource(detailUser.role) : undefined),
     [detailUser]
@@ -115,22 +136,28 @@ export function PermissionRequestListPage() {
         await fetchUserById(userId)
         const u = useUserStore.getState().usersById[userId]
         if (u) {
-          setPermissionRole(role)
-          setDetailUserId(userId)
-          setDetailOpen(true)
+          setSearchParams(prev => {
+            const next = new URLSearchParams(prev)
+            next.set(PR_DETAIL_USER, userId)
+            next.set(PR_DETAIL_ROLE, role)
+            return next
+          }, { replace: false })
         }
       } catch {
         // 회원 조회 실패 시 상세 모달 미오픈
       }
     },
-    [fetchUserById]
+    [fetchUserById, setSearchParams]
   )
 
   const handleCloseDetail = useCallback(() => {
-    setDetailOpen(false)
-    setDetailUserId(null)
-    setPermissionRole(null)
-  }, [])
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete(PR_DETAIL_USER)
+      next.delete(PR_DETAIL_ROLE)
+      return next
+    }, { replace: true })
+  }, [setSearchParams])
 
   const syncDetailUserIfOpened = useCallback(
     (userId: string) => {

@@ -2,7 +2,14 @@
  * 정산 관리 > 지급조서 확인 목록 — URL·필터·테이블 데이터·상세 모달 상태
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+} from 'react'
 import { flushSync } from 'react-dom'
 import type { Dayjs } from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -57,6 +64,10 @@ const PENDING_PAYMENT_ITEM_FILTER_OPTIONS: {
   { value: '11plus', label: '11개 이상' },
 ]
 
+/** 풀페이지 상세 — `replace: false`로 열어 뒤로가기 시 목록 복귀 */
+const PO_DETAIL_TYPE = 'po_detail'
+const PO_DETAIL_NO = 'po_detail_no'
+
 function formatWon(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`
 }
@@ -65,7 +76,6 @@ export function usePaymentOrdersListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [viewMode, setViewMode] = useState<PaymentOrdersPageViewMode>('list')
   const [exposureMode, setExposureMode] = useState<ExposureMode>('program')
-  const [detailState, setDetailState] = useState<PaymentOrdersDetailState>(null)
 
   const paymentOrdersDefaultRangeAppliedRef = useRef(false)
 
@@ -121,7 +131,29 @@ export function usePaymentOrdersListPage() {
     [appliedFromUrl]
   )
 
-  const isProgram = exposureMode === 'program'
+  const detailState = useMemo((): PaymentOrdersDetailState => {
+    const t = searchParams.get(PO_DETAIL_TYPE)
+    const noRaw = searchParams.get(PO_DETAIL_NO)
+    if (t !== 'program' && t !== 'instructor') return null
+    if (noRaw == null || noRaw === '') return null
+    const no = Number(noRaw)
+    if (!Number.isFinite(no)) return null
+    if (t === 'program') {
+      const data = mockPaymentOrderAdminProgramList.find(r => r.no === no)
+      return data != null ? { type: 'program' as const, data } : null
+    }
+    const data = mockPaymentOrderAdminInstructorList.find(r => r.no === no)
+    return data != null ? { type: 'instructor' as const, data } : null
+  }, [searchParams])
+
+  const detailExposureFromUrl = useMemo((): ExposureMode | null => {
+    const t = searchParams.get(PO_DETAIL_TYPE)
+    return t === 'program' || t === 'instructor' ? t : null
+  }, [searchParams])
+
+  const resolvedExposureMode: ExposureMode = detailExposureFromUrl ?? exposureMode
+
+  const isProgram = resolvedExposureMode === 'program'
   const rowsForTable = useMemo(
     () =>
       (isProgram ? listProgram : listInstructor) as (
@@ -151,8 +183,29 @@ export function usePaymentOrdersListPage() {
   })
 
   const closeDetail = useCallback(() => {
-    setDetailState(null)
-  }, [])
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete(PO_DETAIL_TYPE)
+      next.delete(PO_DETAIL_NO)
+      return next
+    }, { replace: true })
+  }, [setSearchParams])
+
+  const openPaymentOrderDetail = useCallback(
+    (
+      type: 'program' | 'instructor',
+      data: PaymentOrderAdminProgramRow | PaymentOrderAdminInstructorRow
+    ) => {
+      setExposureMode(type)
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        next.set(PO_DETAIL_TYPE, type)
+        next.set(PO_DETAIL_NO, String(data.no))
+        return next
+      }, { replace: false })
+    },
+    [setSearchParams]
+  )
 
   const applyDateRangeFromCalendar = useCallback(
     (range: [Dayjs, Dayjs]) => {
@@ -211,7 +264,6 @@ export function usePaymentOrdersListPage() {
     ],
     []
   )
-
   const instructorColumns: ColumnsType<PaymentOrderAdminInstructorRow> = useMemo(
     () => [
       {
@@ -328,17 +380,17 @@ export function usePaymentOrdersListPage() {
     (mode: PaymentOrdersPageViewMode): ReactElement =>
       mode === 'calendar' ? (
         <PaymentOrdersCalendarView
-          key={`${appliedResetKey}-${exposureMode}`}
-          exposure={exposureMode}
+          key={`${appliedResetKey}-${resolvedExposureMode}`}
+          exposure={resolvedExposureMode}
           programRows={listProgram}
           instructorRows={listInstructor}
           filterDateRange={appliedFromUrl.dateRange}
           onFilterDateRangeApply={applyDateRangeFromCalendar}
           onPaymentStatusDetailClick={payload => {
             if (payload.exposure === 'program') {
-              setDetailState({ type: 'program', data: payload.row })
+              openPaymentOrderDetail('program', payload.row)
             } else {
-              setDetailState({ type: 'instructor', data: payload.row })
+              openPaymentOrderDetail('instructor', payload.row)
             }
           }}
         />
@@ -349,7 +401,7 @@ export function usePaymentOrdersListPage() {
           columns={programColumns}
           dataSource={listProgram}
           scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_PROGRAM }}
-          onRowClick={record => setDetailState({ type: 'program', data: record })}
+          onRowClick={record => openPaymentOrderDetail('program', record)}
         />
       ) : (
         <PaymentOrdersTable<PaymentOrderAdminInstructorRow>
@@ -358,12 +410,12 @@ export function usePaymentOrdersListPage() {
           columns={instructorColumns}
           dataSource={listInstructor}
           scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_INSTRUCTOR }}
-          onRowClick={record => setDetailState({ type: 'instructor', data: record })}
+          onRowClick={record => openPaymentOrderDetail('instructor', record)}
         />
       ),
     [
       appliedResetKey,
-      exposureMode,
+      resolvedExposureMode,
       listProgram,
       listInstructor,
       appliedFromUrl.dateRange,
@@ -371,6 +423,7 @@ export function usePaymentOrdersListPage() {
       isProgram,
       programColumns,
       instructorColumns,
+      openPaymentOrderDetail,
     ]
   )
 

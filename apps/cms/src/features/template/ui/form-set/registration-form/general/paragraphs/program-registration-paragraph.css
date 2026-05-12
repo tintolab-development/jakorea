@@ -1,0 +1,122 @@
+.program-registration-paragraph .detail-info-form__body {
+  gap: 0;
+}
+
+.program-registration-paragraph .detail-info-form__field {
+  min-height: 60px;
+}
+
+.program-registration-paragraph .detail-info-form__field-label,
+.program-registration-paragraph .detail-info-form__field-content {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.program-registration-paragraph__schedule-preview-placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.program-registration-curriculum__session-heading {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 24px */
+}
+
+/**
+ * 복수 회차 — 교육 형태·참여·IPS: 라디오 + 구분선 + 셀렉트(들) 한 줄
+ * IPS는 `ProgramRegistrationIpsTypeFields` 루트가 또 `detail-info-form-inputs-wrapper`라
+ * 전역 `width: 100%` + 바깥 줄 `flex-wrap: wrap` 때문에 줄바꿈되던 것을 막음
+ */
+.program-registration-paragraph
+  .detail-info-form-inputs-wrapper.program-registration-paragraph__schedule-detail-row {
+  flex-wrap: nowrap;
+  align-items: center;
+  min-width: 0;
+}
+
+.program-registration-paragraph__schedule-detail-row > .app-radio-group {
+  flex-shrink: 0;
+}
+
+.program-registration-paragraph__schedule-detail-row > .detail-info-form-inputs-separator {
+  flex-shrink: 0;
+}
+
+.program-registration-paragraph__schedule-detail-row > .detail-info-form-inputs-wrapper {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.program-registration-paragraph__schedule-detail-row
+  > .detail-info-form-inputs-wrapper
+  > .cms-select {
+  min-width: 0;
+}
+
+/* 프로그램 등록 — 교육 진행(일정형) 카드 헤더 우측 버튼 묶음 */
+.program-registration-paragraph__card-title-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: min(520px, 100%);
+}
+
+/* 교육 진행 (일정형) — 세부 일정 블록 */
+.program-registration-schedule-curriculum__block {
+  margin-bottom: 20px;
+}
+
+.program-registration-schedule-curriculum__block:last-child {
+  margin-bottom: 0;
+}
+
+.program-registration-schedule-curriculum__session-heading {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  margin-bottom: 8px;
+}
+
+.program-registration-schedule-curriculum__session-panel {
+  border: 1px solid rgba(61, 61, 61, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--main-WT, #fff);
+}
+
+.program-registration-schedule-curriculum__time-groups {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.program-registration-schedule-curriculum__time-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.program-registration-schedule-curriculum__time-group-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

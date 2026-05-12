@@ -2,11 +2,22 @@ import type {
   AgreementSystemBodyDisplayMode,
   SystemParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { PaymentPreConsentFixedBlock } from '@/features/template/ui/paragraph/explanation/payment-pre-consent-fixed-block'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './explanation-system.css'
 
 const AUTHORING_DATE_LABEL = 'YYYY년 MM월 DD일'
 const AUTHORING_SIGNATURE_LABEL = '동의자 (서명)'
+
+function isPaymentStatementPreConsentSheetBarSystemParagraph(p: SystemParagraph): boolean {
+  return (
+    p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midDate ||
+    p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midSignature ||
+    p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailDate ||
+    p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature
+  )
+}
 
 function formatKoreanFullDate(d: Date): string {
   const y = d.getFullYear()
@@ -38,17 +49,53 @@ export function ExplanationSystem({
 
   const bodyText =
     preset === 'agreement_date'
-      ? displayMode === 'write'
+      ? displayMode === 'write' || displayMode === 'document'
         ? formatKoreanFullDate(now ?? new Date())
         : AUTHORING_DATE_LABEL
       : displayMode === 'write'
         ? `동의자 : ${(participantName ?? '').trim() || '000'} (서명)`
         : AUTHORING_SIGNATURE_LABEL
 
+  const documentSignatureBody =
+    preset === 'agreement_signature' && displayMode === 'document' ? (
+      <div className="explanation-system-signature-document">
+        <span className="explanation-system-signature-document__name">동의자</span>
+        <span className="explanation-system-signature-document__mark">(서명)</span>
+      </div>
+    ) : null
+
+  const usePreConsentSheetBar = isPaymentStatementPreConsentSheetBarSystemParagraph(paragraph)
+
+  if (usePreConsentSheetBar) {
+    const rootClass = [
+      'form-editor-body',
+      displayMode === 'document' ? 'explanation-system--document' : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
+    const barClass =
+      displayMode === 'document' ? 'payment-pre-consent-fixed-block--document' : undefined
+    const useDocumentSignatureLayout =
+      preset === 'agreement_signature' && displayMode === 'document' && documentSignatureBody != null
+    return (
+      <div className={rootClass}>
+        <div className="explanation-system-row">
+          <PaymentPreConsentFixedBlock tone="disabled" className={barClass}>
+            {useDocumentSignatureLayout ? documentSignatureBody : bodyText}
+          </PaymentPreConsentFixedBlock>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="form-editor-body">
+    <div
+      className={['form-editor-body', displayMode === 'document' ? 'explanation-system--document' : '']
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="explanation-system-row">
-        <div className="explanation-system-pill">{bodyText}</div>
+        <div className="explanation-system-pill">{documentSignatureBody ?? bodyText}</div>
       </div>
     </div>
   )

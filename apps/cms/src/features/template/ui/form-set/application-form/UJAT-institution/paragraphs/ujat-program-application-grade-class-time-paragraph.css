@@ -1,0 +1,44 @@
+.ujat-program-application-grade-class-time-paragraph__block {
+  display: flex;
+  align-items: stretch;
+  column-gap: 8px;
+}
+
+.ujat-program-application-grade-class-time-paragraph__block
+  + .ujat-program-application-grade-class-time-paragraph__block {
+  margin-top: 16px;
+}
+
+.ujat-program-application-grade-class-time-paragraph__block-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ujat-program-application-grade-class-time-paragraph__delete-cell {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.ujat-program-application-grade-class-time-paragraph__block-heading {
+  margin-bottom: 8px;
+}
+
+.ujat-program-application-grade-class-time-paragraph__grade-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+}
+
+.ujat-program-application-grade-class-time-paragraph__period-inputs {
+  flex-wrap: nowrap;
+  align-items: center;
+  min-width: 0;
+}
+
+.ujat-program-application-grade-class-time-paragraph__tilde {
+  color: var(--default-BK, #3d3d3d);
+  flex-shrink: 0;
+}

@@ -7,9 +7,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Tabs } from 'antd'
-import TemplateFormTab from './template-form-tab'
-import { FormTab } from './form-tab'
-import { IssuanceFormTab } from './issuance-form-tab'
 import { TemplateWritingPreviewProvider } from '@/features/template/context/template-writing-preview-context'
 import { TemplateCreateModal } from '@/features/template/ui/modal/template-create-modal'
 import './template-list-page.css'
@@ -23,9 +20,10 @@ type FormManagementQuery = {
   mode?: string
   type?: string
   id?: string
+  userPreview?: string
+  /** 양식 테스트 > 테이블 데모 상세 키 */
+  ftDemo?: string
 }
-// const KAKAO_NOTIFICATION = '/templates/kakao-notification'
-// const EMAIL_MANAGEMENT = '/templates/email-management'
 
 export function TemplateListPage() {
   const location = useLocation()
@@ -33,17 +31,23 @@ export function TemplateListPage() {
   const { params, setParams } = useQueryParams<FormManagementQuery>()
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
-  const formTabItems = useMemo(
+  const baseFormTabItems = useMemo(
     () => [
       { key: 'template-form', label: '작성 양식', path: FORM_MANAGEMENT_BASE },
       { key: 'issuance-form', label: '발급 양식', path: FORM_MANAGEMENT_BASE },
-      { key: 'form-test', label: '양식 테스트', path: FORM_MANAGEMENT_BASE },
     ],
     []
   )
 
   const isFormManagementSection = location.pathname.startsWith(FORM_MANAGEMENT_BASE)
   const isFormTestTablePath = location.pathname.startsWith('/templates/form-test/')
+  const formTabItems = useMemo(
+    () => [
+      ...baseFormTabItems,
+      { key: 'form-test', label: '양식 테스트', path: FORM_MANAGEMENT_BASE },
+    ],
+    [baseFormTabItems]
+  )
   const showFormTopTabs = isFormManagementSection || isFormTestTablePath
   const activeFormTabFromPath = 'template-form'
 
@@ -85,11 +89,14 @@ export function TemplateListPage() {
       navigate(`${FORM_MANAGEMENT_BASE}?${sp.toString()}`, { replace: true })
       return
     }
-    const updates: Partial<FormManagementQuery> = { tab: key }
-    if (key !== 'template-form') {
-      updates.mode = undefined
-      updates.type = undefined
-      updates.id = undefined
+    const updates: Partial<FormManagementQuery> = {
+      tab: key,
+      // 탭 이동 시 작성·발급 상세 모달·신규 작성용 쿼리 제거 (탭 간 mode/id 누수 방지)
+      mode: undefined,
+      type: undefined,
+      id: undefined,
+      userPreview: undefined,
+      ftDemo: undefined,
     }
     setParams(updates)
 
@@ -124,38 +131,35 @@ export function TemplateListPage() {
               onCancel={() => setCreateModalOpen(false)}
               onDirectRegister={target => {
                 setCreateModalOpen(false)
-                setParams({
-                  tab: 'template-form',
-                  mode: 'new',
-                  type: target,
-                  id: undefined,
-                })
+                setParams(
+                  {
+                    tab: 'template-form',
+                    mode: 'new',
+                    type: target,
+                    id: undefined,
+                    userPreview: undefined,
+                  },
+                  { replace: false }
+                )
               }}
               onDuplicateSuccess={newTemplateId => {
                 setCreateModalOpen(false)
-                setParams({
-                  mode: 'edit',
-                  id: newTemplateId,
-                  type: undefined,
-                })
+                setParams(
+                  {
+                    mode: 'edit',
+                    id: newTemplateId,
+                    type: undefined,
+                    userPreview: undefined,
+                  },
+                  { replace: false }
+                )
               }}
             />
           )}
         </>
       )}
-      {isFormTestTablePath ? (
-        <Outlet />
-      ) : isFormManagementSection ? (
-        activeKey === 'issuance-form' ? (
-          <IssuanceFormTab />
-        ) : activeKey === 'form-test' ? (
-          <FormTab />
-        ) : (
-          <TemplateFormTab />
-        )
-      ) : (
-        <Outlet />
-      )}
+      {/* 자식 라우트(`form-management` 등)는 반드시 Outlet으로만 마운트 — 인라인 중복 시 Provider 밖에서 렌더될 수 있음(RR7) */}
+      <Outlet />
       </>
     </TemplateWritingPreviewProvider>
   )

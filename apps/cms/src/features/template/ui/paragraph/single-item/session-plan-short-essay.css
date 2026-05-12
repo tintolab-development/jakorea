@@ -1,0 +1,144 @@
+/* N차시 교육 계획 전용 — short_essay와 분리된 블록 UI */
+
+.session-plan-short-essay-items {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.session-plan-short-essay-item-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.session-plan-short-essay-item-row .session-plan-short-essay-block {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.session-plan-short-essay-item-row .item-delete-button {
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.session-plan-short-essay-block {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: var(--8, 8px);
+  overflow: hidden;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+}
+
+.session-plan-short-essay-block--active {
+  box-shadow: 0 0 0 1px var(--color-mint-01, #01a1af);
+}
+
+.session-plan-short-essay-block__header {
+  position: relative;
+  display: flex;
+  min-height: 54px;
+  padding: 12px 20px;
+  align-items: center;
+  gap: 2px;
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  background:
+    linear-gradient(
+      0deg,
+      rgba(231, 235, 239, 0.6) 0%,
+      rgba(231, 235, 239, 0.6) 100%
+    ),
+    #fff;
+}
+
+.session-plan-short-essay-block__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-right: 40px;
+  color: var(--main-BK, #3d3d3d);
+  text-align: left;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.session-plan-short-essay-block__delete {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.session-plan-short-essay-block__footer {
+  display: flex;
+  min-height: 48px;
+  padding: 12px;
+  align-items: center;
+  gap: 12px;
+  align-self: stretch;
+  box-sizing: border-box;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+}
+
+.session-plan-short-essay-block__textarea-root.cms-textarea {
+  display: flex;
+  flex: 1 0 0;
+  min-width: 120px;
+  width: 100%;
+}
+
+.session-plan-short-essay-block__textarea-root .cms-textarea__control {
+  display: flex;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  min-width: 120px;
+  padding: 0 12px 0 14px;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 0;
+  box-sizing: border-box;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+}
+
+.session-plan-short-essay-block__textarea-root .cms-textarea__inner {
+  align-items: center;
+  min-height: 0;
+}
+
+.session-plan-short-essay-block__textarea-root .cms-textarea__inner textarea.ant-input {
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 40px;
+  line-height: 24px !important;
+  resize: none;
+  overflow: hidden;
+}
+
+.session-plan-short-essay-block__textarea-root .cms-textarea__inner textarea.ant-input::placeholder {
+  line-height: 150% !important;
+  font-size: 15px;
+}
+
+.session-plan-short-essay-block__textarea-root .cms-textarea__control:hover:not(.cms-textarea__control--disabled),
+.session-plan-short-essay-block__textarea-root
+  .cms-textarea__control:focus-within:not(.cms-textarea__control--disabled) {
+  border-color: var(--table-line, #e0e0e0);
+  box-shadow: none;
+}

@@ -1,0 +1,12 @@
+---
+description: UJAT 프로그램 등록 폼의 교육 진행 일정 제약
+globs: apps/cms/src/features/template/ui/form-set/registration-form/UJAT/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# UJAT 교육 진행 일정
+
+- UJAT 프로그램 교육 진행은 금요일에만 가능하다.
+- `교육 진행 일정 설정` 단락에서 시작일/종료일을 선택할 때 월~목, 토, 일요일은 캘린더에서 disabled 처리한다.
+- 날짜 선택 UI를 수정할 때 이 제약을 유지하고, `ParagraphDatePicker`를 쓰는 경우 `disabledDate`로 금요일 외 날짜 선택을 막는다.
+- UJAT 프로그램 등록 폼의 `진행 불가일 직접 추가` 모달에서는 선택된 교육 진행 일정 범위 안의 금요일만 활성화한다. 범위 밖 날짜와 금요일 외 요일은 disabled 처리한다.

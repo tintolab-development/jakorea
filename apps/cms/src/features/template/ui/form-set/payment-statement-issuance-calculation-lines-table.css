@@ -1,0 +1,25 @@
+/* 발급용 산출 내역: 금액 열 중앙 정렬 · 합계 행 마지막 셀은 정산 테이블의 flex(발급 버튼용) 제거 */
+
+.payment-statement-issuance-calculation-lines-table__wrap {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.payment-statement-issuance-calculation-lines-table.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table-tbody
+  > tr
+  > td:last-child {
+  text-align: center !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.payment-statement-issuance-calculation-lines-table.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table-summary
+  tr
+  .ant-table-cell:last-child {
+  display: table-cell !important;
+  justify-content: unset !important;
+  align-items: unset !important;
+  text-align: center !important;
+}

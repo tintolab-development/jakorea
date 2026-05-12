@@ -12,7 +12,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
-import { FormEditorLeftPane } from '@/features/template/ui/form-editor/form-editor-left-pane'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
 import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
@@ -135,7 +135,7 @@ export function FormTestExplanationFullpageModal({
       description="* 양식 테스트용 미리보기입니다."
       templateTabType="writing"
       leftContent={
-        <FormEditorLeftPane
+        <FormEditorLeftPanel
           paragraphs={draft.paragraphs}
           titleNumbering={draft.formSettings.titleNumbering}
           selectedCardId={activeParagraphId}

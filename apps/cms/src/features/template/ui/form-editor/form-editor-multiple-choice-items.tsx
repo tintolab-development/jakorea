@@ -10,6 +10,8 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { isUjatProgramApplicationInstitutionSingleOptionMultipleChoiceSeed } from '@/features/template/model/ujat-program-application-form-institution-draft'
+import { isUjatProgramApplicationVolunteerSingleOptionMultipleChoiceSeed } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import {
   createDefaultMultipleChoiceItems,
   type MultipleChoiceItem,
@@ -97,7 +99,12 @@ export function FormEditorMultipleChoiceItems({
   updateParagraph: (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => void
 }) {
   const items = paragraph.items?.length ? paragraph.items : createDefaultMultipleChoiceItems()
-  const showDelete = items.length > 2
+  const minMcItems =
+    isUjatProgramApplicationInstitutionSingleOptionMultipleChoiceSeed(paragraph.id) ||
+    isUjatProgramApplicationVolunteerSingleOptionMultipleChoiceSeed(paragraph.id)
+      ? 1
+      : 2
+  const showDelete = items.length > minMcItems
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
@@ -127,7 +134,7 @@ export function FormEditorMultipleChoiceItems({
     updateParagraph(paragraph.id, cur => {
       if (cur.kind !== 'single_item' || cur.variant !== 'multiple_choice') return cur
       const list = cur.items?.length ? cur.items : createDefaultMultipleChoiceItems()
-      if (list.length <= 2) return cur
+      if (list.length <= minMcItems) return cur
       const nextItems = list.filter(row => row.id !== id)
       return { ...cur, items: nextItems, ...prunePreviewIds(cur, id) }
     })

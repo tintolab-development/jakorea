@@ -11,7 +11,7 @@ const PICKER_WIDTH = 240
 export function TimeField({
   paragraph: _paragraph,
   isCardSelected = true,
-  isBodyInteractive: _isBodyInteractive = true,
+  isBodyInteractive = true,
   paragraphInteractionMode = 'authoring',
 }: {
   paragraph: TimeParagraph
@@ -43,6 +43,7 @@ export function TimeField({
         onChange={setTime}
         placeholder="시간 선택"
         width={PICKER_WIDTH}
+        disabled={!isBodyInteractive}
       />
     </div>
   )

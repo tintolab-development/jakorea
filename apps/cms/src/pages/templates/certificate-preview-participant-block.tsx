@@ -15,6 +15,7 @@ export interface CertificatePreviewParticipantBlockProps {
   /** 라벨·값 텍스트 공통 색(흑백 등). 미지정 시 시트 기본(#606060) */
   participantTextColor?: string
   onRegionClick?: (fieldName: string) => void
+  showEditChrome?: boolean
 }
 
 export function CertificatePreviewParticipantBlock({
@@ -23,21 +24,22 @@ export function CertificatePreviewParticipantBlock({
   participantValues,
   participantTextColor,
   onRegionClick,
+  showEditChrome = true,
 }: CertificatePreviewParticipantBlockProps) {
   return (
     <div
-      role="button"
-      tabIndex={0}
+      role={showEditChrome ? 'button' : undefined}
+      tabIndex={showEditChrome ? 0 : undefined}
       className={cn(
         `${P}__content-frame`,
         participantTextColor ? `${P}__content-frame--custom-text` : '',
-        HANDLE_DOT,
-        region === 'contentFrame' && FRAME_ACTIVE,
+        showEditChrome && HANDLE_DOT,
+        showEditChrome && region === 'contentFrame' && FRAME_ACTIVE,
         shouldDim(region, 'contentFrame') && FRAME_DIMMED
       )}
       data-template-field="participantInfo"
       style={participantTextColor ? { color: participantTextColor } : undefined}
-      {...getRegionActivationHandlers('participantInfo', onRegionClick)}
+      {...(showEditChrome ? getRegionActivationHandlers('participantInfo', onRegionClick) : {})}
     >
       <div className={`${P}__content-frame-labels`}>
         {PARTICIPANT_INFO_ROW_LABELS.map((label, index) => {

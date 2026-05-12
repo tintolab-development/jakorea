@@ -26,6 +26,21 @@
   height: 44px;
 }
 
+.paragraph-date-picker__trigger--large {
+  height: 44px;
+  padding: 0 12px 0 14px;
+}
+
+.paragraph-date-picker__trigger--medium {
+  height: 40px;
+  padding: 0 12px 0 14px;
+}
+
+.paragraph-date-picker__trigger--small {
+  height: 32px;
+  padding: 0 10px 0 12px;
+}
+
 .paragraph-date-picker__trigger:hover:not(.paragraph-date-picker__trigger--disabled) {
   border-color: var(--color-mint-01, #01a1af);
 }
@@ -65,6 +80,27 @@
   font-weight: 500;
   line-height: 1.5;
   color: var(--main-BK, #3d3d3d);
+}
+
+.paragraph-date-picker__trigger--large .paragraph-date-picker__trigger-text {
+  font-size: 16px;
+}
+
+.paragraph-date-picker__trigger--medium .paragraph-date-picker__trigger-text {
+  font-size: 15px;
+}
+
+.paragraph-date-picker__trigger--small .paragraph-date-picker__trigger-text {
+  font-size: 14px;
+}
+
+.paragraph-date-picker__trigger-text.paragraph-date-picker__trigger-text--placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-weight: 400;
+}
+
+.paragraph-date-picker__trigger--disabled .paragraph-date-picker__trigger-text--placeholder {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
 }
 
 /* 트리거: 기간 확정 후 CmsInput ~ CmsInput (중첩 포커스 방지: 바깥은 div role=button) */
@@ -194,52 +230,61 @@
   background: transparent;
 }
 
+/* 모달 가로: 항상 동일한 내부 그리드(601 = 300 캘린더 + 1 구분선 + 300 사이드 / 795). 뷰포트가 좁으면 가로 스크롤로 압축 방지 */
 .paragraph-date-picker__popover {
+  --paragraph-date-picker-popover-inner-w: 601px;
+
   position: fixed;
   z-index: 1060;
   box-sizing: border-box;
-  width: min(100vw - 24px, 640px);
+  width: min(var(--paragraph-date-picker-popover-inner-w), calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
   max-height: min(90vh, 520px);
   border-radius: 12px;
   border: 1px solid var(--table-line, #e0e0e0);
   background: var(--main-WT, #fff);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .paragraph-date-picker__popover.paragraph-date-picker__popover--with-time {
-  /* 캘린더(~300px) + 우측 495px */
-  width: min(100vw - 24px, 795px);
+  --paragraph-date-picker-popover-inner-w: 795px;
+
   /* 시간 셀렉트 드롭다운이 `getPopupContainer`로 팝오버 내부에 붙을 때 잘리지 않도록 */
-  overflow: visible;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .paragraph-date-picker__popover--with-time .paragraph-date-picker__popover-side {
-  flex: 0 0 auto;
+  flex: 0 0 494px;
   box-sizing: border-box;
-  /* 데스크톱 495px, 좁은 뷰포트에서는 캘린더(최소 260px) 제외 후 남은 폭 */
-  width: min(495px, calc(100vw - 24px - 260px));
-  min-width: 0;
+  width: 494px;
+  min-width: 494px;
+  max-width: none;
 }
 
 .paragraph-date-picker__popover-body {
   display: flex;
   flex-direction: row;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   align-self: stretch;
-  width: 100%;
-  min-width: 0;
+  box-sizing: border-box;
+  width: var(--paragraph-date-picker-popover-inner-w);
+  min-width: var(--paragraph-date-picker-popover-inner-w);
   padding: 0;
   margin: 0;
   min-height: 0;
 }
 
 .paragraph-date-picker__popover-calendar {
-  flex: 0 0 auto;
-  width: min(100%, 300px);
-  min-width: 260px;
+  flex: 0 0 300px;
+  box-sizing: border-box;
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
   padding: 0;
   border-right: 1px solid var(--table-line, #e0e0e0);
   overflow: auto;
@@ -252,18 +297,20 @@
 .paragraph-date-picker__popover-calendar-mini.calendar-mini {
   box-shadow: none;
   max-height: none;
-  padding: 20px;
   width: 300px;
   min-height: 312px;
+  padding: 0 !important;
   box-sizing: border-box;
 }
 
 .paragraph-date-picker__popover-side {
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 0 300px;
+  box-sizing: border-box;
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
   display: flex;
   min-height: 312px;
-  box-sizing: border-box;
   flex-direction: column;
   padding: 16px;
   gap: 24px;
@@ -468,4 +515,84 @@
 
 .paragraph-date-picker__popover-calendar-mini .calendar-mini-cell--selected .calendar-mini-date {
   color: var(--main-WT, #fff);
+}
+
+/* 설문 제목형 작성 기간 — 듀얼 240×44 트리거 + ~ (바깥 셸은 투명, 셀별 테두리) */
+.paragraph-date-picker__trigger--dual-shell {
+  box-sizing: border-box;
+  gap: 8px;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.paragraph-date-picker__trigger--dual-shell:hover:not(.paragraph-date-picker__trigger--disabled) {
+  border-color: transparent;
+}
+
+.paragraph-date-picker__trigger-dual-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.paragraph-date-picker__trigger-dual-cell {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 240px;
+  width: 240px;
+  min-width: 240px;
+  max-width: 240px;
+  height: 44px;
+  padding: 0 12px 0 14px;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+}
+
+.paragraph-date-picker__trigger--dual-shell:hover:not(.paragraph-date-picker__trigger--disabled)
+  .paragraph-date-picker__trigger-dual-cell {
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+.paragraph-date-picker__trigger--dual-shell.paragraph-date-picker__trigger--disabled
+  .paragraph-date-picker__trigger-dual-cell {
+  border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  background-image: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.1) 0%, rgba(61, 61, 61, 0.1) 100%)
+  );
+}
+
+.paragraph-date-picker__trigger-dual-cell .paragraph-date-picker__trigger-icon {
+  margin-inline-end: 8px;
+}
+
+.paragraph-date-picker__trigger-dual-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--main-BK, #3d3d3d);
+}
+
+.paragraph-date-picker__trigger--dual-shell.paragraph-date-picker__trigger--disabled
+  .paragraph-date-picker__trigger-dual-text {
+  color: rgba(61, 61, 61, 0.35);
+}
+
+.paragraph-date-picker__trigger-dual-wave {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
+  color: rgba(61, 61, 61, 0.45);
 }
