@@ -286,6 +286,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsCheckbox
                   checkboxSize="large"
                   checked={volunteerChecked}
+                  disabled
                   onChange={e => setVolunteerChecked(e.target.checked)}
                 >
                   {participantTypeLabel('volunteer')}
@@ -302,7 +303,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   withAllOption={false}
                   inputSize="medium"
                   disabled
-                  width="100%"
+                  width={240}
                   options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
                   value={BUSINESS_FIELD_FIXED_VALUE}
                 />
@@ -320,7 +321,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   withAllOption={false}
                   inputSize="medium"
                   placeholder="후원사를 선택하세요"
-                  width="100%"
+                  width={240}
                   options={sponsorOptions}
                   value={sponsorId}
                   onChange={v => {
@@ -341,7 +342,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   withAllOption={false}
                   inputSize="medium"
                   placeholder="후원사 담당자를 선택하세요"
-                  width="100%"
+                  width={240}
                   options={managerOptions}
                   value={managerContactId}
                   disabled={sponsorId !== ALL_VALUE && managerOptions.length === 0}

@@ -28,15 +28,9 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph() {
       const [start, end] = dateRange
       if (isValidDayjs(start) && isValidDayjs(end)) {
         return (
-          <div className="detail-info-form-inputs-wrapper-no-gap">
-            <span className="detail-info-form--text nowrap">
-              {formatAppDatepickerDisplay(start)}
-            </span>
-            <DetailInfoForm.InputsSeparator />
-            <span className="detail-info-form--text nowrap">
-              {formatAppDatepickerDisplay(end)}
-            </span>
-          </div>
+          <span className="detail-info-form--text nowrap">
+            {formatAppDatepickerDisplay(start)} ~ {formatAppDatepickerDisplay(end)}
+          </span>
         )
       }
       return (
@@ -78,7 +72,9 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph() {
                 value={scheduleMode}
                 onChange={e => setScheduleMode(e.target.value as EducationScheduleMode)}
               >
-                <CmsRadio value="date">날짜 지정</CmsRadio>
+                <CmsRadio value="date" disabled>
+                  날짜 지정
+                </CmsRadio>
                 <CmsRadio value="period">기간 지정</CmsRadio>
               </CmsRadioGroup>
             </div>

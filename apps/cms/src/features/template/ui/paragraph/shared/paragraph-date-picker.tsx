@@ -888,7 +888,9 @@ function ParagraphDatePickerRangeBridge({
 
   const mergedPlaceholder =
     placeholder != null && placeholder.length >= 2
-      ? `${placeholder[0]} ~ ${placeholder[1]}`
+      ? placeholder[0] === placeholder[1]
+        ? placeholder[0]
+        : `${placeholder[0]} ~ ${placeholder[1]}`
       : undefined
 
   return (
