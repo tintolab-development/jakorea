@@ -205,9 +205,7 @@ export function ParagraphTimePicker({
 
   const hasExplicitWidth = width != null
   const widthStyle: CSSProperties | undefined =
-    width != null
-      ? { width: typeof width === 'number' ? `${width}px` : width }
-      : undefined
+    width != null ? { width: typeof width === 'number' ? `${width}px` : width } : undefined
 
   /** 트리거 표시: 미입력 → placeholder / 시작만 → HH:mm / 범위 확정 → `HH:mm ~ HH:mm` */
   const triggerDisplay =
@@ -498,7 +496,10 @@ export function ParagraphTimePicker({
               : undefined
           }
         >
-          <ClockCircleOutlined className="paragraph-time-picker__trigger-icon cms-datepicker__calendar-icon" aria-hidden />
+          <ClockCircleOutlined
+            className="paragraph-time-picker__trigger-icon cms-datepicker__calendar-icon"
+            aria-hidden
+          />
           <span
             className={cn(
               'paragraph-time-picker__trigger-text',

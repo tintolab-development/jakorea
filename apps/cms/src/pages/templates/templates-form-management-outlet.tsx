@@ -1,10 +1,9 @@
 /**
- * `/templates/form-management` 전용 — 라우터 `<Outlet />`과 동기화되어
- * `TemplateWritingPreviewProvider` 안에서만 마운트되도록 한다.
+ * `/templates/form-management` 전용 — 라우터 `<Outlet />`과 동기화.
+ * `TemplateWritingPreviewProvider`는 상위 `TemplateListPage`에서 한 번만 감싼다.
  */
 import type { ReactElement } from 'react'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { TemplateWritingPreviewProvider } from '@/features/template/context/template-writing-preview-context'
 import TemplateFormTab from './template-form-tab'
 import { IssuanceFormTab } from './issuance-form-tab'
 import { FormTab } from './form-tab'
@@ -25,5 +24,5 @@ export default function TemplatesFormManagementOutlet() {
   } else {
     content = <TemplateFormTab />
   }
-  return <TemplateWritingPreviewProvider>{content}</TemplateWritingPreviewProvider>
+  return content
 }

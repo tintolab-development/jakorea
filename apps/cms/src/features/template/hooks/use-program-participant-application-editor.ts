@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react'
 import { message } from 'antd'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
@@ -208,8 +215,10 @@ export function useProgramParticipantApplicationEditor(
   const [draft, setDraft] = useState<WritingFormDraft>(() =>
     normalizeWritingFormDraft(createProgramParticipantApplicationDraft())
   )
-  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(() =>
-    normalizeWritingFormDraft(createProgramParticipantApplicationDraft()).paragraphs[0]?.id ?? null
+  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
+    () =>
+      normalizeWritingFormDraft(createProgramParticipantApplicationDraft()).paragraphs[0]?.id ??
+      null
   )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
   const [ujatGradeApplicationBlockIds, setUjatGradeApplicationBlockIds] = useState<string[]>(() => [
@@ -238,25 +247,25 @@ export function useProgramParticipantApplicationEditor(
         ? createProgramApplicationFormInstitutionDraft()
         : variant === 'ujat-application-institution'
           ? createUjatProgramApplicationFormInstitutionDraft()
-        : variant === 'ujat-application-volunteer'
-          ? createUjatProgramApplicationFormVolunteerDraft()
-        : variant === 'applicant-recruit-institution'
-          ? createApplicantRecruitFormInstitutionDraft()
-          : variant === 'ujat-recruit-institution'
-            ? createUjatRecruitFormInstitutionDraft()
-          : variant === 'applicant-recruit-individual'
-            ? createApplicantRecruitFormIndividualDraft()
-        : variant === 'recruit-instructor'
-          ? createRecruitFormInstructorDraft()
-          : variant === 'recruit-volunteer'
-            ? createRecruitFormVolunteerDraft()
-          : variant === 'ujat-recruit-volunteer'
-            ? createUjatRecruitFormVolunteerDraft()
-            : variant === 'instructor'
-              ? createProgramApplicationFormInstructorDraft()
-              : variant === 'volunteer'
-                ? createProgramApplicationFormVolunteerDraft()
-                : createProgramParticipantApplicationDraft()
+          : variant === 'ujat-application-volunteer'
+            ? createUjatProgramApplicationFormVolunteerDraft()
+            : variant === 'applicant-recruit-institution'
+              ? createApplicantRecruitFormInstitutionDraft()
+              : variant === 'ujat-recruit-institution'
+                ? createUjatRecruitFormInstitutionDraft()
+                : variant === 'applicant-recruit-individual'
+                  ? createApplicantRecruitFormIndividualDraft()
+                  : variant === 'recruit-instructor'
+                    ? createRecruitFormInstructorDraft()
+                    : variant === 'recruit-volunteer'
+                      ? createRecruitFormVolunteerDraft()
+                      : variant === 'ujat-recruit-volunteer'
+                        ? createUjatRecruitFormVolunteerDraft()
+                        : variant === 'instructor'
+                          ? createProgramApplicationFormInstructorDraft()
+                          : variant === 'volunteer'
+                            ? createProgramApplicationFormVolunteerDraft()
+                            : createProgramParticipantApplicationDraft()
     )
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
@@ -337,9 +346,12 @@ export function useProgramParticipantApplicationEditor(
     setSingleItemListActiveItemId(null)
   }, [])
 
-  const onApplicationGradeByBlockChange = useCallback((blockId: string, grade: string | undefined) => {
-    setUjatApplicationGradeByBlockId(prev => ({ ...prev, [blockId]: grade }))
-  }, [])
+  const onApplicationGradeByBlockChange = useCallback(
+    (blockId: string, grade: string | undefined) => {
+      setUjatApplicationGradeByBlockId(prev => ({ ...prev, [blockId]: grade }))
+    },
+    []
+  )
 
   const onAddUjatGradeApplicationBlock = useCallback(() => {
     setUjatGradeApplicationBlockIds(ids => [...ids, crypto.randomUUID()])

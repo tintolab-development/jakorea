@@ -550,7 +550,8 @@ export function HorizontalTableParagraphBody({
 
   const ujatProgramApplicationFormVolunteerBody =
     renderUjatProgramApplicationFormVolunteerParagraphBody(p, ujatProgramApplicationFormVolunteer)
-  if (ujatProgramApplicationFormVolunteerBody != null) return ujatProgramApplicationFormVolunteerBody
+  if (ujatProgramApplicationFormVolunteerBody != null)
+    return ujatProgramApplicationFormVolunteerBody
 
   const programApplicationFormInstructorBody = renderProgramApplicationFormInstructorParagraphBody(
     p,
@@ -641,7 +642,9 @@ export function HorizontalTableParagraphBody({
       className={[
         'form-editor-body',
         'form-editor-horizontal-table-wrap',
-        isPaymentStatementPreConsentP1 ? 'form-editor-horizontal-table-wrap--payment-pre-consent-p1' : '',
+        isPaymentStatementPreConsentP1
+          ? 'form-editor-horizontal-table-wrap--payment-pre-consent-p1'
+          : '',
         isPaymentStatementPreConsentThirdPartyTable
           ? 'form-editor-horizontal-table-wrap--payment-pre-consent-third-party'
           : '',
@@ -649,11 +652,7 @@ export function HorizontalTableParagraphBody({
         .filter(Boolean)
         .join(' ')}
     >
-      <div
-        className="form-editor-horizontal-table"
-        role="grid"
-        aria-readonly={!effectiveEditMode}
-      >
+      <div className="form-editor-horizontal-table" role="grid" aria-readonly={!effectiveEditMode}>
         <div
           className={[
             'form-editor-horizontal-table__row',

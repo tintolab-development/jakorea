@@ -10,13 +10,23 @@ import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-u
 
 type ParamsWithUserPreview = { userPreview?: string }
 
+export type WritingUserPreviewUrlAuxiliarySyncOptions = {
+  /**
+   * true면 미리보기가 닫혀 있어도 URL의 `userPreview`를 자동으로 지우지 않습니다.
+   * 동의 전용 상세(`AgreementWritingFormShell`)가 레이아웃 단계에서 미리보기를 연 뒤
+   * 동기화 훅이 먼저 쿼리를 비우는 레이스를 막을 때 사용합니다.
+   */
+  suppressInactiveUserPreviewStrip?: boolean
+}
+
 export function useWritingUserPreviewUrlAuxiliarySync<
   T extends ParamsWithUserPreview = ParamsWithUserPreview,
 >(
   params: T,
   setParams: (updates: Partial<T>, options?: SetQueryParamsOptions) => void,
   isWritingUserPreviewOpen: boolean,
-  closeWritingUserPreview: () => void
+  closeWritingUserPreview: () => void,
+  options?: WritingUserPreviewUrlAuxiliarySyncOptions
 ) {
   const prevUserPreviewForCloseRef = useRef<string | undefined>(undefined)
 
@@ -32,8 +42,14 @@ export function useWritingUserPreviewUrlAuxiliarySync<
   }, [params.userPreview, isWritingUserPreviewOpen, closeWritingUserPreview])
 
   useEffect(() => {
+    if (options?.suppressInactiveUserPreviewStrip) return
     if (isWritingUserPreviewOpen) return
     if (params.userPreview !== TEMPLATE_USER_PREVIEW_ACTIVE) return
     setParams({ userPreview: undefined } as Partial<T>)
-  }, [isWritingUserPreviewOpen, params.userPreview, setParams])
+  }, [
+    options?.suppressInactiveUserPreviewStrip,
+    isWritingUserPreviewOpen,
+    params.userPreview,
+    setParams,
+  ])
 }

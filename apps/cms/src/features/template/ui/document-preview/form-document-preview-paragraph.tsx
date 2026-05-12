@@ -49,13 +49,18 @@ function safeTrim(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
-function readOnlyTitleBlock(displayTitle: string, description?: string): { title: ReactNode; description?: ReactNode } {
+function readOnlyTitleBlock(
+  displayTitle: string,
+  description?: string
+): { title: ReactNode; description?: ReactNode } {
   const trimmedDescription = safeTrim(description)
   return {
     title: <span className="form-document-preview-paragraph__title-text">{displayTitle}</span>,
     description:
       trimmedDescription.length > 0 ? (
-        <span className="form-document-preview-paragraph__description-text">{trimmedDescription}</span>
+        <span className="form-document-preview-paragraph__description-text">
+          {trimmedDescription}
+        </span>
       ) : undefined,
   }
 }
@@ -112,9 +117,11 @@ function DocumentShortEssayReadonly({
 }: {
   paragraph: ShortEssayParagraph | SessionPlanShortEssayParagraph
 }) {
-  const ph = safeTrim(paragraph.bodyPlaceholder) || (paragraph.variant === 'session_plan_short_essay'
-    ? '자유롭게 작성해 주세요'
-    : '답변을 입력해 주세요')
+  const ph =
+    safeTrim(paragraph.bodyPlaceholder) ||
+    (paragraph.variant === 'session_plan_short_essay'
+      ? '자유롭게 작성해 주세요'
+      : '답변을 입력해 주세요')
   const items =
     paragraph.items && paragraph.items.length > 0
       ? paragraph.items
@@ -133,7 +140,11 @@ function DocumentShortEssayReadonly({
   return (
     <div className="form-editor-body">
       {items.map((item, index) => (
-        <div key={item.id} className="form-document-preview-paragraph__body-text" style={{ marginBottom: 12 }}>
+        <div
+          key={item.id}
+          className="form-document-preview-paragraph__body-text"
+          style={{ marginBottom: 12 }}
+        >
           {showItemTitle ? (
             <div style={{ fontWeight: 600, marginBottom: 4 }}>
               {item.label ?? `Title ${String(index + 1).padStart(2, '0')}`}
@@ -201,7 +212,9 @@ function renderBody(
             paragraphBodyOptions?.paymentStatementDisplayMode ??
             (renderMode === 'contentOnly' ? 'document' : undefined)
           }
-          programApplicationFormInstitution={paragraphBodyOptions?.programApplicationFormInstitution}
+          programApplicationFormInstitution={
+            paragraphBodyOptions?.programApplicationFormInstitution
+          }
           applicantRecruitFormInstitution={paragraphBodyOptions?.applicantRecruitFormInstitution}
           applicantRecruitFormIndividual={paragraphBodyOptions?.applicantRecruitFormIndividual}
           programApplicationFormInstructor={paragraphBodyOptions?.programApplicationFormInstructor}
@@ -225,7 +238,13 @@ function renderBody(
         />
       )
     case 'vertical_table':
-      return <VerticalTableParagraphBody paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+      return (
+        <VerticalTableParagraphBody
+          paragraph={p}
+          onChange={noopOnParagraphChange}
+          isEditMode={false}
+        />
+      )
     case 'multiple_choice':
       return <DocumentMultipleChoiceReadonly paragraph={p as MultipleChoiceParagraph} />
     case 'short_essay': {
@@ -256,9 +275,21 @@ function renderBody(
       }
       return null
     case 'user_profile':
-      return <UserProfileParagraphBody paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+      return (
+        <UserProfileParagraphBody
+          paragraph={p}
+          onChange={noopOnParagraphChange}
+          isEditMode={false}
+        />
+      )
     case 'score_select':
-      return <ScoreSelectParagraphBody paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+      return (
+        <ScoreSelectParagraphBody
+          paragraph={p}
+          onChange={noopOnParagraphChange}
+          isEditMode={false}
+        />
+      )
     case 'dropdown':
       return <Dropdown paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
     case 'date':
@@ -308,16 +339,12 @@ function renderBody(
       return <StaticDescriptionLines paragraph={p} />
     case 'id_type_with_input':
       if (p.kind !== 'single_item' || p.variant !== 'id_type_with_input') return null
-      return (
-        <IdTypeWithInput
-          paragraph={p}
-          onChange={noopOnParagraphChange}
-          isEditMode={false}
-        />
-      )
+      return <IdTypeWithInput paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
     case 'closing': {
       const c = p as ClosingParagraph
-      return <div className="form-document-preview-paragraph__body-text">{safeTrim(c.body) || ' '}</div>
+      return (
+        <div className="form-document-preview-paragraph__body-text">{safeTrim(c.body) || ' '}</div>
+      )
     }
     default:
       return null
@@ -333,6 +360,8 @@ export interface FormDocumentPreviewParagraphProps {
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   renderMode?: FormDocumentPreviewRenderMode
   style?: CSSProperties
+  /** 작성 화면에서 선택한 단락과 동기화된 강조 */
+  isAuthoringSyncFocused?: boolean
 }
 
 export function FormDocumentPreviewParagraph({
@@ -344,15 +373,17 @@ export function FormDocumentPreviewParagraph({
   paragraphBodyOptions,
   renderMode = 'card',
   style,
+  isAuthoringSyncFocused = false,
 }: FormDocumentPreviewParagraphProps) {
   const displayTitle = getFormParagraphDisplayTitle(allParagraphs, paragraph, titleNumbering)
   const viewModel = getDocumentPreviewParagraphViewModel(paragraph, displayTitle, renderMode)
-  const { title, description } = readOnlyTitleBlock(
-    displayTitle,
-    viewModel.description
-  )
+  const { title, description } = readOnlyTitleBlock(displayTitle, viewModel.description)
 
-  if (renderMode === 'card' && paragraph.kind === 'description' && paragraph.variant === 'closing') {
+  if (
+    renderMode === 'card' &&
+    paragraph.kind === 'description' &&
+    paragraph.variant === 'closing'
+  ) {
     const c = paragraph as ClosingParagraph
     const head = readOnlyTitleBlock(displayTitle, undefined)
     return (
@@ -361,6 +392,7 @@ export function FormDocumentPreviewParagraph({
           'form-document-preview-paragraph',
           'paragraph-card',
           overflow ? 'form-document-preview-paragraph--overflow' : '',
+          isAuthoringSyncFocused ? 'form-document-preview-paragraph--authoring-sync-focus' : '',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -371,7 +403,9 @@ export function FormDocumentPreviewParagraph({
           <div className="paragraph-card__title-block">{head.title}</div>
         </div>
         <div className="paragraph-card__slot">
-          <div className="form-document-preview-paragraph__body-text">{safeTrim(c.body) || ' '}</div>
+          <div className="form-document-preview-paragraph__body-text">
+            {safeTrim(c.body) || ' '}
+          </div>
         </div>
       </div>
     )
@@ -393,8 +427,11 @@ export function FormDocumentPreviewParagraph({
           'form-document-preview-paragraph',
           'form-document-preview-paragraph--content-only',
           viewModel.isClosing ? 'form-document-preview-paragraph--content-only-closing' : '',
-          viewModel.isClosingSignature ? 'form-document-preview-paragraph--content-only-closing-signature' : '',
+          viewModel.isClosingSignature
+            ? 'form-document-preview-paragraph--content-only-closing-signature'
+            : '',
           overflow ? 'form-document-preview-paragraph--overflow' : '',
+          isAuthoringSyncFocused ? 'form-document-preview-paragraph--authoring-sync-focus' : '',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -416,6 +453,7 @@ export function FormDocumentPreviewParagraph({
       className={[
         'form-document-preview-paragraph',
         overflow ? 'form-document-preview-paragraph--overflow' : '',
+        isAuthoringSyncFocused ? 'form-document-preview-paragraph--authoring-sync-focus' : '',
       ]
         .filter(Boolean)
         .join(' ')}

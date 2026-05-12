@@ -1,9 +1,18 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { message } from 'antd'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
 import {
   createDefaultDirectAgreementDraft,
   DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS,
@@ -61,6 +70,10 @@ export type AgreementWritingFormShellProps = {
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
 }
 
+type AgreementShellUrlQuery = {
+  userPreview?: string
+}
+
 export function AgreementWritingFormShell({
   initialDraft,
   defaultActiveParagraphId,
@@ -91,6 +104,8 @@ export function AgreementWritingFormShell({
     closeWritingUserPreview,
     isWritingUserPreviewOpen,
   } = useTemplateWritingPreview()
+  const { params: shellUrlParams, setParams } = useQueryParams<AgreementShellUrlQuery>()
+  const openedUserPreviewFromUrlRef = useRef(false)
 
   const updateParagraph = useCallback(
     (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => {
@@ -158,6 +173,7 @@ export function AgreementWritingFormShell({
       a4ParagraphGapPx,
       paragraphBodyOptions,
       hideParagraphRequiredChrome: previewLayout === 'a4-document',
+      focusedParagraphId: activeParagraphId,
     }),
     [
       draft,
@@ -168,8 +184,23 @@ export function AgreementWritingFormShell({
       a4RenderMode,
       a4ParagraphGapPx,
       paragraphBodyOptions,
+      activeParagraphId,
     ]
   )
+
+  useEffect(() => {
+    if (shellUrlParams.userPreview !== TEMPLATE_USER_PREVIEW_ACTIVE) {
+      openedUserPreviewFromUrlRef.current = false
+    }
+  }, [shellUrlParams.userPreview])
+
+  useLayoutEffect(() => {
+    if (shellUrlParams.userPreview !== TEMPLATE_USER_PREVIEW_ACTIVE) return
+    if (openedUserPreviewFromUrlRef.current) return
+    openedUserPreviewFromUrlRef.current = true
+    openWritingUserPreview(writingPreviewSession)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- URL 진입 시 초기 세션으로 사용자 미리보기를 한 번만 연다
+  }, [shellUrlParams.userPreview, openWritingUserPreview])
 
   useEffect(() => {
     if (!isWritingUserPreviewOpen) return
@@ -183,8 +214,10 @@ export function AgreementWritingFormShell({
   }, [closeWritingUserPreview])
 
   const handlePreview = useCallback(() => {
+    setParams({ userPreview: TEMPLATE_USER_PREVIEW_ACTIVE }, { replace: false })
+    openedUserPreviewFromUrlRef.current = true
     openWritingUserPreview(writingPreviewSession)
-  }, [openWritingUserPreview, writingPreviewSession])
+  }, [setParams, openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
     message.success('저장 API 연동 전입니다.')
@@ -195,7 +228,10 @@ export function AgreementWritingFormShell({
     setSingleItemListActiveItemId(null)
   }, [])
 
-  const middleParagraphActions = useWritingFormMiddleParagraphActions(setDraft, setActiveParagraphId)
+  const middleParagraphActions = useWritingFormMiddleParagraphActions(
+    setDraft,
+    setActiveParagraphId
+  )
   const {
     horizontalTableRowSelectionsByParagraphId,
     verticalTableBodyRowSelection,
@@ -287,7 +323,7 @@ export default function NewAgreementForm() {
   return (
     <AgreementWritingFormShell
       initialDraft={createDefaultDirectAgreementDraft}
-      defaultActiveParagraphId={DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.explanationText}
+      defaultActiveParagraphId={DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.title}
       modalTitle="동의 양식"
       onClose={handleClose}
     />

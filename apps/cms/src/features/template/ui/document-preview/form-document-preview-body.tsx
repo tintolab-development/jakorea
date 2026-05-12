@@ -22,6 +22,8 @@ export interface FormDocumentPreviewBodyProps {
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   renderMode?: FormDocumentPreviewRenderMode
   paragraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
+  /** 작성 화면에서 선택한 단락 id — 미리보기 강조·스크롤 */
+  focusedParagraphId?: string | null
 }
 
 export function FormDocumentPreviewBody({
@@ -34,6 +36,7 @@ export function FormDocumentPreviewBody({
   paragraphBodyOptions,
   renderMode = 'card',
   paragraphGapPx,
+  focusedParagraphId = null,
 }: FormDocumentPreviewBodyProps) {
   const useCustomGaps = paragraphGapPx != null
 
@@ -64,6 +67,7 @@ export function FormDocumentPreviewBody({
           paragraphBodyOptions={paragraphBodyOptions}
           renderMode={renderMode}
           style={useCustomGaps ? { marginTop: getGapBefore(p, index) } : undefined}
+          isAuthoringSyncFocused={focusedParagraphId != null && focusedParagraphId === p.id}
         />
       ))}
     </div>

@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react'
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import type { FormEditorKind } from '@/features/template/model/writing-form-draft.schema'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { TemplatePreviewModal } from '@/features/template/ui/modal/template-preview-modal'
@@ -34,6 +27,10 @@ export type TemplateWritingUserPreviewSession = {
   a4HiddenParagraphIds?: ReadonlySet<string>
   a4RenderMode?: FormDocumentPreviewRenderMode
   a4ParagraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
+  /**
+   * 작성 화면에서 선택 중인 단락 id — 미리보기에서 해당 단락으로 페이지·스크롤·강조 동기화
+   */
+  focusedParagraphId?: string | null
 }
 
 export type TemplateWritingPreviewContextValue = {
@@ -45,9 +42,7 @@ export type TemplateWritingPreviewContextValue = {
   isWritingUserPreviewOpen: boolean
 }
 
-const TemplateWritingPreviewContext = createContext<TemplateWritingPreviewContextValue | null>(
-  null
-)
+const TemplateWritingPreviewContext = createContext<TemplateWritingPreviewContextValue | null>(null)
 
 export function TemplateWritingPreviewProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)
@@ -95,6 +90,7 @@ export function TemplateWritingPreviewProvider({ children }: { children: ReactNo
           a4HiddenParagraphIds={session.a4HiddenParagraphIds}
           a4RenderMode={session.a4RenderMode}
           a4ParagraphGapPx={session.a4ParagraphGapPx}
+          focusedParagraphId={session.focusedParagraphId}
         />
       ) : null}
     </TemplateWritingPreviewContext.Provider>

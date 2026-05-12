@@ -15,14 +15,18 @@ import {
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/use-table-row-selection-state'
 
 export function useUjatProgramRegistrationEditor(active: boolean, previewHeaderTitle: string) {
-  const { openWritingUserPreview, syncWritingUserPreviewSession, closeWritingUserPreview, isWritingUserPreviewOpen } =
-    useTemplateWritingPreview()
+  const {
+    openWritingUserPreview,
+    syncWritingUserPreviewSession,
+    closeWritingUserPreview,
+    isWritingUserPreviewOpen,
+  } = useTemplateWritingPreview()
 
   const [draft, setDraft] = useState<WritingFormDraft>(() =>
     normalizeWritingFormDraft(createUjatProgramRegistrationDraft())
   )
-  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(() =>
-    normalizeWritingFormDraft(createUjatProgramRegistrationDraft()).paragraphs[0]?.id ?? null
+  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
+    () => normalizeWritingFormDraft(createUjatProgramRegistrationDraft()).paragraphs[0]?.id ?? null
   )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
 
@@ -145,7 +149,8 @@ export function useUjatProgramRegistrationEditor(active: boolean, previewHeaderT
     draft,
     activeParagraphId,
     singleItemListActiveItemId,
-    structureLockedParagraphIds: UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS as ReadonlySet<string>,
+    structureLockedParagraphIds:
+      UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS as ReadonlySet<string>,
     pinnedTop,
     sortableMiddle,
     pinnedBottom,

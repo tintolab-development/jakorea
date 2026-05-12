@@ -114,9 +114,7 @@ export function DirectUnavailableDateAddButton({
   const selectedDateSet = useMemo(
     () =>
       new Set(
-        selectedDates
-          .filter(v => ISO_DATE_PATTERN.test(v))
-          .map(v => dayjs(v).format('YYYY-MM-DD'))
+        selectedDates.filter(v => ISO_DATE_PATTERN.test(v)).map(v => dayjs(v).format('YYYY-MM-DD'))
       ),
     [selectedDates]
   )
