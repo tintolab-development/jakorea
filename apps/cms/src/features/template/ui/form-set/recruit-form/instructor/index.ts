@@ -1,4 +1,4 @@
 export {
   RecruitFormInstructorEditorLeftColumn,
   RecruitFormInstructorEditorRightColumn,
-} from '@/features/template/ui/form-set/recruit-form/recruit-form-instructor/editor'
+} from '@/features/template/ui/form-set/recruit-form/instructor/editor'

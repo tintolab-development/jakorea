@@ -71,11 +71,11 @@ import {
 import {
   ApplicantRecruitFormIndividualEditorLeftColumn,
   ApplicantRecruitFormIndividualEditorRightColumn,
-} from '@/features/template/ui/form-set/recruit-form/applicant-recruit-form-individual'
+} from '@/features/template/ui/form-set/recruit-form/individual'
 import {
   ApplicantRecruitFormInstitutionEditorLeftColumn,
   ApplicantRecruitFormInstitutionEditorRightColumn,
-} from '@/features/template/ui/form-set/recruit-form/applicant-recruit-form-institution'
+} from '@/features/template/ui/form-set/recruit-form/institution'
 import {
   UjatRecruitFormInstitutionEditorLeftColumn,
   UjatRecruitFormInstitutionEditorRightColumn,
@@ -83,11 +83,11 @@ import {
 import {
   RecruitFormInstructorEditorLeftColumn,
   RecruitFormInstructorEditorRightColumn,
-} from '@/features/template/ui/form-set/recruit-form/recruit-form-instructor'
+} from '@/features/template/ui/form-set/recruit-form/instructor'
 import {
   RecruitFormVolunteerEditorLeftColumn,
   RecruitFormVolunteerEditorRightColumn,
-} from '@/features/template/ui/form-set/recruit-form/recruit-form-volunteer'
+} from '@/features/template/ui/form-set/recruit-form/volunteer'
 import {
   UjatRecruitFormVolunteerEditorLeftColumn,
   UjatRecruitFormVolunteerEditorRightColumn,

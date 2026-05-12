@@ -8,12 +8,11 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-editor/form-editor.css'
 
-const RECRUIT_PROGRESS_HINT = '입력에 따라 진행 현황이 자동으로 반영됩니다.'
+const RECRUIT_PROGRESS_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
 const MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 
 const inquiryColumnStyle: CSSProperties = {
   display: 'flex',
-  flex: '1 1 0',
   minWidth: 0,
   alignItems: 'center',
   gap: 8,
@@ -25,12 +24,7 @@ function InquiryContactColumn({ label, placeholder }: { label: string; placehold
       <span className="nowrap" style={{ flexShrink: 0 }}>
         {label}
       </span>
-      <CmsInput
-        inputSize="medium"
-        width="100%"
-        placeholder={placeholder}
-        style={{ flex: '1 1 0', minWidth: 0 }}
-      />
+      <CmsInput inputSize="medium" width={240} placeholder={placeholder} />
     </div>
   )
 }
@@ -83,7 +77,9 @@ export function RecruitFormInstructorInfoParagraph() {
         <DetailInfoForm.Field
           label="강사 모집 현황"
           readOnlyDisplay
-          view={<span className="form-editor-template-field-hint-text">{RECRUIT_PROGRESS_HINT}</span>}
+          view={
+            <span className="form-editor-template-field-hint-text">{RECRUIT_PROGRESS_HINT}</span>
+          }
         />
       </DetailInfoForm.Row>
 
@@ -104,7 +100,9 @@ export function RecruitFormInstructorInfoParagraph() {
         />
         <DetailInfoForm.Field
           label="모집 대상 상세"
-          edit={<CmsInput inputSize="medium" width="100%" placeholder="상세 교육 대상을 입력하세요" />}
+          edit={
+            <CmsInput inputSize="medium" width="100%" placeholder="상세 교육 대상을 입력하세요" />
+          }
           view="-"
         />
       </DetailInfoForm.Row>

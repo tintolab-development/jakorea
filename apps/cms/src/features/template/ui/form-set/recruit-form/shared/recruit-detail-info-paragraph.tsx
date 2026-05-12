@@ -2,18 +2,17 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import { ParagraphFileUpload } from '@/features/template/ui/paragraph/shared/paragraph-file-upload'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import '@toast-ui/editor/dist/toastui-editor.css'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
+import './recruit-detail-info-paragraph.css'
 
 const THUMB_UPLOAD_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 
 type RecruitDetailInfoTextField = {
   label: string
   placeholder: string
-  inputType?: 'input' | 'textarea'
 }
 
 export type RecruitDetailInfoParagraphProps = {
@@ -70,6 +69,8 @@ export function RecruitDetailInfoParagraph({
   textFields,
 }: RecruitDetailInfoParagraphProps) {
   const [thumbObjectUrl, setThumbObjectUrl] = useState<string | null>(null)
+  const [thumbFileName, setThumbFileName] = useState<string | null>(null)
+  const [attachmentFileNames, setAttachmentFileNames] = useState<string[]>([])
 
   const revokeThumb = useCallback((url: string | null) => {
     if (url) URL.revokeObjectURL(url)
@@ -78,7 +79,13 @@ export function RecruitDetailInfoParagraph({
   const handleThumbnailFiles = useCallback((files: File[]) => {
     const image = files.find(f => /^image\//u.test(f.type)) ?? files[0]
     if (!image) return
+    setThumbFileName(image.name)
     setThumbObjectUrl(URL.createObjectURL(image))
+  }, [])
+
+  const handleRemoveThumbnail = useCallback(() => {
+    setThumbFileName(null)
+    setThumbObjectUrl(null)
   }, [])
 
   useEffect(
@@ -109,7 +116,9 @@ export function RecruitDetailInfoParagraph({
                 accept=".jpg,.jpeg,.png"
                 multiple={false}
                 style={{ marginLeft: 16 }}
+                fileNames={thumbFileName ? [thumbFileName] : []}
                 onFilesChange={handleThumbnailFiles}
+                onRemoveFile={handleRemoveThumbnail}
               />
             </div>
           }
@@ -123,16 +132,13 @@ export function RecruitDetailInfoParagraph({
             label={field.label}
             fullRow
             edit={
-              field.inputType === 'input' ? (
-                <CmsInput inputSize="medium" width="100%" placeholder={field.placeholder} />
-              ) : (
-                <CmsTextArea
-                  inputSize="medium"
-                  width="100%"
-                  placeholder={field.placeholder}
-                  autoSize={{ minRows: 1, maxRows: 12 }}
-                />
-              )
+              <CmsTextArea
+                className="recruit-detail-info-paragraph__textarea"
+                inputSize="medium"
+                width="100%"
+                placeholder={field.placeholder}
+                rows={1}
+              />
             }
             view="-"
           />
@@ -156,7 +162,19 @@ export function RecruitDetailInfoParagraph({
         <DetailInfoForm.Field
           label="첨부 파일"
           fullRow
-          edit={<ParagraphFileUpload accept=".jpg,.jpeg,.png" multiple />}
+          edit={
+            <ParagraphFileUpload
+              accept=".jpg,.jpeg,.png"
+              multiple
+              fileNames={attachmentFileNames}
+              onFilesChange={files =>
+                setAttachmentFileNames(prev => [...prev, ...files.map(file => file.name)])
+              }
+              onRemoveFile={index =>
+                setAttachmentFileNames(prev => prev.filter((_, i) => i !== index))
+              }
+            />
+          }
           view="-"
         />
       </DetailInfoForm.Row>

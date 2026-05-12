@@ -11,6 +11,7 @@ import dayjs from 'dayjs'
 import { CalendarMini } from '@/shared/components/calendar'
 import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import { CmsButton } from '@/shared/ui/cms-button'
+import type { CmsControlSize } from '@/shared/ui/cms-control-size'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import {
@@ -89,6 +90,8 @@ type ParagraphRangeValue = [Dayjs | null, Dayjs | null]
 interface ParagraphDatePickerBaseProps {
   label?: ReactNode
   width?: number | string
+  /** 트리거 인풋 크기. 기본값은 medium. */
+  inputSize?: CmsControlSize
   className?: string
   style?: CSSProperties
   disabled?: boolean
@@ -176,6 +179,7 @@ interface ParagraphDatePickerSingleInnerProps {
   customizable: boolean
   placeholder?: string
   width?: number | string
+  inputSize?: CmsControlSize
   disabled?: boolean
   disabledDate?: (date: Dayjs) => boolean
   appliedSurfaceRange?: [Dayjs, Dayjs] | null
@@ -194,6 +198,7 @@ function ParagraphDatePickerSingleInner({
   customizable,
   placeholder,
   width,
+  inputSize = 'medium',
   disabled,
   disabledDate,
   appliedSurfaceRange,
@@ -823,6 +828,7 @@ function ParagraphDatePickerSingleInner({
         tabIndex={disabled ? -1 : 0}
         className={cn(
           'paragraph-date-picker__trigger',
+          `paragraph-date-picker__trigger--${inputSize}`,
           disabled && 'paragraph-date-picker__trigger--disabled'
         )}
         style={{ ...triggerWidthStyle }}
@@ -865,6 +871,7 @@ function ParagraphDatePickerRangeBridge({
   onChange,
   placeholder,
   width,
+  inputSize,
   disabled,
   disabledDate,
 }: {
@@ -873,6 +880,7 @@ function ParagraphDatePickerRangeBridge({
   onChange: (next: ParagraphRangeValue) => void
   placeholder?: [string, string]
   width?: number | string
+  inputSize?: CmsControlSize
   disabled?: boolean
   disabledDate?: (date: Dayjs) => boolean
 }) {
@@ -909,6 +917,7 @@ function ParagraphDatePickerRangeBridge({
       customizable={false}
       placeholder={mergedPlaceholder}
       width={width}
+      inputSize={inputSize}
       disabled={disabled}
       disabledDate={disabledDate}
       appliedSurfaceRange={appliedSurfaceRange}
@@ -948,6 +957,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           onChange={props.onChange}
           placeholder={props.placeholder}
           width={resolvedWidth}
+          inputSize={props.inputSize}
           disabled={disabled}
           disabledDate={props.disabledDate}
         />
@@ -961,6 +971,7 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           customizable={singleCustomizable}
           placeholder={props.placeholder}
           width={resolvedWidth}
+          inputSize={props.inputSize}
           disabled={disabled}
           disabledDate={props.disabledDate}
           appliedSurfaceRange={props.appliedSurfaceRange}

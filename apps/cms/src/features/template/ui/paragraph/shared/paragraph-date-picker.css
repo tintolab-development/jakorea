@@ -26,6 +26,21 @@
   height: 44px;
 }
 
+.paragraph-date-picker__trigger--large {
+  height: 44px;
+  padding: 0 12px 0 14px;
+}
+
+.paragraph-date-picker__trigger--medium {
+  height: 40px;
+  padding: 0 12px 0 14px;
+}
+
+.paragraph-date-picker__trigger--small {
+  height: 32px;
+  padding: 0 10px 0 12px;
+}
+
 .paragraph-date-picker__trigger:hover:not(.paragraph-date-picker__trigger--disabled) {
   border-color: var(--color-mint-01, #01a1af);
 }
@@ -65,6 +80,18 @@
   font-weight: 500;
   line-height: 1.5;
   color: var(--main-BK, #3d3d3d);
+}
+
+.paragraph-date-picker__trigger--large .paragraph-date-picker__trigger-text {
+  font-size: 16px;
+}
+
+.paragraph-date-picker__trigger--medium .paragraph-date-picker__trigger-text {
+  font-size: 15px;
+}
+
+.paragraph-date-picker__trigger--small .paragraph-date-picker__trigger-text {
+  font-size: 14px;
 }
 
 .paragraph-date-picker__trigger-text.paragraph-date-picker__trigger-text--placeholder {

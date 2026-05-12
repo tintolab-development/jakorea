@@ -20,7 +20,6 @@ const MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 
 const inquiryColumnStyle: CSSProperties = {
   display: 'flex',
-  flex: '1 1 0',
   minWidth: 0,
   alignItems: 'center',
   gap: 8,
@@ -32,12 +31,7 @@ function InquiryContactColumn({ label, placeholder }: { label: string; placehold
       <span className="nowrap" style={{ flexShrink: 0 }}>
         {label}
       </span>
-      <CmsInput
-        inputSize="medium"
-        width="100%"
-        placeholder={placeholder}
-        style={{ flex: '1 1 0', minWidth: 0 }}
-      />
+      <CmsInput inputSize="medium" width={240} placeholder={placeholder} />
     </div>
   )
 }
@@ -176,7 +170,7 @@ export function ApplicantRecruitParticipantInfoParagraph() {
             edit={
               <CmsSelect
                 inputSize="medium"
-                width="100%"
+                width={240}
                 placeholder="전체"
                 options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
               />
@@ -229,7 +223,12 @@ export function ApplicantRecruitParticipantInfoParagraph() {
                   onChange={next => setFinalAnnounceDate(next)}
                 />
                 <DetailInfoForm.InputsSeparator />
-                <CmsInput inputSize="medium" width="100%" placeholder="발표 방법 안내" />
+                <CmsInput
+                  inputSize="medium"
+                  width="100%"
+                  style={{ flex: '1 1 0', minWidth: 0 }}
+                  placeholder="발표 방법 안내"
+                />
               </div>
             }
             view="-"
