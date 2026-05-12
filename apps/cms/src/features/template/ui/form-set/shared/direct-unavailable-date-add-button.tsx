@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { ParagraphCalendarMini } from '@/features/template/ui/paragraph-calendar-mini'
+import { ItemDeleteButton } from '@/features/template/ui/paragraph/shared/item-delete-button'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import './direct-unavailable-date-add-button.css'
@@ -82,12 +83,14 @@ export function DirectUnavailableDateAddButton({
   disabledDate,
   initialCalendarDate,
   onApplyDatesChange,
+  appliedDatesDisplay = 'badge',
 }: {
   onClick?: () => void
   disabled?: boolean
   disabledDate?: (date: Dayjs) => boolean
   initialCalendarDate?: Dayjs | null
   onApplyDatesChange?: (dates: string[]) => void
+  appliedDatesDisplay?: 'badge' | 'chips'
 }) {
   const [open, setOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(() => dayjs().startOf('month'))
@@ -123,10 +126,24 @@ export function DirectUnavailableDateAddButton({
     [appliedDates]
   )
 
+  const appliedDateItems = useMemo(
+    () => appliedDates.map(value => ({ value, label: formatUnavailableDateLabel(value) })),
+    [appliedDates]
+  )
+
   const closeModal = () => setOpen(false)
 
   const removeDate = (date: string) => {
     setSelectedDates(prev => prev.filter(v => v !== date))
+  }
+
+  const removeAppliedDate = (date: string) => {
+    setSelectedDates(prev => prev.filter(v => v !== date))
+    setAppliedDates(prev => {
+      const next = prev.filter(v => v !== date)
+      onApplyDatesChange?.(next)
+      return next
+    })
   }
 
   const handleCalendarSelect = (d: Dayjs) => {
@@ -143,7 +160,14 @@ export function DirectUnavailableDateAddButton({
 
   return (
     <>
-      <div className="direct-unavailable-date-add-button">
+      <div
+        className={[
+          'direct-unavailable-date-add-button',
+          appliedDatesDisplay === 'chips' && 'direct-unavailable-date-add-button--chips',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <CmsButton
           type="button"
           size="medium"
@@ -160,7 +184,20 @@ export function DirectUnavailableDateAddButton({
         >
           진행 불가일 직접 추가
         </CmsButton>
-        {appliedDateText ? (
+        {appliedDatesDisplay === 'chips' && appliedDateItems.length > 0 ? (
+          <div className="direct-unavailable-date-add-button__selected-date-chips">
+            {appliedDateItems.map(({ value, label }) => (
+              <span key={value} className="direct-unavailable-date-add-button__selected-date-chip">
+                <span>{label}</span>
+                <ItemDeleteButton
+                  className="direct-unavailable-date-add-button__selected-date-remove"
+                  aria-label={`${label} 제거`}
+                  onClick={() => removeAppliedDate(value)}
+                />
+              </span>
+            ))}
+          </div>
+        ) : appliedDateText ? (
           <span className="direct-unavailable-date-add-button__selected-dates">
             {appliedDateText}
           </span>

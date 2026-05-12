@@ -163,6 +163,8 @@ export interface ParagraphTimePickerProps {
   className?: string
   style?: CSSProperties
   width?: number | string
+  /** true면 종료 시간 선택을 항상 ON으로 유지한다. */
+  endTimeAlwaysOn?: boolean
 }
 
 type FocusPhase = 'single' | 'start' | 'end'
@@ -177,6 +179,7 @@ export function ParagraphTimePicker({
   className,
   style,
   width,
+  endTimeAlwaysOn = false,
 }: ParagraphTimePickerProps) {
   const rootRef = useRef<HTMLSpanElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -184,7 +187,7 @@ export function ParagraphTimePicker({
   const panelId = useId()
 
   const [open, setOpen] = useState(false)
-  const [endTimeOn, setEndTimeOn] = useState(false)
+  const [endTimeOn, setEndTimeOn] = useState(endTimeAlwaysOn)
   const [focusPhase, setFocusPhase] = useState<FocusPhase>('single')
 
   const [sHour, setSHour] = useState('12')
@@ -198,6 +201,7 @@ export function ParagraphTimePicker({
   const [popoverStyle, setPopoverStyle] = useState<CSSProperties>({ visibility: 'hidden' })
   /** 종료 시간 ON 후 [설정] 확정 — 트리거에 시작~종료 표시 (`paragraph-date-picker` surfaceRange 와 동일 역할) */
   const [surfaceTimeRange, setSurfaceTimeRange] = useState<[Dayjs, Dayjs] | null>(null)
+  const isEndTimeOn = endTimeAlwaysOn || endTimeOn
 
   const hasExplicitWidth = width != null
   const widthStyle: CSSProperties | undefined =
@@ -213,6 +217,10 @@ export function ParagraphTimePicker({
         ? value.format('HH:mm')
         : null
   const triggerIsPlaceholder = triggerDisplay == null
+
+  useEffect(() => {
+    if (endTimeAlwaysOn) setEndTimeOn(true)
+  }, [endTimeAlwaysOn])
 
   useEffect(() => {
     if (value == null) {
@@ -272,7 +280,7 @@ export function ParagraphTimePicker({
       window.removeEventListener('resize', onWin)
       window.removeEventListener('scroll', onWin, true)
     }
-  }, [open, endTimeOn, schedulePosition])
+  }, [open, isEndTimeOn, schedulePosition])
 
   useEffect(() => {
     if (!open) return
@@ -326,8 +334,8 @@ export function ParagraphTimePicker({
       setFocusPhase('start')
     } else {
       populateDraftFromInstant(value ?? dayjs())
-      setEndTimeOn(false)
-      setFocusPhase('single')
+      setEndTimeOn(endTimeAlwaysOn)
+      setFocusPhase(endTimeAlwaysOn ? 'start' : 'single')
     }
     setOpen(true)
   }
@@ -338,7 +346,7 @@ export function ParagraphTimePicker({
     const sm = parseNum(sMin, 0)
     const start = buildTime(base, sh, sm, sMer)
 
-    if (!endTimeOn) {
+    if (!isEndTimeOn) {
       setSurfaceTimeRange(null)
       onChange?.(start)
       setOpen(false)
@@ -376,9 +384,9 @@ export function ParagraphTimePicker({
       getPopupContainer={() => popoverRef.current ?? document.body}
       disabled={disabled}
       hourActive={
-        (!endTimeOn && phase === 'single') ||
-        (endTimeOn && focusPhase === 'start' && phase === 'start') ||
-        (endTimeOn && focusPhase === 'end' && phase === 'end')
+        (!isEndTimeOn && phase === 'single') ||
+        (isEndTimeOn && focusPhase === 'start' && phase === 'start') ||
+        (isEndTimeOn && focusPhase === 'end' && phase === 'end')
       }
       rowPhase={phase}
     />
@@ -397,7 +405,7 @@ export function ParagraphTimePicker({
             aria-modal="true"
             aria-label="시간 설정"
           >
-            {!endTimeOn ? (
+            {!isEndTimeOn ? (
               <div className="paragraph-time-picker__section">
                 {renderTimeRow('single', sHour, sMin, sMer, setSHour, setSMin, setSMer)}
               </div>
@@ -423,8 +431,9 @@ export function ParagraphTimePicker({
             <div className="paragraph-time-picker__footer">
               <CmsToggle
                 label="종료 시간"
-                checked={endTimeOn}
+                checked={isEndTimeOn}
                 onChange={next => {
+                  if (endTimeAlwaysOn) return
                   setEndTimeOn(next)
                   if (next) {
                     setFocusPhase('start')
@@ -442,7 +451,7 @@ export function ParagraphTimePicker({
                     setFocusPhase('single')
                   }
                 }}
-                disabled={disabled}
+                disabled={disabled || endTimeAlwaysOn}
               />
               <CmsButton
                 type="button"
@@ -467,7 +476,7 @@ export function ParagraphTimePicker({
         ref={rootRef}
         className={cn(
           'cms-datepicker',
-          'cms-datepicker--large',
+          'cms-datepicker--medium',
           hasExplicitWidth && 'cms-datepicker--explicit-width',
           disabled && 'cms-datepicker--disabled',
           className

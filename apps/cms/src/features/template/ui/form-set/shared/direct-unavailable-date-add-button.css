@@ -5,6 +5,10 @@
   flex-wrap: wrap;
 }
 
+.direct-unavailable-date-add-button--chips {
+  display: contents;
+}
+
 .direct-unavailable-date-add-button__selected-dates {
   display: flex;
   padding: 4px 8px;
@@ -24,6 +28,57 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%; /* 21px */
+}
+
+.direct-unavailable-date-add-button__selected-date-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  order: 1;
+  flex: 0 0 100%;
+  margin-top: 10px;
+  gap: 8px;
+}
+
+.direct-unavailable-date-add-button__selected-date-chip {
+  display: flex;
+  padding: 4px 8px 4px 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--4, 4px);
+  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  background: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.1) 0%, rgba(61, 61, 61, 0.1) 100%),
+    #fff
+  );
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.direct-unavailable-date-add-button__selected-date-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.direct-unavailable-date-add-button__selected-date-remove svg {
+  display: block;
+  width: 16px;
+  height: 16px;
 }
 
 .direct-unavailable-date-modal__description {

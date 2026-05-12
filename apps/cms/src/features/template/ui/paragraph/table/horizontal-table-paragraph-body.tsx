@@ -519,12 +519,17 @@ export function HorizontalTableParagraphBody({
   )
   if (recruitFormInstructorBody != null) return recruitFormInstructorBody
 
-  const recruitFormVolunteerBody = renderRecruitFormVolunteerParagraphBody(p, recruitFormVolunteer)
+  const recruitFormVolunteerBody = renderRecruitFormVolunteerParagraphBody(
+    p,
+    recruitFormVolunteer,
+    programApplicationFormVolunteer
+  )
   if (recruitFormVolunteerBody != null) return recruitFormVolunteerBody
 
   const ujatRecruitFormVolunteerBody = renderUjatRecruitFormVolunteerParagraphBody(
     p,
-    ujatRecruitFormVolunteer
+    ujatRecruitFormVolunteer,
+    programApplicationFormVolunteer
   )
   if (ujatRecruitFormVolunteerBody != null) return ujatRecruitFormVolunteerBody
 

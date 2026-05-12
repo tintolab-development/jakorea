@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { ProgramApplicationFormVolunteerBodyOptions } from '@/features/template/ui/form-set/application-form/volunteer/paragraph-body'
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { UJAT_RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
 import { UjatRecruitVolunteerDetailInfoParagraph } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraphs/ujat-recruit-volunteer-detail-info-paragraph'
@@ -8,7 +9,8 @@ import { UjatRecruitVolunteerInterviewScheduleParagraph } from '@/features/templ
 /** 템플릿 편집기 — UJAT 프로그램 봉사자 모집 폼 시드 단락 본문 */
 export function renderUjatRecruitFormVolunteerParagraphBody(
   paragraph: HorizontalTableParagraph,
-  enabled: boolean | undefined
+  enabled: boolean | undefined,
+  volunteerOptions?: ProgramApplicationFormVolunteerBodyOptions
 ): ReactNode | null {
   if (!enabled) return null
   switch (paragraph.id) {
@@ -17,7 +19,11 @@ export function renderUjatRecruitFormVolunteerParagraphBody(
     case UJAT_RECRUIT_FORM_VOLUNTEER_IDS.detailInfo:
       return <UjatRecruitVolunteerDetailInfoParagraph />
     case UJAT_RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule:
-      return <UjatRecruitVolunteerInterviewScheduleParagraph />
+      return (
+        <UjatRecruitVolunteerInterviewScheduleParagraph
+          exceptionScheduleCount={volunteerOptions?.exceptionScheduleCount ?? 0}
+        />
+      )
     default:
       return null
   }

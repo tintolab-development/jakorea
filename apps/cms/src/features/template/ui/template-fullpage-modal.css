@@ -279,7 +279,9 @@
 }
 
 .template-modal-nav-item {
+  box-sizing: border-box;
   display: flex;
+  width: 100%;
   height: 44px;
   min-width: 120px;
   padding: 0 12px 0 14px;

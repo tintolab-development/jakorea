@@ -1,0 +1,132 @@
+/**
+ * 지급조서 확인 페이지
+ * - 참여기관 테이블 베이스 + program-list 스타일 토큰 래퍼
+ * - 루트: 높이는 콘텐츠에 맞춤 — 세로 스크롤은 layout-content
+ * - 흰 카드·테이블: 테이블 래퍼는 가로 스크롤만(넓은 컬럼), 세로는 페이지 스크롤
+ */
+.payment-orders-page {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.payment-orders-page__content-wrapper {
+  background: var(--color-bg-base);
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: var(--spacing-16) var(--spacing-24) var(--spacing-24);
+  border-radius: 12px;
+  box-shadow: 0 0 16px 0 var(--shadow-card-soft);
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* FilterTableLayout: content-wrapper가 이미 카드이므로 이중 그림자·배경 제거 */
+.payment-orders-page__content-wrapper .payment-orders-page__filter-list-layout.filter-table-layout {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.payment-orders-page__content-wrapper
+  .payment-orders-page__filter-list-layout.filter-table-layout
+  .table-filter-group__container {
+  margin-bottom: 0;
+}
+
+.payment-orders-page__content-wrapper
+  .payment-orders-page__filter-list-layout
+  .filter-table-layout__table {
+  flex: 0 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+/*
+ * 필터 ↔ 구분선 ↔ 테이블 헤더(레이블·버튼) 간격
+ * - 디바이더 위·아래 각 32px은 이 패딩만 사용
+ * - `participating-institutions-section__below-divider` 전역 margin-top:32px와 겹치면 하단이 64px로 보이므로 0으로 둠
+ */
+.payment-orders-page__content-wrapper
+  .payment-orders-page__filter-list-layout
+  .filter-table-layout__divider {
+  padding: var(--spacing-32) 0;
+}
+
+.payment-orders-page__content-wrapper
+  .payment-orders-page__filter-list-layout
+  .participating-institutions-section__below-divider {
+  margin-top: 0;
+}
+
+.payment-orders-page__content-wrapper
+  .payment-orders-page__filter-list-layout
+  .filter-table-layout__table:empty {
+  display: none;
+}
+
+/* 구 participating-institutions-section__filters 와 동일: 필터 슬롯 축소 방지 */
+.payment-orders-page__content-wrapper
+  .payment-orders-page__filter-list-layout
+  .filter-table-layout__filter {
+  flex-shrink: 0;
+}
+
+/*
+ * 프로그램별·강사별 목록: 동일 열 정의를 써도 fluid 기본(table-layout:auto)이면
+ * 셀 텍스트 길이에 따라 열 비율이 달라짐 → 한쪽만 고정 레이아웃으로 통일
+ */
+.payment-orders-page
+  .participating-institutions-section__table-wrap
+  .cms-data-table.cms-data-table--fluid
+  table.ant-table {
+  table-layout: fixed !important;
+}
+
+/* 필터: 노출 기준(라디오) ~ 프로그램명 간 과한 여백 완화 + 칸 간격 살짝 타이트 */
+.payment-orders-page .unified-filter-card__fields-shell {
+  margin-right: 8px;
+}
+
+.payment-orders-page .unified-filter-card__fields-inner > .ant-col:not(:last-child) {
+  margin-right: 8px;
+}
+
+/*
+ * ViewModeController 기본은 align-items: flex-end → 우측 토글(버튼)이 더 높을 때
+ * 좌측 제목이 하단 정렬되며 디바이더 직후~제목 사이에 빈 여백처럼 보임 → 수직 가운데 정렬
+ */
+.payment-orders-page__filter-list-layout .view-mode-controller__header {
+  align-items: center;
+}
+
+/* 리스트 뷰: 컬럼 헤더·본문(td) 텍스트 가운데 */
+.payment-orders-page .list-page-layout__table-shell .cms-data-table th.ant-table-cell,
+.payment-orders-page .list-page-layout__table-shell .cms-data-table td.ant-table-cell {
+  text-align: center !important;
+}
+
+/* 실적관리 리스트 셀 텍스트가 칼럼 너비를 넘지 않도록 말줄임 처리 */
+.payment-orders-page .list-page-layout__table-shell .cms-data-table table.ant-table {
+  table-layout: fixed !important;
+}
+
+.payment-orders-page .list-page-layout__table-shell .cms-data-table td.ant-table-cell {
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.payment-orders-page .list-page-layout__table-shell .cms-data-table td.ant-table-cell > * {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -2,8 +2,31 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.volunteer-interview-available-schedule__schedule-block {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   width: 100%;
+}
+
+.volunteer-interview-available-schedule__block-title.detail-info-form--text-bold {
+  margin-bottom: -8px;
+}
+
+.volunteer-interview-available-schedule__unavailable-row {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  width: 100%;
+  min-width: 0;
+}
+
+.volunteer-interview-available-schedule__unavailable-row > .cms-checkbox {
+  height: 40px;
 }
 
 .volunteer-interview-available-schedule__card-title-actions {
@@ -56,4 +79,15 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%; /* 27px */
+}
+
+.volunteer-interview-available-schedule__time-slots {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.volunteer-interview-available-schedule__time-slot {
+  padding: 0 12px;
 }

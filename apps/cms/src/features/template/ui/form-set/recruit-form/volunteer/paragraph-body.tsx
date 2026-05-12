@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { ProgramApplicationFormVolunteerBodyOptions } from '@/features/template/ui/form-set/application-form/volunteer/paragraph-body'
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
 import { RecruitFormVolunteerDetailInfoParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-detail-info-paragraph'
@@ -8,7 +9,8 @@ import { RecruitFormVolunteerInterviewScheduleParagraph } from '@/features/templ
 /** 템플릿 편집기 — 프로그램 봉사자 모집 폼 시드 단락 본문 */
 export function renderRecruitFormVolunteerParagraphBody(
   paragraph: HorizontalTableParagraph,
-  enabled: boolean | undefined
+  enabled: boolean | undefined,
+  volunteerOptions?: ProgramApplicationFormVolunteerBodyOptions
 ): ReactNode | null {
   if (!enabled) return null
   switch (paragraph.id) {
@@ -17,7 +19,11 @@ export function renderRecruitFormVolunteerParagraphBody(
     case RECRUIT_FORM_VOLUNTEER_IDS.detailInfo:
       return <RecruitFormVolunteerDetailInfoParagraph />
     case RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule:
-      return <RecruitFormVolunteerInterviewScheduleParagraph />
+      return (
+        <RecruitFormVolunteerInterviewScheduleParagraph
+          exceptionScheduleCount={volunteerOptions?.exceptionScheduleCount ?? 0}
+        />
+      )
     default:
       return null
   }

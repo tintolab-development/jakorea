@@ -17,6 +17,7 @@ import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/feat
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
+import { UJAT_RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/form-editor-left-panel.types'
@@ -271,7 +272,8 @@ export function withProgramApplicationFormVolunteerTitleTrailing(
   const opts = paragraphBodyOptions?.programApplicationFormVolunteer
   const isVolunteerInterviewSchedule =
     paragraph.id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule ||
-    paragraph.id === RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule
+    paragraph.id === RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule ||
+    paragraph.id === UJAT_RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule
 
   if (!isVolunteerInterviewSchedule || opts?.enabled !== true) {
     return heading
@@ -292,7 +294,10 @@ export function withProgramApplicationFormVolunteerTitleTrailing(
           size="medium"
           width={160}
           icon={<PlusOutlined aria-hidden />}
-          onClick={e => e.stopPropagation()}
+          onClick={e => {
+            e.stopPropagation()
+            opts?.onAddExceptionSchedule?.()
+          }}
         >
           예외 일정 추가
         </CmsButton>

@@ -1,4 +1,5 @@
 import type { UserInfoParagraph } from '@/features/template/model/writing-form-draft.schema'
+import { ParagraphChip } from '@/features/template/ui/paragraph/shared/paragraph-chip'
 import './user-info.css'
 
 const DEFAULT_USER_INFO_FIELDS: Array<{ key: string; label: string }> = [
@@ -57,20 +58,15 @@ export function UserInfo({
         .join(' ')}
     >
       {fields.map(field => (
-        <button
+        <ParagraphChip
           key={field.key}
-          type="button"
-          className={[
-            'user-info-grid__item',
-            selected.has(field.key) ? 'user-info-grid__item--selected' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
+          className="user-info-grid__item"
+          selected={selected.has(field.key)}
           onClick={() => onToggle(field.key)}
           disabled={!isEditMode}
         >
           {field.label}
-        </button>
+        </ParagraphChip>
       ))}
     </div>
   )

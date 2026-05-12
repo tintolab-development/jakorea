@@ -221,6 +221,7 @@ export function useProgramParticipantApplicationEditor(
   const [ujatGradeClassTimeBlockIds, setUjatGradeClassTimeBlockIds] = useState<string[]>(() => [
     crypto.randomUUID(),
   ])
+  const [volunteerExceptionScheduleCount, setVolunteerExceptionScheduleCount] = useState(0)
 
   const {
     openWritingUserPreview,
@@ -464,12 +465,26 @@ export function useProgramParticipantApplicationEditor(
           },
     [variant, onAddUnavailableDateRow]
   )
+  const onAddVolunteerExceptionSchedule = useCallback(() => {
+    setVolunteerExceptionScheduleCount(prev => prev + 1)
+  }, [])
+
   const programApplicationFormVolunteerOptions = useMemo(
     () =>
-      variant === 'volunteer' || variant === 'recruit-volunteer'
-        ? { enabled: true as const }
-        : { enabled: false as const },
-    [variant]
+      variant === 'volunteer' ||
+      variant === 'recruit-volunteer' ||
+      variant === 'ujat-recruit-volunteer'
+        ? {
+            enabled: true as const,
+            exceptionScheduleCount: volunteerExceptionScheduleCount,
+            onAddExceptionSchedule: onAddVolunteerExceptionSchedule,
+          }
+        : {
+            enabled: false as const,
+            exceptionScheduleCount: 0,
+            onAddExceptionSchedule: () => {},
+          },
+    [variant, volunteerExceptionScheduleCount, onAddVolunteerExceptionSchedule]
   )
 
   const writingPreviewSession = useMemo(

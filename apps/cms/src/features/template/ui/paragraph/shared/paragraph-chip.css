@@ -1,0 +1,52 @@
+.paragraph-chip {
+  width: 100%;
+  min-width: 0;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+
+.paragraph-chip--default {
+  min-height: 54px;
+  font-size: 16px;
+  line-height: 140%;
+}
+
+.paragraph-chip--compact {
+  height: 40px;
+  font-size: 15px;
+  line-height: 150%;
+}
+
+.paragraph-chip--interactive {
+  cursor: pointer;
+}
+
+.paragraph-chip--interactive:hover {
+  border-color: var(--color-mint-01, #01a1af);
+  background: rgba(1, 161, 175, 0.04);
+}
+
+.paragraph-chip--selected {
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--color-mint-01, #01a1af);
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+    #fff;
+  color: var(--color-mint-01, #01a1af);
+  font-weight: 600;
+}
+
+.paragraph-chip:disabled {
+  opacity: 1;
+}
