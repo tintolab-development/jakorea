@@ -129,9 +129,10 @@ export function useUjatProgramRegistrationEditor(active: boolean, previewHeaderT
   )
 
   useEffect(() => {
+    if (!active) return
     if (!isWritingUserPreviewOpen) return
     syncWritingUserPreviewSession(writingPreviewSession)
-  }, [isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
+  }, [active, isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
 
   const handlePreview = useCallback(() => {
     openWritingUserPreview(writingPreviewSession)
