@@ -64,12 +64,16 @@ type ProgramRegistrationBasicInfoParagraphProps = {
   participant: ProgramRegistrationParticipantState
   onIndividualChange: (checked: boolean) => void
   onOrganizationChange: (checked: boolean) => void
+  onTeacherInstructorChange: (checked: boolean) => void
+  onVolunteerChange: (checked: boolean) => void
 }
 
 export function ProgramRegistrationBasicInfoParagraph({
   participant,
   onIndividualChange,
   onOrganizationChange,
+  onTeacherInstructorChange,
+  onVolunteerChange,
 }: ProgramRegistrationBasicInfoParagraphProps) {
   const [businessField, setBusinessField] = useState('')
   const [partnerInvolvement, setPartnerInvolvement] = useState<'yes' | 'no'>('yes')
@@ -251,10 +255,20 @@ export function ProgramRegistrationBasicInfoParagraph({
                 >
                   {participantTypeLabel('school_institution')}
                 </CmsCheckbox>
-                <CmsCheckbox checkboxSize="large">
+                <CmsCheckbox
+                  checkboxSize="large"
+                  checked={participant.teacherInstructor === true}
+                  onChange={e => onTeacherInstructorChange(e.target.checked)}
+                >
                   {participantTypeLabel('teacher_instructor')}
                 </CmsCheckbox>
-                <CmsCheckbox checkboxSize="large">{participantTypeLabel('volunteer')}</CmsCheckbox>
+                <CmsCheckbox
+                  checkboxSize="large"
+                  checked={participant.volunteer === true}
+                  onChange={e => onVolunteerChange(e.target.checked)}
+                >
+                  {participantTypeLabel('volunteer')}
+                </CmsCheckbox>
               </div>
             }
             view="-"
@@ -266,7 +280,7 @@ export function ProgramRegistrationBasicInfoParagraph({
                 <CmsSelect
                   inputSize="medium"
                   placeholder="사업 분야를 선택하세요"
-                  width="100%"
+                  width={240}
                   options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
                   value={businessField || undefined}
                   onChange={v => setBusinessField(String(v ?? ''))}
@@ -285,7 +299,7 @@ export function ProgramRegistrationBasicInfoParagraph({
                   withAllOption={false}
                   inputSize="medium"
                   placeholder="후원사를 선택하세요"
-                  width="100%"
+                  width={240}
                   options={sponsorOptions}
                   value={sponsorId}
                   onChange={v => {
@@ -305,7 +319,7 @@ export function ProgramRegistrationBasicInfoParagraph({
                 <CmsSelect
                   inputSize="medium"
                   placeholder="후원사 담당자를 선택하세요"
-                  width="100%"
+                  width={240}
                   options={managerOptions}
                   value={managerContactId}
                   disabled={!sponsorId || managerOptions.length === 0}
@@ -331,7 +345,8 @@ export function ProgramRegistrationBasicInfoParagraph({
                 <CmsInput
                   inputSize="medium"
                   placeholder="교육이 진행될 상세 장소를 입력해 주세요"
-                  width={360}
+                  width="100%"
+                  style={{ flex: '1 1 0', minWidth: 0 }}
                 />
               </div>
             }
@@ -415,8 +430,9 @@ export function ProgramRegistrationBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
                   inputSize="medium"
-                  placeholder="교육 과정을 선택하세요"
-                  width="100%"
+                  placeholder="전체"
+                  withAllOption={false}
+                  width={240}
                   options={[...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]}
                   value={educationCourse || undefined}
                   onChange={v => setEducationCourse(String(v ?? ''))}
@@ -431,8 +447,9 @@ export function ProgramRegistrationBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
                   inputSize="medium"
-                  placeholder="IP Owned를 선택하세요"
-                  width="100%"
+                  placeholder="전체"
+                  withAllOption={false}
+                  width={240}
                   options={[...PROGRAM_REGISTRATION_IP_OWNED_OPTIONS]}
                   value={ipOwned || undefined}
                   onChange={v => setIpOwned(String(v ?? ''))}
@@ -449,8 +466,9 @@ export function ProgramRegistrationBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
                   inputSize="medium"
-                  placeholder="Course Delivered By를 선택하세요"
-                  width="100%"
+                  placeholder="전체"
+                  withAllOption={false}
+                  width={240}
                   options={[...PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS]}
                   value={courseDeliveredBy || undefined}
                   onChange={v => setCourseDeliveredBy(String(v ?? ''))}

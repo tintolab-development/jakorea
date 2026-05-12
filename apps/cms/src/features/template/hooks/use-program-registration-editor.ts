@@ -28,11 +28,14 @@ import type {
   ProgramRegistrationSessionRoundType,
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
 
 type ProgramRegistrationParticipantState = {
   individual: boolean
   organization: boolean
+  teacherInstructor: boolean
+  volunteer: boolean
 }
 
 function useProgramRegistrationMiddleActions(
@@ -148,6 +151,8 @@ export function useProgramRegistrationEditor(
   const [participant, setParticipant] = useState<ProgramRegistrationParticipantState>({
     individual: true,
     organization: false,
+    teacherInstructor: false,
+    volunteer: false,
   })
   const [programType, setProgramType] = useState<ProgramRegistrationType>('curriculum')
   const [sessionRoundType, setSessionRoundType] = useState<ProgramRegistrationSessionRoundType>('single')
@@ -177,8 +182,8 @@ export function useProgramRegistrationEditor(
     setSingleItemListActiveItemId(null)
     setParticipant(
       programRegistrationFormVariant === 'economy'
-        ? { individual: false, organization: true }
-        : { individual: true, organization: false }
+        ? { individual: false, organization: true, teacherInstructor: true, volunteer: false }
+        : { individual: true, organization: false, teacherInstructor: false, volunteer: false }
     )
     setSessionRoundType('single')
     setEducationFormScheduleDetail('common')
@@ -261,17 +266,25 @@ export function useProgramRegistrationEditor(
   }, [])
 
   const onIndividualChange = useCallback((checked: boolean) => {
-    setParticipant(() => {
-      if (checked) return { individual: true, organization: false }
-      return { individual: false, organization: true }
+    setParticipant(prev => {
+      if (checked) return { ...prev, individual: true, organization: false }
+      return { ...prev, individual: false, organization: true }
     })
   }, [])
 
   const onOrganizationChange = useCallback((checked: boolean) => {
-    setParticipant(() => {
-      if (checked) return { individual: false, organization: true }
-      return { individual: true, organization: false }
+    setParticipant(prev => {
+      if (checked) return { ...prev, individual: false, organization: true }
+      return { ...prev, individual: true, organization: false }
     })
+  }, [])
+
+  const onTeacherInstructorChange = useCallback((checked: boolean) => {
+    setParticipant(prev => ({ ...prev, teacherInstructor: checked }))
+  }, [])
+
+  const onVolunteerChange = useCallback((checked: boolean) => {
+    setParticipant(prev => ({ ...prev, volunteer: checked }))
   }, [])
 
   const onSessionRoundTypeChange = useCallback((value: ProgramRegistrationSessionRoundType) => {
@@ -333,7 +346,13 @@ export function useProgramRegistrationEditor(
   }, [])
 
   const onAddScheduleCurriculumGroup = useCallback(() => {
-    setScheduleCurriculumGroupCount(c => Math.min(c + 1, 8))
+    setScheduleCurriculumGroupCount(c =>
+      Math.min(c + 1, PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT)
+    )
+  }, [])
+
+  const onDeleteScheduleCurriculumGroup = useCallback((_groupIndex: number) => {
+    setScheduleCurriculumGroupCount(c => Math.max(1, c - 1))
   }, [])
 
   const onScheduleCurriculumPreEducationChange = useCallback((checked: boolean) => {
@@ -348,6 +367,8 @@ export function useProgramRegistrationEditor(
         onProgramTypeChange,
         onIndividualChange,
         onOrganizationChange,
+        onTeacherInstructorChange,
+        onVolunteerChange,
         sessionRoundType,
         onSessionRoundTypeChange,
         educationFormScheduleDetail,
@@ -370,6 +391,7 @@ export function useProgramRegistrationEditor(
         onAddScheduleCurriculumDetail,
         scheduleCurriculumGroupCount,
         onAddScheduleCurriculumGroup,
+        onDeleteScheduleCurriculumGroup,
         scheduleCurriculumPreEducation,
         onScheduleCurriculumPreEducationChange,
       }),
@@ -382,11 +404,14 @@ export function useProgramRegistrationEditor(
       onAddCurriculumSession,
       onAddScheduleCurriculumDetail,
       onAddScheduleCurriculumGroup,
+      onDeleteScheduleCurriculumGroup,
       onScheduleCurriculumPreEducationChange,
       onEducationFormScheduleDetailChange,
       onIpsScheduleDetailChange,
       onIndividualChange,
       onOrganizationChange,
+      onTeacherInstructorChange,
+      onVolunteerChange,
       onParticipationScheduleDetailChange,
       onProgramTypeChange,
       onSessionRoundTypeChange,

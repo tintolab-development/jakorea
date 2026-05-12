@@ -1,4 +1,3 @@
-import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { ProgramRegistrationIpsCategory } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import {
@@ -77,7 +76,6 @@ export function ProgramRegistrationIpsTypeFields({
         disabled={primaryDisabled}
         onChange={handleCategoryChange}
       />
-      <DetailInfoForm.InputsSeparator />
       <CmsSelect
         inputSize="medium"
         withAllOption={false}

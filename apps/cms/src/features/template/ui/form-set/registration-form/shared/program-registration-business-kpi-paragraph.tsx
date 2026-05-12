@@ -9,6 +9,12 @@ export type ProgramRegistrationBusinessKpiParagraphProps = {
   /** 교육진행자 최종 인원 — 봉사자 입력란 */
   volunteerDisabled?: boolean
   volunteerPlaceholder?: string
+  /** 최종 파견 학교 수 입력란 */
+  dispatchedSchoolDisabled?: boolean
+  dispatchedSchoolPlaceholder?: string
+  /** 최종 파견 학급 수 입력란 */
+  dispatchedClassDisabled?: boolean
+  dispatchedClassPlaceholder?: string
 }
 
 export function ProgramRegistrationBusinessKpiParagraph({
@@ -16,6 +22,10 @@ export function ProgramRegistrationBusinessKpiParagraph({
   instructorPlaceholder = '목표값 입력',
   volunteerDisabled = false,
   volunteerPlaceholder = '목표값 입력',
+  dispatchedSchoolDisabled = false,
+  dispatchedSchoolPlaceholder = '목표값 입력',
+  dispatchedClassDisabled = false,
+  dispatchedClassPlaceholder = '목표값 입력',
 }: ProgramRegistrationBusinessKpiParagraphProps = {}) {
   return (
     <DetailInfoForm
@@ -57,12 +67,26 @@ export function ProgramRegistrationBusinessKpiParagraph({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="최종 파견 학교 수"
-          edit={<CmsInput inputSize="medium" placeholder="목표값 입력" width={120} />}
+          edit={
+            <CmsInput
+              disabled={dispatchedSchoolDisabled}
+              inputSize="medium"
+              placeholder={dispatchedSchoolPlaceholder}
+              width={120}
+            />
+          }
           view="-"
         />
         <DetailInfoForm.Field
           label="최종 파견 학급 수"
-          edit={<CmsInput inputSize="medium" placeholder="목표값 입력" width={120} />}
+          edit={
+            <CmsInput
+              disabled={dispatchedClassDisabled}
+              inputSize="medium"
+              placeholder={dispatchedClassPlaceholder}
+              width={120}
+            />
+          }
           view="-"
         />
       </DetailInfoForm.Row>

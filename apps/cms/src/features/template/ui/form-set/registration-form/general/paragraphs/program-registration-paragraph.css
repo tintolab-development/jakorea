@@ -108,3 +108,15 @@
   width: 100%;
   min-width: 0;
 }
+
+.program-registration-schedule-curriculum__time-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.program-registration-schedule-curriculum__time-group-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

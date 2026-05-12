@@ -2,10 +2,12 @@ import { Fragment, useState } from 'react'
 import type { RadioChangeEvent } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { ItemDeleteButton } from '@/features/template/ui/paragraph/shared/item-delete-button'
 import type {
   ProgramRegistrationScheduleDetailKind,
   ProgramRegistrationSessionRoundType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
@@ -43,13 +45,35 @@ function isScheduleMultiAllPerSchedule(
   )
 }
 
-function ScheduleCurriculumGroupTimeRow({ groupLetter }: { groupLetter: string }) {
-  const [value, setValue] = useState<Dayjs | null>(null)
-
+function ScheduleCurriculumGroupTimeRow({
+  groupLetter,
+  showGroupLabel,
+  value,
+  onChange,
+  onDelete,
+}: {
+  groupLetter: string
+  showGroupLabel: boolean
+  value: Dayjs | null
+  onChange: (value: Dayjs | null) => void
+  onDelete?: () => void
+}) {
   return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-      그룹 {groupLetter}
-      <ParagraphTimePicker value={value} onChange={setValue} placeholder="시간 선택" width={200} />
+    <div className="program-registration-schedule-curriculum__time-group">
+      {showGroupLabel ? `그룹 ${groupLetter}` : null}
+      <div className="program-registration-schedule-curriculum__time-group-control">
+        <ParagraphTimePicker value={value} onChange={onChange} placeholder="시간 선택" width={200} />
+        {onDelete ? (
+          <ItemDeleteButton
+            className="item-delete-button"
+            aria-label={`그룹 ${groupLetter} 삭제`}
+            onClick={event => {
+              event.stopPropagation()
+              onDelete()
+            }}
+          />
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -62,6 +86,7 @@ const IPS_PREPARE_NONE_VALUE: ProgramRegistrationIpsTypeValue = {
 export type ProgramRegistrationEducationScheduleCurriculumParagraphProps = {
   scheduleDetailCount: number
   scheduleGroupCount: number
+  onDeleteScheduleCurriculumGroup: (groupIndex: number) => void
   /** 프로그램 유형 설정에서 IPS 유형이「일정 별 상이」일 때만 (단일·일부 복수 조합) 세부 일정 하단에 IPS 행 */
   ipsPerSchedule?: boolean
   sessionRoundType: ProgramRegistrationSessionRoundType
@@ -76,6 +101,7 @@ export type ProgramRegistrationEducationScheduleCurriculumParagraphProps = {
 export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   scheduleDetailCount,
   scheduleGroupCount,
+  onDeleteScheduleCurriculumGroup,
   ipsPerSchedule = false,
   sessionRoundType,
   participantOrganization,
@@ -85,7 +111,10 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   scheduleCurriculumPreEducation = false,
 }: ProgramRegistrationEducationScheduleCurriculumParagraphProps) {
   const detailCount = Math.max(1, scheduleDetailCount)
-  const groupCount = Math.max(1, scheduleGroupCount)
+  const groupCount = Math.min(
+    Math.max(1, scheduleGroupCount),
+    PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
+  )
   const multiAllPer = isScheduleMultiAllPerSchedule(
     sessionRoundType,
     educationFormScheduleDetail,
@@ -97,6 +126,9 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     Record<number, ProgramRegistrationIpsTypeValue>
   >({})
   const [scheduleDateByDetail, setScheduleDateByDetail] = useState<Record<number, Dayjs | null>>({})
+  const [groupTimeByDetail, setGroupTimeByDetail] = useState<Record<number, Array<Dayjs | null>>>(
+    {}
+  )
   const [educationFormByDetail, setEducationFormByDetail] = useState<Record<number, string>>({})
   const [participationByDetail, setParticipationByDetail] = useState<Record<number, string>>({})
 
@@ -130,6 +162,29 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
 
   const onParticipationRadioChange = (detailIndex: number) => (e: RadioChangeEvent) => {
     setParticipationByDetail(prev => ({ ...prev, [detailIndex]: String(e.target.value) }))
+  }
+
+  const groupTimeValue = (detailIndex: number, groupIndex: number) =>
+    groupTimeByDetail[detailIndex]?.[groupIndex] ?? null
+
+  const setGroupTime = (detailIndex: number, groupIndex: number, value: Dayjs | null) => {
+    setGroupTimeByDetail(prev => {
+      const nextValues = [...(prev[detailIndex] ?? [])]
+      nextValues[groupIndex] = value
+      return { ...prev, [detailIndex]: nextValues }
+    })
+  }
+
+  const deleteScheduleGroup = (groupIndex: number) => {
+    setGroupTimeByDetail(prev =>
+      Object.fromEntries(
+        Object.entries(prev).map(([detailIndex, values]) => [
+          detailIndex,
+          values.filter((_, index) => index !== groupIndex),
+        ])
+      )
+    )
+    onDeleteScheduleCurriculumGroup(groupIndex)
   }
 
   const multiRowPlan =
@@ -291,7 +346,13 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                           return (
                             <Fragment key={`${n}-${letter}`}>
                               {gi > 0 ? <DetailInfoForm.InputsSeparator /> : null}
-                              <ScheduleCurriculumGroupTimeRow groupLetter={letter} />
+                              <ScheduleCurriculumGroupTimeRow
+                                groupLetter={letter}
+                                showGroupLabel={groupCount > 1}
+                                value={groupTimeValue(n, gi)}
+                                onChange={value => setGroupTime(n, gi, value)}
+                                onDelete={gi > 0 ? () => deleteScheduleGroup(gi) : undefined}
+                              />
                             </Fragment>
                           )
                         })}

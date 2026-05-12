@@ -13,6 +13,7 @@ import {
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/ujat-program-application-form-institution-draft'
 import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
+import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
@@ -88,9 +89,19 @@ export function withProgramRegistrationCurriculumTitleTrailing(
             variant="secondary"
             size="medium"
             width={160}
+            disabled={
+              pr.scheduleCurriculumGroupCount >=
+              PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
+            }
             icon={<ClockCircleOutlined aria-hidden />}
             onClick={e => {
               e.stopPropagation()
+              if (
+                pr.scheduleCurriculumGroupCount >=
+                PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
+              ) {
+                return
+              }
               pr.onAddScheduleCurriculumGroup()
             }}
           >

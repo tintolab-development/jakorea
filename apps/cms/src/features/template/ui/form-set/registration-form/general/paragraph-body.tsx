@@ -25,9 +25,13 @@ export type ProgramRegistrationSessionRoundType = 'single' | 'multi'
 /** 복수 회차 시 교육 형태·참여 방식·IPS: 일정 공통 vs 차시별 입력 */
 export type ProgramRegistrationScheduleDetailKind = 'common' | 'perSchedule'
 
+export const PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT = 4
+
 export interface ProgramRegistrationParticipantState {
   individual: boolean
   organization: boolean
+  teacherInstructor?: boolean
+  volunteer?: boolean
 }
 
 export interface ProgramRegistrationParagraphBodyOptions {
@@ -36,6 +40,8 @@ export interface ProgramRegistrationParagraphBodyOptions {
   onProgramTypeChange: (value: ProgramRegistrationType) => void
   onIndividualChange: (checked: boolean) => void
   onOrganizationChange: (checked: boolean) => void
+  onTeacherInstructorChange: (checked: boolean) => void
+  onVolunteerChange: (checked: boolean) => void
   sessionRoundType: ProgramRegistrationSessionRoundType
   onSessionRoundTypeChange: (value: ProgramRegistrationSessionRoundType) => void
   educationFormScheduleDetail: ProgramRegistrationScheduleDetailKind
@@ -62,6 +68,7 @@ export interface ProgramRegistrationParagraphBodyOptions {
   /** 일정형 — 진행 그룹(A,B,…) 수·추가 */
   scheduleCurriculumGroupCount: number
   onAddScheduleCurriculumGroup: () => void
+  onDeleteScheduleCurriculumGroup: (groupIndex: number) => void
   /** 일정형(복수·일정 별 상이 조합) 카드 헤더 — 사전 교육 토글 */
   scheduleCurriculumPreEducation: boolean
   onScheduleCurriculumPreEducationChange: (checked: boolean) => void
@@ -84,13 +91,22 @@ export function renderProgramRegistrationParagraphBody(
           participant={options.participant}
           onIndividualChange={options.onIndividualChange}
           onOrganizationChange={options.onOrganizationChange}
+          onTeacherInstructorChange={options.onTeacherInstructorChange}
+          onVolunteerChange={options.onVolunteerChange}
         />
       )
     case PROGRAM_REGISTRATION_IDS.businessKpi:
       return options?.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationBusinessKpiParagraph />
       ) : (
-        <ProgramRegistrationBusinessKpiParagraph />
+        <ProgramRegistrationBusinessKpiParagraph
+          instructorDisabled={options?.participant.teacherInstructor !== true}
+          instructorPlaceholder={
+            options?.participant.teacherInstructor === true ? '목표값 입력' : '해당 없음'
+          }
+          volunteerDisabled={options?.participant.volunteer !== true}
+          volunteerPlaceholder={options?.participant.volunteer === true ? '목표값 입력' : '해당 없음'}
+        />
       )
     case PROGRAM_REGISTRATION_IDS.wageInfo:
       return options?.programRegistrationFormVariant === 'economy' ? (
@@ -117,9 +133,10 @@ export function renderProgramRegistrationParagraphBody(
     case PROGRAM_REGISTRATION_IDS.educationCurriculum:
       return options == null ? null : options.programType === 'schedule' ? (
         <ProgramRegistrationEducationScheduleCurriculumParagraph
-          key={`pr-schedule-curriculum-${options.scheduleCurriculumDetailCount}-${options.scheduleCurriculumGroupCount}-${options.sessionRoundType}-${options.educationFormScheduleDetail}-${options.participationScheduleDetail}-${options.ipsScheduleDetail}-${options.participant.organization ? 'org' : 'ind'}`}
+          key={`pr-schedule-curriculum-${options.sessionRoundType}-${options.educationFormScheduleDetail}-${options.participationScheduleDetail}-${options.ipsScheduleDetail}-${options.participant.organization ? 'org' : 'ind'}`}
           scheduleDetailCount={options.scheduleCurriculumDetailCount}
           scheduleGroupCount={options.scheduleCurriculumGroupCount}
+          onDeleteScheduleCurriculumGroup={options.onDeleteScheduleCurriculumGroup}
           ipsPerSchedule={options.ipsScheduleDetail === 'perSchedule'}
           sessionRoundType={options.sessionRoundType}
           participantOrganization={options.participant.organization}
