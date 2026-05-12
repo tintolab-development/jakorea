@@ -41,7 +41,7 @@
   min-width: 0;
   width: auto;
   max-width: 100%;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .paragraph-card__header-title-row > .paragraph-card__action-slot-wrap {

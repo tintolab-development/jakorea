@@ -7,12 +7,21 @@ import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/te
 interface BasicInfoParagraphProps {
   values?: Partial<PaymentStatementBasicInfoAutofillValues>
   displayMode?: PaymentStatementIssuanceParagraphDisplayMode
+  onlyPaymentPurposeLocked?: boolean
 }
 
-export function BasicInfoParagraph({ values, displayMode = 'editor' }: BasicInfoParagraphProps) {
+export function BasicInfoParagraph({
+  values,
+  displayMode = 'editor',
+  onlyPaymentPurposeLocked,
+}: BasicInfoParagraphProps) {
   return (
     <div className="form-editor-body payment-statement-basic-info-detail-form-host">
-      <PaymentStatementBasicInfoDetailForm values={values} displayMode={displayMode} />
+      <PaymentStatementBasicInfoDetailForm
+        values={values}
+        displayMode={displayMode}
+        onlyPaymentPurposeLocked={onlyPaymentPurposeLocked}
+      />
     </div>
   )
 }

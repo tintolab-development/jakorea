@@ -128,7 +128,6 @@ const surveyDefinitions: TemplateDefinition[] = [
 ]
 
 const agreementDefinitions: TemplateDefinition[] = [
-  { id: 'agreement-personal', templateName: '개인정보 수집 동의서', variant: 'default' },
   { id: 'agreement-third-party', templateName: '지급조서 사전 동의서', variant: 'default' },
   { id: 'agreement-crime', templateName: '성범죄 경력조회 동의서', variant: 'default' },
   { id: 'agreement-notice', templateName: '행정정보 공동이용 사전 동의서', variant: 'default' },

@@ -143,15 +143,26 @@
 }
 
 /* unified-filter-card의 전역 select min-width(280px)가 table-filter-group에서 gap을 먹지 않도록 무효화 */
-.table-filter-group__fields-inner .unified-filter-card__field--select,
+/* 단일 셀렉트: 래퍼·컨트롤 상한 260. 이중 셀렉트 래퍼(field--select)는 아래 :has 규칙으로 분리(260×1 적용 시 Col 대비 빈 간격 발생) */
+.table-filter-group__fields-inner .unified-filter-card__field--select:not(:has(.table-filter-group__select-pair-selects)),
 .table-filter-group__fields-inner .cms-select,
 .table-filter-group__fields-inner .ant-select,
-.table-filter-group__grid-cell .unified-filter-card__field--select,
+.table-filter-group__grid-cell .unified-filter-card__field--select:not(:has(.table-filter-group__select-pair-selects)),
 .table-filter-group__grid-cell .cms-select,
 .table-filter-group__grid-cell .ant-select {
   min-width: 0 !important;
   width: 100% !important;
   max-width: min(100%, var(--filter-control-max-width, 260px)) !important;
+}
+
+.table-filter-group__fields-inner .unified-filter-card__field--select:has(.table-filter-group__select-pair-selects),
+.table-filter-group__grid-cell .unified-filter-card__field--select:has(.table-filter-group__select-pair-selects) {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px))
+  ) !important;
 }
 
 /* 단일 날짜: 컨트롤 하나당 상한 */

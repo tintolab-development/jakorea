@@ -437,7 +437,8 @@ export function paragraphEditableHeading(
         p.variant === 'horizontal_table' &&
         editorKind === 'horizontal_table'
       const titleIsEditMode = horizontalLockedHeaderEditable
-      const descriptionIsEditMode = horizontalLockedHeaderEditable
+      /* 잠금 시드: 설명란을 선택 전후로 view↔edit 전환하지 않아 카드 헤더 점프 완화 */
+      const descriptionIsEditMode = false
       return {
         isEditMode: false,
         titleIsEditMode,

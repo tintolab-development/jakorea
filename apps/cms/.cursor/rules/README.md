@@ -50,6 +50,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 
 - [Mock data](./data/mock-data.md)  
 - [API spec (mock)](./data/api-spec-mock.md)  
+- [API routes & apiClient (실 연동)](./data/api-routes-and-client.md) — 경로 상수, `apiClient`, env, 점진 mock 전환  
 - [API spec detailed](../../docs/api/api-spec-mock-detailed.md)  
 - [API spec extended](../../docs/api/api-spec-mock-extended.md)  
 

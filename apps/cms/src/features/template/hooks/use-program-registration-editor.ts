@@ -329,13 +329,13 @@ export function useProgramRegistrationEditor(
           return {
             ...ht,
             paragraphTitle: '교육 진행 (일정형)',
-            paragraphDescription: '세부 일정 별 정보를 입력해 주세요',
+            paragraphDescription: '',
           }
         }
         return {
           ...ht,
           paragraphTitle: '교육 진행 (커리큘럼)',
-          paragraphDescription: '차시 별 정보를 입력해 주세요',
+          paragraphDescription: '',
         }
       }),
     }))

@@ -6,6 +6,8 @@ category: data
 
 # API spec summary (mock era)
 
+실 백엔드 연동·경로·`apiClient` 규칙은 [api-routes-and-client.md](./api-routes-and-client.md) 및 [api-routes-and-client.md (docs)](../../../docs/api/api-routes-and-client.md) 를 참고한다.
+
 > Full contracts live in [api-spec-mock-detailed.md](../../../docs/api/api-spec-mock-detailed.md) and [api-spec-mock-extended.md](../../../docs/api/api-spec-mock-extended.md).
 
 ## Global

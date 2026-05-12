@@ -3,18 +3,73 @@
  * Phase 4.1.1: 사용자 인증 시스템
  */
 
-import type { LoginRequest, LoginResponse, User } from '@/types/user'
+import type { LoginRequest, LoginResponse, ProgramRole, User } from '@/types/user'
 import type { MfaState } from '@/types/mfa'
-import { validateLogin, getUserByPhone } from '@/data/mock/users'
+import type { AdminLoginMeta, AdminLoginSuccessData } from '@/features/auth/model/admin-login-api.types'
+import { fetchAdminLogin } from '@/features/auth/api/admin-login-fetcher'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import { validateLogin, getUserByPhone, mockUsers } from '@/data/mock/users'
 import { createTotpMfaState } from '@/data/mock/mfa'
+
+/** 실 API 세션 토큰 접두사 — `validateToken`·auth-store 갱신 시 mock JWT 와 구분 */
+export const CMS_REMOTE_SESSION_PREFIX = 'cms-remote-'
+
+function parseProgramRole(role: string): ProgramRole {
+  if (role === 'OWNER' || role === 'PARTNER' || role === 'ASSISTANT') {
+    return role
+  }
+  return 'OWNER'
+}
+
+function mapRemoteAdminLoginToLoginResponse(
+  data: AdminLoginSuccessData,
+  meta?: AdminLoginMeta
+): LoginResponse {
+  const now = new Date().toISOString()
+  const serverTime = meta?.serverTime
+  const expiresAt =
+    serverTime !== undefined
+      ? new Date(new Date(serverTime).getTime() + 24 * 60 * 60 * 1000).toISOString()
+      : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+
+  const user: Omit<User, 'password'> = {
+    id: data.userId,
+    email: data.userEmail,
+    name: data.userName,
+    role: 'ADMIN',
+    isActive: true,
+    createdAt: serverTime ?? now,
+    updatedAt: serverTime ?? now,
+    lastLoginAt: serverTime ?? now,
+    programRoles: {
+      [data.programId]: parseProgramRole(data.role),
+    },
+  }
+
+  const token = `${CMS_REMOTE_SESSION_PREFIX}${data.userId}-${Date.now()}`
+
+  return { user, token, expiresAt }
+}
 
 /**
  * 로그인 API
  * Phase 0.5.1: MFA 지원 추가
+ * 관리자 이메일 로그인: `VITE_REAL_API_MODULES`에 `adminAuth`가 있을 때만 `fetchAdminLogin`; 그 외는 mock(`validateLogin` + MFA).
  */
 export async function login(
   request: LoginRequest
 ): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
+  if (isRealApiModuleEnabled('adminAuth')) {
+    const { data, meta } = await fetchAdminLogin(request)
+    return mapRemoteAdminLoginToLoginResponse(data, meta)
+  }
+
+  if (import.meta.env.DEV) {
+    const hintRemote =
+      '실 관리자 로그인 API를 쓰려면 `.env`에 `VITE_API_SERVER` 또는 `VITE_API_BASE_URL` 과 `VITE_REAL_API_MODULES=adminAuth` 를 넣고 dev 재시작하세요. (미설정이면 mock 로그인 + MFA 유지)'
+    console.info(`[CMS auth] Mock 로그인 — 브라우저 Network 에는 요청이 없습니다. ${hintRemote}`)
+  }
+
   // Mock: 실제 API 호출 대신 지연 시간 시뮬레이션
   await new Promise(resolve => setTimeout(resolve, 500))
 
@@ -60,6 +115,18 @@ export async function validateToken(token: string): Promise<Omit<User, 'password
   // Mock: 토큰에서 사용자 ID 추출
   await new Promise(resolve => setTimeout(resolve, 100))
 
+  if (token.startsWith(CMS_REMOTE_SESSION_PREFIX)) {
+    if (typeof window === 'undefined') return null
+    const userStr = localStorage.getItem('auth_user')
+    if (!userStr) return null
+    try {
+      const user = JSON.parse(userStr) as Omit<User, 'password'>
+      return user?.isActive ? user : null
+    } catch {
+      return null
+    }
+  }
+
   const match = token.match(/mock-jwt-token-(.+?)-/)
   if (!match) {
     return null
@@ -93,9 +160,6 @@ export async function getCurrentUser(): Promise<Omit<User, 'password'> | null> {
 
   return validateToken(token)
 }
-
-// Mock users import
-import { mockUsers } from '@/data/mock/users'
 
 /**
  * 소셜 로그인 제공자 타입

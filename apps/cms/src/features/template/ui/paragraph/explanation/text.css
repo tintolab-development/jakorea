@@ -1,3 +1,17 @@
+/* 지급조서 사전 동의서 — 「개인정보 수집‧이용 및 제공 동의서」 본문(static-body, \\n + pre-line) */
+.explanation-text__static-body {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 30px */
+  white-space: pre-line;
+}
+
+/* 사전 동의서 고정 동의·최종 확인 문구 바: `payment-pre-consent-sheet-bar.css` */
+
 /* 동의서 설명글_텍스트형 — 작성(authoring) + 구조 잠금 단락 본문: Disabled 입력 영역 placeholder
  *
  * `bodyText`가 비어있으면 텍스트 없는 빈 박스(이용기관 명칭),

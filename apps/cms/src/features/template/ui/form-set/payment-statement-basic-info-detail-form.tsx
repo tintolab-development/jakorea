@@ -1,8 +1,10 @@
 /**
  * 지급조서(발급용) — 「지급조서」 기본 정보 블록 본문.
- * DetailInfoForm 격자 + 비활성 입력 UI (발급 시 회원 정보 자동 기입 가정).
+ * DetailInfoForm 격자 + 기본은 비활성 입력(발급 시 자동 기입 가정).
+ * `onlyPaymentPurposeLocked`: 템플릿 편집(지급조서 사전 동의 등)에서 지급 목적만 잠그고 나머지는 편집 가능.
  */
 
+import { useEffect, useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
@@ -58,6 +60,11 @@ export type PaymentStatementBasicInfoDetailFormProps = {
   values?: Partial<PaymentStatementBasicInfoAutofillValues>
   className?: string
   displayMode?: PaymentStatementIssuanceParagraphDisplayMode
+  /**
+   * true: 편집 모드에서 성명·주소 등은 입력 가능, 「지급 목적」만 비활성(고정 문구).
+   * false: 발급용과 같이 전 필드 비활성.
+   */
+  onlyPaymentPurposeLocked?: boolean
 }
 
 function textOrDash(value: string): string {
@@ -75,9 +82,21 @@ export function PaymentStatementBasicInfoDetailForm({
   values: valuesProp,
   className,
   displayMode = 'editor',
+  onlyPaymentPurposeLocked = false,
 }: PaymentStatementBasicInfoDetailFormProps) {
-  const v = { ...EMPTY, ...valuesProp }
   const isDocumentMode = displayMode === 'document'
+  const merged = useMemo(() => ({ ...EMPTY, ...valuesProp }), [valuesProp])
+  const editable = onlyPaymentPurposeLocked && !isDocumentMode
+  const [local, setLocal] = useState<PaymentStatementBasicInfoAutofillValues>(() => merged)
+  useEffect(() => {
+    if (editable) setLocal(merged)
+  }, [editable, merged])
+
+  const v = editable ? local : merged
+  const allAutofillLocked = !editable
+  const patch = (next: Partial<PaymentStatementBasicInfoAutofillValues>) => {
+    if (editable) setLocal(prev => ({ ...prev, ...next }))
+  }
 
   const rowDash = <span className="payment-statement-basic-info-detail-form__dash">-</span>
   const residentNumber = [v.residentFront, v.residentBack].filter(Boolean).join('-')
@@ -102,10 +121,11 @@ export function PaymentStatementBasicInfoDetailForm({
           view={textOrDash(v.nameKo)}
           edit={
             <CmsInput
-              disabled
+              disabled={allAutofillLocked}
               inputSize="large"
               placeholder="한글 성명"
               value={v.nameKo}
+              onChange={e => patch({ nameKo: e.target.value })}
               width="100%"
               aria-label="한글 성명 (발급 시 자동 입력)"
             />
@@ -116,10 +136,11 @@ export function PaymentStatementBasicInfoDetailForm({
           view={textOrDash(v.nameEn)}
           edit={
             <CmsInput
-              disabled
+              disabled={allAutofillLocked}
               inputSize="large"
               placeholder="영문 성명"
               value={v.nameEn}
+              onChange={e => patch({ nameEn: e.target.value })}
               width="100%"
               aria-label="영문 성명 (발급 시 자동 입력)"
             />
@@ -134,19 +155,21 @@ export function PaymentStatementBasicInfoDetailForm({
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap payment-statement-basic-info-detail-form__resident">
               <CmsInput
-                disabled
+                disabled={allAutofillLocked}
                 inputSize="large"
                 placeholder="주민등록 앞 6자리"
                 value={v.residentFront}
+                onChange={e => patch({ residentFront: e.target.value })}
                 maxLength={6}
                 aria-label="주민등록번호 앞자리"
               />
               {rowDash}
               <CmsInput
-                disabled
+                disabled={allAutofillLocked}
                 inputSize="large"
                 placeholder="주민등록 뒤 7자리"
                 value={v.residentBack}
+                onChange={e => patch({ residentBack: e.target.value })}
                 maxLength={7}
                 aria-label="주민등록번호 뒷자리"
               />
@@ -159,17 +182,23 @@ export function PaymentStatementBasicInfoDetailForm({
           edit={
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__affiliation">
               <CmsSelect
-                disabled
+                disabled={allAutofillLocked}
                 inputSize="medium"
                 placeholder="소속"
                 withAllOption={false}
                 options={AFFILIATION_OPTIONS}
                 value={v.affiliation || undefined}
+                onChange={next => patch({ affiliation: (next as string) ?? '' })}
                 width={221}
                 aria-label="소속 (발급 시 자동 입력)"
               />
               <DetailInfoForm.InputsSeparator />
-              <CmsCheckbox disabled checked={v.noAffiliation} checkboxSize="large">
+              <CmsCheckbox
+                disabled={allAutofillLocked}
+                checked={v.noAffiliation}
+                onChange={e => patch({ noAffiliation: e.target.checked })}
+                checkboxSize="large"
+              >
                 소속 없음
               </CmsCheckbox>
             </div>
@@ -185,21 +214,23 @@ export function PaymentStatementBasicInfoDetailForm({
           edit={
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__address">
               <CmsInput
-                disabled
+                disabled={allAutofillLocked}
                 inputSize="large"
                 icon={<SearchOutlined aria-hidden />}
                 placeholder="건물명, 도로명 또는 지번"
                 value={v.addressRoad}
+                onChange={e => patch({ addressRoad: e.target.value })}
                 width="100%"
                 style={{ flex: '1.2 1 0', minWidth: 0 }}
                 aria-label="도로명·지번 주소 (발급 시 자동 입력)"
               />
               <DetailInfoForm.InputsSeparator />
               <CmsInput
-                disabled
+                disabled={allAutofillLocked}
                 inputSize="large"
                 placeholder="상세 주소"
                 value={v.addressDetail}
+                onChange={e => patch({ addressDetail: e.target.value })}
                 width="100%"
                 style={{ flex: '1 1 0', minWidth: 0 }}
                 aria-label="상세 주소 (발급 시 자동 입력)"
@@ -217,29 +248,32 @@ export function PaymentStatementBasicInfoDetailForm({
           edit={
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__account">
               <CmsSelect
-                disabled
+                disabled={allAutofillLocked}
                 inputSize="medium"
                 placeholder="은행명"
                 withAllOption={false}
                 options={BANK_OPTIONS}
                 value={v.bankName || undefined}
+                onChange={next => patch({ bankName: (next as string) ?? '' })}
                 width={200}
                 aria-label="은행명 (발급 시 자동 입력)"
               />
               <CmsInput
-                disabled
+                disabled={allAutofillLocked}
                 inputSize="medium"
                 placeholder="계좌번호(숫자만)"
                 value={v.accountNumber}
+                onChange={e => patch({ accountNumber: e.target.value })}
                 width={200}
                 aria-label="계좌번호 (발급 시 자동 입력)"
               />
               <DetailInfoForm.InputsSeparator />
               <CmsInput
-                disabled
+                disabled={allAutofillLocked}
                 inputSize="medium"
                 placeholder="예금주명"
                 value={v.accountHolder}
+                onChange={e => patch({ accountHolder: e.target.value })}
                 width={200}
                 aria-label="예금주명 (발급 시 자동 입력)"
               />
@@ -260,7 +294,7 @@ export function PaymentStatementBasicInfoDetailForm({
               placeholder="강사비 또는 활동비 지급"
               value={v.paymentPurpose}
               width="100%"
-              aria-label="지급 목적 (발급 시 자동 입력)"
+              aria-label="지급 목적 (고정 문구)"
             />
           }
         />

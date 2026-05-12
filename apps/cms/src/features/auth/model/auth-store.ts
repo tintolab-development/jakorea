@@ -6,7 +6,11 @@
 import { create } from 'zustand'
 import type { User, LoginRequest } from '@/types/user'
 import type { MfaState } from '@/types/mfa'
-import { login as loginApi, validateToken } from '@/entities/user/api/auth-service'
+import {
+  CMS_REMOTE_SESSION_PREFIX,
+  login as loginApi,
+  validateToken,
+} from '@/entities/user/api/auth-service'
 import { updateMockUserById } from '@/data/mock/users'
 
 function elevateAdminToMaster(user: Omit<User, 'password'>): Omit<User, 'password'> {
@@ -391,8 +395,10 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         // Mock: 토큰 갱신 시뮬레이션
         await new Promise(resolve => setTimeout(resolve, 300))
 
-        // 새 토큰 생성
-        const newToken = `mock-jwt-token-${state.user.id}-${Date.now()}`
+        // 새 토큰 생성 — 실 API 세션(`cms-remote-`)은 접두사 유지 (validateToken·mock 유저와 호환)
+        const newToken = state.token.startsWith(CMS_REMOTE_SESSION_PREFIX)
+          ? `${CMS_REMOTE_SESSION_PREFIX}${state.user.id}-${Date.now()}`
+          : `mock-jwt-token-${state.user.id}-${Date.now()}`
         const newExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24시간 후
 
         // localStorage 업데이트

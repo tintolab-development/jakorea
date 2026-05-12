@@ -34,6 +34,12 @@
   min-height: 1.25em;
 }
 
+/* 제목 줄: view(텍스트)·edit(ant borderless 인풋) 전환 시 세로 정렬·최소 높이를 맞춰 단락 카드 헤더 점프 완화 */
+.form-editor-card .paragraph-input--title .paragraph-input__row {
+  min-height: 34px;
+  align-items: center;
+}
+
 /* 푸터 좌측 토글(답변 필수·하단 설명 등)이 우측 액션과 flex 경쟁 시 폭 0으로 사라지지 않게 */
 .form-editor-card .paragraph-card__toggles {
   flex-shrink: 0;
@@ -175,17 +181,6 @@
   flex-direction: column;
   width: 100%;
   align-items: stretch;
-}
-
-.applicant-recruit-form-individual--editor-right,
-.applicant-recruit-form-institution--editor-right,
-.recruit-form-instructor--editor-right,
-.recruit-form-volunteer--editor-right,
-.program-application-form-instructor--editor-right,
-.program-application-form-institution--editor-right,
-.program-application-form-volunteer--editor-right {
-  width: 100%;
-  min-width: 0;
 }
 
 .form-editor-right-panel__form-items .ant-form-item {

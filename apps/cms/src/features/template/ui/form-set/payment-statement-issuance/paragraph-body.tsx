@@ -1,6 +1,5 @@
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { PAYMENT_STATEMENT_ISSUANCE_IDS } from '@/features/template/model/payment-statement-issuance-draft'
-import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { SETTLEMENT_APPLICATION_ISSUANCE_IDS } from '@/features/template/model/settlement-application-issuance-draft'
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
@@ -33,28 +32,39 @@ interface RenderPaymentStatementIssuanceParagraphBodyParams {
   paragraph: HorizontalTableParagraph
   values?: PaymentStatementIssuanceParagraphBodyValues
   displayMode?: PaymentStatementIssuanceParagraphDisplayMode
+  /** 사전 동의 등: 지급조서 기본정보에서 「지급 목적」만 잠금 */
+  onlyPaymentPurposeLocked?: boolean
 }
 
 export function renderPaymentStatementIssuanceParagraphBody({
   paragraph,
   values,
   displayMode = 'editor',
+  onlyPaymentPurposeLocked,
 }: RenderPaymentStatementIssuanceParagraphBodyParams) {
   switch (paragraph.id) {
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableBasic:
-    case PAYMENT_STATEMENT_PRE_CONSENT_IDS.tableBasic:
-      return <BasicInfoParagraph values={values?.basicInfo} displayMode={displayMode} />
+      return (
+        <BasicInfoParagraph
+          values={values?.basicInfo}
+          displayMode={displayMode}
+          onlyPaymentPurposeLocked={onlyPaymentPurposeLocked}
+        />
+      )
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableCalcInfo:
-    case PAYMENT_STATEMENT_PRE_CONSENT_IDS.tableCalcInfo:
       return <LectureFeeCalculationParagraph values={values?.lectureFeeCalculation} displayMode={displayMode} />
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableCalcLines:
-    case PAYMENT_STATEMENT_PRE_CONSENT_IDS.tableCalcLines:
       return <CalculationLinesParagraph lines={values?.calculationLines} />
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableWorkLog:
-    case PAYMENT_STATEMENT_PRE_CONSENT_IDS.tableWorkLog:
       return <WorkLogParagraph />
     case SETTLEMENT_APPLICATION_ISSUANCE_IDS.tableBasic:
-      return <BasicInfoParagraph values={values?.basicInfo} displayMode={displayMode} />
+      return (
+        <BasicInfoParagraph
+          values={values?.basicInfo}
+          displayMode={displayMode}
+          onlyPaymentPurposeLocked={onlyPaymentPurposeLocked}
+        />
+      )
     case SETTLEMENT_APPLICATION_ISSUANCE_IDS.tableCalcInfo:
       return (
         <LectureFeeCalculationParagraph

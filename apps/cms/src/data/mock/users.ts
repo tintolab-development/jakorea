@@ -44,7 +44,7 @@ const mockAdmins: User[] = [
   {
     id: generateUUID(),
     email: 'admin1@jakorea.org',
-    password: 'admin123!', // Mock 데이터용
+    password: 'admin1234!', // Mock 데이터용
     name: '김관리',
     nameEn: 'Kim Gwan-ri',
     role: 'ADMIN',
