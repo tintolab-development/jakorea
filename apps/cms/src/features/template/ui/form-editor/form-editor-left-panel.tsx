@@ -241,6 +241,8 @@ export function FormEditorLeftPanel({
   const split = getWritingFormHeadMiddlePinnedTail(paragraphs)
   if (split == null) return null
   const { head, middle, pinnedTail } = split
+  const pinnedSystemRows = pinnedTail.filter(isAgreementLockedSystemParagraph)
+  const pinnedCardTail = pinnedTail.filter(p => !isAgreementLockedSystemParagraph(p))
   const sortableIds = middle.map(p => p.id)
 
   if (middle.length < 1) return null
@@ -333,37 +335,46 @@ export function FormEditorLeftPanel({
           />
         ))
       )}
-      {pinnedTail.map(p =>
-        isAgreementLockedSystemParagraph(p) ? (
-          <div key={p.id} className="form-editor-left__system-fixed-row">
-            {renderFormParagraphBody(p, updateParagraph, false, editorKind, mergedParagraphBodyOptions)}
-          </div>
-        ) : (
-          <PinnedFormCard
-            key={p.id}
-            paragraph={p}
-            paragraphs={paragraphs}
-            titleNumbering={titleNumbering}
-            selectedCardId={selectedCardId}
-            onSelectCard={onSelectCard}
-            updateParagraph={updateParagraph}
-            editorKind={editorKind}
-            singleItemListActiveItemId={singleItemListActiveItemId}
-            onSelectSingleItemListItem={onSelectSingleItemListItem}
-            horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
-            onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
-            verticalTableBodyRowSelection={verticalTableBodyRowSelection}
-            onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
-            middleParagraphActions={middleParagraphActions}
-            paragraphBodyOptions={mergedParagraphBodyOptions}
-            structureLockedParagraphIds={structureLockedParagraphIds}
-            hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
-            hideParagraphRequiredChrome={hideParagraphRequiredChrome}
-            headingDescriptionExtraClassName={headingDescriptionExtraClassName}
-            showEditorChrome={showEditorChrome}
-          />
-        )
-      )}
+      {pinnedCardTail.map(p => (
+        <PinnedFormCard
+          key={p.id}
+          paragraph={p}
+          paragraphs={paragraphs}
+          titleNumbering={titleNumbering}
+          selectedCardId={selectedCardId}
+          onSelectCard={onSelectCard}
+          updateParagraph={updateParagraph}
+          editorKind={editorKind}
+          singleItemListActiveItemId={singleItemListActiveItemId}
+          onSelectSingleItemListItem={onSelectSingleItemListItem}
+          horizontalTableRowSelectionsByParagraphId={horizontalTableRowSelectionsByParagraphId}
+          onHorizontalTableRowSelectionChange={onHorizontalTableRowSelectionChange}
+          verticalTableBodyRowSelection={verticalTableBodyRowSelection}
+          onVerticalTableBodyRowSelectionChange={onVerticalTableBodyRowSelectionChange}
+          middleParagraphActions={middleParagraphActions}
+          paragraphBodyOptions={mergedParagraphBodyOptions}
+          structureLockedParagraphIds={structureLockedParagraphIds}
+          hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
+          hideParagraphRequiredChrome={hideParagraphRequiredChrome}
+          headingDescriptionExtraClassName={headingDescriptionExtraClassName}
+          showEditorChrome={showEditorChrome}
+        />
+      ))}
+      {pinnedSystemRows.length > 0 ? (
+        <div className="form-editor-left__system-fixed">
+          {pinnedSystemRows.map(p => (
+            <div key={p.id} className="form-editor-left__system-fixed-row">
+              {renderFormParagraphBody(
+                p,
+                updateParagraph,
+                false,
+                editorKind,
+                mergedParagraphBodyOptions
+              )}
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }

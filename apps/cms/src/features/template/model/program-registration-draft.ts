@@ -45,7 +45,8 @@ export function getProgramRegistrationSeedParagraphIds(
 function createSeedParagraph(
   id: string,
   title: string,
-  paragraphDescription: string = '설명 입력'
+  /** 비워 두면 카드 선택 시 설명란 높이 점프가 줄어듦(지급조서 사전 동의 시드와 동일 패턴) */
+  paragraphDescription: string = ''
 ): HorizontalTableParagraph {
   return normalizeHorizontalTableParagraph({
     id,
@@ -84,13 +85,11 @@ export function createProgramRegistrationDraft(
   paragraphs.push(
     createSeedParagraph(
       PROGRAM_REGISTRATION_IDS.educationCurriculum,
-      variant === 'economy' ? '교육 커리큘럼' : '교육 진행 (커리큘럼)',
-      '차시 별 정보를 입력해 주세요'
+      variant === 'economy' ? '교육 커리큘럼' : '교육 진행 (커리큘럼)'
     ),
     createSeedParagraph(
       PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
-      '교육 진행 일정 설정',
-      '교육이 실행되는 일정을 상세하게 정해주세요.'
+      '교육 진행 일정 설정'
     )
   )
   return normalizeWritingFormDraft({

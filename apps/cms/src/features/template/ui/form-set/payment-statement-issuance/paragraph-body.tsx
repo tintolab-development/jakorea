@@ -32,16 +32,25 @@ interface RenderPaymentStatementIssuanceParagraphBodyParams {
   paragraph: HorizontalTableParagraph
   values?: PaymentStatementIssuanceParagraphBodyValues
   displayMode?: PaymentStatementIssuanceParagraphDisplayMode
+  /** 사전 동의 등: 지급조서 기본정보에서 「지급 목적」만 잠금 */
+  onlyPaymentPurposeLocked?: boolean
 }
 
 export function renderPaymentStatementIssuanceParagraphBody({
   paragraph,
   values,
   displayMode = 'editor',
+  onlyPaymentPurposeLocked,
 }: RenderPaymentStatementIssuanceParagraphBodyParams) {
   switch (paragraph.id) {
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableBasic:
-      return <BasicInfoParagraph values={values?.basicInfo} displayMode={displayMode} />
+      return (
+        <BasicInfoParagraph
+          values={values?.basicInfo}
+          displayMode={displayMode}
+          onlyPaymentPurposeLocked={onlyPaymentPurposeLocked}
+        />
+      )
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableCalcInfo:
       return <LectureFeeCalculationParagraph values={values?.lectureFeeCalculation} displayMode={displayMode} />
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableCalcLines:
@@ -49,7 +58,13 @@ export function renderPaymentStatementIssuanceParagraphBody({
     case PAYMENT_STATEMENT_ISSUANCE_IDS.tableWorkLog:
       return <WorkLogParagraph />
     case SETTLEMENT_APPLICATION_ISSUANCE_IDS.tableBasic:
-      return <BasicInfoParagraph values={values?.basicInfo} displayMode={displayMode} />
+      return (
+        <BasicInfoParagraph
+          values={values?.basicInfo}
+          displayMode={displayMode}
+          onlyPaymentPurposeLocked={onlyPaymentPurposeLocked}
+        />
+      )
     case SETTLEMENT_APPLICATION_ISSUANCE_IDS.tableCalcInfo:
       return (
         <LectureFeeCalculationParagraph
