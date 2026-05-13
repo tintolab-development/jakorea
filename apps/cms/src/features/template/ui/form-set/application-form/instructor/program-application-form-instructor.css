@@ -55,6 +55,32 @@
   align-items: flex-start;
 }
 
+/** 캘린더 열 실측 높이(`--program-reg-schedule-calendar-height`)에 맞춤 — 등록/모집 설정별 우측 내용 높이 상이 */
+.program-application-form-instructor__schedule-side {
+  flex: 1 1 0;
+  min-width: 0;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: var(--program-reg-schedule-calendar-height, auto);
+  max-height: var(--program-reg-schedule-calendar-height, none);
+  overflow: hidden;
+}
+
+.program-application-form-instructor__schedule-side .program-application-form-instructor__session-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  max-width: none;
+}
+
+.program-application-form-instructor__schedule-side .schedule-setting-blocked {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .program-application-form-instructor__calendar-wrap {
   width: 360px !important;
   min-width: 360px;
@@ -65,13 +91,24 @@
   flex: 1;
   min-width: 0;
   display: grid;
-  width: calc(100% - 380px);
+  width: 100%;
   grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
   gap: 10px;
   align-content: start;
 }
 
-.program-application-form-instructor__session-card {
+.program-application-form-instructor__session-grid-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* 세션 슬롯 — `ParagraphChip` + 2줄 라벨(학교·교시|시간) */
+.program-application-form-instructor__session-chip.paragraph-chip {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -79,13 +116,16 @@
   min-width: 0;
   width: 100%;
   max-width: 100%;
-  box-sizing: border-box;
+  min-height: auto;
+  height: auto;
   padding: 12px 14px;
   text-align: left;
-  border-radius: var(--8, 8px);
-  border: 1px solid rgba(61, 61, 61, 0.16);
-  background: var(--main-WT, #fff);
-  cursor: pointer;
+  white-space: normal;
+  font-weight: 500;
+}
+
+.program-application-form-instructor__session-chip.paragraph-chip--selected {
+  font-weight: 500;
 }
 
 .program-application-form-instructor__session-card-line {
@@ -111,19 +151,14 @@
   color: rgba(61, 61, 61, 0.65);
 }
 
-.program-application-form-instructor__session-card--selected
+.program-application-form-instructor__session-chip.paragraph-chip--selected
   .program-application-form-instructor__session-card-line--primary {
   color: var(--color-mint-01, #01a1af);
 }
 
-.program-application-form-instructor__session-card:hover {
-  border: 1px solid var(--color-mint-01, #01a1af);
-  background: linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff;
-}
-
-.program-application-form-instructor__session-card--selected {
-  border: 1px solid var(--color-mint-01, #01a1af);
-  background: linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff;
+.program-application-form-instructor__session-chip.paragraph-chip--selected
+  .program-application-form-instructor__session-card-line--secondary {
+  color: rgba(61, 61, 61, 0.65);
 }
 
 /**
@@ -133,6 +168,17 @@
 .program-application-form-instructor__field-summary-wrap {
   font-size: 0;
   text-align: left;
+}
+
+.program-application-form-instructor__field-summary-wrap > .form-editor-template-field-hint-text {
+  display: block;
+}
+
+.program-application-form-instructor__field-summary-wrap
+  > .form-editor-template-field-hint-text
+  + .program-application-form-instructor__summary-text--placeholder {
+  display: block;
+  margin-top: 8px;
 }
 
 .detail-info-form__field-content--edit > .program-application-form-instructor__field-summary-wrap,

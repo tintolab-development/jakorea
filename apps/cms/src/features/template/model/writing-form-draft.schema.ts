@@ -2908,7 +2908,8 @@ export function getWritingFormHeadMiddlePinnedTail(paragraphs: WritingFormParagr
   middle: WritingFormParagraph[]
   pinnedTail: WritingFormParagraph[]
 } | null {
-  if (paragraphs.length < 3) return null
+  /** head + middle(+선택 핀 tail) 구조. 단락 2개 폼(예: Gemini 찾아가는 연수 강사 신청)도 head·middle로 분해되어야 함 */
+  if (paragraphs.length < 2) return null
   const head = paragraphs[0]!
   const n = paragraphs.length
   const last = paragraphs[n - 1]!

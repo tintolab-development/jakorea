@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import '@/shared/components/calendar/styles/calendar.css'
 import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
 import { ParagraphCalendarMini } from '@/features/template/ui/paragraph-calendar-mini'
+import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
 import { ScheduleSettingBlocked } from '@/features/template/ui/schedule-setting-blocked'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 
@@ -19,6 +20,10 @@ export function UjatProgramApplicationVolunteerInterviewScheduleParagraph() {
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => dayjs().startOf('month'))
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => dayjs().startOf('month'))
 
+  const scheduleTopRef = useRef<HTMLDivElement>(null)
+  const calendarWrapRef = useRef<HTMLDivElement>(null)
+  useProgramRegistrationScheduleTopCalendarHeightSync(scheduleTopRef, calendarWrapRef)
+
   /** 추후 API — 관리자가 지정한 면접 가능일 */
   const adminAvailableDates = useMemo(() => new Set<string>(), [])
   /** 추후 API — 사용자 선택 일정에 따른 강조 날짜 */
@@ -30,8 +35,11 @@ export function UjatProgramApplicationVolunteerInterviewScheduleParagraph() {
 
   return (
     <div className="program-application-form-instructor__available-schedule">
-      <div className="program-application-form-instructor__available-schedule-top">
-        <div className="program-application-form-instructor__calendar-wrap">
+      <div
+        ref={scheduleTopRef}
+        className="program-application-form-instructor__available-schedule-top"
+      >
+        <div ref={calendarWrapRef} className="program-application-form-instructor__calendar-wrap">
           <ParagraphCalendarMini
             currentMonth={currentMonth}
             selectedDate={selectedDate}
@@ -41,14 +49,7 @@ export function UjatProgramApplicationVolunteerInterviewScheduleParagraph() {
             clickableDates={adminAvailableDates}
           />
         </div>
-        <div
-          style={{
-            flex: 1,
-            minWidth: 0,
-            alignSelf: 'stretch',
-            display: 'flex',
-          }}
-        >
+        <div className="program-application-form-instructor__schedule-side">
           <ScheduleSettingBlocked text={TIME_SLOT_AREA_PLACEHOLDER} />
         </div>
       </div>

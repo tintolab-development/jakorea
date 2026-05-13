@@ -6,7 +6,6 @@ import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import '@toast-ui/editor/dist/toastui-editor.css'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
-import './recruit-detail-info-paragraph.css'
 
 const THUMB_UPLOAD_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 
@@ -133,7 +132,6 @@ export function RecruitDetailInfoParagraph({
             fullRow
             edit={
               <CmsTextArea
-                className="recruit-detail-info-paragraph__textarea"
                 inputSize="medium"
                 width="100%"
                 placeholder={field.placeholder}

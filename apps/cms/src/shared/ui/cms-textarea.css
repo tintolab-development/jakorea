@@ -142,23 +142,85 @@
   line-height: 150%;
 }
 
-/* rows=1: 컨트롤 안 세로 중앙·한 줄 말줄임(멀티줄은 기본 resize 유지) */
+/*
+ * rows=1 공통: `CmsInput`과 동일한 박스 높이·가로 패딩 체계,
+ * 값·placeholder 세로 중앙 (`align-content: center`, 상세 정보 단락과 동일).
+ * 한 줄 말줄임·resize 비활성은 `cms-textarea--rows-1-single-line`에만 적용.
+ */
 .cms-textarea--rows-1 .cms-textarea__control {
   align-items: center;
+  padding: 0;
+  overflow: visible;
 }
 
 .cms-textarea--rows-1 .cms-textarea__inner {
   align-items: center;
 }
 
-.cms-textarea--rows-1 .cms-textarea__inner textarea.ant-input {
+.cms-textarea--rows-1.cms-textarea--large .cms-textarea__inner textarea.ant-input {
+  min-height: 44px;
+  height: 44px;
+  padding: 0 12px 0 14px !important;
+  align-content: center;
+  line-height: 150%;
+}
+
+.cms-textarea--rows-1.cms-textarea--medium .cms-textarea__inner textarea.ant-input {
+  min-height: 40px;
+  height: 40px;
+  padding: 0 12px 0 14px !important;
+  align-content: center;
+  line-height: 150%;
+}
+
+.cms-textarea--rows-1.cms-textarea--small .cms-textarea__inner textarea.ant-input {
+  min-height: 32px;
+  height: 32px;
+  padding: 0 10px 0 12px !important;
+  align-content: center;
+  line-height: 150%;
+}
+
+/* `expandableFromSingleRow`: 한 줄 높이로 시작하되 세로 리사이즈·여러 줄 허용 */
+.cms-textarea--expandable-single-row.cms-textarea--large .cms-textarea__inner textarea.ant-input {
+  height: auto;
+  min-height: 44px;
+  resize: vertical;
+  overflow: auto;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+.cms-textarea--expandable-single-row.cms-textarea--medium .cms-textarea__inner textarea.ant-input {
+  height: auto;
+  min-height: 40px;
+  resize: vertical;
+  overflow: auto;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+.cms-textarea--expandable-single-row.cms-textarea--small .cms-textarea__inner textarea.ant-input {
+  height: auto;
+  min-height: 32px;
+  resize: vertical;
+  overflow: auto;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+.cms-textarea--expandable-single-row .cms-textarea__inner textarea.ant-input::placeholder {
+  white-space: normal;
+}
+
+.cms-textarea--rows-1-single-line .cms-textarea__inner textarea.ant-input {
   resize: none;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.cms-textarea--rows-1 .cms-textarea__inner textarea.ant-input::placeholder {
+.cms-textarea--rows-1-single-line .cms-textarea__inner textarea.ant-input::placeholder {
   white-space: nowrap;
 }
 
