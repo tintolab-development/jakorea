@@ -5,7 +5,7 @@ import type {
   FormEditorKind,
   WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
-import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { A4DocumentPageLayout } from '@/features/template/ui/layout'
 import { useA4ParagraphPages } from '@/features/template/hooks/use-a4-paragraph-pages'

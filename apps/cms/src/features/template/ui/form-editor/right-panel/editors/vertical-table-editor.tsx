@@ -1,5 +1,5 @@
-import { FormEditorOptionListEditor } from '@/features/template/ui/form-editor/form-editor-option-list-editor'
-import { FormEditorVerticalTableRowFields } from '@/features/template/ui/form-editor/form-editor-vertical-table-row-fields'
+import { FormEditorOptionListEditor } from '@/features/template/ui/form-editor/table-fields/form-editor-option-list-editor'
+import { FormEditorVerticalTableRowFields } from '@/features/template/ui/form-editor/table-fields/form-editor-vertical-table-row-fields'
 import type { VerticalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
 import {
   effectiveVerticalStageKinds,

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { StarRateParagraph } from '@/features/template/model/writing-form-draft.schema'
-import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import './star-rate.css'
 
 const STAR_PATH =

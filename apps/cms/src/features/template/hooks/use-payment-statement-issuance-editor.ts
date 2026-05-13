@@ -19,15 +19,15 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { useTableRowSelectionState } from '@/features/template/ui/form-editor/use-table-row-selection-state'
+import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
 import { PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-config'
 
 export function usePaymentStatementIssuanceEditor(active: boolean, previewHeaderTitle: string) {
   const [draft, setDraft] = useState<WritingFormDraft>(() =>
     normalizeWritingFormDraft(createPaymentStatementIssuanceDraft())
   )
-  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(() =>
-    normalizeWritingFormDraft(createPaymentStatementIssuanceDraft()).paragraphs[0]?.id ?? null
+  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
+    () => normalizeWritingFormDraft(createPaymentStatementIssuanceDraft()).paragraphs[0]?.id ?? null
   )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
 
@@ -74,7 +74,10 @@ export function usePaymentStatementIssuanceEditor(active: boolean, previewHeader
     }))
   }, [])
 
-  const middleParagraphActions = usePaymentStatementIssuanceMiddleActions(setDraft, setActiveParagraphId)
+  const middleParagraphActions = usePaymentStatementIssuanceMiddleActions(
+    setDraft,
+    setActiveParagraphId
+  )
 
   const {
     horizontalTableRowSelectionsByParagraphId,

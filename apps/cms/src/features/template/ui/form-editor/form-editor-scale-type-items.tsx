@@ -16,8 +16,8 @@ import {
   type ScaleTypeParagraph,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { ItemAddButton } from '@/features/template/ui/paragraph/shared/item-add-button'
-import { ItemDeleteButton } from '@/features/template/ui/paragraph/shared/item-delete-button'
+import { ItemAddButton } from '@/features/template/ui/shared/item-add-button'
+import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { CmsInput } from '@/shared/ui/cms-input'
 import './form-editor.css'
 

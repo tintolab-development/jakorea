@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
-import { ParagraphFileUpload } from '@/features/template/ui/paragraph/shared/paragraph-file-upload'
+import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 
 const CERTIFICATE_GUIDE_LINES = [
   '- 파일은 최대 15M까지 JPG, PNG, PDF 형식만 등록 가능합니다.',

@@ -1,7 +1,7 @@
 import { useEffect, useRef, type MouseEvent } from 'react'
 import type { ScaleTypeParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { createDefaultScaleTypeItems } from '@/features/template/model/writing-form-draft.schema'
-import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import './scale-type.css'
 
 function normalizeItems(paragraph: ScaleTypeParagraph) {

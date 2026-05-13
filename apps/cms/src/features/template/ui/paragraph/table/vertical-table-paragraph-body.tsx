@@ -19,9 +19,9 @@ import {
   normalizeVerticalTableParagraph,
   verticalTableHeaderPlaceholder,
 } from '@/features/template/model/writing-form-draft.schema'
-import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
-import { ParagraphFileUpload } from '@/features/template/ui/paragraph/shared/paragraph-file-upload'
-import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
+import { ParagraphInput } from '@/features/template/ui/shared/paragraph-input'
+import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import '@/features/template/ui/form-editor/form-editor.css'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'

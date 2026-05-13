@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
-import { ParagraphFileUpload } from '@/features/template/ui/paragraph/shared/paragraph-file-upload'
+import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import '@toast-ui/editor/dist/toastui-editor.css'

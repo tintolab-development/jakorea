@@ -5,7 +5,7 @@ import { TemplatePreviewModal } from '@/features/template/ui/modal/template-prev
 import type {
   FormUpdateParagraph,
   RenderFormParagraphBodyOptions,
-} from '@/features/template/ui/paragraph/render-form-paragraph-body'
+} from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import type {
   FormDocumentPreviewParagraphGapResolver,
   FormDocumentPreviewRenderMode,

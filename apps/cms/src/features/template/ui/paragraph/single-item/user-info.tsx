@@ -1,5 +1,5 @@
 import type { UserInfoParagraph } from '@/features/template/model/writing-form-draft.schema'
-import { ParagraphChip } from '@/features/template/ui/paragraph/shared/paragraph-chip'
+import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
 import './user-info.css'
 
 const DEFAULT_USER_INFO_FIELDS: Array<{ key: string; label: string }> = [

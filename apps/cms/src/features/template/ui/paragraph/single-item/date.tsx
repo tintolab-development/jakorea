@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import type { DateParagraph } from '@/features/template/model/writing-form-draft.schema'
-import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
-import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
-import { dateRangeUsesClockTime } from '@/features/template/ui/paragraph/shared/writing-form-period-date-picker-field'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import './date.css'
 
 const PICKER_WIDTH = 240

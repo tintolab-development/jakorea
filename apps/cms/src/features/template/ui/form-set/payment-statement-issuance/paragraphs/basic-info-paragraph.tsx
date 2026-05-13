@@ -1,7 +1,7 @@
 import {
   PaymentStatementBasicInfoDetailForm,
   type PaymentStatementBasicInfoAutofillValues,
-} from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
+} from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 
 interface BasicInfoParagraphProps {

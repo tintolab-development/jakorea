@@ -8,7 +8,7 @@ import type {
   FormDocumentPreviewRenderMode,
 } from '@/features/template/lib/a4-document-preview'
 import { FormDocumentPreviewParagraph } from '@/features/template/ui/document-preview/form-document-preview-paragraph'
-import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import './form-document-preview-body.css'
 
 export interface FormDocumentPreviewBodyProps {

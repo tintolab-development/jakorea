@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FileAttachmentParagraph } from '@/features/template/model/writing-form-draft.schema'
-import { ParagraphFileUpload } from '@/features/template/ui/paragraph/shared/paragraph-file-upload'
-import { ItemDeleteButton } from '@/features/template/ui/paragraph/shared/item-delete-button'
+import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
+import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import './file-attachment.css'
 
 function FilePreviewIcon() {

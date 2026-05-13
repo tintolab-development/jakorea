@@ -2,7 +2,7 @@ import {
   LectureFeeCalculationDetailForm,
   type LectureFeeCalculationAutofillValues,
   type LectureFeeCalculationFeeLayout,
-} from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
+} from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 
 interface LectureFeeCalculationParagraphProps {

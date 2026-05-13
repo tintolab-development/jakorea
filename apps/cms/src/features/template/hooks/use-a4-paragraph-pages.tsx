@@ -11,7 +11,7 @@ import type {
   FormDocumentPreviewRenderMode,
 } from '@/features/template/lib/a4-document-preview'
 import { FormDocumentPreviewBody } from '@/features/template/ui/document-preview/form-document-preview-body'
-import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
 export interface UseA4ParagraphPagesArgs {
   allParagraphs: WritingFormParagraph[]

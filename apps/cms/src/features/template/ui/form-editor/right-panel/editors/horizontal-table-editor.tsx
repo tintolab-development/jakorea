@@ -1,5 +1,5 @@
-import { FormEditorHorizontalTableBodyFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-body-fields'
-import { FormEditorHorizontalTableHeaderFields } from '@/features/template/ui/form-editor/form-editor-horizontal-table-header-fields'
+import { FormEditorHorizontalTableBodyFields } from '@/features/template/ui/form-editor/table-fields/form-editor-horizontal-table-body-fields'
+import { FormEditorHorizontalTableHeaderFields } from '@/features/template/ui/form-editor/table-fields/form-editor-horizontal-table-header-fields'
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
 import type { FormEditorRightPanelProps } from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel.types'
 

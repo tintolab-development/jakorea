@@ -1,4 +1,4 @@
-export type TemplateVariant = 'default' | 'volunteer' | 'curriculum'
+export type TemplateVariant = 'default' | 'volunteer'
 
 export interface TemplateDefinition {
   id: string
@@ -28,16 +28,6 @@ const VOLUNTEER_MODAL_SECTIONS = [
   '경력사항',
   'JA Korea 활동 경험',
 ] as const
-
-/** 일반 프로그램 등록 정보 폼 (교육 커리큘럼 ver.) 풀페이지 모달 섹션 */
-export const CURRICULUM_MODAL_SECTIONS = [
-  '기본 정보',
-  '사업 KPI 목표',
-  '임금 정보',
-  '교육 커리큘럼',
-] as const
-
-export type CurriculumModalSectionTitle = (typeof CURRICULUM_MODAL_SECTIONS)[number]
 
 const createRows = (
   prefix: string,
@@ -95,7 +85,7 @@ const applicationDefinitions: TemplateDefinition[] = [
   { id: 'application-volunteer', templateName: '프로그램 봉사자 신청 폼', variant: 'volunteer' },
   {
     id: 'application-economy',
-    templateName: '1사 1교 프로그램 학교 신청 폼',
+    templateName: '1사1교 프로그램 참여자 신청 폼',
     variant: 'default',
   },
   {
@@ -171,5 +161,4 @@ export const writingSections: TemplateSection[] = [
 export const TEMPLATE_MODAL_SECTIONS_BY_VARIANT: Record<TemplateVariant, readonly string[]> = {
   default: DEFAULT_MODAL_SECTIONS,
   volunteer: VOLUNTEER_MODAL_SECTIONS,
-  curriculum: CURRICULUM_MODAL_SECTIONS,
 }

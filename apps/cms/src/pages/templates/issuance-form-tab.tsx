@@ -37,22 +37,22 @@ import {
   getSettlementApplicationA4ParagraphGap,
   SETTLEMENT_APPLICATION_A4_HIDDEN_PARAGRAPH_IDS,
 } from '@/features/template/model/settlement-application-issuance-a4-preview'
-import { TemplateListCard } from '@/features/template/ui/template-list-card'
+import { TemplateListCard } from '@/features/template/ui/template-management/template-list-card'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { A4DocumentPageLayout } from '@/features/template/ui/layout'
 import { FormDocumentPreviewBody } from '@/features/template/ui/document-preview'
-import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
-import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
+import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import {
   mergeLeftCardOrderByDragIds,
   normalizeLeftCardOrder,
   TemplateModalLeftContent,
   type TemplateModalLeftCardConfig,
-} from '@/features/template/ui/template-modal-left-content'
+} from '@/features/template/ui/template-management/template-modal-left-content'
 import {
   TemplateModalRightNavigation,
   type TemplateModalRightNavigationConfig,
-} from '@/features/template/ui/template-modal-right-navigation'
+} from '@/features/template/ui/template-management/template-modal-right-navigation'
 import { usePaymentStatementIssuanceEditor } from '@/features/template/hooks/use-payment-statement-issuance-editor'
 import { usePaymentStatementPreConsentEditor } from '@/features/template/hooks/use-payment-statement-pre-consent-editor'
 import { useSettlementApplicationIssuanceEditor } from '@/features/template/hooks/use-settlement-application-issuance-editor'
@@ -61,12 +61,12 @@ import {
   useUjatEducationIssuanceEditor,
   type UjatEducationIssuanceVariant,
 } from '@/features/template/hooks/use-ujat-education-plan-issuance-editor'
-import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
-import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
+import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
-} from '@/features/template/ui/form-editor/form-editor-right-panel'
+} from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
 import {
   PaymentStatementIssuanceEditorLeftColumn,
   PaymentStatementIssuanceEditorRightColumn,
@@ -82,7 +82,7 @@ import {
   SettlementApplicationIssuanceEditorRightColumn,
 } from '@/features/template/ui/form-set/settlement-application-issuance/editor'
 import { SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/settlement-application-issuance/paragraph-config'
-import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-custom-fields-form'
+import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-management/template-custom-fields-form'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import {
   TEMPLATE_USER_PREVIEW_ACTIVE,

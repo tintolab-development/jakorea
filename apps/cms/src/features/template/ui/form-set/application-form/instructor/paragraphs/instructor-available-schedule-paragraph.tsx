@@ -7,7 +7,7 @@ import '@/shared/components/calendar/styles/calendar.css'
 import { ProgramApplicationScheduleTemplateHintParagraph } from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
 import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
 import { extractClockTimeRangeForScheduleSummary } from '@/features/template/lib/extract-clock-time-range-for-schedule-summary'
-import { ParagraphChip } from '@/features/template/ui/paragraph/shared/paragraph-chip'
+import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
 
 type ScheduleSlot = {
   id: string

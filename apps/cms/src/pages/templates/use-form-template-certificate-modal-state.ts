@@ -3,7 +3,7 @@ import type { FileUploadResult } from '@/entities/application/api/file-upload-se
 import {
   createDefaultParticipantRowVisibility,
   DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,
-} from '@/features/template/ui/template-custom-fields-form'
+} from '@/features/template/ui/template-management/template-custom-fields-form'
 import { useObjectUrlFromFile } from '@/shared/hooks/use-object-url-from-file'
 
 export function useFormTemplateCertificateModalState(

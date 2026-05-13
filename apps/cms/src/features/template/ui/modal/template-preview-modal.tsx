@@ -4,12 +4,12 @@ import type {
   FormEditorKind,
   WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
-import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import { A4DocumentPageLayout } from '@/features/template/ui/layout'
 import type {
   FormUpdateParagraph,
   RenderFormParagraphBodyOptions,
-} from '@/features/template/ui/paragraph/render-form-paragraph-body'
+} from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { AgreementTemplatePreviewModal } from '@/features/template/ui/modal/agreement-template-preview-modal'
 import { TemplatePreviewPageNavigator } from '@/features/template/ui/modal/template-preview-page-navigator'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'

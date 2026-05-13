@@ -15,7 +15,7 @@ import {
   useWritingFormMiddleParagraphActions,
   type MiddleParagraphActionsHandlers,
 } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
-import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
 export type UseWritingFormEditorWithUserPreviewOptions = {
   /** 편집 UI(풀페이지 등) 열림 */

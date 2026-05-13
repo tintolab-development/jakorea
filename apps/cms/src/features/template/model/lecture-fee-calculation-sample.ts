@@ -2,7 +2,7 @@
  * 강의비 산출 정보 단락 — 발급 양식 미리보기용 목 데이터
  */
 
-import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
+import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
 
 export const LECTURE_FEE_CALCULATION_SAMPLE_VALUES: LectureFeeCalculationAutofillValues = {
   lectureFeeType: '3급 강사비',

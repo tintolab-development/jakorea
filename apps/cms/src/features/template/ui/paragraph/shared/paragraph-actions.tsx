@@ -1,6 +1,6 @@
 import type { MouseEvent } from 'react'
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons'
-import { FormEditorPlusIcon } from '@/features/template/ui/paragraph/shared/form-editor-plus-icon'
+import { FormEditorPlusIcon } from '@/features/template/ui/shared/form-editor-plus-icon'
 import { CmsButton } from '@/shared/ui/cms-button'
 
 export type FormParagraphCardActionHandlers = {

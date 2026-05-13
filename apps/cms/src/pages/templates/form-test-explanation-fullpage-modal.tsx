@@ -11,13 +11,13 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
-import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
-import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
+import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
-} from '@/features/template/ui/form-editor/form-editor-right-panel'
-import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
+} from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
+import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import './form-test-explanation-fullpage-modal.css'
 
 export interface FormTestExplanationFullpageModalProps {

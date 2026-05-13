@@ -40,7 +40,7 @@ import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/s
 import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
 import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
-import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import './form-document-preview-body.css'
 
 function noopOnParagraphChange<T>(_next: T): void {}

@@ -3,9 +3,9 @@ import type {
   ShortEssayParagraph,
   SubjectiveParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
-import { ItemDeleteButton } from '@/features/template/ui/paragraph/shared/item-delete-button'
-import { ParagraphLabelInput } from '@/features/template/ui/paragraph/shared/paragraph-label-input'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
+import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
+import { ParagraphLabelInput } from '@/features/template/ui/shared/paragraph-label-input'
 import './short-essay.css'
 
 /** 주관식형 (short_essay) — 단락 바디 슬롯 */

@@ -1,4 +1,4 @@
-import { WorkLogDetailBlock } from '@/features/template/ui/form-set/work-log-detail-block'
+import { WorkLogDetailBlock } from '@/features/template/ui/form-set/detail-forms/work-log-detail-block'
 
 export function WorkLogParagraph() {
   return (

@@ -3,9 +3,9 @@ import { useId, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { ItemDeleteButton } from '@/features/template/ui/paragraph/shared/item-delete-button'
-import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
-import { ParagraphTimePicker } from '@/features/template/ui/paragraph/shared/paragraph-time-picker'
+import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 const SESSION_OPTIONS = [

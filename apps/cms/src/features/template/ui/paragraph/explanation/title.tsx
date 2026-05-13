@@ -4,7 +4,7 @@ import type { TitleWithPeriodParagraph } from '@/features/template/model/writing
 import {
   WritingFormPeriodDatePickerField,
   dateRangeUsesClockTime,
-} from '@/features/template/ui/paragraph/shared/writing-form-period-date-picker-field'
+} from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 
 import './explanation-title-period.css'
 

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { UnavailableDatesBulkExclusionsRow } from '@/features/template/ui/form-set/shared/unavailable-dates-bulk-exclusions-row'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './ujat-education-schedule-settings-paragraph.css'

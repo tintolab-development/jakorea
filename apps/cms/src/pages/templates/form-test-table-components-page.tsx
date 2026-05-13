@@ -6,7 +6,7 @@
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useCallback, useMemo } from 'react'
-import { HorizontalTableFormEditor } from '@/features/template/ui/form-set/horizontal-table-form-editor'
+import { HorizontalTableFormEditor } from '@/features/template/ui/form-set/editors/horizontal-table-form-editor'
 import {
   createDefaultHorizontalTableDraft,
   type HorizontalTableParagraph,

@@ -3,9 +3,9 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import '@/shared/components/calendar/styles/calendar.css'
 import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
-import { ParagraphCalendarMini } from '@/features/template/ui/paragraph-calendar-mini'
+import { ParagraphCalendarMini } from '@/features/template/ui/shared/paragraph-calendar-mini'
 import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
-import { ScheduleSettingBlocked } from '@/features/template/ui/schedule-setting-blocked'
+import { ScheduleSettingBlocked } from '@/features/template/ui/shared/schedule-setting-blocked'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 
 /** 우측 타임 슬롯 영역 — 관리자 설정 일정 연동 전 플레이스홀더 (디자인 스펙) */

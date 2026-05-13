@@ -37,16 +37,12 @@ import {
   PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
   PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
 } from '@/features/template/ui/form-set/payment-statement-pre-consent/paragraph-config'
-import { TemplateListCard } from '@/features/template/ui/template-list-card'
+import { TemplateListCard } from '@/features/template/ui/template-management/template-list-card'
 import './template-form-tab.css'
-import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
-import { TemplateModalLeftContent } from '@/features/template/ui/template-modal-left-content'
-import { TemplateModalRightNavigation } from '@/features/template/ui/template-modal-right-navigation'
-import { BasicInfoCurriculumSection } from '@/features/template/ui/basic-info-curriculum-section'
-import { EducationCurriculumSection } from '@/features/template/ui/education-curriculum-section'
-import { KpiGoalsCurriculumSection } from '@/features/template/ui/kpi-goals-curriculum-section'
-import { TemplateTable } from '@/features/template/ui/template-table'
-import { WageInfoCurriculumSection } from '@/features/template/ui/wage-info-curriculum-section'
+import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
+import { TemplateModalLeftContent } from '@/features/template/ui/template-management/template-modal-left-content'
+import { TemplateModalRightNavigation } from '@/features/template/ui/template-management/template-modal-right-navigation'
+import { TemplateTable } from '@/features/template/ui/template-management/template-table'
 import { useTemplateModal } from '@/features/template/hooks/use-template-modal'
 import { writingSections } from '@/features/template/model/template.schema'
 import type { TemplateRow } from '@/features/template/model/template.schema'
@@ -58,18 +54,18 @@ import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import NewAgreementForm, {
   AgreementWritingFormShell,
-} from '@/features/template/ui/form-set/new-agreement-form'
-import NewHorizontalTableForm from '@/features/template/ui/form-set/new-horizontal-table-form'
-import NewSurveyForm from '@/features/template/ui/form-set/new-survey-form'
+} from '@/features/template/ui/form-set/editors/new-agreement-form'
+import NewHorizontalTableForm from '@/features/template/ui/form-set/editors/new-horizontal-table-form'
+import NewSurveyForm from '@/features/template/ui/form-set/editors/new-survey-form'
 import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
-import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
-import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
+import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
-} from '@/features/template/ui/form-editor/form-editor-right-panel'
-import { useTableRowSelectionState } from '@/features/template/ui/form-editor/use-table-row-selection-state'
-import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+} from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
+import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
+import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import {
   useProgramParticipantApplicationEditor,
   type ProgramParticipantApplicationEditorVariant,
@@ -140,7 +136,7 @@ import {
   UjatProgramRegistrationEditorRightColumn,
   useUjatProgramRegistrationEditor,
 } from '@/features/template/ui/form-set/registration-form/UJAT'
-import { CrimeRecordConsentDocumentFullpageModal } from '@/features/template/ui/crime-record-consent-document-fullpage-modal'
+import { CrimeRecordConsentDocumentFullpageModal } from '@/features/template/ui/template-management/crime-record-consent-document-fullpage-modal'
 import {
   AGREEMENT_WRITING_FORM_SHELL_TEMPLATE_IDS,
   TEMPLATE_USER_PREVIEW_ACTIVE,
@@ -175,23 +171,13 @@ export default function TemplateFormTab() {
   const { openWritingUserPreview, closeWritingUserPreview, isWritingUserPreviewOpen } =
     useTemplateWritingPreview()
 
-  const curriculumSections = useMemo(
-    () => ({
-      '기본 정보': <BasicInfoCurriculumSection />,
-      '사업 KPI 목표': <KpiGoalsCurriculumSection />,
-      '임금 정보': <WageInfoCurriculumSection />,
-      '교육 커리큘럼': <EducationCurriculumSection />,
-    }),
-    []
-  )
   const buildBaseLeftContentConfig = useCallback(
     (selectedTemplate: Parameters<typeof buildTemplateConfig>[0]['selectedTemplate']) =>
       buildTemplateConfig({
         selectedTemplate,
         orderedLeftContentConfig: [],
-        curriculumSections,
       }).baseLeftContentConfig,
-    [curriculumSections]
+    []
   )
 
   const {

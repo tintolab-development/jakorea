@@ -1,5 +1,5 @@
 import { Fragment, useRef, type CSSProperties, type RefObject } from 'react'
-import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-custom-fields-form'
+import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-management/template-custom-fields-form'
 import templateCertificateBg from '@/assets/images/template/templatge-background.png'
 import templateEducation from '@/assets/images/template/template-education.png'
 import templateLogo from '@/assets/images/template/template-logo.png'

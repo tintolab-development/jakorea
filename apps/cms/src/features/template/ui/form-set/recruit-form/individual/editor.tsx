@@ -1,10 +1,10 @@
 import type { ProgramParticipantApplicationEditorViewModel } from '@/features/template/hooks/use-program-participant-application-editor'
-import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
-import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
+import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
-} from '@/features/template/ui/form-editor/form-editor-right-panel'
+} from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
 
 /** 프로그램 참여자 모집 폼 (개인) — 학교 모집 폼 에디터와 루트 클래스·옵션으로 구분 */
 export function ApplicantRecruitFormIndividualEditorLeftColumn({

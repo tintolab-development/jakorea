@@ -1,10 +1,10 @@
 import type { ProgramParticipantApplicationEditorViewModel } from '@/features/template/hooks/use-program-participant-application-editor'
-import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
-import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
+import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
-} from '@/features/template/ui/form-editor/form-editor-right-panel'
+} from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
 import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
 
 /** Gemini 찾아가는 연수 강사 신청 폼 전용 편집 UI */
