@@ -215,6 +215,9 @@ function renderBody(
           programApplicationFormInstitution={
             paragraphBodyOptions?.programApplicationFormInstitution
           }
+          programApplicationFormGeminiInstitution={
+            paragraphBodyOptions?.programApplicationFormGeminiInstitution
+          }
           applicantRecruitFormInstitution={paragraphBodyOptions?.applicantRecruitFormInstitution}
           applicantRecruitFormIndividual={paragraphBodyOptions?.applicantRecruitFormIndividual}
           programApplicationFormInstructor={paragraphBodyOptions?.programApplicationFormInstructor}

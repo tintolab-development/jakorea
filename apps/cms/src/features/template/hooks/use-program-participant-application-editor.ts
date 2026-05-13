@@ -49,6 +49,10 @@ import {
   UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import {
+  createGeminiVisitingTrainingApplicationFormInstitutionDraft,
+  GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/gemini-visiting-training-application-form-institution-draft'
+import {
   createProgramApplicationFormInstitutionDraft,
   PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-institution-draft'
@@ -163,6 +167,7 @@ function useParticipantApplicationMiddleActions(
 export type ProgramParticipantApplicationEditorVariant =
   | 'individual'
   | 'institution'
+  | 'gemini-application-institution'
   | 'ujat-application-institution'
   | 'ujat-application-volunteer'
   | 'applicant-recruit-institution'
@@ -194,6 +199,8 @@ export function useProgramParticipantApplicationEditor(
 ) {
   const seedParagraphIds = useMemo(() => {
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'gemini-application-institution')
+      return GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'ujat-application-institution')
       return UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'ujat-application-volunteer')
@@ -245,7 +252,9 @@ export function useProgramParticipantApplicationEditor(
     const next = normalizeWritingFormDraft(
       variant === 'institution'
         ? createProgramApplicationFormInstitutionDraft()
-        : variant === 'ujat-application-institution'
+        : variant === 'gemini-application-institution'
+          ? createGeminiVisitingTrainingApplicationFormInstitutionDraft()
+          : variant === 'ujat-application-institution'
           ? createUjatProgramApplicationFormInstitutionDraft()
           : variant === 'ujat-application-volunteer'
             ? createUjatProgramApplicationFormVolunteerDraft()
@@ -509,6 +518,7 @@ export function useProgramParticipantApplicationEditor(
         structureLockedParagraphIds: seedParagraphIds,
         structureLockedAuthoringChoicePreview: true,
         programApplicationFormInstitution: variant === 'institution',
+        programApplicationFormGeminiInstitution: variant === 'gemini-application-institution',
         ujatProgramApplicationFormInstitution: variant === 'ujat-application-institution',
         ujatProgramApplicationFormVolunteer: variant === 'ujat-application-volunteer',
         ujatProgramApplicationGradeInfo,

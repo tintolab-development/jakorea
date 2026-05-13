@@ -190,19 +190,6 @@
   color: var(--paragraph-input-filled);
 }
 
-.paragraph-input--view.paragraph-input--filled.paragraph-input--description:not(
-    .paragraph-input--explanation-body
-  )
-  .paragraph-input__view-text,
-.paragraph-input--view.paragraph-input--filled.paragraph-input--description:not(
-    .paragraph-input--explanation-body
-  )
-  .paragraph-input__leading {
-  color: var(--gray-85969-d, #85969d);
-  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
-  opacity: 0.6;
-}
-
 .paragraph-input--view.paragraph-input--description:not(.paragraph-input--explanation-body):not(
     .paragraph-input--filled
   )
@@ -425,14 +412,14 @@
   -webkit-text-fill-color: var(--gray-85969-d, #85969d);
 }
 
-.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit.paragraph-input--description:not(
-    .paragraph-input--explanation-body
-  )
+.paragraph-input:not(
+    .paragraph-input--filled
+  ).paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body)
   .paragraph-input__shell
   input.ant-input,
-.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit.paragraph-input--description:not(
-    .paragraph-input--explanation-body
-  )
+.paragraph-input:not(
+    .paragraph-input--filled
+  ).paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body)
   .paragraph-input__shell
   textarea.ant-input {
   opacity: 0.6 !important;
@@ -453,9 +440,9 @@
   -webkit-text-fill-color: var(--main-BK, #3d3d3d);
 }
 
-.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit.paragraph-input--description:not(
-    .paragraph-input--explanation-body
-  )
+.paragraph-input:not(
+    .paragraph-input--filled
+  ).paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body)
   .paragraph-input__leading {
   color: var(--gray-85969-d, #85969d);
   opacity: 0.6;
@@ -472,13 +459,13 @@
 }
 
 .paragraph-input--edit.paragraph-input--filled.paragraph-input--description:not(
-     .paragraph-input--explanation-body
-   )
+    .paragraph-input--explanation-body
+  )
   .paragraph-input__shell--focused
   .ant-input,
 .paragraph-input--edit.paragraph-input--filled.paragraph-input--description:not(
-     .paragraph-input--explanation-body
-   )
+    .paragraph-input--explanation-body
+  )
   .paragraph-input__shell--focused
   textarea.ant-input {
   color: var(--gray-85969-d, #85969d) !important;
@@ -512,14 +499,14 @@
   -webkit-text-fill-color: var(--gray-85969-d, #85969d);
 }
 
-.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit.paragraph-input--description:not(
-    .paragraph-input--explanation-body
-  )
+.paragraph-input:not(
+    .paragraph-input--filled
+  ).paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body)
   .paragraph-input__shell
   .ant-input::placeholder,
-.paragraph-input:not(.paragraph-input--filled).paragraph-input--edit.paragraph-input--description:not(
-    .paragraph-input--explanation-body
-  )
+.paragraph-input:not(
+    .paragraph-input--filled
+  ).paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body)
   .paragraph-input__shell
   textarea.ant-input::placeholder {
   opacity: 0.6 !important;

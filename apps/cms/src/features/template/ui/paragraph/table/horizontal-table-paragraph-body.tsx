@@ -34,6 +34,7 @@ import { renderRecruitFormInstructorParagraphBody } from '@/features/template/ui
 import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraph-body'
 import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraph-body'
 import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/institution/paragraph-body'
+import { renderGeminiVisitingTrainingApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/gemini-institution/paragraph-body'
 import { renderUjatProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraph-body'
 import { renderUjatProgramApplicationFormVolunteerParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraph-body'
 import {
@@ -399,6 +400,7 @@ export function HorizontalTableParagraphBody({
   programRegistration,
   ujatProgramRegistration,
   programApplicationFormInstitution,
+  programApplicationFormGeminiInstitution,
   ujatProgramApplicationFormInstitution,
   ujatProgramApplicationFormVolunteer,
   ujatProgramApplicationGradeInfo,
@@ -430,6 +432,8 @@ export function HorizontalTableParagraphBody({
   ujatProgramRegistration?: boolean
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
+  /** Gemini 찾아가는 연수 학교 신청 폼 시드 단락 — 전용 본문 */
+  programApplicationFormGeminiInstitution?: boolean
   /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramApplicationFormInstitution?: boolean
   /** UJAT 프로그램 봉사자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
@@ -532,6 +536,14 @@ export function HorizontalTableParagraphBody({
     programApplicationFormVolunteer
   )
   if (ujatRecruitFormVolunteerBody != null) return ujatRecruitFormVolunteerBody
+
+  const programApplicationFormGeminiInstitutionBody =
+    renderGeminiVisitingTrainingApplicationFormInstitutionParagraphBody(
+      p,
+      programApplicationFormGeminiInstitution
+    )
+  if (programApplicationFormGeminiInstitutionBody != null)
+    return programApplicationFormGeminiInstitutionBody
 
   const programApplicationFormInstitutionBody =
     renderProgramApplicationFormInstitutionParagraphBody(p, programApplicationFormInstitution)
