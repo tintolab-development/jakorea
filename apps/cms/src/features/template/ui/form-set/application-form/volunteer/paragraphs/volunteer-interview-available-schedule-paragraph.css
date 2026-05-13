@@ -17,18 +17,6 @@
   margin-bottom: -8px;
 }
 
-.volunteer-interview-available-schedule__unavailable-row {
-  display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  width: 100%;
-  min-width: 0;
-}
-
-.volunteer-interview-available-schedule__unavailable-row > .cms-checkbox {
-  height: 40px;
-}
-
 .volunteer-interview-available-schedule__card-title-actions {
   display: flex;
   flex-direction: row;

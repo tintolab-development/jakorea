@@ -1,9 +1,8 @@
 import { useCallback, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
-import { DirectUnavailableDateAddButton } from '@/features/template/ui/form-set/shared/direct-unavailable-date-add-button'
+import { UnavailableDatesBulkExclusionsRow } from '@/features/template/ui/form-set/shared/unavailable-dates-bulk-exclusions-row'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './ujat-education-schedule-settings-paragraph.css'
 
@@ -55,14 +54,12 @@ function SemesterScheduleBlock({ title }: { title: string }) {
             label="교육 진행 불가일"
             fullRow
             edit={
-              <div className="detail-info-form-inputs-wrapper">
-                <CmsCheckbox defaultChecked>공휴일 제외</CmsCheckbox>
-                <DetailInfoForm.InputsSeparator />
-                <DirectUnavailableDateAddButton
-                  disabledDate={disableUnavailableDate}
-                  initialCalendarDate={rangeStart ?? rangeEnd}
-                />
-              </div>
+              <UnavailableDatesBulkExclusionsRow
+                disabledDate={disableUnavailableDate}
+                initialCalendarDate={rangeStart ?? rangeEnd}
+                modalUnavailableDescriptionLead="교육 진행 불가한 날짜를 모두 선택해 주세요."
+                modalUnavailableDescriptionSecond="선택된 날짜는 교육 진행 일정으로 신청할 수 없습니다."
+              />
             }
             view="-"
           />

@@ -14,7 +14,7 @@ export type UjatRegistrationSectionId = (typeof UJAT_REGISTRATION_SECTION_IDS)[n
 export const UJAT_REGISTRATION_SECTION_LABELS: Record<UjatRegistrationSectionId, string> = {
   'ujat-reg-basic': '기본 정보',
   'ujat-reg-business-kpi': '사업 KPI 목표',
-  'ujat-reg-payment': '입금 정보',
+  'ujat-reg-payment': '임금 정보',
   'ujat-reg-first-half-education-schedule': '상반기 교육 일정',
   'ujat-reg-second-half-education-schedule': '하반기 교육 일정',
   'ujat-reg-education-schedule-settings': '교육 진행 일정 설정',

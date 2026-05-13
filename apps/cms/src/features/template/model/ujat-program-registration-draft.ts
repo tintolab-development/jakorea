@@ -56,8 +56,8 @@ export function createUjatProgramRegistrationDraft(): WritingFormDraft {
       ),
       createSeedParagraph(
         UJAT_PROGRAM_REGISTRATION_IDS[2],
-        UJAT_REGISTRATION_SECTION_META.payment.title,
-        UJAT_REGISTRATION_SECTION_META.payment.description
+        UJAT_REGISTRATION_SECTION_META.wage.title,
+        UJAT_REGISTRATION_SECTION_META.wage.description
       ),
       createSeedParagraph(
         UJAT_PROGRAM_REGISTRATION_IDS[3],

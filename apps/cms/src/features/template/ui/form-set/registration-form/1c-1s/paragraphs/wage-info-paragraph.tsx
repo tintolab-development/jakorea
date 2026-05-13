@@ -3,7 +3,7 @@
  * (강사비 | 강사 장거리비 2열 × 3행 + 지급/공제 1행 — 스크린 구성)
  */
 import { useMemo, useState } from 'react'
-import { settlementItemSettingSections } from '@/data/mock/settlement-item-settings'
+import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { AppMultiSelect, type AppMultiSelectOption } from '@/shared/ui/app-multi-select'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -32,15 +32,14 @@ export function OneCOneSRegistrationWageInfoParagraph() {
   ])
 
   const paymentItemOptions = useMemo((): AppMultiSelectOption[] => {
-    const section = settlementItemSettingSections.find(s => s.kind === 'payment')
-    return (section?.items ?? []).map(item => {
-      if (item.id === PAYMENT_ID_TRANSPORT_1C1S) {
-        return { value: item.id, label: '교통비(일사일교)' }
+    return getTemplateRegistrationPaymentItemOptions().map(opt => {
+      if (opt.value === PAYMENT_ID_TRANSPORT_1C1S) {
+        return { ...opt, label: '교통비(일사일교)' }
       }
-      if (item.id === PAYMENT_ID_LODGING_1C1S) {
-        return { value: item.id, label: '숙박비(일사일교)' }
+      if (opt.value === PAYMENT_ID_LODGING_1C1S) {
+        return { ...opt, label: '숙박비(일사일교)' }
       }
-      return { value: item.id, label: item.title }
+      return opt
     })
   }, [])
 

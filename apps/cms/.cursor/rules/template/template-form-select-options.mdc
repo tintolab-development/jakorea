@@ -4,6 +4,7 @@ globs:
   - "apps/cms/src/pages/templates/**/*.{ts,tsx}"
   - "apps/cms/src/features/template/ui/form-set/**/*.{ts,tsx}"
   - "apps/cms/src/features/template/lib/template-form-select-options.ts"
+  - "apps/cms/src/features/template/lib/template-registration-payment-item-options.ts"
 alwaysApply: false
 ---
 
@@ -38,3 +39,7 @@ alwaysApply: false
 ## 신규 `/templates` 화면
 
 동일 스펙 셀렉트가 필요하면 **반드시** `template-form-select-options`를 import하고, 예외적으로 다른 값이 필요하면 기획·API와 먼저 맞춘 뒤 이 파일(또는 IPS 전용 파일)을 확장한다.
+
+## 임금 정보 — 지급 항목 (별도 규칙)
+
+정산 mock(`settlement-item-settings`)에서 파생하는 **지급 항목** 옵션은 이 파일이 아니라 **`getTemplateRegistrationPaymentItemOptions()`** (`template-registration-payment-item-options.ts`)를 단일 출처로 쓴다. 상세는 **`template/templates-wage-payment-items.mdc`**를 본다.

@@ -5,9 +5,8 @@ import { ParagraphChip } from '@/features/template/ui/paragraph/shared/paragraph
 import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/paragraph/shared/paragraph-time-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { DirectUnavailableDateAddButton } from '@/features/template/ui/form-set/shared/direct-unavailable-date-add-button'
+import { UnavailableDatesBulkExclusionsRow } from '@/features/template/ui/form-set/shared/unavailable-dates-bulk-exclusions-row'
 import './volunteer-interview-available-schedule-paragraph.css'
 
 type InterviewTimeUnit = '15' | '30' | '60'
@@ -87,13 +86,10 @@ function VolunteerInterviewScheduleBlock({
               label="면접 진행 불가일"
               fullRow
               edit={
-                <div className="volunteer-interview-available-schedule__unavailable-row">
-                  <DirectUnavailableDateAddButton appliedDatesDisplay="chips" />
-                  <DetailInfoForm.InputsSeparator />
-                  <CmsCheckbox>토요일 제외</CmsCheckbox>
-                  <CmsCheckbox>일요일 제외</CmsCheckbox>
-                  <CmsCheckbox defaultChecked>공휴일 제외</CmsCheckbox>
-                </div>
+                <UnavailableDatesBulkExclusionsRow
+                  modalUnavailableDescriptionLead="면접 진행 불가한 날짜를 모두 선택해 주세요."
+                  modalUnavailableDescriptionSecond="선택된 날짜는 면접 일정으로 신청할 수 없습니다."
+                />
               }
               view="-"
             />

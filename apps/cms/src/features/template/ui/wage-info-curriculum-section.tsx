@@ -1,13 +1,11 @@
+import { useMemo, useState } from 'react'
+import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { AppMultiSelect } from '@/shared/ui/app-multi-select'
 import { CmsInput, type CmsInputProps } from '@/shared/ui/cms-input'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
-
-const paymentItemOptions = [
-  { value: 'transport', label: '교통비' },
-  { value: 'lodging', label: '숙박비' },
-]
 
 const deductionItemOptions = [
   { value: 'biz33', label: '사업소득 3.3%' },
@@ -42,6 +40,9 @@ function WonSuffixInput({ width }: WonSuffixInputProps) {
 }
 
 export function WageInfoCurriculumSection() {
+  const [paymentItemValues, setPaymentItemValues] = useState<string[]>([])
+  const paymentItemOptions = useMemo(() => getTemplateRegistrationPaymentItemOptions(), [])
+
   return (
     <DetailInfoForm title="임금 정보" hideHeader mode="edit">
       <DetailInfoForm.Row type="double">
@@ -79,12 +80,15 @@ export function WageInfoCurriculumSection() {
         <DetailInfoForm.Field
           label="지급 항목"
           edit={
-            <CmsSelect
-              inputSize="medium"
-              mode="multiple"
-              placeholder="선택 (복수)"
-              options={paymentItemOptions}
-            />
+            <div className="detail-info-form-inputs-wrapper-no-gap">
+              <AppMultiSelect
+                value={paymentItemValues}
+                onChange={setPaymentItemValues}
+                options={paymentItemOptions}
+                placeholder="지급 항목을 선택하세요"
+                style={{ width: '100%', minWidth: 0 }}
+              />
+            </div>
           }
           view="-"
         />
