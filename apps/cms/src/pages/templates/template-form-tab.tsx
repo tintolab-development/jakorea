@@ -1,5 +1,5 @@
 import { message } from 'antd'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import {
   AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS,
@@ -490,13 +490,39 @@ export default function TemplateFormTab() {
     }
   )
 
+  /**
+   * 설문·동의 등 `suppressInactiveUserPreviewStrip` 사용 시 닫은 직후에도 userPreview가 남는 프레임이 있어
+   * 미리보기 훅이 다시 `openWritingUserPreview`를 호출할 수 있음. 템플릿 단위로 한 번 연 뒤에는 재호출을 막는다.
+   */
+  const templateUserPreviewUrlLatchRef = useRef<{
+    templateKey: string | undefined
+    blockAutoReopen: boolean
+  }>({ templateKey: undefined, blockAutoReopen: false })
+
   /** 직접 입력/앞으로가기 등 URL에 userPreview가 있으면 미리보기 오픈 */
   useEffect(() => {
-    if (params.userPreview !== TEMPLATE_USER_PREVIEW_ACTIVE) return
+    const tid =
+      params.mode === 'edit' && params.id != null && params.id.trim() !== ''
+        ? params.id.trim()
+        : undefined
+    const latch = templateUserPreviewUrlLatchRef.current
+    if (latch.templateKey !== tid) {
+      templateUserPreviewUrlLatchRef.current = { templateKey: tid, blockAutoReopen: false }
+    }
+    const L = templateUserPreviewUrlLatchRef.current
+
+    if (params.userPreview !== TEMPLATE_USER_PREVIEW_ACTIVE) {
+      L.blockAutoReopen = false
+      return
+    }
     if (params.mode !== 'edit') return
     if (isCrimeConsentDetail) return
     if (!selectedTemplate) return
-    if (isWritingUserPreviewOpen) return
+    if (isWritingUserPreviewOpen) {
+      L.blockAutoReopen = true
+      return
+    }
+    if (L.blockAutoReopen) return
     // agreement-notice·agreement-expense·agreement-portrait는 AgreementWritingFormShell이 직접 미리보기 제어
     if (
       params.id === 'agreement-notice' ||
@@ -509,10 +535,12 @@ export default function TemplateFormTab() {
 
     if (isProgramRegistrationTemplate) {
       programRegistrationVm.handlePreview()
+      L.blockAutoReopen = true
       return
     }
     if (isUjatProgramRegistrationTemplate) {
       ujatProgramRegistrationVm.handlePreview()
+      L.blockAutoReopen = true
       return
     }
     if (
@@ -532,10 +560,12 @@ export default function TemplateFormTab() {
       isProgramVolunteerApplicationTemplate
     ) {
       programParticipantApplicationVm.handlePreview()
+      L.blockAutoReopen = true
       return
     }
     if (isWritingSurveyListTemplate) {
       surveyListEditor.handlePreview()
+      L.blockAutoReopen = true
       return
     }
     const genericA4Options = shouldUseA4PreviewForWritingTemplate(selectedTemplate.id)
@@ -550,6 +580,7 @@ export default function TemplateFormTab() {
       a4RenderMode: genericA4Options?.a4RenderMode,
       hideParagraphRequiredChrome: genericA4Options?.hideParagraphRequiredChrome,
     })
+    L.blockAutoReopen = true
   }, [
     params.userPreview,
     params.mode,
