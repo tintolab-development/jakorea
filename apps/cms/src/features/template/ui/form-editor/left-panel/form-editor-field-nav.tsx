@@ -23,6 +23,8 @@ interface FormEditorFieldNavProps {
   /** 가로형 등 상단 고정 항목이 없을 때 생략 */
   pinnedTop?: FormEditorFieldNavItem | null
   sortableMiddle: FormEditorFieldNavItem[]
+  /** sortable 목록 중 핸들을 숨길 단락 id(좌측 `hideDragHandleForParagraphIds`와 맞춤) */
+  hideSortableDragHandleForIds?: ReadonlySet<string>
   /** 가로형(테이블만) 등 하단 고정 항이 없을 때 생략 — 동의 양식은 복수 고정(날짜·서명·마무리) */
   pinnedBottom?: FormEditorFieldNavItem | FormEditorFieldNavItem[] | null
   selectedItemId: string | null
@@ -58,10 +60,13 @@ function SortableNavRow({
   item,
   selected,
   onSelect,
+  hideDragHandle = false,
 }: {
   item: FormEditorFieldNavItem
   selected: boolean
   onSelect: () => void
+  /** true면 DnD 핸들 미노출(해당 행은 드래그 소스로 쓰이지 않음) */
+  hideDragHandle?: boolean
 }) {
   const {
     attributes,
@@ -88,16 +93,18 @@ function SortableNavRow({
       <span className="template-modal-nav-item__label" title={item.displayLine}>
         {item.displayLine}
       </span>
-      <span
-        ref={setActivatorNodeRef}
-        className="template-modal-nav-item__handle"
-        aria-label="드래그 핸들"
-        onClick={event => event.stopPropagation()}
-        {...attributes}
-        {...listeners}
-      >
-        <MenuOutlined />
-      </span>
+      {!hideDragHandle ? (
+        <span
+          ref={setActivatorNodeRef}
+          className="template-modal-nav-item__handle"
+          aria-label="드래그 핸들"
+          onClick={event => event.stopPropagation()}
+          {...attributes}
+          {...listeners}
+        >
+          <MenuOutlined />
+        </span>
+      ) : null}
     </button>
   )
 }
@@ -106,6 +113,7 @@ export function FormEditorFieldNav({
   sectionTitle,
   pinnedTop,
   sortableMiddle,
+  hideSortableDragHandleForIds,
   pinnedBottom,
   selectedItemId,
   onSelectItem,
@@ -147,6 +155,7 @@ export function FormEditorFieldNav({
                 item={item}
                 selected={selectedItemId === item.id}
                 onSelect={() => onSelectItem(item.id)}
+                hideDragHandle={hideSortableDragHandleForIds?.has(item.id) ?? false}
               />
             ))}
           </SortableContext>
