@@ -511,6 +511,7 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isBodyInteractive}
+          layout={paragraphInteractionMode === 'user' ? 'previewTable' : 'chips'}
         />
       )
     case 'file_attachment':
