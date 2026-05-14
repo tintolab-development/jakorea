@@ -133,9 +133,12 @@ export function useUjatProgramRegistrationEditor(active: boolean, previewHeaderT
   )
 
   useEffect(() => {
+    // 다른 작성 양식 상세가 열려 있을 때도 이 훅은 마운트되어 있으므로,
+    // 비활성 상태에서 동기화하면 UJAT 등록 draft가 전역 미리보기 세션을 덮어쓴다.
+    if (!active) return
     if (!isWritingUserPreviewOpen) return
     syncWritingUserPreviewSession(writingPreviewSession)
-  }, [isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
+  }, [active, isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
 
   const handlePreview = useCallback(() => {
     openWritingUserPreview(writingPreviewSession)
