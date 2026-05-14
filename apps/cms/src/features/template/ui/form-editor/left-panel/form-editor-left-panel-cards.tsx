@@ -21,6 +21,7 @@ import {
   withProgramRegistrationCurriculumTitleTrailing,
   withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing,
   withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing,
+  withoutPlaceholderDescriptionInPreview,
   withoutTitleRequired,
 } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-heading'
 import {
@@ -87,18 +88,21 @@ export function PinnedFormCard({
 }: PinnedCardProps) {
   const isSelected = selectedCardId === paragraph.id
   const hideDragHandle = hideDragHandleForParagraphIds?.has(paragraph.id) ?? false
-  const editableHeadingBase = withoutTitleRequired(
-    paragraphEditableHeading(
-      paragraph,
-      paragraphs,
-      titleNumbering,
-      isSelected,
-      updateParagraph,
-      editorKind,
-      structureLockedParagraphIds,
-      headingDescriptionExtraClassName
+  const editableHeadingBase = withoutPlaceholderDescriptionInPreview(
+    withoutTitleRequired(
+      paragraphEditableHeading(
+        paragraph,
+        paragraphs,
+        titleNumbering,
+        isSelected,
+        updateParagraph,
+        editorKind,
+        structureLockedParagraphIds,
+        headingDescriptionExtraClassName
+      ),
+      hideParagraphRequiredChrome
     ),
-    hideParagraphRequiredChrome
+    !showEditorChrome
   )
   const editableHeading = withProgramApplicationFormVolunteerTitleTrailing(
     withProgramApplicationFormInstructorTitleTrailing(
@@ -236,18 +240,21 @@ export function SortableMiddleFormCard({
   } = useSortable({ id: paragraph.id })
 
   const isSelected = selectedCardId === paragraph.id
-  const editableHeadingBase = withoutTitleRequired(
-    paragraphEditableHeading(
-      paragraph,
-      paragraphs,
-      titleNumbering,
-      isSelected,
-      updateParagraph,
-      editorKind,
-      structureLockedParagraphIds,
-      headingDescriptionExtraClassName
+  const editableHeadingBase = withoutPlaceholderDescriptionInPreview(
+    withoutTitleRequired(
+      paragraphEditableHeading(
+        paragraph,
+        paragraphs,
+        titleNumbering,
+        isSelected,
+        updateParagraph,
+        editorKind,
+        structureLockedParagraphIds,
+        headingDescriptionExtraClassName
+      ),
+      hideParagraphRequiredChrome
     ),
-    hideParagraphRequiredChrome
+    !showEditorChrome
   )
   const editableHeading = withProgramApplicationFormVolunteerTitleTrailing(
     withProgramApplicationFormInstructorTitleTrailing(

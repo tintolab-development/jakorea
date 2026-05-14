@@ -1,3 +1,4 @@
+import { CloseOutlined } from '@ant-design/icons'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type {
@@ -24,6 +25,7 @@ import {
   getA4PreviewParagraphs,
 } from '@/features/template/lib/a4-document-preview'
 import type { TemplateWritingPreviewLayout } from '@/features/template/context/template-writing-preview-context'
+import { CmsButton } from '@/shared/ui/cms-button'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 /** 강사 신청 폼 등 `data-paragraph-id` 스코프 스타일(불가 일정 DatePicker 폭 등) — 미리보기 단독 열림에도 적용 */
 import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
@@ -87,10 +89,12 @@ export function TemplatePreviewModal({
   const isAgreementPreviewLayout = editorKind === 'agreement'
   const isHorizontalTablePreviewLayout = editorKind === 'horizontal_table'
   const isFormPreviewLayout = isA4DocumentPreviewLayout || isAgreementPreviewLayout
+  const isCardUserPreviewLayout = !isA4DocumentPreviewLayout
   const modalClassName = [
     'template-preview-modal',
     'teal-header-modal--full',
     isFormPreviewLayout ? 'template-preview-modal--form-layout' : '',
+    isCardUserPreviewLayout ? 'template-preview-modal--card-layout' : '',
     isA4DocumentPreviewLayout ? 'template-preview-modal--agreement-layout' : '',
     isA4DocumentPreviewLayout ? 'template-preview-modal--survey-layout' : '',
     isHorizontalTablePreviewLayout ? 'template-preview-modal--horizontal-table-layout' : '',
@@ -235,23 +239,34 @@ export function TemplatePreviewModal({
             <span className="template-preview-modal__title-text">{headerTitle}</span>
             <span className="template-preview-modal__badge">미리보기</span>
           </div>
+          <button
+            type="button"
+            className="template-preview-modal__title-close"
+            onClick={handleClose}
+            aria-label="닫기"
+          >
+            <CloseOutlined />
+          </button>
         </header>
 
         <div ref={previewBodyRef} className="template-preview-modal__body">
-          {isA4DocumentPreviewLayout ? (
-            <div className="template-preview-modal__notice">
-              <div className="template-preview-modal__notice-text-wrap">
-                <p className="template-preview-modal__notice-text">
+          {isA4DocumentPreviewLayout || isCardUserPreviewLayout ? (
+            <div className="template-preview-modal__notice-wrap">
+              <div className="template-preview-modal__notice">
+                <span className="template-preview-modal__notice-text">
                   현재 화면은 미리보기 화면입니다.
-                </p>
+                </span>
+                <CmsButton
+                  type="button"
+                  variant="secondary"
+                  size="large"
+                  width={140}
+                  className="template-preview-modal__notice-close-btn"
+                  onClick={handleClose}
+                >
+                  미리보기 닫기
+                </CmsButton>
               </div>
-              <button
-                type="button"
-                className="template-preview-modal__notice-close-btn"
-                onClick={handleClose}
-              >
-                미리보기 닫기
-              </button>
             </div>
           ) : null}
 

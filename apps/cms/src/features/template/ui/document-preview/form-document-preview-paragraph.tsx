@@ -49,11 +49,19 @@ function safeTrim(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+const HIDDEN_PREVIEW_DESCRIPTION_TEXTS = new Set(['설명 입력', '설명을 입력해 주세요'])
+
+function normalizePreviewDescription(value: unknown): string {
+  const trimmed = safeTrim(value)
+  if (trimmed.length === 0) return ''
+  return HIDDEN_PREVIEW_DESCRIPTION_TEXTS.has(trimmed) ? '' : trimmed
+}
+
 function readOnlyTitleBlock(
   displayTitle: string,
   description?: string
 ): { title: ReactNode; description?: ReactNode } {
-  const trimmedDescription = safeTrim(description)
+  const trimmedDescription = normalizePreviewDescription(description)
   return {
     title: <span className="form-document-preview-paragraph__title-text">{displayTitle}</span>,
     description:
@@ -166,7 +174,7 @@ function SurveyTitleDocumentReadonly({
 }) {
   /** 카드 타이틀에 `surveyTitle`이 오르므로 본문에는 설명·기간만 */
   const bits: string[] = []
-  const desc = safeTrim(paragraph.surveyDescription)
+  const desc = normalizePreviewDescription(paragraph.surveyDescription)
   if (desc.length > 0) bits.push(desc)
   if (showWritingPeriod && paragraph.showWritingPeriodOnForm) {
     const a = paragraph.startAt ? dayjs(paragraph.startAt).format('YYYY-MM-DD') : '—'

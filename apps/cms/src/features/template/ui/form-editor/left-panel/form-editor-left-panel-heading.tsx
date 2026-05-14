@@ -12,8 +12,12 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/ujat-program-application-form-institution-draft'
-import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
+import {
+  PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS,
+  PROGRAM_REGISTRATION_IDS,
+} from '@/features/template/model/program-registration-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-economy-draft'
+import { UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
@@ -30,6 +34,23 @@ export function withoutTitleRequired<T extends { titleRequired?: boolean }>(
 ): T | undefined {
   if (!heading || !hideParagraphRequiredChrome) return heading
   return { ...heading, titleRequired: false }
+}
+
+const HIDDEN_PREVIEW_DESCRIPTION_TEXTS = new Set(['설명 입력', '설명을 입력해 주세요'])
+
+export function withoutPlaceholderDescriptionInPreview<
+  T extends { descriptionValue?: string; showDescription?: boolean },
+>(heading: T | undefined, hideInPreview?: boolean): T | undefined {
+  if (!heading || !hideInPreview) return heading
+  if (heading.showDescription === false) return heading
+  const trimmedDescription = heading.descriptionValue?.trim() ?? ''
+  if (
+    trimmedDescription.length === 0 ||
+    HIDDEN_PREVIEW_DESCRIPTION_TEXTS.has(trimmedDescription)
+  ) {
+    return { ...heading, showDescription: false }
+  }
+  return heading
 }
 
 /** 프로그램 등록 — 교육 진행 단락: 카드 제목 줄 우측 액션 (본문 DetailInfoForm 밖) */
@@ -444,9 +465,11 @@ export function paragraphEditableHeading(
         editorKind === 'horizontal_table'
       const lockedDescriptionEditable =
         horizontalLockedHeaderEditable &&
-        PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS.has(p.id)
+        (PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS.has(p.id) ||
+          PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS.has(p.id) ||
+          UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(p.id))
       const titleIsEditMode = horizontalLockedHeaderEditable
-      /* 잠금 시드: 기본은 설명 편집 불가, 1사1교 신청 폼 시드만 예외로 허용 */
+      /* 잠금 시드: 기본은 설명 편집 불가, 일부 등록/신청 폼 시드만 예외로 허용 */
       const descriptionIsEditMode = lockedDescriptionEditable
       return {
         isEditMode: false,
