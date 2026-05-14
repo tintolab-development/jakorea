@@ -1,7 +1,10 @@
 /**
  * userPreview 쿼리와 TemplateWritingPreview 모달 보조 동기화:
  * - 히스토리에서 userPreview=1 이 제거될 때만 미리보기 닫기(ref로 이전 값 추적)
- * - 미리보기 X로 닫을 때 쿼리의 userPreview 제거
+ * - 미리보기를 닫을 때(open→false) 쿼리의 userPreview 제거
+ * - `suppressInactiveUserPreviewStrip`: 로딩 중 “아직 안 연” 상태에서만 URL 유지(레이스 방지).
+ *   설문 등은 이 플래그 때문에 닫은 뒤에도 userPreview가 남아 즉시 재오픈되면 안 되므로,
+ *   닫힘 전환 시에는 항상 userPreview를 비운다.
  */
 
 import { useEffect, useRef } from 'react'
@@ -29,6 +32,7 @@ export function useWritingUserPreviewUrlAuxiliarySync<
   options?: WritingUserPreviewUrlAuxiliarySyncOptions
 ) {
   const prevUserPreviewForCloseRef = useRef<string | undefined>(undefined)
+  const prevModalOpenRef = useRef(isWritingUserPreviewOpen)
 
   useEffect(() => {
     const prev = prevUserPreviewForCloseRef.current
@@ -52,4 +56,12 @@ export function useWritingUserPreviewUrlAuxiliarySync<
     params.userPreview,
     setParams,
   ])
+
+  useEffect(() => {
+    const wasOpen = prevModalOpenRef.current
+    prevModalOpenRef.current = isWritingUserPreviewOpen
+    if (!wasOpen || isWritingUserPreviewOpen) return
+    if (params.userPreview !== TEMPLATE_USER_PREVIEW_ACTIVE) return
+    setParams({ userPreview: undefined } as Partial<T>)
+  }, [isWritingUserPreviewOpen, params.userPreview, setParams])
 }
