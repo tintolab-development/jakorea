@@ -12,7 +12,10 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
 import { StaticDescriptionLines } from '@/features/template/ui/paragraph/explanation/static-description-lines'
-import { ExplanationText } from '@/features/template/ui/paragraph/explanation/text'
+import {
+  ExplanationText,
+  type ExplanationTextBodyDisplayMode,
+} from '@/features/template/ui/paragraph/explanation/text'
 import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/title'
 import { DateField } from '@/features/template/ui/paragraph/single-item/date'
 import { TimeField } from '@/features/template/ui/paragraph/single-item/time'
@@ -221,15 +224,28 @@ export function renderFormParagraphBody(
       )
     }
     case 'agreement_explanation_text': {
-      /* 작성(authoring) + 구조 잠금 + 라벨 있는 설명글_텍스트형 (예: 행정정보 공동이용 동의서의 이용기관 명칭/이용사무) —
-         응답자가 채우는 영역이므로 편집 화면에서는 Disabled 입력 박스로 통일.
-         `bodyText`가 비어 있으면 빈 박스(이용기관 명칭), 채워져 있으면 같은 박스 안에 default 텍스트 노출(이용사무). */
-      const explanationBodyDisplayMode =
+      const isPaymentPreConsentIntro =
+        p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.intro &&
+        paragraphInteractionMode === 'authoring' &&
+        structureLocked
+      const isPaymentPreConsentWhiteSheetBar =
+        (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine ||
+          p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm) &&
+        paragraphInteractionMode === 'authoring' &&
+        structureLocked
+      const shouldRenderDisabledPlaceholder =
         paragraphInteractionMode === 'authoring' &&
         structureLocked &&
         (p.paragraphTitle?.trim().length ?? 0) > 0
-          ? 'disabled-placeholder'
-          : 'input'
+      /* 작성(authoring) + 구조 잠금 + 라벨 있는 설명글_텍스트형 (예: 행정정보 공동이용 동의서의 이용기관 명칭/이용사무) —
+         응답자가 채우는 영역이므로 편집 화면에서는 Disabled 입력 박스로 통일.
+         `bodyText`가 비어 있으면 빈 박스(이용기관 명칭), 채워져 있으면 같은 박스 안에 default 텍스트 노출(이용사무). */
+      let explanationBodyDisplayMode: ExplanationTextBodyDisplayMode = 'input'
+      if (isPaymentPreConsentIntro || isPaymentPreConsentWhiteSheetBar) {
+        explanationBodyDisplayMode = 'static-body'
+      } else if (shouldRenderDisabledPlaceholder) {
+        explanationBodyDisplayMode = 'disabled-placeholder'
+      }
       return (
         <ExplanationText
           paragraph={p}

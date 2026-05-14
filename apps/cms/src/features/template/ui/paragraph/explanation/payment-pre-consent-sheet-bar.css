@@ -22,6 +22,8 @@
 .payment-pre-consent-fixed-block--white {
   background: var(--main-WT, #fff);
   color: var(--main-BK, #3d3d3d);
+  /* 단일 문구 블록 — 하위 flex gap이 여백으로 겹쳐 보이지 않게 */
+  gap: 0;
 }
 
 .payment-pre-consent-fixed-block--disabled {
@@ -66,6 +68,11 @@
   border-color: transparent;
   background: transparent;
   box-shadow: none;
+}
+
+/* 작성 화면에서는 문서 출력용 수신자 문구를 렌더하지 않아, 빈 카드가 리스트 gap을 하나 더 만들지 않게 한다. */
+[data-paragraph-id='payment-statement-pre-consent-seed-closing-recipient'].form-editor-card {
+  display: none;
 }
 
 [data-paragraph-id='payment-statement-pre-consent-seed-mid-consent-line'].form-editor-card
@@ -114,4 +121,5 @@
 [data-paragraph-id='payment-statement-pre-consent-seed-closing-recipient'].form-editor-card
   .paragraph-card__slot {
   margin-top: 0;
+  gap: 0;
 }

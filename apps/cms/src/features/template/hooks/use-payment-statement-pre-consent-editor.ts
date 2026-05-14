@@ -126,7 +126,7 @@ export function usePaymentStatementPreConsentEditor(active: boolean, previewHead
       draft,
       updateParagraph,
       headerTitle: previewHeaderTitle,
-      editorKind: 'horizontal_table' as const,
+      editorKind: 'agreement' as const,
       previewLayout: 'a4-document' as const,
       paragraphBodyOptions: PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
       hideParagraphRequiredChrome: true as const,

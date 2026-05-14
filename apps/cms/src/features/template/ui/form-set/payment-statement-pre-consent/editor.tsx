@@ -25,7 +25,7 @@ export function PaymentStatementPreConsentEditorLeftColumn({
         onSelectCard={vm.handleSelectCard}
         onReorderMiddle={vm.onReorderMiddle}
         updateParagraph={vm.updateParagraph}
-        editorKind="horizontal_table"
+        editorKind="agreement"
         layout="five"
         horizontalTableRowSelectionsByParagraphId={vm.horizontalTableRowSelectionsByParagraphId}
         onHorizontalTableRowSelectionChange={vm.onHorizontalTableRowSelectionChange}
@@ -70,7 +70,7 @@ export function PaymentStatementPreConsentEditorRightColumn({
         activeParagraphId={vm.activeParagraphId}
         onTitleNumberingChange={vm.onTitleNumberingChange}
         updateParagraph={vm.updateParagraph}
-        editorKind="horizontal_table"
+        editorKind="agreement"
         showTitleNumbering={false}
         singleItemListActiveItemId={vm.singleItemListActiveItemId}
         horizontalTableRowSelection={vm.activeHorizontalTableRowSelection}

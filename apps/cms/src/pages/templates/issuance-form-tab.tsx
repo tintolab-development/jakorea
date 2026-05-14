@@ -385,7 +385,7 @@ export function IssuanceFormTab() {
   } = useA4ParagraphPages({
     allParagraphs: paymentStatementPreConsentPreviewParagraphs,
     titleNumbering: paymentStatementPreConsentVm.draft.formSettings.titleNumbering,
-    editorKind: 'horizontal_table',
+    editorKind: 'agreement',
     enabled: isPreviewOpen && isPaymentStatementPreConsent,
     paragraphBodyOptions: PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
     renderMode: 'contentOnly',
@@ -524,11 +524,13 @@ export function IssuanceFormTab() {
     const isPreConsentPreview =
       selectedTemplate.key === PAYMENT_STATEMENT_PRE_CONSENT_ROW_KEY ||
       selectedTemplate.templateName === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME
+    const previewEditorKind =
+      isSettlementPreview ? 'horizontal_table' : isPreConsentPreview ? 'agreement' : 'survey'
     openWritingUserPreview({
       draft: getIssuanceUserPreviewDraft(selectedTemplate.templateName),
       updateParagraph: noopUpdateParagraph,
       headerTitle: selectedTemplate.templateName ?? '발급 양식 미리보기',
-      editorKind: isSettlementPreview || isPreConsentPreview ? 'horizontal_table' : 'survey',
+      editorKind: previewEditorKind,
       previewLayout: baseA4Options?.previewLayout,
       paragraphBodyOptions: isJournalPreview
         ? {
@@ -986,7 +988,7 @@ export function IssuanceFormTab() {
                   paragraphs={pageParagraphs}
                   allParagraphs={paymentStatementPreConsentPreviewParagraphs}
                   titleNumbering={paymentStatementPreConsentVm.draft.formSettings.titleNumbering}
-                  editorKind="horizontal_table"
+                  editorKind="agreement"
                   overflowParagraphIds={paymentStatementPreConsentPdfOverflowParagraphIds}
                   paragraphBodyOptions={PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS}
                   renderMode="contentOnly"
