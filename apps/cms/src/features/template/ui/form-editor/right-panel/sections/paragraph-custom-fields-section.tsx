@@ -1,17 +1,20 @@
 import type { ReactNode } from 'react'
 import { Form } from 'antd'
 import type {
+  AgreementExplanationTextParagraph,
   SessionPlanShortEssayParagraph,
   ShortEssayParagraph,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
+  isAgreementExplanationTextParagraph,
   isHorizontalTableParagraph,
   isMultipleChoiceParagraph,
   isScaleTypeParagraph,
   isShortEssayOrSessionPlanParagraph,
   isVerticalTableParagraph,
 } from '@/features/template/model/writing-form/paragraph-guards'
+import { AgreementExplanationTextEditor } from '@/features/template/ui/form-editor/right-panel/editors/agreement-explanation-text-editor'
 import { HorizontalTableEditor } from '@/features/template/ui/form-editor/right-panel/editors/horizontal-table-editor'
 import { MultipleChoiceEditor } from '@/features/template/ui/form-editor/right-panel/editors/multiple-choice-editor'
 import { ScaleTypeEditor } from '@/features/template/ui/form-editor/right-panel/editors/scale-type-editor'
@@ -20,6 +23,7 @@ import { VerticalTableEditor } from '@/features/template/ui/form-editor/right-pa
 import type { FormEditorRightPanelProps } from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel.types'
 
 const PARAGRAPH_EDITOR_COMPONENTS = {
+  agreement_explanation_text: AgreementExplanationTextEditor,
   subjective: ShortEssayEditor,
   multiple_choice: MultipleChoiceEditor,
   scale_type: ScaleTypeEditor,
@@ -40,6 +44,7 @@ function resolveParagraphCustomEditorKey(
   active: WritingFormParagraph,
   selectedShortEssayItem: ShortEssayItemShape | null
 ): ParagraphCustomEditorKey | null {
+  if (isAgreementExplanationTextParagraph(active)) return 'agreement_explanation_text'
   if (isShortEssayOrSessionPlanParagraph(active) && selectedShortEssayItem) return 'subjective'
   if (isMultipleChoiceParagraph(active)) return 'multiple_choice'
   if (isScaleTypeParagraph(active)) return 'scale_type'
@@ -74,6 +79,19 @@ export function ParagraphCustomFieldsSection({
   const editorKey = resolveParagraphCustomEditorKey(active, selectedShortEssayItem)
 
   if (editorKey == null) return null
+
+  if (
+    editorKey === 'agreement_explanation_text' &&
+    isAgreementExplanationTextParagraph(active)
+  ) {
+    const AgreementText = PARAGRAPH_EDITOR_COMPONENTS.agreement_explanation_text
+    return (
+      <AgreementText
+        paragraph={active as AgreementExplanationTextParagraph}
+        updateParagraph={updateParagraph}
+      />
+    )
+  }
 
   if (editorKey === 'subjective' && activeShortEssay && selectedShortEssayItem) {
     const Subjective = PARAGRAPH_EDITOR_COMPONENTS.subjective

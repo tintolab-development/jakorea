@@ -1,4 +1,5 @@
 import type {
+  AgreementExplanationTextParagraph,
   HorizontalTableParagraph,
   MultipleChoiceParagraph,
   ScaleTypeParagraph,
@@ -35,6 +36,12 @@ export function isMultipleChoiceParagraph(
   p: WritingFormParagraph
 ): p is MultipleChoiceParagraph {
   return p.kind === 'single_item' && p.variant === 'multiple_choice'
+}
+
+export function isAgreementExplanationTextParagraph(
+  p: WritingFormParagraph
+): p is AgreementExplanationTextParagraph {
+  return p.kind === 'single_item' && p.variant === 'agreement_explanation_text'
 }
 
 export function isScaleTypeParagraph(p: WritingFormParagraph): p is ScaleTypeParagraph {
