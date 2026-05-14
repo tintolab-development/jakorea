@@ -11,6 +11,7 @@ import type {
   TitleWithPeriodParagraph,
   LectureReportProgramProgressParagraph,
   UjatJournalEducationInfoParagraph,
+  UserInfoParagraph,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
@@ -34,7 +35,11 @@ import { DateField } from '@/features/template/ui/paragraph/single-item/date'
 import { TimeField } from '@/features/template/ui/paragraph/single-item/time'
 import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate'
 import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-type'
-import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
+import {
+  getUserInfoPreviewSelectedEntries,
+  UserInfo,
+  UserInfoPreviewTable,
+} from '@/features/template/ui/paragraph/single-item/user-info'
 import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
 import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
 import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
@@ -350,8 +355,27 @@ function renderBody(
           paragraphInteractionMode="user"
         />
       )
-    case 'user_info':
-      return <UserInfo paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+    case 'user_info': {
+      const ui = p as UserInfoParagraph
+      if (renderMode === 'contentOnly') {
+        return (
+          <div className="form-editor-body">
+            <UserInfoPreviewTable
+              selectedEntries={getUserInfoPreviewSelectedEntries(ui)}
+              skin="a4Document"
+            />
+          </div>
+        )
+      }
+      return (
+        <UserInfo
+          paragraph={ui}
+          onChange={noopOnParagraphChange}
+          isEditMode={false}
+          layout="previewTable"
+        />
+      )
+    }
     case 'file_attachment':
       return <FileAttachment paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
     case 'static_description_lines':

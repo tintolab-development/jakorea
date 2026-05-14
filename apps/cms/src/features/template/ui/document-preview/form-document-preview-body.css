@@ -136,3 +136,9 @@
   font-weight: 600;
   background: var(--table-header, #f5f5f5);
 }
+
+/* user_info — th/td 세로 쌍, A4 contentOnly에서 short_essay 표와 동일 토큰 */
+.form-document-short-essay-table--user-info th,
+.form-document-short-essay-table--user-info td {
+  text-align: left;
+}

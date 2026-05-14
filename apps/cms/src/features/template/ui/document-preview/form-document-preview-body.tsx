@@ -76,7 +76,11 @@ export function FormDocumentPreviewBody({
           paragraphBodyOptions={paragraphBodyOptions}
           renderMode={renderMode}
           style={useCustomGaps ? { marginTop: getGapBefore(p, index) } : undefined}
-          isAuthoringSyncFocused={focusedParagraphId != null && focusedParagraphId === p.id}
+          isAuthoringSyncFocused={
+            renderMode === 'contentOnly'
+              ? false
+              : focusedParagraphId != null && focusedParagraphId === p.id
+          }
         />
       ))}
     </div>
