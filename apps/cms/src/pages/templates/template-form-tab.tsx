@@ -112,6 +112,10 @@ import {
   ProgramApplicationFormInstitutionEditorRightColumn,
 } from '@/features/template/ui/form-set/application-form/institution'
 import {
+  EconomyProgramApplicationEditorLeftColumn,
+  EconomyProgramApplicationEditorRightColumn,
+} from '@/features/template/ui/form-set/application-form/1c-1s'
+import {
   UjatProgramApplicationFormInstitutionEditorLeftColumn,
   UjatProgramApplicationFormInstitutionEditorRightColumn,
 } from '@/features/template/ui/form-set/application-form/UJAT-institution'
@@ -244,6 +248,7 @@ export default function TemplateFormTab() {
     selectedTemplate?.id === 'application-gemini-visiting-training-school'
   const isGeminiVisitingTrainingInstructorApplicationTemplate =
     selectedTemplate?.id === 'application-gemini-visiting-training-instructor'
+  const isEconomyProgramApplicationTemplate = selectedTemplate?.id === 'application-economy'
   const isProgramParticipantApplicationTemplate =
     selectedTemplate?.id === 'application-participant-school' ||
     selectedTemplate?.id === 'application-participant-individual'
@@ -255,7 +260,11 @@ export default function TemplateFormTab() {
   const isProgramVolunteerApplicationTemplate = selectedTemplate?.id === 'application-volunteer'
   const useA4PreviewForWritingTemplate = shouldUseA4PreviewForWritingTemplate(selectedTemplate?.id)
   const programParticipantApplicationVariant: ProgramParticipantApplicationEditorVariant =
-    selectedTemplate?.id === 'application-participant-school' ? 'institution' : 'individual'
+    selectedTemplate?.id === 'application-economy'
+      ? 'economy-application-institution'
+      : selectedTemplate?.id === 'application-participant-school'
+        ? 'institution'
+        : 'individual'
   const programRegistrationVm = useProgramRegistrationEditor(
     isPreviewOpen && isProgramRegistrationTemplate,
     selectedTemplate?.templateName ?? '일반 프로그램 등록 폼',
@@ -279,6 +288,7 @@ export default function TemplateFormTab() {
         isUjatProgramApplicationInstitutionTemplate ||
         isUjatProgramApplicationVolunteerTemplate ||
         isGeminiVisitingTrainingSchoolApplicationTemplate ||
+        isEconomyProgramApplicationTemplate ||
         isProgramParticipantApplicationTemplate ||
         isGeminiVisitingTrainingInstructorApplicationTemplate ||
         isProgramInstructorApplicationTemplate ||
@@ -303,6 +313,8 @@ export default function TemplateFormTab() {
                     ? (selectedTemplate?.templateName ?? 'UJAT 프로그램 봉사자 모집 폼')
                     : isGeminiVisitingTrainingSchoolApplicationTemplate
                       ? (selectedTemplate?.templateName ?? 'Gemini 찾아가는 연수 학교 신청 폼')
+                      : isEconomyProgramApplicationTemplate
+                        ? (selectedTemplate?.templateName ?? '1사1교 프로그램 참여자 신청 폼')
                       : isUjatProgramApplicationInstitutionTemplate
                         ? (selectedTemplate?.templateName ?? 'UJAT 프로그램 학교 신청 폼')
                       : isUjatProgramApplicationVolunteerTemplate
@@ -328,6 +340,8 @@ export default function TemplateFormTab() {
                     ? 'ujat-recruit-volunteer'
                     : isGeminiVisitingTrainingSchoolApplicationTemplate
                       ? 'gemini-application-institution'
+                      : isEconomyProgramApplicationTemplate
+                        ? 'economy-application-institution'
                       : isUjatProgramApplicationInstitutionTemplate
                         ? 'ujat-application-institution'
                       : isUjatProgramApplicationVolunteerTemplate
@@ -429,6 +443,7 @@ export default function TemplateFormTab() {
       isUjatProgramApplicationInstitutionTemplate ||
       isUjatProgramApplicationVolunteerTemplate ||
       isGeminiVisitingTrainingSchoolApplicationTemplate ||
+      isEconomyProgramApplicationTemplate ||
       isProgramParticipantApplicationTemplate ||
       isGeminiVisitingTrainingInstructorApplicationTemplate ||
       isProgramInstructorApplicationTemplate ||
@@ -472,6 +487,7 @@ export default function TemplateFormTab() {
     isUjatProgramApplicationInstitutionTemplate,
     isUjatProgramApplicationVolunteerTemplate,
     isGeminiVisitingTrainingSchoolApplicationTemplate,
+    isEconomyProgramApplicationTemplate,
     isGeminiVisitingTrainingInstructorApplicationTemplate,
     isProgramParticipantApplicationTemplate,
     isProgramInstructorApplicationTemplate,
@@ -503,6 +519,7 @@ export default function TemplateFormTab() {
       isUjatProgramApplicationInstitutionTemplate ||
       isUjatProgramApplicationVolunteerTemplate ||
       isGeminiVisitingTrainingSchoolApplicationTemplate ||
+      isEconomyProgramApplicationTemplate ||
       isProgramParticipantApplicationTemplate ||
       isGeminiVisitingTrainingInstructorApplicationTemplate ||
       isProgramInstructorApplicationTemplate ||
@@ -538,6 +555,7 @@ export default function TemplateFormTab() {
     isUjatProgramApplicationInstitutionTemplate,
     isUjatProgramApplicationVolunteerTemplate,
     isGeminiVisitingTrainingSchoolApplicationTemplate,
+    isEconomyProgramApplicationTemplate,
     isGeminiVisitingTrainingInstructorApplicationTemplate,
     isProgramParticipantApplicationTemplate,
     isProgramVolunteerApplicationTemplate,
@@ -694,6 +712,7 @@ export default function TemplateFormTab() {
                     isRecruitFormVolunteerTemplate ||
                     isUjatRecruitFormVolunteerTemplate ||
                     isGeminiVisitingTrainingSchoolApplicationTemplate ||
+                    isEconomyProgramApplicationTemplate ||
                     isUjatProgramApplicationInstitutionTemplate ||
                     isUjatProgramApplicationVolunteerTemplate ||
                     isProgramParticipantApplicationTemplate ||
@@ -730,6 +749,8 @@ export default function TemplateFormTab() {
             <UjatProgramApplicationFormVolunteerEditorLeftColumn
               vm={programParticipantApplicationVm}
             />
+          ) : isEconomyProgramApplicationTemplate ? (
+            <EconomyProgramApplicationEditorLeftColumn vm={programParticipantApplicationVm} />
           ) : isApplicantRecruitIndividualTemplate ? (
             <ApplicantRecruitFormIndividualEditorLeftColumn vm={programParticipantApplicationVm} />
           ) : isRecruitFormVolunteerTemplate ? (
@@ -811,6 +832,8 @@ export default function TemplateFormTab() {
             <UjatProgramApplicationFormVolunteerEditorRightColumn
               vm={programParticipantApplicationVm}
             />
+          ) : isEconomyProgramApplicationTemplate ? (
+            <EconomyProgramApplicationEditorRightColumn vm={programParticipantApplicationVm} />
           ) : isApplicantRecruitIndividualTemplate ? (
             <ApplicantRecruitFormIndividualEditorRightColumn vm={programParticipantApplicationVm} />
           ) : isRecruitFormVolunteerTemplate ? (

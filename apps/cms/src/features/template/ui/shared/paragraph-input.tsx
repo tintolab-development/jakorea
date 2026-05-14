@@ -54,7 +54,10 @@ export function ParagraphInput({
   const isExplanationTitle = className?.includes('paragraph-input-explanation-title') ?? false
   const isExplanationBody = className?.includes('paragraph-input--explanation-body') ?? false
   /** 단락 카드 설명(설명글_텍스트형 본문 제외) — `\n` 개행·여러 줄 편집 */
-  const isMultilineCardDescription = type === 'description' && !isExplanationBody
+  const isMultilineCardDescription =
+    type === 'description' &&
+    !isExplanationBody &&
+    (!isExplanationTitle || safeValue.includes('\n'))
   const widthSource = filled ? safeValue : (placeholder ?? '')
   const dynamicWidthPx = useMemo(() => {
     if (isMultilineCardDescription) return 0

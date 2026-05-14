@@ -170,9 +170,13 @@
   color: var(--paragraph-input-default);
 }
 
-.paragraph-input.paragraph-input-explanation-title.paragraph-input--view
+.paragraph-input.paragraph-input-explanation-title.paragraph-input--view:not(
+    .paragraph-input--description-multiline
+  )
   .paragraph-input__view-text,
-.paragraph-input.paragraph-input-explanation-title.paragraph-input--view
+.paragraph-input.paragraph-input-explanation-title.paragraph-input--view:not(
+    .paragraph-input--description-multiline
+  )
   .paragraph-input__placeholder {
   display: block;
   overflow: hidden;

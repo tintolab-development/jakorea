@@ -106,6 +106,8 @@ export type RenderFormParagraphBodyOptions = {
   ujatProgramRegistration?: boolean
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
+  /** 1사1교 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
+  programApplicationFormEconomyInstitution?: boolean
   /** Gemini 찾아가는 연수 학교 신청 폼 시드 단락 — 전용 본문 */
   programApplicationFormGeminiInstitution?: boolean
   /** Gemini 찾아가는 연수 강사 신청 폼 시드 단락 — 전용 본문 */
@@ -261,6 +263,9 @@ export function renderFormParagraphBody(
           programRegistration={options?.programRegistration}
           ujatProgramRegistration={options?.ujatProgramRegistration}
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
+          programApplicationFormEconomyInstitution={
+            options?.programApplicationFormEconomyInstitution
+          }
           programApplicationFormGeminiInstitution={options?.programApplicationFormGeminiInstitution}
           programApplicationFormGeminiInstructor={options?.programApplicationFormGeminiInstructor}
           ujatProgramApplicationFormInstitution={options?.ujatProgramApplicationFormInstitution}

@@ -13,6 +13,7 @@ import {
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/ujat-program-application-form-institution-draft'
 import { PROGRAM_REGISTRATION_IDS } from '@/features/template/model/program-registration-draft'
+import { PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-economy-draft'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
@@ -441,9 +442,12 @@ export function paragraphEditableHeading(
         isSelected &&
         p.variant === 'horizontal_table' &&
         editorKind === 'horizontal_table'
+      const lockedDescriptionEditable =
+        horizontalLockedHeaderEditable &&
+        PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS.has(p.id)
       const titleIsEditMode = horizontalLockedHeaderEditable
-      /* 잠금 시드: 설명란을 선택 전후로 view↔edit 전환하지 않아 카드 헤더 점프 완화 */
-      const descriptionIsEditMode = false
+      /* 잠금 시드: 기본은 설명 편집 불가, 1사1교 신청 폼 시드만 예외로 허용 */
+      const descriptionIsEditMode = lockedDescriptionEditable
       return {
         isEditMode: false,
         titleIsEditMode,

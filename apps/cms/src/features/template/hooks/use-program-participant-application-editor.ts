@@ -61,6 +61,10 @@ import {
   PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-institution-draft'
 import {
+  createProgramApplicationFormEconomyDraft,
+  PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/program-application-form-economy-draft'
+import {
   createProgramApplicationFormInstructorDraft,
   PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS,
   PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS,
@@ -171,6 +175,7 @@ function useParticipantApplicationMiddleActions(
 export type ProgramParticipantApplicationEditorVariant =
   | 'individual'
   | 'institution'
+  | 'economy-application-institution'
   | 'gemini-application-institution'
   | 'gemini-application-instructor'
   | 'ujat-application-institution'
@@ -204,6 +209,8 @@ export function useProgramParticipantApplicationEditor(
 ) {
   const seedParagraphIds = useMemo(() => {
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'economy-application-institution')
+      return PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS
     if (variant === 'gemini-application-institution')
       return GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'gemini-application-instructor')
@@ -259,6 +266,8 @@ export function useProgramParticipantApplicationEditor(
     const next = normalizeWritingFormDraft(
       variant === 'institution'
         ? createProgramApplicationFormInstitutionDraft()
+        : variant === 'economy-application-institution'
+          ? createProgramApplicationFormEconomyDraft()
         : variant === 'gemini-application-institution'
           ? createGeminiVisitingTrainingApplicationFormInstitutionDraft()
           : variant === 'gemini-application-instructor'
@@ -527,6 +536,7 @@ export function useProgramParticipantApplicationEditor(
         structureLockedParagraphIds: seedParagraphIds,
         structureLockedAuthoringChoicePreview: true,
         programApplicationFormInstitution: variant === 'institution',
+        programApplicationFormEconomyInstitution: variant === 'economy-application-institution',
         programApplicationFormGeminiInstitution: variant === 'gemini-application-institution',
         programApplicationFormGeminiInstructor: variant === 'gemini-application-instructor',
         ujatProgramApplicationFormInstitution: variant === 'ujat-application-institution',

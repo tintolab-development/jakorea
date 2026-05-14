@@ -34,6 +34,7 @@ import { renderRecruitFormInstructorParagraphBody } from '@/features/template/ui
 import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraph-body'
 import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraph-body'
 import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/institution/paragraph-body'
+import { renderEconomyProgramApplicationParagraphBody } from '@/features/template/ui/form-set/application-form/1c-1s/paragraph-body'
 import { renderGeminiVisitingTrainingApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/gemini-institution/paragraph-body'
 import { renderGeminiVisitingTrainingApplicationFormInstructorParagraphBody } from '@/features/template/ui/form-set/application-form/gemini-instructor/paragraph-body'
 import { renderUjatProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraph-body'
@@ -401,6 +402,7 @@ export function HorizontalTableParagraphBody({
   programRegistration,
   ujatProgramRegistration,
   programApplicationFormInstitution,
+  programApplicationFormEconomyInstitution,
   programApplicationFormGeminiInstitution,
   programApplicationFormGeminiInstructor,
   ujatProgramApplicationFormInstitution,
@@ -434,6 +436,8 @@ export function HorizontalTableParagraphBody({
   ujatProgramRegistration?: boolean
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
+  /** 1사1교 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
+  programApplicationFormEconomyInstitution?: boolean
   /** Gemini 찾아가는 연수 학교 신청 폼 시드 단락 — 전용 본문 */
   programApplicationFormGeminiInstitution?: boolean
   /** Gemini 찾아가는 연수 강사 신청 폼 시드 단락 — 전용 본문 */
@@ -560,6 +564,12 @@ export function HorizontalTableParagraphBody({
   const programApplicationFormInstitutionBody =
     renderProgramApplicationFormInstitutionParagraphBody(p, programApplicationFormInstitution)
   if (programApplicationFormInstitutionBody != null) return programApplicationFormInstitutionBody
+
+  const economyProgramApplicationBody = renderEconomyProgramApplicationParagraphBody(
+    p,
+    programApplicationFormEconomyInstitution
+  )
+  if (economyProgramApplicationBody != null) return economyProgramApplicationBody
 
   const ujatProgramApplicationFormInstitutionBody =
     renderUjatProgramApplicationFormInstitutionParagraphBody(
