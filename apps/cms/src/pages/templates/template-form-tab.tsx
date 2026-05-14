@@ -54,6 +54,7 @@ import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import NewAgreementForm, {
   AgreementWritingFormShell,
+  type AgreementWritingFormShellProps,
 } from '@/features/template/ui/form-set/editors/new-agreement-form'
 import NewHorizontalTableForm from '@/features/template/ui/form-set/editors/new-horizontal-table-form'
 import NewSurveyForm from '@/features/template/ui/form-set/editors/new-survey-form'
@@ -153,6 +154,8 @@ import {
 
 const AGREEMENT_CRIME_TEMPLATE_ID = 'agreement-crime'
 const AGREEMENT_PAYMENT_STATEMENT_PRE_CONSENT_ID = 'agreement-third-party'
+
+type AgreementWritingFormConfig = Omit<AgreementWritingFormShellProps, 'onClose'>
 
 type TemplateFormTabQuery = {
   mode?: string
@@ -390,6 +393,84 @@ export default function TemplateFormTab() {
   })
 
   const isCrimeConsentDetail = isPreviewOpen && selectedTemplate?.id === AGREEMENT_CRIME_TEMPLATE_ID
+  const agreementWritingFormConfig = useMemo<AgreementWritingFormConfig | null>(() => {
+    if (params.mode !== 'edit') return null
+    const templateId = params.id?.trim()
+    if (templateId == null || templateId === '' || templateId === AGREEMENT_CRIME_TEMPLATE_ID) {
+      return null
+    }
+
+    if (templateId === 'agreement-expense') {
+      const row = findWritingTemplateRowByDefinitionId(templateId)
+      const title = row?.templateName ?? '교육진행자 동의 서약서'
+      return {
+        initialDraft: createEducatorFacilitatorPledgeDraft,
+        defaultActiveParagraphId: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.title,
+        modalTitle: title,
+        modalDescription: '* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다.',
+        writingPreviewHeaderTitle: title,
+        previewLayout: 'a4-document',
+        a4RenderMode: 'contentOnly',
+      }
+    }
+
+    if (templateId === 'agreement-notice') {
+      const row = findWritingTemplateRowByDefinitionId(templateId)
+      const title = row?.templateName ?? '행정정보 공동이용 사전동의서'
+      return {
+        initialDraft: createAgreementNoticeDraft,
+        defaultActiveParagraphId: AGREEMENT_NOTICE_PARAGRAPH_IDS.title,
+        modalTitle: title,
+        modalDescription: '* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다.',
+        writingPreviewHeaderTitle: title,
+        structureLockedParagraphIds: AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS,
+        hideDragHandleForParagraphIds: AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS,
+        previewLayout: 'a4-document',
+        a4HiddenParagraphIds: AGREEMENT_NOTICE_A4_HIDDEN_PARAGRAPH_IDS,
+        a4RenderMode: 'contentOnly',
+        a4ParagraphGapPx: getAgreementNoticeA4ParagraphGap,
+      }
+    }
+
+    if (templateId === 'agreement-portrait') {
+      const row = findWritingTemplateRowByDefinitionId(templateId)
+      const title = row?.templateName ?? '초상권 수집·이용 동의'
+      return {
+        initialDraft: createAgreementPortraitDraft,
+        defaultActiveParagraphId: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.title,
+        modalTitle: title,
+        modalDescription: '* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다.',
+        writingPreviewHeaderTitle: title,
+        structureLockedParagraphIds: AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS,
+        hideDragHandleForParagraphIds: AGREEMENT_PORTRAIT_HIDDEN_DRAG_HANDLE_IDS,
+        previewLayout: 'a4-document',
+        a4HiddenParagraphIds: AGREEMENT_PORTRAIT_A4_HIDDEN_PARAGRAPH_IDS,
+        a4RenderMode: 'contentOnly',
+        a4ParagraphGapPx: getAgreementPortraitA4ParagraphGap,
+      }
+    }
+
+    if (templateId === AGREEMENT_PAYMENT_STATEMENT_PRE_CONSENT_ID) {
+      const row = findWritingTemplateRowByDefinitionId(templateId)
+      const title = row?.templateName ?? '지급조서 사전 동의서'
+      return {
+        initialDraft: createPaymentStatementPreConsentDraft,
+        defaultActiveParagraphId: PAYMENT_STATEMENT_PRE_CONSENT_IDS.title,
+        modalTitle: title,
+        modalDescription: '* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다.',
+        writingPreviewHeaderTitle: title,
+        structureLockedParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_SEED_PARAGRAPH_IDS,
+        hideDragHandleForParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
+        previewLayout: 'a4-document',
+        a4HiddenParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS,
+        a4RenderMode: 'contentOnly',
+        a4ParagraphGapPx: getPaymentStatementPreConsentA4ParagraphGap,
+        paragraphBodyOptions: PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
+      }
+    }
+
+    return null
+  }, [params.mode, params.id])
 
   const suppressInactiveUserPreviewStrip = useMemo(() => {
     if (params.mode !== 'edit' || params.id == null || params.id.trim() === '') return false
@@ -573,14 +654,6 @@ export default function TemplateFormTab() {
     surveyListEditor,
   ])
 
-  const agreementExpenseRow = useMemo(
-    () =>
-      params.mode === 'edit' && params.id === 'agreement-expense'
-        ? findWritingTemplateRowByDefinitionId('agreement-expense')
-        : undefined,
-    [params.mode, params.id]
-  )
-
   if (params.mode === 'new' && params.type === 'survey') {
     return <NewSurveyForm />
   }
@@ -591,82 +664,10 @@ export default function TemplateFormTab() {
     return <NewHorizontalTableForm />
   }
 
-  if (params.mode === 'edit' && params.id === 'agreement-expense' && agreementExpenseRow) {
+  if (agreementWritingFormConfig != null) {
     return (
       <AgreementWritingFormShell
-        initialDraft={createEducatorFacilitatorPledgeDraft}
-        defaultActiveParagraphId={EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.title}
-        modalTitle={agreementExpenseRow.templateName}
-        modalDescription="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
-        writingPreviewHeaderTitle={agreementExpenseRow.templateName}
-        previewLayout="a4-document"
-        a4RenderMode="contentOnly"
-        onClose={handleCloseTemplatePreview}
-      />
-    )
-  }
-
-  if (params.mode === 'edit' && params.id === 'agreement-notice') {
-    const agreementNoticeRow = findWritingTemplateRowByDefinitionId('agreement-notice')
-    const noticeTitle = agreementNoticeRow?.templateName ?? '행정정보 공동이용 사전동의서'
-    return (
-      <AgreementWritingFormShell
-        initialDraft={createAgreementNoticeDraft}
-        defaultActiveParagraphId={AGREEMENT_NOTICE_PARAGRAPH_IDS.title}
-        modalTitle={noticeTitle}
-        modalDescription="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
-        writingPreviewHeaderTitle={noticeTitle}
-        structureLockedParagraphIds={AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS}
-        hideDragHandleForParagraphIds={AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS}
-        previewLayout="a4-document"
-        a4HiddenParagraphIds={AGREEMENT_NOTICE_A4_HIDDEN_PARAGRAPH_IDS}
-        a4RenderMode="contentOnly"
-        a4ParagraphGapPx={getAgreementNoticeA4ParagraphGap}
-        onClose={handleCloseTemplatePreview}
-      />
-    )
-  }
-
-  if (params.mode === 'edit' && params.id === 'agreement-portrait') {
-    const agreementPortraitRow = findWritingTemplateRowByDefinitionId('agreement-portrait')
-    const portraitTitle = agreementPortraitRow?.templateName ?? '초상권 수집·이용 동의'
-    return (
-      <AgreementWritingFormShell
-        initialDraft={createAgreementPortraitDraft}
-        defaultActiveParagraphId={AGREEMENT_PORTRAIT_PARAGRAPH_IDS.title}
-        modalTitle={portraitTitle}
-        modalDescription="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
-        writingPreviewHeaderTitle={portraitTitle}
-        structureLockedParagraphIds={AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS}
-        hideDragHandleForParagraphIds={AGREEMENT_PORTRAIT_HIDDEN_DRAG_HANDLE_IDS}
-        previewLayout="a4-document"
-        a4HiddenParagraphIds={AGREEMENT_PORTRAIT_A4_HIDDEN_PARAGRAPH_IDS}
-        a4RenderMode="contentOnly"
-        a4ParagraphGapPx={getAgreementPortraitA4ParagraphGap}
-        onClose={handleCloseTemplatePreview}
-      />
-    )
-  }
-
-  if (params.mode === 'edit' && params.id === AGREEMENT_PAYMENT_STATEMENT_PRE_CONSENT_ID) {
-    const preConsentRow = findWritingTemplateRowByDefinitionId(
-      AGREEMENT_PAYMENT_STATEMENT_PRE_CONSENT_ID
-    )
-    const preConsentTitle = preConsentRow?.templateName ?? '지급조서 사전 동의서'
-    return (
-      <AgreementWritingFormShell
-        initialDraft={createPaymentStatementPreConsentDraft}
-        defaultActiveParagraphId={PAYMENT_STATEMENT_PRE_CONSENT_IDS.title}
-        modalTitle={preConsentTitle}
-        modalDescription="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
-        writingPreviewHeaderTitle={preConsentTitle}
-        structureLockedParagraphIds={PAYMENT_STATEMENT_PRE_CONSENT_SEED_PARAGRAPH_IDS}
-        hideDragHandleForParagraphIds={PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS}
-        previewLayout="a4-document"
-        a4HiddenParagraphIds={PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS}
-        a4RenderMode="contentOnly"
-        a4ParagraphGapPx={getPaymentStatementPreConsentA4ParagraphGap}
-        paragraphBodyOptions={PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS}
+        {...agreementWritingFormConfig}
         onClose={handleCloseTemplatePreview}
       />
     )
