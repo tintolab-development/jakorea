@@ -14,6 +14,7 @@ import {
   createEducatorFacilitatorPledgeDraft,
   DEFAULT_SURVEY_PARAGRAPH_IDS,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
+  SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
@@ -780,6 +781,7 @@ export default function TemplateFormTab() {
               onSelectCard={surveyListEditor.handleSelectCard}
               onReorderMiddle={surveyListEditor.onReorderMiddle}
               updateParagraph={surveyListEditor.updateParagraph}
+              hideDragHandleForParagraphIds={SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS}
               editorKind="survey"
               singleItemListActiveItemId={surveyListEditor.singleItemListActiveItemId}
               onSelectSingleItemListItem={surveyListEditor.onSelectSingleItemListItem}
@@ -865,6 +867,7 @@ export default function TemplateFormTab() {
               pinnedTop={surveyListEditor.pinnedTop}
               sortableMiddle={surveyListEditor.sortableMiddle}
               pinnedBottom={surveyListEditor.pinnedBottom}
+              hideSortableDragHandleForIds={SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS}
               selectedItemId={surveyListEditor.activeParagraphId}
               onSelectItem={surveyListEditor.handleSelectCard}
               onReorderMiddle={surveyListEditor.onReorderMiddle}

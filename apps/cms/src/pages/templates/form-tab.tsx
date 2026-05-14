@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Space, Typography } from 'antd'
 import { useFormTestSingleItemEditor } from '@/features/template/hooks/use-form-test-single-item-editor'
+import { SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import {
@@ -96,6 +97,7 @@ export function FormTab() {
             onSelectCard={singleItem.handleSelectCard}
             onReorderMiddle={singleItem.onReorderMiddle}
             updateParagraph={singleItem.updateParagraph}
+            hideDragHandleForParagraphIds={SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS}
             editorKind="survey"
             singleItemListActiveItemId={singleItem.singleItemListActiveItemId}
             onSelectSingleItemListItem={singleItem.onSelectSingleItemListItem}
@@ -108,6 +110,7 @@ export function FormTab() {
             pinnedTop={singleItem.pinnedTop}
             sortableMiddle={singleItem.sortableMiddle}
             pinnedBottom={singleItem.pinnedBottom}
+            hideSortableDragHandleForIds={SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS}
             selectedItemId={singleItem.activeParagraphId}
             onSelectItem={singleItem.handleSelectCard}
             onReorderMiddle={singleItem.onReorderMiddle}

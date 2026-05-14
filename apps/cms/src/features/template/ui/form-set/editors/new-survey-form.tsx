@@ -8,6 +8,7 @@ import {
   createDefaultSurveyDraft,
   DEFAULT_SURVEY_PARAGRAPH_IDS,
   reorderWritingFormMiddleParagraphs,
+  SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS,
   type FormTitleNumberingStyle,
   type WritingFormDraft,
   type WritingFormParagraph,
@@ -148,6 +149,7 @@ export default function NewSurveyForm() {
           onSelectCard={handleSelectParagraph}
           onReorderMiddle={onReorderMiddle}
           updateParagraph={updateParagraph}
+          hideDragHandleForParagraphIds={SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS}
           editorKind="survey"
           singleItemListActiveItemId={singleItemListActiveItemId}
           onSelectSingleItemListItem={(paragraphId, itemId) => {
@@ -167,6 +169,7 @@ export default function NewSurveyForm() {
           pinnedTop={pinnedTop}
           sortableMiddle={sortableMiddle}
           pinnedBottom={pinnedBottom}
+          hideSortableDragHandleForIds={SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS}
           selectedItemId={activeParagraphId}
           onSelectItem={handleSelectParagraph}
           onReorderMiddle={onReorderMiddle}
