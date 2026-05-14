@@ -33,7 +33,11 @@ const TEMPLATE_AUTO_USER_INFO_HINT = '로그인 사용자 정보가 자동으로
 const inlineChoiceStyle = { display: 'flex', flexWrap: 'wrap' as const, gap: 16 }
 
 /** 1사1교 프로그램 참여자 신청 폼 — 기본 정보 */
-export function EconomyProgramApplicationBasicInfoParagraph() {
+export function EconomyProgramApplicationBasicInfoParagraph({
+  isTemplateAuthoringMode = false,
+}: {
+  isTemplateAuthoringMode?: boolean
+}) {
   const [applicationGrade, setApplicationGrade] = useState<string>('')
   const [classCount, setClassCount] = useState<string>('')
   const [educationFormat, setEducationFormat] = useState<string>('online')
@@ -171,28 +175,39 @@ export function EconomyProgramApplicationBasicInfoParagraph() {
         <DetailInfoForm.Field
           label="담당 교사 정보"
           fullRow
+          readOnlyDisplay={isTemplateAuthoringMode}
           edit={
-            <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
-              <span>담당 교사</span>
+            isTemplateAuthoringMode ? undefined : (
+              <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
+                <span>담당 교사</span>
+                <span className="form-editor-template-field-hint-text">
+                  {TEMPLATE_AUTO_USER_INFO_HINT}
+                </span>
+                <span style={{ color: '#9ca3af' }}>|</span>
+                <span>Tel</span>
+                <CmsInput
+                  inputSize="medium"
+                  width={170}
+                  placeholder="담당 교사의 내선 번호(직통 번호)"
+                />
+                <span style={{ color: '#9ca3af' }}>|</span>
+                <span>M</span>
+                <CmsInput inputSize="medium" width={160} placeholder="휴대폰" />
+                <span style={{ color: '#9ca3af' }}>|</span>
+                <span>E-mail</span>
+                <CmsInput inputSize="medium" width={180} placeholder="이메일" />
+              </div>
+            )
+          }
+          view={
+            isTemplateAuthoringMode ? (
               <span className="form-editor-template-field-hint-text">
                 {TEMPLATE_AUTO_USER_INFO_HINT}
               </span>
-              <span style={{ color: '#9ca3af' }}>|</span>
-              <span>Tel</span>
-              <CmsInput
-                inputSize="medium"
-                width={170}
-                placeholder="담당 교사의 내선 번호(직통 번호)"
-              />
-              <span style={{ color: '#9ca3af' }}>|</span>
-              <span>M</span>
-              <CmsInput inputSize="medium" width={160} placeholder="휴대폰" />
-              <span style={{ color: '#9ca3af' }}>|</span>
-              <span>E-mail</span>
-              <CmsInput inputSize="medium" width={180} placeholder="이메일" />
-            </div>
+            ) : (
+              '-'
+            )
           }
-          view="-"
         />
       </DetailInfoForm.Row>
 

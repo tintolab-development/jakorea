@@ -39,11 +39,20 @@ export function FormDocumentPreviewBody({
   focusedParagraphId = null,
 }: FormDocumentPreviewBodyProps) {
   const useCustomGaps = paragraphGapPx != null
+  const hiddenParagraphIds = paragraphBodyOptions?.hiddenParagraphIds
+  const visibleParagraphs =
+    hiddenParagraphIds == null
+      ? paragraphs
+      : paragraphs.filter(paragraph => !hiddenParagraphIds.has(paragraph.id))
+  const visibleAllParagraphs =
+    hiddenParagraphIds == null
+      ? allParagraphs
+      : allParagraphs.filter(paragraph => !hiddenParagraphIds.has(paragraph.id))
 
   const getGapBefore = (paragraph: WritingFormParagraph, index: number) => {
     if (index === 0 || paragraphGapPx == null) return undefined
     if (typeof paragraphGapPx === 'number') return paragraphGapPx
-    return paragraphGapPx(paragraph, index, paragraphs)
+    return paragraphGapPx(paragraph, index, visibleParagraphs)
   }
 
   return (
@@ -56,11 +65,11 @@ export function FormDocumentPreviewBody({
         .filter(Boolean)
         .join(' ')}
     >
-      {paragraphs.map((p, index) => (
+      {visibleParagraphs.map((p, index) => (
         <FormDocumentPreviewParagraph
           key={p.id}
           paragraph={p}
-          allParagraphs={allParagraphs}
+          allParagraphs={visibleAllParagraphs}
           titleNumbering={titleNumbering}
           editorKind={editorKind}
           overflow={overflowParagraphIds?.has(p.id) ?? false}

@@ -8,16 +8,30 @@ import { UjatProgramApplicationVolunteerInterviewScheduleParagraph } from '@/fea
 import { UjatProgramApplicationVolunteerPreferredRegionParagraph } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraphs/ujat-program-application-volunteer-preferred-region-paragraph'
 import { UjatProgramApplicationVolunteerPreviousTermParagraph } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraphs/ujat-program-application-volunteer-previous-term-paragraph'
 
+export type UjatProgramApplicationVolunteerType = 'new' | 'ujat-graduate'
+
+export type UjatProgramApplicationVolunteerBodyOptions = {
+  enabled: boolean
+  applicationType: UjatProgramApplicationVolunteerType
+  onApplicationTypeChange: (next: UjatProgramApplicationVolunteerType) => void
+}
+
 /** 템플릿 편집기 — UJAT 프로그램 봉사자 신청 폼 시드 단락 본문 */
 export function renderUjatProgramApplicationFormVolunteerParagraphBody(
   paragraph: HorizontalTableParagraph,
-  enabled: boolean | undefined
+  options: UjatProgramApplicationVolunteerBodyOptions | undefined
 ): ReactNode | null {
-  if (!enabled) return null
+  if (options?.enabled !== true) return null
   switch (paragraph.id) {
     case UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.basicInfo:
-      return <UjatProgramApplicationVolunteerBasicInfoParagraph />
+      return (
+        <UjatProgramApplicationVolunteerBasicInfoParagraph
+          applicationType={options.applicationType}
+          onApplicationTypeChange={options.onApplicationTypeChange}
+        />
+      )
     case UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm:
+      if (options.applicationType === 'new') return null
       return <UjatProgramApplicationVolunteerPreviousTermParagraph />
     case UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.preferredRegion:
       return <UjatProgramApplicationVolunteerPreferredRegionParagraph />

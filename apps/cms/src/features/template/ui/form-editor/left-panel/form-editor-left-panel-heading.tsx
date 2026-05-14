@@ -11,18 +11,36 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
-import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/ujat-program-application-form-institution-draft'
+import {
+  UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS,
+  UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/ujat-program-application-form-institution-draft'
 import {
   PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS,
   PROGRAM_REGISTRATION_IDS,
 } from '@/features/template/model/program-registration-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-economy-draft'
+import { PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-individual-draft'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-institution-draft'
+import { APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS } from '@/features/template/model/applicant-recruit-form-individual-draft'
+import { APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/applicant-recruit-form-institution-draft'
+import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-instructor-draft'
+import { PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
+import { RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS } from '@/features/template/model/recruit-form-instructor-draft'
+import { RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
 import { UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-program-registration-draft'
+import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/gemini-visiting-training-application-form-institution-draft'
+import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS } from '@/features/template/model/gemini-visiting-training-application-form-instructor-draft'
+import { UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-recruit-form-institution-draft'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
+import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
-import { UJAT_RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
+import {
+  UJAT_RECRUIT_FORM_VOLUNTEER_IDS,
+  UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/ujat-recruit-form-volunteer-draft'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsToggle } from '@/shared/ui/cms-toggle'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
@@ -37,6 +55,7 @@ export function withoutTitleRequired<T extends { titleRequired?: boolean }>(
 }
 
 const HIDDEN_PREVIEW_DESCRIPTION_TEXTS = new Set(['설명 입력', '설명을 입력해 주세요'])
+const CARD_DESCRIPTION_PLACEHOLDER_TEXT = '설명 입력'
 
 export function withoutPlaceholderDescriptionInPreview<
   T extends { descriptionValue?: string; showDescription?: boolean },
@@ -51,6 +70,33 @@ export function withoutPlaceholderDescriptionInPreview<
     return { ...heading, showDescription: false }
   }
   return heading
+}
+
+function usesPlaceholderDescriptionValue(paragraphId: string): boolean {
+  return (
+    PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(paragraphId)
+  )
+}
+
+function normalizeCardDescriptionValue(paragraphId: string, value: string): string {
+  if (value.trim() !== CARD_DESCRIPTION_PLACEHOLDER_TEXT) return value
+  return usesPlaceholderDescriptionValue(paragraphId) ? '' : value
 }
 
 /** 프로그램 등록 — 교육 진행 단락: 카드 제목 줄 우측 액션 (본문 DetailInfoForm 밖) */
@@ -186,6 +232,7 @@ export function withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
   ) {
     return heading
   }
+  const applicationGradeAddEnabled = paragraphBodyOptions?.paragraphInteractionMode === 'user'
   return {
     ...heading,
     titleTrailing: (
@@ -195,8 +242,10 @@ export function withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
         size="medium"
         width={160}
         icon={<PlusOutlined aria-hidden />}
+        disabled={!applicationGradeAddEnabled}
         onClick={e => {
           e.stopPropagation()
+          if (!applicationGradeAddEnabled) return
           o.onAddApplicationGrade()
         }}
       >
@@ -422,7 +471,7 @@ export function paragraphEditableHeading(
           ? 'paragraph-card__title--placeholder'
           : undefined,
         titleLeading: prefix,
-        descriptionValue: p.paragraphDescription,
+        descriptionValue: normalizeCardDescriptionValue(p.id, p.paragraphDescription),
         onDescriptionChange: () => {},
         descriptionPlaceholder: '설명 입력',
         descriptionClassName: descCls(),
@@ -445,7 +494,7 @@ export function paragraphEditableHeading(
           .join(' '),
         titleLeading: prefix,
         showDescription: false,
-        descriptionValue: p.paragraphDescription,
+        descriptionValue: normalizeCardDescriptionValue(p.id, p.paragraphDescription),
         onDescriptionChange: () => {},
         descriptionPlaceholder: '설명 입력',
       }
@@ -465,7 +514,21 @@ export function paragraphEditableHeading(
         editorKind === 'horizontal_table'
       const lockedDescriptionEditable =
         horizontalLockedHeaderEditable &&
-        (PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS.has(p.id) ||
+        (PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS.has(p.id) ||
+          PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+          PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS.has(p.id) ||
+          PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
+          PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
+          UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+          UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
+          GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+          GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
+          APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS.has(p.id) ||
+          APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+          RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
+          RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
+          UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+          UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
           PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS.has(p.id) ||
           UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(p.id))
       const titleIsEditMode = horizontalLockedHeaderEditable
@@ -490,7 +553,7 @@ export function paragraphEditableHeading(
           ? 'paragraph-card__title--placeholder'
           : undefined,
         titleLeading: prefix,
-        descriptionValue: p.paragraphDescription,
+        descriptionValue: normalizeCardDescriptionValue(p.id, p.paragraphDescription),
         onDescriptionChange: descriptionIsEditMode
           ? (next: string) =>
               updateParagraph(p.id, cur =>
@@ -554,7 +617,7 @@ export function paragraphEditableHeading(
         ? 'paragraph-card__title--placeholder'
         : undefined,
       titleLeading: prefix,
-      descriptionValue: p.paragraphDescription,
+      descriptionValue: normalizeCardDescriptionValue(p.id, p.paragraphDescription),
       onDescriptionChange: (next: string) =>
         updateParagraph(p.id, cur =>
           cur.kind === 'description' && cur.variant === 'static_description_lines'
@@ -586,7 +649,7 @@ export function paragraphEditableHeading(
         .join(' '),
       titleLeading: prefix,
       showDescription: false,
-      descriptionValue: p.paragraphDescription,
+      descriptionValue: normalizeCardDescriptionValue(p.id, p.paragraphDescription),
       onDescriptionChange: () => {},
       descriptionPlaceholder: '설명 입력',
     }
@@ -624,7 +687,7 @@ export function paragraphEditableHeading(
         ? 'paragraph-card__title--placeholder'
         : undefined,
       titleLeading: prefix,
-      descriptionValue: p.paragraphDescription,
+      descriptionValue: normalizeCardDescriptionValue(p.id, p.paragraphDescription),
       onDescriptionChange: (next: string) =>
         updateParagraph(p.id, cur =>
           cur.kind === 'description' && cur.variant === 'system'
@@ -657,7 +720,7 @@ export function paragraphEditableHeading(
         ? 'paragraph-card__title--placeholder'
         : undefined,
       titleLeading: prefix,
-      descriptionValue: p.paragraphDescription,
+      descriptionValue: normalizeCardDescriptionValue(p.id, p.paragraphDescription),
       onDescriptionChange: (next: string) =>
         updateParagraph(p.id, cur =>
           cur.kind === 'single_item' && cur.id === p.id

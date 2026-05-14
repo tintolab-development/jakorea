@@ -4,6 +4,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import type { UjatProgramApplicationVolunteerType } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraph-body'
 
 const GRADE_OPTIONS = [
   { label: '1학년', value: '1' },
@@ -26,8 +27,13 @@ const APPLICATION_ROUTE_OPTIONS = [
 ]
 
 /** UJAT 프로그램 봉사자 신청 폼 — 기본 정보 */
-export function UjatProgramApplicationVolunteerBasicInfoParagraph() {
-  const [applicationType, setApplicationType] = useState<'new' | 'ujat-graduate'>('ujat-graduate')
+export function UjatProgramApplicationVolunteerBasicInfoParagraph({
+  applicationType,
+  onApplicationTypeChange,
+}: {
+  applicationType: UjatProgramApplicationVolunteerType
+  onApplicationTypeChange: (next: UjatProgramApplicationVolunteerType) => void
+}) {
   const [grade, setGrade] = useState<string | undefined>(undefined)
   const [applicationRoute, setApplicationRoute] = useState<string | undefined>(undefined)
   const isOtherApplicationRoute = applicationRoute === APPLICATION_ROUTE_OTHER_VALUE
@@ -115,7 +121,9 @@ export function UjatProgramApplicationVolunteerBasicInfoParagraph() {
             <CmsRadioGroup
               size="large"
               value={applicationType}
-              onChange={e => setApplicationType(e.target.value as 'new' | 'ujat-graduate')}
+              onChange={e =>
+                onApplicationTypeChange(e.target.value as UjatProgramApplicationVolunteerType)
+              }
               style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}
             >
               <CmsRadio value="new">신규 봉사자</CmsRadio>

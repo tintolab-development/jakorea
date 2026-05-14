@@ -53,6 +53,7 @@ import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-stat
 import type { ProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { ProgramApplicationFormInstructorBodyOptions } from '@/features/template/ui/form-set/application-form/instructor/paragraph-body'
 import type { ProgramApplicationFormVolunteerBodyOptions } from '@/features/template/ui/form-set/application-form/volunteer/paragraph-body'
+import type { UjatProgramApplicationVolunteerBodyOptions } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraph-body'
 import type {
   UjatProgramApplicationGradeClassTimeParagraphOptions,
   UjatProgramApplicationGradeInfoParagraphOptions,
@@ -60,6 +61,7 @@ import type {
 
 export type { ProgramApplicationFormInstructorBodyOptions }
 export type { ProgramApplicationFormVolunteerBodyOptions }
+export type { UjatProgramApplicationVolunteerBodyOptions }
 export type { UjatProgramApplicationGradeClassTimeParagraphOptions }
 export type { UjatProgramApplicationGradeInfoParagraphOptions }
 
@@ -115,7 +117,7 @@ export type RenderFormParagraphBodyOptions = {
   /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramApplicationFormInstitution?: boolean
   /** UJAT 프로그램 봉사자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
-  ujatProgramApplicationFormVolunteer?: boolean
+  ujatProgramApplicationFormVolunteer?: UjatProgramApplicationVolunteerBodyOptions
   /** UJAT 프로그램 학교 신청 폼 — 학년 별 신청 정보(블록 수·카드 헤더「+ 신청 학년 추가」) */
   ujatProgramApplicationGradeInfo?: UjatProgramApplicationGradeInfoParagraphOptions
   /** UJAT 프로그램 학교 신청 폼 — 학년 별 수업 시간(블록·카드 헤더「수업 진행 시간 추가」) */
@@ -145,6 +147,8 @@ export type RenderFormParagraphBodyOptions = {
    * 프로그램 참여자 신청 폼 등 고정 단락 템플릿용.
    */
   structureLockedAuthoringChoicePreview?: boolean
+  /** 현재 조건에 따라 숨겨야 하는 단락 id 목록(에디터/미리보기 공통) */
+  hiddenParagraphIds?: ReadonlySet<string>
 }
 
 export function renderFormParagraphBody(

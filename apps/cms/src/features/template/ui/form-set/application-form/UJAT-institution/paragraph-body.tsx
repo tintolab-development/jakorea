@@ -25,7 +25,11 @@ export function renderUjatProgramApplicationFormInstitutionParagraphBody(
     case UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.applicationRegion:
       return <UjatProgramApplicationRegionParagraph />
     case UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo:
-      return <UjatProgramApplicationBasicInfoParagraph />
+      return (
+        <UjatProgramApplicationBasicInfoParagraph
+          isTemplateAuthoringMode={paragraphInteractionMode === 'authoring'}
+        />
+      )
     case UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeApplicationInfo:
       return (
         <UjatProgramApplicationGradeInfoParagraph

@@ -172,7 +172,12 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
                   onChange={next => setFinalAnnounceDate(next)}
                 />
                 <DetailInfoForm.InputsSeparator />
-                <CmsInput inputSize="medium" placeholder="발표 방법 안내" />
+                <CmsInput
+                  inputSize="medium"
+                  width="100%"
+                  style={{ flex: '1 1 0', minWidth: 0 }}
+                  placeholder="발표 방법 안내"
+                />
               </div>
             }
             view="-"

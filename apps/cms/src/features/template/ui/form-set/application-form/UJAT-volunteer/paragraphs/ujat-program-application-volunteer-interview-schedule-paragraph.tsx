@@ -12,8 +12,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 const TIME_SLOT_AREA_PLACEHOLDER = '봉사자 모집 폼에서 관리자가 설정한 일정 및 시간대가 노출됩니다.'
 
 /** 선택한 일정 필드 — 관리자 진행 가능일 연동 전 안내 */
-const SELECTED_SCHEDULE_PLACEHOLDER =
-  '설정된 면접 일정이 없습니다. 면접 진행 가능 일정을 설정해 주세요.'
+const SELECTED_SCHEDULE_PLACEHOLDER = '신청자가 선택한 진행 가능일이 노출됩니다.'
 
 /** UJAT 프로그램 봉사자 신청 폼 — 면접 진행 가능 일정 */
 export function UjatProgramApplicationVolunteerInterviewScheduleParagraph() {

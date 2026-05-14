@@ -38,7 +38,10 @@ import { renderEconomyProgramApplicationParagraphBody } from '@/features/templat
 import { renderGeminiVisitingTrainingApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/gemini-institution/paragraph-body'
 import { renderGeminiVisitingTrainingApplicationFormInstructorParagraphBody } from '@/features/template/ui/form-set/application-form/gemini-instructor/paragraph-body'
 import { renderUjatProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraph-body'
-import { renderUjatProgramApplicationFormVolunteerParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraph-body'
+import {
+  renderUjatProgramApplicationFormVolunteerParagraphBody,
+  type UjatProgramApplicationVolunteerBodyOptions,
+} from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraph-body'
 import {
   renderProgramApplicationFormInstructorParagraphBody,
   type ProgramApplicationFormInstructorBodyOptions,
@@ -445,7 +448,7 @@ export function HorizontalTableParagraphBody({
   /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramApplicationFormInstitution?: boolean
   /** UJAT 프로그램 봉사자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
-  ujatProgramApplicationFormVolunteer?: boolean
+  ujatProgramApplicationFormVolunteer?: UjatProgramApplicationVolunteerBodyOptions
   ujatProgramApplicationGradeInfo?: UjatProgramApplicationGradeInfoParagraphOptions
   ujatProgramApplicationGradeClassTime?: UjatProgramApplicationGradeClassTimeParagraphOptions
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
@@ -567,7 +570,8 @@ export function HorizontalTableParagraphBody({
 
   const economyProgramApplicationBody = renderEconomyProgramApplicationParagraphBody(
     p,
-    programApplicationFormEconomyInstitution
+    programApplicationFormEconomyInstitution,
+    paragraphInteractionMode === 'authoring'
   )
   if (economyProgramApplicationBody != null) return economyProgramApplicationBody
 

@@ -1,4 +1,5 @@
 import type { ProgramParticipantApplicationEditorViewModel } from '@/features/template/hooks/use-program-participant-application-editor'
+import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import {
@@ -12,11 +13,20 @@ export function UjatProgramApplicationFormVolunteerEditorLeftColumn({
 }: {
   vm: ProgramParticipantApplicationEditorViewModel
 }) {
+  const hidePreviousTerm = vm.ujatVolunteerApplicationType === 'new'
+  const visibleParagraphs = hidePreviousTerm
+    ? vm.draft.paragraphs.filter(p => p.id !== UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm)
+    : vm.draft.paragraphs
+  const selectedCardId = hidePreviousTerm &&
+    vm.activeParagraphId === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm
+      ? UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.basicInfo
+      : vm.activeParagraphId
+
   return (
     <FormEditorLeftPanel
-      paragraphs={vm.draft.paragraphs}
+      paragraphs={visibleParagraphs}
       titleNumbering={vm.draft.formSettings.titleNumbering}
-      selectedCardId={vm.activeParagraphId}
+      selectedCardId={selectedCardId}
       onSelectCard={vm.handleSelectCard}
       onReorderMiddle={vm.onReorderMiddle}
       updateParagraph={vm.updateParagraph}
@@ -33,7 +43,14 @@ export function UjatProgramApplicationFormVolunteerEditorLeftColumn({
       paragraphBodyOptions={{
         structureLockedParagraphIds: vm.structureLockedParagraphIds,
         structureLockedAuthoringChoicePreview: true,
-        ujatProgramApplicationFormVolunteer: true,
+        hiddenParagraphIds: hidePreviousTerm
+          ? new Set([UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm])
+          : undefined,
+        ujatProgramApplicationFormVolunteer: {
+          enabled: true,
+          applicationType: vm.ujatVolunteerApplicationType,
+          onApplicationTypeChange: vm.setUjatVolunteerApplicationType,
+        },
       }}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
@@ -45,13 +62,24 @@ export function UjatProgramApplicationFormVolunteerEditorRightColumn({
 }: {
   vm: ProgramParticipantApplicationEditorViewModel
 }) {
+  const hidePreviousTerm = vm.ujatVolunteerApplicationType === 'new'
+  const selectedItemId = hidePreviousTerm &&
+    vm.activeParagraphId === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm
+      ? UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.basicInfo
+      : vm.activeParagraphId
+  const sortableMiddle = hidePreviousTerm
+    ? vm.sortableMiddle.filter(
+        item => item.id !== UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm
+      )
+    : vm.sortableMiddle
+
   return (
     <FormEditorFieldNav
       sectionTitle="커스텀 필드"
       pinnedTop={vm.pinnedTop}
-      sortableMiddle={vm.sortableMiddle}
+      sortableMiddle={sortableMiddle}
       pinnedBottom={vm.pinnedBottom}
-      selectedItemId={vm.activeParagraphId}
+      selectedItemId={selectedItemId}
       onSelectItem={vm.handleSelectCard}
       onReorderMiddle={vm.onReorderMiddle}
       fieldListBottomSlot={
@@ -63,7 +91,7 @@ export function UjatProgramApplicationFormVolunteerEditorRightColumn({
     >
       <FormEditorRightPanel
         draft={vm.draft}
-        activeParagraphId={vm.activeParagraphId}
+        activeParagraphId={selectedItemId}
         onTitleNumberingChange={vm.onTitleNumberingChange}
         updateParagraph={vm.updateParagraph}
         editorKind="horizontal_table"

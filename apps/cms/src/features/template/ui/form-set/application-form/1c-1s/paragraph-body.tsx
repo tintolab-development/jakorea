@@ -10,13 +10,18 @@ import { EconomyProgramApplicationPreferredScheduleParagraph } from '@/features/
 /** 1사1교 프로그램 참여자 신청 폼 — 시드 단락 본문 */
 export function renderEconomyProgramApplicationParagraphBody(
   paragraph: HorizontalTableParagraph,
-  enabled: boolean | undefined
+  enabled: boolean | undefined,
+  isTemplateAuthoringMode = false
 ): ReactNode | null {
   if (!enabled) return null
 
   switch (paragraph.id) {
     case PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo:
-      return <EconomyProgramApplicationBasicInfoParagraph />
+      return (
+        <EconomyProgramApplicationBasicInfoParagraph
+          isTemplateAuthoringMode={isTemplateAuthoringMode}
+        />
+      )
     case PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance:
       return <EconomyProgramApplicationGuidanceParagraph />
     case PROGRAM_APPLICATION_FORM_ECONOMY_IDS.lessonReply:

@@ -46,6 +46,7 @@ import {
 } from '@/features/template/model/ujat-program-application-form-institution-draft'
 import {
   createUjatProgramApplicationFormVolunteerDraft,
+  UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS,
   UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import {
@@ -252,6 +253,9 @@ export function useProgramParticipantApplicationEditor(
     crypto.randomUUID(),
   ])
   const [volunteerExceptionScheduleCount, setVolunteerExceptionScheduleCount] = useState(0)
+  const [ujatVolunteerApplicationType, setUjatVolunteerApplicationType] = useState<
+    'new' | 'ujat-graduate'
+  >('ujat-graduate')
 
   const {
     openWritingUserPreview,
@@ -301,6 +305,9 @@ export function useProgramParticipantApplicationEditor(
       setUjatGradeApplicationBlockIds([crypto.randomUUID()])
       setUjatApplicationGradeByBlockId({})
       setUjatGradeClassTimeBlockIds([crypto.randomUUID()])
+    }
+    if (variant === 'ujat-application-volunteer') {
+      setUjatVolunteerApplicationType('ujat-graduate')
     }
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [active, variant])
@@ -526,6 +533,22 @@ export function useProgramParticipantApplicationEditor(
     [variant, volunteerExceptionScheduleCount, onAddVolunteerExceptionSchedule]
   )
 
+  const ujatProgramApplicationFormVolunteerOptions = useMemo(
+    () =>
+      variant === 'ujat-application-volunteer'
+        ? {
+            enabled: true as const,
+            applicationType: ujatVolunteerApplicationType,
+            onApplicationTypeChange: setUjatVolunteerApplicationType,
+          }
+        : {
+            enabled: false as const,
+            applicationType: 'ujat-graduate' as const,
+            onApplicationTypeChange: () => {},
+          },
+    [variant, ujatVolunteerApplicationType]
+  )
+
   const writingPreviewSession = useMemo(
     () => ({
       draft,
@@ -540,7 +563,11 @@ export function useProgramParticipantApplicationEditor(
         programApplicationFormGeminiInstitution: variant === 'gemini-application-institution',
         programApplicationFormGeminiInstructor: variant === 'gemini-application-instructor',
         ujatProgramApplicationFormInstitution: variant === 'ujat-application-institution',
-        ujatProgramApplicationFormVolunteer: variant === 'ujat-application-volunteer',
+        ujatProgramApplicationFormVolunteer: ujatProgramApplicationFormVolunteerOptions,
+        hiddenParagraphIds:
+          variant === 'ujat-application-volunteer' && ujatVolunteerApplicationType === 'new'
+            ? new Set([UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm])
+            : undefined,
         ujatProgramApplicationGradeInfo,
         ujatProgramApplicationGradeClassTime,
         applicantRecruitFormInstitution: variant === 'applicant-recruit-institution',
@@ -557,8 +584,10 @@ export function useProgramParticipantApplicationEditor(
       previewHeaderTitle,
       programApplicationFormInstructorOptions,
       programApplicationFormVolunteerOptions,
+      ujatProgramApplicationFormVolunteerOptions,
       seedParagraphIds,
       updateParagraph,
+      ujatVolunteerApplicationType,
       variant,
       ujatProgramApplicationGradeInfo,
       ujatProgramApplicationGradeClassTime,
@@ -609,6 +638,8 @@ export function useProgramParticipantApplicationEditor(
     onSelectSingleItemListItem,
     programApplicationFormInstructorOptions,
     programApplicationFormVolunteerOptions,
+    ujatVolunteerApplicationType,
+    setUjatVolunteerApplicationType,
     ujatProgramApplicationGradeInfo,
     ujatProgramApplicationGradeClassTime,
   }
