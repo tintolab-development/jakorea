@@ -41,6 +41,7 @@ Pages under `pages/templates` **compose** features; promote duplicated patterns 
 ## Route areas
 
 - **A — Form management (author / issue):** `/templates` with `tab` query; uses schema + `use-template-modal` + `template-table` (+ sections as needed).  
+- **UJAT 신규 등록 부트스트랩:** `/programs/ujat?new=1` 등에서 `registration-ujat`를 **사용자 모드**로 연다(용어는 [form-editor-modes.mdc](../template/form-editor-modes.mdc)). URL `userPreview`는 모달 동기화용. 상세는 [ujat-program-new-registration-programs-url.md](../process/ujat-program-new-registration-programs-url.md).
 - **B — SMS / email pages:** can differ from A; do not force the same shell if UX differs.  
 - **C — Legacy/simple pages** (`template-files-page`, etc.) keep their own stack unless explicitly unified.
 

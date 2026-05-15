@@ -13,7 +13,7 @@ import type {
 
 export type TemplateWritingPreviewLayout = 'default' | 'a4-document'
 
-/** `/templates` 하위에서 공유하는 작성 양식 user 미리보기 세션 */
+/** `/templates` 등에서 공유하는 작성 양식 풀모달 미리보기 세션(API·파일명의 `UserPreview`는 URL `userPreview` 쿼리와 연동될 뿐, 제품 용어「사용자 모드」와 동일하지 않음 — `form-editor-modes.mdc`) */
 export type TemplateWritingUserPreviewSession = {
   draft: WritingFormDraft
   updateParagraph: FormUpdateParagraph

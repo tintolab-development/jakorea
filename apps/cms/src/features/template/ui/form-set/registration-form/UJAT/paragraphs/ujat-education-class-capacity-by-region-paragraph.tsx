@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import {
+  updateUjatProgramRegistrationOverlayKey,
+  useUjatProgramRegistrationOverlayKv,
+} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import './ujat-education-class-capacity-by-region-paragraph.css'
@@ -15,6 +18,11 @@ type CapacityField = 'classCount' | 'volunteerCount'
 type RegionName = (typeof REGION_ROWS)[number]['left'] | (typeof REGION_ROWS)[number]['right']
 type RegionCapacityValues = Partial<Record<CapacityField, string>>
 type SemesterCapacityValues = Partial<Record<RegionName, RegionCapacityValues>>
+
+type CapacityBySemesterState = {
+  first: SemesterCapacityValues
+  second: SemesterCapacityValues
+}
 
 const SEMESTER_TITLES: Record<SemesterKey, string> = {
   first: '■ 상반기 (1학기)',
@@ -104,15 +112,19 @@ function SemesterClassCapacityTable({
   )
 }
 
+const UJAT_CAPACITY_DEFAULT: CapacityBySemesterState = {
+  first: {},
+  second: {},
+}
+
+const UJAT_CAPACITY_OVERLAY_KEY = 'ujat.capacity.byRegion' as const
+
 /** 지역 별 교육 진행 가능 학급 및 봉사단 수 설정 */
 export function UjatEducationClassCapacityByRegionParagraph() {
-  const [valuesBySemester, setValuesBySemester] = useState<{
-    first: SemesterCapacityValues
-    second: SemesterCapacityValues
-  }>({
-    first: {},
-    second: {},
-  })
+  const [valuesBySemester] = useUjatProgramRegistrationOverlayKv<CapacityBySemesterState>(
+    UJAT_CAPACITY_OVERLAY_KEY,
+    UJAT_CAPACITY_DEFAULT
+  )
 
   const updateValue = (
     semester: SemesterKey,
@@ -120,16 +132,19 @@ export function UjatEducationClassCapacityByRegionParagraph() {
     field: CapacityField,
     value: string
   ) => {
-    setValuesBySemester(prev => ({
-      ...prev,
-      [semester]: {
-        ...prev[semester],
-        [region]: {
-          ...prev[semester][region],
-          [field]: value,
+    updateUjatProgramRegistrationOverlayKey<CapacityBySemesterState>(UJAT_CAPACITY_OVERLAY_KEY, prev => {
+      const p = prev ?? UJAT_CAPACITY_DEFAULT
+      return {
+        ...p,
+        [semester]: {
+          ...p[semester],
+          [region]: {
+            ...p[semester][region],
+            [field]: value,
+          },
         },
-      },
-    }))
+      }
+    })
   }
 
   return (

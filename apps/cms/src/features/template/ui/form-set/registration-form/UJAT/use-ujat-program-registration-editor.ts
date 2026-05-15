@@ -13,8 +13,23 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
+import {
+  getUjatProgramRegistrationOverlayRecord,
+  resetUjatProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import { persistUjatRegistrationFormLocal } from '@/features/program/lib/ujat-registration-local-save'
 
-export function useUjatProgramRegistrationEditor(active: boolean, previewHeaderTitle: string) {
+export type UseUjatProgramRegistrationEditorOptions = {
+  /** 로컬 저장 성공 후(목록 갱신·모달 닫기 등) */
+  onRegistrationSaved?: () => void
+}
+
+export function useUjatProgramRegistrationEditor(
+  active: boolean,
+  previewHeaderTitle: string,
+  options?: UseUjatProgramRegistrationEditorOptions
+) {
+  const onRegistrationSaved = options?.onRegistrationSaved
   const {
     openWritingUserPreview,
     syncWritingUserPreviewSession,
@@ -32,6 +47,7 @@ export function useUjatProgramRegistrationEditor(active: boolean, previewHeaderT
 
   useEffect(() => {
     if (!active) return
+    resetUjatProgramRegistrationOverlay()
     const next = normalizeWritingFormDraft(createUjatProgramRegistrationDraft())
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
@@ -39,7 +55,10 @@ export function useUjatProgramRegistrationEditor(active: boolean, previewHeaderT
   }, [active])
 
   useEffect(() => {
-    if (!active) closeWritingUserPreview()
+    if (!active) {
+      resetUjatProgramRegistrationOverlay()
+      closeWritingUserPreview()
+    }
   }, [active, closeWritingUserPreview])
 
   const updateParagraph = useCallback(
@@ -145,8 +164,15 @@ export function useUjatProgramRegistrationEditor(active: boolean, previewHeaderT
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    message.success('저장 API 연동 전입니다.')
-  }, [])
+    try {
+      const overlay = { ...getUjatProgramRegistrationOverlayRecord() }
+      persistUjatRegistrationFormLocal({ draft, overlay })
+      message.success('저장되었습니다. (브라우저 로컬 — API 연동 시 서버에 반영됩니다.)')
+      onRegistrationSaved?.()
+    } catch {
+      message.error('저장에 실패했습니다.')
+    }
+  }, [draft, onRegistrationSaved])
 
   return {
     draft,

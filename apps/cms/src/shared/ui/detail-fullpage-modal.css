@@ -204,11 +204,12 @@
 .detail-fullpage-modal__lnb {
   flex-shrink: 0;
   align-self: stretch;
-  width: 240px;
+  width: 270px;
+  box-sizing: border-box;
   background: #f5f6f7;
   display: flex;
   flex-direction: column;
-  padding: 0 20px;
+  padding: 0 16px;
 }
 
 .detail-fullpage-modal__lnb-brand {
@@ -245,7 +246,7 @@
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 10px 18px 10px 0;
+  padding: 10px 0;
   text-align: left;
   border: none;
   background: transparent;
@@ -457,7 +458,9 @@
   ) {
   max-width: min(
     100%,
-    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
+    calc(
+      2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+    )
   );
 }
 

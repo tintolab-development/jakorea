@@ -85,27 +85,41 @@ export function DirectUnavailableDateAddButton({
   disabled,
   disabledDate,
   initialCalendarDate,
+  /** 정의되면 제어 컴포넌트 — 풀페이지·미리보기 등 동일 값 공유용 */
+  appliedDates: appliedDatesProp,
   onApplyDatesChange,
   appliedDatesDisplay = 'badge',
   modalUnavailableDescriptionLead = DEFAULT_MODAL_UNAVAILABLE_LEAD,
   modalUnavailableDescriptionSecond = DEFAULT_MODAL_UNAVAILABLE_SECOND,
+  canOpenDirectUnavailableModal,
+  onDirectUnavailableModalBlocked,
 }: {
   onClick?: () => void
   disabled?: boolean
   disabledDate?: (date: Dayjs) => boolean
   initialCalendarDate?: Dayjs | null
+  /** `YYYY-MM-DD` 문자열 목록. 넘기면 내부 state 대신 이 값이 표시·저장 소스가 됨 */
+  appliedDates?: string[]
   onApplyDatesChange?: (dates: string[]) => void
   appliedDatesDisplay?: 'badge' | 'chips'
   /** 모달 본문 첫 줄 (면접·교육 등 맥락별 문구) */
   modalUnavailableDescriptionLead?: ReactNode
   /** 모달 본문 둘째 줄 */
   modalUnavailableDescriptionSecond?: ReactNode
+  /**
+   * `false`이면 직접 추가 모달을 열지 않고 `onDirectUnavailableModalBlocked` 호출
+   */
+  canOpenDirectUnavailableModal?: boolean
+  onDirectUnavailableModalBlocked?: () => void
 }) {
+  const isControlled = appliedDatesProp !== undefined
   const [open, setOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(() => dayjs().startOf('month'))
   const [selectedDate, setSelectedDate] = useState(() => dayjs())
   const [selectedDates, setSelectedDates] = useState<string[]>(['모든 공휴일'])
-  const [appliedDates, setAppliedDates] = useState<string[]>([])
+  const [uncontrolledAppliedDates, setUncontrolledAppliedDates] = useState<string[]>([])
+
+  const appliedDates = isControlled ? appliedDatesProp! : uncontrolledAppliedDates
 
   useEffect(() => {
     if (!disabledDate) return
@@ -114,11 +128,20 @@ export function DirectUnavailableDateAddButton({
       const next = filterEnabledDateValues(prev, disabledDate)
       return areSameStringArray(prev, next) ? prev : next
     })
-    setAppliedDates(prev => {
+
+    if (isControlled) {
+      const next = filterEnabledDateValues(appliedDatesProp ?? [], disabledDate)
+      if (!areSameStringArray(appliedDatesProp ?? [], next)) {
+        onApplyDatesChange?.(next)
+      }
+      return
+    }
+
+    setUncontrolledAppliedDates(prev => {
       const next = filterEnabledDateValues(prev, disabledDate)
       return areSameStringArray(prev, next) ? prev : next
     })
-  }, [disabledDate])
+  }, [appliedDatesProp, disabledDate, isControlled, onApplyDatesChange])
 
   const selectedDateSet = useMemo(
     () =>
@@ -146,11 +169,13 @@ export function DirectUnavailableDateAddButton({
 
   const removeAppliedDate = (date: string) => {
     setSelectedDates(prev => prev.filter(v => v !== date))
-    setAppliedDates(prev => {
-      const next = prev.filter(v => v !== date)
+    const next = appliedDates.filter(v => v !== date)
+    if (isControlled) {
       onApplyDatesChange?.(next)
-      return next
-    })
+    } else {
+      setUncontrolledAppliedDates(next)
+      onApplyDatesChange?.(next)
+    }
   }
 
   const handleCalendarSelect = (d: Dayjs) => {
@@ -183,6 +208,10 @@ export function DirectUnavailableDateAddButton({
           icon={<DirectUnavailableDateAddIcon />}
           onClick={() => {
             onClick?.()
+            if (canOpenDirectUnavailableModal === false) {
+              onDirectUnavailableModalBlocked?.()
+              return
+            }
             const initialDate = findNextEnabledDate(initialCalendarDate ?? dayjs(), disabledDate)
             setCurrentMonth(initialDate.startOf('month'))
             setSelectedDate(initialDate)
@@ -245,7 +274,9 @@ export function DirectUnavailableDateAddButton({
                   if (!disabledDate || !ISO_DATE_PATTERN.test(v)) return true
                   return !disabledDate(dayjs(v))
                 })
-                setAppliedDates(nextDates)
+                if (!isControlled) {
+                  setUncontrolledAppliedDates(nextDates)
+                }
                 onApplyDatesChange?.(nextDates)
                 closeModal()
               }}

@@ -47,9 +47,9 @@ function formatBadgeCount(count: number): string {
   return count >= 99 ? '99+' : String(count)
 }
 
-/** 메뉴 바로가기에서 라우터 이동 대신 준비 중 안내할 프로그램 관련 id (`programs-` 접두) */
+/** 메뉴 바로가기에서 라우터 이동 대신 준비 중 안내할 프로그램 관련 id (`programs-` 접두, UJAT 제외) */
 function isProgramShortcutItemId(id: string): boolean {
-  return id.startsWith('programs-')
+  return id.startsWith('programs-') && id !== 'programs-ujat'
 }
 
 const SHORTCUT_ICON_MAP: Record<string, React.ReactNode> = {

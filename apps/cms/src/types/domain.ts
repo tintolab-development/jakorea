@@ -90,6 +90,18 @@ export type ProgramLifecycleStatus =
   | 'document_processing_completed' // 봉사자 모집 완료
   | 'participant_instructor_recruitment_completed' // 참여자&교육자 모집 완료
 
+/**
+ * UJAT 프로그램 진행 현황 (7단계) — 모집 신청 현황(`ProgramLifecycleStatus`)과 별도
+ */
+export type UjatProgramProgressStatus =
+  | 'WAITING_RESULT' // 신청 및 대기 중
+  | 'DOCUMENT_PASS' // 1차 서류 합격
+  | 'EDUCATION_SCHEDULED' // 프로그램 진행 예정
+  | 'EDUCATION_IN_PROGRESS' // 프로그램 진행 중
+  | 'PROGRAM_ENDED' // 프로그램 진행 완료
+  | 'INTERVIEW_FAILED' // 면접 불합격
+  | 'REJECTED' // 신청 반려
+
 // 프로그램
 export interface Program {
   id: UUID
@@ -105,7 +117,9 @@ export interface Program {
   applicationStartDate?: DateValue // 신청 시작일
   applicationEndDate?: DateValue // 신청 종료일
   status: Status
-  lifecycleStatus?: ProgramLifecycleStatus // 상세 진행 상태 (모집 예정~진행 완료)
+  lifecycleStatus?: ProgramLifecycleStatus // 모집 신청 현황(참여자·강사·봉사자 모집 등)
+  /** UJAT 전용 프로그램 진행 현황(7단계) */
+  ujatProgressStatus?: UjatProgramProgressStatus
   settlementRuleId?: UUID // 정산 규칙 참조
   applicationPathId?: UUID // 신청 경로 참조 (V3 Phase 7)
   // 엑셀 데이터 기반 추가 필드 - 기본 교육실적 정보

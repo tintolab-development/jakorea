@@ -220,6 +220,8 @@ export interface ProjectInfoDetailPanelsProps {
   sponsorName: string | undefined
   /** `loading && !program` — 본문 영역에 스피너 */
   isBodyLoading: boolean
+  /** true면 상단 탭 행·헤더 액션을 렌더하지 않음(UJAT 공통 정보 등 외부에서 탭·버튼을 구성할 때) */
+  hideTabsRow?: boolean
   activeTab: TabKey
   onSelectTab: (key: TabKey) => void
   isEditModeInfo: boolean
@@ -245,6 +247,7 @@ export function ProjectInfoDetailPanels({
   program,
   sponsorName,
   isBodyLoading,
+  hideTabsRow = false,
   activeTab,
   onSelectTab,
   isEditModeInfo,
@@ -267,21 +270,23 @@ export function ProjectInfoDetailPanels({
 }: ProjectInfoDetailPanelsProps) {
   return (
     <>
-      <ProjectInfoDetailTabsRow
-        activeTab={activeTab}
-        onSelectTab={onSelectTab}
-        displayProgram={program}
-        isEditModeInfo={isEditModeInfo}
-        isEditModeInstitutions={isEditModeInstitutions}
-        isEditModeInstructors={isEditModeInstructors}
-        isEditModeVolunteers={isEditModeVolunteers}
-        onInfoEdit={onInfoEdit}
-        onInfoSave={onInfoSave}
-        onInstitutionsSave={onInstitutionsSave}
-        onInstructorsSave={onInstructorsSave}
-        onVolunteersSave={onVolunteersSave}
-        onPreview={onPreview}
-      />
+      {!hideTabsRow ? (
+        <ProjectInfoDetailTabsRow
+          activeTab={activeTab}
+          onSelectTab={onSelectTab}
+          displayProgram={program}
+          isEditModeInfo={isEditModeInfo}
+          isEditModeInstitutions={isEditModeInstitutions}
+          isEditModeInstructors={isEditModeInstructors}
+          isEditModeVolunteers={isEditModeVolunteers}
+          onInfoEdit={onInfoEdit}
+          onInfoSave={onInfoSave}
+          onInstitutionsSave={onInstitutionsSave}
+          onInstructorsSave={onInstructorsSave}
+          onVolunteersSave={onVolunteersSave}
+          onPreview={onPreview}
+        />
+      ) : null}
       {isBodyLoading ? (
         <div className="program-detail-fullpage-modal__loading">
           <Spin size="large" />
