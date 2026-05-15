@@ -183,8 +183,12 @@
 }
 
 /* 지급조서(발급용) — 모든 단락 「설명 입력」: 타입 스펙 + 실입력 + 포커스 시 하단 스트로크(텍스트 길이에 맞춤, paragraph-input 동적 너비) */
-.payment-statement-issuance-editor .paragraph-input--description.paragraph-input--view .paragraph-input__view-text,
-.payment-statement-issuance-editor .paragraph-input--description.paragraph-input--view .paragraph-input__placeholder {
+.payment-statement-issuance-editor
+  .paragraph-input--description.paragraph-input--view
+  .paragraph-input__view-text,
+.payment-statement-issuance-editor
+  .paragraph-input--description.paragraph-input--view
+  .paragraph-input__placeholder {
   color: var(--gray-85969-d, #85969d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
@@ -207,7 +211,10 @@
   opacity: 0.6;
 }
 
-.payment-statement-issuance-editor .paragraph-input--edit.paragraph-input--description .paragraph-input__shell .ant-input,
+.payment-statement-issuance-editor
+  .paragraph-input--edit.paragraph-input--description
+  .paragraph-input__shell
+  .ant-input,
 .payment-statement-issuance-editor
   .paragraph-input--edit.paragraph-input--description
   .paragraph-input__shell
@@ -243,7 +250,10 @@
   opacity: 0.6 !important;
 }
 
-.payment-statement-issuance-editor .paragraph-input--edit.paragraph-input--description .paragraph-input__shell .ant-input::placeholder,
+.payment-statement-issuance-editor
+  .paragraph-input--edit.paragraph-input--description
+  .paragraph-input__shell
+  .ant-input::placeholder,
 .payment-statement-issuance-editor
   .paragraph-input--edit.paragraph-input--description
   .paragraph-input__shell

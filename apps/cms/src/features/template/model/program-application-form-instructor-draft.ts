@@ -80,14 +80,14 @@ function createInstructorThirdPartyHorizontalTable(): HorizontalTableParagraph {
     { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
   ]
   const bodyRow = [
-    { kind: 'text' as const, value: '' },
+    { kind: 'text' as const, value: '배정된 교육 대상 학교' },
     {
       kind: 'text' as const,
-      value: '이름, 연락처(휴대전화번호), 이메일',
+      value: '이름, 개인 연락처, e-mail',
     },
     {
       kind: 'text' as const,
-      value: 'JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내',
+      value: 'JA 프로그램 진행을 위한 업무 연락',
     },
     { kind: 'text' as const, value: '1년' },
   ]

@@ -15,7 +15,7 @@ import {
   useWritingFormMiddleParagraphActions,
   type MiddleParagraphActionsHandlers,
 } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
-import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
 export type UseWritingFormEditorWithUserPreviewOptions = {
   /** 편집 UI(풀페이지 등) 열림 */
@@ -47,10 +47,7 @@ export type WritingFormEditorWithUserPreviewResult = {
   handleSelectCard: (id: string) => void
   onReorderMiddle: (activeId: string, overId: string) => void
   onTitleNumberingChange: (style: FormTitleNumberingStyle) => void
-  updateParagraph: (
-    id: string,
-    updater: (p: WritingFormParagraph) => WritingFormParagraph
-  ) => void
+  updateParagraph: (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => void
   onSelectSingleItemListItem: (paragraphId: string, itemId: string | null) => void
   handlePreview: () => void
   handleSave: () => void
@@ -124,8 +121,17 @@ export function useWritingFormEditorWithUserPreview(
       editorKind,
       zIndex: previewZIndex,
       paragraphBodyOptions: previewParagraphBodyOptions,
+      focusedParagraphId: activeParagraphId,
     }
-  }, [draft, updateParagraph, previewHeaderTitle, editorKind, previewZIndex, previewParagraphBodyOptions])
+  }, [
+    draft,
+    updateParagraph,
+    previewHeaderTitle,
+    editorKind,
+    previewZIndex,
+    previewParagraphBodyOptions,
+    activeParagraphId,
+  ])
 
   useEffect(() => {
     if (!open) return
@@ -166,7 +172,8 @@ export function useWritingFormEditorWithUserPreview(
     return {
       pinnedTop: line(head),
       sortableMiddle: middle.map(line),
-      pinnedBottom: bottomLines.length === 1 ? bottomLines[0]! : bottomLines.length > 1 ? bottomLines : null,
+      pinnedBottom:
+        bottomLines.length === 1 ? bottomLines[0]! : bottomLines.length > 1 ? bottomLines : null,
     }
   }, [draft])
 
@@ -183,7 +190,10 @@ export function useWritingFormEditorWithUserPreview(
     setSingleItemListActiveItemId(itemId)
   }, [])
 
-  const middleParagraphActions = useWritingFormMiddleParagraphActions(setDraft, setActiveParagraphId)
+  const middleParagraphActions = useWritingFormMiddleParagraphActions(
+    setDraft,
+    setActiveParagraphId
+  )
 
   return {
     headerTitle: previewHeaderTitle,

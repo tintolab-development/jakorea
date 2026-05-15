@@ -3,7 +3,7 @@
  * mock 강사(최강사) 스토리와 맞추고, BANK_OPTIONS/AFFILIATION_OPTIONS value 키와 일치시킨다.
  */
 
-import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
+import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 
 export const PAYMENT_STATEMENT_BASIC_INFO_SAMPLE_VALUES: PaymentStatementBasicInfoAutofillValues =
   {

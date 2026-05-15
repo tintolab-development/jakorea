@@ -11,6 +11,7 @@ import type {
   TitleWithPeriodParagraph,
   LectureReportProgramProgressParagraph,
   UjatJournalEducationInfoParagraph,
+  UserInfoParagraph,
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
@@ -34,13 +35,17 @@ import { DateField } from '@/features/template/ui/paragraph/single-item/date'
 import { TimeField } from '@/features/template/ui/paragraph/single-item/time'
 import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate'
 import { ScaleType } from '@/features/template/ui/paragraph/single-item/scale-type'
-import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
+import {
+  getUserInfoPreviewSelectedEntries,
+  UserInfo,
+  UserInfoPreviewTable,
+} from '@/features/template/ui/paragraph/single-item/user-info'
 import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
 import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
 import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
 import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
-import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import './form-document-preview-body.css'
 
 function noopOnParagraphChange<T>(_next: T): void {}
@@ -49,13 +54,26 @@ function safeTrim(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
-function readOnlyTitleBlock(displayTitle: string, description?: string): { title: ReactNode; description?: ReactNode } {
-  const trimmedDescription = safeTrim(description)
+const HIDDEN_PREVIEW_DESCRIPTION_TEXTS = new Set(['설명 입력', '설명을 입력해 주세요'])
+
+function normalizePreviewDescription(value: unknown): string {
+  const trimmed = safeTrim(value)
+  if (trimmed.length === 0) return ''
+  return HIDDEN_PREVIEW_DESCRIPTION_TEXTS.has(trimmed) ? '' : trimmed
+}
+
+function readOnlyTitleBlock(
+  displayTitle: string,
+  description?: string
+): { title: ReactNode; description?: ReactNode } {
+  const trimmedDescription = normalizePreviewDescription(description)
   return {
     title: <span className="form-document-preview-paragraph__title-text">{displayTitle}</span>,
     description:
       trimmedDescription.length > 0 ? (
-        <span className="form-document-preview-paragraph__description-text">{trimmedDescription}</span>
+        <span className="form-document-preview-paragraph__description-text">
+          {trimmedDescription}
+        </span>
       ) : undefined,
   }
 }
@@ -112,9 +130,11 @@ function DocumentShortEssayReadonly({
 }: {
   paragraph: ShortEssayParagraph | SessionPlanShortEssayParagraph
 }) {
-  const ph = safeTrim(paragraph.bodyPlaceholder) || (paragraph.variant === 'session_plan_short_essay'
-    ? '자유롭게 작성해 주세요'
-    : '답변을 입력해 주세요')
+  const ph =
+    safeTrim(paragraph.bodyPlaceholder) ||
+    (paragraph.variant === 'session_plan_short_essay'
+      ? '자유롭게 작성해 주세요'
+      : '답변을 입력해 주세요')
   const items =
     paragraph.items && paragraph.items.length > 0
       ? paragraph.items
@@ -133,7 +153,11 @@ function DocumentShortEssayReadonly({
   return (
     <div className="form-editor-body">
       {items.map((item, index) => (
-        <div key={item.id} className="form-document-preview-paragraph__body-text" style={{ marginBottom: 12 }}>
+        <div
+          key={item.id}
+          className="form-document-preview-paragraph__body-text"
+          style={{ marginBottom: 12 }}
+        >
           {showItemTitle ? (
             <div style={{ fontWeight: 600, marginBottom: 4 }}>
               {item.label ?? `Title ${String(index + 1).padStart(2, '0')}`}
@@ -155,7 +179,7 @@ function SurveyTitleDocumentReadonly({
 }) {
   /** 카드 타이틀에 `surveyTitle`이 오르므로 본문에는 설명·기간만 */
   const bits: string[] = []
-  const desc = safeTrim(paragraph.surveyDescription)
+  const desc = normalizePreviewDescription(paragraph.surveyDescription)
   if (desc.length > 0) bits.push(desc)
   if (showWritingPeriod && paragraph.showWritingPeriodOnForm) {
     const a = paragraph.startAt ? dayjs(paragraph.startAt).format('YYYY-MM-DD') : '—'
@@ -201,7 +225,21 @@ function renderBody(
             paragraphBodyOptions?.paymentStatementDisplayMode ??
             (renderMode === 'contentOnly' ? 'document' : undefined)
           }
-          programApplicationFormInstitution={paragraphBodyOptions?.programApplicationFormInstitution}
+          programApplicationFormInstitution={
+            paragraphBodyOptions?.programApplicationFormInstitution
+          }
+          programApplicationFormEconomyInstitution={
+            paragraphBodyOptions?.programApplicationFormEconomyInstitution
+          }
+          programApplicationFormGeminiInstitution={
+            paragraphBodyOptions?.programApplicationFormGeminiInstitution
+          }
+          programApplicationFormGeminiInstructor={
+            paragraphBodyOptions?.programApplicationFormGeminiInstructor
+          }
+          ujatProgramApplicationFormVolunteer={
+            paragraphBodyOptions?.ujatProgramApplicationFormVolunteer
+          }
           applicantRecruitFormInstitution={paragraphBodyOptions?.applicantRecruitFormInstitution}
           applicantRecruitFormIndividual={paragraphBodyOptions?.applicantRecruitFormIndividual}
           programApplicationFormInstructor={paragraphBodyOptions?.programApplicationFormInstructor}
@@ -225,7 +263,13 @@ function renderBody(
         />
       )
     case 'vertical_table':
-      return <VerticalTableParagraphBody paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+      return (
+        <VerticalTableParagraphBody
+          paragraph={p}
+          onChange={noopOnParagraphChange}
+          isEditMode={false}
+        />
+      )
     case 'multiple_choice':
       return <DocumentMultipleChoiceReadonly paragraph={p as MultipleChoiceParagraph} />
     case 'short_essay': {
@@ -256,9 +300,21 @@ function renderBody(
       }
       return null
     case 'user_profile':
-      return <UserProfileParagraphBody paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+      return (
+        <UserProfileParagraphBody
+          paragraph={p}
+          onChange={noopOnParagraphChange}
+          isEditMode={false}
+        />
+      )
     case 'score_select':
-      return <ScoreSelectParagraphBody paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+      return (
+        <ScoreSelectParagraphBody
+          paragraph={p}
+          onChange={noopOnParagraphChange}
+          isEditMode={false}
+        />
+      )
     case 'dropdown':
       return <Dropdown paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
     case 'date':
@@ -299,8 +355,27 @@ function renderBody(
           paragraphInteractionMode="user"
         />
       )
-    case 'user_info':
-      return <UserInfo paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+    case 'user_info': {
+      const ui = p as UserInfoParagraph
+      if (renderMode === 'contentOnly') {
+        return (
+          <div className="form-editor-body">
+            <UserInfoPreviewTable
+              selectedEntries={getUserInfoPreviewSelectedEntries(ui)}
+              skin="a4Document"
+            />
+          </div>
+        )
+      }
+      return (
+        <UserInfo
+          paragraph={ui}
+          onChange={noopOnParagraphChange}
+          isEditMode={false}
+          layout="previewTable"
+        />
+      )
+    }
     case 'file_attachment':
       return <FileAttachment paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
     case 'static_description_lines':
@@ -308,16 +383,12 @@ function renderBody(
       return <StaticDescriptionLines paragraph={p} />
     case 'id_type_with_input':
       if (p.kind !== 'single_item' || p.variant !== 'id_type_with_input') return null
-      return (
-        <IdTypeWithInput
-          paragraph={p}
-          onChange={noopOnParagraphChange}
-          isEditMode={false}
-        />
-      )
+      return <IdTypeWithInput paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
     case 'closing': {
       const c = p as ClosingParagraph
-      return <div className="form-document-preview-paragraph__body-text">{safeTrim(c.body) || ' '}</div>
+      return (
+        <div className="form-document-preview-paragraph__body-text">{safeTrim(c.body) || ' '}</div>
+      )
     }
     default:
       return null
@@ -333,6 +404,8 @@ export interface FormDocumentPreviewParagraphProps {
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   renderMode?: FormDocumentPreviewRenderMode
   style?: CSSProperties
+  /** 작성 화면에서 선택한 단락과 동기화된 강조 */
+  isAuthoringSyncFocused?: boolean
 }
 
 export function FormDocumentPreviewParagraph({
@@ -344,15 +417,17 @@ export function FormDocumentPreviewParagraph({
   paragraphBodyOptions,
   renderMode = 'card',
   style,
+  isAuthoringSyncFocused = false,
 }: FormDocumentPreviewParagraphProps) {
   const displayTitle = getFormParagraphDisplayTitle(allParagraphs, paragraph, titleNumbering)
   const viewModel = getDocumentPreviewParagraphViewModel(paragraph, displayTitle, renderMode)
-  const { title, description } = readOnlyTitleBlock(
-    displayTitle,
-    viewModel.description
-  )
+  const { title, description } = readOnlyTitleBlock(displayTitle, viewModel.description)
 
-  if (renderMode === 'card' && paragraph.kind === 'description' && paragraph.variant === 'closing') {
+  if (
+    renderMode === 'card' &&
+    paragraph.kind === 'description' &&
+    paragraph.variant === 'closing'
+  ) {
     const c = paragraph as ClosingParagraph
     const head = readOnlyTitleBlock(displayTitle, undefined)
     return (
@@ -361,6 +436,7 @@ export function FormDocumentPreviewParagraph({
           'form-document-preview-paragraph',
           'paragraph-card',
           overflow ? 'form-document-preview-paragraph--overflow' : '',
+          isAuthoringSyncFocused ? 'form-document-preview-paragraph--authoring-sync-focus' : '',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -371,7 +447,9 @@ export function FormDocumentPreviewParagraph({
           <div className="paragraph-card__title-block">{head.title}</div>
         </div>
         <div className="paragraph-card__slot">
-          <div className="form-document-preview-paragraph__body-text">{safeTrim(c.body) || ' '}</div>
+          <div className="form-document-preview-paragraph__body-text">
+            {safeTrim(c.body) || ' '}
+          </div>
         </div>
       </div>
     )
@@ -393,8 +471,11 @@ export function FormDocumentPreviewParagraph({
           'form-document-preview-paragraph',
           'form-document-preview-paragraph--content-only',
           viewModel.isClosing ? 'form-document-preview-paragraph--content-only-closing' : '',
-          viewModel.isClosingSignature ? 'form-document-preview-paragraph--content-only-closing-signature' : '',
+          viewModel.isClosingSignature
+            ? 'form-document-preview-paragraph--content-only-closing-signature'
+            : '',
           overflow ? 'form-document-preview-paragraph--overflow' : '',
+          isAuthoringSyncFocused ? 'form-document-preview-paragraph--authoring-sync-focus' : '',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -416,6 +497,7 @@ export function FormDocumentPreviewParagraph({
       className={[
         'form-document-preview-paragraph',
         overflow ? 'form-document-preview-paragraph--overflow' : '',
+        isAuthoringSyncFocused ? 'form-document-preview-paragraph--authoring-sync-focus' : '',
       ]
         .filter(Boolean)
         .join(' ')}

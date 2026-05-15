@@ -11,7 +11,7 @@ import {
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
-import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/render-form-paragraph-body'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
 export type UjatEducationIssuanceVariant = 'plan' | 'journal'
 

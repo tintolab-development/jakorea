@@ -1,0 +1,15 @@
+/**
+ * 면접/교육 등 — 진행 불가일: 직접 추가 버튼 + 벌크 제외 체크박스 한 줄,
+ * `DirectUnavailableDateAddButton` chips 모드 시 태그 행은 버튼 컴포넌트 CSS로 배치.
+ */
+.unavailable-dates-bulk-exclusions-row {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  width: 100%;
+  min-width: 0;
+}
+
+.unavailable-dates-bulk-exclusions-row > .cms-checkbox {
+  height: 40px;
+}

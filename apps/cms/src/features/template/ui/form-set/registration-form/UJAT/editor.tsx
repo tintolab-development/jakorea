@@ -1,10 +1,10 @@
 import type { UjatProgramRegistrationEditorViewModel } from '@/features/template/ui/form-set/registration-form/UJAT/use-ujat-program-registration-editor'
-import { FormEditorFieldNav } from '@/features/template/ui/form-editor/form-editor-field-nav'
-import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/form-editor-left-panel'
+import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
+import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
-} from '@/features/template/ui/form-editor/form-editor-right-panel'
+} from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
 import '@/features/template/ui/form-editor/form-editor.css'
 
 export function UjatProgramRegistrationEditorLeftColumn({

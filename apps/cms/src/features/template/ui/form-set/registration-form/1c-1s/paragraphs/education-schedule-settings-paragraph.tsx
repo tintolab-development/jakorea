@@ -3,7 +3,7 @@
  */
 import { useMemo, useState } from 'react'
 import type { Dayjs } from 'dayjs'
-import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'

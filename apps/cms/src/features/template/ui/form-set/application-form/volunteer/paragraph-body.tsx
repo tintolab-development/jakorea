@@ -6,6 +6,8 @@ import { VolunteerInterviewAvailableScheduleParagraph } from '@/features/templat
 export type ProgramApplicationFormVolunteerBodyOptions = {
   enabled: boolean
   isTemplateAuthoringMode?: boolean
+  exceptionScheduleCount?: number
+  onAddExceptionSchedule?: () => void
 }
 
 export function renderProgramApplicationFormVolunteerParagraphBody(
@@ -18,6 +20,7 @@ export function renderProgramApplicationFormVolunteerParagraphBody(
       return (
         <VolunteerInterviewAvailableScheduleParagraph
           isTemplateAuthoringMode={options.isTemplateAuthoringMode === true}
+          exceptionScheduleCount={options.exceptionScheduleCount ?? 0}
         />
       )
     default:

@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import { message } from 'antd'
-import { TemplateFullpageModal } from '@/features/template/ui/template-fullpage-modal'
+import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import {
   type TemplateCustomFieldDef,
   TemplateCustomFieldsForm,
@@ -8,7 +8,7 @@ import {
   TEMPLATE_FIELD_CHAIRMAN_SEAL,
   TEMPLATE_FIELD_ORG_LOGO,
   TEMPLATE_FIELD_ORG_LOGO_02,
-} from '@/features/template/ui/template-custom-fields-form'
+} from '@/features/template/ui/template-management/template-custom-fields-form'
 import { TemplatePreviewPageNavigator } from '@/features/template/ui/modal/template-preview-page-navigator'
 import { generateFilename } from '@/shared/utils/file-download'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'

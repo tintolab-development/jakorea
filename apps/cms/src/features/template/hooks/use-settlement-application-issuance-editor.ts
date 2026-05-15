@@ -19,7 +19,7 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { useTableRowSelectionState } from '@/features/template/ui/form-editor/use-table-row-selection-state'
+import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
 import { SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/settlement-application-issuance/paragraph-config'
 
 export function useSettlementApplicationIssuanceEditor(active: boolean, previewHeaderTitle: string) {

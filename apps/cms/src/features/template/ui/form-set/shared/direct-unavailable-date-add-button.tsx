@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { ParagraphCalendarMini } from '@/features/template/ui/paragraph-calendar-mini'
+import { ParagraphCalendarMini } from '@/features/template/ui/shared/paragraph-calendar-mini'
+import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import './direct-unavailable-date-add-button.css'
@@ -76,18 +77,29 @@ function DirectUnavailableDateAddIcon() {
   )
 }
 
+const DEFAULT_MODAL_UNAVAILABLE_LEAD = '진행 불가한 날짜를 모두 선택해 주세요.'
+const DEFAULT_MODAL_UNAVAILABLE_SECOND = '선택된 날짜는 사용자가 신청 불가합니다.'
+
 export function DirectUnavailableDateAddButton({
   onClick,
   disabled,
   disabledDate,
   initialCalendarDate,
   onApplyDatesChange,
+  appliedDatesDisplay = 'badge',
+  modalUnavailableDescriptionLead = DEFAULT_MODAL_UNAVAILABLE_LEAD,
+  modalUnavailableDescriptionSecond = DEFAULT_MODAL_UNAVAILABLE_SECOND,
 }: {
   onClick?: () => void
   disabled?: boolean
   disabledDate?: (date: Dayjs) => boolean
   initialCalendarDate?: Dayjs | null
   onApplyDatesChange?: (dates: string[]) => void
+  appliedDatesDisplay?: 'badge' | 'chips'
+  /** 모달 본문 첫 줄 (면접·교육 등 맥락별 문구) */
+  modalUnavailableDescriptionLead?: ReactNode
+  /** 모달 본문 둘째 줄 */
+  modalUnavailableDescriptionSecond?: ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(() => dayjs().startOf('month'))
@@ -111,9 +123,7 @@ export function DirectUnavailableDateAddButton({
   const selectedDateSet = useMemo(
     () =>
       new Set(
-        selectedDates
-          .filter(v => ISO_DATE_PATTERN.test(v))
-          .map(v => dayjs(v).format('YYYY-MM-DD'))
+        selectedDates.filter(v => ISO_DATE_PATTERN.test(v)).map(v => dayjs(v).format('YYYY-MM-DD'))
       ),
     [selectedDates]
   )
@@ -123,10 +133,24 @@ export function DirectUnavailableDateAddButton({
     [appliedDates]
   )
 
+  const appliedDateItems = useMemo(
+    () => appliedDates.map(value => ({ value, label: formatUnavailableDateLabel(value) })),
+    [appliedDates]
+  )
+
   const closeModal = () => setOpen(false)
 
   const removeDate = (date: string) => {
     setSelectedDates(prev => prev.filter(v => v !== date))
+  }
+
+  const removeAppliedDate = (date: string) => {
+    setSelectedDates(prev => prev.filter(v => v !== date))
+    setAppliedDates(prev => {
+      const next = prev.filter(v => v !== date)
+      onApplyDatesChange?.(next)
+      return next
+    })
   }
 
   const handleCalendarSelect = (d: Dayjs) => {
@@ -143,7 +167,14 @@ export function DirectUnavailableDateAddButton({
 
   return (
     <>
-      <div className="direct-unavailable-date-add-button">
+      <div
+        className={[
+          'direct-unavailable-date-add-button',
+          appliedDatesDisplay === 'chips' && 'direct-unavailable-date-add-button--chips',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <CmsButton
           type="button"
           size="medium"
@@ -160,7 +191,20 @@ export function DirectUnavailableDateAddButton({
         >
           진행 불가일 직접 추가
         </CmsButton>
-        {appliedDateText ? (
+        {appliedDatesDisplay === 'chips' && appliedDateItems.length > 0 ? (
+          <div className="direct-unavailable-date-add-button__selected-date-chips">
+            {appliedDateItems.map(({ value, label }) => (
+              <span key={value} className="direct-unavailable-date-add-button__selected-date-chip">
+                <span>{label}</span>
+                <ItemDeleteButton
+                  className="direct-unavailable-date-add-button__selected-date-remove"
+                  aria-label={`${label} 제거`}
+                  onClick={() => removeAppliedDate(value)}
+                />
+              </span>
+            ))}
+          </div>
+        ) : appliedDateText ? (
           <span className="direct-unavailable-date-add-button__selected-dates">
             {appliedDateText}
           </span>
@@ -174,8 +218,8 @@ export function DirectUnavailableDateAddButton({
         width={600}
         description={
           <div className="direct-unavailable-date-modal__description">
-            <div>면접 진행 불가한 날짜를 모두 선택해 주세요.</div>
-            <div>선택된 날짜는 사용자가 신청 불가합니다.</div>
+            <div>{modalUnavailableDescriptionLead}</div>
+            <div>{modalUnavailableDescriptionSecond}</div>
           </div>
         }
         className="direct-unavailable-date-modal"

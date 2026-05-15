@@ -1,4 +1,4 @@
-import { PARTICIPANT_INFO_ROW_LABELS } from '@/features/template/ui/template-custom-fields-form'
+import { PARTICIPANT_INFO_ROW_LABELS } from '@/features/template/ui/template-management/template-custom-fields-form'
 import type { CertificateCanvasRegion } from './form-certificate-preview-mapping'
 import { shouldDim } from './form-certificate-preview-mapping'
 import { cn, getRegionActivationHandlers, labelToGraphemes } from './form-certificate-preview-utils'

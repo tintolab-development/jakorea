@@ -1,8 +1,8 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import type { Dayjs } from 'dayjs'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
-import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
-import { dateRangeUsesClockTime } from '@/features/template/ui/paragraph/shared/writing-form-period-date-picker-field'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -178,7 +178,12 @@ export function RecruitFormVolunteerInfoParagraph() {
                   onChange={next => setDocDeadlineDate(next)}
                 />
                 <DetailInfoForm.InputsSeparator />
-                <CmsInput inputSize="medium" placeholder="발표 방법 안내" />
+                <CmsInput
+                  inputSize="medium"
+                  width="100%"
+                  style={{ flex: '1 1 0', minWidth: 0 }}
+                  placeholder="발표 방법 안내"
+                />
               </div>
             }
             view="-"
@@ -194,7 +199,7 @@ export function RecruitFormVolunteerInfoParagraph() {
                   mode="single"
                   presetMode="period"
                   value={interviewAnchor}
-                  width="100%"
+                  style={{ flex: '1 1 0', minWidth: 0 }}
                   placeholder="면접 기간을 선택하세요"
                   preferPeriodModeInPopover
                   appliedSurfaceRange={interviewRange}
@@ -204,6 +209,14 @@ export function RecruitFormVolunteerInfoParagraph() {
                     if (next == null) return
                     setInterviewAnchor(next)
                   }}
+                />
+                <DetailInfoForm.InputsSeparator />
+                <CmsSelect
+                  inputSize="medium"
+                  width={140}
+                  placeholder="면접 유형"
+                  options={[]}
+                  withAllOption={false}
                 />
               </div>
             }
@@ -222,7 +235,12 @@ export function RecruitFormVolunteerInfoParagraph() {
                   onChange={next => setFinalAnnounceDate(next)}
                 />
                 <DetailInfoForm.InputsSeparator />
-                <CmsInput inputSize="medium" placeholder="발표 방법 안내" />
+                <CmsInput
+                  inputSize="medium"
+                  width="100%"
+                  style={{ flex: '1 1 0', minWidth: 0 }}
+                  placeholder="발표 방법 안내"
+                />
               </div>
             }
             view="-"

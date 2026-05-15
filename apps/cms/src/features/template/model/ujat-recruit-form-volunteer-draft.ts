@@ -48,7 +48,7 @@ export function createUjatRecruitFormVolunteerDraft(): WritingFormDraft {
     createSeedHorizontalTable(
       UJAT_RECRUIT_FORM_VOLUNTEER_IDS.recruitInfo,
       '봉사자 모집 정보',
-      '설명 입력'
+      '봉사자 모집은 프로그램 등록 시 상반기/하반기 구분되어 진행되며, 양식 내용은 동일하게 노출됩니다. (모집 공고 노출 시점은 하반기 모집 폼에서만 노출됩니다.)'
     ),
     createSeedHorizontalTable(
       UJAT_RECRUIT_FORM_VOLUNTEER_IDS.detailInfo,
@@ -57,7 +57,7 @@ export function createUjatRecruitFormVolunteerDraft(): WritingFormDraft {
     ),
     createSeedHorizontalTable(
       UJAT_RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule,
-      '면접 전형 가능 일정',
+      '면접 진행 가능 일정',
       '면접 진행 가능 시간을 입력해주세요. 면접 진행 가능 일정은 평일만 선택 가능합니다.'
     ),
   ]

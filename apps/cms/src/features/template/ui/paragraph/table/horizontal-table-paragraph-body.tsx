@@ -20,10 +20,10 @@ import {
   normalizeHorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS } from '@/features/template/lib/personal-info-horizontal-table-disclaimer-paragraph-ids'
-import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
+import { ParagraphInput } from '@/features/template/ui/shared/paragraph-input'
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
-import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/payment-statement-basic-info-detail-form'
-import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/lecture-fee-calculation-detail-form'
+import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
+import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
@@ -34,8 +34,14 @@ import { renderRecruitFormInstructorParagraphBody } from '@/features/template/ui
 import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraph-body'
 import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraph-body'
 import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/institution/paragraph-body'
+import { renderEconomyProgramApplicationParagraphBody } from '@/features/template/ui/form-set/application-form/1c-1s/paragraph-body'
+import { renderGeminiVisitingTrainingApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/gemini-institution/paragraph-body'
+import { renderGeminiVisitingTrainingApplicationFormInstructorParagraphBody } from '@/features/template/ui/form-set/application-form/gemini-instructor/paragraph-body'
 import { renderUjatProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraph-body'
-import { renderUjatProgramApplicationFormVolunteerParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraph-body'
+import {
+  renderUjatProgramApplicationFormVolunteerParagraphBody,
+  type UjatProgramApplicationVolunteerBodyOptions,
+} from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraph-body'
 import {
   renderProgramApplicationFormInstructorParagraphBody,
   type ProgramApplicationFormInstructorBodyOptions,
@@ -53,7 +59,7 @@ import type {
   UjatProgramApplicationGradeClassTimeParagraphOptions,
   UjatProgramApplicationGradeInfoParagraphOptions,
 } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-program-application-institution-body-options'
-import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import { IdTypeWithInputBody } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -399,6 +405,9 @@ export function HorizontalTableParagraphBody({
   programRegistration,
   ujatProgramRegistration,
   programApplicationFormInstitution,
+  programApplicationFormEconomyInstitution,
+  programApplicationFormGeminiInstitution,
+  programApplicationFormGeminiInstructor,
   ujatProgramApplicationFormInstitution,
   ujatProgramApplicationFormVolunteer,
   ujatProgramApplicationGradeInfo,
@@ -430,10 +439,16 @@ export function HorizontalTableParagraphBody({
   ujatProgramRegistration?: boolean
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
+  /** 1사1교 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
+  programApplicationFormEconomyInstitution?: boolean
+  /** Gemini 찾아가는 연수 학교 신청 폼 시드 단락 — 전용 본문 */
+  programApplicationFormGeminiInstitution?: boolean
+  /** Gemini 찾아가는 연수 강사 신청 폼 시드 단락 — 전용 본문 */
+  programApplicationFormGeminiInstructor?: boolean
   /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramApplicationFormInstitution?: boolean
   /** UJAT 프로그램 봉사자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
-  ujatProgramApplicationFormVolunteer?: boolean
+  ujatProgramApplicationFormVolunteer?: UjatProgramApplicationVolunteerBodyOptions
   ujatProgramApplicationGradeInfo?: UjatProgramApplicationGradeInfoParagraphOptions
   ujatProgramApplicationGradeClassTime?: UjatProgramApplicationGradeClassTimeParagraphOptions
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
@@ -519,18 +534,46 @@ export function HorizontalTableParagraphBody({
   )
   if (recruitFormInstructorBody != null) return recruitFormInstructorBody
 
-  const recruitFormVolunteerBody = renderRecruitFormVolunteerParagraphBody(p, recruitFormVolunteer)
+  const recruitFormVolunteerBody = renderRecruitFormVolunteerParagraphBody(
+    p,
+    recruitFormVolunteer,
+    programApplicationFormVolunteer
+  )
   if (recruitFormVolunteerBody != null) return recruitFormVolunteerBody
 
   const ujatRecruitFormVolunteerBody = renderUjatRecruitFormVolunteerParagraphBody(
     p,
-    ujatRecruitFormVolunteer
+    ujatRecruitFormVolunteer,
+    programApplicationFormVolunteer
   )
   if (ujatRecruitFormVolunteerBody != null) return ujatRecruitFormVolunteerBody
+
+  const programApplicationFormGeminiInstitutionBody =
+    renderGeminiVisitingTrainingApplicationFormInstitutionParagraphBody(
+      p,
+      programApplicationFormGeminiInstitution
+    )
+  if (programApplicationFormGeminiInstitutionBody != null)
+    return programApplicationFormGeminiInstitutionBody
+
+  const programApplicationFormGeminiInstructorBody =
+    renderGeminiVisitingTrainingApplicationFormInstructorParagraphBody(
+      p,
+      programApplicationFormGeminiInstructor
+    )
+  if (programApplicationFormGeminiInstructorBody != null)
+    return programApplicationFormGeminiInstructorBody
 
   const programApplicationFormInstitutionBody =
     renderProgramApplicationFormInstitutionParagraphBody(p, programApplicationFormInstitution)
   if (programApplicationFormInstitutionBody != null) return programApplicationFormInstitutionBody
+
+  const economyProgramApplicationBody = renderEconomyProgramApplicationParagraphBody(
+    p,
+    programApplicationFormEconomyInstitution,
+    paragraphInteractionMode === 'authoring'
+  )
+  if (economyProgramApplicationBody != null) return economyProgramApplicationBody
 
   const ujatProgramApplicationFormInstitutionBody =
     renderUjatProgramApplicationFormInstitutionParagraphBody(
@@ -545,7 +588,8 @@ export function HorizontalTableParagraphBody({
 
   const ujatProgramApplicationFormVolunteerBody =
     renderUjatProgramApplicationFormVolunteerParagraphBody(p, ujatProgramApplicationFormVolunteer)
-  if (ujatProgramApplicationFormVolunteerBody != null) return ujatProgramApplicationFormVolunteerBody
+  if (ujatProgramApplicationFormVolunteerBody != null)
+    return ujatProgramApplicationFormVolunteerBody
 
   const programApplicationFormInstructorBody = renderProgramApplicationFormInstructorParagraphBody(
     p,
@@ -636,7 +680,9 @@ export function HorizontalTableParagraphBody({
       className={[
         'form-editor-body',
         'form-editor-horizontal-table-wrap',
-        isPaymentStatementPreConsentP1 ? 'form-editor-horizontal-table-wrap--payment-pre-consent-p1' : '',
+        isPaymentStatementPreConsentP1
+          ? 'form-editor-horizontal-table-wrap--payment-pre-consent-p1'
+          : '',
         isPaymentStatementPreConsentThirdPartyTable
           ? 'form-editor-horizontal-table-wrap--payment-pre-consent-third-party'
           : '',
@@ -644,11 +690,7 @@ export function HorizontalTableParagraphBody({
         .filter(Boolean)
         .join(' ')}
     >
-      <div
-        className="form-editor-horizontal-table"
-        role="grid"
-        aria-readonly={!effectiveEditMode}
-      >
+      <div className="form-editor-horizontal-table" role="grid" aria-readonly={!effectiveEditMode}>
         <div
           className={[
             'form-editor-horizontal-table__row',

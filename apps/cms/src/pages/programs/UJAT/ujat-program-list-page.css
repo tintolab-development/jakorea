@@ -1,0 +1,11 @@
+/**
+ * UJAT 프로그램 목록 — `/programs/program-list-page`·FilterTableLayout와 동일 계열 레이아웃
+ */
+
+.ujat-program-list-page {
+  width: 100%;
+}
+
+.ujat-program-list-page .filter-table-layout {
+  width: 100%;
+}

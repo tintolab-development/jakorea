@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
+import { ParagraphInput } from '@/features/template/ui/shared/paragraph-input'
 import './paragraph-card.css'
 
 /** 카드 헤더 제목·설명 — `ParagraphInput`으로 편집, 스키마 필드와 상위 `updateParagraph`에서 동기화 */

@@ -1,5 +1,5 @@
 import { CmsButton } from '@/shared/ui/cms-button'
-import { FormEditorPlusIcon } from '@/features/template/ui/paragraph/shared/form-editor-plus-icon'
+import { FormEditorPlusIcon } from '@/features/template/ui/shared/form-editor-plus-icon'
 import type { VerticalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { verticalTableAddRow } from '@/features/template/model/writing-form-draft.schema'
 

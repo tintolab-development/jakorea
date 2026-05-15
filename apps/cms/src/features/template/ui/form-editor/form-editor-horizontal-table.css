@@ -779,14 +779,17 @@
 [data-paragraph-id='agreement-portrait-delegated-consent-table']
   .form-editor-horizontal-table__row
   > *:nth-child(1),
-[data-paragraph-id='agreement-portrait-usage-table'] .form-editor-horizontal-table__row > *:nth-child(1) {
+[data-paragraph-id='agreement-portrait-usage-table']
+  .form-editor-horizontal-table__row
+  > *:nth-child(1) {
   flex: 0 0 180px;
   min-width: 180px;
   max-width: 180px;
 }
 
 /* 지급조서 사전 동의서 — 1.개인정보 수집‧이용 본문 셀(필드형), 항목/목적/보유기간 공통 */
-.form-editor-horizontal-table-wrap--payment-pre-consent-p1 .form-editor-horizontal-table__td--field {
+.form-editor-horizontal-table-wrap--payment-pre-consent-p1
+  .form-editor-horizontal-table__td--field {
   color: var(--main-BK, #3d3d3d);
   text-align: center;
   font-family: Pretendard, sans-serif;
@@ -844,7 +847,8 @@
   font-weight: 500;
 }
 
-.form-editor-horizontal-table-wrap--payment-pre-consent-third-party .form-editor-horizontal-table__td--field {
+.form-editor-horizontal-table-wrap--payment-pre-consent-third-party
+  .form-editor-horizontal-table__td--field {
   color: var(--main-BK, #3d3d3d);
   text-align: center;
   font-family: Pretendard, sans-serif;

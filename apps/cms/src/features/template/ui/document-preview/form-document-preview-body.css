@@ -15,6 +15,13 @@
   min-width: 0;
 }
 
+.form-document-preview-paragraph--authoring-sync-focus {
+  outline: 2px solid var(--color-mint-01, #01a1af);
+  outline-offset: 4px;
+  border-radius: 4px;
+  transition: outline-color 0.15s ease;
+}
+
 .form-document-preview-paragraph--content-only {
   display: flex;
   flex-direction: column;
@@ -128,4 +135,10 @@
 .form-document-short-essay-table th {
   font-weight: 600;
   background: var(--table-header, #f5f5f5);
+}
+
+/* user_info — th/td 세로 쌍, A4 contentOnly에서 short_essay 표와 동일 토큰 */
+.form-document-short-essay-table--user-info th,
+.form-document-short-essay-table--user-info td {
+  text-align: left;
 }

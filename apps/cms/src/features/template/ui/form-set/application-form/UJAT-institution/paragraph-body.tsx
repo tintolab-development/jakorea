@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
-import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/ujat-program-application-form-institution-draft'
 import { UjatProgramApplicationBasicInfoParagraph } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraphs/ujat-program-application-basic-info-paragraph'
 import { UjatProgramApplicationGradeInfoParagraph } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraphs/ujat-program-application-grade-info-paragraph'
@@ -25,7 +25,11 @@ export function renderUjatProgramApplicationFormInstitutionParagraphBody(
     case UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.applicationRegion:
       return <UjatProgramApplicationRegionParagraph />
     case UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo:
-      return <UjatProgramApplicationBasicInfoParagraph />
+      return (
+        <UjatProgramApplicationBasicInfoParagraph
+          isTemplateAuthoringMode={paragraphInteractionMode === 'authoring'}
+        />
+      )
     case UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeApplicationInfo:
       return (
         <UjatProgramApplicationGradeInfoParagraph

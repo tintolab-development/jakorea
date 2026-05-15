@@ -2,7 +2,7 @@ import { Fragment, useState } from 'react'
 import type { RadioChangeEvent } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { ItemDeleteButton } from '@/features/template/ui/paragraph/shared/item-delete-button'
+import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import type {
   ProgramRegistrationScheduleDetailKind,
   ProgramRegistrationSessionRoundType,
@@ -10,8 +10,8 @@ import type {
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
-import { ParagraphTimePicker } from '@/features/template/ui/paragraph/shared/paragraph-time-picker'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import {
   getProgramRegistrationCurriculumMultiSessionRowPlan,
   shouldHideCurriculumParticipationRowForCommonEduPartWithIpsPerSchedule,

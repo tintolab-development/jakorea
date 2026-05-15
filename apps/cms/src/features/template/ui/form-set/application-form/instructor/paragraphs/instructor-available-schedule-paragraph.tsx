@@ -1,10 +1,13 @@
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useMemo, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CalendarMini } from '@/shared/components/calendar'
 import '@/shared/components/calendar/styles/calendar.css'
 import { ProgramApplicationScheduleTemplateHintParagraph } from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
+import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
+import { extractClockTimeRangeForScheduleSummary } from '@/features/template/lib/extract-clock-time-range-for-schedule-summary'
+import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
 
 type ScheduleSlot = {
   id: string
@@ -17,17 +20,12 @@ type ScheduleSlot = {
 
 const PROGRAM_SCHEDULE_SLOTS: ScheduleSlot[] = []
 
-/** `9:20 - 10:00` → `9:20 ~ 10:00` (표시용) */
-function formatTimeRangeForDisplay(timeRange: string): string {
-  return timeRange.trim().replace(/\s*-\s*/, ' ~ ')
-}
-
-/** 스크린: `강서초등학교 : 26년 3월 9일 (9:20 ~ 12:00)` */
+/** 스크린: `강서초등학교 : 26년 3월 9일 (9:20 ~ 12:00)` — 교시 없이 시각만 */
 function slotDisplaySegment(slot: ScheduleSlot): string {
   const d = dayjs(slot.dateKey)
   const yShort = d.year() % 100
   const datePart = `${yShort}년 ${d.month() + 1}월 ${d.date()}일`
-  return `${slot.school} : ${datePart} (${formatTimeRangeForDisplay(slot.timeRange)})`
+  return `${slot.school} : ${datePart} (${extractClockTimeRangeForScheduleSummary(slot.timeRange)})`
 }
 
 
@@ -44,12 +42,16 @@ export function InstructorAvailableScheduleParagraph({
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => dayjs('2026-03-18'))
   const [selectedSlotIds, setSelectedSlotIds] = useState<Set<string>>(() => new Set())
 
+  const scheduleTopRef = useRef<HTMLDivElement>(null)
+  const calendarWrapRef = useRef<HTMLDivElement>(null)
+  useProgramRegistrationScheduleTopCalendarHeightSync(scheduleTopRef, calendarWrapRef)
+
   const programDates = useMemo(() => new Set(PROGRAM_SCHEDULE_SLOTS.map(s => s.dateKey)), [])
 
-  const slotsForMonth = useMemo(
-    () => PROGRAM_SCHEDULE_SLOTS.filter(s => dayjs(s.dateKey).isSame(currentMonth, 'month')),
-    [currentMonth]
-  )
+  const slotsForSelectedCalendarDay = useMemo(() => {
+    const key = selectedDate.format('YYYY-MM-DD')
+    return PROGRAM_SCHEDULE_SLOTS.filter(s => s.dateKey === key)
+  }, [selectedDate])
 
   const selectedSlotsOrdered = useMemo(
     () => PROGRAM_SCHEDULE_SLOTS.filter(s => selectedSlotIds.has(s.id)),
@@ -90,8 +92,11 @@ export function InstructorAvailableScheduleParagraph({
 
   return (
     <div className="program-application-form-instructor__available-schedule">
-      <div className="program-application-form-instructor__available-schedule-top">
-        <div className="program-application-form-instructor__calendar-wrap">
+      <div
+        ref={scheduleTopRef}
+        className="program-application-form-instructor__available-schedule-top"
+      >
+        <div ref={calendarWrapRef} className="program-application-form-instructor__calendar-wrap">
           <CalendarMini
             currentMonth={currentMonth}
             selectedDate={selectedDate}
@@ -102,37 +107,45 @@ export function InstructorAvailableScheduleParagraph({
             programDates={programDates}
           />
         </div>
-        {isTemplateAuthoringMode ? (
-          <ProgramApplicationScheduleTemplateHintParagraph />
-        ) : (
-          <div className="program-application-form-instructor__session-grid" role="list">
-            {slotsForMonth.map(slot => {
-              const active = selectedSlotIds.has(slot.id)
-              return (
-                <button
-                  key={slot.id}
-                  type="button"
-                  role="listitem"
-                  aria-pressed={active}
-                  className={[
-                    'program-application-form-instructor__session-card',
-                    active ? 'program-application-form-instructor__session-card--selected' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  onClick={() => toggleSlot(slot.id, slot.dateKey)}
+        <div className="program-application-form-instructor__schedule-side">
+          {isTemplateAuthoringMode ? (
+            <ProgramApplicationScheduleTemplateHintParagraph fillScheduleSide />
+          ) : (
+            <div className="program-application-form-instructor__session-grid" role="list">
+              {slotsForSelectedCalendarDay.length === 0 ? (
+                <div
+                  className="program-application-form-instructor__session-grid-empty"
+                  role="status"
                 >
-                  <span className="program-application-form-instructor__session-card-line program-application-form-instructor__session-card-line--primary">
-                    {`${slot.school} | ${slot.region}`}
+                  <span className="form-editor-template-field-hint-text">
+                    이 날짜에 표시할 일정이 없습니다.
                   </span>
-                  <span className="program-application-form-instructor__session-card-line program-application-form-instructor__session-card-line--secondary">
-                    {`${slot.sessionLabel} | ${slot.timeRange}`}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        )}
+                </div>
+              ) : (
+                slotsForSelectedCalendarDay.map(slot => {
+                  const active = selectedSlotIds.has(slot.id)
+                  return (
+                    <ParagraphChip
+                      key={slot.id}
+                      role="listitem"
+                      aria-pressed={active}
+                      className="program-application-form-instructor__session-chip"
+                      selected={active}
+                      onClick={() => toggleSlot(slot.id, slot.dateKey)}
+                    >
+                      <span className="program-application-form-instructor__session-card-line program-application-form-instructor__session-card-line--primary">
+                        {`${slot.school} | ${slot.region}`}
+                      </span>
+                      <span className="program-application-form-instructor__session-card-line program-application-form-instructor__session-card-line--secondary">
+                        {`${slot.sessionLabel} | ${slot.timeRange}`}
+                      </span>
+                    </ParagraphChip>
+                  )
+                })
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <DetailInfoForm title="" hideHeader mode="edit">

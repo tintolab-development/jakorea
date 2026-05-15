@@ -2,7 +2,7 @@ import {
   LECTURE_FEE_CALCULATION_LINES_SAMPLE,
   type PaymentStatementCalculationLinesViewModel,
 } from '@/features/template/model/lecture-fee-calculation-lines-sample'
-import { PaymentStatementIssuanceCalculationLinesTable } from '@/features/template/ui/form-set/payment-statement-issuance-calculation-lines-table'
+import { PaymentStatementIssuanceCalculationLinesTable } from '@/features/template/ui/form-set/detail-forms/payment-statement-issuance-calculation-lines-table'
 
 interface CalculationLinesParagraphProps {
   lines?: PaymentStatementCalculationLinesViewModel

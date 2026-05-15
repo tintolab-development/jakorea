@@ -8,7 +8,8 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { AppMultiSelect } from '@/shared/ui/app-multi-select'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
+import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './ujat-first-half-education-schedule-paragraph.css'
 
@@ -91,8 +92,8 @@ function AddScheduleRowButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-/** 사전 교육 — 지역 셀렉트 + 일정(행 추가) */
-function UjatPreEducationScheduleForm() {
+/** 사전 교육·해단식 공통 — 진행 일정: 1행에 추가, 2행부터 삭제 */
+function UjatRegionDateMultiScheduleRows() {
   const [rowIds, setRowIds] = useState([0, 1])
   const [regionByRow, setRegionByRow] = useState<Record<number, string[]>>({
     0: [],
@@ -103,6 +104,76 @@ function UjatPreEducationScheduleForm() {
     1: null,
   })
 
+  const appendRow = () => {
+    setRowIds(prev => {
+      const nextId = prev.length === 0 ? 0 : Math.max(...prev) + 1
+      setRegionByRow(r => ({
+        ...r,
+        [nextId]: [],
+      }))
+      setDateByRow(d => ({ ...d, [nextId]: null }))
+      return [...prev, nextId]
+    })
+  }
+
+  const removeRow = (id: number) => {
+    setRowIds(prev => prev.filter(rid => rid !== id))
+    setRegionByRow(prev => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setDateByRow(prev => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
+
+  return (
+    <div className="ujat-first-half-schedule__schedule-rows">
+      {rowIds.map((id, index) => (
+        <div
+          key={id}
+          className="detail-info-form-inputs-wrapper ujat-first-half-schedule__schedule-row"
+        >
+          <AppMultiSelect
+            style={{ width: 360 }}
+            placeholder="지역을 선택하세요"
+            options={getRowRegionOptions(id, regionByRow)}
+            value={regionByRow[id] ?? []}
+            onChange={next => setRegionByRow(prev => ({ ...prev, [id]: next }))}
+          />
+          <DetailInfoForm.InputsSeparator />
+          <ParagraphDatePicker
+            mode="single"
+            presetMode="schedule"
+            customizable={false}
+            suppressAutoTodayWhenEmpty
+            value={dateByRow[id] ?? null}
+            onChange={next => setDateByRow(prev => ({ ...prev, [id]: next }))}
+            width={360}
+          />
+          {index === 0 ? (
+            <AddScheduleRowButton onClick={appendRow} />
+          ) : (
+            <ItemDeleteButton
+              className="item-delete-button"
+              aria-label="진행 일정 행 삭제"
+              onClick={event => {
+                event.stopPropagation()
+                removeRow(id)
+              }}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** 사전 교육 — 지역 셀렉트 + 일정(행 추가) */
+function UjatPreEducationScheduleForm() {
   return (
     <div className="ujat-first-half-schedule__block ujat-first-half-schedule__block--first">
       <div className="ujat-first-half-schedule__subheading">■ 사전 교육</div>
@@ -123,51 +194,7 @@ function UjatPreEducationScheduleForm() {
           <DetailInfoForm.Field
             label="진행 일정"
             fullRow
-            edit={
-              <div className="ujat-first-half-schedule__schedule-rows">
-                {rowIds.map((id, index) => (
-                  <div
-                    key={id}
-                    className="detail-info-form-inputs-wrapper ujat-first-half-schedule__schedule-row"
-                  >
-                    <AppMultiSelect
-                      style={{ width: 360 }}
-                      placeholder="지역을 선택하세요"
-                      options={getRowRegionOptions(id, regionByRow)}
-                      value={regionByRow[id] ?? []}
-                      onChange={next => setRegionByRow(prev => ({ ...prev, [id]: next }))}
-                    />
-                    <DetailInfoForm.InputsSeparator />
-                    <ParagraphDatePicker
-                      mode="single"
-                      presetMode="schedule"
-                      customizable={false}
-                      suppressAutoTodayWhenEmpty
-                      value={dateByRow[id] ?? null}
-                      onChange={next => setDateByRow(prev => ({ ...prev, [id]: next }))}
-                      width={360}
-                    />
-                    {index === rowIds.length - 1 ? (
-                      <>
-                        <AddScheduleRowButton
-                          onClick={() => {
-                            setRowIds(prev => {
-                              const nextId = prev.length === 0 ? 0 : Math.max(...prev) + 1
-                              setRegionByRow(r => ({
-                                ...r,
-                                [nextId]: [],
-                              }))
-                              setDateByRow(d => ({ ...d, [nextId]: null }))
-                              return [...prev, nextId]
-                            })
-                          }}
-                        />
-                      </>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            }
+            edit={<UjatRegionDateMultiScheduleRows />}
             view="-"
           />
         </DetailInfoForm.Row>
@@ -232,16 +259,6 @@ function UjatEventSchedule01Form() {
 
 /** 해단식 — 사전 교육과 동일 패턴(별도 DetailInfoForm) */
 function UjatClosingCeremonyScheduleForm() {
-  const [rowIds, setRowIds] = useState([0, 1])
-  const [regionByRow, setRegionByRow] = useState<Record<number, string[]>>({
-    0: [],
-    1: [],
-  })
-  const [dateByRow, setDateByRow] = useState<Record<number, Dayjs | null>>({
-    0: null,
-    1: null,
-  })
-
   return (
     <div className="ujat-first-half-schedule__block">
       <div className="ujat-first-half-schedule__subheading">■ 해단식</div>
@@ -262,49 +279,7 @@ function UjatClosingCeremonyScheduleForm() {
           <DetailInfoForm.Field
             label="진행 일정"
             fullRow
-            edit={
-              <div className="ujat-first-half-schedule__schedule-rows">
-                {rowIds.map((id, index) => (
-                  <div
-                    key={id}
-                    className="detail-info-form-inputs-wrapper ujat-first-half-schedule__schedule-row"
-                  >
-                    <AppMultiSelect
-                      style={{ width: 280 }}
-                      placeholder="지역 선택"
-                      options={getRowRegionOptions(id, regionByRow)}
-                      value={regionByRow[id] ?? []}
-                      onChange={next => setRegionByRow(prev => ({ ...prev, [id]: next }))}
-                    />
-                    <DetailInfoForm.InputsSeparator />
-                    <ParagraphDatePicker
-                      mode="single"
-                      presetMode="schedule"
-                      customizable={false}
-                      suppressAutoTodayWhenEmpty
-                      value={dateByRow[id] ?? null}
-                      onChange={next => setDateByRow(prev => ({ ...prev, [id]: next }))}
-                      className="ujat-first-half-schedule__date-picker-grow"
-                    />
-                    {index === rowIds.length - 1 ? (
-                      <AddScheduleRowButton
-                        onClick={() => {
-                          setRowIds(prev => {
-                            const nextId = prev.length === 0 ? 0 : Math.max(...prev) + 1
-                            setRegionByRow(r => ({
-                              ...r,
-                              [nextId]: [],
-                            }))
-                            setDateByRow(d => ({ ...d, [nextId]: null }))
-                            return [...prev, nextId]
-                          })
-                        }}
-                      />
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            }
+            edit={<UjatRegionDateMultiScheduleRows />}
             view="-"
           />
         </DetailInfoForm.Row>

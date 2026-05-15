@@ -1,20 +1,14 @@
 import { useMemo, useState } from 'react'
-import { settlementItemSettingSections } from '@/data/mock/settlement-item-settings'
+import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { AppMultiSelect, type AppMultiSelectOption } from '@/shared/ui/app-multi-select'
+import { AppMultiSelect } from '@/shared/ui/app-multi-select'
 import { CmsInput } from '@/shared/ui/cms-input'
 import './program-registration-paragraph.css'
 
 export function ProgramRegistrationWageInfoParagraph() {
   const [paymentItemValues, setPaymentItemValues] = useState<string[]>([])
 
-  const paymentItemOptions = useMemo((): AppMultiSelectOption[] => {
-    const section = settlementItemSettingSections.find(s => s.kind === 'payment')
-    return (section?.items ?? []).map(item => ({
-      value: item.id,
-      label: item.title,
-    }))
-  }, [])
+  const paymentItemOptions = useMemo(() => getTemplateRegistrationPaymentItemOptions(), [])
 
   return (
     <DetailInfoForm title="임금 정보" hideHeader mode="edit" className="program-registration-paragraph">

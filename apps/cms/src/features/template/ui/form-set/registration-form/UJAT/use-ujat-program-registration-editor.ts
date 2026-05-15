@@ -12,17 +12,21 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { useTableRowSelectionState } from '@/features/template/ui/form-editor/use-table-row-selection-state'
+import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
 
 export function useUjatProgramRegistrationEditor(active: boolean, previewHeaderTitle: string) {
-  const { openWritingUserPreview, syncWritingUserPreviewSession, closeWritingUserPreview, isWritingUserPreviewOpen } =
-    useTemplateWritingPreview()
+  const {
+    openWritingUserPreview,
+    syncWritingUserPreviewSession,
+    closeWritingUserPreview,
+    isWritingUserPreviewOpen,
+  } = useTemplateWritingPreview()
 
   const [draft, setDraft] = useState<WritingFormDraft>(() =>
     normalizeWritingFormDraft(createUjatProgramRegistrationDraft())
   )
-  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(() =>
-    normalizeWritingFormDraft(createUjatProgramRegistrationDraft()).paragraphs[0]?.id ?? null
+  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
+    () => normalizeWritingFormDraft(createUjatProgramRegistrationDraft()).paragraphs[0]?.id ?? null
   )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
 
@@ -129,9 +133,12 @@ export function useUjatProgramRegistrationEditor(active: boolean, previewHeaderT
   )
 
   useEffect(() => {
+    // 다른 작성 양식 상세가 열려 있을 때도 이 훅은 마운트되어 있으므로,
+    // 비활성 상태에서 동기화하면 UJAT 등록 draft가 전역 미리보기 세션을 덮어쓴다.
+    if (!active) return
     if (!isWritingUserPreviewOpen) return
     syncWritingUserPreviewSession(writingPreviewSession)
-  }, [isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
+  }, [active, isWritingUserPreviewOpen, syncWritingUserPreviewSession, writingPreviewSession])
 
   const handlePreview = useCallback(() => {
     openWritingUserPreview(writingPreviewSession)
@@ -145,7 +152,8 @@ export function useUjatProgramRegistrationEditor(active: boolean, previewHeaderT
     draft,
     activeParagraphId,
     singleItemListActiveItemId,
-    structureLockedParagraphIds: UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS as ReadonlySet<string>,
+    structureLockedParagraphIds:
+      UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS as ReadonlySet<string>,
     pinnedTop,
     sortableMiddle,
     pinnedBottom,

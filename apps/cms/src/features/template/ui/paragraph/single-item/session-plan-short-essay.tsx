@@ -1,8 +1,8 @@
 import { useEffect, useId, useRef } from 'react'
 import type { SessionPlanShortEssayParagraph } from '@/features/template/model/writing-form-draft.schema'
-import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
-import { ItemDeleteButton } from '@/features/template/ui/paragraph/shared/item-delete-button'
+import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import './session-plan-short-essay.css'
 
 /**

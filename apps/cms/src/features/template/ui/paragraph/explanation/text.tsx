@@ -1,7 +1,7 @@
 import type { AgreementExplanationTextParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { PaymentPreConsentFixedBlock } from '@/features/template/ui/paragraph/explanation/payment-pre-consent-fixed-block'
-import { ParagraphInput } from '@/features/template/ui/paragraph/shared/paragraph-input'
+import { ParagraphInput } from '@/features/template/ui/shared/paragraph-input'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './text.css'
 
@@ -26,11 +26,8 @@ export function ExplanationText({
       paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine ||
       paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm
     if (isPreConsentWhiteSheetBar) {
-      return (
-        <div className="form-editor-body">
-          <PaymentPreConsentFixedBlock tone="white">{text}</PaymentPreConsentFixedBlock>
-        </div>
-      )
+      /* `form-editor-body`는 슬롯·고정 블록과 flex gap이 겹칠 수 있어 래퍼 없이 렌더 */
+      return <PaymentPreConsentFixedBlock tone="white">{text}</PaymentPreConsentFixedBlock>
     }
 
     return (

@@ -1,7 +1,7 @@
 import { Fragment, useMemo, useState } from 'react'
 import './ujat-program-application-grade-info-paragraph.css'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { ItemDeleteButton } from '@/features/template/ui/paragraph/shared/item-delete-button'
+import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 

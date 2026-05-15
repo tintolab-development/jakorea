@@ -3,7 +3,7 @@ import '@/features/template/ui/paragraph/single-item/user-info.css'
 import './ujat-program-application-preferred-education-schedule-paragraph.css'
 import { ProgramApplicationScheduleTemplateHintParagraph } from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 /** 템플릿 편집(authoring) — 교육 진행 희망일 값 영역 */

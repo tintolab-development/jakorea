@@ -2101,9 +2101,21 @@ export const DEFAULT_SURVEY_PARAGRAPH_IDS = {
   title: 'survey-paragraph-title',
   user: 'survey-paragraph-user',
   score: 'survey-paragraph-score',
+  score2: 'survey-paragraph-score-2',
   subjective: 'survey-paragraph-subjective',
+  subjective2: 'survey-paragraph-subjective-2',
   closing: 'survey-paragraph-closing',
 } as const
+
+/**
+ * 설문 양식 기본 구조: 제목형·설문자 정보·마무리글은 `getWritingFormHeadMiddlePinnedTail`에서 고정 역할.
+ * DnD 대상이 아니므로 햄버거 핸들 미노출 — `PAYMENT_STATEMENT_ISSUANCE_HIDDEN_DRAG_HANDLE_IDS` 등과 동일 UX.
+ */
+export const SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
+  DEFAULT_SURVEY_PARAGRAPH_IDS.title,
+  DEFAULT_SURVEY_PARAGRAPH_IDS.user,
+  DEFAULT_SURVEY_PARAGRAPH_IDS.closing,
+])
 
 /** 발급 양식 > UJAT 교육계획서 시드 단락 id — 구조 잠금·초기 선택에 사용 */
 export const UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS = {
@@ -2908,7 +2920,8 @@ export function getWritingFormHeadMiddlePinnedTail(paragraphs: WritingFormParagr
   middle: WritingFormParagraph[]
   pinnedTail: WritingFormParagraph[]
 } | null {
-  if (paragraphs.length < 3) return null
+  /** head + middle(+선택 핀 tail) 구조. 단락 2개 폼(예: Gemini 찾아가는 연수 강사 신청)도 head·middle로 분해되어야 함 */
+  if (paragraphs.length < 2) return null
   const head = paragraphs[0]!
   const n = paragraphs.length
   const last = paragraphs[n - 1]!
@@ -3038,6 +3051,7 @@ export function createDefaultHorizontalTableDraft(): WritingFormDraft {
 }
 
 export function createDefaultSurveyDraft(): WritingFormDraft {
+  const scaleItems = createDefaultScaleTypeItems()
   return {
     schemaVersion: 1,
     formSettings: { titleNumbering: 'q123' },
@@ -3055,7 +3069,7 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         periodMode: 'immediate',
         startAt: null,
         endAt: null,
-        showWritingPeriodOnForm: true,
+        showWritingPeriodOnForm: false,
       },
       {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.user,
@@ -3063,7 +3077,7 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         variant: 'user_info',
         answerRequired: true,
         requiredMark: true,
-        paragraphTitle: '기본 정보',
+        paragraphTitle: '설문자 정보',
         paragraphDescription: '선택한 항목을 자동으로 불러옵니다.',
         participatesInTitleNumbering: true,
         userFields: [
@@ -3085,7 +3099,7 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
           { key: 'teamName', label: '팀 명' },
           { key: 'teamPartnerName', label: '팀원/파트너 명' },
         ],
-        selectedUserFieldKeys: [],
+        selectedUserFieldKeys: ['name', 'addressRegion'],
       },
       {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.score,
@@ -3093,10 +3107,22 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         variant: 'scale_type',
         answerRequired: true,
         requiredMark: true,
-        paragraphTitle: '타이틀을 입력해 주세요',
+        paragraphTitle: '오리엔테이션에서 제공된 정보가 이해하기 쉬웠나요?',
         paragraphDescription: '설명 입력',
         participatesInTitleNumbering: true,
-        items: createDefaultScaleTypeItems(),
+        items: scaleItems,
+        selectedPreviewItemId: 'scale-type-item-5',
+      },
+      {
+        id: DEFAULT_SURVEY_PARAGRAPH_IDS.score2,
+        kind: 'single_item',
+        variant: 'scale_type',
+        answerRequired: true,
+        requiredMark: true,
+        paragraphTitle: '프로그램 전반적인 프로세스에 대해 명확히 이해했나요?',
+        paragraphDescription: '설명 입력',
+        participatesInTitleNumbering: true,
+        items: scaleItems,
         selectedPreviewItemId: 'scale-type-item-5',
       },
       {
@@ -3105,13 +3131,36 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         variant: 'short_essay',
         answerRequired: true,
         requiredMark: true,
-        paragraphTitle: '타이틀을 입력해 주세요',
+        paragraphTitle:
+          '오늘 강의에서 배운 점, 기억나는 점, 좋았던 점 등을 작성해 주세요.',
         paragraphDescription: '설명 입력',
         participatesInTitleNumbering: true,
         showItemTitle: false,
         items: [
           {
             id: 'survey-short-essay-item-1',
+            label: 'Title 01',
+            placeholder: '답변을 입력해 주세요',
+            bodyText: '',
+          },
+        ],
+        bodyPlaceholder: '답변을 입력해 주세요',
+        bodyText: '',
+      },
+      {
+        id: DEFAULT_SURVEY_PARAGRAPH_IDS.subjective2,
+        kind: 'single_item',
+        variant: 'short_essay',
+        answerRequired: true,
+        requiredMark: true,
+        paragraphTitle: '기타 의견이 있다면 작성해 주세요.',
+        paragraphDescription:
+          '교육 워크숍 진행, 강의 내용 등에 대한 기타 의견을 작성해 주세요.',
+        participatesInTitleNumbering: true,
+        showItemTitle: false,
+        items: [
+          {
+            id: 'survey-short-essay-item-2',
             label: 'Title 01',
             placeholder: '답변을 입력해 주세요',
             bodyText: '',
@@ -3537,7 +3586,7 @@ export function createExplanationTypesPreviewDraft(): WritingFormDraft {
 export function createSingleItemPreviewDraft(): WritingFormDraft {
   const base = createDefaultSurveyDraft()
   const title = base.paragraphs[0]!
-  const closing = base.paragraphs[4]!
+  const closing = base.paragraphs[base.paragraphs.length - 1]!
   const middle: WritingFormParagraph[] = [
     {
       id: 'short-essay',

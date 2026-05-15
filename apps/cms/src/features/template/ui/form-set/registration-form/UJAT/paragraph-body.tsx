@@ -5,7 +5,7 @@ import { UjatBusinessKpiParagraph } from '@/features/template/ui/form-set/regist
 import { UjatEducationClassCapacityByRegionParagraph } from '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-education-class-capacity-by-region-paragraph'
 import { UjatEducationScheduleSettingsParagraph } from '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-education-schedule-settings-paragraph'
 import { UjatFirstHalfEducationScheduleParagraph } from '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-first-half-education-schedule-paragraph'
-import { UjatPaymentInfoParagraph } from '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-payment-info-paragraph'
+import { UjatWageInfoParagraph } from '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-wage-info-paragraph'
 
 export function renderUjatProgramRegistrationParagraphBody(
   paragraph: HorizontalTableParagraph,
@@ -19,7 +19,7 @@ export function renderUjatProgramRegistrationParagraphBody(
     case UJAT_PROGRAM_REGISTRATION_IDS[1]:
       return <UjatBusinessKpiParagraph />
     case UJAT_PROGRAM_REGISTRATION_IDS[2]:
-      return <UjatPaymentInfoParagraph />
+      return <UjatWageInfoParagraph />
     case UJAT_PROGRAM_REGISTRATION_IDS[3]:
       return <UjatFirstHalfEducationScheduleParagraph />
     case UJAT_PROGRAM_REGISTRATION_IDS[4]:

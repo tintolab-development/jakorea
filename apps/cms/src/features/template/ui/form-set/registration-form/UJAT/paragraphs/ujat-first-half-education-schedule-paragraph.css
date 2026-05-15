@@ -26,11 +26,6 @@
   width: 100%;
 }
 
-.ujat-first-half-schedule__date-picker-grow {
-  flex: 1 1 auto;
-  min-width: 160px;
-}
-
 .ujat-first-half-schedule__range-picker {
   max-width: 480px;
 }

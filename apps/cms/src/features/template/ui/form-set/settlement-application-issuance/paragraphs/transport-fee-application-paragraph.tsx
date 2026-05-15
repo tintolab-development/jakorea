@@ -1,5 +1,5 @@
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
-import { SettlementTransportFeeDetailForm } from '@/features/template/ui/form-set/settlement-transport-fee-detail-form'
+import { SettlementTransportFeeDetailForm } from '@/features/template/ui/form-set/detail-forms/settlement-transport-fee-detail-form'
 
 interface TransportFeeApplicationParagraphProps {
   displayMode?: PaymentStatementIssuanceParagraphDisplayMode

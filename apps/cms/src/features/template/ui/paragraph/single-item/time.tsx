@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import type { TimeParagraph } from '@/features/template/model/writing-form-draft.schema'
-import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/paragraph-body-interaction-mode'
-import { ParagraphTimePicker } from '@/features/template/ui/paragraph/shared/paragraph-time-picker'
+import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
+import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import './time.css'
 
 const PICKER_WIDTH = 240

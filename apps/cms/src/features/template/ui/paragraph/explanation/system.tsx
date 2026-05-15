@@ -67,18 +67,18 @@ export function ExplanationSystem({
   const usePreConsentSheetBar = isPaymentStatementPreConsentSheetBarSystemParagraph(paragraph)
 
   if (usePreConsentSheetBar) {
-    const rootClass = [
-      'form-editor-body',
-      displayMode === 'document' ? 'explanation-system--document' : '',
-    ]
-      .filter(Boolean)
-      .join(' ')
     const barClass =
       displayMode === 'document' ? 'payment-pre-consent-fixed-block--document' : undefined
     const useDocumentSignatureLayout =
       preset === 'agreement_signature' && displayMode === 'document' && documentSignatureBody != null
+    const isDocument = displayMode === 'document'
+    /* 작성 모드: `form-editor-body` 래퍼는 슬롯·리스트 gap과 여백이 겹쳐 보이므로 layout에서 제외(display: contents).
+       문서 모드: `.explanation-system--document` 조상은 인쇄용 스타일에 필요 */
     return (
-      <div className={rootClass}>
+      <div
+        className={isDocument ? 'explanation-system--document' : undefined}
+        style={!isDocument ? { display: 'contents' } : undefined}
+      >
         <div className="explanation-system-row">
           <PaymentPreConsentFixedBlock tone="disabled" className={barClass}>
             {useDocumentSignatureLayout ? documentSignatureBody : bodyText}

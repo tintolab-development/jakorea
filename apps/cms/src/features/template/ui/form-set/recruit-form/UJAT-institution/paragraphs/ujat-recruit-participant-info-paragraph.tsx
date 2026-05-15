@@ -1,8 +1,8 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import type { Dayjs } from 'dayjs'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
-import { dateRangeUsesClockTime } from '@/features/template/ui/paragraph/shared/writing-form-period-date-picker-field'
-import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
+import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -13,7 +13,6 @@ const MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 
 const inquiryColumnStyle: CSSProperties = {
   display: 'flex',
-  flex: '1 1 0',
   minWidth: 0,
   alignItems: 'center',
   gap: 8,
@@ -25,12 +24,7 @@ function InquiryContactColumn({ label, placeholder }: { label: string; placehold
       <span className="nowrap" style={{ flexShrink: 0 }}>
         {label}
       </span>
-      <CmsInput
-        inputSize="medium"
-        width="100%"
-        placeholder={placeholder}
-        style={{ flex: '1 1 0', minWidth: 0 }}
-      />
+      <CmsInput inputSize="medium" width={240} placeholder={placeholder} />
     </div>
   )
 }
@@ -59,7 +53,14 @@ export function UjatRecruitParticipantInfoParagraph() {
         <DetailInfoForm.Field
           label="공고용 프로그램명"
           fullRow
-          edit={<CmsInput inputSize="medium" width="100%" placeholder="프로그램명을 입력하세요" />}
+          edit={
+            <CmsInput
+              inputSize="medium"
+              width="100%"
+              defaultValue="2026년 JA Korea 초등 경제교육 대상 학교"
+              placeholder="프로그램명을 입력하세요"
+            />
+          }
           view="-"
         />
       </DetailInfoForm.Row>
@@ -91,7 +92,9 @@ export function UjatRecruitParticipantInfoParagraph() {
         <DetailInfoForm.Field
           label="참여자 모집 현황"
           readOnlyDisplay
-          view={<span className="form-editor-template-field-hint-text">{RECRUIT_PROGRESS_HINT}</span>}
+          view={
+            <span className="form-editor-template-field-hint-text">{RECRUIT_PROGRESS_HINT}</span>
+          }
         />
       </DetailInfoForm.Row>
 
@@ -102,7 +105,7 @@ export function UjatRecruitParticipantInfoParagraph() {
             <CmsSelect
               disabled
               inputSize="medium"
-              width="100%"
+              width={240}
               value="초등학교"
               options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
             />
@@ -111,7 +114,14 @@ export function UjatRecruitParticipantInfoParagraph() {
         />
         <DetailInfoForm.Field
           label="교육 대상 상세"
-          edit={<CmsInput inputSize="medium" width="100%" placeholder="상세 교육 대상을 입력하세요" />}
+          edit={
+            <CmsInput
+              inputSize="medium"
+              width="100%"
+              defaultValue="경기, 광주, 대구, 대전, 부산, 서울, 인천, 전북 지역 초등학교"
+              placeholder="상세 교육 대상을 입력하세요"
+            />
+          }
           view="-"
         />
       </DetailInfoForm.Row>
@@ -153,7 +163,12 @@ export function UjatRecruitParticipantInfoParagraph() {
                 onChange={next => setFinalAnnounceDate(next)}
               />
               <DetailInfoForm.InputsSeparator />
-              <CmsInput inputSize="medium" width="100%" placeholder="발표 방법 안내" />
+              <CmsInput
+                inputSize="medium"
+                width="100%"
+                style={{ flex: '1 1 0', minWidth: 0 }}
+                placeholder="발표 방법 안내"
+              />
             </div>
           }
           view="-"
@@ -180,7 +195,13 @@ export function UjatRecruitParticipantInfoParagraph() {
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="비고"
-          edit={<CmsInput inputSize="medium" width="100%" placeholder="비고란을 작성하세요 (없으면 -로 입력)" />}
+          edit={
+            <CmsInput
+              inputSize="medium"
+              width="100%"
+              placeholder="비고란을 작성하세요 (없으면 -로 입력)"
+            />
+          }
           view="-"
         />
       </DetailInfoForm.Row>

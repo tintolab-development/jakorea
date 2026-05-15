@@ -20,6 +20,11 @@ export interface CmsTextAreaProps extends Omit<TextAreaProps, 'variant' | 'size'
   label?: ReactNode
   /** 지정 시 사이즈별 기본 width 대신 적용 (숫자는 px) */
   width?: number | string
+  /**
+   * true이면 `rows={1}`일 때 말줄임·`resize: none`(`cms-textarea--rows-1-single-line`)을 쓰지 않음.
+   * 한 줄 높이로 시작하고 세로로 늘리는 입력(연수 공문 등). 세로 중앙은 `rows={1}` 공통 스타일.
+   */
+  expandableFromSingleRow?: boolean
 }
 
 export const CmsTextArea = forwardRef<TextAreaRef, CmsTextAreaProps>(
@@ -32,6 +37,7 @@ export const CmsTextArea = forwardRef<TextAreaRef, CmsTextAreaProps>(
       disabled,
       style,
       rootClassName,
+      expandableFromSingleRow = false,
       ...rest
     },
     ref
@@ -43,13 +49,16 @@ export const CmsTextArea = forwardRef<TextAreaRef, CmsTextAreaProps>(
         : undefined
 
     const { rows, ...textareaRest } = rest
-    const singleLineRows = rows === 1
+    const isRows1 = rows === 1
+    const rows1SingleLine = isRows1 && !expandableFromSingleRow
 
     const rootCn = [
       'cms-textarea',
       `cms-textarea--${inputSize}`,
       hasExplicitWidth && 'cms-textarea--explicit-width',
-      singleLineRows && 'cms-textarea--rows-1',
+      isRows1 && 'cms-textarea--rows-1',
+      rows1SingleLine && 'cms-textarea--rows-1-single-line',
+      expandableFromSingleRow && isRows1 && 'cms-textarea--expandable-single-row',
       className,
     ]
       .filter(Boolean)

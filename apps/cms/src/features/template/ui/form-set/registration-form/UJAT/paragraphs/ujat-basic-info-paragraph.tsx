@@ -20,8 +20,8 @@ import {
   TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS,
   withDetailedProgramNoneOption,
 } from '@/features/template/lib/template-form-select-options'
-import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
-import { dateRangeUsesClockTime } from '@/features/template/ui/paragraph/shared/writing-form-period-date-picker-field'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
@@ -62,10 +62,7 @@ function participantTypeLabel(
   return TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.find(o => o.value === value)?.label ?? value
 }
 
-const educationCourseSelectOptions = [
-  { value: ALL_VALUE, label: '전체' },
-  ...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
-]
+const educationCourseSelectOptions = [...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS]
 
 const BLOCK_GAP_STYLE = { marginTop: 16 } as const
 
@@ -98,7 +95,7 @@ export function UjatBasicInfoParagraph() {
   const [surveyItems, setSurveyItems] =
     useState<Record<UjatSurveyRowId, boolean>>(initialUjatSurveyItems)
 
-  const [educationCourse, setEducationCourse] = useState(ALL_VALUE)
+  const [educationCourse, setEducationCourse] = useState('')
   const [partnerInvolvement, setPartnerInvolvement] = useState<'yes' | 'no'>('no')
 
   const sponsorOptions = useMemo(
@@ -385,33 +382,29 @@ export function UjatBasicInfoParagraph() {
           <DetailInfoForm.Field
             label="교육 과정"
             edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
-                <CmsSelect
-                  withAllOption={false}
-                  inputSize="medium"
-                  placeholder="교육 과정을 선택하세요"
-                  width={240}
-                  options={educationCourseSelectOptions}
-                  value={educationCourse}
-                  onChange={v => setEducationCourse(String(v ?? ''))}
-                />
-              </div>
+              <CmsSelect
+                withAllOption={false}
+                inputSize="medium"
+                placeholder="교육 과정을 선택하세요"
+                width={240}
+                options={educationCourseSelectOptions}
+                value={educationCourse}
+                onChange={v => setEducationCourse(String(v ?? ''))}
+              />
             }
             view="-"
           />
           <DetailInfoForm.Field
             label="IP Owned"
             edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
-                <CmsSelect
-                  withAllOption={false}
-                  inputSize="medium"
-                  disabled
-                  width={240}
-                  options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
-                  value="ja"
-                />
-              </div>
+              <CmsSelect
+                withAllOption={false}
+                inputSize="medium"
+                disabled
+                width={240}
+                options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
+                value="ja"
+              />
             }
             view="-"
           />
@@ -420,16 +413,14 @@ export function UjatBasicInfoParagraph() {
           <DetailInfoForm.Field
             label="Course Delivered By"
             edit={
-              <div className="detail-info-form-inputs-wrapper-no-gap">
-                <CmsSelect
-                  withAllOption={false}
-                  inputSize="medium"
-                  disabled
-                  width={240}
-                  options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
-                  value="ja"
-                />
-              </div>
+              <CmsSelect
+                withAllOption={false}
+                inputSize="medium"
+                disabled
+                width={240}
+                options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
+                value="ja"
+              />
             }
             view="-"
           />

@@ -11,8 +11,8 @@ export const UJAT_REGISTRATION_SECTION_META = {
     title: '사업 KPI 목표',
     description: '',
   },
-  payment: {
-    title: '입금 정보',
+  wage: {
+    title: '임금 정보',
     description: '',
   },
   firstHalfEducationSchedule: {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { FilePdfOutlined } from '@ant-design/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { ParagraphFileUpload } from '@/features/template/ui/paragraph/shared/paragraph-file-upload'
+import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 
 const MOCK_AGENCY_LINE = 'ID : tinto  |  검증번호 : 940412'
 const TEMPLATE_AUTO_USER_INFO_HINT = '로그인 사용자 정보가 자동으로 반영됩니다.'

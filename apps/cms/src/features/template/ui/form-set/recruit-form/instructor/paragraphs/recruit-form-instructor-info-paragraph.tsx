@@ -1,8 +1,8 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import type { Dayjs } from 'dayjs'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
-import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
-import { dateRangeUsesClockTime } from '@/features/template/ui/paragraph/shared/writing-form-period-date-picker-field'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -144,7 +144,12 @@ export function RecruitFormInstructorInfoParagraph() {
                 onChange={next => setFinalAnnounceDate(next)}
               />
               <DetailInfoForm.InputsSeparator />
-              <CmsInput inputSize="medium" placeholder="발표 방법 안내" />
+              <CmsInput
+                inputSize="medium"
+                width="100%"
+                style={{ flex: '1 1 0', minWidth: 0 }}
+                placeholder="발표 방법 안내"
+              />
             </div>
           }
           view="-"

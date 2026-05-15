@@ -1,8 +1,8 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import type { Dayjs } from 'dayjs'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
-import { ParagraphDatePicker } from '@/features/template/ui/paragraph/shared/paragraph-date-picker'
-import { dateRangeUsesClockTime } from '@/features/template/ui/paragraph/shared/writing-form-period-date-picker-field'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -11,7 +11,7 @@ import { AppMultiSelect } from '@/shared/ui/app-multi-select'
 import '@/features/template/ui/form-editor/form-editor.css'
 
 const RECRUIT_PROGRESS_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
-const MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper'
+const MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 const NOTICE_EXPOSURE_OPTIONS = [
   { label: '모집 시작일', value: 'start-day' },
   { label: '모집 하루 전', value: 'one-day-before' },
@@ -20,7 +20,6 @@ const NOTICE_EXPOSURE_OPTIONS = [
 
 const inquiryColumnStyle: CSSProperties = {
   display: 'flex',
-  flex: '1 1 0',
   minWidth: 0,
   alignItems: 'center',
   gap: 8,
@@ -32,12 +31,7 @@ function InquiryContactColumn({ label, placeholder }: { label: string; placehold
       <span className="nowrap" style={{ flexShrink: 0 }}>
         {label}
       </span>
-      <CmsInput
-        inputSize="medium"
-        width="100%"
-        placeholder={placeholder}
-        style={{ flex: '1 1 0', minWidth: 0 }}
-      />
+      <CmsInput inputSize="medium" width={240} placeholder={placeholder} />
     </div>
   )
 }
@@ -167,7 +161,12 @@ export function UjatRecruitVolunteerInfoParagraph() {
           <DetailInfoForm.Field
             label="모집 대상 상세"
             edit={
-              <CmsInput inputSize="medium" width="100%" placeholder="전공무관, 휴학생 지원 가능" />
+              <CmsInput
+                inputSize="medium"
+                width="100%"
+                defaultValue="전공무관, 휴학생 지원 가능"
+                placeholder="모집 대상 상세를 입력하세요"
+              />
             }
             view="-"
           />
