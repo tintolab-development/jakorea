@@ -2,16 +2,9 @@ import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 
-const REGION_OPTIONS = [
-  '서울',
-  '경기(남부)',
-  '인천',
-  '대전',
-  '대구',
-  '부산',
-  '광주',
-  '전북(전주)',
-] as const
+import { UJAT_VOLUNTEER_PREFERRED_REGIONS } from '@/features/program/model/ujat-volunteer-screening-constants'
+
+const REGION_OPTIONS = UJAT_VOLUNTEER_PREFERRED_REGIONS
 
 /** UJAT 프로그램 봉사자 신청 폼 — 희망 교육 활동 지역 */
 export function UjatProgramApplicationVolunteerPreferredRegionParagraph() {
