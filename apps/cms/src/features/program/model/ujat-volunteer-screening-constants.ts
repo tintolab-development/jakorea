@@ -80,6 +80,21 @@ export const UJAT_VOLUNTEER_ESSAY_COLUMN_TITLES: Record<UjatEssayColumnKey, stri
     '4. 초·중·고 당시 학교에서 JA Korea 경제금융교육을 들은 경험 혹은 진행하는 프로그램에 지원하여 참여한 경험',
 }
 
+/** 서술형 컬럼 기본·최소 너비 (헤더 문구가 잘리지 않도록) */
+export const UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS: Record<UjatEssayColumnKey, number> = {
+  essayIntro: 260,
+  essayEducationExperience: 320,
+  essayNecessity: 360,
+  essayJaExperience: 480,
+}
+
+export const UJAT_ESSAY_COLUMN_MIN_WIDTHS: Record<UjatEssayColumnKey, number> = {
+  essayIntro: 220,
+  essayEducationExperience: 280,
+  essayNecessity: 320,
+  essayJaExperience: 400,
+}
+
 /** UJAT 수료자 봉사자 — 서술형 1~4번 미작성 표기 */
 export const UJAT_GRADUATE_ESSAY_CELL_PLACEHOLDER = '-'
 
