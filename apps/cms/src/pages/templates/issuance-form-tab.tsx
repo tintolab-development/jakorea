@@ -158,16 +158,8 @@ interface IssuanceTemplateRow {
 
 const issuanceRows: IssuanceTemplateRow[] = [
   {
-    key: 'issuance-1',
-    no: 1,
-    templateName: 'UJAT 결과리포트',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-',
-  },
-  {
     key: 'issuance-2',
-    no: 2,
+    no: 1,
     templateName: 'UJAT 교육계획서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
@@ -175,7 +167,7 @@ const issuanceRows: IssuanceTemplateRow[] = [
   },
   {
     key: 'issuance-ujat-edu-journal',
-    no: 3,
+    no: 2,
     templateName: 'UJAT 교육일지',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
@@ -183,7 +175,7 @@ const issuanceRows: IssuanceTemplateRow[] = [
   },
   {
     key: 'issuance-3',
-    no: 4,
+    no: 3,
     templateName: '강의보고서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
@@ -191,7 +183,7 @@ const issuanceRows: IssuanceTemplateRow[] = [
   },
   {
     key: 'issuance-4',
-    no: 5,
+    no: 4,
     templateName: '정산 신청서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
@@ -199,7 +191,7 @@ const issuanceRows: IssuanceTemplateRow[] = [
   },
   {
     key: 'issuance-5',
-    no: 6,
+    no: 5,
     templateName: '결과보고서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
