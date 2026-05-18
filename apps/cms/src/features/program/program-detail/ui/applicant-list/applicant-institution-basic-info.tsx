@@ -345,7 +345,6 @@ export function ApplicantInstitutionBasicInfo({
                           ? [detail.sexOffenseRecordAttachmentFileName]
                           : []
                       }
-                      emptyPlaceholder="파일을 선택해주세요"
                     />
                   </div>
                 }

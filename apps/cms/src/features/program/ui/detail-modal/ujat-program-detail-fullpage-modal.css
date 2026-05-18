@@ -1,0 +1,189 @@
+/* UJAT 프로그램 상세 — LNB(봉사자 상·하반기 아코디언 등)·모집 정보 본문 보조 */
+
+.ujat-program-detail-fullpage-modal .ujat-detail-lnb__education-list {
+  padding-left: 0;
+  margin: 0;
+}
+
+/* 교육 진행 요약 — bullet 없음, 클립보드 아이콘 */
+.ujat-detail-lnb__edu-summary-li {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+.ujat-detail-lnb__edu-summary-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 8px 10px 0;
+  margin: 0;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  gap: 8px;
+  box-sizing: border-box;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 120%;
+  color: var(--default-BK, #3d3d3d);
+  transition:
+    color 0.2s,
+    background 0.2s;
+}
+
+.ujat-detail-lnb__edu-summary-btn:hover {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.ujat-detail-lnb__edu-summary-btn:hover .ujat-detail-lnb__edu-summary-icon {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.ujat-detail-lnb__edu-summary-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 22px;
+  justify-content: center;
+  color: inherit;
+}
+
+.ujat-detail-lnb__edu-summary-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.ujat-detail-lnb__edu-summary-btn--active {
+  color: var(--JA-mint-01, #01a1af);
+  border-radius: 8px;
+  background: rgba(1, 161, 175, 0.1);
+}
+
+.ujat-detail-lnb__edu-summary-btn--active .ujat-detail-lnb__edu-summary-icon {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.ujat-detail-lnb__vol-half {
+  list-style: none;
+  margin: 0 0 4px;
+  padding: 0;
+}
+
+/* 상·하반기 헤더: 악수 아이콘 + 제목 + 화살표 (스크린샷 정렬) */
+.ujat-detail-lnb__vol-half-head {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 8px 10px 0;
+  margin: 0;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  gap: 8px;
+  box-sizing: border-box;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 120%;
+  transition:
+    color 0.2s,
+    background 0.2s;
+}
+
+.ujat-detail-lnb__vol-half-head:hover {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.ujat-detail-lnb__vol-half-head:hover .ujat-detail-lnb__vol-half-head-icon {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.ujat-detail-lnb__vol-half-head--open {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.ujat-detail-lnb__vol-half-head--open .ujat-detail-lnb__vol-half-head-icon {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.ujat-detail-lnb__vol-half-head-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 22px;
+  justify-content: center;
+  color: inherit;
+}
+
+.ujat-detail-lnb__vol-half-head-icon svg {
+  display: block;
+}
+
+.ujat-detail-lnb__vol-half-head-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.ujat-detail-lnb__vol-half-arrow {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: inherit;
+  opacity: 0.75;
+}
+
+/* 반기 하위 메뉴 펼침 */
+.ujat-detail-lnb__vol-half-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  min-height: 0;
+  overflow: hidden;
+  transition: grid-template-rows 0.2s ease;
+}
+
+.ujat-detail-lnb__vol-half-body--open {
+  grid-template-rows: 1fr;
+}
+
+.ujat-detail-lnb__vol-half-body > .ujat-detail-lnb__vol-half-children {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ujat-detail-lnb__vol-half-children {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 8px;
+}
+
+.ujat-detail-lnb__vol-half-body--open .ujat-detail-lnb__vol-half-children {
+  margin-top: 2px;
+}
+
+.ujat-detail-lnb__vol-half-child {
+  padding-left: 28px !important;
+}
+
+/* 공통 정보 — 탭 없이 상단 액션만 (스크린샷) */
+.ujat-program-detail-fullpage-modal .ujat-detail-modal__info-header {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--spacing-16) 0 32px;
+  min-height: 0;
+}
+
+.ujat-detail-modal__placeholder {
+  padding-top: 8px;
+}
+
+.ujat-detail-modal__section-title {
+  margin-bottom: 16px !important;
+}
+
+.ujat-detail-modal__recruitment-readonly {
+  padding-top: 8px;
+}

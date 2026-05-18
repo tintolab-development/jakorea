@@ -2,18 +2,35 @@
  * UJAT — 상반기 교육 일정 (사전 교육 / 행사 일정 01 / 해단식, 각 블록별 DetailInfoForm)
  */
 
-import { useState } from 'react'
+import { useMemo } from 'react'
 import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { AppMultiSelect } from '@/shared/ui/app-multi-select'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import {
+  updateUjatProgramRegistrationOverlayKey,
+  useUjatProgramRegistrationOverlayKv,
+} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './ujat-first-half-education-schedule-paragraph.css'
 
 type EducationDelivery = 'online' | 'offline' | 'hybrid'
+
+type MultiScheduleBundle = {
+  rowIds: number[]
+  regionByRow: Record<string, string[]>
+  dateByRow: Record<string, string | null>
+}
+
+const DEFAULT_MULTI_SCHEDULE_BUNDLE: MultiScheduleBundle = {
+  rowIds: [0, 1],
+  regionByRow: { '0': [], '1': [] },
+  dateByRow: { '0': null, '1': null },
+}
 
 const REGION_OPTIONS = [
   { label: '서울', value: '서울' },
@@ -26,20 +43,17 @@ const REGION_OPTIONS = [
   { label: '광주', value: '광주' },
 ]
 
-function getRowRegionOptions(rowId: number, regionByRow: Record<number, string[]>) {
-  const current = new Set(regionByRow[rowId] ?? [])
-  const selectedByOtherRows = new Set(
-    Object.entries(regionByRow)
-      .filter(([key]) => Number(key) !== rowId)
-      .flatMap(([, values]) => values ?? [])
+function ScheduleEducationRadioRow({
+  initial,
+  instanceId,
+}: {
+  initial: EducationDelivery
+  instanceId: string
+}) {
+  const [value, setValue] = useUjatProgramRegistrationOverlayKv<EducationDelivery>(
+    `ujat.firstHalf.radio.${instanceId}`,
+    initial
   )
-  return REGION_OPTIONS.filter(
-    option => current.has(option.value) || !selectedByOtherRows.has(option.value)
-  )
-}
-
-function ScheduleEducationRadioRow({ initial }: { initial: EducationDelivery }) {
-  const [value, setValue] = useState(initial)
   return (
     <CmsRadioGroup
       size="large"
@@ -50,6 +64,18 @@ function ScheduleEducationRadioRow({ initial }: { initial: EducationDelivery }) 
       <CmsRadio value="offline">오프라인</CmsRadio>
       <CmsRadio value="hybrid">온/오프라인</CmsRadio>
     </CmsRadioGroup>
+  )
+}
+
+function getRowRegionOptions(rowId: number, regionByRow: Record<number, string[]>) {
+  const current = new Set(regionByRow[rowId] ?? [])
+  const selectedByOtherRows = new Set(
+    Object.entries(regionByRow)
+      .filter(([key]) => Number(key) !== rowId)
+      .flatMap(([, values]) => values ?? [])
+  )
+  return REGION_OPTIONS.filter(
+    option => current.has(option.value) || !selectedByOtherRows.has(option.value)
   )
 }
 
@@ -93,40 +119,52 @@ function AddScheduleRowButton({ onClick }: { onClick: () => void }) {
 }
 
 /** 사전 교육·해단식 공통 — 진행 일정: 1행에 추가, 2행부터 삭제 */
-function UjatRegionDateMultiScheduleRows() {
-  const [rowIds, setRowIds] = useState([0, 1])
-  const [regionByRow, setRegionByRow] = useState<Record<number, string[]>>({
-    0: [],
-    1: [],
-  })
-  const [dateByRow, setDateByRow] = useState<Record<number, Dayjs | null>>({
-    0: null,
-    1: null,
-  })
+function UjatRegionDateMultiScheduleRows({ instanceId }: { instanceId: string }) {
+  const storageKey = `ujat.firstHalf.multi.${instanceId}`
+  const [bundle] = useUjatProgramRegistrationOverlayKv<MultiScheduleBundle>(
+    storageKey,
+    DEFAULT_MULTI_SCHEDULE_BUNDLE
+  )
+
+  const regionByRow = useMemo((): Record<number, string[]> => {
+    const o: Record<number, string[]> = {}
+    for (const [k, v] of Object.entries(bundle.regionByRow)) {
+      o[Number(k)] = v
+    }
+    return o
+  }, [bundle.regionByRow])
+
+  const dateByRow = useMemo((): Record<number, Dayjs | null> => {
+    const o: Record<number, Dayjs | null> = {}
+    for (const [k, v] of Object.entries(bundle.dateByRow)) {
+      o[Number(k)] = v == null ? null : dayjs(v)
+    }
+    return o
+  }, [bundle.dateByRow])
+
+  const rowIds = bundle.rowIds
 
   const appendRow = () => {
-    setRowIds(prev => {
-      const nextId = prev.length === 0 ? 0 : Math.max(...prev) + 1
-      setRegionByRow(r => ({
-        ...r,
-        [nextId]: [],
-      }))
-      setDateByRow(d => ({ ...d, [nextId]: null }))
-      return [...prev, nextId]
+    updateUjatProgramRegistrationOverlayKey<MultiScheduleBundle>(storageKey, prev => {
+      const p = prev ?? DEFAULT_MULTI_SCHEDULE_BUNDLE
+      const nextId = p.rowIds.length === 0 ? 0 : Math.max(...p.rowIds) + 1
+      return {
+        rowIds: [...p.rowIds, nextId],
+        regionByRow: { ...p.regionByRow, [String(nextId)]: [] },
+        dateByRow: { ...p.dateByRow, [String(nextId)]: null },
+      }
     })
   }
 
   const removeRow = (id: number) => {
-    setRowIds(prev => prev.filter(rid => rid !== id))
-    setRegionByRow(prev => {
-      const next = { ...prev }
-      delete next[id]
-      return next
-    })
-    setDateByRow(prev => {
-      const next = { ...prev }
-      delete next[id]
-      return next
+    updateUjatProgramRegistrationOverlayKey<MultiScheduleBundle>(storageKey, prev => {
+      const p = prev ?? DEFAULT_MULTI_SCHEDULE_BUNDLE
+      const nextRowIds = p.rowIds.filter(rid => rid !== id)
+      const nextRegion = { ...p.regionByRow }
+      delete nextRegion[String(id)]
+      const nextDates = { ...p.dateByRow }
+      delete nextDates[String(id)]
+      return { rowIds: nextRowIds, regionByRow: nextRegion, dateByRow: nextDates }
     })
   }
 
@@ -142,7 +180,15 @@ function UjatRegionDateMultiScheduleRows() {
             placeholder="지역을 선택하세요"
             options={getRowRegionOptions(id, regionByRow)}
             value={regionByRow[id] ?? []}
-            onChange={next => setRegionByRow(prev => ({ ...prev, [id]: next }))}
+            onChange={next =>
+              updateUjatProgramRegistrationOverlayKey<MultiScheduleBundle>(storageKey, prev => {
+                const p = prev ?? DEFAULT_MULTI_SCHEDULE_BUNDLE
+                return {
+                  ...p,
+                  regionByRow: { ...p.regionByRow, [String(id)]: next },
+                }
+              })
+            }
           />
           <DetailInfoForm.InputsSeparator />
           <ParagraphDatePicker
@@ -151,7 +197,18 @@ function UjatRegionDateMultiScheduleRows() {
             customizable={false}
             suppressAutoTodayWhenEmpty
             value={dateByRow[id] ?? null}
-            onChange={next => setDateByRow(prev => ({ ...prev, [id]: next }))}
+            onChange={next =>
+              updateUjatProgramRegistrationOverlayKey<MultiScheduleBundle>(storageKey, prev => {
+                const p = prev ?? DEFAULT_MULTI_SCHEDULE_BUNDLE
+                return {
+                  ...p,
+                  dateByRow: {
+                    ...p.dateByRow,
+                    [String(id)]: next == null ? null : next.toISOString(),
+                  },
+                }
+              })
+            }
             width={360}
           />
           {index === 0 ? (
@@ -194,14 +251,14 @@ function UjatPreEducationScheduleForm() {
           <DetailInfoForm.Field
             label="진행 일정"
             fullRow
-            edit={<UjatRegionDateMultiScheduleRows />}
+            edit={<UjatRegionDateMultiScheduleRows instanceId="pre" />}
             view="-"
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교육 형태"
-            edit={<ScheduleEducationRadioRow initial="online" />}
+            edit={<ScheduleEducationRadioRow initial="online" instanceId="pre" />}
             view="-"
           />
         </DetailInfoForm.Row>
@@ -210,9 +267,25 @@ function UjatPreEducationScheduleForm() {
   )
 }
 
+type EventRangeSeal = { start: string | null; end: string | null }
+const EMPTY_EVENT_RANGE_SEAL: EventRangeSeal = { start: null, end: null }
+
 /** 행사 일정 01 — 기간 한 덩어리 */
 function UjatEventSchedule01Form() {
-  const [eventRange, setEventRange] = useState<[Dayjs | null, Dayjs | null]>([null, null])
+  const [seal, setSeal] = useUjatProgramRegistrationOverlayKv<EventRangeSeal>(
+    'ujat.firstHalf.event01.range',
+    EMPTY_EVENT_RANGE_SEAL
+  )
+  const eventRange: [Dayjs | null, Dayjs | null] = useMemo(
+    () => [seal.start ? dayjs(seal.start) : null, seal.end ? dayjs(seal.end) : null],
+    [seal.end, seal.start]
+  )
+  const setEventRange = (next: [Dayjs | null, Dayjs | null]) => {
+    setSeal({
+      start: next[0]?.toISOString() ?? null,
+      end: next[1]?.toISOString() ?? null,
+    })
+  }
 
   return (
     <div className="ujat-first-half-schedule__block">
@@ -248,7 +321,7 @@ function UjatEventSchedule01Form() {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교육 형태"
-            edit={<ScheduleEducationRadioRow initial="offline" />}
+            edit={<ScheduleEducationRadioRow initial="offline" instanceId="event01" />}
             view="-"
           />
         </DetailInfoForm.Row>
@@ -279,14 +352,14 @@ function UjatClosingCeremonyScheduleForm() {
           <DetailInfoForm.Field
             label="진행 일정"
             fullRow
-            edit={<UjatRegionDateMultiScheduleRows />}
+            edit={<UjatRegionDateMultiScheduleRows instanceId="closing" />}
             view="-"
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="교육 형태"
-            edit={<ScheduleEducationRadioRow initial="online" />}
+            edit={<ScheduleEducationRadioRow initial="online" instanceId="closing" />}
             view="-"
           />
         </DetailInfoForm.Row>

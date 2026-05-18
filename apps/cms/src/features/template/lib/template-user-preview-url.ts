@@ -1,4 +1,4 @@
-/** 작성·발급 풀모달 위 사용자 미리보기 — URL 히스토리 스택과 동기화 */
+/** `userPreview` 쿼리 키 — `TemplateWritingPreview` 풀모달과 URL 히스토리 동기화용(제품 용어「사용자 모드」와 동일하지 않음, 아래 규칙 참고) */
 export const TEMPLATE_USER_PREVIEW_QUERY_KEY = 'userPreview'
 export const TEMPLATE_USER_PREVIEW_ACTIVE = '1'
 

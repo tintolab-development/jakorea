@@ -16,6 +16,11 @@ alwaysApply: false
 | **edit** | 작성자가 양식 정의를 고침 | 편집 중 단락 **선택** 또는 **포커스** |
 | **write** | 배포된 양식에 응답자가 값을 입력 | LMS·응답 화면 등 **최종 사용자 입력** (CMS 에디터 밖) |
 
+## 사용자 모드 vs `userPreview` URL 쿼리
+
+- **사용자 모드(제품 용어):** 템플릿 **편집 authoring**이 불가능한 상태 — 제목·설명 수정, 단락 순서 변경, 단락 추가·삭제 등 **구조 편집**을 할 수 없고, **배포된 양식 필드에 내용만 등록(입력)** 할 수 있는 모드에 가깝다. (`form` 본문은 편집기의 view/write에 가까운 조합으로 구현될 수 있음.)
+- **`userPreview=1` 쿼리:** `TEMPLATE_USER_PREVIEW_ACTIVE` 값으로, `TemplateWritingPreview` **풀모달 미리보기**를 URL·뒤로가기와 **동기화**하기 위한 기술적 플래그다. **사용자 모드와 동의어가 아니다.** 동일 모달 안에서 authoring 크롬을 숨긴 채 필드 입력만 가능하게 보일 수는 있으나, 용어·기획 문서에서는 위「사용자 모드」정의를 쓴다.
+
 ## 코드와의 대응 (현재 CMS 템플릿 에디터)
 
 - 좌측 카드·단락 본문에 넘기는 `isEditMode` / `isParagraphSelected` 류 플래그는 **authoring 맥락에서의 view ↔ edit**에 가깝다. **write**는 별도 앱·라우트에서 동일 스키마를 소비할 때 구현한다.
@@ -44,4 +49,5 @@ alwaysApply: false
 ## 함께 볼 것
 
 - [template-management.md](../coding/template-management.md) — 템플릿 기능 경계
+- [ujat-program-new-registration-programs-url.md](../process/ujat-program-new-registration-programs-url.md) — `/programs/ujat?new` 부트스트랩 및 **사용자 모드 vs `userPreview`**
 - [paragraph-card-slots.mdc](./paragraph-card-slots.mdc) — 카드 슬롯·헤더

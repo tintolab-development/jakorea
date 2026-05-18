@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
+import { useUjatProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { AppMultiSelect } from '@/shared/ui/app-multi-select'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
@@ -8,7 +9,10 @@ import '@/features/template/ui/form-set/registration-form/general/paragraphs/pro
 const UJAT_DEFAULT_PAYMENT_ITEM_VALUES: string[] = ['p-1']
 
 export function UjatWageInfoParagraph() {
-  const [paymentItemValues, setPaymentItemValues] = useState<string[]>(() => [...UJAT_DEFAULT_PAYMENT_ITEM_VALUES])
+  const [paymentItemValues, setPaymentItemValues] = useUjatProgramRegistrationOverlayKv<string[]>(
+    'ujat.wage.paymentItemValues',
+    [...UJAT_DEFAULT_PAYMENT_ITEM_VALUES]
+  )
   const paymentItemOptions = useMemo(() => getTemplateRegistrationPaymentItemOptions(), [])
 
   return (

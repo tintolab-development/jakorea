@@ -1,7 +1,7 @@
 /**
  * 대시보드 프로그램 일정 위젯: 일반 / 1사1교 / UJAT / Gemini 프로그램 분류
  * (제미나이 판별은 제목 `제미나이` 포함 — 메뉴 Gemini와 동기화)
- * (UJAT 풀은 봉사·UJAT 루트와 동일: `getVolunteerPrograms()`)
+ * (UJAT 풀은 `mockUjatElementaryListPrograms` — `/programs/ujat` 목록과 동일)
  */
 
 import type { Program } from '@/types/domain'
@@ -9,7 +9,7 @@ import type { User } from '@/types/user'
 import { filterProgramsByACL } from '@/features/permission-request/lib/program-acl'
 import { getEducationPrograms } from './education-programs'
 import { getEconomyPrograms } from './economy-programs'
-import { getVolunteerPrograms } from './volunteer-programs'
+import { mockUjatElementaryListPrograms } from './ujat-programs-list-mock'
 
 export type ProgramScheduleKind = 'general' | 'economy' | 'ujat' | 'gemini'
 
@@ -27,9 +27,9 @@ export function getGeminiPrograms(): Program[] {
   return getEducationPrograms().filter(isGeminiProgram)
 }
 
-/** UJAT 프로그램(봉사) — `admin-dashboard-service` 배지 `programs-ujat`과 동일 풀 */
+/** UJAT 프로그램 목록 — `/programs/ujat`·일정 위젯·배지와 동일 풀 (`mockUjatElementaryListPrograms`) */
 export function getUjatPrograms(): Program[] {
-  return getVolunteerPrograms()
+  return mockUjatElementaryListPrograms
 }
 
 export const PROGRAM_SCHEDULE_WIDGET_KEYS: Record<

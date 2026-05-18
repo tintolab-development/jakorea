@@ -20,6 +20,10 @@ interface TemplateFullpageModalProps {
   leftContent: ReactNode
   rightNavigation: ReactNode
   className?: string
+  /**
+   * 문자열 제목일 때 상단 `CmsInputIconClick` 편집·연필 비활성화(프로그램 등록 등 템플릿 사용자 모드).
+   */
+  titleReadOnly?: boolean
 }
 
 interface TemplateFullpageModalCardTitleProps {
@@ -49,6 +53,7 @@ export function TemplateFullpageModal({
   leftContent,
   rightNavigation,
   className,
+  titleReadOnly = false,
 }: TemplateFullpageModalProps) {
   const rootClassName = ['full-page-modal', className].filter(Boolean).join(' ')
   const iconMaskId = `full-page-modal-title-mask-${useId().replace(/:/g, '')}`
@@ -80,6 +85,7 @@ export function TemplateFullpageModal({
                 onRequestEdit={() => setTitleEditing(true)}
                 onCommitEdit={() => setTitleEditing(false)}
                 restoreValueIfEmptyOnBlur={editableTitle}
+                readOnly={titleReadOnly}
                 containerClassName="full-page-modal__title-edit-row"
                 inputClassName="full-page-modal__title-input full-page-modal__title-input--editing"
                 textClassName="full-page-modal__title-text"
