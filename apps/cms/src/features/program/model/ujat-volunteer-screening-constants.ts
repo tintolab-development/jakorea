@@ -1,0 +1,95 @@
+/**
+ * UJAT 봉사자 1차 서류 심사 — 필터·정렬 공통 상수
+ */
+
+export const UJAT_VOLUNTEER_PREFERRED_REGIONS = [
+  '서울',
+  '경기(남부)',
+  '인천',
+  '대전',
+  '대구',
+  '부산',
+  '광주',
+  '전북(전주)',
+] as const
+
+export type UjatVolunteerPreferredRegion = (typeof UJAT_VOLUNTEER_PREFERRED_REGIONS)[number]
+
+/** 지역 정렬 우선순위 (기획 스펙) */
+export const UJAT_VOLUNTEER_REGION_SORT_ORDER: Record<string, number> =
+  Object.fromEntries(UJAT_VOLUNTEER_PREFERRED_REGIONS.map((r, i) => [r, i]))
+
+export const UJAT_VOLUNTEER_GRADE_OPTIONS = [
+  '1학년',
+  '2학년',
+  '3학년',
+  '4학년',
+  '휴학생',
+  '졸업유예',
+] as const
+
+export type UjatVolunteerGrade = (typeof UJAT_VOLUNTEER_GRADE_OPTIONS)[number]
+
+export type UjatVolunteerApplicationType = 'new' | 'ujat-graduate'
+
+export const UJAT_VOLUNTEER_APPLICATION_TYPE_LABELS: Record<UjatVolunteerApplicationType, string> = {
+  new: '신규 봉사자',
+  'ujat-graduate': 'UJAT 수료자 봉사자',
+}
+
+export type UjatDocumentScreeningStatus = 'pass' | 'fail' | 'pending'
+
+export const UJAT_DOCUMENT_SCREENING_STATUS_LABELS: Record<UjatDocumentScreeningStatus, string> = {
+  pending: '신청 및 대기 중',
+  fail: '서류 불합격',
+  pass: '서류 합격',
+}
+
+/** 담당자 평가 (○ / △ / X / 미검토) */
+export type UjatManagerEvaluation = 'pass' | 'neutral' | 'fail' | 'unreviewed'
+
+export const UJAT_MANAGER_EVALUATION_ORDER: readonly UjatManagerEvaluation[] = [
+  'pass',
+  'neutral',
+  'fail',
+  'unreviewed',
+] as const
+
+export const UJAT_MANAGER_EVALUATION_LABELS: Record<UjatManagerEvaluation, string> = {
+  pass: '○',
+  neutral: '△',
+  fail: 'X',
+  unreviewed: '미검토',
+}
+
+export type UjatVolunteerRecruitHalf = 'h1' | 'h2'
+
+/** 서술형 1~4번 컬럼 (신청서 문항과 동일 제목) */
+export type UjatEssayColumnKey =
+  | 'essayIntro'
+  | 'essayEducationExperience'
+  | 'essayNecessity'
+  | 'essayJaExperience'
+
+export const UJAT_VOLUNTEER_ESSAY_COLUMN_TITLES: Record<UjatEssayColumnKey, string> = {
+  essayIntro: '1. 자기소개 및 지원동기',
+  essayEducationExperience: '2. 교육봉사, 강사 아르바이트 등 교육 진행 경험',
+  essayNecessity:
+    '3. 초등학생 대상 경제 교육의 필요성에 대해 본인의 생각을 자유롭게 작성',
+  essayJaExperience:
+    '4. 초·중·고 당시 학교에서 JA Korea 경제금융교육을 들은 경험 혹은 진행하는 프로그램에 지원하여 참여한 경험',
+}
+
+/** UJAT 수료자 봉사자 — 서술형 1~4번 미작성 표기 */
+export const UJAT_GRADUATE_ESSAY_CELL_PLACEHOLDER = '-'
+
+export function formatUjatVolunteerEssayCellValue(
+  applicationType: UjatVolunteerApplicationType,
+  value: string | undefined
+): string {
+  if (applicationType === 'ujat-graduate') {
+    return UJAT_GRADUATE_ESSAY_CELL_PLACEHOLDER
+  }
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : '-'
+}
