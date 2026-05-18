@@ -44,6 +44,7 @@ import {
 } from './ujat-program-detail-recruitment-tabs'
 import { UjatProgramRecruitmentPanels } from './ujat-program-recruitment-panels'
 import { UjatProgramRecruitmentTabsRow } from './ujat-program-recruitment-tabs-row'
+import { UjatVolunteerDocScreeningSection } from './ujat-volunteer-screening/ujat-volunteer-doc-screening-section'
 import '@toast-ui/editor/dist/toastui-editor.css'
 import './program-detail-fullpage-modal.css'
 import './ujat-program-detail-fullpage-modal.css'
@@ -562,12 +563,21 @@ export function UjatProgramDetailFullPageModal({
             />
           )}
 
-          {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') && (
-            <UjatPlaceholderSection
-              title={volunteerScreenTitle(activeTab)}
-              description="봉사자 신청·심사·면접 일정 배정 화면(상·하반기 동일 프로세스)입니다. 목 데이터 연동 후 테이블이 표시됩니다."
-            />
-          )}
+          {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
+            (activeTab === 'vh1_doc1' || activeTab === 'vh2_doc1') && (
+              <UjatVolunteerDocScreeningSection
+                programId={displayProgram.id}
+                half={activeTab.startsWith('vh2') ? 'h2' : 'h1'}
+              />
+            )}
+          {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
+            activeTab !== 'vh1_doc1' &&
+            activeTab !== 'vh2_doc1' && (
+              <UjatPlaceholderSection
+                title={volunteerScreenTitle(activeTab)}
+                description="봉사자 신청·심사·면접 일정 배정 화면(상·하반기 동일 프로세스)입니다. 목 데이터 연동 후 테이블이 표시됩니다."
+              />
+            )}
 
           {activeLnb === 'education_progress' &&
             /^edu_h[12]_institutions$/.test(activeTab) && (
