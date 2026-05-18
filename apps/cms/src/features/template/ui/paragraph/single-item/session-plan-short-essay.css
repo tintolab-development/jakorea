@@ -107,7 +107,6 @@
   min-height: 40px;
   max-height: 40px;
   min-width: 120px;
-  padding: 0 12px 0 14px;
   align-items: center;
   gap: 8px;
   flex: 1 0 0;
@@ -115,25 +114,6 @@
   border-radius: var(--8, 8px);
   border: 1px solid var(--table-line, #e0e0e0);
   background: var(--main-WT, #fff);
-}
-
-.session-plan-short-essay-block__textarea-root .cms-textarea__inner {
-  align-items: center;
-  min-height: 0;
-}
-
-.session-plan-short-essay-block__textarea-root .cms-textarea__inner textarea.ant-input {
-  height: 24px !important;
-  min-height: 24px !important;
-  max-height: 40px;
-  line-height: 24px !important;
-  resize: none;
-  overflow: hidden;
-}
-
-.session-plan-short-essay-block__textarea-root .cms-textarea__inner textarea.ant-input::placeholder {
-  line-height: 150% !important;
-  font-size: 15px;
 }
 
 .session-plan-short-essay-block__textarea-root .cms-textarea__control:hover:not(.cms-textarea__control--disabled),

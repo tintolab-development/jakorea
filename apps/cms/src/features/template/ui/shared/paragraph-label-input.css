@@ -59,36 +59,6 @@
   min-width: 0;
 }
 
-/* rows=1 전용: 한 줄 입력형일 때만 세로 중앙 정렬 (`CmsTextArea`의 `cms-textarea--rows-1`) */
-.paragraph-label-input
-  .paragraph-label-input__textarea.cms-textarea--rows-1
-  .cms-textarea__control {
-  align-items: center;
-}
-
-.paragraph-label-input .paragraph-label-input__textarea.cms-textarea--rows-1 .cms-textarea__inner {
-  align-items: center;
-}
-
-.paragraph-label-input
-  .paragraph-label-input__textarea.cms-textarea--rows-1
-  .cms-textarea__inner
-  textarea.ant-input {
-  flex: 0 1 auto !important;
-  align-self: center;
-  min-height: 24px !important;
-  height: auto !important;
-  line-height: 24px !important;
-}
-
-.paragraph-label-input
-  .paragraph-label-input__textarea.cms-textarea--rows-1
-  .cms-textarea__inner
-  textarea.ant-input::placeholder {
-  line-height: 150% !important;
-  font-size: 15px;
-}
-
 .paragraph-label-input .paragraph-label-input__textarea .cms-textarea__control:hover:not(.cms-textarea__control--disabled) {
   border-color: var(--table-line, #e0e0e0);
 }
