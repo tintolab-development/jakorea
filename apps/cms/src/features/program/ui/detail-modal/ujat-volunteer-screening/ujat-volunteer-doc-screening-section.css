@@ -1,0 +1,244 @@
+.ujat-volunteer-doc-screening {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/*
+ * 필터 2행 고정 (1행 5필드 · 2행 3필드 + 조회)
+ * - 래퍼 width 100%, 칸 gap 12px, 필드 max-width 260px (공통 토큰)
+ */
+.filter-table-layout.ujat-volunteer-doc-screening__filter-layout {
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
+  /* 1행 5열과 동일한 칸 너비 — 2행 필드에도 동일 적용 */
+  --ujat-volunteer-filter-col-width: min(
+    var(--filter-control-max-width, 260px),
+    calc((100% - 4 * var(--filter-field-gap)) / 5)
+  );
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.filter-table-layout.ujat-volunteer-doc-screening__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.filter-table-layout.ujat-volunteer-doc-screening__filter-layout .table-filter-group__fields-rows {
+  gap: 12px;
+  width: 100%;
+}
+
+/* 1행: 필드 5개 가로 한 줄 */
+.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
+  .table-filter-group__fields-rows
+  > .table-filter-group__fields-grid-row {
+  display: grid !important;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 12px;
+  align-items: end;
+  justify-content: start;
+  grid-template-columns: repeat(5, minmax(0, var(--ujat-volunteer-filter-col-width))) !important;
+}
+
+/* 2행: 필드 3개(1행과 동일 열 너비) + 여백 + 조회(영역 우측 끝) */
+.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
+  .table-filter-group__fields-row-with-action {
+  display: grid !important;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 12px;
+  align-items: end;
+  grid-template-columns:
+    repeat(3, minmax(0, var(--ujat-volunteer-filter-col-width))) minmax(0, 1fr) 160px !important;
+}
+
+.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-grid-row {
+  display: contents;
+}
+
+.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-shell--inline {
+  grid-column: 5;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  justify-self: end;
+}
+
+.filter-table-layout.ujat-volunteer-doc-screening__filter-layout .table-filter-group__grid-cell {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
+  .table-filter-group__fields-row-with-action
+  .table-filter-group__grid-cell
+  .unified-filter-card__field,
+.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
+  .table-filter-group__fields-row-with-action
+  .table-filter-group__grid-cell
+  .labeled-search-input,
+.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
+  .table-filter-group__fields-row-with-action
+  .table-filter-group__grid-cell
+  .cms-select,
+.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
+  .table-filter-group__fields-row-with-action
+  .table-filter-group__grid-cell
+  .ant-select {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.ujat-volunteer-doc-screening__table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.ujat-volunteer-doc-screening__table-wrap--resizing {
+  user-select: none;
+}
+
+.ujat-volunteer-doc-screening__table-wrap--resizing .ant-table-tbody {
+  pointer-events: none;
+}
+
+.ujat-volunteer-doc-screening__table-wrap--resizing .react-resizable {
+  will-change: width;
+}
+
+.ujat-volunteer-doc-screening__table-wrap .ant-table-wrapper,
+.ujat-volunteer-doc-screening__table-wrap .ant-table-container {
+  max-width: 100%;
+}
+
+/* 서술형·긴 텍스트 셀: 최대 192px, 다중 줄 말줄임 */
+.ujat-volunteer-doc-screening .ujat-volunteer-doc-screening__text-cell {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 9;
+  max-height: 192px;
+  overflow: hidden;
+  word-break: break-word;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+/* 서술형 1~4번 컬럼 헤더 리사이즈 */
+.ujat-volunteer-doc-screening .react-resizable {
+  position: relative;
+  background-clip: padding-box;
+}
+
+.ujat-volunteer-doc-screening .react-resizable-handle {
+  position: absolute;
+  right: -5px;
+  bottom: 0;
+  z-index: 2;
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+/* 담당자 평가 StatusDropdownCell */
+.ujat-volunteer-doc-screening .ant-table-tbody
+  > tr:has(td.ujat-volunteer-doc-screening__manager-eval-dropdown-cell)
+  > td.ujat-volunteer-doc-screening__manager-eval-dropdown-cell {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+.ujat-volunteer-doc-screening
+  .ant-table-thead
+  > tr
+  > th.ujat-volunteer-doc-screening__manager-eval-dropdown-header {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.ujat-volunteer-doc-screening
+  .status-dropdown-cell__status-trigger.status-dropdown-cell__trigger--cell-style {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  min-width: 116px;
+  max-width: 216px;
+  padding: 8px;
+}
+
+.ujat-volunteer-doc-screening
+  .status-dropdown-cell__status-trigger
+  .ujat-manager-evaluation-badge.status-dropdown-cell__badge--cell-style,
+.ujat-volunteer-doc-screening
+  .status-dropdown-cell__dropdown-item
+  .ujat-manager-evaluation-badge.status-dropdown-cell__badge--cell-style {
+  display: flex !important;
+  height: 32px !important;
+  min-width: 100px !important;
+  max-width: 200px !important;
+  padding: 6px 12px !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex: 1 0 0 !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+}
+
+.ujat-volunteer-doc-screening
+  .status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style {
+  min-width: 216px !important;
+  width: 216px !important;
+  max-width: 216px !important;
+}
+
+.ujat-volunteer-doc-screening
+  .status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style
+  .ant-dropdown-menu {
+  min-width: 216px !important;
+  width: 216px !important;
+  max-width: 216px !important;
+}
+
+.ujat-volunteer-doc-screening .ujat-volunteer-doc-screening__screening-status-cell {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.ujat-volunteer-doc-screening__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.ujat-volunteer-doc-screening__btn-excel.app-button.ant-btn-primary {
+  min-width: 140px;
+}
