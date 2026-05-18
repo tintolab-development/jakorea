@@ -167,31 +167,6 @@
   padding-left: 28px !important;
 }
 
-/* 기관 신청·설문 관리 1depth — 비활성 시 아이콘 검정(#3D3D3D), 활성 시 mint */
-.ujat-program-detail-fullpage-modal
-  .detail-fullpage-modal__lnb-item:not(.detail-fullpage-modal__lnb-item--active)
-  .ujat-lnb-institution-icon {
-  color: var(--default-BK, #3d3d3d);
-}
-
-.ujat-program-detail-fullpage-modal
-  .detail-fullpage-modal__lnb-item--active
-  .ujat-lnb-institution-icon {
-  color: var(--JA-mint-01, #01a1af);
-}
-
-.ujat-program-detail-fullpage-modal
-  .detail-fullpage-modal__lnb-item:not(.detail-fullpage-modal__lnb-item--active)
-  .ujat-lnb-survey-icon {
-  color: var(--default-BK, #3d3d3d);
-}
-
-.ujat-program-detail-fullpage-modal
-  .detail-fullpage-modal__lnb-item--active
-  .ujat-lnb-survey-icon {
-  color: var(--JA-mint-01, #01a1af);
-}
-
 /* 공통 정보 — 탭 없이 상단 액션만 (스크린샷) */
 .ujat-program-detail-fullpage-modal .ujat-detail-modal__info-header {
   flex-shrink: 0;

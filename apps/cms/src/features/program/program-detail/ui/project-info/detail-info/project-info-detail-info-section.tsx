@@ -107,12 +107,21 @@ function useDetailInfoEditorBlock(
   }
 }
 
-function DetailSectionHeader({ note }: { note: string }) {
+function DetailSectionHeader({
+  title = '상세 정보',
+  description,
+}: {
+  title?: string
+  description?: string
+}) {
+  if (!description) return null
   return (
-    <div style={{ marginBottom: '10px' }}>
-      <span className="info-section-title">상세 정보</span>
-      <span className="info-section-desc">{note}</span>
-    </div>
+    <header className="detail-info-form__header" style={{ marginBottom: 10 }}>
+      <div className="detail-info-form__header-lead">
+        <h2 className="detail-info-form__title">{title}</h2>
+        <div className="detail-info-form__description">{description}</div>
+      </div>
+    </header>
   )
 }
 
@@ -186,7 +195,6 @@ function ThumbnailImageRow({
                     : 'program-detail-info-tab__file-select'
                 }
                 fileNames={thumbnailFilename ? [thumbnailFilename] : []}
-                emptyPlaceholder="파일을 선택해주세요"
                 guideLines={guideLines}
                 onFilesChange={
                   isFormEdit
@@ -320,7 +328,6 @@ function AttachmentRowStandard({
           buttonLabel="파일 선택"
           className={isEditMode ? 'file-select-field--edit' : ''}
           fileNames={displayFileNames}
-          emptyPlaceholder="파일을 선택해주세요"
           guideLines={guideLines}
           onFilesChange={
             isFormEdit
@@ -360,6 +367,8 @@ export interface DetailInfoSectionProps {
   onRegisterGetAdditionalContentHtml?: (getter: () => string) => void
   /** 참여자 정보 탭 등에서 상세 정보 상단에 썸네일 이미지 행 노출 */
   showThumbnail?: boolean
+  sectionTitle?: string
+  sectionDescription?: string | null
 }
 
 export function DetailInfoSection({
@@ -368,6 +377,8 @@ export function DetailInfoSection({
   form,
   onRegisterGetAdditionalContentHtml,
   showThumbnail = false,
+  sectionTitle,
+  sectionDescription,
 }: DetailInfoSectionProps) {
   const {
     editorOpen,
@@ -382,9 +393,16 @@ export function DetailInfoSection({
     form: f,
   } = useDetailInfoEditorBlock(program, isEditMode, form, onRegisterGetAdditionalContentHtml)
 
+  const headerDescription =
+    sectionDescription ??
+    '필수 정보가 아닌 항목이 공란인 경우, 상세 페이지에서 항목 미노출 됩니다.'
+
   return (
     <>
-      <DetailSectionHeader note="필수 정보가 아닌 항목이 공란인 경우, 상세 페이지에서 항목 미노출 됩니다." />
+      <DetailSectionHeader
+        title={sectionTitle ?? '상세 정보'}
+        description={headerDescription}
+      />
       <DetailInfoTableFrame>
         {showThumbnail && (
           <ThumbnailImageRow
@@ -486,7 +504,7 @@ export function InstructorDetailInfoSection({
 
   return (
     <>
-      <DetailSectionHeader note="공란인 경우, 상세 페이지에서 항목 미노출 됩니다." />
+      <DetailSectionHeader description="공란인 경우, 상세 페이지에서 항목 미노출 됩니다." />
       <DetailInfoTableFrame>
         <ThumbnailImageRow
           program={program}
@@ -573,6 +591,8 @@ export interface VolunteerDetailInfoSectionProps {
   isEditMode?: boolean
   form?: UseFormReturn<ProgramDetailEditFormValues>
   onRegisterGetAdditionalContentHtml?: (getter: () => string) => void
+  sectionTitle?: string
+  sectionDescription?: string | null
 }
 
 export function VolunteerDetailInfoSection({
@@ -580,6 +600,8 @@ export function VolunteerDetailInfoSection({
   isEditMode = false,
   form,
   onRegisterGetAdditionalContentHtml,
+  sectionTitle,
+  sectionDescription,
 }: VolunteerDetailInfoSectionProps) {
   const {
     editorOpen,
@@ -596,10 +618,15 @@ export function VolunteerDetailInfoSection({
 
   const applicationMethod = program.applicationMethod ?? '-'
   const otherNotes = program.otherNotes ?? program.oneLineIntroduction ?? '-'
+  const headerDescription =
+    sectionDescription ?? '공란인 경우, 상세 페이지에서 항목 미노출 됩니다.'
 
   return (
     <>
-      <DetailSectionHeader note="공란인 경우, 상세 페이지에서 항목 미노출 됩니다." />
+      <DetailSectionHeader
+        title={sectionTitle ?? '상세 정보'}
+        description={headerDescription}
+      />
       <DetailInfoTableFrame>
         <ThumbnailImageRow
           program={program}
@@ -677,7 +704,6 @@ export function VolunteerDetailInfoSection({
                 buttonLabel="파일 선택"
                 className="file-select-field--edit"
                 fileNames={displayFileNames}
-                emptyPlaceholder="파일을 선택해주세요"
                 guideLines={ATTACHMENT_GUIDE_LINES}
                 onFilesChange={
                   isFormEdit

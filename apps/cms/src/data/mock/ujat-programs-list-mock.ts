@@ -58,28 +58,61 @@ function buildUjatElementaryListPrograms(): Program[] {
 
   return UJAT_LIST_MOCK_ROWS.map(row => {
     const { id, year, ujatProgressStatus, lifecycleStatus, schools, volunteers } = row
+    const isRecruitmentDemo = lifecycleStatus === 'recruiting_students'
     return {
       id,
       sponsorId,
       title: UJAT_LIST_TITLE(year),
+      mainTitle: isRecruitmentDemo ? `${year}년 JA Korea 초등 경제교육 대상 학교` : undefined,
       type: 'offline' as const,
       format: 'course' as const,
       category: 'school' as const,
-      description: undefined,
+      description: isRecruitmentDemo
+        ? 'JA Korea 초등 경제교육 프로그램은 초등학생들에게 경제·금융 개념을 체험 중심으로 전달하는 프로그램입니다.'
+        : undefined,
+      recruitmentGuide: isRecruitmentDemo
+        ? '1. 신청 자격: 해당 지역 초등학교\n2. 신청 방법: 홈페이지 온라인 신청\n3. 선발: 선착순 및 서류 심사'
+        : undefined,
+      learningSupportContent: isRecruitmentDemo
+        ? '교재, 교구, 강사 파견, 수업 지원 자료 제공'
+        : undefined,
+      district: isRecruitmentDemo
+        ? '경기, 광주, 대구, 대전, 부산, 서울, 인천, 전북 지역 초등학교'
+        : undefined,
+      contactPhone: isRecruitmentDemo ? '02-6085-6028' : undefined,
+      contactEmail: isRecruitmentDemo ? 'ujat@jakorea.org' : undefined,
+      applicationStartDate: isRecruitmentDemo ? `${year - 1}-12-08T00:00:00.000Z` : undefined,
+      applicationEndDate: isRecruitmentDemo ? `${year}-01-16T00:00:00.000Z` : undefined,
+      resultAnnouncementDate: isRecruitmentDemo ? `${year}-01-26T00:00:00.000Z` : undefined,
+      resultAnnouncementMethod: isRecruitmentDemo
+        ? '홈페이지 공지 및 담당교사 개별 안내'
+        : undefined,
+      volunteerTarget: isRecruitmentDemo ? '대학(원)생' : undefined,
+      volunteerTargetDetail: isRecruitmentDemo ? '전공무관, 휴학생 지원 가능' : undefined,
       rounds: [
         {
           id: `${id}-round-1`,
           programId: id,
           roundNumber: 1,
-          startDate: `${year}-03-01T00:00:00.000Z`,
-          endDate: `${year}-11-30T00:00:00.000Z`,
+          startDate: isRecruitmentDemo ? `${year}-04-03T00:00:00.000Z` : `${year}-03-01T00:00:00.000Z`,
+          endDate: isRecruitmentDemo ? `${year}-06-19T00:00:00.000Z` : `${year}-11-30T00:00:00.000Z`,
+          capacity: UJAT_LIST_CAP,
+          status: 'active' as const,
+          deliveryType: 'offline' as const,
+        },
+        {
+          id: `${id}-round-2`,
+          programId: id,
+          roundNumber: 2,
+          startDate: isRecruitmentDemo ? `${year}-09-11T00:00:00.000Z` : `${year}-03-01T00:00:00.000Z`,
+          endDate: isRecruitmentDemo ? `${year}-11-20T00:00:00.000Z` : `${year}-11-30T00:00:00.000Z`,
           capacity: UJAT_LIST_CAP,
           status: 'active' as const,
           deliveryType: 'offline' as const,
         },
       ],
-      startDate: `${year}-01-01T00:00:00.000Z`,
-      endDate: `${year}-12-31T00:00:00.000Z`,
+      startDate: isRecruitmentDemo ? `${year}-04-03T00:00:00.000Z` : `${year}-01-01T00:00:00.000Z`,
+      endDate: isRecruitmentDemo ? `${year}-11-20T00:00:00.000Z` : `${year}-12-31T00:00:00.000Z`,
       status: 'active' as const,
       lifecycleStatus,
       ujatProgressStatus,

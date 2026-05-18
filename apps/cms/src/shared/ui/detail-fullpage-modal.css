@@ -200,7 +200,7 @@
   min-height: 200px;
 }
 
-/* LNB — 메인 열과 동일 높이로 스트레치(기본 바디 상단 패딩 제거 후에도 세로 가득) */
+/* LNB — 메인 열과 동일 높이로 스트레치; 로고 고정·메뉴 목록만 내부 스크롤 */
 .detail-fullpage-modal__lnb {
   flex-shrink: 0;
   align-self: stretch;
@@ -209,11 +209,14 @@
   background: #f5f6f7;
   display: flex;
   flex-direction: column;
-  padding: 0 16px;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
 }
 
 .detail-fullpage-modal__lnb-brand {
-  padding: 30px 24px 30px;
+  flex-shrink: 0;
+  padding: 30px 16px 30px;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -227,10 +230,20 @@
   object-fit: contain;
 }
 
+/* 메뉴 스크롤 — LNB 패널 오른쪽 가장자리(컨테이너 안쪽)에 스크롤바 노출 */
+.detail-fullpage-modal__lnb-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 .detail-fullpage-modal__lnb-list {
   list-style: none;
   margin: 0;
-  padding: var(--spacing-8) 0 20px;
+  padding: var(--spacing-8) 16px 20px;
 }
 
 .detail-fullpage-modal__lnb-list > li {

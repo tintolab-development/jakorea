@@ -3,7 +3,8 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import type { SVGProps } from 'react'
+import { DetailFullpageModalLnbBrand } from '@/shared/ui/detail-fullpage-modal-lnb-brand'
+import { DetailFullpageModalLnbArrowDown } from '@/shared/ui/detail-fullpage-modal-lnb-arrow'
 import type { UjatSurveyMenuItem } from './ujat-program-detail-meta'
 import type { UjatDetailLnbKey } from './ujat-program-detail-url'
 import { LnbIconManagers, LnbIconProjectInfo } from './program-detail-lnb-icons'
@@ -32,60 +33,6 @@ type TopAccordionKey =
   | 'survey'
 
 type VolunteerHalfKey = 'h1' | 'h2'
-
-function LnbArrowDown(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      {...props}
-    >
-      <path
-        d="M4.55806 7.94194C4.31398 7.69786 4.31398 7.30223 4.55806 7.05815C4.80214 6.81407 5.19777 6.81407 5.44185 7.05815L9.99995 11.6163L14.5581 7.05815C14.8021 6.81407 15.1978 6.81407 15.4418 7.05815C15.6859 7.30223 15.6859 7.69786 15.4418 7.94194L10.4418 12.9419C10.1978 13.186 9.80214 13.186 9.55806 12.9419L4.55806 7.94194Z"
-        fill="currentColor"
-      />
-    </svg>
-  )
-}
-
-function JakoreaLogo(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="182"
-      height="92"
-      viewBox="0 0 182 92"
-      fill="none"
-      {...props}
-    >
-      <g clipPath="url(#clip0_ujat_lnb)">
-        <path d="M73.0812 0L48.7466 18.4108L63.9601 18.3686L73.0812 0Z" fill="#296075" />
-        <path
-          d="M73.0952 0L63.9741 18.4108L73.1022 30.5114L73.0952 0Z"
-          fill="#01A1AF"
-        />
-        <path d="M73.0812 30.5117L63.9601 48.8804L48.7466 48.9225L73.0812 30.5117Z" fill="#296075" />
-        <path d="M73.0949 30.5117L63.9668 48.8804L73.1019 61.0301L73.0949 30.5117Z" fill="#01A1AF" />
-        <path d="M48.6764 18.4102L39.5553 36.7788L24.3418 36.821L48.6764 18.4102Z" fill="#296075" />
-        <path d="M48.6901 18.4102L39.562 36.7788L48.6971 48.9215L48.6901 18.4102Z" fill="#01A1AF" />
-        <path d="M0 55.2311L15.2065 55.1819L24.3346 36.8203L0 55.2311Z" fill="#296075" />
-        <path d="M24.3488 36.8203L15.2207 55.1819L24.3488 67.3317V36.8203Z" fill="#01A1AF" />
-        <path d="M48.6691 48.9219L39.541 67.2905L24.3345 67.3327L48.6691 48.9219Z" fill="#296075" />
-        <path d="M48.6833 48.9219L39.5552 67.2905L48.6833 79.4403V48.9219Z" fill="#01A1AF" />
-        <path d="M73.0738 61.0312L63.9457 79.3999L48.7393 79.4421L73.0738 61.0312Z" fill="#296075" />
-        <path d="M63.96 79.3929L73.0951 91.5426L73.0881 61.0312L63.96 79.3929Z" fill="#01A1AF" />
-      </g>
-      <defs>
-        <clipPath id="clip0_ujat_lnb">
-          <rect width="182" height="92" fill="white" />
-        </clipPath>
-      </defs>
-    </svg>
-  )
-}
 
 export interface UjatProgramDetailSidebarProps {
   activeLnb: UjatDetailLnbKey
@@ -174,10 +121,9 @@ export function UjatProgramDetailSidebar({
 
   return (
     <nav className="detail-fullpage-modal__lnb" aria-label="UJAT 프로그램 상세 메뉴">
-      <div className="detail-fullpage-modal__lnb-brand">
-        <JakoreaLogo aria-hidden />
-      </div>
-      <ul className="detail-fullpage-modal__lnb-list">
+      <DetailFullpageModalLnbBrand />
+      <div className="detail-fullpage-modal__lnb-body">
+        <ul className="detail-fullpage-modal__lnb-list">
         {/* 프로그램 정보 */}
         <li>
           <button
@@ -189,7 +135,7 @@ export function UjatProgramDetailSidebar({
               <LnbIconProjectInfo />
             </span>
             <span className="detail-fullpage-modal__lnb-item-label">프로그램 정보</span>
-            <LnbArrowDown
+            <DetailFullpageModalLnbArrowDown
               className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('info') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
             />
           </button>
@@ -214,10 +160,10 @@ export function UjatProgramDetailSidebar({
               <li>
                 <button
                   type="button"
-                  className={`detail-fullpage-modal__lnb-child ${activeLnb === 'info' && activeTab === 'recruitment' ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
+                  className={`detail-fullpage-modal__lnb-child ${activeLnb === 'info' && (activeTab === 'recruitment' || activeTab.startsWith('recruit_')) ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
                   onClick={() => {
                     clearTopBodyStick('info')
-                    onSelectChildTab('info', 'recruitment')
+                    onSelectChildTab('info', 'recruit_participant')
                   }}
                 >
                   <span className="detail-fullpage-modal__lnb-child-dot" />
@@ -239,7 +185,7 @@ export function UjatProgramDetailSidebar({
               <UjatLnbInstitutionApplicationIcon />
             </span>
             <span className="detail-fullpage-modal__lnb-item-label">기관 신청 목록</span>
-            <LnbArrowDown
+            <DetailFullpageModalLnbArrowDown
               className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('institution_applications') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
             />
           </button>
@@ -319,11 +265,11 @@ export function UjatProgramDetailSidebar({
                 className={`detail-fullpage-modal__lnb-item ${activeLnb === top ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
                 onClick={() => toggleTopBody(top)}
               >
-                <span className="detail-fullpage-modal__lnb-item-icon ujat-detail-lnb__vol-1depth-icon-wrap">
+                <span className="detail-fullpage-modal__lnb-item-icon">
                   <UjatLnbVolunteerHandshakeIcon />
                 </span>
                 <span className="detail-fullpage-modal__lnb-item-label">{label}</span>
-                <LnbArrowDown
+                <DetailFullpageModalLnbArrowDown
                   className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen(top) ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
                 />
               </button>
@@ -348,7 +294,7 @@ export function UjatProgramDetailSidebar({
               <UjatLnbEducationBookIcon />
             </span>
             <span className="detail-fullpage-modal__lnb-item-label">상반기 교육 진행 현황</span>
-            <LnbArrowDown
+            <DetailFullpageModalLnbArrowDown
               className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('education_progress_h1') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
             />
           </button>
@@ -372,7 +318,7 @@ export function UjatProgramDetailSidebar({
               <UjatLnbEducationBookIcon />
             </span>
             <span className="detail-fullpage-modal__lnb-item-label">하반기 교육 진행 현황</span>
-            <LnbArrowDown
+            <DetailFullpageModalLnbArrowDown
               className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('education_progress_h2') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
             />
           </button>
@@ -414,7 +360,7 @@ export function UjatProgramDetailSidebar({
               <UjatLnbSurveyManagementIcon />
             </span>
             <span className="detail-fullpage-modal__lnb-item-label">설문 관리</span>
-            <LnbArrowDown
+            <DetailFullpageModalLnbArrowDown
               className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('survey') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
             />
           </button>
@@ -455,7 +401,8 @@ export function UjatProgramDetailSidebar({
             <span className="detail-fullpage-modal__lnb-item-label">담당자 정보</span>
           </button>
         </li>
-      </ul>
+        </ul>
+      </div>
     </nav>
   )
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import type { ProgramApplicationFormVolunteerBodyOptions } from '@/features/template/ui/form-set/application-form/volunteer/paragraph-body'
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
+import type { UjatRecruitParagraphProps } from '@/features/program/ui/detail-modal/ujat-recruit-paragraph-props'
 import { UJAT_RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
 import { UjatRecruitVolunteerDetailInfoParagraph } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraphs/ujat-recruit-volunteer-detail-info-paragraph'
 import { UjatRecruitVolunteerInfoParagraph } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraphs/ujat-recruit-volunteer-info-paragraph'
@@ -10,18 +10,19 @@ import { UjatRecruitVolunteerInterviewScheduleParagraph } from '@/features/templ
 export function renderUjatRecruitFormVolunteerParagraphBody(
   paragraph: HorizontalTableParagraph,
   enabled: boolean | undefined,
-  volunteerOptions?: ProgramApplicationFormVolunteerBodyOptions
+  options?: UjatRecruitParagraphProps
 ): ReactNode | null {
   if (!enabled) return null
   switch (paragraph.id) {
     case UJAT_RECRUIT_FORM_VOLUNTEER_IDS.recruitInfo:
-      return <UjatRecruitVolunteerInfoParagraph />
+      return <UjatRecruitVolunteerInfoParagraph {...options} />
     case UJAT_RECRUIT_FORM_VOLUNTEER_IDS.detailInfo:
-      return <UjatRecruitVolunteerDetailInfoParagraph />
+      return <UjatRecruitVolunteerDetailInfoParagraph {...options} />
     case UJAT_RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule:
       return (
         <UjatRecruitVolunteerInterviewScheduleParagraph
-          exceptionScheduleCount={volunteerOptions?.exceptionScheduleCount ?? 0}
+          exceptionScheduleCount={options?.exceptionScheduleCount ?? 0}
+          {...options}
         />
       )
     default:

@@ -6,11 +6,11 @@ export function UjatLnbInstitutionApplicationIcon(props: SVGProps<SVGSVGElement>
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
+      width="20"
+      height="20"
       viewBox="0 0 18 18"
       fill="none"
-      className="detail-fullpage-modal__lnb-icon ujat-lnb-institution-icon"
+      className="detail-fullpage-modal__lnb-icon"
       aria-hidden
       {...props}
     >

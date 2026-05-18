@@ -90,6 +90,8 @@ export function FileSelectField({
   }
 
   const canRemove = !disabled && typeof onRemoveFile === 'function'
+  const showEmptyPlaceholder =
+    Boolean(emptyPlaceholder) && !disabled && (!fileNames || fileNames.length === 0)
 
   return (
     <div className={`file-select-field ${className}`.trim()}>
@@ -105,9 +107,7 @@ export function FileSelectField({
         />
       )}
 
-      {(fileNames && fileNames.length > 0) ||
-      (emptyPlaceholder && (!fileNames || fileNames.length === 0)) ||
-      uploading ? (
+      {(fileNames && fileNames.length > 0) || showEmptyPlaceholder || uploading ? (
         <div className="file-select-field__names">
           {uploading ? (
             <span className="file-select-field__name-row">

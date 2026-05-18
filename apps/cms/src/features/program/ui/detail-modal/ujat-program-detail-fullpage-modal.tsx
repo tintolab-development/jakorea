@@ -35,15 +35,15 @@ import {
   institutionAppScreenTitle,
   isValidUjatInstitutionAppTab,
 } from './ujat-institution-application-tabs'
-import {
-  ParticipantRecruitmentSection,
-  VolunteerRecruitmentSection,
-} from '@/features/program/program-detail/ui/project-info/recruitment/project-info-recruitment-section'
-import {
-  DetailInfoSection,
-  VolunteerDetailInfoSection,
-} from '@/features/program/program-detail/ui/project-info/detail-info/project-info-detail-info-section'
+import { programDetailInstitutionsEditSchema } from '@/features/program/model/program-detail-edit-schema'
 import { CmsButton } from '@/shared/ui'
+import {
+  isUjatRecruitTab,
+  normalizeUjatRecruitTab,
+  type UjatRecruitTabKey,
+} from './ujat-program-detail-recruitment-tabs'
+import { UjatProgramRecruitmentPanels } from './ujat-program-recruitment-panels'
+import { UjatProgramRecruitmentTabsRow } from './ujat-program-recruitment-tabs-row'
 import '@toast-ui/editor/dist/toastui-editor.css'
 import './program-detail-fullpage-modal.css'
 import './ujat-program-detail-fullpage-modal.css'
@@ -110,7 +110,13 @@ function normalizeUjatDetailParams(
   }
 
   if (lnb === 'info') {
-    if (tab !== 'info' && tab !== 'recruitment') setInvalid('info', 'info')
+    if (tab === 'info') {
+      /* ok */
+    } else if (isUjatRecruitTab(tab)) {
+      tab = normalizeUjatRecruitTab(tab)
+    } else {
+      setInvalid('info', 'info')
+    }
   } else if (lnb === 'institution_applications') {
     if (!isValidUjatInstitutionAppTab(tab)) {
       setInvalid('institution_applications', 'inst_all')
@@ -201,7 +207,10 @@ export function UjatProgramDetailFullPageModal({
   const surveyKeys = useMemo(() => surveyItems.map(s => s.key), [surveyItems])
 
   const activeLnb: UjatDetailLnbKey = open ? (resolveUjatDetailLnbFromSearchParams(searchParams) ?? 'info') : 'info'
-  const activeTab = open ? (searchParams.get(TAB_PARAM) ?? 'info') : 'info'
+  const rawTab = open ? (searchParams.get(TAB_PARAM) ?? 'info') : 'info'
+  const activeTab = open && rawTab !== 'info' && isUjatRecruitTab(rawTab) ? normalizeUjatRecruitTab(rawTab) : rawTab
+  const activeRecruitTab: UjatRecruitTabKey | null =
+    activeLnb === 'info' && isUjatRecruitTab(activeTab) ? (activeTab as UjatRecruitTabKey) : null
 
   const surveyKeysJoined = surveyKeys.join('|')
 
@@ -276,16 +285,6 @@ export function UjatProgramDetailFullPageModal({
     [programId, searchParams, setSearchParams]
   )
 
-  useEffect(() => {
-    if (!open || editTab !== 'info' || !displayProgram) return
-    if (!canUjatProgramInfoEdit(displayProgram)) {
-      const next = new URLSearchParams(searchParams)
-      next.delete(EDIT_PARAM)
-      if (programId) next.set('programId', programId)
-      setSearchParams(next, { replace: true })
-    }
-  }, [open, editTab, displayProgram, programId, searchParams, setSearchParams])
-
   const handleInfoEdit = useCallback(() => {
     if (activeTab !== 'info' || !displayProgram) return
     if (!canUjatProgramInfoEdit(displayProgram)) {
@@ -300,6 +299,143 @@ export function UjatProgramDetailFullPageModal({
     setEditMode(null)
     if (displayProgram) void infoTriggerSave()
   }, [displayProgram, infoTriggerSave, setEditMode])
+
+  const isEditModeRecruitParticipant =
+    open &&
+    activeRecruitTab === 'recruit_participant' &&
+    editTab === 'recruit_participant' &&
+    !!displayProgram &&
+    canEditInfo
+
+  const isEditModeRecruitVolunteer =
+    open &&
+    !!activeRecruitTab &&
+    (activeRecruitTab === 'recruit_volunteer_h1' || activeRecruitTab === 'recruit_volunteer_h2') &&
+    editTab === activeRecruitTab &&
+    !!displayProgram &&
+    canEditInfo
+
+  const institutionsForm = useProgramDetailEditForm({
+    program: displayProgram,
+    isEditMode: isEditModeRecruitParticipant,
+    schema: programDetailInstitutionsEditSchema,
+  })
+  const {
+    triggerSave: institutionsTriggerSave,
+    resetToProgram: institutionsResetToProgram,
+    registerGetAdditionalContentHtml: registerInstitutionsAdditionalHtml,
+  } = useProgramDetailInfoSave({
+    form: institutionsForm,
+    program: displayProgram ?? ({} as Program),
+    onSaveEdit:
+      displayProgram && updateProgram
+        ? async draft => {
+            try {
+              const { id: _id, createdAt: _c, ...patch } = draft
+              await updateProgram(draft.id, patch)
+              message.success(MESSAGES.success.programUpdated)
+              const next = new URLSearchParams(searchParams)
+              next.delete(EDIT_PARAM)
+              if (programId) next.set('programId', programId)
+              setSearchParams(next, { replace: true })
+            } catch {
+              message.error(MESSAGES.error.update)
+            }
+          }
+        : undefined,
+  })
+
+  const volunteersForm = useProgramDetailEditForm({
+    program: displayProgram,
+    isEditMode: isEditModeRecruitVolunteer,
+  })
+  const {
+    triggerSave: volunteersTriggerSave,
+    resetToProgram: volunteersResetToProgram,
+    registerGetAdditionalContentHtml: registerVolunteersAdditionalHtml,
+  } = useProgramDetailInfoSave({
+    form: volunteersForm,
+    program: displayProgram ?? ({} as Program),
+    onSaveEdit:
+      displayProgram && updateProgram
+        ? async draft => {
+            try {
+              const { id: _id, createdAt: _c, ...patch } = draft
+              await updateProgram(draft.id, patch)
+              message.success(MESSAGES.success.programUpdated)
+              const next = new URLSearchParams(searchParams)
+              next.delete(EDIT_PARAM)
+              if (programId) next.set('programId', programId)
+              setSearchParams(next, { replace: true })
+            } catch {
+              message.error(MESSAGES.error.update)
+            }
+          }
+        : undefined,
+  })
+
+  const isRecruitEditMode = isEditModeRecruitParticipant || isEditModeRecruitVolunteer
+
+  const selectRecruitTab = useCallback(
+    (tab: UjatRecruitTabKey) => {
+      if (!programId) return
+      const next = new URLSearchParams(searchParams)
+      next.set('programId', programId)
+      next.set(LNB_PARAM, 'info')
+      next.set(TAB_PARAM, tab)
+      next.delete(EDIT_PARAM)
+      setSearchParams(next, { replace: true })
+    },
+    [programId, searchParams, setSearchParams]
+  )
+
+  useEffect(() => {
+    if (!open || !displayProgram || !editTab) return
+    if (editTab === 'info' && !canUjatProgramInfoEdit(displayProgram)) {
+      const next = new URLSearchParams(searchParams)
+      next.delete(EDIT_PARAM)
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: true })
+      return
+    }
+    const recruitEditKeys = ['recruit_participant', 'recruit_volunteer_h1', 'recruit_volunteer_h2'] as const
+    if ((recruitEditKeys as readonly string[]).includes(editTab) && !canUjatProgramInfoEdit(displayProgram)) {
+      const next = new URLSearchParams(searchParams)
+      next.delete(EDIT_PARAM)
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: true })
+    }
+  }, [open, editTab, displayProgram, programId, searchParams, setSearchParams])
+
+  const handleRecruitmentEdit = useCallback(() => {
+    if (!activeRecruitTab || !displayProgram) return
+    if (!canUjatProgramInfoEdit(displayProgram)) {
+      message.warning('프로그램 진행 중 이후에는 정보를 수정할 수 없습니다.')
+      return
+    }
+    if (activeRecruitTab === 'recruit_participant') {
+      institutionsResetToProgram()
+    } else {
+      volunteersResetToProgram()
+    }
+    setEditMode(activeRecruitTab)
+  }, [
+    activeRecruitTab,
+    displayProgram,
+    institutionsResetToProgram,
+    volunteersResetToProgram,
+    setEditMode,
+  ])
+
+  const handleRecruitmentSave = useCallback(() => {
+    setEditMode(null)
+    if (!activeRecruitTab) return
+    if (activeRecruitTab === 'recruit_participant') {
+      institutionsTriggerSave()
+    } else {
+      volunteersTriggerSave()
+    }
+  }, [activeRecruitTab, institutionsTriggerSave, volunteersTriggerSave, setEditMode])
 
   const handleClose = useCallback(() => {
     onClose()
@@ -388,27 +524,25 @@ export function UjatProgramDetailFullPageModal({
             </>
           )}
 
-          {activeLnb === 'info' && activeTab === 'recruitment' && (
-            <div className="program-detail-fullpage-modal__info-tab ujat-detail-modal__recruitment-readonly">
-              <Typography.Title level={5} className="ujat-detail-modal__section-title">
-                모집 정보
-              </Typography.Title>
-              <ParticipantRecruitmentSection
+          {activeLnb === 'info' && activeRecruitTab && (
+            <div className="program-detail-fullpage-modal__info-tab ujat-detail-modal__recruitment-body">
+              <UjatProgramRecruitmentTabsRow
+                activeTab={activeRecruitTab}
+                onSelectTab={selectRecruitTab}
+                canEdit={canEditInfo}
+                isEditMode={isRecruitEditMode}
+                onEdit={handleRecruitmentEdit}
+                onSave={handleRecruitmentSave}
+              />
+              <UjatProgramRecruitmentPanels
                 program={displayProgram}
                 sponsorName={sponsorName}
-                isEditMode={false}
+                activeRecruitTab={activeRecruitTab}
+                isEditMode={isRecruitEditMode}
+                institutionsForm={isEditModeRecruitParticipant ? institutionsForm : undefined}
+                volunteersForm={isEditModeRecruitVolunteer ? volunteersForm : undefined}
+                registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
               />
-              <div className="detail-info-form--gap">
-                <DetailInfoSection program={displayProgram} isEditMode={false} showThumbnail />
-              </div>
-              <VolunteerRecruitmentSection
-                program={displayProgram}
-                sponsorName={sponsorName}
-                isEditMode={false}
-              />
-              <div className="detail-info-form--gap">
-                <VolunteerDetailInfoSection program={displayProgram} isEditMode={false} />
-              </div>
             </div>
           )}
 
