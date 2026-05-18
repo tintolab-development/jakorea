@@ -17,7 +17,7 @@ export function UjatRecruitVolunteerDetailInfoParagraph(props: UjatRecruitParagr
         form={props.form}
         onRegisterGetAdditionalContentHtml={props.onRegisterGetAdditionalContentHtml}
         sectionTitle={props.sectionTitle}
-        sectionDescription={props.sectionDescription}
+        sectionTitleOnly
       />
     )
   }

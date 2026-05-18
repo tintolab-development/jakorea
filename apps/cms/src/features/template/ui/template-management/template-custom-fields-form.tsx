@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
-import { Checkbox, Input, message } from 'antd'
+import { Checkbox, Input } from 'antd'
 import type { FileUploadResult } from '@/entities/application/api/file-upload-service'
 import { fileUploadService } from '@/entities/application/api/file-upload-service'
 import templateCertificateBg from '@/assets/images/template/templatge-background.png'
@@ -216,12 +216,10 @@ export function TemplateCustomFieldsForm({
         file.type === 'image/png' ||
         /\.(jpe?g|png)$/i.test(file.name)
       if (!isAllowedType) {
-        message.error('JPG, PNG 형식만 등록할 수 있습니다.')
         input.value = ''
         return
       }
       if (file.size > MAX_LOGO_FILE_BYTES) {
-        message.error('파일은 최대 15MB까지 등록 가능합니다.')
         input.value = ''
         return
       }
@@ -243,8 +241,7 @@ export function TemplateCustomFieldsForm({
         onLogoUploadResult?.(fieldName, result)
         setValuesByField(prev => ({ ...prev, [fieldName]: result.url }))
         onSecondaryValueChange?.(field, result.url)
-        message.success(`${field.label} 이미지가 등록되었습니다.`)
-      } catch {
+        } catch {
         setLogoPreviewUrlByField(prev => {
           const u = prev[fieldName]
           if (u) URL.revokeObjectURL(u)
@@ -253,8 +250,7 @@ export function TemplateCustomFieldsForm({
           return next
         })
         onLogoFileSelected?.(fieldName, null)
-        message.error('파일 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.')
-      } finally {
+        } finally {
         setLogoUploading(false)
         input.value = ''
       }

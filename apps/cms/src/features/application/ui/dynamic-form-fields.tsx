@@ -4,9 +4,8 @@
  * Task 2.4.1: file 타입 지원 추가
  */
 
-import { Form, Input, InputNumber, Select, Checkbox, Upload, Button, message } from 'antd'
+import { Form, Input, InputNumber, Select, Checkbox, Upload, Button } from 'antd'
 import { UploadOutlined } from '@ant-design/icons'
-import { MESSAGES } from '@/shared/constants'
 import type { UploadFile } from 'antd/es/upload/interface'
 import type { FormFieldDef } from '@/types/form-template'
 
@@ -101,7 +100,6 @@ export function DynamicFormFields({
                 beforeUpload={file => {
                   const maxSize = field.fileMaxSize ?? DEFAULT_FILE_MAX_SIZE
                   if (file.size > maxSize) {
-                    message.error(MESSAGES.warning.fileSizeMax5MB)
                     return false
                   }
                   update(field.id, file)

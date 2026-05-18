@@ -6,7 +6,7 @@
 
 import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { AppButton } from '@/shared/ui/app-button'
 import type { Program } from '@/types/domain'
@@ -379,14 +379,12 @@ export function SchoolDetailFullpageView({
       })
       .filter((x): x is InstructorListFormInstructor => x != null)
     if (newFormList.length === 0) {
-      message.warning('선택한 강사 정보를 찾을 수 없습니다.')
       return
     }
     onSaveInstructorInfo?.(detail.id, [...existingFormList, ...newFormList])
     setSelectAssignConfirmOpen(false)
     setSelectedWaitingKeys([])
-    message.success('강사가 배정되었습니다.')
-  }, [
+    }, [
     selectedWaitingKeys,
     waitingRows,
     instructorList,
@@ -410,8 +408,7 @@ export function SchoolDetailFullpageView({
     onSaveInstructorInfo?.(detail.id, newFormList)
     setUnassignConfirmOpen(false)
     setSelectedAssignedKeys([])
-    message.success('배정이 취소되었습니다.')
-  }, [selectedAssignedKeys, instructors, detail.id, onSaveInstructorInfo])
+    }, [selectedAssignedKeys, instructors, detail.id, onSaveInstructorInfo])
 
   const handleRoleChange = useCallback(
     (instructorId: string, newRole: InstructorRoleKey) => {
@@ -430,8 +427,7 @@ export function SchoolDetailFullpageView({
       )
       onSaveInstructorInfo?.(detail.id, formList)
       setOpenRoleDropdownId(null)
-      message.success('역할이 변경되었습니다.')
-    },
+      },
     [instructors, detail.id, onSaveInstructorInfo]
   )
 
@@ -974,7 +970,6 @@ export function SchoolDetailFullpageView({
                     size="large"
                     onClick={() => {
                       if (selectedAssignedKeys.length === 0) {
-                        message.warning('배정 취소할 강사를 선택해 주세요.')
                         return
                       }
                       setUnassignConfirmOpen(true)
@@ -1044,7 +1039,6 @@ export function SchoolDetailFullpageView({
                     className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
                     onClick={() => {
                       if (selectedWaitingKeys.length === 0) {
-                        message.warning('배정할 강사를 선택해 주세요.')
                         return
                       }
                       setSelectAssignConfirmOpen(true)

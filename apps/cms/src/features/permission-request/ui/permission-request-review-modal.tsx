@@ -23,22 +23,19 @@ interface PermissionRequestReviewModalProps {
 const actionLabels: Record<PermissionRequest['requestedAction'], string> = {
   VIEW: '조회',
   DOWNLOAD: '다운로드',
-  EDIT: '수정',
-}
+  EDIT: '수정' }
 
 const roleLabels: Record<PermissionRequest['requestedRole'], string> = {
   OWNER: '소유자',
   PARTNER: '파트너',
-  ASSISTANT: '어시스턴트',
-}
+  ASSISTANT: '어시스턴트' }
 
 export function PermissionRequestReviewModal({
   open,
   request,
   onApprove,
   onReject,
-  onCancel,
-}: PermissionRequestReviewModalProps) {
+  onCancel }: PermissionRequestReviewModalProps) {
   const [form] = Form.useForm()
   const [action, setAction] = useState<'approve' | 'reject'>('approve')
   const [submitting, setSubmitting] = useState(false)
@@ -55,10 +52,8 @@ export function PermissionRequestReviewModal({
         grantedPeriod: values.grantedPeriod
           ? {
               startDate: values.grantedPeriod[0].toISOString(),
-              endDate: values.grantedPeriod[1].toISOString(),
-            }
-          : undefined,
-      }
+              endDate: values.grantedPeriod[1].toISOString() }
+          : undefined }
 
       if (action === 'approve') {
         await onApprove(input)
@@ -142,7 +137,7 @@ export function PermissionRequestReviewModal({
         <Form.Item
           label={action === 'approve' ? '승인 메모 (선택사항)' : '거부 사유'}
           name="reviewComment"
-          rules={action === 'reject' ? [{ required: true, message: '거부 사유를 입력해주세요.' }] : []}
+          rules={action === 'reject' ? [{ required: true }] : []}
         >
           <TextArea
             rows={3}

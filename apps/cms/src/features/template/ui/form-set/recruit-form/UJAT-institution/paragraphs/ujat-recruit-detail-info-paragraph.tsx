@@ -18,7 +18,7 @@ export function UjatRecruitDetailInfoParagraph(props: UjatRecruitParagraphProps 
         onRegisterGetAdditionalContentHtml={props.onRegisterGetAdditionalContentHtml}
         showThumbnail
         sectionTitle={props.sectionTitle}
-        sectionDescription={props.sectionDescription}
+        sectionTitleOnly
       />
     )
   }

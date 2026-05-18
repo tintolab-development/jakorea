@@ -9,17 +9,15 @@ export const applicationPathSchema = z
   .object({
     programId: z.string().min(1, '프로그램을 선택해주세요'),
     pathType: z.enum(['google_form', 'internal'] as const, {
-      required_error: '신청 경로를 선택해주세요',
-    }),
+      required_error: '신청 경로를 선택해주세요' }),
     googleFormUrl: z
       .string()
       .url('올바른 URL 형식이 아닙니다')
       .optional()
       .or(z.literal(''))
       .transform(val => (val === '' ? undefined : val)),
-    guideMessage: z.string().optional(),
-    isActive: z.boolean().default(true),
-  })
+    guideText: z.string().optional(),
+    isActive: z.boolean().default(true) })
   .refine(
     data => {
       if (data.pathType === 'google_form' && !data.googleFormUrl) {

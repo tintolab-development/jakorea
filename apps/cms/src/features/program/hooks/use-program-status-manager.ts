@@ -4,9 +4,8 @@
 
 import { useCallback, useState } from 'react'
 import { useProgramStore } from '@/features/program/model/program-store'
-import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { getPreviousProgramLifecycleStatus } from '@/shared/lib/status-transition'
-import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { handleError } from '@/shared/utils/error-handler'
 import type { ProgramLifecycleStatus } from '@/types/domain'
 
 interface UseProgramStatusManagerResult {
@@ -24,8 +23,7 @@ export function useProgramStatusManager(): UseProgramStatusManagerResult {
     try {
       await updateProgram(programId, { lifecycleStatus: status })
       await fetchProgramById(programId)
-      showSuccessMessage(`프로그램 상태가 "${getProgramLifecycleLabel(status)}"로 변경되었습니다`)
-    } catch (error) {
+      } catch (error) {
       handleError(error, {
         defaultMessage: '상태 변경 중 오류가 발생했습니다',
         context: 'ProgramLifecycleStatusChange',
@@ -46,8 +44,7 @@ export function useProgramStatusManager(): UseProgramStatusManagerResult {
     try {
       await updateProgram(programId, { lifecycleStatus: previousStatus })
       await fetchProgramById(programId)
-      showSuccessMessage(`프로그램 상태가 "${getProgramLifecycleLabel(previousStatus)}"로 되돌아갔습니다`)
-    } catch (error) {
+      } catch (error) {
       handleError(error, {
         defaultMessage: '상태 변경 중 오류가 발생했습니다',
         context: 'ProgramLifecycleStatusRollback',

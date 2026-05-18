@@ -55,8 +55,7 @@ import {
   USER_BASIC_INFO_ENTRY_QUERY_KEY,
   type UserBasicInfoEntrySource,
 } from '@/features/user/detail/ui/user-basic-info-section'
-import { MESSAGES } from '@/shared/constants'
-import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { handleError } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
@@ -391,8 +390,7 @@ export function useUserDetailController({
       setBasicInfoEditing(false)
       setBasicInfoDraft(null)
       onMemberBasicInfoSaved?.(updated)
-      showSuccessMessage(MESSAGES.success.updated)
-    } catch (error) {
+      } catch (error) {
       handleError(error, { defaultMessage: '회원 정보 저장에 실패했습니다.' })
     } finally {
       setBasicInfoSaveLoading(false)
@@ -422,8 +420,7 @@ export function useUserDetailController({
           listMetrics: { adminPermissionVariant: nextPermission },
         })
         onMemberBasicInfoSaved?.(updated)
-        showSuccessMessage('관리자 권한 유형이 변경되었습니다.')
-      } catch (error) {
+        } catch (error) {
         handleError(error, { defaultMessage: '관리자 권한 유형 변경에 실패했습니다.' })
       } finally {
         setAdminPermissionVariantPatching(false)

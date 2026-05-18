@@ -7,7 +7,7 @@ import type { ApplicationPath } from '@/types/domain'
 import type { ApplicationPathFormData } from '@/entities/application-path/model/schema'
 import { useApplicationPathStore } from '@/features/application-path/model/application-path-store'
 import { useProgramStore } from '@/features/program/model/program-store'
-import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
+import { handleError } from '@/shared/utils/error-handler'
 
 interface UseApplicationPathManagementProps {
   programId: string
@@ -47,8 +47,7 @@ export function useApplicationPathManagement({
         const updated = await updatePath(editingApplicationPath.id, formData)
         // 프로그램의 applicationPathId 업데이트
         await updateProgram(programId, { applicationPathId: updated.id })
-        showSuccessMessage('신청 경로가 성공적으로 수정되었습니다.')
-      } else {
+        } else {
         // 새 신청 경로 생성
         const newPath = await createPath({
           ...formData,
@@ -56,8 +55,7 @@ export function useApplicationPathManagement({
         })
         // 프로그램의 applicationPathId 업데이트
         await updateProgram(programId, { applicationPathId: newPath.id })
-        showSuccessMessage('신청 경로가 성공적으로 등록되었습니다.')
-      }
+        }
       setApplicationPathModalOpen(false)
       setEditingApplicationPath(null)
     } catch (error) {

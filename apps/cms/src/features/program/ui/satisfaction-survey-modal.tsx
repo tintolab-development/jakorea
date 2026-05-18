@@ -3,10 +3,9 @@
  * FSD: features/program으로 이동 (shared는 entities 미참조)
  */
 
-import { Modal, Form, Rate, Input, Button, message } from 'antd'
+import { Modal, Form, Rate, Input, Button } from 'antd'
 import { FormOutlined } from '@ant-design/icons'
 import { useState, useEffect } from 'react'
-import { MESSAGES } from '@/shared/constants'
 import type { MyProgram } from '@/entities/program/api/instructor-program-service'
 import dayjs from 'dayjs'
 
@@ -38,8 +37,7 @@ export function SatisfactionSurveyModal({
   program,
   existingRecord,
   onCancel,
-  onSuccess,
-}: SatisfactionSurveyModalProps) {
+  onSuccess }: SatisfactionSurveyModalProps) {
   const [form] = Form.useForm()
   const [submitting, setSubmitting] = useState(false)
 
@@ -58,14 +56,12 @@ export function SatisfactionSurveyModal({
     try {
       // TODO: API 연동 필요
       console.log('Submitting satisfaction survey:', values)
-      message.success(MESSAGES.success.satisfactionSurveySubmittedWithThanks)
       form.resetFields()
       onSuccess?.()
       onCancel()
     } catch (e) {
       console.error('Failed to submit satisfaction survey:', e)
-      message.error(MESSAGES.error.satisfactionSurveySubmitFailed)
-    } finally {
+      } finally {
       setSubmitting(false)
     }
   }
@@ -103,7 +99,7 @@ export function SatisfactionSurveyModal({
         <Form.Item
           label="프로그램 만족도"
           name="programRating"
-          rules={[{ required: true, message: '프로그램 만족도를 선택해주세요' }]}
+          rules={[{ required: true }]}
         >
           <Rate allowClear />
         </Form.Item>
@@ -111,7 +107,7 @@ export function SatisfactionSurveyModal({
         <Form.Item
           label="내용 만족도"
           name="contentRating"
-          rules={[{ required: true, message: '내용 만족도를 선택해주세요' }]}
+          rules={[{ required: true }]}
         >
           <Rate allowClear />
         </Form.Item>
@@ -119,7 +115,7 @@ export function SatisfactionSurveyModal({
         <Form.Item
           label="강사 만족도"
           name="instructorRating"
-          rules={[{ required: true, message: '강사 만족도를 선택해주세요' }]}
+          rules={[{ required: true }]}
         >
           <Rate allowClear />
         </Form.Item>
@@ -127,7 +123,7 @@ export function SatisfactionSurveyModal({
         <Form.Item
           label="종합 만족도"
           name="overallRating"
-          rules={[{ required: true, message: '종합 만족도를 선택해주세요' }]}
+          rules={[{ required: true }]}
         >
           <Rate allowClear />
         </Form.Item>

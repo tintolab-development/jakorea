@@ -18,15 +18,13 @@ interface ProgramApplicationPathTabProps {
 
 const pathTypeLabels: Record<string, string> = {
   google_form: '구글폼',
-  internal: '자동화 프로그램',
-}
+  internal: '자동화 프로그램' }
 
 export function ProgramApplicationPathTab({
   applicationPath,
   isAdmin,
   onEdit,
-  onCreate,
-}: ProgramApplicationPathTabProps) {
+  onCreate }: ProgramApplicationPathTabProps) {
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <Card
@@ -70,13 +68,13 @@ export function ProgramApplicationPathTab({
                 </Paragraph>
               </Descriptions.Item>
             )}
-            {applicationPath.guideMessage && (
+            {applicationPath.guideText && (
               <Descriptions.Item label="안내 문구">
                 <Paragraph
                   style={{ margin: 0 }}
                   ellipsis={{ rows: 2, expandable: true, symbol: '더보기' }}
                 >
-                  {applicationPath.guideMessage}
+                  {applicationPath.guideText}
                 </Paragraph>
               </Descriptions.Item>
             )}
@@ -94,7 +92,6 @@ export function ProgramApplicationPathTab({
           </Descriptions>
         ) : (
           <Alert
-            message="신청 경로가 설정되지 않았습니다"
             description="신청 경로를 등록하여 프로그램 신청 방식을 설정할 수 있습니다."
             type="info"
             showIcon

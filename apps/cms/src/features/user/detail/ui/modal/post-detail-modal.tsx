@@ -5,7 +5,7 @@
 
 import { useState, useMemo, useEffect, useId } from 'react'
 import { flushSync } from 'react-dom'
-import { message, Popover } from 'antd'
+import { Popover } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui'
 import type { ProgramPost, ProgramFile, ProgramPostReactionUser } from '@/types/domain'
@@ -281,7 +281,6 @@ export function PostDetailModal({
     if (!post) return
     const ok = removeProgramPostReactionUser(post.id, reactionUserId)
     if (!ok) return
-    message.success('반응을 취소했습니다.')
     setReactionsVersion(v => v + 1)
     onPostStatsChanged?.()
   }
@@ -291,7 +290,6 @@ export function PostDetailModal({
     const trimmed = commentInput.trim()
     const hasEmojiSelection = selectedEmojiIndex != null
     if (!trimmed && !hasEmojiSelection) {
-      message.warning('댓글 내용을 입력해 주세요.')
       return
     }
     const emojiType =
@@ -303,7 +301,6 @@ export function PostDetailModal({
       setReactionsVersion(v => v + 1)
       setSelectedEmojiIndex(null)
       onPostStatsChanged?.()
-      message.success('이모지가 등록되었습니다.')
       return
     }
 
@@ -316,8 +313,7 @@ export function PostDetailModal({
     setCommentInput('')
     setSelectedEmojiIndex(null)
     onPostStatsChanged?.()
-    message.success('댓글이 등록되었습니다.')
-  }
+    }
 
   if (!post) return null
 

@@ -29,23 +29,20 @@ class ErrorBoundaryClass extends Component<Props, State> {
     this.state = {
       hasError: false,
       error: null,
-      errorInfo: null,
-    }
+      errorInfo: null }
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     return {
       hasError: true,
-      error,
-    }
+      error }
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo)
     this.setState({
       error,
-      errorInfo,
-    })
+      errorInfo })
   }
 
   render() {
@@ -70,74 +67,67 @@ function ErrorFallback({ error, errorInfo }: ErrorFallbackProps) {
   const location = useLocation()
 
   // 에러 타입 및 코드 분석
-  const getErrorCode = (): { code: string; message: string; description: string } => {
+  const getErrorCode = (): { code: string; title: string; description: string } => {
     if (!error) {
       return {
         code: 'UNKNOWN',
-        message: '알 수 없는 오류',
+        title: '오류가 발생했습니다',
         description: '예상치 못한 오류가 발생했습니다.',
       }
     }
 
-    // React Router 에러 (404 등)
-    if (error.message.includes('404') || error.message.includes('No route')) {
+    if (String(error).includes('404') || String(error).includes('No route')) {
       return {
         code: '404',
-        message: '페이지를 찾을 수 없습니다',
+        title: '페이지를 찾을 수 없습니다',
         description: '요청하신 페이지가 존재하지 않거나 이동되었습니다.',
       }
     }
 
-    // 네트워크 에러
-    if (error.message.includes('Network') || error.message.includes('fetch')) {
+    if (String(error).includes('Network') || String(error).includes('fetch')) {
       return {
         code: 'NETWORK_ERROR',
-        message: '네트워크 오류',
+        title: '네트워크 오류',
         description: '서버와의 통신 중 문제가 발생했습니다. 인터넷 연결을 확인해주세요.',
       }
     }
 
-    // 타입 에러
     if (error.name === 'TypeError') {
       return {
         code: 'TYPE_ERROR',
-        message: '타입 오류',
+        title: '데이터 형식 오류',
         description: '데이터 형식이 올바르지 않습니다.',
       }
     }
 
-    // 참조 에러
     if (error.name === 'ReferenceError') {
       return {
         code: 'REFERENCE_ERROR',
-        message: '참조 오류',
+        title: '참조 오류',
         description: '존재하지 않는 변수나 함수를 참조했습니다.',
       }
     }
 
-    // 권한 에러
-    if (error.message.includes('403') || error.message.includes('Forbidden')) {
+    if (String(error).includes('403') || String(error).includes('Forbidden')) {
       return {
         code: '403',
-        message: '접근 권한이 없습니다',
+        title: '접근 권한 없음',
         description: '이 페이지에 접근할 권한이 없습니다.',
       }
     }
 
-    // 서버 에러
-    if (error.message.includes('500') || error.message.includes('Internal Server')) {
+    if (String(error).includes('500') || String(error).includes('Internal Server')) {
       return {
         code: '500',
-        message: '서버 오류',
+        title: '서버 오류',
         description: '서버에서 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
       }
     }
 
-    // 일반 에러
     return {
       code: 'GENERAL_ERROR',
-      message: '오류가 발생했습니다',
-      description: error.message || '예상치 못한 오류가 발생했습니다.',
+      title: '오류가 발생했습니다',
+      description: '예상치 못한 오류가 발생했습니다.',
     }
   }
 
@@ -165,8 +155,7 @@ function ErrorFallback({ error, errorInfo }: ErrorFallbackProps) {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '24px',
-        background: '#f5f5f5',
-      }}
+        background: '#f5f5f5' }}
     >
       <div
         style={{
@@ -175,8 +164,7 @@ function ErrorFallback({ error, errorInfo }: ErrorFallbackProps) {
           background: '#fff',
           padding: '48px',
           borderRadius: '8px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        }}
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
       >
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div
@@ -184,13 +172,12 @@ function ErrorFallback({ error, errorInfo }: ErrorFallbackProps) {
               fontSize: '72px',
               fontWeight: 'bold',
               color: '#ff4d4f',
-              marginBottom: '16px',
-            }}
+              marginBottom: '16px' }}
           >
             {errorDetails.code}
           </div>
           <h1 style={{ fontSize: '24px', marginBottom: '8px', color: '#262626' }}>
-            {errorDetails.message}
+            {errorDetails.title}
           </h1>
           <p style={{ color: '#8c8c8c', marginBottom: '24px' }}>{errorDetails.description}</p>
         </div>
@@ -202,8 +189,7 @@ function ErrorFallback({ error, errorInfo }: ErrorFallbackProps) {
               border: '1px solid #ffd591',
               borderRadius: '4px',
               padding: '16px',
-              marginBottom: '24px',
-            }}
+              marginBottom: '24px' }}
           >
             <details>
               <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '8px' }}>
@@ -216,11 +202,10 @@ function ErrorFallback({ error, errorInfo }: ErrorFallbackProps) {
                   borderRadius: '4px',
                   overflow: 'auto',
                   fontSize: '12px',
-                  marginTop: '8px',
-                }}
+                  marginTop: '8px' }}
               >
-                <strong>에러 메시지:</strong>
-                {error.message}
+                <strong>에러 정보:</strong>
+                {String(error)}
                 {'\n\n'}
                 <strong>에러 스택:</strong>
                 {error.stack}
@@ -247,8 +232,7 @@ function ErrorFallback({ error, errorInfo }: ErrorFallbackProps) {
               border: '1px solid #d9d9d9',
               borderRadius: '4px',
               background: '#fff',
-              cursor: 'pointer',
-            }}
+              cursor: 'pointer' }}
           >
             이전 페이지
           </button>
@@ -259,8 +243,7 @@ function ErrorFallback({ error, errorInfo }: ErrorFallbackProps) {
               border: '1px solid #d9d9d9',
               borderRadius: '4px',
               background: '#fff',
-              cursor: 'pointer',
-            }}
+              cursor: 'pointer' }}
           >
             새로고침
           </button>
@@ -272,8 +255,7 @@ function ErrorFallback({ error, errorInfo }: ErrorFallbackProps) {
               borderRadius: '4px',
               background: '#1890ff',
               color: '#fff',
-              cursor: 'pointer',
-            }}
+              cursor: 'pointer' }}
           >
             홈으로 이동
           </button>

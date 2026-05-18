@@ -43,8 +43,7 @@ const INITIAL_VALUES: SchoolRegisterModalFormValues = {
   institutionName: '',
   institutionType: SCHOOL_REGISTER_INSTITUTION_TYPE_ALL,
   roadAddress: '',
-  detailAddress: '',
-}
+  detailAddress: '' }
 
 function normalizeSubmitValues(
   values: SchoolRegisterModalFormValues
@@ -58,16 +57,14 @@ function normalizeSubmitValues(
     institutionName: values.institutionName.trim(),
     institutionType,
     roadAddress: values.roadAddress.trim(),
-    detailAddress: values.detailAddress?.trim(),
-  }
+    detailAddress: values.detailAddress?.trim() }
 }
 
 export function SchoolRegisterModal({
   open,
   onClose,
   onSubmit,
-  loading = false,
-}: SchoolRegisterModalProps) {
+  loading = false }: SchoolRegisterModalProps) {
   const [form] = Form.useForm<SchoolRegisterModalFormValues>()
   const institutionName = Form.useWatch('institutionName', form) ?? ''
   const roadAddress = Form.useWatch('roadAddress', form) ?? ''
@@ -138,7 +135,7 @@ export function SchoolRegisterModal({
                 <Form.Item
                   name="institutionName"
                   noStyle
-                  rules={[{ required: true, message: '기관명을 입력해주세요' }]}
+                  rules={[{ required: true }]}
                 >
                   <CmsInput placeholder="기관명" inputSize="medium" width="100%" />
                 </Form.Item>
@@ -165,7 +162,7 @@ export function SchoolRegisterModal({
                   <Form.Item
                     name="roadAddress"
                     noStyle
-                    rules={[{ required: true, message: '주소를 검색하여 선택해주세요' }]}
+                    rules={[{ required: true }]}
                   >
                     <AddressSearch
                       value={roadAddress}

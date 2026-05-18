@@ -1,11 +1,12 @@
-import { useEffect } from 'react'
-import { Spin, message } from 'antd'
+import { useEffect, useState } from 'react'
+import { Alert, Spin } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { type SocialProvider, SOCIAL_PROVIDER_LABEL } from '@/entities/user/api/auth-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { exchangeOAuthCode } from '@/features/auth/api/oauth-exchange'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { validateOAuthState } from '@/features/auth/lib/oauth-client'
+import { handleError, unknownErrorText } from '@/shared/utils/error-handler'
 
 interface OAuthCallbackPageProps {
   provider: SocialProvider
@@ -14,6 +15,7 @@ interface OAuthCallbackPageProps {
 export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
+  const [oauthError, setOauthError] = useState<string | null>(null)
 
   useEffect(() => {
     const execute = async () => {
@@ -37,8 +39,7 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
       const response = await exchangeOAuthCode({
         provider,
         code,
-        state: state ?? '',
-      })
+        state: state ?? '' })
 
       if (response.requiresMfa) {
         throw new Error('MFA가 필요한 계정입니다. 일반 로그인으로 진행해주세요.')
@@ -51,23 +52,26 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
       setAuth({
         user: response.user,
         token: response.token,
-        expiresAt: String(response.expiresAt),
-      })
+        expiresAt: String(response.expiresAt) })
 
       const target = getRedirectPathByRole(response.user)
       navigate(target, { replace: true })
     }
 
     execute().catch((err: unknown) => {
-      const errorMessage = err instanceof Error ? err.message : '소셜 로그인 처리에 실패했습니다.'
-      message.error(errorMessage)
-      navigate('/login', { replace: true })
+      handleError(err, { context: 'oauthCallbackPage' })
+      setOauthError(unknownErrorText(err, '소셜 로그인 처리에 실패했습니다.'))
+      window.setTimeout(() => navigate('/login', { replace: true }), 2000)
     })
   }, [navigate, provider, setAuth])
 
   return (
     <div className="router-loading-fallback">
-      <Spin size="large" />
+      {oauthError ? (
+        <Alert type="error" description={oauthError} showIcon style={{ maxWidth: 420 }} />
+      ) : (
+        <Spin size="large" />
+      )}
     </div>
   )
 }

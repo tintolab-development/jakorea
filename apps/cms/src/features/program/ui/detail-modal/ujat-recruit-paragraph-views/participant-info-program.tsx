@@ -10,7 +10,7 @@ import {
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { ProgramDetailContactReadRow } from '@/features/program/program-detail/ui/project-info/recruitment/components/recruitment-form-parts'
 import { DateRangeEdit } from '@/features/program/program-detail/ui/project-info/recruitment/components/recruitment-form-parts'
-import { detailInfoFormSectionHeaderProps } from '@/features/template/lib/writing-form-paragraph-description'
+import { detailInfoFormSectionTitleHeaderProps } from '@/features/template/lib/writing-form-paragraph-description'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { AppDatePicker } from '@/shared/ui/app-datepicker'
 import { AppInput } from '@/shared/ui/app-input'
@@ -37,14 +37,12 @@ export function UjatRecruitParticipantInfoProgramView({
   form,
   isEdit,
   sectionTitle = '참여자 모집 정보',
-  sectionDescription,
 }: {
   program: Program
   sponsorName?: string
   form?: UseFormReturn<ProgramDetailEditFormValues>
   isEdit: boolean
   sectionTitle?: string
-  sectionDescription?: string | null
 }) {
   const lifecycle = getParticipantRecruitmentLifecycle(
     program,
@@ -68,7 +66,7 @@ export function UjatRecruitParticipantInfoProgramView({
 
   const formMode = isEdit && form ? 'edit' : 'view'
 
-  const headerProps = detailInfoFormSectionHeaderProps(sectionTitle, sectionDescription)
+  const headerProps = detailInfoFormSectionTitleHeaderProps(sectionTitle)
 
   return (
     <DetailInfoForm {...headerProps} mode={formMode}>

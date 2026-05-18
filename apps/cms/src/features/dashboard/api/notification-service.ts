@@ -12,7 +12,7 @@ export interface Notification {
   id: UUID
   type: NotificationType
   title: string
-  message: string
+  body: string
   /** 프로그램명 (알림 위젯 두 번째 라인) */
   programName?: string
   link?: string
@@ -36,7 +36,7 @@ export async function getNotifications(
     id: string,
     type: NotificationType,
     title: string,
-    message: string,
+    body: string,
     link: string | undefined,
     read: boolean,
     hoursAgo: number,
@@ -45,12 +45,11 @@ export async function getNotifications(
     id,
     type,
     title,
-    message,
+    body,
     programName,
     link,
     read,
-    createdAt: new Date(now.getTime() - hoursAgo * 60 * 60 * 1000).toISOString(),
-  })
+    createdAt: new Date(now.getTime() - hoursAgo * 60 * 60 * 1000).toISOString() })
 
   const notificationsByRole: Record<UserRole, Notification[]> = {
     ADMIN: [
@@ -240,8 +239,7 @@ export async function getNotifications(
         10,
         '내 일정'
       ),
-    ],
-  }
+    ] }
 
   const notifications = notificationsByRole[userRole] || []
 

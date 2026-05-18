@@ -5,7 +5,7 @@
  */
 
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Image, message } from 'antd'
+import { Image } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { AppButton } from '@/shared/ui/app-button'
@@ -103,8 +103,7 @@ export function EnrollmentStatusDetailModal({
         prev.map(row => (row.id === recordId ? { ...row, approvalStatus: nextStatus } : row))
       )
       updateApplicantSchoolApprovalStatus(recordId, nextStatus)
-      message.success('결재 현황이 변경되었습니다.')
-    },
+      },
     []
   )
 

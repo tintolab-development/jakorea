@@ -9,8 +9,7 @@ import {
   DollarOutlined,
   FileTextOutlined,
   CalendarOutlined,
-  CheckCircleOutlined,
-} from '@ant-design/icons'
+  CheckCircleOutlined } from '@ant-design/icons'
 import type { Notification, NotificationType } from '../api/notification-service'
 
 const { Text, Title } = Typography
@@ -79,8 +78,7 @@ export function NotificationModal({
   onNotificationClick,
   onConfirm,
   onMarkAllAsRead,
-  onRefresh,
-}: NotificationModalProps) {
+  onRefresh }: NotificationModalProps) {
   // prop으로 전달된 unreadCount를 우선 사용, 없으면 notifications에서 계산
   const unreadCount =
     propUnreadCount !== undefined ? propUnreadCount : notifications.filter(n => !n.read).length
@@ -124,9 +122,7 @@ export function NotificationModal({
         body: {
           maxHeight: 'calc(100vh - 200px)',
           overflowY: 'auto',
-          padding: '24px',
-        },
-      }}
+          padding: '24px' } }}
     >
       {unreadNotifications.length === 0 ? (
         <Empty
@@ -144,8 +140,7 @@ export function NotificationModal({
                 backgroundColor: getNotificationBackgroundColor(notification.type),
                 border: 'none',
                 borderRadius: 8,
-                cursor: 'pointer',
-              }}
+                cursor: 'pointer' }}
               bodyStyle={{ padding: '16px 20px' }}
               onClick={() => onNotificationClick(notification)}
             >
@@ -158,8 +153,7 @@ export function NotificationModal({
                       color: getNotificationIconColor(notification.type),
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
+                      justifyContent: 'center' }}
                   >
                     {getNotificationIcon(notification.type)}
                   </div>
@@ -168,7 +162,7 @@ export function NotificationModal({
                       {notification.title}
                     </Title>
                     <Text type="secondary" style={{ fontSize: 13 }}>
-                      {notification.message}
+                      {notification.body}
                     </Text>
                   </div>
                 </div>

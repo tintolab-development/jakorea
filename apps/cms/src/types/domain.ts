@@ -66,7 +66,7 @@ export interface ApplicationPath {
   programId: UUID
   pathType: ApplicationPathType
   googleFormUrl?: string // 구글폼 링크 (pathType이 'google_form'일 때)
-  guideMessage?: string // 신청 경로별 안내 문구
+  guideText?: string // 신청 경로별 안내 문구
   isActive: boolean // 활성화 여부
   createdAt: DateValue
   updatedAt: DateValue

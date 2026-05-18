@@ -4,6 +4,7 @@
  * Phase 0.5.3: 다운로드 보호 UX - 옵션 모달, 마스킹, 쿼터
  */
 
+import { MESSAGES } from '@/shared/constants'
 import { useState } from 'react'
 import { Table, Button, Space, Tag, Tooltip, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
@@ -13,8 +14,7 @@ import type { User } from '@/types/user'
 import { canDownloadInstructors } from '@/features/permission-request/lib/download-permission'
 import { recordFileDownload } from '@/entities/download-log/api/download-log-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
-import { MESSAGES } from '@/shared/constants'
+import { handleError } from '@/shared/utils/error-handler'
 import { DownloadOptionsModal } from '@/features/download/ui/download-options-modal'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { DownloadOptions } from '@/types/download'
@@ -111,8 +111,7 @@ export function InstructorList({
         ipAddress: '14.128.xxx.xxx',
       })
 
-      showSuccessMessage(MESSAGES.success.downloaded)
-    } catch (error) {
+      } catch (error) {
       handleError(error, { defaultMessage: MESSAGES.error.download })
     }
   }

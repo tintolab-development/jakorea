@@ -145,7 +145,7 @@ export function CareerDetailSection() {
                                 noStyle
                                 rules={
                                   careerRequired
-                                    ? [{ required: true, message: '회사명을 입력해주세요' }]
+                                    ? [{ required: true }]
                                     : undefined
                                 }
                                 className="add-instructor-modal__career-input-wrap"
@@ -163,7 +163,7 @@ export function CareerDetailSection() {
                                 noStyle
                                 rules={
                                   careerRequired
-                                    ? [{ required: true, message: '담당 업무를 입력해주세요' }]
+                                    ? [{ required: true }]
                                     : undefined
                                 }
                                 className="add-instructor-modal__career-input-wrap"
@@ -181,7 +181,7 @@ export function CareerDetailSection() {
                                 noStyle
                                 rules={
                                   careerRequired
-                                    ? [{ required: true, message: '입사연월을 선택해주세요' }]
+                                    ? [{ required: true }]
                                     : undefined
                                 }
                                 className="add-instructor-modal__career-input-wrap"
@@ -201,7 +201,7 @@ export function CareerDetailSection() {
                                 noStyle
                                 rules={
                                   careerRequired
-                                    ? [{ required: true, message: '퇴사연월을 선택해주세요' }]
+                                    ? [{ required: true }]
                                     : undefined
                                 }
                                 className="add-instructor-modal__career-input-wrap"

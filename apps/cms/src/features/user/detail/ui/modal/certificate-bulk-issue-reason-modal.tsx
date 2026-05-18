@@ -4,7 +4,6 @@
  */
 
 import { useEffect, useState } from 'react'
-import { message } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -41,7 +40,6 @@ export function CertificateBulkIssueReasonModal({
 
   const handleIssue = () => {
     if (reason == null || String(reason).trim() === '') {
-      message.warning('발급 사유를 선택해 주세요.')
       return
     }
     window.alert('준비 중입니다.')

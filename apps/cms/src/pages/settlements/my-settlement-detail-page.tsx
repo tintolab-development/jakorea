@@ -17,14 +17,13 @@ import { getMySettlementDetail } from '@/entities/settlement/api/instructor-sett
 import { settlementStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { useProgramService } from '@/features/program/hooks/use-program-service'
-import { MESSAGES } from '@/shared/constants'
 import { SettlementCalculationSummary } from '@/features/settlement/ui/settlement-calculation-summary'
 import { paymentStatementService } from '@/entities/settlement/api/payment-statement-service'
 import dayjs from 'dayjs'
 import type { Settlement } from '@/types/domain'
 
 export function MySettlementDetailPage() {
-  const { modal, message } = App.useApp()
+  const { modal } = App.useApp()
   const { id } = useParams<{ id: string }>()
   const { user } = useAuthStore()
   const navigate = useNavigate()
@@ -42,17 +41,15 @@ export function MySettlementDetailPage() {
       if (data) {
         setSettlement(data)
       } else {
-        message.error(MESSAGES.error.settlementNotFound)
         navigate('/settlements/my')
       }
     } catch (error) {
       console.error('정산 로드 실패:', error)
-      message.error(MESSAGES.error.settlementLoadFailed)
       navigate('/settlements/my')
     } finally {
       setLoading(false)
     }
-  }, [id, message, navigate, user?.instructorId])
+  }, [id, navigate, user?.instructorId])
 
   useEffect(() => {
     if (id && user?.instructorId) {
@@ -75,25 +72,21 @@ export function MySettlementDetailPage() {
           // 정산 ID로 지급조서 찾기
           const paymentStatement = await paymentStatementService.getBySettlementId(settlement.id)
           if (!paymentStatement) {
-            message.warning('지급조서를 찾을 수 없습니다.')
             return
           }
 
           // 강사 확인 완료 처리
           await paymentStatementService.confirmByInstructor(paymentStatement.id)
-          message.success('지급조서 확인이 완료되었습니다. 계좌로 지급이 진행됩니다.')
-
           // 정산 정보 다시 로드
           await loadSettlement()
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error('지급조서 확인 실패:', error)
-          message.error(error.message || '지급조서 확인 처리 중 오류가 발생했습니다.')
         } finally {
           setConfirming(false)
         }
       },
     })
-  }, [loadSettlement, message, modal, settlement, user?.instructorId])
+  }, [loadSettlement, modal, settlement, user?.instructorId])
 
   if (!user?.instructorId) {
     return (
@@ -293,8 +286,7 @@ export function MySettlementDetailPage() {
                         size="small"
                         onClick={() => {
                           // TODO: 파일 미리보기 API 연결
-                          message.info(MESSAGES.info.filePreviewComingSoon)
-                        }}
+                          }}
                       >
                         미리보기
                       </Button>
@@ -303,8 +295,7 @@ export function MySettlementDetailPage() {
                         size="small"
                         onClick={() => {
                           // TODO: 파일 다운로드 API 연결
-                          message.info(MESSAGES.info.fileDownloadComingSoon)
-                        }}
+                          }}
                       >
                         다운로드
                       </Button>

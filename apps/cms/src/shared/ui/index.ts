@@ -4,7 +4,7 @@
 
 export { StatusDisplay } from './status-display'
 export { SingleCTA } from './single-cta'
-export { GuideMessage } from './guide-message'
+export { GuideAlert, GuideParagraph } from './guide-alert'
 export { EmptyState } from './empty-state'
 export { ConfirmModal } from './confirm-modal'
 export { ActionResultModal } from './action-result-modal'

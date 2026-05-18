@@ -13,9 +13,9 @@ import { AppButton } from '@/shared/ui/app-button'
 import {
   addStudentFormSchema,
   type AddStudentFormValues,
-  DEFAULT_ADD_STUDENT_FORM_VALUES,
-} from '../model/school-detail-add-student-schema'
+  DEFAULT_ADD_STUDENT_FORM_VALUES } from '../model/school-detail-add-student-schema'
 import './add-student-modal.css'
+import { fieldValidationHelp } from '@/shared/utils/error-handler'
 
 export interface AddStudentModalProps {
   open: boolean
@@ -28,11 +28,9 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
     control,
     handleSubmit,
     reset,
-    formState: { errors },
-  } = useForm<AddStudentFormValues>({
+    formState: { errors } } = useForm<AddStudentFormValues>({
     resolver: zodResolver(addStudentFormSchema),
-    defaultValues: DEFAULT_ADD_STUDENT_FORM_VALUES,
-  })
+    defaultValues: DEFAULT_ADD_STUDENT_FORM_VALUES })
 
   useEffect(() => {
     if (open) {
@@ -96,7 +94,7 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
               )}
             />
             {errors.name && (
-              <span className="add-student-modal__error">{errors.name.message}</span>
+              <span className="add-student-modal__error">{fieldValidationHelp(errors.name)}</span>
             )}
           </div>
           <div className="add-student-modal__field">
@@ -143,7 +141,7 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
               )}
             />
             {errors.gradeClass && (
-              <span className="add-student-modal__error">{errors.gradeClass.message}</span>
+              <span className="add-student-modal__error">{fieldValidationHelp(errors.gradeClass)}</span>
             )}
           </div>
           <div className="add-student-modal__field">
@@ -162,7 +160,7 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
               )}
             />
             {errors.contact && (
-              <span className="add-student-modal__error">{errors.contact.message}</span>
+              <span className="add-student-modal__error">{fieldValidationHelp(errors.contact)}</span>
             )}
           </div>
           <div className="add-student-modal__field">
@@ -181,7 +179,7 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
               )}
             />
             {errors.email && (
-              <span className="add-student-modal__error">{errors.email.message}</span>
+              <span className="add-student-modal__error">{fieldValidationHelp(errors.email)}</span>
             )}
           </div>
         </form>

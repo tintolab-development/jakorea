@@ -72,7 +72,6 @@ export function UjatRecruitVolunteerInfoProgramView({
   volunteerHalf,
   showNoticeExposure,
   sectionTitle = '봉사자 모집 정보',
-  sectionDescription,
 }: {
   program: Program
   sponsorName?: string
@@ -81,7 +80,6 @@ export function UjatRecruitVolunteerInfoProgramView({
   volunteerHalf: UjatVolunteerRecruitHalf
   showNoticeExposure: boolean
   sectionTitle?: string
-  sectionDescription?: string | null
 }) {
   const period = getUjatVolunteerRecruitPeriod(program, volunteerHalf)
   const volunteerPeriodLabel = formatDateRange(period.start, period.end)
@@ -94,10 +92,7 @@ export function UjatRecruitVolunteerInfoProgramView({
 
   return (
     <>
-      <UjatRecruitSectionDescriptionHeader
-        title={sectionTitle}
-        description={sectionDescription}
-      />
+      <UjatRecruitSectionDescriptionHeader title={sectionTitle} />
       {showNoticeExposure && (
         <DetailInfoForm title="봉사자 모집 공고 노출 시점" hideHeader mode={formMode}>
           <DetailInfoForm.Row type="single">

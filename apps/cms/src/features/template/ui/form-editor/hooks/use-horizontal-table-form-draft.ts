@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { message } from 'antd'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import {
   cloneHorizontalTableParagraph,
@@ -216,11 +215,9 @@ export function useHorizontalTableFormDraft({
       const onlyTables = paragraphsAreOnlyTableLayoutParagraphs(prev.paragraphs)
       const middle = onlyTables ? prev.paragraphs : prev.paragraphs.slice(0, -1)
       if (middle.length <= 1) {
-        message.warning('테이블 단락은 최소 1개 이상 유지해야 합니다.')
         return prev
       }
       if (!middle.some(p => p.id === paragraphId)) {
-        message.warning('마무리 단락은 삭제할 수 없습니다.')
         return prev
       }
       const idx = prev.paragraphs.findIndex(p => p.id === paragraphId)

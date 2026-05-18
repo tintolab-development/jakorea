@@ -69,24 +69,18 @@ export async function register(request: RegisterRequest): Promise<RegisterRespon
       schoolInfo: {
         schoolName: formData.schoolName,
         address: formData.schoolAddress,
-        position: formData.position,
-      },
-    }),
+        position: formData.position } }),
     ...(formData.role === 'INSTRUCTOR' && {
       instructorInfo: {
         bankName: formData.bankName,
         accountNumber: formData.accountNumber,
         accountHolder: formData.accountHolder,
-        isBusinessIncome: formData.isBusinessIncome,
-      },
-    }),
+        isBusinessIncome: formData.isBusinessIncome } }),
     // P1: 관리자 회원가입 시 adminLevel 및 초기 programRole 설정
     ...(formData.role === 'ADMIN' && {
       adminLevel: formData.adminLevel || 'GENERAL',
       // 초기 programRole은 ASSISTANT로 설정 (프로그램 생성 시 OWNER로 변경됨)
-      programRoles: {},
-    }),
-  }
+      programRoles: {} }) }
 
   // Mock 데이터에 추가 (실제로는 API 호출)
   mockUsers.push(newUser)
@@ -99,14 +93,11 @@ export async function register(request: RegisterRequest): Promise<RegisterRespon
     termsOfService: consent.termsOfService,
     privacyPolicy: consent.privacyPolicy,
     marketingConsent: consent.marketingConsent,
-    consentedAt: new Date().toISOString(),
-  })
+    consentedAt: new Date().toISOString() })
 
   return {
     success: true,
-    userId: newUser.id,
-    message: '회원가입이 완료되었습니다.',
-  }
+    userId: newUser.id }
 }
 
 /**

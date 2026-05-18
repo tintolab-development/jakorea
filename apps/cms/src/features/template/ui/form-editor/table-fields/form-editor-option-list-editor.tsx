@@ -1,4 +1,3 @@
-import { message } from 'antd'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { FormEditorHorizontalTableOptionAddIcon } from '@/features/template/ui/form-editor/table-fields/form-editor-horizontal-table-option-add-icon'
@@ -28,14 +27,12 @@ export function FormEditorOptionListEditor({
   const canRemoveRow = values.length > minOptions
   const add = () => {
     if (atMax) {
-      message.warning(`선택지는 최대 ${maxOptions}개까지 추가할 수 있습니다.`)
       return
     }
     onChange([...values, ''])
   }
   const remove = (i: number) => {
     if (!canRemoveRow) {
-      message.warning(`항목은 최소 ${minOptions}개 이상 유지해야 합니다.`)
       return
     }
     onChange(values.filter((_, j) => j !== i))

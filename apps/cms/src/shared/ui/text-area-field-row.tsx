@@ -34,8 +34,7 @@ export function TextAreaFieldRow<TFieldValues extends FieldValues>({
   placeholder,
   readContent,
   textareaClassName = 'text-area-field-row__content-textarea',
-  readContentWrapperClassName = 'text-area-field-row__content-block',
-}: TextAreaFieldRowProps<TFieldValues>) {
+  readContentWrapperClassName = 'text-area-field-row__content-block' }: TextAreaFieldRowProps<TFieldValues>) {
   return (
     <tr>
       <th>
@@ -57,9 +56,9 @@ export function TextAreaFieldRow<TFieldValues extends FieldValues>({
                   className={textareaClassName}
                   status={fieldState.error ? 'error' : undefined}
                 />
-                {fieldState.error?.message && (
+                {fieldState.error && (
                   <span className="text-area-field-row__field-error">
-                    {fieldState.error.message}
+                    {fieldState.error ? '입력값을 확인해주세요.' : null}
                   </span>
                 )}
               </>

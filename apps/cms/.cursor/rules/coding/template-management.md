@@ -60,4 +60,4 @@ Prefer **`CmsCheckbox` / `CmsCheckbox.Group`** from `@/shared/ui/cms-checkbox` w
 - [list-page composition](./list-page-composition.mdc) — list pages elsewhere  
 - [Form editor modes (view / edit / write)](../template/form-editor-modes.mdc) — 배포 양식·설명글 단락 (write 없음)
 
-**Last updated:** 2026-04-28
+**Last updated:** 2026-05-19

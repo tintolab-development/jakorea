@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import { message } from 'antd'
-import { MESSAGES } from '@/shared/constants/messages'
 import type { EmailTemplate, SmsTemplate } from '@/types/template'
 
 type TemplateType = EmailTemplate | SmsTemplate
@@ -54,7 +52,6 @@ export function useTemplateCRUD<T extends TemplateType>(
     } as T
 
     setRows(prev => [copiedTemplate, ...prev])
-    message.success(MESSAGES.success.templateCopied)
     openEdit(copiedTemplate)
   }
 

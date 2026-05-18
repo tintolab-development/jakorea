@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { MESSAGES } from '@/shared/constants'
-import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { handleError } from '@/shared/utils/error-handler'
 import { mockApplications, mockMatchings, mockSchedules } from '@/data/mock'
 import { useProgramStore } from '@/features/program/model/program-store'
 import { useProgramStatusManager } from '@/features/program/hooks/use-program-status-manager'
@@ -40,11 +40,9 @@ export function useProgramListActions() {
 
       if (editingProgram) {
         await updateProgram(editingProgram.id, programData)
-        showSuccessMessage(MESSAGES.success.updated)
-      } else {
+        } else {
         await createProgram(programData as Omit<Program, 'id' | 'createdAt' | 'updatedAt'>)
-        showSuccessMessage(MESSAGES.success.created)
-      }
+        }
       closeFormModal()
       fetchPrograms()
     } catch (error) {
@@ -108,7 +106,6 @@ export function useProgramListActions() {
       // Note: In a real app, this would be handled by the backend.
 
       await deleteProgram(program.id)
-      showSuccessMessage(MESSAGES.success.deleted)
       await fetchPrograms()
       onSuccess()
     } catch (error) {
@@ -126,7 +123,6 @@ export function useProgramListActions() {
         // Re-use logic for related data if needed, or assume backend handles it
         await deleteProgram(program.id)
       }
-      showSuccessMessage(`선택한 ${programs.length}건이 삭제되었습니다.`)
       await fetchPrograms()
       onSuccess()
     } catch (error) {

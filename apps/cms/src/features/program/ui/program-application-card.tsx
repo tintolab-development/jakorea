@@ -3,7 +3,7 @@
  */
 
 import { Card, Space, Alert, Typography } from 'antd'
-import { StatusDisplay, GuideMessage, SingleCTA } from '@/shared/ui'
+import { StatusDisplay, GuideAlert, SingleCTA } from '@/shared/ui'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { Link } from 'react-router-dom'
 
@@ -17,7 +17,7 @@ interface ProgramApplicationCardProps {
     id: string
     pathType: 'google_form' | 'internal'
     googleFormUrl?: string
-    guideMessage?: string
+    guideText?: string
     isActive: boolean
   }
   remainingCapacity?: number
@@ -46,8 +46,7 @@ export function ProgramApplicationCard({
   userRole: _userRole, // eslint-disable-line @typescript-eslint/no-unused-vars
   isAdmin = false,
   onApplicationClick,
-  applyRedirectPath,
-}: ProgramApplicationCardProps) {
+  applyRedirectPath }: ProgramApplicationCardProps) {
   const { isAuthenticated } = useAuthStore()
 
   // Phase 0.5.2: 관리자는 신청하기 버튼을 볼 수 없음
@@ -67,7 +66,6 @@ export function ProgramApplicationCard({
         {/* Phase 0.2.1 / FR-C01: 비로그인 사용자 로그인/회원가입 유도 (redirect 연동) */}
         {!isAuthenticated && applicationAvailable && (
           <Alert
-            message="로그인이 필요합니다"
             description={
               <span>
                 프로그램 신청을 위해 <Link to={loginTo}>로그인</Link> 또는{' '}
@@ -82,7 +80,6 @@ export function ProgramApplicationCard({
 
         {/* 승인제 안내 */}
         <Alert
-          message="이 프로그램은 승인제로 운영됩니다."
           description="신청 후 관리자 승인을 거쳐 참여가 확정됩니다. 승인 결과는 마이페이지에서 확인하실 수 있습니다."
           type="info"
           showIcon
@@ -95,16 +92,14 @@ export function ProgramApplicationCard({
             <StatusDisplay
               status="available"
               statusLabels={{
-                available: '이 프로그램에 신청할 수 있습니다.',
-              }}
+                available: '이 프로그램에 신청할 수 있습니다.' }}
               statusColors={{
-                available: 'success',
-              }}
+                available: 'success' }}
             />
 
             {/* 안내 문구 */}
-            {applicationPath && applicationPath.guideMessage && (
-              <GuideMessage message={applicationPath.guideMessage} type="info" />
+            {applicationPath && applicationPath.guideText && (
+              <GuideAlert text={applicationPath.guideText} type="info" />
             )}
 
             {/* 정원 정보 */}
@@ -113,14 +108,14 @@ export function ProgramApplicationCard({
                 {capacityFull ? (
                   <Alert
                     type="warning"
-                    message={`정원이 마감되었습니다. (잔여: ${remainingCapacity}명)`}
+                    description={`정원이 마감되었습니다. (잔여: ${remainingCapacity}명)`}
                     showIcon
                     style={{ margin: 0 }}
                   />
                 ) : capacityAlmostFull ? (
                   <Alert
                     type="warning"
-                    message={`정원이 거의 마감되었습니다. (잔여: ${remainingCapacity}명)`}
+                    description={`정원이 거의 마감되었습니다. (잔여: ${remainingCapacity}명)`}
                     showIcon
                     style={{ margin: 0 }}
                   />
@@ -152,7 +147,6 @@ export function ProgramApplicationCard({
             {userHasApplied && (
               <Alert
                 type="info"
-                message="이미 신청하신 프로그램입니다."
                 description="신청 내역은 '마이페이지 > 내가 신청한 프로그램'에서 확인하실 수 있습니다."
                 showIcon
                 style={{ marginTop: 16 }}
@@ -164,11 +158,9 @@ export function ProgramApplicationCard({
             <StatusDisplay
               status="unavailable"
               statusLabels={{
-                unavailable: '현재 이 프로그램에 신청할 수 없습니다.',
-              }}
+                unavailable: '현재 이 프로그램에 신청할 수 없습니다.' }}
               statusColors={{
-                unavailable: 'error',
-              }}
+                unavailable: 'error' }}
             />
             <Paragraph style={{ margin: 0, marginTop: 12, fontSize: 14, color: '#8c8c8c' }}>
               {unavailableReason || '프로그램 상태로 인해 신청할 수 없습니다.'}

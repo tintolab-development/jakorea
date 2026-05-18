@@ -7,7 +7,6 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { message } from 'antd'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
@@ -220,8 +219,7 @@ export function AgreementWritingFormShell({
   }, [setParams, openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    message.success('저장 API 연동 전입니다.')
-  }, [])
+    }, [])
 
   const handleSelectParagraph = useCallback((id: string) => {
     setActiveParagraphId(id)

@@ -3,7 +3,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import {
@@ -181,9 +180,9 @@ export function usePaymentOrderDetailLinesController(
       })
     )
     if (payload.status === 'confirmed') {
-      message.success('지급조서 확인 완료로 반영되었습니다.')
+      console.debug('payment order confirmed', payload)
     } else if (payload.status === 'application_rejected') {
-      message.success('신청 반려로 반영되었습니다.')
+      console.debug('payment order application rejected', payload)
     }
   }, [])
 
@@ -218,7 +217,6 @@ export function usePaymentOrderDetailLinesController(
             : row
         )
       )
-      message.success('선택한 항목이 지급조서 확인 완료로 반영되었습니다.')
       setBatchConfirmOpen(false)
       setSelectedRowKeys([])
     },

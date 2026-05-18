@@ -20,8 +20,8 @@ import {
   type InstructorListFilters,
 } from '@/entities/instructor/api/instructor-list-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { handleError } from '@/shared/utils/error-handler'
 import { MESSAGES } from '@/shared/constants'
+import { handleError } from '@/shared/utils/error-handler'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import './instructor-list-page.css'
 

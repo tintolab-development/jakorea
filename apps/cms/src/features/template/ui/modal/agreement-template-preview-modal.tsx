@@ -1,10 +1,9 @@
+import { Alert } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
-import { message } from 'antd'
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type {
   FormEditorKind,
-  WritingFormDraft,
-} from '@/features/template/model/writing-form-draft.schema'
+  WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { A4DocumentPageLayout } from '@/features/template/ui/layout'
@@ -12,10 +11,10 @@ import { useA4ParagraphPages } from '@/features/template/hooks/use-a4-paragraph-
 import { FormDocumentPreviewBody } from '@/features/template/ui/document-preview'
 import {
   collectFormDocumentPdfPageElements,
-  downloadFormDocumentPdfFromPageElements,
-} from '@/features/template/lib/generate-form-document-pdf'
+  downloadFormDocumentPdfFromPageElements } from '@/features/template/lib/generate-form-document-pdf'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import './agreement-template-preview-modal.css'
+import { handleError, unknownErrorText } from '@/shared/utils/error-handler'
 
 export interface AgreementTemplatePreviewModalProps {
   open: boolean
@@ -46,16 +45,14 @@ export function AgreementTemplatePreviewModal({
   updateParagraph,
   editorKind = 'agreement',
   zIndex = 1100,
-  focusedParagraphId = null,
-}: AgreementTemplatePreviewModalProps) {
+  focusedParagraphId = null }: AgreementTemplatePreviewModalProps) {
   void updateParagraph
   const previewScrollRef = useRef<HTMLDivElement>(null)
   const { pages, overflowParagraphIds, measureLayer } = useA4ParagraphPages({
     allParagraphs: draft.paragraphs,
     titleNumbering: draft.formSettings.titleNumbering,
     editorKind,
-    enabled: open,
-  })
+    enabled: open })
 
   const focusInAnyPage = useMemo(
     () =>
@@ -75,18 +72,19 @@ export function AgreementTemplatePreviewModal({
 
   const pdfHostRef = useRef<HTMLDivElement>(null)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [pdfError, setPdfError] = useState<string | null>(null)
 
   const handlePdfDownload = useCallback(async () => {
     const root = pdfHostRef.current
     if (root == null) return
     setPdfLoading(true)
+    setPdfError(null)
     try {
       const pageEls = collectFormDocumentPdfPageElements(root)
       await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(headerTitle))
-      message.success('PDF가 저장되었습니다')
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'PDF 생성에 실패했습니다'
-      message.error(msg)
+      handleError(e, { context: 'agreementTemplatePreviewModal.pdfDownload' })
+      setPdfError(unknownErrorText(e, 'PDF 생성에 실패했습니다'))
     } finally {
       setPdfLoading(false)
     }
@@ -158,6 +156,7 @@ export function AgreementTemplatePreviewModal({
             <p className="agreement-template-preview-modal__notice">
               * 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다.
             </p>
+            {pdfError ? <Alert type="error" description={pdfError} showIcon /> : null}
             <div className="agreement-template-preview-modal__actions">
               <button
                 type="button"

@@ -12,16 +12,14 @@ import { sponsorManagementTablePageConfig } from '@/features/sponsor/model/spons
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  StatusDropdownCell,
-} from '@/shared/components/status-dropdown-cell'
+  StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { EMPTY_TABLE_PAGE_CONTEXT } from '@/shared/components/table-system/model/use-table-page'
 import { useDeleteGuideMessages } from '@/shared/hooks'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
-  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
-} from '@/shared/constants'
+  DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import './sponsor-page.css'
@@ -35,16 +33,14 @@ import {
   buildDeleteCompletedMessageSingle,
   buildDeleteCompletedTitle,
   buildRegisterCompletedMessage,
-  buildRegisterCompletedTitle,
-} from '@/shared/ui'
+  buildRegisterCompletedTitle } from '@/shared/ui'
 import { SponsorDeleteBlockedModal } from '@/features/sponsor/ui/modal/sponsor-delete-blocked-modal'
 import { SponsorRegisterModal } from '@/features/sponsor/ui/modal/sponsor-register-modal'
 import { SponsorDetailFullPageModal } from '@/features/sponsor/ui/sponsor-detail-fullpage-modal'
 
 const ORG_LABEL: Record<NonNullable<SponsorManagementRow['organizationKind']>, string> = {
   corporate: '기업',
-  foundation: '재단',
-}
+  foundation: '재단' }
 
 const SPONSORSHIP_STATUS_OPTIONS = [
   'active',
@@ -65,13 +61,11 @@ export default function SponsorPage() {
     applySearch: handleSearch,
     handleFilterChange,
     displayedCount,
-    tableData,
-  } = useTablePage(sponsorManagementTablePageConfig, {
+    tableData } = useTablePage(sponsorManagementTablePageConfig, {
     data: rows,
     searchParams,
     setSearchParams,
-    context: EMPTY_TABLE_PAGE_CONTEXT,
-  })
+    context: EMPTY_TABLE_PAGE_CONTEXT })
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [openSponsorshipDropdownId, setOpenSponsorshipDropdownId] = useState<string | null>(null)
@@ -133,8 +127,7 @@ export default function SponsorPage() {
     bulkCounterPhrase: '개의 후원사',
     particleTargetNoun: '후원사',
     singleTitle: '후원사 삭제 안내',
-    getDisplayName: sponsor => sponsor.name ?? '',
-  })
+    getDisplayName: sponsor => sponsor.name ?? '' })
 
   const handleBulkDelete = useCallback(() => {
     if (!canWrite || selectedRowKeys.length === 0) return
@@ -207,30 +200,26 @@ export default function SponsorPage() {
         className: CMS_TABLE_NO_COL_CLASS,
         width: TABLE_COLUMN_WIDTHS.index,
         align: 'center',
-        render: (_: unknown, __: SponsorManagementRow, index: number) => tableData.length - index,
-      },
+        render: (_: unknown, __: SponsorManagementRow, index: number) => tableData.length - index },
       {
         title: '구분',
         key: 'organizationKind',
         width: 100,
         align: 'center',
         render: (_: unknown, r: SponsorManagementRow) =>
-          ORG_LABEL[r.organizationKind ?? 'corporate'],
-      },
+          ORG_LABEL[r.organizationKind ?? 'corporate'] },
       {
         title: '후원사명',
         dataIndex: 'name',
         key: 'name',
         width: 200,
-        ellipsis: true,
-      },
+        ellipsis: true },
       {
         title: '주 담당자',
         key: 'mainManager',
         width: TABLE_COLUMN_WIDTHS.name,
         ellipsis: true,
-        render: (_: unknown, r: SponsorManagementRow) => r.managers?.[0]?.name ?? '-',
-      },
+        render: (_: unknown, r: SponsorManagementRow) => r.managers?.[0]?.name ?? '-' },
       {
         title: '주 담당자 연락처',
         key: 'mainManagerPhone',
@@ -240,15 +229,13 @@ export default function SponsorPage() {
           const raw = r.managers?.[0]?.phone
           if (!raw?.trim()) return '-'
           return MASKING_POLICY.phone(raw)
-        },
-      },
+        } },
       {
         title: '프로그램 진행 수',
         dataIndex: 'programCount',
         key: 'programCount',
         width: 130,
-        align: 'center',
-      },
+        align: 'center' },
       {
         title: '후원 상태',
         key: 'sponsorshipStatus',
@@ -272,16 +259,14 @@ export default function SponsorPage() {
             isOpen={openSponsorshipDropdownId === r.id}
             onOpenChange={open => setOpenSponsorshipDropdownId(open ? r.id : null)}
           />
-        ),
-      },
+        ) },
       {
         title: '후원 시작일',
         dataIndex: 'sponsorshipStartDate',
         key: 'sponsorshipStartDate',
         width: TABLE_COLUMN_WIDTHS.date,
         render: (v: string | undefined) =>
-          v ? dayjs(v).format('YYYY.MM.DD') : <Typography.Text type="secondary">-</Typography.Text>,
-      },
+          v ? dayjs(v).format('YYYY.MM.DD') : <Typography.Text type="secondary">-</Typography.Text> },
     ],
     [canWrite, tableData.length, openSponsorshipDropdownId, updateSponsorshipStatus]
   )
@@ -296,8 +281,7 @@ export default function SponsorPage() {
           organizationKind: pendingFilters.organizationKind,
           sponsorName: pendingFilters.sponsorName,
           managerName: pendingFilters.managerName,
-          sponsorshipStatus: pendingFilters.sponsorshipStatus,
-        }}
+          sponsorshipStatus: pendingFilters.sponsorshipStatus }}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="후원사 목록"
@@ -339,16 +323,14 @@ export default function SponsorPage() {
                 next.set('sponsorId', record.id)
                 return next
               })
-            },
-          })}
+            } })}
           rowSelection={
             canWrite
               ? {
                   columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                   selectedRowKeys,
                   onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
-                  preserveSelectedRowKeys: false,
-                }
+                  preserveSelectedRowKeys: false }
               : undefined
           }
         />
@@ -383,7 +365,7 @@ export default function SponsorPage() {
       <ActionResultModal
         open={actionResultModalOpen}
         title={actionResultTitle}
-        message={actionResultMessage}
+        body={actionResultMessage}
         onClose={handleCloseActionResultModal}
       />
     </>

@@ -32,8 +32,7 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
         name: values.name,
         phone: values.phone,
         role: values.role,
-        isActive: values.isActive ?? true,
-      }
+        isActive: values.isActive ?? true }
 
       // 관리자 권한 설정
       if (values.role === 'ADMIN') {
@@ -46,8 +45,7 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
         request.schoolInfo = {
           schoolName: values.schoolName,
           address: values.schoolAddress || '',
-          position: values.position,
-        }
+          position: values.position }
       }
 
       // 강사 정보 설정
@@ -56,8 +54,7 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
           bankName: values.bankName,
           accountNumber: values.accountNumber,
           accountHolder: values.accountHolder,
-          isBusinessIncome: values.isBusinessIncome ?? false,
-        }
+          isBusinessIncome: values.isBusinessIncome ?? false }
       }
 
       await onSubmit(request)
@@ -84,8 +81,8 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
         name="email"
         label="이메일"
         rules={[
-          { required: true, message: '이메일을 입력해주세요.' },
-          { type: 'email', message: '올바른 이메일 형식이 아닙니다.' },
+          { required: true },
+          { type: 'email' },
         ]}
       >
         <Input placeholder="이메일을 입력하세요" />
@@ -95,8 +92,8 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
         name="password"
         label="비밀번호"
         rules={[
-          { required: true, message: '비밀번호를 입력해주세요.' },
-          { min: 8, message: '비밀번호는 최소 8자 이상이어야 합니다.' },
+          { required: true },
+          { min: 8 },
         ]}
       >
         <Input.Password placeholder="비밀번호를 입력하세요" />
@@ -105,7 +102,7 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
       <Form.Item
         name="name"
         label="이름"
-        rules={[{ required: true, message: '이름을 입력해주세요.' }]}
+        rules={[{ required: true }]}
       >
         <Input placeholder="이름을 입력하세요" />
       </Form.Item>
@@ -115,9 +112,7 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
         label="전화번호"
         rules={[
           {
-            pattern: /^010-\d{4}-\d{4}$/,
-            message: '010-XXXX-XXXX 형식으로 입력해주세요.',
-          },
+            pattern: /^010-\d{4}-\d{4}$/ },
         ]}
       >
         <Input placeholder="010-1234-5678" />
@@ -126,7 +121,7 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
       <Form.Item
         name="role"
         label="권한"
-        rules={[{ required: true, message: '권한을 선택해주세요.' }]}
+        rules={[{ required: true }]}
       >
         <Select placeholder="권한 선택">
           {roleOptions.map(role => (
@@ -142,7 +137,7 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
           <Form.Item
             name="adminLevel"
             label="관리자 권한 레벨"
-            rules={[{ required: true, message: '관리자 권한 레벨을 선택해주세요.' }]}
+            rules={[{ required: true }]}
           >
             <Select placeholder="관리자 권한 레벨 선택">
               {adminLevelOptions.map(adminLevel => (
@@ -155,7 +150,7 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
           <Form.Item
             name="programRole"
             label="프로그램 역할"
-            rules={[{ required: true, message: '프로그램 역할을 선택해주세요.' }]}
+            rules={[{ required: true }]}
           >
             <Select placeholder="프로그램 역할 선택">
               {programRoleOptions.map(programRole => (
@@ -173,7 +168,7 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
           <Form.Item
             name="schoolName"
             label="학교명"
-            rules={[{ required: true, message: '학교명을 입력해주세요.' }]}
+            rules={[{ required: true }]}
           >
             <Input placeholder="학교명을 입력하세요" />
           </Form.Item>

@@ -4,7 +4,6 @@
 
 import { useEffect, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { message } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui/app-button'
 import { AppDatePicker } from '@/shared/ui/app-datepicker'
@@ -40,13 +39,12 @@ export function PaymentOrderBatchConfirmModal({
 
   const handleConfirm = () => {
     if (scheduledDate == null || !scheduledDate.isValid()) {
-      message.warning('강의비 지급 예정일을 선택해 주세요.')
       return
     }
     if (onConfirm) {
       onConfirm(scheduledDate)
     } else {
-      message.success('지급조서 확인 완료 처리는 추후 API와 연동됩니다.')
+      console.debug('paymentOrderBatchConfirmModal onConfirm not provided')
     }
     onCancel()
   }

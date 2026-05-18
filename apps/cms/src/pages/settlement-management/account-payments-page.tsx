@@ -5,7 +5,7 @@
 
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Spin, Table, message } from 'antd'
+import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -431,13 +431,11 @@ export default function AccountPaymentsPage() {
    */
   const resolveToolbarFormIssueRows = useCallback((): AccountPaymentRow[] | null => {
     if (selectedRowKeys.length === 0) {
-      message.warning('양식 발급할 항목을 선택해주세요.')
       return null
     }
     const keySet = new Set(selectedRowKeys.map(String))
     const picked = filteredRows.filter(r => keySet.has(String(r.id)))
     if (picked.length === 0) {
-      message.warning('선택한 항목을 찾을 수 없습니다.')
       return null
     }
     if (picked.some(r => r.accountPaymentStatus !== 'account_paid')) {
@@ -478,20 +476,26 @@ export default function AccountPaymentsPage() {
   }, [])
 
   const closeAccountPaymentDetail = useCallback(() => {
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev)
-      next.delete(AP_DETAIL_ID)
-      return next
-    }, { replace: true })
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.delete(AP_DETAIL_ID)
+        return next
+      },
+      { replace: true }
+    )
   }, [setSearchParams])
 
   const openAccountPaymentDetail = useCallback(
     (row: AccountPaymentRow) => {
-      setSearchParams(prev => {
-        const next = new URLSearchParams(prev)
-        next.set(AP_DETAIL_ID, row.id)
-        return next
-      }, { replace: false })
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set(AP_DETAIL_ID, row.id)
+          return next
+        },
+        { replace: false }
+      )
     },
     [setSearchParams]
   )
@@ -500,7 +504,6 @@ export default function AccountPaymentsPage() {
     setAccountPaymentRows(prev =>
       prev.map(r => (r.id === rowId ? { ...r, accountPaymentStatus: 'account_paid' as const } : r))
     )
-    message.success('계좌 지급 완료 처리되었습니다.')
   }, [])
 
   const closeAccountPaymentConfirmModal = useCallback(() => {
@@ -509,13 +512,11 @@ export default function AccountPaymentsPage() {
 
   const openAccountPaymentConfirmFromSelection = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      message.warning('지급 처리할 항목을 선택해주세요.')
       return
     }
     const keySet = new Set(selectedRowKeys.map(String))
     const picked = filteredRows.filter(r => keySet.has(String(r.id)))
     if (picked.length === 0) {
-      message.warning('선택한 항목을 찾을 수 없습니다.')
       return
     }
     setAccountPayConfirmSelection(picked)
@@ -618,9 +619,7 @@ export default function AccountPaymentsPage() {
     setAccountPaymentCompleteSuccessOpen(false)
     const completed = filteredRows.filter(r => r.accountPaymentStatus === 'account_paid')
     if (completed.length === 0) {
-      message.warning(
-        '현재 조회 결과에 계좌 지급 완료 항목이 없습니다. 미리보기에는 열 헤더만 표시됩니다.'
-      )
+      console.debug('accountPaymentsPage no completed rows for bulk transfer')
     }
     setIssuedFormPreviewRows(completed)
     setBulkTransferPreviewOpen(true)

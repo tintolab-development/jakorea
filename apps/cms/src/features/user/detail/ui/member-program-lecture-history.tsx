@@ -12,7 +12,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { TableProps } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
@@ -288,7 +288,6 @@ export function MemberProgramLectureHistory({
       .filter(row => keySet.has(String(row.id)))
       .map(row => programTitle(row.programId))
     if (titles.length === 0 || !buildProgramProgressHistoryDeleteGuide(titles, historyDeleteDomain)) {
-      message.warning('선택한 이력을 찾을 수 없습니다.')
       return
     }
     setDeleteHistoryModalOpen(true)
@@ -329,7 +328,7 @@ export function MemberProgramLectureHistory({
     if (onBulkDelete) {
       onBulkDelete(ids)
     } else {
-      message.info('이력 삭제는 추후 연결됩니다.')
+      console.debug('memberProgramLectureHistory onBulkDelete not provided')
     }
     setSelectedRowKeys([])
     setDeleteHistoryModalOpen(false)
@@ -469,7 +468,6 @@ export function MemberProgramLectureHistory({
                   className="user-detail-modal__attendance-link"
                   onClick={() => {
                     if (onOpenAttendance) onOpenAttendance(record)
-                    else message.info('강의 출석 내역은 추후 연결됩니다.')
                   }}
                 >
                   {text.replace('/', ' / ')}
@@ -493,7 +491,6 @@ export function MemberProgramLectureHistory({
                 disabled={!record.hasAssignmentSubmission}
                 onClick={() => {
                   if (onOpenAssignment) onOpenAssignment(record)
-                  else message.info('과제 제출 내역은 추후 연결됩니다.')
                 }}
               >
                 내역 보기
@@ -588,7 +585,6 @@ export function MemberProgramLectureHistory({
                 icon={<DownloadOutlined />}
                 onClick={() => {
                   if (onDownloadActivityReport) onDownloadActivityReport(record)
-                  else message.info('활동보고서 다운로드는 추후 연결됩니다.')
                 }}
               >
                 다운로드

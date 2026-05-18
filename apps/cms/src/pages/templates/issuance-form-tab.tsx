@@ -1,15 +1,13 @@
-import { message, Table } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import {
   getA4DocumentTitle,
-  getA4PreviewParagraphs,
-} from '@/features/template/lib/a4-document-preview'
+  getA4PreviewParagraphs } from '@/features/template/lib/a4-document-preview'
 import {
   collectFormDocumentPdfPageElements,
-  downloadFormDocumentPdfFromPageElements,
-} from '@/features/template/lib/generate-form-document-pdf'
+  downloadFormDocumentPdfFromPageElements } from '@/features/template/lib/generate-form-document-pdf'
 import { useA4ParagraphPages } from '@/features/template/hooks/use-a4-paragraph-pages'
 import {
   createDefaultSurveyDraft,
@@ -21,22 +19,18 @@ import {
   UJAT_EDUCATION_JOURNAL_HIDDEN_DRAG_HANDLE_IDS,
   UJAT_EDUCATION_PLAN_HIDDEN_DRAG_HANDLE_IDS,
   UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME,
-  type WritingFormDraft,
-} from '@/features/template/model/writing-form-draft.schema'
+  type WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import {
   getPaymentStatementA4ParagraphGap,
-  PAYMENT_STATEMENT_A4_HIDDEN_PARAGRAPH_IDS,
-} from '@/features/template/model/payment-statement-issuance-a4-preview'
+  PAYMENT_STATEMENT_A4_HIDDEN_PARAGRAPH_IDS } from '@/features/template/model/payment-statement-issuance-a4-preview'
 import {
   getPaymentStatementPreConsentA4ParagraphGap,
-  PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS,
-} from '@/features/template/model/payment-statement-pre-consent-a4-preview'
+  PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS } from '@/features/template/model/payment-statement-pre-consent-a4-preview'
 import { createSettlementApplicationIssuanceDraft } from '@/features/template/model/settlement-application-issuance-draft'
 import { createPaymentStatementPreConsentDraft } from '@/features/template/model/payment-statement-pre-consent-draft'
 import {
   getSettlementApplicationA4ParagraphGap,
-  SETTLEMENT_APPLICATION_A4_HIDDEN_PARAGRAPH_IDS,
-} from '@/features/template/model/settlement-application-issuance-a4-preview'
+  SETTLEMENT_APPLICATION_A4_HIDDEN_PARAGRAPH_IDS } from '@/features/template/model/settlement-application-issuance-a4-preview'
 import { TemplateListCard } from '@/features/template/ui/template-management/template-list-card'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { A4DocumentPageLayout } from '@/features/template/ui/layout'
@@ -47,55 +41,47 @@ import {
   mergeLeftCardOrderByDragIds,
   normalizeLeftCardOrder,
   TemplateModalLeftContent,
-  type TemplateModalLeftCardConfig,
-} from '@/features/template/ui/template-management/template-modal-left-content'
+  type TemplateModalLeftCardConfig } from '@/features/template/ui/template-management/template-modal-left-content'
 import {
   TemplateModalRightNavigation,
-  type TemplateModalRightNavigationConfig,
-} from '@/features/template/ui/template-management/template-modal-right-navigation'
+  type TemplateModalRightNavigationConfig } from '@/features/template/ui/template-management/template-modal-right-navigation'
 import { usePaymentStatementIssuanceEditor } from '@/features/template/hooks/use-payment-statement-issuance-editor'
 import { usePaymentStatementPreConsentEditor } from '@/features/template/hooks/use-payment-statement-pre-consent-editor'
 import { useSettlementApplicationIssuanceEditor } from '@/features/template/hooks/use-settlement-application-issuance-editor'
 import { useLectureReportIssuanceEditor } from '@/features/template/hooks/use-lecture-report-issuance-editor'
 import {
   useUjatEducationIssuanceEditor,
-  type UjatEducationIssuanceVariant,
-} from '@/features/template/hooks/use-ujat-education-plan-issuance-editor'
+  type UjatEducationIssuanceVariant } from '@/features/template/hooks/use-ujat-education-plan-issuance-editor'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import {
   FormEditorRightPanel,
-  FormEditorTitleNumberingField,
-} from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
+  FormEditorTitleNumberingField } from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
 import {
   PaymentStatementIssuanceEditorLeftColumn,
-  PaymentStatementIssuanceEditorRightColumn,
-} from '@/features/template/ui/form-set/payment-statement-issuance'
+  PaymentStatementIssuanceEditorRightColumn } from '@/features/template/ui/form-set/payment-statement-issuance'
 import { PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-config'
 import {
   PaymentStatementPreConsentEditorLeftColumn,
-  PaymentStatementPreConsentEditorRightColumn,
-} from '@/features/template/ui/form-set/payment-statement-pre-consent/editor'
+  PaymentStatementPreConsentEditorRightColumn } from '@/features/template/ui/form-set/payment-statement-pre-consent/editor'
 import { PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/payment-statement-pre-consent/paragraph-config'
 import {
   SettlementApplicationIssuanceEditorLeftColumn,
-  SettlementApplicationIssuanceEditorRightColumn,
-} from '@/features/template/ui/form-set/settlement-application-issuance/editor'
+  SettlementApplicationIssuanceEditorRightColumn } from '@/features/template/ui/form-set/settlement-application-issuance/editor'
 import { SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/settlement-application-issuance/paragraph-config'
 import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-management/template-custom-fields-form'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import {
-  TEMPLATE_USER_PREVIEW_ACTIVE,
-} from '@/features/template/lib/template-user-preview-url'
+  TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import {
   createContentOnlyA4PreviewOptions,
   isCertificateIssuanceTemplateName,
-  shouldUseA4PreviewForIssuanceTemplate,
-} from '@/features/template/lib/a4-preview-template-options'
+  shouldUseA4PreviewForIssuanceTemplate } from '@/features/template/lib/a4-preview-template-options'
 import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-overlay'
 import { FormTemplateFullpageModal } from './form-template-fullpage-modal'
 import './form-test-single-item-fullpage-modal.css'
+import { handleError } from '@/shared/utils/error-handler'
 
 const PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME = '지급조서(발급용)'
 const PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME = '지급조서 사전 동의서'
@@ -110,8 +96,7 @@ const UJAT_STRUCTURED_ISSUANCE_HIDDEN_DRAG_HANDLES: Record<
   Set<string>
 > = {
   plan: UJAT_EDUCATION_PLAN_HIDDEN_DRAG_HANDLE_IDS,
-  journal: UJAT_EDUCATION_JOURNAL_HIDDEN_DRAG_HANDLE_IDS,
-}
+  journal: UJAT_EDUCATION_JOURNAL_HIDDEN_DRAG_HANDLE_IDS }
 const MULTI_PAGE_ISSUANCE_PREVIEW_TEMPLATE_NAMES = new Set(['결과보고서'])
 
 function getIssuanceUserPreviewDraft(templateName?: string): WritingFormDraft {
@@ -163,48 +148,42 @@ const issuanceRows: IssuanceTemplateRow[] = [
     templateName: 'UJAT 결과리포트',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
-    updatedAt: '-',
-  },
+    updatedAt: '-' },
   {
     key: 'issuance-2',
     no: 2,
     templateName: 'UJAT 교육계획서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
-    updatedAt: '-',
-  },
+    updatedAt: '-' },
   {
     key: 'issuance-ujat-edu-journal',
     no: 3,
     templateName: 'UJAT 교육일지',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
-    updatedAt: '-',
-  },
+    updatedAt: '-' },
   {
     key: 'issuance-3',
     no: 4,
     templateName: '강의보고서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
-    updatedAt: '-',
-  },
+    updatedAt: '-' },
   {
     key: 'issuance-4',
     no: 5,
     templateName: '정산 신청서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
-    updatedAt: '-',
-  },
+    updatedAt: '-' },
   {
     key: 'issuance-5',
     no: 6,
     templateName: '결과보고서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
-    updatedAt: '-',
-  },
+    updatedAt: '-' },
 ]
 
 const documentRows: IssuanceTemplateRow[] = [
@@ -214,56 +193,49 @@ const documentRows: IssuanceTemplateRow[] = [
     templateName: PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME,
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
-    updatedAt: '-',
-  },
+    updatedAt: '-' },
   {
     key: PAYMENT_STATEMENT_PRE_CONSENT_ROW_KEY,
     no: 2,
     templateName: PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME,
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
-    updatedAt: '-',
-  },
+    updatedAt: '-' },
   {
     key: 'document-1',
     no: 3,
     templateName: '지출증빙서류(필수폼)',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
-    updatedAt: '-',
-  },
+    updatedAt: '-' },
   {
     key: 'document-2',
     no: 4,
     templateName: '휴가 인증서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
-    updatedAt: '-',
-  },
+    updatedAt: '-' },
   {
     key: 'document-3',
     no: 5,
     templateName: '수료증',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
-    updatedAt: '-',
-  },
+    updatedAt: '-' },
   {
     key: 'document-4',
     no: 6,
     templateName: '강사 활동 인증서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
-    updatedAt: '-',
-  },
+    updatedAt: '-' },
   {
     key: 'document-5',
     no: 7,
     templateName: '봉사 활동 인증서',
     creator: '시스템 생성',
     createdAt: '2025. 09. 15',
-    updatedAt: '-',
-  },
+    updatedAt: '-' },
 ]
 
 const issuanceRowsByKey = new Map<string, IssuanceTemplateRow>(
@@ -274,8 +246,7 @@ export function IssuanceFormTab() {
   const {
     openWritingUserPreview,
     closeWritingUserPreview,
-    isWritingUserPreviewOpen,
-  } = useTemplateWritingPreview()
+    isWritingUserPreviewOpen } = useTemplateWritingPreview()
   const { params, setParams } = useQueryParams<IssuanceFormTabQuery>()
   useWritingUserPreviewUrlAuxiliarySync(
     params,
@@ -308,8 +279,7 @@ export function IssuanceFormTab() {
     if (!isCertificateIssuance || selectedTemplate == null) return undefined
     return {
       ...DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,
-      titleName: selectedTemplate.templateName,
-    }
+      titleName: selectedTemplate.templateName }
   }, [isCertificateIssuance, selectedTemplate])
   const certificateIssueDate = useMemo(() => new Date(), [selectedTemplate?.key])
 
@@ -349,16 +319,14 @@ export function IssuanceFormTab() {
   const {
     pages: paymentStatementPdfPages,
     overflowParagraphIds: paymentStatementPdfOverflowParagraphIds,
-    measureLayer: paymentStatementPdfMeasureLayer,
-  } = useA4ParagraphPages({
+    measureLayer: paymentStatementPdfMeasureLayer } = useA4ParagraphPages({
     allParagraphs: paymentStatementPreviewParagraphs,
     titleNumbering: paymentStatementVm.draft.formSettings.titleNumbering,
     editorKind: 'horizontal_table',
     enabled: isPreviewOpen && isPaymentStatementIssuance,
     paragraphBodyOptions: PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS,
     renderMode: 'contentOnly',
-    paragraphGapPx: getPaymentStatementA4ParagraphGap,
-  })
+    paragraphGapPx: getPaymentStatementA4ParagraphGap })
 
   const paymentStatementPreConsentPdfHostRef = useRef<HTMLDivElement>(null)
   const [paymentStatementPreConsentPdfLoading, setPaymentStatementPreConsentPdfLoading] = useState(false)
@@ -381,16 +349,14 @@ export function IssuanceFormTab() {
   const {
     pages: paymentStatementPreConsentPdfPages,
     overflowParagraphIds: paymentStatementPreConsentPdfOverflowParagraphIds,
-    measureLayer: paymentStatementPreConsentPdfMeasureLayer,
-  } = useA4ParagraphPages({
+    measureLayer: paymentStatementPreConsentPdfMeasureLayer } = useA4ParagraphPages({
     allParagraphs: paymentStatementPreConsentPreviewParagraphs,
     titleNumbering: paymentStatementPreConsentVm.draft.formSettings.titleNumbering,
     editorKind: 'agreement',
     enabled: isPreviewOpen && isPaymentStatementPreConsent,
     paragraphBodyOptions: PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
     renderMode: 'contentOnly',
-    paragraphGapPx: getPaymentStatementPreConsentA4ParagraphGap,
-  })
+    paragraphGapPx: getPaymentStatementPreConsentA4ParagraphGap })
 
   const settlementPdfHostRef = useRef<HTMLDivElement>(null)
   const [settlementPdfLoading, setSettlementPdfLoading] = useState(false)
@@ -413,16 +379,14 @@ export function IssuanceFormTab() {
   const {
     pages: settlementPdfPages,
     overflowParagraphIds: settlementPdfOverflowParagraphIds,
-    measureLayer: settlementPdfMeasureLayer,
-  } = useA4ParagraphPages({
+    measureLayer: settlementPdfMeasureLayer } = useA4ParagraphPages({
     allParagraphs: settlementPreviewParagraphs,
     titleNumbering: settlementVm.draft.formSettings.titleNumbering,
     editorKind: 'horizontal_table',
     enabled: isPreviewOpen && isSettlementApplicationIssuance,
     paragraphBodyOptions: SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS,
     renderMode: 'contentOnly',
-    paragraphGapPx: getSettlementApplicationA4ParagraphGap,
-  })
+    paragraphGapPx: getSettlementApplicationA4ParagraphGap })
 
   const openTemplatePreview = useCallback(
     (row: IssuanceTemplateRow) => {
@@ -467,8 +431,7 @@ export function IssuanceFormTab() {
         <CmsButton size="medium" variant="default" onClick={() => openTemplatePreview(row)}>
           양식 상세보기
         </CmsButton>
-      ),
-    },
+      ) },
   ]
 
   const baseLeftContentConfig = useMemo<TemplateModalLeftCardConfig[]>(
@@ -477,18 +440,15 @@ export function IssuanceFormTab() {
         id: 'issuance-card-1',
         title: '문서 기본 정보',
         required: true,
-        description: '발급 문서 유형별 기본 제목과 안내문을 설정합니다.',
-      },
+        description: '발급 문서 유형별 기본 제목과 안내문을 설정합니다.' },
       {
         id: 'issuance-card-2',
         title: '발급 대상/조건',
-        description: '발급 대상과 노출 조건을 문서별로 설정하세요.',
-      },
+        description: '발급 대상과 노출 조건을 문서별로 설정하세요.' },
       {
         id: 'issuance-card-3',
         title: '출력 옵션',
-        description: '서명, 직인, 발급번호 등 출력 요소를 문서 유형별로 구성합니다.',
-      },
+        description: '서명, 직인, 발급번호 등 출력 요소를 문서 유형별로 구성합니다.' },
     ],
     []
   )
@@ -506,8 +466,7 @@ export function IssuanceFormTab() {
 
   const rightNavigationConfig: TemplateModalRightNavigationConfig = {
     sectionTitle: '발급 필드',
-    items: orderedLeftContentConfig.map(item => ({ id: item.id, label: item.title })),
-  }
+    items: orderedLeftContentConfig.map(item => ({ id: item.id, label: item.title })) }
 
   const applyOrderedCards = (orderedIds: string[]) => {
     setOrderedLeftContentConfig(prev => mergeLeftCardOrderByDragIds(prev, orderedIds))
@@ -535,9 +494,7 @@ export function IssuanceFormTab() {
       paragraphBodyOptions: isJournalPreview
         ? {
             ujatJournalEducationInfoAutofill: {
-              institutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME,
-            },
-          }
+              institutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME } }
         : isSettlementPreview
           ? SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS
           : isPreConsentPreview
@@ -554,8 +511,7 @@ export function IssuanceFormTab() {
         : isPreConsentPreview
           ? getPaymentStatementPreConsentA4ParagraphGap
           : undefined,
-      hideParagraphRequiredChrome: baseA4Options?.hideParagraphRequiredChrome,
-    })
+      hideParagraphRequiredChrome: baseA4Options?.hideParagraphRequiredChrome })
   }, [selectedTemplate, openWritingUserPreview])
 
   const handleModalPreview = useCallback(() => {
@@ -650,10 +606,8 @@ export function IssuanceFormTab() {
     try {
       const pageEls = collectFormDocumentPdfPageElements(root)
       await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(paymentStatementA4Title))
-      message.success('PDF가 저장되었습니다')
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'PDF 생성에 실패했습니다'
-      message.error(msg)
+      handleError(e, { context: 'issuanceFormTab.downloadPaymentStatementPdf' })
     } finally {
       setPaymentStatementPdfLoading(false)
     }
@@ -669,10 +623,8 @@ export function IssuanceFormTab() {
         pageEls,
         safePdfFileName(paymentStatementPreConsentA4Title)
       )
-      message.success('PDF가 저장되었습니다')
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'PDF 생성에 실패했습니다'
-      message.error(msg)
+      handleError(e, { context: 'issuanceFormTab.downloadPaymentStatementPreConsentPdf' })
     } finally {
       setPaymentStatementPreConsentPdfLoading(false)
     }
@@ -685,10 +637,8 @@ export function IssuanceFormTab() {
     try {
       const pageEls = collectFormDocumentPdfPageElements(root)
       await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(settlementA4Title))
-      message.success('PDF가 저장되었습니다')
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'PDF 생성에 실패했습니다'
-      message.error(msg)
+      handleError(e, { context: 'issuanceFormTab.downloadSettlementApplicationPdf' })
     } finally {
       setSettlementPdfLoading(false)
     }
@@ -807,9 +757,7 @@ export function IssuanceFormTab() {
                 ujatStructuredIssuanceVariant === 'journal'
                   ? {
                       ujatJournalEducationInfoAutofill: {
-                        institutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME,
-                      },
-                    }
+                        institutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME } }
                   : undefined
               }
             />
@@ -934,8 +882,7 @@ export function IssuanceFormTab() {
             display: 'flex',
             flexDirection: 'column',
             pointerEvents: 'none',
-            zIndex: -1,
-          }}
+            zIndex: -1 }}
           aria-hidden="true"
         >
           {paymentStatementPdfPages.map((pageParagraphs, pageIndex) => (
@@ -972,8 +919,7 @@ export function IssuanceFormTab() {
             display: 'flex',
             flexDirection: 'column',
             pointerEvents: 'none',
-            zIndex: -1,
-          }}
+            zIndex: -1 }}
           aria-hidden="true"
         >
           {paymentStatementPreConsentPdfPages.map((pageParagraphs, pageIndex) => (
@@ -1010,8 +956,7 @@ export function IssuanceFormTab() {
             display: 'flex',
             flexDirection: 'column',
             pointerEvents: 'none',
-            zIndex: -1,
-          }}
+            zIndex: -1 }}
           aria-hidden="true"
         >
           {settlementPdfPages.map((pageParagraphs, pageIndex) => (

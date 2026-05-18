@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Image, message } from 'antd'
+import { Image } from 'antd'
 import type { Program } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
@@ -114,12 +114,14 @@ function DetailSectionHeader({
   title?: string
   description?: string
 }) {
-  if (!description) return null
+  if (!title?.trim() && !description?.trim()) return null
   return (
     <header className="detail-info-form__header" style={{ marginBottom: 10 }}>
       <div className="detail-info-form__header-lead">
-        <h2 className="detail-info-form__title">{title}</h2>
-        <div className="detail-info-form__description">{description}</div>
+        {title?.trim() ? <h2 className="detail-info-form__title">{title.trim()}</h2> : null}
+        {description?.trim() ? (
+          <div className="detail-info-form__description">{description.trim()}</div>
+        ) : null}
       </div>
     </header>
   )
@@ -212,14 +214,10 @@ function ThumbnailImageRow({
                           const result = await fileUploadService.upload(file, 'image')
                           form.setValue('keyVisualImage', result.url)
                           form.setValue('posterImage', result.url)
-                          message.success('썸네일 이미지가 업로드되었습니다.')
-                        } catch (e) {
+                          } catch (e) {
                           URL.revokeObjectURL(blobUrl)
                           setThumbnailPreviewBlobUrl(null)
-                          message.error(
-                            e instanceof Error ? e.message : '썸네일 이미지 업로드에 실패했습니다.'
-                          )
-                        } finally {
+                          } finally {
                           setUploadingThumbnail(false)
                         }
                       }
@@ -369,6 +367,8 @@ export interface DetailInfoSectionProps {
   showThumbnail?: boolean
   sectionTitle?: string
   sectionDescription?: string | null
+  /** UJAT 프로그램 상세 — title만, description·기본 안내 문구 미노출 */
+  sectionTitleOnly?: boolean
 }
 
 export function DetailInfoSection({
@@ -379,6 +379,7 @@ export function DetailInfoSection({
   showThumbnail = false,
   sectionTitle,
   sectionDescription,
+  sectionTitleOnly = false,
 }: DetailInfoSectionProps) {
   const {
     editorOpen,
@@ -393,9 +394,10 @@ export function DetailInfoSection({
     form: f,
   } = useDetailInfoEditorBlock(program, isEditMode, form, onRegisterGetAdditionalContentHtml)
 
-  const headerDescription =
-    sectionDescription ??
-    '필수 정보가 아닌 항목이 공란인 경우, 상세 페이지에서 항목 미노출 됩니다.'
+  const headerDescription = sectionTitleOnly
+    ? undefined
+    : (sectionDescription ??
+      '필수 정보가 아닌 항목이 공란인 경우, 상세 페이지에서 항목 미노출 됩니다.')
 
   return (
     <>
@@ -593,6 +595,7 @@ export interface VolunteerDetailInfoSectionProps {
   onRegisterGetAdditionalContentHtml?: (getter: () => string) => void
   sectionTitle?: string
   sectionDescription?: string | null
+  sectionTitleOnly?: boolean
 }
 
 export function VolunteerDetailInfoSection({
@@ -602,6 +605,7 @@ export function VolunteerDetailInfoSection({
   onRegisterGetAdditionalContentHtml,
   sectionTitle,
   sectionDescription,
+  sectionTitleOnly = false,
 }: VolunteerDetailInfoSectionProps) {
   const {
     editorOpen,
@@ -618,8 +622,9 @@ export function VolunteerDetailInfoSection({
 
   const applicationMethod = program.applicationMethod ?? '-'
   const otherNotes = program.otherNotes ?? program.oneLineIntroduction ?? '-'
-  const headerDescription =
-    sectionDescription ?? '공란인 경우, 상세 페이지에서 항목 미노출 됩니다.'
+  const headerDescription = sectionTitleOnly
+    ? undefined
+    : (sectionDescription ?? '공란인 경우, 상세 페이지에서 항목 미노출 됩니다.')
 
   return (
     <>

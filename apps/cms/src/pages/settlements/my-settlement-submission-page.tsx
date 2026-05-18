@@ -10,8 +10,6 @@ import { ArrowLeftOutlined } from '@ant-design/icons'
 import { InstructorSettlementForm } from '@/features/settlement/ui/instructor-settlement-form'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { MESSAGES } from '@/shared/constants'
-import { message } from 'antd'
 import type { SettlementFormData } from '@/entities/settlement/model/schema'
 
 export function MySettlementSubmissionPage() {
@@ -22,7 +20,6 @@ export function MySettlementSubmissionPage() {
 
   const handleSubmit = async (data: SettlementFormData) => {
     if (!user?.instructorId && !user?.id) {
-      message.error(MESSAGES.error.loginRequired)
       return
     }
 
@@ -32,10 +29,8 @@ export function MySettlementSubmissionPage() {
         ...data,
         instructorId: user.instructorId || user.id,
       })
-      message.success(MESSAGES.success.settlementSubmitted)
       navigate('/settlements/my')
     } catch (error) {
-      message.error(MESSAGES.error.settlementSubmitFailed)
       console.error(error)
     } finally {
       setSubmitting(false)

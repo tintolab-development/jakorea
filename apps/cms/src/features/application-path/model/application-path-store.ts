@@ -7,6 +7,7 @@ import { create } from 'zustand'
 import type { ApplicationPath } from '@/types/domain'
 import type { UUID } from '@/types'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
+import { unknownErrorText } from '@/shared/utils/error-handler'
 
 interface ApplicationPathStore {
   paths: ApplicationPath[]
@@ -40,7 +41,7 @@ export const useApplicationPathStore = create<ApplicationPathStore>(set => ({
       const paths = await applicationPathService.getAll()
       set({ paths, loading: false })
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : '신청 경로 조회 실패', loading: false })
+      set({ error: unknownErrorText(error, '신청 경로 조회 실패'), loading: false })
     }
   },
 
@@ -51,7 +52,7 @@ export const useApplicationPathStore = create<ApplicationPathStore>(set => ({
       set({ loading: false })
       return path
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : '신청 경로 조회 실패', loading: false })
+      set({ error: unknownErrorText(error, '신청 경로 조회 실패'), loading: false })
       return undefined
     }
   },
@@ -63,7 +64,7 @@ export const useApplicationPathStore = create<ApplicationPathStore>(set => ({
       set({ loading: false })
       return path
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : '신청 경로 조회 실패', loading: false })
+      set({ error: unknownErrorText(error, '신청 경로 조회 실패'), loading: false })
       return undefined
     }
   },
@@ -75,7 +76,7 @@ export const useApplicationPathStore = create<ApplicationPathStore>(set => ({
       set(state => ({ paths: [...state.paths, newPath], loading: false }))
       return newPath
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : '신청 경로 생성 실패', loading: false })
+      set({ error: unknownErrorText(error, '신청 경로 생성 실패'), loading: false })
       throw error
     }
   },
@@ -91,7 +92,7 @@ export const useApplicationPathStore = create<ApplicationPathStore>(set => ({
       }))
       return updated
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : '신청 경로 수정 실패', loading: false })
+      set({ error: unknownErrorText(error, '신청 경로 수정 실패'), loading: false })
       throw error
     }
   },
@@ -106,7 +107,7 @@ export const useApplicationPathStore = create<ApplicationPathStore>(set => ({
         loading: false,
       }))
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : '신청 경로 삭제 실패', loading: false })
+      set({ error: unknownErrorText(error, '신청 경로 삭제 실패'), loading: false })
       throw error
     }
   },

@@ -3,7 +3,7 @@
  * Phase 0.5.1: MFA/OTP UX — TOTP (Microsoft Authenticator)
  */
 
-import { Modal, Form, Alert, Typography, App, Spin } from 'antd'
+import { Modal, Form, Alert, Typography, Spin } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useMfaVerification } from '@/features/auth/hooks/use-mfa-verification'
 import { MfaModalHeader } from './mfa-modal-header'
@@ -18,7 +18,6 @@ interface MfaVerificationModalProps {
 }
 
 export function MfaVerificationModal({ open }: MfaVerificationModalProps) {
-  const { message } = App.useApp()
   const { user } = useAuthStore()
   const {
     form,
@@ -34,7 +33,7 @@ export function MfaVerificationModal({ open }: MfaVerificationModalProps) {
     handleVerify,
     refreshProvisioning,
     lockMessage,
-  } = useMfaVerification({ open, messageApi: message })
+  } = useMfaVerification({ open })
 
   if (!user || user.role !== 'ADMIN') {
     return null
@@ -58,11 +57,11 @@ export function MfaVerificationModal({ open }: MfaVerificationModalProps) {
       <MfaModalHeader accountLabel={mfaState?.accountLabel} />
 
       {lockMessage && (
-        <Alert type="error" message={lockMessage} style={{ marginBottom: 24 }} showIcon />
+        <Alert type="error" description={lockMessage} style={{ marginBottom: 24 }} showIcon />
       )}
 
       {provisioningError && (
-        <Alert type="warning" message={provisioningError} style={{ marginBottom: 16 }} showIcon />
+        <Alert type="warning" description={provisioningError} style={{ marginBottom: 16 }} showIcon />
       )}
 
       <div style={{ textAlign: 'center', marginBottom: 20, minHeight: 220 }}>

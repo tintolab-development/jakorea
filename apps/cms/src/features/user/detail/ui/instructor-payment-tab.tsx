@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Divider, Table, message } from 'antd'
+import { Divider, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   CalendarOutlined,
@@ -164,7 +164,6 @@ export function InstructorPaymentTab({
 
   const openInvoice = useCallback((row: InstructorSettlementListRow) => {
     if (row.status === 'none') {
-      message.warning('정산 현황이 없어 상세 내역을 확인할 수 없습니다.')
       return
     }
     setInvoiceData(row)

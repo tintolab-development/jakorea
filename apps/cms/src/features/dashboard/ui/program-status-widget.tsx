@@ -21,8 +21,8 @@ import {
   STAGE_TO_LIFECYCLE,
   type ProgramProgressStageKey,
 } from '@/shared/config/program-progress-stages'
-import { handleError } from '@/shared/utils/error-handler'
 import { MESSAGES } from '@/shared/constants'
+import { handleError } from '@/shared/utils/error-handler'
 import type { ProgramLifecycleStatus } from '@/types/domain'
 import {
   ProgressStagesWidget,

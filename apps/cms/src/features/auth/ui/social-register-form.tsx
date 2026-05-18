@@ -3,9 +3,9 @@
  * Phase 0.1.3 수정: 회원가입 시 OAuth 연동
  */
 
-import { Button, Space, message } from 'antd'
+import { Button, Space } from 'antd'
 import { useState } from 'react'
-import { SOCIAL_PROVIDER_LABEL, type SocialProvider } from '@/entities/user/api/auth-service'
+import type { SocialProvider } from '@/entities/user/api/auth-service'
 import { GoogleMarkIcon } from '@/shared/ui/icons'
 import './social-register-form.css'
 
@@ -93,9 +93,8 @@ export function SocialRegisterForm({ onSocialRegister, disabled }: SocialRegiste
       }
       
       onSocialRegister(provider, mockSocialData)
-      message.success(`${SOCIAL_PROVIDER_LABEL[provider]} 연동이 완료되었습니다.`)
-    } catch (error: any) {
-      message.error(error?.message || `${SOCIAL_PROVIDER_LABEL[provider]} 연동에 실패했습니다.`)
+      } catch (error: unknown) {
+      console.debug('socialRegisterForm failed', error)
     } finally {
       setLoading(null)
     }

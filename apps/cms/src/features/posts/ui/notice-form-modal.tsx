@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Form, message } from 'antd'
+import { Form } from 'antd'
 import type { Notice } from '@/data/mock/notices'
 import { getNoticeCategorySelectOptions } from '@/features/posts/api/admin-notice-category-mock-store'
 import {
@@ -7,8 +7,7 @@ import {
   buildNoticeUpdateBody,
   noticeInitialAttachmentNames,
   noticeToFormValues,
-  type NoticeFormFieldValues,
-} from '@/features/posts/model/notice-form-mapper'
+  type NoticeFormFieldValues } from '@/features/posts/model/notice-form-mapper'
 import { createAdminNotice, updateAdminNotice } from '@/features/posts/api/admin-notice-mock-store'
 import { deleteNotice } from '@/features/posts/api/admin-notice-service'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
@@ -20,8 +19,7 @@ import {
   CmsInput,
   CmsSelect,
   CmsRadioGroup,
-  FileSelectField,
-} from '@/shared/ui'
+  FileSelectField } from '@/shared/ui'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import '@toast-ui/editor/dist/toastui-editor.css'
 import './notice-register-modal.css'
@@ -51,8 +49,7 @@ export function NoticeFormModal({
   notice,
   onCancel,
   onSuccess,
-  onDeleted,
-}: NoticeFormModalProps) {
+  onDeleted }: NoticeFormModalProps) {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const [form] = Form.useForm<FormValues>()
@@ -88,8 +85,7 @@ export function NoticeFormModal({
         category: undefined,
         visibility: 'public',
         pinTop: 'off',
-        title: '',
-      })
+        title: '' })
       setExistingAttachmentNames([])
       setNewFiles([])
     }
@@ -120,19 +116,17 @@ export function NoticeFormModal({
     if (!notice) return
     try {
       await deleteNotice(notice.id)
-      message.success('공지사항이 삭제되었습니다.')
       setDeleteConfirmOpen(false)
       handleCancel()
       onDeleted?.()
-    } catch {
-      message.error('공지사항을 삭제할 수 없습니다.')
+    } catch (error) {
+      console.debug('noticeFormModal delete failed', error)
     }
   }
 
   const handleAttachmentAdd = (files: File[]) => {
     const ok = files.filter(f => {
       if (f.size > ATTACHMENT_MAX_BYTES) {
-        message.error('파일은 최대 20MB까지 업로드 가능합니다.')
         return false
       }
       return true
@@ -152,13 +146,11 @@ export function NoticeFormModal({
 
   const handleFinish = (values: FormValues) => {
     if (mode === 'edit' && !notice) {
-      message.error('수정할 공지를 찾을 수 없습니다.')
       return
     }
 
     const md = getMarkdown().trim()
     if (!md) {
-      message.warning('공지사항 내용을 입력해 주세요.')
       return
     }
 
@@ -171,20 +163,16 @@ export function NoticeFormModal({
       visibility: values.visibility,
       pinToTop,
       attachmentNames,
-      author: authorName,
-    }
+      author: authorName }
 
     if (mode === 'create') {
       const created = createAdminNotice(buildNoticeCreateBody(base))
-      message.success('공지사항이 등록되었습니다.')
       onSuccess?.(created)
     } else {
       const updated = updateAdminNotice(notice!.id, buildNoticeUpdateBody(notice!, base))
       if (updated) {
-        message.success('공지사항이 수정되었습니다.')
         onSuccess?.(updated)
       } else {
-        message.error('공지사항을 수정할 수 없습니다.')
         return
       }
     }
@@ -252,7 +240,7 @@ export function NoticeFormModal({
                 name="category"
                 label="카테고리"
                 className="notice-register-modal__filter-field notice-register-modal__filter-field--category"
-                rules={[{ required: true, message: '카테고리를 선택해 주세요.' }]}
+                rules={[{ required: true }]}
               >
                 <CmsSelect
                   placeholder="카테고리 선택"
@@ -296,7 +284,7 @@ export function NoticeFormModal({
             name="title"
             label="제목"
             className="notice-register-modal__section"
-            rules={[{ required: true, message: '제목을 입력해 주세요.' }]}
+            rules={[{ required: true }]}
           >
             <CmsInput placeholder="제목을 입력해주세요" inputSize="large" width="100%" />
           </Form.Item>

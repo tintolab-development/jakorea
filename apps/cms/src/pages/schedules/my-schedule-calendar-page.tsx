@@ -5,12 +5,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Spin, Empty, message } from 'antd'
+import { Card, Spin, Empty } from 'antd'
 import { Calendar, Badge } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { MESSAGES } from '@/shared/constants'
 import { getMySchedules } from '@/entities/schedule/api/instructor-schedule-service'
 import type { Schedule } from '@/types/domain'
 
@@ -29,8 +28,7 @@ export function MyScheduleCalendarPage() {
       setSchedules(data)
     } catch (error) {
       console.error('일정 로드 실패:', error)
-      message.error(MESSAGES.error.scheduleLoadFailed)
-    } finally {
+      } finally {
       setLoading(false)
     }
   }, [user?.instructorId])

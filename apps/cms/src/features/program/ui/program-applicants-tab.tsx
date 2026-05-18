@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState, useCallback, useEffect } from 'react'
-import { Card, Table, Row, Col, Select, message } from 'antd'
+import { Card, Table, Row, Col, Select } from 'antd'
 import { AppButton, FilterSearchButton } from '@/shared/ui/app-button'
 import type { ColumnsType } from 'antd/es/table'
 import { useApplicantsTabParams, type ApplicantsFilters } from '../hooks/use-applicants-tab-params'
@@ -171,14 +171,12 @@ export function ProgramApplicantsTab({
       setSchoolList(prev =>
         prev.map(row => (row.id === recordId ? { ...row, approvalStatus: next } : row))
       )
-      message.success('결재 현황이 변경되었습니다.')
-    },
+      },
     []
   )
 
   const handleSchoolBulkRejectClick = useCallback(() => {
     if (selectedSchoolRowKeys.length === 0) {
-      message.warning('반려할 항목을 선택해 주세요.')
       return
     }
     setSchoolConfirmModal('reject')
@@ -186,7 +184,6 @@ export function ProgramApplicantsTab({
 
   const handleSchoolBulkApproveClick = useCallback(() => {
     if (selectedSchoolRowKeys.length === 0) {
-      message.warning('승인할 항목을 선택해 주세요.')
       return
     }
     setSchoolConfirmModal('approve')
@@ -202,8 +199,7 @@ export function ProgramApplicantsTab({
     )
     setSelectedSchoolRowKeys([])
     setSchoolConfirmModal(null)
-    message.success('선택한 학교 신청이 반려되었습니다.')
-  }, [selectedSchoolRowKeys])
+    }, [selectedSchoolRowKeys])
 
   const handleSchoolApproveConfirm = useCallback(() => {
     setSchoolList(prev =>
@@ -215,8 +211,7 @@ export function ProgramApplicantsTab({
     )
     setSelectedSchoolRowKeys([])
     setSchoolConfirmModal(null)
-    message.success('선택한 학교 신청이 승인되었습니다.')
-  }, [selectedSchoolRowKeys])
+    }, [selectedSchoolRowKeys])
 
   const handleInstructorApprovalStatusChange = useCallback(
     (recordId: string, status: ApprovalStatusKey) => {
@@ -224,14 +219,12 @@ export function ProgramApplicantsTab({
       setInstructorList(prev =>
         prev.map(row => (row.id === recordId ? { ...row, approvalStatus: next } : row))
       )
-      message.success('결재 현황이 변경되었습니다.')
-    },
+      },
     []
   )
 
   const handleInstructorBulkRejectClick = useCallback(() => {
     if (selectedInstructorRowKeys.length === 0) {
-      message.warning('반려할 항목을 선택해 주세요.')
       return
     }
     setInstructorConfirmModal('reject')
@@ -239,7 +232,6 @@ export function ProgramApplicantsTab({
 
   const handleInstructorBulkApproveClick = useCallback(() => {
     if (selectedInstructorRowKeys.length === 0) {
-      message.warning('승인할 항목을 선택해 주세요.')
       return
     }
     setInstructorConfirmModal('approve')
@@ -255,8 +247,7 @@ export function ProgramApplicantsTab({
     )
     setSelectedInstructorRowKeys([])
     setInstructorConfirmModal(null)
-    message.success('선택한 강사 신청이 반려되었습니다.')
-  }, [selectedInstructorRowKeys])
+    }, [selectedInstructorRowKeys])
 
   const handleInstructorApproveConfirm = useCallback(() => {
     setInstructorList(prev =>
@@ -268,8 +259,7 @@ export function ProgramApplicantsTab({
     )
     setSelectedInstructorRowKeys([])
     setInstructorConfirmModal(null)
-    message.success('선택한 강사 신청이 승인되었습니다.')
-  }, [selectedInstructorRowKeys])
+    }, [selectedInstructorRowKeys])
 
   const handleInstructorDetailReject = useCallback((instructor: ApplicantInstructorRow) => {
     setInstructorList(prev =>
@@ -281,8 +271,7 @@ export function ProgramApplicantsTab({
     )
     setInstructorDetailModalOpen(false)
     setSelectedInstructor(null)
-    message.success('강사 신청이 반려되었습니다.')
-  }, [])
+    }, [])
 
   const handleInstructorDetailApprove = useCallback(
     (instructor: ApplicantInstructorRow, _selectedSchoolId: string) => {
@@ -295,8 +284,7 @@ export function ProgramApplicantsTab({
       )
       setInstructorDetailModalOpen(false)
       setSelectedInstructor(null)
-      message.success('강사 신청이 승인되었습니다.')
-    },
+      },
     []
   )
 

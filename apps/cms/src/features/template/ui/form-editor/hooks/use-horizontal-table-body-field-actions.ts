@@ -1,8 +1,6 @@
 import { useCallback } from 'react'
-import { message } from 'antd'
 import type { HorizontalTableColumnField } from '@/features/template/model/writing-form-draft.schema'
 import {
-  HORIZONTAL_TABLE_MIN_COLUMN_COUNT,
   horizontalTableRemoveColumn,
   horizontalTableRemoveRow,
   horizontalTableUpdateBodyCellColumnField,
@@ -26,7 +24,6 @@ export function useHorizontalTableBodyFieldActions({
       if (cur.kind !== 'single_item' || cur.variant !== 'horizontal_table') return cur
       const next = horizontalTableRemoveRow(cur, rowIndex)
       if (next == null) {
-        message.warning('데이터 행은 최소 1개 이상 유지해야 합니다.')
         return cur
       }
       removed = true
@@ -41,7 +38,6 @@ export function useHorizontalTableBodyFieldActions({
         if (cur.kind !== 'single_item' || cur.variant !== 'horizontal_table') return cur
         const next = horizontalTableRemoveColumn(cur, columnIndex)
         if (next == null) {
-          message.warning(`열은 최소 ${HORIZONTAL_TABLE_MIN_COLUMN_COUNT}개 이상 유지해야 합니다.`)
           return cur
         }
         return next

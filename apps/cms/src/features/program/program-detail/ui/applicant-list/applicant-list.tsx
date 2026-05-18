@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { AppButton } from '@/shared/ui/app-button'
@@ -102,7 +102,6 @@ export function ApplicantList({
                 )
               )
               updateApplicantSchoolApprovalStatus(id, 'approved')
-              message.success('승인되었습니다.')
               setSelectedItem(null)
             } else if (menu === 'instructors') {
               const row = selectedItem
@@ -119,7 +118,6 @@ export function ApplicantList({
                 )
               )
               updateApplicantSchoolApprovalStatus(id, 'rejected')
-              message.success('반려되었습니다.')
               setSelectedItem(null)
             } else if (menu === 'instructors') {
               setInstructorList(prev =>
@@ -133,8 +131,7 @@ export function ApplicantList({
                   : prev
               )
               updateApplicantInstructorApprovalStatus(id, 'rejected')
-              message.success('참여 반려되었습니다.')
-            }
+              }
           }}
           onCancelApproval={
             menu === 'institutions'
@@ -171,8 +168,7 @@ export function ApplicantList({
               : prev
           )
           updateApplicantInstructorApprovalStatus(id, 'approved')
-          message.success('참여 승인되었습니다.')
-        }}
+          }}
       />
       {!selectedItem && menu ? (
         <FilterTableLayout

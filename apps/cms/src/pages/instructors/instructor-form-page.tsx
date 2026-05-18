@@ -8,8 +8,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { InstructorForm } from '@/features/instructor/ui/instructor-form'
 import { useInstructorStore } from '@/features/instructor/model/instructor-store'
 import type { InstructorFormData } from '@/entities/instructor/model/schema'
-import { message } from 'antd'
-import { MESSAGES } from '@/shared/constants'
 
 export function InstructorFormPage() {
   const { id } = useParams<{ id: string }>()
@@ -29,14 +27,12 @@ export function InstructorFormPage() {
     try {
       if (isEdit && id) {
         await updateInstructor(id, data)
-        message.success(MESSAGES.success.instructorUpdated)
-      } else {
+        } else {
         await createInstructor(data)
-        message.success(MESSAGES.success.instructorCreated)
-      }
+        }
       navigate('/instructors')
-    } catch {
-      message.error(isEdit ? MESSAGES.error.update : MESSAGES.error.create)
+    } catch (error) {
+      console.debug('instructorFormPage submit failed', error)
     }
   }
 

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Form, Input, Button, Card, message, Typography, Space, Alert, Spin } from 'antd'
+import { Form, Input, Button, Card, Typography, Space, Alert, Spin } from 'antd'
 import { SafetyOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -12,7 +12,8 @@ import { useMfa } from '@/features/auth/hooks/use-mfa'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
 import { getTotpProvisioning } from '@/entities/user/api/mfa-service'
 import { OTP_POLICY, OTP_LENGTH } from '@/shared/constants/mfa-policy'
-import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
+import { LAYOUT_CONSTANTS } from '@/shared/constants'
+import { unknownErrorText } from '@/shared/utils/error-handler'
 import type { TotpProvisioning } from '@/types/mfa'
 import './mfa-page.css'
 
@@ -38,7 +39,7 @@ export function MfaPage() {
       const p = await getTotpProvisioning(user.email)
       setProvisioning(p)
     } catch (e: unknown) {
-      setProvisioningError(e instanceof Error ? e.message : 'QR 정보를 불러오지 못했습니다.')
+      setProvisioningError(unknownErrorText(e, 'QR 정보를 불러오지 못했습니다.'))
       setProvisioning(null)
     } finally {
       setProvisioningLoading(false)
@@ -68,11 +69,9 @@ export function MfaPage() {
     const effectiveCode = (code ?? otpCode).trim()
     if (verifyInFlightRef.current || verifying) return
     if (!user?.email || !effectiveCode || effectiveCode.length !== OTP_LENGTH) {
-      message.error(MESSAGES.error.enterOtpCode)
       return
     }
     if (!/^\d+$/.test(effectiveCode)) {
-      message.error(MESSAGES.error.enterOtpCode)
       return
     }
 
@@ -80,21 +79,17 @@ export function MfaPage() {
     try {
       const verified = await verifyTotpCode({
         email: user.email,
-        otpCode: effectiveCode,
-      })
+        otpCode: effectiveCode })
 
       if (verified) {
         completeMfa()
         setMfaVerified()
-        message.success(MESSAGES.success.authenticated)
         navigate('/')
       } else {
-        message.error(MESSAGES.error.invalidCode)
         form.setFieldsValue({ otpCode: '' })
         setOtpCode('')
       }
     } catch (error: unknown) {
-      message.error(error instanceof Error ? error.message : MESSAGES.error.authenticationFailed)
       form.setFieldsValue({ otpCode: '' })
       setOtpCode('')
     } finally {
@@ -148,14 +143,14 @@ export function MfaPage() {
         {lockMessage && (
           <Alert
             type="error"
-            message={lockMessage}
+            description={lockMessage}
             style={{ marginBottom: LAYOUT_CONSTANTS.margins.xl }}
             showIcon
           />
         )}
 
         {provisioningError && (
-          <Alert type="warning" message={provisioningError} style={{ marginBottom: 16 }} showIcon />
+          <Alert type="warning" description={provisioningError} style={{ marginBottom: 16 }} showIcon />
         )}
 
         <div style={{ textAlign: 'center', marginBottom: 24, minHeight: 220 }}>
@@ -182,8 +177,8 @@ export function MfaPage() {
             label="인증번호"
             name="otpCode"
             rules={[
-              { required: true, message: MESSAGES.validation.otpRequired },
-              { len: OTP_LENGTH, message: MESSAGES.validation.otpLength(OTP_LENGTH) },
+              { required: true },
+              { len: OTP_LENGTH },
             ]}
           >
             <Input.OTP

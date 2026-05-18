@@ -14,7 +14,6 @@ import {
   type KeyboardEvent,
   type MutableRefObject,
 } from 'react'
-import { message } from 'antd'
 import type { SettlementItemSettingRow } from '@/data/mock/settlement-item-settings'
 import {
   getSettlementItemSettingDetail,
@@ -1939,8 +1938,7 @@ export function SettlementItemSettingDetailModal({
       emojiOverride: headerEmoji,
     })
     onSave?.(item.id)
-    void message.success('저장되었습니다.')
-    onCancel()
+    void onCancel()
   }
 
   const modalTitleForAria =

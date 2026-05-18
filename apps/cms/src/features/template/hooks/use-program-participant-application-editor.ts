@@ -6,7 +6,6 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react'
-import { message } from 'antd'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import {
@@ -88,6 +87,27 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
+import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
+import {
+  loadWritingFormTemplateSave,
+  persistWritingFormTemplateSave,
+} from '@/features/template/lib/writing-form-template-local-save'
+import {
+  loadUjatRecruitInstitutionTemplateSave,
+  loadUjatRecruitVolunteerTemplateSave,
+  persistUjatRecruitInstitutionTemplateSave,
+  persistUjatRecruitVolunteerTemplateSave,
+} from '@/features/program/lib/ujat-recruit-template-local-save'
+import {
+  getUjatRecruitInstitutionOverlayRecord,
+  replaceUjatRecruitInstitutionOverlay,
+  resetUjatRecruitInstitutionOverlay,
+} from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
+import {
+  getUjatRecruitVolunteerOverlayRecord,
+  replaceUjatRecruitVolunteerOverlay,
+  resetUjatRecruitVolunteerOverlay,
+} from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 
 function useParticipantApplicationMiddleActions(
   setDraft: Dispatch<SetStateAction<WritingFormDraft>>,
@@ -122,7 +142,6 @@ function useParticipantApplicationMiddleActions(
   const onDuplicate = useCallback(
     (paragraphId: string) => {
       if (seedParagraphIds.has(paragraphId)) {
-        message.warning('기본 단락은 복제할 수 없습니다.')
         return
       }
       const newId = crypto.randomUUID()
@@ -130,7 +149,6 @@ function useParticipantApplicationMiddleActions(
       setDraft(prev => {
         const next = duplicateMiddleParagraph(prev.paragraphs, paragraphId, newId)
         if (next == null) {
-          message.warning('이 단락은 복제할 수 없습니다.')
           return prev
         }
         duplicated = true
@@ -144,14 +162,12 @@ function useParticipantApplicationMiddleActions(
   const onDelete = useCallback(
     (paragraphId: string) => {
       if (seedParagraphIds.has(paragraphId)) {
-        message.warning('기본 단락은 삭제할 수 없습니다.')
         return
       }
       let nextActive: string | null = null
       setDraft(prev => {
         const next = removeMiddleParagraph(prev.paragraphs, paragraphId)
         if (next == null) {
-          message.warning('중간 단락은 최소 1개 이상 유지해야 합니다.')
           return prev
         }
         nextActive = pickActiveParagraphIdAfterMiddleDelete(prev.paragraphs, paragraphId)
@@ -264,57 +280,95 @@ export function useProgramParticipantApplicationEditor(
     isWritingUserPreviewOpen,
   } = useTemplateWritingPreview()
 
+  const createSeedDraft = useCallback((): WritingFormDraft => {
+    if (variant === 'institution') return createProgramApplicationFormInstitutionDraft()
+    if (variant === 'economy-application-institution')
+      return createProgramApplicationFormEconomyDraft()
+    if (variant === 'gemini-application-institution')
+      return createGeminiVisitingTrainingApplicationFormInstitutionDraft()
+    if (variant === 'gemini-application-instructor')
+      return createGeminiVisitingTrainingApplicationFormInstructorDraft()
+    if (variant === 'ujat-application-institution')
+      return createUjatProgramApplicationFormInstitutionDraft()
+    if (variant === 'ujat-application-volunteer')
+      return createUjatProgramApplicationFormVolunteerDraft()
+    if (variant === 'applicant-recruit-institution')
+      return createApplicantRecruitFormInstitutionDraft()
+    if (variant === 'ujat-recruit-institution') return createUjatRecruitFormInstitutionDraft()
+    if (variant === 'applicant-recruit-individual')
+      return createApplicantRecruitFormIndividualDraft()
+    if (variant === 'recruit-instructor') return createRecruitFormInstructorDraft()
+    if (variant === 'recruit-volunteer') return createRecruitFormVolunteerDraft()
+    if (variant === 'ujat-recruit-volunteer') return createUjatRecruitFormVolunteerDraft()
+    if (variant === 'instructor') return createProgramApplicationFormInstructorDraft()
+    if (variant === 'volunteer') return createProgramApplicationFormVolunteerDraft()
+    return createProgramParticipantApplicationDraft()
+  }, [variant])
+
   useEffect(() => {
     if (!active) return
-    /* eslint-disable react-hooks/set-state-in-effect -- 풀페이지 미리보기 열림과 동기화해 시드 초안을 리셋 */
-    const next = normalizeWritingFormDraft(
-      variant === 'institution'
-        ? createProgramApplicationFormInstitutionDraft()
-        : variant === 'economy-application-institution'
-          ? createProgramApplicationFormEconomyDraft()
-        : variant === 'gemini-application-institution'
-          ? createGeminiVisitingTrainingApplicationFormInstitutionDraft()
-          : variant === 'gemini-application-instructor'
-            ? createGeminiVisitingTrainingApplicationFormInstructorDraft()
-          : variant === 'ujat-application-institution'
-          ? createUjatProgramApplicationFormInstitutionDraft()
-          : variant === 'ujat-application-volunteer'
-            ? createUjatProgramApplicationFormVolunteerDraft()
-            : variant === 'applicant-recruit-institution'
-              ? createApplicantRecruitFormInstitutionDraft()
-              : variant === 'ujat-recruit-institution'
-                ? createUjatRecruitFormInstitutionDraft()
-                : variant === 'applicant-recruit-individual'
-                  ? createApplicantRecruitFormIndividualDraft()
-                  : variant === 'recruit-instructor'
-                    ? createRecruitFormInstructorDraft()
-                    : variant === 'recruit-volunteer'
-                      ? createRecruitFormVolunteerDraft()
-                      : variant === 'ujat-recruit-volunteer'
-                        ? createUjatRecruitFormVolunteerDraft()
-                        : variant === 'instructor'
-                          ? createProgramApplicationFormInstructorDraft()
-                          : variant === 'volunteer'
-                            ? createProgramApplicationFormVolunteerDraft()
-                            : createProgramParticipantApplicationDraft()
-    )
-    setDraft(next)
-    setActiveParagraphId(next.paragraphs[0]?.id ?? null)
-    setSingleItemListActiveItemId(null)
+    /* eslint-disable react-hooks/set-state-in-effect -- 풀페이지 미리보기 열림과 동기화해 시드·저장본을 반영 */
+    const applyDraft = (next: WritingFormDraft) => {
+      const normalized = normalizeWritingFormDraft(next)
+      setDraft(normalized)
+      setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
+      setSingleItemListActiveItemId(null)
+    }
+
+    if (variant === 'ujat-recruit-institution') {
+      const saved = loadUjatRecruitInstitutionTemplateSave()
+      if (saved) {
+        applyDraft(saved.draft)
+        replaceUjatRecruitInstitutionOverlay(saved.overlay ?? {})
+      } else {
+        resetUjatRecruitInstitutionOverlay()
+        applyDraft(createUjatRecruitFormInstitutionDraft())
+      }
+    } else if (variant === 'ujat-recruit-volunteer') {
+      const saved = loadUjatRecruitVolunteerTemplateSave()
+      if (saved) {
+        applyDraft(saved.draft)
+        replaceUjatRecruitVolunteerOverlay(saved.overlay ?? {})
+      } else {
+        resetUjatRecruitVolunteerOverlay()
+        applyDraft(createUjatRecruitFormVolunteerDraft())
+      }
+    } else {
+      const templateId = getTemplateIdForParticipantApplicationVariant(variant)
+      const saved = loadWritingFormTemplateSave(templateId)
+      if (saved?.draft) {
+        applyDraft(saved.draft)
+        const count = saved.editorState?.volunteerExceptionScheduleCount
+        if (typeof count === 'number' && Number.isFinite(count)) {
+          setVolunteerExceptionScheduleCount(Math.max(0, Math.floor(count)))
+        }
+        const appType = saved.editorState?.ujatVolunteerApplicationType
+        if (appType === 'new' || appType === 'ujat-graduate') {
+          setUjatVolunteerApplicationType(appType)
+        }
+      } else {
+        applyDraft(createSeedDraft())
+        if (variant === 'ujat-application-volunteer') {
+          setUjatVolunteerApplicationType('ujat-graduate')
+        }
+      }
+    }
+
     if (variant === 'ujat-application-institution') {
       setUjatGradeApplicationBlockIds([crypto.randomUUID()])
       setUjatApplicationGradeByBlockId({})
       setUjatGradeClassTimeBlockIds([crypto.randomUUID()])
     }
-    if (variant === 'ujat-application-volunteer') {
-      setUjatVolunteerApplicationType('ujat-graduate')
-    }
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [active, variant])
+  }, [active, createSeedDraft, variant])
 
   useEffect(() => {
-    if (!active) closeWritingUserPreview()
-  }, [active, closeWritingUserPreview])
+    if (!active) {
+      if (variant === 'ujat-recruit-institution') resetUjatRecruitInstitutionOverlay()
+      if (variant === 'ujat-recruit-volunteer') resetUjatRecruitVolunteerOverlay()
+      closeWritingUserPreview()
+    }
+  }, [active, closeWritingUserPreview, variant])
 
   const updateParagraph = useCallback(
     (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => {
@@ -605,8 +659,38 @@ export function useProgramParticipantApplicationEditor(
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    message.success('저장 API 연동 전입니다.')
-  }, [])
+    try {
+      if (variant === 'ujat-recruit-institution') {
+        persistUjatRecruitInstitutionTemplateSave({
+          draft,
+          overlay: { ...getUjatRecruitInstitutionOverlayRecord() },
+        })
+        return
+      }
+      if (variant === 'ujat-recruit-volunteer') {
+        persistUjatRecruitVolunteerTemplateSave({
+          draft,
+          overlay: { ...getUjatRecruitVolunteerOverlayRecord() },
+        })
+        return
+      }
+      const templateId = getTemplateIdForParticipantApplicationVariant(variant)
+      const editorState: Record<string, unknown> = {}
+      if (variant === 'volunteer' || variant === 'recruit-volunteer') {
+        editorState.volunteerExceptionScheduleCount = volunteerExceptionScheduleCount
+      }
+      if (variant === 'ujat-application-volunteer') {
+        editorState.ujatVolunteerApplicationType = ujatVolunteerApplicationType
+      }
+      persistWritingFormTemplateSave({
+        templateId,
+        draft,
+        editorState: Object.keys(editorState).length > 0 ? editorState : undefined,
+      })
+    } catch {
+      // API 연동 전 — localStorage 실패 시 무시
+    }
+  }, [draft, ujatVolunteerApplicationType, variant, volunteerExceptionScheduleCount])
 
   const onSelectSingleItemListItem = useCallback((paragraphId: string, itemId: string | null) => {
     setActiveParagraphId(paragraphId)

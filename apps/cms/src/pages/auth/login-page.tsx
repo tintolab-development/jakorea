@@ -5,7 +5,7 @@
  * UX/UI 디자이너: Ant Design Form 컴포넌트 활용, 깔끔한 로그인 UI
  */
 
-import { Form, Input, Button, Card, message, Typography, Space, Alert, Tabs } from 'antd'
+import { Form, Input, Button, Card, Typography, Space, Alert, Tabs } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { useNavigate, Link } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
@@ -17,7 +17,7 @@ import { SocialLoginForm } from '@/features/auth/ui/social-login-form'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
 import { LOGIN_POLICY } from '@/shared/constants/login-policy'
-import { MESSAGES } from '@/shared/constants'
+import { handleError } from '@/shared/utils/error-handler'
 import './login-page.css'
 
 const { Text } = Typography
@@ -26,21 +26,16 @@ const { Text } = Typography
 const TEST_ACCOUNTS = {
   admin: {
     email: 'admin1@jakorea.org',
-    password: 'admin1234!',
-  },
+    password: 'admin1234!' },
   instructor: {
     email: 'instructor1@example.com',
-    password: 'instructor123!',
-  },
+    password: 'instructor123!' },
   school: {
     email: 'school1@example.com',
-    password: 'school123!',
-  },
+    password: 'school123!' },
   student: {
     email: 'individual1@example.com',
-    password: 'individual123!',
-  },
-}
+    password: 'individual123!' } }
 
 import logoImage from '@/assets/images/logo/ja_korea_logo.png'
 
@@ -59,8 +54,7 @@ export function LoginPage() {
     recordFailure,
     recordSuccess,
     checkLocked,
-    getRemainingLockMinutes,
-  } = useLoginAttempts()
+    getRemainingLockMinutes } = useLoginAttempts()
 
   // Phase 0.2.1: FR-C01 - redirect 파라미터 처리
   const redirectPath = params.redirect
@@ -76,10 +70,6 @@ export function LoginPage() {
   const onFinish = async (values: LoginRequest) => {
     // Phase 0.5.5: 잠금 상태 확인
     if (checkLocked()) {
-      const remainingMinutes = getRemainingLockMinutes()
-      if (remainingMinutes !== null) {
-        message.error(MESSAGES.error.accountLocked(remainingMinutes))
-      }
       return
     }
 
@@ -99,28 +89,14 @@ export function LoginPage() {
       const currentUser = authStore.user
       if (currentUser) {
         const finalRedirectPath = redirectPath || getRedirectPathByRole(currentUser)
-        message.success(MESSAGES.success.loginSuccess)
         navigate(finalRedirectPath, { replace: true })
       } else {
         navigate(redirectPath || '/', { replace: true })
       }
-    } catch {
-      // Phase 0.5.5: 로그인 실패 시 실패 횟수 기록
+    } catch (loginError: unknown) {
+      // Phase 0.5.5: 로그인 실패 시 실패 횟수 기록 (잠금·실패 횟수는 Alert로 표시, authStore.error는 인라인)
       recordFailure()
-      const remainingAttempts = LOGIN_POLICY.maxFailedAttempts - failedAttempts - 1
-
-      if (isLocked || failedAttempts + 1 >= LOGIN_POLICY.maxFailedAttempts) {
-        const remainingMinutes = getRemainingLockMinutes()
-        if (remainingMinutes !== null) {
-          message.error(
-            `로그인에 실패했습니다. 계정이 ${LOGIN_POLICY.lockoutDurationMinutes}분간 잠겼습니다. ${remainingMinutes}분 후 다시 시도해주세요.`
-          )
-        }
-      } else {
-        message.error(
-          error?.message || `로그인에 실패했습니다. (남은 시도 횟수: ${remainingAttempts}회)`
-        )
-      }
+      handleError(loginError, { context: 'loginPage.onFinish' })
     }
   }
 
@@ -179,8 +155,8 @@ export function LoginPage() {
               name="email"
               label="이메일"
               rules={[
-                { required: true, message: MESSAGES.validation.emailRequired },
-                { type: 'email', message: MESSAGES.validation.email },
+                { required: true },
+                { type: 'email' },
               ]}
             >
               <Input prefix={<UserOutlined />} placeholder="이메일" autoComplete="email" />
@@ -189,7 +165,7 @@ export function LoginPage() {
             <Form.Item
               name="password"
               label="비밀번호"
-              rules={[{ required: true, message: MESSAGES.validation.passwordRequired }]}
+              rules={[{ required: true }]}
             >
               <Input.Password
                 prefix={<LockOutlined />}
@@ -203,7 +179,6 @@ export function LoginPage() {
             {isLocked && (
               <Alert
                 type="error"
-                message="계정이 잠겼습니다"
                 description={
                   <div>
                     <Text>
@@ -235,7 +210,7 @@ export function LoginPage() {
 
             {error && !isLocked && (
               <div className="login-error">
-                <Text type="danger">{error.message}</Text>
+                <Text type="danger">로그인에 실패했습니다.</Text>
               </div>
             )}
 
@@ -257,8 +232,7 @@ export function LoginPage() {
                 onClick={() => {
                   form.setFieldsValue({
                     email: TEST_ACCOUNTS.admin.email,
-                    password: TEST_ACCOUNTS.admin.password,
-                  })
+                    password: TEST_ACCOUNTS.admin.password })
                 }}
               >
                 관리자
@@ -269,8 +243,7 @@ export function LoginPage() {
                 onClick={() => {
                   form.setFieldsValue({
                     email: TEST_ACCOUNTS.instructor.email,
-                    password: TEST_ACCOUNTS.instructor.password,
-                  })
+                    password: TEST_ACCOUNTS.instructor.password })
                 }}
               >
                 강사
@@ -280,8 +253,7 @@ export function LoginPage() {
                 onClick={() => {
                   form.setFieldsValue({
                     email: TEST_ACCOUNTS.school.email,
-                    password: TEST_ACCOUNTS.school.password,
-                  })
+                    password: TEST_ACCOUNTS.school.password })
                 }}
               >
                 학교
@@ -291,8 +263,7 @@ export function LoginPage() {
                 onClick={() => {
                   form.setFieldsValue({
                     email: TEST_ACCOUNTS.student.email,
-                    password: TEST_ACCOUNTS.student.password,
-                  })
+                    password: TEST_ACCOUNTS.student.password })
                 }}
               >
                 학생
@@ -301,13 +272,11 @@ export function LoginPage() {
             </Space>
           </div>
         </div>
-      ),
-    },
+      ) },
     {
       key: 'social',
       label: '간편인증',
-      children: <SocialLoginForm />,
-    },
+      children: <SocialLoginForm /> },
   ]
 
   return (

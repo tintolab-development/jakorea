@@ -15,11 +15,11 @@ import { InstructorForm } from '@/features/instructor/ui/instructor-form'
 import { InstructorDetail } from '@/features/instructor/ui/instructor-detail'
 import { useInstructorStore } from '@/features/instructor/model/instructor-store'
 import { PermissionButton } from '@/shared/components'
-import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
+import { LAYOUT_CONSTANTS, MESSAGES } from '@/shared/constants'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import type { InstructorFormData } from '@/entities/instructor/model/schema'
 import type { Instructor } from '@/types/domain'
-import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { handleError } from '@/shared/utils/error-handler'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
@@ -146,11 +146,9 @@ export function InstructorListPage() {
     try {
       if (editingInstructor && editingInstructor.id) {
         await updateInstructor(editingInstructor.id, data)
-        showSuccessMessage(MESSAGES.success.updated)
-      } else {
+        } else {
         await createInstructor(data)
-        showSuccessMessage(MESSAGES.success.created)
-      }
+        }
       closeFormModal()
       fetchInstructors()
     } catch (error) {
@@ -195,7 +193,6 @@ export function InstructorListPage() {
           : deletingInstructor.id
 
       await deleteInstructor(instructorId)
-      showSuccessMessage(MESSAGES.success.deleted)
       if (selectedInstructor?.id === instructorId) {
         closeDrawer()
         setSelectedInstructor(null)

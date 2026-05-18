@@ -27,7 +27,6 @@ export const instructorSchema = z.object({
     return true
   },
   {
-    message: '계좌번호 입력 시 은행명도 입력해주세요',
     path: ['bankName'],
   }
 )

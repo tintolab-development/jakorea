@@ -9,7 +9,6 @@ import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { AppButton } from '@/shared/ui/app-button'
 import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import type { ColumnsType } from 'antd/es/table'
-import { message } from 'antd'
 import {
   DeleteGuideModal,
   buildParticipatingInstitutionDeleteMessageLines,
@@ -284,7 +283,6 @@ export function ParticipatingInstitutionsSection({
 
   const handleBulkDelete = () => {
     if (selectedSchoolRowKeys.length === 0) {
-      message.warning('삭제할 기관을 선택해 주세요.')
       return
     }
     setBulkConfirmModal('delete')
@@ -292,7 +290,6 @@ export function ParticipatingInstitutionsSection({
 
   const handleBulkApprove = () => {
     if (selectedSchoolRowKeys.length === 0) {
-      message.warning('승인할 기관을 선택해 주세요.')
       return
     }
     setBulkConfirmModal('approve')

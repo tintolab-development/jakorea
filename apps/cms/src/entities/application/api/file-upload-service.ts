@@ -5,6 +5,7 @@
  */
 
 import ExcelJS from '@zurmokeeper/exceljs'
+import { unknownErrorText } from '@/shared/utils/error-handler'
 
 /**
  * 파일 업로드 결과
@@ -52,8 +53,7 @@ export const fileUploadService = {
       url,
       fileName: file.name,
       fileSize: file.size,
-      uploadedAt: new Date().toISOString(),
-    }
+      uploadedAt: new Date().toISOString() }
   },
 
   /**
@@ -118,8 +118,7 @@ export const fileUploadService = {
           name,
           grade: headerMap.grade ? row.getCell(headerMap.grade).text?.trim() : undefined,
           class: headerMap.class ? row.getCell(headerMap.class).text?.trim() : undefined,
-          studentNumber: headerMap.studentNumber ? row.getCell(headerMap.studentNumber).text?.trim() : undefined,
-        }
+          studentNumber: headerMap.studentNumber ? row.getCell(headerMap.studentNumber).text?.trim() : undefined }
 
         students.push(student)
       })
@@ -127,11 +126,10 @@ export const fileUploadService = {
       return {
         students,
         totalCount: students.length,
-        errors: errors.length > 0 ? errors : [],
-      }
+        errors: errors.length > 0 ? errors : [] }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : '엑셀 파일 파싱에 실패했습니다.'
+        unknownErrorText(error, '엑셀 파일 파싱에 실패했습니다.')
       throw new Error(errorMessage)
     }
   },
@@ -153,7 +151,5 @@ export const fileUploadService = {
 
     const buffer = await workbook.xlsx.writeBuffer()
     return new Blob([buffer], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    })
-  },
-}
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  } }

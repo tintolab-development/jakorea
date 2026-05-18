@@ -4,7 +4,6 @@
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { message } from 'antd'
 import {
   MOCK_PARTICIPATING_INSTRUCTORS,
   type ParticipatingInstructorRow,
@@ -126,8 +125,7 @@ export function useProgressInstructorList({
       const nextId = `instructor-new-${Date.now()}`
       const newRow = buildInstructorRowFromForm(values, nextNo, nextId)
       setInstructorList(prev => [newRow, ...prev])
-      message.success('강사가 추가되었습니다.')
-    },
+      },
     [instructorList]
   )
 
@@ -136,14 +134,12 @@ export function useProgressInstructorList({
       setInstructorList(prev =>
         prev.map(row => (row.id === recordId ? { ...row, settlementStatus: status } : row))
       )
-      message.success('정산 현황이 변경되었습니다.')
-    },
+      },
     []
   )
 
   const handleInstructorDeleteClick = useCallback(() => {
     if (selectedInstructorRowKeys.length === 0) {
-      message.warning('삭제할 강사를 선택해 주세요.')
       return
     }
     setInstructorDeleteGuideOpen(true)
@@ -151,12 +147,10 @@ export function useProgressInstructorList({
 
   const handleInstructorDeleteConfirm = useCallback(() => {
     const keysToDelete = new Set(selectedInstructorRowKeys.map(String))
-    const count = keysToDelete.size
     setInstructorList(prev => prev.filter(row => !keysToDelete.has(row.id)))
     setSelectedInstructorRowKeys([])
     setInstructorDeleteGuideOpen(false)
-    message.success(`${count}명의 강사가 삭제되었습니다.`)
-  }, [selectedInstructorRowKeys])
+    }, [selectedInstructorRowKeys])
 
   return {
     instructorList,

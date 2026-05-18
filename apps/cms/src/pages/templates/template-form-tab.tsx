@@ -1,162 +1,33 @@
-import { message } from 'antd'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
-import {
-  AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS,
-  AGREEMENT_NOTICE_PARAGRAPH_IDS,
-  AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS,
-  AGREEMENT_PORTRAIT_HIDDEN_DRAG_HANDLE_IDS,
-  AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
-  AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS,
-  createAgreementNoticeDraft,
-  createAgreementPortraitDraft,
-  createDefaultSurveyDraft,
-  createEducatorFacilitatorPledgeDraft,
-  DEFAULT_SURVEY_PARAGRAPH_IDS,
-  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
-  SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS,
-  type WritingFormDraft,
-} from '@/features/template/model/writing-form-draft.schema'
-import {
-  AGREEMENT_NOTICE_A4_HIDDEN_PARAGRAPH_IDS,
-  getAgreementNoticeA4ParagraphGap,
-} from '@/features/template/model/agreement-notice-a4-preview'
-import {
-  AGREEMENT_PORTRAIT_A4_HIDDEN_PARAGRAPH_IDS,
-  getAgreementPortraitA4ParagraphGap,
-} from '@/features/template/model/agreement-portrait-a4-preview'
-import {
-  createPaymentStatementPreConsentDraft,
-  PAYMENT_STATEMENT_PRE_CONSENT_IDS,
-  PAYMENT_STATEMENT_PRE_CONSENT_SEED_PARAGRAPH_IDS,
-} from '@/features/template/model/payment-statement-pre-consent-draft'
-import {
-  getPaymentStatementPreConsentA4ParagraphGap,
-  PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS,
-} from '@/features/template/model/payment-statement-pre-consent-a4-preview'
-import {
-  PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
-  PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
-} from '@/features/template/ui/form-set/payment-statement-pre-consent/paragraph-config'
-import { TemplateListCard } from '@/features/template/ui/template-management/template-list-card'
-import './template-form-tab.css'
-import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
-import { TemplateModalLeftContent } from '@/features/template/ui/template-management/template-modal-left-content'
-import { TemplateModalRightNavigation } from '@/features/template/ui/template-management/template-modal-right-navigation'
-import { TemplateTable } from '@/features/template/ui/template-management/template-table'
-import { useTemplateModal } from '@/features/template/hooks/use-template-modal'
 import { writingSections } from '@/features/template/model/template.schema'
 import type { TemplateRow } from '@/features/template/model/template.schema'
+import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
+import {
+  lookupTemplateRegistry,
+  resolvePreviewHeaderTitle,
+} from '@/features/template/model/template-registry/template-registry'
+import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import {
   buildRightNavigationConfig,
   buildTemplateConfig,
 } from '@/features/template/lib/build-template-config'
-import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
-import NewAgreementForm, {
-  AgreementWritingFormShell,
-  type AgreementWritingFormShellProps,
-} from '@/features/template/ui/form-set/editors/new-agreement-form'
-import NewHorizontalTableForm from '@/features/template/ui/form-set/editors/new-horizontal-table-form'
-import NewSurveyForm from '@/features/template/ui/form-set/editors/new-survey-form'
-import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
-import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
-import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
-import {
-  FormEditorRightPanel,
-  FormEditorTitleNumberingField,
-} from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
-import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
-import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
-import {
-  useProgramParticipantApplicationEditor,
-  type ProgramParticipantApplicationEditorVariant,
-} from '@/features/template/hooks/use-program-participant-application-editor'
-import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
-import {
-  ProgramParticipantApplicationEditorLeftColumn,
-  ProgramParticipantApplicationEditorRightColumn,
-} from '@/features/template/ui/form-set/application-form/individual'
-import {
-  ApplicantRecruitFormIndividualEditorLeftColumn,
-  ApplicantRecruitFormIndividualEditorRightColumn,
-} from '@/features/template/ui/form-set/recruit-form/individual'
-import {
-  ApplicantRecruitFormInstitutionEditorLeftColumn,
-  ApplicantRecruitFormInstitutionEditorRightColumn,
-} from '@/features/template/ui/form-set/recruit-form/institution'
-import {
-  UjatRecruitFormInstitutionEditorLeftColumn,
-  UjatRecruitFormInstitutionEditorRightColumn,
-} from '@/features/template/ui/form-set/recruit-form/UJAT-institution'
-import {
-  RecruitFormInstructorEditorLeftColumn,
-  RecruitFormInstructorEditorRightColumn,
-} from '@/features/template/ui/form-set/recruit-form/instructor'
-import {
-  RecruitFormVolunteerEditorLeftColumn,
-  RecruitFormVolunteerEditorRightColumn,
-} from '@/features/template/ui/form-set/recruit-form/volunteer'
-import {
-  UjatRecruitFormVolunteerEditorLeftColumn,
-  UjatRecruitFormVolunteerEditorRightColumn,
-} from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer'
-import {
-  GeminiVisitingTrainingApplicationFormInstitutionEditorLeftColumn,
-  GeminiVisitingTrainingApplicationFormInstitutionEditorRightColumn,
-} from '@/features/template/ui/form-set/application-form/gemini-institution'
-import {
-  GeminiVisitingTrainingApplicationFormInstructorEditorLeftColumn,
-  GeminiVisitingTrainingApplicationFormInstructorEditorRightColumn,
-} from '@/features/template/ui/form-set/application-form/gemini-instructor'
-import {
-  ProgramApplicationFormInstitutionEditorLeftColumn,
-  ProgramApplicationFormInstitutionEditorRightColumn,
-} from '@/features/template/ui/form-set/application-form/institution'
-import {
-  EconomyProgramApplicationEditorLeftColumn,
-  EconomyProgramApplicationEditorRightColumn,
-} from '@/features/template/ui/form-set/application-form/1c-1s'
-import {
-  UjatProgramApplicationFormInstitutionEditorLeftColumn,
-  UjatProgramApplicationFormInstitutionEditorRightColumn,
-} from '@/features/template/ui/form-set/application-form/UJAT-institution'
-import {
-  UjatProgramApplicationFormVolunteerEditorLeftColumn,
-  UjatProgramApplicationFormVolunteerEditorRightColumn,
-} from '@/features/template/ui/form-set/application-form/UJAT-volunteer'
-import {
-  ProgramApplicationFormInstructorEditorLeftColumn,
-  ProgramApplicationFormInstructorEditorRightColumn,
-} from '@/features/template/ui/form-set/application-form/instructor'
-import {
-  ProgramApplicationFormVolunteerEditorLeftColumn,
-  ProgramApplicationFormVolunteerEditorRightColumn,
-} from '@/features/template/ui/form-set/application-form/volunteer'
-import {
-  ProgramRegistrationEditorLeftColumn,
-  ProgramRegistrationEditorRightColumn,
-} from '@/features/template/ui/form-set/registration-form/general'
-import {
-  UjatProgramRegistrationEditorLeftColumn,
-  UjatProgramRegistrationEditorRightColumn,
-  useUjatProgramRegistrationEditor,
-} from '@/features/template/ui/form-set/registration-form/UJAT'
+import { useTemplateModal } from '@/features/template/hooks/use-template-modal'
+import { useTemplateEditorVm } from '@/features/template/hooks/use-template-editor-vm'
+import { useTemplatePreviewController } from '@/features/template/hooks/use-template-preview-controller'
+import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
+import { TemplateListCard } from '@/features/template/ui/template-management/template-list-card'
+import { TemplateTable } from '@/features/template/ui/template-management/template-table'
+import { TemplatePreviewModal } from '@/features/template/ui/template-management/template-preview-modal'
 import { CrimeRecordConsentDocumentFullpageModal } from '@/features/template/ui/template-management/crime-record-consent-document-fullpage-modal'
 import {
-  AGREEMENT_WRITING_FORM_SHELL_TEMPLATE_IDS,
-  TEMPLATE_USER_PREVIEW_ACTIVE,
-} from '@/features/template/lib/template-user-preview-url'
-import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
-import {
-  createContentOnlyA4PreviewOptions,
-  shouldUseA4PreviewForWritingTemplate,
-} from '@/features/template/lib/a4-preview-template-options'
-
-const AGREEMENT_CRIME_TEMPLATE_ID = 'agreement-crime'
-const AGREEMENT_PAYMENT_STATEMENT_PRE_CONSENT_ID = 'agreement-third-party'
-
-type AgreementWritingFormConfig = Omit<AgreementWritingFormShellProps, 'onClose'>
+  AgreementWritingFormShell,
+} from '@/features/template/ui/form-set/editors/new-agreement-form'
+import NewAgreementForm from '@/features/template/ui/form-set/editors/new-agreement-form'
+import NewHorizontalTableForm from '@/features/template/ui/form-set/editors/new-horizontal-table-form'
+import NewSurveyForm from '@/features/template/ui/form-set/editors/new-survey-form'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
+import './template-form-tab.css'
 
 type TemplateFormTabQuery = {
   mode?: string
@@ -165,19 +36,10 @@ type TemplateFormTabQuery = {
   userPreview?: string
 }
 
-const EMPTY_PREVIEW_DRAFT: WritingFormDraft = {
-  schemaVersion: 1,
-  formSettings: { titleNumbering: 'none' },
-  paragraphs: [],
-}
-
-const noopUpdateParagraph: FormUpdateParagraph = () => {}
-
 export default function TemplateFormTab() {
   const { params, setParams } = useQueryParams<TemplateFormTabQuery>()
   const isPreviewOpen = params.mode === 'edit'
-  const { openWritingUserPreview, closeWritingUserPreview, isWritingUserPreviewOpen } =
-    useTemplateWritingPreview()
+  const { closeWritingUserPreview, isWritingUserPreviewOpen } = useTemplateWritingPreview()
 
   const buildBaseLeftContentConfig = useCallback(
     (selectedTemplate: Parameters<typeof buildTemplateConfig>[0]['selectedTemplate']) =>
@@ -199,6 +61,9 @@ export default function TemplateFormTab() {
   } = useTemplateModal({
     buildBaseLeftContentConfig,
   })
+
+  const templateId = selectedTemplate?.id
+  const registryEntry = useMemo(() => lookupTemplateRegistry(templateId), [templateId])
 
   const handleOpenTemplatePreview = useCallback(
     (row: TemplateRow) => {
@@ -232,252 +97,34 @@ export default function TemplateFormTab() {
     () => buildRightNavigationConfig(orderedLeftContentConfig),
     [orderedLeftContentConfig]
   )
-  const previewEditorKind =
-    selectedTemplate?.id.startsWith('agreement-') === true ? 'agreement' : 'survey'
-  const programRegistrationFormVariant =
-    selectedTemplate?.id === 'registration-economy' ? 'economy' : 'general'
-  const isProgramRegistrationTemplate =
-    selectedTemplate?.id === 'registration-general' ||
-    selectedTemplate?.id === 'registration-economy'
-  const isUjatProgramRegistrationTemplate = selectedTemplate?.id === 'registration-ujat'
-  const isApplicantRecruitInstitutionTemplate =
-    selectedTemplate?.id === 'recruitment-participant-school'
-  const isUjatRecruitInstitutionTemplate = selectedTemplate?.id === 'recruitment-ujat-school'
-  const isApplicantRecruitIndividualTemplate =
-    selectedTemplate?.id === 'recruitment-participant-individual'
-  const isRecruitFormInstructorTemplate = selectedTemplate?.id === 'recruitment-instructor'
-  const isRecruitFormVolunteerTemplate = selectedTemplate?.id === 'recruitment-volunteer'
-  const isUjatRecruitFormVolunteerTemplate = selectedTemplate?.id === 'recruitment-ujat-volunteer'
-  const isGeminiVisitingTrainingSchoolApplicationTemplate =
-    selectedTemplate?.id === 'application-gemini-visiting-training-school'
-  const isGeminiVisitingTrainingInstructorApplicationTemplate =
-    selectedTemplate?.id === 'application-gemini-visiting-training-instructor'
-  const isEconomyProgramApplicationTemplate = selectedTemplate?.id === 'application-economy'
-  const isProgramParticipantApplicationTemplate =
-    selectedTemplate?.id === 'application-participant-school' ||
-    selectedTemplate?.id === 'application-participant-individual'
-  const isUjatProgramApplicationInstitutionTemplate =
-    selectedTemplate?.id === 'application-ujat-school'
-  const isUjatProgramApplicationVolunteerTemplate =
-    selectedTemplate?.id === 'application-ujat-volunteer'
-  const isProgramInstructorApplicationTemplate = selectedTemplate?.id === 'application-instructor'
-  const isProgramVolunteerApplicationTemplate = selectedTemplate?.id === 'application-volunteer'
-  const useA4PreviewForWritingTemplate = shouldUseA4PreviewForWritingTemplate(selectedTemplate?.id)
-  const programParticipantApplicationVariant: ProgramParticipantApplicationEditorVariant =
-    selectedTemplate?.id === 'application-economy'
-      ? 'economy-application-institution'
-      : selectedTemplate?.id === 'application-participant-school'
-        ? 'institution'
-        : 'individual'
-  const programRegistrationVm = useProgramRegistrationEditor(
-    isPreviewOpen && isProgramRegistrationTemplate,
-    selectedTemplate?.templateName ?? '일반 프로그램 등록 폼',
-    {
-      restrictCurriculumSessionStructure: true,
-      programRegistrationFormVariant,
-    }
-  )
-  const ujatProgramRegistrationVm = useUjatProgramRegistrationEditor(
-    isPreviewOpen && isUjatProgramRegistrationTemplate,
-    selectedTemplate?.templateName ?? 'UJAT 프로그램 등록 폼'
-  )
-  const programParticipantApplicationVm = useProgramParticipantApplicationEditor(
-    isPreviewOpen &&
-      (isApplicantRecruitInstitutionTemplate ||
-        isUjatRecruitInstitutionTemplate ||
-        isApplicantRecruitIndividualTemplate ||
-        isRecruitFormInstructorTemplate ||
-        isRecruitFormVolunteerTemplate ||
-        isUjatRecruitFormVolunteerTemplate ||
-        isUjatProgramApplicationInstitutionTemplate ||
-        isUjatProgramApplicationVolunteerTemplate ||
-        isGeminiVisitingTrainingSchoolApplicationTemplate ||
-        isEconomyProgramApplicationTemplate ||
-        isProgramParticipantApplicationTemplate ||
-        isGeminiVisitingTrainingInstructorApplicationTemplate ||
-        isProgramInstructorApplicationTemplate ||
-        isProgramVolunteerApplicationTemplate),
-    isGeminiVisitingTrainingInstructorApplicationTemplate
-      ? (selectedTemplate?.templateName ?? 'Gemini 찾아가는 연수 강사 신청 폼')
-      : isProgramInstructorApplicationTemplate
-      ? (selectedTemplate?.templateName ?? '프로그램 강사 신청 폼')
-      : isProgramVolunteerApplicationTemplate
-        ? (selectedTemplate?.templateName ?? '프로그램 봉사자 신청 폼')
-        : isUjatRecruitInstitutionTemplate
-          ? (selectedTemplate?.templateName ?? 'UJAT 프로그램 학교 모집 폼')
-          : isApplicantRecruitInstitutionTemplate
-            ? (selectedTemplate?.templateName ?? '프로그램 참여자 모집 폼 (학교)')
-            : isApplicantRecruitIndividualTemplate
-              ? (selectedTemplate?.templateName ?? '프로그램 참여자 모집 폼 (개인)')
-              : isRecruitFormInstructorTemplate
-                ? (selectedTemplate?.templateName ?? '프로그램 강사 모집 폼')
-                : isRecruitFormVolunteerTemplate
-                  ? (selectedTemplate?.templateName ?? '프로그램 봉사자 모집 폼')
-                  : isUjatRecruitFormVolunteerTemplate
-                    ? (selectedTemplate?.templateName ?? 'UJAT 프로그램 봉사자 모집 폼')
-                    : isGeminiVisitingTrainingSchoolApplicationTemplate
-                      ? (selectedTemplate?.templateName ?? 'Gemini 찾아가는 연수 학교 신청 폼')
-                      : isEconomyProgramApplicationTemplate
-                        ? (selectedTemplate?.templateName ?? '1사1교 프로그램 참여자 신청 폼')
-                      : isUjatProgramApplicationInstitutionTemplate
-                        ? (selectedTemplate?.templateName ?? 'UJAT 프로그램 학교 신청 폼')
-                      : isUjatProgramApplicationVolunteerTemplate
-                        ? (selectedTemplate?.templateName ?? 'UJAT 프로그램 봉사자 신청 폼')
-                        : (selectedTemplate?.templateName ?? '프로그램 참여자 신청 폼'),
-    isGeminiVisitingTrainingInstructorApplicationTemplate
-      ? 'gemini-application-instructor'
-      : isProgramInstructorApplicationTemplate
-      ? 'instructor'
-      : isProgramVolunteerApplicationTemplate
-        ? 'volunteer'
-        : isUjatRecruitInstitutionTemplate
-          ? 'ujat-recruit-institution'
-          : isApplicantRecruitInstitutionTemplate
-            ? 'applicant-recruit-institution'
-            : isApplicantRecruitIndividualTemplate
-              ? 'applicant-recruit-individual'
-              : isRecruitFormInstructorTemplate
-                ? 'recruit-instructor'
-                : isRecruitFormVolunteerTemplate
-                  ? 'recruit-volunteer'
-                  : isUjatRecruitFormVolunteerTemplate
-                    ? 'ujat-recruit-volunteer'
-                    : isGeminiVisitingTrainingSchoolApplicationTemplate
-                      ? 'gemini-application-institution'
-                      : isEconomyProgramApplicationTemplate
-                        ? 'economy-application-institution'
-                      : isUjatProgramApplicationInstitutionTemplate
-                        ? 'ujat-application-institution'
-                      : isUjatProgramApplicationVolunteerTemplate
-                        ? 'ujat-application-volunteer'
-                        : programParticipantApplicationVariant
-  )
 
-  const isWritingSurveyListTemplate = useMemo(
+  const editorVm = useTemplateEditorVm({
+    isPreviewOpen,
+    templateId,
+    templateName: selectedTemplate?.templateName,
+    registryEntry,
+  })
+
+  const { handlePreview } = useTemplatePreviewController({
+    params,
+    setParams,
+    isPreviewOpen,
+    selectedTemplate,
+    registryEntry,
+    isWritingUserPreviewOpen,
+    editorVm,
+  })
+
+  const agreementWritingFormConfig = useMemo(
     () =>
-      Boolean(
-        isPreviewOpen && selectedTemplate != null && selectedTemplate.id.startsWith('survey-')
-      ),
-    [isPreviewOpen, selectedTemplate]
+      params.mode === 'edit' ? resolveAgreementWritingFormConfig(params.id) : null,
+    [params.mode, params.id]
   )
-
-  const getSurveyListInitialDraft = useCallback((): WritingFormDraft => {
-    const base = createDefaultSurveyDraft()
-    const name = selectedTemplate?.templateName?.trim()
-    if (name == null || name === '') return base
-    return {
-      ...base,
-      paragraphs: base.paragraphs.map(p =>
-        p.id === DEFAULT_SURVEY_PARAGRAPH_IDS.title ? { ...p, surveyTitle: name } : p
-      ),
-    }
-  }, [selectedTemplate?.templateName])
-
-  const getSurveyListDefaultParagraphId = useCallback((_draft: WritingFormDraft) => {
-    return DEFAULT_SURVEY_PARAGRAPH_IDS.title
-  }, [])
-
-  const surveyListEditor = useWritingFormEditorWithUserPreview({
-    open: isWritingSurveyListTemplate,
-    getInitialDraft: getSurveyListInitialDraft,
-    getDefaultActiveParagraphId: getSurveyListDefaultParagraphId,
-    previewHeaderTitle: selectedTemplate?.templateName ?? '설문',
-    editorKind: 'survey',
-    onSave: () => {
-      message.success('저장 API 연동 전입니다.')
-    },
-  })
-
-  const surveyTableRowSelection = useTableRowSelectionState({
-    paragraphs: isWritingSurveyListTemplate ? surveyListEditor.draft.paragraphs : [],
-    activeParagraphId: isWritingSurveyListTemplate ? surveyListEditor.activeParagraphId : null,
-  })
-
-  const isCrimeConsentDetail = isPreviewOpen && selectedTemplate?.id === AGREEMENT_CRIME_TEMPLATE_ID
-  const agreementWritingFormConfig = useMemo<AgreementWritingFormConfig | null>(() => {
-    if (params.mode !== 'edit') return null
-    const templateId = params.id?.trim()
-    if (templateId == null || templateId === '' || templateId === AGREEMENT_CRIME_TEMPLATE_ID) {
-      return null
-    }
-
-    if (templateId === 'agreement-expense') {
-      const row = findWritingTemplateRowByDefinitionId(templateId)
-      const title = row?.templateName ?? '교육진행자 동의 서약서'
-      return {
-        initialDraft: createEducatorFacilitatorPledgeDraft,
-        defaultActiveParagraphId: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.title,
-        modalTitle: title,
-        modalDescription: '* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다.',
-        writingPreviewHeaderTitle: title,
-        previewLayout: 'a4-document',
-        a4RenderMode: 'contentOnly',
-      }
-    }
-
-    if (templateId === 'agreement-notice') {
-      const row = findWritingTemplateRowByDefinitionId(templateId)
-      const title = row?.templateName ?? '행정정보 공동이용 사전동의서'
-      return {
-        initialDraft: createAgreementNoticeDraft,
-        defaultActiveParagraphId: AGREEMENT_NOTICE_PARAGRAPH_IDS.title,
-        modalTitle: title,
-        modalDescription: '* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다.',
-        writingPreviewHeaderTitle: title,
-        structureLockedParagraphIds: AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS,
-        hideDragHandleForParagraphIds: AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS,
-        previewLayout: 'a4-document',
-        a4HiddenParagraphIds: AGREEMENT_NOTICE_A4_HIDDEN_PARAGRAPH_IDS,
-        a4RenderMode: 'contentOnly',
-        a4ParagraphGapPx: getAgreementNoticeA4ParagraphGap,
-      }
-    }
-
-    if (templateId === 'agreement-portrait') {
-      const row = findWritingTemplateRowByDefinitionId(templateId)
-      const title = row?.templateName ?? '초상권 수집·이용 동의'
-      return {
-        initialDraft: createAgreementPortraitDraft,
-        defaultActiveParagraphId: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.title,
-        modalTitle: title,
-        modalDescription: '* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다.',
-        writingPreviewHeaderTitle: title,
-        structureLockedParagraphIds: AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS,
-        hideDragHandleForParagraphIds: AGREEMENT_PORTRAIT_HIDDEN_DRAG_HANDLE_IDS,
-        previewLayout: 'a4-document',
-        a4HiddenParagraphIds: AGREEMENT_PORTRAIT_A4_HIDDEN_PARAGRAPH_IDS,
-        a4RenderMode: 'contentOnly',
-        a4ParagraphGapPx: getAgreementPortraitA4ParagraphGap,
-      }
-    }
-
-    if (templateId === AGREEMENT_PAYMENT_STATEMENT_PRE_CONSENT_ID) {
-      const row = findWritingTemplateRowByDefinitionId(templateId)
-      const title = row?.templateName ?? '지급조서 사전 동의서'
-      return {
-        initialDraft: createPaymentStatementPreConsentDraft,
-        defaultActiveParagraphId: PAYMENT_STATEMENT_PRE_CONSENT_IDS.title,
-        modalTitle: title,
-        modalDescription: '* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다.',
-        writingPreviewHeaderTitle: title,
-        structureLockedParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_SEED_PARAGRAPH_IDS,
-        hideDragHandleForParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
-        previewLayout: 'a4-document',
-        a4HiddenParagraphIds: PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS,
-        a4RenderMode: 'contentOnly',
-        a4ParagraphGapPx: getPaymentStatementPreConsentA4ParagraphGap,
-        paragraphBodyOptions: PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
-      }
-    }
-
-    return null
-  }, [params.mode, params.id])
 
   const suppressInactiveUserPreviewStrip = useMemo(() => {
     if (params.mode !== 'edit' || params.id == null || params.id.trim() === '') return false
-    const id = params.id.trim()
-    if (AGREEMENT_WRITING_FORM_SHELL_TEMPLATE_IDS.has(id)) return true
-    return id.startsWith('survey-')
+    const entry = lookupTemplateRegistry(params.id.trim())
+    return entry?.suppressUserPreviewStrip === true
   }, [params.mode, params.id])
 
   useWritingUserPreviewUrlAuxiliarySync(
@@ -485,206 +132,33 @@ export default function TemplateFormTab() {
     setParams,
     isWritingUserPreviewOpen,
     closeWritingUserPreview,
-    {
-      suppressInactiveUserPreviewStrip,
-    }
+    { suppressInactiveUserPreviewStrip }
   )
 
-  /**
-   * 설문·동의 등 `suppressInactiveUserPreviewStrip` 사용 시 닫은 직후에도 userPreview가 남는 프레임이 있어
-   * 미리보기 훅이 다시 `openWritingUserPreview`를 호출할 수 있음. 템플릿 단위로 한 번 연 뒤에는 재호출을 막는다.
-   */
-  const templateUserPreviewUrlLatchRef = useRef<{
-    templateKey: string | undefined
-    blockAutoReopen: boolean
-  }>({ templateKey: undefined, blockAutoReopen: false })
+  const rendererContext = useMemo(
+    () => ({
+      registryEntry: editorVm.registryEntry,
+      editorVm,
+      generic: {
+        orderedLeftContentConfig,
+        activeCardId,
+        setActiveCardId,
+        applyOrderedCards,
+        rightNavigationConfig,
+      },
+    }),
+    [
+      editorVm,
+      orderedLeftContentConfig,
+      activeCardId,
+      setActiveCardId,
+      applyOrderedCards,
+      rightNavigationConfig,
+    ]
+  )
 
-  /** 직접 입력/앞으로가기 등 URL에 userPreview가 있으면 미리보기 오픈 */
-  useEffect(() => {
-    const tid =
-      params.mode === 'edit' && params.id != null && params.id.trim() !== ''
-        ? params.id.trim()
-        : undefined
-    const latch = templateUserPreviewUrlLatchRef.current
-    if (latch.templateKey !== tid) {
-      templateUserPreviewUrlLatchRef.current = { templateKey: tid, blockAutoReopen: false }
-    }
-    const L = templateUserPreviewUrlLatchRef.current
-
-    if (params.userPreview !== TEMPLATE_USER_PREVIEW_ACTIVE) {
-      L.blockAutoReopen = false
-      return
-    }
-    if (params.mode !== 'edit') return
-    if (isCrimeConsentDetail) return
-    if (!selectedTemplate) return
-    if (isWritingUserPreviewOpen) {
-      L.blockAutoReopen = true
-      return
-    }
-    if (L.blockAutoReopen) return
-    // agreement-notice·agreement-expense·agreement-portrait는 AgreementWritingFormShell이 직접 미리보기 제어
-    if (
-      params.id === 'agreement-notice' ||
-      params.id === 'agreement-expense' ||
-      params.id === 'agreement-portrait' ||
-      params.id === AGREEMENT_PAYMENT_STATEMENT_PRE_CONSENT_ID
-    ) {
-      return
-    }
-
-    if (isProgramRegistrationTemplate) {
-      programRegistrationVm.handlePreview()
-      L.blockAutoReopen = true
-      return
-    }
-    if (isUjatProgramRegistrationTemplate) {
-      ujatProgramRegistrationVm.handlePreview()
-      L.blockAutoReopen = true
-      return
-    }
-    if (
-      isApplicantRecruitInstitutionTemplate ||
-      isUjatRecruitInstitutionTemplate ||
-      isApplicantRecruitIndividualTemplate ||
-      isRecruitFormInstructorTemplate ||
-      isRecruitFormVolunteerTemplate ||
-      isUjatRecruitFormVolunteerTemplate ||
-      isUjatProgramApplicationInstitutionTemplate ||
-      isUjatProgramApplicationVolunteerTemplate ||
-      isGeminiVisitingTrainingSchoolApplicationTemplate ||
-      isEconomyProgramApplicationTemplate ||
-      isProgramParticipantApplicationTemplate ||
-      isGeminiVisitingTrainingInstructorApplicationTemplate ||
-      isProgramInstructorApplicationTemplate ||
-      isProgramVolunteerApplicationTemplate
-    ) {
-      programParticipantApplicationVm.handlePreview()
-      L.blockAutoReopen = true
-      return
-    }
-    if (isWritingSurveyListTemplate) {
-      surveyListEditor.handlePreview()
-      L.blockAutoReopen = true
-      return
-    }
-    const genericA4Options = shouldUseA4PreviewForWritingTemplate(selectedTemplate.id)
-      ? createContentOnlyA4PreviewOptions()
-      : undefined
-    openWritingUserPreview({
-      draft: EMPTY_PREVIEW_DRAFT,
-      updateParagraph: noopUpdateParagraph,
-      headerTitle: selectedTemplate.templateName ?? '양식 미리보기',
-      editorKind: selectedTemplate.id.startsWith('agreement-') === true ? 'agreement' : 'survey',
-      previewLayout: genericA4Options?.previewLayout,
-      a4RenderMode: genericA4Options?.a4RenderMode,
-      hideParagraphRequiredChrome: genericA4Options?.hideParagraphRequiredChrome,
-    })
-    L.blockAutoReopen = true
-  }, [
-    params.userPreview,
-    params.mode,
-    params.id,
-    isCrimeConsentDetail,
-    selectedTemplate,
-    isWritingUserPreviewOpen,
-    isProgramRegistrationTemplate,
-    isUjatProgramRegistrationTemplate,
-    ujatProgramRegistrationVm,
-    isApplicantRecruitInstitutionTemplate,
-    isUjatRecruitInstitutionTemplate,
-    isApplicantRecruitIndividualTemplate,
-    isRecruitFormInstructorTemplate,
-    isRecruitFormVolunteerTemplate,
-    isUjatRecruitFormVolunteerTemplate,
-    isUjatProgramApplicationInstitutionTemplate,
-    isUjatProgramApplicationVolunteerTemplate,
-    isGeminiVisitingTrainingSchoolApplicationTemplate,
-    isEconomyProgramApplicationTemplate,
-    isGeminiVisitingTrainingInstructorApplicationTemplate,
-    isProgramParticipantApplicationTemplate,
-    isProgramInstructorApplicationTemplate,
-    isProgramVolunteerApplicationTemplate,
-    programRegistrationVm,
-    programParticipantApplicationVm,
-    openWritingUserPreview,
-    isWritingSurveyListTemplate,
-    surveyListEditor,
-  ])
-
-  const handlePreview = useCallback(() => {
-    setParams({ userPreview: TEMPLATE_USER_PREVIEW_ACTIVE }, { replace: false })
-    if (isProgramRegistrationTemplate) {
-      programRegistrationVm.handlePreview()
-      return
-    }
-    if (isUjatProgramRegistrationTemplate) {
-      ujatProgramRegistrationVm.handlePreview()
-      return
-    }
-    if (
-      isApplicantRecruitInstitutionTemplate ||
-      isUjatRecruitInstitutionTemplate ||
-      isApplicantRecruitIndividualTemplate ||
-      isRecruitFormInstructorTemplate ||
-      isRecruitFormVolunteerTemplate ||
-      isUjatRecruitFormVolunteerTemplate ||
-      isUjatProgramApplicationInstitutionTemplate ||
-      isUjatProgramApplicationVolunteerTemplate ||
-      isGeminiVisitingTrainingSchoolApplicationTemplate ||
-      isEconomyProgramApplicationTemplate ||
-      isProgramParticipantApplicationTemplate ||
-      isGeminiVisitingTrainingInstructorApplicationTemplate ||
-      isProgramInstructorApplicationTemplate ||
-      isProgramVolunteerApplicationTemplate
-    ) {
-      programParticipantApplicationVm.handlePreview()
-      return
-    }
-    if (isWritingSurveyListTemplate) {
-      surveyListEditor.handlePreview()
-      return
-    }
-    const genericA4Options = useA4PreviewForWritingTemplate
-      ? createContentOnlyA4PreviewOptions()
-      : undefined
-    openWritingUserPreview({
-      draft: EMPTY_PREVIEW_DRAFT,
-      updateParagraph: noopUpdateParagraph,
-      headerTitle: selectedTemplate?.templateName ?? '양식 미리보기',
-      editorKind: previewEditorKind,
-      previewLayout: genericA4Options?.previewLayout,
-      a4RenderMode: genericA4Options?.a4RenderMode,
-      hideParagraphRequiredChrome: genericA4Options?.hideParagraphRequiredChrome,
-    })
-  }, [
-    isProgramInstructorApplicationTemplate,
-    isApplicantRecruitInstitutionTemplate,
-    isUjatRecruitInstitutionTemplate,
-    isApplicantRecruitIndividualTemplate,
-    isRecruitFormInstructorTemplate,
-    isRecruitFormVolunteerTemplate,
-    isUjatRecruitFormVolunteerTemplate,
-    isUjatProgramApplicationInstitutionTemplate,
-    isUjatProgramApplicationVolunteerTemplate,
-    isGeminiVisitingTrainingSchoolApplicationTemplate,
-    isEconomyProgramApplicationTemplate,
-    isGeminiVisitingTrainingInstructorApplicationTemplate,
-    isProgramParticipantApplicationTemplate,
-    isProgramVolunteerApplicationTemplate,
-    isProgramRegistrationTemplate,
-    isUjatProgramRegistrationTemplate,
-    ujatProgramRegistrationVm,
-    openWritingUserPreview,
-    previewEditorKind,
-    programParticipantApplicationVm,
-    programRegistrationVm,
-    selectedTemplate?.templateName,
-    useA4PreviewForWritingTemplate,
-    setParams,
-    isWritingSurveyListTemplate,
-    surveyListEditor,
-  ])
+  const isCrimeConsentDetail =
+    isPreviewOpen && registryEntry?.usesCrimeConsentModal === true
 
   if (params.mode === 'new' && params.type === 'survey') {
     return <NewSurveyForm />
@@ -724,220 +198,13 @@ export default function TemplateFormTab() {
         onClose={handleCloseTemplatePreview}
       />
 
-      <TemplateFullpageModal
+      <TemplatePreviewModal
         open={isPreviewOpen && !isCrimeConsentDetail && selectedTemplate != null}
         onClose={handleCloseTemplatePreview}
-        title={selectedTemplate?.templateName ?? '양식 미리보기'}
-        description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
-        templateTabType="writing"
+        title={resolvePreviewHeaderTitle(registryEntry, selectedTemplate?.templateName)}
         onPreview={handlePreview}
-        onSave={
-          isProgramRegistrationTemplate
-            ? programRegistrationVm.handleSave
-            : isUjatProgramRegistrationTemplate
-              ? ujatProgramRegistrationVm.handleSave
-              : isWritingSurveyListTemplate
-                ? surveyListEditor.handleSave
-                : isApplicantRecruitInstitutionTemplate ||
-                    isUjatRecruitInstitutionTemplate ||
-                    isApplicantRecruitIndividualTemplate ||
-                    isRecruitFormInstructorTemplate ||
-                    isRecruitFormVolunteerTemplate ||
-                    isUjatRecruitFormVolunteerTemplate ||
-                    isGeminiVisitingTrainingSchoolApplicationTemplate ||
-                    isEconomyProgramApplicationTemplate ||
-                    isUjatProgramApplicationInstitutionTemplate ||
-                    isUjatProgramApplicationVolunteerTemplate ||
-                    isProgramParticipantApplicationTemplate ||
-                    isGeminiVisitingTrainingInstructorApplicationTemplate ||
-                    isProgramInstructorApplicationTemplate ||
-                    isProgramVolunteerApplicationTemplate
-                  ? programParticipantApplicationVm.handleSave
-                  : undefined
-        }
-        leftContent={
-          isUjatProgramRegistrationTemplate ? (
-            <UjatProgramRegistrationEditorLeftColumn vm={ujatProgramRegistrationVm} />
-          ) : isProgramRegistrationTemplate ? (
-            <ProgramRegistrationEditorLeftColumn vm={programRegistrationVm} />
-          ) : isGeminiVisitingTrainingInstructorApplicationTemplate ? (
-            <GeminiVisitingTrainingApplicationFormInstructorEditorLeftColumn
-              vm={programParticipantApplicationVm}
-            />
-          ) : isProgramInstructorApplicationTemplate ? (
-            <ProgramApplicationFormInstructorEditorLeftColumn
-              vm={programParticipantApplicationVm}
-            />
-          ) : isProgramVolunteerApplicationTemplate ? (
-            <ProgramApplicationFormVolunteerEditorLeftColumn vm={programParticipantApplicationVm} />
-          ) : isGeminiVisitingTrainingSchoolApplicationTemplate ? (
-            <GeminiVisitingTrainingApplicationFormInstitutionEditorLeftColumn
-              vm={programParticipantApplicationVm}
-            />
-          ) : isUjatProgramApplicationInstitutionTemplate ? (
-            <UjatProgramApplicationFormInstitutionEditorLeftColumn
-              vm={programParticipantApplicationVm}
-            />
-          ) : isUjatProgramApplicationVolunteerTemplate ? (
-            <UjatProgramApplicationFormVolunteerEditorLeftColumn
-              vm={programParticipantApplicationVm}
-            />
-          ) : isEconomyProgramApplicationTemplate ? (
-            <EconomyProgramApplicationEditorLeftColumn vm={programParticipantApplicationVm} />
-          ) : isApplicantRecruitIndividualTemplate ? (
-            <ApplicantRecruitFormIndividualEditorLeftColumn vm={programParticipantApplicationVm} />
-          ) : isRecruitFormVolunteerTemplate ? (
-            <RecruitFormVolunteerEditorLeftColumn vm={programParticipantApplicationVm} />
-          ) : isUjatRecruitFormVolunteerTemplate ? (
-            <UjatRecruitFormVolunteerEditorLeftColumn vm={programParticipantApplicationVm} />
-          ) : isRecruitFormInstructorTemplate ? (
-            <RecruitFormInstructorEditorLeftColumn vm={programParticipantApplicationVm} />
-          ) : isUjatRecruitInstitutionTemplate ? (
-            <UjatRecruitFormInstitutionEditorLeftColumn vm={programParticipantApplicationVm} />
-          ) : isApplicantRecruitInstitutionTemplate ? (
-            <ApplicantRecruitFormInstitutionEditorLeftColumn vm={programParticipantApplicationVm} />
-          ) : isProgramParticipantApplicationTemplate ? (
-            programParticipantApplicationVariant === 'institution' ? (
-              <ProgramApplicationFormInstitutionEditorLeftColumn
-                vm={programParticipantApplicationVm}
-              />
-            ) : (
-              <ProgramParticipantApplicationEditorLeftColumn vm={programParticipantApplicationVm} />
-            )
-          ) : isWritingSurveyListTemplate ? (
-            <FormEditorLeftPanel
-              paragraphs={surveyListEditor.draft.paragraphs}
-              titleNumbering={surveyListEditor.draft.formSettings.titleNumbering}
-              selectedCardId={surveyListEditor.activeParagraphId}
-              onSelectCard={surveyListEditor.handleSelectCard}
-              onReorderMiddle={surveyListEditor.onReorderMiddle}
-              updateParagraph={surveyListEditor.updateParagraph}
-              hideDragHandleForParagraphIds={SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS}
-              editorKind="survey"
-              singleItemListActiveItemId={surveyListEditor.singleItemListActiveItemId}
-              onSelectSingleItemListItem={surveyListEditor.onSelectSingleItemListItem}
-              horizontalTableRowSelectionsByParagraphId={
-                surveyTableRowSelection.horizontalTableRowSelectionsByParagraphId
-              }
-              onHorizontalTableRowSelectionChange={
-                surveyTableRowSelection.onHorizontalTableRowSelectionChange
-              }
-              verticalTableBodyRowSelection={surveyTableRowSelection.verticalTableBodyRowSelection}
-              onVerticalTableBodyRowSelectionChange={
-                surveyTableRowSelection.onVerticalTableBodyRowSelectionChange
-              }
-              middleParagraphActions={surveyListEditor.middleParagraphActions}
-            />
-          ) : (
-            <TemplateModalLeftContent
-              config={orderedLeftContentConfig}
-              selectedCardId={activeCardId}
-              onSelectCard={setActiveCardId}
-              onReorderCards={cards => applyOrderedCards(cards.map(card => card.id))}
-            />
-          )
-        }
-        rightNavigation={
-          isUjatProgramRegistrationTemplate ? (
-            <UjatProgramRegistrationEditorRightColumn vm={ujatProgramRegistrationVm} />
-          ) : isProgramRegistrationTemplate ? (
-            <ProgramRegistrationEditorRightColumn vm={programRegistrationVm} />
-          ) : isGeminiVisitingTrainingInstructorApplicationTemplate ? (
-            <GeminiVisitingTrainingApplicationFormInstructorEditorRightColumn
-              vm={programParticipantApplicationVm}
-            />
-          ) : isProgramInstructorApplicationTemplate ? (
-            <ProgramApplicationFormInstructorEditorRightColumn
-              vm={programParticipantApplicationVm}
-            />
-          ) : isProgramVolunteerApplicationTemplate ? (
-            <ProgramApplicationFormVolunteerEditorRightColumn
-              vm={programParticipantApplicationVm}
-            />
-          ) : isGeminiVisitingTrainingSchoolApplicationTemplate ? (
-            <GeminiVisitingTrainingApplicationFormInstitutionEditorRightColumn
-              vm={programParticipantApplicationVm}
-            />
-          ) : isUjatProgramApplicationInstitutionTemplate ? (
-            <UjatProgramApplicationFormInstitutionEditorRightColumn
-              vm={programParticipantApplicationVm}
-            />
-          ) : isUjatProgramApplicationVolunteerTemplate ? (
-            <UjatProgramApplicationFormVolunteerEditorRightColumn
-              vm={programParticipantApplicationVm}
-            />
-          ) : isEconomyProgramApplicationTemplate ? (
-            <EconomyProgramApplicationEditorRightColumn vm={programParticipantApplicationVm} />
-          ) : isApplicantRecruitIndividualTemplate ? (
-            <ApplicantRecruitFormIndividualEditorRightColumn vm={programParticipantApplicationVm} />
-          ) : isRecruitFormVolunteerTemplate ? (
-            <RecruitFormVolunteerEditorRightColumn vm={programParticipantApplicationVm} />
-          ) : isUjatRecruitFormVolunteerTemplate ? (
-            <UjatRecruitFormVolunteerEditorRightColumn vm={programParticipantApplicationVm} />
-          ) : isRecruitFormInstructorTemplate ? (
-            <RecruitFormInstructorEditorRightColumn vm={programParticipantApplicationVm} />
-          ) : isUjatRecruitInstitutionTemplate ? (
-            <UjatRecruitFormInstitutionEditorRightColumn vm={programParticipantApplicationVm} />
-          ) : isApplicantRecruitInstitutionTemplate ? (
-            <ApplicantRecruitFormInstitutionEditorRightColumn
-              vm={programParticipantApplicationVm}
-            />
-          ) : isProgramParticipantApplicationTemplate ? (
-            programParticipantApplicationVariant === 'institution' ? (
-              <ProgramApplicationFormInstitutionEditorRightColumn
-                vm={programParticipantApplicationVm}
-              />
-            ) : (
-              <ProgramParticipantApplicationEditorRightColumn
-                vm={programParticipantApplicationVm}
-              />
-            )
-          ) : isWritingSurveyListTemplate ? (
-            <FormEditorFieldNav
-              sectionTitle="커스텀 필드"
-              pinnedTop={surveyListEditor.pinnedTop}
-              sortableMiddle={surveyListEditor.sortableMiddle}
-              pinnedBottom={surveyListEditor.pinnedBottom}
-              hideSortableDragHandleForIds={SURVEY_FORM_HIDDEN_DRAG_HANDLE_IDS}
-              selectedItemId={surveyListEditor.activeParagraphId}
-              onSelectItem={surveyListEditor.handleSelectCard}
-              onReorderMiddle={surveyListEditor.onReorderMiddle}
-              fieldListBottomSlot={
-                <FormEditorTitleNumberingField
-                  value={surveyListEditor.draft.formSettings.titleNumbering}
-                  onChange={surveyListEditor.onTitleNumberingChange}
-                />
-              }
-            >
-              <FormEditorRightPanel
-                draft={surveyListEditor.draft}
-                activeParagraphId={surveyListEditor.activeParagraphId}
-                onTitleNumberingChange={surveyListEditor.onTitleNumberingChange}
-                updateParagraph={surveyListEditor.updateParagraph}
-                editorKind="survey"
-                showTitleNumbering={false}
-                singleItemListActiveItemId={surveyListEditor.singleItemListActiveItemId}
-                horizontalTableRowSelection={
-                  surveyTableRowSelection.activeHorizontalTableRowSelection
-                }
-                onHorizontalTableBodyRowDeleted={
-                  surveyTableRowSelection.focusHorizontalTableBodyRow
-                }
-                verticalTableBodyRowSelection={
-                  surveyTableRowSelection.verticalTableBodyRowSelection
-                }
-                onVerticalTableBodyRowDeleted={surveyTableRowSelection.focusVerticalTableBodyRow}
-              />
-            </FormEditorFieldNav>
-          ) : (
-            <TemplateModalRightNavigation
-              config={rightNavigationConfig}
-              selectedItemId={activeCardId}
-              onSelectItem={setActiveCardId}
-              onReorderItems={items => applyOrderedCards(items.map(item => item.id))}
-            />
-          )
-        }
+        onSave={editorVm.handleSave}
+        rendererContext={rendererContext}
       />
     </>
   )

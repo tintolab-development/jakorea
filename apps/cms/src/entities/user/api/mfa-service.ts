@@ -8,8 +8,7 @@ import type {
   OtpSendResponse,
   OtpVerifyRequest,
   OtpVerifyResponse,
-  TotpProvisioning,
-} from '@/types/mfa'
+  TotpProvisioning } from '@/types/mfa'
 import { generateURI, verify } from 'otplib'
 import QRCode from 'qrcode'
 import { TOTP_ISSUER } from '@/shared/constants/totp'
@@ -58,7 +57,7 @@ export async function sendOtp(request: OtpSendRequest): Promise<OtpSendResponse>
   if (!checkAndIncrementDailyCount(request.userId)) {
     return {
       success: false,
-      message: `일일 인증번호 발송 제한(${OTP_POLICY.maxDailyAttempts}회)을 초과했습니다. 내일 다시 시도해주세요.`,
+      detail: `일일 인증번호 발송 제한(${OTP_POLICY.maxDailyAttempts}회)을 초과했습니다. 내일 다시 시도해주세요.`,
       sentAt: new Date().toISOString(),
       expiresAt: new Date().toISOString(),
     }
@@ -80,8 +79,7 @@ export async function sendOtp(request: OtpSendRequest): Promise<OtpSendResponse>
     sentAt,
     expiresAt,
     status: 'SENT',
-    deliveryStatus: 'PENDING',
-  })
+    deliveryStatus: 'PENDING' })
 
   // Mock: SMS 발송 시뮬레이션 (비동기로 전송 상태 업데이트)
   setTimeout(() => {
@@ -103,7 +101,7 @@ export async function sendOtp(request: OtpSendRequest): Promise<OtpSendResponse>
 
   return {
     success: true,
-    message: '인증번호가 발송되었습니다.',
+    detail: '인증번호가 발송되었습니다.',
     sentAt,
     expiresAt,
   }
@@ -121,7 +119,7 @@ export async function verifyOtp(request: OtpVerifyRequest): Promise<OtpVerifyRes
   if (!storedOtp) {
     return {
       success: false,
-      message: '인증번호가 발송되지 않았습니다.',
+      detail: '인증번호가 발송되지 않았습니다.',
       verified: false,
       failedAttempts: 0,
       isLocked: false,
@@ -134,7 +132,7 @@ export async function verifyOtp(request: OtpVerifyRequest): Promise<OtpVerifyRes
     userOtpMap.delete(request.userId)
     return {
       success: false,
-      message: '인증번호가 만료되었습니다. 다시 발송해주세요.',
+      detail: '인증번호가 만료되었습니다. 다시 발송해주세요.',
       verified: false,
       failedAttempts: 0,
       isLocked: false,
@@ -150,8 +148,7 @@ export async function verifyOtp(request: OtpVerifyRequest): Promise<OtpVerifyRes
     userId: request.userId,
     inputOtp: request.otpCode,
     storedOtp: storedOtp.otp,
-    smsLogId: smsLog?.id,
-  })
+    smsLogId: smsLog?.id })
 
   const isValid = verifyMockOtp(request.otpCode, storedOtp.otp)
 
@@ -168,7 +165,7 @@ export async function verifyOtp(request: OtpVerifyRequest): Promise<OtpVerifyRes
 
     return {
       success: true,
-      message: '인증이 완료되었습니다.',
+      detail: '인증이 완료되었습니다.',
       verified: true,
       failedAttempts: 0,
       isLocked: false,
@@ -184,7 +181,7 @@ export async function verifyOtp(request: OtpVerifyRequest): Promise<OtpVerifyRes
   // 실패 시 실패 횟수 증가 (실제로는 백엔드에서 관리)
   return {
     success: false,
-    message: '인증번호가 올바르지 않습니다.',
+    detail: '인증번호가 올바르지 않습니다.',
     verified: false,
     failedAttempts: 1, // Mock: 실제로는 백엔드에서 관리
     isLocked: false,
@@ -206,8 +203,7 @@ export async function getTotpProvisioning(email: string): Promise<TotpProvisioni
   const otpauthUri = generateURI({
     issuer: TOTP_ISSUER,
     label: email,
-    secret,
-  })
+    secret })
   const qrDataUrl = await QRCode.toDataURL(otpauthUri, { margin: 2, width: 220 })
 
   return { otpauthUri, qrDataUrl, manualSecret: secret }
@@ -221,7 +217,7 @@ export async function verifyTotp(email: string, otpCode: string): Promise<OtpVer
   if (!secret) {
     return {
       success: false,
-      message: '인증 설정을 찾을 수 없습니다.',
+      detail: '인증 설정을 찾을 수 없습니다.',
       verified: false,
       failedAttempts: 0,
       isLocked: false,
@@ -232,13 +228,12 @@ export async function verifyTotp(email: string, otpCode: string): Promise<OtpVer
   const result = await verify({
     secret,
     token: otpCode,
-    epochTolerance: 30,
-  })
+    epochTolerance: 30 })
 
   if (result.valid) {
     return {
       success: true,
-      message: '인증이 완료되었습니다.',
+      detail: '인증이 완료되었습니다.',
       verified: true,
       failedAttempts: 0,
       isLocked: false,
@@ -248,7 +243,7 @@ export async function verifyTotp(email: string, otpCode: string): Promise<OtpVer
 
   return {
     success: false,
-    message: '인증번호가 올바르지 않습니다.',
+    detail: '인증번호가 올바르지 않습니다.',
     verified: false,
     failedAttempts: 1,
     isLocked: false,
