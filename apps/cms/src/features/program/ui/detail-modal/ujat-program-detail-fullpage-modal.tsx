@@ -541,6 +541,7 @@ export function UjatProgramDetailFullPageModal({
                 isEditMode={isRecruitEditMode}
                 institutionsForm={isEditModeRecruitParticipant ? institutionsForm : undefined}
                 volunteersForm={isEditModeRecruitVolunteer ? volunteersForm : undefined}
+                registerInstitutionsAdditionalHtml={registerInstitutionsAdditionalHtml}
                 registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
               />
             </div>

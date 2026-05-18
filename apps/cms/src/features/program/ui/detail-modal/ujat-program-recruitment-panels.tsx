@@ -48,6 +48,7 @@ export function UjatProgramRecruitmentPanels({
   isEditMode,
   institutionsForm,
   volunteersForm,
+  registerInstitutionsAdditionalHtml,
   registerVolunteersAdditionalHtml,
 }: {
   program: Program
@@ -56,6 +57,7 @@ export function UjatProgramRecruitmentPanels({
   isEditMode: boolean
   institutionsForm?: UseFormReturn<ProgramDetailEditFormValues>
   volunteersForm?: UseFormReturn<ProgramDetailEditFormValues>
+  registerInstitutionsAdditionalHtml?: (getter: () => string) => void
   registerVolunteersAdditionalHtml?: (getter: () => string) => void
 }) {
   const volunteerHalf = volunteerHalfFromRecruitTab(activeRecruitTab)
@@ -71,6 +73,7 @@ export function UjatProgramRecruitmentPanels({
       program,
       sponsorName,
       form: institutionsForm,
+      onRegisterGetAdditionalContentHtml: registerInstitutionsAdditionalHtml,
     }
     return (
       <div className="ujat-program-recruitment-panels">

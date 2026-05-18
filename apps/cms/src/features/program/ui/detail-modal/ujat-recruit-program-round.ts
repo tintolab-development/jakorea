@@ -1,3 +1,4 @@
+import type { DateValue } from '@/types'
 import type { Program, ProgramRound } from '@/types/domain'
 import type { UjatVolunteerRecruitHalf } from './ujat-recruit-paragraph-props'
 
@@ -15,7 +16,7 @@ export function getUjatVolunteerRound(
 export function getUjatVolunteerRecruitPeriod(
   program: Program,
   half: UjatVolunteerRecruitHalf
-): { start?: string; end?: string } {
+): { start?: DateValue; end?: DateValue } {
   const round = getUjatVolunteerRound(program, half)
   if (round?.startDate && round?.endDate) {
     return { start: round.startDate, end: round.endDate }
