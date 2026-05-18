@@ -48,7 +48,23 @@
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
+  gap: 10px;
   min-width: 0;
+}
+
+.filter-table-layout__title-note {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.filter-table-layout__title-note strong,
+.filter-table-layout__title-note .filter-table-layout__title-note-em {
+  font-weight: 700;
 }
 
 .filter-table-layout__toolbar-actions {
@@ -64,7 +80,7 @@
   font-size: 20px;
   font-weight: 700;
   line-height: 140%; /* 28px */
-  padding: 0 10px 0 8px;
+  padding: 0 0 0 8px;
 }
 
 .filter-table-layout__description {

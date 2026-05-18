@@ -19,6 +19,10 @@
   box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
 }
 
+/**
+ * 캘린더 우측 일별 리스트·`program-schedule-list` 등 공통 행 shell.
+ * 도메인별 item CSS에서 hover/cursor/transition 재정의 금지 — apps/cms/.cursor/rules/design/calendar-sub-right-list.md
+ */
 .calendar-list-item {
   width: 100%;
   min-width: 0;

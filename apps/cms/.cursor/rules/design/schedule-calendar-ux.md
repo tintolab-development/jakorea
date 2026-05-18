@@ -24,5 +24,6 @@ Prefer **option 1** for consistency with common calendar apps and fewer mistaken
 ## Engineering
 
 - Stop propagation on nested controls per [event-handling.md](./event-handling.md).
+- 우측 일별 리스트 행·hover: [calendar-sub-right-list.md](./calendar-sub-right-list.md)
 
 **Last updated:** 2026-04-21

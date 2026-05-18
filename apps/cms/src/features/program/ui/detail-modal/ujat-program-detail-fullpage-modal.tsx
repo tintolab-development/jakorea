@@ -14,7 +14,7 @@ import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { handleError } from '@/shared/utils/error-handler'
 import { ProjectInfoDetailPanels } from '../../program-detail/ui/project-info/project-info-detail'
 import { ProgramManagersTab } from '../program-managers-tab'
-import { ApplicantList } from '../../program-detail/ui/applicant-list/applicant-list'
+import { UjatInstitutionApplicationList } from './ujat-institution-application/ujat-institution-application-list'
 import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
 import type { Program } from '@/types/domain'
 import { parseUjatDetailLnb, resolveUjatDetailLnbFromSearchParams, type UjatDetailLnbKey } from './ujat-program-detail-url'
@@ -545,7 +545,7 @@ export function UjatProgramDetailFullPageModal({
           )}
 
           {activeLnb === 'institution_applications' && activeTab === 'inst_all' && (
-            <ApplicantList menu="institutions" program={displayProgram} />
+            <UjatInstitutionApplicationList />
           )}
           {activeLnb === 'institution_applications' &&
             (activeTab === 'inst_schedule_confirm' || activeTab === 'inst_schedule_assign') && (

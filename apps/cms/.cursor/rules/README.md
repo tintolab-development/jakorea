@@ -35,6 +35,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [Color palette](./design/color-palette.md)  
 - [Styling tokens](./design/styling-tokens.md)  
 - [Schedule / calendar UX](./design/schedule-calendar-ux.md)  
+- [Calendar sub-right list](./design/calendar-sub-right-list.md) — `.calendar-list` / `.calendar-list-item` 공통 shell·mint hover  
 - [Design requests](./design/design-requests.md)  
 
 ## Libraries

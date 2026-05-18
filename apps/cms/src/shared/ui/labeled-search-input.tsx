@@ -32,6 +32,8 @@ export interface LabeledSearchInputProps {
   onBlur?: () => void
   /** default: 일반 폼 높이. filter: 통일 필터 카드(44px 등) */
   uiVariant?: 'default' | 'filter'
+  /** true면 숫자만 입력 가능(비숫자 문자·붙여넣기 즉시 제거) */
+  numericOnly?: boolean
 }
 
 /**
@@ -49,7 +51,12 @@ export function LabeledSearchInput({
   disabled = false,
   showPrefixIcon = false,
   showLabel = true,
+  numericOnly = false,
 }: LabeledSearchInputProps) {
+  const handleChange = (raw: string) => {
+    const next = numericOnly ? raw.replace(/\D/g, '') : raw
+    onChange?.(next)
+  }
   const wrapperClassName = [
     'labeled-search-input',
     !showPrefixIcon && 'labeled-search-input--no-icon',
@@ -66,8 +73,9 @@ export function LabeledSearchInput({
         placeholder={placeholder}
         value={value}
         inputSize="large"
-        onChange={e => onChange?.(e.target.value)}
+        onChange={e => handleChange(e.target.value)}
         onBlur={onBlur}
+        inputMode={numericOnly ? 'numeric' : undefined}
         allowClear={true}
         width={width}
         disabled={disabled}

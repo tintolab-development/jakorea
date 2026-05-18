@@ -1,0 +1,39 @@
+/* 스크린샷: 좌 메인 월간 캘린더 + 우 calendar-sub-right-list (미니 캘린더 없음) */
+.ujat-institution-application-calendar-view {
+  --ujat-institution-calendar-height: 900px;
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  min-height: var(--ujat-institution-calendar-height);
+  align-items: stretch;
+  margin-top: 0;
+}
+
+/* 일별 툴팁 — 총 학급 수 | 학년별 상세 (목록 카드 2행째와 동일) */
+.ujat-institution-preview__meta {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-institution-preview__meta-total {
+  flex-shrink: 0;
+  white-space: nowrap;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 140%;
+}
+
+.ujat-institution-preview__meta-detail {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 140%;
+}

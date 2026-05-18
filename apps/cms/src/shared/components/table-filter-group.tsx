@@ -95,6 +95,8 @@ export interface FilterFieldConfig {
   dateRangeOneMonthFromStart?: boolean
   /** `select`: 첫 옵션 `전체` 자동 삽입 비활성화 */
   withAllOption?: boolean
+  /** `search`: 숫자만 입력 가능 */
+  searchNumericOnly?: boolean
 }
 
 export interface TableFilterGroupProps {
@@ -318,6 +320,7 @@ export function TableFilterGroup({
           label={field.label}
           placeholder={field.placeholder || `${field.label}을(를) 입력하세요`}
           value={searchDrafts[field.key] ?? ''}
+          numericOnly={field.searchNumericOnly}
           onChange={value =>
             setSearchDrafts(prev =>
               prev[field.key] === value ? prev : { ...prev, [field.key]: value }
