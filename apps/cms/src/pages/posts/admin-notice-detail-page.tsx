@@ -4,7 +4,6 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { message } from 'antd'
 import dayjs from 'dayjs'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
 import { NoticeAttachmentDownloadIcon } from '@/features/posts/ui/notice-attachment-download-icon'
@@ -48,11 +47,10 @@ export function AdminNoticeDetailPage() {
     if (!id) return
     try {
       await deleteNotice(id)
-      message.success('공지사항이 삭제되었습니다.')
       setDeleteConfirmOpen(false)
       goList()
-    } catch {
-      message.error('공지사항을 삭제할 수 없습니다.')
+    } catch (error) {
+      console.debug('adminNoticeDetailPage delete failed', error)
     }
   }, [id, goList])
 

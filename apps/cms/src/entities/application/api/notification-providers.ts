@@ -6,7 +6,7 @@
 
 export interface SmsSendParams {
   to: string
-  message: string
+  body: string
   sender?: string
 }
 
@@ -35,7 +35,7 @@ export interface KakaoSendParams {
   to: string
   /** 알림톡 템플릿 ID (실제 연동 시 사용) */
   templateId?: string
-  message: string
+  body: string
   /** 템플릿 변수 (실제 연동 시 사용) */
   templateParams?: Record<string, string>
 }

@@ -19,8 +19,7 @@ import './school-detail-add-instructor-assign-modal.css'
 function InstructorAssignSessionTags({
   value,
   onChange,
-  options,
-}: {
+  options }: {
   value?: string[]
   onChange?: (ids: string[]) => void
   options: InstructorAssignSessionOption[]
@@ -148,8 +147,7 @@ export function SchoolDetailAddInstructorAssignModal({
   currentAssignedCount = 0,
   requiredInstructorCount = 4,
   overflowAlreadyConfirmed = false,
-  onAdd,
-}: SchoolDetailAddInstructorAssignModalProps) {
+  onAdd }: SchoolDetailAddInstructorAssignModalProps) {
   const [form] = Form.useForm<AddInstructorAssignFormValues>()
   const [leadConfirmOpen, setLeadConfirmOpen] = useState(false)
   const [leadConfirmPayload, setLeadConfirmPayload] = useState<LeadConfirmPayload | null>(null)
@@ -206,8 +204,7 @@ export function SchoolDetailAddInstructorAssignModal({
         instructorId: values.instructorId,
         role: values.role,
         option,
-        sessionIds,
-      })
+        sessionIds })
       setOverflowOpen(true)
       return
     }
@@ -239,8 +236,7 @@ export function SchoolDetailAddInstructorAssignModal({
   const handleLeadConfirmOk = () => {
     if (leadConfirmPayload) {
       commitAdd(leadConfirmPayload.instructorId, leadConfirmPayload.role, leadConfirmPayload.option, {
-        sessionIds: leadConfirmPayload.sessionIds,
-      })
+        sessionIds: leadConfirmPayload.sessionIds })
     }
   }
 
@@ -286,7 +282,7 @@ export function SchoolDetailAddInstructorAssignModal({
               <Form.Item
                 name="role"
                 label="대표 강사 지정"
-                rules={[{ required: true, message: '대표 강사 지정을 선택해 주세요' }]}
+                rules={[{ required: true }]}
                 className="school-detail-add-instructor-assign-modal__field"
               >
                 <Radio.Group
@@ -296,15 +292,14 @@ export function SchoolDetailAddInstructorAssignModal({
                     { label: INSTRUCTOR_ROLE_LABELS.lead, value: 'lead' as InstructorRoleKey },
                     {
                       label: INSTRUCTOR_ROLE_LABELS.assistant,
-                      value: 'assistant' as InstructorRoleKey,
-                    },
+                      value: 'assistant' as InstructorRoleKey },
                   ]}
                 />
               </Form.Item>
               <Form.Item
                 name="instructorId"
                 label="강사명"
-                rules={[{ required: true, message: '배정할 강사를 선택해 주세요' }]}
+                rules={[{ required: true }]}
                 className="school-detail-add-instructor-assign-modal__field"
               >
                 <Select
@@ -331,8 +326,7 @@ export function SchoolDetailAddInstructorAssignModal({
                           validator: (_rule, value: string[] | undefined) =>
                             value && value.length > 0
                               ? Promise.resolve()
-                              : Promise.reject(new Error('교육 배정일을 선택해 주세요')),
-                        },
+                              : Promise.reject(new Error('교육 배정일을 선택해 주세요')) },
                       ]
                     : []
                 }

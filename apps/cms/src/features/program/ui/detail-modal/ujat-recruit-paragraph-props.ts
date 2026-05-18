@@ -14,10 +14,8 @@ export type UjatRecruitParagraphProps = {
   volunteerHalf?: UjatVolunteerRecruitHalf
   onRegisterGetAdditionalContentHtml?: (getter: () => string) => void
   exceptionScheduleCount?: number
-  /** draft `paragraphTitle` (DetailInfoForm title) */
+  /** draft `paragraphTitle` — 프로그램 상세에서만 노출 (`paragraphDescription`은 미노출) */
   sectionTitle?: string
-  /** draft `paragraphDescription` — placeholder 제외, DetailInfoForm `description`으로 노출 */
-  sectionDescription?: string | null
 }
 
 export function resolveUjatRecruitParagraphMode(props: UjatRecruitParagraphProps): UjatRecruitParagraphMode {

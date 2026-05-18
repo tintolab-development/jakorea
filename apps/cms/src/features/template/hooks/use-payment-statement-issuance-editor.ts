@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { message } from 'antd'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import { usePaymentStatementIssuanceMiddleActions } from '@/features/template/hooks/use-payment-statement-issuance-middle-actions'
@@ -148,8 +147,7 @@ export function usePaymentStatementIssuanceEditor(active: boolean, previewHeader
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    message.success('저장 API 연동 전입니다.')
-  }, [])
+    }, [])
 
   const onSelectSingleItemListItem = useCallback((paragraphId: string, itemId: string | null) => {
     setActiveParagraphId(paragraphId)

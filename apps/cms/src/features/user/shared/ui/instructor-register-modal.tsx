@@ -706,7 +706,7 @@ export function InstructorRegisterModal({
             </DetailInfoForm.Row>
           </DetailInfoForm>
 
-          <DetailInfoForm title="학력사항" message="최종학력 정보 노출" mode="edit">
+          <DetailInfoForm title="학력사항" headerNote="최종학력 정보 노출" mode="edit">
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="최종 학력"
@@ -765,7 +765,7 @@ export function InstructorRegisterModal({
 
           <DetailInfoForm
             title="경력사항"
-            message="총 경력 정보 노출"
+            headerNote="총 경력 정보 노출"
             mode="edit"
             titleTrailing={
               careerLevel === 'experienced' ? (
@@ -855,7 +855,7 @@ export function InstructorRegisterModal({
             {(fields, { add, remove }) => (
               <DetailInfoForm
                 title="JA Korea 활동 경험"
-                message="총 참여 프로그램 수 노출"
+                headerNote="총 참여 프로그램 수 노출"
                 mode="edit"
                 titleTrailing={
                   <CmsButton
@@ -902,7 +902,7 @@ export function InstructorRegisterModal({
             {(fields, { add, remove }) => (
               <DetailInfoForm
                 title="자격 및 면허"
-                message="총 취득 개수 노출"
+                headerNote="총 취득 개수 노출"
                 mode="edit"
                 titleTrailing={
                   <CmsButton
@@ -949,7 +949,7 @@ export function InstructorRegisterModal({
             {(fields, { add, remove }) => (
               <DetailInfoForm
                 title="수상 및 수료 내역"
-                message="총 수상 개수 노출"
+                headerNote="총 수상 개수 노출"
                 mode="edit"
                 titleTrailing={
                   <CmsButton

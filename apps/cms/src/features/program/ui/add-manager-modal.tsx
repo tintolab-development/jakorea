@@ -12,12 +12,10 @@ import type { ProgramRole } from '@/types/user'
 import {
   PROGRAM_ROLE_LABELS,
   getAssignableManagerCandidates,
-  type ProgramManagerRow,
-} from '@/data/mock/program-managers'
+  type ProgramManagerRow } from '@/data/mock/program-managers'
 import {
   canAddProgramPmFromPmCount,
-  PROGRAM_PM_ROLE_LIMIT_MESSAGE,
-} from '@/entities/program/lib/program-pm-role-policy'
+  PROGRAM_PM_ROLE_LIMIT_MESSAGE } from '@/entities/program/lib/program-pm-role-policy'
 import './add-manager-modal.css'
 
 const ROLE_OPTIONS: { label: string; value: ProgramRole }[] = [
@@ -53,8 +51,7 @@ export function AddManagerModal({
   onCancel,
   currentOwnerCount,
   excludeManagerNames = [],
-  onAdd,
-}: AddManagerModalProps) {
+  onAdd }: AddManagerModalProps) {
   const [form] = Form.useForm<AddManagerModalFormValues>()
   const [showOwnerLimitModal, setShowOwnerLimitModal] = useState(false)
 
@@ -88,8 +85,7 @@ export function AddManagerModal({
       name: picked.name,
       email: picked.email,
       phone: picked.phone,
-      role: values.role,
-    })
+      role: values.role })
     form.resetFields()
     onCancel()
   }
@@ -132,7 +128,7 @@ export function AddManagerModal({
             <Form.Item
               name="role"
               label="권한 설정"
-              rules={[{ required: true, message: '권한을 선택해주세요' }]}
+              rules={[{ required: true }]}
               className="add-manager-modal__field"
             >
               <Radio.Group className="add-manager-modal__role-radios" size="large">
@@ -153,7 +149,7 @@ export function AddManagerModal({
             <Form.Item
               name="managerPreset"
               label="담당자명"
-              rules={[{ required: true, message: '담당자를 선택해주세요' }]}
+              rules={[{ required: true }]}
               className="add-manager-modal__field"
             >
               <Select
@@ -163,8 +159,7 @@ export function AddManagerModal({
                 className="add-manager-modal__select"
                 options={assignablePool.map(m => ({
                   value: m.id,
-                  label: m.name,
-                }))}
+                  label: m.name }))}
                 notFoundContent={
                   assignablePool.length === 0 ? '등록 가능한 담당자가 없습니다' : undefined
                 }
@@ -217,6 +212,5 @@ export function buildManagerRowFromForm(
     role: values.role,
     phone: values.phone,
     email: values.email,
-    registeredAt: formatRegisteredAt(new Date()),
-  }
+    registeredAt: formatRegisteredAt(new Date()) }
 }

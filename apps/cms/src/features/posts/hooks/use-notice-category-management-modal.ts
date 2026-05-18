@@ -5,7 +5,6 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import type { InputRef } from 'antd'
-import { message } from 'antd'
 import type { Notice } from '@/data/mock/notices'
 import {
   countByCategoryLabel,
@@ -101,17 +100,14 @@ export function useNoticeCategoryManagementModal({
     if (editingId == null) return
     const trimmed = editDraft.trim()
     if (trimmed === '') {
-      message.warning('카테고리명을 입력해주세요.')
       return
     }
     if (hasDuplicateCategoryName(categories, trimmed, editingId)) {
-      message.warning('이미 같은 이름의 카테고리가 있습니다.')
       return
     }
     onCategoriesChange(
       categories.map(c => (c.id === editingId ? { ...c, name: trimmed } : c))
     )
-    message.success('카테고리가 수정되었습니다.')
     cancelEdit()
   }, [cancelEdit, categories, editDraft, editingId, onCategoriesChange])
 
@@ -119,8 +115,7 @@ export function useNoticeCategoryManagementModal({
     (id: string) => {
       onCategoriesChange(categories.filter(c => c.id !== id))
       if (editingId === id) cancelEdit()
-      message.success('카테고리가 삭제되었습니다.')
-    },
+      },
     [cancelEdit, categories, editingId, onCategoriesChange]
   )
 
@@ -156,18 +151,15 @@ export function useNoticeCategoryManagementModal({
   const submitNew = useCallback(() => {
     const trimmed = newDraft.trim()
     if (trimmed === '') {
-      message.warning('카테고리명을 입력해주세요.')
       return
     }
     if (hasDuplicateCategoryName(categories, trimmed)) {
-      message.warning('이미 같은 이름의 카테고리가 있습니다.')
       return
     }
     const id = createNoticeCategoryId()
     onCategoriesChange([...categories, { id, name: trimmed }])
     setNewDraft('')
-    message.success('카테고리가 등록되었습니다.')
-  }, [categories, newDraft, onCategoriesChange])
+    }, [categories, newDraft, onCategoriesChange])
 
   const focusNewRow = useCallback(() => {
     newInputRef.current?.focus()

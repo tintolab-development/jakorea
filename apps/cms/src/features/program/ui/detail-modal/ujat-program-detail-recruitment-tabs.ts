@@ -42,3 +42,11 @@ export function volunteerHalfFromRecruitTab(tab: UjatRecruitTabKey): 'h1' | 'h2'
   if (tab === 'recruit_volunteer_h2') return 'h2'
   return null
 }
+
+/** 봉사자 모집 정보 단락 title — 프로그램 상세는 탭 라벨과 동일하게 노출 */
+export function volunteerRecruitInfoSectionTitle(tab: UjatRecruitTabKey): string | undefined {
+  if (tab === 'recruit_volunteer_h1' || tab === 'recruit_volunteer_h2') {
+    return UJAT_RECRUIT_TAB_LABELS[tab]
+  }
+  return undefined
+}

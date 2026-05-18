@@ -6,7 +6,7 @@
 import type { ApplicationProgressStatus } from '@/types/application-progress'
 import { APPLICATION_PROGRESS_ORDER } from '@/types/application-progress'
 import { mockApplications } from '@/data/mock/applications'
-import { showSuccessMessage } from '@/shared/utils/error-handler'
+
 import dayjs from 'dayjs'
 
 export interface StatusChangeLog {
@@ -153,8 +153,7 @@ export async function changeApplicationProgressStatus(
   application.progressStatus = newStatus
   application.updatedAt = new Date().toISOString()
 
-  showSuccessMessage(`상태가 "${newStatus}"로 변경되었습니다`)
-}
+  }
 
 /**
  * 상태 변경 이력에 알림 발송 상태 업데이트

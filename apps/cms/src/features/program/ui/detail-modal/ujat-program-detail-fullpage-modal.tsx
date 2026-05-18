@@ -4,13 +4,14 @@
 
 import { useCallback, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Spin, Typography, message } from 'antd'
+import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useSponsorService } from '@/features/sponsor/hooks/use-sponsor-service'
 import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-save'
-import { MESSAGES, FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
+import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
+import { handleError } from '@/shared/utils/error-handler'
 import { ProjectInfoDetailPanels } from '../../program-detail/ui/project-info/project-info-detail'
 import { ProgramManagersTab } from '../program-managers-tab'
 import { ApplicantList } from '../../program-detail/ui/applicant-list/applicant-list'
@@ -263,13 +264,12 @@ export function UjatProgramDetailFullPageModal({
               try {
                 const { id: _id, createdAt: _c, ...patch } = draft
                 await updateProgram(draft.id, patch)
-                message.success(MESSAGES.success.programUpdated)
                 const next = new URLSearchParams(searchParams)
                 next.delete(EDIT_PARAM)
                 if (programId) next.set('programId', programId)
                 setSearchParams(next, { replace: true })
-              } catch {
-                message.error(MESSAGES.error.update)
+              } catch (error) {
+                handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
               }
             }
           : undefined,
@@ -289,7 +289,6 @@ export function UjatProgramDetailFullPageModal({
   const handleInfoEdit = useCallback(() => {
     if (activeTab !== 'info' || !displayProgram) return
     if (!canUjatProgramInfoEdit(displayProgram)) {
-      message.warning('프로그램 진행 중 이후에는 정보를 수정할 수 없습니다.')
       return
     }
     infoResetToProgram()
@@ -334,13 +333,12 @@ export function UjatProgramDetailFullPageModal({
             try {
               const { id: _id, createdAt: _c, ...patch } = draft
               await updateProgram(draft.id, patch)
-              message.success(MESSAGES.success.programUpdated)
               const next = new URLSearchParams(searchParams)
               next.delete(EDIT_PARAM)
               if (programId) next.set('programId', programId)
               setSearchParams(next, { replace: true })
-            } catch {
-              message.error(MESSAGES.error.update)
+            } catch (error) {
+              handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
             }
           }
         : undefined,
@@ -363,13 +361,12 @@ export function UjatProgramDetailFullPageModal({
             try {
               const { id: _id, createdAt: _c, ...patch } = draft
               await updateProgram(draft.id, patch)
-              message.success(MESSAGES.success.programUpdated)
               const next = new URLSearchParams(searchParams)
               next.delete(EDIT_PARAM)
               if (programId) next.set('programId', programId)
               setSearchParams(next, { replace: true })
-            } catch {
-              message.error(MESSAGES.error.update)
+            } catch (error) {
+              handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
             }
           }
         : undefined,
@@ -411,7 +408,6 @@ export function UjatProgramDetailFullPageModal({
   const handleRecruitmentEdit = useCallback(() => {
     if (!activeRecruitTab || !displayProgram) return
     if (!canUjatProgramInfoEdit(displayProgram)) {
-      message.warning('프로그램 진행 중 이후에는 정보를 수정할 수 없습니다.')
       return
     }
     if (activeRecruitTab === 'recruit_participant') {

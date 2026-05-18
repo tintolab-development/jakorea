@@ -4,10 +4,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { message } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { DOWNLOAD_LIMITS } from '@/shared/constants/download-policy'
-import { MESSAGES } from '@/shared/constants'
 import { getCurrentUserDownloadQuota, updateMockDownloadQuota } from '@/data/mock/download-quota'
 import type { DownloadQuota, DownloadCheckResult } from '@/types/download'
 
@@ -31,8 +29,8 @@ export function useDownloadQuota(): UseDownloadQuotaResult {
     try {
       const newQuota = getCurrentUserDownloadQuota()
       setQuota(newQuota)
-    } catch {
-      message.error(MESSAGES.error.downloadQuotaLoadFailed)
+    } catch (error) {
+      console.debug('useDownloadQuota refresh failed', error)
     } finally {
       setLoading(false)
     }

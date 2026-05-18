@@ -1,4 +1,3 @@
-import { message } from 'antd'
 import { MemberProgramLectureHistory } from '../member-program-lecture-history'
 import type { RendererProps } from '../user-programs-view-renderer'
 
@@ -17,8 +16,7 @@ export function SchoolParticipationView({
       showCertificateBulkIssue={showCertificateBulkIssue}
       onRowClick={onRowClick}
       onBulkDelete={() => {
-        message.info('이력 삭제는 추후 연결됩니다.')
-      }}
+        }}
     />
   )
 }

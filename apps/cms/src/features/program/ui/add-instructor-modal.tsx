@@ -50,8 +50,7 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui/app-button'
 import type {
   ParticipatingInstructorRow,
-  SettlementStatusKey,
-} from '@/data/mock/participating-instructors'
+  SettlementStatusKey } from '@/data/mock/participating-instructors'
 import { INSTRUCTOR_SCHOOL_OPTIONS } from '@/data/mock/participating-instructors'
 import { EducationSection } from './add-instructor-education-section'
 import { CareerDetailSection } from './add-instructor-career-section'
@@ -240,8 +239,7 @@ const INITIAL_FORM_VALUES: AddInstructorFormValues = {
   consentWithholdingTax: 'agree',
   consentCriminalRecord: 'disagree',
   consentAdministrativeInfo: 'agree',
-  consentEducationFacilitatorPledge: 'agree',
-}
+  consentEducationFacilitatorPledge: 'agree' }
 
 const ADDRESS_SEARCH_COUNT_PER_PAGE = 10
 
@@ -253,19 +251,16 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
   const detailAddressInputRef = useRef<HTMLInputElement | null>(null)
   const rhfForm = useForm<AddInstructorFormValues>({
     defaultValues: INITIAL_FORM_VALUES,
-    mode: 'onChange',
-  })
+    mode: 'onChange' })
   const {
     addresses,
     totalCount,
     loading: addressLoading,
     error: addressError,
     search: searchAddress,
-    reset: resetAddressSearch,
-  } = useJusoAddressSearch({
+    reset: resetAddressSearch } = useJusoAddressSearch({
     confmKey: readJusoConfmKeyFromEnv(),
-    countPerPage: ADDRESS_SEARCH_COUNT_PER_PAGE,
-  })
+    countPerPage: ADDRESS_SEARCH_COUNT_PER_PAGE })
   const jaKoreaExperiences = Form.useWatch('jaKoreaExperiences', form) ?? []
   const qualifications = Form.useWatch('qualifications', form) ?? []
   const awards = Form.useWatch('awards', form) ?? []
@@ -286,8 +281,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
         })
         if (target.length === 0 && basePath) {
           rhfForm.setValue(basePath as Path<AddInstructorFormValues>, [] as never, {
-            shouldDirty: true,
-          })
+            shouldDirty: true })
         }
         return
       }
@@ -300,8 +294,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
       }
       if (basePath) {
         rhfForm.setValue(basePath as Path<AddInstructorFormValues>, target as never, {
-          shouldDirty: true,
-        })
+          shouldDirty: true })
       }
     }
     walk(values)
@@ -423,7 +416,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                       <Form.Item
                         name="nameKorean"
-                        rules={[{ required: true, message: '한글 성명을 입력해주세요' }]}
+                        rules={[{ required: true }]}
                         noStyle
                       >
                         <input
@@ -438,7 +431,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                       <Form.Item
                         name="nameEnglish"
-                        rules={[{ required: true, message: '영문 성명을 입력해주세요' }]}
+                        rules={[{ required: true }]}
                         noStyle
                       >
                         <input
@@ -457,8 +450,8 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         <Form.Item
                           name="residentRegistrationFirst"
                           rules={[
-                            { required: true, message: '주민등록 앞 6자리를 입력해주세요' },
-                            { len: 6, message: '6자리를 입력해주세요' },
+                            { required: true },
+                            { len: 6 },
                           ]}
                           noStyle
                         >
@@ -477,8 +470,8 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         <Form.Item
                           name="residentRegistrationLast"
                           rules={[
-                            { required: true, message: '주민등록 뒤 7자리를 입력해주세요' },
-                            { len: 7, message: '7자리를 입력해주세요' },
+                            { required: true },
+                            { len: 7 },
                           ]}
                           noStyle
                         >
@@ -499,8 +492,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                           placeholder="소속"
                           options={INSTRUCTOR_SCHOOL_OPTIONS.map(school => ({
                             label: school,
-                            value: school,
-                          }))}
+                            value: school }))}
                           className="add-instructor-modal__table-input"
                         />
                       </Form.Item>
@@ -513,7 +505,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                       <Form.Item
                         name="contact"
-                        rules={[{ required: true, message: '연락처를 입력해주세요' }]}
+                        rules={[{ required: true }]}
                         noStyle
                       >
                         <input className="add-instructor-modal__table-input" placeholder="연락처" />
@@ -526,8 +518,8 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       <Form.Item
                         name="email"
                         rules={[
-                          { required: true, message: '이메일을 입력해주세요' },
-                          { type: 'email', message: '올바른 이메일 형식이 아닙니다' },
+                          { required: true },
+                          { type: 'email' },
                         ]}
                         noStyle
                       >
@@ -550,7 +542,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       <div className="add-instructor-modal__address-row">
                         <Form.Item
                           name="address"
-                          rules={[{ required: true, message: '주소를 입력해주세요' }]}
+                          rules={[{ required: true }]}
                           noStyle
                         >
                           <AddressSearchInput
@@ -1235,7 +1227,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
               </div>
               {addressError ? (
                 <div className="add-instructor-modal__address-popup-empty">
-                  {addressError.message}
+                  {'주소를 확인해주세요.'}
                 </div>
               ) : addressLoading ? (
                 <div className="add-instructor-modal__address-popup-empty">검색 중...</div>
@@ -1316,8 +1308,7 @@ export function buildInstructorRowFromForm(
     schoolName: e.schoolName,
     major: e.major,
     enrollmentYear: formatYearMonth(e.enrollmentYear),
-    graduationYear: formatYearMonth(e.graduationYear),
-  }))
+    graduationYear: formatYearMonth(e.graduationYear) }))
   return {
     id: nextId,
     no: nextNo,
@@ -1337,8 +1328,7 @@ export function buildInstructorRowFromForm(
       role: c.role,
       startDate: c.startDate,
       endDate: c.endDate,
-      isCurrent: c.isCurrent,
-    })),
+      isCurrent: c.isCurrent })),
     qualifications: values.qualifications,
     awards: values.awards,
     educations,
@@ -1347,6 +1337,5 @@ export function buildInstructorRowFromForm(
     freeWriting2: values.freeWriting2,
     freeWriting3: values.freeWriting3,
     freeWriting4: values.freeWriting4,
-    registeredByAdmin: true,
-  }
+    registeredByAdmin: true }
 }

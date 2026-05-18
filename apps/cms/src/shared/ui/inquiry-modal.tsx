@@ -2,10 +2,9 @@
  * 문의하기 모달 컴포넌트
  */
 
-import { Modal, Form, Input, Select, Button, message } from 'antd'
+import { Modal, Form, Input, Select, Button } from 'antd'
 import { SendOutlined } from '@ant-design/icons'
 import { useState } from 'react'
-import { MESSAGES } from '@/shared/constants'
 
 const { TextArea } = Input
 const { Option } = Select
@@ -34,14 +33,12 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
       // TODO: API 연동 필요
       console.log('Submitting inquiry:', values)
       // await submitInquiry(values)
-      message.success(MESSAGES.success.inquirySubmitted)
       form.resetFields()
       onSuccess?.()
       onCancel()
     } catch (e) {
       console.error('Failed to submit inquiry:', e)
-      message.error(MESSAGES.error.inquirySubmitFailed)
-    } finally {
+      } finally {
       setSubmitting(false)
     }
   }
@@ -69,7 +66,7 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
         <Form.Item
           label="문의 유형"
           name="category"
-          rules={[{ required: true, message: '문의 유형을 선택해주세요' }]}
+          rules={[{ required: true }]}
         >
           <Select placeholder="문의 유형을 선택하세요">
             <Option value="활동">활동 관련 (배정, 일정 등)</Option>
@@ -84,7 +81,7 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
         <Form.Item
           label="제목"
           name="title"
-          rules={[{ required: true, message: '제목을 입력해주세요' }]}
+          rules={[{ required: true }]}
         >
           <Input placeholder="문의 제목을 입력하세요" />
         </Form.Item>
@@ -92,7 +89,7 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
         <Form.Item
           label="문의 내용"
           name="content"
-          rules={[{ required: true, message: '문의 내용을 입력해주세요' }]}
+          rules={[{ required: true }]}
         >
           <TextArea
             rows={6}

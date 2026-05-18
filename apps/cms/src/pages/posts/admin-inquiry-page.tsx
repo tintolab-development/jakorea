@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type Key, type MouseEvent } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { deleteAdminInquiries, listAdminInquiries } from '@/features/posts/api/admin-inquiry-mock-store'
@@ -140,7 +140,6 @@ export function AdminInquiryPage() {
       return
     }
     deleteAdminInquiries(ids)
-    message.success(`선택한 ${ids.length}건의 문의가 삭제되었습니다.`)
     setRows(listAdminInquiries())
     setSelectedRowKeys([])
     setBulkDeleteConfirmOpen(false)
@@ -157,7 +156,6 @@ export function AdminInquiryPage() {
       return
     }
     deleteAdminInquiries([singleDeleteInquiryId])
-    message.success('문의가 삭제되었습니다.')
     setRows(listAdminInquiries())
     setSelectedRowKeys(prev => prev.filter(k => String(k) !== singleDeleteInquiryId))
     setSingleDeleteConfirmOpen(false)

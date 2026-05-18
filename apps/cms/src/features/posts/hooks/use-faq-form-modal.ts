@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Form, message } from 'antd'
+import { Form } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import { getFaqCategorySelectOptions } from '@/features/posts/api/admin-faq-category-mock-store'
 import { createFaq, deleteFaq, updateFaq } from '@/features/posts/api/admin-faq-service'
 import type {
   FaqFormFieldValues,
-  FaqFormModalProps,
-} from '@/features/posts/model/faq-form-types'
+  FaqFormModalProps } from '@/features/posts/model/faq-form-types'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
+import { handleError, unknownErrorText } from '@/shared/utils/error-handler'
 
 export type UseFaqFormModalResult = {
   form: FormInstance<FaqFormFieldValues>
@@ -32,8 +32,7 @@ export function useFaqFormModal({
   mode = 'create',
   faq = null,
   onSuccess,
-  onDeleted,
-}: FaqFormModalProps): UseFaqFormModalResult {
+  onDeleted }: FaqFormModalProps): UseFaqFormModalResult {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const [form] = Form.useForm<FaqFormFieldValues>()
@@ -49,16 +48,14 @@ export function useFaqFormModal({
         question: faq.question,
         answer: faq.answer ?? '',
         category: faq.category,
-        visibility: faq.status === 'published' ? 'public' : 'private',
-      })
+        visibility: faq.status === 'published' ? 'public' : 'private' })
     } else {
       form.resetFields()
       form.setFieldsValue({
         question: '',
         answer: '',
         category: undefined,
-        visibility: 'public',
-      })
+        visibility: 'public' })
     }
   }, [open, isEdit, faq, form])
 
@@ -76,7 +73,6 @@ export function useFaqFormModal({
       const v = await form.validateFields()
       const answer = v.answer.trim()
       if (!answer) {
-        message.warning('내용(답변)을 입력해주세요.')
         return
       }
 
@@ -90,9 +86,7 @@ export function useFaqFormModal({
           question: v.question.trim(),
           answer,
           author,
-          status,
-        })
-        message.success('FAQ가 수정되었습니다.')
+          status })
         onSuccess?.(updated)
       } else {
         const created = await createFaq({
@@ -101,9 +95,7 @@ export function useFaqFormModal({
           answer,
           author,
           status,
-          createdAt: new Date().toISOString(),
-        })
-        message.success('FAQ가 등록되었습니다.')
+          createdAt: new Date().toISOString() })
         onSuccess?.(created)
       }
       onCancel()
@@ -113,11 +105,11 @@ export function useFaqFormModal({
       }
       const msg =
         err instanceof Error
-          ? err.message === 'NOT_FOUND'
+          ? unknownErrorText(err, '오류가 발생했습니다.') === 'NOT_FOUND'
             ? 'FAQ를 찾을 수 없습니다.'
-            : err.message
+            : unknownErrorText(err, '오류가 발생했습니다.')
           : '요청에 실패했습니다.'
-      message.error(msg)
+      handleError(err, { context: 'useFaqFormModal.handleSubmit', defaultMessage: msg })
     }
   }, [canWrite, form, isEdit, faq, onCancel, onSuccess, user?.name])
 
@@ -130,12 +122,11 @@ export function useFaqFormModal({
     if (!faq) return
     try {
       await deleteFaq(faq.id)
-      message.success('FAQ가 삭제되었습니다.')
       setDeleteConfirmOpen(false)
       onDeleted?.()
       onCancel()
-    } catch {
-      message.error('FAQ 삭제에 실패했습니다.')
+    } catch (err) {
+      handleError(err, { context: 'useFaqFormModal.handleConfirmDelete' })
     }
   }, [faq, onCancel, onDeleted])
 
@@ -154,6 +145,5 @@ export function useFaqFormModal({
     submitLabel,
     isEdit,
     canWrite,
-    isBroken,
-  }
+    isBroken }
 }

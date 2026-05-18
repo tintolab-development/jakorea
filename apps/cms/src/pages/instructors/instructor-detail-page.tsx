@@ -7,7 +7,6 @@ import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { InstructorDetail } from '@/features/instructor/ui/instructor-detail'
 import { useInstructorStore } from '@/features/instructor/model/instructor-store'
-import { message } from 'antd'
 import { MESSAGES } from '@/shared/constants'
 
 export function InstructorDetailPage() {
@@ -33,10 +32,9 @@ export function InstructorDetailPage() {
     if (window.confirm(MESSAGES.confirm.delete)) {
       try {
         await deleteInstructor(id)
-        message.success(MESSAGES.success.instructorDeleted)
         navigate('/instructors')
-      } catch {
-        message.error(MESSAGES.error.delete)
+      } catch (error) {
+        console.debug('instructorDetailPage delete failed', error)
       }
     }
   }

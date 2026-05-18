@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { SchoolAffiliatedTeacherRow, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { AppButton } from '@/shared/ui/app-button'
@@ -194,7 +194,6 @@ export function SchoolAffiliatedTeachersSection({
 
   const handleRowClick = (record: Row) => {
     if (!record.linkedUserId) {
-      message.info('연결된 회원 정보가 없습니다.')
       return
     }
     onLinkedUserClick?.(record.linkedUserId)

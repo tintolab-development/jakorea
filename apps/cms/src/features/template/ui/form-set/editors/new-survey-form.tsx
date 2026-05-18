@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { message } from 'antd'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
@@ -112,8 +111,7 @@ export default function NewSurveyForm() {
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    message.success('저장 API 연동 전입니다.')
-  }, [])
+    }, [])
 
   const handleSelectParagraph = useCallback((id: string) => {
     setActiveParagraphId(id)

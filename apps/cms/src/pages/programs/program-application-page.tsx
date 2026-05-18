@@ -7,7 +7,7 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { getProgramAdminDetailUrlDefault } from '@/features/program/lib/program-admin-detail-url'
 import { useEffect, useState } from 'react'
-import { Card, Spin, message, Typography } from 'antd'
+import { Card, Spin, Typography } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useProgramStore } from '@/features/program/model/program-store'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
@@ -17,7 +17,6 @@ import { SchoolApplicationForm } from '@/features/application/ui/school-applicat
 import { InstructorApplicationForm } from '@/features/application/ui/instructor-application-form'
 import { useApplicationStore } from '@/features/application/model/application-store'
 import type { ApplicationFormData } from '@/entities/application/model/schema'
-import { MESSAGES } from '@/shared/constants'
 
 const { Title } = Typography
 
@@ -42,7 +41,6 @@ export function ProgramApplicationPage() {
   useEffect(() => {
     const loadProgram = async () => {
       if (!programId) {
-        message.error(MESSAGES.error.programIdRequired)
         navigate('/programs', { replace: true })
         return
       }
@@ -52,7 +50,6 @@ export function ProgramApplicationPage() {
         await fetchPrograms()
       } catch (error) {
         console.error('프로그램 로드 실패:', error)
-        message.error(MESSAGES.error.programLoadFailed)
         navigate('/programs', { replace: true })
       } finally {
         setProgramLoading(false)
@@ -97,12 +94,10 @@ export function ProgramApplicationPage() {
         applicationData.studentListFileUrl = uploadResult.url
       }
       await createApplication(applicationData)
-      message.success(MESSAGES.success.applicationCompleted)
       // Phase 0.2.3: 신청 완료 페이지로 이동
       navigate(`/programs/${programId}/apply/complete`, { replace: true })
     } catch (error) {
       console.error('신청 실패:', error)
-      message.error(MESSAGES.error.applicationFailed)
       throw error
     } finally {
       setLoading(false)

@@ -48,7 +48,7 @@ export interface OtpSendRequest {
  */
 export interface OtpSendResponse {
   success: boolean
-  message: string
+  detail: string
   sentAt: string
   expiresAt: string
 }
@@ -66,7 +66,7 @@ export interface OtpVerifyRequest {
  */
 export interface OtpVerifyResponse {
   success: boolean
-  message: string
+  detail: string
   verified: boolean
   failedAttempts: number
   isLocked: boolean

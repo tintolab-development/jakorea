@@ -30,6 +30,7 @@ import { getFormTemplateByProgramId, formTemplatesByProgramId } from '@/data/moc
 import type { FormFieldDef } from '@/types/form-template'
 import { FormFieldEditor } from './form-field-editor'
 import dayjs from 'dayjs'
+import { fieldValidationHelp } from '@/shared/utils/error-handler'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -233,7 +234,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
           <Form.Item
             label="스폰서"
             validateStatus={errors.sponsorId ? 'error' : ''}
-            help={errors.sponsorId?.message}
+            help={fieldValidationHelp(errors.sponsorId)}
             required
           >
             <Select
@@ -257,7 +258,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
           <Form.Item
             label="프로그램명"
             validateStatus={errors.title ? 'error' : ''}
-            help={errors.title?.message}
+            help={fieldValidationHelp(errors.title)}
             required
           >
             <Input
@@ -270,7 +271,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
           <Form.Item
             label="유형"
             validateStatus={errors.type ? 'error' : ''}
-            help={errors.type?.message}
+            help={fieldValidationHelp(errors.type)}
             required
           >
             <Select
@@ -291,7 +292,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
           <Form.Item
             label="형태"
             validateStatus={errors.format ? 'error' : ''}
-            help={errors.format?.message}
+            help={fieldValidationHelp(errors.format)}
             required
           >
             <Select
@@ -320,7 +321,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
           <Form.Item
             label="시작일"
             validateStatus={errors.startDate ? 'error' : ''}
-            help={errors.startDate?.message}
+            help={fieldValidationHelp(errors.startDate)}
             required
           >
             <DatePicker
@@ -335,7 +336,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
           <Form.Item
             label="종료일"
             validateStatus={errors.endDate ? 'error' : ''}
-            help={errors.endDate?.message}
+            help={fieldValidationHelp(errors.endDate)}
             required
           >
             <DatePicker
@@ -350,7 +351,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
           <Form.Item
             label="상태"
             validateStatus={errors.status ? 'error' : ''}
-            help={errors.status?.message}
+            help={fieldValidationHelp(errors.status)}
             required
           >
             <Select
@@ -426,7 +427,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
             <Form.Item
               label="문의처 이메일"
               validateStatus={errors.contactEmail ? 'error' : ''}
-              help={errors.contactEmail?.message}
+              help={fieldValidationHelp(errors.contactEmail)}
               style={{ flex: 1 }}
             >
               <Input

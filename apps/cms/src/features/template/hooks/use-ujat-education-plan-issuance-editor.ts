@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from 'react'
-import { message } from 'antd'
 import {
   createUjatEducationJournalIssuanceDraft,
   createUjatEducationPlanIssuanceDraft,
@@ -49,8 +48,7 @@ export function useUjatEducationIssuanceEditor(active: boolean, variant: UjatEdu
     [cfg]
   )
   const onSave = useCallback(() => {
-    message.success('저장 API 연동 전입니다.')
-  }, [])
+    }, [])
 
   const previewParagraphBodyOptions = useMemo((): RenderFormParagraphBodyOptions | undefined => {
     if (variant !== 'journal') return undefined

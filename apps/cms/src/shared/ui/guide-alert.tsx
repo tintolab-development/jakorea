@@ -1,26 +1,21 @@
 /**
- * 안내 문구 컴포넌트
- * 공통 UI 원칙: 고정 문구 준수, 순서 변경 불가, 안정적인 어조
+ * 안내 문구 (Alert description)
  */
 
 import { Alert, Typography } from 'antd'
 
 const { Paragraph } = Typography
 
-interface GuideMessageProps {
-  message: string
+interface GuideAlertProps {
+  text: string
   type?: 'info' | 'success' | 'warning' | 'error'
   showIcon?: boolean
 }
 
-export function GuideMessage({ 
-  message, 
-  type = 'info',
-  showIcon = true 
-}: GuideMessageProps) {
+export function GuideAlert({ text, type = 'info', showIcon = true }: GuideAlertProps) {
   return (
     <Alert
-      message={message}
+      description={text}
       type={type}
       showIcon={showIcon}
       style={{ marginBottom: 16 }}
@@ -29,23 +24,18 @@ export function GuideMessage({
 }
 
 interface GuideParagraphProps {
-  messages: string[]
+  lines: string[]
   type?: 'secondary' | 'success' | 'warning' | 'danger'
 }
 
-export function GuideParagraph({ messages, type = 'secondary' }: GuideParagraphProps) {
+export function GuideParagraph({ lines, type = 'secondary' }: GuideParagraphProps) {
   return (
     <div style={{ marginBottom: 16 }}>
-      {messages.map((message, index) => (
+      {lines.map((line, index) => (
         <Paragraph key={index} type={type}>
-          {message}
+          {line}
         </Paragraph>
       ))}
     </div>
   )
 }
-
-
-
-
-

@@ -10,6 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useMemo } from 'react'
 import { schoolSchema, type SchoolFormData } from '@/entities/school/model/schema'
 import type { School } from '@/types/domain'
+import { fieldValidationHelp } from '@/shared/utils/error-handler'
 
 const { Option } = Select
 
@@ -99,7 +100,7 @@ export function SchoolForm({ school, onSubmit, onCancel, loading }: SchoolFormPr
       <Form.Item
         label="학교명"
         validateStatus={errors.name ? 'error' : ''}
-        help={errors.name?.message}
+        help={fieldValidationHelp(errors.name)}
       >
         <Controller name="name" control={control} render={({ field }) => <Input {...field} />} />
       </Form.Item>
@@ -107,7 +108,7 @@ export function SchoolForm({ school, onSubmit, onCancel, loading }: SchoolFormPr
       <Form.Item
         label="지역"
         validateStatus={errors.region ? 'error' : ''}
-        help={errors.region?.message}
+        help={fieldValidationHelp(errors.region)}
         required
       >
         <Controller
@@ -132,7 +133,7 @@ export function SchoolForm({ school, onSubmit, onCancel, loading }: SchoolFormPr
       <Form.Item
         label="담당자"
         validateStatus={errors.contactPerson ? 'error' : ''}
-        help={errors.contactPerson?.message}
+        help={fieldValidationHelp(errors.contactPerson)}
       >
         <Controller
           name="contactPerson"
@@ -152,7 +153,7 @@ export function SchoolForm({ school, onSubmit, onCancel, loading }: SchoolFormPr
       <Form.Item
         label="이메일"
         validateStatus={errors.contactEmail ? 'error' : ''}
-        help={errors.contactEmail?.message}
+        help={fieldValidationHelp(errors.contactEmail)}
       >
         <Controller
           name="contactEmail"

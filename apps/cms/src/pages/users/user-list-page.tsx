@@ -5,7 +5,6 @@
  */
 
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
-import { message } from 'antd'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
@@ -34,7 +33,6 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
-  MESSAGES,
 } from '@/shared/constants'
 import { useUserStore, selectSelectedUser } from '@/features/user/shared/model/user-store'
 import type { User } from '@/types/user'
@@ -42,7 +40,7 @@ import type { CreateUserRequest, GetUsersPageResult } from '@/entities/user/api/
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { handleError, showSuccessMessage } from '@/shared/utils/error-handler'
+import { handleError } from '@/shared/utils/error-handler'
 import {
   ActionResultModal,
   ContentModal,
@@ -452,24 +450,19 @@ export function UserListPage() {
         const u = useUserStore.getState().usersById[userId]
         if (!u) {
           if (schoolReturn) schoolDetailReturnUserRef.current = null
-          message.error('회원 정보를 찾을 수 없습니다.')
           return
         }
         if (u.role === 'INSTRUCTOR') {
           const profile = resolveInstructorMemberProfile(u)
           if (profile === 'instructor_only') {
             if (schoolReturn) schoolDetailReturnUserRef.current = null
-            message.warning(
-              '학교 소속 교사 목록에서는 교사·교사 및 강사 회원만 열 수 있습니다. 순수 강사는 회원 목록의 강사 탭에서 확인하세요.'
-            )
             return
           }
         }
         handleView(u)
       } catch {
         if (schoolReturn) schoolDetailReturnUserRef.current = null
-        message.error('회원 정보를 불러오지 못했습니다.')
-      }
+        }
     },
     [drawerUser, fetchUserById, handleView]
   )
@@ -507,7 +500,6 @@ export function UserListPage() {
   const handleCreateUser = async (request: CreateUserRequest) => {
     try {
       await createUser(request)
-      showSuccessMessage(MESSAGES.success.created)
       closeCreateModal()
       invalidateList()
     } catch (error) {
@@ -532,7 +524,6 @@ export function UserListPage() {
         },
         isActive: true,
       })
-      showSuccessMessage(MESSAGES.success.created)
       invalidateList()
     } catch (error) {
       handleError(error, { defaultMessage: '학교 등록에 실패했습니다.' })
@@ -554,7 +545,6 @@ export function UserListPage() {
         adminLevel: 'ADMIN',
         isActive: true,
       })
-      showSuccessMessage(MESSAGES.success.created)
       invalidateList()
       closeAdminRegisterModal()
     } catch (error) {
@@ -585,7 +575,6 @@ export function UserListPage() {
         },
         isActive: true,
       })
-      showSuccessMessage(MESSAGES.success.created)
       invalidateList()
       closeInstructorRegisterModal()
     } catch (error) {
@@ -700,8 +689,7 @@ export function UserListPage() {
           setDrawerUser(updated)
         }
         setDetailBridgeUser(prev => (prev?.id === ctx.userId ? updated : prev))
-        showSuccessMessage('관리자 권한 유형이 변경되었습니다.')
-      } catch (error) {
+        } catch (error) {
         handleError(error, { defaultMessage: '관리자 권한 유형 변경에 실패했습니다.' })
       } finally {
         setAdminPermissionChangingUserId(null)
@@ -892,7 +880,7 @@ export function UserListPage() {
       <ActionResultModal
         open={deleteResultModalOpen}
         title={deleteResultTitle}
-        message={deleteResultMessage}
+        body={deleteResultMessage}
         onClose={handleCloseDeleteResultModal}
       />
 

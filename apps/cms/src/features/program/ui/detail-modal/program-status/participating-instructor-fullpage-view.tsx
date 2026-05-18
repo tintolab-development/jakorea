@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback, type ReactNode, type Key } from 'react'
-import { message, Table, Select } from 'antd'
+import { Table, Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import type {
@@ -338,8 +338,7 @@ export function ParticipatingInstructorFullpageView({
       return renumberAssignedRows(updated)
     })
     setOpenRoleDropdownId(null)
-    message.success('역할이 변경되었습니다.')
-  }, [])
+    }, [])
 
   const assignedSchoolColumns: ColumnsType<InstructorAssignedSchoolRow> = useMemo(
     () => [
@@ -495,15 +494,13 @@ export function ParticipatingInstructorFullpageView({
     })
     setUnassignConfirmOpen(false)
     setSelectedAssignedSchoolKeys([])
-    message.success('배정이 취소되었습니다.')
-  }, [selectedAssignedSchoolKeys, schoolRows, d, instructorList])
+    }, [selectedAssignedSchoolKeys, schoolRows, d, instructorList])
 
   const handleSelectAssignConfirm = useCallback(() => {
     const selectedRows = waitingSchools.filter(
       w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus !== 'assigned'
     )
     if (selectedRows.length === 0) {
-      message.warning('배정할 기관을 선택해 주세요.')
       return
     }
     const ids = new Set(selectedRows.map(r => r.id))
@@ -524,17 +521,14 @@ export function ParticipatingInstructorFullpageView({
     })
     setSelectAssignConfirmOpen(false)
     setSelectedWaitingSchoolKeys([])
-    message.success('기관이 배정되었습니다.')
-  }, [selectedWaitingSchoolKeys, waitingSchools, schoolRows, d, instructorList])
+    }, [selectedWaitingSchoolKeys, waitingSchools, schoolRows, d, instructorList])
 
   const handleAddAssignConfirm = useCallback(() => {
     if (!addAssignSchoolId) {
-      message.warning('기관을 선택해 주세요.')
       return
     }
     const school = schoolRows.find(s => s.id === addAssignSchoolId)
     if (!school) {
-      message.warning('선택한 기관을 찾을 수 없습니다.')
       return
     }
     setWaitingSchools(prev => renumberWaitingRows(prev.filter(w => w.id !== addAssignSchoolId)))
@@ -549,8 +543,7 @@ export function ParticipatingInstructorFullpageView({
     })
     setAddAssignModalOpen(false)
     setAddAssignSchoolId(null)
-    message.success('기관이 배정되었습니다.')
-  }, [addAssignSchoolId, schoolRows, d, instructorList])
+    }, [addAssignSchoolId, schoolRows, d, instructorList])
 
   const addAssignOptions = useMemo(
     () =>
@@ -832,14 +825,14 @@ export function ParticipatingInstructorFullpageView({
             <AppButton
               variant="danger"
               size="filter"
-              onClick={() => message.info('승인 취소 기능 준비 중입니다.')}
+              onClick={() => {}}
             >
               승인 취소
             </AppButton>
             <AppButton
               variant="primary"
               size="filter"
-              onClick={() => message.info('정보 수정 기능 준비 중입니다.')}
+              onClick={() => {}}
             >
               정보 수정
             </AppButton>
@@ -858,7 +851,7 @@ export function ParticipatingInstructorFullpageView({
             <AppButton
               variant="danger"
               size="filter"
-              onClick={() => message.info('승인 취소 기능 준비 중입니다.')}
+              onClick={() => {}}
             >
               승인 취소
             </AppButton>
@@ -903,7 +896,6 @@ export function ParticipatingInstructorFullpageView({
                     size="large"
                     onClick={() => {
                       if (selectedAssignedSchoolKeys.length === 0) {
-                        message.warning('배정 취소할 기관을 선택해 주세요.')
                         return
                       }
                       setUnassignConfirmOpen(true)
@@ -917,7 +909,6 @@ export function ParticipatingInstructorFullpageView({
                     className="participating-institutions-section__btn-approve"
                     onClick={() => {
                       if (addAssignOptions.length === 0) {
-                        message.warning('추가 배정 가능한 기관이 없습니다.')
                         return
                       }
                       setAddAssignSchoolId(addAssignOptions[0]?.value ?? null)
@@ -973,7 +964,6 @@ export function ParticipatingInstructorFullpageView({
                     className="participating-institutions-section__btn-approve"
                     onClick={() => {
                       if (selectedWaitingSchoolKeys.length === 0) {
-                        message.warning('배정할 기관을 선택해 주세요.')
                         return
                       }
                       const movable = waitingSchools.some(
@@ -982,7 +972,6 @@ export function ParticipatingInstructorFullpageView({
                           w.assignmentStatus !== 'assigned'
                       )
                       if (!movable) {
-                        message.warning('배정 가능한 기관을 선택해 주세요.')
                         return
                       }
                       setSelectAssignConfirmOpen(true)

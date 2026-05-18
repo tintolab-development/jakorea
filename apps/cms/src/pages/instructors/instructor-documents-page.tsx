@@ -5,11 +5,10 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Card, Upload, Button, Table, Tag, Space, Typography, message, Alert } from 'antd'
+import { Card, Upload, Button, Table, Tag, Space, Typography, Alert } from 'antd'
 import { UploadOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { MESSAGES } from '@/shared/constants'
 import dayjs from 'dayjs'
 
 const { Title, Paragraph, Text } = Typography
@@ -31,35 +30,30 @@ const mockDocuments: DocumentFile[] = [
     fileName: '이력서_2024.pdf',
     uploadedAt: '2024-01-15T10:00:00Z',
     status: 'APPROVED',
-    fileSize: 102400,
-  },
+    fileSize: 102400 },
   {
     id: 'doc-2',
     type: 'crimeCheckConsent',
     fileName: '성범죄조회동의서_2024.pdf',
     uploadedAt: '2024-01-15T10:05:00Z',
     status: 'APPROVED',
-    fileSize: 51200,
-  },
+    fileSize: 51200 },
 ]
 
 const documentTypeLabels: Record<DocumentFile['type'], string> = {
   resume: '이력서',
   crimeCheckConsent: '성범죄조회동의서',
-  other: '기타',
-}
+  other: '기타' }
 
 const documentStatusLabels: Record<DocumentFile['status'], string> = {
   PENDING: '검토 중',
   APPROVED: '승인됨',
-  REJECTED: '반려됨',
-}
+  REJECTED: '반려됨' }
 
 const documentStatusColors: Record<DocumentFile['status'], string> = {
   PENDING: 'processing',
   APPROVED: 'success',
-  REJECTED: 'error',
-}
+  REJECTED: 'error' }
 
 export function InstructorDocumentsPage() {
   const { user } = useAuthStore()
@@ -94,52 +88,44 @@ export function InstructorDocumentsPage() {
       fileName: file.name,
       uploadedAt: new Date().toISOString(),
       status: 'PENDING',
-      fileSize: file.size,
-    }
+      fileSize: file.size }
 
     setDocuments(prev => [...prev, newDocument])
-    message.success(MESSAGES.info.fileUploaded)
     return false // 자동 업로드 방지
   }
 
   const handleView = (document: DocumentFile) => {
     // TODO: 파일 미리보기 API 연결
     void document
-    message.info(MESSAGES.info.filePreviewComingSoon)
-  }
+    }
 
   const handleDownload = (document: DocumentFile) => {
     // TODO: 파일 다운로드 API 연결
     void document
-    message.info(MESSAGES.info.fileDownloadComingSoon)
-  }
+    }
 
   const columns = [
     {
       title: '서류 종류',
       dataIndex: 'type',
       key: 'type',
-      render: (type: DocumentFile['type']) => documentTypeLabels[type],
-    },
+      render: (type: DocumentFile['type']) => documentTypeLabels[type] },
     {
       title: '파일명',
       dataIndex: 'fileName',
-      key: 'fileName',
-    },
+      key: 'fileName' },
     {
       title: '업로드 일시',
       dataIndex: 'uploadedAt',
       key: 'uploadedAt',
-      render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm'),
-    },
+      render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm') },
     {
       title: '상태',
       dataIndex: 'status',
       key: 'status',
       render: (status: DocumentFile['status']) => (
         <Tag color={documentStatusColors[status]}>{documentStatusLabels[status]}</Tag>
-      ),
-    },
+      ) },
     {
       title: '작업',
       key: 'action',
@@ -152,8 +138,7 @@ export function InstructorDocumentsPage() {
             다운로드
           </Button>
         </Space>
-      ),
-    },
+      ) },
   ]
 
   return (
@@ -170,7 +155,6 @@ export function InstructorDocumentsPage() {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* 안내 메시지 */}
         <Alert
-          message="제출 서류 안내"
           description="이력서와 성범죄조회동의서는 필수 제출 서류입니다. 업로드한 서류는 관리자 검토 후 승인됩니다."
           type="info"
           showIcon

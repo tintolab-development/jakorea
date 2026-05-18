@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -113,8 +113,7 @@ export function AssignmentSubmissionModal({
     (rowId: string, newRole: AssignmentTeamRoleKey) => {
       updateAssignmentSubmissionTeamRole(rowId, newRole)
       setAssignmentRoleRevision(n => n + 1)
-      message.success('역할이 변경되었습니다.')
-    },
+      },
     []
   )
 

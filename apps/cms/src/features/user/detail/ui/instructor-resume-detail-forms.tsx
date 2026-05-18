@@ -42,7 +42,7 @@ export function InstructorResumeDetailForms({
     <>
       <DetailInfoForm
         title="학력사항"
-        message={resumeSectionDescriptionNode(instructorEducationSectionDescription(instructor))}
+        headerNote={resumeSectionDescriptionNode(instructorEducationSectionDescription(instructor))}
       >
         <DetailInfoForm.Row type="custom">
           <InstructorResumeEducationCardBody d={instructor} />
@@ -51,7 +51,7 @@ export function InstructorResumeDetailForms({
       <DetailInfoForm
         title="경력사항"
         className="detail-info-form--gap"
-        message={resumeSectionDescriptionNode(instructorCareerSectionDescription(instructor))}
+        headerNote={resumeSectionDescriptionNode(instructorCareerSectionDescription(instructor))}
       >
         <DetailInfoForm.Row type="custom">
           <InstructorResumeCareerCardBody d={instructor} />
@@ -60,7 +60,7 @@ export function InstructorResumeDetailForms({
       <DetailInfoForm
         title="자격 및 면허"
         className="detail-info-form--gap"
-        message={resumeSectionDescriptionNode(
+        headerNote={resumeSectionDescriptionNode(
           instructorQualificationsSectionDescription(instructor)
         )}
       >
@@ -71,7 +71,7 @@ export function InstructorResumeDetailForms({
       <DetailInfoForm
         title="수상 및 수료 내역"
         className="detail-info-form--gap"
-        message={resumeSectionDescriptionNode(instructorAwardsSectionDescription(instructor))}
+        headerNote={resumeSectionDescriptionNode(instructorAwardsSectionDescription(instructor))}
       >
         <DetailInfoForm.Row type="custom">
           <InstructorResumeAwardsCardBody d={instructor} />

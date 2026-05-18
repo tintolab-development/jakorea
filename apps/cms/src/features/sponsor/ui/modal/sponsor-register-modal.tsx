@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Space, message } from 'antd'
+import { Space } from 'antd'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
@@ -58,7 +58,6 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
   const handleSubmit = useCallback((): void => {
     const name = form.nameDisplayKo.trim()
     if (!name) {
-      message.warning('후원사명(국문)을 입력해 주세요.')
       return
     }
 

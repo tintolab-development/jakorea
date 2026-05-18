@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { message } from 'antd'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import {
@@ -122,8 +121,7 @@ export function HorizontalTableFormEditor({
   }, [onBeforeUserPreview, openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    message.success('저장 API 연동 전입니다.')
-  }, [])
+    }, [])
 
   const leftPane = (
     <FormEditorLeftPanel

@@ -2,10 +2,9 @@ import { useMemo } from 'react'
 import {
   buildBulkDeleteGuideTitle,
   buildBulkDomainDeleteMessageLines,
-  buildDomainEntityDeleteMessageLines,
-} from '@/shared/ui/delete-guide-messages'
+  buildDomainEntityDeleteMessageLines } from '@/shared/ui/delete-guide-messages'
 
-interface UseDeleteGuideMessagesOptions<T> {
+interface UseDeleteGuideAlertsOptions<T> {
   items: T[]
   domainLabel: string
   bulkCounterPhrase: string
@@ -14,7 +13,7 @@ interface UseDeleteGuideMessagesOptions<T> {
   singleTitle?: string
 }
 
-interface UseDeleteGuideMessagesResult {
+interface UseDeleteGuideAlertsResult {
   title: string
   lines: string[]
 }
@@ -28,8 +27,7 @@ export function useDeleteGuideMessages<T>({
   bulkCounterPhrase,
   particleTargetNoun,
   getDisplayName,
-  singleTitle,
-}: UseDeleteGuideMessagesOptions<T>): UseDeleteGuideMessagesResult {
+  singleTitle }: UseDeleteGuideAlertsOptions<T>): UseDeleteGuideAlertsResult {
   return useMemo(() => {
     const isMulti = items.length >= 2
     const title = isMulti ? buildBulkDeleteGuideTitle(domainLabel) : (singleTitle ?? `${domainLabel} 삭제 안내`)

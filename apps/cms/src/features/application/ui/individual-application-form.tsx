@@ -12,6 +12,7 @@ import { individualApplicationSchema, type IndividualApplicationFormData } from 
 import type { Program, Application } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getFormTemplateByProgramId } from '@/data/mock/form-templates'
+import { fieldValidationHelp } from '@/shared/utils/error-handler'
 import {
   DynamicApplicationForm,
   validateDynamicFields,
@@ -109,7 +110,7 @@ export function IndividualApplicationForm({
         <Input value={program.title} disabled />
       </Form.Item>
 
-      <Form.Item label="지원 동기" validateStatus={errors.motivation ? 'error' : ''} help={errors.motivation?.message}>
+      <Form.Item label="지원 동기" validateStatus={errors.motivation ? 'error' : ''} help={fieldValidationHelp(errors.motivation)}>
         <TextArea
           {...register('motivation')}
           rows={4}

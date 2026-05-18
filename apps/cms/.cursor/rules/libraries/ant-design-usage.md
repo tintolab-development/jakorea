@@ -32,6 +32,10 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 
 Customize via `ConfigProvider` `theme`; global CSS entry: `src/index.css`.
 
+## Toast (`message`)
+
+**CMS에서 `antd` `message`·`App.useApp().message`·토스트 헬퍼 사용 금지.** [no-antd-message.mdc](./no-antd-message.mdc) — 확인·안내는 모달·인라인 UI 우선.
+
 ## Modals
 
 Center modals to the **viewport** — [modal-viewport-centering.md](../design/modal-viewport-centering.md).

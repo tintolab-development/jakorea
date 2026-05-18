@@ -15,7 +15,7 @@
 
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Spin, Typography, message } from 'antd'
+import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import {
   DetailModalSidebar,
@@ -25,7 +25,6 @@ import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-save'
 import { programDetailInstitutionsEditSchema } from '../../model/program-detail-edit-schema'
-import { MESSAGES } from '@/shared/constants'
 import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
 import {
   SCHOOL_DETAIL_TAB_KEYS,
@@ -44,6 +43,7 @@ import type { Program } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
 import { getEconomyPrograms } from '@/data/mock'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { handleError } from '@/shared/utils/error-handler'
 import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
 import {
   LnbIconApplicants,
@@ -492,10 +492,9 @@ export function ProgramDetailFullPageModal({
               try {
                 const { id: _id, createdAt: _c, ...patch } = draft
                 await updateProgram(draft.id, patch)
-                message.success(MESSAGES.success.programUpdated)
                 setEditMode(null)
-              } catch {
-                message.error(MESSAGES.error.update)
+              } catch (error) {
+                handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
               }
             }
           : undefined,
@@ -521,10 +520,9 @@ export function ProgramDetailFullPageModal({
             try {
               const { id: _id, createdAt: _c, ...patch } = draft
               await updateProgram(draft.id, patch)
-              message.success(MESSAGES.success.programUpdated)
               setEditMode(null)
-            } catch {
-              message.error(MESSAGES.error.update)
+            } catch (error) {
+              handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
             }
           }
         : undefined,
@@ -549,10 +547,9 @@ export function ProgramDetailFullPageModal({
             try {
               const { id: _id, createdAt: _c, ...patch } = draft
               await updateProgram(draft.id, patch)
-              message.success(MESSAGES.success.programUpdated)
               setEditMode(null)
-            } catch {
-              message.error(MESSAGES.error.update)
+            } catch (error) {
+              handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
             }
           }
         : undefined,
@@ -617,10 +614,9 @@ export function ProgramDetailFullPageModal({
             try {
               const { id: _id, createdAt: _c, ...patch } = draft
               await updateProgram(draft.id, patch)
-              message.success(MESSAGES.success.programUpdated)
               setEditMode(null)
-            } catch {
-              message.error(MESSAGES.error.update)
+            } catch (error) {
+              handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
             }
           }
         : undefined,

@@ -1,5 +1,4 @@
 import { useCallback, useMemo, type Dispatch, type SetStateAction } from 'react'
-import { message } from 'antd'
 import {
   createAgreementExplanationTextParagraphForInsert,
   duplicateMiddleParagraph,
@@ -53,7 +52,6 @@ export function usePaymentStatementIssuanceMiddleActions(
   const onDuplicate = useCallback(
     (paragraphId: string) => {
       if (lockedParagraphIds.has(paragraphId)) {
-        message.warning('템플릿 단락은 복제할 수 없습니다.')
         return
       }
       const newId = crypto.randomUUID()
@@ -61,7 +59,6 @@ export function usePaymentStatementIssuanceMiddleActions(
       setDraft(prev => {
         const next = duplicateMiddleParagraph(prev.paragraphs, paragraphId, newId)
         if (next == null) {
-          message.warning('이 단락은 복제할 수 없습니다.')
           return prev
         }
         duplicated = true
@@ -75,14 +72,12 @@ export function usePaymentStatementIssuanceMiddleActions(
   const onDelete = useCallback(
     (paragraphId: string) => {
       if (lockedParagraphIds.has(paragraphId)) {
-        message.warning('템플릿 단락은 삭제할 수 없습니다.')
         return
       }
       let nextActive: string | null = null
       setDraft(prev => {
         const nextParas = removeMiddleParagraph(prev.paragraphs, paragraphId)
         if (nextParas == null) {
-          message.warning('중간 단락은 최소 1개 이상 유지해야 합니다.')
           return prev
         }
         nextActive = pickActiveParagraphIdAfterMiddleDelete(prev.paragraphs, paragraphId)

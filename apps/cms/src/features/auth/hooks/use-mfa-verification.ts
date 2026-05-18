@@ -4,19 +4,18 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Form, message } from 'antd'
+import { Form } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useMfa } from '@/features/auth/hooks/use-mfa'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
 import { getTotpProvisioning } from '@/entities/user/api/mfa-service'
 import { OTP_LENGTH } from '@/shared/constants/mfa-policy'
-import { MESSAGES } from '@/shared/constants'
+import { unknownErrorText } from '@/shared/utils/error-handler'
 import type { TotpProvisioning } from '@/types/mfa'
 
 interface UseMfaVerificationOptions {
   open: boolean
-  messageApi?: ReturnType<typeof import('antd').App.useApp>['message']
 }
 
 interface UseMfaVerificationResult {
@@ -40,7 +39,6 @@ interface UseMfaVerificationResult {
 
 export function useMfaVerification({
   open,
-  messageApi,
 }: UseMfaVerificationOptions): UseMfaVerificationResult {
   const { user, setMfaVerified } = useAuthStore()
   const { mfaState, initializeMfa, completeMfa } = useMfa()
@@ -53,8 +51,6 @@ export function useMfaVerification({
   const [provisioningError, setProvisioningError] = useState<string | null>(null)
   const verifyInFlightRef = useRef(false)
 
-  const msg = messageApi || message
-
   const refreshProvisioning = useCallback(async () => {
     if (!user?.email) return
     setProvisioningLoading(true)
@@ -63,7 +59,7 @@ export function useMfaVerification({
       const p = await getTotpProvisioning(user.email)
       setProvisioning(p)
     } catch (e: unknown) {
-      const err = e instanceof Error ? e.message : 'QR 정보를 불러오지 못했습니다.'
+      const err = unknownErrorText(e, 'QR 정보를 불러오지 못했습니다.')
       setProvisioningError(err)
       setProvisioning(null)
     } finally {
@@ -117,7 +113,6 @@ export function useMfaVerification({
       verifyInFlightRef.current = true
       try {
         if (!user?.email) {
-          msg.error('사용자 정보를 찾을 수 없습니다.')
           return
         }
 
@@ -127,7 +122,7 @@ export function useMfaVerification({
               { name: 'otpCode', errors: [`인증번호는 ${OTP_LENGTH}자리입니다.`] },
             ])
           } catch {
-            msg.error(`인증번호는 ${OTP_LENGTH}자리입니다.`)
+            console.debug('Form not connected, skipping setFields (otp length)')
           }
           return
         }
@@ -136,7 +131,7 @@ export function useMfaVerification({
           try {
             form.setFields([{ name: 'otpCode', errors: ['인증번호는 숫자만 입력 가능합니다.'] }])
           } catch {
-            msg.error('인증번호는 숫자만 입력 가능합니다.')
+            console.debug('Form not connected, skipping setFields (otp digits)')
           }
           return
         }
@@ -150,7 +145,6 @@ export function useMfaVerification({
           if (verified) {
             completeMfa()
             setMfaVerified()
-            msg.success(MESSAGES.success.authenticated)
             try {
               form.resetFields()
             } catch {
@@ -162,17 +156,17 @@ export function useMfaVerification({
               form.setFields([{ name: 'otpCode', errors: ['인증번호가 올바르지 않습니다.'] }])
               form.setFieldsValue({ otpCode: '' })
             } catch {
-              msg.error('인증번호가 올바르지 않습니다.')
+              console.debug('Form not connected, skipping setFields (invalid otp)')
             }
             setOtpCode('')
           }
         } catch (error: unknown) {
-          const errMsg = error instanceof Error ? error.message : '인증에 실패했습니다.'
+          const errMsg = unknownErrorText(error, '인증에 실패했습니다.')
           try {
             form.setFields([{ name: 'otpCode', errors: [errMsg] }])
             form.setFieldsValue({ otpCode: '' })
           } catch {
-            msg.error(errMsg)
+            console.debug('Form not connected, skipping setFields (verify error)')
           }
           setOtpCode('')
         }
@@ -180,7 +174,7 @@ export function useMfaVerification({
         verifyInFlightRef.current = false
       }
     },
-    [user, verifyTotpCode, completeMfa, setMfaVerified, form, msg]
+    [user, verifyTotpCode, completeMfa, setMfaVerified, form]
   )
 
   const onOtpCodeChange = useCallback(
@@ -202,7 +196,6 @@ export function useMfaVerification({
   const handleVerify = useCallback(
     async (values?: { otpCode?: string }) => {
       if (!user) {
-        msg.error('사용자 정보를 찾을 수 없습니다.')
         return
       }
 
@@ -217,7 +210,7 @@ export function useMfaVerification({
         return
       }
     },
-    [user, otpCode, form, verifyAndComplete, msg]
+    [user, otpCode, form, verifyAndComplete]
   )
 
   const lockMessage =

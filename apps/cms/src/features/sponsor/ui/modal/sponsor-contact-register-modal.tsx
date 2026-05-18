@@ -32,8 +32,7 @@ export function SponsorContactRegisterModal({
   open,
   onCancel,
   onSubmit,
-  existingContactCount = 0,
-}: SponsorContactRegisterModalProps) {
+  existingContactCount = 0 }: SponsorContactRegisterModalProps) {
   const [form] = Form.useForm<SponsorContactRegisterFormValues>()
 
   useEffect(() => {
@@ -43,8 +42,7 @@ export function SponsorContactRegisterModal({
       name: '',
       position: '',
       phone: '',
-      email: '',
-    })
+      email: '' })
   }, [form, open])
 
   const handleCancel = () => {
@@ -58,8 +56,7 @@ export function SponsorContactRegisterModal({
       name: values.name.trim(),
       position: values.position?.trim() ?? '',
       phone: values.phone?.trim() ?? '',
-      email: values.email?.trim() ?? '',
-    })
+      email: values.email?.trim() ?? '' })
     form.resetFields()
   }
 
@@ -92,7 +89,7 @@ export function SponsorContactRegisterModal({
           name="contactType"
           label="담당자 유형"
           className="sponsor-contact-register-modal__field"
-          rules={[{ required: true, message: '담당자 유형을 선택해 주세요.' }]}
+          rules={[{ required: true }]}
         >
           <CmsRadioGroup
             size="large"
@@ -110,7 +107,7 @@ export function SponsorContactRegisterModal({
             </span>
           }
           className="sponsor-contact-register-modal__field"
-          rules={[{ required: true, message: '담당자명을 입력해 주세요.' }]}
+          rules={[{ required: true }]}
         >
           <CmsInput placeholder="담당자명을 입력해 주세요." inputSize="large" width="100%" />
         </Form.Item>

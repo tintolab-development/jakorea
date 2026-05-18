@@ -12,7 +12,7 @@ import {
   type MouseEvent,
 } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type { Notice } from '@/data/mock/notices'
@@ -143,12 +143,11 @@ export function AdminNoticeListPage() {
     }
     try {
       await deleteNotices(ids)
-      message.success(`선택한 ${ids.length}건의 공지사항이 삭제되었습니다.`)
       setRows(listAdminNotices())
       setSelectedRowKeys([])
       setBulkDeleteConfirmOpen(false)
-    } catch {
-      message.error('공지사항 삭제에 실패했습니다.')
+    } catch (error) {
+      console.debug('adminNoticeListPage bulkDelete failed', error)
     }
   }, [selectedRowKeys])
 

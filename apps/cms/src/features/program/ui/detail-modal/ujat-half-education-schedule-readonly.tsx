@@ -1,8 +1,7 @@
-/** UJAT 공통 정보 — 상·하반기 교육 일정 조회 테이블(4열 그리드) */
+/** UJAT 공통 정보 — 상·하반기 교육 일정 조회 (4열: DetailInfoForm double 행) */
 
 import type { ReactNode } from 'react'
-import '@/shared/components/detail-info-form/detail-info-form.css'
-import '@/features/program/program-detail/ui/project-info/project-info-form-shared.css'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import './ujat-program-detail-common-info-view.css'
 
 export type UjatHalfEducationScheduleRow = {
@@ -49,7 +48,7 @@ export const UJAT_SECOND_HALF_SCHEDULE_ROWS: readonly UjatHalfEducationScheduleR
   },
   {
     label: '교육 진행',
-    schedule: '2026년 4월 3일(금) ~ 26년 6월 19일(금)',
+    schedule: '2026년 9월 11일(금) ~ 26년 11월 20일(금)',
     deliveryType: '오프라인',
   },
   {
@@ -58,6 +57,15 @@ export const UJAT_SECOND_HALF_SCHEDULE_ROWS: readonly UjatHalfEducationScheduleR
     deliveryType: '온라인',
   },
 ]
+
+function UjatHalfEducationScheduleRowView({ row }: { row: UjatHalfEducationScheduleRow }) {
+  return (
+    <DetailInfoForm.Row type="double">
+      <DetailInfoForm.Field label={row.label} view={<span>{row.schedule}</span>} />
+      <DetailInfoForm.Field label="교육 형태" view={row.deliveryType} />
+    </DetailInfoForm.Row>
+  )
+}
 
 export function UjatHalfEducationScheduleReadonly({
   title,
@@ -68,23 +76,11 @@ export function UjatHalfEducationScheduleReadonly({
 }) {
   return (
     <div className="ujat-program-detail-common-info-view__section ujat-half-education-schedule">
-      <h2 className="detail-info-form__title ujat-half-education-schedule__title">{title}</h2>
-      <div className="program-detail-info-tab__table-wrapper">
-        <table className="program-detail-info-tab__table ujat-half-education-schedule__table">
-          <tbody>
-            {rows.map(row => (
-              <tr key={row.label}>
-                <th scope="row">{row.label}</th>
-                <td className="ujat-half-education-schedule__td-schedule">{row.schedule}</td>
-                <th scope="row" className="ujat-half-education-schedule__th-type">
-                  교육 형태
-                </th>
-                <td className="ujat-half-education-schedule__td-type">{row.deliveryType}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DetailInfoForm title={title} mode="view">
+        {rows.map(row => (
+          <UjatHalfEducationScheduleRowView key={row.label} row={row} />
+        ))}
+      </DetailInfoForm>
     </div>
   )
 }

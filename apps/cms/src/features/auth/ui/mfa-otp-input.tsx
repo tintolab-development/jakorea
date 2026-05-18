@@ -36,15 +36,11 @@ export function MfaOtpInput({ onChange, disabled, autoFocus = true }: MfaOtpInpu
     <Form.Item
       name="otpCode"
       rules={[
-        { required: true, message: '인증번호를 입력해주세요.' },
+        { required: true },
         {
-          len: OTP_LENGTH,
-          message: `인증번호는 ${OTP_LENGTH}자리입니다.`,
-        },
+          len: OTP_LENGTH },
         {
-          pattern: /^\d+$/,
-          message: '인증번호는 숫자만 입력 가능합니다.',
-        },
+          pattern: /^\d+$/ },
       ]}
       validateStatus=""
       help=""
@@ -81,8 +77,7 @@ export function MfaOtpInput({ onChange, disabled, autoFocus = true }: MfaOtpInpu
                     color: '#ff4d4f',
                     fontSize: '14px',
                     marginTop: '8px',
-                    width: '100%',
-                  }}
+                    width: '100%' }}
                 >
                   {errors[0]}
                 </div>

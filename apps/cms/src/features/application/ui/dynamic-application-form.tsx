@@ -3,9 +3,9 @@
  * Task 2.4.1: FR-C03 - 템플릿에서 필드 정의를 읽어 동적 폼 생성, 필드별 validation
  */
 
+import { MESSAGES } from '@/shared/constants'
 import { DynamicFormFields } from './dynamic-form-fields'
 import type { FormFieldDef } from '@/types/form-template'
-import { MESSAGES } from '@/shared/constants'
 
 export interface DynamicApplicationFormProps {
   /** 템플릿 필드 정의 */

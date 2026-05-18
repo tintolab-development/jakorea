@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, Descriptions, Tag, Button, Table, Space, Empty, Spin, message } from 'antd'
+import { Card, Descriptions, Tag, Button, Table, Space, Empty, Spin } from 'antd'
 import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
 import {
   HeartOutlined,
@@ -31,7 +31,7 @@ import {
   getCommonStatusColor,
 } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
-import { MESSAGES, LAYOUT_CONSTANTS } from '@/shared/constants'
+import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import dayjs from 'dayjs'
 
 export function MyProgramDetailPage() {
@@ -51,15 +51,13 @@ export function MyProgramDetailPage() {
     try {
       const data = await getMyProgramDetail(userId, id)
       if (!data) {
-        message.error(MESSAGES.error.programNotFound)
         navigate('/programs/my/active')
         return
       }
       setProgram(data)
     } catch (error) {
       console.error('프로그램 로드 실패:', error)
-      message.error(MESSAGES.error.programLoadFailed)
-    } finally {
+      } finally {
       setLoading(false)
     }
   }, [id, navigate, user?.id, user?.instructorId])
@@ -98,16 +96,13 @@ export function MyProgramDetailPage() {
     try {
       if (favorite) {
         await removeFavoriteProgram(userId, id)
-        message.success(MESSAGES.success.removedFromFavorites)
-      } else {
+        } else {
         await addFavoriteProgram(userId, id)
-        message.success(MESSAGES.success.addedToFavorites)
-      }
+        }
       setFavorite(!favorite)
     } catch (error) {
       console.error('관심 프로그램 토글 실패:', error)
-      message.error(MESSAGES.error.favoriteProgramProcessFailed)
-    }
+      }
   }
 
   const getProgramStatus = (program: MyProgram) => {
@@ -275,7 +270,6 @@ export function MyProgramDetailPage() {
           onCancel={() => setSatisfactionModalOpen(false)}
           onSuccess={() => {
             // 만족도 조사 제출 후 처리
-            message.success(MESSAGES.success.satisfactionSurveySubmitted)
             setSatisfactionModalOpen(false)
           }}
         />

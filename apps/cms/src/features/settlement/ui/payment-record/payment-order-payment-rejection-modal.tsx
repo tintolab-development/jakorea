@@ -3,7 +3,6 @@
  */
 
 import { useEffect, useState } from 'react'
-import { message } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AppButton } from '@/shared/ui/app-button'
 import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
@@ -56,7 +55,6 @@ export function PaymentOrderPaymentRejectionModal({
             onClick={() => {
               const trimmed = reason.trim()
               if (!trimmed) {
-                message.warning('반려 사유를 입력해 주세요.')
                 return
               }
               onReject(trimmed)

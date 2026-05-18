@@ -1,5 +1,4 @@
 import { useCallback } from 'react'
-import { message } from 'antd'
 import type {
   DateTimeFieldMode,
   VerticalTableParagraph,
@@ -163,7 +162,6 @@ export function useVerticalTableRowFieldActions({
       if (cur.kind !== 'single_item' || cur.variant !== 'vertical_table') return cur
       const next = verticalTableRemoveRow(cur, rowIndex)
       if (next == null) {
-        message.warning('데이터 행은 최소 1개 이상 유지해야 합니다.')
         return cur
       }
       removed = true

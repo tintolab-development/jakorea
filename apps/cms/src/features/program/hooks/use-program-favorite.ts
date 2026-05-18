@@ -3,14 +3,12 @@
  */
 
 import { useState, useEffect } from 'react'
-import { message } from 'antd'
 import type { Program } from '@/types/domain'
 import {
   addFavoriteProgram,
   removeFavoriteProgram,
   isFavoriteProgram,
 } from '@/entities/program/api/favorite-program-service'
-import { MESSAGES } from '@/shared/constants'
 
 interface UseProgramFavoriteProps {
   open: boolean
@@ -62,16 +60,13 @@ export function useProgramFavorite({
       if (isFavorite) {
         await removeFavoriteProgram(favoriteUserId, program.id)
         setIsFavorite(false)
-        message.success(MESSAGES.success.removedFromFavorites)
-      } else {
+        } else {
         await addFavoriteProgram(favoriteUserId, program.id)
         setIsFavorite(true)
-        message.success(MESSAGES.success.addedToFavorites)
-      }
+        }
     } catch (error) {
       console.error('관심 프로그램 토글 실패:', error)
-      message.error(MESSAGES.error.favoriteProgramProcessFailed)
-    } finally {
+      } finally {
       setFavoriteLoading(false)
     }
   }

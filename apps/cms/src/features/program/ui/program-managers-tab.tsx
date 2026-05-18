@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import type { ColumnsType } from 'antd/es/table'
@@ -18,11 +18,7 @@ import {
   PROGRAM_ROLE_LABELS,
   type ProgramManagerRow,
 } from '@/data/mock/program-managers'
-import {
-  canAddProgramPm,
-  canSetProgramManagerRole,
-  PROGRAM_PM_ROLE_LIMIT_MESSAGE,
-} from '@/entities/program/lib/program-pm-role-policy'
+import { canAddProgramPm, canSetProgramManagerRole } from '@/entities/program/lib/program-pm-role-policy'
 import {
   AddManagerModal,
   buildManagerRowFromForm,
@@ -155,7 +151,6 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
 
   const handleDeleteClick = () => {
     if (selectedRowKeys.length === 0) {
-      message.warning('삭제할 담당자를 선택해 주세요.')
       return
     }
     setDeleteGuideModalOpen(true)
@@ -177,16 +172,13 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
       setManagerForEditRole(null)
       setEditRoleModalOpen(false)
       setDeleteGuideModalOpen(false)
-      message.success('담당자가 삭제되었습니다.')
       return
     }
     const keysToDelete = new Set(selectedRowKeys.map(String))
-    const count = keysToDelete.size
     setManagerList(prev => prev.filter(row => !keysToDelete.has(row.id)))
     setSelectedRowKeys([])
     setDeleteGuideModalOpen(false)
-    message.success(`${count}명의 담당자가 삭제되었습니다.`)
-  }
+    }
 
   const handleDeleteGuideCancel = () => {
     setDeleteGuideModalOpen(false)
@@ -195,15 +187,13 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
 
   const handleAdd = (values: AddManagerFormValues) => {
     if (values.role === 'OWNER' && !canAddProgramPm(managerList)) {
-      message.error(PROGRAM_PM_ROLE_LIMIT_MESSAGE)
       return
     }
     const nextNo = managerList.length > 0 ? Math.max(...managerList.map(r => r.no)) + 1 : 1
     const nextId = `manager-new-${Date.now()}`
     const newRow = buildManagerRowFromForm(values, nextNo, nextId)
     setManagerList(prev => [newRow, ...prev])
-    message.success('담당자가 등록되었습니다.')
-  }
+    }
 
   const openEditRoleModal = useCallback((record: ProgramManagerRow) => {
     setManagerForEditRole(record)
@@ -215,7 +205,6 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
     setManagerList(prev =>
       prev.map(row => (row.id === managerForEditRole.id ? { ...row, role } : row))
     )
-    message.success('권한이 수정되었습니다.')
     setManagerForEditRole(null)
     setEditRoleModalOpen(false)
   }
@@ -229,14 +218,12 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         return
       }
       if (!canSetProgramManagerRole(managerList, recordId, newRole)) {
-        message.error(PROGRAM_PM_ROLE_LIMIT_MESSAGE)
         setOpenRoleDropdownId(null)
         return
       }
       setManagerList(prev =>
         prev.map(row => (row.id === recordId ? { ...row, role: newRole } : row))
       )
-      message.success('권한이 변경되었습니다.')
       setOpenRoleDropdownId(null)
     },
     [managerList]

@@ -1,5 +1,4 @@
 import { useCallback } from 'react'
-import { message } from 'antd'
 import {
   LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS,
   LECTURE_REPORT_SEED_PARAGRAPH_IDS,
@@ -18,8 +17,7 @@ export function useLectureReportIssuanceEditor(active: boolean) {
     []
   )
   const onSave = useCallback(() => {
-    message.success('저장 API 연동 전입니다.')
-  }, [])
+    }, [])
 
   const base = useWritingFormEditorWithUserPreview({
     open: active,

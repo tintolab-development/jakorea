@@ -9,8 +9,8 @@ import { ApplicationForm } from '@/features/application/ui/application-form'
 import { useApplicationStore } from '@/features/application/model/application-store'
 import { useAuth } from '@/shared/lib/auth/auth-context'
 import type { ApplicationFormData } from '@/entities/application/model/schema'
-import { showSuccessMessage, handleError } from '@/shared/utils/error-handler'
 import { MESSAGES } from '@/shared/constants'
+import { handleError } from '@/shared/utils/error-handler'
 
 interface ApplicationFormModalProps {
   programId: string
@@ -54,7 +54,6 @@ export function ApplicationFormModal({
         notes: applicationData.notes,
       })
 
-      showSuccessMessage(MESSAGES.success.applicationCompletedModal)
       onSuccess?.()
     } catch (error) {
       handleError(error, {

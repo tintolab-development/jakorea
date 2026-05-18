@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
@@ -132,7 +132,6 @@ export function PaymentOrderInstructorSettlementTable({
             : row
         )
       )
-      message.success('선택한 항목이 지급조서 확인 완료로 반영되었습니다.')
       setBatchConfirmOpen(false)
       setSelectedRowKeys([])
     },
@@ -334,7 +333,7 @@ export function PaymentOrderInstructorSettlementTable({
               variant="primary"
               size="filter-wide"
               icon={<DownloadOutlined />}
-              onClick={() => message.info('지급조서 발급은 추후 연결됩니다.')}
+              onClick={() => {}}
             >
               지급조서 발급
             </AppButton>

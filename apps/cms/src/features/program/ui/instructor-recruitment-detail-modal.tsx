@@ -6,7 +6,7 @@
 
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Image, message } from 'antd'
+import { Image } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { AppButton } from '@/shared/ui/app-button'
 import { Table } from 'antd'
@@ -96,8 +96,7 @@ export function InstructorRecruitmentDetailModal({
         prev.map(row => (row.id === instructorId ? { ...row, approvalStatus: nextStatus } : row))
       )
       updateApplicantInstructorApprovalStatus(instructorId, nextStatus)
-      message.success('결재 현황이 변경되었습니다.')
-    },
+      },
     []
   )
 

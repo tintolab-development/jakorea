@@ -3,18 +3,18 @@
  * Phase 4.3: 모집 종료 후 추가 배정 (FR-F02)
  */
 
-import { Modal, Form, Select, Input, Space, Radio, message } from 'antd'
+import { Modal, Form, Select, Input, Space, Radio } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
   type ManualAssignmentData,
-  validateManualAssignment,
-} from '@/entities/instructor-application/api/instructor-application-service'
+  validateManualAssignment } from '@/entities/instructor-application/api/instructor-application-service'
 import { mockInstructors } from '@/data/mock/instructors'
 import { mockPrograms } from '@/data/mock/programs'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { fieldValidationHelp } from '@/shared/utils/error-handler'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -34,11 +34,9 @@ const assignmentSchema = z
           .string()
           .min(1, '전화번호를 입력해주세요')
           .regex(phoneRegex, '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'),
-        email: z.string().email('올바른 이메일 형식이 아닙니다'),
-      })
+        email: z.string().email('올바른 이메일 형식이 아닙니다') })
       .optional(),
-    notes: z.string().optional(),
-  })
+    notes: z.string().optional() })
   .refine(
     data => {
       // assignmentType이 'existing'일 때 instructorId는 필수
@@ -86,8 +84,7 @@ export function ManualAssignmentModal({
   onCancel,
   onSuccess,
   loading = false,
-  fixedProgramId,
-}: ManualAssignmentModalProps) {
+  fixedProgramId }: ManualAssignmentModalProps) {
   const { user } = useAuthStore()
   const {
     register,
@@ -96,14 +93,11 @@ export function ManualAssignmentModal({
     setValue,
     control,
     formState: { errors },
-    reset,
-  } = useForm<AssignmentFormData>({
+    reset } = useForm<AssignmentFormData>({
     resolver: zodResolver(assignmentSchema),
     defaultValues: {
       assignmentType: 'existing',
-      programId: fixedProgramId || '',
-    },
-  })
+      programId: fixedProgramId || '' } })
 
   // 모달이 열릴 때 폼 초기화 및 fixedProgramId 설정
   useEffect(() => {
@@ -113,8 +107,7 @@ export function ManualAssignmentModal({
         programId: fixedProgramId || '',
         instructorId: undefined,
         newInstructor: undefined,
-        notes: undefined,
-      })
+        notes: undefined })
       if (fixedProgramId) {
         setValue('programId', fixedProgramId)
       }
@@ -125,37 +118,30 @@ export function ManualAssignmentModal({
 
   const onSubmit = async (data: AssignmentFormData) => {
     if (!user?.id) {
-      message.error('로그인이 필요합니다.')
       return
     }
 
     const programId = fixedProgramId || data.programId
     if (!programId || programId.trim().length === 0) {
-      message.error('프로그램을 선택해주세요.')
       return
     }
 
     // 배정 방식별 필수 필드 검증
     if (data.assignmentType === 'existing') {
       if (!data.instructorId || data.instructorId.trim().length === 0) {
-        message.error('강사를 선택해주세요.')
         return
       }
     } else if (data.assignmentType === 'new') {
       if (!data.newInstructor) {
-        message.error('신규 강사 정보를 입력해주세요.')
         return
       }
       if (!data.newInstructor.name || data.newInstructor.name.trim().length === 0) {
-        message.error('이름을 입력해주세요.')
         return
       }
       if (!data.newInstructor.phone || data.newInstructor.phone.trim().length === 0) {
-        message.error('전화번호를 입력해주세요.')
         return
       }
       if (!data.newInstructor.email || data.newInstructor.email.trim().length === 0) {
-        message.error('이메일을 입력해주세요.')
         return
       }
     }
@@ -164,8 +150,7 @@ export function ManualAssignmentModal({
       programId,
       scheduleIds: [], // TODO: 일정 선택 기능 추가
       assignedBy: user.id,
-      notes: data.notes,
-    }
+      notes: data.notes }
 
     if (data.assignmentType === 'existing' && data.instructorId) {
       assignmentData.instructorId = data.instructorId
@@ -173,14 +158,12 @@ export function ManualAssignmentModal({
       assignmentData.newInstructor = {
         name: data.newInstructor.name.trim(),
         phone: data.newInstructor.phone.trim(),
-        email: data.newInstructor.email.trim(),
-      }
+        email: data.newInstructor.email.trim() }
     }
 
     // 서버 측 검증
     const validation = validateManualAssignment(assignmentData)
     if (!validation.valid) {
-      message.error(validation.error || '배정 정보가 유효하지 않습니다.')
       return
     }
 
@@ -231,7 +214,7 @@ export function ManualAssignmentModal({
             />
             {errors.programId && (
               <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                {errors.programId.message}
+                {fieldValidationHelp(errors.programId)}
               </div>
             )}
           </Form.Item>
@@ -269,7 +252,7 @@ export function ManualAssignmentModal({
             />
             {errors.instructorId && (
               <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                {errors.instructorId.message}
+                {fieldValidationHelp(errors.instructorId)}
               </div>
             )}
           </Form.Item>

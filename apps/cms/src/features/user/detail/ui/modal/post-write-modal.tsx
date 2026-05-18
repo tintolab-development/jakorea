@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Checkbox, Input, Modal, message } from 'antd'
+import { Checkbox, Input, Modal } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import { createProgramPost, addProgramFiles } from '@/data/mock'
@@ -86,11 +86,9 @@ export function PostWriteModal({
     for (const file of newFiles) {
       const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase()
       if (!ALLOWED_EXTENSIONS.includes(ext)) {
-        message.warning(`"${file.name}"은(는) ${getAllowedExtensionsDescription()} 형식만 등록 가능합니다.`)
         continue
       }
       if (file.size > MAX_FILE_SIZE) {
-        message.warning(`"${file.name}"은(는) 15MB 이하여야 합니다.`)
         continue
       }
       valid.push(file)
@@ -105,7 +103,6 @@ export function PostWriteModal({
   const handleRegister = async () => {
     const trimmed = content.trim()
     if (!trimmed) {
-      message.warning('게시글 내용을 입력해 주세요.')
       return
     }
 
@@ -130,14 +127,12 @@ export function PostWriteModal({
           fileSize: r.fileSize,
         })))
       }
-      message.success('게시글이 등록되었습니다.')
       resetForm(setAudience, setContent, setFiles)
       onSuccess?.()
       onCancel()
     } catch (e) {
       console.error('게시글 등록 실패:', e)
-      message.error('게시글 등록에 실패했습니다. 다시 시도해 주세요.')
-    } finally {
+      } finally {
       setLoading(false)
     }
   }

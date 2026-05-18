@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { message } from 'antd'
 import {
   useTablePage,
   EMPTY_TABLE_PAGE_CONTEXT,
@@ -224,8 +223,7 @@ export function useApplicantsDetail({
           : prev
       )
       updateApplicantSchoolApprovalStatus(recordId, next)
-      message.success('결재 현황이 변경되었습니다.')
-    },
+      },
     []
   )
 
@@ -243,8 +241,7 @@ export function useApplicantsDetail({
           : prev
       )
       updateApplicantInstructorApprovalStatus(recordId, next)
-      message.success('결재 현황이 변경되었습니다.')
-    },
+      },
     []
   )
 
@@ -272,7 +269,6 @@ export function useApplicantsDetail({
 
   const handleBulkReject = () => {
     if (selectedRowKeys.length === 0) {
-      message.warning('반려할 항목을 선택해 주세요.')
       return
     }
     const keys = selectedRowKeys as string[]
@@ -283,17 +279,14 @@ export function useApplicantsDetail({
         )
       )
       keys.forEach(id => updateApplicantSchoolApprovalStatus(id, 'rejected'))
-      message.success('선택한 학교 신청이 반려되었습니다.')
-    } else if (menu === 'instructors') {
+      } else if (menu === 'instructors') {
       setInstructorList(prev =>
         prev.map(row =>
           keys.includes(row.id) ? patchApplicantInstructorForApprovalStatus(row, 'rejected') : row
         )
       )
       keys.forEach(id => updateApplicantInstructorApprovalStatus(id, 'rejected'))
-      message.success('선택한 강사 신청이 반려되었습니다.')
-    } else {
-      message.info('현재 메뉴에서는 일괄 반려를 사용할 수 없습니다.')
+      } else {
       return
     }
     setSelectedRowKeys([])
@@ -301,7 +294,6 @@ export function useApplicantsDetail({
 
   const handleBulkApprove = () => {
     if (selectedRowKeys.length === 0) {
-      message.warning('승인할 항목을 선택해 주세요.')
       return
     }
     const keys = selectedRowKeys as string[]
@@ -312,17 +304,14 @@ export function useApplicantsDetail({
         )
       )
       keys.forEach(id => updateApplicantSchoolApprovalStatus(id, 'approved'))
-      message.success('선택한 학교 신청이 승인되었습니다.')
-    } else if (menu === 'instructors') {
+      } else if (menu === 'instructors') {
       setInstructorList(prev =>
         prev.map(row =>
           keys.includes(row.id) ? patchApplicantInstructorForApprovalStatus(row, 'approved') : row
         )
       )
       keys.forEach(id => updateApplicantInstructorApprovalStatus(id, 'approved'))
-      message.success('선택한 강사 신청이 승인되었습니다.')
-    } else {
-      message.info('현재 메뉴에서는 일괄 승인을 사용할 수 없습니다.')
+      } else {
       return
     }
     setSelectedRowKeys([])
@@ -338,8 +327,7 @@ export function useApplicantsDetail({
         : prev
     )
     updateApplicantSchoolApprovalStatus(id, 'pending')
-    message.success('승인이 취소되었습니다.')
-  }
+    }
 
   const handleCancelApprovalInstructor = (id: string) => {
     setInstructorList(prev =>
@@ -353,8 +341,7 @@ export function useApplicantsDetail({
         : prev
     )
     updateApplicantInstructorApprovalStatus(id, 'pending')
-    message.success('승인이 취소되었습니다.')
-  }
+    }
 
   const handleCancelRejectInstructor = (id: string) => {
     setInstructorList(prev =>
@@ -368,8 +355,7 @@ export function useApplicantsDetail({
         : prev
     )
     updateApplicantInstructorApprovalStatus(id, 'pending')
-    message.success('반려가 취소되었습니다.')
-  }
+    }
 
   const handleCancelRejectInstitution = (id: string) => {
     setInstitutionList(prev =>
@@ -381,8 +367,7 @@ export function useApplicantsDetail({
         : prev
     )
     updateApplicantSchoolApprovalStatus(id, 'pending')
-    message.success('반려가 취소되었습니다.')
-  }
+    }
 
   const handleViewCalendar = () => {
     setViewMode('calendar')

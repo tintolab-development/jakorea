@@ -22,3 +22,10 @@ export function detailInfoFormSectionHeaderProps(
   const description = getVisibleParagraphDescription(sectionDescription ?? null)
   return description ? { title, hideHeader: false, description } : { title, hideHeader: false }
 }
+
+/** 프로그램 상세(UJAT 등) — 폼 양식 `paragraphDescription` 미노출, title만 */
+export function detailInfoFormSectionTitleHeaderProps(
+  title: string
+): { title: string; hideHeader: false } {
+  return { title, hideHeader: false }
+}

@@ -13,19 +13,16 @@ import {
   Space,
   Table,
   Popconfirm,
-  message,
   Typography,
   Switch,
-  Card,
-} from 'antd'
+  Card } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   ArrowUpOutlined,
-  ArrowDownOutlined,
-} from '@ant-design/icons'
+  ArrowDownOutlined } from '@ant-design/icons'
 import type { FormFieldDef, FormFieldType } from '@/types/form-template'
 
 const { TextArea } = Input
@@ -65,8 +62,7 @@ function FieldRow({
   onEdit,
   onDelete,
   onMoveUp,
-  onMoveDown,
-}: FieldRowProps) {
+  onMoveDown }: FieldRowProps) {
   return (
     <tr>
       <td style={{ padding: '8px' }}>
@@ -115,8 +111,7 @@ export function FormFieldEditor({
   open,
   fields: initialFields,
   onSave,
-  onCancel,
-}: FormFieldEditorProps) {
+  onCancel }: FormFieldEditorProps) {
   const [fields, setFields] = useState<FormFieldDef[]>(initialFields)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [fieldForm] = Form.useForm()
@@ -126,8 +121,7 @@ export function FormFieldEditor({
       id: `field-${Date.now()}`,
       label: '',
       type: 'text',
-      required: false,
-    }
+      required: false }
     setFields([...fields, newField])
     setEditingIndex(fields.length)
     fieldForm.setFieldsValue(newField)
@@ -182,8 +176,7 @@ export function FormFieldEditor({
 
   const handleSave = () => {
     onSave(fields)
-    message.success('필드가 저장되었습니다')
-  }
+    }
 
   const handleCancel = () => {
     setFields(initialFields)
@@ -196,30 +189,25 @@ export function FormFieldEditor({
     {
       title: '순서',
       key: 'order',
-      width: 80,
-    },
+      width: 80 },
     {
       title: '필드명',
       dataIndex: 'label',
-      key: 'label',
-    },
+      key: 'label' },
     {
       title: '타입',
       dataIndex: 'type',
       key: 'type',
-      width: 120,
-    },
+      width: 120 },
     {
       title: '필수',
       dataIndex: 'required',
       key: 'required',
-      width: 80,
-    },
+      width: 80 },
     {
       title: '작업',
       key: 'actions',
-      width: 150,
-    },
+      width: 150 },
   ]
 
   return (
@@ -256,7 +244,7 @@ export function FormFieldEditor({
               <Form.Item
                 name="label"
                 label="필드명"
-                rules={[{ required: true, message: '필드명을 입력해주세요' }]}
+                rules={[{ required: true }]}
               >
                 <Input placeholder="예: 참가 목적" />
               </Form.Item>
@@ -264,7 +252,7 @@ export function FormFieldEditor({
               <Form.Item
                 name="type"
                 label="필드 타입"
-                rules={[{ required: true, message: '필드 타입을 선택해주세요' }]}
+                rules={[{ required: true }]}
               >
                 <Select options={fieldTypeOptions} />
               </Form.Item>
@@ -288,19 +276,17 @@ export function FormFieldEditor({
                       <Form.Item
                         name="options"
                         label="선택 옵션"
-                        rules={[{ required: true, message: '옵션을 입력해주세요' }]}
+                        rules={[{ required: true }]}
                         getValueFromEvent={e => {
                           const lines = e.target.value.split('\n').filter((l: string) => l.trim())
                           return lines.map((line: string, idx: number) => ({
                             value: `option-${idx}`,
-                            label: line.trim(),
-                          }))
+                            label: line.trim() }))
                         }}
                         getValueProps={value => {
                           if (!value || !Array.isArray(value)) return { value: '' }
                           return {
-                            value: value.map((opt: { label: string }) => opt.label).join('\n'),
-                          }
+                            value: value.map((opt: { label: string }) => opt.label).join('\n') }
                         }}
                       >
                         <TextArea
@@ -383,9 +369,7 @@ export function FormFieldEditor({
                         onMoveDown={handleMoveDown}
                       />
                     )
-                  },
-                },
-              }}
+                  } } }}
             />
           )}
         </Card>

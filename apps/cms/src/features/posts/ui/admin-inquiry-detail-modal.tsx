@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
-import { message } from 'antd'
 import { getAdminInquiryDetail, submitAdminInquiryReply } from '@/features/posts/api/admin-inquiry-mock-store'
 import type { AdminInquiryDetail } from '@/features/posts/model/admin-inquiry-management.types'
 import { ToastUiMarkdownViewer } from '@/shared/components/toast-ui-markdown-viewer'
@@ -44,16 +43,14 @@ export function AdminInquiryDetailModal({
     if (!detail || !canWrite || isAnswerRegistered) return
     const md = answerText.trim()
     if (md === '') {
-      message.warning('답변 내용을 입력해 주세요.')
       return
     }
     const ok = submitAdminInquiryReply(detail.id, md)
     if (ok) {
-      message.success('답변이 등록되었습니다.')
       onSuccess()
       onCancel()
     } else {
-      message.error('답변 등록에 실패했습니다.')
+      console.debug('adminInquiryDetailModal submitReply failed')
     }
   }, [answerText, canWrite, detail, isAnswerRegistered, onCancel, onSuccess])
 

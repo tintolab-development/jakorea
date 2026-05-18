@@ -4,7 +4,6 @@
  */
 
 import { useState, useCallback } from 'react'
-import { message } from 'antd'
 import type { UploadProps } from 'antd'
 
 export interface UseImageUploadOptions {
@@ -83,18 +82,14 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
 
         // 파일 유효성 검사
         if (!allowedTypes.includes(fileObj.type)) {
-          const error = new Error('지원하지 않는 파일 형식입니다')
           const errorMessage = errorMessages.invalidType || 'JPG, PNG 파일만 업로드 가능합니다'
-          message.error(errorMessage)
-          onUploadError?.(error)
+          onUploadError?.(new Error(errorMessage))
           return
         }
 
         if (fileObj.size > maxSize) {
-          const error = new Error('파일 크기가 너무 큽니다')
           const errorMessage = errorMessages.tooLarge || '파일 크기는 10MB 이하여야 합니다'
-          message.error(errorMessage)
-          onUploadError?.(error)
+          onUploadError?.(new Error(errorMessage))
           return
         }
 
@@ -112,14 +107,11 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
 
         // Ant Design Upload의 onSuccess 호출
         onUploadSuccess?.(url, fileObj as any)
-        message.success('이미지가 업로드되었습니다')
-      } catch (error) {
+        } catch (error) {
         console.error('이미지 업로드 오류:', error)
-        const err = error instanceof Error ? error : new Error('업로드 실패')
         const errorMessage = errorMessages.uploadFailed || '이미지 업로드에 실패했습니다'
-        message.error(errorMessage)
-        onError?.(err)
-        onUploadError?.(err)
+        onError?.(new Error(errorMessage))
+        onUploadError?.(new Error(errorMessage))
       } finally {
         setUploading(false)
       }

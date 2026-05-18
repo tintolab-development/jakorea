@@ -12,8 +12,7 @@ import type { ProgramRole } from '@/types/user'
 import { PROGRAM_ROLE_LABELS } from '@/data/mock/program-managers'
 import {
   canSetProgramManagerRole,
-  PROGRAM_PM_ROLE_LIMIT_MESSAGE,
-} from '@/entities/program/lib/program-pm-role-policy'
+  PROGRAM_PM_ROLE_LIMIT_MESSAGE } from '@/entities/program/lib/program-pm-role-policy'
 import type { ProgramManagerRow } from '@/data/mock/program-managers'
 import './edit-manager-role-modal.css'
 
@@ -40,8 +39,7 @@ export function EditManagerRoleModal({
   manager,
   managerList,
   onSave,
-  onDeleteRequest,
-}: EditManagerRoleModalProps) {
+  onDeleteRequest }: EditManagerRoleModalProps) {
   const [form] = Form.useForm<{ role: ProgramRole }>()
   const [showOwnerLimitModal, setShowOwnerLimitModal] = useState(false)
 
@@ -110,7 +108,7 @@ export function EditManagerRoleModal({
             <Form.Item
               name="role"
               label="권한 설정"
-              rules={[{ required: true, message: '권한을 선택해주세요' }]}
+              rules={[{ required: true }]}
               className="edit-manager-role-modal__field"
             >
               <Radio.Group size="large" className="edit-manager-role-modal__role-radios">

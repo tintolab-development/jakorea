@@ -17,7 +17,7 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
           name="category"
           label="카테고리"
           className="faq-form-modal__field faq-form-modal__field--category"
-          rules={[{ required: true, message: '카테고리를 선택해주세요.' }]}
+          rules={[{ required: true }]}
         >
           <CmsSelect
             placeholder="전체"
@@ -45,7 +45,7 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
       <Form.Item
         name="question"
         label="제목 (질문)"
-        rules={[{ required: true, message: '제목을 입력해주세요.' }]}
+        rules={[{ required: true }]}
       >
         <CmsInput
           placeholder="제목을 입력해주세요"
@@ -57,7 +57,7 @@ export function FaqFormFields({ categoryOptions }: FaqFormFieldsProps) {
       <Form.Item
         name="answer"
         label="내용 (답변)"
-        rules={[{ required: true, message: '내용(답변)을 입력해주세요.' }]}
+        rules={[{ required: true }]}
       >
         <CmsTextArea
           placeholder="내용(답변)을 입력해주세요."

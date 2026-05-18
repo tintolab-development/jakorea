@@ -14,6 +14,7 @@ import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '../../../../model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import { CmsInput } from '@/shared/ui'
+import { fieldValidationHelp } from '@/shared/utils/error-handler'
 
 export interface ProgramKpiTargetSectionProps {
   programId: string
@@ -289,8 +290,8 @@ export function ProgramKpiTargetSection({
                         />
                       )}
                     />
-                    {form.formState.errors.kpiFinalClasses?.message && (
-                      <span>{form.formState.errors.kpiFinalClasses.message}</span>
+                    {fieldValidationHelp(form.formState.errors.kpiFinalClasses) && (
+                      <span>{fieldValidationHelp(form.formState.errors.kpiFinalClasses)}</span>
                     )}
                   </>
                 ) : undefined
