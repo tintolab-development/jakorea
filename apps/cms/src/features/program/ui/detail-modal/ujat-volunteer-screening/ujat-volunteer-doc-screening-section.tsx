@@ -1,16 +1,20 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import type { UjatEssayColumnKey } from './ujat-volunteer-doc-screening-columns'
 import { Table } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { AppButton } from '@/shared/ui/app-button'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { buildUjatVolunteerDocScreeningFilterRows } from './ujat-volunteer-doc-screening-filter-fields'
 import { UjatVolunteerDocScreeningResizableTitle } from './ujat-volunteer-doc-screening-resizable-title'
 import { useUjatVolunteerDocScreeningColumnWidths } from './use-ujat-volunteer-doc-screening-column-widths'
 import { useUjatVolunteerDocScreening } from './use-ujat-volunteer-doc-screening'
+import { useUjatVolunteerApplicantDetail } from './use-ujat-volunteer-applicant-detail'
+import { UjatVolunteerApplicantDetailView } from './ujat-volunteer-applicant-detail-view'
 import './ujat-volunteer-doc-screening-section.css'
+import '@/features/program/program-detail/ui/applicant-list/applicants-detail.css'
 
 const FILTER_ROWS = buildUjatVolunteerDocScreeningFilterRows()
 
@@ -23,11 +27,15 @@ const tableComponents = {
 export interface UjatVolunteerDocScreeningSectionProps {
   programId: string
   half: UjatVolunteerRecruitHalf
+  onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
+  onVolunteerApplicantDetailTitleChange?: (title: string | null) => void
 }
 
 export function UjatVolunteerDocScreeningSection({
   programId,
   half,
+  onRegisterApplicantCloseHandler,
+  onVolunteerApplicantDetailTitleChange,
 }: UjatVolunteerDocScreeningSectionProps) {
   const tableWrapRef = useRef<HTMLDivElement>(null)
   const {
@@ -54,6 +62,8 @@ export function UjatVolunteerDocScreeningSection({
   )
 
   const {
+    list,
+    applyDocumentScreeningStatus,
     pendingFilters,
     handleFilterChange,
     handleSearch,
@@ -64,8 +74,15 @@ export function UjatVolunteerDocScreeningSection({
     handleBulkReject,
     handleBulkApprove,
     handleExportExcel,
+    showDocumentScreeningConfirm,
+    documentScreeningConfirm,
+    closeDocumentScreeningConfirm,
     isExporting,
     count,
+    openManagerDropdown,
+    setOpenManagerDropdown,
+    onManagerAEvaluationChange,
+    onManagerBEvaluationChange,
   } = useUjatVolunteerDocScreening({
     programId,
     half,
@@ -73,6 +90,21 @@ export function UjatVolunteerDocScreeningSection({
     onEssayColumnResizeStart,
     onEssayColumnResizeStop,
     tableWrapRef,
+  })
+
+  const {
+    selectedApplicant,
+    openApplicantDetail,
+    handleDocumentReject,
+    handleDocumentApprove,
+  } = useUjatVolunteerApplicantDetail({
+    programId,
+    half,
+    list,
+    applyDocumentScreeningStatus,
+    onRegisterApplicantCloseHandler,
+    onVolunteerApplicantDetailTitleChange,
+    showDocumentScreeningConfirm,
   })
 
   useLayoutEffect(() => {
@@ -99,8 +131,60 @@ export function UjatVolunteerDocScreeningSection({
 
   const scrollConfig = useMemo(() => ({ x: tableScrollX }), [tableScrollX])
 
+  const handleRowClick = useCallback(
+    (record: UjatVolunteerApplicantRow, e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (
+        target.closest('.ant-table-selection-column') ||
+        target.closest('.ant-checkbox-wrapper') ||
+        target.closest('.status-dropdown-cell__status-trigger') ||
+        target.closest('.react-resizable-handle')
+      ) {
+        return
+      }
+      openApplicantDetail(record)
+    },
+    [openApplicantDetail]
+  )
+
+  const documentScreeningConfirmModal =
+    documentScreeningConfirm != null ? (
+      <ConfirmModal
+        open
+        title={documentScreeningConfirm.title}
+        content={documentScreeningConfirm.content}
+        confirmText={documentScreeningConfirm.confirmText}
+        cancelText="취소"
+        danger={documentScreeningConfirm.danger}
+        onConfirm={() => {
+          documentScreeningConfirm.onConfirm()
+          closeDocumentScreeningConfirm()
+        }}
+        onCancel={closeDocumentScreeningConfirm}
+      />
+    ) : null
+
+  if (selectedApplicant) {
+    return (
+      <>
+        {documentScreeningConfirmModal}
+        <UjatVolunteerApplicantDetailView
+          applicant={selectedApplicant}
+          onDocumentReject={handleDocumentReject}
+          onDocumentApprove={handleDocumentApprove}
+          openManagerDropdown={openManagerDropdown}
+          setOpenManagerDropdown={setOpenManagerDropdown}
+          onManagerAEvaluationChange={onManagerAEvaluationChange}
+          onManagerBEvaluationChange={onManagerBEvaluationChange}
+        />
+      </>
+    )
+  }
+
   return (
-    <div className="ujat-volunteer-doc-screening">
+    <>
+      {documentScreeningConfirmModal}
+      <div className="ujat-volunteer-doc-screening applicant-details">
       <FilterTableLayout
         bordered={false}
         className="ujat-volunteer-doc-screening__filter-layout"
@@ -147,7 +231,7 @@ export function UjatVolunteerDocScreeningSection({
         >
           <Table<UjatVolunteerApplicantRow>
             rowKey="id"
-            className="cms-data-table cms-data-table--fluid"
+            className="cms-data-table cms-data-table--fluid clickable-table"
             columns={columns}
             components={tableComponents}
             dataSource={tableData}
@@ -157,22 +241,13 @@ export function UjatVolunteerDocScreeningSection({
               selectedRowKeys,
               onChange: keys => setSelectedRowKeys(keys),
             }}
-            onRow={() => ({
-              onClick: e => {
-                const target = e.target as HTMLElement
-                if (
-                  target.closest('.ant-table-selection-column') ||
-                  target.closest('.ant-checkbox-wrapper') ||
-                  target.closest('.status-dropdown-cell__status-trigger') ||
-                  target.closest('.react-resizable-handle')
-                ) {
-                  return
-                }
-              },
+            onRow={record => ({
+              onClick: e => handleRowClick(record, e),
             })}
           />
         </div>
       </FilterTableLayout>
-    </div>
+      </div>
+    </>
   )
 }

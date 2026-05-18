@@ -1,0 +1,9 @@
+import type { UjatVolunteerRecruitHalf } from '@/features/program/model/ujat-volunteer-screening-constants'
+
+export function getUjatVolunteerDocScreeningDetailTitle(
+  half: UjatVolunteerRecruitHalf,
+  applicantName: string
+): string {
+  const halfLabel = half === 'h1' ? '상반기' : '하반기'
+  return `${halfLabel} 1차 서류 심사 대상자 상세 (${applicantName})`
+}

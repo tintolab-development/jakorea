@@ -2,7 +2,7 @@
  * UJAT 프로그램 상세 풀페이지 모달 — `/programs/ujat?programId=…&lnb=…&tab=…`
  */
 
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -434,6 +434,20 @@ export function UjatProgramDetailFullPageModal({
     }
   }, [activeRecruitTab, institutionsTriggerSave, volunteersTriggerSave, setEditMode])
 
+  const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
+  const [volunteerApplicantDetailTitle, setVolunteerApplicantDetailTitle] = useState<string | null>(
+    null
+  )
+
+  useEffect(() => {
+    const isVolunteerDocScreening =
+      activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2'
+    const isDoc1Tab = activeTab === 'vh1_doc1' || activeTab === 'vh2_doc1'
+    if (!isVolunteerDocScreening || !isDoc1Tab) {
+      setVolunteerApplicantDetailTitle(null)
+    }
+  }, [activeLnb, activeTab])
+
   const handleClose = useCallback(() => {
     onClose()
     const next = new URLSearchParams(searchParams)
@@ -441,19 +455,31 @@ export function UjatProgramDetailFullPageModal({
     next.delete(LNB_PARAM)
     next.delete(TAB_PARAM)
     next.delete(EDIT_PARAM)
+    next.delete('applicantId')
     navigate({ pathname: location.pathname, search: next.toString() ? `?${next}` : '' }, {
       replace: true,
     })
   }, [location.pathname, navigate, onClose, searchParams])
 
+  const handleHeaderCloseClick = useCallback(() => {
+    const isVolunteerDocScreening =
+      activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2'
+    const isDoc1Tab = activeTab === 'vh1_doc1' || activeTab === 'vh2_doc1'
+    if (isVolunteerDocScreening && isDoc1Tab && volunteerApplicantCloseHandlerRef.current?.()) {
+      return
+    }
+    handleClose()
+  }, [activeLnb, activeTab, handleClose])
+
   if (!open) return null
 
-  const title = displayProgram?.title ?? '프로그램 상세'
+  const title = volunteerApplicantDetailTitle ?? displayProgram?.title ?? '프로그램 상세'
 
   return (
     <DetailFullPageModal
       open={open}
       onClose={handleClose}
+      onHeaderClose={handleHeaderCloseClick}
       title={title}
       className="program-detail-fullpage-modal ujat-program-detail-fullpage-modal"
       sidebar={
@@ -564,6 +590,10 @@ export function UjatProgramDetailFullPageModal({
               <UjatVolunteerDocScreeningSection
                 programId={displayProgram.id}
                 half={activeTab.startsWith('vh2') ? 'h2' : 'h1'}
+                onRegisterApplicantCloseHandler={fn => {
+                  volunteerApplicantCloseHandlerRef.current = fn
+                }}
+                onVolunteerApplicantDetailTitleChange={setVolunteerApplicantDetailTitle}
               />
             )}
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&

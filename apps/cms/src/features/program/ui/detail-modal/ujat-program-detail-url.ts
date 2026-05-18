@@ -60,3 +60,21 @@ export function resolveUjatDetailLnbFromSearchParams(
 export function parseUjatDetailTab(searchParams: URLSearchParams): string | null {
   return searchParams.get(TAB_PARAM)
 }
+
+const APPLICANT_ID_PARAM = 'applicantId'
+
+/** UJAT 봉사자 1차 서류 심사 지원자 상세 딥링크 */
+export function buildUjatVolunteerApplicantDetailUrl(
+  programId: string,
+  lnb: 'volunteer_h1' | 'volunteer_h2',
+  tab: 'vh1_doc1' | 'vh2_doc1',
+  applicantId: string
+): string {
+  const q = new URLSearchParams({
+    programId,
+    [LNB_PARAM]: lnb,
+    [TAB_PARAM]: tab,
+    [APPLICANT_ID_PARAM]: applicantId,
+  })
+  return `/programs/ujat?${q.toString()}`
+}
