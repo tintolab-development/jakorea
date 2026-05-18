@@ -5,6 +5,8 @@ import { STATUS_DROPDOWN_CELL_CLASSNAME, StatusDropdownCell } from '@/shared/com
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { formatUjatVolunteerApplicationType } from '@/data/mock/ujat-volunteer-applicants-mock'
 import {
+  UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS,
+  UJAT_ESSAY_COLUMN_MIN_WIDTHS,
   UJAT_MANAGER_EVALUATION_ORDER,
   UJAT_VOLUNTEER_ESSAY_COLUMN_TITLES,
   formatUjatVolunteerEssayCellValue,
@@ -16,36 +18,38 @@ import { ManagerEvaluationBadge } from './manager-evaluation-badge'
 
 export const UJAT_DOC_SCREENING_SELECTION_COLUMN_WIDTH = 60
 
-export const DEFAULT_ESSAY_COLUMN_WIDTH = 300
-export const ESSAY_COLUMN_MIN_WIDTH = 200
+/** @deprecated UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS 사용 */
+export const DEFAULT_ESSAY_COLUMN_WIDTH = UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS.essayIntro
+/** @deprecated UJAT_ESSAY_COLUMN_MIN_WIDTHS 사용 */
+export const ESSAY_COLUMN_MIN_WIDTH = UJAT_ESSAY_COLUMN_MIN_WIDTHS.essayIntro
 export const ESSAY_COLUMN_MAX_WIDTH = 600
+
+export { UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS, UJAT_ESSAY_COLUMN_MIN_WIDTHS }
 
 export type { UjatEssayColumnKey } from '@/features/program/model/ujat-volunteer-screening-constants'
 
 export type UjatEssayColumnWidths = Record<UjatEssayColumnKey, number>
 
-const ELLIPSIS = { showTitle: true } as const
+const CENTER_CELL_CLASS = 'ujat-volunteer-doc-screening__center-cell'
+const NOWRAP_CELL_CLASS = 'ujat-volunteer-doc-screening__nowrap-cell'
+const ESSAY_CELL_CLASS = 'ujat-volunteer-doc-screening__essay-cell'
 
 const FIXED_COLUMN_WIDTH_SUM =
   72 + // No.
-  120 + // name
-  100 + // grade
-  140 + // preferredRegion
-  130 + // contact
-  180 + // email
+  140 + // name
+  116 + // grade
+  168 + // preferredRegion
+  140 + // contact
+  220 + // email
   120 + // educationExperience
-  120 + // applicationType
+  168 + // applicationType (UJAT 수료자 봉사자 한 줄)
   200 + // managerA
   200 + // managerB
   160 // documentScreeningStatus
 
 /** @deprecated use computeDocScreeningTableScrollX */
-export const UJAT_VOLUNTEER_DOC_SCREENING_TABLE_SCROLL_X = computeDocScreeningTableScrollX({
-  essayIntro: DEFAULT_ESSAY_COLUMN_WIDTH,
-  essayEducationExperience: DEFAULT_ESSAY_COLUMN_WIDTH,
-  essayNecessity: DEFAULT_ESSAY_COLUMN_WIDTH,
-  essayJaExperience: DEFAULT_ESSAY_COLUMN_WIDTH,
-})
+export const UJAT_VOLUNTEER_DOC_SCREENING_TABLE_SCROLL_X =
+  computeDocScreeningTableScrollX(UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS)
 
 export function computeDocScreeningTableScrollX(essayWidths: UjatEssayColumnWidths): number {
   const essaySum =
@@ -58,11 +62,7 @@ export function computeDocScreeningTableScrollX(essayWidths: UjatEssayColumnWidt
 
 function renderEssayCell(value: string | undefined, record: UjatVolunteerApplicantRow) {
   const display = formatUjatVolunteerEssayCellValue(record.applicationType, value)
-  return (
-    <span className="ujat-volunteer-doc-screening__text-cell" title={display}>
-      {display}
-    </span>
-  )
+  return <span className="ujat-volunteer-doc-screening__text-cell">{display}</span>
 }
 
 function buildEssayColumnResizeStopHandler(
@@ -113,17 +113,19 @@ export function useUjatVolunteerDocScreeningColumns({
         dataIndex: key,
         key,
         width,
-        minWidth: ESSAY_COLUMN_MIN_WIDTH,
-        ellipsis: ELLIPSIS,
+        minWidth: UJAT_ESSAY_COLUMN_MIN_WIDTHS[key],
+        align: 'center',
+        ellipsis: false,
         onHeaderCell: () => ({
           width,
+          className: ESSAY_CELL_CLASS,
           essayColKey: key,
           tableWrapRef,
           essayColumnWidths,
           onResizeStart: onEssayColumnResizeStart,
           onResizeStop: buildEssayColumnResizeStopHandler(key, onEssayColumnResizeStop),
         }),
-        onCell: () => ({ className: 'ujat-volunteer-doc-screening__essay-cell' }),
+        onCell: () => ({ className: ESSAY_CELL_CLASS }),
         render: (value: string | undefined, record: UjatVolunteerApplicantRow) =>
           renderEssayCell(value, record),
       }
@@ -138,53 +140,59 @@ export function useUjatVolunteerDocScreeningColumns({
         minWidth: 72,
         align: 'center',
         fixed: 'left',
-        ellipsis: ELLIPSIS,
+        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
+        onCell: () => ({ className: CENTER_CELL_CLASS }),
       },
       {
         title: '성함/봉사자명',
         dataIndex: 'name',
         key: 'name',
-        width: 120,
-        minWidth: 120,
+        width: 140,
+        minWidth: 140,
         align: 'center',
         fixed: 'left',
-        ellipsis: ELLIPSIS,
+        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
+        onCell: () => ({ className: CENTER_CELL_CLASS }),
       },
       {
         title: '신청자 학년',
         dataIndex: 'grade',
         key: 'grade',
-        width: 100,
-        minWidth: 100,
+        width: 116,
+        minWidth: 116,
         align: 'center',
-        ellipsis: ELLIPSIS,
+        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
+        onCell: () => ({ className: CENTER_CELL_CLASS }),
       },
       {
         title: '희망 교육 활동 지역',
         dataIndex: 'preferredRegion',
         key: 'preferredRegion',
-        width: 140,
-        minWidth: 140,
+        width: 168,
+        minWidth: 168,
         align: 'center',
-        ellipsis: ELLIPSIS,
+        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
+        onCell: () => ({ className: CENTER_CELL_CLASS }),
       },
       {
         title: '연락처',
         dataIndex: 'contact',
         key: 'contact',
-        width: 130,
-        minWidth: 130,
+        width: 140,
+        minWidth: 140,
         align: 'center',
-        ellipsis: ELLIPSIS,
+        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
+        onCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
       },
       {
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 180,
-        minWidth: 120,
+        width: 220,
+        minWidth: 220,
         align: 'center',
-        ellipsis: ELLIPSIS,
+        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
+        onCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
       },
       {
         title: '교육 진행 경험',
@@ -192,17 +200,17 @@ export function useUjatVolunteerDocScreeningColumns({
         width: 120,
         minWidth: 120,
         align: 'center',
-        ellipsis: ELLIPSIS,
         render: (_: unknown, record) => (record.hasEducationExperience ? 'O' : 'X'),
       },
       {
         title: '지원유형',
         dataIndex: 'applicationType',
         key: 'applicationType',
-        width: 120,
-        minWidth: 120,
+        width: 168,
+        minWidth: 168,
         align: 'center',
-        ellipsis: ELLIPSIS,
+        onHeaderCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
+        onCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
         render: (type: UjatVolunteerApplicantRow['applicationType']) =>
           formatUjatVolunteerApplicationType(type),
       },
