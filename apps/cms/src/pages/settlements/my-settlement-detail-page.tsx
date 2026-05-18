@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { App, Card, Descriptions, Tag, Button, Space, Spin } from 'antd'
+import { Card, Descriptions, Tag, Button, Space, Spin } from 'antd'
 import {
   ArrowLeftOutlined,
   DownloadOutlined,
@@ -21,9 +21,9 @@ import { SettlementCalculationSummary } from '@/features/settlement/ui/settlemen
 import { paymentStatementService } from '@/entities/settlement/api/payment-statement-service'
 import dayjs from 'dayjs'
 import type { Settlement } from '@/types/domain'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 
 export function MySettlementDetailPage() {
-  const { modal } = App.useApp()
   const { id } = useParams<{ id: string }>()
   const { user } = useAuthStore()
   const navigate = useNavigate()
@@ -31,6 +31,7 @@ export function MySettlementDetailPage() {
   const [settlement, setSettlement] = useState<Settlement | null>(null)
   const [loading, setLoading] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false)
 
   const loadSettlement = useCallback(async () => {
     if (!id || !user?.instructorId) return
@@ -58,35 +59,28 @@ export function MySettlementDetailPage() {
   }, [id, user?.instructorId, loadSettlement])
 
   // 지급조서 확인 완료 처리
-  const handleConfirmPaymentStatement = useCallback(async () => {
+  const handleConfirmPaymentStatement = useCallback(() => {
     if (!settlement || !user?.instructorId) return
+    setPaymentConfirmOpen(true)
+  }, [settlement, user?.instructorId])
 
-    modal.confirm({
-      title: '지급조서 확인 완료',
-      content: '지급조서 내용을 확인하셨습니까? 확인 완료 시 계좌로 지급이 진행됩니다.',
-      okText: '확인 완료',
-      cancelText: '취소',
-      onOk: async () => {
-        setConfirming(true)
-        try {
-          // 정산 ID로 지급조서 찾기
-          const paymentStatement = await paymentStatementService.getBySettlementId(settlement.id)
-          if (!paymentStatement) {
-            return
-          }
-
-          // 강사 확인 완료 처리
-          await paymentStatementService.confirmByInstructor(paymentStatement.id)
-          // 정산 정보 다시 로드
-          await loadSettlement()
-        } catch (error: unknown) {
-          console.error('지급조서 확인 실패:', error)
-        } finally {
-          setConfirming(false)
-        }
-      },
-    })
-  }, [loadSettlement, modal, settlement, user?.instructorId])
+  const handlePaymentConfirmOk = useCallback(async () => {
+    if (!settlement || !user?.instructorId) return
+    setConfirming(true)
+    try {
+      const paymentStatement = await paymentStatementService.getBySettlementId(settlement.id)
+      if (!paymentStatement) {
+        return
+      }
+      await paymentStatementService.confirmByInstructor(paymentStatement.id)
+      await loadSettlement()
+      setPaymentConfirmOpen(false)
+    } catch (error: unknown) {
+      console.error('지급조서 확인 실패:', error)
+    } finally {
+      setConfirming(false)
+    }
+  }, [loadSettlement, settlement, user?.instructorId])
 
   if (!user?.instructorId) {
     return (
@@ -334,6 +328,16 @@ export function MySettlementDetailPage() {
           </Card>
         )}
       </Space>
+
+      <ConfirmModal
+        open={paymentConfirmOpen}
+        title="지급조서 확인 완료"
+        content="지급조서 내용을 확인하셨습니까? 확인 완료 시 계좌로 지급이 진행됩니다."
+        confirmText="확인 완료"
+        cancelText="취소"
+        onConfirm={handlePaymentConfirmOk}
+        onCancel={() => setPaymentConfirmOpen(false)}
+      />
     </div>
   )
 }
