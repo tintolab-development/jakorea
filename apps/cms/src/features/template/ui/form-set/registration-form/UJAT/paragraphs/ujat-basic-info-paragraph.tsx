@@ -2,9 +2,10 @@
  * UJAT 프로그램 등록 폼 — 기본 정보
  * (1사 1교 프로그램 등록 폼 기본 정보와 동일하게 DetailInfoForm 3구역: 프로그램명 / 운영·설문 / 교육·IPS)
  */
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
 import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -23,6 +24,10 @@ import {
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
+import {
+  updateUjatProgramRegistrationOverlayKey,
+  useUjatProgramRegistrationOverlayKv,
+} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
@@ -64,39 +69,108 @@ function participantTypeLabel(
 
 const educationCourseSelectOptions = [...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS]
 
+const UJAT_SURVEY_ITEMS_DEFAULT = initialUjatSurveyItems()
+
+const UJAT_DEFAULT_SPONSOR_ID =
+  mockSponsorManagementListRows.find(s => s.name === '제이에이코리아')?.id ?? ALL_VALUE
+
 const BLOCK_GAP_STYLE = { marginTop: 16 } as const
 
-export function UjatBasicInfoParagraph() {
-  const repKo = UJAT_REP_KO_DEFAULT
-  const repEn = UJAT_REP_EN_DEFAULT
-  const programManagementName = UJAT_PROGRAM_MANAGEMENT_DEFAULT
-  const detailedProgramId = DETAILED_PROGRAM_UJAT_VALUE
+type OperationRangeSeal = { start: string; end: string } | null
 
-  const [operationAnchorDate, setOperationAnchorDate] = useState<Dayjs | null>(null)
-  const [operationRange, setOperationRange] = useState<[Dayjs, Dayjs] | null>(null)
+export function UjatBasicInfoParagraph() {
+  const [repKo, setRepKo] = useUjatProgramRegistrationOverlayKv('ujat.basicInfo.repKo', UJAT_REP_KO_DEFAULT)
+  const [repEn, setRepEn] = useUjatProgramRegistrationOverlayKv('ujat.basicInfo.repEn', UJAT_REP_EN_DEFAULT)
+  const [programManagementName, setProgramManagementName] = useUjatProgramRegistrationOverlayKv(
+    'ujat.basicInfo.programManagementName',
+    UJAT_PROGRAM_MANAGEMENT_DEFAULT
+  )
+  const [detailedProgramId, setDetailedProgramId] = useUjatProgramRegistrationOverlayKv(
+    'ujat.basicInfo.detailedProgramId',
+    DETAILED_PROGRAM_UJAT_VALUE
+  )
+
+  const [operationAnchorIso, setOperationAnchorIso] = useUjatProgramRegistrationOverlayKv<string | null>(
+    'ujat.basicInfo.operationAnchorIso',
+    null
+  )
+  const operationAnchorDate = operationAnchorIso ? dayjs(operationAnchorIso) : null
+  const setOperationAnchorDate = (next: Dayjs | null) => {
+    setOperationAnchorIso(next == null ? null : next.toISOString())
+  }
+
+  const [operationRangeSeal, setOperationRangeSeal] = useUjatProgramRegistrationOverlayKv<OperationRangeSeal>(
+    'ujat.basicInfo.operationRangeSeal',
+    null
+  )
+  const operationRange: [Dayjs, Dayjs] | null = useMemo(() => {
+    if (operationRangeSeal == null) return null
+    return [dayjs(operationRangeSeal.start), dayjs(operationRangeSeal.end)]
+  }, [operationRangeSeal])
+  const setOperationRange = (next: [Dayjs, Dayjs] | null) => {
+    if (next == null) {
+      setOperationRangeSeal(null)
+      return
+    }
+    setOperationRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
+  }
+
   const operationRangeWithTime = useMemo(
     () =>
       operationRange == null ? false : dateRangeUsesClockTime(operationRange[0], operationRange[1]),
     [operationRange]
   )
 
-  const [individualChecked, setIndividualChecked] = useState(false)
-  const [organizationChecked, setOrganizationChecked] = useState(true)
-  const [teacherChecked, setTeacherChecked] = useState(false)
-  const [volunteerChecked, setVolunteerChecked] = useState(true)
-
-  const businessField = 'economy_finance'
-
-  const sponsorId = useMemo(
-    () => mockSponsorManagementListRows.find(s => s.name === '제이에이코리아')?.id ?? ALL_VALUE,
-    []
+  const [individualChecked, setIndividualChecked] = useUjatProgramRegistrationOverlayKv(
+    'ujat.basicInfo.participant.individual',
+    false
+  )
+  const [organizationChecked, setOrganizationChecked] = useUjatProgramRegistrationOverlayKv(
+    'ujat.basicInfo.participant.organization',
+    true
+  )
+  const [teacherChecked, setTeacherChecked] = useUjatProgramRegistrationOverlayKv(
+    'ujat.basicInfo.participant.teacher',
+    false
+  )
+  const [volunteerChecked, setVolunteerChecked] = useUjatProgramRegistrationOverlayKv(
+    'ujat.basicInfo.participant.volunteer',
+    true
   )
 
-  const [surveyItems, setSurveyItems] =
-    useState<Record<UjatSurveyRowId, boolean>>(initialUjatSurveyItems)
+  const [businessField, setBusinessField] = useUjatProgramRegistrationOverlayKv(
+    'ujat.basicInfo.businessField',
+    'economy_finance'
+  )
 
-  const [educationCourse, setEducationCourse] = useState('')
-  const [partnerInvolvement, setPartnerInvolvement] = useState<'yes' | 'no'>('no')
+  const [sponsorId, setSponsorId] = useUjatProgramRegistrationOverlayKv(
+    'ujat.basicInfo.sponsorId',
+    UJAT_DEFAULT_SPONSOR_ID
+  )
+
+  const [ipOwned, setIpOwned] = useUjatProgramRegistrationOverlayKv('ujat.basicInfo.ipOwned', 'ja')
+  const [courseDeliveredBy, setCourseDeliveredBy] = useUjatProgramRegistrationOverlayKv(
+    'ujat.basicInfo.courseDeliveredBy',
+    'ja'
+  )
+  const [ipsCategory, setIpsCategory] = useUjatProgramRegistrationOverlayKv(
+    'ujat.basicInfo.ipsCategory',
+    'prepare'
+  )
+
+  const [surveyItems] = useUjatProgramRegistrationOverlayKv<Record<UjatSurveyRowId, boolean>>(
+    'ujat.basicInfo.surveyItems',
+    UJAT_SURVEY_ITEMS_DEFAULT
+  )
+
+  const [educationCourse, setEducationCourse] = useUjatProgramRegistrationOverlayKv(
+    'ujat.basicInfo.educationCourse',
+    ''
+  )
+  const [partnerInvolvement, setPartnerInvolvement] = useUjatProgramRegistrationOverlayKv<'yes' | 'no'>(
+    'ujat.basicInfo.partnerInvolvement',
+    'no'
+  )
 
   const sponsorOptions = useMemo(
     () => [
@@ -122,7 +196,13 @@ export function UjatBasicInfoParagraph() {
   )
 
   const toggleSurveyItem = (id: UjatSurveyRowId) => (e: CheckboxChangeEvent) => {
-    setSurveyItems(prev => ({ ...prev, [id]: e.target.checked }))
+    updateUjatProgramRegistrationOverlayKey<Record<UjatSurveyRowId, boolean>>(
+      'ujat.basicInfo.surveyItems',
+      prev => ({
+        ...(prev ?? UJAT_SURVEY_ITEMS_DEFAULT),
+        [id]: e.target.checked,
+      })
+    )
   }
 
   return (
@@ -140,8 +220,8 @@ export function UjatBasicInfoParagraph() {
             edit={
               <CmsInput
                 inputSize="medium"
-                disabled
                 value={repKo}
+                onChange={e => setRepKo(e.target.value)}
                 placeholder="대표 프로그램명을 입력하세요"
                 width="100%"
               />
@@ -153,8 +233,8 @@ export function UjatBasicInfoParagraph() {
             edit={
               <CmsInput
                 inputSize="medium"
-                disabled
                 value={repEn}
+                onChange={e => setRepEn(e.target.value)}
                 placeholder="대표 프로그램명을 입력하세요"
                 width="100%"
               />
@@ -168,8 +248,8 @@ export function UjatBasicInfoParagraph() {
             edit={
               <CmsInput
                 inputSize="medium"
-                disabled
                 value={programManagementName}
+                onChange={e => setProgramManagementName(e.target.value)}
                 placeholder="프로그램 관리명을 입력하세요"
                 width="100%"
               />
@@ -183,11 +263,11 @@ export function UjatBasicInfoParagraph() {
                 <CmsSelect
                   withAllOption={false}
                   inputSize="medium"
-                  disabled
                   placeholder="세부 프로그램명을 선택하세요"
                   width="100%"
                   options={detailedProgramOptions}
                   value={detailedProgramId}
+                  onChange={v => setDetailedProgramId(String(v ?? ''))}
                 />
               </div>
             }
@@ -284,11 +364,11 @@ export function UjatBasicInfoParagraph() {
                 <CmsSelect
                   withAllOption={false}
                   inputSize="medium"
-                  disabled
                   placeholder="사업 분야를 선택하세요"
                   width={240}
                   options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
                   value={businessField}
+                  onChange={v => setBusinessField(String(v ?? ''))}
                 />
               </div>
             }
@@ -303,11 +383,11 @@ export function UjatBasicInfoParagraph() {
                 <CmsSelect
                   withAllOption={false}
                   inputSize="medium"
-                  disabled
                   placeholder="후원사를 선택하세요"
                   width={240}
                   options={sponsorOptions}
                   value={sponsorId}
+                  onChange={v => setSponsorId(String(v ?? ''))}
                 />
               </div>
             }
@@ -400,10 +480,10 @@ export function UjatBasicInfoParagraph() {
               <CmsSelect
                 withAllOption={false}
                 inputSize="medium"
-                disabled
                 width={240}
                 options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
-                value="ja"
+                value={ipOwned}
+                onChange={v => setIpOwned(String(v ?? ''))}
               />
             }
             view="-"
@@ -416,10 +496,10 @@ export function UjatBasicInfoParagraph() {
               <CmsSelect
                 withAllOption={false}
                 inputSize="medium"
-                disabled
                 width={240}
                 options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
-                value="ja"
+                value={courseDeliveredBy}
+                onChange={v => setCourseDeliveredBy(String(v ?? ''))}
               />
             }
             view="-"
@@ -448,10 +528,10 @@ export function UjatBasicInfoParagraph() {
                 withAllOption={false}
                 inputSize="medium"
                 placeholder="IPS 유형을 선택하세요"
-                disabled
                 width={240}
                 options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
-                value="prepare"
+                value={ipsCategory}
+                onChange={v => setIpsCategory(String(v ?? ''))}
               />
             }
             view="-"

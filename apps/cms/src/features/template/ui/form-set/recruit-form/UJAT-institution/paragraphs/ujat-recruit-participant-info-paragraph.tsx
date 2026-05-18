@@ -3,6 +3,12 @@ import type { Dayjs } from 'dayjs'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import type { UjatRecruitParagraphProps } from '@/features/program/ui/detail-modal/ujat-recruit-paragraph-props'
+import {
+  isUjatRecruitProgramContext,
+  resolveUjatRecruitParagraphMode,
+} from '@/features/program/ui/detail-modal/ujat-recruit-paragraph-props'
+import { UjatRecruitParticipantInfoProgramView } from '@/features/program/ui/detail-modal/ujat-recruit-paragraph-views/participant-info-program'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -29,8 +35,7 @@ function InquiryContactColumn({ label, placeholder }: { label: string; placehold
   )
 }
 
-/** UJAT 프로그램 학교 모집 폼 — 참여자 모집 정보 */
-export function UjatRecruitParticipantInfoParagraph() {
+function UjatRecruitParticipantInfoTemplateEditor() {
   const [programAnchor, setProgramAnchor] = useState<Dayjs | null>(null)
   const [programRange, setProgramRange] = useState<[Dayjs, Dayjs] | null>(null)
   const programRangeWithTime = useMemo(
@@ -207,4 +212,22 @@ export function UjatRecruitParticipantInfoParagraph() {
       </DetailInfoForm.Row>
     </DetailInfoForm>
   )
+}
+
+/** UJAT 프로그램 학교 모집 폼 — 참여자 모집 정보 */
+export function UjatRecruitParticipantInfoParagraph(props: UjatRecruitParagraphProps = {}) {
+  if (isUjatRecruitProgramContext(props) && props.program) {
+    const mode = resolveUjatRecruitParagraphMode(props)
+    return (
+      <UjatRecruitParticipantInfoProgramView
+        program={props.program}
+        sponsorName={props.sponsorName}
+        form={props.form}
+        isEdit={mode === 'edit'}
+        sectionTitle={props.sectionTitle}
+        sectionDescription={props.sectionDescription}
+      />
+    )
+  }
+  return <UjatRecruitParticipantInfoTemplateEditor />
 }

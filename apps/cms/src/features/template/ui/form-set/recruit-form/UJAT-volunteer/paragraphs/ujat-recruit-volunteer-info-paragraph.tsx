@@ -8,6 +8,12 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { AppMultiSelect } from '@/shared/ui/app-multi-select'
+import type { UjatRecruitParagraphProps } from '@/features/program/ui/detail-modal/ujat-recruit-paragraph-props'
+import {
+  isUjatRecruitProgramContext,
+  resolveUjatRecruitParagraphMode,
+} from '@/features/program/ui/detail-modal/ujat-recruit-paragraph-props'
+import { UjatRecruitVolunteerInfoProgramView } from '@/features/program/ui/detail-modal/ujat-recruit-paragraph-views/volunteer-info-program'
 import '@/features/template/ui/form-editor/form-editor.css'
 
 const RECRUIT_PROGRESS_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
@@ -36,8 +42,7 @@ function InquiryContactColumn({ label, placeholder }: { label: string; placehold
   )
 }
 
-/** UJAT 프로그램 봉사자 모집 폼 — 봉사자 모집 정보 */
-export function UjatRecruitVolunteerInfoParagraph() {
+function UjatRecruitVolunteerInfoTemplateEditor() {
   const [noticeExposureTiming, setNoticeExposureTiming] = useState<string>('start-day')
   const [programAnchor, setProgramAnchor] = useState<Dayjs | null>(null)
   const [programRange, setProgramRange] = useState<[Dayjs, Dayjs] | null>(null)
@@ -313,4 +318,25 @@ export function UjatRecruitVolunteerInfoParagraph() {
       </DetailInfoForm>
     </>
   )
+}
+
+/** UJAT 프로그램 봉사자 모집 폼 — 봉사자 모집 정보 */
+export function UjatRecruitVolunteerInfoParagraph(props: UjatRecruitParagraphProps = {}) {
+  if (isUjatRecruitProgramContext(props) && props.program) {
+    const mode = resolveUjatRecruitParagraphMode(props)
+    const half = props.volunteerHalf ?? 'h1'
+    return (
+      <UjatRecruitVolunteerInfoProgramView
+        program={props.program}
+        sponsorName={props.sponsorName}
+        form={props.form}
+        isEdit={mode === 'edit'}
+        volunteerHalf={half}
+        showNoticeExposure={half === 'h2'}
+        sectionTitle={props.sectionTitle}
+        sectionDescription={props.sectionDescription}
+      />
+    )
+  }
+  return <UjatRecruitVolunteerInfoTemplateEditor />
 }

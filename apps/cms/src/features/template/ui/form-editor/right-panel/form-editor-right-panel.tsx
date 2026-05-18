@@ -55,6 +55,7 @@ export function FormEditorRightPanel({
   verticalTableBodyRowSelection = null,
   onVerticalTableBodyRowDeleted,
   structureLockedParagraphIds,
+  hideParagraphKindOutline = true,
 }: FormEditorRightPanelProps) {
   const { active, structureLockedActive, outline, activeKindValue, activeDetailValue, activeKindLocked } =
     useActiveParagraphState({ draft, activeParagraphId, structureLockedParagraphIds })
@@ -78,7 +79,7 @@ export function FormEditorRightPanel({
             onChange={onTitleNumberingChange}
           />
         ) : null}
-        <StructureLockedParagraphSection paragraph={active} />
+        {hideParagraphKindOutline ? null : <StructureLockedParagraphSection paragraph={active} />}
       </div>
     )
   }
@@ -94,15 +95,17 @@ export function FormEditorRightPanel({
 
       {active ? (
         <>
-          <ParagraphMetaSection
-            active={active}
-            outline={outline}
-            activeKindValue={activeKindValue}
-            activeDetailValue={activeDetailValue}
-            activeKindLocked={activeKindLocked}
-            onKindChange={handleKindChange}
-            onDetailChange={handleDetailChange}
-          />
+          {hideParagraphKindOutline ? null : (
+            <ParagraphMetaSection
+              active={active}
+              outline={outline}
+              activeKindValue={activeKindValue}
+              activeDetailValue={activeDetailValue}
+              activeKindLocked={activeKindLocked}
+              onKindChange={handleKindChange}
+              onDetailChange={handleDetailChange}
+            />
+          )}
 
           <ParagraphCustomFieldsFormShell active={active}>
             <ParagraphSettingsSection active={active} updateParagraph={updateParagraph} />

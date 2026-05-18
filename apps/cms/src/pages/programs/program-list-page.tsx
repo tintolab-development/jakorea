@@ -18,6 +18,11 @@ import {
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { EconomyView } from '@/features/program/ui/table/program-table-column-resolver'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
+import { isUjatProgramId } from '@/features/program/ui/detail-modal/ujat-program-detail-meta'
+import {
+  buildUjatProgramDetailUrl,
+  resolveUjatDetailLnbFromSearchParams,
+} from '@/features/program/ui/detail-modal/ujat-program-detail-url'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 
 // Local Hooks & Components
@@ -157,10 +162,21 @@ export function ProgramListPage() {
 
   // 풀페이지 모달 ↔ 쿼리 파라미터(programId) 연동 — LNB 4분류·레거시 분류 URL은 준비 중이므로 `/programs`에서만
   const isFullPageModalPath = pNorm === '/programs'
+
+  useEffect(() => {
+    if (!isFullPageModalPath) return
+    const pid = searchParams.get('programId')
+    if (!pid || !isUjatProgramId(pid)) return
+    const ujatLnb = resolveUjatDetailLnbFromSearchParams(searchParams) ?? 'info'
+    const tab = searchParams.get('tab') ?? 'info'
+    navigate(buildUjatProgramDetailUrl(pid, ujatLnb, tab), { replace: true })
+  }, [isFullPageModalPath, navigate, searchParams])
+
   useEffect(() => {
     if (!isFullPageModalPath) return
     const programIdFromUrl = searchParams.get('programId')
     if (!programIdFromUrl) return
+    if (isUjatProgramId(programIdFromUrl)) return
     // 목록은 filteredPrograms(교육/경제 시 mock) 기준이므로 여기서 찾아야 새로고침 복원이 안정적임
     if (filteredPrograms.length === 0) return
     const program = filteredPrograms.find(p => p.id === programIdFromUrl)

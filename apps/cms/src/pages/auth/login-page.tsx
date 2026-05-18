@@ -12,6 +12,8 @@ import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useEffect, useState } from 'react'
 import type { LoginRequest } from '@/types/user'
+import type { LoginMode } from '@/entities/user/api/auth-service'
+import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { MfaVerificationModal } from '@/features/auth/ui/mfa-verification-modal'
 import { SocialLoginForm } from '@/features/auth/ui/social-login-form'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
@@ -51,6 +53,8 @@ export function LoginPage() {
   const { login, loading, error, isAuthenticated, requiresMfa, user } = authStore
   const [form] = Form.useForm()
   const [mfaModalOpen, setMfaModalOpen] = useState(false)
+  const [loginMode, setLoginMode] = useState<LoginMode | null>(null)
+  const apiLoginAvailable = isRemoteApiConfigured()
 
   // Phase 0.5.5: 로그인 실패 추적 및 잠금 관리
   const {
@@ -73,7 +77,7 @@ export function LoginPage() {
     }
   }, [isAuthenticated, user, navigate, redirectPath])
 
-  const onFinish = async (values: LoginRequest) => {
+  const submitLogin = async (values: LoginRequest, mode: LoginMode) => {
     // Phase 0.5.5: 잠금 상태 확인
     if (checkLocked()) {
       const remainingMinutes = getRemainingLockMinutes()
@@ -83,8 +87,15 @@ export function LoginPage() {
       return
     }
 
+    if (mode === 'api' && !apiLoginAvailable) {
+      message.error('API 서버가 설정되지 않았습니다. `.env`에 `VITE_API_SERVER`를 확인하세요.')
+      return
+    }
+
+    setLoginMode(mode)
+
     try {
-      const result = await login(values)
+      const result = await login(values, { mode })
 
       // Phase 0.5.5: 로그인 성공 시 실패 횟수 초기화
       recordSuccess()
@@ -121,6 +132,17 @@ export function LoginPage() {
           error?.message || `로그인에 실패했습니다. (남은 시도 횟수: ${remainingAttempts}회)`
         )
       }
+    } finally {
+      setLoginMode(null)
+    }
+  }
+
+  const handleLoginClick = async (mode: LoginMode) => {
+    try {
+      const values = await form.validateFields()
+      await submitLogin(values as LoginRequest, mode)
+    } catch {
+      // 폼 검증 실패 — Ant Design이 필드 오류를 표시함
     }
   }
 
@@ -167,14 +189,7 @@ export function LoginPage() {
       label: '이메일/비밀번호',
       children: (
         <div>
-          <Form
-            form={form}
-            name="login"
-            onFinish={onFinish}
-            autoComplete="off"
-            layout="vertical"
-            size="large"
-          >
+          <Form form={form} name="login" autoComplete="off" layout="vertical" size="large">
             <Form.Item
               name="email"
               label="이메일"
@@ -239,10 +254,31 @@ export function LoginPage() {
               </div>
             )}
 
-            <Form.Item>
-              <Button type="primary" htmlType="submit" block loading={loading} disabled={isLocked}>
-                로그인
-              </Button>
+            <Form.Item className="login-submit-actions">
+              <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                <Button
+                  type="primary"
+                  block
+                  loading={loading && loginMode === 'api'}
+                  disabled={isLocked || !apiLoginAvailable}
+                  onClick={() => handleLoginClick('api')}
+                >
+                  API 로그인
+                </Button>
+                <Button
+                  block
+                  loading={loading && loginMode === 'mock'}
+                  disabled={isLocked}
+                  onClick={() => handleLoginClick('mock')}
+                >
+                  Mock 로그인
+                </Button>
+              </Space>
+              {!apiLoginAvailable && (
+                <Text type="secondary" className="login-api-hint">
+                  API 로그인은 `VITE_API_SERVER` 또는 `VITE_API_BASE_URL` 설정 후 사용할 수 있습니다.
+                </Text>
+              )}
             </Form.Item>
           </Form>
 

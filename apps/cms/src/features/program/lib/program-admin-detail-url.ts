@@ -3,12 +3,18 @@
  * LNB 4분류는 준비 중 — 통합 목록·모달은 `/programs` 사용.
  */
 
+import { isUjatProgramId } from '@/features/program/ui/detail-modal/ujat-program-detail-meta'
+import { buildUjatProgramDetailUrl } from '@/features/program/ui/detail-modal/ujat-program-detail-url'
+
 export function getProgramListBasePathForProgramId(_programId: string): '/programs' {
   return '/programs'
 }
 
 /** 공통 정보 탭(info)으로 바로 열기 — 예: /programs?lnb=info&tab=info&programId=… */
 export function getProgramAdminDetailInfoTabUrl(programId: string): string {
+  if (isUjatProgramId(programId)) {
+    return buildUjatProgramDetailUrl(programId, 'info', 'info')
+  }
   const params = new URLSearchParams({
     lnb: 'info',
     tab: 'info',
@@ -18,6 +24,10 @@ export function getProgramAdminDetailInfoTabUrl(programId: string): string {
 }
 
 export function getProgramAdminDetailUrlFromPathname(programId: string, pathname: string): string {
+  const p = pathname.replace(/\/$/, '') || '/'
+  if (p === '/programs/ujat' || p.startsWith('/programs/ujat/')) {
+    return buildUjatProgramDetailUrl(programId, 'info', 'info')
+  }
   if (
     pathname.startsWith('/programs/economy-education') ||
     pathname.startsWith('/programs/company-school')
@@ -31,5 +41,8 @@ export function getProgramAdminDetailUrlFromPathname(programId: string, pathname
 }
 
 export function getProgramAdminDetailUrlDefault(programId: string): string {
+  if (isUjatProgramId(programId)) {
+    return buildUjatProgramDetailUrl(programId, 'info', 'info')
+  }
   return `/programs?programId=${encodeURIComponent(programId)}`
 }

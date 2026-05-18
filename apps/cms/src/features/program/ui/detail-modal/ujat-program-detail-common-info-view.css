@@ -1,0 +1,216 @@
+/* UJAT 프로그램 상세 — 공통 정보(등록 폼과 동일한 단락 간격) */
+
+.ujat-program-detail-common-info-view {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding-top: 4px;
+}
+
+.ujat-program-detail-common-info-view__section {
+  margin: 0;
+}
+
+/* 기본 정보 — 5개 DetailInfoForm 블록 간격 */
+.ujat-program-detail-common-info-view__basic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ujat-program-detail-common-info-view__basic-info-block {
+  margin: 0;
+}
+
+/* 후원사 링크 — program-detail-info-tab__sponsor-link와 동일 (#0070e7, --color-link는 mint) */
+.ujat-program-detail-common-info-view__sponsor-link {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  color: #0070e7;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: none;
+  text-decoration-thickness: auto;
+  text-underline-offset: auto;
+  text-underline-position: from-font;
+}
+
+.ujat-program-detail-common-info-view__sponsor-link:hover {
+  color: #0070e7;
+}
+
+.ujat-program-detail-common-info-view__sponsor-link:focus-visible {
+  outline: 2px solid #0070e7;
+  outline-offset: 2px;
+}
+
+/* 상·하반기 교육 일정 — 4열 테이블(스크린샷) */
+.ujat-half-education-schedule__title {
+  margin-bottom: 10px;
+  padding: 0;
+}
+
+.ujat-half-education-schedule__table {
+  table-layout: fixed;
+}
+
+.ujat-half-education-schedule__table th {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  background: #f2f4f7;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.ujat-half-education-schedule__table th.ujat-half-education-schedule__th-type {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+}
+
+.ujat-half-education-schedule__table th:first-child {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+}
+
+.ujat-half-education-schedule__table td {
+  min-width: 0 !important;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  vertical-align: middle;
+}
+
+.ujat-half-education-schedule__td-schedule {
+  text-align: left;
+  white-space: pre-line;
+}
+
+.ujat-half-education-schedule__td-type {
+  width: 120px !important;
+  text-align: center;
+}
+
+/* 교육 진행 일정 설정 — 4열(학기 | 일정 | 불가일 라벨 | 불가일) */
+.ujat-education-schedule-settings-readonly__title {
+  margin-bottom: 10px;
+  padding: 0;
+}
+
+.ujat-education-schedule-settings-readonly__table {
+  table-layout: fixed;
+}
+
+.ujat-education-schedule-settings-readonly__table th {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  background: #f2f4f7;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.ujat-education-schedule-settings-readonly__table th:first-child {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.ujat-education-schedule-settings-readonly__table th.ujat-education-schedule-settings-readonly__th-unavailable {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+}
+
+.ujat-education-schedule-settings-readonly__table td {
+  min-width: 0 !important;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* 지역 별 교육 진행 가능 학급 수 — 학기별 2행×4지역(라벨|값×8열 그리드) */
+.ujat-region-capacity-readonly__title {
+  margin-bottom: 10px;
+  padding: 0;
+}
+
+.ujat-region-capacity-readonly__semester {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ujat-region-capacity-readonly__semester + .ujat-region-capacity-readonly__semester {
+  margin-top: 16px;
+}
+
+.ujat-region-capacity-readonly__subtitle {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.ujat-region-capacity-readonly__grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: var(--radius-8, 8px);
+  overflow: hidden;
+  background: var(--color-bg-base, #fff);
+}
+
+.ujat-region-capacity-readonly__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: var(--spacing-12, 12px) var(--spacing-8, 8px);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  line-height: 150%;
+  text-align: center;
+  color: var(--default-BK, #3d3d3d);
+  border-right: 1px solid var(--color-border, #e0e0e0);
+  border-bottom: 1px solid var(--color-border, #e0e0e0);
+  box-sizing: border-box;
+}
+
+.ujat-region-capacity-readonly__cell:nth-child(8n) {
+  border-right: none;
+}
+
+.ujat-region-capacity-readonly__cell:nth-last-child(-n + 8) {
+  border-bottom: none;
+}
+
+.ujat-region-capacity-readonly__cell--label {
+  background: #f5f6f7;
+  font-weight: 700;
+}
+
+.ujat-region-capacity-readonly__cell--value {
+  background: #fff;
+  font-weight: 500;
+}

@@ -11,6 +11,10 @@
   min-width: 0;
 }
 
+.cms-input-iconclick--read-only .cms-input-iconclick__text {
+  cursor: default;
+}
+
 .cms-input-iconclick__input {
   flex: 0 1 auto;
   width: auto;

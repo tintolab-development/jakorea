@@ -29,6 +29,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [UI principles](./design/ui-principles.md)  
 - [Modal viewport centering](./design/modal-viewport-centering.md) — center modals in viewport  
 - Prefer **`ContentModal`**; direct **`TealHeaderModal`** use is deprecated  
+- [CMS 공통 Alert 모달](./libraries/cms-alert-modal.md) — 단일 확인 안내 (`useCmsAlert` / `cmsAlertModal`)  
 - [Event handling](./design/event-handling.md)  
 - [Color system](./design/color-system.md)  
 - [Color palette](./design/color-palette.md)  
@@ -39,6 +40,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 ## Libraries
 
 - [Ant Design usage](./libraries/ant-design-usage.md)  
+- [CMS 공통 Alert 모달](./libraries/cms-alert-modal.md) — `useCmsAlert`, `cmsAlertModal`, 토큰·안내 문구  
 - [Shared packages](./libraries/shared-packages.md) — `@jakorea/ui`, `@jakorea/utils`  
 - [Required libraries](./libraries/required-libraries.md)  
 

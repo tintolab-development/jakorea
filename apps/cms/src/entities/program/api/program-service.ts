@@ -8,11 +8,24 @@
 import type { Program, ProgramRound } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock'
 import { getEconomyProgramById } from '@/data/mock/economy-programs'
+import {
+  mockUjatElementaryListPrograms,
+  mockUjatElementaryListProgramsMap,
+} from '@/data/mock/ujat-programs-list-mock'
+import {
+  findUjatRegistrationLocalSaveProgramById,
+  readUjatRegistrationLocalSavePrograms,
+} from '@/features/program/lib/ujat-registration-local-save'
 import type { UserRole } from '@/types/user'
 import { updateUserProgramRole } from '@/entities/user/api/user-service'
 
 function resolveProgramFromStores(id: string): Program | undefined {
-  return mockProgramsMap.get(id) ?? getEconomyProgramById(id)
+  return (
+    mockProgramsMap.get(id) ??
+    getEconomyProgramById(id) ??
+    mockUjatElementaryListProgramsMap.get(id) ??
+    findUjatRegistrationLocalSaveProgramById(id)
+  )
 }
 
 export const programService = {
@@ -24,7 +37,11 @@ export const programService = {
   getAll: async (userRole?: UserRole | null, userId?: string): Promise<Program[]> => {
     // userId는 향후 매칭 정보 기반 필터링에 사용 예정
     void userId
-    const allPrograms = [...mockPrograms]
+    const basePrograms = [...mockPrograms, ...mockUjatElementaryListPrograms]
+    const localUjat = readUjatRegistrationLocalSavePrograms().filter(
+      lp => !basePrograms.some(b => b.id === lp.id)
+    )
+    const allPrograms = [...basePrograms, ...localUjat]
 
     // 권한별 필터링 적용
     // 관리자는 전체 조회, 강사/봉사자는 본인이 담당한 프로그램만 조회
@@ -155,7 +172,7 @@ export const programService = {
    * @returns 프로그램 배열
    */
   getAllSync: (): Program[] => {
-    return [...mockPrograms]
+    return [...mockPrograms, ...mockUjatElementaryListPrograms]
   },
 
   /**
@@ -164,7 +181,9 @@ export const programService = {
    * @returns 해당 후원사의 프로그램 배열
    */
   getBySponsorId: async (sponsorId: string): Promise<Program[]> => {
-    const programs = mockPrograms.filter(p => p.sponsorId === sponsorId)
+    const programs = [...mockPrograms, ...mockUjatElementaryListPrograms].filter(
+      p => p.sponsorId === sponsorId
+    )
     return Promise.resolve(programs)
   },
 }

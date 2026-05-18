@@ -10,6 +10,7 @@ import {
   CMS_REMOTE_SESSION_PREFIX,
   login as loginApi,
   validateToken,
+  type LoginOptions,
 } from '@/entities/user/api/auth-service'
 import { updateMockUserById } from '@/data/mock/users'
 
@@ -32,7 +33,10 @@ interface AuthState {
   _checkAuthPromise: Promise<void> | null
 
   // Actions
-  login: (request: LoginRequest) => Promise<{ requiresMfa: boolean; mfaState?: MfaState } | void>
+  login: (
+    request: LoginRequest,
+    options?: LoginOptions
+  ) => Promise<{ requiresMfa: boolean; mfaState?: MfaState } | void>
   logout: () => void
   checkAuth: () => Promise<void>
   updateUser: (userData: Partial<Omit<User, 'password'>>) => void
@@ -111,11 +115,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     _isCheckingAuth: false, // Phase 2: checkAuth 중복 호출 방지
     _checkAuthPromise: null, // Phase 2: checkAuth Promise 저장
 
-    login: async (request: LoginRequest) => {
+    login: async (request: LoginRequest, options?: LoginOptions) => {
       set({ loading: true, error: null })
 
       try {
-        const response = await loginApi(request)
+        const response = await loginApi(request, options)
 
         // MFA 필요 시 MFA 상태만 설정하고 인증은 완료하지 않음
         if (response.requiresMfa && response.mfaState) {

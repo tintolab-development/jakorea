@@ -9,6 +9,12 @@ export { EmptyState } from './empty-state'
 export { ConfirmModal } from './confirm-modal'
 export { ActionResultModal } from './action-result-modal'
 export type { ActionResultModalProps } from './action-result-modal'
+export { AlertModal } from './alert-modal'
+export type { AlertModalProps } from './alert-modal'
+export { cmsAlertModal, isCmsAlertModalReady } from './cms-alert-modal-api'
+export type { CmsAlertModalShowOptions } from './cms-alert-modal-api'
+export { CmsAlertModalProvider, useCmsAlert } from './cms-alert-modal-provider'
+export type { CmsAlertModalContextValue } from './cms-alert-modal-provider'
 export {
   buildRegisterCompletedTitle,
   buildRegisterCompletedMessage,

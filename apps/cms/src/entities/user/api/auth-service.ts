@@ -8,6 +8,14 @@ import type { MfaState } from '@/types/mfa'
 import type { AdminLoginMeta, AdminLoginSuccessData } from '@/features/auth/model/admin-login-api.types'
 import { fetchAdminLogin } from '@/features/auth/api/admin-login-fetcher'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+
+/** 로그인 화면에서 명시적으로 선택하는 경로 (미지정 시 `VITE_REAL_API_MODULES` 규칙) */
+export type LoginMode = 'mock' | 'api'
+
+export interface LoginOptions {
+  mode?: LoginMode
+}
 import { validateLogin, getUserByPhone, mockUsers } from '@/data/mock/users'
 import { createTotpMfaState } from '@/data/mock/mfa'
 
@@ -51,26 +59,26 @@ function mapRemoteAdminLoginToLoginResponse(
   return { user, token, expiresAt }
 }
 
-/**
- * 로그인 API
- * Phase 0.5.1: MFA 지원 추가
- * 관리자 이메일 로그인: `VITE_REAL_API_MODULES`에 `adminAuth`가 있을 때만 `fetchAdminLogin`; 그 외는 mock(`validateLogin` + MFA).
- */
-export async function login(
+async function loginWithRemoteApi(
   request: LoginRequest
 ): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
-  if (isRealApiModuleEnabled('adminAuth')) {
-    const { data, meta } = await fetchAdminLogin(request)
-    return mapRemoteAdminLoginToLoginResponse(data, meta)
+  if (!isRemoteApiConfigured()) {
+    throw new Error(
+      'API 서버가 설정되지 않았습니다. `.env`에 `VITE_API_SERVER` 또는 `VITE_API_BASE_URL`을 설정하세요.'
+    )
   }
 
+  const { data, meta } = await fetchAdminLogin(request)
+  return mapRemoteAdminLoginToLoginResponse(data, meta)
+}
+
+async function loginWithMock(
+  request: LoginRequest
+): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
   if (import.meta.env.DEV) {
-    const hintRemote =
-      '실 관리자 로그인 API를 쓰려면 `.env`에 `VITE_API_SERVER` 또는 `VITE_API_BASE_URL` 과 `VITE_REAL_API_MODULES=adminAuth` 를 넣고 dev 재시작하세요. (미설정이면 mock 로그인 + MFA 유지)'
-    console.info(`[CMS auth] Mock 로그인 — 브라우저 Network 에는 요청이 없습니다. ${hintRemote}`)
+    console.info('[CMS auth] Mock 로그인 — 브라우저 Network 에는 요청이 없습니다.')
   }
 
-  // Mock: 실제 API 호출 대신 지연 시간 시뮬레이션
   await new Promise(resolve => setTimeout(resolve, 500))
 
   const user = validateLogin(request.email, request.password)
@@ -79,7 +87,6 @@ export async function login(
     throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.')
   }
 
-  // 관리자는 MFA 필요
   const requiresMfa = user.role === 'ADMIN'
   let mfaState: MfaState | undefined
 
@@ -87,11 +94,9 @@ export async function login(
     mfaState = createTotpMfaState(user.id, user.email)
   }
 
-  // Mock JWT 토큰 생성 (MFA 완료 전에는 임시 토큰)
   const token = `mock-jwt-token-${user.id}-${Date.now()}`
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24시간 후
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
 
-  // password를 제외한 전체 user 객체 반환 (adminLevel 포함)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { password, ...userWithoutPassword } = user
 
@@ -106,6 +111,32 @@ export async function login(
     requiresMfa,
     mfaState,
   }
+}
+
+/**
+ * 로그인 API
+ * Phase 0.5.1: MFA 지원 추가
+ * - `options.mode === 'api'`: 실 `fetchAdminLogin` (원격 URL 필요)
+ * - `options.mode === 'mock'`: mock(`validateLogin` + MFA)
+ * - 미지정: `VITE_REAL_API_MODULES`에 `adminAuth`가 있을 때만 실 API
+ */
+export async function login(
+  request: LoginRequest,
+  options?: LoginOptions
+): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
+  if (options?.mode === 'api') {
+    return loginWithRemoteApi(request)
+  }
+
+  if (options?.mode === 'mock') {
+    return loginWithMock(request)
+  }
+
+  if (isRealApiModuleEnabled('adminAuth')) {
+    return loginWithRemoteApi(request)
+  }
+
+  return loginWithMock(request)
 }
 
 /**

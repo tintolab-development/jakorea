@@ -316,11 +316,10 @@ export interface MenuItemConfig {
   enabled?: boolean // 활성화/비활성화 여부 (기본값: true)
 }
 
-/** 프로그램 관리 LNB 2뎁스 — 준비 중(사이드바 클릭 시 `FEATURE_COMING_SOON_ALERT`만) */
+/** 프로그램 관리 LNB 2뎁스 중 전용 목록 미연결 분류 — 사이드바 클릭 시 `FEATURE_COMING_SOON_ALERT`만 (UJAT는 `/programs/ujat` 라우트 연결) */
 export const PROGRAM_MANAGEMENT_LNB_PATHS = [
   '/programs/general',
   '/programs/company-school',
-  '/programs/ujat',
   '/programs/gemini',
 ] as const
 
@@ -342,7 +341,7 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
   },
 
-  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 4분류 — 라우트는 준비 중(alert), 통합 목록·모달은 `/programs` */
+  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 4분류 — UJAT만 `/programs/ujat`, 나머지 분류는 준비 중(alert), 통합 목록·모달은 `/programs` */
   {
     key: 'programs-group',
     label: '프로그램 관리',

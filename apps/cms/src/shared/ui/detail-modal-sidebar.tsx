@@ -1,4 +1,6 @@
 import React from 'react'
+import { DetailFullpageModalLnbBrand } from '@/shared/ui/detail-fullpage-modal-lnb-brand'
+import { DetailFullpageModalLnbArrowDown } from '@/shared/ui/detail-fullpage-modal-lnb-arrow'
 
 export interface DetailModalSidebarNavChild {
   key: string
@@ -24,94 +26,6 @@ export interface DetailModalSidebarProps {
   onSelectChild: (groupKey: string, childKey: string) => void
 }
 
-function LnbArrowDown(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      {...props}
-    >
-      <path
-        d="M4.55806 7.94194C4.31398 7.69786 4.31398 7.30223 4.55806 7.05815C4.80214 6.81407 5.19777 6.81407 5.44185 7.05815L9.99995 11.6163L14.5581 7.05815C14.8021 6.81407 15.1978 6.81407 15.4418 7.05815C15.6859 7.30223 15.6859 7.69786 15.4418 7.94194L10.4418 12.9419C10.1978 13.186 9.80214 13.186 9.55806 12.9419L4.55806 7.94194Z"
-        fill="currentColor"
-      />
-    </svg>
-  )
-}
-
-function JakoreaLogo(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="182"
-      height="92"
-      viewBox="0 0 182 92"
-      fill="none"
-      {...props}
-    >
-      <g clipPath="url(#clip0_1220_33366)">
-        <path d="M73.0812 0L48.7466 18.4108L63.9601 18.3686L73.0812 0Z" fill="#296075" />
-        <path
-          d="M93.2559 38.9086L95.4694 36.2453C96.6077 37.7983 97.985 38.6345 99.6294 38.6345C101.787 38.6345 102.89 37.3486 102.89 34.7767V23.948H95.4413V20.6875H106.776V34.5659C106.776 39.4989 104.323 41.9232 99.7137 41.9232C97.0786 41.9232 94.6894 40.848 93.2559 38.9016V38.9086Z"
-          fill="#296075"
-        />
-        <path
-          d="M125.383 36.7872H114.913L112.847 41.6359H108.842L118.265 20.6953H122.095L131.546 41.6359H127.477L125.383 36.7872ZM124.097 33.7375L120.148 24.5813L116.227 33.7375H124.097Z"
-          fill="#296075"
-        />
-        <path
-          d="M103.67 62.7794L100.346 66.1875V71.5421H96.46V50.6016H100.346V61.3389L110.697 50.6016H115.068L106.27 59.9616L115.602 71.5351H111.055L103.67 62.7724V62.7794Z"
-          fill="#296075"
-        />
-        <path
-          d="M116.592 63.5599C116.592 58.7745 120.183 55.3945 125.088 55.3945C129.993 55.3945 133.612 58.7745 133.612 63.5599C133.612 68.3453 130.049 71.7535 125.088 71.7535C120.127 71.7535 116.592 68.3453 116.592 63.5599ZM129.838 63.5599C129.838 60.5102 127.807 58.5637 125.081 58.5637C122.354 58.5637 120.352 60.5102 120.352 63.5599C120.352 66.6097 122.383 68.5562 125.081 68.5562C127.779 68.5562 129.838 66.6097 129.838 63.5599Z"
-          fill="#296075"
-        />
-        <path
-          d="M146.443 55.3945V58.9572C146.113 58.894 145.846 58.8659 145.579 58.8659C142.74 58.8659 140.941 60.5383 140.941 63.7989V71.5497H137.203V55.5772H140.765V57.9102C141.84 56.2378 143.787 55.3945 146.45 55.3945H146.443Z"
-          fill="#296075"
-        />
-        <path
-          d="M164.713 64.7545H152.177C152.627 67.0875 154.573 68.5843 157.349 68.5843C159.141 68.5843 160.546 68.0151 161.685 66.8486L163.687 69.1535C162.254 70.861 160.005 71.7535 157.258 71.7535C151.903 71.7535 148.432 68.3102 148.432 63.5599C148.432 58.8097 151.931 55.3945 156.688 55.3945C161.446 55.3945 164.762 58.6551 164.762 63.6513C164.762 63.9535 164.734 64.3962 164.706 64.7545H164.713ZM152.149 62.274H161.214C160.912 59.9691 159.148 58.388 156.695 58.388C154.243 58.388 152.507 59.941 152.149 62.274Z"
-          fill="#296075"
-        />
-        <path
-          d="M181.733 62.1826V71.5426H178.205V69.5962C177.306 70.9735 175.57 71.7535 173.181 71.7535C169.534 71.7535 167.229 69.7507 167.229 66.968C167.229 64.1853 169.021 62.2107 173.87 62.2107H177.994V61.9718C177.994 59.7864 176.68 58.5005 174.017 58.5005C172.225 58.5005 170.37 59.0978 169.168 60.0886L167.7 57.3691C169.407 56.0551 171.888 55.3945 174.46 55.3945C179.07 55.3945 181.726 57.5799 181.726 62.1826H181.733ZM177.994 66.5534V64.6983H174.137C171.593 64.6983 170.904 65.654 170.904 66.8205C170.904 68.1626 172.043 69.034 173.954 69.034C175.865 69.034 177.362 68.1978 177.994 66.5534Z"
-          fill="#296075"
-        />
-        <path d="M73.0952 0L63.9741 18.3687L73.1022 30.5114L73.0952 0Z" fill="#01A1AF" />
-        <path
-          d="M73.0812 30.5117L63.9601 48.8804L48.7466 48.9225L73.0812 30.5117Z"
-          fill="#296075"
-        />
-        <path
-          d="M73.0949 30.5117L63.9668 48.8804L73.1019 61.0301L73.0949 30.5117Z"
-          fill="#01A1AF"
-        />
-        <path d="M48.6764 18.4102L39.5553 36.7788L24.3418 36.821L48.6764 18.4102Z" fill="#296075" />
-        <path d="M48.6901 18.4102L39.562 36.7788L48.6971 48.9215L48.6901 18.4102Z" fill="#01A1AF" />
-        <path d="M0 55.2311L15.2065 55.1819L24.3346 36.8203L0 55.2311Z" fill="#296075" />
-        <path d="M24.3488 36.8203L15.2207 55.1819L24.3488 67.3317V36.8203Z" fill="#01A1AF" />
-        <path d="M48.6691 48.9219L39.541 67.2905L24.3345 67.3327L48.6691 48.9219Z" fill="#296075" />
-        <path d="M48.6833 48.9219L39.5552 67.2905L48.6833 79.4403V48.9219Z" fill="#01A1AF" />
-        <path
-          d="M73.0738 61.0312L63.9457 79.3999L48.7393 79.4421L73.0738 61.0312Z"
-          fill="#296075"
-        />
-        <path d="M63.96 79.3929L73.0951 91.5426L73.0881 61.0312L63.96 79.3929Z" fill="#01A1AF" />
-      </g>
-      <defs>
-        <clipPath id="clip0_1220_33366">
-          <rect width="182" height="92" fill="white" />
-        </clipPath>
-      </defs>
-    </svg>
-  )
-}
-
 export function DetailModalSidebar({
   navAriaLabel,
   items,
@@ -123,10 +37,9 @@ export function DetailModalSidebar({
 }: DetailModalSidebarProps) {
   return (
     <nav className="detail-fullpage-modal__lnb" aria-label={navAriaLabel}>
-      <div className="detail-fullpage-modal__lnb-brand">
-        <JakoreaLogo aria-hidden />
-      </div>
-      <ul className="detail-fullpage-modal__lnb-list">
+      <DetailFullpageModalLnbBrand />
+      <div className="detail-fullpage-modal__lnb-body">
+        <ul className="detail-fullpage-modal__lnb-list">
         {items.map(item => {
           const children = item.children ?? []
           const hasChildren = children.length > 0
@@ -157,7 +70,7 @@ export function DetailModalSidebar({
               >
                 <span className="detail-fullpage-modal__lnb-item-icon">{item.icon}</span>
                 <span className="detail-fullpage-modal__lnb-item-label">{item.label}</span>
-                <LnbArrowDown
+                <DetailFullpageModalLnbArrowDown
                   className={`detail-fullpage-modal__lnb-item-arrow ${expanded ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
                 />
               </button>
@@ -183,7 +96,8 @@ export function DetailModalSidebar({
             </li>
           )
         })}
-      </ul>
+        </ul>
+      </div>
     </nav>
   )
 }
