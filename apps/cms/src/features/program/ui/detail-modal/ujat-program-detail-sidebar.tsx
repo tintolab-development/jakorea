@@ -2,7 +2,7 @@
  * UJAT 프로그램 상세 전용 LNB (다단 메뉴 — 기존 DetailModalSidebar는 2뎁스만 지원)
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { DetailFullpageModalLnbBrand } from '@/shared/ui/detail-fullpage-modal-lnb-brand'
 import { DetailFullpageModalLnbArrowDown } from '@/shared/ui/detail-fullpage-modal-lnb-arrow'
 import type { UjatSurveyMenuItem } from './ujat-program-detail-meta'
@@ -34,6 +34,53 @@ type TopAccordionKey =
 
 type VolunteerHalfKey = 'h1' | 'h2'
 
+const TOP_ACCORDION_KEYS = [
+  'info',
+  'institution_applications',
+  'volunteer_h1',
+  'volunteer_h2',
+  'education_progress_h1',
+  'education_progress_h2',
+  'survey',
+] as const satisfies readonly TopAccordionKey[]
+
+function isTopBodyDerivedOpen(
+  key: TopAccordionKey,
+  lnb: UjatDetailLnbKey,
+  tab: string
+): boolean {
+  if (key === 'education_progress_h1') return lnb === 'education_progress' && tab.startsWith('edu_h1_')
+  if (key === 'education_progress_h2') return lnb === 'education_progress' && tab.startsWith('edu_h2_')
+  return lnb === key
+}
+
+function resolveTopBodyOpen(
+  key: TopAccordionKey,
+  stick: Partial<Record<TopAccordionKey, boolean>>,
+  lnb: UjatDetailLnbKey,
+  tab: string
+): boolean {
+  const explicit = stick[key]
+  if (explicit === false) return false
+  if (explicit === true) return true
+  return isTopBodyDerivedOpen(key, lnb, tab)
+}
+
+function accordionKeysForRoute(lnb: UjatDetailLnbKey, tab: string): TopAccordionKey[] {
+  if (lnb === 'education_progress') {
+    const keys: TopAccordionKey[] = []
+    if (tab.startsWith('edu_h1_')) keys.push('education_progress_h1')
+    if (tab.startsWith('edu_h2_')) keys.push('education_progress_h2')
+    return keys
+  }
+  if (lnb === 'info') return ['info']
+  if (lnb === 'institution_applications') return ['institution_applications']
+  if (lnb === 'volunteer_h1') return ['volunteer_h1']
+  if (lnb === 'volunteer_h2') return ['volunteer_h2']
+  if (lnb === 'survey') return ['survey']
+  return []
+}
+
 export interface UjatProgramDetailSidebarProps {
   activeLnb: UjatDetailLnbKey
   activeTab: string
@@ -55,40 +102,38 @@ export function UjatProgramDetailSidebar({
 }: UjatProgramDetailSidebarProps) {
   const [topBodyStick, setTopBodyStick] = useState<Partial<Record<TopAccordionKey, boolean>>>({})
 
-  const prevLnbRef = useRef(activeLnb)
-  useEffect(() => {
-    if (prevLnbRef.current !== activeLnb) {
-      setTopBodyStick({})
-      prevLnbRef.current = activeLnb
-    }
-  }, [activeLnb])
+  const isTopBodyOpen = useCallback(
+    (key: TopAccordionKey) => resolveTopBodyOpen(key, topBodyStick, activeLnb, activeTab),
+    [topBodyStick, activeLnb, activeTab]
+  )
 
-  const isTopBodyDerivedOpen = (key: TopAccordionKey): boolean => {
-    if (key === 'education_progress_h1') return activeLnb === 'education_progress' && activeTab.startsWith('edu_h1_')
-    if (key === 'education_progress_h2') return activeLnb === 'education_progress' && activeTab.startsWith('edu_h2_')
-    return activeLnb === key
-  }
+  const childrenWrapClass = (open: boolean) =>
+    `detail-fullpage-modal__lnb-children-wrap${open ? ' detail-fullpage-modal__lnb-children-wrap--open' : ''}`
 
-  const isTopBodyOpen = (key: TopAccordionKey): boolean => {
-    const derived = isTopBodyDerivedOpen(key)
-    const s = topBodyStick[key]
-    return s !== undefined ? s : derived
-  }
+  const handleSelectChildTab = useCallback(
+    (lnb: UjatDetailLnbKey, tab: string) => {
+      setTopBodyStick(prev => {
+        const next = { ...prev }
+        for (const key of TOP_ACCORDION_KEYS) {
+          if (resolveTopBodyOpen(key, prev, activeLnb, activeTab)) {
+            next[key] = true
+          }
+        }
+        for (const key of accordionKeysForRoute(lnb, tab)) {
+          next[key] = true
+        }
+        return next
+      })
+      onSelectChildTab(lnb, tab)
+    },
+    [activeLnb, activeTab, onSelectChildTab]
+  )
 
   const toggleTopBody = (key: TopAccordionKey) => {
-    setTopBodyStick(prev => {
-      const derived = isTopBodyDerivedOpen(key)
-      const cur = prev[key] !== undefined ? prev[key]! : derived
-      return { ...prev, [key]: !cur }
-    })
-  }
-
-  const clearTopBodyStick = (key: TopAccordionKey) => {
-    setTopBodyStick(prev => {
-      const next = { ...prev }
-      delete next[key]
-      return next
-    })
+    setTopBodyStick(prev => ({
+      ...prev,
+      [key]: !resolveTopBodyOpen(key, prev, activeLnb, activeTab),
+    }))
   }
 
   const isEduHalfActive = (half: EducationProgressHalfKey): boolean => {
@@ -104,15 +149,12 @@ export function UjatProgramDetailSidebar({
           <button
             type="button"
             className={`detail-fullpage-modal__lnb-child ujat-detail-lnb__vol-half-child ${activeLnb === 'education_progress' && activeTab === tab ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
-            onClick={() => {
-              // 반기 헤더의 stick 상태를 해제해, 선택된 반기만 열린 상태로 보이게 한다.
-              clearTopBodyStick('education_progress_h1')
-              clearTopBodyStick('education_progress_h2')
-              onSelectChildTab('education_progress', tab)
-            }}
+            onClick={() => handleSelectChildTab('education_progress', tab)}
           >
             <span className="detail-fullpage-modal__lnb-child-dot" />
-            <span className="detail-fullpage-modal__lnb-child-label">{row.label}</span>
+            <span className="detail-fullpage-modal__lnb-child-label" data-text={row.label}>
+              {row.label}
+            </span>
           </button>
         </li>
       )
@@ -140,7 +182,7 @@ export function UjatProgramDetailSidebar({
             />
           </button>
           <div
-            className={`detail-fullpage-modal__lnb-children-wrap ${isTopBodyOpen('info') ? 'detail-fullpage-modal__lnb-children-wrap--open' : ''}`}
+            className={childrenWrapClass(isTopBodyOpen('info'))}
             aria-hidden={!isTopBodyOpen('info')}
           >
             <ul className="detail-fullpage-modal__lnb-children">
@@ -148,26 +190,24 @@ export function UjatProgramDetailSidebar({
                 <button
                   type="button"
                   className={`detail-fullpage-modal__lnb-child ${activeLnb === 'info' && activeTab === 'info' ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
-                  onClick={() => {
-                    clearTopBodyStick('info')
-                    onSelectChildTab('info', 'info')
-                  }}
+                  onClick={() => handleSelectChildTab('info', 'info')}
                 >
                   <span className="detail-fullpage-modal__lnb-child-dot" />
-                  <span className="detail-fullpage-modal__lnb-child-label">공통 정보</span>
+                  <span className="detail-fullpage-modal__lnb-child-label" data-text="공통 정보">
+                    공통 정보
+                  </span>
                 </button>
               </li>
               <li>
                 <button
                   type="button"
                   className={`detail-fullpage-modal__lnb-child ${activeLnb === 'info' && (activeTab === 'recruitment' || activeTab.startsWith('recruit_')) ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
-                  onClick={() => {
-                    clearTopBodyStick('info')
-                    onSelectChildTab('info', 'recruit_participant')
-                  }}
+                  onClick={() => handleSelectChildTab('info', 'recruit_participant')}
                 >
                   <span className="detail-fullpage-modal__lnb-child-dot" />
-                  <span className="detail-fullpage-modal__lnb-child-label">모집 정보</span>
+                  <span className="detail-fullpage-modal__lnb-child-label" data-text="모집 정보">
+                    모집 정보
+                  </span>
                 </button>
               </li>
             </ul>
@@ -190,7 +230,7 @@ export function UjatProgramDetailSidebar({
             />
           </button>
           <div
-            className={`detail-fullpage-modal__lnb-children-wrap ${isTopBodyOpen('institution_applications') ? 'detail-fullpage-modal__lnb-children-wrap--open' : ''}`}
+            className={childrenWrapClass(isTopBodyOpen('institution_applications'))}
             aria-hidden={!isTopBodyOpen('institution_applications')}
           >
             <ul className="detail-fullpage-modal__lnb-children">
@@ -199,13 +239,12 @@ export function UjatProgramDetailSidebar({
                   <button
                     type="button"
                     className={`detail-fullpage-modal__lnb-child ${activeLnb === 'institution_applications' && activeTab === row.tab ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
-                    onClick={() => {
-                      clearTopBodyStick('institution_applications')
-                      onSelectChildTab('institution_applications', row.tab)
-                    }}
+                    onClick={() => handleSelectChildTab('institution_applications', row.tab)}
                   >
                     <span className="detail-fullpage-modal__lnb-child-dot" />
-                    <span className="detail-fullpage-modal__lnb-child-label">{row.label}</span>
+                    <span className="detail-fullpage-modal__lnb-child-label" data-text={row.label}>
+                      {row.label}
+                    </span>
                   </button>
                 </li>
               ))}
@@ -232,13 +271,12 @@ export function UjatProgramDetailSidebar({
                   <button
                     type="button"
                     className={`detail-fullpage-modal__lnb-child ujat-detail-lnb__vol-half-child ${activeLnb === top && activeTab === row.tab ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
-                    onClick={() => {
-                      clearTopBodyStick(top)
-                      onSelectChildTab(top, row.tab)
-                    }}
+                    onClick={() => handleSelectChildTab(top, row.tab)}
                   >
                     <span className="detail-fullpage-modal__lnb-child-dot" />
-                    <span className="detail-fullpage-modal__lnb-child-label">{row.childLabel}</span>
+                    <span className="detail-fullpage-modal__lnb-child-label" data-text={row.childLabel}>
+                      {row.childLabel}
+                    </span>
                   </button>
                 </li>
               ))
@@ -247,13 +285,12 @@ export function UjatProgramDetailSidebar({
                   <button
                     type="button"
                     className={`detail-fullpage-modal__lnb-child ujat-detail-lnb__vol-half-child ${activeLnb === top && activeTab === `${prefix}_all` ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
-                    onClick={() => {
-                      clearTopBodyStick(top)
-                      onSelectChildTab(top, `${prefix}_all`)
-                    }}
+                    onClick={() => handleSelectChildTab(top, `${prefix}_all`)}
                   >
                     <span className="detail-fullpage-modal__lnb-child-dot" />
-                    <span className="detail-fullpage-modal__lnb-child-label">신청자 목록</span>
+                    <span className="detail-fullpage-modal__lnb-child-label" data-text="신청자 목록">
+                      신청자 목록
+                    </span>
                   </button>
                 </li>
               )
@@ -274,7 +311,7 @@ export function UjatProgramDetailSidebar({
                 />
               </button>
               <div
-                className={`detail-fullpage-modal__lnb-children-wrap ${isTopBodyOpen(top) ? 'detail-fullpage-modal__lnb-children-wrap--open' : ''}`}
+                className={childrenWrapClass(isTopBodyOpen(top))}
                 aria-hidden={!isTopBodyOpen(top)}
               >
                 <ul className="detail-fullpage-modal__lnb-children">{childRows}</ul>
@@ -299,7 +336,7 @@ export function UjatProgramDetailSidebar({
             />
           </button>
           <div
-            className={`detail-fullpage-modal__lnb-children-wrap ${isTopBodyOpen('education_progress_h1') ? 'detail-fullpage-modal__lnb-children-wrap--open' : ''}`}
+            className={childrenWrapClass(isTopBodyOpen('education_progress_h1'))}
             aria-hidden={!isTopBodyOpen('education_progress_h1')}
           >
             <ul className="detail-fullpage-modal__lnb-children ujat-detail-lnb__education-list">
@@ -323,7 +360,7 @@ export function UjatProgramDetailSidebar({
             />
           </button>
           <div
-            className={`detail-fullpage-modal__lnb-children-wrap ${isTopBodyOpen('education_progress_h2') ? 'detail-fullpage-modal__lnb-children-wrap--open' : ''}`}
+            className={childrenWrapClass(isTopBodyOpen('education_progress_h2'))}
             aria-hidden={!isTopBodyOpen('education_progress_h2')}
           >
             <ul className="detail-fullpage-modal__lnb-children ujat-detail-lnb__education-list">
@@ -336,11 +373,7 @@ export function UjatProgramDetailSidebar({
           <button
             type="button"
             className={`detail-fullpage-modal__lnb-item ${activeLnb === 'education_progress' && activeTab === EDU_PROGRESS_SUMMARY_TAB ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
-            onClick={() => {
-              clearTopBodyStick('education_progress_h1')
-              clearTopBodyStick('education_progress_h2')
-              onSelectChildTab('education_progress', EDU_PROGRESS_SUMMARY_TAB)
-            }}
+            onClick={() => handleSelectChildTab('education_progress', EDU_PROGRESS_SUMMARY_TAB)}
           >
             <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
               <UjatLnbEducationSummaryClipboardIcon />
@@ -365,7 +398,7 @@ export function UjatProgramDetailSidebar({
             />
           </button>
           <div
-            className={`detail-fullpage-modal__lnb-children-wrap ${isTopBodyOpen('survey') ? 'detail-fullpage-modal__lnb-children-wrap--open' : ''}`}
+            className={childrenWrapClass(isTopBodyOpen('survey'))}
             aria-hidden={!isTopBodyOpen('survey')}
           >
             <ul className="detail-fullpage-modal__lnb-children">
@@ -374,13 +407,12 @@ export function UjatProgramDetailSidebar({
                   <button
                     type="button"
                     className={`detail-fullpage-modal__lnb-child ${activeLnb === 'survey' && activeTab === item.key ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
-                    onClick={() => {
-                      clearTopBodyStick('survey')
-                      onSelectChildTab('survey', item.key)
-                    }}
+                    onClick={() => handleSelectChildTab('survey', item.key)}
                   >
                     <span className="detail-fullpage-modal__lnb-child-dot" />
-                    <span className="detail-fullpage-modal__lnb-child-label">{item.label}</span>
+                    <span className="detail-fullpage-modal__lnb-child-label" data-text={item.label}>
+                      {item.label}
+                    </span>
                   </button>
                 </li>
               ))}
@@ -393,7 +425,7 @@ export function UjatProgramDetailSidebar({
           <button
             type="button"
             className={`detail-fullpage-modal__lnb-item ${activeLnb === 'managers' ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
-            onClick={() => onSelectChildTab('managers', 'main')}
+            onClick={() => handleSelectChildTab('managers', 'main')}
           >
             <span className="detail-fullpage-modal__lnb-item-icon">
               <LnbIconManagers />

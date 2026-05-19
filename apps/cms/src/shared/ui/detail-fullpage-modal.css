@@ -238,6 +238,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
 }
 
 .detail-fullpage-modal__lnb-list {
@@ -342,6 +343,10 @@
   pointer-events: none;
 }
 
+.detail-fullpage-modal__lnb-children-wrap--no-transition {
+  transition: none;
+}
+
 .detail-fullpage-modal__lnb-children-wrap--open {
   grid-template-rows: 1fr;
   pointer-events: auto;
@@ -395,6 +400,11 @@
   gap: 8px;
 }
 
+.detail-fullpage-modal__lnb-child-label {
+  flex: 1;
+  min-width: 0;
+}
+
 .detail-fullpage-modal__lnb-child-dot {
   width: 4px;
   height: 4px;
@@ -427,6 +437,18 @@
   font-style: normal;
   font-weight: 700;
   line-height: 120%;
+}
+
+/* 활성 시 font-weight 변경으로 라벨 너비가 달라지지 않도록 굵은 글자 폭 예약 */
+.detail-fullpage-modal__lnb-child-label::before {
+  content: attr(data-text);
+  display: block;
+  height: 0;
+  overflow: hidden;
+  font-weight: 700;
+  pointer-events: none;
+  user-select: none;
+  visibility: hidden;
 }
 
 .detail-fullpage-modal__lnb-child--active .detail-fullpage-modal__lnb-child-dot {
