@@ -101,6 +101,7 @@ export function UjatVolunteerDocScreeningSection({
     programId,
     half,
     list,
+    detailVariant: 'doc_screening',
     applyDocumentScreeningStatus,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailTitleChange,
@@ -169,6 +170,7 @@ export function UjatVolunteerDocScreeningSection({
       <>
         {documentScreeningConfirmModal}
         <UjatVolunteerApplicantDetailView
+          variant="doc_screening"
           applicant={selectedApplicant}
           onDocumentReject={handleDocumentReject}
           onDocumentApprove={handleDocumentApprove}
@@ -243,6 +245,7 @@ export function UjatVolunteerDocScreeningSection({
             }}
             onRow={record => ({
               onClick: e => handleRowClick(record, e),
+              style: { cursor: 'pointer' },
             })}
           />
         </div>
