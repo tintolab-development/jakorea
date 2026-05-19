@@ -23,11 +23,12 @@
 }
 
 /**
- * TealHeaderModal 기본 `.teal-header-modal__body`에 `padding-top: 16px !important`가 있어
+ * TealHeaderModal 기본 `.teal-header-modal__body`의 `margin-top: 16px` 등으로
  * 풀페이지(LNB+메인)가 뷰포트 상단부터 붙지 않음 — 동일 셀에서 제거.
  */
 .detail-fullpage-modal .teal-header-modal__body {
   padding: 0 !important;
+  margin-top: 0 !important;
   gap: 0;
   height: 100%;
   display: flex;
