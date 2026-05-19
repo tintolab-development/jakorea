@@ -1,0 +1,20 @@
+.ujat-interview-assignment-status-text {
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-interview-assignment-status-text--waiting {
+  color: var(--color-green, #1e8c29);
+}
+
+.ujat-interview-assignment-status-text--assigned {
+  color: var(--main-BK, #3d3d3d);
+}
+
+.ujat-interview-assignment-status-text--withdrawn {
+  color: #c32f4a;
+}
