@@ -220,34 +220,54 @@
   width: auto;
 }
 
-/* 담당자 서류 평가 — 행 높이 58px */
+/*
+ * 담당자 서류 평가 — 행 높이 54px
+ * StatusDropdownCell 트리거(8+배지32+8=48px) + td 상하 padding(12×2)이 겹치면 ~74px로 늘어남
+ * → 값 셀만 상하 padding 0 (목록 테이블 status-dropdown-cell__cell-status 와 동일 원리)
+ */
 .ujat-volunteer-applicant-manager-evaluation
   .ujat-volunteer-applicant-detail__table--horizontal
   th,
 .ujat-volunteer-applicant-manager-evaluation
   .ujat-volunteer-applicant-detail__table--horizontal
   td {
-  height: 58px;
-  min-height: 58px;
-  max-height: 58px;
+  height: 54px;
+  min-height: 54px;
+  max-height: 54px;
   box-sizing: border-box;
 }
 
-/* 담당자 서류 평가 — StatusDropdownCell·배지 좌측 정렬 */
-.ujat-volunteer-applicant-manager-evaluation .ujat-volunteer-applicant-detail__horizontal-value {
+.ujat-volunteer-applicant-manager-evaluation
+  .ujat-volunteer-applicant-detail__table--horizontal
+  .ujat-volunteer-applicant-detail__horizontal-value {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
   text-align: left !important;
+  vertical-align: middle;
 }
 
 .ujat-volunteer-applicant-manager-evaluation
   .ujat-volunteer-applicant-detail__horizontal-value
-  .status-dropdown-cell__status-trigger {
+  .status-dropdown-cell__status-trigger.status-dropdown-cell__trigger--cell-style {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
   justify-content: flex-start;
+  min-width: 116px;
+  max-width: 216px;
+  padding: 8px;
 }
 
 .ujat-volunteer-applicant-manager-evaluation
   .ujat-volunteer-applicant-detail__horizontal-value
-  .ujat-manager-evaluation-badge {
-  flex: 0 0 auto;
+  .ujat-manager-evaluation-badge.status-dropdown-cell__badge--cell-style {
+  display: flex !important;
+  height: 32px !important;
+  min-width: 100px !important;
+  max-width: 200px !important;
+  padding: 6px 12px !important;
+  flex: 0 0 auto !important;
+  box-sizing: border-box !important;
 }
 
 .ujat-volunteer-applicant-interview-availability__empty {

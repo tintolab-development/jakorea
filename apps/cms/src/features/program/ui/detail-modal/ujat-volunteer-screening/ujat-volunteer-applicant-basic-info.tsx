@@ -5,6 +5,11 @@ import {
   type UjatVolunteerApplicantRow,
 } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { DocumentScreeningStatusText } from './document-screening-status-text'
+import { InterviewAssignmentStatusText } from './interview-assignment-status-text'
+
+export type UjatVolunteerApplicantBasicInfoStatusRow =
+  | 'document_screening'
+  | 'interview_assignment'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
@@ -29,11 +34,13 @@ function DetailSubsection({ title, children }: { title: string; children: ReactN
 export interface UjatVolunteerApplicantBasicInfoProps {
   applicant: UjatVolunteerApplicantRow
   maskSensitive: boolean
+  statusRow?: UjatVolunteerApplicantBasicInfoStatusRow
 }
 
 export function UjatVolunteerApplicantBasicInfo({
   applicant,
   maskSensitive,
+  statusRow = 'document_screening',
 }: UjatVolunteerApplicantBasicInfoProps) {
   const contactDisplay = maskSensitive ? applicant.contact : applicant.contactRaw
   const emailDisplay = maskSensitive ? applicant.email : applicant.emailRaw
@@ -67,9 +74,19 @@ export function UjatVolunteerApplicantBasicInfo({
             <table className="program-detail-info-tab__table program-detail-info-tab__table--basic ujat-volunteer-applicant-detail__table--vertical">
               <tbody>
                 <tr>
-                  <th scope="row">1차 서류 심사 현황</th>
+                  <th scope="row">
+                    {statusRow === 'interview_assignment'
+                      ? '면접일 배정 현황'
+                      : '1차 서류 심사 현황'}
+                  </th>
                   <td>
-                    <DocumentScreeningStatusText status={applicant.documentScreeningStatus} />
+                    {statusRow === 'interview_assignment' ? (
+                      <InterviewAssignmentStatusText
+                        status={applicant.interviewAssignmentStatus}
+                      />
+                    ) : (
+                      <DocumentScreeningStatusText status={applicant.documentScreeningStatus} />
+                    )}
                   </td>
                 </tr>
               </tbody>

@@ -6,7 +6,6 @@ import {
 } from '@/features/program/model/ujat-volunteer-screening-constants'
 import { ManagerEvaluationBadge } from './manager-evaluation-badge'
 import '@/features/program/program-detail/ui/project-info/project-info-form-shared.css'
-import './ujat-volunteer-doc-screening-section.css'
 
 const MANAGER_EVALUATION_BADGE_STYLE = { minWidth: 72 } as const
 
