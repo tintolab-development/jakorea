@@ -14,6 +14,7 @@ import {
 } from './ujat-institution-application-types'
 import type { UjatInstitutionApplicationRegionKey } from './ujat-institution-application-regions'
 import { useUjatInstitutionApplicationColumns } from './ujat-institution-application-columns'
+import type { UjatInstitutionApplicationBulkModalAction } from './ujat-institution-application-action-modal'
 
 function filterRows(
   rows: UjatInstitutionApplicationRow[],
@@ -54,6 +55,8 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
   )
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
+  const [pendingBulkModalAction, setPendingBulkModalAction] =
+    useState<UjatInstitutionApplicationBulkModalAction | null>(null)
 
   const allRows = useMemo(() => {
     void dataVersion
@@ -63,6 +66,11 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
   const tableData = useMemo(
     () => filterRows(allRows, regionKey, appliedFilters),
     [allRows, regionKey, appliedFilters]
+  )
+
+  const selectedApplications = useMemo(
+    () => tableData.filter(row => selectedRowKeys.includes(row.id)),
+    [tableData, selectedRowKeys]
   )
 
   const columns = useUjatInstitutionApplicationColumns()
@@ -101,17 +109,43 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
     [selectedRowKeys, showNoSelectionAlert]
   )
 
+  const openBulkActionModal = useCallback(
+    (action: UjatInstitutionApplicationBulkModalAction) => {
+      if (selectedRowKeys.length === 0) {
+        showNoSelectionAlert()
+        return
+      }
+      setPendingBulkModalAction(action)
+    },
+    [selectedRowKeys.length, showNoSelectionAlert]
+  )
+
   const handleBulkApplicationReject = useCallback(() => {
-    patchSelectedStatus('application_rejected')
-  }, [patchSelectedStatus])
+    openBulkActionModal('application_reject')
+  }, [openBulkActionModal])
 
   const handleBulkTempReject = useCallback(() => {
-    patchSelectedStatus('temp_rejected')
-  }, [patchSelectedStatus])
+    openBulkActionModal('temp_reject')
+  }, [openBulkActionModal])
 
   const handleBulkTempAssign = useCallback(() => {
-    patchSelectedStatus('temp_assigned')
-  }, [patchSelectedStatus])
+    openBulkActionModal('temp_assign')
+  }, [openBulkActionModal])
+
+  const closeBulkActionModal = useCallback(() => {
+    setPendingBulkModalAction(null)
+  }, [])
+
+  const confirmBulkActionModal = useCallback(() => {
+    if (!pendingBulkModalAction) return
+    const statusMap = {
+      application_reject: 'application_rejected',
+      temp_reject: 'temp_rejected',
+      temp_assign: 'temp_assigned',
+    } as const
+    patchSelectedStatus(statusMap[pendingBulkModalAction])
+    setPendingBulkModalAction(null)
+  }, [pendingBulkModalAction, patchSelectedStatus])
 
   const resetRegionState = useCallback(() => {
     setPendingFilters({ ...EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS })
@@ -138,6 +172,10 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
     handleBulkApplicationReject,
     handleBulkTempReject,
     handleBulkTempAssign,
+    pendingBulkModalAction,
+    closeBulkActionModal,
+    confirmBulkActionModal,
+    selectedApplications,
     resetRegionState,
     refreshData,
   }

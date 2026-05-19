@@ -59,6 +59,22 @@ Show history of status steps with `items` + `statusLabels` / `statusColors`.
 
 ---
 
+## 7. `CrossTable` (`@/shared/ui/cross-table`)
+
+행·열 헤더가 교차하는 가변 격자(예: 학년 × 교시). **인라인 matrix `<table>` 금지** — [cross-table.md](../design/cross-table.md).
+
+```tsx
+<CrossTable
+  corner="학년 / 교시"
+  columnHeaders={['1교시', '2교시']}
+  rows={[{ rowHeader: '1학년', cells: ['09:00 ~ 09:40', '-'] }]}
+/>
+```
+
+`DetailInfoForm` 안에서는 `DetailInfoForm.Row type="custom"`으로 감싼다.
+
+---
+
 ## Common compositions
 
 - **Status + next action:** `StatusDisplay` + conditional `SingleCTA` from API `nextAction`.  
@@ -75,4 +91,4 @@ Show history of status steps with `items` + `statusLabels` / `statusColors`.
 
 See [refactoring-principles.md](./refactoring-principles.md), [custom-hooks.md](./custom-hooks.md).
 
-**Last updated:** 2026-04-21
+**Last updated:** 2026-05-19

@@ -41,4 +41,12 @@
 
 ---
 
+## 신청 기관 상세 — 기본 정보
+
+- **레이아웃:** `DetailInfoForm` 2블록 — (1) **임시 배정 현황** 단독, (2) **기본 정보** (기관명·지역·소재지·교사·기타).
+- **임시 배정 현황 색:** 목록과 동일 `UjatInstitutionApplicationStatusBadge` / `ujat-institution-application-status-badge.css`.
+- **개인정보 마스킹** (`personalInfoRevealed` 전): Tel·M 가운데 4자리 `*`, E-mail `@` 앞 3자리+`***` (`MASKING_POLICY`). **기관 소재지·상세 주소는 마스킹 없음.** 사용자 **자택 주소**만 동·구까지 노출·이후 `blur(5px)` (`HomeAddressPrivacyValue`).
+
+---
+
 **Last updated:** 2026-05-19

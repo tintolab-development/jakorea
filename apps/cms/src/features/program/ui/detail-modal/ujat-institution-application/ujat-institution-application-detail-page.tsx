@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Space } from 'antd'
 import { AppButton } from '@/shared/ui/app-button'
 import {
@@ -10,6 +10,10 @@ import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-i
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import type { UjatInstitutionTempAssignmentStatus } from './ujat-institution-application-types'
 import { UjatInstitutionApplicationDetailView } from './ujat-institution-application-detail-view'
+import {
+  UjatInstitutionApplicationActionModal,
+  type UjatInstitutionApplicationBulkModalAction,
+} from './ujat-institution-application-action-modal'
 
 const TEMP_REJECT_BUTTON_STYLE = {
   borderColor: '#e07a96',
@@ -42,11 +46,25 @@ export function UjatInstitutionApplicationDetailPage({
     controlMode: 'headerStickyNoop',
   })
 
+  const [pendingAction, setPendingAction] =
+    useState<UjatInstitutionApplicationBulkModalAction | null>(null)
+
   const patchStatus = (status: UjatInstitutionTempAssignmentStatus) => {
     if (!row) return
     patchUjatInstitutionApplicationRows([row.id], status)
     onStatusUpdated()
     onBack()
+  }
+
+  const handleActionConfirm = () => {
+    if (!pendingAction) return
+    const statusMap = {
+      application_reject: 'application_rejected',
+      temp_reject: 'temp_rejected',
+      temp_assign: 'temp_assigned',
+    } as const
+    patchStatus(statusMap[pendingAction])
+    setPendingAction(null)
   }
 
   if (!row || !detail) {
@@ -60,18 +78,22 @@ export function UjatInstitutionApplicationDetailPage({
         style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}
       >
         <Space size={8} wrap>
-          <AppButton variant="danger" size="filter" onClick={() => patchStatus('application_rejected')}>
+          <AppButton
+            variant="danger"
+            size="filter"
+            onClick={() => setPendingAction('application_reject')}
+          >
             신청 반려
           </AppButton>
           <AppButton
             variant="danger"
             size="filter"
             style={TEMP_REJECT_BUTTON_STYLE}
-            onClick={() => patchStatus('temp_rejected')}
+            onClick={() => setPendingAction('temp_reject')}
           >
             임시 반려
           </AppButton>
-          <AppButton variant="cancel" size="filter" onClick={() => patchStatus('temp_assigned')}>
+          <AppButton variant="cancel" size="filter" onClick={() => setPendingAction('temp_assign')}>
             임시 배정
           </AppButton>
           <PersonalInfoRevealButton
@@ -91,6 +113,17 @@ export function UjatInstitutionApplicationDetailPage({
         personalInfoRevealed={personalInfoRevealed}
       />
       {confirmModal}
+      {pendingAction ? (
+        <UjatInstitutionApplicationActionModal
+          open
+          action={pendingAction}
+          variant="single"
+          institutionName={row.institutionName}
+          selectionCount={1}
+          onCancel={() => setPendingAction(null)}
+          onConfirm={handleActionConfirm}
+        />
+      ) : null}
     </div>
   )
 }

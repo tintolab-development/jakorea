@@ -160,3 +160,5 @@ export {
 export type { CalendarSetMainProps } from '../components/calendar'
 export { LogoutIcon, GoogleMarkIcon, ProfileAvatarIcon } from './icons'
 export type { LogoutIconProps, GoogleMarkIconProps, ProfileAvatarIconProps } from './icons'
+export { CrossTable } from './cross-table'
+export type { CrossTableProps, CrossTableRow } from './cross-table'

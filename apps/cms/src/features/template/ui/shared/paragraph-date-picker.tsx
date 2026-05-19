@@ -1,32 +1,24 @@
 import type { CSSProperties, ReactNode, RefObject } from 'react'
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 
 function cn(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(' ')
 }
-import { createPortal } from 'react-dom'
 import { CalendarOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { CalendarMini } from '@/shared/components/calendar'
-import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
-import { CmsButton } from '@/shared/ui/cms-button'
-import type { CmsControlSize } from '@/shared/ui/cms-control-size'
-import { CmsInput } from '@/shared/ui/cms-input'
-import { CmsToggle } from '@/shared/ui/cms-toggle'
 import {
-  ParagraphTimeInlineSelects,
+  ParagraphDatePickerPopover,
   buildTime,
-  from24h,
   parseNum,
-} from '@/features/template/ui/shared/paragraph-time-picker'
+} from '@/shared/components/date-time-picker-modal'
+import {
+  dayjsTimeParts,
+  findNextEnabledDate,
+} from '@/shared/components/date-time-picker-shared'
+import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
+import type { CmsControlSize } from '@/shared/ui/cms-control-size'
 import './paragraph-date-picker.css'
-import './paragraph-time-picker.css'
-
-function dayjsTimeParts(d: Dayjs): { h: string; m: string; mer: 'AM' | 'PM' } {
-  const { h12, mer } = from24h(d.hour())
-  return { h: String(h12), m: String(d.minute()), mer }
-}
 
 function formatTriggerClock(d: Dayjs): string {
   return d.format('HH:mm')
@@ -81,9 +73,6 @@ export function resolveParagraphDatePresetMode(props: {
   if (props.preferPeriodModeInPopover) return 'period'
   return 'schedule'
 }
-
-/** `CalendarMini` 일정 점 표시 없음 — 빈 Set 재사용 */
-const PARAGRAPH_DATE_PICKER_EMPTY_SCHEDULES = new Set<string>()
 
 type ParagraphRangeValue = [Dayjs | null, Dayjs | null]
 
@@ -152,22 +141,9 @@ export type ParagraphDatePickerProps =
   | ParagraphDatePickerRangeProps
   | ParagraphDatePickerSingleProps
 
-const POPOVER_GAP = 6
-
 function toWidthStyle(width: number | string | undefined): CSSProperties | undefined {
   if (width == null) return undefined
   return { width: typeof width === 'number' ? `${width}px` : width }
-}
-
-function findNextEnabledDate(date: Dayjs, disabledDate?: (date: Dayjs) => boolean): Dayjs {
-  if (!disabledDate || !disabledDate(date)) return date
-
-  for (let offset = 1; offset <= 366; offset += 1) {
-    const next = date.add(offset, 'day')
-    if (!disabledDate(next)) return next
-  }
-
-  return date
 }
 
 interface ParagraphDatePickerSingleInnerProps {
@@ -208,7 +184,6 @@ function ParagraphDatePickerSingleInner({
   onOpenChange,
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
-  const popoverRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
 
   const [open, setOpen] = useState(false)
@@ -222,7 +197,6 @@ function ParagraphDatePickerSingleInner({
   const [calendarMonth, setCalendarMonth] = useState<Dayjs>(() =>
     findNextEnabledDate(value ?? dayjs(), disabledDate).startOf('month')
   )
-  const [popoverStyle, setPopoverStyle] = useState<CSSProperties>({ visibility: 'hidden' })
   const [periodOn, setPeriodOn] = useState(false)
   const [rangeStart, setRangeStart] = useState<Dayjs>(() =>
     findNextEnabledDate(value ?? dayjs(), disabledDate)
@@ -323,76 +297,7 @@ function ParagraphDatePickerSingleInner({
     surfaceAppliedWithTime
   )
   const triggerIsEmpty = triggerDisplayText == null
-
-  const updatePopoverPosition = useCallback(() => {
-    const trigger = triggerRef.current
-    const pop = popoverRef.current
-    if (!trigger || !pop) return
-
-    const rect = trigger.getBoundingClientRect()
-    const popH = pop.offsetHeight || 400
-    const popW = pop.offsetWidth || 500
-    const vw = window.innerWidth
-    const vh = window.innerHeight
-    const scrollX = window.scrollX
-    const scrollY = window.scrollY
-
-    let top = rect.bottom + POPOVER_GAP + scrollY
-    const spaceBelow = vh - rect.bottom - POPOVER_GAP
-    const spaceAbove = rect.top - POPOVER_GAP
-    if (spaceBelow < popH && spaceAbove > spaceBelow) {
-      top = rect.top - popH - POPOVER_GAP + scrollY
-    }
-
-    let left = rect.left + scrollX
-    left = Math.min(left, scrollX + vw - popW - 12)
-    left = Math.max(left, scrollX + 12)
-
-    setPopoverStyle({
-      top,
-      left,
-      visibility: 'visible',
-    })
-  }, [])
-
-  const schedulePosition = useCallback(() => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => updatePopoverPosition())
-    })
-  }, [updatePopoverPosition])
-
-  useLayoutEffect(() => {
-    if (!open) return
-    schedulePosition()
-    const onWin = () => schedulePosition()
-    window.addEventListener('resize', onWin)
-    window.addEventListener('scroll', onWin, true)
-    return () => {
-      window.removeEventListener('resize', onWin)
-      window.removeEventListener('scroll', onWin, true)
-    }
-  }, [open, isRangeCalendarMode, timeOn, schedulePosition])
-
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [open])
-
-  useEffect(() => {
-    if (!open) return
-    const onPointerDown = (e: MouseEvent | PointerEvent) => {
-      const t = e.target as Node
-      if (rootRef.current?.contains(t)) return
-      if (popoverRef.current?.contains(t)) return
-      setOpen(false)
-    }
-    document.addEventListener('pointerdown', onPointerDown, true)
-    return () => document.removeEventListener('pointerdown', onPointerDown, true)
-  }, [open, rootRef])
+  const triggerAriaLabel = triggerIsEmpty ? effectivePlaceholder : triggerDisplayText
 
   const handleOpen = () => {
     if (disabled) return
@@ -525,300 +430,6 @@ function ParagraphDatePickerSingleInner({
   const widthStyle = toWidthStyle(width)
   const triggerWidthStyle = customizable && surfaceRange != null ? { width: '500px' } : widthStyle
 
-  const popover = open
-    ? createPortal(
-        <>
-          <div className="paragraph-date-picker__backdrop" aria-hidden />
-          <div
-            ref={popoverRef}
-            id={panelId}
-            className={[
-              'paragraph-date-picker__popover',
-              timeOn ? 'paragraph-date-picker__popover--with-time' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            style={popoverStyle}
-            role="dialog"
-            aria-modal="true"
-            aria-label="날짜 선택"
-          >
-            <div className="paragraph-date-picker__popover-body">
-              <div className="paragraph-date-picker__popover-calendar">
-                <div className="calendar-mini paragraph-date-picker__popover-calendar-mini">
-                  <CalendarMini
-                    currentMonth={calendarMonth}
-                    selectedDate={
-                      isRangeCalendarMode ? (rangeFocus === 'start' ? rangeStart : rangeEnd) : draft
-                    }
-                    onMonthChange={setCalendarMonth}
-                    onSelectDate={handleCalendarSelect}
-                    programDates={PARAGRAPH_DATE_PICKER_EMPTY_SCHEDULES}
-                    disabledDate={disabledDate}
-                    rangeSelection={
-                      isRangeCalendarMode ? { start: rangeStart, end: rangeEnd } : null
-                    }
-                  />
-                </div>
-              </div>
-              <div className="paragraph-date-picker__popover-side">
-                {isRangeCalendarMode ? (
-                  <div className="paragraph-date-picker__popover-fields">
-                    <div
-                      className="paragraph-date-picker__popover-field"
-                      onClick={() => setRangeFocus('start')}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                          setRangeFocus('start')
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
-                    >
-                      <span className="paragraph-date-picker__popover-field-label">시작일</span>
-                      <div className="paragraph-date-picker__popover-datetime-row">
-                        <CmsInput
-                          className={[
-                            'paragraph-date-picker__popover-input',
-                            rangeFocus === 'start'
-                              ? 'paragraph-date-picker__popover-input--active'
-                              : '',
-                          ]
-                            .filter(Boolean)
-                            .join(' ')}
-                          width="100%"
-                          inputSize="large"
-                          readOnly
-                          tabIndex={-1}
-                          value={formatAppDatepickerDisplay(rangeStart)}
-                          aria-label="시작일"
-                        />
-                        {timeOn ? (
-                          <>
-                            <span
-                              className="paragraph-date-picker__popover-date-time-sep"
-                              aria-hidden
-                            >
-                              |
-                            </span>
-                            <ParagraphTimeInlineSelects
-                              hour={startHour}
-                              minute={startMinute}
-                              meridiem={startMer}
-                              onHourChange={v => {
-                                setStartHour(v)
-                                setInvalidTimeRange(false)
-                              }}
-                              onMinuteChange={v => {
-                                setStartMinute(v)
-                                setInvalidTimeRange(false)
-                              }}
-                              onMeridiemChange={v => {
-                                setStartMer(v)
-                                setInvalidTimeRange(false)
-                              }}
-                              getPopupContainer={() => popoverRef.current ?? document.body}
-                              disabled={disabled}
-                              hourActive={rangeFocus === 'start'}
-                              rowPhase="start"
-                            />
-                          </>
-                        ) : null}
-                      </div>
-                    </div>
-                    <div
-                      className="paragraph-date-picker__popover-field"
-                      onClick={() => setRangeFocus('end')}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                          setRangeFocus('end')
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
-                    >
-                      <span className="paragraph-date-picker__popover-field-label">종료일</span>
-                      <div className="paragraph-date-picker__popover-datetime-row">
-                        <CmsInput
-                          className={[
-                            'paragraph-date-picker__popover-input',
-                            rangeFocus === 'end'
-                              ? 'paragraph-date-picker__popover-input--active'
-                              : '',
-                          ]
-                            .filter(Boolean)
-                            .join(' ')}
-                          width="100%"
-                          inputSize="large"
-                          readOnly
-                          tabIndex={-1}
-                          value={formatAppDatepickerDisplay(rangeEnd)}
-                          aria-label="종료일"
-                        />
-                        {timeOn ? (
-                          <>
-                            <span
-                              className="paragraph-date-picker__popover-date-time-sep"
-                              aria-hidden
-                            >
-                              |
-                            </span>
-                            <ParagraphTimeInlineSelects
-                              hour={endHour}
-                              minute={endMinute}
-                              meridiem={endMer}
-                              onHourChange={v => {
-                                setEndHour(v)
-                                setInvalidTimeRange(false)
-                              }}
-                              onMinuteChange={v => {
-                                setEndMinute(v)
-                                setInvalidTimeRange(false)
-                              }}
-                              onMeridiemChange={v => {
-                                setEndMer(v)
-                                setInvalidTimeRange(false)
-                              }}
-                              getPopupContainer={() => popoverRef.current ?? document.body}
-                              disabled={disabled}
-                              hourActive={rangeFocus === 'end'}
-                              invalid={invalidTimeRange}
-                              rowPhase="end"
-                            />
-                          </>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="paragraph-date-picker__popover-datetime-row paragraph-date-picker__popover-datetime-row--single">
-                    <CmsInput
-                      className="paragraph-date-picker__popover-input paragraph-date-picker__popover-input--active"
-                      width="100%"
-                      inputSize="large"
-                      readOnly
-                      tabIndex={-1}
-                      value={formatAppDatepickerDisplay(draft)}
-                      aria-label="선택한 날짜"
-                    />
-                    {timeOn ? (
-                      <>
-                        <span className="paragraph-date-picker__popover-date-time-sep" aria-hidden>
-                          |
-                        </span>
-                        <ParagraphTimeInlineSelects
-                          hour={singleHour}
-                          minute={singleMinute}
-                          meridiem={singleMer}
-                          onHourChange={v => {
-                            setSingleHour(v)
-                            setInvalidTimeRange(false)
-                          }}
-                          onMinuteChange={v => {
-                            setSingleMinute(v)
-                            setInvalidTimeRange(false)
-                          }}
-                          onMeridiemChange={v => {
-                            setSingleMer(v)
-                            setInvalidTimeRange(false)
-                          }}
-                          getPopupContainer={() => popoverRef.current ?? document.body}
-                          disabled={disabled}
-                          hourActive
-                          rowPhase="single"
-                        />
-                      </>
-                    ) : null}
-                  </div>
-                )}
-                {invalidTimeRange ? (
-                  <div className="paragraph-date-picker__popover-time-error" role="alert">
-                    종료 일시는 시작 일시보다 이후여야 합니다.
-                  </div>
-                ) : null}
-                <div className="paragraph-date-picker__popover-footer">
-                  <div className="paragraph-date-picker__popover-toggles">
-                    {showPeriodToggleInFooter ? (
-                      <CmsToggle
-                        label="기간"
-                        checked={periodOn}
-                        onChange={next => {
-                          setPeriodOn(next)
-                          setInvalidTimeRange(false)
-                          if (next) {
-                            setRangeStart(draft)
-                            const nextEnd = findNextEnabledDate(draft.add(1, 'day'), disabledDate)
-                            setRangeEnd(nextEnd)
-                            setRangeFocus('start')
-                            if (timeOn) {
-                              const t1 = dayjsTimeParts(draft)
-                              const t2 = dayjsTimeParts(nextEnd)
-                              setStartHour(t1.h)
-                              setStartMinute(t1.m)
-                              setStartMer(t1.mer)
-                              setEndHour(t2.h)
-                              setEndMinute(t2.m)
-                              setEndMer(t2.mer)
-                            }
-                          }
-                        }}
-                        disabled={disabled}
-                      />
-                    ) : null}
-                    <CmsToggle
-                      label="시간"
-                      checked={timeOn}
-                      onChange={next => {
-                        setTimeOn(next)
-                        setInvalidTimeRange(false)
-                        if (next && isRangeCalendarMode) {
-                          const t1 = dayjsTimeParts(rangeStart)
-                          setStartHour(t1.h)
-                          setStartMinute(t1.m)
-                          setStartMer(t1.mer)
-                          const plus = buildTime(
-                            rangeStart,
-                            parseNum(t1.h, 12),
-                            parseNum(t1.m, 0),
-                            t1.mer
-                          ).add(1, 'hour')
-                          const t2 = dayjsTimeParts(plus)
-                          setEndHour(t2.h)
-                          setEndMinute(t2.m)
-                          setEndMer(t2.mer)
-                        } else if (next) {
-                          const t = dayjsTimeParts(draft)
-                          setSingleHour(t.h)
-                          setSingleMinute(t.m)
-                          setSingleMer(t.mer)
-                        }
-                      }}
-                      disabled={disabled}
-                    />
-                  </div>
-                  <div className="paragraph-date-picker__popover-actions">
-                    <CmsButton
-                      type="button"
-                      variant="primary"
-                      size="medium"
-                      width="80px"
-                      onClick={handleApply}
-                    >
-                      설정
-                    </CmsButton>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>,
-        document.body
-      )
-    : null
-
-  const triggerAriaLabel = triggerDisplayText ?? effectivePlaceholder
 
   return (
     <>
@@ -859,7 +470,115 @@ function ParagraphDatePickerSingleInner({
           {triggerIsEmpty ? effectivePlaceholder : triggerDisplayText}
         </span>
       </div>
-      {popover}
+      <ParagraphDatePickerPopover
+        open={open}
+        onClose={() => setOpen(false)}
+        anchorRef={triggerRef}
+        dismissExcludeRef={rootRef}
+        panelId={panelId}
+        disabled={disabled}
+        disabledDate={disabledDate}
+        isRangeCalendarMode={isRangeCalendarMode}
+        timeOn={timeOn}
+        calendarMonth={calendarMonth}
+        onCalendarMonthChange={setCalendarMonth}
+        draft={draft}
+        rangeStart={rangeStart}
+        rangeEnd={rangeEnd}
+        rangeFocus={rangeFocus}
+        onRangeFocusChange={setRangeFocus}
+        onCalendarSelect={handleCalendarSelect}
+        singleHour={singleHour}
+        singleMinute={singleMinute}
+        singleMer={singleMer}
+        onSingleHourChange={v => {
+          setSingleHour(v)
+          setInvalidTimeRange(false)
+        }}
+        onSingleMinuteChange={v => {
+          setSingleMinute(v)
+          setInvalidTimeRange(false)
+        }}
+        onSingleMerChange={v => {
+          setSingleMer(v)
+          setInvalidTimeRange(false)
+        }}
+        startHour={startHour}
+        startMinute={startMinute}
+        startMer={startMer}
+        onStartHourChange={v => {
+          setStartHour(v)
+          setInvalidTimeRange(false)
+        }}
+        onStartMinuteChange={v => {
+          setStartMinute(v)
+          setInvalidTimeRange(false)
+        }}
+        onStartMerChange={v => {
+          setStartMer(v)
+          setInvalidTimeRange(false)
+        }}
+        endHour={endHour}
+        endMinute={endMinute}
+        endMer={endMer}
+        onEndHourChange={v => {
+          setEndHour(v)
+          setInvalidTimeRange(false)
+        }}
+        onEndMinuteChange={v => {
+          setEndMinute(v)
+          setInvalidTimeRange(false)
+        }}
+        onEndMerChange={v => {
+          setEndMer(v)
+          setInvalidTimeRange(false)
+        }}
+        invalidTimeRange={invalidTimeRange}
+        showPeriodToggle={showPeriodToggleInFooter}
+        periodOn={periodOn}
+        onPeriodOnChange={next => {
+          setPeriodOn(next)
+          setInvalidTimeRange(false)
+        }}
+        onTimeOnChange={next => {
+          setTimeOn(next)
+          setInvalidTimeRange(false)
+        }}
+        onApply={handleApply}
+        onPeriodToggleOn={(d, nextEnd) => {
+          setRangeStart(d)
+          setRangeEnd(nextEnd)
+          setRangeFocus('start')
+          if (timeOn) {
+            const t1 = dayjsTimeParts(d)
+            const t2 = dayjsTimeParts(nextEnd)
+            setStartHour(t1.h)
+            setStartMinute(t1.m)
+            setStartMer(t1.mer)
+            setEndHour(t2.h)
+            setEndMinute(t2.m)
+            setEndMer(t2.mer)
+          }
+        }}
+        onTimeToggleOn={({ isRange, rangeStart: rs, draft: d }) => {
+          if (isRange) {
+            const t1 = dayjsTimeParts(rs)
+            setStartHour(t1.h)
+            setStartMinute(t1.m)
+            setStartMer(t1.mer)
+            const plus = buildTime(rs, parseNum(t1.h, 12), parseNum(t1.m, 0), t1.mer).add(1, 'hour')
+            const t2 = dayjsTimeParts(plus)
+            setEndHour(t2.h)
+            setEndMinute(t2.m)
+            setEndMer(t2.mer)
+          } else {
+            const t = dayjsTimeParts(d)
+            setSingleHour(t.h)
+            setSingleMinute(t.m)
+            setSingleMer(t.mer)
+          }
+        }}
+      />
     </>
   )
 }

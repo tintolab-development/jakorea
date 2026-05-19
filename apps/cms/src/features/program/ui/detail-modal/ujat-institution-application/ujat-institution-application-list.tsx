@@ -12,6 +12,7 @@ import {
 } from './ujat-institution-application-columns'
 import type { UjatInstitutionApplicationRow } from './ujat-institution-application-types'
 import { useUjatInstitutionApplicationList } from './use-ujat-institution-application-list'
+import { UjatInstitutionApplicationActionModal } from './ujat-institution-application-action-modal'
 import './ujat-institution-application-list.css'
 
 export function UjatInstitutionApplicationList({
@@ -35,6 +36,10 @@ export function UjatInstitutionApplicationList({
     handleBulkApplicationReject,
     handleBulkTempReject,
     handleBulkTempAssign,
+    pendingBulkModalAction,
+    closeBulkActionModal,
+    confirmBulkActionModal,
+    selectedApplications,
     resetRegionState,
   } = useUjatInstitutionApplicationList(activeRegion)
   useEffect(() => {
@@ -151,6 +156,17 @@ export function UjatInstitutionApplicationList({
         <div className="ujat-institution-application-list__page-bottom-spacer" aria-hidden />
       ) : null}
 
+      {pendingBulkModalAction ? (
+        <UjatInstitutionApplicationActionModal
+          open
+          action={pendingBulkModalAction}
+          variant={selectedApplications.length === 1 ? 'single' : 'bulk'}
+          institutionName={selectedApplications[0]?.institutionName}
+          selectionCount={selectedApplications.length}
+          onCancel={closeBulkActionModal}
+          onConfirm={() => confirmBulkActionModal()}
+        />
+      ) : null}
     </div>
   )
 }

@@ -36,6 +36,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [Styling tokens](./design/styling-tokens.md)  
 - [Schedule / calendar UX](./design/schedule-calendar-ux.md)  
 - [Calendar sub-right list](./design/calendar-sub-right-list.md) — `.calendar-list` / `.calendar-list-item` 공통 shell·mint hover  
+- [Cross table (행·열 교차 격자)](./design/cross-table.md) — `CrossTable` (`@/shared/ui/cross-table`)  
 - [Design requests](./design/design-requests.md)  
 
 ## Libraries

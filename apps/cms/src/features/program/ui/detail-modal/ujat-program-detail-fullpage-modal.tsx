@@ -96,11 +96,7 @@ function defaultVolunteerTabForLnb(
   return defaultVolunteerTab(interview, lnb === 'volunteer_h1' ? 'h1' : 'h2')
 }
 
-function defaultTabForLnb(
-  lnb: UjatDetailLnbKey,
-  interview: boolean,
-  surveyKeys: string[]
-): string {
+function defaultTabForLnb(lnb: UjatDetailLnbKey, interview: boolean, surveyKeys: string[]): string {
   switch (lnb) {
     case 'info':
       return 'info'
@@ -269,9 +265,7 @@ export function UjatProgramDetailFullPageModal({
     [institutionListVersion]
   )
 
-  const institutionApplicationId = open
-    ? searchParams.get(UJAT_INST_APP_ID_PARAM)
-    : null
+  const institutionApplicationId = open ? searchParams.get(UJAT_INST_APP_ID_PARAM) : null
   const institutionDetailId =
     institutionApplicationId && validInstAppIds.has(institutionApplicationId)
       ? institutionApplicationId
@@ -590,11 +584,6 @@ export function UjatProgramDetailFullPageModal({
   const programTitle = displayProgram?.title ?? '프로그램 상세'
   const title = institutionDetailName ? `신청 기관 상세 (${institutionDetailName})` : programTitle
 
-  const institutionDetailBreadcrumb =
-    institutionDetailName != null
-      ? `프로그램 목록 > ${programTitle} > 신청 기관 목록 > ${institutionDetailName}`
-      : null
-
   return (
     <DetailFullPageModal
       open={open}
@@ -602,13 +591,6 @@ export function UjatProgramDetailFullPageModal({
       onHeaderClose={handleHeaderCloseClick}
       title={title}
       closeAriaLabel={institutionDetailId ? '목록으로' : '닫기'}
-      headerExtra={
-        institutionDetailBreadcrumb ? (
-          <p style={{ color: '#8c8c8c', fontSize: 14, lineHeight: '150%', margin: 0 }}>
-            {institutionDetailBreadcrumb}
-          </p>
-        ) : undefined
-      }
       className="program-detail-fullpage-modal ujat-program-detail-fullpage-modal"
       sidebar={
         programId ? (

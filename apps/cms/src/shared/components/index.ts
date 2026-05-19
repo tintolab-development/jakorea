@@ -2,6 +2,17 @@
  * 공유 컴포넌트 export
  */
 
+export { DateTimePickerPopover } from './date-time-picker-modal'
+export type { DateTimePickerPopoverProps } from './date-time-picker-modal'
+export {
+  PermissionRejectModal,
+  PermissionRejectModalMessage,
+} from './permission-reject-modal'
+export type {
+  PermissionRejectModalProps,
+  PermissionRejectNotifyTiming,
+  PermissionRejectPayload,
+} from './permission-reject-modal'
 export { PermissionButton } from './permission-button'
 export type { PermissionButtonProps } from './permission-button'
 export { AppStatusBadge } from './app-status-badge'
