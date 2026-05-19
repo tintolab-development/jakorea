@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type Key, type RefObject } from 'react'
-import { App } from 'antd'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import type { UjatDocumentScreeningConfirmRequest } from './ujat-volunteer-document-screening-actions'
 import type { ColumnsType } from 'antd/es/table'
 import {
   getUjatVolunteerApplicants,
@@ -26,6 +27,11 @@ import {
   type UjatEssayColumnKey,
   type UjatEssayColumnWidths,
 } from './ujat-volunteer-doc-screening-columns'
+import {
+  confirmUjatVolunteerDocumentApprove,
+  confirmUjatVolunteerDocumentReject,
+  patchUjatVolunteerDocumentScreeningStatus,
+} from './ujat-volunteer-document-screening-actions'
 
 function filterApplicants(
   rows: UjatVolunteerApplicantRow[],
@@ -151,7 +157,9 @@ export function useUjatVolunteerDocScreening({
   onEssayColumnResizeStop: (key: UjatEssayColumnKey, width: number) => void
   tableWrapRef: RefObject<HTMLElement | null>
 }) {
-  const { message, modal } = App.useApp()
+  const { showAlert } = useCmsAlert()
+  const [documentScreeningConfirm, setDocumentScreeningConfirm] =
+    useState<UjatDocumentScreeningConfirmRequest | null>(null)
   const [list, setList] = useState<UjatVolunteerApplicantRow[]>(() =>
     sortUjatVolunteerApplicants(getUjatVolunteerApplicants(programId, half))
   )
@@ -217,75 +225,74 @@ export function useUjatVolunteerDocScreening({
     tableWrapRef,
   })
 
+  const applyDocumentScreeningStatus = useCallback(
+    (ids: string[], status: 'pass' | 'fail') => {
+      setList(prev => patchUjatVolunteerDocumentScreeningStatus(prev, ids, status))
+    },
+    []
+  )
+
+  const showDocumentScreeningConfirm = useCallback((options: UjatDocumentScreeningConfirmRequest) => {
+    setDocumentScreeningConfirm(options)
+  }, [])
+
+  const closeDocumentScreeningConfirm = useCallback(() => {
+    setDocumentScreeningConfirm(null)
+  }, [])
+
   const handleBulkReject = useCallback(() => {
-    if (selectedRowKeys.length === 0) {
-      message.warning('반려할 항목을 선택해 주세요.')
-      return
-    }
-    modal.confirm({
-      title: '선택 반려',
-      content: `선택한 ${selectedRowKeys.length}건을 서류 불합격 처리하시겠습니까?`,
-      okText: '반려',
-      cancelText: '취소',
-      okButtonProps: { danger: true },
-      onOk: () => {
-        const keySet = new Set(selectedRowKeys)
-        setList(prev =>
-          prev.map(row =>
-            keySet.has(row.id) ? { ...row, documentScreeningStatus: 'fail' as const } : row
-          )
-        )
+    const ids = selectedRowKeys.map(String)
+    confirmUjatVolunteerDocumentReject({
+      showConfirm: showDocumentScreeningConfirm,
+      count: ids.length,
+      onConfirm: () => {
+        applyDocumentScreeningStatus(ids, 'fail')
         setSelectedRowKeys([])
-        message.success('선택한 항목이 반려되었습니다.')
       },
     })
-  }, [message, modal, selectedRowKeys])
+  }, [applyDocumentScreeningStatus, selectedRowKeys, showDocumentScreeningConfirm])
 
   const handleBulkApprove = useCallback(() => {
-    if (selectedRowKeys.length === 0) {
-      message.warning('승인할 항목을 선택해 주세요.')
-      return
-    }
-    modal.confirm({
-      title: '선택 승인',
-      content: `선택한 ${selectedRowKeys.length}건을 서류 합격 처리하시겠습니까?`,
-      okText: '승인',
-      cancelText: '취소',
-      onOk: () => {
-        const keySet = new Set(selectedRowKeys)
-        setList(prev =>
-          prev.map(row =>
-            keySet.has(row.id) ? { ...row, documentScreeningStatus: 'pass' as const } : row
-          )
-        )
+    const ids = selectedRowKeys.map(String)
+    confirmUjatVolunteerDocumentApprove({
+      showConfirm: showDocumentScreeningConfirm,
+      count: ids.length,
+      onConfirm: () => {
+        applyDocumentScreeningStatus(ids, 'pass')
         setSelectedRowKeys([])
-        message.success('선택한 항목이 승인되었습니다.')
       },
     })
-  }, [message, modal, selectedRowKeys])
+  }, [applyDocumentScreeningStatus, selectedRowKeys, showDocumentScreeningConfirm])
 
   const handleExportExcel = useCallback(async () => {
     if (isExporting) return
     if (filteredSorted.length === 0) {
-      message.warning('다운로드할 데이터가 없습니다.')
+      showAlert({
+        title: '다운로드 안내',
+        content: '다운로드할 데이터가 없습니다.',
+      })
       return
     }
     setIsExporting(true)
-    const hide = message.loading('엑셀 파일 생성 중입니다…', 0)
     try {
       const exportRows = filteredSorted.map(toExportRow)
       await exportTableToExcel(EXPORT_COLUMNS, exportRows, `ujat-volunteer-${half}-doc-screening`)
-      message.success(`엑셀 다운로드 완료 (${exportRows.length.toLocaleString()}건)`)
     } catch (error) {
       console.error('[ujat-volunteer-doc-screening] excel export failed', error)
-      message.error('엑셀 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+      showAlert({
+        title: '다운로드 실패',
+        content: '엑셀 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+      })
     } finally {
-      hide()
       setIsExporting(false)
     }
-  }, [filteredSorted, half, isExporting, message])
+  }, [filteredSorted, half, isExporting, showAlert])
 
   return {
+    list,
+    setList,
+    updateRow,
+    applyDocumentScreeningStatus,
     pendingFilters,
     handleFilterChange,
     handleSearch,
@@ -296,7 +303,14 @@ export function useUjatVolunteerDocScreening({
     handleBulkReject,
     handleBulkApprove,
     handleExportExcel,
+    showDocumentScreeningConfirm,
+    documentScreeningConfirm,
+    closeDocumentScreeningConfirm,
     isExporting,
     count: filteredSorted.length,
+    openManagerDropdown,
+    setOpenManagerDropdown,
+    onManagerAEvaluationChange,
+    onManagerBEvaluationChange,
   }
 }

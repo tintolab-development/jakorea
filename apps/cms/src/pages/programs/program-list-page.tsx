@@ -3,7 +3,6 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { App } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { ProgramList } from '@/features/program/ui/program-list'
 import { useProgramStore } from '@/features/program/model/program-store'
@@ -33,10 +32,11 @@ import { ProgramListModals } from './program-list-modals'
 import { ProgramDetailFullPageModal } from '@/features/program/ui/detail-modal/program-detail-fullpage-modal'
 
 import './program-list-page.css'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, ConfirmModal } from '@/shared/ui'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 
 export function ProgramListPage() {
-  const { modal } = App.useApp()
+  const { showAlert } = useCmsAlert()
   const navigate = useNavigate()
   const location = useLocation()
   const { user, isAuthenticated } = useAuthStore()
@@ -65,6 +65,8 @@ export function ProgramListPage() {
 
   // 2. Local State
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
+  const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
   const [, setHasListFilters] = useState(false)
   const handleDisplayCountChange = useCallback((_count: number, hasActiveFilters: boolean) => {
     setHasListFilters(hasActiveFilters)
@@ -247,17 +249,15 @@ export function ProgramListPage() {
   const handleBulkDeleteClick = () => {
     const programsToDelete = filteredPrograms.filter(p => selectedRowKeys.includes(p.id))
     if (programsToDelete.length === 0) return
-    modal.confirm({
-      title: '선택 삭제',
-      content: `선택한 ${programsToDelete.length}건을 삭제하시겠습니까?`,
-      okText: '삭제',
-      cancelText: '취소',
-      onOk: () => handleBulkDelete(programsToDelete, () => setSelectedRowKeys([])),
-    })
+    setProgramsPendingBulkDelete(programsToDelete)
+    setBulkDeleteModalOpen(true)
   }
 
   const handleProgramCreateClick = () => {
-    window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
+    showAlert({
+      title: '안내',
+      content: FEATURE_COMING_SOON_ALERT_MESSAGE,
+    })
   }
 
   // 예정 프로그램 필터 해제 시 선택 초기화
@@ -429,6 +429,24 @@ export function ProgramListPage() {
         onCancelEnrollmentModal={() => setSelectedProgramForModal(null)}
         selectedProgramForInstructorModal={selectedProgramForInstructorModal}
         onCancelInstructorModal={() => setSelectedProgramForInstructorModal(null)}
+      />
+
+      <ConfirmModal
+        open={bulkDeleteModalOpen}
+        title="선택 삭제"
+        content={`선택한 ${programsPendingBulkDelete.length}건을 삭제하시겠습니까?`}
+        confirmText="삭제"
+        cancelText="취소"
+        danger
+        onConfirm={() => {
+          handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))
+          setBulkDeleteModalOpen(false)
+          setProgramsPendingBulkDelete([])
+        }}
+        onCancel={() => {
+          setBulkDeleteModalOpen(false)
+          setProgramsPendingBulkDelete([])
+        }}
       />
     </div>
   )

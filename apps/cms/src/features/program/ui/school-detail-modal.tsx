@@ -6,10 +6,11 @@
  */
 
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { App, Tabs, Descriptions, Table, Input, Radio } from 'antd'
+import { Tabs, Descriptions, Table, Input, Radio } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AppButton } from '@/shared/ui/app-button'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { ColumnsType } from 'antd/es/table'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import type {
@@ -99,7 +100,7 @@ export function SchoolDetailModal({
   participatingRow,
   onCancelApproval,
 }: SchoolDetailModalProps) {
-  const { modal } = App.useApp()
+  const [unsavedCloseConfirmOpen, setUnsavedCloseConfirmOpen] = useState(false)
   const title =
     titleProp ?? (variant === 'applicant' ? '수강 신청 학교 상세 정보' : '학교 상세 정보')
   const isApplicant = variant === 'applicant'
@@ -665,13 +666,7 @@ export function SchoolDetailModal({
     const basicDirty = isBasicEditMode && basicInfoForm.formState.isDirty
     const instructorDirty = isInstructorEditMode && instructorFormState.isDirty
     if (basicDirty || instructorDirty) {
-      modal.confirm({
-        title: '저장하지 않은 변경 사항이 있습니다.',
-        content: '계속하시겠습니까?',
-        okText: '계속',
-        cancelText: '취소',
-        onOk: () => onCancel(),
-      })
+      setUnsavedCloseConfirmOpen(true)
     } else {
       onCancel()
     }
@@ -943,6 +938,18 @@ export function SchoolDetailModal({
         currentAssignedCount={detail?.instructors.length ?? 0}
         requiredInstructorCount={4}
         onAdd={handleAddInstructorAssign}
+      />
+      <ConfirmModal
+        open={unsavedCloseConfirmOpen}
+        title="저장하지 않은 변경 사항이 있습니다."
+        content="계속하시겠습니까?"
+        confirmText="계속"
+        cancelText="취소"
+        onConfirm={() => {
+          setUnsavedCloseConfirmOpen(false)
+          onCancel()
+        }}
+        onCancel={() => setUnsavedCloseConfirmOpen(false)}
       />
     </>
   )

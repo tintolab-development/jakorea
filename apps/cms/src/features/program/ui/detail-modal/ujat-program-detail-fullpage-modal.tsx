@@ -2,7 +2,7 @@
  * UJAT 프로그램 상세 풀페이지 모달 — `/programs/ujat?programId=…&lnb=…&tab=…`
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -20,11 +20,14 @@ import { ParticipatingInstitutionsSection } from './program-status/participating
 import type { Program } from '@/types/domain'
 import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
 import {
+  isUjatVolunteerApplicantDetailTab,
   parseUjatDetailLnb,
   resolveUjatDetailLnbFromSearchParams,
+  UJAT_APPLICANT_ID_PARAM,
   UJAT_INST_APP_ID_PARAM,
   type UjatDetailLnbKey,
 } from './ujat-program-detail-url'
+import { isUjatVolunteerApplicantInTabList } from './ujat-volunteer-screening/ujat-volunteer-applicant-detail-url'
 import {
   getUjatSurveyMenuItemsForProgram,
   getUjatVolunteerInterviewEnabled,
@@ -53,6 +56,8 @@ import {
 import { UjatProgramRecruitmentPanels } from './ujat-program-recruitment-panels'
 import { UjatProgramRecruitmentTabsRow } from './ujat-program-recruitment-tabs-row'
 import { UjatVolunteerDocScreeningSection } from './ujat-volunteer-screening/ujat-volunteer-doc-screening-section'
+import { UjatVolunteerDocPassedSection } from './ujat-volunteer-screening/ujat-volunteer-doc-passed-section'
+import { UjatVolunteerInterview2Section } from './ujat-volunteer-screening/ujat-volunteer-interview2-section'
 import '@toast-ui/editor/dist/toastui-editor.css'
 import './program-detail-fullpage-modal.css'
 import './ujat-program-detail-fullpage-modal.css'
@@ -190,6 +195,16 @@ function normalizeUjatDetailParams(
   if (instAppIdRaw && validInstAppIds.has(instAppIdRaw)) {
     next.set(UJAT_INST_APP_ID_PARAM, instAppIdRaw)
   }
+
+  const applicantId = next.get(UJAT_APPLICANT_ID_PARAM)
+  if (applicantId) {
+    if (!isUjatVolunteerApplicantDetailTab(tab)) {
+      next.delete(UJAT_APPLICANT_ID_PARAM)
+    } else if (!isUjatVolunteerApplicantInTabList(programId, tab, applicantId)) {
+      next.delete(UJAT_APPLICANT_ID_PARAM)
+    }
+  }
+
   const before = searchParams.toString()
   const after = next.toString()
   if (before === after) return null
@@ -328,6 +343,7 @@ export function UjatProgramDetailFullPageModal({
         next.set(UJAT_INST_APP_ID_PARAM, id)
         next.set(LNB_PARAM, 'institution_applications')
         next.set(TAB_PARAM, 'inst_all')
+        next.delete(UJAT_APPLICANT_ID_PARAM)
       } else {
         next.delete(UJAT_INST_APP_ID_PARAM)
       }
@@ -345,6 +361,7 @@ export function UjatProgramDetailFullPageModal({
       next.set(LNB_PARAM, lnb)
       next.set(TAB_PARAM, tab)
       next.delete(EDIT_PARAM)
+      next.delete(UJAT_APPLICANT_ID_PARAM)
       if (lnb !== 'institution_applications' || tab !== 'inst_all') {
         next.delete(UJAT_INST_APP_ID_PARAM)
       }
@@ -555,6 +572,23 @@ export function UjatProgramDetailFullPageModal({
     }
   }, [activeRecruitTab, institutionsTriggerSave, volunteersTriggerSave, setEditMode])
 
+  const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
+  const [volunteerApplicantDetailTitle, setVolunteerApplicantDetailTitle] = useState<string | null>(
+    null
+  )
+
+  useEffect(() => {
+    const isVolunteerDocScreening = activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2'
+    const isVolunteerApplicantTab =
+      activeTab === 'vh1_doc1' ||
+      activeTab === 'vh2_doc1' ||
+      activeTab === 'vh1_doc_passed' ||
+      activeTab === 'vh2_doc_passed'
+    if (!isVolunteerDocScreening || !isVolunteerApplicantTab) {
+      setVolunteerApplicantDetailTitle(null)
+    }
+  }, [activeLnb, activeTab])
+
   const handleClose = useCallback(() => {
     onClose()
     const next = new URLSearchParams(searchParams)
@@ -563,6 +597,7 @@ export function UjatProgramDetailFullPageModal({
     next.delete(TAB_PARAM)
     next.delete(EDIT_PARAM)
     next.delete(UJAT_INST_APP_ID_PARAM)
+    next.delete(UJAT_APPLICANT_ID_PARAM)
     navigate(
       { pathname: location.pathname, search: next.toString() ? `?${next}` : '' },
       {
@@ -576,13 +611,34 @@ export function UjatProgramDetailFullPageModal({
       setInstitutionApplicationId(null)
       return
     }
+    const isVolunteerDocScreening = activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2'
+    const isVolunteerApplicantTab =
+      activeTab === 'vh1_doc1' ||
+      activeTab === 'vh2_doc1' ||
+      activeTab === 'vh1_doc_passed' ||
+      activeTab === 'vh2_doc_passed'
+    if (
+      isVolunteerDocScreening &&
+      isVolunteerApplicantTab &&
+      volunteerApplicantCloseHandlerRef.current?.()
+    ) {
+      return
+    }
     handleClose()
-  }, [institutionDetailId, handleClose, setInstitutionApplicationId])
+  }, [
+    institutionDetailId,
+    setInstitutionApplicationId,
+    activeLnb,
+    activeTab,
+    handleClose,
+  ])
 
   if (!open) return null
 
   const programTitle = displayProgram?.title ?? '프로그램 상세'
-  const title = institutionDetailName ? `신청 기관 상세 (${institutionDetailName})` : programTitle
+  const title =
+    volunteerApplicantDetailTitle ??
+    (institutionDetailName ? `신청 기관 상세 (${institutionDetailName})` : programTitle)
 
   return (
     <DetailFullPageModal
@@ -711,11 +767,37 @@ export function UjatProgramDetailFullPageModal({
               <UjatVolunteerDocScreeningSection
                 programId={displayProgram.id}
                 half={activeTab.startsWith('vh2') ? 'h2' : 'h1'}
+                onRegisterApplicantCloseHandler={fn => {
+                  volunteerApplicantCloseHandlerRef.current = fn
+                }}
+                onVolunteerApplicantDetailTitleChange={setVolunteerApplicantDetailTitle}
+              />
+            )}
+          {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
+            (activeTab === 'vh1_doc_passed' || activeTab === 'vh2_doc_passed') && (
+              <UjatVolunteerDocPassedSection
+                programId={displayProgram.id}
+                half={activeTab.startsWith('vh2') ? 'h2' : 'h1'}
+                onRegisterApplicantCloseHandler={fn => {
+                  volunteerApplicantCloseHandlerRef.current = fn
+                }}
+                onVolunteerApplicantDetailTitleChange={setVolunteerApplicantDetailTitle}
+              />
+            )}
+          {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
+            (activeTab === 'vh1_interview2' || activeTab === 'vh2_interview2') && (
+              <UjatVolunteerInterview2Section
+                programId={displayProgram.id}
+                half={activeTab.startsWith('vh2') ? 'h2' : 'h1'}
               />
             )}
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
             activeTab !== 'vh1_doc1' &&
-            activeTab !== 'vh2_doc1' && (
+            activeTab !== 'vh2_doc1' &&
+            activeTab !== 'vh1_doc_passed' &&
+            activeTab !== 'vh2_doc_passed' &&
+            activeTab !== 'vh1_interview2' &&
+            activeTab !== 'vh2_interview2' && (
               <UjatPlaceholderSection
                 title={volunteerScreenTitle(activeTab)}
                 description="봉사자 신청·심사·면접 일정 배정 화면(상·하반기 동일 프로세스)입니다. 목 데이터 연동 후 테이블이 표시됩니다."

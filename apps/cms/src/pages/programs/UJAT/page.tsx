@@ -282,7 +282,7 @@ function UjatProgramListPageContent() {
         dataIndex: 'title',
         key: 'title',
         ellipsis: true,
-        align: 'left',
+        align: 'center',
         render: (text: string | undefined) => text ?? '-',
       },
       {

@@ -87,7 +87,9 @@ export function DetailModalSidebar({
                         onClick={() => onSelectChild(item.key, child.key)}
                       >
                         <span className="detail-fullpage-modal__lnb-child-dot" />
-                        <span className="detail-fullpage-modal__lnb-child-label">{child.label}</span>
+                        <span className="detail-fullpage-modal__lnb-child-label" data-text={child.label}>
+                          {child.label}
+                        </span>
                       </button>
                     </li>
                   ))}

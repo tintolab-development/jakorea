@@ -1,0 +1,178 @@
+.ujat-volunteer-interview2 {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.ujat-volunteer-interview2__inner-tabs {
+  margin-bottom: 32px;
+}
+
+.filter-table-layout.ujat-volunteer-interview2__filter-layout {
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
+  --ujat-interview2-filter-col-width: min(
+    var(--filter-control-max-width, 260px),
+    calc((100% - 5 * var(--filter-field-gap)) / 6)
+  );
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.filter-table-layout.ujat-volunteer-interview2__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.filter-table-layout.ujat-volunteer-interview2__filter-layout .table-filter-group__container {
+  display: grid !important;
+  width: 100%;
+  box-sizing: border-box;
+  gap: var(--table-filter-field-gap);
+  align-items: end;
+  justify-content: start;
+  grid-template-columns:
+    repeat(6, minmax(0, var(--ujat-interview2-filter-col-width))) minmax(0, 1fr) 160px !important;
+}
+
+.filter-table-layout.ujat-volunteer-interview2__filter-layout .table-filter-group__fields-container {
+  display: contents;
+}
+
+.filter-table-layout.ujat-volunteer-interview2__filter-layout .table-filter-group__fields-inner.ant-row {
+  display: contents;
+}
+
+.filter-table-layout.ujat-volunteer-interview2__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.filter-table-layout.ujat-volunteer-interview2__filter-layout .table-filter-group__fields-shell {
+  grid-column: 8;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  justify-self: end;
+}
+
+.filter-table-layout.ujat-volunteer-interview2__filter-layout
+  .table-filter-group__grid-cell,
+.filter-table-layout.ujat-volunteer-interview2__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .unified-filter-card__field,
+.filter-table-layout.ujat-volunteer-interview2__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .labeled-search-input,
+.filter-table-layout.ujat-volunteer-interview2__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .cms-select,
+.filter-table-layout.ujat-volunteer-interview2__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .ant-select {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.ujat-volunteer-interview2__toolbar-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ujat-volunteer-interview2__toolbar-title {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.ujat-volunteer-interview2__toolbar-count {
+  color: var(--sub-BK, #767676);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-volunteer-interview2__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ujat-volunteer-interview2__table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+/* No. 컬럼: 정렬 활성 시 파란 헤더 배경 제거(다른 헤더와 동일) */
+.ujat-volunteer-interview2__table-wrap
+  .cms-data-table
+  .ant-table-thead
+  > tr
+  > th[data-column-key='no'].ant-table-column-has-sorters,
+.ujat-volunteer-interview2__table-wrap
+  .cms-data-table
+  .ant-table-thead
+  > tr
+  > th[data-column-key='no'].ant-table-column-sort {
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  ) !important;
+}
+
+.ujat-volunteer-interview2__table-wrap .ujat-volunteer-interview2__score-value {
+  color: var(--color-mint-01, #01a1af);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-volunteer-interview2__calendar-container {
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-volunteer-interview2__placeholder {
+  padding: 24px 8px;
+}
+
+.ujat-volunteer-interview2__placeholder-title {
+  margin: 0 0 8px;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.ujat-volunteer-interview2__placeholder-desc {
+  margin: 0;
+  color: var(--sub-BK, #767676);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 150%;
+}

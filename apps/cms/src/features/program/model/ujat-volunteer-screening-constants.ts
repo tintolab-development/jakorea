@@ -64,6 +64,41 @@ export const UJAT_MANAGER_EVALUATION_LABELS: Record<UjatManagerEvaluation, strin
 
 export type UjatVolunteerRecruitHalf = 'h1' | 'h2'
 
+/** 면접일 배정 현황 (1차 서류 합격자 목록) */
+export type UjatInterviewAssignmentStatus = 'waiting' | 'assigned' | 'withdrawn'
+
+export const UJAT_INTERVIEW_ASSIGNMENT_STATUS_LABELS: Record<UjatInterviewAssignmentStatus, string> = {
+  waiting: '배정 대기',
+  assigned: '배정 완료',
+  withdrawn: '활동 포기',
+}
+
+/** 2차 면접 심사 현황 (2차 면접 대상자 목록) */
+export type UjatSecondInterviewScreeningStatus =
+  | 'waiting'
+  | 'completed'
+  | 'pass'
+  | 'fail'
+  | 'reserve1'
+  | 'reserve2'
+  | 'reserve3'
+
+export const UJAT_SECOND_INTERVIEW_SCREENING_STATUS_ORDER: readonly UjatSecondInterviewScreeningStatus[] =
+  ['waiting', 'completed', 'pass', 'fail', 'reserve1', 'reserve2', 'reserve3'] as const
+
+export const UJAT_SECOND_INTERVIEW_SCREENING_STATUS_LABELS: Record<
+  UjatSecondInterviewScreeningStatus,
+  string
+> = {
+  waiting: '면접 진행 대기',
+  completed: '면접 진행 완료',
+  pass: '면접 합격',
+  fail: '면접 불합격',
+  reserve1: '예비 1',
+  reserve2: '예비 2',
+  reserve3: '예비 3',
+}
+
 /** 서술형 1~4번 컬럼 (신청서 문항과 동일 제목) */
 export type UjatEssayColumnKey =
   | 'essayIntro'

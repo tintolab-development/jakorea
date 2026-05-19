@@ -1,4 +1,9 @@
 .ujat-volunteer-doc-screening {
+  --ujat-doc-screening-row-hover-bg: color-mix(
+    in srgb,
+    var(--color-mint-01, #01a1af) 6%,
+    #fff
+  );
   width: 100%;
   min-width: 0;
   max-width: 100%;
@@ -109,6 +114,28 @@
   overflow-x: auto;
 }
 
+/* 행 클릭 → 지원자 상세: 포인터·호버 배경 (고정 열 포함 불투명 배경) */
+.ujat-volunteer-doc-screening
+  .clickable-table
+  .ant-table-tbody
+  > tr.ant-table-row:hover:not(.ant-table-row-selected)
+  > td {
+  background: var(--ujat-doc-screening-row-hover-bg) !important;
+}
+
+.ujat-volunteer-doc-screening
+  .clickable-table
+  .ant-table-tbody
+  > tr.ant-table-row:hover:not(.ant-table-row-selected)
+  > td.ant-table-cell-fix-left,
+.ujat-volunteer-doc-screening
+  .clickable-table
+  .ant-table-tbody
+  > tr.ant-table-row:hover:not(.ant-table-row-selected)
+  > td.ant-table-cell-fix-left-last {
+  z-index: 4;
+}
+
 .ujat-volunteer-doc-screening__table-wrap--resizing {
   user-select: none;
 }
@@ -153,6 +180,7 @@
   min-height: 53px;
   vertical-align: middle;
   line-height: 1.5;
+  overflow: hidden;
 }
 
 .ujat-volunteer-doc-screening .cms-data-table .ant-table-cell-ellipsis {
@@ -166,10 +194,14 @@
   white-space: normal !important;
 }
 
-/* 연락처·이메일: 한 줄, 말줄임 없이 전체 표시 */
-.ujat-volunteer-doc-screening td.ujat-volunteer-doc-screening__nowrap-cell {
+/* 연락처·이메일·지원유형: 한 줄 (center-cell 공통 규칙보다 우선) */
+.ujat-volunteer-doc-screening td.ujat-volunteer-doc-screening__nowrap-cell,
+.ujat-volunteer-doc-screening
+  td.ujat-volunteer-doc-screening__center-cell.ujat-volunteer-doc-screening__nowrap-cell {
   white-space: nowrap !important;
-  overflow: visible;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  overflow: hidden;
   text-overflow: clip;
   height: auto !important;
   min-height: 53px;
@@ -178,10 +210,15 @@
 
 .ujat-volunteer-doc-screening
   td.ujat-volunteer-doc-screening__nowrap-cell
+  .ant-table-cell-content,
+.ujat-volunteer-doc-screening
+  td.ujat-volunteer-doc-screening__center-cell.ujat-volunteer-doc-screening__nowrap-cell
   .ant-table-cell-content {
-  overflow: visible !important;
+  overflow: hidden !important;
   text-overflow: clip !important;
   white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
 }
 
 /* 서술형 1~4번: 헤더·본문 가운데 정렬, 잘림 방지 */
@@ -190,7 +227,7 @@
   box-sizing: border-box !important;
   text-align: center !important;
   vertical-align: middle !important;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .ujat-volunteer-doc-screening th.ujat-volunteer-doc-screening__essay-cell {
@@ -217,7 +254,7 @@
   width: 100%;
   max-width: 100%;
   text-align: center;
-  overflow: visible !important;
+  overflow: hidden !important;
   white-space: normal;
   word-break: break-word;
   overflow-wrap: anywhere;
@@ -241,7 +278,7 @@
   box-sizing: border-box !important;
   text-align: center !important;
   vertical-align: middle !important;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .ujat-volunteer-doc-screening th.ujat-volunteer-doc-screening__center-cell {
@@ -259,15 +296,44 @@
   width: 100%;
   max-width: 100%;
   text-align: center;
-  overflow: visible !important;
+  overflow: hidden !important;
   white-space: normal;
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
 
-/* 고정 열(성함) 직후 스크롤 열이 가려지지 않도록 */
-.ujat-volunteer-doc-screening .ant-table-cell-fix-left-last {
+/* 좌측 고정 열(선택·No.·성함): 스크롤·호버 시 본문 텍스트가 비치지 않도록 */
+.ujat-volunteer-doc-screening .ant-table-thead > tr > th.ant-table-cell-fix-left,
+.ujat-volunteer-doc-screening .ant-table-tbody > tr > td.ant-table-cell-fix-left {
+  z-index: 2;
+  background: var(--color-bg-base, #fff);
+}
+
+.ujat-volunteer-doc-screening .ant-table-thead > tr > th.ant-table-cell-fix-left-last,
+.ujat-volunteer-doc-screening .ant-table-tbody > tr > td.ant-table-cell-fix-left-last {
   z-index: 3;
+  background: var(--color-bg-base, #fff);
+}
+
+.ujat-volunteer-doc-screening .ant-table-thead > tr > th.ant-table-cell-fix-left {
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
+}
+
+.ujat-volunteer-doc-screening
+  .clickable-table
+  .ant-table-tbody
+  > tr.ant-table-row:hover:not(.ant-table-row-selected)
+  > td.ant-table-cell-fix-left,
+.ujat-volunteer-doc-screening
+  .clickable-table
+  .ant-table-tbody
+  > tr.ant-table-row:hover:not(.ant-table-row-selected)
+  > td.ant-table-cell-fix-left-last {
+  background: var(--ujat-doc-screening-row-hover-bg) !important;
 }
 
 /* 서술형 1~4번 컬럼 헤더 리사이즈 */
