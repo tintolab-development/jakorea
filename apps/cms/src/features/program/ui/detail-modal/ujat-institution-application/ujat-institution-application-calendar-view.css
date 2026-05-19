@@ -5,8 +5,33 @@
   gap: 16px;
   width: 100%;
   min-height: var(--ujat-institution-calendar-height);
-  align-items: stretch;
+  align-items: flex-start;
   margin-top: 0;
+}
+
+/**
+ * 풀페이지 모달 본문 스크롤 시 우측 일별 리스트만 고정(sticky).
+ * `detail-fullpage-modal__content` overflow-x: clip 연동 — `--page-scroll` 클래스.
+ */
+.ujat-institution-application-calendar-view--page-scroll {
+  --calendar-set-sticky-top: 16px;
+  /* 하단 여백 52px — 모달 __content padding-bottom 과 동일, sticky 높이 계산용만 */
+  --ujat-calendar-page-bottom-gap: var(--detail-fullpage-padding-bottom, 52px);
+}
+
+.ujat-institution-application-calendar-view--page-scroll .calendar-sub-right-list {
+  position: sticky;
+  top: var(--calendar-set-sticky-top);
+  align-self: flex-start;
+  flex-shrink: 0;
+  /* 뷰포트 하단 52px + 모달 헤더 여유 — 우측 리스트가 바닥에 붙지 않게 */
+  max-height: calc(
+    100dvh - var(--calendar-set-sticky-top) - var(--ujat-calendar-page-bottom-gap) - 88px
+  );
+  height: min(
+    736px,
+    calc(100dvh - var(--calendar-set-sticky-top) - var(--ujat-calendar-page-bottom-gap) - 88px)
+  );
 }
 
 /* 일별 툴팁 — 총 학급 수 | 학년별 상세 (목록 카드 2행째와 동일) */

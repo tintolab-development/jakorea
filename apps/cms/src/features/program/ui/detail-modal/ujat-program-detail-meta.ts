@@ -2,10 +2,32 @@
  * UJAT 프로그램 상세 LNB·설문·면접 분기용 메타 (mock)
  */
 
+import type { Program } from '@/types/domain'
+import {
+  findUjatRegistrationLocalSaveProgramById,
+  UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
+} from '@/features/program/lib/ujat-registration-local-save'
 import { mockUjatElementaryListProgramsMap } from '@/data/mock/ujat-programs-list-mock'
 
 export function isUjatProgramId(programId: string): boolean {
   return mockUjatElementaryListProgramsMap.has(programId)
+}
+
+/** UJAT 목록·상세 URL에 쓸 수 있는 프로그램 id (mock 7단계·로컬 등록 저장본) */
+export function isResolvableUjatProgramId(programId: string): boolean {
+  return (
+    isUjatProgramId(programId) ||
+    programId.startsWith(UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX) ||
+    findUjatRegistrationLocalSaveProgramById(programId) != null
+  )
+}
+
+/** 스토어 `programs` 로드 전에도 상세 모달 복원용 */
+export function resolveUjatProgramForDetail(programId: string): Program | undefined {
+  return (
+    mockUjatElementaryListProgramsMap.get(programId) ??
+    findUjatRegistrationLocalSaveProgramById(programId)
+  )
 }
 
 /** true면 봉사자 신청 LNB에 면접 단계(2·3뎁스) 노출 */

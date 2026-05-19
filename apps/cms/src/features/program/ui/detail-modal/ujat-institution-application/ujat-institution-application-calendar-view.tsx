@@ -184,7 +184,7 @@ export function UjatInstitutionApplicationCalendarView({
   }, [])
 
   return (
-    <div className="ujat-institution-application-calendar-view">
+    <div className="ujat-institution-application-calendar-view ujat-institution-application-calendar-view--page-scroll">
       <CalendarMain
         mode="month"
         hideModeToggle

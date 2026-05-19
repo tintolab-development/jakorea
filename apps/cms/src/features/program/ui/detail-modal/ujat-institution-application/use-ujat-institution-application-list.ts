@@ -120,6 +120,10 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
     setViewMode('table')
   }, [])
 
+  const refreshData = useCallback(() => {
+    setDataVersion(v => v + 1)
+  }, [])
+
   return {
     pendingFilters,
     handleFilterChange,
@@ -135,5 +139,6 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
     handleBulkTempReject,
     handleBulkTempAssign,
     resetRegionState,
+    refreshData,
   }
 }

@@ -1,5 +1,7 @@
 /**
  * UJAT 프로그램 상세 URL — `/programs/ujat?programId=…&lnb=…&tab=…`
+ * - `instAppId`: 신청 기관 상세(목록 행 id). 있으면 `lnb=institution_applications&tab=inst_all`로 정규화.
+ * - `edit`: 공통정보·모집 폼 수정 모드.
  */
 
 export type UjatDetailLnbKey =
@@ -23,6 +25,11 @@ export const UJAT_DETAIL_LNB_KEYS: readonly UjatDetailLnbKey[] = [
 
 const LNB_PARAM = 'lnb'
 const TAB_PARAM = 'tab'
+
+/** 신청 기관 목록 → 기관 상세 (풀페이지 메인) */
+export const UJAT_INST_APP_ID_PARAM = 'instAppId'
+
+export { LNB_PARAM as UJAT_DETAIL_LNB_PARAM, TAB_PARAM as UJAT_DETAIL_TAB_PARAM }
 
 export function buildUjatProgramDetailUrl(
   programId: string,
@@ -59,4 +66,8 @@ export function resolveUjatDetailLnbFromSearchParams(
 
 export function parseUjatDetailTab(searchParams: URLSearchParams): string | null {
   return searchParams.get(TAB_PARAM)
+}
+
+export function parseUjatInstAppId(searchParams: URLSearchParams): string | null {
+  return searchParams.get(UJAT_INST_APP_ID_PARAM)
 }

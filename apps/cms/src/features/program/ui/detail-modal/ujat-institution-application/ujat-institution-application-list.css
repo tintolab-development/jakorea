@@ -3,8 +3,18 @@
   min-width: 0;
 }
 
+/* 리스트(테이블) 뷰: 하단 52px = detail-fullpage-modal__content padding-bottom */
 .ujat-institution-application-list__filter-layout.filter-table-layout {
   margin-bottom: 0;
+}
+
+/* 캘린더 뷰: 스크롤 문서 끝 52px (margin-collapse·sticky 회피용 블록) */
+.ujat-institution-application-list__page-bottom-spacer {
+  display: block;
+  width: 100%;
+  height: var(--detail-fullpage-padding-bottom, 52px);
+  flex-shrink: 0;
+  pointer-events: none;
 }
 
 .ujat-institution-application-list__filter-layout .filter-table-layout__divider {
@@ -26,7 +36,9 @@
 }
 
 /* 열 너비 고정·텍스트 잘림 방지(ellipsis·fluid 자동 축소 미사용) */
-.ujat-institution-application-list__table-wrap .ujat-institution-application-list__table table.ant-table {
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table
+  table.ant-table {
   table-layout: fixed !important;
   width: max-content !important;
   min-width: 100%;

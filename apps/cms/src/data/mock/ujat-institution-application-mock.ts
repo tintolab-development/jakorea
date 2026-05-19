@@ -1,10 +1,17 @@
+import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '@/features/program/ui/detail-modal/ujat-institution-application/ujat-institution-application-regions'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ui/detail-modal/ujat-institution-application/ujat-institution-application-regions'
+import type { UjatInstitutionApplicationDetail } from '@/features/program/ui/detail-modal/ujat-institution-application/ujat-institution-application-detail-types'
 import type {
   UjatInstitutionApplicationRow,
   UjatInstitutionScheduleSlotKey,
   UjatInstitutionTempAssignmentStatus,
 } from '@/features/program/ui/detail-modal/ujat-institution-application/ujat-institution-application-types'
-import { UJAT_INSTITUTION_SCHEDULE_COLUMNS } from '@/features/program/ui/detail-modal/ujat-institution-application/ujat-institution-application-types'
+import {
+  UJAT_INSTITUTION_SCHEDULE_COLUMNS,
+  buildEmptyScheduleSlots,
+  formatUjatInstitutionFridayDisplay,
+  sumGradeClassCounts,
+} from '@/features/program/ui/detail-modal/ujat-institution-application/ujat-institution-application-types'
 
 const SEOUL_SCHOOLS = [
   '신사초등학교',
@@ -72,37 +79,65 @@ const STATUSES: UjatInstitutionTempAssignmentStatus[] = [
   'evaluation_pending',
 ]
 
-function randomScheduleSlots(seed: number): Record<UjatInstitutionScheduleSlotKey, 'O' | '-'> {
-  const slots = {} as Record<UjatInstitutionScheduleSlotKey, 'O' | '-'>
-  for (const col of UJAT_INSTITUTION_SCHEDULE_COLUMNS) {
-    slots[col.key] = (seed + col.key.length) % 3 === 0 ? 'O' : '-'
+const GRADE_BREAKDOWN_TEMPLATES: ReadonlyArray<
+  ReadonlyArray<{ gradeLabel: string; classCount: number }>
+> = [
+  [
+    { gradeLabel: '1학년', classCount: 4 },
+    { gradeLabel: '2학년', classCount: 7 },
+    { gradeLabel: '3학년', classCount: 5 },
+    { gradeLabel: '4학년', classCount: 1 },
+  ],
+  [
+    { gradeLabel: '2학년', classCount: 3 },
+    { gradeLabel: '3학년', classCount: 5 },
+    { gradeLabel: '5학년', classCount: 2 },
+  ],
+  [
+    { gradeLabel: '1학년', classCount: 2 },
+    { gradeLabel: '3학년', classCount: 4 },
+    { gradeLabel: '4학년', classCount: 3 },
+    { gradeLabel: '6학년', classCount: 6 },
+  ],
+  [
+    { gradeLabel: '1학년', classCount: 3 },
+    { gradeLabel: '2학년', classCount: 4 },
+    { gradeLabel: '5학년', classCount: 5 },
+    { gradeLabel: '6학년', classCount: 5 },
+  ],
+  [
+    { gradeLabel: '3학년', classCount: 8 },
+    { gradeLabel: '4학년', classCount: 6 },
+  ],
+  [
+    { gradeLabel: '1학년', classCount: 5 },
+    { gradeLabel: '2학년', classCount: 5 },
+    { gradeLabel: '3학년', classCount: 5 },
+    { gradeLabel: '4학년', classCount: 2 },
+  ],
+]
+
+const SCHEDULE_SLOT_KEYS = UJAT_INSTITUTION_SCHEDULE_COLUMNS.map(col => col.key)
+
+function buildGradeBreakdown(seed: number) {
+  return [...GRADE_BREAKDOWN_TEMPLATES[seed % GRADE_BREAKDOWN_TEMPLATES.length]]
+}
+
+/** 기관이 신청한 금요일만 O, 나머지 교육 일자 열은 - */
+function buildAppliedScheduleSlots(seed: number): Record<UjatInstitutionScheduleSlotKey, 'O' | '-'> {
+  const slots = buildEmptyScheduleSlots()
+  const applyCount = 2 + (seed % 4)
+  for (let i = 0; i < applyCount; i += 1) {
+    const key = SCHEDULE_SLOT_KEYS[(seed + i * 3) % SCHEDULE_SLOT_KEYS.length]
+    slots[key] = 'O'
   }
   return slots
 }
 
-function buildGradeBreakdown(seed: number) {
-  const templates = [
-    [
-      { gradeLabel: '1학년', classCount: 4 },
-      { gradeLabel: '2학년', classCount: 6 },
-      { gradeLabel: '3학년', classCount: 1 },
-      { gradeLabel: '6학년', classCount: 6 },
-    ],
-    [
-      { gradeLabel: '2학년', classCount: 3 },
-      { gradeLabel: '4학년', classCount: 5 },
-      { gradeLabel: '5학년', classCount: 2 },
-    ],
-    [
-      { gradeLabel: '1학년', classCount: 2 },
-      { gradeLabel: '3학년', classCount: 4 },
-      { gradeLabel: '4학년', classCount: 3 },
-    ],
-  ]
-  return templates[seed % templates.length]
-}
-
 function schoolNameForRegion(region: UjatInstitutionApplicationRegionKey, index: number): string {
+  if (region === 'gwangju' && index === 0) {
+    return '진월초등학교'
+  }
   if (region === 'seoul' && index < SEOUL_SCHOOLS.length) {
     return SEOUL_SCHOOLS[index]
   }
@@ -110,22 +145,116 @@ function schoolNameForRegion(region: UjatInstitutionApplicationRegionKey, index:
   return `${prefix}${['가락', '문정', '잠실', '풍납', '중곡', '화곡'][index % 6]}초등학교`
 }
 
+const DEFAULT_CLASS_TIME_ROWS: UjatInstitutionApplicationDetail['classTimeRows'] = [
+  {
+    gradeRangeLabel: '1, 2, 3학년',
+    periods: ['09:00 ~ 09:40', '09:50 ~ 10:30', '10:40 ~ 11:20', '12:10 ~ 12:50'],
+  },
+  {
+    gradeRangeLabel: '4, 5, 6학년',
+    periods: ['09:00 ~ 09:40', '09:50 ~ 10:30', '10:40 ~ 11:20', '11:30 ~ 12:10'],
+  },
+]
+
+const JINWOL_DETAIL_FIXTURE: Omit<
+  UjatInstitutionApplicationDetail,
+  'institutionName' | 'regionLabel' | 'tempAssignmentStatus' | 'preferredEducationDates'
+> = {
+  address: '광주광역시 남구 광복마을4길 40',
+  addressDetail: '1층 교무실 이길동 선생님 앞',
+  teacherInfoMasked:
+    '담당 교사 : 이길동 | Tel : 062-***-0000 | M : 010-****-0000 | E-mail : ti***@naver.com',
+  teacherInfoRevealed:
+    '담당 교사 : 이길동 | Tel : 062-123-0000 | M : 010-1234-0000 | E-mail : teacher@naver.com',
+  otherRequests: '-',
+  gradeBlocks: [
+    {
+      gradeLabel: '1학년',
+      classCount: 8,
+      classes: [
+        { classNo: 1, studentCount: 28 },
+        { classNo: 2, studentCount: 28 },
+        { classNo: 3, studentCount: 28 },
+        { classNo: 4, studentCount: 28 },
+        { classNo: 5, studentCount: 28 },
+        { classNo: 6, studentCount: 28 },
+        { classNo: 7, studentCount: 28 },
+        { classNo: 8, studentCount: 24 },
+      ],
+    },
+    {
+      gradeLabel: '2학년',
+      classCount: 4,
+      classes: [
+        { classNo: 1, studentCount: 28 },
+        { classNo: 2, studentCount: 28 },
+        { classNo: 3, studentCount: 28 },
+        { classNo: 4, studentCount: 22 },
+      ],
+    },
+  ],
+  classTimeRows: DEFAULT_CLASS_TIME_ROWS,
+}
+
+function regionLabelForKey(regionKey: UjatInstitutionApplicationRegionKey): string {
+  return (
+    UJAT_INSTITUTION_APPLICATION_REGIONS.find(r => r.key === regionKey)?.label ??
+    regionKey
+  )
+}
+
+function buildTeacherInfo(teacherName: string, revealed: boolean): string {
+  if (revealed) {
+    return `담당 교사 : ${teacherName} | Tel : 02-123-4567 | M : 010-1234-5678 | E-mail : ${teacherName.slice(0, 1)}***@school.go.kr`
+  }
+  return `담당 교사 : ${teacherName} | Tel : 02-***-4567 | M : 010-****-5678 | E-mail : ${teacherName.slice(0, 1)}***@school.go.kr`
+}
+
+function buildGradeBlocksFromRow(
+  row: UjatInstitutionApplicationRow,
+  seed: number
+): UjatInstitutionApplicationDetail['gradeBlocks'] {
+  return row.gradeClassCounts.map((grade, gradeIndex) => {
+    const classes = Array.from({ length: grade.classCount }, (_, classIndex) => ({
+      classNo: classIndex + 1,
+      studentCount: 28 - ((seed + gradeIndex + classIndex) % 5),
+    }))
+    return {
+      gradeLabel: grade.gradeLabel,
+      classCount: grade.classCount,
+      classes,
+    }
+  })
+}
+
+function preferredDatesFromSlots(
+  slots: UjatInstitutionApplicationRow['scheduleSlots']
+): string[] {
+  return UJAT_INSTITUTION_SCHEDULE_COLUMNS.filter(col => slots[col.key] === 'O').map(col =>
+    formatUjatInstitutionFridayDisplay(col.isoDate)
+  )
+}
+
 function buildRowsForRegion(
   region: UjatInstitutionApplicationRegionKey,
   count: number
 ): UjatInstitutionApplicationRow[] {
   return Array.from({ length: count }, (_, i) => {
-    const gradeClassCounts = buildGradeBreakdown(i + region.length)
-    const totalClassCount = gradeClassCounts.reduce((sum, g) => sum + g.classCount, 0)
+    const seed = i + region.length
+    const gradeClassCounts = buildGradeBreakdown(seed)
+    const totalClassCount = sumGradeClassCounts(gradeClassCounts)
     return {
       id: `${region}-${i + 1}`,
       regionKey: region,
       no: count - i,
       institutionName: schoolNameForRegion(region, i),
-      tempAssignmentStatus: STATUSES[(i + region.length) % STATUSES.length],
+      tempAssignmentStatus:
+        region === 'gwangju' && i === 0
+          ? 'evaluation_pending'
+          : STATUSES[seed % STATUSES.length],
       gradeClassCounts,
       totalClassCount,
-      scheduleSlots: randomScheduleSlots(i + region.length * 3),
+      scheduleSlots: buildAppliedScheduleSlots(seed * 5),
       teacherName: TEACHERS[i % TEACHERS.length],
     }
   })
@@ -180,4 +309,45 @@ export function patchUjatInstitutionApplicationRows(
   mockRows = ensureMockRows().map(row =>
     set.has(row.id) ? { ...row, tempAssignmentStatus: status } : row
   )
+}
+
+export function getUjatInstitutionApplicationDetail(
+  row: UjatInstitutionApplicationRow
+): UjatInstitutionApplicationDetail {
+  const regionLabel = regionLabelForKey(row.regionKey)
+  const preferredEducationDates = preferredDatesFromSlots(row.scheduleSlots)
+  const seed = row.id.length + row.no
+
+  if (row.institutionName === '진월초등학교') {
+    return {
+      institutionName: row.institutionName,
+      regionLabel,
+      tempAssignmentStatus: row.tempAssignmentStatus,
+      preferredEducationDates:
+        preferredEducationDates.length > 0
+          ? preferredEducationDates
+          : [
+              '26년 4월 24일(금)',
+              '26년 5월 8일(금)',
+              '26년 10월 30일(금)',
+              '26년 11월 20일(금)',
+            ],
+      ...JINWOL_DETAIL_FIXTURE,
+    }
+  }
+
+  const teacherName = row.teacherName
+  return {
+    institutionName: row.institutionName,
+    regionLabel,
+    tempAssignmentStatus: row.tempAssignmentStatus,
+    address: `${regionLabel}광역시 ${row.institutionName.replace(/초등학교$/, '')}구 mock 주소`,
+    addressDetail: '상세 주소 mock',
+    teacherInfoMasked: buildTeacherInfo(teacherName, false),
+    teacherInfoRevealed: buildTeacherInfo(teacherName, true),
+    otherRequests: '-',
+    gradeBlocks: buildGradeBlocksFromRow(row, seed),
+    classTimeRows: DEFAULT_CLASS_TIME_ROWS,
+    preferredEducationDates,
+  }
 }

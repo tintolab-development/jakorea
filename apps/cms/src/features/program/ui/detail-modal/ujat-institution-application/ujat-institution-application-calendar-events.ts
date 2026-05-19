@@ -1,22 +1,5 @@
-import type {
-  UjatInstitutionApplicationRow,
-  UjatInstitutionScheduleSlotKey,
-} from './ujat-institution-application-types'
+import type { UjatInstitutionApplicationRow } from './ujat-institution-application-types'
 import { UJAT_INSTITUTION_SCHEDULE_COLUMNS } from './ujat-institution-application-types'
-
-const SLOT_TO_ISO_DATE: Record<UjatInstitutionScheduleSlotKey, string> = {
-  apr03: '2026-04-03',
-  apr17: '2026-04-17',
-  apr24: '2026-04-24',
-  may01: '2026-05-01',
-  may08: '2026-05-08',
-  may15: '2026-05-15',
-  may22: '2026-05-22',
-  may29: '2026-05-29',
-  jun05: '2026-06-05',
-  jun12: '2026-06-12',
-  jun19: '2026-06-19',
-}
 
 export type UjatInstitutionCalendarOriginalItem = UjatInstitutionApplicationRow & {
   schoolName: string
@@ -60,7 +43,7 @@ export function buildUjatInstitutionApplicationCalendarEvents(
   for (const row of rows) {
     for (const col of UJAT_INSTITUTION_SCHEDULE_COLUMNS) {
       if (row.scheduleSlots[col.key] !== 'O') continue
-      const dateIso = SLOT_TO_ISO_DATE[col.key]
+      const dateIso = col.isoDate
       events.push({
         id: `${row.id}-${col.key}`,
         title: row.institutionName,

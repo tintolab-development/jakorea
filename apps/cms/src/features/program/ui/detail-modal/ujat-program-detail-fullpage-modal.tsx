@@ -2,7 +2,7 @@
  * UJAT 프로그램 상세 풀페이지 모달 — `/programs/ujat?programId=…&lnb=…&tab=…`
  */
 
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -15,9 +15,16 @@ import { handleError } from '@/shared/utils/error-handler'
 import { ProjectInfoDetailPanels } from '../../program-detail/ui/project-info/project-info-detail'
 import { ProgramManagersTab } from '../program-managers-tab'
 import { UjatInstitutionApplicationList } from './ujat-institution-application/ujat-institution-application-list'
+import { UjatInstitutionApplicationDetailPage } from './ujat-institution-application/ujat-institution-application-detail-page'
 import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
 import type { Program } from '@/types/domain'
-import { parseUjatDetailLnb, resolveUjatDetailLnbFromSearchParams, type UjatDetailLnbKey } from './ujat-program-detail-url'
+import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
+import {
+  parseUjatDetailLnb,
+  resolveUjatDetailLnbFromSearchParams,
+  UJAT_INST_APP_ID_PARAM,
+  type UjatDetailLnbKey,
+} from './ujat-program-detail-url'
 import {
   getUjatSurveyMenuItemsForProgram,
   getUjatVolunteerInterviewEnabled,
@@ -78,21 +85,48 @@ function isVolunteerTabValidForLnb(
   if (!tab.startsWith(`${prefix}_`)) return false
   if (!interview) return tab === `${prefix}_all`
   return (
-    tab === `${prefix}_doc1` ||
-    tab === `${prefix}_doc_passed` ||
-    tab === `${prefix}_interview2`
+    tab === `${prefix}_doc1` || tab === `${prefix}_doc_passed` || tab === `${prefix}_interview2`
   )
 }
 
-function defaultVolunteerTabForLnb(lnb: 'volunteer_h1' | 'volunteer_h2', interview: boolean): string {
+function defaultVolunteerTabForLnb(
+  lnb: 'volunteer_h1' | 'volunteer_h2',
+  interview: boolean
+): string {
   return defaultVolunteerTab(interview, lnb === 'volunteer_h1' ? 'h1' : 'h2')
+}
+
+function defaultTabForLnb(
+  lnb: UjatDetailLnbKey,
+  interview: boolean,
+  surveyKeys: string[]
+): string {
+  switch (lnb) {
+    case 'info':
+      return 'info'
+    case 'institution_applications':
+      return 'inst_all'
+    case 'volunteer_h1':
+      return defaultVolunteerTabForLnb('volunteer_h1', interview)
+    case 'volunteer_h2':
+      return defaultVolunteerTabForLnb('volunteer_h2', interview)
+    case 'education_progress':
+      return defaultEducationProgressTabForHalf('h1')
+    case 'survey':
+      return surveyKeys[0] ?? 'survey-poll'
+    case 'managers':
+      return 'main'
+    default:
+      return 'info'
+  }
 }
 
 function normalizeUjatDetailParams(
   programId: string,
   searchParams: URLSearchParams,
   interview: boolean,
-  surveyKeys: string[]
+  surveyKeys: string[],
+  validInstAppIds: ReadonlySet<string>
 ): URLSearchParams | null {
   const next = new URLSearchParams(searchParams)
   next.set('programId', programId)
@@ -106,9 +140,23 @@ function normalizeUjatDetailParams(
       : (parseUjatDetailLnb(searchParams) ?? 'info')
   let tab = searchParams.get(TAB_PARAM) ?? ''
 
+  const instAppIdRaw = searchParams.get(UJAT_INST_APP_ID_PARAM)
+  if (instAppIdRaw) {
+    if (!validInstAppIds.has(instAppIdRaw)) {
+      next.delete(UJAT_INST_APP_ID_PARAM)
+    } else {
+      lnb = 'institution_applications'
+      tab = 'inst_all'
+    }
+  }
+
   const setInvalid = (l: UjatDetailLnbKey, t: string) => {
     lnb = l
     tab = t
+  }
+
+  if (tab === '') {
+    tab = defaultTabForLnb(lnb, interview, surveyKeys)
   }
 
   if (lnb === 'info') {
@@ -143,6 +191,9 @@ function normalizeUjatDetailParams(
 
   if (next.get(LNB_PARAM) !== lnb) next.set(LNB_PARAM, lnb)
   if (next.get(TAB_PARAM) !== tab) next.set(TAB_PARAM, tab)
+  if (instAppIdRaw && validInstAppIds.has(instAppIdRaw)) {
+    next.set(UJAT_INST_APP_ID_PARAM, instAppIdRaw)
+  }
   const before = searchParams.toString()
   const after = next.toString()
   if (before === after) return null
@@ -207,10 +258,46 @@ export function UjatProgramDetailFullPageModal({
     [programId]
   )
   const surveyKeys = useMemo(() => surveyItems.map(s => s.key), [surveyItems])
+  const [institutionListVersion, setInstitutionListVersion] = useState(0)
 
-  const activeLnb: UjatDetailLnbKey = open ? (resolveUjatDetailLnbFromSearchParams(searchParams) ?? 'info') : 'info'
-  const rawTab = open ? (searchParams.get(TAB_PARAM) ?? 'info') : 'info'
-  const activeTab = open && rawTab !== 'info' && isUjatRecruitTab(rawTab) ? normalizeUjatRecruitTab(rawTab) : rawTab
+  const activeLnb: UjatDetailLnbKey = open
+    ? (resolveUjatDetailLnbFromSearchParams(searchParams) ?? 'info')
+    : 'info'
+
+  const validInstAppIds = useMemo(
+    () => new Set(getUjatInstitutionApplicationMockRows().map(row => row.id)),
+    [institutionListVersion]
+  )
+
+  const institutionApplicationId = open
+    ? searchParams.get(UJAT_INST_APP_ID_PARAM)
+    : null
+  const institutionDetailId =
+    institutionApplicationId && validInstAppIds.has(institutionApplicationId)
+      ? institutionApplicationId
+      : null
+
+  const institutionDetailName = useMemo(() => {
+    if (!institutionDetailId) return null
+    return (
+      getUjatInstitutionApplicationMockRows().find(row => row.id === institutionDetailId)
+        ?.institutionName ?? null
+    )
+  }, [institutionDetailId, institutionListVersion])
+
+  const activeTab = useMemo(() => {
+    if (!open) return 'info'
+    const rawTab = searchParams.get(TAB_PARAM)
+    const resolved =
+      rawTab && rawTab.length > 0
+        ? rawTab
+        : defaultTabForLnb(activeLnb, interviewEnabled, surveyKeys)
+    if (activeLnb === 'info' && isUjatRecruitTab(resolved)) {
+      return normalizeUjatRecruitTab(resolved)
+    }
+    return resolved
+  }, [open, searchParams, activeLnb, interviewEnabled, surveyKeys])
+
   const activeRecruitTab: UjatRecruitTabKey | null =
     activeLnb === 'info' && isUjatRecruitTab(activeTab) ? (activeTab as UjatRecruitTabKey) : null
 
@@ -222,10 +309,39 @@ export function UjatProgramDetailFullPageModal({
       programId,
       searchParams,
       interviewEnabled,
-      surveyKeys
+      surveyKeys,
+      validInstAppIds
     )
     if (normalized) setSearchParams(normalized, { replace: true })
-  }, [open, programId, interviewEnabled, surveyKeysJoined, searchParams, setSearchParams, surveyKeys])
+  }, [
+    open,
+    programId,
+    interviewEnabled,
+    surveyKeysJoined,
+    searchParams,
+    setSearchParams,
+    surveyKeys,
+    validInstAppIds,
+    institutionListVersion,
+  ])
+
+  const setInstitutionApplicationId = useCallback(
+    (id: string | null) => {
+      if (!programId) return
+      const next = new URLSearchParams(searchParams)
+      next.set('programId', programId)
+      if (id) {
+        next.set(UJAT_INST_APP_ID_PARAM, id)
+        next.set(LNB_PARAM, 'institution_applications')
+        next.set(TAB_PARAM, 'inst_all')
+      } else {
+        next.delete(UJAT_INST_APP_ID_PARAM)
+      }
+      next.delete(EDIT_PARAM)
+      setSearchParams(next, { replace: true })
+    },
+    [programId, searchParams, setSearchParams]
+  )
 
   const setLnbTab = useCallback(
     (lnb: UjatDetailLnbKey, tab: string) => {
@@ -235,6 +351,9 @@ export function UjatProgramDetailFullPageModal({
       next.set(LNB_PARAM, lnb)
       next.set(TAB_PARAM, tab)
       next.delete(EDIT_PARAM)
+      if (lnb !== 'institution_applications' || tab !== 'inst_all') {
+        next.delete(UJAT_INST_APP_ID_PARAM)
+      }
       setSearchParams(next, { replace: true })
     },
     [programId, searchParams, setSearchParams]
@@ -382,6 +501,7 @@ export function UjatProgramDetailFullPageModal({
       next.set(LNB_PARAM, 'info')
       next.set(TAB_PARAM, tab)
       next.delete(EDIT_PARAM)
+      next.delete(UJAT_INST_APP_ID_PARAM)
       setSearchParams(next, { replace: true })
     },
     [programId, searchParams, setSearchParams]
@@ -396,8 +516,15 @@ export function UjatProgramDetailFullPageModal({
       setSearchParams(next, { replace: true })
       return
     }
-    const recruitEditKeys = ['recruit_participant', 'recruit_volunteer_h1', 'recruit_volunteer_h2'] as const
-    if ((recruitEditKeys as readonly string[]).includes(editTab) && !canUjatProgramInfoEdit(displayProgram)) {
+    const recruitEditKeys = [
+      'recruit_participant',
+      'recruit_volunteer_h1',
+      'recruit_volunteer_h2',
+    ] as const
+    if (
+      (recruitEditKeys as readonly string[]).includes(editTab) &&
+      !canUjatProgramInfoEdit(displayProgram)
+    ) {
       const next = new URLSearchParams(searchParams)
       next.delete(EDIT_PARAM)
       if (programId) next.set('programId', programId)
@@ -441,20 +568,47 @@ export function UjatProgramDetailFullPageModal({
     next.delete(LNB_PARAM)
     next.delete(TAB_PARAM)
     next.delete(EDIT_PARAM)
-    navigate({ pathname: location.pathname, search: next.toString() ? `?${next}` : '' }, {
-      replace: true,
-    })
+    next.delete(UJAT_INST_APP_ID_PARAM)
+    navigate(
+      { pathname: location.pathname, search: next.toString() ? `?${next}` : '' },
+      {
+        replace: true,
+      }
+    )
   }, [location.pathname, navigate, onClose, searchParams])
+
+  const handleHeaderCloseClick = useCallback(() => {
+    if (institutionDetailId) {
+      setInstitutionApplicationId(null)
+      return
+    }
+    handleClose()
+  }, [institutionDetailId, handleClose, setInstitutionApplicationId])
 
   if (!open) return null
 
-  const title = displayProgram?.title ?? '프로그램 상세'
+  const programTitle = displayProgram?.title ?? '프로그램 상세'
+  const title = institutionDetailName ? `신청 기관 상세 (${institutionDetailName})` : programTitle
+
+  const institutionDetailBreadcrumb =
+    institutionDetailName != null
+      ? `프로그램 목록 > ${programTitle} > 신청 기관 목록 > ${institutionDetailName}`
+      : null
 
   return (
     <DetailFullPageModal
       open={open}
       onClose={handleClose}
+      onHeaderClose={handleHeaderCloseClick}
       title={title}
+      closeAriaLabel={institutionDetailId ? '목록으로' : '닫기'}
+      headerExtra={
+        institutionDetailBreadcrumb ? (
+          <p style={{ color: '#8c8c8c', fontSize: 14, lineHeight: '150%', margin: 0 }}>
+            {institutionDetailBreadcrumb}
+          </p>
+        ) : undefined
+      }
       className="program-detail-fullpage-modal ujat-program-detail-fullpage-modal"
       sidebar={
         programId ? (
@@ -544,20 +698,31 @@ export function UjatProgramDetailFullPageModal({
             </div>
           )}
 
-          {activeLnb === 'institution_applications' && activeTab === 'inst_all' && (
-            <UjatInstitutionApplicationList />
-          )}
+          {activeLnb === 'institution_applications' &&
+            activeTab === 'inst_all' &&
+            (institutionDetailId ? (
+              <UjatInstitutionApplicationDetailPage
+                institutionId={institutionDetailId}
+                onBack={() => setInstitutionApplicationId(null)}
+                onStatusUpdated={() => setInstitutionListVersion(v => v + 1)}
+              />
+            ) : (
+              <UjatInstitutionApplicationList
+                key={institutionListVersion}
+                onOpenDetail={row => setInstitutionApplicationId(row.id)}
+              />
+            ))}
           {activeLnb === 'institution_applications' &&
             (activeTab === 'inst_schedule_confirm' || activeTab === 'inst_schedule_assign') && (
-            <UjatPlaceholderSection
-              title={institutionAppScreenTitle(activeTab)}
-              description={
-                activeTab === 'inst_schedule_assign'
-                  ? '신청 기관에 대한 임시 교육 배정을 진행합니다.'
-                  : '임시 배정이 완료된 기관을 대상으로 배정 내용을 확인합니다.'
-              }
-            />
-          )}
+              <UjatPlaceholderSection
+                title={institutionAppScreenTitle(activeTab)}
+                description={
+                  activeTab === 'inst_schedule_assign'
+                    ? '신청 기관에 대한 임시 교육 배정을 진행합니다.'
+                    : '임시 배정이 완료된 기관을 대상으로 배정 내용을 확인합니다.'
+                }
+              />
+            )}
 
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
             (activeTab === 'vh1_doc1' || activeTab === 'vh2_doc1') && (
@@ -575,8 +740,7 @@ export function UjatProgramDetailFullPageModal({
               />
             )}
 
-          {activeLnb === 'education_progress' &&
-            /^edu_h[12]_institutions$/.test(activeTab) && (
+          {activeLnb === 'education_progress' && /^edu_h[12]_institutions$/.test(activeTab) && (
             <div className="program-detail-fullpage-modal__info-tab">
               <ParticipatingInstitutionsSection
                 programId={displayProgram.id}

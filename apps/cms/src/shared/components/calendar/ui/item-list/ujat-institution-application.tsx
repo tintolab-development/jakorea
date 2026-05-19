@@ -1,5 +1,5 @@
 import { Checkbox } from 'antd'
-import { UjatInstitutionApplicationStatusBadge } from './ujat-institution-application-status-badge'
+import { UjatInstitutionApplicationCalendarStatusBadge } from './ujat-institution-application-calendar-status-badge'
 import './ujat-institution-application-list-item.css'
 
 export type CalendarInstitutionApplicationListRow = {
@@ -34,7 +34,10 @@ export function CalendarListItemContentInstitutionApplication({
           <span className="ujat-institution-application-list-item__title-divider" aria-hidden>
             |
           </span>
-          <UjatInstitutionApplicationStatusBadge statusKey={row.statusKey} label={row.statusLabel} />
+          <UjatInstitutionApplicationCalendarStatusBadge
+            statusKey={row.statusKey}
+            label={row.statusLabel}
+          />
         </div>
         <div className="ujat-institution-application-list-item__meta">
           <span className="ujat-institution-application-list-item__meta-total">

@@ -1,4 +1,4 @@
-.ujat-institution-application-status-badge {
+.ujat-institution-application-calendar-status-badge {
   box-sizing: border-box;
   display: inline-flex;
   width: 68px;
@@ -20,15 +20,15 @@
   white-space: nowrap;
 }
 
-.ujat-institution-application-status-badge--temp_assigned {
+.ujat-institution-application-calendar-status-badge--temp_assigned {
   color: rgba(61, 61, 61, 0.8);
 }
 
-.ujat-institution-application-status-badge--temp_rejected,
-.ujat-institution-application-status-badge--application_rejected {
+.ujat-institution-application-calendar-status-badge--temp_rejected,
+.ujat-institution-application-calendar-status-badge--application_rejected {
   color: var(--color-red, #c32f4a);
 }
 
-.ujat-institution-application-status-badge--evaluation_pending {
+.ujat-institution-application-calendar-status-badge--evaluation_pending {
   color: var(--color-green, #1e8c29);
 }

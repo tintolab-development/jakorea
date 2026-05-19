@@ -59,6 +59,13 @@
 
 도메인 예: UJAT 기관 — `item-list/ujat-institution-application.tsx` (내부 레이아웃만), shell은 리스트에서 `calendar-list-item`으로 감쌈.
 
+### 풀페이지 모달에서 페이지 스크롤 + 우측 리스트 고정
+
+- 캘린더 뷰 루트에 `ujat-institution-application-calendar-view--page-scroll` (또는 동일 패턴의 `--no-inner-scroll` 래퍼).
+- `detail-fullpage-modal__content`가 `overflow-x: hidden`이면 `position: sticky`가 깨짐 → `:has(...--page-scroll)` 시 `overflow-x: clip` (`detail-fullpage-modal.css`, 강사 정산 캘린더와 동일).
+- `.calendar-sub-right-list`에 `position: sticky`, `top: var(--calendar-set-sticky-top)`, `align-items: flex-start` 부모.
+- 하단 여백 52px: 테이블 → `detail-fullpage-modal__content` `padding-bottom`. 캘린더 → `__content` `padding-bottom: 0` + `ujat-institution-application-list__page-bottom-spacer`(52px 블록). sticky `max-height`에서 52px 차감.
+
 ---
 
 ## 금지

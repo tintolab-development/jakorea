@@ -8,5 +8,5 @@
 @import './calendar-preview.css';
 @import './calendar-sub-right.css';
 @import '../ui/item-list/ujat-institution-application-list-item.css';
-@import '../ui/item-list/ujat-institution-application-status-badge.css';
+@import '../ui/item-list/ujat-institution-application-calendar-status-badge.css';
 @import './calendar-sub-left.css';

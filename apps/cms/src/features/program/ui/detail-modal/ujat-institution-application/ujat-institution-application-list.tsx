@@ -14,7 +14,11 @@ import type { UjatInstitutionApplicationRow } from './ujat-institution-applicati
 import { useUjatInstitutionApplicationList } from './use-ujat-institution-application-list'
 import './ujat-institution-application-list.css'
 
-export function UjatInstitutionApplicationList() {
+export function UjatInstitutionApplicationList({
+  onOpenDetail,
+}: {
+  onOpenDetail: (row: UjatInstitutionApplicationRow) => void
+}) {
   const [activeRegion, setActiveRegion] =
     useState<UjatInstitutionApplicationRegionKey>('seoul')
   const {
@@ -33,7 +37,6 @@ export function UjatInstitutionApplicationList() {
     handleBulkTempAssign,
     resetRegionState,
   } = useUjatInstitutionApplicationList(activeRegion)
-
   useEffect(() => {
     resetRegionState()
   }, [activeRegion, resetRegionState])
@@ -121,7 +124,7 @@ export function UjatInstitutionApplicationList() {
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
               }}
-              onRow={() => ({
+              onRow={record => ({
                 onClick: e => {
                   const target = e.target as HTMLElement
                   if (
@@ -130,7 +133,9 @@ export function UjatInstitutionApplicationList() {
                   ) {
                     return
                   }
+                  onOpenDetail(record)
                 },
+                style: { cursor: 'pointer' },
               })}
             />
           </div>
@@ -142,6 +147,10 @@ export function UjatInstitutionApplicationList() {
           />
         )}
       </FilterTableLayout>
+      {viewMode === 'calendar' ? (
+        <div className="ujat-institution-application-list__page-bottom-spacer" aria-hidden />
+      ) : null}
+
     </div>
   )
 }

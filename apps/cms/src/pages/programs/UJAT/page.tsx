@@ -11,7 +11,12 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useProgramStore } from '@/features/program/model/program-store'
 import { getCapacity } from '@/features/program/lib/program-helpers'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
+import { UJAT_INST_APP_ID_PARAM } from '@/features/program/ui/detail-modal/ujat-program-detail-url'
 import { getUjatPrograms } from '@/data/mock/program-schedule-categories'
+import {
+  isResolvableUjatProgramId,
+  resolveUjatProgramForDetail,
+} from '@/features/program/ui/detail-modal/ujat-program-detail-meta'
 import type { Program } from '@/types/domain'
 import { FilterTableLayout, CmsButton } from '@/shared/ui'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
@@ -169,21 +174,26 @@ function UjatProgramListPageContent() {
   const programIdFromUrl = searchParams.get('programId')
   const ujatDetailModalOpen =
     Boolean(programIdFromUrl) && !searchParams.has(PROGRAMS_UJAT_NEW_QUERY_KEY)
-  const ujatDetailProgram = useMemo(
-    () => (programIdFromUrl ? programs.find(p => p.id === programIdFromUrl) : undefined),
-    [programIdFromUrl, programs]
-  )
+  const ujatDetailProgram = useMemo(() => {
+    if (!programIdFromUrl) return undefined
+    return (
+      programs.find(p => p.id === programIdFromUrl) ??
+      resolveUjatProgramForDetail(programIdFromUrl)
+    )
+  }, [programIdFromUrl, programs])
 
   useEffect(() => {
-    if (!programIdFromUrl || loading) return
-    if (!programs.some(p => p.id === programIdFromUrl)) {
-      const next = new URLSearchParams(searchParams)
-      next.delete('programId')
-      next.delete('lnb')
-      next.delete('tab')
-      next.delete('edit')
-      setSearchParams(next, { replace: true })
-    }
+    if (!programIdFromUrl) return
+    if (isResolvableUjatProgramId(programIdFromUrl)) return
+    if (loading) return
+    if (programs.some(p => p.id === programIdFromUrl)) return
+    const next = new URLSearchParams(searchParams)
+    next.delete('programId')
+    next.delete('lnb')
+    next.delete('tab')
+    next.delete('edit')
+    next.delete(UJAT_INST_APP_ID_PARAM)
+    setSearchParams(next, { replace: true })
   }, [programIdFromUrl, loading, programs, searchParams, setSearchParams])
 
   const ujatPrograms = useMemo(
