@@ -1,0 +1,24 @@
+/* 탭 그룹 왼쪽 여백 — 권한 승인 페이지와 동일 */
+.gemini-visiting-training-page__tabs.ant-tabs > .ant-tabs-nav {
+  padding-left: 20px;
+}
+
+.gemini-visiting-training-page__tabs.ant-tabs .ant-tabs-tab {
+  color: #7d7d7d;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.gemini-visiting-training-page__tabs.ant-tabs .ant-tabs-tab-btn {
+  font: inherit;
+}
+
+.gemini-visiting-training-page__tabs.ant-tabs > .ant-tabs-nav::before {
+  border-bottom: none;
+}
+
+.gemini-visiting-training-page__approved-placeholder {
+  min-height: 320px;
+}

@@ -26,13 +26,21 @@ export function Sidebar() {
     const keys: string[] = []
 
     // ADMIN: 프로그램 관리 그룹 (/programs/education, /programs/:id 등)
+    const isGeminiProgramScope =
+      user?.role === 'ADMIN' &&
+      (path === '/education-records' || path.startsWith('/programs/gemini'))
     const isProgramMgmt =
       user?.role === 'ADMIN' &&
-      path.startsWith('/programs') &&
-      !path.startsWith('/programs/my') &&
-      !path.startsWith('/programs/favorites')
+      ((path.startsWith('/programs') &&
+        !path.startsWith('/programs/my') &&
+        !path.startsWith('/programs/favorites')) ||
+        isGeminiProgramScope)
     if (isProgramMgmt) {
       keys.push('programs-group')
+    }
+
+    if (isGeminiProgramScope) {
+      keys.push('gemini-program-group')
     }
 
     if (user?.role === 'ADMIN' && path.startsWith('/templates')) {

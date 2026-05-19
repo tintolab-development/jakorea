@@ -34,17 +34,6 @@
   min-width: 0;
 }
 
-.alert-modal.content-modal .teal-header-modal__body {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  align-self: stretch;
-  width: 100%;
-  gap: 0;
-  padding-top: 30px;
-  box-sizing: border-box;
-}
-
 /* TealHeaderModal 푸터 기본이 center라 버튼만 좁게 잡히면 가운데로 보임 → 전폭 + 우측 정렬 */
 .alert-modal.content-modal .teal-header-modal__footer {
   width: 100%;
