@@ -6,10 +6,6 @@
   box-sizing: border-box;
 }
 
-.ujat-volunteer-interview2__inner-tabs {
-  margin-bottom: 32px;
-}
-
 .filter-table-layout.ujat-volunteer-interview2__filter-layout {
   --filter-field-gap: 12px;
   --table-filter-field-gap: 12px;
@@ -155,24 +151,3 @@
   min-width: 0;
 }
 
-.ujat-volunteer-interview2__placeholder {
-  padding: 24px 8px;
-}
-
-.ujat-volunteer-interview2__placeholder-title {
-  margin: 0 0 8px;
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 140%;
-}
-
-.ujat-volunteer-interview2__placeholder-desc {
-  margin: 0;
-  color: var(--sub-BK, #767676);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 150%;
-}

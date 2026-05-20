@@ -14,20 +14,12 @@ import './ujat-volunteer-interview2-section.css'
 import './ujat-volunteer-doc-screening-section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
 
-type Interview2InnerTab = 'applications' | 'final_assignment'
-
-const INNER_TAB_LABELS: Record<Interview2InnerTab, string> = {
-  applications: '신청 목록',
-  final_assignment: '최종 교육 배정',
-}
-
 export interface UjatVolunteerInterview2SectionProps {
   programId: string
   half: UjatVolunteerRecruitHalf
 }
 
 export function UjatVolunteerInterview2Section({ programId, half }: UjatVolunteerInterview2SectionProps) {
-  const [innerTab, setInnerTab] = useState<Interview2InnerTab>('applications')
   const tableWrapRef = useRef<HTMLDivElement>(null)
   const [tableScrollX, setTableScrollX] = useState(UJAT_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X)
 
@@ -89,118 +81,94 @@ export function UjatVolunteerInterview2Section({ programId, half }: UjatVoluntee
 
   return (
     <div className="ujat-volunteer-interview2 applicant-details">
-      <div className="ujat-volunteer-interview2__inner-tabs program-detail-fullpage-modal__tabs">
-        {(Object.keys(INNER_TAB_LABELS) as Interview2InnerTab[]).map(key => (
-          <button
-            key={key}
-            type="button"
-            className={`program-detail-fullpage-modal__tab ${innerTab === key ? 'program-detail-fullpage-modal__tab--active' : ''}`}
-            onClick={() => setInnerTab(key)}
-          >
-            <span className="program-detail-fullpage-modal__tab-label">{INNER_TAB_LABELS[key]}</span>
-          </button>
-        ))}
-      </div>
-
-      {innerTab === 'final_assignment' ? (
-        <div className="ujat-volunteer-interview2__placeholder">
-          <h3 className="ujat-volunteer-interview2__placeholder-title">최종 교육 배정</h3>
-          <p className="ujat-volunteer-interview2__placeholder-desc">
-            최종 교육 배정 화면은 준비 중입니다. 목 데이터 연동 후 배정 기능이 표시됩니다.
-          </p>
-        </div>
-      ) : (
-        <>
-          {interview2ConfirmModal}
-          <FilterTableLayout
-            bordered={false}
-            className="ujat-volunteer-interview2__filter-layout"
-            rows={filterRows}
-            filters={pendingFilters}
-            onFilterChange={handleFilterChange}
-            onSearch={handleSearch}
-            title={
-              <div className="ujat-volunteer-interview2__toolbar-main">
-                <span className="ujat-volunteer-interview2__toolbar-title">
-                  봉사자 2차 면접 대상자 목록
-                </span>
-                <span className="ujat-volunteer-interview2__toolbar-count">{count}건</span>
-              </div>
-            }
-            actions={
-              <div className="ujat-volunteer-interview2__actions">
-                <CmsButton
-                  type="button"
-                  variant="delete"
-                  size="large"
-                  width={160}
-                  disabled={selectedRowKeys.length === 0}
-                  onClick={handleBulkFail}
-                >
-                  선택 불합격
-                </CmsButton>
-                <CmsButton
-                  type="button"
-                  variant="secondary"
-                  size="large"
-                  width={160}
-                  disabled={selectedRowKeys.length === 0}
-                  onClick={handleBulkPass}
-                >
-                  선택 합격
-                </CmsButton>
-                {viewMode === 'list' ? (
-                  <CmsButton
-                    type="button"
-                    variant="secondary"
-                    size="large"
-                    style={{ minWidth: 180 }}
-                    icon={<CalendarOutlined />}
-                    onClick={handleViewCalendar}
-                  >
-                    캘린더 뷰로 보기
-                  </CmsButton>
-                ) : (
-                  <CmsButton
-                    type="button"
-                    variant="secondary"
-                    size="large"
-                    style={{ minWidth: 180 }}
-                    icon={<UnorderedListOutlined />}
-                    onClick={handleViewList}
-                  >
-                    리스트로 보기
-                  </CmsButton>
-                )}
-              </div>
-            }
-          >
+      {interview2ConfirmModal}
+      <FilterTableLayout
+        bordered={false}
+        className="ujat-volunteer-interview2__filter-layout"
+        rows={filterRows}
+        filters={pendingFilters}
+        onFilterChange={handleFilterChange}
+        onSearch={handleSearch}
+        title={
+          <div className="ujat-volunteer-interview2__toolbar-main">
+            <span className="ujat-volunteer-interview2__toolbar-title">
+              봉사자 2차 면접 대상자 목록
+            </span>
+            <span className="ujat-volunteer-interview2__toolbar-count">{count}건</span>
+          </div>
+        }
+        actions={
+          <div className="ujat-volunteer-interview2__actions">
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              width={160}
+              disabled={selectedRowKeys.length === 0}
+              onClick={handleBulkFail}
+            >
+              선택 불합격
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="large"
+              width={160}
+              disabled={selectedRowKeys.length === 0}
+              onClick={handleBulkPass}
+            >
+              선택 합격
+            </CmsButton>
             {viewMode === 'list' ? (
-              <div ref={tableWrapRef} className="ujat-volunteer-interview2__table-wrap">
-                <Table<UjatVolunteerApplicantRow>
-                  rowKey="id"
-                  className="cms-data-table cms-data-table--fluid"
-                  columns={columns}
-                  dataSource={tableData}
-                  pagination={false}
-                  scroll={{ x: tableScrollX }}
-                  rowSelection={{
-                    selectedRowKeys,
-                    onChange: keys => setSelectedRowKeys(keys),
-                  }}
-                />
-              </div>
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="large"
+                style={{ minWidth: 180 }}
+                icon={<CalendarOutlined />}
+                onClick={handleViewCalendar}
+              >
+                캘린더 뷰로 보기
+              </CmsButton>
             ) : (
-              <div className="ujat-volunteer-interview2__calendar-container">
-                <UjatVolunteerDocPassedCalendarView
-                  events={calendarEvents}
-                  onItemClick={() => undefined}
-                />
-              </div>
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="large"
+                style={{ minWidth: 180 }}
+                icon={<UnorderedListOutlined />}
+                onClick={handleViewList}
+              >
+                리스트로 보기
+              </CmsButton>
             )}
-          </FilterTableLayout>
-        </>
-      )}
+          </div>
+        }
+      >
+        {viewMode === 'list' ? (
+          <div ref={tableWrapRef} className="ujat-volunteer-interview2__table-wrap">
+            <Table<UjatVolunteerApplicantRow>
+              rowKey="id"
+              className="cms-data-table cms-data-table--fluid"
+              columns={columns}
+              dataSource={tableData}
+              pagination={false}
+              scroll={{ x: tableScrollX }}
+              rowSelection={{
+                selectedRowKeys,
+                onChange: keys => setSelectedRowKeys(keys),
+              }}
+            />
+          </div>
+        ) : (
+          <div className="ujat-volunteer-interview2__calendar-container">
+            <UjatVolunteerDocPassedCalendarView
+              events={calendarEvents}
+              onItemClick={() => undefined}
+            />
+          </div>
+        )}
+      </FilterTableLayout>
     </div>
   )
 }
