@@ -1,5 +1,5 @@
-import type { UjatInstitutionApplicationRow } from './ujat-institution-application-types'
-import { UJAT_INSTITUTION_SCHEDULE_COLUMNS } from './ujat-institution-application-types'
+import type { UjatInstitutionApplicationRow } from './types'
+import { UJAT_INSTITUTION_SCHEDULE_COLUMNS } from './types'
 
 export type UjatInstitutionCalendarOriginalItem = UjatInstitutionApplicationRow & {
   schoolName: string

@@ -8,8 +8,8 @@ import { DetailFullpageModalLnbArrowDown } from '@/shared/ui/detail-fullpage-mod
 import type { UjatSurveyMenuItem } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import type { UjatDetailLnbKey } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { LnbIconManagers, LnbIconProjectInfo } from '@/features/program/general/ui/detail-modal/program-detail-lnb-icons'
-import { UJAT_INSTITUTION_APP_CHILD_ROWS } from './application-institution/ujat-institution-application-tabs'
-import { UjatLnbInstitutionApplicationIcon } from './application-institution/ujat-lnb-institution-application-icon'
+import { UJAT_INSTITUTION_APP_CHILD_ROWS } from './application-institution/tabs'
+import { UjatLnbInstitutionApplicationIcon } from './application-institution/lnb-icon'
 import { UjatLnbSurveyManagementIcon } from './survey-management/ujat-lnb-survey-management-icon'
 import { UjatLnbVolunteerHandshakeIcon } from './application-volunteer/ujat-lnb-volunteer-handshake-icon'
 import {

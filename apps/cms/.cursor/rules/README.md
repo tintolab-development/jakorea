@@ -89,7 +89,8 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [Personas](./process/persona.md)  
 - [Admin notice modal](./process/admin-notice-form-modal-spec.md)  
 - [Certificate issue spec](./process/member-program-certificate-issue-spec.md)  
-- [UJAT 기관 신청 목록](./process/ujat-institution-application-list-table-spec.md) — 진행일 열·희망일 `O`·선택 임시 배정·임시 배정 탭 역할
+- [UJAT 기관 신청 목록](./process/ujat-institution-application-list-table-spec.md) — 진행일 열·희망일 `O`·선택 임시 배정
+- [UJAT 신청 기관 임시 배정](./process/ujat-institution-schedule-assign-spec.md) — `inst_schedule_assign` 날짜별 배정·배정값 산정
 - Other `process/*` files — feature-specific UI specs (English).  
 
 ---

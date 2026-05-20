@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Space } from 'antd'
 import { useCmsAlert } from '@/shared/ui'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import {
   getUjatInstitutionApplicationDetail,
   getUjatInstitutionApplicationMockRows,
@@ -9,16 +9,16 @@ import {
 } from '@/data/mock/ujat-institution-application-mock'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
-import type { UjatInstitutionTempAssignmentStatus } from './ujat-institution-application-types'
-import { UjatInstitutionApplicationDetailView } from './ujat-institution-application-detail-view'
+import type { UjatInstitutionTempAssignmentStatus } from '../list/types'
+import { UjatInstitutionApplicationDetailView } from './detail-view'
 import {
   UjatInstitutionApplicationActionModal,
   type UjatInstitutionApplicationBulkModalAction,
-} from './ujat-institution-application-action-modal'
+} from '../list/action-modal'
 import {
   getUjatInstitutionTempAssignCompleteContent,
   UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
-} from './ujat-institution-application-temp-assign-complete'
+} from '../list/temp-assign-complete'
 
 const TEMP_REJECT_BUTTON_STYLE = {
   borderColor: '#e07a96',
@@ -97,31 +97,35 @@ export function UjatInstitutionApplicationDetailPage({
         style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}
       >
         <Space size={8} wrap>
-          <AppButton
-            variant="danger"
-            size="filter"
+          <CmsButton
+            type="button"
+            variant="delete"
+            size="large"
+            width={160}
             onClick={() => setPendingAction('application_reject')}
           >
             신청 반려
-          </AppButton>
-          <AppButton
-            variant="danger"
-            size="filter"
+          </CmsButton>
+          <CmsButton
+            type="button"
+            variant="delete"
+            size="large"
+            width={160}
             style={TEMP_REJECT_BUTTON_STYLE}
             onClick={() => setPendingAction('temp_reject')}
           >
             임시 반려
-          </AppButton>
-          <AppButton variant="cancel" size="filter" onClick={handleTempAssign}>
+          </CmsButton>
+          <CmsButton type="button" variant="secondary" size="large" width={160} onClick={handleTempAssign}>
             임시 배정
-          </AppButton>
+          </CmsButton>
           <PersonalInfoRevealButton
-            ui="app"
+            ui="cms"
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
-            variant="primary"
-            size="filter-wide"
-            modalTeal
+            cmsVariant="primary"
+            cmsSize="large"
+            width={180}
             onClick={openPersonalInfoRevealConfirm}
           />
         </Space>

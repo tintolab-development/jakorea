@@ -16,15 +16,15 @@ import {
   type ScheduleColorPair,
 } from '@/features/program/shared/ui/program-schedule-colors'
 import { useApplicantCalendarColorMaps } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-schedule-helpers'
-import { UJAT_INSTITUTION_TEMP_ASSIGNMENT_STATUS_LABEL } from './ujat-institution-application-types'
+import { UJAT_INSTITUTION_TEMP_ASSIGNMENT_STATUS_LABEL } from './types'
 import '@/shared/components/calendar/styles/calendar.css'
 import {
   buildUjatInstitutionApplicationCalendarEvents,
   type UjatInstitutionCalendarEvent,
   type UjatInstitutionCalendarOriginalItem,
-} from './ujat-institution-application-calendar-events'
-import type { UjatInstitutionApplicationRow } from './ujat-institution-application-types'
-import './ujat-institution-application-calendar-view.css'
+} from './calendar-events'
+import type { UjatInstitutionApplicationRow } from './types'
+import './calendar-view.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)

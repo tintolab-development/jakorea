@@ -1,4 +1,4 @@
-import type { UjatInstitutionTempAssignmentStatus } from './ujat-institution-application-types'
+import type { UjatInstitutionTempAssignmentStatus } from '../list/types'
 
 export type UjatInstitutionApplicationGradeClassDetail = {
   classNo: number

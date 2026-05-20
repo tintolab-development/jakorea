@@ -1,8 +1,8 @@
 import {
   UJAT_INSTITUTION_TEMP_ASSIGNMENT_STATUS_LABEL,
   type UjatInstitutionTempAssignmentStatus,
-} from './ujat-institution-application-types'
-import './ujat-institution-application-status-badge.css'
+} from './types'
+import './status-badge.css'
 
 export function UjatInstitutionApplicationStatusBadge({
   status,

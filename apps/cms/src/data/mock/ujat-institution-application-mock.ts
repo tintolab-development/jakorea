@@ -1,17 +1,17 @@
-import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '@/features/program/ujat/ui/detail-modal/application-institution/ujat-institution-application-regions'
-import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/ujat-institution-application-regions'
-import type { UjatInstitutionApplicationDetail } from '@/features/program/ujat/ui/detail-modal/application-institution/ujat-institution-application-detail-types'
+import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
+import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
+import type { UjatInstitutionApplicationDetail } from '@/features/program/ujat/ui/detail-modal/application-institution/detail/detail-types'
 import type {
   UjatInstitutionApplicationRow,
   UjatInstitutionScheduleSlotKey,
   UjatInstitutionTempAssignmentStatus,
-} from '@/features/program/ujat/ui/detail-modal/application-institution/ujat-institution-application-types'
+} from '@/features/program/ujat/ui/detail-modal/application-institution/list/types'
 import {
   UJAT_INSTITUTION_SCHEDULE_COLUMNS,
   buildEmptyScheduleSlots,
   formatUjatInstitutionFridayDisplay,
   sumGradeClassCounts,
-} from '@/features/program/ujat/ui/detail-modal/application-institution/ujat-institution-application-types'
+} from '@/features/program/ujat/ui/detail-modal/application-institution/list/types'
 
 const SEOUL_SCHOOLS = [
   '신사초등학교',

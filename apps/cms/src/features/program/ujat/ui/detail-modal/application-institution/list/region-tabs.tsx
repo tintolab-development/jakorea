@@ -1,8 +1,8 @@
 import {
   UJAT_INSTITUTION_APPLICATION_REGIONS,
   type UjatInstitutionApplicationRegionKey,
-} from './ujat-institution-application-regions'
-import './ujat-institution-application-region-tabs.css'
+} from './regions'
+import './region-tabs.css'
 
 /** 프로그램 정보 > 모집 정보(`UjatProgramRecruitmentTabsRow`)와 동일한 탭 UI */
 export function UjatInstitutionApplicationRegionTabs({

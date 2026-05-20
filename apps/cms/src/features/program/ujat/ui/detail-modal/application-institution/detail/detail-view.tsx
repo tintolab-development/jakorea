@@ -1,15 +1,15 @@
 import { Fragment, type ReactNode } from 'react'
 import { CrossTable } from '@/shared/ui/cross-table'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { UjatInstitutionApplicationStatusBadge } from './ujat-institution-application-status-badge'
+import { UjatInstitutionApplicationStatusBadge } from '../list/status-badge'
 import {
   HomeAddressPrivacyValue,
   UjatInstitutionTeacherInfoValue,
-} from './ujat-institution-application-detail-display'
+} from './detail-display'
 import type {
   UjatInstitutionApplicationClassTimeRowDetail,
   UjatInstitutionApplicationDetail,
-} from './ujat-institution-application-detail-types'
+} from './detail-types'
 
 const CLASS_TIME_PERIOD_HEADERS = ['1교시', '2교시', '3교시', '4교시'] as const
 

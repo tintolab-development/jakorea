@@ -1,6 +1,6 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import { UJAT_INSTITUTION_TEMP_ASSIGNMENT_STATUS_LABEL } from './ujat-institution-application-types'
-import type { UjatInstitutionTempAssignmentStatus } from './ujat-institution-application-types'
+import { UJAT_INSTITUTION_TEMP_ASSIGNMENT_STATUS_LABEL } from './types'
+import type { UjatInstitutionTempAssignmentStatus } from './types'
 
 export const UJAT_INSTITUTION_APPLICATION_FILTER_ALL = ''
 

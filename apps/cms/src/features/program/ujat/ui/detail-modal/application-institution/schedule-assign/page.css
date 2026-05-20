@@ -1,0 +1,81 @@
+.ujat-schedule-assign-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ujat-schedule-assign-page__tabs-row {
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.ujat-schedule-assign-page__tabs-row .ujat-institution-application-region-tabs {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-bottom: 0;
+  padding: 0 !important;
+}
+
+.ujat-schedule-assign-section {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  min-width: 0;
+}
+
+.ujat-schedule-assign-section__dates {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.ujat-schedule-assign-date-block__total-note {
+  color: var(--color-mint-01, #01a1af);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.ujat-schedule-assign-date-block .detail-info-form-inputs-wrapper-no-gap > .cms-select {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ujat-schedule-assign-date-block__total-hint {
+  color: var(--gray-85969-d, #85969d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-schedule-assign-estimation__hint {
+  color: rgba(61, 61, 61, 0.65);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-schedule-assign-estimation__computed {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  color: rgba(61, 61, 61, 0.55);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-schedule-assign-estimation__computed--filled {
+  color: var(--main-BK, #3d3d3d);
+  font-weight: 600;
+}
+
+.ujat-schedule-assign-date-block .detail-info-form__header {
+  align-items: center;
+}
+
+.ujat-schedule-assign-estimation .cross-table__cell--data {
+  vertical-align: middle;
+}
