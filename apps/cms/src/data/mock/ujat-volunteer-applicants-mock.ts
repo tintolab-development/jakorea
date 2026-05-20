@@ -167,13 +167,13 @@ const DEMO_SCREENSHOT_ROW: Partial<UjatVolunteerApplicantRow> = {
     '중학교 2학년 때 JA Korea 경제금융교육을 수강했으며, 당시 배운 내용이 대학 전공 선택에도 영향을 주었습니다.',
   interviewAssignmentStatus: 'assigned',
   assignedInterviewDateLabel: '26. 03. 09(월)',
-  assignedInterviewTime: '15:00 ~ 15:30',
+  assignedInterviewTime: '09:00 ~ 09:30',
   secondInterviewScreeningStatus: 'waiting',
   totalScore: null,
   interviewAvailability: [
     {
       dateLabel: '26. 03. 09(월)',
-      slots: ['15:00 ~ 15:30', '09:00 ~ 09:30'],
+      slots: ['09:00 ~ 09:30', '11:00 ~ 11:30'],
     },
     {
       dateLabel: '26. 03. 23(월)',
