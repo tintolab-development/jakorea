@@ -58,7 +58,7 @@ export function useUjatInstitutionApplicationColumns(): ColumnsType<UjatInstitut
         fixed: 'left',
       },
       {
-        title: '임시 배정 평가',
+        title: '임시 배정 현황',
         dataIndex: 'tempAssignmentStatus',
         key: 'tempAssignmentStatus',
         width: COL.status,

@@ -372,8 +372,8 @@ function UjatProgramListPageContent() {
         onClose={handleCloseUjatProgramRegistrationFullpage}
         title={ujatProgramRegistrationTitle}
         titleReadOnly
-        description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
         templateTabType="writing"
+        registrationUserMode
         onPreview={handleUjatProgramRegistrationFullpagePreview}
         onSave={ujatProgramRegistrationFromProgramsVm.handleSave}
         leftContent={

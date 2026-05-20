@@ -1,4 +1,4 @@
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { CloseOutlined, DownloadOutlined, RightOutlined } from '@ant-design/icons'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -24,6 +24,17 @@ interface TemplateFullpageModalProps {
    * 문자열 제목일 때 상단 `CmsInputIconClick` 편집·연필 비활성화(프로그램 등록 등 템플릿 사용자 모드).
    */
   titleReadOnly?: boolean
+  /**
+   * 템플릿 등록 사용자 모드 — 미리보기와 동일 청록 헤더·회색 본문·상단 닫기/미리보기/임시저장.
+   */
+  registrationUserMode?: boolean
+  /** 저장 버튼 라벨 (`registrationUserMode` 기본: 임시저장) */
+  saveLabel?: string
+  /** 우측 하단 CTA — 미전달 시 숨김 */
+  footerAction?: {
+    label?: string
+    onClick: () => void
+  }
 }
 
 interface TemplateFullpageModalCardTitleProps {
@@ -54,16 +65,57 @@ export function TemplateFullpageModal({
   rightNavigation,
   className,
   titleReadOnly = false,
+  registrationUserMode = false,
+  saveLabel,
+  footerAction,
 }: TemplateFullpageModalProps) {
-  const rootClassName = ['full-page-modal', className].filter(Boolean).join(' ')
+  const rootClassName = [
+    'full-page-modal',
+    registrationUserMode ? 'full-page-modal--registration-user-mode' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
   const iconMaskId = `full-page-modal-title-mask-${useId().replace(/:/g, '')}`
   const editableTitle = typeof title === 'string' ? title : null
   const [titleValue, setTitleValue] = useState(editableTitle ?? '')
   const [titleEditing, setTitleEditing] = useState(false)
+  const resolvedTitleReadOnly = titleReadOnly || registrationUserMode
+  const resolvedSaveLabel = saveLabel ?? (registrationUserMode ? '임시저장' : '저장')
 
   useEffect(() => {
     setTitleValue(editableTitle ?? '')
   }, [editableTitle])
+
+  const headerActions =
+    templateTabType === 'writing' ? (
+      <>
+        <CmsButton variant="secondary" onClick={onClose}>
+          닫기
+        </CmsButton>
+        <CmsButton variant="secondary" onClick={onPreview}>
+          미리보기
+        </CmsButton>
+        <CmsButton onClick={() => onSave?.()}>{resolvedSaveLabel}</CmsButton>
+      </>
+    ) : (
+      <>
+        <CmsButton
+          variant="secondary"
+          icon={<DownloadOutlined />}
+          onClick={onDownloadDocument}
+          className="full-page-modal__download-btn"
+          disabled={downloadDocumentLoading}
+          aria-busy={downloadDocumentLoading}
+        >
+          문서 다운로드
+        </CmsButton>
+        <CmsButton variant="secondary" onClick={onPreview}>
+          미리보기
+        </CmsButton>
+        <CmsButton onClick={() => onSave?.()}>{resolvedSaveLabel}</CmsButton>
+      </>
+    )
 
   return (
     <TealHeaderModal
@@ -85,7 +137,7 @@ export function TemplateFullpageModal({
                 onRequestEdit={() => setTitleEditing(true)}
                 onCommitEdit={() => setTitleEditing(false)}
                 restoreValueIfEmptyOnBlur={editableTitle}
-                readOnly={titleReadOnly}
+                readOnly={resolvedTitleReadOnly}
                 containerClassName="full-page-modal__title-edit-row"
                 inputClassName="full-page-modal__title-input full-page-modal__title-input--editing"
                 textClassName="full-page-modal__title-text"
@@ -126,37 +178,26 @@ export function TemplateFullpageModal({
               </>
             )}
           </div>
-          <button
-            type="button"
-            className="full-page-modal__close"
-            onClick={onClose}
-            aria-label="닫기"
-          >
-            <CloseOutlined />
-          </button>
+          {!registrationUserMode ? (
+            <button
+              type="button"
+              className="full-page-modal__close"
+              onClick={onClose}
+              aria-label="닫기"
+            >
+              <CloseOutlined />
+            </button>
+          ) : null}
         </header>
 
         <div className="full-page-modal__body">
           <div className="full-page-modal__body-header">
-            {description ? <p className="full-page-modal__description">{description}</p> : <span />}
-            <div className="full-page-modal__actions">
-              {templateTabType === 'issuance' ? (
-                <CmsButton
-                  variant="secondary"
-                  icon={<DownloadOutlined />}
-                  onClick={onDownloadDocument}
-                  className="full-page-modal__download-btn"
-                  disabled={downloadDocumentLoading}
-                  aria-busy={downloadDocumentLoading}
-                >
-                  문서 다운로드
-                </CmsButton>
-              ) : null}
-              <CmsButton variant="secondary" onClick={onPreview}>
-                미리보기
-              </CmsButton>
-              <CmsButton onClick={() => onSave?.()}>저장</CmsButton>
-            </div>
+            {description && !registrationUserMode ? (
+              <p className="full-page-modal__description">{description}</p>
+            ) : (
+              <span />
+            )}
+            <div className="full-page-modal__actions">{headerActions}</div>
           </div>
 
           <div className="full-page-modal__contents">
@@ -166,6 +207,20 @@ export function TemplateFullpageModal({
             </aside>
           </div>
           <div className="full-page-modal__body-bottom" aria-hidden="true" />
+          {footerAction ? (
+            <div className="full-page-modal__footer-cta">
+              <CmsButton
+                type="button"
+                size="large"
+                width={220}
+                className="full-page-modal__footer-cta-btn"
+                onClick={footerAction.onClick}
+              >
+                <span>{footerAction.label ?? '다음 양식 작성하기'}</span>
+                <RightOutlined aria-hidden />
+              </CmsButton>
+            </div>
+          ) : null}
         </div>
       </div>
     </TealHeaderModal>

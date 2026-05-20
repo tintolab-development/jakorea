@@ -15,6 +15,10 @@ import {
 import type { UjatInstitutionApplicationRegionKey } from './ujat-institution-application-regions'
 import { useUjatInstitutionApplicationColumns } from './ujat-institution-application-columns'
 import type { UjatInstitutionApplicationBulkModalAction } from './ujat-institution-application-action-modal'
+import {
+  getUjatInstitutionTempAssignCompleteContent,
+  UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
+} from './ujat-institution-application-temp-assign-complete'
 
 function filterRows(
   rows: UjatInstitutionApplicationRow[],
@@ -129,8 +133,20 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
   }, [openBulkActionModal])
 
   const handleBulkTempAssign = useCallback(() => {
-    openBulkActionModal('temp_assign')
-  }, [openBulkActionModal])
+    const ids = selectedRowKeys.map(String)
+    if (ids.length === 0) {
+      showNoSelectionAlert()
+      return
+    }
+    const count = ids.length
+    patchUjatInstitutionApplicationRows(ids, 'temp_assigned')
+    setDataVersion(v => v + 1)
+    setSelectedRowKeys([])
+    showAlert({
+      title: UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
+      content: getUjatInstitutionTempAssignCompleteContent(count),
+    })
+  }, [selectedRowKeys, showNoSelectionAlert, showAlert])
 
   const closeBulkActionModal = useCallback(() => {
     setPendingBulkModalAction(null)
@@ -141,7 +157,6 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
     const statusMap = {
       application_reject: 'application_rejected',
       temp_reject: 'temp_rejected',
-      temp_assign: 'temp_assigned',
     } as const
     patchSelectedStatus(statusMap[pendingBulkModalAction])
     setPendingBulkModalAction(null)

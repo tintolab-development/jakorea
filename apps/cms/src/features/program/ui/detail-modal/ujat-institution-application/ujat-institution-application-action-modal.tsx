@@ -6,7 +6,6 @@ import {
 export type UjatInstitutionApplicationBulkModalAction =
   | 'application_reject'
   | 'temp_reject'
-  | 'temp_assign'
 
 export type UjatInstitutionApplicationActionModalProps = {
   open: boolean
@@ -87,29 +86,7 @@ function getModalCopy(
     }
   }
 
-  if (variant === 'single') {
-    return {
-      title: '기관 임시 배정 안내',
-      message: `**[${displayName}]**에 임시 교육 배정을 진행하시겠습니까?\n임시 배정 시 담당 교사에게 알림이 발송됩니다.`,
-      confirmLabel: '배정',
-      confirmVariant: 'primary',
-      requireReason: false,
-      reasonLabel: '반려 사유',
-      reasonPlaceholder: '반려 사유를 입력해 주세요.',
-      reasonRequiredMessage: '반려 사유를 입력해 주세요.',
-    }
-  }
-
-  return {
-    title: '기관 일괄 임시 배정 안내',
-    message: `선택한 **${selectionCount}개**의 모든 기관에 임시 교육 배정을 진행하시겠습니까?\n임시 배정 시 각 담당 교사에게 개별로 알림이 발송됩니다.`,
-    confirmLabel: '배정',
-    confirmVariant: 'primary',
-    requireReason: false,
-    reasonLabel: '반려 사유',
-    reasonPlaceholder: '반려 사유를 입력해 주세요.',
-    reasonRequiredMessage: '반려 사유를 입력해 주세요.',
-  }
+  throw new Error(`Unknown action: ${action}`)
 }
 
 export function UjatInstitutionApplicationActionModal({

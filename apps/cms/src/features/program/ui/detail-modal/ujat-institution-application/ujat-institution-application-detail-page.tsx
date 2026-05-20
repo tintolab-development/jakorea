@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Space } from 'antd'
+import { useCmsAlert } from '@/shared/ui'
 import { AppButton } from '@/shared/ui/app-button'
 import {
   getUjatInstitutionApplicationDetail,
@@ -14,6 +15,10 @@ import {
   UjatInstitutionApplicationActionModal,
   type UjatInstitutionApplicationBulkModalAction,
 } from './ujat-institution-application-action-modal'
+import {
+  getUjatInstitutionTempAssignCompleteContent,
+  UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
+} from './ujat-institution-application-temp-assign-complete'
 
 const TEMP_REJECT_BUTTON_STYLE = {
   borderColor: '#e07a96',
@@ -29,6 +34,7 @@ export function UjatInstitutionApplicationDetailPage({
   onBack: () => void
   onStatusUpdated: () => void
 }) {
+  const { showAlert } = useCmsAlert()
   const row = useMemo(
     () => getUjatInstitutionApplicationMockRows().find(r => r.id === institutionId) ?? null,
     [institutionId]
@@ -49,19 +55,32 @@ export function UjatInstitutionApplicationDetailPage({
   const [pendingAction, setPendingAction] =
     useState<UjatInstitutionApplicationBulkModalAction | null>(null)
 
-  const patchStatus = (status: UjatInstitutionTempAssignmentStatus) => {
+  const patchStatus = useCallback(
+    (status: UjatInstitutionTempAssignmentStatus) => {
+      if (!row) return
+      patchUjatInstitutionApplicationRows([row.id], status)
+      onStatusUpdated()
+      onBack()
+    },
+    [row, onStatusUpdated, onBack]
+  )
+
+  const handleTempAssign = useCallback(() => {
     if (!row) return
-    patchUjatInstitutionApplicationRows([row.id], status)
+    patchUjatInstitutionApplicationRows([row.id], 'temp_assigned')
     onStatusUpdated()
     onBack()
-  }
+    showAlert({
+      title: UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
+      content: getUjatInstitutionTempAssignCompleteContent(1),
+    })
+  }, [row, onStatusUpdated, onBack, showAlert])
 
   const handleActionConfirm = () => {
     if (!pendingAction) return
     const statusMap = {
       application_reject: 'application_rejected',
       temp_reject: 'temp_rejected',
-      temp_assign: 'temp_assigned',
     } as const
     patchStatus(statusMap[pendingAction])
     setPendingAction(null)
@@ -93,7 +112,7 @@ export function UjatInstitutionApplicationDetailPage({
           >
             임시 반려
           </AppButton>
-          <AppButton variant="cancel" size="filter" onClick={() => setPendingAction('temp_assign')}>
+          <AppButton variant="cancel" size="filter" onClick={handleTempAssign}>
             임시 배정
           </AppButton>
           <PersonalInfoRevealButton

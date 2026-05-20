@@ -11,6 +11,15 @@ export type TemplatePreviewModalProps = {
   onPreview: () => void
   onSave?: () => void
   rendererContext: TemplateRendererContext
+  /**
+   * 프로그램 등록 등 **사용자 모드** 레이아웃(청록 헤더·임시저장).
+   * `/templates/form-management` 템플릿 편집에서는 사용하지 않는다.
+   */
+  registrationUserMode?: boolean
+  footerAction?: {
+    label?: string
+    onClick: () => void
+  }
 }
 
 export function TemplatePreviewModal({
@@ -20,6 +29,8 @@ export function TemplatePreviewModal({
   onPreview,
   onSave,
   rendererContext,
+  registrationUserMode = false,
+  footerAction,
 }: TemplatePreviewModalProps) {
   const panels = useMemo(
     () => resolveTemplateEditorPanels(rendererContext),
@@ -31,10 +42,12 @@ export function TemplatePreviewModal({
       open={open}
       onClose={onClose}
       title={title}
-      description={TEMPLATE_FORM_MODAL_DESCRIPTION}
+      description={registrationUserMode ? undefined : TEMPLATE_FORM_MODAL_DESCRIPTION}
       templateTabType="writing"
       onPreview={onPreview}
       onSave={onSave}
+      registrationUserMode={registrationUserMode}
+      footerAction={footerAction}
       leftContent={panels.leftContent}
       rightNavigation={panels.rightNavigation}
     />

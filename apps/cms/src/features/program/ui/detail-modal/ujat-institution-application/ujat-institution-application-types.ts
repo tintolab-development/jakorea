@@ -1,7 +1,7 @@
 import type { UjatInstitutionApplicationRegionKey } from './ujat-institution-application-regions'
 import type { UjatInstitutionScheduleSlotKey } from './ujat-institution-application-education-schedule'
 
-/** 임시 배정 평가 상태 */
+/** 임시 배정 현황 상태 */
 export type UjatInstitutionTempAssignmentStatus =
   | 'evaluation_pending'
   | 'temp_rejected'

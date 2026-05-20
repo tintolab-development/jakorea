@@ -65,5 +65,6 @@ category: routing
 
 - [template-management.md](../coding/template-management.md)
 - [ujat-program-new-registration-programs-url.md](./ujat-program-new-registration-programs-url.md)
+- [ujat-institution-application-list-table-spec.md](./ujat-institution-application-list-table-spec.md) — **기관 신청** 목록·날짜 열·일괄 임시 배정
 
 **Last updated:** 2026-05-19
