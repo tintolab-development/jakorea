@@ -115,7 +115,13 @@ const APPLICATION_ROUTES = [
   '캠퍼스픽',
 ] as const
 
-const UNIVERSITIES = ['서울대학교', '연세대학교', '고려대학교', '성균관대학교', '한양대학교'] as const
+const UNIVERSITIES = [
+  '서울대학교',
+  '연세대학교',
+  '고려대학교',
+  '성균관대학교',
+  '한양대학교',
+] as const
 
 const ESSAY_INTRO =
   'JA Korea 경제교육 봉사에 지원하게 된 계기와 본인의 강점을 중심으로 자기소개를 작성합니다.'
@@ -176,11 +182,7 @@ const DEMO_SCREENSHOT_ROW: Partial<UjatVolunteerApplicantRow> = {
   ],
 }
 
-const INTERVIEW_TIME_SLOTS = [
-  '09:00 ~ 09:30',
-  '14:00 ~ 14:30',
-  '15:00 ~ 15:30',
-] as const
+const INTERVIEW_TIME_SLOTS = ['09:00 ~ 09:30', '14:00 ~ 14:30', '15:00 ~ 15:30'] as const
 
 const INTERVIEW_DATE_LABELS = [
   '26. 03. 09(월)',
@@ -207,8 +209,7 @@ function buildAssignedInterviewFields(
   const firstSlot = firstDay?.slots[0]
   const dateLabel =
     firstDay?.dateLabel ?? INTERVIEW_DATE_LABELS[seed % INTERVIEW_DATE_LABELS.length]
-  const time =
-    firstSlot ?? INTERVIEW_TIME_SLOTS[seed % INTERVIEW_TIME_SLOTS.length]
+  const time = firstSlot ?? INTERVIEW_TIME_SLOTS[seed % INTERVIEW_TIME_SLOTS.length]
   const status =
     UJAT_SECOND_INTERVIEW_SCREENING_STATUS_ORDER[
       seed % UJAT_SECOND_INTERVIEW_SCREENING_STATUS_ORDER.length
@@ -350,10 +351,7 @@ function buildRow(
     birthDate,
     age,
     universityName: UNIVERSITIES[seed % UNIVERSITIES.length],
-    major:
-      seed % 2 === 0
-        ? '경영학과 전공'
-        : '회계학과 전공, 경영학과 복수전공',
+    major: seed % 2 === 0 ? '경영학과 전공' : '회계학과 전공, 경영학과 복수전공',
     applicationRoute: APPLICATION_ROUTES[seed % APPLICATION_ROUTES.length],
     scheduleChangeCancelCount: seed % 5 === 0 ? 1 : 0,
     interviewAvailability,
@@ -366,8 +364,7 @@ function buildRow(
   }
 
   if (index === 0) {
-    const demoAvailability =
-      DEMO_SCREENSHOT_ROW.interviewAvailability ?? interviewAvailability
+    const demoAvailability = DEMO_SCREENSHOT_ROW.interviewAvailability ?? interviewAvailability
     return {
       ...row,
       ...DEMO_SCREENSHOT_ROW,
