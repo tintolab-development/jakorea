@@ -12,6 +12,7 @@ export function UjatRecruitVolunteerInterviewScheduleParagraph({
     return (
       <UjatRecruitInterviewScheduleProgramView
         program={props.program}
+        volunteerHalf={props.volunteerHalf}
         sectionTitle={props.sectionTitle}
       />
     )

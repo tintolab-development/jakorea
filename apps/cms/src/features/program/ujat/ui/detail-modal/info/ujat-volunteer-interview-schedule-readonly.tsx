@@ -3,7 +3,7 @@ import type {
   UjatVolunteerInterviewScheduleCommon,
   UjatVolunteerInterviewScheduleData,
   UjatVolunteerInterviewScheduleException,
-} from './ujat-volunteer-interview-schedule-mock'
+} from '@/data/mock/ujat-volunteer-interview-schedule'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './ujat-volunteer-interview-schedule-readonly.css'
