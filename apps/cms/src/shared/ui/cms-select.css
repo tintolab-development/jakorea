@@ -41,6 +41,7 @@
   width: 100%;
   min-width: 0;
   height: 100%;
+  position: relative;
 }
 
 .cms-select .ant-select-selector {
@@ -60,8 +61,13 @@
 }
 
 .cms-select .ant-select-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 0;
   flex-shrink: 0;
   inset-inline-end: 0 !important;
+  inset-inline-start: auto !important;
   /* placeholder·라벨과 동일 톤 (`cms-input` 아이콘·입력 힌트와 맞춤) */
   color: var(--gray-85969-d, #85969d);
 }
@@ -155,4 +161,66 @@
 .cms-select--explicit-width {
   width: 100%;
   min-width: 0;
+}
+
+/*
+ * multiple: 플레이스홀더·검색 레이어 세로 중앙
+ * — line-height 150%만 두면 줄 상자가 행 높이를 채우지 않아 베이스라인 정렬로 위로 치우침
+ * — selection-search는 inset:0으로 덮이므로 wrap·placeholder를 stretch + flex 중앙 처리
+ */
+.cms-select .ant-select-multiple .ant-select-selector {
+  align-items: stretch !important;
+  height: 100% !important;
+}
+
+.cms-select .ant-select-multiple .ant-select-selection-wrap {
+  flex: 1 1 auto;
+  align-self: stretch !important;
+  display: flex !important;
+  align-items: stretch !important;
+  min-width: 0 !important;
+  width: 100%;
+  position: relative;
+}
+
+.cms-select .ant-select-multiple .ant-select-selection-overflow {
+  align-items: center;
+  min-height: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.cms-select .ant-select-multiple .ant-select-selection-placeholder {
+  position: absolute !important;
+  inset: 0 !important;
+  top: 0 !important;
+  transform: none !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100%;
+  min-width: 0 !important;
+  height: 100% !important;
+  padding-block: 0 !important;
+  padding-inline-start: 0 !important;
+  box-sizing: border-box;
+  line-height: 150% !important;
+  white-space: nowrap;
+}
+
+.cms-select .ant-select-multiple .ant-select-selection-search {
+  position: absolute;
+  inset: 0;
+  display: flex !important;
+  align-items: center !important;
+  margin-inline-start: 0 !important;
+}
+
+.cms-select .ant-select-multiple .ant-select-selection-search-input {
+  height: 100% !important;
+  line-height: 150% !important;
+  margin: 0;
+  padding: 0;
 }
