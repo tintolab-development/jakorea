@@ -29,6 +29,11 @@
   color: var(--color-red, #c32f4a);
 }
 
-.ujat-institution-application-calendar-status-badge--evaluation_pending {
+.ujat-institution-application-calendar-status-badge--evaluation_pending,
+.ujat-institution-application-calendar-status-badge--institution_checking {
   color: var(--color-green, #1e8c29);
+}
+
+.ujat-institution-application-calendar-status-badge--institution_confirmed {
+  color: rgba(61, 61, 61, 0.8);
 }

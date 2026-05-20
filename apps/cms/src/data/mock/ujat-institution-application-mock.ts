@@ -10,218 +10,29 @@ import {
   UJAT_INSTITUTION_SCHEDULE_COLUMNS,
   buildEmptyScheduleSlots,
   formatUjatInstitutionFridayDisplay,
-  sumGradeClassCounts,
 } from '@/features/program/ujat/ui/detail-modal/application-institution/list/types'
+import type { UjatInstitutionScheduleConfirmStatus } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-confirm/types'
 
-const SEOUL_SCHOOLS = [
-  '신사초등학교',
-  '마포초등학교',
-  '서울숭인초등학교',
-  '서울대명초등학교',
-  '서울신동초등학교',
-  '서울장안초등학교',
-  '서울중곡초등학교',
-  '서울화곡초등학교',
-  '서울가락초등학교',
-  '서울문정초등학교',
-  '서울잠실초등학교',
-  '서울풍납초등학교',
-  '서울송파초등학교',
-  '서울거여초등학교',
-  '서울방이초등학교',
-  '서울오금초등학교',
-  '서울가락본동초등학교',
-  '서울문정동초등학교',
-  '서울석촌초등학교',
-  '서울삼전초등학교',
-  '서울잠실본초등학교',
-  '서울신천초등학교',
-  '서울풍납동초등학교',
-  '서울거여동초등학교',
-  '서울마천초등학교',
-  '서울문정본동초등학교',
-  '서울가락본초등학교',
-  '서울송파본초등학교',
-  '서울방이동초등학교',
-  '서울잠실동초등학교',
-] as const
-
-const REGION_SCHOOL_PREFIX: Record<UjatInstitutionApplicationRegionKey, string> = {
-  seoul: '서울',
-  gyeonggi_south: '경기',
-  incheon: '인천',
-  daejeon: '대전',
-  daegu: '대구',
-  busan: '부산',
-  gwangju: '광주',
-  jeonbuk_jeonju: '전주',
+/** 임시 배정 store 초기 시드 — `schedule-assign/store.ts`에서 1회 적용 */
+export type UjatInstitutionScheduleAssignSeedEntry = {
+  institutionId: string
+  isoDate: string
+  gradeValues: string[]
 }
 
-const TEACHERS = [
-  '홍길동',
-  '김철수',
-  '이영희',
-  '박민수',
-  '최지연',
-  '정하늘',
-  '한소희',
-  '윤서준',
-  '임도현',
-  '강미래',
-  '이길동',
-] as const
-
-/** 지역별 학교 대표번호(유선) 앞자리 */
-const REGION_SCHOOL_TEL_AREA: Record<UjatInstitutionApplicationRegionKey, string> = {
-  seoul: '02',
-  gyeonggi_south: '031',
-  incheon: '032',
-  daejeon: '042',
-  daegu: '053',
-  busan: '051',
-  gwangju: '062',
-  jeonbuk_jeonju: '063',
+export type UjatInstitutionScheduleAssignRegionSeed = {
+  maxClassesPerDay?: string
+  assignments: UjatInstitutionScheduleAssignSeedEntry[]
 }
 
-/** 담당 교사별 휴대폰·이메일(실제 서비스 연동 전 시연용 원문) */
-const TEACHER_CONTACT_BY_NAME: Record<
-  (typeof TEACHERS)[number],
-  { mobile: string; email: string }
-> = {
-  홍길동: { mobile: '010-3342-7819', email: 'gildong.hong@naver.com' },
-  김철수: { mobile: '010-5521-9043', email: 'chulsoo.kim@gmail.com' },
-  이영희: { mobile: '010-8876-2150', email: 'younghee.lee@naver.com' },
-  박민수: { mobile: '010-2918-6647', email: 'minsu.park@kakao.com' },
-  최지연: { mobile: '010-7403-1285', email: 'jiyeon.choi@naver.com' },
-  정하늘: { mobile: '010-6182-5094', email: 'haneul.jung@gmail.com' },
-  한소희: { mobile: '010-9037-4461', email: 'sohee.han@naver.com' },
-  윤서준: { mobile: '010-4756-8320', email: 'seojun.yoon@daum.net' },
-  임도현: { mobile: '010-8291-3706', email: 'dohyun.lim@naver.com' },
-  강미래: { mobile: '010-1568-9942', email: 'mirae.kang@gmail.com' },
-  이길동: { mobile: '010-9876-5432', email: 'tinto@naver.com' },
-}
-
-const INSTITUTION_ADDRESS_BY_REGION: Record<
-  UjatInstitutionApplicationRegionKey,
-  readonly { address: string; addressDetail: string }[]
-> = {
-  seoul: [
-    { address: '서울특별시 송파구 송이로 42', addressDetail: '본관 1층 교무실' },
-    { address: '서울특별시 마포구 월드컵북로 54', addressDetail: '행정실 맞은편 배송 접수대' },
-    { address: '서울특별시 강서구 화곡로 123', addressDetail: '별관 1층 과학실 옆 교사실' },
-    { address: '서울특별시 관악구 신림로 77', addressDetail: '본관 2층 교감실 앞' },
-  ],
-  gyeonggi_south: [
-    { address: '경기도 성남시 분당구 불정로 90', addressDetail: '본관 1층 교무실' },
-    { address: '경기도 수원시 영통구 광교호수공원로 80', addressDetail: '행정동 2층' },
-    { address: '경기도 용인시 기흥구 동백8길 16', addressDetail: '교장실 맞은편 우편함' },
-  ],
-  incheon: [
-    { address: '인천광역시 남동구 남동대로 933', addressDetail: '본관 1층 교무실' },
-    { address: '인천광역시 연수구 청능대로 99', addressDetail: '별관 1층 행정실' },
-  ],
-  daejeon: [
-    { address: '대전광역시 서구 둔산로 117', addressDetail: '본관 1층 교무실' },
-    { address: '대전광역시 유성구 대학로 99', addressDetail: '행정실 창구' },
-  ],
-  daegu: [
-    { address: '대구광역시 수성구 달구벌대로 528', addressDetail: '본관 2층 교무실' },
-    { address: '대구광역시 북구 침산로 227', addressDetail: '1층 행정실' },
-  ],
-  busan: [
-    { address: '부산광역시 해운대구 해운대로 365', addressDetail: '본관 1층 교무실' },
-    { address: '부산광역시 남구 수영로 309', addressDetail: '별관 1층 교사실' },
-  ],
-  gwangju: [
-    { address: '광주광역시 남구 광복마을4길 40', addressDetail: '1층 교무실 이길동 선생님 앞' },
-    { address: '광주광역시 북구 첨단과기로 208', addressDetail: '본관 1층 행정실' },
-  ],
-  jeonbuk_jeonju: [
-    { address: '전북특별자치도 전주시 덕진구 건지로 123', addressDetail: '본관 1층 교무실' },
-    { address: '전북특별자치도 전주시 완산구 전라감문5길 19', addressDetail: '행정동 1층' },
-  ],
-}
-
-const OTHER_REQUESTS_SAMPLES = [
-  '-',
-  '오전 1교시 수업 전 교구 상차 지원 부탁드립니다.',
-  '급식 시간(12:10~13:00)에는 교실 이동이 어렵습니다.',
-  '교구 배송 시 경비실에 먼저 연락 부탁드립니다.',
-] as const
-
-const STATUSES: UjatInstitutionTempAssignmentStatus[] = [
-  'evaluation_pending',
-  'temp_rejected',
-  'temp_assigned',
-  'evaluation_pending',
-  'temp_assigned',
-  'evaluation_pending',
-]
-
-const GRADE_BREAKDOWN_TEMPLATES: ReadonlyArray<
-  ReadonlyArray<{ gradeLabel: string; classCount: number }>
-> = [
-  [
-    { gradeLabel: '1학년', classCount: 4 },
-    { gradeLabel: '2학년', classCount: 7 },
-    { gradeLabel: '3학년', classCount: 5 },
-    { gradeLabel: '4학년', classCount: 1 },
-  ],
-  [
-    { gradeLabel: '2학년', classCount: 3 },
-    { gradeLabel: '3학년', classCount: 5 },
-    { gradeLabel: '5학년', classCount: 2 },
-  ],
-  [
-    { gradeLabel: '1학년', classCount: 2 },
-    { gradeLabel: '3학년', classCount: 4 },
-    { gradeLabel: '4학년', classCount: 3 },
-    { gradeLabel: '6학년', classCount: 6 },
-  ],
-  [
-    { gradeLabel: '1학년', classCount: 3 },
-    { gradeLabel: '2학년', classCount: 4 },
-    { gradeLabel: '5학년', classCount: 5 },
-    { gradeLabel: '6학년', classCount: 5 },
-  ],
-  [
-    { gradeLabel: '3학년', classCount: 8 },
-    { gradeLabel: '4학년', classCount: 6 },
-  ],
-  [
-    { gradeLabel: '1학년', classCount: 5 },
-    { gradeLabel: '2학년', classCount: 5 },
-    { gradeLabel: '3학년', classCount: 5 },
-    { gradeLabel: '4학년', classCount: 2 },
-  ],
-]
-
-const SCHEDULE_SLOT_KEYS = UJAT_INSTITUTION_SCHEDULE_COLUMNS.map(col => col.key)
-
-function buildGradeBreakdown(seed: number) {
-  return [...GRADE_BREAKDOWN_TEMPLATES[seed % GRADE_BREAKDOWN_TEMPLATES.length]]
-}
-
-/** 기관이 신청한 금요일만 O, 나머지 교육 일자 열은 - */
-function buildAppliedScheduleSlots(seed: number): Record<UjatInstitutionScheduleSlotKey, 'O' | '-'> {
-  const slots = buildEmptyScheduleSlots()
-  const applyCount = 2 + (seed % 4)
-  for (let i = 0; i < applyCount; i += 1) {
-    const key = SCHEDULE_SLOT_KEYS[(seed + i * 3) % SCHEDULE_SLOT_KEYS.length]
-    slots[key] = 'O'
-  }
-  return slots
-}
-
-function schoolNameForRegion(region: UjatInstitutionApplicationRegionKey, index: number): string {
-  if (region === 'gwangju' && index === 0) {
-    return '진월초등학교'
-  }
-  if (region === 'seoul' && index < SEOUL_SCHOOLS.length) {
-    return SEOUL_SCHOOLS[index]
-  }
-  const prefix = REGION_SCHOOL_PREFIX[region]
-  return `${prefix}${['가락', '문정', '잠실', '풍납', '중곡', '화곡'][index % 6]}초등학교`
+type UjatInstitutionMockFixture = {
+  row: UjatInstitutionApplicationRow
+  scheduleConfirmStatus?: UjatInstitutionScheduleConfirmStatus
+  scheduleAssignments?: UjatInstitutionScheduleAssignSeedEntry[]
+  detail: Omit<
+    UjatInstitutionApplicationDetail,
+    'institutionName' | 'regionLabel' | 'tempAssignmentStatus' | 'preferredEducationDates'
+  >
 }
 
 const CLASS_TIME_PERIOD_GROUP_LOWER: UjatInstitutionApplicationDetail['classTimeRows'][number]['periods'] =
@@ -244,113 +55,40 @@ const DEFAULT_CLASS_TIME_ROWS: UjatInstitutionApplicationDetail['classTimeRows']
   ...buildClassTimeRowsForGrades([4, 5, 6], CLASS_TIME_PERIOD_GROUP_UPPER),
 ]
 
-const JINWOL_DETAIL_FIXTURE: Omit<
-  UjatInstitutionApplicationDetail,
-  'institutionName' | 'regionLabel' | 'tempAssignmentStatus' | 'preferredEducationDates'
-> = {
-  address: '광주광역시 남구 광복마을4길 40',
-  addressDetail: '1층 교무실 이길동 선생님 앞',
-  teacherContact: {
-    teacherName: '이길동',
-    tel: '062-234-8800',
-    mobile: '010-9876-5432',
-    email: 'tinto@naver.com',
-  },
-  teacherHomeAddress: '광주광역시 북구 용봉동 1185 한양아파트 105동 804호',
-  otherRequests: '-',
-  gradeBlocks: [
-    {
-      gradeLabel: '1학년',
-      classCount: 8,
-      classes: [
-        { classNo: 1, studentCount: 28 },
-        { classNo: 2, studentCount: 28 },
-        { classNo: 3, studentCount: 28 },
-        { classNo: 4, studentCount: 28 },
-        { classNo: 5, studentCount: 28 },
-        { classNo: 6, studentCount: 28 },
-        { classNo: 7, studentCount: 28 },
-        { classNo: 8, studentCount: 24 },
-      ],
-    },
-    {
-      gradeLabel: '2학년',
-      classCount: 4,
-      classes: [
-        { classNo: 1, studentCount: 28 },
-        { classNo: 2, studentCount: 28 },
-        { classNo: 3, studentCount: 28 },
-        { classNo: 4, studentCount: 22 },
-      ],
-    },
-  ],
-  classTimeRows: DEFAULT_CLASS_TIME_ROWS,
+function buildScheduleSlots(appliedIsoDates: readonly string[]): Record<
+  UjatInstitutionScheduleSlotKey,
+  'O' | '-'
+> {
+  const slots = buildEmptyScheduleSlots()
+  for (const iso of appliedIsoDates) {
+    if (iso in slots) {
+      slots[iso as UjatInstitutionScheduleSlotKey] = 'O'
+    }
+  }
+  return slots
+}
+
+function buildGradeBlocks(
+  gradeClassCounts: UjatInstitutionApplicationRow['gradeClassCounts']
+): UjatInstitutionApplicationDetail['gradeBlocks'] {
+  return gradeClassCounts.map(grade => ({
+    gradeLabel: grade.gradeLabel,
+    classCount: grade.classCount,
+    classes: Array.from({ length: grade.classCount }, (_, i) => ({
+      classNo: i + 1,
+      studentCount: 28,
+    })),
+  }))
+}
+
+function gradeValuesForGrade(gradeLabel: string, classCount: number): string[] {
+  return Array.from({ length: classCount }, (_, i) => `${gradeLabel}:${i + 1}`)
 }
 
 function regionLabelForKey(regionKey: UjatInstitutionApplicationRegionKey): string {
   return (
-    UJAT_INSTITUTION_APPLICATION_REGIONS.find(r => r.key === regionKey)?.label ??
-    regionKey
+    UJAT_INSTITUTION_APPLICATION_REGIONS.find(r => r.key === regionKey)?.label ?? regionKey
   )
-}
-
-function buildSchoolTel(region: UjatInstitutionApplicationRegionKey, seed: number): string {
-  const area = REGION_SCHOOL_TEL_AREA[region]
-  if (area === '02') {
-    const mid = 2000 + (seed % 8000)
-    const last = 1000 + ((seed * 7) % 9000)
-    return `02-${mid}-${last}`
-  }
-  const mid = 200 + (seed % 800)
-  const last = 1000 + ((seed * 11) % 9000)
-  return `${area}-${mid}-${last}`
-}
-
-function buildTeacherContact(
-  teacherName: string,
-  region: UjatInstitutionApplicationRegionKey,
-  seed: number
-): UjatInstitutionApplicationDetail['teacherContact'] {
-  const profile =
-    TEACHER_CONTACT_BY_NAME[teacherName as (typeof TEACHERS)[number]] ??
-    TEACHER_CONTACT_BY_NAME['홍길동']
-  return {
-    teacherName,
-    tel: buildSchoolTel(region, seed),
-    mobile: profile.mobile,
-    email: profile.email,
-  }
-}
-
-function buildInstitutionAddress(
-  region: UjatInstitutionApplicationRegionKey,
-  seed: number
-): { address: string; addressDetail: string } {
-  const pool = INSTITUTION_ADDRESS_BY_REGION[region]
-  return pool[seed % pool.length] ?? pool[0]
-}
-
-/** 목록·임시 배정 셀렉트와 상세 `gradeBlocks`가 같은 학년·반 집합을 쓰도록 고정 */
-const JINWOL_GRADE_CLASS_COUNTS: UjatInstitutionApplicationRow['gradeClassCounts'] = [
-  { gradeLabel: '1학년', classCount: 8 },
-  { gradeLabel: '2학년', classCount: 4 },
-]
-
-function buildGradeBlocksFromRow(
-  row: UjatInstitutionApplicationRow,
-  seed: number
-): UjatInstitutionApplicationDetail['gradeBlocks'] {
-  return row.gradeClassCounts.map((grade, gradeIndex) => {
-    const classes = Array.from({ length: grade.classCount }, (_, classIndex) => ({
-      classNo: classIndex + 1,
-      studentCount: 28 - ((seed + gradeIndex + classIndex) % 5),
-    }))
-    return {
-      gradeLabel: grade.gradeLabel,
-      classCount: grade.classCount,
-      classes,
-    }
-  })
 }
 
 function preferredDatesFromSlots(
@@ -361,44 +99,231 @@ function preferredDatesFromSlots(
   )
 }
 
-function buildRowsForRegion(
-  region: UjatInstitutionApplicationRegionKey,
-  count: number
-): UjatInstitutionApplicationRow[] {
-  return Array.from({ length: count }, (_, i) => {
-    const seed = i + region.length
-    const institutionName = schoolNameForRegion(region, i)
-    const gradeClassCounts =
-      institutionName === '진월초등학교'
-        ? JINWOL_GRADE_CLASS_COUNTS
-        : buildGradeBreakdown(seed)
-    const totalClassCount = sumGradeClassCounts(gradeClassCounts)
-    return {
-      id: `${region}-${i + 1}`,
-      regionKey: region,
-      no: count - i,
-      institutionName,
-      tempAssignmentStatus:
-        region === 'gwangju' && i === 0
-          ? 'evaluation_pending'
-          : STATUSES[seed % STATUSES.length],
-      gradeClassCounts,
-      totalClassCount,
-      scheduleSlots: buildAppliedScheduleSlots(seed * 5),
-      teacherName: TEACHERS[i % TEACHERS.length],
-    }
-  })
-}
+/**
+ * 서울 5개 기관 — 목록·상세·임시 배정·임시 배정 기관 확인이 동일 fixture를 참조한다.
+ * (임시 배정 현황 = `tempAssignmentStatus`, 일정 확인 현황 = `scheduleConfirmStatus`)
+ */
+const UJAT_INSTITUTION_SEOUL_FIXTURES: UjatInstitutionMockFixture[] = [
+  {
+    row: {
+      id: 'seoul-1',
+      regionKey: 'seoul',
+      no: 5,
+      institutionName: '신사초등학교',
+      tempAssignmentStatus: 'application_rejected',
+      gradeClassCounts: [
+        { gradeLabel: '1학년', classCount: 4 },
+        { gradeLabel: '2학년', classCount: 3 },
+      ],
+      totalClassCount: 7,
+      scheduleSlots: buildScheduleSlots(['2026-04-03', '2026-04-17', '2026-05-08']),
+      teacherName: '홍길동',
+    },
+    detail: {
+      address: '서울특별시 송파구 송이로 42',
+      addressDetail: '본관 1층 교무실',
+      teacherContact: {
+        teacherName: '홍길동',
+        tel: '02-2145-3301',
+        mobile: '010-3342-7819',
+        email: 'gildong.hong@naver.com',
+      },
+      otherRequests: '-',
+      gradeBlocks: buildGradeBlocks([
+        { gradeLabel: '1학년', classCount: 4 },
+        { gradeLabel: '2학년', classCount: 3 },
+      ]),
+      classTimeRows: DEFAULT_CLASS_TIME_ROWS,
+    },
+  },
+  {
+    row: {
+      id: 'seoul-2',
+      regionKey: 'seoul',
+      no: 4,
+      institutionName: '마포초등학교',
+      tempAssignmentStatus: 'evaluation_pending',
+      gradeClassCounts: [
+        { gradeLabel: '2학년', classCount: 5 },
+        { gradeLabel: '3학년', classCount: 3 },
+      ],
+      totalClassCount: 8,
+      scheduleSlots: buildScheduleSlots(['2026-04-10', '2026-05-22']),
+      teacherName: '김철수',
+    },
+    detail: {
+      address: '서울특별시 마포구 월드컵북로 54',
+      addressDetail: '행정실 맞은편 배송 접수대',
+      teacherContact: {
+        teacherName: '김철수',
+        tel: '02-3361-8802',
+        mobile: '010-5521-9043',
+        email: 'chulsoo.kim@gmail.com',
+      },
+      otherRequests: '오전 1교시 수업 전 교구 상차 지원 부탁드립니다.',
+      gradeBlocks: buildGradeBlocks([
+        { gradeLabel: '2학년', classCount: 5 },
+        { gradeLabel: '3학년', classCount: 3 },
+      ]),
+      classTimeRows: DEFAULT_CLASS_TIME_ROWS,
+    },
+  },
+  {
+    row: {
+      id: 'seoul-3',
+      regionKey: 'seoul',
+      no: 3,
+      institutionName: '서울숭인초등학교',
+      tempAssignmentStatus: 'temp_assigned',
+      gradeClassCounts: [
+        { gradeLabel: '1학년', classCount: 4 },
+        { gradeLabel: '2학년', classCount: 3 },
+      ],
+      totalClassCount: 7,
+      scheduleSlots: buildScheduleSlots(['2026-04-03', '2026-06-19']),
+      teacherName: '이영희',
+    },
+    scheduleConfirmStatus: 'institution_checking',
+    scheduleAssignments: [
+      {
+        institutionId: 'seoul-3',
+        isoDate: '2026-04-03',
+        gradeValues: gradeValuesForGrade('1학년', 4),
+      },
+      {
+        institutionId: 'seoul-3',
+        isoDate: '2026-06-19',
+        gradeValues: gradeValuesForGrade('2학년', 3),
+      },
+    ],
+    detail: {
+      address: '서울특별시 종로구 숭인동 1-1',
+      addressDetail: '본관 2층 교무실',
+      teacherContact: {
+        teacherName: '이영희',
+        tel: '02-2148-1203',
+        mobile: '010-8876-2150',
+        email: 'younghee.lee@naver.com',
+      },
+      otherRequests: '-',
+      gradeBlocks: buildGradeBlocks([
+        { gradeLabel: '1학년', classCount: 4 },
+        { gradeLabel: '2학년', classCount: 3 },
+      ]),
+      classTimeRows: DEFAULT_CLASS_TIME_ROWS,
+    },
+  },
+  {
+    row: {
+      id: 'seoul-4',
+      regionKey: 'seoul',
+      no: 2,
+      institutionName: '서울대명초등학교',
+      tempAssignmentStatus: 'temp_assigned',
+      gradeClassCounts: [
+        { gradeLabel: '3학년', classCount: 5 },
+        { gradeLabel: '4학년', classCount: 2 },
+      ],
+      totalClassCount: 7,
+      scheduleSlots: buildScheduleSlots(['2026-04-17', '2026-05-08']),
+      teacherName: '박민수',
+    },
+    scheduleConfirmStatus: 'application_rejected',
+    scheduleAssignments: [
+      {
+        institutionId: 'seoul-4',
+        isoDate: '2026-04-17',
+        gradeValues: gradeValuesForGrade('3학년', 5),
+      },
+      {
+        institutionId: 'seoul-4',
+        isoDate: '2026-05-08',
+        gradeValues: gradeValuesForGrade('4학년', 2),
+      },
+    ],
+    detail: {
+      address: '서울특별시 관악구 신림로 77',
+      addressDetail: '본관 2층 교감실 앞',
+      teacherContact: {
+        teacherName: '박민수',
+        tel: '02-8712-4405',
+        mobile: '010-2918-6647',
+        email: 'minsu.park@kakao.com',
+      },
+      otherRequests: '교구 배송 시 경비실에 먼저 연락 부탁드립니다.',
+      gradeBlocks: buildGradeBlocks([
+        { gradeLabel: '3학년', classCount: 5 },
+        { gradeLabel: '4학년', classCount: 2 },
+      ]),
+      classTimeRows: DEFAULT_CLASS_TIME_ROWS,
+    },
+  },
+  {
+    row: {
+      id: 'seoul-5',
+      regionKey: 'seoul',
+      no: 1,
+      institutionName: '서울신동초등학교',
+      tempAssignmentStatus: 'temp_assigned',
+      gradeClassCounts: [
+        { gradeLabel: '1학년', classCount: 3 },
+        { gradeLabel: '5학년', classCount: 4 },
+        { gradeLabel: '6학년', classCount: 2 },
+      ],
+      totalClassCount: 9,
+      scheduleSlots: buildScheduleSlots(['2026-04-03', '2026-04-24', '2026-05-29']),
+      teacherName: '최지연',
+    },
+    scheduleConfirmStatus: 'institution_confirmed',
+    scheduleAssignments: [
+      {
+        institutionId: 'seoul-5',
+        isoDate: '2026-04-03',
+        gradeValues: gradeValuesForGrade('1학년', 3),
+      },
+      {
+        institutionId: 'seoul-5',
+        isoDate: '2026-04-24',
+        gradeValues: gradeValuesForGrade('5학년', 4),
+      },
+      {
+        institutionId: 'seoul-5',
+        isoDate: '2026-05-29',
+        gradeValues: gradeValuesForGrade('6학년', 2),
+      },
+    ],
+    detail: {
+      address: '서울특별시 동작구 신동아파트로 15',
+      addressDetail: '별관 1층 과학실 옆 교사실',
+      teacherContact: {
+        teacherName: '최지연',
+        tel: '02-8265-9910',
+        mobile: '010-7403-1285',
+        email: 'jiyeon.choi@naver.com',
+      },
+      otherRequests: '급식 시간(12:10~13:00)에는 교실 이동이 어렵습니다.',
+      gradeBlocks: buildGradeBlocks([
+        { gradeLabel: '1학년', classCount: 3 },
+        { gradeLabel: '5학년', classCount: 4 },
+        { gradeLabel: '6학년', classCount: 2 },
+      ]),
+      classTimeRows: DEFAULT_CLASS_TIME_ROWS,
+    },
+  },
+]
 
-const ROW_COUNTS: Record<UjatInstitutionApplicationRegionKey, number> = {
-  seoul: 30,
-  gyeonggi_south: 28,
-  incheon: 22,
-  daejeon: 18,
-  daegu: 20,
-  busan: 24,
-  gwangju: 16,
-  jeonbuk_jeonju: 14,
+const FIXTURE_BY_ID = new Map(
+  UJAT_INSTITUTION_SEOUL_FIXTURES.map(fixture => [fixture.row.id, fixture])
+)
+
+function buildInitialScheduleConfirmStatusMap(): Record<string, UjatInstitutionScheduleConfirmStatus> {
+  const map: Record<string, UjatInstitutionScheduleConfirmStatus> = {}
+  for (const fixture of UJAT_INSTITUTION_SEOUL_FIXTURES) {
+    if (fixture.scheduleConfirmStatus) {
+      map[fixture.row.id] = fixture.scheduleConfirmStatus
+    }
+  }
+  return map
 }
 
 /** 지역별 일 예상 최대 학급 수(mock) */
@@ -416,19 +341,47 @@ export const UJAT_INSTITUTION_MAX_CLASSES_PER_DAY: Record<
   jeonbuk_jeonju: 8,
 }
 
+/** `schedule-assign/store` 1회 시드용 */
+export const UJAT_INSTITUTION_SCHEDULE_ASSIGN_SEED: Partial<
+  Record<UjatInstitutionApplicationRegionKey, UjatInstitutionScheduleAssignRegionSeed>
+> = {
+  seoul: {
+    maxClassesPerDay: '12',
+    assignments: UJAT_INSTITUTION_SEOUL_FIXTURES.flatMap(
+      fixture => fixture.scheduleAssignments ?? []
+    ),
+  },
+}
+
 let mockRows: UjatInstitutionApplicationRow[] | null = null
+let scheduleConfirmStatusById: Record<string, UjatInstitutionScheduleConfirmStatus> =
+  buildInitialScheduleConfirmStatusMap()
+
+function cloneFixtureRows(): UjatInstitutionApplicationRow[] {
+  return UJAT_INSTITUTION_SEOUL_FIXTURES.map(fixture => ({ ...fixture.row }))
+}
 
 function ensureMockRows(): UjatInstitutionApplicationRow[] {
   if (!mockRows) {
-    mockRows = (
-      Object.keys(ROW_COUNTS) as UjatInstitutionApplicationRegionKey[]
-    ).flatMap(region => buildRowsForRegion(region, ROW_COUNTS[region]))
+    mockRows = cloneFixtureRows()
   }
   return mockRows
 }
 
 export function getUjatInstitutionApplicationMockRows(): UjatInstitutionApplicationRow[] {
   return ensureMockRows()
+}
+
+export function getUjatInstitutionApplicationRowById(
+  institutionId: string
+): UjatInstitutionApplicationRow | null {
+  return ensureMockRows().find(row => row.id === institutionId) ?? null
+}
+
+export function getUjatInstitutionApplicationMockRowsByRegion(
+  regionKey: UjatInstitutionApplicationRegionKey
+): UjatInstitutionApplicationRow[] {
+  return ensureMockRows().filter(row => row.regionKey === regionKey)
 }
 
 export function patchUjatInstitutionApplicationRows(
@@ -441,43 +394,60 @@ export function patchUjatInstitutionApplicationRows(
   )
 }
 
+/** 임시 배정 기관 확인 탭 — 기관별 일정 확인 현황 (fixture·패치만, 해시 없음) */
+export function getUjatInstitutionScheduleConfirmStatus(
+  institutionRowId: string
+): UjatInstitutionScheduleConfirmStatus {
+  const fromPatch = scheduleConfirmStatusById[institutionRowId]
+  if (fromPatch) return fromPatch
+  const fixture = FIXTURE_BY_ID.get(institutionRowId)
+  if (fixture?.scheduleConfirmStatus) return fixture.scheduleConfirmStatus
+  return 'institution_checking'
+}
+
+export function patchUjatInstitutionScheduleConfirmStatus(
+  ids: string[],
+  status: UjatInstitutionScheduleConfirmStatus
+): void {
+  const next = { ...scheduleConfirmStatusById }
+  for (const id of ids) {
+    next[id] = status
+  }
+  scheduleConfirmStatusById = next
+}
+
 export function getUjatInstitutionApplicationDetail(
   row: UjatInstitutionApplicationRow
 ): UjatInstitutionApplicationDetail {
   const regionLabel = regionLabelForKey(row.regionKey)
   const preferredEducationDates = preferredDatesFromSlots(row.scheduleSlots)
-  const seed = row.id.length + row.no
+  const fixture = FIXTURE_BY_ID.get(row.id)
 
-  if (row.institutionName === '진월초등학교') {
+  if (fixture) {
     return {
       institutionName: row.institutionName,
       regionLabel,
       tempAssignmentStatus: row.tempAssignmentStatus,
-      preferredEducationDates:
-        preferredEducationDates.length > 0
-          ? preferredEducationDates
-          : [
-              '26년 4월 24일(금)',
-              '26년 5월 8일(금)',
-              '26년 10월 30일(금)',
-              '26년 11월 20일(금)',
-            ],
-      ...JINWOL_DETAIL_FIXTURE,
+      preferredEducationDates,
+      ...fixture.detail,
     }
   }
 
-  const teacherName = row.teacherName
-  const address = buildInstitutionAddress(row.regionKey, seed)
   return {
     institutionName: row.institutionName,
     regionLabel,
     tempAssignmentStatus: row.tempAssignmentStatus,
-    address: address.address,
-    addressDetail: address.addressDetail,
-    teacherContact: buildTeacherContact(teacherName, row.regionKey, seed),
-    otherRequests: OTHER_REQUESTS_SAMPLES[seed % OTHER_REQUESTS_SAMPLES.length],
-    gradeBlocks: buildGradeBlocksFromRow(row, seed),
-    classTimeRows: DEFAULT_CLASS_TIME_ROWS,
     preferredEducationDates,
+    address: '-',
+    addressDetail: '-',
+    teacherContact: {
+      teacherName: row.teacherName,
+      tel: '-',
+      mobile: '-',
+      email: '-',
+    },
+    otherRequests: '-',
+    gradeBlocks: buildGradeBlocks(row.gradeClassCounts),
+    classTimeRows: DEFAULT_CLASS_TIME_ROWS,
   }
 }

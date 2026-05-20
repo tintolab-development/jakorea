@@ -1,0 +1,123 @@
+.ujat-schedule-confirm-list {
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-schedule-confirm-list__filter-layout.filter-table-layout {
+  background: transparent;
+  box-shadow: none !important;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.ujat-schedule-confirm-list__page-bottom-spacer {
+  display: block;
+  width: 100%;
+  height: var(--detail-fullpage-padding-bottom, 52px);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.ujat-schedule-confirm-list__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.ujat-schedule-confirm-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ujat-schedule-confirm-list__table-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ujat-schedule-confirm-list__table-wrap
+  .ujat-schedule-confirm-list__table
+  table.ant-table {
+  table-layout: fixed !important;
+  width: max-content !important;
+  min-width: 100%;
+}
+
+.ujat-schedule-confirm-list__table-wrap
+  .ujat-schedule-confirm-list__table
+  .ant-table-thead
+  > tr
+  > th,
+.ujat-schedule-confirm-list__table-wrap
+  .ujat-schedule-confirm-list__table
+  .ant-table-tbody
+  > tr
+  > td {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.ujat-schedule-confirm-list__table-wrap
+  .ujat-schedule-confirm-list__table
+  .ant-table-thead
+  > tr
+  > th.ujat-schedule-confirm-list__cell-confirmed-schedule,
+.ujat-schedule-confirm-list__table-wrap
+  .ujat-schedule-confirm-list__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-schedule-confirm-list__cell-confirmed-schedule {
+  width: 450px !important;
+  min-width: 450px !important;
+  max-width: 450px !important;
+}
+
+.ujat-schedule-confirm-list__table-wrap
+  .ujat-schedule-confirm-list__table
+  .ant-table-thead
+  > tr
+  > th.ujat-schedule-confirm-list__cell-confirmed-schedule {
+  text-align: center !important;
+}
+
+.ujat-schedule-confirm-list__table-wrap
+  .ujat-schedule-confirm-list__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-schedule-confirm-list__cell-confirmed-schedule {
+  text-align: left !important;
+  white-space: normal !important;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.ujat-schedule-confirm-list__table-wrap
+  .ujat-schedule-confirm-list__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-schedule-confirm-list__cell-confirmed-schedule
+  .ant-table-cell-content {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.ujat-schedule-confirm-list__table-wrap
+  .ujat-schedule-confirm-list__table
+  .ant-table-thead
+  > tr
+  > th.ujat-schedule-confirm-list__cell-grade-count,
+.ujat-schedule-confirm-list__table-wrap
+  .ujat-schedule-confirm-list__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-schedule-confirm-list__cell-grade-count {
+  text-align: center !important;
+}
+
+.ujat-schedule-confirm-list .ujat-institution-application-calendar-view {
+  width: 100%;
+  min-width: 0;
+}

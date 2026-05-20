@@ -1,3 +1,4 @@
+import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_SEED } from '@/data/mock/ujat-institution-application-mock'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import {
   UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES,
@@ -44,10 +45,49 @@ function createInitialRegionState(): UjatScheduleAssignRegionState {
 }
 
 const regionState = new Map<UjatInstitutionApplicationRegionKey, UjatScheduleAssignRegionState>()
+let scheduleAssignMockSeeded = false
+
+function applyScheduleAssignMockSeed(regionKey: UjatInstitutionApplicationRegionKey): void {
+  const seed = UJAT_INSTITUTION_SCHEDULE_ASSIGN_SEED[regionKey]
+  if (!seed?.assignments.length) return
+
+  const state = createInitialRegionState()
+  if (seed.maxClassesPerDay) {
+    state.maxClassesPerDay = seed.maxClassesPerDay
+  }
+
+  for (const { institutionId, isoDate, gradeValues } of seed.assignments) {
+    const day = state.days[isoDate]
+    if (!day || gradeValues.length === 0) continue
+
+    const filledRows = day.rows.filter(
+      row => row.institutionRowId != null && row.gradeValues.length > 0
+    )
+    filledRows.push({
+      id: `assign-seed-${institutionId}-${isoDate}`,
+      institutionRowId: institutionId,
+      gradeValues: [...gradeValues],
+    })
+    day.rows = [...filledRows, createEmptyRow()]
+  }
+
+  regionState.set(regionKey, state)
+}
+
+function ensureScheduleAssignMockSeeded(): void {
+  if (scheduleAssignMockSeeded) return
+  scheduleAssignMockSeeded = true
+  for (const regionKey of Object.keys(
+    UJAT_INSTITUTION_SCHEDULE_ASSIGN_SEED
+  ) as UjatInstitutionApplicationRegionKey[]) {
+    applyScheduleAssignMockSeed(regionKey)
+  }
+}
 
 export function getUjatScheduleAssignRegionState(
   regionKey: UjatInstitutionApplicationRegionKey
 ): UjatScheduleAssignRegionState {
+  ensureScheduleAssignMockSeeded()
   let state = regionState.get(regionKey)
   if (!state) {
     state = createInitialRegionState()

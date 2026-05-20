@@ -17,6 +17,7 @@ import { ProgramManagersTab } from '@/features/program/general/ui/program-manage
 import { UjatInstitutionApplicationList } from './application-institution/list/list'
 import { UjatInstitutionApplicationDetailPage } from './application-institution/detail/detail-page'
 import { UjatInstitutionScheduleAssignPage } from './application-institution/schedule-assign/page'
+import { UjatInstitutionScheduleConfirmList } from './application-institution/schedule-confirm/list'
 import { ParticipatingInstitutionsSection } from '@/features/program/general/ui/detail-modal/program-status/participating-institutions-section'
 import type { Program } from '@/types/domain'
 import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
@@ -43,10 +44,7 @@ import {
   EDU_PROGRESS_LEGACY_TAB_MAP,
   isValidEducationProgressTab,
 } from './progress/ujat-education-progress-tabs'
-import {
-  institutionAppScreenTitle,
-  isValidUjatInstitutionAppTab,
-} from './application-institution/tabs'
+import { isValidUjatInstitutionAppTab } from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsButton } from '@/shared/ui'
 import {
@@ -755,10 +753,7 @@ export function UjatProgramDetailFullPageModal({
             <UjatInstitutionScheduleAssignPage />
           )}
           {activeLnb === 'institution_applications' && activeTab === 'inst_schedule_confirm' && (
-            <UjatPlaceholderSection
-              title={institutionAppScreenTitle(activeTab)}
-              description="임시 배정이 완료된 기관을 대상으로 배정 내용을 확인합니다."
-            />
+            <UjatInstitutionScheduleConfirmList />
           )}
 
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&

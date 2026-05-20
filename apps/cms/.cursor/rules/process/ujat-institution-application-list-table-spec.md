@@ -19,7 +19,7 @@ category: process
 |-----|-------|------|
 | 기관 신청 > **신청 기관** | `inst_all` | 신청 목록·일괄 임시 배정·반려 (본 문서) |
 | 기관 신청 > **신청 기관 임시 배정** | `inst_schedule_assign` | **상세 임시 배정** — [기획](./ujat-institution-schedule-assign-spec.md) |
-| 기관 신청 > **임시 배정 기관 확인** | `inst_schedule_confirm` | 임시 배정 결과 확인 |
+| 기관 신청 > **임시 배정 기관 확인** | `inst_schedule_confirm` | 임시 배정 결과 확인 — [기획](./ujat-institution-schedule-confirm-spec.md) |
 
 ---
 

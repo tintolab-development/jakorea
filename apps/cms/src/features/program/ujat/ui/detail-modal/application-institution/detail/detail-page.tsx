@@ -4,7 +4,7 @@ import { useCmsAlert } from '@/shared/ui'
 import { CmsButton } from '@/shared/ui'
 import {
   getUjatInstitutionApplicationDetail,
-  getUjatInstitutionApplicationMockRows,
+  getUjatInstitutionApplicationRowById,
   patchUjatInstitutionApplicationRows,
 } from '@/data/mock/ujat-institution-application-mock'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
@@ -36,7 +36,7 @@ export function UjatInstitutionApplicationDetailPage({
 }) {
   const { showAlert } = useCmsAlert()
   const row = useMemo(
-    () => getUjatInstitutionApplicationMockRows().find(r => r.id === institutionId) ?? null,
+    () => getUjatInstitutionApplicationRowById(institutionId),
     [institutionId]
   )
 

@@ -23,8 +23,30 @@
   padding: 0 !important;
 }
 
+/* 필터 ↔ 툴바 사이: padding + 단일 1px 선(::before). 중첩 div·배경 height 이중선 방지 */
 .filter-table-layout__divider {
   padding: 32px 0;
+  margin: 0;
+  border: none;
+  line-height: 0;
+  font-size: 0;
+  box-sizing: border-box;
+}
+
+.filter-table-layout__divider::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid #c4cdd1;
+}
+
+/* 레거시: Divider 컴포넌트를 직접 넣은 화면만 호환 */
+.filter-table-layout__divider .app-divider {
+  display: none;
 }
 
 .filter-table-layout__top-nav {
