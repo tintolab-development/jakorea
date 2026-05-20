@@ -1,0 +1,191 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  getUjatVolunteerDocPassedApplicants,
+  sortUjatVolunteerDocPassedApplicants,
+  type UjatVolunteerApplicantRow,
+} from '@/data/mock/ujat-volunteer-applicants-mock'
+import type {
+  UjatManagerEvaluation,
+  UjatVolunteerRecruitHalf,
+} from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS,
+  UJAT_VOLUNTEER_DOC_PASSED_FILTER_ALL,
+  type UjatVolunteerDocPassedFilters,
+} from './ujat-volunteer-doc-passed-filter-fields'
+import { useUjatVolunteerDocPassedColumns } from './ujat-volunteer-doc-passed-columns'
+import { mapUjatVolunteerInterviewToCalendarEvents } from './ujat-volunteer-interview-calendar-events'
+
+function filterDocPassedApplicants(
+  rows: UjatVolunteerApplicantRow[],
+  filters: UjatVolunteerDocPassedFilters
+): UjatVolunteerApplicantRow[] {
+  const nameQ = filters.volunteerName.trim().toLowerCase()
+  return rows.filter(row => {
+    if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
+    if (
+      filters.preferredRegion !== UJAT_VOLUNTEER_DOC_PASSED_FILTER_ALL &&
+      row.preferredRegion !== filters.preferredRegion
+    ) {
+      return false
+    }
+    if (filters.educationExperience === 'yes' && !row.hasEducationExperience) return false
+    if (filters.educationExperience === 'no' && row.hasEducationExperience) return false
+    if (
+      filters.interviewAssignmentStatus !== UJAT_VOLUNTEER_DOC_PASSED_FILTER_ALL &&
+      row.interviewAssignmentStatus !== filters.interviewAssignmentStatus
+    ) {
+      return false
+    }
+    return true
+  })
+}
+
+export type UjatVolunteerDocPassedViewMode = 'list' | 'calendar'
+
+export function useUjatVolunteerDocPassed({
+  programId,
+  half,
+}: {
+  programId: string
+  half: UjatVolunteerRecruitHalf
+}) {
+  const { showAlert } = useCmsAlert()
+  const [list, setList] = useState<UjatVolunteerApplicantRow[]>(() =>
+    getUjatVolunteerDocPassedApplicants(programId, half)
+  )
+  const [pendingFilters, setPendingFilters] = useState<UjatVolunteerDocPassedFilters>(
+    () => ({ ...DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS })
+  )
+  const [appliedFilters, setAppliedFilters] = useState<UjatVolunteerDocPassedFilters>(
+    () => ({ ...DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS })
+  )
+  const [viewMode, setViewMode] = useState<UjatVolunteerDocPassedViewMode>('list')
+  const [openManagerDropdown, setOpenManagerDropdown] = useState<{
+    rowId: string
+    manager: 'A' | 'B'
+  } | null>(null)
+  const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
+
+  useEffect(() => {
+    setList(getUjatVolunteerDocPassedApplicants(programId, half))
+    setPendingFilters({ ...DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS })
+    setAppliedFilters({ ...DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS })
+    setViewMode('list')
+  }, [programId, half])
+
+  const handleFilterChange = useCallback((key: string, value: unknown) => {
+    setPendingFilters(prev => ({ ...prev, [key]: value }))
+  }, [])
+
+  const handleSearch = useCallback(() => {
+    setAppliedFilters({ ...pendingFilters })
+  }, [pendingFilters])
+
+  const filteredSorted = useMemo(() => {
+    const filtered = filterDocPassedApplicants(list, appliedFilters)
+    return sortUjatVolunteerDocPassedApplicants(filtered)
+  }, [list, appliedFilters])
+
+  const calendarEvents = useMemo(
+    () => mapUjatVolunteerInterviewToCalendarEvents(filteredSorted),
+    [filteredSorted]
+  )
+
+  const updateRow = useCallback((id: string, patch: Partial<UjatVolunteerApplicantRow>) => {
+    setList(prev => prev.map(row => (row.id === id ? { ...row, ...patch } : row)))
+  }, [])
+
+  const onManagerAEvaluationChange = useCallback(
+    (id: string, evaluation: UjatManagerEvaluation) => {
+      updateRow(id, { managerAEvaluation: evaluation })
+    },
+    [updateRow]
+  )
+
+  const onManagerBEvaluationChange = useCallback(
+    (id: string, evaluation: UjatManagerEvaluation) => {
+      updateRow(id, { managerBEvaluation: evaluation })
+    },
+    [updateRow]
+  )
+
+  const handleAssignInterview = useCallback(
+    (row: UjatVolunteerApplicantRow) => {
+      if (row.interviewAssignmentStatus === 'withdrawn') return
+      updateRow(row.id, { interviewAssignmentStatus: 'assigned' })
+      showAlert({
+        title: '면접일 배정',
+        content:
+          row.interviewAssignmentStatus === 'waiting'
+            ? `${row.name} 봉사자의 면접일이 배정되었습니다. (목 데이터)`
+            : `${row.name} 봉사자의 면접일 재배정이 완료되었습니다. (목 데이터)`,
+      })
+    },
+    [showAlert, updateRow]
+  )
+
+  const requestWithdrawActivity = useCallback((row: UjatVolunteerApplicantRow) => {
+    if (row.interviewAssignmentStatus === 'withdrawn') return
+    setWithdrawTargetId(row.id)
+  }, [])
+
+  const cancelWithdrawActivity = useCallback(() => {
+    setWithdrawTargetId(null)
+  }, [])
+
+  const confirmWithdrawActivity = useCallback(() => {
+    if (!withdrawTargetId) return
+    const row = list.find(item => item.id === withdrawTargetId)
+    if (!row) {
+      setWithdrawTargetId(null)
+      return
+    }
+    updateRow(withdrawTargetId, { interviewAssignmentStatus: 'withdrawn' })
+    showAlert({
+      title: '활동 포기',
+      content: `${row.name} 봉사자가 활동 포기 처리되었습니다. (목 데이터)`,
+    })
+    setWithdrawTargetId(null)
+  }, [list, showAlert, updateRow, withdrawTargetId])
+
+  const withdrawTarget = useMemo(
+    () => (withdrawTargetId ? list.find(row => row.id === withdrawTargetId) : undefined),
+    [list, withdrawTargetId]
+  )
+
+  const columns = useUjatVolunteerDocPassedColumns({ onAssignInterview: handleAssignInterview })
+
+  const handleViewCalendar = useCallback(() => {
+    setViewMode('calendar')
+  }, [])
+
+  const handleViewList = useCallback(() => {
+    setViewMode('list')
+  }, [])
+
+  return {
+    list,
+    updateRow,
+    handleAssignInterview,
+    requestWithdrawActivity,
+    cancelWithdrawActivity,
+    confirmWithdrawActivity,
+    withdrawTarget,
+    pendingFilters,
+    handleFilterChange,
+    handleSearch,
+    tableData: filteredSorted,
+    columns,
+    count: filteredSorted.length,
+    viewMode,
+    handleViewCalendar,
+    handleViewList,
+    calendarEvents,
+    openManagerDropdown,
+    setOpenManagerDropdown,
+    onManagerAEvaluationChange,
+    onManagerBEvaluationChange,
+  }
+}

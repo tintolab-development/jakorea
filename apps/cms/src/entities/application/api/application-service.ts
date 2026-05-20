@@ -9,7 +9,7 @@ import {
   getWaitingList,
   getNextWaitingListOrder,
   isCapacityFull,
-} from '@/features/program/lib/program-helpers'
+} from '@/features/program/general/lib/program-helpers'
 import { mockPrograms } from '@/data/mock'
 import { appendReceivedLog } from '@/entities/application-progress/api/status-change-service'
 import { createAuditLog } from '@/entities/audit-log/api/audit-log-service'

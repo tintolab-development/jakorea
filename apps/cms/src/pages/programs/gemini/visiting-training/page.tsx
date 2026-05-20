@@ -6,9 +6,9 @@
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Tabs } from 'antd'
-import { GeminiVisitingTrainingRecruitmentList } from './ui/gemini-visiting-training-recruitment-list'
-import type { GeminiVisitingTrainingTabKey } from './model/gemini-visiting-training-types'
-import './visiting-training-page.css'
+import { GeminiVisitingTrainingRecruitmentList } from '@/features/program/gemini/ui/gemini-visiting-training-recruitment-list'
+import type { GeminiVisitingTrainingTabKey } from '@/features/program/gemini/model/gemini-visiting-training-types'
+import '@/features/program/gemini/ui/visiting-training-page.css'
 
 const TAB_PARAM = 'tab'
 

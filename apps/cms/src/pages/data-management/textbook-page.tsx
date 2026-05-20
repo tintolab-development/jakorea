@@ -30,7 +30,7 @@ import { TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS } from '@/features/textbook/mo
 import type { TextbookRow, TextbookUseStatus } from '@/features/textbook/model/textbook.types'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 import './textbook-page.css'
 
 type TextbookFilters = {

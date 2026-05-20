@@ -6,7 +6,7 @@
 import {
   ProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
-} from '@/features/program/ui/program-detail-td-divider'
+} from '@/features/program/shared/ui/program-detail-td-divider'
 import { formatKoreanDateWithWeekday } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 import './payment-order-lecture-date-session-cell.css'
 

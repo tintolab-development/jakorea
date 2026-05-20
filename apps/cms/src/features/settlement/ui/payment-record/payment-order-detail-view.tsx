@@ -27,7 +27,7 @@ import { PaymentOrderProgramCalculationStatementModal } from './payment-order-pr
 import { PaymentOrderInstructorBasicInfo } from '@/pages/settlement-management/payment-order-instructor-basic-info'
 import { PaymentOrderProgramBasicInfo } from '@/pages/settlement-management/payment-order-program-basic-info'
 import { PaymentOrderStatusDetailLnbIcon } from '@/pages/settlement-management/payment-order-status-detail-lnb-icon'
-import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
+import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/pages/settlement-management/payment-order-program-status-detail-fullpage-modal.css'
 import '@/pages/settlement-management/payment-order-instructor-status-detail-fullpage-modal.css'
 

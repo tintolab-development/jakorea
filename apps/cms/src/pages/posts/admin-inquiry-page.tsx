@@ -28,7 +28,7 @@ import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-conf
 import { InquiryCategoryManagementModal } from '@/features/posts/ui/inquiry-category-management/inquiry-category-management-modal'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 import './admin-inquiry-page.css'
 
 const ADMIN_INQUIRIES_LIST_PATH = '/admin/posts/inquiries'

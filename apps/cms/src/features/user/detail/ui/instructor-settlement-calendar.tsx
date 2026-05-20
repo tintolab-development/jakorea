@@ -12,7 +12,7 @@ import {
   INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT,
   type InstructorSettlementListRow,
 } from '@/data/mock/instructor-member-settlements'
-import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import {
   CalendarMain,
   CalendarSubRightSettlementList,

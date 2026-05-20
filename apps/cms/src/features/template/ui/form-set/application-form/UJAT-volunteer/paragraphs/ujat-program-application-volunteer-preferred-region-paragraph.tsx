@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 
-import { UJAT_VOLUNTEER_PREFERRED_REGIONS } from '@/features/program/model/ujat-volunteer-screening-constants'
+import { UJAT_VOLUNTEER_PREFERRED_REGIONS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 
 const REGION_OPTIONS = UJAT_VOLUNTEER_PREFERRED_REGIONS
 

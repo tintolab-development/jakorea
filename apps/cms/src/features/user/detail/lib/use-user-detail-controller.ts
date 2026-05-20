@@ -25,7 +25,7 @@ import type { UseUserDetailModalsResult } from './use-user-detail-modals'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { User } from '@/types/user'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
-import { getProgramAdminDetailInfoTabUrl } from '@/features/program/lib/program-admin-detail-url'
+import { getProgramAdminDetailInfoTabUrl } from '@/features/program/general/lib/program-admin-detail-url'
 import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import {
   canAccessAdminCommentInAdminDetail,

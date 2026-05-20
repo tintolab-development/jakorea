@@ -11,7 +11,7 @@ import { fileDownloadHistoryFilterFields } from '@/features/download/model/file-
 import { fileDownloadHistoryTablePageConfig } from '@/features/download/model/file-download-history-table.config'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 
 const FILE_DOWNLOAD_HISTORY_TABLE_SCROLL_X = 1120
 

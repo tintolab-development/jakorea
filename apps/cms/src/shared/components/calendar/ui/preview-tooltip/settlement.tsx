@@ -1,4 +1,4 @@
-import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import {
   INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT,
   INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE,

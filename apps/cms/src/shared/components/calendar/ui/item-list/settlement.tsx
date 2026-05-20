@@ -4,7 +4,7 @@ import {
   settlementCalendarPrimaryTitle,
   type InstructorSettlementListRow,
 } from '@/data/mock/instructor-member-settlements'
-import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 
 import './settlement-list-item.css'
 

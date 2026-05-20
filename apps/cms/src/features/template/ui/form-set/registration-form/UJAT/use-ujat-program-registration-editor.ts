@@ -16,7 +16,7 @@ import {
   getUjatProgramRegistrationOverlayRecord,
   resetUjatProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
-import { persistUjatRegistrationFormLocal } from '@/features/program/lib/ujat-registration-local-save'
+import { persistUjatRegistrationFormLocal } from '@/features/program/ujat/lib/ujat-registration-local-save'
 
 export type UseUjatProgramRegistrationEditorOptions = {
   /** 로컬 저장 성공 후(목록 갱신·모달 닫기 등) */

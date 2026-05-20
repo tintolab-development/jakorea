@@ -11,7 +11,7 @@ import { personalInfoAccessHistoryFilterFields } from '@/features/logs/model/per
 import { personalInfoAccessHistoryTablePageConfig } from '@/features/logs/model/personal-info-access-history-table.config'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 
 const PERSONAL_INFO_ACCESS_TABLE_SCROLL_X = 1120
 

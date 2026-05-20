@@ -16,7 +16,7 @@ import {
   type UjatVolunteerGrade,
   type UjatVolunteerPreferredRegion,
   type UjatVolunteerRecruitHalf,
-} from '@/features/program/model/ujat-volunteer-screening-constants'
+} from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 
 export type {
   UjatDocumentScreeningStatus,

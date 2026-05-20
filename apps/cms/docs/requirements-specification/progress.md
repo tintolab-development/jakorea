@@ -101,9 +101,9 @@
 
 **파일 위치**:
 - `src/pages/programs/program-list-page.tsx`
-- `src/features/program/ui/program-detail-drawer.tsx` — handleApplicationClick 로그인 redirect (기존)
-- `src/features/program/ui/program-application-card.tsx` — applyRedirectPath, 로그인/회원가입 Link redirect (2026-01-26)
-- `src/features/program/ui/program-basic-info-tab.tsx` — applyRedirectPath 전달 (2026-01-26)
+- `src/features/program/general/ui/program-detail-drawer.tsx` — handleApplicationClick 로그인 redirect (기존)
+- `src/features/program/general/ui/program-application-card.tsx` — applyRedirectPath, 로그인/회원가입 Link redirect (2026-01-26)
+- `src/features/program/general/ui/program-basic-info-tab.tsx` — applyRedirectPath 전달 (2026-01-26)
 - `src/features/auth/hooks/use-register.ts` — redirectPath 지원, 가입 후 /login?redirect=… (2026-01-26)
 - `src/pages/auth/register-page.tsx` — redirect 쿼리 연동, 푸터 로그인 링크 redirect (2026-01-26)
 - `src/pages/auth/login-page.tsx` — 회원가입 링크 redirect 연동 (2026-01-26)
@@ -122,11 +122,11 @@
 - ✅ 포스터/키비주얼 이미지 노출 (2026-01-22)
 
 **파일 위치**:
-- `src/features/program/ui/program-detail-drawer.tsx`
+- `src/features/program/general/ui/program-detail-drawer.tsx`
 - `src/types/domain.ts` - Program.posterImage 필드 추가 (2026-01-22)
 - `src/data/mock/programs.ts` - Mock 프로그램에 posterImage 추가 (2026-01-22)
-- `src/features/program/ui/program-list.tsx` - 목록에 포스터 썸네일 컬럼 (2026-01-22)
-- `src/features/program/ui/program-basic-info-tab.tsx` - 상세 페이지 상단 포스터 표시 (2026-01-22)
+- `src/features/program/general/ui/program-list.tsx` - 목록에 포스터 썸네일 컬럼 (2026-01-22)
+- `src/features/program/general/ui/program-basic-info-tab.tsx` - 상세 페이지 상단 포스터 표시 (2026-01-22)
 
 ---
 

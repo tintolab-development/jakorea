@@ -1,6 +1,6 @@
 import type { Key, ReactNode } from 'react'
 import type { Dayjs } from 'dayjs'
-import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import type { CalendarItem } from '../lib/calendar-helpers'
 
 export type CalendarEventsConfig = {

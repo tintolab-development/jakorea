@@ -8,20 +8,20 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { useProgramStore } from '@/features/program/model/program-store'
-import { getCapacity } from '@/features/program/lib/program-helpers'
-import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
-import { UJAT_INST_APP_ID_PARAM } from '@/features/program/ui/detail-modal/ujat-program-detail-url'
+import { useProgramStore } from '@/features/program/general/model/program-store'
+import { getCapacity } from '@/features/program/general/lib/program-helpers'
+import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
+import { UJAT_INST_APP_ID_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { getUjatPrograms } from '@/data/mock/program-schedule-categories'
 import {
   isResolvableUjatProgramId,
   resolveUjatProgramForDetail,
-} from '@/features/program/ui/detail-modal/ujat-program-detail-meta'
+} from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import type { Program } from '@/types/domain'
 import { FilterTableLayout, CmsButton } from '@/shared/ui'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { StatusBadge } from '@/shared/components/status-badge'
-import { getUjatProgramProgressDisplayStatus } from '@/features/program/ui/detail-modal/ujat-program-info-edit'
+import { getUjatProgramProgressDisplayStatus } from '@/features/program/ujat/ui/detail-modal/info/ujat-program-info-edit'
 import {
   TemplateWritingPreviewProvider,
   useTemplateWritingPreview,
@@ -36,8 +36,8 @@ import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-u
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
-import { UjatProgramDetailFullPageModal } from '@/features/program/ui/detail-modal/ujat-program-detail-fullpage-modal'
-import { UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/program/lib/ujat-registration-local-save'
+import { UjatProgramDetailFullPageModal } from '@/features/program/ujat/ui/detail-modal/ujat-program-detail-fullpage-modal'
+import { UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/program/ujat/lib/ujat-registration-local-save'
 
 import './ujat-program-list-page.css'
 

@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useMemo } from 'react'
-import { useProgramStore } from '@/features/program/model/program-store'
+import { useProgramStore } from '@/features/program/general/model/program-store'
 import { useSponsorService } from '@/features/sponsor/hooks/use-sponsor-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'

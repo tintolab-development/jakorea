@@ -37,7 +37,7 @@ import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-conf
 import { NoticeFormModal } from '@/features/posts/ui/notice-form-modal'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 import './admin-notice-list-page.css'
 
 /** 고정 레이아웃 기준 최소 가로 스크롤 (체크박스 열 제외 본문 컬럼 합 + 여유) */

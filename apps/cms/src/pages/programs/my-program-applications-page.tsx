@@ -10,13 +10,13 @@ import { EyeOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { useProgramService } from '@/features/program/hooks/use-program-service'
+import { useProgramService } from '@/features/program/general/hooks/use-program-service'
 import { applicationStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { applicationService } from '@/entities/application/api/application-service'
 import dayjs from 'dayjs'
 import type { Application, ApplicationStatus } from '@/types/domain'
-import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
+import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 
 const statusTabs: Array<{ key: ApplicationStatus | 'all'; label: string }> = [
   { key: 'all', label: '전체' },

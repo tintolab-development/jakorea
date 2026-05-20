@@ -3,12 +3,12 @@ import type { Dayjs } from 'dayjs'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
-import type { UjatRecruitParagraphProps } from '@/features/program/ui/detail-modal/ujat-recruit-paragraph-props'
+import type { UjatRecruitParagraphProps } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
 import {
   isUjatRecruitProgramContext,
   resolveUjatRecruitParagraphMode,
-} from '@/features/program/ui/detail-modal/ujat-recruit-paragraph-props'
-import { UjatRecruitParticipantInfoProgramView } from '@/features/program/ui/detail-modal/ujat-recruit-paragraph-views/participant-info-program'
+} from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
+import { UjatRecruitParticipantInfoProgramView } from '@/features/program/ujat/ui/detail-modal/info/recruit-paragraph-views/participant-info-program'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'

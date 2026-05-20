@@ -15,9 +15,9 @@ import {
 import {
   findUjatRegistrationLocalSaveProgramById,
   readUjatRegistrationLocalSavePrograms,
-} from '@/features/program/lib/ujat-registration-local-save'
-import { applyUjatRecruitInstitutionTemplateDefaults } from '@/features/program/lib/ujat-recruit-institution-template-merge'
-import { applyUjatRecruitVolunteerTemplateDefaults } from '@/features/program/lib/ujat-recruit-volunteer-template-merge'
+} from '@/features/program/ujat/lib/ujat-registration-local-save'
+import { applyUjatRecruitInstitutionTemplateDefaults } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
+import { applyUjatRecruitVolunteerTemplateDefaults } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import type { UserRole } from '@/types/user'
 import { updateUserProgramRole } from '@/entities/user/api/user-service'
 

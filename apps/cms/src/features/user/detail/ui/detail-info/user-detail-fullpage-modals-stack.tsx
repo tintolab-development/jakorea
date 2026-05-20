@@ -2,13 +2,13 @@ import {
   DeleteGuideModal,
   buildMemberWithdrawMessageLines,
   buildSchoolDeleteMessageLines,
-} from '@/features/program/ui/manager-delete-guide-modal'
+} from '@/features/program/general/ui/manager-delete-guide-modal'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
-import { LectureAttendanceModal } from '@/features/program/ui/lecture-attendance-modal'
-import { AssignmentSubmissionModal } from '@/features/program/ui/assignment-submission-modal'
+import { LectureAttendanceModal } from '@/features/program/general/ui/lecture-attendance-modal'
+import { AssignmentSubmissionModal } from '@/features/program/general/ui/assignment-submission-modal'
 import { InstructorPermissionRevokeModal } from '@/features/user/detail/ui/modal/instructor-permission-revoke-modal'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
 import { InstitutionDeleteBlockedModal } from '@/features/user/shared/ui/institution-delete-blocked-modal'

@@ -97,7 +97,7 @@ import {
   loadUjatRecruitVolunteerTemplateSave,
   persistUjatRecruitInstitutionTemplateSave,
   persistUjatRecruitVolunteerTemplateSave,
-} from '@/features/program/lib/ujat-recruit-template-local-save'
+} from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import {
   getUjatRecruitInstitutionOverlayRecord,
   replaceUjatRecruitInstitutionOverlay,

@@ -12,7 +12,7 @@ import {
   type ProgramProgressStages,
   type ProgramEconomyStages,
 } from '../api/admin-dashboard-service'
-import { useProgramStore } from '@/features/program/model/program-store'
+import { useProgramStore } from '@/features/program/general/model/program-store'
 import {
   PROGRAM_PROGRESS_STAGE_LABELS,
   PROGRAM_PROGRESS_STAGE_ORDER,

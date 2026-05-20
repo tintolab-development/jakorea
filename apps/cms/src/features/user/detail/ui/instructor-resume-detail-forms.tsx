@@ -15,8 +15,8 @@ import {
   instructorCareerSectionDescription,
   instructorEducationSectionDescription,
   instructorQualificationsSectionDescription,
-} from '@/features/program/program-detail/ui/applicant-list/instructor-resume-blocks'
-import '@/features/program/program-detail/ui/applicant-list/applicant-instructor-resume.css'
+} from '@/features/program/shared/ui/program-detail/applicant-list/instructor-resume-blocks'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-resume.css'
 
 function resumeSectionDescriptionNode(text: string) {
   const empty = text === INSTRUCTOR_RESUME_NO_DATA

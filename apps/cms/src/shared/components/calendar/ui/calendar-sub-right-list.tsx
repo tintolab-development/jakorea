@@ -26,7 +26,7 @@ import {
   SCHEDULE_COLORS,
   buildResolvedScheduleColorMapForPrograms,
   type ScheduleColorPair,
-} from '@/features/program/ui/program-schedule-colors'
+} from '@/features/program/shared/ui/program-schedule-colors'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)

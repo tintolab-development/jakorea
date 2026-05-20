@@ -4,7 +4,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { DateValue } from '@/types'
 import type { Program } from '@/types/domain'
-import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import { CALENDAR_ITEM_TYPE, type CalendarItem } from '../model/calendar-item'
 
 dayjs.extend(isSameOrAfter)

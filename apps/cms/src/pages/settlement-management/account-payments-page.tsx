@@ -21,8 +21,8 @@ import {
 import { ACCOUNT_PAYMENT_AGGREGATE_STATUSES } from '@/shared/constants/payment-order-aggregate-status'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui/cms-button'
-import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
-import '@/features/program/ui/detail-modal/program-status/program-progress-tab.css'
+import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
+import '@/features/program/general/ui/detail-modal/program-status/program-progress-tab.css'
 import './account-payments-page.css'
 import { AccountPaymentsCalendarView } from './account-payments-calendar-view'
 import {

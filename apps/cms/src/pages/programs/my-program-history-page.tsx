@@ -33,7 +33,7 @@ import { getMySettlements } from '@/entities/settlement/api/instructor-settlemen
 import { commonStatusStatusConfig, settlementStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { mockApplications, mockMatchings } from '@/data/mock'
-import { useProgramService } from '@/features/program/hooks/use-program-service'
+import { useProgramService } from '@/features/program/general/hooks/use-program-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import dayjs from 'dayjs'
 import type { Settlement } from '@/types/domain'

@@ -5,7 +5,7 @@ category: routing
 
 # UJAT 프로그램 상세 — 모집 정보 3탭
 
-**Scope:** `apps/cms/src/features/program/ui/detail-modal/**`, `apps/cms/src/features/template/ui/form-set/recruit-form/UJAT-*`
+**Scope:** `apps/cms/src/features/program/ujat/ui/detail-modal/info/**`, `apps/cms/src/features/program/shared/ui/program-detail/**`, `apps/cms/src/features/template/ui/form-set/recruit-form/UJAT-*`
 
 ---
 

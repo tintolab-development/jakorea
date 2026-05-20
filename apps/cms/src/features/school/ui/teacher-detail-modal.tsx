@@ -10,7 +10,7 @@ import { AppButton } from '@/shared/ui/app-button'
 import {
   DeleteGuideModal,
   buildMemberWithdrawMessageLines,
-} from '@/features/program/ui/manager-delete-guide-modal'
+} from '@/features/program/general/ui/manager-delete-guide-modal'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,

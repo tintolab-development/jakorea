@@ -4,8 +4,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
-import { ProgramList } from '@/features/program/ui/program-list'
-import { useProgramStore } from '@/features/program/model/program-store'
+import { ProgramList } from '@/features/program/general/ui/program-list'
+import { useProgramStore } from '@/features/program/general/model/program-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useModalState } from '@/shared/hooks/use-modal-state'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -15,13 +15,13 @@ import {
   type ProgramProgressStageKey,
 } from '@/shared/config/program-progress-stages'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import type { EconomyView } from '@/features/program/ui/table/program-table-column-resolver'
-import { getProgramAdminDetailUrlFromPathname } from '@/features/program/lib/program-admin-detail-url'
-import { isUjatProgramId } from '@/features/program/ui/detail-modal/ujat-program-detail-meta'
+import type { EconomyView } from '@/features/program/general/ui/table/program-table-column-resolver'
+import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
+import { isUjatProgramId } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import {
   buildUjatProgramDetailUrl,
   resolveUjatDetailLnbFromSearchParams,
-} from '@/features/program/ui/detail-modal/ujat-program-detail-url'
+} from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 
 // Local Hooks & Components
@@ -29,7 +29,7 @@ import { useProgramListFilters } from './use-program-list-filters'
 import { useProgramListActions } from './use-program-list-actions'
 import { useSearchSync } from './use-search-sync'
 import { ProgramListModals } from './program-list-modals'
-import { ProgramDetailFullPageModal } from '@/features/program/ui/detail-modal/program-detail-fullpage-modal'
+import { ProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal'
 
 import './program-list-page.css'
 import { CmsButton, ConfirmModal } from '@/shared/ui'

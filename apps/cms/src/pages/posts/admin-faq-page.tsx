@@ -36,7 +36,7 @@ import { FaqCategoryManagementModal } from '@/features/posts/ui/faq-category-man
 import { FaqFormModal } from '@/features/posts/ui/faq-form-modal'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 import './admin-faq-delete-btn.css'
 import './admin-faq-list-page.css'
 

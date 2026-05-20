@@ -18,7 +18,7 @@ import { applicationPathService } from '@/entities/application-path/api/applicat
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
 import {
   isApplicationAvailable,
-  getApplicationUnavailableReason } from '@/features/program/lib/program-helpers'
+  getApplicationUnavailableReason } from '@/features/program/general/lib/program-helpers'
 
 const { Option } = Select
 const { Text } = Typography

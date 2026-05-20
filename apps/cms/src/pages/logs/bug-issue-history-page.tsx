@@ -11,7 +11,7 @@ import { useTablePage } from '@/shared/components/table-system/model/use-table-p
 import type { BugIssueLog } from '@/types/bug-issue-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 
 const BUG_ISSUE_HISTORY_TABLE_SCROLL_X = 1100
 

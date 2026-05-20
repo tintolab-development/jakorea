@@ -38,7 +38,7 @@ import {
 } from '@/shared/constants'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { buildProgressYearSelectOptions, lectureAttendanceHasAtLeastOne } from '@/shared/utils'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import './member-program-lecture-history.css'

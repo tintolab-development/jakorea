@@ -9,7 +9,7 @@ import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-inf
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatWon } from './payment-order-detail-fullpage-shared'
 import { renderAggregateStatus } from './payment-order-detail-aggregate-status'
-import '@/features/program/program-detail/ui/applicant-list/applicant-instructor-basic-info.css'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 
 export interface PaymentOrderInstructorBasicInfoProps {
   detail: PaymentOrderAdminInstructorDetail

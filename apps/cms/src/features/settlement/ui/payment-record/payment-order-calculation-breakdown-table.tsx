@@ -7,7 +7,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { withProgramDetailTdDivider } from '@/features/program/ui/program-detail-td-divider'
+import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import type {
   PaymentOrderAdminLineProcessingStatus,
   PaymentOrderCalculationStatementSessionBlock,

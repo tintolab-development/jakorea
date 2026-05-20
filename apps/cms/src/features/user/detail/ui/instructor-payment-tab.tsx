@@ -28,7 +28,7 @@ import {
   InstructorSettlementCalendarView,
   type SettlementCalendarEvent,
 } from './instructor-settlement-calendar'
-import '@/features/program/program-detail/ui/applicant-list/applicant-list.css'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import './instructor-payment-tab.css'
 

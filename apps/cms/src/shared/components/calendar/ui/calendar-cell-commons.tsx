@@ -5,7 +5,7 @@ import { getProgramDayScheduleLine } from '@/entities/program/lib/program-day-sc
 import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
-} from '@/features/program/ui/program-schedule-colors'
+} from '@/features/program/shared/ui/program-schedule-colors'
 import {
   calendarItemForScheduleSource,
   resolveItemColor,

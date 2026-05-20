@@ -5,11 +5,11 @@
  */
 
 import { useParams, useNavigate } from 'react-router-dom'
-import { getProgramAdminDetailUrlDefault } from '@/features/program/lib/program-admin-detail-url'
+import { getProgramAdminDetailUrlDefault } from '@/features/program/general/lib/program-admin-detail-url'
 import { useEffect, useState } from 'react'
 import { Card, Spin, Typography } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { useProgramStore } from '@/features/program/model/program-store'
+import { useProgramStore } from '@/features/program/general/model/program-store'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 // Phase 0.2.2: 역할별 신청서 폼 컴포넌트
 import { IndividualApplicationForm } from '@/features/application/ui/individual-application-form'

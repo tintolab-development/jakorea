@@ -5,8 +5,8 @@
 
 import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ProgramForm } from '@/features/program/ui/program-form'
-import { useProgramStore } from '@/features/program/model/program-store'
+import { ProgramForm } from '@/features/program/general/ui/program-form'
+import { useProgramStore } from '@/features/program/general/model/program-store'
 import type { ProgramFormData } from '@/entities/program/model/schema'
 import type { Program } from '@/types/domain'
 

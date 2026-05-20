@@ -4,11 +4,11 @@
 
 import type { CSSProperties } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { SendNotiButton } from '@/features/program/ui/detail-modal/components/send-noti-button'
+import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
 import {
   ProgramDetailTdDivider,
   withProgramDetailTdDivider,
-} from '@/features/program/ui/program-detail-td-divider'
+} from '@/features/program/shared/ui/program-detail-td-divider'
 import type {
   PaymentOrderAdminLineProcessingStatus,
   PaymentOrderCalculationStatementProgramBasicInfo,

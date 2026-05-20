@@ -1,8 +1,8 @@
 import type { CSSProperties } from 'react'
 import { Checkbox } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
-import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
-import { getScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
+import { getScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import { CmsInput } from '@/shared/ui/cms-input'
 
 interface CalendarSearchOption {
