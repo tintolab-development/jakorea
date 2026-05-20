@@ -3,12 +3,10 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import type { Key } from 'react'
-import { APP_MULTI_SELECT_TAG_COLORS } from '@/shared/ui'
+import { CMS_MULTI_SELECT_TAG_COLORS } from '@/shared/ui'
 import {
   CalendarMain,
   CalendarSubRightList,
-  type CalendarInstitutionApplicationListRow,
   type CalendarItem,
 } from '@/shared/components/calendar'
 import {
@@ -16,43 +14,30 @@ import {
   type ScheduleColorPair,
 } from '@/features/program/shared/ui/program-schedule-colors'
 import { useApplicantCalendarColorMaps } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-schedule-helpers'
-import { UJAT_INSTITUTION_TEMP_ASSIGNMENT_STATUS_LABEL } from './ujat-institution-application-types'
 import '@/shared/components/calendar/styles/calendar.css'
 import {
-  buildUjatInstitutionApplicationCalendarEvents,
-  type UjatInstitutionCalendarEvent,
-  type UjatInstitutionCalendarOriginalItem,
-} from './ujat-institution-application-calendar-events'
-import type { UjatInstitutionApplicationRow } from './ujat-institution-application-types'
-import './ujat-institution-application-calendar-view.css'
+  buildUjatScheduleConfirmCalendarEvents,
+  toScheduleConfirmCalendarListRow,
+  type UjatScheduleConfirmCalendarEvent,
+  type UjatScheduleConfirmCalendarOriginalItem,
+} from './calendar-events'
+import type { UjatScheduleConfirmRow } from './types'
+import '../list/calendar-view.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
 function extractInstitutionFromCalendarItem(
   item: CalendarItem
-): UjatInstitutionCalendarOriginalItem | null {
+): UjatScheduleConfirmCalendarOriginalItem | null {
   const o = item.original
   if (o != null && typeof o === 'object' && 'originalItem' in o) {
-    return (o as UjatInstitutionCalendarEvent).originalItem
+    return (o as UjatScheduleConfirmCalendarEvent).originalItem
   }
   return null
 }
 
-function toInstitutionListRow(
-  item: UjatInstitutionCalendarOriginalItem
-): CalendarInstitutionApplicationListRow {
-  return {
-    id: item.id,
-    institutionName: item.institutionName,
-    statusLabel: UJAT_INSTITUTION_TEMP_ASSIGNMENT_STATUS_LABEL[item.tempAssignmentStatus],
-    statusKey: item.tempAssignmentStatus,
-    totalClassSummary: item.calendarTotalClassSummary,
-    gradeDetail: item.calendarGradeDetail,
-  }
-}
-
-function renderUjatInstitutionPreviewTooltipContent({
+function renderScheduleConfirmPreviewTooltipContent({
   events,
   colorMap,
 }: {
@@ -66,7 +51,7 @@ function renderUjatInstitutionPreviewTooltipContent({
         const colors = colorMap.get(ev.id) ?? SCHEDULE_COLORS[0]
         const title = institution?.institutionName ?? String(ev.title ?? '-')
         const totalClassSummary = institution?.calendarTotalClassSummary
-        const gradeDetail = institution?.calendarGradeDetail
+        const scheduleDetail = institution?.calendarScheduleDetail
 
         return (
           <div key={String(ev.id)} className="program-preview-item program-preview-item--stack">
@@ -76,13 +61,13 @@ function renderUjatInstitutionPreviewTooltipContent({
             {totalClassSummary ? (
               <div className="ujat-institution-preview__meta">
                 <span className="ujat-institution-preview__meta-total">{totalClassSummary}</span>
-                {gradeDetail ? (
+                {scheduleDetail ? (
                   <>
                     <span className="program-preview-item__sep" aria-hidden>
                       |
                     </span>
-                    <span className="ujat-institution-preview__meta-detail" title={gradeDetail}>
-                      {gradeDetail}
+                    <span className="ujat-institution-preview__meta-detail" title={scheduleDetail}>
+                      {scheduleDetail}
                     </span>
                   </>
                 ) : null}
@@ -95,23 +80,19 @@ function renderUjatInstitutionPreviewTooltipContent({
   )
 }
 
-export function UjatInstitutionApplicationCalendarView({
+export function UjatInstitutionScheduleConfirmCalendarView({
   rows,
-  selectedRowKeys,
-  onSelectionChange,
 }: {
-  rows: UjatInstitutionApplicationRow[]
-  selectedRowKeys: Key[]
-  onSelectionChange: (keys: Key[]) => void
+  rows: UjatScheduleConfirmRow[]
 }) {
-  const events = useMemo(() => buildUjatInstitutionApplicationCalendarEvents(rows), [rows])
+  const events = useMemo(() => buildUjatScheduleConfirmCalendarEvents(rows), [rows])
   const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events)
 
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => dayjs('2026-04-03'))
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => dayjs('2026-04-01'))
   const [selectedSchools, setSelectedSchools] = useState<string[]>([])
 
-  const dayEvents = useMemo((): UjatInstitutionCalendarEvent[] => {
+  const dayEvents = useMemo((): UjatScheduleConfirmCalendarEvent[] => {
     return events.filter(event => {
       const start = dayjs(event.startDate)
       const end = dayjs(event.endDate)
@@ -126,7 +107,7 @@ export function UjatInstitutionApplicationCalendarView({
     return uniqueSchools.map((school, i) => ({
       value: school,
       label: school,
-      tagColor: APP_MULTI_SELECT_TAG_COLORS[i % APP_MULTI_SELECT_TAG_COLORS.length],
+      tagColor: CMS_MULTI_SELECT_TAG_COLORS[i % CMS_MULTI_SELECT_TAG_COLORS.length],
     }))
   }, [dayEvents])
 
@@ -143,14 +124,14 @@ export function UjatInstitutionApplicationCalendarView({
     })
   }, [dayEvents, selectedSchools])
 
-  const listRows = useMemo((): CalendarInstitutionApplicationListRow[] => {
+  const listRows = useMemo(() => {
     const seen = new Set<string>()
-    const out: CalendarInstitutionApplicationListRow[] = []
+    const out: ReturnType<typeof toScheduleConfirmCalendarListRow>[] = []
     for (const ev of filteredDayEvents) {
       const item = ev.originalItem
       if (seen.has(item.id)) continue
       seen.add(item.id)
-      out.push(toInstitutionListRow(item))
+      out.push(toScheduleConfirmCalendarListRow(item))
     }
     return out
   }, [filteredDayEvents])
@@ -161,7 +142,7 @@ export function UjatInstitutionApplicationCalendarView({
   )
 
   const resolveRowColors = useCallback(
-    (row: CalendarInstitutionApplicationListRow) => {
+    (row: { id: string }) => {
       const match = filteredDayEvents.find(ev => ev.originalItem.id === row.id)
       return match ? (listColorMap.get(match.id) ?? SCHEDULE_COLORS[0]) : SCHEDULE_COLORS[0]
     },
@@ -195,11 +176,11 @@ export function UjatInstitutionApplicationCalendarView({
         onSelectDate={handleDateSelect}
         onMonthChange={handleMonthChange}
         onTodayClick={handleTodayClick}
-        selectedRowKeys={selectedRowKeys}
+        selectedRowKeys={[]}
         eventsTooltipScope="full-day"
         eventsTooltipTrigger="cell"
         formatEventsOverflowText={n => `외 ${n}개의 항목`}
-        previewTooltipContent={renderUjatInstitutionPreviewTooltipContent}
+        previewTooltipContent={renderScheduleConfirmPreviewTooltipContent}
       />
 
       <div className="calendar-sub-right-list">
@@ -207,8 +188,8 @@ export function UjatInstitutionApplicationCalendarView({
           mode="institutionApplication"
           selectedDate={selectedDate}
           rows={listRows}
-          selectedRowKeys={selectedRowKeys}
-          onSelectionChange={onSelectionChange}
+          selectedRowKeys={[]}
+          onSelectionChange={() => {}}
           resolveRowColors={resolveRowColors}
         />
       </div>

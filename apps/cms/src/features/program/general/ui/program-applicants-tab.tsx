@@ -5,7 +5,7 @@
 
 import { useMemo, useState, useCallback, useEffect } from 'react'
 import { Card, Table, Row, Col, Select } from 'antd'
-import { AppButton, FilterSearchButton } from '@/shared/ui/app-button'
+import { CmsButton, FilterSearchButton } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import { useApplicantsTabParams, type ApplicantsFilters } from '../hooks/use-applicants-tab-params'
 import {
@@ -687,12 +687,12 @@ export function ProgramApplicantsTab({
                   </span>
                 </div>
                 <div className="program-applicants-tab__table-actions">
-                  <AppButton variant="danger" size="large" onClick={handleSchoolBulkRejectClick}>
+                  <CmsButton variant="delete" size="large" onClick={handleSchoolBulkRejectClick}>
                     선택 반려
-                  </AppButton>
-                  <AppButton variant="primary" size="large" onClick={handleSchoolBulkApproveClick}>
+                  </CmsButton>
+                  <CmsButton variant="primary" size="large" onClick={handleSchoolBulkApproveClick}>
                     선택 승인
-                  </AppButton>
+                  </CmsButton>
                 </div>
               </div>
               <Table<ApplicantSchoolRow>
@@ -737,20 +737,20 @@ export function ProgramApplicantsTab({
                   </span>
                 </div>
                 <div className="program-applicants-tab__table-actions">
-                  <AppButton
-                    variant="danger"
+                  <CmsButton
+                    variant="delete"
                     size="large"
                     onClick={handleInstructorBulkRejectClick}
                   >
                     선택 반려
-                  </AppButton>
-                  <AppButton
+                  </CmsButton>
+                  <CmsButton
                     variant="primary"
                     size="large"
                     onClick={handleInstructorBulkApproveClick}
                   >
                     선택 승인
-                  </AppButton>
+                  </CmsButton>
                 </div>
               </div>
               <Table<ApplicantInstructorRow>

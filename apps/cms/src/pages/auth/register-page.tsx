@@ -590,8 +590,7 @@ export function RegisterPage() {
                   이전
                 </Button>
                 <Button
-                  type="primary"
-                  htmlType="submit"
+                  type="primary" htmlType="submit"
                   block
                   loading={loading}
                   disabled={!phoneVerified && !socialData?.phone}

@@ -7,7 +7,7 @@
 
 import { useRef } from 'react'
 import { Form, Input, Checkbox, DatePicker } from 'antd'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { NativeSelect } from './add-instructor-native-select'
 
 /** 삭제용 X 아이콘 28×28 */
@@ -74,18 +74,17 @@ export function CareerDetailSection() {
           <span className="add-instructor-modal__section-summary">총 경력 {totalCareerYears}년</span>
         </h3>
         <div className="add-instructor-modal__section-right">
-          <AppButton
-            htmlType="button"
+          <CmsButton
+            type="button"
             variant="primary"
-            size="middle"
-            modalTeal
+            size="medium"
             className="add-instructor-modal__add-btn"
             onClick={() => {
               addCareerRef.current?.({})
             }}
           >
             항목 추가
-          </AppButton>
+          </CmsButton>
         </div>
       </div>
       <div className="add-instructor-modal__career-table-wrap">

@@ -22,7 +22,6 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { AppMultiSelect } from '@/shared/ui/app-multi-select'
 import '@/features/template/ui/form-editor/form-editor.css'
 const UJAT_TEMPLATE_INTERVIEW_METHOD_OPTIONS = [
   { label: '대면', value: 'offline' },
@@ -155,7 +154,9 @@ export function UjatRecruitVolunteerInfoProgramEdit({
           <DetailInfoForm.Field
             label="모집 대상"
             edit={
-              <AppMultiSelect
+              <CmsSelect
+                mode="multiple"
+                withAllOption={false}
                 style={{ width: 240 }}
                 value={recruitTargets}
                 onChange={() => undefined}

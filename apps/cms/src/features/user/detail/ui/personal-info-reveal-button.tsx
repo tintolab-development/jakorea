@@ -1,5 +1,5 @@
 import { CmsButton, type CmsButtonSize, type CmsButtonVariant } from '@/shared/ui/cms-button'
-import { AppButton, type AppButtonSize, type AppButtonVariant } from '@/shared/ui/app-button'
+import type { CSSProperties } from 'react'
 
 /** 개인정보 상세보기 / 마스킹 토글 버튼 문구 (화면 공통) */
 export const PERSONAL_INFO_REVEAL_BUTTON_LABEL = {
@@ -15,32 +15,17 @@ export type PersonalInfoRevealButtonLabelMode =
   /** 해제 후에는 렌더하지 않음 (`revealed`이면 `null`) */
   | 'revealOnly'
 
-type PersonalInfoRevealButtonShared = {
+export type PersonalInfoRevealButtonProps = {
   revealed: boolean
   labelMode: PersonalInfoRevealButtonLabelMode
   onClick: () => void
   disabled?: boolean
   className?: string
-}
-
-export type PersonalInfoRevealAppButtonProps = PersonalInfoRevealButtonShared & {
-  ui: 'app'
-  variant?: AppButtonVariant
-  size?: AppButtonSize
-  modalTeal?: boolean
-  htmlType?: 'button' | 'submit' | 'reset'
-}
-
-export type PersonalInfoRevealCmsButtonProps = PersonalInfoRevealButtonShared & {
-  ui: 'cms'
+  style?: CSSProperties
   cmsVariant?: CmsButtonVariant
   cmsSize?: CmsButtonSize
   width?: number | string
 }
-
-export type PersonalInfoRevealButtonProps =
-  | PersonalInfoRevealAppButtonProps
-  | PersonalInfoRevealCmsButtonProps
 
 function resolveLabel(
   labelMode: PersonalInfoRevealButtonLabelMode,
@@ -55,44 +40,35 @@ function resolveLabel(
 /**
  * 개인정보 상세보기 플로우용 공통 버튼 (`usePersonalInfoReveal` / `usePersonalInfoRevealByRow`와 함께 사용).
  */
-export function PersonalInfoRevealButton(props: PersonalInfoRevealButtonProps) {
-  const { revealed, labelMode, onClick, disabled, className } = props
-
+export function PersonalInfoRevealButton({
+  revealed,
+  labelMode,
+  onClick,
+  disabled,
+  className,
+  style,
+  cmsVariant = 'primary',
+  cmsSize = 'large',
+  width = 160,
+}: PersonalInfoRevealButtonProps) {
   if (labelMode === 'revealOnly' && revealed) {
     return null
   }
 
   const children = resolveLabel(labelMode, revealed)
 
-  if (props.ui === 'cms') {
-    const { cmsVariant = 'primary', cmsSize = 'medium', width } = props
-    return (
-      <CmsButton
-        type="button"
-        variant={cmsVariant}
-        size={cmsSize}
-        width={width}
-        className={className}
-        disabled={disabled}
-        onClick={onClick}
-      >
-        {children}
-      </CmsButton>
-    )
-  }
-
-  const { variant = 'primary', size = 'filter', modalTeal, htmlType = 'button' } = props
   return (
-    <AppButton
-      htmlType={htmlType}
-      variant={variant}
-      size={size}
-      modalTeal={modalTeal}
+    <CmsButton
+      type="button"
+      variant={cmsVariant}
+      size={cmsSize}
+      width={width}
       className={className}
+      style={style}
       disabled={disabled}
       onClick={onClick}
     >
       {children}
-    </AppButton>
+    </CmsButton>
   )
 }

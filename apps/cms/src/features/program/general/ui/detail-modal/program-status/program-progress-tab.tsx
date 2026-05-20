@@ -6,7 +6,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Card, Table, Row, Col, Select } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
-import { AppButton, FilterSearchButton } from '@/shared/ui/app-button'
+import { CmsButton, FilterSearchButton } from '@/shared/ui'
 import { ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -525,15 +525,14 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                     총 {filteredSchools.length}건
                   </span>
                 </div>
-                <AppButton
-                  variant="danger"
+                <CmsButton
+                  variant="delete"
                   size="large"
-                  dangerFillOnHover
                   disabled={selectedSchoolRowKeys.length === 0}
                   onClick={handleSchoolDeleteClick}
                 >
                   학교 삭제
-                </AppButton>
+                </CmsButton>
               </div>
               <Table<ParticipatingSchoolRow>
                 className="program-progress-tab__table cms-data-table"
@@ -577,8 +576,8 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                   </span>
                 </div>
                 <div className="program-progress-tab__table-actions">
-                  <AppButton
-                    variant="cancel"
+                  <CmsButton
+                    variant="secondary"
                     size="large"
                     icon={<DownloadOutlined />}
                     onClick={() =>
@@ -586,23 +585,22 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                     }
                   >
                     활동확인서 발급
-                  </AppButton>
-                  <AppButton
-                    variant="danger"
+                  </CmsButton>
+                  <CmsButton
+                    variant="delete"
                     size="large"
-                    dangerFillOnHover
                     disabled={selectedInstructorRowKeys.length === 0}
                     onClick={handleInstructorDeleteClick}
                   >
                     강사 삭제
-                  </AppButton>
-                  <AppButton
+                  </CmsButton>
+                  <CmsButton
                     variant="primary"
                     size="large"
                     onClick={() => setAddInstructorModalOpen(true)}
                   >
                     강사 등록
-                  </AppButton>
+                  </CmsButton>
                 </div>
               </div>
               <Table<ParticipatingInstructorRow>

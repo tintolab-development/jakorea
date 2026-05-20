@@ -6,7 +6,7 @@ category: process
 # UJAT 프로그램 상세 — 기관 신청 > 기관 신청 목록
 
 **Scope:** `ujat-program-detail-fullpage-modal` → LNB **기관 신청** → **신청 기관** (`inst_all`)  
-**Code:** `ujat-institution-application-list.tsx`, `ujat-institution-application-columns.tsx`, `ujat-institution-application-education-schedule.ts`, `ujat-institution-application-mock.ts`, `use-ujat-institution-application-list.ts`
+**Code:** `application-institution/list/list.tsx`, `list/columns.tsx`, `education-schedule.ts`, `ujat-institution-application-mock.ts`, `list/use-list.ts`
 
 **관련 탭:** [UJAT 프로그램 상세 — 모집 정보 3탭](./ujat-program-detail-recruitment-tabs.md)  
 **신청 폼:** 템플릿 `application-ujat-school` — **UJAT 프로그램 학교 신청 폼** (`UJAT-institution` → `ujat-program-application-preferred-education-schedule-paragraph.tsx` · **교육 진행 희망일**)
@@ -18,8 +18,8 @@ category: process
 | LNB | `tab` | 역할 |
 |-----|-------|------|
 | 기관 신청 > **신청 기관** | `inst_all` | 신청 목록·일괄 임시 배정·반려 (본 문서) |
-| 기관 신청 > **신청 기관 임시 배정** | `inst_schedule_assign` | **상세 임시 배정** (일정·학급 단위 조정) |
-| 기관 신청 > **임시 배정 기관 확인** | `inst_schedule_confirm` | 임시 배정 결과 확인 |
+| 기관 신청 > **신청 기관 임시 배정** | `inst_schedule_assign` | **상세 임시 배정** — [기획](./ujat-institution-schedule-assign-spec.md) |
+| 기관 신청 > **임시 배정 기관 확인** | `inst_schedule_confirm` | 임시 배정 결과 확인 — [기획](./ujat-institution-schedule-confirm-spec.md) |
 
 ---
 
@@ -131,7 +131,7 @@ category: process
 - [x] 열 제목 **`임시 배정 현황`** (`ujat-institution-application-columns.tsx` · 필터와 동일)
 - [ ] 날짜 열: mock 금요일 → **프로그램 진행일** API
 - [ ] `temp_assign` 확인 시 **O 표시 일자**에 대한 배정 데이터 생성 (mock/API)
-- [ ] `inst_schedule_assign` 상세 배정 UI·기획서 연동
+- [x] `inst_schedule_assign` 상세 배정 UI — [ujat-institution-schedule-assign-spec.md](./ujat-institution-schedule-assign-spec.md)
 
 ---
 

@@ -2,18 +2,18 @@ import { useEffect, useState } from 'react'
 import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { AppButton } from '@/shared/ui/app-button'
-import type { UjatInstitutionApplicationRegionKey } from './ujat-institution-application-regions'
-import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './ujat-institution-application-filter-fields'
-import { UjatInstitutionApplicationRegionTabs } from './ujat-institution-application-region-tabs'
-import { UjatInstitutionApplicationCalendarView } from './ujat-institution-application-calendar-view'
+import { CmsButton } from '@/shared/ui'
+import type { UjatInstitutionApplicationRegionKey } from './regions'
+import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './filter-fields'
+import { UjatInstitutionApplicationRegionTabs } from './region-tabs'
+import { UjatInstitutionApplicationCalendarView } from './calendar-view'
 import {
   UJAT_INSTITUTION_APPLICATION_TABLE_MIN_SCROLL_X,
-} from './ujat-institution-application-columns'
-import type { UjatInstitutionApplicationRow } from './ujat-institution-application-types'
-import { useUjatInstitutionApplicationList } from './use-ujat-institution-application-list'
-import { UjatInstitutionApplicationActionModal } from './ujat-institution-application-action-modal'
-import './ujat-institution-application-list.css'
+} from './columns'
+import type { UjatInstitutionApplicationRow } from './types'
+import { useUjatInstitutionApplicationList } from './use-list'
+import { UjatInstitutionApplicationActionModal } from './action-modal'
+import './list.css'
 
 export function UjatInstitutionApplicationList({
   onOpenDetail,
@@ -72,45 +72,55 @@ export function UjatInstitutionApplicationList({
         description={`${tableData.length}건`}
         actions={
           <div className="ujat-institution-application-list__actions">
-            <AppButton
-              variant="danger"
-              size="filter"
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              width={160}
               onClick={handleBulkApplicationReject}
             >
               선택 신청 반려
-            </AppButton>
-            <AppButton
-              variant="danger"
-              size="filter"
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              width={160}
               onClick={handleBulkTempReject}
             >
               선택 임시 반려
-            </AppButton>
-            <AppButton
-              variant="cancel"
-              size="filter"
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="large"
+              width={160}
               onClick={handleBulkTempAssign}
             >
               선택 임시 배정
-            </AppButton>
+            </CmsButton>
             {viewMode === 'table' ? (
-              <AppButton
-                variant="cancel"
-                size="filter-wide"
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="large"
+                style={{ minWidth: 180 }}
                 icon={<CalendarOutlined />}
                 onClick={() => setViewMode('calendar')}
               >
                 캘린더 뷰로 보기
-              </AppButton>
+              </CmsButton>
             ) : (
-              <AppButton
-                variant="cancel"
-                size="filter-wide"
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="large"
+                style={{ minWidth: 180 }}
                 icon={<UnorderedListOutlined />}
                 onClick={() => setViewMode('table')}
               >
                 리스트 뷰로 보기
-              </AppButton>
+              </CmsButton>
             )}
           </div>
         }

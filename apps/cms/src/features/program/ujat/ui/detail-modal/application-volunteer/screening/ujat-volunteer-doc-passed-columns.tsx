@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { InterviewAssignmentStatusText } from './interview-assignment-status-text'
 
 const CENTER_CELL_CLASS = 'ujat-volunteer-doc-passed__center-cell'
@@ -96,20 +96,26 @@ export function useUjatVolunteerDocPassedColumns({
           const { interviewAssignmentStatus } = record
           if (interviewAssignmentStatus === 'withdrawn') {
             return (
-              <AppButton
-                variant="cancel"
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="small"
+                width={120}
                 className="ujat-volunteer-doc-passed__assign-btn"
                 disabled
               >
                 면접일 배정
-              </AppButton>
+              </CmsButton>
             )
           }
           const label =
             interviewAssignmentStatus === 'assigned' ? '면접일 재배정' : '면접일 배정'
           return (
-            <AppButton
-              variant="cancel"
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="small"
+              width={120}
               className="ujat-volunteer-doc-passed__assign-btn"
               onClick={e => {
                 e.stopPropagation()
@@ -117,7 +123,7 @@ export function useUjatVolunteerDocPassedColumns({
               }}
             >
               {label}
-            </AppButton>
+            </CmsButton>
           )
         },
       },

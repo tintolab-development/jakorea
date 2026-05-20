@@ -5,7 +5,6 @@
  */
 
 import type { ReactNode } from 'react'
-import { Divider } from '@/shared/components/divider'
 import './filter-table-layout.css'
 import {
   TableFilterGroup,
@@ -62,9 +61,7 @@ export function FilterTableLayout({
             <TableFilterGroup {...TableFilterGroupProps} />
           </div>
 
-          <div className="filter-table-layout__divider">
-            <Divider />
-          </div>
+          <div className="filter-table-layout__divider" role="separator" aria-hidden />
         </>
       ) : null}
 

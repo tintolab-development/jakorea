@@ -15,7 +15,7 @@ import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 const CAL_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
 import type { SettlementStatusKey } from '@/shared/components/settlement-status-badge'
 import {
@@ -303,32 +303,32 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
             allowClear
           />
           {viewMode === 'list' ? (
-            <AppButton
-              variant="cancel"
-              size="middle"
+            <CmsButton
+              variant="secondary"
+              size="medium"
               className="settlement-tab__btn-view-toggle"
               onClick={() => setViewMode('calendar')}
             >
               <CalendarOutlined style={{ marginRight: 4 }} />
               캘린더 뷰로 보기
-            </AppButton>
+            </CmsButton>
           ) : (
-            <AppButton
-              variant="cancel"
-              size="middle"
+            <CmsButton
+              variant="secondary"
+              size="medium"
               className="settlement-tab__btn-view-toggle"
               onClick={() => setViewMode('list')}
             >
               <UnorderedListOutlined style={{ marginRight: 4 }} />
               리스트 뷰로 보기
-            </AppButton>
+            </CmsButton>
           )}
-          <AppButton variant="primary" size="middle">
+          <CmsButton variant="primary" size="medium">
             지급조서 발급
-          </AppButton>
-          <AppButton variant="primary" size="middle" className="settlement-tab__btn-settle">
+          </CmsButton>
+          <CmsButton variant="primary" size="medium" className="settlement-tab__btn-settle">
             강의료 정산
-          </AppButton>
+          </CmsButton>
         </div>
       </div>
 

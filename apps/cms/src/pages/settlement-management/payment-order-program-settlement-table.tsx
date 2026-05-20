@@ -7,7 +7,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
 import {
@@ -218,7 +218,7 @@ export function PaymentOrderProgramSettlementTable({
         width: 196,
         align: 'center',
         render: (_: unknown, row: PaymentOrderAdminProgramDetailInstructorRow) => (
-          <AppButton
+          <CmsButton
             variant="default"
             size="small"
             className="payment-order-program-status-detail__detail-btn"
@@ -228,7 +228,7 @@ export function PaymentOrderProgramSettlementTable({
             }}
           >
             상세 보기
-          </AppButton>
+          </CmsButton>
         ),
       },
     ],
@@ -318,9 +318,9 @@ export function PaymentOrderProgramSettlementTable({
             </span>
           </div>
           <div className="participating-institutions-section__table-actions">
-            <AppButton
-              variant="cancel"
-              size="filter-wide"
+            <CmsButton
+              variant="secondary"
+              size="large" style={{ minWidth: 180 }}
               disabled={selectedRowKeys.length === 0}
               onClick={() => {
                 if (selectedRowKeys.length === 0) return
@@ -328,15 +328,15 @@ export function PaymentOrderProgramSettlementTable({
               }}
             >
               일괄 확인
-            </AppButton>
-            <AppButton
+            </CmsButton>
+            <CmsButton
               variant="primary"
-              size="filter-wide"
+              size="large" style={{ minWidth: 180 }}
               icon={<DownloadOutlined />}
               onClick={() => {}}
             >
               지급조서 발급
-            </AppButton>
+            </CmsButton>
           </div>
         </div>
 

@@ -5,20 +5,20 @@ import {
   patchUjatInstitutionApplicationRows,
   UJAT_INSTITUTION_MAX_CLASSES_PER_DAY,
 } from '@/data/mock/ujat-institution-application-mock'
-import { UJAT_INSTITUTION_APPLICATION_FILTER_ALL } from './ujat-institution-application-filter-fields'
+import { UJAT_INSTITUTION_APPLICATION_FILTER_ALL } from './filter-fields'
 import {
   type UjatInstitutionApplicationFilters,
   EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS,
   type UjatInstitutionApplicationRow,
   type UjatInstitutionTempAssignmentStatus,
-} from './ujat-institution-application-types'
-import type { UjatInstitutionApplicationRegionKey } from './ujat-institution-application-regions'
-import { useUjatInstitutionApplicationColumns } from './ujat-institution-application-columns'
-import type { UjatInstitutionApplicationBulkModalAction } from './ujat-institution-application-action-modal'
+} from './types'
+import type { UjatInstitutionApplicationRegionKey } from './regions'
+import { useUjatInstitutionApplicationColumns } from './columns'
+import type { UjatInstitutionApplicationBulkModalAction } from './action-modal'
 import {
   getUjatInstitutionTempAssignCompleteContent,
   UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
-} from './ujat-institution-application-temp-assign-complete'
+} from './temp-assign-complete'
 
 function filterRows(
   rows: UjatInstitutionApplicationRow[],

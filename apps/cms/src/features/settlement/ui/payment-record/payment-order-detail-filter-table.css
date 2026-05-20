@@ -45,7 +45,7 @@
 
 /* 프로그램 별 정산 목록(강사 상세): 산출 내역 상세 보기 140×40 */
 .payment-order-detail-filter-table
-  .payment-order-detail-filter-table__breakdown-btn--140x40.app-button.app-button--large.ant-btn {
+  .payment-order-detail-filter-table__breakdown-btn--140x40.cms-button.cms-button--large.ant-btn {
   width: 140px !important;
   min-width: 140px !important;
   max-width: 140px !important;
@@ -59,7 +59,7 @@
 
 /* 강사 별 정산 목록(프로그램 상세): 산출 내역 상세 보기 180px 유지 */
 .payment-order-detail-filter-table
-  .payment-order-detail-filter-table__breakdown-btn--180.app-button.app-button--large.ant-btn {
+  .payment-order-detail-filter-table__breakdown-btn--180.cms-button.cms-button--large.ant-btn {
   width: 180px !important;
   min-width: 180px !important;
   max-width: 180px !important;
@@ -104,10 +104,10 @@
 /* 「일괄 확인」과 동일한 disabled 톤 — primary·지급조서 발급(cancel disabled 와 정렬) */
 .payment-order-detail-filter-table
   .participating-institutions-section__table-actions
-  .app-button--primary.app-button--filter-wide.ant-btn-primary:disabled,
+  .cms-button--primary.cms-button--large.ant-btn-primary:disabled,
 .payment-order-detail-filter-table
   .participating-institutions-section__table-actions
-  .app-button--primary.app-button--filter-wide.ant-btn-primary.ant-btn-disabled {
+  .cms-button--primary.cms-button--large.ant-btn-primary.ant-btn-disabled {
   background: var(--color-bg-disabled) !important;
   border-color: var(--color-border-light) !important;
   color: var(--color-text-disabled) !important;
@@ -116,11 +116,11 @@
 
 .payment-order-detail-filter-table
   .participating-institutions-section__table-actions
-  .app-button--primary.app-button--filter-wide.ant-btn-primary:disabled
+  .cms-button--primary.cms-button--large.ant-btn-primary:disabled
   .anticon,
 .payment-order-detail-filter-table
   .participating-institutions-section__table-actions
-  .app-button--primary.app-button--filter-wide.ant-btn-primary.ant-btn-disabled
+  .cms-button--primary.cms-button--large.ant-btn-primary.ant-btn-disabled
   .anticon {
   color: var(--color-text-disabled) !important;
 }

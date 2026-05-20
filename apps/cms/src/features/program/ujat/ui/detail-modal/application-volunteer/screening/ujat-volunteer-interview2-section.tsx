@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
@@ -129,40 +129,48 @@ export function UjatVolunteerInterview2Section({ programId, half }: UjatVoluntee
             }
             actions={
               <div className="ujat-volunteer-interview2__actions">
-                <AppButton
-                  variant="danger"
-                  size="filter"
+                <CmsButton
+                  type="button"
+                  variant="delete"
+                  size="large"
+                  width={160}
                   disabled={selectedRowKeys.length === 0}
                   onClick={handleBulkFail}
                 >
                   선택 불합격
-                </AppButton>
-                <AppButton
-                  variant="cancel"
-                  size="filter"
+                </CmsButton>
+                <CmsButton
+                  type="button"
+                  variant="secondary"
+                  size="large"
+                  width={160}
                   disabled={selectedRowKeys.length === 0}
                   onClick={handleBulkPass}
                 >
                   선택 합격
-                </AppButton>
+                </CmsButton>
                 {viewMode === 'list' ? (
-                  <AppButton
-                    variant="cancel"
-                    size="filter-wide"
+                  <CmsButton
+                    type="button"
+                    variant="secondary"
+                    size="large"
+                    style={{ minWidth: 180 }}
                     icon={<CalendarOutlined />}
                     onClick={handleViewCalendar}
                   >
                     캘린더 뷰로 보기
-                  </AppButton>
+                  </CmsButton>
                 ) : (
-                  <AppButton
-                    variant="cancel"
-                    size="filter-wide"
+                  <CmsButton
+                    type="button"
+                    variant="secondary"
+                    size="large"
+                    style={{ minWidth: 180 }}
                     icon={<UnorderedListOutlined />}
                     onClick={handleViewList}
                   >
                     리스트로 보기
-                  </AppButton>
+                  </CmsButton>
                 )}
               </div>
             }

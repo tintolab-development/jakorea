@@ -170,8 +170,8 @@
   min-width: 0;
 }
 
-.unified-filter-card .app-multi-select,
-.list-page-filters .app-multi-select {
+.unified-filter-card .cms-select--multiple-ui,
+.list-page-filters .cms-select--multiple-ui {
   max-width: var(--filter-control-max-width);
   width: 100%;
 }
@@ -662,8 +662,8 @@
     min-width: var(--filter-control-min-width);
   }
 
-  .unified-filter-card .app-multi-select,
-  .list-page-filters .app-multi-select {
+  .unified-filter-card .cms-select--multiple-ui,
+  .list-page-filters .cms-select--multiple-ui {
     max-width: var(--filter-control-max-width) !important;
   }
 

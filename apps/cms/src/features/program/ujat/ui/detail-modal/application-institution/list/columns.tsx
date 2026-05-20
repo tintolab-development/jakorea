@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
-import { UjatInstitutionApplicationStatusBadge } from './ujat-institution-application-status-badge'
+import { UjatInstitutionApplicationStatusBadge } from './status-badge'
 import {
   UJAT_INSTITUTION_SCHEDULE_COLUMNS,
   type UjatInstitutionApplicationRow,
-} from './ujat-institution-application-types'
+} from './types'
 
 const COL = {
   no: 64,

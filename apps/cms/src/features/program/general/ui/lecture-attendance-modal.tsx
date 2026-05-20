@@ -7,7 +7,7 @@
 import { useMemo, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { Radio } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import type { Application } from '@/types/domain'
 import type { SchoolDetailStudentRow } from '../model/school-detail-types'
 import type { LectureAttendanceDetail, LectureAttendanceSession, LectureAttendanceStatusKey } from '../model/school-detail-types'
@@ -148,21 +148,21 @@ export function LectureAttendanceModal({
 
   const footer = editing ? (
     <>
-      <AppButton variant="cancel" size="large" onClick={cancelCorrection}>
+      <CmsButton variant="secondary" size="large" onClick={cancelCorrection}>
         취소
-      </AppButton>
-      <AppButton variant="primary" size="large" modalTeal onClick={saveCorrection}>
+      </CmsButton>
+      <CmsButton variant="primary" size="large" onClick={saveCorrection}>
         저장
-      </AppButton>
+      </CmsButton>
     </>
   ) : (
     <>
-      <AppButton variant="cancel" size="large" onClick={onCancel}>
+      <CmsButton variant="secondary" size="large" onClick={onCancel}>
         닫기
-      </AppButton>
-      <AppButton variant="primary" size="large" modalTeal onClick={startCorrection}>
+      </CmsButton>
+      <CmsButton variant="primary" size="large" onClick={startCorrection}>
         출석 정정
-      </AppButton>
+      </CmsButton>
     </>
   )
 

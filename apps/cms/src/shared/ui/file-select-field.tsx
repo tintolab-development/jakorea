@@ -6,7 +6,7 @@
 
 import { useRef, type ChangeEvent } from 'react'
 import './file-select-field.css'
-import { AppButton } from './app-button'
+import { CmsButton } from '@/shared/ui/cms-button'
 
 function RemoveIcon() {
   return (
@@ -142,15 +142,14 @@ export function FileSelectField({
       ) : null}
 
       <div className="file-select-field__actions">
-        <AppButton
-          type="default"
-          variant="cancel"
+        <CmsButton type="button"
+          variant="secondary"
           size="large"
           disabled={disabled}
           onClick={() => inputRef.current?.click()}
         >
           {buttonLabel}
-        </AppButton>
+        </CmsButton>
         {guideLines && guideLines.length > 0 ? (
           <div className="file-select-field__guide">
             {guideLines.map((line, i) => (

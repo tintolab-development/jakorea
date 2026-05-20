@@ -18,7 +18,7 @@ import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
@@ -822,54 +822,48 @@ export function ParticipatingInstructorFullpageView({
         </div>
         {effectiveTab === 'application' && (
           <div className="program-detail-fullpage-modal__header-actions">
-            <AppButton
-              variant="danger"
-              size="filter"
+            <CmsButton
+              variant="delete"
+              size="large" width={160}
               onClick={() => {}}
             >
               승인 취소
-            </AppButton>
-            <AppButton
+            </CmsButton>
+            <CmsButton
               variant="primary"
-              size="filter"
+              size="large" width={160}
               onClick={() => {}}
             >
               정보 수정
-            </AppButton>
+            </CmsButton>
             <PersonalInfoRevealButton
-              ui="app"
               labelMode="toggle"
-              revealed={personalInfoRevealed}
-              variant="primary"
-              size="filter-wide"
+              revealed={personalInfoRevealed} style={{ minWidth: 180 }}
               onClick={handlePrivacyToggleClick}
             />
           </div>
         )}
         {effectiveTab === 'institutionAssignment' && (
           <div className="program-detail-fullpage-modal__header-actions">
-            <AppButton
-              variant="danger"
-              size="filter"
+            <CmsButton
+              variant="delete"
+              size="large" width={160}
               onClick={() => {}}
             >
               승인 취소
-            </AppButton>
+            </CmsButton>
             <PersonalInfoRevealButton
-              ui="app"
               labelMode="toggle"
-              revealed={personalInfoRevealed}
-              variant="primary"
-              size="filter-wide"
+              revealed={personalInfoRevealed} style={{ minWidth: 180 }}
               onClick={handlePrivacyToggleClick}
             />
           </div>
         )}
         {effectiveTab === 'posts' && (
           <div className="program-detail-fullpage-modal__header-actions">
-            <AppButton variant="primary" size="filter" onClick={() => setPostWriteModalOpen(true)}>
+            <CmsButton variant="primary" size="large" width={160} onClick={() => setPostWriteModalOpen(true)}>
               게시글 등록
-            </AppButton>
+            </CmsButton>
           </div>
         )}
       </div>
@@ -891,8 +885,8 @@ export function ParticipatingInstructorFullpageView({
                   </span>
                 </div>
                 <div className="participating-institutions-section__table-actions">
-                  <AppButton
-                    variant="danger"
+                  <CmsButton
+                    variant="delete"
                     size="large"
                     onClick={() => {
                       if (selectedAssignedSchoolKeys.length === 0) {
@@ -902,8 +896,8 @@ export function ParticipatingInstructorFullpageView({
                     }}
                   >
                     배정 취소
-                  </AppButton>
-                  <AppButton
+                  </CmsButton>
+                  <CmsButton
                     variant="primary"
                     size="large"
                     className="participating-institutions-section__btn-approve"
@@ -916,7 +910,7 @@ export function ParticipatingInstructorFullpageView({
                     }}
                   >
                     추가 배정
-                  </AppButton>
+                  </CmsButton>
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap">
@@ -958,7 +952,7 @@ export function ParticipatingInstructorFullpageView({
                   </span>
                 </div>
                 <div className="participating-institutions-section__table-actions">
-                  <AppButton
+                  <CmsButton
                     variant="primary"
                     size="large"
                     className="participating-institutions-section__btn-approve"
@@ -978,7 +972,7 @@ export function ParticipatingInstructorFullpageView({
                     }}
                   >
                     선택 배정
-                  </AppButton>
+                  </CmsButton>
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap">
@@ -1015,16 +1009,16 @@ export function ParticipatingInstructorFullpageView({
               width={560}
               footer={
                 <>
-                  <AppButton
-                    variant="cancel"
+                  <CmsButton
+                    variant="secondary"
                     size="large"
                     onClick={() => setUnassignConfirmOpen(false)}
                   >
                     취소
-                  </AppButton>
-                  <AppButton variant="danger" size="large" onClick={handleUnassignConfirm}>
+                  </CmsButton>
+                  <CmsButton variant="delete" size="large" onClick={handleUnassignConfirm}>
                     배정 취소
-                  </AppButton>
+                  </CmsButton>
                 </>
               }
             >
@@ -1046,16 +1040,16 @@ export function ParticipatingInstructorFullpageView({
               width={560}
               footer={
                 <>
-                  <AppButton
-                    variant="cancel"
+                  <CmsButton
+                    variant="secondary"
                     size="large"
                     onClick={() => setSelectAssignConfirmOpen(false)}
                   >
                     취소
-                  </AppButton>
-                  <AppButton variant="primary" size="large" onClick={handleSelectAssignConfirm}>
+                  </CmsButton>
+                  <CmsButton variant="primary" size="large" onClick={handleSelectAssignConfirm}>
                     배정
-                  </AppButton>
+                  </CmsButton>
                 </>
               }
             >
@@ -1079,8 +1073,8 @@ export function ParticipatingInstructorFullpageView({
               width={480}
               footer={
                 <>
-                  <AppButton
-                    variant="cancel"
+                  <CmsButton
+                    variant="secondary"
                     size="large"
                     onClick={() => {
                       setAddAssignModalOpen(false)
@@ -1088,10 +1082,10 @@ export function ParticipatingInstructorFullpageView({
                     }}
                   >
                     취소
-                  </AppButton>
-                  <AppButton variant="primary" size="large" onClick={handleAddAssignConfirm}>
+                  </CmsButton>
+                  <CmsButton variant="primary" size="large" onClick={handleAddAssignConfirm}>
                     배정
-                  </AppButton>
+                  </CmsButton>
                 </>
               }
             >

@@ -5,7 +5,7 @@ import { DownloadOutlined } from '@ant-design/icons'
 import type { Application } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import './lecture-report-submission-history-modal.css'
 
 interface LectureReportSubmissionHistoryModalProps {
@@ -128,9 +128,9 @@ export function LectureReportSubmissionHistoryModal({
         align: 'center',
         width: 140,
         render: (_: unknown, record: LectureReportSubmissionRow) => (
-          <AppButton variant="viewDetails" size="large" disabled={!record.canViewReport}>
+          <CmsButton variant="default" size="large" disabled={!record.canViewReport}>
             강의보고서 보기
-          </AppButton>
+          </CmsButton>
         ),
       },
     ],
@@ -154,19 +154,19 @@ export function LectureReportSubmissionHistoryModal({
       }
       footer={
         <>
-          <AppButton variant="cancel" size="filter" onClick={onCancel}>
+          <CmsButton variant="secondary" size="large" width={160} onClick={onCancel}>
             닫기
-          </AppButton>
-          <AppButton
+          </CmsButton>
+          <CmsButton
             variant="primary"
-            size="filter-wide"
+            size="large" style={{ minWidth: 180 }}
             icon={<DownloadOutlined />}
             onClick={() => {
               window.alert('준비 중입니다.')
             }}
           >
             강의보고서 일괄 다운로드
-          </AppButton>
+          </CmsButton>
         </>
       }
     >

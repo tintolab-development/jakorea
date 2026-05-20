@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { Image } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
@@ -200,9 +200,9 @@ export function EnrollmentStatusDetailModal({
       width={1400}
       className="teal-header-modal--enrollment-detail"
       footer={
-        <AppButton variant="cancel" size="large" onClick={onCancel}>
+        <CmsButton variant="secondary" size="large" onClick={onCancel}>
           닫기
-        </AppButton>
+        </CmsButton>
       }
     >
       <div className="enrollment-status-detail-modal__body">
@@ -210,14 +210,14 @@ export function EnrollmentStatusDetailModal({
         <section className="enrollment-status-detail-modal__section enrollment-status-detail-modal__section--program">
           <div className="enrollment-status-detail-modal__program-header">
             <h3 className="enrollment-status-detail-modal__section-title">프로그램 정보</h3>
-            <AppButton
-              variant="cancel"
-              size="middle"
+            <CmsButton
+              variant="secondary"
+              size="medium"
               onClick={handleGoToDetail}
               className="enrollment-status-detail-modal__detail-link"
             >
               프로그램 상세 바로가기
-            </AppButton>
+            </CmsButton>
           </div>
           <div className="enrollment-status-detail-modal__program-inner">
             <div className="enrollment-status-detail-modal__poster-wrap">

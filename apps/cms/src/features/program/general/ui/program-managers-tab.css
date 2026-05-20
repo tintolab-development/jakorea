@@ -226,7 +226,7 @@
   .ant-table-tbody
   > tr:not(.ant-table-measure-row):not(.ant-table-placeholder)
   > td
-  .app-button--viewDetails.app-button--tableAction.ant-btn-default {
+  .cms-button--default.cms-button--large.ant-btn-default {
   height: 40px !important;
   min-height: 40px !important;
   max-height: 40px !important;

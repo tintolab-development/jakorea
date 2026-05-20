@@ -14,6 +14,12 @@
   background: #fff;
 }
 
+/* DetailInfoForm __body 가 외곽선·radius 제공 — 이중 테두리 방지 */
+.detail-info-form__body > .detail-info-form__row--custom > .cross-table {
+  border: none;
+  border-radius: 0;
+}
+
 /** DetailInfoForm Field `labelWidth={240}` 과 동일 */
 .cross-table--wide {
   --cross-table-label-w: 240px;

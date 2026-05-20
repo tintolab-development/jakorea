@@ -39,7 +39,7 @@
 .payment-order-payment-confirm-modal
   .teal-header-modal__footer
   .payment-order-payment-confirm__footer-actions
-  .app-button--filter-wide {
+  .cms-button--large {
   min-width: 200px;
   width: auto;
 }

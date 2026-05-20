@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { AppDatePicker } from '@/shared/ui/app-datepicker'
 import './payment-order-batch-confirm-modal.css'
 
@@ -58,12 +58,12 @@ export function PaymentOrderBatchConfirmModal({
       className="payment-order-batch-confirm-modal"
       footer={
         <>
-          <AppButton variant="cancel" size="middle" onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             취소
-          </AppButton>
-          <AppButton variant="primary" size="tableAction" onClick={handleConfirm}>
+          </CmsButton>
+          <CmsButton variant="primary" size="large" width={160} onClick={handleConfirm}>
             지급조서 확인 완료
-          </AppButton>
+          </CmsButton>
         </>
       }
     >

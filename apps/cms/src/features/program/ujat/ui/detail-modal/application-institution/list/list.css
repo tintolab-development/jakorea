@@ -5,7 +5,11 @@
 
 /* 리스트(테이블) 뷰: 하단 52px = detail-fullpage-modal__content padding-bottom */
 .ujat-institution-application-list__filter-layout.filter-table-layout {
+  background: transparent;
+  box-shadow: none !important;
+  border-radius: 0;
   margin-bottom: 0;
+  padding: 0;
 }
 
 /* 캘린더 뷰: 스크롤 문서 끝 52px (margin-collapse·sticky 회피용 블록) */
@@ -18,7 +22,7 @@
 }
 
 .ujat-institution-application-list__filter-layout .filter-table-layout__divider {
-  padding: 24px 0;
+  padding: 32px 0;
 }
 
 .ujat-institution-application-list__actions {

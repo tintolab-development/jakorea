@@ -9,7 +9,7 @@ import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Tabs, Descriptions, Table, Input, Radio } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { ColumnsType } from 'antd/es/table'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -673,9 +673,9 @@ export function SchoolDetailModal({
   }
 
   const footer = (
-    <AppButton variant="cancel" size="large" onClick={handleClose}>
+    <CmsButton variant="secondary" size="large" onClick={handleClose}>
       닫기
-    </AppButton>
+    </CmsButton>
   )
 
   const tabItems = [
@@ -693,22 +693,21 @@ export function SchoolDetailModal({
             </div>
             {!isApplicant && isBasicEditMode ? (
               <div className="school-detail-modal__basic-actions">
-                <AppButton variant="cancel" size="middle" onClick={handleBasicCancel}>
+                <CmsButton variant="secondary" size="medium" onClick={handleBasicCancel}>
                   취소
-                </AppButton>
-                <AppButton
+                </CmsButton>
+                <CmsButton
                   variant="primary"
-                  size="middle"
-                  modalTeal
+                  size="medium"
                   onClick={basicInfoForm.handleSubmit(handleBasicSave)}
                 >
                   저장
-                </AppButton>
+                </CmsButton>
               </div>
             ) : !isApplicant ? (
-              <AppButton variant="cancel" size="middle" onClick={handleBasicEditStart}>
+              <CmsButton variant="secondary" size="medium" onClick={handleBasicEditStart}>
                 수정
-              </AppButton>
+              </CmsButton>
             ) : null}
           </div>
           <div className="school-detail-modal__descriptions-wrap">
@@ -772,37 +771,34 @@ export function SchoolDetailModal({
                 <div className="school-detail-modal__instructor-actions">
                   {isInstructorEditMode ? (
                     <>
-                      <AppButton
+                      <CmsButton
                         variant="primary"
-                        size="middle"
-                        modalTeal
+                        size="medium"
                         disabled={!isInstructorDirty}
                         onClick={() => handleInstructorSubmit(handleInstructorSave)()}
                       >
                         저장
-                      </AppButton>
-                      <AppButton
+                      </CmsButton>
+                      <CmsButton
                         variant="primary"
-                        size="middle"
-                        modalTeal
+                        size="medium"
                         onClick={() => setAddInstructorAssignModalOpen(true)}
                       >
                         추가 배정
-                      </AppButton>
+                      </CmsButton>
                     </>
                   ) : (
                     <>
-                      <AppButton variant="cancel" size="middle" onClick={handleInstructorEditStart}>
+                      <CmsButton variant="secondary" size="medium" onClick={handleInstructorEditStart}>
                         수정
-                      </AppButton>
-                      <AppButton
+                      </CmsButton>
+                      <CmsButton
                         variant="primary"
-                        size="middle"
-                        modalTeal
+                        size="medium"
                         onClick={() => setAddInstructorAssignModalOpen(true)}
                       >
                         추가 배정
-                      </AppButton>
+                      </CmsButton>
                     </>
                   )}
                 </div>
@@ -882,25 +878,25 @@ export function SchoolDetailModal({
                   <DefaultTabBar {...tabBarProps} className="school-detail-modal__tabs-nav" />
                   {isApplicant && activeTab !== TAB_STUDENTS && (
                     <div className="school-detail-modal__top-actions school-detail-modal__basic-actions school-detail-modal__basic-actions--approval">
-                      <AppButton variant="danger" size="filter" onClick={() => {}}>
+                      <CmsButton variant="delete" size="large" width={160} onClick={() => {}}>
                         반려
-                      </AppButton>
-                      <AppButton variant="primary" size="filter" modalTeal onClick={() => {}}>
+                      </CmsButton>
+                      <CmsButton variant="primary" size="large" width={160} onClick={() => {}}>
                         승인
-                      </AppButton>
+                      </CmsButton>
                     </div>
                   )}
                   {!isApplicant && activeTab === TAB_BASIC && (
                     <div className="school-detail-modal__top-actions school-detail-modal__basic-actions">
-                      <AppButton
-                        variant="danger"
-                        size="filter"
+                      <CmsButton
+                        variant="delete"
+                        size="large" width={160}
                         disabled={isCancelApprovalDisabled}
                         title={cancelApprovalDisabledReason ?? undefined}
                         onClick={() => setCancelApprovalConfirmOpen(true)}
                       >
                         승인 취소
-                      </AppButton>
+                      </CmsButton>
                     </div>
                   )}
                 </div>

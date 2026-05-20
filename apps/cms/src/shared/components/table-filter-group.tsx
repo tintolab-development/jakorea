@@ -10,8 +10,8 @@ import { Row, Col } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { AppMultiSelect, type AppMultiSelectOption } from '@/shared/ui/app-multi-select'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import './table-filter-group.css'
@@ -67,7 +67,7 @@ export interface FilterFieldConfig {
   /** Select / Radio 옵션 (type이 'select' | 'radio'일 때) */
   options?: Array<{ label: string; value: string | number }>
   /** 다중 선택 옵션 (type이 'multiSelect'일 때). value는 문자열 */
-  multiSelectOptions?: AppMultiSelectOption[]
+  multiSelectOptions?: CmsSelectMultipleOption[]
   /**
    * 기본값. `dateRange`에서만 추가 의미:
    * - `undefined`: 값이 없을 때 이번 달 1일~말일을 부모에 1회 시드
@@ -456,11 +456,14 @@ export function TableFilterGroup({
       return (
         <div className="unified-filter-card__field">
           <span className="unified-filter-card__label">{field.label}</span>
-          <AppMultiSelect
+          <CmsSelect
+            mode="multiple"
+            withAllOption={false}
+            inputSize="large"
             className="unified-filter-card__multi-select"
             placeholder={field.placeholder || '선택하세요'}
             value={arr}
-            onChange={next => onFilterChange(field.key, next)}
+            onChange={next => onFilterChange(field.key, next as string[])}
             options={field.multiSelectOptions ?? []}
             allowClear={field.allowClear !== false}
             style={{ width: '100%', ...field.style }}

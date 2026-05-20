@@ -570,7 +570,6 @@ export const MembersPermissionList = forwardRef<
             신청 승인
           </CmsButton>
           <PersonalInfoRevealButton
-            ui="cms"
             labelMode="toggle"
             revealed={isSelectedRowPrivacyRevealed}
             cmsVariant={isSelectedRowPrivacyRevealed ? 'default' : 'primary'}

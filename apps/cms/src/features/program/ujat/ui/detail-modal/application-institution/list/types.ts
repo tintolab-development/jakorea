@@ -1,5 +1,5 @@
-import type { UjatInstitutionApplicationRegionKey } from './ujat-institution-application-regions'
-import type { UjatInstitutionScheduleSlotKey } from './ujat-institution-application-education-schedule'
+import type { UjatInstitutionApplicationRegionKey } from './regions'
+import type { UjatInstitutionScheduleSlotKey } from '../education-schedule'
 
 /** 임시 배정 현황 상태 */
 export type UjatInstitutionTempAssignmentStatus =
@@ -20,14 +20,14 @@ export const UJAT_INSTITUTION_TEMP_ASSIGNMENT_STATUS_LABEL: Record<
 
 export type {
   UjatInstitutionScheduleSlotKey,
-} from './ujat-institution-application-education-schedule'
+} from '../education-schedule'
 export {
   UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK,
   UJAT_INSTITUTION_SCHEDULE_COLUMNS,
   buildEmptyScheduleSlots,
   formatUjatInstitutionFridayDisplay,
   sumGradeClassCounts,
-} from './ujat-institution-application-education-schedule'
+} from '../education-schedule'
 
 export type UjatInstitutionGradeClassCount = {
   gradeLabel: string

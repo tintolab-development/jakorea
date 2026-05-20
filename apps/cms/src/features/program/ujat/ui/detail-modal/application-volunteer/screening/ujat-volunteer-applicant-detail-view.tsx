@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { UjatVolunteerApplicantBasicInfo } from './ujat-volunteer-applicant-basic-info'
@@ -72,28 +72,32 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
       <div className="ujat-volunteer-applicant-detail">
         <div className="ujat-volunteer-applicant-detail__header">
           <div className="program-detail-fullpage-modal__header-actions">
-            <AppButton
-              variant="danger"
-              size="filter"
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              width={160}
               disabled={isWithdrawn}
               onClick={onWithdrawActivity}
             >
               활동 포기
-            </AppButton>
-            <AppButton
-              variant="cancel"
-              size="filter"
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="large"
+              width={160}
               disabled={isWithdrawn}
               onClick={onAssignInterview}
             >
               {assignInterviewLabel}
-            </AppButton>
+            </CmsButton>
             <PersonalInfoRevealButton
-              ui="app"
               labelMode="stickyReveal"
               revealed={personalInfoRevealed}
-              variant="primary"
-              size="filter-wide"
+              cmsVariant="primary"
+              cmsSize="large"
+              width={180}
               onClick={openPersonalInfoRevealConfirm}
             />
           </div>
@@ -127,18 +131,18 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
     <div className="ujat-volunteer-applicant-detail">
       <div className="ujat-volunteer-applicant-detail__header">
         <div className="program-detail-fullpage-modal__header-actions">
-          <AppButton variant="danger" size="filter" onClick={onDocumentReject}>
+          <CmsButton type="button" variant="delete" size="large" width={160} onClick={onDocumentReject}>
             서류 반려
-          </AppButton>
-          <AppButton variant="cancel" size="filter" onClick={onDocumentApprove}>
+          </CmsButton>
+          <CmsButton type="button" variant="secondary" size="large" width={160} onClick={onDocumentApprove}>
             서류 승인
-          </AppButton>
+          </CmsButton>
           <PersonalInfoRevealButton
-            ui="app"
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
-            variant="primary"
-            size="filter-wide"
+            cmsVariant="primary"
+            cmsSize="large"
+            width={180}
             onClick={openPersonalInfoRevealConfirm}
           />
         </div>

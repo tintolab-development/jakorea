@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react'
 import { Form, Select, Radio } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import type { InstructorRoleKey } from '../model/school-detail-types'
 import { INSTRUCTOR_ROLE_LABELS } from '../model/school-detail-types'
 import type { InstructorAssignSessionOption } from '../lib/instructor-assign-session-options'
@@ -247,12 +247,12 @@ export function SchoolDetailAddInstructorAssignModal({
 
   const footer = (
     <>
-      <AppButton variant="cancel" size="large" onClick={handleCancel}>
+      <CmsButton variant="secondary" size="large" onClick={handleCancel}>
         취소
-      </AppButton>
-      <AppButton variant="primary" size="large" modalTeal onClick={() => form.submit()}>
+      </CmsButton>
+      <CmsButton variant="primary" size="large" onClick={() => form.submit()}>
         강사 배정
-      </AppButton>
+      </CmsButton>
     </>
   )
 
@@ -347,12 +347,12 @@ export function SchoolDetailAddInstructorAssignModal({
         width={LEAD_CONFIRM_MODAL_WIDTH}
         footer={
           <div className="school-detail-add-instructor-assign-modal__lead-confirm-footer">
-            <AppButton variant="cancel" size="large" onClick={handleLeadConfirmCancel}>
+            <CmsButton variant="secondary" size="large" onClick={handleLeadConfirmCancel}>
               취소
-            </AppButton>
-            <AppButton variant="primary" size="large" modalTeal onClick={handleLeadConfirmOk}>
+            </CmsButton>
+            <CmsButton variant="primary" size="large" onClick={handleLeadConfirmOk}>
               변경
-            </AppButton>
+            </CmsButton>
           </div>
         }
         className="school-detail-add-instructor-assign-modal__lead-confirm"

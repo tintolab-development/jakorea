@@ -6,7 +6,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -505,35 +505,35 @@ export function ParticipatingInstitutionsSection({
             </span>
           </div>
           <div className="participating-institutions-section__table-actions">
-            <AppButton variant="danger" size="filter" onClick={handleBulkDelete}>
+            <CmsButton variant="delete" size="large" width={160} onClick={handleBulkDelete}>
               선택 삭제
-            </AppButton>
-            <AppButton
+            </CmsButton>
+            <CmsButton
               variant="primary"
-              size="filter"
+              size="large" width={160}
               onClick={handleBulkApprove}
               className="participating-institutions-section__btn-approve"
             >
               선택 승인
-            </AppButton>
+            </CmsButton>
             {viewMode === 'list' ? (
-              <AppButton
-                variant="cancel"
-                size="filter-wide"
+              <CmsButton
+                variant="secondary"
+                size="large" style={{ minWidth: 180 }}
                 icon={<CalendarOutlined />}
                 onClick={handleCalendarView}
               >
                 캘린더 뷰로 보기
-              </AppButton>
+              </CmsButton>
             ) : (
-              <AppButton
-                variant="cancel"
-                size="filter-wide"
+              <CmsButton
+                variant="secondary"
+                size="large" style={{ minWidth: 180 }}
                 icon={<UnorderedListOutlined />}
                 onClick={handleListView}
               >
                 리스트 뷰로 보기
-              </AppButton>
+              </CmsButton>
             )}
           </div>
         </div>

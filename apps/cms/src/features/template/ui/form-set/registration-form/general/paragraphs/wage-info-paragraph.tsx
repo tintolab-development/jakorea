@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { AppMultiSelect } from '@/shared/ui/app-multi-select'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsInput } from '@/shared/ui/cms-input'
 import './program-registration-paragraph.css'
 
@@ -59,9 +59,11 @@ export function ProgramRegistrationWageInfoParagraph() {
           label="지급 항목"
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap">
-              <AppMultiSelect
+              <CmsSelect
+                mode="multiple"
+                withAllOption={false}
                 value={paymentItemValues}
-                onChange={setPaymentItemValues}
+                onChange={next => setPaymentItemValues(next as string[])}
                 options={paymentItemOptions}
                 placeholder="지급 항목을 선택하세요"
                 style={{ width: '100%', minWidth: 0 }}

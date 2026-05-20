@@ -16,7 +16,7 @@ import {
   Typography,
   Switch,
   Card } from 'antd'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import {
   PlusOutlined,
   EditOutlined,
@@ -217,17 +217,17 @@ export function FormFieldEditor({
       onCancel={handleCancel}
       width={900}
       footer={[
-        <AppButton key="cancel" variant="cancel" size="large" onClick={handleCancel}>
+        <CmsButton key="cancel" variant="secondary" size="large" onClick={handleCancel}>
           취소
-        </AppButton>,
-        <AppButton key="save" variant="primary" size="large" onClick={handleSave}>
+        </CmsButton>,
+        <CmsButton key="save" variant="primary" size="large" onClick={handleSave}>
           저장
-        </AppButton>,
+        </CmsButton>,
       ]}
     >
       <Space direction="vertical" style={{ width: '100%' }} size="large">
         <div>
-          <AppButton
+          <CmsButton
             variant="primary"
             size="large"
             icon={<PlusOutlined />}
@@ -235,7 +235,7 @@ export function FormFieldEditor({
             style={{ marginBottom: 16 }}
           >
             필드 추가
-          </AppButton>
+          </CmsButton>
         </div>
 
         {editingIndex !== null && (
@@ -324,19 +324,19 @@ export function FormFieldEditor({
 
               <Form.Item>
                 <Space>
-                  <AppButton variant="primary" size="middle" htmlType="submit">
+                  <CmsButton variant="primary" size="medium" type="submit">
                     {editingIndex >= fields.length ? '추가' : '수정'}
-                  </AppButton>
-                  <AppButton
-                    variant="cancel"
-                    size="middle"
+                  </CmsButton>
+                  <CmsButton
+                    variant="secondary"
+                    size="medium"
                     onClick={() => {
                       setEditingIndex(null)
                       fieldForm.resetFields()
                     }}
                   >
                     취소
-                  </AppButton>
+                  </CmsButton>
                 </Space>
               </Form.Item>
             </Form>

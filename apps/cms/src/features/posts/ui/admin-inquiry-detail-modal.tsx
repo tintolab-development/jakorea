@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { getAdminInquiryDetail, submitAdminInquiryReply } from '@/features/posts/api/admin-inquiry-mock-store'
 import type { AdminInquiryDetail } from '@/features/posts/model/admin-inquiry-management.types'
 import { ToastUiMarkdownViewer } from '@/shared/components/toast-ui-markdown-viewer'
-import { AppButton, ContentModal } from '@/shared/ui'
+import { CmsButton, ContentModal } from '@/shared/ui'
 import './admin-inquiry-detail-modal.css'
 
 export interface AdminInquiryDetailModalProps {
@@ -61,27 +61,26 @@ export function AdminInquiryDetailModal({
 
   const footer = (
     <>
-      <AppButton
-        variant="danger"
+      <CmsButton
+        variant="delete"
         size="large"
         onClick={handleDelete}
         disabled={!canWrite || !detail}
       >
         문의삭제
-      </AppButton>
+      </CmsButton>
       <div className="admin-inquiry-detail-modal__footer-right">
-        <AppButton variant="cancel" size="large" onClick={onCancel}>
+        <CmsButton variant="secondary" size="large" onClick={onCancel}>
           취소
-        </AppButton>
-        <AppButton
+        </CmsButton>
+        <CmsButton
           variant="primary"
           size="large"
-          modalTeal
           onClick={handleReplySubmit}
           disabled={!canWrite || !detail || isAnswerRegistered}
         >
           답변 등록
-        </AppButton>
+        </CmsButton>
       </div>
     </>
   )

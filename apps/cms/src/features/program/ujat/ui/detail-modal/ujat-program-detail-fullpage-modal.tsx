@@ -14,8 +14,10 @@ import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { handleError } from '@/shared/utils/error-handler'
 import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/project-info/project-info-detail'
 import { ProgramManagersTab } from '@/features/program/general/ui/program-managers-tab'
-import { UjatInstitutionApplicationList } from './application-institution/ujat-institution-application-list'
-import { UjatInstitutionApplicationDetailPage } from './application-institution/ujat-institution-application-detail-page'
+import { UjatInstitutionApplicationList } from './application-institution/list/list'
+import { UjatInstitutionApplicationDetailPage } from './application-institution/detail/detail-page'
+import { UjatInstitutionScheduleAssignPage } from './application-institution/schedule-assign/page'
+import { UjatInstitutionScheduleConfirmList } from './application-institution/schedule-confirm/list'
 import { ParticipatingInstitutionsSection } from '@/features/program/general/ui/detail-modal/program-status/participating-institutions-section'
 import type { Program } from '@/types/domain'
 import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
@@ -42,10 +44,7 @@ import {
   EDU_PROGRESS_LEGACY_TAB_MAP,
   isValidEducationProgressTab,
 } from './progress/ujat-education-progress-tabs'
-import {
-  institutionAppScreenTitle,
-  isValidUjatInstitutionAppTab,
-} from './application-institution/ujat-institution-application-tabs'
+import { isValidUjatInstitutionAppTab } from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsButton } from '@/shared/ui'
 import {
@@ -750,17 +749,12 @@ export function UjatProgramDetailFullPageModal({
                 onOpenDetail={row => setInstitutionApplicationId(row.id)}
               />
             ))}
-          {activeLnb === 'institution_applications' &&
-            (activeTab === 'inst_schedule_confirm' || activeTab === 'inst_schedule_assign') && (
-              <UjatPlaceholderSection
-                title={institutionAppScreenTitle(activeTab)}
-                description={
-                  activeTab === 'inst_schedule_assign'
-                    ? '신청 기관에 대한 임시 교육 배정을 진행합니다.'
-                    : '임시 배정이 완료된 기관을 대상으로 배정 내용을 확인합니다.'
-                }
-              />
-            )}
+          {activeLnb === 'institution_applications' && activeTab === 'inst_schedule_assign' && (
+            <UjatInstitutionScheduleAssignPage />
+          )}
+          {activeLnb === 'institution_applications' && activeTab === 'inst_schedule_confirm' && (
+            <UjatInstitutionScheduleConfirmList />
+          )}
 
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
             (activeTab === 'vh1_doc1' || activeTab === 'vh2_doc1') && (

@@ -5,7 +5,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Table } from 'antd'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProgramRole } from '@/types/user'
@@ -321,16 +321,16 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         width: 246,
         align: 'center',
         render: (_: unknown, record: ProgramManagerRow) => (
-          <AppButton
-            variant="viewDetails"
-            size="tableAction"
+          <CmsButton
+            variant="default"
+            size="large" width={160}
             onClick={e => {
               e.stopPropagation()
               openEditRoleModal(record)
             }}
           >
             권한 수정
-          </AppButton>
+          </CmsButton>
         ),
       },
     ],
@@ -367,18 +367,15 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
             </span>
           </div>
           <div className="program-managers-tab__table-actions">
-            <AppButton variant="danger" size="filter" dangerFillOnHover onClick={handleDeleteClick}>
+            <CmsButton variant="delete" size="large" width={160} onClick={handleDeleteClick}>
               담당자 삭제
-            </AppButton>
-            <AppButton variant="primary" size="filter" onClick={() => setAddModalOpen(true)}>
+            </CmsButton>
+            <CmsButton variant="primary" size="large" width={160} onClick={() => setAddModalOpen(true)}>
               담당자 등록
-            </AppButton>
+            </CmsButton>
             <PersonalInfoRevealButton
-              ui="app"
               labelMode="toggle"
-              revealed={personalInfoRevealed}
-              variant="primary"
-              size="filter-wide"
+              revealed={personalInfoRevealed} style={{ minWidth: 180 }}
               onClick={handleProgramManagersPrivacyClick}
             />
           </div>

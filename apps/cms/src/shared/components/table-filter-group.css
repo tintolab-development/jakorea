@@ -193,8 +193,8 @@
   min-width: 0;
 }
 
-.table-filter-group__fields-inner .app-multi-select,
-.table-filter-group__grid-cell .app-multi-select {
+.table-filter-group__fields-inner .cms-select--multiple-ui,
+.table-filter-group__grid-cell .cms-select--multiple-ui {
   max-width: min(100%, var(--filter-control-max-width, 260px));
   width: 100%;
   box-sizing: border-box;

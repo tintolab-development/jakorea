@@ -7,7 +7,7 @@ import { Form } from 'antd'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { AppButton, CmsInput, ContentModal } from '@/shared/ui'
+import { CmsButton, CmsInput, ContentModal } from '@/shared/ui'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { User } from '@/types/user'
 import './profile-edit-modal.css'
@@ -200,12 +200,12 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
 
   const footer = (
     <>
-      <AppButton variant="cancel" size="large" onClick={handleCancel}>
+      <CmsButton variant="secondary" size="large" onClick={handleCancel}>
         닫기
-      </AppButton>
-      <AppButton variant="primary" size="large" htmlType="submit" form="profile-edit-form" loading={saving}>
+      </CmsButton>
+      <CmsButton variant="primary" size="large" type="submit" form="profile-edit-form" loading={saving}>
         저장
-      </AppButton>
+      </CmsButton>
     </>
   )
 
@@ -315,18 +315,17 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
         className="profile-withdraw-modal"
         footer={
           <>
-            <AppButton variant="cancel" onClick={handleCloseWithdrawModal}>
+            <CmsButton variant="secondary" onClick={handleCloseWithdrawModal}>
               취소
-            </AppButton>
-            <AppButton
-              variant="danger"
-              dangerFillOnHover
+            </CmsButton>
+            <CmsButton
+              variant="delete"
               onClick={handleWithdraw}
               loading={withdrawing}
               disabled={withdrawKeyword.trim() !== '탈퇴'}
             >
               회원 탈퇴
-            </AppButton>
+            </CmsButton>
           </>
         }
       >

@@ -5,7 +5,7 @@ import {
   EMPTY_TABLE_PAGE_CONTEXT,
 } from '@/shared/components/table-system/model/use-table-page'
 import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
-import { APP_MULTI_SELECT_TAG_COLORS } from '@/shared/ui/app-multi-select'
+import { CMS_MULTI_SELECT_TAG_COLORS } from '@/shared/ui/cms-select'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import type { TabKey } from '@/features/program/general/ui/detail-modal/program-detail-nav-types'
 import {
@@ -194,7 +194,7 @@ export function useApplicantsDetail({
             multiSelectOptions: uniqueNames.map((name, i) => ({
               value: name,
               label: name,
-              tagColor: APP_MULTI_SELECT_TAG_COLORS[i % APP_MULTI_SELECT_TAG_COLORS.length],
+              tagColor: CMS_MULTI_SELECT_TAG_COLORS[i % CMS_MULTI_SELECT_TAG_COLORS.length],
             })),
           }
         })

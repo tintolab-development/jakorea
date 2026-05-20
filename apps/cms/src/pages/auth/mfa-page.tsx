@@ -201,8 +201,7 @@ export function MfaPage() {
 
           <Space direction="vertical" style={{ width: '100%' }} size="middle">
             <Button
-              type="primary"
-              htmlType="submit"
+              type="primary" htmlType="submit"
               block
               size="large"
               loading={verifying}

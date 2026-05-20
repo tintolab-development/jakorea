@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import type { UjatInstitutionApplicationTeacherContact } from './ujat-institution-application-detail-types'
+import type { UjatInstitutionApplicationTeacherContact } from './detail-types'
 
 const ADDRESS_BLUR_STYLE: React.CSSProperties = {
   filter: 'blur(5px)',

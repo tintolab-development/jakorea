@@ -305,7 +305,7 @@
 }
 
 /* 조회 AppButton: 필터 영역 시안 border-radius 8px */
-.program-progress-tab__filter-col--btn .app-button {
+.program-progress-tab__filter-col--btn .cms-button {
   border-radius: var(--radius-8);
 }
 

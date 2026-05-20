@@ -9,7 +9,7 @@ import { Input, Radio, Select } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import {
   addStudentFormSchema,
   type AddStudentFormValues,
@@ -45,12 +45,12 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
 
   const footer = (
     <>
-      <AppButton variant="cancel" size="large" onClick={onCancel}>
+      <CmsButton variant="secondary" size="large" onClick={onCancel}>
         취소
-      </AppButton>
-      <AppButton variant="primary" size="large" modalTeal onClick={() => handleSubmit(onSubmit)()}>
+      </CmsButton>
+      <CmsButton variant="primary" size="large" onClick={() => handleSubmit(onSubmit)()}>
         등록
-      </AppButton>
+      </CmsButton>
     </>
   )
 

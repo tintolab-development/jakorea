@@ -10,7 +10,7 @@ import { useMemo, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import {
   getSchoolDetailStats,
   getAffiliatedTeachers,
@@ -129,9 +129,9 @@ export function SchoolDetailModal({
         width={1400}
         className="teal-header-modal--school-detail"
         footer={
-          <AppButton variant="cancel" size="large" onClick={onClose}>
+          <CmsButton variant="secondary" size="large" onClick={onClose}>
             닫기
-          </AppButton>
+          </CmsButton>
         }
       >
         {/* 1. 학교 정보 */}
@@ -167,10 +167,9 @@ export function SchoolDetailModal({
               </span>
             </h3>
             {onDeleteMembers && (
-              <AppButton
-                variant="danger"
+              <CmsButton
+                variant="delete"
                 size="small"
-                dangerFillOnHover
                 onClick={() => {
                   onDeleteMembers(selectedTeacherKeys as string[])
                   setSelectedTeacherKeys([])
@@ -178,7 +177,7 @@ export function SchoolDetailModal({
                 disabled={selectedTeacherKeys.length === 0}
               >
                 회원 삭제
-              </AppButton>
+              </CmsButton>
             )}
           </div>
           <Table<AffiliatedTeacherRow>
