@@ -12,6 +12,7 @@ import { useUjatVolunteerApplicantDetail } from './use-ujat-volunteer-applicant-
 import { UjatVolunteerApplicantDetailView } from './ujat-volunteer-applicant-detail-view'
 import { UjatVolunteerDocPassedCalendarView } from './ujat-volunteer-doc-passed-calendar-view'
 import { UjatVolunteerInterviewAssignModal } from './ujat-volunteer-interview-assign-modal'
+import { UjatVolunteerInterviewAssignCompleteModal } from './ujat-volunteer-interview-assign-complete-modal'
 import { UJAT_VOLUNTEER_DOC_PASSED_TABLE_SCROLL_X } from './ujat-volunteer-doc-passed-columns'
 import './ujat-volunteer-doc-passed-section.css'
 import './ujat-volunteer-doc-screening-section.css'
@@ -51,8 +52,9 @@ export function UjatVolunteerDocPassedSection({
     handleViewList,
     calendarEvents,
     handleAssignInterview,
-    assignModalTarget,
+    assignFlow,
     closeAssignModal,
+    closeAssignCompleteModal,
     confirmAssignInterview,
     requestWithdrawActivity,
     cancelWithdrawActivity,
@@ -119,17 +121,38 @@ export function UjatVolunteerDocPassedSection({
     />
   ) : null
 
-  const assignInterviewModal = assignModalTarget ? (
+  const assignPickFlow = assignFlow?.type === 'pick' ? assignFlow : null
+  const assignCompleteFlow = assignFlow?.type === 'complete' ? assignFlow : null
+
+  const assignInterviewModal = assignPickFlow ? (
     <UjatVolunteerInterviewAssignModal
       open
-      applicant={assignModalTarget}
+      applicant={assignPickFlow.target}
       programId={programId}
       allApplicants={list}
-      mode={assignModalTarget.interviewAssignmentStatus === 'assigned' ? 'reassign' : 'assign'}
+      mode={
+        assignPickFlow.target.interviewAssignmentStatus === 'assigned' ? 'reassign' : 'assign'
+      }
       onCancel={closeAssignModal}
       onConfirm={confirmAssignInterview}
     />
   ) : null
+
+  const assignCompleteModal = (
+    <UjatVolunteerInterviewAssignCompleteModal
+      open={assignCompleteFlow != null}
+      applicantName={assignCompleteFlow?.applicantName ?? ''}
+      mode={assignCompleteFlow?.mode ?? 'assign'}
+      payload={
+        assignCompleteFlow?.payload ?? {
+          dateLabel: '',
+          timeRange: '',
+          notifyTiming: 'immediate',
+        }
+      }
+      onClose={closeAssignCompleteModal}
+    />
+  )
 
   if (selectedApplicant) {
     return (
@@ -142,6 +165,7 @@ export function UjatVolunteerDocPassedSection({
         />
         {withdrawConfirmModal}
         {assignInterviewModal}
+        {assignCompleteModal}
       </>
     )
   }
@@ -223,6 +247,7 @@ export function UjatVolunteerDocPassedSection({
       </FilterTableLayout>
       {withdrawConfirmModal}
       {assignInterviewModal}
+      {assignCompleteModal}
     </div>
   )
 }

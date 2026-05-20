@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   getUjatVolunteerDocPassedApplicants,
   sortUjatVolunteerDocPassedApplicants,
@@ -17,6 +17,20 @@ import {
 import { useUjatVolunteerDocPassedColumns } from './ujat-volunteer-doc-passed-columns'
 import { mapUjatVolunteerInterviewToCalendarEvents } from './ujat-volunteer-interview-calendar-events'
 import type { UjatInterviewAssignConfirmPayload } from './ujat-volunteer-interview-assign-modal'
+
+export type UjatInterviewAssignPickFlow = {
+  type: 'pick'
+  target: UjatVolunteerApplicantRow
+}
+
+export type UjatInterviewAssignCompleteFlow = {
+  type: 'complete'
+  applicantName: string
+  mode: 'assign' | 'reassign'
+  payload: UjatInterviewAssignConfirmPayload
+}
+
+export type UjatInterviewAssignFlow = UjatInterviewAssignPickFlow | UjatInterviewAssignCompleteFlow
 
 function filterDocPassedApplicants(
   rows: UjatVolunteerApplicantRow[],
@@ -68,9 +82,9 @@ export function useUjatVolunteerDocPassed({
     manager: 'A' | 'B'
   } | null>(null)
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
-  const [assignModalTarget, setAssignModalTarget] = useState<UjatVolunteerApplicantRow | null>(
-    null
-  )
+  const [assignFlow, setAssignFlow] = useState<UjatInterviewAssignFlow | null>(null)
+  const assignFlowRef = useRef(assignFlow)
+  assignFlowRef.current = assignFlow
 
   useEffect(() => {
     setList(getUjatVolunteerDocPassedApplicants(programId, half))
@@ -117,32 +131,38 @@ export function useUjatVolunteerDocPassed({
 
   const handleAssignInterview = useCallback((row: UjatVolunteerApplicantRow) => {
     if (row.interviewAssignmentStatus === 'withdrawn') return
-    setAssignModalTarget(row)
+    setAssignFlow({ type: 'pick', target: row })
   }, [])
 
   const closeAssignModal = useCallback(() => {
-    setAssignModalTarget(null)
+    setAssignFlow(current => (current?.type === 'pick' ? null : current))
   }, [])
 
   const confirmAssignInterview = useCallback(
     (payload: UjatInterviewAssignConfirmPayload) => {
-      if (!assignModalTarget) return
-      const wasAssigned = assignModalTarget.interviewAssignmentStatus === 'assigned'
-      updateRow(assignModalTarget.id, {
+      const flow = assignFlowRef.current
+      if (!flow || flow.type !== 'pick') return
+
+      const { target } = flow
+      const wasAssigned = target.interviewAssignmentStatus === 'assigned'
+      updateRow(target.id, {
         interviewAssignmentStatus: 'assigned',
         assignedInterviewDateLabel: payload.dateLabel,
         assignedInterviewTime: payload.timeRange,
       })
-      setAssignModalTarget(null)
-      showAlert({
-        title: '면접일 배정',
-        content: wasAssigned
-          ? `${assignModalTarget.name} 봉사자의 면접일 재배정이 완료되었습니다. (목 데이터)`
-          : `${assignModalTarget.name} 봉사자의 면접일이 배정되었습니다. (목 데이터)`,
+      setAssignFlow({
+        type: 'complete',
+        applicantName: target.name,
+        mode: wasAssigned ? 'reassign' : 'assign',
+        payload,
       })
     },
-    [assignModalTarget, showAlert, updateRow]
+    [updateRow]
   )
+
+  const closeAssignCompleteModal = useCallback(() => {
+    setAssignFlow(null)
+  }, [])
 
   const requestWithdrawActivity = useCallback((row: UjatVolunteerApplicantRow) => {
     if (row.interviewAssignmentStatus === 'withdrawn') return
@@ -187,8 +207,9 @@ export function useUjatVolunteerDocPassed({
     list,
     updateRow,
     handleAssignInterview,
-    assignModalTarget,
+    assignFlow,
     closeAssignModal,
+    closeAssignCompleteModal,
     confirmAssignInterview,
     requestWithdrawActivity,
     cancelWithdrawActivity,
