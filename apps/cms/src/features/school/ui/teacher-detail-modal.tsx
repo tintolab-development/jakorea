@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react'
 import { Tabs, Empty } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import {
   DeleteGuideModal,
   buildMemberWithdrawMessageLines,
@@ -127,9 +127,9 @@ export function TeacherDetailModal({
         width={1400}
         className="teal-header-modal--teacher-detail"
         footer={
-          <AppButton variant="cancel" size="large" onClick={onClose}>
+          <CmsButton variant="secondary" size="large" onClick={onClose}>
             닫기
-          </AppButton>
+          </CmsButton>
         }
       >
         <div className="teacher-detail-modal__body">

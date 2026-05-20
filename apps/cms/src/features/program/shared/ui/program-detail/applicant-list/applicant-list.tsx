@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import type { TabKey } from '@/features/program/general/ui/detail-modal/program-detail-nav-types'
 import {
   updateApplicantSchoolApprovalStatus,
@@ -182,31 +182,31 @@ export function ApplicantList({
           description={`${tableData.length}건`}
           actions={
             <div style={{ display: 'flex', gap: '8px' }}>
-              <AppButton variant="danger" size="filter" onClick={handleBulkReject}>
+              <CmsButton variant="delete" size="large" width={160} onClick={handleBulkReject}>
                 선택 반려
-              </AppButton>
-              <AppButton variant="cancel" size="filter" onClick={handleBulkApprove}>
+              </CmsButton>
+              <CmsButton variant="secondary" size="large" width={160} onClick={handleBulkApprove}>
                 선택 승인
-              </AppButton>
+              </CmsButton>
               {viewMode === 'table' && (
-                <AppButton
+                <CmsButton
                   icon={<CalendarOutlined />}
-                  variant="cancel"
-                  size="filter-wide"
+                  variant="secondary"
+                  size="large" style={{ minWidth: 180 }}
                   onClick={handleViewCalendar}
                 >
                   캘린더 뷰로 보기
-                </AppButton>
+                </CmsButton>
               )}
               {viewMode === 'calendar' && (
-                <AppButton
-                  variant="cancel"
+                <CmsButton
+                  variant="secondary"
                   icon={<UnorderedListOutlined />}
-                  size="filter-wide"
+                  size="large" style={{ minWidth: 180 }}
                   onClick={() => setViewMode('table')}
                 >
                   리스트로 보기
-                </AppButton>
+                </CmsButton>
               )}
             </div>
           }

@@ -90,6 +90,7 @@ export function UjatInstitutionScheduleAssignDateBlock({
                     inputSize="large"
                     width="100%"
                     mode="multiple"
+                    withAllOption={false}
                     placeholder="배정 학급을 선택하세요"
                     options={gradeOptions}
                     value={row.gradeValues}

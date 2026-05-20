@@ -8,7 +8,7 @@ import { useState, useEffect, Fragment, type ReactNode } from 'react'
 import { Tabs, Radio, Select } from 'antd'
 import { UserOutlined } from '@ant-design/icons'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import {
@@ -212,9 +212,9 @@ export function ApplicantInstructorDetailModal({
     )
 
   const footer = (
-    <AppButton variant="cancel" size="large" onClick={onCancel}>
+    <CmsButton variant="secondary" size="large" onClick={onCancel}>
       닫기
-    </AppButton>
+    </CmsButton>
   )
 
   const basicTabContent = (
@@ -225,23 +225,22 @@ export function ApplicantInstructorDetailModal({
         </span>
         {showApprovalActions && (
           <div className="applicant-instructor-detail-modal__actions">
-            <AppButton
-              variant="danger"
-              size="middle"
+            <CmsButton
+              variant="delete"
+              size="medium"
               onClick={() => setConfirmType('reject')}
               disabled={!canApproveReject}
             >
               반려
-            </AppButton>
-            <AppButton
+            </CmsButton>
+            <CmsButton
               variant="primary"
-              size="middle"
-              modalTeal
+              size="medium"
               onClick={() => setConfirmType('approve')}
               disabled={!canApproveReject}
             >
               승인
-            </AppButton>
+            </CmsButton>
           </div>
         )}
       </div>
@@ -503,13 +502,13 @@ export function ApplicantInstructorDetailModal({
                 </div>
                 <div className="applicant-instructor-detail-modal__approval-history-divider" />
                 <div className="applicant-instructor-detail-modal__approval-history-cell applicant-instructor-detail-modal__approval-history-cell--action">
-                  <AppButton
+                  <CmsButton
                     variant="default"
                     size="small"
                     onClick={() => window.alert('준비 중입니다.')}
                   >
                     알림 발송
-                  </AppButton>
+                  </CmsButton>
                 </div>
               </div>
               <div className="applicant-instructor-detail-modal__approval-history-cell applicant-instructor-detail-modal__approval-history-cell--label">
@@ -553,13 +552,13 @@ export function ApplicantInstructorDetailModal({
                 </div>
                 <div className="applicant-instructor-detail-modal__approval-history-divider" />
                 <div className="applicant-instructor-detail-modal__approval-history-cell applicant-instructor-detail-modal__approval-history-cell--action">
-                  <AppButton
+                  <CmsButton
                     variant="default"
                     size="small"
                     onClick={() => window.alert('준비 중입니다.')}
                   >
                     알림 발송
-                  </AppButton>
+                  </CmsButton>
                 </div>
               </div>
               <div className="applicant-instructor-detail-modal__approval-history-cell applicant-instructor-detail-modal__approval-history-cell--label">

@@ -60,8 +60,9 @@ category: process
 
 #### 배정 학급 셀렉트
 
-- 선택 학교의 `gradeClassCounts` → `N학년 M학급` 다중 선택.
-- 행 **총 학급 수** = 선택한 학급의 `classCount` 합.
+- `CmsSelect` `mode="multiple"` — 닫힘: 선택 라벨 쉼표 구분·말줄임, 열림: 검색 + 체크 + 옵션 라벨 pill.
+- 선택 학교의 `gradeClassCounts` → 학년·반 단위(`1학년 1반`, `3학년 4반` …) 다중 선택. 상세 「학년 별 신청 정보」와 동일.
+- 행 **총 학급 수** = 선택한 학년·반 개수.
 
 ---
 

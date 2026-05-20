@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
-import { AppMultiSelect, APP_MULTI_SELECT_TAG_COLORS, ProgramCalendar } from '@/shared/ui'
+import { CmsSelect, CMS_MULTI_SELECT_TAG_COLORS, ProgramCalendar } from '@/shared/ui'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import { useApplicantCalendarColorMaps } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-schedule-helpers'
 import type { UjatVolunteerInterviewCalendarEvent } from './ujat-volunteer-interview-calendar-events'
@@ -53,7 +53,7 @@ export function UjatVolunteerDocPassedCalendarView({
     return uniqueNames.map((name, i) => ({
       value: name,
       label: name,
-      tagColor: APP_MULTI_SELECT_TAG_COLORS[i % APP_MULTI_SELECT_TAG_COLORS.length],
+      tagColor: CMS_MULTI_SELECT_TAG_COLORS[i % CMS_MULTI_SELECT_TAG_COLORS.length],
     }))
   }, [dayEvents])
 
@@ -169,9 +169,11 @@ export function UjatVolunteerDocPassedCalendarView({
 
       <div className="applicant-calendar-right">
         <div className="applicant-calendar-right__school-filter">
-          <AppMultiSelect
+          <CmsSelect
+            mode="multiple"
+            withAllOption={false}
             value={selectedVolunteers}
-            onChange={setSelectedVolunteers}
+            onChange={next => setSelectedVolunteers(next as string[])}
             options={volunteerFilterOptions}
             placeholder="봉사자 선택"
           />

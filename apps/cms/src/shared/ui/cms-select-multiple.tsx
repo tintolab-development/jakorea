@@ -1,37 +1,21 @@
 /**
- * 앱 공통 다중 선택 — 닫힘: 선택 라벨을 쉼표로 한 줄(말줄임), 열림: 검색 + 체크 + 옵션별 배경색
+ * CmsSelect `mode="multiple"` — AppMultiSelect와 동일 UX (검색·체크·pill, 닫힘 시 쉼표 구분)
  */
 
 import { useCallback, useId, useMemo, useState } from 'react'
-import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react'
+import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from 'react'
 import { Checkbox, Input, Popover } from 'antd'
 import { CloseCircleFilled } from '@ant-design/icons'
 import { FilterSelectChevronIcon } from './icons/FilterSelectChevronIcon'
-import './app-multi-select.css'
 
-export interface AppMultiSelectOption {
+export type CmsSelectMultipleOption = {
   value: string
   label: string
-  /** 드롭다운 라벨 배경 (예: #f0f0f0). 없으면 인덱스 기본 팔레트 */
   tagColor?: string
-  /** 라벨 글자색 (학교 대표색 등). 없으면 기본 #3d3d3d */
   tagTextColor?: string
 }
 
-export interface AppMultiSelectProps {
-  value: string[]
-  onChange: (next: string[]) => void
-  options: AppMultiSelectOption[]
-  placeholder?: string
-  disabled?: boolean
-  allowClear?: boolean
-  className?: string
-  id?: string
-  style?: CSSProperties
-}
-
-/** 드롭다운 옵션 기본 배경 팔레트 (필터에서 동일 팔레트로 `tagColor` 부여 시 재사용 가능) */
-export const APP_MULTI_SELECT_TAG_COLORS = [
+export const CMS_MULTI_SELECT_TAG_COLORS = [
   '#f5f5f5',
   '#f0f5ff',
   '#fff7e6',
@@ -40,16 +24,28 @@ export const APP_MULTI_SELECT_TAG_COLORS = [
   '#e6fffb',
   '#fcffe6',
   '#f9f0ff',
-]
+] as const
 
-function labelStyleForOption(opt: AppMultiSelectOption, index: number): CSSProperties {
-  const bg = opt.tagColor ?? APP_MULTI_SELECT_TAG_COLORS[index % APP_MULTI_SELECT_TAG_COLORS.length]
+function labelStyleForOption(opt: CmsSelectMultipleOption, index: number): CSSProperties {
+  const bg = opt.tagColor ?? CMS_MULTI_SELECT_TAG_COLORS[index % CMS_MULTI_SELECT_TAG_COLORS.length]
   const style: CSSProperties = { backgroundColor: bg }
   if (opt.tagTextColor) style.color = opt.tagTextColor
   return style
 }
 
-export function AppMultiSelect({
+export type CmsSelectMultipleProps = {
+  value: string[]
+  onChange: (next: string[]) => void
+  options: CmsSelectMultipleOption[]
+  placeholder?: ReactNode
+  disabled?: boolean
+  allowClear?: boolean
+  className?: string
+  id?: string
+  style?: CSSProperties
+}
+
+export function CmsSelectMultiple({
   value,
   onChange,
   options,
@@ -59,16 +55,16 @@ export function AppMultiSelect({
   className,
   id: idProp,
   style,
-}: AppMultiSelectProps) {
+}: CmsSelectMultipleProps) {
   const reactId = useId()
-  const listId = idProp ?? `app-multi-select-${reactId.replace(/:/g, '')}`
+  const listId = idProp ?? `cms-select-multi-${reactId.replace(/:/g, '')}`
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
 
   const valueSet = useMemo(() => new Set(value), [value])
 
   const optionByValue = useMemo(() => {
-    const m = new Map<string, AppMultiSelectOption>()
+    const m = new Map<string, CmsSelectMultipleOption>()
     options.forEach(o => m.set(o.value, o))
     return m
   }, [options])
@@ -107,9 +103,9 @@ export function AppMultiSelect({
   )
 
   const panel = (
-    <div className="app-multi-select__panel" id={listId}>
+    <div className="cms-select-multi__panel" id={listId}>
       <Input
-        className="app-multi-select__search"
+        className="cms-select-multi__search"
         size="small"
         placeholder="검색"
         value={search}
@@ -117,9 +113,9 @@ export function AppMultiSelect({
         allowClear
         onClick={e => e.stopPropagation()}
       />
-      <ul className="app-multi-select__list" role="listbox" aria-multiselectable>
+      <ul className="cms-select-multi__list" role="listbox" aria-multiselectable>
         {filteredOptions.length === 0 ? (
-          <li className="app-multi-select__empty">검색 결과가 없습니다.</li>
+          <li className="cms-select-multi__empty">검색 결과가 없습니다.</li>
         ) : (
           filteredOptions.map((opt, index) => {
             const originalIndex = options.indexOf(opt)
@@ -128,17 +124,17 @@ export function AppMultiSelect({
             return (
               <li
                 key={opt.value}
-                className={`app-multi-select__row${checked ? ' app-multi-select__row--checked' : ''}`}
+                className={`cms-select-multi__row${checked ? ' cms-select-multi__row--checked' : ''}`}
                 role="option"
                 aria-selected={checked}
               >
                 <Checkbox
-                  className="app-multi-select__checkbox"
+                  className="cms-select-multi__checkbox"
                   checked={checked}
                   onChange={e => toggle(opt.value, e.target.checked)}
                 >
                   <span
-                    className="app-multi-select__label-pill"
+                    className="cms-select-multi__label-pill"
                     style={labelStyleForOption(opt, idx)}
                   >
                     {opt.label}
@@ -153,7 +149,7 @@ export function AppMultiSelect({
   )
 
   return (
-    <div className={['app-multi-select', className].filter(Boolean).join(' ')} style={style}>
+    <div className={className} style={style}>
       <Popover
         open={disabled ? false : open}
         onOpenChange={next => {
@@ -170,8 +166,8 @@ export function AppMultiSelect({
         <button
           type="button"
           className={[
-            'app-multi-select__trigger',
-            open ? 'app-multi-select__trigger--open' : '',
+            'cms-select-multi__trigger',
+            open ? 'cms-select-multi__trigger--open' : '',
           ].join(' ')}
           disabled={disabled}
           aria-expanded={open}
@@ -180,8 +176,8 @@ export function AppMultiSelect({
         >
           <span
             className={[
-              'app-multi-select__trigger-text',
-              !displayText ? 'app-multi-select__trigger-text--placeholder' : '',
+              'cms-select-multi__trigger-text',
+              !displayText ? 'cms-select-multi__trigger-text--placeholder' : '',
             ].join(' ')}
           >
             {displayText || placeholder}
@@ -190,7 +186,7 @@ export function AppMultiSelect({
             <span
               role="button"
               tabIndex={0}
-              className="app-multi-select__clear"
+              className="cms-select-multi__clear"
               onClick={handleClear}
               onKeyDown={e => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -203,7 +199,7 @@ export function AppMultiSelect({
               <CloseCircleFilled />
             </span>
           )}
-          <FilterSelectChevronIcon className="app-multi-select__chevron" />
+          <FilterSelectChevronIcon className="cms-select-multi__chevron" />
         </button>
       </Popover>
     </div>

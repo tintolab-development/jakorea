@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react'
 import { Form, Input, Radio, Modal, Button } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import type { ProgramRole } from '@/types/user'
 import { PROGRAM_ROLE_LABELS } from '@/data/mock/program-managers'
 import {
@@ -77,12 +77,12 @@ export function EditManagerRoleModal({
 
   const footer = (
     <>
-      <AppButton variant="cancel" size="large" onClick={handleCancel}>
+      <CmsButton variant="secondary" size="large" onClick={handleCancel}>
         취소
-      </AppButton>
-      <AppButton variant="primary" size="large" modalTeal onClick={() => form.submit()}>
+      </CmsButton>
+      <CmsButton variant="primary" size="large" onClick={() => form.submit()}>
         권한 변경
-      </AppButton>
+      </CmsButton>
     </>
   )
 

@@ -8,8 +8,8 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { Table, Checkbox } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined, DownloadOutlined } from '@ant-design/icons'
-import { AppButton } from '@/shared/ui/app-button'
-import { AppMultiSelect } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
+import { CmsSelect } from '@/shared/ui'
 import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import type { ColumnsType } from 'antd/es/table'
 import { ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
@@ -536,51 +536,48 @@ export function ParticipatingInstructorsSection({
           </div>
           <div className="participating-institutions-section__table-actions">
             {viewMode === 'list' ? (
-              <AppButton
-                variant="cancel"
-                size="filter-wide"
+              <CmsButton
+                variant="secondary"
+                size="large" style={{ minWidth: 180 }}
                 icon={<CalendarOutlined />}
                 onClick={handleCalendarView}
               >
                 캘린더 뷰로 보기
-              </AppButton>
+              </CmsButton>
             ) : (
-              <AppButton
-                variant="cancel"
-                size="filter-wide"
+              <CmsButton
+                variant="secondary"
+                size="large" style={{ minWidth: 180 }}
                 icon={<UnorderedListOutlined />}
                 onClick={handleListView}
               >
                 리스트 뷰로 보기
-              </AppButton>
+              </CmsButton>
             )}
-            <AppButton
-              variant="cancel"
-              size="filter-wide"
+            <CmsButton
+              variant="secondary"
+              size="large" style={{ minWidth: 180 }}
               icon={<DownloadOutlined />}
               onClick={() =>
                 window.alert(ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE)
               }
             >
               활동확인서 발급
-            </AppButton>
-            <AppButton variant="danger" size="filter" onClick={handleInstructorDeleteClick}>
+            </CmsButton>
+            <CmsButton variant="delete" size="large" width={160} onClick={handleInstructorDeleteClick}>
               강사 삭제
-            </AppButton>
-            <AppButton
+            </CmsButton>
+            <CmsButton
               variant="primary"
-              size="filter"
+              size="large" width={160}
               onClick={() => setAddInstructorModalOpen(true)}
               className="participating-instructors-section__btn-add-instructor"
             >
               강사 등록
-            </AppButton>
+            </CmsButton>
             <PersonalInfoRevealButton
-              ui="app"
               labelMode="toggle"
-              revealed={personalInfoRevealed}
-              variant="primary"
-              size="filter-wide"
+              revealed={personalInfoRevealed} style={{ minWidth: 180 }}
               className="participating-instructors-section__btn-privacy-detail"
               onClick={handleParticipatingInstructorsPrivacyClick}
             />
@@ -639,9 +636,11 @@ export function ParticipatingInstructorsSection({
             rightContent={
               <div className="participating-instructors-section__calendar-right">
                 <div className="participating-instructors-section__calendar-right__school-filter">
-                  <AppMultiSelect
+                  <CmsSelect
+                    mode="multiple"
+                    withAllOption={false}
                     value={calendarSelectedSchools}
-                    onChange={setCalendarSelectedSchools}
+                    onChange={next => setCalendarSelectedSchools(next as string[])}
                     options={calendarSchoolFilterOptions}
                     placeholder="기관 선택"
                   />

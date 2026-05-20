@@ -8,7 +8,7 @@ import {
   DetailModalSidebar,
   type DetailModalSidebarNavItem,
 } from '@/shared/ui/detail-modal-sidebar'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
@@ -223,14 +223,13 @@ export function AccountPaymentStatusDetailFullPageModal({
               lectureSessionSegmentLabel="round"
               headerActions={
                 basic.accountPaymentStatus === 'account_paid' ? undefined : (
-                  <AppButton
+                  <CmsButton
                     variant="primary"
-                    size="filter"
-                    modalTeal
+                    size="large" width={160}
                     onClick={() => setPaymentCompleteConfirmOpen(true)}
                   >
                     지급 완료 처리
-                  </AppButton>
+                  </CmsButton>
                 )
               }
             />

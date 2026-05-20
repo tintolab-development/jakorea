@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { SchoolAffiliatedTeacherRow, SchoolTeacherEmploymentStatus } from '@/types/user'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 import { formatDate } from '@/shared/utils'
@@ -207,15 +207,14 @@ export function SchoolAffiliatedTeachersSection({
           <div className="detail-info-form__description">{`총 ${rows.length}건`}</div>
         </div>
         <div className="school-affiliated-teachers-section__header-end">
-          <AppButton
-            variant="danger"
-            size="filter"
-            dangerFillOnHover
+          <CmsButton
+            variant="delete"
+            size="large" width={160}
             disabled={selectedRowKeys.length === 0}
             onClick={handleWithdraw}
           >
             회원 탈퇴
-          </AppButton>
+          </CmsButton>
         </div>
       </header>
       <DetailInfoForm title="소속 교사 목록" hideHeader className="school-affiliated-teachers-section__form">

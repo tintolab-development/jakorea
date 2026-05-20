@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { AppSelect } from '@/shared/ui/app-select'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
@@ -52,12 +52,12 @@ export function ApplicationApprovalModal({
 
   const footer = (
     <>
-      <AppButton variant="cancel" size="large" onClick={onCancel}>
+      <CmsButton variant="secondary" size="large" onClick={onCancel}>
         취소
-      </AppButton>
-      <AppButton variant="primary" size="large" modalTeal onClick={handleConfirm}>
+      </CmsButton>
+      <CmsButton variant="primary" size="large" onClick={handleConfirm}>
         참여 승인
-      </AppButton>
+      </CmsButton>
     </>
   )
 

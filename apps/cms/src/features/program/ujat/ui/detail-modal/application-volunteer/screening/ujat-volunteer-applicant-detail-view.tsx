@@ -93,7 +93,6 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
               {assignInterviewLabel}
             </CmsButton>
             <PersonalInfoRevealButton
-              ui="cms"
               labelMode="stickyReveal"
               revealed={personalInfoRevealed}
               cmsVariant="primary"
@@ -139,7 +138,6 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
             서류 승인
           </CmsButton>
           <PersonalInfoRevealButton
-            ui="cms"
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
             cmsVariant="primary"

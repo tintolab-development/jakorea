@@ -120,7 +120,6 @@ export function UjatInstitutionApplicationDetailPage({
             임시 배정
           </CmsButton>
           <PersonalInfoRevealButton
-            ui="cms"
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
             cmsVariant="primary"

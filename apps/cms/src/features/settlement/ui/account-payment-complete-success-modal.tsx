@@ -5,7 +5,7 @@
 import { DownloadOutlined } from '@ant-design/icons'
 import type { ModalProps } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import './account-payment-complete-success-modal.css'
 
 /** 인라인 적용 — teal-header-modal·content-modal 전역 CSS보다 우선 */
@@ -49,17 +49,17 @@ export function AccountPaymentCompleteSuccessModal({
       modalStyles={ACCOUNT_PAYMENT_COMPLETE_SUCCESS_MODAL_STYLES}
       footer={
         <>
-          <AppButton variant="cancel" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="large" onClick={onCancel}>
             취소
-          </AppButton>
-          <AppButton
+          </CmsButton>
+          <CmsButton
             variant="primary"
-            size="filter-wide"
+            size="large" style={{ minWidth: 180 }}
             icon={<DownloadOutlined />}
             onClick={onIssueBulkTransfer}
           >
             대량이체 양식 발급
-          </AppButton>
+          </CmsButton>
         </>
       }
     >

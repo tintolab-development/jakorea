@@ -2,7 +2,7 @@ import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/t
 const LABEL_TO_VALUE = new Map(
   TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS.map(o => [o.label, o.value])
 )
-/** 모집 대상 표시 문자열(쉼표 구분 라벨) → AppMultiSelect option value[] */
+/** 모집 대상 표시 문자열(쉼표 구분 라벨) → CmsSelect multiple option value[] */
 export function recruitmentTargetLabelsToOptionValues(text: string | undefined): string[] {
   if (!text?.trim()) return ['university', 'adult']
   const parts = text

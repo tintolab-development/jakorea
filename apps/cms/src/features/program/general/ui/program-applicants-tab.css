@@ -163,7 +163,7 @@
 }
 
 /* 선택 반려 / 선택 승인 버튼: 120×40 고정 */
-.program-applicants-tab__table-actions .app-button {
+.program-applicants-tab__table-actions .cms-button {
     width: 120px;
     min-width: 120px;
     height: 40px;

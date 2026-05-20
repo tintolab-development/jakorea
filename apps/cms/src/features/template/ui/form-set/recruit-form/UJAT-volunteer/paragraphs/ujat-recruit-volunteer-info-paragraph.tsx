@@ -7,7 +7,6 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { AppMultiSelect } from '@/shared/ui/app-multi-select'
 import type { UjatRecruitParagraphProps } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
 import {
   isUjatRecruitProgramContext,
@@ -152,10 +151,12 @@ function UjatRecruitVolunteerInfoTemplateEditor() {
           <DetailInfoForm.Field
             label="모집 대상"
             edit={
-              <AppMultiSelect
+              <CmsSelect
+                mode="multiple"
+                withAllOption={false}
                 style={{ width: 240 }}
                 value={recruitTargets}
-                onChange={setRecruitTargets}
+                onChange={next => setRecruitTargets(next as string[])}
                 disabled
                 placeholder="모집 대상을 선택하세요"
                 options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}

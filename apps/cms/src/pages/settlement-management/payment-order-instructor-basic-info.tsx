@@ -89,11 +89,8 @@ export function PaymentOrderInstructorBasicInfo({
           title="기본 정보"
           titleTrailing={
             <PersonalInfoRevealButton
-              ui="app"
               labelMode="toggle"
-              revealed={personalInfoRevealed}
-              variant="primary"
-              size="filter"
+              revealed={personalInfoRevealed} width={160}
               onClick={onPersonalInfoButtonClick}
             />
           }

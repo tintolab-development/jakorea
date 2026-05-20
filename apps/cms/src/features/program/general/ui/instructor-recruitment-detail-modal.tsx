@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Image } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
@@ -187,9 +187,9 @@ export function InstructorRecruitmentDetailModal({
       width={1400}
       className="teal-header-modal--instructor-recruitment-detail"
       footer={
-        <AppButton variant="cancel" size="large" onClick={onCancel}>
+        <CmsButton variant="secondary" size="large" onClick={onCancel}>
           닫기
-        </AppButton>
+        </CmsButton>
       }
     >
       <div className="instructor-recruitment-detail-modal__body">
@@ -197,14 +197,14 @@ export function InstructorRecruitmentDetailModal({
         <section className="instructor-recruitment-detail-modal__section instructor-recruitment-detail-modal__section--program">
           <div className="instructor-recruitment-detail-modal__section-header">
             <h3 className="instructor-recruitment-detail-modal__section-title">프로그램 정보</h3>
-            <AppButton
-              variant="cancel"
-              size="middle"
+            <CmsButton
+              variant="secondary"
+              size="medium"
               onClick={handleGoToDetail}
               className="instructor-recruitment-detail-modal__detail-link"
             >
               프로그램 상세 바로가기
-            </AppButton>
+            </CmsButton>
           </div>
           <div className="instructor-recruitment-detail-modal__program-inner">
             <div className="instructor-recruitment-detail-modal__poster-wrap">

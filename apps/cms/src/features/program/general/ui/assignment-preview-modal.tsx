@@ -5,7 +5,7 @@
 
 import { DownloadOutlined } from '@ant-design/icons'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import './assignment-preview-modal.css'
 
 export interface AssignmentPreviewModalProps {
@@ -28,20 +28,19 @@ export function AssignmentPreviewModal({
 }: AssignmentPreviewModalProps) {
   const footer = (
     <>
-      <AppButton variant="cancel" size="large" onClick={onCancel}>
+      <CmsButton variant="secondary" size="large" onClick={onCancel}>
         닫기
-      </AppButton>
-      <AppButton
+      </CmsButton>
+      <CmsButton
         variant="primary"
         size="large"
-        modalTeal
         icon={<DownloadOutlined />}
         // onClick={() => onDownload?.()}
         onClick={() => window.alert('준비 중입니다.')}
         className="assignment-preview-modal__btn-download"
       >
         파일 다운로드
-      </AppButton>
+      </CmsButton>
     </>
   )
 

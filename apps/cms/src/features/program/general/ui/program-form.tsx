@@ -826,8 +826,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
           ) : (
             <>
               <Button
-                type="primary"
-                htmlType="submit"
+                type="primary" htmlType="submit"
                 loading={loading}
                 onClick={async e => {
                   // 제출 전 전체 검증

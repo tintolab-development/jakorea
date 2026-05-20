@@ -47,7 +47,7 @@ function AddressSearchInput({ onSearchClick, ...props }: AddressSearchInputProps
   )
 }
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import type {
   ParticipatingInstructorRow,
   SettlementStatusKey } from '@/data/mock/participating-instructors'
@@ -355,18 +355,17 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
 
   const footer = (
     <div className="add-instructor-modal__footer-actions">
-      <AppButton variant="cancel" size="large" onClick={handleCancel}>
+      <CmsButton variant="secondary" size="large" onClick={handleCancel}>
         닫기
-      </AppButton>
-      <AppButton
-        htmlType="submit"
+      </CmsButton>
+      <CmsButton
+        type="submit"
         variant="primary"
         size="large"
-        modalTeal
         form="add-instructor-form"
       >
         신규 등록
-      </AppButton>
+      </CmsButton>
     </div>
   )
 
@@ -669,14 +668,14 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                           className="add-instructor-modal__consent-radio-group"
                         />
                       </Form.Item>
-                      <AppButton
-                        variant="cancel"
-                        size="middle"
+                      <CmsButton
+                        variant="secondary"
+                        size="medium"
                         className="add-instructor-modal__consent-btn"
                         disabled={consentWithholdingTax !== 'agree'}
                       >
                         동의서 작성
-                      </AppButton>
+                      </CmsButton>
                       <div className="add-instructor-modal__consent-description">
                         <p>- 작성 버튼을 눌러 동의서를 작성 및 제출해주세요.</p>
                         <p>- 제출까지 완료되어야 동의된 것으로 간주됩니다.</p>
@@ -699,14 +698,14 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                           className="add-instructor-modal__consent-radio-group"
                         />
                       </Form.Item>
-                      <AppButton
-                        variant="cancel"
-                        size="middle"
+                      <CmsButton
+                        variant="secondary"
+                        size="medium"
                         className="add-instructor-modal__consent-btn"
                         disabled={consentCriminalRecord !== 'agree'}
                       >
                         동의서 작성
-                      </AppButton>
+                      </CmsButton>
                     </div>
                   </td>
                 </tr>
@@ -725,15 +724,14 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                           className="add-instructor-modal__consent-radio-group"
                         />
                       </Form.Item>
-                      <AppButton
+                      <CmsButton
                         variant="primary"
-                        size="middle"
-                        modalTeal
+                        size="medium"
                         className="add-instructor-modal__consent-btn"
                         disabled={consentAdministrativeInfo !== 'agree'}
                       >
                         동의서 수정
-                      </AppButton>
+                      </CmsButton>
                       <span
                         className={`add-instructor-modal__consent-complete ${consentAdministrativeInfo === 'agree' ? '' : 'add-instructor-modal__consent-complete--disabled'}`}
                       >
@@ -757,15 +755,14 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                           className="add-instructor-modal__consent-radio-group"
                         />
                       </Form.Item>
-                      <AppButton
+                      <CmsButton
                         variant="primary"
-                        size="middle"
-                        modalTeal
+                        size="medium"
                         className="add-instructor-modal__consent-btn"
                         disabled={consentEducationFacilitatorPledge !== 'agree'}
                       >
                         동의서 수정
-                      </AppButton>
+                      </CmsButton>
                       <span
                         className={`add-instructor-modal__consent-complete ${consentEducationFacilitatorPledge === 'agree' ? '' : 'add-instructor-modal__consent-complete--disabled'}`}
                       >
@@ -796,16 +793,15 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       총 참여 프로그램 {jaProgramCount}개
                     </span>
                   </h3>
-                  <AppButton
-                    htmlType="button"
+                  <CmsButton
+                    type="button"
                     variant="primary"
-                    size="middle"
-                    modalTeal
+                    size="medium"
                     className="add-instructor-modal__add-btn"
                     onClick={() => add({})}
                   >
                     항목 추가
-                  </AppButton>
+                  </CmsButton>
                 </div>
                 <div className="add-instructor-modal__ja-activity-table-wrap">
                   <table className="add-instructor-modal__ja-activity-table add-instructor-modal__basic-table">
@@ -921,16 +917,15 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       총 취득 개수 {qualificationCount}개
                     </span>
                   </h3>
-                  <AppButton
-                    htmlType="button"
+                  <CmsButton
+                    type="button"
                     variant="primary"
-                    size="middle"
-                    modalTeal
+                    size="medium"
                     className="add-instructor-modal__add-btn"
                     onClick={() => add({})}
                   >
                     항목 추가
-                  </AppButton>
+                  </CmsButton>
                 </div>
                 <div className="add-instructor-modal__qualification-table-wrap">
                   <table className="add-instructor-modal__qualification-table add-instructor-modal__basic-table">
@@ -1030,16 +1025,15 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       총 수상 개수 {awardCount}개
                     </span>
                   </h3>
-                  <AppButton
-                    htmlType="button"
+                  <CmsButton
+                    type="button"
                     variant="primary"
-                    size="middle"
-                    modalTeal
+                    size="medium"
                     className="add-instructor-modal__add-btn"
                     onClick={() => add({})}
                   >
                     항목 추가
-                  </AppButton>
+                  </CmsButton>
                 </div>
                 <div className="add-instructor-modal__award-table-wrap">
                   <table className="add-instructor-modal__award-table add-instructor-modal__basic-table">
@@ -1210,16 +1204,15 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                   }
                 }}
               />
-              <AppButton
-                htmlType="button"
+              <CmsButton
+                type="button"
                 variant="primary"
-                size="middle"
-                modalTeal
+                size="medium"
                 className="add-instructor-modal__address-popup-search-btn"
                 onClick={() => void handleAddressSearch()}
               >
                 검색
-              </AppButton>
+              </CmsButton>
             </div>
             <div className="add-instructor-modal__address-popup-result result">
               <div className="add-instructor-modal__address-popup-result-count">

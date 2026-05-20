@@ -1,3 +1,8 @@
+import {
+  expandGradeClassCountsToSections,
+  formatGradeClassSectionLabel,
+  toGradeClassSectionValue,
+} from '../list/grade-class-sections'
 import type {
   UjatInstitutionApplicationRow,
   UjatInstitutionScheduleSlotKey,
@@ -9,19 +14,17 @@ export function formatScheduleAssignSchoolLabel(index: number, totalRows: number
   return `배정 학교 ${String(index + 1).padStart(2, '0')}`
 }
 
+/** 선택 학교의 학년·반 목록 — 상세 「학년 별 신청 정보」와 동일 단위 */
 export function buildGradeOptionsForInstitution(row: UjatInstitutionApplicationRow) {
-  return row.gradeClassCounts.map(g => ({
-    value: `${g.gradeLabel}:${g.classCount}` as UjatScheduleAssignGradeOptionValue,
-    label: `${g.gradeLabel} ${g.classCount}학급`,
+  return expandGradeClassCountsToSections(row.gradeClassCounts).map(section => ({
+    value: toGradeClassSectionValue(section) as UjatScheduleAssignGradeOptionValue,
+    label: formatGradeClassSectionLabel(section),
   }))
 }
 
+/** 선택된 학년·반 개수 (= 총 배정 학급 수) */
 export function sumSelectedGradeClassCount(gradeValues: readonly UjatScheduleAssignGradeOptionValue[]): number {
-  return gradeValues.reduce((sum, value) => {
-    const part = value.split(':')[1]
-    const n = Number.parseInt(part ?? '', 10)
-    return sum + (Number.isFinite(n) ? n : 0)
-  }, 0)
+  return gradeValues.length
 }
 
 export function listTempAssignedSchoolsForDate(

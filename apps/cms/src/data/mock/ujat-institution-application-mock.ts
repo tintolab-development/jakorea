@@ -330,6 +330,12 @@ function buildInstitutionAddress(
   return pool[seed % pool.length] ?? pool[0]
 }
 
+/** 목록·임시 배정 셀렉트와 상세 `gradeBlocks`가 같은 학년·반 집합을 쓰도록 고정 */
+const JINWOL_GRADE_CLASS_COUNTS: UjatInstitutionApplicationRow['gradeClassCounts'] = [
+  { gradeLabel: '1학년', classCount: 8 },
+  { gradeLabel: '2학년', classCount: 4 },
+]
+
 function buildGradeBlocksFromRow(
   row: UjatInstitutionApplicationRow,
   seed: number
@@ -361,13 +367,17 @@ function buildRowsForRegion(
 ): UjatInstitutionApplicationRow[] {
   return Array.from({ length: count }, (_, i) => {
     const seed = i + region.length
-    const gradeClassCounts = buildGradeBreakdown(seed)
+    const institutionName = schoolNameForRegion(region, i)
+    const gradeClassCounts =
+      institutionName === '진월초등학교'
+        ? JINWOL_GRADE_CLASS_COUNTS
+        : buildGradeBreakdown(seed)
     const totalClassCount = sumGradeClassCounts(gradeClassCounts)
     return {
       id: `${region}-${i + 1}`,
       regionKey: region,
       no: count - i,
-      institutionName: schoolNameForRegion(region, i),
+      institutionName,
       tempAssignmentStatus:
         region === 'gwangju' && i === 0
           ? 'evaluation_pending'

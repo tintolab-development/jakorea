@@ -2,7 +2,7 @@ import type { MenuProps } from 'antd'
 import { Dropdown } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Application } from '@/types/domain'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { StatusBadge } from '@/shared/components/status-badge'
 import { lectureAttendanceHasAtLeastOne } from '@/shared/utils'
 import { programService } from '@/entities/program/api/program-service'
@@ -99,14 +99,14 @@ export function createProgramHistoryColumns({
       align: 'center',
       render: (_: unknown, record: Application) => (
         <span className="user-detail-modal__assignment-cell" onClick={e => e.stopPropagation()}>
-          <AppButton
-            variant="viewDetails"
+          <CmsButton
+            variant="default"
             size="small"
             disabled={!record.hasAssignmentSubmission}
             onClick={() => onOpenAssignmentSubmission(record)}
           >
             내역 보기
-          </AppButton>
+          </CmsButton>
         </span>
       ),
     },

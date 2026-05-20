@@ -2,7 +2,7 @@
  * 교사 회원 상세 모달 — 기본 정보 탭
  */
 
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { formatDate } from '@/shared/utils'
 import type { TeacherDetailData } from '@/data/mock/school-detail'
@@ -20,21 +20,21 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
           회원 본인 및 관리자만 작성/수정이 가능합니다.
         </span>
         <div className="teacher-detail-modal__actions-buttons">
-          <AppButton
+          <CmsButton
             variant="default"
-            size="middle"
+            size="medium"
             className="teacher-detail-modal__btn-withdraw"
             onClick={onWithdraw}
           >
             탈퇴
-          </AppButton>
-          <AppButton
+          </CmsButton>
+          <CmsButton
             variant="default"
-            size="middle"
+            size="medium"
             className="teacher-detail-modal__btn-edit"
           >
             수정
-          </AppButton>
+          </CmsButton>
         </div>
       </div>
 

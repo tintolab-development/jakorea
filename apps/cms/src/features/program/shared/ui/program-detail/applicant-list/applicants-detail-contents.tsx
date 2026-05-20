@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Tabs, Space, Empty, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
-import { AppButton, type AppButtonSize, type AppButtonVariant } from '@/shared/ui/app-button'
+import { CmsButton, type CmsButtonVariant } from '@/shared/ui'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
@@ -47,12 +47,12 @@ function parseDetailTabFromSearch(searchParams: URLSearchParams, type: Applicant
 
 type ApplicantHeaderActionItem = {
   key: string
-  variant: AppButtonVariant
+  variant: CmsButtonVariant
   label: string
   disabled?: boolean
   onClick?: () => void
   /** 기본 `filter` — 개인정보 상세보기 등은 `filter-wide` */
-  size?: AppButtonSize
+  size?: 'filter' | 'filter-wide'
 }
 
 function ApplicantHeaderActionsExtra({
@@ -68,24 +68,25 @@ function ApplicantHeaderActionsExtra({
         a.key === 'privacy' ? (
           <PersonalInfoRevealButton
             key={a.key}
-            ui="app"
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
-            variant={a.variant}
-            size={a.size ?? 'filter'}
+            cmsVariant={a.variant}
+            cmsSize="large"
+            width={a.size === "filter-wide" ? 180 : 160}
             disabled={a.disabled}
             onClick={a.onClick ?? (() => {})}
           />
         ) : (
-          <AppButton
+          <CmsButton
             key={a.key}
             variant={a.variant}
-            size={a.size ?? 'filter'}
+            size="large"
+            width={a.size === "filter-wide" ? 180 : 160}
             disabled={a.disabled}
             onClick={a.onClick}
           >
             {a.label}
-          </AppButton>
+          </CmsButton>
         )
       )}
     </Space>
@@ -109,7 +110,7 @@ function headerBtnCancelApproval(
 ): ApplicantHeaderActionItem {
   return {
     key: 'cancel-approval',
-    variant: 'danger',
+    variant: 'delete',
     label: '승인 취소',
     disabled: !onCancelApproval,
     onClick: () => onCancelApproval?.(applicantId),
@@ -141,7 +142,7 @@ function headerBtnCancelReject(
 ): ApplicantHeaderActionItem {
   return {
     key: 'cancel-reject',
-    variant: 'danger',
+    variant: 'delete',
     label: '반려 취소',
     disabled: !onCancelReject,
     onClick: () => onCancelReject?.(applicantId),
@@ -157,13 +158,13 @@ function headerBtnsPendingParticipation(
   return [
     {
       key: 'reject',
-      variant: 'danger',
+      variant: 'delete',
       label: '참여 반려',
       onClick: () => onReject(applicantId),
     },
     {
       key: 'approve',
-      variant: 'cancel',
+      variant: 'secondary',
       label: '참여 승인',
       onClick: () => onApprove(applicantId),
     },

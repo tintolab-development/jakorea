@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { useStudentListFilterParams } from '../hooks/use-student-list-filter-params'
 import { Table, Input, Select, Row, Col } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
-import { AppButton, FilterSearchButton } from '@/shared/ui/app-button'
+import { CmsButton, FilterSearchButton } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { STUDENT_LIST_INFO_EDIT_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
@@ -335,13 +335,13 @@ export function SchoolDetailStudentListSection({
         align: 'center',
         ...studentListTableDataColumnSize(7),
         render: (_: unknown, record: SchoolDetailStudentRow) => (
-          <AppButton
-            variant="viewDetails"
+          <CmsButton
+            variant="default"
             size="large"
             onClick={() => openAssignmentSubmission(record)}
           >
             내역 보기
-          </AppButton>
+          </CmsButton>
         ),
       },
     ],
@@ -459,9 +459,9 @@ export function SchoolDetailStudentListSection({
         align: 'center',
         ...studentListTableDataColumnSize(7),
         render: () => (
-          <AppButton variant="viewDetails" size="large" disabled>
+          <CmsButton variant="default" size="large" disabled>
             내역 보기
-          </AppButton>
+          </CmsButton>
         ),
       },
     ],
@@ -529,34 +529,33 @@ export function SchoolDetailStudentListSection({
           <div className="school-detail-modal__student-table-actions">
             {isStudentListEditMode ? (
               <>
-                <AppButton variant="cancel" size="filter" onClick={handleStudentListCancel}>
+                <CmsButton variant="secondary" size="large" width={160} onClick={handleStudentListCancel}>
                   취소
-                </AppButton>
-                <AppButton
+                </CmsButton>
+                <CmsButton
                   variant="primary"
-                  size="filter"
-                  modalTeal
+                  size="large" width={160}
                   disabled={!isDirty}
                   onClick={handleStudentListSave}
                 >
                   저장
-                </AppButton>
+                </CmsButton>
               </>
             ) : (
               <>
-                <AppButton
-                  variant="cancel"
-                  size="filter"
+                <CmsButton
+                  variant="secondary"
+                  size="large" width={160}
                   icon={<CertificateIssueIcon />}
                   className="school-detail-student-list-section__btn-certificate"
                   onClick={() => window.alert('준비 중입니다.')}
                 >
                   수료증 발급
-                </AppButton>
+                </CmsButton>
                 {!readOnly ? (
-                  <AppButton
-                    variant="cancel"
-                    size="filter"
+                  <CmsButton
+                    variant="secondary"
+                    size="large" width={160}
                     className="school-detail-student-list-section__btn-edit-info"
                     onClick={
                       studentListInfoEditComingSoonAlert
@@ -565,42 +564,37 @@ export function SchoolDetailStudentListSection({
                     }
                   >
                     정보 수정
-                  </AppButton>
+                  </CmsButton>
                 ) : (
                   onEditInfo && (
-                    <AppButton
-                      variant="cancel"
-                      size="filter"
+                    <CmsButton
+                      variant="secondary"
+                      size="large" width={160}
                       className="school-detail-student-list-section__btn-edit-info"
                       onClick={onEditInfo}
                     >
                       정보 수정
-                    </AppButton>
+                    </CmsButton>
                   )
                 )}
                 {!readOnly ? (
-                  <AppButton
+                  <CmsButton
                     variant="primary"
-                    size="filter"
-                    modalTeal
+                    size="large" width={160}
                     onClick={() => setAddStudentModalOpen(true)}
                   >
                     학생 추가
-                  </AppButton>
+                  </CmsButton>
                 ) : (
                   onAddStudent && (
-                    <AppButton variant="primary" size="filter" modalTeal onClick={onAddStudent}>
+                    <CmsButton variant="primary" size="large" width={160} onClick={onAddStudent}>
                       학생 추가
-                    </AppButton>
+                    </CmsButton>
                   )
                 )}
                 <PersonalInfoRevealButton
-                  ui="app"
                   labelMode="toggle"
-                  revealed={personalInfoRevealed}
-                  variant="primary"
-                  size="filter-wide"
-                  modalTeal
+                  revealed={personalInfoRevealed} style={{ minWidth: 180 }}
                   onClick={handleStudentListPrivacyClick}
                 />
               </>

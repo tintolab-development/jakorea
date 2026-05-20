@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { Key } from 'react'
-import { APP_MULTI_SELECT_TAG_COLORS } from '@/shared/ui'
+import { CMS_MULTI_SELECT_TAG_COLORS } from '@/shared/ui'
 import {
   CalendarMain,
   CalendarSubRightList,
@@ -126,7 +126,7 @@ export function UjatInstitutionApplicationCalendarView({
     return uniqueSchools.map((school, i) => ({
       value: school,
       label: school,
-      tagColor: APP_MULTI_SELECT_TAG_COLORS[i % APP_MULTI_SELECT_TAG_COLORS.length],
+      tagColor: CMS_MULTI_SELECT_TAG_COLORS[i % CMS_MULTI_SELECT_TAG_COLORS.length],
     }))
   }, [dayEvents])
 

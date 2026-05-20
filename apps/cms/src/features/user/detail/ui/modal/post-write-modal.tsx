@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react'
 import { Checkbox, Input, Modal } from 'antd'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import { createProgramPost, addProgramFiles } from '@/data/mock'
 import { fileUploadService } from '@/entities/application/api/file-upload-service'
@@ -146,12 +146,12 @@ export function PostWriteModal({
       className="post-write-modal"
       footer={
         <div className="post-write-modal__footer-actions">
-          <AppButton variant="cancel" size="large" onClick={onCancel} disabled={loading}>
+          <CmsButton variant="secondary" size="large" onClick={onCancel} disabled={loading}>
             취소
-          </AppButton>
-          <AppButton variant="primary" size="large" onClick={handleRegister} loading={loading}>
+          </CmsButton>
+          <CmsButton variant="primary" size="large" onClick={handleRegister} loading={loading}>
             등록
-          </AppButton>
+          </CmsButton>
         </div>
       }
       closable

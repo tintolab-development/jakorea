@@ -124,7 +124,7 @@
 
 /* 프로젝트 정보 탭 헤더 — 프로그램 상세 미리보기 (180×44, JA-mint-01, 연한 보더) */
 .program-detail-fullpage-modal
-  .program-detail-fullpage-modal__program-preview-btn.app-button.ant-btn {
+  .program-detail-fullpage-modal__program-preview-btn.cms-button.ant-btn {
   display: flex;
   width: 180px;
   min-width: 180px;
@@ -142,7 +142,7 @@
 }
 
 .program-detail-fullpage-modal
-  .program-detail-fullpage-modal__program-preview-btn.app-button--primary.ant-btn-primary:hover:not(
+  .program-detail-fullpage-modal__program-preview-btn.cms-button--primary.ant-btn-primary:hover:not(
     :disabled
   ) {
   background: color-mix(in srgb, var(--JA-mint-01, #01a1af) 88%, #000) !important;

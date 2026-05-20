@@ -5,7 +5,7 @@
  */
 
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { Input, Dropdown, Popover, type MenuProps } from 'antd'
 import type { Program, ProgramPost, ProgramFile } from '@/types/domain'
 import {
@@ -248,14 +248,14 @@ export function EnrollmentProgramDetailPostsTab({
       <div className="enrollment-program-detail-modal__posts-tab-column enrollment-program-detail-modal__posts-tab-column--left">
         {showWriteButtonInSection && (
           <div className="enrollment-program-detail-modal__posts-tab-header">
-            <AppButton
+            <CmsButton
               variant="primary"
-              size="middle"
+              size="medium"
               className="enrollment-program-detail-modal__posts-tab-btn"
               onClick={() => setPostWriteModalOpen(true)}
             >
               게시글 작성
-            </AppButton>
+            </CmsButton>
           </div>
         )}
         <div className="enrollment-program-detail-modal__posts-list">

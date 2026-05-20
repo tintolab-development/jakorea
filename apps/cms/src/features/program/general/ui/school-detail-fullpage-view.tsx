@@ -8,7 +8,7 @@ import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import type { Program } from '@/types/domain'
 import type {
   SchoolDetailForModal,
@@ -829,33 +829,30 @@ export function SchoolDetailFullpageView({
         </div>
         {activeTab === 'application' && (
           <div className="program-detail-fullpage-modal__header-actions">
-            <AppButton
-              variant="danger"
-              size="filter"
+            <CmsButton
+              variant="delete"
+              size="large" width={160}
               disabled={isCancelApprovalDisabled}
               title={cancelApprovalDisabledReason ?? undefined}
               onClick={() => setCancelApprovalConfirmOpen(true)}
             >
               승인 취소
-            </AppButton>
-            <AppButton variant="primary" size="filter" onClick={() => {}}>
+            </CmsButton>
+            <CmsButton variant="primary" size="large" width={160} onClick={() => {}}>
               정보 수정
-            </AppButton>
+            </CmsButton>
             <PersonalInfoRevealButton
-              ui="app"
               labelMode="toggle"
-              revealed={personalInfoRevealed}
-              variant="primary"
-              size="filter-wide"
+              revealed={personalInfoRevealed} style={{ minWidth: 180 }}
               onClick={handlePrivacyToggleClick}
             />
           </div>
         )}
         {activeTab === 'posts' && (
           <div className="program-detail-fullpage-modal__header-actions">
-            <AppButton variant="primary" size="filter" onClick={() => setPostWriteModalOpen(true)}>
+            <CmsButton variant="primary" size="large" width={160} onClick={() => setPostWriteModalOpen(true)}>
               게시글 등록
-            </AppButton>
+            </CmsButton>
           </div>
         )}
       </div>
@@ -965,8 +962,8 @@ export function SchoolDetailFullpageView({
                   </span>
                 </div>
                 <div className="participating-institutions-section__table-actions">
-                  <AppButton
-                    variant="danger"
+                  <CmsButton
+                    variant="delete"
                     size="large"
                     onClick={() => {
                       if (selectedAssignedKeys.length === 0) {
@@ -976,8 +973,8 @@ export function SchoolDetailFullpageView({
                     }}
                   >
                     배정 취소
-                  </AppButton>
-                  <AppButton
+                  </CmsButton>
+                  <CmsButton
                     variant="primary"
                     size="large"
                     className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
@@ -990,7 +987,7 @@ export function SchoolDetailFullpageView({
                     }}
                   >
                     추가 배정
-                  </AppButton>
+                  </CmsButton>
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap">
@@ -1033,7 +1030,7 @@ export function SchoolDetailFullpageView({
                   </span>
                 </div>
                 <div className="participating-institutions-section__table-actions">
-                  <AppButton
+                  <CmsButton
                     variant="primary"
                     size="large"
                     className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
@@ -1045,7 +1042,7 @@ export function SchoolDetailFullpageView({
                     }}
                   >
                     선택 배정
-                  </AppButton>
+                  </CmsButton>
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap">

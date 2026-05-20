@@ -4,7 +4,7 @@
  */
 
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { ApprovalAlarmSendSection } from './approval-alarm-send-section'
 import './school-detail-assign-complete-modal.css'
 
@@ -33,9 +33,9 @@ export function SchoolDetailAssignCompleteModal({
   showApprovalAlarmSection = false,
 }: SchoolDetailAssignCompleteModalProps) {
   const footer = (
-    <AppButton variant="primary" size="large" modalTeal onClick={onClose}>
+    <CmsButton variant="primary" size="large" onClick={onClose}>
       확인
-    </AppButton>
+    </CmsButton>
   )
 
   return (

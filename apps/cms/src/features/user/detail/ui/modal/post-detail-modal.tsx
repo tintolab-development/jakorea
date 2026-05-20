@@ -7,7 +7,7 @@ import { useState, useMemo, useEffect, useId } from 'react'
 import { flushSync } from 'react-dom'
 import { Popover } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 import type { ProgramPost, ProgramFile, ProgramPostReactionUser } from '@/types/domain'
 import dayjs from 'dayjs'
 import { ProfileAvatarIcon } from '@/shared/ui/icons'
@@ -331,9 +331,9 @@ export function PostDetailModal({
       width={800}
       className="post-detail-modal"
       footer={
-        <AppButton variant="cancel" size="large" onClick={onCancel}>
+        <CmsButton variant="secondary" size="large" onClick={onCancel}>
           닫기
-        </AppButton>
+        </CmsButton>
       }
     >
       <div className="post-detail-modal__body">

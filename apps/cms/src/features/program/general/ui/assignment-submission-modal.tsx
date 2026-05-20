@@ -9,7 +9,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -196,14 +196,14 @@ export function AssignmentSubmissionModal({
         align: 'center',
         minWidth: 180,
         render: (_: unknown, record: AssignmentSubmissionTableRow) => (
-          <AppButton
-            variant="viewDetails"
+          <CmsButton
+            variant="default"
             size="large"
             disabled={!record.canViewAssignment}
             onClick={() => record.canViewAssignment && openPreview(record.roundNumber)}
           >
             과제 보기
-          </AppButton>
+          </CmsButton>
         ),
       },
     ],
@@ -212,19 +212,19 @@ export function AssignmentSubmissionModal({
 
   const footer = (
     <>
-      <AppButton variant="cancel" size="filter" onClick={handleModalCancel}>
+      <CmsButton variant="secondary" size="large" width={160} onClick={handleModalCancel}>
         닫기
-      </AppButton>
-      <AppButton
+      </CmsButton>
+      <CmsButton
         variant="primary"
-        size="filter-wide"
+        size="large" style={{ minWidth: 180 }}
         icon={<DownloadOutlined />}
         onClick={() => {
           window.alert('준비 중입니다.')
         }}
       >
         과제 일괄 다운로드
-      </AppButton>
+      </CmsButton>
     </>
   )
 

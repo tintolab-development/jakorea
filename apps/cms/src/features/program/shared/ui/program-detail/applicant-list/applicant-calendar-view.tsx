@@ -7,7 +7,7 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import { ApplicantScheduleList } from './applicant-schedule-list'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import './applicant-calendar-view.css'
-import { AppMultiSelect, APP_MULTI_SELECT_TAG_COLORS, ProgramCalendar } from '@/shared/ui'
+import { CmsSelect, CMS_MULTI_SELECT_TAG_COLORS, ProgramCalendar } from '@/shared/ui'
 import { useApplicantCalendarColorMaps } from './applicant-calendar-schedule-helpers'
 
 dayjs.extend(isSameOrAfter)
@@ -65,7 +65,7 @@ export function ApplicantCalendarView({
     return uniqueSchools.map((school, i) => ({
       value: school,
       label: school,
-      tagColor: APP_MULTI_SELECT_TAG_COLORS[i % APP_MULTI_SELECT_TAG_COLORS.length],
+      tagColor: CMS_MULTI_SELECT_TAG_COLORS[i % CMS_MULTI_SELECT_TAG_COLORS.length],
     }))
   }, [dayEvents])
   useEffect(() => {
@@ -185,9 +185,11 @@ export function ApplicantCalendarView({
 
       <div className="applicant-calendar-right">
         <div className="applicant-calendar-right__school-filter">
-          <AppMultiSelect
+          <CmsSelect
+            mode="multiple"
+            withAllOption={false}
             value={selectedSchools}
-            onChange={setSelectedSchools}
+            onChange={next => setSelectedSchools(next as string[])}
             options={schoolFilterOptions}
             placeholder="기관 선택"
           />

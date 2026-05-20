@@ -277,10 +277,10 @@
 /* 산출 내역서 모달 — 산출 내역 상세 헤더: 신청 반려·확인 처리 120×40 */
 .payment-order-calc-statement-modal
   .payment-order-calc-statement-modal__detail-actions
-  .app-button.app-button--large.ant-btn,
+  .cms-button.cms-button--large.ant-btn,
 .payment-order-calc-statement-modal
   .payment-order-calc-statement-modal__detail-actions
-  .app-button.app-button--large.ant-btn-lg {
+  .cms-button.cms-button--large.ant-btn-lg {
   box-sizing: border-box !important;
   width: 120px !important;
   min-width: 120px !important;
@@ -298,7 +298,7 @@
 /* 신청 반려 라벨 타이포 */
 .payment-order-calc-statement-modal
   .payment-order-calc-statement-modal__detail-actions
-  .app-button--danger.app-button--large.ant-btn-dangerous {
+  .cms-button--delete.cms-button--large.ant-btn-dangerous {
   color: var(--color-red, #c32f4a) !important;
   border-color: var(--color-red, #c32f4a) !important;
   font-family: Pretendard, sans-serif !important;
@@ -310,10 +310,10 @@
 
 .payment-order-calc-statement-modal
   .payment-order-calc-statement-modal__detail-actions
-  .app-button--danger.app-button--large.ant-btn-dangerous:hover:not(:disabled),
+  .cms-button--delete.cms-button--large.ant-btn-dangerous:hover:not(:disabled),
 .payment-order-calc-statement-modal
   .payment-order-calc-statement-modal__detail-actions
-  .app-button--danger.app-button--large.ant-btn-dangerous:focus-visible:not(:disabled) {
+  .cms-button--delete.cms-button--large.ant-btn-dangerous:focus-visible:not(:disabled) {
   color: var(--color-red, #c32f4a) !important;
   border-color: color-mix(in srgb, var(--color-red, #c32f4a) 88%, #000) !important;
 }

@@ -14,7 +14,7 @@ import type {
 } from '@/data/mock/participating-schools'
 import { ApplicantScheduleList } from '../../../../shared/ui/program-detail/applicant-list/applicant-schedule-list'
 import { SCHEDULE_COLORS } from '../../../../shared/ui/program-schedule-colors'
-import { AppMultiSelect, ProgramCalendar, type ProgramCalendarEventItem } from '@/shared/ui'
+import { CmsSelect, ProgramCalendar, type ProgramCalendarEventItem } from '@/shared/ui'
 import './participating-institutions-calendar-view.css'
 
 dayjs.extend(isSameOrAfter)
@@ -333,9 +333,11 @@ export function ParticipatingInstitutionsCalendarView({
         ) : (
           <div className="participating-institutions-calendar-default-right">
             <div className="participating-institutions-calendar-default-right__school-filter">
-              <AppMultiSelect
+              <CmsSelect
+                mode="multiple"
+                withAllOption={false}
                 value={defaultRightSelectedSchools}
-                onChange={setDefaultRightSelectedSchools}
+                onChange={next => setDefaultRightSelectedSchools(next as string[])}
                 options={institutionSchoolFilterOptions}
                 placeholder="기관 선택"
               />

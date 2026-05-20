@@ -24,7 +24,7 @@ import {
   type PaymentOrderCalculationStatementCommitPayload,
 } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 import { renderLineProcessingStatusText } from '@/pages/settlement-management/payment-order-detail-aggregate-status'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { PaymentOrderLectureDateSessionCell } from './payment-order-lecture-date-session-cell'
 
 export type PaymentOrderDetailLineRow =
@@ -447,7 +447,7 @@ export function usePaymentOrderDetailLinesController(
         width: w.breakdown,
         align: 'center',
         render: (_: unknown, row: PaymentOrderDetailLineRow) => (
-          <AppButton
+          <CmsButton
             variant="default"
             size="large"
             className={
@@ -465,7 +465,7 @@ export function usePaymentOrderDetailLinesController(
             }}
           >
             상세 보기
-          </AppButton>
+          </CmsButton>
         ),
       },
     ]

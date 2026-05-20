@@ -188,8 +188,7 @@ export function DownloadOptionsModal({
               취소
             </Button>
             <Button
-              type="primary"
-              htmlType="submit"
+              type="primary" htmlType="submit"
               loading={downloading}
               disabled={!downloadCheck.allowed}
             >

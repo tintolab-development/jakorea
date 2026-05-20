@@ -204,7 +204,7 @@
 /* 배정 취소·추가 배정·선택 배정: 120×40 고정 */
 .school-detail-fullpage-view__instructor-tab
   .participating-institutions-section__table-actions
-  .app-button.app-button--large {
+  .cms-button.cms-button--large {
   box-sizing: border-box;
   width: 120px;
   min-width: 120px;
@@ -216,7 +216,7 @@
 }
 
 /* 추가 배정·선택 배정 버튼 스펙 */
-.school-detail-fullpage-view__btn-assign.app-button.ant-btn.ant-btn-primary {
+.school-detail-fullpage-view__btn-assign.cms-button.ant-btn.ant-btn-primary {
   display: flex !important;
   box-sizing: border-box !important;
   width: 120px !important;
@@ -243,9 +243,9 @@
   overflow: hidden !important;
 }
 
-.school-detail-fullpage-view__btn-assign.app-button.ant-btn.ant-btn-primary:hover:not(:disabled),
-.school-detail-fullpage-view__btn-assign.app-button.ant-btn.ant-btn-primary:focus-visible:not(:disabled),
-.school-detail-fullpage-view__btn-assign.app-button.ant-btn.ant-btn-primary:active:not(:disabled) {
+.school-detail-fullpage-view__btn-assign.cms-button.ant-btn.ant-btn-primary:hover:not(:disabled),
+.school-detail-fullpage-view__btn-assign.cms-button.ant-btn.ant-btn-primary:focus-visible:not(:disabled),
+.school-detail-fullpage-view__btn-assign.cms-button.ant-btn.ant-btn-primary:active:not(:disabled) {
   border: 1px solid var(--JA-mint-01, #01a1af) !important;
   background: var(
     --color-bg-mint,

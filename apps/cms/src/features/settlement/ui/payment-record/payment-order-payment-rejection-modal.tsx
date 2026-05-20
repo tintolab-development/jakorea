@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
 import './payment-order-payment-rejection-modal.css'
 import { AppInput } from '@/shared/ui/app-input'
@@ -46,12 +46,12 @@ export function PaymentOrderPaymentRejectionModal({
       className="payment-order-payment-reject-modal"
       footer={
         <div className="payment-order-payment-reject__footer-actions">
-          <AppButton variant="cancel" size="middle" onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             취소
-          </AppButton>
-          <AppButton
-            variant="danger"
-            size="middle"
+          </CmsButton>
+          <CmsButton
+            variant="delete"
+            size="medium"
             onClick={() => {
               const trimmed = reason.trim()
               if (!trimmed) {
@@ -61,7 +61,7 @@ export function PaymentOrderPaymentRejectionModal({
             }}
           >
             반려
-          </AppButton>
+          </CmsButton>
         </div>
       }
     >

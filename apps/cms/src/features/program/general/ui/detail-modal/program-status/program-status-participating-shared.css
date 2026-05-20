@@ -201,9 +201,9 @@
   flex-shrink: 0;
 }
 
-/* 선택 승인: 민트 테두리·연한 배경 — app-button--filter·primary(3클래스)보다 특이도 높여야 적용됨 */
-.app-button.program-status-participating__btn-approve.app-button--primary.app-button--filter.ant-btn.ant-btn-primary,
-.app-button.participating-institutions-section__btn-approve.app-button--primary.app-button--filter.ant-btn.ant-btn-primary {
+/* 선택 승인: 민트 테두리·연한 배경 — cms-button--large·primary(3클래스)보다 특이도 높여야 적용됨 */
+.cms-button.program-status-participating__btn-approve.cms-button--primary.cms-button--large.ant-btn.ant-btn-primary,
+.cms-button.participating-institutions-section__btn-approve.cms-button--primary.cms-button--large.ant-btn.ant-btn-primary {
   box-sizing: border-box !important;
   display: flex !important;
   width: 140px !important;
@@ -227,10 +227,10 @@
   color: var(--JA-mint-01, #01a1af) !important;
 }
 
-.app-button.program-status-participating__btn-approve.app-button--primary.app-button--filter.ant-btn.ant-btn-primary:hover:not(
+.cms-button.program-status-participating__btn-approve.cms-button--primary.cms-button--large.ant-btn.ant-btn-primary:hover:not(
     :disabled
   ),
-.app-button.participating-institutions-section__btn-approve.app-button--primary.app-button--filter.ant-btn.ant-btn-primary:hover:not(
+.cms-button.participating-institutions-section__btn-approve.cms-button--primary.cms-button--large.ant-btn.ant-btn-primary:hover:not(
     :disabled
   ) {
   border-color: var(--JA-mint-01, #01a1af) !important;
