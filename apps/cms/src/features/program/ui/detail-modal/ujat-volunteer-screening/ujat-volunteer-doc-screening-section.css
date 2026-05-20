@@ -107,11 +107,38 @@
   max-width: 100% !important;
 }
 
+/*
+ * 가로 스크롤은 Ant Table 내부(.ant-table-content)만 사용.
+ * 래퍼 overflow-x: auto + scroll.x(뷰포트 너비) 조합 시 고정 열이 밀려 보이는 현상 방지.
+ */
 .ujat-volunteer-doc-screening__table-wrap {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+.ujat-volunteer-doc-screening__table-wrap .ujat-volunteer-doc-screening__table.cms-data-table {
+  overflow-x: visible;
+  min-width: 0;
+  width: 100%;
+}
+
+.ujat-volunteer-doc-screening__table-wrap .ujat-volunteer-doc-screening__table .ant-table-container {
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-volunteer-doc-screening__table-wrap .ujat-volunteer-doc-screening__table .ant-table-content {
+  overflow-x: auto !important;
+  overscroll-behavior-x: contain;
+}
+
+.ujat-volunteer-doc-screening__table-wrap .ujat-volunteer-doc-screening__table table.ant-table {
+  table-layout: fixed !important;
+  width: max-content !important;
+  min-width: 100%;
 }
 
 /* 행 클릭 → 지원자 상세: 포인터·호버 배경 (고정 열 포함 불투명 배경) */
@@ -148,30 +175,42 @@
   will-change: width;
 }
 
-.ujat-volunteer-doc-screening__table-wrap .ant-table-wrapper,
-.ujat-volunteer-doc-screening__table-wrap .ant-table-container {
-  max-width: 100%;
-}
-
-/* 서술형·긴 텍스트: 말줄임 없이 전체 표시 */
+/* 헤더: 한 줄 말줄임 (본문은 아래 tbody 규칙으로 전체 표시) */
 .ujat-volunteer-doc-screening
   .cms-data-table
   .ant-table-thead
   > tr
   > th:not(.ant-table-cell-scrollbar) {
-  white-space: normal;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-  text-overflow: clip;
-  height: auto !important;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 54px !important;
   min-height: 54px;
+  max-height: 54px;
   vertical-align: middle;
   line-height: 1.4;
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
 }
 
-.ujat-volunteer-doc-screening .cms-data-table .ant-table-tbody > tr > td {
+.ujat-volunteer-doc-screening
+  .cms-data-table
+  .ant-table-thead
+  > tr
+  > th:not(.ant-table-cell-scrollbar)
+  .ant-table-cell-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ujat-volunteer-doc-screening
+  .cms-data-table
+  .ant-table-tbody
+  > tr
+  > td:not(.ujat-volunteer-doc-screening__nowrap-cell) {
   white-space: normal;
   word-break: keep-all;
   overflow-wrap: anywhere;
@@ -183,29 +222,34 @@
   overflow: hidden;
 }
 
-.ujat-volunteer-doc-screening .cms-data-table .ant-table-cell-ellipsis {
+.ujat-volunteer-doc-screening .cms-data-table .ant-table-tbody .ant-table-cell-ellipsis {
   white-space: normal !important;
   text-overflow: clip !important;
 }
 
-.ujat-volunteer-doc-screening .cms-data-table .ant-table-cell-ellipsis .ant-table-cell-content {
+.ujat-volunteer-doc-screening
+  .cms-data-table
+  .ant-table-tbody
+  .ant-table-cell-ellipsis
+  .ant-table-cell-content {
   overflow: visible !important;
   text-overflow: clip !important;
   white-space: normal !important;
 }
 
-/* 연락처·이메일·지원유형: 한 줄 (center-cell 공통 규칙보다 우선) */
+/* 연락처·이메일·지원유형: 말줄임 없이 한 줄 (줄바꿈·keep-all 분리) */
 .ujat-volunteer-doc-screening td.ujat-volunteer-doc-screening__nowrap-cell,
 .ujat-volunteer-doc-screening
   td.ujat-volunteer-doc-screening__center-cell.ujat-volunteer-doc-screening__nowrap-cell {
   white-space: nowrap !important;
   word-break: normal !important;
   overflow-wrap: normal !important;
-  overflow: hidden;
+  overflow: visible;
   text-overflow: clip;
-  height: auto !important;
-  min-height: 53px;
-  max-height: none;
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  line-height: 1.5;
 }
 
 .ujat-volunteer-doc-screening
@@ -214,7 +258,10 @@
 .ujat-volunteer-doc-screening
   td.ujat-volunteer-doc-screening__center-cell.ujat-volunteer-doc-screening__nowrap-cell
   .ant-table-cell-content {
-  overflow: hidden !important;
+  display: block;
+  width: 100%;
+  text-align: center;
+  overflow: visible !important;
   text-overflow: clip !important;
   white-space: nowrap !important;
   word-break: normal !important;
@@ -231,12 +278,14 @@
 }
 
 .ujat-volunteer-doc-screening th.ujat-volunteer-doc-screening__essay-cell {
-  white-space: normal;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-  text-overflow: clip;
-  height: auto !important;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 54px !important;
   min-height: 54px;
+  max-height: 54px;
   padding-left: 12px !important;
   padding-right: 12px !important;
   line-height: 1.4;
@@ -274,23 +323,33 @@
 
 /* No.·성함·학년·희망 지역 — 열 너비 내 가운데 정렬, 우측 잘림 방지 */
 .ujat-volunteer-doc-screening th.ujat-volunteer-doc-screening__center-cell,
-.ujat-volunteer-doc-screening td.ujat-volunteer-doc-screening__center-cell {
+.ujat-volunteer-doc-screening
+  td.ujat-volunteer-doc-screening__center-cell:not(.ujat-volunteer-doc-screening__nowrap-cell) {
   box-sizing: border-box !important;
   text-align: center !important;
   vertical-align: middle !important;
   overflow: hidden;
 }
 
+.ujat-volunteer-doc-screening
+  td.ujat-volunteer-doc-screening__center-cell.ujat-volunteer-doc-screening__nowrap-cell {
+  box-sizing: border-box !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
 .ujat-volunteer-doc-screening th.ujat-volunteer-doc-screening__center-cell {
-  white-space: normal;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding-left: 12px !important;
   padding-right: 12px !important;
 }
 
 .ujat-volunteer-doc-screening
-  td.ujat-volunteer-doc-screening__center-cell
+  td.ujat-volunteer-doc-screening__center-cell:not(.ujat-volunteer-doc-screening__nowrap-cell)
   .ant-table-cell-content {
   display: block;
   width: 100%;
@@ -302,7 +361,7 @@
   overflow-wrap: anywhere;
 }
 
-/* 좌측 고정 열(선택·No.·성함): 스크롤·호버 시 본문 텍스트가 비치지 않도록 */
+/* 좌측 고정 열(선택·No.·성함·학년·희망 지역): 스크롤·호버 시 본문 텍스트가 비치지 않도록 */
 .ujat-volunteer-doc-screening .ant-table-thead > tr > th.ant-table-cell-fix-left,
 .ujat-volunteer-doc-screening .ant-table-tbody > tr > td.ant-table-cell-fix-left {
   z-index: 2;
@@ -345,20 +404,28 @@
 
 /*
  * detail-fullpage-modal 공통 th/td height: 54px !important 보다 우선
- * (긴 서술형 헤더·본문 줄바꿈·가운데 정렬)
+ * — 헤더: 말줄임 한 줄 / 본문: 줄바꿈·가운데 정렬
  */
 .detail-fullpage-modal
   .ujat-volunteer-doc-screening
   .ant-table-wrapper.cms-data-table
   .ant-table-thead
   > tr
-  > th:not(.ant-table-cell-scrollbar),
+  > th:not(.ant-table-cell-scrollbar) {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
 .detail-fullpage-modal
   .ujat-volunteer-doc-screening
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
   > tr
-  > td {
+  > td:not(.ujat-volunteer-doc-screening__nowrap-cell) {
   height: auto !important;
   min-height: 54px !important;
   white-space: normal !important;
@@ -366,7 +433,27 @@
 
 .detail-fullpage-modal
   .ujat-volunteer-doc-screening
-  th.ujat-volunteer-doc-screening__essay-cell,
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ujat-volunteer-doc-screening__nowrap-cell {
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+}
+
+.detail-fullpage-modal
+  .ujat-volunteer-doc-screening
+  th.ujat-volunteer-doc-screening__essay-cell {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  white-space: nowrap !important;
+}
+
 .detail-fullpage-modal
   .ujat-volunteer-doc-screening
   td.ujat-volunteer-doc-screening__essay-cell {

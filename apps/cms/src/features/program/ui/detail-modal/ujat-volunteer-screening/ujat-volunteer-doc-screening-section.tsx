@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
+import { useCallback, useRef, useState, type MouseEvent } from 'react'
 import type { UjatEssayColumnKey } from './ujat-volunteer-doc-screening-columns'
 import { Table } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
@@ -43,9 +43,7 @@ export function UjatVolunteerDocScreeningSection({
     handleEssayColumnResizeStart,
     handleEssayColumnResizeStop,
     minTableScrollX,
-    isResizingRef,
   } = useUjatVolunteerDocScreeningColumnWidths()
-  const [tableScrollX, setTableScrollX] = useState(minTableScrollX)
   const [isResizing, setIsResizing] = useState(false)
 
   const onEssayColumnResizeStart = useCallback(() => {
@@ -107,30 +105,6 @@ export function UjatVolunteerDocScreeningSection({
     onVolunteerApplicantDetailTitleChange,
     showDocumentScreeningConfirm,
   })
-
-  useLayoutEffect(() => {
-    const el = tableWrapRef.current
-    if (!el) return
-    const update = () => {
-      if (isResizingRef.current) return
-      const w = el.getBoundingClientRect().width
-      setTableScrollX(Math.max(minTableScrollX, Math.floor(w)))
-    }
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [minTableScrollX, isResizingRef])
-
-  useLayoutEffect(() => {
-    if (isResizingRef.current) return
-    const el = tableWrapRef.current
-    if (!el) return
-    const w = el.getBoundingClientRect().width
-    setTableScrollX(Math.max(minTableScrollX, Math.floor(w)))
-  }, [minTableScrollX, isResizingRef])
-
-  const scrollConfig = useMemo(() => ({ x: tableScrollX }), [tableScrollX])
 
   const handleRowClick = useCallback(
     (record: UjatVolunteerApplicantRow, e: MouseEvent) => {
@@ -233,13 +207,15 @@ export function UjatVolunteerDocScreeningSection({
         >
           <Table<UjatVolunteerApplicantRow>
             rowKey="id"
-            className="cms-data-table cms-data-table--fluid clickable-table"
+            className="cms-data-table ujat-volunteer-doc-screening__table clickable-table"
             columns={columns}
             components={tableComponents}
             dataSource={tableData}
             pagination={false}
-            scroll={scrollConfig}
+            tableLayout="fixed"
+            scroll={{ x: minTableScrollX }}
             rowSelection={{
+              fixed: true,
               selectedRowKeys,
               onChange: keys => setSelectedRowKeys(keys),
             }}
