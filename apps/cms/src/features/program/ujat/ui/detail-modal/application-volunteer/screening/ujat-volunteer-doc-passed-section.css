@@ -266,7 +266,7 @@
 }
 
 /* 면접일 배정 / 재배정 — 테이블 액션 버튼 (120×40) */
-.ujat-volunteer-doc-passed__assign-btn.app-button.ant-btn {
+.ujat-volunteer-doc-passed__assign-btn.cms-button.ant-btn {
   box-sizing: border-box !important;
   display: inline-flex !important;
   width: 120px !important;
@@ -295,7 +295,7 @@
   white-space: nowrap;
 }
 
-.ujat-volunteer-doc-passed__assign-btn.app-button.ant-btn > span {
+.ujat-volunteer-doc-passed__assign-btn.cms-button.ant-btn .cms-button__label {
   font-family: inherit !important;
   font-size: inherit !important;
   font-weight: inherit !important;
@@ -303,14 +303,14 @@
   color: inherit !important;
 }
 
-.ujat-volunteer-doc-passed__assign-btn.app-button.ant-btn:hover:not(:disabled) {
+.ujat-volunteer-doc-passed__assign-btn.cms-button.ant-btn:hover:not(:disabled) {
   border-color: var(--color-mint-01, #01a1af) !important;
   color: var(--color-mint-01, #01a1af) !important;
   background:
     linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%), #fff !important;
 }
 
-.ujat-volunteer-doc-passed__assign-btn.app-button.ant-btn:disabled {
+.ujat-volunteer-doc-passed__assign-btn.cms-button.ant-btn:disabled {
   border-color: var(--color-border-input, rgba(61, 61, 61, 0.2)) !important;
   color: var(--default-BK, #3d3d3d) !important;
   opacity: 0.4;
@@ -321,6 +321,6 @@
 /* 활동 포기 행: 행 opacity와 중복 적용되지 않도록 */
 .ujat-volunteer-doc-passed
   .ujat-volunteer-doc-passed__row--withdrawn
-  .ujat-volunteer-doc-passed__assign-btn.app-button.ant-btn:disabled {
+  .ujat-volunteer-doc-passed__assign-btn.cms-button.ant-btn:disabled {
   opacity: 1;
 }

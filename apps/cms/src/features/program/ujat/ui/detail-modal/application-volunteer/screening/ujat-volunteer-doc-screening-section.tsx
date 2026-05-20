@@ -3,7 +3,7 @@ import type { UjatEssayColumnKey } from './ujat-volunteer-doc-screening-columns'
 import { Table } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
@@ -171,25 +171,31 @@ export function UjatVolunteerDocScreeningSection({
         title={`봉사자 신청 목록 (${count.toLocaleString()})`}
         actions={
           <div className="ujat-volunteer-doc-screening__actions">
-            <AppButton
-              variant="danger"
-              size="filter"
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              width={160}
               disabled={selectedRowKeys.length === 0}
               onClick={handleBulkReject}
             >
               선택 반려
-            </AppButton>
-            <AppButton
-              variant="cancel"
-              size="filter"
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="large"
+              width={160}
               disabled={selectedRowKeys.length === 0}
               onClick={handleBulkApprove}
             >
               선택 승인
-            </AppButton>
-            <AppButton
+            </CmsButton>
+            <CmsButton
+              type="button"
               variant="primary"
-              size="filter"
+              size="large"
+              width={160}
               icon={<DownloadOutlined />}
               className="ujat-volunteer-doc-screening__btn-excel"
               loading={isExporting}
@@ -197,7 +203,7 @@ export function UjatVolunteerDocScreeningSection({
               onClick={handleExportExcel}
             >
               엑셀 다운로드
-            </AppButton>
+            </CmsButton>
           </div>
         }
       >

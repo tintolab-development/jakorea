@@ -556,6 +556,6 @@
   align-items: center;
 }
 
-.ujat-volunteer-doc-screening__btn-excel.app-button.ant-btn-primary {
+.ujat-volunteer-doc-screening__btn-excel.cms-button.ant-btn {
   min-width: 140px;
 }

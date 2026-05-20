@@ -2,7 +2,7 @@ import { useCallback, useLayoutEffect, useRef, useState, type MouseEvent } from 
 import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
@@ -148,23 +148,27 @@ export function UjatVolunteerDocPassedSection({
         }
         actions={
           viewMode === 'list' ? (
-            <AppButton
-              variant="cancel"
-              size="filter-wide"
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="large"
+              style={{ minWidth: 180 }}
               icon={<CalendarOutlined />}
               onClick={handleViewCalendar}
             >
               캘린더 뷰로 보기
-            </AppButton>
+            </CmsButton>
           ) : (
-            <AppButton
-              variant="cancel"
-              size="filter-wide"
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="large"
+              style={{ minWidth: 180 }}
               icon={<UnorderedListOutlined />}
               onClick={handleViewList}
             >
               리스트로 보기
-            </AppButton>
+            </CmsButton>
           )
         }
       >
