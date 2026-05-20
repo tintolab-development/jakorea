@@ -1,0 +1,213 @@
+/**
+ * UJAT 면접일 배정 모달 전용 미니 캘린더 스타일.
+ * `.ujat-volunteer-interview-assign-calendar-mini` 스코프 안에서만 적용.
+ */
+
+.ujat-volunteer-interview-assign-calendar-mini {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.ujat-volunteer-interview-assign-calendar-mini .calendar-mini {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  max-height: none;
+  box-shadow: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.ujat-volunteer-interview-assign-calendar-mini .calendar-mini-cell {
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--8, 8px);
+}
+
+.ujat-volunteer-interview-assign-calendar-mini
+  .calendar-mini
+  .ant-picker-content
+  tbody
+  .ant-picker-cell {
+  padding-top: 15px;
+}
+
+.ujat-volunteer-interview-assign-calendar-mini
+  .calendar-mini
+  .ant-picker-calendar
+  .ant-picker-date-panel
+  .ant-picker-content
+  th {
+  padding-bottom: 0;
+}
+
+.ujat-volunteer-interview-assign-calendar-mini .calendar-mini-date {
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+}
+
+/* 선택 가능한 평일 — 기본 숫자 색 */
+.ujat-volunteer-interview-assign-calendar-mini
+  .ant-picker-cell:not(.ant-picker-cell-disabled)
+  .calendar-mini-cell:not(.calendar-mini-cell--selected):not(.calendar-mini-cell--today):not(
+      .calendar-mini-cell--saturday
+    ):not(.calendar-mini-cell--sunday-or-holiday)
+  .calendar-mini-date {
+  color: var(--main-BK, #3d3d3d);
+}
+
+/* 봉사자가 선택한 면접 가능일 */
+.ujat-volunteer-interview-assign-calendar-mini .calendar-mini-cell--has-schedule {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--8, 8px);
+  background: var(
+    --color-bg-mint,
+    linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%),
+    #fff
+  );
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+}
+
+.ujat-volunteer-interview-assign-calendar-mini
+  .calendar-mini-cell--has-schedule
+  .calendar-mini-date {
+  color: var(--main-BK, #3d3d3d);
+}
+
+/* 면접일 배정 완료된 날짜 */
+.ujat-volunteer-interview-assign-calendar-mini
+  .calendar-mini-cell--assignment-complete:not(.calendar-mini-cell--selected):not(
+    .calendar-mini-cell--today
+  ) {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--8, 8px);
+  background: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%),
+    #fff
+  );
+}
+
+/* 비활성 날짜 */
+.ujat-volunteer-interview-assign-calendar-mini .ant-picker-cell-disabled,
+.ujat-volunteer-interview-assign-calendar-mini .ant-picker-cell-disabled::before,
+.ujat-volunteer-interview-assign-calendar-mini
+  .ant-picker-cell-disabled
+  .ant-picker-calendar-date,
+.ujat-volunteer-interview-assign-calendar-mini .ant-picker-cell-disabled .calendar-mini-cell {
+  background: transparent !important;
+}
+
+.ujat-volunteer-interview-assign-calendar-mini .ant-picker-cell-disabled .calendar-mini-cell {
+  cursor: not-allowed;
+}
+
+.ujat-volunteer-interview-assign-calendar-mini .ant-picker-cell-disabled .calendar-mini-date {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  text-align: center;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+}
+
+.ujat-volunteer-interview-assign-calendar-mini
+  .ant-picker-cell-disabled
+  .calendar-mini-cell--saturday:not(.calendar-mini-cell--selected)
+  .calendar-mini-date {
+  color: var(--color-blue, #017eaf);
+}
+
+.ujat-volunteer-interview-assign-calendar-mini
+  .ant-picker-cell-disabled
+  .calendar-mini-cell--sunday-or-holiday:not(.calendar-mini-cell--selected)
+  .calendar-mini-date {
+  color: var(--color-red, #c32f4a);
+}
+
+/* 오늘 — 민트 (모달: 선택 시에도 민트 유지) */
+.ujat-volunteer-interview-assign-calendar-mini
+  .calendar-mini-cell--today:not(.calendar-mini-cell--selected) {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--8, 8px);
+  background: var(--color-mint-01, #01a1af) !important;
+}
+
+.ujat-volunteer-interview-assign-calendar-mini
+  .calendar-mini-cell--today:not(.calendar-mini-cell--selected)
+  .calendar-mini-date {
+  color: #ffffff !important;
+}
+
+/* 선택일 — 민트 배경 + 흰색 숫자 (시안) */
+.ujat-volunteer-interview-assign-calendar-mini .calendar-mini-cell--selected {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--8, 8px);
+  background: var(--color-mint-01, #01a1af) !important;
+}
+
+.ujat-volunteer-interview-assign-calendar-mini .calendar-mini-cell--selected .calendar-mini-date {
+  color: var(--main-WT, #fff) !important;
+  text-align: center;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+}
+
+/* 토·일·공휴일 숫자 색 (선택 가능 셀) */
+.ujat-volunteer-interview-assign-calendar-mini
+  .ant-picker-cell:not(.ant-picker-cell-disabled)
+  .calendar-mini-cell--saturday:not(.calendar-mini-cell--selected):not(.calendar-mini-cell--today)
+  .calendar-mini-date {
+  color: var(--color-blue, #017eaf) !important;
+}
+
+.ujat-volunteer-interview-assign-calendar-mini
+  .ant-picker-cell:not(.ant-picker-cell-disabled)
+  .calendar-mini-cell--sunday-or-holiday:not(.calendar-mini-cell--selected):not(
+      .calendar-mini-cell--today
+    )
+  .calendar-mini-date {
+  color: var(--color-red, #c32f4a) !important;
+}
