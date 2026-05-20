@@ -14,7 +14,9 @@ export function UjatInstitutionScheduleAssignSection({
     schoolsByDate,
     addAssignmentRow,
     updateAssignmentRow,
-    setEstimationField,
+    removeAssignmentRow,
+    setMaxClassesPerDay,
+    setExpectedVolunteerCount,
     semesterClassTotals,
     volunteerEducationDays,
   } = useUjatInstitutionScheduleAssign(regionKey)
@@ -33,21 +35,21 @@ export function UjatInstitutionScheduleAssignSection({
               schoolOptions={schoolsByDate[isoDate] ?? []}
               onAddRow={() => addAssignmentRow(isoDate)}
               onUpdateRow={(rowId, patch) => updateAssignmentRow(isoDate, rowId, patch)}
+              onRemoveRow={rowId => removeAssignmentRow(isoDate, rowId)}
             />
           )
         })}
       </div>
 
+      <hr className="ujat-schedule-assign-section__divider" aria-hidden />
+
       <UjatInstitutionScheduleAssignEstimationTable
+        maxClassesPerDay={regionState.maxClassesPerDay}
         estimation={regionState.estimation}
         semesterClassTotals={semesterClassTotals}
         volunteerEducationDays={volunteerEducationDays}
-        onMaxClassesPerDayChange={(semester, value) =>
-          setEstimationField(semester, 'maxClassesPerDay', value)
-        }
-        onExpectedVolunteerCountChange={(semester, value) =>
-          setEstimationField(semester, 'expectedVolunteerCount', value)
-        }
+        onMaxClassesPerDayChange={setMaxClassesPerDay}
+        onExpectedVolunteerCountChange={setExpectedVolunteerCount}
       />
     </div>
   )

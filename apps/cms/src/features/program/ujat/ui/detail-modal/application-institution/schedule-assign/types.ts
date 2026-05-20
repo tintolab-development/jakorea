@@ -14,11 +14,12 @@ export type UjatScheduleAssignDayState = {
 }
 
 export type UjatScheduleAssignEstimationSemester = {
-  maxClassesPerDay: string
   expectedVolunteerCount: string
 }
 
 export type UjatScheduleAssignRegionState = {
   days: Record<string, UjatScheduleAssignDayState>
+  /** 1일 최대 교육 학급 수 — 1·2학기 공통 */
+  maxClassesPerDay: string
   estimation: Record<UjatInstitutionEducationSemesterKey, UjatScheduleAssignEstimationSemester>
 }

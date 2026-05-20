@@ -1,20 +1,19 @@
 import { useState } from 'react'
-import { useCmsAlert } from '@/shared/ui'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { UjatInstitutionApplicationRegionTabs } from '../list/region-tabs'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { UjatInstitutionScheduleAssignSection } from './section'
+import { UjatInstitutionScheduleSheetPreviewModal } from './schedule-sheet-preview-modal'
 import './page.css'
 
 export function UjatInstitutionScheduleAssignPage() {
-  const { showAlert } = useCmsAlert()
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>('seoul')
+  const [scheduleSheetOpen, setScheduleSheetOpen] = useState(false)
+  const [scheduleSheetRefreshKey, setScheduleSheetRefreshKey] = useState(0)
 
   const handleOpenScheduleSheet = () => {
-    showAlert({
-      title: '임시 교육 일정표',
-      content: '임시 교육 일정표 확인 기능은 API 연동 후 제공됩니다.',
-    })
+    setScheduleSheetRefreshKey(key => key + 1)
+    setScheduleSheetOpen(true)
   }
 
   return (
@@ -30,6 +29,12 @@ export function UjatInstitutionScheduleAssignPage() {
       </div>
 
       <UjatInstitutionScheduleAssignSection key={activeRegion} regionKey={activeRegion} />
+
+      <UjatInstitutionScheduleSheetPreviewModal
+        open={scheduleSheetOpen}
+        refreshKey={scheduleSheetRefreshKey}
+        onCancel={() => setScheduleSheetOpen(false)}
+      />
     </div>
   )
 }

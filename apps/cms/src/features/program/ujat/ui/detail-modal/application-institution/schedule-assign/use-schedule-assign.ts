@@ -11,6 +11,7 @@ import {
   getUjatScheduleAssignRegionState,
   patchUjatScheduleAssignDay,
   patchUjatScheduleAssignEstimation,
+  patchUjatScheduleAssignMaxClassesPerDay,
 } from './store'
 import type { UjatScheduleAssignRow } from './types'
 import {
@@ -66,14 +67,33 @@ export function useUjatInstitutionScheduleAssign(regionKey: UjatInstitutionAppli
     [regionKey, bump]
   )
 
-  const setEstimationField = useCallback(
-    (
-      semester: UjatInstitutionEducationSemesterKey,
-      field: 'maxClassesPerDay' | 'expectedVolunteerCount',
-      value: string
-    ) => {
-      const digits = value.replace(/\D/g, '')
-      patchUjatScheduleAssignEstimation(regionKey, semester, { [field]: digits })
+  const removeAssignmentRow = useCallback(
+    (isoDate: string, rowId: string) => {
+      patchUjatScheduleAssignDay(regionKey, isoDate, day => {
+        if (day.rows.length <= 1) return day
+        return {
+          ...day,
+          rows: day.rows.filter(row => row.id !== rowId),
+        }
+      })
+      bump()
+    },
+    [regionKey, bump]
+  )
+
+  const setMaxClassesPerDay = useCallback(
+    (value: string) => {
+      patchUjatScheduleAssignMaxClassesPerDay(regionKey, value.replace(/\D/g, ''))
+      bump()
+    },
+    [regionKey, bump]
+  )
+
+  const setExpectedVolunteerCount = useCallback(
+    (semester: UjatInstitutionEducationSemesterKey, value: string) => {
+      patchUjatScheduleAssignEstimation(regionKey, semester, {
+        expectedVolunteerCount: value.replace(/\D/g, ''),
+      })
       bump()
     },
     [regionKey, bump]
@@ -96,13 +116,11 @@ export function useUjatInstitutionScheduleAssign(regionKey: UjatInstitutionAppli
 
   const volunteerEducationDays = useMemo(() => {
     const out: Record<UjatInstitutionEducationSemesterKey, number | null> = { h1: null, h2: null }
+
     for (const semester of ['h1', 'h2'] as const) {
       const expectedClasses = semesterClassTotals[semester]
       const volunteers = Number.parseInt(regionState.estimation[semester].expectedVolunteerCount, 10)
-      out[semester] = computeVolunteerEducationDays(
-        expectedClasses,
-        Number.isFinite(volunteers) ? volunteers : 0
-      )
+      out[semester] = computeVolunteerEducationDays(expectedClasses, volunteers)
     }
     return out
   }, [regionState.estimation, semesterClassTotals])
@@ -113,7 +131,9 @@ export function useUjatInstitutionScheduleAssign(regionKey: UjatInstitutionAppli
     schoolsByDate,
     addAssignmentRow,
     updateAssignmentRow,
-    setEstimationField,
+    removeAssignmentRow,
+    setMaxClassesPerDay,
+    setExpectedVolunteerCount,
     semesterClassTotals,
     volunteerEducationDays,
   }

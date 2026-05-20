@@ -35,9 +35,10 @@ function createInitialRegionState(): UjatScheduleAssignRegionState {
   }
   return {
     days,
+    maxClassesPerDay: '',
     estimation: {
-      h1: { maxClassesPerDay: '', expectedVolunteerCount: '' },
-      h2: { maxClassesPerDay: '', expectedVolunteerCount: '' },
+      h1: { expectedVolunteerCount: '' },
+      h2: { expectedVolunteerCount: '' },
     },
   }
 }
@@ -90,6 +91,17 @@ export function patchUjatScheduleAssignEstimation(
       ...current.estimation,
       [semester]: { ...current.estimation[semester], ...patch },
     },
+  })
+}
+
+export function patchUjatScheduleAssignMaxClassesPerDay(
+  regionKey: UjatInstitutionApplicationRegionKey,
+  value: string
+): void {
+  const current = getUjatScheduleAssignRegionState(regionKey)
+  updateUjatScheduleAssignRegionState(regionKey, {
+    ...current,
+    maxClassesPerDay: value,
   })
 }
 
