@@ -16,6 +16,7 @@ import {
 } from './ujat-volunteer-doc-passed-filter-fields'
 import { useUjatVolunteerDocPassedColumns } from './ujat-volunteer-doc-passed-columns'
 import { mapUjatVolunteerInterviewToCalendarEvents } from './ujat-volunteer-interview-calendar-events'
+import type { UjatInterviewAssignConfirmPayload } from './ujat-volunteer-interview-assign-modal'
 
 function filterDocPassedApplicants(
   rows: UjatVolunteerApplicantRow[],
@@ -55,18 +56,21 @@ export function useUjatVolunteerDocPassed({
   const [list, setList] = useState<UjatVolunteerApplicantRow[]>(() =>
     getUjatVolunteerDocPassedApplicants(programId, half)
   )
-  const [pendingFilters, setPendingFilters] = useState<UjatVolunteerDocPassedFilters>(
-    () => ({ ...DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS })
-  )
-  const [appliedFilters, setAppliedFilters] = useState<UjatVolunteerDocPassedFilters>(
-    () => ({ ...DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS })
-  )
+  const [pendingFilters, setPendingFilters] = useState<UjatVolunteerDocPassedFilters>(() => ({
+    ...DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS,
+  }))
+  const [appliedFilters, setAppliedFilters] = useState<UjatVolunteerDocPassedFilters>(() => ({
+    ...DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS,
+  }))
   const [viewMode, setViewMode] = useState<UjatVolunteerDocPassedViewMode>('list')
   const [openManagerDropdown, setOpenManagerDropdown] = useState<{
     rowId: string
     manager: 'A' | 'B'
   } | null>(null)
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
+  const [assignModalTarget, setAssignModalTarget] = useState<UjatVolunteerApplicantRow | null>(
+    null
+  )
 
   useEffect(() => {
     setList(getUjatVolunteerDocPassedApplicants(programId, half))
@@ -111,19 +115,33 @@ export function useUjatVolunteerDocPassed({
     [updateRow]
   )
 
-  const handleAssignInterview = useCallback(
-    (row: UjatVolunteerApplicantRow) => {
-      if (row.interviewAssignmentStatus === 'withdrawn') return
-      updateRow(row.id, { interviewAssignmentStatus: 'assigned' })
+  const handleAssignInterview = useCallback((row: UjatVolunteerApplicantRow) => {
+    if (row.interviewAssignmentStatus === 'withdrawn') return
+    setAssignModalTarget(row)
+  }, [])
+
+  const closeAssignModal = useCallback(() => {
+    setAssignModalTarget(null)
+  }, [])
+
+  const confirmAssignInterview = useCallback(
+    (payload: UjatInterviewAssignConfirmPayload) => {
+      if (!assignModalTarget) return
+      const wasAssigned = assignModalTarget.interviewAssignmentStatus === 'assigned'
+      updateRow(assignModalTarget.id, {
+        interviewAssignmentStatus: 'assigned',
+        assignedInterviewDateLabel: payload.dateLabel,
+        assignedInterviewTime: payload.timeRange,
+      })
+      setAssignModalTarget(null)
       showAlert({
         title: '면접일 배정',
-        content:
-          row.interviewAssignmentStatus === 'waiting'
-            ? `${row.name} 봉사자의 면접일이 배정되었습니다. (목 데이터)`
-            : `${row.name} 봉사자의 면접일 재배정이 완료되었습니다. (목 데이터)`,
+        content: wasAssigned
+          ? `${assignModalTarget.name} 봉사자의 면접일 재배정이 완료되었습니다. (목 데이터)`
+          : `${assignModalTarget.name} 봉사자의 면접일이 배정되었습니다. (목 데이터)`,
       })
     },
-    [showAlert, updateRow]
+    [assignModalTarget, showAlert, updateRow]
   )
 
   const requestWithdrawActivity = useCallback((row: UjatVolunteerApplicantRow) => {
@@ -169,6 +187,9 @@ export function useUjatVolunteerDocPassed({
     list,
     updateRow,
     handleAssignInterview,
+    assignModalTarget,
+    closeAssignModal,
+    confirmAssignInterview,
     requestWithdrawActivity,
     cancelWithdrawActivity,
     confirmWithdrawActivity,

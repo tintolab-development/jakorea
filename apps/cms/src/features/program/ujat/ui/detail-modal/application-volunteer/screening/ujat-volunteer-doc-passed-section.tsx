@@ -11,6 +11,7 @@ import { useUjatVolunteerDocPassed } from './use-ujat-volunteer-doc-passed'
 import { useUjatVolunteerApplicantDetail } from './use-ujat-volunteer-applicant-detail'
 import { UjatVolunteerApplicantDetailView } from './ujat-volunteer-applicant-detail-view'
 import { UjatVolunteerDocPassedCalendarView } from './ujat-volunteer-doc-passed-calendar-view'
+import { UjatVolunteerInterviewAssignModal } from './ujat-volunteer-interview-assign-modal'
 import { UJAT_VOLUNTEER_DOC_PASSED_TABLE_SCROLL_X } from './ujat-volunteer-doc-passed-columns'
 import './ujat-volunteer-doc-passed-section.css'
 import './ujat-volunteer-doc-screening-section.css'
@@ -50,6 +51,9 @@ export function UjatVolunteerDocPassedSection({
     handleViewList,
     calendarEvents,
     handleAssignInterview,
+    assignModalTarget,
+    closeAssignModal,
+    confirmAssignInterview,
     requestWithdrawActivity,
     cancelWithdrawActivity,
     confirmWithdrawActivity,
@@ -115,6 +119,18 @@ export function UjatVolunteerDocPassedSection({
     />
   ) : null
 
+  const assignInterviewModal = assignModalTarget ? (
+    <UjatVolunteerInterviewAssignModal
+      open
+      applicant={assignModalTarget}
+      programId={programId}
+      allApplicants={list}
+      mode={assignModalTarget.interviewAssignmentStatus === 'assigned' ? 'reassign' : 'assign'}
+      onCancel={closeAssignModal}
+      onConfirm={confirmAssignInterview}
+    />
+  ) : null
+
   if (selectedApplicant) {
     return (
       <>
@@ -125,6 +141,7 @@ export function UjatVolunteerDocPassedSection({
           onWithdrawActivity={handleDetailWithdrawActivity}
         />
         {withdrawConfirmModal}
+        {assignInterviewModal}
       </>
     )
   }
@@ -201,6 +218,7 @@ export function UjatVolunteerDocPassedSection({
         )}
       </FilterTableLayout>
       {withdrawConfirmModal}
+      {assignInterviewModal}
     </div>
   )
 }
