@@ -1,10 +1,10 @@
-.permission-reject-modal__content {
+.permission-modal__content {
   display: flex;
   flex-direction: column;
   gap: 0;
 }
 
-.permission-reject-modal__message {
+.permission-modal__message {
   margin: 0;
   color: var(--main-bk, #3d3d3d);
   font-size: 16px;
@@ -13,20 +13,20 @@
   line-height: 150%;
 }
 
-.permission-reject-modal__field {
+.permission-modal__field {
   margin-top: 24px;
   display: flex;
   flex-direction: column;
 }
 
-.permission-reject-modal__field-error {
+.permission-modal__field-error {
   display: block;
   margin-top: 8px;
   font-size: 14px;
   color: var(--color-red, #ff4d4f);
 }
 
-.permission-reject-modal__label {
+.permission-modal__label {
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard;
   font-size: 14px;
@@ -37,7 +37,7 @@
   margin-bottom: 6px;
 }
 
-.permission-reject-modal__footer {
+.permission-modal__footer {
   display: flex;
   justify-content: flex-end;
   gap: 8px;

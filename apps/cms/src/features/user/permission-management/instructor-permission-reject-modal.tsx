@@ -1,7 +1,7 @@
 import {
-  PermissionRejectModal,
-  type PermissionRejectPayload,
-} from '@/shared/components/permission-reject-modal'
+  PermissionModal,
+  type PermissionModalPayload,
+} from '@/shared/components/permission-modal'
 import type {
   InstructorPermissionApproveNotifyTiming,
   PermissionApproveModalKind,
@@ -46,17 +46,18 @@ export function InstructorPermissionRejectModal(props: InstructorPermissionRejec
         ? '관리자 신청 반려'
         : '강사 승인 반려'
 
-  const handleConfirm = (payload: PermissionRejectPayload) => {
+  const handleConfirm = (payload: PermissionModalPayload) => {
     const notifyTiming: InstructorPermissionApproveNotifyTiming =
       payload.notifyTiming === 'on_announcement' ? 'immediate' : payload.notifyTiming
-    onConfirm({ rejectionReason: payload.rejectionReason, notifyTiming })
+    onConfirm({ rejectionReason: payload.reason, notifyTiming })
   }
 
   return (
-    <PermissionRejectModal
+    <PermissionModal
       open={open}
       onCancel={onCancel}
       onConfirm={handleConfirm}
+      variant="reject"
       title={title}
       zIndex={zIndex}
       notifyTimingOptions="two"

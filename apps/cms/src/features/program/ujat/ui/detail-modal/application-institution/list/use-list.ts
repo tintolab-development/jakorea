@@ -14,7 +14,7 @@ import {
 } from './types'
 import type { UjatInstitutionApplicationRegionKey } from './regions'
 import { useUjatInstitutionApplicationColumns } from './columns'
-import type { UjatInstitutionApplicationBulkModalAction } from './action-modal'
+import type { UjatInstitutionApplicationRejectModalAction } from './action-modal'
 import {
   getUjatInstitutionTempAssignCompleteContent,
   UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
@@ -60,7 +60,7 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
   const [pendingBulkModalAction, setPendingBulkModalAction] =
-    useState<UjatInstitutionApplicationBulkModalAction | null>(null)
+    useState<UjatInstitutionApplicationRejectModalAction | null>(null)
 
   const allRows = useMemo(() => {
     void dataVersion
@@ -114,7 +114,7 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
   )
 
   const openBulkActionModal = useCallback(
-    (action: UjatInstitutionApplicationBulkModalAction) => {
+    (action: UjatInstitutionApplicationRejectModalAction) => {
       if (selectedRowKeys.length === 0) {
         showNoSelectionAlert()
         return

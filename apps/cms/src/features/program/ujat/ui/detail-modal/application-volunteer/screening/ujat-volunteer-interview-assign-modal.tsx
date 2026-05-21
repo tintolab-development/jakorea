@@ -302,7 +302,7 @@ export function UjatVolunteerInterviewAssignModal({
               }
             >
               <CmsRadio value="immediate">즉시</CmsRadio>
-              <span ref={manualRadioAnchorRef} className="permission-reject-modal__manual-anchor">
+              <span ref={manualRadioAnchorRef} className="permission-modal__manual-anchor">
                 <CmsRadio
                   value="manual"
                   onClick={() => {

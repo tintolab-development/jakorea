@@ -2,10 +2,7 @@ import { Fragment, type ReactNode } from 'react'
 import { CrossTable } from '@/shared/ui/cross-table'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { UjatInstitutionApplicationStatusBadge } from '../list/status-badge'
-import {
-  HomeAddressPrivacyValue,
-  UjatInstitutionTeacherInfoValue,
-} from './detail-display'
+import { HomeAddressPrivacyValue, UjatInstitutionTeacherInfoValue } from './detail-display'
 import type {
   UjatInstitutionApplicationClassTimeRowDetail,
   UjatInstitutionApplicationDetail,
@@ -13,9 +10,9 @@ import type {
 
 const CLASS_TIME_PERIOD_HEADERS = ['1교시', '2교시', '3교시', '4교시'] as const
 
-function PipeSeparatedValues({ parts }: { parts: ReactNode[] }) {
+export function PipeSeparatedValues({ parts }: { parts: ReactNode[] }) {
   return (
-    <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
+    <div className="detail-info-form-inputs-wrapper-no-gap">
       {parts.map((part, index) => (
         <Fragment key={index}>
           {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
@@ -28,14 +25,14 @@ function PipeSeparatedValues({ parts }: { parts: ReactNode[] }) {
 
 function classTimePeriodsEqual(
   a: UjatInstitutionApplicationClassTimeRowDetail['periods'],
-  b: UjatInstitutionApplicationClassTimeRowDetail['periods'],
+  b: UjatInstitutionApplicationClassTimeRowDetail['periods']
 ): boolean {
   return a.every((value, index) => value === b[index])
 }
 
 /** 연속된 학년 중 교시별 시간 구성이 같으면 한 행(예: 1학년, 2학년, 3학년)으로 묶는다. */
 function groupClassTimeRowsByPeriods(
-  rows: UjatInstitutionApplicationClassTimeRowDetail[],
+  rows: UjatInstitutionApplicationClassTimeRowDetail[]
 ): UjatInstitutionApplicationClassTimeRowDetail[] {
   return rows.reduce<UjatInstitutionApplicationClassTimeRowDetail[]>((grouped, row) => {
     const last = grouped.at(-1)
@@ -51,7 +48,7 @@ function groupClassTimeRowsByPeriods(
   }, [])
 }
 
-function ClassTimeTable({
+export function ClassTimeTable({
   rows,
 }: {
   rows: UjatInstitutionApplicationDetail['classTimeRows']
@@ -179,4 +176,3 @@ export function UjatInstitutionApplicationDetailView({
     </div>
   )
 }
-

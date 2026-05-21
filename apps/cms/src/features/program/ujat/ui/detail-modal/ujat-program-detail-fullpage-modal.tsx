@@ -308,6 +308,14 @@ export function UjatProgramDetailFullPageModal({
     return resolved
   }, [open, searchParams, activeLnb, interviewEnabled, surveyKeys])
 
+  const institutionDetailTitlePrefix = useMemo(() => {
+    if (!institutionDetailId) return '신청 기관 상세'
+    if (activeLnb === 'institution_applications' && activeTab === 'inst_schedule_confirm') {
+      return '임시 배정 기관 상세'
+    }
+    return '신청 기관 상세'
+  }, [institutionDetailId, activeLnb, activeTab])
+
   const activeRecruitTab: UjatRecruitTabKey | null =
     activeLnb === 'info' && isUjatRecruitTab(activeTab) ? (activeTab as UjatRecruitTabKey) : null
 
@@ -365,15 +373,15 @@ export function UjatProgramDetailFullPageModal({
       next.set(TAB_PARAM, tab)
       next.delete(EDIT_PARAM)
       next.delete(UJAT_APPLICANT_ID_PARAM)
-      if (
-        lnb !== 'institution_applications' ||
-        (tab !== 'inst_all' && tab !== 'inst_schedule_confirm')
-      ) {
+      if (lnb !== 'institution_applications') {
+        next.delete(UJAT_INST_APP_ID_PARAM)
+      } else if (tab !== activeTab) {
+        /** 신청 기관 ↔ 임시 배정 기관 확인 등 서브탭 전환 시 상세 닫고 목록 */
         next.delete(UJAT_INST_APP_ID_PARAM)
       }
       setSearchParams(next, { replace: true })
     },
-    [programId, searchParams, setSearchParams]
+    [programId, searchParams, setSearchParams, activeTab]
   )
 
   const editTab = searchParams.get(EDIT_PARAM)
@@ -644,7 +652,9 @@ export function UjatProgramDetailFullPageModal({
   const programTitle = displayProgram?.title ?? '프로그램 상세'
   const title =
     volunteerApplicantDetailTitle ??
-    (institutionDetailName ? `신청 기관 상세 (${institutionDetailName})` : programTitle)
+    (institutionDetailName
+      ? `${institutionDetailTitlePrefix} (${institutionDetailName})`
+      : programTitle)
 
   return (
     <DetailFullPageModal
