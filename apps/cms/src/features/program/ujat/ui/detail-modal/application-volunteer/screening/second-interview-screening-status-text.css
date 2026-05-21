@@ -11,7 +11,8 @@
 .second-interview-screening-status-text--pass,
 .second-interview-screening-status-text--reserve1,
 .second-interview-screening-status-text--reserve2,
-.second-interview-screening-status-text--reserve3 {
+.second-interview-screening-status-text--reserve3,
+.second-interview-screening-status-text--reserve4 {
   color: var(--color-blue, #017eaf);
 }
 

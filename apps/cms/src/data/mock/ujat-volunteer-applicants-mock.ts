@@ -77,6 +77,9 @@ export interface UjatVolunteerApplicantRow {
   assignedInterviewTime?: string
   secondInterviewScreeningStatus?: UjatSecondInterviewScreeningStatus
   totalScore?: number | null
+  managerAScore?: number | null
+  managerBScore?: number | null
+  interviewEvaluationRemark?: string
 }
 
 const NAMES = [
@@ -147,13 +150,8 @@ const DEMO_SCREENSHOT_ROW: Partial<UjatVolunteerApplicantRow> = {
   managerAEvaluation: 'unreviewed',
   managerBEvaluation: 'pass',
   hasEducationExperience: true,
-  applicationType: 'ujat-graduate',
+  applicationType: 'new',
   preferredRegion: '서울',
-  previousUjatActivity: {
-    term: '30',
-    year: '2023',
-    certificateFileName: '홍길동_UJAT 30기 수료증.jpg',
-  },
   grade: '1학년',
   contactRaw: '010-1234-0000',
   emailRaw: 'tjintolab@naver.com',
@@ -166,14 +164,17 @@ const DEMO_SCREENSHOT_ROW: Partial<UjatVolunteerApplicantRow> = {
   essayJaExperience:
     '중학교 2학년 때 JA Korea 경제금융교육을 수강했으며, 당시 배운 내용이 대학 전공 선택에도 영향을 주었습니다.',
   interviewAssignmentStatus: 'assigned',
-  assignedInterviewDateLabel: '26. 03. 09(월)',
-  assignedInterviewTime: '09:00 ~ 09:30',
+  assignedInterviewDateLabel: '26. 03. 30(목)',
+  assignedInterviewTime: '19:30 ~ 20:00',
   secondInterviewScreeningStatus: 'waiting',
   totalScore: null,
+  managerAScore: null,
+  managerBScore: null,
+  interviewEvaluationRemark: '지원동기도 좋고, 교육 경험이 풍부함',
   interviewAvailability: [
     {
-      dateLabel: '26. 03. 09(월)',
-      slots: ['09:00 ~ 09:30', '11:00 ~ 11:30'],
+      dateLabel: '26. 03. 30(목)',
+      slots: ['19:30 ~ 20:00'],
     },
     {
       dateLabel: '26. 03. 23(월)',
@@ -488,6 +489,48 @@ export function patchUjatVolunteerSecondInterviewScreeningStatus(
   const idSet = new Set(ids)
   return rows.map(row =>
     idSet.has(row.id) ? { ...row, secondInterviewScreeningStatus: status } : row
+  )
+}
+
+export type UjatVolunteerInterviewEvaluationPayload = {
+  managerAScore: number | null
+  managerBScore: number | null
+  interviewEvaluationRemark: string
+}
+
+function computeInterviewTotalScore(
+  managerAScore: number | null,
+  managerBScore: number | null
+): number | null {
+  if (managerAScore == null || managerBScore == null) return null
+  return Math.round((managerAScore + managerBScore) / 2)
+}
+
+export function patchUjatVolunteerInterviewEvaluation(
+  rows: UjatVolunteerApplicantRow[],
+  id: string,
+  payload: UjatVolunteerInterviewEvaluationPayload
+): UjatVolunteerApplicantRow[] {
+  return rows.map(row => {
+    if (row.id !== id) return row
+    const totalScore = computeInterviewTotalScore(payload.managerAScore, payload.managerBScore)
+    return {
+      ...row,
+      managerAScore: payload.managerAScore,
+      managerBScore: payload.managerBScore,
+      interviewEvaluationRemark: payload.interviewEvaluationRemark,
+      totalScore,
+      secondInterviewScreeningStatus: 'completed',
+    }
+  })
+}
+
+export function patchUjatVolunteerInterviewAssignmentWithdrawn(
+  rows: UjatVolunteerApplicantRow[],
+  id: string
+): UjatVolunteerApplicantRow[] {
+  return rows.map(row =>
+    row.id === id ? { ...row, interviewAssignmentStatus: 'withdrawn' as const } : row
   )
 }
 
