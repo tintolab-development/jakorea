@@ -19,6 +19,7 @@ import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton } from '@/shared/ui'
+import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
@@ -806,67 +807,50 @@ export function ParticipatingInstructorFullpageView({
 
   return (
     <div className="participating-instructor-fullpage-view school-detail-fullpage-view">
-      <div className="program-detail-fullpage-modal__tabs-row school-detail-fullpage-view__tabs-row">
-        <div className="program-detail-fullpage-modal__tabs">
-          {INSTRUCTOR_DETAIL_TAB_KEYS.map(key => (
-            <button
-              key={key}
-              type="button"
-              disabled={!!INSTRUCTOR_TAB_DISABLED[key]}
-              className={`program-detail-fullpage-modal__tab ${effectiveTab === key ? 'program-detail-fullpage-modal__tab--active' : ''}`}
-              onClick={() => setActiveTab(key)}
-            >
-              <span className="program-detail-fullpage-modal__tab-label">{TAB_LABELS[key]}</span>
-            </button>
-          ))}
-        </div>
-        {effectiveTab === 'application' && (
-          <div className="program-detail-fullpage-modal__header-actions">
-            <CmsButton
-              variant="delete"
-              size="large" width={160}
-              onClick={() => {}}
-            >
-              승인 취소
-            </CmsButton>
-            <CmsButton
-              variant="primary"
-              size="large" width={160}
-              onClick={() => {}}
-            >
-              정보 수정
-            </CmsButton>
-            <PersonalInfoRevealButton
-              labelMode="toggle"
-              revealed={personalInfoRevealed} style={{ minWidth: 180 }}
-              onClick={handlePrivacyToggleClick}
-            />
-          </div>
-        )}
-        {effectiveTab === 'institutionAssignment' && (
-          <div className="program-detail-fullpage-modal__header-actions">
-            <CmsButton
-              variant="delete"
-              size="large" width={160}
-              onClick={() => {}}
-            >
-              승인 취소
-            </CmsButton>
-            <PersonalInfoRevealButton
-              labelMode="toggle"
-              revealed={personalInfoRevealed} style={{ minWidth: 180 }}
-              onClick={handlePrivacyToggleClick}
-            />
-          </div>
-        )}
-        {effectiveTab === 'posts' && (
-          <div className="program-detail-fullpage-modal__header-actions">
+      <CmsTextTabs
+        className="school-detail-fullpage-view__tabs-row"
+        activeKey={effectiveTab}
+        onChange={setActiveTab}
+        items={INSTRUCTOR_DETAIL_TAB_KEYS.map(key => ({
+          key,
+          label: TAB_LABELS[key],
+          disabled: !!INSTRUCTOR_TAB_DISABLED[key],
+        }))}
+        trailing={
+          effectiveTab === 'application' ? (
+            <>
+              <CmsButton variant="delete" size="large" width={160} onClick={() => {}}>
+                승인 취소
+              </CmsButton>
+              <CmsButton variant="primary" size="large" width={160} onClick={() => {}}>
+                정보 수정
+              </CmsButton>
+              <PersonalInfoRevealButton
+                labelMode="toggle"
+                revealed={personalInfoRevealed}
+                style={{ minWidth: 180 }}
+                onClick={handlePrivacyToggleClick}
+              />
+            </>
+          ) : effectiveTab === 'institutionAssignment' ? (
+            <>
+              <CmsButton variant="delete" size="large" width={160} onClick={() => {}}>
+                승인 취소
+              </CmsButton>
+              <PersonalInfoRevealButton
+                labelMode="toggle"
+                revealed={personalInfoRevealed}
+                style={{ minWidth: 180 }}
+                onClick={handlePrivacyToggleClick}
+              />
+            </>
+          ) : effectiveTab === 'posts' ? (
             <CmsButton variant="primary" size="large" width={160} onClick={() => setPostWriteModalOpen(true)}>
               게시글 등록
             </CmsButton>
-          </div>
-        )}
-      </div>
+          ) : null
+        }
+      />
 
       <div className="program-detail-fullpage-modal__content school-detail-fullpage-view__content">
         {effectiveTab === 'application' && (

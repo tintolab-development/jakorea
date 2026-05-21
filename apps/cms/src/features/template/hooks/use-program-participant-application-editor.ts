@@ -219,10 +219,15 @@ function renumberInstructorUnavailableDateRows(p: VerticalTableParagraph): Verti
   }
 }
 
+export type UseProgramParticipantApplicationEditorOptions = {
+  ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
+}
+
 export function useProgramParticipantApplicationEditor(
   active: boolean,
   previewHeaderTitle: string,
-  variant: ProgramParticipantApplicationEditorVariant = 'individual'
+  variant: ProgramParticipantApplicationEditorVariant = 'individual',
+  editorOptions?: UseProgramParticipantApplicationEditorOptions
 ) {
   const seedParagraphIds = useMemo(() => {
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
@@ -628,6 +633,7 @@ export function useProgramParticipantApplicationEditor(
         applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
         recruitFormInstructor: variant === 'recruit-instructor',
         recruitFormVolunteer: variant === 'recruit-volunteer',
+        ujatRecruitParagraphProps: editorOptions?.ujatRecruitParagraphProps,
         programApplicationFormIndividual: variant === 'individual',
         programApplicationFormInstructor: programApplicationFormInstructorOptions,
         programApplicationFormVolunteer: programApplicationFormVolunteerOptions,
@@ -639,6 +645,7 @@ export function useProgramParticipantApplicationEditor(
       programApplicationFormInstructorOptions,
       programApplicationFormVolunteerOptions,
       ujatProgramApplicationFormVolunteerOptions,
+      editorOptions?.ujatRecruitParagraphProps,
       seedParagraphIds,
       updateParagraph,
       ujatVolunteerApplicationType,
@@ -726,6 +733,7 @@ export function useProgramParticipantApplicationEditor(
     setUjatVolunteerApplicationType,
     ujatProgramApplicationGradeInfo,
     ujatProgramApplicationGradeClassTime,
+    ujatRecruitParagraphProps: editorOptions?.ujatRecruitParagraphProps,
   }
 }
 

@@ -1,3 +1,4 @@
+import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   UJAT_INSTITUTION_APPLICATION_REGIONS,
   type UjatInstitutionApplicationRegionKey,
@@ -13,19 +14,15 @@ export function UjatInstitutionApplicationRegionTabs({
   onChange: (region: UjatInstitutionApplicationRegionKey) => void
 }) {
   return (
-    <div className="program-detail-fullpage-modal__tabs-row ujat-institution-application-region-tabs">
-      <div className="program-detail-fullpage-modal__tabs">
-        {UJAT_INSTITUTION_APPLICATION_REGIONS.map(region => (
-          <button
-            key={region.key}
-            type="button"
-            className={`program-detail-fullpage-modal__tab ${activeRegion === region.key ? 'program-detail-fullpage-modal__tab--active' : ''}`}
-            onClick={() => onChange(region.key)}
-          >
-            <span className="program-detail-fullpage-modal__tab-label">{region.label}</span>
-          </button>
-        ))}
-      </div>
-    </div>
+    <CmsTextTabs
+      className="ujat-institution-application-region-tabs"
+      activeKey={activeRegion}
+      onChange={onChange}
+      wrap
+      items={UJAT_INSTITUTION_APPLICATION_REGIONS.map(region => ({
+        key: region.key,
+        label: region.label,
+      }))}
+    />
   )
 }

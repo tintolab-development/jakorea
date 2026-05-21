@@ -1,10 +1,9 @@
 /* 모집 정보 탭 행(`ujat-program-recruitment-tabs-row`)과 동일한 간격 */
-.ujat-institution-application-region-tabs.program-detail-fullpage-modal__tabs-row {
+.ujat-institution-application-region-tabs.cms-text-tabs .cms-text-tabs__row {
   margin-bottom: 16px;
+  padding-bottom: 0;
 }
 
-/* 지역 탭 8개 — 좁은 폭에서 줄바꿈 (모집 정보 탭 행 스타일은 그대로) */
-.ujat-institution-application-region-tabs .program-detail-fullpage-modal__tabs {
-  flex-wrap: wrap;
+.ujat-institution-application-region-tabs .cms-text-tabs__list--wrap {
   row-gap: 4px;
 }

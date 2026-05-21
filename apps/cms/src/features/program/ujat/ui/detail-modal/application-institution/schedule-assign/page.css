@@ -4,16 +4,16 @@
   min-width: 0;
 }
 
-.ujat-schedule-assign-page__tabs-row {
+.ujat-schedule-assign-page__tabs-row.cms-text-tabs .cms-text-tabs__row {
   align-items: center;
   flex-wrap: nowrap;
+  margin-bottom: 0;
+  padding: 0;
 }
 
-.ujat-schedule-assign-page__tabs-row .ujat-institution-application-region-tabs {
+.ujat-schedule-assign-page__tabs-row .cms-text-tabs__list {
   flex: 1 1 auto;
   min-width: 0;
-  margin-bottom: 0;
-  padding: 0 !important;
 }
 
 .ujat-schedule-assign-section {

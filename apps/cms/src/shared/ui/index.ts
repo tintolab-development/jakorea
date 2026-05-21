@@ -141,6 +141,8 @@ export type {
 } from '../components/view-mode'
 export { SegmentedTab } from './segmented-tab'
 export type { SegmentedTabOption } from './segmented-tab'
+export { CmsTextTabs } from './cms-text-tabs'
+export type { CmsTextTabItem, CmsTextTabsProps, CmsTextTabsVariant } from './cms-text-tabs'
 export { ProgramCalendar } from '../components/program-calendar'
 export type {
   ProgramCalendarProps,

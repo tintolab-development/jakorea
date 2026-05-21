@@ -62,6 +62,16 @@ category: process
 
 ---
 
+## 행 클릭 → 기관 상세
+
+| 일정 확인 현황 | 상세 화면 |
+|----------------|-----------|
+| `institution_checking` | 신청 기관 탭(`inst_all`) 행 클릭 상세와 동일 — `UjatInstitutionApplicationDetailPage` |
+| `application_rejected` | 동일 |
+| `institution_confirmed` | `UjatInstitutionScheduleConfirmConfirmedDetailPlaceholder` (본문 추후 개발) |
+
+- URL: `instAppId` + `tab=inst_schedule_confirm` 유지 (`ujat-program-detail-fullpage-modal.tsx`)
+
 ## 캘린더 뷰
 
 - 이벤트: 확정 일정 ISO 날짜별 기관명

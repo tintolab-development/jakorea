@@ -1,54 +1,18 @@
-/* 탭과 버튼 한 줄 배치 (탭 왼쪽, 버튼 오른쪽) */
+/* 탭 + 본문 — CmsTextTabs (탭 왼쪽, trailing 액션 오른쪽) */
 .applicant-contents__tabs-wrap {
   margin-bottom: 24px;
 }
 
-.applicant-contents__tabs.ant-tabs .ant-tabs-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0 !important;
-  padding-right: 0;
-  width: 100%;
+.applicant-contents__tabs.cms-text-tabs .cms-text-tabs__row {
+  margin-bottom: 0;
 }
 
-.applicant-contents__tabs.ant-tabs .ant-tabs-nav::before {
-  border-bottom: none;
-}
-
-.applicant-contents__tabs.ant-tabs .ant-tabs-nav-list {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.applicant-contents__tabs.ant-tabs .ant-tabs-tab {
-  display: flex;
-  padding: 6px 16px 10px 16px;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 10px;
-  margin: 0;
-  font-size: 18px;
-  border-bottom: 2px solid transparent;
-}
-
-.applicant-contents__tabs.ant-tabs .ant-tabs-ink-bar {
-  background: var(--color-primary, #01a1af);
-}
-
-.applicant-contents__tabs.ant-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
-  color: var(--color-primary, #01a1af);
-  font-weight: 600;
-}
-
-.applicant-contents__tabs.ant-tabs .ant-tabs-tab.ant-tabs-tab-active {
-  border-bottom-color: var(--JA-mint-01, #01a1af);
+.applicant-contents__panel {
+  margin-top: 0;
 }
 
 .applicant-contents__header-actions {
   flex-shrink: 0;
-  margin-left: 24px;
 }
 
 .applicant-contents__header-actions .cms-button {

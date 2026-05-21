@@ -31,6 +31,7 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 /* 참여자·강사·봉사 탭 상세(썸네일·테이블) 스타일 — 하위 컴포넌트 import에만 의존하지 않도록 고정 */
 import './project-info-form-shared.css'
 import { CmsButton } from '@/shared/ui'
+import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 
 type DetailForm = UseFormReturn<ProgramDetailEditFormValues>
 
@@ -165,53 +166,39 @@ function ProjectInfoDetailTabsRow({
   onVolunteersSave: () => void
   onPreview: () => void
 }) {
-  return (
-    <div className="program-detail-fullpage-modal__tabs-row">
-      <div className="program-detail-fullpage-modal__tabs">
-        {TAB_KEYS.map(key => (
-          <button
-            key={key}
-            type="button"
-            className={`program-detail-fullpage-modal__tab ${activeTab === key ? 'program-detail-fullpage-modal__tab--active' : ''}`}
-            onClick={() => onSelectTab(key)}
-          >
-            <span className="program-detail-fullpage-modal__tab-label">{TAB_LABELS[key]}</span>
-          </button>
-        ))}
-      </div>
-      {displayProgram && (
-        <div className="program-detail-fullpage-modal__header-actions">
-          {activeTab === 'info' ? (
-            <>
-              <CmsButton onClick={isEditModeInfo ? onInfoSave : onInfoEdit}>
-                {isEditModeInfo ? '정보 저장' : '정보 수정'}
-              </CmsButton>
-            </>
-          ) : activeTab === 'institutions' ? (
-            <>
-              <CmsButton onClick={isEditModeInstitutions ? onInstitutionsSave : onInfoEdit}>
-                {isEditModeInstitutions ? '정보 저장' : '정보 수정'}
-              </CmsButton>
-            </>
-          ) : activeTab === 'volunteers' ? (
-            <>
-              <CmsButton onClick={isEditModeVolunteers ? onVolunteersSave : onInfoEdit}>
-                {isEditModeVolunteers ? '정보 저장' : '정보 수정'}
-              </CmsButton>
-            </>
-          ) : activeTab === 'instructors' ? (
-            <>
-              <CmsButton onClick={isEditModeInstructors ? onInstructorsSave : onInfoEdit}>
-                {isEditModeInstructors ? '정보 저장' : '정보 수정'}
-              </CmsButton>
-            </>
-          ) : null}
-          <CmsButton width={180} onClick={onPreview}>
-            프로그램 상세 미리보기
+  const trailing =
+    displayProgram != null ? (
+      <>
+        {activeTab === 'info' ? (
+          <CmsButton onClick={isEditModeInfo ? onInfoSave : onInfoEdit}>
+            {isEditModeInfo ? '정보 저장' : '정보 수정'}
           </CmsButton>
-        </div>
-      )}
-    </div>
+        ) : activeTab === 'institutions' ? (
+          <CmsButton onClick={isEditModeInstitutions ? onInstitutionsSave : onInfoEdit}>
+            {isEditModeInstitutions ? '정보 저장' : '정보 수정'}
+          </CmsButton>
+        ) : activeTab === 'volunteers' ? (
+          <CmsButton onClick={isEditModeVolunteers ? onVolunteersSave : onInfoEdit}>
+            {isEditModeVolunteers ? '정보 저장' : '정보 수정'}
+          </CmsButton>
+        ) : activeTab === 'instructors' ? (
+          <CmsButton onClick={isEditModeInstructors ? onInstructorsSave : onInfoEdit}>
+            {isEditModeInstructors ? '정보 저장' : '정보 수정'}
+          </CmsButton>
+        ) : null}
+        <CmsButton width={180} onClick={onPreview}>
+          프로그램 상세 미리보기
+        </CmsButton>
+      </>
+    ) : undefined
+
+  return (
+    <CmsTextTabs
+      activeKey={activeTab}
+      onChange={onSelectTab}
+      items={TAB_KEYS.map(key => ({ key, label: TAB_LABELS[key] }))}
+      trailing={trailing}
+    />
   )
 }
 

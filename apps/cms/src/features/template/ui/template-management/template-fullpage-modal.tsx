@@ -1,4 +1,4 @@
-import { CloseOutlined, DownloadOutlined, RightOutlined } from '@ant-design/icons'
+import { CloseOutlined, DownloadOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -30,11 +30,22 @@ interface TemplateFullpageModalProps {
   registrationUserMode?: boolean
   /** 저장 버튼 라벨 (`registrationUserMode` 기본: 임시저장) */
   saveLabel?: string
-  /** 우측 하단 CTA — 미전달 시 숨김 */
-  footerAction?: {
-    label?: string
-    onClick: () => void
-  }
+  /** 우측 하단 CTA — 미전달 시 숨김 (단일, `footerActions`와 병용 시 배열 우선) */
+  footerAction?: TemplateFullpageModalFooterAction
+  /** 우측 하단 CTA 복수 — 등록 단계별 이전/다음 버튼 */
+  footerActions?: TemplateFullpageModalFooterAction[]
+  /** 청록 헤더와 본문 사이 영역(단계 탭 등) — 레거시·비등록 모드 */
+  subHeader?: ReactNode
+  /** `full-page-modal__body-header` 좌측(닫기·미리보기·임시저장과 동일 행) */
+  bodyHeaderLeading?: ReactNode
+}
+
+export type TemplateFullpageModalFooterAction = {
+  label: string
+  onClick: () => void
+  variant?: 'primary' | 'secondary'
+  /** primary CTA 우측 `>` — `true`일 때만 표시 */
+  showArrow?: boolean
 }
 
 interface TemplateFullpageModalCardTitleProps {
@@ -68,7 +79,12 @@ export function TemplateFullpageModal({
   registrationUserMode = false,
   saveLabel,
   footerAction,
+  footerActions,
+  subHeader,
+  bodyHeaderLeading,
 }: TemplateFullpageModalProps) {
+  const resolvedFooterActions =
+    footerActions ?? (footerAction != null ? [footerAction] : undefined)
   const rootClassName = [
     'full-page-modal',
     registrationUserMode ? 'full-page-modal--registration-user-mode' : '',
@@ -190,9 +206,13 @@ export function TemplateFullpageModal({
           ) : null}
         </header>
 
+        {subHeader ? <div className="full-page-modal__sub-header">{subHeader}</div> : null}
+
         <div className="full-page-modal__body">
           <div className="full-page-modal__body-header">
-            {description && !registrationUserMode ? (
+            {bodyHeaderLeading != null ? (
+              <div className="full-page-modal__body-header-leading">{bodyHeaderLeading}</div>
+            ) : description && !registrationUserMode ? (
               <p className="full-page-modal__description">{description}</p>
             ) : (
               <span />
@@ -206,21 +226,35 @@ export function TemplateFullpageModal({
               <div className="full-page-modal__right">{rightNavigation}</div>
             </aside>
           </div>
-          <div className="full-page-modal__body-bottom" aria-hidden="true" />
-          {footerAction ? (
-            <div className="full-page-modal__footer-cta">
-              <CmsButton
-                type="button"
-                size="large"
-                width={220}
-                className="full-page-modal__footer-cta-btn"
-                onClick={footerAction.onClick}
-              >
-                <span>{footerAction.label ?? '다음 양식 작성하기'}</span>
-                <RightOutlined aria-hidden />
-              </CmsButton>
+          {resolvedFooterActions != null && resolvedFooterActions.length > 0 ? (
+            <div
+              className={[
+                'full-page-modal__footer-cta',
+                resolvedFooterActions.length > 1 ? 'full-page-modal__footer-cta--multi' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {resolvedFooterActions.map(action => (
+                <CmsButton
+                  key={action.label}
+                  type="button"
+                  size="large"
+                  width={180}
+                  variant={action.variant === 'secondary' ? 'secondary' : undefined}
+                  className="full-page-modal__footer-cta-btn"
+                  onClick={action.onClick}
+                >
+                  {action.variant === 'secondary' ? <LeftOutlined aria-hidden /> : null}
+                  <span>{action.label}</span>
+                  {action.variant !== 'secondary' && action.showArrow === true ? (
+                    <RightOutlined aria-hidden />
+                  ) : null}
+                </CmsButton>
+              ))}
             </div>
           ) : null}
+          <div className="full-page-modal__body-bottom" aria-hidden="true" />
         </div>
       </div>
     </TealHeaderModal>

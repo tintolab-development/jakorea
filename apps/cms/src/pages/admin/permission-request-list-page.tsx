@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Tabs } from 'antd'
+import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   MembersPermissionList,
   type MembersPermissionListHandle,
@@ -86,6 +86,8 @@ type PermissionStatusResetConfirmState = {
   fromStatus: 'APPROVED' | 'REJECTED'
 }
 
+type PermissionListTabKey = 'instructor' | 'admin'
+
 export function PermissionRequestListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const fetchUserById = useUserStore(s => s.fetchUserById)
@@ -116,6 +118,7 @@ export function PermissionRequestListPage() {
     useState<AdminApprovedCompleteState | null>(null)
   const [permissionStatusResetConfirm, setPermissionStatusResetConfirm] =
     useState<PermissionStatusResetConfirmState | null>(null)
+  const [activeListTab, setActiveListTab] = useState<PermissionListTabKey>('instructor')
   const detailUser = useUserStore(state =>
     detailUserId ? (state.usersById[detailUserId] ?? null) : null
   )
@@ -451,15 +454,19 @@ export function PermissionRequestListPage() {
 
   return (
     <div>
-      <Tabs
-        defaultActiveKey="instructor"
+      <CmsTextTabs
         className="permission-request-list-page__tabs"
+        activeKey={activeListTab}
+        onChange={setActiveListTab}
+        ariaLabel="권한 승인 회원 유형"
         items={[
-          {
-            key: 'instructor',
-            label: '강사',
-            children: (
-              <MembersPermissionList
+          { key: 'instructor', label: '강사' },
+          { key: 'admin', label: '관리자' },
+        ]}
+      />
+
+      {activeListTab === 'instructor' ? (
+        <MembersPermissionList
                 ref={instructorListRef}
                 memberType="instructor"
                 onOpenUserDetail={handleOpenUserDetail}
@@ -504,13 +511,8 @@ export function PermissionRequestListPage() {
                   setInstructorRejectModal(nextReject)
                 }}
               />
-            ),
-          },
-          {
-            key: 'admin',
-            label: '관리자',
-            children: (
-              <MembersPermissionList
+      ) : (
+        <MembersPermissionList
                 ref={adminListRef}
                 memberType="admin"
                 onOpenUserDetail={handleOpenUserDetail}
@@ -555,10 +557,7 @@ export function PermissionRequestListPage() {
                   setAdminRejectModal(nextReject)
                 }}
               />
-            ),
-          },
-        ]}
-      />
+      )}
 
       <UserDetailFullPageModal
         open={detailOpen && detailUser != null && permissionRole != null}

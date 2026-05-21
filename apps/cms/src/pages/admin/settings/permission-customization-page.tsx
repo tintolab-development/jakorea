@@ -4,7 +4,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Alert, Tabs } from 'antd'
+import { Alert } from 'antd'
+import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { isMasterAdmin } from '@/shared/utils/permissions'
 import { CmsCheckbox } from '@/shared/ui'
@@ -160,13 +161,15 @@ export function PermissionCustomizationPage() {
 
   return (
     <div className="permission-customization-page">
-      <Tabs
+      <CmsTextTabs
         className="permission-customization-page__tabs"
+        variant="list"
         activeKey={activeRole}
         onChange={handleTabChange}
         items={ADMIN_PERMISSION_ROLE_TABS.map(tab => ({
           key: tab,
-          label: ADMIN_PERMISSION_ROLE_LABELS[tab] }))}
+          label: ADMIN_PERMISSION_ROLE_LABELS[tab],
+        }))}
       />
 
       <CategoryCards

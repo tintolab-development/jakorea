@@ -18,6 +18,7 @@ import { UjatInstitutionApplicationList } from './application-institution/list/l
 import { UjatInstitutionApplicationDetailPage } from './application-institution/detail/detail-page'
 import { UjatInstitutionScheduleAssignPage } from './application-institution/schedule-assign/page'
 import { UjatInstitutionScheduleConfirmList } from './application-institution/schedule-confirm/list'
+import { UjatInstitutionScheduleConfirmDetailPage } from './application-institution/schedule-confirm/detail-page'
 import { ParticipatingInstitutionsSection } from '@/features/program/general/ui/detail-modal/program-status/participating-institutions-section'
 import type { Program } from '@/types/domain'
 import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
@@ -146,7 +147,8 @@ function normalizeUjatDetailParams(
       next.delete(UJAT_INST_APP_ID_PARAM)
     } else {
       lnb = 'institution_applications'
-      tab = 'inst_all'
+      const currentTab = searchParams.get(TAB_PARAM) ?? ''
+      tab = currentTab === 'inst_schedule_confirm' ? 'inst_schedule_confirm' : 'inst_all'
     }
   }
 
@@ -341,7 +343,9 @@ export function UjatProgramDetailFullPageModal({
       if (id) {
         next.set(UJAT_INST_APP_ID_PARAM, id)
         next.set(LNB_PARAM, 'institution_applications')
-        next.set(TAB_PARAM, 'inst_all')
+        const tabToKeep =
+          activeTab === 'inst_schedule_confirm' ? 'inst_schedule_confirm' : 'inst_all'
+        next.set(TAB_PARAM, tabToKeep)
         next.delete(UJAT_APPLICANT_ID_PARAM)
       } else {
         next.delete(UJAT_INST_APP_ID_PARAM)
@@ -349,7 +353,7 @@ export function UjatProgramDetailFullPageModal({
       next.delete(EDIT_PARAM)
       setSearchParams(next, { replace: true })
     },
-    [programId, searchParams, setSearchParams]
+    [programId, searchParams, setSearchParams, activeTab]
   )
 
   const setLnbTab = useCallback(
@@ -361,7 +365,10 @@ export function UjatProgramDetailFullPageModal({
       next.set(TAB_PARAM, tab)
       next.delete(EDIT_PARAM)
       next.delete(UJAT_APPLICANT_ID_PARAM)
-      if (lnb !== 'institution_applications' || tab !== 'inst_all') {
+      if (
+        lnb !== 'institution_applications' ||
+        (tab !== 'inst_all' && tab !== 'inst_schedule_confirm')
+      ) {
         next.delete(UJAT_INST_APP_ID_PARAM)
       }
       setSearchParams(next, { replace: true })
@@ -753,7 +760,17 @@ export function UjatProgramDetailFullPageModal({
             <UjatInstitutionScheduleAssignPage />
           )}
           {activeLnb === 'institution_applications' && activeTab === 'inst_schedule_confirm' && (
-            <UjatInstitutionScheduleConfirmList />
+            institutionDetailId ? (
+              <UjatInstitutionScheduleConfirmDetailPage
+                institutionId={institutionDetailId}
+                onBack={() => setInstitutionApplicationId(null)}
+                onStatusUpdated={() => setInstitutionListVersion(v => v + 1)}
+              />
+            ) : (
+              <UjatInstitutionScheduleConfirmList
+                onOpenDetail={row => setInstitutionApplicationId(row.id)}
+              />
+            )
           )}
 
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&

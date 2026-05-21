@@ -9,6 +9,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton } from '@/shared/ui'
+import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
 import type {
   SchoolDetailForModal,
@@ -804,58 +805,46 @@ export function SchoolDetailFullpageView({
 
   return (
     <div className="school-detail-fullpage-view">
-      <div className="program-detail-fullpage-modal__tabs-row school-detail-fullpage-view__tabs-row">
-        <div className="program-detail-fullpage-modal__tabs">
-          {SCHOOL_DETAIL_TAB_KEYS.map(key => {
-            const disabled = isSchoolDetailTabDisabled(key)
-            return (
-              <button
-                key={key}
-                type="button"
-                disabled={disabled}
-                className={`program-detail-fullpage-modal__tab ${activeTab === key ? 'program-detail-fullpage-modal__tab--active' : ''}`}
-                title={disabled ? '해당 화면은 준비 중입니다.' : undefined}
-                onClick={() => {
-                  if (disabled) return
-                  setActiveTab(key as SchoolDetailTabKey)
-                }}
+      <CmsTextTabs
+        className="school-detail-fullpage-view__tabs-row"
+        activeKey={activeTab}
+        onChange={key => setActiveTab(key as SchoolDetailTabKey)}
+        items={SCHOOL_DETAIL_TAB_KEYS.map(key => ({
+          key,
+          label: SCHOOL_DETAIL_TAB_LABELS[key],
+          disabled: isSchoolDetailTabDisabled(key),
+          title: isSchoolDetailTabDisabled(key) ? '해당 화면은 준비 중입니다.' : undefined,
+        }))}
+        trailing={
+          activeTab === 'application' ? (
+            <>
+              <CmsButton
+                variant="delete"
+                size="large"
+                width={160}
+                disabled={isCancelApprovalDisabled}
+                title={cancelApprovalDisabledReason ?? undefined}
+                onClick={() => setCancelApprovalConfirmOpen(true)}
               >
-                <span className="program-detail-fullpage-modal__tab-label">
-                  {SCHOOL_DETAIL_TAB_LABELS[key]}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-        {activeTab === 'application' && (
-          <div className="program-detail-fullpage-modal__header-actions">
-            <CmsButton
-              variant="delete"
-              size="large" width={160}
-              disabled={isCancelApprovalDisabled}
-              title={cancelApprovalDisabledReason ?? undefined}
-              onClick={() => setCancelApprovalConfirmOpen(true)}
-            >
-              승인 취소
-            </CmsButton>
-            <CmsButton variant="primary" size="large" width={160} onClick={() => {}}>
-              정보 수정
-            </CmsButton>
-            <PersonalInfoRevealButton
-              labelMode="toggle"
-              revealed={personalInfoRevealed} style={{ minWidth: 180 }}
-              onClick={handlePrivacyToggleClick}
-            />
-          </div>
-        )}
-        {activeTab === 'posts' && (
-          <div className="program-detail-fullpage-modal__header-actions">
+                승인 취소
+              </CmsButton>
+              <CmsButton variant="primary" size="large" width={160} onClick={() => {}}>
+                정보 수정
+              </CmsButton>
+              <PersonalInfoRevealButton
+                labelMode="toggle"
+                revealed={personalInfoRevealed}
+                style={{ minWidth: 180 }}
+                onClick={handlePrivacyToggleClick}
+              />
+            </>
+          ) : activeTab === 'posts' ? (
             <CmsButton variant="primary" size="large" width={160} onClick={() => setPostWriteModalOpen(true)}>
               게시글 등록
             </CmsButton>
-          </div>
-        )}
-      </div>
+          ) : null
+        }
+      />
 
       <div className="program-detail-fullpage-modal__content school-detail-fullpage-view__content">
         {activeTab === 'application' && (

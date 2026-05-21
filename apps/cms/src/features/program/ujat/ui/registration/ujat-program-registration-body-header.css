@@ -1,0 +1,22 @@
+/**
+ * UJAT 프로그램 등록 — `full-page-modal__body-header` 좌측(단계별 탭·안내)
+ */
+
+.ujat-program-registration-body-header__hint {
+  margin: 0;
+  color: var(--gray-02, #7d7d7d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.full-page-modal__body-header-leading .ujat-program-registration-body-header__tabs.cms-text-tabs {
+  width: 100%;
+  min-width: 0;
+}
+
+.full-page-modal__body-header-leading .ujat-program-registration-body-header__tabs .cms-text-tabs__row {
+  margin: 0;
+  padding: 0;
+}

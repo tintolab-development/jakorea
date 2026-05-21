@@ -30,10 +30,6 @@
   color: var(--color-text-secondary, #8c8c8c);
 }
 
-.school-detail-fullpage-view .program-detail-fullpage-modal__tabs-row {
-  padding: 0 0 32px 0;
-}
-
 .school-detail-fullpage-view .program-detail-fullpage-modal__info-tab {
   padding: 0;
 }
