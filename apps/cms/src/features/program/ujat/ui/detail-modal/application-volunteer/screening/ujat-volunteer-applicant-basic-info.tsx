@@ -6,10 +6,12 @@ import {
 } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { DocumentScreeningStatusText } from './document-screening-status-text'
 import { InterviewAssignmentStatusText } from './interview-assignment-status-text'
+import { SecondInterviewScreeningStatusText } from './second-interview-screening-status-text'
 
 export type UjatVolunteerApplicantBasicInfoStatusRow =
   | 'document_screening'
   | 'interview_assignment'
+  | 'second_interview'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
@@ -75,12 +77,22 @@ export function UjatVolunteerApplicantBasicInfo({
               <tbody>
                 <tr>
                   <th scope="row">
-                    {statusRow === 'interview_assignment'
-                      ? '면접일 배정 현황'
-                      : '1차 서류 심사 현황'}
+                    {statusRow === 'second_interview'
+                      ? '2차 면접 심사 현황'
+                      : statusRow === 'interview_assignment'
+                        ? '면접일 배정 현황'
+                        : '1차 서류 심사 현황'}
                   </th>
                   <td>
-                    {statusRow === 'interview_assignment' ? (
+                    {statusRow === 'second_interview' ? (
+                      applicant.secondInterviewScreeningStatus ? (
+                        <SecondInterviewScreeningStatusText
+                          status={applicant.secondInterviewScreeningStatus}
+                        />
+                      ) : (
+                        '—'
+                      )
+                    ) : statusRow === 'interview_assignment' ? (
                       <InterviewAssignmentStatusText
                         status={applicant.interviewAssignmentStatus}
                       />

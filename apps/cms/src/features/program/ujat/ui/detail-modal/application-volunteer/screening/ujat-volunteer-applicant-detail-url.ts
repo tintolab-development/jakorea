@@ -1,6 +1,7 @@
 import {
   getUjatVolunteerApplicants,
   getUjatVolunteerDocPassedApplicants,
+  getUjatVolunteerInterview2Applicants,
 } from '@/data/mock/ujat-volunteer-applicants-mock'
 import type { UjatVolunteerApplicantDetailTab } from '@/features/program/ujat/lib/ujat-program-detail-url'
 
@@ -11,6 +12,9 @@ export function isUjatVolunteerApplicantInTabList(
   applicantId: string
 ): boolean {
   const half = tab.startsWith('vh2') ? 'h2' : 'h1'
+  if (tab.endsWith('_interview2')) {
+    return getUjatVolunteerInterview2Applicants(programId, half).some(row => row.id === applicantId)
+  }
   if (tab.endsWith('_doc_passed')) {
     return getUjatVolunteerDocPassedApplicants(programId, half).some(row => row.id === applicantId)
   }
