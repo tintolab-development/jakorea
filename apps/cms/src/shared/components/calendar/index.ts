@@ -37,8 +37,11 @@ export {
 } from './ui/calendar-sub-right-list'
 export type {
   CalendarSubRightListProps,
+  CalendarSubRightListProgramProps,
+  CalendarSubRightListInstitutionApplicationProps,
   CalendarSubRightSettlementListProps,
 } from './ui/calendar-sub-right-list'
+export type { CalendarInstitutionApplicationListRow } from './ui/item-list/ujat-institution-application'
 export { CALENDAR_FILTER_COLOR_CLASSES } from './lib/calendar-color-set'
 export { CalendarListItemContentSettlement } from './ui/item-list/settlement'
 export {

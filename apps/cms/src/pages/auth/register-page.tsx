@@ -15,20 +15,17 @@ import {
   Input,
   Button,
   Checkbox,
-  message,
   Typography,
   Space,
   Radio,
-  Divider,
-} from 'antd'
+  Divider } from 'antd'
 import {
   UserOutlined,
   LockOutlined,
   PhoneOutlined,
   BankOutlined,
   HomeOutlined,
-  SettingOutlined,
-} from '@ant-design/icons'
+  SettingOutlined } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useRegister } from '@/features/auth/hooks/use-register'
@@ -38,8 +35,8 @@ import { SocialRegisterForm } from '@/features/auth/ui/social-register-form'
 import type { UserRole } from '@/types/user'
 import type { RegisterFormData, RegisterRequest } from '@/types/register'
 import { Select } from 'antd'
-import { SOCIAL_PROVIDER_LABEL, type SocialProvider } from '@/entities/user/api/auth-service'
 import { MESSAGES } from '@/shared/constants'
+import { SOCIAL_PROVIDER_LABEL, type SocialProvider } from '@/entities/user/api/auth-service'
 import './register-page.css'
 
 const { Title, Text, Paragraph } = Typography
@@ -58,26 +55,22 @@ const REGISTER_TYPES: Array<{
     value: 'INDIVIDUAL',
     label: '학생',
     description: '프로그램 신청, 수료증 발급',
-    icon: <UserOutlined />,
-  },
+    icon: <UserOutlined /> },
   {
     value: 'SCHOOL',
     label: '학교',
     description: '학교 단위 프로그램 신청',
-    icon: <HomeOutlined />,
-  },
+    icon: <HomeOutlined /> },
   {
     value: 'INSTRUCTOR',
     label: '강사',
     description: '강의 신청, 정산 관리',
-    icon: <BankOutlined />,
-  },
+    icon: <BankOutlined /> },
   {
     value: 'ADMIN',
     label: '관리자',
     description: '프로그램 운영, 회원 관리',
-    icon: <SettingOutlined />,
-  },
+    icon: <SettingOutlined /> },
 ]
 
 export function RegisterPage() {
@@ -104,7 +97,6 @@ export function RegisterPage() {
   // Step 2: 약관 동의 완료
   const handleConsentNext = () => {
     if (!consentValid) {
-      message.warning(MESSAGES.warning.requiredAgreement)
       return
     }
     setCurrentStep(2)
@@ -139,26 +131,22 @@ export function RegisterPage() {
     // 소셜 회원가입 시 비밀번호는 선택사항으로 변경
     form.setFieldsValue({
       password: '',
-      passwordConfirm: '',
-    })
+      passwordConfirm: '' })
   }
 
   // Step 3: 정보 입력 및 회원가입
   const handleSubmit = async (values: any) => {
     if (!selectedRole) {
-      message.error(MESSAGES.error.selectRoleType)
       return
     }
 
     // Phase 0.1.3 수정: 휴대폰 본인인증 확인
     if (!phoneVerified && !socialData?.phone) {
-      message.warning(MESSAGES.warning.completeVerification)
       return
     }
 
     // Phase 0.1.3 수정: 소셜 회원가입이 아닌 경우 비밀번호 필수
     if (!socialProvider && (!values.password || !values.passwordConfirm)) {
-      message.warning(MESSAGES.warning.enterPassword)
       return
     }
 
@@ -173,8 +161,7 @@ export function RegisterPage() {
           password: values.password || 'social-password-placeholder', // 소셜 회원가입 시 임시 비밀번호
           passwordConfirm: values.passwordConfirm || 'social-password-placeholder',
           name: values.name || socialData?.name || '',
-          phone: values.phone || socialData?.phone || '',
-        }
+          phone: values.phone || socialData?.phone || '' }
       } else if (selectedRole === 'SCHOOL') {
         formData = {
           role: 'SCHOOL',
@@ -185,8 +172,7 @@ export function RegisterPage() {
           phone: values.phone || socialData?.phone || '',
           schoolName: values.schoolName,
           schoolAddress: values.schoolAddress,
-          position: values.position,
-        }
+          position: values.position }
       } else if (selectedRole === 'INSTRUCTOR') {
         formData = {
           role: 'INSTRUCTOR',
@@ -198,8 +184,7 @@ export function RegisterPage() {
           bankName: values.bankName,
           accountNumber: values.accountNumber,
           accountHolder: values.accountHolder,
-          isBusinessIncome: values.isBusinessIncome || false,
-        }
+          isBusinessIncome: values.isBusinessIncome || false }
       } else {
         // ADMIN
         formData = {
@@ -209,8 +194,7 @@ export function RegisterPage() {
           passwordConfirm: values.passwordConfirm || 'social-password-placeholder',
           name: values.name || socialData?.name || '',
           phone: values.phone || socialData?.phone || '',
-          adminLevel: values.adminLevel || 'GENERAL',
-        }
+          adminLevel: values.adminLevel || 'GENERAL' }
       }
 
       const registerRequest: RegisterRequest = {
@@ -272,16 +256,14 @@ export function RegisterPage() {
                       padding: '16px',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '12px',
-                    }}
+                      gap: '12px' }}
                   >
                     <div
                       style={{
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'flex-start',
-                        gap: 4,
-                      }}
+                        gap: 4 }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: '20px' }}>{type.icon}</span>
@@ -395,8 +377,7 @@ export function RegisterPage() {
                   padding: '12px',
                   background: '#f6ffed',
                   border: '1px solid #b7eb8f',
-                  borderRadius: '4px',
-                }}
+                  borderRadius: '4px' }}
               >
                 <Text type="success">
                   {SOCIAL_PROVIDER_LABEL[socialProvider]} 연동이 완료되었습니다.
@@ -417,8 +398,8 @@ export function RegisterPage() {
                 name="email"
                 label="이메일"
                 rules={[
-                  { required: true, message: MESSAGES.validation.emailRequired },
-                  { type: 'email', message: MESSAGES.validation.email },
+                  { required: true },
+                  { type: 'email' },
                 ]}
               >
                 <Input
@@ -435,8 +416,8 @@ export function RegisterPage() {
                     name="password"
                     label="비밀번호"
                     rules={[
-                      { required: true, message: MESSAGES.validation.passwordRequired },
-                      { min: 8, message: MESSAGES.validation.passwordMinLength(8) },
+                      { required: true },
+                      { min: 8 },
                     ]}
                   >
                     <Input.Password prefix={<LockOutlined />} placeholder="비밀번호" />
@@ -447,15 +428,14 @@ export function RegisterPage() {
                     label="비밀번호 확인"
                     dependencies={['password']}
                     rules={[
-                      { required: true, message: MESSAGES.validation.passwordConfirmRequired },
+                      { required: true },
                       ({ getFieldValue }) => ({
                         validator(_, value) {
                           if (!value || getFieldValue('password') === value) {
                             return Promise.resolve()
                           }
                           return Promise.reject(new Error(MESSAGES.validation.passwordMismatch))
-                        },
-                      }),
+                        } }),
                     ]}
                   >
                     <Input.Password prefix={<LockOutlined />} placeholder="비밀번호 확인" />
@@ -466,7 +446,7 @@ export function RegisterPage() {
               <Form.Item
                 name="name"
                 label="이름"
-                rules={[{ required: true, message: MESSAGES.validation.nameRequired }]}
+                rules={[{ required: true }]}
               >
                 <Input placeholder="이름" disabled={!!socialData?.name} />
               </Form.Item>
@@ -476,11 +456,9 @@ export function RegisterPage() {
                 name="phone"
                 label="전화번호"
                 rules={[
-                  { required: true, message: MESSAGES.validation.phoneRequired },
+                  { required: true },
                   {
-                    pattern: /^010-\d{4}-\d{4}$/,
-                    message: MESSAGES.validation.phoneFormat,
-                  },
+                    pattern: /^010-\d{4}-\d{4}$/ },
                 ]}
               >
                 <Input
@@ -521,7 +499,7 @@ export function RegisterPage() {
                   <Form.Item
                     name="schoolName"
                     label="학교명"
-                    rules={[{ required: true, message: MESSAGES.validation.schoolNameRequired }]}
+                    rules={[{ required: true }]}
                   >
                     <Input placeholder="학교명" />
                   </Form.Item>
@@ -529,7 +507,7 @@ export function RegisterPage() {
                   <Form.Item
                     name="schoolAddress"
                     label="학교 주소"
-                    rules={[{ required: true, message: MESSAGES.validation.schoolAddressRequired }]}
+                    rules={[{ required: true }]}
                   >
                     <Input placeholder="학교 주소" />
                   </Form.Item>
@@ -546,7 +524,7 @@ export function RegisterPage() {
                   <Form.Item
                     name="bankName"
                     label="은행명"
-                    rules={[{ required: true, message: MESSAGES.validation.bankNameRequired }]}
+                    rules={[{ required: true }]}
                   >
                     <Input placeholder="은행명" />
                   </Form.Item>
@@ -554,7 +532,7 @@ export function RegisterPage() {
                   <Form.Item
                     name="accountNumber"
                     label="계좌번호"
-                    rules={[{ required: true, message: MESSAGES.validation.accountNumberRequired }]}
+                    rules={[{ required: true }]}
                   >
                     <Input placeholder="계좌번호" />
                   </Form.Item>
@@ -562,7 +540,7 @@ export function RegisterPage() {
                   <Form.Item
                     name="accountHolder"
                     label="예금주"
-                    rules={[{ required: true, message: MESSAGES.validation.accountHolderRequired }]}
+                    rules={[{ required: true }]}
                   >
                     <Input placeholder="예금주" />
                   </Form.Item>
@@ -584,7 +562,7 @@ export function RegisterPage() {
                   <Form.Item
                     name="adminLevel"
                     label="관리자 권한 레벨"
-                    rules={[{ required: true, message: '관리자 권한 레벨을 선택해주세요.' }]}
+                    rules={[{ required: true }]}
                     initialValue="GENERAL"
                   >
                     <Select placeholder="권한 레벨 선택">
@@ -603,7 +581,7 @@ export function RegisterPage() {
 
               {error && (
                 <div className="register-error">
-                  <Text type="danger">{error.message}</Text>
+                  <Text type="danger">입력 정보를 확인해주세요.</Text>
                 </div>
               )}
 
@@ -612,8 +590,7 @@ export function RegisterPage() {
                   이전
                 </Button>
                 <Button
-                  type="primary"
-                  htmlType="submit"
+                  type="primary" htmlType="submit"
                   block
                   loading={loading}
                   disabled={!phoneVerified && !socialData?.phone}

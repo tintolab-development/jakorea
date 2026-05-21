@@ -5,7 +5,8 @@
 import { useMemo, useState } from 'react'
 import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { AppMultiSelect, type AppMultiSelectOption } from '@/shared/ui/app-multi-select'
+import { CmsSelect } from '@/shared/ui/cms-select'
+import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 import { CmsInput } from '@/shared/ui/cms-input'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
@@ -31,7 +32,7 @@ export function OneCOneSRegistrationWageInfoParagraph() {
     PAYMENT_ID_LODGING_1C1S,
   ])
 
-  const paymentItemOptions = useMemo((): AppMultiSelectOption[] => {
+  const paymentItemOptions = useMemo((): CmsSelectMultipleOption[] => {
     return getTemplateRegistrationPaymentItemOptions().map(opt => {
       if (opt.value === PAYMENT_ID_TRANSPORT_1C1S) {
         return { ...opt, label: '교통비(일사일교)' }
@@ -86,9 +87,11 @@ export function OneCOneSRegistrationWageInfoParagraph() {
           label="지급 항목"
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap">
-              <AppMultiSelect
+              <CmsSelect
+                mode="multiple"
+                withAllOption={false}
                 value={paymentItemValues}
-                onChange={setPaymentItemValues}
+                onChange={next => setPaymentItemValues(next as string[])}
                 options={paymentItemOptions}
                 placeholder="지급 항목을 선택하세요"
                 style={{ width: '100%', minWidth: 0 }}

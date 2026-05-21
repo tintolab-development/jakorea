@@ -8,7 +8,7 @@ import type {
   TeacherResumeCareer,
   TeacherResumeEducation,
 } from '@/data/mock/school-detail'
-import '@/features/program/ui/applicant-instructor-detail-modal.css'
+import '@/features/program/general/ui/applicant-instructor-detail-modal.css'
 
 function getEducationLevelBadge(educationLevel?: string, schoolType?: string): string {
   const raw = schoolType ?? educationLevel ?? ''

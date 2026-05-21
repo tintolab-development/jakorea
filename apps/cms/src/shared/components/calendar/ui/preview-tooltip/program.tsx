@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
-} from '@/features/program/ui/program-schedule-colors'
+} from '@/features/program/shared/ui/program-schedule-colors'
 import type { CalendarItem } from '../../model/calendar-item'
 
 import './program-preview.css'

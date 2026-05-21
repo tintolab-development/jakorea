@@ -12,7 +12,7 @@ const getDate = (daysAgo: number): string => {
 }
 
 const pathTypes: ApplicationPathType[] = ['google_form', 'internal']
-const guideMessages = [
+const guideTexts = [
   '구글폼을 통해 신청해주세요. 신청 후 관리자 승인을 거쳐 참여가 확정됩니다.',
   '자동화 프로그램 내에서 신청해주세요. 신청 후 관리자 승인을 거쳐 참여가 확정됩니다.',
   '아래 링크를 통해 신청 양식을 작성해주세요.',
@@ -41,13 +41,12 @@ export const mockApplicationPaths: ApplicationPath[] = Array.from({ length: 30 }
     googleFormUrl: isGoogleForm
       ? `https://docs.google.com/forms/d/e/${Math.random().toString(36).substring(7)}/viewform`
       : undefined,
-    guideMessage: isFirstProgram 
+    guideText: isFirstProgram 
       ? '자동화 프로그램 내에서 신청해주세요. 신청 후 관리자 승인을 거쳐 참여가 확정됩니다.'
-      : guideMessages[Math.floor(Math.random() * guideMessages.length)],
+      : guideTexts[Math.floor(Math.random() * guideTexts.length)],
     isActive: isFirstProgram ? true : Math.random() > 0.2, // 첫 번째 프로그램은 항상 활성화, 나머지는 80% 확률로 활성화
     createdAt: getDate(Math.floor(Math.random() * 60) + 5),
-    updatedAt: getDate(Math.floor(Math.random() * 5)),
-  }
+    updatedAt: getDate(Math.floor(Math.random() * 5)) }
 })
 
 export const mockApplicationPathsMap = new Map(mockApplicationPaths.map(path => [path.id, path]))

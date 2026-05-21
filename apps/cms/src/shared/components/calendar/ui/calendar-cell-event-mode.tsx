@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { SCHEDULE_COLORS } from '@/features/program/ui/program-schedule-colors'
+import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import { calendarItemsForEventMode, getItemsForDate, resolveItemColor } from '../lib/calendar-helpers'
 import { CalendarPreviewTooltip } from './preview-tooltip/calendar-preview-tooltip'
 import type { CalendarCellEventModeProps } from './calendar-cell-types'

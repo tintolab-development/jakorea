@@ -151,7 +151,13 @@
 }
 
 .calendar-event-more {
-  font-size: 12px;
+  overflow: hidden;
   color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%; /* 15.6px */
   opacity: 0.5;
+  text-align: left;
 }

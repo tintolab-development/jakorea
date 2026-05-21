@@ -1,0 +1,45 @@
+.permission-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.permission-modal__message {
+  margin: 0;
+  color: var(--main-bk, #3d3d3d);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.permission-modal__field {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.permission-modal__field-error {
+  display: block;
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--color-red, #ff4d4f);
+}
+
+.permission-modal__label {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+  padding: 0 8px;
+  margin-bottom: 6px;
+}
+
+.permission-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}

@@ -6,7 +6,7 @@
 import { useState } from 'react'
 import { Input, Modal } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
 import type { SettlementDetail } from '@/data/mock/school-detail'
 import './settlement-detail-modal.css'
@@ -63,15 +63,15 @@ export function SettlementDetailModal({
       className="teal-header-modal--settlement-detail"
       footer={
         <>
-          <AppButton variant="cancel" size="large" onClick={onClose}>
+          <CmsButton variant="secondary" size="large" onClick={onClose}>
             닫기
-          </AppButton>
-          <AppButton variant="danger" size="large" onClick={() => setRejectOpen(true)} disabled={detail.status === 'completed'}>
+          </CmsButton>
+          <CmsButton variant="delete" size="large" onClick={() => setRejectOpen(true)} disabled={detail.status === 'completed'}>
             지급 신청 반려
-          </AppButton>
-          <AppButton variant="primary" size="large" onClick={() => setPaymentOpen(true)} disabled={detail.status === 'completed'}>
+          </CmsButton>
+          <CmsButton variant="primary" size="large" onClick={() => setPaymentOpen(true)} disabled={detail.status === 'completed'}>
             강의료 지급
-          </AppButton>
+          </CmsButton>
         </>
       }
     >
@@ -150,13 +150,13 @@ export function SettlementDetailModal({
                   <td>{item.description}</td>
                   <td>+{item.amount.toLocaleString()}원</td>
                   <td>
-                    <AppButton
-                      variant="cancel"
+                    <CmsButton
+                      variant="secondary"
                       size="small"
                       className="settlement-detail__view-btn"
                     >
                       상세보기
-                    </AppButton>
+                    </CmsButton>
                   </td>
                 </tr>
               ))}
@@ -167,13 +167,13 @@ export function SettlementDetailModal({
                   -{withholdingAmount.toLocaleString()}원
                 </td>
                 <td>
-                  <AppButton
-                    variant="cancel"
+                  <CmsButton
+                    variant="secondary"
                     size="small"
                     className="settlement-detail__view-btn"
                   >
                     상세보기
-                  </AppButton>
+                  </CmsButton>
                 </td>
               </tr>
               <tr className="settlement-detail__total-row">
@@ -181,13 +181,13 @@ export function SettlementDetailModal({
                 <td>기본급 + 교통비 + 숙박비</td>
                 <td>{netTotal.toLocaleString()}원</td>
                 <td>
-                  <AppButton
+                  <CmsButton
                     variant="primary"
                     size="small"
                     className="settlement-detail__view-btn"
                   >
                     지급조서 발급
-                  </AppButton>
+                  </CmsButton>
                 </td>
               </tr>
             </tbody>
@@ -204,10 +204,10 @@ export function SettlementDetailModal({
       className="teal-header-modal--settlement-reject"
       footer={
         <>
-          <AppButton variant="cancel" size="large" onClick={() => { setRejectOpen(false); setRejectReason('') }}>
+          <CmsButton variant="secondary" size="large" onClick={() => { setRejectOpen(false); setRejectReason('') }}>
             취소
-          </AppButton>
-          <AppButton variant="danger" size="large" onClick={() => {
+          </CmsButton>
+          <CmsButton variant="delete" size="large" onClick={() => {
             const reason = rejectReason || '제출 서류 미비'
             setConfirmedReason(reason)
             setRejectOpen(false)
@@ -216,7 +216,7 @@ export function SettlementDetailModal({
             setConfirmOpen(true)
           }}>
             반려
-          </AppButton>
+          </CmsButton>
         </>
       }
     >
@@ -252,9 +252,9 @@ export function SettlementDetailModal({
           </p>
         </div>
         <div className="settlement-reject-confirm__footer">
-          <AppButton variant="cancel" size="large" onClick={() => setConfirmOpen(false)}>
+          <CmsButton variant="secondary" size="large" onClick={() => setConfirmOpen(false)}>
             확인
-          </AppButton>
+          </CmsButton>
         </div>
       </div>
     </Modal>
@@ -267,10 +267,10 @@ export function SettlementDetailModal({
       className="teal-header-modal--settlement-payment"
       footer={
         <>
-          <AppButton variant="cancel" size="large" onClick={() => setPaymentOpen(false)}>
+          <CmsButton variant="secondary" size="large" onClick={() => setPaymentOpen(false)}>
             확인
-          </AppButton>
-          <AppButton
+          </CmsButton>
+          <CmsButton
             variant="primary"
             size="large"
             onClick={() => {
@@ -280,7 +280,7 @@ export function SettlementDetailModal({
             }}
           >
             입금 완료
-          </AppButton>
+          </CmsButton>
         </>
       }
     >
@@ -335,9 +335,9 @@ export function SettlementDetailModal({
           <strong>[{teacherName}]</strong> 강사님의 강의료 지급을 완료 처리하였습니다.
         </p>
         <div className="settlement-payment-confirm__footer">
-          <AppButton variant="cancel" size="large" onClick={() => setPaymentConfirmOpen(false)}>
+          <CmsButton variant="secondary" size="large" onClick={() => setPaymentConfirmOpen(false)}>
             확인
-          </AppButton>
+          </CmsButton>
         </div>
       </div>
     </Modal>

@@ -1,0 +1,43 @@
+.ujat-manager-evaluation-badge {
+  display: flex;
+  height: 32px;
+  min-width: 100px;
+  max-width: 200px;
+  padding: 6px 12px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex: 1 0 0;
+  box-sizing: border-box;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ujat-manager-evaluation-badge--pass {
+  border-color: #90caf9;
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.ujat-manager-evaluation-badge--neutral {
+  border-color: #a5d6a7;
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.ujat-manager-evaluation-badge--fail {
+  border-color: rgba(195, 47, 74, 0.35);
+  background: #f9eaed;
+  color: var(--color-red, #c32f4a);
+}
+
+.ujat-manager-evaluation-badge--unreviewed {
+  border-color: #e0e0e0;
+  background: #f5f5f5;
+  color: #757575;
+}

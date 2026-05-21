@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Modal, Form, Radio, Input, Button, Space, Alert, Typography, message } from 'antd'
+import { Modal, Form, Radio, Input, Button, Space, Alert, Typography } from 'antd'
 import { useDownloadOptions } from '../hooks/use-download-options'
 import { useDownloadQuota } from '../hooks/use-download-quota'
 import type { DownloadOptions, DownloadTargetType } from '@/types/download'
@@ -34,16 +34,14 @@ export function DownloadOptionsModal({
   rowCount,
   onCancel,
   onDownload,
-  canDownloadOriginalOverride,
-}: DownloadOptionsModalProps) {
+  canDownloadOriginalOverride }: DownloadOptionsModalProps) {
   const [form] = Form.useForm()
   const [downloading, setDownloading] = useState(false)
 
   const { canDownloadOriginal, resetOptions } = useDownloadOptions({
     programId,
     targetType,
-    action: 'DOWNLOAD',
-  })
+    action: 'DOWNLOAD' })
 
   const allowOriginal = canDownloadOriginalOverride ?? canDownloadOriginal
 
@@ -54,8 +52,7 @@ export function DownloadOptionsModal({
       // 모달이 열릴 때만 초기값 설정
       form.setFieldsValue({
         maskingEnabled: true, // 기본값으로 초기화
-        reason: '',
-      })
+        reason: '' })
     } else {
       // 모달이 닫힐 때만 리셋
       resetOptions()
@@ -71,15 +68,13 @@ export function DownloadOptionsModal({
       // 다운로드 가능 여부 체크 (행수/쿼터/레이트리밋)
       const checkResult = canDownload(rowCount)
       if (!checkResult.allowed) {
-        message.warning(checkResult.reason ?? '다운로드할 수 없습니다.')
         return
       }
 
       setDownloading(true)
       const downloadOptions: DownloadOptions = {
         maskingEnabled: values.maskingEnabled,
-        reason: values.maskingEnabled ? undefined : values.reason,
-      }
+        reason: values.maskingEnabled ? undefined : values.reason }
 
       await onDownload(downloadOptions)
       
@@ -132,7 +127,7 @@ export function DownloadOptionsModal({
       {!downloadCheck.allowed && (
         <Alert
           type="error"
-          message={downloadCheck.reason}
+          description={downloadCheck.reason}
           style={{ marginBottom: 16 }}
           showIcon
         />
@@ -141,7 +136,7 @@ export function DownloadOptionsModal({
       {downloadCheck.quota && (
         <Alert
           type="info"
-          message={
+          description={
             <div>
               <div>일일 다운로드: {downloadCheck.quota.todayDownloads.toLocaleString()} / {downloadCheck.quota.dailyQuota.toLocaleString()}</div>
               <div>남은 쿼터: {downloadCheck.quota.remainingQuota.toLocaleString()}행</div>
@@ -160,7 +155,7 @@ export function DownloadOptionsModal({
         <Form.Item
           label="데이터 형식"
           name="maskingEnabled"
-          rules={[{ required: true, message: '데이터 형식을 선택해주세요.' }]}
+          rules={[{ required: true }]}
         >
           <Radio.Group>
             <Radio value={true}>마스킹 적용 (기본)</Radio>
@@ -175,7 +170,7 @@ export function DownloadOptionsModal({
           <Form.Item
             label="다운로드 사유"
             name="reason"
-            rules={[{ required: true, message: '원본 데이터 다운로드 사유를 입력해주세요.' }]}
+            rules={[{ required: true }]}
             tooltip="원본 데이터 다운로드는 권한 승인이 필요합니다"
           >
             <TextArea
@@ -193,8 +188,7 @@ export function DownloadOptionsModal({
               취소
             </Button>
             <Button
-              type="primary"
-              htmlType="submit"
+              type="primary" htmlType="submit"
               loading={downloading}
               disabled={!downloadCheck.allowed}
             >

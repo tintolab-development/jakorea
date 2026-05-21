@@ -15,7 +15,6 @@ import {
   Tabs,
   Empty,
   Spin,
-  message,
   Timeline,
 } from 'antd'
 import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
@@ -33,9 +32,8 @@ import {
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
 import { commonStatusStatusConfig, settlementStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
-import { MESSAGES } from '@/shared/constants'
 import { mockApplications, mockMatchings } from '@/data/mock'
-import { useProgramService } from '@/features/program/hooks/use-program-service'
+import { useProgramService } from '@/features/program/general/hooks/use-program-service'
 import { schoolService } from '@/entities/school/api/school-service'
 import dayjs from 'dayjs'
 import type { Settlement } from '@/types/domain'
@@ -56,15 +54,13 @@ export function MyProgramHistoryPage() {
     try {
       const data = await getMyProgramDetail(user.instructorId, id)
       if (!data) {
-        message.error(MESSAGES.error.programNotFound)
         navigate('/programs/my/active')
         return
       }
       setProgram(data)
     } catch (error) {
       console.error('프로그램 로드 실패:', error)
-      message.error(MESSAGES.error.programLoadFailed)
-    } finally {
+      } finally {
       setLoading(false)
     }
   }, [id, navigate, user?.instructorId])

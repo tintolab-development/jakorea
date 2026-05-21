@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { message } from 'antd'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import {
@@ -17,7 +16,7 @@ import {
   getUjatProgramRegistrationOverlayRecord,
   resetUjatProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
-import { persistUjatRegistrationFormLocal } from '@/features/program/lib/ujat-registration-local-save'
+import { persistUjatRegistrationFormLocal } from '@/features/program/ujat/lib/ujat-registration-local-save'
 
 export type UseUjatProgramRegistrationEditorOptions = {
   /** 로컬 저장 성공 후(목록 갱신·모달 닫기 등) */
@@ -167,10 +166,9 @@ export function useUjatProgramRegistrationEditor(
     try {
       const overlay = { ...getUjatProgramRegistrationOverlayRecord() }
       persistUjatRegistrationFormLocal({ draft, overlay })
-      message.success('저장되었습니다. (브라우저 로컬 — API 연동 시 서버에 반영됩니다.)')
       onRegistrationSaved?.()
-    } catch {
-      message.error('저장에 실패했습니다.')
+    } catch (error) {
+      console.debug('ujatProgramRegistrationEditor save failed', error)
     }
   }, [draft, onRegistrationSaved])
 

@@ -50,20 +50,16 @@ function suggestionPrimaryLine(item: JusoAddressItem): string {
 const ADDRESS_TIPS: { label: string; example: string }[] = [
   {
     label: '도로명 + 건물번호',
-    example: '예) 마곡중앙로 171, 제주 첨단로 242',
-  },
+    example: '예) 마곡중앙로 171, 제주 첨단로 242' },
   {
     label: '지역명(동/리) + 번지',
-    example: '예) 백현동 532, 제주 영평동 2181',
-  },
+    example: '예) 백현동 532, 제주 영평동 2181' },
   {
     label: '지역명(동/리) + 건물명(아파트명)',
-    example: '예) 분당 주공, 연수동 주공3차',
-  },
+    example: '예) 분당 주공, 연수동 주공3차' },
   {
     label: '사서함명 + 번호',
-    example: '예) 분당우체국사서함 1~100',
-  },
+    example: '예) 분당우체국사서함 1~100' },
 ]
 
 export interface AddressSearchProps extends Pick<
@@ -88,8 +84,7 @@ export function AddressSearch({
   disabled,
   className,
   confmKey: confmKeyProp,
-  onSelect,
-}: AddressSearchProps) {
+  onSelect }: AddressSearchProps) {
   const [open, setOpen] = useState(false)
   const [keyword, setKeyword] = useState('')
   const [page, setPage] = useState(1)
@@ -102,8 +97,7 @@ export function AddressSearch({
 
   const { addresses, totalCount, loading, error, search, reset } = useJusoAddressSearch({
     confmKey,
-    countPerPage,
-  })
+    countPerPage })
 
   const closeModal = useCallback(() => {
     setOpen(false)
@@ -244,7 +238,7 @@ export function AddressSearch({
             }`}
           >
             {error ? (
-              <div className="address-search__result-empty">{error.message}</div>
+              <div className="address-search__result-empty">주소 검색에 실패했습니다.</div>
             ) : (
               <>
                 {showManyResultsNotice ? (

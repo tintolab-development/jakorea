@@ -4,8 +4,7 @@
  * 시니어 개발자 관점: 컴포넌트 분리
  */
 
-import { Modal, Form, Input, DatePicker, Select, Button, Space, message } from 'antd'
-import { MESSAGES } from '@/shared/constants'
+import { Modal, Form, Input, DatePicker, Select, Button, Space } from 'antd'
 import { usePermissionRequest } from '../hooks/use-permission-request'
 import type { ProgramRole, PermissionAction } from '@/types/permission-request'
 import type { UUID } from '@/types'
@@ -35,8 +34,7 @@ export function PermissionRequestModal({
   programName,
   requestedAction,
   onCancel,
-  onSuccess,
-}: PermissionRequestModalProps) {
+  onSuccess }: PermissionRequestModalProps) {
   const [form] = Form.useForm()
   const { submitting, submitRequest } = usePermissionRequest()
 
@@ -52,10 +50,8 @@ export function PermissionRequestModal({
         requestedPeriod: values.requestedPeriod
           ? {
               startDate: values.requestedPeriod[0].toISOString(),
-              endDate: values.requestedPeriod[1].toISOString(),
-            }
-          : undefined,
-      })
+              endDate: values.requestedPeriod[1].toISOString() }
+          : undefined })
 
       if (result) {
         form.resetFields()
@@ -67,8 +63,7 @@ export function PermissionRequestModal({
       if (error && typeof error === 'object' && 'errorFields' in error) {
         return
       }
-      message.error(MESSAGES.error.permissionRequestSubmitFailed)
-    }
+      }
   }
 
   const handleCancel = () => {
@@ -79,8 +74,7 @@ export function PermissionRequestModal({
   const actionLabels: Record<PermissionAction, string> = {
     VIEW: '조회',
     DOWNLOAD: '다운로드',
-    EDIT: '수정',
-  }
+    EDIT: '수정' }
 
   return (
     <Modal
@@ -103,7 +97,7 @@ export function PermissionRequestModal({
         <Form.Item
           label="요청 역할"
           name="requestedRole"
-          rules={[{ required: true, message: '요청할 역할을 선택해주세요.' }]}
+          rules={[{ required: true }]}
         >
           <Select placeholder="역할을 선택하세요" options={roleOptions} />
         </Form.Item>
@@ -111,7 +105,7 @@ export function PermissionRequestModal({
         <Form.Item
           label="요청 사유"
           name="reason"
-          rules={[{ required: true, message: '요청 사유를 입력해주세요.' }]}
+          rules={[{ required: true }]}
         >
           <TextArea
             rows={4}

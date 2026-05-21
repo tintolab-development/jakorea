@@ -61,9 +61,9 @@
 
 **참고 코드**
 
-- `useForm` + `useFieldArray`: `apps/cms/src/features/settlement/ui/instructor-settlement-form.tsx`, `apps/cms/src/features/program/ui/program-form.tsx`
-- 수정 모드 + reset 동기화: `apps/cms/src/features/program/hooks/use-program-detail-edit-form.ts`
-- Controller 사용: `apps/cms/src/features/program/ui/basic-info-section.tsx`
+- `useForm` + `useFieldArray`: `apps/cms/src/features/settlement/ui/instructor-settlement-form.tsx`, `apps/cms/src/features/program/general/ui/program-form.tsx`
+- 수정 모드 + reset 동기화: `apps/cms/src/features/program/general/hooks/use-program-detail-edit-form.ts`
+- Controller 사용: `apps/cms/src/features/program/general/ui/basic-info-section.tsx`
 
 ---
 

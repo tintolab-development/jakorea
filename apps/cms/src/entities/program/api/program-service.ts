@@ -15,7 +15,9 @@ import {
 import {
   findUjatRegistrationLocalSaveProgramById,
   readUjatRegistrationLocalSavePrograms,
-} from '@/features/program/lib/ujat-registration-local-save'
+} from '@/features/program/ujat/lib/ujat-registration-local-save'
+import { applyUjatRecruitInstitutionTemplateDefaults } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
+import { applyUjatRecruitVolunteerTemplateDefaults } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import type { UserRole } from '@/types/user'
 import { updateUserProgramRole } from '@/entities/user/api/user-service'
 
@@ -25,6 +27,13 @@ function resolveProgramFromStores(id: string): Program | undefined {
     getEconomyProgramById(id) ??
     mockUjatElementaryListProgramsMap.get(id) ??
     findUjatRegistrationLocalSaveProgramById(id)
+  )
+}
+
+/** UJAT 모집 폼 템플릿 localStorage 저장본을 프로그램 mock 필드에 병합 */
+function withUjatRecruitTemplateDefaults(program: Program): Program {
+  return applyUjatRecruitVolunteerTemplateDefaults(
+    applyUjatRecruitInstitutionTemplateDefaults(program)
   )
 }
 
@@ -41,7 +50,7 @@ export const programService = {
     const localUjat = readUjatRegistrationLocalSavePrograms().filter(
       lp => !basePrograms.some(b => b.id === lp.id)
     )
-    const allPrograms = [...basePrograms, ...localUjat]
+    const allPrograms = [...basePrograms, ...localUjat].map(withUjatRecruitTemplateDefaults)
 
     // 권한별 필터링 적용
     // 관리자는 전체 조회, 강사/봉사자는 본인이 담당한 프로그램만 조회
@@ -60,7 +69,7 @@ export const programService = {
     if (!program) {
       throw new Error(`Program not found: ${id}`)
     }
-    return Promise.resolve(program)
+    return Promise.resolve(withUjatRecruitTemplateDefaults(program))
   },
 
   create: async (

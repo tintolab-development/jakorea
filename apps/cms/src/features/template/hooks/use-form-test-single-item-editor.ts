@@ -1,5 +1,4 @@
 import { useCallback } from 'react'
-import { message } from 'antd'
 import {
   createSingleItemPreviewDraft,
   DEFAULT_SURVEY_PARAGRAPH_IDS,
@@ -17,8 +16,7 @@ export function useFormTestSingleItemEditor(open: boolean) {
     []
   )
   const onSave = useCallback(() => {
-    message.success('저장 API 연동 전입니다.')
-  }, [])
+    }, [])
 
   return useWritingFormEditorWithUserPreview({
     open,

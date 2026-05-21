@@ -62,6 +62,7 @@ function ProgramsSubpathRedirect({ toBase }: { toBase: string }) {
   return <Navigate to={`${to}${search}`} replace />
 }
 import TemplatesFormManagementOutlet from '@/pages/templates/templates-form-management-outlet'
+import { TemplatesRouteLayout } from '@/pages/templates/templates-route-layout'
 import {
   RedirectLegacyTemplatesProgramForms,
 } from '@/features/template/template-route-redirects'
@@ -87,6 +88,9 @@ const DetailedProgramPage = lazyLoad(() => import('@/pages/data-management/detai
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const UjatProgramListPage = lazyLoad(() => import('@/pages/programs/UJAT/page'))
+const GeminiVisitingTrainingPage = lazyLoad(
+  () => import('@/pages/programs/gemini/visiting-training/page')
+)
 const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
 const ProgramApplicationCompletePage = lazyLoad(
   () => import('@/pages/programs/program-application-complete-page')
@@ -265,6 +269,8 @@ export const router = createBrowserRouter([
           { path: 'company-school/*', element: programCategoryPreparing },
           { path: 'ujat', element: <UjatProgramListPage /> },
           { path: 'ujat/*', element: <UjatProgramListPage /> },
+          { path: 'gemini/visiting-training', element: <GeminiVisitingTrainingPage /> },
+          { path: 'gemini/visiting-training/*', element: <GeminiVisitingTrainingPage /> },
           { path: 'gemini', element: programCategoryPreparing },
           { path: 'gemini/*', element: programCategoryPreparing },
           { path: 'volunteer', element: <ProgramListPage /> }, // 봉사 프로그램 (기존 경로 유지)
@@ -458,29 +464,34 @@ export const router = createBrowserRouter([
       },
       {
         path: 'templates',
-        element: <TemplateListPage />,
+        element: <TemplatesRouteLayout />,
         children: [
           {
-            path: 'form-test/tables',
-            element: <FormTestTableComponentsPage />,
+            element: <TemplateListPage />,
+            children: [
+              {
+                path: 'form-test/tables',
+                element: <FormTestTableComponentsPage />,
+              },
+              {
+                path: 'form-management',
+                element: <TemplatesFormManagementOutlet />,
+              },
+              {
+                path: 'banner',
+                element: (
+                  <ComingSoonPage
+                    title="배너 관리"
+                    description="배너 관리 기능은 현재 준비 중입니다."
+                  />
+                ),
+              },
+              // 구 경로 호환 (쿼리 보존)
+              { path: 'program-forms', element: <RedirectLegacyTemplatesProgramForms /> },
+              { path: 'program-forms/*', element: <RedirectLegacyTemplatesProgramForms /> },
+              { index: true, element: <Navigate to="form-management" replace /> },
+            ],
           },
-          {
-            path: 'form-management',
-            element: <TemplatesFormManagementOutlet />,
-          },
-          {
-            path: 'banner',
-            element: (
-              <ComingSoonPage
-                title="배너 관리"
-                description="배너 관리 기능은 현재 준비 중입니다."
-              />
-            ),
-          },
-          // 구 경로 호환 (쿼리 보존)
-          { path: 'program-forms', element: <RedirectLegacyTemplatesProgramForms /> },
-          { path: 'program-forms/*', element: <RedirectLegacyTemplatesProgramForms /> },
-          { index: true, element: <Navigate to="form-management" replace /> },
         ],
       },
       {

@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react'
-import { App } from 'antd'
 import { CmsButton, CmsInput, CmsRadio, CmsRadioGroup, ContentModal } from '@/shared/ui'
 import './detailed-program-add-item-modal.css'
 
@@ -30,18 +29,16 @@ export function DetailedProgramAddItemModal({
   onCancel,
   onSubmit,
 }: DetailedProgramAddItemModalProps) {
-  const { message } = App.useApp()
   const [name, setName] = useState('')
   const [active, setActive] = useState(true)
 
   const handleSubmit = useCallback(() => {
     const trimmed = name.trim()
     if (!trimmed) {
-      message.error('세부 프로그램명을 입력해 주세요.')
       return
     }
     onSubmit({ name: trimmed, active })
-  }, [active, message, name, onSubmit])
+  }, [active, name, onSubmit])
 
   const nameLabel = (
     <>

@@ -2,7 +2,7 @@
 
 **대상**: 프로그램 상세 페이지 > **담당자 정보** 탭  
 **참조 시안**: 스크린샷 (프로그램 상세 > 담당자 정보 — 검색/필터, 담당자 목록 테이블, 삭제·등록·권한 수정)  
-**기존 참고 UI**: [ProgramProgressTab](../../../src/features/program/ui/program-progress-tab.tsx) — 필터·조회 버튼·테이블 상단 N건·액션 버튼(삭제/추가) 패턴 재사용
+**기존 참고 UI**: [ProgramProgressTab](../../../src/features/program/general/ui/detail-modal/program-status/program-progress-tab.tsx) — 필터·조회 버튼·테이블 상단 N건·액션 버튼(삭제/추가) 패턴 재사용
 
 ---
 
@@ -173,8 +173,8 @@
 ## 9. 참조 문서·코드
 
 - [persona.md](../../../.cursor/rules/process/persona.md) — 역할별 요청 해석 (디자이너/기획/PM → 개발 위임 표현)
-- [program-progress-tab.tsx](../../../src/features/program/ui/program-progress-tab.tsx) — 필터·조회·테이블 헤더·삭제/추가 버튼 패턴
-- [use-program-progress-params.ts](../../../src/features/program/hooks/use-program-progress-params.ts) — 필터·URL 동기화
+- [program-progress-tab.tsx](../../../src/features/program/general/ui/detail-modal/program-status/program-progress-tab.tsx) — 필터·조회·테이블 헤더·삭제/추가 버튼 패턴
+- [use-program-progress-params.ts](../../../src/features/program/general/hooks/use-program-progress-params.ts) — 필터·URL 동기화
 - [program-detail-applicants-tab-spec.md](./program-detail-applicants-tab-spec.md) — 동일 명세 양식
 - [table-management.md](../../../.cursor/rules/tables/table-management.md) — 테이블 구현 규칙
 - [styling-tokens.md](../../../.cursor/rules/design/styling-tokens.md) — 디자인 토큰

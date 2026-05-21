@@ -6,7 +6,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Tag, Button, Table, Empty, message } from 'antd'
+import { Tag, Button, Table, Empty } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
@@ -23,7 +23,6 @@ import {
 } from '@/entities/program/api/favorite-program-service'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { MESSAGES } from '@/shared/constants'
 import dayjs from 'dayjs'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
@@ -132,11 +131,9 @@ export function MyProgramListPage() {
     try {
       if (isFavorite) {
         await removeFavoriteProgram(userId, programId)
-        message.success(MESSAGES.success.removedFromFavorites)
-      } else {
+        } else {
         await addFavoriteProgram(userId, programId)
-        message.success(MESSAGES.success.addedToFavorites)
-      }
+        }
 
       // 상태 업데이트
       setFavorites(prev => {
@@ -150,8 +147,7 @@ export function MyProgramListPage() {
       })
     } catch (error) {
       console.error('관심 프로그램 토글 실패:', error)
-      message.error(MESSAGES.error.favoriteProgramProcessFailed)
-    }
+      }
   }
 
   const handleViewProgram = (program: MyProgram) => {

@@ -8,8 +8,7 @@ import {
   CmsInput,
   CmsInputSearch,
   CmsRadioGroup,
-  CmsSelect,
-} from '@/shared/ui'
+  CmsSelect } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import './add-user-individual.css'
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
@@ -68,8 +67,7 @@ const INITIAL_VALUES: AddUserIndividualFormValues = {
   consentPersonalInfo: 'agree',
   consentMarketing: 'agree',
   consentPortrait: 'agree',
-  consentWithholdingTax: 'agree',
-}
+  consentWithholdingTax: 'agree' }
 
 export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUserIndividualProps) {
   const affiliationSchoolOptions = useMemo(() => buildAffiliationSchoolOptions(), [])
@@ -94,8 +92,7 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
       name: values.name.trim(),
       phone: values.contact?.trim() || undefined,
       role: 'INDIVIDUAL',
-      isActive: true,
-    }
+      isActive: true }
     await onSubmit(request)
     form.resetFields()
   }
@@ -122,7 +119,7 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
                 <Form.Item
                   name="name"
                   noStyle
-                  rules={[{ required: true, message: '한글 성명을 입력해주세요' }]}
+                  rules={[{ required: true }]}
                 >
                   <CmsInput placeholder="한글 성명" inputSize="medium" width="100%" />
                 </Form.Item>
@@ -136,7 +133,7 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
                 <Form.Item
                   name="englishName"
                   noStyle
-                  rules={[{ required: true, message: '영문 성명을 입력해주세요' }]}
+                  rules={[{ required: true }]}
                 >
                   <CmsInput placeholder="영문 성명" inputSize="medium" width="100%" />
                 </Form.Item>
@@ -153,7 +150,7 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
                   <Form.Item
                     name="residentRegistrationFirst"
                     noStyle
-                    rules={[{ required: true, message: '주민등록번호 앞 6자리를 입력해주세요' }]}
+                    rules={[{ required: true }]}
                   >
                     <CmsInput
                       placeholder="주민등록 앞 6자리"
@@ -166,7 +163,7 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
                   <Form.Item
                     name="residentRegistrationLast"
                     noStyle
-                    rules={[{ required: true, message: '주민등록번호 뒤 7자리를 입력해주세요' }]}
+                    rules={[{ required: true }]}
                   >
                     <CmsInput
                       placeholder="주민등록 뒤 7자리"
@@ -218,7 +215,7 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
                 <Form.Item
                   name="contact"
                   noStyle
-                  rules={[{ required: true, message: '연락처를 입력해주세요' }]}
+                  rules={[{ required: true }]}
                 >
                   <CmsInput placeholder="연락처" inputSize="medium" width="100%" />
                 </Form.Item>
@@ -233,8 +230,8 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
                   name="email"
                   noStyle
                   rules={[
-                    { required: true, message: '이메일을 입력해주세요' },
-                    { type: 'email', message: '올바른 이메일 형식이 아닙니다' },
+                    { required: true },
+                    { type: 'email' },
                   ]}
                 >
                   <CmsInput placeholder="이메일" inputSize="medium" width="100%" />

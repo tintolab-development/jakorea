@@ -16,6 +16,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useMemo } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import locale from 'antd/es/date-picker/locale/ko_KR'
+import { fieldValidationHelp } from '@/shared/utils/error-handler'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -38,8 +39,7 @@ export function InstructorSettlementForm({
   settlement,
   onSubmit,
   onCancel,
-  loading,
-}: InstructorSettlementFormProps) {
+  loading }: InstructorSettlementFormProps) {
   const { user } = useAuthStore()
   const instructorId = user?.instructorId || user?.id
 
@@ -49,8 +49,7 @@ export function InstructorSettlementForm({
     formState: { errors },
     setValue,
     watch,
-    control,
-  } = useForm<SettlementFormData>({
+    control } = useForm<SettlementFormData>({
     resolver: zodResolver(settlementSchema),
     defaultValues: (() => {
       if (settlement) {
@@ -63,21 +62,17 @@ export function InstructorSettlementForm({
           period: settlement.period,
           items: settlement.items,
           status,
-          notes: settlement.notes || '',
-        }
+          notes: settlement.notes || '' }
       }
       return {
         items: [{ type: 'instructor_fee', description: '강사비', amount: 0 }],
         status: 'pending' as const,
-        instructorId: instructorId || '',
-      }
-    })(),
-  })
+        instructorId: instructorId || '' }
+    })() })
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: 'items',
-  })
+    name: 'items' })
 
   const selectedProgramId = watch('programId')
 
@@ -113,7 +108,6 @@ export function InstructorSettlementForm({
   if (!instructorId) {
     return (
       <Alert
-        message="로그인이 필요합니다"
         description="정산을 제출하려면 로그인이 필요합니다."
         type="warning"
         showIcon
@@ -126,7 +120,7 @@ export function InstructorSettlementForm({
       <Form.Item
         label="프로그램"
         validateStatus={errors.programId ? 'error' : ''}
-        help={errors.programId?.message}
+        help={fieldValidationHelp(errors.programId)}
         required
       >
         <Select
@@ -155,7 +149,6 @@ export function InstructorSettlementForm({
         </Select>
         {availablePrograms.length === 0 && (
           <Alert
-            message="담당 프로그램이 없습니다"
             description="정산을 제출할 프로그램이 없습니다. 관리자에게 문의하세요."
             type="info"
             showIcon
@@ -167,7 +160,7 @@ export function InstructorSettlementForm({
       <Form.Item
         label="매칭"
         validateStatus={errors.matchingId ? 'error' : ''}
-        help={errors.matchingId?.message || '해당 프로그램의 매칭 정보를 선택하세요'}
+        help={fieldValidationHelp(errors.matchingId) || '해당 프로그램의 매칭 정보를 선택하세요'}
         required
       >
         <Select
@@ -184,7 +177,6 @@ export function InstructorSettlementForm({
         </Select>
         {selectedProgramId && availableMatchings.length === 0 && (
           <Alert
-            message="매칭 정보가 없습니다"
             description="선택한 프로그램에 대한 매칭 정보가 없습니다."
             type="warning"
             showIcon
@@ -196,7 +188,7 @@ export function InstructorSettlementForm({
       <Form.Item
         label="기간"
         validateStatus={errors.period ? 'error' : ''}
-        help={errors.period?.message || '기간을 선택하세요'}
+        help={fieldValidationHelp(errors.period) || '기간을 선택하세요'}
         required
       >
         <DatePicker
@@ -246,8 +238,7 @@ export function InstructorSettlementForm({
                       </Option>
                     ))}
                   </Select>
-                ),
-              },
+                ) },
               {
                 title: '설명',
                 dataIndex: 'description',
@@ -258,8 +249,7 @@ export function InstructorSettlementForm({
                     onChange={e => setValue(`items.${index}.description`, e.target.value)}
                     placeholder="항목 설명"
                   />
-                ),
-              },
+                ) },
               {
                 title: '금액',
                 dataIndex: 'amount',
@@ -284,8 +274,7 @@ export function InstructorSettlementForm({
                       parser={value => Number(value!.replace(/\$\s?|(,*)/g, '')) || 0}
                     />
                   )
-                },
-              },
+                } },
               {
                 title: '작업',
                 key: 'action',
@@ -298,8 +287,7 @@ export function InstructorSettlementForm({
                     onClick={() => remove(index)}
                     disabled={fields.length === 1}
                   />
-                ),
-              },
+                ) },
             ]}
             rowKey={(_record, index) => `item-${index}`}
             summary={() => (

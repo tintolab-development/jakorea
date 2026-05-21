@@ -14,7 +14,6 @@ import {
   type KeyboardEvent,
   type MutableRefObject,
 } from 'react'
-import { message } from 'antd'
 import type { SettlementItemSettingRow } from '@/data/mock/settlement-item-settings'
 import {
   getSettlementItemSettingDetail,
@@ -26,7 +25,7 @@ import {
   type SettlementItemTransportCommuteMode,
 } from '@/data/mock/settlement-item-setting-detail.mock'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { CmsInputIconClick } from '@/shared/ui/cms-input-iconclick'
 import {
   SettlementItemSettingDescriptionEditIcon,
@@ -1939,8 +1938,7 @@ export function SettlementItemSettingDetailModal({
       emojiOverride: headerEmoji,
     })
     onSave?.(item.id)
-    void message.success('저장되었습니다.')
-    onCancel()
+    void onCancel()
   }
 
   const modalTitleForAria =
@@ -2028,12 +2026,12 @@ export function SettlementItemSettingDetailModal({
         .join(' ')}
       footer={
         <>
-          <AppButton variant="cancel" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="large" onClick={onCancel}>
             취소
-          </AppButton>
-          <AppButton variant="primary" size="tableAction" modalTeal onClick={handleSave}>
+          </CmsButton>
+          <CmsButton variant="primary" size="large" width={160} onClick={handleSave}>
             저장
-          </AppButton>
+          </CmsButton>
         </>
       }
     >

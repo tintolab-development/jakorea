@@ -320,7 +320,6 @@ export interface MenuItemConfig {
 export const PROGRAM_MANAGEMENT_LNB_PATHS = [
   '/programs/general',
   '/programs/company-school',
-  '/programs/gemini',
 ] as const
 
 export function isProgramManagementLnbPath(key: string): boolean {
@@ -341,7 +340,7 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
   },
 
-  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 4분류 — UJAT만 `/programs/ujat`, 나머지 분류는 준비 중(alert), 통합 목록·모달은 `/programs` */
+  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 4분류 — UJAT `/programs/ujat`, Gemini 3뎁스(실적·찾아가는 연수), 나머지 분류는 준비 중(alert) */
   {
     key: 'programs-group',
     label: '프로그램 관리',
@@ -371,11 +370,27 @@ const allMenuItems: MenuItemConfig[] = [
         allowedRoles: ['ADMIN'],
       },
       {
-        key: '/programs/gemini',
+        key: 'gemini-program-group',
         label: 'Gemini 프로그램',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
+        children: [
+          {
+            key: '/education-records',
+            label: '실적 관리',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/programs/gemini/visiting-training',
+            label: '찾아가는 연수',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+        ],
       },
     ],
   },
@@ -578,6 +593,7 @@ const allMenuItems: MenuItemConfig[] = [
     icon: <IconEducationRecords />,
     enabled: true,
     allowedRoles: ['ADMIN'],
+    hidden: true,
   },
   {
     key: 'logs-group',
@@ -826,7 +842,8 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
     { prefix: '/programs/general', menuKey: '/programs/general' },
     { prefix: '/programs/company-school', menuKey: '/programs/company-school' },
     { prefix: '/programs/ujat', menuKey: '/programs/ujat' },
-    { prefix: '/programs/gemini', menuKey: '/programs/gemini' },
+    { prefix: '/programs/gemini/visiting-training', menuKey: '/programs/gemini/visiting-training' },
+    { prefix: '/programs/gemini', menuKey: '/programs/gemini/visiting-training' },
     { prefix: '/programs/education', menuKey: '/programs/general' },
     { prefix: '/programs/economy-education', menuKey: '/programs/company-school' },
   ]

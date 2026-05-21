@@ -9,7 +9,7 @@ export interface ActionResultModalProps {
   /** 완료·결과 안내 제목 (예: 회원 삭제 완료) */
   title: string
   /** 본문 */
-  message: ReactNode
+  body: ReactNode
   /** 기본값 확인 */
   confirmLabel?: string
 }
@@ -21,18 +21,17 @@ export interface ActionResultModalProps {
 export function ActionResultModal({
   open,
   title,
-  message,
+  body,
   onClose,
   zIndex,
-  confirmLabel = '확인',
-}: ActionResultModalProps) {
-  const renderedMessage =
-    typeof message === 'string' ? (
+  confirmLabel = '확인' }: ActionResultModalProps) {
+  const renderedBody =
+    typeof body === 'string' ? (
       (() => {
-        const match = message.match(/^\[[^\]]+\]/)
-        if (!match) return message
+        const match = body.match(/^\[[^\]]+\]/)
+        if (!match) return body
         const namePart = match[0]
-        const rest = message.slice(namePart.length)
+        const rest = body.slice(namePart.length)
         return (
           <>
             <span style={{ fontWeight: 600 }}>{namePart}</span>
@@ -41,7 +40,7 @@ export function ActionResultModal({
         )
       })()
     ) : (
-      message
+      body
     )
 
   return (
@@ -57,7 +56,7 @@ export function ActionResultModal({
         </CmsButton>
       }
     >
-      <span style={{ fontSize: '16px', lineHeight: '150%' }}>{renderedMessage}</span>
+      <span style={{ fontSize: '16px', lineHeight: '150%' }}>{renderedBody}</span>
     </ContentModal>
   )
 }

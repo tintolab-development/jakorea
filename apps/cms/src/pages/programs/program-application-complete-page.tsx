@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 import { Result, Button, Card, Typography, Space } from 'antd'
 import { CheckCircleOutlined, FileSearchOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { useProgramStore } from '@/features/program/model/program-store'
+import { useProgramStore } from '@/features/program/general/model/program-store'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import dayjs from 'dayjs'
 

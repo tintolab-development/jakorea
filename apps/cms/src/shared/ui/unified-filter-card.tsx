@@ -13,8 +13,8 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { LAYOUT_CONSTANTS } from '@/shared/constants/layout'
 import { LabeledSearchInput } from './labeled-search-input'
 import { FilterSearchButton } from './app-button'
-import { AppMultiSelect } from './app-multi-select'
-import type { AppMultiSelectOption } from './app-multi-select'
+import { CmsSelect } from './cms-select'
+import type { CmsSelectMultipleOption } from './cms-select-multiple'
 import { AppSelect } from './app-select'
 import { AppDateRangePicker } from './app-datepicker'
 import { CmsRadio } from './cms-radio'
@@ -33,7 +33,7 @@ export interface FilterFieldConfig {
   /** Select / Radio 옵션 (type이 'select' | 'radio'일 때) */
   options?: Array<{ label: string; value: string | number }>
   /** 다중 선택 옵션 (type이 'multiSelect'일 때). value는 문자열 */
-  multiSelectOptions?: AppMultiSelectOption[]
+  multiSelectOptions?: CmsSelectMultipleOption[]
   /**
    * 기본값. `dateRange`에서만 추가 의미:
    * - `undefined`: 값이 없을 때 이번 달 1일~말일을 부모에 1회 시드
@@ -444,11 +444,14 @@ export function UnifiedFilterCard({
         <Col key={field.key} flex={colFlex(field, '0 0 240px')} className={colClassFor(field)}>
           <div className="unified-filter-card__field">
             <span className="unified-filter-card__label">{field.label}</span>
-            <AppMultiSelect
+            <CmsSelect
+              mode="multiple"
+              withAllOption={false}
+              inputSize="large"
               className="unified-filter-card__multi-select"
               placeholder={field.placeholder || '선택하세요'}
               value={arr}
-              onChange={next => onFilterChange(field.key, next)}
+              onChange={next => onFilterChange(field.key, next as string[])}
               options={field.multiSelectOptions ?? []}
               allowClear={field.allowClear !== false}
               style={{ width: '100%', ...field.style }}

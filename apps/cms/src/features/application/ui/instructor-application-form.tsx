@@ -6,13 +6,13 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Form, Input, Button, Space, Upload, message, Alert } from 'antd'
+import { Form, Input, Button, Space, Upload, Alert } from 'antd'
 import { UploadOutlined } from '@ant-design/icons'
 import { instructorApplicationSchema, type InstructorApplicationFormData } from '@/entities/application/model/schema'
 import type { Program } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { UploadFile } from 'antd/es/upload/interface'
-import { MESSAGES } from '@/shared/constants'
+import { fieldValidationHelp } from '@/shared/utils/error-handler'
 
 const { TextArea } = Input
 
@@ -29,16 +29,14 @@ const UPLOAD_POLICY = {
   documents: {
     allowedExtensions: ['.pdf', '.doc', '.docx', '.hwp'],
     maxSize: 10 * 1024 * 1024, // 10MB
-  },
-}
+  } }
 
 export function InstructorApplicationForm({
   program,
   applicationPath, // 향후 사용 예정
   onSubmit,
   onCancel,
-  loading,
-}: InstructorApplicationFormProps) {
+  loading }: InstructorApplicationFormProps) {
   // 향후 applicationPath 사용 예정
   void applicationPath
   const { user } = useAuthStore()
@@ -48,34 +46,28 @@ export function InstructorApplicationForm({
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
-  } = useForm<InstructorApplicationFormData>({
+    watch } = useForm<InstructorApplicationFormData>({
     resolver: zodResolver(instructorApplicationSchema),
     defaultValues: {
       programId: program.id,
       subjectType: 'instructor',
       subjectId: user?.instructorId || '',
-      status: 'submitted',
-    },
-  })
+      status: 'submitted' } })
 
   // 서류 파일 업로드 핸들러
   const handleDocumentUpload = (file: File, type: 'resume' | 'crimeCheckConsent') => {
     // 파일 확장자 검증
     const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
     if (!UPLOAD_POLICY.documents.allowedExtensions.includes(fileExtension)) {
-      message.error(MESSAGES.warning.fileTypeDocuments)
       return false
     }
 
     // 파일 크기 검증
     if (file.size > UPLOAD_POLICY.documents.maxSize) {
-      message.error(MESSAGES.warning.fileSizeMax10MB)
       return false
     }
 
     setValue(type, file)
-    message.success(MESSAGES.success.fileSelected)
     return false // 자동 업로드 방지
   }
 
@@ -100,7 +92,7 @@ export function InstructorApplicationForm({
       <Form.Item
         label="선호 일정"
         validateStatus={errors.preferredSchedule ? 'error' : ''}
-        help={errors.preferredSchedule?.message}
+        help={fieldValidationHelp(errors.preferredSchedule)}
       >
         <TextArea
           {...register('preferredSchedule')}
@@ -112,7 +104,7 @@ export function InstructorApplicationForm({
       <Form.Item
         label="강의 경력"
         validateStatus={errors.experience ? 'error' : ''}
-        help={errors.experience?.message}
+        help={fieldValidationHelp(errors.experience)}
       >
         <TextArea
           {...register('experience')}
@@ -125,7 +117,7 @@ export function InstructorApplicationForm({
       <Form.Item
         label="이력서"
         validateStatus={errors.resume ? 'error' : ''}
-        help={errors.resume?.message || 'PDF, DOC, DOCX, HWP 파일을 업로드해주세요. (최대 10MB)'}
+        help={fieldValidationHelp(errors.resume) || 'PDF, DOC, DOCX, HWP 파일을 업로드해주세요. (최대 10MB)'}
       >
         <Upload
           beforeUpload={file => handleDocumentUpload(file, 'resume')}
@@ -137,8 +129,7 @@ export function InstructorApplicationForm({
                   {
                     uid: 'resume',
                     name: resume.name,
-                    size: resume.size,
-                  } as UploadFile,
+                    size: resume.size } as UploadFile,
                 ]
               : []
           }
@@ -153,7 +144,7 @@ export function InstructorApplicationForm({
       <Form.Item
         label="성범죄조회동의서"
         validateStatus={errors.crimeCheckConsent ? 'error' : ''}
-        help={errors.crimeCheckConsent?.message || 'PDF, DOC, DOCX, HWP 파일을 업로드해주세요. (최대 10MB)'}
+        help={fieldValidationHelp(errors.crimeCheckConsent) || 'PDF, DOC, DOCX, HWP 파일을 업로드해주세요. (최대 10MB)'}
       >
         <Upload
           beforeUpload={file => handleDocumentUpload(file, 'crimeCheckConsent')}
@@ -165,8 +156,7 @@ export function InstructorApplicationForm({
                   {
                     uid: 'crimeCheckConsent',
                     name: crimeCheckConsent.name,
-                    size: crimeCheckConsent.size,
-                  } as UploadFile,
+                    size: crimeCheckConsent.size } as UploadFile,
                 ]
               : []
           }
@@ -178,7 +168,7 @@ export function InstructorApplicationForm({
         </Upload>
         <Alert
           type="info"
-          message="성범죄조회동의서는 필수 제출 서류입니다"
+          description="성범죄조회동의서는 필수 제출 서류입니다"
           showIcon
           style={{ marginTop: 8 }}
         />

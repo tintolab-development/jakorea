@@ -418,6 +418,7 @@ export function HorizontalTableParagraphBody({
   recruitFormInstructor,
   recruitFormVolunteer,
   ujatRecruitFormVolunteer,
+  ujatRecruitParagraphProps,
   programApplicationFormInstructor,
   programApplicationFormVolunteer,
   paragraphInteractionMode = 'authoring',
@@ -463,6 +464,7 @@ export function HorizontalTableParagraphBody({
   recruitFormVolunteer?: boolean
   /** UJAT 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatRecruitFormVolunteer?: boolean
+  ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
   programApplicationFormInstructor?: ProgramApplicationFormInstructorBodyOptions
   programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
   paragraphInteractionMode?: ParagraphBodyInteractionMode
@@ -544,7 +546,7 @@ export function HorizontalTableParagraphBody({
   const ujatRecruitFormVolunteerBody = renderUjatRecruitFormVolunteerParagraphBody(
     p,
     ujatRecruitFormVolunteer,
-    programApplicationFormVolunteer
+    ujatRecruitParagraphProps
   )
   if (ujatRecruitFormVolunteerBody != null) return ujatRecruitFormVolunteerBody
 

@@ -1,0 +1,63 @@
+---
+priority: high
+always_include: true
+category: libraries
+---
+
+# 토스트·`message` 사용 금지 (CMS)
+
+CMS 앱(`apps/cms/**`)에서는 **사용자-facing 토스트·Ant Design `message`를 사용하지 않는다.**
+
+## 금지
+
+```tsx
+import { message } from 'antd'
+import { Table, message } from 'antd'
+
+const { message } = App.useApp()
+message.success('…')
+message.error('…')
+message.warning('…')
+message.info('…')
+message.loading('…')
+
+import { showSuccessMessage } from '@/shared/ui/cms-message' // 삭제됨
+```
+
+- `@/shared/ui/cms-message` — **사용하지 않음** (제거됨)
+- 성공·실패·경고를 **임의로 토스트로 띄우지 않는다.** 필요 시 모달·인라인 UI·폼 검증으로 처리 ([cms-alert-modal.md](./cms-alert-modal.md))
+
+## 에러 처리
+
+`@/shared/utils/error-handler`의 `handleError` / `withErrorHandling` / `executeWithErrorHandling`은 **DEV 콘솔 로깅만** 하고 토스트를 표시하지 않는다.
+
+```tsx
+import { handleError, withErrorHandling } from '@/shared/utils/error-handler'
+
+try {
+  await save()
+} catch (error) {
+  handleError(error, { context: 'saveProgram' })
+}
+```
+
+## ESLint
+
+루트 `eslint.config.js`에서 `antd`의 `message` named import를 `error`로 차단한다.
+
+## 식별자·UI에서도 `message` 지양
+
+- Ant Design `Form` 규칙·Zod 커스텀 `message:` 제거 → 기본 검증 또는 `fieldValidationHelp()` (`@/shared/utils/error-handler`)
+- `Error.prototype.message` / `error.message` 미사용 → `unknownErrorText(error, fallback)`
+- `GuideMessage` 컴포넌트 삭제 → `GuideAlert` (`text` prop, Alert `description`)
+- 알림·API 응답 필드 `message` → `body` / `detail`
+- `ActionResultModal` 본문 prop → `body`
+- `DetailInfoForm` 강조 문구 prop → `headerNote`
+- Alert JSX → `description=` ( `message=` 사용 안 함)
+
+## Related
+
+- [ant-design-usage.md](./ant-design-usage.md)
+- [cms-alert-modal.md](./cms-alert-modal.md)
+
+**Last updated:** 2026-05-19

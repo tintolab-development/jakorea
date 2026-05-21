@@ -6,8 +6,8 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Checkbox, Input, Modal, message } from 'antd'
-import { AppButton } from '@/shared/ui/app-button'
+import { Checkbox, Input, Modal } from 'antd'
+import { CmsButton } from '@/shared/ui'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import { createProgramPost, addProgramFiles } from '@/data/mock'
 import { fileUploadService } from '@/entities/application/api/file-upload-service'
@@ -86,11 +86,9 @@ export function PostWriteModal({
     for (const file of newFiles) {
       const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase()
       if (!ALLOWED_EXTENSIONS.includes(ext)) {
-        message.warning(`"${file.name}"은(는) ${getAllowedExtensionsDescription()} 형식만 등록 가능합니다.`)
         continue
       }
       if (file.size > MAX_FILE_SIZE) {
-        message.warning(`"${file.name}"은(는) 15MB 이하여야 합니다.`)
         continue
       }
       valid.push(file)
@@ -105,7 +103,6 @@ export function PostWriteModal({
   const handleRegister = async () => {
     const trimmed = content.trim()
     if (!trimmed) {
-      message.warning('게시글 내용을 입력해 주세요.')
       return
     }
 
@@ -130,14 +127,12 @@ export function PostWriteModal({
           fileSize: r.fileSize,
         })))
       }
-      message.success('게시글이 등록되었습니다.')
       resetForm(setAudience, setContent, setFiles)
       onSuccess?.()
       onCancel()
     } catch (e) {
       console.error('게시글 등록 실패:', e)
-      message.error('게시글 등록에 실패했습니다. 다시 시도해 주세요.')
-    } finally {
+      } finally {
       setLoading(false)
     }
   }
@@ -151,12 +146,12 @@ export function PostWriteModal({
       className="post-write-modal"
       footer={
         <div className="post-write-modal__footer-actions">
-          <AppButton variant="cancel" size="large" onClick={onCancel} disabled={loading}>
+          <CmsButton variant="secondary" size="large" onClick={onCancel} disabled={loading}>
             취소
-          </AppButton>
-          <AppButton variant="primary" size="large" onClick={handleRegister} loading={loading}>
+          </CmsButton>
+          <CmsButton variant="primary" size="large" onClick={handleRegister} loading={loading}>
             등록
-          </AppButton>
+          </CmsButton>
         </div>
       }
       closable

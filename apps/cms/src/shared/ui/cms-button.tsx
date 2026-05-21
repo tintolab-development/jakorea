@@ -68,11 +68,15 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
       .filter(Boolean)
       .join(' ')
 
+    const antType: ButtonProps['type'] =
+      variant === 'primary' ? 'primary' : variant === 'delete' ? 'default' : 'default'
+
     return (
       <Button
         ref={ref}
-        type="default"
+        type={antType}
         htmlType={type}
+        danger={variant === 'delete'}
         size={antdSize}
         className={cn}
         disabled={disabled}

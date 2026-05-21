@@ -1,4 +1,4 @@
-import { useCallback, useMemo, type ComponentType } from 'react'
+import { useCallback, useMemo, type ComponentType, type Key } from 'react'
 import { Empty } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -12,6 +12,10 @@ import {
 } from '@/data/mock/instructor-member-settlements'
 import { CalendarListItemContentProgram } from './item-list/program'
 import { CalendarListItemContentSettlement } from './item-list/settlement'
+import {
+  CalendarListItemContentInstitutionApplication,
+  type CalendarInstitutionApplicationListRow,
+} from './item-list/ujat-institution-application'
 import { settlementEventStatusColorPair } from './preview-tooltip/settlement'
 import {
   PROGRAM_DAY_SCHEDULE_STATUS_CONFIG,
@@ -22,7 +26,7 @@ import {
   SCHEDULE_COLORS,
   buildResolvedScheduleColorMapForPrograms,
   type ScheduleColorPair,
-} from '@/features/program/ui/program-schedule-colors'
+} from '@/features/program/shared/ui/program-schedule-colors'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -33,11 +37,31 @@ type CalendarListItemProgramProps = {
   time: string
 }
 
-export type CalendarSubRightListProps = {
+export type CalendarSubRightListProgramProps = {
+  mode?: 'program'
   selectedDate: Dayjs
   items: Program[]
   onItemClick: (item: Program) => void
   listItem?: ComponentType<CalendarListItemProgramProps>
+}
+
+export type CalendarSubRightListInstitutionApplicationProps = {
+  mode: 'institutionApplication'
+  selectedDate: Dayjs
+  rows: CalendarInstitutionApplicationListRow[]
+  selectedRowKeys: Key[]
+  onSelectionChange: (keys: Key[]) => void
+  resolveRowColors?: (row: CalendarInstitutionApplicationListRow) => ScheduleColorPair | undefined
+}
+
+export type CalendarSubRightListProps =
+  | CalendarSubRightListProgramProps
+  | CalendarSubRightListInstitutionApplicationProps
+
+function isInstitutionApplicationListProps(
+  props: CalendarSubRightListProps
+): props is CalendarSubRightListInstitutionApplicationProps {
+  return props.mode === 'institutionApplication'
 }
 
 function CalendarSubRightProgramList({
@@ -108,7 +132,79 @@ function CalendarSubRightProgramList({
   )
 }
 
+function CalendarSubRightInstitutionApplicationList({
+  rows,
+  selectedRowKeys,
+  onSelectionChange,
+  resolveRowColors,
+}: {
+  rows: CalendarInstitutionApplicationListRow[]
+  selectedRowKeys: Key[]
+  onSelectionChange: (keys: Key[]) => void
+  resolveRowColors?: (row: CalendarInstitutionApplicationListRow) => ScheduleColorPair | undefined
+}) {
+  const selectedSet = useMemo(() => new Set(selectedRowKeys.map(String)), [selectedRowKeys])
+
+  const handleToggle = useCallback(
+    (key: string, checked: boolean) => {
+      if (checked) {
+        if (selectedSet.has(key)) return
+        onSelectionChange([...selectedRowKeys, key])
+      } else {
+        onSelectionChange(selectedRowKeys.filter(k => String(k) !== key))
+      }
+    },
+    [onSelectionChange, selectedRowKeys, selectedSet]
+  )
+
+  return (
+    <div
+      className={
+        rows.length === 0 ? 'calendar-list calendar-list--empty' : 'calendar-list'
+      }
+    >
+      {rows.length === 0 ? (
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+      ) : (
+        rows.map(row => {
+          const colors = resolveRowColors?.(row) ?? SCHEDULE_COLORS[0]
+          return (
+            <div
+              key={row.id}
+              className="calendar-list-item"
+              data-has-color="true"
+              style={{
+                backgroundColor: colors.bg,
+                border: `1px solid ${colors.border}`,
+              }}
+            >
+              <div className="calendar-list-item__column">
+                <CalendarListItemContentInstitutionApplication
+                  row={row}
+                  checked={selectedSet.has(row.id)}
+                  onToggle={handleToggle}
+                />
+              </div>
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
+}
+
 export function CalendarSubRightList(props: CalendarSubRightListProps) {
+  if (isInstitutionApplicationListProps(props)) {
+    return (
+      <CalendarSubRightInstitutionApplicationList
+        rows={props.rows}
+        selectedRowKeys={props.selectedRowKeys}
+        onSelectionChange={props.onSelectionChange}
+        resolveRowColors={props.resolveRowColors}
+      />
+    )
+  }
+
   const { selectedDate, items, onItemClick, listItem = CalendarListItemContentProgram } = props
   return (
     <CalendarSubRightProgramList

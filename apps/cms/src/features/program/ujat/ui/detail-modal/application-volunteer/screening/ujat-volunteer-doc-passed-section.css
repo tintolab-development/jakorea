@@ -1,0 +1,326 @@
+.ujat-volunteer-doc-passed {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/*
+ * 필터 1행 4필드 + 조회 — 1차 서류 심사 대상자(doc-screening) 2행 그리드와 동일 원리
+ * (칸 너비 고정 + gap 12px, 퍼센트 Col·merged-inline 래퍼로 인한 과한 간격 방지)
+ */
+.filter-table-layout.ujat-volunteer-doc-passed__filter-layout {
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
+  --ujat-doc-passed-filter-col-width: min(
+    var(--filter-control-max-width, 260px),
+    calc((100% - 3 * var(--filter-field-gap)) / 4)
+  );
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.filter-table-layout.ujat-volunteer-doc-passed__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.filter-table-layout.ujat-volunteer-doc-passed__filter-layout .table-filter-group__container {
+  display: grid !important;
+  width: 100%;
+  box-sizing: border-box;
+  gap: var(--table-filter-field-gap);
+  align-items: end;
+  justify-content: start;
+  grid-template-columns:
+    repeat(4, minmax(0, var(--ujat-doc-passed-filter-col-width))) minmax(0, 1fr) 160px !important;
+}
+
+.filter-table-layout.ujat-volunteer-doc-passed__filter-layout .table-filter-group__fields-container {
+  display: contents;
+}
+
+.filter-table-layout.ujat-volunteer-doc-passed__filter-layout .table-filter-group__fields-inner.ant-row {
+  display: contents;
+}
+
+.filter-table-layout.ujat-volunteer-doc-passed__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.filter-table-layout.ujat-volunteer-doc-passed__filter-layout .table-filter-group__fields-shell {
+  grid-column: 6;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  justify-self: end;
+}
+
+.filter-table-layout.ujat-volunteer-doc-passed__filter-layout
+  .table-filter-group__grid-cell,
+.filter-table-layout.ujat-volunteer-doc-passed__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .unified-filter-card__field,
+.filter-table-layout.ujat-volunteer-doc-passed__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .labeled-search-input,
+.filter-table-layout.ujat-volunteer-doc-passed__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .cms-select,
+.filter-table-layout.ujat-volunteer-doc-passed__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .ant-select {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.ujat-volunteer-doc-passed__table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.ujat-volunteer-doc-passed .clickable-table .ant-table-tbody > tr.ant-table-row:hover:not(.ant-table-row-selected) > td {
+  background: var(--color-table-row-hover, rgba(1, 161, 175, 0.06)) !important;
+}
+
+/* 활동 포기 행 — 셀 전체 비활성(클릭·호버 없음, opacity로 흐리게) */
+.ujat-volunteer-doc-passed
+  .clickable-table
+  .ant-table-tbody
+  > tr.ujat-volunteer-doc-passed__row--withdrawn
+  > td {
+  pointer-events: none;
+  cursor: default !important;
+  opacity: 0.4;
+  color: var(--main-BK, #3d3d3d);
+  background: var(--color-table-row-disabled-bg, rgba(61, 61, 61, 0.04)) !important;
+}
+
+.ujat-volunteer-doc-passed
+  .clickable-table
+  .ant-table-tbody
+  > tr.ujat-volunteer-doc-passed__row--withdrawn:hover
+  > td {
+  background: var(--color-table-row-disabled-bg, rgba(61, 61, 61, 0.04)) !important;
+}
+
+.ujat-volunteer-doc-passed
+  .clickable-table
+  .ant-table-tbody
+  > tr.ujat-volunteer-doc-passed__row--withdrawn
+  .ujat-interview-assignment-status-text--withdrawn {
+  color: #c32f4a;
+}
+
+.ujat-volunteer-doc-passed__center-cell {
+  text-align: center !important;
+}
+
+.ujat-volunteer-doc-passed__toolbar-title {
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.ujat-volunteer-doc-passed__toolbar-count {
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
+}
+
+.ujat-volunteer-doc-passed__toolbar-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ujat-volunteer-doc-passed__calendar-container {
+  width: 100%;
+  min-width: 0;
+}
+
+/*
+ * 캘린더 뷰: 요일 헤더·날짜 셀 사이 디바이더 제거 (UJAT 합격자 화면만)
+ * — 공통 ProgramCalendar(.program-calendar.css)는 변경하지 않음
+ */
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .ant-picker-calendar
+  .ant-picker-panel,
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .ant-picker-date-panel {
+  border-top: none !important;
+}
+
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .ant-picker-content
+  thead
+  th {
+  border-bottom: none !important;
+}
+
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .program-calendar-cell {
+  border: none;
+  gap: 4px;
+}
+
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .program-calendar-cell-date,
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .program-calendar-cell-events {
+  border: none !important;
+}
+
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .ant-picker-calendar-date,
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .ant-picker-calendar-date-value,
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .ant-picker-calendar-date-content {
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
+/* 격자선: 우·하만 (top 없음 → 요일 행과 첫 날짜 행 사이 이중선 방지) */
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .ant-picker-content
+  tbody
+  .ant-picker-cell {
+  padding: 0;
+  vertical-align: top;
+  border: none;
+  border-right: 1px solid var(--color-border-light, #f0f0f0);
+  border-bottom: 1px solid var(--color-border-light, #f0f0f0);
+}
+
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .ant-picker-content
+  tbody
+  tr
+  td:first-child {
+  border-left: 1px solid var(--color-border-light, #f0f0f0);
+}
+
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .ant-picker-content
+  tbody
+  tr {
+  height: var(--calendar-month-row-height, 127.4px);
+}
+
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .ant-picker-cell
+  .program-calendar-cell,
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .ant-picker-cell
+  .program-calendar-cell-tooltip-trigger,
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .ant-picker-cell
+  .program-calendar-cell-tooltip-trigger--full-cell {
+  height: 100%;
+  min-height: 127.4px;
+}
+
+.ujat-volunteer-doc-passed__calendar-container
+  .program-calendar-main.applicant-calendar-main
+  .ant-picker-cell
+  .program-calendar-cell-tooltip-trigger--full-cell
+  > .program-calendar-cell {
+  height: 100%;
+  min-height: 127.4px;
+}
+
+/* 면접일 배정 / 재배정 — 테이블 액션 버튼 (120×40) */
+.ujat-volunteer-doc-passed__assign-btn.cms-button.ant-btn {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding: 6px 16px !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+  border-radius: var(--8, 8px) !important;
+  border: 1px solid var(--color-mint-01, #01a1af) !important;
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff !important;
+  color: var(--color-mint-01, #01a1af) !important;
+  text-align: center !important;
+  font-family: Pretendard, sans-serif !important;
+  font-size: 14px !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+  line-height: 150% !important;
+  white-space: nowrap;
+}
+
+.ujat-volunteer-doc-passed__assign-btn.cms-button.ant-btn .cms-button__label {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  line-height: inherit !important;
+  color: inherit !important;
+}
+
+.ujat-volunteer-doc-passed__assign-btn.cms-button.ant-btn:hover:not(:disabled) {
+  border-color: var(--color-mint-01, #01a1af) !important;
+  color: var(--color-mint-01, #01a1af) !important;
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%), #fff !important;
+}
+
+.ujat-volunteer-doc-passed__assign-btn.cms-button.ant-btn:disabled {
+  border-color: var(--color-border-input, rgba(61, 61, 61, 0.2)) !important;
+  color: var(--default-BK, #3d3d3d) !important;
+  opacity: 0.4;
+  background: #fff !important;
+  cursor: not-allowed;
+}
+
+/* 활동 포기 행: 행 opacity와 중복 적용되지 않도록 */
+.ujat-volunteer-doc-passed
+  .ujat-volunteer-doc-passed__row--withdrawn
+  .ujat-volunteer-doc-passed__assign-btn.cms-button.ant-btn:disabled {
+  opacity: 1;
+}

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { BookOutlined } from '@ant-design/icons'
-import { message } from 'antd'
 import { CmsButton, CmsCheckbox, CmsInput, CmsRadio, CmsSelect } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -59,7 +58,6 @@ export function TextbookDetailFullPageModal({
   const handleSave = () => {
     const payload = toSubmitPayload(editForm)
     if (!payload) {
-      message.warning('교육 대상을 1개 이상 선택해 주세요.')
       return
     }
     onSave(payload)

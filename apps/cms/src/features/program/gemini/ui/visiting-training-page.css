@@ -1,0 +1,9 @@
+/* 탭 그룹 왼쪽 여백 — 권한 승인 페이지와 동일 */
+.gemini-visiting-training-page__tabs.cms-text-tabs .cms-text-tabs__row {
+  padding-left: 20px;
+  padding-bottom: 16px;
+}
+
+.gemini-visiting-training-page__approved-placeholder {
+  min-height: 320px;
+}

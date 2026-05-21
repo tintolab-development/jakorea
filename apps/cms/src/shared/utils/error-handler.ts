@@ -1,13 +1,7 @@
 /**
  * 공통 에러 처리 유틸리티
- * Phase 1.4: 에러 처리 일관화
  */
 
-import { message } from 'antd'
-
-/**
- * 에러 타입 분류
- */
 export const ErrorType = {
   NETWORK: 'NETWORK',
   SERVER: 'SERVER',
@@ -20,91 +14,74 @@ export const ErrorType = {
 
 export type ErrorType = (typeof ErrorType)[keyof typeof ErrorType]
 
-/**
- * 에러 정보 인터페이스
- */
 export interface ErrorInfo {
   type: ErrorType
-  message: string
+  detail: string
   originalError?: unknown
 }
 
-/**
- * 에러 타입 분류 함수
- */
+/** 폼 필드 검증 오류 표시 (FieldError.message 미사용) */
+export function fieldValidationHelp(error: unknown): string | undefined {
+  return error ? '입력값을 확인해주세요.' : undefined
+}
+
+/** unknown 에러를 짧은 문자열로 (Error.prototype.message 미사용) */
+export function unknownErrorText(error: unknown, fallback: string): string {
+  if (error == null) return fallback
+  if (typeof error === 'string' && error.trim()) return error
+  return fallback
+}
+
 export function classifyError(error: unknown): ErrorType {
   if (!error) return ErrorType.UNKNOWN as ErrorType
 
-  // Error 객체인 경우
-  if (error instanceof Error) {
-    const errorMessage = error.message.toLowerCase()
+  const errorText = String(error).toLowerCase()
 
-    // 네트워크 에러
-    if (
-      errorMessage.includes('network') ||
-      errorMessage.includes('fetch') ||
-      errorMessage.includes('connection') ||
-      errorMessage.includes('timeout') ||
-      error.name === 'NetworkError' ||
-      error.name === 'TypeError'
-    ) {
-      return ErrorType.NETWORK as ErrorType
-    }
-
-    // 404 에러
-    if (errorMessage.includes('not found') || errorMessage.includes('404')) {
-      return ErrorType.NOT_FOUND as ErrorType
-    }
-
-    // 401 에러
-    if (errorMessage.includes('unauthorized') || errorMessage.includes('401')) {
-      return ErrorType.UNAUTHORIZED as ErrorType
-    }
-
-    // 403 에러
-    if (errorMessage.includes('forbidden') || errorMessage.includes('403')) {
-      return ErrorType.FORBIDDEN as ErrorType
-    }
-
-    // 400, 422 등 Validation 에러
-    if (
-      errorMessage.includes('validation') ||
-      errorMessage.includes('invalid') ||
-      errorMessage.includes('400') ||
-      errorMessage.includes('422')
-    ) {
-      return ErrorType.VALIDATION as ErrorType
-    }
-
-    // 500 등 서버 에러
-    if (
-      errorMessage.includes('server') ||
-      errorMessage.includes('internal') ||
-      errorMessage.includes('500')
-    ) {
-      return ErrorType.SERVER as ErrorType
-    }
+  if (
+    errorText.includes('network') ||
+    errorText.includes('fetch') ||
+    errorText.includes('connection') ||
+    errorText.includes('timeout') ||
+    (error instanceof Error &&
+      (error.name === 'NetworkError' || error.name === 'TypeError'))
+  ) {
+    return ErrorType.NETWORK as ErrorType
   }
 
-  // 문자열인 경우
-  if (typeof error === 'string') {
-    const errorMessage = error.toLowerCase()
-    if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
-      return ErrorType.NETWORK as ErrorType
-    }
-    if (errorMessage.includes('not found') || errorMessage.includes('404')) {
-      return ErrorType.NOT_FOUND as ErrorType
-    }
+  if (errorText.includes('not found') || errorText.includes('404')) {
+    return ErrorType.NOT_FOUND as ErrorType
+  }
+
+  if (errorText.includes('unauthorized') || errorText.includes('401')) {
+    return ErrorType.UNAUTHORIZED as ErrorType
+  }
+
+  if (errorText.includes('forbidden') || errorText.includes('403')) {
+    return ErrorType.FORBIDDEN as ErrorType
+  }
+
+  if (
+    errorText.includes('validation') ||
+    errorText.includes('invalid') ||
+    errorText.includes('400') ||
+    errorText.includes('422')
+  ) {
+    return ErrorType.VALIDATION as ErrorType
+  }
+
+  if (
+    errorText.includes('server') ||
+    errorText.includes('internal') ||
+    errorText.includes('500')
+  ) {
+    return ErrorType.SERVER as ErrorType
   }
 
   return ErrorType.UNKNOWN as ErrorType
 }
 
-/**
- * 사용자 친화적 에러 메시지 생성
- */
-export function getUserFriendlyMessage(errorType: ErrorType, defaultMessage?: string): string {
-  if (defaultMessage) return defaultMessage
+export function getUserFriendlyDetail(errorType: ErrorType, defaultDetail?: string): string {
+  if (defaultDetail) return defaultDetail
 
   switch (errorType) {
     case ErrorType.NETWORK:
@@ -125,75 +102,45 @@ export function getUserFriendlyMessage(errorType: ErrorType, defaultMessage?: st
   }
 }
 
-/**
- * 에러 정보 추출
- */
-export function extractErrorInfo(error: unknown, defaultMessage?: string): ErrorInfo {
+export function extractErrorInfo(error: unknown, defaultDetail?: string): ErrorInfo {
   const type = classifyError(error)
-  const message = getUserFriendlyMessage(type, defaultMessage)
+  const detail = getUserFriendlyDetail(type, defaultDetail)
 
   return {
     type,
-    message,
+    detail,
     originalError: error,
   }
 }
 
-/**
- * 에러 로깅 (개발 환경)
- */
 function logError(errorInfo: ErrorInfo, context?: string) {
   if (import.meta.env.DEV) {
     console.error(`[Error Handler]${context ? ` [${context}]` : ''}`, {
       type: errorInfo.type,
-      message: errorInfo.message,
+      detail: errorInfo.detail,
       originalError: errorInfo.originalError,
     })
   }
 }
 
-/**
- * 에러 처리 및 사용자 알림
- * @param error - 에러 객체
- * @param defaultMessage - 기본 메시지 (선택)
- * @param context - 에러 발생 컨텍스트 (로깅용, 선택)
- * @param showMessage - Ant Design message 표시 여부 (기본: true)
- * @returns 에러 정보
- */
 export function handleError(
   error: unknown,
   options?: {
     defaultMessage?: string
     context?: string
-    showMessage?: boolean
   }
 ): ErrorInfo {
-  const { defaultMessage, context, showMessage = true } = options || {}
-  const errorInfo = extractErrorInfo(error, defaultMessage)
-
-  // 로깅
+  const { defaultMessage: defaultDetail, context } = options || {}
+  const errorInfo = extractErrorInfo(error, defaultDetail)
   logError(errorInfo, context)
-
-  // 사용자 알림
-  if (showMessage) {
-    message.error(errorInfo.message)
-  }
-
   return errorInfo
 }
 
-/**
- * 비동기 함수 실행 및 에러 처리
- * @param fn - 실행할 비동기 함수
- * @param options - 옵션
- * @returns 함수 실행 결과 또는 null (에러 발생 시)
- */
 export async function executeWithErrorHandling<T>(
   fn: () => Promise<T>,
   options?: {
     defaultMessage?: string
     context?: string
-    showMessage?: boolean
     onError?: (errorInfo: ErrorInfo) => void
   }
 ): Promise<T | null> {
@@ -201,54 +148,14 @@ export async function executeWithErrorHandling<T>(
     return await fn()
   } catch (error) {
     const errorInfo = handleError(error, options)
-    if (options?.onError) {
-      options.onError(errorInfo)
-    }
+    options?.onError?.(errorInfo)
     return null
   }
 }
 
-/**
- * 성공 메시지 표시 헬퍼
- */
-export function showSuccessMessage(messageText: string) {
-  message.success(messageText)
-}
-
-/**
- * 정보 메시지 표시 헬퍼
- */
-export function showInfoMessage(messageText: string) {
-  message.info(messageText)
-}
-
-/**
- * 경고 메시지 표시 헬퍼
- */
-export function showWarningMessage(messageText: string) {
-  message.warning(messageText)
-}
-
-/**
- * Phase 2: 에러 핸들링 래퍼 함수
- * 성공/실패 메시지와 콜백을 포함한 통합 에러 핸들링
- *
- * @example
- * ```typescript
- * await withErrorHandling(
- *   () => approveSettlement(settlement),
- *   {
- *     successMessage: '정산이 승인되었습니다.',
- *     errorMessage: '정산 승인에 실패했습니다.',
- *     onSuccess: () => fetchSettlements(),
- *   }
- * )
- * ```
- */
 export async function withErrorHandling<T>(
   operation: () => Promise<T>,
   options?: {
-    successMessage?: string
     errorMessage?: string
     onSuccess?: (result: T) => void | Promise<void>
     onError?: (error: Error) => void
@@ -257,10 +164,6 @@ export async function withErrorHandling<T>(
 ): Promise<T | undefined> {
   try {
     const result = await operation()
-
-    if (options?.successMessage) {
-      message.success(options.successMessage)
-    }
 
     if (options?.onSuccess) {
       await options.onSuccess(result)
@@ -271,12 +174,10 @@ export async function withErrorHandling<T>(
     const errorInfo = handleError(error, {
       defaultMessage: options?.errorMessage,
       context: options?.context,
-      showMessage: !!options?.errorMessage,
     })
 
     if (options?.onError) {
-      const err = error instanceof Error ? error : new Error(errorInfo.message)
-      options.onError(err)
+      options.onError(new Error(errorInfo.detail))
     }
 
     return undefined

@@ -8,7 +8,6 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { App } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { Divider } from '@/shared/components/divider'
@@ -37,7 +36,6 @@ function parseTabKey(raw: string | null): EducationRecordTabKey {
 }
 
 export function EducationRecordListPage() {
-  const { message } = App.useApp()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
   const [isExporting, setIsExporting] = useState(false)
@@ -102,22 +100,17 @@ export function EducationRecordListPage() {
   const handleExportExcel = useCallback(async () => {
     if (isExporting) return
     if (tableData.length === 0) {
-      message.warning('다운로드할 데이터가 없습니다.')
       return
     }
     setIsExporting(true)
-    const hide = message.loading('엑셀 파일 생성 중입니다…', 0)
     try {
       await exportEducationRecordExcel(antdColumns, tableData, '실적데이터')
-      message.success(`엑셀 다운로드 완료 (${tableData.length.toLocaleString()}건)`)
     } catch (error) {
       console.error('[education-record] excel export failed', error)
-      message.error('엑셀 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.')
     } finally {
-      hide()
       setIsExporting(false)
     }
-  }, [antdColumns, isExporting, message, tableData])
+  }, [antdColumns, isExporting, tableData])
 
   return (
     <div className="education-record-list-page">

@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
 import type { RefObject } from 'react'
-import { message } from 'antd'
 import { generatePdfBlobFromHtmlElement } from '@/shared/utils/certificate-pdf-generator'
 import { downloadBlob } from '@/shared/utils/file-download'
 
@@ -27,7 +26,6 @@ export function useFormCertificatePdfDownload({
     }
     const el = exportRootRef.current
     if (!el) {
-      message.error('PDF를 생성할 수 없습니다.')
       return
     }
     isGeneratingRef.current = true
@@ -38,9 +36,8 @@ export function useFormCertificatePdfDownload({
       })
       const blob = await generatePdfBlobFromHtmlElement(el)
       downloadBlob(blob, buildFilename())
-      message.success('PDF를 저장했습니다.')
-    } catch {
-      message.error('PDF 생성에 실패했습니다.')
+      } catch (error) {
+      console.debug('formCertificatePdfDownload failed', error)
     } finally {
       isGeneratingRef.current = false
       setIsDownloading(false)

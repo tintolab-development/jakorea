@@ -143,7 +143,6 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
   const personalInfoNode =
     !pageShell.basicInfoEditing && headerLayout.showPersonalInfoToggle && personalInfoButton ? (
       <PersonalInfoRevealButton
-        ui="cms"
         labelMode="stickyReveal"
         revealed={personalInfoRevealed}
         cmsVariant={personalInfoButton.variant}

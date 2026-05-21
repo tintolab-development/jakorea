@@ -29,7 +29,7 @@ import {
   SCHEDULE_COLORS,
   buildResolvedScheduleColorMapForPrograms,
   type ScheduleColorPair,
-} from '@/features/program/ui/program-schedule-colors'
+} from '@/features/program/shared/ui/program-schedule-colors'
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import { SegmentedTab } from '@/shared/ui'
 import '@/shared/ui/widget-more-button.css'

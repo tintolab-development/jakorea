@@ -3,7 +3,7 @@
  */
 
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
 import './payment-order-payment-rejection-result-modal.css'
 
@@ -39,9 +39,9 @@ export function PaymentOrderPaymentRejectionResultModal({
       className="payment-order-payment-reject-result-modal"
       footer={
         <div className="payment-order-payment-reject-result__footer-actions">
-          <AppButton variant="cancel" size="large" onClick={onClose}>
+          <CmsButton variant="secondary" size="large" onClick={onClose}>
             확인
-          </AppButton>
+          </CmsButton>
         </div>
       }
     >

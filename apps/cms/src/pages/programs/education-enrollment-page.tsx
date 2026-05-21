@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react'
 import { PageHeader } from '@/shared/ui/page-header'
-import { EnrollmentStatusTable } from '@/features/program/ui/enrollment-status-table'
+import { EnrollmentStatusTable } from '@/features/program/general/ui/enrollment-status-table'
 import { getEducationPrograms } from '@/data/mock/education-programs'
 import type { Program } from '@/types/domain'
 

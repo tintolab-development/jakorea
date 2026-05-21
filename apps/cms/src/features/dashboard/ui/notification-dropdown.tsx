@@ -32,8 +32,7 @@ const TYPE_TO_CATEGORY: Record<NotificationType, NotificationCategoryKey> = {
   schedule: 'schedule',
   matching: 'matching',
   settlement: 'settlement',
-  system: 'system',
-}
+  system: 'system' }
 
 function getCategoryLabel(type: NotificationType): string {
   const key = TYPE_TO_CATEGORY[type]
@@ -57,8 +56,7 @@ export function NotificationDropdown({
   notifications,
   unreadCount: _unreadCount,
   onNotificationClick,
-  onClose,
-}: NotificationDropdownProps) {
+  onClose }: NotificationDropdownProps) {
   const [category, setCategory] = useState<NotificationCategoryKey>('all')
 
   const filtered = useMemo(() => {
@@ -126,9 +124,9 @@ export function NotificationDropdown({
                   </Text>
                   <Text
                     className="notification-dropdown-item-message"
-                    title={notification.message || notification.title}
+                    title={notification.body || notification.title}
                   >
-                    {notification.message || notification.title}
+                    {notification.body || notification.title}
                   </Text>
                 </div>
                 {notification.programName && (

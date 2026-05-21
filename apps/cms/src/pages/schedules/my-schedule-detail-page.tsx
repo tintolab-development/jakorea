@@ -23,16 +23,14 @@ const scheduleStatusLabels: Record<ScheduleStatus | string, string> = {
   SCH_01: '일정이 예정되어 있습니다.',
   SCH_02: '현재 일정이 진행 중입니다.',
   SCH_03: '일정이 종료되었습니다.',
-  SCH_04: '일정이 취소되었습니다.',
-}
+  SCH_04: '일정이 취소되었습니다.' }
 
 // 일정 상태 색상
 const scheduleStatusColors: Record<ScheduleStatus | string, string> = {
   SCH_01: 'blue',
   SCH_02: 'processing',
   SCH_03: 'success',
-  SCH_04: 'error',
-}
+  SCH_04: 'error' }
 
 export function MyScheduleDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -66,8 +64,7 @@ export function MyScheduleDetailPage() {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          minHeight: '400px',
-        }}
+          minHeight: '400px' }}
       >
         <Spin size="large" />
       </div>
@@ -139,7 +136,6 @@ export function MyScheduleDetailPage() {
             {/* SCH_04(취소) 또는 변경 이슈가 있는 경우 reason_public 표시 - Phase 5.6 */}
             {(status as string) === 'SCH_04' && (
               <Alert
-                message="일정이 취소되었습니다"
                 description={(schedule as any).reasonPublic || '사유를 확인할 수 없습니다.'}
                 type="error"
                 showIcon

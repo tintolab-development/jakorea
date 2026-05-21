@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { message } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { MESSAGES } from '@/shared/constants/messages'
 import { duplicateWritingTemplate } from '@/features/template/api/duplicate-writing-template'
 import { getWritingTemplateRowsByCategory } from '@/features/template/lib/writing-template-create-helpers'
 import type {
@@ -96,10 +94,9 @@ export function TemplateCreateModal({
         sourceTemplateId: resolved.templateId,
         category: resolved.category,
       })
-      message.success(MESSAGES.success.templateCopied)
       onDuplicateSuccess(newTemplateId)
-    } catch {
-      message.error('복제에 실패했습니다. 다시 시도해 주세요.')
+    } catch (error) {
+      console.debug('templateCreateModal duplicate failed', error)
     } finally {
       setSubmitting(false)
     }

@@ -61,6 +61,29 @@ export default tseslint.config(
     }
   },
   {
+    files: ['apps/cms/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'antd',
+              importNames: ['message'],
+              message:
+                'antd `message` is not allowed in CMS. Do not use toasts; use modals/inline UI or @/shared/utils/error-handler (logging only). See apps/cms/.cursor/rules/libraries/no-antd-message.mdc',
+            },
+            {
+              name: '@/shared/ui/cms-message',
+              message:
+                'cms-message was removed. Do not show toast messages in CMS.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['packages/**/*.{ts,tsx}'],
     linterOptions: {
       reportUnusedDisableDirectives: true

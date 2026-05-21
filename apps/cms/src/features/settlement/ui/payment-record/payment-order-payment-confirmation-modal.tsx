@@ -7,7 +7,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { CalendarOutlined } from '@ant-design/icons'
 import { DatePicker } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
 import './payment-order-payment-confirmation-modal.css'
 
@@ -75,19 +75,18 @@ export function PaymentOrderPaymentConfirmationModal({
       className="payment-order-payment-confirm-modal"
       footer={
         <div className="payment-order-payment-confirm__footer-actions">
-          <AppButton variant="cancel" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="large" onClick={onCancel}>
             취소
-          </AppButton>
-          <AppButton
+          </CmsButton>
+          <CmsButton
             variant="primary"
-            size="filter-wide"
-            modalTeal
+            size="large" style={{ minWidth: 180 }}
             onClick={() =>
               onConfirm({ lectureFeePaymentScheduledDateIso: expectedDate.format('YYYY-MM-DD') })
             }
           >
             지급조서 확인 완료
-          </AppButton>
+          </CmsButton>
         </div>
       }
     >

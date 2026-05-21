@@ -5,7 +5,6 @@
  */
 
 import type { ReactNode } from 'react'
-import { Divider } from '@/shared/components/divider'
 import './filter-table-layout.css'
 import {
   TableFilterGroup,
@@ -20,6 +19,8 @@ export interface FilterTableLayoutProps extends TableFilterGroupProps {
   showFilter?: boolean
   /** 테이블 상단 제목 */
   title?: ReactNode
+  /** 제목과 건수(description) 사이 보조 텍스트(JSX) */
+  titleNote?: ReactNode
   /** 테이블 상단 보조 설명(건수 등) */
   description?: ReactNode
   /** 헤더 우측 버튼·액션 */
@@ -34,6 +35,7 @@ export interface FilterTableLayoutProps extends TableFilterGroupProps {
 export function FilterTableLayout({
   showFilter = true,
   title,
+  titleNote,
   description,
   actions,
   topNav,
@@ -48,7 +50,8 @@ export function FilterTableLayout({
   ]
     .filter(Boolean)
     .join(' ')
-  const showToolbar = title != null || description != null || actions != null
+  const showToolbar =
+    title != null || titleNote != null || description != null || actions != null
 
   return (
     <div className={rootClass}>
@@ -58,9 +61,7 @@ export function FilterTableLayout({
             <TableFilterGroup {...TableFilterGroupProps} />
           </div>
 
-          <div className="filter-table-layout__divider">
-            <Divider />
-          </div>
+          <div className="filter-table-layout__divider" role="separator" aria-hidden />
         </>
       ) : null}
 
@@ -70,6 +71,9 @@ export function FilterTableLayout({
         <div className="filter-table-layout__toolbar">
           <div className="filter-table-layout__toolbar-main">
             {title != null ? <div className="filter-table-layout__title">{title}</div> : null}
+            {titleNote != null ? (
+              <div className="filter-table-layout__title-note">{titleNote}</div>
+            ) : null}
             {description != null ? (
               <div className="filter-table-layout__description">{description}</div>
             ) : null}

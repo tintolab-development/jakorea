@@ -13,18 +13,15 @@ import {
   Select,
   Card,
   Typography,
-  message,
   Popconfirm,
   Tooltip,
   Modal,
   Form,
   InputNumber,
-  Switch,
-} from 'antd'
+  Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { PlusOutlined, EditOutlined, DeleteOutlined, BarsOutlined } from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
-import { MESSAGES } from '@/shared/constants'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 
 const { Text } = Typography
@@ -48,8 +45,7 @@ const mockCategories: PostCategory[] = [
     slug: 'important',
     order: 1,
     isActive: true,
-    postCount: 2,
-  },
+    postCount: 2 },
   {
     id: '2',
     type: 'NOTICE',
@@ -57,8 +53,7 @@ const mockCategories: PostCategory[] = [
     slug: 'notice',
     order: 2,
     isActive: true,
-    postCount: 15,
-  },
+    postCount: 15 },
   {
     id: '3',
     type: 'NOTICE',
@@ -66,8 +61,7 @@ const mockCategories: PostCategory[] = [
     slug: 'settlement',
     order: 3,
     isActive: true,
-    postCount: 8,
-  },
+    postCount: 8 },
   { id: '4', type: 'FAQ', name: '활동', slug: 'activity', order: 1, isActive: true, postCount: 12 },
   {
     id: '5',
@@ -76,8 +70,7 @@ const mockCategories: PostCategory[] = [
     slug: 'volunteer-hours',
     order: 2,
     isActive: true,
-    postCount: 5,
-  },
+    postCount: 5 },
   {
     id: '6',
     type: 'INQUIRY',
@@ -85,8 +78,7 @@ const mockCategories: PostCategory[] = [
     slug: 'system',
     order: 1,
     isActive: true,
-    postCount: 20,
-  },
+    postCount: 20 },
   { id: '7', type: 'INQUIRY', name: '기타', slug: 'etc', order: 2, isActive: true, postCount: 10 },
 ]
 
@@ -118,8 +110,7 @@ export function AdminCategoryPage() {
   // 삭제 핸들러
   const handleDelete = (id: string) => {
     setData(prev => prev.filter(item => item.id !== id))
-    message.success(MESSAGES.success.categoryDeleted)
-  }
+    }
 
   // 등록/수정 모달 열기
   const showModal = (category?: PostCategory) => {
@@ -132,8 +123,7 @@ export function AdminCategoryPage() {
       form.setFieldsValue({
         type: typeFilter === 'all' ? 'NOTICE' : typeFilter,
         isActive: true,
-        order: 1,
-      })
+        order: 1 })
     }
     setIsModalOpen(true)
   }
@@ -145,16 +135,13 @@ export function AdminCategoryPage() {
       const newCategory: PostCategory = {
         id: editingCategory?.id || `cat-${Date.now()}`,
         ...values,
-        postCount: editingCategory?.postCount || 0,
-      }
+        postCount: editingCategory?.postCount || 0 }
 
       if (editingCategory) {
         setData(prev => prev.map(item => (item.id === editingCategory.id ? newCategory : item)))
-        message.success(MESSAGES.success.categoryUpdated)
-      } else {
+        } else {
         setData(prev => [...prev, newCategory])
-        message.success(MESSAGES.success.categoryCreated)
-      }
+        }
       setIsModalOpen(false)
     } catch (error) {
       console.error('Validate Failed:', error)
@@ -171,38 +158,32 @@ export function AdminCategoryPage() {
         const config = {
           NOTICE: { color: 'blue', label: '공지사항' },
           FAQ: { color: 'green', label: 'FAQ' },
-          INQUIRY: { color: 'orange', label: '문의하기' },
-        }[type as 'NOTICE' | 'FAQ' | 'INQUIRY']
+          INQUIRY: { color: 'orange', label: '문의하기' } }[type as 'NOTICE' | 'FAQ' | 'INQUIRY']
         return <Tag color={config.color}>{config.label}</Tag>
-      },
-    },
+      } },
     {
       title: '카테고리명',
       dataIndex: 'name',
       key: 'name',
-      render: (text: string) => <Text strong>{text}</Text>,
-    },
+      render: (text: string) => <Text strong>{text}</Text> },
     {
       title: '슬러그(Slug)',
       dataIndex: 'slug',
       key: 'slug',
-      width: 150,
-    },
+      width: 150 },
     {
       title: '순서',
       dataIndex: 'order',
       key: 'order',
       width: 80,
-      align: 'center' as const,
-    },
+      align: 'center' as const },
     {
       title: '게시글 수',
       dataIndex: 'postCount',
       key: 'postCount',
       width: 100,
       align: 'right' as const,
-      render: (count: number) => <Text type="secondary">{count}건</Text>,
-    },
+      render: (count: number) => <Text type="secondary">{count}건</Text> },
     {
       title: '사용 여부',
       dataIndex: 'isActive',
@@ -211,8 +192,7 @@ export function AdminCategoryPage() {
       align: 'center' as const,
       render: (isActive: boolean) => (
         <Tag color={isActive ? 'success' : 'default'}>{isActive ? '사용' : '미사용'}</Tag>
-      ),
-    },
+      ) },
     {
       title: '관리',
       key: 'action',
@@ -236,8 +216,7 @@ export function AdminCategoryPage() {
             </Tooltip>
           </Popconfirm>
         </Space>
-      ),
-    },
+      ) },
   ]
 
   return (
@@ -286,7 +265,7 @@ export function AdminCategoryPage() {
           <Form.Item
             name="type"
             label="게시판 구분"
-            rules={[{ required: true, message: '게시판 구분을 선택하세요' }]}
+            rules={[{ required: true }]}
           >
             <Select>
               <Option value="NOTICE">공지사항</Option>
@@ -298,7 +277,7 @@ export function AdminCategoryPage() {
           <Form.Item
             name="name"
             label="카테고리명"
-            rules={[{ required: true, message: '카테고리명을 입력하세요' }]}
+            rules={[{ required: true }]}
           >
             <Input placeholder="예: 활동, 봉사시간, 시스템 등" />
           </Form.Item>
@@ -306,7 +285,7 @@ export function AdminCategoryPage() {
           <Form.Item
             name="slug"
             label="슬러그 (Slug)"
-            rules={[{ required: true, message: '슬러그를 입력하세요' }]}
+            rules={[{ required: true }]}
           >
             <Input placeholder="예: activity, volunteer-hours" />
           </Form.Item>
@@ -315,7 +294,7 @@ export function AdminCategoryPage() {
             <Form.Item
               name="order"
               label="노출 순서"
-              rules={[{ required: true, message: '순서를 입력하세요' }]}
+              rules={[{ required: true }]}
             >
               <InputNumber min={1} style={{ width: '100%' }} />
             </Form.Item>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -30,7 +30,7 @@ import { TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS } from '@/features/textbook/mo
 import type { TextbookRow, TextbookUseStatus } from '@/features/textbook/model/textbook.types'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 import './textbook-page.css'
 
 type TextbookFilters = {
@@ -264,20 +264,18 @@ export default function TextbookPage() {
       setRows(listTextbooksFromStore())
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
-      message.success(`선택한 ${selectedIds.size}건의 교재가 삭제되었습니다.`)
-    } catch {
-      message.error('교재 삭제에 실패했습니다.')
+      } catch (error) {
+      console.debug('textbookPage bulkDelete failed', error)
     }
   }, [selectedRowKeys])
 
   const handleRegisterSubmit = useCallback(async (payload: TextbookRegisterPayload) => {
     try {
       await createTextbook(payload)
-      message.success('교재가 등록되었습니다.')
       setRows(listTextbooksFromStore())
       setRegisterModalOpen(false)
-    } catch {
-      message.error('교재 등록에 실패했습니다.')
+    } catch (error) {
+      console.debug('textbookPage register failed', error)
     }
   }, [])
 
@@ -292,8 +290,7 @@ export default function TextbookPage() {
     setPendingKitQuantities(null)
     setKitQuantityChangeConfirmOpen(false)
     setKitQuantityModalOpen(false)
-    message.success('키트 수량이 변경되었습니다.')
-  }, [pendingKitQuantities])
+    }, [pendingKitQuantities])
 
   const { deleteGuideTitle, deleteGuideLines } = useMemo(() => {
     const n = selectedRowKeys.length
@@ -426,7 +423,6 @@ export default function TextbookPage() {
             !payload.textbookNameEn?.trim() ||
             !payload.businessArea
           ) {
-            message.warning('필수 항목을 모두 입력해 주세요.')
             return
           }
           try {
@@ -434,10 +430,9 @@ export default function TextbookPage() {
             setRows(listTextbooksFromStore())
             setSelectedTextbook(updated)
             setDetailRoute(updated.id, 'view')
-            message.success('교재 정보가 수정되었습니다.')
-          } catch {
-            message.error('교재 수정에 실패했습니다.')
-          }
+            } catch (error) {
+              console.debug('textbookPage detail update failed', error)
+            }
         }}
       />
       <TextbookKitQuantityModal

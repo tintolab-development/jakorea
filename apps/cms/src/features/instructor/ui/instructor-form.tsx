@@ -10,6 +10,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { instructorSchema, type InstructorFormData } from '@/entities/instructor/model/schema'
 import type { Instructor } from '@/types/domain'
+import { fieldValidationHelp } from '@/shared/utils/error-handler'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -159,7 +160,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
       <Form.Item
         label="이름"
         validateStatus={errors.name ? 'error' : ''}
-        help={errors.name?.message}
+        help={fieldValidationHelp(errors.name)}
       >
         <Controller name="name" control={control} render={({ field }) => <Input {...field} />} />
       </Form.Item>
@@ -167,7 +168,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
       <Form.Item
         label="연락처"
         validateStatus={errors.contactPhone ? 'error' : ''}
-        help={errors.contactPhone?.message}
+        help={fieldValidationHelp(errors.contactPhone)}
       >
         <Controller
           name="contactPhone"
@@ -179,7 +180,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
       <Form.Item
         label="이메일"
         validateStatus={errors.contactEmail ? 'error' : ''}
-        help={errors.contactEmail?.message}
+        help={fieldValidationHelp(errors.contactEmail)}
       >
         <Controller
           name="contactEmail"
@@ -191,7 +192,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
       <Form.Item
         label="지역"
         validateStatus={errors.region ? 'error' : ''}
-        help={errors.region?.message}
+        help={fieldValidationHelp(errors.region)}
         required
       >
         <Controller
@@ -212,7 +213,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
       <Form.Item
         label="전문분야"
         validateStatus={errors.specialty ? 'error' : ''}
-        help={errors.specialty?.message}
+        help={fieldValidationHelp(errors.specialty)}
         required
       >
         <Controller
@@ -267,7 +268,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
       <Form.Item
         label="은행명"
         validateStatus={errors.bankName ? 'error' : ''}
-        help={errors.bankName?.message}
+        help={fieldValidationHelp(errors.bankName)}
       >
         <Controller
           name="bankName"
@@ -287,7 +288,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
       <Form.Item
         label="계좌번호"
         validateStatus={errors.bankAccount ? 'error' : ''}
-        help={errors.bankAccount?.message}
+        help={fieldValidationHelp(errors.bankAccount)}
       >
         <Controller
           name="bankAccount"

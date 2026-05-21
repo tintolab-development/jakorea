@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
-import type { UjatRecruitParagraphProps } from '@/features/program/ui/detail-modal/ujat-recruit-paragraph-props'
+import type { UjatRecruitParagraphProps } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
 import { UJAT_RECRUIT_FORM_INSTITUTION_IDS } from '@/features/template/model/ujat-recruit-form-institution-draft'
 import { UjatRecruitDetailInfoParagraph } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/paragraphs/ujat-recruit-detail-info-paragraph'
 import { UjatRecruitParticipantInfoParagraph } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/paragraphs/ujat-recruit-participant-info-paragraph'

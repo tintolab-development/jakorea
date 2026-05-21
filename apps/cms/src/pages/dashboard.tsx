@@ -8,7 +8,7 @@
 
 import { useMemo, useCallback, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Row, message } from 'antd'
+import { Row } from 'antd'
 import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, type SortingStrategy } from '@dnd-kit/sortable'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -101,7 +101,7 @@ export function Dashboard() {
       displayItemsMeta,
       setWidgetWidth,
       getSlotRects,
-      onLayoutSaved: () => message.success('위젯 위치가 저장되었습니다.'),
+      onLayoutSaved: () => {},
     })
 
   const handleInstructorCardClick = useCallback(() => {

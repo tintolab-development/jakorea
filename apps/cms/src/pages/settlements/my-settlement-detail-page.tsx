@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { App, Card, Descriptions, Tag, Button, Space, Spin } from 'antd'
+import { Card, Descriptions, Tag, Button, Space, Spin } from 'antd'
 import {
   ArrowLeftOutlined,
   DownloadOutlined,
@@ -16,15 +16,14 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlementDetail } from '@/entities/settlement/api/instructor-settlement-service'
 import { settlementStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
-import { useProgramService } from '@/features/program/hooks/use-program-service'
-import { MESSAGES } from '@/shared/constants'
+import { useProgramService } from '@/features/program/general/hooks/use-program-service'
 import { SettlementCalculationSummary } from '@/features/settlement/ui/settlement-calculation-summary'
 import { paymentStatementService } from '@/entities/settlement/api/payment-statement-service'
 import dayjs from 'dayjs'
 import type { Settlement } from '@/types/domain'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 
 export function MySettlementDetailPage() {
-  const { modal, message } = App.useApp()
   const { id } = useParams<{ id: string }>()
   const { user } = useAuthStore()
   const navigate = useNavigate()
@@ -32,6 +31,7 @@ export function MySettlementDetailPage() {
   const [settlement, setSettlement] = useState<Settlement | null>(null)
   const [loading, setLoading] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false)
 
   const loadSettlement = useCallback(async () => {
     if (!id || !user?.instructorId) return
@@ -42,17 +42,15 @@ export function MySettlementDetailPage() {
       if (data) {
         setSettlement(data)
       } else {
-        message.error(MESSAGES.error.settlementNotFound)
         navigate('/settlements/my')
       }
     } catch (error) {
       console.error('정산 로드 실패:', error)
-      message.error(MESSAGES.error.settlementLoadFailed)
       navigate('/settlements/my')
     } finally {
       setLoading(false)
     }
-  }, [id, message, navigate, user?.instructorId])
+  }, [id, navigate, user?.instructorId])
 
   useEffect(() => {
     if (id && user?.instructorId) {
@@ -61,39 +59,28 @@ export function MySettlementDetailPage() {
   }, [id, user?.instructorId, loadSettlement])
 
   // 지급조서 확인 완료 처리
-  const handleConfirmPaymentStatement = useCallback(async () => {
+  const handleConfirmPaymentStatement = useCallback(() => {
     if (!settlement || !user?.instructorId) return
+    setPaymentConfirmOpen(true)
+  }, [settlement, user?.instructorId])
 
-    modal.confirm({
-      title: '지급조서 확인 완료',
-      content: '지급조서 내용을 확인하셨습니까? 확인 완료 시 계좌로 지급이 진행됩니다.',
-      okText: '확인 완료',
-      cancelText: '취소',
-      onOk: async () => {
-        setConfirming(true)
-        try {
-          // 정산 ID로 지급조서 찾기
-          const paymentStatement = await paymentStatementService.getBySettlementId(settlement.id)
-          if (!paymentStatement) {
-            message.warning('지급조서를 찾을 수 없습니다.')
-            return
-          }
-
-          // 강사 확인 완료 처리
-          await paymentStatementService.confirmByInstructor(paymentStatement.id)
-          message.success('지급조서 확인이 완료되었습니다. 계좌로 지급이 진행됩니다.')
-
-          // 정산 정보 다시 로드
-          await loadSettlement()
-        } catch (error: any) {
-          console.error('지급조서 확인 실패:', error)
-          message.error(error.message || '지급조서 확인 처리 중 오류가 발생했습니다.')
-        } finally {
-          setConfirming(false)
-        }
-      },
-    })
-  }, [loadSettlement, message, modal, settlement, user?.instructorId])
+  const handlePaymentConfirmOk = useCallback(async () => {
+    if (!settlement || !user?.instructorId) return
+    setConfirming(true)
+    try {
+      const paymentStatement = await paymentStatementService.getBySettlementId(settlement.id)
+      if (!paymentStatement) {
+        return
+      }
+      await paymentStatementService.confirmByInstructor(paymentStatement.id)
+      await loadSettlement()
+      setPaymentConfirmOpen(false)
+    } catch (error: unknown) {
+      console.error('지급조서 확인 실패:', error)
+    } finally {
+      setConfirming(false)
+    }
+  }, [loadSettlement, settlement, user?.instructorId])
 
   if (!user?.instructorId) {
     return (
@@ -293,8 +280,7 @@ export function MySettlementDetailPage() {
                         size="small"
                         onClick={() => {
                           // TODO: 파일 미리보기 API 연결
-                          message.info(MESSAGES.info.filePreviewComingSoon)
-                        }}
+                          }}
                       >
                         미리보기
                       </Button>
@@ -303,8 +289,7 @@ export function MySettlementDetailPage() {
                         size="small"
                         onClick={() => {
                           // TODO: 파일 다운로드 API 연결
-                          message.info(MESSAGES.info.fileDownloadComingSoon)
-                        }}
+                          }}
                       >
                         다운로드
                       </Button>
@@ -343,6 +328,16 @@ export function MySettlementDetailPage() {
           </Card>
         )}
       </Space>
+
+      <ConfirmModal
+        open={paymentConfirmOpen}
+        title="지급조서 확인 완료"
+        content="지급조서 내용을 확인하셨습니까? 확인 완료 시 계좌로 지급이 진행됩니다."
+        confirmText="확인 완료"
+        cancelText="취소"
+        onConfirm={handlePaymentConfirmOk}
+        onCancel={() => setPaymentConfirmOpen(false)}
+      />
     </div>
   )
 }

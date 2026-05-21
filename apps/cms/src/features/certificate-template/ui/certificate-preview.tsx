@@ -3,11 +3,12 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { Card, Button, Space, Input, message } from 'antd'
+import { Alert, Card, Button, Space, Input } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { CertificateTextField } from '@/types/template'
 import { generateCertificatePdf } from '@/shared/utils/certificate-pdf-generator'
 import { downloadBlob } from '@/shared/utils/file-download'
+import { handleError, unknownErrorText } from '@/shared/utils/error-handler'
 
 export interface CertificatePreviewProps {
   backgroundImageUrl?: string
@@ -24,10 +25,10 @@ export function CertificatePreview({
   fieldValues = {},
   onFieldValueChange,
   onDownload,
-  disabled = false,
-}: CertificatePreviewProps) {
+  disabled = false }: CertificatePreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [previewImage, setPreviewImage] = useState<string | undefined>()
+  const [pdfError, setPdfError] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)
 
   // 미리보기 이미지 생성 (텍스트 필드가 있을 때만 Canvas로 렌더링)
@@ -90,14 +91,12 @@ export function CertificatePreview({
         setPreviewImage(imageData)
       } catch (error) {
         console.error('Canvas 렌더링 오류:', error)
-        message.error('미리보기 생성 중 오류가 발생했습니다')
         setPreviewImage(undefined)
       }
     }
     
     img.onerror = (error) => {
       console.error('이미지 로드 실패:', error, 'URL:', backgroundImageUrl)
-      message.error('이미지를 로드할 수 없습니다')
       setPreviewImage(undefined)
     }
     
@@ -107,7 +106,6 @@ export function CertificatePreview({
 
   const handleDownload = async () => {
     if (!backgroundImageUrl) {
-      message.warning('배경 이미지를 먼저 업로드해주세요')
       return
     }
 
@@ -119,8 +117,7 @@ export function CertificatePreview({
         backgroundImageUrl,
         textFieldsCount: textFields?.length || 0,
         fieldValues,
-        textFields,
-      })
+        textFields })
 
       // PDF 생성 (배경 이미지 크기에 맞춰 자동 생성)
       const pdfBlob = await generateCertificatePdf(
@@ -136,19 +133,16 @@ export function CertificatePreview({
 
       console.log('PDF 생성 완료:', {
         blobSize: pdfBlob.size,
-        blobType: pdfBlob.type,
-      })
+        blobType: pdfBlob.type })
 
       // 다운로드
       const filename = `certificate_${new Date().toISOString().split('T')[0]}.pdf`
       downloadBlob(pdfBlob, filename)
-      message.success('PDF 다운로드가 완료되었습니다')
-
+      setPdfError(null)
       onDownload?.()
     } catch (error) {
-      console.error('PDF 생성 실패:', error)
-      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류'
-      message.error(`PDF 생성 중 오류가 발생했습니다: ${errorMessage}`)
+      handleError(error, { context: 'certificatePreview.generatePdf' })
+      setPdfError(`PDF 생성 중 오류가 발생했습니다: ${unknownErrorText(error, '알 수 없는 오류')}`)
     } finally {
       setGenerating(false)
     }
@@ -166,8 +160,7 @@ export function CertificatePreview({
                 maxWidth: '100%',
                 maxHeight: 400,
                 border: '1px solid #d9d9d9',
-                borderRadius: 4,
-              }}
+                borderRadius: 4 }}
             />
           </div>
         ) : backgroundImageUrl ? (
@@ -181,12 +174,10 @@ export function CertificatePreview({
                 maxHeight: 400,
                 border: '1px solid #d9d9d9',
                 borderRadius: 4,
-                objectFit: 'contain',
-              }}
+                objectFit: 'contain' }}
               onError={() => {
                 console.error('이미지 로드 실패:', backgroundImageUrl)
-                message.error('이미지를 표시할 수 없습니다')
-              }}
+                }}
             />
           </div>
         ) : (
@@ -200,8 +191,7 @@ export function CertificatePreview({
               alignItems: 'center',
               justifyContent: 'center',
               color: '#8c8c8c',
-              backgroundColor: '#fafafa',
-            }}
+              backgroundColor: '#fafafa' }}
           >
             배경 이미지를 업로드하면 미리보기가 표시됩니다
           </div>
@@ -224,6 +214,8 @@ export function CertificatePreview({
             </Space>
           </div>
         )}
+
+        {pdfError ? <Alert type="error" description={pdfError} showIcon /> : null}
 
         <Button
           type="primary"

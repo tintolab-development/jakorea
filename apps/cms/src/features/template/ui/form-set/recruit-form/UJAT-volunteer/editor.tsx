@@ -35,6 +35,7 @@ export function UjatRecruitFormVolunteerEditorLeftColumn({
           structureLockedParagraphIds: vm.structureLockedParagraphIds,
           structureLockedAuthoringChoicePreview: true,
           ujatRecruitFormVolunteer: true,
+          ujatRecruitParagraphProps: vm.ujatRecruitParagraphProps,
           programApplicationFormVolunteer: {
             ...vm.programApplicationFormVolunteerOptions,
             enabled: true,

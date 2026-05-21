@@ -3,11 +3,11 @@
  */
 
 import { useMemo, type ReactNode } from 'react'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { withProgramDetailTdDivider } from '@/features/program/ui/program-detail-td-divider'
+import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import type {
   PaymentOrderAdminLineProcessingStatus,
   PaymentOrderCalculationStatementSessionBlock,
@@ -85,8 +85,7 @@ export function getPaymentOrderCalculationColumns(options?: {
       options.onDetailClick()
       return
     }
-    message.info('산정 기준 상세는 추후 연결됩니다.')
-  }
+    }
 
   const sessionLabelMode = options?.lectureSessionSegmentLabel ?? 'session'
 
@@ -222,8 +221,7 @@ export function PaymentOrderCalculationBreakdownTable({
       onDownloadPaymentStatement()
       return
     }
-    message.info('지급조서 발급은 추후 연결됩니다.')
-  }
+    }
 
   return (
     <div

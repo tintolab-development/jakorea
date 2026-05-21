@@ -81,7 +81,6 @@ export function PermissionHeaderActions({
       ) : null}
       {personalInfoButton ? (
         <PersonalInfoRevealButton
-          ui="cms"
           labelMode="stickyReveal"
           revealed={personalInfoRevealed}
           cmsVariant={personalInfoButton.variant}

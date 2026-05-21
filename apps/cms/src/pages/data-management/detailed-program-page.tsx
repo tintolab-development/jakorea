@@ -34,7 +34,7 @@ import {
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 
 function nextDetailedProgramId(rows: DetailedProgramManagementRow[]): string {
   let max = 0

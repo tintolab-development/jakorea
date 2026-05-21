@@ -3,7 +3,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import {
@@ -25,7 +24,7 @@ import {
   type PaymentOrderCalculationStatementCommitPayload,
 } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 import { renderLineProcessingStatusText } from '@/pages/settlement-management/payment-order-detail-aggregate-status'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { PaymentOrderLectureDateSessionCell } from './payment-order-lecture-date-session-cell'
 
 export type PaymentOrderDetailLineRow =
@@ -181,9 +180,9 @@ export function usePaymentOrderDetailLinesController(
       })
     )
     if (payload.status === 'confirmed') {
-      message.success('지급조서 확인 완료로 반영되었습니다.')
+      console.debug('payment order confirmed', payload)
     } else if (payload.status === 'application_rejected') {
-      message.success('신청 반려로 반영되었습니다.')
+      console.debug('payment order application rejected', payload)
     }
   }, [])
 
@@ -218,7 +217,6 @@ export function usePaymentOrderDetailLinesController(
             : row
         )
       )
-      message.success('선택한 항목이 지급조서 확인 완료로 반영되었습니다.')
       setBatchConfirmOpen(false)
       setSelectedRowKeys([])
     },
@@ -449,7 +447,7 @@ export function usePaymentOrderDetailLinesController(
         width: w.breakdown,
         align: 'center',
         render: (_: unknown, row: PaymentOrderDetailLineRow) => (
-          <AppButton
+          <CmsButton
             variant="default"
             size="large"
             className={
@@ -467,7 +465,7 @@ export function usePaymentOrderDetailLinesController(
             }}
           >
             상세 보기
-          </AppButton>
+          </CmsButton>
         ),
       },
     ]

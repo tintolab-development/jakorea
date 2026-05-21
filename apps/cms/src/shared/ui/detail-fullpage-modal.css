@@ -23,11 +23,12 @@
 }
 
 /**
- * TealHeaderModal 기본 `.teal-header-modal__body`에 `padding-top: 16px !important`가 있어
+ * TealHeaderModal 기본 `.teal-header-modal__body`의 `margin-top: 16px` 등으로
  * 풀페이지(LNB+메인)가 뷰포트 상단부터 붙지 않음 — 동일 셀에서 제거.
  */
 .detail-fullpage-modal .teal-header-modal__body {
   padding: 0 !important;
+  margin-top: 0 !important;
   gap: 0;
   height: 100%;
   display: flex;
@@ -143,15 +144,22 @@
  * `clip`은 가로만 막고 스크롤 컨테이너를 만들지 않아 sticky가 `__main` 기준으로 동작함.
  */
 .detail-fullpage-modal__content:has(
-  .instructor-payment-tab__calendar-view-container--no-inner-scroll
-) {
+    .instructor-payment-tab__calendar-view-container--no-inner-scroll
+  ),
+.detail-fullpage-modal__content:has(.ujat-institution-application-calendar-view--page-scroll) {
   overflow-x: clip;
+  /*
+   * UJAT 캘린더: 하단 52px는 list `__page-bottom-spacer` 블록으로만 둠.
+   * __content padding-bottom 과 겹치지 않게 0.
+   */
+  padding-bottom: 0;
 }
 
 @supports not (overflow-x: clip) {
   .detail-fullpage-modal__content:has(
-    .instructor-payment-tab__calendar-view-container--no-inner-scroll
-  ) {
+      .instructor-payment-tab__calendar-view-container--no-inner-scroll
+    ),
+  .detail-fullpage-modal__content:has(.ujat-institution-application-calendar-view--page-scroll) {
     overflow-x: visible;
   }
 }
@@ -216,6 +224,9 @@
 
 .detail-fullpage-modal__lnb-brand {
   flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   padding: 30px 16px 30px;
   box-sizing: border-box;
   overflow: hidden;
@@ -238,6 +249,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
 }
 
 .detail-fullpage-modal__lnb-list {
@@ -342,6 +354,10 @@
   pointer-events: none;
 }
 
+.detail-fullpage-modal__lnb-children-wrap--no-transition {
+  transition: none;
+}
+
 .detail-fullpage-modal__lnb-children-wrap--open {
   grid-template-rows: 1fr;
   pointer-events: auto;
@@ -395,6 +411,11 @@
   gap: 8px;
 }
 
+.detail-fullpage-modal__lnb-child-label {
+  flex: 1;
+  min-width: 0;
+}
+
 .detail-fullpage-modal__lnb-child-dot {
   width: 4px;
   height: 4px;
@@ -429,6 +450,18 @@
   line-height: 120%;
 }
 
+/* 활성 시 font-weight 변경으로 라벨 너비가 달라지지 않도록 굵은 글자 폭 예약 */
+.detail-fullpage-modal__lnb-child-label::before {
+  content: attr(data-text);
+  display: block;
+  height: 0;
+  overflow: hidden;
+  font-weight: 700;
+  pointer-events: none;
+  user-select: none;
+  visibility: hidden;
+}
+
 .detail-fullpage-modal__lnb-child--active .detail-fullpage-modal__lnb-child-dot {
   background-color: var(--JA-mint-01, #01a1af);
 }
@@ -449,8 +482,24 @@
   background-color: var(--JA-mint-01, #01a1af);
 }
 
+/**
+ * 풀페이지 상세: FilterTableLayout 카드 패딩·그림자 제거.
+ * 목록(layout-content 회색 배경 + 카드)과 달리 본문이 흰 배경이라 shadow·이중선이 두껍게 보일 수 있음.
+ */
 .detail-fullpage-modal .filter-table-layout {
+  background: transparent;
+  box-shadow: none !important;
+  border-radius: 0;
+  margin-bottom: 0;
   padding: 0 !important;
+}
+
+.detail-fullpage-modal .filter-table-layout__divider::before {
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: #c4cdd1;
+  background: transparent;
+  box-shadow: none;
 }
 
 /**

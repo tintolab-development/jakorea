@@ -6,6 +6,8 @@
 
 .full-page-modal .teal-header-modal__body {
   padding: 0;
+  margin-top: 0;
+  gap: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -17,6 +19,12 @@
   width: 100%;
   height: 100%;
   background: #f4f6f6;
+}
+
+.full-page-modal__sub-header {
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .full-page-modal__topbar {
@@ -168,6 +176,11 @@
   justify-content: space-between;
   gap: 16px;
   box-sizing: border-box;
+}
+
+.full-page-modal__body-header-leading {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .full-page-modal__description {
@@ -394,4 +407,67 @@
   min-height: 0;
   position: relative;
   top: auto;
+}
+
+/* 템플릿 등록 사용자 모드 — 미리보기와 동일 청록 헤더·회색 본문 */
+.full-page-modal--registration-user-mode .full-page-modal__topbar {
+  background: var(--color-mint-01, #01a1af);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.04);
+}
+
+.full-page-modal--registration-user-mode .full-page-modal__title,
+.full-page-modal--registration-user-mode .full-page-modal__title-text,
+.full-page-modal--registration-user-mode .full-page-modal__title-input {
+  color: var(--main-WT, #fff);
+}
+
+.full-page-modal--registration-user-mode .full-page-modal__title-icon,
+.full-page-modal--registration-user-mode .full-page-modal__title-edit-btn {
+  display: none;
+}
+
+.full-page-modal--registration-user-mode .full-page-modal__title-input--editing {
+  background-image: linear-gradient(var(--main-WT, #fff), var(--main-WT, #fff));
+}
+
+/* 본문 상단 액션 — 편집 모드와 동일 위치, 회색 배경 위 CmsButton 스펙 */
+.full-page-modal--registration-user-mode .full-page-modal__body-header .cms-button--secondary:not(:disabled):not(.ant-btn-disabled) {
+  background-image: none !important;
+  background-color: var(--main-WT, #fff) !important;
+}
+
+/* 하단 CTA — 양식 최하단 단락 아래 32px, 본문 스크롤 흐름(고정 float 없음) */
+.full-page-modal--registration-user-mode .full-page-modal__footer-cta {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
+  margin-top: 32px;
+  box-sizing: border-box;
+}
+
+.full-page-modal--registration-user-mode .full-page-modal__footer-cta-btn.cms-button.ant-btn {
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.08);
+}
+
+.full-page-modal--registration-user-mode .full-page-modal__footer-cta-btn .cms-button__label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.full-page-modal--registration-user-mode .full-page-modal__footer-cta-btn .anticon {
+  font-size: 12px;
 }

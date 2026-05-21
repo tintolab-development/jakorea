@@ -6,6 +6,7 @@
 import { forwardRef } from 'react'
 import { Button } from 'antd'
 import type { ButtonProps } from 'antd'
+import { CmsButton, type CmsButtonProps } from './cms-button'
 import './app-button.css'
 
 export type AppButtonVariant =
@@ -87,15 +88,15 @@ export const AppButton = forwardRef<HTMLButtonElement, AppButtonProps>(
 
 AppButton.displayName = 'AppButton'
 
-/** 필터 영역 공통 「조회」 버튼 (160×44, JA-mint-01 — `app-button--filter` 스타일) */
+/** 필터 영역 공통 「조회」 버튼 (160×44, JA-mint-01) */
 export function FilterSearchButton({
   children = '조회',
   ...props
-}: Omit<AppButtonProps, 'variant' | 'size'>) {
+}: Omit<CmsButtonProps, 'variant' | 'size'>) {
   return (
-    <AppButton variant="primary" size="filter" {...props}>
+    <CmsButton type="button" variant="primary" size="large" width={160} {...props}>
       {children}
-    </AppButton>
+    </CmsButton>
   )
 }
 

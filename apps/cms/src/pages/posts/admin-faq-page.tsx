@@ -12,7 +12,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type { AdminFaq } from '@/data/mock/admin-faqs'
@@ -36,7 +36,7 @@ import { FaqCategoryManagementModal } from '@/features/posts/ui/faq-category-man
 import { FaqFormModal } from '@/features/posts/ui/faq-form-modal'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 import './admin-faq-delete-btn.css'
 import './admin-faq-list-page.css'
 
@@ -142,12 +142,11 @@ function AdminFAQPage() {
     }
     try {
       await deleteFaqs(ids)
-      message.success(`선택한 ${ids.length}건의 FAQ가 삭제되었습니다.`)
       setRows(listAdminFaqs())
       setSelectedRowKeys([])
       setBulkDeleteConfirmOpen(false)
-    } catch {
-      message.error('FAQ 삭제에 실패했습니다.')
+    } catch (error) {
+      console.debug('adminFaqPage bulkDelete failed', error)
     }
   }, [selectedRowKeys])
 

@@ -27,7 +27,7 @@ import {
   settlementEventStatusColorPair,
   type CalendarItem,
 } from '@/shared/components/calendar'
-import type { ScheduleColorPair } from '@/features/program/ui/program-schedule-colors'
+import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import '@/shared/components/calendar/styles/calendar.css'
 import '@/shared/components/program-calendar.css'
 

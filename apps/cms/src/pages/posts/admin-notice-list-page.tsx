@@ -12,7 +12,7 @@ import {
   type MouseEvent,
 } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Table, message } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type { Notice } from '@/data/mock/notices'
@@ -37,7 +37,7 @@ import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-conf
 import { NoticeFormModal } from '@/features/posts/ui/notice-form-modal'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 import './admin-notice-list-page.css'
 
 /** 고정 레이아웃 기준 최소 가로 스크롤 (체크박스 열 제외 본문 컬럼 합 + 여유) */
@@ -143,12 +143,11 @@ export function AdminNoticeListPage() {
     }
     try {
       await deleteNotices(ids)
-      message.success(`선택한 ${ids.length}건의 공지사항이 삭제되었습니다.`)
       setRows(listAdminNotices())
       setSelectedRowKeys([])
       setBulkDeleteConfirmOpen(false)
-    } catch {
-      message.error('공지사항 삭제에 실패했습니다.')
+    } catch (error) {
+      console.debug('adminNoticeListPage bulkDelete failed', error)
     }
   }, [selectedRowKeys])
 

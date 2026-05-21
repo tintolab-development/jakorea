@@ -4,7 +4,7 @@ import type { Program } from '@/types/domain'
 import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
-} from '@/features/program/ui/program-schedule-colors'
+} from '@/features/program/shared/ui/program-schedule-colors'
 import {
   buildEventsPreview,
   CalendarCellSchedulePreview,

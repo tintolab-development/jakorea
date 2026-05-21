@@ -4,11 +4,11 @@
 
 import { useEffect, useState } from 'react'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
 import type { PaymentOrderCalculationStatementCommitPayload } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
-import '@/features/program/program-detail/ui/applicant-list/applicant-instructor-basic-info.css'
-import '@/features/program/program-detail/ui/project-info/project-info-form-shared.css'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
+import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import '@/pages/settlement-management/payment-order-admin-status-tag.css'
 import './payment-order-program-calculation-statement-modal.css'
 import { PaymentOrderPaymentConfirmationModal } from './payment-order-payment-confirmation-modal'
@@ -81,9 +81,9 @@ export function PaymentOrderCalculationStatementModalImpl({
         width={1400}
         className={rootClass}
         footer={
-          <AppButton variant="cancel" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="large" onClick={onCancel}>
             닫기
-          </AppButton>
+          </CmsButton>
         }
       >
         <PaymentOrderCalculationStatementProgramBasicSection
@@ -97,12 +97,12 @@ export function PaymentOrderCalculationStatementModalImpl({
           processingStatus={statement.basic.processingStatusClass}
           headerActions={
             <>
-              <AppButton variant="danger" size="large" onClick={() => setPaymentRejectOpen(true)}>
+              <CmsButton variant="delete" size="large" onClick={() => setPaymentRejectOpen(true)}>
                 신청 반려
-              </AppButton>
-              <AppButton variant="primary" size="large" onClick={() => setPaymentConfirmOpen(true)}>
+              </CmsButton>
+              <CmsButton variant="primary" size="large" onClick={() => setPaymentConfirmOpen(true)}>
                 확인 처리
-              </AppButton>
+              </CmsButton>
             </>
           }
         />

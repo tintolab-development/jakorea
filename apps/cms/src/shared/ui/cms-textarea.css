@@ -143,8 +143,8 @@
 }
 
 /*
- * rows=1 공통: `CmsInput`과 동일한 박스 높이·가로 패딩 체계,
- * 값·placeholder 세로 중앙 (`align-content: center`, 상세 정보 단락과 동일).
+ * rows=1 공통: `CmsInput`과 동일한 박스 높이·가로 패딩 체계.
+ * 값·placeholder 세로 중앙 — line-height를 콘텐츠 높이와 동일하게 맞춤(textarea는 ::placeholder에 align-content 미적용).
  * 한 줄 말줄임·resize 비활성은 `cms-textarea--rows-1-single-line`에만 적용.
  */
 .cms-textarea--rows-1 .cms-textarea__control {
@@ -158,27 +158,31 @@
 }
 
 .cms-textarea--rows-1.cms-textarea--large .cms-textarea__inner textarea.ant-input {
+  box-sizing: border-box;
   min-height: 44px;
   height: 44px;
   padding: 0 12px 0 14px !important;
-  align-content: center;
-  line-height: 150%;
+  line-height: 44px;
 }
 
 .cms-textarea--rows-1.cms-textarea--medium .cms-textarea__inner textarea.ant-input {
+  box-sizing: border-box;
   min-height: 40px;
   height: 40px;
   padding: 0 12px 0 14px !important;
-  align-content: center;
-  line-height: 150%;
+  line-height: 40px;
 }
 
 .cms-textarea--rows-1.cms-textarea--small .cms-textarea__inner textarea.ant-input {
+  box-sizing: border-box;
   min-height: 32px;
   height: 32px;
   padding: 0 10px 0 12px !important;
-  align-content: center;
-  line-height: 150%;
+  line-height: 32px;
+}
+
+.cms-textarea--rows-1 .cms-textarea__inner textarea.ant-input::placeholder {
+  line-height: inherit;
 }
 
 /* `expandableFromSingleRow`: 한 줄 높이로 시작하되 세로 리사이즈·여러 줄 허용 */

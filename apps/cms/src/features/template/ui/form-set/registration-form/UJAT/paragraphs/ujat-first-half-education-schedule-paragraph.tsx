@@ -6,7 +6,7 @@ import { useMemo } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { AppMultiSelect } from '@/shared/ui/app-multi-select'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
@@ -175,7 +175,9 @@ function UjatRegionDateMultiScheduleRows({ instanceId }: { instanceId: string })
           key={id}
           className="detail-info-form-inputs-wrapper ujat-first-half-schedule__schedule-row"
         >
-          <AppMultiSelect
+          <CmsSelect
+            mode="multiple"
+            withAllOption={false}
             style={{ width: 360 }}
             placeholder="지역을 선택하세요"
             options={getRowRegionOptions(id, regionByRow)}
@@ -185,7 +187,7 @@ function UjatRegionDateMultiScheduleRows({ instanceId }: { instanceId: string })
                 const p = prev ?? DEFAULT_MULTI_SCHEDULE_BUNDLE
                 return {
                   ...p,
-                  regionByRow: { ...p.regionByRow, [String(id)]: next },
+                  regionByRow: { ...p.regionByRow, [String(id)]: next as string[] },
                 }
               })
             }

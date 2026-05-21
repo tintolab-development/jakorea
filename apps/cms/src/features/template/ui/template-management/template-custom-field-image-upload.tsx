@@ -1,5 +1,5 @@
 import type { ChangeEvent, RefObject } from 'react'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 
 export interface TemplateCustomFieldImageUploadProps {
   /** 우측 타이틀·aria용 필드 라벨 */
@@ -36,9 +36,9 @@ export function TemplateCustomFieldImageUpload({
       </div>
       <div className="template-custom-fields-form__logo-actions">
         <input ref={fileInputRef} type="file" accept={accept} hidden onChange={onFileChange} />
-        <AppButton
-          htmlType="button"
-          variant="cancel"
+        <CmsButton
+          type="button"
+          variant="secondary"
           size="large"
           className="template-custom-fields-form__logo-file-btn"
           loading={uploading}
@@ -47,7 +47,7 @@ export function TemplateCustomFieldImageUpload({
           aria-label={`${fieldLabel} 파일 선택`}
         >
           파일 변경
-        </AppButton>
+        </CmsButton>
         <div className="template-custom-fields-form__logo-hint">
           <p>{'-  파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.'}</p>
           <p>{'-  첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.'}</p>

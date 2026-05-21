@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { message } from 'antd'
 import { CmsButton, CmsInput, CmsRadio, CmsSelect, ContentModal } from '@/shared/ui'
 import {
   TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS,
@@ -67,11 +66,9 @@ export function TextbookRegisterModal({
 
   const handleSubmit = () => {
     if (!form.textbookName.trim()) {
-      message.warning('교재명을 입력해 주세요.')
       return
     }
     if (!form.businessArea || !form.educationTarget || !form.grade) {
-      message.warning('필수 항목을 모두 선택해 주세요.')
       return
     }
     const businessArea = form.businessArea

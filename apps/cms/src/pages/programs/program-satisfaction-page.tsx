@@ -14,7 +14,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMyPrograms, type MyProgram } from '@/entities/program/api/instructor-program-service'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { SatisfactionSurveyModal } from '@/features/program/ui/satisfaction-survey-modal'
+import { SatisfactionSurveyModal } from '@/features/program/general/ui/satisfaction-survey-modal'
 import dayjs from 'dayjs'
 
 interface SatisfactionRecord {

@@ -5,7 +5,6 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { message } from 'antd'
 import dayjs from 'dayjs'
 import { getAdminFaqById } from '@/features/posts/api/admin-faq-mock-store'
 import { deleteFaq } from '@/features/posts/api/admin-faq-service'
@@ -49,11 +48,10 @@ export function AdminFaqDetailPage() {
     if (!id) return
     try {
       await deleteFaq(id)
-      message.success('FAQ가 삭제되었습니다.')
       setDeleteConfirmOpen(false)
       goList()
-    } catch {
-      message.error('FAQ를 삭제할 수 없습니다.')
+    } catch (error) {
+      console.debug('adminFaqDetailPage delete failed', error)
     }
   }, [id, goList])
 

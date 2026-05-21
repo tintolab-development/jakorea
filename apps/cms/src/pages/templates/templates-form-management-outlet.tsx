@@ -1,6 +1,6 @@
 /**
  * `/templates/form-management` 전용 — 라우터 `<Outlet />`과 동기화.
- * `TemplateWritingPreviewProvider`는 상위 `TemplateListPage`에서 한 번만 감싼다.
+ * `TemplateWritingPreviewProvider`는 상위 `TemplatesRouteLayout`에서 한 번만 감싼다.
  */
 import type { ReactElement } from 'react'
 import { useQueryParams } from '@/shared/hooks/use-query-params'

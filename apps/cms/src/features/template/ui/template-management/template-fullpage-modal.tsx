@@ -1,4 +1,4 @@
-import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
+import { CloseOutlined, DownloadOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -24,6 +24,28 @@ interface TemplateFullpageModalProps {
    * 문자열 제목일 때 상단 `CmsInputIconClick` 편집·연필 비활성화(프로그램 등록 등 템플릿 사용자 모드).
    */
   titleReadOnly?: boolean
+  /**
+   * 템플릿 등록 사용자 모드 — 미리보기와 동일 청록 헤더·회색 본문·상단 닫기/미리보기/임시저장.
+   */
+  registrationUserMode?: boolean
+  /** 저장 버튼 라벨 (`registrationUserMode` 기본: 임시저장) */
+  saveLabel?: string
+  /** 우측 하단 CTA — 미전달 시 숨김 (단일, `footerActions`와 병용 시 배열 우선) */
+  footerAction?: TemplateFullpageModalFooterAction
+  /** 우측 하단 CTA 복수 — 등록 단계별 이전/다음 버튼 */
+  footerActions?: TemplateFullpageModalFooterAction[]
+  /** 청록 헤더와 본문 사이 영역(단계 탭 등) — 레거시·비등록 모드 */
+  subHeader?: ReactNode
+  /** `full-page-modal__body-header` 좌측(닫기·미리보기·임시저장과 동일 행) */
+  bodyHeaderLeading?: ReactNode
+}
+
+export type TemplateFullpageModalFooterAction = {
+  label: string
+  onClick: () => void
+  variant?: 'primary' | 'secondary'
+  /** primary CTA 우측 `>` — `true`일 때만 표시 */
+  showArrow?: boolean
 }
 
 interface TemplateFullpageModalCardTitleProps {
@@ -54,16 +76,62 @@ export function TemplateFullpageModal({
   rightNavigation,
   className,
   titleReadOnly = false,
+  registrationUserMode = false,
+  saveLabel,
+  footerAction,
+  footerActions,
+  subHeader,
+  bodyHeaderLeading,
 }: TemplateFullpageModalProps) {
-  const rootClassName = ['full-page-modal', className].filter(Boolean).join(' ')
+  const resolvedFooterActions =
+    footerActions ?? (footerAction != null ? [footerAction] : undefined)
+  const rootClassName = [
+    'full-page-modal',
+    registrationUserMode ? 'full-page-modal--registration-user-mode' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
   const iconMaskId = `full-page-modal-title-mask-${useId().replace(/:/g, '')}`
   const editableTitle = typeof title === 'string' ? title : null
   const [titleValue, setTitleValue] = useState(editableTitle ?? '')
   const [titleEditing, setTitleEditing] = useState(false)
+  const resolvedTitleReadOnly = titleReadOnly || registrationUserMode
+  const resolvedSaveLabel = saveLabel ?? (registrationUserMode ? '임시저장' : '저장')
 
   useEffect(() => {
     setTitleValue(editableTitle ?? '')
   }, [editableTitle])
+
+  const headerActions =
+    templateTabType === 'writing' ? (
+      <>
+        <CmsButton variant="secondary" onClick={onClose}>
+          닫기
+        </CmsButton>
+        <CmsButton variant="secondary" onClick={onPreview}>
+          미리보기
+        </CmsButton>
+        <CmsButton onClick={() => onSave?.()}>{resolvedSaveLabel}</CmsButton>
+      </>
+    ) : (
+      <>
+        <CmsButton
+          variant="secondary"
+          icon={<DownloadOutlined />}
+          onClick={onDownloadDocument}
+          className="full-page-modal__download-btn"
+          disabled={downloadDocumentLoading}
+          aria-busy={downloadDocumentLoading}
+        >
+          문서 다운로드
+        </CmsButton>
+        <CmsButton variant="secondary" onClick={onPreview}>
+          미리보기
+        </CmsButton>
+        <CmsButton onClick={() => onSave?.()}>{resolvedSaveLabel}</CmsButton>
+      </>
+    )
 
   return (
     <TealHeaderModal
@@ -85,7 +153,7 @@ export function TemplateFullpageModal({
                 onRequestEdit={() => setTitleEditing(true)}
                 onCommitEdit={() => setTitleEditing(false)}
                 restoreValueIfEmptyOnBlur={editableTitle}
-                readOnly={titleReadOnly}
+                readOnly={resolvedTitleReadOnly}
                 containerClassName="full-page-modal__title-edit-row"
                 inputClassName="full-page-modal__title-input full-page-modal__title-input--editing"
                 textClassName="full-page-modal__title-text"
@@ -126,37 +194,30 @@ export function TemplateFullpageModal({
               </>
             )}
           </div>
-          <button
-            type="button"
-            className="full-page-modal__close"
-            onClick={onClose}
-            aria-label="닫기"
-          >
-            <CloseOutlined />
-          </button>
+          {!registrationUserMode ? (
+            <button
+              type="button"
+              className="full-page-modal__close"
+              onClick={onClose}
+              aria-label="닫기"
+            >
+              <CloseOutlined />
+            </button>
+          ) : null}
         </header>
+
+        {subHeader ? <div className="full-page-modal__sub-header">{subHeader}</div> : null}
 
         <div className="full-page-modal__body">
           <div className="full-page-modal__body-header">
-            {description ? <p className="full-page-modal__description">{description}</p> : <span />}
-            <div className="full-page-modal__actions">
-              {templateTabType === 'issuance' ? (
-                <CmsButton
-                  variant="secondary"
-                  icon={<DownloadOutlined />}
-                  onClick={onDownloadDocument}
-                  className="full-page-modal__download-btn"
-                  disabled={downloadDocumentLoading}
-                  aria-busy={downloadDocumentLoading}
-                >
-                  문서 다운로드
-                </CmsButton>
-              ) : null}
-              <CmsButton variant="secondary" onClick={onPreview}>
-                미리보기
-              </CmsButton>
-              <CmsButton onClick={() => onSave?.()}>저장</CmsButton>
-            </div>
+            {bodyHeaderLeading != null ? (
+              <div className="full-page-modal__body-header-leading">{bodyHeaderLeading}</div>
+            ) : description && !registrationUserMode ? (
+              <p className="full-page-modal__description">{description}</p>
+            ) : (
+              <span />
+            )}
+            <div className="full-page-modal__actions">{headerActions}</div>
           </div>
 
           <div className="full-page-modal__contents">
@@ -165,6 +226,34 @@ export function TemplateFullpageModal({
               <div className="full-page-modal__right">{rightNavigation}</div>
             </aside>
           </div>
+          {resolvedFooterActions != null && resolvedFooterActions.length > 0 ? (
+            <div
+              className={[
+                'full-page-modal__footer-cta',
+                resolvedFooterActions.length > 1 ? 'full-page-modal__footer-cta--multi' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {resolvedFooterActions.map(action => (
+                <CmsButton
+                  key={action.label}
+                  type="button"
+                  size="large"
+                  width={180}
+                  variant={action.variant === 'secondary' ? 'secondary' : undefined}
+                  className="full-page-modal__footer-cta-btn"
+                  onClick={action.onClick}
+                >
+                  {action.variant === 'secondary' ? <LeftOutlined aria-hidden /> : null}
+                  <span>{action.label}</span>
+                  {action.variant !== 'secondary' && action.showArrow === true ? (
+                    <RightOutlined aria-hidden />
+                  ) : null}
+                </CmsButton>
+              ))}
+            </div>
+          ) : null}
           <div className="full-page-modal__body-bottom" aria-hidden="true" />
         </div>
       </div>

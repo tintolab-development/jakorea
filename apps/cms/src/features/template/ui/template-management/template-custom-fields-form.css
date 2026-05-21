@@ -296,7 +296,7 @@
  * 로딩 시 Ant가 .ant-btn-icon을 넣으며 app-button.css의 :has(.ant-btn-icon) 규칙이
  * flex-direction을 row로 덮어써, idle(column)과 loading(row) 사이 세로 점프가 났음 → 항상 row로 통일.
  */
-.template-custom-fields-form__logo-file-btn.app-button.app-button--cancel.ant-btn-default {
+.template-custom-fields-form__logo-file-btn.cms-button.cms-button--secondary.ant-btn-default {
   box-sizing: border-box;
   display: flex !important;
   flex-direction: row !important;
@@ -324,14 +324,14 @@
 }
 
 /* app-button 전역 :has(.ant-btn-icon) 및 로딩 마크업과 동일 축 유지 */
-.template-custom-fields-form__logo-file-btn.app-button.ant-btn:has(.ant-btn-icon),
-.template-custom-fields-form__logo-file-btn.app-button.ant-btn.ant-btn-loading {
+.template-custom-fields-form__logo-file-btn.cms-button.ant-btn:has(.ant-btn-icon),
+.template-custom-fields-form__logo-file-btn.cms-button.ant-btn.ant-btn-loading {
   flex-direction: row !important;
   align-items: center !important;
   justify-content: center !important;
 }
 
-.template-custom-fields-form__logo-file-btn.app-button.app-button--cancel.ant-btn-default:hover:not(:disabled) {
+.template-custom-fields-form__logo-file-btn.cms-button.cms-button--secondary.ant-btn-default:hover:not(:disabled) {
   background:
     linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
     #fff !important;

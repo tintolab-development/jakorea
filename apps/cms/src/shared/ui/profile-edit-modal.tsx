@@ -3,15 +3,15 @@
  */
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Form, message } from 'antd'
+import { Form } from 'antd'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { AppButton, CmsInput, ContentModal } from '@/shared/ui'
+import { CmsButton, CmsInput, ContentModal } from '@/shared/ui'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { User } from '@/types/user'
-import { MESSAGES } from '@/shared/constants'
 import './profile-edit-modal.css'
+import { fieldValidationHelp } from '@/shared/utils/error-handler'
 
 const profileEditSchema = z.object({
   name: z.string().min(1, '이름을 입력해주세요'),
@@ -111,13 +111,11 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
       }
 
       updateUser(updateData)
-      message.success(MESSAGES.success.profileUpdated)
       onSuccess?.()
       onCancel()
     } catch (e) {
       console.error('Failed to update profile:', e)
-      message.error(MESSAGES.error.profileUpdateFailed)
-    } finally {
+      } finally {
       setSaving(false)
     }
   }
@@ -146,21 +144,18 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
 
   const handleWithdraw = async () => {
     if (!user || withdrawKeyword.trim() !== '탈퇴') {
-      message.error('탈퇴 키워드를 정확히 입력해주세요.')
       return
     }
 
     setWithdrawing(true)
     try {
       updateUser({ isActive: false })
-      message.success('회원 탈퇴가 완료되었습니다.')
       setWithdrawModalOpen(false)
       onCancel()
       logout()
     } catch (error) {
       console.error('Failed to withdraw account:', error)
-      message.error('회원 탈퇴 처리에 실패했습니다.')
-    } finally {
+      } finally {
       setWithdrawing(false)
       setWithdrawKeyword('')
     }
@@ -176,14 +171,12 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
     if (!allowedTypes.includes(file.type)) {
-      message.error('JPG, PNG, WEBP 형식 이미지만 업로드할 수 있습니다.')
       event.target.value = ''
       return
     }
 
     const maxBytes = 2 * 1024 * 1024
     if (file.size > maxBytes) {
-      message.error('이미지 용량은 2MB 이하여야 합니다.')
       event.target.value = ''
       return
     }
@@ -192,16 +185,13 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
     reader.onload = () => {
       const result = typeof reader.result === 'string' ? reader.result : ''
       if (!result) {
-        message.error('이미지 처리에 실패했습니다. 다시 시도해주세요.')
         return
       }
 
       updateUser({ profileImageUrl: result })
-      message.success('프로필 이미지가 변경되었습니다.')
-    }
+      }
     reader.onerror = () => {
-      message.error('이미지 업로드에 실패했습니다.')
-    }
+      }
     reader.readAsDataURL(file)
     event.target.value = ''
   }
@@ -210,12 +200,12 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
 
   const footer = (
     <>
-      <AppButton variant="cancel" size="large" onClick={handleCancel}>
+      <CmsButton variant="secondary" size="large" onClick={handleCancel}>
         닫기
-      </AppButton>
-      <AppButton variant="primary" size="large" htmlType="submit" form="profile-edit-form" loading={saving}>
+      </CmsButton>
+      <CmsButton variant="primary" size="large" type="submit" form="profile-edit-form" loading={saving}>
         저장
-      </AppButton>
+      </CmsButton>
     </>
   )
 
@@ -264,7 +254,7 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
           <div className="profile-edit-modal__fields">
             <div className="profile-edit-modal__field-row">
               <label className="profile-edit-modal__field-label" htmlFor="profile-edit-name">이름</label>
-              <Form.Item validateStatus={errors.name ? 'error' : ''} help={errors.name?.message}>
+              <Form.Item validateStatus={errors.name ? 'error' : ''} help={fieldValidationHelp(errors.name)}>
                 <Controller
                   name="name"
                   control={control}
@@ -284,7 +274,7 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
 
             <div className="profile-edit-modal__field-row">
               <label className="profile-edit-modal__field-label" htmlFor="profile-edit-phone">연락처</label>
-              <Form.Item validateStatus={errors.phone ? 'error' : ''} help={errors.phone?.message}>
+              <Form.Item validateStatus={errors.phone ? 'error' : ''} help={fieldValidationHelp(errors.phone)}>
                 <Controller
                   name="phone"
                   control={control}
@@ -297,7 +287,7 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
 
             <div className="profile-edit-modal__field-row">
               <label className="profile-edit-modal__field-label" htmlFor="profile-edit-email">이메일</label>
-              <Form.Item validateStatus={errors.email ? 'error' : ''} help={errors.email?.message}>
+              <Form.Item validateStatus={errors.email ? 'error' : ''} help={fieldValidationHelp(errors.email)}>
                 <Controller
                   name="email"
                   control={control}
@@ -325,18 +315,17 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
         className="profile-withdraw-modal"
         footer={
           <>
-            <AppButton variant="cancel" onClick={handleCloseWithdrawModal}>
+            <CmsButton variant="secondary" onClick={handleCloseWithdrawModal}>
               취소
-            </AppButton>
-            <AppButton
-              variant="danger"
-              dangerFillOnHover
+            </CmsButton>
+            <CmsButton
+              variant="delete"
               onClick={handleWithdraw}
               loading={withdrawing}
               disabled={withdrawKeyword.trim() !== '탈퇴'}
             >
               회원 탈퇴
-            </AppButton>
+            </CmsButton>
           </>
         }
       >

@@ -120,13 +120,12 @@ export function NotificationWidget() {
                   style={{
                     backgroundColor: tagColor.bg,
                     color: tagColor.text,
-                    border: 'none',
-                  }}
+                    border: 'none' }}
                 >
                   {getNotificationTypeLabel(notification.type)}
                 </Tag>
                 <Text className="notification-item__title">
-                  {notification.message || notification.title}
+                  {notification.body || notification.title}
                 </Text>
                 <Text type="secondary" className="notification-item__timestamp">
                   {formatTimestamp(notification.createdAt)}

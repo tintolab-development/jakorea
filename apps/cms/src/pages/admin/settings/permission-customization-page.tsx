@@ -4,15 +4,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Alert, Tabs } from 'antd'
+import { Alert } from 'antd'
+import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { isMasterAdmin } from '@/shared/utils/permissions'
 import { CmsCheckbox } from '@/shared/ui'
 import type {
   AdminPermissionCategoryDef,
   AdminPermissionFlags,
-  AdminPermissionRoleTab,
-} from '@/types/admin-permission-settings-ui'
+  AdminPermissionRoleTab } from '@/types/admin-permission-settings-ui'
 import { ADMIN_PERMISSION_ROLE_TABS } from '@/types/admin-permission-settings-ui'
 import {
   ADMIN_PERMISSION_CATEGORIES,
@@ -20,8 +20,7 @@ import {
   PARTNER_UNCHECKED_PERMISSION_IDS,
   PM_UNCHECKED_PERMISSION_IDS,
   createInitialPermissionsByRole,
-  isValidRoleTab,
-} from './admin-permission-settings-ui-data'
+  isValidRoleTab } from './admin-permission-settings-ui-data'
 import './permission-customization-page.css'
 
 interface CategoryCardsProps {
@@ -121,8 +120,7 @@ export function PermissionCustomizationPage() {
   const setItem = useCallback((role: AdminPermissionRoleTab, itemId: string, checked: boolean) => {
     setPermissionsByRole(prev => ({
       ...prev,
-      [role]: { ...prev[role], [itemId]: checked },
-    }))
+      [role]: { ...prev[role], [itemId]: checked } }))
   }, [])
 
   const setCategoryAll = useCallback(
@@ -133,8 +131,7 @@ export function PermissionCustomizationPage() {
       >
       setPermissionsByRole(prev => ({
         ...prev,
-        [role]: { ...prev[role], ...patch },
-      }))
+        [role]: { ...prev[role], ...patch } }))
     },
     []
   )
@@ -154,7 +151,6 @@ export function PermissionCustomizationPage() {
     return (
       <div style={{ padding: 24 }}>
         <Alert
-          message="접근 권한 없음"
           description="이 페이지는 마스터 관리자만 접근할 수 있습니다."
           type="error"
           showIcon
@@ -165,8 +161,9 @@ export function PermissionCustomizationPage() {
 
   return (
     <div className="permission-customization-page">
-      <Tabs
+      <CmsTextTabs
         className="permission-customization-page__tabs"
+        variant="list"
         activeKey={activeRole}
         onChange={handleTabChange}
         items={ADMIN_PERMISSION_ROLE_TABS.map(tab => ({

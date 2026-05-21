@@ -6,7 +6,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Select, Space, Card, Tag, Button, Table, Empty, message } from 'antd'
+import { Select, Space, Card, Tag, Button, Table, Empty } from 'antd'
 import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
 import type { ColumnsType } from 'antd/es/table'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
@@ -22,7 +22,6 @@ import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import dayjs from 'dayjs'
 import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
-import { MESSAGES } from '@/shared/constants'
 
 const { Option } = Select
 
@@ -57,8 +56,7 @@ export function MyFavoriteProgramsPage() {
         setPrograms(data)
       } catch (error) {
         console.error('관심 프로그램 로드 실패:', error)
-        message.error(MESSAGES.error.favoriteProgramsLoadFailed)
-      } finally {
+        } finally {
         setLoading(false)
       }
     },
@@ -96,12 +94,10 @@ export function MyFavoriteProgramsPage() {
 
     try {
       await removeFavoriteProgram(userId, programId)
-      message.success(MESSAGES.success.removedFromFavorites)
       await loadPrograms(userId) // 목록 새로고침
     } catch (error) {
       console.error('관심 프로그램 해제 실패:', error)
-      message.error(MESSAGES.error.favoriteProgramRemoveFailed)
-    }
+      }
   }
 
   const getProgramStatus = (program: FavoriteProgram) => {

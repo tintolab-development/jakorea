@@ -8,13 +8,12 @@ type DetailInfoFormContextValue = {
 }
 
 const DetailInfoFormContext = createContext<DetailInfoFormContextValue>({
-  mode: 'view',
-})
+  mode: 'view' })
 
 export type DetailInfoFormProps = {
   title: string
   /** 타이틀(`h2`) 직후·`description`과 같은 헤더 행에 노출 (민트 강조 문구 등) */
-  message?: ReactNode
+  headerNote?: ReactNode
   /** 타이틀(`h2`) 우측에 붙는 보조 문구·뱃지 등 */
   titleTrailing?: ReactNode
   description?: ReactNode
@@ -31,15 +30,14 @@ export type DetailInfoFormProps = {
 
 function DetailInfoFormRoot({
   title,
-  message,
+  headerNote,
   titleTrailing,
   description,
   hideHeader = false,
   mode = 'view',
   children,
   className,
-  style,
-}: DetailInfoFormProps) {
+  style }: DetailInfoFormProps) {
   const titleId = useId()
   const rootClass = ['detail-info-form', className].filter(Boolean).join(' ')
   const body = <div className="detail-info-form__body">{children}</div>
@@ -62,8 +60,8 @@ function DetailInfoFormRoot({
             <h2 id={titleId} className="detail-info-form__title">
               {title}
             </h2>
-            {message ? (
-              <div className="detail-info-form__message">{message}</div>
+            {headerNote ? (
+              <div className="detail-info-form__header-note">{headerNote}</div>
             ) : null}
             {description ? (
               <div className="detail-info-form__description">{description}</div>
@@ -127,8 +125,7 @@ function DetailInfoFormField({
   view,
   edit,
   mode: modeProp,
-  readOnlyDisplay = false,
-}: DetailInfoFormFieldProps) {
+  readOnlyDisplay = false }: DetailInfoFormFieldProps) {
   const { mode: contextMode } = useContext(DetailInfoFormContext)
   const effectiveMode: DetailInfoFormMode = readOnlyDisplay
     ? 'view'
@@ -138,8 +135,7 @@ function DetailInfoFormField({
   const content = useEditSlot ? edit : view
 
   const style = {
-    '--detail-info-label-w': `${labelWidth}px`,
-  } as CSSProperties
+    '--detail-info-label-w': `${labelWidth}px` } as CSSProperties
 
   const isFull = Boolean(fullRow || colSpan === 2)
   const isEditSlot = useEditSlot
@@ -191,8 +187,7 @@ function DetailInfoFormNameBlock({
   title = '성명',
   showGroupTitle = true,
   rows,
-  className,
-}: DetailInfoFormNameBlockProps) {
+  className }: DetailInfoFormNameBlockProps) {
   const [r0, r1] = rows
   const rootClass = [
     'detail-info-form__name-block',

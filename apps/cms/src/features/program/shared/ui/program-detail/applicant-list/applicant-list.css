@@ -1,0 +1,269 @@
+/* 신청 기관 화면 전체 가로 스크롤 방지: 컨테이너를 부모 너비로 제한, 테이블만 래퍼 내에서 가로 스크롤 */
+.applicant-details {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* 프로그램 승인 현황: shared StatusDropdownCell 사용 — participating-institutions-section과 동일 스타일 */
+/* 행 높이 53px 고정 (테이블 셀 높이와 동일, vertical shifting 방지) */
+.applicant-details .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) {
+  height: 53px;
+  min-height: 53px;
+  max-height: 53px;
+  overflow: visible;
+}
+
+/* 셀 횡 사이즈 고정: 드롭다운 트리거 외곽 136px과 동일 */
+.applicant-details
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  width: 136px;
+  min-width: 136px;
+  max-width: 136px;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 0;
+  padding-right: 0;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+/* 선택된 태그 오버레이(트리거) 136px 고정 */
+.applicant-details .status-dropdown-cell__status-trigger--open {
+  box-sizing: border-box !important;
+  width: 136px !important;
+  min-width: 136px !important;
+  max-width: 136px !important;
+}
+
+/* 드롭다운 활성화 시에도 행/셀 높이 53px 고정 */
+.applicant-details .ant-table-tbody > tr:has(td .status-dropdown-cell__status-trigger--open) > td {
+  height: 53px !important;
+  min-height: 53px !important;
+  max-height: 53px !important;
+}
+
+/* 해당 셀 padding 0 — vertical shifting 방지, 160px 트리거가 셀 밖으로 넘지 않도록 */
+.applicant-details
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* 캘린더 뷰: 풀페이지 메인 안에서 가로 100%·flex 축소 시에도 비율 유지 */
+.applicant-calendar-view-container {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* FilterTableLayout: 풀페이지 모달 본문 안 — 이중 카드·그림자 제거 */
+.applicant-details .applicant-details__filter-table-layout.filter-table-layout {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.applicant-details .applicant-details__filter-table-layout .filter-table-layout__divider {
+  padding: var(--spacing-16, 16px) 0;
+}
+
+.applicant-details .applicant-details__filter-table-layout .filter-table-layout__table {
+  padding-bottom: 24px;
+}
+
+.applicant-details .applicant-details__filter-table-layout .filter-table-layout__toolbar-actions .cms-button {
+  border-radius: 8px !important;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* 필터 칸 반응형 분배: 갭(12px) 유지, 각 필드 폭 균등 — TableFilterGroup */
+.applicant-details .table-filter-group__fields-inner > .ant-col {
+  flex: 1 1 0 !important;
+  min-width: 0;
+}
+
+/* 신청자 화면에서는 긴 라벨 때문에 최소 너비 과다 고정 해제 */
+.applicant-details .unified-filter-card__field--select,
+.applicant-details .table-filter-group__fields-inner .ant-col .ant-select,
+.applicant-details .table-filter-group__fields-inner .ant-col .cms-select,
+.applicant-details .table-filter-group__fields-inner .labeled-search-input__input,
+.applicant-details .table-filter-group__fields-inner .labeled-search-input .app-input,
+.applicant-details .table-filter-group__fields-inner .ant-col .ant-picker-range,
+.applicant-details .table-filter-group__fields-inner .ant-col .cms-datepicker {
+  min-width: 0 !important;
+}
+
+@media (max-width: 1280px) {
+  .applicant-details .table-filter-group__container {
+    flex-wrap: wrap;
+  }
+
+  .applicant-details .table-filter-group__fields-shell {
+    flex: 1 1 100%;
+    max-width: 100%;
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+
+  .applicant-details .table-filter-group__fields-inner.ant-row {
+    flex-wrap: wrap !important;
+  }
+
+  .applicant-details .table-filter-group__fields-inner > .ant-col {
+    flex: 1 1 calc((100% - 12px) / 2) !important;
+    min-width: 0;
+  }
+
+  .applicant-details .table-filter-group__fields-inner > .ant-col:nth-child(2n) {
+    margin-right: 0 !important;
+  }
+}
+
+/* 신청자 목록: 헤더 16px (전역 Table/fontSize 14 토큰·다른 규칙보다 확실히) */
+.applicant-details .cms-data-table .ant-table-thead > tr > th.ant-table-cell:not(.ant-table-cell-scrollbar) {
+  font-size: 16px !important;
+}
+
+/* 테이블 가로 스크롤 */
+.applicant-details__table-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 체크박스 열: 너비 68px(좌 패딩 8px 포함), 행 높이는 시안 49px 유지 */
+.applicant-details__table col.ant-table-selection-col {
+  width: var(--table-selection-column-width, 68px) !important;
+  min-width: var(--table-selection-column-width, 68px) !important;
+}
+.applicant-details__table .ant-table-thead > tr > th.ant-table-selection-column {
+  width: var(--table-selection-column-width, 68px) !important;
+  min-width: var(--table-selection-column-width, 68px) !important;
+  max-width: var(--table-selection-column-width, 68px) !important;
+  height: 49px !important;
+  min-height: 49px !important;
+  padding: 0 4px 0 8px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+}
+.applicant-details__table .ant-table-tbody > tr > td.ant-table-selection-column {
+  width: var(--table-selection-column-width, 68px) !important;
+  min-width: var(--table-selection-column-width, 68px) !important;
+  max-width: var(--table-selection-column-width, 68px) !important;
+  min-height: 49px !important;
+  padding: 0 4px 0 8px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+}
+
+.applicant-details__table--clickable .ant-table-row {
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.applicant-details__table--clickable .ant-table-tbody > tr {
+  cursor: pointer;
+}
+
+/* 강의 회차 td: 비율 열 너비는 컬럼 %에 따름. 최소 너비만 두어 좁은 뷰에서도 내용 가독성 유지 */
+.applicant-details__table .ant-table-tbody > tr > td.applicant-details__td-sessions {
+  min-width: 280px;
+  white-space: normal;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  vertical-align: top;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.applicant-details__sessions-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  line-height: 150%;
+  overflow: hidden;
+}
+
+/* 강의 회차 라인: 회차별 한 줄 처리, 셀 내 줄바꿈 없음 */
+.applicant-details__session-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.applicant-details__session-round-tag {
+  display: inline-flex;
+  width: 47px;
+  height: 26px;
+  padding: 3px 8px 2px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #f5f6f7;
+  box-sizing: border-box;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  flex-shrink: 0;
+}
+
+.applicant-details__session-divider {
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
+  background: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.applicant-details__session-more {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.5;
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  margin-top: 0;
+}

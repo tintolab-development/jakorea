@@ -4,7 +4,6 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { message } from 'antd'
 import { getTemporaryPermissions, checkPermission } from '@/entities/permission-request/api/permission-request-service'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { TemporaryPermission, PermissionAction } from '@/types/permission-request'
@@ -50,8 +49,7 @@ export function useTemporaryPermissions(
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error('임시 권한 조회에 실패했습니다.')
       setError(errorObj)
-      message.error(errorObj.message)
-    } finally {
+      } finally {
       setLoading(false)
     }
   }, [user, programId, activeOnly])

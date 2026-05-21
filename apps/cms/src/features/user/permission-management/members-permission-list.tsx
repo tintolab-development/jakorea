@@ -38,7 +38,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpage-modal'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 import './members-permission-list.css'
 import { CmsButton, ContentModal } from '@/shared/ui'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -570,7 +570,6 @@ export const MembersPermissionList = forwardRef<
             신청 승인
           </CmsButton>
           <PersonalInfoRevealButton
-            ui="cms"
             labelMode="toggle"
             revealed={isSelectedRowPrivacyRevealed}
             cmsVariant={isSelectedRowPrivacyRevealed ? 'default' : 'primary'}

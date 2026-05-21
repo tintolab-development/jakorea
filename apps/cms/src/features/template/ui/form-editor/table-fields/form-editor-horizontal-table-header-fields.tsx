@@ -1,4 +1,4 @@
-import { Form, message } from 'antd'
+import { Form } from 'antd'
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
 import {
   HORIZONTAL_TABLE_MIN_COLUMN_COUNT,
@@ -34,7 +34,6 @@ export function FormEditorHorizontalTableHeaderFields({
       if (cur.kind !== 'single_item' || cur.variant !== 'horizontal_table') return cur
       const next = horizontalTableRemoveColumn(cur, columnIndex)
       if (next == null) {
-        message.warning(`열은 최소 ${HORIZONTAL_TABLE_MIN_COLUMN_COUNT}개 이상 유지해야 합니다.`)
         return cur
       }
       return next

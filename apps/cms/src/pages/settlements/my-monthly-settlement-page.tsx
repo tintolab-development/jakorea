@@ -13,7 +13,7 @@ import { getMySettlements } from '@/entities/settlement/api/instructor-settlemen
 import { settlementStatusStatusConfig } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/ui/status-badge'
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
-import { useProgramService } from '@/features/program/hooks/use-program-service'
+import { useProgramService } from '@/features/program/general/hooks/use-program-service'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { Settlement, SettlementStatus } from '@/types/domain'
 import type { ColumnsType } from 'antd/es/table'

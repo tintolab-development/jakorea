@@ -6,8 +6,8 @@
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { ViewModeController } from '@/shared/components/view-mode'
 import '@/shared/components/list-page/list-page-layout.css'
-import '@/features/program/ui/detail-modal/program-status/program-status-participating-shared.css'
-import '@/features/program/ui/detail-modal/program-status/program-progress-tab.css'
+import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
+import '@/features/program/general/ui/detail-modal/program-status/program-progress-tab.css'
 import { PaymentOrderDetailFullPageModal } from './payment-order-detail-fullpage-modal'
 import { usePaymentOrdersListPage } from './use-payment-orders-list-page'
 

@@ -1,0 +1,69 @@
+.ujat-volunteer-interview2-bulk-pass-modal.content-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 12px;
+}
+
+.ujat-volunteer-interview2-bulk-pass-modal .content-modal__description {
+  margin-bottom: 20px;
+}
+
+.ujat-volunteer-interview2-bulk-pass-modal__description {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 150%;
+}
+
+.ujat-volunteer-interview2-bulk-pass-modal__description strong {
+  font-weight: 600;
+}
+
+.ujat-volunteer-interview2-bulk-pass-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.ujat-volunteer-interview2-bulk-pass-modal__field,
+.ujat-volunteer-interview2-bulk-pass-modal__notify-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.ujat-volunteer-interview2-bulk-pass-modal__label {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  padding: 0 8px;
+  margin-bottom: 6px;
+}
+
+.ujat-volunteer-interview2-bulk-pass-modal__notify-field .ant-radio-group {
+  padding-left: 8px;
+}
+
+.ujat-volunteer-interview2-bulk-pass-modal__field-error {
+  display: block;
+  margin-top: 8px;
+  padding: 0 8px;
+  font-size: 14px;
+  color: var(--color-red, #ff4d4f);
+}
+
+.ujat-volunteer-interview2-bulk-pass-modal__manual-summary {
+  color: rgba(61, 61, 61, 0.65);
+  font-weight: 400;
+}
+
+.ujat-volunteer-interview2-bulk-pass-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}

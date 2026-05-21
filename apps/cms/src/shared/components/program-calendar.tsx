@@ -24,8 +24,8 @@ import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
   buildResolvedScheduleColorMapForPrograms,
-} from '@/features/program/ui/program-schedule-colors'
-import { useApplicantCalendarColorMaps } from '@/features/program/program-detail/ui/applicant-list/applicant-calendar-schedule-helpers'
+} from '@/features/program/shared/ui/program-schedule-colors'
+import { useApplicantCalendarColorMaps } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-schedule-helpers'
 import { SegmentedTab } from '@/shared/ui/segmented-tab'
 import '@/shared/ui/overlay-popover.css'
 import './program-calendar.css'

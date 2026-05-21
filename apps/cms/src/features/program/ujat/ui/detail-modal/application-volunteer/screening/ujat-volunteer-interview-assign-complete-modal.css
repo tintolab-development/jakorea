@@ -1,0 +1,144 @@
+/**
+ * UJAT 면접일 배정·재배정 완료 모달 — 600×274 시안
+ * ContentModal 셸 오버라이드: padding·gap·overflow·푸터 패딩 정리
+ */
+
+.ujat-volunteer-interview-assign-complete-modal.teal-header-modal.ant-modal {
+  max-width: 600px;
+}
+
+.ujat-volunteer-interview-assign-complete-modal.content-modal.ant-modal .ant-modal-content,
+.ujat-volunteer-interview-assign-complete-modal.teal-header-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  box-sizing: border-box;
+  width: 600px !important;
+  max-width: 600px;
+  min-height: 274px;
+  padding: 24px 30px 32px 30px !important;
+  border-radius: var(--16, 16px);
+  background: #fff;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35) !important;
+  overflow: visible !important;
+}
+
+.ujat-volunteer-interview-assign-complete-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  width: 100%;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+/* 헤더(타이틀·닫기) */
+.ujat-volunteer-interview-assign-complete-modal .teal-header-modal__header {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+  height: auto;
+  min-height: 36px;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+}
+
+.ujat-volunteer-interview-assign-complete-modal .teal-header-modal__title {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 24px;
+  line-height: 150%;
+}
+
+.ujat-volunteer-interview-assign-complete-modal .teal-header-modal__close {
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+/* 타이틀 ↔ 디스크립션 12px */
+.ujat-volunteer-interview-assign-complete-modal .teal-header-modal__body {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 0 !important;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.ujat-volunteer-interview-assign-complete-modal.content-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 0 !important;
+}
+
+.ujat-volunteer-interview-assign-complete-modal .content-modal__description {
+  margin: 0;
+  align-self: stretch;
+  width: 100%;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-volunteer-interview-assign-complete-modal__description {
+  margin: 0;
+}
+
+.ujat-volunteer-interview-assign-complete-modal__description-name {
+  font-weight: 700;
+}
+
+/* 디스크립션 ↔ 일정 박스 20px — body gap으로 처리 */
+.ujat-volunteer-interview-assign-complete-modal__summary {
+  display: flex;
+  margin: 0;
+  padding: 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: var(--6, 6px);
+  background: var(--BG-hover, rgba(1, 161, 175, 0.06));
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+/* 본문 블록 ↔ 확인 버튼 30px */
+.ujat-volunteer-interview-assign-complete-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+  margin-top: 30px;
+  padding: 0 !important;
+  background: transparent;
+  justify-content: flex-end;
+}
+
+.ujat-volunteer-interview-assign-complete-modal.content-modal .teal-header-modal__footer {
+  margin-top: 30px;
+}
+
+.ujat-volunteer-interview-assign-complete-modal .content-modal__footer-actions {
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* 그림자·라운드가 wrap에서 잘리지 않도록 */
+.ant-modal-wrap:has(.ujat-volunteer-interview-assign-complete-modal) {
+  overflow: visible;
+}
+
+.ant-modal-wrap:has(.ujat-volunteer-interview-assign-complete-modal) .ant-modal {
+  overflow: visible;
+}

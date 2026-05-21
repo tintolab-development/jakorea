@@ -12,7 +12,7 @@ import {
   type ProgramProgressStages,
   type ProgramEconomyStages,
 } from '../api/admin-dashboard-service'
-import { useProgramStore } from '@/features/program/model/program-store'
+import { useProgramStore } from '@/features/program/general/model/program-store'
 import {
   PROGRAM_PROGRESS_STAGE_LABELS,
   PROGRAM_PROGRESS_STAGE_ORDER,
@@ -21,8 +21,8 @@ import {
   STAGE_TO_LIFECYCLE,
   type ProgramProgressStageKey,
 } from '@/shared/config/program-progress-stages'
-import { handleError } from '@/shared/utils/error-handler'
 import { MESSAGES } from '@/shared/constants'
+import { handleError } from '@/shared/utils/error-handler'
 import type { ProgramLifecycleStatus } from '@/types/domain'
 import {
   ProgressStagesWidget,

@@ -1,0 +1,201 @@
+.ujat-schedule-assign-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ujat-schedule-assign-page__tabs-row.cms-text-tabs .cms-text-tabs__row {
+  align-items: center;
+  flex-wrap: nowrap;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.ujat-schedule-assign-page__tabs-row .cms-text-tabs__list {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ujat-schedule-assign-section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ujat-schedule-assign-section__divider {
+  display: block;
+  width: 100%;
+  height: 0;
+  margin: 32px 0;
+  padding: 0;
+  border: none;
+  border-top: 1px solid #c4cdd1;
+}
+
+.ujat-schedule-assign-section__dates {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* 배정 행 — 본문 외곽선 없이 행별 격자 + 10px 간격 */
+.ujat-schedule-assign-date-block .detail-info-form__body {
+  border: none;
+  background: transparent;
+  overflow: visible;
+}
+
+.ujat-schedule-assign-date-block__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.ujat-schedule-assign-date-block__row {
+  display: flex;
+  align-items: stretch;
+  column-gap: 8px;
+  width: 100%;
+}
+
+.ujat-schedule-assign-date-block__row-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ujat-schedule-assign-date-block__row-fields.detail-info-form__row {
+  border-bottom: none;
+}
+
+.ujat-schedule-assign-date-block__delete-cell {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.ujat-schedule-assign-date-block__total-note {
+  color: var(--color-mint-01, #01a1af);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%; /* 28px */
+}
+
+.ujat-schedule-assign-date-block .detail-info-form-inputs-wrapper-no-gap > .cms-select {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ujat-schedule-assign-date-block__total-hint {
+  color: var(--gray-85969-d, #85969d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-schedule-assign-estimation__hint {
+  color: rgba(61, 61, 61, 0.65);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-schedule-assign-estimation__computed {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  border-radius: 6px;
+  background: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%),
+    #fff
+  );
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: left;
+}
+
+.ujat-schedule-assign-estimation__computed--filled {
+  color: var(--main-BK, #3d3d3d);
+  font-weight: 600;
+}
+
+.ujat-schedule-assign-date-block .detail-info-form__header {
+  align-items: center;
+}
+
+.ujat-schedule-assign-estimation .cross-table__cell--data {
+  vertical-align: middle;
+}
+
+/*
+ * rowSpan + border-collapse:collapse → 인접 열 세로선 이중 노출(브라우저 한계).
+ * 격자선은 셀 오른쪽·아래만 그림(collapse: separate).
+ * .cross-table.css(0,2,0)보다 높은 특이도로 로드 순서와 무관하게 적용.
+ */
+.ujat-schedule-assign-estimation .ujat-schedule-assign-estimation__table .cross-table__table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.ujat-schedule-assign-estimation .ujat-schedule-assign-estimation__table .cross-table__cell {
+  border: 0;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.ujat-schedule-assign-estimation .ujat-schedule-assign-estimation__table .cross-table__cell:first-child {
+  border-left: 0;
+}
+
+.ujat-schedule-assign-estimation .ujat-schedule-assign-estimation__table .cross-table__cell:last-child {
+  border-right: 0;
+}
+
+.ujat-schedule-assign-estimation .ujat-schedule-assign-estimation__table thead tr:first-child .cross-table__cell {
+  border-top: 0;
+}
+
+.ujat-schedule-assign-estimation .ujat-schedule-assign-estimation__table tbody tr:last-child .cross-table__cell {
+  border-bottom: 0;
+}
+
+/*
+ * rowSpan + max-cell: .cross-table__cell(0,2,0)보다 특이도 낮은 단일 클래스 규칙은 무시됨.
+ * 세로 구분선은 after-max 열 border-left 한 줄만.
+ */
+/* rowSpan: 마지막 tr 규칙 미적용 → 하단선이 form body 외곽선과 이중 */
+.ujat-schedule-assign-estimation .ujat-schedule-assign-estimation__table .ujat-schedule-assign-estimation__max-cell {
+  vertical-align: middle;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+/* 1일 최대 교육 학급 수 — 2행 병합 셀 입력 높이 예외 (기본 large 44px) */
+.ujat-schedule-assign-estimation
+  .ujat-schedule-assign-estimation__max-cell
+  .cms-input--large
+  .cms-input__control {
+  height: 104px;
+  min-height: 104px;
+  align-items: center;
+}
+
+.ujat-schedule-assign-estimation
+  .ujat-schedule-assign-estimation__table
+  .cross-table__cell--column-header:nth-child(2) {
+  border-right: 0;
+}
+
+.ujat-schedule-assign-estimation .ujat-schedule-assign-estimation__table .ujat-schedule-assign-estimation__after-max-cell {
+  border-left: 1px solid var(--table-line, #e0e0e0);
+}

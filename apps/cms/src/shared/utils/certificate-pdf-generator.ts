@@ -6,6 +6,7 @@
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import type { CertificateTextField } from '@/types/template'
+import { unknownErrorText } from '@/shared/utils/error-handler'
 
 /**
  * 이미지 로드 헬퍼
@@ -132,8 +133,7 @@ export async function generateCertificatePdf(
         ...field,
         x: field.x * scaleFactor,
         y: field.y * scaleFactor,
-        fontSize: field.fontSize * scaleFactor,
-      }))
+        fontSize: field.fontSize * scaleFactor }))
       renderTextOnCanvas(ctx, scaledTextFields, fieldValues)
     }
 
@@ -174,7 +174,7 @@ export async function generateCertificatePdf(
     return blob
   } catch (error) {
     console.error('PDF 생성 실패:', error)
-    const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류'
+    const errorMessage = unknownErrorText(error, '알 수 없는 오류')
     throw new Error(`수료증 PDF 생성 중 오류가 발생했습니다: ${errorMessage}`)
   }
 }
@@ -205,15 +205,13 @@ export async function generatePdfBlobFromHtmlElement(
     scale,
     useCORS: true,
     logging: false,
-    backgroundColor: '#ffffff',
-  })
+    backgroundColor: '#ffffff' })
 
   const imgData = canvas.toDataURL('image/png', 1.0)
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
-    format: 'a4',
-  })
+    format: 'a4' })
 
   const pageWidth = pdf.internal.pageSize.getWidth()
   const pageHeight = pdf.internal.pageSize.getHeight()

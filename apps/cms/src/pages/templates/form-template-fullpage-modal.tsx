@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from 'react'
-import { message } from 'antd'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import {
   type TemplateCustomFieldDef,
@@ -75,7 +74,6 @@ export function FormTemplateFullpageModal({
   }, [])
 
   const handleSave = useCallback(async () => {
-    const hideLoading = message.loading('저장 중…', 0)
     try {
       await saveFormTemplateSettings({
         orgLogo: logoUploadResults.orgLogo,
@@ -83,11 +81,8 @@ export function FormTemplateFullpageModal({
         certificateBackground: logoUploadResults.certificateBackground,
         chairmanSeal: logoUploadResults.chairmanSeal,
       })
-      message.success('양식 설정이 저장되었습니다.')
     } catch {
-      message.error('저장에 실패했습니다.')
-    } finally {
-      hideLoading()
+      // 무음 처리
     }
   }, [logoUploadResults])
 

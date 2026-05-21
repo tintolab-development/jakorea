@@ -17,7 +17,7 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { PaymentOrderBatchConfirmModal } from './payment-order-batch-confirm-modal'
 import { Divider } from '@/shared/components/divider'
 import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
-import { AppButton } from '@/shared/ui/app-button'
+import { CmsButton } from '@/shared/ui'
 import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import {
   usePaymentOrderDetailLinesController,
@@ -113,9 +113,9 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
             </span>
           </div>
           <div className="participating-institutions-section__table-actions">
-            <AppButton
-              variant="cancel"
-              size="filter"
+            <CmsButton
+              variant="secondary"
+              size="large" width={160}
               disabled={selectedRowKeys.length === 0}
               onClick={() => {
                 if (selectedRowKeys.length === 0) return
@@ -123,16 +123,16 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
               }}
             >
               일괄 확인
-            </AppButton>
-            <AppButton
+            </CmsButton>
+            <CmsButton
               variant="primary"
-              size="filter-wide"
+              size="large" style={{ minWidth: 180 }}
               icon={<DownloadOutlined />}
               disabled={selectedRowKeys.length === 0}
               onClick={handlePaymentStatementIssue}
             >
               지급조서 발급
-            </AppButton>
+            </CmsButton>
           </div>
         </div>
 

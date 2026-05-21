@@ -58,7 +58,7 @@ export function PendingActionsAlert({ onNavigate }: PendingActionsAlertProps) {
   if (scheduleConflictCount > 0) {
     alerts.push({
       type: 'error',
-      message: `일정 중복 경고 ${scheduleConflictCount}건`,
+      message: `일정 충돌 ${scheduleConflictCount}건`,
       description: '중복된 일정이 감지되었습니다.',
       path: '/programs/education/schedule',
       icon: <CalendarOutlined />,
@@ -91,4 +91,3 @@ export function PendingActionsAlert({ onNavigate }: PendingActionsAlertProps) {
     </Space>
   )
 }
-

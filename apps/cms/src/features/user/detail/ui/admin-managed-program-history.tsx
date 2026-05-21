@@ -39,7 +39,7 @@ import {
   buildProgramProgressHistoryDeleteGuide,
 } from '@/shared/ui'
 import { buildProgressYearSelectOptions } from '@/shared/utils'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 

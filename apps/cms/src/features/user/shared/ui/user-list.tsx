@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import '@/features/program/ui/program-list.css'
+import '@/features/program/general/ui/program-list.css'
 import './admin-permission-tag.css'
 import './user-list.css'
 import type { User, UserRole } from '@/types/user'

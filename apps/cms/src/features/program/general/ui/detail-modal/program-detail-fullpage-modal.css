@@ -1,0 +1,418 @@
+/**
+ * 프로그램 상세 풀페이지 모달
+ * LNB(다크 배경) + 메인(헤더 타이틀+닫기, 탭, 콘텐츠) 레이아웃
+ * 스크린샷 기준: 모달 헤더 없음, LNB 다크 UI, 선택 항목 연한 파란 배경
+ */
+
+@import './program-status/program-status-participating-shared.css';
+@import '../../../../../shared/ui/cms-text-tabs.css';
+
+.program-detail-fullpage-modal .teal-header-modal__body {
+  padding: 0;
+  margin-top: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  width: 100%;
+}
+
+/* 클릭 시 포커스 보더 제거 */
+.program-detail-fullpage-modal button:focus,
+.program-detail-fullpage-modal button:focus-visible,
+.program-detail-fullpage-modal .ant-btn:focus,
+.program-detail-fullpage-modal .ant-btn:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.program-detail-fullpage-modal__layout {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* LNB 제외한 풀페이지 모달 전체(헤더+탭+콘텐츠)가 하나의 스크롤 영역. 가로 스크롤 없음(테이블은 각 섹션 래퍼 내에서만) */
+.program-detail-fullpage-modal__main {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--color-bg-base);
+}
+
+/* 메인 헤더: 프로그램명 + 우측 닫기(X) / padding-left 60, height 90 */
+.program-detail-fullpage-modal__header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 60px;
+  padding-right: var(--spacing-24);
+  height: 90px;
+  gap: var(--spacing-16);
+}
+
+.program-detail-fullpage-modal__title {
+  margin: 0;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 26px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+  color: var(--default-BK, #3d3d3d);
+  flex: 1;
+  min-width: 0;
+}
+
+.program-detail-fullpage-modal__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: var(--radius-4);
+  transition:
+    background 0.2s,
+    color 0.2s;
+  flex-shrink: 0;
+}
+
+.program-detail-fullpage-modal__close:hover {
+  background: var(--color-overlay-light, rgba(0, 0, 0, 0.04));
+  color: var(--color-text-primary);
+}
+
+/* 탭 행·버튼: `cms-text-tabs.css` (레거시 BEM alias 포함) */
+
+/* 프로젝트 정보 탭 헤더 — 프로그램 상세 미리보기 (180×44, JA-mint-01, 연한 보더) */
+.program-detail-fullpage-modal
+  .program-detail-fullpage-modal__program-preview-btn.cms-button.ant-btn {
+  display: flex;
+  width: 180px;
+  min-width: 180px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 31px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  background: var(--JA-mint-01, #01a1af) !important;
+}
+
+.program-detail-fullpage-modal
+  .program-detail-fullpage-modal__program-preview-btn.cms-button--primary.ant-btn-primary:hover:not(
+    :disabled
+  ) {
+  background: color-mix(in srgb, var(--JA-mint-01, #01a1af) 88%, #000) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+  color: var(--default-WT) !important;
+}
+
+.program-detail-fullpage-modal__content {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+.program-detail-fullpage-modal__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+/* 공통 정보 탭: 좌우는 공통 content 패딩 — 하단 32px만 */
+.program-detail-fullpage-modal__info-tab {
+  padding: 0 0 32px;
+  box-sizing: border-box;
+  /* 진행현황 등 넓은 테이블: 내용 폭으로 부모가 밀려나면 가로 스크롤이 사라짐 → 폭 상한·shrink 허용 */
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* 참여자 정보 탭: 항목별 갭 32px (공통 정보 탭과 동일하게 margin-top) */
+.program-detail-fullpage-modal__info-tab-block {
+  margin-top: 32px;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* 첫 번째 블록(기본 정보): 상단 여백 제거 */
+.program-detail-fullpage-modal__info-tab
+  > .program-detail-fullpage-modal__info-tab-block:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* 항목 타이틀과 테이블 사이 갭 10px (공통 정보 탭과 동일) */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__section-title {
+  margin-bottom: 10px;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__section-header-row {
+  margin-bottom: 10px;
+}
+
+/* 기본 정보: 최초 등록일·마지막 수정일 테이블만 분리, 하위 16px 갭 */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table-wrapper--dates {
+  margin-bottom: 16px;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table-wrapper--top {
+  margin-bottom: 16px;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table-wrapper--sub {
+  margin-top: 0;
+}
+
+/* 기본 정보 / 교육 커리큘럼 / 사업 KPI 목표 블록: 항목당 32px gap, 디바이더 없음 */
+.program-detail-fullpage-modal__info-tab > .program-detail-info-tab__section-title--block-start,
+.program-detail-fullpage-modal__info-tab > .program-kpi-target-section {
+  margin-top: 32px;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* 수정 모드: 공통 정보 탭 — td 내 AppSelect·AppInput 기본 너비 190px */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-select {
+  width: 190px;
+  max-width: 190px;
+  box-sizing: border-box;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-input {
+  width: 190px;
+  max-width: 190px;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+}
+
+/* 후원사 담당자(수정): 공통 정보 탭 시안 — 190×40, 패딩·테두리 (project-info-form-shared 의 auto!important 덮어씀) */
+.program-detail-fullpage-modal__info-tab
+  .program-detail-info-tab__table
+  td
+  .program-detail-info-tab__sponsor-manager-inputs
+  > .app-select.program-detail-info-tab__manager-select,
+.program-detail-fullpage-modal__info-tab
+  .program-detail-info-tab__table
+  td
+  .program-detail-info-tab__sponsor-manager-inputs
+  > .program-detail-info-tab__manager-select.app-select {
+  display: flex;
+  width: 190px !important;
+  min-width: 190px !important;
+  max-width: 190px !important;
+  height: 40px;
+  padding: 0 14px 0 16px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 6px;
+  border: 1px solid #c4cdd1;
+  background: var(--default-WT, #fff);
+  flex: 0 0 190px;
+  box-sizing: border-box;
+}
+
+/* 임금: 강사비 유형·단위·수량은 별도 폭 */
+.program-detail-fullpage-modal__info-tab .program-wage-info-section__wage-type-select.app-select {
+  width: 190px;
+  max-width: 190px;
+}
+
+/* 임금 책정 기준: 단위·수량 80×40 (shared !important 와 동일) */
+.program-detail-fullpage-modal__info-tab
+  .program-detail-info-tab__table
+  td
+  .program-wage-info-section__measure-select.app-select {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  flex: 0 0 80px;
+}
+
+.program-detail-fullpage-modal__info-tab
+  .program-detail-info-tab__table
+  td
+  .program-wage-info-section__pricing-basis-row
+  > .app-input.program-wage-info-section__input--qty {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  flex: 0 0 80px;
+}
+
+/* 임금: 기본·장거리 강사비 190×40 */
+.program-detail-fullpage-modal__info-tab
+  .program-detail-info-tab__table
+  td
+  .app-input.program-wage-info-section__input--price {
+  width: 190px;
+  max-width: 190px;
+  flex: 0 0 190px;
+}
+
+/* 교육 커리큘럼: 시간 입력 120px, 비고는 가변 */
+.program-detail-fullpage-modal__info-tab
+  .program-detail-info-tab__curriculum-inputs
+  .program-detail-info-tab__curriculum-time-input.app-input {
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+.program-detail-fullpage-modal__info-tab
+  .program-detail-info-tab__curriculum-inputs
+  .program-detail-info-tab__curriculum-remarks-input.app-input {
+  width: auto;
+  max-width: none;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 수정 모드: 공통 정보 탭 — td 내 AppSelect·AppInput 기본 너비 190px */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-select {
+    width: 190px;
+    max-width: 190px;
+    box-sizing: border-box;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-input {
+    width: 190px;
+    max-width: 190px;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+}
+
+/* 대표 프로그램명: td 폭 전체 사용 (세부 프로그램명은 190px — project-info-form-shared) */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-input.program-detail-info-tab__input--cell-full {
+    width: 100%;
+    max-width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* 후원사 담당자(수정): 공통 정보 탭 시안 — 190×40, 패딩·테두리 (project-info-form-shared 의 auto!important 덮어씀) */
+.program-detail-fullpage-modal__info-tab
+    .program-detail-info-tab__table
+    td
+    .program-detail-info-tab__sponsor-manager-inputs
+    > .app-select.program-detail-info-tab__manager-select,
+.program-detail-fullpage-modal__info-tab
+    .program-detail-info-tab__table
+    td
+    .program-detail-info-tab__sponsor-manager-inputs
+    > .program-detail-info-tab__manager-select.app-select {
+    display: flex;
+    width: 190px !important;
+    min-width: 190px !important;
+    max-width: 190px !important;
+    height: 40px;
+    padding: 0 14px 0 16px;
+    align-items: center;
+    gap: 8px;
+    border-radius: 6px;
+    border: 1px solid #c4cdd1;
+    background: var(--default-WT, #fff);
+    flex: 0 0 190px;
+    box-sizing: border-box;
+}
+
+/* 임금: 강사비 유형·단위·수량은 별도 폭 */
+.program-detail-fullpage-modal__info-tab .program-wage-info-section__wage-type-select.app-select {
+    width: 190px;
+    max-width: 190px;
+}
+
+/* 임금 책정 기준: 단위·수량 80×40 (shared !important 와 동일) */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .program-wage-info-section__measure-select.app-select {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    flex: 0 0 80px;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .program-wage-info-section__pricing-basis-row>.app-input.program-wage-info-section__input--qty {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    flex: 0 0 80px;
+}
+
+/* 임금: 기본·장거리 강사비 190×40 */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-input.program-wage-info-section__input--price {
+    width: 190px;
+    max-width: 190px;
+    flex: 0 0 190px;
+}
+
+/* 교육 커리큘럼: 시간 입력 120px, 비고는 가변 */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__curriculum-inputs .program-detail-info-tab__curriculum-time-input.app-input {
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+}
+
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__curriculum-inputs .program-detail-info-tab__curriculum-remarks-input.app-input {
+    width: auto;
+    max-width: none;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.program-detail-fullpage-modal__tab-panel {
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 프로그램 진행 현황 하위(참여 기관/참여 강사/참여 봉사자) 섹션 */
+.program-detail-fullpage-modal__progress-section {
+  margin-top: 0;
+}
+
+.program-detail-fullpage-modal__progress-section .ant-typography + .ant-typography {
+  display: block;
+  margin-top: 8px;
+}
+
+/* 경제 교육: 테이블 헤더 옆 「총 N건」 등 레이블 디스크립션 공통 타이포 */
+.program-detail-fullpage-modal--economy-education .program-progress-tab__table-description,
+.program-detail-fullpage-modal--economy-education
+  .participating-institutions-section__table-description,
+.program-detail-fullpage-modal--economy-education .program-status-participating__table-description,
+.program-detail-fullpage-modal--economy-education .program-applicants-tab__table-description,
+.program-detail-fullpage-modal--economy-education .program-managers-tab__table-description,
+.program-detail-fullpage-modal--economy-education .applicant-details__table-description,
+.program-detail-fullpage-modal--economy-education .school-detail-modal__table-description {
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}

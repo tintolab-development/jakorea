@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
-import { message } from 'antd'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import {
@@ -68,7 +67,6 @@ function useProgramRegistrationMiddleActions(
   const onDuplicate = useCallback(
     (paragraphId: string) => {
       if (seedParagraphIds.has(paragraphId)) {
-        message.warning('기본 단락은 복제할 수 없습니다.')
         return
       }
       const newId = crypto.randomUUID()
@@ -76,7 +74,6 @@ function useProgramRegistrationMiddleActions(
       setDraft(prev => {
         const next = duplicateMiddleParagraph(prev.paragraphs, paragraphId, newId)
         if (next == null) {
-          message.warning('이 단락은 복제할 수 없습니다.')
           return prev
         }
         duplicated = true
@@ -90,14 +87,12 @@ function useProgramRegistrationMiddleActions(
   const onDelete = useCallback(
     (paragraphId: string) => {
       if (seedParagraphIds.has(paragraphId)) {
-        message.warning('기본 단락은 삭제할 수 없습니다.')
         return
       }
       let nextActive: string | null = null
       setDraft(prev => {
         const next = removeMiddleParagraph(prev.paragraphs, paragraphId)
         if (next == null) {
-          message.warning('중간 단락은 최소 1개 이상 유지해야 합니다.')
           return prev
         }
         nextActive = pickActiveParagraphIdAfterMiddleDelete(prev.paragraphs, paragraphId)
@@ -462,8 +457,7 @@ export function useProgramRegistrationEditor(
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    message.success('저장 API 연동 전입니다.')
-  }, [])
+    }, [])
 
   const onSelectSingleItemListItem = useCallback((paragraphId: string, itemId: string | null) => {
     setActiveParagraphId(paragraphId)

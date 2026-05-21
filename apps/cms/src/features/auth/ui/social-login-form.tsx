@@ -3,12 +3,9 @@
  * Phase 0.1.3: 간편인증 로그인
  */
 
-import { Button, Space, message } from 'antd'
+import { Button, Space } from 'antd'
 import { useState } from 'react'
-import {
-  SOCIAL_PROVIDER_LABEL,
-  type SocialProvider,
-} from '@/entities/user/api/auth-service'
+import type { SocialProvider } from '@/entities/user/api/auth-service'
 import { GoogleMarkIcon } from '@/shared/ui/icons'
 import { buildOAuthAuthorizeUrl } from '@/features/auth/lib/oauth-client'
 import './social-login-form.css'
@@ -71,8 +68,8 @@ export function SocialLoginForm() {
     try {
       const authorizeUrl = buildOAuthAuthorizeUrl(provider)
       window.location.href = authorizeUrl
-    } catch (error: any) {
-      message.error(error?.message || `${SOCIAL_PROVIDER_LABEL[provider]} 로그인에 실패했습니다.`)
+    } catch (error: unknown) {
+      console.debug('socialLoginForm redirect failed', error)
     } finally {
       setLoading(null)
     }

@@ -7,13 +7,12 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { AppMultiSelect } from '@/shared/ui/app-multi-select'
-import type { UjatRecruitParagraphProps } from '@/features/program/ui/detail-modal/ujat-recruit-paragraph-props'
+import type { UjatRecruitParagraphProps } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
 import {
   isUjatRecruitProgramContext,
   resolveUjatRecruitParagraphMode,
-} from '@/features/program/ui/detail-modal/ujat-recruit-paragraph-props'
-import { UjatRecruitVolunteerInfoProgramView } from '@/features/program/ui/detail-modal/ujat-recruit-paragraph-views/volunteer-info-program'
+} from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
+import { UjatRecruitVolunteerInfoProgramView } from '@/features/program/ujat/ui/detail-modal/info/recruit-paragraph-views/volunteer-info-program'
 import '@/features/template/ui/form-editor/form-editor.css'
 
 const RECRUIT_PROGRESS_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
@@ -152,10 +151,12 @@ function UjatRecruitVolunteerInfoTemplateEditor() {
           <DetailInfoForm.Field
             label="모집 대상"
             edit={
-              <AppMultiSelect
+              <CmsSelect
+                mode="multiple"
+                withAllOption={false}
                 style={{ width: 240 }}
                 value={recruitTargets}
-                onChange={setRecruitTargets}
+                onChange={next => setRecruitTargets(next as string[])}
                 disabled
                 placeholder="모집 대상을 선택하세요"
                 options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
@@ -334,7 +335,6 @@ export function UjatRecruitVolunteerInfoParagraph(props: UjatRecruitParagraphPro
         volunteerHalf={half}
         showNoticeExposure={half === 'h2'}
         sectionTitle={props.sectionTitle}
-        sectionDescription={props.sectionDescription}
       />
     )
   }

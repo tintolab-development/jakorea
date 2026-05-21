@@ -5,7 +5,6 @@
 
 import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
 import { type ChangeEvent, useCallback, useEffect, useId, useRef, useState } from 'react'
-import { message } from 'antd'
 import crimeConsentDefaultImage from '@/assets/images/template/성범좌 경력 조회.png'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -53,7 +52,6 @@ export function CrimeRecordConsentDocumentFullpageModal({
     e.target.value = ''
     if (!file) return
     if (!file.type.startsWith('image/')) {
-      message.error('이미지 파일만 선택할 수 있습니다.')
       return
     }
     if (replaceObjectUrlRef.current) {
@@ -75,8 +73,8 @@ export function CrimeRecordConsentDocumentFullpageModal({
           ? replacementFileName
           : DEFAULT_DOWNLOAD_FILENAME
       downloadBlob(blob, filename)
-    } catch {
-      message.error('문서를 다운로드할 수 없습니다.')
+    } catch (error) {
+      console.debug('crimeRecordConsentDocument download failed', error)
     }
   }, [displaySrc, replacementFileName])
 

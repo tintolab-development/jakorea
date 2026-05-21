@@ -2,7 +2,7 @@
 
 **대상**: 프로그램 상세 페이지 > **신청자 목록** 탭  
 **참조 시안**: 스크린샷 (프로그램 상세 신청자 목록 — 신청 학교 탭 / **신청 강사 탭**: 필터 학교명·강사명·결재 현황, 강의 신청 강사 목록 총 N건 테이블)  
-**기존 참고 UI**: [ProgramProgressTab](../../../src/features/program/ui/program-progress-tab.tsx) — 서브 탭·필터·조회 버튼·테이블·건수 표시 패턴 재사용
+**기존 참고 UI**: [ProgramProgressTab](../../../src/features/program/general/ui/detail-modal/program-status/program-progress-tab.tsx) — 서브 탭·필터·조회 버튼·테이블·건수 표시 패턴 재사용
 
 ---
 
@@ -198,8 +198,8 @@
 ## 6. 참조 문서·코드
 
 - [persona.md](../../../.cursor/rules/process/persona.md) — 역할별 요청 해석 (디자이너/기획/PM → 개발 위임 표현)
-- [program-progress-tab.tsx](../../../src/features/program/ui/program-progress-tab.tsx) — 서브 탭·필터·조회·테이블·건수 패턴
-- [use-program-progress-params.ts](../../../src/features/program/hooks/use-program-progress-params.ts) — subTab·필터·URL 동기화
+- [program-progress-tab.tsx](../../../src/features/program/general/ui/detail-modal/program-status/program-progress-tab.tsx) — 서브 탭·필터·조회·테이블·건수 패턴
+- [use-program-progress-params.ts](../../../src/features/program/general/hooks/use-program-progress-params.ts) — subTab·필터·URL 동기화
 - [school-detail-modal-spec.md](./school-detail-modal-spec.md) — 명세 문서 양식 참고
 - [table-management.md](../../../.cursor/rules/tables/table-management.md) — 테이블 구현 규칙
 
