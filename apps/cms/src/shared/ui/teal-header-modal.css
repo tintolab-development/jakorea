@@ -52,6 +52,9 @@
   min-height: 0;
   overflow-y: auto;
   max-height: none;
+  /* 풀페이지(등록·미리보기): 기본 margin-top 16px 제거 — 청록 헤더가 뷰포트 상단부터 */
+  margin-top: 0;
+  gap: 0;
 }
 
 /* 헤더 숨김(풀페이지 모달 등): 바디가 최상단부터 채움 */

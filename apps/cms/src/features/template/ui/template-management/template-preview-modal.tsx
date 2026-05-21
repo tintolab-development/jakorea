@@ -1,5 +1,8 @@
 import { useMemo } from 'react'
-import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
+import {
+  TemplateFullpageModal,
+  type TemplateFullpageModalFooterAction,
+} from '@/features/template/ui/template-management/template-fullpage-modal'
 import { TEMPLATE_FORM_MODAL_DESCRIPTION } from '@/features/template/model/template-registry/template-registry'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 import type { TemplateRendererContext } from '@/features/template/ui/template-renderers/template-renderer-types'
@@ -16,10 +19,7 @@ export type TemplatePreviewModalProps = {
    * `/templates/form-management` 템플릿 편집에서는 사용하지 않는다.
    */
   registrationUserMode?: boolean
-  footerAction?: {
-    label?: string
-    onClick: () => void
-  }
+  footerAction?: TemplateFullpageModalFooterAction
 }
 
 export function TemplatePreviewModal({

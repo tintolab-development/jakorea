@@ -5,7 +5,8 @@
  */
 
 import { useState, useEffect, Fragment, type ReactNode } from 'react'
-import { Tabs, Radio, Select } from 'antd'
+import { Radio, Select } from 'antd'
+import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { UserOutlined } from '@ant-design/icons'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui'
@@ -574,16 +575,7 @@ export function ApplicantInstructorDetailModal({
     </div>
   )
 
-  const tabItems = [
-    {
-      key: TAB_BASIC,
-      label: '기본 정보',
-      children: basicTabContent,
-    },
-    {
-      key: TAB_RESUME,
-      label: '강사 이력서',
-      children: (() => {
+  const resumeTabContent = (() => {
         const NO_DATA = '데이터 없음'
         const totalCareerYears = getTotalCareerYears(instructor.careerDetails)
         const educationBadge =
@@ -816,9 +808,7 @@ export function ApplicantInstructorDetailModal({
             ))}
           </div>
         )
-      })(),
-    },
-  ]
+      })()
 
   return (
     <>
@@ -831,12 +821,18 @@ export function ApplicantInstructorDetailModal({
         footer={footer}
       >
         <div className="applicant-instructor-detail-modal">
-          <Tabs
+          <CmsTextTabs
+            className="applicant-instructor-detail-modal__tabs"
             activeKey={activeTab}
             onChange={setActiveTab}
-            items={tabItems}
-            className="applicant-instructor-detail-modal__tabs"
+            items={[
+              { key: TAB_BASIC, label: '기본 정보' },
+              { key: TAB_RESUME, label: '강사 이력서' },
+            ]}
           />
+          <div className="applicant-instructor-detail-modal__tab-panel">
+            {activeTab === TAB_RESUME ? resumeTabContent : basicTabContent}
+          </div>
         </div>
       </TealHeaderModal>
 

@@ -49,8 +49,7 @@
     width: 100%;
 }
 
-/* 탭 영역이 남은 바디 높이를 채우도록 */
-.applicant-instructor-detail-modal__tabs.ant-tabs {
+.applicant-instructor-detail-modal {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
@@ -58,45 +57,18 @@
     overflow: hidden;
 }
 
-.applicant-instructor-detail-modal__tabs .ant-tabs-content-holder {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-.applicant-instructor-detail-modal__tabs .ant-tabs-content {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-.applicant-instructor-detail-modal__tabs .ant-tabs-tabpane {
-    height: 100%;
-    min-height: 0;
-    overflow-y: auto;
-}
-
-/* 탭: 활성 탭 청록 밑줄, 텍스트 색상 */
-.applicant-instructor-detail-modal__tabs .ant-tabs-nav {
-    margin-bottom: var(--spacing-16);
+.applicant-instructor-detail-modal__tabs.cms-text-tabs {
     flex-shrink: 0;
 }
 
-.applicant-instructor-detail-modal__tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
-    color: var(--color-modal-header);
-    font-weight: 600;
+.applicant-instructor-detail-modal__tabs .cms-text-tabs__row {
+    margin-bottom: var(--spacing-16);
 }
 
-.applicant-instructor-detail-modal__tabs .ant-tabs-ink-bar {
-    background: var(--color-modal-header);
-}
-
-.applicant-instructor-detail-modal__tabs .ant-tabs-tab:hover .ant-tabs-tab-btn {
-    color: var(--color-modal-header);
+.applicant-instructor-detail-modal__tab-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .applicant-instructor-detail-modal__basic {

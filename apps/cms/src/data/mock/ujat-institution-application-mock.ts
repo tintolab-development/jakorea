@@ -11,6 +11,7 @@ import {
   buildEmptyScheduleSlots,
   formatUjatInstitutionFridayDisplay,
 } from '@/features/program/ujat/ui/detail-modal/application-institution/list/types'
+import type { UjatScheduleConfirmConfirmedDetailExtras } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-confirm/confirmed-detail-types'
 import type { UjatInstitutionScheduleConfirmStatus } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-confirm/types'
 
 /** 임시 배정 store 초기 시드 — `schedule-assign/store.ts`에서 1회 적용 */
@@ -29,6 +30,8 @@ type UjatInstitutionMockFixture = {
   row: UjatInstitutionApplicationRow
   scheduleConfirmStatus?: UjatInstitutionScheduleConfirmStatus
   scheduleAssignments?: UjatInstitutionScheduleAssignSeedEntry[]
+  /** 기관 확인 완료 상세 — 교재·안내 사항 등 */
+  confirmedDetailExtras?: UjatScheduleConfirmConfirmedDetailExtras
   detail: Omit<
     UjatInstitutionApplicationDetail,
     'institutionName' | 'regionLabel' | 'tempAssignmentStatus' | 'preferredEducationDates'
@@ -288,6 +291,36 @@ const UJAT_INSTITUTION_SEOUL_FIXTURES: UjatInstitutionMockFixture[] = [
       teacherName: '최지연',
     },
     scheduleConfirmStatus: 'institution_confirmed',
+    confirmedDetailExtras: {
+      gradeTextbooks: {
+        '1학년': {
+          textbookName: '우리가족',
+          kitSummary: '3키트 (84권)',
+          deliveryStatus: 'before_shipping',
+        },
+        '5학년': {
+          textbookName: '우리마을',
+          kitSummary: '4키트 (112권)',
+          deliveryStatus: 'before_shipping',
+        },
+        '6학년': {
+          textbookName: '우리동네',
+          kitSummary: '2키트 (56권)',
+          deliveryStatus: 'before_shipping',
+        },
+      },
+      guidanceNotes: {
+        searchDeviceGrade6: '6학년 개별 태블릿 사용 가능.',
+        waitingArea:
+          '후관 2층 1-4 옆 강사 대기실(늘봄교실 1)에서 대기해 주세요. 수업 10분 전 도착 부탁드립니다.',
+        textbookDisposalLocation:
+          "후관 1층 세면대 옆 '종이 쓰레기 분리함'을 이용해 주세요.",
+        otherSpecialNotes:
+          "본교 주차장이 협소한 관계로 인근 '동작 공영주차장' 이용을 권장합니다.",
+        snackAvailability: '가능',
+        sexOffenderCheck: '온라인 제출 | ID: jiyeon.choi | 검증번호: 940412',
+      },
+    },
     scheduleAssignments: [
       {
         institutionId: 'seoul-5',
@@ -520,6 +553,12 @@ export function patchUjatInstitutionScheduleConfirmStatus(
     next[id] = status
   }
   scheduleConfirmStatusById = next
+}
+
+export function getUjatInstitutionScheduleConfirmConfirmedDetailExtras(
+  institutionId: string
+): UjatScheduleConfirmConfirmedDetailExtras | undefined {
+  return FIXTURE_BY_ID.get(institutionId)?.confirmedDetailExtras
 }
 
 export function getUjatInstitutionApplicationDetail(

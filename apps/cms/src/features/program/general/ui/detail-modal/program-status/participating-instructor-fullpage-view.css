@@ -5,10 +5,6 @@
 @import '../../../../shared/ui/program-detail/project-info/project-info-form-shared.css';
 @import '../../../../shared/ui/program-detail/applicant-list/applicant-instructor-resume.css';
 
-.participating-instructor-fullpage-view .program-detail-fullpage-modal__tabs-row {
-  padding: 0 0 32px 0;
-}
-
 .participating-instructor-fullpage-view .program-detail-fullpage-modal__info-tab {
   padding: 0;
 }

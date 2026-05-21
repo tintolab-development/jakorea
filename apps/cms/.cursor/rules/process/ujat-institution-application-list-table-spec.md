@@ -101,7 +101,7 @@ category: process
 | 선택 신청 반려 | `application_rejected` |
 | 선택 임시 반려 | `temp_rejected` |
 
-반려 모달: `ujat-institution-application-action-modal.tsx` · `PermissionRejectModal` (신청 반려·임시 반려만).  
+결정 모달: `ujat-institution-application-action-modal.tsx` · `PermissionModal` (`variant`: reject / approve). 신청·임시 반려, 기관 승인(임시 배정 기관 확인 상세).  
 **임시 배정**(목록·상세): 확인 모달 없음 → `temp_assigned` 즉시 반영 → `useCmsAlert` **임시 배정 완료** (`ujat-institution-application-temp-assign-complete.ts`).
 
 ---

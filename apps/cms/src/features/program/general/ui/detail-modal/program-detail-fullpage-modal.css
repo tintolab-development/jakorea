@@ -5,6 +5,7 @@
  */
 
 @import './program-status/program-status-participating-shared.css';
+@import '../../../../../shared/ui/cms-text-tabs.css';
 
 .program-detail-fullpage-modal .teal-header-modal__body {
   padding: 0;
@@ -97,30 +98,7 @@
   color: var(--color-text-primary);
 }
 
-/* 탭 영역: 좌우 패딩은 공통 .detail-fullpage-modal__content(52px) — 여기서는 상·하만 */
-.program-detail-fullpage-modal__tabs-row {
-  flex-shrink: 0;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: var(--spacing-16) 0 32px;
-  gap: var(--spacing-16);
-  min-height: 0;
-}
-
-.program-detail-fullpage-modal__tabs {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  flex: 1;
-}
-
-.program-detail-fullpage-modal__header-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-8);
-  flex-shrink: 0;
-}
+/* 탭 행·버튼: `cms-text-tabs.css` (레거시 BEM alias 포함) */
 
 /* 프로젝트 정보 탭 헤더 — 프로그램 상세 미리보기 (180×44, JA-mint-01, 연한 보더) */
 .program-detail-fullpage-modal
@@ -148,70 +126,6 @@
   background: color-mix(in srgb, var(--JA-mint-01, #01a1af) 88%, #000) !important;
   border-color: rgba(0, 0, 0, 0.06) !important;
   color: var(--default-WT) !important;
-}
-
-/* 탭 버튼: 스펙 — flex, padding 6 16 10 16, center/flex-start, gap 10, 활성 시 하단 보더 */
-.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab {
-  display: flex;
-  padding: 6px 16px 10px 16px;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  border: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  background: none;
-  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  color: #7d7d7d;
-  cursor: pointer;
-  transition:
-    color 0.2s,
-    border-color 0.2s;
-  box-sizing: border-box;
-}
-
-.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:hover {
-  color: var(--color-text-primary);
-}
-
-.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:disabled {
-  color: #bdbdbd;
-  cursor: not-allowed;
-  opacity: 0.65;
-}
-
-.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:disabled:hover {
-  color: #bdbdbd;
-}
-
-.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:disabled {
-    color: #bdbdbd;
-    cursor: not-allowed;
-    opacity: 0.65;
-}
-
-.program-detail-fullpage-modal button.program-detail-fullpage-modal__tab:disabled:hover {
-    color: #bdbdbd;
-}
-
-/* 활성 탭 — 동일 specificity로 base 오버라이드 (색상·보더 적용되도록) */
-.program-detail-fullpage-modal
-  button.program-detail-fullpage-modal__tab.program-detail-fullpage-modal__tab--active {
-  color: var(--JA-mint-01, #01a1af);
-  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
-  border-bottom: 2px solid var(--JA-mint-01, #01a1af);
-}
-
-.program-detail-fullpage-modal__tab-label {
-  display: inline-block;
 }
 
 .program-detail-fullpage-modal__content {

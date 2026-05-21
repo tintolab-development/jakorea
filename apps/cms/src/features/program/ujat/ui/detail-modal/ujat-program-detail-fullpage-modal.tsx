@@ -18,6 +18,7 @@ import { UjatInstitutionApplicationDetailPage } from './application-institution/
 import { UjatInstitutionScheduleAssignPage } from './application-institution/schedule-assign/page'
 import { UjatInstitutionScheduleConfirmList } from './application-institution/schedule-confirm/list'
 import { UjatEducationProgressInstitutionsSection } from './progress/institutions/ujat-education-progress-institutions-section'
+import { UjatInstitutionScheduleConfirmDetailPage } from './application-institution/schedule-confirm/detail-page'
 import type { Program } from '@/types/domain'
 import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
 import {
@@ -156,7 +157,8 @@ function normalizeUjatDetailParams(
       next.delete(UJAT_INST_APP_ID_PARAM)
     } else {
       lnb = 'institution_applications'
-      tab = 'inst_all'
+      const currentTab = searchParams.get(TAB_PARAM) ?? ''
+      tab = currentTab === 'inst_schedule_confirm' ? 'inst_schedule_confirm' : 'inst_all'
     }
   }
 
@@ -359,6 +361,14 @@ export function UjatProgramDetailFullPageModal({
     ? parseUjatEduInstTab(searchParams)
     : ('application' as UjatEducationProgressInstitutionDetailTab)
 
+  const institutionDetailTitlePrefix = useMemo(() => {
+    if (!institutionDetailId) return '신청 기관 상세'
+    if (activeLnb === 'institution_applications' && activeTab === 'inst_schedule_confirm') {
+      return '임시 배정 기관 상세'
+    }
+    return '신청 기관 상세'
+  }, [institutionDetailId, activeLnb, activeTab])
+
   const activeRecruitTab: UjatRecruitTabKey | null =
     activeLnb === 'info' && isUjatRecruitTab(activeTab) ? (activeTab as UjatRecruitTabKey) : null
 
@@ -394,7 +404,9 @@ export function UjatProgramDetailFullPageModal({
       if (id) {
         next.set(UJAT_INST_APP_ID_PARAM, id)
         next.set(LNB_PARAM, 'institution_applications')
-        next.set(TAB_PARAM, 'inst_all')
+        const tabToKeep =
+          activeTab === 'inst_schedule_confirm' ? 'inst_schedule_confirm' : 'inst_all'
+        next.set(TAB_PARAM, tabToKeep)
         next.delete(UJAT_APPLICANT_ID_PARAM)
       } else {
         next.delete(UJAT_INST_APP_ID_PARAM)
@@ -402,7 +414,7 @@ export function UjatProgramDetailFullPageModal({
       next.delete(EDIT_PARAM)
       setSearchParams(next, { replace: true })
     },
-    [programId, searchParams, setSearchParams]
+    [programId, searchParams, setSearchParams, activeTab]
   )
 
   const setLnbTab = useCallback(
@@ -414,7 +426,10 @@ export function UjatProgramDetailFullPageModal({
       next.set(TAB_PARAM, tab)
       next.delete(EDIT_PARAM)
       next.delete(UJAT_APPLICANT_ID_PARAM)
-      if (lnb !== 'institution_applications' || tab !== 'inst_all') {
+      if (lnb !== 'institution_applications') {
+        next.delete(UJAT_INST_APP_ID_PARAM)
+      } else if (tab !== activeTab) {
+        /** 신청 기관 ↔ 임시 배정 기관 확인 등 서브탭 전환 시 상세 닫고 목록 */
         next.delete(UJAT_INST_APP_ID_PARAM)
       }
       if (lnb !== 'education_progress' || !isEducationProgressInstitutionsTab(tab)) {
@@ -423,7 +438,7 @@ export function UjatProgramDetailFullPageModal({
       }
       setSearchParams(next, { replace: true })
     },
-    [programId, searchParams, setSearchParams]
+    [programId, searchParams, setSearchParams, activeTab]
   )
 
   const setEduInstitutionId = useCallback(
@@ -744,7 +759,7 @@ export function UjatProgramDetailFullPageModal({
     (eduInstitutionDetailName
       ? `참여 기관 신청 상세 (${eduInstitutionDetailName})`
       : institutionDetailName
-        ? `신청 기관 상세 (${institutionDetailName})`
+        ? `${institutionDetailTitlePrefix} (${institutionDetailName})`
         : programTitle)
 
   return (
@@ -863,7 +878,17 @@ export function UjatProgramDetailFullPageModal({
             <UjatInstitutionScheduleAssignPage />
           )}
           {activeLnb === 'institution_applications' && activeTab === 'inst_schedule_confirm' && (
-            <UjatInstitutionScheduleConfirmList />
+            institutionDetailId ? (
+              <UjatInstitutionScheduleConfirmDetailPage
+                institutionId={institutionDetailId}
+                onBack={() => setInstitutionApplicationId(null)}
+                onStatusUpdated={() => setInstitutionListVersion(v => v + 1)}
+              />
+            ) : (
+              <UjatInstitutionScheduleConfirmList
+                onOpenDetail={row => setInstitutionApplicationId(row.id)}
+              />
+            )
           )}
 
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&

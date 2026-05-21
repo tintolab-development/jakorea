@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Tabs, Space, Empty, Table } from 'antd'
+import { Space, Empty, Table } from 'antd'
+import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import { CmsButton, type CmsButtonVariant } from '@/shared/ui'
@@ -350,25 +351,48 @@ export function ApplicantsDetailContents({
     return headerExtraContent
   }, [isInstructor, activeTab, headerExtraContent])
 
-  const institutionTabItems = useMemo(() => {
-    if (!institutionData) return []
-    const d = institutionData
-    return [
+  const institutionTabDefs = useMemo(
+    () => [
+      { key: 'info', label: '기본 정보' },
+      { key: 'students', label: '학생 명단', disabled: true },
+      { key: 'assign', label: '강사 배정 현황', disabled: true },
+    ],
+    []
+  )
+
+  const instructorTabDefs = useMemo(
+    () => [
+      { key: 'application', label: INSTRUCTOR_DETAIL_TAB_LABELS.application },
       {
-        key: 'info',
-        label: '기본 정보',
-        children: (
+        key: 'institutionAssignment',
+        label: INSTRUCTOR_DETAIL_TAB_LABELS.institutionAssignment,
+        disabled: true,
+      },
+    ],
+    []
+  )
+
+  const tabPanel = useMemo(() => {
+    if (isVolunteer) {
+      return (
+        <div className="extra-tab-content">
+          <Empty description="준비 중입니다." />
+        </div>
+      )
+    }
+    if (isInstitution && institutionData) {
+      const d = institutionData
+      if (activeTab === 'info') {
+        return (
           <ApplicantInstitutionBasicInfo
             institution={d}
             detail={d.detail}
             maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
           />
-        ),
-      },
-      {
-        key: 'students',
-        label: '학생 명단',
-        children: (
+        )
+      }
+      if (activeTab === 'students') {
+        return (
           <div className="extra-tab-content applicant-contents__student-list-tab">
             <SchoolDetailStudentListSection
               schoolId={d.id}
@@ -378,48 +402,17 @@ export function ApplicantsDetailContents({
               onSaveEdit={() => {}}
             />
           </div>
-        ),
-        disabled: true,
-      },
-      {
-        key: 'assign',
-        label: '강사 배정 현황',
-        children: <ApplicantInstitutionInstructorAssignTab schoolName={d.schoolName} />,
-        disabled: true,
-      },
-    ]
-  }, [institutionData, personalInfoRevealed])
-
-  const instructorTabItems = useMemo(() => {
-    if (!instructorData) return []
-    const d = instructorData
-    const assignedSchoolDisplay =
-      d.assignedSchoolName || d.preferredSchools?.[0]?.schoolName || d.schoolName || '-'
-    const assignmentColumns: ColumnsType<{
-      key: string
-      schoolName: string
-      lectureRound: string
-    }> = [
-      { title: '배정 기관', dataIndex: 'schoolName', key: 'schoolName' },
-      {
-        title: '교육 예정 현황',
-        dataIndex: 'lectureRound',
-        key: 'lectureRound',
-        width: 140,
-      },
-    ]
-    const assignmentData = [
-      {
-        key: '1',
-        schoolName: assignedSchoolDisplay,
-        lectureRound: '-',
-      },
-    ]
-    return [
-      {
-        key: 'application',
-        label: INSTRUCTOR_DETAIL_TAB_LABELS.application,
-        children: (
+        )
+      }
+      if (activeTab === 'assign') {
+        return <ApplicantInstitutionInstructorAssignTab schoolName={d.schoolName} />
+      }
+      return null
+    }
+    if (isInstructor && instructorData) {
+      const d = instructorData
+      if (activeTab === 'application') {
+        return (
           <div className="applicant-info-section applicant-info-section--instructor">
             <ApplicantInstructorBasicInfo
               instructor={d}
@@ -427,62 +420,73 @@ export function ApplicantsDetailContents({
             />
             <ApplicantInstructorResume instructor={d} />
           </div>
-        ),
-      },
-      {
-        key: 'institutionAssignment',
-        label: INSTRUCTOR_DETAIL_TAB_LABELS.institutionAssignment,
-        children: (
+        )
+      }
+      if (activeTab === 'institutionAssignment') {
+        const assignedSchoolDisplay =
+          d.assignedSchoolName || d.preferredSchools?.[0]?.schoolName || d.schoolName || '-'
+        const assignmentColumns: ColumnsType<{
+          key: string
+          schoolName: string
+          lectureRound: string
+        }> = [
+          { title: '배정 기관', dataIndex: 'schoolName', key: 'schoolName' },
+          {
+            title: '교육 예정 현황',
+            dataIndex: 'lectureRound',
+            key: 'lectureRound',
+            width: 140,
+          },
+        ]
+        return (
           <div className="extra-tab-content applicant-contents__instructor-assignment-tab">
             <Table
               className="cms-data-table cms-data-table--skip-auto-no-col"
               columns={assignmentColumns}
-              dataSource={assignmentData}
+              dataSource={[
+                {
+                  key: '1',
+                  schoolName: assignedSchoolDisplay,
+                  lectureRound: '-',
+                },
+              ]}
               pagination={false}
               rowKey="key"
               size="middle"
             />
           </div>
-        ),
-        disabled: true,
-      },
-    ]
-  }, [instructorData, personalInfoRevealed])
+        )
+      }
+      return null
+    }
+    return null
+  }, [
+    activeTab,
+    institutionData,
+    instructorData,
+    isInstitution,
+    isInstructor,
+    isVolunteer,
+    personalInfoRevealed,
+  ])
 
-  if (isVolunteer) {
-    return (
-      <div className="applicant-contents">
-        <div className="applicant-contents__tabs-wrap">
-          <Tabs
-            activeKey="info"
-            items={[
-              {
-                key: 'info',
-                label: '기본 정보',
-                children: (
-                  <div className="extra-tab-content">
-                    <Empty description="준비 중입니다." />
-                  </div>
-                ),
-              },
-            ]}
-            className="applicant-contents__tabs"
-          />
-        </div>
-      </div>
-    )
-  }
+  const tabDefs = isVolunteer
+    ? [{ key: 'info', label: '기본 정보' }]
+    : isInstitution
+      ? institutionTabDefs
+      : instructorTabDefs
 
   return (
     <div className="applicant-contents">
       <div className="applicant-contents__tabs-wrap">
-        <Tabs
+        <CmsTextTabs
+          className="applicant-contents__tabs"
           activeKey={activeTab}
           onChange={setActiveTab}
-          className="applicant-contents__tabs"
-          tabBarExtraContent={tabBarExtraContent}
-          items={isInstitution ? institutionTabItems : instructorTabItems}
+          items={tabDefs}
+          trailing={tabBarExtraContent}
         />
+        <div className="applicant-contents__panel">{tabPanel}</div>
       </div>
       {personalInfoRevealModal}
     </div>

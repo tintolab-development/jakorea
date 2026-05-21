@@ -26,15 +26,9 @@ import {
   TemplateWritingPreviewProvider,
   useTemplateWritingPreview,
 } from '@/features/template/context/template-writing-preview-context'
-import {
-  UjatProgramRegistrationEditorLeftColumn,
-  UjatProgramRegistrationEditorRightColumn,
-} from '@/features/template/ui/form-set/registration-form/UJAT/editor'
-import { useUjatProgramRegistrationEditor } from '@/features/template/ui/form-set/registration-form/UJAT/use-ujat-program-registration-editor'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
-import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
-import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
-import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
+import { UjatProgramRegistrationFullpageModal } from '@/features/program/ujat/ui/registration/ujat-program-registration-fullpage-modal'
+import { UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/ujat/model/ujat-program-registration-flow'
 import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 import { UjatProgramDetailFullPageModal } from '@/features/program/ujat/ui/detail-modal/ujat-program-detail-fullpage-modal'
 import { UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/program/ujat/lib/ujat-registration-local-save'
@@ -43,9 +37,8 @@ import './ujat-program-list-page.css'
 
 const UJAT_VOLUNTEER_CAP_FALLBACK = 30
 
-/** `/programs/ujat?new` — `registration-ujat`를 템플릿 작성 탭과 동일한 `TemplateFullpageModal`로 연다. `userPreview`는 상단「미리보기」시 `TemplatePreviewModal` 동기화용. */
+/** `/programs/ujat?new` — 5단계 UJAT 등록 플로우 풀페이지. `userPreview`는 상단「미리보기」시 `TemplatePreviewModal` 동기화용. */
 const PROGRAMS_UJAT_NEW_QUERY_KEY = 'new'
-const UJAT_REGISTRATION_FORM_TEMPLATE_ID = 'registration-ujat'
 
 /** `/programs/ujat` 및 하위 경로(라우터 `ujat/*`) */
 function isUjatProgramListPath(pathnameNormalized: string): boolean {
@@ -100,13 +93,6 @@ function UjatProgramListPageContent() {
 
   const { programs, loading, fetchPrograms } = useProgramStore()
 
-  const ujatProgramRegistrationTitle = useMemo(
-    () =>
-      findWritingTemplateRowByDefinitionId(UJAT_REGISTRATION_FORM_TEMPLATE_ID)?.templateName ??
-      'UJAT 프로그램 등록 폼',
-    []
-  )
-
   const { isWritingUserPreviewOpen, closeWritingUserPreview } = useTemplateWritingPreview()
 
   const handleCloseUjatProgramRegistrationFullpage = useCallback(() => {
@@ -114,6 +100,7 @@ function UjatProgramListPageContent() {
     closeWritingUserPreview()
     const next = new URLSearchParams(searchParams)
     next.delete(PROGRAMS_UJAT_NEW_QUERY_KEY)
+    next.delete(UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
     next.delete('userPreview')
     setSearchParams(next, { replace: true })
   }, [closeWritingUserPreview, pNorm, searchParams, setSearchParams])
@@ -122,19 +109,6 @@ function UjatProgramListPageContent() {
     void fetchPrograms()
     handleCloseUjatProgramRegistrationFullpage()
   }, [fetchPrograms, handleCloseUjatProgramRegistrationFullpage])
-
-  const ujatProgramRegistrationFromProgramsVm = useUjatProgramRegistrationEditor(
-    isUjatProgramNewRegistrationQuery,
-    ujatProgramRegistrationTitle,
-    { onRegistrationSaved: handleUjatProgramRegistrationSaved }
-  )
-
-  const handleUjatProgramRegistrationFullpagePreview = useCallback(() => {
-    const next = new URLSearchParams(searchParams)
-    next.set('userPreview', TEMPLATE_USER_PREVIEW_ACTIVE)
-    setSearchParams(next, { replace: false })
-    ujatProgramRegistrationFromProgramsVm.handlePreview()
-  }, [searchParams, setSearchParams, ujatProgramRegistrationFromProgramsVm])
 
   const userPreviewSyncParams = useMemo(
     () => ({ userPreview: searchParams.get('userPreview') ?? undefined }),
@@ -367,21 +341,10 @@ function UjatProgramListPageContent() {
         programIdHint={programIdFromUrl}
       />
 
-      <TemplateFullpageModal
+      <UjatProgramRegistrationFullpageModal
         open={isUjatProgramNewRegistrationQuery}
         onClose={handleCloseUjatProgramRegistrationFullpage}
-        title={ujatProgramRegistrationTitle}
-        titleReadOnly
-        templateTabType="writing"
-        registrationUserMode
-        onPreview={handleUjatProgramRegistrationFullpagePreview}
-        onSave={ujatProgramRegistrationFromProgramsVm.handleSave}
-        leftContent={
-          <UjatProgramRegistrationEditorLeftColumn vm={ujatProgramRegistrationFromProgramsVm} />
-        }
-        rightNavigation={
-          <UjatProgramRegistrationEditorRightColumn vm={ujatProgramRegistrationFromProgramsVm} />
-        }
+        onProgramRegistrationSaved={handleUjatProgramRegistrationSaved}
       />
     </div>
   )

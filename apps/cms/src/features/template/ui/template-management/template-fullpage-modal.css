@@ -6,6 +6,8 @@
 
 .full-page-modal .teal-header-modal__body {
   padding: 0;
+  margin-top: 0;
+  gap: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -17,6 +19,12 @@
   width: 100%;
   height: 100%;
   background: #f4f6f6;
+}
+
+.full-page-modal__sub-header {
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .full-page-modal__topbar {
@@ -168,6 +176,11 @@
   justify-content: space-between;
   gap: 16px;
   box-sizing: border-box;
+}
+
+.full-page-modal__body-header-leading {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .full-page-modal__description {
@@ -424,20 +437,23 @@
   background-color: var(--main-WT, #fff) !important;
 }
 
-.full-page-modal--registration-user-mode .full-page-modal__body {
-  position: relative;
-}
-
+/* 하단 CTA — 양식 최하단 단락 아래 32px, 본문 스크롤 흐름(고정 float 없음) */
 .full-page-modal--registration-user-mode .full-page-modal__footer-cta {
-  position: fixed;
-  right: 52px;
-  bottom: 52px;
-  z-index: 2;
-  pointer-events: none;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
+  margin-top: 32px;
+  box-sizing: border-box;
 }
 
 .full-page-modal--registration-user-mode .full-page-modal__footer-cta-btn.cms-button.ant-btn {
-  pointer-events: auto;
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

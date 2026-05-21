@@ -13,7 +13,7 @@ import type { UjatInstitutionTempAssignmentStatus } from '../list/types'
 import { UjatInstitutionApplicationDetailView } from './detail-view'
 import {
   UjatInstitutionApplicationActionModal,
-  type UjatInstitutionApplicationBulkModalAction,
+  type UjatInstitutionApplicationRejectModalAction,
 } from '../list/action-modal'
 import {
   getUjatInstitutionTempAssignCompleteContent,
@@ -53,7 +53,7 @@ export function UjatInstitutionApplicationDetailPage({
   })
 
   const [pendingAction, setPendingAction] =
-    useState<UjatInstitutionApplicationBulkModalAction | null>(null)
+    useState<UjatInstitutionApplicationRejectModalAction | null>(null)
 
   const patchStatus = useCallback(
     (status: UjatInstitutionTempAssignmentStatus) => {

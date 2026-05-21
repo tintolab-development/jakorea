@@ -12,7 +12,11 @@ import { useUjatScheduleConfirmList } from './use-schedule-confirm-list'
 import type { UjatScheduleConfirmRow } from './types'
 import './list.css'
 
-export function UjatInstitutionScheduleConfirmList() {
+export function UjatInstitutionScheduleConfirmList({
+  onOpenDetail,
+}: {
+  onOpenDetail: (row: UjatScheduleConfirmRow) => void
+}) {
   const [activeRegion, setActiveRegion] =
     useState<UjatInstitutionApplicationRegionKey>('seoul')
   const {
@@ -84,6 +88,10 @@ export function UjatInstitutionScheduleConfirmList() {
               pagination={false}
               tableLayout="fixed"
               scroll={{ x: UJAT_SCHEDULE_CONFIRM_TABLE_MIN_SCROLL_X }}
+              onRow={record => ({
+                onClick: () => onOpenDetail(record),
+                style: { cursor: 'pointer' },
+              })}
             />
           </div>
         ) : (

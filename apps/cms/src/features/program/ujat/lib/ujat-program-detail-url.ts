@@ -1,6 +1,6 @@
 /**
  * UJAT 프로그램 상세 URL — `/programs/ujat?programId=…&lnb=…&tab=…`
- * - `instAppId`: 신청 기관 상세(목록 행 id). 있으면 `lnb=institution_applications&tab=inst_all`로 정규화.
+ * - `instAppId`: 신청 기관 상세(목록 행 id). `tab=inst_schedule_confirm`이면 해당 탭 유지, 아니면 `inst_all`.
  * - `edit`: 공통정보·모집 폼 수정 모드.
  */
 

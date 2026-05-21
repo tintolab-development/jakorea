@@ -4,21 +4,32 @@
 
 export { DateTimePickerPopover } from './date-time-picker-modal'
 export type { DateTimePickerPopoverProps } from './date-time-picker-modal'
+export { PermissionModal, PermissionModalMessage } from './permission-modal'
+export type {
+  PermissionModalPayload,
+  PermissionModalProps,
+  PermissionModalNotifyTiming,
+  PermissionModalVariant,
+} from './permission-modal'
+/** @deprecated `PermissionModal` 계열로 이전 */
 export {
   PermissionRejectModal,
   PermissionRejectModalMessage,
-} from './permission-reject-modal'
-export type {
-  PermissionRejectModalProps,
-  PermissionRejectNotifyTiming,
-  PermissionRejectPayload,
-} from './permission-reject-modal'
+  type PermissionRejectPayload,
+  type PermissionRejectModalProps,
+  type PermissionRejectNotifyTiming,
+} from './permission-modal'
 export { PermissionButton } from './permission-button'
 export type { PermissionButtonProps } from './permission-button'
 export { AppStatusBadge } from './app-status-badge'
 export type { AppStatusBadgeProps } from './app-status-badge'
 export { TextbookStatusBadge } from './textbook-status-badge'
 export type { TextbookStatusKey } from './textbook-status-badge'
+export {
+  DeliveryStatusBadge,
+  TEXTBOOK_DELIVERY_STATUS_LABEL,
+} from './delivery-status-badge'
+export type { TextbookDeliveryStatus } from './delivery-status-badge'
 export { ProgramLifecycleStatusBadge } from './program-lifecycle-status-badge'
 export type { ProgramLifecycleStatusBadgeProps } from './program-lifecycle-status-badge'
 export { ProgramLifecycleStatusTableCell } from './program-lifecycle-status-table-cell'

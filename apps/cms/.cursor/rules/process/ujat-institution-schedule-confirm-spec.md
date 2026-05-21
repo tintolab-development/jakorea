@@ -62,6 +62,40 @@ category: process
 
 ---
 
+## 행 클릭 → 기관 상세
+
+**일정 확인 현황과 무관하게 동일 화면** — `UjatInstitutionScheduleConfirmConfirmedDetailPage` / `UjatScheduleConfirmConfirmedDetailView`  
+(신청 기관 탭 `UjatInstitutionApplicationDetailPage`와 **분리** 유지)
+
+- 모달 제목: **`임시 배정 기관 상세 (기관명)`** (`tab=inst_schedule_confirm` + `instAppId`)
+- URL: `instAppId` + `tab=inst_schedule_confirm` 유지 (해당 탭에서 상세 열 때)
+- **서브탭 전환** (`inst_all` ↔ `inst_schedule_confirm` ↔ `inst_schedule_assign`): `instAppId` 제거 → **목록** 표시 (`setLnbTab` in `ujat-program-detail-fullpage-modal.tsx`)
+
+### 본문 섹션
+
+| 섹션 | 노출 |
+|------|------|
+| 기본 정보 (일정 확인 현황·기관·교사 등) | 항상 |
+| 교육 학년 별 정보 | 항상 |
+| 학년 별 수업 시간 | 항상 |
+| 진행 교육 일정 | 항상 |
+| **안내 사항** | **`institution_confirmed`만** |
+
+### 안내 사항 블록 (기관 확인 완료 전용)
+
+- 임시 배정 일정을 기관이 확인하는 과정에서 **`UJAT 프로그램_기관 안내 사항` 폼**을 추가 제출한다 (기관 포털·폼 UI **추후 개발**, CMS 화면 없음).
+- 제출 내용은 상세 **안내 사항** 블록에 노출 예정.
+- **`institution_checking` · `application_rejected`에서는 안내 사항 블록을 렌더하지 않는다** (`shouldShowScheduleConfirmGuidanceNotes` → `types.ts`).
+- mock 안내 문구: `confirmedDetailExtras.guidanceNotes` (`seoul-5` 등).
+
+### 상단 액션 (확인 완료 상세)
+
+- 신청 반려 · 신청 승인 (140px) · 개인정보 상세보기
+- **신청 승인** 클릭 → `PermissionModal` `variant="approve"` — 기관 승인 안내, 알림 발송 3옵션
+- 승인 확인 후 → `useCmsAlert` **기관 승인 완료** (`institution-approve-complete.ts` · 배정 강사 수 mock 0명)
+
+---
+
 ## 캘린더 뷰
 
 - 이벤트: 확정 일정 ISO 날짜별 기관명

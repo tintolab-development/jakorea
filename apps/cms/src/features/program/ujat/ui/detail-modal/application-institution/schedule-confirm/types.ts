@@ -56,6 +56,13 @@ export type UjatScheduleConfirmFilters = {
   teacherName: string
 }
 
+/** 안내 사항 블록 — `institution_confirmed`에서만 노출 (기관 안내 사항 폼 제출 후) */
+export function shouldShowScheduleConfirmGuidanceNotes(
+  status: UjatInstitutionScheduleConfirmStatus
+): boolean {
+  return status === 'institution_confirmed'
+}
+
 export const EMPTY_UJAT_SCHEDULE_CONFIRM_FILTERS: UjatScheduleConfirmFilters = {
   institutionName: '',
   scheduleConfirmStatus: '',
