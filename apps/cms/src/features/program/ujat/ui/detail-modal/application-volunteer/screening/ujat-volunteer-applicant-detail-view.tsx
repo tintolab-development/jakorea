@@ -9,10 +9,11 @@ import { UjatVolunteerApplicantManagerEvaluationSection } from './ujat-volunteer
 import { UjatVolunteerApplicantInterviewAvailability } from './ujat-volunteer-applicant-interview-availability'
 import { UjatVolunteerApplicantEssaySections } from './ujat-volunteer-applicant-essay-sections'
 import { UjatVolunteerApplicantPreviousUjatSection } from './ujat-volunteer-applicant-previous-ujat-section'
+import { UjatVolunteerApplicantInterviewEvaluationSection } from './ujat-volunteer-applicant-interview-evaluation-section'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './ujat-volunteer-applicant-detail.css'
 
-export type UjatVolunteerApplicantDetailVariant = 'doc_screening' | 'doc_passed'
+export type UjatVolunteerApplicantDetailVariant = 'doc_screening' | 'doc_passed' | 'interview2'
 
 type DocScreeningDetailProps = {
   variant?: 'doc_screening'
@@ -32,12 +33,30 @@ type DocPassedDetailProps = {
   onWithdrawActivity?: () => void
 }
 
-export type UjatVolunteerApplicantDetailViewProps = DocScreeningDetailProps | DocPassedDetailProps
+type Interview2DetailProps = {
+  variant: 'interview2'
+  applicant: UjatVolunteerApplicantRow
+  onWithdrawActivity?: () => void
+  onInterviewFail?: () => void
+  onInterviewPass?: () => void
+  onOpenInterviewEvaluation?: () => void
+}
+
+export type UjatVolunteerApplicantDetailViewProps =
+  | DocScreeningDetailProps
+  | DocPassedDetailProps
+  | Interview2DetailProps
 
 function isDocPassedProps(
   props: UjatVolunteerApplicantDetailViewProps
 ): props is DocPassedDetailProps {
   return props.variant === 'doc_passed'
+}
+
+function isInterview2Props(
+  props: UjatVolunteerApplicantDetailViewProps
+): props is Interview2DetailProps {
+  return props.variant === 'interview2'
 }
 
 export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDetailViewProps) {
@@ -64,6 +83,84 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
   }, [applicant.interviewAssignmentStatus])
 
   const isWithdrawn = applicant.interviewAssignmentStatus === 'withdrawn'
+  const isInterview2Finalized =
+    applicant.secondInterviewScreeningStatus === 'pass' ||
+    applicant.secondInterviewScreeningStatus === 'fail'
+  const isInterview2ActionsDisabled = isWithdrawn || isInterview2Finalized
+
+  if (isInterview2Props(props)) {
+    const { onWithdrawActivity, onInterviewFail, onInterviewPass, onOpenInterviewEvaluation } =
+      props
+
+    return (
+      <div className="ujat-volunteer-applicant-detail">
+        <div className="ujat-volunteer-applicant-detail__header">
+          <div className="program-detail-fullpage-modal__header-actions">
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              width={160}
+              disabled={isWithdrawn}
+              onClick={onWithdrawActivity}
+            >
+              활동 포기
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              width={160}
+              disabled={isInterview2ActionsDisabled}
+              onClick={onInterviewFail}
+            >
+              면접 불합격
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="large"
+              width={160}
+              disabled={isInterview2ActionsDisabled}
+              onClick={onInterviewPass}
+            >
+              면접 합격
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="primary"
+              size="large"
+              width={160}
+              disabled={isInterview2ActionsDisabled}
+              onClick={onOpenInterviewEvaluation}
+            >
+              면접 평가
+            </CmsButton>
+            <PersonalInfoRevealButton
+              labelMode="stickyReveal"
+              revealed={personalInfoRevealed}
+              cmsVariant="primary"
+              cmsSize="large"
+              width={180}
+              onClick={openPersonalInfoRevealConfirm}
+            />
+          </div>
+        </div>
+
+        <div className="ujat-volunteer-applicant-detail__body applicant-info-section">
+          <UjatVolunteerApplicantBasicInfo
+            applicant={applicant}
+            maskSensitive={!personalInfoRevealed}
+            statusRow="second_interview"
+          />
+          <UjatVolunteerApplicantInterviewEvaluationSection applicant={applicant} />
+          <UjatVolunteerApplicantEssaySections applicant={applicant} />
+        </div>
+
+        {personalInfoRevealModal}
+      </div>
+    )
+  }
 
   if (isDocPassedProps(props)) {
     const { onAssignInterview, onWithdrawActivity } = props

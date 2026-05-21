@@ -597,7 +597,11 @@ export function UjatProgramDetailFullPageModal({
       activeTab === 'vh1_doc1' ||
       activeTab === 'vh2_doc1' ||
       activeTab === 'vh1_doc_passed' ||
-      activeTab === 'vh2_doc_passed'
+      activeTab === 'vh2_doc_passed' ||
+      activeTab === 'vh1_interview2' ||
+      activeTab === 'vh2_interview2' ||
+      activeTab === 'vh1_interview2' ||
+      activeTab === 'vh2_interview2'
     if (!isVolunteerDocScreening || !isVolunteerApplicantTab) {
       setVolunteerApplicantDetailTitle(null)
     }
@@ -630,7 +634,9 @@ export function UjatProgramDetailFullPageModal({
       activeTab === 'vh1_doc1' ||
       activeTab === 'vh2_doc1' ||
       activeTab === 'vh1_doc_passed' ||
-      activeTab === 'vh2_doc_passed'
+      activeTab === 'vh2_doc_passed' ||
+      activeTab === 'vh1_interview2' ||
+      activeTab === 'vh2_interview2'
     if (
       isVolunteerDocScreening &&
       isVolunteerApplicantTab &&
@@ -810,6 +816,10 @@ export function UjatProgramDetailFullPageModal({
               <UjatVolunteerInterview2Section
                 programId={displayProgram.id}
                 half={activeTab.startsWith('vh2') ? 'h2' : 'h1'}
+                onRegisterApplicantCloseHandler={fn => {
+                  volunteerApplicantCloseHandlerRef.current = fn
+                }}
+                onVolunteerApplicantDetailTitleChange={setVolunteerApplicantDetailTitle}
               />
             )}
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&

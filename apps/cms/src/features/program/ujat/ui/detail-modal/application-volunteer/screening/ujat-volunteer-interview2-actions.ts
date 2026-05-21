@@ -73,3 +73,15 @@ export function confirmUjatVolunteerInterview2Pass({
     onConfirm,
   })
 }
+
+/** 목록 일괄 합격 — 선택 건수 검증 후 BulkPassModal 오픈 */
+export function openUjatVolunteerInterview2BulkPassModal(onOpen: () => void, count: number): void {
+  if (count === 0) {
+    cmsAlertModal.show({
+      title: '항목 선택 안내',
+      content: '합격 처리할 항목을 선택해 주세요.',
+    })
+    return
+  }
+  onOpen()
+}

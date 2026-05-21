@@ -82,9 +82,10 @@ export type UjatSecondInterviewScreeningStatus =
   | 'reserve1'
   | 'reserve2'
   | 'reserve3'
+  | 'reserve4'
 
 export const UJAT_SECOND_INTERVIEW_SCREENING_STATUS_ORDER: readonly UjatSecondInterviewScreeningStatus[] =
-  ['waiting', 'completed', 'pass', 'fail', 'reserve1', 'reserve2', 'reserve3'] as const
+  ['waiting', 'completed', 'pass', 'fail', 'reserve1', 'reserve2', 'reserve3', 'reserve4'] as const
 
 export const UJAT_SECOND_INTERVIEW_SCREENING_STATUS_LABELS: Record<
   UjatSecondInterviewScreeningStatus,
@@ -97,7 +98,27 @@ export const UJAT_SECOND_INTERVIEW_SCREENING_STATUS_LABELS: Record<
   reserve1: '예비 1',
   reserve2: '예비 2',
   reserve3: '예비 3',
+  reserve4: '예비 4',
 }
+
+/** 2차 면접 일괄 합격 모달 — 합격 유형 선택 */
+export type UjatInterview2BulkPassType =
+  | 'pass'
+  | 'reserve1'
+  | 'reserve2'
+  | 'reserve3'
+  | 'reserve4'
+
+export const UJAT_INTERVIEW2_BULK_PASS_TYPE_OPTIONS: readonly {
+  value: UjatInterview2BulkPassType
+  label: string
+}[] = [
+  { value: 'pass', label: '합격' },
+  { value: 'reserve1', label: '예비합격 1' },
+  { value: 'reserve2', label: '예비합격 2' },
+  { value: 'reserve3', label: '예비합격 3' },
+  { value: 'reserve4', label: '예비합격 4' },
+] as const
 
 /** 서술형 1~4번 컬럼 (신청서 문항과 동일 제목) */
 export type UjatEssayColumnKey =

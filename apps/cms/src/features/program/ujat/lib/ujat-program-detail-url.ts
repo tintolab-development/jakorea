@@ -74,18 +74,22 @@ export function parseUjatInstAppId(searchParams: URLSearchParams): string | null
 
 export const UJAT_APPLICANT_ID_PARAM = 'applicantId'
 
-/** UJAT 봉사자 1차 서류 심사 지원자 상세 딥링크 */
+/** UJAT 봉사자 지원자 상세 딥링크 */
 export type UjatVolunteerApplicantDetailTab =
   | 'vh1_doc1'
   | 'vh2_doc1'
   | 'vh1_doc_passed'
   | 'vh2_doc_passed'
+  | 'vh1_interview2'
+  | 'vh2_interview2'
 
 const UJAT_VOLUNTEER_APPLICANT_DETAIL_TABS: readonly UjatVolunteerApplicantDetailTab[] = [
   'vh1_doc1',
   'vh2_doc1',
   'vh1_doc_passed',
   'vh2_doc_passed',
+  'vh1_interview2',
+  'vh2_interview2',
 ]
 
 export function isUjatVolunteerApplicantDetailTab(

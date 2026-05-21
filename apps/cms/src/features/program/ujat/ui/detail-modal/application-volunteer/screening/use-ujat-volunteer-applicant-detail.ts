@@ -11,9 +11,10 @@ import {
 import {
   getUjatVolunteerDocPassedDetailTitle,
   getUjatVolunteerDocScreeningDetailTitle,
+  getUjatVolunteerInterview2DetailTitle,
 } from './ujat-volunteer-applicant-detail-title'
 
-export type UjatVolunteerApplicantDetailVariant = 'doc_screening' | 'doc_passed'
+export type UjatVolunteerApplicantDetailVariant = 'doc_screening' | 'doc_passed' | 'interview2'
 
 export function useUjatVolunteerApplicantDetail({
   programId,
@@ -81,10 +82,15 @@ export function useUjatVolunteerApplicantDetail({
 
   useEffect(() => {
     if (!onVolunteerApplicantDetailTitleChange) return
-    const titleForApplicant = (name: string) =>
-      detailVariant === 'doc_passed'
-        ? getUjatVolunteerDocPassedDetailTitle(half, name)
-        : getUjatVolunteerDocScreeningDetailTitle(half, name)
+    const titleForApplicant = (name: string) => {
+      if (detailVariant === 'doc_passed') {
+        return getUjatVolunteerDocPassedDetailTitle(half, name)
+      }
+      if (detailVariant === 'interview2') {
+        return getUjatVolunteerInterview2DetailTitle(half, name)
+      }
+      return getUjatVolunteerDocScreeningDetailTitle(half, name)
+    }
     onVolunteerApplicantDetailTitleChange(
       selectedApplicant ? titleForApplicant(selectedApplicant.name) : null
     )
