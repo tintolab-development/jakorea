@@ -29,6 +29,29 @@ const TAB_PARAM = 'tab'
 /** 신청 기관 목록 → 기관 상세 (풀페이지 메인) */
 export const UJAT_INST_APP_ID_PARAM = 'instAppId'
 
+/** 교육 진행 > 참여 기관 목록 → 기관 상세 */
+export const UJAT_EDU_INST_ID_PARAM = 'eduInstId'
+export const UJAT_EDU_INST_TAB_PARAM = 'eduInstTab'
+
+export type UjatEducationProgressInstitutionDetailTab = 'application' | 'assignment' | 'posts'
+
+const UJAT_EDU_PROGRESS_INSTITUTION_DETAIL_TABS: readonly UjatEducationProgressInstitutionDetailTab[] =
+  ['application', 'assignment', 'posts']
+
+export function isUjatEducationProgressInstitutionDetailTab(
+  tab: string
+): tab is UjatEducationProgressInstitutionDetailTab {
+  return (UJAT_EDU_PROGRESS_INSTITUTION_DETAIL_TABS as readonly string[]).includes(tab)
+}
+
+export function parseUjatEduInstTab(
+  searchParams: URLSearchParams
+): UjatEducationProgressInstitutionDetailTab {
+  const raw = searchParams.get(UJAT_EDU_INST_TAB_PARAM)
+  if (raw && isUjatEducationProgressInstitutionDetailTab(raw)) return raw
+  return 'application'
+}
+
 export { LNB_PARAM as UJAT_DETAIL_LNB_PARAM, TAB_PARAM as UJAT_DETAIL_TAB_PARAM }
 
 export function buildUjatProgramDetailUrl(
