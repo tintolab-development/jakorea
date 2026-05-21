@@ -81,6 +81,19 @@ function buildGradeBlocks(
   }))
 }
 
+function buildGradeBlocksFromClasses(
+  grades: Array<{
+    gradeLabel: string
+    classes: Array<{ classNo: number; studentCount: number }>
+  }>
+): UjatInstitutionApplicationDetail['gradeBlocks'] {
+  return grades.map(grade => ({
+    gradeLabel: grade.gradeLabel,
+    classCount: grade.classes.length,
+    classes: grade.classes.map(row => ({ ...row })),
+  }))
+}
+
 function gradeValuesForGrade(gradeLabel: string, classCount: number): string[] {
   return Array.from({ length: classCount }, (_, i) => `${gradeLabel}:${i + 1}`)
 }
@@ -312,13 +325,100 @@ const UJAT_INSTITUTION_SEOUL_FIXTURES: UjatInstitutionMockFixture[] = [
   },
 ]
 
+const UJAT_INSTITUTION_GWANGJU_FIXTURES: UjatInstitutionMockFixture[] = [
+  {
+    row: {
+      id: 'gwangju-jinwol',
+      regionKey: 'gwangju',
+      no: 1,
+      institutionName: '진월초등학교',
+      tempAssignmentStatus: 'temp_assigned',
+      gradeClassCounts: [
+        { gradeLabel: '1학년', classCount: 8 },
+        { gradeLabel: '2학년', classCount: 4 },
+      ],
+      totalClassCount: 12,
+      scheduleSlots: buildScheduleSlots(['2026-04-03', '2026-04-17']),
+      teacherName: '이길동',
+    },
+    scheduleConfirmStatus: 'institution_confirmed',
+    scheduleAssignments: [
+      {
+        institutionId: 'gwangju-jinwol',
+        isoDate: '2026-04-03',
+        gradeValues: [
+          '1학년:1',
+          '1학년:2',
+          '1학년:3',
+          '1학년:4',
+          '1학년:5',
+          '1학년:6',
+        ],
+      },
+      {
+        institutionId: 'gwangju-jinwol',
+        isoDate: '2026-04-17',
+        gradeValues: [
+          '1학년:7',
+          '1학년:8',
+          '2학년:1',
+          '2학년:2',
+          '2학년:3',
+          '2학년:4',
+        ],
+      },
+    ],
+    detail: {
+      address: '광주광역시 남구 광복마을4길 40',
+      addressDetail: '1층 교무실 이길동 선생님 앞',
+      teacherContact: {
+        teacherName: '이길동',
+        tel: '062-2145-3301',
+        mobile: '010-3342-7819',
+        email: 'tinto@naver.com',
+      },
+      otherRequests: '-',
+      gradeBlocks: buildGradeBlocksFromClasses([
+        {
+          gradeLabel: '1학년',
+          classes: [
+            { classNo: 1, studentCount: 28 },
+            { classNo: 2, studentCount: 28 },
+            { classNo: 3, studentCount: 24 },
+            { classNo: 4, studentCount: 22 },
+            { classNo: 5, studentCount: 21 },
+            { classNo: 6, studentCount: 28 },
+            { classNo: 7, studentCount: 29 },
+            { classNo: 8, studentCount: 24 },
+          ],
+        },
+        {
+          gradeLabel: '2학년',
+          classes: [
+            { classNo: 1, studentCount: 28 },
+            { classNo: 2, studentCount: 28 },
+            { classNo: 3, studentCount: 24 },
+            { classNo: 4, studentCount: 22 },
+          ],
+        },
+      ]),
+      classTimeRows: DEFAULT_CLASS_TIME_ROWS,
+    },
+  },
+]
+
+const UJAT_INSTITUTION_ALL_FIXTURES: UjatInstitutionMockFixture[] = [
+  ...UJAT_INSTITUTION_SEOUL_FIXTURES,
+  ...UJAT_INSTITUTION_GWANGJU_FIXTURES,
+]
+
 const FIXTURE_BY_ID = new Map(
-  UJAT_INSTITUTION_SEOUL_FIXTURES.map(fixture => [fixture.row.id, fixture])
+  UJAT_INSTITUTION_ALL_FIXTURES.map(fixture => [fixture.row.id, fixture])
 )
 
 function buildInitialScheduleConfirmStatusMap(): Record<string, UjatInstitutionScheduleConfirmStatus> {
   const map: Record<string, UjatInstitutionScheduleConfirmStatus> = {}
-  for (const fixture of UJAT_INSTITUTION_SEOUL_FIXTURES) {
+  for (const fixture of UJAT_INSTITUTION_ALL_FIXTURES) {
     if (fixture.scheduleConfirmStatus) {
       map[fixture.row.id] = fixture.scheduleConfirmStatus
     }
@@ -351,6 +451,12 @@ export const UJAT_INSTITUTION_SCHEDULE_ASSIGN_SEED: Partial<
       fixture => fixture.scheduleAssignments ?? []
     ),
   },
+  gwangju: {
+    maxClassesPerDay: '8',
+    assignments: UJAT_INSTITUTION_GWANGJU_FIXTURES.flatMap(
+      fixture => fixture.scheduleAssignments ?? []
+    ),
+  },
 }
 
 let mockRows: UjatInstitutionApplicationRow[] | null = null
@@ -358,7 +464,7 @@ let scheduleConfirmStatusById: Record<string, UjatInstitutionScheduleConfirmStat
   buildInitialScheduleConfirmStatusMap()
 
 function cloneFixtureRows(): UjatInstitutionApplicationRow[] {
-  return UJAT_INSTITUTION_SEOUL_FIXTURES.map(fixture => ({ ...fixture.row }))
+  return UJAT_INSTITUTION_ALL_FIXTURES.map(fixture => ({ ...fixture.row }))
 }
 
 function ensureMockRows(): UjatInstitutionApplicationRow[] {
