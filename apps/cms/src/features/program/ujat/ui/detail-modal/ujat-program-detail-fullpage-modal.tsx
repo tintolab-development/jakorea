@@ -20,6 +20,12 @@ import { UjatInstitutionScheduleConfirmList } from './application-institution/sc
 import { UjatEducationProgressInstitutionsSection } from './progress/institutions/ujat-education-progress-institutions-section'
 import { UjatEducationProgressVolunteersSection } from './progress/volunteers/ujat-education-progress-volunteers-section'
 import { UjatEducationProgressVolunteerAddRegistrationView } from './progress/volunteers/ujat-education-progress-volunteer-add-registration-view'
+import { UjatEducationProgressVolunteerDetailPage } from './progress/volunteers/detail/ujat-education-progress-volunteer-detail-page'
+import {
+  formatUjatEducationProgressVolunteerDetailTitle,
+  getUjatEducationProgressVolunteerDetail,
+  isUjatEducationProgressVolunteerInList,
+} from './progress/volunteers/detail/ujat-education-progress-volunteer-detail-mock'
 import { UjatInstitutionScheduleConfirmDetailPage } from './application-institution/schedule-confirm/detail-page'
 import type { Program } from '@/types/domain'
 import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
@@ -33,9 +39,13 @@ import {
   UJAT_EDU_INST_TAB_PARAM,
   UJAT_INST_APP_ID_PARAM,
   UJAT_VOL_ADD_MEMBER_ID_PARAM,
+  UJAT_EDU_VOL_ID_PARAM,
+  UJAT_EDU_VOL_TAB_PARAM,
   isUjatEducationProgressVolunteersTab,
+  parseUjatEduVolTab,
   type UjatDetailLnbKey,
   type UjatEducationProgressInstitutionDetailTab,
+  type UjatEducationProgressVolunteerDetailTab,
 } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { isUjatVolunteerApplicantInTabList } from './application-volunteer/screening/ujat-volunteer-applicant-detail-url'
 import {
@@ -374,6 +384,38 @@ export function UjatProgramDetailFullPageModal({
     ? parseUjatEduInstTab(searchParams)
     : ('application' as UjatEducationProgressInstitutionDetailTab)
 
+  const volAddMemberIdEarly = open ? searchParams.get(UJAT_VOL_ADD_MEMBER_ID_PARAM) : null
+
+  const eduVolunteerHalf =
+    activeTab.startsWith('edu_h2') ? 'h2' : activeTab.startsWith('edu_h1') ? 'h1' : null
+  const eduVolunteerIdRaw = open ? searchParams.get(UJAT_EDU_VOL_ID_PARAM) : null
+  const eduVolunteerDetailId =
+    eduVolunteerIdRaw &&
+    eduVolunteerHalf &&
+    displayProgram?.id &&
+    isUjatEducationProgressVolunteerInList(eduVolunteerHalf, eduVolunteerIdRaw) &&
+    !volAddMemberIdEarly
+      ? eduVolunteerIdRaw
+      : null
+
+  const eduVolunteerDetailTab = open
+    ? parseUjatEduVolTab(searchParams)
+    : ('application' as UjatEducationProgressVolunteerDetailTab)
+
+  const eduVolunteerDetailTitle = useMemo(() => {
+    if (!eduVolunteerDetailId || !eduVolunteerHalf) return null
+    const detail = getUjatEducationProgressVolunteerDetail(
+      displayProgram?.id ?? '',
+      eduVolunteerHalf,
+      eduVolunteerDetailId
+    )
+    if (!detail) return null
+    return formatUjatEducationProgressVolunteerDetailTitle(
+      eduVolunteerHalf,
+      detail.applicant.name
+    )
+  }, [displayProgram?.id, eduVolunteerDetailId, eduVolunteerHalf])
+
   const institutionDetailTitlePrefix = useMemo(() => {
     if (!institutionDetailId) return '신청 기관 상세'
     if (activeLnb === 'institution_applications' && activeTab === 'inst_schedule_confirm') {
@@ -449,6 +491,10 @@ export function UjatProgramDetailFullPageModal({
         next.delete(UJAT_EDU_INST_ID_PARAM)
         next.delete(UJAT_EDU_INST_TAB_PARAM)
       }
+      if (lnb !== 'education_progress' || !isUjatEducationProgressVolunteersTab(tab)) {
+        next.delete(UJAT_EDU_VOL_ID_PARAM)
+        next.delete(UJAT_EDU_VOL_TAB_PARAM)
+      }
       setSearchParams(next, { replace: true })
     },
     [programId, searchParams, setSearchParams, activeTab]
@@ -468,12 +514,50 @@ export function UjatProgramDetailFullPageModal({
         next.delete(UJAT_EDU_INST_ID_PARAM)
         next.delete(UJAT_EDU_INST_TAB_PARAM)
       }
+      next.delete(UJAT_EDU_VOL_ID_PARAM)
+      next.delete(UJAT_EDU_VOL_TAB_PARAM)
       next.delete(UJAT_APPLICANT_ID_PARAM)
       next.delete(UJAT_INST_APP_ID_PARAM)
       next.delete(EDIT_PARAM)
       setSearchParams(next, { replace: true })
     },
     [programId, searchParams, setSearchParams]
+  )
+
+  const setEduVolunteerId = useCallback(
+    (id: string | null) => {
+      if (!programId) return
+      const next = new URLSearchParams(searchParams)
+      next.set('programId', programId)
+      if (id) {
+        next.set(UJAT_EDU_VOL_ID_PARAM, id)
+        if (!next.get(UJAT_EDU_VOL_TAB_PARAM)) {
+          next.set(UJAT_EDU_VOL_TAB_PARAM, 'application')
+        }
+      } else {
+        next.delete(UJAT_EDU_VOL_ID_PARAM)
+        next.delete(UJAT_EDU_VOL_TAB_PARAM)
+      }
+      next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
+      next.delete(UJAT_EDU_INST_ID_PARAM)
+      next.delete(UJAT_EDU_INST_TAB_PARAM)
+      next.delete(UJAT_APPLICANT_ID_PARAM)
+      next.delete(UJAT_INST_APP_ID_PARAM)
+      next.delete(EDIT_PARAM)
+      setSearchParams(next, { replace: true })
+    },
+    [programId, searchParams, setSearchParams]
+  )
+
+  const setEduVolunteerDetailTab = useCallback(
+    (tab: UjatEducationProgressVolunteerDetailTab) => {
+      if (!programId || !eduVolunteerDetailId) return
+      const next = new URLSearchParams(searchParams)
+      next.set('programId', programId)
+      next.set(UJAT_EDU_VOL_TAB_PARAM, tab)
+      setSearchParams(next, { replace: true })
+    },
+    [programId, eduVolunteerDetailId, searchParams, setSearchParams]
   )
 
   const setEduInstitutionDetailTab = useCallback(
@@ -723,6 +807,8 @@ export function UjatProgramDetailFullPageModal({
     next.delete(UJAT_EDU_INST_ID_PARAM)
     next.delete(UJAT_EDU_INST_TAB_PARAM)
     next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
+    next.delete(UJAT_EDU_VOL_ID_PARAM)
+    next.delete(UJAT_EDU_VOL_TAB_PARAM)
     navigate(
       { pathname: location.pathname, search: next.toString() ? `?${next}` : '' },
       {
@@ -752,6 +838,8 @@ export function UjatProgramDetailFullPageModal({
       next.delete(UJAT_APPLICANT_ID_PARAM)
       next.delete(UJAT_EDU_INST_ID_PARAM)
       next.delete(UJAT_EDU_INST_TAB_PARAM)
+      next.delete(UJAT_EDU_VOL_ID_PARAM)
+      next.delete(UJAT_EDU_VOL_TAB_PARAM)
       setSearchParams(next, { replace: true })
     },
     [activeTab, programId, searchParams, setSearchParams]
@@ -778,6 +866,10 @@ export function UjatProgramDetailFullPageModal({
       setEduInstitutionId(null)
       return
     }
+    if (eduVolunteerDetailId) {
+      setEduVolunteerId(null)
+      return
+    }
     const isVolunteerDocScreening = activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2'
     const isVolunteerApplicantTab =
       activeTab === 'vh1_doc1' ||
@@ -799,6 +891,8 @@ export function UjatProgramDetailFullPageModal({
     setInstitutionApplicationId,
     eduInstitutionDetailId,
     setEduInstitutionId,
+    eduVolunteerDetailId,
+    setEduVolunteerId,
     activeLnb,
     activeTab,
     volAddMemberId,
@@ -812,12 +906,13 @@ export function UjatProgramDetailFullPageModal({
   const title =
     volAddMemberId
       ? '봉사자 추가 등록'
-      : volunteerApplicantDetailTitle ??
-    (eduInstitutionDetailName
-      ? `참여 기관 신청 상세 (${eduInstitutionDetailName})`
-      : institutionDetailName
-        ? `${institutionDetailTitlePrefix} (${institutionDetailName})`
-        : programTitle)
+      : eduVolunteerDetailTitle ??
+        volunteerApplicantDetailTitle ??
+        (eduInstitutionDetailName
+          ? `참여 기관 신청 상세 (${eduInstitutionDetailName})`
+          : institutionDetailName
+            ? `${institutionDetailTitlePrefix} (${institutionDetailName})`
+            : programTitle)
 
   return (
     <DetailFullPageModal
@@ -826,7 +921,12 @@ export function UjatProgramDetailFullPageModal({
       onHeaderClose={handleHeaderCloseClick}
       title={title}
       closeAriaLabel={
-        volAddMemberId || institutionDetailId || eduInstitutionDetailId ? '목록으로' : '닫기'
+        volAddMemberId ||
+        institutionDetailId ||
+        eduInstitutionDetailId ||
+        eduVolunteerDetailId
+          ? '목록으로'
+          : '닫기'
       }
       className="program-detail-fullpage-modal ujat-program-detail-fullpage-modal"
       sidebar={
@@ -1021,10 +1121,19 @@ export function UjatProgramDetailFullPageModal({
                   onClose={closeVolAddRegistration}
                   onComplete={handleCompleteVolAddRegistration}
                 />
+              ) : eduVolunteerDetailId && eduVolunteerHalf && displayProgram ? (
+                <UjatEducationProgressVolunteerDetailPage
+                  programId={displayProgram.id}
+                  half={eduVolunteerHalf}
+                  volunteerId={eduVolunteerDetailId}
+                  activeTab={eduVolunteerDetailTab}
+                  onSelectTab={setEduVolunteerDetailTab}
+                />
               ) : (
                 <UjatEducationProgressVolunteersSection
                   half={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
                   onStartAddRegistration={openVolAddRegistration}
+                  onOpenDetail={setEduVolunteerId}
                   onBindRegisterVolunteer={register => {
                     registerVolunteerFromMemberRef.current = register
                   }}

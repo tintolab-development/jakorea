@@ -110,6 +110,10 @@ export function useUjatEducationProgressVolunteers(half: EducationProgressHalfKe
     [allRows, half]
   )
 
+  const syncRowsFromMock = useCallback(() => {
+    setAllRows(getUjatEducationProgressVolunteerMockRows(half))
+  }, [half])
+
   return {
     pendingFilters,
     handleFilterChange,
@@ -121,5 +125,6 @@ export function useUjatEducationProgressVolunteers(half: EducationProgressHalfKe
     resetHalfState,
     memberOptions,
     addVolunteerFromMember,
+    syncRowsFromMock,
   }
 }

@@ -35,3 +35,7 @@
   width: max-content !important;
   min-width: 100%;
 }
+
+.ujat-education-progress-volunteers__table--clickable .ant-table-tbody > tr {
+  cursor: pointer;
+}

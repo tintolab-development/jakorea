@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { UJAT_EDU_VOL_ID_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { Table } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -15,15 +17,20 @@ import './ujat-education-progress-volunteers-section.css'
 export function UjatEducationProgressVolunteersSection({
   half,
   onStartAddRegistration,
+  onOpenDetail,
   onBindRegisterVolunteer,
 }: {
   half: EducationProgressHalfKey
   /** 회원 선택 후 대리 작성 풀페이지 폼으로 이동 */
   onStartAddRegistration: (memberId: string) => void
+  /** 목록 행 클릭 → 봉사자 상세 */
+  onOpenDetail?: (volunteerId: string) => void
   /** 풀페이지 폼 완료 시 목록에 반영할 등록 함수 연결 */
   onBindRegisterVolunteer?: (register: (memberId: string) => void) => void
 }) {
   const { showAlert } = useCmsAlert()
+  const [searchParams] = useSearchParams()
+  const eduVolDetailId = searchParams.get(UJAT_EDU_VOL_ID_PARAM)
   const tableWrapRef = useRef<HTMLDivElement>(null)
   const [tableScrollX, setTableScrollX] = useState(UJAT_EDU_PROGRESS_VOLUNTEERS_TABLE_MIN_SCROLL_X)
   const [addVolunteerModalOpen, setAddVolunteerModalOpen] = useState(false)
@@ -39,12 +46,19 @@ export function UjatEducationProgressVolunteersSection({
     resetHalfState,
     memberOptions,
     addVolunteerFromMember,
+    syncRowsFromMock,
   } = useUjatEducationProgressVolunteers(half)
 
   useEffect(() => {
     resetHalfState()
     setAddVolunteerModalOpen(false)
   }, [half, resetHalfState])
+
+  useEffect(() => {
+    if (!eduVolDetailId) {
+      syncRowsFromMock()
+    }
+  }, [eduVolDetailId, syncRowsFromMock])
 
   useEffect(() => {
     onBindRegisterVolunteer?.(addVolunteerFromMember)
@@ -70,6 +84,17 @@ export function UjatEducationProgressVolunteersSection({
       content: FEATURE_COMING_SOON_ALERT_MESSAGE,
     })
   }
+
+  const handleRowClick = useCallback(
+    (record: UjatEducationProgressVolunteerRow, event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (target.closest('.ant-checkbox-wrapper, .ant-checkbox, input[type="checkbox"]')) {
+        return
+      }
+      onOpenDetail?.(record.id)
+    },
+    [onOpenDetail]
+  )
 
   const showNoMemberSelectedAlert = useCallback(() => {
     showAlert({
@@ -136,12 +161,15 @@ export function UjatEducationProgressVolunteersSection({
         <div ref={tableWrapRef} className="ujat-education-progress-volunteers__table-wrap">
           <Table<UjatEducationProgressVolunteerRow>
             rowKey="id"
-            className="cms-data-table ujat-education-progress-volunteers__table"
+            className="cms-data-table ujat-education-progress-volunteers__table ujat-education-progress-volunteers__table--clickable"
             columns={columns}
             dataSource={tableData}
             pagination={false}
             tableLayout="fixed"
             scroll={{ x: tableScrollX }}
+            onRow={record => ({
+              onClick: event => handleRowClick(record, event),
+            })}
             rowSelection={{
               selectedRowKeys,
               onChange: keys => setSelectedRowKeys(keys),

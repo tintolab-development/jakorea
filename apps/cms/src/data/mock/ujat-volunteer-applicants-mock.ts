@@ -2,6 +2,15 @@
  * UJAT 프로그램 — 봉사자 1차 서류 심사 대상자 mock
  */
 
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import {
+  buildUjatVolunteerApplicantId,
+  countVolunteerProfileInterviewSlots,
+  getUjatVolunteerMockProfileByName,
+  regionLabelForVolunteerProfile,
+  getUjatVolunteerMockProfilesResolved,
+  type UjatVolunteerMockProfile,
+} from '@/data/mock/ujat-volunteer-mock-profiles'
 import {
   UJAT_VOLUNTEER_APPLICATION_TYPE_LABELS,
   UJAT_VOLUNTEER_GRADE_OPTIONS,
@@ -135,52 +144,67 @@ const ESSAY_NECESSITY =
 const ESSAY_JA =
   '중학교 시절 JA Korea 프로그램을 수료한 경험이 있으며, 당시 배운 내용을 봉사로 전달하고 싶습니다.'
 
-const DEMO_SCREENSHOT_ROW: Partial<UjatVolunteerApplicantRow> = {
-  name: '박틴토',
-  englishName: 'Park Tinto',
-  id1365: 'park_tt915',
-  gender: '남성',
-  birthDate: '2000.09.15',
-  age: 25,
-  universityName: '**대학교',
-  major: '회계학과 전공, 경영학과 복수전공',
-  applicationRoute: '인스타그램',
-  scheduleChangeCancelCount: 1,
-  documentScreeningStatus: 'pass',
-  managerAEvaluation: 'unreviewed',
-  managerBEvaluation: 'pass',
-  hasEducationExperience: true,
-  applicationType: 'new',
-  preferredRegion: '서울',
-  grade: '1학년',
-  contactRaw: '010-1234-0000',
-  emailRaw: 'tjintolab@naver.com',
-  essayIntro:
-    '안녕하세요. 경제·금융에 관심이 많은 대학생 박틴토입니다. JA Korea의 초등 경제교육 봉사에 지원하게 되었습니다. 학생들과 소통하며 경제 개념을 쉽게 전달하는 역량을 키우고 싶습니다.',
-  essayEducationExperience:
-    '초등학생 대상 과외 6개월, 중학생 수학 보조 강사 3개월 경험이 있습니다. 수업 준비와 피드백에 익숙합니다.',
-  essayNecessity:
-    '초등학생 시기에 형성되는 경제 사고력은 평생에 걸쳐 영향을 미칩니다. JA Korea 프로그램은 체험 중심 교육으로 학생들의 참여를 높일 수 있다고 생각합니다.',
-  essayJaExperience:
-    '중학교 2학년 때 JA Korea 경제금융교육을 수강했으며, 당시 배운 내용이 대학 전공 선택에도 영향을 주었습니다.',
-  interviewAssignmentStatus: 'assigned',
-  assignedInterviewDateLabel: '26. 03. 30(목)',
-  assignedInterviewTime: '19:30 ~ 20:00',
-  secondInterviewScreeningStatus: 'waiting',
-  totalScore: null,
-  managerAScore: null,
-  managerBScore: null,
-  interviewEvaluationRemark: '지원동기도 좋고, 교육 경험이 풍부함',
-  interviewAvailability: [
-    {
-      dateLabel: '26. 03. 30(목)',
-      slots: ['19:30 ~ 20:00'],
-    },
-    {
-      dateLabel: '26. 03. 23(월)',
-      slots: ['09:00 ~ 09:30', '14:00 ~ 14:30', '15:00 ~ 15:30'],
-    },
-  ],
+const CATALOG_VOLUNTEER_NAMES = new Set(
+  getUjatVolunteerMockProfilesResolved().map(p => p.name)
+)
+
+/** 카탈로그 프로필 → 신청 목록 행 (교육 진행·신청 목록·상세 공통) */
+export function buildUjatVolunteerApplicantRowFromProfile(
+  programId: string,
+  half: UjatVolunteerRecruitHalf,
+  profile: UjatVolunteerMockProfile,
+  no: number
+): UjatVolunteerApplicantRow {
+  const mobile = profile.mobile.replace(/\s/g, '')
+  const preferredRegion = regionLabelForVolunteerProfile(profile.regionKey)
+  const interviewSlotCount = countVolunteerProfileInterviewSlots(profile.interviewAvailability)
+
+  return {
+    id: buildUjatVolunteerApplicantId(programId, half, profile.id),
+    no,
+    name: profile.name,
+    grade: profile.grade,
+    preferredRegion,
+    contact: MASKING_POLICY.phone(mobile) || mobile,
+    email: MASKING_POLICY.email(profile.email),
+    contactRaw: mobile,
+    emailRaw: profile.email,
+    hasEducationExperience: profile.hasEducationExperience,
+    applicationType: profile.applicationType,
+    essayIntro: profile.essayIntro,
+    essayEducationExperience: profile.essayEducationExperience,
+    essayNecessity: profile.essayNecessity,
+    essayJaExperience: profile.essayJaExperience,
+    managerAEvaluation: profile.managerAEvaluation,
+    managerBEvaluation: profile.managerBEvaluation,
+    documentScreeningStatus: profile.documentScreeningStatus,
+    interviewSlotCount,
+    programId,
+    half,
+    englishName: profile.englishName,
+    id1365: profile.id1365,
+    gender: profile.gender,
+    birthDate: profile.birthDate,
+    age: profile.age,
+    universityName: profile.universityName,
+    major: profile.major,
+    applicationRoute: profile.applicationRoute,
+    scheduleChangeCancelCount: profile.scheduleChangeCancelCount,
+    interviewAvailability: profile.interviewAvailability.map(day => ({
+      dateLabel: day.dateLabel,
+      slots: [...day.slots],
+    })),
+    interviewAssignmentStatus: profile.interviewAssignmentStatus,
+    ...(profile.interviewAssignmentStatus === 'assigned'
+      ? {
+          assignedInterviewDateLabel: profile.assignedInterviewDateLabel,
+          assignedInterviewTime: profile.assignedInterviewTime,
+          secondInterviewScreeningStatus: profile.secondInterviewScreeningStatus,
+          totalScore: profile.totalScore,
+          interviewEvaluationRemark: profile.interviewEvaluationRemark,
+        }
+      : {}),
+  }
 }
 
 const INTERVIEW_TIME_SLOTS = ['09:00 ~ 09:30', '14:00 ~ 14:30', '15:00 ~ 15:30'] as const
@@ -301,7 +325,8 @@ function buildRow(
   index: number
 ): UjatVolunteerApplicantRow {
   const seed = hashSeed(programId, half, index)
-  const name = NAMES[index % NAMES.length]
+  const pool = NAMES.filter(n => !CATALOG_VOLUNTEER_NAMES.has(n))
+  const name = pool.length > 0 ? pool[index % pool.length] : NAMES[index % NAMES.length]
   const grade = UJAT_VOLUNTEER_GRADE_OPTIONS[seed % UJAT_VOLUNTEER_GRADE_OPTIONS.length]
   const preferredRegion =
     UJAT_VOLUNTEER_PREFERRED_REGIONS[seed % UJAT_VOLUNTEER_PREFERRED_REGIONS.length]
@@ -364,28 +389,14 @@ function buildRow(
       : {}),
   }
 
-  if (index === 0) {
-    const demoAvailability = DEMO_SCREENSHOT_ROW.interviewAvailability ?? interviewAvailability
-    return {
-      ...row,
-      ...DEMO_SCREENSHOT_ROW,
-      id: row.id,
-      no: row.no,
-      programId,
-      half,
-      contact: maskContact(DEMO_SCREENSHOT_ROW.contactRaw ?? rawContact),
-      email: maskEmail(DEMO_SCREENSHOT_ROW.emailRaw ?? rawEmail),
-      interviewAvailability: demoAvailability,
-      interviewSlotCount: countInterviewSlots(demoAvailability),
-      interviewAssignmentStatus:
-        DEMO_SCREENSHOT_ROW.interviewAssignmentStatus ?? interviewAssignmentStatus,
-    }
-  }
-
   return row
 }
 
 const cache = new Map<string, UjatVolunteerApplicantRow[]>()
+
+export function clearUjatVolunteerApplicantsMockCache(): void {
+  cache.clear()
+}
 
 export function getUjatVolunteerApplicants(
   programId: string,
@@ -396,7 +407,14 @@ export function getUjatVolunteerApplicants(
   if (existing) return existing.map(row => ({ ...row }))
 
   const count = 72 + (hashSeed(programId, half, 0) % 8)
-  const rows = Array.from({ length: count }, (_, i) => buildRow(programId, half, i))
+  const catalogRows = getUjatVolunteerMockProfilesResolved().map((profile, index) =>
+    buildUjatVolunteerApplicantRowFromProfile(programId, half, profile, index + 1)
+  )
+  const extraCount = Math.max(0, count - catalogRows.length)
+  const extraRows = Array.from({ length: extraCount }, (_, i) =>
+    buildRow(programId, half, i + catalogRows.length)
+  ).map((row, offset) => ({ ...row, no: catalogRows.length + offset + 1 }))
+  const rows = [...catalogRows, ...extraRows]
   cache.set(key, rows)
   return rows.map(row => ({ ...row }))
 }
@@ -407,6 +425,23 @@ export function findUjatVolunteerApplicantById(
   applicantId: string
 ): UjatVolunteerApplicantRow | undefined {
   return getUjatVolunteerApplicants(programId, half).find(row => row.id === applicantId)
+}
+
+/** 교육 진행 참여 봉사자 상세 — 카탈로그 프로필 id로 신청 목록 행 조회 */
+export function findUjatVolunteerApplicantByName(
+  programId: string,
+  half: UjatVolunteerRecruitHalf,
+  name: string
+): UjatVolunteerApplicantRow | undefined {
+  const profile = getUjatVolunteerMockProfileByName(name)
+  if (profile) {
+    return findUjatVolunteerApplicantById(
+      programId,
+      half,
+      buildUjatVolunteerApplicantId(programId, half, profile.id)
+    )
+  }
+  return getUjatVolunteerApplicants(programId, half).find(row => row.name === name.trim())
 }
 
 export function sortUjatVolunteerApplicants(
