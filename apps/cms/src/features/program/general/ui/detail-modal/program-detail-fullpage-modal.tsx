@@ -387,6 +387,8 @@ export function ProgramDetailFullPageModal({
       : activeLnb === 'progress'
         ? activeProgressChild
         : ''
+  const activeLnbItem = programSidebarItems.find(item => item.key === activeLnb)
+  const activeChildItem = activeLnbItem?.children?.find(child => child.key === sidebarActiveChildKey)
 
   const handleSidebarSelectTop = (key: string) => {
     const k = key as LnbKey
@@ -514,6 +516,15 @@ export function ProgramDetailFullPageModal({
 
     if (!displayProgram) return items
 
+    const programParams = buildSearchParams(searchParams, {
+      delete: PROGRAM_DETAIL_QUERY_PARAMS,
+      set: {
+        programId,
+        [LNB_PARAM]: 'info',
+        [TAB_PARAM]: 'info',
+      },
+    })
+
     const nestedDetailLabel =
       schoolIdFromUrl && schoolDetailTitle
         ? schoolDetailTitle
@@ -523,19 +534,58 @@ export function ProgramDetailFullPageModal({
             ? '신청자 상세'
             : null
 
-    if (!nestedDetailLabel) {
+    const lnbParams = buildSearchParams(searchParams, {
+      delete: [...PROGRAM_NESTED_DETAIL_QUERY_PARAMS, EDIT_PARAM],
+      set: {
+        programId,
+        [LNB_PARAM]: activeLnb,
+        [TAB_PARAM]:
+          activeLnb === 'applicants'
+            ? 'institutions'
+            : activeLnb === 'progress'
+              ? 'institutions'
+              : activeTab,
+        [SUB_TAB_PARAM]: null,
+      },
+    })
+
+    const childParams = activeChildItem
+      ? buildSearchParams(searchParams, {
+          delete: [...PROGRAM_NESTED_DETAIL_QUERY_PARAMS, EDIT_PARAM],
+          set: {
+            programId,
+            [LNB_PARAM]: activeLnb,
+            [TAB_PARAM]: activeChildItem.key,
+            [SUB_TAB_PARAM]:
+              activeLnb === 'progress' && activeChildItem.key === 'instructors'
+                ? 'instructors'
+                : null,
+          },
+        })
+      : null
+
+    if (!activeLnbItem) {
       items.push({ label: displayProgram.title })
       return items
     }
 
-    const programParams = buildSearchParams(searchParams, {
-      delete: PROGRAM_NESTED_DETAIL_QUERY_PARAMS,
-      set: {
-        programId,
-      },
-    })
     items.push(makeBreadcrumbItem(displayProgram.title, location.pathname, programParams))
-    items.push({ label: nestedDetailLabel })
+
+    if (!activeChildItem) {
+      items.push(
+        nestedDetailLabel
+          ? makeBreadcrumbItem(activeLnbItem.label, location.pathname, lnbParams)
+          : { label: activeLnbItem.label }
+      )
+    } else {
+      items.push(
+        nestedDetailLabel && childParams
+          ? makeBreadcrumbItem(activeChildItem.label, location.pathname, childParams)
+          : { label: activeChildItem.label }
+      )
+    }
+
+    if (nestedDetailLabel) items.push({ label: nestedDetailLabel })
     return items
   })()
 

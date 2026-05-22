@@ -206,6 +206,10 @@ export function UserDetailFullPageModal({
 
   const { displayUser } = shell
   const title = userDetailModalTitle(displayUser)
+  const activeSidebarItem = derived.sidebarItems.find(item => item.key === state.tabState.lnb)
+  const activeChildItem = activeSidebarItem?.children?.find(
+    child => child.key === state.tabState.child
+  )
   const headerBreadcrumbItems = (() => {
     const listParams = buildSearchParams(searchParams, {
       delete: [
@@ -215,7 +219,44 @@ export function UserDetailFullPageModal({
         USER_BASIC_INFO_ENTRY_QUERY_KEY,
       ],
     })
-    return [makeBreadcrumbItem('회원 목록', location.pathname, listParams), { label: title }]
+    const items = [makeBreadcrumbItem('회원 목록', location.pathname, listParams)]
+
+    if (!activeSidebarItem) {
+      items.push({ label: title })
+      return items
+    }
+
+    const detailParams = buildSearchParams(searchParams, {
+      delete: ['lnb', USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY, USER_BASIC_INFO_ENTRY_QUERY_KEY],
+      set: {
+        id: displayUser.id,
+        lnb: 'detail-info',
+      },
+    })
+    const childParams = activeChildItem
+      ? buildSearchParams(searchParams, {
+          delete: [USER_BASIC_INFO_ENTRY_QUERY_KEY],
+          set: {
+            id: displayUser.id,
+            lnb: state.tabState.lnb,
+            [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: activeChildItem.key,
+          },
+        })
+      : null
+
+    items.push(makeBreadcrumbItem(title, location.pathname, detailParams))
+
+    if (!activeChildItem) {
+      items.push({ label: activeSidebarItem.label })
+      return items
+    }
+
+    items.push(
+      childParams
+        ? makeBreadcrumbItem(activeChildItem.label, location.pathname, childParams)
+        : { label: activeChildItem.label }
+    )
+    return items
   })()
 
   return (

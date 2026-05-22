@@ -88,6 +88,7 @@ export default function SponsorPage() {
       setSearchParams(prev => {
         const next = new URLSearchParams(prev)
         next.delete('sponsorId')
+        next.delete('sponsorLnb')
         return next
       })
     }
@@ -97,6 +98,7 @@ export default function SponsorPage() {
     setSearchParams(prev => {
       const next = new URLSearchParams(prev)
       next.delete('sponsorId')
+      next.delete('sponsorLnb')
       return next
     })
   }, [setSearchParams])
@@ -321,6 +323,7 @@ export default function SponsorPage() {
               setSearchParams(prev => {
                 const next = new URLSearchParams(prev)
                 next.set('sponsorId', record.id)
+                next.set('sponsorLnb', 'sponsor-detail')
                 return next
               })
             } })}

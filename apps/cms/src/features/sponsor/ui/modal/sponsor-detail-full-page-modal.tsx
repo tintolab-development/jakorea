@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { BulbOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -26,6 +26,13 @@ import './sponsor-detail-full-page-modal.css'
 
 const LNB_DETAIL = 'sponsor-detail'
 const LNB_PROGRAMS = 'sponsor-programs'
+const SPONSOR_LNB_PARAM = 'sponsorLnb'
+const SPONSOR_DETAIL_LNB_KEYS = [LNB_DETAIL, LNB_PROGRAMS] as const
+type SponsorDetailLnbKey = (typeof SPONSOR_DETAIL_LNB_KEYS)[number]
+
+function isSponsorDetailLnbKey(value: string | null): value is SponsorDetailLnbKey {
+  return (SPONSOR_DETAIL_LNB_KEYS as readonly string[]).includes(value ?? '')
+}
 
 const SPONSOR_DETAIL_MODAL_SIDEBAR_ITEMS: DetailModalSidebarNavItem[] = [
   {
@@ -66,10 +73,11 @@ function SponsorDetailFullPageModalInner({
   onDeleteSponsor,
 }: SponsorDetailFullPageModalInnerProps) {
   const location = useLocation()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
-  const [lnbKey, setLnbKey] = useState(LNB_DETAIL)
+  const rawLnbKey = searchParams.get(SPONSOR_LNB_PARAM)
+  const lnbKey: SponsorDetailLnbKey = isSponsorDetailLnbKey(rawLnbKey) ? rawLnbKey : LNB_DETAIL
 
   const sponsorDetail = useSponsorDetail(sponsor)
   const {
@@ -94,9 +102,31 @@ function SponsorDetailFullPageModalInner({
     filteredProgramHistoryRowCount: programHistory.filteredRows.length,
   })
 
-  const handleSelectLnbTop = useCallback((key: string): void => {
-    setLnbKey(key)
-  }, [])
+  useEffect(() => {
+    if (!open) return
+    const raw = searchParams.get(SPONSOR_LNB_PARAM)
+    if (isSponsorDetailLnbKey(raw)) return
+    const next = new URLSearchParams(searchParams)
+    next.set('sponsorId', sponsor.id)
+    next.set(SPONSOR_LNB_PARAM, LNB_DETAIL)
+    setSearchParams(next, { replace: true })
+  }, [open, searchParams, setSearchParams, sponsor.id])
+
+  const handleSelectLnbTop = useCallback(
+    (key: string): void => {
+      if (!isSponsorDetailLnbKey(key)) return
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set('sponsorId', sponsor.id)
+          next.set(SPONSOR_LNB_PARAM, key)
+          return next
+        },
+        { replace: true }
+      )
+    },
+    [setSearchParams, sponsor.id]
+  )
   const handleSelectLnbChild = useCallback((_g: string, _c: string): void => {}, [])
   const handleCloseContactRegisterModal = useCallback((): void => {
     setRegisterModalOpen(false)
@@ -108,13 +138,23 @@ function SponsorDetailFullPageModalInner({
   if (!basicInfo) return null
 
   const title = `후원사 상세_${detail.nameDisplayKo}`
+  const activeLnbItem =
+    SPONSOR_DETAIL_MODAL_SIDEBAR_ITEMS.find(item => item.key === lnbKey) ??
+    SPONSOR_DETAIL_MODAL_SIDEBAR_ITEMS[0]
   const headerBreadcrumbItems = [
     makeBreadcrumbItem(
       '후원사 관리',
       location.pathname,
-      buildSearchParams(searchParams, { delete: ['sponsorId'] })
+      buildSearchParams(searchParams, { delete: ['sponsorId', SPONSOR_LNB_PARAM] })
     ),
-    { label: title },
+    makeBreadcrumbItem(
+      title,
+      location.pathname,
+      buildSearchParams(searchParams, {
+        set: { sponsorId: sponsor.id, [SPONSOR_LNB_PARAM]: LNB_DETAIL },
+      })
+    ),
+    { label: activeLnbItem.label },
   ]
 
   return (
