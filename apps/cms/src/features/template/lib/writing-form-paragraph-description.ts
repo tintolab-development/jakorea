@@ -2,6 +2,7 @@ export {
   FORM_PARAGRAPH_SECTION_DESCRIPTION_CLASS,
   FormParagraphSectionDescription,
   type FormParagraphSectionDescriptionProps,
+  type FormParagraphSectionDescriptionSurface,
 } from '@/features/template/ui/shared/form-paragraph-section-description'
 
 /** 템플릿 단락 카드·프로그램 상세 등 — 시드 placeholder는 사용자-facing 설명으로 노출하지 않음 */

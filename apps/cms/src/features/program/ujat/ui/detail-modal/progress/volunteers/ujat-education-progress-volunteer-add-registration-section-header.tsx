@@ -23,7 +23,9 @@ export function UjatVolunteerAddRegistrationSectionHeader({
         ) : null}
       </h3>
       {description ? (
-        <FormParagraphSectionDescription titleAligned>{description}</FormParagraphSectionDescription>
+        <FormParagraphSectionDescription surface="responseEntry" titleAligned>
+          {description}
+        </FormParagraphSectionDescription>
       ) : null}
     </header>
   )

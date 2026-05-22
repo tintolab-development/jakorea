@@ -33,7 +33,9 @@ export function UjatEducationProgressVolunteerBasicInfoSection({
         </span>
       </h2>
       {description ? (
-        <FormParagraphSectionDescription titleAligned>{description}</FormParagraphSectionDescription>
+        <FormParagraphSectionDescription surface="responseEntry" titleAligned>
+          {description}
+        </FormParagraphSectionDescription>
       ) : null}
 
       <div className="ujat-volunteer-add-registration__basic-info-form-stack">
