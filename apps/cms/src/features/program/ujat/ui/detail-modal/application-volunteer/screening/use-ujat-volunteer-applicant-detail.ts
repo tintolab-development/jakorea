@@ -100,7 +100,10 @@ export function useUjatVolunteerApplicantDetail({
   /** URL → state: 현재 탭 목록에 있는 지원자만 상세 연동 (다른 탭 applicantId는 URL에서 제거) */
   useEffect(() => {
     const applicantId = searchParams.get(UJAT_APPLICANT_ID_PARAM)
-    if (!applicantId) return
+    if (!applicantId) {
+      setSelectedApplicant(prev => (prev ? null : prev))
+      return
+    }
 
     const fromList = list.find(row => row.id === applicantId)
     if (fromList) {
