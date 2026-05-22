@@ -99,8 +99,8 @@ export function UjatEducationProgressVolunteerDetailView({
     })
   }
 
-  const headerActions = (
-    <div className="program-detail-fullpage-modal__header-actions">
+  const applicationHeaderActions = (
+    <>
       <CmsButton type="button" variant="delete" size="large" width={140} onClick={showComingSoon}>
         활동 포기
       </CmsButton>
@@ -139,6 +139,26 @@ export function UjatEducationProgressVolunteerDetailView({
         onClick={openPersonalInfoRevealConfirm}
         width={180}
       />
+    </>
+  )
+
+  const assignmentHeaderActions = (
+    <>
+      <CmsButton type="button" variant="delete" size="large" width={140} onClick={showComingSoon}>
+        배정 취소
+      </CmsButton>
+      <CmsButton type="button" variant="secondary" size="large" width={160} onClick={showComingSoon}>
+        출결 정정
+      </CmsButton>
+      <CmsButton type="button" variant="primary" size="large" width={210} onClick={showComingSoon}>
+        파트너 및 교육 배정
+      </CmsButton>
+    </>
+  )
+
+  const headerActions = (
+    <div className="program-detail-fullpage-modal__header-actions">
+      {activeTab === 'application' ? applicationHeaderActions : assignmentHeaderActions}
     </div>
   )
 
@@ -164,7 +184,7 @@ export function UjatEducationProgressVolunteerDetailView({
             onPreferredRegionDraftChange={setPreferredRegionDraft}
           />
         ) : (
-          <UjatEducationProgressVolunteerAssignmentProgressTab />
+          <UjatEducationProgressVolunteerAssignmentProgressTab volunteerId={detail.volunteerId} />
         )}
       </div>
 

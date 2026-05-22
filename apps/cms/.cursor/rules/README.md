@@ -91,8 +91,9 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [Certificate issue spec](./process/member-program-certificate-issue-spec.md)  
 - [UJAT 기관 신청 목록](./process/ujat-institution-application-list-table-spec.md) — 진행일 열·희망일 `O`·선택 임시 배정
 - [UJAT 신청 기관 임시 배정](./process/ujat-institution-schedule-assign-spec.md) — `inst_schedule_assign` 날짜별 배정·배정값 산정
+- [UJAT 참여 봉사자 상세 — 교육 배정 및 진행 현황](./process/ujat-education-progress-volunteer-assignment-tab-spec.md) — 역할 드롭다운·출결 담당 1명·활동 포기 행 오버레이
 - Other `process/*` files — feature-specific UI specs (English).  
 
 ---
 
-**Last updated:** 2026-04-28
+**Last updated:** 2026-05-19
