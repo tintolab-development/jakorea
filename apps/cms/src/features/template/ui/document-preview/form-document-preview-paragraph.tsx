@@ -71,7 +71,7 @@ function readOnlyTitleBlock(
     title: <span className="form-document-preview-paragraph__title-text">{displayTitle}</span>,
     description:
       trimmedDescription.length > 0 ? (
-        <span className="form-document-preview-paragraph__description-text">
+        <span className="form-paragraph-section-description form-document-preview-paragraph__description-text">
           {trimmedDescription}
         </span>
       ) : undefined,

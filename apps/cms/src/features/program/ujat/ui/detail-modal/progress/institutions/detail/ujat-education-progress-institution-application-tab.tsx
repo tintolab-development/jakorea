@@ -201,7 +201,7 @@ export function UjatEducationProgressInstitutionApplicationTab({
           <CmsButton
             type="button"
             variant="secondary"
-            size="medium"
+            size="large"
             onClick={() => setAddClassModalOpen(true)}
           >
             학급 추가

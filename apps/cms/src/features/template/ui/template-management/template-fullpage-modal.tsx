@@ -282,7 +282,11 @@ export function TemplateFullpageModalCardDescription({
   className,
 }: TemplateFullpageModalCardDescriptionProps) {
   return (
-    <p className={['paragraph-card__description', className].filter(Boolean).join(' ')}>
+    <p
+      className={['form-paragraph-section-description', 'paragraph-card__description', className]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {children}
     </p>
   )

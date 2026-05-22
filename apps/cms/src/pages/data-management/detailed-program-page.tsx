@@ -387,20 +387,9 @@ export default function DetailedProgramPage() {
         title="세부 프로그램 삭제 불가 안내"
         width={480}
         description={
-          deleteBlockedSelectedCount <= 1 ? (
-            <span className="fs-16">
-              해당 세부 프로그램은 실적 관리에서 사용 중입니다.
-              <br />
-              사용 중인 세부 프로그램은 삭제할 수 없습니다.
-            </span>
-          ) : (
-            <span className="fs-16">
-              선택한 {deleteBlockedSelectedCount}개의 세부 프로그램 중 실적 관리에서 사용 중인
-              항목이 있습니다.
-              <br />
-              사용 중인 세부 프로그램은 삭제할 수 없습니다.
-            </span>
-          )
+          deleteBlockedSelectedCount <= 1
+            ? '해당 세부 프로그램은 실적 관리에서 사용 중입니다.\n사용 중인 세부 프로그램은 삭제할 수 없습니다.'
+            : `선택한 **${deleteBlockedSelectedCount}**개의 세부 프로그램 중 실적 관리에서 사용 중인 항목이 있습니다.\n사용 중인 세부 프로그램은 삭제할 수 없습니다.`
         }
         footer={
           <CmsButton

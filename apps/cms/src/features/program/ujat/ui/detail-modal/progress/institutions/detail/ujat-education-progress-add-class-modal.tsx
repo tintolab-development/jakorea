@@ -273,14 +273,7 @@ export function UjatEducationProgressAddClassModal({
       className="ujat-education-progress-add-class-modal"
       wrapClassName="ujat-education-progress-add-class-modal-wrap"
       footer={footer}
-      description={
-        <div className="ujat-education-progress-add-class-modal__description">
-          <p>
-            현재 진행 학급은 총 <strong>[{currentTotalClassCount}학급]</strong>입니다.
-          </p>
-          <p>추가로 교육을 진행할 학급 정보를 입력해 주세요.</p>
-        </div>
-      }
+      description={`현재 진행 학급은 총 **[${currentTotalClassCount}학급]**입니다.\n추가로 교육을 진행할 학급 정보를 입력해 주세요.`}
     >
       <div className="ujat-education-progress-add-class-modal__table">
         <div className="ujat-education-progress-add-class-modal__table-scroll">

@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import type { PermissionApproveModalKind } from '@/features/user/permission-management/instructor-permission-approve-modal'
 import {
@@ -12,88 +11,35 @@ function resolveAdminPermissionPhrase(variant: AdminPermissionTagVariant | undef
   return `${ADMIN_PERMISSION_TAG_LABEL.manager} 권한`
 }
 
-function EmphasisText({ children }: { children: ReactNode }) {
-  return <strong style={{ fontWeight: 700, color: 'var(--main-bk, #3d3d3d)' }}>{children}</strong>
-}
-
-function SingleApprovedDescription({
-  userDisplayName,
-  permissionKind,
-  approvedPermissionVariant,
-}: {
-  userDisplayName: string
-  permissionKind: PermissionApproveModalKind
+function buildSingleApprovedDescription(
+  userDisplayName: string,
+  permissionKind: PermissionApproveModalKind,
   approvedPermissionVariant?: AdminPermissionTagVariant
-}) {
+): string {
   const name = userDisplayName.trim() || '회원'
   const isAdmin = permissionKind === 'admin'
-  const adminPermissionPhrase = resolveAdminPermissionPhrase(approvedPermissionVariant)
-  return (
-    <>
-      <span className="fs-16">
-        <strong>[{name}]</strong> 님의 {isAdmin ? '관리자' : '강사'} 권한을 승인하였습니다.
-      </span>
-      <br />
-      <span className="fs-16" style={{ fontWeight: 500, color: 'var(--main-bk, #3d3d3d)' }}>
-        {isAdmin ? (
-          <>
-            {name} 님은 지금부터 <EmphasisText>{adminPermissionPhrase}</EmphasisText>으로 JA 관리자
-            활동이 가능합니다.
-          </>
-        ) : (
-          `${name} 님은 지금부터 JA 강사단 소속으로 강사 활동이 가능합니다.`
-        )}
-      </span>
-      {!isAdmin ? (
-        <>
-          <br />
-          <span className="fs-16">
-            (JA 강사단 및 제미나이 강사단은 프로그램에 따라 특강 강사로도 활동이 가능합니다.)
-          </span>
-        </>
-      ) : null}
-    </>
-  )
+
+  if (isAdmin) {
+    const adminPermissionPhrase = resolveAdminPermissionPhrase(approvedPermissionVariant)
+    return `**[${name}]** 님의 관리자 권한을 승인하였습니다.\n${name} 님은 지금부터 **${adminPermissionPhrase}**으로 JA 관리자 활동이 가능합니다.`
+  }
+
+  return `**[${name}]** 님의 강사 권한을 승인하였습니다.\n${name} 님은 지금부터 JA 강사단 소속으로 강사 활동이 가능합니다.\n(JA 강사단 및 제미나이 강사단은 프로그램에 따라 특강 강사로도 활동이 가능합니다.)`
 }
 
-function BulkApprovedDescription({
-  memberCount,
-  permissionKind,
-  approvedPermissionVariant,
-}: {
-  memberCount: number
-  permissionKind: PermissionApproveModalKind
+function buildBulkApprovedDescription(
+  memberCount: number,
+  permissionKind: PermissionApproveModalKind,
   approvedPermissionVariant?: AdminPermissionTagVariant
-}) {
+): string {
   const isAdmin = permissionKind === 'admin'
-  const adminPermissionPhrase = resolveAdminPermissionPhrase(approvedPermissionVariant)
-  return (
-    <>
-      <span className="fs-16">
-        선택한 <strong>{memberCount}명의 회원</strong>의 {isAdmin ? '관리자' : '강사'} 권한을
-        승인하였습니다.
-      </span>
-      <br />
-      <span className="fs-16" style={{ fontWeight: 500, color: 'var(--main-bk, #3d3d3d)' }}>
-        {isAdmin ? (
-          <>
-            해당 회원은 지금부터 <EmphasisText>{adminPermissionPhrase}</EmphasisText>
-            으로 JA 관리자 활동이 가능합니다.
-          </>
-        ) : (
-          '해당 회원은 지금부터 JA 강사단 소속으로 강사 활동이 가능합니다.'
-        )}
-      </span>
-      {!isAdmin ? (
-        <>
-          <br />
-          <span className="fs-16">
-            (JA 강사단 및 제미나이 강사단은 프로그램에 따라 특강 강사로도 활동이 가능합니다.)
-          </span>
-        </>
-      ) : null}
-    </>
-  )
+
+  if (isAdmin) {
+    const adminPermissionPhrase = resolveAdminPermissionPhrase(approvedPermissionVariant)
+    return `선택한 **${memberCount}명의 회원**의 관리자 권한을 승인하였습니다.\n해당 회원은 지금부터 **${adminPermissionPhrase}**으로 JA 관리자 활동이 가능합니다.`
+  }
+
+  return `선택한 **${memberCount}명의 회원**의 강사 권한을 승인하였습니다.\n해당 회원은 지금부터 JA 강사단 소속으로 강사 활동이 가능합니다.\n(JA 강사단 및 제미나이 강사단은 프로그램에 따라 특강 강사로도 활동이 가능합니다.)`
 }
 
 type InstructorPermissionApprovedCompleteModalBaseProps = {
@@ -128,19 +74,17 @@ export function InstructorPermissionApprovedCompleteModal(
   const isAdmin = permissionKind === 'admin'
 
   const description =
-    variant === 'single' ? (
-      <SingleApprovedDescription
-        userDisplayName={props.userDisplayName}
-        permissionKind={permissionKind}
-        approvedPermissionVariant={approvedPermissionVariant}
-      />
-    ) : (
-      <BulkApprovedDescription
-        memberCount={props.memberCount}
-        permissionKind={permissionKind}
-        approvedPermissionVariant={approvedPermissionVariant}
-      />
-    )
+    variant === 'single'
+      ? buildSingleApprovedDescription(
+          props.userDisplayName,
+          permissionKind,
+          approvedPermissionVariant
+        )
+      : buildBulkApprovedDescription(
+          props.memberCount,
+          permissionKind,
+          approvedPermissionVariant
+        )
 
   return (
     <ContentModal

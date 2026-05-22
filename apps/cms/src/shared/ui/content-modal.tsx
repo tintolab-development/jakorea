@@ -10,6 +10,7 @@
 import type { ReactNode } from 'react'
 import type { ModalProps } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { renderContentModalDescription } from '@/shared/ui/content-modal-description'
 import './content-modal.css'
 
 /** 기본 닫기 버튼 X 아이콘 24×24, opacity 0.5 */
@@ -40,8 +41,12 @@ export interface ContentModalProps {
   className?: string
   /** 닫기 버튼 아이콘 (미지정 시 기본 X 아이콘) */
   closeIcon?: ReactNode
-  /** 헤더 타이틀 바로 아래 설명. 전달 시 타이틀–설명 간격은 descriptionGap에 따름 */
-  description?: ReactNode
+  /**
+   * 헤더 타이틀 바로 아래 설명(plain text).
+   * - `\n`: 줄바꿈(추가 행간 없음, line-height 150%만 적용)
+   * - `**텍스트**`: 볼드(font-weight 700)
+   */
+  description?: string
   /** default: 16px, compact: 10px (헤더 하단 ↔ 설명) */
   descriptionGap?: 'default' | 'compact'
   /** 다른 모달 위에 겹칠 때 (예: 이중 모달) */
@@ -103,8 +108,10 @@ export function ContentModal({
       rootClassName={rootClassName}
       styles={modalStyles}
     >
-      {description != null ? (
-        <div className="content-modal__description">{description}</div>
+      {description != null && description !== '' ? (
+        <div className="content-modal__description">
+          {renderContentModalDescription(description)}
+        </div>
       ) : null}
       {children}
     </TealHeaderModal>

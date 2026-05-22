@@ -1,3 +1,5 @@
+@import '../shared/form-paragraph-section-description.css';
+
 .form-document-preview-body {
   display: flex;
   flex-direction: column;
@@ -74,15 +76,6 @@
   font-weight: 600;
   line-height: 150%;
   color: var(--color-text-primary, #1f1f1f);
-  white-space: pre-wrap;
-}
-
-.form-document-preview-paragraph__description-text {
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 150%;
-  color: var(--color-text-secondary, #595959);
   white-space: pre-wrap;
 }
 

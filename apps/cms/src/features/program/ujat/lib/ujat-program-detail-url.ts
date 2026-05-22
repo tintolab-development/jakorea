@@ -33,6 +33,13 @@ export const UJAT_INST_APP_ID_PARAM = 'instAppId'
 export const UJAT_EDU_INST_ID_PARAM = 'eduInstId'
 export const UJAT_EDU_INST_TAB_PARAM = 'eduInstTab'
 
+/** 교육 진행 > 참여 봉사자 — 관리자 대리 신청서 작성(회원 선택 후) */
+export const UJAT_VOL_ADD_MEMBER_ID_PARAM = 'volAddMemberId'
+
+export function isUjatEducationProgressVolunteersTab(tab: string): boolean {
+  return /^edu_h[12]_volunteers$/.test(tab)
+}
+
 export type UjatEducationProgressInstitutionDetailTab = 'application' | 'assignment' | 'posts'
 
 const UJAT_EDU_PROGRESS_INSTITUTION_DETAIL_TABS: readonly UjatEducationProgressInstitutionDetailTab[] =

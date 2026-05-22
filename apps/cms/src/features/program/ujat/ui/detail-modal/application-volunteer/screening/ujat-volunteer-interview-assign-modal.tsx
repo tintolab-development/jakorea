@@ -190,14 +190,7 @@ export function UjatVolunteerInterviewAssignModal({
             overflowY: 'auto',
           },
         }}
-        description={
-          <div className="ujat-volunteer-interview-assign-modal__description">
-            <div>
-              <strong>[{applicant.name}]</strong> 봉사자의 면접을 진행할 일정을 선택해 주세요.
-            </div>
-            <div>면접은 한 명 당 한 차례만 진행 가능합니다.</div>
-          </div>
-        }
+        description={`**[${applicant.name}]** 봉사자의 면접을 진행할 일정을 선택해 주세요.\n면접은 한 명 당 한 차례만 진행 가능합니다.`}
         footer={
           <div className="ujat-volunteer-interview-assign-modal__footer">
             <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>

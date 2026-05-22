@@ -93,13 +93,7 @@ export function UjatEducationProgressActivityWithdrawModal({
       className="ujat-education-progress-activity-withdraw-modal"
       wrapClassName="ujat-education-progress-activity-withdraw-modal-wrap"
       footer={footer}
-      description={
-        <p className="ujat-education-progress-activity-withdraw-modal__description">
-          <strong>[{institutionName}]</strong>의 프로그램 참여 활동을 포기 처리하시겠습니까?
-          <br />
-          활동을 중단할 교육 일정을 선택해 주세요
-        </p>
-      }
+      description={`**[${institutionName}]**의 프로그램 참여 활동을 포기 처리하시겠습니까?\n활동을 중단할 교육 일정을 선택해 주세요`}
     >
       <div className="ujat-education-progress-activity-withdraw-modal__form">
         <CmsInput

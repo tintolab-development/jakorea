@@ -1,5 +1,7 @@
 /* 단락 카드 — FormEditor / 템플릿 미리보기 공통 */
 
+@import '../../shared/form-paragraph-section-description.css';
+
 .paragraph-card {
   position: relative;
   display: flex;
@@ -253,16 +255,7 @@
   line-height: 120%;
 }
 
-.paragraph-card__description {
-  margin: 0;
-  color: var(--gray-85969-d, #85969d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.paragraph-card--survey-title-with-period .paragraph-card__description {
+.paragraph-card--survey-title-with-period .paragraph-card__description,
+.paragraph-card--survey-title-with-period .form-paragraph-section-description {
   font-size: 18px;
 }

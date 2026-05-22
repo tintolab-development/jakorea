@@ -204,13 +204,7 @@ export function UjatEducationProgressChangeClassModal({
       wrapClassName="ujat-education-progress-change-class-modal-wrap"
       footer={footer}
       description={
-        <div className="ujat-education-progress-change-class-modal__description">
-          <p>변경할 기존 학급과 신규 학급 정보를 입력해 주세요.</p>
-          <p>
-            기존 학급의 교육만 취소할 시 변경 학급의 학년 선택에서 &ldquo;미배정&rdquo;을 선택해
-            주세요.
-          </p>
-        </div>
+        '변경할 기존 학급과 신규 학급 정보를 입력해 주세요.\n기존 학급의 교육만 취소할 시 변경 학급의 학년 선택에서 "미배정"을 선택해 주세요.'
       }
     >
       <div className="ujat-education-progress-change-class-modal__apply-date-field">
