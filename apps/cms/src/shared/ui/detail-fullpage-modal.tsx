@@ -10,6 +10,8 @@ export interface DetailFullPageModalProps {
   open: boolean
   onClose: () => void
   title: React.ReactNode
+  /** 메인 헤더 1행: 타이틀과 닫기 사이 우측 영역 (예: 풀페이지 breadcrumb) */
+  headerTrailing?: React.ReactNode
   /** 메인 헤더: 타이틀과 닫기 사이 (예: 회원 상세 액션 버튼) */
   headerExtra?: React.ReactNode
   /** 메인 컨텐츠 영역 추가 영역 (예: 회원 상세 액션 버튼) */
@@ -28,6 +30,7 @@ export function DetailFullPageModal({
   open,
   onClose,
   title,
+  headerTrailing,
   headerExtra,
   contentExtra,
   sidebar,
@@ -60,6 +63,9 @@ export function DetailFullPageModal({
           <header className="detail-fullpage-modal__header">
             <div className="detail-fullpage-modal__header-top">
               <h2 className="detail-fullpage-modal__title">{title}</h2>
+              {headerTrailing ? (
+                <div className="detail-fullpage-modal__header-trailing">{headerTrailing}</div>
+              ) : null}
               <button
                 type="button"
                 className="detail-fullpage-modal__close"
