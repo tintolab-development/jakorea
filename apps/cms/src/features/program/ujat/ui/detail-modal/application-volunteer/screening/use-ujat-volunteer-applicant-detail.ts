@@ -53,7 +53,7 @@ export function useUjatVolunteerApplicantDetail({
       const next = new URLSearchParams(searchParams)
       if (next.get(UJAT_APPLICANT_ID_PARAM) === applicantId) return
       next.set(UJAT_APPLICANT_ID_PARAM, applicantId)
-      setSearchParams(next, { replace: true })
+      setSearchParams(next, { replace: false })
     },
     [searchParams, setSearchParams]
   )

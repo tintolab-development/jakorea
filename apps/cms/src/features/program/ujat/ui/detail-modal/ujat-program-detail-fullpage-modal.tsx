@@ -6,6 +6,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
+import {
+  buildSearchParams,
+  makeBreadcrumbItem,
+} from '@/shared/lib/detail-fullpage-query-stack'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useSponsorService } from '@/features/sponsor/hooks/use-sponsor-service'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
@@ -89,6 +94,24 @@ import './ujat-program-detail-fullpage-modal.css'
 const TAB_PARAM = 'tab'
 const LNB_PARAM = 'lnb'
 const EDIT_PARAM = 'edit'
+const UJAT_DETAIL_QUERY_PARAMS = [
+  'programId',
+  LNB_PARAM,
+  TAB_PARAM,
+  EDIT_PARAM,
+  UJAT_INST_APP_ID_PARAM,
+  UJAT_APPLICANT_ID_PARAM,
+  UJAT_EDU_INST_ID_PARAM,
+  UJAT_EDU_INST_TAB_PARAM,
+  UJAT_VOL_ADD_MEMBER_ID_PARAM,
+] as const
+const UJAT_NESTED_DETAIL_QUERY_PARAMS = [
+  UJAT_INST_APP_ID_PARAM,
+  UJAT_APPLICANT_ID_PARAM,
+  UJAT_EDU_INST_ID_PARAM,
+  UJAT_EDU_INST_TAB_PARAM,
+  UJAT_VOL_ADD_MEMBER_ID_PARAM,
+] as const
 
 export interface UjatProgramDetailFullPageModalProps {
   open: boolean
@@ -467,7 +490,7 @@ export function UjatProgramDetailFullPageModal({
         next.delete(UJAT_INST_APP_ID_PARAM)
       }
       next.delete(EDIT_PARAM)
-      setSearchParams(next, { replace: true })
+      setSearchParams(next, { replace: id == null })
     },
     [programId, searchParams, setSearchParams, activeTab]
   )
@@ -519,7 +542,7 @@ export function UjatProgramDetailFullPageModal({
       next.delete(UJAT_APPLICANT_ID_PARAM)
       next.delete(UJAT_INST_APP_ID_PARAM)
       next.delete(EDIT_PARAM)
-      setSearchParams(next, { replace: true })
+      setSearchParams(next, { replace: id == null })
     },
     [programId, searchParams, setSearchParams]
   )
@@ -914,12 +937,46 @@ export function UjatProgramDetailFullPageModal({
             ? `${institutionDetailTitlePrefix} (${institutionDetailName})`
             : programTitle)
 
+  const headerBreadcrumbItems = (() => {
+    const listParams = buildSearchParams(searchParams, {
+      delete: UJAT_DETAIL_QUERY_PARAMS,
+    })
+    const items = [makeBreadcrumbItem('프로그램 목록', location.pathname, listParams)]
+
+    if (!displayProgram) return items
+
+    const nestedDetailLabel =
+      volAddMemberId
+        ? '봉사자 추가 등록'
+        : volunteerApplicantDetailTitle
+          ? volunteerApplicantDetailTitle
+          : eduInstitutionDetailName
+            ? `참여 기관 신청 상세 (${eduInstitutionDetailName})`
+            : institutionDetailName
+              ? `${institutionDetailTitlePrefix} (${institutionDetailName})`
+              : null
+
+    if (!nestedDetailLabel) {
+      items.push({ label: displayProgram.title })
+      return items
+    }
+
+    const programParams = buildSearchParams(searchParams, {
+      delete: UJAT_NESTED_DETAIL_QUERY_PARAMS,
+      set: { programId },
+    })
+    items.push(makeBreadcrumbItem(displayProgram.title, location.pathname, programParams))
+    items.push({ label: nestedDetailLabel })
+    return items
+  })()
+
   return (
     <DetailFullPageModal
       open={open}
       onClose={handleClose}
       onHeaderClose={handleHeaderCloseClick}
       title={title}
+      headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       closeAriaLabel={
         volAddMemberId ||
         institutionDetailId ||

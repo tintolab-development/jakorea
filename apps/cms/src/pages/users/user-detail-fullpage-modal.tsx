@@ -4,7 +4,13 @@
  */
 
 import { useCallback, useMemo } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
+import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
+import {
+  buildSearchParams,
+  makeBreadcrumbItem,
+} from '@/shared/lib/detail-fullpage-query-stack'
 import {
   userDetailModalTitle,
   userDetailSidebarNavAriaLabel,
@@ -26,6 +32,7 @@ import { useUserDetailController } from '@/features/user/detail/lib/use-user-det
 import { useUserDetailFullpageDerived } from '@/features/user/detail/lib/use-user-detail-fullpage-derived'
 import { useUserDetailModals } from '@/features/user/detail/lib/use-user-detail-modals'
 import { UserDetailLayout } from '@/features/user/detail/ui/detail-info/user-detail-layout'
+import { USER_BASIC_INFO_ENTRY_QUERY_KEY } from '@/features/user/detail/ui/user-basic-info/entry-resolver'
 import type { UserBasicInfoEntrySource } from '@/features/user/detail/ui/user-basic-info-section'
 import './user-detail-modal.css'
 
@@ -80,6 +87,8 @@ export function UserDetailFullPageModal({
   onNavigateToLinkedUser,
   onMemberBasicInfoSaved,
 }: UserDetailFullPageModalProps) {
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
   const modals = useUserDetailModals()
   const patchMemberBasicInfo = useCallback(
     (userId: string, patch: PatchUserBasicInfoInput) =>
@@ -196,6 +205,18 @@ export function UserDetailFullPageModal({
   }
 
   const { displayUser } = shell
+  const title = userDetailModalTitle(displayUser)
+  const headerBreadcrumbItems = (() => {
+    const listParams = buildSearchParams(searchParams, {
+      delete: [
+        'id',
+        'lnb',
+        USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
+        USER_BASIC_INFO_ENTRY_QUERY_KEY,
+      ],
+    })
+    return [makeBreadcrumbItem('회원 목록', location.pathname, listParams), { label: title }]
+  })()
 
   return (
     <UserDetailFullpageShellProvider value={shell}>
@@ -203,7 +224,8 @@ export function UserDetailFullPageModal({
       <UserDetailLayout
         open={open}
         onClose={onClose}
-        title={userDetailModalTitle(displayUser)}
+        title={title}
+        headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
         sidebar={
           <DetailModalSidebar
             navAriaLabel={userDetailSidebarNavAriaLabel(mode, displayUser)}

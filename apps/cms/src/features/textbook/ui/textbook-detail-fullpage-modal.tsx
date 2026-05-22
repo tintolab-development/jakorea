@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { BookOutlined } from '@ant-design/icons'
 import { CmsButton, CmsCheckbox, CmsInput, CmsRadio, CmsSelect } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
+import {
+  buildSearchParams,
+  makeBreadcrumbItem,
+} from '@/shared/lib/detail-fullpage-query-stack'
 import {
   DetailModalSidebar,
   type DetailModalSidebarNavItem,
@@ -44,6 +50,8 @@ export function TextbookDetailFullPageModal({
   onEdit,
   onSave,
 }: TextbookDetailFullPageModalProps) {
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
   const [editForm, setEditForm] = useState<TextbookEditForm | null>(null)
 
   useEffect(() => {
@@ -54,6 +62,16 @@ export function TextbookDetailFullPageModal({
   const isEditMode = mode === 'edit'
   if (!open || !textbook) return null
   if (!editForm) return null
+
+  const title = `${textbook.businessArea}_${textbook.textbookName}`
+  const headerBreadcrumbItems = [
+    makeBreadcrumbItem(
+      '교재 관리',
+      location.pathname,
+      buildSearchParams(searchParams, { delete: ['textbookId', 'textbookMode'] })
+    ),
+    { label: title },
+  ]
 
   const handleSave = () => {
     const payload = toSubmitPayload(editForm)
@@ -67,7 +85,8 @@ export function TextbookDetailFullPageModal({
     <DetailFullPageModal
       open={open}
       onClose={onClose}
-      title={`${textbook.businessArea}_${textbook.textbookName}`}
+      title={title}
+      headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className="textbook-detail-fullpage-modal"
       sidebar={
         <DetailModalSidebar

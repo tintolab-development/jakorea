@@ -159,7 +159,7 @@ export function useApplicantsDetail({
     if (selectedItem) {
       if (next.get(APPLICANT_ID_PARAM) !== selectedItem.id) {
         next.set(APPLICANT_ID_PARAM, selectedItem.id)
-        setSearchParams(next, { replace: true })
+        setSearchParams(next, { replace: false })
       }
     } else if (next.has(APPLICANT_ID_PARAM)) {
       next.delete(APPLICANT_ID_PARAM)

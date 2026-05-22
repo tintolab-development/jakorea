@@ -3,7 +3,13 @@
  *  */
 
 import { useMemo, useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
+import {
+  buildSearchParams,
+  makeBreadcrumbItem,
+} from '@/shared/lib/detail-fullpage-query-stack'
 import {
   DetailModalSidebar,
   type DetailModalSidebarNavItem,
@@ -54,6 +60,8 @@ export function AccountPaymentStatusDetailFullPageModal({
   row,
   onAccountPaymentCompleted,
 }: AccountPaymentStatusDetailFullPageModalProps) {
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
   const detail = useMemo(() => (row ? getMockAccountPaymentStatusDetail(row) : null), [row])
   const [paymentCompleteConfirmOpen, setPaymentCompleteConfirmOpen] = useState(false)
 
@@ -78,13 +86,23 @@ export function AccountPaymentStatusDetailFullPageModal({
   }
 
   const { basic } = detail
+  const title = '계좌 지급 현황 상세'
+  const headerBreadcrumbItems = [
+    makeBreadcrumbItem(
+      '계좌 지급 확인',
+      location.pathname,
+      buildSearchParams(searchParams, { delete: ['ap_detail'] })
+    ),
+    { label: title },
+  ]
 
   return (
     <>
       <DetailFullPageModal
         open={open}
         onClose={onClose}
-        title="계좌 지급 현황 상세"
+        title={title}
+        headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
         className="account-payment-status-detail-fullpage-modal"
         sidebar={
           <DetailModalSidebar
