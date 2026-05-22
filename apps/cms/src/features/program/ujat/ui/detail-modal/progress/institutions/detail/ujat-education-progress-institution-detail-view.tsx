@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
-import { Typography } from 'antd'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Program } from '@/types/domain'
 import { CmsButton } from '@/shared/ui'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
@@ -12,7 +11,23 @@ import {
   UJAT_EDU_PROGRESS_INSTITUTION_DETAIL_TAB_LABELS,
   type UjatEducationProgressInstitutionDetail,
 } from './types'
+import type { UjatInstitutionApplicationGradeBlockDetail } from '../../../application-institution/detail/detail-types'
 import { UjatEducationProgressInstitutionApplicationTab } from './ujat-education-progress-institution-application-tab'
+import {
+  UjatEducationProgressInstitutionAssignmentChangeButton,
+  UjatEducationProgressInstitutionAssignmentTab,
+} from './ujat-education-progress-institution-assignment-tab'
+import {
+  UjatEducationProgressActivityWithdrawModal,
+  type UjatEducationProgressActivityWithdrawPayload,
+} from './ujat-education-progress-activity-withdraw-modal'
+import { UjatEducationProgressChangeClassModal } from './ujat-education-progress-change-class-modal'
+import {
+  applyClassChangesToGradeBlocks,
+  applyClassChangesToSchedules,
+  resolveRegionKeyForInstitution,
+  type ChangeClassConfirmPayload,
+} from './ujat-education-progress-change-class'
 import './ujat-education-progress-institution-detail.css'
 
 export function UjatEducationProgressInstitutionDetailView({
@@ -28,6 +43,32 @@ export function UjatEducationProgressInstitutionDetailView({
 }) {
   const { showAlert } = useCmsAlert()
   const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
+  const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false)
+  const [changeClassModalOpen, setChangeClassModalOpen] = useState(false)
+  const [activityWithdrawn, setActivityWithdrawn] = useState(false)
+  const [assignmentDataRevision, setAssignmentDataRevision] = useState(0)
+  const [gradeBlocks, setGradeBlocks] = useState<UjatInstitutionApplicationGradeBlockDetail[]>(
+    () => detail.applicationDetail.gradeBlocks
+  )
+
+  useEffect(() => {
+    setWithdrawConfirmOpen(false)
+    setChangeClassModalOpen(false)
+    setActivityWithdrawn(false)
+    setAssignmentDataRevision(0)
+    setGradeBlocks(detail.applicationDetail.gradeBlocks)
+  }, [detail.institutionId, detail.half, detail.applicationDetail.gradeBlocks])
+
+  const detailWithGradeBlocks = useMemo(
+    (): UjatEducationProgressInstitutionDetail => ({
+      ...detail,
+      applicationDetail: {
+        ...detail.applicationDetail,
+        gradeBlocks,
+      },
+    }),
+    [detail, gradeBlocks]
+  )
 
   const resolveAccessItem = useCallback(
     () => `${detail.institutionName} 참여 기관 신청 정보`,
@@ -50,12 +91,49 @@ export function UjatEducationProgressInstitutionDetailView({
     []
   )
 
-  const handleWithdraw = useCallback(() => {
-    showAlert({
-      title: '활동 포기',
-      content: `${detail.institutionName} 기관이 활동 포기 처리되었습니다. (목 데이터)`,
-    })
-  }, [detail.institutionName, showAlert])
+  const withdrawScheduleOptions = useMemo(
+    () =>
+      detail.confirmedScheduleRows.map(row => ({
+        value: row.id,
+        label: row.dateDisplay,
+      })),
+    [detail.confirmedScheduleRows]
+  )
+
+  const handleRequestWithdraw = useCallback(() => {
+    if (activityWithdrawn) return
+    setWithdrawConfirmOpen(true)
+  }, [activityWithdrawn])
+
+  const handleCancelWithdraw = useCallback(() => {
+    setWithdrawConfirmOpen(false)
+  }, [])
+
+  const handleConfirmWithdraw = useCallback(
+    (_payload: UjatEducationProgressActivityWithdrawPayload) => {
+      setActivityWithdrawn(true)
+      setWithdrawConfirmOpen(false)
+      showAlert({
+        title: '활동 포기',
+        content: `${detail.institutionName} 기관이 활동 포기 처리되었습니다. (목 데이터)`,
+      })
+    },
+    [detail.institutionName, showAlert]
+  )
+
+  const handleConfirmChangeClass = useCallback(
+    (payload: ChangeClassConfirmPayload) => {
+      const regionKey = resolveRegionKeyForInstitution(detail.institutionId)
+      if (regionKey) {
+        applyClassChangesToSchedules(detail, regionKey, payload)
+      }
+
+      setGradeBlocks(prev => applyClassChangesToGradeBlocks(prev, payload.mappings))
+      setAssignmentDataRevision(revision => revision + 1)
+      setChangeClassModalOpen(false)
+    },
+    [detail]
+  )
 
   return (
     <div className="ujat-education-progress-institution-detail">
@@ -84,7 +162,8 @@ export function UjatEducationProgressInstitutionDetailView({
               variant="delete"
               size="large"
               width={160}
-              onClick={handleWithdraw}
+              disabled={activityWithdrawn}
+              onClick={handleRequestWithdraw}
             >
               활동 포기
             </CmsButton>
@@ -108,6 +187,14 @@ export function UjatEducationProgressInstitutionDetailView({
           </div>
         ) : null}
 
+        {activeTab === 'assignment' ? (
+          <div className="program-detail-fullpage-modal__header-actions">
+            <UjatEducationProgressInstitutionAssignmentChangeButton
+              onClick={() => setChangeClassModalOpen(true)}
+            />
+          </div>
+        ) : null}
+
         {activeTab === 'posts' ? (
           <div className="program-detail-fullpage-modal__header-actions">
             <CmsButton
@@ -127,35 +214,61 @@ export function UjatEducationProgressInstitutionDetailView({
         {activeTab === 'application' ? (
           <div className="program-detail-fullpage-modal__info-tab">
             <UjatEducationProgressInstitutionApplicationTab
-              detail={detail}
+              detail={detailWithGradeBlocks}
               personalInfoRevealed={personalInfoRevealed}
+              gradeBlocks={gradeBlocks}
+              onGradeBlocksChange={setGradeBlocks}
             />
           </div>
         ) : null}
 
         {activeTab === 'assignment' ? (
-          <div className="program-detail-fullpage-modal__info-tab ujat-education-progress-institution-detail__placeholder">
-            <Typography.Title level={5}>교육 배정 및 진행 현황</Typography.Title>
-            <Typography.Paragraph type="secondary">
-              해당 기능 화면이 연결되면 이 영역에 표시됩니다.
-            </Typography.Paragraph>
+          <div className="program-detail-fullpage-modal__info-tab">
+            <UjatEducationProgressInstitutionAssignmentTab
+              detail={detailWithGradeBlocks}
+              dataRevision={assignmentDataRevision}
+            />
           </div>
         ) : null}
 
         {activeTab === 'posts' ? (
-          <div className="program-detail-fullpage-modal__info-tab">
+          <div className="program-detail-fullpage-modal__info-tab ujat-education-progress-institution-detail__posts-tab-wrap">
             <EnrollmentProgramDetailPostsTab
               program={program}
               schoolId={detail.institutionId}
               showWriteButtonInSection={false}
               writeModalOpen={postWriteModalOpen}
               onWriteModalOpenChange={setPostWriteModalOpen}
+              writeAuthorName="담당 매니저"
+              onPostWriteSuccess={() => {
+                showAlert({
+                  title: '게시글 등록',
+                  content: '게시글이 등록되었습니다.',
+                })
+              }}
             />
           </div>
         ) : null}
       </div>
 
       {personalInfoRevealModal}
+
+      <UjatEducationProgressActivityWithdrawModal
+        open={withdrawConfirmOpen}
+        institutionName={detail.institutionName}
+        scheduleOptions={withdrawScheduleOptions}
+        onCancel={handleCancelWithdraw}
+        onConfirm={handleConfirmWithdraw}
+      />
+
+      <UjatEducationProgressChangeClassModal
+        open={changeClassModalOpen}
+        half={detail.half}
+        detail={detail}
+        gradeBlocks={gradeBlocks}
+        onCancel={() => setChangeClassModalOpen(false)}
+        onConfirm={handleConfirmChangeClass}
+      />
     </div>
   )
 }
