@@ -81,6 +81,7 @@ import { UjatProgramRecruitmentTabsRow } from './info/ujat-program-recruitment-t
 import { UjatVolunteerDocScreeningSection } from './application-volunteer/screening/ujat-volunteer-doc-screening-section'
 import { UjatVolunteerDocPassedSection } from './application-volunteer/screening/ujat-volunteer-doc-passed-section'
 import { UjatVolunteerInterview2Section } from './application-volunteer/screening/ujat-volunteer-interview2-section'
+import type { UjatVolunteerApplicantDetailMeta } from './application-volunteer/screening/use-ujat-volunteer-applicant-detail'
 import '@toast-ui/editor/dist/toastui-editor.css'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './ujat-program-detail-fullpage-modal.css'
@@ -360,6 +361,18 @@ function ujatLnbBreadcrumbTargetTab(
       : defaultEducationProgressTabForHalf('h1')
   }
   return defaultTabForLnb(lnb, interview, surveyKeys)
+}
+
+function isUjatVolunteerApplicantDetailRoute(lnb: UjatDetailLnbKey, tab: string): boolean {
+  return (
+    (lnb === 'volunteer_h1' || lnb === 'volunteer_h2') &&
+    (tab === 'vh1_doc1' ||
+      tab === 'vh2_doc1' ||
+      tab === 'vh1_doc_passed' ||
+      tab === 'vh2_doc_passed' ||
+      tab === 'vh1_interview2' ||
+      tab === 'vh2_interview2')
+  )
 }
 
 function UjatPlaceholderSection({ title, description }: { title: string; description: string }) {
@@ -784,23 +797,12 @@ export function UjatProgramDetailFullPageModal({
 
   const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
   const registerVolunteerFromMemberRef = useRef<(memberId: string) => void>(() => {})
-  const [volunteerApplicantDetailTitle, setVolunteerApplicantDetailTitle] = useState<string | null>(
-    null
-  )
+  const [volunteerApplicantDetailMeta, setVolunteerApplicantDetailMeta] =
+    useState<UjatVolunteerApplicantDetailMeta | null>(null)
 
   useEffect(() => {
-    const isVolunteerDocScreening = activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2'
-    const isVolunteerApplicantTab =
-      activeTab === 'vh1_doc1' ||
-      activeTab === 'vh2_doc1' ||
-      activeTab === 'vh1_doc_passed' ||
-      activeTab === 'vh2_doc_passed' ||
-      activeTab === 'vh1_interview2' ||
-      activeTab === 'vh2_interview2' ||
-      activeTab === 'vh1_interview2' ||
-      activeTab === 'vh2_interview2'
-    if (!isVolunteerDocScreening || !isVolunteerApplicantTab) {
-      setVolunteerApplicantDetailTitle(null)
+    if (!isUjatVolunteerApplicantDetailRoute(activeLnb, activeTab)) {
+      setVolunteerApplicantDetailMeta(null)
     }
   }, [activeLnb, activeTab])
 
@@ -871,17 +873,8 @@ export function UjatProgramDetailFullPageModal({
       setEduInstitutionId(null)
       return
     }
-    const isVolunteerDocScreening = activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2'
-    const isVolunteerApplicantTab =
-      activeTab === 'vh1_doc1' ||
-      activeTab === 'vh2_doc1' ||
-      activeTab === 'vh1_doc_passed' ||
-      activeTab === 'vh2_doc_passed' ||
-      activeTab === 'vh1_interview2' ||
-      activeTab === 'vh2_interview2'
     if (
-      isVolunteerDocScreening &&
-      isVolunteerApplicantTab &&
+      isUjatVolunteerApplicantDetailRoute(activeLnb, activeTab) &&
       volunteerApplicantCloseHandlerRef.current?.()
     ) {
       return
@@ -905,7 +898,7 @@ export function UjatProgramDetailFullPageModal({
   const title =
     volAddMemberId
       ? '봉사자 추가 등록'
-      : volunteerApplicantDetailTitle ??
+      : volunteerApplicantDetailMeta?.title ??
     (eduInstitutionDetailName
       ? `참여 기관 신청 상세 (${eduInstitutionDetailName})`
       : institutionDetailName
@@ -932,8 +925,8 @@ export function UjatProgramDetailFullPageModal({
     const nestedDetailLabel =
       volAddMemberId
         ? '봉사자 추가 등록'
-        : volunteerApplicantDetailTitle
-          ? volunteerApplicantDetailTitle
+        : volunteerApplicantDetailMeta?.breadcrumbLabel
+          ? volunteerApplicantDetailMeta.breadcrumbLabel
           : eduInstitutionDetailName
             ? eduInstitutionDetailName
             : institutionDetailName
@@ -1125,7 +1118,7 @@ export function UjatProgramDetailFullPageModal({
                 onRegisterApplicantCloseHandler={fn => {
                   volunteerApplicantCloseHandlerRef.current = fn
                 }}
-                onVolunteerApplicantDetailTitleChange={setVolunteerApplicantDetailTitle}
+                onVolunteerApplicantDetailMetaChange={setVolunteerApplicantDetailMeta}
               />
             )}
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
@@ -1136,7 +1129,7 @@ export function UjatProgramDetailFullPageModal({
                 onRegisterApplicantCloseHandler={fn => {
                   volunteerApplicantCloseHandlerRef.current = fn
                 }}
-                onVolunteerApplicantDetailTitleChange={setVolunteerApplicantDetailTitle}
+                onVolunteerApplicantDetailMetaChange={setVolunteerApplicantDetailMeta}
               />
             )}
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
@@ -1147,7 +1140,7 @@ export function UjatProgramDetailFullPageModal({
                 onRegisterApplicantCloseHandler={fn => {
                   volunteerApplicantCloseHandlerRef.current = fn
                 }}
-                onVolunteerApplicantDetailTitleChange={setVolunteerApplicantDetailTitle}
+                onVolunteerApplicantDetailMetaChange={setVolunteerApplicantDetailMeta}
               />
             )}
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&

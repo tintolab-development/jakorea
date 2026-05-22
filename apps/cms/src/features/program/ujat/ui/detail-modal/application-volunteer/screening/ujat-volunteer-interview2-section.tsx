@@ -8,7 +8,10 @@ import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/uja
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { buildUjatVolunteerInterview2FilterRows } from './ujat-volunteer-interview2-filter-fields'
 import { useUjatVolunteerInterview2 } from './use-ujat-volunteer-interview2'
-import { useUjatVolunteerApplicantDetail } from './use-ujat-volunteer-applicant-detail'
+import {
+  useUjatVolunteerApplicantDetail,
+  type UjatVolunteerApplicantDetailMetaChangeHandler,
+} from './use-ujat-volunteer-applicant-detail'
 import { UjatVolunteerApplicantDetailView } from './ujat-volunteer-applicant-detail-view'
 import { UjatVolunteerInterviewEvaluationModal } from './ujat-volunteer-interview-evaluation-modal'
 import { UjatVolunteerInterview2BulkPassModal } from './ujat-volunteer-interview2-bulk-pass-modal'
@@ -25,14 +28,14 @@ export interface UjatVolunteerInterview2SectionProps {
   programId: string
   half: UjatVolunteerRecruitHalf
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
-  onVolunteerApplicantDetailTitleChange?: (title: string | null) => void
+  onVolunteerApplicantDetailMetaChange?: UjatVolunteerApplicantDetailMetaChangeHandler
 }
 
 export function UjatVolunteerInterview2Section({
   programId,
   half,
   onRegisterApplicantCloseHandler,
-  onVolunteerApplicantDetailTitleChange,
+  onVolunteerApplicantDetailMetaChange,
 }: UjatVolunteerInterview2SectionProps) {
   const tableWrapRef = useRef<HTMLDivElement>(null)
   const [tableScrollX, setTableScrollX] = useState(UJAT_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X)
@@ -79,7 +82,7 @@ export function UjatVolunteerInterview2Section({
     detailVariant: 'interview2',
     applyDocumentScreeningStatus: noopApplyDocumentScreeningStatus,
     onRegisterApplicantCloseHandler,
-    onVolunteerApplicantDetailTitleChange,
+    onVolunteerApplicantDetailMetaChange,
     showDocumentScreeningConfirm: noopShowDocumentScreeningConfirm,
   })
 

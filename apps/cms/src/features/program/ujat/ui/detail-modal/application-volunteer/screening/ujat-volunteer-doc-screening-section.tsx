@@ -11,7 +11,10 @@ import { buildUjatVolunteerDocScreeningFilterRows } from './ujat-volunteer-doc-s
 import { UjatVolunteerDocScreeningResizableTitle } from './ujat-volunteer-doc-screening-resizable-title'
 import { useUjatVolunteerDocScreeningColumnWidths } from './use-ujat-volunteer-doc-screening-column-widths'
 import { useUjatVolunteerDocScreening } from './use-ujat-volunteer-doc-screening'
-import { useUjatVolunteerApplicantDetail } from './use-ujat-volunteer-applicant-detail'
+import {
+  useUjatVolunteerApplicantDetail,
+  type UjatVolunteerApplicantDetailMetaChangeHandler,
+} from './use-ujat-volunteer-applicant-detail'
 import { UjatVolunteerApplicantDetailView } from './ujat-volunteer-applicant-detail-view'
 import './ujat-volunteer-doc-screening-section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
@@ -28,14 +31,14 @@ export interface UjatVolunteerDocScreeningSectionProps {
   programId: string
   half: UjatVolunteerRecruitHalf
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
-  onVolunteerApplicantDetailTitleChange?: (title: string | null) => void
+  onVolunteerApplicantDetailMetaChange?: UjatVolunteerApplicantDetailMetaChangeHandler
 }
 
 export function UjatVolunteerDocScreeningSection({
   programId,
   half,
   onRegisterApplicantCloseHandler,
-  onVolunteerApplicantDetailTitleChange,
+  onVolunteerApplicantDetailMetaChange,
 }: UjatVolunteerDocScreeningSectionProps) {
   const tableWrapRef = useRef<HTMLDivElement>(null)
   const {
@@ -102,7 +105,7 @@ export function UjatVolunteerDocScreeningSection({
     detailVariant: 'doc_screening',
     applyDocumentScreeningStatus,
     onRegisterApplicantCloseHandler,
-    onVolunteerApplicantDetailTitleChange,
+    onVolunteerApplicantDetailMetaChange,
     showDocumentScreeningConfirm,
   })
 
