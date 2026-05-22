@@ -935,9 +935,9 @@ export function UjatProgramDetailFullPageModal({
         : volunteerApplicantDetailTitle
           ? volunteerApplicantDetailTitle
           : eduInstitutionDetailName
-            ? `참여 기관 신청 상세 (${eduInstitutionDetailName})`
+            ? eduInstitutionDetailName
             : institutionDetailName
-              ? `${institutionDetailTitlePrefix} (${institutionDetailName})`
+              ? institutionDetailName
               : null
 
     const lnbLabel = ujatLnbBreadcrumbLabel(activeLnb, activeTab)
