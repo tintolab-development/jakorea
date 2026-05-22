@@ -11,7 +11,13 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useProgramStore } from '@/features/program/general/model/program-store'
 import { getCapacity } from '@/features/program/general/lib/program-helpers'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
-import { UJAT_INST_APP_ID_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
+import {
+  UJAT_APPLICANT_ID_PARAM,
+  UJAT_EDU_INST_ID_PARAM,
+  UJAT_EDU_INST_TAB_PARAM,
+  UJAT_INST_APP_ID_PARAM,
+  UJAT_VOL_ADD_MEMBER_ID_PARAM,
+} from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { getUjatPrograms } from '@/data/mock/program-schedule-categories'
 import {
   isResolvableUjatProgramId,
@@ -167,6 +173,10 @@ function UjatProgramListPageContent() {
     next.delete('tab')
     next.delete('edit')
     next.delete(UJAT_INST_APP_ID_PARAM)
+    next.delete(UJAT_APPLICANT_ID_PARAM)
+    next.delete(UJAT_EDU_INST_ID_PARAM)
+    next.delete(UJAT_EDU_INST_TAB_PARAM)
+    next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
     setSearchParams(next, { replace: true })
   }, [programIdFromUrl, loading, programs, searchParams, setSearchParams])
 
