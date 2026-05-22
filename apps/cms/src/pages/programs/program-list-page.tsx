@@ -289,7 +289,7 @@ export function ProgramListPage() {
       setSelectedProgramForFullPageModal(program)
       const nextParams = new URLSearchParams(searchParams)
       nextParams.set('programId', program.id)
-      setSearchParams(nextParams, { replace: true })
+      setSearchParams(nextParams, { replace: false })
       return
     }
 
@@ -313,7 +313,16 @@ export function ProgramListPage() {
     setSelectedProgramForFullPageModal(null)
     const nextParams = new URLSearchParams(searchParams)
     nextParams.delete('programId')
+    nextParams.delete('lnb')
     nextParams.delete('tab')
+    nextParams.delete('edit')
+    nextParams.delete('schoolId')
+    nextParams.delete('schoolTab')
+    nextParams.delete('instructorId')
+    nextParams.delete('instructorTab')
+    nextParams.delete('subTab')
+    nextParams.delete('applicantId')
+    nextParams.delete('detailTab')
     setSearchParams(nextParams, { replace: true })
   }
 
