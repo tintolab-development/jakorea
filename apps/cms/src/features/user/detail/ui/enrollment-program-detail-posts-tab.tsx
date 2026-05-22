@@ -28,6 +28,10 @@ export interface EnrollmentProgramDetailPostsTabProps {
   /** PostWriteModal open을 부모에서 제어할 때 사용 */
   writeModalOpen?: boolean
   onWriteModalOpenChange?: (open: boolean) => void
+  /** 게시글 등록 모달 작성자 표시명 (기본: JA KOREA 알림) */
+  writeAuthorName?: string
+  /** 게시글 등록 성공 시 추가 콜백 (목록 갱신 후 호출) */
+  onPostWriteSuccess?: () => void
 }
 
 function formatKoDate(date: string | Date): string {
@@ -164,12 +168,16 @@ function PostAttachmentIcon({ postId }: { postId: string }) {
   )
 }
 
+const DEFAULT_WRITE_AUTHOR_NAME = 'JA KOREA 알림'
+
 export function EnrollmentProgramDetailPostsTab({
   program,
   schoolId,
   showWriteButtonInSection = true,
   writeModalOpen: writeModalOpenProp,
   onWriteModalOpenChange,
+  writeAuthorName = DEFAULT_WRITE_AUTHOR_NAME,
+  onPostWriteSuccess,
 }: EnrollmentProgramDetailPostsTabProps) {
   const [internalWriteModalOpen, setInternalWriteModalOpen] = useState(false)
   const isWriteModalControlled = writeModalOpenProp !== undefined && onWriteModalOpenChange !== undefined
@@ -419,8 +427,11 @@ export function EnrollmentProgramDetailPostsTab({
         onCancel={() => setPostWriteModalOpen(false)}
         programId={program.id}
         schoolId={schoolId}
-        authorName="JA KOREA 알림"
-        onSuccess={() => setPostsVersion(v => v + 1)}
+        authorName={writeAuthorName}
+        onSuccess={() => {
+          setPostsVersion(v => v + 1)
+          onPostWriteSuccess?.()
+        }}
       />
       <PostDetailModal
         open={detailPost !== null}
