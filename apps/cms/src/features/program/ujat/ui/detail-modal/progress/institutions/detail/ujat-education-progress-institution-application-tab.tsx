@@ -1,7 +1,6 @@
-import { Fragment, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton } from '@/shared/ui'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
@@ -18,6 +17,14 @@ import {
   UJAT_EDUCATION_PROGRESS_TEXTBOOK_STATUS_LABELS,
 } from './ujat-education-progress-institution-textbook'
 import type { UjatEducationProgressInstitutionDetail } from './types'
+import type { UjatInstitutionApplicationGradeBlockDetail } from '../../../application-institution/detail/detail-types'
+import { UjatEducationProgressAddClassModal } from './ujat-education-progress-add-class-modal'
+import {
+  computeTotalClassCount,
+  mergePendingClassesIntoGradeBlocks,
+  removeClassesFromGradeBlocks,
+} from './ujat-education-progress-grade-blocks'
+import type { UjatEducationProgressAddClassConfirmPayload } from './ujat-education-progress-add-class-modal'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './ujat-education-progress-institution-detail.css'
 
@@ -67,13 +74,34 @@ function toTableRows(
 export function UjatEducationProgressInstitutionApplicationTab({
   detail,
   personalInfoRevealed,
+  gradeBlocks,
+  onGradeBlocksChange,
 }: {
   detail: UjatEducationProgressInstitutionDetail
   personalInfoRevealed: boolean
+  gradeBlocks: UjatInstitutionApplicationGradeBlockDetail[]
+  onGradeBlocksChange: (next: UjatInstitutionApplicationGradeBlockDetail[]) => void
 }) {
   const currentUser = useAuthStore(state => state.user)
   const showAdminCommentSection = isCmsAdminUser(currentUser)
   const { applicationDetail } = detail
+  const [addClassModalOpen, setAddClassModalOpen] = useState(false)
+
+  useEffect(() => {
+    setAddClassModalOpen(false)
+  }, [detail.institutionId, detail.half])
+
+  const currentTotalClassCount = useMemo(() => computeTotalClassCount(gradeBlocks), [gradeBlocks])
+
+  const handleConfirmAddClasses = useCallback(
+    ({ added, removed }: UjatEducationProgressAddClassConfirmPayload) => {
+      onGradeBlocksChange(
+        mergePendingClassesIntoGradeBlocks(removeClassesFromGradeBlocks(gradeBlocks, removed), added)
+      )
+      setAddClassModalOpen(false)
+    },
+    [gradeBlocks, onGradeBlocksChange]
+  )
 
   const basicInfoItems = [
     { key: 'institutionName', label: '참여 기관명', children: detail.institutionName },
@@ -173,14 +201,14 @@ export function UjatEducationProgressInstitutionApplicationTab({
           <CmsButton
             type="button"
             variant="secondary"
-            size="large"
-            onClick={() => window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)}
+            size="medium"
+            onClick={() => setAddClassModalOpen(true)}
           >
             학급 추가
           </CmsButton>
         }
       >
-        {applicationDetail.gradeBlocks.map((block, blockIndex) => {
+        {gradeBlocks.map((block, blockIndex) => {
           const textbook = calculateGradeTextbookSupply(block)
           return (
             <Fragment key={`${block.gradeLabel}-${blockIndex}`}>
@@ -276,6 +304,14 @@ export function UjatEducationProgressInstitutionApplicationTab({
           </table>
         </div>
       </div>
+
+      <UjatEducationProgressAddClassModal
+        open={addClassModalOpen}
+        currentTotalClassCount={currentTotalClassCount}
+        existingGradeBlocks={gradeBlocks}
+        onCancel={() => setAddClassModalOpen(false)}
+        onConfirm={handleConfirmAddClasses}
+      />
     </div>
   )
 }
