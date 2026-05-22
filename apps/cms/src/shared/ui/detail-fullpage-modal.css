@@ -14,6 +14,8 @@
   --detail-fullpage-header-padding-x: 52px;
   --detail-fullpage-header-padding-bottom: 16px;
   --detail-fullpage-section-gap: 32px;
+  /* UJAT 등 긴 1뎁스 라벨(예: 상·하반기 봉사자 신청 목록) 한 줄 — scrollbar-gutter 여유 포함 */
+  --detail-fullpage-lnb-width: 300px;
   /* TealHeaderModal 공통 규칙(teal-header-modal.css)의 radius-8보다 후단에서 4면 직각 고정 */
   border-radius: 0 !important;
 }
@@ -212,7 +214,8 @@
 .detail-fullpage-modal__lnb {
   flex-shrink: 0;
   align-self: stretch;
-  width: 270px;
+  width: var(--detail-fullpage-lnb-width, 300px);
+  min-width: var(--detail-fullpage-lnb-width, 300px);
   box-sizing: border-box;
   background: #f5f6f7;
   display: flex;
@@ -330,7 +333,8 @@
 }
 
 .detail-fullpage-modal__lnb-item-label {
-  flex: 1;
+  flex: 1 1 auto;
+  white-space: nowrap;
 }
 
 .detail-fullpage-modal__lnb-item-arrow {
