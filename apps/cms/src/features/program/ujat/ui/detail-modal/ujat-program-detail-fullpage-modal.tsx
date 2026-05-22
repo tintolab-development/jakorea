@@ -54,6 +54,7 @@ import {
   getUjatSurveyMenuItemsForProgram,
   getUjatVolunteerInterviewEnabled,
   UJAT_SURVEY_LEGACY_TAB_MAP,
+  type UjatSurveyMenuItem,
 } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import { UjatProgramDetailSidebar } from './ujat-program-detail-sidebar'
 import { UjatProgramDetailCommonInfoView } from './info/ujat-program-detail-common-info-view'
@@ -64,7 +65,10 @@ import {
   EDU_PROGRESS_LEGACY_TAB_MAP,
   isValidEducationProgressTab,
 } from './progress/ujat-education-progress-tabs'
-import { isValidUjatInstitutionAppTab } from './application-institution/tabs'
+import {
+  isValidUjatInstitutionAppTab,
+  UJAT_INSTITUTION_APP_CHILD_ROWS,
+} from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsButton } from '@/shared/ui'
 import {
@@ -290,6 +294,72 @@ const VOLUNTEER_TAB_LABELS: Record<string, string> = {
 
 function volunteerScreenTitle(tab: string): string {
   return VOLUNTEER_TAB_LABELS[tab] ?? tab
+}
+
+function ujatLnbBreadcrumbLabel(lnb: UjatDetailLnbKey, tab: string): string {
+  switch (lnb) {
+    case 'info':
+      return '프로그램 정보'
+    case 'institution_applications':
+      return '기관 신청 목록'
+    case 'volunteer_h1':
+      return '상반기 봉사자 신청 목록'
+    case 'volunteer_h2':
+      return '하반기 봉사자 신청 목록'
+    case 'education_progress':
+      if (tab === 'edu_summary') return '교육 진행 요약'
+      if (tab.startsWith('edu_h2_')) return '하반기 교육 진행 현황'
+      return '상반기 교육 진행 현황'
+    case 'survey':
+      return '설문 관리'
+    case 'managers':
+      return '담당자 정보'
+    default:
+      return '프로그램 정보'
+  }
+}
+
+function ujatChildBreadcrumbLabel(
+  lnb: UjatDetailLnbKey,
+  tab: string,
+  surveyItems: UjatSurveyMenuItem[]
+): string | null {
+  if (lnb === 'info') {
+    return tab === 'info' ? '공통 정보' : isUjatRecruitTab(tab) ? '모집 정보' : null
+  }
+  if (lnb === 'institution_applications') {
+    return UJAT_INSTITUTION_APP_CHILD_ROWS.find(row => row.tab === tab)?.label ?? null
+  }
+  if (lnb === 'volunteer_h1' || lnb === 'volunteer_h2') {
+    if (tab.endsWith('_all')) return '신청자 목록'
+    if (tab.endsWith('_doc1')) return '1차 서류 심사 대상자'
+    if (tab.endsWith('_doc_passed')) return '1차 서류 합격자'
+    if (tab.endsWith('_interview2')) return '2차 면접 대상자'
+    return null
+  }
+  if (lnb === 'education_progress' && tab !== 'edu_summary') {
+    const screenTitle = educationProgressScreenTitle(tab)
+    return screenTitle.includes(' — ') ? screenTitle.split(' — ')[1] : screenTitle
+  }
+  if (lnb === 'survey') {
+    return surveyItems.find(item => item.key === tab)?.label ?? null
+  }
+  return null
+}
+
+function ujatLnbBreadcrumbTargetTab(
+  lnb: UjatDetailLnbKey,
+  activeTab: string,
+  interview: boolean,
+  surveyKeys: string[]
+): string {
+  if (lnb === 'education_progress') {
+    if (activeTab === 'edu_summary') return 'edu_summary'
+    return activeTab.startsWith('edu_h2_')
+      ? defaultEducationProgressTabForHalf('h2')
+      : defaultEducationProgressTabForHalf('h1')
+  }
+  return defaultTabForLnb(lnb, interview, surveyKeys)
 }
 
 function UjatPlaceholderSection({ title, description }: { title: string; description: string }) {
@@ -850,6 +920,15 @@ export function UjatProgramDetailFullPageModal({
 
     if (!displayProgram) return items
 
+    const programParams = buildSearchParams(searchParams, {
+      delete: UJAT_DETAIL_QUERY_PARAMS,
+      set: {
+        programId,
+        [LNB_PARAM]: 'info',
+        [TAB_PARAM]: 'info',
+      },
+    })
+
     const nestedDetailLabel =
       volAddMemberId
         ? '봉사자 추가 등록'
@@ -861,17 +940,50 @@ export function UjatProgramDetailFullPageModal({
               ? `${institutionDetailTitlePrefix} (${institutionDetailName})`
               : null
 
-    if (!nestedDetailLabel) {
-      items.push({ label: displayProgram.title })
-      return items
+    const lnbLabel = ujatLnbBreadcrumbLabel(activeLnb, activeTab)
+    const childLabel = ujatChildBreadcrumbLabel(activeLnb, activeTab, surveyItems)
+    const lnbTab = ujatLnbBreadcrumbTargetTab(
+      activeLnb,
+      activeTab,
+      interviewEnabled,
+      surveyKeys
+    )
+    const lnbParams = buildSearchParams(searchParams, {
+      delete: [...UJAT_NESTED_DETAIL_QUERY_PARAMS, EDIT_PARAM],
+      set: {
+        programId,
+        [LNB_PARAM]: activeLnb,
+        [TAB_PARAM]: lnbTab,
+      },
+    })
+    const childParams = childLabel
+      ? buildSearchParams(searchParams, {
+          delete: [...UJAT_NESTED_DETAIL_QUERY_PARAMS, EDIT_PARAM],
+          set: {
+            programId,
+            [LNB_PARAM]: activeLnb,
+            [TAB_PARAM]: activeTab,
+          },
+        })
+      : null
+
+    items.push(makeBreadcrumbItem(displayProgram.title, location.pathname, programParams))
+
+    if (!childLabel) {
+      items.push(
+        nestedDetailLabel
+          ? makeBreadcrumbItem(lnbLabel, location.pathname, lnbParams)
+          : { label: lnbLabel }
+      )
+    } else {
+      items.push(
+        nestedDetailLabel && childParams
+          ? makeBreadcrumbItem(childLabel, location.pathname, childParams)
+          : { label: childLabel }
+      )
     }
 
-    const programParams = buildSearchParams(searchParams, {
-      delete: UJAT_NESTED_DETAIL_QUERY_PARAMS,
-      set: { programId },
-    })
-    items.push(makeBreadcrumbItem(displayProgram.title, location.pathname, programParams))
-    items.push({ label: nestedDetailLabel })
+    if (nestedDetailLabel) items.push({ label: nestedDetailLabel })
     return items
   })()
 
