@@ -15,6 +15,37 @@ import {
 } from './ujat-volunteer-applicant-detail-title'
 
 export type UjatVolunteerApplicantDetailVariant = 'doc_screening' | 'doc_passed' | 'interview2'
+export type UjatVolunteerApplicantDetailMeta = {
+  title: string
+  breadcrumbLabel: string
+}
+export type UjatVolunteerApplicantDetailMetaChangeHandler = (
+  meta: UjatVolunteerApplicantDetailMeta | null
+) => void
+export type UseUjatVolunteerApplicantDetailParams = {
+  programId: string
+  half: UjatVolunteerRecruitHalf
+  list: UjatVolunteerApplicantRow[]
+  detailVariant: UjatVolunteerApplicantDetailVariant
+  applyDocumentScreeningStatus: (ids: string[], status: 'pass' | 'fail') => void
+  onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
+  onVolunteerApplicantDetailMetaChange?: UjatVolunteerApplicantDetailMetaChangeHandler
+  showDocumentScreeningConfirm: (options: UjatDocumentScreeningConfirmRequest) => void
+}
+
+function getVolunteerApplicantDetailTitle(
+  detailVariant: UjatVolunteerApplicantDetailVariant,
+  half: UjatVolunteerRecruitHalf,
+  name: string
+): string {
+  if (detailVariant === 'doc_passed') {
+    return getUjatVolunteerDocPassedDetailTitle(half, name)
+  }
+  if (detailVariant === 'interview2') {
+    return getUjatVolunteerInterview2DetailTitle(half, name)
+  }
+  return getUjatVolunteerDocScreeningDetailTitle(half, name)
+}
 
 export function useUjatVolunteerApplicantDetail({
   programId,
@@ -23,18 +54,9 @@ export function useUjatVolunteerApplicantDetail({
   detailVariant,
   applyDocumentScreeningStatus,
   onRegisterApplicantCloseHandler,
-  onVolunteerApplicantDetailTitleChange,
+  onVolunteerApplicantDetailMetaChange,
   showDocumentScreeningConfirm,
-}: {
-  programId: string
-  half: UjatVolunteerRecruitHalf
-  list: UjatVolunteerApplicantRow[]
-  detailVariant: UjatVolunteerApplicantDetailVariant
-  applyDocumentScreeningStatus: (ids: string[], status: 'pass' | 'fail') => void
-  onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
-  onVolunteerApplicantDetailTitleChange?: (title: string | null) => void
-  showDocumentScreeningConfirm: (options: UjatDocumentScreeningConfirmRequest) => void
-}) {
+}: UseUjatVolunteerApplicantDetailParams) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedApplicant, setSelectedApplicant] = useState<UjatVolunteerApplicantRow | null>(null)
   const selectedApplicantRef = useRef(selectedApplicant)
@@ -80,27 +102,28 @@ export function useUjatVolunteerApplicantDetail({
     return () => onRegisterApplicantCloseHandler(null)
   }, [clearApplicantIdFromUrl, onRegisterApplicantCloseHandler])
 
+  const selectedApplicantName = selectedApplicant?.name
+
   useEffect(() => {
-    if (!onVolunteerApplicantDetailTitleChange) return
-    const titleForApplicant = (name: string) => {
-      if (detailVariant === 'doc_passed') {
-        return getUjatVolunteerDocPassedDetailTitle(half, name)
-      }
-      if (detailVariant === 'interview2') {
-        return getUjatVolunteerInterview2DetailTitle(half, name)
-      }
-      return getUjatVolunteerDocScreeningDetailTitle(half, name)
-    }
-    onVolunteerApplicantDetailTitleChange(
-      selectedApplicant ? titleForApplicant(selectedApplicant.name) : null
+    if (!onVolunteerApplicantDetailMetaChange) return
+    onVolunteerApplicantDetailMetaChange(
+      selectedApplicantName
+        ? {
+            title: getVolunteerApplicantDetailTitle(detailVariant, half, selectedApplicantName),
+            breadcrumbLabel: selectedApplicantName,
+          }
+        : null
     )
-    return () => onVolunteerApplicantDetailTitleChange(null)
-  }, [detailVariant, half, onVolunteerApplicantDetailTitleChange, selectedApplicant])
+    return () => onVolunteerApplicantDetailMetaChange(null)
+  }, [detailVariant, half, onVolunteerApplicantDetailMetaChange, selectedApplicantName])
 
   /** URL → state: 현재 탭 목록에 있는 지원자만 상세 연동 (다른 탭 applicantId는 URL에서 제거) */
   useEffect(() => {
     const applicantId = searchParams.get(UJAT_APPLICANT_ID_PARAM)
-    if (!applicantId) return
+    if (!applicantId) {
+      setSelectedApplicant(prev => (prev ? null : prev))
+      return
+    }
 
     const fromList = list.find(row => row.id === applicantId)
     if (fromList) {

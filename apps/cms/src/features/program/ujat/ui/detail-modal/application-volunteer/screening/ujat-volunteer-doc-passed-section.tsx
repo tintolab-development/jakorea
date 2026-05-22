@@ -8,7 +8,10 @@ import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/uja
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { buildUjatVolunteerDocPassedFilterRows } from './ujat-volunteer-doc-passed-filter-fields'
 import { useUjatVolunteerDocPassed } from './use-ujat-volunteer-doc-passed'
-import { useUjatVolunteerApplicantDetail } from './use-ujat-volunteer-applicant-detail'
+import {
+  useUjatVolunteerApplicantDetail,
+  type UjatVolunteerApplicantDetailMetaChangeHandler,
+} from './use-ujat-volunteer-applicant-detail'
 import { UjatVolunteerApplicantDetailView } from './ujat-volunteer-applicant-detail-view'
 import { UjatVolunteerDocPassedCalendarView } from './ujat-volunteer-doc-passed-calendar-view'
 import { UjatVolunteerInterviewAssignModal } from './ujat-volunteer-interview-assign-modal'
@@ -27,14 +30,14 @@ export interface UjatVolunteerDocPassedSectionProps {
   programId: string
   half: UjatVolunteerRecruitHalf
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
-  onVolunteerApplicantDetailTitleChange?: (title: string | null) => void
+  onVolunteerApplicantDetailMetaChange?: UjatVolunteerApplicantDetailMetaChangeHandler
 }
 
 export function UjatVolunteerDocPassedSection({
   programId,
   half,
   onRegisterApplicantCloseHandler,
-  onVolunteerApplicantDetailTitleChange,
+  onVolunteerApplicantDetailMetaChange,
 }: UjatVolunteerDocPassedSectionProps) {
   const tableWrapRef = useRef<HTMLDivElement>(null)
   const [tableScrollX, setTableScrollX] = useState(UJAT_VOLUNTEER_DOC_PASSED_TABLE_SCROLL_X)
@@ -69,7 +72,7 @@ export function UjatVolunteerDocPassedSection({
     detailVariant: 'doc_passed',
     applyDocumentScreeningStatus: noopApplyDocumentScreeningStatus,
     onRegisterApplicantCloseHandler,
-    onVolunteerApplicantDetailTitleChange,
+    onVolunteerApplicantDetailMetaChange,
     showDocumentScreeningConfirm: noopShowDocumentScreeningConfirm,
   })
 
