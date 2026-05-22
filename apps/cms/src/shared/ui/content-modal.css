@@ -87,3 +87,24 @@
   gap: 10px;
   width: 100%;
 }
+
+/* description prop 본문 — 전 모달 공통 */
+.content-modal__description {
+  margin: 0;
+  width: 100%;
+  align-self: stretch;
+}
+
+.content-modal__description-text {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.content-modal__description-text strong {
+  font-weight: 700;
+}

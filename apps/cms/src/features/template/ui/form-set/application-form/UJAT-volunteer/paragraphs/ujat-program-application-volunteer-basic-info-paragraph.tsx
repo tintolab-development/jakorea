@@ -1,5 +1,5 @@
 import { SearchOutlined } from '@ant-design/icons'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -26,20 +26,33 @@ const APPLICATION_ROUTE_OPTIONS = [
   { label: '기타', value: APPLICATION_ROUTE_OTHER_VALUE },
 ]
 
-/** UJAT 프로그램 봉사자 신청 폼 — 기본 정보 */
-export function UjatProgramApplicationVolunteerBasicInfoParagraph({
-  applicationType,
-  onApplicationTypeChange,
-}: {
+type BasicInfoFieldsProps = {
   applicationType: UjatProgramApplicationVolunteerType
   onApplicationTypeChange: (next: UjatProgramApplicationVolunteerType) => void
-}) {
+}
+
+function useVolunteerBasicInfoFieldState() {
   const [grade, setGrade] = useState<string | undefined>(undefined)
   const [applicationRoute, setApplicationRoute] = useState<string | undefined>(undefined)
   const isOtherApplicationRoute = applicationRoute === APPLICATION_ROUTE_OTHER_VALUE
+  return {
+    grade,
+    setGrade,
+    applicationRoute,
+    setApplicationRoute,
+    isOtherApplicationRoute,
+  }
+}
+
+function UjatProgramApplicationVolunteerBasicInfoFieldRows({
+  applicationType,
+  onApplicationTypeChange,
+}: BasicInfoFieldsProps): ReactNode {
+  const { grade, setGrade, applicationRoute, setApplicationRoute, isOtherApplicationRoute } =
+    useVolunteerBasicInfoFieldState()
 
   return (
-    <DetailInfoForm title="기본 정보" hideHeader mode="edit">
+    <>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="대학교 및 학년"
@@ -55,7 +68,7 @@ export function UjatProgramApplicationVolunteerBasicInfoParagraph({
               <CmsSelect
                 inputSize="medium"
                 width={120}
-                withAllOption={false}
+                withAllOption
                 placeholder="학년"
                 value={grade}
                 onChange={v => setGrade(v == null ? undefined : String(v))}
@@ -105,7 +118,7 @@ export function UjatProgramApplicationVolunteerBasicInfoParagraph({
               <CmsSelect
                 inputSize="medium"
                 width="100%"
-                withAllOption={false}
+                withAllOption
                 placeholder="선택"
                 value={applicationRoute}
                 onChange={v => setApplicationRoute(v == null ? undefined : String(v))}
@@ -133,6 +146,59 @@ export function UjatProgramApplicationVolunteerBasicInfoParagraph({
           view="-"
         />
       </DetailInfoForm.Row>
+    </>
+  )
+}
+
+/** 1365 ID — 단독 DetailInfoForm 격자 */
+export function UjatProgramApplicationVolunteer1365IdForm({ className }: { className?: string }) {
+  return (
+    <DetailInfoForm title="1365 ID" hideHeader mode="edit" className={className}>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="1365 ID"
+          edit={<CmsInput inputSize="medium" width="100%" placeholder="1365 ID" />}
+          view="-"
+        />
+      </DetailInfoForm.Row>
+    </DetailInfoForm>
+  )
+}
+
+/** 대학·지원 경로 등 — DetailInfoForm 격자(1365 ID 제외) */
+export function UjatProgramApplicationVolunteerBasicInfoDetailForm({
+  applicationType,
+  onApplicationTypeChange,
+  className,
+}: BasicInfoFieldsProps & { className?: string }) {
+  return (
+    <DetailInfoForm title="기본 정보" hideHeader mode="edit" className={className}>
+      <UjatProgramApplicationVolunteerBasicInfoFieldRows
+        applicationType={applicationType}
+        onApplicationTypeChange={onApplicationTypeChange}
+      />
+    </DetailInfoForm>
+  )
+}
+
+/** UJAT 프로그램 봉사자 신청 폼 — 기본 정보(템플릿 편집: 단일 격자) */
+export function UjatProgramApplicationVolunteerBasicInfoParagraph({
+  applicationType,
+  onApplicationTypeChange,
+}: BasicInfoFieldsProps) {
+  return (
+    <DetailInfoForm title="기본 정보" hideHeader mode="edit">
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="1365 ID"
+          edit={<CmsInput inputSize="medium" width="100%" placeholder="1365 ID" />}
+          view="-"
+        />
+      </DetailInfoForm.Row>
+      <UjatProgramApplicationVolunteerBasicInfoFieldRows
+        applicationType={applicationType}
+        onApplicationTypeChange={onApplicationTypeChange}
+      />
     </DetailInfoForm>
   )
 }

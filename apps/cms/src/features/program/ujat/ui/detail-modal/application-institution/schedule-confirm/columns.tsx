@@ -41,7 +41,6 @@ export function useUjatScheduleConfirmColumns(): ColumnsType<UjatScheduleConfirm
         key: 'no',
         width: COL.no,
         align: 'center',
-        fixed: 'left',
       },
       {
         title: '참여 기관명',
@@ -49,7 +48,6 @@ export function useUjatScheduleConfirmColumns(): ColumnsType<UjatScheduleConfirm
         key: 'institutionName',
         width: COL.institution,
         align: 'center',
-        fixed: 'left',
       },
       {
         title: '일정 확인 현황',

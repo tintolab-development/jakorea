@@ -1979,22 +1979,10 @@ export function SettlementItemSettingDetailModal({
           </SettlementItemTossfaceIconPickerTrigger>
         ) : undefined
       }
-      description={
-        item ? (
-          <SettlementItemSettingDetailModalHeaderDescription
-            value={headerDescription}
-            editing={descriptionEditing}
-            onChange={setHeaderDescription}
-            onRequestEdit={() => setDescriptionEditing(true)}
-            onCommitEdit={() => setDescriptionEditing(false)}
-            restoreValueIfEmptyOnBlur={item.description}
-          />
-        ) : undefined
-      }
-      descriptionGap="compact"
       width={800}
       className={[
         'settlement-item-setting-detail-modal',
+        'content-modal--description-gap-compact',
         item?.id === 'w-4' ? 'settlement-item-setting-detail-modal--special-lecture' : '',
         item?.id === 'p-1' || item?.id === 'p-2'
           ? 'settlement-item-setting-detail-modal--transport'
@@ -2035,6 +2023,18 @@ export function SettlementItemSettingDetailModal({
         </>
       }
     >
+      {item ? (
+        <div className="content-modal__description settlement-item-setting-detail-modal__header-description-slot">
+          <SettlementItemSettingDetailModalHeaderDescription
+            value={headerDescription}
+            editing={descriptionEditing}
+            onChange={setHeaderDescription}
+            onRequestEdit={() => setDescriptionEditing(true)}
+            onCommitEdit={() => setDescriptionEditing(false)}
+            restoreValueIfEmptyOnBlur={item.description}
+          />
+        </div>
+      ) : null}
       <SettlementDetailSnapshotRefContext.Provider value={snapshotRef}>
         {item ? <SettlementItemSettingDetailModalBody key={item.id} itemId={item.id} /> : null}
       </SettlementDetailSnapshotRefContext.Provider>

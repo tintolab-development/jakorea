@@ -18,6 +18,8 @@ import { UjatInstitutionApplicationDetailPage } from './application-institution/
 import { UjatInstitutionScheduleAssignPage } from './application-institution/schedule-assign/page'
 import { UjatInstitutionScheduleConfirmList } from './application-institution/schedule-confirm/list'
 import { UjatEducationProgressInstitutionsSection } from './progress/institutions/ujat-education-progress-institutions-section'
+import { UjatEducationProgressVolunteersSection } from './progress/volunteers/ujat-education-progress-volunteers-section'
+import { UjatEducationProgressVolunteerAddRegistrationView } from './progress/volunteers/ujat-education-progress-volunteer-add-registration-view'
 import { UjatInstitutionScheduleConfirmDetailPage } from './application-institution/schedule-confirm/detail-page'
 import type { Program } from '@/types/domain'
 import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
@@ -30,6 +32,8 @@ import {
   UJAT_EDU_INST_ID_PARAM,
   UJAT_EDU_INST_TAB_PARAM,
   UJAT_INST_APP_ID_PARAM,
+  UJAT_VOL_ADD_MEMBER_ID_PARAM,
+  isUjatEducationProgressVolunteersTab,
   type UjatDetailLnbKey,
   type UjatEducationProgressInstitutionDetailTab,
 } from '@/features/program/ujat/lib/ujat-program-detail-url'
@@ -233,6 +237,15 @@ function normalizeUjatDetailParams(
         next.set(UJAT_EDU_INST_TAB_PARAM, detailTab)
       }
     }
+  }
+
+  const volAddMemberIdRaw = next.get(UJAT_VOL_ADD_MEMBER_ID_PARAM)
+  if (
+    lnb !== 'education_progress' ||
+    !isUjatEducationProgressVolunteersTab(tab) ||
+    !volAddMemberIdRaw?.trim()
+  ) {
+    next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
   }
 
   const before = searchParams.toString()
@@ -677,6 +690,7 @@ export function UjatProgramDetailFullPageModal({
   }, [activeRecruitTab, institutionsTriggerSave, volunteersTriggerSave, setEditMode])
 
   const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
+  const registerVolunteerFromMemberRef = useRef<(memberId: string) => void>(() => {})
   const [volunteerApplicantDetailTitle, setVolunteerApplicantDetailTitle] = useState<string | null>(
     null
   )
@@ -708,6 +722,7 @@ export function UjatProgramDetailFullPageModal({
     next.delete(UJAT_APPLICANT_ID_PARAM)
     next.delete(UJAT_EDU_INST_ID_PARAM)
     next.delete(UJAT_EDU_INST_TAB_PARAM)
+    next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
     navigate(
       { pathname: location.pathname, search: next.toString() ? `?${next}` : '' },
       {
@@ -716,7 +731,45 @@ export function UjatProgramDetailFullPageModal({
     )
   }, [location.pathname, navigate, onClose, searchParams])
 
+  const volAddMemberId = open ? searchParams.get(UJAT_VOL_ADD_MEMBER_ID_PARAM) : null
+
+  const closeVolAddRegistration = useCallback(() => {
+    const next = new URLSearchParams(searchParams)
+    next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [programId, searchParams, setSearchParams])
+
+  const openVolAddRegistration = useCallback(
+    (memberId: string) => {
+      const next = new URLSearchParams(searchParams)
+      if (programId) next.set('programId', programId)
+      next.set(LNB_PARAM, 'education_progress')
+      const halfTab = activeTab.startsWith('edu_h2') ? 'edu_h2_volunteers' : 'edu_h1_volunteers'
+      next.set(TAB_PARAM, halfTab)
+      next.set(UJAT_VOL_ADD_MEMBER_ID_PARAM, memberId)
+      next.delete(UJAT_INST_APP_ID_PARAM)
+      next.delete(UJAT_APPLICANT_ID_PARAM)
+      next.delete(UJAT_EDU_INST_ID_PARAM)
+      next.delete(UJAT_EDU_INST_TAB_PARAM)
+      setSearchParams(next, { replace: true })
+    },
+    [activeTab, programId, searchParams, setSearchParams]
+  )
+
+  const handleCompleteVolAddRegistration = useCallback(
+    (memberId: string) => {
+      registerVolunteerFromMemberRef.current(memberId)
+      closeVolAddRegistration()
+    },
+    [closeVolAddRegistration]
+  )
+
   const handleHeaderCloseClick = useCallback(() => {
+    if (volAddMemberId) {
+      closeVolAddRegistration()
+      return
+    }
     if (institutionDetailId) {
       setInstitutionApplicationId(null)
       return
@@ -748,6 +801,8 @@ export function UjatProgramDetailFullPageModal({
     setEduInstitutionId,
     activeLnb,
     activeTab,
+    volAddMemberId,
+    closeVolAddRegistration,
     handleClose,
   ])
 
@@ -755,7 +810,9 @@ export function UjatProgramDetailFullPageModal({
 
   const programTitle = displayProgram?.title ?? '프로그램 상세'
   const title =
-    volunteerApplicantDetailTitle ??
+    volAddMemberId
+      ? '봉사자 추가 등록'
+      : volunteerApplicantDetailTitle ??
     (eduInstitutionDetailName
       ? `참여 기관 신청 상세 (${eduInstitutionDetailName})`
       : institutionDetailName
@@ -769,7 +826,7 @@ export function UjatProgramDetailFullPageModal({
       onHeaderClose={handleHeaderCloseClick}
       title={title}
       closeAriaLabel={
-        institutionDetailId || eduInstitutionDetailId ? '목록으로' : '닫기'
+        volAddMemberId || institutionDetailId || eduInstitutionDetailId ? '목록으로' : '닫기'
       }
       className="program-detail-fullpage-modal ujat-program-detail-fullpage-modal"
       sidebar={
@@ -957,10 +1014,23 @@ export function UjatProgramDetailFullPageModal({
             </div>
           )}
           {activeLnb === 'education_progress' && /^edu_h[12]_volunteers$/.test(activeTab) && (
-            <UjatPlaceholderSection
-              title={educationProgressScreenTitle(activeTab)}
-              description="최종 승인된 봉사자 목록이 표시됩니다."
-            />
+            <div className="program-detail-fullpage-modal__info-tab">
+              {volAddMemberId ? (
+                <UjatEducationProgressVolunteerAddRegistrationView
+                  memberId={volAddMemberId}
+                  onClose={closeVolAddRegistration}
+                  onComplete={handleCompleteVolAddRegistration}
+                />
+              ) : (
+                <UjatEducationProgressVolunteersSection
+                  half={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
+                  onStartAddRegistration={openVolAddRegistration}
+                  onBindRegisterVolunteer={register => {
+                    registerVolunteerFromMemberRef.current = register
+                  }}
+                />
+              )}
+            </div>
           )}
           {activeLnb === 'education_progress' &&
             /^edu_h[12]_(region|attendance|assignments)$/.test(activeTab) && (

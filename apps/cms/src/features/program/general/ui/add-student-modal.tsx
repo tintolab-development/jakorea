@@ -62,11 +62,7 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
       width={800}
       footer={footer}
       className="add-student-modal"
-      description={
-        <p className="add-student-modal__description">
-          프로그램에 참여하는 학생 정보를 추가 등록합니다.
-        </p>
-      }
+      description="프로그램에 참여하는 학생 정보를 추가 등록합니다."
     >
       <div className="add-student-modal__body">
         <form

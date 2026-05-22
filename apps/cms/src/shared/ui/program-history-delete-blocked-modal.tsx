@@ -17,11 +17,7 @@ export function ProgramHistoryDeleteBlockedModal({ open, onClose }: ProgramHisto
       onCancel={onClose}
       title="이력 삭제 불가 안내"
       width={480}
-      description={
-        <>
-          <span className="fs-16">진행 중인 프로그램 정보는 삭제 불가합니다.</span>
-        </>
-      }
+      description="진행 중인 프로그램 정보는 삭제 불가합니다."
       footer={
         <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>
           확인

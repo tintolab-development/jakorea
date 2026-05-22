@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { ParagraphCalendarMini } from '@/features/template/ui/shared/paragraph-calendar-mini'
@@ -103,9 +103,9 @@ export function DirectUnavailableDateAddButton({
   onApplyDatesChange?: (dates: string[]) => void
   appliedDatesDisplay?: 'badge' | 'chips'
   /** 모달 본문 첫 줄 (면접·교육 등 맥락별 문구) */
-  modalUnavailableDescriptionLead?: ReactNode
+  modalUnavailableDescriptionLead?: string
   /** 모달 본문 둘째 줄 */
-  modalUnavailableDescriptionSecond?: ReactNode
+  modalUnavailableDescriptionSecond?: string
   /**
    * `false`이면 직접 추가 모달을 열지 않고 `onDirectUnavailableModalBlocked` 호출
    */
@@ -245,12 +245,7 @@ export function DirectUnavailableDateAddButton({
         onCancel={closeModal}
         title="진행 불가일 직접 선택"
         width={600}
-        description={
-          <div className="direct-unavailable-date-modal__description">
-            <div>{modalUnavailableDescriptionLead}</div>
-            <div>{modalUnavailableDescriptionSecond}</div>
-          </div>
-        }
+        description={`${modalUnavailableDescriptionLead}\n${modalUnavailableDescriptionSecond}`}
         className="direct-unavailable-date-modal"
         footer={
           <div className="direct-unavailable-date-modal__footer">

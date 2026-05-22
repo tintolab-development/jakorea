@@ -1,0 +1,37 @@
+.ujat-education-progress-volunteers {
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-education-progress-volunteers__filter-layout.filter-table-layout {
+  background: transparent;
+  box-shadow: none !important;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.ujat-education-progress-volunteers__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.ujat-education-progress-volunteers__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.ujat-education-progress-volunteers__table-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ujat-education-progress-volunteers__table-wrap .ujat-education-progress-volunteers__table table.ant-table {
+  table-layout: fixed !important;
+  width: max-content !important;
+  min-width: 100%;
+}

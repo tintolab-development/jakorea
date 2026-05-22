@@ -136,12 +136,7 @@ export function TemplateCreateModal({
       width={600}
       footer={footer}
       className="template-create-modal"
-      description={
-        <div className="template-create-modal__description-block">
-          <p>신규 템플릿을 등록하시겠습니까?</p>
-          <p>등록하시려는 템플릿의 유형을 선택해 주세요.</p>
-        </div>
-      }
+      description={'신규 템플릿을 등록하시겠습니까?\n등록하시려는 템플릿의 유형을 선택해 주세요.'}
     >
       <div className="template-create-modal__field">
         <span className="template-create-modal__label">템플릿 유형</span>

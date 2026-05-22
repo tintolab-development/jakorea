@@ -99,15 +99,7 @@ export function UjatVolunteerInterview2BulkPassModal({
         width={600}
         className="ujat-volunteer-interview2-bulk-pass-modal"
         zIndex={MODAL_Z_INDEX}
-        description={
-          <div className="ujat-volunteer-interview2-bulk-pass-modal__description">
-            <div>
-              선택한 <strong>{count}</strong>개의 모든 봉사자의 면접 심사를 일괄 합격
-              처리하시겠습니까?
-            </div>
-            <div>합격 시 봉사자에게 개별로 승인 알림이 발송됩니다.</div>
-          </div>
-        }
+        description={`선택한 **${count}**개의 모든 봉사자의 면접 심사를 일괄 합격 처리하시겠습니까?\n합격 시 봉사자에게 개별로 승인 알림이 발송됩니다.`}
         footer={
           <div className="ujat-volunteer-interview2-bulk-pass-modal__footer">
             <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>

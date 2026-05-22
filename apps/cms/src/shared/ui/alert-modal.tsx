@@ -1,3 +1,4 @@
+import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { ContentModal } from './content-modal'
 import { CmsButton } from './cms-button'
 import './alert-modal.css'
@@ -28,7 +29,7 @@ export function AlertModal({
   content,
   width = DEFAULT_WIDTH,
   confirmLabel = '확인',
-  zIndex,
+  zIndex = CMS_ALERT_MODAL_Z_INDEX,
 }: AlertModalProps) {
   return (
     <ContentModal
