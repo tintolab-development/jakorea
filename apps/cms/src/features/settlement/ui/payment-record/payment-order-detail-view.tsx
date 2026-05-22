@@ -3,6 +3,7 @@
  */
 
 import { useMemo, type ReactElement } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import type { Dayjs } from 'dayjs'
 import type {
   PaymentOrderAdminInstructorDetail,
@@ -17,6 +18,11 @@ import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payme
 import { usePaymentOrderDetailInstructorPrivacyReveal } from './use-payment-order-detail-instructor-privacy'
 import { usePaymentOrderStatementCommitBridge } from './use-payment-order-statement-commit-bridge'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
+import {
+  buildSearchParams,
+  makeBreadcrumbItem,
+} from '@/shared/lib/detail-fullpage-query-stack'
 import {
   DetailModalSidebar,
   type DetailModalSidebarNavItem,
@@ -68,6 +74,8 @@ export type PaymentOrderDetailViewProps = PaymentOrderDetailViewShared &
   (PaymentOrderDetailViewProgramBranch | PaymentOrderDetailViewInstructorBranch)
 
 export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): ReactElement {
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
   const {
     isOpen,
     kind,
@@ -135,6 +143,15 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     .filter((c): c is string => typeof c === 'string' && c.trim().length > 0)
     .join(' ')
 
+  const headerBreadcrumbItems = [
+    makeBreadcrumbItem(
+      '지급조서 확인',
+      location.pathname,
+      buildSearchParams(searchParams, { delete: ['po_detail', 'po_detail_no'] })
+    ),
+    { label: title },
+  ]
+
   const mainContent = (
     <>
       {kind === 'program' ? (
@@ -195,6 +212,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
         open={isOpen}
         onClose={resetCalcAndClose}
         title={title}
+        headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
         className={detailModalRootClass}
         sidebar={sidebar}
       >

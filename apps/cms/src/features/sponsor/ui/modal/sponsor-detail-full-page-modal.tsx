@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { BulbOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
@@ -13,6 +14,11 @@ import { SponsorDeleteModal } from '@/features/sponsor/ui/modal/sponsor-delete-m
 import { SponsorDetailPanel } from '@/features/sponsor/ui/panels/sponsor-detail-panel'
 import { SponsorProgramHistoryPanel } from '@/features/sponsor/ui/panels/sponsor-program-history-panel'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
+import {
+  buildSearchParams,
+  makeBreadcrumbItem,
+} from '@/shared/lib/detail-fullpage-query-stack'
 import { DetailModalSidebar, type DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
 import { CmsButton } from '@/shared/ui'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -59,6 +65,8 @@ function SponsorDetailFullPageModalInner({
   sponsor,
   onDeleteSponsor,
 }: SponsorDetailFullPageModalInnerProps) {
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const [lnbKey, setLnbKey] = useState(LNB_DETAIL)
@@ -99,11 +107,22 @@ function SponsorDetailFullPageModalInner({
 
   if (!basicInfo) return null
 
+  const title = `후원사 상세_${detail.nameDisplayKo}`
+  const headerBreadcrumbItems = [
+    makeBreadcrumbItem(
+      '후원사 관리',
+      location.pathname,
+      buildSearchParams(searchParams, { delete: ['sponsorId'] })
+    ),
+    { label: title },
+  ]
+
   return (
     <DetailFullPageModal
       open={open}
       onClose={onClose}
-      title={`후원사 상세_${detail.nameDisplayKo}`}
+      title={title}
+      headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className="sponsor-detail-fullpage-modal"
       sidebar={
         <DetailModalSidebar
