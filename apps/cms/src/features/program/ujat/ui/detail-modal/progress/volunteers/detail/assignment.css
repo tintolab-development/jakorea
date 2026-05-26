@@ -1,0 +1,243 @@
+/* 역할 태그 — 기획 스펙(100×32, tag160 드롭다운 셀과 병행) */
+.ujat-volunteer-assignment-role-badge--static {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.ujat-volunteer-assignment-role-badge {
+  display: flex;
+  width: 100px;
+  height: 32px;
+  min-width: 100px;
+  max-width: 200px;
+  padding: 6px 12px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  border-radius: var(--6, 6px);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 150%;
+  box-sizing: border-box;
+}
+
+.ujat-volunteer-assignment-role-badge--none {
+  color: var(--main-BK, #3d3d3d);
+  border: 1px solid rgba(61, 61, 61, 0.1);
+  background: #f2f3f5;
+}
+
+.ujat-volunteer-assignment-role-badge--attendance-manager {
+  color: var(--color-blue, #017eaf);
+  border: 1px solid rgba(1, 126, 175, 0.1);
+  background: #e6f2f7;
+}
+
+/* 역할 열 — 배지·드롭다운 트리거 가로 중앙 (오버레이 행 포함) */
+.ujat-volunteer-assignment-role-cell__center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ujat-volunteer-assignment-table__table
+  .ant-table-tbody
+  > tr.ujat-volunteer-assignment-table__row--class-withdrawn
+  > td.status-dropdown-cell__cell-status
+  .ujat-volunteer-assignment-role-cell__center {
+  position: relative;
+  z-index: 2;
+}
+
+.ujat-volunteer-assignment-table__dash {
+  color: var(--main-BK, #3d3d3d);
+}
+
+.ujat-volunteer-assignment-table__partner-undecided {
+  color: var(--color-mint-01, #01a1af);
+  font-weight: 500;
+}
+
+.ujat-volunteer-assignment-table__class-withdrawn {
+  color: var(--color-red, #c32f4a);
+  font-weight: 500;
+}
+
+.ujat-volunteer-assignment-table__attendance-late {
+  color: var(--color-red, #c32f4a);
+  font-weight: 500;
+}
+
+.ujat-volunteer-assignment-table__attendance-excused {
+  color: var(--color-blue, #017eaf);
+  font-weight: 500;
+}
+
+/* 배정 학급 `활동 포기` 행만 — 하단 고정·흰색 오버레이 */
+.ujat-volunteer-assignment-table__table
+  .ant-table-tbody
+  > tr.ujat-volunteer-assignment-table__row--class-withdrawn {
+  position: relative;
+}
+
+.ujat-volunteer-assignment-table__table
+  .ant-table-tbody
+  > tr.ujat-volunteer-assignment-table__row--class-withdrawn
+  > td {
+  position: relative;
+  pointer-events: none;
+  color: var(--main-BK, #3d3d3d);
+  background: var(--default-WT, #fff) !important;
+}
+
+.ujat-volunteer-assignment-table__table
+  .ant-table-tbody
+  > tr.ujat-volunteer-assignment-table__row--class-withdrawn
+  > td::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ujat-volunteer-assignment-table__table
+  .ant-table-tbody
+  > tr.ujat-volunteer-assignment-table__row--class-withdrawn:hover
+  > td {
+  background: var(--default-WT, #fff) !important;
+}
+
+.ujat-volunteer-assignment-table__table
+  .ant-table-tbody
+  > tr.ujat-volunteer-assignment-table__row--class-withdrawn
+  .ujat-volunteer-assignment-table__class-withdrawn {
+  position: relative;
+  z-index: 2;
+}
+
+.ujat-volunteer-assignment-attendance-info {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* 불참 사유 — 4열 격자(일자·사유·증빙 서류·파일) */
+.ujat-volunteer-assignment-absence-reasons__table th {
+  background: #f2f3f5;
+}
+
+.ujat-volunteer-assignment-absence-reasons__dash {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-volunteer-assignment-absence-reasons__file {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  color: var(--main-BK, #3d3d3d);
+  max-width: 100%;
+}
+
+.ujat-volunteer-assignment-absence-reasons__file:hover {
+  text-decoration: underline;
+}
+
+.ujat-volunteer-assignment-absence-reasons__file-icon {
+  flex-shrink: 0;
+  display: block;
+}
+
+.ujat-volunteer-assignment-absence-reasons__file-name {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* 불참 사유 제출 없음 */
+.ujat-volunteer-assignment-absence-reasons__empty {
+  box-sizing: border-box;
+  display: flex;
+  height: 100px;
+  padding: 0 24px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  width: 100%;
+  margin: 0;
+  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: rgba(61, 61, 61, 0.02);
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.5;
+}
+
+.ujat-volunteer-assignment-progress-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-width: 0;
+}
+
+.ujat-volunteer-assignment-progress-tab__table-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* 교육계획서·교육일지 보기 버튼 — 셀 가로·세로 중앙 */
+.ujat-volunteer-assignment-table__table
+  .ant-table-thead
+  > tr
+  > th.ujat-volunteer-assignment-table__plan-log-cell,
+.ujat-volunteer-assignment-table__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-volunteer-assignment-table__plan-log-cell {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+.ujat-volunteer-assignment-table__plan-log-cell-inner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* 역할 드롭다운 열림 시 행 높이 고정 */
+.ujat-volunteer-assignment-table__table tr:has(td .status-dropdown-cell__status-trigger--open) > td,
+.ujat-volunteer-assignment-table__table tr:has(td.status-dropdown-cell__cell-status) > td {
+  vertical-align: middle;
+}

@@ -183,7 +183,7 @@ export function useUjatVolunteerDocPassed({
     updateRow(withdrawTargetId, { interviewAssignmentStatus: 'withdrawn' })
     showAlert({
       title: '활동 포기',
-      content: `${row.name} 봉사자가 활동 포기 처리되었습니다. (목 데이터)`,
+      content: `${row.name} 봉사자가 활동 포기 처리되었습니다.`,
     })
     setWithdrawTargetId(null)
   }, [list, showAlert, updateRow, withdrawTargetId])

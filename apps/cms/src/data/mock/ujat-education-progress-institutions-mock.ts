@@ -11,7 +11,7 @@ import {
   resolveEducationSemesterForIsoDate,
 } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
-import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/ujat-education-progress-tabs'
+import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
 import type { UjatEducationProgressInstitutionRow } from '@/features/program/ujat/ui/detail-modal/progress/institutions/types'
 import dayjs from 'dayjs'
 

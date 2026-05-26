@@ -15,13 +15,13 @@ import { UjatLnbVolunteerHandshakeIcon } from './application-volunteer/ujat-lnb-
 import {
   UjatLnbEducationBookIcon,
   UjatLnbEducationSummaryClipboardIcon,
-} from './progress/ujat-lnb-education-icons'
+} from './progress/lnb-icons'
 import {
   EDU_PROGRESS_CHILD_ROWS,
   EDU_PROGRESS_SUMMARY_TAB,
   educationProgressTabId,
   type EducationProgressHalfKey,
-} from './progress/ujat-education-progress-tabs'
+} from './progress/tabs'
 
 type TopAccordionKey =
   | 'info'

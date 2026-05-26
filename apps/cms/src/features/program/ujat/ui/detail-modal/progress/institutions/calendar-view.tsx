@@ -21,7 +21,7 @@ import {
   type UjatEducationProgressInstitutionCalendarEvent,
   type UjatEducationProgressInstitutionCalendarOriginalItem,
 } from './calendar-events'
-import type { EducationProgressHalfKey } from '../ujat-education-progress-tabs'
+import type { EducationProgressHalfKey } from '../tabs'
 import type { UjatEducationProgressInstitutionRow } from './types'
 import '../../application-institution/list/calendar-view.css'
 

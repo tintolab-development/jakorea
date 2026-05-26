@@ -1,4 +1,4 @@
-import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/ujat-education-progress-tabs'
+import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
 import type { UjatEducationProgressVolunteerRow } from '@/features/program/ujat/ui/detail-modal/progress/volunteers/types'
 import {
   buildUjatEducationProgressVolunteerRowId,

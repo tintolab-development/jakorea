@@ -22,15 +22,15 @@ import { UjatInstitutionApplicationList } from './application-institution/list/l
 import { UjatInstitutionApplicationDetailPage } from './application-institution/detail/detail-page'
 import { UjatInstitutionScheduleAssignPage } from './application-institution/schedule-assign/page'
 import { UjatInstitutionScheduleConfirmList } from './application-institution/schedule-confirm/list'
-import { UjatEducationProgressInstitutionsSection } from './progress/institutions/ujat-education-progress-institutions-section'
-import { UjatEducationProgressVolunteersSection } from './progress/volunteers/ujat-education-progress-volunteers-section'
-import { UjatEducationProgressVolunteerAddRegistrationView } from './progress/volunteers/ujat-education-progress-volunteer-add-registration-view'
-import { UjatEducationProgressVolunteerDetailPage } from './progress/volunteers/detail/ujat-education-progress-volunteer-detail-page'
+import { UjatEducationProgressInstitutionsSection } from './progress/institutions/section'
+import { UjatEducationProgressVolunteersSection } from './progress/volunteers/section'
+import { UjatEducationProgressVolunteerAddRegistrationView } from './progress/volunteers/add-registration-view'
+import { UjatEducationProgressVolunteerDetailPage } from './progress/volunteers/detail/detail-page'
 import {
   formatUjatEducationProgressVolunteerDetailTitle,
   getUjatEducationProgressVolunteerDetail,
   isUjatEducationProgressVolunteerInList,
-} from './progress/volunteers/detail/ujat-education-progress-volunteer-detail-mock'
+} from './progress/volunteers/detail/detail-mock'
 import { UjatInstitutionScheduleConfirmDetailPage } from './application-institution/schedule-confirm/detail-page'
 import type { Program } from '@/types/domain'
 import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
@@ -57,9 +57,9 @@ import {
   educationProgressHalfFromTab,
   isEducationProgressInstitutionsTab,
   isUjatEducationProgressInstitutionInList,
-} from './progress/institutions/detail/ujat-education-progress-institution-detail-url'
-import { getUjatEducationProgressInstitutionName } from './progress/institutions/detail/ujat-education-progress-institution-detail-mock'
-import { UjatEducationProgressInstitutionDetailPage } from './progress/institutions/detail/ujat-education-progress-institution-detail-page'
+} from './progress/institutions/detail/detail-url'
+import { getUjatEducationProgressInstitutionName } from './progress/institutions/detail/detail-mock'
+import { UjatEducationProgressInstitutionDetailPage } from './progress/institutions/detail/detail-page'
 import {
   getUjatSurveyMenuItemsForProgram,
   getUjatVolunteerInterviewEnabled,
@@ -74,7 +74,7 @@ import {
   educationProgressScreenTitle,
   EDU_PROGRESS_LEGACY_TAB_MAP,
   isValidEducationProgressTab,
-} from './progress/ujat-education-progress-tabs'
+} from './progress/tabs'
 import {
   isValidUjatInstitutionAppTab,
   UJAT_INSTITUTION_APP_CHILD_ROWS,

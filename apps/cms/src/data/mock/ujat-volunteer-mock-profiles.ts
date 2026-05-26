@@ -15,7 +15,7 @@ import type {
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
-import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/ujat-education-progress-tabs'
+import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
 import type {
   UjatEducationProgressVolunteerAssignmentStatus,
   UjatEducationProgressVolunteerGrade,

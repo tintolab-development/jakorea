@@ -1,5 +1,5 @@
 import type { UjatInstitutionApplicationDetail } from '../../../application-institution/detail/detail-types'
-import type { EducationProgressHalfKey } from '../../ujat-education-progress-tabs'
+import type { EducationProgressHalfKey } from '../../tabs'
 
 export const UJAT_EDU_PROGRESS_INSTITUTION_DETAIL_TABS = [
   'application',
