@@ -13,8 +13,18 @@
   .cms-text-tabs__row,
 .ujat-education-progress-assignments
   .ujat-institution-application-region-tabs.cms-text-tabs
+  .cms-text-tabs__row,
+.program-detail-fullpage-modal
+  .ujat-education-progress-attendance
+  .ujat-institution-application-region-tabs.cms-text-tabs
+  .cms-text-tabs__row,
+.program-detail-fullpage-modal
+  .ujat-education-progress-assignments
+  .ujat-institution-application-region-tabs.cms-text-tabs
   .cms-text-tabs__row {
   margin-bottom: 0;
+  /* 풀페이지 detail 탭 row padding(16px 0 32px) 제거 — 지역 탭↔필터 간격은 부모 gap 32px만 */
+  padding: 0;
 }
 
 .ujat-education-progress-attendance__filter-layout.filter-table-layout,
