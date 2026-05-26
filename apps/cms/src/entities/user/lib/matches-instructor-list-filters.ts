@@ -1,10 +1,12 @@
 import type { User } from '@/types/user'
+import { getMemberPermissionInstructorApplicationTypeLabel } from '@/features/user/permission-management/lib/member-permission-instructor-application-type'
 
 type UserRow = Omit<User, 'password'>
 
-/** `user-list`의 강사 유형 표시와 동일 — API `listMetrics.instructorTypeLabel` 기준 */
+/** `user-list`의 강사 유형 표시와 동일 — 강사비 등급이 아닌 신청·소속 구분 기준 */
 export function getInstructorTypeDisplayLabel(user: UserRow): string {
-  return user.listMetrics?.instructorTypeLabel?.trim() ?? ''
+  const label = getMemberPermissionInstructorApplicationTypeLabel(user)
+  return label === '-' ? '' : label
 }
 
 export function matchesInstructorTypeFilter(user: UserRow, selected: string): boolean {
