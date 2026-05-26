@@ -57,10 +57,10 @@
 ### 3.1 권한 값 (표시 라벨)
 
 - **데이터**: `ProgramRole` = `OWNER` | `PARTNER` | `ASSISTANT` ([permissions.ts](../../../src/shared/config/permissions.ts), [user.ts](../../../src/types/user.ts)).
-- **UI 표시**: 시안 기준 **PM** / **파트너** / **보조**.
+- **UI 표시**: 시안 기준 **PM** / **파트너** / **뷰어**.
   - `OWNER` → **"PM"** 또는 **"담당자"** (요구사항 문서는 "담당자", 시안은 "PM" — 개발 시 기획 확인 또는 둘 다 지원하도록 라벨 맵 상수화).
   - `PARTNER` → **파트너**
-  - `ASSISTANT` → **보조**
+  - `ASSISTANT` → **뷰어**
 - Select 옵션: `전체` + PM(담당자) + 파트너 + 보조.
 
 ---
@@ -83,7 +83,8 @@
 | 연락처   | string      | 텍스트               | 예: 010-1234-5678                                                  |
 | 이메일   | string      | 텍스트               |                                                                    |
 | 등록일시 | datetime    | "YYYY.MM.DD HH:mm"   | 예: 2026.02.10 09:15                                               |
-| 관리     | -           | **권한 수정** 버튼   | viewDetails 스타일(연청 아웃라인) 또는 동일 계열. 행별 권한 변경용 |
+
+- **권한 변경**: 권한 열 `StatusDropdownCell` 인라인 배지만 사용 (별도 관리 컬럼 없음).
 
 - **행 스타일**: 기존 테이블과 동일(헤더 배경 #fafafa, 셀 구분선, 세로 중앙 정렬). [table-management.md](../../../.cursor/rules/tables/table-management.md) 참고.
 
@@ -126,7 +127,7 @@
   - `phone`: string (연락처)
   - `email`: string (이메일)
   - `registeredAt`: string (등록일시, ISO 또는 "YYYY.MM.DD HH:mm")
-- **1차**: mock 배열로 테이블 렌더링. 예: 3건(강제이-보조, 박제이-파트너, 김제이-PM) 등 스크린샷과 유사한 mock 데이터.
+- **1차**: mock 배열로 테이블 렌더링. 예: 3건(강제이-뷰어, 박제이-파트너, 김제이-PM) 등 스크린샷과 유사한 mock 데이터.
 
 ---
 

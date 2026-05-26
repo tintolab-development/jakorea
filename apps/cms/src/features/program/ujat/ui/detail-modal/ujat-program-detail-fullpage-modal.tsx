@@ -22,6 +22,9 @@ import { UjatInstitutionApplicationList } from './application-institution/list/l
 import { UjatInstitutionApplicationDetailPage } from './application-institution/detail/detail-page'
 import { UjatInstitutionScheduleAssignPage } from './application-institution/schedule-assign/page'
 import { UjatInstitutionScheduleConfirmList } from './application-institution/schedule-confirm/list'
+import { UjatEducationProgressSummarySection } from './progress/progress-summary/section'
+import { UjatEducationProgressAssignmentsSection } from './progress/assignments/section'
+import { UjatEducationProgressAttendanceSection } from './progress/attendance/section'
 import { UjatEducationProgressInstitutionsSection } from './progress/institutions/section'
 import { UjatEducationProgressVolunteersSection } from './progress/volunteers/section'
 import { UjatEducationProgressVolunteerAddRegistrationView } from './progress/volunteers/add-registration-view'
@@ -1308,18 +1311,30 @@ export function UjatProgramDetailFullPageModal({
               )}
             </div>
           )}
-          {activeLnb === 'education_progress' &&
-            /^edu_h[12]_(region|attendance|assignments)$/.test(activeTab) && (
-              <UjatPlaceholderSection
-                title={educationProgressScreenTitle(activeTab)}
-                description="해당 기능 화면이 연결되면 이 영역에 표시됩니다."
+          {activeLnb === 'education_progress' && /^edu_h[12]_attendance$/.test(activeTab) && (
+            <div className="program-detail-fullpage-modal__info-tab">
+              <UjatEducationProgressAttendanceSection
+                half={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
               />
-            )}
-          {activeLnb === 'education_progress' && activeTab === 'edu_summary' && (
+            </div>
+          )}
+          {activeLnb === 'education_progress' && /^edu_h[12]_assignments$/.test(activeTab) && (
+            <div className="program-detail-fullpage-modal__info-tab">
+              <UjatEducationProgressAssignmentsSection
+                half={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
+              />
+            </div>
+          )}
+          {activeLnb === 'education_progress' && /^edu_h[12]_region$/.test(activeTab) && (
             <UjatPlaceholderSection
-              title="교육 진행 요약"
-              description="교육 진행 현황을 요약해 보여주는 화면입니다."
+              title={educationProgressScreenTitle(activeTab)}
+              description="해당 기능 화면이 연결되면 이 영역에 표시됩니다."
             />
+          )}
+          {activeLnb === 'education_progress' && activeTab === 'edu_summary' && (
+            <div className="program-detail-fullpage-modal__info-tab">
+              <UjatEducationProgressSummarySection />
+            </div>
           )}
 
           {activeLnb === 'survey' && (

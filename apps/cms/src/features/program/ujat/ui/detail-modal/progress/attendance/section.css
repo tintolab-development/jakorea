@@ -1,0 +1,57 @@
+@import '../education-progress-region-filter-section.css';
+
+.ujat-attendance-session-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.ujat-attendance-session-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ujat-attendance-session-group__title {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.ujat-attendance-session-group__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ujat-attendance-session-group__table-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ujat-attendance-table__status-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.ujat-attendance-table .ant-table-tbody > tr.ujat-attendance-table__row--dropout > td {
+  opacity: 0.85;
+}
+
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  table.ant-table {
+  table-layout: fixed !important;
+  width: max-content !important;
+  min-width: 100%;
+}

@@ -1,0 +1,56 @@
+/* 출석·과제 관리 — 지역 탭 + FilterTableLayout 공통 레이아웃 */
+.ujat-education-progress-attendance,
+.ujat-education-progress-assignments {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-education-progress-attendance
+  .ujat-institution-application-region-tabs.cms-text-tabs
+  .cms-text-tabs__row,
+.ujat-education-progress-assignments
+  .ujat-institution-application-region-tabs.cms-text-tabs
+  .cms-text-tabs__row {
+  margin-bottom: 0;
+}
+
+.ujat-education-progress-attendance__filter-layout.filter-table-layout,
+.ujat-education-progress-assignments__filter-layout.filter-table-layout {
+  background: transparent;
+  box-shadow: none !important;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.ujat-education-progress-attendance__filter-layout .filter-table-layout__divider,
+.ujat-education-progress-assignments__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.ujat-education-progress-attendance__groups,
+.ujat-education-progress-assignments__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-education-progress-attendance__empty,
+.ujat-education-progress-assignments__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: rgba(61, 61, 61, 0.02);
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  opacity: 0.6;
+}

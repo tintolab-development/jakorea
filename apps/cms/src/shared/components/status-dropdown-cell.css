@@ -87,7 +87,7 @@
   text-align: center;
 }
 
-/* 테이블 행 hover 시 상태 배지/태그 보더가 도드라져 보이지 않도록 투명 처리 */
+/* 테이블 행 hover 시 상태 배지/태그 보더가 도드라져 보이지 않도록 — 박스 크기 유지 */
 .ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .app-status-badge,
 .ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .status-badge,
 .ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .program-managers-tab__role-badge,
@@ -96,6 +96,7 @@
 .ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .sponsor-contact-type-badge {
   border: 1px solid transparent !important;
   border-color: transparent !important;
+  box-sizing: border-box !important;
 }
 
 /* 권한/상태에 따라 트리거 없이 배지만 렌더되는 셀도 동일 처리 */
@@ -107,6 +108,14 @@
 .ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .sponsor-contact-type-badge {
   border: 1px solid transparent !important;
   border-color: transparent !important;
+  box-sizing: border-box !important;
+}
+
+/* tag-160: 행 hover 시 트리거 외곽선도 동일 박스 유지 (배지 우측 밀림 방지) */
+.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger--tag-160:not(.status-dropdown-cell__status-trigger--open) {
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 
 /* 열림(open) 상태 트리거의 민트 외곽선도 hover 시 숨김 */
@@ -356,6 +365,10 @@
   padding: 8px 13px;
   justify-content: center;
   align-items: center;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
 }
 
 .status-dropdown-cell__status-trigger--tag-160.status-dropdown-cell__status-trigger--open {
