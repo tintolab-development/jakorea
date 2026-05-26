@@ -68,13 +68,13 @@ const INSTITUTION_FIELDS: FilterFieldConfig[] = [
 ]
 
 const INSTRUCTOR_FIELDS: FilterFieldConfig[] = [
-  searchField('강사명', '강사명을 입력하세요', '25%'),
+  searchField('강사명', '강사명을 입력하세요', '20%'),
   {
     key: 'instructorType',
     type: 'select',
     label: '강사 유형',
     placeholder: '전체',
-    width: '25%',
+    width: '18%',
     options: INSTRUCTOR_TYPE_FILTER_OPTIONS,
   },
   {
@@ -82,10 +82,10 @@ const INSTRUCTOR_FIELDS: FilterFieldConfig[] = [
     type: 'select',
     label: '정산 현황',
     placeholder: '전체',
-    width: '25%',
+    width: '18%',
     options: INSTRUCTOR_SETTLEMENT_FILTER_OPTIONS,
   },
-  dateRangeField('가입 시기', '25%'),
+  dateRangeField('가입 시기', '44%'),
 ]
 
 const ADMIN_FIELDS: FilterFieldConfig[] = [
