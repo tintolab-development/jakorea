@@ -4,6 +4,7 @@ import type { DateValue } from '@/types'
 import { formatDate } from '@/shared/utils'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { getMemberPermissionInstructorApplicationTypeLabel } from '@/features/user/permission-management/lib/member-permission-instructor-application-type'
+import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
 
 function ageFromBirthDate(birthDate: DateValue | undefined): number | null {
   if (!birthDate) return null
@@ -30,12 +31,62 @@ export function affiliationLine(user: Omit<User, 'password'>): string {
   return '-'
 }
 
-export function affiliationAndGradeLine(user: Omit<User, 'password'>): string {
+function inlineSegmentsWithDivider(
+  segments: [ReactNode, ReactNode],
+  className = 'user-basic-info-section__inline-segments'
+): ReactNode {
+  return inlineSegmentsWithDividers([segments[0], segments[1]], className)
+}
+
+function inlineSegmentsWithDividers(
+  segments: ReactNode[],
+  className = 'user-basic-info-section__inline-segments'
+): ReactNode {
+  const filtered = segments.filter(s => s != null && s !== '' && s !== '-')
+  if (filtered.length === 0) return '-'
+  if (filtered.length === 1) return filtered[0]
+
+  const children: ReactNode[] = []
+  filtered.forEach((seg, i) => {
+    if (i > 0) {
+      children.push(createElement(DetailInfoFormTdDivider, { key: `d-${i}` }))
+    }
+    children.push(createElement('span', { key: `s-${i}` }, seg))
+  })
+  return createElement('span', { className }, ...children)
+}
+
+/** 성별 및 생년월일 td — 문자 `|` 대신 TdDivider, gap 12px */
+export function genderBirthView(user: Omit<User, 'password'>): ReactNode {
+  const gender = user.gender ?? '-'
+  if (!user.birthDate) {
+    return inlineSegmentsWithDivider([gender, '-'])
+  }
+  const d = formatDate(user.birthDate)
+  const age = ageFromBirthDate(user.birthDate)
+  const agePart = age != null ? ` (만 ${age}세)` : ''
+  return inlineSegmentsWithDivider([gender, `${d}${agePart}`])
+}
+
+/** 교사 기본 정보 — 소속 및 담당 학년 td (문자 `|` 대신 TdDivider, gap 12px) */
+export function affiliationAndGradeView(user: Omit<User, 'password'>): ReactNode {
   const school = user.affiliatedSchoolName?.trim()
   const grade = user.listMetrics?.instructorAssignedGrade?.trim()
-  if (school && grade) return `${school} | ${grade}`
+  if (school && grade) {
+    return inlineSegmentsWithDivider([school, grade])
+  }
   if (school) return school
-  return affiliationLine(user)
+
+  if (user.schoolInfo) {
+    const { schoolName, position } = user.schoolInfo
+    if (position) {
+      return inlineSegmentsWithDivider([schoolName, position])
+    }
+    return schoolName
+  }
+
+  if (user.affiliation) return user.affiliation
+  return '-'
 }
 
 export function affiliationAndInstructorCareerLine(user: Omit<User, 'password'>): string {
@@ -52,6 +103,41 @@ export function affiliationAndInstructorCareerLine(user: Omit<User, 'password'>)
   if (schoolPart && schoolPart !== '-' && tail) return `${schoolPart}, ${tail}`
   if (tail) return tail
   if (schoolPart && schoolPart !== '-') return schoolPart
+  return '-'
+}
+
+/** 강사 기본 정보 — 소속 및 강사 경력 td (문자 `|` 대신 TdDivider, gap 12px) */
+export function affiliationAndInstructorCareerView(user: Omit<User, 'password'>): ReactNode {
+  const summary = user.listMetrics?.instructorCareerSummaryLabel?.trim()
+  if (summary) return summary
+
+  const school = user.affiliatedSchoolName?.trim()
+  const grade = user.listMetrics?.instructorAssignedGrade?.trim()
+
+  let schoolPart: ReactNode | null = null
+  if (school && grade) {
+    schoolPart = `${school}(${grade})`
+  } else if (school) {
+    schoolPart = school
+  } else if (user.schoolInfo) {
+    const { schoolName, position } = user.schoolInfo
+    schoolPart = position ? inlineSegmentsWithDivider([schoolName, position]) : schoolName
+  } else if (user.affiliation) {
+    schoolPart = user.affiliation
+  }
+
+  const typeLabel = instructorApplicationTypeLine(user).trim()
+  const years = user.listMetrics?.instructorCareerYearsLabel?.trim()
+  const tailNode = inlineSegmentsWithDividers([typeLabel === '-' ? '' : typeLabel, years ?? ''])
+
+  const hasSchool = schoolPart != null && schoolPart !== '-'
+  const hasTail = tailNode !== '-' && tailNode != null
+
+  if (hasSchool && hasTail) {
+    return createElement('span', null, schoolPart, ', ', tailNode)
+  }
+  if (hasTail) return tailNode
+  if (hasSchool) return schoolPart
   return '-'
 }
 
@@ -89,6 +175,13 @@ export function addressLine(user: Omit<User, 'password'>): string {
 
 export function socialLine(user: Omit<User, 'password'>): string {
   return user.socialAccounts?.length ? user.socialAccounts.join(' | ') : '-'
+}
+
+/** 연동된 소셜 계정 td — 문자 `|` 대신 TdDivider, gap 12px */
+export function socialView(user: Omit<User, 'password'>): ReactNode {
+  const accounts = user.socialAccounts?.filter(Boolean) ?? []
+  if (accounts.length === 0) return '-'
+  return inlineSegmentsWithDividers(accounts)
 }
 
 export function detailPhoneDisplay(user: Omit<User, 'password'>, revealed: boolean): string {
@@ -160,6 +253,33 @@ export function instructorBankLine(user: Omit<User, 'password'>, revealed: boole
   const left = `${bank} ${maskedNum}`.trim()
   const holder = maskedHolder ? ` | ${maskedHolder}` : ''
   return left || holder ? `${left}${holder}` : '-'
+}
+
+/** 강사 기본 정보 — 정산 계좌 정보 td (문자 `|` 대신 TdDivider, gap 12px) */
+export function instructorBankView(user: Omit<User, 'password'>, revealed: boolean): ReactNode {
+  const info = user.instructorInfo
+  if (!info) return '-'
+
+  const rawNum = info.accountNumber ?? ''
+  const rawHolder = info.accountHolder ?? ''
+  const bank = info.bankName ?? ''
+
+  if (revealed) {
+    const left = `${bank} ${rawNum}`.trim()
+    const holder = rawHolder.trim()
+    if (!left && !holder) return '-'
+    if (!holder) return left
+    if (!left) return holder
+    return inlineSegmentsWithDivider([left, holder])
+  }
+
+  const maskedNum = rawNum ? MASKING_POLICY.accountNumber(rawNum) : ''
+  const maskedHolder = rawHolder ? MASKING_POLICY.accountHolderName(rawHolder) : ''
+  const left = `${bank} ${maskedNum}`.trim()
+  if (!left && !maskedHolder) return '-'
+  if (!maskedHolder) return left
+  if (!left) return maskedHolder
+  return inlineSegmentsWithDivider([left, maskedHolder])
 }
 
 export function institutionTimesLabel(n: number | undefined): string {
