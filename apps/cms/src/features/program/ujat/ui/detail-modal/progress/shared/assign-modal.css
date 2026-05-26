@@ -1,4 +1,4 @@
-.ujat-volunteer-assignment-assign-modal-wrap {
+.ujat-assignment-assign-modal-wrap {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -13,12 +13,12 @@
   margin: 0 !important;
 }
 
-.ujat-volunteer-assignment-assign-modal-wrap::before {
+.ujat-assignment-assign-modal-wrap::before {
   display: none !important;
   content: none !important;
 }
 
-.ujat-volunteer-assignment-assign-modal-wrap .ant-modal.ujat-volunteer-assignment-assign-modal {
+.ujat-assignment-assign-modal-wrap .ant-modal.ujat-assignment-assign-modal {
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
@@ -32,8 +32,8 @@
   box-sizing: border-box !important;
 }
 
-.content-modal.ujat-volunteer-assignment-assign-modal.ant-modal .ant-modal-content,
-.content-modal.ujat-volunteer-assignment-assign-modal.teal-header-modal .ant-modal-content {
+.content-modal.ujat-assignment-assign-modal.ant-modal .ant-modal-content,
+.content-modal.ujat-assignment-assign-modal.teal-header-modal .ant-modal-content {
   display: flex;
   width: 600px;
   min-height: 320px;
@@ -49,7 +49,7 @@
   overflow: visible;
 }
 
-.content-modal.ujat-volunteer-assignment-assign-modal .teal-header-modal__body {
+.content-modal.ujat-assignment-assign-modal .teal-header-modal__body {
   flex: 0 0 auto;
   width: 100%;
   display: flex;
@@ -62,14 +62,14 @@
   padding-top: 16px;
 }
 
-.content-modal.ujat-volunteer-assignment-assign-modal .teal-header-modal__footer {
+.content-modal.ujat-assignment-assign-modal .teal-header-modal__footer {
   width: 100%;
   margin-top: 30px;
   padding: 0;
   flex-shrink: 0;
 }
 
-.ujat-volunteer-assignment-assign-modal__form {
+.ujat-assignment-assign-modal__form {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -78,7 +78,7 @@
   margin-top: 16px;
 }
 
-.ujat-volunteer-assignment-assign-modal__field {
+.ujat-assignment-assign-modal__field {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -86,7 +86,7 @@
   gap: 6px;
 }
 
-.ujat-volunteer-assignment-assign-modal__label {
+.ujat-assignment-assign-modal__label {
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 14px;
@@ -95,7 +95,7 @@
   line-height: 150%;
 }
 
-.ujat-volunteer-assignment-assign-modal__footer {
+.ujat-assignment-assign-modal__footer {
   display: flex;
   width: 100%;
   justify-content: flex-end;
@@ -103,6 +103,6 @@
   gap: 10px;
 }
 
-.ujat-volunteer-assignment-assign-modal__field .cms-select {
+.ujat-assignment-assign-modal__field .cms-select {
   width: 100%;
 }

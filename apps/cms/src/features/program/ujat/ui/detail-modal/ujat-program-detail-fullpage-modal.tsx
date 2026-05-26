@@ -26,6 +26,7 @@ import { UjatEducationProgressSummarySection } from './progress/progress-summary
 import { UjatEducationProgressAssignmentsSection } from './progress/assignments/section'
 import { UjatEducationProgressAttendanceSection } from './progress/attendance/section'
 import { UjatEducationProgressInstitutionsSection } from './progress/institutions/section'
+import { UjatEducationProgressRegionAssignmentSection } from './progress/region/section'
 import { UjatEducationProgressVolunteersSection } from './progress/volunteers/section'
 import { UjatEducationProgressVolunteerAddRegistrationView } from './progress/volunteers/add-registration-view'
 import { UjatEducationProgressVolunteerDetailPage } from './progress/volunteers/detail/detail-page'
@@ -1326,10 +1327,11 @@ export function UjatProgramDetailFullPageModal({
             </div>
           )}
           {activeLnb === 'education_progress' && /^edu_h[12]_region$/.test(activeTab) && (
-            <UjatPlaceholderSection
-              title={educationProgressScreenTitle(activeTab)}
-              description="해당 기능 화면이 연결되면 이 영역에 표시됩니다."
-            />
+            <div className="program-detail-fullpage-modal__info-tab">
+              <UjatEducationProgressRegionAssignmentSection
+                half={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
+              />
+            </div>
           )}
           {activeLnb === 'education_progress' && activeTab === 'edu_summary' && (
             <div className="program-detail-fullpage-modal__info-tab">

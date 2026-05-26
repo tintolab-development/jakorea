@@ -373,6 +373,7 @@ export const UjatEducationProgressVolunteerAssignmentProgressTab = forwardRef<
 
       {assignModalData ? (
         <UjatVolunteerAssignmentAssignModal
+          variant="volunteer"
           open={assignModalOpen}
           mode={assignModalData.mode}
           volunteerName={volunteerName}
