@@ -18,8 +18,14 @@
 }
 
 .admin-inquiry-page .table-filter-group__grid-cell[data-filter-field-key='dateRange'] {
-  max-width: none;
-  width: auto;
+  max-width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
+  );
+  width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
+  );
 }
 
 .admin-inquiry-page
@@ -38,7 +44,7 @@
   .cms-datepicker.cms-datepicker--range-split
   .cms-datepicker__segment {
   max-width: min(100%, var(--filter-control-max-width, 260px)) !important;
-  flex: 0 1 auto;
+  flex: 1 1 0;
   width: 100%;
   box-sizing: border-box;
 }
