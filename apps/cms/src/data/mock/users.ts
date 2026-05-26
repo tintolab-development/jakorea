@@ -161,7 +161,8 @@ const mockInstructors: User[] = [
       isBusinessIncome: false,
     },
     listMetrics: {
-      instructorTypeLabel: '1급 강사비',
+      instructorFeeGradeLabel: '1급 강사비',
+      permissionApplicationTypeLabel: '제미나이 강사단',
       settlementStatusLabel: '계좌 지급 완료',
       jaEvaluationGrade: 'A',
       employmentStatusLabel: '재직 중',
@@ -201,7 +202,7 @@ const mockInstructors: User[] = [
       isBusinessIncome: true,
     },
     listMetrics: {
-      instructorTypeLabel: '2급 강사비',
+      instructorFeeGradeLabel: '2급 강사비',
       permissionApplicationTypeLabel: '특강 강사',
       settlementStatusLabel: '확인 대기 중',
       jaEvaluationGrade: 'B',
@@ -239,7 +240,8 @@ const mockInstructors: User[] = [
       isBusinessIncome: false,
     },
     listMetrics: {
-      instructorTypeLabel: '3급 강사비',
+      instructorFeeGradeLabel: '3급 강사비',
+      permissionApplicationTypeLabel: 'JA 강사단',
       jaEvaluationGrade: 'C',
       employmentStatusLabel: '재직 중',
       instructorAssignedGrade: '5학년 담임',
@@ -1220,7 +1222,7 @@ const extraMockUsers: User[] = [
       isBusinessIncome: false,
     },
     listMetrics: {
-      instructorTypeLabel: '1급 강사비',
+      instructorFeeGradeLabel: '1급 강사비',
       permissionApplicationTypeLabel: '제미나이 강사단',
       settlementStatusLabel: '확인 진행중',
       employmentStatusLabel: '재직 중',
@@ -1275,7 +1277,8 @@ const extraMockUsers: User[] = [
     detailAddress: '경기도 용인시 수지구 200',
     affiliation: '신규 강사 지원',
     listMetrics: {
-      instructorTypeLabel: '2급 강사비',
+      instructorFeeGradeLabel: '2급 강사비',
+      permissionApplicationTypeLabel: 'JA 강사단',
     },
   },
   // 관리자 등록 강사 (직접 가입 완료 전)
@@ -1310,7 +1313,7 @@ const extraMockUsers: User[] = [
     },
     adminComment: '관리자 등록 강사 데모 계정',
     listMetrics: {
-      instructorTypeLabel: '1급 강사비',
+      instructorFeeGradeLabel: '1급 강사비',
       permissionApplicationTypeLabel: 'JA 강사단',
       settlementStatusLabel: '확인 대기 중',
       jaEvaluationGrade: 'B',
@@ -1340,7 +1343,8 @@ const extraMockUsers: User[] = [
     detailAddress: '서울특별시 마포구 망원동 300',
     affiliation: '경제교육연구소 | 수석강사',
     listMetrics: {
-      instructorTypeLabel: '3급 강사비',
+      instructorFeeGradeLabel: '3급 강사비',
+      permissionApplicationTypeLabel: '특강 강사',
     },
   },
   // 스크린샷/UI 예시용 회원 (상세 모달 스펙: 최틴토, Choi Tinto)

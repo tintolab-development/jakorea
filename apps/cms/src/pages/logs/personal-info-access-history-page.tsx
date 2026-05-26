@@ -4,7 +4,10 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
+import {
+  EMPTY_TABLE_PAGE_CONTEXT,
+  useTablePage,
+} from '@/shared/components/table-system/model/use-table-page'
 import type { PersonalInfoAccessLog } from '@/types/personal-info-access-log'
 import { getPersonalInfoAccessLogs } from '@/entities/personal-info-access-log/api/personal-info-access-log-service'
 import { personalInfoAccessHistoryFilterFields } from '@/features/logs/model/personal-info-access-history-filter-fields'
@@ -42,7 +45,7 @@ export default function PersonalInfoAccessHistoryPage() {
       data: rows,
       searchParams,
       setSearchParams,
-      context: {},
+      context: EMPTY_TABLE_PAGE_CONTEXT,
     }
   )
 

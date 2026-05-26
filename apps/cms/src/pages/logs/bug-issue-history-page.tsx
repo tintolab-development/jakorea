@@ -7,7 +7,10 @@ import { getBugIssueLogs } from '@/entities/download-log/api/bug-issue-log-servi
 import { bugIssueHistoryFilterFields } from '@/features/download/model/bug-issue-history-filter-fields'
 import { bugIssueHistoryTablePageConfig } from '@/features/download/model/bug-issue-history-table.config'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
+import {
+  EMPTY_TABLE_PAGE_CONTEXT,
+  useTablePage,
+} from '@/shared/components/table-system/model/use-table-page'
 import type { BugIssueLog } from '@/types/bug-issue-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
@@ -41,7 +44,7 @@ export default function BugIssueHistoryPage() {
       data: rows,
       searchParams,
       setSearchParams,
-      context: {},
+      context: EMPTY_TABLE_PAGE_CONTEXT,
     }
   )
 

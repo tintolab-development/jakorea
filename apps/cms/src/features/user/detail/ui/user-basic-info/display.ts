@@ -45,9 +45,9 @@ export function affiliationAndInstructorCareerLine(user: Omit<User, 'password'>)
   const school = user.affiliatedSchoolName?.trim()
   const grade = user.listMetrics?.instructorAssignedGrade?.trim()
   const schoolPart = school && grade ? `${school}(${grade})` : school || affiliationLine(user)
-  const typeLabel = user.listMetrics?.instructorTypeLabel?.trim()
+  const typeLabel = instructorApplicationTypeLine(user).trim()
   const years = user.listMetrics?.instructorCareerYearsLabel?.trim()
-  const tail = [typeLabel, years].filter(Boolean).join(' | ')
+  const tail = [typeLabel === '-' ? '' : typeLabel, years].filter(Boolean).join(' | ')
 
   if (schoolPart && schoolPart !== '-' && tail) return `${schoolPart}, ${tail}`
   if (tail) return tail
@@ -67,7 +67,9 @@ export function jaEvaluationGradeLine(user: Omit<User, 'password'>): string {
 }
 
 export function instructorFeeGradeLine(user: Omit<User, 'password'>): string {
-  const grade = user.listMetrics?.instructorTypeLabel?.trim()
+  const grade =
+    user.listMetrics?.instructorFeeGradeLabel?.trim() ||
+    user.listMetrics?.instructorTypeLabel?.trim()
   return grade && grade.length > 0 ? grade : '-'
 }
 

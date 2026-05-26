@@ -4,7 +4,10 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
+import {
+  EMPTY_TABLE_PAGE_CONTEXT,
+  useTablePage,
+} from '@/shared/components/table-system/model/use-table-page'
 import { getDownloadLogs } from '@/entities/download-log/api/download-log-service'
 import type { DownloadLog } from '@/types/download-log'
 import { fileDownloadHistoryFilterFields } from '@/features/download/model/file-download-history-filter-fields'
@@ -41,7 +44,7 @@ export default function FileDownloadHistoryPage() {
       data: rows,
       searchParams,
       setSearchParams,
-      context: {},
+      context: EMPTY_TABLE_PAGE_CONTEXT,
     }
   )
 
