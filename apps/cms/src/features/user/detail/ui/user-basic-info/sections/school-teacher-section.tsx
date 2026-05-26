@@ -1,12 +1,19 @@
-import { AppStatusBadge } from '@/shared/components'
+import { useCallback, useEffect, useState } from 'react'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
+import { StatusDropdownCell } from '@/shared/components'
+import type { SchoolTeacherEmploymentStatus } from '@/types/user'
+import {
+  parseSchoolTeacherEmploymentStatus,
+  SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
+  SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
+  SchoolTeacherEmploymentStatusBadge,
+} from '@/features/user/detail/lib/school-teacher-employment-status'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
 import { NameBlockField } from '../fields/name-block-field'
 import { ContactInfoFieldsRow } from './shared'
 import type { BasicInfoSectionContext } from './types'
-import { affiliationAndGradeLine, detailAddressView, formatGenderBirthLine, socialLine } from '../display'
-import { schoolTeacherEmploymentBadgeModifier } from '../status'
+import { affiliationAndGradeView, detailAddressView, genderBirthView, socialLine } from '../display'
 import { formatDate } from '@/shared/utils'
 
 export function SchoolTeacherMetaSection(ctx: BasicInfoSectionContext) {
@@ -19,18 +26,54 @@ export function SchoolTeacherMetaSection(ctx: BasicInfoSectionContext) {
   )
 }
 
+function SchoolTeacherEmploymentStatusField({
+  userId,
+  employmentStatusLabel,
+}: {
+  userId: string
+  employmentStatusLabel?: string
+}) {
+  const [employmentStatus, setEmploymentStatus] = useState<SchoolTeacherEmploymentStatus | null>(() =>
+    parseSchoolTeacherEmploymentStatus(employmentStatusLabel)
+  )
+  const [employmentDropdownOpen, setEmploymentDropdownOpen] = useState(false)
+
+  useEffect(() => {
+    setEmploymentStatus(parseSchoolTeacherEmploymentStatus(employmentStatusLabel))
+  }, [userId, employmentStatusLabel])
+
+  const handleEmploymentStatusChange = useCallback((next: SchoolTeacherEmploymentStatus) => {
+    setEmploymentStatus(next)
+    setEmploymentDropdownOpen(false)
+  }, [])
+
+  if (employmentStatus == null) {
+    return <span>-</span>
+  }
+
+  return (
+    <span className="user-basic-info-section__teacher-employment-dropdown">
+      <StatusDropdownCell<SchoolTeacherEmploymentStatus>
+      status={employmentStatus}
+      statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
+      renderBadge={status => (
+        <SchoolTeacherEmploymentStatusBadge
+          status={status}
+          classNamePrefix="user-basic-info-section__teacher-employment-badge"
+        />
+      )}
+      isItemDisabled={(cur, opt) => cur === opt}
+      onChange={handleEmploymentStatusChange}
+      isOpen={employmentDropdownOpen}
+      onOpenChange={setEmploymentDropdownOpen}
+      style={SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE}
+    />
+    </span>
+  )
+}
+
 export function SchoolTeacherSection(ctx: BasicInfoSectionContext) {
   const { user, scheduleChangeCount, personalInfoRevealed } = ctx
-  const employment = user.listMetrics?.employmentStatusLabel?.trim() || '-'
-  const employmentSide =
-    employment === '-' ? (
-      <span>-</span>
-    ) : (
-      <AppStatusBadge
-        label={employment}
-        className={`user-basic-info-section__teacher-employment-badge user-basic-info-section__teacher-employment-badge--${schoolTeacherEmploymentBadgeModifier(employment)}`}
-      />
-    )
   return (
     <>
       <NameBlockField
@@ -46,13 +89,18 @@ export function SchoolTeacherSection(ctx: BasicInfoSectionContext) {
               </span>
             ),
             sideLabel: '재직 현황',
-            side: employmentSide,
+            side: (
+              <SchoolTeacherEmploymentStatusField
+                userId={user.id}
+                employmentStatusLabel={user.listMetrics?.employmentStatusLabel}
+              />
+            ),
           },
           {
             subLabel: '영문',
             main: <span>{user.nameEn ?? '-'}</span>,
             sideLabel: '성별 및 생년월일',
-            side: <span>{formatGenderBirthLine(user)}</span>,
+            side: genderBirthView(user),
           },
         ]}
       />
@@ -74,7 +122,7 @@ export function SchoolTeacherSection(ctx: BasicInfoSectionContext) {
         <EditableField
           label="소속 및 담당 학년"
           readOnlyDisplay
-          view={<span>{affiliationAndGradeLine(user)}</span>}
+          view={affiliationAndGradeView(user)}
         />
       </EditableRow>
     </>

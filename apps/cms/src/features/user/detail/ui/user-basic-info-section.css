@@ -5,13 +5,24 @@
   gap: var(--spacing-8, 8px);
 }
 
-/* 교사/강사: 가입일 카드 + 성명 카드 — 32px 간격, 각각 독립 `detail-info-form__body`(둥근 테두리) */
+/* 교사/강사: 가입일 카드 + 성명 카드 — 16px 간격, 각각 독립 `detail-info-form__body`(둥근 테두리) */
 .user-basic-info-section__split-cards {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 16px;
   width: 100%;
   min-width: 0;
+}
+
+.user-basic-info-section__inline-segments {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.user-basic-info-section__inline-segments .detail-info-form-inputs-separator {
+  margin: 0;
 }
 
 /* 일반 교사 기본 정보 — 재직 현황 (소속 교사 목록 배지 톤과 정렬) */
@@ -35,6 +46,72 @@
   border: 1px solid rgba(61, 61, 61, 0.1);
   background: #f2f3f5;
   color: var(--main-bk, #3d3d3d);
+}
+
+/*
+ * 교사 상세 — 성명 블록 행 높이 56px (셀 padding 12×2 + 배지 32).
+ * StatusDropdownCell 기본 트리거 padding(8px) 제거해 재직 현황 도입 전 높이 유지.
+ */
+.user-basic-info-section--school-teacher-profile-card .detail-info-form__name-block {
+  grid-template-rows: 56px 56px;
+}
+
+.user-basic-info-section--school-teacher-profile-card
+  .detail-info-form__name-block-cell {
+  min-height: 0;
+}
+
+.user-basic-info-section--school-teacher-profile-card
+  .detail-info-form__name-block-cell--r1 {
+  overflow: visible;
+}
+
+.user-basic-info-section--school-teacher-profile-card
+  .user-basic-info-section__teacher-employment-dropdown {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.user-basic-info-section--school-teacher-profile-card
+  .user-basic-info-section__teacher-employment-dropdown
+  .status-dropdown-cell__status-trigger {
+  box-sizing: border-box;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  padding: 0;
+  gap: 0;
+}
+
+.user-basic-info-section--school-teacher-profile-card
+  .user-basic-info-section__teacher-employment-dropdown
+  .status-dropdown-cell__status-trigger--open {
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  padding: 0;
+}
+
+.user-basic-info-section--school-teacher-profile-card
+  .user-basic-info-section__teacher-employment-dropdown
+  .user-basic-info-section__teacher-employment-badge.app-status-badge,
+.user-basic-info-section--school-teacher-profile-card
+  .user-basic-info-section__teacher-employment-dropdown
+  .status-dropdown-cell__status-trigger
+  .app-status-badge.status-dropdown-cell__badge--cell-style {
+  box-sizing: border-box;
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 0 !important;
+  padding: 6px 12px !important;
 }
 
 /* 권한 승인 현황(상세) — 목록·회원 권한 승인 페이지와 동일 색/타이포 */
