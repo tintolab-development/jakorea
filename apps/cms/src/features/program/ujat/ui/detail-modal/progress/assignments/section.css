@@ -1,0 +1,118 @@
+@import '../education-progress-region-filter-section.css';
+
+.ujat-education-progress-assignments {
+  --ujat-assignment-status-completed-color: var(--main-BK, #3d3d3d);
+  --ujat-assignment-status-not-submitted-color: #c32f4a;
+  --ujat-assignment-status-deadline-missed-color: var(--color-green, #1e8c29);
+}
+
+.ujat-education-progress-assignments__session-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.ujat-education-progress-assignments__session-header {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin: 0;
+  gap: 0;
+  min-width: 0;
+}
+
+.ujat-education-progress-assignments__session-leading {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ujat-education-progress-assignments__session-date {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.ujat-education-progress-assignments__session-meta {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-education-progress-assignments__session-divider.app-divider-vertical {
+  margin: 0 10px;
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+
+.ujat-education-progress-assignments__table-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ujat-education-progress-assignments__table-wrap
+  .ujat-education-progress-assignments__table
+  table.ant-table {
+  table-layout: fixed !important;
+  width: max-content !important;
+  min-width: 100%;
+}
+
+.ujat-education-progress-assignments__status {
+  display: block;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-education-progress-assignments__status--completed {
+  color: var(--ujat-assignment-status-completed-color);
+}
+
+.ujat-education-progress-assignments__status--not-submitted {
+  color: var(--ujat-assignment-status-not-submitted-color);
+}
+
+.ujat-education-progress-assignments__status--deadline-missed {
+  color: var(--ujat-assignment-status-deadline-missed-color);
+}
+
+.ujat-education-progress-assignments__remarks {
+  display: block;
+  white-space: pre-line;
+  text-align: center;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 14px;
+  line-height: 150%;
+}
+
+.ujat-education-progress-assignments__remarks-dash {
+  color: var(--main-BK, #3d3d3d);
+}
+
+.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr.ujat-education-progress-assignments__row--dropout
+  > td {
+  opacity: 0.85;
+}
+
+.ujat-education-progress-assignments__table
+  .ant-table-thead
+  > tr
+  > th.ujat-volunteer-assignment-table__plan-log-cell,
+.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-volunteer-assignment-table__plan-log-cell {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
