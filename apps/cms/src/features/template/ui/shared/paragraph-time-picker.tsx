@@ -33,6 +33,8 @@ export interface ParagraphTimePickerProps {
   style?: CSSProperties
   width?: number | string
   endTimeAlwaysOn?: boolean
+  /** 중첩 ContentModal 위에 띄울 때 — 기본 1060 */
+  popoverZIndex?: number
 }
 
 type FocusPhase = 'single' | 'start' | 'end'
@@ -47,6 +49,7 @@ export function ParagraphTimePicker({
   style,
   width,
   endTimeAlwaysOn = false,
+  popoverZIndex,
 }: ParagraphTimePickerProps) {
   const rootRef = useRef<HTMLSpanElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -217,6 +220,7 @@ export function ParagraphTimePicker({
         anchorRef={triggerRef}
         dismissExcludeRef={rootRef}
         panelId={panelId}
+        zIndex={popoverZIndex}
         disabled={disabled}
         isEndTimeOn={isEndTimeOn}
         endTimeAlwaysOn={endTimeAlwaysOn}
