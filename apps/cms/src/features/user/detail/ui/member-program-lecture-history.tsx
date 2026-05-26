@@ -24,6 +24,7 @@ import {
   type ProgramEnrollmentDisplayStatus,
 } from '@/shared/constants/status'
 import { StatusBadge } from '@/shared/components/status-badge'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import {
@@ -638,6 +639,7 @@ export function MemberProgramLectureHistory({
   return (
     <>
       <FilterTableLayout
+        className="member-program-lecture-history"
         bordered={false}
         fields={filterFields}
         filters={{
@@ -650,9 +652,15 @@ export function MemberProgramLectureHistory({
         onSearch={handleSearch}
         title={summaryTitle}
         description={
-          <>
-            총 {displayRowCount}건{footnote ? <span> | {footnote}</span> : null}
-          </>
+          footnote ? (
+            <span className="member-program-lecture-history__table-description">
+              <span>총 {displayRowCount}건</span>
+              <DetailInfoForm.TdDivider />
+              <span>{footnote}</span>
+            </span>
+          ) : (
+            `총 ${displayRowCount}건`
+          )
         }
         actions={
           <div className="member-program-lecture-history__toolbar-actions-inner">
