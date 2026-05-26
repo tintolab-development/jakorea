@@ -156,6 +156,48 @@ const PARK_TINTO_ABSENCE_REASONS: UjatVolunteerAssignmentProgressBundle['absence
   },
 ]
 
+export function getVolunteerActivityWithdrawScheduleOptions(
+  volunteerRowId: string,
+  additionalWithdrawnRowIds: ReadonlyArray<string> = []
+): { value: string; label: string }[] {
+  const withdrawnIdSet = new Set(additionalWithdrawnRowIds)
+  const { rows } = getUjatVolunteerAssignmentProgressBundle(volunteerRowId)
+
+  return rows
+    .filter(
+      row => row.classDisplay.kind !== 'withdrawn' && !withdrawnIdSet.has(row.id)
+    )
+    .map(row => ({
+      value: row.id,
+      label: row.scheduleLabel,
+    }))
+}
+
+export function mergeVolunteerActivityWithdrawnRows(
+  rows: UjatVolunteerAssignmentProgressRow[],
+  withdrawnScheduleRowIds: ReadonlyArray<string>
+): UjatVolunteerAssignmentProgressRow[] {
+  if (withdrawnScheduleRowIds.length === 0) {
+    return sortVolunteerAssignmentRows(rows)
+  }
+
+  const withdrawnIdSet = new Set(withdrawnScheduleRowIds)
+
+  return sortVolunteerAssignmentRows(
+    rows.map(row => {
+      if (!withdrawnIdSet.has(row.id) || row.classDisplay.kind === 'withdrawn') {
+        return row
+      }
+
+      return {
+        ...row,
+        classDisplay: { kind: 'withdrawn' as const },
+        isWithdrawn: true,
+      }
+    })
+  )
+}
+
 export function sortVolunteerAssignmentRows(
   rows: UjatVolunteerAssignmentProgressRow[]
 ): UjatVolunteerAssignmentProgressRow[] {

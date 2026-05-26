@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
@@ -17,7 +17,15 @@ import {
 } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import type { UjatEducationProgressVolunteerDetail } from './detail-mock'
 import { UjatEducationProgressVolunteerApplicationTab } from './application-tab'
-import { UjatEducationProgressVolunteerAssignmentProgressTab } from './assignment-progress-tab'
+import {
+  UjatEducationProgressActivityWithdrawModal,
+  type UjatEducationProgressActivityWithdrawPayload,
+} from '../../shared/activity-withdraw-modal'
+import { getVolunteerActivityWithdrawScheduleOptions } from './assignment-mock'
+import {
+  UjatEducationProgressVolunteerAssignmentProgressTab,
+  type UjatVolunteerAssignmentProgressTabHandle,
+} from './assignment-progress-tab'
 import './detail.css'
 
 const TAB_KEYS = Object.keys(
@@ -40,12 +48,46 @@ export function UjatEducationProgressVolunteerDetailView({
   const [preferredRegionDraft, setPreferredRegionDraft] = useState<UjatVolunteerPreferredRegion>(
     detail.applicant.preferredRegion
   )
-  const [assignModalTrigger, setAssignModalTrigger] = useState(0)
+  const assignmentProgressTabRef = useRef<UjatVolunteerAssignmentProgressTabHandle>(null)
+  const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
+  const [withdrawnScheduleRowIds, setWithdrawnScheduleRowIds] = useState<string[]>([])
 
   useEffect(() => {
     setIsEditing(false)
     setPreferredRegionDraft(detail.applicant.preferredRegion)
+    setActivityWithdrawModalOpen(false)
+    setWithdrawnScheduleRowIds([])
   }, [detail.volunteerId, detail.applicant.preferredRegion])
+
+  const activityWithdrawScheduleOptions = useMemo(
+    () =>
+      getVolunteerActivityWithdrawScheduleOptions(detail.volunteerId, withdrawnScheduleRowIds),
+    [detail.volunteerId, withdrawnScheduleRowIds]
+  )
+
+  const handleRequestActivityWithdraw = useCallback(() => {
+    setActivityWithdrawModalOpen(true)
+  }, [])
+
+  const handleCancelActivityWithdraw = useCallback(() => {
+    setActivityWithdrawModalOpen(false)
+  }, [])
+
+  const handleConfirmActivityWithdraw = useCallback(
+    (payload: UjatEducationProgressActivityWithdrawPayload) => {
+      setWithdrawnScheduleRowIds(prev =>
+        prev.includes(payload.stopScheduleRowId)
+          ? prev
+          : [...prev, payload.stopScheduleRowId]
+      )
+      setActivityWithdrawModalOpen(false)
+      showAlert({
+        title: '활동 포기',
+        content: `${detail.applicant.name} 봉사자가 활동 포기 처리되었습니다.`,
+      })
+    },
+    [detail.applicant.name, showAlert]
+  )
 
   const resolveAccessItem = useCallback(
     () => `${detail.applicant.name} 봉사자 신청 정보`,
@@ -102,7 +144,14 @@ export function UjatEducationProgressVolunteerDetailView({
 
   const applicationHeaderActions = (
     <>
-      <CmsButton type="button" variant="delete" size="large" width={140} onClick={showComingSoon}>
+      <CmsButton
+        type="button"
+        variant="delete"
+        size="large"
+        width={140}
+        disabled={activityWithdrawScheduleOptions.length === 0}
+        onClick={handleRequestActivityWithdraw}
+      >
         활동 포기
       </CmsButton>
       <CmsButton
@@ -145,10 +194,22 @@ export function UjatEducationProgressVolunteerDetailView({
 
   const assignmentHeaderActions = (
     <>
-      <CmsButton type="button" variant="delete" size="large" width={140} onClick={showComingSoon}>
+      <CmsButton
+        type="button"
+        variant="delete"
+        size="large"
+        width={140}
+        onClick={() => assignmentProgressTabRef.current?.openCancelModal()}
+      >
         배정 취소
       </CmsButton>
-      <CmsButton type="button" variant="secondary" size="large" width={160} onClick={showComingSoon}>
+      <CmsButton
+        type="button"
+        variant="secondary"
+        size="large"
+        width={160}
+        onClick={() => assignmentProgressTabRef.current?.openAttendanceCorrectionModal()}
+      >
         출결 정정
       </CmsButton>
       <CmsButton
@@ -156,7 +217,7 @@ export function UjatEducationProgressVolunteerDetailView({
         variant="primary"
         size="large"
         width={210}
-        onClick={() => setAssignModalTrigger(count => count + 1)}
+        onClick={() => assignmentProgressTabRef.current?.openAssignModal()}
       >
         파트너 및 교육 배정
       </CmsButton>
@@ -192,14 +253,23 @@ export function UjatEducationProgressVolunteerDetailView({
           />
         ) : (
           <UjatEducationProgressVolunteerAssignmentProgressTab
+            ref={assignmentProgressTabRef}
             volunteerId={detail.volunteerId}
             volunteerName={detail.applicant.name}
-            assignModalTrigger={assignModalTrigger}
+            withdrawnScheduleRowIds={withdrawnScheduleRowIds}
           />
         )}
       </div>
 
       {personalInfoRevealModal}
+
+      <UjatEducationProgressActivityWithdrawModal
+        open={activityWithdrawModalOpen}
+        participantName={detail.applicant.name}
+        scheduleOptions={activityWithdrawScheduleOptions}
+        onCancel={handleCancelActivityWithdraw}
+        onConfirm={handleConfirmActivityWithdraw}
+      />
     </div>
   )
 }

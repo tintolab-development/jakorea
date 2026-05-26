@@ -278,7 +278,7 @@ export function PermissionModal({
         </div>
       </ContentModal>
 
-      {showNotifyTiming && notifyTimingOptions === 'three' ? (
+      {showNotifyTiming ? (
         <DateTimePickerPopover
           open={open && notifyTiming === 'manual' && dateTimePickerOpen}
           onClose={() => setDateTimePickerOpen(false)}

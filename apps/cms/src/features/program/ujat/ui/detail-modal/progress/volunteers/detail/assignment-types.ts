@@ -27,6 +27,7 @@ export type UjatVolunteerClassDisplay =
 export type UjatVolunteerAttendanceDisplay =
   | { kind: 'present' }
   | { kind: 'late'; time: string }
+  | { kind: 'absence' }
   | { kind: 'excused_absence' }
   | { kind: 'dash' }
 
@@ -54,6 +55,8 @@ export function isVolunteerAssignmentClassWithdrawn(row: UjatVolunteerAssignment
 
 export type UjatVolunteerAssignmentAbsenceReason = {
   id: string
+  /** 출결 행과의 연결 키(출결 정정 갱신용) */
+  scheduleRowId?: string
   /** 표시용 짧은 일자 (예: 5월 8일) */
   dateLabel: string
   reason: string

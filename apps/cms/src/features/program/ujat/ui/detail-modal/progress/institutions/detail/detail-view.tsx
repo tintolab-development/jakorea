@@ -20,7 +20,7 @@ import {
 import {
   UjatEducationProgressActivityWithdrawModal,
   type UjatEducationProgressActivityWithdrawPayload,
-} from './activity-withdraw-modal'
+} from '../../shared/activity-withdraw-modal'
 import { UjatEducationProgressChangeClassModal } from './change-class-modal'
 import {
   applyClassChangesToGradeBlocks,
@@ -257,7 +257,7 @@ export function UjatEducationProgressInstitutionDetailView({
 
       <UjatEducationProgressActivityWithdrawModal
         open={withdrawConfirmOpen}
-        institutionName={detail.institutionName}
+        participantName={detail.institutionName}
         scheduleOptions={withdrawScheduleOptions}
         onCancel={handleCancelWithdraw}
         onConfirm={handleConfirmWithdraw}

@@ -94,6 +94,9 @@ function renderAttendance(attendance: UjatVolunteerAttendanceDisplay) {
       <span className="ujat-volunteer-assignment-table__attendance-excused">사유 불참</span>
     )
   }
+  if (attendance.kind === 'absence') {
+    return '결석'
+  }
   return '출석'
 }
 

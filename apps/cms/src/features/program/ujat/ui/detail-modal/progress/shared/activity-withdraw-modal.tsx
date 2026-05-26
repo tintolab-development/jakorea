@@ -22,7 +22,8 @@ export type UjatEducationProgressActivityWithdrawScheduleOption = {
 
 export type UjatEducationProgressActivityWithdrawModalProps = {
   open: boolean
-  institutionName: string
+  /** 기관명 또는 봉사자명 */
+  participantName: string
   scheduleOptions: ReadonlyArray<UjatEducationProgressActivityWithdrawScheduleOption>
   onCancel: () => void
   onConfirm: (payload: UjatEducationProgressActivityWithdrawPayload) => void
@@ -30,7 +31,7 @@ export type UjatEducationProgressActivityWithdrawModalProps = {
 
 export function UjatEducationProgressActivityWithdrawModal({
   open,
-  institutionName,
+  participantName,
   scheduleOptions,
   onCancel,
   onConfirm,
@@ -93,7 +94,7 @@ export function UjatEducationProgressActivityWithdrawModal({
       className="ujat-education-progress-activity-withdraw-modal"
       wrapClassName="ujat-education-progress-activity-withdraw-modal-wrap"
       footer={footer}
-      description={`**[${institutionName}]**의 프로그램 참여 활동을 포기 처리하시겠습니까?\n활동을 중단할 교육 일정을 선택해 주세요`}
+      description={`**[${participantName}]**의 프로그램 참여 활동을 포기 처리하시겠습니까?\n활동을 중단할 교육 일정을 선택해 주세요`}
     >
       <div className="ujat-education-progress-activity-withdraw-modal__form">
         <CmsInput
