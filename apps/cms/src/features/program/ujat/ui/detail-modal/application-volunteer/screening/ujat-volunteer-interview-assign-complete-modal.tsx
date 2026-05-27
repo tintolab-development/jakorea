@@ -45,14 +45,7 @@ export function UjatVolunteerInterviewAssignCompleteModal({
       width={MODAL_WIDTH}
       zIndex={MODAL_Z_INDEX}
       className="ujat-volunteer-interview-assign-complete-modal"
-      description={
-        <p className="ujat-volunteer-interview-assign-complete-modal__description">
-          <span className="ujat-volunteer-interview-assign-complete-modal__description-name">
-            [{applicantName}]
-          </span>{' '}
-          봉사자의 {descriptionAction}
-        </p>
-      }
+      description={`**[${applicantName}]** 봉사자의 ${descriptionAction}`}
       footer={
         <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>
           확인

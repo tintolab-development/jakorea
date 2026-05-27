@@ -33,6 +33,44 @@ export const UJAT_INST_APP_ID_PARAM = 'instAppId'
 export const UJAT_EDU_INST_ID_PARAM = 'eduInstId'
 export const UJAT_EDU_INST_TAB_PARAM = 'eduInstTab'
 
+/** 교육 진행 > 참여 봉사자 — 관리자 대리 신청서 작성(회원 선택 후) */
+export const UJAT_VOL_ADD_MEMBER_ID_PARAM = 'volAddMemberId'
+
+/** 교육 진행 > 참여 봉사자 목록 → 봉사자 상세 */
+export const UJAT_EDU_VOL_ID_PARAM = 'eduVolId'
+export const UJAT_EDU_VOL_TAB_PARAM = 'eduVolTab'
+
+export type UjatEducationProgressVolunteerDetailTab = 'application' | 'assignment_progress'
+
+const UJAT_EDU_PROGRESS_VOLUNTEER_DETAIL_TABS: readonly UjatEducationProgressVolunteerDetailTab[] =
+  ['application', 'assignment_progress']
+
+export const UJAT_EDU_PROGRESS_VOLUNTEER_DETAIL_TAB_LABELS: Record<
+  UjatEducationProgressVolunteerDetailTab,
+  string
+> = {
+  application: '신청 정보',
+  assignment_progress: '교육 배정 및 진행 현황',
+}
+
+export function isUjatEducationProgressVolunteerDetailTab(
+  tab: string
+): tab is UjatEducationProgressVolunteerDetailTab {
+  return (UJAT_EDU_PROGRESS_VOLUNTEER_DETAIL_TABS as readonly string[]).includes(tab)
+}
+
+export function parseUjatEduVolTab(
+  searchParams: URLSearchParams
+): UjatEducationProgressVolunteerDetailTab {
+  const raw = searchParams.get(UJAT_EDU_VOL_TAB_PARAM)
+  if (raw && isUjatEducationProgressVolunteerDetailTab(raw)) return raw
+  return 'application'
+}
+
+export function isUjatEducationProgressVolunteersTab(tab: string): boolean {
+  return /^edu_h[12]_volunteers$/.test(tab)
+}
+
 export type UjatEducationProgressInstitutionDetailTab = 'application' | 'assignment' | 'posts'
 
 const UJAT_EDU_PROGRESS_INSTITUTION_DETAIL_TABS: readonly UjatEducationProgressInstitutionDetailTab[] =

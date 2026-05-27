@@ -69,12 +69,7 @@ export function NoticeDeleteConfirmModal({
       zIndex={zIndex}
       wrapClassName={wrapClassName}
       className={modalClassName}
-      description={
-        <div className="notice-delete-confirm-modal__body">
-          <p className="notice-delete-confirm-modal__line">{line1}</p>
-          <p className="notice-delete-confirm-modal__line">{line2}</p>
-        </div>
-      }
+      description={`${line1}\n${line2}`}
       footer={
         <>
           <CmsButton variant="secondary" size="large" onClick={onCancel}>

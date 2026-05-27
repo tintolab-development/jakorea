@@ -5,16 +5,16 @@ import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
 import { NameBlockField } from '../fields/name-block-field'
 import {
-  affiliationAndInstructorCareerLine,
+  affiliationAndInstructorCareerView,
   detailAddressView,
-  formatGenderBirthLine,
+  genderBirthView,
   highestEducationLine,
   instructorApplicationTypeLine,
-  instructorBankLine,
+  instructorBankView,
   instructorFeeGradeLine,
   jaEvaluationGradeLine,
   oneLineIntroLine,
-  socialLine,
+  socialView,
 } from '../display'
 import {
   PermissionApprovalStatusWithResend,
@@ -36,7 +36,7 @@ export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
   return (
     <EditableRow type="double">
       <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
-      <EditableField label="연동된 소셜 계정" readOnlyDisplay view={<span>{socialLine(user)}</span>} />
+      <EditableField label="연동된 소셜 계정" readOnlyDisplay view={<span>{socialView(user)}</span>} />
     </EditableRow>
   )
 }
@@ -145,7 +145,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                 />
               </span>
             ) : (
-              <span>{formatGenderBirthLine(user)}</span>
+              genderBirthView(user)
             ),
           },
         ]}
@@ -171,7 +171,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         <EditableField
           label="정산 계좌 정보"
           readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={<span>{instructorBankLine(user, personalInfoRevealed)}</span>}
+          view={<span>{instructorBankView(user, personalInfoRevealed)}</span>}
           edit={
             <span className="detail-info-form-inputs-wrapper-no-gap">
               <CmsInput
@@ -214,7 +214,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         <EditableField
           label="소속 및 강사 경력"
           readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={<span>{affiliationAndInstructorCareerLine(user)}</span>}
+          view={<span>{affiliationAndInstructorCareerView(user)}</span>}
           edit={<CmsInput value={d?.instructorCareerSummaryLabel ?? ''} onChange={e => onMemberInfoDraftChange?.({ instructorCareerSummaryLabel: e.target.value })} inputSize="medium" width="100%" placeholder="강사 경력 요약" />}
         />
       </EditableRow>

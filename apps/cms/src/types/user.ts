@@ -164,11 +164,15 @@ export interface UserListRowMetrics {
   institutionProgramAttendanceCount?: number
   /** 학교(기관): 등록된 교사 수 */
   institutionRegisteredTeacherCount?: number
-  /** 강사: 유형 라벨 */
+  /**
+   * @deprecated 강사비 등급이 저장되던 구 필드. 신규 코드는 `instructorFeeGradeLabel`을 사용한다.
+   */
   instructorTypeLabel?: string
+  /** 강사: 강사비 등급 */
+  instructorFeeGradeLabel?: string
   /**
    * 회원·권한 UI 전용 강사 신청/소속 구분 (예: JA 강사단, 특강 강사, 제미나이 강사단).
-   * 정산의 강사비 등급(`instructorTypeLabel`)과 별도 — 없으면 클라이언트가 소속·경력 문구로 추론 가능.
+   * 정산의 강사비 등급과 별도 — 없으면 클라이언트가 소속·경력 문구로 추론 가능.
    */
   permissionApplicationTypeLabel?: string
   /** 강사: JA 평가 등급 */

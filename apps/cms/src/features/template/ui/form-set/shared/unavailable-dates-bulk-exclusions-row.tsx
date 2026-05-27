@@ -1,5 +1,4 @@
 import type { Dayjs } from 'dayjs'
-import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { DirectUnavailableDateAddButton } from '@/features/template/ui/form-set/shared/direct-unavailable-date-add-button'
@@ -12,9 +11,9 @@ export type UnavailableDatesBulkExclusionsRowProps = {
   appliedDates?: string[]
   onApplyDatesChange?: (dates: string[]) => void
   /** 모달 본문 첫 줄 — 면접/교육 등 맥락별 (예: 면접 진행 불가한 날짜를…) */
-  modalUnavailableDescriptionLead?: ReactNode
+  modalUnavailableDescriptionLead?: string
   /** 모달 본문 둘째 줄 */
-  modalUnavailableDescriptionSecond?: ReactNode
+  modalUnavailableDescriptionSecond?: string
   /**
    * `false`이면 「진행 불가일 직접 추가」 클릭 시 날짜 모달을 열지 않고 `onDirectUnavailableModalBlocked`만 호출
    * (예: 교육 진행 일정 범위 미선택)

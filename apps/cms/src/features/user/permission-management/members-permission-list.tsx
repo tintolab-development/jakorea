@@ -619,16 +619,7 @@ export const MembersPermissionList = forwardRef<
           onCancel={() => setBulkApproveBlockedSelectedCount(null)}
           title="일괄 신청 승인 불가 안내"
           width={480}
-          description={
-            <>
-              <span className="fs-16">
-                선택한 {bulkApproveBlockedSelectedCount}명의 회원 중 승인 완료 혹은 신청 반려 상태인
-                회원이 있습니다.
-              </span>
-              <br />
-              <span className="fs-16">다시 확인 해주세요.</span>
-            </>
-          }
+          description={`선택한 **${bulkApproveBlockedSelectedCount}**명의 회원 중 승인 완료 혹은 신청 반려 상태인 회원이 있습니다.\n다시 확인 해주세요.`}
           footer={
             <CmsButton
               variant="secondary"
@@ -650,16 +641,7 @@ export const MembersPermissionList = forwardRef<
           onCancel={() => setBulkRejectBlockedSelectedCount(null)}
           title="일괄 신청 반려 불가 안내"
           width={480}
-          description={
-            <>
-              <span className="fs-16">
-                선택한 {bulkRejectBlockedSelectedCount}명의 회원 중 승인 완료 혹은 신청 반려 상태인
-                회원이 있습니다
-              </span>
-              <br />
-              <span className="fs-16">다시 확인 해주세요.</span>
-            </>
-          }
+          description={`선택한 **${bulkRejectBlockedSelectedCount}**명의 회원 중 승인 완료 혹은 신청 반려 상태인 회원이 있습니다.\n다시 확인 해주세요.`}
           footer={
             <CmsButton
               variant="secondary"

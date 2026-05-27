@@ -144,14 +144,7 @@ export function LectureReportSubmissionHistoryModal({
       title="강의보고서 제출 내역"
       size="large"
       className="lecture-report-submission-history-modal"
-      description={
-        <>
-          <span className="lecture-report-submission-history-modal__description-program">
-            [{programTitle}]
-          </span>{' '}
-          프로그램의 과제 및 실습 제출 내역입니다.
-        </>
-      }
+      description={`**[${programTitle}]** 프로그램의 과제 및 실습 제출 내역입니다.`}
       footer={
         <>
           <CmsButton variant="secondary" size="large" width={160} onClick={onCancel}>

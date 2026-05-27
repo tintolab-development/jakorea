@@ -1,7 +1,7 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '../../application-institution/list/regions'
 import { getUjatEducationProgressScheduleFilterOptions } from '@/data/mock/ujat-education-progress-institutions-mock'
-import type { EducationProgressHalfKey } from '../ujat-education-progress-tabs'
+import type { EducationProgressHalfKey } from '../tabs'
 
 export const UJAT_EDU_PROGRESS_INSTITUTION_FILTER_ALL = ''
 

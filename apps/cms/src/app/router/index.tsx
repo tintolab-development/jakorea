@@ -263,8 +263,8 @@ export const router = createBrowserRouter([
         path: 'programs',
         children: [
           { index: true, element: <ProgramListPage /> },
-          { path: 'general', element: programCategoryPreparing },
-          { path: 'general/*', element: programCategoryPreparing },
+          { path: 'general', element: <ProgramListPage /> },
+          { path: 'general/*', element: <ProgramListPage /> },
           { path: 'company-school', element: programCategoryPreparing },
           { path: 'company-school/*', element: programCategoryPreparing },
           { path: 'ujat', element: <UjatProgramListPage /> },

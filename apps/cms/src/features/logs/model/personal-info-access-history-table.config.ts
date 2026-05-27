@@ -9,13 +9,49 @@ import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 export type PersonalInfoAccessHistoryPendingFilters = {
   accessPurpose: string
   accessorName: string
-  dateRange: [Dayjs, Dayjs] | null
+  dateRange: PersonalInfoAccessHistoryPendingDateRange
 }
 
-function dayjsPairEqual(a: [Dayjs, Dayjs] | null, b: [Dayjs, Dayjs] | null): boolean {
+type PersonalInfoAccessHistoryPendingDateRange =
+  | [Dayjs, Dayjs]
+  | [Dayjs | null, Dayjs | null]
+  | null
+
+function dayjsPairEqual(
+  a: PersonalInfoAccessHistoryPendingDateRange,
+  b: PersonalInfoAccessHistoryPendingDateRange
+): boolean {
   if (a == null && b == null) return true
   if (a == null || b == null) return false
-  return a[0].valueOf() === b[0].valueOf() && a[1].valueOf() === b[1].valueOf()
+  return (a[0]?.valueOf() ?? null) === (b[0]?.valueOf() ?? null) &&
+    (a[1]?.valueOf() ?? null) === (b[1]?.valueOf() ?? null)
+}
+
+function normalizeDateRangePickerValue(value: unknown): PersonalInfoAccessHistoryPendingDateRange {
+  if (!Array.isArray(value) || value.length < 2) return null
+  const start = (value[0] ?? null) as Dayjs | null
+  const end = (value[1] ?? null) as Dayjs | null
+  if (start == null && end == null) return null
+  return [start, end]
+}
+
+const urlDateRangeSyncState = { hadCompleteInUrl: false }
+
+function resolvePendingDateRangeFromUrl(args: {
+  from: string | null
+  to: string | null
+  prev: PersonalInfoAccessHistoryPendingDateRange
+}): PersonalInfoAccessHistoryPendingDateRange {
+  const { from, to, prev } = args
+  if (from && to) {
+    urlDateRangeSyncState.hadCompleteInUrl = true
+    return [dayjs(from), dayjs(to)]
+  }
+  if (urlDateRangeSyncState.hadCompleteInUrl) {
+    urlDateRangeSyncState.hadCompleteInUrl = false
+    return null
+  }
+  return prev ?? null
 }
 
 function filterLogs(data: PersonalInfoAccessLog[], searchParams: URLSearchParams): PersonalInfoAccessLog[] {
@@ -91,9 +127,13 @@ export const personalInfoAccessHistoryTablePageConfig: TablePageConfig<
       const accessorName = searchParams.get('pia_accessor') ?? ''
       const from = searchParams.get('pia_from')
       const to = searchParams.get('pia_to')
-      const dateRange = from && to ? ([dayjs(from), dayjs(to)] as [Dayjs, Dayjs]) : null
 
       setPendingFilters(prev => {
+        const dateRange = resolvePendingDateRangeFromUrl({
+          from,
+          to,
+          prev: prev.dateRange,
+        })
         const next: PersonalInfoAccessHistoryPendingFilters = {
           accessPurpose,
           accessorName,
@@ -118,11 +158,7 @@ export const personalInfoAccessHistoryTablePageConfig: TablePageConfig<
     getBaseCount: ({ filteredData }) => filteredData.length,
     onFilterChange: ({ prev, key, value }) => {
       if (key === 'dateRange') {
-        const range = Array.isArray(value) ? value : null
-        if (range?.[0] && range?.[1]) {
-          return { ...prev, dateRange: [range[0], range[1]] }
-        }
-        return { ...prev, dateRange: null }
+        return { ...prev, dateRange: normalizeDateRangePickerValue(value) }
       }
       if (key === 'accessPurpose' || key === 'accessorName') {
         return { ...prev, [key]: String(value ?? '') }

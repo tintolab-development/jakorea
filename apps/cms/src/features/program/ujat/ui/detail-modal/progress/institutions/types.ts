@@ -1,5 +1,5 @@
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
-import type { EducationProgressHalfKey } from '../ujat-education-progress-tabs'
+import type { EducationProgressHalfKey } from '../tabs'
 
 export const UJAT_EDU_PROGRESS_INSTITUTION_GRADE_LABELS = [
   '1학년',

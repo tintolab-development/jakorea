@@ -8,13 +8,13 @@
 import { Card, Button, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { Program } from '@/types/domain'
 import { getCapacity } from '@/features/program/general/lib/program-helpers'
 import { ProgramLifecycleStatusText } from '@/shared/components/program-lifecycle-status-text'
 import { getRecruitmentStatusList } from '../api/admin-dashboard-service'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
-import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import '@/shared/ui/widget-more-button.css'
 import './dashboard-widget-table.css'
 
@@ -25,6 +25,7 @@ const EMPTY_IDS: string[] = []
 const recruitmentStatusCache = new Map<string, Program[]>()
 
 export function RecruitmentStatusWidget() {
+  const navigate = useNavigate()
   const cardRef = useRef<HTMLDivElement>(null)
   const [halfColumn, setHalfColumn] = useState(false)
   const allowedProgramIds =
@@ -156,7 +157,7 @@ export function RecruitmentStatusWidget() {
         <Button
           type="link"
           size="small"
-          onClick={() => window.alert(WIDGET_MORE_ALERT_MESSAGE)}
+          onClick={() => navigate('/programs/general')}
           className="widget-more-button"
         >
           더보기
@@ -170,9 +171,9 @@ export function RecruitmentStatusWidget() {
         pagination={false}
         loading={loading}
         className="dashboard-widget-table__data"
-        onRow={() => ({
+        onRow={record => ({
           onClick: () => {
-            window.alert(WIDGET_MORE_ALERT_MESSAGE)
+            navigate(`/programs/general?programId=${encodeURIComponent(record.id)}`)
           },
         })}
       />

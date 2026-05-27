@@ -6,6 +6,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
+import {
+  buildSearchParams,
+  makeBreadcrumbItem,
+} from '@/shared/lib/detail-fullpage-query-stack'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useSponsorService } from '@/features/sponsor/hooks/use-sponsor-service'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
@@ -17,7 +22,19 @@ import { UjatInstitutionApplicationList } from './application-institution/list/l
 import { UjatInstitutionApplicationDetailPage } from './application-institution/detail/detail-page'
 import { UjatInstitutionScheduleAssignPage } from './application-institution/schedule-assign/page'
 import { UjatInstitutionScheduleConfirmList } from './application-institution/schedule-confirm/list'
-import { UjatEducationProgressInstitutionsSection } from './progress/institutions/ujat-education-progress-institutions-section'
+import { UjatEducationProgressSummarySection } from './progress/progress-summary/section'
+import { UjatEducationProgressAssignmentsSection } from './progress/assignments/section'
+import { UjatEducationProgressAttendanceSection } from './progress/attendance/section'
+import { UjatEducationProgressInstitutionsSection } from './progress/institutions/section'
+import { UjatEducationProgressRegionAssignmentSection } from './progress/region/section'
+import { UjatEducationProgressVolunteersSection } from './progress/volunteers/section'
+import { UjatEducationProgressVolunteerAddRegistrationView } from './progress/volunteers/add-registration-view'
+import { UjatEducationProgressVolunteerDetailPage } from './progress/volunteers/detail/detail-page'
+import {
+  formatUjatEducationProgressVolunteerDetailTitle,
+  getUjatEducationProgressVolunteerDetail,
+  isUjatEducationProgressVolunteerInList,
+} from './progress/volunteers/detail/detail-mock'
 import { UjatInstitutionScheduleConfirmDetailPage } from './application-institution/schedule-confirm/detail-page'
 import type { Program } from '@/types/domain'
 import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
@@ -30,21 +47,28 @@ import {
   UJAT_EDU_INST_ID_PARAM,
   UJAT_EDU_INST_TAB_PARAM,
   UJAT_INST_APP_ID_PARAM,
+  UJAT_VOL_ADD_MEMBER_ID_PARAM,
+  UJAT_EDU_VOL_ID_PARAM,
+  UJAT_EDU_VOL_TAB_PARAM,
+  isUjatEducationProgressVolunteersTab,
+  parseUjatEduVolTab,
   type UjatDetailLnbKey,
   type UjatEducationProgressInstitutionDetailTab,
+  type UjatEducationProgressVolunteerDetailTab,
 } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { isUjatVolunteerApplicantInTabList } from './application-volunteer/screening/ujat-volunteer-applicant-detail-url'
 import {
   educationProgressHalfFromTab,
   isEducationProgressInstitutionsTab,
   isUjatEducationProgressInstitutionInList,
-} from './progress/institutions/detail/ujat-education-progress-institution-detail-url'
-import { getUjatEducationProgressInstitutionName } from './progress/institutions/detail/ujat-education-progress-institution-detail-mock'
-import { UjatEducationProgressInstitutionDetailPage } from './progress/institutions/detail/ujat-education-progress-institution-detail-page'
+} from './progress/institutions/detail/detail-url'
+import { getUjatEducationProgressInstitutionName } from './progress/institutions/detail/detail-mock'
+import { UjatEducationProgressInstitutionDetailPage } from './progress/institutions/detail/detail-page'
 import {
   getUjatSurveyMenuItemsForProgram,
   getUjatVolunteerInterviewEnabled,
   UJAT_SURVEY_LEGACY_TAB_MAP,
+  type UjatSurveyMenuItem,
 } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import { UjatProgramDetailSidebar } from './ujat-program-detail-sidebar'
 import { UjatProgramDetailCommonInfoView } from './info/ujat-program-detail-common-info-view'
@@ -54,8 +78,11 @@ import {
   educationProgressScreenTitle,
   EDU_PROGRESS_LEGACY_TAB_MAP,
   isValidEducationProgressTab,
-} from './progress/ujat-education-progress-tabs'
-import { isValidUjatInstitutionAppTab } from './application-institution/tabs'
+} from './progress/tabs'
+import {
+  isValidUjatInstitutionAppTab,
+  UJAT_INSTITUTION_APP_CHILD_ROWS,
+} from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsButton } from '@/shared/ui'
 import {
@@ -68,6 +95,7 @@ import { UjatProgramRecruitmentTabsRow } from './info/ujat-program-recruitment-t
 import { UjatVolunteerDocScreeningSection } from './application-volunteer/screening/ujat-volunteer-doc-screening-section'
 import { UjatVolunteerDocPassedSection } from './application-volunteer/screening/ujat-volunteer-doc-passed-section'
 import { UjatVolunteerInterview2Section } from './application-volunteer/screening/ujat-volunteer-interview2-section'
+import type { UjatVolunteerApplicantDetailMeta } from './application-volunteer/screening/use-ujat-volunteer-applicant-detail'
 import '@toast-ui/editor/dist/toastui-editor.css'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './ujat-program-detail-fullpage-modal.css'
@@ -75,6 +103,26 @@ import './ujat-program-detail-fullpage-modal.css'
 const TAB_PARAM = 'tab'
 const LNB_PARAM = 'lnb'
 const EDIT_PARAM = 'edit'
+const UJAT_DETAIL_QUERY_PARAMS = [
+  'programId',
+  LNB_PARAM,
+  TAB_PARAM,
+  EDIT_PARAM,
+  UJAT_INST_APP_ID_PARAM,
+  UJAT_APPLICANT_ID_PARAM,
+  UJAT_EDU_INST_ID_PARAM,
+  UJAT_EDU_INST_TAB_PARAM,
+  UJAT_VOL_ADD_MEMBER_ID_PARAM,
+] as const
+const UJAT_NESTED_DETAIL_QUERY_PARAMS = [
+  UJAT_INST_APP_ID_PARAM,
+  UJAT_APPLICANT_ID_PARAM,
+  UJAT_EDU_INST_ID_PARAM,
+  UJAT_EDU_INST_TAB_PARAM,
+  UJAT_VOL_ADD_MEMBER_ID_PARAM,
+  UJAT_EDU_VOL_ID_PARAM,
+  UJAT_EDU_VOL_TAB_PARAM,
+] as const
 
 export interface UjatProgramDetailFullPageModalProps {
   open: boolean
@@ -235,6 +283,15 @@ function normalizeUjatDetailParams(
     }
   }
 
+  const volAddMemberIdRaw = next.get(UJAT_VOL_ADD_MEMBER_ID_PARAM)
+  if (
+    lnb !== 'education_progress' ||
+    !isUjatEducationProgressVolunteersTab(tab) ||
+    !volAddMemberIdRaw?.trim()
+  ) {
+    next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
+  }
+
   const before = searchParams.toString()
   const after = next.toString()
   if (before === after) return null
@@ -254,6 +311,84 @@ const VOLUNTEER_TAB_LABELS: Record<string, string> = {
 
 function volunteerScreenTitle(tab: string): string {
   return VOLUNTEER_TAB_LABELS[tab] ?? tab
+}
+
+function ujatLnbBreadcrumbLabel(lnb: UjatDetailLnbKey, tab: string): string {
+  switch (lnb) {
+    case 'info':
+      return '프로그램 정보'
+    case 'institution_applications':
+      return '기관 신청 목록'
+    case 'volunteer_h1':
+      return '상반기 봉사자 신청 목록'
+    case 'volunteer_h2':
+      return '하반기 봉사자 신청 목록'
+    case 'education_progress':
+      if (tab === 'edu_summary') return '교육 진행 요약'
+      if (tab.startsWith('edu_h2_')) return '하반기 교육 진행 현황'
+      return '상반기 교육 진행 현황'
+    case 'survey':
+      return '설문 관리'
+    case 'managers':
+      return '담당자 정보'
+    default:
+      return '프로그램 정보'
+  }
+}
+
+function ujatChildBreadcrumbLabel(
+  lnb: UjatDetailLnbKey,
+  tab: string,
+  surveyItems: UjatSurveyMenuItem[]
+): string | null {
+  if (lnb === 'info') {
+    return tab === 'info' ? '공통 정보' : isUjatRecruitTab(tab) ? '모집 정보' : null
+  }
+  if (lnb === 'institution_applications') {
+    return UJAT_INSTITUTION_APP_CHILD_ROWS.find(row => row.tab === tab)?.label ?? null
+  }
+  if (lnb === 'volunteer_h1' || lnb === 'volunteer_h2') {
+    if (tab.endsWith('_all')) return '신청자 목록'
+    if (tab.endsWith('_doc1')) return '1차 서류 심사 대상자'
+    if (tab.endsWith('_doc_passed')) return '1차 서류 합격자'
+    if (tab.endsWith('_interview2')) return '2차 면접 대상자'
+    return null
+  }
+  if (lnb === 'education_progress' && tab !== 'edu_summary') {
+    const screenTitle = educationProgressScreenTitle(tab)
+    return screenTitle.includes(' — ') ? screenTitle.split(' — ')[1] : screenTitle
+  }
+  if (lnb === 'survey') {
+    return surveyItems.find(item => item.key === tab)?.label ?? null
+  }
+  return null
+}
+
+function ujatLnbBreadcrumbTargetTab(
+  lnb: UjatDetailLnbKey,
+  activeTab: string,
+  interview: boolean,
+  surveyKeys: string[]
+): string {
+  if (lnb === 'education_progress') {
+    if (activeTab === 'edu_summary') return 'edu_summary'
+    return activeTab.startsWith('edu_h2_')
+      ? defaultEducationProgressTabForHalf('h2')
+      : defaultEducationProgressTabForHalf('h1')
+  }
+  return defaultTabForLnb(lnb, interview, surveyKeys)
+}
+
+function isUjatVolunteerApplicantDetailRoute(lnb: UjatDetailLnbKey, tab: string): boolean {
+  return (
+    (lnb === 'volunteer_h1' || lnb === 'volunteer_h2') &&
+    (tab === 'vh1_doc1' ||
+      tab === 'vh2_doc1' ||
+      tab === 'vh1_doc_passed' ||
+      tab === 'vh2_doc_passed' ||
+      tab === 'vh1_interview2' ||
+      tab === 'vh2_interview2')
+  )
 }
 
 function UjatPlaceholderSection({ title, description }: { title: string; description: string }) {
@@ -361,6 +496,39 @@ export function UjatProgramDetailFullPageModal({
     ? parseUjatEduInstTab(searchParams)
     : ('application' as UjatEducationProgressInstitutionDetailTab)
 
+  const volAddMemberIdEarly = open ? searchParams.get(UJAT_VOL_ADD_MEMBER_ID_PARAM) : null
+
+  const eduVolunteerHalf =
+    activeTab.startsWith('edu_h2') ? 'h2' : activeTab.startsWith('edu_h1') ? 'h1' : null
+  const eduVolunteerIdRaw = open ? searchParams.get(UJAT_EDU_VOL_ID_PARAM) : null
+  const eduVolunteerDetailId =
+    eduVolunteerIdRaw &&
+    eduVolunteerHalf &&
+    displayProgram?.id &&
+    isUjatEducationProgressVolunteerInList(eduVolunteerHalf, eduVolunteerIdRaw) &&
+    !volAddMemberIdEarly
+      ? eduVolunteerIdRaw
+      : null
+
+  const eduVolunteerDetailTab = open
+    ? parseUjatEduVolTab(searchParams)
+    : ('application' as UjatEducationProgressVolunteerDetailTab)
+
+  const eduVolunteerDetailMeta = useMemo(() => {
+    if (!eduVolunteerDetailId || !eduVolunteerHalf) return null
+    const detail = getUjatEducationProgressVolunteerDetail(
+      displayProgram?.id ?? '',
+      eduVolunteerHalf,
+      eduVolunteerDetailId
+    )
+    if (!detail) return null
+    const volunteerName = detail.applicant.name
+    return {
+      title: formatUjatEducationProgressVolunteerDetailTitle(eduVolunteerHalf, volunteerName),
+      breadcrumbLabel: volunteerName,
+    }
+  }, [displayProgram?.id, eduVolunteerDetailId, eduVolunteerHalf])
+
   const institutionDetailTitlePrefix = useMemo(() => {
     if (!institutionDetailId) return '신청 기관 상세'
     if (activeLnb === 'institution_applications' && activeTab === 'inst_schedule_confirm') {
@@ -412,7 +580,7 @@ export function UjatProgramDetailFullPageModal({
         next.delete(UJAT_INST_APP_ID_PARAM)
       }
       next.delete(EDIT_PARAM)
-      setSearchParams(next, { replace: true })
+      setSearchParams(next, { replace: id == null })
     },
     [programId, searchParams, setSearchParams, activeTab]
   )
@@ -436,6 +604,10 @@ export function UjatProgramDetailFullPageModal({
         next.delete(UJAT_EDU_INST_ID_PARAM)
         next.delete(UJAT_EDU_INST_TAB_PARAM)
       }
+      if (lnb !== 'education_progress' || !isUjatEducationProgressVolunteersTab(tab)) {
+        next.delete(UJAT_EDU_VOL_ID_PARAM)
+        next.delete(UJAT_EDU_VOL_TAB_PARAM)
+      }
       setSearchParams(next, { replace: true })
     },
     [programId, searchParams, setSearchParams, activeTab]
@@ -455,12 +627,50 @@ export function UjatProgramDetailFullPageModal({
         next.delete(UJAT_EDU_INST_ID_PARAM)
         next.delete(UJAT_EDU_INST_TAB_PARAM)
       }
+      next.delete(UJAT_EDU_VOL_ID_PARAM)
+      next.delete(UJAT_EDU_VOL_TAB_PARAM)
+      next.delete(UJAT_APPLICANT_ID_PARAM)
+      next.delete(UJAT_INST_APP_ID_PARAM)
+      next.delete(EDIT_PARAM)
+      setSearchParams(next, { replace: id == null })
+    },
+    [programId, searchParams, setSearchParams]
+  )
+
+  const setEduVolunteerId = useCallback(
+    (id: string | null) => {
+      if (!programId) return
+      const next = new URLSearchParams(searchParams)
+      next.set('programId', programId)
+      if (id) {
+        next.set(UJAT_EDU_VOL_ID_PARAM, id)
+        if (!next.get(UJAT_EDU_VOL_TAB_PARAM)) {
+          next.set(UJAT_EDU_VOL_TAB_PARAM, 'application')
+        }
+      } else {
+        next.delete(UJAT_EDU_VOL_ID_PARAM)
+        next.delete(UJAT_EDU_VOL_TAB_PARAM)
+      }
+      next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
+      next.delete(UJAT_EDU_INST_ID_PARAM)
+      next.delete(UJAT_EDU_INST_TAB_PARAM)
       next.delete(UJAT_APPLICANT_ID_PARAM)
       next.delete(UJAT_INST_APP_ID_PARAM)
       next.delete(EDIT_PARAM)
       setSearchParams(next, { replace: true })
     },
     [programId, searchParams, setSearchParams]
+  )
+
+  const setEduVolunteerDetailTab = useCallback(
+    (tab: UjatEducationProgressVolunteerDetailTab) => {
+      if (!programId || !eduVolunteerDetailId) return
+      const next = new URLSearchParams(searchParams)
+      next.set('programId', programId)
+      next.set(UJAT_EDU_VOL_TAB_PARAM, tab)
+      setSearchParams(next, { replace: true })
+    },
+    [programId, eduVolunteerDetailId, searchParams, setSearchParams]
   )
 
   const setEduInstitutionDetailTab = useCallback(
@@ -677,23 +887,13 @@ export function UjatProgramDetailFullPageModal({
   }, [activeRecruitTab, institutionsTriggerSave, volunteersTriggerSave, setEditMode])
 
   const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
-  const [volunteerApplicantDetailTitle, setVolunteerApplicantDetailTitle] = useState<string | null>(
-    null
-  )
+  const registerVolunteerFromMemberRef = useRef<(memberId: string) => void>(() => {})
+  const [volunteerApplicantDetailMeta, setVolunteerApplicantDetailMeta] =
+    useState<UjatVolunteerApplicantDetailMeta | null>(null)
 
   useEffect(() => {
-    const isVolunteerDocScreening = activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2'
-    const isVolunteerApplicantTab =
-      activeTab === 'vh1_doc1' ||
-      activeTab === 'vh2_doc1' ||
-      activeTab === 'vh1_doc_passed' ||
-      activeTab === 'vh2_doc_passed' ||
-      activeTab === 'vh1_interview2' ||
-      activeTab === 'vh2_interview2' ||
-      activeTab === 'vh1_interview2' ||
-      activeTab === 'vh2_interview2'
-    if (!isVolunteerDocScreening || !isVolunteerApplicantTab) {
-      setVolunteerApplicantDetailTitle(null)
+    if (!isUjatVolunteerApplicantDetailRoute(activeLnb, activeTab)) {
+      setVolunteerApplicantDetailMeta(null)
     }
   }, [activeLnb, activeTab])
 
@@ -708,6 +908,9 @@ export function UjatProgramDetailFullPageModal({
     next.delete(UJAT_APPLICANT_ID_PARAM)
     next.delete(UJAT_EDU_INST_ID_PARAM)
     next.delete(UJAT_EDU_INST_TAB_PARAM)
+    next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
+    next.delete(UJAT_EDU_VOL_ID_PARAM)
+    next.delete(UJAT_EDU_VOL_TAB_PARAM)
     navigate(
       { pathname: location.pathname, search: next.toString() ? `?${next}` : '' },
       {
@@ -716,7 +919,47 @@ export function UjatProgramDetailFullPageModal({
     )
   }, [location.pathname, navigate, onClose, searchParams])
 
+  const volAddMemberId = open ? searchParams.get(UJAT_VOL_ADD_MEMBER_ID_PARAM) : null
+
+  const closeVolAddRegistration = useCallback(() => {
+    const next = new URLSearchParams(searchParams)
+    next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [programId, searchParams, setSearchParams])
+
+  const openVolAddRegistration = useCallback(
+    (memberId: string) => {
+      const next = new URLSearchParams(searchParams)
+      if (programId) next.set('programId', programId)
+      next.set(LNB_PARAM, 'education_progress')
+      const halfTab = activeTab.startsWith('edu_h2') ? 'edu_h2_volunteers' : 'edu_h1_volunteers'
+      next.set(TAB_PARAM, halfTab)
+      next.set(UJAT_VOL_ADD_MEMBER_ID_PARAM, memberId)
+      next.delete(UJAT_INST_APP_ID_PARAM)
+      next.delete(UJAT_APPLICANT_ID_PARAM)
+      next.delete(UJAT_EDU_INST_ID_PARAM)
+      next.delete(UJAT_EDU_INST_TAB_PARAM)
+      next.delete(UJAT_EDU_VOL_ID_PARAM)
+      next.delete(UJAT_EDU_VOL_TAB_PARAM)
+      setSearchParams(next, { replace: true })
+    },
+    [activeTab, programId, searchParams, setSearchParams]
+  )
+
+  const handleCompleteVolAddRegistration = useCallback(
+    (memberId: string) => {
+      registerVolunteerFromMemberRef.current(memberId)
+      closeVolAddRegistration()
+    },
+    [closeVolAddRegistration]
+  )
+
   const handleHeaderCloseClick = useCallback(() => {
+    if (volAddMemberId) {
+      closeVolAddRegistration()
+      return
+    }
     if (institutionDetailId) {
       setInstitutionApplicationId(null)
       return
@@ -725,17 +968,12 @@ export function UjatProgramDetailFullPageModal({
       setEduInstitutionId(null)
       return
     }
-    const isVolunteerDocScreening = activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2'
-    const isVolunteerApplicantTab =
-      activeTab === 'vh1_doc1' ||
-      activeTab === 'vh2_doc1' ||
-      activeTab === 'vh1_doc_passed' ||
-      activeTab === 'vh2_doc_passed' ||
-      activeTab === 'vh1_interview2' ||
-      activeTab === 'vh2_interview2'
+    if (eduVolunteerDetailId) {
+      setEduVolunteerId(null)
+      return
+    }
     if (
-      isVolunteerDocScreening &&
-      isVolunteerApplicantTab &&
+      isUjatVolunteerApplicantDetailRoute(activeLnb, activeTab) &&
       volunteerApplicantCloseHandlerRef.current?.()
     ) {
       return
@@ -746,8 +984,12 @@ export function UjatProgramDetailFullPageModal({
     setInstitutionApplicationId,
     eduInstitutionDetailId,
     setEduInstitutionId,
+    eduVolunteerDetailId,
+    setEduVolunteerId,
     activeLnb,
     activeTab,
+    volAddMemberId,
+    closeVolAddRegistration,
     handleClose,
   ])
 
@@ -755,12 +997,92 @@ export function UjatProgramDetailFullPageModal({
 
   const programTitle = displayProgram?.title ?? '프로그램 상세'
   const title =
-    volunteerApplicantDetailTitle ??
-    (eduInstitutionDetailName
-      ? `참여 기관 신청 상세 (${eduInstitutionDetailName})`
-      : institutionDetailName
-        ? `${institutionDetailTitlePrefix} (${institutionDetailName})`
-        : programTitle)
+    volAddMemberId
+      ? '봉사자 추가 등록'
+      : eduVolunteerDetailMeta?.title ??
+        volunteerApplicantDetailMeta?.title ??
+        (eduInstitutionDetailName
+          ? `참여 기관 신청 상세 (${eduInstitutionDetailName})`
+          : institutionDetailName
+            ? `${institutionDetailTitlePrefix} (${institutionDetailName})`
+            : programTitle)
+
+  const headerBreadcrumbItems = (() => {
+    const listParams = buildSearchParams(searchParams, {
+      delete: UJAT_DETAIL_QUERY_PARAMS,
+    })
+    const items = [makeBreadcrumbItem('프로그램 목록', location.pathname, listParams)]
+
+    if (!displayProgram) return items
+
+    const programParams = buildSearchParams(searchParams, {
+      delete: UJAT_DETAIL_QUERY_PARAMS,
+      set: {
+        programId,
+        [LNB_PARAM]: 'info',
+        [TAB_PARAM]: 'info',
+      },
+    })
+
+    const nestedDetailLabel =
+      volAddMemberId
+        ? '봉사자 추가 등록'
+        : volunteerApplicantDetailMeta?.breadcrumbLabel
+          ? volunteerApplicantDetailMeta.breadcrumbLabel
+          : eduVolunteerDetailMeta?.breadcrumbLabel
+            ? eduVolunteerDetailMeta.breadcrumbLabel
+            : eduInstitutionDetailName
+            ? eduInstitutionDetailName
+            : institutionDetailName
+              ? institutionDetailName
+              : null
+
+    const lnbLabel = ujatLnbBreadcrumbLabel(activeLnb, activeTab)
+    const childLabel = ujatChildBreadcrumbLabel(activeLnb, activeTab, surveyItems)
+    const lnbTab = ujatLnbBreadcrumbTargetTab(
+      activeLnb,
+      activeTab,
+      interviewEnabled,
+      surveyKeys
+    )
+    const lnbParams = buildSearchParams(searchParams, {
+      delete: [...UJAT_NESTED_DETAIL_QUERY_PARAMS, EDIT_PARAM],
+      set: {
+        programId,
+        [LNB_PARAM]: activeLnb,
+        [TAB_PARAM]: lnbTab,
+      },
+    })
+    const childParams = childLabel
+      ? buildSearchParams(searchParams, {
+          delete: [...UJAT_NESTED_DETAIL_QUERY_PARAMS, EDIT_PARAM],
+          set: {
+            programId,
+            [LNB_PARAM]: activeLnb,
+            [TAB_PARAM]: activeTab,
+          },
+        })
+      : null
+
+    items.push(makeBreadcrumbItem(displayProgram.title, location.pathname, programParams))
+
+    if (!childLabel) {
+      items.push(
+        nestedDetailLabel
+          ? makeBreadcrumbItem(lnbLabel, location.pathname, lnbParams)
+          : { label: lnbLabel }
+      )
+    } else {
+      items.push(
+        nestedDetailLabel && childParams
+          ? makeBreadcrumbItem(childLabel, location.pathname, childParams)
+          : { label: childLabel }
+      )
+    }
+
+    if (nestedDetailLabel) items.push({ label: nestedDetailLabel })
+    return items
+  })()
 
   return (
     <DetailFullPageModal
@@ -768,8 +1090,14 @@ export function UjatProgramDetailFullPageModal({
       onClose={handleClose}
       onHeaderClose={handleHeaderCloseClick}
       title={title}
+      headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       closeAriaLabel={
-        institutionDetailId || eduInstitutionDetailId ? '목록으로' : '닫기'
+        volAddMemberId ||
+        institutionDetailId ||
+        eduInstitutionDetailId ||
+        eduVolunteerDetailId
+          ? '목록으로'
+          : '닫기'
       }
       className="program-detail-fullpage-modal ujat-program-detail-fullpage-modal"
       sidebar={
@@ -899,7 +1227,7 @@ export function UjatProgramDetailFullPageModal({
                 onRegisterApplicantCloseHandler={fn => {
                   volunteerApplicantCloseHandlerRef.current = fn
                 }}
-                onVolunteerApplicantDetailTitleChange={setVolunteerApplicantDetailTitle}
+                onVolunteerApplicantDetailMetaChange={setVolunteerApplicantDetailMeta}
               />
             )}
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
@@ -910,7 +1238,7 @@ export function UjatProgramDetailFullPageModal({
                 onRegisterApplicantCloseHandler={fn => {
                   volunteerApplicantCloseHandlerRef.current = fn
                 }}
-                onVolunteerApplicantDetailTitleChange={setVolunteerApplicantDetailTitle}
+                onVolunteerApplicantDetailMetaChange={setVolunteerApplicantDetailMeta}
               />
             )}
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
@@ -921,7 +1249,7 @@ export function UjatProgramDetailFullPageModal({
                 onRegisterApplicantCloseHandler={fn => {
                   volunteerApplicantCloseHandlerRef.current = fn
                 }}
-                onVolunteerApplicantDetailTitleChange={setVolunteerApplicantDetailTitle}
+                onVolunteerApplicantDetailMetaChange={setVolunteerApplicantDetailMeta}
               />
             )}
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
@@ -957,23 +1285,58 @@ export function UjatProgramDetailFullPageModal({
             </div>
           )}
           {activeLnb === 'education_progress' && /^edu_h[12]_volunteers$/.test(activeTab) && (
-            <UjatPlaceholderSection
-              title={educationProgressScreenTitle(activeTab)}
-              description="최종 승인된 봉사자 목록이 표시됩니다."
-            />
+            <div className="program-detail-fullpage-modal__info-tab">
+              {volAddMemberId ? (
+                <UjatEducationProgressVolunteerAddRegistrationView
+                  memberId={volAddMemberId}
+                  onClose={closeVolAddRegistration}
+                  onComplete={handleCompleteVolAddRegistration}
+                />
+              ) : eduVolunteerDetailId && eduVolunteerHalf && displayProgram ? (
+                <UjatEducationProgressVolunteerDetailPage
+                  programId={displayProgram.id}
+                  half={eduVolunteerHalf}
+                  volunteerId={eduVolunteerDetailId}
+                  activeTab={eduVolunteerDetailTab}
+                  onSelectTab={setEduVolunteerDetailTab}
+                />
+              ) : (
+                <UjatEducationProgressVolunteersSection
+                  half={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
+                  onStartAddRegistration={openVolAddRegistration}
+                  onOpenDetail={setEduVolunteerId}
+                  onBindRegisterVolunteer={register => {
+                    registerVolunteerFromMemberRef.current = register
+                  }}
+                />
+              )}
+            </div>
           )}
-          {activeLnb === 'education_progress' &&
-            /^edu_h[12]_(region|attendance|assignments)$/.test(activeTab) && (
-              <UjatPlaceholderSection
-                title={educationProgressScreenTitle(activeTab)}
-                description="해당 기능 화면이 연결되면 이 영역에 표시됩니다."
+          {activeLnb === 'education_progress' && /^edu_h[12]_attendance$/.test(activeTab) && (
+            <div className="program-detail-fullpage-modal__info-tab">
+              <UjatEducationProgressAttendanceSection
+                half={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
               />
-            )}
+            </div>
+          )}
+          {activeLnb === 'education_progress' && /^edu_h[12]_assignments$/.test(activeTab) && (
+            <div className="program-detail-fullpage-modal__info-tab">
+              <UjatEducationProgressAssignmentsSection
+                half={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
+              />
+            </div>
+          )}
+          {activeLnb === 'education_progress' && /^edu_h[12]_region$/.test(activeTab) && (
+            <div className="program-detail-fullpage-modal__info-tab">
+              <UjatEducationProgressRegionAssignmentSection
+                half={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
+              />
+            </div>
+          )}
           {activeLnb === 'education_progress' && activeTab === 'edu_summary' && (
-            <UjatPlaceholderSection
-              title="교육 진행 요약"
-              description="교육 진행 현황을 요약해 보여주는 화면입니다."
-            />
+            <div className="program-detail-fullpage-modal__info-tab">
+              <UjatEducationProgressSummarySection />
+            </div>
           )}
 
           {activeLnb === 'survey' && (

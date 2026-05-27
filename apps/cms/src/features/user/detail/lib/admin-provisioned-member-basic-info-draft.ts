@@ -28,7 +28,7 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   institutionAddressSearch?: string
   /** 상세 주소(동·호 등) */
   institutionAddressDetail?: string
-  /** 강사 — 강사비 등급(목: listMetrics.instructorTypeLabel) */
+  /** 강사 — 강사비 등급 */
   instructorFeeGrade?: string
   /** 강사 — 정산 계좌 정보 */
   instructorBankName?: string
@@ -164,7 +164,10 @@ export function userToAdminCommentOnlyDraft(user: Omit<User, 'password'>): Admin
   return {
     ...EMPTY_ADMIN_PROVISIONED_DRAFT,
     adminComment: user.adminComment ?? '',
-    instructorFeeGrade: user.role === 'INSTRUCTOR' ? user.listMetrics?.instructorTypeLabel ?? '' : '',
+    instructorFeeGrade:
+      user.role === 'INSTRUCTOR'
+        ? user.listMetrics?.instructorFeeGradeLabel ?? user.listMetrics?.instructorTypeLabel ?? ''
+        : '',
     adminPermissionVariant: user.role === 'ADMIN' ? getAdminPermissionVariant(user) : '',
   }
 }
@@ -189,7 +192,10 @@ export function userToAdminProvisionedBasicDraft(
     birthDate: birthDateToInputValue(user.birthDate),
     socialAccount: user.socialAccounts?.[0] ?? '',
     adminComment: user.adminComment ?? '',
-    instructorFeeGrade: user.role === 'INSTRUCTOR' ? user.listMetrics?.instructorTypeLabel ?? '' : '',
+    instructorFeeGrade:
+      user.role === 'INSTRUCTOR'
+        ? user.listMetrics?.instructorFeeGradeLabel ?? user.listMetrics?.instructorTypeLabel ?? ''
+        : '',
     instructorBankName: user.role === 'INSTRUCTOR' ? user.instructorInfo?.bankName ?? '' : '',
     instructorAccountNumber: user.role === 'INSTRUCTOR' ? user.instructorInfo?.accountNumber ?? '' : '',
     instructorAccountHolder: user.role === 'INSTRUCTOR' ? user.instructorInfo?.accountHolder ?? '' : '',
@@ -284,7 +290,7 @@ export function draftToAdminCommentAndInstructorFeePatch(
   const feeGrade = (draft.instructorFeeGrade ?? '').trim()
   return {
     adminComment: adminTrimmed ? adminTrimmed : undefined,
-    listMetrics: feeGrade ? { instructorTypeLabel: feeGrade } : undefined,
+    listMetrics: feeGrade ? { instructorFeeGradeLabel: feeGrade } : undefined,
   }
 }
 
@@ -319,7 +325,7 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
       ...(businessIncome !== undefined ? { isBusinessIncome: businessIncome } : {}),
     } as NonNullable<User['instructorInfo']>,
     listMetrics: {
-      ...(feeGrade ? { instructorTypeLabel: feeGrade } : {}),
+      ...(feeGrade ? { instructorFeeGradeLabel: feeGrade } : {}),
       ...(jaGrade ? { jaEvaluationGrade: jaGrade } : {}),
       ...(highestEducation ? { highestEducationLabel: highestEducation } : {}),
       ...(careerSummary ? { instructorCareerSummaryLabel: careerSummary } : {}),

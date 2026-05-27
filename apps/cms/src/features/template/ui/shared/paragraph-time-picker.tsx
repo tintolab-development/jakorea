@@ -33,6 +33,8 @@ export interface ParagraphTimePickerProps {
   style?: CSSProperties
   width?: number | string
   endTimeAlwaysOn?: boolean
+  zIndex?: number
+  showEndTimeToggle?: boolean
 }
 
 type FocusPhase = 'single' | 'start' | 'end'
@@ -47,6 +49,8 @@ export function ParagraphTimePicker({
   style,
   width,
   endTimeAlwaysOn = false,
+  zIndex,
+  showEndTimeToggle = true,
 }: ParagraphTimePickerProps) {
   const rootRef = useRef<HTMLSpanElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -217,6 +221,8 @@ export function ParagraphTimePicker({
         anchorRef={triggerRef}
         dismissExcludeRef={rootRef}
         panelId={panelId}
+        zIndex={zIndex}
+        showEndTimeToggle={showEndTimeToggle}
         disabled={disabled}
         isEndTimeOn={isEndTimeOn}
         endTimeAlwaysOn={endTimeAlwaysOn}

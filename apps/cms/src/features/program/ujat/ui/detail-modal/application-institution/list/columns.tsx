@@ -47,7 +47,6 @@ export function useUjatInstitutionApplicationColumns(): ColumnsType<UjatInstitut
         key: 'no',
         width: COL.no,
         align: 'center',
-        fixed: 'left',
       },
       {
         title: '신청 기관명',
@@ -55,7 +54,6 @@ export function useUjatInstitutionApplicationColumns(): ColumnsType<UjatInstitut
         key: 'institutionName',
         width: COL.institution,
         align: 'center',
-        fixed: 'left',
       },
       {
         title: '임시 배정 현황',

@@ -192,10 +192,313 @@ function buildPosts(): ProgramPost[] {
   return posts
 }
 
+/** UJAT 초등 경제교육 — 참여 기관(기관 id)별 게시글 mock 시드 프로그램 */
+export const UJAT_EDUCATION_IN_PROGRESS_PROGRAM_ID = 'ujat-progress-education-in-progress' as UUID
+
+function isUjatProgressProgramId(programId: string): boolean {
+  return programId.startsWith('ujat-progress-')
+}
+
+function ujatIsoDate(year: number, month: number, day: number, hour: number, minute = 0): string {
+  return new Date(year, month - 1, day, hour, minute, 0, 0).toISOString()
+}
+
+type UjatInstitutionPostSeed = Omit<ProgramPost, 'id' | 'programId' | 'schoolId'>
+
+function ujatLongContent(schoolName: string): string {
+  return (
+    `최근 과제 제출과 관련하여 다른 반 친구의 과제를 그대로 베끼거나, GPT 등에 답을 맡기는 사례가 많다는 소식을 전해 들었습니다.\n\n` +
+    `${schoolName} 학생 여러분, 과제를 스스로 성실히 수행하는 학생이 되어 주시기 바랍니다.\n\n` +
+    '앞으로 타인의 글을 베끼거나 대신 작성한 것으로 확인되는 과제는 0점 처리하며 재제출이 필요합니다.\n\n' +
+    '추가 안내 사항은 첨부 파일을 참고해 주시고, 문의는 게시판 댓글로 남겨 주세요.'
+  )
+}
+
+function buildPostsForUjatInstitutions(): ProgramPost[] {
+  const programId = UJAT_EDUCATION_IN_PROGRESS_PROGRAM_ID
+
+  const institutionPosts: Array<{
+    institutionId: string
+    posts: UjatInstitutionPostSeed[]
+  }> = [
+    {
+      institutionId: 'gwangju-jinwol',
+      posts: [
+        {
+          authorName: '박○○ 담당교사님',
+          content: ujatLongContent('진월초등학교'),
+          read: false,
+          viewCount: 12,
+          reactionCount: 10,
+          commentCount: 2,
+          attachmentCount: 0,
+          postType: 'notice',
+          publishedAt: ujatIsoDate(2026, 1, 15, 15, 0),
+          createdAt: ujatIsoDate(2026, 1, 15, 15, 0),
+          updatedAt: ujatIsoDate(2026, 1, 15, 15, 0),
+        },
+        {
+          authorName: '김○○ 강사님',
+          content:
+            '2회차 강의의 테마는 "나를 보여주는 기술"입니다. 면접 태도와 모의 면접을 다룰 예정이오니 교재를 꼭 준비해 주시고, 이번 주까지 과제 제출 부탁드립니다.',
+          read: false,
+          viewCount: 12,
+          reactionCount: 10,
+          commentCount: 2,
+          attachmentCount: 2,
+          postType: 'notice',
+          publishedAt: ujatIsoDate(2026, 1, 10, 10, 0),
+          createdAt: ujatIsoDate(2026, 1, 10, 10, 0),
+          updatedAt: ujatIsoDate(2026, 1, 10, 10, 0),
+        },
+        {
+          authorName: '담당 매니저',
+          content:
+            '1회차 수업 하루 전입니다. 내일 진행될 단원 내용을 미리 준비해 주시기 바랍니다!',
+          read: true,
+          viewCount: 12,
+          reactionCount: 10,
+          commentCount: 2,
+          attachmentCount: 0,
+          postType: 'schedule',
+          publishedAt: ujatIsoDate(2026, 1, 5, 10, 0),
+          createdAt: ujatIsoDate(2026, 1, 5, 10, 0),
+          updatedAt: ujatIsoDate(2026, 1, 5, 10, 0),
+        },
+        {
+          authorName: '오○○ 봉사자님',
+          content:
+            '4월 17일 2학년 교육 전 학급 이동 동선을 사전에 확인했습니다. 현장 도착 후 10분 전까지 강사 대기실에서 대기하겠습니다.',
+          read: true,
+          viewCount: 9,
+          reactionCount: 6,
+          commentCount: 1,
+          attachmentCount: 1,
+          publishedAt: ujatIsoDate(2026, 1, 3, 16, 30),
+          createdAt: ujatIsoDate(2026, 1, 3, 16, 30),
+          updatedAt: ujatIsoDate(2026, 1, 3, 16, 30),
+        },
+        {
+          authorName: '담당 매니저',
+          content:
+            '[공지] 진월초등학교 4월 교육 일정 확정 안내입니다. 첨부된 일정표를 확인해 주세요.',
+          read: false,
+          viewCount: 15,
+          reactionCount: 4,
+          commentCount: 0,
+          attachmentCount: 1,
+          postType: 'notice',
+          publishedAt: ujatIsoDate(2025, 12, 20, 11, 0),
+          createdAt: ujatIsoDate(2025, 12, 20, 11, 0),
+          updatedAt: ujatIsoDate(2025, 12, 20, 11, 0),
+        },
+      ],
+    },
+    {
+      institutionId: 'seoul-5',
+      posts: [
+        {
+          authorName: '최○○ 담당교사님',
+          content:
+            '서울신동초등학교 1학기 JA Korea 초등 경제교육 일정이 확정되었습니다. 첨부된 안내문을 확인해 주시기 바랍니다.',
+          read: false,
+          viewCount: 10,
+          reactionCount: 8,
+          commentCount: 2,
+          attachmentCount: 2,
+          postType: 'notice',
+          publishedAt: ujatIsoDate(2026, 1, 14, 14, 0),
+          createdAt: ujatIsoDate(2026, 1, 14, 14, 0),
+          updatedAt: ujatIsoDate(2026, 1, 14, 14, 0),
+        },
+        {
+          authorName: '정○○ 강사님',
+          content:
+            '5학년 수업 전 교구 점검을 완료했습니다. 수업 당일 교실 앞 복도에서 학급별로 나눠 드리겠습니다.',
+          read: false,
+          viewCount: 7,
+          reactionCount: 5,
+          commentCount: 1,
+          attachmentCount: 0,
+          publishedAt: ujatIsoDate(2026, 1, 11, 9, 0),
+          createdAt: ujatIsoDate(2026, 1, 11, 9, 0),
+          updatedAt: ujatIsoDate(2026, 1, 11, 9, 0),
+        },
+        {
+          authorName: '담당 매니저',
+          content: '교재 배송이 완료되었습니다. 미수령 학급이 있으면 연락 부탁드립니다.',
+          read: true,
+          viewCount: 11,
+          reactionCount: 3,
+          commentCount: 0,
+          attachmentCount: 0,
+          postType: 'schedule',
+          publishedAt: ujatIsoDate(2026, 1, 7, 15, 30),
+          createdAt: ujatIsoDate(2026, 1, 7, 15, 30),
+          updatedAt: ujatIsoDate(2026, 1, 7, 15, 30),
+        },
+        {
+          authorName: '윤○○ 학생',
+          content: '1회차 수업이 재미있었습니다. 다음 수업도 기대하고 있어요!',
+          read: true,
+          viewCount: 4,
+          reactionCount: 12,
+          commentCount: 3,
+          attachmentCount: 0,
+          publishedAt: ujatIsoDate(2026, 1, 4, 13, 0),
+          createdAt: ujatIsoDate(2026, 1, 4, 13, 0),
+          updatedAt: ujatIsoDate(2026, 1, 4, 13, 0),
+        },
+      ],
+    },
+    {
+      institutionId: 'seoul-3',
+      posts: [
+        {
+          authorName: '이○○ 담당교사님',
+          content:
+            '서울숭인초등학교 2026년 1학기 경제금융교육 일정이 확정되었습니다. 첨부된 일정표를 확인해 주시기 바랍니다.',
+          read: false,
+          viewCount: 8,
+          reactionCount: 4,
+          commentCount: 1,
+          attachmentCount: 1,
+          postType: 'notice',
+          publishedAt: ujatIsoDate(2026, 1, 12, 14, 0),
+          createdAt: ujatIsoDate(2026, 1, 12, 14, 0),
+          updatedAt: ujatIsoDate(2026, 1, 12, 14, 0),
+        },
+        {
+          authorName: '담당 매니저',
+          content: '교재 배송이 완료되었습니다. 미수령 시 연락 부탁드립니다.',
+          read: true,
+          viewCount: 6,
+          reactionCount: 2,
+          commentCount: 0,
+          attachmentCount: 0,
+          publishedAt: ujatIsoDate(2026, 1, 8, 11, 0),
+          createdAt: ujatIsoDate(2026, 1, 8, 11, 0),
+          updatedAt: ujatIsoDate(2026, 1, 8, 11, 0),
+        },
+        {
+          authorName: '한○○ 봉사자님',
+          content: '6월 교육 일정 관련하여 사전 협의 요청드립니다. 가능한 시간대를 댓글로 알려 주세요.',
+          read: false,
+          viewCount: 5,
+          reactionCount: 1,
+          commentCount: 2,
+          attachmentCount: 0,
+          publishedAt: ujatIsoDate(2026, 1, 2, 10, 0),
+          createdAt: ujatIsoDate(2026, 1, 2, 10, 0),
+          updatedAt: ujatIsoDate(2026, 1, 2, 10, 0),
+        },
+      ],
+    },
+    {
+      institutionId: 'seoul-4',
+      posts: [
+        {
+          authorName: '박○○ 담당교사님',
+          content:
+            '서울대명초등학교 교육 일정 관련 문의드립니다. 4월 17일 수업 교실 배정이 확정되면 공유 부탁드립니다.',
+          read: false,
+          viewCount: 6,
+          reactionCount: 2,
+          commentCount: 1,
+          attachmentCount: 0,
+          publishedAt: ujatIsoDate(2026, 1, 13, 11, 0),
+          createdAt: ujatIsoDate(2026, 1, 13, 11, 0),
+          updatedAt: ujatIsoDate(2026, 1, 13, 11, 0),
+        },
+        {
+          authorName: '최○○ 봉사자님',
+          content:
+            '다음 주 금요일 1회차 교육을 진행할 예정입니다. 학급별 인원 확인 부탁드립니다.',
+          read: false,
+          viewCount: 5,
+          reactionCount: 3,
+          commentCount: 0,
+          attachmentCount: 1,
+          publishedAt: ujatIsoDate(2026, 1, 14, 9, 30),
+          createdAt: ujatIsoDate(2026, 1, 14, 9, 30),
+          updatedAt: ujatIsoDate(2026, 1, 14, 9, 30),
+        },
+      ],
+    },
+    {
+      institutionId: 'seoul-2',
+      posts: [
+        {
+          authorName: '김○○ 담당교사님',
+          content:
+            '마포초등학교 담당교사입니다. 교구 상차 지원 일정을 조율하고자 합니다. 가능하신 시간을 알려 주세요.',
+          read: true,
+          viewCount: 4,
+          reactionCount: 1,
+          commentCount: 0,
+          attachmentCount: 0,
+          publishedAt: ujatIsoDate(2026, 1, 9, 14, 0),
+          createdAt: ujatIsoDate(2026, 1, 9, 14, 0),
+          updatedAt: ujatIsoDate(2026, 1, 9, 14, 0),
+        },
+        {
+          authorName: '담당 매니저',
+          content: '프로그램 참여 신청 관련 서류 제출 기한을 안내드립니다.',
+          read: false,
+          viewCount: 7,
+          reactionCount: 0,
+          commentCount: 1,
+          attachmentCount: 1,
+          postType: 'notice',
+          publishedAt: ujatIsoDate(2026, 1, 6, 10, 0),
+          createdAt: ujatIsoDate(2026, 1, 6, 10, 0),
+          updatedAt: ujatIsoDate(2026, 1, 6, 10, 0),
+        },
+      ],
+    },
+    {
+      institutionId: 'seoul-1',
+      posts: [
+        {
+          authorName: '홍○○ 담당교사님',
+          content: '신사초등학교 프로그램 관련 문의가 있어 글 남깁니다. 확인 후 회신 부탁드립니다.',
+          read: false,
+          viewCount: 3,
+          reactionCount: 0,
+          commentCount: 0,
+          attachmentCount: 0,
+          publishedAt: ujatIsoDate(2026, 1, 8, 15, 0),
+          createdAt: ujatIsoDate(2026, 1, 8, 15, 0),
+          updatedAt: ujatIsoDate(2026, 1, 8, 15, 0),
+        },
+      ],
+    },
+  ]
+
+  const posts: ProgramPost[] = []
+  institutionPosts.forEach(({ institutionId, posts: rows }) => {
+    rows.forEach((row, index) => {
+      const publishedAt = row.publishedAt as string
+      posts.push({
+        id: `post-ujat-${institutionId}-${index + 1}` as UUID,
+        programId,
+        schoolId: institutionId as UUID,
+        ...row,
+        publishedAt,
+        createdAt: (row.createdAt as string) ?? publishedAt,
+        updatedAt: (row.updatedAt as string) ?? publishedAt,
+      })
+    })
+  })
+
+  return posts
+}
+
 export const mockProgramPosts: ProgramPost[] = [
   ...buildPosts(),
   ...buildPostsForSchools(),
   ...buildPostsForHSBCGangseo(),
+  ...buildPostsForUjatInstitutions(),
 ]
 
 const byProgramId = new Map<UUID, ProgramPost[]>()
@@ -223,8 +526,14 @@ export function getProgramPostsByProgramId(programId: UUID): ProgramPost[] {
 
 /** 프로그램 + 참여기관(학교) ID로 해당 학교 게시글만 조회 (학교 상세 게시글 탭용) */
 export function getProgramPostsByProgramIdAndSchoolId(programId: UUID, schoolId: string): ProgramPost[] {
-  const key = `${programId}:${schoolId}`
-  return (byProgramAndSchool.get(key) ?? []).slice()
+  const directKey = `${programId}:${schoolId}`
+  const direct = byProgramAndSchool.get(directKey) ?? []
+  if (direct.length > 0) return direct.slice()
+  if (isUjatProgressProgramId(programId)) {
+    const canonicalKey = `${UJAT_EDUCATION_IN_PROGRESS_PROGRAM_ID}:${schoolId}`
+    return (byProgramAndSchool.get(canonicalKey) ?? []).slice()
+  }
+  return []
 }
 
 export const mockProgramPostsMap = new Map(mockProgramPosts.map(p => [p.id, p]))

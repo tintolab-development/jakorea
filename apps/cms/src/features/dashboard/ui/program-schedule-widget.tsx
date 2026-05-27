@@ -7,6 +7,7 @@
 import { Card, List, Button, Empty, Popover } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useState, useMemo, useRef, useLayoutEffect, Fragment, type ReactElement } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
 import {
@@ -31,6 +32,7 @@ import {
   type ScheduleColorPair,
 } from '@/features/program/shared/ui/program-schedule-colors'
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
+import { isProgramManagementLnbPath } from '@/shared/config/menu-config'
 import { SegmentedTab } from '@/shared/ui'
 import '@/shared/ui/widget-more-button.css'
 import '@/shared/components/program-calendar.css'
@@ -380,9 +382,10 @@ export function ProgramScheduleWidget({
   variant,
   widgetKey,
   title,
-  viewAllPath: _viewAllPath,
+  viewAllPath,
   user,
 }: ProgramScheduleWidgetProps) {
+  const navigate = useNavigate()
   const { cardRef, halfColumn } = useDashboardHalfColumnSlot()
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
@@ -497,10 +500,22 @@ export function ProgramScheduleWidget({
   }
 
   const handleViewAll = () => {
-    window.alert(WIDGET_MORE_ALERT_MESSAGE)
+    if (isProgramManagementLnbPath(viewAllPath) || viewAllPath.startsWith('/programs/gemini')) {
+      window.alert(WIDGET_MORE_ALERT_MESSAGE)
+      return
+    }
+    navigate(viewAllPath)
   }
 
-  const handleEventClick = (_event: ScheduleEvent) => {
+  const handleEventClick = (event: ScheduleEvent) => {
+    if (variant === 'general') {
+      navigate(`/programs/general?programId=${encodeURIComponent(event.programId)}`)
+      return
+    }
+    if (variant === 'ujat') {
+      navigate(`/programs/ujat?programId=${encodeURIComponent(event.programId)}`)
+      return
+    }
     window.alert(WIDGET_MORE_ALERT_MESSAGE)
   }
 

@@ -12,107 +12,48 @@
   width: 100%;
 }
 
-/*
- * 담당자 정보 탭 필터: 담당자명·권한 동일 폭 분배 (칸 사이 12px margin 기준)
- * - 넓은 화면·태블릿(2열): 각 calc((100% - 12px) / 2)
- * - 모바일: unified-filter-card 전역 규칙으로 세로 스택(각 100%)
- */
+/* 필터: 콘텐츠 폭 기준 — 50% flex 분배 대신 explicit width col */
 .program-managers-tab .unified-filter-card {
   --filter-select-min-width: 0px;
 }
 
-@media (min-width: 1200px) {
-  .program-managers-tab .unified-filter-card__fields-inner.ant-row {
-    flex-wrap: nowrap !important;
-  }
-
-  .program-managers-tab .unified-filter-card__fields-inner > .ant-col:nth-child(1),
-  .program-managers-tab .unified-filter-card__fields-inner > .ant-col:nth-child(2) {
-    flex: 1 1 calc((100% - var(--filter-field-gap, 12px)) / 2) !important;
-    max-width: calc((100% - var(--filter-field-gap, 12px)) / 2) !important;
-    min-width: 0 !important;
-  }
-
-  .program-managers-tab
-    .unified-filter-card--single-row
-    .unified-filter-card__fields-inner
-    .ant-col:nth-child(2)
-    .unified-filter-card__field--select {
-    min-width: 0 !important;
-  }
-
-  .program-managers-tab
-    .unified-filter-card--single-row
-    .unified-filter-card__fields-inner
-    .ant-col
-    .ant-select,
-  .program-managers-tab
-    .unified-filter-card--single-row
-    .unified-filter-card__fields-inner
-    .ant-col
-    .app-select {
-    min-width: 0 !important;
-  }
-
-  .program-managers-tab .unified-filter-card--single-row .labeled-search-input__input,
-  .program-managers-tab .unified-filter-card--single-row .labeled-search-input .app-input {
-    min-width: 0 !important;
-  }
+.program-managers-tab .unified-filter-card .ant-card-body {
+  padding: 0;
 }
 
-@media (max-width: 1199px) and (min-width: 769px) {
-  .program-managers-tab .unified-filter-card__fields-inner.ant-row {
-    flex-wrap: wrap !important;
-    gap: var(--filter-field-gap, 12px);
-  }
+.program-managers-tab .unified-filter-card__fields-inner .ant-col {
+  min-width: 0;
+}
 
-  .program-managers-tab .unified-filter-card__fields-inner > .ant-col:not(:last-child) {
-    margin-right: 0;
-    margin-bottom: 0;
-  }
-
-  .program-managers-tab .unified-filter-card__fields-inner > .ant-col {
-    flex: 1 1 calc((100% - var(--filter-field-gap, 12px)) / 2) !important;
-    max-width: calc((100% - var(--filter-field-gap, 12px)) / 2) !important;
-    min-width: min(100%, 160px) !important;
-  }
-
-  .program-managers-tab
-    .unified-filter-card--single-row
-    .unified-filter-card__fields-inner
-    .ant-col
-    .unified-filter-card__field--select {
-    min-width: 0 !important;
-  }
-
-  .program-managers-tab
-    .unified-filter-card--single-row
-    .unified-filter-card__fields-inner
-    .ant-col
-    .ant-select,
-  .program-managers-tab
-    .unified-filter-card--single-row
-    .unified-filter-card__fields-inner
-    .ant-col
-    .app-select {
-    min-width: 0 !important;
-  }
-
-  .program-managers-tab .unified-filter-card--single-row .labeled-search-input__input,
-  .program-managers-tab .unified-filter-card--single-row .labeled-search-input .app-input {
-    min-width: 0 !important;
-  }
+.program-managers-tab
+  .unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col
+  .unified-filter-card__field--select,
+.program-managers-tab
+  .unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col
+  .ant-select,
+.program-managers-tab
+  .unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col
+  .app-select,
+.program-managers-tab .unified-filter-card--single-row .labeled-search-input__input,
+.program-managers-tab .unified-filter-card--single-row .labeled-search-input .app-input {
+  min-width: 0 !important;
 }
 
 .program-managers-tab__divider {
   height: 0;
   border: none;
   border-top: 1px solid var(--color-border-light);
-  margin: var(--spacing-32) 0 0;
+  margin: 32px 0 0;
 }
 
 .program-managers-tab__below-divider {
-  padding-top: var(--spacing-32);
+  padding-top: 0;
   margin-top: 0;
 }
 
@@ -159,10 +100,9 @@
   margin-top: 0;
 }
 
-/* fluid 기본 table-layout:auto 는 헤더·본문 최소 너비 불일치로 열이 어긋남 → fixed + 컬럼 width 스펙 정렬 */
-/* 컬럼 width 합 68+80+246+160+246×4 = 1538 — fluid 기본 min-width(1080)보다 크면 가로 스크롤로 스펙 유지 */
+/* 컬럼 width 합 68+80+246+160+246+246+246 = 1292 */
 .program-managers-tab .program-managers-tab__managers-table.cms-data-table--fluid .ant-table-container {
-  min-width: 1538px;
+  min-width: 1292px;
 }
 
 .program-managers-tab .program-managers-tab__managers-table.cms-data-table--fluid {
@@ -220,17 +160,12 @@
   overflow: visible;
 }
 
-/* 관리 열 버튼: 셀 높이 54px 안에 정확히 맞춤 */
+/* 권한 열 트리거 수평 고정 */
 .program-managers-tab
   .program-managers-tab__managers-table.cms-data-table
-  .ant-table-tbody
-  > tr:not(.ant-table-measure-row):not(.ant-table-placeholder)
-  > td
-  .cms-button--default.cms-button--large.ant-btn-default {
-  height: 40px !important;
-  min-height: 40px !important;
-  max-height: 40px !important;
-  line-height: 1.2 !important;
+  td.status-dropdown-cell__cell-status--tag-160
+  .status-dropdown-cell__status-trigger--tag-160 {
+  margin-inline: auto;
 }
 
 /* 권한 태그 (테이블·드롭다운 공통) */
@@ -255,6 +190,7 @@
   font-style: normal;
   font-weight: 600;
   line-height: 150%; /* 21px */
+  transition: none !important;
 }
 
 .program-managers-tab__role-badge--owner {

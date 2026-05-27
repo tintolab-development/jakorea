@@ -352,6 +352,7 @@ export type ParagraphTimePickerPopoverProps = {
   dismissExcludeRef?: RefObject<HTMLElement | null>
   panelId: string
   zIndex?: number
+  showEndTimeToggle?: boolean
   disabled?: boolean
   isEndTimeOn: boolean
   endTimeAlwaysOn?: boolean
@@ -381,6 +382,7 @@ export function ParagraphTimePickerPopover({
   dismissExcludeRef,
   panelId,
   zIndex = 1060,
+  showEndTimeToggle = true,
   disabled,
   isEndTimeOn,
   endTimeAlwaysOn = false,
@@ -479,21 +481,25 @@ export function ParagraphTimePickerPopover({
         )}
 
         <div className="date-time-picker-time-popover__footer">
-          <CmsToggle
-            label="종료 시간"
-            checked={isEndTimeOn}
-            onChange={next => {
-              if (endTimeAlwaysOn) return
-              onEndTimeOnChange(next)
-              if (next) {
-                onFocusPhaseChange('start')
-                onEndTimeToggleOn?.()
-              } else {
-                onFocusPhaseChange('single')
-              }
-            }}
-            disabled={disabled || endTimeAlwaysOn}
-          />
+          {showEndTimeToggle ? (
+            <CmsToggle
+              label="종료 시간"
+              checked={isEndTimeOn}
+              onChange={next => {
+                if (endTimeAlwaysOn) return
+                onEndTimeOnChange(next)
+                if (next) {
+                  onFocusPhaseChange('start')
+                  onEndTimeToggleOn?.()
+                } else {
+                  onFocusPhaseChange('single')
+                }
+              }}
+              disabled={disabled || endTimeAlwaysOn}
+            />
+          ) : (
+            <span />
+          )}
           <CmsButton
             type="button"
             variant="primary"

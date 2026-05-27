@@ -1,0 +1,24 @@
+.gemini-recruitment-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.gemini-recruitment-add-form__card.paragraph-card {
+  border-color: transparent;
+}
+
+.gemini-recruitment-add-form__training-form .detail-info-form__body {
+  padding: 0;
+}
+
+.gemini-recruitment-add-form__editor {
+  width: 100%;
+}
+
+.gemini-recruitment-add-form__footer {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 16px;
+}

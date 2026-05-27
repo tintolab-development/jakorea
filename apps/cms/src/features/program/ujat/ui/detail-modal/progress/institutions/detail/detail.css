@@ -1,0 +1,140 @@
+.ujat-education-progress-institution-detail {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.ujat-education-progress-institution-detail .program-detail-fullpage-modal__content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+/* 탭 ↔ 본문: 공통 tabs-row padding-bottom(32px)만 사용 — 추가 margin 제거 */
+.ujat-education-progress-institution-detail__tabs-row {
+  margin-bottom: 0;
+}
+
+.ujat-education-progress-institution-detail__content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* info-tab-block margin-top(32px)와 gap 중복 방지 */
+.ujat-education-progress-institution-detail__content .program-detail-fullpage-modal__info-tab-block {
+  margin-top: 0;
+}
+
+.ujat-education-progress-institution-detail__admin-comment-box {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 64px;
+  height: 64px;
+  padding: 20px 24px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 12px;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  background: var(--default-WT, #fff);
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ujat-education-progress-institution-detail__admin-comment-box--empty {
+  color: rgba(61, 61, 61, 0.45);
+}
+
+.ujat-education-progress-institution-detail__textbook-row {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ujat-education-progress-institution-detail__textbook-badge {
+  display: flex;
+  box-sizing: border-box;
+  width: 100px;
+  height: 32px;
+  min-width: 100px;
+  max-width: 200px;
+  padding: 6px 12px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  border-radius: var(--6, 6px);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 150%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ujat-education-progress-institution-detail__textbook-badge--preparing {
+  border: 1px solid rgba(30, 140, 41, 0.1);
+  background: #e9f3ea;
+  color: #1e8c29;
+}
+
+.ujat-education-progress-institution-detail__textbook-badge--shipping {
+  border: 1px solid rgba(132, 87, 206, 0.1);
+  background: #f0e6fa;
+  color: #8457ce;
+}
+
+.ujat-education-progress-institution-detail__textbook-badge--delivered {
+  border: 1px solid rgba(70, 70, 70, 0.1);
+  background: #f2f3f5;
+  color: #464646;
+}
+
+.ujat-education-progress-institution-detail__schedule-classes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 4px;
+  text-align: left;
+  word-break: keep-all;
+}
+
+.ujat-education-progress-institution-detail__schedule-classes--wrap {
+  max-width: 100%;
+}
+
+.ujat-education-progress-institution-detail__placeholder {
+  padding: 24px 0;
+}
+
+/* 게시글 탭: 2컬럼이 content 영역 높이를 채우도록 */
+.ujat-education-progress-institution-detail__posts-tab-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.ujat-education-progress-institution-detail__posts-tab-wrap
+  .enrollment-program-detail-modal__posts-tab {
+  flex: 1;
+  min-height: 0;
+}

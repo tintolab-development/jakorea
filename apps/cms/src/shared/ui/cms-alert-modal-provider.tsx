@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { setCmsAlertModalListener } from './cms-alert-modal-api'
 import type { CmsAlertModalShowOptions } from './cms-alert-modal-api'
 import { AlertModal } from './alert-modal'
@@ -42,7 +43,7 @@ export function CmsAlertModalProvider({ children }: { children: ReactNode }) {
       content: options.content,
       width: options.width ?? DEFAULT_WIDTH,
       confirmLabel: options.confirmLabel ?? '확인',
-      zIndex: options.zIndex,
+      zIndex: options.zIndex ?? CMS_ALERT_MODAL_Z_INDEX,
     })
   }, [])
 

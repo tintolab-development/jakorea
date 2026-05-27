@@ -9,13 +9,49 @@ import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 export type FileDownloadHistoryPendingFilters = {
   fileName: string
   userName: string
-  dateRange: [Dayjs, Dayjs] | null
+  dateRange: FileDownloadHistoryPendingDateRange
 }
 
-function dayjsPairEqual(a: [Dayjs, Dayjs] | null, b: [Dayjs, Dayjs] | null): boolean {
+type FileDownloadHistoryPendingDateRange =
+  | [Dayjs, Dayjs]
+  | [Dayjs | null, Dayjs | null]
+  | null
+
+function dayjsPairEqual(
+  a: FileDownloadHistoryPendingDateRange,
+  b: FileDownloadHistoryPendingDateRange
+): boolean {
   if (a == null && b == null) return true
   if (a == null || b == null) return false
-  return a[0].valueOf() === b[0].valueOf() && a[1].valueOf() === b[1].valueOf()
+  return (a[0]?.valueOf() ?? null) === (b[0]?.valueOf() ?? null) &&
+    (a[1]?.valueOf() ?? null) === (b[1]?.valueOf() ?? null)
+}
+
+function normalizeDateRangePickerValue(value: unknown): FileDownloadHistoryPendingDateRange {
+  if (!Array.isArray(value) || value.length < 2) return null
+  const start = (value[0] ?? null) as Dayjs | null
+  const end = (value[1] ?? null) as Dayjs | null
+  if (start == null && end == null) return null
+  return [start, end]
+}
+
+const urlDateRangeSyncState = { hadCompleteInUrl: false }
+
+function resolvePendingDateRangeFromUrl(args: {
+  from: string | null
+  to: string | null
+  prev: FileDownloadHistoryPendingDateRange
+}): FileDownloadHistoryPendingDateRange {
+  const { from, to, prev } = args
+  if (from && to) {
+    urlDateRangeSyncState.hadCompleteInUrl = true
+    return [dayjs(from), dayjs(to)]
+  }
+  if (urlDateRangeSyncState.hadCompleteInUrl) {
+    urlDateRangeSyncState.hadCompleteInUrl = false
+    return null
+  }
+  return prev ?? null
 }
 
 function filterLogs(data: DownloadLog[], searchParams: URLSearchParams): DownloadLog[] {
@@ -91,9 +127,13 @@ export const fileDownloadHistoryTablePageConfig: TablePageConfig<
       const userName = searchParams.get('fdl_user') ?? ''
       const from = searchParams.get('fdl_from')
       const to = searchParams.get('fdl_to')
-      const dateRange = from && to ? ([dayjs(from), dayjs(to)] as [Dayjs, Dayjs]) : null
 
       setPendingFilters(prev => {
+        const dateRange = resolvePendingDateRangeFromUrl({
+          from,
+          to,
+          prev: prev.dateRange,
+        })
         const next: FileDownloadHistoryPendingFilters = {
           fileName,
           userName,
@@ -118,11 +158,7 @@ export const fileDownloadHistoryTablePageConfig: TablePageConfig<
     getBaseCount: ({ filteredData }) => filteredData.length,
     onFilterChange: ({ prev, key, value }) => {
       if (key === 'dateRange') {
-        const range = Array.isArray(value) ? value : null
-        if (range?.[0] && range[1]) {
-          return { ...prev, dateRange: [range[0], range[1]] }
-        }
-        return { ...prev, dateRange: null }
+        return { ...prev, dateRange: normalizeDateRangePickerValue(value) }
       }
       if (key === 'fileName' || key === 'userName') {
         return { ...prev, [key]: String(value ?? '') }

@@ -1,0 +1,27 @@
+/**
+ * 단락 설명(타이틀 하단) — templateAuthoringPreview·응답 작성 embed 등 공통
+ * (우측 `detail-info-form__description`과 별도 토큰)
+ */
+
+.form-paragraph-section-description,
+.form-document-preview-paragraph__description-text,
+.paragraph-card__description {
+  margin: 0;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  color: var(--color-text-secondary, #595959);
+  white-space: pre-wrap;
+}
+
+/** 섹션 제목과 좌측 정렬 — DetailInfoForm title `padding: 0 8px` 등과 맞춤 */
+.form-paragraph-section-description--title-aligned {
+  padding-left: 8px;
+}
+
+/** 응답 작성·수정·미리보기(`/programs`, `/users` 등) — templateAuthoring(14px)과 구분 */
+.form-paragraph-section-description--response-entry {
+  font-size: 16px;
+}

@@ -224,8 +224,8 @@
   padding-top: 0;
 }
 
-/* 모달 헤더 하단 디스크립션(항목 설명) — 읽기: 텍스트 + 4px + 연필 / 편집: textarea */
-.settlement-item-setting-detail-modal .content-modal__description {
+/* 편집 가능 헤더 설명 — plain text description과 동일 슬롯, 내부 스타일은 전용 */
+.settlement-item-setting-detail-modal__header-description-slot.content-modal__description {
   margin: 0;
 }
 

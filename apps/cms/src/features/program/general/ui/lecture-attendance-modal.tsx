@@ -174,12 +174,9 @@ export function LectureAttendanceModal({
       footer={footer}
       className="lecture-attendance-modal"
       description={
-        detailBase ? (
-          <p className="lecture-attendance-modal__description">
-            <span className="lecture-attendance-modal__description-name">[{detailBase.studentName}]</span>
-            <span className="lecture-attendance-modal__description-text"> 학생의 강의 출석 내역입니다.</span>
-          </p>
-        ) : undefined
+        detailBase
+          ? `**[${detailBase.studentName}]** 학생의 강의 출석 내역입니다.`
+          : undefined
       }
     >
       <div className="lecture-attendance-modal__body">

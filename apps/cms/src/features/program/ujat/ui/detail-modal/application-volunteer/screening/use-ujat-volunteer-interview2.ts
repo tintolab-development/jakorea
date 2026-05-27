@@ -85,12 +85,12 @@ export function useUjatVolunteerInterview2({
   const [list, setList] = useState<UjatVolunteerApplicantRow[]>(() =>
     getUjatVolunteerInterview2Applicants(programId, half)
   )
-  const [pendingFilters, setPendingFilters] = useState<UjatVolunteerInterview2Filters>(
-    () => ({ ...DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS })
-  )
-  const [appliedFilters, setAppliedFilters] = useState<UjatVolunteerInterview2Filters>(
-    () => ({ ...DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS })
-  )
+  const [pendingFilters, setPendingFilters] = useState<UjatVolunteerInterview2Filters>(() => ({
+    ...DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS,
+  }))
+  const [appliedFilters, setAppliedFilters] = useState<UjatVolunteerInterview2Filters>(() => ({
+    ...DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS,
+  }))
   const [viewMode, setViewMode] = useState<UjatVolunteerInterview2ViewMode>('list')
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [interview2Confirm, setInterview2Confirm] = useState<UjatInterview2ConfirmRequest | null>(
@@ -181,7 +181,7 @@ export function useUjatVolunteerInterview2({
           ? '즉시'
           : payload.notifyTiming === 'on_announcement'
             ? '발표일에 맞춰서'
-            : payload.manualNotifyAt?.format('YYYY. MM. DD HH:mm') ?? '직접 설정'
+            : (payload.manualNotifyAt?.format('YYYY. MM. DD HH:mm') ?? '직접 설정')
       showAlert({
         title: '일괄 합격',
         content: `선택한 ${ids.length}건이 ${passTypeLabel} 처리되었습니다. (알림: ${notifyLabel}, 목 데이터)`,
@@ -232,7 +232,7 @@ export function useUjatVolunteerInterview2({
     updateRow(withdrawTargetId, { interviewAssignmentStatus: 'withdrawn' })
     showAlert({
       title: '활동 포기',
-      content: `${row.name} 봉사자가 활동 포기 처리되었습니다. (목 데이터)`,
+      content: `${row.name} 봉사자가 활동 포기 처리되었습니다.`,
     })
     setWithdrawTargetId(null)
   }, [list, showAlert, updateRow, withdrawTargetId])
@@ -261,7 +261,7 @@ export function useUjatVolunteerInterview2({
       setList(prev => patchUjatVolunteerInterviewEvaluation(prev, evaluationTargetId, payload))
       showAlert({
         title: '면접 평가',
-        content: '면접 평가가 저장되었습니다. (목 데이터)',
+        content: '면접 평가가 저장되었습니다.',
       })
       setEvaluationTargetId(null)
     },

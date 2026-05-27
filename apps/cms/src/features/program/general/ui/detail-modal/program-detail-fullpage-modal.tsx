@@ -17,10 +17,15 @@ import { useMemo, useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
 import {
   DetailModalSidebar,
   type DetailModalSidebarNavItem,
 } from '@/shared/ui/detail-modal-sidebar'
+import {
+  buildSearchParams,
+  makeBreadcrumbItem,
+} from '@/shared/lib/detail-fullpage-query-stack'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-save'
@@ -46,6 +51,10 @@ import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { handleError } from '@/shared/utils/error-handler'
 import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
 import {
+  APPLICANT_ID_PARAM,
+  DETAIL_TAB_PARAM,
+} from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
+import {
   LnbIconApplicants,
   LnbIconManagers,
   LnbIconProgress,
@@ -68,6 +77,27 @@ const SCHOOL_TAB_PARAM = 'schoolTab'
 const INSTRUCTOR_ID_PARAM = 'instructorId'
 const INSTRUCTOR_TAB_PARAM = 'instructorTab'
 const SUB_TAB_PARAM = 'subTab'
+const PROGRAM_DETAIL_QUERY_PARAMS = [
+  'programId',
+  LNB_PARAM,
+  TAB_PARAM,
+  EDIT_PARAM,
+  SCHOOL_ID_PARAM,
+  SCHOOL_TAB_PARAM,
+  INSTRUCTOR_ID_PARAM,
+  INSTRUCTOR_TAB_PARAM,
+  SUB_TAB_PARAM,
+  APPLICANT_ID_PARAM,
+  DETAIL_TAB_PARAM,
+] as const
+const PROGRAM_NESTED_DETAIL_QUERY_PARAMS = [
+  SCHOOL_ID_PARAM,
+  SCHOOL_TAB_PARAM,
+  INSTRUCTOR_ID_PARAM,
+  INSTRUCTOR_TAB_PARAM,
+  APPLICANT_ID_PARAM,
+  DETAIL_TAB_PARAM,
+] as const
 
 /** 프로그램 상세 모달 LNB 카테고리
  * info: 프로젝트 정보
@@ -357,6 +387,8 @@ export function ProgramDetailFullPageModal({
       : activeLnb === 'progress'
         ? activeProgressChild
         : ''
+  const activeLnbItem = programSidebarItems.find(item => item.key === activeLnb)
+  const activeChildItem = activeLnbItem?.children?.find(child => child.key === sidebarActiveChildKey)
 
   const handleSidebarSelectTop = (key: string) => {
     const k = key as LnbKey
@@ -393,7 +425,7 @@ export function ProgramDetailFullPageModal({
       next.delete(SCHOOL_ID_PARAM)
       next.delete(SCHOOL_TAB_PARAM)
     }
-    setSearchParams(next, { replace: true })
+    setSearchParams(next, { replace: id == null })
   }
 
   const setInstructorId = (id: string | null) => {
@@ -408,7 +440,7 @@ export function ProgramDetailFullPageModal({
       next.delete(INSTRUCTOR_TAB_PARAM)
     }
     if (programId) next.set('programId', programId)
-    setSearchParams(next, { replace: true })
+    setSearchParams(next, { replace: id == null })
   }
 
   const setInstructorTab = (tab: InstructorDetailTabKey) => {
@@ -475,6 +507,87 @@ export function ProgramDetailFullPageModal({
       : instructorDetailTitle != null && displayProgram
         ? `${displayProgram.title}_${instructorDetailTitle}`
         : (displayProgram?.title ?? '프로그램 상세')
+
+  const headerBreadcrumbItems = (() => {
+    const listParams = buildSearchParams(searchParams, {
+      delete: PROGRAM_DETAIL_QUERY_PARAMS,
+    })
+    const items = [makeBreadcrumbItem('프로그램 목록', location.pathname, listParams)]
+
+    if (!displayProgram) return items
+
+    const programParams = buildSearchParams(searchParams, {
+      delete: PROGRAM_DETAIL_QUERY_PARAMS,
+      set: {
+        programId,
+        [LNB_PARAM]: 'info',
+        [TAB_PARAM]: 'info',
+      },
+    })
+
+    const nestedDetailLabel =
+      schoolIdFromUrl && schoolDetailTitle
+        ? schoolDetailTitle
+        : instructorIdFromUrl && instructorDetailTitle
+          ? instructorDetailTitle
+          : searchParams.get(APPLICANT_ID_PARAM)
+            ? '신청자 상세'
+            : null
+
+    const lnbParams = buildSearchParams(searchParams, {
+      delete: [...PROGRAM_NESTED_DETAIL_QUERY_PARAMS, EDIT_PARAM],
+      set: {
+        programId,
+        [LNB_PARAM]: activeLnb,
+        [TAB_PARAM]:
+          activeLnb === 'applicants'
+            ? 'institutions'
+            : activeLnb === 'progress'
+              ? 'institutions'
+              : activeTab,
+        [SUB_TAB_PARAM]: null,
+      },
+    })
+
+    const childParams = activeChildItem
+      ? buildSearchParams(searchParams, {
+          delete: [...PROGRAM_NESTED_DETAIL_QUERY_PARAMS, EDIT_PARAM],
+          set: {
+            programId,
+            [LNB_PARAM]: activeLnb,
+            [TAB_PARAM]: activeChildItem.key,
+            [SUB_TAB_PARAM]:
+              activeLnb === 'progress' && activeChildItem.key === 'instructors'
+                ? 'instructors'
+                : null,
+          },
+        })
+      : null
+
+    if (!activeLnbItem) {
+      items.push({ label: displayProgram.title })
+      return items
+    }
+
+    items.push(makeBreadcrumbItem(displayProgram.title, location.pathname, programParams))
+
+    if (!activeChildItem) {
+      items.push(
+        nestedDetailLabel
+          ? makeBreadcrumbItem(activeLnbItem.label, location.pathname, lnbParams)
+          : { label: activeLnbItem.label }
+      )
+    } else {
+      items.push(
+        nestedDetailLabel && childParams
+          ? makeBreadcrumbItem(activeChildItem.label, location.pathname, childParams)
+          : { label: activeChildItem.label }
+      )
+    }
+
+    if (nestedDetailLabel) items.push({ label: nestedDetailLabel })
+    return items
+  })()
 
   /** 공통정보 탭 수정 모드: 이 때만 `infoForm` 을 자식에 넘김 (RHF + Zod 단일 스키마) */
   const isEditModeInfo = activeTab === 'info' && editTab === 'info' && !!displayProgram
@@ -652,6 +765,7 @@ export function ProgramDetailFullPageModal({
       onClose={onClose}
       onHeaderClose={handleHeaderCloseClick}
       title={title}
+      headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className={[
         'program-detail-fullpage-modal',
         isEconomyEducationProgram && 'program-detail-fullpage-modal--economy-education',

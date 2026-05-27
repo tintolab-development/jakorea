@@ -229,17 +229,9 @@ export function AssignmentSubmissionModal({
   )
 
   const headerDescription =
-    detail != null ? (
-      <>
-        <span className="assignment-submission-modal__description-program">
-          [{detail.programTitle}]
-        </span>
-        <span className="assignment-submission-modal__description-rest">
-          {' '}
-          프로그램의 과제 및 설문 제출 내역입니다.
-        </span>
-      </>
-    ) : undefined
+    detail != null
+      ? `**[${detail.programTitle}]** 프로그램의 과제 및 설문 제출 내역입니다.`
+      : undefined
 
   return (
     <>

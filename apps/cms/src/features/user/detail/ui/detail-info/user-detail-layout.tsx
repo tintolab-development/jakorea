@@ -7,6 +7,7 @@ export interface UserDetailLayoutProps {
   title: ReactNode
   sidebar: ReactNode
   header: ReactNode
+  headerTrailing?: ReactNode
   children: ReactNode
 }
 
@@ -17,6 +18,7 @@ export function UserDetailLayout({
   title,
   sidebar,
   header,
+  headerTrailing,
   children,
 }: UserDetailLayoutProps) {
   return (
@@ -24,6 +26,7 @@ export function UserDetailLayout({
       open={open}
       onClose={onClose}
       title={title}
+      headerTrailing={headerTrailing}
       sidebar={sidebar}
       contentExtra={header}
     >

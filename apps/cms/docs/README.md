@@ -105,6 +105,7 @@
 | 문서 | 설명 |
 |------|------|
 | [certificate-template-implementation-summary.md](implementation/certificate-template-implementation-summary.md) | 수료증 템플릿 구현 |
+| [template-form-draft-local-save.md](implementation/template-form-draft-local-save.md) | 템플릿 양식 임시저장 구현 가이드 |
 | [instructor-settlement-payment-statement-issue-rules.md](features/instructor-settlement-payment-statement-issue-rules.md) | 강사 정산 지급명세 이슈 규칙 |
 | [instructor-fee-budget-criteria.md](settlement/instructor-fee-budget-criteria.md) | 강사 수당·예산 기준 |
 

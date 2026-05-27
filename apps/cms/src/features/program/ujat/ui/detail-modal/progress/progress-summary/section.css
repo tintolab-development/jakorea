@@ -1,0 +1,228 @@
+.ujat-edu-progress-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-edu-progress-summary__group-col {
+  width: 150px;
+  min-width: 150px;
+}
+
+.ujat-edu-progress-summary__matrix .ujat-edu-progress-summary__group-col {
+  width: 150px;
+  min-width: 150px;
+}
+
+.ujat-edu-progress-summary__matrix--label-1 .cross-table__label-col {
+  width: 320px;
+  min-width: 320px;
+}
+
+.ujat-edu-progress-summary__matrix--label-2 .ujat-edu-progress-summary__group-col {
+  width: 150px;
+  min-width: 150px;
+}
+
+.ujat-edu-progress-summary__matrix--label-2 .ujat-edu-progress-summary__metric-col {
+  width: 170px;
+  min-width: 170px;
+}
+
+.ujat-edu-progress-summary__category-header.cross-table__cell {
+  width: auto;
+  min-width: 80px;
+  min-height: 54px;
+  max-width: none;
+  padding: 0;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.ujat-edu-progress-summary__category-cell.cross-table__cell--row-header {
+  width: auto;
+  min-width: 80px;
+  min-height: 54px;
+  max-width: none;
+  padding: 0;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.ujat-edu-progress-summary__category-cell-inner {
+  display: flex;
+  min-width: 80px;
+  min-height: 54px;
+  width: 100%;
+  padding: 12px 20px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 0;
+  box-sizing: border-box;
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-edu-progress-summary__category-cell.cross-table__cell--row-header {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-edu-progress-summary__category-header.cross-table__cell--column-header,
+.ujat-edu-progress-summary__category-header .ujat-edu-progress-summary__category-cell-inner {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.ujat-edu-progress-summary__matrix
+  .ujat-edu-progress-summary__row--plain
+  > .cross-table__cell--data:not(.ujat-edu-progress-summary__cell--total) {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.ujat-edu-progress-summary__row--plain > .ujat-edu-progress-summary__category-cell,
+.ujat-edu-progress-summary__row--plain > .ujat-edu-progress-summary__category-td,
+.ujat-edu-progress-summary__row--plain
+  > .ujat-edu-progress-summary__category-cell
+  .ujat-edu-progress-summary__category-cell-inner,
+.ujat-edu-progress-summary__row--plain
+  > .ujat-edu-progress-summary__category-td
+  .ujat-edu-progress-summary__category-cell-inner {
+  font-weight: 500;
+}
+
+.ujat-edu-progress-summary__category-cell-inner--semester {
+  width: 150px;
+}
+
+.ujat-edu-progress-summary__category-cell-inner--metric {
+  width: 170px;
+}
+
+.ujat-edu-progress-summary__matrix--label-1
+  .ujat-edu-progress-summary__category-cell-inner,
+.ujat-edu-progress-summary__category-header
+  .ujat-edu-progress-summary__category-cell-inner {
+  width: 320px;
+}
+
+.ujat-edu-progress-summary__row--plain > .cross-table__cell {
+  background: #fff;
+}
+
+.ujat-edu-progress-summary__cell--tone-h1.ujat-edu-progress-summary__category-cell {
+  border-right: 1px solid rgba(1, 161, 175, 0.1);
+  border-bottom: 1px solid rgba(1, 161, 175, 0.1);
+  background: var(
+    --color-bg-mint,
+    linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%),
+    #fff
+  );
+}
+
+.ujat-edu-progress-summary__cell--tone-h2.ujat-edu-progress-summary__category-cell {
+  border-right: 1px solid rgba(30, 140, 41, 0.1);
+  border-bottom: 1px solid rgba(30, 140, 41, 0.1);
+  background: var(
+    --color-bg-green,
+    linear-gradient(0deg, rgba(30, 140, 41, 0.1) 0%, rgba(30, 140, 41, 0.1) 100%),
+    #fff
+  );
+}
+
+.ujat-edu-progress-summary__cell--tone-grand.ujat-edu-progress-summary__category-cell {
+  border-right: 1px solid rgba(195, 47, 74, 0.1);
+  border-bottom: 1px solid rgba(195, 47, 74, 0.1);
+  background: var(
+    --color-bg-red,
+    linear-gradient(0deg, rgba(195, 47, 74, 0.1) 0%, rgba(195, 47, 74, 0.1) 100%),
+    #fff
+  );
+}
+
+.ujat-edu-progress-summary__block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ujat-edu-progress-summary__title {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.ujat-edu-progress-summary__table-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ujat-edu-progress-summary__matrix.cross-table {
+  min-width: 960px;
+}
+
+.ujat-edu-progress-summary__region-col {
+  width: auto;
+}
+
+.ujat-edu-progress-summary__total-col {
+  width: 88px;
+}
+
+.ujat-edu-progress-summary__matrix .cross-table__cell--data,
+.ujat-edu-progress-summary__matrix .cross-table__cell--row-header {
+  text-align: center;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-edu-progress-summary__matrix
+  .cross-table__cell--row-header:not(.ujat-edu-progress-summary__category-cell) {
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.ujat-edu-progress-summary__matrix
+  .cross-table__cell--data.ujat-edu-progress-summary__cell--total,
+.ujat-edu-progress-summary__matrix
+  .cross-table__cell--data.ujat-edu-progress-summary__cell--merged-total {
+  color: var(--color-mint-01, #01a1af);
+  text-align: center;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}

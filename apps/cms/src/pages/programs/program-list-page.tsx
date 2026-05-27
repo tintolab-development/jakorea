@@ -162,8 +162,11 @@ export function ProgramListPage() {
     }
   }, [isRecruitmentRoute, viewMode, searchParams, setSearchParams])
 
-  // 풀페이지 모달 ↔ 쿼리 파라미터(programId) 연동 — LNB 4분류·레거시 분류 URL은 준비 중이므로 `/programs`에서만
-  const isFullPageModalPath = pNorm === '/programs'
+  // 풀페이지 모달 ↔ 쿼리 파라미터(programId) 연동
+  const isFullPageModalPath =
+    pNorm === '/programs' ||
+    pNorm === '/programs/general' ||
+    pNorm === '/programs/education'
 
   useEffect(() => {
     if (!isFullPageModalPath) return
@@ -289,7 +292,7 @@ export function ProgramListPage() {
       setSelectedProgramForFullPageModal(program)
       const nextParams = new URLSearchParams(searchParams)
       nextParams.set('programId', program.id)
-      setSearchParams(nextParams, { replace: true })
+      setSearchParams(nextParams, { replace: false })
       return
     }
 
@@ -313,7 +316,16 @@ export function ProgramListPage() {
     setSelectedProgramForFullPageModal(null)
     const nextParams = new URLSearchParams(searchParams)
     nextParams.delete('programId')
+    nextParams.delete('lnb')
     nextParams.delete('tab')
+    nextParams.delete('edit')
+    nextParams.delete('schoolId')
+    nextParams.delete('schoolTab')
+    nextParams.delete('instructorId')
+    nextParams.delete('instructorTab')
+    nextParams.delete('subTab')
+    nextParams.delete('applicantId')
+    nextParams.delete('detailTab')
     setSearchParams(nextParams, { replace: true })
   }
 

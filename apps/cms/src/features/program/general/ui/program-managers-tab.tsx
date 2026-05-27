@@ -1,6 +1,6 @@
 /**
  * 프로그램 상세 - 담당자 정보 탭
- * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록/개인정보 상세보기·권한 수정
+ * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록/개인정보 상세보기
  */
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
@@ -14,7 +14,7 @@ import {
   type ProgramManagersFilters,
 } from '../hooks/use-program-managers-params'
 import {
-  MOCK_PROGRAM_MANAGERS,
+  getMockProgramManagers,
   PROGRAM_ROLE_LABELS,
   type ProgramManagerRow,
 } from '@/data/mock/program-managers'
@@ -24,7 +24,6 @@ import {
   buildManagerRowFromForm,
   type AddManagerFormValues,
 } from './add-manager-modal'
-import { EditManagerRoleModal } from './edit-manager-role-modal'
 import { ManagerDeleteGuideModal } from './manager-delete-guide-modal'
 import {
   StatusDropdownCell,
@@ -71,6 +70,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         type: 'search',
         label: '담당자명',
         placeholder: '담당자명을 입력하세요',
+        width: 240,
       },
       {
         key: 'role',
@@ -78,6 +78,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         label: '권한',
         placeholder: '전체',
         options: ROLE_OPTIONS,
+        width: 240,
       },
     ]
   }, [])
@@ -109,14 +110,18 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
       role: pendingFilters.role,
     })
   }
-  const [managerList, setManagerList] = useState<ProgramManagerRow[]>(() => [
-    ...MOCK_PROGRAM_MANAGERS,
-  ])
+
+  const [managerList, setManagerList] = useState<ProgramManagerRow[]>(() =>
+    getMockProgramManagers(programId)
+  )
   const [addModalOpen, setAddModalOpen] = useState(false)
-  const [editRoleModalOpen, setEditRoleModalOpen] = useState(false)
-  const [managerForEditRole, setManagerForEditRole] = useState<ProgramManagerRow | null>(null)
   const [deleteGuideModalOpen, setDeleteGuideModalOpen] = useState(false)
-  const [deleteFromEditManager, setDeleteFromEditManager] = useState<ProgramManagerRow | null>(null)
+
+  useEffect(() => {
+    setManagerList(getMockProgramManagers(programId))
+    setSelectedRowKeys([])
+    setOpenRoleDropdownId(null)
+  }, [programId])
 
   const filteredManagers = useMemo(() => {
     const list = managerList.filter(row => {
@@ -156,33 +161,20 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
     setDeleteGuideModalOpen(true)
   }
 
-  const managerNamesToDeleteFromTable = useMemo(() => {
+  const managerNamesToDelete = useMemo(() => {
     const keysSet = new Set(selectedRowKeys.map(String))
     return managerList.filter(row => keysSet.has(row.id)).map(row => row.name)
   }, [selectedRowKeys, managerList])
 
-  const managerNamesToDelete = deleteFromEditManager
-    ? [deleteFromEditManager.name]
-    : managerNamesToDeleteFromTable
-
   const handleDeleteConfirm = () => {
-    if (deleteFromEditManager) {
-      setManagerList(prev => prev.filter(row => row.id !== deleteFromEditManager.id))
-      setDeleteFromEditManager(null)
-      setManagerForEditRole(null)
-      setEditRoleModalOpen(false)
-      setDeleteGuideModalOpen(false)
-      return
-    }
     const keysToDelete = new Set(selectedRowKeys.map(String))
     setManagerList(prev => prev.filter(row => !keysToDelete.has(row.id)))
     setSelectedRowKeys([])
     setDeleteGuideModalOpen(false)
-    }
+  }
 
   const handleDeleteGuideCancel = () => {
     setDeleteGuideModalOpen(false)
-    setDeleteFromEditManager(null)
   }
 
   const handleAdd = (values: AddManagerFormValues) => {
@@ -193,20 +185,6 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
     const nextId = `manager-new-${Date.now()}`
     const newRow = buildManagerRowFromForm(values, nextNo, nextId)
     setManagerList(prev => [newRow, ...prev])
-    }
-
-  const openEditRoleModal = useCallback((record: ProgramManagerRow) => {
-    setManagerForEditRole(record)
-    setEditRoleModalOpen(true)
-  }, [])
-
-  const handleSaveRole = (role: ProgramRole) => {
-    if (!managerForEditRole) return
-    setManagerList(prev =>
-      prev.map(row => (row.id === managerForEditRole.id ? { ...row, role } : row))
-    )
-    setManagerForEditRole(null)
-    setEditRoleModalOpen(false)
   }
 
   const handleTableRoleChange = useCallback(
@@ -315,29 +293,10 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         width: 246,
         align: 'center',
       },
-      {
-        title: '관리',
-        key: 'action',
-        width: 246,
-        align: 'center',
-        render: (_: unknown, record: ProgramManagerRow) => (
-          <CmsButton
-            variant="default"
-            size="large" width={160}
-            onClick={e => {
-              e.stopPropagation()
-              openEditRoleModal(record)
-            }}
-          >
-            권한 수정
-          </CmsButton>
-        ),
-      },
     ],
     [
       handleTableRoleChange,
       openRoleDropdownId,
-      openEditRoleModal,
       renderRoleBadge,
       roleItemDisabled,
       personalInfoRevealed,
@@ -375,7 +334,8 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
             </CmsButton>
             <PersonalInfoRevealButton
               labelMode="toggle"
-              revealed={personalInfoRevealed} style={{ minWidth: 180 }}
+              revealed={personalInfoRevealed}
+              style={{ minWidth: 180 }}
               onClick={handleProgramManagersPrivacyClick}
             />
           </div>
@@ -399,21 +359,6 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         onCancel={() => setAddModalOpen(false)}
         currentOwnerCount={managerList.filter(m => m.role === 'OWNER').length}
         onAdd={handleAdd}
-      />
-
-      <EditManagerRoleModal
-        open={editRoleModalOpen}
-        onCancel={() => {
-          setEditRoleModalOpen(false)
-          setManagerForEditRole(null)
-        }}
-        manager={managerForEditRole}
-        managerList={managerList}
-        onSave={handleSaveRole}
-        onDeleteRequest={manager => {
-          setDeleteFromEditManager(manager)
-          setDeleteGuideModalOpen(true)
-        }}
       />
 
       <ManagerDeleteGuideModal

@@ -39,6 +39,10 @@
   text-align: right;
 }
 
+.detail-info-form__header-trailing:has(.cms-button) {
+  opacity: 1;
+}
+
 .detail-info-form__title {
   margin: 0;
   font-size: 18px;

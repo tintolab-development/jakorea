@@ -36,7 +36,7 @@ function Example() {
       content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
       // width — px, 생략 시 600
       // confirmLabel — 기본 '확인'
-      // zIndex — 다른 모달 위에 겹칠 때만 지정
+      // zIndex — 생략 시 CMS_ALERT_MODAL_Z_INDEX(10000, 중첩 모달보다 항상 위)
     })
   }
 
@@ -78,7 +78,7 @@ cmsAlertModal.close()
 | `cmsAlertModal.close()` | 동일 |
 | `isCmsAlertModalReady()` | 등록 여부 확인 |
 
-`CmsAlertModalShowOptions`: `title`, `content`, 선택 `width`, `confirmLabel`, `zIndex`.
+`CmsAlertModalShowOptions`: `title`, `content`, 선택 `width`, `confirmLabel`, `zIndex`(기본 `CMS_ALERT_MODAL_Z_INDEX` = 10000).
 
 ## `AlertModal` 직접 사용
 
