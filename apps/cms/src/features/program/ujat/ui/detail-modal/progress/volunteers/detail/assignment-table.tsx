@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton } from '@/shared/ui'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
-import { useCmsAlert } from '@/shared/ui'
 import { STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME } from '@/shared/components/status-dropdown-cell'
 import {
   UjatVolunteerAssignmentRoleCell,
@@ -19,6 +17,8 @@ import {
   type UjatVolunteerPartnerDisplay,
   type UjatVolunteerScheduleRole,
 } from './assignment-types'
+import { UjatAssignmentDocumentViewerModal } from '../../assignments/document-viewer/ujat-assignment-document-viewer-modal'
+import type { UjatDocumentViewerTarget } from '../../assignments/document-viewer/ujat-document-viewer-types'
 import './assignment.css'
 
 const PLAN_LOG_CELL_CLASSNAME = 'ujat-volunteer-assignment-table__plan-log-cell'
@@ -108,17 +108,21 @@ function renderEducationProgress(status: UjatVolunteerAssignmentProgressRow['edu
 
 export function UjatEducationProgressVolunteerAssignmentTable({
   initialRows,
+  volunteerName = '',
+  regionLabel = '서울',
   selectedRowKeys: selectedRowKeysProp,
   onSelectedRowKeysChange,
 }: {
   initialRows: UjatVolunteerAssignmentProgressRow[]
+  volunteerName?: string
+  regionLabel?: string
   selectedRowKeys?: Key[]
   onSelectedRowKeysChange?: (keys: Key[]) => void
 }) {
-  const { showAlert } = useCmsAlert()
   const [rows, setRows] = useState(() => sortVolunteerAssignmentRows(initialRows))
   const [internalSelectedRowKeys, setInternalSelectedRowKeys] = useState<Key[]>([])
   const [openRoleDropdownRowId, setOpenRoleDropdownRowId] = useState<string | null>(null)
+  const [viewerTarget, setViewerTarget] = useState<UjatDocumentViewerTarget | null>(null)
 
   const selectedRowKeys = selectedRowKeysProp ?? internalSelectedRowKeys
   const setSelectedRowKeys = onSelectedRowKeysChange ?? setInternalSelectedRowKeys
@@ -134,9 +138,38 @@ export function UjatEducationProgressVolunteerAssignmentTable({
     [rows]
   )
 
-  const showComingSoon = useCallback(() => {
-    showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
-  }, [showAlert])
+  const getInstitutionName = useCallback((record: UjatVolunteerAssignmentProgressRow): string => {
+    if (record.assignedInstitution.kind === 'name') return record.assignedInstitution.value
+    return ''
+  }, [])
+
+  const openPlanViewer = useCallback(
+    (record: UjatVolunteerAssignmentProgressRow) => {
+      setViewerTarget({
+        docType: 'plan',
+        volunteerName,
+        regionLabel,
+        institutionName: getInstitutionName(record),
+        assignedClass: record.classDisplay.kind === 'class' ? record.classDisplay.label : '',
+        submittedDateLabel: '260403',
+      })
+    },
+    [volunteerName, regionLabel, getInstitutionName]
+  )
+
+  const openLogViewer = useCallback(
+    (record: UjatVolunteerAssignmentProgressRow) => {
+      setViewerTarget({
+        docType: 'log',
+        volunteerName,
+        regionLabel,
+        institutionName: getInstitutionName(record),
+        assignedClass: record.classDisplay.kind === 'class' ? record.classDisplay.label : '',
+        submittedDateLabel: '260410',
+      })
+    },
+    [volunteerName, regionLabel, getInstitutionName]
+  )
 
   const handleRoleChange = useCallback((rowId: string, nextRole: UjatVolunteerScheduleRole) => {
     setRows(prev => {
@@ -237,7 +270,7 @@ export function UjatEducationProgressVolunteerAssignmentTable({
         onCell: () => ({ className: PLAN_LOG_CELL_CLASSNAME }),
         render: (_: unknown, record: UjatVolunteerAssignmentProgressRow) => {
           const enabled = isPlanLogViewEnabled(record) && record.educationPlanSubmitted
-          return renderPlanLogViewButton('교육계획서 보기', enabled, showComingSoon)
+          return renderPlanLogViewButton('교육계획서 보기', enabled, () => openPlanViewer(record))
         },
       },
       {
@@ -249,7 +282,7 @@ export function UjatEducationProgressVolunteerAssignmentTable({
         onCell: () => ({ className: PLAN_LOG_CELL_CLASSNAME }),
         render: (_: unknown, record: UjatVolunteerAssignmentProgressRow) => {
           const enabled = isPlanLogViewEnabled(record) && record.educationLogSubmitted
-          return renderPlanLogViewButton('교육일지 보기', enabled, showComingSoon)
+          return renderPlanLogViewButton('교육일지 보기', enabled, () => openLogViewer(record))
         },
       },
       {
@@ -262,32 +295,40 @@ export function UjatEducationProgressVolunteerAssignmentTable({
           renderEducationProgress(status),
       },
     ],
-    [handleRoleChange, openRoleDropdownRowId, showComingSoon]
+    [handleRoleChange, openRoleDropdownRowId, openPlanViewer, openLogViewer]
   )
 
   return (
-    <div className="ujat-volunteer-assignment-table">
-      <Table<UjatVolunteerAssignmentProgressRow & { no: number }>
-        rowKey="id"
-        className="cms-data-table ujat-volunteer-assignment-table__table"
-        columns={columns}
-        dataSource={tableData}
-        pagination={false}
-        tableLayout="fixed"
-        scroll={{ x: 1340 }}
-        rowSelection={{
-          selectedRowKeys,
-          onChange: keys => setSelectedRowKeys(keys),
-          getCheckboxProps: record => ({
-            disabled: isVolunteerAssignmentClassWithdrawn(record),
-          }),
-        }}
-        onRow={record => ({
-          className: isVolunteerAssignmentClassWithdrawn(record)
-            ? 'ujat-volunteer-assignment-table__row--class-withdrawn'
-            : undefined,
-        })}
+    <>
+      <div className="ujat-volunteer-assignment-table">
+        <Table<UjatVolunteerAssignmentProgressRow & { no: number }>
+          rowKey="id"
+          className="cms-data-table ujat-volunteer-assignment-table__table"
+          columns={columns}
+          dataSource={tableData}
+          pagination={false}
+          tableLayout="fixed"
+          scroll={{ x: 1340 }}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: keys => setSelectedRowKeys(keys),
+            getCheckboxProps: record => ({
+              disabled: isVolunteerAssignmentClassWithdrawn(record),
+            }),
+          }}
+          onRow={record => ({
+            className: isVolunteerAssignmentClassWithdrawn(record)
+              ? 'ujat-volunteer-assignment-table__row--class-withdrawn'
+              : undefined,
+          })}
+        />
+      </div>
+
+      <UjatAssignmentDocumentViewerModal
+        open={viewerTarget != null}
+        onCancel={() => setViewerTarget(null)}
+        target={viewerTarget}
       />
-    </div>
+    </>
   )
 }

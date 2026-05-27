@@ -1,0 +1,152 @@
+.ujat-doc-viewer-modal {
+  --ujat-doc-viewer-a4-scale: 0.55;
+}
+
+.ujat-doc-viewer-modal__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ujat-doc-viewer-modal__file-name {
+  color: var(--main-BK, #3d3d3d);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(820px, calc(100vw - 520px));
+}
+
+.ujat-doc-viewer-modal__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 11px;
+  background: rgba(1, 161, 175, 0.12);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-mint-01, #01a1af);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ujat-doc-viewer-modal__description {
+  font-size: 15px;
+}
+
+.ujat-doc-viewer-modal__actions {
+  gap: 8px;
+}
+
+.ujat-doc-viewer-modal__workspace {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  min-height: 0;
+  padding: 20px 0 0;
+  box-sizing: border-box;
+}
+
+.ujat-doc-viewer-modal__page {
+  position: relative;
+  width: 805px;
+  height: 1140px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.ujat-doc-viewer-modal__page .a4-document-page-layout {
+  transform: scale(var(--ujat-doc-viewer-a4-scale));
+  transform-origin: top left;
+}
+
+.ujat-doc-viewer-modal__page-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: fit-content;
+  min-height: 44px;
+  padding: 6px 14px;
+  border-radius: 22px;
+  background: rgba(51, 68, 77, 0.75);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+  flex-shrink: 0;
+}
+
+.ujat-doc-viewer-modal__page-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 16px;
+  transition: background 0.15s;
+}
+
+.ujat-doc-viewer-modal__page-nav-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.ujat-doc-viewer-modal__page-nav-btn:disabled {
+  color: rgba(255, 255, 255, 0.4);
+  cursor: default;
+}
+
+.ujat-doc-viewer-modal__page-indicator {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  min-width: 48px;
+  text-align: center;
+}
+
+.ujat-assignment-feedback-modal__write-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ujat-assignment-feedback-modal__guide {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.ujat-assignment-feedback-modal__view-body {
+  padding: 4px 0;
+}
+
+.ujat-assignment-feedback-modal__feedback-content {
+  font-size: 14px;
+  color: #3d3d3d;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  background: #f9f9f9;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  padding: 16px 20px;
+  min-height: 120px;
+}
+
+.ujat-doc-viewer-modal__pdf-host {
+  position: fixed;
+  left: -20000px;
+  top: 0;
+  width: 1464px;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  z-index: -1;
+}
