@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { useGeminiRecruitmentAddForm } from '../../hooks/use-gemini-recruitment-add-form'
+import { persistGeminiRecruitmentAddDraft } from '../../lib/recruitment/add-local-save'
 import {
   GEMINI_RECRUITMENT_ADD_ACTIVE,
   GEMINI_RECRUITMENT_ADD_PARAM,
@@ -19,6 +21,12 @@ import './add-fullpage-modal.css'
 
 const ADD_MODAL_TITLE = '찾아가는 연수 모집 공고 추가'
 
+const DRAFT_SAVE_SUCCESS_MESSAGE =
+  '작성 내용을 임시 저장하였습니다.\n임시 저장본은 가장 최근에 저장한 1개의 항목만 유지됩니다.'
+
+const DRAFT_SAVE_FAILURE_MESSAGE =
+  '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
+
 export function GeminiRecruitmentAddFullpageModal({
   open,
   onClose,
@@ -27,17 +35,19 @@ export function GeminiRecruitmentAddFullpageModal({
   onClose: () => void
 }) {
   const { showAlert } = useCmsAlert()
+  const form = useGeminiRecruitmentAddForm(open)
 
   const handleDraftSave = useCallback(() => {
-    // TODO(api): 모집 공고 임시저장 API 연동
+    if (!form.hydrated) return
+    const ok = persistGeminiRecruitmentAddDraft(form.buildSaveSnapshot())
     showAlert({
-      title: '준비 중',
-      content: FEATURE_COMING_SOON_ALERT_MESSAGE,
+      title: '안내',
+      content: ok ? DRAFT_SAVE_SUCCESS_MESSAGE : DRAFT_SAVE_FAILURE_MESSAGE,
     })
-  }, [showAlert])
+  }, [form, showAlert])
 
   const handleRegister = useCallback(() => {
-    // TODO(api): 모집 공고 등록 API 연동
+    // TODO(api): 모집 공고 등록 API 연동 — 성공 시 removeGeminiRecruitmentAddDraft()
     showAlert({
       title: '준비 중',
       content: FEATURE_COMING_SOON_ALERT_MESSAGE,
@@ -65,7 +75,7 @@ export function GeminiRecruitmentAddFullpageModal({
           </CmsButton>
         </div>
       }
-      leftContent={<GeminiRecruitmentAddForm onCancel={onClose} />}
+      leftContent={<GeminiRecruitmentAddForm form={form} onCancel={onClose} />}
       rightNavigation={
         <span className="gemini-recruitment-add-fullpage-modal__nav-placeholder" aria-hidden />
       }

@@ -1,6 +1,3 @@
-import { useCallback, useState } from 'react'
-import type { Dayjs } from 'dayjs'
-import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import {
   ParagraphCard,
   paragraphCardStaticHeading,
@@ -9,36 +6,35 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsButton } from '@/shared/ui'
+import type { useGeminiRecruitmentAddForm } from '../../hooks/use-gemini-recruitment-add-form'
 import '@toast-ui/editor/dist/toastui-editor.css'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import './add-form.css'
 
-const WYSIWYG_RESET_KEY = 'gemini-visiting-training-recruitment-add'
-
 export type GeminiRecruitmentAddFormProps = {
   onCancel: () => void
+  form: ReturnType<typeof useGeminiRecruitmentAddForm>
 }
 
-export function GeminiRecruitmentAddForm({ onCancel }: GeminiRecruitmentAddFormProps) {
-  const [title, setTitle] = useState('')
-  const [applicationPeriod, setApplicationPeriod] = useState<[Dayjs | null, Dayjs | null] | null>(
-    null
-  )
-  const [trainingRequestPeriod, setTrainingRequestPeriod] = useState<
-    [Dayjs | null, Dayjs | null] | null
-  >(null)
-  const [minStudentCount, setMinStudentCount] = useState<number | undefined>(undefined)
+export function GeminiRecruitmentAddForm({ onCancel, form }: GeminiRecruitmentAddFormProps) {
+  const {
+    hydrated,
+    title,
+    setTitle,
+    applicationPeriod,
+    setApplicationPeriod,
+    trainingRequestPeriod,
+    setTrainingRequestPeriod,
+    minStudentCount,
+    handleMinStudentCountChange,
+    editorHostRef,
+  } = form
 
-  const { editorHostRef } = useNoticeWysiwygEditor(true, '', WYSIWYG_RESET_KEY, {
-    placeholder: '모집 내용을 입력해 주세요. (ex. 연수 모집 절차, 연수 내용 등)',
-  })
-
-  const handleMinStudentCountChange = useCallback((value: string) => {
-    const digits = value.replace(/\D/g, '')
-    setMinStudentCount(digits ? Number(digits) : undefined)
-  }, [])
+  if (!hydrated) {
+    return <div className="gemini-recruitment-add-form" aria-hidden />
+  }
 
   return (
     <div className="gemini-recruitment-add-form">
