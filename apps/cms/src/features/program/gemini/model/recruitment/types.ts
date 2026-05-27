@@ -1,7 +1,7 @@
-/** Gemini 찾아가는 연수 — 모집 공고 상태 */
-export type GeminiVisitingTrainingRecruitmentStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'ENDED'
+/** Gemini 찾아가는 연수 — 모집 공고 상태(신청 기간 대비 오늘 날짜로 파생) */
+export type GeminiRecruitmentStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'ENDED'
 
-export type GeminiVisitingTrainingRecruitmentRow = {
+export type GeminiRecruitmentRow = {
   id: string
   /** 목록 No. 열 표시값 */
   displayNo: number
@@ -10,7 +10,6 @@ export type GeminiVisitingTrainingRecruitmentRow = {
   applicationPeriodEnd: string
   trainingRequestPeriodStart: string
   trainingRequestPeriodEnd: string
-  status: GeminiVisitingTrainingRecruitmentStatus
 }
 
 export type GeminiVisitingTrainingTabKey = 'recruitment' | 'approved'

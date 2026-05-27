@@ -26,6 +26,22 @@ export interface ParagraphCardEditableHeading {
   showDescription?: boolean
 }
 
+/** 읽기 전용 단락 제목 — `ParagraphInput`·필수(*) 마크업을 카드 헤더와 동일하게 쓴다 */
+export function paragraphCardStaticHeading(
+  title: string,
+  options?: { required?: boolean }
+): ParagraphCardEditableHeading {
+  return {
+    isEditMode: false,
+    titleValue: title,
+    onTitleChange: () => {},
+    titleRequired: options?.required ?? false,
+    descriptionValue: '',
+    onDescriptionChange: () => {},
+    showDescription: false,
+  }
+}
+
 export interface ParagraphCardProps {
   className?: string
   onClick?: () => void

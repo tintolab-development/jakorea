@@ -6,9 +6,17 @@
 import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
-import { GeminiVisitingTrainingRecruitmentList } from '@/features/program/gemini/ui/gemini-visiting-training-recruitment-list'
-import type { GeminiVisitingTrainingTabKey } from '@/features/program/gemini/model/gemini-visiting-training-types'
-import '@/features/program/gemini/ui/visiting-training-page.css'
+import { GeminiRecruitmentList } from '@/features/program/gemini/ui/recruitment/list'
+import {
+  GeminiRecruitmentDetailFullPageModal,
+  useGeminiRecruitmentDetailUrl,
+} from '@/features/program/gemini/ui/detail/fullpage-modal'
+import {
+  GeminiRecruitmentAddFullpageModal,
+  useGeminiRecruitmentAddUrl,
+} from '@/features/program/gemini/ui/recruitment/add-fullpage-modal'
+import type { GeminiVisitingTrainingTabKey } from '@/features/program/gemini/model/recruitment/types'
+import '@/features/program/gemini/ui/page.css'
 
 const TAB_PARAM = 'tab'
 
@@ -20,6 +28,8 @@ function parseTabKey(raw: string | null): GeminiVisitingTrainingTabKey {
 export function GeminiVisitingTrainingPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
+  const { recruitmentId, closeDetail } = useGeminiRecruitmentDetailUrl()
+  const { isAddOpen, closeAdd } = useGeminiRecruitmentAddUrl()
 
   const handleTabChange = useCallback(
     (key: string) => {
@@ -53,10 +63,14 @@ export function GeminiVisitingTrainingPage() {
         ]}
       />
       {activeKey === 'recruitment' ? (
-        <GeminiVisitingTrainingRecruitmentList />
+        <GeminiRecruitmentList />
       ) : (
         <div className="gemini-visiting-training-page__approved-placeholder" aria-hidden />
       )}
+      {isAddOpen ? <GeminiRecruitmentAddFullpageModal open onClose={closeAdd} /> : null}
+      {recruitmentId && !isAddOpen ? (
+        <GeminiRecruitmentDetailFullPageModal recruitmentId={recruitmentId} onClose={closeDetail} />
+      ) : null}
     </div>
   )
 }

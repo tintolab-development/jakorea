@@ -3,16 +3,17 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
-import type {
-  GeminiVisitingTrainingRecruitmentRow,
-  GeminiVisitingTrainingRecruitmentStatus,
-} from './gemini-visiting-training-types'
+import { resolveRecruitmentStatus } from '../../lib/recruitment/resolve-status'
+import type { GeminiRecruitmentRow, GeminiRecruitmentStatus } from './types'
 
-export type GeminiVisitingTrainingRecruitmentTableContext = Record<string, never>
+export type GeminiRecruitmentTableContext = {
+  /** `YYYY-MM-DD` — 자정·재마운트 시 필터·건수가 신청 기간 기준 상태로 다시 계산된다 */
+  todayKey: string
+}
 
-type StatusFilter = GeminiVisitingTrainingRecruitmentStatus | 'ALL'
+type StatusFilter = GeminiRecruitmentStatus | 'ALL'
 
-export type GeminiVisitingTrainingRecruitmentPendingFilters = {
+export type GeminiRecruitmentPendingFilters = {
   title: string
   status: StatusFilter
   trainingRequestPeriodRange: [Dayjs | null, Dayjs | null] | null
@@ -27,9 +28,11 @@ function parseStatus(raw: string | null): StatusFilter {
 }
 
 function filterRowsBySearchParams(
-  data: GeminiVisitingTrainingRecruitmentRow[],
-  searchParams: URLSearchParams
-): GeminiVisitingTrainingRecruitmentRow[] {
+  data: GeminiRecruitmentRow[],
+  searchParams: URLSearchParams,
+  todayKey: string
+): GeminiRecruitmentRow[] {
+  const referenceDate = dayjs(todayKey)
   const titleQ = (searchParams.get(`${URL_PREFIX}_title`) ?? '').trim().toLowerCase()
   const status = parseStatus(searchParams.get(`${URL_PREFIX}_status`))
   const fromStr = searchParams.get(`${URL_PREFIX}_from`)
@@ -40,7 +43,14 @@ function filterRowsBySearchParams(
     list = list.filter(r => r.title.toLowerCase().includes(titleQ))
   }
   if (status !== 'ALL') {
-    list = list.filter(r => r.status === status)
+    list = list.filter(
+      r =>
+        resolveRecruitmentStatus(
+          r.applicationPeriodStart,
+          r.applicationPeriodEnd,
+          referenceDate
+        ) === status
+    )
   }
   if (fromStr && toStr) {
     const from = dayjs(fromStr).startOf('day')
@@ -60,49 +70,46 @@ function filterRowsBySearchParams(
   return list.sort((a, b) => b.displayNo - a.displayNo)
 }
 
-const tanstackColumns: ColumnDef<GeminiVisitingTrainingRecruitmentRow>[] = [
-  { accessorKey: 'id', header: 'id' },
+const tanstackColumns: ColumnDef<GeminiRecruitmentRow>[] = [{ accessorKey: 'id', header: 'id' }]
+
+const searchSyncRules: readonly TableSearchParamRule<GeminiRecruitmentPendingFilters>[] = [
+  {
+    kind: 'param',
+    filterKey: 'title',
+    paramKey: `${URL_PREFIX}_title`,
+    condition: f => f.title.trim().length > 0,
+    transform: v => String(v).trim(),
+  },
+  {
+    kind: 'param',
+    filterKey: 'status',
+    paramKey: `${URL_PREFIX}_status`,
+    condition: f => f.status !== 'ALL',
+    transform: v => String(v),
+  },
+  {
+    kind: 'apply',
+    apply: (nextParams, filters) => {
+      nextParams.delete(`${URL_PREFIX}_from`)
+      nextParams.delete(`${URL_PREFIX}_to`)
+      const range = filters.trainingRequestPeriodRange
+      if (range?.[0] && range[1]) {
+        nextParams.set(`${URL_PREFIX}_from`, range[0].format('YYYY-MM-DD'))
+        nextParams.set(`${URL_PREFIX}_to`, range[1].format('YYYY-MM-DD'))
+      }
+    },
+  },
 ]
 
-const searchSyncRules: readonly TableSearchParamRule<GeminiVisitingTrainingRecruitmentPendingFilters>[] =
-  [
-    {
-      kind: 'param',
-      filterKey: 'title',
-      paramKey: `${URL_PREFIX}_title`,
-      condition: f => f.title.trim().length > 0,
-      transform: v => String(v).trim(),
-    },
-    {
-      kind: 'param',
-      filterKey: 'status',
-      paramKey: `${URL_PREFIX}_status`,
-      condition: f => f.status !== 'ALL',
-      transform: v => String(v),
-    },
-    {
-      kind: 'apply',
-      apply: (nextParams, filters) => {
-        nextParams.delete(`${URL_PREFIX}_from`)
-        nextParams.delete(`${URL_PREFIX}_to`)
-        const range = filters.trainingRequestPeriodRange
-        if (range?.[0] && range[1]) {
-          nextParams.set(`${URL_PREFIX}_from`, range[0].format('YYYY-MM-DD'))
-          nextParams.set(`${URL_PREFIX}_to`, range[1].format('YYYY-MM-DD'))
-        }
-      },
-    },
-  ]
-
-export const geminiVisitingTrainingRecruitmentTablePageConfig: TablePageConfig<
-  GeminiVisitingTrainingRecruitmentRow,
-  GeminiVisitingTrainingRecruitmentPendingFilters,
-  GeminiVisitingTrainingRecruitmentTableContext
+export const geminiRecruitmentTablePageConfig: TablePageConfig<
+  GeminiRecruitmentRow,
+  GeminiRecruitmentPendingFilters,
+  GeminiRecruitmentTableContext
 > = {
   columns: {
     tanstack: tanstackColumns,
     filterKeys: [],
-    resolveAntdColumns: (): ColumnsType<GeminiVisitingTrainingRecruitmentRow> => [],
+    resolveAntdColumns: (): ColumnsType<GeminiRecruitmentRow> => [],
   },
 
   filters: {
@@ -168,8 +175,8 @@ export const geminiVisitingTrainingRecruitmentTablePageConfig: TablePageConfig<
     },
   },
 
-  filterFn: ({ data, searchParams }) => {
-    const filtered = filterRowsBySearchParams(data, searchParams)
+  filterFn: ({ context, data, searchParams }) => {
+    const filtered = filterRowsBySearchParams(data, searchParams, context.todayKey)
     return { dataForTable: filtered, filteredData: filtered }
   },
 

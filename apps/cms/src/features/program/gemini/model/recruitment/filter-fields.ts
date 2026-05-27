@@ -1,7 +1,7 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 
 /** TableFilterGroup `width` % — 합 100%. 연수 요청 가능기간은 dateRange 비중 확대 */
-export const geminiVisitingTrainingRecruitmentFilterFields: FilterFieldConfig[] = [
+export const GEMINI_RECRUITMENT_FILTER_FIELDS: FilterFieldConfig[] = [
   {
     key: 'title',
     type: 'search',

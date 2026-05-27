@@ -1,0 +1,30 @@
+.gemini-recruitment-info-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* 기본 정보 — UJAT 공통정보와 동일: 등록·수정 블록 + 본문 블록 분리 */
+.gemini-recruitment-info-tab__basic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gemini-recruitment-info-tab__basic-info-block {
+  margin: 0;
+}
+
+.gemini-recruitment-info-tab__training {
+  margin-top: 0;
+}
+
+.gemini-recruitment-info-tab__training-body {
+  padding: 16px;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  white-space: pre-wrap;
+}
