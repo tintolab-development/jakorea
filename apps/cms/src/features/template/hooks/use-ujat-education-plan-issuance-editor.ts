@@ -10,7 +10,7 @@ import {
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
-import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
+import { createUjatEducationIssuanceA4Preview } from '@/features/template/model/ujat-education-issuance-a4-preview'
 
 export type UjatEducationIssuanceVariant = 'plan' | 'journal'
 
@@ -50,14 +50,16 @@ export function useUjatEducationIssuanceEditor(active: boolean, variant: UjatEdu
   const onSave = useCallback(() => {
     }, [])
 
-  const previewParagraphBodyOptions = useMemo((): RenderFormParagraphBodyOptions | undefined => {
-    if (variant !== 'journal') return undefined
-    return {
-      ujatJournalEducationInfoAutofill: {
-        institutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME,
-      },
-    }
-  }, [variant])
+  const ujatA4Preview = useMemo(
+    () =>
+      createUjatEducationIssuanceA4Preview({
+        variant,
+        ...(variant === 'journal'
+          ? { journalInstitutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME }
+          : {}),
+      }),
+    [variant]
+  )
 
   const base = useWritingFormEditorWithUserPreview({
     open: active,
@@ -65,7 +67,8 @@ export function useUjatEducationIssuanceEditor(active: boolean, variant: UjatEdu
     getDefaultActiveParagraphId,
     previewHeaderTitle: cfg.previewHeaderTitle,
     editorKind: 'survey',
-    previewParagraphBodyOptions,
+    previewParagraphBodyOptions: ujatA4Preview.paragraphBodyOptions,
+    a4PreviewOptions: ujatA4Preview.a4PreviewOptions,
     onSave,
   })
 

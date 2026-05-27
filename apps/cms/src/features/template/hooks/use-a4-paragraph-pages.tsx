@@ -103,8 +103,8 @@ export function useA4ParagraphPages({
         : typeof paragraphGapPx === 'number'
           ? `n:${paragraphGapPx}`
           : 'resolver'
-    return `${renderMode}|${gapKind}`
-  }, [paragraphGapPx, renderMode])
+    return `${renderMode}|${gapKind}|${paragraphBodyOptions?.documentPreviewClassName ?? ''}`
+  }, [paragraphBodyOptions?.documentPreviewClassName, paragraphGapPx, renderMode])
   const packedCacheKey = `${paragraphIdsKey}|${paginationConfigKey}`
 
   const [packed, setPacked] = useState<{

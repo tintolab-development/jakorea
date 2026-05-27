@@ -31,6 +31,14 @@ export type UseWritingFormEditorWithUserPreviewOptions = {
   previewZIndex?: number
   /** 사용자 미리보기(`TemplatePreviewModal`) 본문 옵션 — UJAT 교육일지 학교명 자동 표시 등 */
   previewParagraphBodyOptions?: RenderFormParagraphBodyOptions
+  a4PreviewOptions?: Pick<
+    TemplateWritingUserPreviewSession,
+    | 'previewLayout'
+    | 'hideParagraphRequiredChrome'
+    | 'a4HiddenParagraphIds'
+    | 'a4RenderMode'
+    | 'a4ParagraphGapPx'
+  >
   onSave?: () => void
 }
 
@@ -68,6 +76,7 @@ export function useWritingFormEditorWithUserPreview(
     editorKind = 'survey',
     previewZIndex,
     previewParagraphBodyOptions,
+    a4PreviewOptions,
     onSave,
   } = options
 
@@ -121,6 +130,11 @@ export function useWritingFormEditorWithUserPreview(
       editorKind,
       zIndex: previewZIndex,
       paragraphBodyOptions: previewParagraphBodyOptions,
+      previewLayout: a4PreviewOptions?.previewLayout,
+      hideParagraphRequiredChrome: a4PreviewOptions?.hideParagraphRequiredChrome,
+      a4HiddenParagraphIds: a4PreviewOptions?.a4HiddenParagraphIds,
+      a4RenderMode: a4PreviewOptions?.a4RenderMode,
+      a4ParagraphGapPx: a4PreviewOptions?.a4ParagraphGapPx,
       focusedParagraphId: activeParagraphId,
     }
   }, [
@@ -130,6 +144,7 @@ export function useWritingFormEditorWithUserPreview(
     editorKind,
     previewZIndex,
     previewParagraphBodyOptions,
+    a4PreviewOptions,
     activeParagraphId,
   ])
 
