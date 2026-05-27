@@ -36,9 +36,9 @@
 .content-modal.ujat-attendance-correction-modal.teal-header-modal .ant-modal-content {
   display: flex;
   width: 600px;
-  height: 400px;
+  height: auto;
   min-height: 400px;
-  max-height: 400px;
+  max-height: none;
   padding: 26px 30px 34px 30px;
   flex-direction: column;
   align-items: stretch;
@@ -140,6 +140,11 @@
 .ujat-attendance-correction-modal__time-field--hidden {
   visibility: hidden;
   pointer-events: none;
+}
+
+.ujat-attendance-correction-modal__reason-field {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .ujat-attendance-correction-modal__footer {

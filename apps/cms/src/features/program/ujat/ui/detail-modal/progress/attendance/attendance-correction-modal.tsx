@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { ContentModal, CmsButton } from '@/shared/ui'
+import { ContentModal, CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import {
@@ -22,6 +22,7 @@ export type UjatAttendanceCorrectionPayload = {
   volunteerId: string
   status: UjatAttendanceStatus
   checkInTime?: string
+  excusedReason?: string
 }
 
 export type UjatAttendanceCorrectionModalProps = {
@@ -52,6 +53,10 @@ function isTimeFieldVisible(status: UjatAttendanceStatus): boolean {
   return status === 'present' || status === 'late'
 }
 
+function isReasonFieldVisible(status: UjatAttendanceStatus): boolean {
+  return status === 'excused_absence'
+}
+
 export function UjatAttendanceCorrectionModal({
   open,
   timeRange,
@@ -59,6 +64,7 @@ export function UjatAttendanceCorrectionModal({
   onCancel,
   onConfirm,
 }: UjatAttendanceCorrectionModalProps) {
+  const { showAlert } = useCmsAlert()
   const sessionStartTime = useMemo(() => parseSessionStartTime(timeRange), [timeRange])
 
   const volunteerOptions = useMemo(
@@ -71,6 +77,7 @@ export function UjatAttendanceCorrectionModal({
   const [checkInTime, setCheckInTime] = useState<Dayjs>(() =>
     parseCheckInDayjs(undefined, sessionStartTime)
   )
+  const [excusedReason, setExcusedReason] = useState('')
 
   const selectedVolunteer = useMemo(
     () => volunteers.find(row => row.id === volunteerId),
@@ -82,6 +89,7 @@ export function UjatAttendanceCorrectionModal({
     setVolunteerId(undefined)
     setStatus('present')
     setCheckInTime(parseCheckInDayjs(undefined, sessionStartTime))
+    setExcusedReason('')
   }, [open, sessionStartTime])
 
   useEffect(() => {
@@ -91,7 +99,17 @@ export function UjatAttendanceCorrectionModal({
       selectedVolunteer.checkInTime ??
       (selectedVolunteer.status === 'late' ? '9:10' : sessionStartTime)
     setCheckInTime(parseCheckInDayjs(defaultTime, sessionStartTime))
+    setExcusedReason(
+      selectedVolunteer.status === 'excused_absence'
+        ? (selectedVolunteer.excusedReason ?? '')
+        : ''
+    )
   }, [selectedVolunteer, sessionStartTime])
+
+  useEffect(() => {
+    if (isReasonFieldVisible(status)) return
+    setExcusedReason('')
+  }, [status])
 
   const canConfirm = useMemo(() => {
     if (!volunteerId) return false
@@ -105,15 +123,23 @@ export function UjatAttendanceCorrectionModal({
 
   const handleConfirm = useCallback(() => {
     if (!canConfirm || !volunteerId) return
+    if (isReasonFieldVisible(status) && excusedReason.trim().length === 0) {
+      showAlert({
+        title: '안내',
+        content: '사유를 입력해 주세요.',
+      })
+      return
+    }
     onConfirm({
       volunteerId,
       status,
       checkInTime: isTimeFieldVisible(status)
         ? formatCheckInTime(checkInTime)
         : undefined,
+      excusedReason: isReasonFieldVisible(status) ? excusedReason.trim() : undefined,
     })
     setVolunteerId(undefined)
-  }, [canConfirm, checkInTime, onConfirm, status, volunteerId])
+  }, [canConfirm, checkInTime, excusedReason, onConfirm, showAlert, status, volunteerId])
 
   const footer = (
     <div className="ujat-attendance-correction-modal__footer">
@@ -186,6 +212,17 @@ export function UjatAttendanceCorrectionModal({
                   zIndex={MODAL_Z_INDEX + DATE_TIME_PICKER_Z_OFFSET}
                 />
               </div>
+            ) : isReasonFieldVisible(status) ? (
+              <div className="ujat-attendance-correction-modal__reason-field">
+                <CmsInput
+                  inputSize="large"
+                  width="100%"
+                  value={excusedReason}
+                  onChange={event => setExcusedReason(event.target.value)}
+                  placeholder="사유를 입력해 주세요"
+                  aria-label="불참 사유"
+                />
+              </div>
             ) : (
               <div className="ujat-attendance-correction-modal__time-field ujat-attendance-correction-modal__time-field--hidden" />
             )}
@@ -204,5 +241,6 @@ export function buildCorrectedVolunteerRow(
   return applyAttendanceCorrection(row, payload.status, {
     checkInTime: payload.checkInTime,
     sessionStartTime,
+    excusedReason: payload.excusedReason,
   })
 }
