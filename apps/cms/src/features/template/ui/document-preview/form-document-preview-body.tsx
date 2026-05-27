@@ -60,6 +60,7 @@ export function FormDocumentPreviewBody({
       className={[
         'form-document-preview-body',
         useCustomGaps ? 'form-document-preview-body--custom-gaps' : '',
+        paragraphBodyOptions?.documentPreviewClassName,
         className,
       ]
         .filter(Boolean)

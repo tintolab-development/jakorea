@@ -39,7 +39,10 @@ import {
   subjectiveParagraphToShortEssayView,
 } from '@/features/template/ui/paragraph/single-item/short-essay'
 import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate'
-import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
+import {
+  UserInfo,
+  type UserInfoPreviewValues,
+} from '@/features/template/ui/paragraph/single-item/user-info'
 import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
 import {
   UjatJournalEducationInfo,
@@ -146,6 +149,10 @@ export type RenderFormParagraphBodyOptions = {
   programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
   /** UJAT 교육일지 교육 정보 단락 — 담당 학교명 등 자동 표시 */
   ujatJournalEducationInfoAutofill?: UjatJournalEducationInfoAutofill | null
+  /** user_info 단락 미리보기 셀 값 — UJAT 문서 뷰어의 선택 봉사자 정보 등 */
+  userInfoPreviewValues?: UserInfoPreviewValues
+  /** A4 문서 본문 스코프 클래스 — 템플릿별 preview CSS 오버라이드 */
+  documentPreviewClassName?: string
   /**
    * 구조 잠금 + 작성(authoring)일 때도 객관식·가로형 하단 동의 라디오 등 선택 UI만 조작 가능(미리 체크).
    * 프로그램 참여자 신청 폼 등 고정 단락 템플릿용.
@@ -514,6 +521,7 @@ export function renderFormParagraphBody(
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isBodyInteractive}
           layout={paragraphInteractionMode === 'user' ? 'previewTable' : 'chips'}
+          previewValues={options?.userInfoPreviewValues}
         />
       )
     case 'file_attachment':

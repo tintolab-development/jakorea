@@ -56,14 +56,17 @@ function previewSampleForKey(key: string): string {
 type UserInfoFieldEntry = { key: string; label: string }
 
 export type UserInfoPreviewTableSkin = 'surface' | 'a4Document'
+export type UserInfoPreviewValues = Record<string, string>
 
 /** 설문자 정보 등 — 카드 미리보기(`surface`) / A4 contentOnly(`a4Document`) */
 export function UserInfoPreviewTable({
   selectedEntries,
   skin = 'surface',
+  previewValues,
 }: {
   selectedEntries: UserInfoFieldEntry[]
   skin?: UserInfoPreviewTableSkin
+  previewValues?: UserInfoPreviewValues
 }) {
   const n = selectedEntries.length
   const isA4 = skin === 'a4Document'
@@ -104,7 +107,7 @@ export function UserInfoPreviewTable({
               <th className={thCls} scope="row">
                 {field.label}
               </th>
-              <td className={tdCls}>{previewSampleForKey(field.key)}</td>
+              <td className={tdCls}>{previewValues?.[field.key] ?? previewSampleForKey(field.key)}</td>
             </tr>
           ))}
         </tbody>
@@ -138,13 +141,17 @@ export function UserInfoPreviewTable({
             <th className={thCls} scope="row">
               {row.left.label}
             </th>
-            <td className={tdCls}>{previewSampleForKey(row.left.key)}</td>
+            <td className={tdCls}>
+              {previewValues?.[row.left.key] ?? previewSampleForKey(row.left.key)}
+            </td>
             {row.right != null ? (
               <>
                 <th className={thCls} scope="row">
                   {row.right.label}
                 </th>
-                <td className={tdCls}>{previewSampleForKey(row.right.key)}</td>
+                <td className={tdCls}>
+                  {previewValues?.[row.right.key] ?? previewSampleForKey(row.right.key)}
+                </td>
               </>
             ) : isA4 ? (
               <>
@@ -181,11 +188,13 @@ export function UserInfo({
   onChange,
   isEditMode,
   layout = 'chips',
+  previewValues,
 }: {
   paragraph: UserInfoParagraph
   onChange?: (next: UserInfoParagraph) => void
   isEditMode: boolean
   layout?: UserInfoLayout
+  previewValues?: UserInfoPreviewValues
 }) {
   const fields = normalizeFields(paragraph)
   const selected = new Set(paragraph.selectedUserFieldKeys ?? [])
@@ -207,6 +216,7 @@ export function UserInfo({
       <UserInfoPreviewTable
         selectedEntries={getUserInfoPreviewSelectedEntries(paragraph)}
         skin="surface"
+        previewValues={previewValues}
       />
     )
   }
