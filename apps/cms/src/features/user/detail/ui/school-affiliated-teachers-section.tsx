@@ -12,35 +12,12 @@ import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 import { formatDate } from '@/shared/utils'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
-  AppStatusBadge,
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-} from '@/shared/components'
+  SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
+  SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
+  SchoolTeacherEmploymentStatusBadge,
+} from '@/features/user/detail/lib/school-teacher-employment-status'
+import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
 import './school-affiliated-teachers-section.css'
-
-/** 재직 현황 드롭다운 선택지 — 탈퇴(WITHDRAWN)는 목록에서 제외, 데이터에만 남을 수 있음 */
-const SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS = [
-  'ACTIVE',
-  'ON_LEAVE',
-  'TRANSFERRED',
-] as const satisfies readonly SchoolTeacherEmploymentStatus[]
-
-const EMPLOYMENT_BADGE_LABEL: Record<SchoolTeacherEmploymentStatus, string> = {
-  ACTIVE: '재직중',
-  ON_LEAVE: '휴직',
-  TRANSFERRED: '전근',
-  WITHDRAWN: '탈퇴',
-}
-
-function SchoolTeacherEmploymentStatusBadge({ status }: { status: SchoolTeacherEmploymentStatus }) {
-  const variant = status === 'ACTIVE' ? 'active' : 'muted'
-  return (
-    <AppStatusBadge
-      label={EMPLOYMENT_BADGE_LABEL[status]}
-      className={`school-affiliated-teachers-section__employment-badge school-affiliated-teachers-section__employment-badge--${variant}`}
-    />
-  )
-}
 
 export interface SchoolAffiliatedTeachersSectionProps {
   rows: SchoolAffiliatedTeacherRow[]
@@ -57,19 +34,12 @@ export interface SchoolAffiliatedTeachersSectionProps {
   ) => void | Promise<void>
 }
 
+const EMPLOYMENT_BADGE_CELL_STYLE = SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE
+
 function isCheckboxClickTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false
   return Boolean(target.closest('.ant-checkbox-wrapper, .ant-checkbox'))
 }
-
-const EMPLOYMENT_BADGE_CELL_STYLE = {
-  width: 100,
-  minWidth: 100,
-  maxWidth: 100,
-  height: 32,
-  minHeight: 32,
-  maxHeight: 32,
-} as const
 
 export function SchoolAffiliatedTeachersSection({
   rows,

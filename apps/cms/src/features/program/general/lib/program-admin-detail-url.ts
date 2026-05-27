@@ -1,6 +1,5 @@
 /**
  * 관리자 프로그램 상세: 목록 URL + programId 쿼리(풀페이지 모달). 단독 /programs/:id 미사용.
- * LNB 4분류는 준비 중 — 통합 목록·모달은 `/programs` 사용.
  */
 
 import { isUjatProgramId } from '@/features/program/ujat/lib/ujat-program-detail-meta'
@@ -35,7 +34,7 @@ export function getProgramAdminDetailUrlFromPathname(programId: string, pathname
     return `/programs?programId=${encodeURIComponent(programId)}`
   }
   if (pathname.startsWith('/programs/education') || pathname.startsWith('/programs/general')) {
-    return `/programs?programId=${encodeURIComponent(programId)}`
+    return `/programs/general?programId=${encodeURIComponent(programId)}`
   }
   return `/programs?programId=${encodeURIComponent(programId)}`
 }
