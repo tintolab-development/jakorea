@@ -47,6 +47,17 @@ const DETAIL_OVERLAY: Record<
   },
 }
 
+const runtimeDetailPatches = new Map<string, Partial<GeminiRecruitmentDetail>>()
+
+/** API 연동 전 — 상세 정보 수정 저장(mock 세션 유지) */
+export function patchRecruitmentDetail(
+  id: string,
+  patch: Partial<GeminiRecruitmentDetail>
+): void {
+  const prev = runtimeDetailPatches.get(id) ?? {}
+  runtimeDetailPatches.set(id, { ...prev, ...patch })
+}
+
 export function getRecruitmentDetailById(
   id: string,
   referenceDate: Dayjs | string = dayjs()
@@ -54,5 +65,7 @@ export function getRecruitmentDetailById(
   const row = createRecruitmentMockRows(referenceDate).find(r => r.id === id)
   const overlay = DETAIL_OVERLAY[id]
   if (!row || !overlay) return null
-  return { ...row, ...overlay }
+  const base = { ...row, ...overlay }
+  const patch = runtimeDetailPatches.get(id)
+  return patch != null ? { ...base, ...patch } : base
 }

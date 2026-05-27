@@ -12,9 +12,9 @@ export function formatRecruitmentPeriodRange(start: string, end: string): string
   return `${formatRecruitmentPeriodDate(start)} ~ ${formatRecruitmentPeriodDate(end)}`
 }
 
-/** `2025. 12. 08(월) 09:15 | 홍길동` */
-export function formatRecruitmentAuditLine(iso: string, actorName: string): string {
+/** `2025. 12. 08(월) 09:15` — 담당자명은 `DetailInfoForm.InputsSeparator`로 분리 */
+export function formatRecruitmentAuditDate(iso: string): string {
   const x = dayjs(iso)
   if (!x.isValid()) return '-'
-  return `${x.format('YYYY. MM. DD')}(${KO_DOW[x.day()]}) ${x.format('HH:mm')} | ${actorName}`
+  return `${x.format('YYYY. MM. DD')}(${KO_DOW[x.day()]}) ${x.format('HH:mm')}`
 }
