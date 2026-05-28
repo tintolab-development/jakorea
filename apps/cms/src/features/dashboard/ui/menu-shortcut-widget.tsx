@@ -32,7 +32,6 @@ import {
   UserOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import { getMenuShortcutBadgeCounts } from '../api/admin-dashboard-service'
 import {
@@ -45,13 +44,6 @@ import './menu-shortcut-widget.css'
 /** 배지 표시용: 99 초과 시 "99+" */
 function formatBadgeCount(count: number): string {
   return count >= 99 ? '99+' : String(count)
-}
-
-/** 메뉴 바로가기에서 라우터 이동 대신 준비 중 안내할 프로그램 관련 id (`programs-` 접두, 연결된 분류 제외) */
-function isProgramShortcutItemId(id: string): boolean {
-  return (
-    id.startsWith('programs-') && id !== 'programs-ujat' && id !== 'programs-general-education'
-  )
 }
 
 const SHORTCUT_ICON_MAP: Record<string, React.ReactNode> = {
@@ -114,10 +106,6 @@ export function MenuShortcutWidget() {
                 type="button"
                 className="menu-shortcut-widget__item"
                 onClick={() => {
-                  if (isProgramShortcutItemId(item.id)) {
-                    window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-                    return
-                  }
                   setShortcutBadgeCount(item.id, 0)
                   navigate(item.path)
                 }}
