@@ -289,6 +289,9 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
 .mr-6 {
   margin-right: 6px;
 }
+.mb-16 {
+  margin-bottom: 16px;
+}
 
 .calendar-layout {
   display: flex;

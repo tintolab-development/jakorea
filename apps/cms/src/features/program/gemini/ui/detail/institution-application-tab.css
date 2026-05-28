@@ -1,0 +1,28 @@
+.gemini-institution-application-tab__approval {
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.gemini-institution-application-tab__approval--pending {
+  color: var(--color-green, #1e8c29);
+}
+
+.gemini-institution-application-tab__approval--approved {
+  color: var(--main-BK, #3d3d3d);
+}
+
+.gemini-institution-application-tab__approval--rejected {
+  color: var(--color-red, #c32f4a);
+}
+
+.gemini-institution-application-tab__schedule-cell {
+  text-align: left !important;
+}
+
+.gemini-institution-application-tab__schedule {
+  white-space: pre-line;
+  line-height: 1.5;
+}
