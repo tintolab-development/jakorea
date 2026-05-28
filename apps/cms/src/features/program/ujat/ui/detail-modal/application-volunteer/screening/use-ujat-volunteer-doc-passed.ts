@@ -17,6 +17,10 @@ import {
 import { useUjatVolunteerDocPassedColumns } from './ujat-volunteer-doc-passed-columns'
 import { mapUjatVolunteerInterviewToCalendarEvents } from './ujat-volunteer-interview-calendar-events'
 import type { UjatInterviewAssignConfirmPayload } from './ujat-volunteer-interview-assign-modal'
+import {
+  guardUjatVolunteerAssignInterview,
+  guardUjatVolunteerWithdrawActivity,
+} from './ujat-volunteer-applicant-guard-actions'
 
 export type UjatInterviewAssignPickFlow = {
   type: 'pick'
@@ -130,7 +134,7 @@ export function useUjatVolunteerDocPassed({
   )
 
   const handleAssignInterview = useCallback((row: UjatVolunteerApplicantRow) => {
-    if (row.interviewAssignmentStatus === 'withdrawn') return
+    if (!guardUjatVolunteerAssignInterview(row)) return
     setAssignFlow({ type: 'pick', target: row })
   }, [])
 
@@ -165,7 +169,7 @@ export function useUjatVolunteerDocPassed({
   }, [])
 
   const requestWithdrawActivity = useCallback((row: UjatVolunteerApplicantRow) => {
-    if (row.interviewAssignmentStatus === 'withdrawn') return
+    if (!guardUjatVolunteerWithdrawActivity(row)) return
     setWithdrawTargetId(row.id)
   }, [])
 

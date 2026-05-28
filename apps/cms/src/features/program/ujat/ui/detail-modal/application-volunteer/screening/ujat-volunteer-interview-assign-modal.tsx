@@ -7,6 +7,7 @@ import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
 import '@/shared/components/calendar/styles/calendar.css'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
+import { alertUjatVolunteerInterviewAssignSlotRequired } from './ujat-volunteer-applicant-guard-actions'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsRadio } from '@/shared/ui/cms-radio'
@@ -145,7 +146,10 @@ export function UjatVolunteerInterviewAssignModal({
   }
 
   const handleConfirm = () => {
-    if (!selectedSlot) return
+    if (!selectedSlot) {
+      alertUjatVolunteerInterviewAssignSlotRequired()
+      return
+    }
     if (notifyTiming === 'manual' && !manualNotifyAt) {
       setNotifyError('알림 발송 일시를 설정해 주세요.')
       return
@@ -200,7 +204,6 @@ export function UjatVolunteerInterviewAssignModal({
               variant="primary"
               size="medium"
               type="button"
-              disabled={!selectedSlot}
               onClick={handleConfirm}
             >
               {confirmLabel}

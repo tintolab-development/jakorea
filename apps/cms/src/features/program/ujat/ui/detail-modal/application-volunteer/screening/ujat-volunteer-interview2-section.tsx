@@ -127,12 +127,12 @@ export function UjatVolunteerInterview2Section({
 
   const handleDetailInterviewFail = useCallback(() => {
     if (!selectedApplicant) return
-    requestInterview2Fail(selectedApplicant.id)
+    requestInterview2Fail(selectedApplicant)
   }, [requestInterview2Fail, selectedApplicant])
 
   const handleDetailInterviewPass = useCallback(() => {
     if (!selectedApplicant) return
-    requestInterview2Pass(selectedApplicant.id)
+    requestInterview2Pass(selectedApplicant)
   }, [requestInterview2Pass, selectedApplicant])
 
   const handleDetailOpenEvaluation = useCallback(() => {
@@ -235,7 +235,6 @@ export function UjatVolunteerInterview2Section({
               variant="delete"
               size="large"
               width={160}
-              disabled={selectedRowKeys.length === 0}
               onClick={handleBulkFail}
             >
               선택 불합격
@@ -245,7 +244,6 @@ export function UjatVolunteerInterview2Section({
               variant="secondary"
               size="large"
               width={160}
-              disabled={selectedRowKeys.length === 0}
               onClick={handleBulkPass}
             >
               선택 합격

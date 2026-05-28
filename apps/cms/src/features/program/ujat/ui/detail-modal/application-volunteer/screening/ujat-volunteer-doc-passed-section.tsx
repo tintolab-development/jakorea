@@ -182,14 +182,8 @@ export function UjatVolunteerDocPassedSection({
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
-        title={
-          <div className="ujat-volunteer-doc-passed__toolbar-main">
-            <span className="ujat-volunteer-doc-passed__toolbar-title">
-              봉사자 1차 서류 합격자 목록
-            </span>
-            <span className="ujat-volunteer-doc-passed__toolbar-count">{count}건</span>
-          </div>
-        }
+        title="봉사자 1차 서류 합격자 목록"
+        description={`${count.toLocaleString()}건`}
         actions={
           viewMode === 'list' ? (
             <CmsButton

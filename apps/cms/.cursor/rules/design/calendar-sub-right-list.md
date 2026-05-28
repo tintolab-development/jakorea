@@ -1,5 +1,7 @@
 # 캘린더 우측 일별 리스트 (`calendar-sub-right-list`)
 
+**상위 규칙 (필수):** [calendar-common.md](./calendar-common.md)
+
 **Scope:** `shared/components/calendar` — 메인 캘린더와 함께 쓰는 우측 `.calendar-sub-right-list` / `.calendar-list` 영역.
 
 **Styles:** `styles/calendar-sub-right.css` (import: `styles/calendar.css`)
@@ -48,12 +50,21 @@
 
 ---
 
+## 7:3 카드형 우측 vs `calendar-set` 3열
+
+- **`calendar-set` + `.calendar-sub-right-list`:** 미니 캘린더·검색이 있는 3열. 우측은 sticky 400px 래퍼.
+- **`CalendarSplitCardLayout` + `.calendar-split-card--right`:** 7:3 카드. 우측에는 **`.calendar-list`만** 두고 `.calendar-sub-right-list` 래퍼를 **추가하지 않는다.** → [calendar-split-card-layout.md](./calendar-split-card-layout.md)
+- **7:3 카드 안의 `.calendar-list`:** 기본 `calendar-sub-right.css`의 border·box-shadow는 **끈 상태**여야 한다. shell은 `.calendar-split-card--right`만 담당.
+
+---
+
 ## 구현 참고
 
 | 용도 | 파일 |
 |------|------|
 | 프로그램 일정 | `calendar-sub-right-list.tsx` → `CalendarSubRightProgramList` |
 | UJAT 기관 신청 | `calendar-sub-right-list.tsx` → `CalendarSubRightInstitutionApplicationList` |
+| UJAT 봉사자 면접 일정 | `CalendarSubRightVolunteerInterviewList` + `item-list/ujat-volunteer-interview.tsx` |
 | 프로그램 상세 스케줄 리스트 | `program-schedule-list.tsx` |
 | 정산 (레거시) | `CalendarSubRightSettlementList` — 현재 `settlement-list-item.css`에 hover 중복. **신규/수정 시 `calendar-list-item` 패턴으로 통일 권장** |
 
@@ -70,6 +81,8 @@
 
 ## 금지
 
+- 7:3 카드 우측에 `applicant-schedule-list`·커스텀 리스트 루트로 `.calendar-list-item` shell 우회
+- 7:3 카드 우측에 `.calendar-sub-right-list` 래퍼 추가 (이중 래퍼)
 - `.calendar-list` 안에서 `.calendar-list-item` 없이 도메인 루트만 렌더링 (hover·간격 불일치)
 - 도메인 CSS에서 `:hover`로 mint 효과를 다시 정의하거나 **끄기** (`border-width: 1px !important` 등)
 - `calendar-sub-right.css`와 다른 transition/hover 토큰을 item 파일에 복제

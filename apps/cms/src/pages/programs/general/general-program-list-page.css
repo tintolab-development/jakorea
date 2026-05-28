@@ -1,0 +1,9 @@
+/**
+ * 일반 프로그램 목록 — program-list-page 경제 교육 레이아웃 계열
+ */
+@import '../program-list-page.css';
+@import '@/features/program/general/ui/program-list.css';
+
+.general-program-list-page.program-list-page--economy-education {
+  width: 100%;
+}

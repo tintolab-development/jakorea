@@ -23,7 +23,10 @@ Prefer **option 1** for consistency with common calendar apps and fewer mistaken
 
 ## Engineering
 
+- **공통 캘린더 단일 진입:** [calendar-common.md](./calendar-common.md) (shell 토큰·셀·리스트·PR 체크리스트)
 - Stop propagation on nested controls per [event-handling.md](./event-handling.md).
-- 우측 일별 리스트 행·hover: [calendar-sub-right-list.md](./calendar-sub-right-list.md)
+- 7:3 카드형: [calendar-split-card-layout.md](./calendar-split-card-layout.md)
+- 우측 일별 리스트: [calendar-sub-right-list.md](./calendar-sub-right-list.md)
+- 주간 시간 격자: [calendar-week-time-grid.md](./calendar-week-time-grid.md)
 
-**Last updated:** 2026-04-21
+**Last updated:** 2026-05-28

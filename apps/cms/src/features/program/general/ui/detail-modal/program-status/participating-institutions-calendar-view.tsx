@@ -3,7 +3,7 @@
  * 좌측 캘린더 7 : 우측 추등학교 리스트 3, 기존 Calendar·ApplicantScheduleList 활용
  */
 
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -14,7 +14,14 @@ import type {
 } from '@/data/mock/participating-schools'
 import { ApplicantScheduleList } from '../../../../shared/ui/program-detail/applicant-list/applicant-schedule-list'
 import { SCHEDULE_COLORS } from '../../../../shared/ui/program-schedule-colors'
-import { CmsSelect, ProgramCalendar, type ProgramCalendarEventItem } from '@/shared/ui'
+import {
+  CalendarMain,
+  CalendarSplitCardLayout,
+  calendarItemsForEventMode,
+  type CalendarMainEventInput,
+} from '@/shared/components/calendar'
+import { CmsSelect } from '@/shared/ui'
+import '@/shared/components/calendar/styles/calendar.css'
 import './participating-institutions-calendar-view.css'
 
 dayjs.extend(isSameOrAfter)
@@ -27,7 +34,7 @@ function parseSessionDate(dateStr: string): Dayjs {
 }
 
 /** 학교·날짜별 이벤트 (하루에 한 학교당 1건, 해당 날짜의 세션 목록 포함) */
-interface CalendarEvent extends ProgramCalendarEventItem {
+interface CalendarEvent extends CalendarMainEventInput {
   id: string
   title: string
   startDate: string
@@ -197,8 +204,6 @@ export function ParticipatingInstitutionsCalendarView({
     if (calendarControlled) onCalendarGranularityChange(mode)
     else setFallbackCalendarMode(mode)
   }
-  const mainCalendarRef = useRef<HTMLDivElement>(null)
-
   const baseEvents = useMemo(() => buildEventsFromSchools(schools), [schools])
   const events = useMemo(
     () =>
@@ -290,13 +295,10 @@ export function ParticipatingInstitutionsCalendarView({
   }
 
   return (
-    <div className="participating-institutions-calendar-layout">
-      <div
-        className="participating-institutions-calendar-card participating-institutions-calendar-card--left"
-        ref={mainCalendarRef}
-      >
-        <ProgramCalendar
-          className="participating-institutions-calendar-main"
+    <CalendarSplitCardLayout
+      left={
+        <CalendarMain
+          className="calendar-split-card-main"
           events={events}
           selectedRowKeys={selectedRowKeys}
           selectedDate={selectedDate}
@@ -305,34 +307,45 @@ export function ParticipatingInstitutionsCalendarView({
           onSelectDate={handleDateSelect}
           onMonthChange={setCurrentMonth}
           onModeChange={setCalendarMode}
+          eventsTooltipScope="full-day"
+          eventsTooltipTrigger="cell"
+          formatEventsOverflowText={n => `외 ${n}개의 항목`}
           tooltipOverlayClassName="participating-institutions-calendar-tooltip-overlay"
-          previewTooltipContent={({ events: dayEvents }) => (
-            <ParticipatingCalendarEventPopoverContent
-              events={dayEvents as CalendarEvent[]}
-              titleColorMap={new Map(
-                (dayEvents as CalendarEvent[]).map(ev => [String(ev.id), getColorForEvent(ev).text])
-              )}
-              resolvePopoverRowParts={
-                resolvePopoverRowParts
-                  ? event => {
-                      const parts = resolvePopoverRowParts({
-                        schoolRow: event.originalItem.row,
-                        date: dayjs(event.startDate),
-                      })
-                      return { ...parts, valueTone: 'default' }
-                    }
-                  : undefined
-              }
-            />
-          )}
+          previewTooltipContent={({ events: dayItems, colorMap }) => {
+            const dayEvents = calendarItemsForEventMode(dayItems).map(
+              item => item.original as CalendarEvent
+            )
+            return (
+              <ParticipatingCalendarEventPopoverContent
+                events={dayEvents}
+                titleColorMap={new Map(
+                  dayEvents.map(ev => [
+                    String(ev.id),
+                    colorMap.get(ev.id)?.text ?? getColorForEvent(ev).text,
+                  ])
+                )}
+                resolvePopoverRowParts={
+                  resolvePopoverRowParts
+                    ? event => {
+                        const parts = resolvePopoverRowParts({
+                          schoolRow: event.originalItem.row,
+                          date: dayjs(event.startDate),
+                        })
+                        return { ...parts, valueTone: 'default' }
+                      }
+                    : undefined
+                }
+              />
+            )
+          }}
         />
-      </div>
-      <div className="participating-institutions-calendar-card participating-institutions-calendar-card--right">
-        {rightContent !== undefined ? (
+      }
+      right={
+        rightContent !== undefined ? (
           rightContent
         ) : (
-          <div className="participating-institutions-calendar-default-right">
-            <div className="participating-institutions-calendar-default-right__school-filter">
+          <>
+            <div className="calendar-split-card-right__toolbar">
               <CmsSelect
                 mode="multiple"
                 withAllOption={false}
@@ -350,9 +363,9 @@ export function ParticipatingInstitutionsCalendarView({
               onEventClick={item => item?.row && onSchoolClick(item.row)}
               getColorForEvent={e => getColorForEvent(e as CalendarEvent)}
             />
-          </div>
-        )}
-      </div>
-    </div>
+          </>
+        )
+      }
+    />
   )
 }

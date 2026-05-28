@@ -164,9 +164,7 @@ export function ProgramListPage() {
 
   // 풀페이지 모달 ↔ 쿼리 파라미터(programId) 연동
   const isFullPageModalPath =
-    pNorm === '/programs' ||
-    pNorm === '/programs/general' ||
-    pNorm === '/programs/education'
+    pNorm === '/programs' || pNorm === '/programs/education'
 
   useEffect(() => {
     if (!isFullPageModalPath) return
@@ -288,7 +286,13 @@ export function ProgramListPage() {
       return
     }
 
-    if (pNorm === '/programs' || pNorm === '/programs/education' || pNorm === '/programs/economy-education' || pNorm === '/programs/general' || pNorm === '/programs/company-school') {
+    if (
+      pNorm === '/programs' ||
+      pNorm === '/programs/education' ||
+      pNorm === '/programs/economy-education' ||
+      pNorm.startsWith('/programs/general/') ||
+      pNorm === '/programs/company-school'
+    ) {
       setSelectedProgramForFullPageModal(program)
       const nextParams = new URLSearchParams(searchParams)
       nextParams.set('programId', program.id)

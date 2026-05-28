@@ -143,17 +143,12 @@ export { SegmentedTab } from './segmented-tab'
 export type { SegmentedTabOption } from './segmented-tab'
 export { CmsTextTabs } from './cms-text-tabs'
 export type { CmsTextTabItem, CmsTextTabsProps, CmsTextTabsVariant } from './cms-text-tabs'
-export { ProgramCalendar } from '../components/program-calendar'
-export type {
-  ProgramCalendarProps,
-  ProgramCalendarProgramProps,
-  ProgramCalendarEventsProps,
-  ProgramCalendarEventItem,
-} from '../components/program-calendar'
 export {
   CalendarSet,
+  CalendarMain,
   CALENDAR_FILTER_COLOR_CLASSES,
 } from '../components/calendar'
+export type { CalendarMainEventInput } from '../components/calendar'
 export type { CalendarSetMainProps } from '../components/calendar'
 export { LogoutIcon, GoogleMarkIcon, ProfileAvatarIcon } from './icons'
 export type { LogoutIconProps, GoogleMarkIconProps, ProfileAvatarIconProps } from './icons'

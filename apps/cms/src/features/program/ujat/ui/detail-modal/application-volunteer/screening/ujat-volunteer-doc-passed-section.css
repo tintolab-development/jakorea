@@ -130,139 +130,15 @@
   text-align: center !important;
 }
 
-.ujat-volunteer-doc-passed__toolbar-title {
-  font-family: Pretendard, sans-serif;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 150%;
-  color: var(--default-BK, #3d3d3d);
-}
-
-.ujat-volunteer-doc-passed__toolbar-count {
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-  color: var(--default-BK, #3d3d3d);
-  opacity: 0.6;
-}
-
-.ujat-volunteer-doc-passed__toolbar-main {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
 .ujat-volunteer-doc-passed__calendar-container {
   width: 100%;
   min-width: 0;
+  overflow: visible;
 }
 
-/*
- * 캘린더 뷰: 요일 헤더·날짜 셀 사이 디바이더 제거 (UJAT 합격자 화면만)
- * — 공통 ProgramCalendar(.program-calendar.css)는 변경하지 않음
- */
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-calendar
-  .ant-picker-panel,
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-date-panel {
-  border-top: none !important;
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-content
-  thead
-  th {
-  border-bottom: none !important;
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .program-calendar-cell {
-  border: none;
-  gap: 4px;
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .program-calendar-cell-date,
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .program-calendar-cell-events {
-  border: none !important;
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-calendar-date,
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-calendar-date-value,
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-calendar-date-content {
-  border: none !important;
-  border-top: none !important;
-  border-bottom: none !important;
-}
-
-/* 격자선: 우·하만 (top 없음 → 요일 행과 첫 날짜 행 사이 이중선 방지) */
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-content
-  tbody
-  .ant-picker-cell {
-  padding: 0;
-  vertical-align: top;
-  border: none;
-  border-right: 1px solid var(--color-border-light, #f0f0f0);
-  border-bottom: 1px solid var(--color-border-light, #f0f0f0);
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-content
-  tbody
-  tr
-  td:first-child {
-  border-left: 1px solid var(--color-border-light, #f0f0f0);
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-content
-  tbody
-  tr {
-  height: var(--calendar-month-row-height, 127.4px);
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-cell
-  .program-calendar-cell,
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-cell
-  .program-calendar-cell-tooltip-trigger,
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-cell
-  .program-calendar-cell-tooltip-trigger--full-cell {
-  height: 100%;
-  min-height: 127.4px;
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-cell
-  .program-calendar-cell-tooltip-trigger--full-cell
-  > .program-calendar-cell {
-  height: 100%;
-  min-height: 127.4px;
+/* 캘린더 카드 box-shadow가 좌우에서 잘리지 않도록(리스트 뷰 테이블 가로 스크롤은 table-wrap 유지) */
+.ujat-volunteer-doc-passed:has(.ujat-volunteer-doc-passed__calendar-container) {
+  overflow-x: visible;
 }
 
 /* 면접일 배정 / 재배정 — 테이블 액션 버튼 (120×40) */

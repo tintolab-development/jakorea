@@ -1,5 +1,5 @@
 /**
- * 신청자 캘린더 일정 색상 맵 (`ProgramCalendar` / `CalendarMain` 이벤트 모드와 공유)
+ * 신청자 캘린더 일정 색상 맵 (`CalendarMain` 이벤트 모드와 공유)
  */
 
 import { useMemo, useCallback } from 'react'
@@ -22,6 +22,7 @@ export function getEntityKey(event: {
   const item = fromNested as Record<string, unknown> | undefined
   if (item && typeof item.schoolName === 'string') return item.schoolName
   if (item && typeof item.instructorName === 'string') return item.instructorName
+  if (item && typeof item.name === 'string') return item.name
   return String(event?.title ?? '').replace(/^\[.*?\]\s*/, '') ?? ''
 }
 

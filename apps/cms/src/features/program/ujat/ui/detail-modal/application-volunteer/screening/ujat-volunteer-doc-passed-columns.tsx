@@ -93,23 +93,8 @@ export function useUjatVolunteerDocPassedColumns({
         align: 'center',
         className: CENTER_CELL_CLASS,
         render: (_value, record) => {
-          const { interviewAssignmentStatus } = record
-          if (interviewAssignmentStatus === 'withdrawn') {
-            return (
-              <CmsButton
-                type="button"
-                variant="secondary"
-                size="small"
-                width={120}
-                className="ujat-volunteer-doc-passed__assign-btn"
-                disabled
-              >
-                면접일 배정
-              </CmsButton>
-            )
-          }
           const label =
-            interviewAssignmentStatus === 'assigned' ? '면접일 재배정' : '면접일 배정'
+            record.interviewAssignmentStatus === 'assigned' ? '면접일 재배정' : '면접일 배정'
           return (
             <CmsButton
               type="button"

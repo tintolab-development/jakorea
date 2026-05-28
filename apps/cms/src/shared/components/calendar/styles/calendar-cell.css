@@ -1,3 +1,7 @@
+/*
+ * CalendarMain 월간 셀 상호작용 단일 소스.
+ * 7:3 split-card에서도 동일 — calendar-split-card-main.css에 --selected/--today/--hover 재정의 금지.
+ */
 .calendar-cell {
   display: flex;
   flex-direction: column;
@@ -148,6 +152,49 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.calendar-event-title--with-divider {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  line-height: 130%;
+}
+
+/* split-card-main의 `.calendar-event-title { display: block; }` 오버라이드를 다시 flex로 고정 */
+.calendar-split-card-main .calendar-event-title.calendar-event-title--with-divider {
+  display: flex;
+  align-items: center;
+}
+
+.calendar-event-title__left {
+  flex: 0 0 auto;
+  min-width: 0;
+  color: inherit;
+  line-height: 130%;
+}
+
+.calendar-event-title__divider {
+  flex: 0 0 auto;
+  display: inline-block;
+  width: 0;
+  height: 12px;
+  margin: 0 6px;
+  border-left: 1px solid var(--main-BK, #3d3d3d);
+  opacity: 0.6;
+}
+
+.calendar-event-title__right {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--main-BK, #3d3d3d);
+  opacity: 0.6;
+  line-height: 130%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .calendar-event-more {

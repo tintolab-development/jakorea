@@ -1007,6 +1007,10 @@
   overflow-y: auto;
 }
 
+.program-calendar-week-time-grid__event--all-day.program-calendar-week-time-grid__event--timed {
+  overflow-y: hidden;
+}
+
 .program-calendar-week-time-grid__event-text {
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -1024,4 +1028,54 @@
   font-size: 11px;
   font-weight: 500;
   line-height: 1.35;
+}
+
+/* 집약 표시: 대표 제목 + 외 N개의 항목 */
+.program-calendar-week--time-grid
+  .program-calendar-week-time-grid__event
+  .program-calendar-event-title.program-calendar-week-time-grid__event-text:has(
+    > .program-calendar-week-time-grid__event-subtext
+  ) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  min-height: 0;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  -webkit-box-orient: unset;
+}
+
+.program-calendar-week--time-grid
+  .program-calendar-week-time-grid__event
+  .program-calendar-event-title.program-calendar-week-time-grid__event-text:has(
+    > .program-calendar-week-time-grid__event-subtext
+  )
+  > span:not(.program-calendar-week-time-grid__event-subtext) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  text-overflow: ellipsis;
+}
+
+.program-calendar-week--time-grid
+  .program-calendar-week-time-grid__event
+  .program-calendar-week-time-grid__event-subtext {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.3;
+  opacity: 0.85;
 }

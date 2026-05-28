@@ -16,6 +16,10 @@ import {
   CalendarListItemContentInstitutionApplication,
   type CalendarInstitutionApplicationListRow,
 } from './item-list/ujat-institution-application'
+import {
+  CalendarListItemContentVolunteerInterview,
+  type CalendarVolunteerInterviewListRow,
+} from './item-list/ujat-volunteer-interview'
 import { settlementEventStatusColorPair } from './preview-tooltip/settlement'
 import {
   PROGRAM_DAY_SCHEDULE_STATUS_CONFIG,
@@ -224,6 +228,46 @@ export type CalendarSubRightSettlementListProps = {
   onRowClick: (row: InstructorSettlementListRow) => void
   resolveRowColors?: (row: InstructorSettlementListRow) => ScheduleColorPair | undefined
   resolveBadgeLabel?: (row: InstructorSettlementListRow) => string | undefined
+}
+
+export type CalendarSubRightVolunteerInterviewListProps = {
+  rows: CalendarVolunteerInterviewListRow[]
+  onRowClick: (row: CalendarVolunteerInterviewListRow) => void
+  resolveRowColors?: (row: CalendarVolunteerInterviewListRow) => ScheduleColorPair | undefined
+}
+
+export function CalendarSubRightVolunteerInterviewList({
+  rows,
+  onRowClick,
+  resolveRowColors,
+}: CalendarSubRightVolunteerInterviewListProps) {
+  return (
+    <div className={rows.length === 0 ? 'calendar-list calendar-list--empty' : 'calendar-list'}>
+      {rows.length === 0 ? (
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+      ) : (
+        rows.map(row => {
+          const colors = resolveRowColors?.(row) ?? SCHEDULE_COLORS[0]
+          return (
+            <div
+              key={row.id}
+              className="calendar-list-item"
+              data-has-color="true"
+              style={{
+                backgroundColor: colors.bg,
+                border: `1px solid ${colors.border}`,
+              }}
+              onClick={() => onRowClick(row)}
+            >
+              <div className="calendar-list-item__column">
+                <CalendarListItemContentVolunteerInterview row={row} />
+              </div>
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
 }
 
 export function CalendarSubRightSettlementList({

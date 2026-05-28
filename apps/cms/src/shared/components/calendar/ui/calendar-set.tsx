@@ -190,15 +190,13 @@ function CalendarSetMain({ items, loading, onItemClick }: CalendarSetMainProps) 
   return (
     <div className="calendar-set">
       <div className="calendar-sub-left">
-        <div className="calendar-mini">
-          <CalendarMini
-            currentMonth={currentMonth}
-            selectedDate={selectedDate}
-            onMonthChange={handleMonthChange}
-            onSelectDate={handleDateSelect}
-            programDates={programDates}
-          />
-        </div>
+        <CalendarMini
+          currentMonth={currentMonth}
+          selectedDate={selectedDate}
+          onMonthChange={handleMonthChange}
+          onSelectDate={handleDateSelect}
+          programDates={programDates}
+        />
         <CalendarSearch
           keyword={calendarSearchKeyword}
           options={programFilterOptions}
