@@ -1,5 +1,9 @@
 .ujat-doc-viewer-modal {
-  --ujat-doc-viewer-a4-scale: 0.55;
+  --ujat-doc-viewer-a4-design-page-width: 1464px;
+  --ujat-doc-viewer-a4-display-width: 1404px;
+  --ujat-doc-viewer-a4-scale: calc(
+    var(--ujat-doc-viewer-a4-display-width) / var(--ujat-doc-viewer-a4-design-page-width)
+  );
 }
 
 .ujat-doc-viewer-modal__title-wrap {
@@ -10,11 +14,11 @@
 }
 
 .ujat-doc-viewer-modal__file-name {
-  color: var(--main-BK, #3d3d3d);
+  color: var(--main-WT, #fff);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: min(820px, calc(100vw - 520px));
+  max-width: min(1040px, calc(100vw - 520px));
 }
 
 .ujat-doc-viewer-modal__badge {
@@ -23,10 +27,10 @@
   height: 22px;
   padding: 0 8px;
   border-radius: 11px;
-  background: rgba(1, 161, 175, 0.12);
-  font-size: 11px;
+  border: 1px solid var(--main-WT, #fff);
+  font-size: 14px;
   font-weight: 600;
-  color: var(--color-mint-01, #01a1af);
+  color: var(--main-WT, #fff);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -39,6 +43,18 @@
   gap: 8px;
 }
 
+.ujat-doc-viewer-modal .full-page-modal__topbar {
+  background: var(--color-mint-01, #01a1af);
+}
+
+.ujat-doc-viewer-modal .full-page-modal__title {
+  color: var(--main-WT, #fff);
+}
+
+.ujat-doc-viewer-modal .full-page-modal__close {
+  color: var(--main-WT, #fff);
+}
+
 .ujat-doc-viewer-modal__workspace {
   display: flex;
   flex-direction: column;
@@ -46,16 +62,17 @@
   gap: 18px;
   width: 100%;
   min-height: 0;
-  padding: 20px 0 0;
+  padding: 4px 0 0;
   box-sizing: border-box;
 }
 
 .ujat-doc-viewer-modal__page {
   position: relative;
-  width: 805px;
-  height: 1140px;
+  width: var(--ujat-doc-viewer-a4-display-width);
+  aspect-ratio: 65 / 92;
+  height: calc(var(--ujat-doc-viewer-a4-display-width) * 92 / 65);
   background: #fff;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: none;
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -69,13 +86,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  width: fit-content;
-  min-height: 44px;
-  padding: 6px 14px;
-  border-radius: 22px;
-  background: rgba(51, 68, 77, 0.75);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+  gap: 16px;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 20px;
+  min-height: 48px;
+  padding: 10px 16px;
+  border-radius: var(--16, 16px);
+  background: rgba(34, 64, 75, 0.5);
+  z-index: 1200;
   flex-shrink: 0;
 }
 
@@ -83,31 +103,31 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: none;
   background: none;
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: 0;
   color: #fff;
-  font-size: 16px;
-  transition: background 0.15s;
+  padding: 0;
+  transition: opacity 0.15s;
 }
 
 .ujat-doc-viewer-modal__page-nav-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.16);
+  opacity: 0.86;
 }
 
 .ujat-doc-viewer-modal__page-nav-btn:disabled {
-  color: rgba(255, 255, 255, 0.4);
+  opacity: 0.45;
   cursor: default;
 }
 
 .ujat-doc-viewer-modal__page-indicator {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 500;
   color: #fff;
-  min-width: 48px;
+  min-width: 64px;
   text-align: center;
 }
 
