@@ -1,4 +1,4 @@
-import { useMemo, useState, type Key } from 'react'
+import { useCallback, useMemo, useState, type Key } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -9,7 +9,7 @@ import {
   INSTITUTION_SIDO_FILTER_OPTIONS,
   getInstitutionSigunguSelectOptions,
 } from '@/shared/config/institution-address-region-data'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import './institution-application-tab.css'
 
 type GeminiInstitutionApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
@@ -175,11 +175,37 @@ function filterRows(rows: GeminiInstitutionApplicationRow[], filters: PendingFil
 export function GeminiInstitutionApplicationTab() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
+  const { showAlert } = useCmsAlert()
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
 
   const filteredRows = useMemo(() => filterRows(MOCK_ROWS, appliedFilters), [appliedFilters])
+
+  const showNoSelectionAlert = useCallback(() => {
+    showAlert({
+      title: '항목 선택 안내',
+      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+    })
+  }, [showAlert])
+
+  const handleBulkReject = useCallback(() => {
+    if (!canWrite) return
+    if (selectedRowKeys.length === 0) {
+      showNoSelectionAlert()
+      return
+    }
+    // TODO: 참여 기관 신청 선택 반려 확인 모달·API 연동
+  }, [canWrite, selectedRowKeys.length, showNoSelectionAlert])
+
+  const handleBulkApprove = useCallback(() => {
+    if (!canWrite) return
+    if (selectedRowKeys.length === 0) {
+      showNoSelectionAlert()
+      return
+    }
+    // TODO: 참여 기관 신청 선택 승인 확인 모달·API 연동
+  }, [canWrite, selectedRowKeys.length, showNoSelectionAlert])
 
   const columns = useMemo<ColumnsType<GeminiInstitutionApplicationRow>>(
     () => [
@@ -283,10 +309,10 @@ export function GeminiInstitutionApplicationTab() {
       actions={
         canWrite ? (
           <>
-            <CmsButton variant="delete" size="medium">
+            <CmsButton variant="delete" size="medium" onClick={handleBulkReject}>
               선택 반려
             </CmsButton>
-            <CmsButton variant="secondary" size="medium">
+            <CmsButton variant="secondary" size="medium" onClick={handleBulkApprove}>
               선택 승인
             </CmsButton>
           </>
