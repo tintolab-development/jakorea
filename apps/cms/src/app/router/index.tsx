@@ -266,8 +266,8 @@ export const router = createBrowserRouter([
           { index: true, element: <ProgramListPage /> },
           { path: 'general', element: <GeneralProgramListPage /> },
           { path: 'general/*', element: <ProgramListPage /> },
-          { path: 'company-school', element: programCategoryPreparing },
-          { path: 'company-school/*', element: programCategoryPreparing },
+          { path: 'company-school', element: <ProgramListPage /> },
+          { path: 'company-school/*', element: <ProgramListPage /> },
           { path: 'ujat', element: <UjatProgramListPage /> },
           { path: 'ujat/*', element: <UjatProgramListPage /> },
           { path: 'gemini/visiting-training', element: <GeminiVisitingTrainingPage /> },
@@ -620,6 +620,14 @@ export const router = createBrowserRouter([
       {
         path: 'applications',
         element: <Navigate to="/programs/education/enrollment" replace />,
+      },
+      {
+        path: 'dashboard',
+        element: <Navigate to="/" replace />,
+      },
+      {
+        path: 'dashboard/*',
+        element: <Navigate to="/" replace />,
       },
       {
         path: 'applications/*',

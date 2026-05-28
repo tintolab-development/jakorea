@@ -46,7 +46,7 @@ export function getUjatSurveyMenuItems(programId: string): UjatSurveyMenuItem[] 
   void programId
   return [
     { key: 'survey-poll', label: '설문조사' },
-    { key: 'survey-satisfaction', label: '만족도 조사' },
+    { key: 'survey-satisfaction', label: '만족도조사' },
     { key: 'survey-lecture-eval', label: '강의평가' },
   ]
 }
@@ -59,11 +59,6 @@ export const UJAT_SURVEY_LEGACY_TAB_MAP: Record<string, string> = {
 
 /** 진행 예정 프로그램은 설문 항목 일부만 노출 예시 */
 export function getUjatSurveyMenuItemsForProgram(programId: string): UjatSurveyMenuItem[] {
-  const p = mockUjatElementaryListProgramsMap.get(programId)
   const all = getUjatSurveyMenuItems(programId)
-  if (p?.ujatProgressStatus === 'EDUCATION_SCHEDULED') {
-    const sliced = all.slice(0, 1)
-    return sliced.length > 0 ? sliced : all
-  }
   return all.length > 0 ? all : [{ key: 'survey-poll', label: '설문조사' }]
 }

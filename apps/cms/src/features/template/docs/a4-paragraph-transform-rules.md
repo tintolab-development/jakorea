@@ -49,6 +49,10 @@
   - hidden/gap/body options를 사전동의 전용 설정으로 적용
 - 정산 신청서
   - hidden/gap/body options를 정산신청 전용 설정으로 적용
+- UJAT 교육계획서·교육일지
+  - hidden: 타이틀 단락
+  - gap: 시드 단락 32, 그 외 16
+  - `user_info`는 `contentOnly`에서 선택된 봉사자 정보 필드만 A4 테이블로 렌더
 - 행정정보 공동이용 사전 동의서
   - hidden: 타이틀 단락
   - gap: 시드 단락 32, 그 외 16

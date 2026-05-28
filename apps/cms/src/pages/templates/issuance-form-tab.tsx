@@ -31,12 +31,18 @@ import { createPaymentStatementPreConsentDraft } from '@/features/template/model
 import {
   getSettlementApplicationA4ParagraphGap,
   SETTLEMENT_APPLICATION_A4_HIDDEN_PARAGRAPH_IDS } from '@/features/template/model/settlement-application-issuance-a4-preview'
+import {
+  createUjatEducationIssuanceA4Preview,
+} from '@/features/template/model/ujat-education-issuance-a4-preview'
 import { TemplateListCard } from '@/features/template/ui/template-management/template-list-card'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { A4DocumentPageLayout } from '@/features/template/ui/layout'
 import { FormDocumentPreviewBody } from '@/features/template/ui/document-preview'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
-import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
+import type {
+  FormUpdateParagraph,
+  RenderFormParagraphBodyOptions,
+} from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import {
   mergeLeftCardOrderByDragIds,
   normalizeLeftCardOrder,
@@ -476,41 +482,59 @@ export function IssuanceFormTab() {
   const handleOpenUserPreview = useCallback(() => {
     if (selectedTemplate == null) return
     const useA4Preview = shouldUseA4PreviewForIssuanceTemplate(selectedTemplate.templateName)
-    const baseA4Options = useA4Preview ? createContentOnlyA4PreviewOptions() : undefined
+    const isUjatPlanPreview = selectedTemplate.templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME
     const isJournalPreview = selectedTemplate.templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
+    const ujatPreviewVariant: UjatEducationIssuanceVariant | null = isUjatPlanPreview
+      ? 'plan'
+      : isJournalPreview
+        ? 'journal'
+        : null
     const isSettlementPreview =
       selectedTemplate.templateName === SETTLEMENT_APPLICATION_TEMPLATE_NAME
     const isPreConsentPreview =
       selectedTemplate.key === PAYMENT_STATEMENT_PRE_CONSENT_ROW_KEY ||
       selectedTemplate.templateName === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME
+    const ujatA4Preview =
+      ujatPreviewVariant != null
+        ? createUjatEducationIssuanceA4Preview({
+            variant: ujatPreviewVariant,
+            ...(isJournalPreview
+              ? {
+                  journalInstitutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME,
+                }
+              : {}),
+          })
+        : null
+    const baseA4Options = useA4Preview
+      ? ujatA4Preview?.a4PreviewOptions ?? createContentOnlyA4PreviewOptions()
+      : undefined
     const previewEditorKind =
       isSettlementPreview ? 'horizontal_table' : isPreConsentPreview ? 'agreement' : 'survey'
+    const previewParagraphBodyOptions: RenderFormParagraphBodyOptions | undefined =
+      ujatA4Preview?.paragraphBodyOptions ??
+      (isSettlementPreview
+        ? SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS
+        : isPreConsentPreview
+          ? PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS
+          : undefined)
     openWritingUserPreview({
       draft: getIssuanceUserPreviewDraft(selectedTemplate.templateName),
       updateParagraph: noopUpdateParagraph,
       headerTitle: selectedTemplate.templateName ?? '발급 양식 미리보기',
       editorKind: previewEditorKind,
       previewLayout: baseA4Options?.previewLayout,
-      paragraphBodyOptions: isJournalPreview
-        ? {
-            ujatJournalEducationInfoAutofill: {
-              institutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME } }
-        : isSettlementPreview
-          ? SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS
-          : isPreConsentPreview
-            ? PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS
-          : undefined,
+      paragraphBodyOptions: previewParagraphBodyOptions,
       a4HiddenParagraphIds: isSettlementPreview
         ? SETTLEMENT_APPLICATION_A4_HIDDEN_PARAGRAPH_IDS
         : isPreConsentPreview
           ? PAYMENT_STATEMENT_PRE_CONSENT_A4_HIDDEN_PARAGRAPH_IDS
-        : undefined,
+          : baseA4Options?.a4HiddenParagraphIds,
       a4RenderMode: baseA4Options?.a4RenderMode,
       a4ParagraphGapPx: isSettlementPreview
         ? getSettlementApplicationA4ParagraphGap
         : isPreConsentPreview
           ? getPaymentStatementPreConsentA4ParagraphGap
-          : undefined,
+          : baseA4Options?.a4ParagraphGapPx,
       hideParagraphRequiredChrome: baseA4Options?.hideParagraphRequiredChrome })
   }, [selectedTemplate, openWritingUserPreview])
 

@@ -32,7 +32,6 @@ import {
   type ScheduleColorPair,
 } from '@/features/program/shared/ui/program-schedule-colors'
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
-import { isProgramManagementLnbPath } from '@/shared/config/menu-config'
 import { SegmentedTab } from '@/shared/ui'
 import '@/shared/ui/widget-more-button.css'
 import '@/shared/components/program-calendar.css'
@@ -500,7 +499,7 @@ export function ProgramScheduleWidget({
   }
 
   const handleViewAll = () => {
-    if (isProgramManagementLnbPath(viewAllPath) || viewAllPath.startsWith('/programs/gemini')) {
+    if (viewAllPath.startsWith('/programs/gemini')) {
       window.alert(WIDGET_MORE_ALERT_MESSAGE)
       return
     }

@@ -1,8 +1,7 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
+import { CmsButton } from '@/shared/ui'
 import {
   assignmentSubmissionStatusClassName,
   assignmentSubmissionStatusLabel,
@@ -12,6 +11,9 @@ import {
   resolveAssignmentSubmissionStatus,
 } from './assignment-display'
 import type { UjatAssignmentVolunteerRow } from './types'
+import { UjatAssignmentDocumentViewerModal } from './document-viewer/ujat-assignment-document-viewer-modal'
+import type { UjatDocumentViewerTarget } from './document-viewer/ujat-document-viewer-types'
+import { parseSubmittedDate } from './document-viewer/ujat-document-viewer-types'
 import '../volunteers/detail/assignment.css'
 import './section.css'
 
@@ -63,14 +65,40 @@ export const UJAT_ASSIGNMENT_TABLE_MIN_SCROLL_X = 1180
 
 export function UjatEducationProgressAssignmentTable({
   rows,
+  regionLabel,
 }: {
   rows: UjatAssignmentVolunteerRow[]
+  regionLabel: string
 }) {
-  const { showAlert } = useCmsAlert()
+  const [viewerTarget, setViewerTarget] = useState<UjatDocumentViewerTarget | null>(null)
 
-  const showComingSoon = useCallback(() => {
-    showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
-  }, [showAlert])
+  const openPlanViewer = useCallback(
+    (record: UjatAssignmentVolunteerRow) => {
+      setViewerTarget({
+        docType: 'plan',
+        volunteerName: record.name,
+        regionLabel,
+        institutionName: record.institutionName,
+        assignedClass: record.assignedClass,
+        submittedDateLabel: parseSubmittedDate(record.plan.submittedDateLabel),
+      })
+    },
+    [regionLabel]
+  )
+
+  const openLogViewer = useCallback(
+    (record: UjatAssignmentVolunteerRow) => {
+      setViewerTarget({
+        docType: 'log',
+        volunteerName: record.name,
+        regionLabel,
+        institutionName: record.institutionName,
+        assignedClass: record.assignedClass,
+        submittedDateLabel: parseSubmittedDate(record.log.submittedDateLabel),
+      })
+    },
+    [regionLabel]
+  )
 
   const tableData = useMemo(() => {
     const total = rows.length
@@ -130,7 +158,7 @@ export function UjatEducationProgressAssignmentTable({
           renderPlanLogViewButton(
             '교육 계획서 보기',
             isAssignmentPlanViewEnabled(record.plan),
-            showComingSoon
+            () => openPlanViewer(record)
           ),
       },
       {
@@ -144,7 +172,7 @@ export function UjatEducationProgressAssignmentTable({
           renderPlanLogViewButton(
             '교육일지 보기',
             isAssignmentLogViewEnabled(record.log),
-            showComingSoon
+            () => openLogViewer(record)
           ),
       },
       {
@@ -155,23 +183,31 @@ export function UjatEducationProgressAssignmentTable({
         render: (_: unknown, record: UjatAssignmentVolunteerRow) => renderRemarks(record),
       },
     ],
-    [showComingSoon]
+    [openPlanViewer, openLogViewer]
   )
 
   return (
-    <Table<UjatAssignmentVolunteerRow & { no: number }>
-      rowKey="id"
-      className="cms-data-table ujat-education-progress-assignments__table"
-      columns={columns}
-      dataSource={tableData}
-      pagination={false}
-      tableLayout="fixed"
-      scroll={{ x: UJAT_ASSIGNMENT_TABLE_MIN_SCROLL_X }}
-      onRow={record => ({
-        className: record.isDropout
-          ? 'ujat-education-progress-assignments__row--dropout'
-          : undefined,
-      })}
-    />
+    <>
+      <Table<UjatAssignmentVolunteerRow & { no: number }>
+        rowKey="id"
+        className="cms-data-table ujat-education-progress-assignments__table"
+        columns={columns}
+        dataSource={tableData}
+        pagination={false}
+        tableLayout="fixed"
+        scroll={{ x: UJAT_ASSIGNMENT_TABLE_MIN_SCROLL_X }}
+        onRow={record => ({
+          className: record.isDropout
+            ? 'ujat-education-progress-assignments__row--dropout'
+            : undefined,
+        })}
+      />
+
+      <UjatAssignmentDocumentViewerModal
+        open={viewerTarget != null}
+        onCancel={() => setViewerTarget(null)}
+        target={viewerTarget}
+      />
+    </>
   )
 }
