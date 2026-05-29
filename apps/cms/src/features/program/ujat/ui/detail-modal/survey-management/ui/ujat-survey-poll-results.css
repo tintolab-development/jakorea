@@ -1,0 +1,274 @@
+.ujat-survey-poll-results {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 24px 0 52px;
+  box-sizing: border-box;
+}
+
+.ujat-survey-poll-results__summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ujat-survey-poll-results__summary-primary {
+  margin: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.ujat-survey-poll-results__summary-count-group {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+}
+
+.ujat-survey-poll-results__summary-text {
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 32px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.ujat-survey-poll-results__summary-count {
+  color: var(--color-mint-01, #01a1af);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 32px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.ujat-survey-poll-results__summary-secondary {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.ujat-survey-poll-results__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.ujat-survey-poll-results__section {
+  display: flex;
+  height: 420px;
+  padding: 20px 20px 10px 20px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  align-self: stretch;
+  box-sizing: border-box;
+  border-radius: 16px;
+  border: 1px solid #d4d4d4;
+  background: var(--default-WT, #fff);
+}
+
+.ujat-survey-poll-results__section-title {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  flex-shrink: 0;
+}
+
+.ujat-survey-poll-results__section-divider {
+  height: 1px;
+  flex-shrink: 0;
+  align-self: stretch;
+  background: var(--table-line, #e0e0e0);
+}
+
+.ujat-survey-poll-results__section-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-self: stretch;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.ujat-survey-scale-chart {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.ujat-survey-scale-chart .recharts-bar-rectangle {
+  max-width: 100px;
+}
+
+.ujat-survey-scale-chart__tooltip {
+  display: flex;
+  width: 121px;
+  padding: 4px;
+  flex-direction: column;
+  align-items: flex-start;
+  border-radius: var(--6, 6px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+}
+
+.ujat-survey-scale-chart__tooltip-label {
+  margin: 0;
+  width: 100%;
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.ujat-survey-scale-chart__tooltip-value {
+  margin: 0;
+  width: 100%;
+  color: var(--color-mint-01, #01a1af);
+  text-align: center;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-survey-text-responses-table {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  border-radius: 8px;
+}
+
+.ujat-survey-text-responses-table__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ujat-survey-text-responses-table__table th,
+.ujat-survey-text-responses-table__table td {
+  padding: 12px 16px;
+  vertical-align: middle;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  line-height: 150%;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.ujat-survey-text-responses-table__table th {
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-weight: 700;
+  background: #f5f6f7;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.ujat-survey-text-responses-table__table th:last-child {
+  border-right: none;
+}
+
+.ujat-survey-text-responses-table__table td {
+  color: var(--default-BK, #3d3d3d);
+  font-weight: 500;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  border-right: 1px solid var(--table-line, #e0e0e0);
+}
+
+.ujat-survey-text-responses-table__table td.ujat-survey-text-responses-table__cell--content {
+  text-align: left;
+}
+
+.ujat-survey-text-responses-table__table td.ujat-survey-text-responses-table__cell--respondent {
+  text-align: center;
+}
+
+.ujat-survey-text-responses-table__table td:last-child {
+  border-right: none;
+}
+
+.ujat-survey-text-responses-table__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ujat-survey-text-responses-table__table thead th:first-child {
+  border-top-left-radius: 8px;
+}
+
+.ujat-survey-text-responses-table__table thead th:last-child {
+  border-top-right-radius: 8px;
+}
+
+.ujat-survey-text-responses-table__table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 8px;
+}
+
+.ujat-survey-text-responses-table__table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 8px;
+}
+
+.ujat-survey-text-responses-table__table th:first-child,
+.ujat-survey-text-responses-table__table td:first-child {
+  width: 75%;
+}
+
+.ujat-survey-text-responses-table__table th:last-child,
+.ujat-survey-text-responses-table__table td:last-child {
+  width: 25%;
+}
+
+.ujat-survey-registered-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.ujat-program-detail-fullpage-modal
+  .ujat-survey-registered-actions__download-button.cms-button.ant-btn.cms-button--large,
+.ujat-program-detail-fullpage-modal
+  .ujat-survey-registered-actions__preview-button.cms-button.ant-btn.cms-button--large {
+  width: auto;
+  min-width: 160px;
+  height: 44px;
+  padding: 0 20px !important;
+}
+
+.ujat-program-detail-fullpage-modal
+  .ujat-survey-registered-actions__download-button.cms-button.ant-btn.cms-button--large {
+  min-width: 210px;
+}
+
+.ujat-program-detail-fullpage-modal
+  .ujat-survey-registered-actions__share-button.cms-button.ant-btn.cms-button--large,
+.ujat-program-detail-fullpage-modal
+  .ujat-survey-registered-actions__add-button.cms-button.ant-btn.cms-button--large {
+  width: 160px;
+  min-width: 160px;
+  height: 44px;
+  padding: 0 31px !important;
+}
