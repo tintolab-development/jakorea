@@ -249,6 +249,32 @@
   opacity: 0.7;
 }
 
+.ujat-survey-poll-empty__secondary-description {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 120%;
+  opacity: 0.7;
+}
+
+.ujat-satisfaction-survey {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 0;
+  align-self: stretch;
+  background: var(--default-WT, #fff);
+}
+
+.ujat-survey-poll-empty--embedded {
+  padding: 80px 52px 52px;
+  flex: 1 0 0;
+  align-self: stretch;
+}
+
 .ujat-program-detail-fullpage-modal
   .ujat-survey-poll-empty__register-button.cms-button.ant-btn.cms-button--large {
   display: flex;
@@ -276,6 +302,10 @@
 
 .ujat-survey-create-modal .content-modal__description p {
   margin: 0;
+}
+
+.ujat-survey-create-modal__confirm-placeholder {
+  display: none;
 }
 
 .ujat-survey-create-modal__field {
@@ -374,6 +404,58 @@
   margin-top: 0;
   gap: 0;
   align-items: stretch;
+}
+
+.ujat-lecture-eval-incomplete-modal.ant-modal .ant-modal-content {
+  width: 600px;
+  height: 222px;
+  min-height: 222px;
+  max-height: 222px;
+  padding: 24px 30px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.ujat-lecture-eval-incomplete-modal .teal-header-modal__body {
+  margin-top: 0;
+  gap: 0;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+}
+
+.ujat-lecture-eval-incomplete-modal .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 12px;
+}
+
+.ujat-lecture-eval-incomplete-modal .content-modal__description {
+  margin: 0;
+}
+
+.ujat-lecture-eval-incomplete-modal .content-modal__description-text {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-lecture-eval-incomplete-modal .teal-header-modal__footer {
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.ujat-lecture-eval-incomplete-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.ujat-lecture-eval-incomplete-modal__body-placeholder {
+  display: none;
 }
 
 .ujat-survey-registered {
