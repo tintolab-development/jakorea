@@ -1,10 +1,11 @@
 import type { Dayjs } from 'dayjs'
 import type { ProgramLifecycleStatus, ProgramCategory, ProgramType } from '@/types/domain'
+import type { ProgramProgressPhaseFilter } from '../constants/program-list-constants'
 import type { ProgramListProgramMode } from '../../model/program-list-program-mode'
 
 interface PendingFilters {
   title: string
-  lifecycleStatus: ProgramLifecycleStatus | undefined
+  lifecycleStatus: ProgramLifecycleStatus | ProgramProgressPhaseFilter | undefined
   category: string | undefined
   businessArea: string | undefined
   targetLevel: string | undefined

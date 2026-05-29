@@ -124,7 +124,7 @@ function normalizeGeneralDetailParams(
   } else if (lnb === 'survey') {
     if (surveyKeys.length === 0) {
       if (tab !== 'main') setInvalid('survey', 'main')
-    } else if (!surveyKeys.includes(tab)) {
+    } else if (!(surveyKeys as readonly string[]).includes(tab)) {
       setInvalid('survey', surveyKeys[0] ?? 'main')
     }
   } else if (lnb === 'managers') {

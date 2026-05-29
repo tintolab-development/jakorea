@@ -163,6 +163,13 @@ export const programDetailInstitutionsEditSchema = programDetailEditSchemaBase.e
 
 export type ProgramDetailEditFormValues = z.infer<typeof programDetailEditSchema>
 
+/** 폼 참여자 유형(select)은 school | individual 만 지원 */
+function toDetailEditCategory(
+  category: import('@/types/domain').ProgramCategory | undefined
+): 'school' | 'individual' {
+  return category === 'individual' ? 'individual' : 'school'
+}
+
 /** Program → 폼 기본값 (날짜는 ISO 문자열) */
 export function programToDetailEditValues(
   program: import('@/types/domain').Program
@@ -174,7 +181,7 @@ export function programToDetailEditValues(
     title: program.title ?? '',
     startDate: toStr(program.startDate),
     endDate: toStr(program.endDate),
-    category: program.category ?? 'school',
+    category: toDetailEditCategory(program.category),
     targetLevel: program.targetLevel ?? undefined,
     district: program.district ?? undefined,
     type: program.type ?? 'offline',

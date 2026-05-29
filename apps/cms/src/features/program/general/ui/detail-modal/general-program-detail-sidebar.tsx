@@ -45,7 +45,7 @@ const PROGRESS_CHILD_ROWS = [
 function isTopBodyDerivedOpen(
   key: TopAccordionKey,
   lnb: GeneralDetailLnbKey,
-  tab: string
+  _tab: string
 ): boolean {
   if (key === 'info') return lnb === 'info'
   if (key === 'volunteer_applications') return lnb === 'volunteer_applications'
