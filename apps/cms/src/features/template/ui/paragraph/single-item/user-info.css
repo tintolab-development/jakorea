@@ -21,17 +21,19 @@
 .user-info-preview-table-wrap {
   width: 100%;
   max-width: 100%;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--8, 8px);
+  overflow: hidden;
+  background: var(--main-WT, #fff);
 }
 
 .user-info-preview-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  border-radius: var(--8, 8px);
-  border: 1px solid var(--table-line, #e0e0e0);
-  background: var(--main-WT, #fff);
+  border: none;
+  background: transparent;
   box-sizing: border-box;
-  overflow: hidden;
 }
 
 .user-info-preview-table--one-tier .user-info-preview-table__th {
