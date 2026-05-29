@@ -1,17 +1,30 @@
-import { useState, useRef, useMemo, useCallback, useEffect, useLayoutEffect } from 'react'
-import { Spin } from 'antd'
+/**
+ * UJAT 봉사자 신청(서류합격·2차 면접 등) 캘린더 뷰
+ * 공통 `CalendarSplitCardLayout` + `CalendarMain` + `CalendarSubRightVolunteerInterviewList`
+ */
+
+import { useState, useMemo, useCallback } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
-import { CmsSelect, CMS_MULTI_SELECT_TAG_COLORS, ProgramCalendar } from '@/shared/ui'
+import {
+  CalendarMain,
+  CalendarSplitCardLayout,
+  CalendarSubRightVolunteerInterviewList,
+  type CalendarVolunteerInterviewListRow,
+} from '@/shared/components/calendar'
+import '@/shared/components/calendar/styles/calendar.css'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import { useApplicantCalendarColorMaps } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-schedule-helpers'
 import type { UjatVolunteerInterviewCalendarEvent } from './ujat-volunteer-interview-calendar-events'
-import { UjatVolunteerInterviewScheduleList } from './ujat-volunteer-interview-schedule-list'
-import '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-view.css'
-import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
+import { renderUjatVolunteerInterviewPreviewTooltipContent } from './ujat-volunteer-interview-preview-tooltip'
+import {
+  buildUjatVolunteerInterviewMonthCellRows,
+  renderUjatVolunteerInterviewMonthEventContent,
+} from './ujat-volunteer-calendar-month-cells'
+import '@/features/program/general/ui/detail-modal/program-status/participating-institutions-calendar-view.css' /* tooltip/popover only */
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -22,6 +35,51 @@ export interface UjatVolunteerDocPassedCalendarViewProps {
   onItemClick: (item: UjatVolunteerApplicantRow) => void
 }
 
+function buildVolunteerInterviewListRows(
+  dayEvents: UjatVolunteerInterviewCalendarEvent[]
+): CalendarVolunteerInterviewListRow[] {
+  const grouped = new Map<
+    string,
+    {
+      representativeId: string
+      volunteerName: string
+      assignmentStatus: UjatVolunteerInterviewCalendarEvent['originalItem']['interviewAssignmentStatus']
+      slots: string[]
+      slotSet: Set<string>
+    }
+  >()
+
+  for (const event of dayEvents) {
+    const key = event.volunteerName.trim()
+    if (!key) continue
+
+    let group = grouped.get(key)
+    if (!group) {
+      group = {
+        representativeId: String(event.id),
+        volunteerName: key,
+        assignmentStatus: event.originalItem.interviewAssignmentStatus,
+        slots: [],
+        slotSet: new Set<string>(),
+      }
+      grouped.set(key, group)
+    }
+
+    const slot = event.slotLabel.trim()
+    if (slot && !group.slotSet.has(slot)) {
+      group.slotSet.add(slot)
+      group.slots.push(slot)
+    }
+  }
+
+  return Array.from(grouped.values()).map(group => ({
+    id: group.representativeId,
+    volunteerName: group.volunteerName,
+    assignmentStatus: group.assignmentStatus,
+    slotLabels: group.slots,
+  }))
+}
+
 export function UjatVolunteerDocPassedCalendarView({
   events,
   loading,
@@ -30,8 +88,8 @@ export function UjatVolunteerDocPassedCalendarView({
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
   const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
-  const [selectedVolunteers, setSelectedVolunteers] = useState<string[]>([])
-  const mainCalendarRef = useRef<HTMLDivElement>(null)
+
+  const eventById = useMemo(() => new Map(events.map(event => [String(event.id), event])), [events])
 
   const getEventsForDate = useCallback(
     (date: Dayjs): UjatVolunteerInterviewCalendarEvent[] => {
@@ -46,84 +104,30 @@ export function UjatVolunteerDocPassedCalendarView({
 
   const dayEvents = useMemo(() => getEventsForDate(selectedDate), [getEventsForDate, selectedDate])
 
-  const volunteerFilterOptions = useMemo(() => {
-    const uniqueNames = Array.from(
-      new Set(dayEvents.map(ev => ev.volunteerName.trim()).filter(Boolean))
-    ).sort((a, b) => a.localeCompare(b, 'ko'))
-    return uniqueNames.map((name, i) => ({
-      value: name,
-      label: name,
-      tagColor: CMS_MULTI_SELECT_TAG_COLORS[i % CMS_MULTI_SELECT_TAG_COLORS.length],
-    }))
-  }, [dayEvents])
-
-  useEffect(() => {
-    setSelectedVolunteers(volunteerFilterOptions.map(o => o.value))
-  }, [volunteerFilterOptions])
+  const dayListRows = useMemo(
+    () => buildVolunteerInterviewListRows(dayEvents),
+    [dayEvents]
+  )
 
   const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events)
 
-  useLayoutEffect(() => {
-    const main = mainCalendarRef.current
-    if (!main || loading) return
-
-    const ROWS = 6
-    const MIN_ROW = 124.2
-    const BOTTOM_RESERVE = 12
-
-    const applyMonthRowHeight = () => {
-      if (calendarMode !== 'month') {
-        main.style.removeProperty('--calendar-month-row-height')
-        return
-      }
-
-      const thead = main.querySelector('.ant-picker-content thead')
-      if (!thead) {
-        main.style.removeProperty('--calendar-month-row-height')
-        return
-      }
-
-      const mainRect = main.getBoundingClientRect()
-      const padBottom = parseFloat(getComputedStyle(main).paddingBottom) || 0
-      const innerBottom = mainRect.bottom - padBottom
-      const tbodyTop = thead.getBoundingClientRect().bottom
-      const forBody = Math.max(0, innerBottom - tbodyTop - BOTTOM_RESERVE)
-      const rowPx = Math.max(MIN_ROW, forBody / ROWS)
-      main.style.setProperty(
-        '--calendar-month-row-height',
-        `${Math.round(rowPx * 10) / 10}px`
-      )
-    }
-
-    const ro = new ResizeObserver(() => {
-      requestAnimationFrame(applyMonthRowHeight)
-    })
-    ro.observe(main)
-    const parent = main.parentElement
-    if (parent) ro.observe(parent)
-
-    requestAnimationFrame(applyMonthRowHeight)
-    return () => {
-      ro.disconnect()
-      main.style.removeProperty('--calendar-month-row-height')
-    }
-  }, [calendarMode, loading, currentMonth])
-
-  const filteredDayEvents = useMemo(() => {
-    if (selectedVolunteers.length === 0) return []
-    const selectedSet = new Set(selectedVolunteers)
-    return dayEvents.filter(ev => selectedSet.has(ev.volunteerName))
-  }, [dayEvents, selectedVolunteers])
-
   const scheduleListColorMap = useMemo(
-    () => buildResolvedColorMap(filteredDayEvents),
-    [filteredDayEvents, buildResolvedColorMap]
+    () => buildResolvedColorMap(dayEvents),
+    [dayEvents, buildResolvedColorMap]
   )
 
-  const getColorForScheduleList = useCallback(
-    (event: UjatVolunteerInterviewCalendarEvent) =>
-      scheduleListColorMap.get(event.id) ?? SCHEDULE_COLORS[0],
+  const resolveRowColors = useCallback(
+    (row: CalendarVolunteerInterviewListRow) =>
+      scheduleListColorMap.get(row.id) ?? SCHEDULE_COLORS[0],
     [scheduleListColorMap]
+  )
+
+  const handleListRowClick = useCallback(
+    (row: CalendarVolunteerInterviewListRow) => {
+      const event = eventById.get(row.id)
+      if (event) onItemClick(event.originalItem)
+    },
+    [eventById, onItemClick]
   )
 
   const handleDateSelect = (date: Dayjs) => {
@@ -143,47 +147,37 @@ export function UjatVolunteerDocPassedCalendarView({
     setCurrentMonth(today.startOf('month'))
   }
 
-  if (loading) {
-    return (
-      <div className="applicant-calendar-view applicant-calendar-view--loading">
-        <Spin size="large" />
-      </div>
-    )
-  }
-
   return (
-    <div className="applicant-calendar-layout applicant-calendar-view-container">
-      <ProgramCalendar
-        ref={mainCalendarRef}
-        className="applicant-calendar-main"
-        events={events}
-        selectedRowKeys={[]}
-        selectedDate={selectedDate}
-        currentMonth={currentMonth}
-        mode={calendarMode}
-        onSelectDate={handleDateSelect}
-        onMonthChange={setCurrentMonth}
-        onModeChange={setCalendarMode}
-        onTodayClick={handleToday}
-      />
-
-      <div className="applicant-calendar-right">
-        <div className="applicant-calendar-right__school-filter">
-          <CmsSelect
-            mode="multiple"
-            withAllOption={false}
-            value={selectedVolunteers}
-            onChange={next => setSelectedVolunteers(next as string[])}
-            options={volunteerFilterOptions}
-            placeholder="봉사자 선택"
-          />
-        </div>
-        <UjatVolunteerInterviewScheduleList
-          events={filteredDayEvents}
-          onEventClick={onItemClick}
-          getColorForEvent={getColorForScheduleList}
+    <CalendarSplitCardLayout
+      loading={loading}
+      left={
+        <CalendarMain
+          className="calendar-split-card-main"
+          events={events}
+          selectedRowKeys={[]}
+          selectedDate={selectedDate}
+          currentMonth={currentMonth}
+          mode={calendarMode}
+          onSelectDate={handleDateSelect}
+          onMonthChange={setCurrentMonth}
+          onModeChange={setCalendarMode}
+          onTodayClick={handleToday}
+          eventsTooltipScope="full-day"
+          eventsTooltipTrigger="cell"
+          formatEventsOverflowText={n => `외 ${n}개의 항목`}
+          tooltipOverlayClassName="participating-institutions-calendar-tooltip-overlay"
+          previewTooltipContent={renderUjatVolunteerInterviewPreviewTooltipContent}
+          buildMonthCellRows={buildUjatVolunteerInterviewMonthCellRows}
+          renderMonthEventContent={renderUjatVolunteerInterviewMonthEventContent}
         />
-      </div>
-    </div>
+      }
+      right={
+        <CalendarSubRightVolunteerInterviewList
+          rows={dayListRows}
+          onRowClick={handleListRowClick}
+          resolveRowColors={resolveRowColors}
+        />
+      }
+    />
   )
 }

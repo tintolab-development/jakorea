@@ -234,6 +234,10 @@
   overflow-y: auto;
 }
 
+.calendar-week-time-grid__event--all-day.calendar-week-time-grid__event--timed {
+  overflow-y: hidden;
+}
+
 .calendar-week-time-grid__event-text {
   width: 100%;
   min-width: 0;

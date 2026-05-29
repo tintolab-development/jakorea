@@ -9,6 +9,7 @@ import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import './program-list.css'
 import { ProgramCalendarView } from './program-calendar-view'
 import {
+  generalProgramFilterFields,
   programListFilterFields,
   resolveEconomyProgramListFilterFields,
 } from './table/program-list-filter-fields'
@@ -24,8 +25,12 @@ export type ProgramListTableVariant = 'general' | 'economy'
 
 export type { ProgramListProgramMode } from '../model/program-list-program-mode'
 
+/** `general-overview`: `/programs/general` 스크린샷 4필터(참여자 모집 인원 제외) */
+export type ProgramListFilterProfile = 'general-overview'
+
 export type ProgramListConfig = {
   mode?: ProgramListProgramMode
+  filterProfile?: ProgramListFilterProfile
   view?: EconomyView
   tableType?: 'student' | 'instructor'
   lifecycleStatus?: ProgramLifecycleStatus | null
@@ -122,6 +127,8 @@ export function ProgramList({
     },
     [externalSelectedRowKeys, onSelectionChange]
   )
+  const isGeneralOverview = config?.filterProfile === 'general-overview'
+
   const economyFilterFieldsForLayout = useMemo(
     () =>
       resolveEconomyProgramListFilterFields({
@@ -131,17 +138,22 @@ export function ProgramList({
     [economyView]
   )
 
+  const filterFieldsForLayout = useMemo(() => {
+    if (isGeneralOverview) return generalProgramFilterFields
+    if (tableContext.mode === 'economy') return economyFilterFieldsForLayout
+    return programListFilterFields
+  }, [isGeneralOverview, tableContext.mode, economyFilterFieldsForLayout])
+
   return (
     <>
       {viewMode === 'list' ? (
         <FilterTableLayout
-          fields={
-            tableContext.mode === 'economy' ? economyFilterFieldsForLayout : programListFilterFields
-          }
+          fields={filterFieldsForLayout}
           filters={buildProgramListFilters(
             pendingFilters,
             tableContext.mode,
-            tableContext.view === 'SCHEDULED'
+            tableContext.view === 'SCHEDULED',
+            isGeneralOverview
           )}
           onFilterChange={handleFilterChange}
           onSearch={handleSearch}
@@ -175,7 +187,7 @@ export function ProgramList({
       ) : null}
 
       {showCalendarView && viewMode === 'calendar' ? (
-        <>
+        <div className="program-list-calendar-view-container">
           <div className="table-header-actions ">
             <div className="table-header-title-wrapper">
               <span className="table-title">{headerTitle}</span>
@@ -188,7 +200,7 @@ export function ProgramList({
             loading={loading}
             onItemClick={onView}
           />
-        </>
+        </div>
       ) : null}
     </>
   )

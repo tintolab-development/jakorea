@@ -104,6 +104,7 @@ export { mockUsers, getUserByEmail, getUsersByRole, validateLogin } from './user
 export { getVolunteerPrograms, mockVolunteerProgramsMap } from './volunteer-programs'
 export { getEducationPrograms, mockEducationProgramsMap } from './education-programs'
 export { getEconomyPrograms, getEconomyProgramById } from './economy-programs'
+export { getGeneralPrograms, getGeneralProgramById } from './general-programs'
 export {
   isGeminiProgram,
   getGeneralEducationPrograms,

@@ -1,0 +1,154 @@
+/**
+ * 7:3 split-card 좌측 CalendarMain — 그리드·일정 칩 레이아웃만.
+ * 선택/호버/오늘/타월 셀 상호작용은 `calendar-cell.css` 단일 소스 (페이지에서 재정의 금지).
+ */
+
+/* ===== Ant Design Calendar 요일 헤더 ===== */
+.calendar-split-card--left .ant-picker-content thead th {
+  padding-top: 8px !important;
+  padding-right: 20px !important;
+  padding-bottom: 8px !important;
+  padding-left: 20px !important;
+  border-bottom: 1px solid #f0f0f0;
+  position: relative;
+  box-sizing: border-box;
+  min-height: 37px;
+  vertical-align: middle;
+  font-size: 0;
+}
+
+.calendar-split-card--left .ant-picker-content thead th::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Outfit, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  letter-spacing: -0.312px;
+  opacity: 0.5;
+}
+
+.calendar-split-card--left .ant-picker-content thead th:nth-child(1)::before {
+  content: 'Sun';
+}
+.calendar-split-card--left .ant-picker-content thead th:nth-child(2)::before {
+  content: 'Mon';
+}
+.calendar-split-card--left .ant-picker-content thead th:nth-child(3)::before {
+  content: 'Tue';
+}
+.calendar-split-card--left .ant-picker-content thead th:nth-child(4)::before {
+  content: 'Wed';
+}
+.calendar-split-card--left .ant-picker-content thead th:nth-child(5)::before {
+  content: 'Thu';
+}
+.calendar-split-card--left .ant-picker-content thead th:nth-child(6)::before {
+  content: 'Fri';
+}
+.calendar-split-card--left .ant-picker-content thead th:nth-child(7)::before {
+  content: 'Sat';
+}
+
+.calendar-split-card--left .ant-picker-content table {
+  table-layout: fixed;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.calendar-split-card--left .ant-picker-content thead th,
+.calendar-split-card--left .ant-picker-content tbody td {
+  width: calc(100% / 7);
+}
+
+.calendar-split-card--left .ant-picker-content tbody tr {
+  height: 124.2px;
+}
+
+.calendar-split-card--left .ant-picker-cell {
+  width: calc(100% / 7);
+  max-width: calc(100% / 7);
+  height: 124.2px;
+  border: 1px solid #f0f0f0;
+  padding: 0;
+  vertical-align: top;
+  box-sizing: border-box;
+}
+
+.calendar-split-card--left .ant-picker-cell .ant-picker-cell-inner {
+  text-align: left !important;
+}
+
+.calendar-split-card-main .calendar-cell {
+  width: 100%;
+  height: 100%;
+  min-height: 124.2px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  cursor: pointer;
+  border: none;
+  box-sizing: border-box;
+}
+
+.calendar-split-card-main .calendar-cell-events {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  align-items: stretch;
+  text-align: left;
+  width: 100%;
+}
+
+.calendar-split-card-main .calendar-event {
+  font-size: 11px;
+  padding: 4px 6px;
+  height: auto;
+  min-height: 24px;
+  align-items: center;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #595959;
+  box-sizing: border-box;
+  text-align: left;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.calendar-split-card-main .calendar-event--selected {
+  color: #096dd9;
+}
+
+.calendar-split-card-main .calendar-event-more {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.5;
+  margin-top: 2px;
+  cursor: default;
+  text-align: left;
+}
+
+.calendar-split-card-main .calendar-event-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  min-width: 0;
+}

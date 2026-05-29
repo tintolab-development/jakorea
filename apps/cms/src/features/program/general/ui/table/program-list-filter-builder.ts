@@ -29,8 +29,18 @@ interface PendingUserFilters {
 export function buildProgramListFilters(
   pendingFilters: PendingFilters,
   programMode: ProgramListProgramMode,
-  economyScheduledLayout = false
+  economyScheduledLayout = false,
+  generalOverview = false
 ) {
+  if (generalOverview) {
+    return {
+      title: pendingFilters.title,
+      lifecycleStatus: pendingFilters.lifecycleStatus,
+      category: pendingFilters.category,
+      targetLevel: pendingFilters.targetLevel,
+    }
+  }
+
   if (programMode === 'economy' && economyScheduledLayout) {
     return {
       title: pendingFilters.title,

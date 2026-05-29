@@ -109,6 +109,44 @@ export const economyFilterFields = [
   },
 ]
 
+/**
+ * 일반 프로그램 목록(`/programs/general`) — 스크린샷 4필드
+ * 프로그램명 / 프로그램 진행 현황 / 참여자 유형 / 교육 대상
+ */
+export const generalProgramFilterFields = [
+  {
+    key: 'title',
+    type: 'search' as const,
+    label: '프로그램명',
+    placeholder: '프로그램명을 입력하세요',
+    width: '25%',
+  },
+  {
+    key: 'lifecycleStatus',
+    type: 'select' as const,
+    label: '프로그램 진행 현황',
+    placeholder: '전체',
+    options: statusOptions,
+    width: '25%',
+  },
+  {
+    key: 'category',
+    type: 'select' as const,
+    label: '참여자 유형',
+    placeholder: '전체',
+    options: economyParticipantTypeOptions,
+    width: '25%',
+  },
+  {
+    key: 'targetLevel',
+    type: 'select' as const,
+    label: '교육 대상',
+    placeholder: '전체',
+    options: economyTargetLevelOptions,
+    width: '25%',
+  },
+]
+
 /** 경제 교육 · 「예정 프로그램」 */
 export const economyScheduledFilterFields = [
   {

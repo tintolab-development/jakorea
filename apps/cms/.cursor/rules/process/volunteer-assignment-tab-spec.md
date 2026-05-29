@@ -65,10 +65,10 @@ category: process
 
 ### 활동 포기 (배정 학급)
 
-- **배정 학급** 열: `classDisplay.kind === 'withdrawn'` → `활동 포기` (빨간색).
+- **배정 학급** 열: `classDisplay.kind === 'withdrawn'` → `활동 포기` (`.cms-data-table__cell-accent--danger`).
 - 정렬: `classDisplay.kind === 'withdrawn'` 행만 No.와 무관하게 **테이블 최하단**.
-- **흰색 오버레이**(`row--class-withdrawn`): **배정 학급이 활동 포기인 행만** 적용. `isWithdrawn`만 true이고 학급이 `5-1` 등인 행은 오버레이 없음.
-- 오버레이 행: 체크박스 비활성. `isWithdrawn`은 역할 변경·교육계획서/일지 보기 제한 등에 별도 사용.
+- **비활성 행**(`CMS_DATA_TABLE_ROW_DISABLED_CLASS` / `cms-data-table__row--disabled`): **배정 학급이 활동 포기인 행만** 적용. `isWithdrawn`만 true이고 학급이 `5-1` 등인 행은 오버레이 없음. 스타일은 [table-implementation.md](../tables/table-implementation.md) §Disabled row.
+- 비활성 행: 체크박스 비활성. `isWithdrawn`은 역할 변경·교육계획서/일지 보기 제한 등에 별도 사용.
 
 ---
 

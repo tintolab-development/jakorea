@@ -66,7 +66,7 @@ export function CalendarListItemContentSettlement({
       </button>
 
       <div
-        className="settlement-list-item__checkbox"
+        className="calendar-list-item__checkbox"
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >

@@ -149,5 +149,10 @@
 .ujat-volunteer-interview2__calendar-container {
   width: 100%;
   min-width: 0;
+  overflow: visible;
+}
+
+.ujat-volunteer-interview2:has(.ujat-volunteer-interview2__calendar-container) {
+  overflow-x: visible;
 }
 

@@ -1,5 +1,7 @@
 # 캘린더 우측 일별 리스트 (`calendar-sub-right-list`)
 
+**상위 규칙 (필수):** [calendar-common.md](./calendar-common.md)
+
 **Scope:** `shared/components/calendar` — 메인 캘린더와 함께 쓰는 우측 `.calendar-sub-right-list` / `.calendar-list` 영역.
 
 **Styles:** `styles/calendar-sub-right.css` (import: `styles/calendar.css`)
@@ -44,7 +46,26 @@
 
 클릭 가능한 프로그램 행은 `onClick`을 `.calendar-list-item`에 둔다. 체크박스·버튼은 `stopPropagation`으로 행 클릭과 분리한다.
 
-체크박스 영역: 행 세로 중앙(`align-items: center`), `__checkbox` hit area(예: 52×52) + mint 배경 hover — 정산 `settlement-list-item__checkbox`·UJAT `ujat-institution-application-list-item__checkbox` 패턴. **행 shell hover와 별도**로 item CSS에만 둔다.
+체크박스 영역: `.calendar-list-item__checkbox` (`calendar-sub-right.css`) — `padding: 12px`, `border-radius: 6px`, hover `rgba(1, 161, 175, 0.06)`. **행 shell hover와 별도**로 공통 shell에만 둔다. item CSS에서 hit area·hover 재정의 금지.
+
+### 체크박스 마크업 (필수)
+
+| ✅ | ❌ |
+|----|-----|
+| `className="calendar-list-item__checkbox"` | `ujat-*-list-item__checkbox`, `settlement-list-item__checkbox` 등 도메인 전용 hit 래퍼 |
+| `stopPropagation` on checkbox wrapper | 체크박스 hover를 item CSS에 새로 작성 |
+
+신규 `CalendarSubRight*` / `item-list/*` 추가 시 institution·settlement 파일을 **복사하지 말고** 위 클래스만 붙인다. (`calendar.css` import ≠ hover 자동 적용 — **클래스 연결**이 필요.)
+
+**사례 — UJAT 2차 면접:** 최초 구현에서 `ujat-volunteer-interview2-list-item__checkbox`만 사용 → 공통 hover 미적용. 수정: 래퍼를 `calendar-list-item__checkbox`로 교체, item CSS의 checkbox 블록 삭제.
+
+---
+
+## 7:3 카드형 우측 vs `calendar-set` 3열
+
+- **`calendar-set` + `.calendar-sub-right-list`:** 미니 캘린더·검색이 있는 3열. 우측은 sticky 400px 래퍼.
+- **`CalendarSplitCardLayout` + `.calendar-split-card--right`:** 7:3 카드. 우측에는 **`.calendar-list`만** 두고 `.calendar-sub-right-list` 래퍼를 **추가하지 않는다.** → [calendar-split-card-layout.md](./calendar-split-card-layout.md)
+- **7:3 카드 안의 `.calendar-list`:** 기본 `calendar-sub-right.css`의 border·box-shadow는 **끈 상태**여야 한다. shell은 `.calendar-split-card--right`만 담당.
 
 ---
 
@@ -53,9 +74,11 @@
 | 용도 | 파일 |
 |------|------|
 | 프로그램 일정 | `calendar-sub-right-list.tsx` → `CalendarSubRightProgramList` |
-| UJAT 기관 신청 | `calendar-sub-right-list.tsx` → `CalendarSubRightInstitutionApplicationList` |
+| UJAT 기관 신청 | `CalendarSubRightInstitutionApplicationList` + `item-list/ujat-institution-application.tsx` — 체크박스 **`calendar-list-item__checkbox`** |
+| UJAT 봉사자 1차 서류 합격 | `CalendarSubRightVolunteerInterviewList` + `item-list/ujat-volunteer-interview.tsx` (체크박스 없음) |
+| UJAT 봉사자 2차 면접 | `CalendarSubRightVolunteerInterview2List` + `item-list/ujat-volunteer-interview2.tsx` — 체크박스 **`calendar-list-item__checkbox`** |
 | 프로그램 상세 스케줄 리스트 | `program-schedule-list.tsx` |
-| 정산 (레거시) | `CalendarSubRightSettlementList` — 현재 `settlement-list-item.css`에 hover 중복. **신규/수정 시 `calendar-list-item` 패턴으로 통일 권장** |
+| 정산 | `CalendarSubRightSettlementList` + `item-list/settlement.tsx` — 체크박스 **`calendar-list-item__checkbox`** |
 
 도메인 예: UJAT 기관 — `item-list/ujat-institution-application.tsx` (내부 레이아웃만), shell은 리스트에서 `calendar-list-item`으로 감쌈.
 
@@ -70,10 +93,13 @@
 
 ## 금지
 
+- 7:3 카드 우측에 `applicant-schedule-list`·커스텀 리스트 루트로 `.calendar-list-item` shell 우회
+- 7:3 카드 우측에 `.calendar-sub-right-list` 래퍼 추가 (이중 래퍼)
 - `.calendar-list` 안에서 `.calendar-list-item` 없이 도메인 루트만 렌더링 (hover·간격 불일치)
 - 도메인 CSS에서 `:hover`로 mint 효과를 다시 정의하거나 **끄기** (`border-width: 1px !important` 등)
 - `calendar-sub-right.css`와 다른 transition/hover 토큰을 item 파일에 복제
+- 체크박스 hit 영역에 도메인 전용 `__checkbox` 클래스 사용 (공통 `.calendar-list-item__checkbox` 우회)
 
 ---
 
-**Last updated:** 2026-05-15
+**Last updated:** 2026-05-29

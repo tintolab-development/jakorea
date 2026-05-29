@@ -75,6 +75,39 @@
   width: 100%;
 }
 
+/* 월간: 중앙 메인 캘린더 카드 하단 32px */
+.program-list-calendar-view-container:not(:has(.calendar-week--time-grid))
+  .calendar-main-container
+  .calendar-main {
+  margin-bottom: var(--spacing-32);
+}
+
+/*
+ * 주간(시간 격자): 24시간 격자 전체 높이를 카드·페이지에 펼침(내부 스크롤 없음).
+ * 우측 736px 고정 높이 해제.
+ */
+.program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-set {
+  min-height: 0;
+}
+
+.program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-sub-right-list {
+  height: auto;
+  max-height: none;
+}
+
+.program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-main-container .calendar-main {
+  margin-bottom: 0;
+  padding-bottom: var(--spacing-32);
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-week-time-grid__scroll {
+  min-height: var(--calendar-week-total-px, 1296px);
+  max-height: none;
+  overflow: visible;
+}
+
 /* 필터 + tableButtonSection + 테이블 공통 배경 컨테이너 */
 .program-list-content-wrapper {
   background: var(--color-bg-base);

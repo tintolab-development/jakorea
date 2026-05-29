@@ -77,7 +77,7 @@ type ProgramPreviewTooltipBodyProps = {
   selectedIds?: ReadonlySet<string | number>
 }
 
-/** `CalendarMain` / `ProgramCalendar` 툴팁 본문 — 신청자 일정 요약 행 */
+/** `CalendarMain` 툴팁 본문 — 신청자 일정 요약 행 */
 export function ProgramPreviewTooltipBody({
   events,
   colorMap,
@@ -139,7 +139,7 @@ export function renderProgramApplicantPreviewTooltipContent({
 }
 
 /**
- * `ProgramCalendar`의 `previewTooltipContent`에 넘기면 이벤트 모드 툴팁 본문을 렌더합니다.
+ * `CalendarMain`의 `previewTooltipContent`에 넘기면 이벤트 모드 툴팁 본문을 렌더합니다.
  * (미전달 시에는 툴팁이 열리지 않습니다.)
  */
 export function renderProgramCalendarEventsDefaultTooltipContent({

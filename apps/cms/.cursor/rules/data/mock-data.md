@@ -14,6 +14,11 @@ Keep mock **services** in `entities/*/api/*-service.ts` (or feature-local mocks 
 
 When deleting or mutating entities, keep **referential integrity** (e.g. cascade deletes where the real API would).
 
+## General programs (`general-programs.ts`)
+
+- 6건, 진행현황별 2건.
+- `scheduleTimeEnabled: false` → `startTime`/`endTime` 없음 → 주간 격자 **종일(00:00–24:00)** + 라벨 `종일` (규칙: [calendar-week-time-grid.md](../design/calendar-week-time-grid.md)).
+
 ## Related
 
 - [api-spec-mock.md](./api-spec-mock.md)  

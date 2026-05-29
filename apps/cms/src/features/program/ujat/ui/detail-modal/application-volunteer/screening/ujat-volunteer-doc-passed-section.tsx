@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
+import { useCallback, type MouseEvent } from 'react'
 import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -16,7 +16,7 @@ import { UjatVolunteerApplicantDetailView } from './ujat-volunteer-applicant-det
 import { UjatVolunteerDocPassedCalendarView } from './ujat-volunteer-doc-passed-calendar-view'
 import { UjatVolunteerInterviewAssignModal } from './ujat-volunteer-interview-assign-modal'
 import { UjatVolunteerInterviewAssignCompleteModal } from './ujat-volunteer-interview-assign-complete-modal'
-import { UJAT_VOLUNTEER_DOC_PASSED_TABLE_SCROLL_X } from './ujat-volunteer-doc-passed-columns'
+import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import './ujat-volunteer-doc-passed-section.css'
 import './ujat-volunteer-doc-screening-section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
@@ -39,9 +39,6 @@ export function UjatVolunteerDocPassedSection({
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: UjatVolunteerDocPassedSectionProps) {
-  const tableWrapRef = useRef<HTMLDivElement>(null)
-  const [tableScrollX, setTableScrollX] = useState(UJAT_VOLUNTEER_DOC_PASSED_TABLE_SCROLL_X)
-
   const {
     list,
     pendingFilters,
@@ -85,20 +82,6 @@ export function UjatVolunteerDocPassedSection({
     if (!selectedApplicant) return
     requestWithdrawActivity(selectedApplicant)
   }, [requestWithdrawActivity, selectedApplicant])
-
-  useLayoutEffect(() => {
-    const el = tableWrapRef.current
-    if (!el) return
-    const minW = UJAT_VOLUNTEER_DOC_PASSED_TABLE_SCROLL_X
-    const update = () => {
-      const w = el.getBoundingClientRect().width
-      setTableScrollX(Math.max(minW, Math.floor(w)))
-    }
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
 
   const handleRowClick = useCallback(
     (record: UjatVolunteerApplicantRow, e: MouseEvent) => {
@@ -182,14 +165,8 @@ export function UjatVolunteerDocPassedSection({
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
-        title={
-          <div className="ujat-volunteer-doc-passed__toolbar-main">
-            <span className="ujat-volunteer-doc-passed__toolbar-title">
-              봉사자 1차 서류 합격자 목록
-            </span>
-            <span className="ujat-volunteer-doc-passed__toolbar-count">{count}건</span>
-          </div>
-        }
+        title="봉사자 1차 서류 합격자 목록"
+        description={`${count.toLocaleString()}건`}
         actions={
           viewMode === 'list' ? (
             <CmsButton
@@ -217,17 +194,17 @@ export function UjatVolunteerDocPassedSection({
         }
       >
         {viewMode === 'list' ? (
-          <div ref={tableWrapRef} className="ujat-volunteer-doc-passed__table-wrap">
+          <div className="ujat-volunteer-doc-passed__table-wrap">
             <Table<UjatVolunteerApplicantRow>
               rowKey="id"
-              className="cms-data-table cms-data-table--fluid clickable-table"
+              className="cms-data-table cms-data-table--fluid clickable-table ujat-volunteer-doc-passed__table"
               columns={columns}
               dataSource={tableData}
               pagination={false}
-              scroll={{ x: tableScrollX }}
+              tableLayout="fixed"
               rowClassName={record =>
                 record.interviewAssignmentStatus === 'withdrawn'
-                  ? 'ujat-volunteer-doc-passed__row--withdrawn'
+                  ? CMS_DATA_TABLE_ROW_DISABLED_CLASS
                   : ''
               }
               onRow={record => {

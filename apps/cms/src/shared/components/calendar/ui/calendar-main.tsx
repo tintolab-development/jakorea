@@ -29,6 +29,13 @@ import {
   uniqueScheduleSourcesForDay,
   type CalendarItem,
 } from '../lib/calendar-helpers'
+import type { CalendarMainEventInput } from '../model/calendar-main-event-input'
+import type {
+  BuildCalendarMonthCellRows,
+  RenderCalendarMonthEventContent,
+} from '../model/calendar-month-cell-row'
+
+export type { CalendarMainEventInput } from '../model/calendar-main-event-input'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -87,7 +94,7 @@ export type CalendarMainScheduleProps = CalendarMainItemsProps
 export type CalendarMainProgramProps = CalendarMainItemsProps
 
 export type CalendarMainEventsProps = CalendarMainSharedProps & {
-  events: Parameters<typeof mapEventsToItems>[0]
+  events: CalendarMainEventInput[]
   selectedRowKeys?: React.Key[]
   previewTooltipContent?: (args: {
     events: CalendarItem[]
@@ -98,6 +105,10 @@ export type CalendarMainEventsProps = CalendarMainSharedProps & {
   eventsTooltipScope?: 'trigger-only' | 'full-day'
   formatEventsOverflowText?: (hiddenCount: number) => string
   eventsTooltipTrigger?: 'event-strip' | 'cell'
+  /** 월간 셀 strip 목록 — 페이지별 (UJAT 지원자·슬롯 묶음 등) */
+  buildMonthCellRows?: BuildCalendarMonthCellRows
+  /** 월간 strip 내부 UI — shell(`.calendar-event`)은 공통 */
+  renderMonthEventContent?: RenderCalendarMonthEventContent
   items?: undefined
   onItemClick?: undefined
 }
@@ -333,6 +344,8 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
           eventsTooltipScope: props.eventsTooltipScope ?? 'trigger-only',
           formatEventsOverflowText: props.formatEventsOverflowText,
           eventsTooltipTrigger: props.eventsTooltipTrigger ?? 'event-strip',
+          buildMonthCellRows: props.buildMonthCellRows,
+          renderMonthEventContent: props.renderMonthEventContent,
         }
       : undefined
 

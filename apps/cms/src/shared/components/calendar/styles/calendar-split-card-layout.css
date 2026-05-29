@@ -1,0 +1,145 @@
+/**
+ * 7:3 카드형 캘린더 분할 레이아웃 (참여 기관·UJAT 봉사자 면접 등)
+ * shell 토큰 = calendar-main.css / .calendar-list (box-shadow) — apps/cms/.cursor/rules/design/calendar-common.md
+ * 좌: CalendarMain 단일 자식. calendar-main-container 중첩 금지.
+ */
+
+.calendar-split-card-layout {
+  --calendar-split-card-height: 900px;
+  /* `calendar-main.css` · `calendar-sub-right.css` (.calendar-list) 와 동일 shell */
+  --calendar-split-card-shell-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  --calendar-split-card-shell-radius: var(--16, 16px);
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  min-height: var(--calendar-split-card-height);
+  align-items: stretch;
+}
+
+.calendar-split-card-layout--loading {
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-split-card {
+  background: var(--main-WT, #fff);
+  border: none;
+  border-radius: var(--calendar-split-card-shell-radius);
+  box-shadow: var(--calendar-split-card-shell-shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.calendar-split-card--left {
+  flex: 7;
+  min-width: 0;
+  min-height: var(--calendar-split-card-height);
+  height: var(--calendar-split-card-height);
+  padding: 16px 20px 20px;
+  overflow: hidden;
+}
+
+/**
+ * 좌측 카드가 이미 shell(배경·테두리·패딩)이므로
+ * `calendar-main.css`의 그림자·radius·패딩을 끈다 — 이중 카드 방지.
+ */
+.calendar-split-card--left > .calendar-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.calendar-split-card--left .ant-picker-calendar {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-split-card--left .ant-picker-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-split-card--left .ant-picker-body {
+  overflow: hidden;
+  min-height: 0;
+  padding-bottom: 2px;
+  box-sizing: border-box;
+}
+
+.calendar-split-card--left .ant-picker-content {
+  overflow: hidden;
+}
+
+.calendar-split-card--right {
+  flex: 3;
+  min-width: 280px;
+  min-height: var(--calendar-split-card-height);
+  height: var(--calendar-split-card-height);
+  padding: 20px;
+  overflow: hidden;
+}
+
+/**
+ * 우측 카드가 shell이므로 `calendar-sub-right.css`의 `.calendar-list` 카드 스타일을 끈다.
+ */
+.calendar-split-card--right > .calendar-list {
+  flex: 1 1 0;
+  min-height: 0;
+  max-width: none;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.calendar-split-card-right__toolbar {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+}
+
+.calendar-split-card--right > .applicant-schedule-list {
+  padding: 0;
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding-bottom: 8px;
+}
+
+/*
+ * split-card 주간(시간 격자) 모드:
+ * 좌측 고정 높이(900px) + overflow:hidden 이면 24시간(1296px) 하단이 잘려 14시 전후까지만 보일 수 있음.
+ * 주간에서는 좌측 카드를 콘텐츠 높이에 맞춰 확장한다.
+ */
+.calendar-split-card-layout:has(.calendar-week--time-grid) {
+  min-height: 0;
+  align-items: flex-start;
+}
+
+.calendar-split-card-layout:has(.calendar-week--time-grid) .calendar-split-card--left {
+  min-height: 0;
+  height: auto;
+  overflow: visible;
+}
+
+.calendar-split-card-layout:has(.calendar-week--time-grid) .calendar-split-card--left > .calendar-main {
+  overflow: visible;
+}

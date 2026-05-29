@@ -179,7 +179,6 @@ export function UjatVolunteerDocScreeningSection({
               variant="delete"
               size="large"
               width={160}
-              disabled={selectedRowKeys.length === 0}
               onClick={handleBulkReject}
             >
               선택 반려
@@ -189,7 +188,6 @@ export function UjatVolunteerDocScreeningSection({
               variant="secondary"
               size="large"
               width={160}
-              disabled={selectedRowKeys.length === 0}
               onClick={handleBulkApprove}
             >
               선택 승인
@@ -202,7 +200,6 @@ export function UjatVolunteerDocScreeningSection({
               icon={<DownloadOutlined />}
               className="ujat-volunteer-doc-screening__btn-excel"
               loading={isExporting}
-              disabled={tableData.length === 0}
               onClick={handleExportExcel}
             >
               엑셀 다운로드

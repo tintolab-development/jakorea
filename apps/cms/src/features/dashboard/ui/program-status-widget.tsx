@@ -30,13 +30,19 @@ import {
 } from '@/features/dashboard/ui/progress-stages-widget'
 import './program-status-widget.css'
 
-/** 일반(레거시 education, 신규 general) */
+/** `/programs/general` 루트 — 4카드(예정/진행/완료) 목록 */
+const isGeneralProgramListRoot = (pathname: string) => {
+  const p = pathname.replace(/\/$/, '') || '/'
+  return p === '/programs/general'
+}
+
+/** 레거시 education·general 하위(모집 등) — 7단계 위젯 */
 const isEducationLayoutPath = (pathname: string) => {
   const p = pathname.replace(/\/$/, '') || '/'
+  if (isGeneralProgramListRoot(pathname)) return false
   return (
     p === '/programs/education' ||
     p.startsWith('/programs/education/') ||
-    p === '/programs/general' ||
     p.startsWith('/programs/general/')
   )
 }
@@ -68,7 +74,8 @@ export function ProgramStatusWidget({
   const [progress, setProgress] = useState<ProgramProgressStagesResult | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const programType = useMemo<'education' | 'economy' | 'volunteer' | 'all'>(() => {
+  const programType = useMemo<'education' | 'economy' | 'general' | 'volunteer' | 'all'>(() => {
+    if (isGeneralProgramListRoot(location.pathname)) return 'general'
     if (isEducationLayoutPath(location.pathname)) return 'education'
     if (isEconomyLayoutPath(location.pathname)) return 'economy'
     if (location.pathname === '/programs/volunteer') return 'volunteer'
@@ -98,7 +105,9 @@ export function ProgramStatusWidget({
   }, [location.search, selectedFromPath])
 
   const programs = useProgramStore(state =>
-    programType === 'education' || programType === 'economy' ? state.programs : EMPTY_PROGRAMS
+    programType === 'education' || programType === 'economy' || programType === 'general'
+      ? state.programs
+      : EMPTY_PROGRAMS
   )
 
   useEffect(() => {
@@ -121,8 +130,8 @@ export function ProgramStatusWidget({
   const stages = useMemo((): ProgressStageItem[] => {
     if (!progress) return []
 
-    // 경제 교육 4단계 UI (Total, Scheduled, In Progress, Completed)
-    if (programType === 'economy') {
+    // 경제 교육·일반 프로그램 루트 4단계 UI (Total, Scheduled, In Progress, Completed)
+    if (programType === 'economy' || programType === 'general') {
       const p = progress as ProgramEconomyStages
       const s = selectedStatus
       return [
@@ -205,7 +214,7 @@ export function ProgramStatusWidget({
   }, [progress, selectedStatus, selectedFromPath, programType])
 
   const handleStageClick = (key: string) => {
-    if (programType === 'economy') {
+    if (programType === 'economy' || programType === 'general') {
       const nextParams = new URLSearchParams(searchParams)
       if (key === 'total') {
         nextParams.delete('status')
@@ -268,7 +277,7 @@ export function ProgramStatusWidget({
       showBottomDivider
       onStageClick={handleStageClick}
       loading={loading}
-      loadingCardCount={programType === 'economy' ? 4 : 8}
+      loadingCardCount={programType === 'economy' || programType === 'general' ? 4 : 8}
     />
   )
 }

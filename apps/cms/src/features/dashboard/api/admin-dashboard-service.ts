@@ -10,6 +10,7 @@ import type { Program } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock/programs'
 import { getEducationPrograms } from '@/data/mock/education-programs'
 import { getEconomyPrograms, getEconomyProgramById } from '@/data/mock/economy-programs'
+import { getGeneralPrograms } from '@/data/mock/general-programs'
 import { getVolunteerPrograms } from '@/data/mock/volunteer-programs'
 import { mockApplications } from '@/data/mock/applications'
 import { mockMatchings } from '@/data/mock/matchings'
@@ -148,15 +149,16 @@ export async function getProgramProgressSummary(): Promise<ProgramProgressSummar
 /**
  * 프로그램 진행 현황 집계 (상태별 세분화)
  * - programType 'education' | 'volunteer' 시 7단계 집계
- * - programType 'economy' 시 3단계(예정/진행/완료) 집계
+ * - programType 'economy' | 'general' 시 4카드(예정/진행/완료) 집계
  */
 export async function getProgramProgressStages(options?: {
-  programType?: 'education' | 'economy' | 'volunteer' | 'all'
+  programType?: 'education' | 'economy' | 'general' | 'volunteer' | 'all'
 }): Promise<ProgramProgressStagesResult> {
   await new Promise(resolve => setTimeout(resolve, 300))
 
-  if (options?.programType === 'economy') {
-    const programs = getEconomyPrograms()
+  if (options?.programType === 'economy' || options?.programType === 'general') {
+    const programs =
+      options.programType === 'general' ? getGeneralPrograms() : getEconomyPrograms()
     const stages = {
       scheduled: 0,
       inProgress: 0,
@@ -165,7 +167,14 @@ export async function getProgramProgressStages(options?: {
 
     programs.forEach(program => {
       const status = program.lifecycleStatus || ''
-      if (['recruiting_students', 'recruiting_instructors', 'matching_completed', 'education_before_textbook'].includes(status)) {
+      if (
+        [
+          'recruiting_students',
+          'recruiting_instructors',
+          'matching_completed',
+          'education_before_textbook',
+        ].includes(status)
+      ) {
         stages.scheduled++
       } else if (status === 'education_after_textbook') {
         stages.inProgress++

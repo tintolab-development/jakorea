@@ -5,9 +5,6 @@ import { CmsButton } from '@/shared/ui'
 import { InterviewAssignmentStatusText } from './interview-assignment-status-text'
 
 const CENTER_CELL_CLASS = 'ujat-volunteer-doc-passed__center-cell'
-const NOWRAP_CELL_CLASS = 'ujat-volunteer-doc-screening__nowrap-cell'
-
-export const UJAT_VOLUNTEER_DOC_PASSED_TABLE_SCROLL_X = 1256
 
 export function useUjatVolunteerDocPassedColumns({
   onAssignInterview,
@@ -54,9 +51,8 @@ export function useUjatVolunteerDocPassedColumns({
         key: 'contact',
         width: 140,
         align: 'center',
-        ellipsis: false,
-        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
-        onCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
+        ellipsis: true,
+        className: CENTER_CELL_CLASS,
       },
       {
         title: '이메일',
@@ -64,9 +60,8 @@ export function useUjatVolunteerDocPassedColumns({
         key: 'email',
         width: 220,
         align: 'center',
-        ellipsis: false,
-        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
-        onCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
+        ellipsis: true,
+        className: CENTER_CELL_CLASS,
       },
       {
         title: '교육 진행 경험 여부',
@@ -93,23 +88,8 @@ export function useUjatVolunteerDocPassedColumns({
         align: 'center',
         className: CENTER_CELL_CLASS,
         render: (_value, record) => {
-          const { interviewAssignmentStatus } = record
-          if (interviewAssignmentStatus === 'withdrawn') {
-            return (
-              <CmsButton
-                type="button"
-                variant="secondary"
-                size="small"
-                width={120}
-                className="ujat-volunteer-doc-passed__assign-btn"
-                disabled
-              >
-                면접일 배정
-              </CmsButton>
-            )
-          }
           const label =
-            interviewAssignmentStatus === 'assigned' ? '면접일 재배정' : '면접일 배정'
+            record.interviewAssignmentStatus === 'assigned' ? '면접일 재배정' : '면접일 배정'
           return (
             <CmsButton
               type="button"

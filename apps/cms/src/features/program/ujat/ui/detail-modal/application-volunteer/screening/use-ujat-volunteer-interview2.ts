@@ -27,6 +27,12 @@ import {
   openUjatVolunteerInterview2BulkPassModal,
 } from './ujat-volunteer-interview2-actions'
 import type { UjatInterview2BulkPassConfirmPayload } from './ujat-volunteer-interview2-bulk-pass-modal'
+import {
+  guardUjatVolunteerInterview2Evaluation,
+  guardUjatVolunteerInterview2Fail,
+  guardUjatVolunteerInterview2Pass,
+  guardUjatVolunteerWithdrawActivity,
+} from './ujat-volunteer-applicant-guard-actions'
 
 function matchesScoreFilter(score: number | null | undefined, filter: string): boolean {
   if (filter === UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL) return true
@@ -192,29 +198,31 @@ export function useUjatVolunteerInterview2({
   )
 
   const requestInterview2Pass = useCallback(
-    (id: string) => {
+    (row: UjatVolunteerApplicantRow) => {
+      if (!guardUjatVolunteerInterview2Pass(row)) return
       confirmUjatVolunteerInterview2Pass({
         showConfirm: showInterview2Confirm,
         count: 1,
-        onConfirm: () => applySecondInterviewStatus([id], 'pass'),
+        onConfirm: () => applySecondInterviewStatus([row.id], 'pass'),
       })
     },
     [applySecondInterviewStatus, showInterview2Confirm]
   )
 
   const requestInterview2Fail = useCallback(
-    (id: string) => {
+    (row: UjatVolunteerApplicantRow) => {
+      if (!guardUjatVolunteerInterview2Fail(row)) return
       confirmUjatVolunteerInterview2Fail({
         showConfirm: showInterview2Confirm,
         count: 1,
-        onConfirm: () => applySecondInterviewStatus([id], 'fail'),
+        onConfirm: () => applySecondInterviewStatus([row.id], 'fail'),
       })
     },
     [applySecondInterviewStatus, showInterview2Confirm]
   )
 
   const requestWithdrawActivity = useCallback((row: UjatVolunteerApplicantRow) => {
-    if (row.interviewAssignmentStatus === 'withdrawn') return
+    if (!guardUjatVolunteerWithdrawActivity(row)) return
     setWithdrawTargetId(row.id)
   }, [])
 
@@ -243,6 +251,7 @@ export function useUjatVolunteerInterview2({
   )
 
   const openEvaluationModal = useCallback((row: UjatVolunteerApplicantRow) => {
+    if (!guardUjatVolunteerInterview2Evaluation(row)) return
     setEvaluationTargetId(row.id)
   }, [])
 

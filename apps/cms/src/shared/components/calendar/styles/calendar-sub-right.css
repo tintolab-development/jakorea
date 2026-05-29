@@ -90,6 +90,45 @@
   line-height: 150%;
 }
 
+/* 우측 리스트 행 내 체크박스 hit 영역 — 모든 `.calendar-list` 공통 */
+.calendar-list-item__checkbox {
+  flex-shrink: 0;
+  align-self: center;
+  box-sizing: border-box;
+  display: flex;
+  padding: 12px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.calendar-list-item__checkbox:hover {
+  background: rgba(1, 161, 175, 0.06);
+}
+
+.calendar-list-item__checkbox .ant-checkbox-wrapper {
+  align-items: center;
+  margin-inline-end: 0;
+}
+
+.calendar-list-item__checkbox .ant-checkbox {
+  width: 20px;
+  height: 20px;
+  top: 0;
+}
+
+.calendar-list-item__checkbox .ant-checkbox .ant-checkbox-inner {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.calendar-list-item__checkbox .ant-checkbox .ant-checkbox-inner::after {
+  inset-block-start: 45%;
+}
+
 .calendar-list .ant-empty {
   margin: 0 0 8px;
   flex-shrink: 0;

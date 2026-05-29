@@ -86,6 +86,7 @@ const SponsorDataPage = lazyLoad(() => import('@/pages/data-management/sponsor-p
 const TextbookPage = lazyLoad(() => import('@/pages/data-management/textbook-page'))
 const DetailedProgramPage = lazyLoad(() => import('@/pages/data-management/detailed-program-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
+const GeneralProgramListPage = lazyLoad(() => import('@/pages/programs/general/page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const UjatProgramListPage = lazyLoad(() => import('@/pages/programs/UJAT/page'))
 const GeminiVisitingTrainingPage = lazyLoad(
@@ -263,7 +264,7 @@ export const router = createBrowserRouter([
         path: 'programs',
         children: [
           { index: true, element: <ProgramListPage /> },
-          { path: 'general', element: <ProgramListPage /> },
+          { path: 'general', element: <GeneralProgramListPage /> },
           { path: 'general/*', element: <ProgramListPage /> },
           { path: 'company-school', element: <ProgramListPage /> },
           { path: 'company-school/*', element: <ProgramListPage /> },
