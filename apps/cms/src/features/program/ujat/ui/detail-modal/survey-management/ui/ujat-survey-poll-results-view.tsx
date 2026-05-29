@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   UJAT_SURVEY_POLL_RESPONSES_MOCK,
   type UjatSurveyPollRawResponse,
 } from '@/data/mock/ujat-survey-poll-responses-mock'
+import { WRITING_FORM_TEMPLATE_SAVE_EVENT } from '@/features/template/lib/writing-form-template-local-save'
 import { buildSurveyPollResultSections } from '../lib/aggregate-survey-poll-results'
 import { UjatSurveyScaleResultChart } from './ujat-survey-scale-result-chart'
 import { UjatSurveyTextResponsesTable } from './ujat-survey-text-responses-table'
@@ -21,9 +22,22 @@ export function UjatSurveyPollResultsView({
   participantTotal,
   responses,
 }: UjatSurveyPollResultsViewProps) {
+  const [templateSaveRevision, setTemplateSaveRevision] = useState(0)
+
+  useEffect(() => {
+    const handleTemplateSaved = (event: Event) => {
+      const detail = (event as CustomEvent<{ templateId?: string }>).detail
+      if (detail?.templateId === templateId) {
+        setTemplateSaveRevision(revision => revision + 1)
+      }
+    }
+    window.addEventListener(WRITING_FORM_TEMPLATE_SAVE_EVENT, handleTemplateSaved)
+    return () => window.removeEventListener(WRITING_FORM_TEMPLATE_SAVE_EVENT, handleTemplateSaved)
+  }, [templateId])
+
   const sections = useMemo(
     () => buildSurveyPollResultSections(templateId, responses ?? UJAT_SURVEY_POLL_RESPONSES_MOCK),
-    [templateId, responses]
+    [templateId, responses, templateSaveRevision]
   )
 
   const summary = (
