@@ -78,6 +78,18 @@
   white-space: nowrap;
 }
 
+/** 라벨 말줄임 없음 — `width` auto·max-content 등과 함께 사용 */
+.cms-button.ant-btn.cms-button--no-label-ellipsis .cms-button__label {
+  overflow: visible;
+  text-overflow: unset;
+  max-width: none;
+  flex-shrink: 0;
+}
+
+.cms-button.ant-btn.cms-button--no-label-ellipsis.cms-button--large {
+  width: auto;
+}
+
 /* ----- variant (enabled) ----- */
 .cms-button.ant-btn.cms-button--primary:not(:disabled):not(.ant-btn-disabled) {
   border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
