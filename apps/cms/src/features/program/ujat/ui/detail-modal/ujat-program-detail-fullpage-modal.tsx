@@ -106,16 +106,11 @@ import {
 } from '@/features/template/lib/writing-template-create-helpers'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import {
-  createDefaultSurveyDraft,
-  DEFAULT_SURVEY_PARAGRAPH_IDS,
-  normalizeWritingFormDraft,
-  type WritingFormDraft,
-} from '@/features/template/model/writing-form-draft.schema'
-import {
   isSurveyRegistryEntry,
   lookupTemplateRegistry,
   resolvePreviewHeaderTitle,
 } from '@/features/template/model/template-registry/template-registry'
+import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT } from '@/data/mock/ujat-survey-poll-responses-mock'
 import { useClipboard } from '@/features/template/hooks/use-clipboard'
 import {
@@ -139,6 +134,7 @@ import {
   canEditLectureEvalResponse,
   draftToLectureEvalPollResponse,
   UJAT_LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT,
+  UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
   UJAT_LECTURE_EVAL_TEMPLATE_ID,
   validateLectureEvalFormDraft,
   type UjatLectureEvalTabKey,
@@ -148,6 +144,10 @@ import {
   exportLectureEvalResultsPdf,
 } from './survey-management/lib/export-lecture-eval-results-pdf'
 import { getSurveyWritingTemplateSelectOptions } from './survey-management/lib/ujat-survey-template-options'
+import {
+  buildUjatSurveyWritingPreviewSession,
+} from './survey-management/lib/open-ujat-survey-writing-preview'
+import { UjatSurveyTemplateEditModal } from './survey-management/ui/ujat-survey-template-edit-modal'
 import { UjatSatisfactionSurveyView } from './survey-management/ui/ujat-satisfaction-survey-view'
 import { UjatLectureEvalSurveyView } from './survey-management/ui/ujat-lecture-eval-survey-view'
 import { UjatSurveyEmptyState } from './survey-management/ui/ujat-survey-empty-state'
@@ -186,20 +186,6 @@ const UJAT_REGISTERED_SURVEY_MOCK: UjatRegisteredSurvey[] = []
 const UJAT_SATISFACTION_SURVEY_MOCK: UjatSatisfactionSurveyByAudience = {}
 
 const UJAT_LECTURE_EVAL_SURVEY_MOCK: UjatRegisteredSurvey | null = null
-
-function buildSurveyPreviewDraft(templateName?: string) {
-  const base = normalizeWritingFormDraft(createDefaultSurveyDraft())
-  const name = templateName?.trim()
-  if (name == null || name === '') return base
-  return normalizeWritingFormDraft({
-    ...base,
-    paragraphs: base.paragraphs.map(paragraph =>
-      paragraph.id === DEFAULT_SURVEY_PARAGRAPH_IDS.title
-        ? { ...paragraph, surveyTitle: name }
-        : paragraph
-    ),
-  })
-}
 
 export interface UjatProgramDetailFullPageModalProps {
   open: boolean
@@ -531,6 +517,8 @@ export function UjatProgramDetailFullPageModal({
   const [submittingSatisfactionSurvey, setSubmittingSatisfactionSurvey] = useState(false)
   const [satisfactionDeleteModalOpen, setSatisfactionDeleteModalOpen] = useState(false)
   const [satisfactionDeleteConfirmWord, setSatisfactionDeleteConfirmWord] = useState('')
+  const [surveyTemplateEditOpen, setSurveyTemplateEditOpen] = useState(false)
+  const [surveyTemplateEditId, setSurveyTemplateEditId] = useState<string | null>(null)
   const [selectedSatisfactionTemplateId, setSelectedSatisfactionTemplateId] = useState<string | null>(
     null
   )
@@ -549,9 +537,27 @@ export function UjatProgramDetailFullPageModal({
   const [submittingLectureEvalSurvey, setSubmittingLectureEvalSurvey] = useState(false)
   const [downloadingLectureEvalResults, setDownloadingLectureEvalResults] = useState(false)
   const lectureEvalResultsExportRef = useRef<HTMLDivElement>(null)
-  const { openWritingUserPreview } = useTemplateWritingPreview()
+  const { openWritingUserPreview, closeWritingUserPreview } = useTemplateWritingPreview()
   const { copyText } = useClipboard()
   const { showAlert } = useCmsAlert()
+
+  const openUjatSurveyTemplatePreview = useCallback(
+    (templateId: string) => {
+      const session = buildUjatSurveyWritingPreviewSession(templateId, () => {
+        closeWritingUserPreview()
+        setSurveyTemplateEditId(templateId)
+        setSurveyTemplateEditOpen(true)
+      })
+      if (session == null) return
+      openWritingUserPreview(session)
+    },
+    [closeWritingUserPreview, openWritingUserPreview]
+  )
+
+  const handleCloseSurveyTemplateEdit = useCallback(() => {
+    setSurveyTemplateEditOpen(false)
+    setSurveyTemplateEditId(null)
+  }, [])
 
   const surveyTemplateOptions = useMemo(() => getSurveyWritingTemplateSelectOptions(), [])
   const activeRegisteredSurvey = useMemo(
@@ -1121,18 +1127,8 @@ export function UjatProgramDetailFullPageModal({
 
   const handleOpenRegisteredSurveyTemplatePreview = useCallback(() => {
     if (!activeRegisteredSurvey) return
-    const row = findWritingTemplateRowByDefinitionId(activeRegisteredSurvey.templateId)
-    if (!row) return
-    const entry = lookupTemplateRegistry(row.id)
-    if (entry == null || !isSurveyRegistryEntry(entry)) return
-
-    openWritingUserPreview({
-      draft: buildSurveyPreviewDraft(row.templateName),
-      updateParagraph: () => {},
-      headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
-      editorKind: 'survey',
-    })
-  }, [activeRegisteredSurvey, openWritingUserPreview])
+    openUjatSurveyTemplatePreview(activeRegisteredSurvey.templateId)
+  }, [activeRegisteredSurvey, openUjatSurveyTemplatePreview])
 
   const handleOpenSatisfactionCreateModal = useCallback(() => {
     setSubmittingSatisfactionSurvey(false)
@@ -1209,18 +1205,8 @@ export function UjatProgramDetailFullPageModal({
 
   const handleOpenSatisfactionTemplatePreview = useCallback(() => {
     if (!activeSatisfactionSurvey) return
-    const row = findWritingTemplateRowByDefinitionId(activeSatisfactionSurvey.templateId)
-    if (!row) return
-    const entry = lookupTemplateRegistry(row.id)
-    if (entry == null || !isSurveyRegistryEntry(entry)) return
-
-    openWritingUserPreview({
-      draft: buildSurveyPreviewDraft(row.templateName),
-      updateParagraph: () => {},
-      headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
-      editorKind: 'survey',
-    })
-  }, [activeSatisfactionSurvey, openWritingUserPreview])
+    openUjatSurveyTemplatePreview(activeSatisfactionSurvey.templateId)
+  }, [activeSatisfactionSurvey, openUjatSurveyTemplatePreview])
 
   const handleShareSatisfactionSurvey = useCallback(() => {
     if (!activeSatisfactionSurvey || programId == null) return
@@ -1305,6 +1291,7 @@ export function UjatProgramDetailFullPageModal({
       updateParagraph: () => {},
       headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
       editorKind: 'survey',
+      paragraphBodyOptions: UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
     })
   }, [lectureEvalSurvey, openWritingUserPreview])
 
@@ -1539,6 +1526,7 @@ export function UjatProgramDetailFullPageModal({
   })()
 
   return (
+    <>
     <DetailFullPageModal
       open={open}
       onClose={handleClose}
@@ -2138,5 +2126,13 @@ export function UjatProgramDetailFullPageModal({
         <span className="ujat-lecture-eval-incomplete-modal__body-placeholder" />
       </ContentModal>
     </DetailFullPageModal>
+    {surveyTemplateEditId != null ? (
+      <UjatSurveyTemplateEditModal
+        open={surveyTemplateEditOpen}
+        templateId={surveyTemplateEditId}
+        onClose={handleCloseSurveyTemplateEdit}
+      />
+    ) : null}
+    </>
   )
 }
