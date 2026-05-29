@@ -1,7 +1,7 @@
 import type { UjatSurveyPollRawResponse } from '@/data/mock/ujat-survey-poll-responses-mock'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import type { ScaleTypeItem, WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
-import { resolveLectureEvalWritingDraft } from './ujat-lecture-eval-survey'
+import { resolveUjatSurveyWritingDraft } from './ujat-survey-writing-draft'
 
 export type UjatSurveyScaleChartDatum = {
   itemId: string
@@ -74,7 +74,7 @@ export function aggregateTextResults(
 }
 
 function resolveSurveyDraftForTemplate(templateId: string) {
-  return resolveLectureEvalWritingDraft(templateId)
+  return resolveUjatSurveyWritingDraft(templateId)
 }
 
 function getParagraphTitle(paragraphs: WritingFormParagraph[], paragraph: WritingFormParagraph) {
