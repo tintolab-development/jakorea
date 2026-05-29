@@ -8,6 +8,10 @@ import { ApplicantScheduleList } from './applicant-schedule-list'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import './applicant-calendar-view.css'
 import { CalendarMain } from '@/shared/components/calendar'
+import {
+  createInitialCalendarNavigationState,
+  syncViewAnchorOnDateSelect,
+} from '@/shared/components/calendar/lib/calendar-navigation'
 import { CmsSelect, CMS_MULTI_SELECT_TAG_COLORS } from '@/shared/ui'
 import '@/shared/components/calendar/styles/calendar.css'
 import { useApplicantCalendarColorMaps } from './applicant-calendar-schedule-helpers'
@@ -34,8 +38,6 @@ export function ApplicantCalendarView({
   calendarGranularity: calendarGranularityProp,
   onCalendarGranularityChange,
 }: ApplicantCalendarViewProps) {
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
-  const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
   const [fallbackCalendarMode, setFallbackCalendarMode] = useState<'month' | 'week'>('month')
   const calendarControlled =
     calendarGranularityProp !== undefined && onCalendarGranularityChange !== undefined
@@ -44,6 +46,10 @@ export function ApplicantCalendarView({
     if (calendarControlled) onCalendarGranularityChange(mode)
     else setFallbackCalendarMode(mode)
   }
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(() => dayjs())
+  const [currentMonth, setCurrentMonth] = useState<Dayjs>(() =>
+    createInitialCalendarNavigationState(calendarGranularityProp ?? 'month').viewAnchor
+  )
   /** 날짜별 필터 옵션과 동기화 시 전체 선택이 기본, []는 사용자가 모두 해제한 경우 */
   const [selectedSchools, setSelectedSchools] = useState<string[]>([])
 
@@ -93,19 +99,7 @@ export function ApplicantCalendarView({
 
   const handleDateSelect = (date: Dayjs) => {
     setSelectedDate(date)
-    if (calendarMode === 'week') {
-      if (!date.isSame(currentMonth, 'week')) {
-        setCurrentMonth(date.startOf('week'))
-      }
-    } else if (!date.isSame(currentMonth, 'month')) {
-      setCurrentMonth(date.startOf('month'))
-    }
-  }
-
-  const handleToday = () => {
-    const today = dayjs()
-    setSelectedDate(today)
-    setCurrentMonth(today.startOf('month'))
+    setCurrentMonth(prev => syncViewAnchorOnDateSelect(calendarMode, date, prev))
   }
 
   if (loading) {
@@ -129,7 +123,6 @@ export function ApplicantCalendarView({
           onSelectDate={handleDateSelect}
           onMonthChange={setCurrentMonth}
           onModeChange={setCalendarMode}
-          onTodayClick={handleToday}
         />
       </div>
 

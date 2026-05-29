@@ -96,6 +96,8 @@ border-radius: var(--16, 16px); /* 16px */
 - [ ] 7:3이면 `CalendarSplitCardLayout` + `className="calendar-split-card-main"`만
 - [ ] 우측 `CalendarSubRight*` — `.calendar-list` 구조
 - [ ] 체크박스 있으면 래퍼 className **`calendar-list-item__checkbox`만** (도메인 `__checkbox` 금지) — DevTools hover 시 mint 6% 배경
+- [ ] 주간 토글 시 **선택일 유지** + 해당 주 그리드 표시 (월 1일 주로 튀지 않음)
+- [ ] [오늘] 클릭 시 선택일·주/월 앵커 모두 오늘
 - [ ] DevTools: `.calendar-split-card`에 `box-shadow` 있고 `border` 없음
 - [ ] DevTools: 선택 셀에 **셀 전체 border 2px** 없음, 날짜 mint 원만
 - [ ] `participating-institutions-calendar-view.css`에 **popover/tooltip만** 추가 (그리드·셀 상태 X)
@@ -106,6 +108,48 @@ border-radius: var(--16, 16px); /* 16px */
 |------|------|
 | 참여 기관 기본 우측 | `ApplicantScheduleList` — `CalendarSubRight*`로 이전 예정 |
 | `applicant-calendar-view.css` | 우측 `border: #f0f0f0` — split-card 이전 패턴 |
+
+---
+
+## 날짜·모드 네비게이션 (공통 — 모든 `CalendarMain`)
+
+**코드:** `lib/calendar-navigation.ts` · `lib/use-calendar-navigation-state.ts` · `CalendarMain` 내부 `handleModeChange` / [오늘]
+
+| 규칙 | 동작 |
+|------|------|
+| **초기 진입** | `selectedDate` = 실시간 오늘. `currentMonth`(표시 앵커) = 모드에 맞게 오늘 기준 (`월간` → 해당 월 1일, `주간` → 해당 주 시작) |
+| **월간 → 주간 전환** | `CalendarMain`이 **현재 `selectedDate`가 속한 주**로 앵커 이동 (`syncViewAnchorOnModeChange`). 월 1일 앵커에 묶이지 않음 |
+| **[오늘] 버튼** | 선택일·표시 앵커 모두 오늘 (`goToTodayState`). `CalendarMain`이 처리 — 페이지별 `onTodayClick` **불필요**(중복 시에도 `onMonthChange`로 앵커 보정) |
+| **주간 헤더 연·월** | `resolveWeekViewHeaderTitle` — 선택일이 표시 주에 있으면 선택일 기준, 없으면 주 중앙(목) 기준. **`weekDates[0]`(주 시작)만 쓰지 말 것** (월초 선택 시 전월로 표기됨) |
+
+### 페이지 구현
+
+```tsx
+// 권장: 3열·split 공통 state
+const {
+  selectedDate,
+  currentMonth,
+  mode,
+  onSelectDate,
+  onMonthChange,
+  onModeChange,
+} = useCalendarNavigationState('month')
+
+<CalendarMain
+  selectedDate={selectedDate}
+  currentMonth={currentMonth}
+  mode={mode}
+  onSelectDate={onSelectDate}
+  onMonthChange={onMonthChange}
+  onModeChange={onModeChange}  // 모드만 set — 앵커는 CalendarMain이 selectedDate 기준 동기화
+/>
+```
+
+- **금지:** `currentMonth`만 `startOf('month')`로 초기화하고 `selectedDate`만 `dayjs()` — 주간 전환 시 다른 주로 점프
+- **금지:** `onModeChange`에서 앵커를 갱신하지 않고 `setMode`만 (→ `CalendarMain`이 보정하므로 동작은 하나, 중복 구현 불필요)
+- **금지:** [오늘]에서 주간인데 `startOf('month')`만 호출하는 페이지 전용 handler
+
+초기 state만 수동일 때: `createInitialCalendarNavigationState(mode)` 사용.
 
 ---
 
@@ -140,4 +184,4 @@ border-radius: var(--16, 16px); /* 16px */
 - [calendar-week-time-grid.md](./calendar-week-time-grid.md) — 주간 격자
 - [schedule-calendar-ux.md](./schedule-calendar-ux.md) — 클릭 UX
 
-**Last updated:** 2026-05-29
+**Last updated:** 2026-05-29 (날짜·모드 네비게이션 공통화)

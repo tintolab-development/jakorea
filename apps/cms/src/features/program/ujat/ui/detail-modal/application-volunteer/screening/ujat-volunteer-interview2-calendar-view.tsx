@@ -3,7 +3,7 @@
  * 1차 서류 합격(`UjatVolunteerDocPassedCalendarView`)과 분리 — 팝오버·우측 리스트 UI 상이
  */
 
-import { useState, useMemo, useCallback, type Key } from 'react'
+import { useMemo, useCallback, type Key } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -16,6 +16,7 @@ import {
   CalendarSubRightVolunteerInterview2List,
   type CalendarVolunteerInterview2ListRow,
 } from '@/shared/components/calendar'
+import { useCalendarNavigationState } from '@/shared/components/calendar/lib/use-calendar-navigation-state'
 import '@/shared/components/calendar/styles/calendar.css'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import { useApplicantCalendarColorMaps } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-schedule-helpers'
@@ -59,9 +60,14 @@ export function UjatVolunteerInterview2CalendarView({
   onSelectionChange,
   onItemClick,
 }: UjatVolunteerInterview2CalendarViewProps) {
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
-  const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
-  const [calendarMode, setCalendarMode] = useState<'month' | 'week'>('month')
+  const {
+    selectedDate,
+    currentMonth,
+    mode: calendarMode,
+    onSelectDate: handleDateSelect,
+    onMonthChange: setCurrentMonth,
+    onModeChange: setCalendarMode,
+  } = useCalendarNavigationState('month')
 
   const applicantById = useMemo(
     () => new Map(events.map(event => [event.originalItem.id, event.originalItem])),
@@ -104,23 +110,6 @@ export function UjatVolunteerInterview2CalendarView({
     [applicantById, onItemClick]
   )
 
-  const handleDateSelect = (date: Dayjs) => {
-    setSelectedDate(date)
-    if (calendarMode === 'week') {
-      if (!date.isSame(currentMonth, 'week')) {
-        setCurrentMonth(date.startOf('week'))
-      }
-    } else if (!date.isSame(currentMonth, 'month')) {
-      setCurrentMonth(date.startOf('month'))
-    }
-  }
-
-  const handleToday = () => {
-    const today = dayjs()
-    setSelectedDate(today)
-    setCurrentMonth(today.startOf('month'))
-  }
-
   return (
     <CalendarSplitCardLayout
       loading={loading}
@@ -135,7 +124,6 @@ export function UjatVolunteerInterview2CalendarView({
           onSelectDate={handleDateSelect}
           onMonthChange={setCurrentMonth}
           onModeChange={setCalendarMode}
-          onTodayClick={handleToday}
           eventsTooltipScope="full-day"
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}

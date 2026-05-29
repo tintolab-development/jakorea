@@ -25,6 +25,16 @@ export {
   defaultCalendarMonthEventTitle,
 } from './ui/calendar-month-event-title'
 export type { CalendarMonthEventTitleParts } from './ui/calendar-month-event-title'
+export {
+  createInitialCalendarNavigationState,
+  goToTodayState,
+  resolveViewAnchor,
+  syncViewAnchorOnDateSelect,
+  syncViewAnchorOnModeChange,
+  resolveWeekViewHeaderTitle,
+} from './lib/calendar-navigation'
+export type { CalendarNavigationState, CalendarViewMode } from './lib/calendar-navigation'
+export { useCalendarNavigationState } from './lib/use-calendar-navigation-state'
 export { CalendarMain } from './ui/calendar-main'
 export { WeekView } from './ui/week-view'
 export type { WeekViewProps } from './ui/week-view'

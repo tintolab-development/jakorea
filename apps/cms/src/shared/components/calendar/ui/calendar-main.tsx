@@ -34,6 +34,12 @@ import type {
   BuildCalendarMonthCellRows,
   RenderCalendarMonthEventContent,
 } from '../model/calendar-month-cell-row'
+import {
+  goToTodayState,
+  resolveWeekViewHeaderTitle,
+  syncViewAnchorOnModeChange,
+  type CalendarViewMode,
+} from '../lib/calendar-navigation'
 
 export type { CalendarMainEventInput } from '../model/calendar-main-event-input'
 
@@ -121,6 +127,7 @@ function isEventsProps(p: CalendarMainProps): p is CalendarMainEventsProps {
 
 function useCalendarNavigation({
   currentMonth,
+  selectedDate,
   mode,
   onSelectDate,
   onMonthChange,
@@ -128,6 +135,7 @@ function useCalendarNavigation({
   weekDates,
 }: {
   currentMonth: Dayjs
+  selectedDate: Dayjs
   mode: 'month' | 'week'
   onSelectDate: (date: Dayjs) => void
   onMonthChange: (month: Dayjs) => void
@@ -135,9 +143,10 @@ function useCalendarNavigation({
   weekDates: Dayjs[]
 }) {
   const handleToday = () => {
-    const today = dayjs()
+    const { selectedDate: today, viewAnchor } = goToTodayState(mode)
     onTodayClick?.()
     onSelectDate(today)
+    onMonthChange(viewAnchor)
   }
 
   const handlePrev = () => {
@@ -152,7 +161,7 @@ function useCalendarNavigation({
 
   const headerTitle =
     mode === 'week'
-      ? weekDates[0].format('YYYY. MM')
+      ? resolveWeekViewHeaderTitle(selectedDate, weekDates)
       : currentMonth.format('YYYY.MM')
 
   return { handleToday, handlePrev, handleNext, headerTitle }
@@ -356,12 +365,21 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
 
     const { handleToday, handlePrev, handleNext, headerTitle } = useCalendarNavigation({
       currentMonth,
+      selectedDate,
       mode,
       onSelectDate,
       onMonthChange,
       onTodayClick,
       weekDates,
     })
+
+    const handleModeChange = useCallback(
+      (nextMode: CalendarViewMode) => {
+        onMonthChange(syncViewAnchorOnModeChange(nextMode, selectedDate))
+        onModeChange(nextMode)
+      },
+      [selectedDate, onMonthChange, onModeChange]
+    )
 
     const renderMonthCell = useCallback(
       (date: Dayjs) =>
@@ -410,7 +428,7 @@ export const CalendarMain = forwardRef<HTMLDivElement, CalendarMainProps>(
           <CalendarHeader
             headerTitle={headerTitle}
             mode={mode}
-            onModeChange={onModeChange}
+            onModeChange={handleModeChange}
             onToday={handleToday}
             onPrev={handlePrev}
             onNext={handleNext}

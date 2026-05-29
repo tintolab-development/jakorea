@@ -20,6 +20,10 @@ import {
   calendarItemsForEventMode,
   type CalendarMainEventInput,
 } from '@/shared/components/calendar'
+import {
+  createInitialCalendarNavigationState,
+  syncViewAnchorOnDateSelect,
+} from '@/shared/components/calendar/lib/calendar-navigation'
 import { CmsSelect } from '@/shared/ui'
 import '@/shared/components/calendar/styles/calendar.css'
 import './participating-institutions-calendar-view.css'
@@ -192,10 +196,6 @@ export function ParticipatingInstitutionsCalendarView({
   onCalendarGranularityChange,
   resolvePopoverRowParts,
 }: ParticipatingInstitutionsCalendarViewProps) {
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
-  const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs().startOf('month'))
-  /** 기본 우측(참여 기관) 기관 멀티셀렉트 — 옵션 동기화 시 전체 선택 */
-  const [defaultRightSelectedSchools, setDefaultRightSelectedSchools] = useState<string[]>([])
   const [fallbackCalendarMode, setFallbackCalendarMode] = useState<'month' | 'week'>('month')
   const calendarControlled =
     calendarGranularityProp !== undefined && onCalendarGranularityChange !== undefined
@@ -204,6 +204,12 @@ export function ParticipatingInstitutionsCalendarView({
     if (calendarControlled) onCalendarGranularityChange(mode)
     else setFallbackCalendarMode(mode)
   }
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(() => dayjs())
+  const [currentMonth, setCurrentMonth] = useState<Dayjs>(() =>
+    createInitialCalendarNavigationState(calendarGranularityProp ?? 'month').viewAnchor
+  )
+  /** 기본 우측(참여 기관) 기관 멀티셀렉트 — 옵션 동기화 시 전체 선택 */
+  const [defaultRightSelectedSchools, setDefaultRightSelectedSchools] = useState<string[]>([])
   const baseEvents = useMemo(() => buildEventsFromSchools(schools), [schools])
   const events = useMemo(
     () =>
@@ -289,9 +295,7 @@ export function ParticipatingInstitutionsCalendarView({
   const handleDateSelect = (date: Dayjs) => {
     setSelectedDate(date)
     onDateSelect?.(date)
-    if (!date.isSame(currentMonth, 'month')) {
-      setCurrentMonth(date.startOf('month'))
-    }
+    setCurrentMonth(prev => syncViewAnchorOnDateSelect(calendarMode, date, prev))
   }
 
   return (
