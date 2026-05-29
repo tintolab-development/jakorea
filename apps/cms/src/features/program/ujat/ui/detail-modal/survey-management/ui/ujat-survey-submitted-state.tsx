@@ -1,4 +1,5 @@
 import { CheckCircleOutlined } from '@ant-design/icons'
+import type { ReactNode } from 'react'
 import { CmsButton } from '@/shared/ui/cms-button'
 
 export type UjatSurveySubmittedStateProps = {
@@ -7,6 +8,8 @@ export type UjatSurveySubmittedStateProps = {
   editButtonLabel: string
   canEdit: boolean
   onEditClick: () => void
+  className?: string
+  icon?: ReactNode
 }
 
 export function UjatSurveySubmittedState({
@@ -15,12 +18,16 @@ export function UjatSurveySubmittedState({
   editButtonLabel,
   canEdit,
   onEditClick,
+  className,
+  icon,
 }: UjatSurveySubmittedStateProps) {
+  const rootClassName = ['ujat-survey-submitted-state', className].filter(Boolean).join(' ')
+
   return (
-    <div className="ujat-survey-submitted-state">
+    <div className={rootClassName}>
       <div className="ujat-survey-submitted-state__content">
         <span className="ujat-survey-submitted-state__icon" aria-hidden>
-          <CheckCircleOutlined />
+          {icon ?? <CheckCircleOutlined />}
         </span>
         <div className="ujat-survey-submitted-state__texts">
           <p className="ujat-survey-submitted-state__title">{title}</p>
