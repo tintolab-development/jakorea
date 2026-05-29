@@ -105,16 +105,20 @@ import {
   findWritingTemplateRowByDefinitionId,
   getWritingTemplateRowsByCategory,
 } from '@/features/template/lib/writing-template-create-helpers'
-import { useTemplateModal } from '@/features/template/hooks/use-template-modal'
+import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import {
-  buildRightNavigationConfig,
-  buildTemplateConfig,
-} from '@/features/template/lib/build-template-config'
-import { useTemplateEditorVm } from '@/features/template/hooks/use-template-editor-vm'
-import { lookupTemplateRegistry } from '@/features/template/model/template-registry/template-registry'
-import { TemplatePreviewModal } from '@/features/template/ui/template-management/template-preview-modal'
-import type { TemplateRow } from '@/features/template/model/template.schema'
-import '@toast-ui/editor/dist/toastui-editor.css'
+  createDefaultSurveyDraft,
+  DEFAULT_SURVEY_PARAGRAPH_IDS,
+  normalizeWritingFormDraft,
+} from '@/features/template/model/writing-form-draft.schema'
+import {
+  isSurveyRegistryEntry,
+  lookupTemplateRegistry,
+  resolvePreviewHeaderTitle,
+} from '@/features/template/model/template-registry/template-registry'
+import { UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT } from '@/data/mock/ujat-survey-poll-responses-mock'
+import { UjatSurveyPollResultsView } from './survey-management/ui/ujat-survey-poll-results-view'
+import { UjatSurveyRegisteredActions } from './survey-management/ui/ujat-survey-registered-actions'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './ujat-program-detail-fullpage-modal.css'
 
@@ -156,9 +160,24 @@ type UjatRegisteredSurvey = {
   templateId: string
   status: UjatSurveyProgressStatus
   responseCount: number
+  participantTotal: number
 }
 
 const UJAT_REGISTERED_SURVEY_MOCK: UjatRegisteredSurvey[] = []
+
+function buildSurveyPreviewDraft(templateName?: string) {
+  const base = normalizeWritingFormDraft(createDefaultSurveyDraft())
+  const name = templateName?.trim()
+  if (name == null || name === '') return base
+  return normalizeWritingFormDraft({
+    ...base,
+    paragraphs: base.paragraphs.map(paragraph =>
+      paragraph.id === DEFAULT_SURVEY_PARAGRAPH_IDS.title
+        ? { ...paragraph, surveyTitle: name }
+        : paragraph
+    ),
+  })
+}
 
 export interface UjatProgramDetailFullPageModalProps {
   open: boolean
@@ -574,58 +593,8 @@ export function UjatProgramDetailFullPageModal({
   const [activeRegisteredSurveyId, setActiveRegisteredSurveyId] = useState<string | null>(
     UJAT_REGISTERED_SURVEY_MOCK[0]?.id ?? null
   )
+  const { openWritingUserPreview } = useTemplateWritingPreview()
 
-  const buildBaseTemplateCards = useCallback((selectedTemplate: TemplateRow | null) => {
-    return buildTemplateConfig({
-      selectedTemplate,
-      orderedLeftContentConfig: [],
-    }).baseLeftContentConfig
-  }, [])
-  const {
-    selectedTemplate: selectedSurveyEditorTemplate,
-    orderedLeftContentConfig: surveyOrderedLeftContentConfig,
-    activeCardId: surveyActiveCardId,
-    setActiveCardId: setSurveyActiveCardId,
-    openTemplatePreview: openSurveyTemplatePreview,
-    closeTemplatePreview: closeSurveyTemplatePreview,
-    applyOrderedCards: applySurveyOrderedCards,
-  } = useTemplateModal({ buildBaseLeftContentConfig: buildBaseTemplateCards })
-
-  const surveyEditorRegistryEntry = useMemo(
-    () => lookupTemplateRegistry(selectedSurveyEditorTemplate?.id),
-    [selectedSurveyEditorTemplate?.id]
-  )
-  const surveyEditorVm = useTemplateEditorVm({
-    isPreviewOpen: selectedSurveyEditorTemplate != null,
-    templateId: selectedSurveyEditorTemplate?.id,
-    templateName: selectedSurveyEditorTemplate?.templateName,
-    registryEntry: surveyEditorRegistryEntry,
-  })
-  const surveyRightNavigationConfig = useMemo(
-    () => buildRightNavigationConfig(surveyOrderedLeftContentConfig),
-    [surveyOrderedLeftContentConfig]
-  )
-  const surveyEditorRendererContext = useMemo(
-    () => ({
-      registryEntry: surveyEditorVm.registryEntry,
-      editorVm: surveyEditorVm,
-      generic: {
-        orderedLeftContentConfig: surveyOrderedLeftContentConfig,
-        activeCardId: surveyActiveCardId,
-        setActiveCardId: setSurveyActiveCardId,
-        applyOrderedCards: applySurveyOrderedCards,
-        rightNavigationConfig: surveyRightNavigationConfig,
-      },
-    }),
-    [
-      surveyEditorVm,
-      surveyOrderedLeftContentConfig,
-      surveyActiveCardId,
-      setSurveyActiveCardId,
-      applySurveyOrderedCards,
-      surveyRightNavigationConfig,
-    ]
-  )
   const surveyTemplateOptions = useMemo(() => {
     const byId = new Map(getWritingTemplateRowsByCategory('survey').map(row => [row.id, row]))
     return surveyItems
@@ -1152,16 +1121,17 @@ export function UjatProgramDetailFullPageModal({
       })
       const next = findWritingTemplateRowByDefinitionId(newTemplateId)
       if (next != null) {
+        const isFirstSurvey = registeredSurveys.length === 0
         const newSurvey: UjatRegisteredSurvey = {
           id: `ujat-survey-${Date.now()}`,
           title: `${next.templateName} ${registeredSurveys.length + 1 < 10 ? `0${registeredSurveys.length + 1}` : registeredSurveys.length + 1}`,
           templateId: next.id,
-          status: 'before_start',
-          responseCount: 0,
+          status: isFirstSurvey ? 'in_progress' : 'finished',
+          responseCount: UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT,
+          participantTotal: isFirstSurvey ? 16 : UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT,
         }
         setRegisteredSurveys(prev => [...prev, newSurvey])
         setActiveRegisteredSurveyId(newSurvey.id)
-        openSurveyTemplatePreview(next)
       }
       setSurveyCreateModalOpen(false)
     } catch (error) {
@@ -1169,7 +1139,7 @@ export function UjatProgramDetailFullPageModal({
     } finally {
       setSubmittingSurveyTemplate(false)
     }
-  }, [selectedSurveyTemplateId, openSurveyTemplatePreview, registeredSurveys.length])
+  }, [selectedSurveyTemplateId, registeredSurveys.length])
 
   const handleDeleteRegisteredSurvey = useCallback(() => {
     if (!activeRegisteredSurvey || activeRegisteredSurvey.status !== 'before_start') return
@@ -1205,8 +1175,16 @@ export function UjatProgramDetailFullPageModal({
     if (!activeRegisteredSurvey) return
     const row = findWritingTemplateRowByDefinitionId(activeRegisteredSurvey.templateId)
     if (!row) return
-    openSurveyTemplatePreview(row)
-  }, [activeRegisteredSurvey, openSurveyTemplatePreview])
+    const entry = lookupTemplateRegistry(row.id)
+    if (entry == null || !isSurveyRegistryEntry(entry)) return
+
+    openWritingUserPreview({
+      draft: buildSurveyPreviewDraft(row.templateName),
+      updateParagraph: () => {},
+      headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
+      editorKind: 'survey',
+    })
+  }, [activeRegisteredSurvey, openWritingUserPreview])
 
   const closeVolAddRegistration = useCallback(() => {
     const next = new URLSearchParams(searchParams)
@@ -1639,22 +1617,15 @@ export function UjatProgramDetailFullPageModal({
                     onChange={setActiveRegisteredSurveyId}
                     items={registeredSurveys.map(item => ({ key: item.id, label: item.title }))}
                     trailing={
-                      <div className="ujat-survey-registered__actions">
-                        <CmsButton
-                          className="ujat-survey-registered__share-button"
-                          width={160}
-                          onClick={() => undefined}
-                        >
-                          설문조사 공유
-                        </CmsButton>
-                        <CmsButton
-                          className="ujat-survey-registered__add-button"
-                          width={160}
-                          onClick={handleOpenSurveyCreateModal}
-                        >
-                          설문조사 추가
-                        </CmsButton>
-                      </div>
+                      activeRegisteredSurvey != null ? (
+                        <UjatSurveyRegisteredActions
+                          survey={activeRegisteredSurvey}
+                          onShareClick={() => undefined}
+                          onAddClick={handleOpenSurveyCreateModal}
+                          onOpenTemplatePreview={handleOpenRegisteredSurveyTemplatePreview}
+                          onDownloadClick={() => undefined}
+                        />
+                      ) : null
                     }
                   />
                   {activeRegisteredSurvey != null && activeRegisteredSurvey.responseCount === 0 ? (
@@ -1663,12 +1634,13 @@ export function UjatProgramDetailFullPageModal({
                       onDeleteClick={handleOpenSurveyDeleteModal}
                       onOpenTemplatePreview={handleOpenRegisteredSurveyTemplatePreview}
                     />
-                  ) : (
-                    <UjatPlaceholderSection
-                      title={activeRegisteredSurvey?.title ?? '설문'}
-                      description="설문 응답 데이터 화면은 준비 중입니다."
+                  ) : activeRegisteredSurvey != null ? (
+                    <UjatSurveyPollResultsView
+                      templateId={activeRegisteredSurvey.templateId}
+                      responseCount={activeRegisteredSurvey.responseCount}
+                      participantTotal={activeRegisteredSurvey.participantTotal}
                     />
-                  )}
+                  ) : null}
                 </div>
               )
             ) : (
@@ -1736,14 +1708,6 @@ export function UjatProgramDetailFullPageModal({
           />
         </div>
       </ContentModal>
-      <TemplatePreviewModal
-        open={selectedSurveyEditorTemplate != null}
-        onClose={closeSurveyTemplatePreview}
-        title={selectedSurveyEditorTemplate?.templateName ?? '설문'}
-        onPreview={() => {}}
-        onSave={surveyEditorVm.handleSave}
-        rendererContext={surveyEditorRendererContext}
-      />
       <ContentModal
         open={surveyDeleteModalOpen}
         onCancel={handleCloseSurveyDeleteModal}
