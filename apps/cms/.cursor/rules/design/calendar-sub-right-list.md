@@ -63,8 +63,8 @@
 
 ## 7:3 카드형 우측 vs `calendar-set` 3열
 
-- **`calendar-set` + `.calendar-sub-right-list`:** 미니 캘린더·검색이 있는 3열. 우측은 sticky 400px 래퍼.
-- **`CalendarSplitCardLayout` + `.calendar-split-card--right`:** 7:3 카드. 우측에는 **`.calendar-list`만** 두고 `.calendar-sub-right-list` 래퍼를 **추가하지 않는다.** → [calendar-split-card-layout.md](./calendar-split-card-layout.md)
+- **`calendar-set` + `.calendar-sub-right-list`:** 미니 캘린더·검색이 있는 3열. 우측 sticky 래퍼 — **743px** 높이 · **280~400px** clamp 너비 ([calendar-common.md](./calendar-common.md) 토큰). 래퍼는 **border·shadow·radius 없음** — shell은 자식 `.calendar-list`만 (**border만**, `box-shadow` 금지).
+- **`CalendarSplitCardLayout` + `.calendar-split-card--right`:** 7:3 카드. 우측에는 **`.calendar-list`만** 두고 `.calendar-sub-right-list` 래퍼를 **추가하지 않는다.** → [calendar-split-card-layout.md](./calendar-split-card-layout.md). 우측 카드 너비·리스트 높이는 공통 토큰과 동일.
 - **7:3 카드 안의 `.calendar-list`:** 기본 `calendar-sub-right.css`의 border·box-shadow는 **끈 상태**여야 한다. shell은 `.calendar-split-card--right`만 담당.
 
 ---
@@ -87,6 +87,7 @@
 - 캘린더 뷰 루트에 `ujat-institution-application-calendar-view--page-scroll` (또는 동일 패턴의 `--no-inner-scroll` 래퍼).
 - `detail-fullpage-modal__content`가 `overflow-x: hidden`이면 `position: sticky`가 깨짐 → `:has(...--page-scroll)` 시 `overflow-x: clip` (`detail-fullpage-modal.css`, 강사 정산 캘린더와 동일).
 - `.calendar-sub-right-list`에 `position: sticky`, `top: var(--calendar-set-sticky-top)`, `align-items: flex-start` 부모.
+- 모달 `--page-scroll` 시 뷰포트보다 743px 클 때만 `height: min(743px, calc(...))`로 축소 — `ujat-institution-application-calendar-view.css` 패턴.
 - 하단 여백 52px: 테이블 → `detail-fullpage-modal__content` `padding-bottom`. 캘린더 → `__content` `padding-bottom: 0` + `ujat-institution-application-list__page-bottom-spacer`(52px 블록). sticky `max-height`에서 52px 차감.
 
 ---
@@ -95,6 +96,8 @@
 
 - 7:3 카드 우측에 `applicant-schedule-list`·커스텀 리스트 루트로 `.calendar-list-item` shell 우회
 - 7:3 카드 우측에 `.calendar-sub-right-list` 래퍼 추가 (이중 래퍼)
+- `.calendar-list` / `.calendar-sub-right-list` **743px·280~400px** 재정의 (공통 CSS 단일 소스)
+- `.calendar-list`에 **border + box-shadow** 동시 적용, 또는 `.calendar-sub-right-list`에 shell border/shadow (이중 테두리 회귀)
 - `.calendar-list` 안에서 `.calendar-list-item` 없이 도메인 루트만 렌더링 (hover·간격 불일치)
 - 도메인 CSS에서 `:hover`로 mint 효과를 다시 정의하거나 **끄기** (`border-width: 1px !important` 등)
 - `calendar-sub-right.css`와 다른 transition/hover 토큰을 item 파일에 복제
@@ -102,4 +105,4 @@
 
 ---
 
-**Last updated:** 2026-05-29
+**Last updated:** 2026-05-29 (우측 리스트 743px · 280~400px clamp)

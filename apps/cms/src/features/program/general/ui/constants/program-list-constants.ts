@@ -4,7 +4,7 @@
  * getRecruitmentStatus는 program-detail-info-constants 단일 소스에서 re-export
  */
 
-import type { ProgramCategory, TargetLevel } from '@/types/domain'
+import type { Program, ProgramCategory, ProgramLifecycleStatus, TargetLevel } from '@/types/domain'
 import { programLifecycleStatusConfig, getProgramLifecycleLabel } from '@/shared/constants/status'
 import { getRecruitmentStatus } from '../../../shared/lib/program-detail-info-constants'
 
@@ -28,6 +28,49 @@ export const statusOptions = programLifecycleStatusConfig.order.map(status => ({
   value: status,
   label: getProgramLifecycleLabel(status),
 }))
+
+/** 프로그램 목록 —「프로그램 진행 현황」필터 (3단계, 위젯 구간과 동일) */
+export type ProgramProgressPhaseFilter = 'scheduled' | 'in_progress' | 'completed'
+
+export const programProgressPhaseFilterOptions: {
+  value: ProgramProgressPhaseFilter
+  label: string
+}[] = [
+  { value: 'scheduled', label: '프로그램 진행 예정' },
+  { value: 'in_progress', label: '프로그램 진행 중' },
+  { value: 'completed', label: '프로그램 진행 완료' },
+]
+
+const programProgressPhaseLifecycleMap: Record<
+  ProgramProgressPhaseFilter,
+  readonly ProgramLifecycleStatus[]
+> = {
+  scheduled: [
+    'recruiting_students',
+    'recruiting_instructors',
+    'matching_completed',
+    'education_before_textbook',
+  ],
+  in_progress: ['education_after_textbook'],
+  completed: ['education_completed', 'document_processing_completed'],
+}
+
+export const programProgressPhaseFilterValues = new Set<ProgramProgressPhaseFilter>(
+  programProgressPhaseFilterOptions.map(o => o.value)
+)
+
+export function isProgramProgressPhaseFilter(value: string): value is ProgramProgressPhaseFilter {
+  return programProgressPhaseFilterValues.has(value as ProgramProgressPhaseFilter)
+}
+
+export function programMatchesProgressPhase(
+  program: Pick<Program, 'lifecycleStatus'>,
+  phase: ProgramProgressPhaseFilter
+): boolean {
+  const status = program.lifecycleStatus
+  if (!status) return false
+  return programProgressPhaseLifecycleMap[phase].includes(status)
+}
 
 export const recruitmentStatusOptions = [
   { value: 'scheduled', label: '모집 예정' },
@@ -53,16 +96,16 @@ export const categoryOptions: { value: ProgramCategory; label: string }[] = [
   { value: 'individual', label: '개인 학생' },
 ]
 
-/** 경제 교육 프로그램 필터: 참여자 유형 */
-export const economyParticipantTypeOptions = [
+/** 프로그램 목록 필터·테이블: 참여자 유형 */
+export const programParticipantTypeOptions = [
   { value: 'school', label: '학교/기관' },
-  { value: 'volunteer', label: '봉사자' },
-  { value: 'individual', label: '개인 학습자' },
+  { value: 'individual', label: '개인' },
   { value: 'instructor', label: '교사/강사' },
+  { value: 'volunteer', label: '봉사자' },
 ]
 
-/** 경제 교육 프로그램 필터: 교육 대상 */
-export const economyTargetLevelOptions = [
+/** 프로그램 목록 필터: 교육 대상 */
+export const programListTargetLevelOptions = [
   { value: 'elementary', label: '초등학생' },
   { value: 'middle', label: '중학생' },
   { value: 'high', label: '고등학생' },
@@ -70,17 +113,17 @@ export const economyTargetLevelOptions = [
   { value: 'adult', label: '성인' },
 ]
 
-/** 경제 교육 목록/필터와 동일한 참여자 유형 표기 (시안: 학교/기관, 개인 학습자 등) */
-export function getEconomyParticipantTypeLabel(value: string | undefined): string {
+/** 프로그램 목록 참여자 유형 표기 (필터 옵션과 동일) */
+export function getProgramParticipantTypeLabel(value: string | undefined): string {
   if (value == null || value === '') return '-'
-  const hit = economyParticipantTypeOptions.find(o => o.value === value)
+  const hit = programParticipantTypeOptions.find(o => o.value === value)
   return hit?.label ?? value
 }
 
-/** 경제 교육 목록/필터와 동일한 교육 대상 표기 (시안: 초등학생 — 일반 목록 `초등`과 구분) */
-export function getEconomyTargetLevelLabel(value: string | undefined): string {
+/** 프로그램 목록 교육 대상 표기 (필터 옵션과 동일, `초등` 등 단축 라벨과 구분) */
+export function getProgramListTargetLevelLabel(value: string | undefined): string {
   if (value == null || value === '') return '-'
-  const hit = economyTargetLevelOptions.find(o => o.value === value)
+  const hit = programListTargetLevelOptions.find(o => o.value === value)
   if (hit) return hit.label
   const legacyShort: Record<string, string> = {
     초: '초등학생',

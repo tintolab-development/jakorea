@@ -60,21 +60,25 @@
   table-layout: fixed;
   border-collapse: collapse;
   width: 100%;
+  min-width: calc(var(--calendar-cell-min-width, 116px) * 7);
 }
 
 .calendar-split-card--left .ant-picker-content thead th,
 .calendar-split-card--left .ant-picker-content tbody td {
+  min-width: var(--calendar-cell-min-width, 116px);
   width: calc(100% / 7);
 }
 
 .calendar-split-card--left .ant-picker-content tbody tr {
-  height: 124.2px;
+  height: auto;
 }
 
 .calendar-split-card--left .ant-picker-cell {
   width: calc(100% / 7);
   max-width: calc(100% / 7);
-  height: 124.2px;
+  min-width: var(--calendar-cell-min-width, 116px);
+  min-height: var(--calendar-cell-min-height, 124px);
+  height: auto;
   border: 1px solid #f0f0f0;
   padding: 0;
   vertical-align: top;
@@ -87,8 +91,8 @@
 
 .calendar-split-card-main .calendar-cell {
   width: 100%;
-  height: 100%;
-  min-height: 124.2px;
+  height: auto;
+  min-height: var(--calendar-cell-min-height, 124px);
   padding: 8px;
   display: flex;
   flex-direction: column;

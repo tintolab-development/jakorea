@@ -3,7 +3,7 @@
   min-height: 0;
   width: 100%;
   min-width: 0;
-  max-width: 400px;
+  max-width: none;
   box-sizing: border-box;
   background: var(--color-bg-base);
   border-radius: 16px;
@@ -16,7 +16,10 @@
   align-items: stretch;
   gap: 6px;
   overflow-y: auto;
-  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  /*
+   * 3열 shell: border만 (calendar-search와 동일). box-shadow는 부모 overflow:hidden과
+   * 겹치면 모서리에 이중 선처럼 보임 — calendar-common.md 회귀 방지.
+   */
 }
 
 /**

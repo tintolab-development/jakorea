@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { getGeneralPrograms } from '@/data/mock/general-programs'
 import type { Program } from '@/types/domain'
-import type { EconomyView } from '@/features/program/general/ui/table/program-table-column-resolver'
+import type { ProgramListView } from '@/features/program/general/ui/table/program-table-column-resolver'
 import type { ProgramListConfig } from '@/features/program/general/ui/program-list'
 
 /** 일반 프로그램 목록 — 4카드 위젯과 동일한 status 쿼리 */
@@ -59,14 +59,14 @@ export function useGeneralProgramListFilters() {
   }, [statusFilter])
 
   const headerTitle = useMemo(() => {
-    if (statusFilter === 'economy_scheduled') return '진행 예정 프로그램'
+    if (statusFilter === 'economy_scheduled') return '예정 프로그램'
     if (statusFilter === 'economy_in_progress') return '진행 중인 프로그램'
-    if (statusFilter === 'economy_completed') return '진행 완료된 프로그램'
+    if (statusFilter === 'economy_completed') return '완료 프로그램'
     return '전체 프로그램'
   }, [statusFilter])
 
   const programListConfig = useMemo((): ProgramListConfig => {
-    const economyView: EconomyView =
+    const listView: ProgramListView =
       statusFilter === 'economy_scheduled'
         ? 'SCHEDULED'
         : statusFilter === 'economy_in_progress'
@@ -76,9 +76,8 @@ export function useGeneralProgramListFilters() {
             : 'ALL'
 
     return {
-      mode: 'economy',
-      filterProfile: 'general-overview',
-      view: economyView,
+      mode: 'overview',
+      view: listView,
       lifecycleStatus: undefined,
     }
   }, [statusFilter])

@@ -42,24 +42,24 @@
 }
 
 /* ===== 경제 교육 페이지 3단계 (스크린샷 색상) ===== */
-.app-status-badge.program-lifecycle-status-badge--economy-scheduled,
-.app-status-badge.program-lifecycle-status-badge--economy-in-progress,
-.app-status-badge.program-lifecycle-status-badge--economy-completed {
+.app-status-badge.program-lifecycle-status-badge--list-phase-scheduled,
+.app-status-badge.program-lifecycle-status-badge--list-phase-in-progress,
+.app-status-badge.program-lifecycle-status-badge--list-phase-completed {
   min-width: auto;
   width: auto;
 }
 
-.app-status-badge.program-lifecycle-status-badge--economy-scheduled {
+.app-status-badge.program-lifecycle-status-badge--list-phase-scheduled {
   color: var(--color-green, #1e8c29);
   background-color: transparent !important;
 }
 
-.app-status-badge.program-lifecycle-status-badge--economy-in-progress {
+.app-status-badge.program-lifecycle-status-badge--list-phase-in-progress {
   color: var(--color-blue, #017eaf);
   background-color: transparent !important;
 }
 
-.app-status-badge.program-lifecycle-status-badge--economy-completed {
+.app-status-badge.program-lifecycle-status-badge--list-phase-completed {
   color: var(--default-BK, #3d3d3d);
   background-color: transparent !important;
 }

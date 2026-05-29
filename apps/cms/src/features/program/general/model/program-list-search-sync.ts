@@ -3,12 +3,13 @@
  */
 
 import type { ProgramLifecycleStatus } from '@/types/domain'
+import type { ProgramProgressPhaseFilter } from '../ui/constants/program-list-constants'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 import type { Dayjs } from 'dayjs'
 
 export interface ProgramListPendingFilters extends Record<string, unknown> {
   title: string
-  lifecycleStatus: ProgramLifecycleStatus | undefined
+  lifecycleStatus: ProgramLifecycleStatus | ProgramProgressPhaseFilter | undefined
   category: string | undefined
   businessArea: string | undefined
   targetLevel: string | undefined
@@ -33,7 +34,8 @@ const operationPeriodRule: TableSearchParamRule<ProgramListPendingFilters> = {
   },
 }
 
-export const economyProgramListParamConfig = [
+/** 일반·1사1교 4탭 위젯 목록 URL 동기화 */
+export const programListOverviewParamConfig = [
   {
     kind: 'param' as const,
     filterKey: 'title' as const,
@@ -64,7 +66,7 @@ export const economyProgramListParamConfig = [
   operationPeriodRule,
 ] satisfies readonly TableSearchParamRule<ProgramListPendingFilters>[]
 
-export const economyProgramListTableConfig: Record<
+export const programListOverviewTableConfig: Record<
   string,
   (filters: ProgramListPendingFilters) => unknown
 > = {
@@ -72,7 +74,7 @@ export const economyProgramListTableConfig: Record<
   targetLevel: f => f.targetLevel ?? null,
 }
 
-export function economyProgramListAfterApplyParams(nextParams: URLSearchParams): void {
+export function programListOverviewAfterApplyParams(nextParams: URLSearchParams): void {
   nextParams.delete('statusText')
 }
 

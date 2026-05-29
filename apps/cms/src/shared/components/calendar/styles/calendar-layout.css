@@ -1,11 +1,56 @@
 .calendar-set {
   --calendar-set-sticky-top: calc(40px + var(--cms-layout-content-padding-top, 0px));
-  display: flex;
-  align-items: flex-start;
+  /* 3열 좌측 하단 — CalendarSearch 프로그램명·체크 목록 */
+  --calendar-search-height: 391px;
+  --calendar-sub-right-list-height: 743px;
+  --calendar-sub-right-list-min-width: 280px;
+  --calendar-sub-right-list-max-width: 400px;
+  /*
+   * grid 3열: 좌 300px · 중앙 minmax(min, 1fr) · 우 minmax(280px, 400px).
+   * 여유 가로는 1fr(메인)만 흡수 — 우측은 400px까지 먼저 채워지고, 이후에만 셀 확장.
+   */
+  display: grid;
+  grid-template-columns:
+    300px
+    minmax(var(--calendar-main-month-min-width, calc(116px * 7 + 40px)), 1fr)
+    minmax(
+      var(--calendar-sub-right-list-min-width),
+      var(--calendar-sub-right-list-max-width)
+    );
+  align-items: start;
   gap: var(--spacing-24);
   width: 100%;
   min-height: 600px;
   margin-top: 16px;
+}
+
+/* 미니·검색 없음 — 메인 + 우측 2열 (정산 캘린더 등) */
+.calendar-set:not(:has(.calendar-sub-left)) {
+  grid-template-columns:
+    minmax(var(--calendar-main-month-min-width, calc(116px * 7 + 40px)), 1fr)
+    minmax(
+      var(--calendar-sub-right-list-min-width),
+      var(--calendar-sub-right-list-max-width)
+    );
+}
+
+.calendar-set:has(.calendar-week--time-grid) {
+  grid-template-columns:
+    300px
+    minmax(var(--calendar-main-week-min-width, calc(112px + 20px + 116px * 7 + 40px)), 1fr)
+    minmax(
+      var(--calendar-sub-right-list-min-width),
+      var(--calendar-sub-right-list-max-width)
+    );
+}
+
+.calendar-set:has(.calendar-week--time-grid):not(:has(.calendar-sub-left)) {
+  grid-template-columns:
+    minmax(var(--calendar-main-week-min-width, calc(112px + 20px + 116px * 7 + 40px)), 1fr)
+    minmax(
+      var(--calendar-sub-right-list-min-width),
+      var(--calendar-sub-right-list-max-width)
+    );
 }
 
 .calendar-sub-left {
@@ -13,10 +58,9 @@
   top: var(--calendar-set-sticky-top);
   left: 0;
   z-index: 2;
-  flex: 0 0 300px;
-  width: 300px;
-  min-width: 300px;
-  max-width: 300px;
+  width: auto;
+  min-width: 0;
+  max-width: none;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-16);
@@ -29,8 +73,23 @@
 }
 
 .calendar-main-container {
-  flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
+  min-height: var(--calendar-main-month-min-height, calc(124px * 6 + 37px + 50px + 32px));
+  box-sizing: border-box;
+}
+
+.calendar-main-container:has(.calendar-week--time-grid) {
+  min-height: var(
+    --calendar-main-week-min-height,
+    calc(1344px + 40px + 50px + 32px)
+  );
+}
+
+.calendar-main-container > .calendar-main {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .calendar-sub-right-list {
@@ -42,15 +101,30 @@
    */
   top: var(--calendar-set-sticky-top);
   right: 0;
-  flex: 0 0 auto;
-  width: 400px;
-  max-width: 400px;
-  height: 736px;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: var(--calendar-sub-right-list-height);
+  min-height: var(--calendar-sub-right-list-height);
+  max-height: var(--calendar-sub-right-list-height);
   display: flex;
   flex-direction: column;
   align-self: flex-start;
   box-sizing: border-box;
-  overflow: visible;
+  overflow: hidden;
   z-index: 2;
   scroll-margin-top: 40px;
+  /* 레이아웃·sticky 전용 — shell(border/shadow/radius)은 자식 `.calendar-list`만 */
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.calendar-sub-right-list > .calendar-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
 }

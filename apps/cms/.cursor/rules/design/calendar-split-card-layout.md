@@ -33,7 +33,7 @@ split-card 안에 `CalendarMain` / `CalendarSubRight*`를 넣으면 **CSS가 카
 2. **`calendar-main-container`를 추가하지 않는다.** (`calendar-set` 3열 레이아웃 전용. 7:3 카드 좌측은 `.calendar-split-card--left`가 flex 컨테이너 역할.)
 3. `CalendarMain`에는 `className="calendar-split-card-main"`만 추가한다.
 4. split-card 안에서는 **`calendar-main`에 별도 카드 스타일을 주지 않는다** — shell은 `calendar-split-card-layout.css`.
-5. **그리드·124px·일정 칩 크기**만 `calendar-split-card-main.css`(shared). **셀 호버·선택·오늘**은 `calendar-cell.css`만 — **도메인 CSS(`participating-institutions-calendar-view.css` 등)에서 `.calendar-cell--*` 재정의 금지.** 해당 파일은 tooltip/popover만.
+5. **그리드·요일 헤더·일정 칩**만 `calendar-split-card-main.css`(shared). **셀 min 116×124px·주간 56px/h**는 `calendar-main.css` / `calendar-cell.css` / `calendar-antd-override.css` 토큰 — **도메인 CSS에서 `.calendar-cell--*`·고정 px 재정의 금지.** `participating-institutions-calendar-view.css` 등은 tooltip/popover만.
 6. 주간 시간 격자(`.calendar-week--time-grid`)에서는 좌측 카드 고정 높이(900px)를 쓰지 않는다. `calendar-split-card-layout.css`의 `:has(.calendar-week--time-grid)` 분기로 `height:auto` + `overflow:visible`이 적용되어야 한다.
 
 ### 셀 상호작용 (공통 `CalendarMain`과 동일)
@@ -72,7 +72,7 @@ split-card 안에 `CalendarMain` / `CalendarSubRight*`를 넣으면 **CSS가 카
 ## 우측 일별 리스트 (필수)
 
 1. **공통 리스트 shell:** `CalendarSubRightList` / `CalendarSubRightVolunteerInterviewList` / `CalendarSubRightSettlementList` 등 — 내부가 `.calendar-list` + `.calendar-list-item` 구조 ([calendar-sub-right-list.md](./calendar-sub-right-list.md)).
-2. **`calendar-sub-right-list` 클래스 래퍼를 7:3 카드 우측에 추가하지 않는다.** (`calendar-set` sticky 400px 전용. 카드 우측은 `.calendar-split-card--right` + `.calendar-list` 직접.)
+2. **`calendar-sub-right-list` 클래스 래퍼를 7:3 카드 우측에 추가하지 않는다.** (`calendar-set` 3열 sticky 전용. 카드 우측은 `.calendar-split-card--right` + `.calendar-list` 직접. 너비·높이는 [calendar-common.md](./calendar-common.md) `--calendar-sub-right-list-*` 토큰.)
 3. **`applicant-schedule-list` / 도메인 전용 리스트 루트를 새로 만들지 않는다.** 신규 도메인은 `item-list/*` + `CalendarSubRight*` 목록 컴포넌트로 확장.
 4. 필터·툴바만 필요하면 `calendar-split-card-right__toolbar` 한 겹만 허용. 그 아래는 공통 리스트 컴포넌트.
 

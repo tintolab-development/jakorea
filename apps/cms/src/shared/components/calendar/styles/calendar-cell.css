@@ -5,7 +5,10 @@
 .calendar-cell {
   display: flex;
   flex-direction: column;
-  height: var(--calendar-cell-height, 128px);
+  width: 100%;
+  min-width: var(--calendar-cell-min-width, 116px);
+  min-height: var(--calendar-cell-min-height, 124px);
+  height: auto;
   padding: 8px;
   overflow: hidden;
   background: var(--main-WT, #fff);

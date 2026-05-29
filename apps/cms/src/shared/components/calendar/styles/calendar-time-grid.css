@@ -5,8 +5,8 @@
   flex: 1 1 auto;
   min-height: 0;
   gap: 0;
-  --calendar-week-total-px: 1296px;
-  --calendar-week-hour-px: 54px;
+  --calendar-week-hour-px: 56px;
+  --calendar-week-total-px: calc(24 * var(--calendar-week-hour-px));
   --calendar-week-gutter-width: 112px;
   --calendar-week-gutter-gap: 20px;
 }
@@ -16,7 +16,7 @@
   grid-template-columns:
     var(--calendar-week-gutter-width)
     var(--calendar-week-gutter-gap)
-    repeat(7, minmax(0, 1fr));
+    repeat(7, minmax(var(--calendar-cell-min-width, 116px), 1fr));
   align-items: stretch;
   min-width: 0;
   box-sizing: border-box;

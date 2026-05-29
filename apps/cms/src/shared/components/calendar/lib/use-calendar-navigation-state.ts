@@ -10,6 +10,7 @@ import {
 /**
  * CalendarMain과 함께 쓰는 선택일·표시 앵커(currentMonth)·모드 state.
  * `onModeChange`는 모드만 갱신 — 표시 앵커는 CalendarMain이 selectedDate 기준으로 동기화.
+ * 좌측 CalendarMini는 `useCalendarMiniState`로 별도 state — 이 훅과 공유하지 않음.
  */
 export function useCalendarNavigationState(initialMode: CalendarViewMode = 'month') {
   const initial = createInitialCalendarNavigationState(initialMode)

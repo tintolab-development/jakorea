@@ -17,6 +17,7 @@ When deleting or mutating entities, keep **referential integrity** (e.g. cascade
 ## General programs (`general-programs.ts`)
 
 - 6건, 진행현황별 2건.
+- `category`: `school` | `individual` | `instructor` | `volunteer` — 4유형 순환 배정(목록 필터·테이블 표기와 동일).
 - `scheduleTimeEnabled: false` → `startTime`/`endTime` 없음 → 주간 격자 **종일(00:00–24:00)** + 라벨 `종일` (규칙: [calendar-week-time-grid.md](../design/calendar-week-time-grid.md)).
 
 ## Related
@@ -24,4 +25,4 @@ When deleting or mutating entities, keep **referential integrity** (e.g. cascade
 - [api-spec-mock.md](./api-spec-mock.md)  
 - [fsd-structure.md](../architecture/fsd-structure.md)  
 
-**Last updated:** 2026-04-21
+**Last updated:** 2026-05-29

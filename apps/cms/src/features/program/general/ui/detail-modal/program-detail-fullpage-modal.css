@@ -398,15 +398,15 @@
   margin-top: 8px;
 }
 
-/* 경제 교육: 테이블 헤더 옆 「총 N건」 등 레이블 디스크립션 공통 타이포 */
-.program-detail-fullpage-modal--economy-education .program-progress-tab__table-description,
-.program-detail-fullpage-modal--economy-education
+/* 4탭 목록 상세: 테이블 헤더 옆 「총 N건」 등 레이블 디스크립션 공통 타이포 */
+.program-detail-fullpage-modal--program-list-overview .program-progress-tab__table-description,
+.program-detail-fullpage-modal--program-list-overview
   .participating-institutions-section__table-description,
-.program-detail-fullpage-modal--economy-education .program-status-participating__table-description,
-.program-detail-fullpage-modal--economy-education .program-applicants-tab__table-description,
-.program-detail-fullpage-modal--economy-education .program-managers-tab__table-description,
-.program-detail-fullpage-modal--economy-education .applicant-details__table-description,
-.program-detail-fullpage-modal--economy-education .school-detail-modal__table-description {
+.program-detail-fullpage-modal--program-list-overview .program-status-participating__table-description,
+.program-detail-fullpage-modal--program-list-overview .program-applicants-tab__table-description,
+.program-detail-fullpage-modal--program-list-overview .program-managers-tab__table-description,
+.program-detail-fullpage-modal--program-list-overview .applicant-details__table-description,
+.program-detail-fullpage-modal--program-list-overview .school-detail-modal__table-description {
   color: var(--default-BK, #3d3d3d);
   text-align: center;
   font-family: Pretendard, var(--font-family-primary, 'Pretendard', sans-serif);

@@ -23,7 +23,7 @@ export function resolveViewAnchor(mode: CalendarViewMode, selectedDate: Dayjs): 
   return mode === 'week' ? selectedDate.startOf('week') : selectedDate.startOf('month')
 }
 
-/** 날짜 클릭·미니캘린더 선택 시 표시 앵커 동기화 */
+/** 메인 CalendarMain 날짜 클릭 시 표시 앵커 동기화 (좌측 CalendarMini와 무관) */
 export function syncViewAnchorOnDateSelect(
   mode: CalendarViewMode,
   date: Dayjs,
@@ -49,6 +49,39 @@ export function goToTodayState(mode: CalendarViewMode): CalendarNavigationState 
   return {
     selectedDate,
     viewAnchor: resolveViewAnchor(mode, selectedDate),
+  }
+}
+
+/** 월간 뷰 ◀▶ 이동 후 기본 선택일 — 해당 월 1일 */
+export function resolveMonthDefaultFocusDate(monthViewAnchor: Dayjs): Dayjs {
+  return monthViewAnchor.startOf('month')
+}
+
+/**
+ * 주간 뷰 ◀▶ 이동 후 기본 선택일 — 해당 주 월요일.
+ * 그리드·앵커는 dayjs `startOf('week')`(일요일) 기준이므로 +1일.
+ */
+export function resolveWeekDefaultFocusDate(weekViewAnchor: Dayjs): Dayjs {
+  return weekViewAnchor.startOf('week').add(1, 'day')
+}
+
+/** 메인 캘린더 헤더 ◀▶ — 월간 ±1개월·주간 ±1주 + 모드별 기본 포커스일 */
+export function shiftCalendarViewByStep(
+  mode: CalendarViewMode,
+  viewAnchor: Dayjs,
+  direction: -1 | 1
+): CalendarNavigationState {
+  if (mode === 'week') {
+    const nextAnchor = viewAnchor.add(direction, 'week').startOf('week')
+    return {
+      viewAnchor: nextAnchor,
+      selectedDate: resolveWeekDefaultFocusDate(nextAnchor),
+    }
+  }
+  const nextAnchor = viewAnchor.add(direction, 'month').startOf('month')
+  return {
+    viewAnchor: nextAnchor,
+    selectedDate: resolveMonthDefaultFocusDate(nextAnchor),
   }
 }
 

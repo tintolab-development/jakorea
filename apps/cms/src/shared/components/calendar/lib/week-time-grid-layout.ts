@@ -1,5 +1,9 @@
 import type { CSSProperties } from 'react'
 
+export const WEEK_TIME_GRID_HOURS = 24
+export const WEEK_TIME_GRID_HOUR_PX = 56
+export const WEEK_TIME_GRID_TOTAL_PX = WEEK_TIME_GRID_HOUR_PX * WEEK_TIME_GRID_HOURS
+
 export const WEEK_TIME_GRID_OVERLAP_GAP_PX = 2
 
 /** 프로그램·일정에 시각 미설정 시 주간 격자·라벨용 */

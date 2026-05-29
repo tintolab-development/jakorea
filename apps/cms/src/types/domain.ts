@@ -45,8 +45,23 @@ export type ProgramType = 'online' | 'offline' | 'hybrid'
 // 프로그램 진행 형태
 export type ProgramFormat = 'workshop' | 'seminar' | 'course' | 'lecture' | 'other'
 
-// 프로그램 카테고리 (학교 프로그램 vs 개인 프로그램)
-export type ProgramCategory = 'school' | 'individual'
+// 프로그램 참여자 유형 (목록 필터·테이블과 동일 4값)
+export type ProgramCategory = 'school' | 'individual' | 'instructor' | 'volunteer'
+
+/** 일반 프로그램 등록 폼 — 참여자 유형 (복수 선택) */
+export type GeneralProgramParticipantType =
+  | 'individual'
+  | 'school_institution'
+  | 'teacher_instructor'
+  | 'volunteer'
+
+/** 일반 프로그램 등록 폼 — 설문 진행 항목 키 */
+export type GeneralProgramSurveyMenuKey =
+  | 'survey'
+  | 'student_satisfaction'
+  | 'teacher_satisfaction'
+  | 'satisfaction'
+  | 'lecture_evaluation'
 
 // IPS 분류
 export type IPSClassification = 'Prepare' | 'Succeed' | 'Inspire'
@@ -218,6 +233,12 @@ export interface Program {
   surveyFormTemplateId?: UUID // 설문 폼 템플릿 ID
   satisfactionFormTemplateId?: UUID // 만족도 조사 폼 템플릿 ID
   lectureReportFormTemplateId?: UUID // 강의보고서 폼 템플릿 ID
+  /** 일반 프로그램 상세 — 등록 폼 참여자 유형 (복수, API 연동 전 mock) */
+  generalParticipantTypes?: GeneralProgramParticipantType[]
+  /** 일반 프로그램 — 봉사자 선발 시 면접 단계 LNB 노출 여부 */
+  generalVolunteerInterviewEnabled?: boolean
+  /** 일반 프로그램 — 설문 관리 LNB 2뎁스 키 */
+  generalSurveyMenuKeys?: GeneralProgramSurveyMenuKey[]
   createdAt: DateValue
   updatedAt: DateValue
   /** 등록자 표시명 (목록/상세 표시용, API·mock에서 채움) */

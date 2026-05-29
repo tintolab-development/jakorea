@@ -29,36 +29,24 @@ interface PendingUserFilters {
 export function buildProgramListFilters(
   pendingFilters: PendingFilters,
   programMode: ProgramListProgramMode,
-  economyScheduledLayout = false,
-  generalOverview = false
+  overviewScheduledLayout = false
 ) {
-  if (generalOverview) {
+  if (programMode === 'overview' && overviewScheduledLayout) {
     return {
       title: pendingFilters.title,
-      lifecycleStatus: pendingFilters.lifecycleStatus,
       category: pendingFilters.category,
       targetLevel: pendingFilters.targetLevel,
-    }
-  }
-
-  if (programMode === 'economy' && economyScheduledLayout) {
-    return {
-      title: pendingFilters.title,
       operationPeriod:
         pendingFilters.operationStartDate && pendingFilters.operationEndDate
           ? [pendingFilters.operationStartDate, pendingFilters.operationEndDate]
           : null,
-      participantRecruitment: pendingFilters.participantRecruitment,
-      category: pendingFilters.category,
-      targetLevel: pendingFilters.targetLevel,
     }
   }
 
-  if (programMode === 'economy') {
+  if (programMode === 'overview') {
     return {
       title: pendingFilters.title,
       lifecycleStatus: pendingFilters.lifecycleStatus,
-      participantRecruitment: pendingFilters.participantRecruitment,
       category: pendingFilters.category,
       targetLevel: pendingFilters.targetLevel,
     }

@@ -1,9 +1,11 @@
 import { Calendar } from 'antd'
 import enUS from 'antd/es/calendar/locale/en_US'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { useMemo, type CSSProperties } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import updateLocale from 'dayjs/plugin/updateLocale'
+import { countMiniCalendarWeekRows } from '../lib/calendar-mini-layout'
 import '../styles/calendar.css'
 
 dayjs.extend(updateLocale)
@@ -41,9 +43,18 @@ export function CalendarMini({
     onMonthChange(currentMonth.add(1, 'month'))
   }
 
+  const weekRows = useMemo(() => countMiniCalendarWeekRows(currentMonth), [currentMonth])
+
+  const miniStyle = {
+    '--calendar-mini-week-rows': weekRows,
+  } as CSSProperties
+
   const dateFullCellRender = (date: Dayjs) => {
-    if (!date.isSame(currentMonth, 'month')) return null
-    const hasSchedule = programDates.has(date.format('YYYY-MM-DD'))
+    const isCurrentMonth = date.isSame(currentMonth, 'month')
+    const hasSchedule = isCurrentMonth && programDates.has(date.format('YYYY-MM-DD'))
+    const dayOfWeek = date.day()
+    const weekendClass =
+      dayOfWeek === 0 ? 'calendar-mini-cell--sunday' : dayOfWeek === 6 ? 'calendar-mini-cell--saturday' : ''
 
     if (rangeSelection != null) {
       const a = rangeSelection.start
@@ -63,7 +74,13 @@ export function CalendarMini({
               : 'calendar-mini-cell--range-middle'
         return (
           <div
-            className={['calendar-mini-cell', hasSchedule ? 'calendar-mini-cell--has-schedule' : '', rangeClass]
+            className={[
+              'calendar-mini-cell',
+              !isCurrentMonth ? 'calendar-mini-cell--other-month' : '',
+              hasSchedule ? 'calendar-mini-cell--has-schedule' : '',
+              weekendClass,
+              rangeClass,
+            ]
               .filter(Boolean)
               .join(' ')}
           >
@@ -73,14 +90,16 @@ export function CalendarMini({
       }
     }
 
-    const isSelected = date.isSame(selectedDate, 'day')
+    const isSelected = isCurrentMonth && date.isSame(selectedDate, 'day')
 
     return (
       <div
         className={[
           'calendar-mini-cell',
+          !isCurrentMonth ? 'calendar-mini-cell--other-month' : '',
           hasSchedule ? 'calendar-mini-cell--has-schedule' : '',
           isSelected ? 'calendar-mini-cell--selected' : '',
+          weekendClass,
         ]
           .filter(Boolean)
           .join(' ')}
@@ -91,7 +110,7 @@ export function CalendarMini({
   }
 
   return (
-    <div className="calendar-mini">
+    <div className="calendar-mini" style={miniStyle} data-week-rows={weekRows}>
       <div className="calendar-mini-header">
         <button type="button" className="calendar-mini-nav-btn" onClick={handlePrevMonth}>
           <LeftOutlined />

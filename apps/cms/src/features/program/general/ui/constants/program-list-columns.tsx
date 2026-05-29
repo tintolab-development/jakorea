@@ -238,7 +238,7 @@ export const instructorRecruitmentTableColumns = [
   },
 ]
 
-export const capacityTableColumnsEconomy = {
+export const capacityTableColumnsOverview = {
   title: '참여자 모집 인원',
   key: 'participantCapacity',
   width: 120,

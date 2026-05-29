@@ -1,7 +1,7 @@
 /**
  * 프로그램 진행 현황 위젯 (목록/대시보드)
  * Phase 4.5: 전체 프로그램 진행 현황 (상태별 집계)
- * 경로 기반 선택: /programs/general, /programs/company-school(및 레거시 education·economy-education)
+ * 경로 기반 선택: /programs/general, /programs/company-school(및 레거시 education·economy-education URL)
  */
 
 import { useLocation, useSearchParams, useNavigate } from 'react-router-dom'
@@ -130,7 +130,7 @@ export function ProgramStatusWidget({
   const stages = useMemo((): ProgressStageItem[] => {
     if (!progress) return []
 
-    // 경제 교육·일반 프로그램 루트 4단계 UI (Total, Scheduled, In Progress, Completed)
+    // 일반·1사1교 프로그램 루트 4단계 UI (Total, Scheduled, In Progress, Completed)
     if (programType === 'economy' || programType === 'general') {
       const p = progress as ProgramEconomyStages
       const s = selectedStatus

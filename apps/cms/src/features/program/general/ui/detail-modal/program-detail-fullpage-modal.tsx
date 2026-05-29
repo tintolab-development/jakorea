@@ -46,7 +46,7 @@ import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/proje
 import { ProgramManagersTab } from '../program-managers-tab'
 import type { Program } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
-import { getEconomyPrograms } from '@/data/mock'
+import { getEconomyPrograms, getGeneralPrograms } from '@/data/mock'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { handleError } from '@/shared/utils/error-handler'
 import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
@@ -748,16 +748,16 @@ export function ProgramDetailFullPageModal({
   if (!open) return null
 
   const pNorm = location.pathname.replace(/\/$/, '') || '/'
-  const isEconomyOnProgramsIndex =
-    pNorm === '/programs' &&
-    displayProgram != null &&
-    getEconomyPrograms().some(pr => pr.id === displayProgram.id)
-  const isEconomyEducationProgram =
+  const isOverviewListProgram =
+    pNorm === '/programs/general' ||
+    pNorm.startsWith('/programs/general/') ||
     pNorm === '/programs/economy-education' ||
     pNorm.startsWith('/programs/economy-education/') ||
     pNorm === '/programs/company-school' ||
     pNorm.startsWith('/programs/company-school/') ||
-    isEconomyOnProgramsIndex
+    (displayProgram != null &&
+      (getGeneralPrograms().some(pr => pr.id === displayProgram.id) ||
+        getEconomyPrograms().some(pr => pr.id === displayProgram.id)))
 
   return (
     <DetailFullPageModal
@@ -768,7 +768,7 @@ export function ProgramDetailFullPageModal({
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className={[
         'program-detail-fullpage-modal',
-        isEconomyEducationProgram && 'program-detail-fullpage-modal--economy-education',
+        isOverviewListProgram && 'program-detail-fullpage-modal--program-list-overview',
       ]
         .filter(Boolean)
         .join(' ')}

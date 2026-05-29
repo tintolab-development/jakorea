@@ -84,7 +84,7 @@
 
 /*
  * 주간(시간 격자): 24시간 격자 전체 높이를 카드·페이지에 펼침(내부 스크롤 없음).
- * 우측 736px 고정 높이 해제.
+ * 우측 743px 고정 높이 해제.
  */
 .program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-set {
   min-height: 0;
@@ -121,26 +121,35 @@
   margin-bottom: var(--spacing-16);
 }
 
-/* 경제 교육 프로그램: 필터~디바이더 (카드 인라인 marginBottom 제거해 과한 간격 방지) */
-.program-list-content-wrapper--economy-education.filter-list-layout .unified-filter-card {
+/* 프로그램 목록(4탭 위젯): 필터~디바이더 (카드 인라인 marginBottom 제거해 과한 간격 방지) */
+.program-list-content-wrapper--program-list-overview.filter-list-layout .unified-filter-card {
   margin-bottom: 0 !important;
 }
 
 /*
- * 예정 프로그램 필터 4열(프로그램명·사업 운영 기간·유형·대상):
+ * 예정 프로그램 필터 4열(프로그램명·유형·대상·사업 운영 기간):
  * 필드 간 margin 12px × 3 을 제외한 나머지를 동일 flex로 분배.
  * DatePicker/Select 전역 min-width가 한 칸만 넓어 보이는 현상 방지.
  */
-.program-list-content-wrapper--economy-scheduled-filters
+.program-list-content-wrapper--program-list-scheduled-filters
   .unified-filter-card__fields-inner.ant-row
-  > .ant-col.unified-filter-card__col--explicit-width {
+  > .ant-col.unified-filter-card__col--explicit-width,
+.program-list-page--overview.program-list-page--scheduled-filters
+  .filter-table-layout__filter
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--pct-width {
   flex: 1 1 0 !important;
   min-width: 0 !important;
   max-width: none !important;
 }
 
-.program-list-content-wrapper--economy-scheduled-filters
+.program-list-content-wrapper--program-list-scheduled-filters
   .unified-filter-card__fields-inner
+  > .ant-col
+  .unified-filter-card__field,
+.program-list-page--overview.program-list-page--scheduled-filters
+  .filter-table-layout__filter
+  .table-filter-group__fields-inner
   > .ant-col
   .unified-filter-card__field {
   min-width: 0;
@@ -148,73 +157,117 @@
   max-width: 100%;
 }
 
-.program-list-content-wrapper--economy-scheduled-filters
+.program-list-page--overview.program-list-page--scheduled-filters
+  .filter-table-layout__filter
+  .table-filter-group__fields-inner
+  > .ant-col.table-filter-group__col--pct-width
+  .unified-filter-card__field,
+.program-list-page--overview.program-list-page--scheduled-filters
+  .filter-table-layout__filter
+  .table-filter-group__fields-inner
+  > .ant-col.table-filter-group__col--pct-width
+  .unified-filter-card__field--select,
+.program-list-page--overview.program-list-page--scheduled-filters
+  .filter-table-layout__filter
+  .table-filter-group__fields-inner
+  > .ant-col.table-filter-group__col--pct-width
+  .labeled-search-input,
+.program-list-content-wrapper--program-list-scheduled-filters
   .unified-filter-card__fields-inner
   .labeled-search-input,
-.program-list-content-wrapper--economy-scheduled-filters
+.program-list-page--overview.program-list-page--scheduled-filters
+  .filter-table-layout__filter
+  .table-filter-group__fields-inner
+  > .ant-col.table-filter-group__col--pct-width
+  .labeled-search-input__input,
+.program-list-page--overview.program-list-page--scheduled-filters
+  .filter-table-layout__filter
+  .table-filter-group__fields-inner
+  > .ant-col.table-filter-group__col--pct-width
+  .labeled-search-input
+  .app-input,
+.program-list-page--overview.program-list-page--scheduled-filters
+  .filter-table-layout__filter
+  .table-filter-group__fields-inner
+  > .ant-col.table-filter-group__col--pct-width
+  .labeled-search-input
+  .ant-input-affix-wrapper,
+.program-list-page--overview.program-list-page--scheduled-filters
+  .filter-table-layout__filter
+  .table-filter-group__fields-inner
+  > .ant-col.table-filter-group__col--pct-width
+  .cms-select,
+.program-list-page--overview.program-list-page--scheduled-filters
+  .filter-table-layout__filter
+  .table-filter-group__fields-inner
+  > .ant-col.table-filter-group__col--pct-width
+  .ant-select,
+.program-list-page--overview.program-list-page--scheduled-filters
+  .filter-table-layout__filter
+  .table-filter-group__fields-inner
+  > .ant-col.table-filter-group__col--pct-width
+  .cms-datepicker,
+.program-list-page--overview.program-list-page--scheduled-filters
+  .filter-table-layout__filter
+  .table-filter-group__fields-inner
+  > .ant-col.table-filter-group__col--pct-width
+  .cms-datepicker.cms-datepicker--range-split,
+.program-list-content-wrapper--program-list-scheduled-filters
   .unified-filter-card__fields-inner
   .labeled-search-input__input,
-.program-list-content-wrapper--economy-scheduled-filters
+.program-list-content-wrapper--program-list-scheduled-filters
   .unified-filter-card__fields-inner
   .labeled-search-input
-  .app-input {
-  min-width: 0 !important;
-  width: 100% !important;
-  max-width: 100%;
-}
-
-.program-list-content-wrapper--economy-scheduled-filters
+  .app-input,
+.program-list-content-wrapper--program-list-scheduled-filters
   .unified-filter-card__fields-inner
   .app-select,
-.program-list-content-wrapper--economy-scheduled-filters
+.program-list-content-wrapper--program-list-scheduled-filters
   .unified-filter-card__fields-inner
-  .ant-select {
-  min-width: 0 !important;
-  width: 100% !important;
-  max-width: 100%;
-}
-
-.program-list-content-wrapper--economy-scheduled-filters
+  .ant-select,
+.program-list-content-wrapper--program-list-scheduled-filters
   .unified-filter-card__fields-inner
   .app-datepicker,
-.program-list-content-wrapper--economy-scheduled-filters
+.program-list-content-wrapper--program-list-scheduled-filters
   .unified-filter-card__fields-inner
   .app-datepicker
   > .ant-picker-range,
-.program-list-content-wrapper--economy-scheduled-filters
+.program-list-content-wrapper--program-list-scheduled-filters
   .unified-filter-card__fields-inner
-  .ant-picker-range {
-  min-width: 0 !important;
-  width: 100% !important;
-  max-width: 100%;
-}
-
-/* 분할 기간 필드: app-datepicker.css 세그먼트 max-width 218px 때문에 열이 비어 보임 → 열 폭에 맞춰 균등 확장 */
-.program-list-content-wrapper--economy-scheduled-filters
+  .ant-picker-range,
+.program-list-content-wrapper--program-list-scheduled-filters
   .unified-filter-card__fields-inner
   .app-datepicker.app-datepicker--range-split {
-  width: 100%;
-  max-width: 100%;
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
 }
 
-.program-list-content-wrapper--economy-scheduled-filters
+.program-list-content-wrapper--program-list-scheduled-filters
   .unified-filter-card__fields-inner
   .app-datepicker--range-split
-  .app-datepicker__segment {
+  .app-datepicker__segment,
+.program-list-page--overview.program-list-page--scheduled-filters
+  .filter-table-layout__filter
+  .table-filter-group__fields-inner
+  > .ant-col.table-filter-group__col--pct-width
+  .cms-datepicker--range-split
+  .cms-datepicker__segment {
   flex: 1 1 0 !important;
   min-width: 0 !important;
   max-width: none !important;
   width: auto;
 }
 
-.program-list-content-wrapper--economy-education
+.program-list-content-wrapper--program-list-overview
   .program-list-card--in-wrapper
-  .cms-data-table--economy-education
+  .cms-data-table--program-list-overview
   .ant-table-header {
   margin-bottom: 0 !important;
 }
 
-.program-list-content-wrapper--economy-education .program-list-page__divider-wrapper {
+.program-list-content-wrapper--program-list-overview .program-list-page__divider-wrapper {
   padding: var(--spacing-32) 20px var(--spacing-32) 20px;
 }
 
@@ -698,53 +751,53 @@
   color: var(--color-brand-primary-hover);
 }
 
-/* 경제 교육 프로그램 목록 — 기본 1470px(레거시). 예정 위젯+사업 운영 기간 열: 1300px(68+420+320+160×3). 「전체 프로그램」: 1330px. 행 선택 시 +68px */
-.program-list-table-wrapper--economy-education {
+/* 프로그램 목록(4탭 위젯) 목록 — 기본 1470px(레거시). 예정 위젯+사업 운영 기간 열: 1300px(68+420+320+160×3). 「전체 프로그램」: 1330px. 행 선택 시 +68px */
+.program-list-table-wrapper--program-list-overview {
   --table-selection-column-width: 68px;
-  --economy-table-min-width: 1470px;
+  --program-list-table-min-width: 1470px;
 }
 
-/* 예정 위젯(사업 운영 기간 열): 프로그램명 열 420px — 진행 중·완료 8열과 동일, 기간 열과 간격 완화 */
-.program-list-table-wrapper--economy-education.program-list-table-wrapper--economy-period-columns {
-  --economy-table-min-width: 1300px;
+/* 예정 위젯(사업 운영 기간 열): 프로그램명 열 600px — 전체·진행·완료 탭과 동일 */
+.program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-period-columns {
+  --program-list-table-min-width: 1300px;
 }
 
-.program-list-table-wrapper--economy-education.program-list-table-wrapper--economy-all-programs {
-  --economy-table-min-width: 1330px;
+.program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-all-programs {
+  --program-list-table-min-width: 1330px;
 }
 
-.program-list-table-wrapper--economy-education.program-list-table-wrapper--economy-education-selection {
-  --economy-table-min-width: 1538px;
+.program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-overview-selection {
+  --program-list-table-min-width: 1538px;
 }
 
-.program-list-table-wrapper--economy-education.program-list-table-wrapper--economy-period-columns.program-list-table-wrapper--economy-education-selection {
-  --economy-table-min-width: 1368px;
+.program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-period-columns.program-list-table-wrapper--program-list-overview-selection {
+  --program-list-table-min-width: 1368px;
 }
 
-.program-list-table-wrapper--economy-education.program-list-table-wrapper--economy-all-programs.program-list-table-wrapper--economy-education-selection {
-  --economy-table-min-width: 1398px;
+.program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-all-programs.program-list-table-wrapper--program-list-overview-selection {
+  --program-list-table-min-width: 1398px;
 }
 
-.program-list-card--economy-education .cms-data-table--economy-education .ant-table {
+.program-list-card--program-list-overview .cms-data-table--program-list-overview .ant-table {
   width: 100% !important;
-  min-width: var(--economy-table-min-width, 1470px);
+  min-width: var(--program-list-table-min-width, 1470px);
 }
 
-.program-list-card--economy-education .cms-data-table--economy-education .ant-table-container {
+.program-list-card--program-list-overview .cms-data-table--program-list-overview .ant-table-container {
   width: 100%;
 }
 
 /* 셀 사이 세로 흰 갭 제거: separate + border-spacing 대신 겹친 테두리 (스크롤 시 헤더·본문 각각 table) */
-.program-list-card--economy-education .cms-data-table--economy-education table.ant-table,
-.program-list-card--economy-education .cms-data-table--economy-education .ant-table-header table,
-.program-list-card--economy-education .cms-data-table--economy-education .ant-table-body table,
-.program-list-card--economy-education .cms-data-table--economy-education .ant-table-content table {
+.program-list-card--program-list-overview .cms-data-table--program-list-overview table.ant-table,
+.program-list-card--program-list-overview .cms-data-table--program-list-overview .ant-table-header table,
+.program-list-card--program-list-overview .cms-data-table--program-list-overview .ant-table-body table,
+.program-list-card--program-list-overview .cms-data-table--program-list-overview .ant-table-content table {
   border-collapse: collapse !important;
   border-spacing: 0 !important;
 }
 
-.program-list-card--economy-education
-  .cms-data-table--economy-education
+.program-list-card--program-list-overview
+  .cms-data-table--program-list-overview
   .ant-table-thead
   > tr
   > th.ant-table-cell:not(.ant-table-cell-scrollbar) {
@@ -753,8 +806,8 @@
   box-sizing: border-box !important;
 }
 
-.program-list-card--economy-education
-  .cms-data-table--economy-education
+.program-list-card--program-list-overview
+  .cms-data-table--program-list-overview
   .ant-table-tbody
   > tr
   > td.ant-table-cell {
@@ -764,13 +817,13 @@
   vertical-align: middle;
 }
 
-.program-list-card--economy-education
-  .cms-data-table--economy-education
+.program-list-card--program-list-overview
+  .cms-data-table--program-list-overview
   .ant-table-thead
   > tr
   > th.ant-table-selection-column,
-.program-list-card--economy-education
-  .cms-data-table--economy-education
+.program-list-card--program-list-overview
+  .cms-data-table--program-list-overview
   .ant-table-tbody
   > tr
   > td.ant-table-selection-column {
@@ -780,95 +833,96 @@
   vertical-align: middle;
 }
 
-/* 컬럼 최소 너비(시안) — resolver minWidth와 동기화, 좁은 뷰포트는 테이블 가로 스크롤 */
-.program-list-card--economy-education .economy-program-table__col-no {
+/* 컬럼 최소 너비(시안) — resolver width와 동기화, 좁은 뷰포트는 테이블 가로 스크롤 */
+.program-list-page--overview .filter-table-layout__table .program-list-table__col-title,
+.program-list-card--program-list-overview .program-list-table__col-title {
+  min-width: 600px;
+}
+
+.program-list-card--program-list-overview .program-list-table__col-no {
   min-width: 80px;
 }
 
-.program-list-card--economy-education .economy-program-table__col-title {
-  min-width: 590px;
+.program-list-card--program-list-overview.program-list-card--program-list-period-columns .program-list-table__col-title {
+  min-width: 600px;
 }
 
-.program-list-card--economy-education.program-list-card--economy-period-columns .economy-program-table__col-title {
-  min-width: 420px;
-}
-
-.program-list-card--economy-education .economy-program-table__col-period {
+.program-list-card--program-list-overview .program-list-table__col-period {
   min-width: 320px;
 }
 
-.program-list-card--economy-education .economy-program-table__col-progress {
+.program-list-card--program-list-overview .program-list-table__col-progress {
   min-width: 180px;
 }
 
-.program-list-card--economy-education .economy-program-table__col-recruitment,
-.program-list-card--economy-education .economy-program-table__col-category,
-.program-list-card--economy-education .economy-program-table__col-target {
+.program-list-card--program-list-overview .program-list-table__col-recruitment,
+.program-list-card--program-list-overview .program-list-table__col-category,
+.program-list-card--program-list-overview .program-list-table__col-target {
   min-width: 160px;
 }
 
-/* 경제 교육 · 「진행 중」「완료」 — 8열 고정 px, 합 1412px (+행 선택 시 1492px) */
-.program-list-table-wrapper--economy-in-progress,
-.program-list-table-wrapper--economy-completed {
-  --economy-table-min-width: 1412px;
+/* 4탭 목록 · 「진행 중」「완료」 — 8열 고정 px, 합 1412px (+행 선택 시 1492px) */
+.program-list-table-wrapper--program-list-in-progress,
+.program-list-table-wrapper--program-list-completed {
+  --program-list-table-min-width: 1412px;
 }
 
-.program-list-table-wrapper--economy-in-progress.program-list-table-wrapper--economy-education-selection,
-.program-list-table-wrapper--economy-completed.program-list-table-wrapper--economy-education-selection {
-  --economy-table-min-width: 1492px;
+.program-list-table-wrapper--program-list-in-progress.program-list-table-wrapper--program-list-overview-selection,
+.program-list-table-wrapper--program-list-completed.program-list-table-wrapper--program-list-overview-selection {
+  --program-list-table-min-width: 1492px;
 }
 
-.program-list-card--economy-education.program-list-card--economy-in-progress
-  .economy-program-table__col-title,
-.program-list-card--economy-education.program-list-card--economy-completed
-  .economy-program-table__col-title {
+.program-list-card--program-list-overview.program-list-card--program-list-in-progress
+  .program-list-table__col-title,
+.program-list-card--program-list-overview.program-list-card--program-list-completed
+  .program-list-table__col-title {
   min-width: 420px;
 }
 
-.program-list-card--economy-education.program-list-card--economy-in-progress
-  .economy-program-table__col-recruitment,
-.program-list-card--economy-education.program-list-card--economy-in-progress
-  .economy-program-table__col-instructor-recruit,
-.program-list-card--economy-education.program-list-card--economy-completed
-  .economy-program-table__col-recruitment,
-.program-list-card--economy-education.program-list-card--economy-completed
-  .economy-program-table__col-instructor-recruit {
+.program-list-card--program-list-overview.program-list-card--program-list-in-progress
+  .program-list-table__col-recruitment,
+.program-list-card--program-list-overview.program-list-card--program-list-in-progress
+  .program-list-table__col-instructor-recruit,
+.program-list-card--program-list-overview.program-list-card--program-list-completed
+  .program-list-table__col-recruitment,
+.program-list-card--program-list-overview.program-list-card--program-list-completed
+  .program-list-table__col-instructor-recruit {
   min-width: 168px;
 }
 
-.program-list-card--economy-education.program-list-card--economy-in-progress
-  .economy-program-table__col-school-count,
-.program-list-card--economy-education.program-list-card--economy-in-progress
-  .economy-program-table__col-student-count,
-.program-list-card--economy-education.program-list-card--economy-completed
-  .economy-program-table__col-school-count,
-.program-list-card--economy-education.program-list-card--economy-completed
-  .economy-program-table__col-student-count {
+.program-list-card--program-list-overview.program-list-card--program-list-in-progress
+  .program-list-table__col-school-count,
+.program-list-card--program-list-overview.program-list-card--program-list-in-progress
+  .program-list-table__col-student-count,
+.program-list-card--program-list-overview.program-list-card--program-list-completed
+  .program-list-table__col-school-count,
+.program-list-card--program-list-overview.program-list-card--program-list-completed
+  .program-list-table__col-student-count {
   min-width: 150px;
 }
 
-.program-list-card--economy-education.program-list-card--economy-in-progress
-  .economy-program-table__col-category,
-.program-list-card--economy-education.program-list-card--economy-in-progress
-  .economy-program-table__col-target,
-.program-list-card--economy-education.program-list-card--economy-completed
-  .economy-program-table__col-category,
-.program-list-card--economy-education.program-list-card--economy-completed
-  .economy-program-table__col-target {
+.program-list-card--program-list-overview.program-list-card--program-list-in-progress
+  .program-list-table__col-category,
+.program-list-card--program-list-overview.program-list-card--program-list-in-progress
+  .program-list-table__col-target,
+.program-list-card--program-list-overview.program-list-card--program-list-completed
+  .program-list-table__col-category,
+.program-list-card--program-list-overview.program-list-card--program-list-completed
+  .program-list-table__col-target {
   min-width: 138px;
 }
 
 /* 프로그램 진행 현황 열: 셀 기준 말줄임(배지 max-width 100%와 함께 동작) */
-.program-list-card--economy-education
-  .cms-data-table--economy-education
+.program-list-card--program-list-overview
+  .cms-data-table--program-list-overview
   .ant-table-tbody
   > tr
-  > td.economy-program-table__col-progress {
+  > td.program-list-table__col-progress {
   overflow: hidden;
   text-align: center;
 }
 
-.program-list-card:not(.program-list-card--economy-education)
+.program-list-card:not(.program-list-card--program-list-overview)
   .cms-data-table
   .ant-table-tbody
   > tr

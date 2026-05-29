@@ -6,6 +6,7 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { Program } from '@/types/domain'
 import { buildResolvedScheduleColorMapForPrograms } from '@/features/program/shared/ui/program-schedule-colors'
 import { useCalendarNavigationState } from '../lib/use-calendar-navigation-state'
+import { useCalendarMiniState } from '../lib/use-calendar-mini-state'
 import { CalendarMain } from './calendar-main'
 import { CalendarMini } from './calendar-mini'
 import { CalendarSearch } from './calendar-search'
@@ -128,10 +129,16 @@ function CalendarSetMain({ items, loading, onItemClick }: CalendarSetMainProps) 
     selectedDate,
     currentMonth,
     mode: calendarMode,
-    onSelectDate: handleDateSelect,
-    onMonthChange: handleMonthChange,
+    onSelectDate: handleMainDateSelect,
+    onMonthChange: handleMainMonthChange,
     onModeChange,
   } = useCalendarNavigationState('month')
+  const {
+    selectedDate: miniSelectedDate,
+    currentMonth: miniCurrentMonth,
+    onSelectDate: handleMiniDateSelect,
+    onMonthChange: handleMiniMonthChange,
+  } = useCalendarMiniState()
   const {
     calendarSearchKeyword,
     calendarProgramSelection,
@@ -161,10 +168,10 @@ function CalendarSetMain({ items, loading, onItemClick }: CalendarSetMainProps) 
     <div className="calendar-set">
       <div className="calendar-sub-left">
         <CalendarMini
-          currentMonth={currentMonth}
-          selectedDate={selectedDate}
-          onMonthChange={handleMonthChange}
-          onSelectDate={handleDateSelect}
+          currentMonth={miniCurrentMonth}
+          selectedDate={miniSelectedDate}
+          onMonthChange={handleMiniMonthChange}
+          onSelectDate={handleMiniDateSelect}
           programDates={programDates}
         />
         <CalendarSearch
@@ -182,8 +189,8 @@ function CalendarSetMain({ items, loading, onItemClick }: CalendarSetMainProps) 
           selectedDate={selectedDate}
           currentMonth={currentMonth}
           mode={calendarMode}
-          onSelectDate={handleDateSelect}
-          onMonthChange={handleMonthChange}
+          onSelectDate={handleMainDateSelect}
+          onMonthChange={handleMainMonthChange}
           onModeChange={onModeChange}
           onItemClick={onItemClick}
         />

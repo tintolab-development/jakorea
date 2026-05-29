@@ -4,6 +4,6 @@
 @import '../program-list-page.css';
 @import '@/features/program/general/ui/program-list.css';
 
-.general-program-list-page.program-list-page--economy-education {
+.general-program-list-page.program-list-page--program-list-overview {
   width: 100%;
 }

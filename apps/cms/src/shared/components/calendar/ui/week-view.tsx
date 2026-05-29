@@ -23,11 +23,10 @@ import {
   isAllDayScheduleSpan,
   readTimesOrAllDaySpan,
   resolveWeekTimeGridSubtext,
+  WEEK_TIME_GRID_HOUR_PX,
+  WEEK_TIME_GRID_TOTAL_PX,
 } from '../lib/week-time-grid-layout'
 
-const WEEK_TIME_GRID_HOURS = 24
-const WEEK_TIME_GRID_HOUR_PX = 54
-const WEEK_TIME_GRID_TOTAL_PX = WEEK_TIME_GRID_HOUR_PX * WEEK_TIME_GRID_HOURS
 const WEEK_HEADER_WEEKDAY_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
 
 const WEEK_TIME_GRID_HOUR_ROWS: readonly { period: '오전' | '오후'; hour: string }[] = (() => {

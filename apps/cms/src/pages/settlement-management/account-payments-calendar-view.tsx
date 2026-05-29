@@ -24,6 +24,7 @@ import {
   CalendarSubRightSettlementList,
   settlementEventStatusColorPair,
   settlementRowFromCalendarItem,
+  useCalendarMiniState,
   type CalendarItem,
 } from '@/shared/components/calendar'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
@@ -247,6 +248,12 @@ export function AccountPaymentsCalendarView({
 
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => anchor)
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => anchor.startOf('month'))
+  const {
+    selectedDate: miniSelectedDate,
+    currentMonth: miniCurrentMonth,
+    onSelectDate: onMiniSelectDate,
+    onMonthChange: onMiniMonthChange,
+  } = useCalendarMiniState(anchor)
   const isFirstFilteredRowsEffect = useRef(true)
 
   useEffect(() => {
@@ -316,10 +323,10 @@ export function AccountPaymentsCalendarView({
       <div className="calendar-sub-left">
         <div className="calendar-mini">
           <CalendarMini
-            currentMonth={currentMonth}
-            selectedDate={selectedDate}
-            onMonthChange={onMonthChange}
-            onSelectDate={onSelectDate}
+            currentMonth={miniCurrentMonth}
+            selectedDate={miniSelectedDate}
+            onMonthChange={onMiniMonthChange}
+            onSelectDate={onMiniSelectDate}
             programDates={programDates}
           />
         </div>

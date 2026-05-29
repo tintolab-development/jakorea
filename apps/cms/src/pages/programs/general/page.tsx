@@ -10,10 +10,12 @@ import { ProgramList } from '@/features/program/general/ui/program-list'
 import { useProgramStore } from '@/features/program/general/model/program-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
-import { ProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal'
+import { GeneralProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/general-program-detail-fullpage-modal'
+import { isGeneralProgramId } from '@/features/program/general/lib/general-program-detail-meta'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import type { Program } from '@/types/domain'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, ConfirmModal } from '@/shared/ui'
+import { useProgramListActions } from '@/pages/programs/use-program-list-actions'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { useGeneralProgramListFilters } from './use-general-program-list-filters'
@@ -27,10 +29,18 @@ export function GeneralProgramListPage() {
   const { user, isAuthenticated } = useAuthStore()
   const { loading, fetchPrograms } = useProgramStore()
 
-  const { filteredPrograms, headerTitle, programListConfig } = useGeneralProgramListFilters()
+  const { filteredPrograms, headerTitle, programListConfig, statusFilter } =
+    useGeneralProgramListFilters()
+
+  const { handleBulkDelete } = useProgramListActions()
 
   const [selectedProgramForFullPageModal, setSelectedProgramForFullPageModal] =
     useState<Program | null>(null)
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
+  const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
+
+  const isScheduledFilter = statusFilter === 'economy_scheduled'
   const [, setHasListFilters] = useState(false)
   const handleDisplayCountChange = useCallback((_count: number, hasActiveFilters: boolean) => {
     setHasListFilters(hasActiveFilters)
@@ -46,6 +56,10 @@ export function GeneralProgramListPage() {
   }, [fetchPrograms])
 
   useEffect(() => {
+    if (!isScheduledFilter) setSelectedRowKeys([])
+  }, [isScheduledFilter])
+
+  useEffect(() => {
     const urlViewMode = searchParams.get('viewMode') as 'list' | 'calendar' | null
     if (urlViewMode === 'list' || urlViewMode === 'calendar') {
       setViewMode(urlViewMode)
@@ -55,6 +69,7 @@ export function GeneralProgramListPage() {
   useEffect(() => {
     const programIdFromUrl = searchParams.get('programId')
     if (!programIdFromUrl) return
+    if (!isGeneralProgramId(programIdFromUrl)) return
     if (filteredPrograms.length === 0) return
     const program = filteredPrograms.find(p => p.id === programIdFromUrl)
     if (program) {
@@ -62,8 +77,18 @@ export function GeneralProgramListPage() {
     }
   }, [searchParams, filteredPrograms])
 
+  const programIdFromUrl = searchParams.get('programId')
+  const generalDetailModalOpen = Boolean(programIdFromUrl)
+
   const isAdmin = user?.role === 'ADMIN'
   const showCalendarView = isAdmin
+
+  const handleBulkDeleteClick = () => {
+    const programsToDelete = filteredPrograms.filter(p => selectedRowKeys.includes(p.id))
+    if (programsToDelete.length === 0) return
+    setProgramsPendingBulkDelete(programsToDelete)
+    setBulkDeleteModalOpen(true)
+  }
 
   const handleProgramCreateClick = () => {
     showAlert({
@@ -82,6 +107,8 @@ export function GeneralProgramListPage() {
     setSelectedProgramForFullPageModal(program)
     const nextParams = new URLSearchParams(searchParams)
     nextParams.set('programId', program.id)
+    if (!nextParams.get('lnb')) nextParams.set('lnb', 'info')
+    if (!nextParams.get('tab')) nextParams.set('tab', 'info')
     setSearchParams(nextParams, { replace: false })
   }
 
@@ -112,6 +139,17 @@ export function GeneralProgramListPage() {
 
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
+      {isScheduledFilter && (
+        <CmsButton
+          variant="delete"
+          width={140}
+          onClick={handleBulkDeleteClick}
+          disabled={selectedRowKeys.length === 0}
+          className="program-list-page__bulk-delete-button"
+        >
+          선택 삭제
+        </CmsButton>
+      )}
       <CmsButton
         variant="secondary"
         width={180}
@@ -127,7 +165,16 @@ export function GeneralProgramListPage() {
   )
 
   return (
-    <div className="program-list-page program-list-page--economy-education general-program-list-page">
+    <div
+      className={[
+        'program-list-page',
+        'program-list-page--overview',
+        'general-program-list-page',
+        isScheduledFilter && 'program-list-page--scheduled-filters',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="program-progress-widget-container">
         <ProgramStatusWidget title={null} />
       </div>
@@ -136,19 +183,41 @@ export function GeneralProgramListPage() {
         loading={loading}
         headerTitle={headerTitle}
         onView={handleView}
+        onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
+        selectedRowKeys={isScheduledFilter ? selectedRowKeys : undefined}
+        showRowSelection={isScheduledFilter}
         showCalendarView={showCalendarView}
         viewMode={viewMode}
-        tableVariant="economy"
+        tableVariant="overview"
         config={programListConfig}
         onDisplayCountChange={handleDisplayCountChange}
       >
         {programListToolbarActions}
       </ProgramList>
 
-      <ProgramDetailFullPageModal
-        open={!!selectedProgramForFullPageModal}
+      <GeneralProgramDetailFullPageModal
+        open={generalDetailModalOpen}
         program={selectedProgramForFullPageModal}
+        programIdHint={programIdFromUrl}
         onClose={handleCloseFullPageModal}
+      />
+
+      <ConfirmModal
+        open={bulkDeleteModalOpen}
+        title="선택 삭제"
+        content={`선택한 ${programsPendingBulkDelete.length}건을 삭제하시겠습니까?`}
+        confirmText="삭제"
+        cancelText="취소"
+        danger
+        onConfirm={() => {
+          handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))
+          setBulkDeleteModalOpen(false)
+          setProgramsPendingBulkDelete([])
+        }}
+        onCancel={() => {
+          setBulkDeleteModalOpen(false)
+          setProgramsPendingBulkDelete([])
+        }}
       />
     </div>
   )

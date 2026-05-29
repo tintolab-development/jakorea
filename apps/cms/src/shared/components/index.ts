@@ -57,7 +57,7 @@ export { ScheduleChangeHistoryBadge } from './schedule-change-history-badge'
 export { SessionFormatBadge } from './session-format-badge'
 export type { SessionFormat } from './session-format-badge'
 export { ProgramCategoryBadge } from './program-category-badge'
-export type { ProgramCategory } from './program-category-badge'
+export type { ProgramCategory } from '@/types/domain'
 export { InterviewStatusBadge } from './interview-status-badge'
 export {
   CalendarSet,

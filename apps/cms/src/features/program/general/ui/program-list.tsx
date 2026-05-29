@@ -9,29 +9,24 @@ import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import './program-list.css'
 import { ProgramCalendarView } from './program-calendar-view'
 import {
-  generalProgramFilterFields,
   programListFilterFields,
-  resolveEconomyProgramListFilterFields,
+  resolveProgramListFilterFields,
 } from './table/program-list-filter-fields'
 import { buildProgramListFilters } from './table/program-list-filter-builder'
 import type { ProgramListProgramMode } from '../model/program-list-program-mode'
-import type { EconomyView } from './table/program-table-column-resolver'
+import type { ProgramListView } from './table/program-table-column-resolver'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { FilterTableLayout } from '@/shared/ui'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { getProgramTablePageConfig, type ProgramTableContext } from './program-table.config'
 
-export type ProgramListTableVariant = 'general' | 'economy'
+export type ProgramListTableVariant = 'general' | 'overview'
 
 export type { ProgramListProgramMode } from '../model/program-list-program-mode'
 
-/** `general-overview`: `/programs/general` 스크린샷 4필터(참여자 모집 인원 제외) */
-export type ProgramListFilterProfile = 'general-overview'
-
 export type ProgramListConfig = {
   mode?: ProgramListProgramMode
-  filterProfile?: ProgramListFilterProfile
-  view?: EconomyView
+  view?: ProgramListView
   tableType?: 'student' | 'instructor'
   lifecycleStatus?: ProgramLifecycleStatus | null
 }
@@ -70,7 +65,7 @@ export function ProgramList({
   children,
 }: ProgramListProps) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const economyView: EconomyView = config?.view ?? 'ALL'
+  const listView: ProgramListView = config?.view ?? 'ALL'
   const tableType = config?.tableType
   const mode = config?.mode ?? 'general'
   const effectiveLifecycleStatus = config?.lifecycleStatus
@@ -78,16 +73,16 @@ export function ProgramList({
   const tableContext = useMemo<ProgramTableContext>(
     () => ({
       mode,
-      view: economyView,
+      view: listView,
       tableType,
       effectiveLifecycleStatus,
     }),
-    [mode, economyView, tableType, effectiveLifecycleStatus]
+    [mode, listView, tableType, effectiveLifecycleStatus]
   )
 
   const tableConfig = useMemo(
     () => getProgramTablePageConfig(tableContext),
-    [mode, economyView, tableType, effectiveLifecycleStatus]
+    [mode, listView, tableType, effectiveLifecycleStatus]
   )
 
   const {
@@ -127,22 +122,15 @@ export function ProgramList({
     },
     [externalSelectedRowKeys, onSelectionChange]
   )
-  const isGeneralOverview = config?.filterProfile === 'general-overview'
-
-  const economyFilterFieldsForLayout = useMemo(
-    () =>
-      resolveEconomyProgramListFilterFields({
-        economyScheduledActive: economyView === 'SCHEDULED',
-        economyInProgressActive: economyView === 'IN_PROGRESS',
-      }),
-    [economyView]
-  )
-
   const filterFieldsForLayout = useMemo(() => {
-    if (isGeneralOverview) return generalProgramFilterFields
-    if (tableContext.mode === 'economy') return economyFilterFieldsForLayout
+    if (tableContext.mode === 'overview') {
+      return resolveProgramListFilterFields({
+        scheduledViewActive: listView === 'SCHEDULED',
+        inProgressViewActive: listView === 'IN_PROGRESS',
+      })
+    }
     return programListFilterFields
-  }, [isGeneralOverview, tableContext.mode, economyFilterFieldsForLayout])
+  }, [tableContext.mode, listView])
 
   return (
     <>
@@ -152,8 +140,7 @@ export function ProgramList({
           filters={buildProgramListFilters(
             pendingFilters,
             tableContext.mode,
-            tableContext.view === 'SCHEDULED',
-            isGeneralOverview
+            tableContext.view === 'SCHEDULED'
           )}
           onFilterChange={handleFilterChange}
           onSearch={handleSearch}

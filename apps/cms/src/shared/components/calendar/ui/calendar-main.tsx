@@ -13,6 +13,7 @@ import {
 import { useApplicantCalendarColorMaps } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-schedule-helpers'
 import { SegmentedTab } from '@/shared/ui/segmented-tab'
 import '@/shared/ui/overlay-popover.css'
+import '../styles/calendar.css'
 import { CalendarBody } from './calendar-body'
 import { WeekView } from './week-view'
 import {
@@ -37,6 +38,7 @@ import type {
 import {
   goToTodayState,
   resolveWeekViewHeaderTitle,
+  shiftCalendarViewByStep,
   syncViewAnchorOnModeChange,
   type CalendarViewMode,
 } from '../lib/calendar-navigation'
@@ -150,13 +152,15 @@ function useCalendarNavigation({
   }
 
   const handlePrev = () => {
-    if (mode === 'week') onMonthChange(currentMonth.subtract(1, 'week'))
-    else onMonthChange(currentMonth.subtract(1, 'month'))
+    const next = shiftCalendarViewByStep(mode, currentMonth, -1)
+    onSelectDate(next.selectedDate)
+    onMonthChange(next.viewAnchor)
   }
 
   const handleNext = () => {
-    if (mode === 'week') onMonthChange(currentMonth.add(1, 'week'))
-    else onMonthChange(currentMonth.add(1, 'month'))
+    const next = shiftCalendarViewByStep(mode, currentMonth, 1)
+    onSelectDate(next.selectedDate)
+    onMonthChange(next.viewAnchor)
   }
 
   const headerTitle =

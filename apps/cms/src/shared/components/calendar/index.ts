@@ -28,13 +28,27 @@ export type { CalendarMonthEventTitleParts } from './ui/calendar-month-event-tit
 export {
   createInitialCalendarNavigationState,
   goToTodayState,
+  resolveMonthDefaultFocusDate,
   resolveViewAnchor,
+  resolveWeekDefaultFocusDate,
+  shiftCalendarViewByStep,
   syncViewAnchorOnDateSelect,
   syncViewAnchorOnModeChange,
   resolveWeekViewHeaderTitle,
 } from './lib/calendar-navigation'
 export type { CalendarNavigationState, CalendarViewMode } from './lib/calendar-navigation'
+export {
+  WEEK_TIME_GRID_HOUR_PX,
+  WEEK_TIME_GRID_HOURS,
+  WEEK_TIME_GRID_TOTAL_PX,
+} from './lib/week-time-grid-layout'
 export { useCalendarNavigationState } from './lib/use-calendar-navigation-state'
+export { countMiniCalendarWeekRows } from './lib/calendar-mini-layout'
+export {
+  createInitialCalendarMiniState,
+  useCalendarMiniState,
+} from './lib/use-calendar-mini-state'
+export type { CalendarMiniState } from './lib/use-calendar-mini-state'
 export { CalendarMain } from './ui/calendar-main'
 export { WeekView } from './ui/week-view'
 export type { WeekViewProps } from './ui/week-view'

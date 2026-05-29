@@ -2,6 +2,8 @@
  * 관리자 프로그램 상세: 목록 URL + programId 쿼리(풀페이지 모달). 단독 /programs/:id 미사용.
  */
 
+import { buildGeneralProgramDetailUrl } from '@/features/program/general/lib/general-program-detail-url'
+import { isGeneralProgramId } from '@/features/program/general/lib/general-program-detail-meta'
 import { isUjatProgramId } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import { buildUjatProgramDetailUrl } from '@/features/program/ujat/lib/ujat-program-detail-url'
 
@@ -13,6 +15,9 @@ export function getProgramListBasePathForProgramId(_programId: string): '/progra
 export function getProgramAdminDetailInfoTabUrl(programId: string): string {
   if (isUjatProgramId(programId)) {
     return buildUjatProgramDetailUrl(programId, 'info', 'info')
+  }
+  if (isGeneralProgramId(programId)) {
+    return buildGeneralProgramDetailUrl(programId, 'info', 'info')
   }
   const params = new URLSearchParams({
     lnb: 'info',
@@ -34,7 +39,7 @@ export function getProgramAdminDetailUrlFromPathname(programId: string, pathname
     return `/programs?programId=${encodeURIComponent(programId)}`
   }
   if (pathname.startsWith('/programs/education') || pathname.startsWith('/programs/general')) {
-    return `/programs/general?programId=${encodeURIComponent(programId)}`
+    return buildGeneralProgramDetailUrl(programId, 'info', 'info')
   }
   return `/programs?programId=${encodeURIComponent(programId)}`
 }
@@ -42,6 +47,9 @@ export function getProgramAdminDetailUrlFromPathname(programId: string, pathname
 export function getProgramAdminDetailUrlDefault(programId: string): string {
   if (isUjatProgramId(programId)) {
     return buildUjatProgramDetailUrl(programId, 'info', 'info')
+  }
+  if (isGeneralProgramId(programId)) {
+    return buildGeneralProgramDetailUrl(programId, 'info', 'info')
   }
   return `/programs?programId=${encodeURIComponent(programId)}`
 }
