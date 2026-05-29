@@ -12,8 +12,14 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import type { UjatRegisteredSurvey } from './ujat-satisfaction-survey'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
 export const UJAT_LECTURE_EVAL_TEMPLATE_ID = 'survey-admin'
+
+/** 강의 평가 응답·미리보기 — 설문 기간을 지정 텍스트로 표시 */
+export const UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS = {
+  surveyPeriodReadonly: true,
+} satisfies Partial<RenderFormParagraphBodyOptions>
 
 export type UjatLectureEvalTabKey = 'eval' | 'results'
 

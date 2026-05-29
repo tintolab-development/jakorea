@@ -5,7 +5,10 @@ import type {
   WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
-import { UJAT_LECTURE_EVAL_STRUCTURE_LOCKED_IDS } from '../lib/ujat-lecture-eval-survey'
+import {
+  UJAT_LECTURE_EVAL_STRUCTURE_LOCKED_IDS,
+  UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
+} from '../lib/ujat-lecture-eval-survey'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import './ujat-lecture-eval.css'
 
@@ -49,6 +52,7 @@ export function UjatLectureEvalFormView({
           showEditorChrome={false}
           structureLockedParagraphIds={UJAT_LECTURE_EVAL_STRUCTURE_LOCKED_IDS}
           hideDragHandleForParagraphIds={UJAT_LECTURE_EVAL_STRUCTURE_LOCKED_IDS}
+          paragraphBodyOptions={UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS}
         />
       </div>
       {showSubmitButton ? (
