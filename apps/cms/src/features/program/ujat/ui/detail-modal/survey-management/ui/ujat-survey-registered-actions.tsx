@@ -8,10 +8,20 @@ export type UjatSurveyRegisteredActionsSurvey = {
   participantTotal: number
 }
 
+export type UjatSurveyActionLabels = {
+  share: string
+  add?: string
+  download: string
+  preview: string
+}
+
 type UjatSurveyRegisteredActionsProps = {
   survey: UjatSurveyRegisteredActionsSurvey
+  labels: UjatSurveyActionLabels
+  layout?: 'poll' | 'satisfaction'
+  showAddButton?: boolean
   onShareClick: () => void
-  onAddClick: () => void
+  onAddClick?: () => void
   onOpenTemplatePreview: () => void
   onDownloadClick?: () => void
 }
@@ -22,6 +32,9 @@ function canDownloadSurveyResults(survey: UjatSurveyRegisteredActionsSurvey): bo
 
 export function UjatSurveyRegisteredActions({
   survey,
+  labels,
+  layout = 'poll',
+  showAddButton = true,
   onShareClick,
   onAddClick,
   onOpenTemplatePreview,
@@ -29,30 +42,36 @@ export function UjatSurveyRegisteredActions({
 }: UjatSurveyRegisteredActionsProps) {
   const hasResponses = survey.responseCount > 0
   const downloadEnabled = canDownloadSurveyResults(survey)
+  const rootClassName =
+    layout === 'satisfaction'
+      ? 'ujat-survey-registered-actions ujat-survey-registered-actions--satisfaction'
+      : 'ujat-survey-registered-actions'
 
   if (!hasResponses) {
     return (
-      <div className="ujat-survey-registered-actions">
+      <div className={rootClassName}>
         <CmsButton
           className="ujat-survey-registered-actions__share-button"
-          width={160}
+          width={layout === 'satisfaction' ? undefined : 160}
           onClick={onShareClick}
         >
-          설문조사 공유
+          {labels.share}
         </CmsButton>
-        <CmsButton
-          className="ujat-survey-registered-actions__add-button"
-          width={160}
-          onClick={onAddClick}
-        >
-          설문조사 추가
-        </CmsButton>
+        {showAddButton && onAddClick != null && labels.add != null ? (
+          <CmsButton
+            className="ujat-survey-registered-actions__add-button"
+            width={160}
+            onClick={onAddClick}
+          >
+            {labels.add}
+          </CmsButton>
+        ) : null}
       </div>
     )
   }
 
   return (
-    <div className="ujat-survey-registered-actions">
+    <div className={rootClassName}>
       <CmsButton
         className="ujat-survey-registered-actions__download-button"
         variant="secondary"
@@ -61,7 +80,7 @@ export function UjatSurveyRegisteredActions({
         disabled={!downloadEnabled}
         onClick={onDownloadClick}
       >
-        설문조사 결과 다운로드
+        {labels.download}
       </CmsButton>
       <CmsButton
         className="ujat-survey-registered-actions__preview-button"
@@ -69,22 +88,24 @@ export function UjatSurveyRegisteredActions({
         size="large"
         onClick={onOpenTemplatePreview}
       >
-        설문 양식 보기
+        {labels.preview}
       </CmsButton>
       <CmsButton
         className="ujat-survey-registered-actions__share-button"
-        width={160}
+        width={layout === 'satisfaction' ? undefined : 160}
         onClick={onShareClick}
       >
-        설문조사 공유
+        {labels.share}
       </CmsButton>
-      <CmsButton
-        className="ujat-survey-registered-actions__add-button"
-        width={160}
-        onClick={onAddClick}
-      >
-        설문조사 추가
-      </CmsButton>
+      {showAddButton && onAddClick != null && labels.add != null ? (
+        <CmsButton
+          className="ujat-survey-registered-actions__add-button"
+          width={160}
+          onClick={onAddClick}
+        >
+          {labels.add}
+        </CmsButton>
+      ) : null}
     </div>
   )
 }

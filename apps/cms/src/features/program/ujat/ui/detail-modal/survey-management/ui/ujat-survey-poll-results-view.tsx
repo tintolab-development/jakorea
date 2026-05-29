@@ -23,7 +23,10 @@ export function UjatSurveyPollResultsView({
 
   return (
     <div className="ujat-survey-poll-results">
-      <div className="ujat-survey-poll-results__summary">
+      <div
+        className="ujat-survey-poll-results__summary ujat-survey-poll-results__section--pdf-page"
+        data-form-document-pdf-page
+      >
         <p className="ujat-survey-poll-results__summary-primary">
           <span className="ujat-survey-poll-results__summary-text">총</span>
           <span className="ujat-survey-poll-results__summary-count-group">
@@ -43,7 +46,8 @@ export function UjatSurveyPollResultsView({
         {sections.map(section => (
           <section
             key={section.paragraphId}
-            className="ujat-survey-poll-results__section"
+            className="ujat-survey-poll-results__section ujat-survey-poll-results__section--pdf-page"
+            data-form-document-pdf-page
             aria-labelledby={`ujat-survey-result-${section.paragraphId}`}
           >
             <h3 className="ujat-survey-poll-results__section-title" id={`ujat-survey-result-${section.paragraphId}`}>

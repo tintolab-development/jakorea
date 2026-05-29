@@ -272,3 +272,16 @@
   height: 44px;
   padding: 0 31px !important;
 }
+
+.ujat-survey-registered-actions--satisfaction
+  .ujat-survey-registered-actions__download-button.cms-button.ant-btn.cms-button--large {
+  min-width: 230px;
+}
+
+.ujat-program-detail-fullpage-modal
+  .ujat-survey-registered-actions--satisfaction
+  .ujat-survey-registered-actions__share-button.cms-button.ant-btn.cms-button--large {
+  width: auto;
+  min-width: 180px;
+  padding: 0 20px !important;
+}
