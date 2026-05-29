@@ -21,11 +21,10 @@ const SPONSOR_ID = mockSponsors[0]?.id ?? 'sponsor-1'
 /** 기관 프로그램 공통 — 기관 신청·진행 현황 LNB는 항상 노출 */
 const BASE_PARTICIPANT_TYPES: GeneralProgramParticipantType[] = ['school_institution']
 
-/** 설문 2depth 있음 — 기관형 설문 항목 3종 */
-const SURVEY_MENU_FULL_ORG: GeneralProgramSurveyMenuKey[] = [
+/** 설문 2depth 있음 — 설문 진행 항목 3종 전체 */
+const SURVEY_MENU_FULL: GeneralProgramSurveyMenuKey[] = [
   'survey',
-  'student_satisfaction',
-  'teacher_satisfaction',
+  'satisfaction',
   'lecture_evaluation',
 ]
 
@@ -113,7 +112,7 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     approvedStudentCount: 0,
     scheduleTimeEnabled: true,
     generalParticipantTypes: ['school_institution'],
-    generalSurveyMenuKeys: ['survey', 'student_satisfaction', 'lecture_evaluation'],
+    generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
   },
   {
     id: 'general-prog-scheduled-2',
@@ -382,12 +381,12 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     id: 'general-prog-lnb-06',
     capacity: 30,
     sponsorId: SPONSOR_ID,
-    title: '【LNB】강사 없음 · 봉사자 없음 · 설문 있음(하위 4항목)',
+    title: '【LNB】강사 없음 · 봉사자 없음 · 설문 있음(하위 3항목)',
     mainTitle: 'LNB-06',
     type: 'offline',
     format: 'seminar',
     category: 'school' as ProgramCategory,
-    description: 'LNB: + 설문관리(설문·학생만족·교사만족·강의평가)',
+    description: 'LNB: + 설문관리(설문·만족도·강의평가)',
     startDate: getDate(43),
     endDate: getDate(13),
     applicationStartDate: getDate(87),
@@ -400,14 +399,14 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     participatingSchoolCount: 5,
     scheduleTimeEnabled: true,
     generalParticipantTypes: [...BASE_PARTICIPANT_TYPES],
-    generalSurveyMenuKeys: [...SURVEY_MENU_FULL_ORG],
+    generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
   },
   // ── 완료 ─────────────────────────────────────────────────────────────
   {
     id: 'general-prog-lnb-07',
     capacity: 28,
     sponsorId: SPONSOR_ID,
-    title: '【LNB】강사 있음 · 봉사자 없음 · 설문 있음(하위 4항목)',
+    title: '【LNB】강사 있음 · 봉사자 없음 · 설문 있음(하위 3항목)',
     mainTitle: 'LNB-07',
     type: 'offline',
     format: 'seminar',
@@ -425,7 +424,7 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     instructors: 14,
     scheduleTimeEnabled: false,
     generalParticipantTypes: [...BASE_PARTICIPANT_TYPES, 'teacher_instructor'],
-    generalSurveyMenuKeys: [...SURVEY_MENU_FULL_ORG],
+    generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
   },
   {
     id: 'general-prog-lnb-08',
@@ -456,7 +455,7 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     id: 'general-prog-lnb-09',
     capacity: 36,
     sponsorId: SPONSOR_ID,
-    title: '【LNB】강사 있음 · 봉사자 있음(면접 2depth) · 설문 있음(하위 4항목)',
+    title: '【LNB】강사 있음 · 봉사자 있음(면접 2depth) · 설문 있음(하위 3항목)',
     mainTitle: 'LNB-09',
     type: 'offline',
     format: 'workshop',
@@ -482,7 +481,7 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     interviewStartDate: getDate(35),
     interviewEndDate: getDate(28),
     interviewMethod: '대면 면접',
-    generalSurveyMenuKeys: [...SURVEY_MENU_FULL_ORG],
+    generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
   },
 ]
 
@@ -491,12 +490,18 @@ const GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
   ...LNB_GENERAL_PROGRAM_SEEDS,
 ]
 
+import { readGeneralRegistrationLocalSavePrograms } from '@/features/program/general/lib/general-registration-local-save'
+
 let generalProgramsCache: Program[] | null = null
+
+export function invalidateGeneralProgramsCache(): void {
+  generalProgramsCache = null
+}
 
 export function getGeneralPrograms(): Program[] {
   if (generalProgramsCache) return generalProgramsCache
 
-  generalProgramsCache = GENERAL_PROGRAM_SEEDS.map((seed, index) => {
+  const seeded = GENERAL_PROGRAM_SEEDS.map((seed, index) => {
     const { id, capacity, scheduleTimeEnabled, mainTitle, ...rest } = seed
     const createdAt = getDate(30)
     const timeFields =
@@ -514,6 +519,11 @@ export function getGeneralPrograms(): Program[] {
       updatedAt: createdAt,
     } as Program
   })
+
+  const local = readGeneralRegistrationLocalSavePrograms().filter(
+    lp => !seeded.some(s => s.id === lp.id)
+  )
+  generalProgramsCache = [...seeded, ...local]
 
   return generalProgramsCache
 }

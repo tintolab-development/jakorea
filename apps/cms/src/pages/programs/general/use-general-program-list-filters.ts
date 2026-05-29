@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { getGeneralPrograms } from '@/data/mock/general-programs'
+import { getGeneralPrograms, invalidateGeneralProgramsCache } from '@/data/mock/general-programs'
 import type { Program } from '@/types/domain'
 import type { ProgramListView } from '@/features/program/general/ui/table/program-table-column-resolver'
 import type { ProgramListConfig } from '@/features/program/general/ui/program-list'
@@ -24,6 +24,12 @@ const economyStatusValues: GeneralProgramEconomyStatusFilter[] = [
 
 export function useGeneralProgramListFilters() {
   const { params, setParam } = useQueryParams<GeneralProgramListQueryParams>()
+  const [listVersion, setListVersion] = useState(0)
+
+  const refetchPrograms = useCallback(() => {
+    invalidateGeneralProgramsCache()
+    setListVersion(v => v + 1)
+  }, [])
 
   const statusFilter = useMemo<GeneralProgramEconomyStatusFilter | null>(() => {
     const value = params.status
@@ -56,7 +62,7 @@ export function useGeneralProgramListFilters() {
     }
 
     return filtered
-  }, [statusFilter])
+  }, [statusFilter, listVersion])
 
   const headerTitle = useMemo(() => {
     if (statusFilter === 'economy_scheduled') return '예정 프로그램'
@@ -89,5 +95,6 @@ export function useGeneralProgramListFilters() {
     programListConfig,
     params,
     setParam,
+    refetchPrograms,
   }
 }

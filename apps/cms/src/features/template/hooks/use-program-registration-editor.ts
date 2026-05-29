@@ -29,8 +29,9 @@ import type {
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
+import { persistGeneralRegistrationFormLocal } from '@/features/program/general/lib/general-registration-local-save'
 
-type ProgramRegistrationParticipantState = {
+export type ProgramRegistrationParticipantSelection = {
   individual: boolean
   organization: boolean
   teacherInstructor: boolean
@@ -119,6 +120,8 @@ export type UseProgramRegistrationEditorOptions = {
   restrictCurriculumSessionStructure?: boolean
   /** `economy`: 1사 1교 등록 폼 시드(프로그램 유형 설정 단락 없음) */
   programRegistrationFormVariant?: ProgramRegistrationFormVariant
+  /** 일반 프로그램 등록 풀페이지 — 임시 저장 성공 후(목록 갱신·모달 닫기 등) */
+  onRegistrationSaved?: () => void
 }
 
 export function useProgramRegistrationEditor(
@@ -130,6 +133,7 @@ export function useProgramRegistrationEditor(
     editorOptions?.restrictCurriculumSessionStructure === true
   const programRegistrationFormVariant: ProgramRegistrationFormVariant =
     editorOptions?.programRegistrationFormVariant ?? 'general'
+  const onRegistrationSaved = editorOptions?.onRegistrationSaved
   const seedParagraphIds = useMemo(
     () => getProgramRegistrationSeedParagraphIds(programRegistrationFormVariant),
     [programRegistrationFormVariant]
@@ -143,7 +147,7 @@ export function useProgramRegistrationEditor(
       .paragraphs[0]?.id ?? null
   )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
-  const [participant, setParticipant] = useState<ProgramRegistrationParticipantState>({
+  const [participant, setParticipant] = useState<ProgramRegistrationParticipantSelection>({
     individual: true,
     organization: false,
     teacherInstructor: false,
@@ -457,7 +461,18 @@ export function useProgramRegistrationEditor(
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    }, [])
+    if (programRegistrationFormVariant !== 'general' || !onRegistrationSaved) return
+    try {
+      persistGeneralRegistrationFormLocal({
+        draft,
+        participant,
+        programType,
+      })
+      onRegistrationSaved()
+    } catch (error) {
+      console.debug('programRegistrationEditor save failed', error)
+    }
+  }, [draft, onRegistrationSaved, participant, programRegistrationFormVariant, programType])
 
   const onSelectSingleItemListItem = useCallback((paragraphId: string, itemId: string | null) => {
     setActiveParagraphId(paragraphId)
@@ -488,6 +503,7 @@ export function useProgramRegistrationEditor(
     handleSave,
     onSelectSingleItemListItem,
     paragraphBodyOptions,
+    participant,
   }
 }
 

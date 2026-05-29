@@ -24,35 +24,16 @@ import {
   PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
   PROGRAM_REGISTRATION_IP_OWNED_OPTIONS,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
+import {
+  initialProgramRegistrationSurveyItems,
+  PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
+  PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
+  type ProgramRegistrationSurveyItemId,
+} from '@/features/template/lib/program-registration-survey-items'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './program-registration-paragraph.css'
 
 const PROGRAM_PROGRESS_STATIC_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
-
-type OrganizationSurveyItemId =
-  | 'survey'
-  | 'student_satisfaction'
-  | 'teacher_satisfaction'
-  | 'lecture_evaluation'
-
-type IndividualSurveyItemId = 'survey' | 'satisfaction' | 'lecture_evaluation'
-
-function initialOrganizationSurveyItems(): Record<OrganizationSurveyItemId, boolean> {
-  return {
-    survey: false,
-    student_satisfaction: false,
-    teacher_satisfaction: false,
-    lecture_evaluation: false,
-  }
-}
-
-function initialIndividualSurveyItems(): Record<IndividualSurveyItemId, boolean> {
-  return {
-    survey: false,
-    satisfaction: false,
-    lecture_evaluation: false,
-  }
-}
 
 function participantTypeLabel(
   value: (typeof TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS)[number]['value']
@@ -92,20 +73,12 @@ export function ProgramRegistrationBasicInfoParagraph({
   const [educationCourse, setEducationCourse] = useState('')
   const [ipOwned, setIpOwned] = useState('')
   const [courseDeliveredBy, setCourseDeliveredBy] = useState('')
-  const [organizationSurveyItems, setOrganizationSurveyItems] = useState<
-    Record<OrganizationSurveyItemId, boolean>
-  >(initialOrganizationSurveyItems)
-  const [individualSurveyItems, setIndividualSurveyItems] = useState<
-    Record<IndividualSurveyItemId, boolean>
-  >(initialIndividualSurveyItems)
+  const [surveyItems, setSurveyItems] = useState<
+    Record<ProgramRegistrationSurveyItemId, boolean>
+  >(initialProgramRegistrationSurveyItems)
 
-  const toggleOrganizationSurveyItem =
-    (id: OrganizationSurveyItemId) => (e: CheckboxChangeEvent) => {
-      setOrganizationSurveyItems(prev => ({ ...prev, [id]: e.target.checked }))
-    }
-
-  const toggleIndividualSurveyItem = (id: IndividualSurveyItemId) => (e: CheckboxChangeEvent) => {
-    setIndividualSurveyItems(prev => ({ ...prev, [id]: e.target.checked }))
+  const toggleSurveyItem = (id: ProgramRegistrationSurveyItemId) => (e: CheckboxChangeEvent) => {
+    setSurveyItems(prev => ({ ...prev, [id]: e.target.checked }))
   }
 
   /** `/sponsor` 후원사 관리 목록과 동일 mock (`mockSponsorManagementListRows`) */
@@ -359,62 +332,16 @@ export function ProgramRegistrationBasicInfoParagraph({
             fullRow
             edit={
               <div className="detail-info-form-inputs-wrapper">
-                {participant.organization ? (
-                  <>
-                    <CmsCheckbox
-                      checkboxSize="large"
-                      checked={organizationSurveyItems.survey}
-                      onChange={toggleOrganizationSurveyItem('survey')}
-                    >
-                      설문조사
-                    </CmsCheckbox>
-                    <CmsCheckbox
-                      checkboxSize="large"
-                      checked={organizationSurveyItems.student_satisfaction}
-                      onChange={toggleOrganizationSurveyItem('student_satisfaction')}
-                    >
-                      학생 만족도조사
-                    </CmsCheckbox>
-                    <CmsCheckbox
-                      checkboxSize="large"
-                      checked={organizationSurveyItems.teacher_satisfaction}
-                      onChange={toggleOrganizationSurveyItem('teacher_satisfaction')}
-                    >
-                      교사 만족도조사
-                    </CmsCheckbox>
-                    <CmsCheckbox
-                      checkboxSize="large"
-                      checked={organizationSurveyItems.lecture_evaluation}
-                      onChange={toggleOrganizationSurveyItem('lecture_evaluation')}
-                    >
-                      강의평가
-                    </CmsCheckbox>
-                  </>
-                ) : (
-                  <>
-                    <CmsCheckbox
-                      checkboxSize="large"
-                      checked={individualSurveyItems.survey}
-                      onChange={toggleIndividualSurveyItem('survey')}
-                    >
-                      설문조사
-                    </CmsCheckbox>
-                    <CmsCheckbox
-                      checkboxSize="large"
-                      checked={individualSurveyItems.satisfaction}
-                      onChange={toggleIndividualSurveyItem('satisfaction')}
-                    >
-                      만족도조사
-                    </CmsCheckbox>
-                    <CmsCheckbox
-                      checkboxSize="large"
-                      checked={individualSurveyItems.lecture_evaluation}
-                      onChange={toggleIndividualSurveyItem('lecture_evaluation')}
-                    >
-                      강의평가
-                    </CmsCheckbox>
-                  </>
-                )}
+                {PROGRAM_REGISTRATION_SURVEY_ITEM_IDS.map(id => (
+                  <CmsCheckbox
+                    key={id}
+                    checkboxSize="large"
+                    checked={surveyItems[id]}
+                    onChange={toggleSurveyItem(id)}
+                  >
+                    {PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[id]}
+                  </CmsCheckbox>
+                ))}
               </div>
             }
             view="-"

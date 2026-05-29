@@ -55,11 +55,9 @@ export type GeneralProgramParticipantType =
   | 'teacher_instructor'
   | 'volunteer'
 
-/** 일반 프로그램 등록 폼 — 설문 진행 항목 키 */
+/** 일반 프로그램 등록 폼 — 설문 진행 항목 키 (등록 양식·상세 LNB 공통 3종) */
 export type GeneralProgramSurveyMenuKey =
   | 'survey'
-  | 'student_satisfaction'
-  | 'teacher_satisfaction'
   | 'satisfaction'
   | 'lecture_evaluation'
 
@@ -239,6 +237,11 @@ export interface Program {
   generalVolunteerInterviewEnabled?: boolean
   /** 일반 프로그램 — 설문 관리 LNB 2뎁스 키 */
   generalSurveyMenuKeys?: GeneralProgramSurveyMenuKey[]
+  /** 일반 프로그램 캘린더 — 시간대 사용 여부 (false면 종일) */
+  scheduleTimeEnabled?: boolean
+  /** 일반 프로그램 캘린더 — 일정 시작·종료 시각 (HH:mm) */
+  startTime?: string
+  endTime?: string
   createdAt: DateValue
   updatedAt: DateValue
   /** 등록자 표시명 (목록/상세 표시용, API·mock에서 채움) */

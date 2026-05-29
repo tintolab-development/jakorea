@@ -3,36 +3,100 @@
  * 레이아웃·공통 컴포넌트: program-list-page.tsx / ProgramList (economy 모드) 패턴
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramList } from '@/features/program/general/ui/program-list'
 import { useProgramStore } from '@/features/program/general/model/program-store'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
 import { GeneralProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/general-program-detail-fullpage-modal'
+import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/general-program-registration-fullpage-modal'
+import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/general-program-registration-flow'
 import { isGeneralProgramId } from '@/features/program/general/lib/general-program-detail-meta'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import type { Program } from '@/types/domain'
 import { CmsButton, ConfirmModal } from '@/shared/ui'
 import { useProgramListActions } from '@/pages/programs/use-program-list-actions'
-import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
+import {
+  TemplateWritingPreviewProvider,
+  useTemplateWritingPreview,
+} from '@/features/template/context/template-writing-preview-context'
+import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
+import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 import { useGeneralProgramListFilters } from './use-general-program-list-filters'
 
 import './general-program-list-page.css'
 
-export function GeneralProgramListPage() {
-  const { showAlert } = useCmsAlert()
+/** `/programs/general?new` — 일반 프로그램 등록 폼 풀페이지 */
+const PROGRAMS_GENERAL_NEW_QUERY_KEY = 'new'
+
+function isGeneralProgramListPath(pathnameNormalized: string): boolean {
+  return (
+    pathnameNormalized === '/programs/general' ||
+    pathnameNormalized.startsWith('/programs/general/')
+  )
+}
+
+function GeneralProgramListPageContent() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
+  const pNorm = location.pathname.replace(/\/$/, '') || '/'
+
+  const isGeneralProgramNewRegistrationQuery =
+    isGeneralProgramListPath(pNorm) && searchParams.has(PROGRAMS_GENERAL_NEW_QUERY_KEY)
+
   const { user, isAuthenticated } = useAuthStore()
   const { loading, fetchPrograms } = useProgramStore()
 
-  const { filteredPrograms, headerTitle, programListConfig, statusFilter } =
+  const { filteredPrograms, headerTitle, programListConfig, statusFilter, refetchPrograms } =
     useGeneralProgramListFilters()
 
   const { handleBulkDelete } = useProgramListActions()
+
+  const { isWritingUserPreviewOpen, closeWritingUserPreview } = useTemplateWritingPreview()
+
+  const handleCloseGeneralProgramRegistrationFullpage = useCallback(() => {
+    if (!isGeneralProgramListPath(pNorm)) return
+    closeWritingUserPreview()
+    const next = new URLSearchParams(searchParams)
+    next.delete(PROGRAMS_GENERAL_NEW_QUERY_KEY)
+    next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+    next.delete('userPreview')
+    setSearchParams(next, { replace: true })
+  }, [closeWritingUserPreview, pNorm, searchParams, setSearchParams])
+
+  const handleGeneralProgramRegistrationSaved = useCallback(() => {
+    refetchPrograms()
+    void fetchPrograms()
+    handleCloseGeneralProgramRegistrationFullpage()
+  }, [fetchPrograms, handleCloseGeneralProgramRegistrationFullpage, refetchPrograms])
+
+  const userPreviewSyncParams = useMemo(
+    () => ({ userPreview: searchParams.get('userPreview') ?? undefined }),
+    [searchParams]
+  )
+
+  const setUserPreviewSyncParams = useCallback(
+    (updates: { userPreview?: string }, options?: SetQueryParamsOptions) => {
+      const next = new URLSearchParams(searchParams)
+      if (updates.userPreview === undefined || updates.userPreview === '') {
+        next.delete('userPreview')
+      } else {
+        next.set('userPreview', updates.userPreview)
+      }
+      setSearchParams(next, { replace: options?.replace ?? true })
+    },
+    [searchParams, setSearchParams]
+  )
+
+  useWritingUserPreviewUrlAuxiliarySync(
+    userPreviewSyncParams,
+    setUserPreviewSyncParams,
+    isWritingUserPreviewOpen,
+    closeWritingUserPreview
+  )
 
   const [selectedProgramForFullPageModal, setSelectedProgramForFullPageModal] =
     useState<Program | null>(null)
@@ -52,7 +116,7 @@ export function GeneralProgramListPage() {
   )
 
   useEffect(() => {
-    fetchPrograms()
+    void fetchPrograms()
   }, [fetchPrograms])
 
   useEffect(() => {
@@ -69,6 +133,7 @@ export function GeneralProgramListPage() {
   useEffect(() => {
     const programIdFromUrl = searchParams.get('programId')
     if (!programIdFromUrl) return
+    if (searchParams.has(PROGRAMS_GENERAL_NEW_QUERY_KEY)) return
     if (!isGeneralProgramId(programIdFromUrl)) return
     if (filteredPrograms.length === 0) return
     const program = filteredPrograms.find(p => p.id === programIdFromUrl)
@@ -78,7 +143,8 @@ export function GeneralProgramListPage() {
   }, [searchParams, filteredPrograms])
 
   const programIdFromUrl = searchParams.get('programId')
-  const generalDetailModalOpen = Boolean(programIdFromUrl)
+  const generalDetailModalOpen =
+    Boolean(programIdFromUrl) && !searchParams.has(PROGRAMS_GENERAL_NEW_QUERY_KEY)
 
   const isAdmin = user?.role === 'ADMIN'
   const showCalendarView = isAdmin
@@ -90,12 +156,9 @@ export function GeneralProgramListPage() {
     setBulkDeleteModalOpen(true)
   }
 
-  const handleProgramCreateClick = () => {
-    showAlert({
-      title: '안내',
-      content: FEATURE_COMING_SOON_ALERT_MESSAGE,
-    })
-  }
+  const handleProgramCreateClick = useCallback(() => {
+    navigate({ pathname: '/programs/general', search: '?new=1' })
+  }, [navigate])
 
   const handleView = (program: Program) => {
     if (!user || !isAuthenticated) {
@@ -202,6 +265,12 @@ export function GeneralProgramListPage() {
         onClose={handleCloseFullPageModal}
       />
 
+      <GeneralProgramRegistrationFullpageModal
+        open={isGeneralProgramNewRegistrationQuery}
+        onClose={handleCloseGeneralProgramRegistrationFullpage}
+        onProgramRegistrationSaved={handleGeneralProgramRegistrationSaved}
+      />
+
       <ConfirmModal
         open={bulkDeleteModalOpen}
         title="선택 삭제"
@@ -220,6 +289,14 @@ export function GeneralProgramListPage() {
         }}
       />
     </div>
+  )
+}
+
+export function GeneralProgramListPage() {
+  return (
+    <TemplateWritingPreviewProvider>
+      <GeneralProgramListPageContent />
+    </TemplateWritingPreviewProvider>
   )
 }
 

@@ -9,16 +9,16 @@ import type {
   ProgramCategory,
 } from '@/types/domain'
 import { getGeneralProgramById, getGeneralPrograms } from '@/data/mock/general-programs'
+import {
+  findGeneralRegistrationLocalSaveProgramById,
+  GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
+} from '@/features/program/general/lib/general-registration-local-save'
+import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
 
 export type GeneralSurveyMenuItem = { key: GeneralProgramSurveyMenuKey; label: string }
 
-const SURVEY_MENU_LABELS: Record<GeneralProgramSurveyMenuKey, string> = {
-  survey: '설문조사',
-  student_satisfaction: '학생 만족도조사',
-  teacher_satisfaction: '교사 만족도조사',
-  satisfaction: '만족도조사',
-  lecture_evaluation: '강의평가',
-}
+const SURVEY_MENU_LABELS: Record<GeneralProgramSurveyMenuKey, string> =
+  PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS
 
 const CATEGORY_TO_PARTICIPANT: Record<ProgramCategory, GeneralProgramParticipantType> = {
   school: 'school_institution',
@@ -28,11 +28,14 @@ const CATEGORY_TO_PARTICIPANT: Record<ProgramCategory, GeneralProgramParticipant
 }
 
 export function isGeneralProgramId(programId: string): boolean {
-  return getGeneralPrograms().some(p => p.id === programId)
+  return (
+    getGeneralPrograms().some(p => p.id === programId) ||
+    programId.startsWith(GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)
+  )
 }
 
 export function resolveGeneralProgramForDetail(programId: string): Program | undefined {
-  return getGeneralProgramById(programId)
+  return getGeneralProgramById(programId) ?? findGeneralRegistrationLocalSaveProgramById(programId)
 }
 
 export function getGeneralParticipantTypes(program: Program): GeneralProgramParticipantType[] {
