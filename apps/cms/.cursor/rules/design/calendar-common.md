@@ -62,7 +62,31 @@ border-radius: var(--16, 16px); /* 16px */
 **컴포넌트:** `CalendarSubRightList` / `CalendarSubRightVolunteerInterviewList` / …  
 **금지:** `applicant-schedule-list` 신규 복제, split-card 안 `.calendar-list`에 shadow·border 재부여.
 
-→ [calendar-sub-right-list.md](./calendar-sub-right-list.md)
+### 체크박스 hit 영역 (필수 — 페이지 공통)
+
+체크박스가 있는 우측 행은 **반드시** 공통 클래스만 사용한다.
+
+```tsx
+<div
+  className="calendar-list-item__checkbox"
+  onClick={e => e.stopPropagation()}
+  onKeyDown={e => e.stopPropagation()}
+>
+  <Checkbox … />
+</div>
+```
+
+- **스타일 단일 소스:** `styles/calendar-sub-right.css` — hover `rgba(1, 161, 175, 0.06)`, `padding: 12px`, `border-radius: 6px`
+- **금지:** `*-list-item__checkbox` 등 도메인 전용 클래스로 hit area·hover 재구현
+- **금지:** institution/settlement CSS를 “참고해서” 페이지별 hover 복제
+
+**2차 면접 대상자 목록에서 미적용됐던 이유 (회귀 방지):**
+
+1. `CalendarSubRightVolunteerInterview2List`·`ujat-volunteer-interview2-list-item` 신규 추가 시, 당시 rule이 `settlement-list-item__checkbox` / `ujat-institution-application-list-item__checkbox` **페이지별 패턴**만 가리키고 공통 클래스명을 강제하지 않음.
+2. 2차 면접 item은 `ujat-volunteer-interview2-list-item__checkbox`만 두고 flex 정렬만 넣었고, **hover·padding·radius를 item CSS에 넣지 않음** → 공통 shell과 연결되지 않아 hover 없음.
+3. `calendar.css` import만으로는 부족 — **마크업에 `calendar-list-item__checkbox` 클래스가 있어야** `calendar-sub-right.css` 규칙이 적용됨.
+
+→ 상세·DOM: [calendar-sub-right-list.md](./calendar-sub-right-list.md)
 
 ---
 
@@ -71,6 +95,7 @@ border-radius: var(--16, 16px); /* 16px */
 - [ ] `calendar.css` import (도메인 파일이 `calendar-main` shell·셀 상태를 덮어쓰지 않음)
 - [ ] 7:3이면 `CalendarSplitCardLayout` + `className="calendar-split-card-main"`만
 - [ ] 우측 `CalendarSubRight*` — `.calendar-list` 구조
+- [ ] 체크박스 있으면 래퍼 className **`calendar-list-item__checkbox`만** (도메인 `__checkbox` 금지) — DevTools hover 시 mint 6% 배경
 - [ ] DevTools: `.calendar-split-card`에 `box-shadow` 있고 `border` 없음
 - [ ] DevTools: 선택 셀에 **셀 전체 border 2px** 없음, 날짜 mint 원만
 - [ ] `participating-institutions-calendar-view.css`에 **popover/tooltip만** 추가 (그리드·셀 상태 X)

@@ -3,6 +3,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton } from '@/shared/ui'
 import { STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME } from '@/shared/components/status-dropdown-cell'
+import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import {
   UjatVolunteerAssignmentRoleCell,
   UJAT_VOLUNTEER_ASSIGNMENT_ROLE_CELL_CLASSNAME,
@@ -73,7 +74,7 @@ function renderClass(classDisplay: UjatVolunteerClassDisplay) {
     return <span className="ujat-volunteer-assignment-table__dash">-</span>
   }
   if (classDisplay.kind === 'withdrawn') {
-    return <span className="ujat-volunteer-assignment-table__class-withdrawn">활동 포기</span>
+    return <span className="cms-data-table__cell-accent--danger">활동 포기</span>
   }
   return classDisplay.label
 }
@@ -318,7 +319,7 @@ export function UjatEducationProgressVolunteerAssignmentTable({
           }}
           onRow={record => ({
             className: isVolunteerAssignmentClassWithdrawn(record)
-              ? 'ujat-volunteer-assignment-table__row--class-withdrawn'
+              ? CMS_DATA_TABLE_ROW_DISABLED_CLASS
               : undefined,
           })}
         />

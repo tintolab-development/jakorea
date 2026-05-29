@@ -49,6 +49,7 @@ export {
   CalendarSubRightList,
   CalendarSubRightSettlementList,
   CalendarSubRightVolunteerInterviewList,
+  CalendarSubRightVolunteerInterview2List,
 } from './ui/calendar-sub-right-list'
 export type {
   CalendarSubRightListProps,
@@ -56,8 +57,10 @@ export type {
   CalendarSubRightListInstitutionApplicationProps,
   CalendarSubRightSettlementListProps,
   CalendarSubRightVolunteerInterviewListProps,
+  CalendarSubRightVolunteerInterview2ListProps,
 } from './ui/calendar-sub-right-list'
 export type { CalendarVolunteerInterviewListRow } from './ui/item-list/ujat-volunteer-interview'
+export type { CalendarVolunteerInterview2ListRow } from './ui/item-list/ujat-volunteer-interview2'
 export type { CalendarInstitutionApplicationListRow } from './ui/item-list/ujat-institution-application'
 export { CALENDAR_FILTER_COLOR_CLASSES } from './lib/calendar-color-set'
 export { CalendarListItemContentSettlement } from './ui/item-list/settlement'

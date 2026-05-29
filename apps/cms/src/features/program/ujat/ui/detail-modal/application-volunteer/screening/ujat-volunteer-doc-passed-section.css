@@ -90,40 +90,37 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
-.ujat-volunteer-doc-passed .clickable-table .ant-table-tbody > tr.ant-table-row:hover:not(.ant-table-row-selected) > td {
+.ujat-volunteer-doc-passed__table-wrap .ujat-volunteer-doc-passed__table.cms-data-table {
+  overflow-x: visible;
+  min-width: 0;
+  width: 100%;
+}
+
+.ujat-volunteer-doc-passed__table-wrap
+  .ujat-volunteer-doc-passed__table.cms-data-table--fluid
+  .ant-table-container {
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-volunteer-doc-passed__table-wrap .ujat-volunteer-doc-passed__table .ant-table-content {
+  overflow-x: hidden !important;
+}
+
+.ujat-volunteer-doc-passed__table-wrap .ujat-volunteer-doc-passed__table table.ant-table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+.ujat-volunteer-doc-passed
+  .clickable-table
+  .ant-table-tbody
+  > tr.ant-table-row:hover:not(.ant-table-row-selected):not(.cms-data-table__row--disabled)
+  > td {
   background: var(--color-table-row-hover, rgba(1, 161, 175, 0.06)) !important;
-}
-
-/* 활동 포기 행 — 셀 전체 비활성(클릭·호버 없음, opacity로 흐리게) */
-.ujat-volunteer-doc-passed
-  .clickable-table
-  .ant-table-tbody
-  > tr.ujat-volunteer-doc-passed__row--withdrawn
-  > td {
-  pointer-events: none;
-  cursor: default !important;
-  opacity: 0.4;
-  color: var(--main-BK, #3d3d3d);
-  background: var(--color-table-row-disabled-bg, rgba(61, 61, 61, 0.04)) !important;
-}
-
-.ujat-volunteer-doc-passed
-  .clickable-table
-  .ant-table-tbody
-  > tr.ujat-volunteer-doc-passed__row--withdrawn:hover
-  > td {
-  background: var(--color-table-row-disabled-bg, rgba(61, 61, 61, 0.04)) !important;
-}
-
-.ujat-volunteer-doc-passed
-  .clickable-table
-  .ant-table-tbody
-  > tr.ujat-volunteer-doc-passed__row--withdrawn
-  .ujat-interview-assignment-status-text--withdrawn {
-  color: #c32f4a;
 }
 
 .ujat-volunteer-doc-passed__center-cell {
@@ -192,11 +189,4 @@
   opacity: 0.4;
   background: #fff !important;
   cursor: not-allowed;
-}
-
-/* 활동 포기 행: 행 opacity와 중복 적용되지 않도록 */
-.ujat-volunteer-doc-passed
-  .ujat-volunteer-doc-passed__row--withdrawn
-  .ujat-volunteer-doc-passed__assign-btn.cms-button.ant-btn:disabled {
-  opacity: 1;
 }

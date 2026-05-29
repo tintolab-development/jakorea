@@ -73,39 +73,3 @@
   white-space: nowrap;
 }
 
-.ujat-institution-application-list-item__checkbox {
-  flex-shrink: 0;
-  align-self: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  padding: 0;
-  border-radius: 10px;
-  transition: background-color 0.2s;
-}
-
-.ujat-institution-application-list-item__checkbox:hover {
-  background: rgba(1, 161, 175, 0.14);
-}
-
-.ujat-institution-application-list-item__checkbox .ant-checkbox-wrapper {
-  align-items: center;
-}
-
-.ujat-institution-application-list-item__checkbox .ant-checkbox {
-  width: 20px;
-  height: 20px;
-  top: 0;
-}
-
-.ujat-institution-application-list-item__checkbox .ant-checkbox .ant-checkbox-inner {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-}
-
-.ujat-institution-application-list-item__checkbox .ant-checkbox .ant-checkbox-inner::after {
-  inset-block-start: 45%;
-}

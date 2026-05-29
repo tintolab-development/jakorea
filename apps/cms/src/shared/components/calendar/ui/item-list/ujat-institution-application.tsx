@@ -59,7 +59,7 @@ export function CalendarListItemContentInstitutionApplication({
         </div>
       </div>
       <div
-        className="ujat-institution-application-list-item__checkbox"
+        className="calendar-list-item__checkbox"
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >
