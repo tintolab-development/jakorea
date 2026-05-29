@@ -1,4 +1,5 @@
 import { DownloadOutlined } from '@ant-design/icons'
+import { Spin } from 'antd'
 import type { RefObject } from 'react'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -15,11 +16,13 @@ import {
   UJAT_LECTURE_EVAL_TABS,
   type UjatLectureEvalTabKey,
 } from '../lib/ujat-lecture-eval-survey'
+import type { UjatSurveyPollRawResponse } from '@/data/mock/ujat-survey-poll-responses-mock'
 import type { UjatRegisteredSurvey } from '../lib/ujat-satisfaction-survey'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { canDownloadSurveyResults } from './ujat-survey-registered-actions'
 import { UjatSurveyEmptyState } from './ujat-survey-empty-state'
 import { UjatSurveyPreStartState } from './ujat-survey-pre-start-state'
+import { UjatLectureEvalSubmittedIcon } from './ujat-lecture-eval-submitted-icon'
 import { UjatSurveySubmittedState } from './ujat-survey-submitted-state'
 import { UjatLectureEvalFormView } from './ujat-lecture-eval-form-view'
 import { UjatSurveyPollResultsView } from './ujat-survey-poll-results-view'
@@ -29,6 +32,7 @@ export type UjatLectureEvalSurveyViewProps = {
   survey: UjatRegisteredSurvey | null
   submitted: boolean
   formDraft: WritingFormDraft | null
+  pollResponses: UjatSurveyPollRawResponse[]
   activeTab: UjatLectureEvalTabKey
   downloadingResults: boolean
   resultsExportRef: RefObject<HTMLDivElement | null>
@@ -45,6 +49,7 @@ export function UjatLectureEvalSurveyView({
   survey,
   submitted,
   formDraft,
+  pollResponses,
   activeTab,
   downloadingResults,
   resultsExportRef,
@@ -74,12 +79,12 @@ export function UjatLectureEvalSurveyView({
       </CmsButton>
     ) : activeTab === 'results' && resultsAccessible ? (
       <CmsButton
-        className="ujat-lecture-eval-survey__download-trailing"
+        className="ujat-lecture-eval-survey__download-trailing cms-button--no-label-ellipsis"
         variant="secondary"
         size="large"
+        width="auto"
         icon={<DownloadOutlined />}
         disabled={!downloadEnabled || downloadingResults}
-        loading={downloadingResults}
         onClick={onDownloadResultsClick}
       >
         {UJAT_LECTURE_EVAL_ACTION_LABELS.download}
@@ -104,10 +109,12 @@ export function UjatLectureEvalSurveyView({
       />
     ) : showSubmitted ? (
       <UjatSurveySubmittedState
+        className="ujat-lecture-eval-submitted"
+        icon={<UjatLectureEvalSubmittedIcon />}
         title={UJAT_LECTURE_EVAL_SUBMITTED_COPY.title}
         description={UJAT_LECTURE_EVAL_SUBMITTED_COPY.description}
         editButtonLabel={UJAT_LECTURE_EVAL_SUBMITTED_COPY.editButton}
-        canEdit={canEditLectureEvalResponse(survey)}
+        canEdit={canEditLectureEvalResponse(survey, formDraft)}
         onEditClick={onEditResponseClick}
       />
     ) : showForm && formDraft != null ? (
@@ -137,7 +144,19 @@ export function UjatLectureEvalSurveyView({
             templateId={survey!.templateId}
             responseCount={survey!.responseCount}
             participantTotal={survey!.participantTotal}
+            responses={pollResponses.length > 0 ? pollResponses : undefined}
           />
+        </div>
+      ) : null}
+      {downloadingResults ? (
+        <div className="ujat-lecture-eval-survey__pdf-loading-overlay" role="status" aria-live="polite">
+          <div className="ujat-lecture-eval-survey__pdf-loading-card">
+            <Spin size="large" />
+            <p className="ujat-lecture-eval-survey__pdf-loading-title">PDF 생성 중입니다.</p>
+            <p className="ujat-lecture-eval-survey__pdf-loading-description">
+              강의 평가 결과 파일을 준비하고 있어요.
+            </p>
+          </div>
         </div>
       ) : null}
     </div>

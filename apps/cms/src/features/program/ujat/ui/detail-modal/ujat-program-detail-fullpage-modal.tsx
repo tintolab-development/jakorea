@@ -103,7 +103,6 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { duplicateWritingTemplate } from '@/features/template/api/duplicate-writing-template'
 import {
   findWritingTemplateRowByDefinitionId,
-  getWritingTemplateRowsByCategory,
 } from '@/features/template/lib/writing-template-create-helpers'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import {
@@ -134,10 +133,12 @@ import {
   UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY,
   UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY,
 } from './survey-management/lib/ujat-survey-copy'
+import type { UjatSurveyPollRawResponse } from '@/data/mock/ujat-survey-poll-responses-mock'
 import {
   buildLectureEvalFormDraft,
+  canEditLectureEvalResponse,
+  draftToLectureEvalPollResponse,
   UJAT_LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT,
-  UJAT_LECTURE_EVAL_DEV_AUTO_PROGRESS,
   UJAT_LECTURE_EVAL_TEMPLATE_ID,
   validateLectureEvalFormDraft,
   type UjatLectureEvalTabKey,
@@ -146,6 +147,7 @@ import {
   buildLectureEvalResultsPdfFileName,
   exportLectureEvalResultsPdf,
 } from './survey-management/lib/export-lecture-eval-results-pdf'
+import { getSurveyWritingTemplateSelectOptions } from './survey-management/lib/ujat-survey-template-options'
 import { UjatSatisfactionSurveyView } from './survey-management/ui/ujat-satisfaction-survey-view'
 import { UjatLectureEvalSurveyView } from './survey-management/ui/ujat-lecture-eval-survey-view'
 import { UjatSurveyEmptyState } from './survey-management/ui/ujat-survey-empty-state'
@@ -178,12 +180,6 @@ const UJAT_NESTED_DETAIL_QUERY_PARAMS = [
   UJAT_EDU_VOL_ID_PARAM,
   UJAT_EDU_VOL_TAB_PARAM,
 ] as const
-
-const UJAT_SURVEY_TEMPLATE_BY_MENU_KEY: Record<string, string> = {
-  'survey-poll': 'survey-default',
-  'survey-satisfaction': 'survey-student',
-  'survey-lecture-eval': 'survey-admin',
-}
 
 const UJAT_REGISTERED_SURVEY_MOCK: UjatRegisteredSurvey[] = []
 
@@ -535,14 +531,21 @@ export function UjatProgramDetailFullPageModal({
   const [submittingSatisfactionSurvey, setSubmittingSatisfactionSurvey] = useState(false)
   const [satisfactionDeleteModalOpen, setSatisfactionDeleteModalOpen] = useState(false)
   const [satisfactionDeleteConfirmWord, setSatisfactionDeleteConfirmWord] = useState('')
+  const [selectedSatisfactionTemplateId, setSelectedSatisfactionTemplateId] = useState<string | null>(
+    null
+  )
   const [lectureEvalSurvey, setLectureEvalSurvey] = useState<UjatRegisteredSurvey | null>(
     UJAT_LECTURE_EVAL_SURVEY_MOCK
   )
   const [lectureEvalSubmitted, setLectureEvalSubmitted] = useState(false)
   const [lectureEvalFormDraft, setLectureEvalFormDraft] = useState<WritingFormDraft | null>(null)
+  const [lectureEvalResponses, setLectureEvalResponses] = useState<UjatSurveyPollRawResponse[]>([])
   const [activeLectureEvalTab, setActiveLectureEvalTab] = useState<UjatLectureEvalTabKey>('eval')
   const [lectureEvalCreateModalOpen, setLectureEvalCreateModalOpen] = useState(false)
   const [lectureEvalIncompleteModalOpen, setLectureEvalIncompleteModalOpen] = useState(false)
+  const [selectedLectureEvalTemplateId, setSelectedLectureEvalTemplateId] = useState<string | null>(
+    null
+  )
   const [submittingLectureEvalSurvey, setSubmittingLectureEvalSurvey] = useState(false)
   const [downloadingLectureEvalResults, setDownloadingLectureEvalResults] = useState(false)
   const lectureEvalResultsExportRef = useRef<HTMLDivElement>(null)
@@ -550,21 +553,7 @@ export function UjatProgramDetailFullPageModal({
   const { copyText } = useClipboard()
   const { showAlert } = useCmsAlert()
 
-  const surveyTemplateOptions = useMemo(() => {
-    const byId = new Map(getWritingTemplateRowsByCategory('survey').map(row => [row.id, row]))
-    return surveyItems
-      .map(item => {
-        const templateId = UJAT_SURVEY_TEMPLATE_BY_MENU_KEY[item.key]
-        if (!templateId) return null
-        const row = byId.get(templateId)
-        if (!row) return null
-        return {
-          label: row.templateName,
-          value: row.id,
-        }
-      })
-      .filter((opt): opt is { label: string; value: string } => opt != null)
-  }, [surveyItems])
+  const surveyTemplateOptions = useMemo(() => getSurveyWritingTemplateSelectOptions(), [])
   const activeRegisteredSurvey = useMemo(
     () => registeredSurveys.find(item => item.id === activeRegisteredSurveyId) ?? null,
     [registeredSurveys, activeRegisteredSurveyId]
@@ -1147,8 +1136,11 @@ export function UjatProgramDetailFullPageModal({
 
   const handleOpenSatisfactionCreateModal = useCallback(() => {
     setSubmittingSatisfactionSurvey(false)
+    setSelectedSatisfactionTemplateId(
+      UJAT_SATISFACTION_TEMPLATE_BY_AUDIENCE[activeSatisfactionAudience]
+    )
     setSatisfactionCreateModalOpen(true)
-  }, [])
+  }, [activeSatisfactionAudience])
 
   const handleCloseSatisfactionCreateModal = useCallback(() => {
     if (submittingSatisfactionSurvey) return
@@ -1156,11 +1148,11 @@ export function UjatProgramDetailFullPageModal({
   }, [submittingSatisfactionSurvey])
 
   const handleSubmitSatisfactionSurvey = useCallback(async () => {
-    const templateId = UJAT_SATISFACTION_TEMPLATE_BY_AUDIENCE[activeSatisfactionAudience]
+    if (selectedSatisfactionTemplateId == null || selectedSatisfactionTemplateId === '') return
     setSubmittingSatisfactionSurvey(true)
     try {
       const { newTemplateId } = await duplicateWritingTemplate({
-        sourceTemplateId: templateId,
+        sourceTemplateId: selectedSatisfactionTemplateId,
         category: 'survey',
       })
       const next = findWritingTemplateRowByDefinitionId(newTemplateId)
@@ -1186,7 +1178,7 @@ export function UjatProgramDetailFullPageModal({
     } finally {
       setSubmittingSatisfactionSurvey(false)
     }
-  }, [activeSatisfactionAudience])
+  }, [activeSatisfactionAudience, selectedSatisfactionTemplateId])
 
   const handleDeleteSatisfactionSurvey = useCallback(() => {
     if (!activeSatisfactionSurvey || activeSatisfactionSurvey.status !== 'before_start') return
@@ -1236,21 +1228,15 @@ export function UjatProgramDetailFullPageModal({
     void copyText(shareUrl)
   }, [activeSatisfactionSurvey, activeSatisfactionAudience, copyText, programId])
 
-  const resolveLectureEvalTemplateName = useCallback(() => {
-    const row = findWritingTemplateRowByDefinitionId(
-      lectureEvalSurvey?.templateId ?? UJAT_LECTURE_EVAL_TEMPLATE_ID
-    )
-    return row?.templateName
-  }, [lectureEvalSurvey?.templateId])
-
   const ensureLectureEvalFormDraft = useCallback(() => {
-    const templateName = resolveLectureEvalTemplateName()
-    setLectureEvalFormDraft(prev => prev ?? buildLectureEvalFormDraft(templateName))
-  }, [resolveLectureEvalTemplateName])
+    const templateId = lectureEvalSurvey?.templateId ?? UJAT_LECTURE_EVAL_TEMPLATE_ID
+    setLectureEvalFormDraft(prev => prev ?? buildLectureEvalFormDraft(templateId))
+  }, [lectureEvalSurvey?.templateId])
 
   useEffect(() => {
     if (lectureEvalSurvey == null) {
       setLectureEvalFormDraft(null)
+      setLectureEvalResponses([])
       setLectureEvalSubmitted(false)
       setActiveLectureEvalTab('eval')
       return
@@ -1265,6 +1251,7 @@ export function UjatProgramDetailFullPageModal({
 
   const handleOpenLectureEvalCreateModal = useCallback(() => {
     setSubmittingLectureEvalSurvey(false)
+    setSelectedLectureEvalTemplateId(UJAT_LECTURE_EVAL_TEMPLATE_ID)
     setLectureEvalCreateModalOpen(true)
   }, [])
 
@@ -1274,10 +1261,11 @@ export function UjatProgramDetailFullPageModal({
   }, [submittingLectureEvalSurvey])
 
   const handleSubmitLectureEvalRegister = useCallback(async () => {
+    if (selectedLectureEvalTemplateId == null || selectedLectureEvalTemplateId === '') return
     setSubmittingLectureEvalSurvey(true)
     try {
       const { newTemplateId } = await duplicateWritingTemplate({
-        sourceTemplateId: UJAT_LECTURE_EVAL_TEMPLATE_ID,
+        sourceTemplateId: selectedLectureEvalTemplateId,
         category: 'survey',
       })
       const next = findWritingTemplateRowByDefinitionId(newTemplateId)
@@ -1286,18 +1274,16 @@ export function UjatProgramDetailFullPageModal({
           id: `ujat-lecture-eval-${Date.now()}`,
           title: next.templateName,
           templateId: next.id,
-          status: UJAT_LECTURE_EVAL_DEV_AUTO_PROGRESS ? 'in_progress' : 'before_start',
+          // TODO(api): 서버 status — 진행 전(before_start) / 진행 중 / 종료
+          status: 'in_progress',
           responseCount: 0,
           participantTotal: 1,
         }
         setLectureEvalSurvey(newSurvey)
         setLectureEvalSubmitted(false)
+        setLectureEvalResponses([])
         setActiveLectureEvalTab('eval')
-        if (newSurvey.status === 'in_progress') {
-          setLectureEvalFormDraft(buildLectureEvalFormDraft(next.templateName))
-        } else {
-          setLectureEvalFormDraft(null)
-        }
+        setLectureEvalFormDraft(buildLectureEvalFormDraft(next.id))
       }
       setLectureEvalCreateModalOpen(false)
     } catch (error) {
@@ -1305,7 +1291,7 @@ export function UjatProgramDetailFullPageModal({
     } finally {
       setSubmittingLectureEvalSurvey(false)
     }
-  }, [])
+  }, [selectedLectureEvalTemplateId])
 
   const handleOpenLectureEvalPreview = useCallback(() => {
     if (!lectureEvalSurvey) return
@@ -1315,7 +1301,7 @@ export function UjatProgramDetailFullPageModal({
     if (entry == null || !isSurveyRegistryEntry(entry)) return
 
     openWritingUserPreview({
-      draft: buildLectureEvalFormDraft(row.templateName),
+      draft: buildLectureEvalFormDraft(row.id),
       updateParagraph: () => {},
       headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
       editorKind: 'survey',
@@ -1347,6 +1333,7 @@ export function UjatProgramDetailFullPageModal({
     }
 
     setLectureEvalSubmitted(true)
+    setLectureEvalResponses([draftToLectureEvalPollResponse(lectureEvalFormDraft)])
     setLectureEvalSurvey(prev => {
       if (prev == null) return prev
       const nextStatus =
@@ -1363,10 +1350,10 @@ export function UjatProgramDetailFullPageModal({
   }, [lectureEvalSurvey, lectureEvalFormDraft, showAlert])
 
   const handleLectureEvalEditResponse = useCallback(() => {
-    if (!lectureEvalSurvey || lectureEvalSurvey.status === 'finished') return
+    if (!lectureEvalSurvey || lectureEvalFormDraft == null) return
+    if (!canEditLectureEvalResponse(lectureEvalSurvey, lectureEvalFormDraft)) return
     setLectureEvalSubmitted(false)
-    ensureLectureEvalFormDraft()
-  }, [lectureEvalSurvey, ensureLectureEvalFormDraft])
+  }, [lectureEvalSurvey, lectureEvalFormDraft])
 
   const handleDownloadLectureEvalResults = useCallback(async () => {
     const root = lectureEvalResultsExportRef.current
@@ -1871,6 +1858,7 @@ export function UjatProgramDetailFullPageModal({
                 survey={lectureEvalSurvey}
                 submitted={lectureEvalSubmitted}
                 formDraft={lectureEvalFormDraft}
+                pollResponses={lectureEvalResponses}
                 activeTab={activeLectureEvalTab}
                 downloadingResults={downloadingLectureEvalResults}
                 resultsExportRef={lectureEvalResultsExportRef}
@@ -2014,6 +2002,9 @@ export function UjatProgramDetailFullPageModal({
               onClick={() => {
                 void handleSubmitSatisfactionSurvey()
               }}
+              disabled={
+                selectedSatisfactionTemplateId == null || selectedSatisfactionTemplateId === ''
+              }
               loading={submittingSatisfactionSurvey}
             >
               신규 등록
@@ -2021,7 +2012,17 @@ export function UjatProgramDetailFullPageModal({
           </div>
         }
       >
-        <span className="ujat-survey-create-modal__confirm-placeholder" />
+        <div className="ujat-survey-create-modal__field">
+          <p className="ujat-survey-create-modal__label">템플릿 유형</p>
+          <CmsSelect
+            width="100%"
+            withAllOption={false}
+            placeholder="사용할 설문 양식을 선택해 주세요"
+            options={surveyTemplateOptions}
+            value={selectedSatisfactionTemplateId ?? undefined}
+            onChange={value => setSelectedSatisfactionTemplateId(value ?? null)}
+          />
+        </div>
       </ContentModal>
       <ContentModal
         open={satisfactionDeleteModalOpen}
@@ -2093,6 +2094,7 @@ export function UjatProgramDetailFullPageModal({
               onClick={() => {
                 void handleSubmitLectureEvalRegister()
               }}
+              disabled={selectedLectureEvalTemplateId == null || selectedLectureEvalTemplateId === ''}
               loading={submittingLectureEvalSurvey}
             >
               {UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY.confirmButton}
@@ -2100,7 +2102,17 @@ export function UjatProgramDetailFullPageModal({
           </div>
         }
       >
-        <span className="ujat-survey-create-modal__confirm-placeholder" />
+        <div className="ujat-survey-create-modal__field">
+          <p className="ujat-survey-create-modal__label">템플릿 유형</p>
+          <CmsSelect
+            width="100%"
+            withAllOption={false}
+            placeholder="사용할 설문 양식을 선택해 주세요"
+            options={surveyTemplateOptions}
+            value={selectedLectureEvalTemplateId ?? undefined}
+            onChange={value => setSelectedLectureEvalTemplateId(value ?? null)}
+          />
+        </div>
       </ContentModal>
       <ContentModal
         open={lectureEvalIncompleteModalOpen}
