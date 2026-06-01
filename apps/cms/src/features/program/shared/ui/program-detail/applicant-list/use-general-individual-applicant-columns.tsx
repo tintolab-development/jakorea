@@ -2,26 +2,10 @@ import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
-import {
-  StatusDropdownCell,
-  STATUS_DROPDOWN_CELL_CLASSNAME,
-} from '@/shared/components/status-dropdown-cell'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 import { GeneralDetailSessionLine } from './general-detail-session-line'
 
-export function useGeneralIndividualApplicantColumns(params: {
-  approvalStatusKeys: ApprovalStatusKey[]
-  handleApprovalStatusChange: (recordId: string, status: ApprovalStatusKey) => void
-  openApprovalDropdownId: string | null
-  setOpenApprovalDropdownId: (id: string | null) => void
-}): ColumnsType<GeneralIndividualApplicantRow> {
-  const {
-    approvalStatusKeys,
-    handleApprovalStatusChange,
-    openApprovalDropdownId,
-    setOpenApprovalDropdownId,
-  } = params
-
+export function useGeneralIndividualApplicantColumns(): ColumnsType<GeneralIndividualApplicantRow> {
   return useMemo(
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: '64px', align: 'center' },
@@ -57,33 +41,19 @@ export function useGeneralIndividualApplicantColumns(params: {
         key: 'approvalStatus',
         width: '180px',
         align: 'center',
-        className: STATUS_DROPDOWN_CELL_CLASSNAME,
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-        render: (status: ApprovalStatusKey, record: GeneralIndividualApplicantRow) => (
-          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
-            <StatusDropdownCell<ApprovalStatusKey>
-              status={status ?? null}
-              statusOptions={approvalStatusKeys}
-              renderBadge={s => <ApprovalStatusText status={s} />}
-              isItemDisabled={(cur, opt) => cur === opt}
-              onChange={newStatus => handleApprovalStatusChange(record.id, newStatus)}
-              isOpen={openApprovalDropdownId === record.id}
-              onOpenChange={open => setOpenApprovalDropdownId(open ? record.id : null)}
-              emptyPlaceholder="-"
-            />
-          </div>
-        ),
+        render: (status: ApprovalStatusKey) =>
+          status ? <ApprovalStatusText status={status} /> : '-',
       },
       {
         title: '진행 희망 교육 일정',
         key: 'sessions',
         width: '480px',
-        align: 'left',
+        align: 'center',
         className: 'applicant-details__th-sessions',
         onHeaderCell: () => ({ className: 'applicant-details__th-sessions' }),
         onCell: () => ({
-          className: 'applicant-details__td-sessions',
+          className:
+            'applicant-details__td-sessions applicant-details__td-sessions--center',
         }),
         render: (_: unknown, record: GeneralIndividualApplicantRow) => {
           const sessions = record.sessions ?? []
@@ -106,11 +76,6 @@ export function useGeneralIndividualApplicantColumns(params: {
         },
       },
     ],
-    [
-      approvalStatusKeys,
-      handleApprovalStatusChange,
-      openApprovalDropdownId,
-      setOpenApprovalDropdownId,
-    ]
+    []
   )
 }

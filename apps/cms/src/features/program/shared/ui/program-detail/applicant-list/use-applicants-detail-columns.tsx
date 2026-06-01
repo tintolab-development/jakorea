@@ -76,40 +76,43 @@ export function useInstitutionApplicantColumns(params: {
         key: 'approvalStatus',
         width: isGeneralDetail ? '180px' : '150px',
         align: 'center',
-        className: STATUS_DROPDOWN_CELL_CLASSNAME,
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-        render: (status: ApprovalStatusKey, record: ApplicantSchoolRow) => (
-          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
-            <StatusDropdownCell<ApprovalStatusKey>
-              status={status ?? null}
-              statusOptions={approvalStatusKeys}
-              renderBadge={s =>
-                isGeneralDetail ? (
-                  <ApprovalStatusText status={s} />
-                ) : (
-                  <ApprovalStatusBadge status={s} />
-                )
-              }
-              isItemDisabled={(cur, opt) => cur === opt}
-              onChange={newStatus => handleInstitutionApprovalStatusChange(record.id, newStatus)}
-              isOpen={openApprovalDropdownId === record.id}
-              onOpenChange={open => setOpenApprovalDropdownId(open ? record.id : null)}
-              emptyPlaceholder="-"
-            />
-          </div>
-        ),
+        ...(isGeneralDetail
+          ? {}
+          : {
+              className: STATUS_DROPDOWN_CELL_CLASSNAME,
+              onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+              onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+            }),
+        render: (status: ApprovalStatusKey, record: ApplicantSchoolRow) =>
+          isGeneralDetail ? (
+            status ? <ApprovalStatusText status={status} /> : '-'
+          ) : (
+            <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+              <StatusDropdownCell<ApprovalStatusKey>
+                status={status ?? null}
+                statusOptions={approvalStatusKeys}
+                renderBadge={s => <ApprovalStatusBadge status={s} />}
+                isItemDisabled={(cur, opt) => cur === opt}
+                onChange={newStatus => handleInstitutionApprovalStatusChange(record.id, newStatus)}
+                isOpen={openApprovalDropdownId === record.id}
+                onOpenChange={open => setOpenApprovalDropdownId(open ? record.id : null)}
+                emptyPlaceholder="-"
+              />
+            </div>
+          ),
       },
       {
         title: isGeneralDetail ? '진행 희망 교육 일정' : '강의 회차 별 희망 교육 날짜 및 시간',
         key: 'sessions',
         width: '480px',
-        align: isGeneralDetail ? 'left' : 'center',
+        align: 'center',
         className: isGeneralDetail ? 'applicant-details__th-sessions' : undefined,
         onHeaderCell: () =>
           isGeneralDetail ? { className: 'applicant-details__th-sessions' } : {},
         onCell: () => ({
-          className: 'applicant-details__td-sessions',
+          className: isGeneralDetail
+            ? 'applicant-details__td-sessions applicant-details__td-sessions--center'
+            : 'applicant-details__td-sessions',
         }),
         render: (_: unknown, record: ApplicantSchoolRow) => {
           const sessions = record.sessions ?? []

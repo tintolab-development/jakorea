@@ -262,28 +262,48 @@
   padding: 10px 16px !important;
 }
 
-/* 진행 희망 교육 일정 — 일정·외 n개 텍스트 좌측 정렬 */
+/* 진행 희망 교육 일정 — 텍스트 블록은 셀 중앙, 블록 내 일정·외 n개는 좌측 정렬 */
 .detail-fullpage-modal.general-program-detail-fullpage-modal
   .general-participant-applications
   .applicant-details
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
   > tr
-  > td.ant-table-cell.applicant-details__td-sessions {
-  text-align: left !important;
+  > td.ant-table-cell.applicant-details__td-sessions--center {
+  text-align: center !important;
+  vertical-align: middle;
 }
 
 .general-participant-applications
   .applicant-details
-  .applicant-details__td-sessions
+  .applicant-details__td-sessions--center
   .applicant-details__sessions-cell {
+  display: inline-flex;
+  flex-direction: column;
   align-items: flex-start;
   text-align: left;
+  max-width: 100%;
 }
 
 .general-participant-applications
   .applicant-details
-  .applicant-details__td-sessions
+  .applicant-details__td-sessions--center
+  .applicant-details__session-line {
+  justify-content: flex-start;
+  width: auto;
+}
+
+.general-participant-applications
+  .applicant-details
+  .applicant-details__td-sessions--center
+  .general-detail-session-line {
+  display: inline-flex;
+  justify-content: flex-start;
+}
+
+.general-participant-applications
+  .applicant-details
+  .applicant-details__td-sessions--center
   .applicant-details__session-more {
   text-align: left;
 }
