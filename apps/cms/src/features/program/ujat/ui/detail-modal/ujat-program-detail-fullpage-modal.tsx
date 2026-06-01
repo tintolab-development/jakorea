@@ -84,7 +84,7 @@ import {
   UJAT_INSTITUTION_APP_CHILD_ROWS,
 } from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   isUjatRecruitTab,
@@ -103,20 +103,55 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { duplicateWritingTemplate } from '@/features/template/api/duplicate-writing-template'
 import {
   findWritingTemplateRowByDefinitionId,
-  getWritingTemplateRowsByCategory,
 } from '@/features/template/lib/writing-template-create-helpers'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
-import {
-  createDefaultSurveyDraft,
-  DEFAULT_SURVEY_PARAGRAPH_IDS,
-  normalizeWritingFormDraft,
-} from '@/features/template/model/writing-form-draft.schema'
 import {
   isSurveyRegistryEntry,
   lookupTemplateRegistry,
   resolvePreviewHeaderTitle,
 } from '@/features/template/model/template-registry/template-registry'
+import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT } from '@/data/mock/ujat-survey-poll-responses-mock'
+import { useClipboard } from '@/features/template/hooks/use-clipboard'
+import {
+  getSatisfactionAudienceLabel,
+  getSatisfactionDeleteModalSubject,
+  UJAT_SATISFACTION_TEMPLATE_BY_AUDIENCE,
+  type UjatRegisteredSurvey,
+  type UjatSatisfactionAudienceKey,
+  type UjatSatisfactionSurveyByAudience,
+} from './survey-management/lib/ujat-satisfaction-survey'
+import {
+  UJAT_SURVEY_POLL_ACTION_LABELS,
+  UJAT_SURVEY_POLL_EMPTY_COPY,
+  UJAT_SURVEY_POLL_NO_RESPONSE_COPY,
+  UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY,
+  UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY,
+} from './survey-management/lib/ujat-survey-copy'
+import type { UjatSurveyPollRawResponse } from '@/data/mock/ujat-survey-poll-responses-mock'
+import {
+  buildLectureEvalFormDraft,
+  canEditLectureEvalResponse,
+  draftToLectureEvalPollResponse,
+  UJAT_LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT,
+  UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
+  UJAT_LECTURE_EVAL_TEMPLATE_ID,
+  validateLectureEvalFormDraft,
+  type UjatLectureEvalTabKey,
+} from './survey-management/lib/ujat-lecture-eval-survey'
+import {
+  buildLectureEvalResultsPdfFileName,
+  exportLectureEvalResultsPdf,
+} from './survey-management/lib/export-lecture-eval-results-pdf'
+import { getSurveyWritingTemplateSelectOptions } from './survey-management/lib/ujat-survey-template-options'
+import {
+  buildUjatSurveyWritingPreviewSession,
+} from './survey-management/lib/open-ujat-survey-writing-preview'
+import { UjatSurveyTemplateEditModal } from './survey-management/ui/ujat-survey-template-edit-modal'
+import { UjatSatisfactionSurveyView } from './survey-management/ui/ujat-satisfaction-survey-view'
+import { UjatLectureEvalSurveyView } from './survey-management/ui/ujat-lecture-eval-survey-view'
+import { UjatSurveyEmptyState } from './survey-management/ui/ujat-survey-empty-state'
+import { UjatSurveyNoResponseState } from './survey-management/ui/ujat-survey-no-response-state'
 import { UjatSurveyPollResultsView } from './survey-management/ui/ujat-survey-poll-results-view'
 import { UjatSurveyRegisteredActions } from './survey-management/ui/ujat-survey-registered-actions'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
@@ -146,38 +181,11 @@ const UJAT_NESTED_DETAIL_QUERY_PARAMS = [
   UJAT_EDU_VOL_TAB_PARAM,
 ] as const
 
-const UJAT_SURVEY_TEMPLATE_BY_MENU_KEY: Record<string, string> = {
-  'survey-poll': 'survey-default',
-  'survey-satisfaction': 'survey-student',
-  'survey-lecture-eval': 'survey-admin',
-}
-
-type UjatSurveyProgressStatus = 'before_start' | 'in_progress' | 'finished'
-
-type UjatRegisteredSurvey = {
-  id: string
-  title: string
-  templateId: string
-  status: UjatSurveyProgressStatus
-  responseCount: number
-  participantTotal: number
-}
-
 const UJAT_REGISTERED_SURVEY_MOCK: UjatRegisteredSurvey[] = []
 
-function buildSurveyPreviewDraft(templateName?: string) {
-  const base = normalizeWritingFormDraft(createDefaultSurveyDraft())
-  const name = templateName?.trim()
-  if (name == null || name === '') return base
-  return normalizeWritingFormDraft({
-    ...base,
-    paragraphs: base.paragraphs.map(paragraph =>
-      paragraph.id === DEFAULT_SURVEY_PARAGRAPH_IDS.title
-        ? { ...paragraph, surveyTitle: name }
-        : paragraph
-    ),
-  })
-}
+const UJAT_SATISFACTION_SURVEY_MOCK: UjatSatisfactionSurveyByAudience = {}
+
+const UJAT_LECTURE_EVAL_SURVEY_MOCK: UjatRegisteredSurvey | null = null
 
 export interface UjatProgramDetailFullPageModalProps {
   open: boolean
@@ -455,98 +463,6 @@ function UjatPlaceholderSection({ title, description }: { title: string; descrip
   )
 }
 
-function UjatSurveyPollEmptyState({ onRegisterClick }: { onRegisterClick: () => void }) {
-  return (
-    <div className="program-detail-fullpage-modal__info-tab ujat-survey-poll-empty">
-      <div className="ujat-survey-poll-empty__content">
-        <span className="ujat-survey-poll-empty__icon" aria-hidden>
-          <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="none">
-            <mask id="ujat-survey-empty-icon-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="60" height="60">
-              <rect width="60" height="60" fill="#D9D9D9" />
-            </mask>
-            <g mask="url(#ujat-survey-empty-icon-mask)">
-              <path
-                d="M17.5 44.25L21 47.8125C21.25 48.0625 21.5417 48.1875 21.875 48.1875C22.2083 48.1875 22.5 48.0625 22.75 47.8125C23 47.5625 23.125 47.2604 23.125 46.9062C23.125 46.5521 23 46.25 22.75 46L19.25 42.5L22.8125 38.9375C23.0625 38.6875 23.1875 38.3958 23.1875 38.0625C23.1875 37.7292 23.0625 37.4375 22.8125 37.1875C22.5625 36.9375 22.2708 36.8125 21.9375 36.8125C21.6042 36.8125 21.3125 36.9375 21.0625 37.1875L17.5 40.75L13.9375 37.1875C13.6875 36.9375 13.3958 36.8125 13.0625 36.8125C12.7292 36.8125 12.4375 36.9375 12.1875 37.1875C11.9375 37.4375 11.8125 37.7292 11.8125 38.0625C11.8125 38.3958 11.9375 38.6875 12.1875 38.9375L15.75 42.5L12.1875 46.0625C11.9375 46.3125 11.8125 46.6042 11.8125 46.9375C11.8125 47.2708 11.9375 47.5625 12.1875 47.8125C12.4375 48.0625 12.7292 48.1875 13.0625 48.1875C13.3958 48.1875 13.6875 48.0625 13.9375 47.8125L17.5 44.25ZM8.65625 51.3438C6.21875 48.9062 5 45.9583 5 42.5C5 39.0417 6.21875 36.0938 8.65625 33.6563C11.0938 31.2188 14.0417 30 17.5 30C20.9583 30 23.9062 31.2188 26.3438 33.6563C28.7813 36.0938 30 39.0417 30 42.5C30 45.9583 28.7813 48.9062 26.3438 51.3438C23.9062 53.7812 20.9583 55 17.5 55C14.0417 55 11.0938 53.7812 8.65625 51.3438ZM35.5 36.5C35 35.9583 34.4688 35.4062 33.9062 34.8438C33.3438 34.2812 32.7917 33.75 32.25 33.25C33.8333 32.25 35.1042 30.9167 36.0625 29.25C37.0208 27.5833 37.5 25.75 37.5 23.75C37.5 20.625 36.4062 17.9688 34.2188 15.7812C32.0312 13.5938 29.375 12.5 26.25 12.5C23.125 12.5 20.4688 13.5938 18.2812 15.7812C16.0938 17.9688 15 20.625 15 23.75C15 24 15.0104 24.2396 15.0313 24.4688C15.0521 24.6979 15.0833 24.9375 15.125 25.1875C14.375 25.2708 13.5521 25.4375 12.6562 25.6875C11.7604 25.9375 10.9583 26.2292 10.25 26.5625C10.1667 26.1042 10.1042 25.6458 10.0625 25.1875C10.0208 24.7292 10 24.25 10 23.75C10 19.2083 11.5729 15.3646 14.7188 12.2188C17.8646 9.07292 21.7083 7.5 26.25 7.5C30.7917 7.5 34.6354 9.07292 37.7812 12.2188C40.9271 15.3646 42.5 19.2083 42.5 23.75C42.5 25.5417 42.2188 27.2396 41.6562 28.8438C41.0938 30.4479 40.3125 31.9167 39.3125 33.25L53.25 47.25C53.7083 47.7083 53.9479 48.2812 53.9688 48.9688C53.9896 49.6562 53.75 50.25 53.25 50.75C52.7917 51.2083 52.2083 51.4375 51.5 51.4375C50.7917 51.4375 50.2083 51.2083 49.75 50.75L35.5 36.5Z"
-                fill="#01A1AF"
-              />
-            </g>
-          </svg>
-        </span>
-        <div className="ujat-survey-poll-empty__texts">
-          <p className="ujat-survey-poll-empty__title">아직 등록된 설문조사가 없습니다.</p>
-          <p className="ujat-survey-poll-empty__description">
-            설문조사 등록 버튼을 눌러 설문 내용을 추가해 주세요.
-          </p>
-        </div>
-        <CmsButton className="ujat-survey-poll-empty__register-button" onClick={onRegisterClick}>
-          설문조사 등록
-        </CmsButton>
-      </div>
-    </div>
-  )
-}
-
-function UjatSurveyNoResponseState({
-  canDelete,
-  onDeleteClick,
-  onOpenTemplatePreview,
-}: {
-  canDelete: boolean
-  onDeleteClick: () => void
-  onOpenTemplatePreview: () => void
-}) {
-  return (
-    <div className="program-detail-fullpage-modal__info-tab ujat-survey-registered-empty-state">
-      <div className="ujat-survey-registered-empty-state__content">
-        <span className="ujat-survey-registered-empty-state__icon" aria-hidden>
-          <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="none">
-            <mask
-              id="ujat-survey-registered-empty-icon-mask"
-              maskUnits="userSpaceOnUse"
-              x="0"
-              y="0"
-              width="60"
-              height="60"
-            >
-              <rect width="60" height="60" fill="#D9D9D9" />
-            </mask>
-            <g mask="url(#ujat-survey-registered-empty-icon-mask)">
-              <path
-                d="M17.5 44.25L21 47.8125C21.25 48.0625 21.5417 48.1875 21.875 48.1875C22.2083 48.1875 22.5 48.0625 22.75 47.8125C23 47.5625 23.125 47.2604 23.125 46.9062C23.125 46.5521 23 46.25 22.75 46L19.25 42.5L22.8125 38.9375C23.0625 38.6875 23.1875 38.3958 23.1875 38.0625C23.1875 37.7292 23.0625 37.4375 22.8125 37.1875C22.5625 36.9375 22.2708 36.8125 21.9375 36.8125C21.6042 36.8125 21.3125 36.9375 21.0625 37.1875L17.5 40.75L13.9375 37.1875C13.6875 36.9375 13.3958 36.8125 13.0625 36.8125C12.7292 36.8125 12.4375 36.9375 12.1875 37.1875C11.9375 37.4375 11.8125 37.7292 11.8125 38.0625C11.8125 38.3958 11.9375 38.6875 12.1875 38.9375L15.75 42.5L12.1875 46.0625C11.9375 46.3125 11.8125 46.6042 11.8125 46.9375C11.8125 47.2708 11.9375 47.5625 12.1875 47.8125C12.4375 48.0625 12.7292 48.1875 13.0625 48.1875C13.3958 48.1875 13.6875 48.0625 13.9375 47.8125L17.5 44.25ZM8.65625 51.3438C6.21875 48.9062 5 45.9583 5 42.5C5 39.0417 6.21875 36.0938 8.65625 33.6563C11.0938 31.2188 14.0417 30 17.5 30C20.9583 30 23.9062 31.2188 26.3438 33.6563C28.7813 36.0938 30 39.0417 30 42.5C30 45.9583 28.7813 48.9062 26.3438 51.3438C23.9062 53.7812 20.9583 55 17.5 55C14.0417 55 11.0938 53.7812 8.65625 51.3438ZM35.5 36.5C35 35.9583 34.4688 35.4062 33.9062 34.8438C33.3438 34.2812 32.7917 33.75 32.25 33.25C33.8333 32.25 35.1042 30.9167 36.0625 29.25C37.0208 27.5833 37.5 25.75 37.5 23.75C37.5 20.625 36.4062 17.9688 34.2188 15.7812C32.0312 13.5938 29.375 12.5 26.25 12.5C23.125 12.5 20.4688 13.5938 18.2812 15.7812C16.0938 17.9688 15 20.625 15 23.75C15 24 15.0104 24.2396 15.0313 24.4688C15.0521 24.6979 15.0833 24.9375 15.125 25.1875C14.375 25.2708 13.5521 25.4375 12.6562 25.6875C11.7604 25.9375 10.9583 26.2292 10.25 26.5625C10.1667 26.1042 10.1042 25.6458 10.0625 25.1875C10.0208 24.7292 10 24.25 10 23.75C10 19.2083 11.5729 15.3646 14.7188 12.2188C17.8646 9.07292 21.7083 7.5 26.25 7.5C30.7917 7.5 34.6354 9.07292 37.7812 12.2188C40.9271 15.3646 42.5 19.2083 42.5 23.75C42.5 25.5417 42.2188 27.2396 41.6562 28.8438C41.0938 30.4479 40.3125 31.9167 39.3125 33.25L53.25 47.25C53.7083 47.7083 53.9479 48.2812 53.9688 48.9688C53.9896 49.6562 53.75 50.25 53.25 50.75C52.7917 51.2083 52.2083 51.4375 51.5 51.4375C50.7917 51.4375 50.2083 51.2083 49.75 50.75L35.5 36.5Z"
-                fill="#01A1AF"
-              />
-            </g>
-          </svg>
-        </span>
-        <div className="ujat-survey-registered-empty-state__texts">
-          <p className="ujat-survey-registered-empty-state__title">해당 설문조사는 아직 진행 전입니다.</p>
-          <p className="ujat-survey-registered-empty-state__description">
-            설문 진행 이후에 확인해 주세요.
-          </p>
-        </div>
-        <div className="ujat-survey-registered-empty-state__actions">
-          <CmsButton
-            className="ujat-survey-registered-empty-state__delete-button"
-            variant="delete"
-            width={140}
-            disabled={!canDelete}
-            onClick={onDeleteClick}
-          >
-            설문조사 삭제
-          </CmsButton>
-          <CmsButton
-            className="ujat-survey-registered-empty-state__preview-button"
-            width={180}
-            onClick={onOpenTemplatePreview}
-          >
-            설문 양식 보기
-          </CmsButton>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export function UjatProgramDetailFullPageModal({
   open,
   onClose,
@@ -593,26 +509,64 @@ export function UjatProgramDetailFullPageModal({
   const [activeRegisteredSurveyId, setActiveRegisteredSurveyId] = useState<string | null>(
     UJAT_REGISTERED_SURVEY_MOCK[0]?.id ?? null
   )
-  const { openWritingUserPreview } = useTemplateWritingPreview()
+  const [satisfactionSurveysByAudience, setSatisfactionSurveysByAudience] =
+    useState<UjatSatisfactionSurveyByAudience>(UJAT_SATISFACTION_SURVEY_MOCK)
+  const [activeSatisfactionAudience, setActiveSatisfactionAudience] =
+    useState<UjatSatisfactionAudienceKey>('teacher')
+  const [satisfactionCreateModalOpen, setSatisfactionCreateModalOpen] = useState(false)
+  const [submittingSatisfactionSurvey, setSubmittingSatisfactionSurvey] = useState(false)
+  const [satisfactionDeleteModalOpen, setSatisfactionDeleteModalOpen] = useState(false)
+  const [satisfactionDeleteConfirmWord, setSatisfactionDeleteConfirmWord] = useState('')
+  const [surveyTemplateEditOpen, setSurveyTemplateEditOpen] = useState(false)
+  const [surveyTemplateEditId, setSurveyTemplateEditId] = useState<string | null>(null)
+  const [selectedSatisfactionTemplateId, setSelectedSatisfactionTemplateId] = useState<string | null>(
+    null
+  )
+  const [lectureEvalSurvey, setLectureEvalSurvey] = useState<UjatRegisteredSurvey | null>(
+    UJAT_LECTURE_EVAL_SURVEY_MOCK
+  )
+  const [lectureEvalSubmitted, setLectureEvalSubmitted] = useState(false)
+  const [lectureEvalFormDraft, setLectureEvalFormDraft] = useState<WritingFormDraft | null>(null)
+  const [lectureEvalResponses, setLectureEvalResponses] = useState<UjatSurveyPollRawResponse[]>([])
+  const [activeLectureEvalTab, setActiveLectureEvalTab] = useState<UjatLectureEvalTabKey>('eval')
+  const [lectureEvalCreateModalOpen, setLectureEvalCreateModalOpen] = useState(false)
+  const [lectureEvalIncompleteModalOpen, setLectureEvalIncompleteModalOpen] = useState(false)
+  const [selectedLectureEvalTemplateId, setSelectedLectureEvalTemplateId] = useState<string | null>(
+    null
+  )
+  const [submittingLectureEvalSurvey, setSubmittingLectureEvalSurvey] = useState(false)
+  const [downloadingLectureEvalResults, setDownloadingLectureEvalResults] = useState(false)
+  const lectureEvalResultsExportRef = useRef<HTMLDivElement>(null)
+  const { openWritingUserPreview, closeWritingUserPreview } = useTemplateWritingPreview()
+  const { copyText } = useClipboard()
+  const { showAlert } = useCmsAlert()
 
-  const surveyTemplateOptions = useMemo(() => {
-    const byId = new Map(getWritingTemplateRowsByCategory('survey').map(row => [row.id, row]))
-    return surveyItems
-      .map(item => {
-        const templateId = UJAT_SURVEY_TEMPLATE_BY_MENU_KEY[item.key]
-        if (!templateId) return null
-        const row = byId.get(templateId)
-        if (!row) return null
-        return {
-          label: row.templateName,
-          value: row.id,
-        }
+  const openUjatSurveyTemplatePreview = useCallback(
+    (templateId: string) => {
+      const session = buildUjatSurveyWritingPreviewSession(templateId, () => {
+        closeWritingUserPreview()
+        setSurveyTemplateEditId(templateId)
+        setSurveyTemplateEditOpen(true)
       })
-      .filter((opt): opt is { label: string; value: string } => opt != null)
-  }, [surveyItems])
+      if (session == null) return
+      openWritingUserPreview(session)
+    },
+    [closeWritingUserPreview, openWritingUserPreview]
+  )
+
+  const handleCloseSurveyTemplateEdit = useCallback(() => {
+    setSurveyTemplateEditOpen(false)
+    setSurveyTemplateEditId(null)
+  }, [])
+
+  const surveyTemplateOptions = useMemo(() => getSurveyWritingTemplateSelectOptions(), [])
   const activeRegisteredSurvey = useMemo(
     () => registeredSurveys.find(item => item.id === activeRegisteredSurveyId) ?? null,
     [registeredSurveys, activeRegisteredSurveyId]
+  )
+  const activeSatisfactionSurvey = useMemo(
+    () => satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null,
+    [satisfactionSurveysByAudience, activeSatisfactionAudience]
   )
 
   const activeLnb: UjatDetailLnbKey = open
@@ -1173,18 +1127,240 @@ export function UjatProgramDetailFullPageModal({
 
   const handleOpenRegisteredSurveyTemplatePreview = useCallback(() => {
     if (!activeRegisteredSurvey) return
-    const row = findWritingTemplateRowByDefinitionId(activeRegisteredSurvey.templateId)
+    openUjatSurveyTemplatePreview(activeRegisteredSurvey.templateId)
+  }, [activeRegisteredSurvey, openUjatSurveyTemplatePreview])
+
+  const handleOpenSatisfactionCreateModal = useCallback(() => {
+    setSubmittingSatisfactionSurvey(false)
+    setSelectedSatisfactionTemplateId(
+      UJAT_SATISFACTION_TEMPLATE_BY_AUDIENCE[activeSatisfactionAudience]
+    )
+    setSatisfactionCreateModalOpen(true)
+  }, [activeSatisfactionAudience])
+
+  const handleCloseSatisfactionCreateModal = useCallback(() => {
+    if (submittingSatisfactionSurvey) return
+    setSatisfactionCreateModalOpen(false)
+  }, [submittingSatisfactionSurvey])
+
+  const handleSubmitSatisfactionSurvey = useCallback(async () => {
+    if (selectedSatisfactionTemplateId == null || selectedSatisfactionTemplateId === '') return
+    setSubmittingSatisfactionSurvey(true)
+    try {
+      const { newTemplateId } = await duplicateWritingTemplate({
+        sourceTemplateId: selectedSatisfactionTemplateId,
+        category: 'survey',
+      })
+      const next = findWritingTemplateRowByDefinitionId(newTemplateId)
+      if (next != null) {
+        const isTeacherAudience = activeSatisfactionAudience === 'teacher'
+        const audienceLabel = getSatisfactionAudienceLabel(activeSatisfactionAudience)
+        const newSurvey: UjatRegisteredSurvey = {
+          id: `ujat-satisfaction-${activeSatisfactionAudience}-${Date.now()}`,
+          title: `${audienceLabel} 만족도조사`,
+          templateId: next.id,
+          status: isTeacherAudience ? 'in_progress' : 'before_start',
+          responseCount: isTeacherAudience ? UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT : 0,
+          participantTotal: isTeacherAudience ? 11 : 0,
+        }
+        setSatisfactionSurveysByAudience(prev => ({
+          ...prev,
+          [activeSatisfactionAudience]: newSurvey,
+        }))
+      }
+      setSatisfactionCreateModalOpen(false)
+    } catch (error) {
+      console.debug('ujat satisfaction survey create failed', error)
+    } finally {
+      setSubmittingSatisfactionSurvey(false)
+    }
+  }, [activeSatisfactionAudience, selectedSatisfactionTemplateId])
+
+  const handleDeleteSatisfactionSurvey = useCallback(() => {
+    if (!activeSatisfactionSurvey || activeSatisfactionSurvey.status !== 'before_start') return
+    setSatisfactionSurveysByAudience(prev => {
+      const next = { ...prev }
+      delete next[activeSatisfactionAudience]
+      return next
+    })
+  }, [activeSatisfactionSurvey, activeSatisfactionAudience])
+
+  const handleOpenSatisfactionDeleteModal = useCallback(() => {
+    if (!activeSatisfactionSurvey || activeSatisfactionSurvey.status !== 'before_start') return
+    setSatisfactionDeleteConfirmWord('')
+    setSatisfactionDeleteModalOpen(true)
+  }, [activeSatisfactionSurvey])
+
+  const handleCloseSatisfactionDeleteModal = useCallback(() => {
+    setSatisfactionDeleteModalOpen(false)
+    setSatisfactionDeleteConfirmWord('')
+  }, [])
+
+  const handleConfirmSatisfactionDelete = useCallback(() => {
+    if (satisfactionDeleteConfirmWord !== '삭제') return
+    handleDeleteSatisfactionSurvey()
+    setSatisfactionDeleteModalOpen(false)
+    setSatisfactionDeleteConfirmWord('')
+  }, [satisfactionDeleteConfirmWord, handleDeleteSatisfactionSurvey])
+
+  const handleOpenSatisfactionTemplatePreview = useCallback(() => {
+    if (!activeSatisfactionSurvey) return
+    openUjatSurveyTemplatePreview(activeSatisfactionSurvey.templateId)
+  }, [activeSatisfactionSurvey, openUjatSurveyTemplatePreview])
+
+  const handleShareSatisfactionSurvey = useCallback(() => {
+    if (!activeSatisfactionSurvey || programId == null) return
+    const shareUrl = `${window.location.origin}/programs/ujat/satisfaction?programId=${programId}&audience=${activeSatisfactionAudience}`
+    void copyText(shareUrl)
+  }, [activeSatisfactionSurvey, activeSatisfactionAudience, copyText, programId])
+
+  const ensureLectureEvalFormDraft = useCallback(() => {
+    const templateId = lectureEvalSurvey?.templateId ?? UJAT_LECTURE_EVAL_TEMPLATE_ID
+    setLectureEvalFormDraft(prev => prev ?? buildLectureEvalFormDraft(templateId))
+  }, [lectureEvalSurvey?.templateId])
+
+  useEffect(() => {
+    if (lectureEvalSurvey == null) {
+      setLectureEvalFormDraft(null)
+      setLectureEvalResponses([])
+      setLectureEvalSubmitted(false)
+      setActiveLectureEvalTab('eval')
+      return
+    }
+    if (
+      lectureEvalSurvey.status === 'in_progress' ||
+      lectureEvalSurvey.status === 'finished'
+    ) {
+      ensureLectureEvalFormDraft()
+    }
+  }, [lectureEvalSurvey, ensureLectureEvalFormDraft])
+
+  const handleOpenLectureEvalCreateModal = useCallback(() => {
+    setSubmittingLectureEvalSurvey(false)
+    setSelectedLectureEvalTemplateId(UJAT_LECTURE_EVAL_TEMPLATE_ID)
+    setLectureEvalCreateModalOpen(true)
+  }, [])
+
+  const handleCloseLectureEvalCreateModal = useCallback(() => {
+    if (submittingLectureEvalSurvey) return
+    setLectureEvalCreateModalOpen(false)
+  }, [submittingLectureEvalSurvey])
+
+  const handleSubmitLectureEvalRegister = useCallback(async () => {
+    if (selectedLectureEvalTemplateId == null || selectedLectureEvalTemplateId === '') return
+    setSubmittingLectureEvalSurvey(true)
+    try {
+      const { newTemplateId } = await duplicateWritingTemplate({
+        sourceTemplateId: selectedLectureEvalTemplateId,
+        category: 'survey',
+      })
+      const next = findWritingTemplateRowByDefinitionId(newTemplateId)
+      if (next != null) {
+        const newSurvey: UjatRegisteredSurvey = {
+          id: `ujat-lecture-eval-${Date.now()}`,
+          title: next.templateName,
+          templateId: next.id,
+          // TODO(api): 서버 status — 진행 전(before_start) / 진행 중 / 종료
+          status: 'in_progress',
+          responseCount: 0,
+          participantTotal: 1,
+        }
+        setLectureEvalSurvey(newSurvey)
+        setLectureEvalSubmitted(false)
+        setLectureEvalResponses([])
+        setActiveLectureEvalTab('eval')
+        setLectureEvalFormDraft(buildLectureEvalFormDraft(next.id))
+      }
+      setLectureEvalCreateModalOpen(false)
+    } catch (error) {
+      console.debug('ujat lecture eval register failed', error)
+    } finally {
+      setSubmittingLectureEvalSurvey(false)
+    }
+  }, [selectedLectureEvalTemplateId])
+
+  const handleOpenLectureEvalPreview = useCallback(() => {
+    if (!lectureEvalSurvey) return
+    const row = findWritingTemplateRowByDefinitionId(lectureEvalSurvey.templateId)
     if (!row) return
     const entry = lookupTemplateRegistry(row.id)
     if (entry == null || !isSurveyRegistryEntry(entry)) return
 
     openWritingUserPreview({
-      draft: buildSurveyPreviewDraft(row.templateName),
+      draft: buildLectureEvalFormDraft(row.id),
       updateParagraph: () => {},
       headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
       editorKind: 'survey',
+      paragraphBodyOptions: UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
     })
-  }, [activeRegisteredSurvey, openWritingUserPreview])
+  }, [lectureEvalSurvey, openWritingUserPreview])
+
+  const handleLectureEvalTabChange = useCallback(
+    (tab: UjatLectureEvalTabKey) => {
+      if (tab === 'results') {
+        if (lectureEvalSurvey == null || lectureEvalSurvey.status !== 'finished') {
+          setLectureEvalIncompleteModalOpen(true)
+          return
+        }
+      }
+      setActiveLectureEvalTab(tab)
+    },
+    [lectureEvalSurvey]
+  )
+
+  const handleLectureEvalSubmit = useCallback(() => {
+    if (!lectureEvalSurvey || lectureEvalFormDraft == null) return
+    const validation = validateLectureEvalFormDraft(lectureEvalFormDraft)
+    if (!validation.valid) {
+      void showAlert({
+        title: '입력 확인',
+        content: validation.message,
+      })
+      return
+    }
+
+    setLectureEvalSubmitted(true)
+    setLectureEvalResponses([draftToLectureEvalPollResponse(lectureEvalFormDraft)])
+    setLectureEvalSurvey(prev => {
+      if (prev == null) return prev
+      const nextStatus =
+        UJAT_LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT && prev.status === 'in_progress'
+          ? 'finished'
+          : prev.status
+      return {
+        ...prev,
+        status: nextStatus,
+        responseCount: 1,
+        participantTotal: Math.max(prev.participantTotal, 1),
+      }
+    })
+  }, [lectureEvalSurvey, lectureEvalFormDraft, showAlert])
+
+  const handleLectureEvalEditResponse = useCallback(() => {
+    if (!lectureEvalSurvey || lectureEvalFormDraft == null) return
+    if (!canEditLectureEvalResponse(lectureEvalSurvey, lectureEvalFormDraft)) return
+    setLectureEvalSubmitted(false)
+  }, [lectureEvalSurvey, lectureEvalFormDraft])
+
+  const handleDownloadLectureEvalResults = useCallback(async () => {
+    const root = lectureEvalResultsExportRef.current
+    if (root == null || !displayProgram) return
+    setDownloadingLectureEvalResults(true)
+    try {
+      await exportLectureEvalResultsPdf(
+        root,
+        buildLectureEvalResultsPdfFileName(displayProgram.title)
+      )
+    } catch (error) {
+      handleError(error, { context: 'ujatLectureEvalResultsPdfDownload' })
+    } finally {
+      setDownloadingLectureEvalResults(false)
+    }
+  }, [displayProgram])
+
+  const handleCloseLectureEvalIncompleteModal = useCallback(() => {
+    setLectureEvalIncompleteModalOpen(false)
+  }, [])
 
   const closeVolAddRegistration = useCallback(() => {
     const next = new URLSearchParams(searchParams)
@@ -1350,6 +1526,7 @@ export function UjatProgramDetailFullPageModal({
   })()
 
   return (
+    <>
     <DetailFullPageModal
       open={open}
       onClose={handleClose}
@@ -1607,7 +1784,12 @@ export function UjatProgramDetailFullPageModal({
           {activeLnb === 'survey' &&
             (activeTab === 'survey-poll' ? (
               registeredSurveys.length === 0 ? (
-                <UjatSurveyPollEmptyState onRegisterClick={handleOpenSurveyCreateModal} />
+                <UjatSurveyEmptyState
+                  title={UJAT_SURVEY_POLL_EMPTY_COPY.title}
+                  description={UJAT_SURVEY_POLL_EMPTY_COPY.description}
+                  registerButtonLabel={UJAT_SURVEY_POLL_EMPTY_COPY.registerButton}
+                  onRegisterClick={handleOpenSurveyCreateModal}
+                />
               ) : (
                 <div className="program-detail-fullpage-modal__info-tab ujat-survey-registered">
                   <CmsTextTabs
@@ -1620,6 +1802,7 @@ export function UjatProgramDetailFullPageModal({
                       activeRegisteredSurvey != null ? (
                         <UjatSurveyRegisteredActions
                           survey={activeRegisteredSurvey}
+                          labels={UJAT_SURVEY_POLL_ACTION_LABELS}
                           onShareClick={() => undefined}
                           onAddClick={handleOpenSurveyCreateModal}
                           onOpenTemplatePreview={handleOpenRegisteredSurveyTemplatePreview}
@@ -1630,6 +1813,10 @@ export function UjatProgramDetailFullPageModal({
                   />
                   {activeRegisteredSurvey != null && activeRegisteredSurvey.responseCount === 0 ? (
                     <UjatSurveyNoResponseState
+                      title={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.title}
+                      description={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.description}
+                      deleteButtonLabel={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.deleteButton}
+                      previewButtonLabel={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.previewButton}
                       canDelete={activeRegisteredSurvey.status === 'before_start'}
                       onDeleteClick={handleOpenSurveyDeleteModal}
                       onOpenTemplatePreview={handleOpenRegisteredSurveyTemplatePreview}
@@ -1643,12 +1830,37 @@ export function UjatProgramDetailFullPageModal({
                   ) : null}
                 </div>
               )
-            ) : (
-              <UjatPlaceholderSection
-                title={surveyItems.find(s => s.key === activeTab)?.label ?? '설문'}
-                description="설문 관리 화면입니다. 목 데이터 연동 후 설문 항목별 콘텐츠가 표시됩니다."
+            ) : activeTab === 'survey-satisfaction' ? (
+              <UjatSatisfactionSurveyView
+                surveysByAudience={satisfactionSurveysByAudience}
+                activeAudience={activeSatisfactionAudience}
+                onAudienceChange={setActiveSatisfactionAudience}
+                onRegisterClick={handleOpenSatisfactionCreateModal}
+                onShareClick={handleShareSatisfactionSurvey}
+                onDeleteClick={handleOpenSatisfactionDeleteModal}
+                onOpenTemplatePreview={handleOpenSatisfactionTemplatePreview}
+                onDownloadClick={() => undefined}
               />
-            ))}
+            ) : activeTab === 'survey-lecture-eval' ? (
+              <UjatLectureEvalSurveyView
+                survey={lectureEvalSurvey}
+                submitted={lectureEvalSubmitted}
+                formDraft={lectureEvalFormDraft}
+                pollResponses={lectureEvalResponses}
+                activeTab={activeLectureEvalTab}
+                downloadingResults={downloadingLectureEvalResults}
+                resultsExportRef={lectureEvalResultsExportRef}
+                onTabChange={handleLectureEvalTabChange}
+                onRegisterClick={handleOpenLectureEvalCreateModal}
+                onOpenTemplatePreview={handleOpenLectureEvalPreview}
+                onFormDraftChange={setLectureEvalFormDraft}
+                onSubmitClick={handleLectureEvalSubmit}
+                onEditResponseClick={handleLectureEvalEditResponse}
+                onDownloadResultsClick={() => {
+                  void handleDownloadLectureEvalResults()
+                }}
+              />
+            ) : null)}
 
           {activeLnb === 'managers' && (
             <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
@@ -1751,6 +1963,176 @@ export function UjatProgramDetailFullPageModal({
           />
         </div>
       </ContentModal>
+      <ContentModal
+        open={satisfactionCreateModalOpen}
+        onCancel={handleCloseSatisfactionCreateModal}
+        title="신규 만족도조사 등록"
+        width={600}
+        className="ujat-survey-create-modal"
+        description={`${getSatisfactionAudienceLabel(activeSatisfactionAudience)}용 만족도조사를 등록하시겠습니까?\n등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.`}
+        footer={
+          <div className="ujat-survey-create-modal__footer">
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              width={120}
+              type="button"
+              onClick={handleCloseSatisfactionCreateModal}
+              disabled={submittingSatisfactionSurvey}
+            >
+              취소
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="medium"
+              width={120}
+              type="button"
+              onClick={() => {
+                void handleSubmitSatisfactionSurvey()
+              }}
+              disabled={
+                selectedSatisfactionTemplateId == null || selectedSatisfactionTemplateId === ''
+              }
+              loading={submittingSatisfactionSurvey}
+            >
+              신규 등록
+            </CmsButton>
+          </div>
+        }
+      >
+        <div className="ujat-survey-create-modal__field">
+          <p className="ujat-survey-create-modal__label">템플릿 유형</p>
+          <CmsSelect
+            width="100%"
+            withAllOption={false}
+            placeholder="사용할 설문 양식을 선택해 주세요"
+            options={surveyTemplateOptions}
+            value={selectedSatisfactionTemplateId ?? undefined}
+            onChange={value => setSelectedSatisfactionTemplateId(value ?? null)}
+          />
+        </div>
+      </ContentModal>
+      <ContentModal
+        open={satisfactionDeleteModalOpen}
+        onCancel={handleCloseSatisfactionDeleteModal}
+        title="만족도조사 삭제 안내"
+        width={600}
+        modalStyles={{
+          content: { minHeight: 310 },
+        }}
+        className="ujat-survey-delete-modal"
+        description={`**[${getSatisfactionDeleteModalSubject(activeSatisfactionAudience)}]** 만족도조사를 삭제하시겠습니까?\n삭제 시 해당 양식의 내용은 모두 삭제됩니다.\n삭제된 항목 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?`}
+        footer={
+          <div className="ujat-survey-delete-modal__footer">
+            <CmsButton
+              variant="secondary"
+              size="large"
+              width={140}
+              type="button"
+              onClick={handleCloseSatisfactionDeleteModal}
+            >
+              취소
+            </CmsButton>
+            <CmsButton
+              variant="delete"
+              size="large"
+              width={160}
+              type="button"
+              disabled={satisfactionDeleteConfirmWord.trim() !== '삭제'}
+              onClick={handleConfirmSatisfactionDelete}
+            >
+              만족도조사 삭제
+            </CmsButton>
+          </div>
+        }
+      >
+        <div className="ujat-survey-delete-modal__field">
+          <CmsInput
+            width="100%"
+            placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요."
+            value={satisfactionDeleteConfirmWord}
+            onChange={e => setSatisfactionDeleteConfirmWord(e.target.value)}
+          />
+        </div>
+      </ContentModal>
+      <ContentModal
+        open={lectureEvalCreateModalOpen}
+        onCancel={handleCloseLectureEvalCreateModal}
+        title={UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY.title}
+        width={600}
+        className="ujat-survey-create-modal"
+        description={UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY.description}
+        footer={
+          <div className="ujat-survey-create-modal__footer">
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              width={120}
+              type="button"
+              onClick={handleCloseLectureEvalCreateModal}
+              disabled={submittingLectureEvalSurvey}
+            >
+              {UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY.cancelButton}
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="medium"
+              width={120}
+              type="button"
+              onClick={() => {
+                void handleSubmitLectureEvalRegister()
+              }}
+              disabled={selectedLectureEvalTemplateId == null || selectedLectureEvalTemplateId === ''}
+              loading={submittingLectureEvalSurvey}
+            >
+              {UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY.confirmButton}
+            </CmsButton>
+          </div>
+        }
+      >
+        <div className="ujat-survey-create-modal__field">
+          <p className="ujat-survey-create-modal__label">템플릿 유형</p>
+          <CmsSelect
+            width="100%"
+            withAllOption={false}
+            placeholder="사용할 설문 양식을 선택해 주세요"
+            options={surveyTemplateOptions}
+            value={selectedLectureEvalTemplateId ?? undefined}
+            onChange={value => setSelectedLectureEvalTemplateId(value ?? null)}
+          />
+        </div>
+      </ContentModal>
+      <ContentModal
+        open={lectureEvalIncompleteModalOpen}
+        onCancel={handleCloseLectureEvalIncompleteModal}
+        title={UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.title}
+        width={600}
+        className="ujat-lecture-eval-incomplete-modal"
+        description={UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.description}
+        footer={
+          <div className="ujat-lecture-eval-incomplete-modal__footer">
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              width={120}
+              type="button"
+              onClick={handleCloseLectureEvalIncompleteModal}
+            >
+              {UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.confirmButton}
+            </CmsButton>
+          </div>
+        }
+      >
+        <span className="ujat-lecture-eval-incomplete-modal__body-placeholder" />
+      </ContentModal>
     </DetailFullPageModal>
+    {surveyTemplateEditId != null ? (
+      <UjatSurveyTemplateEditModal
+        open={surveyTemplateEditOpen}
+        templateId={surveyTemplateEditId}
+        onClose={handleCloseSurveyTemplateEdit}
+      />
+    ) : null}
+    </>
   )
 }

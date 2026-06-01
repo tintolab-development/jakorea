@@ -4,6 +4,7 @@
   gap: 32px;
   padding: 24px 0 52px;
   box-sizing: border-box;
+  position: relative;
 }
 
 .ujat-survey-poll-results__summary {
@@ -241,6 +242,120 @@
   width: 25%;
 }
 
+.ujat-survey-poll-results__pdf-pages {
+  position: fixed;
+  top: 0;
+  left: -100000px;
+  width: 794px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.ujat-survey-poll-results__pdf-page {
+  display: flex;
+  width: 794px;
+  height: 1123px;
+  padding: 44px;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ujat-survey-poll-results__pdf-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--color-mint-01, #01a1af);
+}
+
+.ujat-survey-poll-results__pdf-kicker {
+  margin: 0;
+  color: var(--color-mint-01, #01a1af);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.ujat-survey-poll-results__pdf-title,
+.ujat-survey-poll-results__pdf-section-title {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 140%;
+  word-break: keep-all;
+}
+
+.ujat-survey-poll-results__pdf-summary {
+  flex: 0 0 auto;
+  min-height: 88px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: #f8fbfb;
+}
+
+.ujat-survey-poll-results__pdf-sections {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  min-height: 0;
+}
+
+.ujat-survey-poll-results__pdf-section {
+  display: flex;
+  min-height: 176px;
+  max-height: 220px;
+  padding: 16px;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.ujat-survey-poll-results__pdf-section-title {
+  font-size: 15px;
+  line-height: 135%;
+}
+
+.ujat-survey-poll-results__pdf-section .ujat-survey-poll-results__section-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ujat-survey-poll-results__pdf-section .ujat-survey-scale-chart {
+  height: 132px;
+}
+
+.ujat-survey-poll-results__pdf-section .ujat-survey-text-responses-table {
+  height: 132px;
+  overflow: hidden;
+}
+
+.ujat-survey-poll-results__pdf-page .ujat-survey-poll-results__summary-text,
+.ujat-survey-poll-results__pdf-page .ujat-survey-poll-results__summary-count {
+  font-size: 24px;
+}
+
+.ujat-survey-poll-results__pdf-page .ujat-survey-poll-results__summary-secondary {
+  font-size: 16px;
+}
+
+.ujat-survey-poll-results__pdf-page .ujat-survey-text-responses-table__table th,
+.ujat-survey-poll-results__pdf-page .ujat-survey-text-responses-table__table td {
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
 .ujat-survey-registered-actions {
   display: flex;
   flex-wrap: wrap;
@@ -271,4 +386,17 @@
   min-width: 160px;
   height: 44px;
   padding: 0 31px !important;
+}
+
+.ujat-survey-registered-actions--satisfaction
+  .ujat-survey-registered-actions__download-button.cms-button.ant-btn.cms-button--large {
+  min-width: 230px;
+}
+
+.ujat-program-detail-fullpage-modal
+  .ujat-survey-registered-actions--satisfaction
+  .ujat-survey-registered-actions__share-button.cms-button.ant-btn.cms-button--large {
+  width: auto;
+  min-width: 180px;
+  padding: 0 20px !important;
 }

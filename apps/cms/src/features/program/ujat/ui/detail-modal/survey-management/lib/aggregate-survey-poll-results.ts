@@ -1,12 +1,7 @@
 import type { UjatSurveyPollRawResponse } from '@/data/mock/ujat-survey-poll-responses-mock'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
-import {
-  createDefaultSurveyDraft,
-  DEFAULT_SURVEY_PARAGRAPH_IDS,
-  type ScaleTypeItem,
-  type WritingFormParagraph,
-} from '@/features/template/model/writing-form-draft.schema'
-import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
+import type { ScaleTypeItem, WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
+import { resolveUjatSurveyWritingDraft } from './ujat-survey-writing-draft'
 
 export type UjatSurveyScaleChartDatum = {
   itemId: string
@@ -79,18 +74,7 @@ export function aggregateTextResults(
 }
 
 function resolveSurveyDraftForTemplate(templateId: string) {
-  const row = findWritingTemplateRowByDefinitionId(templateId)
-  const draft = createDefaultSurveyDraft()
-  const name = row?.templateName?.trim()
-  if (name == null || name === '') return draft
-  return {
-    ...draft,
-    paragraphs: draft.paragraphs.map(paragraph =>
-      paragraph.id === DEFAULT_SURVEY_PARAGRAPH_IDS.title
-        ? { ...paragraph, surveyTitle: name }
-        : paragraph
-    ),
-  }
+  return resolveUjatSurveyWritingDraft(templateId)
 }
 
 function getParagraphTitle(paragraphs: WritingFormParagraph[], paragraph: WritingFormParagraph) {

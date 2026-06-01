@@ -17,6 +17,7 @@ import {
   type ExplanationTextBodyDisplayMode,
 } from '@/features/template/ui/paragraph/explanation/text'
 import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/title'
+import { ExplanationSurveyPeriodReadonly } from '@/features/template/ui/paragraph/explanation/survey-period-readonly'
 import { DateField } from '@/features/template/ui/paragraph/single-item/date'
 import { TimeField } from '@/features/template/ui/paragraph/single-item/time'
 import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
@@ -160,6 +161,8 @@ export type RenderFormParagraphBodyOptions = {
   structureLockedAuthoringChoicePreview?: boolean
   /** 현재 조건에 따라 숨겨야 하는 단락 id 목록(에디터/미리보기 공통) */
   hiddenParagraphIds?: ReadonlySet<string>
+  /** 강의 평가 등 — 설문 기간을 기간 피커 대신 지정 텍스트로 표시 */
+  surveyPeriodReadonly?: boolean
 }
 
 export function renderFormParagraphBody(
@@ -187,6 +190,15 @@ export function renderFormParagraphBody(
     case 'survey_title_with_period':
       if (!isCardSelected && paragraphInteractionMode !== 'user') return null
       if (!(p.showWritingPeriodOnForm ?? false)) return null
+      if (options?.surveyPeriodReadonly) {
+        return (
+          <ExplanationSurveyPeriodReadonly
+            startAt={p.startAt}
+            endAt={p.endAt}
+            periodLabel={editorKind === 'survey' ? '설문 기간' : undefined}
+          />
+        )
+      }
       const titlePeriodEditMode = structureLocked
         ? paragraphInteractionMode === 'user'
         : paragraphInteractionMode === 'user' || isParagraphSelected

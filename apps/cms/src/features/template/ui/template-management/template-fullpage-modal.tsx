@@ -38,6 +38,8 @@ interface TemplateFullpageModalProps {
   subHeader?: ReactNode
   /** `full-page-modal__body-header` 좌측(닫기·미리보기·임시저장과 동일 행) */
   bodyHeaderLeading?: ReactNode
+  /** 프로그램 상세 등 다른 풀페이지 모달 위에 겹칠 때 스택 순서 */
+  zIndex?: number
 }
 
 export type TemplateFullpageModalFooterAction = {
@@ -82,6 +84,7 @@ export function TemplateFullpageModal({
   footerActions,
   subHeader,
   bodyHeaderLeading,
+  zIndex,
 }: TemplateFullpageModalProps) {
   const resolvedFooterActions =
     footerActions ?? (footerAction != null ? [footerAction] : undefined)
@@ -141,6 +144,7 @@ export function TemplateFullpageModal({
       size="full"
       hideHeader
       className={rootClassName}
+      zIndex={zIndex}
     >
       <div className="full-page-modal__layout">
         <header className="full-page-modal__topbar">
