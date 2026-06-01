@@ -1,0 +1,19 @@
+.program-kpi-target-section__inline-segments,
+.program-kpi-target-section__instructor-edit {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.program-kpi-target-section__inline-segments .detail-info-form-inputs-separator,
+.program-kpi-target-section__instructor-edit .detail-info-form-inputs-separator {
+  margin: 0;
+}
+
+.program-kpi-target-section__instructor-edit-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}

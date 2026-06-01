@@ -16,6 +16,7 @@ import { AppInput } from '@/shared/ui/app-input'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import type { UjatVolunteerRecruitHalf } from '../ujat-recruit-paragraph-props'
 import { getUjatVolunteerRecruitPeriod } from '../ujat-recruit-program-round'
+import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segments'
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 
@@ -58,10 +59,10 @@ function dateMethodLine(
   date: string | Date | undefined,
   method: string | undefined,
   fallbackMethod: string
-): string {
+) {
   if (!date) return '-'
-  const m = method?.trim() || fallbackMethod
-  return `${formatDateOnly(date)} | ${m}`
+  const methodLabel = method?.trim() || fallbackMethod
+  return <UjatInlineDividedSegments segments={[formatDateOnly(date), methodLabel]} />
 }
 
 export function UjatRecruitVolunteerInfoProgramView({
@@ -199,9 +200,16 @@ export function UjatRecruitVolunteerInfoProgramView({
           <DetailInfoForm.Field
             label="2차 면접 기간"
             view={
-              program.interviewStartDate && program.interviewEndDate
-                ? `${formatDateRange(program.interviewStartDate, program.interviewEndDate)}${program.interviewMethod ? ` | ${program.interviewMethod}` : ''}`
-                : '-'
+              program.interviewStartDate && program.interviewEndDate ? (
+                <UjatInlineDividedSegments
+                  segments={[
+                    formatDateRange(program.interviewStartDate, program.interviewEndDate),
+                    program.interviewMethod,
+                  ]}
+                />
+              ) : (
+                '-'
+              )
             }
           />
           <DetailInfoForm.Field
