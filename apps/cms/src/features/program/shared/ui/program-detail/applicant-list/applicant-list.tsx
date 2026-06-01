@@ -3,9 +3,9 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
-import type { TabKey } from '@/features/program/general/ui/detail-modal/program-detail-nav-types'
 import {
   updateApplicantSchoolApprovalStatus,
+  patchApplicantSchoolForApprovalStatus,
   type ApplicantSchoolRow,
 } from '@/data/mock/applicant-institutions'
 import {
@@ -13,28 +13,56 @@ import {
   updateApplicantInstructorApprovalStatus,
   type ApplicantInstructorRow,
 } from '@/data/mock/applicant-instructors'
+import {
+  updateGeneralIndividualApplicantApprovalStatus,
+  patchGeneralIndividualApplicantForApprovalStatus,
+  type GeneralIndividualApplicantRow,
+} from '@/data/mock/general-individual-applications-mock'
 import type { Program } from '@/types/domain'
+import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import { ApplicantCalendarView } from './applicant-calendar-view'
 import { mapApplicantDataToCalendarEvents } from './applicant-calendar-events'
 import { ApplicantsDetailContents, type ApplicantType } from './applicants-detail-contents'
+import type { ApplicantDetailMeta } from './use-applicants-detail'
 import { ApplicationApprovalModal } from '@/features/program/shared/ui/detail-modal/components/application-approval-modal'
 import { useApplicantsDetail } from './use-applicants-detail'
+import type {
+  ApplicantListMenu,
+  InstitutionColumnPreset,
+  SessionLinePreset,
+} from './applicant-list-menu'
 import './applicants-detail.css'
 import './applicant-list.css'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 
 export interface ApplicantListProps {
-  menu: TabKey | ''
+  menu: ApplicantListMenu | ''
   /** 신청 강사 상세 게시글 탭 등에 사용 */
   program?: Program | null
+  /** FilterTableLayout 타이틀 (일반 상세 LNB 라벨) */
+  listTitle?: string
+  filterFields?: FilterFieldConfig[]
+  institutionColumnPreset?: InstitutionColumnPreset
+  sessionLinePreset?: SessionLinePreset
+  programId?: string
   /** 풀페이지 모달 X: 상세가 열려 있으면 목록으로만 돌아가도록 등록 (true면 모달은 닫지 않음) */
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
+  /** 일반 프로그램 상세: 신규 UI / legacy 구분 */
+  detailVariant?: 'legacy' | 'general'
+  onApplicantDetailMetaChange?: (meta: ApplicantDetailMeta) => void
 }
 
 export function ApplicantList({
   menu,
   program = null,
+  listTitle,
+  filterFields,
+  institutionColumnPreset,
+  sessionLinePreset,
+  programId,
   onRegisterApplicantCloseHandler,
+  detailVariant = 'legacy',
+  onApplicantDetailMetaChange,
 }: ApplicantListProps) {
   const {
     applicantsCalendarGranularity,
@@ -43,6 +71,7 @@ export function ApplicantList({
     fields,
     setInstitutionList,
     setInstructorList,
+    setIndividualList,
     selectedItem,
     setSelectedItem,
     viewMode,
@@ -59,18 +88,33 @@ export function ApplicantList({
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,
     handleCancelRejectInstitution,
+    handleCancelApprovalIndividual,
+    handleCancelRejectIndividual,
     handleViewCalendar,
     title,
     tableData,
     columns,
     tableScrollX,
-  } = useApplicantsDetail({ menu, onRegisterApplicantCloseHandler })
+  } = useApplicantsDetail({
+    menu,
+    onRegisterApplicantCloseHandler,
+    onApplicantDetailMetaChange,
+    listTitle,
+    filterFields,
+    institutionColumnPreset,
+    sessionLinePreset,
+    programId,
+    detailVariant,
+  })
 
   const institutionTableWrapRef = useRef<HTMLDivElement>(null)
   const [institutionTableScrollX, setInstitutionTableScrollX] = useState(1280)
 
+  const usesInstitutionTableScroll =
+    menu === 'institutions' || menu === 'individual-applications'
+
   useLayoutEffect(() => {
-    if (menu !== 'institutions' || viewMode !== 'table' || selectedItem) return
+    if (!usesInstitutionTableScroll || viewMode !== 'table' || selectedItem) return
     const el = institutionTableWrapRef.current
     if (!el) return
     const minW = 1280
@@ -82,71 +126,142 @@ export function ApplicantList({
     const ro = new ResizeObserver(update)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [menu, viewMode, selectedItem])
+  }, [usesInstitutionTableScroll, viewMode, selectedItem])
 
-  const tableHorizontalScrollX = menu === 'institutions' ? institutionTableScrollX : tableScrollX
+  const tableHorizontalScrollX = usesInstitutionTableScroll ? institutionTableScrollX : tableScrollX
+
+  const showInstitutionDetail =
+    selectedItem != null && menu === 'institutions' && 'schoolName' in selectedItem
+  const showInstructorDetail =
+    selectedItem != null && menu === 'instructors' && 'instructorName' in selectedItem
+  const showIndividualDetail =
+    selectedItem != null && menu === 'individual-applications' && 'applicantName' in selectedItem
+
+  const resolveCancelApproval = () => {
+    if (menu === 'individual-applications') return handleCancelApprovalIndividual
+    return handleCancelApproval
+  }
+
+  const resolveCancelReject = () => {
+    if (menu === 'individual-applications') return handleCancelRejectIndividual
+    return handleCancelRejectInstitution
+  }
 
   return (
     <div className="applicant-details">
-      {selectedItem ? (
+      {showInstitutionDetail ? (
         <ApplicantsDetailContents
           type={menu as ApplicantType}
-          data={selectedItem}
+          detailVariant={detailVariant}
+          data={selectedItem as ApplicantSchoolRow}
           program={program}
           onBack={() => setSelectedItem(null)}
           onApprove={id => {
-            if (menu === 'institutions') {
-              setInstitutionList(prev =>
-                prev.map(row =>
-                  row.id === id ? { ...row, approvalStatus: 'approved' as const } : row
-                )
+            setInstitutionList(prev =>
+              prev.map(row =>
+                row.id === id ? patchApplicantSchoolForApprovalStatus(row, 'approved') : row
               )
-              updateApplicantSchoolApprovalStatus(id, 'approved')
+            )
+            updateApplicantSchoolApprovalStatus(id, 'approved')
+            if (detailVariant === 'general') {
+              setSelectedItem(prev =>
+                prev && 'schoolName' in prev && prev.id === id
+                  ? patchApplicantSchoolForApprovalStatus(prev as ApplicantSchoolRow, 'approved')
+                  : prev
+              )
+            } else {
               setSelectedItem(null)
-            } else if (menu === 'instructors') {
-              const row = selectedItem
-              if (row && 'instructorName' in row && row.id === id) {
-                setInstructorApprovalTarget({ id, name: row.instructorName })
-              }
             }
           }}
           onReject={id => {
-            if (menu === 'institutions') {
-              setInstitutionList(prev =>
-                prev.map(row =>
-                  row.id === id ? { ...row, approvalStatus: 'rejected' as const } : row
-                )
+            setInstitutionList(prev =>
+              prev.map(row =>
+                row.id === id ? patchApplicantSchoolForApprovalStatus(row, 'rejected') : row
               )
-              updateApplicantSchoolApprovalStatus(id, 'rejected')
-              setSelectedItem(null)
-            } else if (menu === 'instructors') {
-              setInstructorList(prev =>
-                prev.map(row =>
-                  row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'rejected') : row
-                )
-              )
+            )
+            updateApplicantSchoolApprovalStatus(id, 'rejected')
+            if (detailVariant === 'general') {
               setSelectedItem(prev =>
-                prev && 'instructorName' in prev && prev.id === id
-                  ? patchApplicantInstructorForApprovalStatus(prev, 'rejected')
+                prev && 'schoolName' in prev && prev.id === id
+                  ? patchApplicantSchoolForApprovalStatus(prev as ApplicantSchoolRow, 'rejected')
                   : prev
               )
-              updateApplicantInstructorApprovalStatus(id, 'rejected')
-              }
+            } else {
+              setSelectedItem(null)
+            }
           }}
-          onCancelApproval={
-            menu === 'institutions'
-              ? handleCancelApproval
-              : menu === 'instructors'
-                ? handleCancelApprovalInstructor
-                : undefined
-          }
-          onCancelReject={
-            menu === 'instructors'
-              ? handleCancelRejectInstructor
-              : menu === 'institutions'
-                ? handleCancelRejectInstitution
-                : undefined
-          }
+          onCancelApproval={resolveCancelApproval()}
+          onCancelReject={resolveCancelReject()}
+        />
+      ) : showIndividualDetail ? (
+        <ApplicantsDetailContents
+          type="individual-applications"
+          detailVariant={detailVariant}
+          data={selectedItem as GeneralIndividualApplicantRow}
+          program={program}
+          onBack={() => setSelectedItem(null)}
+          onApprove={id => {
+            setIndividualList(prev =>
+              prev.map(row =>
+                row.id === id ? patchGeneralIndividualApplicantForApprovalStatus(row, 'approved') : row
+              )
+            )
+            updateGeneralIndividualApplicantApprovalStatus(id, 'approved')
+            setSelectedItem(prev =>
+              prev && 'applicantName' in prev && prev.id === id
+                ? patchGeneralIndividualApplicantForApprovalStatus(
+                    prev as GeneralIndividualApplicantRow,
+                    'approved'
+                  )
+                : prev
+            )
+          }}
+          onReject={id => {
+            setIndividualList(prev =>
+              prev.map(row =>
+                row.id === id ? patchGeneralIndividualApplicantForApprovalStatus(row, 'rejected') : row
+              )
+            )
+            updateGeneralIndividualApplicantApprovalStatus(id, 'rejected')
+            setSelectedItem(prev =>
+              prev && 'applicantName' in prev && prev.id === id
+                ? patchGeneralIndividualApplicantForApprovalStatus(
+                    prev as GeneralIndividualApplicantRow,
+                    'rejected'
+                  )
+                : prev
+            )
+          }}
+          onCancelApproval={handleCancelApprovalIndividual}
+          onCancelReject={handleCancelRejectIndividual}
+        />
+      ) : showInstructorDetail ? (
+        <ApplicantsDetailContents
+          type={menu as ApplicantType}
+          data={selectedItem as ApplicantInstructorRow}
+          program={program}
+          onBack={() => setSelectedItem(null)}
+          onApprove={id => {
+            const row = selectedItem
+            if (row && 'instructorName' in row && row.id === id) {
+              setInstructorApprovalTarget({ id, name: row.instructorName })
+            }
+          }}
+          onReject={id => {
+            setInstructorList(prev =>
+              prev.map(row =>
+                row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'rejected') : row
+              )
+            )
+            setSelectedItem(prev =>
+              prev && 'instructorName' in prev && prev.id === id
+                ? patchApplicantInstructorForApprovalStatus(prev, 'rejected')
+                : prev
+            )
+            updateApplicantInstructorApprovalStatus(id, 'rejected')
+          }}
+          onCancelApproval={handleCancelApprovalInstructor}
+          onCancelReject={handleCancelRejectInstructor}
         />
       ) : null}
       <ApplicationApprovalModal
@@ -168,7 +283,7 @@ export function ApplicantList({
               : prev
           )
           updateApplicantInstructorApprovalStatus(id, 'approved')
-          }}
+        }}
       />
       {!selectedItem && menu ? (
         <FilterTableLayout
@@ -192,7 +307,8 @@ export function ApplicantList({
                 <CmsButton
                   icon={<CalendarOutlined />}
                   variant="secondary"
-                  size="large" style={{ minWidth: 180 }}
+                  size="large"
+                  style={{ minWidth: 180 }}
                   onClick={handleViewCalendar}
                 >
                   캘린더 뷰로 보기
@@ -202,7 +318,8 @@ export function ApplicantList({
                 <CmsButton
                   variant="secondary"
                   icon={<UnorderedListOutlined />}
-                  size="large" style={{ minWidth: 180 }}
+                  size="large"
+                  style={{ minWidth: 180 }}
                   onClick={() => setViewMode('table')}
                 >
                   리스트로 보기
@@ -212,10 +329,14 @@ export function ApplicantList({
           }
         >
           {viewMode === 'table' ? (
-            <div ref={menu === 'institutions' ? institutionTableWrapRef : undefined}>
-              <Table<ApplicantSchoolRow | ApplicantInstructorRow>
+            <div ref={usesInstitutionTableScroll ? institutionTableWrapRef : undefined}>
+              <Table<ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow>
                 rowKey="id"
-                columns={columns as ColumnsType<ApplicantSchoolRow | ApplicantInstructorRow>}
+                columns={
+                  columns as ColumnsType<
+                    ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow
+                  >
+                }
                 dataSource={tableData}
                 className="cms-data-table cms-data-table--fluid"
                 onRow={record => ({
@@ -226,11 +347,20 @@ export function ApplicantList({
                       target.closest('.status-dropdown-cell__status-trigger') ||
                       target.closest('.ant-table-selection-column') ||
                       target.closest('.ant-checkbox-wrapper')
-                    )
+                    ) {
                       return
-                    setSelectedItem(record)
+                    }
+                    if (menu === 'institutions' && 'schoolName' in record) {
+                      setSelectedItem(record)
+                    } else if (menu === 'instructors' && 'instructorName' in record) {
+                      setSelectedItem(record)
+                    } else if (menu === 'individual-applications' && 'applicantName' in record) {
+                      setSelectedItem(record)
+                    }
                   },
-                  style: { cursor: 'pointer' },
+                  style: {
+                    cursor: 'pointer',
+                  },
                 })}
                 scroll={{ x: tableHorizontalScrollX }}
                 pagination={false}
@@ -243,11 +373,19 @@ export function ApplicantList({
           ) : (
             <div className="applicant-calendar-view-container">
               <ApplicantCalendarView
-                events={mapApplicantDataToCalendarEvents(tableData, menu)}
+                events={mapApplicantDataToCalendarEvents(
+                  tableData as
+                    | ApplicantSchoolRow[]
+                    | ApplicantInstructorRow[]
+                    | GeneralIndividualApplicantRow[],
+                  menu
+                )}
                 loading={false}
                 selectedRowKeys={selectedRowKeys}
                 onSelectionChange={setSelectedRowKeys}
-                onItemClick={setSelectedItem}
+                onItemClick={item => {
+                  setSelectedItem(item)
+                }}
                 calendarGranularity={applicantsCalendarGranularity}
                 onCalendarGranularityChange={setApplicantsCalendarGranularity}
               />

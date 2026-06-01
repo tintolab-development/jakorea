@@ -2,6 +2,10 @@
  * 신청 기관 상세 - 기본 정보 / 안내 사항 / 강의 회차 별 교육 희망 날짜 및 시간
  * applicant-instructor-basic-info 스타일 참고, 이미지 시안 구조 반영
  * 강의 회차 표시: 프로그램 진행 현황 참여 기관과 동일 형식 (ParticipatingSchoolSession)
+ *
+ * @deprecated 삭제 예정 — 일반 프로그램은 ApplicantGeneralInstitutionBasicInfo 사용.
+ *   legacy ProgramDetailFullPageModal 경로 마이그레이션 후 제거.
+ *   @see apps/cms/docs/design/general-participant-application-detail-spec.md
  */
 
 import type { ReactNode } from 'react'
@@ -95,7 +99,7 @@ function ProgramApprovalStatusValue({ institution }: { institution: ApplicantSch
       <div className="applicant-institution-basic-info__approval-status-row">
         <span>참여 반려</span>
         <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
-        <span>사유 : {reason}</span>
+        <span>사유 : ({reason})</span>
         <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
         <SendNotiButton />
       </div>

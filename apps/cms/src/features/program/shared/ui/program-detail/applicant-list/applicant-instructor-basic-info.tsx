@@ -48,7 +48,7 @@ function ProgramApprovalStatusValue({ instructor }: { instructor: ApplicantInstr
       <div className="applicant-instructor-basic-info__approval-status-row">
         <span>{APPROVAL_STATUS_LABELS.rejected}</span>
         <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
-        <span>사유 : {reason}</span>
+        <span>사유 : ({reason})</span>
         <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
         <SendNotiButton />
       </div>

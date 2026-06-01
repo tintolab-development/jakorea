@@ -7,12 +7,16 @@ import {
 import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import { CMS_MULTI_SELECT_TAG_COLORS } from '@/shared/ui/cms-select'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
-import type { TabKey } from '@/features/program/general/ui/detail-modal/program-detail-nav-types'
 import {
   institutionFilterFields,
   instructorFilterFields,
   volunteerFilterFields,
 } from '@/features/program/general/ui/table/applicant-filter-fields'
+import {
+  filterGeneralOrganizationApplications,
+  filterGeneralIndividualApplications,
+} from '@/features/program/general/lib/general-application-table-filter'
+import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/general-institution-applications-mock'
 import {
   APPLICANTS_CALENDAR_RANGE_PARAM,
   parseCalendarRangeParam,
@@ -21,6 +25,7 @@ import {
 import {
   MOCK_APPLICANT_INSTITUTIONS,
   updateApplicantSchoolApprovalStatus,
+  patchApplicantSchoolForApprovalStatus,
   type ApplicantApprovalStatusKey,
   type ApplicantSchoolRow,
 } from '@/data/mock/applicant-institutions'
@@ -31,23 +36,68 @@ import {
   type ApplicantInstructorApprovalStatusKey,
   type ApplicantInstructorRow,
 } from '@/data/mock/applicant-instructors'
+import {
+  getGeneralIndividualApplicationsForProgram,
+  updateGeneralIndividualApplicantApprovalStatus,
+  patchGeneralIndividualApplicantForApprovalStatus,
+  type GeneralIndividualApplicantRow,
+} from '@/data/mock/general-individual-applications-mock'
 import { APPLICANT_ID_PARAM, DETAIL_TAB_PARAM } from './applicants-detail-constants'
-import { getSessionLineParts as getSessionLinePartsPure } from './applicants-detail-session-format'
+import {
+  getSessionLineParts as getSessionLinePartsPure,
+  type ApplicantSessionLineInput,
+} from './applicants-detail-session-format'
 import { filterApplicantsTableData } from './applicants-detail-table-filter'
 import {
   useInstitutionApplicantColumns,
   useInstructorApplicantColumns,
 } from './use-applicants-detail-columns'
+import { useGeneralIndividualApplicantColumns } from './use-general-individual-applicant-columns'
 import { createApplicantsFilterTablePageConfig } from './applicants-filter-table.config'
+import type {
+  ApplicantListMenu,
+  InstitutionColumnPreset,
+  SessionLinePreset,
+} from './applicant-list-menu'
+
+export type ApplicantListRow =
+  | ApplicantSchoolRow
+  | ApplicantInstructorRow
+  | GeneralIndividualApplicantRow
+
+export type ApplicantDetailMeta = {
+  title: string
+  breadcrumbLabel: string
+  kind: 'institution' | 'individual'
+} | null
 
 export function useApplicantsDetail({
   menu,
   onRegisterApplicantCloseHandler,
+  onApplicantDetailMetaChange,
+  listTitle,
+  filterFields: filterFieldsOverride,
+  institutionColumnPreset = 'legacy',
+  sessionLinePreset,
+  programId,
+  detailVariant = 'legacy',
 }: {
-  menu: TabKey | ''
+  menu: ApplicantListMenu | ''
   /** 풀페이지 모달 X: 상세가 열려 있으면 목록으로만 돌아가도록 등록 (true면 모달은 닫지 않음) */
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
+  /** 상세 진입 시 모달 제목·breadcrumb 갱신 */
+  onApplicantDetailMetaChange?: (meta: ApplicantDetailMeta) => void
+  /** FilterTableLayout 타이틀 (일반 상세 LNB 라벨) */
+  listTitle?: string
+  filterFields?: FilterFieldConfig[]
+  institutionColumnPreset?: InstitutionColumnPreset
+  sessionLinePreset?: SessionLinePreset
+  programId?: string
+  detailVariant?: 'legacy' | 'general'
 }) {
+  const resolvedSessionPreset: SessionLinePreset =
+    sessionLinePreset ?? (institutionColumnPreset === 'general-detail' ? 'general-detail' : 'legacy')
+
   const [searchParams, setSearchParams] = useSearchParams()
 
   const applicantsCalendarGranularity = useMemo(
@@ -66,18 +116,28 @@ export function useApplicantsDetail({
 
   const [appliedFilters, setAppliedFilters] = useState<Record<string, unknown>>({})
 
-  const [institutionList, setInstitutionList] = useState<ApplicantSchoolRow[]>(() => [
-    ...MOCK_APPLICANT_INSTITUTIONS,
-  ])
+  const [institutionList, setInstitutionList] = useState<ApplicantSchoolRow[]>(() => {
+    if (programId && institutionColumnPreset === 'general-detail') {
+      return getGeneralInstitutionApplicationsForProgram(programId)
+    }
+    return [...MOCK_APPLICANT_INSTITUTIONS]
+  })
   const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>(() => [
     ...MOCK_APPLICANT_INSTRUCTORS,
   ])
+  const [individualList, setIndividualList] = useState<GeneralIndividualApplicantRow[]>(() => {
+    if (programId) {
+      return getGeneralIndividualApplicationsForProgram(programId)
+    }
+    return []
+  })
 
-  const rawTableData = useMemo((): ApplicantSchoolRow[] | ApplicantInstructorRow[] => {
+  const rawTableData = useMemo((): ApplicantListRow[] => {
     if (menu === 'institutions') return institutionList
     if (menu === 'instructors') return instructorList
+    if (menu === 'individual-applications') return individualList
     return []
-  }, [menu, institutionList, instructorList])
+  }, [menu, institutionList, instructorList, individualList])
 
   const applicantFilterTablePageConfig = useMemo(
     () =>
@@ -90,7 +150,7 @@ export function useApplicantsDetail({
   )
 
   const { pendingFilters, setPendingFilters, handleFilterChange, applySearch } = useTablePage(
-    applicantFilterTablePageConfig,
+    applicantFilterTablePageConfig as Parameters<typeof useTablePage>[0],
     {
       data: rawTableData,
       searchParams,
@@ -99,9 +159,7 @@ export function useApplicantsDetail({
     }
   )
 
-  const [selectedItem, setSelectedItem] = useState<
-    ApplicantSchoolRow | ApplicantInstructorRow | null
-  >(null)
+  const [selectedItem, setSelectedItem] = useState<ApplicantListRow | null>(null)
   const selectedItemRef = useRef(selectedItem)
   selectedItemRef.current = selectedItem
 
@@ -135,7 +193,7 @@ export function useApplicantsDetail({
     }
   }, [selectedItem])
 
-  const prevMenuRef = useRef<TabKey | ''>(menu)
+  const prevMenuRef = useRef<ApplicantListMenu | ''>(menu)
   useEffect(() => {
     if (prevMenuRef.current !== menu) {
       prevMenuRef.current = menu
@@ -166,20 +224,66 @@ export function useApplicantsDetail({
       next.delete(DETAIL_TAB_PARAM)
       setSearchParams(next, { replace: true })
     }
-  }, [selectedItem, searchParams, setSearchParams])
+  }, [menu, selectedItem, searchParams, setSearchParams])
 
   useEffect(() => {
     if (!menu || menu === 'volunteers') return
     const applicantId = searchParams.get(APPLICANT_ID_PARAM)
-    if (!applicantId) return
-    const list = menu === 'institutions' ? institutionList : instructorList
+    if (!applicantId) {
+      setSelectedItem(prev => (prev ? null : prev))
+      return
+    }
+    const list =
+      menu === 'institutions'
+        ? institutionList
+        : menu === 'individual-applications'
+          ? individualList
+          : instructorList
     const found = list.find(item => item.id === applicantId)
     if (found) {
       setSelectedItem(found)
+    } else {
+      setSelectedItem(null)
     }
-  }, [menu, searchParams, institutionList, instructorList])
+  }, [menu, searchParams, institutionList, instructorList, individualList])
+
+  useEffect(() => {
+    if (!onApplicantDetailMetaChange || detailVariant !== 'general') return
+    if (!selectedItem) {
+      onApplicantDetailMetaChange(null)
+      return
+    }
+    if (menu === 'institutions' && 'schoolName' in selectedItem) {
+      onApplicantDetailMetaChange({
+        title: `참여 기관 신청 상세 (${selectedItem.schoolName})`,
+        breadcrumbLabel: selectedItem.schoolName,
+        kind: 'institution',
+      })
+      return
+    }
+    if (menu === 'individual-applications' && 'applicantName' in selectedItem) {
+      onApplicantDetailMetaChange({
+        title: `참여자 신청 상세 (${selectedItem.applicantName})`,
+        breadcrumbLabel: selectedItem.applicantName,
+        kind: 'individual',
+      })
+    }
+  }, [onApplicantDetailMetaChange, detailVariant, menu, selectedItem])
+
+  useEffect(() => {
+    if (programId && institutionColumnPreset === 'general-detail' && menu === 'institutions') {
+      setInstitutionList(getGeneralInstitutionApplicationsForProgram(programId))
+    }
+  }, [programId, institutionColumnPreset, menu])
+
+  useEffect(() => {
+    if (programId && menu === 'individual-applications') {
+      setIndividualList(getGeneralIndividualApplicationsForProgram(programId))
+    }
+  }, [programId, menu])
 
   const fields = useMemo((): FilterFieldConfig[] => {
+    if (filterFieldsOverride?.length) return filterFieldsOverride
     switch (menu) {
       case 'institutions':
         return institutionFilterFields
@@ -204,7 +308,7 @@ export function useApplicantsDetail({
       default:
         return []
     }
-  }, [menu, instructorList])
+  }, [menu, instructorList, filterFieldsOverride])
 
   const approvalStatusKeys = useMemo<ApprovalStatusKey[]>(
     () => ['pending', 'rejected', 'approved'] as ApprovalStatusKey[],
@@ -223,7 +327,18 @@ export function useApplicantsDetail({
           : prev
       )
       updateApplicantSchoolApprovalStatus(recordId, next)
-      },
+    },
+    []
+  )
+
+  const handleIndividualApprovalStatusChange = useCallback(
+    (recordId: string, status: ApprovalStatusKey) => {
+      const next = status as ApplicantApprovalStatusKey
+      setIndividualList(prev =>
+        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: next } : row))
+      )
+      updateGeneralIndividualApplicantApprovalStatus(recordId, next)
+    },
     []
   )
 
@@ -241,28 +356,36 @@ export function useApplicantsDetail({
           : prev
       )
       updateApplicantInstructorApprovalStatus(recordId, next)
-      },
+    },
     []
   )
 
   const getSessionLineParts = useCallback(
-    (s: Parameters<typeof getSessionLinePartsPure>[0]) => getSessionLinePartsPure(s),
-    []
+    (s: ApplicantSessionLineInput) => getSessionLinePartsPure(s, resolvedSessionPreset),
+    [resolvedSessionPreset]
   )
 
   const institutionColumns = useInstitutionApplicantColumns({
-    setSelectedItem,
+    setSelectedItem: record => setSelectedItem(record),
     approvalStatusKeys,
     getSessionLineParts,
     handleInstitutionApprovalStatusChange,
     openApprovalDropdownId,
     setOpenApprovalDropdownId,
+    preset: institutionColumnPreset,
   })
 
   const instructorColumns = useInstructorApplicantColumns({
-    setSelectedItem,
+    setSelectedItem: record => setSelectedItem(record),
     approvalStatusKeys,
     handleInstructorApprovalStatusChange,
+    openApprovalDropdownId,
+    setOpenApprovalDropdownId,
+  })
+
+  const individualColumns = useGeneralIndividualApplicantColumns({
+    approvalStatusKeys,
+    handleApprovalStatusChange: handleIndividualApprovalStatusChange,
     openApprovalDropdownId,
     setOpenApprovalDropdownId,
   })
@@ -279,14 +402,21 @@ export function useApplicantsDetail({
         )
       )
       keys.forEach(id => updateApplicantSchoolApprovalStatus(id, 'rejected'))
-      } else if (menu === 'instructors') {
+    } else if (menu === 'individual-applications') {
+      setIndividualList(prev =>
+        prev.map(row =>
+          keys.includes(row.id) ? { ...row, approvalStatus: 'rejected' as const } : row
+        )
+      )
+      keys.forEach(id => updateGeneralIndividualApplicantApprovalStatus(id, 'rejected'))
+    } else if (menu === 'instructors') {
       setInstructorList(prev =>
         prev.map(row =>
           keys.includes(row.id) ? patchApplicantInstructorForApprovalStatus(row, 'rejected') : row
         )
       )
       keys.forEach(id => updateApplicantInstructorApprovalStatus(id, 'rejected'))
-      } else {
+    } else {
       return
     }
     setSelectedRowKeys([])
@@ -304,14 +434,21 @@ export function useApplicantsDetail({
         )
       )
       keys.forEach(id => updateApplicantSchoolApprovalStatus(id, 'approved'))
-      } else if (menu === 'instructors') {
+    } else if (menu === 'individual-applications') {
+      setIndividualList(prev =>
+        prev.map(row =>
+          keys.includes(row.id) ? { ...row, approvalStatus: 'approved' as const } : row
+        )
+      )
+      keys.forEach(id => updateGeneralIndividualApplicantApprovalStatus(id, 'approved'))
+    } else if (menu === 'instructors') {
       setInstructorList(prev =>
         prev.map(row =>
           keys.includes(row.id) ? patchApplicantInstructorForApprovalStatus(row, 'approved') : row
         )
       )
       keys.forEach(id => updateApplicantInstructorApprovalStatus(id, 'approved'))
-      } else {
+    } else {
       return
     }
     setSelectedRowKeys([])
@@ -319,15 +456,15 @@ export function useApplicantsDetail({
 
   const handleCancelApproval = (id: string) => {
     setInstitutionList(prev =>
-      prev.map(row => (row.id === id ? { ...row, approvalStatus: 'pending' as const } : row))
+      prev.map(row => (row.id === id ? patchApplicantSchoolForApprovalStatus(row, 'pending') : row))
     )
     setSelectedItem(prev =>
       prev && 'schoolName' in prev && prev.id === id
-        ? { ...prev, approvalStatus: 'pending' as const }
+        ? patchApplicantSchoolForApprovalStatus(prev as ApplicantSchoolRow, 'pending')
         : prev
     )
     updateApplicantSchoolApprovalStatus(id, 'pending')
-    }
+  }
 
   const handleCancelApprovalInstructor = (id: string) => {
     setInstructorList(prev =>
@@ -341,7 +478,7 @@ export function useApplicantsDetail({
         : prev
     )
     updateApplicantInstructorApprovalStatus(id, 'pending')
-    }
+  }
 
   const handleCancelRejectInstructor = (id: string) => {
     setInstructorList(prev =>
@@ -355,25 +492,54 @@ export function useApplicantsDetail({
         : prev
     )
     updateApplicantInstructorApprovalStatus(id, 'pending')
-    }
+  }
 
   const handleCancelRejectInstitution = (id: string) => {
     setInstitutionList(prev =>
-      prev.map(row => (row.id === id ? { ...row, approvalStatus: 'pending' as const } : row))
+      prev.map(row => (row.id === id ? patchApplicantSchoolForApprovalStatus(row, 'pending') : row))
     )
     setSelectedItem(prev =>
       prev && 'schoolName' in prev && prev.id === id
-        ? { ...prev, approvalStatus: 'pending' as const }
+        ? patchApplicantSchoolForApprovalStatus(prev as ApplicantSchoolRow, 'pending')
         : prev
     )
     updateApplicantSchoolApprovalStatus(id, 'pending')
-    }
+  }
+
+  const handleCancelApprovalIndividual = (id: string) => {
+    setIndividualList(prev =>
+      prev.map(row =>
+        row.id === id ? patchGeneralIndividualApplicantForApprovalStatus(row, 'pending') : row
+      )
+    )
+    setSelectedItem(prev =>
+      prev && 'applicantName' in prev && prev.id === id
+        ? patchGeneralIndividualApplicantForApprovalStatus(prev, 'pending')
+        : prev
+    )
+    updateGeneralIndividualApplicantApprovalStatus(id, 'pending')
+  }
+
+  const handleCancelRejectIndividual = (id: string) => {
+    setIndividualList(prev =>
+      prev.map(row =>
+        row.id === id ? patchGeneralIndividualApplicantForApprovalStatus(row, 'pending') : row
+      )
+    )
+    setSelectedItem(prev =>
+      prev && 'applicantName' in prev && prev.id === id
+        ? patchGeneralIndividualApplicantForApprovalStatus(prev, 'pending')
+        : prev
+    )
+    updateGeneralIndividualApplicantApprovalStatus(id, 'pending')
+  }
 
   const handleViewCalendar = () => {
     setViewMode('calendar')
   }
 
   const title = useMemo(() => {
+    if (listTitle) return listTitle
     switch (menu) {
       case 'institutions':
         return '교육 신청 기관 목록'
@@ -384,30 +550,46 @@ export function useApplicantsDetail({
       default:
         return ''
     }
-  }, [menu])
+  }, [menu, listTitle])
 
-  const tableData = useMemo(
-    () =>
-      filterApplicantsTableData(
+  const tableData = useMemo((): ApplicantListRow[] => {
+    if (menu === 'individual-applications') {
+      return filterGeneralIndividualApplications(individualList, appliedFilters)
+    }
+    if (menu === 'institutions' && institutionColumnPreset === 'general-detail') {
+      return filterGeneralOrganizationApplications(institutionList, appliedFilters)
+    }
+    if (menu === 'institutions' || menu === 'instructors') {
+      return filterApplicantsTableData(
         menu,
         institutionList,
         instructorList,
-        appliedFilters as Record<string, any>
-      ),
-    [menu, institutionList, instructorList, appliedFilters]
-  )
+        appliedFilters as Record<string, unknown>
+      ) as ApplicantListRow[]
+    }
+    return []
+  }, [
+    menu,
+    institutionList,
+    instructorList,
+    individualList,
+    appliedFilters,
+    institutionColumnPreset,
+  ])
 
   const columns = useMemo(() => {
     if (menu === 'institutions') return institutionColumns
     if (menu === 'instructors') return instructorColumns
+    if (menu === 'individual-applications') return individualColumns
     return []
-  }, [menu, institutionColumns, instructorColumns])
+  }, [menu, institutionColumns, instructorColumns, individualColumns])
 
-  /** 신청 강사: 픽셀 합산 스크롤. 신청 기관은 뷰에서 래퍼 너비 기반 scroll.x 사용 */
   const tableScrollX =
     menu === 'instructors'
       ? 48 + 72 + 110 + 150 + 120 + 110 + 130 + 160 + 136
-      : 1280
+      : menu === 'individual-applications'
+        ? 1280
+        : 1280
 
   return {
     menu,
@@ -418,6 +600,7 @@ export function useApplicantsDetail({
     institutionList,
     setInstitutionList,
     setInstructorList,
+    setIndividualList,
     selectedItem,
     setSelectedItem,
     viewMode,
@@ -438,7 +621,10 @@ export function useApplicantsDetail({
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,
     handleCancelRejectInstitution,
+    handleCancelApprovalIndividual,
+    handleCancelRejectIndividual,
     handleViewCalendar,
+    detailVariant,
     title,
     tableData,
     columns,

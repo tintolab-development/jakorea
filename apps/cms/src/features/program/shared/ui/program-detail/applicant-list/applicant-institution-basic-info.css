@@ -16,6 +16,13 @@
   gap: 16px;
 }
 
+/** 기본 정보 — 프로그램 승인 현황 테이블과 나머지 필드 테이블 분리 */
+.applicant-institution-basic-info__basic-info-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .applicant-institution-basic-info__title {
   margin: 0;
   font-size: 18px;
@@ -105,7 +112,7 @@
 }
 
 .applicant-institution-basic-info__cell--label {
-  background: #f9f9f9;
+  background: var(--BG-header);
   text-align: center;
   font-size: 16px;
   font-weight: 600;
@@ -135,6 +142,15 @@
   background: var(--default-BK, #3d3d3d);
   opacity: 0.5;
   flex-shrink: 0;
+}
+
+.applicant-institution-basic-info__approval-notification-sent-at {
+  font-family: Pretendard, var(--font-family-primary, 'Pretendard'), sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
 }
 
 /* 강의 회차 별 교육 희망 날짜 및 시간 (참여 기관과 동일 표시 방식) */

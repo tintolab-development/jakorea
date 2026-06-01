@@ -7,8 +7,11 @@ import type { Program } from '@/types/domain'
 import { CmsButton, type CmsButtonVariant } from '@/shared/ui'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
 import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-info'
+import { ApplicantGeneralInstitutionBasicInfo } from '@/features/program/general/ui/applicant-detail/applicant-general-institution-basic-info'
+import { ApplicantGeneralIndividualBasicInfo } from '@/features/program/general/ui/applicant-detail/applicant-general-individual-basic-info'
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import {
@@ -19,7 +22,9 @@ import { SchoolDetailStudentListSection } from '@/features/program/general/ui/sc
 import { ApplicantInstitutionInstructorAssignTab } from './applicant-institution-instructor-assign-tab'
 import './applicants-detail-contents.css'
 
-export type ApplicantType = 'institutions' | 'instructors' | 'volunteers'
+export type ApplicantType = 'institutions' | 'instructors' | 'volunteers' | 'individual-applications'
+
+export type ApplicantDetailVariant = 'legacy' | 'general'
 
 const DETAIL_TAB_PARAM = 'detailTab'
 
@@ -29,10 +34,21 @@ const INSTRUCTOR_DETAIL_TAB_LABELS = {
   institutionAssignment: '기관 배정 현황',
 } as const
 
-function parseDetailTabFromSearch(searchParams: URLSearchParams, type: ApplicantType): string {
+function parseDetailTabFromSearch(
+  searchParams: URLSearchParams,
+  type: ApplicantType,
+  detailVariant: ApplicantDetailVariant
+): string {
   const t = searchParams.get(DETAIL_TAB_PARAM)
   if (type === 'institutions') {
-    /** 학생 명단·강사 배정 현황 탭 비활성화 중 — 선택 가능한 탭은 기본 정보 뿐 */
+    if (detailVariant === 'general') {
+      if (t === 'students') return 'students'
+      return 'info'
+    }
+    /** legacy: 학생 명단·강사 배정 현황 탭 비활성화 중 — 선택 가능한 탭은 기본 정보 뿐 */
+    return 'info'
+  }
+  if (type === 'individual-applications') {
     return 'info'
   }
   if (type === 'instructors') {
@@ -177,10 +193,13 @@ function resolveApplicantHeaderItems(params: {
   applicantId: string
   isApprovedInstitution: boolean
   isApprovedInstructor: boolean
+  isApprovedIndividual: boolean
   isRejectedInstitution: boolean
   isRejectedInstructor: boolean
+  isRejectedIndividual: boolean
   isInstitution: boolean
   isInstructor: boolean
+  isIndividual: boolean
   onRevealPersonalInfo: () => void
   onApprove: (id: string) => void
   onReject: (id: string) => void
@@ -191,10 +210,13 @@ function resolveApplicantHeaderItems(params: {
     applicantId,
     isApprovedInstitution,
     isApprovedInstructor,
+    isApprovedIndividual,
     isRejectedInstitution,
     isRejectedInstructor,
+    isRejectedIndividual,
     isInstitution,
     isInstructor,
+    isIndividual,
     onRevealPersonalInfo,
     onApprove,
     onReject,
@@ -202,7 +224,7 @@ function resolveApplicantHeaderItems(params: {
     onCancelReject,
   } = params
 
-  if (isApprovedInstitution) {
+  if (isApprovedInstitution || isApprovedIndividual) {
     return [
       headerBtnCancelApproval(applicantId, onCancelApproval),
       headerBtnEditInfoDisabled(),
@@ -216,13 +238,13 @@ function resolveApplicantHeaderItems(params: {
       headerBtnPrivacy(onRevealPersonalInfo),
     ]
   }
-  if (isRejectedInstructor || isRejectedInstitution) {
+  if (isRejectedInstructor || isRejectedInstitution || isRejectedIndividual) {
     return [
       headerBtnCancelReject(applicantId, onCancelReject),
       headerBtnPrivacy(onRevealPersonalInfo),
     ]
   }
-  if (isInstitution || isInstructor) {
+  if (isInstitution || isInstructor || isIndividual) {
     return headerBtnsPendingParticipation(applicantId, onApprove, onReject, onRevealPersonalInfo)
   }
   return null
@@ -230,7 +252,8 @@ function resolveApplicantHeaderItems(params: {
 
 interface ApplicantsDetailContentsProps {
   type: ApplicantType
-  data: ApplicantSchoolRow | ApplicantInstructorRow
+  data: ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow
+  detailVariant?: ApplicantDetailVariant
   /** 상위에서 전달 유지(향후 탭 복원 등). 신청 강사 상세에서는 미사용 */
   program?: Program | null
   onBack: () => void
@@ -245,6 +268,7 @@ interface ApplicantsDetailContentsProps {
 export function ApplicantsDetailContents({
   type,
   data,
+  detailVariant = 'legacy',
   onBack: _onBack,
   onApprove,
   onReject,
@@ -254,8 +278,8 @@ export function ApplicantsDetailContents({
   const [searchParams, setSearchParams] = useSearchParams()
 
   const activeTab = useMemo(
-    () => parseDetailTabFromSearch(searchParams, type),
-    [searchParams, type]
+    () => parseDetailTabFromSearch(searchParams, type, detailVariant),
+    [searchParams, type, detailVariant]
   )
 
   const setActiveTab = useCallback(
@@ -276,9 +300,12 @@ export function ApplicantsDetailContents({
   const isInstitution = type === 'institutions'
   const isInstructor = type === 'instructors'
   const isVolunteer = type === 'volunteers'
+  const isIndividual = type === 'individual-applications'
+  const isGeneralDetail = detailVariant === 'general'
 
   const institutionData = isInstitution ? (data as ApplicantSchoolRow) : null
   const instructorData = isInstructor ? (data as ApplicantInstructorRow) : null
+  const individualData = isIndividual ? (data as GeneralIndividualApplicantRow) : null
 
   /** 신청 기관(참여자) 승인 완료: [승인 취소], [정보 수정], [개인정보 상세보기] */
   const isApprovedInstitution = isInstitution && institutionData?.approvalStatus === 'approved'
@@ -292,13 +319,22 @@ export function ApplicantsDetailContents({
   /** 신청 강사 반려: [반려 취소] [개인정보 상세보기] */
   const isRejectedInstructor = isInstructor && instructorData?.approvalStatus === 'rejected'
 
+  const isApprovedIndividual = isIndividual && individualData?.approvalStatus === 'approved'
+  const isRejectedIndividual = isIndividual && individualData?.approvalStatus === 'rejected'
+
   const applicantId = data.id
 
   const resolveApplicantPersonalInfoAccessItem = useCallback(() => {
-    return isInstitution
-      ? institutionData?.schoolName ?? '신청 기관 정보'
-      : instructorData?.instructorName ?? '신청 강사 정보'
-  }, [isInstitution, institutionData?.schoolName, instructorData?.instructorName])
+    if (isInstitution) return institutionData?.schoolName ?? '신청 기관 정보'
+    if (isIndividual) return individualData?.applicantName ?? '참여자 신청 정보'
+    return instructorData?.instructorName ?? '신청 강사 정보'
+  }, [
+    isInstitution,
+    isIndividual,
+    institutionData?.schoolName,
+    individualData?.applicantName,
+    instructorData?.instructorName,
+  ])
 
   const {
     personalInfoRevealed,
@@ -315,10 +351,13 @@ export function ApplicantsDetailContents({
       applicantId,
       isApprovedInstitution,
       isApprovedInstructor,
+      isApprovedIndividual,
       isRejectedInstitution,
       isRejectedInstructor,
+      isRejectedIndividual,
       isInstitution,
       isInstructor,
+      isIndividual,
       onRevealPersonalInfo,
       onApprove,
       onReject,
@@ -331,10 +370,13 @@ export function ApplicantsDetailContents({
     applicantId,
     isApprovedInstitution,
     isApprovedInstructor,
+    isApprovedIndividual,
     isRejectedInstitution,
     isRejectedInstructor,
+    isRejectedIndividual,
     isInstitution,
     isInstructor,
+    isIndividual,
     onRevealPersonalInfo,
     onApprove,
     onReject,
@@ -352,12 +394,18 @@ export function ApplicantsDetailContents({
   }, [isInstructor, activeTab, headerExtraContent])
 
   const institutionTabDefs = useMemo(
-    () => [
-      { key: 'info', label: '기본 정보' },
-      { key: 'students', label: '학생 명단', disabled: true },
-      { key: 'assign', label: '강사 배정 현황', disabled: true },
-    ],
-    []
+    () =>
+      isGeneralDetail && isInstitution
+        ? [
+            { key: 'info', label: '신청 정보' },
+            { key: 'students', label: '학생 명단', disabled: true },
+          ]
+        : [
+            { key: 'info', label: '기본 정보' },
+            { key: 'students', label: '학생 명단', disabled: true },
+            { key: 'assign', label: '강사 배정 현황', disabled: true },
+          ],
+    [isGeneralDetail, isInstitution]
   )
 
   const instructorTabDefs = useMemo(
@@ -383,6 +431,15 @@ export function ApplicantsDetailContents({
     if (isInstitution && institutionData) {
       const d = institutionData
       if (activeTab === 'info') {
+        if (isGeneralDetail) {
+          return (
+            <ApplicantGeneralInstitutionBasicInfo
+              institution={d}
+              detail={d.detail}
+              maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
+            />
+          )
+        }
         return (
           <ApplicantInstitutionBasicInfo
             institution={d}
@@ -408,6 +465,14 @@ export function ApplicantsDetailContents({
         return <ApplicantInstitutionInstructorAssignTab schoolName={d.schoolName} />
       }
       return null
+    }
+    if (isIndividual && individualData) {
+      return (
+        <ApplicantGeneralIndividualBasicInfo
+          applicant={individualData}
+          maskSensitive={!personalInfoRevealed && individualData.approvalStatus !== 'approved'}
+        />
+      )
     }
     if (isInstructor && instructorData) {
       const d = instructorData
@@ -463,18 +528,35 @@ export function ApplicantsDetailContents({
   }, [
     activeTab,
     institutionData,
+    individualData,
     instructorData,
     isInstitution,
+    isIndividual,
     isInstructor,
     isVolunteer,
+    isGeneralDetail,
     personalInfoRevealed,
   ])
 
   const tabDefs = isVolunteer
     ? [{ key: 'info', label: '기본 정보' }]
-    : isInstitution
-      ? institutionTabDefs
-      : instructorTabDefs
+    : isIndividual
+      ? []
+      : isInstitution
+        ? institutionTabDefs
+        : instructorTabDefs
+
+  if (isIndividual) {
+    return (
+      <div className="applicant-contents">
+        {headerExtraContent ? (
+          <div className="applicant-contents__header-only-actions">{headerExtraContent}</div>
+        ) : null}
+        <div className="applicant-contents__panel">{tabPanel}</div>
+        {personalInfoRevealModal}
+      </div>
+    )
+  }
 
   return (
     <div className="applicant-contents">

@@ -1,7 +1,8 @@
 import dayjs from 'dayjs'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { TabKey } from '@/features/program/general/ui/detail-modal/program-detail-nav-types'
+import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import type { ApplicantListMenu } from './applicant-list-menu'
 
 /** 강사 캘린더 집계 이벤트용 — `calendarInstitutionSummary` 있으면 팝오버는 기관·인원, 우측 목록은 `calendarInstitutionInstructors`로 강사별 행 */
 export type ApplicantInstructorCalendarEventItem = ApplicantInstructorRow & {
@@ -93,57 +94,73 @@ export function buildInstructorInstitutionCalendarEvents(rows: ApplicantInstruct
   return events
 }
 
+function mapSchoolLikeSessionsToEvents(
+  item: ApplicantSchoolRow | GeneralIndividualApplicantRow,
+  titlePrefix: string,
+  index: number
+) {
+  let title = ''
+  let startDate: string | null = null
+  let endDate: string | null = null
+  const id = item.id || item.no || index
+  const label =
+    'schoolName' in item
+      ? item.schoolName
+      : 'applicantName' in item
+        ? item.applicantName
+        : ''
+
+  if ('desiredEducationPeriod' in item || 'sessions' in item) {
+    title = `${titlePrefix} ${label}`
+    const period =
+      'desiredEducationPeriod' in item ? item.desiredEducationPeriod?.trim() : undefined
+    if (period) {
+      const dateTimeMatch = period.match(
+        /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/
+      )
+
+      if (dateTimeMatch) {
+        const datePart = dateTimeMatch[1]
+        const startTime = dateTimeMatch[2]
+        const endTime = dateTimeMatch[3]
+        startDate = `${datePart}T${startTime}:00`
+        endDate = `${datePart}T${endTime}:00`
+      } else {
+        const rangeMatch = period.match(
+          /^(\d{2})\.(\d{2})\.(\d{2})\(.*\)\s*~\s*(\d{2})\.(\d{2})\.(\d{2})\(.*\)/
+        )
+        if (rangeMatch) {
+          startDate = `20${rangeMatch[1]}-${rangeMatch[2]}-${rangeMatch[3]}T00:00:00`
+          endDate = `20${rangeMatch[4]}-${rangeMatch[5]}-${rangeMatch[6]}T23:59:59`
+        }
+      }
+    }
+  }
+
+  return {
+    id,
+    title,
+    startDate,
+    endDate,
+    originalItem: item,
+  }
+}
+
 export function mapApplicantDataToCalendarEvents(
-  data: ApplicantSchoolRow[] | ApplicantInstructorRow[],
-  currentMenu: TabKey | ''
+  data: ApplicantSchoolRow[] | ApplicantInstructorRow[] | GeneralIndividualApplicantRow[],
+  currentMenu: ApplicantListMenu | ''
 ): any[] {
   if (currentMenu === 'instructors') {
     return buildInstructorInstitutionCalendarEvents(data as ApplicantInstructorRow[])
   }
 
-  return data.map((item, index) => {
-    let title = ''
-    let startDate = null
-    let endDate = null
-    const id = item.id || item.no || index
+  if (currentMenu === 'individual-applications') {
+    return (data as GeneralIndividualApplicantRow[]).map((item, index) =>
+      mapSchoolLikeSessionsToEvents(item, '[참여자]', index)
+    )
+  }
 
-    if (
-      currentMenu === 'institutions' &&
-      'schoolName' in item &&
-      'desiredEducationPeriod' in item
-    ) {
-      const applicant = item as ApplicantSchoolRow
-      title = `[참여기관] ${applicant.schoolName}`
-      if (applicant.desiredEducationPeriod) {
-        const period = applicant.desiredEducationPeriod.trim()
-        const dateTimeMatch = period.match(
-          /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/
-        )
-
-        if (dateTimeMatch) {
-          const datePart = dateTimeMatch[1]
-          const startTime = dateTimeMatch[2]
-          const endTime = dateTimeMatch[3]
-          startDate = `${datePart}T${startTime}:00`
-          endDate = `${datePart}T${endTime}:00`
-        } else {
-          const rangeMatch = period.match(
-            /^(\d{2})\.(\d{2})\.(\d{2})\(.*\)\s*~\s*(\d{2})\.(\d{2})\.(\d{2})\(.*\)/
-          )
-          if (rangeMatch) {
-            startDate = `20${rangeMatch[1]}-${rangeMatch[2]}-${rangeMatch[3]}T00:00:00`
-            endDate = `20${rangeMatch[4]}-${rangeMatch[5]}-${rangeMatch[6]}T23:59:59`
-          }
-        }
-      }
-    }
-
-    return {
-      id,
-      title,
-      startDate,
-      endDate,
-      originalItem: item,
-    } as any
-  })
+  return (data as ApplicantSchoolRow[]).map((item, index) =>
+    mapSchoolLikeSessionsToEvents(item, '[참여기관]', index)
+  )
 }

@@ -15,6 +15,12 @@
   flex-shrink: 0;
 }
 
+.applicant-contents__header-only-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 24px;
+}
+
 .applicant-contents__header-actions .cms-button {
   border-radius: 8px !important;
   font-weight: 600;
