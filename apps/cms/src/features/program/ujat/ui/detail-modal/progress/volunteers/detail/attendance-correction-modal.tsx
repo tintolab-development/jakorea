@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import { ContentModal, CmsButton, CmsInput, CmsSelect, FileSelectField, useCmsAlert } from '@/shared/ui'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
+import { UJAT_ATTENDANCE_STATUS_LABEL } from '../../attendance/types'
 import type { UjatVolunteerAttendanceDisplay } from './assignment-types'
 import './attendance-correction-modal.css'
 
@@ -11,7 +12,7 @@ const ATTENDANCE_STATUS_OPTIONS: Array<{ value: AttendanceStatusOption; label: s
   { value: 'present', label: '출석' },
   { value: 'late', label: '지각' },
   { value: 'absence', label: '결석' },
-  { value: 'excused_absence', label: '사유 불참' },
+  { value: 'excused_absence', label: UJAT_ATTENDANCE_STATUS_LABEL.excused_absence },
 ]
 
 function toStatus(attendance: UjatVolunteerAttendanceDisplay): AttendanceStatusOption {

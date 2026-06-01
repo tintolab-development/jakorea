@@ -20,6 +20,7 @@ import {
 } from './assignment-types'
 import { UjatAssignmentDocumentViewerModal } from '../../assignments/document-viewer/ujat-assignment-document-viewer-modal'
 import type { UjatDocumentViewerTarget } from '../../assignments/document-viewer/ujat-document-viewer-types'
+import { UJAT_ATTENDANCE_STATUS_LABEL } from '../../attendance/types'
 import './assignment.css'
 
 const PLAN_LOG_CELL_CLASSNAME = 'ujat-volunteer-assignment-table__plan-log-cell'
@@ -92,7 +93,9 @@ function renderAttendance(attendance: UjatVolunteerAttendanceDisplay) {
   }
   if (attendance.kind === 'excused_absence') {
     return (
-      <span className="ujat-volunteer-assignment-table__attendance-excused">사유 불참</span>
+      <span className="ujat-volunteer-assignment-table__attendance-excused">
+        {UJAT_ATTENDANCE_STATUS_LABEL.excused_absence}
+      </span>
     )
   }
   if (attendance.kind === 'absence') {
