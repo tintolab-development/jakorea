@@ -91,6 +91,27 @@
   min-width: 0;
 }
 
+/* 사업 KPI — 교육진행자 최종 인원: 강사/봉사자 라벨+입력 한 줄 */
+.program-registration-paragraph
+  .detail-info-form-inputs-wrapper.program-registration-paragraph__instructor-kpi-row {
+  flex-wrap: nowrap;
+  gap: 16px;
+  width: auto;
+  min-width: 0;
+}
+
+/* 디바이더 내장 margin(12px)과 래퍼 gap 중복 방지 — 간격은 래퍼 gap만 사용 */
+.program-registration-paragraph__instructor-kpi-row > .detail-info-form-inputs-separator {
+  margin: 0;
+}
+
+.program-registration-paragraph__instructor-kpi-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
 .program-registration-paragraph__schedule-detail-row > .app-radio-group {
   flex-shrink: 0;
 }

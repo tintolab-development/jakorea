@@ -43,22 +43,26 @@ export function ProgramRegistrationBusinessKpiParagraph({
         <DetailInfoForm.Field
           label="교육진행자 최종 인원"
           edit={
-            <div className="detail-info-form-inputs-wrapper">
-              <span className="detail-info-form--text mr-6">강사</span>
-              <CmsInput
-                disabled={instructorDisabled}
-                inputSize="medium"
-                placeholder={instructorPlaceholder}
-                width={120}
-              />
+            <div className="detail-info-form-inputs-wrapper program-registration-paragraph__instructor-kpi-row">
+              <div className="program-registration-paragraph__instructor-kpi-group">
+                <span className="detail-info-form--text">강사</span>
+                <CmsInput
+                  disabled={instructorDisabled}
+                  inputSize="medium"
+                  placeholder={instructorPlaceholder}
+                  width={120}
+                />
+              </div>
               <DetailInfoForm.InputsSeparator />
-              <span className="detail-info-form--text mr-6">봉사자</span>
-              <CmsInput
-                disabled={volunteerDisabled}
-                inputSize="medium"
-                placeholder={volunteerPlaceholder}
-                width={120}
-              />
+              <div className="program-registration-paragraph__instructor-kpi-group">
+                <span className="detail-info-form--text">봉사자</span>
+                <CmsInput
+                  disabled={volunteerDisabled}
+                  inputSize="medium"
+                  placeholder={volunteerPlaceholder}
+                  width={120}
+                />
+              </div>
             </div>
           }
           view="-"
