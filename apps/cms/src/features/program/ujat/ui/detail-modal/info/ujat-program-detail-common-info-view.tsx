@@ -29,6 +29,7 @@ import {
 } from './ujat-half-education-schedule-readonly'
 import { UjatEducationScheduleSettingsReadonly } from './ujat-education-schedule-settings-readonly'
 import { UjatRegionCapacityReadonly } from './ujat-region-capacity-readonly'
+import { UjatInlineDividedSegments } from '../shared/ujat-inline-divided-segments'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './ujat-program-detail-common-info-view.css'
@@ -102,7 +103,6 @@ function UjatBasicInfoFiveBlocks({
   v: ReturnType<typeof programToDetailEditValues>
   operationRange: string
 }) {
-  const managerLine = [v.managerName, v.contactPhone].filter(Boolean).join(' | ') || '-'
   const sponsorDisplay = sponsorName?.trim() ? (
     <UjatSponsorLink name={sponsorName.trim()} homepageUrl={sponsorHomepageUrl} />
   ) : (
@@ -121,19 +121,17 @@ function UjatBasicInfoFiveBlocks({
           <DetailInfoForm.Field
             label="최초 등록일"
             view={
-              <>
-                {formatDate(program.createdAt)}
-                {program.createdByName ? ` | ${program.createdByName}` : null}
-              </>
+              <UjatInlineDividedSegments
+                segments={[formatDate(program.createdAt), program.createdByName]}
+              />
             }
           />
           <DetailInfoForm.Field
             label="마지막 수정일"
             view={
-              <>
-                {formatDate(program.updatedAt)}
-                {program.updatedByName ? ` | ${program.updatedByName}` : null}
-              </>
+              <UjatInlineDividedSegments
+                segments={[formatDate(program.updatedAt), program.updatedByName]}
+              />
             }
           />
         </DetailInfoForm.Row>
@@ -198,7 +196,12 @@ function UjatBasicInfoFiveBlocks({
       >
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="후원사" view={sponsorDisplay} />
-          <DetailInfoForm.Field label="후원사 담당자" view={managerLine} />
+          <DetailInfoForm.Field
+            label="후원사 담당자"
+            view={
+              <UjatInlineDividedSegments segments={[v.managerName, v.contactPhone]} />
+            }
+          />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field

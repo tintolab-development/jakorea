@@ -1,0 +1,10 @@
+.ujat-inline-divided-segments {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ujat-inline-divided-segments .detail-info-form-inputs-separator {
+  margin: 0;
+}

@@ -15,6 +15,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { AppDatePicker } from '@/shared/ui/app-datepicker'
 import { AppInput } from '@/shared/ui/app-input'
 import { DividerVertical } from '@/shared/components/divider-vertical'
+import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segments'
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 
@@ -58,9 +59,13 @@ export function UjatRecruitParticipantInfoProgramView({
     : '초등학교'
   const resultDate = program.resultAnnouncementDate ?? program.applicationEndDate
   const resultMethod = program.resultAnnouncementMethod ?? '홈페이지 공지 및 담당교사 개별 안내'
-  const resultLine = resultDate
-    ? `${dayjs(resultDate).format('YYYY. MM. DD (ddd)')} | ${resultMethod}`
-    : '-'
+  const resultLine = resultDate ? (
+    <UjatInlineDividedSegments
+      segments={[dayjs(resultDate).format('YYYY. MM. DD (ddd)'), resultMethod]}
+    />
+  ) : (
+    '-'
+  )
   const publicTitle = program.mainTitle?.trim() || program.title
   const notes = (program.oneLineIntroduction ?? '').trim() || '-'
 
