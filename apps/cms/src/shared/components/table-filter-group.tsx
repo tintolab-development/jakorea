@@ -479,12 +479,15 @@ export function TableFilterGroup({
     const inner = renderFieldInner(field)
     if (inner == null) return null
 
+    const colDataAttrs = { 'data-filter-field-key': field.key }
+
     if (field.type === 'radio') {
       return (
         <Col
           key={field.key}
           flex={colFlex(field, '0 0 auto', rowFieldCount)}
           className={['unified-filter-card__col--radio', colClassName(field)].filter(Boolean).join(' ')}
+          {...colDataAttrs}
         >
           {inner}
         </Col>
@@ -493,7 +496,12 @@ export function TableFilterGroup({
 
     if (field.type === 'search') {
       return (
-        <Col key={field.key} flex={colFlex(field, '0 0 240px', rowFieldCount)} className={colClassName(field)}>
+        <Col
+          key={field.key}
+          flex={colFlex(field, '0 0 240px', rowFieldCount)}
+          className={colClassName(field)}
+          {...colDataAttrs}
+        >
           {inner}
         </Col>
       )
@@ -501,7 +509,12 @@ export function TableFilterGroup({
 
     if (field.type === 'select') {
       return (
-        <Col key={field.key} flex={colFlex(field, '1 1 300px', rowFieldCount)} className={colClassName(field)}>
+        <Col
+          key={field.key}
+          flex={colFlex(field, '1 1 300px', rowFieldCount)}
+          className={colClassName(field)}
+          {...colDataAttrs}
+        >
           {inner}
         </Col>
       )
@@ -509,7 +522,12 @@ export function TableFilterGroup({
 
     if (field.type === 'dateRange') {
       return (
-        <Col key={field.key} flex={colFlex(field, '1 1 360px', rowFieldCount)} className={colClassName(field)}>
+        <Col
+          key={field.key}
+          flex={colFlex(field, '1 1 360px', rowFieldCount)}
+          className={colClassName(field)}
+          {...colDataAttrs}
+        >
           {inner}
         </Col>
       )
@@ -517,7 +535,12 @@ export function TableFilterGroup({
 
     if (field.type === 'multiSelect') {
       return (
-        <Col key={field.key} flex={colFlex(field, '0 0 240px', rowFieldCount)} className={colClassName(field)}>
+        <Col
+          key={field.key}
+          flex={colFlex(field, '0 0 240px', rowFieldCount)}
+          className={colClassName(field)}
+          {...colDataAttrs}
+        >
           {inner}
         </Col>
       )
@@ -525,7 +548,12 @@ export function TableFilterGroup({
 
     if (field.type === 'addressRegion' || field.type === 'selectPair') {
       return (
-        <Col key={field.key} flex={colFlex(field, '1 1 320px', rowFieldCount)} className={colClassName(field)}>
+        <Col
+          key={field.key}
+          flex={colFlex(field, '1 1 320px', rowFieldCount)}
+          className={colClassName(field)}
+          {...colDataAttrs}
+        >
           {inner}
         </Col>
       )

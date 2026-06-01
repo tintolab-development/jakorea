@@ -23,8 +23,8 @@
 /* ===== 결재 현황 (동일 배지, 배경/텍스트색만 다름) ===== */
 /* 승인 대기 */
 .app-status-badge.textbook-status-badge--pending {
-    background: #e3f2fd;
-    color: #1976d2;
+    background: #e8f5e9;
+    color: var(--color-green, #1e8c29);
 }
 
 /* 신청 반려 */
@@ -32,7 +32,7 @@
     border-radius: 4px;
     border: 1px solid rgba(195, 47, 74, 0.06);
     background: #f9eaed;
-    color: var(--color-red, #c32f4a);
+    color: #c32f4a;
     text-align: center;
     font-family: Pretendard, sans-serif;
     font-size: 14px;
@@ -44,7 +44,7 @@
 /* 승인 완료 */
 .app-status-badge.textbook-status-badge--approved {
     background: #f2f3f5;
-    color: #464646;
+    color: var(--main-BK, #3d3d3d);
 }
 
 /* 승인 취소 */
