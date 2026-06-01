@@ -37,6 +37,22 @@ function maskInstitutionTeacherInfoLine(text: string): string {
     )
 }
 
+/** 라벨 문자열을 본문 + `(…)` 보조 문구 두 줄로 표시 (th 중앙 정렬 유지) */
+function tableLabelWithParenthesisHint(label: string): ReactNode {
+  const open = label.indexOf('(')
+  if (open <= 0) return label
+  const main = label.slice(0, open).trim()
+  const hint = label.slice(open).trim()
+  if (!hint.startsWith('(') || !hint.endsWith(')')) return label
+  return (
+    <>
+      {main}
+      <br />
+      {hint}
+    </>
+  )
+}
+
 function maskSexOffenseCheckRequestLine(text: string): string {
   return text
     .replace(/\bID\s*:\s*(\S+)/gi, (_, id: string) => {
@@ -102,7 +118,7 @@ function TableRowFullWidth({ label, value, multiline }: { label: string; value: 
   )
 }
 
-function TableRowSingleCol({ label, value }: { label: string; value: ReactNode }) {
+function TableRowSingleCol({ label, value }: { label: ReactNode; value: ReactNode }) {
   return (
     <tr>
       <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
@@ -129,6 +145,25 @@ function ProgramApprovalStatusValue({
       participationRejectionReason={institution.participationRejectionReason}
       approvalNotificationSentAt={institution.approvalNotificationSentAt}
     />
+  )
+}
+
+function buildSexOffenseRequestCell(
+  detail: ApplicantInstitutionDetailExtend | undefined,
+  shouldMask: boolean
+): ReactNode {
+  const raw = detail?.sexOffenseCheckRequest?.trim()
+  if (!raw) return '-'
+  const text = shouldMask ? maskSexOffenseCheckRequestLine(raw) : raw
+  const parts = text
+    .split(' | ')
+    .map(s => s.trim())
+    .filter(Boolean)
+  if (parts.length === 0) return '-'
+  return (
+    <ProgramDetailTdSegmentWrap>
+      {parts.length === 1 ? parts[0] : withProgramDetailTdDivider(parts)}
+    </ProgramDetailTdSegmentWrap>
   )
 }
 
@@ -199,12 +234,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
 
   const teacherInfo = buildTeacherInfoCell(institution, detail, shouldMask)
 
-  const sexOffenseRequestDisplay =
-    detail?.sexOffenseCheckRequest == null || detail.sexOffenseCheckRequest === ''
-      ? '-'
-      : shouldMask
-        ? maskSexOffenseCheckRequestLine(detail.sexOffenseCheckRequest)
-        : detail.sexOffenseCheckRequest
+  const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
 
   const sessions = institution.sessions ?? []
   const colgroup = (
@@ -296,7 +326,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
                 value={detail?.mealInfo ?? '-'}
               />
               <TableRowSingleCol
-                label="기타 특이사항 (주차, 전달사항 등)"
+                label={tableLabelWithParenthesisHint('기타 특이사항 (주차, 전달사항 등)')}
                 value={detail?.otherSpecialNotes ?? detail?.parkingInfo ?? '-'}
               />
               <TableRowSingleCol

@@ -137,6 +137,25 @@ function TableRowTwoCols({
   )
 }
 
+function buildSexOffenseRequestCell(
+  detail: ApplicantInstitutionDetailExtend | undefined,
+  shouldMask: boolean
+): ReactNode {
+  const raw = detail?.sexOffenseCheckRequest?.trim()
+  if (!raw) return '-'
+  const text = shouldMask ? maskSexOffenseCheckRequestLine(raw) : raw
+  const parts = text
+    .split(' | ')
+    .map(s => s.trim())
+    .filter(Boolean)
+  if (parts.length === 0) return '-'
+  return (
+    <ProgramDetailTdSegmentWrap>
+      {parts.length === 1 ? parts[0] : withProgramDetailTdDivider(parts)}
+    </ProgramDetailTdSegmentWrap>
+  )
+}
+
 function buildTeacherInfoCell(
   institution: ApplicantSchoolRow,
   detail: ApplicantInstitutionDetailExtend | undefined,
@@ -195,12 +214,7 @@ export function ApplicantInstitutionBasicInfo({
 
   const teacherInfo = buildTeacherInfoCell(institution, detail, shouldMask)
 
-  const sexOffenseRequestDisplay =
-    detail?.sexOffenseCheckRequest == null || detail.sexOffenseCheckRequest === ''
-      ? '-'
-      : shouldMask
-        ? maskSexOffenseCheckRequestLine(detail.sexOffenseCheckRequest)
-        : detail.sexOffenseCheckRequest
+  const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
 
   const sessions = institution.sessions ?? []
 
