@@ -163,13 +163,7 @@ export function ApplicantList({
               )
             )
             updateApplicantSchoolApprovalStatus(id, 'approved')
-            if (detailVariant === 'general') {
-              setSelectedItem(prev =>
-                prev && 'schoolName' in prev && prev.id === id
-                  ? patchApplicantSchoolForApprovalStatus(prev as ApplicantSchoolRow, 'approved')
-                  : prev
-              )
-            } else {
+            if (detailVariant !== 'general') {
               setSelectedItem(null)
             }
           }}
@@ -180,13 +174,7 @@ export function ApplicantList({
               )
             )
             updateApplicantSchoolApprovalStatus(id, 'rejected')
-            if (detailVariant === 'general') {
-              setSelectedItem(prev =>
-                prev && 'schoolName' in prev && prev.id === id
-                  ? patchApplicantSchoolForApprovalStatus(prev as ApplicantSchoolRow, 'rejected')
-                  : prev
-              )
-            } else {
+            if (detailVariant !== 'general') {
               setSelectedItem(null)
             }
           }}
@@ -207,14 +195,6 @@ export function ApplicantList({
               )
             )
             updateGeneralIndividualApplicantApprovalStatus(id, 'approved')
-            setSelectedItem(prev =>
-              prev && 'applicantName' in prev && prev.id === id
-                ? patchGeneralIndividualApplicantForApprovalStatus(
-                    prev as GeneralIndividualApplicantRow,
-                    'approved'
-                  )
-                : prev
-            )
           }}
           onReject={id => {
             setIndividualList(prev =>
@@ -223,14 +203,6 @@ export function ApplicantList({
               )
             )
             updateGeneralIndividualApplicantApprovalStatus(id, 'rejected')
-            setSelectedItem(prev =>
-              prev && 'applicantName' in prev && prev.id === id
-                ? patchGeneralIndividualApplicantForApprovalStatus(
-                    prev as GeneralIndividualApplicantRow,
-                    'rejected'
-                  )
-                : prev
-            )
           }}
           onCancelApproval={handleCancelApprovalIndividual}
           onCancelReject={handleCancelRejectIndividual}
@@ -253,11 +225,6 @@ export function ApplicantList({
                 row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'rejected') : row
               )
             )
-            setSelectedItem(prev =>
-              prev && 'instructorName' in prev && prev.id === id
-                ? patchApplicantInstructorForApprovalStatus(prev, 'rejected')
-                : prev
-            )
             updateApplicantInstructorApprovalStatus(id, 'rejected')
           }}
           onCancelApproval={handleCancelApprovalInstructor}
@@ -276,11 +243,6 @@ export function ApplicantList({
             prev.map(row =>
               row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'approved') : row
             )
-          )
-          setSelectedItem(prev =>
-            prev && 'instructorName' in prev && prev.id === id
-              ? patchApplicantInstructorForApprovalStatus(prev, 'approved')
-              : prev
           )
           updateApplicantInstructorApprovalStatus(id, 'approved')
         }}

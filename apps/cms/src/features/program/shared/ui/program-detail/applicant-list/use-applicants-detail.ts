@@ -159,9 +159,71 @@ export function useApplicantsDetail({
     }
   )
 
-  const [selectedItem, setSelectedItem] = useState<ApplicantListRow | null>(null)
-  const selectedItemRef = useRef(selectedItem)
+  const selectedItemRef = useRef<ApplicantListRow | null>(null)
+
+  const applicantIdFromUrl = searchParams.get(APPLICANT_ID_PARAM)
+
+  const selectedItem = useMemo((): ApplicantListRow | null => {
+    if (!applicantIdFromUrl || !menu || menu === 'volunteers') return null
+    if (menu === 'institutions') {
+      return institutionList.find(row => row.id === applicantIdFromUrl) ?? null
+    }
+    if (menu === 'individual-applications') {
+      return individualList.find(row => row.id === applicantIdFromUrl) ?? null
+    }
+    if (menu === 'instructors') {
+      return instructorList.find(row => row.id === applicantIdFromUrl) ?? null
+    }
+    return null
+  }, [applicantIdFromUrl, menu, institutionList, individualList, instructorList])
+
   selectedItemRef.current = selectedItem
+
+  const resolveApplicantFromUrlParams = useCallback(
+    (params: URLSearchParams): ApplicantListRow | null => {
+      const applicantId = params.get(APPLICANT_ID_PARAM)
+      if (!applicantId || !menu || menu === 'volunteers') return null
+      if (menu === 'institutions') {
+        return institutionList.find(row => row.id === applicantId) ?? null
+      }
+      if (menu === 'individual-applications') {
+        return individualList.find(row => row.id === applicantId) ?? null
+      }
+      if (menu === 'instructors') {
+        return instructorList.find(row => row.id === applicantId) ?? null
+      }
+      return null
+    },
+    [menu, institutionList, individualList, instructorList]
+  )
+
+  const setSelectedItem = useCallback(
+    (value: ApplicantListRow | null | ((prev: ApplicantListRow | null) => ApplicantListRow | null)) => {
+      setSearchParams(
+        prevParams => {
+          const next = new URLSearchParams(prevParams)
+          const current = resolveApplicantFromUrlParams(prevParams)
+          const resolved = typeof value === 'function' ? value(current) : value
+
+          if (resolved) {
+            if (next.get(APPLICANT_ID_PARAM) === resolved.id) {
+              return prevParams
+            }
+            next.set(APPLICANT_ID_PARAM, resolved.id)
+          } else {
+            if (!next.has(APPLICANT_ID_PARAM)) {
+              return prevParams
+            }
+            next.delete(APPLICANT_ID_PARAM)
+            next.delete(DETAIL_TAB_PARAM)
+          }
+          return next
+        },
+        { replace: true }
+      )
+    },
+    [resolveApplicantFromUrlParams, setSearchParams]
+  )
 
   useEffect(() => {
     if (!onRegisterApplicantCloseHandler) return
@@ -193,6 +255,20 @@ export function useApplicantsDetail({
     }
   }, [selectedItem])
 
+  useEffect(() => {
+    if (!applicantIdFromUrl || selectedItem || !menu || menu === 'volunteers') return
+    setSearchParams(
+      prevParams => {
+        const next = new URLSearchParams(prevParams)
+        if (!next.has(APPLICANT_ID_PARAM)) return prevParams
+        next.delete(APPLICANT_ID_PARAM)
+        next.delete(DETAIL_TAB_PARAM)
+        return next
+      },
+      { replace: true }
+    )
+  }, [applicantIdFromUrl, selectedItem, menu, setSearchParams])
+
   const prevMenuRef = useRef<ApplicantListMenu | ''>(menu)
   useEffect(() => {
     if (prevMenuRef.current !== menu) {
@@ -203,49 +279,8 @@ export function useApplicantsDetail({
       setSelectedItem(null)
       setOpenApprovalDropdownId(null)
       setInstructorApprovalTarget(null)
-      const next = new URLSearchParams(searchParams)
-      if (next.has(APPLICANT_ID_PARAM)) {
-        next.delete(APPLICANT_ID_PARAM)
-        next.delete(DETAIL_TAB_PARAM)
-        setSearchParams(next, { replace: true })
-      }
     }
-  }, [menu, searchParams, setSearchParams, setPendingFilters])
-
-  useEffect(() => {
-    const next = new URLSearchParams(searchParams)
-    if (selectedItem) {
-      if (next.get(APPLICANT_ID_PARAM) !== selectedItem.id) {
-        next.set(APPLICANT_ID_PARAM, selectedItem.id)
-        setSearchParams(next, { replace: false })
-      }
-    } else if (next.has(APPLICANT_ID_PARAM)) {
-      next.delete(APPLICANT_ID_PARAM)
-      next.delete(DETAIL_TAB_PARAM)
-      setSearchParams(next, { replace: true })
-    }
-  }, [menu, selectedItem, searchParams, setSearchParams])
-
-  useEffect(() => {
-    if (!menu || menu === 'volunteers') return
-    const applicantId = searchParams.get(APPLICANT_ID_PARAM)
-    if (!applicantId) {
-      setSelectedItem(prev => (prev ? null : prev))
-      return
-    }
-    const list =
-      menu === 'institutions'
-        ? institutionList
-        : menu === 'individual-applications'
-          ? individualList
-          : instructorList
-    const found = list.find(item => item.id === applicantId)
-    if (found) {
-      setSelectedItem(found)
-    } else {
-      setSelectedItem(null)
-    }
-  }, [menu, searchParams, institutionList, instructorList, individualList])
+  }, [menu, setPendingFilters, setSelectedItem])
 
   useEffect(() => {
     if (!onApplicantDetailMetaChange || detailVariant !== 'general') return
@@ -321,23 +356,7 @@ export function useApplicantsDetail({
       setInstitutionList(prev =>
         prev.map(row => (row.id === recordId ? { ...row, approvalStatus: next } : row))
       )
-      setSelectedItem(prev =>
-        prev && 'schoolName' in prev && prev.id === recordId
-          ? { ...prev, approvalStatus: next }
-          : prev
-      )
       updateApplicantSchoolApprovalStatus(recordId, next)
-    },
-    []
-  )
-
-  const handleIndividualApprovalStatusChange = useCallback(
-    (recordId: string, status: ApprovalStatusKey) => {
-      const next = status as ApplicantApprovalStatusKey
-      setIndividualList(prev =>
-        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: next } : row))
-      )
-      updateGeneralIndividualApplicantApprovalStatus(recordId, next)
     },
     []
   )
@@ -349,11 +368,6 @@ export function useApplicantsDetail({
         prev.map(row =>
           row.id === recordId ? patchApplicantInstructorForApprovalStatus(row, next) : row
         )
-      )
-      setSelectedItem(prev =>
-        prev && 'instructorName' in prev && prev.id === recordId
-          ? patchApplicantInstructorForApprovalStatus(prev, next)
-          : prev
       )
       updateApplicantInstructorApprovalStatus(recordId, next)
     },
@@ -383,12 +397,7 @@ export function useApplicantsDetail({
     setOpenApprovalDropdownId,
   })
 
-  const individualColumns = useGeneralIndividualApplicantColumns({
-    approvalStatusKeys,
-    handleApprovalStatusChange: handleIndividualApprovalStatusChange,
-    openApprovalDropdownId,
-    setOpenApprovalDropdownId,
-  })
+  const individualColumns = useGeneralIndividualApplicantColumns()
 
   const handleBulkReject = () => {
     if (selectedRowKeys.length === 0) {
@@ -458,11 +467,6 @@ export function useApplicantsDetail({
     setInstitutionList(prev =>
       prev.map(row => (row.id === id ? patchApplicantSchoolForApprovalStatus(row, 'pending') : row))
     )
-    setSelectedItem(prev =>
-      prev && 'schoolName' in prev && prev.id === id
-        ? patchApplicantSchoolForApprovalStatus(prev as ApplicantSchoolRow, 'pending')
-        : prev
-    )
     updateApplicantSchoolApprovalStatus(id, 'pending')
   }
 
@@ -471,11 +475,6 @@ export function useApplicantsDetail({
       prev.map(row =>
         row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'pending') : row
       )
-    )
-    setSelectedItem(prev =>
-      prev && 'instructorName' in prev && prev.id === id
-        ? patchApplicantInstructorForApprovalStatus(prev, 'pending')
-        : prev
     )
     updateApplicantInstructorApprovalStatus(id, 'pending')
   }
@@ -486,22 +485,12 @@ export function useApplicantsDetail({
         row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'pending') : row
       )
     )
-    setSelectedItem(prev =>
-      prev && 'instructorName' in prev && prev.id === id
-        ? patchApplicantInstructorForApprovalStatus(prev, 'pending')
-        : prev
-    )
     updateApplicantInstructorApprovalStatus(id, 'pending')
   }
 
   const handleCancelRejectInstitution = (id: string) => {
     setInstitutionList(prev =>
       prev.map(row => (row.id === id ? patchApplicantSchoolForApprovalStatus(row, 'pending') : row))
-    )
-    setSelectedItem(prev =>
-      prev && 'schoolName' in prev && prev.id === id
-        ? patchApplicantSchoolForApprovalStatus(prev as ApplicantSchoolRow, 'pending')
-        : prev
     )
     updateApplicantSchoolApprovalStatus(id, 'pending')
   }
@@ -512,11 +501,6 @@ export function useApplicantsDetail({
         row.id === id ? patchGeneralIndividualApplicantForApprovalStatus(row, 'pending') : row
       )
     )
-    setSelectedItem(prev =>
-      prev && 'applicantName' in prev && prev.id === id
-        ? patchGeneralIndividualApplicantForApprovalStatus(prev, 'pending')
-        : prev
-    )
     updateGeneralIndividualApplicantApprovalStatus(id, 'pending')
   }
 
@@ -525,11 +509,6 @@ export function useApplicantsDetail({
       prev.map(row =>
         row.id === id ? patchGeneralIndividualApplicantForApprovalStatus(row, 'pending') : row
       )
-    )
-    setSelectedItem(prev =>
-      prev && 'applicantName' in prev && prev.id === id
-        ? patchGeneralIndividualApplicantForApprovalStatus(prev, 'pending')
-        : prev
     )
     updateGeneralIndividualApplicantApprovalStatus(id, 'pending')
   }
