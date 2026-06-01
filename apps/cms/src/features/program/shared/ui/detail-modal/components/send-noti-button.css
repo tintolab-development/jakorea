@@ -1,34 +1,87 @@
 /**
- * 프로그램 승인 현황 — 알림 발송 버튼
- * 시안: 120×40, flex column·중앙, gap 10px, radius 6, border rgba(0,0,0,0.15), 배경 흰색
- * (원안 padding 32px 31px는 고정 크기와 상충하여 생략, 콘텐츠는 flex로 중앙 정렬)
+ * 프로그램 승인 현황 — 알림 발송 / 알림 재발송 버튼
+ * 시안: 100×32, mint border·text, 연한 mint 배경
+ * cms-button--default 보다 특이도 높은 선택자로 variant 덮어쓰기 방지
  */
-.send-noti-button.cms-button.ant-btn {
+
+.send-noti-button.cms-button.ant-btn.cms-button--secondary.cms-button--small:not(:disabled):not(
+    .ant-btn-disabled
+  ) {
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: column !important;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  width: 120px;
-  min-width: 120px;
-  max-width: 120px;
-  height: 40px;
-  min-height: 40px;
-  padding: 0;
-  border-radius: 6px !important;
-  border: 1px solid rgba(0, 0, 0, 0.15) !important;
-  background: var(--default-WT, #fff) !important;
-  color: var(--default-BK, #3d3d3d) !important;
-  font-size: var(--font-size-14, 14px);
-  font-weight: var(--font-weight-600, 600);
-  line-height: 1.2;
+  gap: 4px;
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 6px 12px !important;
+  border-radius: var(--6, var(--radius-6, 6px)) !important;
+  border: 1px solid var(--color-mint-01, #01a1af) !important;
+  background-color: #fff !important;
+  background-image: linear-gradient(
+    0deg,
+    rgba(1, 161, 175, 0.06) 0%,
+    rgba(1, 161, 175, 0.06) 100%
+  ) !important;
+  color: var(--color-mint-01, #01a1af) !important;
+  font-family: Pretendard, var(--font-family-primary, 'Pretendard'), sans-serif;
+  font-size: 12px !important;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
   text-align: center;
+  box-shadow: none !important;
 }
 
-.send-noti-button.cms-button.ant-btn:hover:not(:disabled),
-.send-noti-button.cms-button.ant-btn:focus:not(:disabled) {
-  background: #f5f5f5 !important;
-  border-color: rgba(0, 0, 0, 0.15) !important;
-  color: var(--default-BK, #3d3d3d) !important;
+.send-noti-button.cms-button.ant-btn.cms-button--secondary.cms-button--small:not(:disabled):not(
+    .ant-btn-disabled
+  )
+  .cms-button__label {
+  color: var(--color-mint-01, #01a1af) !important;
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary, 'Pretendard'), sans-serif;
+  font-size: 12px !important;
+  font-style: normal;
+  font-weight: 600 !important;
+  line-height: 150%;
+}
+
+.send-noti-button.cms-button.ant-btn.cms-button--secondary.cms-button--small:not(:disabled):not(
+    .ant-btn-disabled
+  ):hover
+  .cms-button__label,
+.send-noti-button.cms-button.ant-btn.cms-button--secondary.cms-button--small:not(:disabled):not(
+    .ant-btn-disabled
+  ):focus
+  .cms-button__label,
+.send-noti-button.cms-button.ant-btn.cms-button--secondary.cms-button--small:not(:disabled):not(
+    .ant-btn-disabled
+  ):active
+  .cms-button__label {
+  color: var(--color-mint-01, #01a1af) !important;
+}
+
+.send-noti-button.cms-button.ant-btn.cms-button--secondary.cms-button--small:not(:disabled):not(
+    .ant-btn-disabled
+  ):hover,
+.send-noti-button.cms-button.ant-btn.cms-button--secondary.cms-button--small:not(:disabled):not(
+    .ant-btn-disabled
+  ):focus,
+.send-noti-button.cms-button.ant-btn.cms-button--secondary.cms-button--small:not(:disabled):not(
+    .ant-btn-disabled
+  ):active {
+  border: 1px solid var(--color-mint-01, #01a1af) !important;
+  background-color: #fff !important;
+  background-image: linear-gradient(
+    0deg,
+    rgba(1, 161, 175, 0.06) 0%,
+    rgba(1, 161, 175, 0.06) 100%
+  ) !important;
+  color: var(--color-mint-01, #01a1af) !important;
+  box-shadow: none !important;
 }

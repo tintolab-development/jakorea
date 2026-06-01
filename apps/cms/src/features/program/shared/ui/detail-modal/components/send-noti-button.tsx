@@ -17,8 +17,8 @@ export function SendNotiButton({ mode = 'send', onClick }: SendNotiButtonProps) 
   const label = mode === 'resend' ? '알림 재발송' : '알림 발송'
   return (
     <CmsButton
-      variant="default"
-      size="large"
+      variant="secondary"
+      size="small"
       type="button"
       className="send-noti-button"
       onClick={onClick ?? defaultSendNotiClick}
