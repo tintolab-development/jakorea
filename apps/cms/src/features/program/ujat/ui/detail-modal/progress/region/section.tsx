@@ -2,12 +2,12 @@ import { useCallback, useMemo, useState } from 'react'
 import { useRegionAssignment } from './use-region-assignment'
 import { DownloadOutlined } from '@ant-design/icons'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../../application-institution/list/region-tabs'
 import { UjatAssignmentAssignModal } from '../shared/assign-modal'
 import type { EducationProgressHalfKey } from '../tabs'
 import { RegionAssignmentTable } from './assignment-table'
+import { RegionAssignmentDownloadModal } from './assignment-download-modal'
 import {
   applyRegionAttendanceManagersFromData,
   getRegionAttendanceManagerScheduleItemsFromData,
@@ -35,6 +35,7 @@ export function UjatEducationProgressRegionAssignmentSection({
   const [directAssignModalOpen, setDirectAssignModalOpen] = useState(false)
   const [blockedDateModalOpen, setBlockedDateModalOpen] = useState(false)
   const [attendanceManagerModalOpen, setAttendanceManagerModalOpen] = useState(false)
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false)
 
   const { tableData, tableVersion, runAutoAssign, bump } = useRegionAssignment(activeRegion)
 
@@ -75,6 +76,14 @@ export function UjatEducationProgressRegionAssignmentSection({
 
   const handleOpenDirectAssignModal = useCallback(() => {
     setDirectAssignModalOpen(true)
+  }, [])
+
+  const handleOpenDownloadModal = useCallback(() => {
+    setDownloadModalOpen(true)
+  }, [])
+
+  const handleCloseDownloadModal = useCallback(() => {
+    setDownloadModalOpen(false)
   }, [])
 
   const handleCloseDirectAssignModal = useCallback(() => {
@@ -135,13 +144,6 @@ export function UjatEducationProgressRegionAssignmentSection({
     [activeRegion, bump, showAlert, tableData]
   )
 
-  const showComingSoon = () => {
-    showAlert({
-      title: '안내',
-      content: FEATURE_COMING_SOON_ALERT_MESSAGE,
-    })
-  }
-
   return (
     <div className="ujat-education-progress-region-assignment">
       <UjatInstitutionApplicationRegionTabs
@@ -164,7 +166,7 @@ export function UjatEducationProgressRegionAssignmentSection({
             size="large"
             width={160}
             icon={<DownloadOutlined />}
-            onClick={showComingSoon}
+            onClick={handleOpenDownloadModal}
           >
             배정표 다운로드
           </CmsButton>
@@ -208,6 +210,12 @@ export function UjatEducationProgressRegionAssignmentSection({
       </div>
 
       <RegionAssignmentTable data={tableData} />
+
+      <RegionAssignmentDownloadModal
+        open={downloadModalOpen}
+        data={tableData}
+        onCancel={handleCloseDownloadModal}
+      />
 
       <UjatAssignmentAssignModal
         variant="region_direct"
