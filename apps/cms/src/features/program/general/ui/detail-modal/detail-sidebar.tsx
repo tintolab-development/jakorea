@@ -77,6 +77,7 @@ function accordionKeysForRoute(lnb: GeneralDetailLnbKey): TopAccordionKey[] {
 export interface GeneralProgramDetailSidebarProps {
   activeLnb: GeneralDetailLnbKey
   activeTab: string
+  participantApplicationsLnbLabel: string
   showInstructorApplications: boolean
   showVolunteerApplications: boolean
   volunteerInterviewEnabled: boolean
@@ -87,6 +88,7 @@ export interface GeneralProgramDetailSidebarProps {
 export function GeneralProgramDetailSidebar({
   activeLnb,
   activeTab,
+  participantApplicationsLnbLabel,
   showInstructorApplications,
   showVolunteerApplications,
   volunteerInterviewEnabled,
@@ -204,7 +206,9 @@ export function GeneralProgramDetailSidebar({
               <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
                 <GeneralLnbInstitutionApplicationIcon />
               </span>
-              <span className="detail-fullpage-modal__lnb-item-label">기관 신청 목록</span>
+              <span className="detail-fullpage-modal__lnb-item-label">
+                {participantApplicationsLnbLabel}
+              </span>
             </button>
           </li>
 

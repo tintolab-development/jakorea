@@ -3,7 +3,7 @@
  * LNB·breadcrumb·queryParam 복원만 구성 (본문 화면은 추후 API 연동)
  */
 
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { handleError } from '@/shared/utils/error-handler'
@@ -16,6 +16,8 @@ import {
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import type { Program } from '@/types/domain'
 import {
+  GENERAL_ORGANIZATION_APPLICATIONS_LNB_LABEL,
+  getGeneralParticipantApplicationsLnbLabel,
   getGeneralSurveyMenuItems,
   getGeneralVolunteerInterviewEnabled,
   hasGeneralInstructorApplications,
@@ -33,6 +35,10 @@ import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hook
 import { GeneralProgramDetailSidebar } from './detail-sidebar'
 import { GeneralProgramDetailCommonInfoView } from './info/common-info-view'
 import { GeneralSurveyManagementView } from './survey-management/general-survey-management-view'
+import { ProgramManagersTab } from '../program-managers-tab'
+import { GeneralParticipantApplicationsView } from './applications/general-participant-applications-view'
+import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
+import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './detail-fullpage-modal.css'
 
@@ -40,7 +46,14 @@ const TAB_PARAM = 'tab'
 const LNB_PARAM = 'lnb'
 const EDIT_PARAM = 'edit'
 
-const GENERAL_DETAIL_QUERY_PARAMS = ['programId', LNB_PARAM, TAB_PARAM, EDIT_PARAM] as const
+const GENERAL_DETAIL_QUERY_PARAMS = [
+  'programId',
+  LNB_PARAM,
+  TAB_PARAM,
+  EDIT_PARAM,
+  APPLICANT_ID_PARAM,
+  'detailTab',
+] as const
 
 const INFO_TABS = ['info', 'recruitment', 'application'] as const
 const VOLUNTEER_INTERVIEW_TABS = ['vol_doc1', 'vol_doc_passed', 'vol_interview2'] as const
@@ -150,12 +163,15 @@ function normalizeGeneralDetailParams(
   return changed ? next : null
 }
 
-function generalLnbBreadcrumbLabel(lnb: GeneralDetailLnbKey): string {
+function generalLnbBreadcrumbLabel(
+  lnb: GeneralDetailLnbKey,
+  participantApplicationsLnbLabel: string
+): string {
   switch (lnb) {
     case 'info':
       return '프로그램 정보'
     case 'institution_applications':
-      return '기관 신청 목록'
+      return participantApplicationsLnbLabel
     case 'instructor_applications':
       return '강사 신청 목록'
     case 'volunteer_applications':
@@ -247,6 +263,13 @@ export function GeneralProgramDetailFullPageModal({
   const showVolunteerApplications = displayProgram
     ? hasGeneralVolunteerApplications(displayProgram)
     : false
+  const participantApplicationsLnbLabel = useMemo(
+    () =>
+      displayProgram
+        ? getGeneralParticipantApplicationsLnbLabel(displayProgram)
+        : GENERAL_ORGANIZATION_APPLICATIONS_LNB_LABEL,
+    [displayProgram]
+  )
 
   const activeLnb: GeneralDetailLnbKey = open
     ? (parseGeneralDetailLnb(searchParams) ?? 'info')
@@ -304,6 +327,26 @@ export function GeneralProgramDetailFullPageModal({
     if (displayProgram) void infoTriggerSave()
   }, [displayProgram, infoTriggerSave])
 
+  const applicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
+  const [applicantDetailMeta, setApplicantDetailMeta] = useState<ApplicantDetailMeta>(null)
+
+  const handleApplicantDetailMetaChange = useCallback((meta: ApplicantDetailMeta) => {
+    setApplicantDetailMeta(meta)
+  }, [])
+
+  useEffect(() => {
+    if (!open || activeLnb !== 'institution_applications') {
+      setApplicantDetailMeta(null)
+    }
+  }, [open, activeLnb])
+
+  const handleModalClose = useCallback(() => {
+    if (activeLnb === 'institution_applications' && applicantCloseHandlerRef.current?.()) {
+      return
+    }
+    onClose()
+  }, [activeLnb, onClose])
+
   useEffect(() => {
     if (!open || !programId || !displayProgram) return
     const normalized = normalizeGeneralDetailParams(programId, searchParams, displayProgram)
@@ -338,7 +381,7 @@ export function GeneralProgramDetailFullPageModal({
       },
     })
 
-    const lnbLabel = generalLnbBreadcrumbLabel(activeLnb)
+    const lnbLabel = generalLnbBreadcrumbLabel(activeLnb, participantApplicationsLnbLabel)
     const childLabel = generalChildBreadcrumbLabel(activeLnb, activeTab, surveyItems)
     const lnbTab = generalLnbBreadcrumbTargetTab(
       activeLnb,
@@ -373,8 +416,15 @@ export function GeneralProgramDetailFullPageModal({
       )
     )
 
+    const hasParticipantApplicationDetail =
+      applicantDetailMeta != null && activeLnb === 'institution_applications'
+
     if (!childLabel) {
-      items.push({ label: lnbLabel })
+      items.push(
+        hasParticipantApplicationDetail
+          ? makeBreadcrumbItem(lnbLabel, location.pathname, lnbParams)
+          : { label: lnbLabel }
+      )
     } else {
       items.push(makeBreadcrumbItem(lnbLabel, location.pathname, lnbParams))
       items.push(
@@ -384,19 +434,26 @@ export function GeneralProgramDetailFullPageModal({
       )
     }
 
+    if (hasParticipantApplicationDetail) {
+      items.push({ label: applicantDetailMeta.breadcrumbLabel })
+    }
+
     return items
   })()
 
   if (!open) return null
 
-  const modalTitle = displayProgram
-    ? resolveGeneralProgramDisplayTitle(displayProgram)
-    : '프로그램 상세'
+  const modalTitle =
+    applicantDetailMeta && activeLnb === 'institution_applications'
+      ? applicantDetailMeta.title
+      : displayProgram
+        ? resolveGeneralProgramDisplayTitle(displayProgram)
+        : '프로그램 상세'
 
   return (
     <DetailFullPageModal
       open={open}
-      onClose={onClose}
+      onClose={handleModalClose}
       title={modalTitle}
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className="program-detail-fullpage-modal general-program-detail-fullpage-modal program-detail-fullpage-modal--program-list-overview"
@@ -405,6 +462,7 @@ export function GeneralProgramDetailFullPageModal({
           <GeneralProgramDetailSidebar
             activeLnb={activeLnb}
             activeTab={activeTab}
+            participantApplicationsLnbLabel={participantApplicationsLnbLabel}
             showInstructorApplications={showInstructorApplications}
             showVolunteerApplications={showVolunteerApplications}
             volunteerInterviewEnabled={interviewEnabled}
@@ -432,12 +490,27 @@ export function GeneralProgramDetailFullPageModal({
             />
           ) : activeLnb === 'survey' ? (
             <GeneralSurveyManagementView program={displayProgram} activeTab={activeTab} />
+          ) : activeLnb === 'managers' && displayProgram.id ? (
+            <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
+              <ProgramManagersTab programId={displayProgram.id} />
+            </div>
+          ) : activeLnb === 'institution_applications' ? (
+            <div className="program-detail-fullpage-modal__info-tab">
+              <GeneralParticipantApplicationsView
+                program={displayProgram}
+                listTitle={participantApplicationsLnbLabel}
+                onRegisterApplicantCloseHandler={fn => {
+                  applicantCloseHandlerRef.current = fn
+                }}
+                onApplicantDetailMetaChange={handleApplicantDetailMetaChange}
+              />
+            </div>
           ) : (
             <div
               className="general-program-detail-fullpage-modal__main"
               aria-label={
                 generalChildBreadcrumbLabel(activeLnb, activeTab, surveyItems) ??
-                generalLnbBreadcrumbLabel(activeLnb)
+                generalLnbBreadcrumbLabel(activeLnb, participantApplicationsLnbLabel)
               }
             />
           )}
