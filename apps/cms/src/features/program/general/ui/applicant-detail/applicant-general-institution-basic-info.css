@@ -1,0 +1,24 @@
+/**
+ * 일반 프로그램 — 기관 유형 참여자 신청 상세
+ * applicant-institution-basic-info.css 클래스 재사용 + general 전용 보조
+ */
+
+.applicant-general-institution-basic-info.applicant-institution-basic-info {
+  margin-top: 0;
+}
+
+.applicant-general-institution-basic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.applicant-general-institution-basic-info .applicant-institution-basic-info__section {
+  margin-top: 0;
+}
+
+.applicant-general-institution-basic-info
+  .applicant-institution-basic-info__cell--value--multiline {
+  white-space: pre-wrap;
+  line-height: 150%;
+}

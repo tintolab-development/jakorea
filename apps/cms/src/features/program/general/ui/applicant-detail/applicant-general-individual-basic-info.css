@@ -1,0 +1,30 @@
+/**
+ * 일반 프로그램 — 개인 유형 참여자 신청 상세
+ */
+
+.applicant-general-individual-basic-info.applicant-institution-basic-info {
+  margin-top: 0;
+}
+
+.applicant-general-individual-basic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.applicant-general-individual-basic-info .applicant-institution-basic-info__section {
+  margin-top: 0;
+}
+
+.applicant-general-individual-basic-info__name-badge {
+  margin-left: 8px;
+}
+
+.applicant-general-individual-basic-info__team-table .applicant-institution-basic-info__cell--label {
+  width: 200px;
+}
+
+.applicant-general-individual-basic-info__team-role-cell {
+  display: inline-flex;
+  align-items: center;
+}
