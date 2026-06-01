@@ -12,7 +12,7 @@ import { getGeneralProgramById, getGeneralPrograms } from '@/data/mock/general-p
 import {
   findGeneralRegistrationLocalSaveProgramById,
   GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
-} from '@/features/program/general/lib/general-registration-local-save'
+} from '@/features/program/general/lib/registration-local-save'
 import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
 
 export type GeneralSurveyMenuItem = { key: GeneralProgramSurveyMenuKey; label: string }

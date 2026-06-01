@@ -179,7 +179,7 @@ export async function getProgramProgressStages(options?: {
         ].includes(status)
       ) {
         stages.scheduled++
-      } else if (status === 'education_after_textbook') {
+      } else if (status === 'education_after_textbook' || status === 'education_in_progress') {
         stages.inProgress++
       } else if (['education_completed', 'document_processing_completed'].includes(status)) {
         stages.completed++

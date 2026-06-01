@@ -56,9 +56,11 @@ API 연동 전 mock·상세 LNB 분기는 `Program.generalProgramAudience`, `gen
 
 ## 구현 참고
 
-- 라벨·8종 조합 상수: `features/program/general/lib/general-program-variant.ts`
+- 라벨·8종 조합 상수: `features/program/general/lib/variant.ts`
 - Mock 8종: `data/mock/general-programs.ts` — id 접두 `general-prog-type-`
-- 기관_커리큘럼형_단일 회차 공통 정보 스크린샷 mock: `general-program-detail-common-info-display.ts` (`GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_*`)
+- 기관_커리큘럼형_단일 회차 공통 정보 스크린샷 mock: `detail-common-info-display.ts` (`GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_*`)
+- 기관_커리큘럼형_복수 회차 — 교육 진행: `■ N회차` + `차시 및 교육 내용` / `과제 설정` (`GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_*`, id `general-prog-type-org-curriculum-multi`)
+- 기관_커리큘럼형_복수 회차 + 교육 형태·IPS 일정 별 상이 — 유형 설정에 일정 공통/별 상이, 회차별 교육 형태·IPS (`GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_EDU_IPS_PER_SCHEDULE_*`, id `general-prog-type-org-curriculum-multi-edu-ips-per-schedule`)
 - 유형 확인용 mock 프로그램명은 위 표기명을 **title** 로 사용한다 (헤더·목록). 공고용명은 `generalCommonInfo.announcementTitle`.
 
 ## Related

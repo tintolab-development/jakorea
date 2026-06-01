@@ -44,6 +44,7 @@ import { FileAttachment } from '@/features/template/ui/paragraph/single-item/fil
 import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
 import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
 import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
+import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import './form-document-preview-body.css'
@@ -71,9 +72,12 @@ function readOnlyTitleBlock(
     title: <span className="form-document-preview-paragraph__title-text">{displayTitle}</span>,
     description:
       trimmedDescription.length > 0 ? (
-        <span className="form-paragraph-section-description form-document-preview-paragraph__description-text">
+        <FormParagraphSectionDescription
+          surface="templateAuthoring"
+          className="form-document-preview-paragraph__description-text"
+        >
           {trimmedDescription}
-        </span>
+        </FormParagraphSectionDescription>
       ) : undefined,
   }
 }

@@ -55,6 +55,7 @@ export interface ProgramRegistrationParagraphBodyOptions {
   /** 단일 회차 + IPS 일정 별 상이 — 커리큘럼 차시 블록 개수·추가 */
   curriculumChartSessionCount: number
   onAddCurriculumChartSession: () => void
+  onDeleteCurriculumChartSession: (chartIndex: number) => void
   /**
    * true면 템플릿 `/templates` 편집 등: 커리큘럼형「강의 진행 차시/회차 추가」비활성, 차시·회차 블록 1개만 노출.
    * 프로그램 관리 등 실제 등록 폼에서는 false(또는 생략).
@@ -152,6 +153,7 @@ export function renderProgramRegistrationParagraphBody(
           participantOrganization={options.participant.organization}
           curriculumSessionCount={options.curriculumSessionCount}
           curriculumChartSessionCount={options.curriculumChartSessionCount}
+          onDeleteCurriculumChartSession={options.onDeleteCurriculumChartSession}
           educationFormScheduleDetail={options.educationFormScheduleDetail}
           participationScheduleDetail={options.participationScheduleDetail}
           ipsScheduleDetail={options.ipsScheduleDetail}

@@ -73,9 +73,20 @@ export type GeneralProgramSessionRoundKind = 'single' | 'multi'
 /** 일반 프로그램 상세 공통 정보 — 커리큘럼 차시 (등록 폼·조회 mock) */
 export interface GeneralProgramCurriculumSessionRow {
   sessionLabel: string
+  /** 단일 회차: 단원명. 복수 회차: 진행 차시 수(표시 시 N차시) */
   title: string
   description: string
+  /** 복수 회차 — 과제 설정 */
+  assignmentEnabled?: boolean
+  assignmentPeriod?: string
+  /** 복수 회차 · 교육 형태 일정 별 상이 — 회차별 표시 라벨 */
+  educationFormLabel?: string
+  /** 복수 회차 · IPS 일정 별 상이 — 회차별 `카테고리 | 세부` (일정 접두 없음) */
+  ipsTypeSummary?: string
 }
+
+/** 일반 프로그램 — 교육 형태·참여·IPS 일정 공통/별 상이 */
+export type GeneralProgramScheduleDetailKind = 'common' | 'perSchedule'
 
 /** 일반 프로그램 상세 공통 정보 확장 (등록 폼 저장값 mock/API 연동 전) */
 export interface GeneralProgramCommonInfoExtension {
@@ -92,6 +103,9 @@ export interface GeneralProgramCommonInfoExtension {
   sponsorManagementId?: string
   educationFormLabel?: string
   ipsTypeSummary?: string
+  educationFormScheduleDetail?: GeneralProgramScheduleDetailKind
+  participationScheduleDetail?: GeneralProgramScheduleDetailKind
+  ipsScheduleDetail?: GeneralProgramScheduleDetailKind
   curriculumSessions?: GeneralProgramCurriculumSessionRow[]
   educationScheduleLines?: string[]
   wageGradeRows?: Array<{ grade: string; pricing: string }>

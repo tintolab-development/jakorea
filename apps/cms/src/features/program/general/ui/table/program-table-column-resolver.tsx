@@ -3,7 +3,7 @@ import { ProgramLifecycleStatusTableCell } from '@/shared/components/program-lif
 import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import { formatDateRange } from '../../hooks/use-format-date'
 import { getCapacity } from '../../lib/program-helpers'
-import { resolveGeneralProgramListTitle } from '../../lib/general-program-detail-common-info-display'
+import { resolveGeneralProgramListTitle } from '../../lib/detail-common-info-display'
 import {
   optionalColumns,
   studentRecruitmentTableColumns,

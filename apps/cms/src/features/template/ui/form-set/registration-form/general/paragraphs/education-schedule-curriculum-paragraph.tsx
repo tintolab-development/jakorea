@@ -187,6 +187,8 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     onDeleteScheduleCurriculumGroup(groupIndex)
   }
 
+  const showParticipationMethod = !participantOrganization
+
   const multiRowPlan =
     sessionRoundType === 'multi'
       ? getProgramRegistrationCurriculumMultiSessionRowPlan(
@@ -261,9 +263,10 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                       view="-"
                     />
                   </DetailInfoForm.Row>
-                  <DetailInfoForm.Row type="double">
+                  <DetailInfoForm.Row type={showParticipationMethod ? 'double' : 'single'}>
                     <DetailInfoForm.Field
                       label="교육 형태"
+                      fullRow={!showParticipationMethod}
                       edit={
                         <CmsRadioGroup
                           size="large"
@@ -281,20 +284,22 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                       }
                       view="-"
                     />
-                    <DetailInfoForm.Field
-                      label="참여 방식"
-                      edit={
-                        <CmsRadioGroup
-                          size="large"
-                          value={participationForDetail(n)}
-                          onChange={onParticipationRadioChange(n)}
-                        >
-                          <CmsRadio value="individual">개인</CmsRadio>
-                          <CmsRadio value="team">팀</CmsRadio>
-                        </CmsRadioGroup>
-                      }
-                      view="-"
-                    />
+                    {showParticipationMethod ? (
+                      <DetailInfoForm.Field
+                        label="참여 방식"
+                        edit={
+                          <CmsRadioGroup
+                            size="large"
+                            value={participationForDetail(n)}
+                            onChange={onParticipationRadioChange(n)}
+                          >
+                            <CmsRadio value="individual">개인</CmsRadio>
+                            <CmsRadio value="team">팀</CmsRadio>
+                          </CmsRadioGroup>
+                        }
+                        view="-"
+                      />
+                    ) : null}
                   </DetailInfoForm.Row>
                 </DetailInfoForm>
               </div>
@@ -397,11 +402,12 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                             />
                           </DetailInfoForm.Row>
                         ) : null}
-                        {shouldHideCurriculumParticipationRowForCommonEduPartWithIpsPerSchedule(
+                        {showParticipationMethod &&
+                        !shouldHideCurriculumParticipationRowForCommonEduPartWithIpsPerSchedule(
                           educationFormScheduleDetail,
                           participationScheduleDetail,
                           ipsScheduleDetail
-                        ) ? null : (
+                        ) ? (
                           <DetailInfoForm.Row type="single">
                             <DetailInfoForm.Field
                               label="참여 방식"
@@ -418,9 +424,9 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                               view="-"
                             />
                           </DetailInfoForm.Row>
-                        )}
+                        ) : null}
                       </>
-                    ) : multiRowPlan === 'c_allCommon_piPartPerOnly' ? (
+                    ) : showParticipationMethod && multiRowPlan === 'c_allCommon_piPartPerOnly' ? (
                       <DetailInfoForm.Row type="single">
                         <DetailInfoForm.Field
                           label="참여 방식"
@@ -477,7 +483,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                             />
                           </DetailInfoForm.Row>
                         ) : null}
-                        {participationScheduleDetail === 'perSchedule' ? (
+                        {participationScheduleDetail === 'perSchedule' && showParticipationMethod ? (
                           <DetailInfoForm.Row type="double">
                             <DetailInfoForm.Field
                               label="교육 형태"
@@ -513,7 +519,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                               view="-"
                             />
                           </DetailInfoForm.Row>
-                        ) : (
+                        ) : educationFormScheduleDetail === 'perSchedule' ? (
                           <DetailInfoForm.Row type="single">
                             <DetailInfoForm.Field
                               label="교육 형태"
@@ -535,7 +541,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                               view="-"
                             />
                           </DetailInfoForm.Row>
-                        )}
+                        ) : null}
                       </>
                     ) : null}
                   </>

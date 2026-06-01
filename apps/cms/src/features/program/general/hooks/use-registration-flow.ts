@@ -21,7 +21,7 @@ import {
   type GeneralProgramRegistrationParticipantFlags,
   type GeneralProgramRegistrationPhaseKey,
   type GeneralProgramRegistrationStepKey,
-} from '@/features/program/general/model/general-program-registration-flow'
+} from '@/features/program/general/model/registration-flow'
 
 export type UseGeneralProgramRegistrationFlowOptions = {
   onProgramRegistrationSaved?: () => void

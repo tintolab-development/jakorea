@@ -6,9 +6,9 @@ import type { TemplateFullpageModalFooterAction } from '@/features/template/ui/t
 import {
   GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY,
   normalizeGeneralProgramRegistrationStepKey,
-} from '@/features/program/general/model/general-program-registration-flow'
-import { useGeneralProgramRegistrationFlow } from '@/features/program/general/hooks/use-general-program-registration-flow'
-import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general/ui/registration/general-program-registration-body-header'
+} from '@/features/program/general/model/registration-flow'
+import { useGeneralProgramRegistrationFlow } from '@/features/program/general/hooks/use-registration-flow'
+import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general/ui/registration/registration-body-header'
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 

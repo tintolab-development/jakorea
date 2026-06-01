@@ -1,0 +1,63 @@
+/* 일반 프로그램 상세 — 공통 정보 (등록 양식 단락 간격) */
+
+.general-program-detail-common-info-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 4px;
+}
+
+.general-program-detail-common-info-view__header {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--spacing-16) 0 0;
+  min-height: 0;
+}
+
+.general-program-detail-common-info-view__section {
+  width: 100%;
+  min-width: 0;
+}
+
+.general-program-detail-common-info-view__section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* 기본 정보 — DetailInfoForm 3블록 (dates / main / course), 블록 간 16px
+ * 규격: program-detail-fullpage-modal.css `.program-detail-info-tab__table-wrapper--dates|--top|--sub`
+ */
+.general-program-detail-common-info-view__section-body--basic-info {
+  gap: 16px;
+}
+
+.general-program-detail-common-info-view__basic-info-dates-form,
+.general-program-detail-common-info-view__basic-info-main-form,
+.general-program-detail-common-info-view__basic-info-course-form {
+  margin: 0;
+}
+
+/* 프로그램 유형 설정 — 구조/회차 1블록 + 교육형태·IPS 1블록, 간격 16px (등록 양식 type-settings-paragraph) */
+.general-program-detail-common-info-view__section-body--type-settings {
+  gap: 16px;
+}
+
+.general-program-detail-common-info-view__type-settings-structure-form,
+.general-program-detail-common-info-view__type-settings-detail-form {
+  margin: 0;
+}
+
+/* 교육 진행 (커리큘럼) — 차시 블록 간 16px, ■ N차시 ↔ 테이블 4px은 `.program-registration-curriculum__session-block` */
+.general-program-detail-common-info-view__section-body--curriculum {
+  gap: 16px;
+}
+
+.general-program-detail-common-info-view__progress-status {
+  font-weight: 700;
+}
+
+.general-program-detail-common-info-view__kpi-number {
+  font-weight: 700;
+}

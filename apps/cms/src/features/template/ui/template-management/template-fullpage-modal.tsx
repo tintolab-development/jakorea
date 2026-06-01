@@ -3,6 +3,7 @@ import { useEffect, useId, useState, type ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInputIconClick } from '@/shared/ui/cms-input-iconclick'
+import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
 import './template-fullpage-modal.css'
 import '../paragraph/shared/paragraph-card.css'
 
@@ -286,13 +287,12 @@ export function TemplateFullpageModalCardDescription({
   className,
 }: TemplateFullpageModalCardDescriptionProps) {
   return (
-    <p
-      className={['form-paragraph-section-description', 'paragraph-card__description', className]
-        .filter(Boolean)
-        .join(' ')}
+    <FormParagraphSectionDescription
+      surface="templateAuthoring"
+      className={['paragraph-card__description', className].filter(Boolean).join(' ')}
     >
       {children}
-    </p>
+    </FormParagraphSectionDescription>
   )
 }
 

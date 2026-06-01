@@ -125,12 +125,17 @@ type FormRenderContext = {
 
 공통 컴포넌트/클래스:
 
-- `FormParagraphSectionDescription` (`apps/cms/src/features/template/ui/shared/form-paragraph-section-description.tsx`)
-- 기본(surface=`templateAuthoring`): **14px**
-- `surface="responseEntry"`: **16px**
-- `titleAligned`: `padding-left: 8px`
+- `FormParagraphSectionDescription` (`apps/cms/src/features/template/ui/shared/form-paragraph-section-description.tsx`) — 하단 설명 **문구만**
+- `FormParagraphSectionHeader` (`apps/cms/src/features/template/ui/shared/form-paragraph-section-header.tsx`) — 타이틀 + (선택) 우측 액션 + 하단 설명(내부에서 위 컴포넌트 사용)
+- 하단 설명 타이포(`form-paragraph-section-description.css`): `main-BK` **16px / 500 / 150%**, **opacity 0.6**
+- 타이틀 ↔ 하단 설명 간격: `FormParagraphSectionHeader__lead` flex column **gap 2px** (우측 `titleTrailing` 버튼 높이와 무관)
+- `titleAligned`: `padding-left: 8px` (제목과 좌측 정렬)
+- `surface` prop: API 호환용(현재 하단 타이포는 동일). 템플릿 카드 **편집 인풋**(`.paragraph-card__description`)만 14px 유지
+- re-export: `@/features/template/lib/writing-form-paragraph-description`
+- 교육 진행 예정일 목록: `EducationSchedulePreviewLines` (`education-schedule-preview-lines.tsx`) — 텍스트 + X만, **배경·테두리 없음** (등록 폼·상세·templateAuthoring 동일)
+- 복수 회차 커리큘럼 과제: `ProgramRegistrationMultiRoundAssignmentFields`(등록 폼 입력), `CurriculumAssignmentSettingView`(조회·responseEntry) — 단일 회차에는 미노출. 상세 복수 회차 판별: `isGeneralProgramMultiRoundCurriculum`
 
-> 우측 description(`detail-info-form__description`)과는 다른 토큰이다.
+> 우측 description(`detail-info-form__description`)과는 다른 토큰이다. 타이틀 하단 설명은 `DetailInfoForm`의 `description` prop을 쓰지 않는다.
 
 ---
 

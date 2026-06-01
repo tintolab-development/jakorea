@@ -1,6 +1,6 @@
 import { formatDateRange } from '../../hooks/use-format-date'
 import { getCapacity, getApplicationCountByProgram } from '../../lib/program-helpers'
-import { resolveGeneralProgramListTitle } from '../../lib/general-program-detail-common-info-display'
+import { resolveGeneralProgramListTitle } from '../../lib/detail-common-info-display'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import type { Program, ProgramCategory, TargetLevel } from '@/types/domain'
 import {

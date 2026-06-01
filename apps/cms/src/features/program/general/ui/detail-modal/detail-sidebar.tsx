@@ -5,8 +5,8 @@
 import { useCallback, useState } from 'react'
 import { DetailFullpageModalLnbBrand } from '@/shared/ui/detail-fullpage-modal-lnb-brand'
 import { DetailFullpageModalLnbArrowDown } from '@/shared/ui/detail-fullpage-modal-lnb-arrow'
-import type { GeneralSurveyMenuItem } from '@/features/program/general/lib/general-program-detail-meta'
-import type { GeneralDetailLnbKey } from '@/features/program/general/lib/general-program-detail-url'
+import type { GeneralSurveyMenuItem } from '@/features/program/general/lib/detail-meta'
+import type { GeneralDetailLnbKey } from '@/features/program/general/lib/detail-url'
 import {
   GeneralLnbInstitutionApplicationIcon,
   GeneralLnbInstructorApplicationIcon,
@@ -15,7 +15,7 @@ import {
   LnbIconManagers,
   LnbIconProgress,
   LnbIconProjectInfo,
-} from './general-program-detail-lnb-icons'
+} from './detail-lnb-icons'
 
 type TopAccordionKey =
   | 'info'

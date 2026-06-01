@@ -51,7 +51,7 @@ const programProgressPhaseLifecycleMap: Record<
     'matching_completed',
     'education_before_textbook',
   ],
-  in_progress: ['education_after_textbook'],
+  in_progress: ['education_after_textbook', 'education_in_progress'],
   completed: ['education_completed', 'document_processing_completed'],
 }
 

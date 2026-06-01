@@ -1,27 +1,23 @@
+import { getVisibleParagraphDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
+
 export {
   FORM_PARAGRAPH_SECTION_DESCRIPTION_CLASS,
   FormParagraphSectionDescription,
+  getVisibleParagraphDescription,
+  isPlaceholderParagraphDescription,
   type FormParagraphSectionDescriptionProps,
   type FormParagraphSectionDescriptionSurface,
 } from '@/features/template/ui/shared/form-paragraph-section-description'
 
-/** 템플릿 단락 카드·프로그램 상세 등 — 시드 placeholder는 사용자-facing 설명으로 노출하지 않음 */
-const PLACEHOLDER_PARAGRAPH_DESCRIPTIONS = new Set(['설명 입력', '설명을 입력해 주세요'])
+export {
+  FormParagraphSectionHeader,
+  type FormParagraphSectionHeaderProps,
+} from '@/features/template/ui/shared/form-paragraph-section-header'
 
-export function isPlaceholderParagraphDescription(value: string | undefined | null): boolean {
-  const trimmed = value?.trim() ?? ''
-  return trimmed.length === 0 || PLACEHOLDER_PARAGRAPH_DESCRIPTIONS.has(trimmed)
-}
-
-/** 노출할 설명 문자열 — placeholder·공백이면 `null` */
-export function getVisibleParagraphDescription(
-  value: string | undefined | null
-): string | null {
-  if (isPlaceholderParagraphDescription(value)) return null
-  return value!.trim()
-}
-
-/** DetailInfoForm 헤더 — title은 항상 노출, description은 placeholder 제외 시만 */
+/**
+ * DetailInfoForm 헤더 — title 옆(가로) `detail-info-form__description`용.
+ * 타이틀 **하단** 설명은 `FormParagraphSectionHeader` + `FormParagraphSectionDescription` 사용.
+ */
 export function detailInfoFormSectionHeaderProps(
   title: string,
   sectionDescription?: string | null

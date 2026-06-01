@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
+import { handleError } from '@/shared/utils/error-handler'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
 import {
@@ -21,21 +22,24 @@ import {
   hasGeneralVolunteerApplications,
   resolveGeneralProgramForDetail,
   type GeneralSurveyMenuItem,
-} from '@/features/program/general/lib/general-program-detail-meta'
-import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/lib/general-program-detail-common-info-display'
+} from '@/features/program/general/lib/detail-meta'
+import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/lib/detail-common-info-display'
 import {
   parseGeneralDetailLnb,
   type GeneralDetailLnbKey,
-} from '@/features/program/general/lib/general-program-detail-url'
-import { GeneralProgramDetailSidebar } from './general-program-detail-sidebar'
-import { GeneralProgramDetailCommonInfoView } from './info/general-program-detail-common-info-view'
+} from '@/features/program/general/lib/detail-url'
+import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/hooks/use-common-info-edit-form'
+import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hooks/use-common-info-save'
+import { GeneralProgramDetailSidebar } from './detail-sidebar'
+import { GeneralProgramDetailCommonInfoView } from './info/common-info-view'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
-import './general-program-detail-fullpage-modal.css'
+import './detail-fullpage-modal.css'
 
 const TAB_PARAM = 'tab'
 const LNB_PARAM = 'lnb'
+const EDIT_PARAM = 'edit'
 
-const GENERAL_DETAIL_QUERY_PARAMS = ['programId', LNB_PARAM, TAB_PARAM] as const
+const GENERAL_DETAIL_QUERY_PARAMS = ['programId', LNB_PARAM, TAB_PARAM, EDIT_PARAM] as const
 
 const INFO_TABS = ['info', 'recruitment', 'application'] as const
 const VOLUNTEER_INTERVIEW_TABS = ['vol_doc1', 'vol_doc_passed', 'vol_interview2'] as const
@@ -218,7 +222,8 @@ export function GeneralProgramDetailFullPageModal({
   const [searchParams, setSearchParams] = useSearchParams()
   const programId = program?.id ?? programIdHint ?? searchParams.get('programId') ?? undefined
 
-  const { program: detailProgram, loading, sponsorName } = useProgramDetail(open ? programId : undefined)
+  const { program: detailProgram, loading, sponsorName, canWrite, updateProgram } =
+    useProgramDetail(open ? programId : undefined)
   const displayProgram = useMemo(() => {
     return (
       detailProgram ??
@@ -246,6 +251,57 @@ export function GeneralProgramDetailFullPageModal({
     ? (parseGeneralDetailLnb(searchParams) ?? 'info')
     : 'info'
   const activeTab = open ? (searchParams.get(TAB_PARAM) ?? 'info') : 'info'
+  const editTab = open ? searchParams.get(EDIT_PARAM) : null
+
+  const setEditMode = useCallback(
+    (tab: string | null) => {
+      const next = new URLSearchParams(searchParams)
+      if (tab) next.set(EDIT_PARAM, tab)
+      else next.delete(EDIT_PARAM)
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: true })
+    },
+    [programId, searchParams, setSearchParams]
+  )
+
+  const isEditModeInfo =
+    open &&
+    activeLnb === 'info' &&
+    activeTab === 'info' &&
+    editTab === 'info' &&
+    !!displayProgram
+
+  const infoForm = useGeneralProgramCommonInfoEditForm({
+    program: displayProgram,
+    isEditMode: isEditModeInfo,
+  })
+  const { triggerSave: infoTriggerSave, resetToProgram: infoResetToProgram } =
+    useGeneralProgramCommonInfoSave({
+      form: infoForm,
+      program: displayProgram ?? null,
+      onSaveEdit:
+        displayProgram && updateProgram
+          ? async draft => {
+              try {
+                const { id: _id, createdAt: _c, ...patch } = draft
+                await updateProgram(draft.id, patch)
+                setEditMode(null)
+              } catch (error) {
+                handleError(error, { context: 'generalProgramDetailFullpageModal.saveEdit' })
+              }
+            }
+          : undefined,
+    })
+
+  const handleInfoEdit = useCallback(() => {
+    if (activeLnb !== 'info' || activeTab !== 'info' || !displayProgram) return
+    infoResetToProgram()
+    setEditMode('info')
+  }, [activeLnb, activeTab, displayProgram, infoResetToProgram, setEditMode])
+
+  const handleInfoSave = useCallback(() => {
+    if (displayProgram) void infoTriggerSave()
+  }, [displayProgram, infoTriggerSave])
 
   useEffect(() => {
     if (!open || !programId || !displayProgram) return
@@ -367,6 +423,11 @@ export function GeneralProgramDetailFullPageModal({
             <GeneralProgramDetailCommonInfoView
               program={displayProgram}
               sponsorName={sponsorName}
+              isEditMode={isEditModeInfo}
+              form={infoForm}
+              canWrite={canWrite}
+              onEdit={handleInfoEdit}
+              onSave={handleInfoSave}
             />
           ) : (
             <div

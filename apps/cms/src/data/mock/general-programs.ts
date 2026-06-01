@@ -23,11 +23,15 @@ import {
   GENERAL_PROGRAM_VARIANTS,
   generalProgramVariantIdSuffix,
   type GeneralProgramVariant,
-} from '@/features/program/general/lib/general-program-variant'
+} from '@/features/program/general/lib/variant'
 import {
+  buildGeneralOrgCurriculumMultiEduIpsPerScheduleProgramSeedFields,
+  buildGeneralOrgCurriculumMultiProgramSeedFields,
   buildGeneralOrgCurriculumSingleProgramSeedFields,
+  GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_EDU_IPS_PER_SCHEDULE_ID,
+  GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_ID,
   GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID,
-} from '@/features/program/general/lib/general-program-detail-common-info-display'
+} from '@/features/program/general/lib/detail-common-info-display'
 import { mockSponsors } from './sponsors'
 
 const SPONSOR_ID = mockSponsors[0]?.id ?? 'sponsor-1'
@@ -290,12 +294,73 @@ function isOrgCurriculumSingleVariant(variant: GeneralProgramVariant): boolean {
   )
 }
 
+function isOrgCurriculumMultiVariant(variant: GeneralProgramVariant): boolean {
+  return (
+    variant.audience === 'organization' &&
+    variant.educationStructure === 'curriculum' &&
+    variant.sessionRound === 'multi'
+  )
+}
+
 function buildTypeVariantSeed(
   variant: GeneralProgramVariant,
   index: number
 ): GeneralProgramSeed {
   const title = buildGeneralProgramVariantTitle(variant)
   const id = `general-prog-type-${generalProgramVariantIdSuffix(variant)}`
+
+  if (isOrgCurriculumMultiVariant(variant)) {
+    const screenshot = buildGeneralOrgCurriculumMultiProgramSeedFields()
+    return {
+      id: GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_ID,
+      capacity: 30,
+      sponsorId: SPONSOR_ID,
+      title: screenshot.title,
+      mainTitle: screenshot.mainTitle,
+      titleEn: screenshot.titleEn,
+      type: 'online',
+      format: 'course',
+      category: 'school' as ProgramCategory,
+      description: `유형 mock — ${screenshot.title} (공통 정보 스크린샷 기준)`,
+      startDate: '2025-12-08T00:00:00+09:00',
+      endDate: '2026-12-30T23:59:59+09:00',
+      applicationStartDate: getDate(150),
+      applicationEndDate: getDate(100),
+      status: 'active',
+      lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
+      businessArea: '진로취업',
+      targetLevel: 'high' as TargetLevel,
+      approvedStudentCount: screenshot.approvedStudentCount,
+      instructors: screenshot.instructors,
+      instructorCapacity: screenshot.instructorCapacity,
+      generalVolunteers: screenshot.generalVolunteers,
+      participatingSchoolCount: screenshot.participatingSchoolCount,
+      scheduleTimeEnabled: false,
+      institutionType: 'inside_school',
+      educationProcess: 'Traditional (Paper)',
+      ipOwned: 'Jointly',
+      courseDeliveredBy: 'JA',
+      partnerInvolvement: false,
+      ips: 'Prepare',
+      createdAt: '2025-12-08T09:15:00+09:00',
+      updatedAt: '2025-12-08T17:55:00+09:00',
+      createdByName: '홍길동',
+      updatedByName: '이순신',
+      generalParticipantTypes: [
+        ...FULL_LNB_PARTICIPANT_TYPES.organization,
+      ] as GeneralProgramParticipantType[],
+      generalVolunteerInterviewEnabled: true,
+      interviewStartDate: getDate(48),
+      interviewEndDate: getDate(38),
+      interviewMethod: '대면 면접',
+      generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
+      generalProgramAudience: variant.audience,
+      generalProgramEducationStructure: variant.educationStructure,
+      generalProgramSessionRound: variant.sessionRound,
+      sessionRoundForRounds: variant.sessionRound,
+      generalCommonInfo: screenshot.generalCommonInfo,
+    }
+  }
 
   if (isOrgCurriculumSingleVariant(variant)) {
     const screenshot = buildGeneralOrgCurriculumSingleProgramSeedFields()
@@ -398,6 +463,64 @@ function buildTypeVariantSeed(
 const TYPE_VARIANT_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = GENERAL_PROGRAM_VARIANTS.map(
   (variant, index) => buildTypeVariantSeed(variant, index)
 )
+
+function buildOrgCurriculumMultiEduIpsPerScheduleSeed(): GeneralProgramSeed {
+  const variant: GeneralProgramVariant = {
+    audience: 'organization',
+    educationStructure: 'curriculum',
+    sessionRound: 'multi',
+  }
+  const screenshot = buildGeneralOrgCurriculumMultiEduIpsPerScheduleProgramSeedFields()
+  return {
+    id: GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_EDU_IPS_PER_SCHEDULE_ID,
+    capacity: 30,
+    sponsorId: SPONSOR_ID,
+    title: screenshot.title,
+    mainTitle: screenshot.mainTitle,
+    titleEn: screenshot.titleEn,
+    type: 'online',
+    format: 'course',
+    category: 'school' as ProgramCategory,
+    description: `유형 mock — ${screenshot.title} (교육 형태·IPS 일정 별 상이)`,
+    startDate: '2025-12-08T00:00:00+09:00',
+    endDate: '2026-12-30T23:59:59+09:00',
+    applicationStartDate: getDate(150),
+    applicationEndDate: getDate(100),
+    status: 'active',
+    lifecycleStatus: 'education_after_textbook' as ProgramLifecycleStatus,
+    businessArea: '진로취업',
+    targetLevel: 'high' as TargetLevel,
+    approvedStudentCount: screenshot.approvedStudentCount,
+    instructors: screenshot.instructors,
+    instructorCapacity: screenshot.instructorCapacity,
+    generalVolunteers: screenshot.generalVolunteers,
+    participatingSchoolCount: screenshot.participatingSchoolCount,
+    scheduleTimeEnabled: false,
+    institutionType: 'inside_school',
+    educationProcess: 'Traditional (Paper)',
+    ipOwned: 'Jointly',
+    courseDeliveredBy: 'JA',
+    partnerInvolvement: false,
+    ips: 'Prepare',
+    createdAt: '2025-12-08T09:15:00+09:00',
+    updatedAt: '2025-12-08T17:55:00+09:00',
+    createdByName: '홍길동',
+    updatedByName: '이순신',
+    generalParticipantTypes: [
+      ...FULL_LNB_PARTICIPANT_TYPES.organization,
+    ] as GeneralProgramParticipantType[],
+    generalVolunteerInterviewEnabled: true,
+    interviewStartDate: getDate(48),
+    interviewEndDate: getDate(38),
+    interviewMethod: '대면 면접',
+    generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
+    generalProgramAudience: variant.audience,
+    generalProgramEducationStructure: variant.educationStructure,
+    generalProgramSessionRound: variant.sessionRound,
+    sessionRoundForRounds: variant.sessionRound,
+    generalCommonInfo: screenshot.generalCommonInfo,
+  }
+}
 
 /** LNB 메뉴 조합 확인용 — `【LNB】` 접두 프로그램명 */
 const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
@@ -642,10 +765,11 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
 const GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
   ...REALISTIC_GENERAL_PROGRAM_SEEDS,
   ...TYPE_VARIANT_GENERAL_PROGRAM_SEEDS,
+  buildOrgCurriculumMultiEduIpsPerScheduleSeed(),
   ...LNB_GENERAL_PROGRAM_SEEDS,
 ]
 
-import { readGeneralRegistrationLocalSavePrograms } from '@/features/program/general/lib/general-registration-local-save'
+import { readGeneralRegistrationLocalSavePrograms } from '@/features/program/general/lib/registration-local-save'
 
 let generalProgramsCache: Program[] | null = null
 
@@ -661,6 +785,8 @@ export function getGeneralPrograms(): Program[] {
       scheduleTimeEnabled,
       mainTitle,
       sessionRoundForRounds,
+      generalProgramAudience,
+      generalProgramEducationStructure,
       generalProgramSessionRound,
       createdAt: seedCreatedAt,
       updatedAt: seedUpdatedAt,
@@ -679,6 +805,9 @@ export function getGeneralPrograms(): Program[] {
       ...rest,
       mainTitle,
       id,
+      generalProgramAudience,
+      generalProgramEducationStructure,
+      generalProgramSessionRound,
       rounds: createRounds(id, capacity, curriculumLabel, roundKind),
       ...timeFields,
       createdAt,

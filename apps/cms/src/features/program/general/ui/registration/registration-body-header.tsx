@@ -9,7 +9,7 @@ import {
   type GeneralProgramRegistrationApplicationTabKey,
   type GeneralProgramRegistrationStepKey,
   type GeneralProgramRecruitTabKey,
-} from '@/features/program/general/model/general-program-registration-flow'
+} from '@/features/program/general/model/registration-flow'
 import '@/features/program/ujat/ui/registration/ujat-program-registration-body-header.css'
 
 export function GeneralProgramRegistrationBodyHeader({

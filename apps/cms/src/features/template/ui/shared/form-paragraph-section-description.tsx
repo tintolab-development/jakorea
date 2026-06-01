@@ -32,3 +32,19 @@ export function FormParagraphSectionDescription({
 
   return <p className={rootClass}>{children}</p>
 }
+
+/** 템플릿 단락 카드·프로그램 상세 등 — 시드 placeholder는 사용자-facing 설명으로 노출하지 않음 */
+const PLACEHOLDER_PARAGRAPH_DESCRIPTIONS = new Set(['설명 입력', '설명을 입력해 주세요'])
+
+export function isPlaceholderParagraphDescription(value: string | undefined | null): boolean {
+  const trimmed = value?.trim() ?? ''
+  return trimmed.length === 0 || PLACEHOLDER_PARAGRAPH_DESCRIPTIONS.has(trimmed)
+}
+
+/** 노출할 설명 문자열 — placeholder·공백이면 `null` */
+export function getVisibleParagraphDescription(
+  value: string | undefined | null
+): string | null {
+  if (isPlaceholderParagraphDescription(value)) return null
+  return value!.trim()
+}

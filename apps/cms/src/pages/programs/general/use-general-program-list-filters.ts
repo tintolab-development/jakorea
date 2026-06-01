@@ -50,7 +50,11 @@ export function useGeneralProgramListFilters() {
         ].includes(program.lifecycleStatus || '')
       )
     } else if (statusFilter === 'in_progress') {
-      filtered = filtered.filter(program => program.lifecycleStatus === 'education_after_textbook')
+      filtered = filtered.filter(program =>
+        ['education_after_textbook', 'education_in_progress'].includes(
+          program.lifecycleStatus || ''
+        )
+      )
     } else if (statusFilter === 'completed') {
       filtered = filtered.filter(program =>
         ['education_completed', 'document_processing_completed'].includes(

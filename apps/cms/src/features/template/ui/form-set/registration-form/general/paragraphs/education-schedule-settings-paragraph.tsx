@@ -1,60 +1,50 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { Dayjs } from 'dayjs'
+import { formatEducationScheduleLineFromRange } from '@/features/template/lib/format-education-schedule-line'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import {
+  EducationSchedulePreviewLines,
+} from '@/features/template/ui/shared/education-schedule-preview-lines'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import './program-registration-paragraph.css'
 
 type EducationScheduleMode = 'date' | 'period'
 
-const EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER =
-  '교육 진행 일정을 선택해 주세요. (해당 란에는 선택한 날짜가 노출됩니다.)'
-
-function isValidDayjs(d: Dayjs | null | undefined): d is Dayjs {
-  return d != null && d.isValid()
-}
-
 export function ProgramRegistrationEducationScheduleSettingsParagraph() {
   const [scheduleMode, setScheduleMode] = useState<EducationScheduleMode>('date')
   const [singleDate, setSingleDate] = useState<Dayjs | null>(null)
-  const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null])
+  const [periodDate, setPeriodDate] = useState<Dayjs | null>(null)
+  const [scheduleLines, setScheduleLines] = useState<string[]>([])
 
-  const educationSchedulePreview = useMemo(() => {
-    if (scheduleMode === 'period') {
-      const [start, end] = dateRange
-      if (isValidDayjs(start) && isValidDayjs(end)) {
-        return (
-          <div className="detail-info-form-inputs-wrapper-no-gap">
-            <span className="detail-info-form--text nowrap">
-              {formatAppDatepickerDisplay(start)}
-            </span>
-            <DetailInfoForm.InputsSeparator />
-            <span className="detail-info-form--text nowrap">
-              {formatAppDatepickerDisplay(end)}
-            </span>
-          </div>
-        )
-      }
-      return (
-        <span className="program-registration-paragraph__schedule-preview-placeholder">
-          {EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER}
-        </span>
-      )
-    }
+  const appendLineIfNew = useCallback((line: string) => {
+    const trimmed = line.trim()
+    if (!trimmed) return
+    setScheduleLines(prev => (prev.includes(trimmed) ? prev : [...prev, trimmed]))
+  }, [])
 
-    if (isValidDayjs(singleDate)) {
-      return (
-        <span className="detail-info-form--text">{formatAppDatepickerDisplay(singleDate)}</span>
-      )
-    }
+  const handleScheduleRangeApply = useCallback(
+    (range: [Dayjs, Dayjs]) => {
+      appendLineIfNew(formatEducationScheduleLineFromRange(range))
+      setSingleDate(null)
+      setPeriodDate(null)
+    },
+    [appendLineIfNew]
+  )
 
-    return (
-      <span className="program-registration-paragraph__schedule-preview-placeholder">
-        {EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER}
-      </span>
-    )
-  }, [scheduleMode, dateRange, singleDate])
+  const removeLine = useCallback((index: number) => {
+    setScheduleLines(prev => prev.filter((_, i) => i !== index))
+  }, [])
+
+  useEffect(() => {
+    if (scheduleMode !== 'date') return
+    setPeriodDate(null)
+  }, [scheduleMode])
+
+  useEffect(() => {
+    if (scheduleMode !== 'period') return
+    setSingleDate(null)
+  }, [scheduleMode])
 
   return (
     <DetailInfoForm
@@ -65,7 +55,7 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph() {
     >
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
-          label="교육 진행 방식"
+          label="교육 진행 일정 유형"
           edit={
             <div className="program-registration-paragraph__schedule-inline">
               <CmsRadioGroup
@@ -86,20 +76,24 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph() {
             scheduleMode === 'date' ? (
               <ParagraphDatePicker
                 mode="single"
-                presetMode="date"
+                presetMode="schedule"
                 customizable={false}
                 suppressAutoTodayWhenEmpty
                 value={singleDate}
                 onChange={setSingleDate}
+                onRangeChange={handleScheduleRangeApply}
                 width={240}
               />
             ) : (
               <ParagraphDatePicker
-                mode="range"
-                value={dateRange}
-                onChange={setDateRange}
+                mode="single"
+                presetMode="period"
+                customizable={false}
+                suppressAutoTodayWhenEmpty
+                value={periodDate}
+                onChange={setPeriodDate}
+                onRangeChange={handleScheduleRangeApply}
                 width={360}
-                placeholder={['시작일', '종료일']}
               />
             )
           }
@@ -111,7 +105,9 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph() {
           label="교육 진행 예정일"
           fullRow
           readOnlyDisplay
-          view={educationSchedulePreview}
+          view={
+            <EducationSchedulePreviewLines lines={scheduleLines} onRemove={removeLine} />
+          }
         />
       </DetailInfoForm.Row>
     </DetailInfoForm>

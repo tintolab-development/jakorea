@@ -9,7 +9,7 @@ import type { Program, ProgramRound } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock'
 import { getCompanySchoolProgramById } from '@/data/mock/economy-programs'
 import { getGeneralProgramById } from '@/data/mock/general-programs'
-import { findGeneralRegistrationLocalSaveProgramById } from '@/features/program/general/lib/general-registration-local-save'
+import { findGeneralRegistrationLocalSaveProgramById } from '@/features/program/general/lib/registration-local-save'
 import {
   mockUjatElementaryListPrograms,
   mockUjatElementaryListProgramsMap,
