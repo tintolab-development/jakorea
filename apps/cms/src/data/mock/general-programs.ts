@@ -2,8 +2,8 @@
  * 일반 프로그램 Mock 데이터 (`/programs/general`)
  *
  * 1) 기존 그럴싸한 프로그램명 6건 (예정/진행/완료 UI·캘린더용)
- * 2) LNB 확인용 9건 — `【LNB】` 접두 (`general-prog-lnb-*`)
- * 3) 유형 8종 — `일반 프로그램 (기관/개인)_커리큘럼형|일정형_단일|복수 회차` (`general-prog-type-*`)
+ * 2) 유형 케이스 8종(행 7~14) + 15행(교육·IPS 일정별 상이) — `【유형·NN】` 접두
+ * 3) LNB 조합 9건(행 16~24) — `【LNB·NN】` 접두 (`general-prog-lnb-16` … `24`)
  */
 
 import type {
@@ -45,6 +45,58 @@ const SURVEY_MENU_FULL: GeneralProgramSurveyMenuKey[] = [
   'satisfaction',
   'lecture_evaluation',
 ]
+
+const SURVEY_MENU_SINGLE: GeneralProgramSurveyMenuKey[] = ['survey']
+
+/** 스크린샷 유형 구분 표 행 7~14 ↔ `GENERAL_PROGRAM_VARIANTS` 인덱스 */
+const TYPE_CASE_ROW_BASE = 7
+
+function typeCaseRowForVariantIndex(index: number): number {
+  return TYPE_CASE_ROW_BASE + index
+}
+
+function formatTypeCaseTitle(row: number, title: string): string {
+  return `【유형·${row}】${title}`
+}
+
+type LnbVolunteerMode = 'none' | 'no_interview' | 'interview_2depth'
+type LnbSurveyMode = 'none' | 'single' | 'full'
+
+type LnbMatrixConfig = {
+  hasInstructor: boolean
+  volunteerMode: LnbVolunteerMode
+  surveyMode: LnbSurveyMode
+}
+
+function formatLnbCaseTitle(row: number, config: LnbMatrixConfig): string {
+  const instructorLabel = config.hasInstructor ? '강사 있음' : '강사 없음'
+  const volunteerLabel =
+    config.volunteerMode === 'none'
+      ? '봉사자 없음'
+      : config.volunteerMode === 'no_interview'
+        ? '봉사자 있음(면접 없음)'
+        : '봉사자 있음(면접 2depth)'
+  const surveyLabel =
+    config.surveyMode === 'none'
+      ? '설문 없음'
+      : config.surveyMode === 'single'
+        ? '설문 있음(하위 1항목)'
+        : '설문 있음(하위 3항목)'
+  return `【LNB·${row}】${instructorLabel} · ${volunteerLabel} · ${surveyLabel}`
+}
+
+function lnbSurveyMenuKeys(mode: LnbSurveyMode): GeneralProgramSurveyMenuKey[] {
+  if (mode === 'none') return []
+  if (mode === 'single') return [...SURVEY_MENU_SINGLE]
+  return [...SURVEY_MENU_FULL]
+}
+
+function lnbParticipantTypes(config: LnbMatrixConfig): GeneralProgramParticipantType[] {
+  const types: GeneralProgramParticipantType[] = [...BASE_PARTICIPANT_TYPES]
+  if (config.hasInstructor) types.push('teacher_instructor')
+  if (config.volunteerMode !== 'none') types.push('volunteer')
+  return types
+}
 
 const now = new Date()
 const getDate = (daysAgo: number) => {
@@ -307,7 +359,9 @@ function buildTypeVariantSeed(
   variant: GeneralProgramVariant,
   index: number
 ): GeneralProgramSeed {
-  const title = buildGeneralProgramVariantTitle(variant)
+  const variantTitle = buildGeneralProgramVariantTitle(variant)
+  const typeCaseRow = typeCaseRowForVariantIndex(index)
+  const title = formatTypeCaseTitle(typeCaseRow, variantTitle)
   const id = `general-prog-type-${generalProgramVariantIdSuffix(variant)}`
 
   if (isOrgCurriculumMultiVariant(variant)) {
@@ -316,7 +370,7 @@ function buildTypeVariantSeed(
       id: GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_ID,
       capacity: 30,
       sponsorId: SPONSOR_ID,
-      title: screenshot.title,
+      title: formatTypeCaseTitle(typeCaseRow, screenshot.title),
       mainTitle: screenshot.mainTitle,
       titleEn: screenshot.titleEn,
       type: 'online',
@@ -369,7 +423,7 @@ function buildTypeVariantSeed(
       id: GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID,
       capacity: 30,
       sponsorId: SPONSOR_ID,
-      title: screenshot.title,
+      title: formatTypeCaseTitle(typeCaseRow, screenshot.title),
       mainTitle: screenshot.mainTitle,
       titleEn: screenshot.titleEn,
       type: 'online',
@@ -431,7 +485,7 @@ function buildTypeVariantSeed(
     type: 'offline',
     format: variant.educationStructure === 'curriculum' ? 'course' : 'workshop',
     category: (variant.audience === 'organization' ? 'school' : 'individual') as ProgramCategory,
-    description: `유형 mock — ${title} (강사·봉사·설문 LNB 전체)`,
+    description: `유형 mock · 행 ${typeCaseRow} — ${variantTitle} (강사·봉사·설문 LNB 전체)`,
     startDate: getDate(isCompleted ? 120 : isScheduled ? 58 : 44),
     endDate: getDate(isCompleted ? 90 : isScheduled ? 26 : 12),
     applicationStartDate: getDate(isCompleted ? 150 : 88),
@@ -476,13 +530,13 @@ function buildOrgCurriculumMultiEduIpsPerScheduleSeed(): GeneralProgramSeed {
     id: GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_EDU_IPS_PER_SCHEDULE_ID,
     capacity: 30,
     sponsorId: SPONSOR_ID,
-    title: screenshot.title,
+    title: formatTypeCaseTitle(15, screenshot.title),
     mainTitle: screenshot.mainTitle,
     titleEn: screenshot.titleEn,
     type: 'online',
     format: 'course',
     category: 'school' as ProgramCategory,
-    description: `유형 mock — ${screenshot.title} (교육 형태·IPS 일정 별 상이)`,
+    description: `유형 mock · 행 15 — ${screenshot.title} (교육 형태·IPS 일정 별 상이)`,
     startDate: '2025-12-08T00:00:00+09:00',
     endDate: '2026-12-30T23:59:59+09:00',
     applicationStartDate: getDate(150),
@@ -523,118 +577,47 @@ function buildOrgCurriculumMultiEduIpsPerScheduleSeed(): GeneralProgramSeed {
   }
 }
 
-/** LNB 메뉴 조합 확인용 — `【LNB】` 접두 프로그램명 */
-const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
-  // ── 예정 ─────────────────────────────────────────────────────────────
-  {
-    id: 'general-prog-lnb-01',
-    capacity: 30,
-    sponsorId: SPONSOR_ID,
-    title: '【LNB】강사 없음 · 봉사자 없음 · 설문 없음',
-    mainTitle: 'LNB-01',
-    type: 'offline',
-    format: 'workshop',
-    category: 'school' as ProgramCategory,
-    description: 'LNB: 프로그램정보·기관신청·진행현황·담당자만',
-    startDate: getDate(60),
-    endDate: getDate(30),
-    applicationStartDate: getDate(90),
-    applicationEndDate: getDate(45),
-    status: 'pending',
-    lifecycleStatus: 'recruiting_students' as ProgramLifecycleStatus,
-    businessArea: '경제금융',
-    targetLevel: 'elementary' as TargetLevel,
-    approvedStudentCount: 0,
-    scheduleTimeEnabled: true,
-    generalParticipantTypes: [...BASE_PARTICIPANT_TYPES],
-    generalSurveyMenuKeys: [],
-  },
-  {
-    id: 'general-prog-lnb-02',
-    capacity: 30,
-    sponsorId: SPONSOR_ID,
-    title: '【LNB】강사 있음 · 봉사자 없음 · 설문 없음',
-    mainTitle: 'LNB-02',
-    type: 'offline',
-    format: 'workshop',
-    category: 'instructor' as ProgramCategory,
-    description: 'LNB: + 강사 신청 목록',
-    startDate: getDate(58),
-    endDate: getDate(28),
-    applicationStartDate: getDate(88),
-    applicationEndDate: getDate(43),
-    status: 'pending',
-    lifecycleStatus: 'recruiting_instructors' as ProgramLifecycleStatus,
-    businessArea: '경제금융',
-    targetLevel: 'high' as TargetLevel,
-    approvedStudentCount: 0,
-    scheduleTimeEnabled: false,
-    generalParticipantTypes: [...BASE_PARTICIPANT_TYPES, 'teacher_instructor'],
-    generalSurveyMenuKeys: [],
-  },
-  {
-    id: 'general-prog-lnb-03',
-    capacity: 30,
-    sponsorId: SPONSOR_ID,
-    title: '【LNB】강사 없음 · 봉사자 있음(면접 2depth) · 설문 없음',
-    mainTitle: 'LNB-03',
-    type: 'offline',
-    format: 'seminar',
-    category: 'volunteer' as ProgramCategory,
-    description: 'LNB: + 봉사자 신청(1차서류·합격·2차면접)',
-    startDate: getDate(56),
-    endDate: getDate(26),
-    applicationStartDate: getDate(86),
-    applicationEndDate: getDate(41),
-    status: 'pending',
-    lifecycleStatus: 'recruiting_students' as ProgramLifecycleStatus,
-    businessArea: '진로취업',
-    targetLevel: 'college' as TargetLevel,
-    approvedStudentCount: 0,
-    scheduleTimeEnabled: true,
-    generalParticipantTypes: [...BASE_PARTICIPANT_TYPES, 'volunteer'],
+function buildLnbVolunteerFields(
+  matrix: LnbMatrixConfig
+): Pick<
+  GeneralProgramSeed,
+  | 'generalVolunteerInterviewEnabled'
+  | 'interviewStartDate'
+  | 'interviewEndDate'
+  | 'interviewMethod'
+> {
+  if (matrix.volunteerMode === 'none') return {}
+  if (matrix.volunteerMode === 'no_interview') {
+    return { generalVolunteerInterviewEnabled: false }
+  }
+  return {
     generalVolunteerInterviewEnabled: true,
     interviewStartDate: getDate(50),
     interviewEndDate: getDate(40),
     interviewMethod: '대면 면접',
-    generalSurveyMenuKeys: [],
-  },
-  // ── 진행 중 ──────────────────────────────────────────────────────────
-  {
-    id: 'general-prog-lnb-04',
-    capacity: 32,
+  }
+}
+
+/** LNB 메뉴 조합 — 스크린샷 구분 표 행 16~24 */
+function buildLnbCaseSeed(
+  row: number,
+  matrix: LnbMatrixConfig,
+  overrides: Partial<GeneralProgramSeed> = {}
+): GeneralProgramSeed {
+  const title = formatLnbCaseTitle(row, matrix)
+  return {
+    id: `general-prog-lnb-${row}`,
+    capacity: 30,
     sponsorId: SPONSOR_ID,
-    title: '【LNB】강사 없음 · 봉사자 있음(면접 없음) · 설문 없음',
-    mainTitle: 'LNB-04',
+    title,
+    mainTitle: `LNB-${row}`,
     type: 'offline',
     format: 'workshop',
-    category: 'volunteer' as ProgramCategory,
-    description: 'LNB: + 봉사자 신청(2depth 없음)',
-    startDate: getDate(45),
-    endDate: getDate(15),
-    applicationStartDate: getDate(90),
-    applicationEndDate: getDate(30),
-    status: 'active',
-    lifecycleStatus: 'education_after_textbook' as ProgramLifecycleStatus,
-    businessArea: '경제금융',
-    targetLevel: 'high' as TargetLevel,
-    approvedStudentCount: 20,
-    generalVolunteers: 6,
-    scheduleTimeEnabled: false,
-    generalParticipantTypes: [...BASE_PARTICIPANT_TYPES, 'volunteer'],
-    generalVolunteerInterviewEnabled: false,
-    generalSurveyMenuKeys: [],
-  },
-  {
-    id: 'general-prog-lnb-05',
-    capacity: 32,
-    sponsorId: SPONSOR_ID,
-    title: '【LNB】강사 있음 · 봉사자 있음(면접 2depth) · 설문 없음',
-    mainTitle: 'LNB-05',
-    type: 'offline',
-    format: 'workshop',
-    category: 'instructor' as ProgramCategory,
-    description: 'LNB: 강사 + 봉사자(면접)',
+    category: 'school' as ProgramCategory,
+    description: `LNB mock · 행 ${row}`,
+    generalProgramAudience: 'organization',
+    generalProgramEducationStructure: 'curriculum',
+    generalProgramSessionRound: 'single',
     startDate: getDate(44),
     endDate: getDate(14),
     applicationStartDate: getDate(89),
@@ -643,124 +626,174 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     lifecycleStatus: 'education_after_textbook' as ProgramLifecycleStatus,
     businessArea: '경제금융',
     targetLevel: 'high' as TargetLevel,
-    approvedStudentCount: 18,
-    instructors: 10,
-    instructorCapacity: 15,
-    generalVolunteers: 8,
-    scheduleTimeEnabled: true,
-    generalParticipantTypes: [...BASE_PARTICIPANT_TYPES, 'teacher_instructor', 'volunteer'],
-    generalVolunteerInterviewEnabled: true,
-    interviewStartDate: getDate(38),
-    interviewEndDate: getDate(32),
-    interviewMethod: '화상 면접',
-    generalSurveyMenuKeys: [],
-  },
-  {
-    id: 'general-prog-lnb-06',
-    capacity: 30,
-    sponsorId: SPONSOR_ID,
-    title: '【LNB】강사 없음 · 봉사자 없음 · 설문 있음(하위 3항목)',
-    mainTitle: 'LNB-06',
-    type: 'offline',
-    format: 'seminar',
-    category: 'school' as ProgramCategory,
-    description: 'LNB: + 설문관리(설문·만족도·강의평가)',
-    startDate: getDate(43),
-    endDate: getDate(13),
-    applicationStartDate: getDate(87),
-    applicationEndDate: getDate(28),
-    status: 'active',
-    lifecycleStatus: 'education_after_textbook' as ProgramLifecycleStatus,
-    businessArea: '진로취업',
-    targetLevel: 'middle' as TargetLevel,
-    approvedStudentCount: 22,
-    participatingSchoolCount: 5,
-    scheduleTimeEnabled: true,
-    generalParticipantTypes: [...BASE_PARTICIPANT_TYPES],
-    generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
-  },
-  // ── 완료 ─────────────────────────────────────────────────────────────
-  {
-    id: 'general-prog-lnb-07',
-    capacity: 28,
-    sponsorId: SPONSOR_ID,
-    title: '【LNB】강사 있음 · 봉사자 없음 · 설문 있음(하위 3항목)',
-    mainTitle: 'LNB-07',
-    type: 'offline',
-    format: 'seminar',
-    category: 'instructor' as ProgramCategory,
-    description: 'LNB: 강사 + 설문 2depth',
-    startDate: getDate(120),
-    endDate: getDate(90),
-    applicationStartDate: getDate(150),
-    applicationEndDate: getDate(100),
-    status: 'completed',
-    lifecycleStatus: 'education_completed' as ProgramLifecycleStatus,
-    businessArea: '진로취업',
-    targetLevel: 'college' as TargetLevel,
-    approvedStudentCount: 28,
-    instructors: 14,
-    scheduleTimeEnabled: false,
-    generalParticipantTypes: [...BASE_PARTICIPANT_TYPES, 'teacher_instructor'],
-    generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
-  },
-  {
-    id: 'general-prog-lnb-08',
-    capacity: 28,
-    sponsorId: SPONSOR_ID,
-    title: '【LNB】강사 없음 · 봉사자 있음(면접 없음) · 설문 있음(하위 1항목)',
-    mainTitle: 'LNB-08',
-    type: 'offline',
-    format: 'seminar',
-    category: 'volunteer' as ProgramCategory,
-    description: 'LNB: 봉사자(면접X) + 설문(설문조사만)',
-    startDate: getDate(118),
-    endDate: getDate(88),
-    applicationStartDate: getDate(152),
-    applicationEndDate: getDate(98),
-    status: 'completed',
-    lifecycleStatus: 'document_processing_completed' as ProgramLifecycleStatus,
-    businessArea: '진로취업',
-    targetLevel: 'college' as TargetLevel,
-    approvedStudentCount: 22,
-    generalVolunteers: 12,
-    scheduleTimeEnabled: true,
-    generalParticipantTypes: [...BASE_PARTICIPANT_TYPES, 'volunteer'],
-    generalVolunteerInterviewEnabled: false,
-    generalSurveyMenuKeys: ['survey'],
-  },
-  {
-    id: 'general-prog-lnb-09',
-    capacity: 36,
-    sponsorId: SPONSOR_ID,
-    title: '【LNB】강사 있음 · 봉사자 있음(면접 2depth) · 설문 있음(하위 3항목)',
-    mainTitle: 'LNB-09',
-    type: 'offline',
-    format: 'workshop',
-    category: 'instructor' as ProgramCategory,
-    description: 'LNB: 강사·봉사자(면접)·설문 전체',
-    startDate: getDate(42),
-    endDate: getDate(12),
-    applicationStartDate: getDate(85),
-    applicationEndDate: getDate(27),
-    status: 'active',
-    lifecycleStatus: 'education_after_textbook' as ProgramLifecycleStatus,
-    businessArea: '경제금융',
-    targetLevel: 'high' as TargetLevel,
-    approvedStudentCount: 24,
-    instructors: 12,
-    instructorCapacity: 20,
-    generalVolunteers: 10,
-    participatingSchoolCount: 8,
-    participatingStudentCount: 240,
-    scheduleTimeEnabled: false,
-    generalParticipantTypes: [...BASE_PARTICIPANT_TYPES, 'teacher_instructor', 'volunteer'],
-    generalVolunteerInterviewEnabled: true,
-    interviewStartDate: getDate(35),
-    interviewEndDate: getDate(28),
-    interviewMethod: '대면 면접',
-    generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
-  },
+    approvedStudentCount: 0,
+    scheduleTimeEnabled: row % 2 === 0,
+    generalParticipantTypes: lnbParticipantTypes(matrix),
+    generalSurveyMenuKeys: lnbSurveyMenuKeys(matrix.surveyMode),
+    ...buildLnbVolunteerFields(matrix),
+    ...overrides,
+  }
+}
+
+const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
+  buildLnbCaseSeed(
+    16,
+    { hasInstructor: true, volunteerMode: 'interview_2depth', surveyMode: 'full' },
+    {
+      capacity: 36,
+      category: 'instructor' as ProgramCategory,
+      startDate: getDate(42),
+      endDate: getDate(12),
+      applicationStartDate: getDate(85),
+      applicationEndDate: getDate(27),
+      approvedStudentCount: 24,
+      instructors: 12,
+      instructorCapacity: 20,
+      generalVolunteers: 10,
+      participatingSchoolCount: 8,
+      participatingStudentCount: 240,
+      scheduleTimeEnabled: false,
+      interviewStartDate: getDate(35),
+      interviewEndDate: getDate(28),
+    }
+  ),
+  buildLnbCaseSeed(
+    17,
+    { hasInstructor: true, volunteerMode: 'no_interview', surveyMode: 'full' },
+    {
+      category: 'instructor' as ProgramCategory,
+      startDate: getDate(43),
+      endDate: getDate(13),
+      approvedStudentCount: 22,
+      instructors: 10,
+      instructorCapacity: 15,
+      generalVolunteers: 8,
+      participatingSchoolCount: 5,
+      scheduleTimeEnabled: true,
+    }
+  ),
+  buildLnbCaseSeed(
+    18,
+    { hasInstructor: false, volunteerMode: 'interview_2depth', surveyMode: 'full' },
+    {
+      format: 'seminar',
+      category: 'volunteer' as ProgramCategory,
+      businessArea: '진로취업',
+      targetLevel: 'middle' as TargetLevel,
+      startDate: getDate(43),
+      endDate: getDate(13),
+      approvedStudentCount: 22,
+      generalVolunteers: 6,
+      participatingSchoolCount: 5,
+      scheduleTimeEnabled: true,
+    }
+  ),
+  buildLnbCaseSeed(
+    19,
+    { hasInstructor: false, volunteerMode: 'no_interview', surveyMode: 'none' },
+    {
+      capacity: 32,
+      category: 'volunteer' as ProgramCategory,
+      startDate: getDate(45),
+      endDate: getDate(15),
+      applicationStartDate: getDate(90),
+      applicationEndDate: getDate(30),
+      approvedStudentCount: 20,
+      generalVolunteers: 6,
+      scheduleTimeEnabled: false,
+    }
+  ),
+  buildLnbCaseSeed(
+    20,
+    { hasInstructor: false, volunteerMode: 'no_interview', surveyMode: 'single' },
+    {
+      capacity: 28,
+      format: 'seminar',
+      category: 'volunteer' as ProgramCategory,
+      businessArea: '진로취업',
+      targetLevel: 'college' as TargetLevel,
+      startDate: getDate(118),
+      endDate: getDate(88),
+      applicationStartDate: getDate(152),
+      applicationEndDate: getDate(98),
+      status: 'completed',
+      lifecycleStatus: 'document_processing_completed' as ProgramLifecycleStatus,
+      approvedStudentCount: 22,
+      generalVolunteers: 12,
+      scheduleTimeEnabled: true,
+    }
+  ),
+  buildLnbCaseSeed(
+    21,
+    { hasInstructor: true, volunteerMode: 'none', surveyMode: 'none' },
+    {
+      category: 'instructor' as ProgramCategory,
+      startDate: getDate(58),
+      endDate: getDate(28),
+      applicationStartDate: getDate(88),
+      applicationEndDate: getDate(43),
+      status: 'pending',
+      lifecycleStatus: 'recruiting_instructors' as ProgramLifecycleStatus,
+      scheduleTimeEnabled: false,
+    }
+  ),
+  buildLnbCaseSeed(
+    22,
+    { hasInstructor: false, volunteerMode: 'interview_2depth', surveyMode: 'none' },
+    {
+      format: 'seminar',
+      category: 'volunteer' as ProgramCategory,
+      businessArea: '진로취업',
+      targetLevel: 'college' as TargetLevel,
+      startDate: getDate(56),
+      endDate: getDate(26),
+      applicationStartDate: getDate(86),
+      applicationEndDate: getDate(41),
+      status: 'pending',
+      lifecycleStatus: 'recruiting_students' as ProgramLifecycleStatus,
+      scheduleTimeEnabled: true,
+    }
+  ),
+  buildLnbCaseSeed(
+    23,
+    { hasInstructor: true, volunteerMode: 'interview_2depth', surveyMode: 'none' },
+    {
+      capacity: 32,
+      category: 'instructor' as ProgramCategory,
+      startDate: getDate(44),
+      endDate: getDate(14),
+      approvedStudentCount: 18,
+      instructors: 10,
+      instructorCapacity: 15,
+      generalVolunteers: 8,
+      scheduleTimeEnabled: true,
+      interviewStartDate: getDate(38),
+      interviewEndDate: getDate(32),
+      interviewMethod: '화상 면접',
+    }
+  ),
+  buildLnbCaseSeed(
+    24,
+    { hasInstructor: false, volunteerMode: 'interview_2depth', surveyMode: 'single' },
+    {
+      capacity: 28,
+      format: 'seminar',
+      category: 'volunteer' as ProgramCategory,
+      businessArea: '진로취업',
+      targetLevel: 'college' as TargetLevel,
+      startDate: getDate(117),
+      endDate: getDate(87),
+      applicationStartDate: getDate(151),
+      applicationEndDate: getDate(97),
+      status: 'completed',
+      lifecycleStatus: 'education_completed' as ProgramLifecycleStatus,
+      approvedStudentCount: 26,
+      generalVolunteers: 10,
+      scheduleTimeEnabled: false,
+      interviewStartDate: getDate(36),
+      interviewEndDate: getDate(30),
+    }
+  ),
 ]
 
 const GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [

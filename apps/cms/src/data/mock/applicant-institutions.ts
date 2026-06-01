@@ -30,6 +30,12 @@ export interface ApplicantInstitutionDetailExtend {
   sexOffenseCheckRequest?: string
   /** 성범죄 경력 조회서 첨부 파일명 (표시용) */
   sexOffenseRecordAttachmentFileName?: string
+  /** 합반 신청 여부 (일반 프로그램 기관 상세) */
+  combinedClassApplication?: string
+  /** 대기 장소 안내 (일반 프로그램 기관 상세) */
+  waitingPlaceGuide?: string
+  /** 기타 특이사항 — 주차, 전달사항 등 (일반 프로그램 기관 상세) */
+  otherSpecialNotes?: string
 }
 
 export interface ApplicantSchoolRow {
@@ -58,6 +64,8 @@ export interface ApplicantSchoolRow {
   detail?: ApplicantInstitutionDetailExtend
   /** 참여 반려 시 사유 (프로그램 승인 현황 영역 표시용) */
   participationRejectionReason?: string
+  /** 승인/반려 알림 발송 일시 — 상세 승인 현황 행 표시 */
+  approvalNotificationSentAt?: string
 }
 
 const SCHOOL_NAMES = [
@@ -199,68 +207,46 @@ function buildMockList(count: number, programIds?: string[]): ApplicantSchoolRow
   return rows
 }
 
-/** 스크린샷 시안 기준: applicant-school-1 상세 */
+/** 스크린샷 시안 기준: applicant-school-1 (진월초등학교) 상세 */
 const APPLICANT_SCHOOL_1_DETAIL: ApplicantInstitutionDetailExtend = {
-  addressDetail: '-',
-  educationLocation: '기관 안 | 교육 진행 대상 학급의 교실',
+  addressDetail: '1층 교무실 이길동 선생님 앞',
   educationType: '온/오프라인',
-  textbookName: '성공하는 경제생활',
-  totalHoursAndSessions: '2시간 (총 2회차)',
-  previousYearParticipation: '참여 X',
-  affiliatedFinancialCompany: '미결연',
+  textbookName: '미정',
+  combinedClassApplication: '미신청',
   /** 원문 — UI에서 대기/반려 시 마스킹, 개인정보 상세보기 시 원문 표시 */
   teacherInfo:
-    '교사명: 이길동 | Tel : 062-1234-0000 | M : 010-9876-5432 | E-mail : tinto@naver.com',
+    '담당 교사 : 이길동 | Tel : 062-1234-0000 | M : 010-9876-5432 | E-mail : tinto@naver.com',
   applicationReason: '아이들의 경제감각 성장에 큰 도움이 될 것 같아 신청합니다!',
   otherRequests: '혹시 다른 학년도 동일하게 추가 신청이 가능할까요?',
-  computerInSpace: '1대 사용 가능 | USB 사용 불가',
-  waitingRoom: '있음 | 교내 1층 귀빈실',
-  parkingInfo: '있음 | 학교 정문 앞 주차장 사용 가능',
-  mealInfo: '제공 | 인당 4,500원씩 내시면 급식실에서 식사 가능하세요 ~',
+  computerInSpace: '1대 사용 가능, USB는 사용 불가합니다.',
+  waitingPlaceGuide:
+    '대기실은 1층 귀빈실을 이용해 주세요. 정수기와 의자가 구비되어 있습니다.',
+  mealInfo: '가능',
+  otherSpecialNotes:
+    '주차는 학교 정문 앞 공영주차장을 이용해 주세요. 방문 시 경비실에 신분증을 제시해 주시기 바랍니다.',
   sexOffenseCheckRequest: '온라인 제출 | ID : tinto | 검증번호 : 940412',
-  sexOffenseRecordAttachmentFileName: '2026_초등 경제교육 봉사단 모집_cover.JPG',
 }
 
 const APPLICANT_SCHOOL_1_SESSIONS: ParticipatingSchoolSession[] = [
   {
     round: 1,
-    date: '2026.01.09',
-    dayOfWeek: '금',
-    duration: '1시간',
+    date: '2026.04.20',
+    dayOfWeek: '월',
+    duration: '3시간',
     format: '오프라인',
-    classNum: '1교시',
-    timeRange: '9:20~10:10',
+    classNum: '3차시',
+    timeRange: '09:30~12:20',
     status: 'pending',
   },
   {
     round: 2,
-    date: '2026.01.30',
-    dayOfWeek: '금',
-    duration: '1시간',
-    format: '온라인',
-    classNum: '2교시',
-    timeRange: '10:20~11:10',
+    date: '2026.04.27',
+    dayOfWeek: '월',
+    duration: '2시간',
+    format: '오프라인',
+    classNum: '2차시',
+    timeRange: '13:00~15:50',
     status: 'pending',
-  },
-  {
-    round: 3,
-    date: '',
-    dayOfWeek: '',
-    duration: '',
-    format: '',
-    classNum: '',
-    timeRange: '',
-    status: 'not_planned',
-  },
-  {
-    round: 4,
-    date: '',
-    dayOfWeek: '',
-    duration: '',
-    format: '',
-    classNum: '',
-    timeRange: '',
-    status: 'not_planned',
   },
 ]
 
@@ -268,18 +254,54 @@ export const MOCK_APPLICANT_INSTITUTIONS: ApplicantSchoolRow[] = (() => {
   const list = buildMockList(30)
   const row = list.find(s => s.id === 'applicant-school-1')
   if (row) {
+    row.schoolName = '진월초등학교'
+    row.region = '광주광역시 남구 광복마을4길 40'
+    row.educationGrade = '5학년'
+    row.classCount = 4
+    row.studentCount = 124
+    row.approvalStatus = 'pending'
     row.teacherName = '이길동'
     row.contact = '062-1234-0000'
-    row.desiredEducationPeriod = '26.01.09(금)~26.01.30(금)'
+    row.desiredEducationPeriod = '26.04.20(월)~26.04.27(월)'
     row.detail = APPLICANT_SCHOOL_1_DETAIL
     row.sessions = APPLICANT_SCHOOL_1_SESSIONS
   }
   const row2 = list.find(s => s.id === 'applicant-school-2')
   if (row2) {
+    row2.approvalStatus = 'rejected'
     row2.participationRejectionReason = '인원 초과'
+    row2.approvalNotificationSentAt = '2024.01.15 09:15:42'
   }
   return list
 })()
+
+export function formatApplicantSchoolApprovalNotificationSentAt(d = new Date()): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  const ss = String(d.getSeconds()).padStart(2, '0')
+  return `${y}.${m}.${day} ${hh}:${mm}:${ss}`
+}
+
+export function patchApplicantSchoolForApprovalStatus(
+  row: ApplicantSchoolRow,
+  approvalStatus: ApplicantApprovalStatusKey
+): ApplicantSchoolRow {
+  if (approvalStatus === 'approved' || approvalStatus === 'rejected') {
+    return {
+      ...row,
+      approvalStatus,
+      approvalNotificationSentAt: formatApplicantSchoolApprovalNotificationSentAt(),
+    }
+  }
+  return {
+    ...row,
+    approvalStatus,
+    approvalNotificationSentAt: undefined,
+  }
+}
 
 /**
  * 프로그램별 수강 신청 학교 목록 (모달용).
@@ -303,6 +325,6 @@ export function updateApplicantSchoolApprovalStatus(
 ): void {
   const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === schoolId)
   if (row) {
-    row.approvalStatus = approvalStatus
+    Object.assign(row, patchApplicantSchoolForApprovalStatus(row, approvalStatus))
   }
 }
