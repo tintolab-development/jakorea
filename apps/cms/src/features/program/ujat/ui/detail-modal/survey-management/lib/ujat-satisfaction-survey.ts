@@ -1,13 +1,8 @@
+import type { RegisteredSurvey } from '@/features/program/shared/lib/survey-management/survey-management-types'
+
 export type UjatSurveyProgressStatus = 'before_start' | 'in_progress' | 'finished'
 
-export type UjatRegisteredSurvey = {
-  id: string
-  title: string
-  templateId: string
-  status: UjatSurveyProgressStatus
-  responseCount: number
-  participantTotal: number
-}
+export type UjatRegisteredSurvey = RegisteredSurvey
 
 export type UjatSatisfactionAudienceKey = 'teacher' | 'volunteer_h1' | 'volunteer_h2'
 
