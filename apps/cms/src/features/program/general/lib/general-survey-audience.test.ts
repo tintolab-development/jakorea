@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
+import { getGeneralParticipantApplicationsLnbLabel } from './detail-meta'
 import {
   getDefaultGeneralSatisfactionAudience,
   getGeneralSatisfactionAudienceTabs,
@@ -61,5 +62,24 @@ describe('general survey audience', () => {
     })
 
     expect(isGeneralIndividualProgram(p)).toBe(true)
+  })
+
+  it('신청 목록 LNB 라벨을 참여자 유형 대분류에 맞게 표시한다', () => {
+    expect(
+      getGeneralParticipantApplicationsLnbLabel(
+        program({
+          generalProgramAudience: 'organization',
+          generalParticipantTypes: ['school_institution'],
+        })
+      )
+    ).toBe('기관 신청 목록')
+    expect(
+      getGeneralParticipantApplicationsLnbLabel(
+        program({
+          generalProgramAudience: 'individual',
+          generalParticipantTypes: ['individual'],
+        })
+      )
+    ).toBe('참여자 신청 목록')
   })
 })

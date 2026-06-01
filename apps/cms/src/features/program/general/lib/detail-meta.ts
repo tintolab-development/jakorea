@@ -14,6 +14,7 @@ import {
   GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
 } from '@/features/program/general/lib/registration-local-save'
 import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/general-survey-audience'
 
 export type GeneralSurveyMenuItem = { key: GeneralProgramSurveyMenuKey; label: string }
 
@@ -66,4 +67,17 @@ export function getGeneralVolunteerInterviewEnabled(program: Program): boolean {
 export function getGeneralSurveyMenuItems(program: Program): GeneralSurveyMenuItem[] {
   const keys = program.generalSurveyMenuKeys ?? []
   return keys.map(key => ({ key, label: SURVEY_MENU_LABELS[key] }))
+}
+
+/** LNB·breadcrumb — 기관 대분류 프로그램 */
+export const GENERAL_ORGANIZATION_APPLICATIONS_LNB_LABEL = '기관 신청 목록'
+
+/** LNB·breadcrumb — 개인 대분류(개인 포함) 프로그램 */
+export const GENERAL_PARTICIPANT_APPLICATIONS_LNB_LABEL = '참여자 신청 목록'
+
+/** 참여자 유형(대분류)에 따른 신청 목록 LNB 라벨 */
+export function getGeneralParticipantApplicationsLnbLabel(program: Program): string {
+  return isGeneralIndividualProgram(program)
+    ? GENERAL_PARTICIPANT_APPLICATIONS_LNB_LABEL
+    : GENERAL_ORGANIZATION_APPLICATIONS_LNB_LABEL
 }
