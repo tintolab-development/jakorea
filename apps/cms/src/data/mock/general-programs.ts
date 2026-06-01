@@ -159,7 +159,8 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     approvedStudentCount: 0,
     scheduleTimeEnabled: false,
     generalParticipantTypes: ['individual', 'teacher_instructor'],
-    generalSurveyMenuKeys: [],
+    generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
+    generalProgramAudience: 'individual',
   },
   {
     id: 'general-prog-in-progress-1',

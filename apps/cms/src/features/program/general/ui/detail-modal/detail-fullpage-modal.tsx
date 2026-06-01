@@ -32,6 +32,7 @@ import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/
 import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hooks/use-common-info-save'
 import { GeneralProgramDetailSidebar } from './detail-sidebar'
 import { GeneralProgramDetailCommonInfoView } from './info/common-info-view'
+import { GeneralSurveyManagementView } from './survey-management/general-survey-management-view'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './detail-fullpage-modal.css'
 
@@ -429,6 +430,8 @@ export function GeneralProgramDetailFullPageModal({
               onEdit={handleInfoEdit}
               onSave={handleInfoSave}
             />
+          ) : activeLnb === 'survey' ? (
+            <GeneralSurveyManagementView program={displayProgram} activeTab={activeTab} />
           ) : (
             <div
               className="general-program-detail-fullpage-modal__main"

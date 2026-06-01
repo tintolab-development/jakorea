@@ -1,0 +1,7 @@
+.general-program-detail-fullpage-modal .ujat-survey-registered {
+  min-height: 0;
+}
+
+.general-program-detail-fullpage-modal .ujat-survey-registered__tabs {
+  flex-shrink: 0;
+}
