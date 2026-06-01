@@ -34,9 +34,13 @@ When deleting or mutating entities, keep **referential integrity** (e.g. cascade
 - `generalProgramAudience` / `generalProgramEducationStructure` / `generalProgramSessionRound` 필드 설정
 - 복수 회차: `rounds` 2건
 
-### 3) LNB matrix (9건)
+### 3) LNB matrix (9건, 스크린샷 행 16~24)
 
-LNB 메뉴 조합 확인용. id: `general-prog-lnb-*`, title: `【LNB】…` 접두.
+LNB 메뉴 조합 확인용. id: `general-prog-lnb-16` … `general-prog-lnb-24`, title: `【LNB·NN】강사 … · 봉사자 … · 설문 …` (구 `general-prog-lnb-01`~`09` 대체).
+
+### 4) 유형 케이스 라벨 (행 7~15)
+
+8종 variant + 15행(교육·IPS 일정별 상이). 목록 title: `【유형·NN】일반 프로그램 (기관|개인)_…`.
 
 ### 공통
 
@@ -50,4 +54,4 @@ LNB 메뉴 조합 확인용. id: `general-prog-lnb-*`, title: `【LNB】…` 접
 - [api-spec-mock.md](./api-spec-mock.md)
 - [fsd-structure.md](../architecture/fsd-structure.md)
 
-**Last updated:** 2026-05-29
+**Last updated:** 2026-06-01
