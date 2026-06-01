@@ -55,6 +55,7 @@ export {
   mockSchedules,
   mockSchedulesMap,
   buildEconomySchedulesForVisibleRange,
+  buildCompanySchoolSchedulesForVisibleRange,
   buildGeneralSchedulesForVisibleRange,
   buildGeminiSchedulesForVisibleRange,
   buildUjatSchedulesForVisibleRange,
@@ -103,7 +104,12 @@ export {
 export { mockUsers, getUserByEmail, getUsersByRole, validateLogin } from './users'
 export { getVolunteerPrograms, mockVolunteerProgramsMap } from './volunteer-programs'
 export { getEducationPrograms, mockEducationProgramsMap } from './education-programs'
-export { getEconomyPrograms, getEconomyProgramById } from './economy-programs'
+export {
+  getCompanySchoolPrograms,
+  getCompanySchoolProgramById,
+  getEconomyPrograms,
+  getEconomyProgramById,
+} from './economy-programs'
 export { getGeneralPrograms, getGeneralProgramById } from './general-programs'
 export {
   isGeminiProgram,

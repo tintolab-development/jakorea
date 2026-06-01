@@ -16,7 +16,33 @@ import type { DashboardWidgetConfig, DashboardWidgetSlotHeightPx } from '@/share
 export const WIDGET_IDS_WITHOUT_BUILT_IN_HANDLE: readonly string[] = [] as const
 
 const STORAGE_KEY = 'dashboard-widget-order'
-const PERSIST_VERSION = 3
+const PERSIST_VERSION = 5
+
+const HIDDEN_ADMIN_SCHEDULE_WIDGET_IDS = [
+  'program-schedule-economy-widget',
+  'program-schedule-company-school-widget',
+  'program-schedule-ujat-widget',
+  'program-schedule-gemini-widget',
+] as const
+
+function stripHiddenAdminScheduleWidgets(ids: string[]): string[] {
+  const hidden = new Set<string>(HIDDEN_ADMIN_SCHEDULE_WIDGET_IDS)
+  return ids.filter(id => !hidden.has(id))
+}
+
+function renameWidgetId(ids: string[], from: string, to: string): string[] {
+  return ids.map(id => (id === from ? to : id))
+}
+
+function migrateWidgetIdKey(
+  widths: Record<string, 12 | 24> | undefined,
+  from: string,
+  to: string
+): Record<string, 12 | 24> | undefined {
+  if (!widths || widths[from] === undefined) return widths
+  const { [from]: val, ...rest } = widths
+  return { ...rest, [to]: val }
+}
 
 interface PersistedLayoutState {
   orderByRole: Record<string, string[]>
@@ -99,6 +125,47 @@ function migrateLayoutState(persisted: unknown, version: number): PersistedLayou
               'program-schedule-ujat-widget': adminWidths['program-schedule-economy-widget'],
             },
           }
+        }
+      }
+
+      if (version < 4) {
+        const adminOrder = orderByRole['ADMIN']
+        if (adminOrder?.includes('program-schedule-economy-widget')) {
+          orderByRole = {
+            ...orderByRole,
+            ADMIN: renameWidgetId(
+              adminOrder,
+              'program-schedule-economy-widget',
+              'program-schedule-company-school-widget'
+            ),
+          }
+        }
+        const adminWidths = widthByRole['ADMIN']
+        const migratedWidths = migrateWidgetIdKey(
+          adminWidths,
+          'program-schedule-economy-widget',
+          'program-schedule-company-school-widget'
+        )
+        if (migratedWidths && migratedWidths !== adminWidths) {
+          widthByRole = { ...widthByRole, ADMIN: migratedWidths }
+        }
+      }
+
+      if (version < 5) {
+        const adminOrder = orderByRole['ADMIN']
+        if (adminOrder) {
+          orderByRole = {
+            ...orderByRole,
+            ADMIN: stripHiddenAdminScheduleWidgets(adminOrder),
+          }
+        }
+        const adminWidths = widthByRole['ADMIN']
+        if (adminWidths) {
+          const next = { ...adminWidths }
+          for (const id of HIDDEN_ADMIN_SCHEDULE_WIDGET_IDS) {
+            delete next[id]
+          }
+          widthByRole = { ...widthByRole, ADMIN: next }
         }
       }
 

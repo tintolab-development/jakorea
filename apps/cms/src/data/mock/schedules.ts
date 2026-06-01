@@ -6,7 +6,7 @@
 import type { Schedule, UUID } from '../../types'
 import { mockPrograms } from './programs'
 import { mockInstructors } from './instructors'
-import { getEconomyPrograms } from './economy-programs'
+import { getCompanySchoolPrograms } from './economy-programs'
 import {
   getGeneralEducationPrograms,
   getGeminiPrograms,
@@ -358,17 +358,17 @@ const ECONOMY_WIDGET_SCHOOL_LOCATIONS = [
  * - **하루 1건**만 생성 (다른 위젯 대비 캘린더 과밀 완화)
  * - 제목/장소는 출강·회차 맥락에 맞게 program 메타 기반
  */
-export function buildEconomySchedulesForVisibleRange(
+export function buildCompanySchoolSchedulesForVisibleRange(
   visibleDateKeys: string[],
-  allowedEconomyProgramIdSet: Set<string> | null
+  allowedCompanySchoolProgramIdSet: Set<string> | null
 ): Schedule[] {
-  const economyPrograms = getEconomyPrograms()
-  if (economyPrograms.length === 0) return []
+  const companySchoolPrograms = getCompanySchoolPrograms()
+  if (companySchoolPrograms.length === 0) return []
 
   const pool =
-    allowedEconomyProgramIdSet == null
-      ? economyPrograms
-      : economyPrograms.filter(p => allowedEconomyProgramIdSet.has(p.id))
+    allowedCompanySchoolProgramIdSet == null
+      ? companySchoolPrograms
+      : companySchoolPrograms.filter(p => allowedCompanySchoolProgramIdSet.has(p.id))
 
   if (pool.length === 0) return []
 
@@ -409,8 +409,11 @@ export function buildEconomySchedulesForVisibleRange(
   return schedules
 }
 
+/** @deprecated `buildCompanySchoolSchedulesForVisibleRange` 사용 */
+export const buildEconomySchedulesForVisibleRange = buildCompanySchoolSchedulesForVisibleRange
+
 /**
- * 일반 교육 프로그램 일정 위젯: 가시 구간 동적 목 일정 (경제 위젯과 동일 패턴)
+ * 일반 교육 프로그램 일정 위젯: 가시 구간 동적 목 일정 (1사1교 위젯과 동일 패턴)
  */
 export function buildGeneralSchedulesForVisibleRange(
   visibleDateKeys: string[],

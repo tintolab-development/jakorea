@@ -20,7 +20,7 @@ import {
   TARGET_LEVEL_LABEL,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { StatusBadge } from '@/shared/components/status-badge'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import { getUjatProgramProgressDisplayStatus } from './ujat-program-info-edit'
 import {
   UjatHalfEducationScheduleReadonly,
@@ -54,222 +54,142 @@ function participantTypeSummary(program: Program): string {
   return level ? `${cat}, ${level}` : cat
 }
 
-function normalizeExternalUrl(url: string): string {
-  const trimmed = url.trim()
-  if (/^https?:\/\//i.test(trimmed)) return trimmed
-  return `https://${trimmed}`
-}
-
-/** 후원사명 — 클릭 시 홈페이지(데이터 연동 전: 준비 중 알림) */
-function UjatSponsorLink({
-  name,
-  homepageUrl,
-}: {
-  name: string
-  homepageUrl?: string | null
-}) {
-  const handleClick = () => {
-    const url = homepageUrl?.trim()
-    if (url) {
-      window.open(normalizeExternalUrl(url), '_blank', 'noopener,noreferrer')
-      return
-    }
-    window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-  }
-
-  return (
-    <button
-      type="button"
-      className="ujat-program-detail-common-info-view__sponsor-link"
-      onClick={handleClick}
-    >
-      {name}
-    </button>
-  )
-}
-
-/** 기본 정보 — 스크린샷 5블록(각각 DetailInfoForm) */
-function UjatBasicInfoFiveBlocks({
+function UjatBasicInfoSection({
   program,
   sponsorName,
-  sponsorHomepageUrl,
   v,
   operationRange,
 }: {
   program: Program
   sponsorName?: string
-  sponsorHomepageUrl?: string | null
   v: ReturnType<typeof programToDetailEditValues>
   operationRange: string
 }) {
   const managerLine = [v.managerName, v.contactPhone].filter(Boolean).join(' | ') || '-'
   const sponsorDisplay = sponsorName?.trim() ? (
-    <UjatSponsorLink name={sponsorName.trim()} homepageUrl={sponsorHomepageUrl} />
+    <ProgramDetailSponsorLink
+      name={sponsorName.trim()}
+      sponsorId={program.sponsorId}
+      sponsorName={sponsorName.trim()}
+    />
   ) : (
     '-'
   )
 
   return (
-    <div
-      className="ujat-program-detail-common-info-view__basic-info"
-      role="group"
-      aria-label="기본 정보"
-    >
-      {/* 1. 등록·수정 */}
-      <DetailInfoForm title="기본 정보" mode="view" className="program-registration-paragraph">
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="최초 등록일"
-            view={
-              <>
-                {formatDate(program.createdAt)}
-                {program.createdByName ? ` | ${program.createdByName}` : null}
-              </>
-            }
-          />
-          <DetailInfoForm.Field
-            label="마지막 수정일"
-            view={
-              <>
-                {formatDate(program.updatedAt)}
-                {program.updatedByName ? ` | ${program.updatedByName}` : null}
-              </>
-            }
-          />
-        </DetailInfoForm.Row>
-      </DetailInfoForm>
-
-      {/* 2. 프로그램명 */}
-      <DetailInfoForm
-        title="기본 정보 — 프로그램명"
-        hideHeader
-        mode="view"
-        className="program-registration-paragraph ujat-program-detail-common-info-view__basic-info-block"
-      >
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="대표 프로그램명 (국문)" view={v.mainTitle?.trim() || '-'} />
-          <DetailInfoForm.Field
-            label="대표 프로그램명 (영문)"
-            view={program.titleEn?.trim() || '-'}
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="프로그램 관리명" view={v.title?.trim() || '-'} />
-          <DetailInfoForm.Field
-            label="세부 프로그램명"
-            view={program.teamDivision?.trim() || program.textbookName?.trim() || '-'}
-          />
-        </DetailInfoForm.Row>
-      </DetailInfoForm>
-
-      {/* 3. 운영·진행 현황 */}
-      <DetailInfoForm
-        title="기본 정보 — 운영"
-        hideHeader
-        mode="view"
-        className="program-registration-paragraph ujat-program-detail-common-info-view__basic-info-block"
-      >
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="사업 운영 기간" view={operationRange} />
-          <DetailInfoForm.Field
-            label="프로그램 진행 현황"
-            view={program.ujatProgressStatus || program.lifecycleStatus ? (
-              <UjatProgressStatusView program={program} />
-            ) : (
-              '-'
-            )}
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="참여자 유형" view={participantTypeSummary(program)} />
-          <DetailInfoForm.Field
-            label="사업 분야"
-            view={optionLabel(BUSINESS_AREA_OPTIONS, v.businessArea)}
-          />
-        </DetailInfoForm.Row>
-      </DetailInfoForm>
-
-      {/* 4. 후원·설문 */}
-      <DetailInfoForm
-        title="기본 정보 — 후원"
-        hideHeader
-        mode="view"
-        className="program-registration-paragraph ujat-program-detail-common-info-view__basic-info-block"
-      >
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="후원사" view={sponsorDisplay} />
-          <DetailInfoForm.Field label="후원사 담당자" view={managerLine} />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="설문 진행 항목"
-            fullRow
-            view="설문조사, 학생 만족도조사, 교사 만족도조사, 강의평가"
-          />
-        </DetailInfoForm.Row>
-      </DetailInfoForm>
-
-      {/* 5. 교육·IPS */}
-      <DetailInfoForm
-        title="기본 정보 — 교육·IPS"
-        hideHeader
-        mode="view"
-        className="program-registration-paragraph ujat-program-detail-common-info-view__basic-info-block"
-      >
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="교육 과정"
-            view={optionLabel(EDUCATION_PROCESS_OPTIONS, v.educationProcess ?? program.curriculum)}
-          />
-          <DetailInfoForm.Field label="IP Owned" view={optionLabel(IP_OWNED_OPTIONS, v.ipOwned)} />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="Course Delivered By"
-            view={optionLabel(COURSE_DELIVERED_BY_OPTIONS, v.courseDeliveredBy ?? undefined)}
-          />
-          <DetailInfoForm.Field
-            label="Partner Involvement"
-            view={
-              program.partnerInvolvement == null
-                ? '-'
-                : (PARTNER_INVOLVEMENT_OPTIONS.find(o => o.value === program.partnerInvolvement)
-                    ?.label ?? '-')
-            }
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="IPS 유형"
-            view={program.ips ? optionLabel(IPS_OPTIONS, program.ips) : '-'}
-          />
-        </DetailInfoForm.Row>
-      </DetailInfoForm>
-    </div>
+    <DetailInfoForm title="기본 정보" mode="view" className="program-registration-paragraph">
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="최초 등록일"
+          view={
+            <>
+              {formatDate(program.createdAt)}
+              {program.createdByName ? ` | ${program.createdByName}` : null}
+            </>
+          }
+        />
+        <DetailInfoForm.Field
+          label="마지막 수정일"
+          view={
+            <>
+              {formatDate(program.updatedAt)}
+              {program.updatedByName ? ` | ${program.updatedByName}` : null}
+            </>
+          }
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="대표 프로그램명 (국문)" view={v.mainTitle?.trim() || '-'} />
+        <DetailInfoForm.Field
+          label="대표 프로그램명 (영문)"
+          view={program.titleEn?.trim() || '-'}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="프로그램 관리명" view={v.title?.trim() || '-'} />
+        <DetailInfoForm.Field
+          label="세부 프로그램명"
+          view={program.teamDivision?.trim() || program.textbookName?.trim() || '-'}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="사업 운영 기간" view={operationRange} />
+        <DetailInfoForm.Field
+          label="프로그램 진행 현황"
+          view={program.ujatProgressStatus || program.lifecycleStatus ? (
+            <UjatProgressStatusView program={program} />
+          ) : (
+            '-'
+          )}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="참여자 유형" view={participantTypeSummary(program)} />
+        <DetailInfoForm.Field
+          label="사업 분야"
+          view={optionLabel(BUSINESS_AREA_OPTIONS, v.businessArea)}
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="후원사" view={sponsorDisplay} />
+        <DetailInfoForm.Field label="후원사 담당자" view={managerLine} />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="설문 진행 항목"
+          fullRow
+          view="설문조사, 학생 만족도조사, 교사 만족도조사, 강의평가"
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="교육 과정"
+          view={optionLabel(EDUCATION_PROCESS_OPTIONS, v.educationProcess ?? program.curriculum)}
+        />
+        <DetailInfoForm.Field label="IP Owned" view={optionLabel(IP_OWNED_OPTIONS, v.ipOwned)} />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="Course Delivered By"
+          view={optionLabel(COURSE_DELIVERED_BY_OPTIONS, v.courseDeliveredBy ?? undefined)}
+        />
+        <DetailInfoForm.Field
+          label="Partner Involvement"
+          view={
+            program.partnerInvolvement == null
+              ? '-'
+              : (PARTNER_INVOLVEMENT_OPTIONS.find(o => o.value === program.partnerInvolvement)
+                  ?.label ?? '-')
+          }
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="IPS 유형"
+          view={program.ips ? optionLabel(IPS_OPTIONS, program.ips) : '-'}
+        />
+      </DetailInfoForm.Row>
+    </DetailInfoForm>
   )
 }
 
 export interface UjatProgramDetailCommonInfoViewProps {
   program: Program
   sponsorName?: string
-  /** 후원사 홈페이지 URL — 없으면 클릭 시 준비 중 알림 */
-  sponsorHomepageUrl?: string | null
 }
 
 export function UjatProgramDetailCommonInfoView({
   program,
   sponsorName,
-  sponsorHomepageUrl,
 }: UjatProgramDetailCommonInfoViewProps) {
   const v = programToDetailEditValues(program)
   const operationRange = formatDateRange(program.startDate, program.endDate)
 
   return (
     <div className="ujat-program-detail-common-info-view program-detail-fullpage-modal__info-tab">
-      <UjatBasicInfoFiveBlocks
+      <UjatBasicInfoSection
         program={program}
         sponsorName={sponsorName}
-        sponsorHomepageUrl={sponsorHomepageUrl}
         v={v}
         operationRange={operationRange}
       />

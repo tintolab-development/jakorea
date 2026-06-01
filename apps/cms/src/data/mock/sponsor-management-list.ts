@@ -129,6 +129,7 @@ const SPONSOR_ENGLISH_NAME_MAP: Record<string, string> = {
   KB국민은행: 'KB KOOKMIN BANK',
   한화생명: 'HANWHA LIFE',
   '아름다운 재단': 'BEAUTIFUL FOUNDATION',
+  '한국씨티은행': 'CITI BANK',
 }
 
 function resolveSponsorNameEn(name: string, index: number): string {
@@ -197,6 +198,15 @@ function buildMockSponsorManagementList(): SponsorManagementRow[] {
       })
     )
   }
+
+  rows.push(
+    createRow(130, {
+      name: '한국씨티은행',
+      organizationKind: 'corporate',
+      sponsorshipStatus: 'active',
+      sponsorshipStartDate: START_SCREENSHOT,
+    })
+  )
 
   return rows
 }

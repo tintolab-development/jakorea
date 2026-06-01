@@ -5,22 +5,15 @@ import type { Program } from '@/types/domain'
 import type { ProgramListView } from '@/features/program/general/ui/table/program-table-column-resolver'
 import type { ProgramListConfig } from '@/features/program/general/ui/program-list'
 
-/** 일반 프로그램 목록 — 4카드 위젯과 동일한 status 쿼리 */
-export type GeneralProgramEconomyStatusFilter =
-  | 'economy_scheduled'
-  | 'economy_in_progress'
-  | 'economy_completed'
+/** 일반 프로그램 목록 — 4카드 위젯 status 쿼리 */
+export type GeneralProgramOverviewStatusFilter = 'scheduled' | 'in_progress' | 'completed'
 
 export interface GeneralProgramListQueryParams extends Record<string, string | undefined> {
   programId?: string
-  status?: GeneralProgramEconomyStatusFilter
+  status?: GeneralProgramOverviewStatusFilter | 'economy_scheduled' | 'economy_in_progress' | 'economy_completed'
 }
 
-const economyStatusValues: GeneralProgramEconomyStatusFilter[] = [
-  'economy_scheduled',
-  'economy_in_progress',
-  'economy_completed',
-]
+const overviewStatusValues = ['scheduled', 'in_progress', 'completed'] as const
 
 export function useGeneralProgramListFilters() {
   const { params, setParam } = useQueryParams<GeneralProgramListQueryParams>()
@@ -31,18 +24,23 @@ export function useGeneralProgramListFilters() {
     setListVersion(v => v + 1)
   }, [])
 
-  const statusFilter = useMemo<GeneralProgramEconomyStatusFilter | null>(() => {
+  const statusFilter = useMemo<GeneralProgramOverviewStatusFilter | null>(() => {
     const value = params.status
-    if (value && economyStatusValues.includes(value as GeneralProgramEconomyStatusFilter)) {
-      return value as GeneralProgramEconomyStatusFilter
+    if (value && (overviewStatusValues as readonly string[]).includes(value)) {
+      return value as GeneralProgramOverviewStatusFilter
     }
+    // 하위 호환: 기존 economy_* 쿼리 키
+    if (value === 'economy_scheduled') return 'scheduled'
+    if (value === 'economy_in_progress') return 'in_progress'
+    if (value === 'economy_completed') return 'completed'
     return null
   }, [params.status])
 
   const filteredPrograms = useMemo(() => {
+    void listVersion
     let filtered: Program[] = getGeneralPrograms()
 
-    if (statusFilter === 'economy_scheduled') {
+    if (statusFilter === 'scheduled') {
       filtered = filtered.filter(program =>
         [
           'recruiting_students',
@@ -51,9 +49,9 @@ export function useGeneralProgramListFilters() {
           'education_before_textbook',
         ].includes(program.lifecycleStatus || '')
       )
-    } else if (statusFilter === 'economy_in_progress') {
+    } else if (statusFilter === 'in_progress') {
       filtered = filtered.filter(program => program.lifecycleStatus === 'education_after_textbook')
-    } else if (statusFilter === 'economy_completed') {
+    } else if (statusFilter === 'completed') {
       filtered = filtered.filter(program =>
         ['education_completed', 'document_processing_completed'].includes(
           program.lifecycleStatus || ''
@@ -65,19 +63,19 @@ export function useGeneralProgramListFilters() {
   }, [statusFilter, listVersion])
 
   const headerTitle = useMemo(() => {
-    if (statusFilter === 'economy_scheduled') return '예정 프로그램'
-    if (statusFilter === 'economy_in_progress') return '진행 중인 프로그램'
-    if (statusFilter === 'economy_completed') return '완료 프로그램'
+    if (statusFilter === 'scheduled') return '예정 프로그램'
+    if (statusFilter === 'in_progress') return '진행 중인 프로그램'
+    if (statusFilter === 'completed') return '완료 프로그램'
     return '전체 프로그램'
   }, [statusFilter])
 
   const programListConfig = useMemo((): ProgramListConfig => {
     const listView: ProgramListView =
-      statusFilter === 'economy_scheduled'
+      statusFilter === 'scheduled'
         ? 'SCHEDULED'
-        : statusFilter === 'economy_in_progress'
+        : statusFilter === 'in_progress'
           ? 'IN_PROGRESS'
-          : statusFilter === 'economy_completed'
+          : statusFilter === 'completed'
             ? 'COMPLETED'
             : 'ALL'
 

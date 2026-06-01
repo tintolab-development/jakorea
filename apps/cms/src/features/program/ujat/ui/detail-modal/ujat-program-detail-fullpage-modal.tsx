@@ -12,7 +12,6 @@ import {
   makeBreadcrumbItem,
 } from '@/shared/lib/detail-fullpage-query-stack'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
-import { useSponsorService } from '@/features/sponsor/hooks/use-sponsor-service'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-program-detail-info-save'
 import { handleError } from '@/shared/utils/error-handler'
@@ -482,14 +481,6 @@ export function UjatProgramDetailFullPageModal({
   } = useProgramDetail(open ? programId : undefined)
 
   const displayProgram = useMemo(() => detailProgram ?? program ?? null, [detailProgram, program])
-
-  const { getByIdSync: getSponsorByIdSync } = useSponsorService()
-  const sponsorHomepageUrl = useMemo(() => {
-    const sid = displayProgram?.sponsorId
-    if (!sid) return undefined
-    const sponsor = getSponsorByIdSync(sid) as { homepageUrl?: string } | undefined
-    return sponsor?.homepageUrl
-  }, [displayProgram?.sponsorId, getSponsorByIdSync])
 
   const interviewEnabled = programId ? getUjatVolunteerInterviewEnabled(programId) : true
   const surveyItems = useMemo(
@@ -1601,7 +1592,6 @@ export function UjatProgramDetailFullPageModal({
                 <UjatProgramDetailCommonInfoView
                   program={displayProgram}
                   sponsorName={sponsorName}
-                  sponsorHomepageUrl={sponsorHomepageUrl}
                 />
               )}
             </>

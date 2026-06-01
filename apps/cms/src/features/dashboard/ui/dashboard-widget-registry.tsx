@@ -140,10 +140,10 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<Record<DashboardWidgetType, Dash
       user={p.user}
     />
   ),
-  'program-schedule-economy-widget': p => (
+  'program-schedule-company-school-widget': p => (
     <ProgramScheduleWidget
-      variant="economy"
-      widgetKey={PROGRAM_SCHEDULE_WIDGET_KEYS.economy}
+      variant="company_school"
+      widgetKey={PROGRAM_SCHEDULE_WIDGET_KEYS.company_school}
       title="1사1교 프로그램 일정"
       viewAllPath="/programs/company-school"
       user={p.user}

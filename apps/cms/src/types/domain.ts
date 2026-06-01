@@ -61,6 +61,51 @@ export type GeneralProgramSurveyMenuKey =
   | 'satisfaction'
   | 'lecture_evaluation'
 
+/** 일반 프로그램 대분류 — 등록 폼 참여자 유형 [기관] / [개인] */
+export type GeneralProgramAudienceKind = 'organization' | 'individual'
+
+/** 일반 프로그램 중분류 — 등록 폼 교육 진행 구조 [커리큘럼형] / [일정형] */
+export type GeneralProgramEducationStructure = 'curriculum' | 'schedule'
+
+/** 일반 프로그램 소분류 — 등록 폼 수업 회차 유형 [단일 회차] / [복수 회차] */
+export type GeneralProgramSessionRoundKind = 'single' | 'multi'
+
+/** 일반 프로그램 상세 공통 정보 — 커리큘럼 차시 (등록 폼·조회 mock) */
+export interface GeneralProgramCurriculumSessionRow {
+  sessionLabel: string
+  title: string
+  description: string
+}
+
+/** 일반 프로그램 상세 공통 정보 확장 (등록 폼 저장값 mock/API 연동 전) */
+export interface GeneralProgramCommonInfoExtension {
+  /** 공고용 프로그램명 — 미설정 시 `Program.title` */
+  announcementTitle?: string
+  /** 세부 프로그램명 */
+  detailedProgramName?: string
+  sponsorManagerLine?: string
+  /** 교육 장소 상세 (기관 안/밖 뒤 `|` 구분) */
+  venueDetail?: string
+  /** 후원사 표시명 mock — `sponsorId` resolve 전 스크린샷·데모용 */
+  sponsorDisplayName?: string
+  /** 후원사 관리 목록 id — `/sponsor?sponsorId=` 링크용 */
+  sponsorManagementId?: string
+  educationFormLabel?: string
+  ipsTypeSummary?: string
+  curriculumSessions?: GeneralProgramCurriculumSessionRow[]
+  educationScheduleLines?: string[]
+  wageGradeRows?: Array<{ grade: string; pricing: string }>
+  paymentItems?: string
+  deductionItems?: string
+  kpi?: {
+    finalParticipants: number
+    instructorCount: number
+    volunteerCount: number
+    finalSchools: number
+    finalClasses: number
+  }
+}
+
 // IPS 분류
 export type IPSClassification = 'Prepare' | 'Succeed' | 'Inspire'
 
@@ -237,6 +282,14 @@ export interface Program {
   generalVolunteerInterviewEnabled?: boolean
   /** 일반 프로그램 — 설문 관리 LNB 2뎁스 키 */
   generalSurveyMenuKeys?: GeneralProgramSurveyMenuKey[]
+  /** 일반 프로그램 유형 — 대분류 (기관/개인) */
+  generalProgramAudience?: GeneralProgramAudienceKind
+  /** 일반 프로그램 유형 — 중분류 (커리큘럼형/일정형) */
+  generalProgramEducationStructure?: GeneralProgramEducationStructure
+  /** 일반 프로그램 유형 — 소분류 (단일/복수 회차) */
+  generalProgramSessionRound?: GeneralProgramSessionRoundKind
+  /** 일반 프로그램 상세 공통 정보 확장 필드 */
+  generalCommonInfo?: GeneralProgramCommonInfoExtension
   /** 일반 프로그램 캘린더 — 시간대 사용 여부 (false면 종일) */
   scheduleTimeEnabled?: boolean
   /** 일반 프로그램 캘린더 — 일정 시작·종료 시각 (HH:mm) */

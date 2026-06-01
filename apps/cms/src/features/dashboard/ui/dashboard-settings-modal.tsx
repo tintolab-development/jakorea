@@ -19,7 +19,7 @@ import {
 import {
   mockPrograms,
   getGeneralEducationPrograms,
-  getEconomyPrograms,
+  getCompanySchoolPrograms,
   getUjatPrograms,
   getGeminiPrograms,
 } from '@/data/mock'
@@ -53,8 +53,8 @@ function getProgramRowsForWidget(widgetKey: string): { id: string; title: string
   if (widgetKey === 'program-schedule-general-widget') {
     return getGeneralEducationPrograms().map(p => ({ id: p.id, title: p.title }))
   }
-  if (widgetKey === 'program-schedule-economy-widget') {
-    return getEconomyPrograms().map(p => ({ id: p.id, title: p.title }))
+  if (widgetKey === 'program-schedule-company-school-widget') {
+    return getCompanySchoolPrograms().map(p => ({ id: p.id, title: p.title }))
   }
   if (widgetKey === 'program-schedule-ujat-widget') {
     return getUjatPrograms().map(p => ({ id: p.id, title: p.title }))

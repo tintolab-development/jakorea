@@ -3,6 +3,7 @@ import { ProgramLifecycleStatusTableCell } from '@/shared/components/program-lif
 import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
 import { formatDateRange } from '../../hooks/use-format-date'
 import { getCapacity } from '../../lib/program-helpers'
+import { resolveGeneralProgramListTitle } from '../../lib/general-program-detail-common-info-display'
 import {
   optionalColumns,
   studentRecruitmentTableColumns,
@@ -94,7 +95,7 @@ function createProgramListAllColumns() {
       width: WIDTH_PROGRAM_TITLE,
       align: 'center' as const,
       className: 'program-list-table__col-title',
-      render: (text: string) => text ?? '-',
+      render: (_: unknown, record: Program) => resolveGeneralProgramListTitle(record),
     },
     {
       title: '프로그램 진행 현황',
@@ -149,7 +150,7 @@ function createProgramListScheduledColumns() {
       width: WIDTH_PROGRAM_TITLE,
       align: 'center' as const,
       className: 'program-list-table__col-title',
-      render: (text: string) => text ?? '-',
+      render: (_: unknown, record: Program) => resolveGeneralProgramListTitle(record),
     },
     {
       title: '참여자 모집 인원',
@@ -197,7 +198,7 @@ function createProgramListInProgressColumns() {
       ellipsis: true,
       width: WIDTH_PROGRAM_TITLE,
       align: 'center' as const,
-      render: (text: string) => text ?? '-',
+      render: (_: unknown, record: Program) => resolveGeneralProgramListTitle(record),
     },
     {
       title: '참여자 모집 인원',
@@ -256,7 +257,7 @@ function createProgramListFallbackColumns() {
       key: 'title',
       ellipsis: true,
       align: 'center' as const,
-      render: (text: string) => text ?? '-',
+      render: (_: unknown, record: Program) => resolveGeneralProgramListTitle(record),
     },
     {
       title: '프로그램 진행 현황',
@@ -314,7 +315,7 @@ function createGeneralColumns(params: Pick<ResolveEducationColumnsParams, 'progr
       width: 260,
       ellipsis: true,
       align: 'center' as const,
-      render: (text: string) => text ?? '-',
+      render: (_: unknown, record: Program) => resolveGeneralProgramListTitle(record),
     },
     {
       title: '모집 신청 현황',

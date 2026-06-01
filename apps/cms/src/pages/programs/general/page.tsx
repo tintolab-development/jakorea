@@ -1,6 +1,6 @@
 /**
  * 프로그램 관리 > 일반 프로그램 목록
- * 레이아웃·공통 컴포넌트: program-list-page.tsx / ProgramList (economy 모드) 패턴
+ * 레이아웃·공통 컴포넌트: program-list-page.tsx / ProgramList (overview 모드) 패턴
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
@@ -104,7 +104,7 @@ function GeneralProgramListPageContent() {
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
   const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
 
-  const isScheduledFilter = statusFilter === 'economy_scheduled'
+  const isScheduledFilter = statusFilter === 'scheduled'
   const [, setHasListFilters] = useState(false)
   const handleDisplayCountChange = useCallback((_count: number, hasActiveFilters: boolean) => {
     setHasListFilters(hasActiveFilters)

@@ -2,11 +2,15 @@
  * 일반 프로그램 Mock 데이터 (`/programs/general`)
  *
  * 1) 기존 그럴싸한 프로그램명 6건 (예정/진행/완료 UI·캘린더용)
- * 2) LNB 확인용 9건 — 프로그램명에 강사/봉사자/설문 조합 표기 (`general-prog-lnb-*`)
+ * 2) LNB 확인용 9건 — `【LNB】` 접두 (`general-prog-lnb-*`)
+ * 3) 유형 8종 — `일반 프로그램 (기관/개인)_커리큘럼형|일정형_단일|복수 회차` (`general-prog-type-*`)
  */
 
 import type {
+  GeneralProgramAudienceKind,
+  GeneralProgramEducationStructure,
   GeneralProgramParticipantType,
+  GeneralProgramSessionRoundKind,
   GeneralProgramSurveyMenuKey,
   Program,
   ProgramCategory,
@@ -14,6 +18,16 @@ import type {
   ProgramRound,
   TargetLevel,
 } from '../../types/domain'
+import {
+  buildGeneralProgramVariantTitle,
+  GENERAL_PROGRAM_VARIANTS,
+  generalProgramVariantIdSuffix,
+  type GeneralProgramVariant,
+} from '@/features/program/general/lib/general-program-variant'
+import {
+  buildGeneralOrgCurriculumSingleProgramSeedFields,
+  GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID,
+} from '@/features/program/general/lib/general-program-detail-common-info-display'
 import { mockSponsors } from './sponsors'
 
 const SPONSOR_ID = mockSponsors[0]?.id ?? 'sponsor-1'
@@ -62,22 +76,21 @@ function buildProgramStartEndTime(seed: number): { startTime: string; endTime: s
 const createRounds = (
   programId: string,
   capacity: number,
-  curriculumLabel: string
+  curriculumLabel: string,
+  sessionRound: GeneralProgramSessionRoundKind = 'single'
 ): ProgramRound[] => {
-  const startDate = new Date(2026, 2, 1)
-  return [
-    {
-      id: `${programId}-round-1`,
-      programId,
-      roundNumber: 1,
-      startDate: startDate.toISOString(),
-      endDate: new Date(2026, 2, 15).toISOString(),
-      capacity,
-      status: 'active',
-      deliveryType: 'offline',
-      curriculum: curriculumLabel,
-    },
-  ]
+  const roundCount = sessionRound === 'multi' ? 2 : 1
+  return Array.from({ length: roundCount }, (_, i) => ({
+    id: `${programId}-round-${i + 1}`,
+    programId,
+    roundNumber: i + 1,
+    startDate: new Date(2026, 2, 1 + i * 14).toISOString(),
+    endDate: new Date(2026, 2, 15 + i * 14).toISOString(),
+    capacity,
+    status: 'active' as const,
+    deliveryType: 'offline' as const,
+    curriculum: roundCount > 1 ? `${curriculumLabel} ${i + 1}회차` : curriculumLabel,
+  }))
 }
 
 type GeneralProgramSeed = Omit<Program, 'id' | 'rounds' | 'createdAt' | 'updatedAt'> & {
@@ -87,6 +100,13 @@ type GeneralProgramSeed = Omit<Program, 'id' | 'rounds' | 'createdAt' | 'updated
   generalParticipantTypes: GeneralProgramParticipantType[]
   generalVolunteerInterviewEnabled?: boolean
   generalSurveyMenuKeys?: GeneralProgramSurveyMenuKey[]
+  generalProgramAudience?: GeneralProgramAudienceKind
+  generalProgramEducationStructure?: GeneralProgramEducationStructure
+  generalProgramSessionRound?: GeneralProgramSessionRoundKind
+  /** `createRounds`에 전달 — seed에서 rounds를 직접 넣지 않을 때 사용 */
+  sessionRoundForRounds?: GeneralProgramSessionRoundKind
+  createdAt?: string
+  updatedAt?: string
 }
 
 /** 기존 목록·캘린더용 — 실제 후원사/프로그램명 스타일 */
@@ -244,6 +264,140 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     generalSurveyMenuKeys: ['survey'],
   },
 ]
+
+/** LNB·설문·강사·봉사(면접) 전부 포함 — 8종 유형 mock 공통 */
+const FULL_LNB_PARTICIPANT_TYPES = {
+  organization: ['school_institution', 'teacher_instructor', 'volunteer'] as const,
+  individual: ['individual', 'teacher_instructor', 'volunteer'] as const,
+}
+
+const TYPE_VARIANT_LIFECYCLE: ProgramLifecycleStatus[] = [
+  'recruiting_students',
+  'recruiting_instructors',
+  'education_after_textbook',
+  'education_after_textbook',
+  'education_after_textbook',
+  'education_after_textbook',
+  'education_completed',
+  'document_processing_completed',
+]
+
+function isOrgCurriculumSingleVariant(variant: GeneralProgramVariant): boolean {
+  return (
+    variant.audience === 'organization' &&
+    variant.educationStructure === 'curriculum' &&
+    variant.sessionRound === 'single'
+  )
+}
+
+function buildTypeVariantSeed(
+  variant: GeneralProgramVariant,
+  index: number
+): GeneralProgramSeed {
+  const title = buildGeneralProgramVariantTitle(variant)
+  const id = `general-prog-type-${generalProgramVariantIdSuffix(variant)}`
+
+  if (isOrgCurriculumSingleVariant(variant)) {
+    const screenshot = buildGeneralOrgCurriculumSingleProgramSeedFields()
+    return {
+      id: GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID,
+      capacity: 30,
+      sponsorId: SPONSOR_ID,
+      title: screenshot.title,
+      mainTitle: screenshot.mainTitle,
+      titleEn: screenshot.titleEn,
+      type: 'online',
+      format: 'course',
+      category: 'school' as ProgramCategory,
+      description: `유형 mock — ${screenshot.title} (공통 정보 스크린샷 기준)`,
+      startDate: '2025-12-08T00:00:00+09:00',
+      endDate: '2026-12-30T23:59:59+09:00',
+      applicationStartDate: getDate(150),
+      applicationEndDate: getDate(100),
+      status: 'active',
+      lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
+      businessArea: '진로취업',
+      targetLevel: 'high' as TargetLevel,
+      approvedStudentCount: screenshot.approvedStudentCount,
+      instructors: screenshot.instructors,
+      instructorCapacity: screenshot.instructorCapacity,
+      generalVolunteers: screenshot.generalVolunteers,
+      participatingSchoolCount: screenshot.participatingSchoolCount,
+      scheduleTimeEnabled: false,
+      institutionType: 'inside_school',
+      educationProcess: 'Traditional (Paper)',
+      ipOwned: 'Jointly',
+      courseDeliveredBy: 'JA',
+      partnerInvolvement: false,
+      ips: 'Prepare',
+      createdAt: '2025-12-08T09:15:00+09:00',
+      updatedAt: '2025-12-08T17:55:00+09:00',
+      createdByName: '홍길동',
+      updatedByName: '이순신',
+      generalParticipantTypes: [
+        ...FULL_LNB_PARTICIPANT_TYPES.organization,
+      ] as GeneralProgramParticipantType[],
+      generalVolunteerInterviewEnabled: true,
+      interviewStartDate: getDate(48),
+      interviewEndDate: getDate(38),
+      interviewMethod: '대면 면접',
+      generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
+      generalProgramAudience: variant.audience,
+      generalProgramEducationStructure: variant.educationStructure,
+      generalProgramSessionRound: variant.sessionRound,
+      sessionRoundForRounds: variant.sessionRound,
+      generalCommonInfo: screenshot.generalCommonInfo,
+    }
+  }
+
+  const lifecycleStatus = TYPE_VARIANT_LIFECYCLE[index] ?? 'education_after_textbook'
+  const isCompleted = ['education_completed', 'document_processing_completed'].includes(
+    lifecycleStatus
+  )
+  const isScheduled = ['recruiting_students', 'recruiting_instructors'].includes(lifecycleStatus)
+
+  return {
+    id,
+    capacity: 30 + index,
+    sponsorId: SPONSOR_ID,
+    title,
+    mainTitle: title,
+    type: 'offline',
+    format: variant.educationStructure === 'curriculum' ? 'course' : 'workshop',
+    category: (variant.audience === 'organization' ? 'school' : 'individual') as ProgramCategory,
+    description: `유형 mock — ${title} (강사·봉사·설문 LNB 전체)`,
+    startDate: getDate(isCompleted ? 120 : isScheduled ? 58 : 44),
+    endDate: getDate(isCompleted ? 90 : isScheduled ? 26 : 12),
+    applicationStartDate: getDate(isCompleted ? 150 : 88),
+    applicationEndDate: getDate(isCompleted ? 100 : 40),
+    status: isCompleted ? 'completed' : isScheduled ? 'pending' : 'active',
+    lifecycleStatus,
+    businessArea: '경제금융',
+    targetLevel: 'high' as TargetLevel,
+    approvedStudentCount: isScheduled ? 0 : 20 + index,
+    instructors: 8,
+    instructorCapacity: 15,
+    generalVolunteers: 6,
+    scheduleTimeEnabled: index % 2 === 0,
+    generalParticipantTypes: [
+      ...FULL_LNB_PARTICIPANT_TYPES[variant.audience],
+    ] as GeneralProgramParticipantType[],
+    generalVolunteerInterviewEnabled: true,
+    interviewStartDate: getDate(48),
+    interviewEndDate: getDate(38),
+    interviewMethod: '대면 면접',
+    generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
+    generalProgramAudience: variant.audience,
+    generalProgramEducationStructure: variant.educationStructure,
+    generalProgramSessionRound: variant.sessionRound,
+    sessionRoundForRounds: variant.sessionRound,
+  }
+}
+
+/** 프로그램 유형 8종 — title = `일반 프로그램 (기관/개인)_…` */
+const TYPE_VARIANT_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = GENERAL_PROGRAM_VARIANTS.map(
+  (variant, index) => buildTypeVariantSeed(variant, index)
+)
 
 /** LNB 메뉴 조합 확인용 — `【LNB】` 접두 프로그램명 */
 const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
@@ -487,6 +641,7 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
 
 const GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
   ...REALISTIC_GENERAL_PROGRAM_SEEDS,
+  ...TYPE_VARIANT_GENERAL_PROGRAM_SEEDS,
   ...LNB_GENERAL_PROGRAM_SEEDS,
 ]
 
@@ -499,24 +654,35 @@ export function invalidateGeneralProgramsCache(): void {
 }
 
 export function getGeneralPrograms(): Program[] {
-  if (generalProgramsCache) return generalProgramsCache
-
   const seeded = GENERAL_PROGRAM_SEEDS.map((seed, index) => {
-    const { id, capacity, scheduleTimeEnabled, mainTitle, ...rest } = seed
-    const createdAt = getDate(30)
+    const {
+      id,
+      capacity,
+      scheduleTimeEnabled,
+      mainTitle,
+      sessionRoundForRounds,
+      generalProgramSessionRound,
+      createdAt: seedCreatedAt,
+      updatedAt: seedUpdatedAt,
+      ...rest
+    } = seed
+    const createdAt = seedCreatedAt ?? getDate(30)
+    const updatedAt = seedUpdatedAt ?? createdAt
     const timeFields =
       scheduleTimeEnabled === false ? {} : buildProgramStartEndTime(index)
     const curriculumLabel = mainTitle
       ? `${mainTitle} 커리큘럼`
       : '일반 프로그램 커리큘럼'
+    const roundKind =
+      sessionRoundForRounds ?? generalProgramSessionRound ?? 'single'
     return {
       ...rest,
       mainTitle,
       id,
-      rounds: createRounds(id, capacity, curriculumLabel),
+      rounds: createRounds(id, capacity, curriculumLabel, roundKind),
       ...timeFields,
       createdAt,
-      updatedAt: createdAt,
+      updatedAt,
     } as Program
   })
 
@@ -535,4 +701,9 @@ export function getGeneralProgramById(id: string): Program | undefined {
 /** LNB mock 전용 id 접두사 */
 export function isGeneralLnbMockProgramId(programId: string): boolean {
   return programId.startsWith('general-prog-lnb-')
+}
+
+/** 유형 8종 mock id 접두사 */
+export function isGeneralTypeVariantMockProgramId(programId: string): boolean {
+  return programId.startsWith('general-prog-type-')
 }

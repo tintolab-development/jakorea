@@ -11,46 +11,6 @@
   margin: 0;
 }
 
-/* 기본 정보 — 5개 DetailInfoForm 블록 간격 */
-.ujat-program-detail-common-info-view__basic-info {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.ujat-program-detail-common-info-view__basic-info-block {
-  margin: 0;
-}
-
-/* 후원사 링크 — program-detail-info-tab__sponsor-link와 동일 (#0070e7, --color-link는 mint) */
-.ujat-program-detail-common-info-view__sponsor-link {
-  display: inline;
-  padding: 0;
-  margin: 0;
-  border: none;
-  background: none;
-  font: inherit;
-  font-weight: inherit;
-  line-height: inherit;
-  cursor: pointer;
-  color: #0070e7;
-  text-decoration-line: underline;
-  text-decoration-style: solid;
-  text-decoration-skip-ink: none;
-  text-decoration-thickness: auto;
-  text-underline-offset: auto;
-  text-underline-position: from-font;
-}
-
-.ujat-program-detail-common-info-view__sponsor-link:hover {
-  color: #0070e7;
-}
-
-.ujat-program-detail-common-info-view__sponsor-link:focus-visible {
-  outline: 2px solid #0070e7;
-  outline-offset: 2px;
-}
-
 /* 지역 별 교육 진행 가능 학급 수 — 학기별 2행×4지역(라벨|값×8열 그리드) */
 .ujat-region-capacity-readonly__title {
   margin-bottom: 10px;

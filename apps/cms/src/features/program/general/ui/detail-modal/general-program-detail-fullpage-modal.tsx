@@ -19,13 +19,16 @@ import {
   getGeneralVolunteerInterviewEnabled,
   hasGeneralInstructorApplications,
   hasGeneralVolunteerApplications,
+  resolveGeneralProgramForDetail,
   type GeneralSurveyMenuItem,
 } from '@/features/program/general/lib/general-program-detail-meta'
+import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/lib/general-program-detail-common-info-display'
 import {
   parseGeneralDetailLnb,
   type GeneralDetailLnbKey,
 } from '@/features/program/general/lib/general-program-detail-url'
 import { GeneralProgramDetailSidebar } from './general-program-detail-sidebar'
+import { GeneralProgramDetailCommonInfoView } from './info/general-program-detail-common-info-view'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './general-program-detail-fullpage-modal.css'
 
@@ -215,11 +218,14 @@ export function GeneralProgramDetailFullPageModal({
   const [searchParams, setSearchParams] = useSearchParams()
   const programId = program?.id ?? programIdHint ?? searchParams.get('programId') ?? undefined
 
-  const { program: detailProgram, loading } = useProgramDetail(open ? programId : undefined)
-  const displayProgram = useMemo(
-    () => detailProgram ?? program ?? null,
-    [detailProgram, program]
-  )
+  const { program: detailProgram, loading, sponsorName } = useProgramDetail(open ? programId : undefined)
+  const displayProgram = useMemo(() => {
+    return (
+      detailProgram ??
+      program ??
+      (programId ? resolveGeneralProgramForDetail(programId) ?? null : null)
+    )
+  }, [detailProgram, program, programId])
 
   const interviewEnabled = displayProgram
     ? getGeneralVolunteerInterviewEnabled(displayProgram)
@@ -302,7 +308,13 @@ export function GeneralProgramDetailFullPageModal({
         })
       : null
 
-    items.push(makeBreadcrumbItem(displayProgram.title, location.pathname, programParams))
+    items.push(
+      makeBreadcrumbItem(
+        resolveGeneralProgramDisplayTitle(displayProgram),
+        location.pathname,
+        programParams
+      )
+    )
 
     if (!childLabel) {
       items.push({ label: lnbLabel })
@@ -320,11 +332,15 @@ export function GeneralProgramDetailFullPageModal({
 
   if (!open) return null
 
+  const modalTitle = displayProgram
+    ? resolveGeneralProgramDisplayTitle(displayProgram)
+    : '프로그램 상세'
+
   return (
     <DetailFullPageModal
       open={open}
       onClose={onClose}
-      title={displayProgram?.title ?? '프로그램 상세'}
+      title={modalTitle}
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className="program-detail-fullpage-modal general-program-detail-fullpage-modal program-detail-fullpage-modal--program-list-overview"
       sidebar={
@@ -346,10 +362,22 @@ export function GeneralProgramDetailFullPageModal({
           <Spin size="large" />
         </div>
       ) : displayProgram ? (
-        <div
-          className="general-program-detail-fullpage-modal__main"
-          aria-label={generalChildBreadcrumbLabel(activeLnb, activeTab, surveyItems) ?? generalLnbBreadcrumbLabel(activeLnb)}
-        />
+        <>
+          {activeLnb === 'info' && activeTab === 'info' ? (
+            <GeneralProgramDetailCommonInfoView
+              program={displayProgram}
+              sponsorName={sponsorName}
+            />
+          ) : (
+            <div
+              className="general-program-detail-fullpage-modal__main"
+              aria-label={
+                generalChildBreadcrumbLabel(activeLnb, activeTab, surveyItems) ??
+                generalLnbBreadcrumbLabel(activeLnb)
+              }
+            />
+          )}
+        </>
       ) : (
         <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
       )}

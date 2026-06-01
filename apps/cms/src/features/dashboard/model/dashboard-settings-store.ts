@@ -47,7 +47,7 @@ export const SHORTCUT_ITEMS: Array<{ id: string; label: string; path: string }> 
 /** 위젯별 프로그램 설정용 위젯 키 (7개: 일정 4 + 기타) */
 export const WIDGET_PROGRAM_KEYS = [
   { key: 'program-schedule-general-widget', label: '일반 프로그램 일정' },
-  { key: 'program-schedule-economy-widget', label: '1사1교 프로그램 일정' },
+  { key: 'program-schedule-company-school-widget', label: '1사1교 프로그램 일정' },
   { key: 'program-schedule-ujat-widget', label: 'UJAT 프로그램 일정' },
   { key: 'program-schedule-gemini-widget', label: 'Gemini 프로그램 일정' },
   { key: 'recruitment-status-widget', label: '모집 신청 현황' },
@@ -144,7 +144,7 @@ export const useDashboardSettingsStore = create<DashboardSettingsState>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 1,
+      version: 2,
       migrate: (persistedState, version) => {
         const p = persistedState as {
           shortcutEnabled?: Record<string, boolean>
@@ -157,6 +157,13 @@ export const useDashboardSettingsStore = create<DashboardSettingsState>()(
             ...p,
             shortcutBadgeCounts: {},
           }
+        }
+        if (version < 2 && p.widgetProgramIds?.['program-schedule-economy-widget']) {
+          const next = { ...p.widgetProgramIds }
+          next['program-schedule-company-school-widget'] =
+            next['program-schedule-economy-widget']
+          delete next['program-schedule-economy-widget']
+          return { ...p, widgetProgramIds: next }
         }
         return persistedState as typeof p
       },

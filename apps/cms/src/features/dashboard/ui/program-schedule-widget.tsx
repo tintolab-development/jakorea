@@ -12,9 +12,9 @@ import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
 import {
   mockSchedules,
-  getEconomyPrograms,
+  getCompanySchoolPrograms,
   getUjatPrograms,
-  buildEconomySchedulesForVisibleRange,
+  buildCompanySchoolSchedulesForVisibleRange,
   buildGeneralSchedulesForVisibleRange,
   buildGeminiSchedulesForVisibleRange,
   buildUjatSchedulesForVisibleRange,
@@ -72,8 +72,8 @@ function getEventTypeLabel(type: ScheduleEvent['type']) {
 }
 
 function resolveWidgetProgram(programId: string, variant: ProgramScheduleKind): Program | undefined {
-  if (variant === 'economy') {
-    return programService.getByIdSync(programId) ?? getEconomyPrograms().find(p => p.id === programId)
+  if (variant === 'company_school') {
+    return programService.getByIdSync(programId) ?? getCompanySchoolPrograms().find(p => p.id === programId)
   }
   if (variant === 'ujat') {
     return programService.getByIdSync(programId) ?? getUjatPrograms().find(p => p.id === programId)
@@ -98,8 +98,8 @@ function getCategoryProgramIdSet(variant: ProgramScheduleKind): Set<string> {
   switch (variant) {
     case 'general':
       return new Set(getGeneralEducationPrograms().map(p => p.id))
-    case 'economy':
-      return new Set(getEconomyPrograms().map(p => p.id))
+    case 'company_school':
+      return new Set(getCompanySchoolPrograms().map(p => p.id))
     case 'ujat':
       return new Set(getUjatPrograms().map(p => p.id))
     case 'gemini':
@@ -111,8 +111,8 @@ function getProgramsForRecruitment(variant: ProgramScheduleKind): Program[] {
   switch (variant) {
     case 'general':
       return getGeneralEducationPrograms()
-    case 'economy':
-      return getEconomyPrograms()
+    case 'company_school':
+      return getCompanySchoolPrograms()
     case 'ujat':
       return getUjatPrograms()
     case 'gemini':
@@ -150,8 +150,8 @@ function buildDynamicSchedulesForVisibleRange(
   switch (variant) {
     case 'general':
       return buildGeneralSchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
-    case 'economy':
-      return buildEconomySchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
+    case 'company_school':
+      return buildCompanySchoolSchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
     case 'ujat':
       return buildUjatSchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
     case 'gemini':

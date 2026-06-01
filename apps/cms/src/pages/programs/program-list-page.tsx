@@ -74,10 +74,10 @@ export function ProgramListPage() {
 
   // 헤더 타이틀 계산: statusFilter (위젯 클릭) → 모집단계 라벨 → "전체 프로그램"
   const headerTitle = useMemo(() => {
-    if (programType === 'economy' && statusFilter) {
-      if (statusFilter === 'economy_scheduled') return '예정 프로그램'
-      if (statusFilter === 'economy_in_progress') return '진행 중인 프로그램'
-      if (statusFilter === 'economy_completed') return '완료 프로그램'
+    if (programType === 'company_school' && statusFilter) {
+      if (statusFilter === 'scheduled') return '예정 프로그램'
+      if (statusFilter === 'in_progress') return '진행 중인 프로그램'
+      if (statusFilter === 'completed') return '완료 프로그램'
     }
 
     // 7단계/교육 모집단계 매핑
@@ -212,25 +212,25 @@ export function ProgramListPage() {
     location.pathname,
   ])
 
-  /** 예정 프로그램 필터 활성 시에만 행 선택·선택 삭제 표시 (경제 교육 페이지) */
-  const isScheduledFilter = programType === 'economy' && statusFilter === 'economy_scheduled'
+  /** 예정 프로그램 필터 활성 시에만 행 선택·선택 삭제 표시 (1사1교 페이지) */
+  const isScheduledFilter = programType === 'company_school' && statusFilter === 'scheduled'
 
   const isAdmin = user?.role === 'ADMIN'
 
-  const showCalendarView = isAdmin && (programType === 'education' || programType === 'economy')
+  const showCalendarView = isAdmin && (programType === 'education' || programType === 'company_school')
 
   const programListConfig = useMemo(() => {
     const listView: ProgramListView =
-      statusFilter === 'economy_scheduled'
+      statusFilter === 'scheduled'
         ? 'SCHEDULED'
-        : statusFilter === 'economy_in_progress'
+        : statusFilter === 'in_progress'
           ? 'IN_PROGRESS'
-          : statusFilter === 'economy_completed'
+          : statusFilter === 'completed'
             ? 'COMPLETED'
             : 'ALL'
 
     return {
-      mode: programType === 'economy' ? ('overview' as const) : ('general' as const),
+      mode: programType === 'company_school' ? ('overview' as const) : ('general' as const),
       view: listView,
       tableType:
         statusFilter === 'recruiting_students'
@@ -239,7 +239,7 @@ export function ProgramListPage() {
             ? ('instructor' as const)
             : undefined,
       lifecycleStatus:
-        programType === 'economy'
+        programType === 'company_school'
           ? undefined
           : statusFilter === 'matching_completed'
             ? ('education_before_textbook' as const)
@@ -365,7 +365,7 @@ export function ProgramListPage() {
     <div
       className={[
         'program-list-page',
-        programType === 'economy' ? 'program-list-page--overview' : '',
+        programType === 'company_school' ? 'program-list-page--overview' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -384,7 +384,7 @@ export function ProgramListPage() {
         showRowSelection={isScheduledFilter}
         showCalendarView={showCalendarView}
         viewMode={viewMode}
-        tableVariant={programType === 'economy' ? 'overview' : 'general'}
+        tableVariant={programType === 'company_school' ? 'overview' : 'general'}
         config={programListConfig}
         onDisplayCountChange={handleDisplayCountChange}
       >

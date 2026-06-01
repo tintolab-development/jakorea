@@ -7,7 +7,9 @@
 
 import type { Program, ProgramRound } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock'
-import { getEconomyProgramById } from '@/data/mock/economy-programs'
+import { getCompanySchoolProgramById } from '@/data/mock/economy-programs'
+import { getGeneralProgramById } from '@/data/mock/general-programs'
+import { findGeneralRegistrationLocalSaveProgramById } from '@/features/program/general/lib/general-registration-local-save'
 import {
   mockUjatElementaryListPrograms,
   mockUjatElementaryListProgramsMap,
@@ -21,10 +23,39 @@ import { applyUjatRecruitVolunteerTemplateDefaults } from '@/features/program/uj
 import type { UserRole } from '@/types/user'
 import { updateUserProgramRole } from '@/entities/user/api/user-service'
 
+function isCompanySchoolProgramId(id: string): boolean {
+  return id.startsWith('economy-prog-') || id.startsWith('company-school-prog-')
+}
+
 function resolveProgramFromStores(id: string): Program | undefined {
+  const isGeneralProgramId = id.startsWith('general-prog-')
+  if (isGeneralProgramId) {
+    return (
+      getGeneralProgramById(id) ??
+      findGeneralRegistrationLocalSaveProgramById(id) ??
+      mockProgramsMap.get(id) ??
+      getCompanySchoolProgramById(id) ??
+      mockUjatElementaryListProgramsMap.get(id) ??
+      findUjatRegistrationLocalSaveProgramById(id)
+    )
+  }
+
+  if (isCompanySchoolProgramId(id)) {
+    return (
+      getCompanySchoolProgramById(id) ??
+      mockProgramsMap.get(id) ??
+      getGeneralProgramById(id) ??
+      findGeneralRegistrationLocalSaveProgramById(id) ??
+      mockUjatElementaryListProgramsMap.get(id) ??
+      findUjatRegistrationLocalSaveProgramById(id)
+    )
+  }
+
   return (
     mockProgramsMap.get(id) ??
-    getEconomyProgramById(id) ??
+    getCompanySchoolProgramById(id) ??
+    getGeneralProgramById(id) ??
+    findGeneralRegistrationLocalSaveProgramById(id) ??
     mockUjatElementaryListProgramsMap.get(id) ??
     findUjatRegistrationLocalSaveProgramById(id)
   )

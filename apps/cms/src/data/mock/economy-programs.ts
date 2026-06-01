@@ -411,10 +411,10 @@ function extraFieldsForGeneratedIndex(i: number): Partial<Program> {
   }
 }
 
-/** 경제 교육 프로그램 206건 (스크린샷 상위 8건 + 나머지 198건) */
+/** 1사1교 프로그램 206건 (스크린샷 상위 8건 + 나머지 198건) */
 let economyProgramsCache: Program[] | null = null
 
-export function getEconomyPrograms(): Program[] {
+export function getCompanySchoolPrograms(): Program[] {
   if (economyProgramsCache) return economyProgramsCache
 
   const programs: Program[] = []
@@ -523,7 +523,13 @@ export function getEconomyPrograms(): Program[] {
   return economyProgramsCache
 }
 
-/** 상세 모달·KPI 등에서 ID만으로 경제 프로그램을 찾을 때 사용 */
-export function getEconomyProgramById(id: string): Program | undefined {
-  return getEconomyPrograms().find(p => p.id === id)
+/** 상세 모달·KPI 등에서 ID만으로 1사1교 프로그램을 찾을 때 사용 */
+export function getCompanySchoolProgramById(id: string): Program | undefined {
+  return getCompanySchoolPrograms().find(p => p.id === id)
 }
+
+/** @deprecated `getCompanySchoolPrograms` 사용 */
+export const getEconomyPrograms = getCompanySchoolPrograms
+
+/** @deprecated `getCompanySchoolProgramById` 사용 */
+export const getEconomyProgramById = getCompanySchoolProgramById

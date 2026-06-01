@@ -376,7 +376,14 @@ export function getProgramTablePageConfig(
       let result = filteredData
       if (title.trim()) {
         const q = title.trim().toLowerCase()
-        result = result.filter(p => p.title?.toLowerCase().includes(q))
+        result = result.filter(p => {
+          const programTitle = p.title?.trim() || ''
+          const announcementTitle = p.generalCommonInfo?.announcementTitle?.trim() || ''
+          return (
+            programTitle.toLowerCase().includes(q) ||
+            announcementTitle.toLowerCase().includes(q)
+          )
+        })
       }
       if (lifecyclePhaseFilter && applyLifecycleFromUrl) {
         result = result.filter(p => programMatchesProgressPhase(p, lifecyclePhaseFilter))

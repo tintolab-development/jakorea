@@ -10,7 +10,7 @@ import {
   getProgramProgressStages,
   type ProgramProgressStagesResult,
   type ProgramProgressStages,
-  type ProgramEconomyStages,
+  type ProgramOverviewStages,
 } from '../api/admin-dashboard-service'
 import { useProgramStore } from '@/features/program/general/model/program-store'
 import {
@@ -47,7 +47,7 @@ const isEducationLayoutPath = (pathname: string) => {
   )
 }
 
-const isEconomyLayoutPath = (pathname: string) => {
+const isCompanySchoolLayoutPath = (pathname: string) => {
   const p = pathname.replace(/\/$/, '') || '/'
   return (
     p === '/programs/economy-education' ||
@@ -74,10 +74,10 @@ export function ProgramStatusWidget({
   const [progress, setProgress] = useState<ProgramProgressStagesResult | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const programType = useMemo<'education' | 'economy' | 'general' | 'volunteer' | 'all'>(() => {
+  const programType = useMemo<'education' | 'company_school' | 'general' | 'volunteer' | 'all'>(() => {
     if (isGeneralProgramListRoot(location.pathname)) return 'general'
     if (isEducationLayoutPath(location.pathname)) return 'education'
-    if (isEconomyLayoutPath(location.pathname)) return 'economy'
+    if (isCompanySchoolLayoutPath(location.pathname)) return 'company_school'
     if (location.pathname === '/programs/volunteer') return 'volunteer'
     return 'all'
   }, [location.pathname])
@@ -105,7 +105,7 @@ export function ProgramStatusWidget({
   }, [location.search, selectedFromPath])
 
   const programs = useProgramStore(state =>
-    programType === 'education' || programType === 'economy' || programType === 'general'
+    programType === 'education' || programType === 'company_school' || programType === 'general'
       ? state.programs
       : EMPTY_PROGRAMS
   )
@@ -115,7 +115,10 @@ export function ProgramStatusWidget({
       setLoading(true)
       try {
         const data = await getProgramProgressStages({
-          programType: programType === 'all' ? undefined : programType,
+          programType:
+            programType === 'all'
+              ? undefined
+              : programType,
         })
         setProgress(data)
       } catch (error) {
@@ -131,8 +134,8 @@ export function ProgramStatusWidget({
     if (!progress) return []
 
     // 일반·1사1교 프로그램 루트 4단계 UI (Total, Scheduled, In Progress, Completed)
-    if (programType === 'economy' || programType === 'general') {
-      const p = progress as ProgramEconomyStages
+    if (programType === 'company_school' || programType === 'general') {
+      const p = progress as ProgramOverviewStages
       const s = selectedStatus
       return [
         {
@@ -141,28 +144,28 @@ export function ProgramStatusWidget({
           count: p.total,
           showArrowAfter: true,
           isSelected:
-            !s || !['economy_scheduled', 'economy_in_progress', 'economy_completed'].includes(s),
+            !s || !['scheduled', 'in_progress', 'completed'].includes(s),
         },
         {
-          key: 'economy_scheduled',
+          key: 'scheduled',
           label: '예정 프로그램',
           count: p.scheduled,
           showArrowAfter: true,
-          isSelected: s === 'economy_scheduled',
+          isSelected: s === 'scheduled',
         },
         {
-          key: 'economy_in_progress',
+          key: 'in_progress',
           label: '진행 중인 프로그램',
           count: p.inProgress,
           showArrowAfter: true,
-          isSelected: s === 'economy_in_progress',
+          isSelected: s === 'in_progress',
         },
         {
-          key: 'economy_completed',
+          key: 'completed',
           label: '완료 프로그램',
           count: p.completed,
           showArrowAfter: false,
-          isSelected: s === 'economy_completed',
+          isSelected: s === 'completed',
         },
       ]
     }
@@ -214,7 +217,7 @@ export function ProgramStatusWidget({
   }, [progress, selectedStatus, selectedFromPath, programType])
 
   const handleStageClick = (key: string) => {
-    if (programType === 'economy' || programType === 'general') {
+    if (programType === 'company_school' || programType === 'general') {
       const nextParams = new URLSearchParams(searchParams)
       if (key === 'total') {
         nextParams.delete('status')
@@ -277,7 +280,7 @@ export function ProgramStatusWidget({
       showBottomDivider
       onStageClick={handleStageClick}
       loading={loading}
-      loadingCardCount={programType === 'economy' || programType === 'general' ? 4 : 8}
+      loadingCardCount={programType === 'company_school' || programType === 'general' ? 4 : 8}
     />
   )
 }

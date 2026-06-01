@@ -10,14 +10,21 @@ import {
 import type { Program, ProgramLifecycleStatus, ProgramCategory } from '@/types/domain'
 import type { User } from '@/types/user'
 
-/** 경제 교육 프로그램 전용 상태 (예정/진행 중/완료) */
-export type EconomyStatusFilter = 'economy_scheduled' | 'economy_in_progress' | 'economy_completed'
+/** 개요형 목록 전용 상태 (예정/진행 중/완료) */
+export type OverviewStatusFilter = 'scheduled' | 'in_progress' | 'completed'
 
 export interface ProgramListQueryParams extends Record<string, string | undefined> {
   programId?: string
   category?: ProgramCategory | 'all'
-  status?: ProgramLifecycleStatus | EconomyStatusFilter
+  status?:
+    | ProgramLifecycleStatus
+    | OverviewStatusFilter
+    | 'economy_scheduled'
+    | 'economy_in_progress'
+    | 'economy_completed'
 }
+
+const OVERVIEW_STATUS_VALUES: readonly OverviewStatusFilter[] = ['scheduled', 'in_progress', 'completed']
 
 export function useProgramListFilters(
   programs: Program[],
@@ -27,11 +34,12 @@ export function useProgramListFilters(
   const { params, setParam } = useQueryParams<ProgramListQueryParams>()
 
   // 프로그램 타입 구분 (교육/경제교육/봉사)
-  const programType = useMemo<'education' | 'economy' | 'volunteer' | 'all'>(() => {
+  const programType = useMemo<'education' | 'company_school' | 'volunteer' | 'all'>(() => {
     const p = location.pathname.replace(/\/$/, '') || '/'
     if (p === '/programs/economy-education' || p.startsWith('/programs/economy-education/'))
-      return 'economy'
-    if (p === '/programs/company-school' || p.startsWith('/programs/company-school/')) return 'economy'
+      return 'company_school'
+    if (p === '/programs/company-school' || p.startsWith('/programs/company-school/'))
+      return 'company_school'
     if (p === '/programs/education' || p.startsWith('/programs/education/')) return 'education'
     if (p === '/programs/general' || p.startsWith('/programs/general/')) return 'education'
     if (p === '/programs/volunteer') return 'volunteer'
@@ -55,16 +63,27 @@ export function useProgramListFilters(
     p === '/programs/general/instructor-recruitment' ||
     p === '/programs/company-school/instructor-recruitment' ||
     p === '/programs/economy-education/instructor-recruitment'
-  const economyStatusValues: EconomyStatusFilter[] = [
-    'economy_scheduled',
-    'economy_in_progress',
-    'economy_completed',
-  ]
-
-  const statusFilter = useMemo<ProgramLifecycleStatus | EconomyStatusFilter | null>(() => {
+  const statusFilter = useMemo<ProgramLifecycleStatus | OverviewStatusFilter | null>(() => {
     const value = params.status as string | null
-    if (programType === 'economy' && value && economyStatusValues.includes(value as EconomyStatusFilter)) {
-      return value as EconomyStatusFilter
+    if (
+      programType === 'company_school' &&
+      value &&
+      (OVERVIEW_STATUS_VALUES as readonly string[]).includes(value)
+    ) {
+      return value as OverviewStatusFilter
+    }
+    if (programType === 'company_school' && value === 'economy_scheduled') return 'scheduled'
+    if (programType === 'company_school' && value === 'economy_in_progress') return 'in_progress'
+    if (programType === 'company_school' && value === 'economy_completed') return 'completed'
+    if (programType === 'education' && value === 'economy_scheduled') return 'scheduled'
+    if (programType === 'education' && value === 'economy_in_progress') return 'in_progress'
+    if (programType === 'education' && value === 'economy_completed') return 'completed'
+    if (
+      programType === 'education' &&
+      value &&
+      (OVERVIEW_STATUS_VALUES as readonly string[]).includes(value)
+    ) {
+      return value as OverviewStatusFilter
     }
     const validStatuses = new Set(programLifecycleStatusConfig.order)
     if (value && (value === 'education_before_textbook' || validStatuses.has(value as ProgramLifecycleStatus))) {
@@ -73,12 +92,17 @@ export function useProgramListFilters(
     if (isStudentRecruitmentRoute) return 'recruiting_students'
     if (isInstructorRecruitmentRoute) return 'recruiting_instructors'
     return null
-  }, [params.status, programType, isStudentRecruitmentRoute, isInstructorRecruitmentRoute])
+  }, [
+    params.status,
+    programType,
+    isStudentRecruitmentRoute,
+    isInstructorRecruitmentRoute,
+  ])
 
   const filteredPrograms = useMemo(() => {
     let filtered: Program[]
 
-    if (isAdmin && programType === 'economy') {
+    if (isAdmin && programType === 'company_school') {
       filtered = getEconomyPrograms()
     } else if (isAdmin && programType === 'education') {
       filtered = getEducationPrograms()
@@ -93,20 +117,20 @@ export function useProgramListFilters(
       filtered = filtered.filter(program => volunteerProgramIds.has(program.id))
     }
 
-    // 경제 교육: 4단계 필터
-    if (programType === 'economy' && statusFilter) {
-      const s = statusFilter as EconomyStatusFilter
-      if (s === 'economy_scheduled') {
+    // 1사1교: 4단계 필터
+    if (programType === 'company_school' && statusFilter) {
+      const s = statusFilter as OverviewStatusFilter
+      if (s === 'scheduled') {
         filtered = filtered.filter(program =>
           ['recruiting_students', 'recruiting_instructors', 'matching_completed', 'education_before_textbook'].includes(
             program.lifecycleStatus || ''
           )
         )
-      } else if (s === 'economy_in_progress') {
+      } else if (s === 'in_progress') {
         filtered = filtered.filter(
           program => program.lifecycleStatus === 'education_after_textbook'
         )
-      } else if (s === 'economy_completed') {
+      } else if (s === 'completed') {
         filtered = filtered.filter(program =>
           ['education_completed', 'document_processing_completed'].includes(
             program.lifecycleStatus || ''
@@ -116,7 +140,7 @@ export function useProgramListFilters(
     }
 
     // status 쿼리 파라미터 필터링
-    if (programType !== 'economy' && statusFilter) {
+    if (programType !== 'company_school' && statusFilter) {
       const s = statusFilter as ProgramLifecycleStatus
       if (s === 'matching_completed') {
         filtered = filtered.filter(

@@ -1,5 +1,6 @@
 import { formatDateRange } from '../../hooks/use-format-date'
 import { getCapacity, getApplicationCountByProgram } from '../../lib/program-helpers'
+import { resolveGeneralProgramListTitle } from '../../lib/general-program-detail-common-info-display'
 import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import type { Program, ProgramCategory, TargetLevel } from '@/types/domain'
 import {
@@ -25,7 +26,7 @@ export const studentRecruitmentTableColumns = [
     width: 260,
     ellipsis: true,
     align: 'center' as const,
-    render: (text: string) => text ?? '-',
+    render: (_: unknown, record: Program) => resolveGeneralProgramListTitle(record),
   },
   {
     title: '모집 신청 현황',
@@ -138,7 +139,7 @@ export const instructorRecruitmentTableColumns = [
     width: 260,
     ellipsis: true,
     align: 'center' as const,
-    render: (text: string) => text ?? '-',
+    render: (_: unknown, record: Program) => resolveGeneralProgramListTitle(record),
   },
   {
     title: '모집 신청 현황',
