@@ -35,6 +35,7 @@ import {
   getAssignmentSubmissionDetailForApplication,
   updateAssignmentSubmissionTeamRole,
 } from '../lib/school-detail-mock'
+import { assignmentTeamRoleTagClassName } from '../lib/assignment-team-role-tag'
 import './assignment-submission-modal.css'
 
 export interface AssignmentSubmissionModalProps {
@@ -48,13 +49,6 @@ export interface AssignmentSubmissionModalProps {
 }
 
 const DEFAULT_PROGRAM_TITLE = '프로그램'
-
-function assignmentTeamRoleTagClassName(role: AssignmentTeamRoleKey): string {
-  const base = 'assignment-submission-modal__team-role-tag'
-  if (role === 'leader') return `${base} assignment-submission-modal__team-role-tag--leader`
-  if (role === 'individual') return `${base} assignment-submission-modal__team-role-tag--individual`
-  return `${base} assignment-submission-modal__team-role-tag--member`
-}
 
 type StatusTextKind = 'scheduled' | 'completed' | 'undone'
 
