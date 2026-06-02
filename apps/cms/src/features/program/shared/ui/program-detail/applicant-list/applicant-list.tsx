@@ -29,6 +29,7 @@ import { useApplicantsDetail } from './use-applicants-detail'
 import type {
   ApplicantListMenu,
   InstitutionColumnPreset,
+  InstructorColumnPreset,
   SessionLinePreset,
 } from './applicant-list-menu'
 import './applicants-detail.css'
@@ -43,6 +44,7 @@ export interface ApplicantListProps {
   listTitle?: string
   filterFields?: FilterFieldConfig[]
   institutionColumnPreset?: InstitutionColumnPreset
+  instructorColumnPreset?: InstructorColumnPreset
   sessionLinePreset?: SessionLinePreset
   programId?: string
   /** 풀페이지 모달 X: 상세가 열려 있으면 목록으로만 돌아가도록 등록 (true면 모달은 닫지 않음) */
@@ -58,6 +60,7 @@ export function ApplicantList({
   listTitle,
   filterFields,
   institutionColumnPreset,
+  instructorColumnPreset,
   sessionLinePreset,
   programId,
   onRegisterApplicantCloseHandler,
@@ -103,6 +106,7 @@ export function ApplicantList({
     listTitle,
     filterFields,
     institutionColumnPreset,
+    instructorColumnPreset,
     sessionLinePreset,
     programId,
     detailVariant,
@@ -112,7 +116,9 @@ export function ApplicantList({
   const [institutionTableScrollX, setInstitutionTableScrollX] = useState(1280)
 
   const usesInstitutionTableScroll =
-    menu === 'institutions' || menu === 'individual-applications'
+    menu === 'institutions' ||
+    menu === 'individual-applications' ||
+    (menu === 'instructors' && instructorColumnPreset === 'general-detail')
 
   useLayoutEffect(() => {
     if (!usesInstitutionTableScroll || viewMode !== 'table' || selectedItem) return
@@ -130,6 +136,12 @@ export function ApplicantList({
   }, [usesInstitutionTableScroll, viewMode, selectedItem])
 
   const tableHorizontalScrollX = usesInstitutionTableScroll ? institutionTableScrollX : tableScrollX
+
+  const isGeneralInstructorCalendar =
+    menu === 'instructors' &&
+    instructorColumnPreset === 'general-detail' &&
+    viewMode === 'calendar' &&
+    !selectedItem
 
   const showInstitutionDetail =
     selectedItem != null && menu === 'institutions' && 'schoolName' in selectedItem
@@ -149,7 +161,9 @@ export function ApplicantList({
   }
 
   return (
-    <div className="applicant-details">
+    <div
+      className={`applicant-details${isGeneralInstructorCalendar ? ' applicant-details--instructor-calendar' : ''}`}
+    >
       {showInstitutionDetail ? (
         <ApplicantsDetailContents
           type={menu as ApplicantType}
@@ -230,6 +244,7 @@ export function ApplicantList({
       ) : showInstructorDetail ? (
         <ApplicantsDetailContents
           type={menu as ApplicantType}
+          detailVariant={detailVariant}
           data={selectedItem as ApplicantInstructorRow}
           program={program}
           onBack={() => setSelectedItem(null)}
@@ -249,6 +264,13 @@ export function ApplicantList({
           }}
           onCancelApproval={handleCancelApprovalInstructor}
           onCancelReject={handleCancelRejectInstructor}
+          onInstructorDetailSaved={row => {
+            setInstructorList(prev => prev.map(item => (item.id === row.id ? row : item)))
+            const current = selectedItem as ApplicantInstructorRow
+            if (current.id === row.id) {
+              setSelectedItem(row)
+            }
+          }}
         />
       ) : null}
       <ApplicationApprovalModal
@@ -259,16 +281,32 @@ export function ApplicantList({
           if (!instructorApprovalTarget) return
           const { id } = instructorApprovalTarget
           setInstructorApprovalTarget(null)
-          setInstructorList(prev =>
-            prev.map(row =>
+          setInstructorList(prev => {
+            const next = prev.map(row =>
               row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'approved') : row
             )
-          )
+            const updated = next.find(row => row.id === id)
+            const current = selectedItem
+            if (
+              updated &&
+              current &&
+              'instructorName' in current &&
+              current.id === id
+            ) {
+              setSelectedItem(updated)
+            }
+            return next
+          })
           updateApplicantInstructorApprovalStatus(id, 'approved')
         }}
       />
       {!selectedItem && menu ? (
         <FilterTableLayout
+          key={
+            menu === 'instructors' && instructorColumnPreset === 'general-detail'
+              ? `applicant-filter-${viewMode}`
+              : 'applicant-filter'
+          }
           className="applicant-details__filter-table-layout"
           bordered={false}
           fields={fields}
@@ -304,7 +342,7 @@ export function ApplicantList({
                   style={{ minWidth: 180 }}
                   onClick={() => setViewMode('table')}
                 >
-                  리스트로 보기
+                  리스트 뷰로 보기
                 </CmsButton>
               )}
             </div>
@@ -370,6 +408,9 @@ export function ApplicantList({
                 }}
                 calendarGranularity={applicantsCalendarGranularity}
                 onCalendarGranularityChange={setApplicantsCalendarGranularity}
+                calendarVariant={
+                  instructorColumnPreset === 'general-detail' ? 'general-instructor' : 'default'
+                }
               />
             </div>
           )}
