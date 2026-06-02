@@ -71,7 +71,19 @@
 .general-participant-applications
   .applicant-details
   .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='organizationName'],
+.general-participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='grade'],
+.general-participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='experienceYears'],
+.general-participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='evaluationGrade'],
 .general-participant-applications
   .applicant-details
   .table-filter-group__fields-inner
@@ -90,6 +102,16 @@
 .general-participant-applications
   .applicant-details
   .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='experienceYears']
+  .unified-filter-card__field--select,
+.general-participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='evaluationGrade']
+  .unified-filter-card__field--select,
+.general-participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='approvalStatus']
   .unified-filter-card__field--select,
 .general-participant-applications
@@ -101,6 +123,26 @@
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='grade']
+  .ant-select,
+.general-participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='experienceYears']
+  .cms-select,
+.general-participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='experienceYears']
+  .ant-select,
+.general-participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='evaluationGrade']
+  .cms-select,
+.general-participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='evaluationGrade']
   .ant-select,
 .general-participant-applications
   .applicant-details
@@ -319,4 +361,40 @@
   font-weight: 500;
   line-height: 150%;
   opacity: 0.6;
+}
+
+/* 일반 프로그램 강사 신청 — 캘린더 뷰 풀페이지 */
+.detail-fullpage-modal.general-program-detail-fullpage-modal
+  .general-instructor-applications
+  .applicant-details.applicant-details--instructor-calendar
+  .applicant-calendar-view-container,
+.detail-fullpage-modal.general-program-detail-fullpage-modal
+  .general-instructor-applications
+  .applicant-details.applicant-details--instructor-calendar
+  .applicant-calendar-set {
+  min-width: 0;
+  min-height: 560px;
+}
+
+.detail-fullpage-modal.general-program-detail-fullpage-modal
+  .general-instructor-applications
+  .applicant-details.applicant-details--instructor-calendar
+  .filter-table-layout__table {
+  min-height: 0;
+  overflow: visible;
+  width: 100%;
+  min-width: 0;
+}
+
+.detail-fullpage-modal.general-program-detail-fullpage-modal
+  .general-instructor-applications
+  .applicant-details.applicant-details--instructor-calendar
+  .applicant-calendar-set {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.applicant-schedule-item-title-row .applicant-schedule-item-approval {
+  flex-shrink: 0;
 }

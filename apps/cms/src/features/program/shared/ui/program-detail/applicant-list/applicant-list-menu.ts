@@ -5,4 +5,6 @@ export type ApplicantListMenu = TabKey | 'individual-applications'
 
 export type InstitutionColumnPreset = 'legacy' | 'general-detail'
 
+export type InstructorColumnPreset = 'legacy' | 'general-detail'
+
 export type SessionLinePreset = 'legacy' | 'general-detail'

@@ -37,6 +37,7 @@ import { GeneralProgramDetailCommonInfoView } from './info/common-info-view'
 import { GeneralSurveyManagementView } from './survey-management/general-survey-management-view'
 import { ProgramManagersTab } from '../program-managers-tab'
 import { GeneralParticipantApplicationsView } from './applications/general-participant-applications-view'
+import { GeneralInstructorApplicationsView } from './applications/general-instructor-applications-view'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
@@ -335,13 +336,19 @@ export function GeneralProgramDetailFullPageModal({
   }, [])
 
   useEffect(() => {
-    if (!open || activeLnb !== 'institution_applications') {
+    if (
+      !open ||
+      (activeLnb !== 'institution_applications' && activeLnb !== 'instructor_applications')
+    ) {
       setApplicantDetailMeta(null)
     }
   }, [open, activeLnb])
 
   const handleModalClose = useCallback(() => {
-    if (activeLnb === 'institution_applications' && applicantCloseHandlerRef.current?.()) {
+    if (
+      (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications') &&
+      applicantCloseHandlerRef.current?.()
+    ) {
       return
     }
     onClose()
@@ -417,7 +424,8 @@ export function GeneralProgramDetailFullPageModal({
     )
 
     const hasParticipantApplicationDetail =
-      applicantDetailMeta != null && activeLnb === 'institution_applications'
+      applicantDetailMeta != null &&
+      (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications')
 
     if (!childLabel) {
       items.push(
@@ -444,7 +452,8 @@ export function GeneralProgramDetailFullPageModal({
   if (!open) return null
 
   const modalTitle =
-    applicantDetailMeta && activeLnb === 'institution_applications'
+    applicantDetailMeta &&
+    (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications')
       ? applicantDetailMeta.title
       : displayProgram
         ? resolveGeneralProgramDisplayTitle(displayProgram)
@@ -499,6 +508,16 @@ export function GeneralProgramDetailFullPageModal({
               <GeneralParticipantApplicationsView
                 program={displayProgram}
                 listTitle={participantApplicationsLnbLabel}
+                onRegisterApplicantCloseHandler={fn => {
+                  applicantCloseHandlerRef.current = fn
+                }}
+                onApplicantDetailMetaChange={handleApplicantDetailMetaChange}
+              />
+            </div>
+          ) : activeLnb === 'instructor_applications' ? (
+            <div className="program-detail-fullpage-modal__info-tab">
+              <GeneralInstructorApplicationsView
+                program={displayProgram}
                 onRegisterApplicantCloseHandler={fn => {
                   applicantCloseHandlerRef.current = fn
                 }}
