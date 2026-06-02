@@ -28,6 +28,7 @@ import type {
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
+import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { resolveProgramRegistrationCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
@@ -174,6 +175,14 @@ export function useProgramRegistrationEditor(
     closeWritingUserPreview,
     isWritingUserPreviewOpen,
   } = useTemplateWritingPreview()
+
+  useEffect(() => {
+    if (!active || programRegistrationFormVariant !== 'general') return
+    patchInstitutionApplicationProgramBridge({
+      educationStructure: programType,
+      sessionRound: sessionRoundType,
+    })
+  }, [active, programRegistrationFormVariant, programType, sessionRoundType])
 
   useEffect(() => {
     if (!active) return
@@ -543,6 +552,8 @@ export function useProgramRegistrationEditor(
     onSelectSingleItemListItem,
     paragraphBodyOptions,
     participant,
+    programType,
+    sessionRoundType,
   }
 }
 

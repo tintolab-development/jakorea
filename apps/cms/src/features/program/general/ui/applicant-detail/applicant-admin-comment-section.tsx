@@ -27,7 +27,7 @@ export function ApplicantAdminCommentSection({
 
   return (
     <section className="applicant-admin-comment-section">
-      <h3 className="program-detail-info-tab__section-title">관리자 코멘트</h3>
+      <h3 className="info-section-title">관리자 코멘트</h3>
       {isEditMode ? (
         <div className="applicant-admin-comment-section__edit-wrap">
           <CmsInput

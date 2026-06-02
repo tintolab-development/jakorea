@@ -284,6 +284,7 @@ function renderBody(
             paragraphBodyOptions?.ujatProgramApplicationFormVolunteer
           }
           applicantRecruitFormInstitution={paragraphBodyOptions?.applicantRecruitFormInstitution}
+          showInstitutionApplicationLimits={paragraphBodyOptions?.showInstitutionApplicationLimits}
           applicantRecruitFormIndividual={paragraphBodyOptions?.applicantRecruitFormIndividual}
           programApplicationFormInstructor={paragraphBodyOptions?.programApplicationFormInstructor}
         />

@@ -17,6 +17,7 @@ export type DetailInfoFormProps = {
   /** 타이틀(`h2`) 우측에 붙는 보조 문구·뱃지 등 */
   titleTrailing?: ReactNode
   description?: ReactNode
+  descriptionPlacement?: 'inline' | 'below'
   /**
    * true면 섹션 헤더 없이 본문 격자만 렌더합니다.
    * 상위에 이미 제목(h2 등)이 있을 때 — `title`은 접근용 aria-label 등에만 쓰입니다.
@@ -33,6 +34,7 @@ function DetailInfoFormRoot({
   headerNote,
   titleTrailing,
   description,
+  descriptionPlacement = 'inline',
   hideHeader = false,
   mode = 'view',
   children,
@@ -64,7 +66,15 @@ function DetailInfoFormRoot({
               <div className="detail-info-form__header-note">{headerNote}</div>
             ) : null}
             {description ? (
-              <div className="detail-info-form__description">{description}</div>
+              <div
+                className={
+                  descriptionPlacement === 'below'
+                    ? 'detail-info-form__description detail-info-form__description--below'
+                    : 'detail-info-form__description'
+                }
+              >
+                {description}
+              </div>
             ) : null}
           </div>
           {titleTrailing ? (

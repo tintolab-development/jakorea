@@ -3,48 +3,6 @@
  * 각 섹션 TSX의 동명 CSS에서 @import 로 로드
  */
 
-/* 상세 정보: 타이틀 + 디스크립션 한 줄(row) 정렬, 좌측 정렬 */
-.program-detail-info-tab__section-header-row {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  gap: var(--spacing-12);
-  margin-bottom: var(--spacing-16);
-  text-align: left;
-}
-
-.program-detail-info-tab__section-header-row .program-detail-info-tab__section-title {
-  margin: 0;
-  line-height: 1.4;
-  text-align: left;
-}
-
-.program-detail-info-tab__section-header-row .program-detail-info-tab__detail-note {
-  margin: 0;
-  line-height: 1.4;
-  text-align: left;
-}
-
-.program-detail-info-tab__section-title {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard;
-  font-size: 20px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 140%;
-  /* 25.2px */
-}
-
-.program-detail-info-tab__detail-note {
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 150%;
-  /* 21px */
-  opacity: 0.6;
-}
-
 /* 테이블 래퍼: radius + 외곽선(셀 border가 클립/서브픽셀에서 사라지는 현상 보완), 내부 격자는 셀 border 유지 */
 .program-detail-info-tab__table-wrapper,
 .program-kpi-target-section__table-wrap,
@@ -304,12 +262,11 @@
   gap: 0;
 }
 
-/* 이미지 86px 하단 ↔ 파일명·버튼·가이드 블록 하단 정렬 (center 시 콘텐츠가 짧을 때 버튼 아래에 빈 여백 발생) */
+/* 썸네일(좌) ↔ 파일 선택/설명(우) — 첨부 없음 상태에서도 위 공백이 커지지 않도록 중앙 정렬 */
 .program-detail-info-tab__thumbnail-row {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 16px;
-  min-height: 86px;
 }
 
 /* Ant Image 루트(span): 인라인 베이스라인 여백 제거 → 왼쪽 썸네일과 오른쪽 파일 영역 수직 기준 일치 */
@@ -354,7 +311,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 10px;
   flex: 1;
   min-width: 0;
@@ -415,7 +372,7 @@
 
 .program-detail-info-tab__file-select .file-select-field__actions {
   gap: var(--spacing-12);
-  align-items: flex-end;
+  align-items: center;
 }
 
 /* FileSelectField는 AppButton 사용 — 구버전 __btn 선택자 대신 실제 버튼에 적용 */
@@ -611,7 +568,7 @@
   width: 100%;
 }
 
-.program-detail-info-tab__table--basic td .app-select.program-detail-info-tab__lifecycle-select {
+.program-detail-info-tab__table--basic td .cms-select.program-detail-info-tab__lifecycle-select {
   width: 190px !important;
   max-width: 190px !important;
 }
@@ -662,7 +619,7 @@
 }
 
 .program-detail-info-tab__date-range--interview
-  .app-select.program-detail-info-tab__select--interview-method {
+  .cms-select.program-detail-info-tab__select--interview-method {
   width: 190px !important;
   max-width: 190px;
   flex: 0 0 auto;
@@ -712,19 +669,19 @@
   max-width: none;
 }
 
-/* 테이블 값 셀: AppSelect 기본 190px (인라인 width 덮어씀) */
-.program-detail-info-tab__table td .app-select {
+/* 테이블 값 셀: CmsSelect 기본 190px (인라인 width 덮어씀) */
+.program-detail-info-tab__table td .cms-select {
   width: 190px !important;
   max-width: 190px !important;
   flex-shrink: 0;
   box-sizing: border-box;
 }
 
-.program-detail-info-tab__table td .app-select .ant-select {
+.program-detail-info-tab__table td .cms-select .ant-select {
   width: 100% !important;
 }
 
-.program-detail-info-tab__table td .program-detail-info-tab__sponsor-manager-inputs > .app-select {
+.program-detail-info-tab__table td .program-detail-info-tab__sponsor-manager-inputs > .cms-select {
   width: auto !important;
   min-width: 200px;
   max-width: 280px !important;
@@ -812,7 +769,7 @@
 }
 
 /* 후원사 Select — 테이블 내 고정 너비 190px */
-.program-detail-info-tab__sponsor-select.app-select {
+.program-detail-info-tab__sponsor-select.cms-select {
   width: 190px;
   max-width: 190px;
   box-sizing: border-box;
@@ -853,8 +810,8 @@
   min-width: 0;
 }
 
-/* 행 안에서 AppSelect 기본 width:100%를 끄고, 전화번호 구간이 한 줄로 남도록 */
-.program-detail-info-tab__sponsor-manager-inputs > .app-select {
+/* 행 안에서 CmsSelect 기본 width:100%를 끄고, 전화번호 구간이 한 줄로 남도록 */
+.program-detail-info-tab__sponsor-manager-inputs > .cms-select {
   flex: 1 1 auto;
   width: auto;
   min-width: 200px;
@@ -978,51 +935,8 @@
   box-sizing: border-box;
 }
 
-.program-detail-info-tab__content-block.program-detail-info-tab__content-block--sm {
-  min-height: 120px;
-}
-
 .program-detail-info-tab__content-block ul,
 .program-detail-info-tab__content-block ol {
   margin: 0.5em 0;
   padding-left: 1.2em;
-}
-
-.program-detail-info-tab__content-textarea {
-  width: 100%;
-  min-height: 160px;
-  border-radius: 6px;
-  resize: vertical;
-  border: 1px solid #d9d9d9;
-}
-
-.program-detail-info-tab__content-textarea.ant-input {
-  min-height: 160px;
-}
-
-.program-detail-info-tab__content-textarea.program-detail-info-tab__content-textarea--sm {
-  min-height: 120px;
-}
-
-.program-detail-info-tab__content-textarea.program-detail-info-tab__content-textarea--sm.ant-input {
-  min-height: 120px;
-}
-
-/* 참여자/강사 정보 수정모드: 프로그램 설명/모집 안내/지원 방법 행 */
-.program-detail-info-tab__table td:has(.program-detail-info-tab__edit-row-input.ant-input) {
-  height: 71px;
-  min-height: 71px;
-  box-sizing: border-box;
-}
-
-.program-detail-info-tab__edit-row-input.ant-input {
-  width: 100%;
-  min-height: 47px !important;
-  height: 47px !important;
-  max-height: 47px !important;
-  padding-top: 11px !important;
-  padding-bottom: 11px !important;
-  box-sizing: border-box;
-  resize: none;
-  line-height: 1.5;
 }

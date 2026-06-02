@@ -3,9 +3,9 @@ import type { UseFormReturn } from 'react-hook-form'
 import type { Program, ProgramLifecycleStatus, TargetLevel } from '@/types/domain'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { DividerVertical } from '@/shared/components/divider-vertical'
-import { AppInput } from '@/shared/ui/app-input'
-import { AppSelect } from '@/shared/ui/app-select'
-import { AppDatePicker } from '@/shared/ui/app-datepicker'
+import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsSelect } from '@/shared/ui/cms-select'
+import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { formatDateRange, TARGET_LEVEL_LABEL } from '@/features/program/shared/lib/program-detail-info-constants'
@@ -91,7 +91,9 @@ export function createInstitutionsSchema({
                   name="targetLevel"
                   control={form.control}
                   render={({ field }) => (
-                    <AppSelect
+                    <CmsSelect
+                      inputSize="medium"
+                      withAllOption={false}
                       value={field.value ?? undefined}
                       options={TARGET_LEVEL_OPTIONS}
                       onChange={v => field.onChange((v as TargetLevel) || undefined)}
@@ -112,7 +114,7 @@ export function createInstitutionsSchema({
                   name="district"
                   control={form.control}
                   render={({ field }) => (
-                    <AppInput
+                    <CmsInput
                       {...field}
                       value={field.value ?? ''}
                       placeholder="경기, 광주, 대구, 대전, 부산, 서울, 인천, 전북 지역"
@@ -149,7 +151,7 @@ export function createInstitutionsSchema({
                     name="resultAnnouncementDate"
                     control={form.control}
                     render={({ field }) => (
-                      <AppDatePicker
+                      <CmsDatePicker
                         value={toDayjs(field.value)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                         format="YYYY. MM. DD"
@@ -165,7 +167,7 @@ export function createInstitutionsSchema({
                     name="resultAnnouncementMethod"
                     control={form.control}
                     render={({ field }) => (
-                      <AppInput
+                      <CmsInput
                         {...field}
                         value={field.value ?? ''}
                         placeholder="홈페이지 공지 및 담당교사 개별 안내"
@@ -191,7 +193,7 @@ export function createInstitutionsSchema({
                   name="rounds.0.classCount"
                   control={form.control}
                   render={({ field }) => (
-                    <AppInput
+                    <CmsInput
                       type="number"
                       min={0}
                       value={field.value ?? ''}
@@ -248,7 +250,7 @@ export function createInstitutionsSchema({
                 <div className="program-detail-info-tab__contact-inputs program-detail-info-tab__contact-inputs--even">
                   <div className="program-detail-info-tab__contact-group">
                     <span className="program-detail-info-tab__contact-label">문의처</span>
-                    <AppInput
+                    <CmsInput
                       placeholder="문의처"
                       value={sponsorName ?? ''}
                       readOnly
@@ -265,7 +267,7 @@ export function createInstitutionsSchema({
                       name="contactPhone"
                       control={form.control}
                       render={({ field }) => (
-                        <AppInput
+                        <CmsInput
                           {...field}
                           value={field.value ?? ''}
                           placeholder="02-6085-6028"
@@ -284,7 +286,7 @@ export function createInstitutionsSchema({
                       name="contactEmail"
                       control={form.control}
                       render={({ field }) => (
-                        <AppInput
+                        <CmsInput
                           {...field}
                           value={field.value ?? ''}
                           placeholder="ujat@jakorea.org"
@@ -311,7 +313,7 @@ export function createInstitutionsSchema({
                   name="oneLineIntroduction"
                   control={form.control}
                   render={({ field }) => (
-                    <AppInput
+                    <CmsInput
                       {...field}
                       value={field.value ?? ''}
                       placeholder="비고"

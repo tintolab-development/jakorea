@@ -167,11 +167,7 @@
 }
 
 /* 항목 타이틀과 테이블 사이 갭 10px (공통 정보 탭과 동일) */
-.program-detail-fullpage-modal__info-tab .program-detail-info-tab__section-title {
-  margin-bottom: 10px;
-}
-
-.program-detail-fullpage-modal__info-tab .program-detail-info-tab__section-header-row {
+.program-detail-fullpage-modal__info-tab .info-section-title {
   margin-bottom: 10px;
 }
 
@@ -189,15 +185,14 @@
 }
 
 /* 기본 정보 / 교육 커리큘럼 / 사업 KPI 목표 블록: 항목당 32px gap, 디바이더 없음 */
-.program-detail-fullpage-modal__info-tab > .program-detail-info-tab__section-title--block-start,
 .program-detail-fullpage-modal__info-tab > .program-kpi-target-section {
   margin-top: 32px;
   padding-top: 0;
   border-top: none;
 }
 
-/* 수정 모드: 공통 정보 탭 — td 내 AppSelect·AppInput 기본 너비 190px */
-.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-select {
+/* 수정 모드: 공통 정보 탭 — td 내 CmsSelect·AppInput 기본 너비 190px */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .cms-select {
   width: 190px;
   max-width: 190px;
   box-sizing: border-box;
@@ -215,12 +210,12 @@
   .program-detail-info-tab__table
   td
   .program-detail-info-tab__sponsor-manager-inputs
-  > .app-select.program-detail-info-tab__manager-select,
+  > .cms-select.program-detail-info-tab__manager-select,
 .program-detail-fullpage-modal__info-tab
   .program-detail-info-tab__table
   td
   .program-detail-info-tab__sponsor-manager-inputs
-  > .program-detail-info-tab__manager-select.app-select {
+  > .program-detail-info-tab__manager-select.cms-select {
   display: flex;
   width: 190px !important;
   min-width: 190px !important;
@@ -237,7 +232,7 @@
 }
 
 /* 임금: 강사비 유형·단위·수량은 별도 폭 */
-.program-detail-fullpage-modal__info-tab .program-wage-info-section__wage-type-select.app-select {
+.program-detail-fullpage-modal__info-tab .program-wage-info-section__wage-type-select.cms-select {
   width: 190px;
   max-width: 190px;
 }
@@ -246,7 +241,7 @@
 .program-detail-fullpage-modal__info-tab
   .program-detail-info-tab__table
   td
-  .program-wage-info-section__measure-select.app-select {
+  .program-wage-info-section__measure-select.cms-select {
   width: 80px;
   min-width: 80px;
   max-width: 80px;
@@ -292,8 +287,8 @@
   min-width: 0;
 }
 
-/* 수정 모드: 공통 정보 탭 — td 내 AppSelect·AppInput 기본 너비 190px */
-.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .app-select {
+/* 수정 모드: 공통 정보 탭 — td 내 CmsSelect·AppInput 기본 너비 190px */
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .cms-select {
     width: 190px;
     max-width: 190px;
     box-sizing: border-box;
@@ -319,12 +314,12 @@
     .program-detail-info-tab__table
     td
     .program-detail-info-tab__sponsor-manager-inputs
-    > .app-select.program-detail-info-tab__manager-select,
+    > .cms-select.program-detail-info-tab__manager-select,
 .program-detail-fullpage-modal__info-tab
     .program-detail-info-tab__table
     td
     .program-detail-info-tab__sponsor-manager-inputs
-    > .program-detail-info-tab__manager-select.app-select {
+    > .program-detail-info-tab__manager-select.cms-select {
     display: flex;
     width: 190px !important;
     min-width: 190px !important;
@@ -341,13 +336,13 @@
 }
 
 /* 임금: 강사비 유형·단위·수량은 별도 폭 */
-.program-detail-fullpage-modal__info-tab .program-wage-info-section__wage-type-select.app-select {
+.program-detail-fullpage-modal__info-tab .program-wage-info-section__wage-type-select.cms-select {
     width: 190px;
     max-width: 190px;
 }
 
 /* 임금 책정 기준: 단위·수량 80×40 (shared !important 와 동일) */
-.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .program-wage-info-section__measure-select.app-select {
+.program-detail-fullpage-modal__info-tab .program-detail-info-tab__table td .program-wage-info-section__measure-select.cms-select {
     width: 80px;
     min-width: 80px;
     max-width: 80px;

@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  patchInstitutionApplicationProgramBridge,
+  resetInstitutionApplicationProgramBridge,
+} from '@/features/program/general/lib/institution-application-program-bridge'
+import { resetApplicantRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import {
   lookupTemplateRegistry,
@@ -113,8 +118,21 @@ export function useGeneralProgramRegistrationFlow(
   const participantVm = useProgramParticipantApplicationEditor(
     open && isParticipantStep,
     participantTemplateName,
-    participantVariant
+    participantVariant,
+    { participantOrganization: participantFlags.organization }
   )
+
+  useEffect(() => {
+    if (!open) {
+      resetInstitutionApplicationProgramBridge()
+      resetApplicantRecruitInstitutionOverlay()
+      return
+    }
+    patchInstitutionApplicationProgramBridge({
+      educationStructure: registrationVm.programType,
+      sessionRound: registrationVm.sessionRoundType,
+    })
+  }, [open, registrationVm.programType, registrationVm.sessionRoundType])
 
   const registryEntry = useMemo(
     () => lookupTemplateRegistry(currentStepDef.templateId),

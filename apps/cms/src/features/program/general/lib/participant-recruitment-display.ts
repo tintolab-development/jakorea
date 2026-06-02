@@ -3,6 +3,12 @@
  */
 
 import type { Program } from '@/types/domain'
+
+/** 학교/기관 대상 일반 프로그램 — 모집·신청 최대값 필드 노출 */
+export function isGeneralProgramSchoolInstitutionTarget(program: Program): boolean {
+  if (program.generalProgramAudience === 'organization') return true
+  return program.generalParticipantTypes?.includes('school_institution') === true
+}
 import {
   formatDateOnly,
   formatDateRange,
@@ -17,7 +23,9 @@ import {
 export type GeneralProgramParticipantRecruitmentDisplay = {
   announcementPublishedLabel: string
   preEducationNoticeLabel: string
+  certificateIssuanceLabel: string
   studentListLabel: string
+  showInstitutionApplicationLimits: boolean
   maxClassLabel: string
   maxInstructorsLabel: string
   maxSessionsPerDayLabel: string
@@ -38,6 +46,7 @@ export type GeneralProgramParticipantRecruitmentDisplay = {
 const JOB담_PARTICIPANT_RECRUITMENT_MOCK = {
   announcementPublishedLabel: '게시',
   preEducationNoticeLabel: '필요',
+  certificateIssuanceLabel: '제공',
   studentListLabel: '필요',
   maxClassLabel: '4개',
   maxInstructorsLabel: '2명',
@@ -73,9 +82,12 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
   const info = common?.participantRecruitmentInfo
   const lifecycle = getParticipantRecruitmentLifecycle(program, options)
 
+  const showInstitutionApplicationLimits = isGeneralProgramSchoolInstitutionTarget(program)
+
   if (program.id === GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID) {
     return {
       ...JOB담_PARTICIPANT_RECRUITMENT_MOCK,
+      showInstitutionApplicationLimits: true,
       recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '참여자 모집 중',
       recruitmentStatusLifecycle: lifecycle ?? 'recruiting_students',
       targetLabel: program.targetLevel
@@ -103,6 +115,13 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
       ? `${formatDateOnly(resultDate)} | ${resultMethod}`
       : '-')
 
+  const certificateIssuanceLabel =
+    info?.certificateIssuanceProvided == null
+      ? '-'
+      : info.certificateIssuanceProvided
+        ? '제공'
+        : '미제공'
+
   return {
     announcementPublishedLabel: needOrNotLabel(
       info?.announcementPublished,
@@ -110,8 +129,13 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
       '미게시'
     ),
     preEducationNoticeLabel: needOrNotLabel(info?.preEducationNoticeRequired),
+    certificateIssuanceLabel,
+    showInstitutionApplicationLimits,
     studentListLabel,
-    maxClassLabel: countLabel(program.rounds?.[0]?.classCount, '개'),
+    maxClassLabel: countLabel(
+      info?.maxClassCount ?? program.rounds?.[0]?.classCount,
+      '개'
+    ),
     maxInstructorsLabel: countLabel(info?.maxAssignableInstructors, '명'),
     maxSessionsPerDayLabel: countLabel(info?.maxSessionsPerDay, '차시'),
     maxScheduleCountLabel: countLabel(info?.maxScheduleCount, '개'),

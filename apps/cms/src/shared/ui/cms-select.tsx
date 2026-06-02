@@ -1,5 +1,5 @@
 /**
- * CMS 전용 셀렉트 (AppSelect와 동일하게 span 래퍼 + borderless Select)
+ * CMS 전용 셀렉트 (span 래퍼 + borderless Select)
  * - inputSize: large | medium | small (CmsInput 치수 정렬)
  * - `placeholder`: Ant `Select`와 동일. options에 `value: ''`가 없을 때 폼 값이 `''`여도 placeholder가 보이도록 표시용 value만 `undefined`로 맞춤 (`cms-input`과 동일한 empty UX).
  * - 단일 선택: `allowClear`(×) 없음. 첫 옵션에 `전체`(value `''`)를 넣어 초기화(필터 등)는 해당 옵션 선택으로 처리.

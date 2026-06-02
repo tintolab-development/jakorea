@@ -15,7 +15,6 @@ import { LabeledSearchInput } from './labeled-search-input'
 import { FilterSearchButton } from './app-button'
 import { CmsSelect } from './cms-select'
 import type { CmsSelectMultipleOption } from './cms-select-multiple'
-import { AppSelect } from './app-select'
 import { AppDateRangePicker } from './app-datepicker'
 import { CmsRadio } from './cms-radio'
 import type { AddressRegionFilterSubConfig } from '@/shared/components/table-filter-group'
@@ -363,29 +362,29 @@ export function UnifiedFilterCard({
           <div className="unified-filter-card__field unified-filter-card__field--select">
             <span className="unified-filter-card__label">{field.label}</span>
             <div className="unified-filter-card__address-region-selects">
-              <AppSelect
-                uiVariant="filter"
-                size="small"
+              <CmsSelect
+                inputSize="large"
+                withAllOption={false}
+                width="100%"
                 placeholder={ar.sidoPlaceholder ?? '시/도'}
-                value={sidoEmpty ? undefined : sido}
+                value={sido}
                 selectClassName="unified-filter-card__select"
-                onChange={value => onFilterChange(ar.sidoKey, value ?? '')}
-                allowClear={field.allowClear !== false}
+                onChange={value => onFilterChange(ar.sidoKey, String(value ?? ''))}
                 popupMatchSelectWidth
-                style={{ width: '100%', ...field.style }}
+                style={field.style}
                 options={ar.sidoOptions.map(opt => ({ label: opt.label, value: opt.value }))}
               />
-              <AppSelect
-                uiVariant="filter"
-                size="small"
+              <CmsSelect
+                inputSize="large"
+                withAllOption={false}
+                width="100%"
                 placeholder={ar.sigunguPlaceholder ?? '시/군/구'}
-                value={sigungu == null || sigungu === '' ? undefined : sigungu}
+                value={sigungu}
                 selectClassName="unified-filter-card__select"
-                onChange={value => onFilterChange(ar.sigunguKey, value ?? '')}
-                allowClear={field.allowClear !== false}
+                onChange={value => onFilterChange(ar.sigunguKey, String(value ?? ''))}
                 disabled={sidoEmpty}
                 popupMatchSelectWidth
-                style={{ width: '100%', ...field.style }}
+                style={field.style}
                 options={districtOptions.map(opt => ({ label: opt.label, value: opt.value }))}
               />
             </div>
@@ -399,16 +398,16 @@ export function UnifiedFilterCard({
         <Col key={field.key} flex={colFlex(field, '1 1 300px')} className={colClassFor(field)}>
           <div className="unified-filter-card__field unified-filter-card__field--select">
             <span className="unified-filter-card__label">{field.label}</span>
-            <AppSelect
-              uiVariant="filter"
-              size="small"
+            <CmsSelect
+              inputSize="large"
+              withAllOption={field.allowClear !== false}
+              width="100%"
               placeholder={field.placeholder || '전체'}
               value={filters[field.key]}
               selectClassName="unified-filter-card__select"
               onChange={value => onFilterChange(field.key, value)}
-              allowClear={field.allowClear !== false}
               popupMatchSelectWidth
-              style={{ width: '100%', ...field.style }}
+              style={field.style}
               options={field.options?.map(opt => ({
                 label: opt.label,
                 value: opt.value,

@@ -92,6 +92,13 @@ const programDetailEditSchemaBase = z.object({
     .trim()
     .min(1, '결과 발표 방법을 입력해주세요'),
   studentListRequired: z.enum(['required', 'not_required']).optional(),
+  /** 참여자 모집 정보 — 사전 안내·수료증·기관 신청 상한(일반 프로그램) */
+  participantRecruitmentPreEducationRequired: z.enum(['required', 'not_required']).optional(),
+  participantRecruitmentCertificateProvided: z.enum(['provided', 'not_provided']).optional(),
+  participantRecruitmentMaxInstructors: z.number().min(0).optional(),
+  participantRecruitmentMaxClassCount: z.number().min(0).optional(),
+  participantRecruitmentMaxScheduleCount: z.number().min(0).optional(),
+  participantRecruitmentMaxSessionsPerDay: z.number().min(0).optional(),
   // 강사 모집
   instructorCapacity: z.number().min(0).optional(),
   instructorApplicationStartDate: z.string().optional(),
@@ -205,6 +212,27 @@ export function programToDetailEditValues(
       : '',
     resultAnnouncementMethod: program.resultAnnouncementMethod ?? '',
     studentListRequired: program.studentListRequired ?? 'required',
+    participantRecruitmentPreEducationRequired: (() => {
+      const v = program.generalCommonInfo?.participantRecruitmentInfo?.preEducationNoticeRequired
+      if (v === true) return 'required' as const
+      if (v === false) return 'not_required' as const
+      return undefined
+    })(),
+    participantRecruitmentCertificateProvided: (() => {
+      const v = program.generalCommonInfo?.participantRecruitmentInfo?.certificateIssuanceProvided
+      if (v === true) return 'provided' as const
+      if (v === false) return 'not_provided' as const
+      return undefined
+    })(),
+    participantRecruitmentMaxInstructors:
+      program.generalCommonInfo?.participantRecruitmentInfo?.maxAssignableInstructors,
+    participantRecruitmentMaxClassCount:
+      program.generalCommonInfo?.participantRecruitmentInfo?.maxClassCount ??
+      program.rounds?.[0]?.classCount,
+    participantRecruitmentMaxScheduleCount:
+      program.generalCommonInfo?.participantRecruitmentInfo?.maxScheduleCount,
+    participantRecruitmentMaxSessionsPerDay:
+      program.generalCommonInfo?.participantRecruitmentInfo?.maxSessionsPerDay,
     instructorCapacity: program.instructorCapacity ?? undefined,
     instructorApplicationStartDate: program.instructorApplicationStartDate
       ? toStr(program.instructorApplicationStartDate)
@@ -311,6 +339,36 @@ export function detailEditValuesToProgramPatch(
     resultAnnouncementDate: values.resultAnnouncementDate ?? existing.resultAnnouncementDate,
     resultAnnouncementMethod: values.resultAnnouncementMethod ?? existing.resultAnnouncementMethod,
     studentListRequired: values.studentListRequired ?? existing.studentListRequired,
+    generalCommonInfo: {
+      ...existing.generalCommonInfo,
+      participantRecruitmentInfo: {
+        ...existing.generalCommonInfo?.participantRecruitmentInfo,
+        preEducationNoticeRequired:
+          values.participantRecruitmentPreEducationRequired === 'required'
+            ? true
+            : values.participantRecruitmentPreEducationRequired === 'not_required'
+              ? false
+              : existing.generalCommonInfo?.participantRecruitmentInfo?.preEducationNoticeRequired,
+        certificateIssuanceProvided:
+          values.participantRecruitmentCertificateProvided === 'provided'
+            ? true
+            : values.participantRecruitmentCertificateProvided === 'not_provided'
+              ? false
+              : existing.generalCommonInfo?.participantRecruitmentInfo?.certificateIssuanceProvided,
+        maxAssignableInstructors:
+          values.participantRecruitmentMaxInstructors ??
+          existing.generalCommonInfo?.participantRecruitmentInfo?.maxAssignableInstructors,
+        maxClassCount:
+          values.participantRecruitmentMaxClassCount ??
+          existing.generalCommonInfo?.participantRecruitmentInfo?.maxClassCount,
+        maxScheduleCount:
+          values.participantRecruitmentMaxScheduleCount ??
+          existing.generalCommonInfo?.participantRecruitmentInfo?.maxScheduleCount,
+        maxSessionsPerDay:
+          values.participantRecruitmentMaxSessionsPerDay ??
+          existing.generalCommonInfo?.participantRecruitmentInfo?.maxSessionsPerDay,
+      },
+    },
     instructorCapacity: values.instructorCapacity ?? existing.instructorCapacity,
     instructorApplicationStartDate:
       values.instructorApplicationStartDate ?? existing.instructorApplicationStartDate,

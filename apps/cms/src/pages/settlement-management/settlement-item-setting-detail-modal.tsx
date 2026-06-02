@@ -33,8 +33,8 @@ import {
 } from './settlement-item-setting-icons'
 import { SettlementItemTossfaceIconPickerTrigger } from './settlement-item-tossface-icon-picker'
 import './settlement-item-setting-detail-modal.css'
-import { AppInput } from '@/shared/ui/app-input'
-import { AppSelect } from '@/shared/ui/app-select'
+import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import {
   ModalSpecTable,
   ModalSpecTableRadioCell,
@@ -383,7 +383,7 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   value={basisHoursStr}
                   onChange={e => handleHoursChange(e.target.value)}
@@ -396,7 +396,7 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   suffix="원"
                   value={maxLimitStr}
@@ -547,7 +547,7 @@ function SettlementItemSettingDetailAssistantBody({ itemId }: { itemId: string }
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   value={basisHoursStr}
                   onChange={e => handleHoursChange(e.target.value)}
@@ -560,7 +560,7 @@ function SettlementItemSettingDetailAssistantBody({ itemId }: { itemId: string }
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   suffix="원"
                   value={maxLimitStr}
@@ -652,7 +652,7 @@ function SettlementItemSettingDetailMultiInstructorBody({ itemId }: { itemId: st
     <ModalSpecTableRow key={label} label={label} labelVariant="basis">
       <div className="modal-spec-table__field-row">
         <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-          <AppInput
+          <CmsInput
             {...settlementInputIntegerKeyDownProps}
             suffix="원"
             value={value}
@@ -677,7 +677,7 @@ function SettlementItemSettingDetailMultiInstructorBody({ itemId }: { itemId: st
           <ModalSpecTableRow label="기준 항목" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   value={m01BasisStr}
                   onChange={e => setM01BasisStr(handleIntOnly(e.target.value))}
@@ -704,7 +704,7 @@ function SettlementItemSettingDetailMultiInstructorBody({ itemId }: { itemId: st
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   value={m02HoursStr}
                   onChange={e => setM02HoursStr(handleIntOnly(e.target.value))}
@@ -823,7 +823,7 @@ function SettlementItemSettingDetailSimpleLaborBody({ itemId }: { itemId: string
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   value={basisHoursStr}
                   onChange={e => handleHoursChange(e.target.value)}
@@ -836,7 +836,7 @@ function SettlementItemSettingDetailSimpleLaborBody({ itemId }: { itemId: string
           <ModalSpecTableRow label="단순인건비" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   suffix="원"
                   value={simpleLaborStr}
@@ -849,7 +849,7 @@ function SettlementItemSettingDetailSimpleLaborBody({ itemId }: { itemId: string
           <ModalSpecTableRow label="주휴수당" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   suffix="원"
                   value={weeklyHolidayStr}
@@ -968,7 +968,7 @@ function SettlementItemSettingDetailLodgingBody({ itemId }: { itemId: string }) 
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--lodging-basis-days">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   value={basisDaysStr}
                   onChange={e => handleBasisDaysChange(e.target.value)}
@@ -984,7 +984,7 @@ function SettlementItemSettingDetailLodgingBody({ itemId }: { itemId: string }) 
           >
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   suffix="원"
                   value={maxLimitStr}
@@ -1100,7 +1100,7 @@ function SettlementItemSettingDetailMealBody({ itemId }: { itemId: string }) {
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--meal-basis-hours">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   value={basisHoursStr}
                   onChange={e => handleBasisHoursChange(e.target.value)}
@@ -1113,7 +1113,7 @@ function SettlementItemSettingDetailMealBody({ itemId }: { itemId: string }) {
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   suffix="원"
                   value={maxLimitStr}
@@ -1232,7 +1232,7 @@ function SettlementItemSettingDetailVolunteerActivityBody({ itemId }: { itemId: 
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--volunteer-activity-basis-hours">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   value={basisHoursStr}
                   onChange={e => handleBasisHoursChange(e.target.value)}
@@ -1245,7 +1245,7 @@ function SettlementItemSettingDetailVolunteerActivityBody({ itemId }: { itemId: 
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   suffix="원"
                   value={maxLimitStr}
@@ -1330,7 +1330,7 @@ function SettlementItemSettingDetailMeetingAttendanceBody({ itemId }: { itemId: 
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--meeting-attendance-hours">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   value={m01HoursStr}
                   onChange={e => setM01HoursStr(handleIntOnly(e.target.value))}
@@ -1344,7 +1344,7 @@ function SettlementItemSettingDetailMeetingAttendanceBody({ itemId }: { itemId: 
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   suffix="원"
                   value={m01MaxStr}
@@ -1369,7 +1369,7 @@ function SettlementItemSettingDetailMeetingAttendanceBody({ itemId }: { itemId: 
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--meeting-attendance-hours">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   value={m02HoursStr}
                   onChange={e => setM02HoursStr(handleIntOnly(e.target.value))}
@@ -1383,7 +1383,7 @@ function SettlementItemSettingDetailMeetingAttendanceBody({ itemId }: { itemId: 
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   suffix="원"
                   value={m02MaxStr}
@@ -1483,7 +1483,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
             <div className="modal-spec-table__field-row modal-spec-table__field-row--withholding-inline">
               <span className="modal-spec-table__suffix-text">원천징수세액이</span>
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   value={exclusionMaxStr}
                   onChange={e => setExclusionMaxStr(parseWonInput(e.target.value))}
@@ -1508,7 +1508,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           <ModalSpecTableRow label="근로소득공제비용" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   suffix="원"
                   value={earnedDeductionStr}
@@ -1533,7 +1533,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           <ModalSpecTableRow label="사업소득" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <AppInput
+                <CmsInput
                   {...settlementInputDecimalKeyDownProps}
                   suffix="%"
                   value={rateBusinessStr}
@@ -1547,7 +1547,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           <ModalSpecTableRow label="기타소득" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <AppInput
+                <CmsInput
                   {...settlementInputDecimalKeyDownProps}
                   suffix="%"
                   value={rateOtherStr}
@@ -1561,7 +1561,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           <ModalSpecTableRow label="상금 (기타소득)" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <AppInput
+                <CmsInput
                   {...settlementInputDecimalKeyDownProps}
                   suffix="%"
                   value={ratePrizeStr}
@@ -1584,7 +1584,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           >
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
-                <AppInput
+                <CmsInput
                   {...settlementInputDecimalKeyDownProps}
                   suffix="%"
                   value={rateInterviewStr}
@@ -1699,7 +1699,7 @@ function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--transport-km">
-                <AppInput
+                <CmsInput
                   {...settlementInputIntegerKeyDownProps}
                   value={distanceKmStr}
                   onChange={e => handleDistanceKmChange(e.target.value)}
@@ -1760,7 +1760,8 @@ function SettlementItemSettingDetailSimpleLayoutBody({ itemId }: { itemId: strin
           산정 기준
         </h3>
         <div className="settlement-item-setting-detail-modal__basis-row settlement-item-setting-detail-modal__basis-row--simple">
-          <AppSelect
+          <CmsSelect
+            withAllOption={false}
             value={basisUnit}
             onChange={v => setBasisUnit(v)}
             options={BASIS_UNIT_OPTIONS_SIMPLE}
@@ -1771,7 +1772,7 @@ function SettlementItemSettingDetailSimpleLayoutBody({ itemId }: { itemId: strin
       <section aria-label="최대 한도 금액">
         <div className="settlement-item-setting-detail-modal__fee-row settlement-item-setting-detail-modal__fee-row--simple">
           <div className="settlement-item-setting-detail-modal__fee-col">
-            <AppInput
+            <CmsInput
               {...settlementInputIntegerKeyDownProps}
               label="최대 한도 금액"
               suffix="원"

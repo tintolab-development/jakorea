@@ -149,7 +149,9 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK: NonNullable
   participantRecruitmentInfo: {
     announcementPublished: true,
     preEducationNoticeRequired: true,
+    certificateIssuanceProvided: true,
     maxAssignableInstructors: 2,
+    maxClassCount: 4,
     maxSessionsPerDay: 8,
     maxScheduleCount: 3,
     operationPeriodLabel: '2026. 04. 03(금) - 2026. 11. 20(금)',

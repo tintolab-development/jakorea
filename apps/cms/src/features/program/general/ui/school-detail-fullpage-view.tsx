@@ -851,7 +851,7 @@ export function SchoolDetailFullpageView({
           <div className="program-detail-fullpage-modal__info-tab">
             {showAdminCommentSection ? (
               <div className="program-detail-fullpage-modal__info-tab-block school-detail-fullpage-view__admin-comment-section">
-                <h3 className="program-detail-info-tab__section-title">관리자 코멘트</h3>
+                <h3 className="info-section-title">관리자 코멘트</h3>
                 <div
                   className={`school-detail-fullpage-view__admin-comment-box ${
                     !mergedDetail.adminComment?.trim()
@@ -868,7 +868,7 @@ export function SchoolDetailFullpageView({
               </div>
             ) : null}
             <div className="program-detail-fullpage-modal__info-tab-block">
-              <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
+              <h3 className="info-section-title">기본 정보</h3>
               <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
                 <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
                   <colgroup>
@@ -883,7 +883,7 @@ export function SchoolDetailFullpageView({
             </div>
 
             <div className="program-detail-fullpage-modal__info-tab-block school-detail-fullpage-view__guidance-block">
-              <h3 className="program-detail-info-tab__section-title">안내 사항</h3>
+              <h3 className="info-section-title">안내 사항</h3>
               <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
                 <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
                   <colgroup>
@@ -898,7 +898,7 @@ export function SchoolDetailFullpageView({
             </div>
 
             <div className="program-detail-fullpage-modal__info-tab-block">
-              <h3 className="program-detail-info-tab__section-title">강의 회차별 교육 진행 현황</h3>
+              <h3 className="info-section-title">강의 회차별 교육 진행 현황</h3>
               <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
                 <table className="program-detail-info-tab__table program-detail-info-tab__table--basic school-detail-fullpage-view__sessions-table">
                   <colgroup>

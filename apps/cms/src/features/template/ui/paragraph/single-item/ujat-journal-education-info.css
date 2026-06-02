@@ -28,7 +28,7 @@
   gap: 8px;
 }
 
-/* 드롭다운 화살표·clear: shared/ui/app-select.css 와 동일 토큰·비율 */
+/* 드롭다운 화살표·clear: shared/ui/cms-select.css 와 동일 토큰·비율 */
 .ujat-journal-edu-info__field-120 .ant-select {
   position: relative;
   width: 100%;

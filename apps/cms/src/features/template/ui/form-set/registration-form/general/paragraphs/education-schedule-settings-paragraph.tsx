@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import type { Dayjs } from 'dayjs'
 import { formatEducationScheduleLineFromRange } from '@/features/template/lib/format-education-schedule-line'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
@@ -44,6 +45,10 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph() {
   useEffect(() => {
     if (scheduleMode !== 'period') return
     setSingleDate(null)
+  }, [scheduleMode])
+
+  useEffect(() => {
+    patchInstitutionApplicationProgramBridge({ educationScheduleMode: scheduleMode })
   }, [scheduleMode])
 
   return (

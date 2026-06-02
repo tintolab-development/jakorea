@@ -37,7 +37,7 @@ export const CmsTextArea = forwardRef<TextAreaRef, CmsTextAreaProps>(
       disabled,
       style,
       rootClassName,
-      expandableFromSingleRow = false,
+      expandableFromSingleRow = true,
       ...rest
     },
     ref

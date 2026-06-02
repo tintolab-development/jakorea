@@ -11,9 +11,9 @@ import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { ProgramDetailContactReadRow } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import { DateRangeEdit } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import { detailInfoFormSectionTitleHeaderProps } from '@/features/template/lib/writing-form-paragraph-description'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { AppDatePicker } from '@/shared/ui/app-datepicker'
-import { AppInput } from '@/shared/ui/app-input'
+import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segments'
 import dayjs from 'dayjs'
@@ -86,7 +86,13 @@ export function UjatRecruitParticipantInfoProgramView({
                 name="mainTitle"
                 control={form.control}
                 render={({ field }) => (
-                  <AppInput {...field} value={field.value ?? ''} placeholder="공고용 프로그램명" />
+                  <CmsTextArea
+                    {...field}
+                    value={field.value ?? ''}
+                    placeholder="공고용 프로그램명"
+                    inputSize="medium"
+                    rows={1}
+                  />
                 )}
               />
             ) : undefined
@@ -122,7 +128,13 @@ export function UjatRecruitParticipantInfoProgramView({
                 name="district"
                 control={form.control}
                 render={({ field }) => (
-                  <AppInput {...field} value={field.value ?? ''} placeholder="교육 대상 상세" />
+                  <CmsTextArea
+                    {...field}
+                    value={field.value ?? ''}
+                    placeholder="교육 대상 상세"
+                    inputSize="medium"
+                    rows={1}
+                  />
                 )}
               />
             ) : undefined
@@ -154,11 +166,14 @@ export function UjatRecruitParticipantInfoProgramView({
                   name="resultAnnouncementDate"
                   control={form.control}
                   render={({ field }) => (
-                    <AppDatePicker
+                    <ParagraphDatePicker
+                      mode="single"
+                      presetMode="date"
+                      customizable={false}
                       value={toDayjs(field.value)}
                       onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                      format="YYYY. MM. DD"
-                      className="program-detail-info-tab__date-picker"
+                      placeholder="결과 발표일"
+                      width={240}
                     />
                   )}
                 />
@@ -167,10 +182,12 @@ export function UjatRecruitParticipantInfoProgramView({
                   name="resultAnnouncementMethod"
                   control={form.control}
                   render={({ field }) => (
-                    <AppInput
+                    <CmsTextArea
                       {...field}
                       value={field.value ?? ''}
                       placeholder="홈페이지 공지 및 담당교사 개별 안내"
+                      inputSize="medium"
+                      rows={1}
                       className="program-detail-info-tab__result-method-input"
                     />
                   )}
@@ -206,7 +223,13 @@ export function UjatRecruitParticipantInfoProgramView({
                 name="oneLineIntroduction"
                 control={form.control}
                 render={({ field }) => (
-                  <AppInput {...field} value={field.value ?? ''} placeholder="비고" />
+                  <CmsTextArea
+                    {...field}
+                    value={field.value ?? ''}
+                    placeholder="비고"
+                    inputSize="medium"
+                    rows={1}
+                  />
                 )}
               />
             ) : undefined

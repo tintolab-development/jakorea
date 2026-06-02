@@ -21,6 +21,7 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
@@ -600,11 +601,13 @@ export function ParticipatingInstructorFullpageView({
   const applicationTab = (
     <>
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block">
-        <div className="program-detail-info-tab__section-header-row">
-          <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
-        </div>
-        <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
-          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
+        <DetailInfoForm
+          title="기본 정보"
+          mode="view"
+          className="participating-instructor-fullpage-view__basic-info-form"
+        >
+          <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
+            <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
             <colgroup>
               <col style={{ width: '200px' }} />
               <col />
@@ -681,10 +684,10 @@ export function ParticipatingInstructorFullpageView({
                 </td>
               </tr>
             </tbody>
-          </table>
-        </div>
-        <div className="program-detail-info-tab__table-wrapper participating-instructor-fullpage-view__fee-table-wrap">
-          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
+            </table>
+          </div>
+          <div className="program-detail-info-tab__table-wrapper participating-instructor-fullpage-view__fee-table-wrap">
+            <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
             <colgroup>
               <col style={{ width: '200px' }} />
               <col />
@@ -703,104 +706,114 @@ export function ParticipatingInstructorFullpageView({
                 <td>{d.businessIncomeEarnerStatus?.trim() || '-'}</td>
               </tr>
             </tbody>
-          </table>
-        </div>
+            </table>
+          </div>
+        </DetailInfoForm>
       </div>
 
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block instructor-resume-section">
-        <h3 className="instructor-resume-section-title">
-          학력사항
-          <span className="instructor-resume-section-count">{educationSummary}</span>
-        </h3>
-        <div className="instructor-resume-card">
-          {(d.educations?.length ?? 0) > 0 ? (
-            d.educations!.map((item, idx) => {
-              const period = formatEducationPeriod(item)
-              const schoolLabel = item.schoolName
-                ? [
-                    item.schoolName,
-                    item.schoolType
-                      ? `(${getEducationLevelBadge(undefined, item.schoolType)})`
-                      : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')
-                : NO_DATA
-              return (
+        <DetailInfoForm
+          title="학력사항"
+          description={<span className="instructor-resume-section-count">{educationSummary}</span>}
+          mode="view"
+          className="participating-instructor-fullpage-view__resume-form"
+        >
+          <div className="instructor-resume-card">
+            {(d.educations?.length ?? 0) > 0 ? (
+              d.educations!.map((item, idx) => {
+                const period = formatEducationPeriod(item)
+                const schoolLabel = item.schoolName
+                  ? [
+                      item.schoolName,
+                      item.schoolType
+                        ? `(${getEducationLevelBadge(undefined, item.schoolType)})`
+                        : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')
+                  : NO_DATA
+                return (
+                  <div key={idx} className="instructor-resume-row instructor-resume-row--career">
+                    <span className="instructor-resume-row-left">{period || NO_DATA}</span>
+                    <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
+                      <span className="instructor-resume-emphasis">{schoolLabel}</span>
+                      {item.major ? (
+                        <>
+                          <ProgramDetailTdDivider />
+                          <span className="instructor-resume-role">{item.major}</span>
+                        </>
+                      ) : null}
+                    </span>
+                  </div>
+                )
+              })
+            ) : (
+              <p className="instructor-resume-empty">{NO_DATA}</p>
+            )}
+          </div>
+        </DetailInfoForm>
+      </div>
+
+      <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block instructor-resume-section">
+        <DetailInfoForm
+          title="경력사항"
+          description={<span className="instructor-resume-section-count">{careerSummaryYears}년</span>}
+          mode="view"
+          className="participating-instructor-fullpage-view__resume-form"
+        >
+          <div className="instructor-resume-card">
+            {(d.careerDetails?.length ?? 0) > 0 ? (
+              d.careerDetails!.map((item, idx) => (
                 <div key={idx} className="instructor-resume-row instructor-resume-row--career">
-                  <span className="instructor-resume-row-left">{period || NO_DATA}</span>
+                  <span className="instructor-resume-row-left">{formatCareerPeriod(item)}</span>
                   <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
-                    <span className="instructor-resume-emphasis">{schoolLabel}</span>
-                    {item.major ? (
+                    {item.companyName || item.role ? (
                       <>
-                        <ProgramDetailTdDivider />
-                        <span className="instructor-resume-role">{item.major}</span>
+                        {item.companyName ? (
+                          <span className="instructor-resume-emphasis">{item.companyName}</span>
+                        ) : null}
+                        {item.companyName && item.role ? <ProgramDetailTdDivider /> : null}
+                        {item.role ? (
+                          <span className="instructor-resume-role">{item.role}</span>
+                        ) : null}
                       </>
-                    ) : null}
+                    ) : (
+                      <span className="instructor-resume-emphasis">{NO_DATA}</span>
+                    )}
                   </span>
                 </div>
-              )
-            })
-          ) : (
-            <p className="instructor-resume-empty">{NO_DATA}</p>
-          )}
-        </div>
+              ))
+            ) : (
+              <p className="instructor-resume-empty">{NO_DATA}</p>
+            )}
+          </div>
+        </DetailInfoForm>
       </div>
 
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block instructor-resume-section">
-        <h3 className="instructor-resume-section-title">
-          경력사항
-          <span className="instructor-resume-section-count">{careerSummaryYears}년</span>
-        </h3>
-        <div className="instructor-resume-card">
-          {(d.careerDetails?.length ?? 0) > 0 ? (
-            d.careerDetails!.map((item, idx) => (
-              <div key={idx} className="instructor-resume-row instructor-resume-row--career">
-                <span className="instructor-resume-row-left">{formatCareerPeriod(item)}</span>
-                <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
-                  {item.companyName || item.role ? (
-                    <>
-                      {item.companyName ? (
-                        <span className="instructor-resume-emphasis">{item.companyName}</span>
-                      ) : null}
-                      {item.companyName && item.role ? <ProgramDetailTdDivider /> : null}
-                      {item.role ? (
-                        <span className="instructor-resume-role">{item.role}</span>
-                      ) : null}
-                    </>
-                  ) : (
-                    <span className="instructor-resume-emphasis">{NO_DATA}</span>
-                  )}
-                </span>
-              </div>
-            ))
-          ) : (
-            <p className="instructor-resume-empty">{NO_DATA}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block instructor-resume-section">
-        <h3 className="instructor-resume-section-title">
-          자격 및 면허
-          <span className="instructor-resume-section-count">{qualificationCount}개</span>
-        </h3>
-        <div className="instructor-resume-card">
-          {(d.qualifications?.length ?? 0) > 0 ? (
-            d.qualifications!.map((q: ParticipatingInstructorQualification, idx: number) => (
-              <div key={idx} className="instructor-resume-row">
-                <span className="instructor-resume-row-left instructor-resume-row-left--single-year">
-                  {q.year ?? '-'}
-                </span>
-                <span className="instructor-resume-row-right instructor-resume-row-right--black">
-                  {q.name ?? '-'}
-                </span>
-              </div>
-            ))
-          ) : (
-            <p className="instructor-resume-empty">{NO_DATA}</p>
-          )}
-        </div>
+        <DetailInfoForm
+          title="자격 및 면허"
+          description={<span className="instructor-resume-section-count">{qualificationCount}개</span>}
+          mode="view"
+          className="participating-instructor-fullpage-view__resume-form"
+        >
+          <div className="instructor-resume-card">
+            {(d.qualifications?.length ?? 0) > 0 ? (
+              d.qualifications!.map((q: ParticipatingInstructorQualification, idx: number) => (
+                <div key={idx} className="instructor-resume-row">
+                  <span className="instructor-resume-row-left instructor-resume-row-left--single-year">
+                    {q.year ?? '-'}
+                  </span>
+                  <span className="instructor-resume-row-right instructor-resume-row-right--black">
+                    {q.name ?? '-'}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="instructor-resume-empty">{NO_DATA}</p>
+            )}
+          </div>
+        </DetailInfoForm>
       </div>
     </>
   )

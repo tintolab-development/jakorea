@@ -112,7 +112,7 @@
     .unified-filter-card--single-row
     .unified-filter-card__fields-inner
     .ant-col
-    .app-select,
+    .cms-select,
   .program-list-container
     > .unified-filter-card.unified-filter-card--single-row
     .unified-filter-card__fields-inner
@@ -122,7 +122,7 @@
     > .unified-filter-card.unified-filter-card--single-row
     .unified-filter-card__fields-inner
     .ant-col
-    .app-select {
+    .cms-select {
     min-width: 0 !important;
   }
 
@@ -254,7 +254,7 @@
 .unified-filter-card--single-row
   .unified-filter-card__fields-inner
   .ant-col.unified-filter-card__col--explicit-width
-  .app-select {
+  .cms-select {
   min-width: 0 !important;
 }
 
@@ -368,12 +368,12 @@
   min-width: min(var(--filter-select-min-width, 280px), var(--filter-control-max-width, 260px));
 }
 
-.unified-filter-card__field--select .app-select {
+.unified-filter-card__field--select .cms-select {
   width: 100%;
   max-width: 100%;
 }
 
-/* Select: 테두리·타이포는 AppSelect uiVariant=filter(.app-select--filter)에서 처리 */
+/* Select: 테두리·타이포는 CmsSelect에서 처리 */
 
 .unified-filter-card__label {
   box-sizing: border-box;
@@ -398,7 +398,7 @@
 }
 
 .unified-filter-card--single-row .unified-filter-card__fields-inner .ant-col .ant-select,
-.unified-filter-card--single-row .unified-filter-card__fields-inner .ant-col .app-select {
+.unified-filter-card--single-row .unified-filter-card__fields-inner .ant-col .cms-select {
   min-width: min(var(--filter-select-min-width, 280px), var(--filter-control-max-width, 260px));
 }
 
@@ -427,11 +427,11 @@
   min-width: 0;
 }
 
-.unified-filter-card__address-region-selects > .app-select {
+.unified-filter-card__address-region-selects > .cms-select {
   flex: 1 1 0;
   min-width: 0;
 }
 
-.unified-filter-card--single-row .unified-filter-card__address-region-selects .app-select {
+.unified-filter-card--single-row .unified-filter-card__address-region-selects .cms-select {
   min-width: 0 !important;
 }

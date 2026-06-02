@@ -34,6 +34,7 @@ export function ApplicantRecruitFormInstitutionEditorLeftColumn({
           structureLockedParagraphIds: vm.structureLockedParagraphIds,
           structureLockedAuthoringChoicePreview: true,
           applicantRecruitFormInstitution: true,
+          showInstitutionApplicationLimits: true,
         }}
         headingDescriptionExtraClassName="paragraph-input-explanation-title"
       />

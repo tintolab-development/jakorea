@@ -84,8 +84,8 @@
 }
 
 /* 통일 필터 카드 (flex 컬럼 내에서는 min-width + 높이만 고정) */
-.unified-filter-card .app-select,
-.unified-filter-card .unified-filter-card__field .app-select,
+.unified-filter-card .cms-select,
+.unified-filter-card .unified-filter-card__field .cms-select,
 .unified-filter-card .labeled-search-input .app-input,
 .unified-filter-card .unified-filter-card__field .app-datepicker:not(.app-datepicker--range-split),
 .unified-filter-card .app-datepicker:not(.app-datepicker--range-split) {
@@ -121,15 +121,15 @@
   min-width: 0;
 }
 
-/* 셀렉트·기간: 드롭다운이 잘리지 않도록 — 클리어·화살표는 app-select / app-datepicker 규칙으로 박스 안 배치 */
-.unified-filter-card .app-select,
-.unified-filter-card .unified-filter-card__field .app-select,
+/* 셀렉트·기간: 드롭다운이 잘리지 않도록 — 클리어·화살표는 cms-select / app-datepicker 규칙으로 박스 안 배치 */
+.unified-filter-card .cms-select,
+.unified-filter-card .unified-filter-card__field .cms-select,
 .unified-filter-card .unified-filter-card__field .app-datepicker,
 .unified-filter-card .app-datepicker {
   overflow: visible;
 }
 
-.unified-filter-card .app-select > .ant-select,
+.unified-filter-card .cms-select > .ant-select,
 .unified-filter-card .app-datepicker > .ant-picker,
 .unified-filter-card .app-datepicker > .ant-picker-range {
   flex: 1 1 auto;
@@ -645,7 +645,7 @@
     min-width: var(--filter-control-min-width);
   }
 
-  .unified-filter-card .app-select,
+  .unified-filter-card .cms-select,
   .unified-filter-card .app-datepicker:not(.app-datepicker--range-split),
   .unified-filter-card .labeled-search-input .app-input {
     width: 100% !important;
@@ -704,7 +704,7 @@
 }
 
 .cms-select .ant-select-arrow,
-.app-select.app-select--filter .ant-select-arrow,
+.unified-filter-card .cms-select .ant-select-arrow,
 .unified-filter-card .ant-select .ant-select-arrow,
 .list-page-filters .ant-select .ant-select-arrow,
 .program-filter-card .ant-select .ant-select-arrow,
@@ -724,7 +724,7 @@
 }
 
 .cms-select .ant-select-arrow > *,
-.app-select.app-select--filter .ant-select-arrow > *,
+.unified-filter-card .cms-select .ant-select-arrow > *,
 .unified-filter-card .ant-select .ant-select-arrow > *,
 .list-page-filters .ant-select .ant-select-arrow > *,
 .program-filter-card .ant-select .ant-select-arrow > *,
@@ -742,7 +742,7 @@
   transform: translateY(-50%) rotate(180deg) !important;
 }
 
-.app-select.app-select--filter .ant-select.ant-select-open .ant-select-arrow,
+.unified-filter-card .cms-select .ant-select.ant-select-open .ant-select-arrow,
 .list-page-filters .ant-select.ant-select-open .ant-select-arrow,
 .program-filter-card .ant-select.ant-select-open .ant-select-arrow,
 .program-filter-wrapper .ant-select.ant-select-open .ant-select-arrow,
@@ -754,7 +754,7 @@
 }
 
 .cms-select--disabled .ant-select-arrow,
-.app-select.app-select--filter .ant-select-disabled .ant-select-arrow,
+.unified-filter-card .cms-select--disabled .ant-select-arrow,
 .list-page-filters .ant-select-disabled .ant-select-arrow,
 .program-filter-card .ant-select-disabled .ant-select-arrow,
 .program-filter-wrapper .ant-select-disabled .ant-select-arrow,

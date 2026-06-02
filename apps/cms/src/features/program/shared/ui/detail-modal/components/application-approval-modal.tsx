@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { CmsRadio } from '@/shared/ui/cms-radio'
-import { AppSelect } from '@/shared/ui/app-select'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
 import './application-approval-modal.css'
 
@@ -86,9 +86,10 @@ export function ApplicationApprovalModal({
               <CmsRadio value="instructor">강사 별도</CmsRadio>
             </CmsRadio.Group>
             {feeMode === 'instructor' ? (
-              <AppSelect
+              <CmsSelect
                 className="application-approval-modal__fee-select"
-                size="large"
+                inputSize="large"
+                withAllOption={false}
                 value={feeType}
                 onChange={v => setFeeType(v)}
                 options={INSTRUCTOR_FEE_GRADE_OPTIONS}

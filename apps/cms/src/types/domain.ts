@@ -142,13 +142,19 @@ export interface GeneralProgramCommonInfoExtension {
   }
   /** 모집 정보 — 참여자 모집 (등록 양식·상세 조회 mock) */
   participantRecruitmentInfo?: GeneralProgramParticipantRecruitmentInfo
+  /** 교육 진행 일정 설정 — `date` 날짜 지정 · `period` 기간 지정(기획: 날짜 선택(기간)) */
+  educationScheduleMode?: 'date' | 'period'
 }
 
 /** 일반 프로그램 — 참여자 모집 정보 (프로그램 등록 참여자 모집 양식 필드) */
 export interface GeneralProgramParticipantRecruitmentInfo {
   announcementPublished?: boolean
   preEducationNoticeRequired?: boolean
+  /** 수료증 발급 여부 — 모집 양식 */
+  certificateIssuanceProvided?: boolean
   maxAssignableInstructors?: number
+  /** 기관 신청 시 선택 가능한 최대 학급 수 상한 */
+  maxClassCount?: number
   maxSessionsPerDay?: number
   maxScheduleCount?: number
   /** 표시용 — 운영·모집 기간·합격 발표 (요일 포함) */
