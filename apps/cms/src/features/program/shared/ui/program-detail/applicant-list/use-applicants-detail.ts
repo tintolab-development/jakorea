@@ -13,8 +13,14 @@ import {
   volunteerFilterFields,
 } from '@/features/program/general/ui/table/applicant-filter-fields'
 import {
+  generalInstructorApplicationFilterFields,
+  generalInstructorCalendarFilterFields,
+} from '@/features/program/general/lib/general-application-filter-fields'
+import {
   filterGeneralOrganizationApplications,
   filterGeneralIndividualApplications,
+  filterGeneralInstructorApplications,
+  filterGeneralInstructorCalendarApplications,
 } from '@/features/program/general/lib/general-application-table-filter'
 import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/general-institution-applications-mock'
 import {
@@ -31,6 +37,7 @@ import {
 } from '@/data/mock/applicant-institutions'
 import {
   MOCK_APPLICANT_INSTRUCTORS,
+  getApplicantInstructorsByProgramId,
   patchApplicantInstructorForApprovalStatus,
   updateApplicantInstructorApprovalStatus,
   type ApplicantInstructorApprovalStatusKey,
@@ -53,10 +60,12 @@ import {
   useInstructorApplicantColumns,
 } from './use-applicants-detail-columns'
 import { useGeneralIndividualApplicantColumns } from './use-general-individual-applicant-columns'
+import { useGeneralInstructorApplicantColumns } from './use-general-instructor-applicant-columns'
 import { createApplicantsFilterTablePageConfig } from './applicants-filter-table.config'
 import type {
   ApplicantListMenu,
   InstitutionColumnPreset,
+  InstructorColumnPreset,
   SessionLinePreset,
 } from './applicant-list-menu'
 
@@ -68,7 +77,7 @@ export type ApplicantListRow =
 export type ApplicantDetailMeta = {
   title: string
   breadcrumbLabel: string
-  kind: 'institution' | 'individual'
+  kind: 'institution' | 'individual' | 'instructor'
 } | null
 
 export function useApplicantsDetail({
@@ -78,6 +87,7 @@ export function useApplicantsDetail({
   listTitle,
   filterFields: filterFieldsOverride,
   institutionColumnPreset = 'legacy',
+  instructorColumnPreset = 'legacy',
   sessionLinePreset,
   programId,
   detailVariant = 'legacy',
@@ -91,6 +101,7 @@ export function useApplicantsDetail({
   listTitle?: string
   filterFields?: FilterFieldConfig[]
   institutionColumnPreset?: InstitutionColumnPreset
+  instructorColumnPreset?: InstructorColumnPreset
   sessionLinePreset?: SessionLinePreset
   programId?: string
   detailVariant?: 'legacy' | 'general'
@@ -122,9 +133,12 @@ export function useApplicantsDetail({
     }
     return [...MOCK_APPLICANT_INSTITUTIONS]
   })
-  const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>(() => [
-    ...MOCK_APPLICANT_INSTRUCTORS,
-  ])
+  const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>(() => {
+    if (programId && instructorColumnPreset === 'general-detail') {
+      return getApplicantInstructorsByProgramId(programId)
+    }
+    return [...MOCK_APPLICANT_INSTRUCTORS]
+  })
   const [individualList, setIndividualList] = useState<GeneralIndividualApplicantRow[]>(() => {
     if (programId) {
       return getGeneralIndividualApplicationsForProgram(programId)
@@ -282,6 +296,20 @@ export function useApplicantsDetail({
     }
   }, [menu, setPendingFilters, setSelectedItem])
 
+  const prevViewModeRef = useRef(viewMode)
+  useEffect(() => {
+    if (
+      menu === 'instructors' &&
+      instructorColumnPreset === 'general-detail' &&
+      prevViewModeRef.current !== viewMode
+    ) {
+      prevViewModeRef.current = viewMode
+      setPendingFilters({})
+      setAppliedFilters({})
+      setSelectedRowKeys([])
+    }
+  }, [viewMode, menu, instructorColumnPreset, setPendingFilters])
+
   useEffect(() => {
     if (!onApplicantDetailMetaChange || detailVariant !== 'general') return
     if (!selectedItem) {
@@ -302,6 +330,14 @@ export function useApplicantsDetail({
         breadcrumbLabel: selectedItem.applicantName,
         kind: 'individual',
       })
+      return
+    }
+    if (menu === 'instructors' && 'instructorName' in selectedItem) {
+      onApplicantDetailMetaChange({
+        title: `강사 신청 상세 (${selectedItem.instructorName})`,
+        breadcrumbLabel: selectedItem.instructorName,
+        kind: 'instructor',
+      })
     }
   }, [onApplicantDetailMetaChange, detailVariant, menu, selectedItem])
 
@@ -317,7 +353,22 @@ export function useApplicantsDetail({
     }
   }, [programId, menu])
 
+  useEffect(() => {
+    if (programId && instructorColumnPreset === 'general-detail' && menu === 'instructors') {
+      setInstructorList(getApplicantInstructorsByProgramId(programId))
+    }
+  }, [programId, instructorColumnPreset, menu])
+
   const fields = useMemo((): FilterFieldConfig[] => {
+    if (
+      menu === 'instructors' &&
+      instructorColumnPreset === 'general-detail' &&
+      !filterFieldsOverride?.length
+    ) {
+      return viewMode === 'calendar'
+        ? generalInstructorCalendarFilterFields
+        : generalInstructorApplicationFilterFields
+    }
     if (filterFieldsOverride?.length) return filterFieldsOverride
     switch (menu) {
       case 'institutions':
@@ -343,7 +394,7 @@ export function useApplicantsDetail({
       default:
         return []
     }
-  }, [menu, instructorList, filterFieldsOverride])
+  }, [menu, instructorList, filterFieldsOverride, instructorColumnPreset, viewMode])
 
   const approvalStatusKeys = useMemo<ApprovalStatusKey[]>(
     () => ['pending', 'rejected', 'approved'] as ApprovalStatusKey[],
@@ -389,13 +440,22 @@ export function useApplicantsDetail({
     preset: institutionColumnPreset,
   })
 
-  const instructorColumns = useInstructorApplicantColumns({
+  const instructorColumnsLegacy = useInstructorApplicantColumns({
     setSelectedItem: record => setSelectedItem(record),
     approvalStatusKeys,
     handleInstructorApprovalStatusChange,
     openApprovalDropdownId,
     setOpenApprovalDropdownId,
   })
+
+  const instructorColumnsGeneral = useGeneralInstructorApplicantColumns({
+    setSelectedItem: record => setSelectedItem(record as ApplicantInstructorRow),
+  })
+
+  const instructorColumns =
+    menu === 'instructors' && instructorColumnPreset === 'general-detail'
+      ? instructorColumnsGeneral
+      : instructorColumnsLegacy
 
   const individualColumns = useGeneralIndividualApplicantColumns()
 
@@ -538,6 +598,11 @@ export function useApplicantsDetail({
     if (menu === 'institutions' && institutionColumnPreset === 'general-detail') {
       return filterGeneralOrganizationApplications(institutionList, appliedFilters)
     }
+    if (menu === 'instructors' && instructorColumnPreset === 'general-detail') {
+      return viewMode === 'calendar'
+        ? filterGeneralInstructorCalendarApplications(instructorList, appliedFilters)
+        : filterGeneralInstructorApplications(instructorList, appliedFilters)
+    }
     if (menu === 'institutions' || menu === 'instructors') {
       return filterApplicantsTableData(
         menu,
@@ -554,6 +619,8 @@ export function useApplicantsDetail({
     individualList,
     appliedFilters,
     institutionColumnPreset,
+    instructorColumnPreset,
+    viewMode,
   ])
 
   const columns = useMemo(() => {
@@ -564,11 +631,13 @@ export function useApplicantsDetail({
   }, [menu, institutionColumns, instructorColumns, individualColumns])
 
   const tableScrollX =
-    menu === 'instructors'
-      ? 48 + 72 + 110 + 150 + 120 + 110 + 130 + 160 + 136
-      : menu === 'individual-applications'
-        ? 1280
-        : 1280
+    menu === 'instructors' && instructorColumnPreset === 'general-detail'
+      ? 1280
+      : menu === 'instructors'
+        ? 48 + 72 + 110 + 150 + 120 + 110 + 130 + 160 + 136
+        : menu === 'individual-applications'
+          ? 1280
+          : 1280
 
   return {
     menu,
