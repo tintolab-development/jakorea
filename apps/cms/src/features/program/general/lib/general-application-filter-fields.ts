@@ -135,3 +135,122 @@ export const generalIndividualApplicationFilterFields: FilterFieldConfig[] = [
     options: APPROVAL_STATUS_OPTIONS,
   },
 ]
+
+const INSTRUCTOR_EXPERIENCE_YEARS_OPTIONS = [
+  { label: '전체', value: 'all' },
+  { label: '1년', value: '1' },
+  { label: '2년', value: '2' },
+  { label: '3년', value: '3' },
+  { label: '4년', value: '4' },
+  { label: '5년', value: '5' },
+  { label: '6년 이상', value: '6+' },
+]
+
+const INSTRUCTOR_EVALUATION_GRADE_OPTIONS = [
+  { label: '전체', value: 'all' },
+  { label: 'A등급', value: 'A' },
+  { label: 'B등급', value: 'B' },
+  { label: 'C등급', value: 'C' },
+]
+
+/** 일반 프로그램 상세 — 강사 신청 목록 필터 (스크린샷 라벨) */
+export const generalInstructorApplicationFilterFields: FilterFieldConfig[] = [
+  {
+    key: 'instructorName',
+    type: 'search',
+    label: '신청 강사명',
+    placeholder: '강사명을 입력하세요',
+    width: GENERAL_APPLICATION_FILTER_CONTROL_WIDTH,
+  },
+  {
+    key: 'homeAddress',
+    type: 'addressRegion',
+    label: '자택 소재지',
+    width: GENERAL_APPLICATION_FILTER_ADDRESS_REGION_WIDTH,
+    addressRegion: {
+      sidoKey: 'homeSido',
+      sigunguKey: 'homeSigungu',
+      sidoOptions: INSTITUTION_SIDO_FILTER_OPTIONS,
+      getSigunguOptions: getInstitutionSigunguSelectOptions,
+      sidoPlaceholder: '시/도',
+      sigunguPlaceholder: '시/군/구',
+    },
+  },
+  {
+    key: 'experienceYears',
+    type: 'select',
+    label: 'JA 강의 경력',
+    placeholder: '전체',
+    width: GENERAL_APPLICATION_FILTER_CONTROL_WIDTH,
+    style: GENERAL_APPLICATION_FILTER_SELECT_FIELD_STYLE,
+    options: INSTRUCTOR_EXPERIENCE_YEARS_OPTIONS,
+  },
+  {
+    key: 'evaluationGrade',
+    type: 'select',
+    label: 'JA 평가 등급',
+    placeholder: '전체',
+    width: GENERAL_APPLICATION_FILTER_CONTROL_WIDTH,
+    style: GENERAL_APPLICATION_FILTER_SELECT_FIELD_STYLE,
+    options: INSTRUCTOR_EVALUATION_GRADE_OPTIONS,
+  },
+  {
+    key: 'approvalStatus',
+    type: 'select',
+    label: '프로그램 승인 현황',
+    placeholder: '전체',
+    width: GENERAL_APPLICATION_FILTER_CONTROL_WIDTH,
+    style: GENERAL_APPLICATION_FILTER_SELECT_FIELD_STYLE,
+    options: APPROVAL_STATUS_OPTIONS,
+  },
+]
+
+/** 일반 프로그램 상세 — 강사 신청 목록 캘린더 뷰 필터 */
+export const generalInstructorCalendarFilterFields: FilterFieldConfig[] = [
+  {
+    key: 'organizationName',
+    type: 'search',
+    label: '신청 기관명',
+    placeholder: '신청 기관명을 입력하세요',
+    width: GENERAL_APPLICATION_FILTER_CONTROL_WIDTH,
+  },
+  {
+    key: 'homeAddress',
+    type: 'addressRegion',
+    label: '자택 소재지',
+    width: GENERAL_APPLICATION_FILTER_ADDRESS_REGION_WIDTH,
+    addressRegion: {
+      sidoKey: 'homeSido',
+      sigunguKey: 'homeSigungu',
+      sidoOptions: INSTITUTION_SIDO_FILTER_OPTIONS,
+      getSigunguOptions: getInstitutionSigunguSelectOptions,
+      sidoPlaceholder: '시/도',
+      sigunguPlaceholder: '시/군/구',
+    },
+  },
+  {
+    key: 'approvalStatus',
+    type: 'select',
+    label: '프로그램 승인 현황',
+    placeholder: '전체',
+    width: GENERAL_APPLICATION_FILTER_CONTROL_WIDTH,
+    style: GENERAL_APPLICATION_FILTER_SELECT_FIELD_STYLE,
+    options: APPROVAL_STATUS_OPTIONS,
+  },
+  {
+    key: 'grade',
+    type: 'select',
+    label: '신청 학년',
+    placeholder: '전체',
+    width: GENERAL_APPLICATION_FILTER_CONTROL_WIDTH,
+    style: GENERAL_APPLICATION_FILTER_SELECT_FIELD_STYLE,
+    options: GRADE_OPTIONS,
+  },
+  {
+    key: 'instructorName',
+    type: 'search',
+    label: '신청 강사명',
+    placeholder: '강사명을 입력하세요',
+    width: GENERAL_APPLICATION_FILTER_CONTROL_WIDTH,
+  },
+]
