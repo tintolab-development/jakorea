@@ -297,12 +297,3 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
   display: flex;
   gap: 16px;
 }
-
-/* Toast UI Editor 본문 타이포 공통 */
-.toastui-editor-defaultUI .toastui-editor-contents,
-.toastui-editor-defaultUI .toastui-editor-contents p,
-.toastui-editor-defaultUI .toastui-editor-contents li,
-.toastui-editor-defaultUI .toastui-editor-contents td,
-.toastui-editor-defaultUI .toastui-editor-contents th {
-  font-size: 15px;
-}
