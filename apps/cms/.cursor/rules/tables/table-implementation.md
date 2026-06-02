@@ -6,7 +6,7 @@ category: tables
 
 # Ant Design `Table` implementation (CMS)
 
-**See also:** [UI principles — filters](../design/ui-principles.md), [table management](./table-management.md), [Ant Design usage](../libraries/ant-design-usage.md), [status dropdown cell](../coding/status-dropdown-cell.md).
+**See also:** [UI principles — filters](../design/ui-principles.md), [table td divider](../design/table-td-divider.mdc), [table management](./table-management.md), [Ant Design usage](../libraries/ant-design-usage.md), [status dropdown cell](../coding/status-dropdown-cell.md).
 
 ---
 

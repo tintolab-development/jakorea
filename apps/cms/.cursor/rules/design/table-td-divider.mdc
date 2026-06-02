@@ -1,0 +1,58 @@
+---
+description: 테이블 td 값 셀 — 문자열 | 구분 금지, 디바이더 컴포넌트 사용 (CMS)
+globs:
+  - 'apps/cms/src/**/*.tsx'
+alwaysApply: false
+---
+
+# 테이블 td 값 셀 — 세그먼트 구분 (디바이더)
+
+**상세·기본정보 테이블**의 `td` 값 영역에서 여러 항목을 한 줄에 나열할 때, **문자 `|`(파이프)를 JSX·문자열로 넣지 않는다.**  
+시각 구분은 **디바이더 컴포넌트**(또는 헬퍼)로만 표현한다.
+
+## 금지
+
+```tsx
+// ❌ 문자열·템플릿 리터럴
+value={`${name} | ${phone}`}
+<span>{a} | {b}</span>
+withProgramDetailTdDivider([`${x} | ${y}`]) // 한 세그먼트 안에 | 포함
+
+// ❌ CSS로 | 모양 흉내 (content: '|', ::before 등)
+```
+
+## 사용할 컴포넌트·헬퍼 (맥락별)
+
+| 화면                                | import                                                   | 용도                                                                          |
+| ----------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| 프로그램·신청 상세, 정산 등 공통 td | `@/features/program/shared/ui/program-detail-td-divider` | `withProgramDetailTdDivider(segments)` + 필요 시 `ProgramDetailTdSegmentWrap` |
+| `DetailInfoForm` 격자               | `@/shared/components/detail-info-form`                   | `DetailInfoForm.TdDivider` / `InputsSeparator`                                |
+| 학교 풀페이지 상세 (로컬)           | `school-detail-fullpage-view.tsx`                        | `withTdDivider(segments)` — **렌더 시**만 사용                                |
+
+- 세그먼트 배열은 **항목별로 분리**해 전달한다. (`['010-1234-5678', '010-9876-5432']`)
+- 저장 데이터에 `|` 구분자가 **이미 박혀 있는 mock/레거시**는 파싱(`split`) 후 **`with*TdDivider`로 재조립**한다. 화면에 `|` 문자열을 그대로 출력하지 않는다.
+
+## 권장 예
+
+```tsx
+import {
+  ProgramDetailTdSegmentWrap,
+  withProgramDetailTdDivider,
+} from '@/features/program/shared/ui/program-detail-td-divider'
+;<ProgramDetailTdSegmentWrap>
+  {withProgramDetailTdDivider([contact, email])}
+</ProgramDetailTdSegmentWrap>
+```
+
+## 예외
+
+- **테이블 밖** 일반 문장·라벨·로그·API payload·mock 원문 필드 값 자체에는 적용하지 않는다.
+- **승인 현황** 등 전용 vbar(`__approval-status-vbar`, `ProgramApprovalStatusDetailValue`)는 해당 컴포넌트 스펙을 따른다.
+
+## 리뷰 체크
+
+- [ ] td `render` / 상세 테이블 value 셀에 `' | '` 또는 `` `…|…` `` 없음
+- [ ] 2개 이상 값 나열 시 디바이더 컴포넌트 또는 `with*TdDivider` 사용
+- [ ] colocated divider CSS를 새로 만들기 전 기존 디바이더 재사용 검토
+
+**참고:** [cross-table.md](./cross-table.md) · [table-implementation.md](../tables/table-implementation.md)
