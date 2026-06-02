@@ -15,8 +15,8 @@ import {
 import {
   filterGeneralOrganizationApplications,
   filterGeneralIndividualApplications,
-} from '@/features/program/general/lib/general-application-table-filter'
-import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/general-institution-applications-mock'
+} from '@/features/program/general/lib/application-table-filter'
+import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications-mock'
 import {
   APPLICANTS_CALENDAR_RANGE_PARAM,
   parseCalendarRangeParam,

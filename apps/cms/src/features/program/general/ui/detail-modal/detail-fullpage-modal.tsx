@@ -33,9 +33,17 @@ import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/
 import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hooks/use-common-info-save'
 import { GeneralProgramDetailSidebar } from './detail-sidebar'
 import { GeneralProgramDetailCommonInfoView } from './info/common-info-view'
-import { GeneralSurveyManagementView } from './survey-management/general-survey-management-view'
+import { GeneralProgramRecruitmentView } from './info/recruitment-view'
+import {
+  normalizeGeneralRecruitTab,
+  type GeneralRecruitTabKey,
+} from '@/features/program/general/lib/recruitment-tabs'
+import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
+import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-program-detail-info-save'
+import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
+import { GeneralSurveyManagementView } from './survey-management/survey-management-view'
 import { ProgramManagersTab } from '../program-managers-tab'
-import { GeneralParticipantApplicationsView } from './applications/general-participant-applications-view'
+import { GeneralParticipantApplicationsView } from './applications/participant-applications-view'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
@@ -330,6 +338,180 @@ export function GeneralProgramDetailFullPageModal({
     void infoTriggerSave()
   }, [displayProgram, infoForm, infoTriggerSave, setEditMode])
 
+  const [recruitSubTab, setRecruitSubTab] = useState<GeneralRecruitTabKey>('institutions')
+
+  useEffect(() => {
+    setRecruitSubTab(prev =>
+      normalizeGeneralRecruitTab(prev, {
+        showInstructor: showInstructorApplications,
+        showVolunteer: showVolunteerApplications,
+      })
+    )
+  }, [showInstructorApplications, showVolunteerApplications])
+
+  const handleRecruitSubTabChange = useCallback(
+    (tab: GeneralRecruitTabKey) => {
+      setRecruitSubTab(tab)
+      if (editTab) setEditMode(null)
+    },
+    [editTab, setEditMode]
+  )
+
+  const isEditModeInstitutions =
+    open &&
+    activeLnb === 'info' &&
+    activeTab === 'recruitment' &&
+    recruitSubTab === 'institutions' &&
+    editTab === 'institutions' &&
+    !!displayProgram
+
+  const institutionsForm = useProgramDetailEditForm({
+    program: displayProgram,
+    isEditMode: isEditModeInstitutions,
+    schema: programDetailInstitutionsEditSchema,
+  })
+  const {
+    triggerSave: institutionsTriggerSave,
+    resetToProgram: institutionsResetToProgram,
+    registerGetAdditionalContentHtml: registerInstitutionsAdditionalHtml,
+  } = useProgramDetailInfoSave({
+    form: institutionsForm,
+    program: displayProgram ?? null,
+    onSaveEdit: displayProgram
+      ? async draft => {
+          try {
+            const { id: _id, createdAt: _c, ...patch } = draft
+            await updateProgram(draft.id, patch)
+          } catch {
+            setSelectedProgram(draft)
+          }
+        }
+      : undefined,
+  })
+
+  const isEditModeInstructors =
+    open &&
+    activeLnb === 'info' &&
+    activeTab === 'recruitment' &&
+    recruitSubTab === 'instructors' &&
+    editTab === 'instructors' &&
+    !!displayProgram
+
+  const instructorsForm = useProgramDetailEditForm({
+    program: displayProgram,
+    isEditMode: isEditModeInstructors,
+  })
+  const {
+    triggerSave: instructorsTriggerSave,
+    resetToProgram: instructorsResetToProgram,
+    registerGetAdditionalContentHtml: registerInstructorsAdditionalHtml,
+  } = useProgramDetailInfoSave({
+    form: instructorsForm,
+    program: displayProgram ?? null,
+    onSaveEdit: displayProgram
+      ? async draft => {
+          try {
+            const { id: _id, createdAt: _c, ...patch } = draft
+            await updateProgram(draft.id, patch)
+          } catch {
+            setSelectedProgram(draft)
+          }
+        }
+      : undefined,
+  })
+
+  const isEditModeVolunteers =
+    open &&
+    activeLnb === 'info' &&
+    activeTab === 'recruitment' &&
+    recruitSubTab === 'volunteers' &&
+    editTab === 'volunteers' &&
+    !!displayProgram
+
+  const volunteersForm = useProgramDetailEditForm({
+    program: displayProgram,
+    isEditMode: isEditModeVolunteers,
+  })
+  const {
+    triggerSave: volunteersTriggerSave,
+    resetToProgram: volunteersResetToProgram,
+    registerGetAdditionalContentHtml: registerVolunteersAdditionalHtml,
+  } = useProgramDetailInfoSave({
+    form: volunteersForm,
+    program: displayProgram ?? null,
+    onSaveEdit: displayProgram
+      ? async draft => {
+          try {
+            const { id: _id, createdAt: _c, ...patch } = draft
+            await updateProgram(draft.id, patch)
+          } catch {
+            setSelectedProgram(draft)
+          }
+        }
+      : undefined,
+  })
+
+  const handleRecruitmentEdit = useCallback(() => {
+    if (activeLnb !== 'info' || activeTab !== 'recruitment' || !displayProgram) return
+    if (recruitSubTab === 'institutions') {
+      institutionsResetToProgram()
+      setEditMode('institutions')
+      return
+    }
+    if (recruitSubTab === 'instructors') {
+      instructorsResetToProgram()
+      setEditMode('instructors')
+      return
+    }
+    if (recruitSubTab === 'volunteers') {
+      volunteersResetToProgram()
+      setEditMode('volunteers')
+    }
+  }, [
+    activeLnb,
+    activeTab,
+    displayProgram,
+    recruitSubTab,
+    institutionsResetToProgram,
+    instructorsResetToProgram,
+    volunteersResetToProgram,
+    setEditMode,
+  ])
+
+  const handleRecruitmentSave = useCallback(async () => {
+    if (!displayProgram) return
+    if (recruitSubTab === 'institutions') {
+      const isValid = await institutionsForm.trigger()
+      if (!isValid) return
+      setEditMode(null)
+      void institutionsTriggerSave()
+      return
+    }
+    if (recruitSubTab === 'instructors') {
+      const isValid = await instructorsForm.trigger()
+      if (!isValid) return
+      setEditMode(null)
+      void instructorsTriggerSave()
+      return
+    }
+    if (recruitSubTab === 'volunteers') {
+      const isValid = await volunteersForm.trigger()
+      if (!isValid) return
+      setEditMode(null)
+      void volunteersTriggerSave()
+    }
+  }, [
+    displayProgram,
+    recruitSubTab,
+    institutionsForm,
+    instructorsForm,
+    volunteersForm,
+    institutionsTriggerSave,
+    instructorsTriggerSave,
+    volunteersTriggerSave,
+    setEditMode,
+  ])
+
   const applicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
   const [applicantDetailMeta, setApplicantDetailMeta] = useState<ApplicantDetailMeta>(null)
 
@@ -460,7 +642,7 @@ export function GeneralProgramDetailFullPageModal({
       onClose={handleModalClose}
       title={modalTitle}
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
-      className="program-detail-fullpage-modal general-program-detail-fullpage-modal program-detail-fullpage-modal--program-list-overview"
+      className="program-detail-fullpage-modal general-detail-fullpage-modal program-detail-fullpage-modal--program-list-overview"
       sidebar={
         programId ? (
           <GeneralProgramDetailSidebar
@@ -492,6 +674,27 @@ export function GeneralProgramDetailFullPageModal({
               onEdit={handleInfoEdit}
               onSave={handleInfoSave}
             />
+          ) : activeLnb === 'info' && activeTab === 'recruitment' ? (
+            <GeneralProgramRecruitmentView
+              program={displayProgram}
+              sponsorName={sponsorName}
+              activeRecruitTab={recruitSubTab}
+              onRecruitTabChange={handleRecruitSubTabChange}
+              showInstructorTab={showInstructorApplications}
+              showVolunteerTab={showVolunteerApplications}
+              canWrite={canWrite}
+              isEditModeInstitutions={isEditModeInstitutions}
+              institutionsForm={isEditModeInstitutions ? institutionsForm : undefined}
+              registerInstitutionsAdditionalHtml={registerInstitutionsAdditionalHtml}
+              isEditModeInstructors={isEditModeInstructors}
+              instructorsForm={isEditModeInstructors ? instructorsForm : undefined}
+              registerInstructorsAdditionalHtml={registerInstructorsAdditionalHtml}
+              isEditModeVolunteers={isEditModeVolunteers}
+              volunteersForm={isEditModeVolunteers ? volunteersForm : undefined}
+              registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
+              onEdit={handleRecruitmentEdit}
+              onSave={handleRecruitmentSave}
+            />
           ) : activeLnb === 'survey' ? (
             <GeneralSurveyManagementView program={displayProgram} activeTab={activeTab} />
           ) : activeLnb === 'managers' && displayProgram.id ? (
@@ -511,7 +714,7 @@ export function GeneralProgramDetailFullPageModal({
             </div>
           ) : (
             <div
-              className="general-program-detail-fullpage-modal__main"
+              className="general-detail-fullpage-modal__main"
               aria-label={
                 generalChildBreadcrumbLabel(activeLnb, activeTab, surveyItems) ??
                 generalLnbBreadcrumbLabel(activeLnb, participantApplicationsLnbLabel)

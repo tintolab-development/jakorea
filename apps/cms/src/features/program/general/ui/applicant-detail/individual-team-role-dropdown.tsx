@@ -9,7 +9,7 @@ import { updateGeneralIndividualApplicantTeamRole } from '@/data/mock/general-in
 import { assignmentTeamRoleTagClassName } from '@/features/program/general/lib/assignment-team-role-tag'
 import { ASSIGNMENT_TEAM_ROLE_LABELS } from '@/features/program/general/model/school-detail-types'
 import '@/features/program/general/ui/assignment-submission-modal.css'
-import './applicant-general-individual-basic-info.css'
+import './individual-basic-info.css'
 
 export type GeneralIndividualTeamRoleKey = NonNullable<GeneralIndividualApplicantDetail['teamRole']>
 
@@ -34,7 +34,7 @@ export function GeneralIndividualTeamRoleDropdown({
   }
 
   return (
-    <div className="applicant-general-individual-basic-info__team-role-cell">
+    <div className="individual-basic-info__team-role-cell">
       <StatusDropdownCell<GeneralIndividualTeamRoleKey>
         status={role}
         statusOptions={TEAM_ROLE_OPTIONS}

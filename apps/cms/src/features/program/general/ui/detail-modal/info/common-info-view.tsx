@@ -24,6 +24,7 @@ import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-d
 import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import {
+  applyCurriculumTypeSettingsDetailChangeToForm,
   applyEducationStructureChangeToForm,
   applyScheduleTypeSettingsDetailChangeToForm,
   applySessionRoundChangeToForm,
@@ -34,6 +35,7 @@ import {
   padEventScheduleLabel,
 } from '@/features/program/general/lib/schedule-detail-form'
 import {
+  GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT,
   GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS,
   formatGeneralProgramProgressSessionDisplay,
 } from '@/features/program/general/lib/curriculum-progress-session-options'
@@ -54,6 +56,7 @@ import {
   isGeneralProgramScheduleType,
   padScheduleDetailLabel,
   relabelScheduleDetailFormRows,
+  buildSessionIpsTypeSummary,
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
@@ -150,18 +153,16 @@ function ProgramRegistrationDetailSection({
   isFormEdit?: boolean
 }) {
   return (
-    <section className="general-program-detail-common-info-view__section" aria-label={title}>
+    <section className="detail-common-info-view__section" aria-label={title}>
       <FormParagraphSectionHeader
         title={title}
         description={isFormEdit ? editDescription : undefined}
         titleTrailing={titleTrailing}
         surface="responseEntry"
         titleAligned
-        headerClassName="detail-info-form__header"
-        titleClassName="detail-info-form__title"
       />
       <div
-        className={['general-program-detail-common-info-view__section-body', bodyClassName]
+        className={['detail-common-info-view__section-body', bodyClassName]
           .filter(Boolean)
           .join(' ')}
       >
@@ -192,14 +193,14 @@ function ProgramProgressView({ program }: { program: Program }) {
   if (!status) return <>-</>
   const { label, color } = getProgramProgressPhaseDisplay(status)
   return (
-    <span className="general-program-detail-common-info-view__progress-status" style={{ color }}>
+    <span className="detail-common-info-view__progress-status" style={{ color }}>
       {label}
     </span>
   )
 }
 
 function KpiBoldNumber({ value }: { value: number }) {
-  return <span className="general-program-detail-common-info-view__kpi-number">{value}</span>
+  return <span className="detail-common-info-view__kpi-number">{value}</span>
 }
 
 function BasicInfoSection({
@@ -300,13 +301,13 @@ function BasicInfoSection({
   return (
     <ProgramRegistrationDetailSection
       title="기본 정보"
-      bodyClassName="general-program-detail-common-info-view__section-body--basic-info"
+      bodyClassName="detail-common-info-view__section-body--basic-info"
     >
       <DetailInfoForm
         title="기본 정보 — 등록 이력"
         hideHeader
         mode="view"
-        className="program-registration-paragraph general-program-detail-common-info-view__basic-info-dates-form"
+        className="program-registration-paragraph detail-common-info-view__basic-info-dates-form"
       >
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -343,7 +344,7 @@ function BasicInfoSection({
         title="기본 정보"
         hideHeader
         mode={mainFormMode}
-        className="program-registration-paragraph general-program-detail-common-info-view__basic-info-main-form"
+        className="program-registration-paragraph detail-common-info-view__basic-info-main-form"
       >
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -646,7 +647,7 @@ function BasicInfoSection({
         title="기본 정보 — 교육 과정"
         hideHeader
         mode={courseFormMode}
-        className="program-registration-paragraph general-program-detail-common-info-view__basic-info-course-form"
+        className="program-registration-paragraph detail-common-info-view__basic-info-course-form"
       >
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -818,38 +819,44 @@ function KpiSection({
             edit={
               <div className="detail-info-form-inputs-wrapper">
                 <span className="detail-info-form--text mr-6">강사</span>
-                <Controller
-                  name="kpiInstructorCount"
-                  control={editForm.control}
-                  render={({ field }) => (
-                    <CmsInput
-                      {...field}
-                      value={field.value ?? ''}
-                      onChange={e => field.onChange(Number(e.target.value) || 0)}
-                      disabled={!hasInstructor}
-                      inputSize="medium"
-                      placeholder={hasInstructor ? '목표값 입력' : '해당 없음'}
-                      width={120}
-                    />
-                  )}
-                />
+                {hasInstructor ? (
+                  <Controller
+                    name="kpiInstructorCount"
+                    control={editForm.control}
+                    render={({ field }) => (
+                      <CmsInput
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => field.onChange(Number(e.target.value) || 0)}
+                        inputSize="medium"
+                        placeholder="목표값 입력"
+                        width={120}
+                      />
+                    )}
+                  />
+                ) : (
+                  <span className="detail-info-form--text">해당 없음</span>
+                )}
                 <DetailInfoForm.InputsSeparator />
                 <span className="detail-info-form--text mr-6">봉사자</span>
-                <Controller
-                  name="kpiVolunteerCount"
-                  control={editForm.control}
-                  render={({ field }) => (
-                    <CmsInput
-                      {...field}
-                      value={field.value ?? ''}
-                      onChange={e => field.onChange(Number(e.target.value) || 0)}
-                      disabled={!hasVolunteer}
-                      inputSize="medium"
-                      placeholder={hasVolunteer ? '목표값 입력' : '해당 없음'}
-                      width={120}
-                    />
-                  )}
-                />
+                {hasVolunteer ? (
+                  <Controller
+                    name="kpiVolunteerCount"
+                    control={editForm.control}
+                    render={({ field }) => (
+                      <CmsInput
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => field.onChange(Number(e.target.value) || 0)}
+                        inputSize="medium"
+                        placeholder="목표값 입력"
+                        width={120}
+                      />
+                    )}
+                  />
+                ) : (
+                  <span className="detail-info-form--text">해당 없음</span>
+                )}
               </div>
             }
           />
@@ -1061,7 +1068,13 @@ function TypeSettingsScheduleDetailRow({
                 <CmsRadioGroup
                   size="large"
                   value={field.value ?? 'common'}
-                  onChange={e => field.onChange(e.target.value)}
+                  onChange={e => {
+                    field.onChange(e.target.value)
+                    applyCurriculumTypeSettingsDetailChangeToForm(
+                      editForm.setValue,
+                      editForm.getValues
+                    )
+                  }}
                 >
                   <CmsRadio value="common">일정 공통</CmsRadio>
                   <CmsRadio value="perSchedule">일정 별 상이</CmsRadio>
@@ -1113,7 +1126,13 @@ function TypeSettingsIpsRow({
                 <CmsRadioGroup
                   size="large"
                   value={field.value}
-                  onChange={e => field.onChange(e.target.value)}
+                  onChange={e => {
+                    field.onChange(e.target.value)
+                    applyCurriculumTypeSettingsDetailChangeToForm(
+                      editForm.setValue,
+                      editForm.getValues
+                    )
+                  }}
                 >
                   <CmsRadio value="common">일정 공통</CmsRadio>
                   <CmsRadio value="perSchedule">일정 별 상이</CmsRadio>
@@ -1225,10 +1244,16 @@ function TypeSettingsSection({
   const scheduleTypeSettingsKey = `${educationFormScheduleDetail}-${participationScheduleDetail}-${ipsScheduleDetail}`
   const prevScheduleTypeSettingsKeyRef = useRef(scheduleTypeSettingsKey)
   useEffect(() => {
-    if (!isFormEdit || !isScheduleStructure || !isMultiRoundType) return
+    if (!isFormEdit) return
     if (prevScheduleTypeSettingsKeyRef.current === scheduleTypeSettingsKey) return
     prevScheduleTypeSettingsKeyRef.current = scheduleTypeSettingsKey
-    applyScheduleTypeSettingsDetailChangeToForm(editForm.setValue, editForm.getValues)
+    if (isScheduleStructure && isMultiRoundType) {
+      applyScheduleTypeSettingsDetailChangeToForm(editForm.setValue, editForm.getValues)
+      return
+    }
+    if (!isScheduleStructure) {
+      applyCurriculumTypeSettingsDetailChangeToForm(editForm.setValue, editForm.getValues)
+    }
   }, [
     scheduleTypeSettingsKey,
     isFormEdit,
@@ -1242,13 +1267,13 @@ function TypeSettingsSection({
       title={PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.title}
       isFormEdit={isFormEdit}
       editDescription={PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.editDescription}
-      bodyClassName="general-program-detail-common-info-view__section-body--type-settings"
+      bodyClassName="detail-common-info-view__section-body--type-settings"
     >
       <DetailInfoForm
         title="프로그램 유형 설정"
         hideHeader
         mode={formMode}
-        className="program-registration-paragraph general-program-detail-common-info-view__type-settings-structure-form"
+        className="program-registration-paragraph detail-common-info-view__type-settings-structure-form"
       >
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -1318,7 +1343,7 @@ function TypeSettingsSection({
           title="교육 형태, IPS 유형 설정"
           hideHeader
           mode={formMode}
-          className="program-registration-paragraph general-program-detail-common-info-view__type-settings-detail-form"
+          className="program-registration-paragraph detail-common-info-view__type-settings-detail-form"
         >
           <DetailInfoForm.Row type={isOrganization ? 'single' : 'double'}>
             <DetailInfoForm.Field
@@ -1385,7 +1410,7 @@ function TypeSettingsSection({
           title={isOrganization ? '교육 형태, IPS 유형 설정' : '교육 형태, 참여 방식, IPS 유형 설정'}
           hideHeader
           mode={formMode}
-          className="program-registration-paragraph general-program-detail-common-info-view__type-settings-detail-form"
+          className="program-registration-paragraph detail-common-info-view__type-settings-detail-form"
         >
           <TypeSettingsScheduleDetailRow
             label="교육 형태"
@@ -1483,7 +1508,8 @@ function MultiRoundCurriculumSessionForm({
   editForm,
   isFormEdit,
   onRemove,
-  showEducationAndIpsPerRound,
+  showEducationPerRound,
+  showIpsOnlyPerRound,
   educationFormOptions,
 }: {
   index: number
@@ -1492,7 +1518,10 @@ function MultiRoundCurriculumSessionForm({
   editForm: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
   isFormEdit: boolean
   onRemove: () => void
-  showEducationAndIpsPerRound: boolean
+  /** 교육 형태 일정 별 상이 — 회차별 교육 형태 + IPS */
+  showEducationPerRound: boolean
+  /** 교육·참여 공통 + IPS 일정 별 상이 — 회차별 IPS만 */
+  showIpsOnlyPerRound: boolean
   educationFormOptions: ReturnType<typeof getProgramRegistrationEducationFormOptions>
 }) {
   const assignmentEnabled = editForm.watch(`curriculumSessions.${index}.assignmentEnabled`) ?? false
@@ -1629,7 +1658,7 @@ function MultiRoundCurriculumSessionForm({
               }
             />
           </DetailInfoForm.Row>
-          {showEducationAndIpsPerRound ? (
+          {showEducationPerRound ? (
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="교육 형태"
@@ -1665,8 +1694,37 @@ function MultiRoundCurriculumSessionForm({
                       detail: sessionIpsDetail,
                     }}
                     onChange={next => {
-                      editForm.setValue(`curriculumSessions.${index}.ipsCategory`, next.category)
-                      editForm.setValue(`curriculumSessions.${index}.ipsDetail`, next.detail)
+                      editForm.setValue(`curriculumSessions.${index}.ipsCategory`, next.category, {
+                        shouldDirty: true,
+                      })
+                      editForm.setValue(`curriculumSessions.${index}.ipsDetail`, next.detail, {
+                        shouldDirty: true,
+                      })
+                    }}
+                  />
+                }
+              />
+            </DetailInfoForm.Row>
+          ) : null}
+          {showIpsOnlyPerRound ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="IPS 유형"
+                fullRow
+                view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
+                edit={
+                  <ProgramRegistrationIpsTypeFields
+                    value={{
+                      category: sessionIpsCategory,
+                      detail: sessionIpsDetail,
+                    }}
+                    onChange={next => {
+                      editForm.setValue(`curriculumSessions.${index}.ipsCategory`, next.category, {
+                        shouldDirty: true,
+                      })
+                      editForm.setValue(`curriculumSessions.${index}.ipsDetail`, next.detail, {
+                        shouldDirty: true,
+                      })
                     }}
                   />
                 }
@@ -1696,6 +1754,7 @@ function SingleRoundCurriculumSessionForm({
   editForm,
   isFormEdit,
   onRemove,
+  showIpsPerSession,
 }: {
   index: number
   session: CurriculumSessionViewModel
@@ -1703,7 +1762,10 @@ function SingleRoundCurriculumSessionForm({
   editForm: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
   isFormEdit: boolean
   onRemove: () => void
+  showIpsPerSession: boolean
 }) {
+  const sessionIpsCategory = editForm.watch(`curriculumSessions.${index}.ipsCategory`) ?? ''
+  const sessionIpsDetail = editForm.watch(`curriculumSessions.${index}.ipsDetail`) ?? ''
   return (
     <div className="program-registration-curriculum__session-block">
       <div className="program-registration-curriculum__session-heading">■ {session.sessionLabel}</div>
@@ -1760,6 +1822,31 @@ function SingleRoundCurriculumSessionForm({
               }
             />
           </DetailInfoForm.Row>
+          {showIpsPerSession ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="IPS 유형"
+                fullRow
+                view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
+                edit={
+                  <ProgramRegistrationIpsTypeFields
+                    value={{
+                      category: sessionIpsCategory,
+                      detail: sessionIpsDetail,
+                    }}
+                    onChange={next => {
+                      editForm.setValue(`curriculumSessions.${index}.ipsCategory`, next.category, {
+                        shouldDirty: true,
+                      })
+                      editForm.setValue(`curriculumSessions.${index}.ipsDetail`, next.detail, {
+                        shouldDirty: true,
+                      })
+                    }}
+                  />
+                }
+              />
+            </DetailInfoForm.Row>
+          ) : null}
         </DetailInfoForm>
         {isFormEdit && index > 0 ? (
           <ItemDeleteButton
@@ -1823,8 +1910,27 @@ function CurriculumSection({
     (isFormEdit ? editForm.watch('educationFormScheduleDetail') : undefined) ??
     commonInfo.educationFormScheduleDetail ??
     'common'
-  const showEducationAndIpsPerRound =
+  const participationScheduleDetail =
+    (isFormEdit ? editForm.watch('participationScheduleDetail') : undefined) ??
+    commonInfo.participationScheduleDetail ??
+    'common'
+  const ipsScheduleDetail =
+    (isFormEdit ? editForm.watch('ipsScheduleDetail') : undefined) ??
+    commonInfo.ipsScheduleDetail ??
+    'common'
+  const multiCurriculumRowPlan = isMultiRoundCurriculum
+    ? getProgramRegistrationCurriculumMultiSessionRowPlan(
+        educationFormScheduleDetail,
+        participationScheduleDetail,
+        ipsScheduleDetail
+      )
+    : null
+  const showEducationPerRound =
     isMultiRoundCurriculum && educationFormScheduleDetail === 'perSchedule'
+  const showIpsOnlyPerRound =
+    isMultiRoundCurriculum && multiCurriculumRowPlan === 'c_allCommon_piBothPer'
+  const showIpsPerSession =
+    !isMultiRoundCurriculum && ipsScheduleDetail === 'perSchedule'
   const educationFormOptions = getProgramRegistrationEducationFormOptions(
     Boolean(participantOrganization)
   )
@@ -1845,12 +1951,16 @@ function CurriculumSection({
           description: editForm.watch(`curriculumSessions.${i}.description`) ?? '',
           assignmentEnabled: editForm.watch(`curriculumSessions.${i}.assignmentEnabled`) ?? false,
           assignmentPeriod: editForm.watch(`curriculumSessions.${i}.assignmentPeriod`) ?? '',
-          educationFormLabel: showEducationAndIpsPerRound
+          educationFormLabel: showEducationPerRound
             ? educationFormOptions.find(o => o.value === educationForm)?.label
             : undefined,
-          ipsTypeSummary: showEducationAndIpsPerRound
-            ? [ipsCategory, ipsDetail].filter(Boolean).join(' | ') || undefined
-            : undefined,
+          ipsTypeSummary:
+            (showEducationPerRound || showIpsOnlyPerRound || showIpsPerSession) && ipsCategory
+              ? buildSessionIpsTypeSummary(
+                  ipsCategory as 'inspire' | 'prepare' | 'succeed',
+                  ipsDetail
+                )
+              : undefined,
         }
       })
     : (commonInfo.curriculumSessions ?? []).map(session => ({
@@ -1883,12 +1993,24 @@ function CurriculumSection({
       })
       return
     }
+    if (fields.length >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT) return
+    const values = editForm.getValues()
+    const topIpsCategory = values.ipsCategory || 'prepare'
+    const topIpsDetail = values.ipsDetail || (topIpsCategory === 'prepare' ? 'none' : '')
     append({
       sessionLabel: `${nextIndex}차시`,
       title: '',
       description: '',
+      assignmentEnabled: false,
+      assignmentPeriod: '',
+      educationForm: values.educationForm ?? 'online',
+      ipsCategory: values.ipsScheduleDetail === 'perSchedule' ? topIpsCategory : '',
+      ipsDetail: values.ipsScheduleDetail === 'perSchedule' ? topIpsDetail : '',
     })
   }
+
+  const curriculumChartSessionAtMax =
+    !isMultiRoundCurriculum && fields.length >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
 
   const sessionBlocks = sessions.map((session, index) =>
     isMultiRoundCurriculum ? (
@@ -1900,7 +2022,8 @@ function CurriculumSection({
         editForm={editForm}
         isFormEdit={isFormEdit}
         onRemove={() => remove(index)}
-        showEducationAndIpsPerRound={showEducationAndIpsPerRound}
+        showEducationPerRound={showEducationPerRound}
+        showIpsOnlyPerRound={showIpsOnlyPerRound}
         educationFormOptions={educationFormOptions}
       />
     ) : (
@@ -1912,6 +2035,7 @@ function CurriculumSection({
         editForm={editForm}
         isFormEdit={isFormEdit}
         onRemove={() => remove(index)}
+        showIpsPerSession={showIpsPerSession}
       />
     )
   )
@@ -1934,6 +2058,7 @@ function CurriculumSection({
             variant="secondary"
             size="medium"
             width={180}
+            disabled={curriculumChartSessionAtMax}
             icon={<PlusOutlined aria-hidden />}
             onClick={handleAddSession}
           >
@@ -1941,7 +2066,7 @@ function CurriculumSection({
           </CmsButton>
         ) : undefined
       }
-      bodyClassName="general-program-detail-common-info-view__section-body--curriculum"
+      bodyClassName="detail-common-info-view__section-body--curriculum"
     >
       {isFormEdit ? (
         <div className="program-registration-curriculum__sessions">{sessionBlocks}</div>
@@ -2599,7 +2724,7 @@ function ScheduleProgressEditSection({
           )}
         </div>
       }
-      bodyClassName="general-program-detail-common-info-view__section-body--schedule-curriculum"
+      bodyClassName="detail-common-info-view__section-body--schedule-curriculum"
     >
       {fields.map((field, index) => {
         const detailBlockKind =
@@ -2692,7 +2817,7 @@ function ScheduleProgressSection({
   return (
     <ProgramRegistrationDetailSection
       title={scheduleMeta.title}
-      bodyClassName="general-program-detail-common-info-view__section-body--schedule-curriculum"
+      bodyClassName="detail-common-info-view__section-body--schedule-curriculum"
     >
       {scheduleDetailsView.map(detail => {
         const isEventSchedule = detail.scheduleLabel.includes('행사 일정')
@@ -2923,9 +3048,9 @@ export function GeneralProgramDetailCommonInfoView({
   const commonInfo = resolveGeneralProgramCommonInfo(program)
 
   return (
-    <div className="general-program-detail-common-info-view program-detail-fullpage-modal__info-tab">
+    <div className="detail-common-info-view program-detail-fullpage-modal__info-tab">
       {(canWrite || isEditMode) && (
-        <div className="general-program-detail-common-info-view__header">
+        <div className="detail-common-info-view__header">
           <CmsButton
             onClick={isEditMode ? onSave : onEdit}
             aria-label={isEditMode ? '공통 정보 저장' : '공통 정보 수정'}

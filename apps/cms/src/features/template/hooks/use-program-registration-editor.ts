@@ -27,6 +27,7 @@ import type {
   ProgramRegistrationSessionRoundType,
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { resolveProgramRegistrationCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
@@ -335,7 +336,9 @@ export function useProgramRegistrationEditor(
 
   const onAddCurriculumChartSession = useCallback(() => {
     if (restrictCurriculumSessionStructure) return
-    setCurriculumChartSessionCount(c => Math.min(c + 1, 16))
+    setCurriculumChartSessionCount(c =>
+      Math.min(c + 1, GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT)
+    )
   }, [restrictCurriculumSessionStructure])
 
   const onDeleteCurriculumChartSession = useCallback(

@@ -214,3 +214,34 @@ export function applyScheduleTypeSettingsDetailChangeToForm(
     ipsScheduleDetail: values.ipsScheduleDetail ?? 'common',
   }), { shouldDirty: true })
 }
+
+/** 커리큘럼형 — IPS·교육 형태 일정 설정 변경 시 차시/회차별 필드 시드 (등록 양식과 동일) */
+export function applyCurriculumTypeSettingsDetailChangeToForm(
+  setValue: CommonInfoSetValue,
+  getValues: CommonInfoGetValues
+) {
+  const values = getValues()
+  if (values.educationStructure !== 'curriculum') return
+
+  const topIpsCategory = values.ipsCategory || 'prepare'
+  const topIpsDetail = values.ipsDetail || (topIpsCategory === 'prepare' ? 'none' : '')
+  const topEducationForm = values.educationForm ?? 'online'
+
+  const sessions = (values.curriculumSessions ?? []).map(session => ({
+    ...session,
+    educationForm:
+      values.educationFormScheduleDetail === 'perSchedule'
+        ? session.educationForm || topEducationForm
+        : session.educationForm,
+    ipsCategory:
+      values.ipsScheduleDetail === 'perSchedule'
+        ? session.ipsCategory || topIpsCategory
+        : session.ipsCategory,
+    ipsDetail:
+      values.ipsScheduleDetail === 'perSchedule'
+        ? session.ipsDetail || topIpsDetail
+        : session.ipsDetail,
+  }))
+
+  setValue('curriculumSessions', sessions, { shouldDirty: true })
+}

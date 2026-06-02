@@ -15,6 +15,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 ## Coding
 
 - [Code style](./coding/code-style.md) — ESLint, Prettier, TS, naming  
+- **[Feature file naming](./coding/feature-file-naming.mdc)** — CMS 전역 파일명 간략화 (**alwaysApply**, 필수)  
 - [Component patterns](./coding/component-patterns.md) — shared UI usage  
 - [List page composition](./coding/list-page-composition.mdc) — filter + table layout  
 - [Status dropdown cell](./coding/status-dropdown-cell.md) — `StatusDropdownCell`, tag layout  

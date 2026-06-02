@@ -1,0 +1,12 @@
+---
+description: CMS 파일명 간략화 — 상세 규칙은 apps/cms/.cursor/rules/coding/feature-file-naming.mdc (alwaysApply)
+alwaysApply: false
+---
+
+# CMS 파일명 간략화
+
+**CMS 작업 시** 아래 규칙을 **항상** 따른다 (모노레포에서 `apps/cms`를 다룰 때 포함).
+
+→ **[apps/cms/.cursor/rules/coding/feature-file-naming.mdc](apps/cms/.cursor/rules/coding/feature-file-naming.mdc)** (`alwaysApply: true`)
+
+요약: `apps/cms` 경로에 이미 있는 `general`, `ujat`, `program`, `sponsor` 등을 파일명·colocated CSS 루트에 반복하지 않는다.

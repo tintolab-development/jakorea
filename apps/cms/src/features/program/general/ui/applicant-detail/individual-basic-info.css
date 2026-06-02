@@ -2,30 +2,30 @@
  * 일반 프로그램 — 개인 유형 참여자 신청 상세
  */
 
-.applicant-general-individual-basic-info.applicant-institution-basic-info {
+.individual-basic-info.applicant-institution-basic-info {
   margin-top: 0;
 }
 
-.applicant-general-individual-basic-info {
+.individual-basic-info {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-.applicant-general-individual-basic-info .applicant-institution-basic-info__section {
+.individual-basic-info .applicant-institution-basic-info__section {
   margin-top: 0;
 }
 
-.applicant-general-individual-basic-info__team-table .applicant-institution-basic-info__cell--label {
+.individual-basic-info__team-table .applicant-institution-basic-info__cell--label {
   width: 200px;
 }
 
-.applicant-general-individual-basic-info__team-role-cell {
+.individual-basic-info__team-role-cell {
   display: inline-flex;
   align-items: center;
 }
 
-.applicant-general-individual-basic-info__form-error {
+.individual-basic-info__form-error {
   color: #c32f4a;
   font-size: 13px;
   line-height: 150%;
@@ -33,7 +33,7 @@
 }
 
 /* 자택 주소: 읍·면·동(또는 구) 이후 가우시안 블러 — 신청 강사 기본정보와 동일 */
-.applicant-general-individual-basic-info__address-blur {
+.individual-basic-info__address-blur {
   display: inline-block;
   filter: blur(5px);
   -webkit-filter: blur(5px);

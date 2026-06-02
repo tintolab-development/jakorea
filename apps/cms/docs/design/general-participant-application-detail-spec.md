@@ -6,8 +6,8 @@
 
 | 유형 | 컴포넌트 | 경로 |
 |------|----------|------|
-| 기관 | `ApplicantGeneralInstitutionBasicInfo` | `apps/cms/src/features/program/general/ui/applicant-detail/applicant-general-institution-basic-info.tsx` |
-| 개인 | `ApplicantGeneralIndividualBasicInfo` | `apps/cms/src/features/program/general/ui/applicant-detail/applicant-general-individual-basic-info.tsx` |
+| 기관 | `ApplicantGeneralInstitutionBasicInfo` | `apps/cms/src/features/program/general/ui/applicant-detail/institution-basic-info.tsx` |
+| 개인 | `ApplicantGeneralIndividualBasicInfo` | `apps/cms/src/features/program/general/ui/applicant-detail/individual-basic-info.tsx` |
 | 공통 | `ProgramApprovalStatusDetailValue` | `apps/cms/src/features/program/general/ui/applicant-detail/program-approval-status-detail-value.tsx` |
 
 연결: `GeneralParticipantApplicationsView` → `ApplicantList` (`detailVariant="general"`) → `ApplicantsDetailContents`
@@ -232,7 +232,7 @@ Mock: `applicant-school-1` — `apps/cms/src/data/mock/applicant-institutions.ts
 
 | 패턴 | 참조 파일 |
 |------|-----------|
-| 4열 그리드 + TableRowTwoCols/FullWidth | `applicant-general-institution-basic-info.tsx` |
+| 4열 그리드 + TableRowTwoCols/FullWidth | `institution-basic-info.tsx` |
 | 승인 현황 텍스트 + 알림 + 일시 | `applicant-instructor-basic-info.tsx` (`ProgramApprovalStatusValue`) |
 | 상태 텍스트 색상 | `ApprovalStatusText` + `approval-status-text.css` |
 | 알림 버튼 | `SendNotiButton` (`mode: 'send' \| 'resend'`) |

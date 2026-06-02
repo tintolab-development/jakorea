@@ -146,6 +146,17 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK: NonNullable
     finalSchools: 100,
     finalClasses: 100,
   },
+  participantRecruitmentInfo: {
+    announcementPublished: true,
+    preEducationNoticeRequired: true,
+    maxAssignableInstructors: 2,
+    maxSessionsPerDay: 8,
+    maxScheduleCount: 3,
+    operationPeriodLabel: '2026. 04. 03(금) - 2026. 11. 20(금)',
+    recruitmentPeriodLabel: '2025. 12. 08(월) - 2026. 01. 16(금)',
+    finalAnnouncementLabel: '2026. 01. 26 (금) | 홈페이지 공지 및 담당교사 개별 안내',
+    contactOrganizationName: 'JA Korea',
+  },
 }
 
 /** 스크린샷·유형 mock — 기관_일정형_복수 회차 (교육 형태·참여·IPS 일정 별 상이 → 행사 일정 + 과제 설정) */

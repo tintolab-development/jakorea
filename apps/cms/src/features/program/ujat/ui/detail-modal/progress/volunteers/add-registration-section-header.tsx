@@ -19,11 +19,8 @@ export function UjatVolunteerAddRegistrationSectionHeader({
       title={title}
       description={descriptionText}
       required={required}
-      headingLevel="h3"
       surface="responseEntry"
       titleAligned
-      headerClassName="ujat-volunteer-add-registration__section-header"
-      titleClassName="info-section-title"
     />
   )
 }

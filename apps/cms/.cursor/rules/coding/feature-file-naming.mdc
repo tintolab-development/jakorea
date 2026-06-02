@@ -1,0 +1,54 @@
+---
+description: CMS 전역 — 경로에 드러난 접두어를 파일명·colocated CSS에 반복 금지 (필수)
+alwaysApply: true
+---
+
+# CMS 파일명 간략화 (필수)
+
+`apps/cms` **전체**에서 새 파일·rename·분리 시 적용한다. (`src/features`, `src/pages`, `src/entities`, `src/shared` 등 경로가 스코프를 정의하면 파일명은 **역할만** 쓴다.)
+
+## 금지
+
+- 상위 폴더·feature·앱 이름을 파일명에 다시 넣기  
+  - 예: `features/program/general/…/general-program-recruitment-view.tsx`  
+  - 예: `features/program/ujat/…/ujat-volunteer-add-registration-*.tsx`  
+  - 예: `features/sponsor/…/sponsor-detail-modal.tsx` (폴더가 이미 `sponsor`이면)
+- colocated `.css` BEM 루트에도 동일 (`general-program-detail-*` → `detail-*` 등)
+- rename 시 **import 경로·className·CSS 선택자만** 남겨 두기
+
+## 원칙
+
+1. **경로 = 스코프** — `general`, `ujat`, `gemini`, `program`, `cms`, `sponsor` 등은 디렉터리가 표현한다.
+2. **kebab-case 역할명** — `recruitment-view.tsx`, `survey-audience.ts`, `list-filters.ts`, `detail-fullpage-modal.tsx`.
+3. **한 단계만** — `program/general/recruitment-view` (O), `general-program-recruitment-view` (X).
+4. **rename은 일괄** — 파일 + import + colocated CSS + 해당 컴포넌트 `className` grep 확인.
+
+## CMS 예시
+
+| 경로 맥락 | Avoid | Prefer |
+|-----------|-------|--------|
+| `features/program/general/ui/…/info/` | `general-program-recruitment-view.tsx` | `recruitment-view.tsx` |
+| `features/program/general/lib/` | `general-survey-audience.ts` | `survey-audience.ts` |
+| `features/program/ujat/ui/…/` | `ujat-program-detail-*.tsx` | `detail-*.tsx` (ujat 폴더 안) |
+| `features/program/general/ui/applicant-detail/` | `applicant-general-institution-basic-info.tsx` | `institution-basic-info.tsx` |
+| CSS (동일 feature) | `.general-program-detail-common-info-view` | `.detail-common-info-view` |
+| `pages/programs/general/` | `use-general-program-list-filters.ts` | `use-list-filters.ts` (해당 page 폴더 안) |
+
+## 적용 범위
+
+- **우선**: `src/features/**` (도메인·화면 단위)
+- **동일 규칙**: `src/pages/**` (라우트 폴더명 반복 금지), feature 전용 `src/entities/**`, colocated 스타일
+- **공유 레이어**: `src/shared/**`에 올릴 때도 CMS 앱 전역에서 쓰는 이름이면 접두어 최소화
+
+## 예외 (명시적 이유 없으면 예외 만들지 말 것)
+
+- **모노레포 밖·다른 앱과 계약** — `packages/`, `@jakorea/*` import 경로, published API
+- **mock·시드 id** — `data/mock/general-programs.ts` 등 데이터 식별자 (파일 rename은 별도 마이그레이션)
+- **도메인 export 타입** — `GeneralProgram`, `UjatProgram` 등 타입/심볼명 (파일명과 분리 가능)
+- **의도적 구분** — 같은 디렉터리에 역할이 겹칠 때만 짧은 접두어 (예: `institution-` vs `individual-` in `applicant-detail/`)
+
+## 작업 후 체크
+
+- [ ] 새 파일명에 `cms`, `general`, `ujat`, `program`, 상위 feature명이 **불필요하게** 반복되지 않음
+- [ ] `rg 'general-program-|ujat-program-|applicant-general-' apps/cms/src` 등으로 구 경로·클래스 잔존 확인
+- [ ] `pnpm --filter cms typecheck` 통과

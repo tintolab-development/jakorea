@@ -28,7 +28,7 @@ import {
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { GeneralDetailSessionLine } from '@/features/program/shared/ui/program-detail/applicant-list/general-detail-session-line'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
-import './applicant-general-institution-basic-info.css'
+import './institution-basic-info.css'
 
 function maskInstitutionTeacherInfoLine(text: string): string {
   return text
@@ -259,9 +259,9 @@ function CombinedClassEditCell({
   const isApplied = draft.combinedClassApplication === '신청'
 
   return (
-    <div className="applicant-general-institution-basic-info__combined-class-edit">
+    <div className="institution-basic-info__combined-class-edit">
       <Radio.Group
-        className="applicant-general-institution-basic-info__combined-class-radios"
+        className="institution-basic-info__combined-class-radios"
         value={draft.combinedClassApplication}
         onChange={event => {
           const next = event.target.value as ApplicantInstitutionEditDraft['combinedClassApplication']
@@ -278,7 +278,7 @@ function CombinedClassEditCell({
         <Radio value="미신청">미신청</Radio>
       </Radio.Group>
       <CmsSelect
-        className="applicant-general-institution-basic-info__combined-class-select"
+        className="institution-basic-info__combined-class-select"
         inputSize="large"
         mode="multiple"
         disabled={!isApplied}
@@ -295,7 +295,7 @@ function CombinedClassEditCell({
         }}
       />
       {validationErrors?.combinedClassPartnerApplicantIds ? (
-        <span className="applicant-general-institution-basic-info__field-error">
+        <span className="institution-basic-info__field-error">
           {validationErrors.combinedClassPartnerApplicantIds}
         </span>
       ) : null}
@@ -348,9 +348,9 @@ export function ApplicantGeneralInstitutionBasicInfo({
 
   const textbookEditValue =
     isEditMode && draft && onDraftChange ? (
-      <div className="applicant-general-institution-basic-info__field-stack">
+      <div className="institution-basic-info__field-stack">
         <CmsSelect
-          className="applicant-general-institution-basic-info__full-width-control"
+          className="institution-basic-info__full-width-control"
           inputSize="large"
           placeholder="교재명 선택"
           value={draft.textbookId || undefined}
@@ -367,7 +367,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
           }}
         />
         {validationErrors?.textbookId || validationErrors?.textbookName ? (
-          <span className="applicant-general-institution-basic-info__field-error">
+          <span className="institution-basic-info__field-error">
             {validationErrors.textbookId ?? validationErrors.textbookName}
           </span>
         ) : null}
@@ -392,9 +392,9 @@ export function ApplicantGeneralInstitutionBasicInfo({
   const showAdminComment = institution.approvalStatus === 'approved'
 
   return (
-    <div className="applicant-general-institution-basic-info applicant-institution-basic-info">
+    <div className="institution-basic-info applicant-institution-basic-info">
       {validationErrors?.form ? (
-        <div className="applicant-general-institution-basic-info__form-error">{validationErrors.form}</div>
+        <div className="institution-basic-info__form-error">{validationErrors.form}</div>
       ) : null}
       {showAdminComment ? (
         <ApplicantAdminCommentSection

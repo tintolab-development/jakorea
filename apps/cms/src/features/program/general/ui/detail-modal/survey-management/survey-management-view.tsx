@@ -62,9 +62,9 @@ import {
   getGeneralSatisfactionAudienceTabs,
   isGeneralIndividualProgram,
   type GeneralSatisfactionAudienceKey,
-} from '@/features/program/general/lib/general-survey-audience'
-import { buildGeneralSurveyMockState } from './general-survey-mock'
-import './general-survey-management.css'
+} from '@/features/program/general/lib/survey-audience'
+import { buildGeneralSurveyMockState } from './survey-mock'
+import './survey-management.css'
 
 type CreateModalKind = 'survey' | 'satisfaction' | 'lecture'
 type DeleteModalKind = 'survey' | 'satisfaction'
@@ -402,10 +402,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     )
 
   const renderEmptyMain = () => (
-    <div className="program-detail-fullpage-modal__info-tab general-survey-management__empty-main">
-      <div className="general-survey-management__empty-main-card">
-        <p className="general-survey-management__empty-main-title">설문 관리 항목이 없습니다.</p>
-        <p className="general-survey-management__empty-main-description">
+    <div className="program-detail-fullpage-modal__info-tab survey-management__empty-main">
+      <div className="survey-management__empty-main-card">
+        <p className="survey-management__empty-main-title">설문 관리 항목이 없습니다.</p>
+        <p className="survey-management__empty-main-description">
           공통 정보에서 설문 진행 항목을 선택하면 설문조사, 만족도조사, 강의평가를 관리할 수 있습니다.
         </p>
       </div>

@@ -8,7 +8,7 @@ import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/applicant-detail/applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/applicant-detail/program-approval-status-detail-value'
-import { GeneralIndividualTeamRoleDropdown } from '@/features/program/general/ui/applicant-detail/general-individual-team-role-dropdown'
+import { GeneralIndividualTeamRoleDropdown } from '@/features/program/general/ui/applicant-detail/individual-team-role-dropdown'
 import type { ApplicantIndividualEditDraft } from '@/features/program/general/lib/applicant-individual-detail-edit'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import {
@@ -17,7 +17,7 @@ import {
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-resume.css'
-import './applicant-general-individual-basic-info.css'
+import './individual-basic-info.css'
 
 export interface ApplicantGeneralIndividualBasicInfoProps {
   applicant: GeneralIndividualApplicantRow
@@ -75,7 +75,7 @@ function HomeAddressDisplay({ address, mask }: { address: string | undefined; ma
   const split = splitAddressForPrivacyBlur(address)
   if (!split) {
     return (
-      <span className="applicant-general-individual-basic-info__address-blur" aria-hidden="true">
+      <span className="individual-basic-info__address-blur" aria-hidden="true">
         {address}
       </span>
     )
@@ -89,7 +89,7 @@ function HomeAddressDisplay({ address, mask }: { address: string | undefined; ma
   return (
     <>
       {head}
-      <span className="applicant-general-individual-basic-info__address-blur" aria-hidden="true">
+      <span className="individual-basic-info__address-blur" aria-hidden="true">
         {tail}
       </span>
     </>
@@ -173,7 +173,7 @@ export function ApplicantGeneralIndividualBasicInfo({
         {applicant.applicantName}
         <ScheduleChangeHistoryBadge
           count={scheduleChangeCount}
-          className="applicant-general-individual-basic-info__name-badge"
+          className="individual-basic-info__name-badge"
         />
       </>
     ) : (
@@ -240,9 +240,9 @@ export function ApplicantGeneralIndividualBasicInfo({
   )
 
   return (
-    <div className="applicant-general-individual-basic-info applicant-institution-basic-info">
+    <div className="individual-basic-info applicant-institution-basic-info">
       {validationErrors?.form ? (
-        <div className="applicant-general-individual-basic-info__form-error">{validationErrors.form}</div>
+        <div className="individual-basic-info__form-error">{validationErrors.form}</div>
       ) : null}
       {showAdminComment ? (
         <ApplicantAdminCommentSection
@@ -318,7 +318,7 @@ export function ApplicantGeneralIndividualBasicInfo({
 
       <section className="applicant-institution-basic-info__section">
         <h3 className="applicant-institution-basic-info__title">팀 정보</h3>
-        <div className="applicant-institution-basic-info__table-wrap applicant-general-individual-basic-info__team-table">
+        <div className="applicant-institution-basic-info__table-wrap individual-basic-info__team-table">
           <table className="applicant-institution-basic-info__table">
             {colgroup}
             <tbody>

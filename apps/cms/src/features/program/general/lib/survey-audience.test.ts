@@ -5,7 +5,7 @@ import {
   getDefaultGeneralSatisfactionAudience,
   getGeneralSatisfactionAudienceTabs,
   isGeneralIndividualProgram,
-} from './general-survey-audience'
+} from './survey-audience'
 
 function program(overrides: Partial<Program>): Program {
   return {

@@ -33,8 +33,6 @@ export function UjatEducationProgressVolunteerBasicInfoSection({
         headingId="ujat-volunteer-basic-info-heading"
         surface="responseEntry"
         titleAligned
-        headerClassName="ujat-volunteer-add-registration__section-header"
-        titleClassName="detail-info-form__title"
       />
 
       <div className="ujat-volunteer-add-registration__basic-info-form-stack">

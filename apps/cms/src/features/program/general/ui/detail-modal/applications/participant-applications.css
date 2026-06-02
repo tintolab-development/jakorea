@@ -1,4 +1,4 @@
-.general-participant-applications {
+.participant-applications {
   flex: 1;
   min-width: 0;
   min-height: 0;
@@ -13,17 +13,17 @@
   --table-filter-field-gap: 12px;
   --filter-control-width: 260px;
   --filter-control-max-width: 260px;
-  --general-application-filter-column-width: 260px;
-  --general-application-filter-address-segment-width: 120px;
-  --general-application-filter-address-pair-gap: 12px;
-  --general-application-filter-address-region-width: calc(
-    2 * var(--general-application-filter-address-segment-width) +
-      var(--general-application-filter-address-pair-gap)
+  --application-filter-column-width: 260px;
+  --application-filter-address-segment-width: 120px;
+  --application-filter-address-pair-gap: 12px;
+  --application-filter-address-region-width: calc(
+    2 * var(--application-filter-address-segment-width) +
+      var(--application-filter-address-pair-gap)
   );
 }
 
 /* 필터 ↔ 테이블 구분선 — applicant-details 기본 16px 덮어씀 */
-.general-participant-applications
+.participant-applications
   .applicant-details
   .applicant-details__filter-table-layout
   .filter-table-layout__divider {
@@ -31,19 +31,19 @@
 }
 
 /* 필터 행: 칸 사이 12px (TableFilterGroup fields-inner gap) */
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__container {
   gap: var(--filter-field-gap);
 }
 
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner.ant-row {
   gap: var(--filter-field-gap);
 }
 
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col {
@@ -53,132 +53,132 @@
 }
 
 /* 검색·단일 셀렉트 — 260px 고정 */
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   .labeled-search-input,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   .unified-filter-card__field:not(:has(.table-filter-group__select-pair-selects)) {
-  width: var(--general-application-filter-column-width);
-  max-width: min(100%, var(--general-application-filter-column-width));
+  width: var(--application-filter-column-width);
+  max-width: min(100%, var(--application-filter-column-width));
   min-width: 0;
   box-sizing: border-box;
 }
 
 /* 신청 학년 · 프로그램 승인 현황 — 열·셀렉트 260px */
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='grade'],
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='approvalStatus'] {
-  width: var(--general-application-filter-column-width) !important;
-  flex: 0 0 var(--general-application-filter-column-width) !important;
-  max-width: var(--general-application-filter-column-width) !important;
-  min-width: var(--general-application-filter-column-width) !important;
+  width: var(--application-filter-column-width) !important;
+  flex: 0 0 var(--application-filter-column-width) !important;
+  max-width: var(--application-filter-column-width) !important;
+  min-width: var(--application-filter-column-width) !important;
 }
 
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='grade']
   .unified-filter-card__field--select,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='approvalStatus']
   .unified-filter-card__field--select,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='grade']
   .cms-select,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='grade']
   .ant-select,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='approvalStatus']
   .cms-select,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='approvalStatus']
   .ant-select {
-  width: var(--general-application-filter-column-width) !important;
-  max-width: var(--general-application-filter-column-width) !important;
-  min-width: var(--general-application-filter-column-width) !important;
+  width: var(--application-filter-column-width) !important;
+  max-width: var(--application-filter-column-width) !important;
+  min-width: var(--application-filter-column-width) !important;
 }
 
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   .unified-filter-card__field:not(:has(.table-filter-group__select-pair-selects))
   .cms-select,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   .unified-filter-card__field:not(:has(.table-filter-group__select-pair-selects))
   .ant-select,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   .labeled-search-input__input,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   .labeled-search-input
   .app-input {
   width: 100% !important;
-  max-width: min(100%, var(--general-application-filter-column-width)) !important;
+  max-width: min(100%, var(--application-filter-column-width)) !important;
   min-width: 0 !important;
 }
 
 /* 주소(시/도 + 시/군/구) — 120px × 2 + 12px */
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   .unified-filter-card__field--select:has(.table-filter-group__select-pair-selects) {
-  width: var(--general-application-filter-address-region-width) !important;
-  max-width: min(100%, var(--general-application-filter-address-region-width)) !important;
+  width: var(--application-filter-address-region-width) !important;
+  max-width: min(100%, var(--application-filter-address-region-width)) !important;
   min-width: 0;
   box-sizing: border-box;
 }
 
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   .table-filter-group__select-pair-selects {
-  width: var(--general-application-filter-address-region-width);
-  max-width: min(100%, var(--general-application-filter-address-region-width));
-  gap: var(--general-application-filter-address-pair-gap);
+  width: var(--application-filter-address-region-width);
+  max-width: min(100%, var(--application-filter-address-region-width));
+  gap: var(--application-filter-address-pair-gap);
 }
 
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   .table-filter-group__select-pair-selects
   > .cms-select,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   .table-filter-group__select-pair-selects
   > .ant-select {
-  flex: 0 0 var(--general-application-filter-address-segment-width) !important;
-  width: var(--general-application-filter-address-segment-width) !important;
-  min-width: var(--general-application-filter-address-segment-width) !important;
-  max-width: var(--general-application-filter-address-segment-width) !important;
+  flex: 0 0 var(--application-filter-address-segment-width) !important;
+  width: var(--application-filter-address-segment-width) !important;
+  min-width: var(--application-filter-address-segment-width) !important;
+  max-width: var(--application-filter-address-segment-width) !important;
 }
 
 @media (max-width: 1280px) {
-  .general-participant-applications
+  .participant-applications
     .applicant-details
     .table-filter-group__fields-inner
     > .ant-col {
@@ -191,15 +191,15 @@
  * 테이블 셀 패딩 (승인 현황 th·td 좌우 16px, 진행 희망 교육 일정 th/td 16px)
  * ant-table-wrapper.cms-data-table + detail-fullpage-modal 체인으로 cms-data-table·applicants-detail(24px) 덮어씀
  */
-.detail-fullpage-modal.general-program-detail-fullpage-modal
-  .general-participant-applications
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
   .applicant-details
   .ant-table-wrapper.cms-data-table
   .ant-table-thead
   > tr
   > th.ant-table-cell.status-dropdown-cell__cell-status,
-.detail-fullpage-modal.general-program-detail-fullpage-modal
-  .general-participant-applications
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
   .applicant-details
   .ant-table-wrapper.cms-data-table
   .ant-table-thead
@@ -209,13 +209,13 @@
 }
 
 /* 승인 현황: 텍스트 표기 + 드롭다운 트리거 폭 조정 */
-.general-participant-applications .applicant-details .status-dropdown-cell__status-trigger {
+.participant-applications .applicant-details .status-dropdown-cell__status-trigger {
   width: auto !important;
   min-width: 100px !important;
   max-width: 148px !important;
 }
 
-.general-participant-applications
+.participant-applications
   .applicant-details
   .status-dropdown-cell__status-trigger--open {
   width: auto !important;
@@ -223,8 +223,8 @@
   max-width: 148px !important;
 }
 
-.detail-fullpage-modal.general-program-detail-fullpage-modal
-  .general-participant-applications
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
   .applicant-details
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
@@ -239,11 +239,11 @@
   padding-right: 16px !important;
 }
 
-.general-participant-applications
+.participant-applications
   .applicant-details
   .status-dropdown-cell__status-trigger
   .approval-status-text,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .status-dropdown-cell__dropdown-item
   .approval-status-text {
@@ -252,8 +252,8 @@
   max-width: 100%;
 }
 
-.detail-fullpage-modal.general-program-detail-fullpage-modal
-  .general-participant-applications
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
   .applicant-details
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
@@ -263,8 +263,8 @@
 }
 
 /* 진행 희망 교육 일정 — 텍스트 블록은 셀 중앙, 블록 내 일정·외 n개는 좌측 정렬 */
-.detail-fullpage-modal.general-program-detail-fullpage-modal
-  .general-participant-applications
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
   .applicant-details
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
@@ -274,7 +274,7 @@
   vertical-align: middle;
 }
 
-.general-participant-applications
+.participant-applications
   .applicant-details
   .applicant-details__td-sessions--center
   .applicant-details__sessions-cell {
@@ -285,7 +285,7 @@
   max-width: 100%;
 }
 
-.general-participant-applications
+.participant-applications
   .applicant-details
   .applicant-details__td-sessions--center
   .applicant-details__session-line {
@@ -293,7 +293,7 @@
   width: auto;
 }
 
-.general-participant-applications
+.participant-applications
   .applicant-details
   .applicant-details__td-sessions--center
   .general-detail-session-line {
@@ -301,7 +301,7 @@
   justify-content: flex-start;
 }
 
-.general-participant-applications
+.participant-applications
   .applicant-details
   .applicant-details__td-sessions--center
   .applicant-details__session-more {
@@ -309,7 +309,7 @@
 }
 
 .program-detail-fullpage-modal--program-list-overview
-  .general-participant-applications
+  .participant-applications
   .applicant-details__filter-table-layout
   .filter-table-layout__description {
   color: var(--default-BK, #3d3d3d);

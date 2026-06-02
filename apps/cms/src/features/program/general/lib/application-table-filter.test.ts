@@ -4,7 +4,7 @@ import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individu
 import {
   filterGeneralIndividualApplications,
   filterGeneralOrganizationApplications,
-} from './general-application-table-filter'
+} from './application-table-filter'
 
 function schoolRow(overrides: Partial<ApplicantSchoolRow>): ApplicantSchoolRow {
   return {

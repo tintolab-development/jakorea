@@ -13,7 +13,7 @@ import {
   getDefaultGeneralSatisfactionAudience,
   isGeneralIndividualProgram,
   type GeneralSatisfactionAudienceKey,
-} from '@/features/program/general/lib/general-survey-audience'
+} from '@/features/program/general/lib/survey-audience'
 
 export type GeneralSurveyMockState = {
   registeredSurveys: RegisteredSurvey[]

@@ -14,7 +14,7 @@ import {
   GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
 } from '@/features/program/general/lib/registration-local-save'
 import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
-import { isGeneralIndividualProgram } from '@/features/program/general/lib/general-survey-audience'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 
 export type GeneralSurveyMenuItem = { key: GeneralProgramSurveyMenuKey; label: string }
 

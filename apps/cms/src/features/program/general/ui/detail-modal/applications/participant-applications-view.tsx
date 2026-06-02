@@ -1,12 +1,12 @@
 import type { Program } from '@/types/domain'
-import { isGeneralIndividualProgram } from '@/features/program/general/lib/general-survey-audience'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
   generalIndividualApplicationFilterFields,
   generalOrganizationApplicationFilterFields,
-} from '@/features/program/general/lib/general-application-filter-fields'
+} from '@/features/program/general/lib/application-filter-fields'
 import { ApplicantList } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-list'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
-import './general-participant-applications.css'
+import './participant-applications.css'
 
 export interface GeneralParticipantApplicationsViewProps {
   program: Program
@@ -25,7 +25,7 @@ export function GeneralParticipantApplicationsView({
 
   if (isIndividual) {
     return (
-      <div className="general-participant-applications">
+      <div className="participant-applications">
         <ApplicantList
           menu="individual-applications"
           program={program}
@@ -41,7 +41,7 @@ export function GeneralParticipantApplicationsView({
   }
 
   return (
-    <div className="general-participant-applications">
+    <div className="participant-applications">
       <ApplicantList
         menu="institutions"
         program={program}

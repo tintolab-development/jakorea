@@ -135,7 +135,8 @@ const createRounds = (
   programId: string,
   capacity: number,
   curriculumLabel: string,
-  sessionRound: GeneralProgramSessionRoundKind = 'single'
+  sessionRound: GeneralProgramSessionRoundKind = 'single',
+  classCount?: number
 ): ProgramRound[] => {
   const roundCount = sessionRound === 'multi' ? 2 : 1
   return Array.from({ length: roundCount }, (_, i) => ({
@@ -148,6 +149,7 @@ const createRounds = (
     status: 'active' as const,
     deliveryType: 'offline' as const,
     curriculum: roundCount > 1 ? `${curriculumLabel} ${i + 1}회차` : curriculumLabel,
+    ...(classCount != null ? { classCount } : {}),
   }))
 }
 
@@ -163,6 +165,8 @@ type GeneralProgramSeed = Omit<Program, 'id' | 'rounds' | 'createdAt' | 'updated
   generalProgramSessionRound?: GeneralProgramSessionRoundKind
   /** `createRounds`에 전달 — seed에서 rounds를 직접 넣지 않을 때 사용 */
   sessionRoundForRounds?: GeneralProgramSessionRoundKind
+  /** `createRounds` 1회차 `classCount` (참여자 모집 mock 등) */
+  roundClassCount?: number
   createdAt?: string
   updatedAt?: string
 }
@@ -530,6 +534,13 @@ function buildTypeVariantSeed(
       generalProgramSessionRound: variant.sessionRound,
       sessionRoundForRounds: variant.sessionRound,
       generalCommonInfo: screenshot.generalCommonInfo,
+      district: '특성화고등학교 3학년',
+      studentListRequired: 'required',
+      roundClassCount: 4,
+      contactPhone: '02-6085-6028',
+      contactEmail: 'cc@jakorea.org',
+      resultAnnouncementDate: '2026-01-26T00:00:00+09:00',
+      resultAnnouncementMethod: '홈페이지 공지 및 담당교사 개별 안내',
     }
   }
 
@@ -882,6 +893,7 @@ export function getGeneralPrograms(): Program[] {
       scheduleTimeEnabled,
       mainTitle,
       sessionRoundForRounds,
+      roundClassCount,
       generalProgramAudience,
       generalProgramEducationStructure,
       generalProgramSessionRound,
@@ -905,7 +917,7 @@ export function getGeneralPrograms(): Program[] {
       generalProgramAudience,
       generalProgramEducationStructure,
       generalProgramSessionRound,
-      rounds: createRounds(id, capacity, curriculumLabel, roundKind),
+      rounds: createRounds(id, capacity, curriculumLabel, roundKind, roundClassCount),
       ...timeFields,
       createdAt,
       updatedAt,

@@ -4,6 +4,7 @@ import {
   getVisibleParagraphDescription,
   type FormParagraphSectionDescriptionSurface,
 } from '@/features/template/ui/shared/form-paragraph-section-description'
+import '@/shared/components/detail-info-form/detail-info-form.css'
 import './form-paragraph-section-header.css'
 
 export type FormParagraphSectionHeaderProps = {
@@ -15,19 +16,14 @@ export type FormParagraphSectionHeaderProps = {
   surface?: FormParagraphSectionDescriptionSurface
   /** @default true */
   titleAligned?: boolean
-  /** @default 'h2' */
-  headingLevel?: 'h2' | 'h3'
   required?: boolean
-  titleClassName?: string
-  headerClassName?: string
-  mainClassName?: string
   /** 제목 요소 `id` — `aria-labelledby` 연결용 */
   headingId?: string
 }
 
 /**
- * 폼 섹션 헤더 — 타이틀 + (선택) 우측 액션 + (선택) 하단 설명.
- * 하단 description은 `detail-info-form__description`이 아닌 `FormParagraphSectionDescription`만 사용한다.
+ * 폼 섹션 헤더 — `DetailInfoForm` 헤더(`detail-info-form__*`)와 동일 타이포·클래스.
+ * 타이틀 하단 설명은 `FormParagraphSectionDescription`만 사용(2px 간격).
  */
 export function FormParagraphSectionHeader({
   title,
@@ -35,53 +31,38 @@ export function FormParagraphSectionHeader({
   titleTrailing,
   surface = 'responseEntry',
   titleAligned = true,
-  headingLevel = 'h2',
   required = false,
-  titleClassName,
-  headerClassName,
-  mainClassName,
   headingId,
 }: FormParagraphSectionHeaderProps) {
   const visibleDescription = getVisibleParagraphDescription(description ?? null)
-  const Heading = headingLevel
-
-  const titleClass = ['form-paragraph-section-header__title', titleClassName]
-    .filter(Boolean)
-    .join(' ')
 
   return (
-    <header
-      className={['form-paragraph-section-header', headerClassName].filter(Boolean).join(' ')}
-    >
-      <div
-        className={['form-paragraph-section-header__main', mainClassName].filter(Boolean).join(' ')}
-      >
-        <div className="form-paragraph-section-header__lead">
-          <Heading id={headingId} className={titleClass}>
-            {title}
-            {required ? (
-              <span
-                className="detail-info-form__field-required form-paragraph-section-header__required"
-                aria-hidden
-              >
-                *
-              </span>
-            ) : null}
-          </Heading>
-          {visibleDescription ? (
-            <FormParagraphSectionDescription
-              surface={surface}
-              titleAligned={titleAligned}
-              className="form-paragraph-section-header__description"
+    <header className="detail-info-form__header form-paragraph-section-header">
+      <div className="detail-info-form__header-lead form-paragraph-section-header__lead">
+        <h2 id={headingId} className="detail-info-form__title">
+          {title}
+          {required ? (
+            <span
+              className="detail-info-form__field-required form-paragraph-section-header__required"
+              aria-hidden
             >
-              {visibleDescription}
-            </FormParagraphSectionDescription>
+              *
+            </span>
           ) : null}
-        </div>
-        {titleTrailing ? (
-          <div className="form-paragraph-section-header__trailing">{titleTrailing}</div>
+        </h2>
+        {visibleDescription ? (
+          <FormParagraphSectionDescription
+            surface={surface}
+            titleAligned={titleAligned}
+            className="form-paragraph-section-header__description"
+          >
+            {visibleDescription}
+          </FormParagraphSectionDescription>
         ) : null}
       </div>
+      {titleTrailing ? (
+        <div className="detail-info-form__header-trailing">{titleTrailing}</div>
+      ) : null}
     </header>
   )
 }

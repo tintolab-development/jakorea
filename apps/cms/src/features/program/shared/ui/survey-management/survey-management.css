@@ -1,14 +1,14 @@
 @import '../../../ujat/ui/detail-modal/survey-management/ui/ujat-survey-poll-results.css';
 @import '../../../ujat/ui/detail-modal/survey-management/ui/ujat-lecture-eval.css';
 
-.general-survey-management__empty-main {
+.survey-management__empty-main {
   display: flex;
   min-height: 420px;
   align-items: center;
   justify-content: center;
 }
 
-.general-survey-management__empty-main-card {
+.survey-management__empty-main-card {
   display: flex;
   max-width: 480px;
   flex-direction: column;
@@ -17,7 +17,7 @@
   text-align: center;
 }
 
-.general-survey-management__empty-main-title {
+.survey-management__empty-main-title {
   margin: 0;
   color: var(--default-BK, #3d3d3d);
   font-family: var(--font-family-primary, 'Pretendard', sans-serif);
@@ -26,7 +26,7 @@
   line-height: 140%;
 }
 
-.general-survey-management__empty-main-description {
+.survey-management__empty-main-description {
   margin: 0;
   color: var(--default-BK, #3d3d3d);
   font-family: var(--font-family-primary, 'Pretendard', sans-serif);

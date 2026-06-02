@@ -479,7 +479,7 @@ function parseSessionIpsTypeSummary(summary: string | undefined): {
   return { ipsCategory: parsed.ipsCategory, ipsDetail: parsed.ipsDetail }
 }
 
-function buildSessionIpsTypeSummary(
+export function buildSessionIpsTypeSummary(
   ipsCategory: ProgramRegistrationIpsCategory | '',
   ipsDetail: string | undefined
 ): string {
@@ -869,7 +869,9 @@ export function generalCommonInfoEditValuesToProgramPatch(
                 s.ipsCategory as ProgramRegistrationIpsCategory,
                 s.ipsDetail
               )
-            : undefined,
+            : values.ipsScheduleDetail === 'perSchedule'
+              ? buildSessionIpsTypeSummary('prepare', 'none')
+              : undefined,
       })),
       scheduleCurriculumPreEducation:
         values.educationStructure === 'schedule'
