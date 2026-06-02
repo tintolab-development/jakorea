@@ -88,6 +88,24 @@ export interface GeneralProgramCurriculumSessionRow {
 /** 일반 프로그램 — 교육 형태·참여·IPS 일정 공통/별 상이 */
 export type GeneralProgramScheduleDetailKind = 'common' | 'perSchedule'
 
+/** 일반 프로그램 상세 — 일정형 세부 일정 (등록 폼·조회 mock) */
+export interface GeneralProgramScheduleDetailRow {
+  /** `세부 일정 01` / `행사 일정 01` */
+  scheduleLabel: string
+  /** 일정명 */
+  name: string
+  /** `그룹 A : 09:30 ~ 09:40 | 그룹 B : …` — 세부 일정(단일·복수 공통) */
+  progressTimeSummary?: string
+  /** 복수 — 진행 일정 표시 */
+  scheduleDateLabel?: string
+  /** 복수 행사 일정 — 과제 설정 */
+  assignmentEnabled?: boolean
+  assignmentPeriod?: string
+  educationFormLabel?: string
+  participationMethodLabel?: string
+  ipsTypeSummary?: string
+}
+
 /** 일반 프로그램 상세 공통 정보 확장 (등록 폼 저장값 mock/API 연동 전) */
 export interface GeneralProgramCommonInfoExtension {
   /** 공고용 프로그램명 — 미설정 시 `Program.title` */
@@ -106,7 +124,11 @@ export interface GeneralProgramCommonInfoExtension {
   educationFormScheduleDetail?: GeneralProgramScheduleDetailKind
   participationScheduleDetail?: GeneralProgramScheduleDetailKind
   ipsScheduleDetail?: GeneralProgramScheduleDetailKind
+  /** 일정형 복수 + IPS 일정 별 상이 — 사전 교육 */
+  scheduleCurriculumPreEducation?: boolean
   curriculumSessions?: GeneralProgramCurriculumSessionRow[]
+  /** 일정형 — 세부 일정 블록 */
+  scheduleDetails?: GeneralProgramScheduleDetailRow[]
   educationScheduleLines?: string[]
   wageGradeRows?: Array<{ grade: string; pricing: string }>
   paymentItems?: string

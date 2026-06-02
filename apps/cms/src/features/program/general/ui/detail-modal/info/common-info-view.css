@@ -54,6 +54,23 @@
   gap: 16px;
 }
 
+/* 교육 진행 (일정형) — 세부 일정 블록 간 16px */
+.general-program-detail-common-info-view__section-body--schedule-curriculum {
+  gap: 16px;
+}
+
+.general-program-detail-common-info-view__section-body--schedule-curriculum
+  > .program-registration-schedule-curriculum__block {
+  margin-bottom: 0;
+}
+
+.general-program-detail-common-info-view__section-body--schedule-curriculum
+  .program-registration-curriculum__session-row
+  > .program-registration-schedule-curriculum__session-panel {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .general-program-detail-common-info-view__progress-status {
   font-weight: 700;
 }

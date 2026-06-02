@@ -2,7 +2,11 @@
  * 프로그램 상세 — 후원사명 링크 (후원사 관리 상세 풀페이지)
  */
 
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import {
+  appendSponsorDetailQueryStack,
+  isProgramDetailSponsorQueryStackPath,
+} from '@/features/sponsor/lib/sponsor-detail-query-stack'
 import {
   buildSponsorDetailPageUrl,
   resolveSponsorManagementIdForDetailLink,
@@ -26,6 +30,8 @@ export function ProgramDetailSponsorLink({
   className,
 }: ProgramDetailSponsorLinkProps) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [, setSearchParams] = useSearchParams()
   const trimmedName = name.trim()
   if (!trimmedName) return <>-</>
 
@@ -43,7 +49,18 @@ export function ProgramDetailSponsorLink({
     <button
       type="button"
       className={['program-detail-sponsor-link', className].filter(Boolean).join(' ')}
-      onClick={() => navigate(buildSponsorDetailPageUrl(managementId))}
+      onClick={() => {
+        if (isProgramDetailSponsorQueryStackPath(location.pathname)) {
+          setSearchParams(
+            prev => appendSponsorDetailQueryStack(new URLSearchParams(prev), managementId),
+            { replace: false }
+          )
+          return
+        }
+        navigate(
+          buildSponsorDetailPageUrl(managementId, `${location.pathname}${location.search}`)
+        )
+      }}
     >
       {trimmedName}
     </button>

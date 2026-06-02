@@ -21,7 +21,22 @@ import {
   ProgramRegistrationIpsTypeFields,
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
+import { CurriculumAssignmentSettingView } from '@/features/template/ui/shared/curriculum-assignment-setting-view'
+import {
+  formatEducationScheduleLineFromRange,
+  parseEducationScheduleLineToRange,
+} from '@/features/template/lib/format-education-schedule-line'
 import './program-registration-paragraph.css'
+
+type ScheduleEventAssignmentValue = {
+  enabled: boolean
+  period: string
+}
+
+const EMPTY_SCHEDULE_EVENT_ASSIGNMENT: ScheduleEventAssignmentValue = {
+  enabled: false,
+  period: '',
+}
 
 function pad2(n: number): string {
   return String(n).padStart(2, '0')
@@ -111,10 +126,13 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   scheduleCurriculumPreEducation = false,
 }: ProgramRegistrationEducationScheduleCurriculumParagraphProps) {
   const detailCount = Math.max(1, scheduleDetailCount)
-  const groupCount = Math.min(
-    Math.max(1, scheduleGroupCount),
-    PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
-  )
+  const groupCount =
+    sessionRoundType === 'multi'
+      ? 1
+      : Math.min(
+          Math.max(1, scheduleGroupCount),
+          PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
+        )
   const multiAllPer = isScheduleMultiAllPerSchedule(
     sessionRoundType,
     educationFormScheduleDetail,
@@ -126,6 +144,9 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     Record<number, ProgramRegistrationIpsTypeValue>
   >({})
   const [scheduleDateByDetail, setScheduleDateByDetail] = useState<Record<number, Dayjs | null>>({})
+  const [assignmentByDetail, setAssignmentByDetail] = useState<
+    Record<number, ScheduleEventAssignmentValue>
+  >({})
   const [groupTimeByDetail, setGroupTimeByDetail] = useState<Record<number, Array<Dayjs | null>>>(
     {}
   )
@@ -204,6 +225,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
         {Array.from({ length: detailCount }, (_, i) => {
           const n = i + 1
           const scheduleDate = scheduleDateByDetail[n] ?? null
+          const assignment = assignmentByDetail[n] ?? EMPTY_SCHEDULE_EVENT_ASSIGNMENT
           return (
             <div key={n} className="program-registration-schedule-curriculum__block">
               <div className="program-registration-schedule-curriculum__session-heading">
@@ -230,7 +252,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                       view="-"
                     />
                   </DetailInfoForm.Row>
-                  <DetailInfoForm.Row type="double">
+                  <DetailInfoForm.Row type="single">
                     <DetailInfoForm.Field
                       label="진행 일정"
                       edit={
@@ -251,55 +273,63 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                       }
                       view="-"
                     />
+                  </DetailInfoForm.Row>
+                  <DetailInfoForm.Row type="single">
                     <DetailInfoForm.Field
-                      label="IPS 유형"
-                      edit={
-                        <ProgramRegistrationIpsTypeFields
-                          value={ipsTypeValueForDetail(n)}
-                          onChange={next => setIpsForDetailUnlessLocked(n, next)}
-                          disabled={ipsLockedForSchedulePreEducation}
+                      label="과제 설정"
+                      fullRow
+                      view={
+                        <CurriculumAssignmentSettingView
+                          assignmentEnabled={assignment.enabled}
+                          assignmentPeriod={assignment.period}
                         />
                       }
-                      view="-"
-                    />
-                  </DetailInfoForm.Row>
-                  <DetailInfoForm.Row type={showParticipationMethod ? 'double' : 'single'}>
-                    <DetailInfoForm.Field
-                      label="교육 형태"
-                      fullRow={!showParticipationMethod}
                       edit={
-                        <CmsRadioGroup
-                          size="large"
-                          value={educationFormForDetail(n)}
-                          onChange={onEducationFormRadioChange(n)}
-                        >
-                          {getProgramRegistrationEducationFormOptions(participantOrganization).map(
-                            opt => (
-                              <CmsRadio key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </CmsRadio>
-                            )
-                          )}
-                        </CmsRadioGroup>
-                      }
-                      view="-"
-                    />
-                    {showParticipationMethod ? (
-                      <DetailInfoForm.Field
-                        label="참여 방식"
-                        edit={
+                        <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap program-registration-paragraph__assignment-row">
                           <CmsRadioGroup
                             size="large"
-                            value={participationForDetail(n)}
-                            onChange={onParticipationRadioChange(n)}
+                            value={assignment.enabled ? 'yes' : 'no'}
+                            onChange={e => {
+                              const enabled = e.target.value === 'yes'
+                              setAssignmentByDetail(prev => ({
+                                ...prev,
+                                [n]: {
+                                  enabled,
+                                  period: enabled ? (prev[n]?.period ?? '') : '',
+                                },
+                              }))
+                            }}
                           >
-                            <CmsRadio value="individual">개인</CmsRadio>
-                            <CmsRadio value="team">팀</CmsRadio>
+                            <CmsRadio value="yes">있음</CmsRadio>
+                            <CmsRadio value="no">없음</CmsRadio>
                           </CmsRadioGroup>
-                        }
-                        view="-"
-                      />
-                    ) : null}
+                          <DetailInfoForm.InputsSeparator />
+                          <ParagraphDatePicker
+                            mode="single"
+                            presetMode="period"
+                            customizable={false}
+                            suppressAutoTodayWhenEmpty
+                            disabled={!assignment.enabled}
+                            value={
+                              parseEducationScheduleLineToRange(assignment.period)?.[0] ?? null
+                            }
+                            onChange={() => {}}
+                            appliedSurfaceRange={parseEducationScheduleLineToRange(assignment.period)}
+                            onRangeChange={([start, end]) => {
+                              setAssignmentByDetail(prev => ({
+                                ...prev,
+                                [n]: {
+                                  enabled: true,
+                                  period: formatEducationScheduleLineFromRange([start, end]),
+                                },
+                              }))
+                            }}
+                            width={360}
+                            placeholder="제출 기한을 설정해 주세요"
+                          />
+                        </div>
+                      }
+                    />
                   </DetailInfoForm.Row>
                 </DetailInfoForm>
               </div>

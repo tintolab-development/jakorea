@@ -39,7 +39,7 @@ export function EducationSchedulePreviewLines({
   const editable = onRemove != null
 
   return (
-    <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap education-schedule-preview-lines">
+    <div className="education-schedule-preview-lines">
       {lines.map((line, index) => (
         <Fragment key={`${line}-${index}`}>
           {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}

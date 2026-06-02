@@ -5,6 +5,7 @@
 import { z } from 'zod'
 import type {
   GeneralProgramParticipantType,
+  GeneralProgramSessionRoundKind,
   GeneralProgramSurveyMenuKey,
   InstitutionType,
   Program,
@@ -15,6 +16,11 @@ import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-s
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
+import {
+  buildDefaultScheduleDetailsForEdit,
+  inferScheduleDetailBlockKind,
+  relabelScheduleDetailFormRowsByKind,
+} from '@/features/program/general/lib/schedule-detail-form'
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
@@ -42,6 +48,25 @@ const curriculumSessionSchema = z.object({
   assignmentEnabled: z.boolean().optional(),
   assignmentPeriod: z.string().optional(),
   educationForm: z.string().optional(),
+  ipsCategory: z.enum(['inspire', 'prepare', 'succeed', '']).optional(),
+  ipsDetail: z.string().optional(),
+})
+
+const scheduleGroupTimeSchema = z.object({
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+})
+
+const scheduleDetailFormSchema = z.object({
+  scheduleLabel: z.string(),
+  blockKind: z.enum(['sub', 'event']).optional(),
+  name: z.string(),
+  groupTimes: z.array(scheduleGroupTimeSchema),
+  scheduleDate: z.string().optional(),
+  assignmentEnabled: z.boolean().optional(),
+  assignmentPeriod: z.string().optional(),
+  educationForm: z.string().optional(),
+  participationMethod: z.enum(['individual', 'team']).optional(),
   ipsCategory: z.enum(['inspire', 'prepare', 'succeed', '']).optional(),
   ipsDetail: z.string().optional(),
 })
@@ -93,6 +118,9 @@ export const generalProgramCommonInfoEditSchema = z
     ipsDetail: z.string().optional(),
     participationMethod: z.enum(['individual', 'team']).optional(),
     curriculumSessions: z.array(curriculumSessionSchema),
+    scheduleGroupCount: z.coerce.number().min(1).max(4).default(2),
+    scheduleDetails: z.array(scheduleDetailFormSchema),
+    scheduleCurriculumPreEducation: z.boolean().optional(),
     educationScheduleMode: z.enum(['date', 'period']).default('date'),
     educationScheduleLines: z.array(z.string()),
   })
@@ -115,6 +143,112 @@ export const generalProgramCommonInfoEditSchema = z
 export type GeneralProgramCommonInfoEditFormValues = z.infer<
   typeof generalProgramCommonInfoEditSchema
 >
+
+export type GeneralProgramScheduleDetailFormValues = z.infer<typeof scheduleDetailFormSchema>
+
+export function padScheduleDetailLabel(index: number): string {
+  return `세부 일정 ${String(index + 1).padStart(2, '0')}`
+}
+
+function emptyScheduleGroupTimes(count: number) {
+  return Array.from({ length: count }, () => ({ startTime: '', endTime: '' }))
+}
+
+export function parseScheduleProgressTimeSummary(
+  summary: string | undefined
+): Array<{ startTime: string; endTime: string }> {
+  if (!summary?.trim()) return [{ startTime: '', endTime: '' }]
+  return summary.split(/\s*\|\s*/).map(part => {
+    const match = part
+      .trim()
+      .match(/그룹\s+[A-Z]\s*:\s*(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)
+    return { startTime: match?.[1] ?? '', endTime: match?.[2] ?? '' }
+  })
+}
+
+export function buildScheduleProgressTimeSummary(
+  groupTimes: Array<{ startTime?: string; endTime?: string }>
+): string {
+  return groupTimes
+    .map((gt, gi) => {
+      const letter = String.fromCharCode('A'.charCodeAt(0) + gi)
+      const start = gt.startTime?.trim() ?? ''
+      const end = gt.endTime?.trim() ?? ''
+      if (!start || !end) return `그룹 ${letter} : -`
+      return `그룹 ${letter} : ${start} ~ ${end}`
+    })
+    .join(' | ')
+}
+
+export function resolveScheduleDetailsFormState(
+  commonInfo: NonNullable<Program['generalCommonInfo']>,
+  sessionRound: GeneralProgramSessionRoundKind = 'single'
+): {
+  scheduleGroupCount: number
+  scheduleDetails: GeneralProgramScheduleDetailFormValues[]
+  scheduleCurriculumPreEducation: boolean
+} {
+  const eduDetail = commonInfo.educationFormScheduleDetail ?? 'common'
+  const partDetail = commonInfo.participationScheduleDetail ?? 'common'
+  const ipsDetail =
+    commonInfo.ipsScheduleDetail ??
+    (commonInfo.ipsTypeSummary?.includes('별') ? 'perSchedule' : 'common')
+
+  const raw = commonInfo.scheduleDetails ?? []
+  if (raw.length === 0) {
+    const groupCount = 2
+    return {
+      scheduleGroupCount: groupCount,
+      scheduleCurriculumPreEducation: commonInfo.scheduleCurriculumPreEducation ?? false,
+      scheduleDetails: buildDefaultScheduleDetailsForEdit({
+        sessionRound,
+        scheduleGroupCount: groupCount,
+        educationFormScheduleDetail: eduDetail,
+        participationScheduleDetail: partDetail,
+        ipsScheduleDetail: ipsDetail,
+      }),
+    }
+  }
+
+  const scheduleDetails = raw.map((d, i) => {
+    const blockKind = inferScheduleDetailBlockKind(d.scheduleLabel ?? '')
+    const groupTimes = d.progressTimeSummary
+      ? parseScheduleProgressTimeSummary(d.progressTimeSummary)
+      : emptyScheduleGroupTimes(1)
+    return {
+      scheduleLabel: d.scheduleLabel || padScheduleDetailLabel(i),
+      blockKind,
+      name: d.name ?? '',
+      groupTimes: groupTimes.length > 0 ? groupTimes : emptyScheduleGroupTimes(1),
+      scheduleDate: d.scheduleDateLabel ?? '',
+      assignmentEnabled: d.assignmentEnabled ?? false,
+      assignmentPeriod: d.assignmentPeriod ?? '',
+      educationForm: 'online',
+      participationMethod: 'individual' as const,
+      ipsCategory: '' as const,
+      ipsDetail: '',
+    }
+  })
+
+  const scheduleGroupCount = Math.max(1, ...scheduleDetails.map(d => d.groupTimes.length))
+  return {
+    scheduleCurriculumPreEducation: commonInfo.scheduleCurriculumPreEducation ?? false,
+    scheduleGroupCount,
+    scheduleDetails: scheduleDetails.map(d => ({
+      ...d,
+      groupTimes: [
+        ...d.groupTimes,
+        ...emptyScheduleGroupTimes(Math.max(0, scheduleGroupCount - d.groupTimes.length)),
+      ].slice(0, scheduleGroupCount),
+    })),
+  }
+}
+
+export function relabelScheduleDetailFormRows(
+  details: GeneralProgramScheduleDetailFormValues[]
+): GeneralProgramScheduleDetailFormValues[] {
+  return relabelScheduleDetailFormRowsByKind(details)
+}
 
 function toIso(d: string | Date | undefined): string {
   if (d == null) return ''
@@ -520,6 +654,7 @@ export function programToGeneralCommonInfoEditValues(
 ): GeneralProgramCommonInfoEditFormValues {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
   const sponsorManagementId = resolveSponsorManagementId(program)
+  const typeSettings = resolveTypeSettingsFromProgram(program)
 
   return {
     mainTitle: program.mainTitle?.trim() ?? '',
@@ -541,7 +676,7 @@ export function programToGeneralCommonInfoEditValues(
     partnerInvolvement: program.partnerInvolvement ? 'yes' : 'no',
     ...resolveKpiFromProgram(program),
     ...resolveWageFromProgram(program),
-    ...resolveTypeSettingsFromProgram(program),
+    ...typeSettings,
     curriculumSessions: (commonInfo.curriculumSessions ?? []).map(s => {
       const sessionIps = parseSessionIpsTypeSummary(s.ipsTypeSummary)
       return {
@@ -555,6 +690,7 @@ export function programToGeneralCommonInfoEditValues(
         ipsDetail: sessionIps.ipsDetail,
       }
     }),
+    ...resolveScheduleDetailsFormState(commonInfo, typeSettings.sessionRound),
     educationScheduleMode: 'date',
     educationScheduleLines: [...(commonInfo.educationScheduleLines ?? [])],
   }
@@ -735,6 +871,38 @@ export function generalCommonInfoEditValuesToProgramPatch(
               )
             : undefined,
       })),
+      scheduleCurriculumPreEducation:
+        values.educationStructure === 'schedule'
+          ? values.scheduleCurriculumPreEducation ?? false
+          : existingCommon.scheduleCurriculumPreEducation,
+      scheduleDetails:
+        values.educationStructure === 'schedule'
+          ? relabelScheduleDetailFormRows(values.scheduleDetails).map(d => {
+              const row = {
+                scheduleLabel: d.scheduleLabel,
+                name: d.name.trim(),
+              }
+              if (d.blockKind === 'event' || inferScheduleDetailBlockKind(d.scheduleLabel) === 'event') {
+                return {
+                  ...row,
+                  scheduleDateLabel: d.scheduleDate?.trim() || undefined,
+                  assignmentEnabled: d.assignmentEnabled,
+                  assignmentPeriod: d.assignmentPeriod?.trim() || undefined,
+                }
+              }
+              return {
+                ...row,
+                progressTimeSummary: buildScheduleProgressTimeSummary(d.groupTimes),
+                ipsTypeSummary:
+                  values.ipsScheduleDetail === 'perSchedule' && d.ipsCategory
+                    ? buildSessionIpsTypeSummary(
+                        d.ipsCategory as ProgramRegistrationIpsCategory,
+                        d.ipsDetail
+                      )
+                    : undefined,
+              }
+            })
+          : existingCommon.scheduleDetails,
       educationScheduleLines: [...values.educationScheduleLines],
       wageGradeRows,
       paymentItems: paymentItemLabelsFromIds(values.wagePaymentItemIds) || existingCommon.paymentItems,

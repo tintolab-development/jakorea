@@ -140,7 +140,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 16px;
   max-width: min(520px, 100%);
 }
 
@@ -168,6 +168,12 @@
   border-radius: 12px;
   overflow: hidden;
   background: var(--main-WT, #fff);
+}
+
+/* 패널 외곽선만 사용 — 내부 DetailInfoForm body 테두리 제거(2중 보더 방지) */
+.program-registration-schedule-curriculum__session-panel .detail-info-form__body {
+  border: none;
+  border-radius: 0;
 }
 
 .program-registration-schedule-curriculum__time-groups {

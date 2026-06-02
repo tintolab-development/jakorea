@@ -25,6 +25,7 @@ import {
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 import { useGeneralProgramListFilters } from './use-general-program-list-filters'
+import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
 
 import './general-program-list-page.css'
 
@@ -185,7 +186,7 @@ function GeneralProgramListPageContent() {
 
   const handleCloseFullPageModal = () => {
     setSelectedProgramForFullPageModal(null)
-    const nextParams = new URLSearchParams(searchParams)
+    const nextParams = clearSponsorDetailQueryStack(new URLSearchParams(searchParams))
     nextParams.delete('programId')
     nextParams.delete('lnb')
     nextParams.delete('tab')

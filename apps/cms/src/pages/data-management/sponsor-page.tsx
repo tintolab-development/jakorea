@@ -3,7 +3,7 @@ import type { MouseEvent } from 'react'
 import { Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
 import type { SponsorSponsorshipStatus } from '@/types/domain'
 import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
@@ -37,6 +37,10 @@ import {
 import { SponsorDeleteBlockedModal } from '@/features/sponsor/ui/modal/sponsor-delete-blocked-modal'
 import { SponsorRegisterModal } from '@/features/sponsor/ui/modal/sponsor-register-modal'
 import { SponsorDetailFullPageModal } from '@/features/sponsor/ui/sponsor-detail-fullpage-modal'
+import {
+  SPONSOR_DETAIL_RETURN_TO_PARAM,
+  sanitizeInternalReturnTo,
+} from '@/features/sponsor/lib/sponsor-detail-page-url'
 
 const ORG_LABEL: Record<NonNullable<SponsorManagementRow['organizationKind']>, string> = {
   corporate: '기업',
@@ -50,6 +54,7 @@ const SPONSORSHIP_STATUS_OPTIONS = [
 export default function SponsorPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [rows, setRows] = useState<SponsorManagementRow[]>(() =>
@@ -95,13 +100,19 @@ export default function SponsorPage() {
   }, [sponsorIdFromUrl, sponsorRowForDetail, setSearchParams])
 
   const closeSponsorDetail = useCallback(() => {
+    const returnTo = sanitizeInternalReturnTo(searchParams.get(SPONSOR_DETAIL_RETURN_TO_PARAM))
+    if (returnTo) {
+      navigate(returnTo, { replace: true })
+      return
+    }
     setSearchParams(prev => {
       const next = new URLSearchParams(prev)
       next.delete('sponsorId')
       next.delete('sponsorLnb')
+      next.delete(SPONSOR_DETAIL_RETURN_TO_PARAM)
       return next
     })
-  }, [setSearchParams])
+  }, [navigate, searchParams, setSearchParams])
 
   const handleDeleteSponsor = useCallback(
     (sponsorId: string) => {

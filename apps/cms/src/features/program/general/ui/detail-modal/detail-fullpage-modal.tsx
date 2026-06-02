@@ -6,7 +6,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
-import { handleError } from '@/shared/utils/error-handler'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
 import {
@@ -39,6 +38,7 @@ import { ProgramManagersTab } from '../program-managers-tab'
 import { GeneralParticipantApplicationsView } from './applications/general-participant-applications-view'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
+import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './detail-fullpage-modal.css'
 
@@ -239,7 +239,7 @@ export function GeneralProgramDetailFullPageModal({
   const [searchParams, setSearchParams] = useSearchParams()
   const programId = program?.id ?? programIdHint ?? searchParams.get('programId') ?? undefined
 
-  const { program: detailProgram, loading, sponsorName, canWrite, updateProgram } =
+  const { program: detailProgram, loading, sponsorName, canWrite, updateProgram, setSelectedProgram } =
     useProgramDetail(open ? programId : undefined)
   const displayProgram = useMemo(() => {
     return (
@@ -303,18 +303,17 @@ export function GeneralProgramDetailFullPageModal({
     useGeneralProgramCommonInfoSave({
       form: infoForm,
       program: displayProgram ?? null,
-      onSaveEdit:
-        displayProgram && updateProgram
-          ? async draft => {
-              try {
-                const { id: _id, createdAt: _c, ...patch } = draft
-                await updateProgram(draft.id, patch)
-                setEditMode(null)
-              } catch (error) {
-                handleError(error, { context: 'generalProgramDetailFullpageModal.saveEdit' })
-              }
+      onSaveEdit: displayProgram
+        ? async draft => {
+            try {
+              const { id: _id, createdAt: _c, ...patch } = draft
+              await updateProgram(draft.id, patch)
+            } catch {
+              // API 연동 전 — 일반 프로그램 mock은 선택 프로그램 store에만 반영
+              setSelectedProgram(draft)
             }
-          : undefined,
+          }
+        : undefined,
     })
 
   const handleInfoEdit = useCallback(() => {
@@ -323,9 +322,13 @@ export function GeneralProgramDetailFullPageModal({
     setEditMode('info')
   }, [activeLnb, activeTab, displayProgram, infoResetToProgram, setEditMode])
 
-  const handleInfoSave = useCallback(() => {
-    if (displayProgram) void infoTriggerSave()
-  }, [displayProgram, infoTriggerSave])
+  const handleInfoSave = useCallback(async () => {
+    if (!displayProgram) return
+    const isValid = await infoForm.trigger()
+    if (!isValid) return
+    setEditMode(null)
+    void infoTriggerSave()
+  }, [displayProgram, infoForm, infoTriggerSave, setEditMode])
 
   const applicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
   const [applicantDetailMeta, setApplicantDetailMeta] = useState<ApplicantDetailMeta>(null)
@@ -451,6 +454,7 @@ export function GeneralProgramDetailFullPageModal({
         : '프로그램 상세'
 
   return (
+    <>
     <DetailFullPageModal
       open={open}
       onClose={handleModalClose}
@@ -519,5 +523,7 @@ export function GeneralProgramDetailFullPageModal({
         <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
       )}
     </DetailFullPageModal>
+    <ProgramDetailSponsorDetailOverlay />
+    </>
   )
 }

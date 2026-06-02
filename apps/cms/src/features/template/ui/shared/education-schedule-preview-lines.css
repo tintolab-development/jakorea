@@ -1,17 +1,25 @@
 /**
  * 교육 진행 예정일 — 텍스트 + X만 (chip 배경·테두리 없음)
  * 프로그램 등록·상세 수정·templateAuthoring 미리보기 공통
+ * 항목 많을 때 줄바꿈으로 아래로 확장 (한 줄 고정·잘림 방지)
  */
 
 .education-schedule-preview-lines {
+  display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
+  align-content: flex-start;
+  row-gap: 10px;
+  width: 100%;
+  min-width: 0;
 }
 
 .education-schedule-preview-lines__item {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  max-width: 100%;
 }
 
 .education-schedule-preview-lines__remove {
@@ -31,4 +39,22 @@
   display: block;
   width: 16px;
   height: 16px;
+}
+
+/* 다줄 목록 — 값 셀·라벨 상단 정렬 */
+.detail-info-form__field:has(.education-schedule-preview-lines) {
+  align-items: stretch;
+}
+
+.detail-info-form__field:has(.education-schedule-preview-lines) .detail-info-form__field-label {
+  align-items: flex-start;
+}
+
+.detail-info-form__field-content:has(.education-schedule-preview-lines) {
+  align-items: flex-start;
+}
+
+.detail-info-form__field-content > .education-schedule-preview-lines {
+  flex: 1 1 auto;
+  min-width: 0;
 }

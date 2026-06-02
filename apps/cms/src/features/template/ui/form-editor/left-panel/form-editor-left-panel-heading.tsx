@@ -149,6 +149,29 @@ export function withProgramRegistrationCurriculumTitleTrailing(
       }
     }
 
+    if (pr.sessionRoundType === 'multi') {
+      return {
+        ...heading,
+        titleTrailing: (
+          <div className="program-registration-paragraph__card-title-actions">
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="medium"
+              width={160}
+              icon={<PlusOutlined aria-hidden />}
+              onClick={e => {
+                e.stopPropagation()
+                pr.onAddScheduleCurriculumDetail()
+              }}
+            >
+              강의 세부 일정 추가
+            </CmsButton>
+          </div>
+        ),
+      }
+    }
+
     return {
       ...heading,
       titleTrailing: (

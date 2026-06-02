@@ -76,11 +76,19 @@ export function createProgramRegistrationDraft(
   const paragraphs: HorizontalTableParagraph[] = [
     createSeedParagraph(PROGRAM_REGISTRATION_IDS.basicInfo, '기본 정보'),
     createSeedParagraph(PROGRAM_REGISTRATION_IDS.businessKpi, '사업 KPI 목표'),
-    createSeedParagraph(PROGRAM_REGISTRATION_IDS.wageInfo, '임금 정보'),
+    createSeedParagraph(
+      PROGRAM_REGISTRATION_IDS.wageInfo,
+      PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.title,
+      PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.editDescription
+    ),
   ]
   if (variant === 'general') {
     paragraphs.push(
-      createSeedParagraph(PROGRAM_REGISTRATION_IDS.typeSettings, '프로그램 유형 설정')
+      createSeedParagraph(
+        PROGRAM_REGISTRATION_IDS.typeSettings,
+        PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.title,
+        PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.editDescription
+      )
     )
   }
   paragraphs.push(

@@ -70,6 +70,8 @@ import {
   type UjatSurveyMenuItem,
 } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import { UjatProgramDetailSidebar } from './ujat-program-detail-sidebar'
+import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
+import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
 import { UjatProgramDetailCommonInfoView } from './info/ujat-program-detail-common-info-view'
 import { canUjatProgramInfoEdit } from './info/ujat-program-info-edit'
 import {
@@ -1023,7 +1025,7 @@ export function UjatProgramDetailFullPageModal({
 
   const handleClose = useCallback(() => {
     onClose()
-    const next = new URLSearchParams(searchParams)
+    const next = clearSponsorDetailQueryStack(new URLSearchParams(searchParams))
     next.delete('programId')
     next.delete(LNB_PARAM)
     next.delete(TAB_PARAM)
@@ -2123,6 +2125,7 @@ export function UjatProgramDetailFullPageModal({
         onClose={handleCloseSurveyTemplateEdit}
       />
     ) : null}
+    <ProgramDetailSponsorDetailOverlay />
     </>
   )
 }

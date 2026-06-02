@@ -28,9 +28,11 @@ import {
   buildGeneralOrgCurriculumMultiEduIpsPerScheduleProgramSeedFields,
   buildGeneralOrgCurriculumMultiProgramSeedFields,
   buildGeneralOrgCurriculumSingleProgramSeedFields,
+  buildGeneralOrgScheduleSingleProgramSeedFields,
   GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_EDU_IPS_PER_SCHEDULE_ID,
   GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_ID,
   GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID,
+  GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_ID,
 } from '@/features/program/general/lib/detail-common-info-display'
 import { mockSponsors } from './sponsors'
 
@@ -339,6 +341,14 @@ const TYPE_VARIANT_LIFECYCLE: ProgramLifecycleStatus[] = [
   'document_processing_completed',
 ]
 
+function isOrgScheduleSingleVariant(variant: GeneralProgramVariant): boolean {
+  return (
+    variant.audience === 'organization' &&
+    variant.educationStructure === 'schedule' &&
+    variant.sessionRound === 'single'
+  )
+}
+
 function isOrgCurriculumSingleVariant(variant: GeneralProgramVariant): boolean {
   return (
     variant.audience === 'organization' &&
@@ -397,6 +407,59 @@ function buildTypeVariantSeed(
       courseDeliveredBy: 'JA',
       partnerInvolvement: false,
       ips: 'Prepare',
+      createdAt: '2025-12-08T09:15:00+09:00',
+      updatedAt: '2025-12-08T17:55:00+09:00',
+      createdByName: '홍길동',
+      updatedByName: '이순신',
+      generalParticipantTypes: [
+        ...FULL_LNB_PARTICIPANT_TYPES.organization,
+      ] as GeneralProgramParticipantType[],
+      generalVolunteerInterviewEnabled: true,
+      interviewStartDate: getDate(48),
+      interviewEndDate: getDate(38),
+      interviewMethod: '대면 면접',
+      generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
+      generalProgramAudience: variant.audience,
+      generalProgramEducationStructure: variant.educationStructure,
+      generalProgramSessionRound: variant.sessionRound,
+      sessionRoundForRounds: variant.sessionRound,
+      generalCommonInfo: screenshot.generalCommonInfo,
+    }
+  }
+
+  if (isOrgScheduleSingleVariant(variant)) {
+    const screenshot = buildGeneralOrgScheduleSingleProgramSeedFields()
+    return {
+      id: GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_ID,
+      capacity: 30,
+      sponsorId: SPONSOR_ID,
+      title: formatTypeCaseTitle(typeCaseRow, screenshot.title),
+      mainTitle: screenshot.mainTitle,
+      titleEn: screenshot.titleEn,
+      type: 'online',
+      format: 'workshop',
+      category: 'school' as ProgramCategory,
+      description: `유형 mock — ${screenshot.title} (공통 정보 스크린샷 기준)`,
+      startDate: '2025-12-08T00:00:00+09:00',
+      endDate: '2026-12-30T23:59:59+09:00',
+      applicationStartDate: getDate(150),
+      applicationEndDate: getDate(100),
+      status: 'active',
+      lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
+      businessArea: '진로취업',
+      targetLevel: 'high' as TargetLevel,
+      approvedStudentCount: screenshot.approvedStudentCount,
+      instructors: screenshot.instructors,
+      instructorCapacity: screenshot.instructorCapacity,
+      generalVolunteers: screenshot.generalVolunteers,
+      participatingSchoolCount: screenshot.participatingSchoolCount,
+      scheduleTimeEnabled: false,
+      institutionType: 'inside_school',
+      educationProcess: 'Traditional (Paper)',
+      ipOwned: 'Jointly',
+      courseDeliveredBy: 'JA',
+      partnerInvolvement: false,
+      ips: 'Succeed',
       createdAt: '2025-12-08T09:15:00+09:00',
       updatedAt: '2025-12-08T17:55:00+09:00',
       createdByName: '홍길동',
