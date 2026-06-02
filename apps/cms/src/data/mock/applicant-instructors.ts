@@ -67,6 +67,10 @@ export interface ApplicantInstructorRow {
   scheduleChangeCancelCount?: number
   /** JA 평가 등급 (A|B|C) */
   evaluationGrade?: string
+  /** 강사비 등급 (예: 3급 강사비) — JA 평가 등급과 별도 */
+  instructorFeeGradeLabel?: string
+  /** 소속 재직 여부 — true일 때 general 상세 소속 옆 재직중 배지 */
+  affiliationIsCurrentlyEmployed?: boolean
   /** JA 강의 경력 (신규|1년 미만|1~3년|3년 이상 등) */
   teachingExperience?: string
   /** 한줄소개 (강사 상세 모달 기본 정보 탭) */
@@ -119,13 +123,24 @@ export interface ApplicantInstructorRow {
   managerComment?: string
   /** 승인 완료 시 기본 정보 하단: 강의비 책정 기준 (예: 특강 강사비 | 915,000원) */
   lectureFeeBasisDisplay?: string
-  /** 승인 완료 시 기본 정보 하단: 사업소득자 여부 (예: 해당 없음) */
+  /** 사업소득자 여부 (예: 해당 없음) — general 상세에서 승인 전에도 표시 */
   businessIncomeEarnerStatus?: string
   /** 승인 완료 시 알림 발송 일시 (프로그램 승인 현황 옆 표시) */
   approvalNotificationSentAt?: string
   /** 회원 관리 강사 상세 기본 정보: 정산 현황 셀 (프로그램 신청 강사 플로우에서는 미사용) */
   settlementStatusLabel?: string
 }
+
+const AFFILIATION_SCHOOLS = [
+  '진월초등학교',
+  '서울중앙초등학교',
+  '한강중학교',
+  '미래고등학교',
+  '삼성전자',
+  '개인',
+]
+
+const INSTRUCTOR_FEE_GRADE_LABELS = ['1급 강사비', '2급 강사비', '3급 강사비'] as const
 
 const INSTRUCTOR_NAMES = [
   '김서연',
@@ -237,28 +252,28 @@ const PREFERRED_SCHOOL_OPTIONS = [
     schoolName: '강서초등학교',
     rank: 1,
     grade: '5학년',
-    dateRange: '2026.04.09 (목) ~ 2026.04.30 (목)',
+    dateRange: '2026.06.02 (화) ~ 2026.06.28 (일)',
   },
   {
     schoolId: 'school-2',
     schoolName: '우장초등학교',
     rank: 2,
     grade: '3학년',
-    dateRange: '2026.04.09 (목) ~ 2026.04.30 (목)',
+    dateRange: '2026.06.02 (화) ~ 2026.06.28 (일)',
   },
   {
     schoolId: 'school-3',
     schoolName: '마포초등학교',
     rank: 3,
     grade: '6학년',
-    dateRange: '2026.04.09 (목) ~ 2026.04.30 (목)',
+    dateRange: '2026.06.02 (화) 09:00 ~ 11:00',
   },
   {
     schoolId: 'school-4',
     schoolName: '서이초등학교',
     rank: 4,
     grade: '5학년',
-    dateRange: '2026.04.09 (목) ~ 2026.04.30 (목)',
+    dateRange: '2026.06.10 (수) 14:00 ~ 16:00',
   },
 ]
 
@@ -469,7 +484,11 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
     const rejectionReason = status === 'rejected' ? '인원 초과' : undefined
     const lectureFeeBasisDisplay =
       status === 'approved' ? '특강 강사비 | 915,000원' : undefined
-    const businessIncomeEarnerStatus = status === 'approved' ? '해당 없음' : undefined
+    const businessIncomeEarnerStatus = '해당 없음'
+    const affiliation = AFFILIATION_SCHOOLS[i % AFFILIATION_SCHOOLS.length]
+    const affiliationIsCurrentlyEmployed =
+      affiliation !== '개인' && affiliation !== '삼성전자' ? true : i % 3 === 0
+    const instructorFeeGradeLabel = INSTRUCTOR_FEE_GRADE_LABELS[i % INSTRUCTOR_FEE_GRADE_LABELS.length]
     const approvalNotificationSentAt =
       status === 'approved' ? '2026.01.15 09:15:42' : undefined
     const resumeSample = getResumeSample(i)
@@ -495,7 +514,9 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
       email: i === 3 ? 'tinto@naver.com' : `instructor${i}@example.com`,
       address: ADDRESSES[i % ADDRESSES.length],
       appliedAt: `2026.01.${(10 + (i % 20)).toString().padStart(2, '0')}`,
-      affiliation: i % 2 === 0 ? '개인' : '삼성전자',
+      affiliation,
+      affiliationIsCurrentlyEmployed,
+      instructorFeeGradeLabel,
       approvalStatus: status,
       schoolName: SCHOOL_NAMES[i % SCHOOL_NAMES.length],
       ...assignedSchool,
@@ -562,7 +583,7 @@ export function patchApplicantInstructorForApprovalStatus(
     ...row,
     approvalStatus,
     lectureFeeBasisDisplay: undefined,
-    businessIncomeEarnerStatus: undefined,
+    businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
     approvalNotificationSentAt: undefined,
   }
 }
@@ -579,4 +600,20 @@ export function updateApplicantInstructorApprovalStatus(
   if (row) {
     Object.assign(row, patchApplicantInstructorForApprovalStatus(row, approvalStatus))
   }
+}
+
+export interface ApplicantInstructorDetailSavePayload {
+  managerComment?: string
+}
+
+export function patchApplicantInstructorDetail(
+  instructorId: string,
+  payload: ApplicantInstructorDetailSavePayload
+): ApplicantInstructorRow | null {
+  const row = MOCK_APPLICANT_INSTRUCTORS.find(i => i.id === instructorId)
+  if (!row) return null
+
+  const adminTrimmed = payload.managerComment?.trim()
+  row.managerComment = adminTrimmed ? adminTrimmed : undefined
+  return { ...row }
 }
