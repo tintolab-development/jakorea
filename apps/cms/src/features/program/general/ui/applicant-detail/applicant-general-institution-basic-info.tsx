@@ -4,13 +4,24 @@
  */
 
 import type { ReactNode } from 'react'
+import { Radio } from 'antd'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
 } from '@/data/mock/applicant-institutions'
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import { ApplicantAdminCommentSection } from '@/features/program/general/ui/applicant-detail/applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/applicant-detail/program-approval-status-detail-value'
+import {
+  formatCombinedClassDisplay,
+  type ApplicantInstitutionEditDraft,
+} from '@/features/program/general/lib/applicant-institution-detail-edit'
+import type {
+  SameSchoolGradeOption,
+  TextbookSelectOption,
+} from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
@@ -69,6 +80,13 @@ export interface ApplicantGeneralInstitutionBasicInfoProps {
   institution: ApplicantSchoolRow
   detail?: ApplicantInstitutionDetailExtend
   maskSensitive?: boolean
+  mode?: 'view' | 'edit'
+  draft?: ApplicantInstitutionEditDraft
+  onDraftChange?: (partial: Partial<ApplicantInstitutionEditDraft>) => void
+  textbookOptions?: TextbookSelectOption[]
+  sameSchoolGradeOptions?: SameSchoolGradeOption[]
+  canApplyCombinedClass?: boolean
+  validationErrors?: Record<string, string>
 }
 
 function TableRowTwoCols({
@@ -213,11 +231,91 @@ function PreferredScheduleRow({ rank, session }: { rank: number; session: Partic
   )
 }
 
+function buildCombinedClassViewValue(detail?: ApplicantInstitutionDetailExtend): ReactNode {
+  const display = formatCombinedClassDisplay(detail)
+  if (display === '미신청') return display
+  const parts = display.split(' | ').map(part => part.trim()).filter(Boolean)
+  if (parts.length <= 1) return parts[0] ?? display
+  return (
+    <ProgramDetailTdSegmentWrap>
+      {withProgramDetailTdDivider(parts)}
+    </ProgramDetailTdSegmentWrap>
+  )
+}
+
+function CombinedClassEditCell({
+  draft,
+  onDraftChange,
+  sameSchoolGradeOptions,
+  canApplyCombinedClass,
+  validationErrors,
+}: {
+  draft: ApplicantInstitutionEditDraft
+  onDraftChange: (partial: Partial<ApplicantInstitutionEditDraft>) => void
+  sameSchoolGradeOptions: SameSchoolGradeOption[]
+  canApplyCombinedClass: boolean
+  validationErrors?: Record<string, string>
+}) {
+  const isApplied = draft.combinedClassApplication === '신청'
+
+  return (
+    <div className="applicant-general-institution-basic-info__combined-class-edit">
+      <Radio.Group
+        className="applicant-general-institution-basic-info__combined-class-radios"
+        value={draft.combinedClassApplication}
+        onChange={event => {
+          const next = event.target.value as ApplicantInstitutionEditDraft['combinedClassApplication']
+          onDraftChange({
+            combinedClassApplication: next,
+            combinedClassPartnerApplicantIds:
+              next === '신청' ? draft.combinedClassPartnerApplicantIds : [],
+          })
+        }}
+      >
+        <Radio value="신청" disabled={!canApplyCombinedClass}>
+          신청
+        </Radio>
+        <Radio value="미신청">미신청</Radio>
+      </Radio.Group>
+      <CmsSelect
+        className="applicant-general-institution-basic-info__combined-class-select"
+        inputSize="large"
+        mode="multiple"
+        disabled={!isApplied}
+        placeholder={isApplied ? '합반 대상 학년 선택' : '해당 없음'}
+        value={isApplied ? draft.combinedClassPartnerApplicantIds : []}
+        options={sameSchoolGradeOptions.map(option => ({
+          label: option.label,
+          value: option.value,
+        }))}
+        onChange={value => {
+          onDraftChange({
+            combinedClassPartnerApplicantIds: Array.isArray(value) ? value.map(String) : [],
+          })
+        }}
+      />
+      {validationErrors?.combinedClassPartnerApplicantIds ? (
+        <span className="applicant-general-institution-basic-info__field-error">
+          {validationErrors.combinedClassPartnerApplicantIds}
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
 export function ApplicantGeneralInstitutionBasicInfo({
   institution,
   detail,
   maskSensitive = true,
+  mode = 'view',
+  draft,
+  onDraftChange,
+  textbookOptions = [],
+  sameSchoolGradeOptions = [],
+  canApplyCombinedClass = false,
+  validationErrors,
 }: ApplicantGeneralInstitutionBasicInfoProps) {
+  const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
   const shouldMask = maskSensitive && institution.approvalStatus !== 'approved'
 
   const classAndCount: ReactNode =
@@ -233,10 +331,12 @@ export function ApplicantGeneralInstitutionBasicInfo({
     )
 
   const teacherInfo = buildTeacherInfoCell(institution, detail, shouldMask)
-
   const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
-
   const sessions = institution.sessions ?? []
+
+  const textbookViewValue = detail?.textbookName ?? '-'
+  const combinedClassViewValue = buildCombinedClassViewValue(detail)
+
   const colgroup = (
     <colgroup>
       <col style={{ width: '200px' }} />
@@ -246,8 +346,69 @@ export function ApplicantGeneralInstitutionBasicInfo({
     </colgroup>
   )
 
+  const textbookEditValue =
+    isEditMode && draft && onDraftChange ? (
+      <div className="applicant-general-institution-basic-info__field-stack">
+        <CmsSelect
+          className="applicant-general-institution-basic-info__full-width-control"
+          inputSize="large"
+          placeholder="교재명 선택"
+          value={draft.textbookId || undefined}
+          options={textbookOptions.map(option => ({
+            label: option.label,
+            value: option.value,
+          }))}
+          onChange={value => {
+            const selected = textbookOptions.find(option => option.value === value)
+            onDraftChange({
+              textbookId: selected?.value ?? String(value ?? ''),
+              textbookName: selected?.textbookName ?? '',
+            })
+          }}
+        />
+        {validationErrors?.textbookId || validationErrors?.textbookName ? (
+          <span className="applicant-general-institution-basic-info__field-error">
+            {validationErrors.textbookId ?? validationErrors.textbookName}
+          </span>
+        ) : null}
+      </div>
+    ) : (
+      textbookViewValue
+    )
+
+  const combinedClassEditValue =
+    isEditMode && draft && onDraftChange ? (
+      <CombinedClassEditCell
+        draft={draft}
+        onDraftChange={onDraftChange}
+        sameSchoolGradeOptions={sameSchoolGradeOptions}
+        canApplyCombinedClass={canApplyCombinedClass}
+        validationErrors={validationErrors}
+      />
+    ) : (
+      combinedClassViewValue
+    )
+
+  const showAdminComment = institution.approvalStatus === 'approved'
+
   return (
     <div className="applicant-general-institution-basic-info applicant-institution-basic-info">
+      {validationErrors?.form ? (
+        <div className="applicant-general-institution-basic-info__form-error">{validationErrors.form}</div>
+      ) : null}
+      {showAdminComment ? (
+        <ApplicantAdminCommentSection
+          adminComment={isEditMode && draft ? draft.adminComment : institution.adminComment}
+          mode={isEditMode ? 'edit' : 'view'}
+          draftValue={draft?.adminComment ?? ''}
+          onDraftChange={
+            isEditMode && onDraftChange
+              ? value => onDraftChange({ adminComment: value })
+              : undefined
+          }
+          validationError={validationErrors?.adminComment}
+        />
+      ) : null}
       <section className="applicant-institution-basic-info__section">
         <h3 className="applicant-institution-basic-info__title">기본 정보</h3>
         <div className="applicant-institution-basic-info__basic-info-fields">
@@ -261,9 +422,9 @@ export function ApplicantGeneralInstitutionBasicInfo({
                 />
                 <TableRowTwoCols
                   label1="교재명"
-                  value1={detail?.textbookName ?? '-'}
+                  value1={textbookEditValue}
                   label2="합반 신청 여부"
-                  value2={detail?.combinedClassApplication ?? '-'}
+                  value2={combinedClassEditValue}
                 />
               </tbody>
             </table>
@@ -272,35 +433,35 @@ export function ApplicantGeneralInstitutionBasicInfo({
             <table className="applicant-institution-basic-info__table">
               {colgroup}
               <tbody>
-              <TableRowTwoCols
-                label1="신청 기관명"
-                value1={institution.schoolName ?? '-'}
-                label2="신청 학년"
-                value2={institution.educationGrade ?? '-'}
-              />
-              <TableRowTwoCols
-                label1="기관 소재지"
-                value1={institution.region ?? '-'}
-                label2="상세 주소"
-                value2={detail?.addressDetail ?? '-'}
-              />
-              <TableRowTwoCols
-                label1="신청 학급 수 및 총 인원"
-                value1={classAndCount}
-                label2="희망 교육 형태"
-                value2={detail?.educationType ?? '-'}
-              />
-              <TableRowFullWidth label="담당 교사 정보" value={teacherInfo} />
-              <TableRowFullWidth
-                label="신청 사유"
-                value={detail?.applicationReason ?? '-'}
-                multiline
-              />
-              <TableRowFullWidth
-                label="기타 요청사항"
-                value={detail?.otherRequests ?? '-'}
-                multiline
-              />
+                <TableRowTwoCols
+                  label1="신청 기관명"
+                  value1={institution.schoolName ?? '-'}
+                  label2="신청 학년"
+                  value2={institution.educationGrade ?? '-'}
+                />
+                <TableRowTwoCols
+                  label1="기관 소재지"
+                  value1={institution.region ?? '-'}
+                  label2="상세 주소"
+                  value2={detail?.addressDetail ?? '-'}
+                />
+                <TableRowTwoCols
+                  label1="신청 학급 수 및 총 인원"
+                  value1={classAndCount}
+                  label2="희망 교육 형태"
+                  value2={detail?.educationType ?? '-'}
+                />
+                <TableRowFullWidth label="담당 교사 정보" value={teacherInfo} />
+                <TableRowFullWidth
+                  label="신청 사유"
+                  value={detail?.applicationReason ?? '-'}
+                  multiline
+                />
+                <TableRowFullWidth
+                  label="기타 요청사항"
+                  value={detail?.otherRequests ?? '-'}
+                  multiline
+                />
               </tbody>
             </table>
           </div>

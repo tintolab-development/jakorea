@@ -1,0 +1,44 @@
+.applicant-admin-comment-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.applicant-admin-comment-section__edit-wrap {
+  box-sizing: border-box;
+  display: flex;
+  padding: 12px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 12px;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+}
+
+.applicant-admin-comment-section__input {
+  align-self: stretch;
+  width: 100%;
+}
+
+.applicant-admin-comment-section__input.cms-input--medium .cms-input__control {
+  align-self: stretch;
+}
+
+.applicant-admin-comment-section__input.cms-input--medium .cms-input__inner .ant-input::placeholder {
+  overflow: hidden;
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.applicant-admin-comment-section__error {
+  color: #c32f4a;
+  font-size: 13px;
+  line-height: 150%;
+}

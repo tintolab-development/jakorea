@@ -69,6 +69,7 @@ export function ApplicantList({
     setApplicantsCalendarGranularity,
     pendingFilters,
     fields,
+    institutionList,
     setInstitutionList,
     setInstructorList,
     setIndividualList,
@@ -155,6 +156,18 @@ export function ApplicantList({
           detailVariant={detailVariant}
           data={selectedItem as ApplicantSchoolRow}
           program={program}
+          institutionList={institutionList}
+          onInstitutionDetailSaved={rows => {
+            const updatedById = new Map(rows.map(row => [row.id, row]))
+            setInstitutionList(prev =>
+              prev.map(row => updatedById.get(row.id) ?? row)
+            )
+            const current = selectedItem as ApplicantSchoolRow
+            const nextSelected = updatedById.get(current.id)
+            if (nextSelected) {
+              setSelectedItem(nextSelected)
+            }
+          }}
           onBack={() => setSelectedItem(null)}
           onApprove={id => {
             setInstitutionList(prev =>
@@ -206,6 +219,13 @@ export function ApplicantList({
           }}
           onCancelApproval={handleCancelApprovalIndividual}
           onCancelReject={handleCancelRejectIndividual}
+          onIndividualDetailSaved={row => {
+            setIndividualList(prev => prev.map(item => (item.id === row.id ? row : item)))
+            const current = selectedItem as GeneralIndividualApplicantRow
+            if (current.id === row.id) {
+              setSelectedItem(row)
+            }
+          }}
         />
       ) : showInstructorDetail ? (
         <ApplicantsDetailContents

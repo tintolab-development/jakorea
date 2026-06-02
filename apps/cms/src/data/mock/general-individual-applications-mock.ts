@@ -38,6 +38,8 @@ export interface GeneralIndividualApplicantRow {
   participationRejectionReason?: string
   /** 승인/반려 알림 발송 일시 — 상세 승인 현황 행 표시 */
   approvalNotificationSentAt?: string
+  /** 신청 건별 관리자 코멘트 (회원 상세 adminComment와 별도) */
+  adminComment?: string
 }
 
 export function formatApprovalNotificationSentAt(d = new Date()): string {
@@ -155,6 +157,26 @@ function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
   return sessions
 }
 
+/** 스크린샷·데모용: general-individual-applicant-1 (고종욱) 상세 — 승인 대기 + 전 필드 */
+const APPLICANT_INDIVIDUAL_1_DETAIL: GeneralIndividualApplicantDetail = {
+  gender: '남성',
+  birthDate: '2014.05.10',
+  age: 11,
+  schoolEnrollmentStatus: '재학 중',
+  affiliationSchool: '강서초등학교',
+  affiliationGrade: '5학년',
+  contact: '010-2345-6789',
+  email: 'jongwook.ko@example.com',
+  homeAddressFull: '서울특별시 강서구 화곡동 456-78 102동 501호',
+  id1365: '05101234',
+  scheduleChangeCancelCount: 1,
+  selfIntroduction:
+    '안녕하세요. 강서초등학교 5학년 고종욱입니다. JA Korea 경제·금융 교육 봉사에 참여하고 싶어 신청했습니다. 학교에서 친구들과 함께 봉사 동아리 활동을 하며, 어린이들에게 쉽게 설명하는 것을 좋아합니다. 이번 프로그램을 통해 배운 내용을 또래 친구들과 나누고, 성실하게 봉사하겠습니다.',
+  teamName: 'JA 봉사팀',
+  teamMemberCount: 3,
+  teamRole: 'leader',
+}
+
 /** 스크린샷 시안 기준: general-individual-applicant-18 (김범수) 상세 */
 const APPLICANT_INDIVIDUAL_18_DETAIL: GeneralIndividualApplicantDetail = {
   gender: '여성',
@@ -195,6 +217,15 @@ function buildMockList(count: number): GeneralIndividualApplicantRow[] {
 
 export const MOCK_GENERAL_INDIVIDUAL_APPLICATIONS: GeneralIndividualApplicantRow[] = (() => {
   const list = buildMockList(30)
+  const row1 = list.find(r => r.id === 'general-individual-applicant-1')
+  if (row1) {
+    row1.applicantName = '고종욱'
+    row1.affiliation = '강서초등학교'
+    row1.educationGrade = '5학년'
+    row1.homeAddress = '서울특별시 강서구'
+    row1.approvalStatus = 'pending'
+    row1.detail = APPLICANT_INDIVIDUAL_1_DETAIL
+  }
   const row = list.find(r => r.id === 'general-individual-applicant-18')
   if (row) {
     row.applicantName = '김범수'
@@ -247,4 +278,21 @@ export function updateGeneralIndividualApplicantTeamRole(
   const row = MOCK_GENERAL_INDIVIDUAL_APPLICATIONS.find(r => r.id === applicantId)
   if (!row) return
   row.detail = { ...row.detail, teamRole }
+}
+
+export interface GeneralIndividualApplicantDetailSavePayload {
+  adminComment?: string
+}
+
+/** 개인 참여자 신청 상세 필드 갱신 (mock) — 회원 프로필과 분리 */
+export function patchGeneralIndividualApplicantDetail(
+  applicantId: string,
+  payload: GeneralIndividualApplicantDetailSavePayload
+): GeneralIndividualApplicantRow | null {
+  const row = MOCK_GENERAL_INDIVIDUAL_APPLICATIONS.find(r => r.id === applicantId)
+  if (!row) return null
+
+  const adminTrimmed = payload.adminComment?.trim()
+  row.adminComment = adminTrimmed ? adminTrimmed : undefined
+  return { ...row }
 }

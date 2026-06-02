@@ -6,6 +6,9 @@ import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import { CmsButton, type CmsButtonVariant } from '@/shared/ui'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import { useApplicantInstitutionDetailEdit } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
+import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
+import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
@@ -67,6 +70,7 @@ type ApplicantHeaderActionItem = {
   variant: CmsButtonVariant
   label: string
   disabled?: boolean
+  title?: string
   onClick?: () => void
   /** 기본 `filter` — 개인정보 상세보기 등은 `filter-wide` */
   size?: 'filter' | 'filter-wide'
@@ -100,6 +104,7 @@ function ApplicantHeaderActionsExtra({
             size="large"
             width={a.size === "filter-wide" ? 180 : 160}
             disabled={a.disabled}
+            title={a.title}
             onClick={a.onClick}
           >
             {a.label}
@@ -123,14 +128,16 @@ function headerBtnPrivacy(onRevealPersonalInfo: () => void): ApplicantHeaderActi
 
 function headerBtnCancelApproval(
   applicantId: string,
-  onCancelApproval?: (id: string) => void
+  onCancelApproval: ((id: string) => void) | undefined,
+  cancelApprovalState: { disabled: boolean; reason: string | null }
 ): ApplicantHeaderActionItem {
   return {
     key: 'cancel-approval',
     variant: 'delete',
     label: '승인 취소',
-    disabled: !onCancelApproval,
-    onClick: () => onCancelApproval?.(applicantId),
+    disabled: cancelApprovalState.disabled,
+    title: cancelApprovalState.reason ?? undefined,
+    onClick: cancelApprovalState.disabled ? undefined : () => onCancelApproval?.(applicantId),
   }
 }
 
@@ -140,6 +147,42 @@ function headerBtnEditInfoDisabled(): ApplicantHeaderActionItem {
     variant: 'primary',
     label: '정보 수정',
     disabled: true,
+  }
+}
+
+function headerBtnInstitutionEditInfo(onClick: () => void): ApplicantHeaderActionItem {
+  return {
+    key: 'edit-info',
+    variant: 'primary',
+    label: '정보 수정',
+    onClick,
+  }
+}
+
+function headerBtnInstitutionSaveInfo(onClick: () => void): ApplicantHeaderActionItem {
+  return {
+    key: 'edit-info',
+    variant: 'primary',
+    label: '정보 저장',
+    onClick,
+  }
+}
+
+function headerBtnIndividualEditInfo(onClick: () => void): ApplicantHeaderActionItem {
+  return {
+    key: 'edit-info',
+    variant: 'primary',
+    label: '정보 수정',
+    onClick,
+  }
+}
+
+function headerBtnIndividualSaveInfo(onClick: () => void): ApplicantHeaderActionItem {
+  return {
+    key: 'edit-info',
+    variant: 'primary',
+    label: '정보 저장',
+    onClick,
   }
 }
 
@@ -205,6 +248,15 @@ function resolveApplicantHeaderItems(params: {
   onReject: (id: string) => void
   onCancelApproval?: (id: string) => void
   onCancelReject?: (id: string) => void
+  cancelApprovalState: { disabled: boolean; reason: string | null }
+  isGeneralInstitutionEditEnabled?: boolean
+  isEditingInstitutionDetail?: boolean
+  onEnterInstitutionEdit?: () => void
+  onSaveInstitutionEdit?: () => void
+  isGeneralIndividualEditEnabled?: boolean
+  isEditingIndividualDetail?: boolean
+  onEnterIndividualEdit?: () => void
+  onSaveIndividualEdit?: () => void
 }): ApplicantHeaderActionItem[] | null {
   const {
     applicantId,
@@ -222,18 +274,49 @@ function resolveApplicantHeaderItems(params: {
     onReject,
     onCancelApproval,
     onCancelReject,
+    cancelApprovalState,
+    isGeneralInstitutionEditEnabled = false,
+    isEditingInstitutionDetail = false,
+    onEnterInstitutionEdit,
+    onSaveInstitutionEdit,
+    isGeneralIndividualEditEnabled = false,
+    isEditingIndividualDetail = false,
+    onEnterIndividualEdit,
+    onSaveIndividualEdit,
   } = params
 
-  if (isApprovedInstitution || isApprovedIndividual) {
+  if (isApprovedInstitution) {
+    const editButton =
+      isGeneralInstitutionEditEnabled && onEnterInstitutionEdit && onSaveInstitutionEdit
+        ? isEditingInstitutionDetail
+          ? headerBtnInstitutionSaveInfo(onSaveInstitutionEdit)
+          : headerBtnInstitutionEditInfo(onEnterInstitutionEdit)
+        : headerBtnEditInfoDisabled()
+
     return [
-      headerBtnCancelApproval(applicantId, onCancelApproval),
-      headerBtnEditInfoDisabled(),
+      headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState),
+      editButton,
+      headerBtnPrivacy(onRevealPersonalInfo),
+    ]
+  }
+
+  if (isApprovedIndividual) {
+    const editButton =
+      isGeneralIndividualEditEnabled && onEnterIndividualEdit && onSaveIndividualEdit
+        ? isEditingIndividualDetail
+          ? headerBtnIndividualSaveInfo(onSaveIndividualEdit)
+          : headerBtnIndividualEditInfo(onEnterIndividualEdit)
+        : headerBtnEditInfoDisabled()
+
+    return [
+      headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState),
+      editButton,
       headerBtnPrivacy(onRevealPersonalInfo),
     ]
   }
   if (isApprovedInstructor) {
     return [
-      headerBtnCancelApproval(applicantId, onCancelApproval),
+      headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState),
       headerBtnEditInfoPreparing(),
       headerBtnPrivacy(onRevealPersonalInfo),
     ]
@@ -256,6 +339,11 @@ interface ApplicantsDetailContentsProps {
   detailVariant?: ApplicantDetailVariant
   /** 상위에서 전달 유지(향후 탭 복원 등). 신청 강사 상세에서는 미사용 */
   program?: Program | null
+  /** 일반 프로그램 기관 상세 수정 — 목록 동기화용 */
+  institutionList?: ApplicantSchoolRow[]
+  onInstitutionDetailSaved?: (rows: ApplicantSchoolRow[]) => void
+  /** 일반 프로그램 개인 상세 수정 — 목록 동기화용 */
+  onIndividualDetailSaved?: (row: GeneralIndividualApplicantRow) => void
   onBack: () => void
   onApprove: (id: string) => void
   onReject: (id: string) => void
@@ -269,6 +357,10 @@ export function ApplicantsDetailContents({
   type,
   data,
   detailVariant = 'legacy',
+  program = null,
+  institutionList = [],
+  onInstitutionDetailSaved,
+  onIndividualDetailSaved,
   onBack: _onBack,
   onApprove,
   onReject,
@@ -324,6 +416,56 @@ export function ApplicantsDetailContents({
 
   const applicantId = data.id
 
+  const isGeneralInstitutionEditEnabled =
+    isGeneralDetail && isApprovedInstitution && institutionData != null
+
+  const isGeneralIndividualEditEnabled =
+    isGeneralDetail && isApprovedIndividual && individualData != null
+
+  const institutionDetailEdit = useApplicantInstitutionDetailEdit({
+    institution: isGeneralInstitutionEditEnabled ? institutionData : null,
+    program,
+    institutionList,
+    onSaved: rows => {
+      onInstitutionDetailSaved?.(rows)
+    },
+  })
+
+  const individualDetailEdit = useApplicantIndividualDetailEdit({
+    applicant: isGeneralIndividualEditEnabled ? individualData : null,
+    onSaved: row => {
+      onIndividualDetailSaved?.(row)
+    },
+  })
+
+  const cancelApprovalSessions = useMemo(() => {
+    if (institutionData?.sessions) return institutionData.sessions
+    if (individualData?.sessions) return individualData.sessions
+    return undefined
+  }, [institutionData?.sessions, individualData?.sessions])
+
+  const cancelApprovalState = useMemo(
+    () =>
+      resolveApplicantCancelApprovalState({
+        program,
+        approvalStatus:
+          institutionData?.approvalStatus ??
+          individualData?.approvalStatus ??
+          instructorData?.approvalStatus ??
+          'pending',
+        sessions: cancelApprovalSessions,
+        hasCancelHandler: Boolean(onCancelApproval),
+      }),
+    [
+      program,
+      institutionData?.approvalStatus,
+      individualData?.approvalStatus,
+      instructorData?.approvalStatus,
+      cancelApprovalSessions,
+      onCancelApproval,
+    ]
+  )
+
   const resolveApplicantPersonalInfoAccessItem = useCallback(() => {
     if (isInstitution) return institutionData?.schoolName ?? '신청 기관 정보'
     if (isIndividual) return individualData?.applicantName ?? '참여자 신청 정보'
@@ -363,12 +505,34 @@ export function ApplicantsDetailContents({
       onReject,
       onCancelApproval,
       onCancelReject,
+      cancelApprovalState,
+      isGeneralInstitutionEditEnabled,
+      isEditingInstitutionDetail: institutionDetailEdit.isEditing,
+      onEnterInstitutionEdit: institutionDetailEdit.enterEdit,
+      onSaveInstitutionEdit: () => {
+        institutionDetailEdit.saveEdit()
+      },
+      isGeneralIndividualEditEnabled,
+      isEditingIndividualDetail: individualDetailEdit.isEditing,
+      onEnterIndividualEdit: individualDetailEdit.enterEdit,
+      onSaveIndividualEdit: () => {
+        individualDetailEdit.saveEdit()
+      },
     })
     if (!items) return null
     return <ApplicantHeaderActionsExtra items={items} personalInfoRevealed={personalInfoRevealed} />
   }, [
     applicantId,
     isApprovedInstitution,
+    institutionDetailEdit.enterEdit,
+    institutionDetailEdit.isEditing,
+    institutionDetailEdit.saveEdit,
+    individualDetailEdit.enterEdit,
+    individualDetailEdit.isEditing,
+    individualDetailEdit.saveEdit,
+    isGeneralInstitutionEditEnabled,
+    isGeneralIndividualEditEnabled,
+    cancelApprovalState,
     isApprovedInstructor,
     isApprovedIndividual,
     isRejectedInstitution,
@@ -437,6 +601,13 @@ export function ApplicantsDetailContents({
               institution={d}
               detail={d.detail}
               maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
+              mode={institutionDetailEdit.isEditing ? 'edit' : 'view'}
+              draft={institutionDetailEdit.draft ?? undefined}
+              onDraftChange={institutionDetailEdit.updateDraft}
+              textbookOptions={institutionDetailEdit.textbookOptions}
+              sameSchoolGradeOptions={institutionDetailEdit.sameSchoolGradeOptions}
+              canApplyCombinedClass={institutionDetailEdit.canApplyCombinedClass}
+              validationErrors={institutionDetailEdit.validationErrors}
             />
           )
         }
@@ -471,6 +642,10 @@ export function ApplicantsDetailContents({
         <ApplicantGeneralIndividualBasicInfo
           applicant={individualData}
           maskSensitive={!personalInfoRevealed && individualData.approvalStatus !== 'approved'}
+          mode={individualDetailEdit.isEditing ? 'edit' : 'view'}
+          draft={individualDetailEdit.draft ?? undefined}
+          onDraftChange={individualDetailEdit.updateDraft}
+          validationErrors={individualDetailEdit.validationErrors}
         />
       )
     }
@@ -536,6 +711,17 @@ export function ApplicantsDetailContents({
     isVolunteer,
     isGeneralDetail,
     personalInfoRevealed,
+    institutionDetailEdit.isEditing,
+    institutionDetailEdit.draft,
+    institutionDetailEdit.updateDraft,
+    institutionDetailEdit.textbookOptions,
+    institutionDetailEdit.sameSchoolGradeOptions,
+    institutionDetailEdit.canApplyCombinedClass,
+    institutionDetailEdit.validationErrors,
+    individualDetailEdit.isEditing,
+    individualDetailEdit.draft,
+    individualDetailEdit.updateDraft,
+    individualDetailEdit.validationErrors,
   ])
 
   const tabDefs = isVolunteer

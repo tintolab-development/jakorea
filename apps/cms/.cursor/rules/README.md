@@ -37,6 +37,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [Schedule / calendar UX](./design/schedule-calendar-ux.md)  
 - [Calendar sub-right list](./design/calendar-sub-right-list.md) — `.calendar-list` / `.calendar-list-item` 공통 shell·mint hover  
 - [Cross table (행·열 교차 격자)](./design/cross-table.md) — `CrossTable` (`@/shared/ui/cross-table`)  
+- [Table td divider (값 셀 `|` 금지)](./design/table-td-divider.mdc) — `withProgramDetailTdDivider`, `DetailInfoForm.TdDivider`  
 - [Design requests](./design/design-requests.md)  
 
 ## Libraries
@@ -65,6 +66,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 ## Tables
 
 - [Table implementation](./tables/table-implementation.md) — Ant Table patterns  
+- [Table td divider (값 셀 `|` 금지)](./design/table-td-divider.mdc) — 디바이더 컴포넌트 필수  
 - [Table management](./tables/table-management.md) — TanStack table & URL sync  
 - [Status dropdown cell](./coding/status-dropdown-cell.md)  
 

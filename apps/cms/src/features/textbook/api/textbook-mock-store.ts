@@ -10,6 +10,26 @@ type TextbookSeedRow = Omit<TextbookRow, 'textbookNameEn' | 'educationStages'>
 
 const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   {
+    id: 'TB-109',
+    businessArea: '경제금융',
+    educationTarget: '초등학교',
+    grade: '4학년',
+    textbookName: '우리나라',
+    useStatus: 'USED',
+    registrant: '김민지',
+    registeredAt: '2026-03-28T09:00:00',
+  },
+  {
+    id: 'TB-110',
+    businessArea: '경제금융',
+    educationTarget: '초등학교',
+    grade: '5학년',
+    textbookName: '성공하는 경제생활',
+    useStatus: 'USED',
+    registrant: '이길동',
+    registeredAt: '2026-03-28T09:00:00',
+  },
+  {
     id: 'TB-130',
     businessArea: '기업가정신',
     educationTarget: '중학교',

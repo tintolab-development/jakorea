@@ -6,8 +6,10 @@
 import type { ReactNode } from 'react'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import { ApplicantAdminCommentSection } from '@/features/program/general/ui/applicant-detail/applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/applicant-detail/program-approval-status-detail-value'
 import { GeneralIndividualTeamRoleDropdown } from '@/features/program/general/ui/applicant-detail/general-individual-team-role-dropdown'
+import type { ApplicantIndividualEditDraft } from '@/features/program/general/lib/applicant-individual-detail-edit'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import {
   withProgramDetailTdDivider,
@@ -20,6 +22,10 @@ import './applicant-general-individual-basic-info.css'
 export interface ApplicantGeneralIndividualBasicInfoProps {
   applicant: GeneralIndividualApplicantRow
   maskSensitive?: boolean
+  mode?: 'view' | 'edit'
+  draft?: ApplicantIndividualEditDraft
+  onDraftChange?: (partial: Partial<ApplicantIndividualEditDraft>) => void
+  validationErrors?: Record<string, string>
 }
 
 function formatBirthDateAndAge(birthDate?: string, age?: number): string {
@@ -58,16 +64,36 @@ function splitAddressAfterGu(address: string): { head: string; tail: string } | 
   return { head: address.slice(0, end), tail: address.slice(end) }
 }
 
-function formatHomeAddressDisplay(address: string | undefined, mask: boolean): ReactNode {
-  if (!address?.trim()) return '-'
-  if (!mask) return address
-  const split = splitAddressAfterDong(address) ?? splitAddressAfterGu(address)
-  if (!split?.tail.trim()) {
-    const parts = address.trim().split(/\s+/).filter(Boolean)
-    if (parts.length <= 2) return parts.join(' ')
-    return `${parts[0]} ${parts[1]} …`
+function splitAddressForPrivacyBlur(address: string): { head: string; tail: string } | null {
+  return splitAddressAfterDong(address) ?? splitAddressAfterGu(address)
+}
+
+function HomeAddressDisplay({ address, mask }: { address: string | undefined; mask: boolean }) {
+  if (!address?.trim()) return <>-</>
+  if (!mask) return <>{address}</>
+
+  const split = splitAddressForPrivacyBlur(address)
+  if (!split) {
+    return (
+      <span className="applicant-general-individual-basic-info__address-blur" aria-hidden="true">
+        {address}
+      </span>
+    )
   }
-  return `${split.head} …`
+
+  const { head, tail } = split
+  if (!tail.trim()) {
+    return <>{head}</>
+  }
+
+  return (
+    <>
+      {head}
+      <span className="applicant-general-individual-basic-info__address-blur" aria-hidden="true">
+        {tail}
+      </span>
+    </>
+  )
 }
 
 function TableRowTwoCols({
@@ -128,9 +154,15 @@ function ProgramApprovalStatusValue({ applicant }: { applicant: GeneralIndividua
 export function ApplicantGeneralIndividualBasicInfo({
   applicant,
   maskSensitive = true,
+  mode = 'view',
+  draft,
+  onDraftChange,
+  validationErrors,
 }: ApplicantGeneralIndividualBasicInfoProps) {
   const detail = applicant.detail
   const shouldMask = maskSensitive && applicant.approvalStatus !== 'approved'
+  const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
+  const showAdminComment = applicant.approvalStatus === 'approved'
 
   const scheduleChangeCount =
     detail?.scheduleChangeCancelCount ?? 0
@@ -180,9 +212,11 @@ export function ApplicantGeneralIndividualBasicInfo({
       : detail.email
     : '-'
 
-  const homeAddressDisplay = formatHomeAddressDisplay(
-    detail?.homeAddressFull ?? applicant.homeAddress,
-    shouldMask
+  const homeAddressDisplay = (
+    <HomeAddressDisplay
+      address={detail?.homeAddressFull ?? applicant.homeAddress}
+      mask={shouldMask}
+    />
   )
 
   const id1365Display = detail?.id1365
@@ -207,6 +241,22 @@ export function ApplicantGeneralIndividualBasicInfo({
 
   return (
     <div className="applicant-general-individual-basic-info applicant-institution-basic-info">
+      {validationErrors?.form ? (
+        <div className="applicant-general-individual-basic-info__form-error">{validationErrors.form}</div>
+      ) : null}
+      {showAdminComment ? (
+        <ApplicantAdminCommentSection
+          adminComment={isEditMode && draft ? draft.adminComment : applicant.adminComment}
+          mode={isEditMode ? 'edit' : 'view'}
+          draftValue={draft?.adminComment ?? ''}
+          onDraftChange={
+            isEditMode && onDraftChange
+              ? value => onDraftChange({ adminComment: value })
+              : undefined
+          }
+          validationError={validationErrors?.adminComment}
+        />
+      ) : null}
       <section className="applicant-institution-basic-info__section">
         <h3 className="applicant-institution-basic-info__title">기본 정보</h3>
         <div className="applicant-institution-basic-info__basic-info-fields">
