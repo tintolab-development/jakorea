@@ -30,8 +30,14 @@ export interface ApplicantInstitutionDetailExtend {
   sexOffenseCheckRequest?: string
   /** 성범죄 경력 조회서 첨부 파일명 (표시용) */
   sexOffenseRecordAttachmentFileName?: string
+  /** 교재 마스터 id (일반 프로그램 기관 상세 수정) */
+  textbookId?: string
   /** 합반 신청 여부 (일반 프로그램 기관 상세) */
-  combinedClassApplication?: string
+  combinedClassApplication?: '신청' | '미신청'
+  /** 합반 대상 신청 id 목록 */
+  combinedClassPartnerApplicantIds?: string[]
+  /** 합반 대상 학년 표시용 */
+  combinedClassPartnerGrades?: string[]
   /** 대기 장소 안내 (일반 프로그램 기관 상세) */
   waitingPlaceGuide?: string
   /** 기타 특이사항 — 주차, 전달사항 등 (일반 프로그램 기관 상세) */
@@ -66,6 +72,8 @@ export interface ApplicantSchoolRow {
   participationRejectionReason?: string
   /** 승인/반려 알림 발송 일시 — 상세 승인 현황 행 표시 */
   approvalNotificationSentAt?: string
+  /** 신청 건별 관리자 코멘트 (회원 상세 adminComment와 별도) */
+  adminComment?: string
 }
 
 const SCHOOL_NAMES = [
@@ -211,7 +219,8 @@ function buildMockList(count: number, programIds?: string[]): ApplicantSchoolRow
 const APPLICANT_SCHOOL_1_DETAIL: ApplicantInstitutionDetailExtend = {
   addressDetail: '1층 교무실 이길동 선생님 앞',
   educationType: '온/오프라인',
-  textbookName: '미정',
+  textbookName: '성공하는 경제생활',
+  textbookId: 'TB-110',
   combinedClassApplication: '미신청',
   /** 원문 — UI에서 대기/반려 시 마스킹, 개인정보 상세보기 시 원문 표시 */
   teacherInfo:
@@ -259,12 +268,51 @@ export const MOCK_APPLICANT_INSTITUTIONS: ApplicantSchoolRow[] = (() => {
     row.educationGrade = '5학년'
     row.classCount = 4
     row.studentCount = 124
-    row.approvalStatus = 'pending'
+    row.approvalStatus = 'approved'
+    row.approvalNotificationSentAt = '2026.01.15 09:15:42'
+    row.programId = 'general-prog-scheduled-1'
+    row.adminComment = '교재 배송 일정 확인 후 연락 예정'
     row.teacherName = '이길동'
     row.contact = '062-1234-0000'
     row.desiredEducationPeriod = '26.04.20(월)~26.04.27(월)'
-    row.detail = APPLICANT_SCHOOL_1_DETAIL
+    row.detail = { ...APPLICANT_SCHOOL_1_DETAIL }
     row.sessions = APPLICANT_SCHOOL_1_SESSIONS
+  }
+  const rowJinwol4 = list.find(s => s.id === 'applicant-school-5')
+  if (rowJinwol4) {
+    rowJinwol4.schoolName = '진월초등학교'
+    rowJinwol4.region = '광주광역시 남구 광복마을4길 40'
+    rowJinwol4.educationGrade = '4학년'
+    rowJinwol4.classCount = 3
+    rowJinwol4.studentCount = 98
+    rowJinwol4.approvalStatus = 'approved'
+    rowJinwol4.approvalNotificationSentAt = '2026.01.14 10:00:00'
+    rowJinwol4.programId = 'general-prog-scheduled-1'
+    rowJinwol4.teacherName = '이길동'
+    rowJinwol4.detail = {
+      ...APPLICANT_SCHOOL_1_DETAIL,
+      textbookName: '성공하는 경제생활',
+      textbookId: 'TB-110',
+      combinedClassApplication: '미신청',
+    }
+  }
+  const rowJinwol6 = list.find(s => s.id === 'applicant-school-6')
+  if (rowJinwol6) {
+    rowJinwol6.schoolName = '진월초등학교'
+    rowJinwol6.region = '광주광역시 남구 광복마을4길 40'
+    rowJinwol6.educationGrade = '6학년'
+    rowJinwol6.classCount = 2
+    rowJinwol6.studentCount = 72
+    rowJinwol6.approvalStatus = 'approved'
+    rowJinwol6.approvalNotificationSentAt = '2026.01.14 11:30:00'
+    rowJinwol6.programId = 'general-prog-scheduled-1'
+    rowJinwol6.teacherName = '박지훈'
+    rowJinwol6.detail = {
+      ...APPLICANT_SCHOOL_1_DETAIL,
+      textbookName: '성공하는 경제생활',
+      textbookId: 'TB-110',
+      combinedClassApplication: '미신청',
+    }
   }
   const row2 = list.find(s => s.id === 'applicant-school-2')
   if (row2) {
@@ -305,14 +353,17 @@ export function patchApplicantSchoolForApprovalStatus(
 
 /**
  * 프로그램별 수강 신청 학교 목록 (모달용).
- * programId가 있으면 해당 프로그램에 연결된 행만 반환, 없으면 전체 목록 반환.
+ * - `programId`가 일치하는 행 + programId 미지정(legacy) 행을 함께 반환
+ * - 어떤 행에도 programId가 없으면 전체 목록 반환
  */
 export function getApplicantSchoolsByProgramId(programId: string): ApplicantSchoolRow[] {
-  const withProgramId = MOCK_APPLICANT_INSTITUTIONS.some(s => s.programId != null)
-  if (withProgramId) {
-    return MOCK_APPLICANT_INSTITUTIONS.filter(s => s.programId === programId)
+  const hasAnyProgramId = MOCK_APPLICANT_INSTITUTIONS.some(s => s.programId != null)
+  if (!hasAnyProgramId) {
+    return [...MOCK_APPLICANT_INSTITUTIONS]
   }
-  return [...MOCK_APPLICANT_INSTITUTIONS]
+  return MOCK_APPLICANT_INSTITUTIONS.filter(
+    s => s.programId === programId || s.programId == null
+  )
 }
 
 /**
@@ -327,4 +378,119 @@ export function updateApplicantSchoolApprovalStatus(
   if (row) {
     Object.assign(row, patchApplicantSchoolForApprovalStatus(row, approvalStatus))
   }
+}
+
+export interface ApplicantInstitutionDetailSavePayload {
+  adminComment?: string
+  educationGrade: string
+  classCount: number
+  studentCount: number
+  addressDetail?: string
+  educationType?: string
+  textbookId: string
+  textbookName: string
+  combinedClassApplication: '신청' | '미신청'
+  combinedClassPartnerApplicantIds: string[]
+}
+
+function buildCombinedClassDetailFields(
+  payload: ApplicantInstitutionDetailSavePayload,
+  partnerGrades: string[]
+): Partial<ApplicantInstitutionDetailExtend> {
+  const isApplied = payload.combinedClassApplication === '신청'
+  return {
+    textbookId: payload.textbookId,
+    textbookName: payload.textbookName,
+    addressDetail: payload.addressDetail,
+    educationType: payload.educationType,
+    combinedClassApplication: payload.combinedClassApplication,
+    combinedClassPartnerApplicantIds: isApplied ? payload.combinedClassPartnerApplicantIds : undefined,
+    combinedClassPartnerGrades: isApplied && partnerGrades.length > 0 ? partnerGrades : undefined,
+  }
+}
+
+function applyDetailSaveToRow(
+  row: ApplicantSchoolRow,
+  payload: ApplicantInstitutionDetailSavePayload,
+  partnerGrades: string[]
+): ApplicantSchoolRow {
+  const detailPatch = buildCombinedClassDetailFields(payload, partnerGrades)
+  const adminTrimmed = payload.adminComment?.trim()
+  return {
+    ...row,
+    educationGrade: payload.educationGrade,
+    classCount: payload.classCount,
+    studentCount: payload.studentCount,
+    adminComment: adminTrimmed ? adminTrimmed : undefined,
+    detail: {
+      ...row.detail,
+      ...detailPatch,
+    },
+  }
+}
+
+/** 단일 기관 신청 상세 필드 갱신 (mock) */
+export function patchApplicantInstitutionDetail(
+  schoolId: string,
+  payload: ApplicantInstitutionDetailSavePayload
+): ApplicantSchoolRow | null {
+  const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === schoolId)
+  if (!row) return null
+
+  const partnerGrades =
+    payload.combinedClassApplication === '신청'
+      ? payload.combinedClassPartnerApplicantIds
+          .map(id => MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === id)?.educationGrade)
+          .filter((grade): grade is string => Boolean(grade))
+      : []
+
+  const updated = applyDetailSaveToRow(row, payload, partnerGrades)
+  Object.assign(row, updated)
+  return { ...row }
+}
+
+/**
+ * 합반 연동 저장 — 현재 신청 + 선택된 partner 신청에 동일 교재·합반 정보 반영 (mock)
+ */
+export function patchApplicantInstitutionDetailWithCombinedClass(
+  sourceId: string,
+  payload: ApplicantInstitutionDetailSavePayload
+): ApplicantSchoolRow[] {
+  const sourceRow = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === sourceId)
+  if (!sourceRow) return []
+
+  const partnerIds =
+    payload.combinedClassApplication === '신청' ? payload.combinedClassPartnerApplicantIds : []
+  const allIds = [sourceId, ...partnerIds]
+
+  const updatedRows: ApplicantSchoolRow[] = []
+
+  for (const id of allIds) {
+    const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === id)
+    if (!row) continue
+
+    const rowPayload: ApplicantInstitutionDetailSavePayload = {
+      ...payload,
+      educationGrade: id === sourceId ? payload.educationGrade : row.educationGrade,
+      classCount: id === sourceId ? payload.classCount : row.classCount,
+      studentCount: id === sourceId ? payload.studentCount : row.studentCount,
+      combinedClassPartnerApplicantIds:
+        payload.combinedClassApplication === '신청'
+          ? allIds.filter(targetId => targetId !== id)
+          : [],
+    }
+
+    const partnerGradesForRow =
+      rowPayload.combinedClassApplication === '신청'
+        ? rowPayload.combinedClassPartnerApplicantIds
+            .map(partnerId => MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === partnerId)?.educationGrade)
+            .filter((grade): grade is string => Boolean(grade))
+        : []
+
+    const updated = applyDetailSaveToRow(row, rowPayload, partnerGradesForRow)
+    Object.assign(row, updated)
+    updatedRows.push({ ...row })
+  }
+
+  return updatedRows
 }
