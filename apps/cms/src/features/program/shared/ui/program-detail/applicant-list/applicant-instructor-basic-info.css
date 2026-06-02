@@ -219,17 +219,3 @@
   max-height: 72px;
   overflow-y: auto;
 }
-
-.applicant-instructor-basic-info__name-badge {
-  margin-left: 8px;
-  vertical-align: middle;
-
-  color: var(--default-BK) !important;
-  border-radius: 4px !important;
-  border: 1px solid rgba(195, 47, 74, 0.1) !important;
-  background: var(
-    --color-bg-red,
-    linear-gradient(0deg, rgba(195, 47, 74, 0.06) 0%, rgba(195, 47, 74, 0.06) 100%),
-    #fff
-  ) !important;
-}
