@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
+import { RichTextEditor } from '@/shared/rich-text'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
-import '@toast-ui/editor/dist/toastui-editor.css'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 
@@ -94,7 +94,7 @@ export function RecruitDetailInfoParagraph({
     [revokeThumb, thumbObjectUrl]
   )
 
-  const { editorHostRef } = useNoticeWysiwygEditor(true, '', wysiwygResetKey, {
+  const { editor, editorMinHeight } = useNoticeWysiwygEditor(true, '', wysiwygResetKey, {
     placeholder: '내용을 작성하세요',
   })
 
@@ -149,7 +149,9 @@ export function RecruitDetailInfoParagraph({
           fullRow
           edit={
             <div className="notice-register-modal__section notice-register-modal__section--editor">
-              <div className="notice-register-modal__editor-host" ref={editorHostRef} />
+              <div className="notice-register-modal__editor-host">
+                <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+              </div>
             </div>
           }
           view="-"
