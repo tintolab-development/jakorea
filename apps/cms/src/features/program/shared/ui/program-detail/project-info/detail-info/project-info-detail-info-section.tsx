@@ -14,6 +14,7 @@ import { FileSelectField } from '@/shared/ui/file-select-field'
 import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
 import { fileUploadService } from '@/entities/application/api/file-upload-service'
 import { useTemplateEditor } from '@/features/template/hooks/use-template-editor'
+import { RichTextEditor, RichTextViewer } from '@/shared/rich-text'
 import {
   DEFAULT_ADDITIONAL_HTML,
   DEFAULT_LEARNING_SUPPORT,
@@ -62,7 +63,7 @@ function useDetailInfoEditorBlock(
     return () => clearTimeout(t)
   }, [isEditMode])
 
-  const { editorHostRef, getHTML } = useTemplateEditor(
+  const { editor, editorMinHeight, getHTML } = useTemplateEditor(
     editorOpen,
     '',
     program.additionalContentHtml ?? undefined
@@ -95,7 +96,8 @@ function useDetailInfoEditorBlock(
 
   return {
     editorOpen,
-    editorHostRef,
+    editor,
+    editorMinHeight,
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
@@ -251,14 +253,16 @@ function AdditionalContentRow({
   isEditMode,
   isFormEdit,
   editorOpen,
-  editorHostRef,
+  editor,
+  editorMinHeight,
   showRequiredOnTh,
 }: {
   program: Program
   isEditMode: boolean
   isFormEdit: boolean
   editorOpen: boolean
-  editorHostRef: React.RefObject<HTMLDivElement | null>
+  editor: ReturnType<typeof useTemplateEditor>['editor']
+  editorMinHeight: string
   showRequiredOnTh: boolean
 }) {
   return (
@@ -273,7 +277,9 @@ function AdditionalContentRow({
         {isEditMode ? (
           <div className="program-detail-info-tab__additional-content program-detail-info-tab__additional-content--edit">
             {editorOpen ? (
-              <div ref={editorHostRef} className="program-detail-info-tab__editor-host" />
+              <div className="program-detail-info-tab__editor-host">
+                <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+              </div>
             ) : (
               <div className="program-detail-info-tab__editor-placeholder">로딩 중…</div>
             )}
@@ -289,11 +295,11 @@ function AdditionalContentRow({
                 fallback={FALLBACK_ADDITIONAL_SVG}
               />
             </div>
-            <div
-              className="program-detail-info-tab__editor-content toastui-editor-contents"
-              dangerouslySetInnerHTML={{
-                __html: program.additionalContentHtml || DEFAULT_ADDITIONAL_HTML,
-              }}
+            <RichTextViewer
+              content={program.additionalContentHtml || DEFAULT_ADDITIONAL_HTML}
+              contentFormat="html"
+              maxHeight="none"
+              className="program-detail-info-tab__editor-content"
             />
           </div>
         )}
@@ -383,7 +389,8 @@ export function DetailInfoSection({
 }: DetailInfoSectionProps) {
   const {
     editorOpen,
-    editorHostRef,
+    editor,
+    editorMinHeight,
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
@@ -460,7 +467,8 @@ export function DetailInfoSection({
           isEditMode={isEditMode}
           isFormEdit={isFormEdit}
           editorOpen={editorOpen}
-          editorHostRef={editorHostRef}
+          editor={editor}
+          editorMinHeight={editorMinHeight}
           showRequiredOnTh={false}
         />
         <AttachmentRowStandard
@@ -490,7 +498,8 @@ export function InstructorDetailInfoSection({
 }: InstructorDetailInfoSectionProps) {
   const {
     editorOpen,
-    editorHostRef,
+    editor,
+    editorMinHeight,
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
@@ -559,7 +568,8 @@ export function InstructorDetailInfoSection({
           isEditMode={isEditMode}
           isFormEdit={isFormEdit}
           editorOpen={editorOpen}
-          editorHostRef={editorHostRef}
+          editor={editor}
+          editorMinHeight={editorMinHeight}
           showRequiredOnTh={false}
         />
         <TextAreaFieldRow
@@ -609,7 +619,8 @@ export function VolunteerDetailInfoSection({
 }: VolunteerDetailInfoSectionProps) {
   const {
     editorOpen,
-    editorHostRef,
+    editor,
+    editorMinHeight,
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
@@ -684,7 +695,8 @@ export function VolunteerDetailInfoSection({
           isEditMode={isEditMode}
           isFormEdit={isFormEdit}
           editorOpen={editorOpen}
-          editorHostRef={editorHostRef}
+          editor={editor}
+          editorMinHeight={editorMinHeight}
           showRequiredOnTh={false}
         />
         <TextAreaFieldRow

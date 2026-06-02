@@ -465,13 +465,10 @@
 }
 
 /* 추가 내용 에디터: 테이블/텍스트필드와 동일한 옅은 회색 테두리·라운드 */
-.program-detail-info-tab__editor-host .toast-ui-editor-defaultUI {
+.program-detail-info-tab__editor-host .rich-text-editor {
   border: 1px solid #d9d9d9;
   border-radius: 0;
-}
-
-.program-detail-info-tab__editor-host .toast-ui-editor-main-container {
-  border-radius: 0;
+  min-height: 320px;
 }
 
 /* 추가 내용 td 이미지 래퍼: 확대보기 마스크 영역까지 200px로 제한 */
@@ -512,9 +509,15 @@
   color: var(--color-text-primary);
 }
 
-.program-detail-info-tab__editor-content .toastui-editor-contents,
-.program-detail-info-tab__editor-content:global(.toastui-editor-contents) {
+.program-detail-info-tab__editor-content.rich-text-viewer {
+  max-height: none;
   padding: 0;
+}
+
+.program-detail-info-tab__editor-content .rich-text-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text-primary);
 }
 
 .program-detail-info-tab__editor-content h1,

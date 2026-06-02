@@ -60,7 +60,6 @@ import {
   LnbIconProgress,
   LnbIconProjectInfo,
 } from './program-detail-lnb-icons'
-import '@toast-ui/editor/dist/toastui-editor.css'
 import './program-detail-fullpage-modal.css'
 
 export interface ProgramDetailFullPageModalProps {
