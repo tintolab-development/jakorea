@@ -34,8 +34,8 @@ Keep this doc and CSS in sync when changing numbers.
 ## Editor
 
 - Host `.notice-register-modal__editor-host`, height **369px**.  
-- Border on `.toastui-editor`: `1px solid #e0e0e0`, `border-radius: 8px`.  
-- `useNoticeWysiwygEditor` for open/reset sync.
+- Border on `.rich-text-editor`: `1px solid #e0e0e0`, `border-radius: 8px`.  
+- `useNoticeWysiwygEditor` + `RichTextEditor` / `RichTextToolbar` for open/reset sync.
 
 ## Attachments row
 

@@ -107,6 +107,7 @@
 | [certificate-template-implementation-summary.md](implementation/certificate-template-implementation-summary.md) | 수료증 템플릿 구현 |
 | [template-form-draft-local-save.md](implementation/template-form-draft-local-save.md) | 템플릿 양식 임시저장 구현 가이드 |
 | [form-surface-refactoring-guide.md](implementation/form-surface-refactoring-guide.md) | 템플릿 편집 ↔ 응답 작성 폼 리팩터링 가이드 (surface/JSON/로컬 renderer) |
+| [rich-text-editor-tiptap-migration.md](implementation/rich-text-editor-tiptap-migration.md) | Rich Text 에디터·뷰어 마이그레이션 (Toast UI → Tiptap) |
 | [instructor-settlement-payment-statement-issue-rules.md](features/instructor-settlement-payment-statement-issue-rules.md) | 강사 정산 지급명세 이슈 규칙 |
 | [instructor-fee-budget-criteria.md](settlement/instructor-fee-budget-criteria.md) | 강사 수당·예산 기준 |
 
