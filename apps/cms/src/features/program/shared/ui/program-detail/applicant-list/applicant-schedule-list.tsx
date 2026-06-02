@@ -1,10 +1,17 @@
 import { Empty, Checkbox } from 'antd'
 import type { Dayjs } from 'dayjs'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import { MOCK_APPLICANT_INSTRUCTORS } from '@/data/mock/applicant-instructors'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import { MOCK_APPLICANT_INSTITUTIONS } from '@/data/mock/applicant-institutions'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
+import { ApprovalStatusText } from '@/shared/components/approval-status-text'
+import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
+import { getInstructorCalendarSessionSummary } from './applicant-instructor-calendar-session'
+import {
+  getInstructorScheduleDispatchStats,
+  getInstructorScheduleDistanceKm,
+  LONG_DISTANCE_THRESHOLD_KM,
+} from './applicant-instructor-schedule-meta'
 import './applicant-calendar-view.css'
 
 /** 강사 캘린더 기관 집계 이벤트(대표 행 클릭 시) — 메타 제거 후 상세로 전달 */
@@ -28,21 +35,13 @@ interface ApplicantScheduleListProps {
   onSelectionChange: (keys: React.Key[]) => void
   onEventClick: (item: any) => void
   getColorForEvent?: (event: any) => ScheduleColorPair
+  /** 일반 프로그램 강사 캘린더 — 승인 배지·preferredSchool 회차 */
+  showApprovalStatus?: boolean
 }
-
-const LONG_DISTANCE_THRESHOLD_KM = 60
 
 const SCHOOL_BY_NAME = new Map<string, ApplicantSchoolRow>(
   MOCK_APPLICANT_INSTITUTIONS.map(s => [s.schoolName, s])
 )
-
-function stableHash(input: string): number {
-  let h = 0
-  for (let i = 0; i < input.length; i++) {
-    h = (Math.imul(31, h) + input.charCodeAt(i)) >>> 0
-  }
-  return h
-}
 
 function parsePrimaryInstructorName(raw?: string): string {
   if (!raw) return '-'
@@ -79,32 +78,25 @@ function getSessionTimeSummary(schoolName: string, fallbackPeriod?: string): str
   return '-'
 }
 
-function getDistanceKm(schoolName: string, instructorName: string, instructorAddress?: string): number {
-  const schoolRegion = SCHOOL_BY_NAME.get(schoolName)?.region ?? schoolName
-  const seed = `${schoolRegion}|${instructorAddress ?? ''}|${instructorName}`
-  return 20 + (stableHash(seed) % 121)
-}
-
-function getDispatchStats(instructorName: string): { dispatchCount: number; longDistanceCount: number } {
-  const approvedRows = MOCK_APPLICANT_INSTRUCTORS.filter(
-    row => row.instructorName === instructorName && row.approvalStatus === 'approved'
-  )
-  const longDistanceCount = approvedRows.filter(
-    row => getDistanceKm(row.schoolName, row.instructorName, row.address) > LONG_DISTANCE_THRESHOLD_KM
-  ).length
-  return {
-    dispatchCount: approvedRows.length,
-    longDistanceCount,
-  }
-}
-
 export function ApplicantScheduleList({
   events,
   selectedRowKeys,
   onSelectionChange,
   onEventClick,
   getColorForEvent,
+  showApprovalStatus = false,
 }: ApplicantScheduleListProps) {
+  const resolveSessionSummary = (
+    instructor: ApplicantInstructorRow,
+    schoolName: string,
+    fallbackPeriod?: string
+  ) => {
+    if (showApprovalStatus) {
+      const fromPreferred = getInstructorCalendarSessionSummary(instructor, schoolName)
+      if (fromPreferred !== '-') return fromPreferred
+    }
+    return getSessionTimeSummary(schoolName, fallbackPeriod)
+  }
   const handleToggleSelection = (id: React.Key) => {
     if (selectedRowKeys.includes(id)) {
       onSelectionChange(selectedRowKeys.filter(k => k !== id))
@@ -133,9 +125,14 @@ export function ApplicantScheduleList({
                   {institutionRows.map(inst => {
                     const isInstSelected = selectedRowKeys.includes(inst.id)
                     const instructorName = inst.instructorName || '-'
-                    const sessionSummary = getSessionTimeSummary(schoolName)
-                    const distanceKm = getDistanceKm(schoolName, instructorName, inst.address)
-                    const { dispatchCount, longDistanceCount } = getDispatchStats(instructorName)
+                    const sessionSummary = resolveSessionSummary(inst, schoolName)
+                    const distanceKm = getInstructorScheduleDistanceKm(
+                      schoolName,
+                      instructorName,
+                      inst.address
+                    )
+                    const { dispatchCount, longDistanceCount } =
+                      getInstructorScheduleDispatchStats(instructorName)
                     const isLongDistance = distanceKm > LONG_DISTANCE_THRESHOLD_KM
                     return (
                       <div
@@ -156,6 +153,12 @@ export function ApplicantScheduleList({
                           onClick={() => onEventClick(inst)}
                         >
                           <div className="applicant-schedule-item-title-row">
+                            {showApprovalStatus && inst.approvalStatus ? (
+                              <ApprovalStatusText
+                                status={inst.approvalStatus as ApprovalStatusKey}
+                                className="applicant-schedule-item-approval"
+                              />
+                            ) : null}
                             <span className="applicant-schedule-item-title">{schoolName}</span>
                             <span className="applicant-schedule-item-title-divider" aria-hidden>
                               |
@@ -200,16 +203,24 @@ export function ApplicantScheduleList({
               typeof originalItem?.instructorName === 'string'
                 ? originalItem.instructorName
                 : parsePrimaryInstructorName(originalItem?.assignedInstructorNames)
-            const sessionSummary = getSessionTimeSummary(
-              schoolName,
-              originalItem?.desiredEducationPeriod as string | undefined
-            )
-            const distanceKm = getDistanceKm(
+            const sessionSummary =
+              showApprovalStatus && originalItem && 'instructorName' in originalItem
+                ? resolveSessionSummary(
+                    originalItem as ApplicantInstructorRow,
+                    schoolName,
+                    originalItem?.desiredEducationPeriod as string | undefined
+                  )
+                : getSessionTimeSummary(
+                    schoolName,
+                    originalItem?.desiredEducationPeriod as string | undefined
+                  )
+            const distanceKm = getInstructorScheduleDistanceKm(
               schoolName,
               instructorName,
               originalItem?.address as string | undefined
             )
-            const { dispatchCount, longDistanceCount } = getDispatchStats(instructorName)
+            const { dispatchCount, longDistanceCount } =
+              getInstructorScheduleDispatchStats(instructorName)
             const isLongDistance = distanceKm > LONG_DISTANCE_THRESHOLD_KM
 
             return (
@@ -231,6 +242,14 @@ export function ApplicantScheduleList({
                   onClick={() => onEventClick(rowForCalendarDetailClick(originalItem))}
                 >
                   <div className="applicant-schedule-item-title-row">
+                    {showApprovalStatus &&
+                    originalItem &&
+                    typeof originalItem.approvalStatus === 'string' ? (
+                      <ApprovalStatusText
+                        status={originalItem.approvalStatus as ApprovalStatusKey}
+                        className="applicant-schedule-item-approval"
+                      />
+                    ) : null}
                     <span className="applicant-schedule-item-title">{schoolName}</span>
                     <span className="applicant-schedule-item-title-divider" aria-hidden>
                       |
