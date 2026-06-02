@@ -22,3 +22,72 @@
   white-space: pre-wrap;
   line-height: 150%;
 }
+
+.applicant-general-institution-basic-info__full-width-control {
+  width: 100%;
+}
+
+.applicant-general-institution-basic-info__field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.applicant-general-institution-basic-info__field-error,
+.applicant-general-institution-basic-info__form-error {
+  color: #c32f4a;
+  font-size: 13px;
+  line-height: 150%;
+}
+
+.applicant-general-institution-basic-info__form-error {
+  margin-bottom: -8px;
+}
+
+.applicant-general-institution-basic-info__combined-class-edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.applicant-general-institution-basic-info__combined-class-radios {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.applicant-general-institution-basic-info__combined-class-select {
+  flex: 1 1 180px;
+  min-width: 180px;
+}
+
+.applicant-general-institution-basic-info__class-count-edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.applicant-general-institution-basic-info__inline-number {
+  width: 88px;
+}
+
+.applicant-general-institution-basic-info__inline-suffix {
+  margin-right: 8px;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.applicant-general-institution-basic-info__education-type-radios {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.applicant-general-institution-basic-info .cms-select,
+.applicant-general-institution-basic-info .ant-input,
+.applicant-general-institution-basic-info .ant-input-number {
+  max-width: 100%;
+}
