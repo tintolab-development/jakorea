@@ -1,0 +1,68 @@
+/**
+ * Rich text 본문 타이포 — 구 `.toastui-editor-contents` 대체.
+ * 에디터·뷰어 공통 (ProseMirror `.rich-text-content`)
+ */
+
+.rich-text-content {
+  box-sizing: border-box;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 170%;
+  outline: none;
+}
+
+.rich-text-content p,
+.rich-text-content li,
+.rich-text-content td,
+.rich-text-content th {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 170%;
+}
+
+.rich-text-content h1,
+.rich-text-content h2,
+.rich-text-content h3 {
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.rich-text-content a {
+  color: var(--primary, #00897b);
+  text-decoration: underline;
+}
+
+.rich-text-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.rich-text-content table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.rich-text-content th,
+.rich-text-content td {
+  border: 1px solid var(--border-default, #e0e0e0);
+  padding: 8px;
+}
+
+.rich-text-viewer {
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 403px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.rich-text-viewer .rich-text-content {
+  min-height: 0;
+}
