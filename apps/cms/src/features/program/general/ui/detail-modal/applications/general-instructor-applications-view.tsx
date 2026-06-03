@@ -1,7 +1,7 @@
 import type { Program } from '@/types/domain'
 import { ApplicantList } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-list'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
-import './general-participant-applications.css'
+import './participant-applications.css'
 
 export interface GeneralInstructorApplicationsViewProps {
   program: Program
