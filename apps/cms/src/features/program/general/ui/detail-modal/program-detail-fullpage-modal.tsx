@@ -700,10 +700,12 @@ export function ProgramDetailFullPageModal({
   }
 
   const handleInstitutionsSave = () => {
+    setEditMode(null)
     institutionsTriggerSave()
   }
 
   const handleInstructorsSave = () => {
+    setEditMode(null)
     instructorsTriggerSave()
   }
 
@@ -735,6 +737,7 @@ export function ProgramDetailFullPageModal({
   })
 
   const handleVolunteersSave = () => {
+    setEditMode(null)
     volunteersTriggerSave()
   }
 

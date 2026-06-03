@@ -481,34 +481,23 @@ export function GeneralProgramDetailFullPageModal({
     setEditMode,
   ])
 
-  const handleRecruitmentSave = useCallback(async () => {
+  const handleRecruitmentSave = useCallback(() => {
     if (!displayProgram) return
+    setEditMode(null)
     if (recruitSubTab === 'institutions') {
-      const isValid = await institutionsForm.trigger()
-      if (!isValid) return
-      setEditMode(null)
       void institutionsTriggerSave()
       return
     }
     if (recruitSubTab === 'instructors') {
-      const isValid = await instructorsForm.trigger()
-      if (!isValid) return
-      setEditMode(null)
       void instructorsTriggerSave()
       return
     }
     if (recruitSubTab === 'volunteers') {
-      const isValid = await volunteersForm.trigger()
-      if (!isValid) return
-      setEditMode(null)
       void volunteersTriggerSave()
     }
   }, [
     displayProgram,
     recruitSubTab,
-    institutionsForm,
-    instructorsForm,
-    volunteersForm,
     institutionsTriggerSave,
     instructorsTriggerSave,
     volunteersTriggerSave,

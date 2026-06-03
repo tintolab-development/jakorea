@@ -41,6 +41,11 @@ const PLACEHOLDER_ADDITIONAL_IMAGE =
 const FALLBACK_ADDITIONAL_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='200' viewBox='0 0 600 200'%3E%3Crect fill='%23f5f5f5' width='600' height='200'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='14'%3E추가 내용 이미지%3C/text%3E%3C/svg%3E"
 
+/** 조회·수정 모드 동일 — mock 기본 HTML 포함 */
+function resolveAdditionalContentHtml(program: Program): string {
+  return program.additionalContentHtml?.trim() || DEFAULT_ADDITIONAL_HTML
+}
+
 function useDetailInfoEditorBlock(
   program: Program,
   isEditMode: boolean,
@@ -64,16 +69,18 @@ function useDetailInfoEditorBlock(
     return () => clearTimeout(t)
   }, [isEditMode])
 
+  const additionalContentHtml = resolveAdditionalContentHtml(program)
+
   const { editor, editorMinHeight, getHTML } = useTemplateEditor(
     editorOpen,
     '',
-    program.additionalContentHtml ?? undefined
+    additionalContentHtml
   )
   const getterRef = useRef<() => string>(() => '')
 
   useEffect(() => {
-    getterRef.current = () => (editorOpen ? getHTML() : (program.additionalContentHtml ?? ''))
-  }, [editorOpen, getHTML, program.additionalContentHtml])
+    getterRef.current = () => (editorOpen ? getHTML() : additionalContentHtml)
+  }, [editorOpen, getHTML, additionalContentHtml])
 
   useEffect(() => {
     if (!isEditMode) return
@@ -257,7 +264,7 @@ function AdditionalContentRow({
       <td>
         {isEditMode ? (
           <div className="program-detail-info-tab__additional-content program-detail-info-tab__additional-content--edit">
-            {editorOpen ? (
+            {editorOpen && editor ? (
               <div className="program-detail-info-tab__editor-host">
                 <RichTextEditor editor={editor} minHeight={editorMinHeight} />
               </div>
@@ -277,7 +284,7 @@ function AdditionalContentRow({
               />
             </div>
             <RichTextViewer
-              content={program.additionalContentHtml || DEFAULT_ADDITIONAL_HTML}
+              content={resolveAdditionalContentHtml(program)}
               contentFormat="html"
               maxHeight="none"
               className="program-detail-info-tab__editor-content"

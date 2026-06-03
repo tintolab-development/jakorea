@@ -1,5 +1,6 @@
 import { EditorContent } from '@tiptap/react'
 import { RichTextToolbar } from './rich-text-toolbar'
+import { isRichTextEditorReady } from './lib/editor-ready'
 import type { RichTextEditorProps } from './types'
 import './rich-text-content.css'
 import './rich-text-editor.css'
@@ -17,6 +18,19 @@ export function RichTextEditor({
   'aria-label': ariaLabel = '본문 편집',
 }: RichTextEditorProps) {
   const rootClass = ['rich-text-editor', className].filter(Boolean).join(' ')
+
+  if (!isRichTextEditorReady(editor)) {
+    return (
+      <div
+        className={rootClass}
+        style={minHeight != null ? { minHeight } : undefined}
+        data-rich-text-editor=""
+        aria-busy="true"
+      >
+        <div className="rich-text-editor__body rich-text-editor__body--loading">로딩 중…</div>
+      </div>
+    )
+  }
 
   const toolbarNode =
     toolbar ?? (showToolbar ? <RichTextToolbar editor={editor} /> : null)

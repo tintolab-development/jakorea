@@ -41,7 +41,7 @@
   .ant-col
   .cms-select,
 .program-managers-tab .unified-filter-card--single-row .labeled-search-input__input,
-.program-managers-tab .unified-filter-card--single-row .labeled-search-input .app-input {
+.program-managers-tab .unified-filter-card--single-row .labeled-search-input .cms-input {
   min-width: 0 !important;
 }
 

@@ -135,8 +135,8 @@
   height: auto;
 }
 
-/* LabeledSearchInput: 테두리·높이는 내부 __input에만 (AppInput 래퍼는 투명) */
-.program-progress-tab__filters .labeled-search-input .app-input {
+/* LabeledSearchInput: 테두리·높이는 내부 CmsInput에만 (래퍼는 투명) */
+.program-progress-tab__filters .labeled-search-input .cms-input {
   border: none !important;
   background: transparent !important;
   padding: 0 !important;

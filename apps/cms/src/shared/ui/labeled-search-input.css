@@ -1,5 +1,5 @@
 /**
- * 레이블이 있는 검색 인풋 스타일 (AppInput 래퍼 + borderless 내부)
+ * 레이블이 있는 검색 인풋 스타일 (CmsInput 래퍼 + borderless 내부)
  */
 
 .labeled-search-input {
@@ -26,7 +26,6 @@
   margin: 0;
 }
 
-.labeled-search-input__control.app-input,
 .labeled-search-input__control.cms-input {
   width: 100%;
   min-width: 0;
@@ -37,7 +36,7 @@
   font-size: var(--font-size-14);
 }
 
-.labeled-search-input .app-input .ant-input-affix-wrapper .ant-input-prefix {
+.labeled-search-input .cms-input .ant-input-affix-wrapper .ant-input-prefix {
   margin-inline-end: 8px;
 }
 

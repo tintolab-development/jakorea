@@ -177,7 +177,7 @@
   .applicant-details
   .table-filter-group__fields-inner
   .labeled-search-input
-  .app-input {
+  .cms-input {
   width: 100% !important;
   max-width: min(100%, var(--application-filter-column-width)) !important;
   min-width: 0 !important;

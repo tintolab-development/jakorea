@@ -20,7 +20,6 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import {
   ProgramDetailContactReadRow,
@@ -392,13 +391,11 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                     name="district"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsTextArea
+                      <CmsInput
                         {...field}
                         value={field.value ?? ''}
                         placeholder="상세 교육 대상을 입력하세요"
                         inputSize="medium"
-                        rows={1}
-                        expandableFromSingleRow
                         className="program-detail-info-tab__district-input"
                       />
                     )}
@@ -454,7 +451,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                           value={toDayjs(field.value)}
                           onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                           placeholder="합격자 발표일"
-                          width={240}
+                          width={190}
                         />
                       )}
                     />
@@ -466,13 +463,12 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                       name="resultAnnouncementMethod"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsTextArea
+                        <CmsInput
                           {...field}
                           value={field.value ?? ''}
                           placeholder="발표 방법 안내"
                           inputSize="medium"
-                          rows={1}
-                          expandableFromSingleRow
+                          width="100%"
                           className="program-detail-info-tab__result-method-input"
                         />
                       )}
@@ -500,13 +496,11 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                   <div className="program-detail-info-tab__contact-inputs program-detail-info-tab__contact-inputs--even">
                     <div className="program-detail-info-tab__contact-group">
                       <span className="program-detail-info-tab__contact-label">문의처</span>
-                      <CmsTextArea
+                      <CmsInput
                         placeholder="담당 문의처"
                         value={contactOrg}
                         readOnly
                         inputSize="medium"
-                        rows={1}
-                        expandableFromSingleRow
                         className="program-detail-info-tab__contact-name-input"
                       />
                     </div>
@@ -520,13 +514,11 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                         name="contactPhone"
                         control={form.control}
                         render={({ field }) => (
-                          <CmsTextArea
+                          <CmsInput
                             {...field}
                             value={field.value ?? ''}
                             placeholder="문의처 전화번호"
                             inputSize="medium"
-                            rows={1}
-                            expandableFromSingleRow
                             className="program-detail-info-tab__contact-phone-input"
                           />
                         )}
@@ -542,13 +534,11 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                         name="contactEmail"
                         control={form.control}
                         render={({ field }) => (
-                          <CmsTextArea
+                          <CmsInput
                             {...field}
                             value={field.value ?? ''}
                             placeholder="문의처 이메일"
                             inputSize="medium"
-                            rows={1}
-                            expandableFromSingleRow
                             className="program-detail-info-tab__contact-email-input"
                           />
                         )}
@@ -570,13 +560,12 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                     name="oneLineIntroduction"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsTextArea
+                      <CmsInput
                         {...field}
                         value={field.value ?? ''}
                         placeholder="비고란을 작성하세요 (없으면 -로 입력)"
                         inputSize="medium"
-                        rows={1}
-                        expandableFromSingleRow
+                        className="program-detail-info-tab__notes-input"
                       />
                     )}
                   />

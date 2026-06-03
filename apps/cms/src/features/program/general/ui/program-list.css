@@ -185,7 +185,7 @@
   .table-filter-group__fields-inner
   > .ant-col.table-filter-group__col--pct-width
   .labeled-search-input
-  .app-input,
+  .cms-input,
 .program-list-page--overview.program-list-page--scheduled-filters
   .filter-table-layout__filter
   .table-filter-group__fields-inner
@@ -218,7 +218,7 @@
 .program-list-content-wrapper--program-list-scheduled-filters
   .unified-filter-card__fields-inner
   .labeled-search-input
-  .app-input,
+  .cms-input,
 .program-list-content-wrapper--program-list-scheduled-filters
   .unified-filter-card__fields-inner
   .cms-select,

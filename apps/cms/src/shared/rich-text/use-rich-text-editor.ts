@@ -2,6 +2,7 @@ import { useEditor } from '@tiptap/react'
 import { useEffect, useMemo, useRef } from 'react'
 import { createRichTextExtensions } from './extensions'
 import { createRichTextEditorApi } from './lib/editor-api'
+import { isRichTextEditorReady } from './lib/editor-ready'
 import { getInitialEditorContent } from './lib/content'
 import type { RichTextEditorApi, UseRichTextEditorOptions } from './types'
 
@@ -49,14 +50,15 @@ export function useRichTextEditor({
         },
       },
       onCreate: ({ editor: instance }) => {
+        if (!isRichTextEditorReady(instance)) return
         onReadyRef.current?.(createRichTextEditorApi(instance))
       },
     },
-    [enabled, resetKey, placeholder]
+    [resetKey, placeholder]
   )
 
   useEffect(() => {
-    if (!editor || !enabled) return
+    if (!isRichTextEditorReady(editor) || !enabled) return
     editor.commands.setContent(content, {
       emitUpdate: false,
       contentType,
@@ -67,7 +69,7 @@ export function useRichTextEditor({
   }, [editor, enabled, resetKey, content, contentType, autofocus])
 
   useEffect(() => {
-    if (!editor) return
+    if (!isRichTextEditorReady(editor)) return
     editor.setEditable(enabled)
     if (!enabled) {
       editor.commands.blur()
@@ -75,7 +77,7 @@ export function useRichTextEditor({
   }, [editor, enabled])
 
   const api: RichTextEditorApi | null = useMemo(
-    () => (editor ? createRichTextEditorApi(editor) : null),
+    () => (isRichTextEditorReady(editor) ? createRichTextEditorApi(editor) : null),
     [editor]
   )
 

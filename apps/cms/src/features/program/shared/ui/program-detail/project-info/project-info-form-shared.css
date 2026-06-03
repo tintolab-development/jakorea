@@ -615,7 +615,7 @@
   max-width: 100%;
 }
 
-.program-detail-info-tab__date-range--interview .program-detail-info-tab__date-picker {
+.program-detail-info-tab__date-range--interview .cms-datepicker.program-detail-info-tab__date-picker {
   flex: 0 0 auto;
   width: 190px !important;
   max-width: 190px;
@@ -639,17 +639,32 @@
 
 .program-detail-info-tab__result-row:has(.program-detail-info-tab__result-row-divider) {
   gap: 0;
+  flex-wrap: wrap;
+}
+
+/* DetailInfoForm 수정 슬롯: 결과·문의처 flex 행이 라벨 옆 폭을 채움 */
+.detail-info-form__field-content--edit > .program-detail-info-tab__result-row,
+.detail-info-form__field-content--edit > .program-detail-info-tab__contact-inputs {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.program-detail-info-tab__result-row > .paragraph-date-picker {
+  flex: 0 0 auto;
+  flex-shrink: 0;
 }
 
 /* 상세 테이블 공통: DatePicker 래퍼 고정 190px */
-.app-datepicker.program-detail-info-tab__date-picker {
+.cms-datepicker.program-detail-info-tab__date-picker:not(.cms-datepicker--explicit-width) {
   width: 190px !important;
   max-width: 190px;
   flex-shrink: 0;
   box-sizing: border-box;
 }
 
-.app-datepicker.program-detail-info-tab__date-picker .ant-picker {
+.cms-datepicker.program-detail-info-tab__date-picker .cms-datepicker__picker,
+.cms-datepicker.program-detail-info-tab__date-picker .ant-picker {
   width: 100% !important;
 }
 
@@ -661,14 +676,31 @@
   box-sizing: border-box;
 }
 
-/* 결과 발표·합격 안내 행: 텍스트 필드는 같은 td 내 DatePicker(190px) 제외 남은 폭 */
+/* 결과 발표·합격 안내 행: CmsInput은 DatePicker 제외 남은 폭(테이블·DetailInfoForm 공통) */
 .program-detail-info-tab__table
   td
   .program-detail-info-tab__result-row
-  .app-input.program-detail-info-tab__result-method-input {
-  flex: 1 1 auto;
+  .cms-input.program-detail-info-tab__result-method-input,
+.detail-info-form__field-content
+  .program-detail-info-tab__result-row
+  .cms-input.program-detail-info-tab__result-method-input {
+  flex: 1 1 180px;
   min-width: 0;
   width: auto !important;
+  max-width: none;
+}
+
+.detail-info-form__field-content
+  .program-detail-info-tab__result-row
+  .cms-input.program-detail-info-tab__result-method-input
+  .cms-input__control,
+.program-detail-info-tab__table
+  td
+  .program-detail-info-tab__result-row
+  .cms-input.program-detail-info-tab__result-method-input
+  .cms-input__control {
+  width: 100% !important;
+  min-width: 0;
   max-width: none;
 }
 
@@ -691,16 +723,26 @@
   flex: 1 1 auto;
 }
 
-/* 테이블 값 셀: 텍스트 AppInput — 단독이면 100%, flex 행은 하위에서 덮어씀 */
+/* 테이블 값 셀: CmsInput — 단독이면 100%, flex 행은 하위에서 덮어씀 */
 .program-detail-info-tab__table
   td
-  .app-input:not(.program-detail-info-tab__capacity-input):not(
+  .cms-input:not(.program-detail-info-tab__capacity-input):not(
     .program-detail-info-tab__curriculum-time-input
   ):not(.program-detail-info-tab__max-class-count-input):not(.program-kpi-target-section__input) {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0;
   box-sizing: border-box;
+}
+
+.program-detail-info-tab__table
+  td
+  .cms-input:not(.program-detail-info-tab__capacity-input):not(
+    .program-detail-info-tab__curriculum-time-input
+  ):not(.program-detail-info-tab__max-class-count-input):not(.program-kpi-target-section__input)
+  .cms-input__control {
+  width: 100% !important;
+  min-width: 0;
 }
 
 /* 강사 정보 탭: 문의처 3필드 행 */
@@ -736,12 +778,8 @@
   padding: 0 2px;
 }
 
-.program-detail-info-tab__capacity-input {
+.program-detail-info-tab__capacity-input.cms-input .cms-input__control {
   width: 80px;
-  border-radius: 6px;
-}
-
-.program-detail-info-tab__capacity-input.app-input {
   border-radius: 6px;
 }
 
@@ -846,7 +884,7 @@
   box-sizing: border-box;
 }
 
-.program-detail-info-tab__contact-inputs .app-input {
+.program-detail-info-tab__contact-inputs .cms-input .cms-input__control {
   border-radius: 6px;
   height: 40px;
   box-sizing: border-box;
@@ -913,9 +951,19 @@
   flex-shrink: 0;
 }
 
-.program-detail-info-tab__contact-inputs--even .program-detail-info-tab__contact-group .app-input {
-  height: 40px;
+.program-detail-info-tab__contact-inputs--even .program-detail-info-tab__contact-group .cms-input {
+  flex: 1 1 160px;
+  min-width: 0;
   box-sizing: border-box;
+}
+
+.program-detail-info-tab__contact-inputs--even
+  .program-detail-info-tab__contact-group
+  .cms-input
+  .cms-input__control {
+  width: 100% !important;
+  min-width: 0;
+  height: 40px;
 }
 
 /* 상세 정보 탭: 읽기 전용 블록 / TextArea (TextAreaFieldRow 와 동일 규칙) */

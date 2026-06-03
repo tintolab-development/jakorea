@@ -100,7 +100,7 @@
 .applicant-details .table-filter-group__fields-inner .ant-col .ant-select,
 .applicant-details .table-filter-group__fields-inner .ant-col .cms-select,
 .applicant-details .table-filter-group__fields-inner .labeled-search-input__input,
-.applicant-details .table-filter-group__fields-inner .labeled-search-input .app-input,
+.applicant-details .table-filter-group__fields-inner .labeled-search-input .cms-input,
 .applicant-details .table-filter-group__fields-inner .ant-col .ant-picker-range,
 .applicant-details .table-filter-group__fields-inner .ant-col .cms-datepicker {
   min-width: 0 !important;

@@ -1,5 +1,5 @@
 /**
- * CMS 전용 텍스트 인풋 (AppInput과 동일하게 Ant Input + borderless 래퍼)
+ * CMS 전용 텍스트 인풋 — Ant Input borderless + `.cms-input__control` 크롬
  * - size: large | medium | small
  * - 왼쪽 아이콘 선택
  */
