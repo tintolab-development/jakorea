@@ -45,7 +45,10 @@ export function getGeneralParticipantTypes(program: Program): GeneralProgramPart
 }
 
 export function hasGeneralInstructorApplications(program: Program): boolean {
-  return getGeneralParticipantTypes(program).includes('teacher_instructor')
+  const types = getGeneralParticipantTypes(program)
+  if (types.includes('teacher_instructor')) return true
+  /** 기관(학교) 신청 프로그램은 기관 신청 목록과 함께 강사 신청 목록 LNB 노출 */
+  return types.includes('school_institution')
 }
 
 export function hasGeneralVolunteerApplications(program: Program): boolean {

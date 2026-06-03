@@ -8,6 +8,7 @@ import { CmsButton, type CmsButtonVariant } from '@/shared/ui'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import { useApplicantInstitutionDetailEdit } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
+import { useApplicantInstructorDetailEdit } from '@/features/program/general/hooks/use-applicant-instructor-detail-edit'
 import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
@@ -15,6 +16,7 @@ import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
 import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-info'
 import { ApplicantGeneralInstitutionBasicInfo } from '@/features/program/general/ui/applicant-detail/institution-basic-info'
 import { ApplicantGeneralIndividualBasicInfo } from '@/features/program/general/ui/applicant-detail/individual-basic-info'
+import { ApplicantGeneralInstructorBasicInfo } from '@/features/program/general/ui/applicant-detail/applicant-general-instructor-basic-info'
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import {
@@ -25,7 +27,11 @@ import { SchoolDetailStudentListSection } from '@/features/program/general/ui/sc
 import { ApplicantInstitutionInstructorAssignTab } from './applicant-institution-instructor-assign-tab'
 import './applicants-detail-contents.css'
 
-export type ApplicantType = 'institutions' | 'instructors' | 'volunteers' | 'individual-applications'
+export type ApplicantType =
+  | 'institutions'
+  | 'instructors'
+  | 'volunteers'
+  | 'individual-applications'
 
 export type ApplicantDetailVariant = 'legacy' | 'general'
 
@@ -93,7 +99,7 @@ function ApplicantHeaderActionsExtra({
             revealed={personalInfoRevealed}
             cmsVariant={a.variant}
             cmsSize="large"
-            width={a.size === "filter-wide" ? 180 : 160}
+            width={a.size === 'filter-wide' ? 180 : 160}
             disabled={a.disabled}
             onClick={a.onClick ?? (() => {})}
           />
@@ -102,7 +108,7 @@ function ApplicantHeaderActionsExtra({
             key={a.key}
             variant={a.variant}
             size="large"
-            width={a.size === "filter-wide" ? 180 : 160}
+            width={a.size === 'filter-wide' ? 180 : 160}
             disabled={a.disabled}
             title={a.title}
             onClick={a.onClick}
@@ -257,6 +263,10 @@ function resolveApplicantHeaderItems(params: {
   isEditingIndividualDetail?: boolean
   onEnterIndividualEdit?: () => void
   onSaveIndividualEdit?: () => void
+  isGeneralInstructorEditEnabled?: boolean
+  isEditingInstructorDetail?: boolean
+  onEnterInstructorEdit?: () => void
+  onSaveInstructorEdit?: () => void
 }): ApplicantHeaderActionItem[] | null {
   const {
     applicantId,
@@ -283,6 +293,10 @@ function resolveApplicantHeaderItems(params: {
     isEditingIndividualDetail = false,
     onEnterIndividualEdit,
     onSaveIndividualEdit,
+    isGeneralInstructorEditEnabled = false,
+    isEditingInstructorDetail = false,
+    onEnterInstructorEdit,
+    onSaveInstructorEdit,
   } = params
 
   if (isApprovedInstitution) {
@@ -315,9 +329,16 @@ function resolveApplicantHeaderItems(params: {
     ]
   }
   if (isApprovedInstructor) {
+    const editButton =
+      isGeneralInstructorEditEnabled && onEnterInstructorEdit && onSaveInstructorEdit
+        ? isEditingInstructorDetail
+          ? headerBtnIndividualSaveInfo(onSaveInstructorEdit)
+          : headerBtnIndividualEditInfo(onEnterInstructorEdit)
+        : headerBtnEditInfoPreparing()
+
     return [
       headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState),
-      headerBtnEditInfoPreparing(),
+      editButton,
       headerBtnPrivacy(onRevealPersonalInfo),
     ]
   }
@@ -344,6 +365,8 @@ interface ApplicantsDetailContentsProps {
   onInstitutionDetailSaved?: (rows: ApplicantSchoolRow[]) => void
   /** 일반 프로그램 개인 상세 수정 — 목록 동기화용 */
   onIndividualDetailSaved?: (row: GeneralIndividualApplicantRow) => void
+  /** 일반 프로그램 강사 상세 수정 — 목록 동기화용 */
+  onInstructorDetailSaved?: (row: ApplicantInstructorRow) => void
   onBack: () => void
   onApprove: (id: string) => void
   onReject: (id: string) => void
@@ -361,6 +384,7 @@ export function ApplicantsDetailContents({
   institutionList = [],
   onInstitutionDetailSaved,
   onIndividualDetailSaved,
+  onInstructorDetailSaved,
   onBack: _onBack,
   onApprove,
   onReject,
@@ -422,6 +446,9 @@ export function ApplicantsDetailContents({
   const isGeneralIndividualEditEnabled =
     isGeneralDetail && isApprovedIndividual && individualData != null
 
+  const isGeneralInstructorEditEnabled =
+    isGeneralDetail && isApprovedInstructor && instructorData != null
+
   const institutionDetailEdit = useApplicantInstitutionDetailEdit({
     institution: isGeneralInstitutionEditEnabled ? institutionData : null,
     program,
@@ -435,6 +462,13 @@ export function ApplicantsDetailContents({
     applicant: isGeneralIndividualEditEnabled ? individualData : null,
     onSaved: row => {
       onIndividualDetailSaved?.(row)
+    },
+  })
+
+  const instructorDetailEdit = useApplicantInstructorDetailEdit({
+    instructor: isGeneralInstructorEditEnabled ? instructorData : null,
+    onSaved: row => {
+      onInstructorDetailSaved?.(row)
     },
   })
 
@@ -518,6 +552,12 @@ export function ApplicantsDetailContents({
       onSaveIndividualEdit: () => {
         individualDetailEdit.saveEdit()
       },
+      isGeneralInstructorEditEnabled,
+      isEditingInstructorDetail: instructorDetailEdit.isEditing,
+      onEnterInstructorEdit: instructorDetailEdit.enterEdit,
+      onSaveInstructorEdit: () => {
+        instructorDetailEdit.saveEdit()
+      },
     })
     if (!items) return null
     return <ApplicantHeaderActionsExtra items={items} personalInfoRevealed={personalInfoRevealed} />
@@ -530,8 +570,12 @@ export function ApplicantsDetailContents({
     individualDetailEdit.enterEdit,
     individualDetailEdit.isEditing,
     individualDetailEdit.saveEdit,
+    instructorDetailEdit.enterEdit,
+    instructorDetailEdit.isEditing,
+    instructorDetailEdit.saveEdit,
     isGeneralInstitutionEditEnabled,
     isGeneralIndividualEditEnabled,
+    isGeneralInstructorEditEnabled,
     cancelApprovalState,
     isApprovedInstructor,
     isApprovedIndividual,
@@ -652,6 +696,21 @@ export function ApplicantsDetailContents({
     if (isInstructor && instructorData) {
       const d = instructorData
       if (activeTab === 'application') {
+        if (isGeneralDetail) {
+          return (
+            <div className="applicant-info-section applicant-info-section--instructor">
+              <ApplicantGeneralInstructorBasicInfo
+                instructor={d}
+                maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
+                mode={instructorDetailEdit.isEditing ? 'edit' : 'view'}
+                draft={instructorDetailEdit.draft ?? undefined}
+                onDraftChange={instructorDetailEdit.updateDraft}
+                validationErrors={instructorDetailEdit.validationErrors}
+              />
+              <ApplicantInstructorResume instructor={d} />
+            </div>
+          )
+        }
         return (
           <div className="applicant-info-section applicant-info-section--instructor">
             <ApplicantInstructorBasicInfo
@@ -722,6 +781,10 @@ export function ApplicantsDetailContents({
     individualDetailEdit.draft,
     individualDetailEdit.updateDraft,
     individualDetailEdit.validationErrors,
+    instructorDetailEdit.isEditing,
+    instructorDetailEdit.draft,
+    instructorDetailEdit.updateDraft,
+    instructorDetailEdit.validationErrors,
   ])
 
   const tabDefs = isVolunteer

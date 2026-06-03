@@ -63,6 +63,84 @@
   align-items: center;
 }
 
+.applicant-calendar-set {
+  --calendar-sub-right-list-min-width: 280px;
+  --calendar-sub-right-list-max-width: 400px;
+  --applicant-general-instructor-calendar-panel-height: var(--calendar-main-month-min-height);
+  margin-top: 0;
+}
+
+/* 지급조서 캘린더와 동일 — 좌·우 열 높이 stretch, 우측 = 좌측 월간 캘린더 min-height */
+.applicant-calendar-set.applicant-calendar-set--general-instructor {
+  align-items: start;
+  max-height: var(--applicant-general-instructor-calendar-panel-height);
+}
+
+.applicant-calendar-set.applicant-calendar-set--general-instructor:has(.calendar-week--time-grid) {
+  --applicant-general-instructor-calendar-panel-height: var(--calendar-main-week-min-height);
+}
+
+.applicant-calendar-set--general-instructor .calendar-main-container {
+  height: var(--applicant-general-instructor-calendar-panel-height);
+  min-height: var(--applicant-general-instructor-calendar-panel-height);
+  max-height: var(--applicant-general-instructor-calendar-panel-height);
+  overflow: visible;
+}
+
+.applicant-calendar-set--general-instructor .calendar-main-container > .calendar-main {
+  height: var(--applicant-general-instructor-calendar-panel-height);
+  min-height: var(--applicant-general-instructor-calendar-panel-height);
+  max-height: var(--applicant-general-instructor-calendar-panel-height);
+}
+
+.applicant-calendar-set .calendar-main-container,
+.applicant-calendar-set .calendar-main-container > .calendar-main {
+  min-width: 0;
+}
+
+.applicant-calendar-sub-right-list {
+  padding: 20px;
+  background: var(--default-WT, #fff);
+  border: 1px solid var(--color-border-light, #f0f0f0);
+  border-radius: 16px;
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.applicant-calendar-set--general-instructor .applicant-calendar-sub-right-list {
+  height: var(--applicant-general-instructor-calendar-panel-height);
+  min-height: var(--applicant-general-instructor-calendar-panel-height);
+  max-height: var(--applicant-general-instructor-calendar-panel-height);
+  align-self: start;
+}
+
+.applicant-calendar-set--general-instructor .applicant-calendar-sub-right-list {
+  padding: 20px;
+}
+
+.applicant-calendar-sub-right-list__school-filter {
+  flex-shrink: 0;
+  width: 100%;
+  margin-bottom: 18px;
+}
+
+.applicant-calendar-sub-right-list__school-filter .ant-select {
+  width: 100%;
+}
+
+.applicant-calendar-sub-right-list__school-filter .ant-select-selector {
+  min-height: 48px;
+  border-radius: 8px;
+}
+
+.applicant-calendar-set--general-instructor .general-instructor-calendar-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
 .applicant-calendar-right .applicant-schedule-item--selected {
   background: #fcfcfc;
   border-color: #f0f0f0;

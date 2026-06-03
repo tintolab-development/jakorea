@@ -8,10 +8,7 @@ import { useLocation, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
-import {
-  buildSearchParams,
-  makeBreadcrumbItem,
-} from '@/shared/lib/detail-fullpage-query-stack'
+import { buildSearchParams, makeBreadcrumbItem } from '@/shared/lib/detail-fullpage-query-stack'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import type { Program } from '@/types/domain'
 import {
@@ -44,6 +41,7 @@ import { programDetailInstitutionsEditSchema } from '@/features/program/shared/m
 import { GeneralSurveyManagementView } from './survey-management/survey-management-view'
 import { ProgramManagersTab } from '../program-managers-tab'
 import { GeneralParticipantApplicationsView } from './applications/participant-applications-view'
+import { GeneralInstructorApplicationsView } from './applications/general-instructor-applications-view'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
@@ -144,7 +142,10 @@ function normalizeGeneralDetailParams(
   } else if (lnb === 'volunteer_applications') {
     if (!showVolunteer) setInvalid('info', 'info')
     else if (!isVolunteerTabValid(tab, interview)) {
-      setInvalid('volunteer_applications', defaultTabForLnb('volunteer_applications', interview, surveyKeys))
+      setInvalid(
+        'volunteer_applications',
+        defaultTabForLnb('volunteer_applications', interview, surveyKeys)
+      )
     }
   } else if (lnb === 'progress') {
     if (!(PROGRESS_TABS as readonly string[]).includes(tab)) {
@@ -247,13 +248,19 @@ export function GeneralProgramDetailFullPageModal({
   const [searchParams, setSearchParams] = useSearchParams()
   const programId = program?.id ?? programIdHint ?? searchParams.get('programId') ?? undefined
 
-  const { program: detailProgram, loading, sponsorName, canWrite, updateProgram, setSelectedProgram } =
-    useProgramDetail(open ? programId : undefined)
+  const {
+    program: detailProgram,
+    loading,
+    sponsorName,
+    canWrite,
+    updateProgram,
+    setSelectedProgram,
+  } = useProgramDetail(open ? programId : undefined)
   const displayProgram = useMemo(() => {
     return (
       detailProgram ??
       program ??
-      (programId ? resolveGeneralProgramForDetail(programId) ?? null : null)
+      (programId ? (resolveGeneralProgramForDetail(programId) ?? null) : null)
     )
   }, [detailProgram, program, programId])
 
@@ -297,11 +304,7 @@ export function GeneralProgramDetailFullPageModal({
   )
 
   const isEditModeInfo =
-    open &&
-    activeLnb === 'info' &&
-    activeTab === 'info' &&
-    editTab === 'info' &&
-    !!displayProgram
+    open && activeLnb === 'info' && activeTab === 'info' && editTab === 'info' && !!displayProgram
 
   const infoForm = useGeneralProgramCommonInfoEditForm({
     program: displayProgram,
@@ -520,13 +523,19 @@ export function GeneralProgramDetailFullPageModal({
   }, [])
 
   useEffect(() => {
-    if (!open || activeLnb !== 'institution_applications') {
+    if (
+      !open ||
+      (activeLnb !== 'institution_applications' && activeLnb !== 'instructor_applications')
+    ) {
       setApplicantDetailMeta(null)
     }
   }, [open, activeLnb])
 
   const handleModalClose = useCallback(() => {
-    if (activeLnb === 'institution_applications' && applicantCloseHandlerRef.current?.()) {
+    if (
+      (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications') &&
+      applicantCloseHandlerRef.current?.()
+    ) {
       return
     }
     onClose()
@@ -568,12 +577,7 @@ export function GeneralProgramDetailFullPageModal({
 
     const lnbLabel = generalLnbBreadcrumbLabel(activeLnb, participantApplicationsLnbLabel)
     const childLabel = generalChildBreadcrumbLabel(activeLnb, activeTab, surveyItems)
-    const lnbTab = generalLnbBreadcrumbTargetTab(
-      activeLnb,
-      activeTab,
-      interviewEnabled,
-      surveyKeys
-    )
+    const lnbTab = generalLnbBreadcrumbTargetTab(activeLnb, activeTab, interviewEnabled, surveyKeys)
     const lnbParams = buildSearchParams(searchParams, {
       delete: GENERAL_DETAIL_QUERY_PARAMS,
       set: {
@@ -602,7 +606,8 @@ export function GeneralProgramDetailFullPageModal({
     )
 
     const hasParticipantApplicationDetail =
-      applicantDetailMeta != null && activeLnb === 'institution_applications'
+      applicantDetailMeta != null &&
+      (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications')
 
     if (!childLabel) {
       items.push(
@@ -629,7 +634,8 @@ export function GeneralProgramDetailFullPageModal({
   if (!open) return null
 
   const modalTitle =
-    applicantDetailMeta && activeLnb === 'institution_applications'
+    applicantDetailMeta &&
+    (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications')
       ? applicantDetailMeta.title
       : displayProgram
         ? resolveGeneralProgramDisplayTitle(displayProgram)
@@ -637,96 +643,106 @@ export function GeneralProgramDetailFullPageModal({
 
   return (
     <>
-    <DetailFullPageModal
-      open={open}
-      onClose={handleModalClose}
-      title={modalTitle}
-      headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
-      className="program-detail-fullpage-modal general-detail-fullpage-modal program-detail-fullpage-modal--program-list-overview"
-      sidebar={
-        programId ? (
-          <GeneralProgramDetailSidebar
-            activeLnb={activeLnb}
-            activeTab={activeTab}
-            participantApplicationsLnbLabel={participantApplicationsLnbLabel}
-            showInstructorApplications={showInstructorApplications}
-            showVolunteerApplications={showVolunteerApplications}
-            volunteerInterviewEnabled={interviewEnabled}
-            surveyItems={surveyItems}
-            onSelectChildTab={setLnbTab}
-          />
-        ) : null
-      }
-    >
-      {loading && !displayProgram ? (
-        <div className="detail-fullpage-modal__loading">
-          <Spin size="large" />
-        </div>
-      ) : displayProgram ? (
-        <>
-          {activeLnb === 'info' && activeTab === 'info' ? (
-            <GeneralProgramDetailCommonInfoView
-              program={displayProgram}
-              sponsorName={sponsorName}
-              isEditMode={isEditModeInfo}
-              form={infoForm}
-              canWrite={canWrite}
-              onEdit={handleInfoEdit}
-              onSave={handleInfoSave}
+      <DetailFullPageModal
+        open={open}
+        onClose={handleModalClose}
+        title={modalTitle}
+        headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
+        className="program-detail-fullpage-modal general-detail-fullpage-modal program-detail-fullpage-modal--program-list-overview"
+        sidebar={
+          programId ? (
+            <GeneralProgramDetailSidebar
+              activeLnb={activeLnb}
+              activeTab={activeTab}
+              participantApplicationsLnbLabel={participantApplicationsLnbLabel}
+              showInstructorApplications={showInstructorApplications}
+              showVolunteerApplications={showVolunteerApplications}
+              volunteerInterviewEnabled={interviewEnabled}
+              surveyItems={surveyItems}
+              onSelectChildTab={setLnbTab}
             />
-          ) : activeLnb === 'info' && activeTab === 'recruitment' ? (
-            <GeneralProgramRecruitmentView
-              program={displayProgram}
-              sponsorName={sponsorName}
-              activeRecruitTab={recruitSubTab}
-              onRecruitTabChange={handleRecruitSubTabChange}
-              showInstructorTab={showInstructorApplications}
-              showVolunteerTab={showVolunteerApplications}
-              canWrite={canWrite}
-              isEditModeInstitutions={isEditModeInstitutions}
-              institutionsForm={isEditModeInstitutions ? institutionsForm : undefined}
-              registerInstitutionsAdditionalHtml={registerInstitutionsAdditionalHtml}
-              isEditModeInstructors={isEditModeInstructors}
-              instructorsForm={isEditModeInstructors ? instructorsForm : undefined}
-              registerInstructorsAdditionalHtml={registerInstructorsAdditionalHtml}
-              isEditModeVolunteers={isEditModeVolunteers}
-              volunteersForm={isEditModeVolunteers ? volunteersForm : undefined}
-              registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
-              onEdit={handleRecruitmentEdit}
-              onSave={handleRecruitmentSave}
-            />
-          ) : activeLnb === 'survey' ? (
-            <GeneralSurveyManagementView program={displayProgram} activeTab={activeTab} />
-          ) : activeLnb === 'managers' && displayProgram.id ? (
-            <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
-              <ProgramManagersTab programId={displayProgram.id} />
-            </div>
-          ) : activeLnb === 'institution_applications' ? (
-            <div className="program-detail-fullpage-modal__info-tab">
-              <GeneralParticipantApplicationsView
+          ) : null
+        }
+      >
+        {loading && !displayProgram ? (
+          <div className="detail-fullpage-modal__loading">
+            <Spin size="large" />
+          </div>
+        ) : displayProgram ? (
+          <>
+            {activeLnb === 'info' && activeTab === 'info' ? (
+              <GeneralProgramDetailCommonInfoView
                 program={displayProgram}
-                listTitle={participantApplicationsLnbLabel}
-                onRegisterApplicantCloseHandler={fn => {
-                  applicantCloseHandlerRef.current = fn
-                }}
-                onApplicantDetailMetaChange={handleApplicantDetailMetaChange}
+                sponsorName={sponsorName}
+                isEditMode={isEditModeInfo}
+                form={infoForm}
+                canWrite={canWrite}
+                onEdit={handleInfoEdit}
+                onSave={handleInfoSave}
               />
-            </div>
-          ) : (
-            <div
-              className="general-detail-fullpage-modal__main"
-              aria-label={
-                generalChildBreadcrumbLabel(activeLnb, activeTab, surveyItems) ??
-                generalLnbBreadcrumbLabel(activeLnb, participantApplicationsLnbLabel)
-              }
-            />
-          )}
-        </>
-      ) : (
-        <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
-      )}
-    </DetailFullPageModal>
-    <ProgramDetailSponsorDetailOverlay />
+            ) : activeLnb === 'info' && activeTab === 'recruitment' ? (
+              <GeneralProgramRecruitmentView
+                program={displayProgram}
+                sponsorName={sponsorName}
+                activeRecruitTab={recruitSubTab}
+                onRecruitTabChange={handleRecruitSubTabChange}
+                showInstructorTab={showInstructorApplications}
+                showVolunteerTab={showVolunteerApplications}
+                canWrite={canWrite}
+                isEditModeInstitutions={isEditModeInstitutions}
+                institutionsForm={isEditModeInstitutions ? institutionsForm : undefined}
+                registerInstitutionsAdditionalHtml={registerInstitutionsAdditionalHtml}
+                isEditModeInstructors={isEditModeInstructors}
+                instructorsForm={isEditModeInstructors ? instructorsForm : undefined}
+                registerInstructorsAdditionalHtml={registerInstructorsAdditionalHtml}
+                isEditModeVolunteers={isEditModeVolunteers}
+                volunteersForm={isEditModeVolunteers ? volunteersForm : undefined}
+                registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
+                onEdit={handleRecruitmentEdit}
+                onSave={handleRecruitmentSave}
+              />
+            ) : activeLnb === 'survey' ? (
+              <GeneralSurveyManagementView program={displayProgram} activeTab={activeTab} />
+            ) : activeLnb === 'managers' && displayProgram.id ? (
+              <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
+                <ProgramManagersTab programId={displayProgram.id} />
+              </div>
+            ) : activeLnb === 'institution_applications' ? (
+              <div className="program-detail-fullpage-modal__info-tab">
+                <GeneralParticipantApplicationsView
+                  program={displayProgram}
+                  listTitle={participantApplicationsLnbLabel}
+                  onRegisterApplicantCloseHandler={fn => {
+                    applicantCloseHandlerRef.current = fn
+                  }}
+                  onApplicantDetailMetaChange={handleApplicantDetailMetaChange}
+                />
+              </div>
+            ) : activeLnb === 'instructor_applications' ? (
+              <div className="program-detail-fullpage-modal__info-tab">
+                <GeneralInstructorApplicationsView
+                  program={displayProgram}
+                  onRegisterApplicantCloseHandler={fn => {
+                    applicantCloseHandlerRef.current = fn
+                  }}
+                  onApplicantDetailMetaChange={handleApplicantDetailMetaChange}
+                />
+              </div>
+            ) : (
+              <div
+                className="general-detail-fullpage-modal__main"
+                aria-label={
+                  generalChildBreadcrumbLabel(activeLnb, activeTab, surveyItems) ??
+                  generalLnbBreadcrumbLabel(activeLnb, participantApplicationsLnbLabel)
+                }
+              />
+            )}
+          </>
+        ) : (
+          <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
+        )}
+      </DetailFullPageModal>
+      <ProgramDetailSponsorDetailOverlay />
     </>
   )
 }

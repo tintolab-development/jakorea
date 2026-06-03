@@ -232,7 +232,7 @@
   line-height: 150%;
 }
 
-/* 첨부 있음: 첨부 블록 하단 ↔ 본문 24px — ToastUiMarkdownViewer 래퍼 */
+/* 첨부 있음: 첨부 블록 하단 ↔ 본문 24px — RichTextViewer 래퍼 */
 .admin-notice-detail-page__attachments + .admin-notice-detail-page__body {
   margin-top: 24px;
 }

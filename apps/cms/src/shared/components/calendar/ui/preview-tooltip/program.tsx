@@ -4,6 +4,7 @@ import {
   type ScheduleColorPair,
 } from '@/features/program/shared/ui/program-schedule-colors'
 import type { CalendarItem } from '../../model/calendar-item'
+import { getInstructorTooltipSessionLabel } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-calendar-session'
 
 import './program-preview.css'
 
@@ -26,16 +27,18 @@ function calendarItemsToPopoverRows(
 
 function getProgramPreviewRowParts(
   item: Record<string, unknown> | null | undefined
-): { title: string; location: string; countLabel: string } | null {
+): { title: string; location: string; countLabel: string; sessionLabel?: string } | null {
   if (!item) return null
   const summary = item.calendarInstitutionSummary as
     | { applicantCount: number; regionDisplay: string }
     | undefined
   if (summary && typeof item.schoolName === 'string') {
+    const sessionLabel = getInstructorTooltipSessionLabel(item)
     return {
       title: item.schoolName,
       location: summary.regionDisplay || '-',
       countLabel: `신청 : ${summary.applicantCount}명`,
+      ...(sessionLabel ? { sessionLabel } : {}),
     }
   }
   if (typeof item.schoolName === 'string' && 'region' in item && item.region != null) {
@@ -117,6 +120,14 @@ export function ProgramPreviewTooltipBody({
               |
             </span>
             <span className="program-preview-item__text">{parts.countLabel}</span>
+            {parts.sessionLabel ? (
+              <>
+                <span className="program-preview-item__sep" aria-hidden>
+                  |
+                </span>
+                <span className="program-preview-item__text">{parts.sessionLabel}</span>
+              </>
+            ) : null}
           </div>
         )
       })}

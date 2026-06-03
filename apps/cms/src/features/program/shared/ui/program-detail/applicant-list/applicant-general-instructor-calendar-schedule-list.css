@@ -1,0 +1,204 @@
+/**
+ * 일반 프로그램 강사 신청 캘린더 — 우측 일별 카드 (스크린샷 스펙)
+ */
+
+.general-instructor-calendar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.general-instructor-calendar-list--empty {
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.general-instructor-calendar-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 14px 16px 16px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  box-sizing: border-box;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.general-instructor-calendar-card--pending {
+  background: #fff4f6;
+  border-color: #f4dce2;
+}
+
+.general-instructor-calendar-card--approved {
+  background: #edf8f9;
+  border-color: #d7eef0;
+}
+
+.general-instructor-calendar-card--rejected {
+  background: #faf7ff;
+  border-color: #eee6f6;
+}
+
+.general-instructor-calendar-card--selected {
+  background: var(--default-WT, #fff);
+  border: 2px solid var(--JA-mint-01, #01a1af);
+  box-shadow:
+    0 0 4px rgba(0, 136, 148, 0.06),
+    0 4px 12px rgba(0, 136, 148, 0.14);
+}
+
+.general-instructor-calendar-card__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.general-instructor-calendar-card__body:focus-visible {
+  outline: 2px solid var(--JA-mint-01, #01a1af);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.general-instructor-calendar-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.general-instructor-calendar-card__school {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.general-instructor-calendar-card__header-sep {
+  flex-shrink: 0;
+  color: #d4d4d4;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.general-instructor-calendar-card__badge {
+  flex-shrink: 0;
+}
+
+.general-instructor-calendar-card__session {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 150%;
+  color: #8c8c8c;
+}
+
+.general-instructor-calendar-card__instructor,
+.general-instructor-calendar-card__round {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.general-instructor-calendar-card__sep {
+  flex-shrink: 0;
+  color: #d4d4d4;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.general-instructor-calendar-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.general-instructor-calendar-card__tag {
+  display: inline-flex;
+  padding: 4px 8px 3px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  border: 1px solid #e6e6e6;
+  background: var(--default-WT, #fff);
+  color: var(--default-BK, #3d3d3d);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.general-instructor-calendar-card__tag--mint {
+  border-color: var(--JA-mint-01, #01a1af);
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.general-instructor-calendar-card__checkbox {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  transition: background-color 0.2s;
+}
+
+.general-instructor-calendar-card--selected .general-instructor-calendar-card__checkbox {
+  background: rgba(1, 161, 175, 0.14);
+}
+
+.general-instructor-calendar-card__checkbox:hover {
+  background: rgba(1, 161, 175, 0.14);
+}
+
+.general-instructor-calendar-card__checkbox .ant-checkbox-wrapper {
+  align-items: center;
+}
+
+.general-instructor-calendar-card__checkbox .ant-checkbox {
+  width: 20px;
+  height: 20px;
+  top: 0;
+}
+
+.general-instructor-calendar-card__checkbox .ant-checkbox .ant-checkbox-inner {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.general-instructor-calendar-card__checkbox .ant-checkbox .ant-checkbox-inner::after {
+  inset-block-start: 45%;
+}

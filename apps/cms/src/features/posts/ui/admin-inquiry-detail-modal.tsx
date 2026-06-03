@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { getAdminInquiryDetail, submitAdminInquiryReply } from '@/features/posts/api/admin-inquiry-mock-store'
 import type { AdminInquiryDetail } from '@/features/posts/model/admin-inquiry-management.types'
-import { ToastUiMarkdownViewer } from '@/shared/components/toast-ui-markdown-viewer'
+import { RichTextViewer } from '@/shared/rich-text'
 import { CmsButton, ContentModal } from '@/shared/ui'
 import './admin-inquiry-detail-modal.css'
 
@@ -180,9 +180,10 @@ export function AdminInquiryDetailModal({
                       className="admin-inquiry-detail-modal__cell admin-inquiry-detail-modal__cell--value admin-inquiry-detail-modal__cell--multiline"
                       colSpan={3}
                     >
-                      <ToastUiMarkdownViewer
+                      <RichTextViewer
                         markdown={detail.body}
                         className="admin-inquiry-detail-modal__body-viewer"
+                        maxHeight="none"
                       />
                     </td>
                   </tr>
@@ -208,9 +209,10 @@ export function AdminInquiryDetailModal({
             ) : (
               <div className="admin-inquiry-detail-modal__answer-readonly">
                 {detail.answerMarkdown && detail.answerMarkdown.length > 0 ? (
-                  <ToastUiMarkdownViewer
+                  <RichTextViewer
                     markdown={detail.answerMarkdown}
                     className="admin-inquiry-detail-modal__answer-viewer"
+                    maxHeight="none"
                   />
                 ) : (
                   <span className="admin-inquiry-detail-modal__answer-placeholder">등록된 답변이 없습니다.</span>

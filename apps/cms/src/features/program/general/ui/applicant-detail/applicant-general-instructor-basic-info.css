@@ -1,0 +1,54 @@
+/**
+ * 일반 프로그램 — 강사 유형 신청 상세
+ */
+
+.applicant-general-instructor-basic-info.applicant-institution-basic-info {
+  margin-top: 0;
+}
+
+.applicant-general-instructor-basic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.applicant-general-instructor-basic-info .applicant-institution-basic-info__section {
+  margin-top: 0;
+  gap: 32px;
+}
+
+.applicant-general-instructor-basic-info .applicant-institution-basic-info__basic-info-fields {
+  gap: 16px;
+}
+
+.applicant-general-instructor-basic-info__name-badge {
+  margin-left: 8px;
+}
+
+.applicant-general-instructor-basic-info__affiliation-cell {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.applicant-general-instructor-basic-info__employment-badge.app-status-badge {
+  flex-shrink: 0;
+}
+
+.applicant-general-instructor-basic-info__form-error {
+  color: #c32f4a;
+  font-size: 13px;
+  line-height: 150%;
+  margin-bottom: -8px;
+}
+
+/* 자택 주소: 읍·면·동(또는 구) 이후 가우시안 블러 */
+.applicant-general-instructor-basic-info__address-blur {
+  display: inline-block;
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+  user-select: none;
+  -webkit-user-select: none;
+  vertical-align: baseline;
+}

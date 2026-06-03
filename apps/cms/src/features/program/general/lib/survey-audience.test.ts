@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
-import { getGeneralParticipantApplicationsLnbLabel } from './detail-meta'
+import {
+  getGeneralParticipantApplicationsLnbLabel,
+  hasGeneralInstructorApplications,
+} from './detail-meta'
 import {
   getDefaultGeneralSatisfactionAudience,
   getGeneralSatisfactionAudienceTabs,
@@ -81,5 +84,16 @@ describe('general survey audience', () => {
         })
       )
     ).toBe('참여자 신청 목록')
+  })
+
+  it('기관 신청 프로그램은 teacher_instructor 없이도 강사 신청 목록 LNB를 노출한다', () => {
+    expect(
+      hasGeneralInstructorApplications(
+        program({ generalParticipantTypes: ['school_institution'] })
+      )
+    ).toBe(true)
+    expect(
+      hasGeneralInstructorApplications(program({ generalParticipantTypes: ['individual'] }))
+    ).toBe(false)
   })
 })

@@ -167,6 +167,26 @@
   padding: 32px 0 0;
 }
 
+.applicant-info-section--instructor:has(.applicant-general-instructor-basic-info) {
+  gap: 32px;
+  padding-top: 0;
+}
+
+/* general 강사 상세 — 탭 trailing 버튼 영역 ↔ 관리자 코멘트: 16px */
+.detail-fullpage-modal.general-program-detail-fullpage-modal
+  .applicant-contents:has(.applicant-general-instructor-basic-info)
+  .applicant-contents__tabs.cms-text-tabs
+  .cms-text-tabs__row,
+.applicant-contents:has(.applicant-general-instructor-basic-info)
+  .applicant-contents__tabs.cms-text-tabs
+  .cms-text-tabs__row {
+  padding-bottom: 16px;
+}
+
+.applicant-info-section--instructor:has(.applicant-general-instructor-basic-info) .applicant-instructor-resume {
+  gap: 32px;
+}
+
 .instructor-resume-section {
   display: flex;
   flex-direction: column;

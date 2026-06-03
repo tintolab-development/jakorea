@@ -90,7 +90,7 @@ export function useGeminiRecruitmentAddForm(open: boolean) {
   }, [open])
 
   const editorOpen = open && hydrated
-  const { editorHostRef, getMarkdown } = useNoticeWysiwygEditor(
+  const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
     editorOpen,
     trainingContentMarkdown,
     `${WYSIWYG_RESET_KEY}-${hydrated ? 'ready' : 'pending'}`,
@@ -134,7 +134,8 @@ export function useGeminiRecruitmentAddForm(open: boolean) {
     setTrainingRequestPeriod,
     minStudentCount,
     handleMinStudentCountChange,
-    editorHostRef,
+    editor,
+    editorMinHeight,
     buildSaveSnapshot,
   }
 }
