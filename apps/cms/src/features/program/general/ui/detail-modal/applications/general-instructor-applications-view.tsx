@@ -15,7 +15,7 @@ export function GeneralInstructorApplicationsView({
   onApplicantDetailMetaChange,
 }: GeneralInstructorApplicationsViewProps) {
   return (
-    <div className="general-participant-applications general-instructor-applications">
+    <div className="participant-applications general-instructor-applications">
       <ApplicantList
         menu="instructors"
         program={program}

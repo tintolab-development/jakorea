@@ -3,6 +3,9 @@
  * 강의 신청 강사 목록 (필터: 학교명, 강사명, 결재 현황)
  */
 
+import type { SchoolTeacherEmploymentStatus } from '@/types/user'
+export type ApplicantInstructorLectureFeeBasisType = 'program' | 'special_lecture' | 'other_labor'
+
 export type ApplicantInstructorApprovalStatusKey = 'pending' | 'rejected' | 'approved'
 
 /** 희망 배정 학교 1~4순위 (상세 모달 희망 배정 학교 섹션) */
@@ -69,8 +72,10 @@ export interface ApplicantInstructorRow {
   evaluationGrade?: string
   /** 강사비 등급 (예: 3급 강사비) — JA 평가 등급과 별도 */
   instructorFeeGradeLabel?: string
-  /** 소속 재직 여부 — true일 때 general 상세 소속 옆 재직중 배지 */
+  /** 소속 재직 여부 — affiliationEmploymentStatus 미지정 시 general 상세 배지 fallback */
   affiliationIsCurrentlyEmployed?: boolean
+  /** 소속 재직 현황 — general 상세 소속 td 내 변경 가능 배지 */
+  affiliationEmploymentStatus?: SchoolTeacherEmploymentStatus
   /** JA 강의 경력 (신규|1년 미만|1~3년|3년 이상 등) */
   teachingExperience?: string
   /** 한줄소개 (강사 상세 모달 기본 정보 탭) */
@@ -123,6 +128,12 @@ export interface ApplicantInstructorRow {
   managerComment?: string
   /** 승인 완료 시 기본 정보 하단: 강의비 책정 기준 (예: 특강 강사비 | 915,000원) */
   lectureFeeBasisDisplay?: string
+  /** 강의비 책정 기준 — 유형 */
+  lectureFeeBasisType?: ApplicantInstructorLectureFeeBasisType
+  /** 강의비 책정 기준 — 단위 (예: 1회 기준) */
+  lectureFeeMeasure?: string
+  /** 강의비 책정 기준 — 금액(숫자만) */
+  lectureFeeAmount?: string
   /** 사업소득자 여부 (예: 해당 없음) — general 상세에서 승인 전에도 표시 */
   businessIncomeEarnerStatus?: string
   /** 승인 완료 시 알림 발송 일시 (프로그램 승인 현황 옆 표시) */
@@ -482,12 +493,19 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
     const managerComment =
       status === 'approved' ? '정보 재검토 정보 재확인 필요, 입금기입이 다르네요.' : undefined
     const rejectionReason = status === 'rejected' ? '인원 초과' : undefined
+    const lectureFeeBasisType: ApplicantInstructorLectureFeeBasisType | undefined =
+      status === 'approved' ? 'special_lecture' : undefined
+    const lectureFeeMeasure = status === 'approved' ? '1회 기준' : undefined
+    const lectureFeeAmount = status === 'approved' ? '915000' : undefined
     const lectureFeeBasisDisplay =
-      status === 'approved' ? '특강 강사비 | 915,000원' : undefined
+      status === 'approved' ? '특강 강사비 | 1회 기준 | 915,000원' : undefined
     const businessIncomeEarnerStatus = '해당 없음'
     const affiliation = AFFILIATION_SCHOOLS[i % AFFILIATION_SCHOOLS.length]
-    const affiliationIsCurrentlyEmployed =
-      affiliation !== '개인' && affiliation !== '삼성전자' ? true : i % 3 === 0
+    const affiliationEmploymentStatus: SchoolTeacherEmploymentStatus | undefined =
+      affiliation !== '개인' && affiliation !== '삼성전자'
+        ? (['ACTIVE', 'ON_LEAVE', 'TRANSFERRED'] as const)[i % 3]
+        : undefined
+    const affiliationIsCurrentlyEmployed = affiliationEmploymentStatus === 'ACTIVE'
     const instructorFeeGradeLabel = INSTRUCTOR_FEE_GRADE_LABELS[i % INSTRUCTOR_FEE_GRADE_LABELS.length]
     const approvalNotificationSentAt =
       status === 'approved' ? '2026.01.15 09:15:42' : undefined
@@ -516,6 +534,7 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
       appliedAt: `2026.01.${(10 + (i % 20)).toString().padStart(2, '0')}`,
       affiliation,
       affiliationIsCurrentlyEmployed,
+      affiliationEmploymentStatus,
       instructorFeeGradeLabel,
       approvalStatus: status,
       schoolName: SCHOOL_NAMES[i % SCHOOL_NAMES.length],
@@ -530,6 +549,9 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
       preferredSchools,
       managerComment,
       lectureFeeBasisDisplay,
+      lectureFeeBasisType,
+      lectureFeeMeasure,
+      lectureFeeAmount,
       businessIncomeEarnerStatus,
       approvalNotificationSentAt,
       ...resumeSample,
@@ -574,7 +596,11 @@ export function patchApplicantInstructorForApprovalStatus(
     return {
       ...row,
       approvalStatus,
-      lectureFeeBasisDisplay: row.lectureFeeBasisDisplay ?? '특강 강사비 | 915,000원',
+      lectureFeeBasisType: row.lectureFeeBasisType ?? 'special_lecture',
+      lectureFeeMeasure: row.lectureFeeMeasure ?? '1회 기준',
+      lectureFeeAmount: row.lectureFeeAmount ?? '915000',
+      lectureFeeBasisDisplay:
+        row.lectureFeeBasisDisplay ?? '특강 강사비 | 1회 기준 | 915,000원',
       businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
       approvalNotificationSentAt: formatApprovalNotificationSentAt(),
     }
@@ -583,6 +609,9 @@ export function patchApplicantInstructorForApprovalStatus(
     ...row,
     approvalStatus,
     lectureFeeBasisDisplay: undefined,
+    lectureFeeBasisType: undefined,
+    lectureFeeMeasure: undefined,
+    lectureFeeAmount: undefined,
     businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
     approvalNotificationSentAt: undefined,
   }
@@ -604,6 +633,12 @@ export function updateApplicantInstructorApprovalStatus(
 
 export interface ApplicantInstructorDetailSavePayload {
   managerComment?: string
+  lectureFeeBasisType?: ApplicantInstructorLectureFeeBasisType
+  lectureFeeMeasure?: string
+  lectureFeeAmount?: string
+  lectureFeeBasisDisplay?: string
+  instructorFeeGradeLabel?: string
+  businessIncomeEarnerStatus?: string
 }
 
 export function patchApplicantInstructorDetail(
@@ -615,5 +650,29 @@ export function patchApplicantInstructorDetail(
 
   const adminTrimmed = payload.managerComment?.trim()
   row.managerComment = adminTrimmed ? adminTrimmed : undefined
+
+  if (payload.lectureFeeBasisType !== undefined) {
+    row.lectureFeeBasisType = payload.lectureFeeBasisType
+  }
+  if (payload.lectureFeeMeasure !== undefined) {
+    row.lectureFeeMeasure = payload.lectureFeeMeasure
+  } else if (payload.lectureFeeBasisType === 'program') {
+    row.lectureFeeMeasure = undefined
+  }
+  if (payload.lectureFeeAmount !== undefined) {
+    row.lectureFeeAmount = payload.lectureFeeAmount
+  } else if (payload.lectureFeeBasisType === 'program') {
+    row.lectureFeeAmount = undefined
+  }
+  if (payload.lectureFeeBasisDisplay !== undefined) {
+    row.lectureFeeBasisDisplay = payload.lectureFeeBasisDisplay
+  }
+  if (payload.instructorFeeGradeLabel !== undefined) {
+    row.instructorFeeGradeLabel = payload.instructorFeeGradeLabel
+  }
+  if (payload.businessIncomeEarnerStatus !== undefined) {
+    row.businessIncomeEarnerStatus = payload.businessIncomeEarnerStatus
+  }
+
   return { ...row }
 }

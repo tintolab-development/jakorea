@@ -1,0 +1,135 @@
+import type {
+  ApplicantInstructorLectureFeeBasisType,
+  ApplicantInstructorRow,
+} from '@/data/mock/applicant-instructors'
+
+export type { ApplicantInstructorLectureFeeBasisType } from '@/data/mock/applicant-instructors'
+
+export type ApplicantInstructorBusinessIncomeStatus = '해당' | '해당 없음'
+
+export const LECTURE_FEE_BASIS_TYPE_OPTIONS: {
+  value: ApplicantInstructorLectureFeeBasisType
+  label: string
+}[] = [
+  { value: 'program', label: '프로그램 기준' },
+  { value: 'special_lecture', label: '특강 강사비' },
+  { value: 'other_labor', label: '기타 인건비' },
+]
+
+export const LECTURE_FEE_MEASURE_OPTIONS: { value: string; label: string }[] = [
+  { value: '1회 기준', label: '1회 기준' },
+]
+
+const LECTURE_FEE_BASIS_TYPE_LABEL: Record<ApplicantInstructorLectureFeeBasisType, string> = {
+  program: '프로그램 기준',
+  special_lecture: '특강 강사비',
+  other_labor: '기타 인건비',
+}
+
+export function lectureFeeBasisTypeLabel(type: ApplicantInstructorLectureFeeBasisType): string {
+  return LECTURE_FEE_BASIS_TYPE_LABEL[type]
+}
+
+export function parseBusinessIncomeStatus(
+  value: string | undefined
+): ApplicantInstructorBusinessIncomeStatus {
+  return value?.trim() === '해당' ? '해당' : '해당 없음'
+}
+
+export function parseLectureFeeAmountDigits(raw: string | undefined): string {
+  return (raw ?? '').replace(/[^\d]/g, '')
+}
+
+export function formatLectureFeeAmountWon(amountDigits: string | undefined): string {
+  const digits = parseLectureFeeAmountDigits(amountDigits)
+  if (!digits) return ''
+  return `${Number.parseInt(digits, 10).toLocaleString('ko-KR')}원`
+}
+
+export function formatLectureFeeAmountInput(amountDigits: string | undefined): string {
+  const digits = parseLectureFeeAmountDigits(amountDigits)
+  if (!digits) return ''
+  return Number.parseInt(digits, 10).toLocaleString('ko-KR')
+}
+
+function inferLectureFeeBasisTypeFromDisplay(
+  display: string
+): ApplicantInstructorLectureFeeBasisType | null {
+  const t = display.trim()
+  if (!t) return null
+  if (/프로그램\s*기준/.test(t)) return 'program'
+  if (/특강/.test(t)) return 'special_lecture'
+  if (/기타\s*인건비/.test(t)) return 'other_labor'
+  return null
+}
+
+export interface ResolvedLectureFeeBasis {
+  type: ApplicantInstructorLectureFeeBasisType
+  measure: string
+  amount: string
+}
+
+export function resolveLectureFeeBasisFromRow(row: ApplicantInstructorRow): ResolvedLectureFeeBasis {
+  if (row.lectureFeeBasisType) {
+    return {
+      type: row.lectureFeeBasisType,
+      measure: row.lectureFeeMeasure?.trim() || LECTURE_FEE_MEASURE_OPTIONS[0]!.value,
+      amount: parseLectureFeeAmountDigits(row.lectureFeeAmount),
+    }
+  }
+
+  const display = row.lectureFeeBasisDisplay?.trim()
+  if (!display) {
+    return {
+      type: 'special_lecture',
+      measure: LECTURE_FEE_MEASURE_OPTIONS[0]!.value,
+      amount: '915000',
+    }
+  }
+
+  const inferredType = inferLectureFeeBasisTypeFromDisplay(display)
+  if (inferredType === 'program') {
+    return {
+      type: 'program',
+      measure: LECTURE_FEE_MEASURE_OPTIONS[0]!.value,
+      amount: '',
+    }
+  }
+
+  const segments = display.split('|').map(s => s.trim()).filter(Boolean)
+  const type =
+    inferredType ??
+    (segments[0]?.includes('특강')
+      ? 'special_lecture'
+      : segments[0]?.includes('기타')
+        ? 'other_labor'
+        : 'special_lecture')
+
+  const amountSegment = segments.find(s => /[\d,]+/.test(s)) ?? segments[segments.length - 1]
+  const measureSegment = segments.find(s => /기준/.test(s))
+
+  return {
+    type,
+    measure: measureSegment ?? LECTURE_FEE_MEASURE_OPTIONS[0]!.value,
+    amount: parseLectureFeeAmountDigits(amountSegment),
+  }
+}
+
+export function buildLectureFeeBasisDisplay(
+  type: ApplicantInstructorLectureFeeBasisType,
+  measure: string,
+  amountDigits: string
+): string | undefined {
+  if (type === 'program') {
+    return lectureFeeBasisTypeLabel(type)
+  }
+  const amountLabel = formatLectureFeeAmountWon(amountDigits)
+  if (!amountLabel) {
+    return lectureFeeBasisTypeLabel(type)
+  }
+  const measureLabel = measure.trim()
+  if (measureLabel) {
+    return `${lectureFeeBasisTypeLabel(type)} | ${measureLabel} | ${amountLabel}`
+  }
+  return `${lectureFeeBasisTypeLabel(type)} | ${amountLabel}`
+}

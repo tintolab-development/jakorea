@@ -179,7 +179,12 @@ function CalendarSubRightInstitutionApplicationList({
           return (
             <div
               key={row.id}
-              className="calendar-list-item"
+              className={[
+                'calendar-list-item',
+                selectedSet.has(row.id) ? 'calendar-list-item--selected' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               data-has-color="true"
               style={{
                 backgroundColor: colors.bg,
@@ -313,7 +318,12 @@ export function CalendarSubRightVolunteerInterview2List({
           return (
             <div
               key={row.id}
-              className="calendar-list-item"
+              className={[
+                'calendar-list-item',
+                selectedSet.has(row.id) ? 'calendar-list-item--selected' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               data-has-color="true"
               style={{
                 backgroundColor: colors.bg,

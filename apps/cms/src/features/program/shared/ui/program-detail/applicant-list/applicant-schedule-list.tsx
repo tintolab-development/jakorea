@@ -106,12 +106,17 @@ export function ApplicantScheduleList({
   }
 
   return (
-    <div className="applicant-schedule-list">
-      <div className="applicant-schedule-list-content">
-        {events.length === 0 ? (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
-        ) : (
-          events.map(event => {
+    <div
+      className={
+        events.length === 0
+          ? 'calendar-list applicant-schedule-list calendar-list--empty'
+          : 'calendar-list applicant-schedule-list'
+      }
+    >
+      {events.length === 0 ? (
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+      ) : (
+        events.map(event => {
             const color = getColorForEvent?.(event)
             const originalItem = event.originalItem
             const institutionRows = originalItem?.calendarInstitutionInstructors as
@@ -137,7 +142,15 @@ export function ApplicantScheduleList({
                     return (
                       <div
                         key={`${event.id}-${inst.id}`}
-                        className={`applicant-schedule-item ${isInstSelected ? 'applicant-schedule-item--selected' : ''}`}
+                        className={[
+                          'calendar-list-item',
+                          'applicant-schedule-item',
+                          isInstSelected
+                            ? 'calendar-list-item--selected applicant-schedule-item--selected'
+                            : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
                         data-has-color={color ? 'true' : undefined}
                         style={
                           color
@@ -149,7 +162,7 @@ export function ApplicantScheduleList({
                         }
                       >
                         <div
-                          className="applicant-schedule-item-info"
+                          className="calendar-list-item__column applicant-schedule-item-info"
                           onClick={() => onEventClick(inst)}
                         >
                           <div className="applicant-schedule-item-title-row">
@@ -160,9 +173,7 @@ export function ApplicantScheduleList({
                               />
                             ) : null}
                             <span className="applicant-schedule-item-title">{schoolName}</span>
-                            <span className="applicant-schedule-item-title-divider" aria-hidden>
-                              |
-                            </span>
+                            <span className="applicant-schedule-item-title-divider" aria-hidden />
                             <span className="applicant-schedule-item-title">
                               {instructorName}
                             </span>
@@ -181,7 +192,7 @@ export function ApplicantScheduleList({
                           </div>
                         </div>
                         <div
-                          className="applicant-schedule-item-checkbox"
+                          className="calendar-list-item__checkbox applicant-schedule-item-checkbox"
                           onClick={e => {
                             e.stopPropagation()
                             handleToggleSelection(inst.id)
@@ -226,7 +237,13 @@ export function ApplicantScheduleList({
             return (
               <div
                 key={event.id}
-                className={`applicant-schedule-item ${isSelected ? 'applicant-schedule-item--selected' : ''}`}
+                className={[
+                  'calendar-list-item',
+                  'applicant-schedule-item',
+                  isSelected ? 'calendar-list-item--selected applicant-schedule-item--selected' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
                 data-has-color={color ? 'true' : undefined}
                 style={
                   color
@@ -238,7 +255,7 @@ export function ApplicantScheduleList({
                 }
               >
                 <div
-                  className="applicant-schedule-item-info"
+                  className="calendar-list-item__column applicant-schedule-item-info"
                   onClick={() => onEventClick(rowForCalendarDetailClick(originalItem))}
                 >
                   <div className="applicant-schedule-item-title-row">
@@ -251,9 +268,7 @@ export function ApplicantScheduleList({
                       />
                     ) : null}
                     <span className="applicant-schedule-item-title">{schoolName}</span>
-                    <span className="applicant-schedule-item-title-divider" aria-hidden>
-                      |
-                    </span>
+                    <span className="applicant-schedule-item-title-divider" aria-hidden />
                     <span className="applicant-schedule-item-title">{instructorName}</span>
                   </div>
                   <div className="applicant-schedule-item-session">{sessionSummary}</div>
@@ -268,7 +283,7 @@ export function ApplicantScheduleList({
                   </div>
                 </div>
                 <div
-                  className="applicant-schedule-item-checkbox"
+                  className="calendar-list-item__checkbox applicant-schedule-item-checkbox"
                   onClick={e => {
                     e.stopPropagation()
                     handleToggleSelection(event.id)
@@ -278,9 +293,8 @@ export function ApplicantScheduleList({
                 </div>
               </div>
             )
-          })
-        )}
-      </div>
+        })
+      )}
     </div>
   )
 }

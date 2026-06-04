@@ -4,19 +4,96 @@
  */
 
 import type { ReactNode } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/applicant-detail/applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/applicant-detail/program-approval-status-detail-value'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import { SchoolTeacherEmploymentStatusBadge } from '@/features/user/detail/lib/school-teacher-employment-status'
+import { StatusDropdownCell } from '@/shared/components'
+import type { SchoolTeacherEmploymentStatus } from '@/types/user'
+import {
+  SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
+  SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
+  SchoolTeacherEmploymentStatusBadge,
+} from '@/features/user/detail/lib/school-teacher-employment-status'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import type { ApplicantInstructorEditDraft } from '@/features/program/general/lib/applicant-instructor-detail-edit'
+import {
+  BusinessIncomeEditField,
+  BusinessIncomeView,
+  InstructorFeeGradeEditField,
+  InstructorFeeGradeView,
+  LectureFeeBasisEditField,
+  LectureFeeBasisView,
+} from '@/features/program/general/ui/applicant-detail/applicant-general-instructor-fee-fields'
 import './applicant-general-instructor-basic-info.css'
+
+const AFFILIATION_EMPLOYMENT_BADGE_CELL_STYLE = {
+  ...SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
+  maxWidth: 200,
+} as const
+
+function resolveAffiliationEmploymentStatus(
+  instructor: ApplicantInstructorRow
+): SchoolTeacherEmploymentStatus | null {
+  if (!instructor.affiliation?.trim()) return null
+  if (instructor.affiliationEmploymentStatus) {
+    return instructor.affiliationEmploymentStatus
+  }
+  if (instructor.affiliationIsCurrentlyEmployed) return 'ACTIVE'
+  return null
+}
+
+function AffiliationEmploymentStatusField({
+  instructorId,
+  instructor,
+}: {
+  instructorId: string
+  instructor: ApplicantInstructorRow
+}) {
+  const [employmentStatus, setEmploymentStatus] = useState<SchoolTeacherEmploymentStatus | null>(() =>
+    resolveAffiliationEmploymentStatus(instructor)
+  )
+  const [employmentDropdownOpen, setEmploymentDropdownOpen] = useState(false)
+
+  useEffect(() => {
+    setEmploymentStatus(resolveAffiliationEmploymentStatus(instructor))
+  }, [instructorId, instructor.affiliationEmploymentStatus, instructor.affiliationIsCurrentlyEmployed, instructor.affiliation])
+
+  const handleEmploymentStatusChange = useCallback((next: SchoolTeacherEmploymentStatus) => {
+    setEmploymentStatus(next)
+    setEmploymentDropdownOpen(false)
+  }, [])
+
+  if (employmentStatus == null) {
+    return null
+  }
+
+  return (
+    <span className="applicant-general-instructor-basic-info__employment-dropdown">
+      <StatusDropdownCell<SchoolTeacherEmploymentStatus>
+        status={employmentStatus}
+        statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
+        renderBadge={status => (
+          <SchoolTeacherEmploymentStatusBadge
+            status={status}
+            classNamePrefix="applicant-general-instructor-basic-info__employment-badge"
+          />
+        )}
+        isItemDisabled={(cur, opt) => cur === opt}
+        onChange={handleEmploymentStatusChange}
+        isOpen={employmentDropdownOpen}
+        onOpenChange={setEmploymentDropdownOpen}
+        style={AFFILIATION_EMPLOYMENT_BADGE_CELL_STYLE}
+      />
+    </span>
+  )
+}
 
 export interface ApplicantGeneralInstructorBasicInfoProps {
   instructor: ApplicantInstructorRow
@@ -175,6 +252,7 @@ export function ApplicantGeneralInstructorBasicInfo({
   const shouldMask = maskSensitive && instructor.approvalStatus !== 'approved'
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
   const showAdminComment = instructor.approvalStatus === 'approved'
+  const showPostApprovalFields = instructor.approvalStatus === 'approved'
 
   const scheduleChangeCount = instructor.scheduleChangeCancelCount ?? 0
   const nameCell =
@@ -195,16 +273,17 @@ export function ApplicantGeneralInstructorBasicInfo({
     formatBirthDateAndAge(instructor.birthDate, instructor.age),
   ])
 
+  const affiliationEmploymentBadge =
+    resolveAffiliationEmploymentStatus(instructor) != null ? (
+      <AffiliationEmploymentStatusField instructorId={instructor.id} instructor={instructor} />
+    ) : null
+
   const affiliationCell = instructor.affiliation?.trim() ? (
-    <span className="applicant-general-instructor-basic-info__affiliation-cell">
-      <span>{instructor.affiliation}</span>
-      {instructor.affiliationIsCurrentlyEmployed ? (
-        <SchoolTeacherEmploymentStatusBadge
-          status="ACTIVE"
-          classNamePrefix="applicant-general-instructor-basic-info__employment-badge"
-        />
-      ) : null}
-    </span>
+    <ProgramDetailTdSegmentWrap>
+      {affiliationEmploymentBadge
+        ? withProgramDetailTdDivider([instructor.affiliation, affiliationEmploymentBadge])
+        : instructor.affiliation}
+    </ProgramDetailTdSegmentWrap>
   ) : (
     '-'
   )
@@ -234,9 +313,34 @@ export function ApplicantGeneralInstructorBasicInfo({
     ? `${instructor.evaluationGrade}등급`
     : '-'
 
-  const instructorFeeGradeDisplay = instructor.instructorFeeGradeLabel?.trim() || '-'
+  const instructorFeeGradeCell =
+    isEditMode && draft && onDraftChange ? (
+      <InstructorFeeGradeEditField
+        draft={draft}
+        onDraftChange={onDraftChange}
+        validationError={validationErrors?.instructorFeeGrade}
+      />
+    ) : (
+      <InstructorFeeGradeView instructor={instructor} />
+    )
 
-  const businessIncomeDisplay = instructor.businessIncomeEarnerStatus?.trim() || '-'
+  const businessIncomeCell =
+    isEditMode && draft && onDraftChange ? (
+      <BusinessIncomeEditField draft={draft} onDraftChange={onDraftChange} />
+    ) : (
+      <BusinessIncomeView instructor={instructor} />
+    )
+
+  const lectureFeeBasisCell =
+    isEditMode && draft && onDraftChange ? (
+      <LectureFeeBasisEditField
+        draft={draft}
+        onDraftChange={onDraftChange}
+        validationError={validationErrors?.lectureFeeAmount}
+      />
+    ) : (
+      <LectureFeeBasisView instructor={instructor} />
+    )
 
   const colgroup = (
     <colgroup>
@@ -268,18 +372,30 @@ export function ApplicantGeneralInstructorBasicInfo({
       <section className="applicant-institution-basic-info__section">
         <h3 className="applicant-institution-basic-info__title">기본 정보</h3>
         <div className="applicant-institution-basic-info__basic-info-fields">
-          <div className="applicant-institution-basic-info__table-wrap">
-            <table className="applicant-institution-basic-info__table">
-              {colgroup}
-              <tbody>
-                <TableRowTwoCols
-                  label1="프로그램 승인 현황"
-                  value1={<ProgramApprovalStatusValue instructor={instructor} />}
-                  label2="JA 평가 등급"
-                  value2={evaluationGradeDisplay}
-                />
-              </tbody>
-            </table>
+          <div className="applicant-general-instructor-basic-info__approval-block">
+            <div className="applicant-institution-basic-info__table-wrap">
+              <table className="applicant-institution-basic-info__table">
+                {colgroup}
+                <tbody>
+                  <TableRowTwoCols
+                    label1="프로그램 승인 현황"
+                    value1={<ProgramApprovalStatusValue instructor={instructor} />}
+                    label2="JA 평가 등급"
+                    value2={evaluationGradeDisplay}
+                  />
+                </tbody>
+              </table>
+            </div>
+            {showPostApprovalFields ? (
+              <div className="applicant-institution-basic-info__table-wrap applicant-general-instructor-basic-info__post-approval-wrap">
+                <table className="applicant-institution-basic-info__table applicant-general-instructor-basic-info__post-approval-table">
+                  {colgroup}
+                  <tbody>
+                    <TableRowFullWidth label="강의비 책정 기준" value={lectureFeeBasisCell} />
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
           </div>
           <div className="applicant-institution-basic-info__table-wrap">
             <table className="applicant-institution-basic-info__table">
@@ -311,9 +427,9 @@ export function ApplicantGeneralInstructorBasicInfo({
                 />
                 <TableRowTwoCols
                   label1="강사비 등급"
-                  value1={instructorFeeGradeDisplay}
+                  value1={instructorFeeGradeCell}
                   label2="사업소득자 여부"
-                  value2={businessIncomeDisplay}
+                  value2={businessIncomeCell}
                 />
                 <TableRowFullWidth
                   label="한 줄 소개"

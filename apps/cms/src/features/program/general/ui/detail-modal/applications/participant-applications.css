@@ -1,10 +1,11 @@
-.participant-applications {
+.participant-applications,
+.general-instructor-applications {
   flex: 1;
   min-width: 0;
   min-height: 0;
 
   /*
-   * 시안 (참여자/기관 신청 목록 필터)
+   * 시안 (참여자/기관/강사 신청 목록 필터)
    * - 필터 칸 사이 column gap: 12px
    * - 검색·셀렉트(학년·승인 현황): 260px
    * - 주소 시/도·시/군/구: 각 120px, 칸 내부 gap 12px
@@ -26,6 +27,10 @@
 .participant-applications
   .applicant-details
   .applicant-details__filter-table-layout
+  .filter-table-layout__divider,
+.general-instructor-applications
+  .applicant-details
+  .applicant-details__filter-table-layout
   .filter-table-layout__divider {
   padding: 32px 0;
 }
@@ -33,17 +38,27 @@
 /* 필터 행: 칸 사이 12px (TableFilterGroup fields-inner gap) */
 .participant-applications
   .applicant-details
+  .table-filter-group__container,
+.general-instructor-applications
+  .applicant-details
   .table-filter-group__container {
   gap: var(--filter-field-gap);
 }
 
 .participant-applications
   .applicant-details
+  .table-filter-group__fields-inner.ant-row,
+.general-instructor-applications
+  .applicant-details
   .table-filter-group__fields-inner.ant-row {
   gap: var(--filter-field-gap);
 }
 
 .participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col,
+.general-instructor-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col {
@@ -60,6 +75,14 @@
 .participant-applications
   .applicant-details
   .table-filter-group__fields-inner
+  .unified-filter-card__field:not(:has(.table-filter-group__select-pair-selects)),
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  .labeled-search-input,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
   .unified-filter-card__field:not(:has(.table-filter-group__select-pair-selects)) {
   width: var(--application-filter-column-width);
   max-width: min(100%, var(--application-filter-column-width));
@@ -67,12 +90,28 @@
   box-sizing: border-box;
 }
 
-/* 신청 학년 · 프로그램 승인 현황 — 열·셀렉트 260px */
+/* 검색·셀렉트 열 — 260px 고정 */
 .participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='organizationName'],
-.general-participant-applications
+.participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='instructorName'],
+.participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='applicantName'],
+.participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='teacherName'],
+.participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='affiliation'],
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='grade'],
@@ -80,11 +119,35 @@
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='experienceYears'],
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='evaluationGrade'],
-.general-participant-applications
+.participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='approvalStatus'],
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='organizationName'],
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='instructorName'],
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='grade'],
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='experienceYears'],
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='evaluationGrade'],
+.general-instructor-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='approvalStatus'] {
@@ -94,6 +157,25 @@
   min-width: var(--application-filter-column-width) !important;
 }
 
+/* 주소(시/도 + 시/군/구) 열 — 252px 고정 */
+.participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='homeAddress'],
+.participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='institutionAddress'],
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='homeAddress'] {
+  width: var(--application-filter-address-region-width) !important;
+  flex: 0 0 var(--application-filter-address-region-width) !important;
+  max-width: var(--application-filter-address-region-width) !important;
+  min-width: var(--application-filter-address-region-width) !important;
+}
+
 .participant-applications
   .applicant-details
   .table-filter-group__fields-inner
@@ -104,12 +186,12 @@
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='experienceYears']
   .unified-filter-card__field--select,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='evaluationGrade']
   .unified-filter-card__field--select,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='approvalStatus']
@@ -129,27 +211,87 @@
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='experienceYears']
   .cms-select,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='experienceYears']
   .ant-select,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='evaluationGrade']
   .cms-select,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='evaluationGrade']
   .ant-select,
-.general-participant-applications
+.participant-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='approvalStatus']
   .cms-select,
 .participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='approvalStatus']
+  .ant-select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='grade']
+  .unified-filter-card__field--select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='experienceYears']
+  .unified-filter-card__field--select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='evaluationGrade']
+  .unified-filter-card__field--select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='approvalStatus']
+  .unified-filter-card__field--select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='grade']
+  .cms-select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='grade']
+  .ant-select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='experienceYears']
+  .cms-select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='experienceYears']
+  .ant-select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='evaluationGrade']
+  .cms-select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='evaluationGrade']
+  .ant-select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='approvalStatus']
+  .cms-select,
+.general-instructor-applications
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='approvalStatus']
@@ -177,6 +319,25 @@
   .applicant-details
   .table-filter-group__fields-inner
   .labeled-search-input
+  .cms-input,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  .unified-filter-card__field:not(:has(.table-filter-group__select-pair-selects))
+  .cms-select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  .unified-filter-card__field:not(:has(.table-filter-group__select-pair-selects))
+  .ant-select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  .labeled-search-input__input,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  .labeled-search-input
   .cms-input {
   width: 100% !important;
   max-width: min(100%, var(--application-filter-column-width)) !important;
@@ -187,6 +348,10 @@
 .participant-applications
   .applicant-details
   .table-filter-group__fields-inner
+  .unified-filter-card__field--select:has(.table-filter-group__select-pair-selects),
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
   .unified-filter-card__field--select:has(.table-filter-group__select-pair-selects) {
   width: var(--application-filter-address-region-width) !important;
   max-width: min(100%, var(--application-filter-address-region-width)) !important;
@@ -195,6 +360,10 @@
 }
 
 .participant-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  .table-filter-group__select-pair-selects,
+.general-instructor-applications
   .applicant-details
   .table-filter-group__fields-inner
   .table-filter-group__select-pair-selects {
@@ -212,6 +381,16 @@
   .applicant-details
   .table-filter-group__fields-inner
   .table-filter-group__select-pair-selects
+  > .ant-select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  .table-filter-group__select-pair-selects
+  > .cms-select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__fields-inner
+  .table-filter-group__select-pair-selects
   > .ant-select {
   flex: 0 0 var(--application-filter-address-segment-width) !important;
   width: var(--application-filter-address-segment-width) !important;
@@ -221,6 +400,10 @@
 
 @media (max-width: 1280px) {
   .participant-applications
+    .applicant-details
+    .table-filter-group__fields-inner
+    > .ant-col,
+  .general-instructor-applications
     .applicant-details
     .table-filter-group__fields-inner
     > .ant-col {
