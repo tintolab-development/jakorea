@@ -5,13 +5,12 @@ import {
   categoryOptions,
   businessAreaOptions,
   targetLevelOptions,
-  programParticipantTypeOptions,
   programListTargetLevelOptions,
 } from '../constants/program-list-constants'
 
 /**
  * 「전체 프로그램」「완료 프로그램」위젯 탭
- * 프로그램명 / 진행 현황 / 참여자 유형 / 교육 대상
+ * 프로그램명 / 진행 현황 / 교육 대상
  */
 export const programListOverviewFilterFields = [
   {
@@ -19,7 +18,7 @@ export const programListOverviewFilterFields = [
     type: 'search' as const,
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
-    width: '20%',
+    width: '34%',
   },
   {
     key: 'lifecycleStatus',
@@ -27,15 +26,7 @@ export const programListOverviewFilterFields = [
     label: '프로그램 진행 현황',
     placeholder: '전체',
     options: programProgressPhaseFilterOptions,
-    width: '20%',
-  },
-  {
-    key: 'category',
-    type: 'select' as const,
-    label: '참여자 유형',
-    placeholder: '전체',
-    options: programParticipantTypeOptions,
-    width: '20%',
+    width: '33%',
   },
   {
     key: 'targetLevel',
@@ -43,7 +34,7 @@ export const programListOverviewFilterFields = [
     label: '교육 대상',
     placeholder: '전체',
     options: programListTargetLevelOptions,
-    width: '20%',
+    width: '33%',
   },
 ]
 
@@ -54,15 +45,7 @@ export const programListScheduledFilterFields = [
     type: 'search' as const,
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
-    width: '25%',
-  },
-  {
-    key: 'category',
-    type: 'select' as const,
-    label: '참여자 유형',
-    placeholder: '전체',
-    options: programParticipantTypeOptions,
-    width: '25%',
+    width: '34%',
   },
   {
     key: 'targetLevel',
@@ -70,13 +53,13 @@ export const programListScheduledFilterFields = [
     label: '교육 대상',
     placeholder: '전체',
     options: programListTargetLevelOptions,
-    width: '25%',
+    width: '33%',
   },
   {
     key: 'operationPeriod',
     type: 'dateRange' as const,
     label: '사업 운영 기간',
-    width: '25%',
+    width: '33%',
   },
 ]
 
@@ -87,15 +70,7 @@ export const programListInProgressFilterFields = [
     type: 'search' as const,
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
-    width: '34%',
-  },
-  {
-    key: 'category',
-    type: 'select' as const,
-    label: '참여자 유형',
-    placeholder: '전체',
-    options: programParticipantTypeOptions,
-    width: '33%',
+    width: '50%',
   },
   {
     key: 'targetLevel',
@@ -103,7 +78,7 @@ export const programListInProgressFilterFields = [
     label: '교육 대상',
     placeholder: '전체',
     options: programListTargetLevelOptions,
-    width: '33%',
+    width: '50%',
   },
 ]
 

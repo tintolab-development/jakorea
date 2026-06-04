@@ -35,7 +35,6 @@ export function buildProgramListFilters(
   if (programMode === 'overview' && overviewScheduledLayout) {
     return {
       title: pendingFilters.title,
-      category: pendingFilters.category,
       targetLevel: pendingFilters.targetLevel,
       operationPeriod:
         pendingFilters.operationStartDate && pendingFilters.operationEndDate
@@ -48,7 +47,6 @@ export function buildProgramListFilters(
     return {
       title: pendingFilters.title,
       lifecycleStatus: pendingFilters.lifecycleStatus,
-      category: pendingFilters.category,
       targetLevel: pendingFilters.targetLevel,
     }
   }
