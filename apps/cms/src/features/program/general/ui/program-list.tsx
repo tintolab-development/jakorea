@@ -183,9 +183,10 @@ export function ProgramList({
             {children}
           </div>
           <ProgramCalendarView
-            items={table.getRowModel().rows.map(row => row.original)}
+            items={table.getFilteredRowModel().rows.map(row => row.original)}
             loading={loading}
             onItemClick={onView}
+            view={listView}
           />
         </div>
       ) : null}

@@ -143,6 +143,12 @@ export function ApplicantList({
     viewMode === 'calendar' &&
     !selectedItem
 
+  const isGeneralInstitutionCalendar =
+    menu === 'institutions' &&
+    institutionColumnPreset === 'general-detail' &&
+    viewMode === 'calendar' &&
+    !selectedItem
+
   const showInstitutionDetail =
     selectedItem != null && menu === 'institutions' && 'schoolName' in selectedItem
   const showInstructorDetail =
@@ -162,7 +168,7 @@ export function ApplicantList({
 
   return (
     <div
-      className={`applicant-details${isGeneralInstructorCalendar ? ' applicant-details--instructor-calendar' : ''}`}
+      className={`applicant-details${isGeneralInstructorCalendar || isGeneralInstitutionCalendar ? ' applicant-details--instructor-calendar' : ''}`}
     >
       {showInstitutionDetail ? (
         <ApplicantsDetailContents
@@ -406,10 +412,15 @@ export function ApplicantList({
                 onItemClick={item => {
                   setSelectedItem(item)
                 }}
+                menu={menu}
                 calendarGranularity={applicantsCalendarGranularity}
                 onCalendarGranularityChange={setApplicantsCalendarGranularity}
                 calendarVariant={
-                  instructorColumnPreset === 'general-detail' ? 'general-instructor' : 'default'
+                  instructorColumnPreset === 'general-detail' && menu === 'instructors'
+                    ? 'general-instructor'
+                    : institutionColumnPreset === 'general-detail' && menu === 'institutions'
+                      ? 'general-institution'
+                      : 'default'
                 }
               />
             </div>

@@ -152,7 +152,6 @@ export function getProgramTablePageConfig(
             lifecycleRaw && isProgramProgressPhaseFilter(lifecycleRaw)
               ? (lifecycleRaw as ProgramProgressPhaseFilter)
               : undefined
-          const categoryFilter = searchParams.get('category') || undefined
           const targetLevelFilter = searchParams.get('targetLevel') || undefined
           const participantRaw = searchParams.get('participantRecruitment') || ''
           const participantFromUrl = participantRecruitmentFilterValues.has(participantRaw)
@@ -165,7 +164,6 @@ export function getProgramTablePageConfig(
             const hasChanges =
               prev.title !== titleFromUrl ||
               prev.lifecycleStatus !== lifecycleFromUrl ||
-              prev.category !== categoryFilter ||
               prev.targetLevel !== targetLevelFilter ||
               prev.participantRecruitment !== participantFromUrl ||
               prev.operationStartDate?.format('YYYY-MM-DD') !== operationStartDateStr ||
@@ -177,7 +175,6 @@ export function getProgramTablePageConfig(
               ...prev,
               title: titleFromUrl,
               lifecycleStatus: lifecycleFromUrl,
-              category: categoryFilter,
               targetLevel: targetLevelFilter,
               participantRecruitment: participantFromUrl,
               operationStartDate: operationStartDateStr
@@ -317,8 +314,7 @@ export function getProgramTablePageConfig(
         }
         if (
           ctx.mode === 'overview' &&
-          (key === 'category' ||
-            key === 'targetLevel' ||
+          (key === 'targetLevel' ||
             key === 'lifecycleStatus' ||
             key === 'participantRecruitment')
         ) {
@@ -370,7 +366,6 @@ export function getProgramTablePageConfig(
         lifecycleRaw && isProgramProgressPhaseFilter(lifecycleRaw)
           ? lifecycleRaw
           : null
-      const categoryFilter = searchParams.get('category') || ''
       const targetLevelFilter = searchParams.get('targetLevel') || ''
 
       let result = filteredData
@@ -387,9 +382,6 @@ export function getProgramTablePageConfig(
       }
       if (lifecyclePhaseFilter && applyLifecycleFromUrl) {
         result = result.filter(p => programMatchesProgressPhase(p, lifecyclePhaseFilter))
-      }
-      if (categoryFilter) {
-        result = result.filter(p => p.category === categoryFilter)
       }
       if (targetLevelFilter) {
         result = result.filter(p => p.targetLevel === targetLevelFilter)

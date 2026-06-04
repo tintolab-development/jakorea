@@ -50,11 +50,6 @@ export const programListOverviewParamConfig = [
   },
   {
     kind: 'param' as const,
-    filterKey: 'category' as const,
-    paramKey: 'category',
-  },
-  {
-    kind: 'param' as const,
     filterKey: 'targetLevel' as const,
     paramKey: 'targetLevel',
   },
@@ -70,7 +65,6 @@ export const programListOverviewTableConfig: Record<
   string,
   (filters: ProgramListPendingFilters) => unknown
 > = {
-  category: f => f.category ?? null,
   targetLevel: f => f.targetLevel ?? null,
 }
 

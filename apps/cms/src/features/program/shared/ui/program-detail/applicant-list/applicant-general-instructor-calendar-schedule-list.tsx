@@ -1,11 +1,9 @@
 import { useCallback, useMemo } from 'react'
 import { Checkbox, Empty } from 'antd'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import {
-  ApprovalStatusBadge,
-  type ApprovalStatusKey,
-} from '@/shared/components/approval-status-badge'
-import { getInstructorCalendarSessionSummary } from './applicant-instructor-calendar-session'
+import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
+import { CalendarApprovalStatusBadge } from '@/shared/components/calendar/ui/item-list/calendar-approval-status-badge'
+import { getInstructorCalendarSessionCardLabel } from './applicant-instructor-calendar-session'
 import {
   getInstructorScheduleDispatchStats,
   getInstructorScheduleDistanceKm,
@@ -44,14 +42,6 @@ function flattenInstructorCalendarCards(
     }
   }
   return cards
-}
-
-function formatSessionLine(summary: string): string {
-  const match = summary.match(/^(\d+차시)\s+(\d{1,2}:\d{2})~(\d{1,2}:\d{2})$/)
-  if (match) {
-    return `${match[1]} (${match[2]} ~ ${match[3]})`
-  }
-  return summary
 }
 
 function approvalStatusModifier(status: ApprovalStatusKey | undefined): ApprovalStatusKey {
@@ -106,9 +96,7 @@ export function GeneralInstructorCalendarScheduleList({
           )
           const isSelected = selectedSet.has(id)
           const instructorName = instructor.instructorName || '-'
-          const sessionRaw = getInstructorCalendarSessionSummary(instructor, schoolName)
-          const sessionLine =
-            sessionRaw !== '-' ? formatSessionLine(sessionRaw) : sessionRaw
+          const sessionLabel = getInstructorCalendarSessionCardLabel(instructor, schoolName)
           const distanceKm = getInstructorScheduleDistanceKm(
             schoolName,
             instructorName,
@@ -139,17 +127,18 @@ export function GeneralInstructorCalendarScheduleList({
                 <div className="general-instructor-calendar-card__header">
                   <span className="general-instructor-calendar-card__school">{schoolName}</span>
                   <span className="general-instructor-calendar-card__divider" aria-hidden />
-                  <ApprovalStatusBadge
-                    status={status}
-                    className="general-instructor-calendar-card__badge"
-                  />
+                  <CalendarApprovalStatusBadge status={status} />
                 </div>
                 <div className="general-instructor-calendar-card__session">
                   <span className="general-instructor-calendar-card__instructor">
                     {instructorName}
                   </span>
-                  <span className="general-instructor-calendar-card__divider" aria-hidden />
-                  <span className="general-instructor-calendar-card__round">{sessionLine}</span>
+                  {sessionLabel !== '-' ? (
+                    <>
+                      <span className="general-instructor-calendar-card__divider" aria-hidden />
+                      <span className="general-instructor-calendar-card__round">{sessionLabel}</span>
+                    </>
+                  ) : null}
                 </div>
                 <div className="general-instructor-calendar-card__tags">
                   <span className="general-instructor-calendar-card__tag general-instructor-calendar-card__tag--mint">
@@ -164,7 +153,7 @@ export function GeneralInstructorCalendarScheduleList({
                 </div>
               </button>
               <div
-                className="calendar-list-item__checkbox general-instructor-calendar-card__checkbox"
+                className="calendar-list-item__checkbox"
                 onClick={e => e.stopPropagation()}
                 onKeyDown={e => e.stopPropagation()}
               >

@@ -78,7 +78,8 @@
  * 캘린더는 콘텐츠 높이만큼 확장, 모달/페이지 스크롤로 확인.
  */
 .applicant-calendar-set.applicant-calendar-set--default,
-.applicant-calendar-set.applicant-calendar-set--general-instructor {
+.applicant-calendar-set.applicant-calendar-set--general-instructor,
+.applicant-calendar-set.applicant-calendar-set--general-institution {
   flex: 0 0 auto;
   align-items: stretch;
   max-height: none;
@@ -86,7 +87,8 @@
 }
 
 .applicant-calendar-set.applicant-calendar-set--default:has(.calendar-week--time-grid),
-.applicant-calendar-set.applicant-calendar-set--general-instructor:has(.calendar-week--time-grid) {
+.applicant-calendar-set.applicant-calendar-set--general-instructor:has(.calendar-week--time-grid),
+.applicant-calendar-set.applicant-calendar-set--general-institution:has(.calendar-week--time-grid) {
   --applicant-general-instructor-calendar-panel-height: var(--calendar-main-week-min-height);
 }
 
@@ -95,19 +97,24 @@
 .applicant-calendar-set--default .applicant-calendar-main,
 .applicant-calendar-set--general-instructor .calendar-main-container,
 .applicant-calendar-set--general-instructor .calendar-main-container > .calendar-main,
-.applicant-calendar-set--general-instructor .applicant-calendar-main {
+.applicant-calendar-set--general-instructor .applicant-calendar-main,
+.applicant-calendar-set--general-institution .calendar-main-container,
+.applicant-calendar-set--general-institution .calendar-main-container > .calendar-main,
+.applicant-calendar-set--general-institution .applicant-calendar-main {
   height: auto;
   max-height: none;
   overflow: visible;
 }
 
 .applicant-calendar-set--default .calendar-main-container,
-.applicant-calendar-set--general-instructor .calendar-main-container {
+.applicant-calendar-set--general-instructor .calendar-main-container,
+.applicant-calendar-set--general-institution .calendar-main-container {
   min-height: var(--applicant-general-instructor-calendar-panel-height);
 }
 
 .applicant-calendar-set--default .calendar-main-container > .calendar-main,
-.applicant-calendar-set--general-instructor .calendar-main-container > .calendar-main {
+.applicant-calendar-set--general-instructor .calendar-main-container > .calendar-main,
+.applicant-calendar-set--general-institution .calendar-main-container > .calendar-main {
   min-height: var(--applicant-general-instructor-calendar-panel-height);
 }
 
@@ -125,37 +132,57 @@
 .applicant-calendar-sub-right-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
   overflow: hidden;
 }
 
 .applicant-calendar-set--default .applicant-calendar-sub-right-list,
-.applicant-calendar-set--general-instructor .applicant-calendar-sub-right-list {
+.applicant-calendar-set--general-instructor .applicant-calendar-sub-right-list,
+.applicant-calendar-set--general-institution .applicant-calendar-sub-right-list {
   height: var(--applicant-general-instructor-calendar-panel-height);
   min-height: var(--applicant-general-instructor-calendar-panel-height);
   max-height: var(--applicant-general-instructor-calendar-panel-height);
   align-self: start;
 }
 
-.applicant-calendar-sub-right-list__school-filter {
+.applicant-calendar-sub-right-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.applicant-calendar-sub-right-card > .calendar-split-card-right__toolbar {
   flex-shrink: 0;
   width: 100%;
-  margin-bottom: 18px;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-.applicant-calendar-sub-right-list__school-filter .ant-select {
+.applicant-calendar-sub-right-card > .calendar-split-card-right__toolbar .cms-select {
   width: 100%;
+  min-width: 0;
 }
 
-.applicant-calendar-sub-right-list__school-filter .ant-select-selector {
+.applicant-calendar-sub-right-card > .calendar-split-card-right__toolbar .ant-select-selector {
   min-height: 48px;
   border-radius: 8px;
 }
 
-.applicant-calendar-set--default .applicant-schedule-list,
-.applicant-calendar-set--general-instructor .general-instructor-calendar-list {
+/* 내부 리스트: 이중 카드 방지 (split-card-layout.css 동일 의도) */
+.applicant-calendar-sub-right-card > .applicant-schedule-list,
+.applicant-calendar-sub-right-card > .general-instructor-calendar-list,
+.applicant-calendar-sub-right-card > .general-institution-calendar-list {
   flex: 1 1 auto;
   min-height: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  overflow-y: auto;
 }
 
 .applicant-calendar-right .applicant-schedule-item--selected {

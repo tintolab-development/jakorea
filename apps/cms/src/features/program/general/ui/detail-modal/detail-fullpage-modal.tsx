@@ -48,6 +48,9 @@ import { GeneralSurveyManagementView } from './survey-management/survey-manageme
 import { ProgramManagersTab } from '../program-managers-tab'
 import { GeneralParticipantApplicationsView } from './applications/participant-applications-view'
 import { GeneralInstructorApplicationsView } from './applications/general-instructor-applications-view'
+import { GeneralVolunteerApplicationsView } from './applications/general-volunteer-applications-view'
+import { isGeneralVolunteerApplicantDetailRoute } from '@/features/program/general/lib/general-volunteer-applications'
+import type { UjatVolunteerApplicantDetailMeta } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/use-ujat-volunteer-applicant-detail'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
@@ -597,7 +600,10 @@ export function GeneralProgramDetailFullPageModal({
   ])
 
   const applicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
+  const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
   const [applicantDetailMeta, setApplicantDetailMeta] = useState<ApplicantDetailMeta>(null)
+  const [volunteerApplicantDetailMeta, setVolunteerApplicantDetailMeta] =
+    useState<UjatVolunteerApplicantDetailMeta | null>(null)
 
   const handleApplicantDetailMetaChange = useCallback((meta: ApplicantDetailMeta) => {
     setApplicantDetailMeta(meta)
@@ -825,10 +831,13 @@ export function GeneralProgramDetailFullPageModal({
       (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications')
 
     const hasProgressNestedDetail = progressNestedDetailLabel != null
+    const hasVolunteerApplicationDetail =
+      volunteerApplicantDetailMeta != null &&
+      isGeneralVolunteerApplicantDetailRoute(activeLnb, activeTab)
 
     if (!childLabel) {
       items.push(
-        hasParticipantApplicationDetail
+        hasParticipantApplicationDetail || hasVolunteerApplicationDetail
           ? makeBreadcrumbItem(lnbLabel, location.pathname, lnbParams)
           : { label: lnbLabel }
       )
@@ -853,6 +862,8 @@ export function GeneralProgramDetailFullPageModal({
 
     if (hasParticipantApplicationDetail) {
       items.push({ label: applicantDetailMeta.breadcrumbLabel })
+    } else if (hasVolunteerApplicationDetail) {
+      items.push({ label: volunteerApplicantDetailMeta.breadcrumbLabel })
     }
 
     if (hasProgressNestedDetail) {
@@ -865,16 +876,18 @@ export function GeneralProgramDetailFullPageModal({
   if (!open) return null
 
   const modalTitle =
-    applicantDetailMeta &&
-    (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications')
-      ? applicantDetailMeta.title
-      : activeLnb === 'progress' && schoolIdFromUrl && schoolDetailTitle
-        ? `참여 기관 상세 (${schoolDetailTitle})`
-        : progressNestedDetailLabel && displayProgram
-          ? `${resolveGeneralProgramDisplayTitle(displayProgram)}_${progressNestedDetailLabel}`
-          : displayProgram
-            ? resolveGeneralProgramDisplayTitle(displayProgram)
-            : '프로그램 상세'
+    volunteerApplicantDetailMeta && isGeneralVolunteerApplicantDetailRoute(activeLnb, activeTab)
+      ? volunteerApplicantDetailMeta.title
+      : applicantDetailMeta &&
+          (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications')
+        ? applicantDetailMeta.title
+        : activeLnb === 'progress' && schoolIdFromUrl && schoolDetailTitle
+          ? `참여 기관 상세 (${schoolDetailTitle})`
+          : progressNestedDetailLabel && displayProgram
+            ? `${resolveGeneralProgramDisplayTitle(displayProgram)}_${progressNestedDetailLabel}`
+            : displayProgram
+              ? resolveGeneralProgramDisplayTitle(displayProgram)
+              : '프로그램 상세'
 
   return (
     <>
@@ -882,9 +895,7 @@ export function GeneralProgramDetailFullPageModal({
         open={open}
         onClose={handleModalClose}
         title={modalTitle}
-        closeAriaLabel={
-          schoolIdFromUrl || instructorIdFromUrl ? '목록으로' : undefined
-        }
+        closeAriaLabel={schoolIdFromUrl || instructorIdFromUrl ? '목록으로' : undefined}
         headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
         className="program-detail-fullpage-modal general-detail-fullpage-modal program-detail-fullpage-modal--program-list-overview"
         sidebar={
@@ -1011,6 +1022,18 @@ export function GeneralProgramDetailFullPageModal({
                 <Typography.Text className="program-status-participating__placeholder">
                   참여 봉사자 목록 및 현황이 표시됩니다.
                 </Typography.Text>
+              </div>
+            ) : activeLnb === 'volunteer_applications' ? (
+              <div className="program-detail-fullpage-modal__info-tab">
+                <GeneralVolunteerApplicationsView
+                  program={displayProgram}
+                  activeTab={activeTab}
+                  interviewEnabled={interviewEnabled}
+                  onRegisterApplicantCloseHandler={fn => {
+                    volunteerApplicantCloseHandlerRef.current = fn
+                  }}
+                  onVolunteerApplicantDetailMetaChange={setVolunteerApplicantDetailMeta}
+                />
               </div>
             ) : (
               <div

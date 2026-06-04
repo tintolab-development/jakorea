@@ -178,6 +178,25 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK: NonNullable
     availableTimeSlots:
       '09:00 ~ 09:30, 09:30 ~ 10:00, 10:00 ~ 10:30, 10:30 ~ 11:00, 11:00 ~ 11:30, 16:00 ~ 16:30, 20:30 ~ 21:00',
   },
+  calendarSurveySchedules: [
+    {
+      id: 'pre-survey',
+      title: '사전 설문조사 시작',
+      startDate: '2026-04-03T00:00:00+09:00',
+    },
+    {
+      id: 'satisfaction-survey',
+      title: '만족도 조사 종료',
+      endDate: '2026-11-20T23:59:59+09:00',
+    },
+  ],
+  calendarAssignmentSchedules: [
+    {
+      id: 'assignment-1',
+      title: '1회차 과제 제출 마감',
+      dueDate: '2026-04-27T23:59:59+09:00',
+    },
+  ],
 }
 
 /** 스크린샷·유형 mock — 기관_일정형_복수 회차 (교육 형태·참여·IPS 일정 별 상이 → 행사 일정 + 과제 설정) */
@@ -389,6 +408,27 @@ export function resolveGeneralProgramCommonInfo(
       finalSchools: program.participatingSchoolCount ?? 100,
       finalClasses: 100,
     },
+    calendarSurveySchedules: program.generalSurveyMenuKeys?.length
+      ? [
+          {
+            id: 'survey-start',
+            title: '설문조사 시작',
+            startDate: program.startDate,
+          },
+          {
+            id: 'survey-end',
+            title: '설문조사 종료',
+            endDate: program.endDate,
+          },
+        ]
+      : undefined,
+    calendarAssignmentSchedules: [
+      {
+        id: 'assignment-due',
+        title: '과제 제출 마감',
+        dueDate: program.endDate,
+      },
+    ],
   }
 }
 

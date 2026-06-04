@@ -1,0 +1,24 @@
+.calendar-approval-status-badge {
+  box-sizing: border-box;
+  display: flex;
+  width: 68px;
+  min-width: 68px;
+  max-width: 68px;
+  height: 26px;
+  min-height: 26px;
+  padding: 5px 12px 4px 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  border-radius: var(--6, 6px);
+  border: 1px solid;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

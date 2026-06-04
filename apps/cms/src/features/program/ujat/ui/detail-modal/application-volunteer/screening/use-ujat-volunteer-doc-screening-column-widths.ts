@@ -8,6 +8,7 @@ import {
   computeDocScreeningTableScrollX,
   ESSAY_COLUMN_MAX_WIDTH,
   type UjatEssayColumnWidths,
+  type UjatVolunteerDocScreeningColumnPreset,
 } from './ujat-volunteer-doc-screening-columns'
 
 const ESSAY_COLUMN_KEYS = Object.keys(
@@ -19,7 +20,9 @@ function clampEssayWidth(key: UjatEssayColumnKey, width: number): number {
   return Math.min(ESSAY_COLUMN_MAX_WIDTH, Math.max(min, Math.round(width)))
 }
 
-export function useUjatVolunteerDocScreeningColumnWidths() {
+export function useUjatVolunteerDocScreeningColumnWidths(
+  columnPreset: UjatVolunteerDocScreeningColumnPreset = 'ujat'
+) {
   const [essayColumnWidths, setEssayColumnWidths] = useState<UjatEssayColumnWidths>(() => ({
     ...UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS,
   }))
@@ -38,8 +41,8 @@ export function useUjatVolunteerDocScreeningColumnWidths() {
   }, [])
 
   const minTableScrollX = useMemo(
-    () => computeDocScreeningTableScrollX(essayColumnWidths),
-    [essayColumnWidths]
+    () => computeDocScreeningTableScrollX(essayColumnWidths, columnPreset),
+    [essayColumnWidths, columnPreset]
   )
 
   return {

@@ -10,11 +10,7 @@ import {
   instructorRecruitmentTableColumns,
   capacityTableColumnsEducation,
 } from '../constants/program-list-columns'
-import {
-  categoryOptions,
-  getProgramParticipantTypeLabel,
-  getProgramListTargetLevelLabel,
-} from '../constants/program-list-constants'
+import { categoryOptions, getProgramListTargetLevelLabel } from '../constants/program-list-constants'
 import type { Program, ProgramCategory, TargetLevel } from '@/types/domain'
 import type { ProgramListProgramMode } from '../../model/program-list-program-mode'
 
@@ -47,14 +43,6 @@ function instructorRecruitRender(_: unknown, record: Program) {
   const current = record.instructors ?? 0
   if (cap !== undefined) return `${current} / ${cap}`
   return `${current}`
-}
-
-function volunteerRecruitRender(_: unknown, record: Program) {
-  const current =
-    (record.generalVolunteers ?? 0) +
-    (record.staffVolunteers ?? 0) +
-    (record.returningVolunteers ?? 0)
-  return current > 0 ? String(current) : '-'
 }
 
 export function resolveProgramListTableView(params: {
@@ -115,11 +103,10 @@ function createProgramListAllColumns() {
       render: participantCountRender,
     },
     {
-      title: '참여자 유형',
-      dataIndex: 'category',
-      key: 'category',
+      title: '강사 모집 인원',
+      key: 'instructorRecruitment',
       align: 'center' as const,
-      render: (value: ProgramCategory | undefined) => getProgramParticipantTypeLabel(value),
+      render: instructorRecruitRender,
     },
     {
       title: '교육 대상',
@@ -159,11 +146,10 @@ function createProgramListScheduledColumns() {
       render: participantCountRender,
     },
     {
-      title: '참여자 유형',
-      dataIndex: 'category',
-      key: 'category',
+      title: '강사 모집 인원',
+      key: 'instructorRecruitment',
       align: 'center' as const,
-      render: (value: ProgramCategory | undefined) => getProgramParticipantTypeLabel(value),
+      render: instructorRecruitRender,
     },
     {
       title: '교육 대상',
@@ -213,12 +199,6 @@ function createProgramListInProgressColumns() {
       render: instructorRecruitRender,
     },
     {
-      title: '봉사자 모집 인원',
-      key: 'volunteerRecruitment',
-      align: 'center' as const,
-      render: volunteerRecruitRender,
-    },
-    {
       title: '총 참여 학교 수',
       key: 'participatingSchoolCount',
       align: 'center' as const,
@@ -231,13 +211,6 @@ function createProgramListInProgressColumns() {
       align: 'center' as const,
       render: (_: unknown, record: Program) =>
         record.participatingStudentCount != null ? String(record.participatingStudentCount) : '-',
-    },
-    {
-      title: '참여자 유형',
-      dataIndex: 'category',
-      key: 'category',
-      align: 'center' as const,
-      render: (value: ProgramCategory | undefined) => getProgramParticipantTypeLabel(value),
     },
     {
       title: '교육 대상',
@@ -277,11 +250,10 @@ function createProgramListFallbackColumns() {
       render: participantCountRender,
     },
     {
-      title: '참여자 유형',
-      dataIndex: 'category',
-      key: 'category',
+      title: '강사 모집 인원',
+      key: 'instructorRecruitment',
       align: 'center' as const,
-      render: (value: ProgramCategory | undefined) => getProgramParticipantTypeLabel(value),
+      render: instructorRecruitRender,
     },
     {
       title: '교육 대상',

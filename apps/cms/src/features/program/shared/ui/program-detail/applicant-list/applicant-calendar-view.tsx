@@ -6,6 +6,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import { ApplicantScheduleList } from './applicant-schedule-list'
 import { GeneralInstructorCalendarScheduleList } from './applicant-general-instructor-calendar-schedule-list'
+import { GeneralInstitutionCalendarScheduleList } from './applicant-general-institution-calendar-schedule-list'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import './applicant-calendar-view.css'
 import { CalendarMain } from '@/shared/components/calendar'
@@ -18,20 +19,28 @@ import '@/shared/components/calendar/styles/calendar.css'
 import { useApplicantCalendarColorMaps } from './applicant-calendar-schedule-helpers'
 import { renderGeneralInstructorCalendarMonthEventContent } from './applicant-instructor-calendar-month-event'
 import { renderProgramCalendarEventsDefaultTooltipContent } from '@/shared/components/calendar/ui/preview-tooltip/program'
+import type { ApplicantCalendarEvent } from './applicant-calendar-events'
+import type { ApplicantListMenu } from './applicant-list-menu'
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
+export type ApplicantCalendarFilterEntity = 'school' | 'participant'
+
 interface ApplicantCalendarViewProps {
-  events: any[]
+  events: ApplicantCalendarEvent[]
   loading?: boolean
   selectedRowKeys: Key[]
   onSelectionChange: (keys: Key[]) => void
-  onItemClick: (item: any) => void
+  onItemClick: (item: ApplicantCalendarEvent['originalItem']) => void
   /** 월간/주간 — onCalendarGranularityChange와 함께 전달 시 쿼리스트링 등과 동기화 */
   calendarGranularity?: 'month' | 'week'
   onCalendarGranularityChange?: (mode: 'month' | 'week') => void
-  /** 일반 프로그램 강사 신청 캘린더 — strip·툴팁·우측 카드 스펙 */
-  calendarVariant?: 'default' | 'general-instructor'
+  /** 일반 프로그램 강사/기관 신청 캘린더 — strip·툴팁·우측 카드 스펙 */
+  calendarVariant?: 'default' | 'general-instructor' | 'general-institution'
+  /** 우측 다중 선택 필터 기준 (기관명 vs 참여자명) */
+  filterEntity?: ApplicantCalendarFilterEntity
+  /** LNB 메뉴 — filterEntity 미지정 시 자동 추론 */
+  menu?: ApplicantListMenu | ''
 }
 
 export function ApplicantCalendarView({
@@ -43,8 +52,13 @@ export function ApplicantCalendarView({
   calendarGranularity: calendarGranularityProp,
   onCalendarGranularityChange,
   calendarVariant = 'default',
+  filterEntity: filterEntityProp,
+  menu = '',
 }: ApplicantCalendarViewProps) {
   const isGeneralInstructor = calendarVariant === 'general-instructor'
+  const isGeneralInstitution = calendarVariant === 'general-institution'
+  const filterEntity: ApplicantCalendarFilterEntity =
+    filterEntityProp ?? (menu === 'individual-applications' ? 'participant' : 'school')
   const [fallbackCalendarMode, setFallbackCalendarMode] = useState<'month' | 'week'>('month')
   const calendarControlled =
     calendarGranularityProp !== undefined && onCalendarGranularityChange !== undefined
@@ -63,7 +77,7 @@ export function ApplicantCalendarView({
 
   /** mock·실데이터 일정이 현재 월 밖이면 빈 캘린더로 보이지 않도록 최초 1회 앵커 이동 */
   useEffect(() => {
-    if (!isGeneralInstructor || didSnapToEventsRef.current || events.length === 0) return
+    if (didSnapToEventsRef.current || events.length === 0) return
     const startDates = events
       .map(ev => dayjs(ev.startDate))
       .filter(d => d.isValid())
@@ -77,9 +91,27 @@ export function ApplicantCalendarView({
       setSelectedDate(earliest.startOf('day'))
     }
     didSnapToEventsRef.current = true
-  }, [events, isGeneralInstructor, currentMonth])
+  }, [events, currentMonth])
 
-  const getEventsForDate = (date: Dayjs): any[] => {
+  const resolveFilterLabel = useCallback(
+    (ev: ApplicantCalendarEvent): string => {
+      const item = ev.originalItem
+      if (!item || typeof item !== 'object') return ''
+      if (filterEntity === 'participant' && 'applicantName' in item) {
+        return String(item.applicantName ?? '').trim()
+      }
+      if ('schoolName' in item) {
+        return String(item.schoolName ?? '').trim()
+      }
+      if ('applicantName' in item) {
+        return String(item.applicantName ?? '').trim()
+      }
+      return ''
+    },
+    [filterEntity]
+  )
+
+  const getEventsForDate = (date: Dayjs): ApplicantCalendarEvent[] => {
     return events.filter(event => {
       const start = dayjs(event.startDate)
       const end = dayjs(event.endDate)
@@ -88,21 +120,19 @@ export function ApplicantCalendarView({
   }
 
   const dayEvents = useMemo(() => getEventsForDate(selectedDate), [events, selectedDate])
-  const schoolFilterOptions = useMemo(() => {
-    const uniqueSchools = Array.from(
-      new Set(
-        dayEvents.map(ev => String(ev?.originalItem?.schoolName ?? '').trim()).filter(Boolean)
-      )
+  const entityFilterOptions = useMemo(() => {
+    const uniqueLabels = Array.from(
+      new Set(dayEvents.map(ev => resolveFilterLabel(ev)).filter(Boolean))
     ).sort((a, b) => a.localeCompare(b, 'ko'))
-    return uniqueSchools.map((school, i) => ({
-      value: school,
-      label: school,
+    return uniqueLabels.map((label, i) => ({
+      value: label,
+      label,
       tagColor: CMS_MULTI_SELECT_TAG_COLORS[i % CMS_MULTI_SELECT_TAG_COLORS.length],
     }))
-  }, [dayEvents])
+  }, [dayEvents, resolveFilterLabel])
   useEffect(() => {
-    setSelectedSchools(schoolFilterOptions.map(o => o.value))
-  }, [schoolFilterOptions])
+    setSelectedSchools(entityFilterOptions.map(o => o.value))
+  }, [entityFilterOptions])
 
   const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events)
 
@@ -110,10 +140,10 @@ export function ApplicantCalendarView({
     if (selectedSchools.length === 0) return []
     const selectedSet = new Set(selectedSchools)
     return dayEvents.filter(ev => {
-      const schoolName = String(ev?.originalItem?.schoolName ?? '').trim()
-      return schoolName !== '' && selectedSet.has(schoolName)
+      const label = resolveFilterLabel(ev)
+      return label !== '' && selectedSet.has(label)
     })
-  }, [dayEvents, selectedSchools])
+  }, [dayEvents, selectedSchools, resolveFilterLabel])
   const scheduleListColorMap = useMemo(
     () => buildResolvedColorMap(filteredDayEvents),
     [filteredDayEvents, buildResolvedColorMap]
@@ -147,14 +177,12 @@ export function ApplicantCalendarView({
       onSelectDate={handleDateSelect}
       onMonthChange={setCurrentMonth}
       onModeChange={setCalendarMode}
+      eventsTooltipScope="full-day"
+      eventsTooltipTrigger="cell"
+      formatEventsOverflowText={n => `외 ${n}개의 항목`}
+      previewTooltipContent={renderProgramCalendarEventsDefaultTooltipContent}
       {...(isGeneralInstructor
-        ? {
-            eventsTooltipScope: 'full-day' as const,
-            eventsTooltipTrigger: 'cell' as const,
-            formatEventsOverflowText: (n: number) => `외 ${n}개의 항목`,
-            previewTooltipContent: renderProgramCalendarEventsDefaultTooltipContent,
-            renderMonthEventContent: renderGeneralInstructorCalendarMonthEventContent,
-          }
+        ? { renderMonthEventContent: renderGeneralInstructorCalendarMonthEventContent }
         : {})}
     />
   )
@@ -165,6 +193,13 @@ export function ApplicantCalendarView({
       selectedRowKeys={selectedRowKeys}
       onSelectionChange={onSelectionChange}
       onInstructorClick={onItemClick}
+    />
+  ) : isGeneralInstitution ? (
+    <GeneralInstitutionCalendarScheduleList
+      events={filteredDayEvents}
+      selectedRowKeys={selectedRowKeys}
+      onSelectionChange={onSelectionChange}
+      onInstitutionClick={onItemClick}
     />
   ) : (
     <ApplicantScheduleList
@@ -184,22 +219,27 @@ export function ApplicantCalendarView({
         'applicant-calendar-set',
         isGeneralInstructor
           ? 'applicant-calendar-set--general-instructor'
-          : 'applicant-calendar-set--default',
+          : isGeneralInstitution
+            ? 'applicant-calendar-set--general-institution'
+            : 'applicant-calendar-set--default',
       ].join(' ')}
     >
       <div className="calendar-main-container">{calendarMain}</div>
       <div className="calendar-sub-right-list applicant-calendar-sub-right-list">
-        <div className="applicant-calendar-sub-right-list__school-filter">
-          <CmsSelect
-            mode="multiple"
-            withAllOption={false}
-            value={selectedSchools}
-            onChange={next => setSelectedSchools(next as string[])}
-            options={schoolFilterOptions}
-            placeholder="기관 선택"
-          />
+        <div className="calendar-list applicant-calendar-sub-right-card">
+          <div className="calendar-split-card-right__toolbar">
+            <CmsSelect
+              mode="multiple"
+              withAllOption={false}
+              width="100%"
+              value={selectedSchools}
+              onChange={next => setSelectedSchools(next as string[])}
+              options={entityFilterOptions}
+              placeholder={filterEntity === 'participant' ? '참여자 선택' : '기관 선택'}
+            />
+          </div>
+          {scheduleList}
         </div>
-        {scheduleList}
       </div>
     </div>
   )

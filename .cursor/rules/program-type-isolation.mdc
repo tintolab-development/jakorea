@@ -1,0 +1,16 @@
+---
+description: CMS 프로그램 유형(일반·UJAT·1사1교·Gemini) 간 UI/로직 간섭 방지 — 상세 규칙 참조
+alwaysApply: true
+---
+
+# 프로그램 유형 간 간섭 방지
+
+**CMS에서 `apps/cms/src/features/program/**` 작업 시** 아래 규칙을 **항상** 따른다.
+
+→ **[apps/cms/.cursor/rules/process/program-type-isolation.mdc](apps/cms/.cursor/rules/process/program-type-isolation.mdc)** (`alwaysApply: true`)
+
+요약:
+
+- 일반 / UJAT / 1사1교 / Gemini는 **폴더·mock·스펙이 다름** — 한 유형 수정이 다른 유형 기본 동작을 바꾸지 않는다.
+- `shared/`·타 유형에서 import한 컴포넌트 수정 시 **`variant` / `columnPreset` / `programMode` 등으로 분기**하고, **기본값은 원래 유형 유지**.
+- 영향 유형이 불명확하거나 **2개 이상 유형에 닿으면 코드 변경 전 유저에게 확인**한다.
