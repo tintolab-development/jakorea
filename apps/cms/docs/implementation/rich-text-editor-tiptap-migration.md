@@ -533,3 +533,5 @@ useEditor({
 | 2026-06-02 | `use-template-preview.ts` 삭제 (미사용) |
 | 2026-06-02 | 단계 5~6: Toast UI 패키지·타입·전역 CSS 제거 |
 | 2026-06-02 | `RichTextToolbar` 기본 탑재 (`showToolbar` 기본 true) |
+| 2026-06-04 | Figma 스펙 커스텀 툴바(글꼴·크기·색상·하이라이트·정렬); Markdown 서식은 인라인 HTML/`==highlight==` 보존 |
+| 2026-06-04 | 삽입: 이미지(URL·파일·리사이즈·정렬), YouTube(`@tiptap/extension-youtube`), 링크·표·구분선 |
