@@ -51,6 +51,14 @@
     0 4px 12px 0 rgba(0, 136, 148, 0.14);
 }
 
+.calendar-list-item--selected {
+  border: 2px solid var(--JA-mint-01, #01a1af) !important;
+  background: var(--default-WT, #fff) !important;
+  box-shadow:
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
+}
+
 .calendar-list-item:last-child {
   margin-bottom: 0;
 }
