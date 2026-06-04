@@ -31,10 +31,16 @@ import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hook
 import { GeneralProgramDetailSidebar } from './detail-sidebar'
 import { GeneralProgramDetailCommonInfoView } from './info/common-info-view'
 import { GeneralProgramRecruitmentView } from './info/recruitment-view'
+import { GeneralProgramApplicationView } from './info/application-view'
+import { GeneralProgramApplicationTemplateEditModal } from './info/application-template-edit-modal'
 import {
   normalizeGeneralRecruitTab,
   type GeneralRecruitTabKey,
 } from '@/features/program/general/lib/recruitment-tabs'
+import {
+  normalizeGeneralApplicationTab,
+  type GeneralApplicationTabKey,
+} from '@/features/program/general/lib/application-tabs'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-program-detail-info-save'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -359,6 +365,36 @@ export function GeneralProgramDetailFullPageModal({
     },
     [editTab, setEditMode]
   )
+
+  const [applicationSubTab, setApplicationSubTab] =
+    useState<GeneralApplicationTabKey>('institutions')
+  const [applicationTemplateEditOpen, setApplicationTemplateEditOpen] = useState(false)
+  const [applicationPreviewReloadKey, setApplicationPreviewReloadKey] = useState(0)
+
+  useEffect(() => {
+    setApplicationSubTab(prev =>
+      normalizeGeneralApplicationTab(prev, {
+        showInstructor: showInstructorApplications,
+        showVolunteer: showVolunteerApplications,
+      })
+    )
+  }, [showInstructorApplications, showVolunteerApplications])
+
+  const handleApplicationSubTabChange = useCallback((tab: GeneralApplicationTabKey) => {
+    setApplicationSubTab(tab)
+  }, [])
+
+  const handleApplicationEditForm = useCallback(() => {
+    setApplicationTemplateEditOpen(true)
+  }, [])
+
+  const handleApplicationTemplateEditClose = useCallback(() => {
+    setApplicationTemplateEditOpen(false)
+  }, [])
+
+  const handleApplicationTemplateSaved = useCallback(() => {
+    setApplicationPreviewReloadKey(key => key + 1)
+  }, [])
 
   const isEditModeInstitutions =
     open &&
@@ -690,6 +726,17 @@ export function GeneralProgramDetailFullPageModal({
                 onEdit={handleRecruitmentEdit}
                 onSave={handleRecruitmentSave}
               />
+            ) : activeLnb === 'info' && activeTab === 'application' ? (
+              <GeneralProgramApplicationView
+                program={displayProgram}
+                activeApplicationTab={applicationSubTab}
+                onApplicationTabChange={handleApplicationSubTabChange}
+                showInstructorTab={showInstructorApplications}
+                showVolunteerTab={showVolunteerApplications}
+                canWrite={canWrite}
+                onEditForm={handleApplicationEditForm}
+                previewReloadKey={applicationPreviewReloadKey}
+              />
             ) : activeLnb === 'survey' ? (
               <GeneralSurveyManagementView program={displayProgram} activeTab={activeTab} />
             ) : activeLnb === 'managers' && displayProgram.id ? (
@@ -731,6 +778,15 @@ export function GeneralProgramDetailFullPageModal({
           <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
         )}
       </DetailFullPageModal>
+      {displayProgram ? (
+        <GeneralProgramApplicationTemplateEditModal
+          open={applicationTemplateEditOpen}
+          program={displayProgram}
+          applicationTab={applicationSubTab}
+          onClose={handleApplicationTemplateEditClose}
+          onSaved={handleApplicationTemplateSaved}
+        />
+      ) : null}
       <ProgramDetailSponsorDetailOverlay />
     </>
   )

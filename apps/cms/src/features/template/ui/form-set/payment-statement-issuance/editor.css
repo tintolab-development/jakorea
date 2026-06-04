@@ -1,12 +1,6 @@
-.payment-statement-issuance-editor {
-  width: 100%;
-}
-
 /* 하단 일자·회장 마무리 — 카드 셸·본문 타이포(햄버거 핸들은 hideDragHandleForParagraphIds로 비노출, pinnedTail로 순서 고정) */
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date'],
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature'] {
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date'],
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature'] {
   border-radius: var(--16, 16px);
   background-color: #fff;
   background-image: var(
@@ -16,31 +10,25 @@
   box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
 }
 
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
   .paragraph-input--closing-body.paragraph-input--view.paragraph-input--title
   .paragraph-input__leading,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
   .paragraph-input--closing-body.paragraph-input--view.paragraph-input--title
   .paragraph-input__leading {
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
 }
 
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
   .paragraph-input--closing-body.paragraph-input--view.paragraph-input--title
   .paragraph-input__view-text,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
   .paragraph-input--closing-body.paragraph-input--view.paragraph-input--title
   .paragraph-input__placeholder,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
   .paragraph-input--closing-body.paragraph-input--view.paragraph-input--title
   .paragraph-input__view-text,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
   .paragraph-input--closing-body.paragraph-input--view.paragraph-input--title
   .paragraph-input__placeholder {
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5)) !important;
@@ -53,12 +41,10 @@
   opacity: 1 !important;
 }
 
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
   .paragraph-input--closing-body.paragraph-input--view.paragraph-input--filled.paragraph-input--title
   .paragraph-input__view-text,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
   .paragraph-input--closing-body.paragraph-input--view.paragraph-input--filled.paragraph-input--title
   .paragraph-input__view-text {
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5)) !important;
@@ -66,63 +52,51 @@
   opacity: 1 !important;
 }
 
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--title
   .paragraph-input__shell
   .ant-input,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--title
   .paragraph-input__shell
   textarea.ant-input,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--title
   .paragraph-input__shell
   .ant-input,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--title
   .paragraph-input__shell
   textarea.ant-input,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--filled.paragraph-input--title
   .paragraph-input__shell
   .ant-input,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--filled.paragraph-input--title
   .paragraph-input__shell
   textarea.ant-input,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--filled.paragraph-input--title
   .paragraph-input__shell
   .ant-input,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--filled.paragraph-input--title
   .paragraph-input__shell
   textarea.ant-input,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--title
   .paragraph-input__shell--focused
   .ant-input,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--title
   .paragraph-input__shell--focused
   textarea.ant-input,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--title
   .paragraph-input__shell--focused
   .ant-input,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--title
   .paragraph-input__shell--focused
   textarea.ant-input {
@@ -136,23 +110,19 @@
   opacity: 1 !important;
 }
 
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--title
   .paragraph-input__shell
   .ant-input::placeholder,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--title
   .paragraph-input__shell
   textarea.ant-input::placeholder,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--title
   .paragraph-input__shell
   .ant-input::placeholder,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--title
   .paragraph-input__shell
   textarea.ant-input::placeholder {
@@ -160,22 +130,18 @@
   opacity: 1;
 }
 
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--filled.paragraph-input--title
   .paragraph-input__row:has(.paragraph-input__shell--focused)
   .paragraph-input__leading,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--filled.paragraph-input--title
   .paragraph-input__row:has(.paragraph-input__shell--focused)
   .paragraph-input__leading,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-date']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--filled.paragraph-input--title
   .paragraph-input__leading,
-.payment-statement-issuance-editor
-  .paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
+.paragraph-card[data-paragraph-id='payment-statement-seed-closing-signature']
   .paragraph-input--closing-body.paragraph-input--edit.paragraph-input--filled.paragraph-input--title
   .paragraph-input__leading {
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
@@ -183,12 +149,8 @@
 }
 
 /* 지급조서(발급용) — 모든 단락 「설명 입력」: 타입 스펙 + 실입력 + 포커스 시 하단 스트로크(텍스트 길이에 맞춤, paragraph-input 동적 너비) */
-.payment-statement-issuance-editor
-  .paragraph-input--description.paragraph-input--view
-  .paragraph-input__view-text,
-.payment-statement-issuance-editor
-  .paragraph-input--description.paragraph-input--view
-  .paragraph-input__placeholder {
+.paragraph-input--description.paragraph-input--view .paragraph-input__view-text,
+.paragraph-input--description.paragraph-input--view .paragraph-input__placeholder {
   color: var(--gray-85969-d, #85969d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
@@ -198,11 +160,9 @@
   opacity: 0.6;
 }
 
-.payment-statement-issuance-editor
-  .paragraph-input--description.paragraph-input--view.paragraph-input--filled
+.paragraph-input--description.paragraph-input--view.paragraph-input--filled
   .paragraph-input__view-text,
-.payment-statement-issuance-editor
-  .paragraph-input--description.paragraph-input--view.paragraph-input--filled
+.paragraph-input--description.paragraph-input--view.paragraph-input--filled
   .paragraph-input__leading {
   color: var(--gray-85969-d, #85969d);
   font-size: 16px;
@@ -211,14 +171,8 @@
   opacity: 0.6;
 }
 
-.payment-statement-issuance-editor
-  .paragraph-input--edit.paragraph-input--description
-  .paragraph-input__shell
-  .ant-input,
-.payment-statement-issuance-editor
-  .paragraph-input--edit.paragraph-input--description
-  .paragraph-input__shell
-  textarea.ant-input {
+.paragraph-input--edit.paragraph-input--description .paragraph-input__shell .ant-input,
+.paragraph-input--edit.paragraph-input--description .paragraph-input__shell textarea.ant-input {
   color: var(--gray-85969-d, #85969d) !important;
   -webkit-text-fill-color: var(--gray-85969-d, #85969d);
   font-family: Pretendard, sans-serif !important;
@@ -229,20 +183,16 @@
   opacity: 0.6 !important;
 }
 
-.payment-statement-issuance-editor
-  .paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
   .paragraph-input__shell
   .ant-input,
-.payment-statement-issuance-editor
-  .paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
   .paragraph-input__shell
   textarea.ant-input,
-.payment-statement-issuance-editor
-  .paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
   .paragraph-input__shell--focused
   .ant-input,
-.payment-statement-issuance-editor
-  .paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
   .paragraph-input__shell--focused
   textarea.ant-input {
   color: var(--gray-85969-d, #85969d) !important;
@@ -250,23 +200,17 @@
   opacity: 0.6 !important;
 }
 
-.payment-statement-issuance-editor
-  .paragraph-input--edit.paragraph-input--description
-  .paragraph-input__shell
-  .ant-input::placeholder,
-.payment-statement-issuance-editor
-  .paragraph-input--edit.paragraph-input--description
+.paragraph-input--edit.paragraph-input--description .paragraph-input__shell .ant-input::placeholder,
+.paragraph-input--edit.paragraph-input--description
   .paragraph-input__shell
   textarea.ant-input::placeholder {
   color: var(--gray-85969-d, #85969d);
   opacity: 0.6;
 }
 
-.payment-statement-issuance-editor
-  .paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
   .paragraph-input__leading,
-.payment-statement-issuance-editor
-  .paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
   .paragraph-input__row:has(.paragraph-input__shell--focused)
   .paragraph-input__leading {
   color: var(--gray-85969-d, #85969d);

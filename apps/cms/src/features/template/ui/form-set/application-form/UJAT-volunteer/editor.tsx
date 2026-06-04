@@ -15,9 +15,12 @@ export function UjatProgramApplicationFormVolunteerEditorLeftColumn({
 }) {
   const hidePreviousTerm = vm.ujatVolunteerApplicationType === 'new'
   const visibleParagraphs = hidePreviousTerm
-    ? vm.draft.paragraphs.filter(p => p.id !== UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm)
+    ? vm.draft.paragraphs.filter(
+        p => p.id !== UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm
+      )
     : vm.draft.paragraphs
-  const selectedCardId = hidePreviousTerm &&
+  const selectedCardId =
+    hidePreviousTerm &&
     vm.activeParagraphId === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm
       ? UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.basicInfo
       : vm.activeParagraphId
@@ -63,7 +66,8 @@ export function UjatProgramApplicationFormVolunteerEditorRightColumn({
   vm: ProgramParticipantApplicationEditorViewModel
 }) {
   const hidePreviousTerm = vm.ujatVolunteerApplicationType === 'new'
-  const selectedItemId = hidePreviousTerm &&
+  const selectedItemId =
+    hidePreviousTerm &&
     vm.activeParagraphId === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm
       ? UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.basicInfo
       : vm.activeParagraphId

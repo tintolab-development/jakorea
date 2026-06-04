@@ -13,32 +13,30 @@ export function RecruitFormInstructorEditorLeftColumn({
   vm: ProgramParticipantApplicationEditorViewModel
 }) {
   return (
-    <div className="recruit-form-instructor recruit-form-instructor--editor-left">
-      <FormEditorLeftPanel
-        paragraphs={vm.draft.paragraphs}
-        titleNumbering={vm.draft.formSettings.titleNumbering}
-        selectedCardId={vm.activeParagraphId}
-        onSelectCard={vm.handleSelectCard}
-        onReorderMiddle={vm.onReorderMiddle}
-        updateParagraph={vm.updateParagraph}
-        editorKind="horizontal_table"
-        layout="three"
-        horizontalTableRowSelectionsByParagraphId={vm.horizontalTableRowSelectionsByParagraphId}
-        onHorizontalTableRowSelectionChange={vm.onHorizontalTableRowSelectionChange}
-        verticalTableBodyRowSelection={vm.verticalTableBodyRowSelection}
-        onVerticalTableBodyRowSelectionChange={vm.onVerticalTableBodyRowSelectionChange}
-        middleParagraphActions={vm.middleParagraphActions}
-        singleItemListActiveItemId={vm.singleItemListActiveItemId}
-        onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
-        structureLockedParagraphIds={vm.structureLockedParagraphIds}
-        paragraphBodyOptions={{
-          structureLockedParagraphIds: vm.structureLockedParagraphIds,
-          structureLockedAuthoringChoicePreview: true,
-          recruitFormInstructor: true,
-        }}
-        headingDescriptionExtraClassName="paragraph-input-explanation-title"
-      />
-    </div>
+    <FormEditorLeftPanel
+      paragraphs={vm.draft.paragraphs}
+      titleNumbering={vm.draft.formSettings.titleNumbering}
+      selectedCardId={vm.activeParagraphId}
+      onSelectCard={vm.handleSelectCard}
+      onReorderMiddle={vm.onReorderMiddle}
+      updateParagraph={vm.updateParagraph}
+      editorKind="horizontal_table"
+      layout="three"
+      horizontalTableRowSelectionsByParagraphId={vm.horizontalTableRowSelectionsByParagraphId}
+      onHorizontalTableRowSelectionChange={vm.onHorizontalTableRowSelectionChange}
+      verticalTableBodyRowSelection={vm.verticalTableBodyRowSelection}
+      onVerticalTableBodyRowSelectionChange={vm.onVerticalTableBodyRowSelectionChange}
+      middleParagraphActions={vm.middleParagraphActions}
+      singleItemListActiveItemId={vm.singleItemListActiveItemId}
+      onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
+      structureLockedParagraphIds={vm.structureLockedParagraphIds}
+      paragraphBodyOptions={{
+        structureLockedParagraphIds: vm.structureLockedParagraphIds,
+        structureLockedAuthoringChoicePreview: true,
+        recruitFormInstructor: true,
+      }}
+      headingDescriptionExtraClassName="paragraph-input-explanation-title"
+    />
   )
 }
 

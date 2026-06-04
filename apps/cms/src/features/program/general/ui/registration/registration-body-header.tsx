@@ -10,7 +10,7 @@ import {
   type GeneralProgramRegistrationStepKey,
   type GeneralProgramRecruitTabKey,
 } from '@/features/program/general/model/registration-flow'
-import '@/features/program/ujat/ui/registration/ujat-program-registration-body-header.css'
+import '@/features/program/shared/ui/registration/registration-body-header.css'
 
 export function GeneralProgramRegistrationBodyHeader({
   activeStep,
@@ -27,7 +27,7 @@ export function GeneralProgramRegistrationBodyHeader({
 
   if (phase === 'program') {
     return (
-      <p className="ujat-program-registration-body-header__hint">
+      <p className="registration-body-header__hint">
         {GENERAL_PROGRAM_REGISTRATION_PHASE_HINT.program}
       </p>
     )
@@ -42,7 +42,7 @@ export function GeneralProgramRegistrationBodyHeader({
       : visibleRecruitTabKeys[0]
     return (
       <CmsTextTabs
-        className="ujat-program-registration-body-header__tabs"
+        className="registration-body-header__tabs"
         variant="list"
         activeKey={activeRecruitTab}
         onChange={(tab: GeneralProgramRecruitTabKey) =>
@@ -67,7 +67,7 @@ export function GeneralProgramRegistrationBodyHeader({
 
   return (
     <CmsTextTabs
-      className="ujat-program-registration-body-header__tabs"
+      className="registration-body-header__tabs"
       variant="list"
       activeKey={activeApplicationTab}
       onChange={onSelectStep}

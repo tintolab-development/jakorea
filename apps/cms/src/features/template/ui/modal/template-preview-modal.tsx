@@ -288,7 +288,7 @@ export function TemplatePreviewModal({
 
           <div
             className={
-              isFormPreviewLayout
+              isFormPreviewLayout || isCardUserPreviewLayout
                 ? 'template-preview-modal__pages'
                 : 'template-preview-modal__content'
             }
@@ -343,6 +343,9 @@ export function TemplatePreviewModal({
               />
             )}
           </div>
+          {isCardUserPreviewLayout && !isA4DocumentPreviewLayout ? (
+            <div className="template-preview-modal__body-bottom" aria-hidden="true" />
+          ) : null}
         </div>
       </div>
     </TealHeaderModal>

@@ -137,6 +137,8 @@ export function VerticalTableParagraphBody({
   onChange,
   isEditMode,
   dateTimeCellsInteractive: dateTimeCellsInteractiveProp,
+  /** false: 미리보기(user) 등 — 행 클릭·민트 강조 비활성, 셀 입력은 `isEditMode`/`dateTimeCellsInteractive` 유지 */
+  tableCanvasInteractive = true,
   tableRowSelection: controlledRow,
   onTableRowSelectionChange,
 }: {
@@ -148,11 +150,13 @@ export function VerticalTableParagraphBody({
    * 구조 잠금 작성 모드에서 행 라벨(th)은 읽기 전용으로 두고 값만 고를 때 사용.
    */
   dateTimeCellsInteractive?: boolean
+  tableCanvasInteractive?: boolean
   /** 있으면 상위와 본문 행 선택 동기화(다른 위젯 th/td 선택 시 단일 포커스) */
   tableRowSelection?: number | null
   onTableRowSelectionChange?: (row: number | null) => void
 }) {
   const dtCellsInteractive = dateTimeCellsInteractiveProp ?? isEditMode
+  const canvasInteractive = tableCanvasInteractive
   const p = useMemo(() => normalizeVerticalTableParagraph(paragraph), [paragraph])
   const choiceOpts = useMemo(
     () => normalizeVerticalChoiceOptions(p.verticalChoiceOptions),
@@ -228,12 +232,13 @@ export function VerticalTableParagraphBody({
   }
 
   const toggleRow = (rowIdx: number) => {
+    if (!canvasInteractive) return
     setSelectedRow(selectedRow === rowIdx ? null : rowIdx)
   }
 
   /** onFocus 타이밍에 행 선택 state를 갱신하면 리렌더로 피커가 닫히거나 패널이 열리지 않을 수 있어, 패널 open 이후 동기화 */
   const notifyPickerRowFocused = (rowIdxFocus: number) => (pickerOpen: boolean) => {
-    if (pickerOpen) setSelectedRow(rowIdxFocus)
+    if (pickerOpen && canvasInteractive) setSelectedRow(rowIdxFocus)
   }
 
   const renderStage = (row: VerticalTableRow, rowIdx: number, stageIdx: number) => {
@@ -390,10 +395,14 @@ export function VerticalTableParagraphBody({
         <div
           className="form-editor-vertical-table__th"
           role="columnheader"
-          onClick={e => {
-            if (isEventFromTableInteractive(e.target)) return
-            toggleRow(rowIdx)
-          }}
+          onClick={
+            canvasInteractive
+              ? e => {
+                  if (isEventFromTableInteractive(e.target)) return
+                  toggleRow(rowIdx)
+                }
+              : undefined
+          }
         >
           {isEditMode ? (
             <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--header">
@@ -402,7 +411,9 @@ export function VerticalTableParagraphBody({
                 value={header}
                 placeholder={hPh}
                 onChange={e => setHeader(rowIdx, stageIdx, e.target.value)}
-                onFocus={() => setSelectedRow(rowIdx)}
+                onFocus={() => {
+                  if (canvasInteractive) setSelectedRow(rowIdx)
+                }}
                 onKeyDown={e => {
                   if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
                 }}
@@ -415,10 +426,14 @@ export function VerticalTableParagraphBody({
         <div
           className="form-editor-vertical-table__td"
           role="gridcell"
-          onClick={e => {
-            if (isEventFromTableInteractive(e.target)) return
-            toggleRow(rowIdx)
-          }}
+          onClick={
+            canvasInteractive
+              ? e => {
+                  if (isEventFromTableInteractive(e.target)) return
+                  toggleRow(rowIdx)
+                }
+              : undefined
+          }
         >
           {isDateTime ? (
             <div
@@ -447,7 +462,9 @@ export function VerticalTableParagraphBody({
                   if (!isEditMode) return
                   setCell(rowIdx, stageIdx, e.target.value)
                 }}
-                onFocus={() => setSelectedRow(rowIdx)}
+                onFocus={() => {
+                  if (canvasInteractive) setSelectedRow(rowIdx)
+                }}
                 disabled={!isEditMode}
               >
                 {choiceOpts.map((o, i) => (
@@ -484,7 +501,9 @@ export function VerticalTableParagraphBody({
                         else s.delete(o)
                         setMultipleChoiceStage(rowIdx, stageIdx, [...s])
                       }}
-                      onFocus={() => setSelectedRow(rowIdx)}
+                      onFocus={() => {
+                        if (canvasInteractive) setSelectedRow(rowIdx)
+                      }}
                     >
                       {o}
                     </CmsCheckbox>
@@ -507,7 +526,9 @@ export function VerticalTableParagraphBody({
                 value={cell}
                 placeholder={cPh}
                 onChange={e => setCell(rowIdx, stageIdx, e.target.value)}
-                onFocus={() => setSelectedRow(rowIdx)}
+                onFocus={() => {
+                  if (canvasInteractive) setSelectedRow(rowIdx)
+                }}
                 onKeyDown={e => {
                   if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
                 }}
@@ -571,21 +592,27 @@ export function VerticalTableParagraphBody({
             className={[
               'form-editor-vertical-table__row',
               'form-editor-vertical-table__row--file-attachment',
-              selectedRow === 0 ? 'form-editor-vertical-table__row--selected' : '',
+              canvasInteractive && selectedRow === 0
+                ? 'form-editor-vertical-table__row--selected'
+                : '',
             ]
               .filter(Boolean)
               .join(' ')}
             role="row"
-            aria-selected={selectedRow === 0}
+            aria-selected={canvasInteractive && selectedRow === 0}
           >
             <div className="form-editor-vertical-table__stage">
               <div
                 className="form-editor-vertical-table__th"
                 role="columnheader"
-                onClick={e => {
-                  if (isEventFromTableInteractive(e.target)) return
-                  toggleRow(0)
-                }}
+                onClick={
+                  canvasInteractive
+                    ? e => {
+                        if (isEventFromTableInteractive(e.target)) return
+                        toggleRow(0)
+                      }
+                    : undefined
+                }
               >
                 <VerticalTableCellText
                   value={fileAttachmentHeaderLabel}
@@ -596,10 +623,14 @@ export function VerticalTableParagraphBody({
               <div
                 className="form-editor-vertical-table__td form-editor-vertical-table__td--file-upload"
                 role="gridcell"
-                onClick={e => {
-                  if (isEventFromTableInteractive(e.target)) return
-                  toggleRow(0)
-                }}
+                onClick={
+                  canvasInteractive
+                    ? e => {
+                        if (isEventFromTableInteractive(e.target)) return
+                        toggleRow(0)
+                      }
+                    : undefined
+                }
               >
                 <div
                   className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body"
@@ -628,12 +659,14 @@ export function VerticalTableParagraphBody({
             key={`vr-${rowIdx}-sc${row.stageCount}`}
             className={[
               'form-editor-vertical-table__row',
-              selectedRow === rowIdx ? 'form-editor-vertical-table__row--selected' : '',
+              canvasInteractive && selectedRow === rowIdx
+                ? 'form-editor-vertical-table__row--selected'
+                : '',
             ]
               .filter(Boolean)
               .join(' ')}
             role="row"
-            aria-selected={selectedRow === rowIdx}
+            aria-selected={canvasInteractive && selectedRow === rowIdx}
           >
             {row.stageCount === 1
               ? renderStage(row, rowIdx, 0)

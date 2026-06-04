@@ -353,3 +353,31 @@
   flex: 1 0 0;
   align-items: center;
 }
+
+/* 카드형(user) 미리보기 — 단일 스크롤·하단 52px 스페이서(full-page-modal과 동일) */
+.template-preview-modal--card-layout .template-preview-modal__body {
+  padding-bottom: 0;
+  min-height: 0;
+}
+
+.template-preview-modal__body-bottom {
+  flex: 0 0 52px;
+  width: 100%;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.template-preview-modal--card-layout .template-preview-modal__pages,
+.template-preview-modal--card-layout .template-preview-modal__content {
+  flex: 0 0 auto;
+  min-height: auto;
+  width: 100%;
+}
+
+.template-preview-modal--card-layout .template-preview-modal__pages .form-editor-left,
+.template-preview-modal--card-layout .template-preview-modal__content .form-editor-left {
+  flex: 0 0 auto;
+  min-height: auto;
+  overflow: visible;
+  padding-right: 0;
+}

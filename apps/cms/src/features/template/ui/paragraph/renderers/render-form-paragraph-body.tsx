@@ -285,7 +285,9 @@ export function renderFormParagraphBody(
       const isEditMode =
         (!structureLocked || paragraphInteractionMode === 'user') &&
         (paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field')
-      const tableCanvasInteractive = !structureLocked || paragraphInteractionMode === 'user'
+      /** 표 격자·헤더 행 선택(민트 스트로크) — 작성(authoring) + 구조 미잠금에서만 */
+      const tableCanvasInteractive =
+        !structureLocked && paragraphInteractionMode === 'authoring'
       return (
         <HorizontalTableParagraphBody
           paragraph={p}
@@ -387,12 +389,15 @@ export function renderFormParagraphBody(
           })
         : normalizedVp
       const dateTimeCellsInteractive = isBodyInteractive || lockedAuthoringChoicePreview
+      const tableCanvasInteractive =
+        !structureLocked && paragraphInteractionMode === 'authoring'
       return (
         <VerticalTableParagraphBody
           paragraph={vp}
           onChange={next => updateParagraph(p.id, () => normalizeVerticalTableParagraph(next))}
           isEditMode={isBodyInteractive}
           dateTimeCellsInteractive={dateTimeCellsInteractive}
+          tableCanvasInteractive={tableCanvasInteractive}
           tableRowSelection={options?.verticalTableRowSelection}
           onTableRowSelectionChange={options?.onVerticalTableRowSelectionChange}
         />

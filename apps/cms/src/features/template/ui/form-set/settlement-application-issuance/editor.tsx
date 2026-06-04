@@ -17,30 +17,28 @@ export function SettlementApplicationIssuanceEditorLeftColumn({
   vm: SettlementApplicationIssuanceEditorViewModel
 }) {
   return (
-    <div className="payment-statement-issuance-editor">
-      <FormEditorLeftPanel
-        paragraphs={vm.draft.paragraphs}
-        titleNumbering={vm.draft.formSettings.titleNumbering}
-        selectedCardId={vm.activeParagraphId}
-        onSelectCard={vm.handleSelectCard}
-        onReorderMiddle={vm.onReorderMiddle}
-        updateParagraph={vm.updateParagraph}
-        editorKind="horizontal_table"
-        layout="five"
-        horizontalTableRowSelectionsByParagraphId={vm.horizontalTableRowSelectionsByParagraphId}
-        onHorizontalTableRowSelectionChange={vm.onHorizontalTableRowSelectionChange}
-        verticalTableBodyRowSelection={vm.verticalTableBodyRowSelection}
-        onVerticalTableBodyRowSelectionChange={vm.onVerticalTableBodyRowSelectionChange}
-        middleParagraphActions={vm.middleParagraphActions}
-        singleItemListActiveItemId={vm.singleItemListActiveItemId}
-        onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
-        structureLockedParagraphIds={vm.structureLockedParagraphIds}
-        hideDragHandleForParagraphIds={SETTLEMENT_APPLICATION_ISSUANCE_HIDDEN_DRAG_HANDLE_IDS}
-        paragraphBodyOptions={SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS}
-        hideParagraphRequiredChrome
-        headingDescriptionExtraClassName="paragraph-input-explanation-title"
-      />
-    </div>
+    <FormEditorLeftPanel
+      paragraphs={vm.draft.paragraphs}
+      titleNumbering={vm.draft.formSettings.titleNumbering}
+      selectedCardId={vm.activeParagraphId}
+      onSelectCard={vm.handleSelectCard}
+      onReorderMiddle={vm.onReorderMiddle}
+      updateParagraph={vm.updateParagraph}
+      editorKind="horizontal_table"
+      layout="five"
+      horizontalTableRowSelectionsByParagraphId={vm.horizontalTableRowSelectionsByParagraphId}
+      onHorizontalTableRowSelectionChange={vm.onHorizontalTableRowSelectionChange}
+      verticalTableBodyRowSelection={vm.verticalTableBodyRowSelection}
+      onVerticalTableBodyRowSelectionChange={vm.onVerticalTableBodyRowSelectionChange}
+      middleParagraphActions={vm.middleParagraphActions}
+      singleItemListActiveItemId={vm.singleItemListActiveItemId}
+      onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
+      structureLockedParagraphIds={vm.structureLockedParagraphIds}
+      hideDragHandleForParagraphIds={SETTLEMENT_APPLICATION_ISSUANCE_HIDDEN_DRAG_HANDLE_IDS}
+      paragraphBodyOptions={SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS}
+      hideParagraphRequiredChrome
+      headingDescriptionExtraClassName="paragraph-input-explanation-title"
+    />
   )
 }
 
