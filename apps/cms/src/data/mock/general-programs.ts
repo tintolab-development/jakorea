@@ -1,7 +1,7 @@
 /**
  * 일반 프로그램 Mock 데이터 (`/programs/general`)
  *
- * 1) 기존 그럴싸한 프로그램명 6건 (예정/진행/완료 UI·캘린더용)
+ * 1) 캘린더 QA용 6건 — `【예정·캘린더】` / `【진행·캘린더】` / `【완료·캘린더】` 접두 + 고정 일정
  * 2) 유형 케이스 8종(행 7~14) + 15행(교육·IPS 일정별 상이) — `【유형·NN】` 접두
  * 3) LNB 조합 9건(행 16~24) — `【LNB·NN】` 접두 (`general-prog-lnb-16` … `24`)
  */
@@ -111,6 +111,65 @@ function pad2(n: number): string {
   return String(n).padStart(2, '0')
 }
 
+/** 캘린더뷰 QA용 고정 날짜 (KST) — `getDate()` 상대값 대신 탭별 월·일정 구분 */
+function calendarDemoIso(year: number, month: number, day: number, endOfDay = false): string {
+  return `${year}-${pad2(month)}-${pad2(day)}T${endOfDay ? '23:59:59' : '00:00:00'}+09:00`
+}
+
+function formatCalendarDemoTitle(prefix: string, name: string): string {
+  return `【${prefix}】${name}`
+}
+
+const CALENDAR_DEMO_IN_PROGRESS_A_COMMON_INFO: NonNullable<Program['generalCommonInfo']> = {
+  educationScheduleLines: [
+    '26년 6월 10일(수) 09:30 ~ 11:30',
+    '26년 6월 17일(수) 13:00 ~ 15:00',
+  ],
+  calendarSurveySchedules: [
+    {
+      id: 'survey-start',
+      title: '설문조사 시작',
+      startDate: calendarDemoIso(2026, 6, 5),
+    },
+    {
+      id: 'survey-end',
+      title: '설문조사 종료',
+      endDate: calendarDemoIso(2026, 6, 12, true),
+    },
+  ],
+  calendarAssignmentSchedules: [
+    {
+      id: 'assignment-due',
+      title: '1회차 과제 제출 마감',
+      dueDate: calendarDemoIso(2026, 6, 24, true),
+    },
+  ],
+}
+
+const CALENDAR_DEMO_IN_PROGRESS_B_COMMON_INFO: NonNullable<Program['generalCommonInfo']> = {
+  educationScheduleLines: ['26년 6월 12일(금) 10:00 ~ 12:00'],
+  scheduleDetails: [
+    {
+      scheduleLabel: '세부 일정 01',
+      name: '오리엔테이션',
+    },
+  ],
+  calendarSurveySchedules: [
+    {
+      id: 'satisfaction-start',
+      title: '만족도 조사 시작',
+      startDate: calendarDemoIso(2026, 6, 8),
+    },
+  ],
+  calendarAssignmentSchedules: [
+    {
+      id: 'assignment-due',
+      title: '과제 제출 마감',
+      dueDate: calendarDemoIso(2026, 6, 19, true),
+    },
+  ],
+}
+
 function buildProgramStartEndTime(seed: number): { startTime: string; endTime: string } {
   const templates = [
     { startH: 9, startM: 0, durationM: 150 },
@@ -171,22 +230,22 @@ type GeneralProgramSeed = Omit<Program, 'id' | 'rounds' | 'createdAt' | 'updated
   updatedAt?: string
 }
 
-/** 기존 목록·캘린더용 — 실제 후원사/프로그램명 스타일 */
+/** 기존 목록·캘린더용 — `【예정·캘린더】` 등 접두 + 고정 일정으로 탭별 QA 구분 */
 const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
   {
     id: 'general-prog-scheduled-1',
     capacity: 30,
     sponsorId: SPONSOR_ID,
-    title: 'HSBC/HKU Business Case Competition 2026 모집 안내',
-    mainTitle: 'HSBC/HKU Business Case Competition 2026',
+    title: formatCalendarDemoTitle('예정·캘린더·A', 'HSBC Business Case 2026'),
+    mainTitle: 'HSBC Business Case 2026',
     type: 'offline',
     format: 'workshop',
     category: 'school' as ProgramCategory,
-    description: '프로그램 진행 예정(모집 전) 샘플 1',
-    startDate: getDate(60),
-    endDate: getDate(30),
-    applicationStartDate: getDate(90),
-    applicationEndDate: getDate(45),
+    description: '캘린더 QA — 예정 탭: 6/20 운영 시작만 표시',
+    startDate: calendarDemoIso(2026, 6, 20),
+    endDate: calendarDemoIso(2026, 9, 30, true),
+    applicationStartDate: calendarDemoIso(2026, 5, 1),
+    applicationEndDate: calendarDemoIso(2026, 5, 31, true),
     status: 'pending',
     lifecycleStatus: 'recruiting_students' as ProgramLifecycleStatus,
     businessArea: '경제금융',
@@ -200,16 +259,16 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     id: 'general-prog-scheduled-2',
     capacity: 40,
     sponsorId: SPONSOR_ID,
-    title: '2026 JA Korea 대학생경제교육봉사단 UJAT 36기 모집',
-    mainTitle: '대학생경제교육봉사단 UJAT 36기',
+    title: formatCalendarDemoTitle('예정·캘린더·B', 'UJAT 36기'),
+    mainTitle: 'UJAT 36기',
     type: 'offline',
     format: 'workshop',
     category: 'individual' as ProgramCategory,
-    description: '프로그램 진행 예정(모집 중) 샘플 2',
-    startDate: getDate(58),
-    endDate: getDate(26),
-    applicationStartDate: getDate(92),
-    applicationEndDate: getDate(42),
+    description: '캘린더 QA — 예정 탭: 7/5 운영 시작만 표시',
+    startDate: calendarDemoIso(2026, 7, 5),
+    endDate: calendarDemoIso(2026, 10, 15, true),
+    applicationStartDate: calendarDemoIso(2026, 5, 10),
+    applicationEndDate: calendarDemoIso(2026, 6, 10, true),
     status: 'pending',
     lifecycleStatus: 'recruiting_instructors' as ProgramLifecycleStatus,
     businessArea: '경제금융',
@@ -224,18 +283,20 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     id: 'general-prog-in-progress-1',
     capacity: 30,
     sponsorId: SPONSOR_ID,
-    title: 'EY한영-JA Korea Growth to Professional 2026 대학생 참가자 모집',
+    title: formatCalendarDemoTitle('진행·캘린더·A', 'Growth to Professional 2026'),
     mainTitle: 'Growth to Professional 2026',
     type: 'offline',
     format: 'workshop',
     category: 'instructor' as ProgramCategory,
-    description: '프로그램 진행 중 샘플 1 (교사/강사)',
-    startDate: getDate(45),
-    endDate: getDate(15),
-    applicationStartDate: getDate(90),
-    applicationEndDate: getDate(30),
+    description: '캘린더 QA — 6/10·6/17 교육, 6/5 설문, 6/24 과제',
+    startDate: calendarDemoIso(2026, 5, 1),
+    endDate: calendarDemoIso(2026, 8, 31, true),
+    applicationStartDate: calendarDemoIso(2026, 3, 1),
+    applicationEndDate: calendarDemoIso(2026, 3, 31, true),
+    instructorApplicationStartDate: calendarDemoIso(2026, 4, 1),
+    instructorApplicationEndDate: calendarDemoIso(2026, 4, 20, true),
     status: 'active',
-    lifecycleStatus: 'education_after_textbook' as ProgramLifecycleStatus,
+    lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
     businessArea: '경제금융',
     targetLevel: 'high' as TargetLevel,
     approvedStudentCount: 18,
@@ -245,22 +306,27 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     participatingStudentCount: 180,
     scheduleTimeEnabled: false,
     generalParticipantTypes: ['school_institution', 'teacher_instructor'],
-    generalSurveyMenuKeys: [],
+    generalSurveyMenuKeys: ['survey', 'satisfaction'],
+    generalProgramEducationStructure: 'curriculum',
+    generalProgramSessionRound: 'multi',
+    generalCommonInfo: CALENDAR_DEMO_IN_PROGRESS_A_COMMON_INFO,
   },
   {
     id: 'general-prog-in-progress-2',
     capacity: 35,
     sponsorId: SPONSOR_ID,
-    title: '2026년 한국씨티은행-JA Korea 특별한 JOB탐 참가자 모집',
+    title: formatCalendarDemoTitle('진행·캘린더·B', '특별한 JOB탐'),
     mainTitle: '특별한 JOB탐',
     type: 'offline',
     format: 'seminar',
     category: 'volunteer' as ProgramCategory,
-    description: '프로그램 진행 중 샘플 2 (봉사자)',
-    startDate: getDate(43),
-    endDate: getDate(12),
-    applicationStartDate: getDate(86),
-    applicationEndDate: getDate(28),
+    description: '캘린더 QA — 6/12 오리엔테이션, 6/8 만족도, 6/19 과제',
+    startDate: calendarDemoIso(2026, 5, 15),
+    endDate: calendarDemoIso(2026, 8, 15, true),
+    applicationStartDate: calendarDemoIso(2026, 3, 15),
+    applicationEndDate: calendarDemoIso(2026, 4, 15, true),
+    volunteerApplicationStartDate: calendarDemoIso(2026, 4, 20),
+    volunteerApplicationEndDate: calendarDemoIso(2026, 5, 5, true),
     status: 'active',
     lifecycleStatus: 'education_after_textbook' as ProgramLifecycleStatus,
     businessArea: '진로취업',
@@ -273,25 +339,28 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     scheduleTimeEnabled: true,
     generalParticipantTypes: ['individual', 'volunteer'],
     generalVolunteerInterviewEnabled: true,
-    interviewStartDate: getDate(50),
-    interviewEndDate: getDate(40),
+    interviewStartDate: calendarDemoIso(2026, 5, 8),
+    interviewEndDate: calendarDemoIso(2026, 5, 12, true),
     interviewMethod: '대면 면접',
     generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
+    generalProgramEducationStructure: 'schedule',
+    generalProgramSessionRound: 'single',
+    generalCommonInfo: CALENDAR_DEMO_IN_PROGRESS_B_COMMON_INFO,
   },
   {
     id: 'general-prog-completed-1',
     capacity: 30,
     sponsorId: SPONSOR_ID,
-    title: '2026 SAP-함께 성장JA! 참여 고등학생 모집 안내 (IT, SW 멘토링)',
-    mainTitle: 'SAP-함께 성장JA!',
+    title: formatCalendarDemoTitle('완료·캘린더·A', 'SAP 함께 성장JA'),
+    mainTitle: 'SAP 함께 성장JA',
     type: 'offline',
     format: 'seminar',
     category: 'school' as ProgramCategory,
-    description: '프로그램 진행 완료 샘플 1',
-    startDate: getDate(120),
-    endDate: getDate(90),
-    applicationStartDate: getDate(150),
-    applicationEndDate: getDate(100),
+    description: '캘린더 QA — 완료 탭: 5/15 운영 종료만 표시',
+    startDate: calendarDemoIso(2026, 1, 10),
+    endDate: calendarDemoIso(2026, 5, 15, true),
+    applicationStartDate: calendarDemoIso(2025, 11, 1),
+    applicationEndDate: calendarDemoIso(2025, 12, 15, true),
     status: 'completed',
     lifecycleStatus: 'education_completed' as ProgramLifecycleStatus,
     businessArea: '진로취업',
@@ -306,16 +375,16 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     id: 'general-prog-completed-2',
     capacity: 28,
     sponsorId: SPONSOR_ID,
-    title: '2026 SAP-JA Korea Global Career Discovery 원데이 취업 멘토링 대학생 참가자 모집',
+    title: formatCalendarDemoTitle('완료·캘린더·B', 'Global Career Discovery'),
     mainTitle: 'Global Career Discovery',
     type: 'offline',
     format: 'seminar',
     category: 'individual' as ProgramCategory,
-    description: '프로그램 진행 완료 샘플 2',
-    startDate: getDate(118),
-    endDate: getDate(88),
-    applicationStartDate: getDate(152),
-    applicationEndDate: getDate(98),
+    description: '캘린더 QA — 완료 탭: 5/28 운영 종료만 표시',
+    startDate: calendarDemoIso(2026, 2, 1),
+    endDate: calendarDemoIso(2026, 5, 28, true),
+    applicationStartDate: calendarDemoIso(2025, 11, 15),
+    applicationEndDate: calendarDemoIso(2026, 1, 10, true),
     status: 'completed',
     lifecycleStatus: 'document_processing_completed' as ProgramLifecycleStatus,
     businessArea: '진로취업',
