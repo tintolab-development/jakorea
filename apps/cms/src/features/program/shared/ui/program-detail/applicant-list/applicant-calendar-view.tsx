@@ -177,33 +177,19 @@ export function ApplicantCalendarView({
     />
   )
 
-  if (isGeneralInstructor) {
-    return (
-      <div className="calendar-set applicant-calendar-set applicant-calendar-set--general-instructor">
-        <div className="calendar-main-container">{calendarMain}</div>
-        <div className="calendar-sub-right-list applicant-calendar-sub-right-list">
-          <div className="applicant-calendar-sub-right-list__school-filter">
-            <CmsSelect
-              mode="multiple"
-              withAllOption={false}
-              value={selectedSchools}
-              onChange={next => setSelectedSchools(next as string[])}
-              options={schoolFilterOptions}
-              placeholder="기관 선택"
-            />
-          </div>
-          {scheduleList}
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="applicant-calendar-layout">
+    <div
+      className={[
+        'calendar-set',
+        'applicant-calendar-set',
+        isGeneralInstructor
+          ? 'applicant-calendar-set--general-instructor'
+          : 'applicant-calendar-set--default',
+      ].join(' ')}
+    >
       <div className="calendar-main-container">{calendarMain}</div>
-
-      <div className="applicant-calendar-right">
-        <div className="applicant-calendar-right__school-filter">
+      <div className="calendar-sub-right-list applicant-calendar-sub-right-list">
+        <div className="applicant-calendar-sub-right-list__school-filter">
           <CmsSelect
             mode="multiple"
             withAllOption={false}
