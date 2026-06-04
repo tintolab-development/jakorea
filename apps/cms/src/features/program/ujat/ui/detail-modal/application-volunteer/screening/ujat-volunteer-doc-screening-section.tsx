@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState, type MouseEvent } from 'react'
-import type { UjatEssayColumnKey } from './ujat-volunteer-doc-screening-columns'
+import type { UjatEssayColumnKey, UjatVolunteerDocScreeningColumnPreset } from './ujat-volunteer-doc-screening-columns'
 import { Table } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -30,6 +30,7 @@ const tableComponents = {
 export interface UjatVolunteerDocScreeningSectionProps {
   programId: string
   half: UjatVolunteerRecruitHalf
+  columnPreset?: UjatVolunteerDocScreeningColumnPreset
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onVolunteerApplicantDetailMetaChange?: UjatVolunteerApplicantDetailMetaChangeHandler
 }
@@ -37,6 +38,7 @@ export interface UjatVolunteerDocScreeningSectionProps {
 export function UjatVolunteerDocScreeningSection({
   programId,
   half,
+  columnPreset = 'ujat',
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: UjatVolunteerDocScreeningSectionProps) {
@@ -46,7 +48,7 @@ export function UjatVolunteerDocScreeningSection({
     handleEssayColumnResizeStart,
     handleEssayColumnResizeStop,
     minTableScrollX,
-  } = useUjatVolunteerDocScreeningColumnWidths()
+  } = useUjatVolunteerDocScreeningColumnWidths(columnPreset)
   const [isResizing, setIsResizing] = useState(false)
 
   const onEssayColumnResizeStart = useCallback(() => {
@@ -87,6 +89,7 @@ export function UjatVolunteerDocScreeningSection({
   } = useUjatVolunteerDocScreening({
     programId,
     half,
+    columnPreset,
     essayColumnWidths,
     onEssayColumnResizeStart,
     onEssayColumnResizeStop,
