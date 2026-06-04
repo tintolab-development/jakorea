@@ -1,7 +1,7 @@
 /**
  * 일반 프로그램 Mock 데이터 (`/programs/general`)
  *
- * 1) 캘린더 QA용 6건 — `【예정·캘린더】` / `【진행·캘린더】` / `【완료·캘린더】` 접두 + 고정 일정
+ * 1) 캘린더 QA용 7건 — `【예정·캘린더】` / `【진행·캘린더】` / `【완료·캘린더】` 접두 + 고정 일정
  * 2) 유형 케이스 8종(행 7~14) + 15행(교육·IPS 일정별 상이) — `【유형·NN】` 접두
  * 3) LNB 조합 9건(행 16~24) — `【LNB·NN】` 접두 (`general-prog-lnb-16` … `24`)
  */
@@ -346,6 +346,44 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     generalProgramEducationStructure: 'schedule',
     generalProgramSessionRound: 'single',
     generalCommonInfo: CALENDAR_DEMO_IN_PROGRESS_B_COMMON_INFO,
+  },
+  {
+    id: 'general-prog-in-progress-3',
+    capacity: 32,
+    sponsorId: SPONSOR_ID,
+    title: formatCalendarDemoTitle('진행·캘린더·C', '기관·봉사자 면접 QA'),
+    mainTitle: '기관·봉사자 면접 QA',
+    type: 'offline',
+    format: 'workshop',
+    category: 'school' as ProgramCategory,
+    description:
+      '캘린더 QA — 기관 신청 + 봉사자 신청 LNB(면접 2depth: 서류/합격/2차 면접)',
+    startDate: calendarDemoIso(2026, 5, 1),
+    endDate: calendarDemoIso(2026, 8, 31, true),
+    applicationStartDate: calendarDemoIso(2026, 3, 1),
+    applicationEndDate: calendarDemoIso(2026, 3, 31, true),
+    volunteerApplicationStartDate: calendarDemoIso(2026, 4, 1),
+    volunteerApplicationEndDate: calendarDemoIso(2026, 4, 25, true),
+    status: 'active',
+    lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
+    businessArea: '경제금융',
+    targetLevel: 'high' as TargetLevel,
+    approvedStudentCount: 16,
+    instructors: 8,
+    instructorCapacity: 12,
+    generalVolunteers: 10,
+    participatingSchoolCount: 5,
+    participatingStudentCount: 150,
+    scheduleTimeEnabled: true,
+    generalParticipantTypes: ['school_institution', 'teacher_instructor', 'volunteer'],
+    generalVolunteerInterviewEnabled: true,
+    interviewStartDate: calendarDemoIso(2026, 4, 28),
+    interviewEndDate: calendarDemoIso(2026, 5, 3, true),
+    interviewMethod: '대면 면접',
+    generalSurveyMenuKeys: ['survey', 'satisfaction'],
+    generalProgramAudience: 'organization',
+    generalProgramEducationStructure: 'curriculum',
+    generalProgramSessionRound: 'single',
   },
   {
     id: 'general-prog-completed-1',
@@ -1014,3 +1052,25 @@ export function isGeneralLnbMockProgramId(programId: string): boolean {
 export function isGeneralTypeVariantMockProgramId(programId: string): boolean {
   return programId.startsWith('general-prog-type-')
 }
+
+/**
+ * 봉사자 신청 목록 LNB QA용 프로그램 id (일반 상세 mock)
+ * - `generalParticipantTypes`에 `volunteer` 포함 시 LNB 노출
+ * - `generalVolunteerInterviewEnabled === true`(또는 면접 일정) 시 2depth 메뉴
+ */
+export const GENERAL_VOLUNTEER_APPLICATION_QA = {
+  /** 개인 + 봉사 + 면접 2depth */
+  individualWithInterview2Depth: 'general-prog-in-progress-2',
+  /** 개인 + 봉사 + 면접 없음(1depth) */
+  individualNoInterview: 'general-prog-completed-2',
+  /** 기관 + 봉사 + 면접 없음(1depth) */
+  organizationNoInterview: 'general-prog-completed-1',
+  /** 기관 + 봉사 + 면접 2depth */
+  organizationWithInterview2Depth: 'general-prog-in-progress-3',
+  /** LNB 조합 mock — 면접 2depth */
+  lnbInterview2Depth: 'general-prog-lnb-16',
+  /** LNB 조합 mock — 면접 없음 */
+  lnbNoInterview: 'general-prog-lnb-17',
+  /** LNB 조합 mock — 봉사자 없음(대조) */
+  lnbNoVolunteer: 'general-prog-lnb-21',
+} as const

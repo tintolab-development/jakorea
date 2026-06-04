@@ -48,6 +48,9 @@ import { GeneralSurveyManagementView } from './survey-management/survey-manageme
 import { ProgramManagersTab } from '../program-managers-tab'
 import { GeneralParticipantApplicationsView } from './applications/participant-applications-view'
 import { GeneralInstructorApplicationsView } from './applications/general-instructor-applications-view'
+import { GeneralVolunteerApplicationsView } from './applications/general-volunteer-applications-view'
+import { isGeneralVolunteerApplicantDetailRoute } from '@/features/program/general/lib/general-volunteer-applications'
+import type { UjatVolunteerApplicantDetailMeta } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/use-ujat-volunteer-applicant-detail'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
@@ -541,7 +544,10 @@ export function GeneralProgramDetailFullPageModal({
   ])
 
   const applicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
+  const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
   const [applicantDetailMeta, setApplicantDetailMeta] = useState<ApplicantDetailMeta>(null)
+  const [volunteerApplicantDetailMeta, setVolunteerApplicantDetailMeta] =
+    useState<UjatVolunteerApplicantDetailMeta | null>(null)
 
   const handleApplicantDetailMetaChange = useCallback((meta: ApplicantDetailMeta) => {
     setApplicantDetailMeta(meta)
@@ -556,6 +562,12 @@ export function GeneralProgramDetailFullPageModal({
     }
   }, [open, activeLnb])
 
+  useEffect(() => {
+    if (!open || !isGeneralVolunteerApplicantDetailRoute(activeLnb, activeTab)) {
+      setVolunteerApplicantDetailMeta(null)
+    }
+  }, [open, activeLnb, activeTab])
+
   const handleModalClose = useCallback(() => {
     if (
       (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications') &&
@@ -563,8 +575,14 @@ export function GeneralProgramDetailFullPageModal({
     ) {
       return
     }
+    if (
+      isGeneralVolunteerApplicantDetailRoute(activeLnb, activeTab) &&
+      volunteerApplicantCloseHandlerRef.current?.()
+    ) {
+      return
+    }
     onClose()
-  }, [activeLnb, onClose])
+  }, [activeLnb, activeTab, onClose])
 
   useEffect(() => {
     if (!open || !programId || !displayProgram) return
@@ -634,9 +652,13 @@ export function GeneralProgramDetailFullPageModal({
       applicantDetailMeta != null &&
       (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications')
 
+    const hasVolunteerApplicationDetail =
+      volunteerApplicantDetailMeta != null &&
+      isGeneralVolunteerApplicantDetailRoute(activeLnb, activeTab)
+
     if (!childLabel) {
       items.push(
-        hasParticipantApplicationDetail
+        hasParticipantApplicationDetail || hasVolunteerApplicationDetail
           ? makeBreadcrumbItem(lnbLabel, location.pathname, lnbParams)
           : { label: lnbLabel }
       )
@@ -651,6 +673,8 @@ export function GeneralProgramDetailFullPageModal({
 
     if (hasParticipantApplicationDetail) {
       items.push({ label: applicantDetailMeta.breadcrumbLabel })
+    } else if (hasVolunteerApplicationDetail) {
+      items.push({ label: volunteerApplicantDetailMeta.breadcrumbLabel })
     }
 
     return items
@@ -659,12 +683,15 @@ export function GeneralProgramDetailFullPageModal({
   if (!open) return null
 
   const modalTitle =
-    applicantDetailMeta &&
-    (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications')
-      ? applicantDetailMeta.title
-      : displayProgram
-        ? resolveGeneralProgramDisplayTitle(displayProgram)
-        : '프로그램 상세'
+    volunteerApplicantDetailMeta &&
+    isGeneralVolunteerApplicantDetailRoute(activeLnb, activeTab)
+      ? volunteerApplicantDetailMeta.title
+      : applicantDetailMeta &&
+          (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications')
+        ? applicantDetailMeta.title
+        : displayProgram
+          ? resolveGeneralProgramDisplayTitle(displayProgram)
+          : '프로그램 상세'
 
   return (
     <>
@@ -762,6 +789,18 @@ export function GeneralProgramDetailFullPageModal({
                     applicantCloseHandlerRef.current = fn
                   }}
                   onApplicantDetailMetaChange={handleApplicantDetailMetaChange}
+                />
+              </div>
+            ) : activeLnb === 'volunteer_applications' ? (
+              <div className="program-detail-fullpage-modal__info-tab">
+                <GeneralVolunteerApplicationsView
+                  program={displayProgram}
+                  activeTab={activeTab}
+                  interviewEnabled={interviewEnabled}
+                  onRegisterApplicantCloseHandler={fn => {
+                    volunteerApplicantCloseHandlerRef.current = fn
+                  }}
+                  onVolunteerApplicantDetailMetaChange={setVolunteerApplicantDetailMeta}
                 />
               </div>
             ) : (
