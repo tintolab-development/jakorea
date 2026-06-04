@@ -5,7 +5,7 @@
 
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
-import { ApprovalAlarmSendSection } from './approval-alarm-send-section'
+import { ApprovalAlarmSendSection } from '../../approval-alarm-send-section'
 import './school-detail-assign-complete-modal.css'
 
 export interface SchoolDetailAssignCompleteModalProps {

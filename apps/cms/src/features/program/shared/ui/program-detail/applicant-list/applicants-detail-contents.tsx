@@ -14,16 +14,16 @@ import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
 import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-info'
-import { ApplicantGeneralInstitutionBasicInfo } from '@/features/program/general/ui/applicant-detail/institution-basic-info'
-import { ApplicantGeneralIndividualBasicInfo } from '@/features/program/general/ui/applicant-detail/individual-basic-info'
-import { ApplicantGeneralInstructorBasicInfo } from '@/features/program/general/ui/applicant-detail/applicant-general-instructor-basic-info'
+import { ApplicantGeneralInstitutionBasicInfo } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info'
+import { ApplicantGeneralIndividualBasicInfo } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/individual-basic-info'
+import { ApplicantGeneralInstructorBasicInfo } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-basic-info'
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import {
   PersonalInfoRevealButton,
   PERSONAL_INFO_REVEAL_BUTTON_LABEL,
 } from '@/features/user/detail/ui/personal-info-reveal-button'
-import { SchoolDetailStudentListSection } from '@/features/program/general/ui/school-detail-student-list-section'
+import { SchoolDetailStudentListSection } from '@/features/program/general/ui/detail-modal/program-status/school-detail-student-list-section'
 import { ApplicantInstitutionInstructorAssignTab } from './applicant-institution-instructor-assign-tab'
 import './applicants-detail-contents.css'
 

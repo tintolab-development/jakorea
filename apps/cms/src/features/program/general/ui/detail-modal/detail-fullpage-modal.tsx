@@ -45,7 +45,7 @@ import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-p
 import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-program-detail-info-save'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { GeneralSurveyManagementView } from './survey-management/survey-management-view'
-import { ProgramManagersTab } from '../program-managers-tab'
+import { ProgramManagersTab } from './managers/program-managers-tab'
 import { GeneralParticipantApplicationsView } from './applications/participant-applications-view'
 import { GeneralInstructorApplicationsView } from './applications/general-instructor-applications-view'
 import { GeneralVolunteerApplicationsView } from './applications/general-volunteer-applications-view'
@@ -60,7 +60,7 @@ import {
   GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS,
   normalizeGeneralParticipatingInstitutionDetailTab,
   type GeneralParticipatingInstitutionDetailTabKey,
-} from '../general-participating-institution-detail-view'
+} from './program-status/general-participating-institution-detail-view'
 import {
   INSTRUCTOR_DETAIL_TAB_KEYS,
   type InstructorDetailTabKey,

@@ -41,7 +41,7 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import { SchoolDetailModal } from './school-detail-modal'
+import { SchoolDetailModal } from './detail-modal/program-status/school-detail-modal'
 import { getApplicantSchoolDetail } from '../lib/school-detail-mock'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import './enrollment-status-detail-modal.css'

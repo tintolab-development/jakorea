@@ -23,7 +23,7 @@ import {
   isProgramHistoryDeleteBlockedByDisplayStatus,
   type ProgramEnrollmentDisplayStatus,
 } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/components/status-badge'
+import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
@@ -62,11 +62,6 @@ function programYear(programId: string): number | null {
 function programTitle(programId: string): string {
   const p = programService.getByIdSync(programId)
   return p?.title ?? programId
-}
-
-/** 프로그램 진행 현황 — `StatusBadge` 글자색 전용(`variant="text"`) */
-function ProgramEnrollmentStatusTextBadge({ status }: { status: ProgramEnrollmentDisplayStatus }) {
-  return <StatusBadge domain="programEnrollment" status={status} variant="text" />
 }
 
 function enrollmentDisplayStatusForApplication(
@@ -373,7 +368,7 @@ export function MemberProgramLectureHistory({
           key: 'enrollmentDisplay',
           align: 'center',
           render: (_: unknown, record: UserHistory) => (
-            <ProgramEnrollmentStatusTextBadge status={deriveVolunteerDisplayStatus(record)} />
+            <ProgramEnrollmentStatusText status={deriveVolunteerDisplayStatus(record)} />
           ),
         },
         {
@@ -429,7 +424,7 @@ export function MemberProgramLectureHistory({
         key: 'enrollmentDisplay',
         align: 'center',
         render: (_: unknown, record: Application) => (
-          <ProgramEnrollmentStatusTextBadge
+          <ProgramEnrollmentStatusText
             status={enrollmentDisplayStatusForApplication(record)}
           />
         ),

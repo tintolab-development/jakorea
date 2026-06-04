@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { useStudentListFilterParams } from '../hooks/use-student-list-filter-params'
+import { useStudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
 import { Table, Input, Select, Row, Col } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { CmsButton, FilterSearchButton } from '@/shared/ui'
@@ -19,19 +19,19 @@ import type {
   StudentListFormValues,
   StudentListFormStudent,
   StudentGenderKey,
-} from '../model/school-detail-types'
-import { STUDENT_GENDER_LABELS } from '../model/school-detail-types'
-import { getSchoolDetailStudents } from '../lib/school-detail-mock'
-import { lectureAttendanceStringFromSessions } from '../lib/lecture-attendance-from-sessions'
-import type { AddStudentFormValues } from '../model/school-detail-add-student-schema'
-import { LectureAttendanceModal } from './lecture-attendance-modal'
-import { AssignmentSubmissionModal } from './assignment-submission-modal'
-import { AddStudentModal } from './add-student-modal'
+} from '../../../model/school-detail-types'
+import { STUDENT_GENDER_LABELS } from '../../../model/school-detail-types'
+import { getSchoolDetailStudents } from '../../../lib/school-detail-mock'
+import { lectureAttendanceStringFromSessions } from '../../../lib/lecture-attendance-from-sessions'
+import type { AddStudentFormValues } from '../../../model/school-detail-add-student-schema'
+import { LectureAttendanceModal } from '../../lecture-attendance-modal'
+import { AssignmentSubmissionModal } from '../../assignment-submission-modal'
+import { AddStudentModal } from '../../add-student-modal'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import './school-detail-modal.css'
-import './detail-modal/program-status/program-progress-tab.css'
-import './detail-modal/program-status/participating-institutions-section.css'
+import './program-progress-tab.css'
+import './participating-institutions-section.css'
 import './school-detail-student-list-section.css'
 import {
   STUDENT_LIST_TABLE_COL_MIN_WIDTHS,

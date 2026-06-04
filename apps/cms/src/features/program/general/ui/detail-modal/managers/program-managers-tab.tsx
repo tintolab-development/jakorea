@@ -12,7 +12,7 @@ import type { ProgramRole } from '@/types/user'
 import {
   useProgramManagersParams,
   type ProgramManagersFilters,
-} from '../hooks/use-program-managers-params'
+} from '../../../hooks/use-program-managers-params'
 import {
   getMockProgramManagers,
   PROGRAM_ROLE_LABELS,
@@ -23,8 +23,8 @@ import {
   AddManagerModal,
   buildManagerRowFromForm,
   type AddManagerFormValues,
-} from './add-manager-modal'
-import { ManagerDeleteGuideModal } from './manager-delete-guide-modal'
+} from '../../add-manager-modal'
+import { ManagerDeleteGuideModal } from '../../manager-delete-guide-modal'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,

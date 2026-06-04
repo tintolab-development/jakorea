@@ -22,11 +22,11 @@ import { useParticipatingInstitutionsParams } from '../../../hooks/use-participa
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
 import type { ProgressFilters } from '../../../hooks/use-program-progress-params'
-import { SchoolDetailModal } from '../../school-detail-modal'
+import { SchoolDetailModal } from './school-detail-modal'
 import {
   GeneralParticipatingInstitutionDetailView,
   type GeneralParticipatingInstitutionDetailTabKey,
-} from '../../general-participating-institution-detail-view'
+} from './general-participating-institution-detail-view'
 import { getSchoolDetailByRow } from '../../../lib/school-detail-mock'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 import type { Program } from '@/types/domain'

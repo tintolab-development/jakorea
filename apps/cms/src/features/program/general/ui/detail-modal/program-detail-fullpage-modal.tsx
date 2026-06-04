@@ -35,7 +35,8 @@ import {
   GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS,
   normalizeGeneralParticipatingInstitutionDetailTab,
   type GeneralParticipatingInstitutionDetailTabKey,
-} from '../general-participating-institution-detail-view'
+} from './program-status/general-participating-institution-detail-view'
+import { ProgramManagersTab } from './managers/program-managers-tab'
 import {
   INSTRUCTOR_DETAIL_TAB_KEYS,
   type InstructorDetailTabKey,
@@ -43,7 +44,6 @@ import {
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
 import { ApplicantList } from '../../../shared/ui/program-detail/applicant-list/applicant-list'
 import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/project-info/project-info-detail'
-import { ProgramManagersTab } from '../program-managers-tab'
 import type { Program } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import { getEconomyPrograms, getGeneralPrograms } from '@/data/mock'

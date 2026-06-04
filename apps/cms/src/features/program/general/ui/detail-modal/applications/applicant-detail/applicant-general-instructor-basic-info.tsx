@@ -7,8 +7,8 @@ import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import { ApplicantAdminCommentSection } from '@/features/program/general/ui/applicant-detail/applicant-admin-comment-section'
-import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/applicant-detail/program-approval-status-detail-value'
+import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
+import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { StatusDropdownCell } from '@/shared/components'
 import type { SchoolTeacherEmploymentStatus } from '@/types/user'
@@ -30,7 +30,7 @@ import {
   InstructorFeeGradeView,
   LectureFeeBasisEditField,
   LectureFeeBasisView,
-} from '@/features/program/general/ui/applicant-detail/applicant-general-instructor-fee-fields'
+} from './applicant-general-instructor-fee-fields'
 import './applicant-general-instructor-basic-info.css'
 
 const AFFILIATION_EMPLOYMENT_BADGE_CELL_STYLE = {

@@ -51,9 +51,9 @@ import {
   type InstructorWaitingAssignmentStatus,
 } from '@/features/program/general/lib/instructor-institution-assignment-mock'
 import './participating-institutions-section.css'
-import '../../instructor-assignment-role-tag.css'
-import '../../instructor-assignment-status-text.css'
-import '../../school-detail-fullpage-view.css'
+import './instructor-assignment-role-tag.css'
+import './instructor-assignment-status-text.css'
+import './school-detail-fullpage-view.css'
 import './participating-instructor-fullpage-view.css'
 
 const ASSIGNMENT_STATUS_LABELS: Record<InstructorWaitingAssignmentStatus, string> = {

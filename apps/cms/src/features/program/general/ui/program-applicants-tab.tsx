@@ -14,7 +14,7 @@ import {
   type ApplicantSchoolRow,
 } from '@/data/mock/applicant-institutions'
 import { getApplicantSchoolDetail } from '../lib/school-detail-mock'
-import { SchoolDetailModal } from './school-detail-modal'
+import { SchoolDetailModal } from './detail-modal/program-status/school-detail-modal'
 import { ApplicantInstructorDetailModal } from './applicant-instructor-detail-modal'
 import {
   DeleteGuideModal,

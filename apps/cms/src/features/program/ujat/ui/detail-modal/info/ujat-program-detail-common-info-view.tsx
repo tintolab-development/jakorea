@@ -19,9 +19,8 @@ import {
   PARTNER_INVOLVEMENT_OPTIONS,
   TARGET_LEVEL_LABEL,
 } from '@/features/program/shared/lib/program-detail-info-constants'
-import { StatusBadge } from '@/shared/components/status-badge'
+import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
-import { getUjatProgramProgressDisplayStatus } from './ujat-program-info-edit'
 import {
   UjatHalfEducationScheduleReadonly,
   UJAT_FIRST_HALF_SCHEDULE_ROWS,
@@ -43,8 +42,7 @@ function optionLabel<T extends { value: string; label: string }>(
 }
 
 function UjatProgressStatusView({ program }: { program: Program }) {
-  const status = getUjatProgramProgressDisplayStatus(program)
-  return <StatusBadge domain="programEnrollment" status={status} variant="text" />
+  return <ProgramProgressStatusText program={program} />
 }
 
 function participantTypeSummary(program: Program): string {
