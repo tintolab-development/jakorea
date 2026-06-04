@@ -30,8 +30,6 @@ export type { UjatEssayColumnKey } from '@/features/program/ujat/model/ujat-volu
 
 export type UjatEssayColumnWidths = Record<UjatEssayColumnKey, number>
 
-export type UjatVolunteerDocScreeningColumnPreset = 'ujat' | 'general'
-
 const CENTER_CELL_CLASS = 'ujat-volunteer-doc-screening__center-cell'
 const NOWRAP_CELL_CLASS = 'ujat-volunteer-doc-screening__nowrap-cell'
 const ESSAY_CELL_CLASS = 'ujat-volunteer-doc-screening__essay-cell'
@@ -49,32 +47,19 @@ const FIXED_COLUMN_WIDTH_SUM_UJAT =
   200 + // managerB
   160 // documentScreeningStatus
 
-const FIXED_COLUMN_WIDTH_SUM_GENERAL =
-  72 + // No.
-  140 + // name
-  140 + // contact
-  220 + // email
-  140 + // applicationType (지원 항목)
-  200 + // managerA
-  200 + // managerB
-  160 // documentScreeningStatus
-
 /** @deprecated use computeDocScreeningTableScrollX */
 export const UJAT_VOLUNTEER_DOC_SCREENING_TABLE_SCROLL_X =
   computeDocScreeningTableScrollX(UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS)
 
 export function computeDocScreeningTableScrollX(
-  essayWidths: UjatEssayColumnWidths,
-  columnPreset: UjatVolunteerDocScreeningColumnPreset = 'ujat'
+  essayWidths: UjatEssayColumnWidths
 ): number {
   const essaySum =
     essayWidths.essayIntro +
     essayWidths.essayEducationExperience +
     essayWidths.essayNecessity +
     essayWidths.essayJaExperience
-  const fixedSum =
-    columnPreset === 'general' ? FIXED_COLUMN_WIDTH_SUM_GENERAL : FIXED_COLUMN_WIDTH_SUM_UJAT
-  return UJAT_DOC_SCREENING_SELECTION_COLUMN_WIDTH + fixedSum + essaySum
+  return UJAT_DOC_SCREENING_SELECTION_COLUMN_WIDTH + FIXED_COLUMN_WIDTH_SUM_UJAT + essaySum
 }
 
 function renderEssayCell(value: string | undefined, record: UjatVolunteerApplicantRow) {
@@ -100,7 +85,6 @@ const MANAGER_EVALUATION_BADGE_STYLE = {
 } as const
 
 export function useUjatVolunteerDocScreeningColumns({
-  columnPreset = 'ujat',
   onManagerAEvaluationChange,
   onManagerBEvaluationChange,
   openManagerDropdown,
@@ -110,7 +94,6 @@ export function useUjatVolunteerDocScreeningColumns({
   onEssayColumnResizeStop,
   tableWrapRef,
 }: {
-  columnPreset?: UjatVolunteerDocScreeningColumnPreset
   onManagerAEvaluationChange: (id: string, evaluation: UjatManagerEvaluation) => void
   onManagerBEvaluationChange: (id: string, evaluation: UjatManagerEvaluation) => void
   openManagerDropdown: { rowId: string; manager: 'A' | 'B' } | null
@@ -123,7 +106,6 @@ export function useUjatVolunteerDocScreeningColumns({
   tableWrapRef: RefObject<HTMLElement | null>
 }): ColumnsType<UjatVolunteerApplicantRow> {
   return useMemo(() => {
-    const isGeneral = columnPreset === 'general'
     const essayColumns: ColumnsType<UjatVolunteerApplicantRow> = (
       Object.keys(UJAT_VOLUNTEER_ESSAY_COLUMN_TITLES) as UjatEssayColumnKey[]
     ).map(key => {
@@ -151,32 +133,30 @@ export function useUjatVolunteerDocScreeningColumns({
       }
     })
 
-    const ujatOnlyColumns: ColumnsType<UjatVolunteerApplicantRow> = isGeneral
-      ? []
-      : [
-          {
-            title: '신청자 학년',
-            dataIndex: 'grade',
-            key: 'grade',
-            width: 116,
-            minWidth: 116,
-            align: 'center',
-            fixed: 'left',
-            onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
-            onCell: () => ({ className: CENTER_CELL_CLASS }),
-          },
-          {
-            title: '희망 교육 활동 지역',
-            dataIndex: 'preferredRegion',
-            key: 'preferredRegion',
-            width: 168,
-            minWidth: 168,
-            align: 'center',
-            fixed: 'left',
-            onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
-            onCell: () => ({ className: CENTER_CELL_CLASS }),
-          },
-        ]
+    const ujatOnlyColumns: ColumnsType<UjatVolunteerApplicantRow> = [
+      {
+        title: '신청자 학년',
+        dataIndex: 'grade',
+        key: 'grade',
+        width: 116,
+        minWidth: 116,
+        align: 'center',
+        fixed: 'left',
+        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
+        onCell: () => ({ className: CENTER_CELL_CLASS }),
+      },
+      {
+        title: '희망 교육 활동 지역',
+        dataIndex: 'preferredRegion',
+        key: 'preferredRegion',
+        width: 168,
+        minWidth: 168,
+        align: 'center',
+        fixed: 'left',
+        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
+        onCell: () => ({ className: CENTER_CELL_CLASS }),
+      },
+    ]
 
     const contactEmailColumns: ColumnsType<UjatVolunteerApplicantRow> = [
       {
@@ -201,58 +181,33 @@ export function useUjatVolunteerDocScreeningColumns({
       },
     ]
 
-    const educationExperienceColumn: ColumnsType<UjatVolunteerApplicantRow> = isGeneral
-      ? []
-      : [
-          {
-            title: '교육 진행 경험',
-            key: 'educationExperience',
-            width: 120,
-            minWidth: 120,
-            align: 'center',
-            render: (_: unknown, record) => (record.hasEducationExperience ? 'O' : 'X'),
-          },
-        ]
+    const educationExperienceColumn: ColumnsType<UjatVolunteerApplicantRow> = [
+      {
+        title: '교육 진행 경험',
+        key: 'educationExperience',
+        width: 120,
+        minWidth: 120,
+        align: 'center',
+        render: (_: unknown, record) => (record.hasEducationExperience ? 'O' : 'X'),
+      },
+    ]
 
-    return [
+    const applicationTypeColumn: ColumnsType<UjatVolunteerApplicantRow> = [
       {
-        title: 'No.',
-        dataIndex: 'no',
-        key: 'no',
-        width: 72,
-        minWidth: 72,
-        align: 'center',
-        fixed: 'left',
-        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
-        onCell: () => ({ className: CENTER_CELL_CLASS }),
-      },
-      {
-        title: isGeneral ? '성명 (봉사자명)' : '성함/봉사자명',
-        dataIndex: 'name',
-        key: 'name',
-        width: 140,
-        minWidth: 140,
-        align: 'center',
-        fixed: 'left',
-        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
-        onCell: () => ({ className: CENTER_CELL_CLASS }),
-      },
-      ...(isGeneral ? contactEmailColumns : ujatOnlyColumns),
-      ...(isGeneral ? [] : contactEmailColumns),
-      ...educationExperienceColumn,
-      {
-        title: isGeneral ? '지원 항목' : '지원유형',
+        title: '지원유형',
         dataIndex: 'applicationType',
         key: 'applicationType',
-        width: isGeneral ? 140 : 168,
-        minWidth: isGeneral ? 140 : 168,
+        width: 168,
+        minWidth: 168,
         align: 'center',
         onHeaderCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
         onCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
         render: (type: UjatVolunteerApplicantRow['applicationType']) =>
           formatUjatVolunteerApplicationType(type),
       },
-      ...essayColumns,
+    ]
+
+    const managerAndScreeningColumns: ColumnsType<UjatVolunteerApplicantRow> = [
       {
         title: '담당자 A 평가',
         key: 'managerAEvaluation',
@@ -263,7 +218,7 @@ export function useUjatVolunteerDocScreeningColumns({
           className: 'ujat-volunteer-doc-screening__manager-eval-dropdown-header',
         }),
         onCell: () => ({ className: MANAGER_EVALUATION_CELL_CLASS }),
-        render: (_: unknown, record) => (
+        render: (_: unknown, record: UjatVolunteerApplicantRow) => (
           <StatusDropdownCell<UjatManagerEvaluation>
             status={record.managerAEvaluation}
             statusOptions={UJAT_MANAGER_EVALUATION_ORDER}
@@ -271,7 +226,7 @@ export function useUjatVolunteerDocScreeningColumns({
             isItemDisabled={(current, option) => current === option}
             onChange={evaluation => onManagerAEvaluationChange(record.id, evaluation)}
             isOpen={
-              openManagerDropdown?.rowId === record.id && openManagerDropdown.manager === 'A'
+              openManagerDropdown?.rowId === record.id && openManagerDropdown?.manager === 'A'
             }
             onOpenChange={open =>
               setOpenManagerDropdown(open ? { rowId: record.id, manager: 'A' } : null)
@@ -290,7 +245,7 @@ export function useUjatVolunteerDocScreeningColumns({
           className: 'ujat-volunteer-doc-screening__manager-eval-dropdown-header',
         }),
         onCell: () => ({ className: MANAGER_EVALUATION_CELL_CLASS }),
-        render: (_: unknown, record) => (
+        render: (_: unknown, record: UjatVolunteerApplicantRow) => (
           <StatusDropdownCell<UjatManagerEvaluation>
             status={record.managerBEvaluation}
             statusOptions={UJAT_MANAGER_EVALUATION_ORDER}
@@ -298,7 +253,7 @@ export function useUjatVolunteerDocScreeningColumns({
             isItemDisabled={(current, option) => current === option}
             onChange={evaluation => onManagerBEvaluationChange(record.id, evaluation)}
             isOpen={
-              openManagerDropdown?.rowId === record.id && openManagerDropdown.manager === 'B'
+              openManagerDropdown?.rowId === record.id && openManagerDropdown?.manager === 'B'
             }
             onOpenChange={open =>
               setOpenManagerDropdown(open ? { rowId: record.id, manager: 'B' } : null)
@@ -320,8 +275,40 @@ export function useUjatVolunteerDocScreeningColumns({
         ),
       },
     ]
+
+    const columns: ColumnsType<UjatVolunteerApplicantRow> = [
+      {
+        title: 'No.',
+        dataIndex: 'no',
+        key: 'no',
+        width: 72,
+        minWidth: 72,
+        align: 'center',
+        fixed: 'left',
+        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
+        onCell: () => ({ className: CENTER_CELL_CLASS }),
+      },
+      {
+        title: '성함/봉사자명',
+        dataIndex: 'name',
+        key: 'name',
+        width: 140,
+        minWidth: 140,
+        align: 'center',
+        fixed: 'left',
+        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
+        onCell: () => ({ className: CENTER_CELL_CLASS }),
+      },
+      ...ujatOnlyColumns,
+      ...contactEmailColumns,
+      ...educationExperienceColumn,
+      ...applicationTypeColumn,
+      ...essayColumns,
+      ...managerAndScreeningColumns,
+    ]
+
+    return columns
   }, [
-    columnPreset,
     essayColumnWidths,
     onEssayColumnResizeStart,
     onEssayColumnResizeStop,

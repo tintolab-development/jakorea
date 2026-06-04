@@ -108,7 +108,7 @@ export function useUjatVolunteerDocPassed({
   const filteredSorted = useMemo(() => {
     const filtered = filterDocPassedApplicants(list, appliedFilters)
     return sortUjatVolunteerDocPassedApplicants(filtered)
-  }, [list, appliedFilters])
+  }, [appliedFilters, list])
 
   const calendarEvents = useMemo(
     () => mapUjatVolunteerInterviewToCalendarEvents(filteredSorted),

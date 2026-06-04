@@ -26,7 +26,6 @@ import {
   useUjatVolunteerDocScreeningColumns,
   type UjatEssayColumnKey,
   type UjatEssayColumnWidths,
-  type UjatVolunteerDocScreeningColumnPreset,
 } from './ujat-volunteer-doc-screening-columns'
 import {
   confirmUjatVolunteerDocumentApprove,
@@ -117,44 +116,7 @@ const EXPORT_COLUMNS_UJAT: ColumnsType<Record<string, string | number>> = [
   { title: '1차 서류 심사 현황', dataIndex: 'documentScreeningStatusLabel', key: 'documentScreeningStatusLabel' },
 ]
 
-const EXPORT_COLUMNS_GENERAL: ColumnsType<Record<string, string | number>> = [
-  { title: 'No.', dataIndex: 'no', key: 'no' },
-  { title: '성명 (봉사자명)', dataIndex: 'name', key: 'name' },
-  { title: '연락처', dataIndex: 'contact', key: 'contact' },
-  { title: '이메일', dataIndex: 'email', key: 'email' },
-  { title: '지원 항목', dataIndex: 'applicationTypeLabel', key: 'applicationTypeLabel' },
-  {
-    title: UJAT_VOLUNTEER_ESSAY_COLUMN_TITLES.essayIntro,
-    dataIndex: 'essayIntro',
-    key: 'essayIntro',
-  },
-  {
-    title: UJAT_VOLUNTEER_ESSAY_COLUMN_TITLES.essayEducationExperience,
-    dataIndex: 'essayEducationExperience',
-    key: 'essayEducationExperience',
-  },
-  {
-    title: UJAT_VOLUNTEER_ESSAY_COLUMN_TITLES.essayNecessity,
-    dataIndex: 'essayNecessity',
-    key: 'essayNecessity',
-  },
-  {
-    title: UJAT_VOLUNTEER_ESSAY_COLUMN_TITLES.essayJaExperience,
-    dataIndex: 'essayJaExperience',
-    key: 'essayJaExperience',
-  },
-  { title: '담당자 A 평가', dataIndex: 'managerAEvaluationLabel', key: 'managerAEvaluationLabel' },
-  { title: '담당자 B 평가', dataIndex: 'managerBEvaluationLabel', key: 'managerBEvaluationLabel' },
-  { title: '1차 서류 심사 현황', dataIndex: 'documentScreeningStatusLabel', key: 'documentScreeningStatusLabel' },
-]
-
-function getExportColumns(
-  columnPreset: UjatVolunteerDocScreeningColumnPreset
-): ColumnsType<Record<string, string | number>> {
-  return columnPreset === 'general' ? EXPORT_COLUMNS_GENERAL : EXPORT_COLUMNS_UJAT
-}
-
-function toExportRow(row: UjatVolunteerApplicantRow): Record<string, string | number> {
+function toExportRowUjat(row: UjatVolunteerApplicantRow): Record<string, string | number> {
   return {
     no: row.no,
     name: row.name,
@@ -183,7 +145,6 @@ function toExportRow(row: UjatVolunteerApplicantRow): Record<string, string | nu
 export function useUjatVolunteerDocScreening({
   programId,
   half,
-  columnPreset = 'ujat',
   essayColumnWidths,
   onEssayColumnResizeStart,
   onEssayColumnResizeStop,
@@ -191,7 +152,6 @@ export function useUjatVolunteerDocScreening({
 }: {
   programId: string
   half: UjatVolunteerRecruitHalf
-  columnPreset?: UjatVolunteerDocScreeningColumnPreset
   essayColumnWidths: UjatEssayColumnWidths
   onEssayColumnResizeStart: () => void
   onEssayColumnResizeStop: (key: UjatEssayColumnKey, width: number) => void
@@ -203,12 +163,12 @@ export function useUjatVolunteerDocScreening({
   const [list, setList] = useState<UjatVolunteerApplicantRow[]>(() =>
     sortUjatVolunteerApplicants(getUjatVolunteerApplicants(programId, half))
   )
-  const [pendingFilters, setPendingFilters] = useState<UjatVolunteerDocScreeningFilters>(
-    () => ({ ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS })
-  )
-  const [appliedFilters, setAppliedFilters] = useState<UjatVolunteerDocScreeningFilters>(
-    () => ({ ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS })
-  )
+  const [pendingFilters, setPendingFilters] = useState<UjatVolunteerDocScreeningFilters>(() => ({
+    ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS,
+  }))
+  const [appliedFilters, setAppliedFilters] = useState<UjatVolunteerDocScreeningFilters>(() => ({
+    ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS,
+  }))
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [isExporting, setIsExporting] = useState(false)
   const [openManagerDropdown, setOpenManagerDropdown] = useState<{
@@ -234,7 +194,7 @@ export function useUjatVolunteerDocScreening({
   const filteredSorted = useMemo(() => {
     const filtered = filterApplicants(list, appliedFilters)
     return sortUjatVolunteerApplicants(filtered)
-  }, [list, appliedFilters])
+  }, [appliedFilters, list])
 
   const updateRow = useCallback((id: string, patch: Partial<UjatVolunteerApplicantRow>) => {
     setList(prev => prev.map(row => (row.id === id ? { ...row, ...patch } : row)))
@@ -255,7 +215,6 @@ export function useUjatVolunteerDocScreening({
   )
 
   const columns = useUjatVolunteerDocScreeningColumns({
-    columnPreset,
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
     openManagerDropdown,
@@ -316,12 +275,12 @@ export function useUjatVolunteerDocScreening({
     }
     setIsExporting(true)
     try {
-      const exportRows = filteredSorted.map(toExportRow)
-      const exportFilePrefix =
-        columnPreset === 'general'
-          ? `general-volunteer-${programId}-doc-screening`
-          : `ujat-volunteer-${half}-doc-screening`
-      await exportTableToExcel(getExportColumns(columnPreset), exportRows, exportFilePrefix)
+      const exportRows = filteredSorted.map(toExportRowUjat)
+      await exportTableToExcel(
+        EXPORT_COLUMNS_UJAT,
+        exportRows,
+        `ujat-volunteer-${half}-doc-screening`
+      )
     } catch (error) {
       console.error('[ujat-volunteer-doc-screening] excel export failed', error)
       showAlert({
@@ -331,7 +290,7 @@ export function useUjatVolunteerDocScreening({
     } finally {
       setIsExporting(false)
     }
-  }, [columnPreset, filteredSorted, half, isExporting, programId, showAlert])
+  }, [filteredSorted, half, isExporting, showAlert])
 
   return {
     list,

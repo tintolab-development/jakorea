@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState, type MouseEvent } from 'react'
-import type { UjatEssayColumnKey, UjatVolunteerDocScreeningColumnPreset } from './ujat-volunteer-doc-screening-columns'
+import type { UjatEssayColumnKey } from './ujat-volunteer-doc-screening-columns'
 import { Table } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -30,7 +30,6 @@ const tableComponents = {
 export interface UjatVolunteerDocScreeningSectionProps {
   programId: string
   half: UjatVolunteerRecruitHalf
-  columnPreset?: UjatVolunteerDocScreeningColumnPreset
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onVolunteerApplicantDetailMetaChange?: UjatVolunteerApplicantDetailMetaChangeHandler
 }
@@ -38,7 +37,6 @@ export interface UjatVolunteerDocScreeningSectionProps {
 export function UjatVolunteerDocScreeningSection({
   programId,
   half,
-  columnPreset = 'ujat',
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: UjatVolunteerDocScreeningSectionProps) {
@@ -48,7 +46,7 @@ export function UjatVolunteerDocScreeningSection({
     handleEssayColumnResizeStart,
     handleEssayColumnResizeStop,
     minTableScrollX,
-  } = useUjatVolunteerDocScreeningColumnWidths(columnPreset)
+  } = useUjatVolunteerDocScreeningColumnWidths()
   const [isResizing, setIsResizing] = useState(false)
 
   const onEssayColumnResizeStart = useCallback(() => {
@@ -89,7 +87,6 @@ export function UjatVolunteerDocScreeningSection({
   } = useUjatVolunteerDocScreening({
     programId,
     half,
-    columnPreset,
     essayColumnWidths,
     onEssayColumnResizeStart,
     onEssayColumnResizeStop,
@@ -167,74 +164,74 @@ export function UjatVolunteerDocScreeningSection({
     <>
       {documentScreeningConfirmModal}
       <div className="ujat-volunteer-doc-screening applicant-details">
-      <FilterTableLayout
-        bordered={false}
-        className="ujat-volunteer-doc-screening__filter-layout"
-        rows={FILTER_ROWS}
-        filters={pendingFilters}
-        onFilterChange={handleFilterChange}
-        onSearch={handleSearch}
-        title={`봉사자 신청 목록 (${count.toLocaleString()})`}
-        actions={
-          <div className="ujat-volunteer-doc-screening__actions">
-            <CmsButton
-              type="button"
-              variant="delete"
-              size="large"
-              width={160}
-              onClick={handleBulkReject}
-            >
-              선택 반려
-            </CmsButton>
-            <CmsButton
-              type="button"
-              variant="secondary"
-              size="large"
-              width={160}
-              onClick={handleBulkApprove}
-            >
-              선택 승인
-            </CmsButton>
-            <CmsButton
-              type="button"
-              variant="primary"
-              size="large"
-              width={160}
-              icon={<DownloadOutlined />}
-              className="ujat-volunteer-doc-screening__btn-excel"
-              loading={isExporting}
-              onClick={handleExportExcel}
-            >
-              엑셀 다운로드
-            </CmsButton>
-          </div>
-        }
-      >
-        <div
-          ref={tableWrapRef}
-          className={`ujat-volunteer-doc-screening__table-wrap${isResizing ? ' ujat-volunteer-doc-screening__table-wrap--resizing' : ''}`}
+        <FilterTableLayout
+          bordered={false}
+          className="ujat-volunteer-doc-screening__filter-layout"
+          rows={FILTER_ROWS}
+          filters={pendingFilters}
+          onFilterChange={handleFilterChange}
+          onSearch={handleSearch}
+          title={`봉사자 신청 목록 (${count.toLocaleString()})`}
+          actions={
+            <div className="ujat-volunteer-doc-screening__actions">
+              <CmsButton
+                type="button"
+                variant="delete"
+                size="large"
+                width={160}
+                onClick={handleBulkReject}
+              >
+                선택 반려
+              </CmsButton>
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="large"
+                width={160}
+                onClick={handleBulkApprove}
+              >
+                선택 승인
+              </CmsButton>
+              <CmsButton
+                type="button"
+                variant="primary"
+                size="large"
+                width={160}
+                icon={<DownloadOutlined />}
+                className="ujat-volunteer-doc-screening__btn-excel"
+                loading={isExporting}
+                onClick={handleExportExcel}
+              >
+                엑셀 다운로드
+              </CmsButton>
+            </div>
+          }
         >
-          <Table<UjatVolunteerApplicantRow>
-            rowKey="id"
-            className="cms-data-table ujat-volunteer-doc-screening__table clickable-table"
-            columns={columns}
-            components={tableComponents}
-            dataSource={tableData}
-            pagination={false}
-            tableLayout="fixed"
-            scroll={{ x: minTableScrollX }}
-            rowSelection={{
-              fixed: true,
-              selectedRowKeys,
-              onChange: keys => setSelectedRowKeys(keys),
-            }}
-            onRow={record => ({
-              onClick: e => handleRowClick(record, e),
-              style: { cursor: 'pointer' },
-            })}
-          />
-        </div>
-      </FilterTableLayout>
+          <div
+            ref={tableWrapRef}
+            className={`ujat-volunteer-doc-screening__table-wrap${isResizing ? ' ujat-volunteer-doc-screening__table-wrap--resizing' : ''}`}
+          >
+            <Table<UjatVolunteerApplicantRow>
+              rowKey="id"
+              className="cms-data-table ujat-volunteer-doc-screening__table clickable-table"
+              columns={columns}
+              components={tableComponents}
+              dataSource={tableData}
+              pagination={false}
+              tableLayout="fixed"
+              scroll={{ x: minTableScrollX }}
+              rowSelection={{
+                fixed: true,
+                selectedRowKeys,
+                onChange: keys => setSelectedRowKeys(keys),
+              }}
+              onRow={record => ({
+                onClick: e => handleRowClick(record, e),
+                style: { cursor: 'pointer' },
+              })}
+            />
+          </div>
+        </FilterTableLayout>
       </div>
     </>
   )
