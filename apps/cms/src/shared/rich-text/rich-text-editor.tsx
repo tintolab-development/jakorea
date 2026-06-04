@@ -42,9 +42,7 @@ export function RichTextEditor({
       data-rich-text-editor=""
     >
       {toolbarNode ? (
-        <div className="rich-text-editor__toolbar" role="toolbar" aria-label="서식">
-          {toolbarNode}
-        </div>
+        <div className="rich-text-editor__toolbar">{toolbarNode}</div>
       ) : null}
       <div className="rich-text-editor__body">
         <EditorContent editor={editor} aria-label={ariaLabel} />

@@ -37,9 +37,35 @@
   text-decoration: underline;
 }
 
-.rich-text-content img {
+.rich-text-content mark {
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.rich-text-content img,
+.rich-text-content .rich-text-content__image {
   max-width: 100%;
   height: auto;
+}
+
+/* tiptap-extension-resize-image 래퍼 */
+.rich-text-editor__body .ProseMirror [data-resize-image-ui],
+.rich-text-editor__body .ProseMirror .image-resizer {
+  max-width: 100%;
+}
+
+.rich-text-content__youtube,
+.rich-text-content iframe.rich-text-content__youtube,
+.rich-text-content div[data-youtube-video] iframe {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  min-height: 200px;
+  border: 0;
+  border-radius: 8px;
+  margin: 8px 0;
 }
 
 .rich-text-content table {

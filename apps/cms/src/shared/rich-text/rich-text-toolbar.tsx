@@ -1,46 +1,58 @@
-import {
-  BoldOutlined,
-  CodeOutlined,
-  ItalicOutlined,
-  LinkOutlined,
-  OrderedListOutlined,
-  PictureOutlined,
-  StrikethroughOutlined,
-  TableOutlined,
-  UnderlineOutlined,
-  UnorderedListOutlined,
-} from '@ant-design/icons'
 import type { Editor } from '@tiptap/react'
 import { useEditorState } from '@tiptap/react'
-import type { ReactNode } from 'react'
-import { useCallback, useMemo } from 'react'
+import type { MenuProps } from 'antd'
+import { useCallback, useMemo, useRef, type ChangeEvent } from 'react'
+import {
+  insertHorizontalRule,
+  insertImageFromFile,
+  insertImageFromUrl,
+  insertTable,
+  insertYoutubeFromUrl,
+  promptImageUrl,
+  promptLinkUrl,
+  promptYoutubeUrl,
+  RICH_TEXT_IMAGE_ACCEPT,
+} from './lib/rich-text-insert-actions'
+import {
+  FONT_FAMILY_OPTIONS,
+  FONT_SIZE_OPTIONS,
+  HEADING_OPTIONS,
+  HIGHLIGHT_OPTIONS,
+  TEXT_ALIGN_OPTIONS,
+  TEXT_COLOR_OPTIONS,
+  type HeadingLevel,
+  type TextAlignValue,
+} from './rich-text-toolbar.constants'
+import { ColorSwatchGrid, ToolbarDropdown } from './rich-text-toolbar-dropdown'
+import {
+  AlignLeftIcon,
+  BulletListIcon,
+  FontFamilyIcon,
+  OrderedListIcon,
+  PaletteIcon,
+  ToolbarGlyphToggle,
+  ToolbarToggle,
+} from './rich-text-toolbar-toggle'
 import './rich-text-toolbar.css'
 
 export type RichTextToolbarProps = {
   editor: Editor | null
 }
 
-type HeadingLevel = 'p' | '1' | '2' | '3'
-
-const HEADING_OPTIONS: { value: HeadingLevel; label: string }[] = [
-  { value: 'p', label: '본문' },
-  { value: '1', label: '제목 1' },
-  { value: '2', label: '제목 2' },
-  { value: '3', label: '제목 3' },
-]
-
 const EMPTY_TOOLBAR_STATE = {
   canEdit: false,
   heading: 'p' as HeadingLevel,
+  fontFamily: '',
+  fontSize: '',
+  textColor: '',
+  highlightColor: '',
+  textAlign: 'left' as TextAlignValue,
   isBold: false,
   isItalic: false,
   isStrike: false,
   isUnderline: false,
   isBulletList: false,
   isOrderedList: false,
-  isBlockquote: false,
-  isCode: false,
-  isCodeBlock: false,
 }
 
 function getHeadingLevel(editor: Editor): HeadingLevel {
@@ -50,48 +62,24 @@ function getHeadingLevel(editor: Editor): HeadingLevel {
   return 'p'
 }
 
-function ToolbarButton({
-  title,
-  active,
-  disabled,
-  onAction,
-  children,
-}: {
-  title: string
-  active?: boolean
-  disabled?: boolean
-  onAction: () => void
-  children: ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      className={[
-        'rich-text-toolbar__btn',
-        active ? 'rich-text-toolbar__btn--active' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      title={title}
-      aria-label={title}
-      disabled={disabled}
-      onMouseDown={event => event.preventDefault()}
-      onClick={onAction}
-    >
-      {children}
-    </button>
-  )
+function getTextStyleAttr(editor: Editor, attr: string): string {
+  const attrs = editor.getAttributes('textStyle') as Record<string, string | undefined>
+  return attrs[attr] ?? ''
 }
 
-function ToolbarGroup({ children }: { children: ReactNode }) {
-  return <div className="rich-text-toolbar__group">{children}</div>
+function getActiveTextAlign(editor: Editor): TextAlignValue {
+  if (editor.isActive({ textAlign: 'center' })) return 'center'
+  if (editor.isActive({ textAlign: 'right' })) return 'right'
+  if (editor.isActive({ textAlign: 'justify' })) return 'justify'
+  return 'left'
 }
 
 /**
- * Toast UI WYSIWYG 툴바 parity — headless Tiptap용 기본 툴바.
- * @see apps/cms/docs/implementation/rich-text-editor-tiptap-migration.md §7.2
+ * Figma 스펙 커스텀 툴바 — 드롭다운 + B/I/U/S·목록·삽입(이미지·YouTube 등).
+ * 이미지 선택 시 `tiptap-extension-resize-image`가 크기·좌/중/우 정렬 UI를 표시한다.
  */
 export function RichTextToolbar({ editor }: RichTextToolbarProps) {
+  const imageFileInputRef = useRef<HTMLInputElement>(null)
   const state =
     useEditorState({
       editor,
@@ -100,15 +88,17 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
         return {
           canEdit: ed.isEditable,
           heading: getHeadingLevel(ed),
+          fontFamily: getTextStyleAttr(ed, 'fontFamily'),
+          fontSize: getTextStyleAttr(ed, 'fontSize'),
+          textColor: getTextStyleAttr(ed, 'color'),
+          highlightColor: (ed.getAttributes('highlight').color as string | undefined) ?? '',
+          textAlign: getActiveTextAlign(ed),
           isBold: ed.isActive('bold'),
           isItalic: ed.isActive('italic'),
           isStrike: ed.isActive('strike'),
           isUnderline: ed.isActive('underline'),
           isBulletList: ed.isActive('bulletList'),
           isOrderedList: ed.isActive('orderedList'),
-          isBlockquote: ed.isActive('blockquote'),
-          isCode: ed.isActive('code'),
-          isCodeBlock: ed.isActive('codeBlock'),
         }
       },
     }) ?? EMPTY_TOOLBAR_STATE
@@ -137,161 +127,255 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
     [run]
   )
 
-  const handleLink = useCallback(() => {
-    run(ed => {
-      const previousUrl = ed.getAttributes('link').href as string | undefined
-      const url = window.prompt('링크 URL', previousUrl ?? 'https://')
-      if (url === null) return
-      const trimmed = url.trim()
-      if (trimmed === '') {
-        ed.chain().focus().extendMarkRange('link').unsetLink().run()
-        return
-      }
-      ed.chain().focus().extendMarkRange('link').setLink({ href: trimmed }).run()
-    })
-  }, [run])
+  const headingTriggerLabel = useMemo(() => {
+    return HEADING_OPTIONS.find(o => o.value === state.heading)?.triggerLabel ?? 'H₁'
+  }, [state.heading])
 
-  const handleImage = useCallback(() => {
-    run(ed => {
-      const url = window.prompt('이미지 URL')
-      if (url == null) return
-      const trimmed = url.trim()
-      if (!trimmed) return
-      ed.chain().focus().setImage({ src: trimmed }).run()
-    })
-  }, [run])
+  const fontFamilyMenuItems: MenuProps['items'] = useMemo(
+    () =>
+      FONT_FAMILY_OPTIONS.map(opt => ({
+        key: opt.value || 'default',
+        label: opt.label,
+        onClick: () =>
+          run(ed => {
+            if (!opt.value) {
+              ed.chain().focus().unsetFontFamily().run()
+              return
+            }
+            ed.chain().focus().setFontFamily(opt.value).run()
+          }),
+      })),
+    [run]
+  )
 
-  const handleTable = useCallback(() => {
-    run(ed => {
-      ed.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-    })
-  }, [run])
+  const fontSizeMenuItems: MenuProps['items'] = useMemo(
+    () =>
+      FONT_SIZE_OPTIONS.map(opt => ({
+        key: opt.value || 'default',
+        label: opt.label,
+        onClick: () =>
+          run(ed => {
+            if (!opt.value) {
+              ed.chain().focus().unsetFontSize().run()
+              return
+            }
+            ed.chain().focus().setFontSize(opt.value).run()
+          }),
+      })),
+    [run]
+  )
 
-  const headingValue = useMemo(() => state.heading, [state.heading])
+  const headingMenuItems: MenuProps['items'] = useMemo(
+    () =>
+      HEADING_OPTIONS.map(opt => ({
+        key: opt.value,
+        label: opt.label,
+        onClick: () => handleHeadingChange(opt.value),
+      })),
+    [handleHeadingChange]
+  )
+
+  const textAlignMenuItems: MenuProps['items'] = useMemo(
+    () =>
+      TEXT_ALIGN_OPTIONS.map(opt => ({
+        key: opt.value,
+        label: opt.label,
+        onClick: () => run(ed => ed.chain().focus().setTextAlign(opt.value).run()),
+      })),
+    [run]
+  )
+
+  const insertMenuItems: MenuProps['items'] = useMemo(
+    () => [
+      {
+        key: 'image-url',
+        label: '이미지 (URL)',
+        onClick: () => {
+          const src = promptImageUrl()
+          if (src) run(ed => insertImageFromUrl(ed, src))
+        },
+      },
+      {
+        key: 'image-file',
+        label: '이미지 (파일)',
+        onClick: () => imageFileInputRef.current?.click(),
+      },
+      {
+        key: 'youtube',
+        label: 'YouTube 동영상',
+        onClick: () => {
+          const url = promptYoutubeUrl()
+          if (url) run(ed => insertYoutubeFromUrl(ed, url))
+        },
+      },
+      { type: 'divider' },
+      {
+        key: 'link',
+        label: '링크',
+        onClick: () => run(ed => promptLinkUrl(ed)),
+      },
+      {
+        key: 'table',
+        label: '표',
+        onClick: () => run(ed => insertTable(ed)),
+      },
+      {
+        key: 'hr',
+        label: '구분선',
+        onClick: () => run(ed => insertHorizontalRule(ed)),
+      },
+    ],
+    [run]
+  )
+
+  const handleImageFileChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      event.target.value = ''
+      if (!file || !editor) return
+      insertImageFromFile(editor, file)
+    },
+    [editor]
+  )
 
   if (!editor) return null
 
   return (
-    <div className="rich-text-toolbar">
-      <ToolbarGroup>
-        <select
-          className="rich-text-toolbar__heading-select"
-          value={headingValue}
-          disabled={disabled}
-          aria-label="제목 단계"
-          onMouseDown={event => event.preventDefault()}
-          onChange={event => handleHeadingChange(event.target.value as HeadingLevel)}
-        >
-          {HEADING_OPTIONS.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </ToolbarGroup>
+    <div className="rich-text-toolbar" role="toolbar" aria-label="서식">
+      <input
+        ref={imageFileInputRef}
+        type="file"
+        accept={RICH_TEXT_IMAGE_ACCEPT}
+        className="rich-text-toolbar__file-input"
+        tabIndex={-1}
+        aria-hidden
+        onChange={handleImageFileChange}
+      />
+      <ToolbarDropdown
+        ariaLabel="글꼴"
+        label="글꼴"
+        leadingIcon={<FontFamilyIcon />}
+        menuItems={fontFamilyMenuItems}
+        disabled={disabled}
+      />
 
-      <ToolbarGroup>
-        <ToolbarButton
-          title="굵게"
-          active={state.isBold}
-          disabled={disabled}
-          onAction={() => run(ed => ed.chain().focus().toggleBold().run())}
-        >
-          <BoldOutlined className="rich-text-toolbar__btn-icon" />
-        </ToolbarButton>
-        <ToolbarButton
-          title="기울임"
-          active={state.isItalic}
-          disabled={disabled}
-          onAction={() => run(ed => ed.chain().focus().toggleItalic().run())}
-        >
-          <ItalicOutlined className="rich-text-toolbar__btn-icon" />
-        </ToolbarButton>
-        <ToolbarButton
-          title="취소선"
-          active={state.isStrike}
-          disabled={disabled}
-          onAction={() => run(ed => ed.chain().focus().toggleStrike().run())}
-        >
-          <StrikethroughOutlined className="rich-text-toolbar__btn-icon" />
-        </ToolbarButton>
-        <ToolbarButton
-          title="밑줄"
-          active={state.isUnderline}
-          disabled={disabled}
-          onAction={() => run(ed => ed.chain().focus().toggleUnderline().run())}
-        >
-          <UnderlineOutlined className="rich-text-toolbar__btn-icon" />
-        </ToolbarButton>
-      </ToolbarGroup>
+      <ToolbarDropdown
+        ariaLabel="글자 크기"
+        label="크기"
+        valueLabel={
+          state.fontSize
+            ? FONT_SIZE_OPTIONS.find(o => o.value === state.fontSize)?.label
+            : undefined
+        }
+        menuItems={fontSizeMenuItems}
+        disabled={disabled}
+      />
 
-      <ToolbarGroup>
-        <ToolbarButton
-          title="구분선"
-          disabled={disabled}
-          onAction={() => run(ed => ed.chain().focus().setHorizontalRule().run())}
-        >
-          <span className="rich-text-toolbar__btn-icon">―</span>
-        </ToolbarButton>
-        <ToolbarButton
-          title="인용"
-          active={state.isBlockquote}
-          disabled={disabled}
-          onAction={() => run(ed => ed.chain().focus().toggleBlockquote().run())}
-        >
-          <span className="rich-text-toolbar__btn-icon">&ldquo;</span>
-        </ToolbarButton>
-      </ToolbarGroup>
+      <ToolbarDropdown
+        ariaLabel="제목"
+        label="제목"
+        valueLabel={headingTriggerLabel}
+        menuItems={headingMenuItems}
+        disabled={disabled}
+      />
 
-      <ToolbarGroup>
-        <ToolbarButton
-          title="글머리 목록"
-          active={state.isBulletList}
-          disabled={disabled}
-          onAction={() => run(ed => ed.chain().focus().toggleBulletList().run())}
-        >
-          <UnorderedListOutlined className="rich-text-toolbar__btn-icon" />
-        </ToolbarButton>
-        <ToolbarButton
-          title="번호 목록"
-          active={state.isOrderedList}
-          disabled={disabled}
-          onAction={() => run(ed => ed.chain().focus().toggleOrderedList().run())}
-        >
-          <OrderedListOutlined className="rich-text-toolbar__btn-icon" />
-        </ToolbarButton>
-      </ToolbarGroup>
+      <ToolbarGlyphToggle
+        title="굵게"
+        glyph="B"
+        active={state.isBold}
+        disabled={disabled}
+        onAction={() => run(ed => ed.chain().focus().toggleBold().run())}
+      />
+      <ToolbarGlyphToggle
+        title="기울임"
+        glyph="I"
+        active={state.isItalic}
+        disabled={disabled}
+        onAction={() => run(ed => ed.chain().focus().toggleItalic().run())}
+      />
+      <ToolbarGlyphToggle
+        title="밑줄"
+        glyph="U"
+        underline
+        active={state.isUnderline}
+        disabled={disabled}
+        onAction={() => run(ed => ed.chain().focus().toggleUnderline().run())}
+      />
+      <ToolbarGlyphToggle
+        title="취소선"
+        glyph="S"
+        active={state.isStrike}
+        disabled={disabled}
+        onAction={() => run(ed => ed.chain().focus().toggleStrike().run())}
+      />
 
-      <ToolbarGroup>
-        <ToolbarButton title="표 삽입" disabled={disabled} onAction={handleTable}>
-          <TableOutlined className="rich-text-toolbar__btn-icon" />
-        </ToolbarButton>
-        <ToolbarButton title="링크" disabled={disabled} onAction={handleLink}>
-          <LinkOutlined className="rich-text-toolbar__btn-icon" />
-        </ToolbarButton>
-        <ToolbarButton title="이미지" disabled={disabled} onAction={handleImage}>
-          <PictureOutlined className="rich-text-toolbar__btn-icon" />
-        </ToolbarButton>
-      </ToolbarGroup>
+      <ToolbarDropdown
+        ariaLabel="텍스트 색상"
+        label="텍스트 색상"
+        leadingIcon={<PaletteIcon />}
+        disabled={disabled}
+        panel={
+          <ColorSwatchGrid
+            colors={TEXT_COLOR_OPTIONS}
+            activeValue={state.textColor}
+            disabled={disabled}
+            onPick={color =>
+              run(ed => ed.chain().focus().setColor(color).run())
+            }
+            onClear={() => run(ed => ed.chain().focus().unsetColor().run())}
+          />
+        }
+      />
 
-      <ToolbarGroup>
-        <ToolbarButton
-          title="인라인 코드"
-          active={state.isCode}
-          disabled={disabled}
-          onAction={() => run(ed => ed.chain().focus().toggleCode().run())}
-        >
-          <CodeOutlined className="rich-text-toolbar__btn-icon" />
-        </ToolbarButton>
-        <ToolbarButton
-          title="코드 블록"
-          active={state.isCodeBlock}
-          disabled={disabled}
-          onAction={() => run(ed => ed.chain().focus().toggleCodeBlock().run())}
-        >
-          <span className="rich-text-toolbar__btn-icon">{'{}'}</span>
-        </ToolbarButton>
-      </ToolbarGroup>
+      <ToolbarDropdown
+        ariaLabel="하이라이트"
+        label="하이라이트"
+        disabled={disabled}
+        panel={
+          <ColorSwatchGrid
+            colors={HIGHLIGHT_OPTIONS}
+            activeValue={state.highlightColor}
+            disabled={disabled}
+            onPick={color =>
+              run(ed => ed.chain().focus().setHighlight({ color }).run())
+            }
+            onClear={() => run(ed => ed.chain().focus().unsetHighlight().run())}
+            clearLabel="하이라이트 제거"
+          />
+        }
+      />
+
+      <ToolbarDropdown
+        ariaLabel="정렬"
+        label="정렬"
+        leadingIcon={<AlignLeftIcon />}
+        menuItems={textAlignMenuItems}
+        disabled={disabled}
+      />
+
+      <ToolbarToggle
+        title="글머리 목록"
+        active={state.isBulletList}
+        disabled={disabled}
+        onAction={() => run(ed => ed.chain().focus().toggleBulletList().run())}
+      >
+        <BulletListIcon />
+      </ToolbarToggle>
+      <ToolbarToggle
+        title="번호 목록"
+        active={state.isOrderedList}
+        disabled={disabled}
+        onAction={() => run(ed => ed.chain().focus().toggleOrderedList().run())}
+      >
+        <OrderedListIcon />
+      </ToolbarToggle>
+
+      <ToolbarDropdown
+        ariaLabel="삽입"
+        label="삽입"
+        menuItems={insertMenuItems}
+        disabled={disabled}
+      />
     </div>
   )
 }
