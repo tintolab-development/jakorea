@@ -50,7 +50,7 @@ import { GeneralParticipantApplicationsView } from './applications/participant-a
 import { GeneralInstructorApplicationsView } from './applications/general-instructor-applications-view'
 import { GeneralVolunteerApplicationsView } from './applications/general-volunteer-applications-view'
 import { isGeneralVolunteerApplicantDetailRoute } from '@/features/program/general/lib/general-volunteer-applications'
-import type { UjatVolunteerApplicantDetailMeta } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/use-ujat-volunteer-applicant-detail'
+import type { GeneralVolunteerApplicantDetailMeta } from './applications/volunteer-screening/use-detail'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
@@ -603,7 +603,7 @@ export function GeneralProgramDetailFullPageModal({
   const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
   const [applicantDetailMeta, setApplicantDetailMeta] = useState<ApplicantDetailMeta>(null)
   const [volunteerApplicantDetailMeta, setVolunteerApplicantDetailMeta] =
-    useState<UjatVolunteerApplicantDetailMeta | null>(null)
+    useState<GeneralVolunteerApplicantDetailMeta | null>(null)
 
   const handleApplicantDetailMetaChange = useCallback((meta: ApplicantDetailMeta) => {
     setApplicantDetailMeta(meta)

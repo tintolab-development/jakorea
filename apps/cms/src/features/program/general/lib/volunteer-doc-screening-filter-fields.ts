@@ -1,0 +1,388 @@
+import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import {
+  GENERAL_DOCUMENT_SCREENING_STATUS_LABELS,
+  GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS,
+  GENERAL_MANAGER_EVALUATION_LABELS,
+  GENERAL_MANAGER_EVALUATION_ORDER,
+  GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_LABELS,
+  GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_ORDER,
+  GENERAL_VOLUNTEER_APPLICATION_TYPE_LABELS,
+  type GeneralDocumentScreeningStatus,
+  type GeneralInterviewAssignmentStatus,
+  type GeneralManagerEvaluation,
+  type GeneralSecondInterviewScreeningStatus,
+  type GeneralVolunteerApplicationType,
+} from './volunteer-screening-constants'
+import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+
+const ALL = 'ALL'
+const FILTER_WIDTH = 260
+
+const selectStyle = { width: FILTER_WIDTH } as const
+
+const applicationTypeOptions = [
+  { label: '전체', value: ALL },
+  ...(
+    Object.entries(GENERAL_VOLUNTEER_APPLICATION_TYPE_LABELS) as [
+      GeneralVolunteerApplicationType,
+      string,
+    ][]
+  ).map(([value, label]) => ({ label, value })),
+]
+
+const managerEvaluationOptions = [
+  { label: '전체', value: ALL },
+  ...GENERAL_MANAGER_EVALUATION_ORDER.map((value: GeneralManagerEvaluation) => ({
+    label: GENERAL_MANAGER_EVALUATION_LABELS[value],
+    value,
+  })),
+]
+
+const screeningStatusOptions = [
+  { label: '전체', value: ALL },
+  ...(
+    Object.entries(GENERAL_DOCUMENT_SCREENING_STATUS_LABELS) as [
+      GeneralDocumentScreeningStatus,
+      string,
+    ][]
+  ).map(([value, label]) => ({ label, value })),
+]
+
+const interviewSlotOptions = [
+  { label: '전체', value: ALL },
+  { label: '0개', value: '0' },
+  { label: '1개', value: '1' },
+  { label: '2개 이상', value: '2plus' },
+]
+
+const interviewAssignmentOptions = [
+  { label: '전체', value: ALL },
+  ...(
+    Object.entries(GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS) as [
+      GeneralInterviewAssignmentStatus,
+      string,
+    ][]
+  ).map(([value, label]) => ({ label, value })),
+]
+
+const secondInterviewStatusOptions = [
+  { label: '전체', value: ALL },
+  ...GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_ORDER.map(
+    (value: GeneralSecondInterviewScreeningStatus) => ({
+      label: GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_LABELS[value],
+      value,
+    })
+  ),
+]
+
+/** doc_passed / interview2 — mock에 프로그램·모집 구분 필드 없음, 전체 옵션만 제공 */
+const appliedProgramOptions = [{ label: '전체', value: ALL }]
+const recruitCategoryOptions = [{ label: '전체', value: ALL }]
+
+const ujatCompletionOptions = [
+  { label: '전체', value: ALL },
+  ...(
+    Object.entries(GENERAL_VOLUNTEER_APPLICATION_TYPE_LABELS) as [
+      GeneralVolunteerApplicationType,
+      string,
+    ][]
+  ).map(([value, label]) => ({ label, value })),
+]
+
+export const GENERAL_VOLUNTEER_FILTER_ALL = ALL
+
+/** 1차 서류 심사 대상자 — 기관 프로그램 5필터(1행) */
+export type GeneralVolunteerDoc1Filters = {
+  volunteerName: string
+  applicationType: string
+  managerAEvaluation: string
+  managerBEvaluation: string
+  documentScreeningStatus: string
+}
+
+export const DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS: GeneralVolunteerDoc1Filters = {
+  volunteerName: '',
+  applicationType: ALL,
+  managerAEvaluation: ALL,
+  managerBEvaluation: ALL,
+  documentScreeningStatus: ALL,
+}
+
+export type GeneralVolunteerDocPassedFilters = {
+  appliedProgram: string
+  recruitCategory: string
+  ujatCompletion: string
+  interviewSlotRange: string
+  interviewAssignmentStatus: string
+}
+
+export const DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS: GeneralVolunteerDocPassedFilters = {
+  appliedProgram: ALL,
+  recruitCategory: ALL,
+  ujatCompletion: ALL,
+  interviewSlotRange: ALL,
+  interviewAssignmentStatus: ALL,
+}
+
+export type GeneralVolunteerInterview2Filters = {
+  appliedProgram: string
+  recruitCategory: string
+  ujatCompletion: string
+  interviewDate: string
+  secondInterviewScreeningStatus: string
+}
+
+export const DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS: GeneralVolunteerInterview2Filters = {
+  appliedProgram: ALL,
+  recruitCategory: ALL,
+  ujatCompletion: ALL,
+  interviewDate: ALL,
+  secondInterviewScreeningStatus: ALL,
+}
+
+function buildGeneralFilterField(
+  config: FilterFieldConfig
+): FilterFieldConfig {
+  return {
+    width: FILTER_WIDTH,
+    style: config.type === 'select' ? selectStyle : undefined,
+    ...config,
+  }
+}
+
+export function buildGeneralVolunteerDoc1FilterRows(): FilterFieldConfig[][] {
+  return [
+    [
+      buildGeneralFilterField({
+        key: 'volunteerName',
+        type: 'search',
+        label: '신청 봉사자명',
+        placeholder: '봉사자명을 입력하세요',
+      }),
+      buildGeneralFilterField({
+        key: 'applicationType',
+        type: 'select',
+        label: '지원 형태',
+        placeholder: '전체',
+        options: applicationTypeOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'managerAEvaluation',
+        type: 'select',
+        label: '담당자 A 평가',
+        placeholder: '전체',
+        options: managerEvaluationOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'managerBEvaluation',
+        type: 'select',
+        label: '담당자 B 평가',
+        placeholder: '전체',
+        options: managerEvaluationOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'documentScreeningStatus',
+        type: 'select',
+        label: '1차 서류 심사 현황',
+        placeholder: '전체',
+        options: screeningStatusOptions,
+      }),
+    ],
+  ]
+}
+
+export function filterGeneralDoc1Applicants(
+  rows: GeneralVolunteerApplicantRow[],
+  filters: GeneralVolunteerDoc1Filters
+): GeneralVolunteerApplicantRow[] {
+  const nameQ = filters.volunteerName.trim().toLowerCase()
+  return rows.filter(row => {
+    if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
+    if (
+      filters.applicationType !== GENERAL_VOLUNTEER_FILTER_ALL &&
+      row.applicationType !== filters.applicationType
+    ) {
+      return false
+    }
+    if (
+      filters.managerAEvaluation !== GENERAL_VOLUNTEER_FILTER_ALL &&
+      row.managerAEvaluation !== filters.managerAEvaluation
+    ) {
+      return false
+    }
+    if (
+      filters.managerBEvaluation !== GENERAL_VOLUNTEER_FILTER_ALL &&
+      row.managerBEvaluation !== filters.managerBEvaluation
+    ) {
+      return false
+    }
+    if (
+      filters.documentScreeningStatus !== GENERAL_VOLUNTEER_FILTER_ALL &&
+      row.documentScreeningStatus !== filters.documentScreeningStatus
+    ) {
+      return false
+    }
+    return true
+  })
+}
+
+export function buildGeneralVolunteerDocPassedFilterRows(): FilterFieldConfig[][] {
+  return [
+    [
+      buildGeneralFilterField({
+        key: 'appliedProgram',
+        type: 'select',
+        label: '신청 프로그램',
+        placeholder: '전체',
+        options: appliedProgramOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'recruitCategory',
+        type: 'select',
+        label: '모집 구분',
+        placeholder: '전체',
+        options: recruitCategoryOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'ujatCompletion',
+        type: 'select',
+        label: 'UJAT 수료 여부',
+        placeholder: '전체',
+        options: ujatCompletionOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'interviewSlotRange',
+        type: 'select',
+        label: '면접 가능 일정',
+        placeholder: '전체',
+        options: interviewSlotOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'interviewAssignmentStatus',
+        type: 'select',
+        label: '면접일 배정 현황',
+        placeholder: '전체',
+        options: interviewAssignmentOptions,
+      }),
+    ],
+  ]
+}
+
+export function buildGeneralVolunteerInterview2DateOptions(rows: GeneralVolunteerApplicantRow[]) {
+  const dates = Array.from(
+    new Set(
+      rows.map(row => row.assignedInterviewDateLabel).filter((d): d is string => Boolean(d))
+    )
+  ).sort()
+  return [{ label: '전체', value: ALL }, ...dates.map(d => ({ label: d, value: d }))]
+}
+
+export function buildGeneralVolunteerInterview2FilterRows(
+  rows: GeneralVolunteerApplicantRow[]
+): FilterFieldConfig[][] {
+  const dateOptions = buildGeneralVolunteerInterview2DateOptions(rows)
+
+  return [
+    [
+      buildGeneralFilterField({
+        key: 'appliedProgram',
+        type: 'select',
+        label: '신청 프로그램',
+        placeholder: '전체',
+        options: appliedProgramOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'recruitCategory',
+        type: 'select',
+        label: '모집 구분',
+        placeholder: '전체',
+        options: recruitCategoryOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'ujatCompletion',
+        type: 'select',
+        label: 'UJAT 수료 여부',
+        placeholder: '전체',
+        options: ujatCompletionOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'interviewDate',
+        type: 'select',
+        label: '면접일',
+        placeholder: '전체',
+        options: dateOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'secondInterviewScreeningStatus',
+        type: 'select',
+        label: '면접 심사 결과',
+        placeholder: '전체',
+        options: secondInterviewStatusOptions,
+      }),
+    ],
+  ]
+}
+
+export function matchesGeneralInterviewSlotRange(
+  count: number,
+  filter: string
+): boolean {
+  if (filter === ALL) return true
+  if (filter === '0') return count === 0
+  if (filter === '1') return count === 1
+  if (filter === '2plus') return count >= 2
+  return true
+}
+
+export function matchesGeneralUjatCompletion(
+  applicationType: GeneralVolunteerApplicantRow['applicationType'],
+  filter: string
+): boolean {
+  if (filter === ALL) return true
+  return applicationType === filter
+}
+
+export function filterGeneralDocPassedApplicants(
+  rows: GeneralVolunteerApplicantRow[],
+  filters: GeneralVolunteerDocPassedFilters
+): GeneralVolunteerApplicantRow[] {
+  return rows.filter(row => {
+    if (!matchesGeneralUjatCompletion(row.applicationType, filters.ujatCompletion)) {
+      return false
+    }
+    if (!matchesGeneralInterviewSlotRange(row.interviewSlotCount, filters.interviewSlotRange)) {
+      return false
+    }
+    if (
+      filters.interviewAssignmentStatus !== GENERAL_VOLUNTEER_FILTER_ALL &&
+      row.interviewAssignmentStatus !== filters.interviewAssignmentStatus
+    ) {
+      return false
+    }
+    return true
+  })
+}
+
+export function filterGeneralInterview2Applicants(
+  rows: GeneralVolunteerApplicantRow[],
+  filters: GeneralVolunteerInterview2Filters
+): GeneralVolunteerApplicantRow[] {
+  return rows.filter(row => {
+    if (!matchesGeneralUjatCompletion(row.applicationType, filters.ujatCompletion)) {
+      return false
+    }
+    if (
+      filters.interviewDate !== GENERAL_VOLUNTEER_FILTER_ALL &&
+      row.assignedInterviewDateLabel !== filters.interviewDate
+    ) {
+      return false
+    }
+    if (
+      filters.secondInterviewScreeningStatus !== GENERAL_VOLUNTEER_FILTER_ALL &&
+      row.secondInterviewScreeningStatus !== filters.secondInterviewScreeningStatus
+    ) {
+      return false
+    }
+    return true
+  })
+}

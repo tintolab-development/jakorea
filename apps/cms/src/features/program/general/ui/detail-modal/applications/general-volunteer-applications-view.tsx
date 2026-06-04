@@ -1,14 +1,10 @@
 import { useCallback } from 'react'
 import type { Program } from '@/types/domain'
-import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { UjatVolunteerDocScreeningSection } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-doc-screening-section'
-import { UjatVolunteerDocPassedSection } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-doc-passed-section'
-import { UjatVolunteerInterview2Section } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-interview2-section'
-import type { UjatVolunteerApplicantDetailMeta } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/use-ujat-volunteer-applicant-detail'
+import { GeneralVolunteerDocScreeningSection } from './volunteer-screening/doc-screening-section'
+import { GeneralVolunteerDocPassedSection } from './volunteer-screening/doc-passed-section'
+import { GeneralVolunteerInterview2Section } from './volunteer-screening/interview2-section'
+import type { GeneralVolunteerApplicantDetailMeta } from './volunteer-screening/use-detail'
 import './participant-applications.css'
-
-/** 일반 프로그램은 상·하반기 구분 없이 단일 봉사자 모집 — mock·UJAT 심사 UI는 h1 슬롯 재사용 */
-const GENERAL_VOLUNTEER_RECRUIT_HALF: UjatVolunteerRecruitHalf = 'h1'
 
 export type GeneralVolunteerApplicationsTab =
   | 'vol_all'
@@ -21,12 +17,12 @@ export interface GeneralVolunteerApplicationsViewProps {
   activeTab: string
   interviewEnabled: boolean
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
-  onVolunteerApplicantDetailMetaChange?: (meta: UjatVolunteerApplicantDetailMeta | null) => void
+  onVolunteerApplicantDetailMetaChange?: (meta: GeneralVolunteerApplicantDetailMeta | null) => void
 }
 
 function normalizeGeneralVolunteerApplicantMeta(
-  meta: UjatVolunteerApplicantDetailMeta
-): UjatVolunteerApplicantDetailMeta {
+  meta: GeneralVolunteerApplicantDetailMeta
+): GeneralVolunteerApplicantDetailMeta {
   const stripHalfPrefix = (value: string) => value.replace(/^(상반기|하반기)\s+/, '')
   return {
     title: stripHalfPrefix(meta.title),
@@ -53,7 +49,7 @@ export function GeneralVolunteerApplicationsView({
   const screenTab = resolveVolunteerScreenTab(activeTab, interviewEnabled)
 
   const handleVolunteerApplicantDetailMetaChange = useCallback(
-    (meta: UjatVolunteerApplicantDetailMeta | null) => {
+    (meta: GeneralVolunteerApplicantDetailMeta | null) => {
       if (!meta) {
         onVolunteerApplicantDetailMetaChange?.(null)
         return
@@ -65,7 +61,6 @@ export function GeneralVolunteerApplicationsView({
 
   const sharedSectionProps = {
     programId: program.id,
-    half: GENERAL_VOLUNTEER_RECRUIT_HALF,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailMetaChange: handleVolunteerApplicantDetailMetaChange,
   }
@@ -73,11 +68,11 @@ export function GeneralVolunteerApplicationsView({
   return (
     <div className="participant-applications">
       {screenTab === 'vol_doc_passed' ? (
-        <UjatVolunteerDocPassedSection {...sharedSectionProps} />
+        <GeneralVolunteerDocPassedSection {...sharedSectionProps} />
       ) : screenTab === 'vol_interview2' ? (
-        <UjatVolunteerInterview2Section {...sharedSectionProps} />
+        <GeneralVolunteerInterview2Section {...sharedSectionProps} />
       ) : (
-        <UjatVolunteerDocScreeningSection {...sharedSectionProps} columnPreset="general" />
+        <GeneralVolunteerDocScreeningSection {...sharedSectionProps} />
       )}
     </div>
   )

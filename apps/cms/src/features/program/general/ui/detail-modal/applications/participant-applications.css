@@ -127,6 +127,26 @@
   .applicant-details
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='approvalStatus'],
+.participant-applications
+  .general-volunteer-screening
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='volunteerName'],
+.participant-applications
+  .general-volunteer-screening
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='applicationType'],
+.participant-applications
+  .general-volunteer-screening
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='managerAEvaluation'],
+.participant-applications
+  .general-volunteer-screening
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='managerBEvaluation'],
+.participant-applications
+  .general-volunteer-screening
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='documentScreeningStatus'],
 .general-instructor-applications
   .applicant-details
   .table-filter-group__fields-inner

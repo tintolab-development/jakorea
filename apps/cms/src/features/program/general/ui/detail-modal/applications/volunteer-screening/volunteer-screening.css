@@ -1,0 +1,162 @@
+.general-volunteer-screening,
+.general-volunteer-doc-passed,
+.general-volunteer-interview2 {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.general-volunteer-screening__filter-layout,
+.general-volunteer-doc-passed__filter-layout,
+.general-volunteer-interview2__filter-layout {
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.participant-applications
+  .general-volunteer-screening__filter-layout.filter-table-layout
+  .table-filter-group__fields-rows
+  > .table-filter-group__fields-row-with-action {
+  display: grid !important;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 12px;
+  align-items: end;
+  grid-template-columns:
+    repeat(5, minmax(0, var(--application-filter-column-width, 260px))) minmax(0, 1fr) 160px !important;
+}
+
+.participant-applications
+  .general-volunteer-screening__filter-layout.filter-table-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-grid-row {
+  display: contents;
+}
+
+.participant-applications
+  .general-volunteer-screening__filter-layout.filter-table-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-shell--inline {
+  grid-column: 7;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  justify-self: end;
+}
+
+.general-volunteer-screening__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.general-volunteer-screening__table-wrap,
+.general-volunteer-doc-passed__table-wrap,
+.general-volunteer-interview2__table-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.general-volunteer-screening__center-cell,
+.general-volunteer-screening__status-cell {
+  text-align: center;
+}
+
+.general-volunteer-screening__nowrap-cell {
+  white-space: nowrap;
+}
+
+td.general-volunteer-screening__essay-cell .general-volunteer-screening__text-cell {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 8;
+  max-height: 192px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+th.general-volunteer-screening__essay-cell .ant-table-cell-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.general-volunteer-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f5f5f5;
+  color: #555;
+  font-weight: 600;
+}
+
+.general-volunteer-status--pass,
+.general-volunteer-status--assigned,
+.general-volunteer-status--completed {
+  background: #e8f7ef;
+  color: #16824a;
+}
+
+.general-volunteer-status--fail,
+.general-volunteer-status--withdrawn {
+  background: #fff1f0;
+  color: #c5352b;
+}
+
+.general-volunteer-status--neutral,
+.general-volunteer-status--waiting,
+.general-volunteer-status--pending {
+  background: #fff7e6;
+  color: #ad6b00;
+}
+
+.general-volunteer-status--unreviewed {
+  background: #f5f5f5;
+  color: #777;
+}
+
+.general-volunteer-applicant-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.general-volunteer-applicant-detail__essays {
+  display: grid;
+  gap: 16px;
+}
+
+.general-volunteer-applicant-detail__essay-section {
+  padding: 20px;
+  border: 1px solid var(--color-gray-20, #e5e5e5);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.general-volunteer-applicant-detail__essay-section h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.general-volunteer-applicant-detail__essay-section p {
+  margin: 0;
+  color: var(--color-gray-80, #333);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
