@@ -6,6 +6,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import { ApplicantScheduleList } from './applicant-schedule-list'
 import { GeneralInstructorCalendarScheduleList } from './applicant-general-instructor-calendar-schedule-list'
+import { GeneralInstitutionCalendarScheduleList } from './applicant-general-institution-calendar-schedule-list'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import './applicant-calendar-view.css'
 import { CalendarMain } from '@/shared/components/calendar'
@@ -34,8 +35,8 @@ interface ApplicantCalendarViewProps {
   /** 월간/주간 — onCalendarGranularityChange와 함께 전달 시 쿼리스트링 등과 동기화 */
   calendarGranularity?: 'month' | 'week'
   onCalendarGranularityChange?: (mode: 'month' | 'week') => void
-  /** 일반 프로그램 강사 신청 캘린더 — strip·툴팁·우측 카드 스펙 */
-  calendarVariant?: 'default' | 'general-instructor'
+  /** 일반 프로그램 강사/기관 신청 캘린더 — strip·툴팁·우측 카드 스펙 */
+  calendarVariant?: 'default' | 'general-instructor' | 'general-institution'
   /** 우측 다중 선택 필터 기준 (기관명 vs 참여자명) */
   filterEntity?: ApplicantCalendarFilterEntity
   /** LNB 메뉴 — filterEntity 미지정 시 자동 추론 */
@@ -55,6 +56,7 @@ export function ApplicantCalendarView({
   menu = '',
 }: ApplicantCalendarViewProps) {
   const isGeneralInstructor = calendarVariant === 'general-instructor'
+  const isGeneralInstitution = calendarVariant === 'general-institution'
   const filterEntity: ApplicantCalendarFilterEntity =
     filterEntityProp ?? (menu === 'individual-applications' ? 'participant' : 'school')
   const [fallbackCalendarMode, setFallbackCalendarMode] = useState<'month' | 'week'>('month')
@@ -175,14 +177,12 @@ export function ApplicantCalendarView({
       onSelectDate={handleDateSelect}
       onMonthChange={setCurrentMonth}
       onModeChange={setCalendarMode}
+      eventsTooltipScope="full-day"
+      eventsTooltipTrigger="cell"
+      formatEventsOverflowText={n => `외 ${n}개의 항목`}
+      previewTooltipContent={renderProgramCalendarEventsDefaultTooltipContent}
       {...(isGeneralInstructor
-        ? {
-            eventsTooltipScope: 'full-day' as const,
-            eventsTooltipTrigger: 'cell' as const,
-            formatEventsOverflowText: (n: number) => `외 ${n}개의 항목`,
-            previewTooltipContent: renderProgramCalendarEventsDefaultTooltipContent,
-            renderMonthEventContent: renderGeneralInstructorCalendarMonthEventContent,
-          }
+        ? { renderMonthEventContent: renderGeneralInstructorCalendarMonthEventContent }
         : {})}
     />
   )
@@ -193,6 +193,13 @@ export function ApplicantCalendarView({
       selectedRowKeys={selectedRowKeys}
       onSelectionChange={onSelectionChange}
       onInstructorClick={onItemClick}
+    />
+  ) : isGeneralInstitution ? (
+    <GeneralInstitutionCalendarScheduleList
+      events={filteredDayEvents}
+      selectedRowKeys={selectedRowKeys}
+      onSelectionChange={onSelectionChange}
+      onInstitutionClick={onItemClick}
     />
   ) : (
     <ApplicantScheduleList
@@ -212,22 +219,27 @@ export function ApplicantCalendarView({
         'applicant-calendar-set',
         isGeneralInstructor
           ? 'applicant-calendar-set--general-instructor'
-          : 'applicant-calendar-set--default',
+          : isGeneralInstitution
+            ? 'applicant-calendar-set--general-institution'
+            : 'applicant-calendar-set--default',
       ].join(' ')}
     >
       <div className="calendar-main-container">{calendarMain}</div>
       <div className="calendar-sub-right-list applicant-calendar-sub-right-list">
-        <div className="applicant-calendar-sub-right-list__school-filter">
-          <CmsSelect
-            mode="multiple"
-            withAllOption={false}
-            value={selectedSchools}
-            onChange={next => setSelectedSchools(next as string[])}
-            options={entityFilterOptions}
-            placeholder={filterEntity === 'participant' ? '참여자 선택' : '기관 선택'}
-          />
+        <div className="calendar-list applicant-calendar-sub-right-card">
+          <div className="calendar-split-card-right__toolbar">
+            <CmsSelect
+              mode="multiple"
+              withAllOption={false}
+              width="100%"
+              value={selectedSchools}
+              onChange={next => setSelectedSchools(next as string[])}
+              options={entityFilterOptions}
+              placeholder={filterEntity === 'participant' ? '참여자 선택' : '기관 선택'}
+            />
+          </div>
+          {scheduleList}
         </div>
-        {scheduleList}
       </div>
     </div>
   )
