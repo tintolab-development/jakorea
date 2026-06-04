@@ -139,8 +139,8 @@ function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
   const sessionCount = 1 + (rowIndex % 4)
   const sessions: ParticipatingSchoolSession[] = []
   for (let s = 0; s < sessionCount; s++) {
-    const dayOffset = rowIndex * 5 + s * 2
-    const d = new Date(2026, 0, 9 + dayOffset)
+    const dayOffset = rowIndex * 3 + s * 2
+    const d = new Date(2026, 5, 2 + dayOffset)
     const dayOfWeek = DAYS_OF_WEEK[d.getDay()]
     const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
     sessions.push({

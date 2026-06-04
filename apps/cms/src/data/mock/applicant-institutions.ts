@@ -150,9 +150,9 @@ const TEACHER_NAMES = [
 const APPROVAL_STATUSES: ApplicantApprovalStatusKey[] = ['pending', 'rejected', 'approved']
 
 const DESIRED_PERIODS = [
-  '26.01.09(금)~26.01.30(금)',
-  '26.02.01(월)~26.02.28(금)',
-  '26.03.01(일)~26.03.31(월)',
+  '26.06.02(화)~26.06.28(일)',
+  '26.06.10(수)~26.06.20(금)',
+  '26.06.15(월)~26.06.25(목)',
 ]
 
 const DAYS_OF_WEEK = ['일', '월', '화', '수', '목', '금', '토']
@@ -167,8 +167,8 @@ function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
   const sessionCount = 1 + (rowIndex % 5)
   const sessions: ParticipatingSchoolSession[] = []
   for (let s = 0; s < sessionCount; s++) {
-    const dayOffset = rowIndex * 7 + s * 3
-    const d = new Date(2026, 0, 9 + dayOffset)
+    const dayOffset = rowIndex * 3 + s * 2
+    const d = new Date(2026, 5, 2 + dayOffset)
     const dayOfWeek = DAYS_OF_WEEK[d.getDay()]
     const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
     const status = SESSION_STATUSES[(rowIndex + s) % 3]
