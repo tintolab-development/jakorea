@@ -22,6 +22,35 @@ export function getInstructorCalendarSessionSummary(
   return '-'
 }
 
+/** 캘린더 우측 카드 — 강사명 옆 차시 라벨만 (시간·학년 제외) */
+export function getInstructorCalendarRoundLabel(
+  instructor: ApplicantInstructorRow,
+  schoolName: string
+): string {
+  const pref =
+    instructor.preferredSchools?.find(p => p.schoolName === schoolName) ??
+    instructor.preferredSchools?.[0]
+  if (!pref) return '-'
+  if (pref.rank) return `${pref.rank}차시`
+  const timeMatch = pref.dateRange?.match(/(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)
+  if (timeMatch) return '1차시'
+  return '-'
+}
+
+/** 캘린더 우측 카드 2행 — `2차시 (09:20 ~ 11:20)` 형식 */
+export function getInstructorCalendarSessionCardLabel(
+  instructor: ApplicantInstructorRow,
+  schoolName: string
+): string {
+  const summary = getInstructorCalendarSessionSummary(instructor, schoolName)
+  const match = summary.match(/^(\d+차시)\s+(\d{1,2}:\d{2})~(\d{1,2}:\d{2})$/)
+  if (match) {
+    return `${match[1]} (${match[2]} ~ ${match[3]})`
+  }
+  const roundOnly = getInstructorCalendarRoundLabel(instructor, schoolName)
+  return roundOnly !== '-' ? roundOnly : '-'
+}
+
 export function getInstructorTooltipSessionLabel(
   item: Record<string, unknown> | null | undefined
 ): string | null {
