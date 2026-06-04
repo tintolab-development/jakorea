@@ -3,13 +3,28 @@
   --ujat-institution-calendar-height: 900px;
   --calendar-sub-right-list-height: 743px;
   --calendar-sub-right-list-min-width: 280px;
-  --calendar-sub-right-list-max-width: 400px;
-  display: flex;
+  --calendar-sub-right-list-max-width: 360px;
+  --calendar-main-month-min-width: 0px;
+  --calendar-cell-min-width: 88px;
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(
+      var(--calendar-sub-right-list-min-width),
+      var(--calendar-sub-right-list-max-width)
+    );
   gap: 16px;
   width: 100%;
+  min-width: 0;
   min-height: var(--ujat-institution-calendar-height);
   align-items: flex-start;
   margin-top: 0;
+}
+
+.ujat-institution-application-calendar-view > .calendar-main {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /**
@@ -26,7 +41,6 @@
   position: sticky;
   top: var(--calendar-set-sticky-top);
   align-self: flex-start;
-  flex-shrink: 0;
   /* 뷰포트 하단 52px + 모달 헤더 여유 — 우측 리스트가 바닥에 붙지 않게 */
   min-height: 0;
   max-height: calc(
