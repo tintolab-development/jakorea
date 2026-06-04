@@ -1,11 +1,11 @@
 /**
- * 일반 프로그램 강사 신청 캘린더 — 우측 일별 카드 (스크린샷 스펙)
+ * 일반 프로그램 강사 신청 캘린더 — 우측 일별 카드 (Figma 스펙)
  */
 
 .general-instructor-calendar-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   flex: 1 1 auto;
   min-height: 0;
   overflow-x: hidden;
@@ -21,11 +21,11 @@
 
 .general-instructor-calendar-card {
   display: flex;
+  padding: 10px 24px 10px 12px;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px 14px 16px 16px;
-  border-radius: 10px;
+  gap: 16px;
+  align-self: stretch;
+  border-radius: 6px;
   border: 1px solid transparent;
   box-sizing: border-box;
   transition:
@@ -34,22 +34,22 @@
 }
 
 .general-instructor-calendar-card--pending {
-  background: #fff4f6;
-  border-color: #f4dce2;
+  background: rgba(195, 47, 74, 0.06);
+  border-color: rgba(195, 47, 74, 0.1);
 }
 
 .general-instructor-calendar-card--approved {
-  background: #edf8f9;
-  border-color: #d7eef0;
+  background: rgba(30, 140, 41, 0.06);
+  border-color: rgba(30, 140, 41, 0.1);
 }
 
 .general-instructor-calendar-card--rejected {
-  background: #faf7ff;
-  border-color: #eee6f6;
+  background: rgba(123, 97, 200, 0.06);
+  border-color: rgba(123, 97, 200, 0.1);
 }
 
 .general-instructor-calendar-card--selected {
-  background: var(--default-WT, #fff);
+  background: var(--default-WT, #fff) !important;
   border: 2px solid var(--JA-mint-01, #01a1af);
   box-shadow:
     0 0 4px rgba(0, 136, 148, 0.06),
@@ -83,7 +83,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
   margin-bottom: 8px;
 }
@@ -94,34 +94,74 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: Pretendard, sans-serif;
   font-size: 16px;
+  font-style: normal;
   font-weight: 700;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
 }
 
-.general-instructor-calendar-card__header-sep {
+.general-instructor-calendar-card__divider {
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
   flex-shrink: 0;
-  color: #d4d4d4;
-  font-size: 14px;
-  line-height: 1;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
+  align-self: center;
 }
 
 .general-instructor-calendar-card__badge {
   flex-shrink: 0;
 }
 
+/* 캘린더 카드 전용 승인 배지 — 68×26, 흰 배경 + 상태별 테두리/글자색 */
+.general-instructor-calendar-card__badge.app-status-badge {
+  display: flex;
+  width: 68px;
+  min-width: 68px;
+  max-width: 68px;
+  height: 26px;
+  min-height: 26px;
+  padding: 5px 12px 4px;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--6, 6px);
+  background: var(--main-WT, #fff);
+  box-sizing: border-box;
+}
+
+.general-instructor-calendar-card__badge.app-status-badge.textbook-status-badge--pending {
+  color: #ed6c02;
+  border: 1px solid #ed6c02;
+}
+
+.general-instructor-calendar-card__badge.app-status-badge.textbook-status-badge--approved {
+  color: #1e8c29;
+  border: 1px solid #1e8c29;
+}
+
+.general-instructor-calendar-card__badge.app-status-badge.textbook-status-badge--rejected {
+  color: #c32f4a;
+  border: 1px solid #c32f4a;
+}
+
 .general-instructor-calendar-card__session {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
   min-width: 0;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  font-family: Pretendard, sans-serif;
   font-size: 16px;
-  font-weight: 600;
+  font-style: normal;
+  font-weight: 500;
   line-height: 150%;
-  color: #8c8c8c;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
 }
 
 .general-instructor-calendar-card__instructor,
@@ -131,37 +171,39 @@
   white-space: nowrap;
 }
 
-.general-instructor-calendar-card__sep {
-  flex-shrink: 0;
-  color: #d4d4d4;
-  font-size: 14px;
-  line-height: 1;
-}
-
 .general-instructor-calendar-card__tags {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .general-instructor-calendar-card__tag {
   display: inline-flex;
-  padding: 4px 8px 3px;
+  flex: 0 0 auto;
+  padding: 3px 8px 2px;
   justify-content: center;
   align-items: center;
+  gap: 10px;
   border-radius: 4px;
-  border: 1px solid #e6e6e6;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   background: var(--default-WT, #fff);
   color: var(--default-BK, #3d3d3d);
-  font-size: 15px;
-  font-weight: 600;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
   line-height: 150%;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .general-instructor-calendar-card__tag--mint {
   border-color: var(--JA-mint-01, #01a1af);
-  color: var(--JA-mint-01, #01a1af);
+  color: var(--default-BK, #3d3d3d);
+  background: var(--default-WT, #fff);
 }
 
 .general-instructor-calendar-card__checkbox {
@@ -171,7 +213,7 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: 10px;
+  border-radius: 6px;
   transition: background-color 0.2s;
 }
 
@@ -180,7 +222,7 @@
 }
 
 .general-instructor-calendar-card__checkbox:hover {
-  background: rgba(1, 161, 175, 0.14);
+  background: rgba(1, 161, 175, 0.06);
 }
 
 .general-instructor-calendar-card__checkbox .ant-checkbox-wrapper {
@@ -201,4 +243,16 @@
 
 .general-instructor-calendar-card__checkbox .ant-checkbox .ant-checkbox-inner::after {
   inset-block-start: 45%;
+}
+
+.general-instructor-calendar-card__checkbox .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: var(--JA-mint-01, #01a1af);
+  border-color: var(--JA-mint-01, #01a1af);
+}
+
+.general-instructor-calendar-card__checkbox
+  .ant-checkbox-checked:not(.ant-checkbox-disabled):hover
+  .ant-checkbox-inner {
+  background-color: #00838f;
+  border-color: #00838f;
 }

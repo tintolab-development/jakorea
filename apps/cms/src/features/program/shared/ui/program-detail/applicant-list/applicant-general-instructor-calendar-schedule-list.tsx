@@ -9,7 +9,6 @@ import { getInstructorCalendarSessionSummary } from './applicant-instructor-cale
 import {
   getInstructorScheduleDispatchStats,
   getInstructorScheduleDistanceKm,
-  LONG_DISTANCE_THRESHOLD_KM,
 } from './applicant-instructor-schedule-meta'
 import './applicant-general-instructor-calendar-schedule-list.css'
 
@@ -94,8 +93,8 @@ export function GeneralInstructorCalendarScheduleList({
     <div
       className={
         cards.length === 0
-          ? 'general-instructor-calendar-list general-instructor-calendar-list--empty'
-          : 'general-instructor-calendar-list'
+          ? 'calendar-list general-instructor-calendar-list calendar-list--empty general-instructor-calendar-list--empty'
+          : 'calendar-list general-instructor-calendar-list'
       }
     >
       {cards.length === 0 ? (
@@ -117,15 +116,17 @@ export function GeneralInstructorCalendarScheduleList({
           )
           const { dispatchCount, longDistanceCount } =
             getInstructorScheduleDispatchStats(instructorName)
-          const isLongDistance = distanceKm > LONG_DISTANCE_THRESHOLD_KM
 
           return (
             <div
               key={id}
               className={[
                 'general-instructor-calendar-card',
+                'calendar-list-item',
                 `general-instructor-calendar-card--${status}`,
-                isSelected ? 'general-instructor-calendar-card--selected' : '',
+                isSelected
+                  ? 'calendar-list-item--selected general-instructor-calendar-card--selected'
+                  : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -137,9 +138,7 @@ export function GeneralInstructorCalendarScheduleList({
               >
                 <div className="general-instructor-calendar-card__header">
                   <span className="general-instructor-calendar-card__school">{schoolName}</span>
-                  <span className="general-instructor-calendar-card__header-sep" aria-hidden>
-                    |
-                  </span>
+                  <span className="general-instructor-calendar-card__divider" aria-hidden />
                   <ApprovalStatusBadge
                     status={status}
                     className="general-instructor-calendar-card__badge"
@@ -149,24 +148,15 @@ export function GeneralInstructorCalendarScheduleList({
                   <span className="general-instructor-calendar-card__instructor">
                     {instructorName}
                   </span>
-                  <span className="general-instructor-calendar-card__sep" aria-hidden>
-                    |
-                  </span>
+                  <span className="general-instructor-calendar-card__divider" aria-hidden />
                   <span className="general-instructor-calendar-card__round">{sessionLine}</span>
                 </div>
                 <div className="general-instructor-calendar-card__tags">
-                  <span
-                    className={[
-                      'general-instructor-calendar-card__tag',
-                      isLongDistance ? '' : 'general-instructor-calendar-card__tag--mint',
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                  >
+                  <span className="general-instructor-calendar-card__tag general-instructor-calendar-card__tag--mint">
                     거리 : {distanceKm}km
                   </span>
                   <span className="general-instructor-calendar-card__tag">
-                    총강 : {dispatchCount}회
+                    출강 : {dispatchCount}회
                   </span>
                   <span className="general-instructor-calendar-card__tag">
                     장거리 : {longDistanceCount}회
@@ -174,7 +164,7 @@ export function GeneralInstructorCalendarScheduleList({
                 </div>
               </button>
               <div
-                className="general-instructor-calendar-card__checkbox"
+                className="calendar-list-item__checkbox general-instructor-calendar-card__checkbox"
                 onClick={e => e.stopPropagation()}
                 onKeyDown={e => e.stopPropagation()}
               >
