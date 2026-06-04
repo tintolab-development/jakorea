@@ -16,12 +16,11 @@
 
 .rich-text-editor__toolbar {
   flex-shrink: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 8px;
-  border-bottom: 1px solid #e0e0e0;
-  background: var(--bg-subtle, #fafafa);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
 }
 
 .rich-text-editor__body {
