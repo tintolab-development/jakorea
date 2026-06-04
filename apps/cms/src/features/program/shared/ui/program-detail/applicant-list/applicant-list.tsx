@@ -406,6 +406,7 @@ export function ApplicantList({
                 onItemClick={item => {
                   setSelectedItem(item)
                 }}
+                menu={menu}
                 calendarGranularity={applicantsCalendarGranularity}
                 onCalendarGranularityChange={setApplicantsCalendarGranularity}
                 calendarVariant={

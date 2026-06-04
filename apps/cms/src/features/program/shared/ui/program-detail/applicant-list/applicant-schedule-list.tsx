@@ -57,25 +57,45 @@ function normalizeTimeRange(range?: string): string {
   return range.replace(/\s*~\s*/g, ' ~ ')
 }
 
-function getSessionTimeSummary(schoolName: string, fallbackPeriod?: string): string {
-  const school = SCHOOL_BY_NAME.get(schoolName)
+function getSessionTimeSummaryFromSessions(
+  sessions: ApplicantSchoolRow['sessions'] | undefined
+): string | null {
   const validSessions =
-    school?.sessions
+    sessions
       ?.filter(s => s.status !== 'not_planned' && s.classNum && s.timeRange)
       .sort((a, b) => a.round - b.round) ?? []
-  if (validSessions.length > 0) {
-    const first = validSessions[0]!
-    const last = validSessions[validSessions.length - 1]!
-    if (validSessions.length === 1) {
-      return `${first.classNum} (${normalizeTimeRange(first.timeRange)})`
-    }
-    return `${first.classNum} (${normalizeTimeRange(first.timeRange)}) ~ ${last.classNum} (${normalizeTimeRange(last.timeRange)})`
+  if (validSessions.length === 0) return null
+  const first = validSessions[0]!
+  const last = validSessions[validSessions.length - 1]!
+  if (validSessions.length === 1) {
+    return `${first.classNum} (${normalizeTimeRange(first.timeRange)})`
   }
+  return `${first.classNum} (${normalizeTimeRange(first.timeRange)}) ~ ${last.classNum} (${normalizeTimeRange(last.timeRange)})`
+}
+
+function getSessionTimeSummary(schoolName: string, fallbackPeriod?: string): string {
+  const school = SCHOOL_BY_NAME.get(schoolName)
+  const fromSchool = getSessionTimeSummaryFromSessions(school?.sessions)
+  if (fromSchool) return fromSchool
   if (fallbackPeriod) {
     const match = fallbackPeriod.match(/(\d{1,2}:\d{2})\s*[-~]\s*(\d{1,2}:\d{2})/)
     if (match) return `${match[1]} ~ ${match[2]}`
   }
   return '-'
+}
+
+function resolveApplicantDisplayName(originalItem: Record<string, unknown> | undefined): string {
+  if (!originalItem) return '기관'
+  const schoolName = String(originalItem.schoolName ?? '').trim()
+  if (schoolName) return schoolName
+  const applicantName = String(originalItem.applicantName ?? '').trim()
+  if (applicantName) return applicantName
+  return '기관'
+}
+
+function resolveRowSelectionKey(originalItem: Record<string, unknown> | undefined, eventId: string): string {
+  const rowId = originalItem?.id
+  return typeof rowId === 'string' && rowId ? rowId : eventId
 }
 
 export function ApplicantScheduleList({
@@ -208,14 +228,34 @@ export function ApplicantScheduleList({
             }
 
             const displayTitle = event.title.replace(/^\[.*?\]\s*/, '')
-            const isSelected = selectedRowKeys.includes(event.id)
-            const schoolName = String(originalItem?.schoolName ?? displayTitle).trim() || '기관'
-            const instructorName =
-              typeof originalItem?.instructorName === 'string'
+            const selectionKey = resolveRowSelectionKey(
+              originalItem as Record<string, unknown> | undefined,
+              String(event.id)
+            )
+            const isSelected = selectedRowKeys.includes(selectionKey)
+            const isIndividualRow =
+              originalItem != null && typeof originalItem === 'object' && 'applicantName' in originalItem
+            const primaryTitle = resolveApplicantDisplayName(
+              originalItem as Record<string, unknown> | undefined
+            )
+            const secondaryTitle = isIndividualRow
+              ? [originalItem?.affiliation, originalItem?.educationGrade]
+                  .map(v => String(v ?? '').trim())
+                  .filter(Boolean)
+                  .join(' · ') || '-'
+              : typeof originalItem?.instructorName === 'string'
                 ? originalItem.instructorName
-                : parsePrimaryInstructorName(originalItem?.assignedInstructorNames)
+                : parsePrimaryInstructorName(originalItem?.assignedInstructorNames as string | undefined)
+            const schoolName = isIndividualRow
+              ? String(originalItem?.affiliation ?? '').trim() || primaryTitle
+              : primaryTitle
+            const instructorName = isIndividualRow ? primaryTitle : secondaryTitle
+            const sessionFromRow = getSessionTimeSummaryFromSessions(
+              originalItem?.sessions as ApplicantSchoolRow['sessions'] | undefined
+            )
             const sessionSummary =
-              showApprovalStatus && originalItem && 'instructorName' in originalItem
+              sessionFromRow ??
+              (showApprovalStatus && originalItem && 'instructorName' in originalItem
                 ? resolveSessionSummary(
                     originalItem as ApplicantInstructorRow,
                     schoolName,
@@ -224,7 +264,7 @@ export function ApplicantScheduleList({
                 : getSessionTimeSummary(
                     schoolName,
                     originalItem?.desiredEducationPeriod as string | undefined
-                  )
+                  ))
             const distanceKm = getInstructorScheduleDistanceKm(
               schoolName,
               instructorName,
@@ -267,26 +307,36 @@ export function ApplicantScheduleList({
                         className="applicant-schedule-item-approval"
                       />
                     ) : null}
-                    <span className="applicant-schedule-item-title">{schoolName}</span>
-                    <span className="applicant-schedule-item-title-divider" aria-hidden />
-                    <span className="applicant-schedule-item-title">{instructorName}</span>
+                    <span className="applicant-schedule-item-title">
+                      {primaryTitle || displayTitle}
+                    </span>
+                    {secondaryTitle && secondaryTitle !== '-' ? (
+                      <>
+                        <span className="applicant-schedule-item-title-divider" aria-hidden />
+                        <span className="applicant-schedule-item-title">{secondaryTitle}</span>
+                      </>
+                    ) : null}
                   </div>
                   <div className="applicant-schedule-item-session">{sessionSummary}</div>
-                  <div className="applicant-schedule-item-tags">
-                    <span
-                      className={`applicant-schedule-item-tag ${isLongDistance ? '' : 'applicant-schedule-item-tag--mint'}`.trim()}
-                    >
-                      거리 : {distanceKm}km
-                    </span>
-                    <span className="applicant-schedule-item-tag">출강 : {dispatchCount}회</span>
-                    <span className="applicant-schedule-item-tag">장거리 : {longDistanceCount}회</span>
-                  </div>
+                  {!isIndividualRow ? (
+                    <div className="applicant-schedule-item-tags">
+                      <span
+                        className={`applicant-schedule-item-tag ${isLongDistance ? '' : 'applicant-schedule-item-tag--mint'}`.trim()}
+                      >
+                        거리 : {distanceKm}km
+                      </span>
+                      <span className="applicant-schedule-item-tag">출강 : {dispatchCount}회</span>
+                      <span className="applicant-schedule-item-tag">
+                        장거리 : {longDistanceCount}회
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
                 <div
                   className="calendar-list-item__checkbox applicant-schedule-item-checkbox"
                   onClick={e => {
                     e.stopPropagation()
-                    handleToggleSelection(event.id)
+                    handleToggleSelection(selectionKey)
                   }}
                 >
                   <Checkbox checked={isSelected} />
