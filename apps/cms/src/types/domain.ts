@@ -106,6 +106,17 @@ export interface GeneralProgramScheduleDetailRow {
   ipsTypeSummary?: string
 }
 
+/** 일반 프로그램 캘린더 — 설문·과제 등 보조 일정 */
+export interface GeneralProgramCalendarScheduleRow {
+  id: string
+  title: string
+  startDate?: DateValue
+  endDate?: DateValue
+  dueDate?: DateValue
+  startTime?: string
+  endTime?: string
+}
+
 /** 일반 프로그램 상세 공통 정보 확장 (등록 폼 저장값 mock/API 연동 전) */
 export interface GeneralProgramCommonInfoExtension {
   /** 공고용 프로그램명 — 미설정 시 `Program.title` */
@@ -150,6 +161,10 @@ export interface GeneralProgramCommonInfoExtension {
   volunteerInterviewScheduleInfo?: GeneralProgramVolunteerInterviewScheduleInfo
   /** 교육 진행 일정 설정 — `date` 날짜 지정 · `period` 기간 지정(기획: 날짜 선택(기간)) */
   educationScheduleMode?: 'date' | 'period'
+  /** 일반 프로그램 캘린더 — 설문조사 시작/종료 등 */
+  calendarSurveySchedules?: GeneralProgramCalendarScheduleRow[]
+  /** 일반 프로그램 캘린더 — 과제 제출 마감 등 */
+  calendarAssignmentSchedules?: GeneralProgramCalendarScheduleRow[]
 }
 
 /** 일반 프로그램 — 참여자 모집 정보 (프로그램 등록 참여자 모집 양식 필드) */
