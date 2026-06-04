@@ -228,42 +228,50 @@ export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailF
     toDetailInstructor(r, i)
   )
 
-  const educationGradeLabel = row.educationGrade.startsWith('초')
-    ? row.educationGrade
-    : `초등학교 ${row.educationGrade}`
-
   const sessionCount = row.sessions?.length ?? 2
   const adminCommentRaw = pick(ADMIN_COMMENTS, seed)
+  const isJinwolDemo = row.schoolName === '진월초등학교'
   return {
     id: row.id,
     schoolName: row.schoolName,
     adminComment: adminCommentRaw.trim() ? adminCommentRaw : undefined,
     region: row.region,
-    addressDetail: pick(ADDRESS_DETAILS, seed),
-    educationGrade: educationGradeLabel,
+    addressDetail: isJinwolDemo ? '1층 교무실 이길동 선생님 앞' : pick(ADDRESS_DETAILS, seed),
+    educationGrade: row.educationGrade,
+    combinedClassApplication: isJinwolDemo ? '미신청' : seed % 4 === 0 ? '신청' : '미신청',
+    programProgressLabel: '프로그램 진행 중',
     venue: pick(VENUES, seed),
-    educationFormat: pick(EDUCATION_FORMATS, seed),
+    educationFormat: isJinwolDemo ? '온/오프라인' : pick(EDUCATION_FORMATS, seed),
     totalEducationHours: 2,
     totalSessions: sessionCount,
     affiliatedFinancialCompany: pick(AFFILIATED_FINANCIAL, seed),
-    mealProvided: seed % 3 !== 0,
-    mealNotice: pick(MEAL_NOTICES, seed),
+    mealProvided: isJinwolDemo ? true : seed % 3 !== 0,
+    mealNotice: isJinwolDemo ? '가능' : pick(MEAL_NOTICES, seed),
     teacherName: row.teacherName,
     teacherPhone: pick(TEACHER_PHONES, seed),
     teacherEmail: pick(TEACHER_EMAILS, seed),
     teacherMobile: pick(TEACHER_PHONES, seed + 1),
     classCount: row.classCount,
     studentCount: row.studentCount,
-    waitingRoomAvailable: seed % 2 === 0,
-    waitingRoomLocation: pick(WAITING_ROOMS, seed),
-    computerInRoom: pick(COMPUTER_IN_ROOM, seed),
-    parkingInfo: pick(PARKING_INFO, seed),
-    criminalCheckRequest: pick(CRIMINAL_CHECK, seed),
+    waitingRoomAvailable: isJinwolDemo ? true : seed % 2 === 0,
+    waitingRoomLocation: isJinwolDemo
+      ? '교내 1층 귀빈실 (정수기 옆) | 강사 대기실로 이용 가능합니다.'
+      : pick(WAITING_ROOMS, seed),
+    computerInRoom: isJinwolDemo
+      ? '1대 사용 가능, USB는 사용 불가합니다.'
+      : pick(COMPUTER_IN_ROOM, seed),
+    parkingInfo: isJinwolDemo
+      ? '인근 공영주차장 이용 (학교 주차 불가)'
+      : pick(PARKING_INFO, seed),
+    criminalCheckRequest: isJinwolDemo
+      ? '온라인 제출 (ID: jakorea / 인증번호: 1234)'
+      : pick(CRIMINAL_CHECK, seed),
     lectureRound: row.lectureRound,
-    textbookName: pick(TEXTBOOK_NAMES, seed),
-    textbookKits: pick(TEXTBOOK_KITS, seed),
+    textbookName:
+      row.schoolName === '진월초등학교' ? '성공하는 경제생활' : pick(TEXTBOOK_NAMES, seed),
+    textbookKits: row.schoolName === '진월초등학교' ? 6 : pick(TEXTBOOK_KITS, seed),
     textbookStatus: row.textbookStatus,
-    textbookQuantity: pick(TEXTBOOK_QUANTITIES, seed),
+    textbookQuantity: row.schoolName === '진월초등학교' ? 144 : pick(TEXTBOOK_QUANTITIES, seed),
     previousYearParticipation: pick(PREVIOUS_YEAR, seed),
     applicationReason: pick(APPLICATION_REASONS, seed),
     otherRequests: pick(OTHER_REQUESTS, seed),

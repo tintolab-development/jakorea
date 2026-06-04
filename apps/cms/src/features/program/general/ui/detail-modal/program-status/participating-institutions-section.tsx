@@ -1,21 +1,14 @@
 /**
  * 참여 기관 페이지 (풀페이지 모달 > 프로그램 진행 현황 > 참여 기관)
- * 필터 + 테이블(교육 참여 기관 목록, 선택 삭제/승인, 캘린더 뷰), 교재 배송 현황 StatusDropdownCell
+ * FilterTableLayout + 테이블(교육 참여 기관 목록, 캘린더 뷰), 교재 배송 현황 StatusDropdownCell
  */
 
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
-import { CmsButton } from '@/shared/ui'
-import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import { CmsButton, FilterTableLayout } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import {
-  DeleteGuideModal,
-  buildParticipatingInstitutionDeleteMessageLines,
-  buildSchoolApproveMessageLines,
-} from '../../manager-delete-guide-modal'
-import {
-  TEXTBOOK_STATUS_LABELS,
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
   type ParticipatingSchoolSession,
@@ -28,70 +21,36 @@ import {
 import { useParticipatingInstitutionsParams } from '../../../hooks/use-participating-institutions-params'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
-import { Divider } from '@/shared/components/divider'
-import {
-  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
-  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
-} from '@/shared/constants'
 import type { ProgressFilters } from '../../../hooks/use-program-progress-params'
 import { SchoolDetailModal } from '../../school-detail-modal'
 import {
-  SchoolDetailFullpageView,
-  type SchoolDetailTabKey,
-} from '../../school-detail-fullpage-view'
+  GeneralParticipatingInstitutionDetailView,
+  type GeneralParticipatingInstitutionDetailTabKey,
+} from '../../general-participating-institution-detail-view'
 import { getSchoolDetailByRow } from '../../../lib/school-detail-mock'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 import type { Program } from '@/types/domain'
 import type { ParticipatingInstitutionsFilters } from '../../../hooks/use-participating-institutions-params'
+import { participatingInstitutionsFilterFields } from '../../../lib/participating-institutions-filter-fields'
+import { PARTICIPATING_INSTITUTIONS_TABLE_MIN_SCROLL_X } from '../../../lib/participating-institutions-table'
+import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import './participating-institutions-section.css'
 
-const REGION_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: '서울', value: '서울' },
-  { label: '부산', value: '부산' },
-  { label: '대구', value: '대구' },
-  { label: '인천', value: '인천' },
-  { label: '광주', value: '광주' },
-  { label: '대전', value: '대전' },
-  { label: '울산', value: '울산' },
-  { label: '세종', value: '세종' },
-  { label: '경기', value: '경기' },
-  { label: '강원', value: '강원' },
-  { label: '충북', value: '충북' },
-  { label: '충남', value: '충남' },
-  { label: '전북', value: '전북' },
-  { label: '전남', value: '전남' },
-  { label: '경북', value: '경북' },
-  { label: '경남', value: '경남' },
-  { label: '제주', value: '제주' },
-]
-
-const GRADE_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: '1학년', value: '1학년' },
-  { label: '2학년', value: '2학년' },
-  { label: '3학년', value: '3학년' },
-  { label: '4학년', value: '4학년' },
-  { label: '5학년', value: '5학년' },
-  { label: '6학년', value: '6학년' },
-]
-
-const TEXTBOOK_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: TEXTBOOK_STATUS_LABELS.preparing, value: 'preparing' },
-  { label: TEXTBOOK_STATUS_LABELS.shipping, value: 'shipping' },
-  { label: TEXTBOOK_STATUS_LABELS.delivered, value: 'delivered' },
-]
-
 const textbookStatusKeys: TextbookStatusKey[] = ['preparing', 'shipping', 'delivered']
 
-/** 날짜·시간·교시 구간 텍스트 (디바이더는 JSX로 삽입) */
-function getSessionLineParts(s: ParticipatingSchoolSession) {
-  const datePart = `${s.date.replace(/\./g, '. ')}(${s.dayOfWeek})`
-  const durationPart = `${s.duration} (${s.format})`
-  const periodPart = `${s.classNum} (${s.timeRange.replace('~', ' ~ ')})`
-  return { datePart, durationPart, periodPart }
+function padTimePart(part: string): string {
+  const trimmed = part.trim()
+  const [h, m = '00'] = trimmed.split(':')
+  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`
+}
+
+/** 스크린샷 형식: YYYY. MM. DD(요일) HH:mm ~ HH:mm | N차시 */
+function formatSessionLine(s: ParticipatingSchoolSession): string {
+  const datePart = s.date.replace(/\./g, '. ')
+  const [startRaw, endRaw] = s.timeRange.split('~')
+  const timePart = `${padTimePart(startRaw)} ~ ${padTimePart(endRaw ?? startRaw)}`
+  return `${datePart}(${s.dayOfWeek}) ${timePart} | ${s.round}차시`
 }
 
 export interface ParticipatingInstitutionsSectionProps {
@@ -101,9 +60,9 @@ export interface ParticipatingInstitutionsSectionProps {
   /** URL의 schoolId. 있으면 해당 학교 상세 인라인 뷰 표시 */
   schoolIdFromUrl?: string | null
   /** URL의 학교 상세 탭(application | students | instructors | posts). 쿼리 파라미터 연동용 */
-  schoolTabFromUrl?: SchoolDetailTabKey | null
+  schoolTabFromUrl?: GeneralParticipatingInstitutionDetailTabKey | null
   /** 학교 상세 뷰 내 탭 변경 시 호출 (쿼리 파라미터 갱신용) */
-  onSchoolTabChange?: (tab: SchoolDetailTabKey) => void
+  onSchoolTabChange?: (tab: GeneralParticipatingInstitutionDetailTabKey) => void
   /** 행 클릭 시 호출 (풀페이지 인라인 뷰용). 있으면 모달 대신 schoolId로 전환 */
   onSchoolRowClick?: (row: ParticipatingSchoolRow) => void
   /** 상세 뷰 닫기(목록으로) 시 호출 */
@@ -126,6 +85,8 @@ export function ParticipatingInstitutionsSection({
   onSchoolDetailClose,
 }: ParticipatingInstitutionsSectionProps) {
   const prevSchoolIdFromUrl = useRef<string | null>(null)
+  const tableWrapRef = useRef<HTMLDivElement>(null)
+  const [tableScrollX, setTableScrollX] = useState(PARTICIPATING_INSTITUTIONS_TABLE_MIN_SCROLL_X)
   const {
     filters,
     appliedFilters,
@@ -137,97 +98,76 @@ export function ParticipatingInstitutionsSection({
     ...filters,
   }))
   const [openTextbookDropdownId, setOpenTextbookDropdownId] = useState<string | null>(null)
-  const [bulkConfirmModal, setBulkConfirmModal] = useState<'delete' | 'approve' | null>(null)
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
 
   useEffect(() => {
     setPendingFilters({ ...filters })
   }, [filters])
 
-  /** 프로그램에 교재 배송 현황 필드가 있을 때만 교재 배송 현황 필터 노출 */
-  const showTextbookFilter = useMemo(
-    () => !!(program?.textbookName ?? program?.textbookNameEn),
-    [program?.textbookName, program?.textbookNameEn]
-  )
-
-  const institutionFilterFields = useMemo((): FilterFieldConfig[] => {
-    const colWidth = '18%'
-    const fields: FilterFieldConfig[] = [
-      {
-        key: 'schoolName',
-        type: 'search',
-        label: '기관명',
-        placeholder: '기관명을 입력하세요',
-        width: colWidth,
-      },
-      {
-        key: 'region',
-        type: 'select',
-        label: '기관 지역',
-        placeholder: '전체',
-        options: REGION_OPTIONS,
-        width: colWidth,
-      },
-      {
-        key: 'educationGrade',
-        type: 'select',
-        label: '대상 학년',
-        placeholder: '전체',
-        options: GRADE_OPTIONS,
-        width: colWidth,
-      },
-    ]
-    if (showTextbookFilter) {
-      fields.push({
-        key: 'textbookStatus',
-        type: 'select',
-        label: '교재 배송 현황',
-        placeholder: '전체',
-        options: TEXTBOOK_OPTIONS,
-        width: colWidth,
-      })
+  useLayoutEffect(() => {
+    const el = tableWrapRef.current
+    if (!el) return
+    const minW = PARTICIPATING_INSTITUTIONS_TABLE_MIN_SCROLL_X
+    const update = () => {
+      const w = el.getBoundingClientRect().width
+      setTableScrollX(Math.max(minW, Math.floor(w)))
     }
-    fields.push({
-      key: 'teacherName',
-      type: 'search',
-      label: '담당 교사/강사명',
-      placeholder: '교사/강사명을 입력하세요',
-      width: colWidth,
-    })
-    return fields
-  }, [showTextbookFilter])
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [viewMode])
 
-  const unifiedFilterCardValues = useMemo(
+  const filterTableValues = useMemo(
     () => ({
       schoolName: pendingFilters.schoolName,
-      region: pendingFilters.region === 'all' ? undefined : pendingFilters.region,
+      institutionSido: pendingFilters.institutionSido,
+      institutionSigungu: pendingFilters.institutionSigungu,
       educationGrade:
-        pendingFilters.educationGrade === 'all' ? undefined : pendingFilters.educationGrade,
+        pendingFilters.educationGrade === 'all' ? '' : pendingFilters.educationGrade,
       textbookStatus:
-        pendingFilters.textbookStatus === 'all' ? undefined : pendingFilters.textbookStatus,
+        pendingFilters.textbookStatus === 'all' ? '' : pendingFilters.textbookStatus,
       teacherName: pendingFilters.teacherName,
     }),
     [pendingFilters]
   )
 
-  const handleUnifiedFilterChange = (key: string, value: unknown) => {
+  const handleFilterChange = (key: string, value: unknown) => {
     if (key === 'schoolName' || key === 'teacherName') {
       setPendingFilters(prev => ({ ...prev, [key]: String(value ?? '') }))
       return
     }
-    const k = key as keyof ParticipatingInstitutionsFilters
-    const v = value == null || value === '' ? 'all' : String(value)
-    setPendingFilters(prev => ({ ...prev, [k]: v }))
+    if (key === 'institutionSido') {
+      setPendingFilters(prev => ({
+        ...prev,
+        institutionSido: value == null || value === '' ? '' : String(value),
+        institutionSigungu: '',
+      }))
+      return
+    }
+    if (key === 'institutionSigungu') {
+      setPendingFilters(prev => ({
+        ...prev,
+        institutionSigungu: value == null || value === '' ? '' : String(value),
+      }))
+      return
+    }
+    if (key === 'educationGrade' || key === 'textbookStatus') {
+      const v = value == null || value === '' || value === 'all' ? 'all' : String(value)
+      setPendingFilters(prev => ({ ...prev, [key]: v }))
+    }
   }
 
-  const handleUnifiedFilterSearch = () => {
+  const handleFilterSearch = () => {
     applyFilters(pendingFilters)
   }
 
   const progressFilters: ProgressFilters = useMemo(
     () => ({
       schoolName: appliedFilters.schoolName,
-      region: appliedFilters.region,
+      region: 'all',
+      institutionSido: appliedFilters.institutionSido,
+      institutionSigungu: appliedFilters.institutionSigungu,
       educationGrade: appliedFilters.educationGrade,
       lectureRound: 'all',
       textbookStatus: appliedFilters.textbookStatus,
@@ -245,18 +185,12 @@ export function ParticipatingInstitutionsSection({
 
   const {
     filteredSchools,
-    selectedSchoolRowKeys,
-    setSelectedSchoolRowKeys,
     selectedSchoolForDetail,
     setSelectedSchoolForDetail,
     schoolDetailModalOpen,
     setSchoolDetailModalOpen,
     handleTextbookStatusChange,
-    handleBulkDeleteConfirm: hookBulkDeleteConfirm,
-    schoolNamesToDelete,
-    handleBulkApproveConfirm: hookBulkApproveConfirm,
     handleSchoolApprovalCancel,
-    getInstructorDisplayForSchool,
     savedBasicPatches,
     setSavedBasicPatches,
     savedInstructorPatches,
@@ -281,30 +215,6 @@ export function ParticipatingInstitutionsSection({
     }
   }, [selectedRowFromUrl, schoolIdFromUrl, onSchoolDetailOpen, onSchoolDetailClose])
 
-  const handleBulkDelete = () => {
-    if (selectedSchoolRowKeys.length === 0) {
-      return
-    }
-    setBulkConfirmModal('delete')
-  }
-
-  const handleBulkApprove = () => {
-    if (selectedSchoolRowKeys.length === 0) {
-      return
-    }
-    setBulkConfirmModal('approve')
-  }
-
-  const handleBulkDeleteConfirm = () => {
-    hookBulkDeleteConfirm()
-    setBulkConfirmModal(null)
-  }
-
-  const handleBulkApproveConfirm = () => {
-    hookBulkApproveConfirm()
-    setBulkConfirmModal(null)
-  }
-
   const handleCalendarView = () => {
     setViewMode('calendar')
   }
@@ -313,17 +223,16 @@ export function ParticipatingInstitutionsSection({
     setViewMode('list')
   }
 
-  /** 컬럼 너비 합. 회차 컬럼 480px(한 줄 텍스트 길이만큼) → 테이블이 화면보다 길면 테이블 자체 가로 스크롤 */
-  const tableScrollX = 48 + 64 + 180 + 200 + 480 + 96 + 100 + 100 + 136 + 120 + 180
-
   const columns: ColumnsType<ParticipatingSchoolRow> = useMemo(
     () => [
       {
         title: 'No.',
         dataIndex: 'no',
         key: 'no',
-        width: 64,
+        width: 80,
         align: 'center',
+        className: CMS_TABLE_NO_COL_CLASS,
+        onCell: () => ({ className: CMS_TABLE_NO_COL_CLASS }),
       },
       {
         title: '참여 기관명',
@@ -332,13 +241,13 @@ export function ParticipatingInstitutionsSection({
         width: 180,
       },
       {
-        title: '기관 지역',
+        title: '기관 소재지',
         dataIndex: 'region',
         key: 'region',
         width: 200,
       },
       {
-        title: '강의 회차 별 교육 진행 날짜 및 시간',
+        title: '교육 진행 일정',
         key: 'sessions',
         width: 480,
         onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
@@ -350,24 +259,14 @@ export function ParticipatingInstitutionsSection({
           const restCount = total - showCount
           return (
             <div className="participating-institutions-section__sessions-cell">
-              {displaySessions.map(s => {
-                const { datePart, durationPart, periodPart } = getSessionLineParts(s)
-                return (
-                  <div key={s.round} className="participating-institutions-section__session-line">
-                    {datePart}
-                    <span
-                      className="participating-institutions-section__session-divider"
-                      aria-hidden
-                    />
-                    {durationPart}
-                    <span
-                      className="participating-institutions-section__session-divider"
-                      aria-hidden
-                    />
-                    {periodPart}
-                  </div>
-                )
-              })}
+              {displaySessions.map((s, index) => (
+                <div
+                  key={`${record.id}-session-${s.round}-${index}`}
+                  className="participating-institutions-section__session-line"
+                >
+                  {formatSessionLine(s)}
+                </div>
+              ))}
               {restCount > 0 && (
                 <div className="participating-institutions-section__session-more">
                   외 {restCount}개의 교육 일정
@@ -376,29 +275,6 @@ export function ParticipatingInstitutionsSection({
             </div>
           )
         },
-      },
-      {
-        title: '대상 학년',
-        dataIndex: 'educationGrade',
-        key: 'educationGrade',
-        width: 96,
-        align: 'center',
-      },
-      {
-        title: '대상 학급수',
-        dataIndex: 'classCount',
-        key: 'classCount',
-        width: 100,
-        align: 'center',
-        render: (v: number) => (v != null ? `${v}개` : '-'),
-      },
-      {
-        title: '총 학생수',
-        dataIndex: 'studentCount',
-        key: 'studentCount',
-        width: 100,
-        align: 'center',
-        render: (v: number) => (v != null ? `${v}명` : '-'),
       },
       {
         title: '교재 배송 현황',
@@ -421,22 +297,37 @@ export function ParticipatingInstitutionsSection({
         ),
       },
       {
+        title: '교육 학년',
+        dataIndex: 'educationGrade',
+        key: 'educationGrade',
+        width: 96,
+        align: 'center',
+      },
+      {
+        title: '대상 학급 수',
+        dataIndex: 'classCount',
+        key: 'classCount',
+        width: 100,
+        align: 'center',
+        render: (v: number) => (v != null ? `${v}개` : '-'),
+      },
+      {
+        title: '총 학생 수',
+        dataIndex: 'studentCount',
+        key: 'studentCount',
+        width: 100,
+        align: 'center',
+        render: (v: number) => (v != null ? `${v}명` : '-'),
+      },
+      {
         title: '담당 교사명',
         dataIndex: 'teacherName',
         key: 'teacherName',
         width: 120,
         align: 'center',
       },
-      {
-        title: '담당 강사',
-        key: 'instructors',
-        width: 180,
-        align: 'center',
-        render: (_: unknown, record: ParticipatingSchoolRow) =>
-          getInstructorDisplayForSchool(record.id, record.schoolName),
-      },
     ],
-    [handleTextbookStatusChange, getInstructorDisplayForSchool, openTextbookDropdownId]
+    [handleTextbookStatusChange, openTextbookDropdownId]
   )
 
   if (selectedRowFromUrl && program) {
@@ -458,7 +349,7 @@ export function ParticipatingInstitutionsSection({
     }
     return (
       <div className="program-status-participating participating-institutions-section">
-        <SchoolDetailFullpageView
+        <GeneralParticipatingInstitutionDetailView
           program={program}
           detail={mergedDetail}
           row={selectedRowFromUrl}
@@ -483,81 +374,54 @@ export function ParticipatingInstitutionsSection({
 
   return (
     <div className="program-status-participating participating-institutions-section">
-      <UnifiedFilterCard
+      <FilterTableLayout
+        className="participating-institutions-section__filter-layout"
         bordered={false}
-        cardStyle={{ marginBottom: 0 }}
-        fields={institutionFilterFields}
-        filters={unifiedFilterCardValues}
-        onFilterChange={handleUnifiedFilterChange}
-        onSearch={handleUnifiedFilterSearch}
-      />
-
-      <Divider className="participating-institutions-section__divider" />
-
-      <div className="participating-institutions-section__below-divider">
-        <div className="participating-institutions-section__table-header">
-          <div className="participating-institutions-section__table-heading">
-            <span className="participating-institutions-section__table-title">
-              교육 참여 기관 목록
-            </span>
-            <span className="participating-institutions-section__table-description">
-              {filteredSchools.length}건
-            </span>
-          </div>
-          <div className="participating-institutions-section__table-actions">
-            <CmsButton variant="delete" size="large" width={160} onClick={handleBulkDelete}>
-              선택 삭제
-            </CmsButton>
+        fields={participatingInstitutionsFilterFields}
+        filters={filterTableValues}
+        onFilterChange={handleFilterChange}
+        onSearch={handleFilterSearch}
+        title="교육 참여 기관 목록"
+        description={`${filteredSchools.length}건`}
+        actions={
+          viewMode === 'list' ? (
             <CmsButton
-              variant="primary"
-              size="large" width={160}
-              onClick={handleBulkApprove}
-              className="participating-institutions-section__btn-approve"
+              variant="secondary"
+              size="large"
+              style={{ minWidth: 180 }}
+              icon={<CalendarOutlined />}
+              onClick={handleCalendarView}
             >
-              선택 승인
+              캘린더 뷰로 보기
             </CmsButton>
-            {viewMode === 'list' ? (
-              <CmsButton
-                variant="secondary"
-                size="large" style={{ minWidth: 180 }}
-                icon={<CalendarOutlined />}
-                onClick={handleCalendarView}
-              >
-                캘린더 뷰로 보기
-              </CmsButton>
-            ) : (
-              <CmsButton
-                variant="secondary"
-                size="large" style={{ minWidth: 180 }}
-                icon={<UnorderedListOutlined />}
-                onClick={handleListView}
-              >
-                리스트 뷰로 보기
-              </CmsButton>
-            )}
-          </div>
-        </div>
-
+          ) : (
+            <CmsButton
+              variant="secondary"
+              size="large"
+              style={{ minWidth: 180 }}
+              icon={<UnorderedListOutlined />}
+              onClick={handleListView}
+            >
+              리스트 뷰로 보기
+            </CmsButton>
+          )
+        }
+      >
         {viewMode === 'list' ? (
-          <div className="participating-institutions-section__table-wrap">
+          <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">
             <Table<ParticipatingSchoolRow>
-              className="participating-institutions-section__table cms-data-table participating-institutions-section__table--clickable"
+              className="cms-data-table participating-institutions-section__table"
               rowKey="id"
               size="middle"
               pagination={false}
+              tableLayout="fixed"
               scroll={{ x: tableScrollX }}
               columns={columns}
               dataSource={filteredSchools}
-              rowSelection={{
-                selectedRowKeys: selectedSchoolRowKeys,
-                onChange: keys => setSelectedSchoolRowKeys(keys as string[]),
-              }}
               onRow={record => ({
                 onClick: e => {
                   const target = e.target as HTMLElement
                   if (
-                    target.closest('.ant-table-selection-column') ||
-                    target.closest('.ant-checkbox-wrapper') ||
                     target.closest('.status-dropdown-cell__cell-status') ||
                     target.closest('.status-dropdown-cell__status-trigger')
                   )
@@ -577,8 +441,8 @@ export function ParticipatingInstitutionsSection({
           <div className="participating-institutions-section__calendar-wrap">
             <ParticipatingInstitutionsCalendarView
               schools={filteredSchools}
-              selectedRowKeys={selectedSchoolRowKeys}
-              onSelectionChange={setSelectedSchoolRowKeys}
+              selectedRowKeys={[]}
+              onSelectionChange={() => {}}
               onSchoolClick={row => {
                 if (onSchoolRowClick) {
                   onSchoolRowClick(row)
@@ -592,7 +456,11 @@ export function ParticipatingInstitutionsSection({
             />
           </div>
         )}
-      </div>
+      </FilterTableLayout>
+
+      {viewMode === 'calendar' ? (
+        <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />
+      ) : null}
 
       {!schoolIdFromUrl && (
         <SchoolDetailModal
@@ -634,30 +502,6 @@ export function ParticipatingInstitutionsSection({
         />
       )}
 
-      {bulkConfirmModal === 'delete' && (
-        <DeleteGuideModal
-          open
-          onCancel={() => setBulkConfirmModal(null)}
-          onConfirm={handleBulkDeleteConfirm}
-          title="참여 기관 삭제 안내"
-          lines={buildParticipatingInstitutionDeleteMessageLines(schoolNamesToDelete)}
-          confirmText="삭제"
-          confirmVariant="delete"
-          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
-          confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
-        />
-      )}
-      {bulkConfirmModal === 'approve' && (
-        <DeleteGuideModal
-          open
-          onCancel={() => setBulkConfirmModal(null)}
-          onConfirm={handleBulkApproveConfirm}
-          title="선택 승인 안내"
-          lines={buildSchoolApproveMessageLines(selectedSchoolRowKeys.length)}
-          confirmText="승인"
-          confirmVariant="primary"
-        />
-      )}
     </div>
   )
 }

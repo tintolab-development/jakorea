@@ -260,6 +260,8 @@ export function ParticipatingInstructorsSection({
     () => ({
       schoolName: '',
       region: 'all',
+      institutionSido: '',
+      institutionSigungu: '',
       educationGrade: 'all',
       lectureRound: appliedFilters.educationAssignmentStatus || 'all',
       textbookStatus: 'all',

@@ -3,6 +3,43 @@
  * 월간 그리드: 요일 행 + 최대 6주 × min 124px tbody — 콘텐츠에 따라 행 높이 확장.
  */
 
+.participating-institutions-calendar-view {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/**
+ * split-card shell box-shadow(16px)가 부모 overflow에 잘리지 않도록 여유 확보.
+ * `detail-fullpage-modal__content` `--page-scroll` 연동은 `detail-fullpage-modal.css`.
+ */
+.participating-institutions-calendar-view--page-scroll {
+  --calendar-set-sticky-top: 16px;
+  --participating-institutions-calendar-page-bottom-gap: var(--detail-fullpage-padding-bottom, 52px);
+  padding: 16px;
+  margin: -16px;
+}
+
+.participating-institutions-calendar-view .calendar-split-card-layout {
+  overflow: visible;
+}
+
+.participating-institutions-calendar-view--page-scroll .calendar-split-card--right {
+  position: sticky;
+  top: var(--calendar-set-sticky-top);
+  align-self: flex-start;
+  min-height: 0;
+  max-height: calc(
+    100dvh - var(--calendar-set-sticky-top) - var(--participating-institutions-calendar-page-bottom-gap) -
+      88px
+  );
+  height: min(
+    var(--calendar-sub-right-list-height, 743px),
+    calc(100dvh - var(--calendar-set-sticky-top) - var(--participating-institutions-calendar-page-bottom-gap) -
+      88px)
+  );
+}
+
 /* Header */
 .participating-institutions-calendar-header {
   display: flex;
@@ -212,15 +249,15 @@
 }
 
 .participating-institutions-calendar-popover {
-  display: inline-flex;
+  display: flex;
   width: auto;
   min-width: 360px;
   max-width: min(460px, calc(100vw - 24px));
   max-height: 250px;
   padding: 11px 16px 10px 14px;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+  align-items: stretch;
+  gap: 0;
   border-radius: 8px;
   border: 1px solid #d4d4d4;
   background: #fff;
@@ -230,64 +267,80 @@
   overflow-y: auto;
 }
 
-.participating-institutions-calendar-popover__row {
+.participating-institutions-calendar-popover__entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   width: 100%;
+  min-width: 0;
+  padding: 8px 0;
+  box-sizing: border-box;
+}
+
+.participating-institutions-calendar-popover__entry:first-child {
+  padding-top: 0;
+}
+
+.participating-institutions-calendar-popover__entry:last-child {
+  padding-bottom: 0;
+}
+
+.participating-institutions-calendar-popover__entry:not(:last-child) {
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .participating-institutions-calendar-popover__title {
+  width: 100%;
   min-width: 0;
-  max-width: 100%;
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: Pretendard, sans-serif;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 150%;
 }
 
-.participating-institutions-calendar-popover__text {
+.participating-institutions-calendar-popover__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
   min-width: 0;
-  max-width: 100%;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.participating-institutions-calendar-popover__meta-part {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.participating-institutions-calendar-popover__meta-part--session {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--default-BK, #3d3d3d);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 140%;
 }
 
-.participating-institutions-calendar-popover__text--pending {
-  color: #01a1af;
-}
-
-.participating-institutions-calendar-popover__text--partial {
-  color: #017eaf;
-}
-
-.participating-institutions-calendar-popover__text--completed {
-  color: #2d9f4d;
-}
-
-.participating-institutions-calendar-popover__text--na {
-  color: #8c8c8c;
-}
-
-.participating-institutions-calendar-popover__text--rejected {
-  color: #e44970;
-}
-
-.participating-institutions-calendar-popover__sep {
-  display: inline-flex;
-  width: 21px;
-  justify-content: center;
-  color: #d4d4d4;
-  font-size: 12px;
-  font-weight: 300;
-  line-height: 1;
-  -webkit-user-select: none;
-  user-select: none;
+.participating-institutions-calendar-popover__meta-sep {
+  display: inline-block;
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
 }
 
 /* 참여 강사 캘린더 우측: 기관 선택 + 목록 (신청기관 ApplicantCalendarView 우측과 동일 레이아웃) */
@@ -321,17 +374,76 @@
   padding-bottom: 8px;
 }
 
-/* 우측 카드 태그: 선택 시 백그라운드 제거(기본/학교색 유지), 체크박스 세로 중앙 */
-.calendar-split-card--right .applicant-schedule-item {
+/* 참여 기관 캘린더 우측 일별 리스트 */
+.calendar-split-card--right > .participating-institutions-calendar-day-list {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding-bottom: 8px;
+}
+
+.participating-institutions-calendar-day-list__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.participating-institutions-calendar-day-list__title {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.participating-institutions-calendar-day-list__meta {
+  display: flex;
   align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
 }
 
-.calendar-split-card--right .applicant-schedule-item--selected {
-  background: #fcfcfc;
-  border-color: #f0f0f0;
+.participating-institutions-calendar-day-list__meta-part {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
-.calendar-split-card--right
-  .applicant-schedule-item[data-has-color='true'].applicant-schedule-item--selected {
-  box-shadow: none;
+.participating-institutions-calendar-day-list__meta-part--session {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.participating-institutions-calendar-day-list__meta-sep {
+  display: inline-block;
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
 }

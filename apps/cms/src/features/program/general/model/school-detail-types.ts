@@ -66,6 +66,10 @@ export interface SchoolDetailForModal {
   applicationReason?: string
   /** 기타 요청사항 */
   otherRequests?: string
+  /** 합반 신청 여부 (일반 프로그램 참여 기관 상세) */
+  combinedClassApplication?: string
+  /** 프로그램 진행 현황 라벨 (예: 프로그램 진행 중) */
+  programProgressLabel?: string
   instructors: SchoolDetailInstructorRow[]
 }
 

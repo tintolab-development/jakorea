@@ -95,9 +95,10 @@
 }
 
 .ujat-education-progress-institution-detail__textbook-badge--shipping {
-  border: 1px solid rgba(132, 87, 206, 0.1);
-  background: #f0e6fa;
-  color: #8457ce;
+  border-radius: var(--6, 6px);
+  border: 1px solid rgba(1, 126, 175, 0.1);
+  background: #e6f2f7;
+  color: var(--color-blue, #017eaf);
 }
 
 .ujat-education-progress-institution-detail__textbook-badge--delivered {

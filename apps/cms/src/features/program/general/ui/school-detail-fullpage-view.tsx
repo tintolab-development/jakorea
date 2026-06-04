@@ -1,7 +1,8 @@
 /**
- * 교육기관 상세 풀페이지 인라인 뷰
- * LNB 제외 메인 영역에서만 렌더. 탭: 신청 정보 | 학생 명단 | 강사 배정 현황 | 출석 관리(비활성) | 과제 관리(비활성) | 게시글
- * 액션: 승인 취소 | 정보 수정 | 개인정보 상세보기
+ * 일반 프로그램 > 진행 현황 > 참여 기관 상세 (풀페이지 인라인)
+ * UJAT 참여 기관 상세는 `features/program/ujat/ui/detail-modal/progress/institutions/detail/` — 별도 구현.
+ * 탭: 신청 정보 | 학생 명단 | 강사 배정 현황 | 출석 관리(비활성) | 게시글
+ * 신청 정보 액션: 활동 포기 | 정보 수정 | 개인정보 상세보기
  */
 
 import type { ReactNode } from 'react'
@@ -56,12 +57,7 @@ import { SchoolDetailSelectAssignConfirmModal } from './school-detail-select-ass
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import { SchoolDetailAssignOverflowModal } from './school-detail-assign-overflow-modal'
 import { SchoolDetailAssignCompleteModal } from './school-detail-assign-complete-modal'
-import {
-  DeleteGuideModal,
-  buildSchoolCancelApprovalMessageLines,
-} from './manager-delete-guide-modal'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
-import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -71,24 +67,31 @@ import './instructor-assignment-role-tag.css'
 import './instructor-assignment-status-text.css'
 import './school-detail-fullpage-view.css'
 
-export const SCHOOL_DETAIL_TAB_KEYS = [
+/** 일반 프로그램 참여 기관 상세 탭 (UJAT 상세 탭과 별도) */
+export const GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS = [
   'application',
   'students',
   'instructors',
   'attendance',
-  'assignments',
   'posts',
 ] as const
-export type SchoolDetailTabKey = (typeof SCHOOL_DETAIL_TAB_KEYS)[number]
+export type GeneralParticipatingInstitutionDetailTabKey =
+  (typeof GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS)[number]
 
-/** 화면 미구현 — 탭 비활성화·URL은 `normalizeSchoolDetailTab`으로 신청 정보로 보정 */
-export const SCHOOL_DETAIL_DISABLED_TAB_KEYS: readonly SchoolDetailTabKey[] = [
-  'attendance',
-  'assignments',
-]
+/** @deprecated 일반 참여 기관 상세와 동일 — URL 파라미터 호환용 */
+export const SCHOOL_DETAIL_TAB_KEYS = GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS
+export type SchoolDetailTabKey = GeneralParticipatingInstitutionDetailTabKey
+
+export const SCHOOL_DETAIL_DISABLED_TAB_KEYS: readonly SchoolDetailTabKey[] = ['attendance']
+
+export function normalizeGeneralParticipatingInstitutionDetailTab(
+  tab: GeneralParticipatingInstitutionDetailTabKey
+): GeneralParticipatingInstitutionDetailTabKey {
+  return SCHOOL_DETAIL_DISABLED_TAB_KEYS.includes(tab) ? 'application' : tab
+}
 
 export function normalizeSchoolDetailTab(tab: SchoolDetailTabKey): SchoolDetailTabKey {
-  return SCHOOL_DETAIL_DISABLED_TAB_KEYS.includes(tab) ? 'application' : tab
+  return normalizeGeneralParticipatingInstitutionDetailTab(tab)
 }
 
 function isSchoolDetailTabDisabled(key: SchoolDetailTabKey): boolean {
@@ -100,9 +103,10 @@ const SCHOOL_DETAIL_TAB_LABELS: Record<SchoolDetailTabKey, string> = {
   students: '학생 명단',
   instructors: '강사 배정 현황',
   attendance: '출석 관리',
-  assignments: '과제 관리',
   posts: '게시글',
 }
+
+export type GeneralParticipatingInstitutionDetailViewProps = SchoolDetailFullpageViewProps
 
 /** 배정된 강사 테이블용 행 (표시용 확장 필드 포함) */
 interface AssignedInstructorDisplayRow extends SchoolDetailInstructorRow {
@@ -192,7 +196,7 @@ export interface SchoolDetailFullpageViewProps {
   onTextbookStatusChange?: (schoolId: string, status: TextbookStatusKey) => void
 }
 
-export function SchoolDetailFullpageView({
+export function GeneralParticipatingInstitutionDetailView({
   program: _program,
   detail,
   row,
@@ -204,13 +208,12 @@ export function SchoolDetailFullpageView({
   savedBasicPatches = {},
   savedInstructorPatches = {},
   instructorList,
-  onCancelApproval,
+  onCancelApproval: _onCancelApproval,
   onTextbookStatusChange,
 }: SchoolDetailFullpageViewProps) {
   const currentUser = useAuthStore(state => state.user)
   const showAdminCommentSection = isCmsAdminUser(currentUser)
   const [internalTab, setInternalTab] = useState<SchoolDetailTabKey>('application')
-  const [cancelApprovalConfirmOpen, setCancelApprovalConfirmOpen] = useState(false)
   const activeTab = normalizeSchoolDetailTab(
     activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
   )
@@ -266,57 +269,31 @@ export function SchoolDetailFullpageView({
         }))
       : getInstructorRowsForSchool(row.schoolName, instructorList)
 
-  /** 담당 교사 정보: 교사명 | Tel | M | E-mail (스크린샷 형식). M·E-mail은 TD 표시용 마스킹 */
-  const teacherDisplay = [
+  /** 담당 교사 정보: 이름 | Tel | M | E-mail */
+  const teacherDisplaySegments = [
     mergedDetail.teacherName &&
-      `교사명: ${
-        privacyMasked ? MASKING_POLICY.name(mergedDetail.teacherName) : mergedDetail.teacherName
-      }`,
+      (privacyMasked ? MASKING_POLICY.name(mergedDetail.teacherName) : mergedDetail.teacherName),
     mergedDetail.teacherPhone &&
-      `Tel: ${
-        privacyMasked ? MASKING_POLICY.phone(mergedDetail.teacherPhone) : mergedDetail.teacherPhone
-      }`,
+      (privacyMasked ? MASKING_POLICY.phone(mergedDetail.teacherPhone) : mergedDetail.teacherPhone),
     mergedDetail.teacherMobile &&
-      `M: ${
-        privacyMasked
-          ? maskMobilePhoneMiddleStars(mergedDetail.teacherMobile)
-          : mergedDetail.teacherMobile
-      }`,
+      (privacyMasked
+        ? maskMobilePhoneMiddleStars(mergedDetail.teacherMobile)
+        : mergedDetail.teacherMobile),
     mergedDetail.teacherEmail &&
-      `E-mail: ${
-        privacyMasked
-          ? maskEmailLocalAfterTwoChars(mergedDetail.teacherEmail)
-          : mergedDetail.teacherEmail
-      }`,
-  ]
-    .filter(Boolean)
-    .join(' | ') || '-'
-  const mealDisplay = mergedDetail.mealProvided
-    ? `제공 | ${mergedDetail.mealNotice ?? ''}`
-    : '미제공'
+      (privacyMasked
+        ? maskEmailLocalAfterTwoChars(mergedDetail.teacherEmail)
+        : mergedDetail.teacherEmail),
+  ].filter((v): v is string => Boolean(v))
+  const mealDisplay =
+    mergedDetail.mealNotice === '가능'
+      ? '가능'
+      : mergedDetail.mealProvided
+        ? `제공 | ${mergedDetail.mealNotice ?? ''}`
+        : '미제공'
   const waitingDisplay =
     mergedDetail.waitingRoomAvailable && mergedDetail.waitingRoomLocation
       ? `있음 | ${mergedDetail.waitingRoomLocation}`
       : '없음'
-  const educationTimeDisplay =
-    mergedDetail.totalEducationHours != null && mergedDetail.totalSessions != null
-      ? `${mergedDetail.totalEducationHours}시간 (총 ${mergedDetail.totalSessions}회차)`
-      : '-'
-
-  /** 기획: 수업 진행 이후 — 회차 중 [진행 완료]가 하나라도 있으면 승인 취소 불가 */
-  const isCancelApprovalDisabledAfterClassStarted = (row.sessions ?? []).some(
-    s => s.status === 'completed'
-  )
-  /** 버튼은 항상 노출, 조건부 비활성화 */
-  const cancelApprovalDisabledReason = (() => {
-    if (!onCancelApproval) return '현재 승인 취소를 처리할 수 없습니다.'
-    if (row.approvalStatus !== 'approved') return '승인 완료 상태에서만 승인 취소할 수 있습니다.'
-    if (isCancelApprovalDisabledAfterClassStarted)
-      return '진행 완료된 회차가 있어 승인 취소할 수 없습니다.'
-    return null
-  })()
-  const isCancelApprovalDisabled = cancelApprovalDisabledReason !== null
-
   /** 배정된 강사 테이블용 행 (목 데이터 연동) */
   const assignedRows: AssignedInstructorDisplayRow[] = useMemo(
     () => getAssignedInstructorDisplayRows(instructors),
@@ -606,41 +583,16 @@ export function SchoolDetailFullpageView({
     [privacyMasked]
   )
 
-  /** 기본 정보: 스크린샷 순서. 2열 배치 후 담당 교사/신청 사유/기타 요청사항은 span 2 */
+  /** 기본 정보 — 일반 프로그램 참여 기관 상세 시안 순서 */
   const basicInfoItems = [
-    { key: 'schoolName', label: '신청 기관명', children: mergedDetail.schoolName },
     {
-      key: 'approval',
-      label: '프로그램 승인 현황',
+      key: 'programProgress',
+      label: '프로그램 진행 현황',
       children: (
-        <div className="school-detail-fullpage-view__approval-cell">
-          {withTdDivider([
-            '승인 완료',
-            <SendNotiButton key="notification" />,
-          ])}
-        </div>
+        <span className="general-participating-institution-detail__program-status">
+          {mergedDetail.programProgressLabel ?? '프로그램 진행 중'}
+        </span>
       ),
-    },
-    { key: 'region', label: '기관 주소', children: mergedDetail.region },
-    {
-      key: 'addressDetail',
-      label: '상세 주소',
-      children: mergedDetail.addressDetail ?? '-',
-    },
-    { key: 'educationGrade', label: '신청 학년', children: mergedDetail.educationGrade },
-    {
-      key: 'classCount',
-      label: '신청 학급 수 및 총 인원',
-      children: withTdDivider([
-        `${mergedDetail.classCount}개 학급`,
-        `총 ${mergedDetail.studentCount}명`,
-      ]),
-    },
-    { key: 'venue', label: '교육 장소', children: mergedDetail.venue ?? '-' },
-    {
-      key: 'educationFormat',
-      label: '교육 형태',
-      children: mergedDetail.educationFormat ?? '-',
     },
     {
       key: 'textbook',
@@ -681,24 +633,38 @@ export function SchoolDetailFullpageView({
       })(),
     },
     {
-      key: 'educationTime',
-      label: '신청 총 교육시간 및 회차',
-      children: educationTimeDisplay,
+      key: 'combinedClass',
+      label: '합반 신청 여부',
+      children: mergedDetail.combinedClassApplication ?? '미신청',
+    },
+    { key: 'schoolName', label: '신청 기관명', children: mergedDetail.schoolName },
+    { key: 'educationGrade', label: '신청 학년', children: mergedDetail.educationGrade },
+    { key: 'region', label: '기관 주소', children: mergedDetail.region },
+    {
+      key: 'addressDetail',
+      label: '상세 주소',
+      children: mergedDetail.addressDetail ?? '-',
     },
     {
-      key: 'prevYear',
-      label: '전년도 참여 여부',
-      children: mergedDetail.previousYearParticipation ?? '-',
+      key: 'classCount',
+      label: '신청 학급 수 및 총 인원',
+      children: withTdDivider([
+        `${mergedDetail.classCount}개 학급`,
+        `총 ${mergedDetail.studentCount}명`,
+      ]),
     },
     {
-      key: 'affiliated',
-      label: '결연 금융회사명',
-      children: mergedDetail.affiliatedFinancialCompany ?? '미결연',
+      key: 'educationFormat',
+      label: '교육 형태',
+      children: mergedDetail.educationFormat ?? '-',
     },
     {
       key: 'teacher',
       label: '담당 교사 정보',
-      children: withTdDivider(teacherDisplay === '-' ? ['-'] : teacherDisplay.split(' | ')),
+      children:
+        teacherDisplaySegments.length > 0
+          ? withTdDivider(teacherDisplaySegments)
+          : '-',
       span: 2,
     },
     {
@@ -809,7 +775,7 @@ export function SchoolDetailFullpageView({
         className="school-detail-fullpage-view__tabs-row"
         activeKey={activeTab}
         onChange={key => setActiveTab(key as SchoolDetailTabKey)}
-        items={SCHOOL_DETAIL_TAB_KEYS.map(key => ({
+        items={GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS.map(key => ({
           key,
           label: SCHOOL_DETAIL_TAB_LABELS[key],
           disabled: isSchoolDetailTabDisabled(key),
@@ -818,15 +784,8 @@ export function SchoolDetailFullpageView({
         trailing={
           activeTab === 'application' ? (
             <>
-              <CmsButton
-                variant="delete"
-                size="large"
-                width={160}
-                disabled={isCancelApprovalDisabled}
-                title={cancelApprovalDisabledReason ?? undefined}
-                onClick={() => setCancelApprovalConfirmOpen(true)}
-              >
-                승인 취소
+              <CmsButton variant="delete" size="large" width={160} onClick={() => {}}>
+                활동 포기
               </CmsButton>
               <CmsButton variant="primary" size="large" width={160} onClick={() => {}}>
                 정보 수정
@@ -898,7 +857,7 @@ export function SchoolDetailFullpageView({
             </div>
 
             <div className="program-detail-fullpage-modal__info-tab-block">
-              <h3 className="info-section-title">강의 회차별 교육 진행 현황</h3>
+              <h3 className="info-section-title">교육 진행 일정</h3>
               <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
                 <table className="program-detail-info-tab__table program-detail-info-tab__table--basic school-detail-fullpage-view__sessions-table">
                   <colgroup>
@@ -913,8 +872,12 @@ export function SchoolDetailFullpageView({
                         </td>
                       </tr>
                     ) : (
-                      sessions.map(session => (
-                        <SessionTableRow key={session.round} session={session} />
+                      sessions.map((session, index) => (
+                        <EducationScheduleTableRow
+                          key={`${session.round}-${session.date}`}
+                          preferenceIndex={index + 1}
+                          session={session}
+                        />
                       ))
                     )}
                   </tbody>
@@ -1176,30 +1139,27 @@ export function SchoolDetailFullpageView({
         )}
       </div>
 
-      {cancelApprovalConfirmOpen && (
-        <DeleteGuideModal
-          open={cancelApprovalConfirmOpen}
-          onCancel={() => setCancelApprovalConfirmOpen(false)}
-          onConfirm={() => {
-            onCancelApproval?.(row.id)
-            setCancelApprovalConfirmOpen(false)
-          }}
-          title="승인 취소 안내"
-          lines={buildSchoolCancelApprovalMessageLines(row.schoolName)}
-          confirmText="취소"
-          confirmVariant="delete"
-        />
-      )}
       {personalInfoRevealModal}
     </div>
   )
 }
 
-function SessionTableRow({ session }: { session: ParticipatingSchoolSession }) {
-  const isNotPlanned = session.status === 'not_planned' || !session.date
-  const datePart = `${session.date.replace(/\./g, '. ')}(${session.dayOfWeek})`
-  const durationFormat = `${session.duration} (${session.format})`
-  const periodTime = `${session.classNum} (${session.timeRange.replace('~', ' ~ ')})`
+function padScheduleTimePart(part: string): string {
+  const trimmed = part.trim()
+  const [h, m = '00'] = trimmed.split(':')
+  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`
+}
+
+function EducationScheduleTableRow({
+  preferenceIndex,
+  session,
+}: {
+  preferenceIndex: number
+  session: ParticipatingSchoolSession
+}) {
+  const datePart = session.date.replace(/\./g, '. ')
+  const [startRaw, endRaw] = session.timeRange.split('~')
+  const timePart = `${padScheduleTimePart(startRaw)} ~ ${padScheduleTimePart(endRaw ?? startRaw)}`
   const statusLabel = session.status
     ? (SESSION_STATUS_LABELS[session.status] ?? session.status)
     : '미진행 희망'
@@ -1210,21 +1170,24 @@ function SessionTableRow({ session }: { session: ParticipatingSchoolSession }) {
         ? 'school-detail-fullpage-view__session-status--pending'
         : 'school-detail-fullpage-view__session-status--not_planned'
 
-  const contentCell = isNotPlanned
-    ? '미진행 희망'
-    : withTdDivider([
-        datePart,
-        durationFormat,
-        periodTime,
-        <span key="status" className={`school-detail-fullpage-view__session-status ${statusClass}`}>
-          {statusLabel}
-        </span>,
-      ])
-
   return (
     <tr>
-      <th>{session.round}차시 강의</th>
-      <td>{contentCell}</td>
+      <th>{preferenceIndex}지망</th>
+      <td>
+        {withTdDivider([
+          `${datePart}(${session.dayOfWeek}) ${timePart}`,
+          `${session.round}차시`,
+          <span
+            key="status"
+            className={`school-detail-fullpage-view__session-status ${statusClass}`}
+          >
+            {statusLabel}
+          </span>,
+        ])}
+      </td>
     </tr>
   )
 }
+
+/** @deprecated `GeneralParticipatingInstitutionDetailView` 사용 */
+export const SchoolDetailFullpageView = GeneralParticipatingInstitutionDetailView

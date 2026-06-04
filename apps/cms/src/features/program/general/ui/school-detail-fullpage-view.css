@@ -7,6 +7,14 @@
 
 /* 교육기관 상세: 탭 행 패딩 제거, 하단만 32px */
 /* 관리자 코멘트: 기본 정보 상단. 시안 1546×64 기준, padding 20/24, 폭 반응형 */
+.general-participating-institution-detail__program-status {
+  color: var(--JA-mint-01, #01a1af);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
 .school-detail-fullpage-view__admin-comment-box {
   width: 100%;
   max-width: 1546px;

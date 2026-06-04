@@ -32,10 +32,10 @@ import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-sa
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
 import {
-  SCHOOL_DETAIL_TAB_KEYS,
-  normalizeSchoolDetailTab,
-  type SchoolDetailTabKey,
-} from '../school-detail-fullpage-view'
+  GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS,
+  normalizeGeneralParticipatingInstitutionDetailTab,
+  type GeneralParticipatingInstitutionDetailTabKey,
+} from '../general-participating-institution-detail-view'
 import {
   INSTRUCTOR_DETAIL_TAB_KEYS,
   type InstructorDetailTabKey,
@@ -106,11 +106,14 @@ const PROGRAM_NESTED_DETAIL_QUERY_PARAMS = [
  */
 const LNB_KEYS_READONLY: readonly LnbKey[] = ['info', 'applicants', 'progress', 'managers']
 
-/** 학교 상세 뷰 내 탭 — 키 목록은 `school-detail-fullpage-view`의 SCHOOL_DETAIL_TAB_KEYS와 동일 */
-function parseSchoolTabFromSearch(searchParams: URLSearchParams): SchoolDetailTabKey {
+function parseSchoolTabFromSearch(
+  searchParams: URLSearchParams
+): GeneralParticipatingInstitutionDetailTabKey {
   const t = searchParams.get(SCHOOL_TAB_PARAM)
-  if (t && (SCHOOL_DETAIL_TAB_KEYS as readonly string[]).includes(t))
-    return normalizeSchoolDetailTab(t as SchoolDetailTabKey)
+  if (t && (GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS as readonly string[]).includes(t))
+    return normalizeGeneralParticipatingInstitutionDetailTab(
+      t as GeneralParticipatingInstitutionDetailTabKey
+    )
   return 'application'
 }
 
@@ -450,9 +453,9 @@ export function ProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }
 
-  const setSchoolTab = (tab: SchoolDetailTabKey) => {
+  const setSchoolTab = (tab: GeneralParticipatingInstitutionDetailTabKey) => {
     const next = new URLSearchParams(searchParams)
-    next.set(SCHOOL_TAB_PARAM, normalizeSchoolDetailTab(tab))
+    next.set(SCHOOL_TAB_PARAM, normalizeGeneralParticipatingInstitutionDetailTab(tab))
     setSearchParams(next, { replace: true })
   }
 
@@ -501,8 +504,10 @@ export function ProgramDetailFullPageModal({
   }, [instructorIdFromUrl])
 
   const title =
-    schoolDetailTitle != null && displayProgram
-      ? `${displayProgram.title}_${schoolDetailTitle}`
+    schoolIdFromUrl && schoolDetailTitle
+      ? `참여 기관 상세 (${schoolDetailTitle})`
+      : schoolDetailTitle != null && displayProgram
+        ? `${displayProgram.title}_${schoolDetailTitle}`
       : instructorDetailTitle != null && displayProgram
         ? `${displayProgram.title}_${instructorDetailTitle}`
         : (displayProgram?.title ?? '프로그램 상세')
@@ -577,10 +582,14 @@ export function ProgramDetailFullPageModal({
           : { label: activeLnbItem.label }
       )
     } else {
+      const childLabel =
+        schoolIdFromUrl && activeChildItem?.key === 'institutions'
+          ? '참여 기관 목록'
+          : activeChildItem.label
       items.push(
         nestedDetailLabel && childParams
-          ? makeBreadcrumbItem(activeChildItem.label, location.pathname, childParams)
-          : { label: activeChildItem.label }
+          ? makeBreadcrumbItem(childLabel, location.pathname, childParams)
+          : { label: childLabel }
       )
     }
 

@@ -146,7 +146,8 @@
 .program-status-participating__calendar-wrap,
 .participating-institutions-section__calendar-wrap {
   width: 100%;
-  overflow-x: auto;
+  min-width: 0;
+  overflow: visible;
   min-height: 900px;
 }
 

@@ -1,6 +1,6 @@
 /**
  * 참여 기관 페이지(풀페이지 모달) 필터 쿼리 파라미터 연동
- * lnb=progress&tab=institutions 일 때 기관명·지역·학년·교재배송현황·담당교사강사명
+ * lnb=progress&tab=institutions 일 때 기관명·소재지(시/도·시/군/구)·교재배송·학년·담당강사명
  */
 
 import { useMemo, useCallback, useState } from 'react'
@@ -14,7 +14,8 @@ import {
 
 export interface ParticipatingInstitutionsFilters {
   schoolName: string
-  region: string
+  institutionSido: string
+  institutionSigungu: string
   educationGrade: string
   textbookStatus: string
   teacherName: string
@@ -22,20 +23,54 @@ export interface ParticipatingInstitutionsFilters {
 
 const DEFAULT_FILTERS: ParticipatingInstitutionsFilters = {
   schoolName: '',
-  region: 'all',
+  institutionSido: '',
+  institutionSigungu: '',
   educationGrade: 'all',
   textbookStatus: 'all',
   teacherName: '',
 }
 
+const FILTER_KEYS: (keyof ParticipatingInstitutionsFilters)[] = [
+  'schoolName',
+  'institutionSido',
+  'institutionSigungu',
+  'educationGrade',
+  'textbookStatus',
+  'teacherName',
+]
+
 function readFiltersFromParams(searchParams: URLSearchParams): ParticipatingInstitutionsFilters {
+  const institutionSido = searchParams.get('institutionSido') ?? ''
+  const institutionSigungu = searchParams.get('institutionSigungu') ?? ''
+  /** 구 URL `region` 단일 키 호환 */
+  const legacyRegion = searchParams.get('region') ?? ''
+  const legacySido =
+    legacyRegion && legacyRegion !== 'all' && !institutionSido ? legacyRegion : ''
+
   return {
     schoolName: searchParams.get('schoolName') ?? DEFAULT_FILTERS.schoolName,
-    region: searchParams.get('region') ?? DEFAULT_FILTERS.region,
+    institutionSido: institutionSido || legacySido,
+    institutionSigungu: institutionSigungu || DEFAULT_FILTERS.institutionSigungu,
     educationGrade: searchParams.get('educationGrade') ?? DEFAULT_FILTERS.educationGrade,
     textbookStatus: searchParams.get('textbookStatus') ?? DEFAULT_FILTERS.textbookStatus,
     teacherName: searchParams.get('teacherName') ?? DEFAULT_FILTERS.teacherName,
   }
+}
+
+function mergeFilterParams(
+  next: URLSearchParams,
+  merged: ParticipatingInstitutionsFilters
+): void {
+  FILTER_KEYS.forEach(name => {
+    const value = merged[name]
+    const defaultValue = DEFAULT_FILTERS[name]
+    if (value === '' || value === defaultValue) {
+      next.delete(name)
+    } else {
+      next.set(name, value)
+    }
+  })
+  next.delete('region')
 }
 
 export function useParticipatingInstitutionsParams() {
@@ -51,26 +86,14 @@ export function useParticipatingInstitutionsParams() {
   const setFilters = useCallback(
     (updates: Partial<ParticipatingInstitutionsFilters>) => {
       const next = new URLSearchParams(searchParams)
-      const keys: (keyof ParticipatingInstitutionsFilters)[] = [
-        'schoolName',
-        'region',
-        'educationGrade',
-        'textbookStatus',
-        'teacherName',
-      ]
-      keys.forEach(name => {
-        const value = updates[name]
-        if (value === undefined) return
-        const defaultValue = DEFAULT_FILTERS[name]
-        if (value === '' || value === defaultValue) {
-          next.delete(name)
-        } else {
-          next.set(name, value)
-        }
-      })
+      const merged: ParticipatingInstitutionsFilters = {
+        ...filters,
+        ...updates,
+      }
+      mergeFilterParams(next, merged)
       setSearchParams(next, { replace: true })
     },
-    [searchParams, setSearchParams]
+    [searchParams, setSearchParams, filters]
   )
 
   const setFilter = useCallback(
@@ -80,33 +103,19 @@ export function useParticipatingInstitutionsParams() {
     [setFilters]
   )
 
-  /** 조회 버튼 클릭 시 전달한 값으로 URL 갱신 후 appliedFilters 반영 (기관명/담당 등 로컬 입력 동기화용) */
+  /** 조회 버튼 클릭 시 전달한 값으로 URL 갱신 후 appliedFilters 반영 */
   const applyFilters = useCallback(
     (overrides?: Partial<ParticipatingInstitutionsFilters>) => {
       const next = new URLSearchParams(searchParams)
       const merged: ParticipatingInstitutionsFilters = {
         schoolName: overrides?.schoolName ?? filters.schoolName,
-        region: overrides?.region ?? filters.region,
+        institutionSido: overrides?.institutionSido ?? filters.institutionSido,
+        institutionSigungu: overrides?.institutionSigungu ?? filters.institutionSigungu,
         educationGrade: overrides?.educationGrade ?? filters.educationGrade,
         textbookStatus: overrides?.textbookStatus ?? filters.textbookStatus,
         teacherName: overrides?.teacherName ?? filters.teacherName,
       }
-      const keys: (keyof ParticipatingInstitutionsFilters)[] = [
-        'schoolName',
-        'region',
-        'educationGrade',
-        'textbookStatus',
-        'teacherName',
-      ]
-      keys.forEach(name => {
-        const value = merged[name]
-        const defaultValue = DEFAULT_FILTERS[name]
-        if (value === '' || value === defaultValue) {
-          next.delete(name)
-        } else {
-          next.set(name, value)
-        }
-      })
+      mergeFilterParams(next, merged)
       setSearchParams(next, { replace: true })
       setAppliedFilters(merged)
     },

@@ -227,7 +227,8 @@
 .detail-fullpage-modal__content:has(
     .instructor-payment-tab__calendar-view-container--no-inner-scroll
   ),
-.detail-fullpage-modal__content:has(.ujat-institution-application-calendar-view--page-scroll) {
+.detail-fullpage-modal__content:has(.ujat-institution-application-calendar-view--page-scroll),
+.detail-fullpage-modal__content:has(.participating-institutions-calendar-view--page-scroll) {
   overflow-x: clip;
   /*
    * UJAT 캘린더: 하단 52px는 list `__page-bottom-spacer` 블록으로만 둠.
@@ -236,11 +237,20 @@
   padding-bottom: 0;
 }
 
+.detail-fullpage-modal__main:has(.participating-institutions-calendar-view--page-scroll) {
+  overflow-x: clip;
+}
+
 @supports not (overflow-x: clip) {
   .detail-fullpage-modal__content:has(
       .instructor-payment-tab__calendar-view-container--no-inner-scroll
     ),
-  .detail-fullpage-modal__content:has(.ujat-institution-application-calendar-view--page-scroll) {
+  .detail-fullpage-modal__content:has(.ujat-institution-application-calendar-view--page-scroll),
+  .detail-fullpage-modal__content:has(.participating-institutions-calendar-view--page-scroll) {
+    overflow-x: visible;
+  }
+
+  .detail-fullpage-modal__main:has(.participating-institutions-calendar-view--page-scroll) {
     overflow-x: visible;
   }
 }

@@ -51,12 +51,41 @@ import { GeneralInstructorApplicationsView } from './applications/general-instru
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
+import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
+import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
+import {
+  GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS,
+  normalizeGeneralParticipatingInstitutionDetailTab,
+  type GeneralParticipatingInstitutionDetailTabKey,
+} from '../general-participating-institution-detail-view'
+import {
+  INSTRUCTOR_DETAIL_TAB_KEYS,
+  type InstructorDetailTabKey,
+} from './program-status/participating-instructor-fullpage-view'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './detail-fullpage-modal.css'
 
 const TAB_PARAM = 'tab'
 const LNB_PARAM = 'lnb'
 const EDIT_PARAM = 'edit'
+const SCHOOL_ID_PARAM = 'schoolId'
+const SCHOOL_TAB_PARAM = 'schoolTab'
+const INSTRUCTOR_ID_PARAM = 'instructorId'
+const INSTRUCTOR_TAB_PARAM = 'instructorTab'
+
+const GENERAL_PROGRESS_NESTED_QUERY_PARAMS = [
+  SCHOOL_ID_PARAM,
+  SCHOOL_TAB_PARAM,
+  INSTRUCTOR_ID_PARAM,
+  INSTRUCTOR_TAB_PARAM,
+  'progressCalendarRange',
+  'schoolName',
+  'institutionSido',
+  'institutionSigungu',
+  'educationGrade',
+  'textbookStatus',
+  'teacherName',
+] as const
 
 const GENERAL_DETAIL_QUERY_PARAMS = [
   'programId',
@@ -65,7 +94,28 @@ const GENERAL_DETAIL_QUERY_PARAMS = [
   EDIT_PARAM,
   APPLICANT_ID_PARAM,
   'detailTab',
+  ...GENERAL_PROGRESS_NESTED_QUERY_PARAMS,
 ] as const
+
+function parseSchoolTabFromSearch(
+  searchParams: URLSearchParams
+): GeneralParticipatingInstitutionDetailTabKey {
+  const t = searchParams.get(SCHOOL_TAB_PARAM)
+  if (t && (GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS as readonly string[]).includes(t))
+    return normalizeGeneralParticipatingInstitutionDetailTab(
+      t as GeneralParticipatingInstitutionDetailTabKey
+    )
+  return 'application'
+}
+
+function parseInstructorTabFromSearch(searchParams: URLSearchParams): InstructorDetailTabKey {
+  const t = searchParams.get(INSTRUCTOR_TAB_PARAM)
+  if (t && (INSTRUCTOR_DETAIL_TAB_KEYS as readonly string[]).includes(t)) {
+    if (t === 'settlement') return 'application'
+    return t as InstructorDetailTabKey
+  }
+  return 'application'
+}
 
 const INFO_TABS = ['info', 'recruitment', 'application'] as const
 const VOLUNTEER_INTERVIEW_TABS = ['vol_doc1', 'vol_doc_passed', 'vol_interview2'] as const
@@ -220,7 +270,7 @@ function generalChildBreadcrumbLabel(
     return null
   }
   if (lnb === 'progress') {
-    if (tab === 'progress_institutions') return '참여 기관'
+    if (tab === 'progress_institutions') return '참여 기관 목록'
     if (tab === 'progress_instructors') return '참여 강사'
     if (tab === 'progress_volunteers') return '참여 봉사자'
     return null
@@ -297,6 +347,12 @@ export function GeneralProgramDetailFullPageModal({
     : 'info'
   const activeTab = open ? (searchParams.get(TAB_PARAM) ?? 'info') : 'info'
   const editTab = open ? searchParams.get(EDIT_PARAM) : null
+  const schoolIdFromUrl = open ? searchParams.get(SCHOOL_ID_PARAM) : null
+  const activeSchoolTab = schoolIdFromUrl ? parseSchoolTabFromSearch(searchParams) : 'application'
+  const instructorIdFromUrl = open ? searchParams.get(INSTRUCTOR_ID_PARAM) : null
+  const activeInstructorTab = instructorIdFromUrl
+    ? parseInstructorTabFromSearch(searchParams)
+    : 'application'
 
   const setEditMode = useCallback(
     (tab: string | null) => {
@@ -556,21 +612,68 @@ export function GeneralProgramDetailFullPageModal({
     }
   }, [open, activeLnb])
 
-  const handleModalClose = useCallback(() => {
-    if (
-      (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications') &&
-      applicantCloseHandlerRef.current?.()
-    ) {
-      return
-    }
-    onClose()
-  }, [activeLnb, onClose])
-
   useEffect(() => {
     if (!open || !programId || !displayProgram) return
     const normalized = normalizeGeneralDetailParams(programId, searchParams, displayProgram)
     if (normalized) setSearchParams(normalized, { replace: true })
   }, [open, programId, displayProgram, searchParams, setSearchParams])
+
+  const setSchoolId = useCallback(
+    (id: string | null) => {
+      const next = new URLSearchParams(searchParams)
+      if (id) {
+        next.set(SCHOOL_ID_PARAM, id)
+        next.set(SCHOOL_TAB_PARAM, 'application')
+        next.delete(INSTRUCTOR_ID_PARAM)
+        next.delete(INSTRUCTOR_TAB_PARAM)
+      } else {
+        next.delete(SCHOOL_ID_PARAM)
+        next.delete(SCHOOL_TAB_PARAM)
+      }
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: id == null })
+    },
+    [programId, searchParams, setSearchParams]
+  )
+
+  const setInstructorId = useCallback(
+    (id: string | null) => {
+      const next = new URLSearchParams(searchParams)
+      if (id) {
+        next.set(INSTRUCTOR_ID_PARAM, id)
+        next.set(INSTRUCTOR_TAB_PARAM, 'application')
+        next.delete(SCHOOL_ID_PARAM)
+        next.delete(SCHOOL_TAB_PARAM)
+      } else {
+        next.delete(INSTRUCTOR_ID_PARAM)
+        next.delete(INSTRUCTOR_TAB_PARAM)
+      }
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: id == null })
+    },
+    [programId, searchParams, setSearchParams]
+  )
+
+  const setSchoolTab = useCallback(
+    (tab: GeneralParticipatingInstitutionDetailTabKey) => {
+      const next = new URLSearchParams(searchParams)
+      next.set(SCHOOL_TAB_PARAM, normalizeGeneralParticipatingInstitutionDetailTab(tab))
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: true })
+    },
+    [programId, searchParams, setSearchParams]
+  )
+
+  const setInstructorTab = useCallback(
+    (tab: InstructorDetailTabKey) => {
+      if (tab === 'settlement') return
+      const next = new URLSearchParams(searchParams)
+      next.set(INSTRUCTOR_TAB_PARAM, tab)
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: true })
+    },
+    [programId, searchParams, setSearchParams]
+  )
 
   const setLnbTab = useCallback(
     (lnb: GeneralDetailLnbKey, tab: string) => {
@@ -578,10 +681,97 @@ export function GeneralProgramDetailFullPageModal({
       next.set(LNB_PARAM, lnb)
       next.set(TAB_PARAM, tab)
       if (programId) next.set('programId', programId)
+
+      if (lnb !== 'progress') {
+        for (const key of GENERAL_PROGRESS_NESTED_QUERY_PARAMS) next.delete(key)
+      } else if (tab === 'progress_institutions') {
+        next.delete(INSTRUCTOR_ID_PARAM)
+        next.delete(INSTRUCTOR_TAB_PARAM)
+      } else if (tab === 'progress_instructors') {
+        next.delete(SCHOOL_ID_PARAM)
+        next.delete(SCHOOL_TAB_PARAM)
+      } else if (tab === 'progress_volunteers') {
+        for (const key of GENERAL_PROGRESS_NESTED_QUERY_PARAMS) next.delete(key)
+      }
+
       setSearchParams(next, { replace: true })
     },
     [programId, searchParams, setSearchParams]
   )
+
+  const [schoolDetailTitle, setSchoolDetailTitle] = useState<string | null>(null)
+  const [instructorDetailTitle, setInstructorDetailTitle] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!schoolIdFromUrl) setSchoolDetailTitle(null)
+  }, [schoolIdFromUrl])
+
+  useEffect(() => {
+    if (!instructorIdFromUrl) setInstructorDetailTitle(null)
+  }, [instructorIdFromUrl])
+
+  useEffect(() => {
+    if (!open || !schoolIdFromUrl) return
+    const raw = searchParams.get(SCHOOL_TAB_PARAM)
+    const normalized = parseSchoolTabFromSearch(searchParams)
+    if (raw === normalized) return
+    const next = new URLSearchParams(searchParams)
+    next.set(SCHOOL_TAB_PARAM, normalized)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, schoolIdFromUrl, searchParams, setSearchParams, programId])
+
+  useEffect(() => {
+    if (!open || !instructorIdFromUrl) return
+    const raw = searchParams.get(INSTRUCTOR_TAB_PARAM)
+    if (raw === 'settlement') {
+      const next = new URLSearchParams(searchParams)
+      next.set(INSTRUCTOR_TAB_PARAM, 'application')
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: true })
+      return
+    }
+    if (raw && (INSTRUCTOR_DETAIL_TAB_KEYS as readonly string[]).includes(raw)) return
+    const next = new URLSearchParams(searchParams)
+    next.set(INSTRUCTOR_TAB_PARAM, 'application')
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, instructorIdFromUrl, searchParams, setSearchParams, programId])
+
+  useEffect(() => {
+    if (!open || !instructorIdFromUrl) return
+    if (activeLnb === 'progress' && activeTab === 'progress_instructors') return
+    const next = new URLSearchParams(searchParams)
+    next.delete(INSTRUCTOR_ID_PARAM)
+    next.delete(INSTRUCTOR_TAB_PARAM)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, activeLnb, activeTab, instructorIdFromUrl, programId, searchParams, setSearchParams])
+
+  const handleModalClose = useCallback(() => {
+    if (activeLnb === 'progress' && schoolIdFromUrl) {
+      setSchoolId(null)
+      return
+    }
+    if (activeLnb === 'progress' && instructorIdFromUrl) {
+      setInstructorId(null)
+      return
+    }
+    if (
+      (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications') &&
+      applicantCloseHandlerRef.current?.()
+    ) {
+      return
+    }
+    onClose()
+  }, [activeLnb, schoolIdFromUrl, instructorIdFromUrl, setSchoolId, setInstructorId, onClose])
+
+  const progressNestedDetailLabel =
+    activeLnb === 'progress' && schoolIdFromUrl && schoolDetailTitle
+      ? schoolDetailTitle
+      : activeLnb === 'progress' && instructorIdFromUrl && instructorDetailTitle
+        ? instructorDetailTitle
+        : null
 
   const headerBreadcrumbItems = (() => {
     const listParams = buildSearchParams(searchParams, {
@@ -634,16 +824,28 @@ export function GeneralProgramDetailFullPageModal({
       applicantDetailMeta != null &&
       (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications')
 
+    const hasProgressNestedDetail = progressNestedDetailLabel != null
+
     if (!childLabel) {
       items.push(
         hasParticipantApplicationDetail
           ? makeBreadcrumbItem(lnbLabel, location.pathname, lnbParams)
           : { label: lnbLabel }
       )
+    } else if (
+      activeLnb === 'progress' &&
+      schoolIdFromUrl &&
+      activeTab === 'progress_institutions'
+    ) {
+      items.push(
+        childParams && hasProgressNestedDetail
+          ? makeBreadcrumbItem(childLabel, location.pathname, childParams)
+          : { label: childLabel }
+      )
     } else {
       items.push(makeBreadcrumbItem(lnbLabel, location.pathname, lnbParams))
       items.push(
-        childParams
+        childParams && (hasParticipantApplicationDetail || hasProgressNestedDetail)
           ? makeBreadcrumbItem(childLabel, location.pathname, childParams)
           : { label: childLabel }
       )
@@ -651,6 +853,10 @@ export function GeneralProgramDetailFullPageModal({
 
     if (hasParticipantApplicationDetail) {
       items.push({ label: applicantDetailMeta.breadcrumbLabel })
+    }
+
+    if (hasProgressNestedDetail) {
+      items.push({ label: progressNestedDetailLabel })
     }
 
     return items
@@ -662,9 +868,13 @@ export function GeneralProgramDetailFullPageModal({
     applicantDetailMeta &&
     (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications')
       ? applicantDetailMeta.title
-      : displayProgram
-        ? resolveGeneralProgramDisplayTitle(displayProgram)
-        : '프로그램 상세'
+      : activeLnb === 'progress' && schoolIdFromUrl && schoolDetailTitle
+        ? `참여 기관 상세 (${schoolDetailTitle})`
+        : progressNestedDetailLabel && displayProgram
+          ? `${resolveGeneralProgramDisplayTitle(displayProgram)}_${progressNestedDetailLabel}`
+          : displayProgram
+            ? resolveGeneralProgramDisplayTitle(displayProgram)
+            : '프로그램 상세'
 
   return (
     <>
@@ -672,6 +882,9 @@ export function GeneralProgramDetailFullPageModal({
         open={open}
         onClose={handleModalClose}
         title={modalTitle}
+        closeAriaLabel={
+          schoolIdFromUrl || instructorIdFromUrl ? '목록으로' : undefined
+        }
         headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
         className="program-detail-fullpage-modal general-detail-fullpage-modal program-detail-fullpage-modal--program-list-overview"
         sidebar={
@@ -763,6 +976,41 @@ export function GeneralProgramDetailFullPageModal({
                   }}
                   onApplicantDetailMetaChange={handleApplicantDetailMetaChange}
                 />
+              </div>
+            ) : activeLnb === 'progress' && activeTab === 'progress_institutions' ? (
+              <div className="program-detail-fullpage-modal__info-tab">
+                <ParticipatingInstitutionsSection
+                  programId={displayProgram.id}
+                  program={displayProgram}
+                  schoolIdFromUrl={schoolIdFromUrl}
+                  schoolTabFromUrl={activeSchoolTab}
+                  onSchoolTabChange={setSchoolTab}
+                  onSchoolRowClick={row => setSchoolId(row.id)}
+                  onClearSchoolId={() => setSchoolId(null)}
+                  onSchoolDetailOpen={name => setSchoolDetailTitle(name)}
+                  onSchoolDetailClose={() => setSchoolDetailTitle(null)}
+                />
+              </div>
+            ) : activeLnb === 'progress' && activeTab === 'progress_instructors' ? (
+              <div className="program-detail-fullpage-modal__info-tab">
+                <ParticipatingInstructorsSection
+                  programId={displayProgram.id}
+                  program={displayProgram}
+                  instructorIdFromUrl={instructorIdFromUrl}
+                  instructorTabFromUrl={activeInstructorTab}
+                  onInstructorTabChange={setInstructorTab}
+                  onInstructorRowClick={row => setInstructorId(row.id)}
+                  onClearInstructorId={() => setInstructorId(null)}
+                  onInstructorDetailOpen={name => setInstructorDetailTitle(name)}
+                  onInstructorDetailClose={() => setInstructorDetailTitle(null)}
+                />
+              </div>
+            ) : activeLnb === 'progress' && activeTab === 'progress_volunteers' ? (
+              <div className="program-status-participating program-detail-fullpage-modal__progress-section">
+                <Typography.Title level={5}>참여 봉사자</Typography.Title>
+                <Typography.Text className="program-status-participating__placeholder">
+                  참여 봉사자 목록 및 현황이 표시됩니다.
+                </Typography.Text>
               </div>
             ) : (
               <div
