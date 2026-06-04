@@ -159,6 +159,25 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK: NonNullable
     finalAnnouncementLabel: '2026. 01. 26 (금) | 홈페이지 공지 및 담당교사 개별 안내',
     contactOrganizationName: 'JA Korea',
   },
+  instructorRecruitmentInfo: {
+    announcementPublished: true,
+    operationPeriodLabel: '2026. 04. 03(금) ~ 2026. 11. 20(금)',
+    recruitmentPeriodLabel: '2025. 12. 08(일) ~ 2026. 01. 16(금)',
+    contactOrganizationName: 'JA Korea',
+  },
+  volunteerRecruitmentInfo: {
+    announcementPublished: true,
+    operationPeriodLabel: '2026. 03. 04(수) ~ 2026. 12. 30(수)',
+    recruitmentPeriodLabel: '2026. 01. 05(월) ~ 2026. 01. 28(수)',
+    contactOrganizationName: 'JA Korea',
+  },
+  volunteerInterviewScheduleInfo: {
+    recurringUnavailable: '일요일, 공휴일',
+    specificUnavailableDates: '2026년 2월 10일(화)',
+    specificUnavailableDateIsos: ['2026-02-10'],
+    availableTimeSlots:
+      '09:00 ~ 09:30, 09:30 ~ 10:00, 10:00 ~ 10:30, 10:30 ~ 11:00, 11:00 ~ 11:30, 16:00 ~ 16:30, 20:30 ~ 21:00',
+  },
 }
 
 /** 스크린샷·유형 mock — 기관_일정형_복수 회차 (교육 형태·참여·IPS 일정 별 상이 → 행사 일정 + 과제 설정) */

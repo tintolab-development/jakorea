@@ -1,0 +1,14 @@
+.volunteer-recruitment-info-view {
+  width: 100%;
+  min-width: 0;
+}
+
+.volunteer-recruitment-info-view__forms {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.volunteer-recruitment-info-view__forms .detail-info-form {
+  margin: 0;
+}

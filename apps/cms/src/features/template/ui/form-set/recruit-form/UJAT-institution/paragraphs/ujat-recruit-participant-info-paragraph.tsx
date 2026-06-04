@@ -1,4 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react'
+import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import type { Dayjs } from 'dayjs'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
@@ -36,6 +38,8 @@ function InquiryContactColumn({ label, placeholder }: { label: string; placehold
 }
 
 function UjatRecruitParticipantInfoTemplateEditor() {
+  const [announcementPublished, setAnnouncementPublished] =
+    useState<ParticipantRecruitmentAnnouncementPublishedValue>('published')
   const [programAnchor, setProgramAnchor] = useState<Dayjs | null>(null)
   const [programRange, setProgramRange] = useState<[Dayjs, Dayjs] | null>(null)
   const programRangeWithTime = useMemo(
@@ -54,6 +58,20 @@ function UjatRecruitParticipantInfoTemplateEditor() {
 
   return (
     <DetailInfoForm title="참여자 모집 정보" hideHeader mode="edit">
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="공고 게시 여부"
+          fullRow
+          edit={
+            <ParticipantRecruitmentAnnouncementPublishedRadios
+              value={announcementPublished}
+              onChange={setAnnouncementPublished}
+            />
+          }
+          view="-"
+        />
+      </DetailInfoForm.Row>
+
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="공고용 프로그램명"

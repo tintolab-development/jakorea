@@ -1,5 +1,8 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import type { Dayjs } from 'dayjs'
+import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import { INTERVIEW_METHOD_OPTIONS } from '@/features/program/shared/lib/program-detail-info-constants'
+import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
@@ -8,9 +11,11 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-editor/form-editor.css'
+import './recruit-form-volunteer-info-paragraph.css'
 
 const RECRUIT_PROGRESS_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
 const MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
+const RECRUITMENT_RADIO_CLASS = 'program-detail-info-tab__recruitment-radio'
 
 const INTERVIEW_OPTIONS = [
   { label: '면접 있음', value: 'yes' },
@@ -37,6 +42,8 @@ function InquiryContactColumn({ label, placeholder }: { label: string; placehold
 
 /** 프로그램 봉사자 모집 폼 — 봉사자 모집 정보 */
 export function RecruitFormVolunteerInfoParagraph() {
+  const [announcementPublished, setAnnouncementPublished] =
+    useState<ParticipantRecruitmentAnnouncementPublishedValue>('published')
   const [interviewRequired, setInterviewRequired] = useState<string>('yes')
 
   const [programAnchor, setProgramAnchor] = useState<Dayjs | null>(null)
@@ -66,19 +73,30 @@ export function RecruitFormVolunteerInfoParagraph() {
   const [finalAnnounceDate, setFinalAnnounceDate] = useState<Dayjs | null>(null)
 
   return (
-    <>
-      <DetailInfoForm title="봉사자 면접 유무" hideHeader mode="edit">
-        <DetailInfoForm.Row type="single">
+    <div className="recruit-form-volunteer-info-paragraph__forms">
+      <DetailInfoForm title="봉사자 모집 정보" hideHeader mode="edit">
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="공고 게시 여부"
+            edit={
+              <ParticipantRecruitmentAnnouncementPublishedRadios
+                value={announcementPublished}
+                onChange={setAnnouncementPublished}
+              />
+            }
+            view="-"
+          />
           <DetailInfoForm.Field
             label="봉사자 면접 유무"
-            fullRow
             edit={
               <CmsRadioGroup
+                size="large"
                 value={interviewRequired}
                 onChange={e => setInterviewRequired(String(e.target.value))}
+                className={RECRUITMENT_RADIO_CLASS}
               >
                 {INTERVIEW_OPTIONS.map(o => (
-                  <CmsRadio key={o.value} value={o.value}>
+                  <CmsRadio key={o.value} value={o.value} size="large">
                     {o.label}
                   </CmsRadio>
                 ))}
@@ -117,7 +135,9 @@ export function RecruitFormVolunteerInfoParagraph() {
           <DetailInfoForm.Field
             label="봉사자 모집 현황"
             readOnlyDisplay
-            view={<span className="form-editor-template-field-hint-text">{RECRUIT_PROGRESS_HINT}</span>}
+            view={
+              <span className="form-editor-template-field-hint-text">{RECRUIT_PROGRESS_HINT}</span>
+            }
           />
         </DetailInfoForm.Row>
 
@@ -136,7 +156,9 @@ export function RecruitFormVolunteerInfoParagraph() {
           />
           <DetailInfoForm.Field
             label="모집 대상 상세"
-            edit={<CmsInput inputSize="medium" width="100%" placeholder="상세 모집 대상을 입력하세요" />}
+            edit={
+              <CmsInput inputSize="medium" width="100%" placeholder="상세 모집 대상을 입력하세요" />
+            }
             view="-"
           />
         </DetailInfoForm.Row>
@@ -166,7 +188,7 @@ export function RecruitFormVolunteerInfoParagraph() {
             view="-"
           />
           <DetailInfoForm.Field
-            label="1차 서류합격 발표"
+            label="1차 서류 합격자 발표"
             edit={
               <div className={MAX_SUFFIX_CLASS}>
                 <ParagraphDatePicker
@@ -215,7 +237,7 @@ export function RecruitFormVolunteerInfoParagraph() {
                   inputSize="medium"
                   width={140}
                   placeholder="면접 유형"
-                  options={[]}
+                  options={INTERVIEW_METHOD_OPTIONS}
                   withAllOption={false}
                 />
               </div>
@@ -268,13 +290,16 @@ export function RecruitFormVolunteerInfoParagraph() {
           <DetailInfoForm.Field
             label="비고"
             edit={
-              <CmsInput inputSize="medium" width="100%" placeholder="비고란을 작성하세요 (없으면 -로 입력)" />
+              <CmsInput
+                inputSize="medium"
+                width="100%"
+                placeholder="비고란을 작성하세요 (없으면 -로 입력)"
+              />
             }
             view="-"
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
-    </>
+    </div>
   )
 }
-

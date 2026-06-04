@@ -142,6 +142,12 @@ export interface GeneralProgramCommonInfoExtension {
   }
   /** 모집 정보 — 참여자 모집 (등록 양식·상세 조회 mock) */
   participantRecruitmentInfo?: GeneralProgramParticipantRecruitmentInfo
+  /** 모집 정보 — 강사 모집 (등록 양식·상세 조회 mock) */
+  instructorRecruitmentInfo?: GeneralProgramInstructorRecruitmentInfo
+  /** 모집 정보 — 봉사자 모집 (등록 양식·상세 조회 mock) */
+  volunteerRecruitmentInfo?: GeneralProgramVolunteerRecruitmentInfo
+  /** 봉사자 모집 — 면접 진행 가능 일정 (등록 양식·상세 조회 mock) */
+  volunteerInterviewScheduleInfo?: GeneralProgramVolunteerInterviewScheduleInfo
   /** 교육 진행 일정 설정 — `date` 날짜 지정 · `period` 기간 지정(기획: 날짜 선택(기간)) */
   educationScheduleMode?: 'date' | 'period'
 }
@@ -162,6 +168,33 @@ export interface GeneralProgramParticipantRecruitmentInfo {
   recruitmentPeriodLabel?: string
   finalAnnouncementLabel?: string
   contactOrganizationName?: string
+}
+
+/** 일반 프로그램 — 강사 모집 정보 (프로그램 등록 강사 모집 양식 필드) */
+export interface GeneralProgramInstructorRecruitmentInfo {
+  announcementPublished?: boolean
+  /** 표시용 — 운영·모집 기간 (요일 포함) */
+  operationPeriodLabel?: string
+  recruitmentPeriodLabel?: string
+  contactOrganizationName?: string
+}
+
+/** 일반 프로그램 — 봉사자 모집 정보 (프로그램 등록 봉사자 모집 양식 필드) */
+export interface GeneralProgramVolunteerRecruitmentInfo {
+  announcementPublished?: boolean
+  /** 표시용 — 운영·모집 기간 (요일 포함) */
+  operationPeriodLabel?: string
+  recruitmentPeriodLabel?: string
+  contactOrganizationName?: string
+}
+
+/** 일반 프로그램 — 봉사자 면접 진행 가능 일정 */
+export interface GeneralProgramVolunteerInterviewScheduleInfo {
+  recurringUnavailable?: string
+  specificUnavailableDates?: string
+  /** 직접 추가 불가일 — ISO `YYYY-MM-DD` */
+  specificUnavailableDateIsos?: string[]
+  availableTimeSlots?: string
 }
 
 // IPS 분류

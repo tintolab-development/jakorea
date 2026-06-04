@@ -9,10 +9,6 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import { CmsButton } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
-  InstructorRecruitmentSection,
-  VolunteerRecruitmentSection,
-} from '@/features/program/shared/ui/program-detail/project-info/recruitment/project-info-recruitment-section'
-import {
   DetailInfoSection,
   InstructorDetailInfoSection,
   VolunteerDetailInfoSection,
@@ -22,12 +18,15 @@ import {
   type GeneralRecruitTabKey,
 } from '@/features/program/general/lib/recruitment-tabs'
 import { GeneralProgramParticipantRecruitmentInfoView } from './participant-recruitment-info-view'
+import { GeneralProgramInstructorRecruitmentInfoView } from './instructor-recruitment-info-view'
+import { GeneralProgramVolunteerRecruitmentInfoView } from './volunteer-recruitment-info-view'
+import { GeneralProgramVolunteerInterviewScheduleSection } from './volunteer-interview-schedule-section'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './recruitment-view.css'
 
 export function GeneralProgramRecruitmentView({
   program,
-  sponsorName,
+  sponsorName: _sponsorName,
   activeRecruitTab,
   onRecruitTabChange,
   showInstructorTab,
@@ -93,10 +92,9 @@ export function GeneralProgramRecruitmentView({
       break
     case 'instructors':
       recruitment = (
-        <InstructorRecruitmentSection
+        <GeneralProgramInstructorRecruitmentInfoView
           program={program}
-          sponsorName={sponsorName}
-          isEditMode={isEditModeInstructors}
+          isEdit={isEditModeInstructors}
           form={isEditModeInstructors ? instructorsForm : undefined}
         />
       )
@@ -111,20 +109,28 @@ export function GeneralProgramRecruitmentView({
       break
     case 'volunteers':
       recruitment = (
-        <VolunteerRecruitmentSection
+        <GeneralProgramVolunteerRecruitmentInfoView
           program={program}
-          sponsorName={sponsorName}
-          isEditMode={isEditModeVolunteers}
+          isEdit={isEditModeVolunteers}
           form={isEditModeVolunteers ? volunteersForm : undefined}
         />
       )
       detail = (
-        <VolunteerDetailInfoSection
-          program={program}
-          isEditMode={isEditModeVolunteers}
-          form={isEditModeVolunteers ? volunteersForm : undefined}
-          onRegisterGetAdditionalContentHtml={registerVolunteersAdditionalHtml}
-        />
+        <>
+          <VolunteerDetailInfoSection
+            program={program}
+            isEditMode={isEditModeVolunteers}
+            form={isEditModeVolunteers ? volunteersForm : undefined}
+            onRegisterGetAdditionalContentHtml={registerVolunteersAdditionalHtml}
+          />
+          <div className="detail-info-form--gap">
+            <GeneralProgramVolunteerInterviewScheduleSection
+              program={program}
+              isEdit={isEditModeVolunteers}
+              form={isEditModeVolunteers ? volunteersForm : undefined}
+            />
+          </div>
+        </>
       )
       break
     default: {

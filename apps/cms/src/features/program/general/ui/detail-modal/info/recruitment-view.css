@@ -12,7 +12,6 @@
 .recruitment-view__body {
   display: flex;
   flex-direction: column;
-  gap: 24px;
   padding-top: 4px;
   min-width: 0;
 }

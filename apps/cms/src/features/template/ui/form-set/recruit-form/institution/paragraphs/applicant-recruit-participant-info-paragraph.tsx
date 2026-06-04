@@ -9,6 +9,8 @@ import {
   APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
   useApplicantRecruitInstitutionOverlayKv,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -74,6 +76,54 @@ function NumberWithSuffixRow({
   )
 }
 
+const RECRUITMENT_RADIO_CLASS = 'program-detail-info-tab__recruitment-radio'
+
+function NeedOrNotRadioGroup({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (next: string) => void
+}) {
+  return (
+    <CmsRadioGroup
+      size="large"
+      value={value}
+      onChange={e => onChange(String(e.target.value))}
+      className={RECRUITMENT_RADIO_CLASS}
+    >
+      {NEED_OR_NOT_OPTIONS.map(option => (
+        <CmsRadio key={option.value} value={option.value} size="large">
+          {option.label}
+        </CmsRadio>
+      ))}
+    </CmsRadioGroup>
+  )
+}
+
+function CertificateRadioGroup({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (next: string) => void
+}) {
+  return (
+    <CmsRadioGroup
+      size="large"
+      value={value}
+      onChange={e => onChange(String(e.target.value))}
+      className={RECRUITMENT_RADIO_CLASS}
+    >
+      {CERTIFICATE_OPTIONS.map(option => (
+        <CmsRadio key={option.value} value={option.value} size="large">
+          {option.label}
+        </CmsRadio>
+      ))}
+    </CmsRadioGroup>
+  )
+}
+
 export type ApplicantRecruitParticipantInfoParagraphProps = {
   /**
    * 학교/기관 대상 프로그램일 때만 최대 강사·학급·일정·차시 입력 노출.
@@ -86,6 +136,8 @@ export type ApplicantRecruitParticipantInfoParagraphProps = {
 export function ApplicantRecruitParticipantInfoParagraph({
   showInstitutionApplicationLimits = true,
 }: ApplicantRecruitParticipantInfoParagraphProps = {}) {
+  const [announcementPublished, setAnnouncementPublished] =
+    useState<ParticipantRecruitmentAnnouncementPublishedValue>('published')
   const [preguidanceRequired, setPreguidanceRequired] = useState<string>('need')
   const [studentListRequired, setStudentListRequired] = useState<string>('need')
   const [certificateProvided, setCertificateProvided] = useState<string>('provide')
@@ -145,19 +197,13 @@ export function ApplicantRecruitParticipantInfoParagraph({
       <DetailInfoForm title="참여자 모집 정보" hideHeader mode="edit">
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="사전 안내 사항 작성 여부"
+            label="공고 게시 여부"
             fullRow
             edit={
-              <CmsRadioGroup
-                value={preguidanceRequired}
-                onChange={e => setPreguidanceRequired(String(e.target.value))}
-              >
-                {NEED_OR_NOT_OPTIONS.map(o => (
-                  <CmsRadio key={o.value} value={o.value}>
-                    {o.label}
-                  </CmsRadio>
-                ))}
-              </CmsRadioGroup>
+              <ParticipantRecruitmentAnnouncementPublishedRadios
+                value={announcementPublished}
+                onChange={setAnnouncementPublished}
+              />
             }
             view="-"
           />
@@ -167,32 +213,20 @@ export function ApplicantRecruitParticipantInfoParagraph({
           <DetailInfoForm.Field
             label="학생 명단 제출 여부"
             edit={
-              <CmsRadioGroup
+              <NeedOrNotRadioGroup
                 value={studentListRequired}
-                onChange={e => setStudentListRequired(String(e.target.value))}
-              >
-                {NEED_OR_NOT_OPTIONS.map(o => (
-                  <CmsRadio key={o.value} value={o.value}>
-                    {o.label}
-                  </CmsRadio>
-                ))}
-              </CmsRadioGroup>
+                onChange={setStudentListRequired}
+              />
             }
             view="-"
           />
           <DetailInfoForm.Field
-            label="수료증 발급 여부"
+            label="사전 안내 사항 작성 여부"
             edit={
-              <CmsRadioGroup
-                value={certificateProvided}
-                onChange={e => setCertificateProvided(String(e.target.value))}
-              >
-                {CERTIFICATE_OPTIONS.map(o => (
-                  <CmsRadio key={o.value} value={o.value}>
-                    {o.label}
-                  </CmsRadio>
-                ))}
-              </CmsRadioGroup>
+              <NeedOrNotRadioGroup
+                value={preguidanceRequired}
+                onChange={setPreguidanceRequired}
+              />
             }
             view="-"
           />
@@ -308,6 +342,20 @@ export function ApplicantRecruitParticipantInfoParagraph({
             label="교육 대상 상세"
             edit={
               <CmsInput inputSize="medium" width="100%" placeholder="상세 교육 대상을 입력하세요" />
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="수료증 발급 여부"
+            fullRow
+            edit={
+              <CertificateRadioGroup
+                value={certificateProvided}
+                onChange={setCertificateProvided}
+              />
             }
             view="-"
           />

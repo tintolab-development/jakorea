@@ -14,6 +14,9 @@ export type UnavailableDatesBulkExclusionsRowProps = {
   modalUnavailableDescriptionLead?: string
   /** 모달 본문 둘째 줄 */
   modalUnavailableDescriptionSecond?: string
+  defaultExcludeSaturday?: boolean
+  defaultExcludeSunday?: boolean
+  defaultExcludeHoliday?: boolean
   /**
    * `false`이면 「진행 불가일 직접 추가」 클릭 시 날짜 모달을 열지 않고 `onDirectUnavailableModalBlocked`만 호출
    * (예: 교육 진행 일정 범위 미선택)
@@ -32,6 +35,9 @@ export function UnavailableDatesBulkExclusionsRow({
   modalUnavailableDescriptionSecond,
   canOpenDirectUnavailableModal,
   onDirectUnavailableModalBlocked,
+  defaultExcludeSaturday,
+  defaultExcludeSunday,
+  defaultExcludeHoliday,
 }: UnavailableDatesBulkExclusionsRowProps) {
   return (
     <div className="unavailable-dates-bulk-exclusions-row">
@@ -47,9 +53,9 @@ export function UnavailableDatesBulkExclusionsRow({
         onDirectUnavailableModalBlocked={onDirectUnavailableModalBlocked}
       />
       <DetailInfoForm.InputsSeparator />
-      <CmsCheckbox>토요일 제외</CmsCheckbox>
-      <CmsCheckbox>일요일 제외</CmsCheckbox>
-      <CmsCheckbox defaultChecked>공휴일 제외</CmsCheckbox>
+      <CmsCheckbox defaultChecked={defaultExcludeSaturday}>토요일 제외</CmsCheckbox>
+      <CmsCheckbox defaultChecked={defaultExcludeSunday}>일요일 제외</CmsCheckbox>
+      <CmsCheckbox defaultChecked={defaultExcludeHoliday ?? true}>공휴일 제외</CmsCheckbox>
     </div>
   )
 }
