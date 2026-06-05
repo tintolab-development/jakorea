@@ -1,5 +1,4 @@
 import {
-  GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_ORDER,
   GENERAL_VOLUNTEER_APPLICATION_TYPE_LABELS,
   type GeneralDocumentScreeningStatus,
   type GeneralInterviewAssignmentStatus,
@@ -7,6 +6,11 @@ import {
   type GeneralSecondInterviewScreeningStatus,
   type GeneralVolunteerApplicationType,
 } from '@/features/program/general/lib/volunteer-screening-constants'
+import {
+  computeGeneralInterviewTotalScore,
+  sortGeneralVolunteerInterview2Applicants,
+} from '@/features/program/general/lib/general-volunteer-interview2-display'
+import { DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK } from '@/data/mock/general-volunteer-interview-schedule-mock'
 
 export type GeneralVolunteerInterviewAvailabilityDay = {
   dateLabel: string
@@ -76,12 +80,10 @@ const INTERVIEW_DATE_LABELS = [
   '26. 03. 23(월)',
 ] as const
 
-const INTERVIEW_SLOTS = [
-  ['09:00 ~ 09:30', '14:00 ~ 14:30'],
-  ['15:00 ~ 15:30'],
-  ['09:00 ~ 09:30', '14:00 ~ 14:30', '15:00 ~ 15:30'],
-  [],
-] as const
+const INTERVIEW_TIME_SLOTS = DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.availableTimeSlots
+  .split(',')
+  .map(slot => slot.trim())
+  .filter(Boolean)
 
 const ESSAY_INTRO =
   '경제·금융에 관심을 키우며 JA Korea 봉사에 지원했습니다. 학생들과 소통하며 경제 개념을 쉽게 전달하고 싶습니다.'
@@ -115,13 +117,13 @@ function buildInterviewAvailability(
   seed: number,
   index: number
 ): GeneralVolunteerInterviewAvailabilityDay[] {
-  const slots = INTERVIEW_SLOTS[seed % INTERVIEW_SLOTS.length]
-  if (slots.length === 0) return []
-
+  const slotCount = 1 + (seed % 3)
+  const slots = Array.from({ length: slotCount }, (_, slotIndex) =>
+    INTERVIEW_TIME_SLOTS[(seed + slotIndex) % INTERVIEW_TIME_SLOTS.length]
+  )
   const firstDate = INTERVIEW_DATE_LABELS[seed % INTERVIEW_DATE_LABELS.length]
-  const days: GeneralVolunteerInterviewAvailabilityDay[] = [
-    { dateLabel: firstDate, slots: [...slots] },
-  ]
+
+  const days: GeneralVolunteerInterviewAvailabilityDay[] = [{ dateLabel: firstDate, slots }]
 
   if (index <= 4) {
     days.push({
@@ -145,8 +147,8 @@ function countInterviewSlots(days: GeneralVolunteerInterviewAvailabilityDay[]): 
 function resolveDocumentStatus(index: number): GeneralDocumentScreeningStatus {
   if (index === 2) return 'pass'
   if (index <= 4) return 'pending'
-  if (index <= 9) return 'pass'
-  return 'fail'
+  if (index % 11 === 10) return 'fail'
+  return 'pass'
 }
 
 function resolveInterviewAssignmentStatus(
@@ -154,9 +156,37 @@ function resolveInterviewAssignmentStatus(
   documentScreeningStatus: GeneralDocumentScreeningStatus
 ): GeneralInterviewAssignmentStatus {
   if (documentScreeningStatus !== 'pass') return 'waiting'
-  if (index % 5 === 0) return 'withdrawn'
-  if (index % 2 === 0) return 'assigned'
-  return 'waiting'
+  if (index % 17 === 0) return 'withdrawn'
+  if (index % 12 === 0) return 'waiting'
+  return 'assigned'
+}
+
+const MANUAL_SECOND_INTERVIEW_STATUSES: GeneralSecondInterviewScreeningStatus[] = [
+  'pass',
+  'fail',
+  'reserve1',
+  'reserve2',
+  'reserve3',
+  'reserve4',
+]
+
+function buildInterviewManagerScores(seed: number): {
+  managerAScore: number | null
+  managerBScore: number | null
+} {
+  if (seed % 4 === 0) {
+    return { managerAScore: null, managerBScore: null }
+  }
+
+  const total = 1 + (seed % 10)
+  if (total === 1) {
+    return { managerAScore: 1, managerBScore: 0 }
+  }
+
+  const managerAScore = 1 + (seed % (total - 1))
+  const managerBScore = total - managerAScore
+
+  return { managerAScore, managerBScore }
 }
 
 function buildAssignedInterviewFields(
@@ -168,24 +198,39 @@ function buildAssignedInterviewFields(
     return {
       assignedInterviewDateLabel: '26. 03. 23(월)',
       assignedInterviewTime: '09:00 ~ 09:30',
-      secondInterviewScreeningStatus: 'waiting' as GeneralSecondInterviewScreeningStatus,
-      totalScore: null,
+      secondInterviewScreeningStatus: undefined,
+      managerAScore: null,
+      managerBScore: null,
+      interviewEvaluationRemark: '지원동기도 좋고, 교육 경험이 풍부함',
+    }
+  }
+
+  /** 26.03.09 09:00 슬롯 — 배정 모달 `N명` 카운트 demo (2명) */
+  if (index === 6 || index === 8) {
+    return {
+      assignedInterviewDateLabel: '26. 03. 09(월)',
+      assignedInterviewTime: '09:00 ~ 09:30',
+      secondInterviewScreeningStatus: undefined,
+      ...buildInterviewManagerScores(seed),
     }
   }
 
   const firstDay = interviewAvailability[0]
   const firstSlot = firstDay?.slots[0]
-  if (!firstDay || !firstSlot) return {}
-  const status =
-    GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_ORDER[
-      seed % GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_ORDER.length
-    ]
-  const totalScore = seed % 4 === 0 ? null : 70 + (seed % 25)
+  const dateLabel =
+    firstDay?.dateLabel ?? INTERVIEW_DATE_LABELS[seed % INTERVIEW_DATE_LABELS.length]
+  const time =
+    firstSlot ?? INTERVIEW_TIME_SLOTS[seed % INTERVIEW_TIME_SLOTS.length]
+  const manualStatus =
+    seed % 8 === 0
+      ? MANUAL_SECOND_INTERVIEW_STATUSES[seed % MANUAL_SECOND_INTERVIEW_STATUSES.length]
+      : undefined
+
   return {
-    assignedInterviewDateLabel: firstDay.dateLabel,
-    assignedInterviewTime: firstSlot,
-    secondInterviewScreeningStatus: status,
-    totalScore,
+    assignedInterviewDateLabel: dateLabel,
+    assignedInterviewTime: time,
+    secondInterviewScreeningStatus: manualStatus,
+    ...buildInterviewManagerScores(seed),
   }
 }
 
@@ -253,7 +298,7 @@ function buildRow(programId: string, index: number): GeneralVolunteerApplicantRo
     major: seed % 2 === 0 ? '경제학과 전공' : '경영학과 전공',
     applicationRoute: ['인스타그램', '학교 안내', '링커리어', '캠퍼스픽'][seed % 4],
     interviewAvailability,
-    ...(interviewAssignmentStatus === 'assigned'
+    ...(interviewAssignmentStatus === 'assigned' || interviewAssignmentStatus === 'withdrawn'
       ? buildAssignedInterviewFields(seed, interviewAvailability, index)
       : {}),
   }
@@ -264,7 +309,8 @@ const cache = new Map<string, GeneralVolunteerApplicantRow[]>()
 export function getGeneralVolunteerApplicants(programId: string): GeneralVolunteerApplicantRow[] {
   const existing = cache.get(programId)
   if (existing) return existing.map(row => ({ ...row }))
-  const rows = Array.from({ length: 12 }, (_, index) => buildRow(programId, index))
+  const count = 72 + (hashSeed(programId, 0) % 8)
+  const rows = Array.from({ length: count }, (_, index) => buildRow(programId, index))
   cache.set(programId, rows)
   return rows.map(row => ({ ...row }))
 }
@@ -317,26 +363,15 @@ export function getGeneralVolunteerInterview2Applicants(
     getGeneralVolunteerApplicants(programId).filter(
       row =>
         row.documentScreeningStatus === 'pass' &&
-        row.interviewAssignmentStatus === 'assigned' &&
+        (row.interviewAssignmentStatus === 'assigned' ||
+          row.interviewAssignmentStatus === 'withdrawn') &&
         row.assignedInterviewDateLabel &&
         row.assignedInterviewTime
     )
   )
 }
 
-export function sortGeneralVolunteerInterview2Applicants(
-  rows: GeneralVolunteerApplicantRow[]
-): GeneralVolunteerApplicantRow[] {
-  return [...rows].sort((a, b) => {
-    const dateA = a.assignedInterviewDateLabel ?? ''
-    const dateB = b.assignedInterviewDateLabel ?? ''
-    if (dateA !== dateB) return dateA.localeCompare(dateB)
-    const timeA = a.assignedInterviewTime ?? ''
-    const timeB = b.assignedInterviewTime ?? ''
-    if (timeA !== timeB) return timeA.localeCompare(timeB)
-    return a.no - b.no
-  })
-}
+export { sortGeneralVolunteerInterview2Applicants } from '@/features/program/general/lib/general-volunteer-interview2-display'
 
 export function patchGeneralVolunteerDocumentScreeningStatus(
   rows: GeneralVolunteerApplicantRow[],
@@ -373,17 +408,16 @@ export function patchGeneralVolunteerInterviewEvaluation(
 ): GeneralVolunteerApplicantRow[] {
   return rows.map(row => {
     if (row.id !== id) return row
-    const totalScore =
-      payload.managerAScore == null || payload.managerBScore == null
-        ? null
-        : Math.round((payload.managerAScore + payload.managerBScore) / 2)
+    const totalScore = computeGeneralInterviewTotalScore({
+      managerAScore: payload.managerAScore,
+      managerBScore: payload.managerBScore,
+    })
     return {
       ...row,
       managerAScore: payload.managerAScore,
       managerBScore: payload.managerBScore,
       interviewEvaluationRemark: payload.interviewEvaluationRemark,
       totalScore,
-      secondInterviewScreeningStatus: 'completed',
     }
   })
 }

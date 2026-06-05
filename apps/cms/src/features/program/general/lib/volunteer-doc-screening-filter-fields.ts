@@ -14,6 +14,11 @@ import {
   type GeneralVolunteerApplicationType,
 } from './volunteer-screening-constants'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import {
+  computeGeneralInterviewTotalScore,
+  matchesGeneralInterview2ScoreFilter,
+  resolveGeneralEffectiveSecondInterviewStatus,
+} from './general-volunteer-interview2-display'
 
 const ALL = 'ALL'
 const FILTER_WIDTH = 260
@@ -66,20 +71,19 @@ const secondInterviewStatusOptions = [
       value,
     })
   ),
+  {
+    label: GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS.withdrawn,
+    value: 'withdrawn',
+  },
 ]
 
-/** doc_passed / interview2 — mock에 프로그램·모집 구분 필드 없음, 전체 옵션만 제공 */
-const appliedProgramOptions = [{ label: '전체', value: ALL }]
-const recruitCategoryOptions = [{ label: '전체', value: ALL }]
-
-const ujatCompletionOptions = [
+const interview2ScoreOptions = [
   { label: '전체', value: ALL },
-  ...(
-    Object.entries(GENERAL_VOLUNTEER_APPLICATION_TYPE_LABELS) as [
-      GeneralVolunteerApplicationType,
-      string,
-    ][]
-  ).map(([value, label]) => ({ label, value })),
+  ...Array.from({ length: 10 }, (_, index) => ({
+    label: String(index + 1),
+    value: String(index + 1),
+  })),
+  { label: '-', value: 'empty' },
 ]
 
 export const GENERAL_VOLUNTEER_FILTER_ALL = ALL
@@ -112,18 +116,18 @@ export const DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS: GeneralVolunteerDocPa
 }
 
 export type GeneralVolunteerInterview2Filters = {
-  appliedProgram: string
-  recruitCategory: string
-  ujatCompletion: string
+  volunteerName: string
   interviewDate: string
+  interviewTime: string
+  totalScore: string
   secondInterviewScreeningStatus: string
 }
 
 export const DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS: GeneralVolunteerInterview2Filters = {
-  appliedProgram: ALL,
-  recruitCategory: ALL,
-  ujatCompletion: ALL,
+  volunteerName: '',
   interviewDate: ALL,
+  interviewTime: ALL,
+  totalScore: ALL,
   secondInterviewScreeningStatus: ALL,
 }
 
@@ -242,33 +246,26 @@ export function buildGeneralVolunteerInterview2DateOptions(rows: GeneralVoluntee
   return [{ label: '전체', value: ALL }, ...dates.map(d => ({ label: d, value: d }))]
 }
 
+export function buildGeneralVolunteerInterview2TimeOptions(rows: GeneralVolunteerApplicantRow[]) {
+  const times = Array.from(
+    new Set(rows.map(row => row.assignedInterviewTime).filter((t): t is string => Boolean(t)))
+  ).sort()
+  return [{ label: '전체', value: ALL }, ...times.map(t => ({ label: t, value: t }))]
+}
+
 export function buildGeneralVolunteerInterview2FilterRows(
   rows: GeneralVolunteerApplicantRow[]
 ): FilterFieldConfig[][] {
   const dateOptions = buildGeneralVolunteerInterview2DateOptions(rows)
+  const timeOptions = buildGeneralVolunteerInterview2TimeOptions(rows)
 
   return [
     [
       buildGeneralFilterField({
-        key: 'appliedProgram',
-        type: 'select',
-        label: '신청 프로그램',
-        placeholder: '전체',
-        options: appliedProgramOptions,
-      }),
-      buildGeneralFilterField({
-        key: 'recruitCategory',
-        type: 'select',
-        label: '모집 구분',
-        placeholder: '전체',
-        options: recruitCategoryOptions,
-      }),
-      buildGeneralFilterField({
-        key: 'ujatCompletion',
-        type: 'select',
-        label: 'UJAT 수료 여부',
-        placeholder: '전체',
-        options: ujatCompletionOptions,
+        key: 'volunteerName',
+        type: 'search',
+        label: '신청 봉사자명',
+        placeholder: '봉사자명을 입력하세요',
       }),
       buildGeneralFilterField({
         key: 'interviewDate',
@@ -278,9 +275,23 @@ export function buildGeneralVolunteerInterview2FilterRows(
         options: dateOptions,
       }),
       buildGeneralFilterField({
+        key: 'interviewTime',
+        type: 'select',
+        label: '면접 시간',
+        placeholder: '전체',
+        options: timeOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'totalScore',
+        type: 'select',
+        label: '점수 종합',
+        placeholder: '전체',
+        options: interview2ScoreOptions,
+      }),
+      buildGeneralFilterField({
         key: 'secondInterviewScreeningStatus',
         type: 'select',
-        label: '면접 심사 결과',
+        label: '2차 면접 심사 현황',
         placeholder: '전체',
         options: secondInterviewStatusOptions,
       }),
@@ -297,14 +308,6 @@ export function matchesGeneralInterviewSlotRange(
   if (filter === '1') return count === 1
   if (filter === '2plus') return count >= 2
   return true
-}
-
-export function matchesGeneralUjatCompletion(
-  applicationType: GeneralVolunteerApplicantRow['applicationType'],
-  filter: string
-): boolean {
-  if (filter === ALL) return true
-  return applicationType === filter
 }
 
 export function filterGeneralDocPassedApplicants(
@@ -328,10 +331,9 @@ export function filterGeneralInterview2Applicants(
   rows: GeneralVolunteerApplicantRow[],
   filters: GeneralVolunteerInterview2Filters
 ): GeneralVolunteerApplicantRow[] {
+  const nameQ = filters.volunteerName.trim().toLowerCase()
   return rows.filter(row => {
-    if (!matchesGeneralUjatCompletion(row.applicationType, filters.ujatCompletion)) {
-      return false
-    }
+    if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
     if (
       filters.interviewDate !== GENERAL_VOLUNTEER_FILTER_ALL &&
       row.assignedInterviewDateLabel !== filters.interviewDate
@@ -339,10 +341,22 @@ export function filterGeneralInterview2Applicants(
       return false
     }
     if (
-      filters.secondInterviewScreeningStatus !== GENERAL_VOLUNTEER_FILTER_ALL &&
-      row.secondInterviewScreeningStatus !== filters.secondInterviewScreeningStatus
+      filters.interviewTime !== GENERAL_VOLUNTEER_FILTER_ALL &&
+      row.assignedInterviewTime !== filters.interviewTime
     ) {
       return false
+    }
+    if (
+      !matchesGeneralInterview2ScoreFilter(
+        computeGeneralInterviewTotalScore(row),
+        filters.totalScore
+      )
+    ) {
+      return false
+    }
+    if (filters.secondInterviewScreeningStatus !== GENERAL_VOLUNTEER_FILTER_ALL) {
+      const effectiveStatus = resolveGeneralEffectiveSecondInterviewStatus(row)
+      if (effectiveStatus !== filters.secondInterviewScreeningStatus) return false
     }
     return true
   })
