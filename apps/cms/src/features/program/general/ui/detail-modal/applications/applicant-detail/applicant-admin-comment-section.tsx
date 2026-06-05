@@ -4,7 +4,7 @@
  */
 
 import { CmsInput } from '@/shared/ui'
-import '@/features/program/general/ui/school-detail-fullpage-view.css'
+import '@/features/program/general/ui/detail-modal/program-status/school-detail-fullpage-view.css'
 import './applicant-admin-comment-section.css'
 
 export interface ApplicantAdminCommentSectionProps {

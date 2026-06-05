@@ -17,8 +17,8 @@ import {
   type AssignedInstructorDisplayRowMock,
 } from '@/features/program/general/lib/school-detail-mock'
 import { INSTRUCTOR_ROLE_LABELS, type InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
-import '@/features/program/general/ui/instructor-assignment-role-tag.css'
-import '@/features/program/general/ui/instructor-assignment-status-text.css'
+import '@/features/program/general/ui/detail-modal/program-status/instructor-assignment-role-tag.css'
+import '@/features/program/general/ui/detail-modal/program-status/instructor-assignment-status-text.css'
 
 const MOCK_REQUIRED_INSTRUCTORS = 4
 

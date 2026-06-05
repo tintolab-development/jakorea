@@ -162,7 +162,7 @@
   width: auto;
 }
 
-/* 기본 정보 — 프로그램 진행 현황 읽기 전용 (색상은 TS `PROGRAM_PROGRESS_PHASE_COLORS` 인라인) */
+/* 기본 정보 — 프로그램 진행 현황 읽기 전용 (`ProgramEnrollmentStatusText` / status-badge.css) */
 .program-detail-info-tab__lifecycle-status-text {
   display: block;
   box-sizing: border-box;

@@ -240,6 +240,7 @@ export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailF
     educationGrade: row.educationGrade,
     combinedClassApplication: isJinwolDemo ? '미신청' : seed % 4 === 0 ? '신청' : '미신청',
     programProgressLabel: '프로그램 진행 중',
+    programProgressStatus: 'EDUCATION_IN_PROGRESS',
     venue: pick(VENUES, seed),
     educationFormat: isJinwolDemo ? '온/오프라인' : pick(EDUCATION_FORMATS, seed),
     totalEducationHours: 2,

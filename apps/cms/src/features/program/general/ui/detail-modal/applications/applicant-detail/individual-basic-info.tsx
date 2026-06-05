@@ -6,9 +6,9 @@
 import type { ReactNode } from 'react'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
-import { ApplicantAdminCommentSection } from '@/features/program/general/ui/applicant-detail/applicant-admin-comment-section'
-import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/applicant-detail/program-approval-status-detail-value'
-import { GeneralIndividualTeamRoleDropdown } from '@/features/program/general/ui/applicant-detail/individual-team-role-dropdown'
+import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
+import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'
+import { GeneralIndividualTeamRoleDropdown } from './individual-team-role-dropdown'
 import type { ApplicantIndividualEditDraft } from '@/features/program/general/lib/applicant-individual-detail-edit'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import {

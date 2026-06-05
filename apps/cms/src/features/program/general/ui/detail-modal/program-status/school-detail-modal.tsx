@@ -18,16 +18,16 @@ import type {
   SchoolDetailInstructorRow,
   InstructorListFormValues,
   InstructorListFormInstructor,
-} from '../model/school-detail-types'
-import type { InstructorRoleKey } from '../model/school-detail-types'
-import { INSTRUCTOR_ROLE_LABELS } from '../model/school-detail-types'
+} from '../../../model/school-detail-types'
+import type { InstructorRoleKey } from '../../../model/school-detail-types'
+import { INSTRUCTOR_ROLE_LABELS } from '../../../model/school-detail-types'
 import {
   schoolDetailBasicFormSchema,
   detailToBasicFormValues,
   basicFormValuesToDetailPatch,
   EMPTY_BASIC_FORM_VALUES,
   type SchoolDetailBasicFormValues,
-} from '../model/school-detail-basic-form-schema'
+} from '../../../model/school-detail-basic-form-schema'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
@@ -38,7 +38,7 @@ import {
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
 } from '@/data/mock/participating-schools'
-import { MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS } from '../lib/instructor-assign-session-options'
+import { MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS } from '../../../lib/instructor-assign-session-options'
 import {
   SchoolDetailAddInstructorAssignModal,
   type AddInstructorAssignOption,
@@ -47,7 +47,7 @@ import { SchoolDetailStudentListSection } from './school-detail-student-list-sec
 import {
   DeleteGuideModal,
   buildSchoolCancelApprovalMessageLines,
-} from './manager-delete-guide-modal'
+} from '../../manager-delete-guide-modal'
 import './instructor-assignment-role-tag.css'
 import './school-detail-modal.css'
 

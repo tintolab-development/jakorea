@@ -32,17 +32,12 @@ import {
   IPS_OPTIONS,
   PROGRAM_CATEGORY_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
-import { getProgramProgressPhaseDisplay } from '@/shared/constants/status'
+import { ProgramLifecycleEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 
 function ProgramProgressReadonlyCell({ status }: { status: ProgramLifecycleStatus }) {
-  const { label, color } = getProgramProgressPhaseDisplay(status)
-  return (
-    <span className="program-detail-info-tab__lifecycle-status-text" style={{ color }}>
-      {label}
-    </span>
-  )
+  return <ProgramLifecycleEnrollmentStatusText lifecycleStatus={status} />
 }
 
 export interface BasicInfoSectionProps {

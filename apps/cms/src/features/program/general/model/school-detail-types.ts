@@ -3,6 +3,7 @@
  * 명세: docs/design/school-detail-modal-spec.md
  */
 
+import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import type { TextbookStatusKey } from '@/data/mock/participating-schools'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 
@@ -68,8 +69,10 @@ export interface SchoolDetailForModal {
   otherRequests?: string
   /** 합반 신청 여부 (일반 프로그램 참여 기관 상세) */
   combinedClassApplication?: string
-  /** 프로그램 진행 현황 라벨 (예: 프로그램 진행 중) */
+  /** 프로그램 진행 현황 라벨 (레거시 mock 호환) */
   programProgressLabel?: string
+  /** 프로그램 진행 현황(7단계) — `ProgramEnrollmentStatusText`용 */
+  programProgressStatus?: ProgramEnrollmentDisplayStatus
   instructors: SchoolDetailInstructorRow[]
 }
 

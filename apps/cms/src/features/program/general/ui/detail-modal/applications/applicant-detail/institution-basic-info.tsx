@@ -11,8 +11,8 @@ import type {
   ApplicantSchoolRow,
 } from '@/data/mock/applicant-institutions'
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
-import { ApplicantAdminCommentSection } from '@/features/program/general/ui/applicant-detail/applicant-admin-comment-section'
-import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/applicant-detail/program-approval-status-detail-value'
+import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
+import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'
 import {
   formatCombinedClassDisplay,
   type ApplicantInstitutionEditDraft,

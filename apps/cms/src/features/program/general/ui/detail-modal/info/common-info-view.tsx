@@ -19,7 +19,7 @@ import {
   IP_OWNED_OPTIONS,
   PARTNER_INVOLVEMENT_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
-import { getProgramProgressPhaseDisplay } from '@/shared/constants/status'
+import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
@@ -189,14 +189,8 @@ function PipeSeparatedInlineView({ text }: { text: string | undefined | null }) 
 }
 
 function ProgramProgressView({ program }: { program: Program }) {
-  const status = program.lifecycleStatus
-  if (!status) return <>-</>
-  const { label, color } = getProgramProgressPhaseDisplay(status)
-  return (
-    <span className="detail-common-info-view__progress-status" style={{ color }}>
-      {label}
-    </span>
-  )
+  if (!program.lifecycleStatus && !program.ujatProgressStatus) return <>-</>
+  return <ProgramProgressStatusText program={program} />
 }
 
 function KpiBoldNumber({ value }: { value: number }) {

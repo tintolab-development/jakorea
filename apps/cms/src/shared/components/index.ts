@@ -47,6 +47,16 @@ export { ProgramLifecycleStatusCell } from './program-lifecycle-status-cell'
 export type { ProgramLifecycleStatusCellProps } from './program-lifecycle-status-cell'
 export { StatusBadge } from './status-badge'
 export type { StatusBadgeProps, StatusBadgeVariant } from './status-badge'
+export {
+  ProgramEnrollmentStatusText,
+  ProgramProgressStatusText,
+  ProgramLifecycleEnrollmentStatusText,
+} from './program-enrollment-status-text'
+export type {
+  ProgramEnrollmentStatusTextProps,
+  ProgramProgressStatusTextProps,
+  ProgramLifecycleEnrollmentStatusTextProps,
+} from './program-enrollment-status-text'
 export { SettlementStatusBadge } from './settlement-status-badge'
 export type { SettlementStatusKey } from './settlement-status-badge'
 export { ApprovalStatusBadge } from './approval-status-badge'

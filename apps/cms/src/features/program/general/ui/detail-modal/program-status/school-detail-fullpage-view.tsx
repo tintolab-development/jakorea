@@ -16,8 +16,8 @@ import type {
   SchoolDetailForModal,
   SchoolDetailInstructorRow,
   InstructorRoleKey,
-} from '../model/school-detail-types'
-import { INSTRUCTOR_ROLE_LABELS } from '../model/school-detail-types'
+} from '../../../model/school-detail-types'
+import { INSTRUCTOR_ROLE_LABELS } from '../../../model/school-detail-types'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
@@ -28,17 +28,17 @@ import type {
   SettlementStatusKey,
 } from '@/data/mock/participating-instructors'
 import { SETTLEMENT_STATUS_LABELS } from '@/data/mock/participating-instructors'
-import type { InstructorListFormInstructor } from '../model/school-detail-types'
+import type { InstructorListFormInstructor } from '../../../model/school-detail-types'
 import {
   getInstructorRowsForSchool,
   getAssignedInstructorDisplayRows,
   getWaitingInstructorRows,
-} from '../lib/school-detail-mock'
-import { MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS } from '../lib/instructor-assign-session-options'
+} from '../../../lib/school-detail-mock'
+import { MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS } from '../../../lib/instructor-assign-session-options'
 import {
   maskEmailLocalAfterTwoChars,
   maskMobilePhoneMiddleStars,
-} from '../lib/teacher-contact-display-mask'
+} from '../../../lib/teacher-contact-display-mask'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
@@ -57,12 +57,17 @@ import { SchoolDetailSelectAssignConfirmModal } from './school-detail-select-ass
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import { SchoolDetailAssignOverflowModal } from './school-detail-assign-overflow-modal'
 import { SchoolDetailAssignCompleteModal } from './school-detail-assign-complete-modal'
+import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
+import {
+  getProgramProgressDisplayStatus,
+  resolveProgramEnrollmentDisplayStatusFromLabel,
+} from '@/shared/constants/status'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
-import './detail-modal/program-status/participating-institutions-section.css'
+import './participating-institutions-section.css'
 import './instructor-assignment-role-tag.css'
 import './instructor-assignment-status-text.css'
 import './school-detail-fullpage-view.css'
@@ -197,7 +202,7 @@ export interface SchoolDetailFullpageViewProps {
 }
 
 export function GeneralParticipatingInstitutionDetailView({
-  program: _program,
+  program,
   detail,
   row,
   activeTab: activeTabFromUrl,
@@ -244,6 +249,11 @@ export function GeneralParticipatingInstitutionDetailView({
   }, [detail.id])
 
   const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
+
+  const programProgressStatus =
+    mergedDetail.programProgressStatus ??
+    resolveProgramEnrollmentDisplayStatusFromLabel(mergedDetail.programProgressLabel) ??
+    getProgramProgressDisplayStatus(program)
 
   const resolvePersonalInfoAccessItem = useCallback(
     () => mergedDetail.schoolName ?? row.schoolName ?? '학교 상세 정보',
@@ -588,11 +598,7 @@ export function GeneralParticipatingInstitutionDetailView({
     {
       key: 'programProgress',
       label: '프로그램 진행 현황',
-      children: (
-        <span className="general-participating-institution-detail__program-status">
-          {mergedDetail.programProgressLabel ?? '프로그램 진행 중'}
-        </span>
-      ),
+      children: <ProgramEnrollmentStatusText status={programProgressStatus} />,
     },
     {
       key: 'textbook',
@@ -784,10 +790,10 @@ export function GeneralParticipatingInstitutionDetailView({
         trailing={
           activeTab === 'application' ? (
             <>
-              <CmsButton variant="delete" size="large" width={160} onClick={() => {}}>
+              <CmsButton variant="delete" size="large" width={140} onClick={() => {}}>
                 활동 포기
               </CmsButton>
-              <CmsButton variant="primary" size="large" width={160} onClick={() => {}}>
+              <CmsButton variant="primary" size="large" width={140} onClick={() => {}}>
                 정보 수정
               </CmsButton>
               <PersonalInfoRevealButton
@@ -1129,7 +1135,7 @@ export function GeneralParticipatingInstitutionDetailView({
         {activeTab === 'posts' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__posts-tab-wrap">
             <EnrollmentProgramDetailPostsTab
-              program={_program}
+              program={program}
               schoolId={detail.id}
               showWriteButtonInSection={false}
               writeModalOpen={postWriteModalOpen}
