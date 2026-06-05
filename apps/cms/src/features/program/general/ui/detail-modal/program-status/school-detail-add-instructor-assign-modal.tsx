@@ -6,9 +6,9 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Form, Select, Radio } from 'antd'
+import { Form, Select } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CmsRadio } from '@/shared/ui'
 import type { InstructorRoleKey } from '../../../model/school-detail-types'
 import { INSTRUCTOR_ROLE_LABELS } from '../../../model/school-detail-types'
 import type { InstructorAssignSessionOption } from '../../../lib/instructor-assign-session-options'
@@ -285,7 +285,7 @@ export function SchoolDetailAddInstructorAssignModal({
                 rules={[{ required: true }]}
                 className="school-detail-add-instructor-assign-modal__field"
               >
-                <Radio.Group
+                <CmsRadio.Group
                   className="school-detail-add-instructor-assign-modal__role-radios"
                   size="large"
                   options={[

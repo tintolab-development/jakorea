@@ -4,8 +4,9 @@
  * 시니어 개발자 관점: 컴포넌트 분리
  */
 
+import { CmsRadio } from '@/shared/ui'
 import { useState, useEffect } from 'react'
-import { Modal, Form, Radio, Input, Button, Space, Alert, Typography } from 'antd'
+import { Modal, Form, Input, Button, Space, Alert, Typography } from 'antd'
 import { useDownloadOptions } from '../hooks/use-download-options'
 import { useDownloadQuota } from '../hooks/use-download-quota'
 import type { DownloadOptions, DownloadTargetType } from '@/types/download'
@@ -157,13 +158,13 @@ export function DownloadOptionsModal({
           name="maskingEnabled"
           rules={[{ required: true }]}
         >
-          <Radio.Group>
-            <Radio value={true}>마스킹 적용 (기본)</Radio>
-            <Radio value={false} disabled={!allowOriginal}>
+          <CmsRadio.Group>
+            <CmsRadio value={true}>마스킹 적용 (기본)</CmsRadio>
+            <CmsRadio value={false} disabled={!allowOriginal}>
               원본 데이터
               {!allowOriginal && ' (권한 필요)'}
-            </Radio>
-          </Radio.Group>
+            </CmsRadio>
+          </CmsRadio.Group>
         </Form.Item>
 
         {!maskingEnabled && (

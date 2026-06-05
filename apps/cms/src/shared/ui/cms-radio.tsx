@@ -6,7 +6,8 @@
 
 import { forwardRef, type ComponentRef } from 'react'
 import { Radio } from 'antd'
-import type { RadioGroupProps, RadioProps } from 'antd'
+import type { RadioGroupProps, RadioProps, RadioRef } from 'antd/es/radio/interface'
+import type { RadioButtonProps } from 'antd/es/radio/radioButton'
 import './app-radio.css'
 
 type CmsRadioRef = ComponentRef<typeof Radio>
@@ -42,6 +43,18 @@ export const CmsRadioGroup = forwardRef<HTMLDivElement, CmsRadioGroupProps>(
 
 CmsRadioGroup.displayName = 'CmsRadioGroup'
 
+const CmsRadioButton = forwardRef<RadioRef, RadioButtonProps>(
+  ({ className, rootClassName, ...rest }, ref) => (
+    <Radio.Button ref={ref} className={className} rootClassName={rootClassName} {...rest} />
+  )
+)
+
+CmsRadioButton.displayName = 'CmsRadioButton'
+
 export const CmsRadio = Object.assign(CmsRadioInner, {
   Group: CmsRadioGroup,
-}) as typeof CmsRadioInner & { Group: typeof CmsRadioGroup }
+  Button: CmsRadioButton,
+}) as typeof CmsRadioInner & { Group: typeof CmsRadioGroup; Button: typeof CmsRadioButton }
+
+export { CmsRadioButton }
+export type { RadioButtonProps as CmsRadioButtonProps }

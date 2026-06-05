@@ -380,98 +380,75 @@
 }
 
 /*
- * 참여 학생 목록 컬럼 min-width: 68,80,160,170,170,295,295,150,150(px)
- * 합계 1538 — TS `STUDENT_LIST_TABLE_SCROLL_X` 와 동기화
+ * 참여 학생 목록 컬럼 min-width: 48,64,160,170,130,170,255,255,110(px)
+ * 합계 1362 — TS `STUDENT_LIST_TABLE_SCROLL_X` 와 동기화
  */
 .school-detail-modal__student-table {
-    --student-list-col-scale: 1;
-}
-
-@media (max-width: 1560px) {
-    .school-detail-modal__student-table {
-        --student-list-col-scale: 0.94;
-    }
-}
-
-@media (max-width: 1360px) {
-    .school-detail-modal__student-table {
-        --student-list-col-scale: 0.86;
-    }
-}
-
-@media (max-width: 1160px) {
-    .school-detail-modal__student-table {
-        --student-list-col-scale: 0.78;
-    }
-}
-
-@media (max-width: 992px) {
-    .school-detail-modal__student-table {
-        --student-list-col-scale: 0.72;
-    }
+    width: 100%;
+    table-layout: fixed;
 }
 
 .school-detail-modal__student-table col:nth-child(1),
 .school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(1),
 .school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(1) {
-    width: calc(68px * var(--student-list-col-scale)) !important;
-    min-width: calc(68px * var(--student-list-col-scale)) !important;
+    width: 48px !important;
+    min-width: 48px !important;
 }
 
 .school-detail-modal__student-table col:nth-child(2),
 .school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(2),
 .school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(2) {
-    width: calc(80px * var(--student-list-col-scale)) !important;
-    min-width: calc(80px * var(--student-list-col-scale)) !important;
+    width: 64px !important;
+    min-width: 64px !important;
 }
 
 .school-detail-modal__student-table col:nth-child(3),
 .school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(3),
 .school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(3) {
-    width: calc(160px * var(--student-list-col-scale)) !important;
-    min-width: calc(160px * var(--student-list-col-scale)) !important;
+    width: 160px !important;
+    min-width: 160px !important;
 }
 
 .school-detail-modal__student-table col:nth-child(4),
 .school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(4),
 .school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(4) {
-    width: calc(170px * var(--student-list-col-scale)) !important;
-    min-width: calc(170px * var(--student-list-col-scale)) !important;
+    width: 170px !important;
+    min-width: 170px !important;
 }
 
 .school-detail-modal__student-table col:nth-child(5),
 .school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(5),
 .school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(5) {
-    width: calc(170px * var(--student-list-col-scale)) !important;
-    min-width: calc(170px * var(--student-list-col-scale)) !important;
+    width: 130px !important;
+    min-width: 130px !important;
 }
 
 .school-detail-modal__student-table col:nth-child(6),
 .school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(6),
 .school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(6) {
-    width: calc(295px * var(--student-list-col-scale)) !important;
-    min-width: calc(295px * var(--student-list-col-scale)) !important;
+    width: 170px !important;
+    min-width: 170px !important;
 }
 
 .school-detail-modal__student-table col:nth-child(7),
 .school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(7),
 .school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(7) {
-    width: calc(295px * var(--student-list-col-scale)) !important;
-    min-width: calc(295px * var(--student-list-col-scale)) !important;
+    width: 255px !important;
+    min-width: 255px !important;
 }
 
 .school-detail-modal__student-table col:nth-child(8),
 .school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(8),
 .school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(8) {
-    width: calc(150px * var(--student-list-col-scale)) !important;
-    min-width: calc(150px * var(--student-list-col-scale)) !important;
+    width: 255px !important;
+    min-width: 255px !important;
 }
 
 .school-detail-modal__student-table col:nth-child(9),
 .school-detail-modal__student-table .ant-table-thead>tr>th:nth-child(9),
 .school-detail-modal__student-table .ant-table-tbody>tr>td:nth-child(9) {
-    width: calc(150px * var(--student-list-col-scale)) !important;
-    min-width: calc(150px * var(--student-list-col-scale)) !important;
+    width: 110px !important;
+    min-width: 110px !important;
 }
 
 .school-detail-modal__student-table .school-detail-modal__student-table-gender-select {

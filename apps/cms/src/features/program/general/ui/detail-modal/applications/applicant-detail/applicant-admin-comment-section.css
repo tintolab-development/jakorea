@@ -1,7 +1,7 @@
 .applicant-admin-comment-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .applicant-admin-comment-section__edit-wrap {

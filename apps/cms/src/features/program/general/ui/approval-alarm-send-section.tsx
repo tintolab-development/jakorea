@@ -4,8 +4,9 @@
  * 즉시 / 발표일에 맞춰서 / 직접 설정(날짜·시간) 라디오 선택.
  */
 
+import { CmsRadio } from '@/shared/ui'
 import { useState } from 'react'
-import { Radio, DatePicker } from 'antd'
+import { DatePicker } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import './approval-alarm-send-section.css'
@@ -53,22 +54,22 @@ export function ApprovalAlarmSendSection({
   return (
     <div className={`approval-alarm-send-section ${className ?? ''}`}>
       <div className="approval-alarm-send-section__label">승인 알람 발송</div>
-      <Radio.Group
+      <CmsRadio.Group
         value={currentValue}
         onChange={e => handleChange(e.target.value as ApprovalAlarmSendValue)}
         className="approval-alarm-send-section__radio-group"
       >
-        <Radio value="immediate">{LABELS.immediate}</Radio>
-        <Radio value="on_announcement">{LABELS.on_announcement}</Radio>
-        <Radio value="manual">
+        <CmsRadio value="immediate">{LABELS.immediate}</CmsRadio>
+        <CmsRadio value="on_announcement">{LABELS.on_announcement}</CmsRadio>
+        <CmsRadio value="manual">
           {LABELS.manual}
           {currentValue === 'manual' && currentManual && (
             <span className="approval-alarm-send-section__manual-display">
               {' '}({currentManual.format('YYYY. MM. DD HH:mm')})
             </span>
           )}
-        </Radio>
-      </Radio.Group>
+        </CmsRadio>
+      </CmsRadio.Group>
       {currentValue === 'manual' && (
         <DatePicker
           showTime

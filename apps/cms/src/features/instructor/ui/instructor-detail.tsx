@@ -4,24 +4,9 @@
  * 강사단 관리: 강의 진행 및 정산 현황 추가
  */
 
+import { CmsRadio } from '@/shared/ui'
 import { useEffect, useState, useMemo } from 'react'
-import {
-  Card,
-  Descriptions,
-  Tag,
-  Space,
-  Button,
-  Table,
-  Tabs,
-  Badge,
-  Select,
-  Collapse,
-  Statistic,
-  Radio,
-  Row,
-  Col,
-  Modal,
-} from 'antd'
+import { Card, Descriptions, Tag, Space, Button, Table, Tabs, Badge, Select, Collapse, Statistic, Row, Col, Modal,  } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { Instructor } from '@/types/domain'
 import type { Settlement, Matching, Program } from '@/types/domain'
@@ -446,19 +431,18 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
                   options={availablePeriods}
                 />
               </Space>
-              <Radio.Group
+              <CmsRadio.Group
                 value={viewMode}
                 onChange={e => setViewMode(e.target.value)}
                 buttonStyle="solid"
-                size="small"
               >
-                <Radio.Button value="list">
+                <CmsRadio.Button value="list">
                   <UnorderedListOutlined /> 목록
-                </Radio.Button>
-                <Radio.Button value="calendar">
+                </CmsRadio.Button>
+                <CmsRadio.Button value="calendar">
                   <CalendarOutlined /> 캘린더
-                </Radio.Button>
-              </Radio.Group>
+                </CmsRadio.Button>
+              </CmsRadio.Group>
             </Space>
           </Card>
 

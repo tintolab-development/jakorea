@@ -10,7 +10,7 @@ const TARGET_LEVEL_TO_EDUCATION_TARGET: Partial<Record<TargetLevel, TextbookEduc
   university: '대학교',
 }
 
-function resolveProgramEducationTarget(program: Program): TextbookEducationTarget | null {
+export function resolveProgramEducationTarget(program: Program): TextbookEducationTarget | null {
   if (!program.targetLevel) return null
   return TARGET_LEVEL_TO_EDUCATION_TARGET[program.targetLevel] ?? null
 }
@@ -26,7 +26,7 @@ function textbookIncludesGrade(textbook: TextbookRow, educationGrade: string): b
   })
 }
 
-function dedupeTextbooksByName(textbooks: TextbookRow[]): TextbookRow[] {
+export function dedupeTextbooksByName(textbooks: TextbookRow[]): TextbookRow[] {
   const seen = new Set<string>()
   const result: TextbookRow[] = []
   for (const row of textbooks) {

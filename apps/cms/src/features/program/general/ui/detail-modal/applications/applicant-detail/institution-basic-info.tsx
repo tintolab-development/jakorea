@@ -4,8 +4,8 @@
  */
 
 import type { ReactNode } from 'react'
-import { Radio } from 'antd'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { CmsRadio } from '@/shared/ui'
 import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
@@ -23,11 +23,28 @@ import type {
 } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import {
+  InstitutionAddressDetailEdit,
+  InstitutionComputerInRoomEdit,
+  InstitutionEducationFormatRadios,
+  InstitutionMealEdit,
+  InstitutionMultilineEdit,
+  InstitutionWaitingRoomEdit,
+} from './institution-application-edit-fields'
+import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { GeneralDetailSessionLine } from '@/features/program/shared/ui/program-detail/applicant-list/general-detail-session-line'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
+import {
+  INSTITUTION_APPLICATION_INFO_COLGROUP,
+  INSTITUTION_APPLICATION_SCHEDULE_COLGROUP,
+  InstitutionApplicationTableRowFullWidth,
+  InstitutionApplicationTableRowSingleCol,
+  InstitutionApplicationTableRowTwoCols,
+  institutionApplicationTableLabelWithParenthesisHint,
+  INSTITUTION_OTHER_NOTES_TABLE_LABEL,
+} from './institution-application-info-table'
 import './institution-basic-info.css'
 
 function maskInstitutionTeacherInfoLine(text: string): string {
@@ -46,22 +63,6 @@ function maskInstitutionTeacherInfoLine(text: string): string {
       /(E-mail\s*:\s*)(\S+)/gi,
       (_, prefix: string, em: string) => prefix + MASKING_POLICY.email(em)
     )
-}
-
-/** 라벨 문자열을 본문 + `(…)` 보조 문구 두 줄로 표시 (th 중앙 정렬 유지) */
-function tableLabelWithParenthesisHint(label: string): ReactNode {
-  const open = label.indexOf('(')
-  if (open <= 0) return label
-  const main = label.slice(0, open).trim()
-  const hint = label.slice(open).trim()
-  if (!hint.startsWith('(') || !hint.endsWith(')')) return label
-  return (
-    <>
-      {main}
-      <br />
-      {hint}
-    </>
-  )
 }
 
 function maskSexOffenseCheckRequestLine(text: string): string {
@@ -87,69 +88,6 @@ export interface ApplicantGeneralInstitutionBasicInfoProps {
   sameSchoolGradeOptions?: SameSchoolGradeOption[]
   canApplyCombinedClass?: boolean
   validationErrors?: Record<string, string>
-}
-
-function TableRowTwoCols({
-  label1,
-  value1,
-  label2,
-  value2,
-}: {
-  label1: string
-  value1: ReactNode
-  label2: string
-  value2: ReactNode
-}) {
-  return (
-    <tr>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {label1}
-      </td>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-        {value1}
-      </td>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {label2}
-      </td>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-        {value2}
-      </td>
-    </tr>
-  )
-}
-
-function TableRowFullWidth({ label, value, multiline }: { label: string; value: ReactNode; multiline?: boolean }) {
-  return (
-    <tr>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {label}
-      </td>
-      <td
-        colSpan={3}
-        className={`applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value${
-          multiline ? ' applicant-institution-basic-info__cell--value--multiline' : ''
-        }`}
-      >
-        {value}
-      </td>
-    </tr>
-  )
-}
-
-function TableRowSingleCol({ label, value }: { label: ReactNode; value: ReactNode }) {
-  return (
-    <tr>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {label}
-      </td>
-      <td
-        colSpan={3}
-        className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value"
-      >
-        {value}
-      </td>
-    </tr>
-  )
 }
 
 function ProgramApprovalStatusValue({
@@ -218,11 +156,10 @@ function buildTeacherInfoCell(
 }
 
 function PreferredScheduleRow({ rank, session }: { rank: number; session: ParticipatingSchoolSession }) {
-  const label = `${rank}지망`
   return (
     <tr>
       <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {label}
+        {rank}지망
       </td>
       <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
         <GeneralDetailSessionLine session={session} />
@@ -260,7 +197,7 @@ function CombinedClassEditCell({
 
   return (
     <div className="institution-basic-info__combined-class-edit">
-      <Radio.Group
+      <CmsRadio.Group
         className="institution-basic-info__combined-class-radios"
         value={draft.combinedClassApplication}
         onChange={event => {
@@ -272,11 +209,11 @@ function CombinedClassEditCell({
           })
         }}
       >
-        <Radio value="신청" disabled={!canApplyCombinedClass}>
+        <CmsRadio value="신청" disabled={!canApplyCombinedClass}>
           신청
-        </Radio>
-        <Radio value="미신청">미신청</Radio>
-      </Radio.Group>
+        </CmsRadio>
+        <CmsRadio value="미신청">미신청</CmsRadio>
+      </CmsRadio.Group>
       <CmsSelect
         className="institution-basic-info__combined-class-select"
         inputSize="large"
@@ -337,14 +274,98 @@ export function ApplicantGeneralInstitutionBasicInfo({
   const textbookViewValue = detail?.textbookName ?? '-'
   const combinedClassViewValue = buildCombinedClassViewValue(detail)
 
-  const colgroup = (
-    <colgroup>
-      <col style={{ width: '200px' }} />
-      <col />
-      <col style={{ width: '200px' }} />
-      <col />
-    </colgroup>
-  )
+  const addressDetailValue =
+    isEditMode && draft && onDraftChange ? (
+      <InstitutionAddressDetailEdit
+        value={draft.addressDetail}
+        onChange={value => onDraftChange({ addressDetail: value })}
+        error={validationErrors?.addressDetail}
+      />
+    ) : (
+      detail?.addressDetail ?? '-'
+    )
+
+  const educationTypeValue =
+    isEditMode && draft && onDraftChange ? (
+      <InstitutionEducationFormatRadios
+        value={draft.educationFormat}
+        onChange={value => onDraftChange({ educationFormat: value })}
+        error={validationErrors?.educationFormat}
+      />
+    ) : (
+      detail?.educationType ?? '-'
+    )
+
+  const applicationReasonValue =
+    isEditMode && draft && onDraftChange ? (
+      <InstitutionMultilineEdit
+        value={draft.applicationReason}
+        onChange={value => onDraftChange({ applicationReason: value })}
+        placeholder="신청 사유를 입력해 주세요."
+        error={validationErrors?.applicationReason}
+      />
+    ) : (
+      detail?.applicationReason ?? '-'
+    )
+
+  const otherRequestsValue =
+    isEditMode && draft && onDraftChange ? (
+      <InstitutionMultilineEdit
+        value={draft.otherRequests}
+        onChange={value => onDraftChange({ otherRequests: value })}
+        placeholder="기타 요청사항을 입력해 주세요."
+        error={validationErrors?.otherRequests}
+      />
+    ) : (
+      detail?.otherRequests ?? '-'
+    )
+
+  const computerValue =
+    isEditMode && draft && onDraftChange ? (
+      <InstitutionComputerInRoomEdit
+        value={draft.computerInRoom}
+        onChange={value => onDraftChange({ computerInRoom: value })}
+        error={validationErrors?.computerInRoom}
+      />
+    ) : (
+      detail?.computerInSpace ?? '-'
+    )
+
+  const waitingPlaceValue =
+    isEditMode && draft && onDraftChange ? (
+      <InstitutionWaitingRoomEdit
+        available={draft.waitingRoomAvailable}
+        location={draft.waitingRoomLocation}
+        onChange={patch => onDraftChange(patch)}
+        error={validationErrors?.waitingRoomLocation}
+      />
+    ) : (
+      detail?.waitingPlaceGuide ?? detail?.waitingRoom ?? '-'
+    )
+
+  const mealValue =
+    isEditMode && draft && onDraftChange ? (
+      <InstitutionMealEdit
+        provided={draft.mealProvided}
+        notice={draft.mealNotice}
+        onChange={patch => onDraftChange(patch)}
+        error={validationErrors?.mealNotice}
+      />
+    ) : (
+      detail?.mealInfo ?? '-'
+    )
+
+  const otherNotesValue =
+    isEditMode && draft && onDraftChange ? (
+      <InstitutionMultilineEdit
+        value={draft.parkingInfo}
+        onChange={value => onDraftChange({ parkingInfo: value })}
+        placeholder="주차, 전달사항 등을 입력해 주세요."
+        error={validationErrors?.parkingInfo}
+      />
+    ) : (
+      detail?.otherSpecialNotes ?? detail?.parkingInfo ?? '-'
+    )
 
   const textbookEditValue =
     isEditMode && draft && onDraftChange ? (
@@ -414,13 +435,13 @@ export function ApplicantGeneralInstitutionBasicInfo({
         <div className="applicant-institution-basic-info__basic-info-fields">
           <div className="applicant-institution-basic-info__table-wrap">
             <table className="applicant-institution-basic-info__table">
-              {colgroup}
+              {INSTITUTION_APPLICATION_INFO_COLGROUP}
               <tbody>
-                <TableRowFullWidth
+                <InstitutionApplicationTableRowFullWidth
                   label="프로그램 승인 현황"
                   value={<ProgramApprovalStatusValue institution={institution} />}
                 />
-                <TableRowTwoCols
+                <InstitutionApplicationTableRowTwoCols
                   label1="교재명"
                   value1={textbookEditValue}
                   label2="합반 신청 여부"
@@ -431,35 +452,35 @@ export function ApplicantGeneralInstitutionBasicInfo({
           </div>
           <div className="applicant-institution-basic-info__table-wrap">
             <table className="applicant-institution-basic-info__table">
-              {colgroup}
+              {INSTITUTION_APPLICATION_INFO_COLGROUP}
               <tbody>
-                <TableRowTwoCols
+                <InstitutionApplicationTableRowTwoCols
                   label1="신청 기관명"
                   value1={institution.schoolName ?? '-'}
                   label2="신청 학년"
                   value2={institution.educationGrade ?? '-'}
                 />
-                <TableRowTwoCols
+                <InstitutionApplicationTableRowTwoCols
                   label1="기관 소재지"
                   value1={institution.region ?? '-'}
                   label2="상세 주소"
-                  value2={detail?.addressDetail ?? '-'}
+                  value2={addressDetailValue}
                 />
-                <TableRowTwoCols
+                <InstitutionApplicationTableRowTwoCols
                   label1="신청 학급 수 및 총 인원"
                   value1={classAndCount}
                   label2="희망 교육 형태"
-                  value2={detail?.educationType ?? '-'}
+                  value2={educationTypeValue}
                 />
-                <TableRowFullWidth label="담당 교사 정보" value={teacherInfo} />
-                <TableRowFullWidth
+                <InstitutionApplicationTableRowFullWidth label="담당 교사 정보" value={teacherInfo} />
+                <InstitutionApplicationTableRowFullWidth
                   label="신청 사유"
-                  value={detail?.applicationReason ?? '-'}
+                  value={applicationReasonValue}
                   multiline
                 />
-                <TableRowFullWidth
+                <InstitutionApplicationTableRowFullWidth
                   label="기타 요청사항"
-                  value={detail?.otherRequests ?? '-'}
+                  value={otherRequestsValue}
                   multiline
                 />
               </tbody>
@@ -472,25 +493,24 @@ export function ApplicantGeneralInstitutionBasicInfo({
         <h3 className="applicant-institution-basic-info__title">안내 사항</h3>
         <div className="applicant-institution-basic-info__table-wrap">
           <table className="applicant-institution-basic-info__table">
-            {colgroup}
+            {INSTITUTION_APPLICATION_INFO_COLGROUP}
             <tbody>
-              <TableRowSingleCol
+              <InstitutionApplicationTableRowSingleCol
                 label="강의 공간 내 컴퓨터 여부"
-                value={detail?.computerInSpace ?? '-'}
+                value={computerValue}
               />
-              <TableRowSingleCol
-                label="대기 장소 안내"
-                value={detail?.waitingPlaceGuide ?? detail?.waitingRoom ?? '-'}
-              />
-              <TableRowSingleCol
+              <InstitutionApplicationTableRowSingleCol label="대기 장소 안내" value={waitingPlaceValue} />
+              <InstitutionApplicationTableRowSingleCol
                 label="식사 가능 여부 및 안내"
-                value={detail?.mealInfo ?? '-'}
+                value={mealValue}
               />
-              <TableRowSingleCol
-                label={tableLabelWithParenthesisHint('기타 특이사항 (주차, 전달사항 등)')}
-                value={detail?.otherSpecialNotes ?? detail?.parkingInfo ?? '-'}
+              <InstitutionApplicationTableRowSingleCol
+                label={institutionApplicationTableLabelWithParenthesisHint(
+                  INSTITUTION_OTHER_NOTES_TABLE_LABEL
+                )}
+                value={otherNotesValue}
               />
-              <TableRowSingleCol
+              <InstitutionApplicationTableRowSingleCol
                 label="성범죄 경력 조회서 요청"
                 value={sexOffenseRequestDisplay}
               />
@@ -503,10 +523,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
         <h3 className="applicant-institution-basic-info__title">진행 희망 교육 일정</h3>
         <div className="applicant-institution-basic-info__table-wrap">
           <table className="applicant-institution-basic-info__table">
-            <colgroup>
-              <col style={{ width: '200px' }} />
-              <col />
-            </colgroup>
+            {INSTITUTION_APPLICATION_SCHEDULE_COLGROUP}
             <tbody>
               {sessions.length === 0 ? (
                 <tr>

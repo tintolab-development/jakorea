@@ -115,17 +115,32 @@
   text-overflow: clip;
 }
 
-/* 강의 회차 td: 셀 내 줄바꿈 없음. 회차별 한 줄, 영역은 텍스트 길이만큼(480px). 테이블이 화면보다 길면 테이블 자체 가로 스크롤 */
-.participating-institutions-section__table
+/* 교육 진행 일정 열: 360px 고정 (scroll.x가 뷰포트보다 넓어져도 열 확장 방지) */
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-thead
+  > tr
+  > th.participating-institutions-section__th-sessions,
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
   .ant-table-tbody
   > tr
   > td.participating-institutions-section__td-sessions {
-  width: 480px;
-  min-width: 480px;
+  width: 360px !important;
+  min-width: 360px !important;
+  max-width: 360px !important;
+  box-sizing: border-box;
+}
+
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-institutions-section__td-sessions {
   white-space: normal;
   padding: 12px 24px !important;
   vertical-align: top;
-  box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* 강의 회차 별 교육 진행 날짜 및 시간 셀: 회차별 한 줄, 셀 내 줄바꿈·가로 스크롤 없음 */
@@ -137,9 +152,11 @@
   padding: 0;
   margin: 0;
   min-width: 0;
+  max-width: 100%;
   min-height: 0;
   box-sizing: border-box;
   line-height: 150%;
+  overflow: hidden;
 }
 
 /* 강의 회차 라인: 회차별 한 줄 처리 */
@@ -148,12 +165,15 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
+  max-width: 100%;
   font-size: 16px;
   font-weight: 500;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   box-sizing: border-box;
 }
 
@@ -171,63 +191,30 @@
   margin-top: 0;
 }
 
-/* 교재 배송 현황: 공통 StatusDropdownCell 사용 — 행 높이 53px 고정 (테이블 셀 높이와 동일, vertical shifting 방지) */
-.participating-institutions-section
+/*
+ * 교재 배송 현황(StatusDropdownCell)
+ * - 배지·패널 100×30 / 116px: column width + `PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE` + status-dropdown-cell.css `--sdcb-*`
+ * - 아래는 cms-data-table 행 패딩·드롭다운 열림 시 세로 흔들림만 막음 (공통 셀 패딩 0은 status-dropdown-cell.css)
+ */
+.participating-institutions-section__table--textbook-dropdown.cms-data-table
   .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status) {
+  > tr:has(td.status-dropdown-cell__cell-status),
+.participating-institutions-section__table--textbook-dropdown.cms-data-table
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open) {
   height: 53px;
   min-height: 53px;
   max-height: 53px;
   overflow: visible;
 }
 
-/* 셀 횡 사이즈 고정: 트리거 외곽 136px과 동일 (132 태그 열은 tag132 150px · tag160 160px · 지급조서 라인 payment-order-line 176px) */
-.participating-institutions-section
-  .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-132):not(
-      .status-dropdown-cell__cell-status--tag-160
-    ):not(.status-dropdown-cell__cell-status--payment-order-line) {
-  width: 136px;
-  min-width: 136px;
-  max-width: 136px;
-  padding-top: 0;
-  padding-bottom: 0;
-  padding-left: 0;
-  padding-right: 0;
-  overflow: visible;
-  box-sizing: border-box;
-}
-
-.participating-institutions-section
-  .status-dropdown-cell__status-trigger--open:not(.status-dropdown-cell__status-trigger--tag-132):not(
-    .status-dropdown-cell__status-trigger--tag-160
-  ):not(.status-dropdown-cell__status-trigger--payment-order-line) {
-  box-sizing: border-box !important;
-  width: 136px !important;
-  min-width: 136px !important;
-  max-width: 136px !important;
-}
-
-/* 테이블 셀 높이 53px인 경우: 드롭다운 활성화 시에도 행/셀 높이 53px 고정 */
-.participating-institutions-section
+.participating-institutions-section__table--textbook-dropdown.cms-data-table
   .ant-table-tbody
   > tr:has(td .status-dropdown-cell__status-trigger--open)
   > td {
   height: 53px !important;
   min-height: 53px !important;
   max-height: 53px !important;
-}
-
-/* 테이블 셀 높이 53px인 경우 해당 셀 padding 0 — vertical shifting 방지 */
-.participating-institutions-section
-  .ant-table-tbody
-  > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
 }
 
 /* --------------------------------------------------------------------------

@@ -9,7 +9,7 @@
 .individual-basic-info {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }
 
 .individual-basic-info .applicant-institution-basic-info__section {

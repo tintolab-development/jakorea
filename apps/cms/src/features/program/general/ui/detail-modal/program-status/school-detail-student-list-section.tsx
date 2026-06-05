@@ -6,12 +6,19 @@
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { useStudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
-import { Table, Input, Select, Row, Col } from 'antd'
+import type { StudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
+import { CheckOutlined, DownloadOutlined } from '@ant-design/icons'
+import { Table } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
-import { CmsButton, FilterSearchButton } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsRadio, CmsSelect, FilterTableLayout, useCmsAlert } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
-import { STUDENT_LIST_INFO_EDIT_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
+import {
+  FEATURE_COMING_SOON_ALERT_MESSAGE,
+  STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
+  STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
+  STUDENT_LIST_EDIT_MODE_BLOCKED_ALERT_MESSAGE,
+  STUDENT_LIST_INFO_EDIT_COMING_SOON_ALERT_MESSAGE,
+} from '@/shared/constants/messages'
 import { formatLectureAttendanceCellDisplay } from '@/shared/lib/format-lecture-attendance-display'
 import type {
   LectureAttendanceSession,
@@ -22,46 +29,31 @@ import type {
 } from '../../../model/school-detail-types'
 import { STUDENT_GENDER_LABELS } from '../../../model/school-detail-types'
 import { getSchoolDetailStudents } from '../../../lib/school-detail-mock'
+import { buildStudentListFilterFields, STUDENT_GRADE_CLASS_OPTIONS } from '../../../lib/student-list-filter-fields'
 import { lectureAttendanceStringFromSessions } from '../../../lib/lecture-attendance-from-sessions'
-import type { AddStudentFormValues } from '../../../model/school-detail-add-student-schema'
+import {
+  formatStudentBirthDateFromDigits,
+  type AddStudentFormValues,
+} from '../../../model/school-detail-add-student-schema'
 import { LectureAttendanceModal } from '../../lecture-attendance-modal'
-import { AssignmentSubmissionModal } from '../../assignment-submission-modal'
 import { AddStudentModal } from '../../add-student-modal'
-import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
-import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import './school-detail-modal.css'
-import './program-progress-tab.css'
-import './participating-institutions-section.css'
 import './school-detail-student-list-section.css'
 import {
   STUDENT_LIST_TABLE_COL_MIN_WIDTHS,
+  STUDENT_LIST_TABLE_SCROLL_X,
   studentListTableDataColumnSize,
 } from './school-detail-student-list-table'
 
-/** 수료증 발급 버튼용 아이콘 (22×22, JA/mint 01) */
-function CertificateIssueIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={22}
-      height={22}
-      viewBox="0 0 22 22"
-      fill="none"
-      aria-hidden
-    >
-      <path
-        d="M11 14.1272C10.8895 14.1272 10.7867 14.1096 10.6915 14.0743C10.5964 14.0391 10.5058 13.9786 10.42 13.8928L7.5696 11.0424C7.43333 10.906 7.36603 10.7464 7.36771 10.5637C7.36954 10.3809 7.43684 10.2185 7.5696 10.0762C7.71184 9.93415 7.87516 9.86074 8.05956 9.856C8.24412 9.85126 8.40751 9.92001 8.54975 10.0623L10.3125 11.825V4.8125C10.3125 4.6174 10.3783 4.45408 10.51 4.32254C10.6416 4.19085 10.8049 4.125 11 4.125C11.1951 4.125 11.3584 4.19085 11.49 4.32254C11.6217 4.45408 11.6875 4.6174 11.6875 4.8125V11.825L13.4502 10.0623C13.5867 9.92597 13.7485 9.85867 13.9359 9.86035C14.1233 9.86219 14.2882 9.93415 14.4304 10.0762C14.5632 10.2185 14.6319 10.3795 14.6366 10.5593C14.6414 10.7391 14.5726 10.9002 14.4304 11.0424L11.58 13.8928C11.4942 13.9786 11.4036 14.0391 11.3085 14.0743C11.2133 14.1096 11.1105 14.1272 11 14.1272ZM5.7821 17.875C5.31903 17.875 4.92708 17.7146 4.60625 17.3938C4.28542 17.0729 4.125 16.681 4.125 16.2179V14.4199C4.125 14.2248 4.19085 14.0614 4.32254 13.9299C4.45408 13.7982 4.6174 13.7324 4.8125 13.7324C5.0076 13.7324 5.17092 13.7982 5.30246 13.9299C5.43415 14.0614 5.5 14.2248 5.5 14.4199V16.2179C5.5 16.2885 5.52941 16.3531 5.58823 16.4118C5.6469 16.4706 5.71152 16.5 5.7821 16.5H16.2179C16.2885 16.5 16.3531 16.4706 16.4118 16.4118C16.4706 16.3531 16.5 16.2885 16.5 16.2179V14.4199C16.5 14.2248 16.5658 14.0614 16.6975 13.9299C16.8291 13.7982 16.9924 13.7324 17.1875 13.7324C17.3826 13.7324 17.5459 13.7982 17.6775 13.9299C17.8092 14.0614 17.875 14.2248 17.875 14.4199V16.2179C17.875 16.681 17.7146 17.0729 17.3938 17.3938C17.0729 17.7146 16.681 17.875 16.2179 17.875H5.7821Z"
-        fill="var(--JA-mint-01, #01A1AF)"
-      />
-    </svg>
-  )
-}
-
-const GENDER_FILTER_OPTIONS = [
-  { value: 'all', label: '전체' },
+const STUDENT_GENDER_EDIT_OPTIONS = [
   { value: 'male', label: '남' },
   { value: 'female', label: '여' },
-]
+] as const
+
+function StudentListEditCell({ children }: { children: React.ReactNode }) {
+  return <div className="school-detail-student-list-section__edit-cell">{children}</div>
+}
 
 function rowsToFormValues(rows: SchoolDetailStudentRow[]): StudentListFormValues {
   return {
@@ -70,6 +62,7 @@ function rowsToFormValues(rows: SchoolDetailStudentRow[]): StudentListFormValues
       no: r.no,
       name: r.name,
       gender: r.gender,
+      birthDate: r.birthDate ?? '',
       gradeClass: r.gradeClass,
       contact: r.contact ?? '',
       email: r.email ?? '',
@@ -84,6 +77,7 @@ function formValuesToRows(students: StudentListFormStudent[]): SchoolDetailStude
     no: r.no,
     name: r.name,
     gender: r.gender,
+    birthDate: r.birthDate?.trim() || undefined,
     gradeClass: r.gradeClass,
     contact: r.contact?.trim() || undefined,
     email: r.email?.trim() || undefined,
@@ -99,7 +93,7 @@ export interface SchoolDetailStudentListSectionProps {
   /** 풀페이지 등에서 상단에 이미 정보 수정/개인정보 상세보기 있을 때 버튼만 숨기거나 콜백으로 위임 */
   readOnly?: boolean
   /**
-   * true면 `readOnly`가 아닐 때도 「정보 수정」 클릭 시 명단 편집 모드 대신 준비 중 alert만 표시
+   * true면 `readOnly`가 아닐 때도 「정보 수정」 클릭 시 명단 편집 모드 대신 준비 중 AlertModal만 표시
    * (참여 기관 풀페이지 학생 명단 탭 등)
    */
   studentListInfoEditComingSoonAlert?: boolean
@@ -113,7 +107,7 @@ export interface SchoolDetailStudentListSectionProps {
 export function SchoolDetailStudentListSection({
   schoolId,
   studentCount,
-  programTitle,
+  programTitle: _programTitle,
   readOnly = false,
   studentListInfoEditComingSoonAlert = false,
   onIssueCertificates: _onIssueCertificates,
@@ -122,13 +116,15 @@ export function SchoolDetailStudentListSection({
   onViewDetail: _onViewDetail,
   onSaveEdit,
 }: SchoolDetailStudentListSectionProps) {
-  const { filters, appliedFilters, setFilter, applyFilters } = useStudentListFilterParams()
-  const [localStudentName, setLocalStudentName] = useState(() => filters.studentName)
+  const { filters, appliedFilters, applyFilters } = useStudentListFilterParams()
+  const [pendingFilters, setPendingFilters] = useState<StudentListFilterParams>(() => ({
+    ...filters,
+  }))
   const [selectedStudentKeys, setSelectedStudentKeys] = useState<Key[]>([])
 
   useEffect(() => {
-    setLocalStudentName(filters.studentName)
-  }, [filters.studentName])
+    setPendingFilters({ ...filters })
+  }, [filters])
   const [isStudentListEditMode, setIsStudentListEditMode] = useState(false)
   const [addedStudents, setAddedStudents] = useState<SchoolDetailStudentRow[]>([])
   const [lectureAttendanceModalOpen, setLectureAttendanceModalOpen] = useState(false)
@@ -137,10 +133,50 @@ export function SchoolDetailStudentListSection({
   const [attendanceSessionsByStudentId, setAttendanceSessionsByStudentId] = useState<
     Record<string, LectureAttendanceSession[]>
   >({})
-  const [assignmentSubmissionModalOpen, setAssignmentSubmissionModalOpen] = useState(false)
-  const [assignmentSubmissionStudent, setAssignmentSubmissionStudent] =
-    useState<SchoolDetailStudentRow | null>(null)
   const [addStudentModalOpen, setAddStudentModalOpen] = useState(false)
+  const [certificateIssueModalOpen, setCertificateIssueModalOpen] = useState(false)
+  const [certificateIssueStudentId, setCertificateIssueStudentId] = useState<string | null>(null)
+  const { showAlert } = useCmsAlert()
+
+  const showComingSoonAlert = useCallback(
+    () => showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE }),
+    [showAlert]
+  )
+
+  const showStudentListEditModeBlockedAlert = useCallback(
+    () => showAlert({ title: '안내', content: STUDENT_LIST_EDIT_MODE_BLOCKED_ALERT_MESSAGE }),
+    [showAlert]
+  )
+
+  const handleCertificateIssueClick = useCallback(() => {
+    if (isStudentListEditMode) {
+      showStudentListEditModeBlockedAlert()
+      return
+    }
+
+    const selectedCount = selectedStudentKeys.length
+    if (selectedCount === 0) {
+      showAlert({ title: '안내', content: STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE })
+      return
+    }
+    if (selectedCount > 1) {
+      showAlert({ title: '안내', content: STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE })
+      return
+    }
+
+    setCertificateIssueStudentId(String(selectedStudentKeys[0]))
+    setCertificateIssueModalOpen(true)
+  }, [
+    isStudentListEditMode,
+    selectedStudentKeys,
+    showAlert,
+    showStudentListEditModeBlockedAlert,
+  ])
+
+  const handleCertificateIssueModalCancel = useCallback(() => {
+    setCertificateIssueModalOpen(false)
+    setCertificateIssueStudentId(null)
+  }, [])
 
   const studentList = useMemo(
     () => getSchoolDetailStudents(schoolId, studentCount),
@@ -167,31 +203,54 @@ export function SchoolDetailStudentListSection({
         appliedFilters.studentClass === 'all' || row.gradeClass === appliedFilters.studentClass
       return matchName && matchGender && matchClass
     })
-  }, [mergedStudentList, appliedFilters.studentName, appliedFilters.studentGender, appliedFilters.studentClass])
+  }, [
+    mergedStudentList,
+    appliedFilters.studentName,
+    appliedFilters.studentGender,
+    appliedFilters.studentClass,
+  ])
 
-  const resolveStudentListPersonalInfoAccessItem = useCallback(() => {
-    const accessItem = filteredStudentList.find(row => selectedStudentKeys.includes(row.id))?.name
-    return accessItem ?? '학생 명단'
-  }, [filteredStudentList, selectedStudentKeys])
+  const handleFilterChange = useCallback(
+    (key: string, value: unknown) => {
+      if (isStudentListEditMode) {
+        showStudentListEditModeBlockedAlert()
+        return
+      }
+      if (key === 'studentName') {
+        setPendingFilters(prev => ({ ...prev, studentName: String(value ?? '') }))
+        return
+      }
+      if (key === 'studentGender') {
+        const next = value == null || value === '' || value === 'all' ? 'all' : String(value)
+        setPendingFilters(prev => ({ ...prev, studentGender: next }))
+        return
+      }
+      if (key === 'studentClass') {
+        const next = value == null || value === '' || value === 'all' ? 'all' : String(value)
+        setPendingFilters(prev => ({ ...prev, studentClass: next }))
+      }
+    },
+    [isStudentListEditMode, showStudentListEditModeBlockedAlert]
+  )
 
-  const {
-    personalInfoRevealed,
-    onPrivacyControlClick: handleStudentListPrivacyClick,
-    confirmModal: personalInfoRevealModal,
-  } = usePersonalInfoReveal({
-    resolveAccessItem: resolveStudentListPersonalInfoAccessItem,
-    resetDeps: [schoolId],
-    controlMode: 'toggleRemask',
-  })
+  const handleFilterSearch = useCallback(() => {
+    if (isStudentListEditMode) {
+      showStudentListEditModeBlockedAlert()
+      return
+    }
+    applyFilters(pendingFilters)
+  }, [applyFilters, pendingFilters, isStudentListEditMode, showStudentListEditModeBlockedAlert])
 
-  const handleStudentSearch = useCallback(() => {
-    applyFilters({ studentName: localStudentName })
-  }, [localStudentName, applyFilters])
+  const filterTableValues = useMemo(
+    () => ({
+      studentName: pendingFilters.studentName,
+      studentGender: pendingFilters.studentGender === 'all' ? '' : pendingFilters.studentGender,
+      studentClass: pendingFilters.studentClass === 'all' ? '' : pendingFilters.studentClass,
+    }),
+    [pendingFilters]
+  )
 
-  const studentClassOptions = useMemo(() => {
-    const classes = Array.from(new Set(mergedStudentList.map(r => r.gradeClass))).sort()
-    return [{ value: 'all', label: '전체' }, ...classes.map(c => ({ value: c, label: c }))]
-  }, [mergedStudentList])
+  const studentListFilterFields = useMemo(() => buildStudentListFilterFields(), [])
 
   const studentListForm = useForm<StudentListFormValues>({
     defaultValues: { students: [] },
@@ -225,6 +284,7 @@ export function SchoolDetailStudentListSection({
         no: nextNo,
         name: values.name,
         gender: values.gender,
+        birthDate: formatStudentBirthDateFromDigits(values.birthDate),
         gradeClass: values.gradeClass,
         contact: values.contact?.trim() || undefined,
         email: values.email?.trim() || undefined,
@@ -255,52 +315,177 @@ export function SchoolDetailStudentListSection({
     [lectureAttendanceStudent?.id]
   )
 
-  const openAssignmentSubmission = useCallback((record: SchoolDetailStudentRow) => {
-    setAssignmentSubmissionStudent(record)
-    setAssignmentSubmissionModalOpen(true)
-  }, [])
+  const handleEditInfoClick = useCallback(() => {
+    if (studentListInfoEditComingSoonAlert) {
+      showAlert({ title: '안내', content: STUDENT_LIST_INFO_EDIT_COMING_SOON_ALERT_MESSAGE })
+      return
+    }
+    if (isStudentListEditMode) {
+      if (isDirty) {
+        handleStudentListSave()
+      } else {
+        handleStudentListCancel()
+      }
+    } else {
+      enterStudentListEditMode()
+    }
+  }, [
+    studentListInfoEditComingSoonAlert,
+    isStudentListEditMode,
+    isDirty,
+    handleStudentListSave,
+    handleStudentListCancel,
+    enterStudentListEditMode,
+    showAlert,
+  ])
 
   const displayCount = isStudentListEditMode
     ? (watch('students')?.length ?? 0)
     : filteredStudentList.length
 
+  const studentListToolbarActions = (
+    <div className="school-detail-student-list-section__toolbar-actions">
+      <CmsButton
+        variant="secondary"
+        size="large"
+        width={180}
+        icon={<CheckOutlined />}
+        className="school-detail-student-list-section__btn-outline"
+        onClick={() => {
+          if (isStudentListEditMode) {
+            showStudentListEditModeBlockedAlert()
+            return
+          }
+          showComingSoonAlert()
+        }}
+      >
+        초상권 동의 확인
+      </CmsButton>
+      <CmsButton
+        variant="secondary"
+        size="large"
+        width={215}
+        icon={<DownloadOutlined />}
+        className="school-detail-student-list-section__btn-outline"
+        onClick={handleCertificateIssueClick}
+      >
+        수료증/참여인증서 발급
+      </CmsButton>
+      {!readOnly ? (
+        <>
+          <CmsButton
+            variant="secondary"
+            size="large"
+            width={140}
+            className={[
+              'school-detail-student-list-section__btn-edit-info',
+              isStudentListEditMode && 'school-detail-student-list-section__btn-edit-info--active',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            onClick={handleEditInfoClick}
+          >
+            정보 수정
+          </CmsButton>
+          <CmsButton
+            variant="primary"
+            size="large"
+            width={140}
+            onClick={() => {
+              if (isStudentListEditMode) {
+                showStudentListEditModeBlockedAlert()
+                return
+              }
+              setAddStudentModalOpen(true)
+            }}
+          >
+            학생 추가
+          </CmsButton>
+        </>
+      ) : (
+        <>
+          {onEditInfo && (
+            <CmsButton
+              variant="secondary"
+              size="large"
+              width={140}
+              className="school-detail-student-list-section__btn-edit-info"
+              onClick={onEditInfo}
+            >
+              정보 수정
+            </CmsButton>
+          )}
+          {onAddStudent && (
+            <CmsButton variant="primary" size="large" width={140} onClick={onAddStudent}>
+              학생 추가
+            </CmsButton>
+          )}
+        </>
+      )}
+    </div>
+  )
+
   const studentTableRowSelection = useMemo(
     () => ({
       selectedRowKeys: selectedStudentKeys,
-      onChange: (keys: Key[]) => setSelectedStudentKeys(keys),
+      onChange: (keys: Key[]) => {
+        if (isStudentListEditMode) {
+          showStudentListEditModeBlockedAlert()
+          return
+        }
+        setSelectedStudentKeys(keys)
+      },
       columnWidth: STUDENT_LIST_TABLE_COL_MIN_WIDTHS[0],
     }),
-    [selectedStudentKeys]
+    [selectedStudentKeys, isStudentListEditMode, showStudentListEditModeBlockedAlert]
   )
 
   const studentColumnsView: ColumnsType<SchoolDetailStudentRow> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', align: 'center', ...studentListTableDataColumnSize(0) },
-      { title: '학생명', dataIndex: 'name', key: 'name', align: 'center', ...studentListTableDataColumnSize(1) },
+      {
+        title: 'No.',
+        dataIndex: 'no',
+        key: 'no',
+        align: 'center',
+        ...studentListTableDataColumnSize(0),
+      },
+      {
+        title: '학생명',
+        dataIndex: 'name',
+        key: 'name',
+        align: 'center',
+        ...studentListTableDataColumnSize(1),
+      },
       {
         title: '성별',
         dataIndex: 'gender',
         key: 'gender',
         align: 'center',
         ...studentListTableDataColumnSize(2),
-        render: (v: StudentGenderKey | undefined) =>
-          v ? (STUDENT_GENDER_LABELS[v] ?? '-') : '-',
+        render: (v: StudentGenderKey | undefined) => (v ? (STUDENT_GENDER_LABELS[v] ?? '-') : '-'),
+      },
+      {
+        title: '생년월일',
+        dataIndex: 'birthDate',
+        key: 'birthDate',
+        align: 'center',
+        ...studentListTableDataColumnSize(3),
+        render: (v: string | undefined) => v ?? '-',
       },
       {
         title: '학급',
         dataIndex: 'gradeClass',
         key: 'gradeClass',
         align: 'center',
-        ...studentListTableDataColumnSize(3),
+        ...studentListTableDataColumnSize(4),
       },
       {
         title: '연락처',
         dataIndex: 'contact',
         key: 'contact',
         align: 'center',
-        ...studentListTableDataColumnSize(4),
-        render: (v: string | undefined) =>
-          v ? (personalInfoRevealed ? v : MASKING_POLICY.phone(v)) : '-',
+        ...studentListTableDataColumnSize(5),
+        render: (v: string | undefined) => v ?? '-',
       },
       {
         title: '이메일',
@@ -308,16 +493,15 @@ export function SchoolDetailStudentListSection({
         key: 'email',
         align: 'center',
         ellipsis: true,
-        ...studentListTableDataColumnSize(5),
-        render: (v: string | undefined) =>
-          v ? (personalInfoRevealed ? v : MASKING_POLICY.email(v)) : '-',
+        ...studentListTableDataColumnSize(6),
+        render: (v: string | undefined) => v ?? '-',
       },
       {
         title: '강의 출석 내역',
         dataIndex: 'lectureAttendance',
         key: 'lectureAttendance',
         align: 'center',
-        ...studentListTableDataColumnSize(6),
+        ...studentListTableDataColumnSize(7),
         onCell: () => ({ className: 'school-detail-modal__td-lecture-attendance' }),
         render: (v: string | undefined, record: SchoolDetailStudentRow) => (
           <button
@@ -329,28 +513,19 @@ export function SchoolDetailStudentListSection({
           </button>
         ),
       },
-      {
-        title: '과제 제출 내역',
-        key: 'assignment',
-        align: 'center',
-        ...studentListTableDataColumnSize(7),
-        render: (_: unknown, record: SchoolDetailStudentRow) => (
-          <CmsButton
-            variant="default"
-            size="large"
-            onClick={() => openAssignmentSubmission(record)}
-          >
-            내역 보기
-          </CmsButton>
-        ),
-      },
     ],
-    [openLectureAttendance, openAssignmentSubmission, personalInfoRevealed]
+    [openLectureAttendance]
   )
 
   const studentColumnsEdit: ColumnsType<StudentListFormStudent> = useMemo(
     () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', align: 'center', ...studentListTableDataColumnSize(0) },
+      {
+        title: 'No.',
+        dataIndex: 'no',
+        key: 'no',
+        align: 'center',
+        ...studentListTableDataColumnSize(0),
+      },
       {
         title: '학생명',
         key: 'name',
@@ -361,7 +536,9 @@ export function SchoolDetailStudentListSection({
             control={control}
             name={`students.${index}.name`}
             render={({ field }) => (
-              <Input {...field} size="small" className="school-detail-modal__cell-input" />
+              <StudentListEditCell>
+                <CmsInput {...field} inputSize="medium" width="100%" />
+              </StudentListEditCell>
             )}
           />
         ),
@@ -376,16 +553,36 @@ export function SchoolDetailStudentListSection({
             control={control}
             name={`students.${index}.gender`}
             render={({ field }) => (
-              <Select
-                {...field}
-                size="small"
-                className="school-detail-modal__filter-select"
-                options={[
-                  { value: 'male', label: '남' },
-                  { value: 'female', label: '여' },
-                ]}
-                classNames={{ root: 'school-detail-modal__student-table-gender-select' }}
-              />
+              <StudentListEditCell>
+                <CmsRadio.Group
+                  {...field}
+                  size="medium"
+                  options={[...STUDENT_GENDER_EDIT_OPTIONS]}
+                  className="school-detail-student-list-section__gender-radios"
+                />
+              </StudentListEditCell>
+            )}
+          />
+        ),
+      },
+      {
+        title: '생년월일',
+        key: 'birthDate',
+        align: 'center',
+        ...studentListTableDataColumnSize(3),
+        render: (_: unknown, __: unknown, index: number) => (
+          <Controller
+            control={control}
+            name={`students.${index}.birthDate`}
+            render={({ field }) => (
+              <StudentListEditCell>
+                <CmsInput
+                  {...field}
+                  inputSize="medium"
+                  width="100%"
+                  placeholder="YYYY. MM. DD."
+                />
+              </StudentListEditCell>
             )}
           />
         ),
@@ -394,13 +591,22 @@ export function SchoolDetailStudentListSection({
         title: '학급',
         key: 'gradeClass',
         align: 'center',
-        ...studentListTableDataColumnSize(3),
+        ...studentListTableDataColumnSize(4),
         render: (_: unknown, __: unknown, index: number) => (
           <Controller
             control={control}
             name={`students.${index}.gradeClass`}
             render={({ field }) => (
-              <Input {...field} size="small" className="school-detail-modal__cell-input" />
+              <StudentListEditCell>
+                <CmsSelect
+                  {...field}
+                  inputSize="medium"
+                  width="100%"
+                  withAllOption={false}
+                  options={STUDENT_GRADE_CLASS_OPTIONS}
+                  getPopupContainer={() => document.body}
+                />
+              </StudentListEditCell>
             )}
           />
         ),
@@ -409,13 +615,15 @@ export function SchoolDetailStudentListSection({
         title: '연락처',
         key: 'contact',
         align: 'center',
-        ...studentListTableDataColumnSize(4),
+        ...studentListTableDataColumnSize(5),
         render: (_: unknown, __: unknown, index: number) => (
           <Controller
             control={control}
             name={`students.${index}.contact`}
             render={({ field }) => (
-              <Input {...field} size="small" className="school-detail-modal__cell-input" />
+              <StudentListEditCell>
+                <CmsInput {...field} inputSize="medium" width="100%" />
+              </StudentListEditCell>
             )}
           />
         ),
@@ -424,13 +632,15 @@ export function SchoolDetailStudentListSection({
         title: '이메일',
         key: 'email',
         align: 'center',
-        ...studentListTableDataColumnSize(5),
+        ...studentListTableDataColumnSize(6),
         render: (_: unknown, __: unknown, index: number) => (
           <Controller
             control={control}
             name={`students.${index}.email`}
             render={({ field }) => (
-              <Input {...field} size="small" className="school-detail-modal__cell-input" />
+              <StudentListEditCell>
+                <CmsInput {...field} inputSize="medium" width="100%" />
+              </StudentListEditCell>
             )}
           />
         ),
@@ -440,191 +650,70 @@ export function SchoolDetailStudentListSection({
         dataIndex: 'lectureAttendance',
         key: 'lectureAttendance',
         align: 'center',
-        ...studentListTableDataColumnSize(6),
+        ...studentListTableDataColumnSize(7),
         onCell: () => ({ className: 'school-detail-modal__td-lecture-attendance' }),
         render: (v: string | undefined) => (
           <button
             type="button"
-            className="school-detail-modal__link-button school-detail-modal__link-button--disabled"
-            onClick={() => {}}
-            disabled
+            className="school-detail-modal__link-button"
+            onClick={showStudentListEditModeBlockedAlert}
           >
             {formatLectureAttendanceCellDisplay(v)}
           </button>
         ),
       },
-      {
-        title: '과제 제출 내역',
-        key: 'assignment',
-        align: 'center',
-        ...studentListTableDataColumnSize(7),
-        render: () => (
-          <CmsButton variant="default" size="large" disabled>
-            내역 보기
-          </CmsButton>
-        ),
-      },
     ],
-    [control]
+    [control, showStudentListEditModeBlockedAlert]
   )
 
   return (
-    <div className="school-detail-student-list-section">
-      <div className="school-detail-student-list-section__filters participating-institutions-section__filters program-progress-tab__filters">
-        <Row gutter={[12, 12]} align="bottom" wrap className="program-progress-tab__filter-row">
-          <Col className="program-progress-tab__filter-col school-detail-student-list-section__filter-col school-detail-student-list-section__filter-col--name">
-            <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
-              <span className="program-progress-tab__filter-label">학생명</span>
-              <Input
-                placeholder="학생명을 입력하세요"
-                value={localStudentName}
-                onChange={e => setLocalStudentName(e.target.value)}
-                allowClear
-                className="participating-institutions-section__filter-input school-detail-student-list-section__filter-input"
-              />
-            </div>
-          </Col>
-          <Col className="program-progress-tab__filter-col school-detail-student-list-section__filter-col school-detail-student-list-section__filter-col--gender">
-            <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
-              <span className="program-progress-tab__filter-label">성별</span>
-              <Select
-                placeholder="전체"
-                value={filters.studentGender === 'all' ? undefined : filters.studentGender}
-                onChange={v => setFilter('studentGender', v ?? 'all')}
-                allowClear
-                options={GENDER_FILTER_OPTIONS}
-                getPopupContainer={() => document.body}
-                rootClassName="school-detail-student-list-section__filter-select"
-              />
-            </div>
-          </Col>
-          <Col className="program-progress-tab__filter-col school-detail-student-list-section__filter-col school-detail-student-list-section__filter-col--class">
-            <div className="program-progress-tab__filter-field participating-institutions-section__filter-field--label-top">
-              <span className="program-progress-tab__filter-label">학급</span>
-              <Select
-                placeholder="전체"
-                value={filters.studentClass === 'all' ? undefined : filters.studentClass}
-                onChange={v => setFilter('studentClass', v ?? 'all')}
-                allowClear
-                options={studentClassOptions}
-                getPopupContainer={() => document.body}
-                rootClassName="school-detail-student-list-section__filter-select"
-              />
-            </div>
-          </Col>
-          <Col className="program-progress-tab__filter-col--btn school-detail-student-list-section__filter-col--btn">
-            <FilterSearchButton onClick={handleStudentSearch} />
-          </Col>
-        </Row>
-      </div>
-
-      <div className="participating-institutions-section__divider" />
-
-      <div className="school-detail-modal__students">
-        <div className="school-detail-modal__student-table-header">
-          <div className="school-detail-modal__student-table-heading">
-            <span className="school-detail-modal__student-table-title">참여 학생 목록</span>
-            <span className="school-detail-modal__table-description">총 {displayCount}건</span>
-          </div>
-          <div className="school-detail-modal__student-table-actions">
-            {isStudentListEditMode ? (
-              <>
-                <CmsButton variant="secondary" size="large" width={160} onClick={handleStudentListCancel}>
-                  취소
-                </CmsButton>
-                <CmsButton
-                  variant="primary"
-                  size="large" width={160}
-                  disabled={!isDirty}
-                  onClick={handleStudentListSave}
-                >
-                  저장
-                </CmsButton>
-              </>
-            ) : (
-              <>
-                <CmsButton
-                  variant="secondary"
-                  size="large" width={160}
-                  icon={<CertificateIssueIcon />}
-                  className="school-detail-student-list-section__btn-certificate"
-                  onClick={() => window.alert('준비 중입니다.')}
-                >
-                  수료증 발급
-                </CmsButton>
-                {!readOnly ? (
-                  <CmsButton
-                    variant="secondary"
-                    size="large" width={160}
-                    className="school-detail-student-list-section__btn-edit-info"
-                    onClick={
-                      studentListInfoEditComingSoonAlert
-                        ? () => window.alert(STUDENT_LIST_INFO_EDIT_COMING_SOON_ALERT_MESSAGE)
-                        : enterStudentListEditMode
-                    }
-                  >
-                    정보 수정
-                  </CmsButton>
-                ) : (
-                  onEditInfo && (
-                    <CmsButton
-                      variant="secondary"
-                      size="large" width={160}
-                      className="school-detail-student-list-section__btn-edit-info"
-                      onClick={onEditInfo}
-                    >
-                      정보 수정
-                    </CmsButton>
-                  )
-                )}
-                {!readOnly ? (
-                  <CmsButton
-                    variant="primary"
-                    size="large" width={160}
-                    onClick={() => setAddStudentModalOpen(true)}
-                  >
-                    학생 추가
-                  </CmsButton>
-                ) : (
-                  onAddStudent && (
-                    <CmsButton variant="primary" size="large" width={160} onClick={onAddStudent}>
-                      학생 추가
-                    </CmsButton>
-                  )
-                )}
-                <PersonalInfoRevealButton
-                  labelMode="toggle"
-                  revealed={personalInfoRevealed} style={{ minWidth: 180 }}
-                  onClick={handleStudentListPrivacyClick}
-                />
-              </>
-            )}
-          </div>
+    <div
+      className={[
+        'school-detail-student-list-section',
+        isStudentListEditMode && 'school-detail-student-list-section--edit-mode',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <FilterTableLayout
+        className="school-detail-student-list-section__filter-layout"
+        bordered={false}
+        fields={studentListFilterFields}
+        filters={filterTableValues}
+        onFilterChange={handleFilterChange}
+        onSearch={handleFilterSearch}
+        title="참여 학생 목록"
+        description={`총 ${displayCount}건`}
+        actions={studentListToolbarActions}
+      >
+        <div className="school-detail-student-list-section__table-wrap">
+          {isStudentListEditMode ? (
+            <Table
+              rowKey="id"
+              size="middle"
+              pagination={false}
+              rowSelection={studentTableRowSelection}
+              scroll={{ x: STUDENT_LIST_TABLE_SCROLL_X }}
+              tableLayout="fixed"
+              columns={studentColumnsEdit}
+              dataSource={watch('students') ?? []}
+              className="school-detail-modal__student-table school-detail-modal__student-table--edit cms-data-table"
+            />
+          ) : (
+            <Table<SchoolDetailStudentRow>
+              rowKey="id"
+              size="middle"
+              pagination={false}
+              rowSelection={studentTableRowSelection}
+              scroll={{ x: STUDENT_LIST_TABLE_SCROLL_X }}
+              tableLayout="fixed"
+              columns={studentColumnsView}
+              dataSource={filteredStudentList}
+              className="school-detail-modal__student-table cms-data-table"
+            />
+          )}
         </div>
-        {isStudentListEditMode ? (
-          <Table
-            rowKey="id"
-            size="middle"
-            pagination={false}
-            rowSelection={studentTableRowSelection}
-            scroll={{ x: 'max-content' }}
-            columns={studentColumnsEdit}
-            dataSource={watch('students') ?? []}
-            className="school-detail-modal__student-table cms-data-table"
-          />
-        ) : (
-          <Table<SchoolDetailStudentRow>
-            rowKey="id"
-            size="middle"
-            pagination={false}
-            rowSelection={studentTableRowSelection}
-            scroll={{ x: 'max-content' }}
-            columns={studentColumnsView}
-            dataSource={filteredStudentList}
-            className="school-detail-modal__student-table cms-data-table"
-          />
-        )}
-      </div>
+      </FilterTableLayout>
 
       <LectureAttendanceModal
         open={lectureAttendanceModalOpen}
@@ -634,6 +723,7 @@ export function SchoolDetailStudentListSection({
         }}
         student={lectureAttendanceStudent}
         schoolId={schoolId}
+        zIndex={1200}
         savedSessions={
           lectureAttendanceStudent?.id
             ? attendanceSessionsByStudentId[lectureAttendanceStudent.id]
@@ -641,22 +731,16 @@ export function SchoolDetailStudentListSection({
         }
         onSaveAttendance={handleSaveLectureAttendance}
       />
-      <AssignmentSubmissionModal
-        open={assignmentSubmissionModalOpen}
-        onCancel={() => {
-          setAssignmentSubmissionModalOpen(false)
-          setAssignmentSubmissionStudent(null)
-        }}
-        programTitle={programTitle}
-        student={assignmentSubmissionStudent}
-        schoolId={schoolId}
-      />
       <AddStudentModal
         open={addStudentModalOpen}
         onCancel={() => setAddStudentModalOpen(false)}
         onAdd={handleAddStudent}
       />
-      {personalInfoRevealModal}
+      <CertificateBulkIssueReasonModal
+        open={certificateIssueModalOpen}
+        onCancel={handleCertificateIssueModalCancel}
+        applicationIds={certificateIssueStudentId ? [certificateIssueStudentId] : []}
+      />
     </div>
   )
 }

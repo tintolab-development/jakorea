@@ -30,8 +30,71 @@
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
 }
 
+/* 기본 정보 — 진행·교재 / 기관·신청 2개 테이블 박스 + 간격 (시안) */
+.school-detail-fullpage-view__basic-info-tables {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.school-detail-fullpage-view__basic-info-table-wrap {
+  margin-bottom: 0;
+}
+
+/*
+ * 기본 정보 상단 테이블 — 교재명 행(StatusDropdownCell): 54px 고정
+ * Ant Table(참여 기관 목록)과 동일 — td 상하 패딩 0 + 트리거 ~49px, 메뉴는 body 포털
+ */
+.school-detail-fullpage-view__basic-info-tables
+  .school-detail-fullpage-view__basic-info-table-wrap:first-child
+  tbody
+  > tr:has(.status-dropdown-cell__status-trigger) {
+  height: 54px;
+  min-height: 54px;
+  max-height: 54px;
+  overflow: visible;
+}
+
+.school-detail-fullpage-view__basic-info-tables
+  .school-detail-fullpage-view__basic-info-table-wrap:first-child
+  tbody
+  > tr:has(.status-dropdown-cell__status-trigger)
+  > th,
+.school-detail-fullpage-view__basic-info-tables
+  .school-detail-fullpage-view__basic-info-table-wrap:first-child
+  tbody
+  > tr:has(.status-dropdown-cell__status-trigger)
+  > td {
+  padding-top: 0;
+  padding-bottom: 0;
+  vertical-align: middle;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.school-detail-fullpage-view__basic-info-tables
+  .school-detail-fullpage-view__basic-info-table-wrap:first-child
+  tbody
+  > tr:has(.status-dropdown-cell__status-trigger--open)
+  > th,
+.school-detail-fullpage-view__basic-info-tables
+  .school-detail-fullpage-view__basic-info-table-wrap:first-child
+  tbody
+  > tr:has(.status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+}
+
 .school-detail-fullpage-view .program-detail-fullpage-modal__info-tab {
   padding: 0;
+}
+
+.school-detail-fullpage-view__application-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .school-detail-fullpage-view__content {
@@ -128,7 +191,8 @@
   margin-right: 12px;
 }
 
-/* 강의 회차별 교육 진행 현황 테이블 — 2열(회차 th | 내용 td), 좌측 200px */
+/* 강의 회차별·안내 사항 테이블 — 2열(라벨 th | 값 td), 좌측 200px */
+.school-detail-fullpage-view__guidance-table tbody th,
 .school-detail-fullpage-view__sessions-table tbody th {
   width: 200px !important;
   min-width: 200px !important;

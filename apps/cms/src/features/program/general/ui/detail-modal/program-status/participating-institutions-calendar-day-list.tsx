@@ -7,6 +7,7 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/data/mock/participating-schools'
+import { formatInstitutionRegionForTableDisplay } from '@/shared/lib/format-institution-region-display'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 
 export type ParticipatingInstitutionsCalendarDayListEvent = {
@@ -72,7 +73,7 @@ export function ParticipatingInstitutionsCalendarDayList({
         sortedEvents.map(ev => {
           const { row, sessionsOnDate, educationGrade } = ev.originalItem
           const color = getColorForEvent(ev)
-          const region = row.region?.trim() || '-'
+          const region = formatInstitutionRegionForTableDisplay(row.region)
           const grade = educationGrade?.trim() || row.educationGrade?.trim() || '-'
           const sessionLine = getPrimaryParticipatingSessionLine(sessionsOnDate)
 

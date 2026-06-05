@@ -4,9 +4,10 @@
  * 목록/캘린더 보기 전환 및 상세 정보 표시
  */
 
+import { CmsRadio } from '@/shared/ui'
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Radio, Space, Typography, Modal, Descriptions, Tag, Button, Empty } from 'antd'
+import { Card, Space, Typography, Modal, Descriptions, Tag, Button, Empty } from 'antd'
 import { CalendarOutlined, TableOutlined } from '@ant-design/icons'
 import { Calendar, Badge } from 'antd'
 import type { Dayjs } from 'dayjs'
@@ -219,19 +220,19 @@ export function InstructorSchedulePage() {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* Phase 0.2.6: 목록/캘린더 보기 전환 */}
         <Card>
-          <Radio.Group
+          <CmsRadio.Group
             value={viewMode}
             onChange={e => setViewMode(e.target.value)}
             buttonStyle="solid"
             size="large"
           >
-            <Radio.Button value="calendar">
+            <CmsRadio.Button value="calendar">
               <CalendarOutlined /> 캘린더
-            </Radio.Button>
-            <Radio.Button value="list">
+            </CmsRadio.Button>
+            <CmsRadio.Button value="list">
               <TableOutlined /> 목록
-            </Radio.Button>
-          </Radio.Group>
+            </CmsRadio.Button>
+          </CmsRadio.Group>
         </Card>
 
         {/* 캘린더 뷰 */}

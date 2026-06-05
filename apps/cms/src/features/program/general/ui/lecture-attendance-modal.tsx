@@ -1,16 +1,22 @@
 /**
  * 강의 출석 내역 모달
  * 명세: docs/design/lecture-attendance-modal-spec.md
- * 공통 ContentModal 사용, 강의 출석 전용 컨텐츠(설명·테이블·푸터 버튼)만 구성
+ * 공통 ContentModal + DetailInfoForm 격자(이중 보더 방지)
  */
 
-import { useMemo, useState, useEffect, useCallback, type ReactNode } from 'react'
-import { Radio } from 'antd'
+import { useMemo, useState, useEffect, useCallback } from 'react'
+
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
+import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import type { Application } from '@/types/domain'
 import type { SchoolDetailStudentRow } from '../model/school-detail-types'
-import type { LectureAttendanceDetail, LectureAttendanceSession, LectureAttendanceStatusKey } from '../model/school-detail-types'
+import type {
+  LectureAttendanceDetail,
+  LectureAttendanceSession,
+  LectureAttendanceStatusKey,
+} from '../model/school-detail-types'
 import {
   getLectureAttendanceDetail,
   getLectureAttendanceDetailForApplication,
@@ -45,6 +51,8 @@ export interface LectureAttendanceModalProps {
   onCorrectAttendance?: () => void
   /** 저장 후 재오픈 시 목업 재계산 대신 이 회차 데이터 사용 */
   savedSessions?: LectureAttendanceSession[] | null
+  /** 풀페이지 모달 위 중첩 시 (기본 Ant Modal z-index) */
+  zIndex?: number
 }
 
 function SessionStatusCell({
@@ -66,14 +74,58 @@ function SessionStatusCell({
     )
   }
   return (
-    <Radio.Group
+    <CmsRadioGroup
       className="lecture-attendance-modal__session-radios"
+      size="medium"
       value={session.status}
       onChange={e => onPick(session.roundNumber, e.target.value as 'attended' | 'absent')}
     >
-      <Radio value="attended">출석</Radio>
-      <Radio value="absent">결석</Radio>
-    </Radio.Group>
+      <CmsRadio value="attended" size="medium">
+        출석
+      </CmsRadio>
+      <CmsRadio value="absent" size="medium">
+        결석
+      </CmsRadio>
+    </CmsRadioGroup>
+  )
+}
+
+function AttendanceRateValue({ attended, held }: { attended: number; held: number }) {
+  return (
+    <span className="lecture-attendance-modal__rate-wrap">
+      <span className="lecture-attendance-modal__rate-count">
+        {attended} / {held}건
+      </span>
+      <span className="lecture-attendance-modal__rate-note">(강의 진행 회차 기준)</span>
+    </span>
+  )
+}
+
+function SessionRoundField({
+  session,
+  editing,
+  onPick,
+}: {
+  session: LectureAttendanceSession
+  editing: boolean
+  onPick: (roundNumber: number, status: 'attended' | 'absent') => void
+}) {
+  const statusView = (
+    <SessionStatusCell session={session} editing={false} onPick={onPick} />
+  )
+  const canEditRound = editing && session.status !== 'not_held'
+
+  return (
+    <DetailInfoForm.Field
+      label={`${session.roundNumber}회차`}
+      view={statusView}
+      edit={
+        canEditRound ? (
+          <SessionStatusCell session={session} editing onPick={onPick} />
+        ) : undefined
+      }
+      readOnlyDisplay={!canEditRound}
+    />
   )
 }
 
@@ -87,6 +139,7 @@ export function LectureAttendanceModal({
   onSaveAttendance,
   onCorrectAttendance,
   savedSessions = null,
+  zIndex,
 }: LectureAttendanceModalProps) {
   const detailBase: LectureAttendanceDetail | null = useMemo(() => {
     if (!open) return null
@@ -166,6 +219,14 @@ export function LectureAttendanceModal({
     </>
   )
 
+  const sessionRowPairs = useMemo(() => {
+    const pairs: [LectureAttendanceSession, LectureAttendanceSession | undefined][] = []
+    for (let i = 0; i < tableSessions.length; i += 2) {
+      pairs.push([tableSessions[i]!, tableSessions[i + 1]])
+    }
+    return pairs
+  }, [tableSessions])
+
   return (
     <ContentModal
       open={open}
@@ -173,80 +234,40 @@ export function LectureAttendanceModal({
       title="강의 출석 내역"
       footer={footer}
       className="lecture-attendance-modal"
+      zIndex={zIndex}
       description={
         detailBase
           ? `**[${detailBase.studentName}]** 학생의 강의 출석 내역입니다.`
           : undefined
       }
     >
-      <div className="lecture-attendance-modal__body">
-        {detailBase ? (
-          <>
-            <div className="lecture-attendance-modal__table-wrap">
-              <table className="lecture-attendance-modal__table" role="table">
-                <tbody>
-                  <tr>
-                    <td className="lecture-attendance-modal__cell lecture-attendance-modal__cell--label">
-                      학생명
-                    </td>
-                    <td className="lecture-attendance-modal__cell lecture-attendance-modal__cell--value">
-                      {detailBase.studentName}
-                    </td>
-                    <td className="lecture-attendance-modal__cell lecture-attendance-modal__cell--label">
-                      출석률
-                    </td>
-                    <td className="lecture-attendance-modal__cell lecture-attendance-modal__cell--value">
-                      <span className="lecture-attendance-modal__rate-wrap">
-                        <span className="lecture-attendance-modal__rate-count">
-                          {attendedDisplay} / {heldDisplay}건
-                        </span>
-                        <span className="lecture-attendance-modal__rate-note">
-                          (강의 진행 회차 기준)
-                        </span>
-                      </span>
-                    </td>
-                  </tr>
-                  {(() => {
-                    const rows: ReactNode[] = []
-                    const list = tableSessions
-                    for (let i = 0; i < list.length; i += 2) {
-                      const s1 = list[i]
-                      const s2 = list[i + 1]
-                      rows.push(
-                        <tr key={i}>
-                          <td className="lecture-attendance-modal__cell lecture-attendance-modal__cell--label">
-                            {s1.roundNumber}회차
-                          </td>
-                          <td className="lecture-attendance-modal__cell lecture-attendance-modal__cell--value">
-                            <SessionStatusCell
-                              session={s1}
-                              editing={editing}
-                              onPick={patchSessionStatus}
-                            />
-                          </td>
-                          <td className="lecture-attendance-modal__cell lecture-attendance-modal__cell--label">
-                            {s2 ? `${s2.roundNumber}회차` : ''}
-                          </td>
-                          <td className="lecture-attendance-modal__cell lecture-attendance-modal__cell--value">
-                            {s2 ? (
-                              <SessionStatusCell
-                                session={s2}
-                                editing={editing}
-                                onPick={patchSessionStatus}
-                              />
-                            ) : null}
-                          </td>
-                        </tr>
-                      )
-                    }
-                    return rows
-                  })()}
-                </tbody>
-              </table>
-            </div>
-          </>
-        ) : null}
-      </div>
+      {detailBase ? (
+        <DetailInfoForm
+          title="강의 출석 내역"
+          hideHeader
+          mode={editing ? 'edit' : 'view'}
+          className="lecture-attendance-modal__detail-form"
+        >
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field label="학생명" view={detailBase.studentName} readOnlyDisplay />
+            <DetailInfoForm.Field
+              label="출석률"
+              view={<AttendanceRateValue attended={attendedDisplay} held={heldDisplay} />}
+              readOnlyDisplay
+            />
+          </DetailInfoForm.Row>
+          {sessionRowPairs.map(([s1, s2]) => (
+            <DetailInfoForm.Row key={`${s1.roundNumber}-${s2?.roundNumber ?? 'solo'}`} type="double">
+              <SessionRoundField session={s1} editing={editing} onPick={patchSessionStatus} />
+              {s2 ? (
+                <SessionRoundField session={s2} editing={editing} onPick={patchSessionStatus} />
+              ) : (
+                <div className="lecture-attendance-modal__session-spacer" aria-hidden />
+              )}
+            </DetailInfoForm.Row>
+          ))}
+        </DetailInfoForm>
+      ) : null}
     </ContentModal>
   )
 }

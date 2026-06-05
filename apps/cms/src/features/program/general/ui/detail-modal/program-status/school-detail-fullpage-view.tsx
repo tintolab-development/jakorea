@@ -9,7 +9,8 @@ import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CmsRadio } from '@/shared/ui'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
 import type {
@@ -20,7 +21,6 @@ import type {
 import { INSTRUCTOR_ROLE_LABELS } from '../../../model/school-detail-types'
 import type {
   ParticipatingSchoolRow,
-  ParticipatingSchoolSession,
   TextbookStatusKey,
 } from '@/data/mock/participating-schools'
 import type {
@@ -65,12 +65,32 @@ import {
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
-import { useAuthStore } from '@/features/auth/model/auth-store'
+import {
+  InstitutionAddressDetailEdit,
+  InstitutionComputerInRoomEdit,
+  InstitutionEducationFormatRadios,
+  InstitutionMealEdit,
+  InstitutionMultilineEdit,
+  InstitutionTeacherEdit,
+  InstitutionWaitingRoomEdit,
+} from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
+import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
+import {
+  formatParticipatingCombinedClassDisplay,
+  type ParticipatingInstitutionEditDraft,
+} from '@/features/program/general/lib/participating-institution-detail-edit'
+import {
+  withProgramDetailTdDivider,
+  ProgramDetailTdSegmentWrap,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import './participating-institutions-section.css'
 import './instructor-assignment-role-tag.css'
 import './instructor-assignment-status-text.css'
+import { ParticipatingInstitutionApplicationInfo } from './participating-institution-application-info'
 import './school-detail-fullpage-view.css'
+import '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info.css'
 
 /** 일반 프로그램 참여 기관 상세 탭 (UJAT 상세 탭과 별도) */
 export const GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS = [
@@ -147,12 +167,6 @@ const ASSIGNMENT_STATUS_LABELS: Record<AssignmentStatusKey, string> = {
 /** 필요 배정 인원(분모) — 상세에 필드 없으면 mock */
 const MOCK_REQUIRED_INSTRUCTORS = 4
 
-const SESSION_STATUS_LABELS: Record<string, string> = {
-  completed: '진행 완료',
-  pending: '진행 대기',
-  not_planned: '미진행 희망',
-}
-
 const TEXTBOOK_STATUS_OPTIONS: TextbookStatusKey[] = ['preparing', 'shipping', 'delivered']
 
 /** td 내 세로 디바이더 — 1×13px, default-BK @ 50%, 양옆 gap 12px */
@@ -173,6 +187,79 @@ function withTdDivider(segments: ReactNode[]) {
   )
 }
 
+function buildCombinedClassViewValue(detail: SchoolDetailForModal): ReactNode {
+  const display = formatParticipatingCombinedClassDisplay(detail)
+  if (display === '미신청') return display
+  const parts = display.split(' | ').map(part => part.trim()).filter(Boolean)
+  if (parts.length <= 1) return parts[0] ?? display
+  return (
+    <ProgramDetailTdSegmentWrap>
+      {withProgramDetailTdDivider(parts)}
+    </ProgramDetailTdSegmentWrap>
+  )
+}
+
+function ParticipatingCombinedClassEditCell({
+  draft,
+  onDraftChange,
+  sameSchoolGradeOptions,
+  canApplyCombinedClass,
+  validationErrors,
+}: {
+  draft: ParticipatingInstitutionEditDraft
+  onDraftChange: (partial: Partial<ParticipatingInstitutionEditDraft>) => void
+  sameSchoolGradeOptions: Array<{ value: string; label: string }>
+  canApplyCombinedClass: boolean
+  validationErrors?: Record<string, string>
+}) {
+  const combinedClassValue = canApplyCombinedClass ? draft.combinedClassApplication : '미신청'
+  const isApplied = combinedClassValue === '신청'
+
+  return (
+    <div className="institution-basic-info__combined-class-edit">
+      <CmsRadio.Group
+        className="institution-basic-info__combined-class-radios"
+        value={combinedClassValue}
+        disabled={!canApplyCombinedClass}
+        onChange={event => {
+          const next = event.target.value as ParticipatingInstitutionEditDraft['combinedClassApplication']
+          onDraftChange({
+            combinedClassApplication: next,
+            combinedClassPartnerSchoolIds:
+              next === '신청' ? draft.combinedClassPartnerSchoolIds : [],
+          })
+        }}
+      >
+        <CmsRadio value="미신청">미신청</CmsRadio>
+        <CmsRadio value="신청">신청</CmsRadio>
+      </CmsRadio.Group>
+      {isApplied ? (
+        <CmsSelect
+          className="institution-basic-info__combined-class-select"
+          inputSize="large"
+          mode="multiple"
+          placeholder="타 학년 선택"
+          value={draft.combinedClassPartnerSchoolIds}
+          options={sameSchoolGradeOptions.map(option => ({
+            label: option.label,
+            value: option.value,
+          }))}
+          onChange={value => {
+            onDraftChange({
+              combinedClassPartnerSchoolIds: Array.isArray(value) ? value.map(String) : [],
+            })
+          }}
+        />
+      ) : null}
+      {validationErrors?.combinedClassPartnerSchoolIds ? (
+        <span className="institution-basic-info__field-error">
+          {validationErrors.combinedClassPartnerSchoolIds}
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
 /** 자택 주소 컬럼 표시: 개인정보 마스킹 대신 앞 두 단위(공백 기준)까지만 노출 */
 function formatHomeAddressToSecondUnit(address?: string): string {
   if (!address) return '-'
@@ -185,6 +272,8 @@ export interface SchoolDetailFullpageViewProps {
   program: Program
   detail: SchoolDetailForModal
   row: ParticipatingSchoolRow
+  /** 합반 대상 lookup — 동일 프로그램 참여 기관 전체 목록 */
+  participatingSchoolList?: ParticipatingSchoolRow[]
   /** URL 쿼리 파라미터와 연동 시 활성 탭 (제공 시 controlled) */
   activeTab?: SchoolDetailTabKey
   /** 탭 변경 시 호출 (쿼리 파라미터 갱신용) */
@@ -205,10 +294,11 @@ export function GeneralParticipatingInstitutionDetailView({
   program,
   detail,
   row,
+  participatingSchoolList = [],
   activeTab: activeTabFromUrl,
   onTabChange,
   onClearSchoolId: _onClearSchoolId,
-  onSaveBasicInfo: _onSaveBasicInfo,
+  onSaveBasicInfo,
   onSaveInstructorInfo,
   savedBasicPatches = {},
   savedInstructorPatches = {},
@@ -250,6 +340,29 @@ export function GeneralParticipatingInstitutionDetailView({
 
   const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
 
+  const applicationInfoEdit = useParticipatingInstitutionDetailEdit({
+    detail: mergedDetail,
+    row,
+    program,
+    participatingSchoolList,
+    onSaveBasicInfo,
+  })
+
+  const {
+    isEditing: isApplicationInfoEditing,
+    draft: applicationInfoDraft,
+    validationErrors: applicationInfoValidationErrors,
+    textbookOptions,
+    textbookDisplay,
+    usesTextbook,
+    canEditTextbook,
+    sameSchoolGradeOptions,
+    canApplyCombinedClass,
+    enterEdit: enterApplicationInfoEdit,
+    saveEdit: saveApplicationInfoEdit,
+    updateDraft: updateApplicationInfoDraft,
+  } = applicationInfoEdit
+
   const programProgressStatus =
     mergedDetail.programProgressStatus ??
     resolveProgramEnrollmentDisplayStatusFromLabel(mergedDetail.programProgressLabel) ??
@@ -279,20 +392,28 @@ export function GeneralParticipatingInstitutionDetailView({
         }))
       : getInstructorRowsForSchool(row.schoolName, instructorList)
 
-  /** 담당 교사 정보: 이름 | Tel | M | E-mail */
+  /** 담당 교사 정보: 담당 교사 : 이름 | Tel : … | M : … | E-mail : … */
   const teacherDisplaySegments = [
     mergedDetail.teacherName &&
-      (privacyMasked ? MASKING_POLICY.name(mergedDetail.teacherName) : mergedDetail.teacherName),
+      `담당 교사 : ${
+        privacyMasked ? MASKING_POLICY.name(mergedDetail.teacherName) : mergedDetail.teacherName
+      }`,
     mergedDetail.teacherPhone &&
-      (privacyMasked ? MASKING_POLICY.phone(mergedDetail.teacherPhone) : mergedDetail.teacherPhone),
+      `Tel : ${
+        privacyMasked ? MASKING_POLICY.phone(mergedDetail.teacherPhone) : mergedDetail.teacherPhone
+      }`,
     mergedDetail.teacherMobile &&
-      (privacyMasked
-        ? maskMobilePhoneMiddleStars(mergedDetail.teacherMobile)
-        : mergedDetail.teacherMobile),
+      `M : ${
+        privacyMasked
+          ? maskMobilePhoneMiddleStars(mergedDetail.teacherMobile)
+          : mergedDetail.teacherMobile
+      }`,
     mergedDetail.teacherEmail &&
-      (privacyMasked
-        ? maskEmailLocalAfterTwoChars(mergedDetail.teacherEmail)
-        : mergedDetail.teacherEmail),
+      `E-mail : ${
+        privacyMasked
+          ? maskEmailLocalAfterTwoChars(mergedDetail.teacherEmail)
+          : mergedDetail.teacherEmail
+      }`,
   ].filter((v): v is string => Boolean(v))
   const mealDisplay =
     mergedDetail.mealNotice === '가능'
@@ -300,10 +421,18 @@ export function GeneralParticipatingInstitutionDetailView({
       : mergedDetail.mealProvided
         ? `제공 | ${mergedDetail.mealNotice ?? ''}`
         : '미제공'
-  const waitingDisplay =
-    mergedDetail.waitingRoomAvailable && mergedDetail.waitingRoomLocation
-      ? `있음 | ${mergedDetail.waitingRoomLocation}`
-      : '없음'
+
+  /** ` | ` 구분 값 → td 디바이더 (안내 사항·성범죄 경력 조회서 등) */
+  const formatGuidanceSegmentValue = (raw?: string): ReactNode => {
+    const text = raw?.trim()
+    if (!text) return '-'
+    const parts = text
+      .split(' | ')
+      .map(s => s.trim())
+      .filter(Boolean)
+    if (parts.length <= 1) return parts[0] ?? '-'
+    return withTdDivider(parts)
+  }
   /** 배정된 강사 테이블용 행 (목 데이터 연동) */
   const assignedRows: AssignedInstructorDisplayRow[] = useMemo(
     () => getAssignedInstructorDisplayRows(instructors),
@@ -593,187 +722,91 @@ export function GeneralParticipatingInstitutionDetailView({
     [privacyMasked]
   )
 
-  /** 기본 정보 — 일반 프로그램 참여 기관 상세 시안 순서 */
-  const basicInfoItems = [
-    {
-      key: 'programProgress',
-      label: '프로그램 진행 현황',
-      children: <ProgramEnrollmentStatusText status={programProgressStatus} />,
-    },
-    {
-      key: 'textbook',
-      label: '교재명',
-      children: (() => {
-        const name = mergedDetail.textbookName ?? '-'
-        const kitsAndQty =
-          mergedDetail.textbookKits != null && mergedDetail.textbookQuantity != null
-            ? `${mergedDetail.textbookKits}키트 (${mergedDetail.textbookQuantity}권)`
-            : mergedDetail.textbookQuantity != null
-              ? `${mergedDetail.textbookQuantity}권`
-              : '-'
-        const status =
-          onTextbookStatusChange != null ? (
-            <StatusDropdownCell<TextbookStatusKey>
-              status={mergedDetail.textbookStatus}
-              statusOptions={TEXTBOOK_STATUS_OPTIONS}
-              renderBadge={s => <TextbookStatusBadge status={s} />}
-              isItemDisabled={(cur, opt) => cur === opt}
-              onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
-              isOpen={textbookStatusDropdownOpen}
-              onOpenChange={setTextbookStatusDropdownOpen}
-            />
-          ) : (
-            <TextbookStatusBadge status={mergedDetail.textbookStatus} />
-          )
-        return (
-          <div className="school-detail-fullpage-view__textbook-value-row">
-            <span className="school-detail-fullpage-view__textbook-value-row__segment">{name}</span>
-            <TdDivider />
-            <span className="school-detail-fullpage-view__textbook-value-row__segment">
-              {kitsAndQty}
-            </span>
-            <TdDivider />
-            <span className="school-detail-fullpage-view__textbook-value-row__status">{status}</span>
-          </div>
-        )
-      })(),
-    },
-    {
-      key: 'combinedClass',
-      label: '합반 신청 여부',
-      children: mergedDetail.combinedClassApplication ?? '미신청',
-    },
-    { key: 'schoolName', label: '신청 기관명', children: mergedDetail.schoolName },
-    { key: 'educationGrade', label: '신청 학년', children: mergedDetail.educationGrade },
-    { key: 'region', label: '기관 주소', children: mergedDetail.region },
-    {
-      key: 'addressDetail',
-      label: '상세 주소',
-      children: mergedDetail.addressDetail ?? '-',
-    },
-    {
-      key: 'classCount',
-      label: '신청 학급 수 및 총 인원',
-      children: withTdDivider([
-        `${mergedDetail.classCount}개 학급`,
-        `총 ${mergedDetail.studentCount}명`,
-      ]),
-    },
-    {
-      key: 'educationFormat',
-      label: '교육 형태',
-      children: mergedDetail.educationFormat ?? '-',
-    },
-    {
-      key: 'teacher',
-      label: '담당 교사 정보',
-      children:
-        teacherDisplaySegments.length > 0
-          ? withTdDivider(teacherDisplaySegments)
-          : '-',
-      span: 2,
-    },
-    {
-      key: 'reason',
-      label: '신청 사유',
-      children: mergedDetail.applicationReason ?? '-',
-      span: 2,
-    },
-    {
-      key: 'other',
-      label: '기타 요청사항',
-      children: mergedDetail.otherRequests ?? '-',
-      span: 2,
-    },
-  ]
+  /** 기본 정보 — 상단(진행·교재) / 하단(기관·신청) 테이블 분리 (시안) */
+  const textbookStatusCell =
+    onTextbookStatusChange != null ? (
+      <StatusDropdownCell<TextbookStatusKey>
+        status={mergedDetail.textbookStatus}
+        statusOptions={TEXTBOOK_STATUS_OPTIONS}
+        renderBadge={s => <TextbookStatusBadge status={s} />}
+        isItemDisabled={(cur, opt) => cur === opt}
+        onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
+        isOpen={textbookStatusDropdownOpen}
+        onOpenChange={setTextbookStatusDropdownOpen}
+      />
+    ) : (
+      <TextbookStatusBadge status={mergedDetail.textbookStatus} />
+    )
 
-  /** 안내 사항: 2열 배치. 왼쪽 열 3개, 오른쪽 열 2개 후 식사는 span 2 */
-  const guidanceItems = [
-    {
-      key: 'computer',
-      label: '강의 공간 내 컴퓨터 여부',
-      children: mergedDetail.computerInRoom ?? '-',
-    },
-    {
-      key: 'waitingRoom',
-      label: '대기실 여부 및 위치',
-      children: withTdDivider(
-        waitingDisplay.includes(' | ') ? waitingDisplay.split(' | ') : [waitingDisplay]
-      ),
-    },
-    {
-      key: 'parking',
-      label: '주차 공간 여부 및 위치',
-      children: mergedDetail.parkingInfo ?? '-',
-    },
-    {
-      key: 'meal',
-      label: '식사 제공 여부 및 안내',
-      children: withTdDivider(
-        mealDisplay.includes(' | ') ? mealDisplay.split(' | ') : [mealDisplay]
-      ),
-    },
-    {
-      key: 'criminalCheck',
-      label: '성범죄 경력 조회서 요청',
-      children: mergedDetail.criminalCheckRequest ?? '-',
-      span: 2,
-    },
-  ]
+  const textbookNameView = textbookDisplay.textbookName
+  const kitsAndQty =
+    textbookDisplay.textbookKits > 0
+      ? `${textbookDisplay.textbookKits}키트 (${textbookDisplay.textbookQuantity}권)`
+      : '-'
+
+  const textbookSelectEditCell =
+    isApplicationInfoEditing && applicationInfoDraft && canEditTextbook ? (
+      <div className="institution-basic-info__field-stack school-detail-fullpage-view__textbook-select-only">
+        <CmsSelect
+          className="institution-basic-info__full-width-control"
+          inputSize="large"
+          placeholder="교재명 선택"
+          value={applicationInfoDraft.textbookId || undefined}
+          options={textbookOptions.map(option => ({
+            label: option.label,
+            value: option.value,
+          }))}
+          onChange={value => {
+            const selected = textbookOptions.find(option => option.value === value)
+            updateApplicationInfoDraft({
+              textbookId: selected?.value ?? String(value ?? ''),
+              textbookName: selected?.textbookName ?? '',
+            })
+          }}
+        />
+        {applicationInfoValidationErrors?.textbookId ||
+        applicationInfoValidationErrors?.textbookName ? (
+          <span className="institution-basic-info__field-error">
+            {applicationInfoValidationErrors.textbookId ??
+              applicationInfoValidationErrors.textbookName}
+          </span>
+        ) : null}
+      </div>
+    ) : null
+
+  const textbookCell =
+    isApplicationInfoEditing && canEditTextbook ? (
+      textbookSelectEditCell
+    ) : (
+      <div className="participating-institution-application-info__textbook-value">
+        <ProgramDetailTdSegmentWrap>
+          {withProgramDetailTdDivider([textbookNameView, kitsAndQty, textbookStatusCell])}
+        </ProgramDetailTdSegmentWrap>
+      </div>
+    )
+
+  const combinedClassCell =
+    isApplicationInfoEditing && applicationInfoDraft ? (
+      <ParticipatingCombinedClassEditCell
+        draft={applicationInfoDraft}
+        onDraftChange={updateApplicationInfoDraft}
+        sameSchoolGradeOptions={sameSchoolGradeOptions}
+        canApplyCombinedClass={canApplyCombinedClass}
+        validationErrors={applicationInfoValidationErrors}
+      />
+    ) : (
+      buildCombinedClassViewValue(mergedDetail)
+    )
+
+  const isApplicationDetailEditing =
+    isApplicationInfoEditing && applicationInfoDraft != null
+
+  const classAndCountDisplay = withProgramDetailTdDivider([
+    `${mergedDetail.classCount}개 학급`,
+    `총 ${mergedDetail.studentCount}명`,
+  ])
 
   const sessions = row.sessions ?? []
-
-  /** 기본 정보·안내 사항을 2열 테이블 행으로 변환 (프로그램 정보 탭과 동일한 table 구조) */
-  const toTableRows = (
-    items: Array<{ key: string; label: string; children: ReactNode; span?: number }>
-  ) => {
-    const rows: React.ReactNode[] = []
-    let i = 0
-    while (i < items.length) {
-      const item = items[i]
-      if (item.span === 2) {
-        rows.push(
-          <tr key={item.key}>
-            <th>{item.label}</th>
-            <td colSpan={3}>{item.children}</td>
-          </tr>
-        )
-        i += 1
-      } else {
-        const next = items[i + 1]
-        if (next && 'span' in next && next.span === 2) {
-          rows.push(
-            <tr key={item.key}>
-              <th>{item.label}</th>
-              <td>{item.children}</td>
-              <th />
-              <td />
-            </tr>
-          )
-          i += 1
-        } else if (next) {
-          rows.push(
-            <tr key={`${item.key}-${next.key}`}>
-              <th>{item.label}</th>
-              <td>{item.children}</td>
-              <th>{next.label}</th>
-              <td>{next.children}</td>
-            </tr>
-          )
-          i += 2
-        } else {
-          rows.push(
-            <tr key={item.key}>
-              <th>{item.label}</th>
-              <td colSpan={3}>{item.children}</td>
-            </tr>
-          )
-          i += 1
-        }
-      }
-    }
-    return rows
-  }
 
   return (
     <div className="school-detail-fullpage-view">
@@ -793,8 +826,17 @@ export function GeneralParticipatingInstitutionDetailView({
               <CmsButton variant="delete" size="large" width={140} onClick={() => {}}>
                 활동 포기
               </CmsButton>
-              <CmsButton variant="primary" size="large" width={140} onClick={() => {}}>
-                정보 수정
+              <CmsButton
+                variant="primary"
+                size="large"
+                width={140}
+                onClick={
+                  isApplicationInfoEditing
+                    ? () => saveApplicationInfoEdit()
+                    : enterApplicationInfoEdit
+                }
+              >
+                {isApplicationInfoEditing ? '정보 저장' : '정보 수정'}
               </CmsButton>
               <PersonalInfoRevealButton
                 labelMode="toggle"
@@ -813,83 +855,142 @@ export function GeneralParticipatingInstitutionDetailView({
 
       <div className="program-detail-fullpage-modal__content school-detail-fullpage-view__content">
         {activeTab === 'application' && (
-          <div className="program-detail-fullpage-modal__info-tab">
-            {showAdminCommentSection ? (
-              <div className="program-detail-fullpage-modal__info-tab-block school-detail-fullpage-view__admin-comment-section">
-                <h3 className="info-section-title">관리자 코멘트</h3>
-                <div
-                  className={`school-detail-fullpage-view__admin-comment-box ${
-                    !mergedDetail.adminComment?.trim()
-                      ? 'school-detail-fullpage-view__admin-comment-box--empty'
-                      : ''
-                  }`}
-                  role="region"
-                  aria-label="관리자 코멘트"
-                >
-                  {mergedDetail.adminComment?.trim()
-                    ? mergedDetail.adminComment
-                    : '작성된 코멘트가 없습니다.'}
-                </div>
-              </div>
-            ) : null}
-            <div className="program-detail-fullpage-modal__info-tab-block">
-              <h3 className="info-section-title">기본 정보</h3>
-              <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
-                <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
-                  <colgroup>
-                    <col style={{ width: '200px' }} />
-                    <col />
-                    <col style={{ width: '200px' }} />
-                    <col />
-                  </colgroup>
-                  <tbody>{toTableRows(basicInfoItems)}</tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="program-detail-fullpage-modal__info-tab-block school-detail-fullpage-view__guidance-block">
-              <h3 className="info-section-title">안내 사항</h3>
-              <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
-                <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
-                  <colgroup>
-                    <col style={{ width: '200px' }} />
-                    <col />
-                    <col style={{ width: '200px' }} />
-                    <col />
-                  </colgroup>
-                  <tbody>{toTableRows(guidanceItems)}</tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="program-detail-fullpage-modal__info-tab-block">
-              <h3 className="info-section-title">교육 진행 일정</h3>
-              <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
-                <table className="program-detail-info-tab__table program-detail-info-tab__table--basic school-detail-fullpage-view__sessions-table">
-                  <colgroup>
-                    <col style={{ width: '200px' }} />
-                    <col />
-                  </colgroup>
-                  <tbody>
-                    {sessions.length === 0 ? (
-                      <tr>
-                        <td colSpan={2} className="school-detail-fullpage-view__sessions-empty">
-                          등록된 회차가 없습니다.
-                        </td>
-                      </tr>
-                    ) : (
-                      sessions.map((session, index) => (
-                        <EducationScheduleTableRow
-                          key={`${session.round}-${session.date}`}
-                          preferenceIndex={index + 1}
-                          session={session}
-                        />
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+          <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__application-tab">
+            <ParticipatingInstitutionApplicationInfo
+              formError={applicationInfoValidationErrors?.form}
+              showAdminComment={showAdminCommentSection}
+              adminComment={mergedDetail.adminComment}
+              isEditing={isApplicationInfoEditing}
+              adminCommentDraft={applicationInfoDraft?.adminComment ?? ''}
+              onAdminCommentDraftChange={
+                isApplicationInfoEditing
+                  ? value => updateApplicationInfoDraft({ adminComment: value })
+                  : undefined
+              }
+              adminCommentError={applicationInfoValidationErrors?.adminComment}
+              programProgressCell={
+                <ProgramEnrollmentStatusText status={programProgressStatus} />
+              }
+              textbookCell={textbookCell}
+              combinedClassCell={combinedClassCell}
+              usesTextbook={usesTextbook}
+              textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
+              schoolName={mergedDetail.schoolName}
+              educationGrade={mergedDetail.educationGrade}
+              region={mergedDetail.region}
+              addressDetail={
+                isApplicationDetailEditing ? (
+                  <InstitutionAddressDetailEdit
+                    value={applicationInfoDraft.addressDetail}
+                    onChange={value => updateApplicationInfoDraft({ addressDetail: value })}
+                    error={applicationInfoValidationErrors?.addressDetail}
+                  />
+                ) : (
+                  mergedDetail.addressDetail ?? '-'
+                )
+              }
+              classAndCount={classAndCountDisplay}
+              educationFormat={
+                isApplicationDetailEditing ? (
+                  <InstitutionEducationFormatRadios
+                    value={applicationInfoDraft.educationFormat}
+                    onChange={value => updateApplicationInfoDraft({ educationFormat: value })}
+                    error={applicationInfoValidationErrors?.educationFormat}
+                  />
+                ) : (
+                  mergedDetail.educationFormat ?? '-'
+                )
+              }
+              teacherInfo={
+                isApplicationDetailEditing ? (
+                  <InstitutionTeacherEdit
+                    name={applicationInfoDraft.teacherName}
+                    phone={applicationInfoDraft.teacherPhone}
+                    mobile={applicationInfoDraft.teacherMobile}
+                    email={applicationInfoDraft.teacherEmail}
+                    onChange={patch => updateApplicationInfoDraft(patch)}
+                    errors={applicationInfoValidationErrors}
+                  />
+                ) : teacherDisplaySegments.length > 0 ? (
+                  withProgramDetailTdDivider(teacherDisplaySegments)
+                ) : (
+                  '-'
+                )
+              }
+              applicationReason={
+                isApplicationDetailEditing ? (
+                  <InstitutionMultilineEdit
+                    value={applicationInfoDraft.applicationReason}
+                    onChange={value => updateApplicationInfoDraft({ applicationReason: value })}
+                    placeholder="신청 사유를 입력해 주세요."
+                    error={applicationInfoValidationErrors?.applicationReason}
+                  />
+                ) : (
+                  mergedDetail.applicationReason ?? '-'
+                )
+              }
+              otherRequests={
+                isApplicationDetailEditing ? (
+                  <InstitutionMultilineEdit
+                    value={applicationInfoDraft.otherRequests}
+                    onChange={value => updateApplicationInfoDraft({ otherRequests: value })}
+                    placeholder="기타 요청사항을 입력해 주세요."
+                    error={applicationInfoValidationErrors?.otherRequests}
+                  />
+                ) : (
+                  mergedDetail.otherRequests ?? '-'
+                )
+              }
+              computerInRoom={
+                isApplicationDetailEditing ? (
+                  <InstitutionComputerInRoomEdit
+                    value={applicationInfoDraft.computerInRoom}
+                    onChange={value => updateApplicationInfoDraft({ computerInRoom: value })}
+                    error={applicationInfoValidationErrors?.computerInRoom}
+                  />
+                ) : (
+                  mergedDetail.computerInRoom ?? '-'
+                )
+              }
+              waitingPlace={
+                isApplicationDetailEditing ? (
+                  <InstitutionWaitingRoomEdit
+                    available={applicationInfoDraft.waitingRoomAvailable}
+                    location={applicationInfoDraft.waitingRoomLocation}
+                    onChange={patch => updateApplicationInfoDraft(patch)}
+                    error={applicationInfoValidationErrors?.waitingRoomLocation}
+                  />
+                ) : (
+                  mergedDetail.waitingRoomLocation ?? '-'
+                )
+              }
+              mealInfo={
+                isApplicationDetailEditing ? (
+                  <InstitutionMealEdit
+                    provided={applicationInfoDraft.mealProvided}
+                    notice={applicationInfoDraft.mealNotice}
+                    onChange={patch => updateApplicationInfoDraft(patch)}
+                    error={applicationInfoValidationErrors?.mealNotice}
+                  />
+                ) : (
+                  mealDisplay
+                )
+              }
+              otherNotes={
+                isApplicationDetailEditing ? (
+                  <InstitutionMultilineEdit
+                    value={applicationInfoDraft.parkingInfo}
+                    onChange={value => updateApplicationInfoDraft({ parkingInfo: value })}
+                    placeholder="주차, 전달사항 등을 입력해 주세요."
+                    error={applicationInfoValidationErrors?.parkingInfo}
+                  />
+                ) : (
+                  mergedDetail.parkingInfo ?? '-'
+                )
+              }
+              criminalCheck={formatGuidanceSegmentValue(mergedDetail.criminalCheckRequest)}
+              sessions={sessions}
+            />
           </div>
         )}
 
@@ -899,7 +1000,6 @@ export function GeneralParticipatingInstitutionDetailView({
               schoolId={detail.id}
               studentCount={detail.studentCount}
               readOnly={false}
-              studentListInfoEditComingSoonAlert
               onViewDetail={() => {}}
               onSaveEdit={() => {}}
             />
@@ -1147,51 +1247,6 @@ export function GeneralParticipatingInstitutionDetailView({
 
       {personalInfoRevealModal}
     </div>
-  )
-}
-
-function padScheduleTimePart(part: string): string {
-  const trimmed = part.trim()
-  const [h, m = '00'] = trimmed.split(':')
-  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`
-}
-
-function EducationScheduleTableRow({
-  preferenceIndex,
-  session,
-}: {
-  preferenceIndex: number
-  session: ParticipatingSchoolSession
-}) {
-  const datePart = session.date.replace(/\./g, '. ')
-  const [startRaw, endRaw] = session.timeRange.split('~')
-  const timePart = `${padScheduleTimePart(startRaw)} ~ ${padScheduleTimePart(endRaw ?? startRaw)}`
-  const statusLabel = session.status
-    ? (SESSION_STATUS_LABELS[session.status] ?? session.status)
-    : '미진행 희망'
-  const statusClass =
-    session.status === 'completed'
-      ? 'school-detail-fullpage-view__session-status--completed'
-      : session.status === 'pending'
-        ? 'school-detail-fullpage-view__session-status--pending'
-        : 'school-detail-fullpage-view__session-status--not_planned'
-
-  return (
-    <tr>
-      <th>{preferenceIndex}지망</th>
-      <td>
-        {withTdDivider([
-          `${datePart}(${session.dayOfWeek}) ${timePart}`,
-          `${session.round}차시`,
-          <span
-            key="status"
-            className={`school-detail-fullpage-view__session-status ${statusClass}`}
-          >
-            {statusLabel}
-          </span>,
-        ])}
-      </td>
-    </tr>
   )
 }
 

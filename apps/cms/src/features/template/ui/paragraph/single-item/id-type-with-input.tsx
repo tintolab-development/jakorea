@@ -1,4 +1,5 @@
-import { Input, Radio } from 'antd'
+import { Input } from 'antd'
+import { CmsRadio } from '@/shared/ui'
 import type { IdTypeWithInputParagraph } from '@/features/template/model/writing-form-draft.schema'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './id-type-with-input.css'
@@ -55,7 +56,7 @@ export function IdTypeWithInputBody({
 
   return (
     <div className="id-type-with-input">
-      <Radio.Group
+      <CmsRadio.Group
         className={[
           'id-type-with-input__radios',
           documentMode ? 'id-type-with-input__radios--document-ui' : '',
@@ -70,11 +71,11 @@ export function IdTypeWithInputBody({
         disabled={documentMode || !isEditMode}
       >
         {options.map(opt => (
-          <Radio key={opt.id} value={opt.id} className="id-type-with-input__radio">
+          <CmsRadio key={opt.id} value={opt.id} className="id-type-with-input__radio">
             {opt.label}
-          </Radio>
+          </CmsRadio>
         ))}
-      </Radio.Group>
+      </CmsRadio.Group>
       <Input
         className="id-type-with-input__input paragraph-input--explanation-body"
         value={inputValueForView}

@@ -76,7 +76,7 @@ function demoParticipatingSchoolSession(
   }
 }
 
-/** 교재 배송 상태별 2건씩(총 6건) — 교육 진행 일정 1·2·3(전부)·4+(2+외 N) 케이스 포함 */
+/** 교재 배송 상태별 2건 + 합반 신청 데모(동일 학교·다른 학년 1쌍) — 총 7건 */
 function buildParticipatingSchoolsByTextbookStatus(): ParticipatingSchoolRow[] {
   const seeds: Array<{
     schoolName: string
@@ -103,6 +103,21 @@ function buildParticipatingSchoolsByTextbookStatus(): ParticipatingSchoolRow[] {
       ],
     },
     {
+      /** 합반 신청 UI 데모 — 강서초등학교 5학년(school-1)과 동일 기관·다른 학년 */
+      schoolName: '강서초등학교',
+      region: '서울특별시 강서구',
+      educationGrade: '3학년',
+      textbookStatus: 'preparing',
+      teacherName: '박서연',
+      classCount: 2,
+      studentCount: 52,
+      instructors: '김서연 외 1명',
+      sessions: [
+        demoParticipatingSchoolSession(1, '2026.01.23', '금', '9:20~10:10'),
+        demoParticipatingSchoolSession(2, '2026.02.13', '금', '10:20~11:10'),
+      ],
+    },
+    {
       schoolName: '마포초등학교',
       region: '서울특별시 마포구',
       educationGrade: '3학년',
@@ -118,10 +133,10 @@ function buildParticipatingSchoolsByTextbookStatus(): ParticipatingSchoolRow[] {
     },
     {
       schoolName: '진월초등학교',
-      region: '광주광역시 광산구 월곡동',
+      region: '광주광역시 남구 광복마을4길 40',
       educationGrade: '5학년',
       textbookStatus: 'preparing',
-      teacherName: '박지훈',
+      teacherName: '이길동',
       classCount: 4,
       studentCount: 124,
       instructors: '최지원 외 3명',

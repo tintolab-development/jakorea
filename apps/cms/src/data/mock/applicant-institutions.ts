@@ -387,6 +387,12 @@ export interface ApplicantInstitutionDetailSavePayload {
   studentCount: number
   addressDetail?: string
   educationType?: string
+  applicationReason?: string
+  otherRequests?: string
+  computerInSpace?: string
+  waitingPlaceGuide?: string
+  mealInfo?: string
+  otherSpecialNotes?: string
   textbookId: string
   textbookName: string
   combinedClassApplication: '신청' | '미신청'
@@ -403,6 +409,12 @@ function buildCombinedClassDetailFields(
     textbookName: payload.textbookName,
     addressDetail: payload.addressDetail,
     educationType: payload.educationType,
+    applicationReason: payload.applicationReason,
+    otherRequests: payload.otherRequests,
+    computerInSpace: payload.computerInSpace,
+    waitingPlaceGuide: payload.waitingPlaceGuide,
+    mealInfo: payload.mealInfo,
+    otherSpecialNotes: payload.otherSpecialNotes,
     combinedClassApplication: payload.combinedClassApplication,
     combinedClassPartnerApplicantIds: isApplied ? payload.combinedClassPartnerApplicantIds : undefined,
     combinedClassPartnerGrades: isApplied && partnerGrades.length > 0 ? partnerGrades : undefined,

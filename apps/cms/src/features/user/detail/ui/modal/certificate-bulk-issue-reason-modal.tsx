@@ -4,9 +4,11 @@
  */
 
 import { useEffect, useState } from 'react'
+import { FEATURE_COMING_SOON_ALERT_MESSAGE, CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import './certificate-bulk-issue-reason-modal.css'
 
 const REASON_OPTIONS = [
@@ -32,6 +34,7 @@ export function CertificateBulkIssueReasonModal({
   certificateDocumentLabel = '수료증/참여인증서',
 }: CertificateBulkIssueReasonModalProps) {
   void applicationIds
+  const { showAlert } = useCmsAlert()
   const [reason, setReason] = useState<string | undefined>(undefined)
 
   useEffect(() => {
@@ -40,10 +43,11 @@ export function CertificateBulkIssueReasonModal({
 
   const handleIssue = () => {
     if (reason == null || String(reason).trim() === '') {
+      showAlert({ title: '안내', content: CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE })
       return
     }
-    window.alert('준비 중입니다.')
     onCancel()
+    showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
   }
 
   return (
@@ -51,21 +55,24 @@ export function CertificateBulkIssueReasonModal({
       open={open}
       onCancel={onCancel}
       title={`${certificateDocumentLabel} 발급 사유`}
-      description={`${certificateDocumentLabel} 발급 사유를 선택해 주세요. 선택한 사유는 발급 문서에 기입됩니다.`}
+      description={`${certificateDocumentLabel} 발급 사유를 선택해 주세요.\n선택한 사유는 발급 문서에 기입됩니다.`}
       width={560}
       footer={
         <>
-          <CmsButton variant="secondary" size="large" width={120} onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" width={120} onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="large" width={120} onClick={handleIssue}>
+          <CmsButton variant="primary" size="medium" width={120} onClick={handleIssue}>
             발급
           </CmsButton>
         </>
       }
     >
       <div className="certificate-bulk-issue-reason-modal__field">
-        <div className="certificate-bulk-issue-reason-modal__label" id="certificate-issue-reason-label">
+        <div
+          className="certificate-bulk-issue-reason-modal__label"
+          id="certificate-issue-reason-label"
+        >
           발급 사유{' '}
           <span className="certificate-bulk-issue-reason-modal__required" aria-hidden>
             *
@@ -77,8 +84,9 @@ export function CertificateBulkIssueReasonModal({
           value={reason}
           onChange={v => setReason(v as string)}
           options={REASON_OPTIONS}
-          inputSize="large"
+          inputSize="medium"
           width="100%"
+          withAllOption={false}
         />
       </div>
     </ContentModal>

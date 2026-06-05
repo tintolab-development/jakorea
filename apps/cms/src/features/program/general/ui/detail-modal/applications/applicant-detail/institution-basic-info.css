@@ -7,12 +7,6 @@
   margin-top: 0;
 }
 
-.institution-basic-info {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
 .institution-basic-info .applicant-institution-basic-info__section {
   margin-top: 0;
 }
@@ -64,30 +58,16 @@
   min-width: 180px;
 }
 
-.institution-basic-info__class-count-edit {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-.institution-basic-info__inline-number {
-  width: 88px;
-}
-
-.institution-basic-info__inline-suffix {
-  margin-right: 8px;
-  color: var(--default-BK, #3d3d3d);
-}
-
-.institution-basic-info__education-type-radios {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
 .institution-basic-info .cms-select,
 .institution-basic-info .ant-input,
 .institution-basic-info .ant-input-number {
   max-width: 100%;
+}
+
+/* 신청 양식 수정 슬롯: 테이블 td 안에서 detail-info-form 한 줄 래퍼가 폭을 채우도록 */
+.institution-basic-info .applicant-institution-basic-info__cell--value
+  > .institution-basic-info__field-stack
+  > .detail-info-form-inputs-wrapper-no-gap {
+  flex: 1 1 0;
+  min-width: 0;
 }

@@ -3,23 +3,9 @@
  * Phase 6.1.2: 강사/봉사자 정산 제출
  */
 
+import { CmsRadio } from '@/shared/ui'
 import { useState, useEffect, useCallback } from 'react'
-import {
-  Modal,
-  Form,
-  Select,
-  InputNumber,
-  Input,
-  Upload,
-  Button,
-  Space,
-  Divider,
-  Typography,
-  Switch,
-  DatePicker,
-  Collapse,
-  Card,
-  Radio } from 'antd'
+import { Modal, Form, Select, InputNumber, Input, Upload, Button, Space, Divider, Typography, Switch, DatePicker, Collapse, Card } from 'antd'
 import { UploadOutlined, CalculatorOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -417,7 +403,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
 
             {/* Phase 0.4.1: 자동 산출 / 수동 입력 모드 선택 */}
             <Form.Item label="입력 방식">
-              <Radio.Group
+              <CmsRadio.Group
                 value={calculationMode}
                 onChange={e => {
                   setCalculationMode(e.target.value)
@@ -434,14 +420,14 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                   }
                 }}
               >
-                <Radio value="auto">
+                <CmsRadio value="auto">
                   <Space>
                     <CalculatorOutlined />
                     <span>자동 산출 (차시/거리 기반)</span>
                   </Space>
-                </Radio>
-                <Radio value="manual">수동 입력</Radio>
-              </Radio.Group>
+                </CmsRadio>
+                <CmsRadio value="manual">수동 입력</CmsRadio>
+              </CmsRadio.Group>
             </Form.Item>
 
             <Divider style={{ margin: '16px 0' }} />

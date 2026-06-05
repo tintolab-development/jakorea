@@ -57,6 +57,10 @@ export interface SchoolDetailForModal {
   criminalCheckRequest?: string
   lectureRound: string
   textbookName?: string
+  /** 교재 선택 id (참여 기관 정보 수정 mock) */
+  textbookId?: string
+  /** 실적 취합용 교재 학년 (합반 시 선택 교재 기준) */
+  textbookGrade?: string
   /** 키트 수 (표시: n키트 (n권)용) */
   textbookKits?: number
   textbookStatus: TextbookStatusKey
@@ -69,6 +73,10 @@ export interface SchoolDetailForModal {
   otherRequests?: string
   /** 합반 신청 여부 (일반 프로그램 참여 기관 상세) */
   combinedClassApplication?: string
+  /** 합반 대상 참여 기관 id (동일 기관명·다른 학년) */
+  combinedClassPartnerSchoolIds?: string[]
+  /** 합반 대상 학년 표시용 */
+  combinedClassPartnerGrades?: string[]
   /** 프로그램 진행 현황 라벨 (레거시 mock 호환) */
   programProgressLabel?: string
   /** 프로그램 진행 현황(7단계) — `ProgramEnrollmentStatusText`용 */
@@ -90,6 +98,8 @@ export interface SchoolDetailStudentRow {
   name: string
   /** 성별: '남' | '여' 표시용 */
   gender?: StudentGenderKey
+  /** 예: 2010. 07. 15. */
+  birthDate?: string
   gradeClass: string
   contact?: string
   email?: string
@@ -106,6 +116,7 @@ export interface StudentListFormStudent {
   no: number
   name: string
   gender?: StudentGenderKey
+  birthDate: string
   gradeClass: string
   contact: string
   email: string

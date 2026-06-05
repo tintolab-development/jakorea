@@ -12,6 +12,7 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/data/mock/participating-schools'
+import { formatInstitutionRegionForTableDisplay } from '@/shared/lib/format-institution-region-display'
 import { SCHEDULE_COLORS } from '../../../../shared/ui/program-schedule-colors'
 import {
   ParticipatingInstitutionsCalendarDayList,
@@ -67,7 +68,7 @@ function getPopoverRowParts(ev: CalendarEvent): ParticipatingCalendarPopoverRowP
   const { row, sessionsOnDate, educationGrade } = ev.originalItem
   return {
     title: row.schoolName?.trim() || '-',
-    location: row.region?.trim() || '-',
+    location: formatInstitutionRegionForTableDisplay(row.region),
     grade: educationGrade?.trim() || row.educationGrade?.trim() || '-',
     sessionLine: getPrimaryParticipatingSessionLine(sessionsOnDate),
   }

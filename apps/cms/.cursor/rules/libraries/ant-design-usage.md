@@ -28,6 +28,22 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 <CmsCheckbox checkboxSize="large">Label</CmsCheckbox>
 ```
 
+## `CmsRadio`
+
+Prefer **`CmsRadio` / `CmsRadio.Group` / `CmsRadio.Button`** from `@/shared/ui` (or `@/shared/ui/cms-radio`) instead of raw Ant `Radio`.
+
+- Group `size`: `large` (default) | `medium` for dense rows.
+- Segmented list/calendar toggles may use `CmsRadio.Button` or `SegmentedTab` per screen spec.
+
+```tsx
+import { CmsRadio } from '@/shared/ui'
+
+<CmsRadio.Group value={value} onChange={e => setValue(e.target.value)}>
+  <CmsRadio value="a">옵션 A</CmsRadio>
+  <CmsRadio value="b">옵션 B</CmsRadio>
+</CmsRadio.Group>
+```
+
 ## Theming
 
 Customize via `ConfigProvider` `theme`; global CSS entry: `src/index.css`.

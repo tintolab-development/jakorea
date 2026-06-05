@@ -5,11 +5,11 @@
  */
 
 import { useState, useEffect, Fragment, type ReactNode } from 'react'
-import { Radio, Select } from 'antd'
+import { Select } from 'antd'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { UserOutlined } from '@ant-design/icons'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CmsRadio } from '@/shared/ui'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import {
@@ -418,7 +418,7 @@ export function ApplicantInstructorDetailModal({
           <span className="applicant-instructor-detail-modal__section-title">
             희망 배정 학교
           </span>
-          <Radio.Group
+          <CmsRadio.Group
             value={selectedSchoolId}
             onChange={(e) => setSelectedSchoolId(e.target.value)}
             className="applicant-instructor-detail-modal__preferred-schools-radio-group"
@@ -448,7 +448,7 @@ export function ApplicantInstructorDetailModal({
                               </span>
                             </th>
                             <td className="applicant-instructor-detail-modal__preferred-schools-cell applicant-instructor-detail-modal__preferred-schools-cell--school">
-                              <Radio
+                              <CmsRadio
                                 value={school.schoolId}
                                 disabled={!school.assignable}
                                 className="applicant-instructor-detail-modal__preferred-school-radio"
@@ -472,7 +472,7 @@ export function ApplicantInstructorDetailModal({
                                     {school.dateRange ?? '-'}
                                   </span>
                                 </span>
-                              </Radio>
+                              </CmsRadio>
                             </td>
                           </Fragment>
                         )
@@ -482,7 +482,7 @@ export function ApplicantInstructorDetailModal({
                 </tbody>
               </table>
             </div>
-          </Radio.Group>
+          </CmsRadio.Group>
         </div>
       )}
 

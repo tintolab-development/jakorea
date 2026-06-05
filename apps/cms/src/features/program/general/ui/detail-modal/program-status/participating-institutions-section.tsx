@@ -27,12 +27,19 @@ import {
   GeneralParticipatingInstitutionDetailView,
   type GeneralParticipatingInstitutionDetailTabKey,
 } from './general-participating-institution-detail-view'
+import {
+  PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+  PARTICIPATING_INSTITUTIONS_TABLE_MIN_SCROLL_X,
+  PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH,
+  PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE,
+} from '../../../lib/participating-institutions-table'
+import { formatInstitutionRegionForTableDisplay } from '@/shared/lib/format-institution-region-display'
 import { getSchoolDetailByRow } from '../../../lib/school-detail-mock'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 import type { Program } from '@/types/domain'
 import type { ParticipatingInstitutionsFilters } from '../../../hooks/use-participating-institutions-params'
 import { participatingInstitutionsFilterFields } from '../../../lib/participating-institutions-filter-fields'
-import { PARTICIPATING_INSTITUTIONS_TABLE_MIN_SCROLL_X } from '../../../lib/participating-institutions-table'
+import { programUsesTextbook } from '../../../lib/participating-institution-textbook'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import './participating-institutions-section.css'
@@ -184,6 +191,7 @@ export function ParticipatingInstitutionsSection({
   })
 
   const {
+    schoolList,
     filteredSchools,
     selectedSchoolForDetail,
     setSelectedSchoolForDetail,
@@ -223,6 +231,16 @@ export function ParticipatingInstitutionsSection({
     setViewMode('list')
   }
 
+  const showTextbookFeatures = program ? programUsesTextbook(program) : true
+
+  const filterFields = useMemo(
+    () =>
+      showTextbookFeatures
+        ? participatingInstitutionsFilterFields
+        : participatingInstitutionsFilterFields.filter(field => field.key !== 'textbookStatus'),
+    [showTextbookFeatures]
+  )
+
   const columns: ColumnsType<ParticipatingSchoolRow> = useMemo(
     () => [
       {
@@ -245,11 +263,17 @@ export function ParticipatingInstitutionsSection({
         dataIndex: 'region',
         key: 'region',
         width: 200,
+        render: (region: string | undefined) => formatInstitutionRegionForTableDisplay(region),
       },
       {
         title: '교육 진행 일정',
         key: 'sessions',
-        width: 480,
+        width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+        minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+        className: 'participating-institutions-section__th-sessions',
+        onHeaderCell: () => ({
+          className: 'participating-institutions-section__th-sessions',
+        }),
         onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
         render: (_: unknown, record: ParticipatingSchoolRow) => {
           const sessions = record.sessions ?? []
@@ -276,26 +300,31 @@ export function ParticipatingInstitutionsSection({
           )
         },
       },
-      {
-        title: '교재 배송 현황',
-        dataIndex: 'textbookStatus',
-        key: 'textbookStatus',
-        width: 136,
-        align: 'center',
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-        render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (
-          <StatusDropdownCell<TextbookStatusKey>
-            status={status ?? null}
-            statusOptions={textbookStatusKeys}
-            renderBadge={s => <TextbookStatusBadge status={s} />}
-            isItemDisabled={(cur, opt) => cur === opt}
-            onChange={key => handleTextbookStatusChange(record.id, key)}
-            isOpen={openTextbookDropdownId === record.id}
-            onOpenChange={open => setOpenTextbookDropdownId(open ? record.id : null)}
-            emptyPlaceholder="-"
-          />
-        ),
-      },
+      ...(showTextbookFeatures
+        ? [
+            {
+              title: '교재 배송 현황',
+              dataIndex: 'textbookStatus',
+              key: 'textbookStatus',
+              width: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH,
+              align: 'center' as const,
+              onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+              render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (
+                <StatusDropdownCell<TextbookStatusKey>
+                  status={status ?? null}
+                  statusOptions={textbookStatusKeys}
+                  renderBadge={s => <TextbookStatusBadge status={s} />}
+                  isItemDisabled={(cur, opt) => cur === opt}
+                  onChange={key => handleTextbookStatusChange(record.id, key)}
+                  isOpen={openTextbookDropdownId === record.id}
+                  onOpenChange={open => setOpenTextbookDropdownId(open ? record.id : null)}
+                  emptyPlaceholder="-"
+                  style={PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE}
+                />
+              ),
+            },
+          ]
+        : []),
       {
         title: '교육 학년',
         dataIndex: 'educationGrade',
@@ -327,7 +356,7 @@ export function ParticipatingInstitutionsSection({
         align: 'center',
       },
     ],
-    [handleTextbookStatusChange, openTextbookDropdownId]
+    [handleTextbookStatusChange, openTextbookDropdownId, showTextbookFeatures]
   )
 
   if (selectedRowFromUrl && program) {
@@ -353,11 +382,15 @@ export function ParticipatingInstitutionsSection({
           program={program}
           detail={mergedDetail}
           row={selectedRowFromUrl}
+          participatingSchoolList={schoolList}
           activeTab={schoolTabFromUrl ?? undefined}
           onTabChange={onSchoolTabChange}
           onClearSchoolId={onClearSchoolId ?? (() => {})}
           onSaveBasicInfo={patch => {
-            setSavedBasicPatches(prev => ({ ...prev, [patch.id]: patch }))
+            setSavedBasicPatches(prev => ({
+              ...prev,
+              [patch.id]: { ...prev[patch.id], ...patch },
+            }))
           }}
           onSaveInstructorInfo={(id, instructors) => {
             setSavedInstructorPatches(prev => ({ ...prev, [id]: instructors }))
@@ -377,7 +410,7 @@ export function ParticipatingInstitutionsSection({
       <FilterTableLayout
         className="participating-institutions-section__filter-layout"
         bordered={false}
-        fields={participatingInstitutionsFilterFields}
+        fields={filterFields}
         filters={filterTableValues}
         onFilterChange={handleFilterChange}
         onSearch={handleFilterSearch}
@@ -410,7 +443,7 @@ export function ParticipatingInstitutionsSection({
         {viewMode === 'list' ? (
           <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">
             <Table<ParticipatingSchoolRow>
-              className="cms-data-table participating-institutions-section__table"
+              className="cms-data-table participating-institutions-section__table participating-institutions-section__table--textbook-dropdown"
               rowKey="id"
               size="middle"
               pagination={false}

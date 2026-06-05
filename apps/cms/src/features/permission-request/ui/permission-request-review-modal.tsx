@@ -4,8 +4,9 @@
  * 시니어 개발자 관점: 컴포넌트 분리
  */
 
+import { CmsRadio } from '@/shared/ui'
 import { useState } from 'react'
-import { Modal, Form, Input, DatePicker, Radio, Button, Space, Descriptions, Tag } from 'antd'
+import { Modal, Form, Input, DatePicker, Button, Space, Descriptions, Tag } from 'antd'
 import type { PermissionRequest, ReviewPermissionRequestInput } from '@/types/permission-request'
 import dayjs from 'dayjs'
 
@@ -114,10 +115,10 @@ export function PermissionRequestReviewModal({
         onFinish={handleSubmit}
       >
         <Form.Item label="처리 결정" required>
-          <Radio.Group value={action} onChange={(e) => setAction(e.target.value)}>
-            <Radio value="approve">승인</Radio>
-            <Radio value="reject">거부</Radio>
-          </Radio.Group>
+          <CmsRadio.Group value={action} onChange={(e) => setAction(e.target.value)}>
+            <CmsRadio value="approve">승인</CmsRadio>
+            <CmsRadio value="reject">거부</CmsRadio>
+          </CmsRadio.Group>
         </Form.Item>
 
         {action === 'approve' && (

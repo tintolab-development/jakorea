@@ -6,10 +6,10 @@
  */
 
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { Tabs, Descriptions, Table, Input, Radio } from 'antd'
+import { Tabs, Descriptions, Table, Input } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CmsRadio } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { ColumnsType } from 'antd/es/table'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -319,7 +319,7 @@ export function SchoolDetailModal({
                   control={instructorControl}
                   name={`instructors.${index}.role`}
                   render={({ field }) => (
-                    <Radio.Group
+                    <CmsRadio.Group
                       {...field}
                       options={[
                         { label: INSTRUCTOR_ROLE_LABELS.lead, value: 'lead' },
@@ -474,7 +474,7 @@ export function SchoolDetailModal({
             name="textbookStatus"
             control={control}
             render={({ field }) => (
-              <Radio.Group
+              <CmsRadio.Group
                 {...field}
                 options={textbookStatusOptions}
                 onChange={e => field.onChange(e.target.value)}
@@ -547,7 +547,7 @@ export function SchoolDetailModal({
                     role="radiogroup"
                     aria-label="대기실 여부 및 위치"
                   >
-                    <Radio.Group
+                    <CmsRadio.Group
                       {...radioField}
                       onChange={e => radioField.onChange(e.target.value)}
                       options={[
@@ -591,7 +591,7 @@ export function SchoolDetailModal({
                     role="radiogroup"
                     aria-label="식사 제공 여부 및 안내"
                   >
-                    <Radio.Group
+                    <CmsRadio.Group
                       {...radioField}
                       onChange={e => radioField.onChange(e.target.value)}
                       options={[

@@ -6,14 +6,14 @@
 .applicant-institution-basic-info {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
   margin-top: 32px;
 }
 
 .applicant-institution-basic-info__section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
 }
 
 /** 기본 정보 — 프로그램 승인 현황 테이블과 나머지 필드 테이블 분리 */
@@ -24,7 +24,7 @@
 }
 
 .applicant-institution-basic-info__title {
-  margin: 0;
+  margin: 0 0 10px;
   font-size: 18px;
   font-weight: 700;
   line-height: 140%;

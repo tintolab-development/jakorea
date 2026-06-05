@@ -112,8 +112,13 @@ export type { CmsControlSize } from './cms-control-size'
 export { CmsSelect, CMS_MULTI_SELECT_TAG_COLORS } from './cms-select'
 export type { CmsSelectProps } from './cms-select'
 export type { CmsSelectMultipleOption } from './cms-select-multiple'
-export { CmsRadio, CmsRadioGroup } from './cms-radio'
-export type { CmsRadioProps, CmsRadioGroupProps, CmsRadioSize } from './cms-radio'
+export { CmsRadio, CmsRadioGroup, CmsRadioButton } from './cms-radio'
+export type {
+  CmsRadioProps,
+  CmsRadioGroupProps,
+  CmsRadioSize,
+  CmsRadioButtonProps,
+} from './cms-radio'
 export { CmsCheckbox } from './cms-checkbox'
 export type { CmsCheckboxProps, CmsCheckboxGroupProps, CmsCheckboxSize } from './cms-checkbox'
 export { CmsToggle } from './cms-toggle'
