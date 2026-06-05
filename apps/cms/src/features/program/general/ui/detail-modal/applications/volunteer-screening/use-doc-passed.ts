@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   getGeneralVolunteerDocPassedApplicants,
+  sortGeneralVolunteerDocPassedApplicants,
   type GeneralVolunteerApplicantRow,
 } from '@/data/mock/general-volunteer-applicants-mock'
 import {
@@ -9,7 +10,28 @@ import {
   filterGeneralDocPassedApplicants,
   type GeneralVolunteerDocPassedFilters,
 } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
+import {
+  guardGeneralVolunteerAssignInterview,
+  guardGeneralVolunteerWithdrawActivity,
+} from './general-volunteer-applicant-guard-actions'
+import type { GeneralInterviewAssignConfirmPayload } from './general-volunteer-interview-assign-modal'
 import { useGeneralVolunteerDocPassedColumns } from './doc-passed-columns'
+
+export type GeneralInterviewAssignPickFlow = {
+  type: 'pick'
+  target: GeneralVolunteerApplicantRow
+}
+
+export type GeneralInterviewAssignCompleteFlow = {
+  type: 'complete'
+  applicantName: string
+  mode: 'assign' | 'reassign'
+  payload: GeneralInterviewAssignConfirmPayload
+}
+
+export type GeneralInterviewAssignFlow =
+  | GeneralInterviewAssignPickFlow
+  | GeneralInterviewAssignCompleteFlow
 
 export function useGeneralVolunteerDocPassed({ programId }: { programId: string }) {
   const { showAlert } = useCmsAlert()
@@ -22,6 +44,10 @@ export function useGeneralVolunteerDocPassed({ programId }: { programId: string 
   const [appliedFilters, setAppliedFilters] = useState<GeneralVolunteerDocPassedFilters>(() => ({
     ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS,
   }))
+  const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
+  const [assignFlow, setAssignFlow] = useState<GeneralInterviewAssignFlow | null>(null)
+  const assignFlowRef = useRef(assignFlow)
+  assignFlowRef.current = assignFlow
 
   useEffect(() => {
     setList(getGeneralVolunteerDocPassedApplicants(programId))
@@ -37,53 +63,78 @@ export function useGeneralVolunteerDocPassed({ programId }: { programId: string 
     setAppliedFilters({ ...pendingFilters })
   }, [pendingFilters])
 
-  const tableData = useMemo(
-    () => filterGeneralDocPassedApplicants(list, appliedFilters),
-    [appliedFilters, list]
-  )
+  const tableData = useMemo(() => {
+    const filtered = filterGeneralDocPassedApplicants(list, appliedFilters)
+    return sortGeneralVolunteerDocPassedApplicants(filtered)
+  }, [appliedFilters, list])
 
-  const handleAssignInterview = useCallback(
-    (row: GeneralVolunteerApplicantRow) => {
-      const firstDay = row.interviewAvailability[0]
-      const firstSlot = firstDay?.slots[0]
-      if (!firstDay || !firstSlot) {
-        showAlert({ title: '면접일 배정', content: '배정 가능한 면접 일정이 없습니다.' })
-        return
-      }
-      setList(prev =>
-        prev.map(item =>
-          item.id === row.id
-            ? {
-                ...item,
-                interviewAssignmentStatus: 'assigned',
-                assignedInterviewDateLabel: firstDay.dateLabel,
-                assignedInterviewTime: firstSlot,
-                secondInterviewScreeningStatus: 'waiting',
-              }
-            : item
-        )
-      )
-      showAlert({
-        title: '면접일 배정',
-        content: `${row.name} 봉사자의 면접일이 배정되었습니다. (목 데이터)`,
+  const updateRow = useCallback((id: string, patch: Partial<GeneralVolunteerApplicantRow>) => {
+    setList(prev => prev.map(row => (row.id === id ? { ...row, ...patch } : row)))
+  }, [])
+
+  const handleAssignInterview = useCallback((row: GeneralVolunteerApplicantRow) => {
+    if (!guardGeneralVolunteerAssignInterview(row)) return
+    setAssignFlow({ type: 'pick', target: row })
+  }, [])
+
+  const closeAssignModal = useCallback(() => {
+    setAssignFlow(current => (current?.type === 'pick' ? null : current))
+  }, [])
+
+  const confirmAssignInterview = useCallback(
+    (payload: GeneralInterviewAssignConfirmPayload) => {
+      const flow = assignFlowRef.current
+      if (!flow || flow.type !== 'pick') return
+
+      const { target } = flow
+      const wasAssigned = target.interviewAssignmentStatus === 'assigned'
+      updateRow(target.id, {
+        interviewAssignmentStatus: 'assigned',
+        assignedInterviewDateLabel: payload.dateLabel,
+        assignedInterviewTime: payload.timeRange,
+        secondInterviewScreeningStatus: target.secondInterviewScreeningStatus ?? 'waiting',
+      })
+      setAssignFlow({
+        type: 'complete',
+        applicantName: target.name,
+        mode: wasAssigned ? 'reassign' : 'assign',
+        payload,
       })
     },
-    [showAlert]
+    [updateRow]
   )
 
-  const requestWithdrawActivity = useCallback(
-    (row: GeneralVolunteerApplicantRow) => {
-      setList(prev =>
-        prev.map(item =>
-          item.id === row.id ? { ...item, interviewAssignmentStatus: 'withdrawn' } : item
-        )
-      )
-      showAlert({
-        title: '활동 포기',
-        content: `${row.name} 봉사자가 활동 포기 처리되었습니다.`,
-      })
-    },
-    [showAlert]
+  const closeAssignCompleteModal = useCallback(() => {
+    setAssignFlow(null)
+  }, [])
+
+  const requestWithdrawActivity = useCallback((row: GeneralVolunteerApplicantRow) => {
+    if (!guardGeneralVolunteerWithdrawActivity(row)) return
+    setWithdrawTargetId(row.id)
+  }, [])
+
+  const cancelWithdrawActivity = useCallback(() => {
+    setWithdrawTargetId(null)
+  }, [])
+
+  const confirmWithdrawActivity = useCallback(() => {
+    if (!withdrawTargetId) return
+    const row = list.find(item => item.id === withdrawTargetId)
+    if (!row) {
+      setWithdrawTargetId(null)
+      return
+    }
+    updateRow(withdrawTargetId, { interviewAssignmentStatus: 'withdrawn' })
+    showAlert({
+      title: '활동 포기',
+      content: `${row.name} 봉사자가 활동 포기 처리되었습니다.`,
+    })
+    setWithdrawTargetId(null)
+  }, [list, showAlert, updateRow, withdrawTargetId])
+
+  const withdrawTarget = useMemo(
+    () => (withdrawTargetId ? list.find(row => row.id === withdrawTargetId) : undefined),
+    [list, withdrawTargetId]
   )
 
   const columns = useGeneralVolunteerDocPassedColumns({ onAssignInterview: handleAssignInterview })
@@ -97,6 +148,13 @@ export function useGeneralVolunteerDocPassed({ programId }: { programId: string 
     columns,
     count: tableData.length,
     handleAssignInterview,
+    assignFlow,
+    closeAssignModal,
+    closeAssignCompleteModal,
+    confirmAssignInterview,
     requestWithdrawActivity,
+    cancelWithdrawActivity,
+    confirmWithdrawActivity,
+    withdrawTarget,
   }
 }

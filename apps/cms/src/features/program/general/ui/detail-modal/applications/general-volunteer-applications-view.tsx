@@ -68,7 +68,11 @@ export function GeneralVolunteerApplicationsView({
   return (
     <div className="participant-applications">
       {screenTab === 'vol_doc_passed' ? (
-        <GeneralVolunteerDocPassedSection {...sharedSectionProps} />
+        <GeneralVolunteerDocPassedSection
+          program={program}
+          onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
+          onVolunteerApplicantDetailMetaChange={handleVolunteerApplicantDetailMetaChange}
+        />
       ) : screenTab === 'vol_interview2' ? (
         <GeneralVolunteerInterview2Section {...sharedSectionProps} />
       ) : (

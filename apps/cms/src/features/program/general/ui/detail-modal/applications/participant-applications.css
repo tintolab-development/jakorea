@@ -147,6 +147,14 @@
   .general-volunteer-screening
   .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='documentScreeningStatus'],
+.participant-applications
+  .general-volunteer-doc-passed
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='volunteerName'],
+.participant-applications
+  .general-volunteer-doc-passed
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='interviewAssignmentStatus'],
 .general-instructor-applications
   .applicant-details
   .table-filter-group__fields-inner

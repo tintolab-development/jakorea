@@ -21,6 +21,8 @@ export interface GeneralVolunteerApplicantRow {
   email: string
   contactRaw: string
   emailRaw: string
+  id1365: string
+  scheduleChangeCancelCount: number
   applicationType: GeneralVolunteerApplicationType
   essayIntro: string
   essayEducationExperience: string
@@ -71,6 +73,7 @@ const INTERVIEW_DATE_LABELS = [
   '26. 03. 12(목)',
   '26. 03. 16(월)',
   '26. 03. 17(화)',
+  '26. 03. 23(월)',
 ] as const
 
 const INTERVIEW_SLOTS = [
@@ -108,11 +111,31 @@ function maskEmail(raw: string): string {
   return `${local.slice(0, 2)}***@${domain}`
 }
 
-function buildInterviewAvailability(seed: number): GeneralVolunteerInterviewAvailabilityDay[] {
+function buildInterviewAvailability(
+  seed: number,
+  index: number
+): GeneralVolunteerInterviewAvailabilityDay[] {
   const slots = INTERVIEW_SLOTS[seed % INTERVIEW_SLOTS.length]
   if (slots.length === 0) return []
-  const dateLabel = INTERVIEW_DATE_LABELS[seed % INTERVIEW_DATE_LABELS.length]
-  return [{ dateLabel, slots: [...slots] }]
+
+  const firstDate = INTERVIEW_DATE_LABELS[seed % INTERVIEW_DATE_LABELS.length]
+  const days: GeneralVolunteerInterviewAvailabilityDay[] = [
+    { dateLabel: firstDate, slots: [...slots] },
+  ]
+
+  if (index <= 4) {
+    days.push({
+      dateLabel: '26. 03. 23(월)',
+      slots: ['09:00 ~ 09:30', '14:00 ~ 14:30', '15:00 ~ 15:30'],
+    })
+  }
+
+  return days
+}
+
+function buildId1365(name: string, no: number): string {
+  const romanized = name === '박틴토' ? 'park_tt' : `vol_${no}`
+  return `${romanized}***`
 }
 
 function countInterviewSlots(days: GeneralVolunteerInterviewAvailabilityDay[]): number {
@@ -120,6 +143,7 @@ function countInterviewSlots(days: GeneralVolunteerInterviewAvailabilityDay[]): 
 }
 
 function resolveDocumentStatus(index: number): GeneralDocumentScreeningStatus {
+  if (index === 2) return 'pass'
   if (index <= 4) return 'pending'
   if (index <= 9) return 'pass'
   return 'fail'
@@ -137,8 +161,18 @@ function resolveInterviewAssignmentStatus(
 
 function buildAssignedInterviewFields(
   seed: number,
-  interviewAvailability: GeneralVolunteerInterviewAvailabilityDay[]
+  interviewAvailability: GeneralVolunteerInterviewAvailabilityDay[],
+  index?: number
 ) {
+  if (index === 2) {
+    return {
+      assignedInterviewDateLabel: '26. 03. 23(월)',
+      assignedInterviewTime: '09:00 ~ 09:30',
+      secondInterviewScreeningStatus: 'waiting' as GeneralSecondInterviewScreeningStatus,
+      totalScore: null,
+    }
+  }
+
   const firstDay = interviewAvailability[0]
   const firstSlot = firstDay?.slots[0]
   if (!firstDay || !firstSlot) return {}
@@ -169,7 +203,19 @@ function buildRow(programId: string, index: number): GeneralVolunteerApplicantRo
     index,
     documentScreeningStatus
   )
-  const interviewAvailability = buildInterviewAvailability(seed)
+  const interviewAvailability =
+    index === 2
+      ? ([
+          {
+            dateLabel: '26.03.09(월)',
+            slots: ['15:00 - 15:30', '09:00 - 09:30'],
+          },
+          {
+            dateLabel: '26. 03. 23(월)',
+            slots: ['09:00 ~ 09:30', '14:00 ~ 14:30', '15:00 ~ 15:30'],
+          },
+        ] satisfies GeneralVolunteerInterviewAvailabilityDay[])
+      : buildInterviewAvailability(seed, index)
   const evaluationOptions: GeneralManagerEvaluation[] = ['pass', 'neutral', 'fail', 'unreviewed']
 
   return {
@@ -180,6 +226,8 @@ function buildRow(programId: string, index: number): GeneralVolunteerApplicantRo
     email: maskEmail(emailRaw),
     contactRaw,
     emailRaw,
+    id1365: buildId1365(name, no),
+    scheduleChangeCancelCount: index === 2 ? 1 : seed % 7 === 0 ? 1 : 0,
     applicationType,
     essayIntro: applicationType === 'ujat-graduate' ? '' : `${ESSAY_INTRO} (${name})`,
     essayEducationExperience: applicationType === 'ujat-graduate' ? '' : ESSAY_EDUCATION,
@@ -193,17 +241,20 @@ function buildRow(programId: string, index: number): GeneralVolunteerApplicantRo
     interviewAssignmentStatus,
     programId,
     englishName: `General Volunteer ${no}`,
-    gender: seed % 2 === 0 ? '여성' : '남성',
-    birthDate: `200${seed % 5}.${String(1 + (seed % 12)).padStart(2, '0')}.${String(
-      1 + (seed % 28)
-    ).padStart(2, '0')}`,
-    age: 22 + (seed % 7),
+    gender: index === 2 ? '남성' : seed % 2 === 0 ? '여성' : '남성',
+    birthDate:
+      index === 2
+        ? '2000.09.15'
+        : `200${seed % 5}.${String(1 + (seed % 12)).padStart(2, '0')}.${String(
+            1 + (seed % 28)
+          ).padStart(2, '0')}`,
+    age: index === 2 ? 25 : 22 + (seed % 7),
     universityName: '**대학교',
     major: seed % 2 === 0 ? '경제학과 전공' : '경영학과 전공',
     applicationRoute: ['인스타그램', '학교 안내', '링커리어', '캠퍼스픽'][seed % 4],
     interviewAvailability,
     ...(interviewAssignmentStatus === 'assigned'
-      ? buildAssignedInterviewFields(seed, interviewAvailability)
+      ? buildAssignedInterviewFields(seed, interviewAvailability, index)
       : {}),
   }
 }
@@ -237,13 +288,25 @@ export function getGeneralVolunteerDoc1Applicants(
   )
 }
 
+export function sortGeneralVolunteerDocPassedApplicants(
+  rows: GeneralVolunteerApplicantRow[]
+): GeneralVolunteerApplicantRow[] {
+  return [...rows].sort((a, b) => {
+    const aWithdrawn = a.interviewAssignmentStatus === 'withdrawn' ? 1 : 0
+    const bWithdrawn = b.interviewAssignmentStatus === 'withdrawn' ? 1 : 0
+    if (aWithdrawn !== bWithdrawn) return aWithdrawn - bWithdrawn
+    if (a.interviewSlotCount !== b.interviewSlotCount) {
+      return a.interviewSlotCount - b.interviewSlotCount
+    }
+    return a.no - b.no
+  })
+}
+
 export function getGeneralVolunteerDocPassedApplicants(
   programId: string
 ): GeneralVolunteerApplicantRow[] {
-  return sortGeneralVolunteerByInterviewSlotCount(
-    getGeneralVolunteerApplicants(programId).filter(
-      row => row.documentScreeningStatus === 'pass' && row.interviewAssignmentStatus === 'waiting'
-    )
+  return sortGeneralVolunteerDocPassedApplicants(
+    getGeneralVolunteerApplicants(programId).filter(row => row.documentScreeningStatus === 'pass')
   )
 }
 

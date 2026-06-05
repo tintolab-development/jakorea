@@ -48,13 +48,6 @@ const screeningStatusOptions = [
   ).map(([value, label]) => ({ label, value })),
 ]
 
-const interviewSlotOptions = [
-  { label: '전체', value: ALL },
-  { label: '0개', value: '0' },
-  { label: '1개', value: '1' },
-  { label: '2개 이상', value: '2plus' },
-]
-
 const interviewAssignmentOptions = [
   { label: '전체', value: ALL },
   ...(
@@ -109,18 +102,12 @@ export const DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS: GeneralVolunteerDoc1Filters
 }
 
 export type GeneralVolunteerDocPassedFilters = {
-  appliedProgram: string
-  recruitCategory: string
-  ujatCompletion: string
-  interviewSlotRange: string
+  volunteerName: string
   interviewAssignmentStatus: string
 }
 
 export const DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS: GeneralVolunteerDocPassedFilters = {
-  appliedProgram: ALL,
-  recruitCategory: ALL,
-  ujatCompletion: ALL,
-  interviewSlotRange: ALL,
+  volunteerName: '',
   interviewAssignmentStatus: ALL,
 }
 
@@ -230,32 +217,10 @@ export function buildGeneralVolunteerDocPassedFilterRows(): FilterFieldConfig[][
   return [
     [
       buildGeneralFilterField({
-        key: 'appliedProgram',
-        type: 'select',
-        label: '신청 프로그램',
-        placeholder: '전체',
-        options: appliedProgramOptions,
-      }),
-      buildGeneralFilterField({
-        key: 'recruitCategory',
-        type: 'select',
-        label: '모집 구분',
-        placeholder: '전체',
-        options: recruitCategoryOptions,
-      }),
-      buildGeneralFilterField({
-        key: 'ujatCompletion',
-        type: 'select',
-        label: 'UJAT 수료 여부',
-        placeholder: '전체',
-        options: ujatCompletionOptions,
-      }),
-      buildGeneralFilterField({
-        key: 'interviewSlotRange',
-        type: 'select',
-        label: '면접 가능 일정',
-        placeholder: '전체',
-        options: interviewSlotOptions,
+        key: 'volunteerName',
+        type: 'search',
+        label: '신청 봉사자명',
+        placeholder: '봉사자명을 입력하세요',
       }),
       buildGeneralFilterField({
         key: 'interviewAssignmentStatus',
@@ -346,13 +311,9 @@ export function filterGeneralDocPassedApplicants(
   rows: GeneralVolunteerApplicantRow[],
   filters: GeneralVolunteerDocPassedFilters
 ): GeneralVolunteerApplicantRow[] {
+  const nameQ = filters.volunteerName.trim().toLowerCase()
   return rows.filter(row => {
-    if (!matchesGeneralUjatCompletion(row.applicationType, filters.ujatCompletion)) {
-      return false
-    }
-    if (!matchesGeneralInterviewSlotRange(row.interviewSlotCount, filters.interviewSlotRange)) {
-      return false
-    }
+    if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
     if (
       filters.interviewAssignmentStatus !== GENERAL_VOLUNTEER_FILTER_ALL &&
       row.interviewAssignmentStatus !== filters.interviewAssignmentStatus

@@ -22,6 +22,7 @@ import {
   parseInterviewScheduleMock,
   resolveInterviewAssignModalCalendarState,
   type InterviewAssignSlot,
+  type ParsedInterviewSchedule,
 } from './ujat-interview-assign-schedule-utils'
 import './ujat-volunteer-interview-assign-modal.css'
 
@@ -43,6 +44,8 @@ export type UjatVolunteerInterviewAssignModalProps = {
   programId: string
   allApplicants: UjatVolunteerApplicantRow[]
   mode: 'assign' | 'reassign'
+  /** 프로그램 유형별 스케줄 주입 (미전달 시 programId mock 사용) */
+  schedule?: ParsedInterviewSchedule
   onCancel: () => void
   onConfirm: (payload: UjatInterviewAssignConfirmPayload) => void
 }
@@ -57,10 +60,12 @@ export function UjatVolunteerInterviewAssignModal({
   programId,
   allApplicants,
   mode,
+  schedule: scheduleOverride,
   onCancel,
   onConfirm,
 }: UjatVolunteerInterviewAssignModalProps) {
-  const schedule = useMemo(() => parseInterviewScheduleMock(programId), [programId])
+  const scheduleFromProgramId = useMemo(() => parseInterviewScheduleMock(programId), [programId])
+  const schedule = scheduleOverride ?? scheduleFromProgramId
 
   const assignedDateKeys = useMemo(
     () => getAssignedInterviewDateKeys(allApplicants),

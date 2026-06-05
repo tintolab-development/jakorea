@@ -1,121 +1,243 @@
-import { Descriptions } from 'antd'
-import { CmsButton } from '@/shared/ui'
+import { useCallback, useMemo } from 'react'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
-import {
-  GENERAL_DOCUMENT_SCREENING_STATUS_LABELS,
-  GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS,
-  GENERAL_MANAGER_EVALUATION_LABELS,
-  GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_LABELS,
-  GENERAL_VOLUNTEER_ESSAY_COLUMN_TITLES,
-  formatGeneralVolunteerApplicationType,
-  formatGeneralVolunteerEssayCellValue,
-} from '@/features/program/general/lib/volunteer-screening-constants'
-import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
+import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
+import { CmsButton } from '@/shared/ui'
+import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { GeneralVolunteerApplicantBasicInfo } from './basic-info'
+import { GeneralVolunteerApplicantManagerEvaluationSection } from './manager-evaluation-section'
+import { GeneralVolunteerApplicantInterviewAvailability } from './interview-availability'
+import { GeneralVolunteerApplicantEssaySections } from './essay-sections'
+import { GeneralVolunteerApplicantInterviewEvaluationSection } from './interview-evaluation-section'
+import '@/shared/components/detail-info-form/detail-info-form.css'
+import './detail.css'
 
-export function GeneralVolunteerApplicantDetailView({
-  applicant,
-  variant,
-  onDocumentReject,
-  onDocumentApprove,
-  onAssignInterview,
-  onWithdrawActivity,
-  onInterviewFail,
-  onInterviewPass,
-}: {
+export type GeneralVolunteerApplicantDetailVariant = 'doc_screening' | 'doc_passed' | 'interview2'
+
+type DocScreeningDetailProps = {
+  variant?: 'doc_screening'
   applicant: GeneralVolunteerApplicantRow
-  variant: 'doc_screening' | 'doc_passed' | 'interview2'
-  onDocumentReject?: () => void
-  onDocumentApprove?: () => void
+  onDocumentReject: () => void
+  onDocumentApprove: () => void
+  openManagerDropdown: { rowId: string; manager: 'A' | 'B' } | null
+  setOpenManagerDropdown: (value: { rowId: string; manager: 'A' | 'B' } | null) => void
+  onManagerAEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
+  onManagerBEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
+}
+
+type DocPassedDetailProps = {
+  variant: 'doc_passed'
+  applicant: GeneralVolunteerApplicantRow
   onAssignInterview?: () => void
+  onWithdrawActivity?: () => void
+}
+
+type Interview2DetailProps = {
+  variant: 'interview2'
+  applicant: GeneralVolunteerApplicantRow
   onWithdrawActivity?: () => void
   onInterviewFail?: () => void
   onInterviewPass?: () => void
-}) {
-  return (
-    <div className="general-volunteer-applicant-detail applicant-details">
-      <div className="program-detail-fullpage-modal__header-actions">
-        {variant === 'doc_screening' ? (
-          <>
-            <CmsButton type="button" variant="delete" size="large" width={160} onClick={onDocumentReject}>
-              반려
-            </CmsButton>
-            <CmsButton type="button" variant="secondary" size="large" width={160} onClick={onDocumentApprove}>
-              승인
-            </CmsButton>
-          </>
-        ) : null}
-        {variant === 'doc_passed' ? (
-          <>
-            <CmsButton type="button" variant="delete" size="large" width={160} onClick={onWithdrawActivity}>
+}
+
+export type GeneralVolunteerApplicantDetailViewProps =
+  | DocScreeningDetailProps
+  | DocPassedDetailProps
+  | Interview2DetailProps
+
+function isDocPassedProps(
+  props: GeneralVolunteerApplicantDetailViewProps
+): props is DocPassedDetailProps {
+  return props.variant === 'doc_passed'
+}
+
+function isInterview2Props(
+  props: GeneralVolunteerApplicantDetailViewProps
+): props is Interview2DetailProps {
+  return props.variant === 'interview2'
+}
+
+export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerApplicantDetailViewProps) {
+  const { applicant } = props
+
+  const resolveAccessItem = useCallback(
+    () => `${applicant.name} 봉사자 신청 정보`,
+    [applicant.name]
+  )
+
+  const {
+    personalInfoRevealed,
+    openPersonalInfoRevealConfirm,
+    confirmModal: personalInfoRevealModal,
+  } = usePersonalInfoReveal({
+    resolveAccessItem,
+    resetDeps: [applicant.id],
+    controlMode: 'headerStickyNoop',
+  })
+
+  const assignInterviewLabel = useMemo(() => {
+    if (applicant.interviewAssignmentStatus === 'assigned') return '면접일 재배정'
+    return '면접일 배정'
+  }, [applicant.interviewAssignmentStatus])
+
+  if (isInterview2Props(props)) {
+    const { onWithdrawActivity, onInterviewFail, onInterviewPass } = props
+
+    return (
+      <div className="general-volunteer-applicant-detail">
+        <div className="general-volunteer-applicant-detail__header">
+          <div className="program-detail-fullpage-modal__header-actions">
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              width={160}
+              onClick={onWithdrawActivity}
+            >
               활동 포기
             </CmsButton>
-            <CmsButton type="button" variant="secondary" size="large" width={160} onClick={onAssignInterview}>
-              면접일 배정
-            </CmsButton>
-          </>
-        ) : null}
-        {variant === 'interview2' ? (
-          <>
-            <CmsButton type="button" variant="delete" size="large" width={160} onClick={onWithdrawActivity}>
-              활동 포기
-            </CmsButton>
-            <CmsButton type="button" variant="delete" size="large" width={160} onClick={onInterviewFail}>
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              width={160}
+              onClick={onInterviewFail}
+            >
               면접 불합격
             </CmsButton>
-            <CmsButton type="button" variant="secondary" size="large" width={160} onClick={onInterviewPass}>
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="large"
+              width={160}
+              onClick={onInterviewPass}
+            >
               면접 합격
             </CmsButton>
-          </>
-        ) : null}
+            <PersonalInfoRevealButton
+              labelMode="stickyReveal"
+              revealed={personalInfoRevealed}
+              cmsVariant="primary"
+              cmsSize="large"
+              width={180}
+              onClick={openPersonalInfoRevealConfirm}
+            />
+          </div>
+        </div>
+
+        <div className="general-volunteer-applicant-detail__body applicant-info-section">
+          <GeneralVolunteerApplicantBasicInfo
+            applicant={applicant}
+            maskSensitive={!personalInfoRevealed}
+            statusRow="second_interview"
+          />
+          <GeneralVolunteerApplicantInterviewEvaluationSection applicant={applicant} />
+          <GeneralVolunteerApplicantEssaySections applicant={applicant} />
+        </div>
+
+        {personalInfoRevealModal}
+      </div>
+    )
+  }
+
+  if (isDocPassedProps(props)) {
+    const { onAssignInterview, onWithdrawActivity } = props
+
+    return (
+      <div className="general-volunteer-applicant-detail">
+        <div className="general-volunteer-applicant-detail__header">
+          <div className="program-detail-fullpage-modal__header-actions">
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              width={160}
+              onClick={onWithdrawActivity}
+            >
+              활동 포기
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="large"
+              width={160}
+              onClick={onAssignInterview}
+            >
+              {assignInterviewLabel}
+            </CmsButton>
+            <PersonalInfoRevealButton
+              labelMode="stickyReveal"
+              revealed={personalInfoRevealed}
+              cmsVariant="primary"
+              cmsSize="large"
+              width={180}
+              onClick={openPersonalInfoRevealConfirm}
+            />
+          </div>
+        </div>
+
+        <div className="general-volunteer-applicant-detail__body applicant-info-section">
+          <GeneralVolunteerApplicantBasicInfo
+            applicant={applicant}
+            maskSensitive={!personalInfoRevealed}
+            statusRow="interview_assignment"
+          />
+          <GeneralVolunteerApplicantInterviewAvailability applicant={applicant} />
+          <GeneralVolunteerApplicantEssaySections applicant={applicant} />
+        </div>
+
+        {personalInfoRevealModal}
+      </div>
+    )
+  }
+
+  const {
+    onDocumentReject,
+    onDocumentApprove,
+    openManagerDropdown,
+    setOpenManagerDropdown,
+    onManagerAEvaluationChange,
+    onManagerBEvaluationChange,
+  } = props
+
+  return (
+    <div className="general-volunteer-applicant-detail">
+      <div className="general-volunteer-applicant-detail__header">
+        <div className="program-detail-fullpage-modal__header-actions">
+          <CmsButton type="button" variant="delete" size="large" width={160} onClick={onDocumentReject}>
+            서류 반려
+          </CmsButton>
+          <CmsButton type="button" variant="secondary" size="large" width={160} onClick={onDocumentApprove}>
+            서류 승인
+          </CmsButton>
+          <PersonalInfoRevealButton
+            labelMode="stickyReveal"
+            revealed={personalInfoRevealed}
+            cmsVariant="primary"
+            cmsSize="large"
+            width={180}
+            onClick={openPersonalInfoRevealConfirm}
+          />
+        </div>
       </div>
 
-      <Descriptions bordered column={2} size="middle" className="general-volunteer-applicant-detail__info">
-        <Descriptions.Item label="신청 봉사자명">{applicant.name}</Descriptions.Item>
-        <Descriptions.Item label="연락처">{applicant.contact}</Descriptions.Item>
-        <Descriptions.Item label="이메일">{applicant.email}</Descriptions.Item>
-        <Descriptions.Item label="지원 형태">
-          {formatGeneralVolunteerApplicationType(applicant.applicationType)}
-        </Descriptions.Item>
-        <Descriptions.Item label="담당자 A 평가">
-          {GENERAL_MANAGER_EVALUATION_LABELS[applicant.managerAEvaluation]}
-        </Descriptions.Item>
-        <Descriptions.Item label="담당자 B 평가">
-          {GENERAL_MANAGER_EVALUATION_LABELS[applicant.managerBEvaluation]}
-        </Descriptions.Item>
-        <Descriptions.Item label="1차 서류 심사 현황">
-          {GENERAL_DOCUMENT_SCREENING_STATUS_LABELS[applicant.documentScreeningStatus]}
-        </Descriptions.Item>
-        <Descriptions.Item label="면접일 배정 현황">
-          {GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS[applicant.interviewAssignmentStatus]}
-        </Descriptions.Item>
-        <Descriptions.Item label="면접일">
-          {applicant.assignedInterviewDateLabel ?? '-'}
-        </Descriptions.Item>
-        <Descriptions.Item label="면접 시간">
-          {applicant.assignedInterviewTime ?? '-'}
-        </Descriptions.Item>
-        <Descriptions.Item label="2차 면접 심사 현황">
-          {applicant.secondInterviewScreeningStatus
-            ? GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_LABELS[
-                applicant.secondInterviewScreeningStatus
-              ]
-            : '-'}
-        </Descriptions.Item>
-        <Descriptions.Item label="점수 종합">{applicant.totalScore ?? '-'}</Descriptions.Item>
-      </Descriptions>
-
-      <div className="general-volunteer-applicant-detail__essays">
-        {(Object.keys(GENERAL_VOLUNTEER_ESSAY_COLUMN_TITLES) as Array<
-          keyof typeof GENERAL_VOLUNTEER_ESSAY_COLUMN_TITLES
-        >).map(key => (
-          <section key={key} className="general-volunteer-applicant-detail__essay-section">
-            <h3>{GENERAL_VOLUNTEER_ESSAY_COLUMN_TITLES[key]}</h3>
-            <p>
-              {formatGeneralVolunteerEssayCellValue(applicant.applicationType, applicant[key])}
-            </p>
-          </section>
-        ))}
+      <div className="general-volunteer-applicant-detail__body applicant-info-section">
+        <GeneralVolunteerApplicantBasicInfo
+          applicant={applicant}
+          maskSensitive={!personalInfoRevealed}
+        />
+        <GeneralVolunteerApplicantManagerEvaluationSection
+          applicant={applicant}
+          openManagerDropdown={openManagerDropdown}
+          setOpenManagerDropdown={setOpenManagerDropdown}
+          onManagerAEvaluationChange={onManagerAEvaluationChange}
+          onManagerBEvaluationChange={onManagerBEvaluationChange}
+        />
+        <GeneralVolunteerApplicantInterviewAvailability applicant={applicant} />
+        <GeneralVolunteerApplicantEssaySections applicant={applicant} />
       </div>
+
+      {personalInfoRevealModal}
     </div>
   )
 }

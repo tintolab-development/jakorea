@@ -1,0 +1,180 @@
+.general-volunteer-doc-passed {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/*
+ * 필터 2필드(신청 봉사자명·면접일 배정 현황) + 조회 — 기관 프로그램 260px 칸 규격
+ */
+.filter-table-layout.general-volunteer-doc-passed__filter-layout {
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
+  --general-doc-passed-filter-col-width: min(
+    var(--filter-control-max-width, 260px),
+    calc((100% - var(--filter-field-gap)) / 2)
+  );
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.filter-table-layout.general-volunteer-doc-passed__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.filter-table-layout.general-volunteer-doc-passed__filter-layout .table-filter-group__container {
+  display: grid !important;
+  width: 100%;
+  box-sizing: border-box;
+  gap: var(--table-filter-field-gap);
+  align-items: end;
+  justify-content: start;
+  grid-template-columns:
+    repeat(2, minmax(0, var(--general-doc-passed-filter-col-width))) minmax(0, 1fr) 160px !important;
+}
+
+.filter-table-layout.general-volunteer-doc-passed__filter-layout .table-filter-group__fields-container {
+  display: contents;
+}
+
+.filter-table-layout.general-volunteer-doc-passed__filter-layout .table-filter-group__fields-inner.ant-row {
+  display: contents;
+}
+
+.filter-table-layout.general-volunteer-doc-passed__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.filter-table-layout.general-volunteer-doc-passed__filter-layout .table-filter-group__fields-shell {
+  grid-column: 4;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  justify-self: end;
+}
+
+.filter-table-layout.general-volunteer-doc-passed__filter-layout
+  .table-filter-group__grid-cell,
+.filter-table-layout.general-volunteer-doc-passed__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .unified-filter-card__field,
+.filter-table-layout.general-volunteer-doc-passed__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .labeled-search-input,
+.filter-table-layout.general-volunteer-doc-passed__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .cms-select,
+.filter-table-layout.general-volunteer-doc-passed__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .ant-select {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.general-volunteer-doc-passed__table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.general-volunteer-doc-passed__table-wrap .general-volunteer-doc-passed__table.cms-data-table {
+  overflow-x: visible;
+  min-width: 0;
+  width: 100%;
+}
+
+.general-volunteer-doc-passed__table-wrap
+  .general-volunteer-doc-passed__table.cms-data-table--fluid
+  .ant-table-container {
+  width: 100%;
+  min-width: 0;
+}
+
+.general-volunteer-doc-passed__table-wrap .general-volunteer-doc-passed__table .ant-table-content {
+  overflow-x: hidden !important;
+}
+
+.general-volunteer-doc-passed__table-wrap .general-volunteer-doc-passed__table table.ant-table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+.general-volunteer-doc-passed
+  .clickable-table
+  .ant-table-tbody
+  > tr.ant-table-row:hover:not(.ant-table-row-selected):not(.cms-data-table__row--disabled)
+  > td {
+  background: var(--color-table-row-hover, rgba(1, 161, 175, 0.06)) !important;
+}
+
+.general-volunteer-doc-passed__center-cell {
+  text-align: center !important;
+}
+
+/* 면접일 배정 / 재배정 — 테이블 액션 버튼 (120×40) */
+.general-volunteer-doc-passed__assign-btn.cms-button.ant-btn {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding: 6px 16px !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+  border-radius: var(--8, 8px) !important;
+  border: 1px solid var(--color-mint-01, #01a1af) !important;
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff !important;
+  color: var(--color-mint-01, #01a1af) !important;
+  text-align: center !important;
+  font-family: Pretendard, sans-serif !important;
+  font-size: 14px !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+  line-height: 150% !important;
+  white-space: nowrap;
+}
+
+.general-volunteer-doc-passed__assign-btn.cms-button.ant-btn .cms-button__label {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  line-height: inherit !important;
+  color: inherit !important;
+}
+
+.general-volunteer-doc-passed__assign-btn.cms-button.ant-btn:hover:not(:disabled) {
+  border-color: var(--color-mint-01, #01a1af) !important;
+  color: var(--color-mint-01, #01a1af) !important;
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%), #fff !important;
+}
+
+.general-volunteer-doc-passed__assign-btn.cms-button.ant-btn:disabled {
+  border-color: var(--color-border-input, rgba(61, 61, 61, 0.2)) !important;
+  color: var(--default-BK, #3d3d3d) !important;
+  opacity: 0.4;
+  background: #fff !important;
+  cursor: not-allowed;
+}
