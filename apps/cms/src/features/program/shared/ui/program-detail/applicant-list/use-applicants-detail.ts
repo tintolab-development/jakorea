@@ -33,6 +33,7 @@ import {
   updateApplicantSchoolApprovalStatus,
   patchApplicantSchoolForApprovalStatus,
   type ApplicantApprovalStatusKey,
+  type ApplicantSchoolApprovalNotifyOptions,
   type ApplicantSchoolRow,
 } from '@/data/mock/applicant-institutions'
 import {
@@ -513,6 +514,15 @@ export function useApplicantsDetail({
     rejectionReason,
   })
 
+  const toInstitutionNotifyOptions = (
+    payload: PermissionModalPayload,
+    rejectionReason?: string
+  ): ApplicantSchoolApprovalNotifyOptions => ({
+    notifyTiming: payload.notifyTiming,
+    manualNotifyAt: payload.manualNotifyAt ?? undefined,
+    rejectionReason,
+  })
+
   const confirmBulkInstructorReject = useCallback(
     (payload: PermissionModalPayload) => {
       if (selectedRowKeys.length === 0) {
@@ -552,6 +562,46 @@ export function useApplicantsDetail({
       keys.forEach(id =>
         updateApplicantInstructorApprovalStatus(id, 'approved', notifyOptions)
       )
+      setSelectedRowKeys([])
+    },
+    [selectedRowKeys]
+  )
+
+  const confirmBulkInstitutionReject = useCallback(
+    (payload: PermissionModalPayload) => {
+      if (selectedRowKeys.length === 0) {
+        return
+      }
+      const keys = selectedRowKeys as string[]
+      const notifyOptions = toInstitutionNotifyOptions(payload, payload.reason)
+      setInstitutionList(prev =>
+        prev.map(row =>
+          keys.includes(row.id)
+            ? patchApplicantSchoolForApprovalStatus(row, 'rejected', notifyOptions)
+            : row
+        )
+      )
+      keys.forEach(id => updateApplicantSchoolApprovalStatus(id, 'rejected', notifyOptions))
+      setSelectedRowKeys([])
+    },
+    [selectedRowKeys]
+  )
+
+  const confirmBulkInstitutionApprove = useCallback(
+    (payload: PermissionModalPayload) => {
+      if (selectedRowKeys.length === 0) {
+        return
+      }
+      const keys = selectedRowKeys as string[]
+      const notifyOptions = toInstitutionNotifyOptions(payload)
+      setInstitutionList(prev =>
+        prev.map(row =>
+          keys.includes(row.id)
+            ? patchApplicantSchoolForApprovalStatus(row, 'approved', notifyOptions)
+            : row
+        )
+      )
+      keys.forEach(id => updateApplicantSchoolApprovalStatus(id, 'approved', notifyOptions))
       setSelectedRowKeys([])
     },
     [selectedRowKeys]
@@ -734,6 +784,8 @@ export function useApplicantsDetail({
     handleBulkApprove,
     confirmBulkInstructorReject,
     confirmBulkInstructorApprove,
+    confirmBulkInstitutionReject,
+    confirmBulkInstitutionApprove,
     handleCancelApproval,
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,

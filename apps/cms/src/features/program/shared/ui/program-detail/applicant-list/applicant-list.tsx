@@ -8,6 +8,8 @@ import {
   patchApplicantSchoolForApprovalStatus,
   patchApplicantSchoolForNotificationResend,
   updateApplicantSchoolNotificationResend,
+  updateApplicantSchoolCancelApproval,
+  updateApplicantSchoolCancelRejection,
   type ApplicantSchoolRow,
 } from '@/data/mock/applicant-institutions'
 import {
@@ -61,6 +63,27 @@ import { InstructorBulkRejectCompleteModal } from '@/features/program/shared/ui/
 import { InstructorBulkRejectModal } from '@/features/program/shared/ui/detail-modal/components/instructor-bulk-reject-modal'
 import { InstructorRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/instructor-reject-complete-modal'
 import { InstructorRejectModal } from '@/features/program/shared/ui/detail-modal/components/instructor-reject-modal'
+import { countAssignedInstructors } from '@/features/program/general/lib/institution-assigned-instructor-count'
+import { patchInstitutionForCancelApproval } from '@/features/program/general/lib/institution-cancel-approval'
+import {
+  patchInstitutionForCancelRejection,
+  toInstitutionCancelRejectionNotifyOptions,
+} from '@/features/program/general/lib/institution-cancel-rejection'
+import { InstitutionBulkApproveModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-approve-modal'
+import { InstitutionBulkApproveCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-approve-complete-modal'
+import { InstitutionBulkRejectModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-reject-modal'
+import { InstitutionBulkRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-reject-complete-modal'
+import { InstitutionApproveModal } from '@/features/program/shared/ui/detail-modal/components/institution-approve-modal'
+import { InstitutionApprovalCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-approval-complete-modal'
+import { InstitutionRejectModal } from '@/features/program/shared/ui/detail-modal/components/institution-reject-modal'
+import { InstitutionRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-reject-complete-modal'
+import { InstitutionCancelApprovalModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-modal'
+import { InstitutionCancelApprovalCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-complete-modal'
+import {
+  InstitutionCancelRejectModal,
+  type InstitutionCancelRejectionConfirmPayload,
+} from '@/features/program/shared/ui/detail-modal/components/institution-cancel-reject-modal'
+import { InstitutionCancelRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-reject-complete-modal'
 import { useApplicantsDetail } from './use-applicants-detail'
 import type {
   ApplicantListMenu,
@@ -127,6 +150,8 @@ export function ApplicantList({
     handleBulkApprove,
     confirmBulkInstructorReject,
     confirmBulkInstructorApprove,
+    confirmBulkInstitutionReject,
+    confirmBulkInstitutionApprove,
     handleCancelApproval,
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,
@@ -194,9 +219,51 @@ export function ApplicantList({
     subjectKind: ApplicantNotificationResendSubjectKind
     approvalStatus: ApplicantNotificationResendApprovalStatus
   } | null>(null)
+  const [institutionBulkApproveOpen, setInstitutionBulkApproveOpen] = useState(false)
+  const [institutionBulkApproveCompleteCount, setInstitutionBulkApproveCompleteCount] = useState<
+    number | null
+  >(null)
+  const [institutionBulkRejectOpen, setInstitutionBulkRejectOpen] = useState(false)
+  const [institutionBulkRejectCompleteCount, setInstitutionBulkRejectCompleteCount] = useState<
+    number | null
+  >(null)
+  const [institutionApproveTarget, setInstitutionApproveTarget] = useState<{
+    id: string
+    name: string
+  } | null>(null)
+  const [institutionApprovalComplete, setInstitutionApprovalComplete] = useState<{
+    schoolName: string
+    assignedInstructorCount: number
+  } | null>(null)
+  const [institutionRejectTarget, setInstitutionRejectTarget] = useState<{
+    id: string
+    name: string
+  } | null>(null)
+  const [institutionRejectComplete, setInstitutionRejectComplete] = useState<{
+    schoolName: string
+    rejectionReason: string
+  } | null>(null)
+  const [institutionCancelApprovalTarget, setInstitutionCancelApprovalTarget] = useState<{
+    id: string
+    name: string
+  } | null>(null)
+  const [institutionCancelApprovalComplete, setInstitutionCancelApprovalComplete] = useState<{
+    schoolName: string
+    cancellationReason: string
+  } | null>(null)
+  const [institutionCancelRejectTarget, setInstitutionCancelRejectTarget] = useState<{
+    id: string
+    name: string
+  } | null>(null)
+  const [institutionCancelRejectComplete, setInstitutionCancelRejectComplete] = useState<{
+    schoolName: string
+  } | null>(null)
 
   const useGeneralInstructorBulkActionModal =
     menu === 'instructors' && instructorColumnPreset === 'general-detail'
+
+  const useGeneralInstitutionActionModal =
+    menu === 'institutions' && institutionColumnPreset === 'general-detail'
 
   const useOrganizationInstructorAssignFlow =
     menu === 'instructors' &&
@@ -249,8 +316,36 @@ export function ApplicantList({
     )
   }, [instructorCancelRejectTarget, instructorList, selectedItem])
 
+  const institutionCancelApprovalInstitution = useMemo(() => {
+    if (!institutionCancelApprovalTarget) return null
+    return (
+      institutionList.find(row => row.id === institutionCancelApprovalTarget.id) ??
+      (selectedItem &&
+      'schoolName' in selectedItem &&
+      selectedItem.id === institutionCancelApprovalTarget.id
+        ? (selectedItem as ApplicantSchoolRow)
+        : null)
+    )
+  }, [institutionCancelApprovalTarget, institutionList, selectedItem])
+
+  const institutionCancelRejectInstitution = useMemo(() => {
+    if (!institutionCancelRejectTarget) return null
+    return (
+      institutionList.find(row => row.id === institutionCancelRejectTarget.id) ??
+      (selectedItem &&
+      'schoolName' in selectedItem &&
+      selectedItem.id === institutionCancelRejectTarget.id
+        ? (selectedItem as ApplicantSchoolRow)
+        : null)
+    )
+  }, [institutionCancelRejectTarget, institutionList, selectedItem])
+
   const handleBulkRejectClick = () => {
     if (selectedRowKeys.length === 0) {
+      return
+    }
+    if (useGeneralInstitutionActionModal) {
+      setInstitutionBulkRejectOpen(true)
       return
     }
     if (useGeneralInstructorBulkActionModal) {
@@ -262,6 +357,10 @@ export function ApplicantList({
 
   const handleBulkApproveClick = () => {
     if (selectedRowKeys.length === 0) {
+      return
+    }
+    if (useGeneralInstitutionActionModal) {
+      setInstitutionBulkApproveOpen(true)
       return
     }
     if (useGeneralInstructorBulkActionModal) {
@@ -386,9 +485,14 @@ export function ApplicantList({
           }}
           onBack={() => setSelectedItem(null)}
           onApprove={id => {
+            const row = selectedItem
+            if (row && 'schoolName' in row && row.id === id && useGeneralInstitutionActionModal) {
+              setInstitutionApproveTarget({ id, name: row.schoolName })
+              return
+            }
             setInstitutionList(prev =>
-              prev.map(row =>
-                row.id === id ? patchApplicantSchoolForApprovalStatus(row, 'approved') : row
+              prev.map(r =>
+                r.id === id ? patchApplicantSchoolForApprovalStatus(r, 'approved') : r
               )
             )
             updateApplicantSchoolApprovalStatus(id, 'approved')
@@ -397,9 +501,14 @@ export function ApplicantList({
             }
           }}
           onReject={id => {
+            const row = selectedItem
+            if (row && 'schoolName' in row && row.id === id && useGeneralInstitutionActionModal) {
+              setInstitutionRejectTarget({ id, name: row.schoolName })
+              return
+            }
             setInstitutionList(prev =>
-              prev.map(row =>
-                row.id === id ? patchApplicantSchoolForApprovalStatus(row, 'rejected') : row
+              prev.map(r =>
+                r.id === id ? patchApplicantSchoolForApprovalStatus(r, 'rejected') : r
               )
             )
             updateApplicantSchoolApprovalStatus(id, 'rejected')
@@ -407,8 +516,22 @@ export function ApplicantList({
               setSelectedItem(null)
             }
           }}
-          onCancelApproval={resolveCancelApproval()}
-          onCancelReject={resolveCancelReject()}
+          onCancelApproval={id => {
+            const row = selectedItem
+            if (row && 'schoolName' in row && row.id === id && useGeneralInstitutionActionModal) {
+              setInstitutionCancelApprovalTarget({ id, name: row.schoolName })
+              return
+            }
+            resolveCancelApproval()(id)
+          }}
+          onCancelReject={id => {
+            const row = selectedItem
+            if (row && 'schoolName' in row && row.id === id && useGeneralInstitutionActionModal) {
+              setInstitutionCancelRejectTarget({ id, name: row.schoolName })
+              return
+            }
+            resolveCancelReject()(id)
+          }}
           onResendNotification={handleOpenNotificationResend}
         />
       ) : showIndividualDetail ? (
@@ -536,6 +659,190 @@ export function ApplicantList({
         open={instructorBulkRejectCompleteCount != null}
         selectionCount={instructorBulkRejectCompleteCount ?? 0}
         onClose={() => setInstructorBulkRejectCompleteCount(null)}
+      />
+      <InstitutionBulkRejectModal
+        open={institutionBulkRejectOpen}
+        selectionCount={selectedRowKeys.length}
+        onCancel={() => setInstitutionBulkRejectOpen(false)}
+        onConfirm={payload => {
+          const rejectedCount = selectedRowKeys.length
+          confirmBulkInstitutionReject(payload)
+          setInstitutionBulkRejectOpen(false)
+          setInstitutionBulkRejectCompleteCount(rejectedCount)
+        }}
+      />
+      <InstitutionBulkRejectCompleteModal
+        open={institutionBulkRejectCompleteCount != null}
+        selectionCount={institutionBulkRejectCompleteCount ?? 0}
+        onClose={() => setInstitutionBulkRejectCompleteCount(null)}
+      />
+      <InstitutionBulkApproveModal
+        open={institutionBulkApproveOpen}
+        selectionCount={selectedRowKeys.length}
+        onCancel={() => setInstitutionBulkApproveOpen(false)}
+        onConfirm={payload => {
+          const approvedCount = selectedRowKeys.length
+          confirmBulkInstitutionApprove(payload)
+          setInstitutionBulkApproveOpen(false)
+          setInstitutionBulkApproveCompleteCount(approvedCount)
+        }}
+      />
+      <InstitutionBulkApproveCompleteModal
+        open={institutionBulkApproveCompleteCount != null}
+        selectionCount={institutionBulkApproveCompleteCount ?? 0}
+        onClose={() => setInstitutionBulkApproveCompleteCount(null)}
+      />
+      <InstitutionApproveModal
+        open={institutionApproveTarget != null}
+        schoolName={institutionApproveTarget?.name ?? ''}
+        onCancel={() => setInstitutionApproveTarget(null)}
+        onConfirm={payload => {
+          if (!institutionApproveTarget) return
+          const { id, name } = institutionApproveTarget
+          const notifyOptions = {
+            notifyTiming: payload.notifyTiming,
+            manualNotifyAt: payload.manualNotifyAt,
+          }
+          setInstitutionApproveTarget(null)
+          const sourceRow =
+            institutionList.find(row => row.id === id) ??
+            (selectedItem && 'schoolName' in selectedItem && selectedItem.id === id
+              ? (selectedItem as ApplicantSchoolRow)
+              : null)
+          const patchedRow = sourceRow
+            ? patchApplicantSchoolForApprovalStatus(sourceRow, 'approved', notifyOptions)
+            : null
+          setInstitutionList(prev => {
+            const next = prev.map(row => (row.id === id && patchedRow ? patchedRow : row))
+            const updated = next.find(row => row.id === id)
+            const current = selectedItem
+            if (updated && current && 'schoolName' in current && current.id === id) {
+              setSelectedItem(updated)
+            }
+            return next
+          })
+          updateApplicantSchoolApprovalStatus(id, 'approved', notifyOptions)
+          setInstitutionApprovalComplete({
+            schoolName: name,
+            assignedInstructorCount: countAssignedInstructors(
+              patchedRow?.assignedInstructorNames
+            ),
+          })
+        }}
+      />
+      <InstitutionApprovalCompleteModal
+        open={institutionApprovalComplete != null}
+        schoolName={institutionApprovalComplete?.schoolName ?? ''}
+        assignedInstructorCount={institutionApprovalComplete?.assignedInstructorCount ?? 0}
+        onClose={() => setInstitutionApprovalComplete(null)}
+      />
+      <InstitutionRejectModal
+        open={institutionRejectTarget != null}
+        schoolName={institutionRejectTarget?.name ?? ''}
+        onCancel={() => setInstitutionRejectTarget(null)}
+        onConfirm={payload => {
+          if (!institutionRejectTarget) return
+          const { id, name } = institutionRejectTarget
+          const notifyOptions = {
+            notifyTiming: payload.notifyTiming,
+            manualNotifyAt: payload.manualNotifyAt,
+            rejectionReason: payload.reason,
+          }
+          setInstitutionRejectTarget(null)
+          setInstitutionList(prev => {
+            const next = prev.map(row =>
+              row.id === id
+                ? patchApplicantSchoolForApprovalStatus(row, 'rejected', notifyOptions)
+                : row
+            )
+            const updated = next.find(row => row.id === id)
+            const current = selectedItem
+            if (updated && current && 'schoolName' in current && current.id === id) {
+              setSelectedItem(updated)
+            }
+            return next
+          })
+          updateApplicantSchoolApprovalStatus(id, 'rejected', notifyOptions)
+          setInstitutionRejectComplete({
+            schoolName: name,
+            rejectionReason: payload.reason,
+          })
+        }}
+      />
+      <InstitutionRejectCompleteModal
+        open={institutionRejectComplete != null}
+        schoolName={institutionRejectComplete?.schoolName ?? ''}
+        rejectionReason={institutionRejectComplete?.rejectionReason ?? ''}
+        onClose={() => setInstitutionRejectComplete(null)}
+      />
+      <InstitutionCancelApprovalModal
+        open={institutionCancelApprovalTarget != null}
+        institution={institutionCancelApprovalInstitution}
+        onCancel={() => setInstitutionCancelApprovalTarget(null)}
+        onConfirm={payload => {
+          if (!institutionCancelApprovalTarget) return
+          const { id, name } = institutionCancelApprovalTarget
+          const notifyOptions = {
+            notifyTiming: payload.notifyTiming,
+            manualNotifyAt: payload.manualNotifyAt,
+            rejectionReason: payload.reason,
+          }
+          setInstitutionCancelApprovalTarget(null)
+          setInstitutionList(prev => {
+            const next = prev.map(row =>
+              row.id === id ? patchInstitutionForCancelApproval(row, notifyOptions) : row
+            )
+            const updated = next.find(row => row.id === id)
+            const current = selectedItem
+            if (updated && current && 'schoolName' in current && current.id === id) {
+              setSelectedItem(updated)
+            }
+            return next
+          })
+          updateApplicantSchoolCancelApproval(id, notifyOptions)
+          setInstitutionCancelApprovalComplete({
+            schoolName: name,
+            cancellationReason: payload.reason,
+          })
+        }}
+      />
+      <InstitutionCancelApprovalCompleteModal
+        open={institutionCancelApprovalComplete != null}
+        schoolName={institutionCancelApprovalComplete?.schoolName ?? ''}
+        cancellationReason={institutionCancelApprovalComplete?.cancellationReason ?? ''}
+        onClose={() => setInstitutionCancelApprovalComplete(null)}
+      />
+      <InstitutionCancelRejectModal
+        open={institutionCancelRejectTarget != null}
+        institution={institutionCancelRejectInstitution}
+        onCancel={() => setInstitutionCancelRejectTarget(null)}
+        onConfirm={(payload: InstitutionCancelRejectionConfirmPayload) => {
+          if (!institutionCancelRejectTarget) return
+          const { id, name } = institutionCancelRejectTarget
+          const notifyOptions =
+            payload.variant === 'alreadySent'
+              ? toInstitutionCancelRejectionNotifyOptions(payload)
+              : undefined
+          setInstitutionCancelRejectTarget(null)
+          setInstitutionList(prev => {
+            const next = prev.map(row =>
+              row.id === id ? patchInstitutionForCancelRejection(row, notifyOptions) : row
+            )
+            const updated = next.find(row => row.id === id)
+            const current = selectedItem
+            if (updated && current && 'schoolName' in current && current.id === id) {
+              setSelectedItem(updated)
+            }
+            return next
+          })
+          updateApplicantSchoolCancelRejection(id, notifyOptions)
+          setInstitutionCancelRejectComplete({ schoolName: name })
+        }}
+      />
+      <InstitutionCancelRejectCompleteModal
+        open={institutionCancelRejectComplete != null}
+        schoolName={institutionCancelRejectComplete?.schoolName ?? ''}
+        onClose={() => setInstitutionCancelRejectComplete(null)}
       />
       <InstructorRejectModal
         open={instructorRejectTarget != null}
