@@ -10,23 +10,23 @@ import './program-list.css'
 import { ProgramCalendarView } from './program-calendar-view'
 import {
   programListFilterFields,
-  resolveEconomyProgramListFilterFields,
+  resolveProgramListFilterFields,
 } from './table/program-list-filter-fields'
 import { buildProgramListFilters } from './table/program-list-filter-builder'
 import type { ProgramListProgramMode } from '../model/program-list-program-mode'
-import type { EconomyView } from './table/program-table-column-resolver'
+import type { ProgramListView } from './table/program-table-column-resolver'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { FilterTableLayout } from '@/shared/ui'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { getProgramTablePageConfig, type ProgramTableContext } from './program-table.config'
 
-export type ProgramListTableVariant = 'general' | 'economy'
+export type ProgramListTableVariant = 'general' | 'overview'
 
 export type { ProgramListProgramMode } from '../model/program-list-program-mode'
 
 export type ProgramListConfig = {
   mode?: ProgramListProgramMode
-  view?: EconomyView
+  view?: ProgramListView
   tableType?: 'student' | 'instructor'
   lifecycleStatus?: ProgramLifecycleStatus | null
 }
@@ -65,7 +65,7 @@ export function ProgramList({
   children,
 }: ProgramListProps) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const economyView: EconomyView = config?.view ?? 'ALL'
+  const listView: ProgramListView = config?.view ?? 'ALL'
   const tableType = config?.tableType
   const mode = config?.mode ?? 'general'
   const effectiveLifecycleStatus = config?.lifecycleStatus
@@ -73,16 +73,16 @@ export function ProgramList({
   const tableContext = useMemo<ProgramTableContext>(
     () => ({
       mode,
-      view: economyView,
+      view: listView,
       tableType,
       effectiveLifecycleStatus,
     }),
-    [mode, economyView, tableType, effectiveLifecycleStatus]
+    [mode, listView, tableType, effectiveLifecycleStatus]
   )
 
   const tableConfig = useMemo(
     () => getProgramTablePageConfig(tableContext),
-    [mode, economyView, tableType, effectiveLifecycleStatus]
+    [mode, listView, tableType, effectiveLifecycleStatus]
   )
 
   const {
@@ -122,22 +122,21 @@ export function ProgramList({
     },
     [externalSelectedRowKeys, onSelectionChange]
   )
-  const economyFilterFieldsForLayout = useMemo(
-    () =>
-      resolveEconomyProgramListFilterFields({
-        economyScheduledActive: economyView === 'SCHEDULED',
-        economyInProgressActive: economyView === 'IN_PROGRESS',
-      }),
-    [economyView]
-  )
+  const filterFieldsForLayout = useMemo(() => {
+    if (tableContext.mode === 'overview') {
+      return resolveProgramListFilterFields({
+        scheduledViewActive: listView === 'SCHEDULED',
+        inProgressViewActive: listView === 'IN_PROGRESS',
+      })
+    }
+    return programListFilterFields
+  }, [tableContext.mode, listView])
 
   return (
     <>
       {viewMode === 'list' ? (
         <FilterTableLayout
-          fields={
-            tableContext.mode === 'economy' ? economyFilterFieldsForLayout : programListFilterFields
-          }
+          fields={filterFieldsForLayout}
           filters={buildProgramListFilters(
             pendingFilters,
             tableContext.mode,
@@ -175,7 +174,7 @@ export function ProgramList({
       ) : null}
 
       {showCalendarView && viewMode === 'calendar' ? (
-        <>
+        <div className="program-list-calendar-view-container">
           <div className="table-header-actions ">
             <div className="table-header-title-wrapper">
               <span className="table-title">{headerTitle}</span>
@@ -184,11 +183,12 @@ export function ProgramList({
             {children}
           </div>
           <ProgramCalendarView
-            items={table.getRowModel().rows.map(row => row.original)}
+            items={table.getFilteredRowModel().rows.map(row => row.original)}
             loading={loading}
             onItemClick={onView}
+            view={listView}
           />
-        </>
+        </div>
       ) : null}
     </>
   )

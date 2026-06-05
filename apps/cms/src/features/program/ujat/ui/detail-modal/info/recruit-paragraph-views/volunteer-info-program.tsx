@@ -10,12 +10,13 @@ import {
 import { ProgramDetailContactReadRow } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import { DateRangeEdit } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import { UjatRecruitSectionDescriptionHeader } from '../ujat-recruit-section-description-header'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { AppDatePicker } from '@/shared/ui/app-datepicker'
-import { AppInput } from '@/shared/ui/app-input'
+import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import type { UjatVolunteerRecruitHalf } from '../ujat-recruit-paragraph-props'
 import { getUjatVolunteerRecruitPeriod } from '../ujat-recruit-program-round'
+import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segments'
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 
@@ -58,10 +59,10 @@ function dateMethodLine(
   date: string | Date | undefined,
   method: string | undefined,
   fallbackMethod: string
-): string {
+) {
   if (!date) return '-'
-  const m = method?.trim() || fallbackMethod
-  return `${formatDateOnly(date)} | ${m}`
+  const methodLabel = method?.trim() || fallbackMethod
+  return <UjatInlineDividedSegments segments={[formatDateOnly(date), methodLabel]} />
 }
 
 export function UjatRecruitVolunteerInfoProgramView({
@@ -134,7 +135,13 @@ export function UjatRecruitVolunteerInfoProgramView({
                   name="volunteerTarget"
                   control={form.control}
                   render={({ field }) => (
-                    <AppInput {...field} value={field.value ?? ''} placeholder="모집 대상" />
+                    <CmsTextArea
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder="모집 대상"
+                      inputSize="medium"
+                      rows={1}
+                    />
                   )}
                 />
               ) : undefined
@@ -149,7 +156,13 @@ export function UjatRecruitVolunteerInfoProgramView({
                   name="volunteerTargetDetail"
                   control={form.control}
                   render={({ field }) => (
-                    <AppInput {...field} value={field.value ?? ''} placeholder="모집 대상 상세" />
+                    <CmsTextArea
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder="모집 대상 상세"
+                      inputSize="medium"
+                      rows={1}
+                    />
                   )}
                 />
               ) : undefined
@@ -199,9 +212,16 @@ export function UjatRecruitVolunteerInfoProgramView({
           <DetailInfoForm.Field
             label="2차 면접 기간"
             view={
-              program.interviewStartDate && program.interviewEndDate
-                ? `${formatDateRange(program.interviewStartDate, program.interviewEndDate)}${program.interviewMethod ? ` | ${program.interviewMethod}` : ''}`
-                : '-'
+              program.interviewStartDate && program.interviewEndDate ? (
+                <UjatInlineDividedSegments
+                  segments={[
+                    formatDateRange(program.interviewStartDate, program.interviewEndDate),
+                    program.interviewMethod,
+                  ]}
+                />
+              ) : (
+                '-'
+              )
             }
           />
           <DetailInfoForm.Field
@@ -218,11 +238,14 @@ export function UjatRecruitVolunteerInfoProgramView({
                     name="finalPassAnnouncementDate"
                     control={form.control}
                     render={({ field }) => (
-                      <AppDatePicker
+                      <ParagraphDatePicker
+                        mode="single"
+                        presetMode="date"
+                        customizable={false}
                         value={toDayjs(field.value)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                        format="YYYY. MM. DD"
-                        className="program-detail-info-tab__date-picker"
+                        placeholder="최종 합격자 발표일"
+                        width={240}
                       />
                     )}
                   />
@@ -231,10 +254,12 @@ export function UjatRecruitVolunteerInfoProgramView({
                     name="finalPassAnnouncementMethod"
                     control={form.control}
                     render={({ field }) => (
-                      <AppInput
+                      <CmsTextArea
                         {...field}
                         value={field.value ?? ''}
                         placeholder="발표 방법 안내"
+                        inputSize="medium"
+                        rows={1}
                         className="program-detail-info-tab__result-method-input"
                       />
                     )}
@@ -270,7 +295,13 @@ export function UjatRecruitVolunteerInfoProgramView({
                   name="otherNotes"
                   control={form.control}
                   render={({ field }) => (
-                    <AppInput {...field} value={field.value ?? ''} placeholder="비고" />
+                    <CmsTextArea
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder="비고"
+                      inputSize="medium"
+                      rows={1}
+                    />
                   )}
                 />
               ) : undefined

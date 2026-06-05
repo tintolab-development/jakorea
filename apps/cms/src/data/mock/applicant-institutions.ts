@@ -3,12 +3,22 @@
  * 수강 신청 학교 목록 (필터: 학교명, 지역, 대상 학년, 담당 교사명, 결재 현황)
  */
 
+import type { Dayjs } from 'dayjs'
 import type {
   ParticipatingSchoolSession,
   ParticipatingSchoolSessionStatusKey,
 } from './participating-schools'
 
 export type ApplicantApprovalStatusKey = 'pending' | 'rejected' | 'approved'
+
+export type ApplicantSchoolApprovalNotifyTiming = 'immediate' | 'on_announcement' | 'manual'
+
+export type ApplicantSchoolApprovalNotifyOptions = {
+  notifyTiming: ApplicantSchoolApprovalNotifyTiming
+  manualNotifyAt?: Dayjs | null
+  /** 반려 시 사유 */
+  rejectionReason?: string
+}
 
 /** 신청 기관 상세 — 기본 정보·안내 사항 확장 필드 (mock/UI 공통) */
 export interface ApplicantInstitutionDetailExtend {
@@ -30,6 +40,18 @@ export interface ApplicantInstitutionDetailExtend {
   sexOffenseCheckRequest?: string
   /** 성범죄 경력 조회서 첨부 파일명 (표시용) */
   sexOffenseRecordAttachmentFileName?: string
+  /** 교재 마스터 id (일반 프로그램 기관 상세 수정) */
+  textbookId?: string
+  /** 합반 신청 여부 (일반 프로그램 기관 상세) */
+  combinedClassApplication?: '신청' | '미신청'
+  /** 합반 대상 신청 id 목록 */
+  combinedClassPartnerApplicantIds?: string[]
+  /** 합반 대상 학년 표시용 */
+  combinedClassPartnerGrades?: string[]
+  /** 대기 장소 안내 (일반 프로그램 기관 상세) */
+  waitingPlaceGuide?: string
+  /** 기타 특이사항 — 주차, 전달사항 등 (일반 프로그램 기관 상세) */
+  otherSpecialNotes?: string
 }
 
 export interface ApplicantSchoolRow {
@@ -58,6 +80,14 @@ export interface ApplicantSchoolRow {
   detail?: ApplicantInstitutionDetailExtend
   /** 참여 반려 시 사유 (프로그램 승인 현황 영역 표시용) */
   participationRejectionReason?: string
+  /** 승인 알림 발송 예약 방식 */
+  approvalNotifyTiming?: ApplicantSchoolApprovalNotifyTiming
+  /** 반려 알림 발송 예약 방식 */
+  rejectionNotifyTiming?: ApplicantSchoolApprovalNotifyTiming
+  /** 승인/반려 알림 발송 일시 — 상세 승인 현황 행 표시 */
+  approvalNotificationSentAt?: string
+  /** 신청 건별 관리자 코멘트 (회원 상세 adminComment와 별도) */
+  adminComment?: string
 }
 
 const SCHOOL_NAMES = [
@@ -134,9 +164,9 @@ const TEACHER_NAMES = [
 const APPROVAL_STATUSES: ApplicantApprovalStatusKey[] = ['pending', 'rejected', 'approved']
 
 const DESIRED_PERIODS = [
-  '26.01.09(금)~26.01.30(금)',
-  '26.02.01(월)~26.02.28(금)',
-  '26.03.01(일)~26.03.31(월)',
+  '26.06.02(화)~26.06.28(일)',
+  '26.06.10(수)~26.06.20(금)',
+  '26.06.15(월)~26.06.25(목)',
 ]
 
 const DAYS_OF_WEEK = ['일', '월', '화', '수', '목', '금', '토']
@@ -151,8 +181,8 @@ function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
   const sessionCount = 1 + (rowIndex % 5)
   const sessions: ParticipatingSchoolSession[] = []
   for (let s = 0; s < sessionCount; s++) {
-    const dayOffset = rowIndex * 7 + s * 3
-    const d = new Date(2026, 0, 9 + dayOffset)
+    const dayOffset = rowIndex * 3 + s * 2
+    const d = new Date(2026, 5, 2 + dayOffset)
     const dayOfWeek = DAYS_OF_WEEK[d.getDay()]
     const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
     const status = SESSION_STATUSES[(rowIndex + s) % 3]
@@ -199,68 +229,47 @@ function buildMockList(count: number, programIds?: string[]): ApplicantSchoolRow
   return rows
 }
 
-/** 스크린샷 시안 기준: applicant-school-1 상세 */
+/** 스크린샷 시안 기준: applicant-school-1 (진월초등학교) 상세 */
 const APPLICANT_SCHOOL_1_DETAIL: ApplicantInstitutionDetailExtend = {
-  addressDetail: '-',
-  educationLocation: '기관 안 | 교육 진행 대상 학급의 교실',
+  addressDetail: '1층 교무실 이길동 선생님 앞',
   educationType: '온/오프라인',
   textbookName: '성공하는 경제생활',
-  totalHoursAndSessions: '2시간 (총 2회차)',
-  previousYearParticipation: '참여 X',
-  affiliatedFinancialCompany: '미결연',
+  textbookId: 'TB-110',
+  combinedClassApplication: '미신청',
   /** 원문 — UI에서 대기/반려 시 마스킹, 개인정보 상세보기 시 원문 표시 */
   teacherInfo:
-    '교사명: 이길동 | Tel : 062-1234-0000 | M : 010-9876-5432 | E-mail : tinto@naver.com',
+    '담당 교사 : 이길동 | Tel : 062-1234-0000 | M : 010-9876-5432 | E-mail : tinto@naver.com',
   applicationReason: '아이들의 경제감각 성장에 큰 도움이 될 것 같아 신청합니다!',
   otherRequests: '혹시 다른 학년도 동일하게 추가 신청이 가능할까요?',
-  computerInSpace: '1대 사용 가능 | USB 사용 불가',
-  waitingRoom: '있음 | 교내 1층 귀빈실',
-  parkingInfo: '있음 | 학교 정문 앞 주차장 사용 가능',
-  mealInfo: '제공 | 인당 4,500원씩 내시면 급식실에서 식사 가능하세요 ~',
+  computerInSpace: '1대 사용 가능, USB는 사용 불가합니다.',
+  waitingPlaceGuide:
+    '대기실은 1층 귀빈실을 이용해 주세요. 정수기와 의자가 구비되어 있습니다.',
+  mealInfo: '가능',
+  otherSpecialNotes:
+    '주차는 학교 정문 앞 공영주차장을 이용해 주세요. 방문 시 경비실에 신분증을 제시해 주시기 바랍니다.',
   sexOffenseCheckRequest: '온라인 제출 | ID : tinto | 검증번호 : 940412',
-  sexOffenseRecordAttachmentFileName: '2026_초등 경제교육 봉사단 모집_cover.JPG',
 }
 
 const APPLICANT_SCHOOL_1_SESSIONS: ParticipatingSchoolSession[] = [
   {
     round: 1,
-    date: '2026.01.09',
-    dayOfWeek: '금',
-    duration: '1시간',
+    date: '2026.04.20',
+    dayOfWeek: '월',
+    duration: '3시간',
     format: '오프라인',
-    classNum: '1교시',
-    timeRange: '9:20~10:10',
+    classNum: '3차시',
+    timeRange: '09:30~12:20',
     status: 'pending',
   },
   {
     round: 2,
-    date: '2026.01.30',
-    dayOfWeek: '금',
-    duration: '1시간',
-    format: '온라인',
-    classNum: '2교시',
-    timeRange: '10:20~11:10',
+    date: '2026.04.27',
+    dayOfWeek: '월',
+    duration: '2시간',
+    format: '오프라인',
+    classNum: '2차시',
+    timeRange: '13:00~15:50',
     status: 'pending',
-  },
-  {
-    round: 3,
-    date: '',
-    dayOfWeek: '',
-    duration: '',
-    format: '',
-    classNum: '',
-    timeRange: '',
-    status: 'not_planned',
-  },
-  {
-    round: 4,
-    date: '',
-    dayOfWeek: '',
-    duration: '',
-    format: '',
-    classNum: '',
-    timeRange: '',
-    status: 'not_planned',
   },
 ]
 
@@ -268,29 +277,142 @@ export const MOCK_APPLICANT_INSTITUTIONS: ApplicantSchoolRow[] = (() => {
   const list = buildMockList(30)
   const row = list.find(s => s.id === 'applicant-school-1')
   if (row) {
+    row.schoolName = '진월초등학교'
+    row.region = '광주광역시 남구 광복마을4길 40'
+    row.educationGrade = '5학년'
+    row.classCount = 4
+    row.studentCount = 124
+    row.approvalStatus = 'approved'
+    row.approvalNotificationSentAt = '2026.01.15 09:15:42'
+    row.programId = 'general-prog-scheduled-1'
+    row.adminComment = '교재 배송 일정 확인 후 연락 예정'
     row.teacherName = '이길동'
     row.contact = '062-1234-0000'
-    row.desiredEducationPeriod = '26.01.09(금)~26.01.30(금)'
-    row.detail = APPLICANT_SCHOOL_1_DETAIL
+    row.desiredEducationPeriod = '26.04.20(월)~26.04.27(월)'
+    row.detail = { ...APPLICANT_SCHOOL_1_DETAIL }
     row.sessions = APPLICANT_SCHOOL_1_SESSIONS
+  }
+  const rowJinwol4 = list.find(s => s.id === 'applicant-school-5')
+  if (rowJinwol4) {
+    rowJinwol4.schoolName = '진월초등학교'
+    rowJinwol4.region = '광주광역시 남구 광복마을4길 40'
+    rowJinwol4.educationGrade = '4학년'
+    rowJinwol4.classCount = 3
+    rowJinwol4.studentCount = 98
+    rowJinwol4.approvalStatus = 'approved'
+    rowJinwol4.approvalNotificationSentAt = '2026.01.14 10:00:00'
+    rowJinwol4.programId = 'general-prog-scheduled-1'
+    rowJinwol4.teacherName = '이길동'
+    rowJinwol4.detail = {
+      ...APPLICANT_SCHOOL_1_DETAIL,
+      textbookName: '성공하는 경제생활',
+      textbookId: 'TB-110',
+      combinedClassApplication: '미신청',
+    }
+  }
+  const rowJinwol6 = list.find(s => s.id === 'applicant-school-6')
+  if (rowJinwol6) {
+    rowJinwol6.schoolName = '진월초등학교'
+    rowJinwol6.region = '광주광역시 남구 광복마을4길 40'
+    rowJinwol6.educationGrade = '6학년'
+    rowJinwol6.classCount = 2
+    rowJinwol6.studentCount = 72
+    rowJinwol6.approvalStatus = 'approved'
+    rowJinwol6.approvalNotificationSentAt = '2026.01.14 11:30:00'
+    rowJinwol6.programId = 'general-prog-scheduled-1'
+    rowJinwol6.teacherName = '박지훈'
+    rowJinwol6.detail = {
+      ...APPLICANT_SCHOOL_1_DETAIL,
+      textbookName: '성공하는 경제생활',
+      textbookId: 'TB-110',
+      combinedClassApplication: '미신청',
+    }
   }
   const row2 = list.find(s => s.id === 'applicant-school-2')
   if (row2) {
+    row2.approvalStatus = 'rejected'
     row2.participationRejectionReason = '인원 초과'
+    row2.approvalNotificationSentAt = '2024.01.15 09:15:42'
   }
   return list
 })()
 
+export function formatApplicantSchoolApprovalNotificationSentAt(d = new Date()): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  const ss = String(d.getSeconds()).padStart(2, '0')
+  return `${y}.${m}.${day} ${hh}:${mm}:${ss}`
+}
+
+export function resolveApplicantSchoolApprovalNotificationSentAt(
+  options?: ApplicantSchoolApprovalNotifyOptions
+): string | undefined {
+  if (!options || options.notifyTiming === 'immediate') {
+    return formatApplicantSchoolApprovalNotificationSentAt()
+  }
+  if (options.notifyTiming === 'on_announcement') {
+    return undefined
+  }
+  if (options.notifyTiming === 'manual' && options.manualNotifyAt) {
+    return formatApplicantSchoolApprovalNotificationSentAt(options.manualNotifyAt.toDate())
+  }
+  return undefined
+}
+
+export function patchApplicantSchoolForApprovalStatus(
+  row: ApplicantSchoolRow,
+  approvalStatus: ApplicantApprovalStatusKey,
+  notifyOptions?: ApplicantSchoolApprovalNotifyOptions
+): ApplicantSchoolRow {
+  if (approvalStatus === 'approved') {
+    return {
+      ...row,
+      approvalStatus,
+      participationRejectionReason: undefined,
+      approvalNotifyTiming: notifyOptions?.notifyTiming,
+      rejectionNotifyTiming: undefined,
+      approvalNotificationSentAt:
+        resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
+    }
+  }
+  if (approvalStatus === 'rejected') {
+    return {
+      ...row,
+      approvalStatus,
+      participationRejectionReason:
+        notifyOptions?.rejectionReason ?? row.participationRejectionReason,
+      approvalNotifyTiming: undefined,
+      rejectionNotifyTiming: notifyOptions?.notifyTiming,
+      approvalNotificationSentAt:
+        resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
+    }
+  }
+  return {
+    ...row,
+    approvalStatus,
+    participationRejectionReason: undefined,
+    approvalNotifyTiming: undefined,
+    rejectionNotifyTiming: undefined,
+    approvalNotificationSentAt: undefined,
+  }
+}
+
 /**
  * 프로그램별 수강 신청 학교 목록 (모달용).
- * programId가 있으면 해당 프로그램에 연결된 행만 반환, 없으면 전체 목록 반환.
+ * - `programId`가 일치하는 행 + programId 미지정(legacy) 행을 함께 반환
+ * - 어떤 행에도 programId가 없으면 전체 목록 반환
  */
 export function getApplicantSchoolsByProgramId(programId: string): ApplicantSchoolRow[] {
-  const withProgramId = MOCK_APPLICANT_INSTITUTIONS.some(s => s.programId != null)
-  if (withProgramId) {
-    return MOCK_APPLICANT_INSTITUTIONS.filter(s => s.programId === programId)
+  const hasAnyProgramId = MOCK_APPLICANT_INSTITUTIONS.some(s => s.programId != null)
+  if (!hasAnyProgramId) {
+    return [...MOCK_APPLICANT_INSTITUTIONS]
   }
-  return [...MOCK_APPLICANT_INSTITUTIONS]
+  return MOCK_APPLICANT_INSTITUTIONS.filter(
+    s => s.programId === programId || s.programId == null
+  )
 }
 
 /**
@@ -299,10 +421,206 @@ export function getApplicantSchoolsByProgramId(programId: string): ApplicantScho
  */
 export function updateApplicantSchoolApprovalStatus(
   schoolId: string,
-  approvalStatus: ApplicantApprovalStatusKey
+  approvalStatus: ApplicantApprovalStatusKey,
+  notifyOptions?: ApplicantSchoolApprovalNotifyOptions
 ): void {
   const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === schoolId)
   if (row) {
-    row.approvalStatus = approvalStatus
+    Object.assign(
+      row,
+      patchApplicantSchoolForApprovalStatus(row, approvalStatus, notifyOptions)
+    )
   }
+}
+
+/** 승인 취소 — 반려 처리 */
+export function patchApplicantSchoolForCancelApproval(
+  row: ApplicantSchoolRow,
+  notifyOptions: ApplicantSchoolApprovalNotifyOptions
+): ApplicantSchoolRow {
+  return patchApplicantSchoolForApprovalStatus(row, 'rejected', notifyOptions)
+}
+
+export function updateApplicantSchoolCancelApproval(
+  schoolId: string,
+  notifyOptions: ApplicantSchoolApprovalNotifyOptions
+): void {
+  const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === schoolId)
+  if (row) {
+    Object.assign(row, patchApplicantSchoolForCancelApproval(row, notifyOptions))
+  }
+}
+
+/** 반려 취소 — 승인 대기 복원 */
+export function patchApplicantSchoolForCancelRejection(
+  row: ApplicantSchoolRow,
+  notifyOptions?: ApplicantSchoolApprovalNotifyOptions
+): ApplicantSchoolRow {
+  const pending = patchApplicantSchoolForApprovalStatus(row, 'pending')
+  if (!notifyOptions) {
+    return pending
+  }
+  return {
+    ...pending,
+    approvalNotificationSentAt:
+      resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
+  }
+}
+
+export function updateApplicantSchoolCancelRejection(
+  schoolId: string,
+  notifyOptions?: ApplicantSchoolApprovalNotifyOptions
+): void {
+  const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === schoolId)
+  if (row) {
+    Object.assign(row, patchApplicantSchoolForCancelRejection(row, notifyOptions))
+  }
+}
+
+/** 알림 재발송 — 발송 일시 갱신 */
+export function patchApplicantSchoolForNotificationResend(
+  row: ApplicantSchoolRow,
+  sentAt = new Date()
+): ApplicantSchoolRow {
+  return {
+    ...row,
+    approvalNotificationSentAt: formatApplicantSchoolApprovalNotificationSentAt(sentAt),
+  }
+}
+
+export function updateApplicantSchoolNotificationResend(
+  schoolId: string,
+  sentAt = new Date()
+): void {
+  const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === schoolId)
+  if (row) {
+    Object.assign(row, patchApplicantSchoolForNotificationResend(row, sentAt))
+  }
+}
+
+export interface ApplicantInstitutionDetailSavePayload {
+  adminComment?: string
+  educationGrade: string
+  classCount: number
+  studentCount: number
+  addressDetail?: string
+  educationType?: string
+  applicationReason?: string
+  otherRequests?: string
+  computerInSpace?: string
+  waitingPlaceGuide?: string
+  mealInfo?: string
+  otherSpecialNotes?: string
+  textbookId: string
+  textbookName: string
+  combinedClassApplication: '신청' | '미신청'
+  combinedClassPartnerApplicantIds: string[]
+}
+
+function buildCombinedClassDetailFields(
+  payload: ApplicantInstitutionDetailSavePayload,
+  partnerGrades: string[]
+): Partial<ApplicantInstitutionDetailExtend> {
+  const isApplied = payload.combinedClassApplication === '신청'
+  return {
+    textbookId: payload.textbookId,
+    textbookName: payload.textbookName,
+    addressDetail: payload.addressDetail,
+    educationType: payload.educationType,
+    applicationReason: payload.applicationReason,
+    otherRequests: payload.otherRequests,
+    computerInSpace: payload.computerInSpace,
+    waitingPlaceGuide: payload.waitingPlaceGuide,
+    mealInfo: payload.mealInfo,
+    otherSpecialNotes: payload.otherSpecialNotes,
+    combinedClassApplication: payload.combinedClassApplication,
+    combinedClassPartnerApplicantIds: isApplied ? payload.combinedClassPartnerApplicantIds : undefined,
+    combinedClassPartnerGrades: isApplied && partnerGrades.length > 0 ? partnerGrades : undefined,
+  }
+}
+
+function applyDetailSaveToRow(
+  row: ApplicantSchoolRow,
+  payload: ApplicantInstitutionDetailSavePayload,
+  partnerGrades: string[]
+): ApplicantSchoolRow {
+  const detailPatch = buildCombinedClassDetailFields(payload, partnerGrades)
+  const adminTrimmed = payload.adminComment?.trim()
+  return {
+    ...row,
+    educationGrade: payload.educationGrade,
+    classCount: payload.classCount,
+    studentCount: payload.studentCount,
+    adminComment: adminTrimmed ? adminTrimmed : undefined,
+    detail: {
+      ...row.detail,
+      ...detailPatch,
+    },
+  }
+}
+
+/** 단일 기관 신청 상세 필드 갱신 (mock) */
+export function patchApplicantInstitutionDetail(
+  schoolId: string,
+  payload: ApplicantInstitutionDetailSavePayload
+): ApplicantSchoolRow | null {
+  const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === schoolId)
+  if (!row) return null
+
+  const partnerGrades =
+    payload.combinedClassApplication === '신청'
+      ? payload.combinedClassPartnerApplicantIds
+          .map(id => MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === id)?.educationGrade)
+          .filter((grade): grade is string => Boolean(grade))
+      : []
+
+  const updated = applyDetailSaveToRow(row, payload, partnerGrades)
+  Object.assign(row, updated)
+  return { ...row }
+}
+
+/**
+ * 합반 연동 저장 — 현재 신청 + 선택된 partner 신청에 동일 교재·합반 정보 반영 (mock)
+ */
+export function patchApplicantInstitutionDetailWithCombinedClass(
+  sourceId: string,
+  payload: ApplicantInstitutionDetailSavePayload
+): ApplicantSchoolRow[] {
+  const sourceRow = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === sourceId)
+  if (!sourceRow) return []
+
+  const partnerIds =
+    payload.combinedClassApplication === '신청' ? payload.combinedClassPartnerApplicantIds : []
+  const allIds = [sourceId, ...partnerIds]
+
+  const updatedRows: ApplicantSchoolRow[] = []
+
+  for (const id of allIds) {
+    const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === id)
+    if (!row) continue
+
+    const rowPayload: ApplicantInstitutionDetailSavePayload = {
+      ...payload,
+      educationGrade: id === sourceId ? payload.educationGrade : row.educationGrade,
+      classCount: id === sourceId ? payload.classCount : row.classCount,
+      studentCount: id === sourceId ? payload.studentCount : row.studentCount,
+      combinedClassPartnerApplicantIds:
+        payload.combinedClassApplication === '신청'
+          ? allIds.filter(targetId => targetId !== id)
+          : [],
+    }
+
+    const partnerGradesForRow =
+      rowPayload.combinedClassApplication === '신청'
+        ? rowPayload.combinedClassPartnerApplicantIds
+            .map(partnerId => MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === partnerId)?.educationGrade)
+            .filter((grade): grade is string => Boolean(grade))
+        : []
+
+    const updated = applyDetailSaveToRow(row, rowPayload, partnerGradesForRow)
+    Object.assign(row, updated)
+    updatedRows.push({ ...row })
+  }
+
+  return updatedRows
 }

@@ -108,6 +108,10 @@ import {
   replaceUjatRecruitVolunteerOverlay,
   resetUjatRecruitVolunteerOverlay,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
+import {
+  getInstitutionApplicationFormHiddenParagraphIds,
+  useInstitutionApplicationProgramBridge,
+} from '@/features/program/general/lib/institution-application-program-bridge'
 
 function useParticipantApplicationMiddleActions(
   setDraft: Dispatch<SetStateAction<WritingFormDraft>>,
@@ -221,6 +225,8 @@ function renumberInstructorUnavailableDateRows(p: VerticalTableParagraph): Verti
 
 export type UseProgramParticipantApplicationEditorOptions = {
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
+  /** 프로그램 등록 마법사 — 참여자 유형이 학교/기관일 때만 모집 최대값 필드 노출 */
+  participantOrganization?: boolean
 }
 
 export function useProgramParticipantApplicationEditor(
@@ -592,6 +598,12 @@ export function useProgramParticipantApplicationEditor(
     [variant, volunteerExceptionScheduleCount, onAddVolunteerExceptionSchedule]
   )
 
+  const institutionApplicationBridge = useInstitutionApplicationProgramBridge()
+  const institutionApplicationHiddenParagraphIds = useMemo(() => {
+    if (variant !== 'institution') return undefined
+    return getInstitutionApplicationFormHiddenParagraphIds(institutionApplicationBridge)
+  }, [variant, institutionApplicationBridge])
+
   const ujatProgramApplicationFormVolunteerOptions = useMemo(
     () =>
       variant === 'ujat-application-volunteer'
@@ -623,13 +635,21 @@ export function useProgramParticipantApplicationEditor(
         programApplicationFormGeminiInstructor: variant === 'gemini-application-instructor',
         ujatProgramApplicationFormInstitution: variant === 'ujat-application-institution',
         ujatProgramApplicationFormVolunteer: ujatProgramApplicationFormVolunteerOptions,
-        hiddenParagraphIds:
-          variant === 'ujat-application-volunteer' && ujatVolunteerApplicationType === 'new'
-            ? new Set([UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm])
-            : undefined,
+        hiddenParagraphIds: (() => {
+          if (
+            variant === 'ujat-application-volunteer' &&
+            ujatVolunteerApplicationType === 'new'
+          ) {
+            return new Set([UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm])
+          }
+          return institutionApplicationHiddenParagraphIds
+        })(),
         ujatProgramApplicationGradeInfo,
         ujatProgramApplicationGradeClassTime,
         applicantRecruitFormInstitution: variant === 'applicant-recruit-institution',
+        showInstitutionApplicationLimits:
+          variant === 'applicant-recruit-institution' &&
+          (editorOptions?.participantOrganization ?? true),
         applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
         recruitFormInstructor: variant === 'recruit-instructor',
         recruitFormVolunteer: variant === 'recruit-volunteer',
@@ -646,12 +666,14 @@ export function useProgramParticipantApplicationEditor(
       programApplicationFormVolunteerOptions,
       ujatProgramApplicationFormVolunteerOptions,
       editorOptions?.ujatRecruitParagraphProps,
+      editorOptions?.participantOrganization,
       seedParagraphIds,
       updateParagraph,
       ujatVolunteerApplicationType,
       variant,
       ujatProgramApplicationGradeInfo,
       ujatProgramApplicationGradeClassTime,
+      institutionApplicationHiddenParagraphIds,
     ]
   )
 

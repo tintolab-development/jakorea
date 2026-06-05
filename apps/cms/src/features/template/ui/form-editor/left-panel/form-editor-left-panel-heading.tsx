@@ -32,6 +32,7 @@ import { UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS } from '@/features/templat
 import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/gemini-visiting-training-application-form-institution-draft'
 import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS } from '@/features/template/model/gemini-visiting-training-application-form-instructor-draft'
 import { UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-recruit-form-institution-draft'
+import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
@@ -149,6 +150,29 @@ export function withProgramRegistrationCurriculumTitleTrailing(
       }
     }
 
+    if (pr.sessionRoundType === 'multi') {
+      return {
+        ...heading,
+        titleTrailing: (
+          <div className="program-registration-paragraph__card-title-actions">
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="medium"
+              width={160}
+              icon={<PlusOutlined aria-hidden />}
+              onClick={e => {
+                e.stopPropagation()
+                pr.onAddScheduleCurriculumDetail()
+              }}
+            >
+              강의 세부 일정 추가
+            </CmsButton>
+          </div>
+        ),
+      }
+    }
+
     return {
       ...heading,
       titleTrailing: (
@@ -195,6 +219,9 @@ export function withProgramRegistrationCurriculumTitleTrailing(
   }
   const isMulti = pr.sessionRoundType === 'multi'
   const curriculumAddDisabled = pr.restrictCurriculumSessionStructure === true
+  const curriculumChartSessionAtMax =
+    !isMulti &&
+    pr.curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
   return {
     ...heading,
     titleTrailing: (
@@ -203,11 +230,11 @@ export function withProgramRegistrationCurriculumTitleTrailing(
         variant="secondary"
         size="medium"
         width={isMulti ? 160 : 180}
-        disabled={curriculumAddDisabled}
+        disabled={curriculumAddDisabled || curriculumChartSessionAtMax}
         icon={<PlusOutlined aria-hidden />}
         onClick={e => {
           e.stopPropagation()
-          if (curriculumAddDisabled) return
+          if (curriculumAddDisabled || curriculumChartSessionAtMax) return
           if (isMulti) pr.onAddCurriculumSession()
           else pr.onAddCurriculumChartSession()
         }}

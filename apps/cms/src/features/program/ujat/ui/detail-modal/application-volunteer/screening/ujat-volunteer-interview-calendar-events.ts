@@ -1,12 +1,9 @@
 import dayjs from 'dayjs'
+import type { CalendarMainEventInput } from '@/shared/components/calendar'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { UJAT_INTERVIEW_ASSIGNMENT_STATUS_LABELS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 
-export type UjatVolunteerInterviewCalendarEvent = {
-  id: string
-  title: string
-  startDate: string
-  endDate: string
+export type UjatVolunteerInterviewCalendarEvent = CalendarMainEventInput & {
   originalItem: UjatVolunteerApplicantRow
   slotLabel: string
   dateLabel: string
@@ -49,11 +46,15 @@ export function mapUjatVolunteerInterviewToCalendarEvents(
         if (!range) continue
 
         const id = `${row.id}|${day.dateLabel}|${slot}`
+        const timeMatch = slot.match(/(\d{2}:\d{2})\s*~\s*(\d{2}:\d{2})/)
         events.push({
           id,
           title: `[봉사자] ${row.name} | ${row.preferredRegion}`,
           startDate: range.startDate,
           endDate: range.endDate,
+          startTime: timeMatch?.[1],
+          endTime: timeMatch?.[2],
+          timeGridLabel: `${row.name} | ${slot}`,
           originalItem: row,
           slotLabel: slot,
           dateLabel: day.dateLabel,

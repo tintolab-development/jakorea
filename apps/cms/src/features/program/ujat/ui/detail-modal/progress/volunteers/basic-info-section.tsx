@@ -1,4 +1,4 @@
-import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
+import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import {
   UjatProgramApplicationVolunteer1365IdForm,
   UjatProgramApplicationVolunteerBasicInfoDetailForm,
@@ -26,17 +26,14 @@ export function UjatEducationProgressVolunteerBasicInfoSection({
       className="ujat-volunteer-add-registration__section ujat-volunteer-add-registration__section--basic-info"
       aria-labelledby="ujat-volunteer-basic-info-heading"
     >
-      <h2 id="ujat-volunteer-basic-info-heading" className="detail-info-form__title">
-        기본 정보
-        <span className="detail-info-form__field-required" aria-hidden>
-          *
-        </span>
-      </h2>
-      {description ? (
-        <FormParagraphSectionDescription surface="responseEntry" titleAligned>
-          {description}
-        </FormParagraphSectionDescription>
-      ) : null}
+      <FormParagraphSectionHeader
+        title="기본 정보"
+        description={description}
+        required
+        headingId="ujat-volunteer-basic-info-heading"
+        surface="responseEntry"
+        titleAligned
+      />
 
       <div className="ujat-volunteer-add-registration__basic-info-form-stack">
         <UjatProgramApplicationVolunteer1365IdForm />

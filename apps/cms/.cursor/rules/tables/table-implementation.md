@@ -6,7 +6,7 @@ category: tables
 
 # Ant Design `Table` implementation (CMS)
 
-**See also:** [UI principles — filters](../design/ui-principles.md), [table management](./table-management.md), [Ant Design usage](../libraries/ant-design-usage.md), [status dropdown cell](../coding/status-dropdown-cell.md).
+**See also:** [UI principles — filters](../design/ui-principles.md), [table td divider](../design/table-td-divider.mdc), [table management](./table-management.md), [Ant Design usage](../libraries/ant-design-usage.md), [status dropdown cell](../coding/status-dropdown-cell.md).
 
 ---
 
@@ -45,6 +45,21 @@ Use `rowSelection` when bulk actions exist. Selection column width follows `--ta
 - Body cells: middle vertical align; zebra/hover per global table CSS if applicable.  
 - Avoid horizontal overflow: fixed widths + `scroll={{ x: true }}` when many columns.
 
+### Disabled row (활동 포기 등)
+
+Non-interactive tbody rows use shared **`cms-data-table__row--disabled`**:
+
+| Item | Detail |
+|------|--------|
+| Constant | `CMS_DATA_TABLE_ROW_DISABLED_CLASS` (`@/shared/constants/table`) |
+| CSS | `shared/ui/cms-data-table.css` (global via `index.css`) |
+| Apply | `rowClassName` or `onRow({ className })` on Ant `Table` |
+| Effect | Cell `pointer-events: none`; each `td::after` overlay `rgba(255,255,255,0.55)` (not `tr::after` — breaks Ant Table cols); hover stays white |
+| Accent text | `.cms-data-table__cell-accent--danger` on status label (e.g. 활동 포기) |
+| `clickable-table` | Exclude disabled rows from mint hover: `:not(.cms-data-table__row--disabled)` |
+
+**Examples:** UJAT 1차 서류 합격자 면접일 배정 현황, 참여 봉사자 · 교육 배정 및 진행 현황 (배정 학급 활동 포기 행).
+
 (Exact pixel specs for a feature belong in that feature’s design doc—keep this file as **patterns**, not a full mock.)
 
 ---
@@ -56,4 +71,4 @@ Use `rowSelection` when bulk actions exist. Selection column width follows `--ta
 
 ---
 
-**Last updated:** 2026-04-21
+**Last updated:** 2026-05-26

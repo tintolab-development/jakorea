@@ -4,8 +4,7 @@ import { Layout, Menu } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useMemo, useEffect, type CSSProperties } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { getMenuItemsByRole, isProgramManagementLnbPath } from '@/shared/config/menu-config'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { getMenuItemsByRole } from '@/shared/config/menu-config'
 import { memberListHref, normalizeMemberListKind } from '@/shared/config/member-list-kinds'
 import './sidebar.css'
 import { Header } from './header'
@@ -172,12 +171,7 @@ export function Sidebar() {
           style={sidebarChrome}
           items={menuItems}
           onClick={({ key }) => {
-            // 기존: if (typeof key === 'string' && key.startsWith('/')) navigate(key)
             if (typeof key !== 'string' || !key.startsWith('/')) return
-            if (isProgramManagementLnbPath(key)) {
-              window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-              return
-            }
             navigate(key)
           }}
         />

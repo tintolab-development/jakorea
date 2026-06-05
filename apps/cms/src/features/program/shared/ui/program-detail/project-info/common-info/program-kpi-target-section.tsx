@@ -5,8 +5,7 @@
  * 수정 모드 시 form 연동으로 Input 표시.
  */
 
-import type { ReactNode } from 'react'
-import { useState, useEffect } from 'react'
+import { Fragment, type ReactNode, useEffect, useState } from 'react'
 import { Controller } from 'react-hook-form'
 import { getKpiAchievementList } from '@/features/dashboard/api/admin-dashboard-service'
 import type { KpiMetric } from '@/features/dashboard/api/admin-dashboard-service'
@@ -15,6 +14,7 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import { CmsInput } from '@/shared/ui'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
+import './program-kpi-target-section.css'
 
 export interface ProgramKpiTargetSectionProps {
   programId: string
@@ -37,7 +37,7 @@ function boldNumbersInSegment(segment: string, keyPrefix: string): ReactNode[] {
   )
 }
 
-/** td 내용 중 숫자만 볼드 처리. 여러 "라벨: 숫자" 구간은 ` | ` 구분자로 연결 */
+/** td 내용 중 숫자만 볼드 처리. 여러 "라벨: 숫자" 구간은 세로 디바이더로 연결 */
 function formatKpiValueWithBoldNumbers(value: string | number | undefined): ReactNode {
   if (value === undefined || value === null || value === '') return '-'
   const str = String(value).trim()
@@ -49,14 +49,16 @@ function formatKpiValueWithBoldNumbers(value: string | number | undefined): Reac
   const matches = [...str.matchAll(KPI_SEGMENT_REGEX)]
 
   if (matches.length >= 2) {
-    const nodes: ReactNode[] = []
-    matches.forEach((m, idx) => {
-      if (idx > 0) {
-        nodes.push(<span key={`kpi-sep-${idx}`}>&nbsp;&nbsp;|&nbsp;&nbsp;</span>)
-      }
-      nodes.push(...boldNumbersInSegment(m[0], `kpi-seg-${idx}`))
-    })
-    return <>{nodes}</>
+    return (
+      <span className="program-kpi-target-section__inline-segments">
+        {matches.map((match, index) => (
+          <Fragment key={`kpi-seg-wrap-${index}`}>
+            {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
+            {boldNumbersInSegment(match[0], `kpi-seg-${index}`)}
+          </Fragment>
+        ))}
+      </span>
+    )
   }
 
   if (matches.length === 1) {
@@ -163,23 +165,8 @@ export function ProgramKpiTargetSection({
               view={formatKpiValueWithBoldNumbers(instructorDisplay ?? undefined)}
               edit={
                 form ? (
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      flexWrap: 'wrap',
-                      alignItems: 'center',
-                      gap: 12,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 8,
-                      }}
-                    >
+                  <div className="program-kpi-target-section__instructor-edit">
+                    <div className="program-kpi-target-section__instructor-edit-group">
                       <span>강사</span>
                       <Controller
                         name="kpiInstructorCount"
@@ -200,15 +187,8 @@ export function ProgramKpiTargetSection({
                         )}
                       />
                     </div>
-                    <span style={{ flexShrink: 0 }}> | </span>
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 8,
-                      }}
-                    >
+                    <DetailInfoForm.InputsSeparator />
+                    <div className="program-kpi-target-section__instructor-edit-group">
                       <span>봉사자</span>
                       <Controller
                         name="kpiVolunteerCount"

@@ -103,10 +103,10 @@
 
 /* 「일괄 확인」과 동일한 disabled 톤 — primary·지급조서 발급(cancel disabled 와 정렬) */
 .payment-order-detail-filter-table
-  .participating-institutions-section__table-actions
+  .info-section-buttons--wrapper
   .cms-button--primary.cms-button--large.ant-btn-primary:disabled,
 .payment-order-detail-filter-table
-  .participating-institutions-section__table-actions
+  .info-section-buttons--wrapper
   .cms-button--primary.cms-button--large.ant-btn-primary.ant-btn-disabled {
   background: var(--color-bg-disabled) !important;
   border-color: var(--color-border-light) !important;
@@ -115,11 +115,11 @@
 }
 
 .payment-order-detail-filter-table
-  .participating-institutions-section__table-actions
+  .info-section-buttons--wrapper
   .cms-button--primary.cms-button--large.ant-btn-primary:disabled
   .anticon,
 .payment-order-detail-filter-table
-  .participating-institutions-section__table-actions
+  .info-section-buttons--wrapper
   .cms-button--primary.cms-button--large.ant-btn-primary.ant-btn-disabled
   .anticon {
   color: var(--color-text-disabled) !important;

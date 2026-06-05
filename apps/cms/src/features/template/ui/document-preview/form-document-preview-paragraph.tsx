@@ -44,6 +44,7 @@ import { FileAttachment } from '@/features/template/ui/paragraph/single-item/fil
 import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
 import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
 import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
+import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import './form-document-preview-body.css'
@@ -71,9 +72,12 @@ function readOnlyTitleBlock(
     title: <span className="form-document-preview-paragraph__title-text">{displayTitle}</span>,
     description:
       trimmedDescription.length > 0 ? (
-        <span className="form-paragraph-section-description form-document-preview-paragraph__description-text">
+        <FormParagraphSectionDescription
+          surface="templateAuthoring"
+          className="form-document-preview-paragraph__description-text"
+        >
           {trimmedDescription}
-        </span>
+        </FormParagraphSectionDescription>
       ) : undefined,
   }
 }
@@ -125,10 +129,35 @@ function DocumentShortEssayTableReadonly({ paragraph }: { paragraph: ShortEssayP
   )
 }
 
+function DocumentTextInputBlockReadonly({
+  item,
+  fallbackLabel,
+  fallbackText,
+}: {
+  item: { id: string; label?: string; placeholder?: string; bodyText: string }
+  fallbackLabel: string
+  fallbackText: string
+}) {
+  return (
+    <table className="form-document-text-input-table">
+      <tbody>
+        <tr>
+          <th scope="row">{safeTrim(item.label) || fallbackLabel}</th>
+        </tr>
+        <tr>
+          <td>{safeTrim(item.bodyText) || item.placeholder || fallbackText}</td>
+        </tr>
+      </tbody>
+    </table>
+  )
+}
+
 function DocumentShortEssayReadonly({
   paragraph,
+  renderMode = 'card',
 }: {
   paragraph: ShortEssayParagraph | SessionPlanShortEssayParagraph
+  renderMode?: FormDocumentPreviewRenderMode
 }) {
   const ph =
     safeTrim(paragraph.bodyPlaceholder) ||
@@ -150,6 +179,20 @@ function DocumentShortEssayReadonly({
           },
         ]
   const showItemTitle = items.length >= 2 ? true : (paragraph.showItemTitle ?? false)
+  if (renderMode === 'contentOnly') {
+    return (
+      <div className="form-editor-body form-document-text-input-blocks">
+        {items.map((item, index) => (
+          <DocumentTextInputBlockReadonly
+            key={item.id}
+            item={item}
+            fallbackLabel={`Title ${String(index + 1).padStart(2, '0')}`}
+            fallbackText={ph}
+          />
+        ))}
+      </div>
+    )
+  }
   return (
     <div className="form-editor-body">
       {items.map((item, index) => (
@@ -241,6 +284,7 @@ function renderBody(
             paragraphBodyOptions?.ujatProgramApplicationFormVolunteer
           }
           applicantRecruitFormInstitution={paragraphBodyOptions?.applicantRecruitFormInstitution}
+          showInstitutionApplicationLimits={paragraphBodyOptions?.showInstitutionApplicationLimits}
           applicantRecruitFormIndividual={paragraphBodyOptions?.applicantRecruitFormIndividual}
           programApplicationFormInstructor={paragraphBodyOptions?.programApplicationFormInstructor}
         />
@@ -277,14 +321,20 @@ function renderBody(
       if (renderMode === 'contentOnly' && (shortEssayP.items?.length ?? 0) >= 2) {
         return <DocumentShortEssayTableReadonly paragraph={shortEssayP} />
       }
-      return <DocumentShortEssayReadonly paragraph={shortEssayP} />
+      return <DocumentShortEssayReadonly paragraph={shortEssayP} renderMode={renderMode} />
     }
     case 'session_plan_short_essay':
-      return <DocumentShortEssayReadonly paragraph={p as SessionPlanShortEssayParagraph} />
+      return (
+        <DocumentShortEssayReadonly
+          paragraph={p as SessionPlanShortEssayParagraph}
+          renderMode={renderMode}
+        />
+      )
     case 'subjective':
       return (
         <DocumentShortEssayReadonly
           paragraph={subjectiveParagraphToShortEssayView(p as SubjectiveParagraph)}
+          renderMode={renderMode}
         />
       )
     case 'system':
@@ -363,6 +413,7 @@ function renderBody(
             <UserInfoPreviewTable
               selectedEntries={getUserInfoPreviewSelectedEntries(ui)}
               skin="a4Document"
+              previewValues={paragraphBodyOptions?.userInfoPreviewValues}
             />
           </div>
         )
@@ -373,6 +424,7 @@ function renderBody(
           onChange={noopOnParagraphChange}
           isEditMode={false}
           layout="previewTable"
+          previewValues={paragraphBodyOptions?.userInfoPreviewValues}
         />
       )
     }

@@ -1,12 +1,17 @@
 /**
  * 신청자 캘린더 뷰 레이아웃
  * 7:3, 좌측 캘린더 래퍼 높이 = 우측 카드와 stretch 동일.
- * 월간: 남은 세로 영역을 6주 행에 균등 분배(최소 행 높이 124.2px).
  */
 
 .applicant-calendar-layout {
   --applicant-calendar-min-height: 900px;
-  display: flex;
+  display: grid;
+  grid-template-columns:
+    minmax(var(--calendar-main-month-min-width, calc(116px * 7 + 40px)), 1fr)
+    minmax(
+      var(--calendar-sub-right-list-min-width),
+      var(--calendar-sub-right-list-max-width)
+    );
   align-items: stretch;
   gap: 16px;
   width: 100%;
@@ -15,16 +20,16 @@
 }
 
 .applicant-calendar-main {
-  flex: 7 1 0;
-  min-width: 1000px;
+  width: 100%;
+  min-width: 0;
   box-sizing: border-box;
-  overflow-y: auto;
+  overflow: visible;
 }
 
 .applicant-calendar-right {
-  flex: 3 1 0;
-  width: 400px;
-  min-width: 400px;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
   box-sizing: border-box;
   min-height: var(--applicant-calendar-min-height);
   background: #fff;
@@ -44,10 +49,10 @@
 
 .applicant-calendar-right .applicant-schedule-list {
   padding: 0;
-  flex: 1 1 0;
-  min-height: 0;
-  height: auto;
-  max-height: none;
+  flex: 0 0 var(--calendar-sub-right-list-height);
+  min-height: var(--calendar-sub-right-list-height);
+  max-height: var(--calendar-sub-right-list-height);
+  height: var(--calendar-sub-right-list-height);
   overflow-x: hidden;
   overflow-y: auto;
   box-sizing: border-box;
@@ -56,6 +61,128 @@
 
 .applicant-calendar-right .applicant-schedule-item {
   align-items: center;
+}
+
+.applicant-calendar-set {
+  --calendar-sub-right-list-min-width: 280px;
+  --calendar-sub-right-list-max-width: 360px;
+  --calendar-main-month-min-width: 0px;
+  --calendar-main-week-min-width: 0px;
+  --calendar-cell-min-width: 88px;
+  --applicant-general-instructor-calendar-panel-height: var(--calendar-main-month-min-height);
+  margin-top: 0;
+}
+
+/*
+ * 일반 프로그램 신청 캘린더 — 좌측 내부 스크롤 없음 (instructor-payment-tab --no-inner-scroll 패턴).
+ * 캘린더는 콘텐츠 높이만큼 확장, 모달/페이지 스크롤로 확인.
+ */
+.applicant-calendar-set.applicant-calendar-set--default,
+.applicant-calendar-set.applicant-calendar-set--general-instructor,
+.applicant-calendar-set.applicant-calendar-set--general-institution {
+  flex: 0 0 auto;
+  align-items: stretch;
+  max-height: none;
+  height: auto;
+}
+
+.applicant-calendar-set.applicant-calendar-set--default:has(.calendar-week--time-grid),
+.applicant-calendar-set.applicant-calendar-set--general-instructor:has(.calendar-week--time-grid),
+.applicant-calendar-set.applicant-calendar-set--general-institution:has(.calendar-week--time-grid) {
+  --applicant-general-instructor-calendar-panel-height: var(--calendar-main-week-min-height);
+}
+
+.applicant-calendar-set--default .calendar-main-container,
+.applicant-calendar-set--default .calendar-main-container > .calendar-main,
+.applicant-calendar-set--default .applicant-calendar-main,
+.applicant-calendar-set--general-instructor .calendar-main-container,
+.applicant-calendar-set--general-instructor .calendar-main-container > .calendar-main,
+.applicant-calendar-set--general-instructor .applicant-calendar-main,
+.applicant-calendar-set--general-institution .calendar-main-container,
+.applicant-calendar-set--general-institution .calendar-main-container > .calendar-main,
+.applicant-calendar-set--general-institution .applicant-calendar-main {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.applicant-calendar-set--default .calendar-main-container,
+.applicant-calendar-set--general-instructor .calendar-main-container,
+.applicant-calendar-set--general-institution .calendar-main-container {
+  min-height: var(--applicant-general-instructor-calendar-panel-height);
+}
+
+.applicant-calendar-set--default .calendar-main-container > .calendar-main,
+.applicant-calendar-set--general-instructor .calendar-main-container > .calendar-main,
+.applicant-calendar-set--general-institution .calendar-main-container > .calendar-main {
+  min-height: var(--applicant-general-instructor-calendar-panel-height);
+}
+
+.applicant-calendar-set .calendar-main-container,
+.applicant-calendar-set .calendar-main-container > .calendar-main {
+  min-width: 0;
+}
+
+.applicant-calendar-set .calendar-main-container,
+.applicant-calendar-set .applicant-calendar-main {
+  width: 100%;
+  max-width: 100%;
+}
+
+.applicant-calendar-sub-right-list {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.applicant-calendar-set--default .applicant-calendar-sub-right-list,
+.applicant-calendar-set--general-instructor .applicant-calendar-sub-right-list,
+.applicant-calendar-set--general-institution .applicant-calendar-sub-right-list {
+  height: var(--applicant-general-instructor-calendar-panel-height);
+  min-height: var(--applicant-general-instructor-calendar-panel-height);
+  max-height: var(--applicant-general-instructor-calendar-panel-height);
+  align-self: start;
+}
+
+.applicant-calendar-sub-right-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.applicant-calendar-sub-right-card > .calendar-split-card-right__toolbar {
+  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.applicant-calendar-sub-right-card > .calendar-split-card-right__toolbar .cms-select {
+  width: 100%;
+  min-width: 0;
+}
+
+.applicant-calendar-sub-right-card > .calendar-split-card-right__toolbar .ant-select-selector {
+  min-height: 48px;
+  border-radius: 8px;
+}
+
+/* 내부 리스트: 이중 카드 방지 (split-card-layout.css 동일 의도) */
+.applicant-calendar-sub-right-card > .applicant-schedule-list,
+.applicant-calendar-sub-right-card > .general-instructor-calendar-list,
+.applicant-calendar-sub-right-card > .general-institution-calendar-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  overflow-y: auto;
 }
 
 .applicant-calendar-right .applicant-schedule-item--selected {
@@ -70,17 +197,15 @@
 
 /* Schedule List (기본 스타일, 우측 카드 내부에서 오버라이드) */
 .applicant-schedule-list {
-  padding: 16px;
-  height: 100%;
-  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* 신청 강사 캘린더: 기관·일자 집계 시 강사별 N줄 */
 .applicant-schedule-list__institution-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 6px;
 }
 
 .applicant-schedule-list__institution-group .applicant-schedule-item {
@@ -89,35 +214,14 @@
 
 .applicant-schedule-item {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 16px;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: #fcfcfc;
-}
-
-.applicant-schedule-item:hover {
-  border: 2px solid var(--JA-mint-01, #01a1af) !important;
-  background: var(--default-WT, #fff) !important;
-
-  /* shadow/hover */
-  box-shadow:
-    0 0 4px 0 rgba(0, 136, 148, 0.06),
-    0 4px 12px 0 rgba(0, 136, 148, 0.14);
+  gap: 12px;
 }
 
 .applicant-schedule-item--selected {
-  background: #e6f7ff;
-  border-color: #1890ff;
-}
-
-/* 학교별 색상 + 선택 시: accent 유지, 선택 링 표시 */
-.applicant-schedule-item[data-has-color='true'].applicant-schedule-item--selected {
-  box-shadow: 0 0 0 2px #1890ff;
+  background: var(--default-WT, #fff) !important;
+  border: 2px solid var(--JA-mint-01, #01a1af) !important;
 }
 
 .applicant-schedule-item-title {
@@ -137,23 +241,26 @@
 .applicant-schedule-item-title-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 .applicant-schedule-item-title-divider {
-  color: #d4d4d4;
-  font-size: 14px;
-  line-height: 1;
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
   flex-shrink: 0;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
 }
 
 .applicant-schedule-item-session {
-  color: #8c8c8c;
-  font-size: 14px;
-  font-weight: 600;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
   line-height: 150%;
   margin-bottom: 10px;
+  opacity: 0.6;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -163,11 +270,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .applicant-schedule-item-tag {
   display: flex;
+  flex: 0 0 auto;
   padding: 3px 8px 2px 8px;
   justify-content: center;
   align-items: center;
@@ -181,51 +291,21 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+  white-space: nowrap;
 }
 
 .applicant-schedule-item-tag--mint {
   border-color: var(--JA-mint-01, #01a1af);
-  color: var(--JA-mint-01, #01a1af);
+  color: var(--default-BK, #3d3d3d);
   background: #fff;
 }
 
 .applicant-schedule-item-checkbox {
   flex-shrink: 0;
-  width: 52px;
-  height: 52px;
-  padding: 0;
-  align-self: center;
-  border-radius: 10px;
-  transition: background-color 0.2s;
 }
-.applicant-schedule-item-checkbox:hover {
+
+.applicant-schedule-item--selected .applicant-schedule-item-checkbox {
   background: rgba(1, 161, 175, 0.14);
-}
-
-.applicant-schedule-item-checkbox .ant-checkbox-wrapper {
-  align-items: center;
-}
-
-.applicant-schedule-item-checkbox .ant-checkbox {
-  width: 20px;
-  height: 20px;
-  top: 0;
-}
-
-.applicant-schedule-item-checkbox .ant-checkbox .ant-checkbox-inner {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-}
-
-.applicant-schedule-item-checkbox .ant-checkbox .ant-checkbox-inner::after {
-  inset-block-start: 45%;
-}
-
-.applicant-schedule-item-checkbox {
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .detail-divider {

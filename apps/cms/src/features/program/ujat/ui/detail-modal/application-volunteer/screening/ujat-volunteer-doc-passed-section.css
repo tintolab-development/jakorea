@@ -90,179 +90,52 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
-.ujat-volunteer-doc-passed .clickable-table .ant-table-tbody > tr.ant-table-row:hover:not(.ant-table-row-selected) > td {
+.ujat-volunteer-doc-passed__table-wrap .ujat-volunteer-doc-passed__table.cms-data-table {
+  overflow-x: visible;
+  min-width: 0;
+  width: 100%;
+}
+
+.ujat-volunteer-doc-passed__table-wrap
+  .ujat-volunteer-doc-passed__table.cms-data-table--fluid
+  .ant-table-container {
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-volunteer-doc-passed__table-wrap .ujat-volunteer-doc-passed__table .ant-table-content {
+  overflow-x: hidden !important;
+}
+
+.ujat-volunteer-doc-passed__table-wrap .ujat-volunteer-doc-passed__table table.ant-table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+.ujat-volunteer-doc-passed
+  .clickable-table
+  .ant-table-tbody
+  > tr.ant-table-row:hover:not(.ant-table-row-selected):not(.cms-data-table__row--disabled)
+  > td {
   background: var(--color-table-row-hover, rgba(1, 161, 175, 0.06)) !important;
-}
-
-/* 활동 포기 행 — 셀 전체 비활성(클릭·호버 없음, opacity로 흐리게) */
-.ujat-volunteer-doc-passed
-  .clickable-table
-  .ant-table-tbody
-  > tr.ujat-volunteer-doc-passed__row--withdrawn
-  > td {
-  pointer-events: none;
-  cursor: default !important;
-  opacity: 0.4;
-  color: var(--main-BK, #3d3d3d);
-  background: var(--color-table-row-disabled-bg, rgba(61, 61, 61, 0.04)) !important;
-}
-
-.ujat-volunteer-doc-passed
-  .clickable-table
-  .ant-table-tbody
-  > tr.ujat-volunteer-doc-passed__row--withdrawn:hover
-  > td {
-  background: var(--color-table-row-disabled-bg, rgba(61, 61, 61, 0.04)) !important;
-}
-
-.ujat-volunteer-doc-passed
-  .clickable-table
-  .ant-table-tbody
-  > tr.ujat-volunteer-doc-passed__row--withdrawn
-  .ujat-interview-assignment-status-text--withdrawn {
-  color: #c32f4a;
 }
 
 .ujat-volunteer-doc-passed__center-cell {
   text-align: center !important;
 }
 
-.ujat-volunteer-doc-passed__toolbar-title {
-  font-family: Pretendard, sans-serif;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 150%;
-  color: var(--default-BK, #3d3d3d);
-}
-
-.ujat-volunteer-doc-passed__toolbar-count {
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-  color: var(--default-BK, #3d3d3d);
-  opacity: 0.6;
-}
-
-.ujat-volunteer-doc-passed__toolbar-main {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
 .ujat-volunteer-doc-passed__calendar-container {
   width: 100%;
   min-width: 0;
+  overflow: visible;
 }
 
-/*
- * 캘린더 뷰: 요일 헤더·날짜 셀 사이 디바이더 제거 (UJAT 합격자 화면만)
- * — 공통 ProgramCalendar(.program-calendar.css)는 변경하지 않음
- */
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-calendar
-  .ant-picker-panel,
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-date-panel {
-  border-top: none !important;
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-content
-  thead
-  th {
-  border-bottom: none !important;
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .program-calendar-cell {
-  border: none;
-  gap: 4px;
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .program-calendar-cell-date,
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .program-calendar-cell-events {
-  border: none !important;
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-calendar-date,
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-calendar-date-value,
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-calendar-date-content {
-  border: none !important;
-  border-top: none !important;
-  border-bottom: none !important;
-}
-
-/* 격자선: 우·하만 (top 없음 → 요일 행과 첫 날짜 행 사이 이중선 방지) */
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-content
-  tbody
-  .ant-picker-cell {
-  padding: 0;
-  vertical-align: top;
-  border: none;
-  border-right: 1px solid var(--color-border-light, #f0f0f0);
-  border-bottom: 1px solid var(--color-border-light, #f0f0f0);
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-content
-  tbody
-  tr
-  td:first-child {
-  border-left: 1px solid var(--color-border-light, #f0f0f0);
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-content
-  tbody
-  tr {
-  height: var(--calendar-month-row-height, 127.4px);
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-cell
-  .program-calendar-cell,
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-cell
-  .program-calendar-cell-tooltip-trigger,
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-cell
-  .program-calendar-cell-tooltip-trigger--full-cell {
-  height: 100%;
-  min-height: 127.4px;
-}
-
-.ujat-volunteer-doc-passed__calendar-container
-  .program-calendar-main.applicant-calendar-main
-  .ant-picker-cell
-  .program-calendar-cell-tooltip-trigger--full-cell
-  > .program-calendar-cell {
-  height: 100%;
-  min-height: 127.4px;
+/* 캘린더 카드 box-shadow가 좌우에서 잘리지 않도록(리스트 뷰 테이블 가로 스크롤은 table-wrap 유지) */
+.ujat-volunteer-doc-passed:has(.ujat-volunteer-doc-passed__calendar-container) {
+  overflow-x: visible;
 }
 
 /* 면접일 배정 / 재배정 — 테이블 액션 버튼 (120×40) */
@@ -316,11 +189,4 @@
   opacity: 0.4;
   background: #fff !important;
   cursor: not-allowed;
-}
-
-/* 활동 포기 행: 행 opacity와 중복 적용되지 않도록 */
-.ujat-volunteer-doc-passed
-  .ujat-volunteer-doc-passed__row--withdrawn
-  .ujat-volunteer-doc-passed__assign-btn.cms-button.ant-btn:disabled {
-  opacity: 1;
 }

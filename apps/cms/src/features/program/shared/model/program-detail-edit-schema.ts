@@ -20,6 +20,10 @@
  */
 
 import { z } from 'zod'
+import {
+  announcementPublishedFromFormValue,
+  announcementPublishedToFormValue,
+} from '@/features/program/shared/lib/participant-recruitment-form-options'
 
 const roundStatusEnum = z.enum(['active', 'inactive', 'pending', 'completed', 'cancelled'])
 
@@ -92,7 +96,16 @@ const programDetailEditSchemaBase = z.object({
     .trim()
     .min(1, '결과 발표 방법을 입력해주세요'),
   studentListRequired: z.enum(['required', 'not_required']).optional(),
+  /** 참여자 모집 정보 — 사전 안내·수료증·기관 신청 상한(일반 프로그램) */
+  participantRecruitmentAnnouncementPublished: z.enum(['published', 'unpublished']).optional(),
+  participantRecruitmentPreEducationRequired: z.enum(['required', 'not_required']).optional(),
+  participantRecruitmentCertificateProvided: z.enum(['provided', 'not_provided']).optional(),
+  participantRecruitmentMaxInstructors: z.number().min(0).optional(),
+  participantRecruitmentMaxClassCount: z.number().min(0).optional(),
+  participantRecruitmentMaxScheduleCount: z.number().min(0).optional(),
+  participantRecruitmentMaxSessionsPerDay: z.number().min(0).optional(),
   // 강사 모집
+  instructorRecruitmentAnnouncementPublished: z.enum(['published', 'unpublished']).optional(),
   instructorCapacity: z.number().min(0).optional(),
   instructorApplicationStartDate: z.string().optional(),
   instructorApplicationEndDate: z.string().optional(),
@@ -106,6 +119,8 @@ const programDetailEditSchemaBase = z.object({
   instructorTarget: z.string().optional(),
   instructorTargetDetail: z.string().optional(),
   // 봉사자
+  volunteerRecruitmentAnnouncementPublished: z.enum(['published', 'unpublished']).optional(),
+  volunteerRecruitmentInterviewEnabled: z.enum(['yes', 'no']).optional(),
   volunteerApplicationStartDate: z.string().optional(),
   volunteerApplicationEndDate: z.string().optional(),
   volunteerTarget: z.string().optional(),
@@ -163,6 +178,13 @@ export const programDetailInstitutionsEditSchema = programDetailEditSchemaBase.e
 
 export type ProgramDetailEditFormValues = z.infer<typeof programDetailEditSchema>
 
+/** 폼 참여자 유형(select)은 school | individual 만 지원 */
+function toDetailEditCategory(
+  category: import('@/types/domain').ProgramCategory | undefined
+): 'school' | 'individual' {
+  return category === 'individual' ? 'individual' : 'school'
+}
+
 /** Program → 폼 기본값 (날짜는 ISO 문자열) */
 export function programToDetailEditValues(
   program: import('@/types/domain').Program
@@ -174,7 +196,7 @@ export function programToDetailEditValues(
     title: program.title ?? '',
     startDate: toStr(program.startDate),
     endDate: toStr(program.endDate),
-    category: program.category ?? 'school',
+    category: toDetailEditCategory(program.category),
     targetLevel: program.targetLevel ?? undefined,
     district: program.district ?? undefined,
     type: program.type ?? 'offline',
@@ -198,6 +220,33 @@ export function programToDetailEditValues(
       : '',
     resultAnnouncementMethod: program.resultAnnouncementMethod ?? '',
     studentListRequired: program.studentListRequired ?? 'required',
+    participantRecruitmentAnnouncementPublished: announcementPublishedToFormValue(
+      program.generalCommonInfo?.participantRecruitmentInfo?.announcementPublished
+    ),
+    participantRecruitmentPreEducationRequired: (() => {
+      const v = program.generalCommonInfo?.participantRecruitmentInfo?.preEducationNoticeRequired
+      if (v === true) return 'required' as const
+      if (v === false) return 'not_required' as const
+      return undefined
+    })(),
+    participantRecruitmentCertificateProvided: (() => {
+      const v = program.generalCommonInfo?.participantRecruitmentInfo?.certificateIssuanceProvided
+      if (v === true) return 'provided' as const
+      if (v === false) return 'not_provided' as const
+      return undefined
+    })(),
+    participantRecruitmentMaxInstructors:
+      program.generalCommonInfo?.participantRecruitmentInfo?.maxAssignableInstructors,
+    participantRecruitmentMaxClassCount:
+      program.generalCommonInfo?.participantRecruitmentInfo?.maxClassCount ??
+      program.rounds?.[0]?.classCount,
+    participantRecruitmentMaxScheduleCount:
+      program.generalCommonInfo?.participantRecruitmentInfo?.maxScheduleCount,
+    participantRecruitmentMaxSessionsPerDay:
+      program.generalCommonInfo?.participantRecruitmentInfo?.maxSessionsPerDay,
+    instructorRecruitmentAnnouncementPublished: announcementPublishedToFormValue(
+      program.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublished
+    ),
     instructorCapacity: program.instructorCapacity ?? undefined,
     instructorApplicationStartDate: program.instructorApplicationStartDate
       ? toStr(program.instructorApplicationStartDate)
@@ -218,6 +267,15 @@ export function programToDetailEditValues(
     finalPassAnnouncementMethod: program.finalPassAnnouncementMethod ?? undefined,
     instructorTarget: program.instructorTarget ?? undefined,
     instructorTargetDetail: program.instructorTargetDetail ?? undefined,
+    volunteerRecruitmentAnnouncementPublished: announcementPublishedToFormValue(
+      program.generalCommonInfo?.volunteerRecruitmentInfo?.announcementPublished
+    ),
+    volunteerRecruitmentInterviewEnabled: (() => {
+      const v = program.generalVolunteerInterviewEnabled
+      if (v === true) return 'yes' as const
+      if (v === false) return 'no' as const
+      return undefined
+    })(),
     volunteerApplicationStartDate: program.volunteerApplicationStartDate
       ? toStr(program.volunteerApplicationStartDate)
       : undefined,
@@ -304,6 +362,57 @@ export function detailEditValuesToProgramPatch(
     resultAnnouncementDate: values.resultAnnouncementDate ?? existing.resultAnnouncementDate,
     resultAnnouncementMethod: values.resultAnnouncementMethod ?? existing.resultAnnouncementMethod,
     studentListRequired: values.studentListRequired ?? existing.studentListRequired,
+    generalCommonInfo: {
+      ...existing.generalCommonInfo,
+      participantRecruitmentInfo: {
+        ...existing.generalCommonInfo?.participantRecruitmentInfo,
+        announcementPublished:
+          announcementPublishedFromFormValue(values.participantRecruitmentAnnouncementPublished) ??
+          existing.generalCommonInfo?.participantRecruitmentInfo?.announcementPublished,
+        preEducationNoticeRequired:
+          values.participantRecruitmentPreEducationRequired === 'required'
+            ? true
+            : values.participantRecruitmentPreEducationRequired === 'not_required'
+              ? false
+              : existing.generalCommonInfo?.participantRecruitmentInfo?.preEducationNoticeRequired,
+        certificateIssuanceProvided:
+          values.participantRecruitmentCertificateProvided === 'provided'
+            ? true
+            : values.participantRecruitmentCertificateProvided === 'not_provided'
+              ? false
+              : existing.generalCommonInfo?.participantRecruitmentInfo?.certificateIssuanceProvided,
+        maxAssignableInstructors:
+          values.participantRecruitmentMaxInstructors ??
+          existing.generalCommonInfo?.participantRecruitmentInfo?.maxAssignableInstructors,
+        maxClassCount:
+          values.participantRecruitmentMaxClassCount ??
+          existing.generalCommonInfo?.participantRecruitmentInfo?.maxClassCount,
+        maxScheduleCount:
+          values.participantRecruitmentMaxScheduleCount ??
+          existing.generalCommonInfo?.participantRecruitmentInfo?.maxScheduleCount,
+        maxSessionsPerDay:
+          values.participantRecruitmentMaxSessionsPerDay ??
+          existing.generalCommonInfo?.participantRecruitmentInfo?.maxSessionsPerDay,
+      },
+      instructorRecruitmentInfo: {
+        ...existing.generalCommonInfo?.instructorRecruitmentInfo,
+        announcementPublished:
+          announcementPublishedFromFormValue(values.instructorRecruitmentAnnouncementPublished) ??
+          existing.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublished,
+      },
+      volunteerRecruitmentInfo: {
+        ...existing.generalCommonInfo?.volunteerRecruitmentInfo,
+        announcementPublished:
+          announcementPublishedFromFormValue(values.volunteerRecruitmentAnnouncementPublished) ??
+          existing.generalCommonInfo?.volunteerRecruitmentInfo?.announcementPublished,
+      },
+    },
+    generalVolunteerInterviewEnabled:
+      values.volunteerRecruitmentInterviewEnabled === 'yes'
+        ? true
+        : values.volunteerRecruitmentInterviewEnabled === 'no'
+          ? false
+          : existing.generalVolunteerInterviewEnabled,
     instructorCapacity: values.instructorCapacity ?? existing.instructorCapacity,
     instructorApplicationStartDate:
       values.instructorApplicationStartDate ?? existing.instructorApplicationStartDate,

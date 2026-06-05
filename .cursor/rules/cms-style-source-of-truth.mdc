@@ -1,0 +1,21 @@
+---
+description: CMS 스타일은 index.css·detail-info-form 기준을 우선하고 임의 레이아웃 클래스를 추가하지 않는다
+globs: apps/cms/src/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# CMS 스타일 소스 오브 트루스
+
+## 기본 원칙
+- 타이틀/설명/헤더 배치는 `apps/cms/src/index.css` 또는 `apps/cms/src/shared/components/detail-info-form/detail-info-form.css`의 기존 클래스를 우선 사용한다.
+- 동일 목적의 로컬 클래스(예: `*-section-header-row`, `*-description-always`)를 새로 만들지 않는다.
+
+## 금지 사항
+- 기존 공통 클래스가 있는 UI를 로컬 CSS로 재정의하기 위해 신규 클래스/변형 클래스를 추가하지 않는다.
+- 간격/정렬 조정을 위해 임의의 전용 modifier 클래스를 추가하지 않는다.
+- 헤더 여백 조정을 위해 `mb-*`, `mt-*` 같은 유틸 클래스 또는 인라인 `style`을 직접 넣지 않는다.
+- 제목/설명 간격 문제를 발견하면 공통 클래스 조합(`info-section-title`, `info-section-desc`, 필요 시 `detail-info-form__title`)으로 해결한다.
+
+## 예외
+- 공통 클래스만으로 구현이 불가능할 때만 예외를 허용한다.
+- 이때는 PR/응답에 이유를 명시하고, 공통 레이어로 승격 가능한지 먼저 검토한다.

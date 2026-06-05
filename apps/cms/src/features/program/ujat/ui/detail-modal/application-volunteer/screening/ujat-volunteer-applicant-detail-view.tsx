@@ -82,12 +82,6 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
     return '면접일 배정'
   }, [applicant.interviewAssignmentStatus])
 
-  const isWithdrawn = applicant.interviewAssignmentStatus === 'withdrawn'
-  const isInterview2Finalized =
-    applicant.secondInterviewScreeningStatus === 'pass' ||
-    applicant.secondInterviewScreeningStatus === 'fail'
-  const isInterview2ActionsDisabled = isWithdrawn || isInterview2Finalized
-
   if (isInterview2Props(props)) {
     const { onWithdrawActivity, onInterviewFail, onInterviewPass, onOpenInterviewEvaluation } =
       props
@@ -101,7 +95,6 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
               variant="delete"
               size="large"
               width={160}
-              disabled={isWithdrawn}
               onClick={onWithdrawActivity}
             >
               활동 포기
@@ -111,7 +104,6 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
               variant="delete"
               size="large"
               width={160}
-              disabled={isInterview2ActionsDisabled}
               onClick={onInterviewFail}
             >
               면접 불합격
@@ -121,7 +113,6 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
               variant="secondary"
               size="large"
               width={160}
-              disabled={isInterview2ActionsDisabled}
               onClick={onInterviewPass}
             >
               면접 합격
@@ -131,7 +122,6 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
               variant="primary"
               size="large"
               width={160}
-              disabled={isInterview2ActionsDisabled}
               onClick={onOpenInterviewEvaluation}
             >
               면접 평가
@@ -174,7 +164,6 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
               variant="delete"
               size="large"
               width={160}
-              disabled={isWithdrawn}
               onClick={onWithdrawActivity}
             >
               활동 포기
@@ -184,7 +173,6 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
               variant="secondary"
               size="large"
               width={160}
-              disabled={isWithdrawn}
               onClick={onAssignInterview}
             >
               {assignInterviewLabel}

@@ -11,6 +11,7 @@ import {
 import { createAdminNotice, updateAdminNotice } from '@/features/posts/api/admin-notice-mock-store'
 import { deleteNotice } from '@/features/posts/api/admin-notice-service'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
+import { RichTextEditor } from '@/shared/rich-text'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import {
@@ -21,7 +22,6 @@ import {
   CmsRadioGroup,
   FileSelectField } from '@/shared/ui'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
-import '@toast-ui/editor/dist/toastui-editor.css'
 import './notice-register-modal.css'
 
 export type NoticeFormModalMode = 'create' | 'edit'
@@ -70,7 +70,11 @@ export function NoticeFormModal({
     [open, mode, notice?.id]
   )
 
-  const { editorHostRef, getMarkdown } = useNoticeWysiwygEditor(open, initialMarkdown, editorResetKey)
+  const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
+    open,
+    initialMarkdown,
+    editorResetKey
+  )
 
   /* 모달이 열릴 때마다 폼·첨부 세션 초기화(등록↔수정·다른 공지 전환) */
   /* eslint-disable react-hooks/set-state-in-effect -- open/mode/notice 변경 시 의도적 초기화 */
@@ -291,7 +295,9 @@ export function NoticeFormModal({
 
           <div className="notice-register-modal__section notice-register-modal__section--editor">
             <div className="notice-register-modal__editor-label">내용</div>
-            <div ref={editorHostRef} className="notice-register-modal__editor-host" />
+            <div className="notice-register-modal__editor-host">
+              <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+            </div>
           </div>
 
           <div className="notice-register-modal__attachment">

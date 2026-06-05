@@ -1,11 +1,19 @@
 /**
- * TextAreaFieldRow — 테이블 행 내 TextArea / 읽기 전용 블록
+ * TextAreaFieldRow — 테이블 행 내 CmsTextArea / 읽기 전용 블록
  */
 
 /* 필수 표시(*) */
 th .text-area-field-row__required {
   color: var(--color-red, #c32f4a);
   margin-left: 2px;
+}
+
+.text-area-field-row__field {
+  width: 100%;
+}
+
+.text-area-field-row__field.cms-textarea--explicit-width {
+  max-width: 100%;
 }
 
 .text-area-field-row__field-error {
@@ -15,16 +23,12 @@ th .text-area-field-row__required {
   color: var(--color-red, #ff4d4f);
 }
 
-/* 조회/수정 공통: 테이블 박스 사이즈 유지 */
+/* 조회 모드: 테이블 셀 내 읽기 전용 */
 .text-area-field-row__content-block {
   white-space: pre-wrap;
   word-break: break-word;
   padding: 8px 0;
   box-sizing: border-box;
-}
-
-.text-area-field-row__content-block.text-area-field-row__content-block--sm {
-  min-height: 120px;
 }
 
 .text-area-field-row__content-block ul {
@@ -35,25 +39,4 @@ th .text-area-field-row__required {
 .text-area-field-row__content-block ol {
   margin: 0.5em 0;
   padding-left: 1.2em;
-}
-
-/* 수정 모드 텍스트 필드 */
-.text-area-field-row__content-textarea {
-  width: 100%;
-  min-height: 160px;
-  border-radius: 6px;
-  resize: vertical;
-  border: 1px solid #d9d9d9;
-}
-
-.text-area-field-row__content-textarea.ant-input {
-  min-height: 160px;
-}
-
-.text-area-field-row__content-textarea.text-area-field-row__content-textarea--sm {
-  min-height: 120px;
-}
-
-.text-area-field-row__content-textarea.text-area-field-row__content-textarea--sm.ant-input {
-  min-height: 120px;
 }

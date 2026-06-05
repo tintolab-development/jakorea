@@ -3,7 +3,7 @@
   min-height: 0;
   width: 100%;
   min-width: 0;
-  max-width: 400px;
+  max-width: none;
   box-sizing: border-box;
   background: var(--color-bg-base);
   border-radius: 16px;
@@ -16,7 +16,10 @@
   align-items: stretch;
   gap: 6px;
   overflow-y: auto;
-  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  /*
+   * 3열 shell: border만 (calendar-search와 동일). box-shadow는 부모 overflow:hidden과
+   * 겹치면 모서리에 이중 선처럼 보임 — calendar-common.md 회귀 방지.
+   */
 }
 
 /**
@@ -41,6 +44,14 @@
 }
 
 .calendar-list-item:hover {
+  border: 2px solid var(--JA-mint-01, #01a1af) !important;
+  background: var(--default-WT, #fff) !important;
+  box-shadow:
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
+}
+
+.calendar-list-item--selected {
   border: 2px solid var(--JA-mint-01, #01a1af) !important;
   background: var(--default-WT, #fff) !important;
   box-shadow:
@@ -88,6 +99,45 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+}
+
+/* 우측 리스트 행 내 체크박스 hit 영역 — 모든 `.calendar-list` 공통 */
+.calendar-list-item__checkbox {
+  flex-shrink: 0;
+  align-self: center;
+  box-sizing: border-box;
+  display: flex;
+  padding: 12px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.calendar-list-item__checkbox:hover {
+  background: rgba(1, 161, 175, 0.06);
+}
+
+.calendar-list-item__checkbox .ant-checkbox-wrapper {
+  align-items: center;
+  margin-inline-end: 0;
+}
+
+.calendar-list-item__checkbox .ant-checkbox {
+  width: 20px;
+  height: 20px;
+  top: 0;
+}
+
+.calendar-list-item__checkbox .ant-checkbox .ant-checkbox-inner {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.calendar-list-item__checkbox .ant-checkbox .ant-checkbox-inner::after {
+  inset-block-start: 45%;
 }
 
 .calendar-list .ant-empty {

@@ -15,7 +15,8 @@ import {
 import { UjatVolunteerApplicantDetailView } from './ujat-volunteer-applicant-detail-view'
 import { UjatVolunteerInterviewEvaluationModal } from './ujat-volunteer-interview-evaluation-modal'
 import { UjatVolunteerInterview2BulkPassModal } from './ujat-volunteer-interview2-bulk-pass-modal'
-import { UjatVolunteerDocPassedCalendarView } from './ujat-volunteer-doc-passed-calendar-view'
+import { UjatVolunteerInterview2CalendarView } from './ujat-volunteer-interview2-calendar-view'
+import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import { UJAT_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X } from './ujat-volunteer-interview2-columns'
 import './ujat-volunteer-interview2-section.css'
 import './ujat-volunteer-doc-screening-section.css'
@@ -127,12 +128,12 @@ export function UjatVolunteerInterview2Section({
 
   const handleDetailInterviewFail = useCallback(() => {
     if (!selectedApplicant) return
-    requestInterview2Fail(selectedApplicant.id)
+    requestInterview2Fail(selectedApplicant)
   }, [requestInterview2Fail, selectedApplicant])
 
   const handleDetailInterviewPass = useCallback(() => {
     if (!selectedApplicant) return
-    requestInterview2Pass(selectedApplicant.id)
+    requestInterview2Pass(selectedApplicant)
   }, [requestInterview2Pass, selectedApplicant])
 
   const handleDetailOpenEvaluation = useCallback(() => {
@@ -235,7 +236,6 @@ export function UjatVolunteerInterview2Section({
               variant="delete"
               size="large"
               width={160}
-              disabled={selectedRowKeys.length === 0}
               onClick={handleBulkFail}
             >
               선택 불합격
@@ -245,7 +245,6 @@ export function UjatVolunteerInterview2Section({
               variant="secondary"
               size="large"
               width={160}
-              disabled={selectedRowKeys.length === 0}
               onClick={handleBulkPass}
             >
               선택 합격
@@ -291,7 +290,7 @@ export function UjatVolunteerInterview2Section({
               }}
               rowClassName={record =>
                 record.interviewAssignmentStatus === 'withdrawn'
-                  ? 'ujat-volunteer-doc-passed__row--withdrawn'
+                  ? CMS_DATA_TABLE_ROW_DISABLED_CLASS
                   : ''
               }
               onRow={record => {
@@ -305,8 +304,10 @@ export function UjatVolunteerInterview2Section({
           </div>
         ) : (
           <div className="ujat-volunteer-interview2__calendar-container">
-            <UjatVolunteerDocPassedCalendarView
+            <UjatVolunteerInterview2CalendarView
               events={calendarEvents}
+              selectedRowKeys={selectedRowKeys}
+              onSelectionChange={setSelectedRowKeys}
               onItemClick={openApplicantDetail}
             />
           </div>

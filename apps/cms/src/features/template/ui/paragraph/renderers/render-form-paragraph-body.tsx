@@ -17,6 +17,7 @@ import {
   type ExplanationTextBodyDisplayMode,
 } from '@/features/template/ui/paragraph/explanation/text'
 import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/title'
+import { ExplanationSurveyPeriodReadonly } from '@/features/template/ui/paragraph/explanation/survey-period-readonly'
 import { DateField } from '@/features/template/ui/paragraph/single-item/date'
 import { TimeField } from '@/features/template/ui/paragraph/single-item/time'
 import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
@@ -39,7 +40,10 @@ import {
   subjectiveParagraphToShortEssayView,
 } from '@/features/template/ui/paragraph/single-item/short-essay'
 import { StarRate } from '@/features/template/ui/paragraph/single-item/star-rate'
-import { UserInfo } from '@/features/template/ui/paragraph/single-item/user-info'
+import {
+  UserInfo,
+  type UserInfoPreviewValues,
+} from '@/features/template/ui/paragraph/single-item/user-info'
 import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
 import {
   UjatJournalEducationInfo,
@@ -127,6 +131,8 @@ export type RenderFormParagraphBodyOptions = {
   ujatProgramApplicationGradeClassTime?: UjatProgramApplicationGradeClassTimeParagraphOptions
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   applicantRecruitFormInstitution?: boolean
+  /** 참여자 모집 폼 — 학교/기관 대상일 때만 최대 강사·학급·일정·차시 입력 */
+  showInstitutionApplicationLimits?: boolean
   /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatRecruitFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
@@ -146,6 +152,10 @@ export type RenderFormParagraphBodyOptions = {
   programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
   /** UJAT 교육일지 교육 정보 단락 — 담당 학교명 등 자동 표시 */
   ujatJournalEducationInfoAutofill?: UjatJournalEducationInfoAutofill | null
+  /** user_info 단락 미리보기 셀 값 — UJAT 문서 뷰어의 선택 봉사자 정보 등 */
+  userInfoPreviewValues?: UserInfoPreviewValues
+  /** A4 문서 본문 스코프 클래스 — 템플릿별 preview CSS 오버라이드 */
+  documentPreviewClassName?: string
   /**
    * 구조 잠금 + 작성(authoring)일 때도 객관식·가로형 하단 동의 라디오 등 선택 UI만 조작 가능(미리 체크).
    * 프로그램 참여자 신청 폼 등 고정 단락 템플릿용.
@@ -153,6 +163,8 @@ export type RenderFormParagraphBodyOptions = {
   structureLockedAuthoringChoicePreview?: boolean
   /** 현재 조건에 따라 숨겨야 하는 단락 id 목록(에디터/미리보기 공통) */
   hiddenParagraphIds?: ReadonlySet<string>
+  /** 강의 평가 등 — 설문 기간을 기간 피커 대신 지정 텍스트로 표시 */
+  surveyPeriodReadonly?: boolean
 }
 
 export function renderFormParagraphBody(
@@ -180,6 +192,15 @@ export function renderFormParagraphBody(
     case 'survey_title_with_period':
       if (!isCardSelected && paragraphInteractionMode !== 'user') return null
       if (!(p.showWritingPeriodOnForm ?? false)) return null
+      if (options?.surveyPeriodReadonly) {
+        return (
+          <ExplanationSurveyPeriodReadonly
+            startAt={p.startAt}
+            endAt={p.endAt}
+            periodLabel={editorKind === 'survey' ? '설문 기간' : undefined}
+          />
+        )
+      }
       const titlePeriodEditMode = structureLocked
         ? paragraphInteractionMode === 'user'
         : paragraphInteractionMode === 'user' || isParagraphSelected
@@ -264,7 +285,9 @@ export function renderFormParagraphBody(
       const isEditMode =
         (!structureLocked || paragraphInteractionMode === 'user') &&
         (paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field')
-      const tableCanvasInteractive = !structureLocked || paragraphInteractionMode === 'user'
+      /** 표 격자·헤더 행 선택(민트 스트로크) — 작성(authoring) + 구조 미잠금에서만 */
+      const tableCanvasInteractive =
+        !structureLocked && paragraphInteractionMode === 'authoring'
       return (
         <HorizontalTableParagraphBody
           paragraph={p}
@@ -294,6 +317,7 @@ export function renderFormParagraphBody(
           ujatProgramApplicationGradeInfo={options?.ujatProgramApplicationGradeInfo}
           ujatProgramApplicationGradeClassTime={options?.ujatProgramApplicationGradeClassTime}
           applicantRecruitFormInstitution={options?.applicantRecruitFormInstitution}
+          showInstitutionApplicationLimits={options?.showInstitutionApplicationLimits}
           ujatRecruitFormInstitution={options?.ujatRecruitFormInstitution}
           applicantRecruitFormIndividual={options?.applicantRecruitFormIndividual}
           recruitFormInstructor={options?.recruitFormInstructor}
@@ -365,12 +389,15 @@ export function renderFormParagraphBody(
           })
         : normalizedVp
       const dateTimeCellsInteractive = isBodyInteractive || lockedAuthoringChoicePreview
+      const tableCanvasInteractive =
+        !structureLocked && paragraphInteractionMode === 'authoring'
       return (
         <VerticalTableParagraphBody
           paragraph={vp}
           onChange={next => updateParagraph(p.id, () => normalizeVerticalTableParagraph(next))}
           isEditMode={isBodyInteractive}
           dateTimeCellsInteractive={dateTimeCellsInteractive}
+          tableCanvasInteractive={tableCanvasInteractive}
           tableRowSelection={options?.verticalTableRowSelection}
           onTableRowSelectionChange={options?.onVerticalTableRowSelectionChange}
         />
@@ -514,6 +541,7 @@ export function renderFormParagraphBody(
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isBodyInteractive}
           layout={paragraphInteractionMode === 'user' ? 'previewTable' : 'chips'}
+          previewValues={options?.userInfoPreviewValues}
         />
       )
     case 'file_attachment':

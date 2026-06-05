@@ -3,6 +3,7 @@ import { useEffect, useId, useState, type ReactNode } from 'react'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInputIconClick } from '@/shared/ui/cms-input-iconclick'
+import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
 import './template-fullpage-modal.css'
 import '../paragraph/shared/paragraph-card.css'
 
@@ -38,6 +39,8 @@ interface TemplateFullpageModalProps {
   subHeader?: ReactNode
   /** `full-page-modal__body-header` 좌측(닫기·미리보기·임시저장과 동일 행) */
   bodyHeaderLeading?: ReactNode
+  /** 프로그램 상세 등 다른 풀페이지 모달 위에 겹칠 때 스택 순서 */
+  zIndex?: number
 }
 
 export type TemplateFullpageModalFooterAction = {
@@ -82,6 +85,7 @@ export function TemplateFullpageModal({
   footerActions,
   subHeader,
   bodyHeaderLeading,
+  zIndex,
 }: TemplateFullpageModalProps) {
   const resolvedFooterActions =
     footerActions ?? (footerAction != null ? [footerAction] : undefined)
@@ -141,6 +145,7 @@ export function TemplateFullpageModal({
       size="full"
       hideHeader
       className={rootClassName}
+      zIndex={zIndex}
     >
       <div className="full-page-modal__layout">
         <header className="full-page-modal__topbar">
@@ -282,13 +287,12 @@ export function TemplateFullpageModalCardDescription({
   className,
 }: TemplateFullpageModalCardDescriptionProps) {
   return (
-    <p
-      className={['form-paragraph-section-description', 'paragraph-card__description', className]
-        .filter(Boolean)
-        .join(' ')}
+    <FormParagraphSectionDescription
+      surface="templateAuthoring"
+      className={['paragraph-card__description', className].filter(Boolean).join(' ')}
     >
       {children}
-    </p>
+    </FormParagraphSectionDescription>
   )
 }
 

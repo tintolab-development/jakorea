@@ -5,9 +5,9 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Form, Input, Radio, Modal, Button } from 'antd'
+import { Form, Input, Modal, Button } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CmsRadio } from '@/shared/ui'
 import type { ProgramRole } from '@/types/user'
 import { PROGRAM_ROLE_LABELS } from '@/data/mock/program-managers'
 import {
@@ -111,19 +111,19 @@ export function EditManagerRoleModal({
               rules={[{ required: true }]}
               className="edit-manager-role-modal__field"
             >
-              <Radio.Group size="large" className="edit-manager-role-modal__role-radios">
+              <CmsRadio.Group size="large" className="edit-manager-role-modal__role-radios">
                 {ROLE_OPTIONS.map(opt => {
                   const disablePm =
                     manager &&
                     opt.value === 'OWNER' &&
                     !canSetProgramManagerRole(managerList, manager.id, 'OWNER')
                   return (
-                    <Radio key={opt.value} value={opt.value} disabled={!!disablePm}>
+                    <CmsRadio key={opt.value} value={opt.value} disabled={!!disablePm}>
                       {opt.label}
-                    </Radio>
+                    </CmsRadio>
                   )
                 })}
-              </Radio.Group>
+              </CmsRadio.Group>
             </Form.Item>
             {manager && (
               <Form.Item label="담당자명" className="edit-manager-role-modal__field">

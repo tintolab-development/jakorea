@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { buildInstitutionClassCountOptions } from '@/features/template/lib/participant-recruitment-institution-limits'
+import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -10,12 +12,6 @@ import '@/features/template/ui/form-editor/form-editor.css'
 const APPLICATION_GRADE_OPTIONS = Array.from({ length: 6 }, (_, i) => ({
   value: String(i + 1),
   label: `${i + 1}학년`,
-}))
-
-/** 신청 학급 수(개) — 스크린: 드롭다운 + 「개 학급」 */
-const CLASS_COUNT_OPTIONS = Array.from({ length: 40 }, (_, i) => ({
-  value: String(i + 1),
-  label: String(i + 1),
 }))
 
 const EDUCATION_FORM_OPTIONS = [
@@ -30,6 +26,12 @@ const DETAIL_ADDRESS_PLACEHOLDER = '교구재 등 택배 발송을 위한 정확
 
 /** 프로그램 참여자 신청 폼 (학교) — 기본 정보 단락 (`DetailInfoForm` 격자) */
 export function ProgramApplicationFormInstitutionBasicInfoParagraph() {
+  const bridge = useInstitutionApplicationProgramBridge()
+  const classCountOptions = useMemo(
+    () => buildInstitutionClassCountOptions(bridge.maxClassCount),
+    [bridge.maxClassCount]
+  )
+
   const [applicationGrade, setApplicationGrade] = useState<string>('')
   const [classCount, setClassCount] = useState<string>('')
   const [educationForm, setEducationForm] = useState<string>(
@@ -88,7 +90,7 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph() {
                 width={120}
                 value={classCount === '' ? undefined : classCount}
                 onChange={v => setClassCount(String(v ?? ''))}
-                options={CLASS_COUNT_OPTIONS}
+                options={classCountOptions}
               />
               <span>개 학급</span>
               <DetailInfoForm.InputsSeparator />

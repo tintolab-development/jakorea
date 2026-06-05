@@ -5,9 +5,9 @@
 import { useEffect, useState } from 'react'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
+import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
 import './payment-order-payment-rejection-modal.css'
-import { AppInput } from '@/shared/ui/app-input'
 
 export interface PaymentOrderPaymentRejectionModalProps {
   open: boolean
@@ -91,11 +91,13 @@ export function PaymentOrderPaymentRejectionModal({
           </div>
           <div className="payment-order-payment-reject__reason-block">
             <span className="payment-order-payment-reject__reason-label">반려 사유</span>
-            <AppInput
+            <CmsTextArea
               value={reason}
               className="payment-order-payment-reject__reason-input"
               onChange={e => setReason(e.target.value)}
               placeholder="반려 사유를 입력해 주세요."
+              inputSize="medium"
+              rows={1}
               maxLength={100}
             />
           </div>

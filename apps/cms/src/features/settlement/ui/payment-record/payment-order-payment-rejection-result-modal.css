@@ -40,8 +40,3 @@
 .payment-order-payment-reject-result__name {
   font-weight: var(--font-weight-700, 700);
 }
-
-.payment-order-payment-reject__reason-input .app-input__control .ant-input-affix-wrapper,
-.app-input__control .ant-input {
-  font-size: 16px !important;
-}

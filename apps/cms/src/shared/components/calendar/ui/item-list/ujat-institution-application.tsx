@@ -31,9 +31,7 @@ export function CalendarListItemContentInstitutionApplication({
           <span className="ujat-institution-application-list-item__title">
             {row.institutionName}
           </span>
-          <span className="ujat-institution-application-list-item__title-divider" aria-hidden>
-            |
-          </span>
+          <span className="ujat-institution-application-list-item__title-divider" aria-hidden />
           <UjatInstitutionApplicationCalendarStatusBadge
             statusKey={row.statusKey}
             label={row.statusLabel}
@@ -45,9 +43,7 @@ export function CalendarListItemContentInstitutionApplication({
           </span>
           {row.gradeDetail ? (
             <>
-              <span className="ujat-institution-application-list-item__meta-divider" aria-hidden>
-                |
-              </span>
+              <span className="ujat-institution-application-list-item__meta-divider" aria-hidden />
               <span
                 className="ujat-institution-application-list-item__meta-detail"
                 title={row.gradeDetail}
@@ -59,7 +55,7 @@ export function CalendarListItemContentInstitutionApplication({
         </div>
       </div>
       <div
-        className="ujat-institution-application-list-item__checkbox"
+        className="calendar-list-item__checkbox"
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >

@@ -7,6 +7,11 @@ import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { GeminiRecruitmentList } from '@/features/program/gemini/ui/recruitment/list'
+import { GeminiApprovedTrainingList } from '@/features/program/gemini/ui/approved/list'
+import {
+  GeminiApprovedTrainingDetailFullPageModal,
+  useGeminiApprovedTrainingDetailUrl,
+} from '@/features/program/gemini/ui/approved/detail-fullpage-modal'
 import {
   GeminiRecruitmentDetailFullPageModal,
   useGeminiRecruitmentDetailUrl,
@@ -29,6 +34,7 @@ export function GeminiVisitingTrainingPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
   const { recruitmentId, closeDetail } = useGeminiRecruitmentDetailUrl()
+  const { approvedTrainingId, closeDetail: closeApprovedDetail } = useGeminiApprovedTrainingDetailUrl()
   const { isAddOpen, closeAdd } = useGeminiRecruitmentAddUrl()
 
   const handleTabChange = useCallback(
@@ -65,11 +71,17 @@ export function GeminiVisitingTrainingPage() {
       {activeKey === 'recruitment' ? (
         <GeminiRecruitmentList />
       ) : (
-        <div className="gemini-visiting-training-page__approved-placeholder" aria-hidden />
+        <GeminiApprovedTrainingList />
       )}
       {isAddOpen ? <GeminiRecruitmentAddFullpageModal open onClose={closeAdd} /> : null}
       {recruitmentId && !isAddOpen ? (
         <GeminiRecruitmentDetailFullPageModal recruitmentId={recruitmentId} onClose={closeDetail} />
+      ) : null}
+      {approvedTrainingId && !isAddOpen ? (
+        <GeminiApprovedTrainingDetailFullPageModal
+          approvedTrainingId={approvedTrainingId}
+          onClose={closeApprovedDetail}
+        />
       ) : null}
     </div>
   )

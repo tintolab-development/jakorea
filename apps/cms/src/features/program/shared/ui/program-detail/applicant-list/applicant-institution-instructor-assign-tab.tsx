@@ -17,8 +17,9 @@ import {
   type AssignedInstructorDisplayRowMock,
 } from '@/features/program/general/lib/school-detail-mock'
 import { INSTRUCTOR_ROLE_LABELS, type InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
-import '@/features/program/general/ui/instructor-assignment-role-tag.css'
-import '@/features/program/general/ui/instructor-assignment-status-text.css'
+import '@/features/program/general/ui/detail-modal/program-status/instructor-assignment-role-tag.css'
+import '@/features/program/general/ui/detail-modal/program-status/instructor-assignment-status-text.css'
+import '@/features/program/general/ui/detail-modal/program-status/school-detail-fullpage-view.css'
 
 const MOCK_REQUIRED_INSTRUCTORS = 4
 
@@ -188,12 +189,12 @@ export function ApplicantInstitutionInstructorAssignTab({
   return (
     <div className="extra-tab-content school-detail-fullpage-view__instructor-tab applicant-institution-assign-tab">
       <div className="school-detail-fullpage-view__instructor-section">
-        <div className="participating-institutions-section__table-header">
-          <div className="participating-institutions-section__table-heading">
-            <span className="participating-institutions-section__table-title">
+        <div className="table-header-actions">
+          <div className="table-header-title--wrapper">
+            <span className="table-title">
               배정된 강사 목록
             </span>
-            <span className="participating-institutions-section__table-description">
+            <span className="table-description">
               {assignedRows.length} / {MOCK_REQUIRED_INSTRUCTORS}명
             </span>
           </div>
@@ -201,7 +202,7 @@ export function ApplicantInstitutionInstructorAssignTab({
         <div className="participating-institutions-section__table-wrap">
           {assignedRows.length === 0 ? (
             <div
-              className="school-detail-fullpage-view__assigned-empty"
+              className="school-detail-fullpage-view__instructor-list-empty"
               role="status"
               aria-label="배정된 강사 없음"
             >
@@ -222,32 +223,41 @@ export function ApplicantInstitutionInstructorAssignTab({
       </div>
 
       <div className="school-detail-fullpage-view__instructor-section school-detail-fullpage-view__instructor-section--waiting">
-        <div className="participating-institutions-section__table-header">
-          <div className="participating-institutions-section__table-heading">
-            <span className="participating-institutions-section__table-title">
+        <div className="table-header-actions">
+          <div className="table-header-title--wrapper">
+            <span className="table-title">
               배정 대기 강사 목록
             </span>
-            <span className="participating-institutions-section__table-description">
+            <span className="table-description">
               {waitingRows.length}건
             </span>
           </div>
         </div>
         <div className="participating-institutions-section__table-wrap">
-          <Table<WaitingRow>
-            className="participating-institutions-section__table cms-data-table"
-            rowKey="id"
-            size="middle"
-            pagination={false}
-            scroll={{ x: 1000 }}
-            columns={waitingColumns}
-            dataSource={waitingRows}
-            locale={{ emptyText: '배정 대기 중인 강사가 없습니다.' }}
-            rowClassName={record =>
-              record.assignmentStatus === 'assigned'
-                ? 'school-detail-fullpage-view__waiting-row--assigned'
-                : ''
-            }
-          />
+          {waitingRows.length === 0 ? (
+            <div
+              className="school-detail-fullpage-view__instructor-list-empty"
+              role="status"
+              aria-label="배정 대기 강사 없음"
+            >
+              배정 대기 중인 강사가 없습니다.
+            </div>
+          ) : (
+            <Table<WaitingRow>
+              className="participating-institutions-section__table cms-data-table"
+              rowKey="id"
+              size="middle"
+              pagination={false}
+              scroll={{ x: 1000 }}
+              columns={waitingColumns}
+              dataSource={waitingRows}
+              rowClassName={record =>
+                record.assignmentStatus === 'assigned'
+                  ? 'school-detail-fullpage-view__waiting-row--assigned'
+                  : ''
+              }
+            />
+          )}
         </div>
       </div>
     </div>

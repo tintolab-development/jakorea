@@ -30,6 +30,55 @@
   line-height: 150%; /* 24px */
 }
 
+.program-registration-curriculum__session-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.program-registration-curriculum__sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.program-registration-curriculum__session-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.program-registration-curriculum__session-row > .program-registration-paragraph {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.program-registration-curriculum__session-delete {
+  align-self: center;
+  flex-shrink: 0;
+}
+
+/* 과제 설정 — 있음/없음 + 제출 기한 피커 한 줄 고정 */
+.program-registration-paragraph__assignment-row {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.program-registration-paragraph__assignment-row > .app-radio-group {
+  flex-shrink: 0;
+}
+
+.program-registration-paragraph__assignment-row > .detail-info-form-inputs-separator {
+  flex-shrink: 0;
+}
+
+.program-registration-paragraph__assignment-row > .paragraph-date-picker {
+  flex: 1 1 0;
+  min-width: 200px;
+}
+
 /**
  * 복수 회차 — 교육 형태·참여·IPS: 라디오 + 구분선 + 셀렉트(들) 한 줄
  * IPS는 `ProgramRegistrationIpsTypeFields` 루트가 또 `detail-info-form-inputs-wrapper`라
@@ -40,6 +89,27 @@
   flex-wrap: nowrap;
   align-items: center;
   min-width: 0;
+}
+
+/* 사업 KPI — 교육진행자 최종 인원: 강사/봉사자 라벨+입력 한 줄 */
+.program-registration-paragraph
+  .detail-info-form-inputs-wrapper.program-registration-paragraph__instructor-kpi-row {
+  flex-wrap: nowrap;
+  gap: 16px;
+  width: auto;
+  min-width: 0;
+}
+
+/* 디바이더 내장 margin(12px)과 래퍼 gap 중복 방지 — 간격은 래퍼 gap만 사용 */
+.program-registration-paragraph__instructor-kpi-row > .detail-info-form-inputs-separator {
+  margin: 0;
+}
+
+.program-registration-paragraph__instructor-kpi-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
 }
 
 .program-registration-paragraph__schedule-detail-row > .app-radio-group {
@@ -70,7 +140,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 16px;
   max-width: min(520px, 100%);
 }
 
@@ -98,6 +168,12 @@
   border-radius: 12px;
   overflow: hidden;
   background: var(--main-WT, #fff);
+}
+
+/* 패널 외곽선만 사용 — 내부 DetailInfoForm body 테두리 제거(2중 보더 방지) */
+.program-registration-schedule-curriculum__session-panel .detail-info-form__body {
+  border: none;
+  border-radius: 0;
 }
 
 .program-registration-schedule-curriculum__time-groups {

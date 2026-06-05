@@ -43,95 +43,12 @@ export interface ParticipatingSchoolRow {
 }
 
 export const TEXTBOOK_STATUS_LABELS: Record<TextbookStatusKey, string> = {
-  preparing: '교재 준비 중',
-  shipping: '교재 배송 중',
-  delivered: '교재 배송 완료',
+  preparing: '배송 전',
+  shipping: '배송 중',
+  delivered: '배송 완료',
 }
 
-const SCHOOL_NAMES = [
-  '강서초등학교',
-  '마포초등학교',
-  '학사초등학교',
-  '진월초등학교',
-  '대구수성초등학교',
-  '부산해운대초등학교',
-  '인천남동초등학교',
-  '광주광산초등학교',
-  '대전유성초등학교',
-  '울산중구초등학교',
-  '세종반곡초등학교',
-  '수원영덕초등학교',
-  '성남분당초등학교',
-  '고양일산초등학교',
-  '용인기흥초등학교',
-  '창원성산초등학교',
-  '청주상당초등학교',
-  '전주완산초등학교',
-  '천안서북구초등학교',
-  '안양만안초등학교',
-  '안산상록초등학교',
-  '김해율하초등학교',
-  '포항남구초등학교',
-  '진주초등학교',
-  '춘천초등학교',
-  '원주초등학교',
-  '제주초등학교',
-  '목포초등학교',
-  '여수초등학교',
-  '순천초등학교',
-]
-
-/** 지역: 시안 예시(서울특별시 강서구, 광주광역시 남구) 형식 */
-const REGIONS = [
-  '서울특별시 강서구',
-  '서울특별시 마포구',
-  '서울특별시 관악구',
-  '부산광역시 해운대구',
-  '대구광역시 수성구',
-  '인천광역시 남동구',
-  '광주광역시 남구',
-  '대전광역시 유성구',
-  '울산광역시 중구',
-  '세종특별자치시',
-  '경기도 수원시',
-  '경기도 성남시',
-  '경기도 고양시',
-  '강원특별자치도 춘천시',
-  '충청북도 청주시',
-  '충청남도 천안시',
-  '전북특별자치도 전주시',
-  '전라남도 목포시',
-  '경상북도 포항시',
-  '경상남도 창원시',
-  '제주특별자치도',
-]
-
-/** 교육 학년: 시안 예시(5학년, 1학년) 형식 */
-const GRADES = ['1학년', '2학년', '3학년', '4학년', '5학년', '6학년']
-
 const LECTURE_ROUND_LABEL = '진행 전'
-
-const TEACHER_NAMES = [
-  '홍채원',
-  '김민지',
-  '박지훈',
-  '이수진',
-  '최현아',
-  '정다은',
-  '강태양',
-  '조아람',
-]
-
-const INSTRUCTOR_SAMPLES = [
-  '김서연 외 2명',
-  '이준혁 외 1명',
-  '최지원 외 3명',
-  '박민준',
-  '정수아 외 2명',
-  '강현우 외 1명',
-]
-
-const textbookStatuses: TextbookStatusKey[] = ['preparing', 'shipping', 'delivered']
 
 const APPROVAL_STATUSES: ParticipatingSchoolApprovalStatusKey[] = [
   'pending',
@@ -140,93 +57,166 @@ const APPROVAL_STATUSES: ParticipatingSchoolApprovalStatusKey[] = [
   'cancelled',
 ]
 
-const DAYS_OF_WEEK = ['일', '월', '화', '수', '목', '금', '토']
-
-const SESSION_STATUSES: ParticipatingSchoolSessionStatusKey[] = ['completed', 'pending', 'not_planned']
-
-/** 3월 중 하루: 캘린더 "외 N개의 항목" 확인용 — 이 날짜에 4개 학교 일정이 겹침 */
-const MARCH_MULTI_DAY = '2026.03.12'
-
-function buildSessionsForRow(rowIndex: number): ParticipatingSchoolSession[] {
-  const sessionCount = 1 + (rowIndex % 5)
-  const sessions: ParticipatingSchoolSession[] = []
-  for (let s = 0; s < sessionCount; s++) {
-    const dayOffset = rowIndex * 7 + s * 3
-    const d = new Date(2026, 0, 9 + dayOffset)
-    const dayOfWeek = DAYS_OF_WEEK[d.getDay()]
-    const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-    /** +1 오프셋: rowIndex 0 등 단일 회차 학교도 pending/not_planned가 섞이도록(강사 배정일 태그 선택 가능 목데이터) */
-    const status = SESSION_STATUSES[(rowIndex + s + 1) % 3]
-    sessions.push({
-      round: s + 1,
-      date: dateStr,
-      dayOfWeek,
-      duration: '1시간',
-      format: s % 2 === 0 ? '오프라인' : '온라인',
-      classNum: `${s + 1}교시`,
-      timeRange: `${9 + s}:20~${10 + s}:10`,
-      status,
-    })
-  }
-  return sessions
-}
-
-/** 3월 12일 한 날에 처음 4개 학교에 일정 1건 추가 (월간 캘린더 "외 N개의 항목" 노출용) */
-function addMarchMultiDaySessions(
-  sessions: ParticipatingSchoolSession[],
-  rowIndex: number,
-): ParticipatingSchoolSession[] {
-  const marchDaySchools = [0, 1, 2, 3]
-  if (!marchDaySchools.includes(rowIndex)) return sessions
-  const d = new Date(2026, 2, 12)
-  const dayOfWeek = DAYS_OF_WEEK[d.getDay()]
-  /** 기존 회차(1…N) 다음 회차 — 99 등 비연속 round 제거 */
-  const nextRound = sessions.length + 1
-  /** 같은 날짜·다 학교 겹침을 보이기 위해 행별 시작 시각만 다르게 */
-  const marchSlotByRow: Array<Pick<ParticipatingSchoolSession, 'format' | 'classNum' | 'timeRange'>> = [
-    { format: '오프라인', classNum: '1교시', timeRange: '9:20~10:10' },
-    { format: '온라인', classNum: '1교시', timeRange: '10:20~11:10' },
-    { format: '오프라인', classNum: '1교시', timeRange: '11:20~12:10' },
-    { format: '온라인', classNum: '1교시', timeRange: '14:00~14:50' },
-  ]
-  const slot = marchSlotByRow[rowIndex]
-  const extra: ParticipatingSchoolSession = {
-    round: nextRound,
-    date: MARCH_MULTI_DAY,
+/** 데모용 교육 진행 일정 한 건 (스크린샷: YYYY. MM. DD(요일) HH:mm ~ HH:mm | N차시) */
+function demoParticipatingSchoolSession(
+  round: number,
+  date: string,
+  dayOfWeek: string,
+  timeRange: string
+): ParticipatingSchoolSession {
+  return {
+    round,
+    date,
     dayOfWeek,
-    duration: '1시간',
-    format: slot.format,
-    classNum: slot.classNum,
-    timeRange: slot.timeRange,
+    duration: '2시간',
+    format: '오프라인',
+    classNum: `${round}교시`,
+    timeRange,
     status: 'pending',
   }
-  return [...sessions, extra]
 }
 
-function buildMockList(count: number): ParticipatingSchoolRow[] {
-  const rows: ParticipatingSchoolRow[] = []
-  for (let i = 0; i < count; i++) {
-    const idx = i % SCHOOL_NAMES.length
-    const statusIdx = i % textbookStatuses.length
-    const baseSessions = buildSessionsForRow(i)
-    const sessions = addMarchMultiDaySessions(baseSessions, i)
-    rows.push({
-      id: `school-${i + 1}`,
-      no: count - i,
-      schoolName: SCHOOL_NAMES[idx],
-      region: REGIONS[idx % REGIONS.length],
-      educationGrade: GRADES[i % GRADES.length],
-      classCount: 2 + (i % 4),
-      studentCount: 40 + (i % 30),
-      lectureRound: LECTURE_ROUND_LABEL,
-      textbookStatus: textbookStatuses[statusIdx],
-      approvalStatus: APPROVAL_STATUSES[i % APPROVAL_STATUSES.length],
-      teacherName: TEACHER_NAMES[i % TEACHER_NAMES.length],
-      instructors: INSTRUCTOR_SAMPLES[i % INSTRUCTOR_SAMPLES.length],
-      sessions,
-    })
-  }
-  return rows
+/** 교재 배송 상태별 2건 + 합반 신청 데모(동일 학교·다른 학년 1쌍) — 총 7건 */
+function buildParticipatingSchoolsByTextbookStatus(): ParticipatingSchoolRow[] {
+  const seeds: Array<{
+    schoolName: string
+    region: string
+    educationGrade: string
+    textbookStatus: TextbookStatusKey
+    teacherName: string
+    classCount: number
+    studentCount: number
+    instructors: string
+    sessions: ParticipatingSchoolSession[]
+  }> = [
+    {
+      schoolName: '강서초등학교',
+      region: '서울특별시 강서구',
+      educationGrade: '5학년',
+      textbookStatus: 'preparing',
+      teacherName: '홍채원',
+      classCount: 3,
+      studentCount: 72,
+      instructors: '김서연 외 2명',
+      sessions: [
+        demoParticipatingSchoolSession(2, '2026.01.09', '금', '9:20~11:20'),
+      ],
+    },
+    {
+      /** 합반 신청 UI 데모 — 강서초등학교 5학년(school-1)과 동일 기관·다른 학년 */
+      schoolName: '강서초등학교',
+      region: '서울특별시 강서구',
+      educationGrade: '3학년',
+      textbookStatus: 'preparing',
+      teacherName: '박서연',
+      classCount: 2,
+      studentCount: 52,
+      instructors: '김서연 외 1명',
+      sessions: [
+        demoParticipatingSchoolSession(1, '2026.01.23', '금', '9:20~10:10'),
+        demoParticipatingSchoolSession(2, '2026.02.13', '금', '10:20~11:10'),
+      ],
+    },
+    {
+      schoolName: '마포초등학교',
+      region: '서울특별시 마포구',
+      educationGrade: '3학년',
+      textbookStatus: 'preparing',
+      teacherName: '김민지',
+      classCount: 2,
+      studentCount: 48,
+      instructors: '이준혁 외 1명',
+      sessions: [
+        demoParticipatingSchoolSession(1, '2026.01.16', '금', '9:30~10:20'),
+        demoParticipatingSchoolSession(2, '2026.02.06', '금', '10:30~11:20'),
+      ],
+    },
+    {
+      schoolName: '진월초등학교',
+      region: '광주광역시 남구 광복마을4길 40',
+      educationGrade: '5학년',
+      textbookStatus: 'preparing',
+      teacherName: '이길동',
+      classCount: 4,
+      studentCount: 124,
+      instructors: '최지원 외 3명',
+      sessions: [
+        {
+          ...demoParticipatingSchoolSession(1, '2026.04.20', '월', '9:30~12:20'),
+          status: 'completed',
+        },
+        {
+          ...demoParticipatingSchoolSession(2, '2026.04.27', '일', '13:00~15:50'),
+          status: 'pending',
+        },
+      ],
+    },
+    {
+      schoolName: '학사초등학교',
+      region: '서울특별시 관악구',
+      educationGrade: '2학년',
+      textbookStatus: 'shipping',
+      teacherName: '이수진',
+      classCount: 2,
+      studentCount: 44,
+      instructors: '박민준',
+      sessions: [
+        demoParticipatingSchoolSession(1, '2026.01.30', '금', '9:20~10:10'),
+        demoParticipatingSchoolSession(2, '2026.02.20', '금', '10:20~11:10'),
+        demoParticipatingSchoolSession(3, '2026.03.13', '금', '13:00~13:50'),
+        demoParticipatingSchoolSession(4, '2026.03.27', '금', '14:00~14:50'),
+      ],
+    },
+    {
+      schoolName: '대구수성초등학교',
+      region: '대구광역시 수성구',
+      educationGrade: '6학년',
+      textbookStatus: 'delivered',
+      teacherName: '최현아',
+      classCount: 3,
+      studentCount: 66,
+      instructors: '정수아 외 2명',
+      sessions: [
+        demoParticipatingSchoolSession(1, '2026.02.06', '금', '9:20~10:10'),
+        demoParticipatingSchoolSession(2, '2026.02.27', '금', '10:20~11:20'),
+      ],
+    },
+    {
+      schoolName: '부산해운대초등학교',
+      region: '부산광역시 해운대구',
+      educationGrade: '1학년',
+      textbookStatus: 'delivered',
+      teacherName: '정다은',
+      classCount: 2,
+      studentCount: 40,
+      instructors: '강현우 외 1명',
+      sessions: [
+        demoParticipatingSchoolSession(1, '2026.02.13', '금', '9:20~10:10'),
+        demoParticipatingSchoolSession(2, '2026.03.06', '금', '10:20~11:10'),
+        demoParticipatingSchoolSession(3, '2026.03.20', '금', '11:20~12:10'),
+        demoParticipatingSchoolSession(4, '2026.04.03', '금', '13:30~14:20'),
+        demoParticipatingSchoolSession(5, '2026.04.17', '금', '14:30~15:20'),
+      ],
+    },
+  ]
+
+  const total = seeds.length
+  return seeds.map((seed, i) => ({
+    id: `school-${i + 1}`,
+    no: total - i,
+    schoolName: seed.schoolName,
+    region: seed.region,
+    educationGrade: seed.educationGrade,
+    classCount: seed.classCount,
+    studentCount: seed.studentCount,
+    lectureRound: LECTURE_ROUND_LABEL,
+    textbookStatus: seed.textbookStatus,
+    approvalStatus: APPROVAL_STATUSES[i % APPROVAL_STATUSES.length],
+    teacherName: seed.teacherName,
+    instructors: seed.instructors,
+    sessions: seed.sessions,
+  }))
 }
 
-export const MOCK_PARTICIPATING_SCHOOLS: ParticipatingSchoolRow[] = buildMockList(30)
+export const MOCK_PARTICIPATING_SCHOOLS: ParticipatingSchoolRow[] =
+  buildParticipatingSchoolsByTextbookStatus()

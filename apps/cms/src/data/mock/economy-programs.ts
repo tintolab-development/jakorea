@@ -102,6 +102,13 @@ const DISTRICT_SAMPLES = [
   '제주 제주시',
 ]
 
+const PARTICIPANT_CATEGORY_CYCLE: ProgramCategory[] = [
+  'school',
+  'individual',
+  'instructor',
+  'volunteer',
+]
+
 /** 스크린샷 상위 8건 (No. 1~8) */
 const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'updatedAt'>[] = [
   {
@@ -112,7 +119,7 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     titleEn: 'HSBC/HKU Business Case Competition 2026',
     type: 'offline',
     format: 'workshop',
-    category: 'school' as ProgramCategory,
+    category: PARTICIPANT_CATEGORY_CYCLE[0],
     description: 'HSBC/HKU Business Case Competition 2026',
     startDate: getDate(60),
     endDate: getDate(30),
@@ -143,7 +150,7 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     titleEn: 'JA Korea University JA Volunteer Program UJAT 36th',
     type: 'offline',
     format: 'workshop',
-    category: 'individual' as ProgramCategory,
+    category: PARTICIPANT_CATEGORY_CYCLE[1],
     description: '대학생경제교육봉사단 UJAT 36기',
     startDate: getDate(45),
     endDate: getDate(15),
@@ -176,7 +183,7 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     titleEn: 'Growth to Professional 2026',
     type: 'offline',
     format: 'workshop',
-    category: 'individual' as ProgramCategory,
+    category: PARTICIPANT_CATEGORY_CYCLE[2],
     description: 'Growth to Professional 2026',
     startDate: getDate(75),
     endDate: getDate(45),
@@ -206,7 +213,7 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     titleEn: 'JA Korea Elementary Economic Education 2026',
     type: 'offline',
     format: 'workshop',
-    category: 'school' as ProgramCategory,
+    category: PARTICIPANT_CATEGORY_CYCLE[3],
     description: '초등 경제교육 모집',
     startDate: getDate(90),
     endDate: getDate(60),
@@ -237,7 +244,7 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     titleEn: 'SAP-JA Korea IT & SW Mentoring 2026',
     type: 'offline',
     format: 'workshop',
-    category: 'individual' as ProgramCategory,
+    category: PARTICIPANT_CATEGORY_CYCLE[4],
     description: 'SAP 함께 성장하JA IT SW 멘토링',
     startDate: getDate(100),
     endDate: getDate(70),
@@ -268,7 +275,7 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     titleEn: 'Global Career Discovery One-day Mentoring',
     type: 'offline',
     format: 'workshop',
-    category: 'individual' as ProgramCategory,
+    category: PARTICIPANT_CATEGORY_CYCLE[5],
     description: 'Global Career Discovery 원데이 취업 멘토링',
     startDate: getDate(50),
     endDate: getDate(20),
@@ -302,7 +309,7 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     titleEn: 'JA Korea Financial Literacy Instructor Corps 2026',
     type: 'offline',
     format: 'workshop',
-    category: 'individual' as ProgramCategory,
+    category: PARTICIPANT_CATEGORY_CYCLE[6],
     description: '경제금융교육 전문강사단 모집',
     startDate: getDate(55),
     endDate: getDate(25),
@@ -334,7 +341,7 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     titleEn: 'Citi-JA Korea Special JOB Talk 2026',
     type: 'offline',
     format: 'workshop',
-    category: 'school' as ProgramCategory,
+    category: PARTICIPANT_CATEGORY_CYCLE[7],
     description: '한국씨티은행 특별한 JOB담',
     startDate: getDate(120),
     endDate: getDate(90),
@@ -378,9 +385,10 @@ const TITLES = [
 ]
 
 function extraFieldsForGeneratedIndex(i: number): Partial<Program> {
-  const category: ProgramCategory = i % 3 === 0 ? 'school' : 'individual'
+  const category = PARTICIPANT_CATEGORY_CYCLE[i % PARTICIPANT_CATEGORY_CYCLE.length]
   const ips = IPS_CYCLE[i % 3]
-  const institutionType: InstitutionType = category === 'school' ? 'inside_school' : 'outside_school'
+  const institutionType: InstitutionType =
+    category === 'school' ? 'inside_school' : 'outside_school'
   const yearSuffix = 2026 - (i % 3)
   const baseTitle = TITLES[i % TITLES.length]
 
@@ -403,10 +411,10 @@ function extraFieldsForGeneratedIndex(i: number): Partial<Program> {
   }
 }
 
-/** 경제 교육 프로그램 206건 (스크린샷 상위 8건 + 나머지 198건) */
+/** 1사1교 프로그램 206건 (스크린샷 상위 8건 + 나머지 198건) */
 let economyProgramsCache: Program[] | null = null
 
-export function getEconomyPrograms(): Program[] {
+export function getCompanySchoolPrograms(): Program[] {
   if (economyProgramsCache) return economyProgramsCache
 
   const programs: Program[] = []
@@ -449,7 +457,7 @@ export function getEconomyPrograms(): Program[] {
     const id = `economy-prog-${String(i + 1).padStart(3, '0')}`
     const capacity = 30
     const lifecycleStatus = statusSequence[i - 8] ?? scheduledStatuses[0]
-    const category: ProgramCategory = i % 3 === 0 ? 'school' : 'individual'
+    const category = PARTICIPANT_CATEGORY_CYCLE[i % PARTICIPANT_CATEGORY_CYCLE.length]
     const targetLevels: TargetLevel[] = ['elementary', 'middle', 'high']
     const targetLevel = targetLevels[i % 3]
     const approvedCount = i % 5 === 0 ? 0 : Math.min(30, Math.floor((i * 7) % 31))
@@ -515,7 +523,13 @@ export function getEconomyPrograms(): Program[] {
   return economyProgramsCache
 }
 
-/** 상세 모달·KPI 등에서 ID만으로 경제 프로그램을 찾을 때 사용 */
-export function getEconomyProgramById(id: string): Program | undefined {
-  return getEconomyPrograms().find(p => p.id === id)
+/** 상세 모달·KPI 등에서 ID만으로 1사1교 프로그램을 찾을 때 사용 */
+export function getCompanySchoolProgramById(id: string): Program | undefined {
+  return getCompanySchoolPrograms().find(p => p.id === id)
 }
+
+/** @deprecated `getCompanySchoolPrograms` 사용 */
+export const getEconomyPrograms = getCompanySchoolPrograms
+
+/** @deprecated `getCompanySchoolProgramById` 사용 */
+export const getEconomyProgramById = getCompanySchoolProgramById

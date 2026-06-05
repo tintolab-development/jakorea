@@ -15,6 +15,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 ## Coding
 
 - [Code style](./coding/code-style.md) — ESLint, Prettier, TS, naming  
+- **[Feature file naming](./coding/feature-file-naming.mdc)** — CMS 전역 파일명 간략화 (**alwaysApply**, 필수)  
 - [Component patterns](./coding/component-patterns.md) — shared UI usage  
 - [List page composition](./coding/list-page-composition.mdc) — filter + table layout  
 - [Status dropdown cell](./coding/status-dropdown-cell.md) — `StatusDropdownCell`, tag layout  
@@ -37,6 +38,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [Schedule / calendar UX](./design/schedule-calendar-ux.md)  
 - [Calendar sub-right list](./design/calendar-sub-right-list.md) — `.calendar-list` / `.calendar-list-item` 공통 shell·mint hover  
 - [Cross table (행·열 교차 격자)](./design/cross-table.md) — `CrossTable` (`@/shared/ui/cross-table`)  
+- [Table td divider (값 셀 `|` 금지)](./design/table-td-divider.mdc) — `withProgramDetailTdDivider`, `DetailInfoForm.TdDivider`  
 - [Design requests](./design/design-requests.md)  
 
 ## Libraries
@@ -65,6 +67,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 ## Tables
 
 - [Table implementation](./tables/table-implementation.md) — Ant Table patterns  
+- [Table td divider (값 셀 `|` 금지)](./design/table-td-divider.mdc) — 디바이더 컴포넌트 필수  
 - [Table management](./tables/table-management.md) — TanStack table & URL sync  
 - [Status dropdown cell](./coding/status-dropdown-cell.md)  
 
@@ -76,6 +79,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 
 ## Process
 
+- **[프로그램 유형 간 간섭 방지](./process/program-type-isolation.mdc)** — 일반·UJAT·1사1교·Gemini UI/로직 격리, 공유 코드 변경 시 유저 확인 (**alwaysApply**)
 - [개발 프로세스](./process/development-process.md) - Phase별 개발 프로세스
 - [진행 상황 관리](./process/progress-management.md) - PROGRESS.md 기록 규칙
 - [역할별 Persona](./process/persona.md) - 시니어 PM, 기획자, UX/UI 디자이너, 개발자 역할 정의
@@ -96,4 +100,4 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 
 ---
 
-**Last updated:** 2026-05-19
+**Last updated:** 2026-06-04

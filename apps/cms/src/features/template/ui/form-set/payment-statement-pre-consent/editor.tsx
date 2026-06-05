@@ -17,30 +17,28 @@ export function PaymentStatementPreConsentEditorLeftColumn({
   vm: PaymentStatementPreConsentEditorViewModel
 }) {
   return (
-    <div className="payment-statement-issuance-editor">
-      <FormEditorLeftPanel
-        paragraphs={vm.draft.paragraphs}
-        titleNumbering={vm.draft.formSettings.titleNumbering}
-        selectedCardId={vm.activeParagraphId}
-        onSelectCard={vm.handleSelectCard}
-        onReorderMiddle={vm.onReorderMiddle}
-        updateParagraph={vm.updateParagraph}
-        editorKind="agreement"
-        layout="five"
-        horizontalTableRowSelectionsByParagraphId={vm.horizontalTableRowSelectionsByParagraphId}
-        onHorizontalTableRowSelectionChange={vm.onHorizontalTableRowSelectionChange}
-        verticalTableBodyRowSelection={vm.verticalTableBodyRowSelection}
-        onVerticalTableBodyRowSelectionChange={vm.onVerticalTableBodyRowSelectionChange}
-        middleParagraphActions={vm.middleParagraphActions}
-        singleItemListActiveItemId={vm.singleItemListActiveItemId}
-        onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
-        structureLockedParagraphIds={vm.structureLockedParagraphIds}
-        hideDragHandleForParagraphIds={PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS}
-        paragraphBodyOptions={PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS}
-        hideParagraphRequiredChrome
-        headingDescriptionExtraClassName="paragraph-input-explanation-title"
-      />
-    </div>
+    <FormEditorLeftPanel
+      paragraphs={vm.draft.paragraphs}
+      titleNumbering={vm.draft.formSettings.titleNumbering}
+      selectedCardId={vm.activeParagraphId}
+      onSelectCard={vm.handleSelectCard}
+      onReorderMiddle={vm.onReorderMiddle}
+      updateParagraph={vm.updateParagraph}
+      editorKind="agreement"
+      layout="five"
+      horizontalTableRowSelectionsByParagraphId={vm.horizontalTableRowSelectionsByParagraphId}
+      onHorizontalTableRowSelectionChange={vm.onHorizontalTableRowSelectionChange}
+      verticalTableBodyRowSelection={vm.verticalTableBodyRowSelection}
+      onVerticalTableBodyRowSelectionChange={vm.onVerticalTableBodyRowSelectionChange}
+      middleParagraphActions={vm.middleParagraphActions}
+      singleItemListActiveItemId={vm.singleItemListActiveItemId}
+      onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
+      structureLockedParagraphIds={vm.structureLockedParagraphIds}
+      hideDragHandleForParagraphIds={PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS}
+      paragraphBodyOptions={PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS}
+      hideParagraphRequiredChrome
+      headingDescriptionExtraClassName="paragraph-input-explanation-title"
+    />
   )
 }
 

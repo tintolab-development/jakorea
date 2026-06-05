@@ -1,0 +1,23 @@
+/**
+ * 프로그램 등록 풀페이지 — `full-page-modal__body-header` 좌측(단계별 탭·안내)
+ */
+
+.registration-body-header__hint {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 27px */
+  opacity: 0.6;
+}
+
+.full-page-modal__body-header-leading .registration-body-header__tabs.cms-text-tabs {
+  width: 100%;
+  min-width: 0;
+}
+
+.full-page-modal__body-header-leading .registration-body-header__tabs .cms-text-tabs__row {
+  margin: 0;
+  padding: 0;
+}

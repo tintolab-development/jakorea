@@ -3,10 +3,11 @@
  * Phase 5.2.4: 본인 정산 정보 - 월별 정산 관리
  */
 
+import { CmsRadio } from '@/shared/ui'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Card, Space, Button, Radio, Table, Tag, Select, Statistic, Empty } from 'antd'
+import { Card, Space, Button, Table, Tag, Select, Statistic, Empty } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
@@ -181,18 +182,18 @@ export function MyMonthlySettlementPage() {
         <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
           {/* <h1 style={{ margin: 0 }}>월별 정산 관리</h1> */}
           <Space>
-            <Radio.Group
+            <CmsRadio.Group
               value={viewMode}
               onChange={e => handleViewModeChange(e.target.value)}
               buttonStyle="solid"
             >
-              <Radio.Button value="list">
+              <CmsRadio.Button value="list">
                 <UnorderedListOutlined /> 리스트
-              </Radio.Button>
-              <Radio.Button value="calendar">
+              </CmsRadio.Button>
+              <CmsRadio.Button value="calendar">
                 <CalendarOutlined /> 캘린더
-              </Radio.Button>
-            </Radio.Group>
+              </CmsRadio.Button>
+            </CmsRadio.Group>
           </Space>
         </Space>
 

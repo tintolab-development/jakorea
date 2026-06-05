@@ -1,21 +1,27 @@
 /**
  * 학생 추가 등록 모달
  * 프로그램 상세 풀페이지 모달 > 프로그램 진행현황 > 참여기관 > 학생 추가 클릭 시 노출
- * 스펙: 제목 "학생 추가 등록", 설명 문구, 필수 학생명/성별/학급(Select), 선택 연락처/이메일, 취소/등록 버튼
+ * 스펙: 제목 "학생 추가 등록", 설명 문구, 필수 학생명/성별/생년월일/학급, 선택 연락처/이메일, 취소/등록 버튼
  */
 
 import { useEffect } from 'react'
-import { Input, Radio, Select } from 'antd'
-import { useForm, Controller } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
+import { STUDENT_GRADE_CLASS_OPTIONS } from '@/features/program/general/lib/student-list-filter-fields'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsRadioGroup, CmsSelect } from '@/shared/ui'
 import {
   addStudentFormSchema,
   type AddStudentFormValues,
-  DEFAULT_ADD_STUDENT_FORM_VALUES } from '../model/school-detail-add-student-schema'
+  DEFAULT_ADD_STUDENT_FORM_VALUES,
+} from '../model/school-detail-add-student-schema'
 import './add-student-modal.css'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
+
+const GENDER_OPTIONS = [
+  { label: '남', value: 'male' },
+  { label: '여', value: 'female' },
+] as const
 
 export interface AddStudentModalProps {
   open: boolean
@@ -28,9 +34,11 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
     control,
     handleSubmit,
     reset,
-    formState: { errors } } = useForm<AddStudentFormValues>({
+    formState: { errors },
+  } = useForm<AddStudentFormValues>({
     resolver: zodResolver(addStudentFormSchema),
-    defaultValues: DEFAULT_ADD_STUDENT_FORM_VALUES })
+    defaultValues: DEFAULT_ADD_STUDENT_FORM_VALUES,
+  })
 
   useEffect(() => {
     if (open) {
@@ -45,10 +53,10 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
 
   const footer = (
     <>
-      <CmsButton variant="secondary" size="large" onClick={onCancel}>
+      <CmsButton variant="secondary" size="medium" onClick={onCancel}>
         취소
       </CmsButton>
-      <CmsButton variant="primary" size="large" onClick={() => handleSubmit(onSubmit)()}>
+      <CmsButton variant="primary" size="medium" onClick={() => handleSubmit(onSubmit)()}>
         등록
       </CmsButton>
     </>
@@ -81,11 +89,11 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
               name="name"
               control={control}
               render={({ field }) => (
-                <Input
+                <CmsInput
                   {...field}
+                  inputSize="medium"
+                  width="100%"
                   placeholder="학생명을 입력하세요"
-                  className="add-student-modal__input"
-                  status={errors.name ? 'error' : undefined}
                 />
               )}
             />
@@ -93,23 +101,55 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
               <span className="add-student-modal__error">{fieldValidationHelp(errors.name)}</span>
             )}
           </div>
+
           <div className="add-student-modal__field">
-            <label className="add-student-modal__label">성별</label>
+            <label className="add-student-modal__label">
+              성별 <span className="add-student-modal__required" aria-hidden>*</span>
+            </label>
             <Controller
               name="gender"
               control={control}
               render={({ field }) => (
-                <Radio.Group
+                <CmsRadioGroup
                   {...field}
-                  options={[
-                    { label: '남', value: 'male' },
-                    { label: '여', value: 'female' },
-                  ]}
+                  options={[...GENDER_OPTIONS]}
+                  size="medium"
                   className="add-student-modal__radio-group"
                 />
               )}
             />
+            {errors.gender && (
+              <span className="add-student-modal__error">{fieldValidationHelp(errors.gender)}</span>
+            )}
           </div>
+
+          <div className="add-student-modal__field">
+            <label className="add-student-modal__label">
+              생년월일 <span className="add-student-modal__required" aria-hidden>*</span>
+            </label>
+            <Controller
+              name="birthDate"
+              control={control}
+              render={({ field }) => (
+                <CmsInput
+                  {...field}
+                  value={field.value ?? ''}
+                  inputSize="medium"
+                  width="100%"
+                  placeholder="생년월일 8자리를 입력하세요"
+                  maxLength={8}
+                  inputMode="numeric"
+                  onChange={e => {
+                    field.onChange(e.target.value.replace(/\D/g, '').slice(0, 8))
+                  }}
+                />
+              )}
+            />
+            {errors.birthDate && (
+              <span className="add-student-modal__error">{fieldValidationHelp(errors.birthDate)}</span>
+            )}
+          </div>
+
           <div className="add-student-modal__field">
             <label className="add-student-modal__label">
               학급 <span className="add-student-modal__required" aria-hidden>*</span>
@@ -118,21 +158,14 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
               name="gradeClass"
               control={control}
               render={({ field }) => (
-                <Select
+                <CmsSelect
                   {...field}
                   value={field.value || undefined}
+                  inputSize="medium"
+                  width="100%"
+                  withAllOption={false}
                   placeholder="학급을 선택하세요"
-                  className="add-student-modal__select add-student-modal__select--full"
-                  status={errors.gradeClass ? 'error' : undefined}
-                  options={[
-                    { label: '1반', value: '1반' },
-                    { label: '2반', value: '2반' },
-                    { label: '3반', value: '3반' },
-                    { label: '4반', value: '4반' },
-                    { label: '5반', value: '5반' },
-                    { label: '6반', value: '6반' },
-                  ]}
-                  allowClear
+                  options={STUDENT_GRADE_CLASS_OPTIONS}
                 />
               )}
             />
@@ -140,18 +173,19 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
               <span className="add-student-modal__error">{fieldValidationHelp(errors.gradeClass)}</span>
             )}
           </div>
+
           <div className="add-student-modal__field">
             <label className="add-student-modal__label">연락처</label>
             <Controller
               name="contact"
               control={control}
               render={({ field }) => (
-                <Input
+                <CmsInput
                   {...field}
                   value={field.value ?? ''}
+                  inputSize="medium"
+                  width="100%"
                   placeholder="연락처를 입력하세요"
-                  className="add-student-modal__input"
-                  status={errors.contact ? 'error' : undefined}
                 />
               )}
             />
@@ -159,18 +193,19 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
               <span className="add-student-modal__error">{fieldValidationHelp(errors.contact)}</span>
             )}
           </div>
+
           <div className="add-student-modal__field">
             <label className="add-student-modal__label">이메일</label>
             <Controller
               name="email"
               control={control}
               render={({ field }) => (
-                <Input
+                <CmsInput
                   {...field}
                   value={field.value ?? ''}
+                  inputSize="medium"
+                  width="100%"
                   placeholder="이메일을 입력하세요"
-                  className="add-student-modal__input"
-                  status={errors.email ? 'error' : undefined}
                 />
               )}
             />

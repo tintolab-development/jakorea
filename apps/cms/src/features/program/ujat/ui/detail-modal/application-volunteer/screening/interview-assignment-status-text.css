@@ -16,5 +16,6 @@
 }
 
 .ujat-interview-assignment-status-text--withdrawn {
-  color: #c32f4a;
+  color: var(--color-red, #c32f4a);
+  font-weight: 500;
 }

@@ -4,6 +4,7 @@ import {
   ApprovalStatusBadge,
   type ApprovalStatusKey,
 } from '@/shared/components/approval-status-badge'
+import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -11,6 +12,8 @@ import {
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ApplicantSessionLineInput } from './applicants-detail-session-format'
+import { GeneralDetailSessionLine } from './general-detail-session-line'
+import type { InstitutionColumnPreset } from './applicant-list-menu'
 
 export function useInstitutionApplicantColumns(params: {
   setSelectedItem: (record: ApplicantSchoolRow) => void
@@ -23,6 +26,7 @@ export function useInstitutionApplicantColumns(params: {
   handleInstitutionApprovalStatusChange: (recordId: string, status: ApprovalStatusKey) => void
   openApprovalDropdownId: string | null
   setOpenApprovalDropdownId: (id: string | null) => void
+  preset?: InstitutionColumnPreset
 }): ColumnsType<ApplicantSchoolRow> {
   const {
     setSelectedItem,
@@ -31,14 +35,16 @@ export function useInstitutionApplicantColumns(params: {
     handleInstitutionApprovalStatusChange,
     openApprovalDropdownId,
     setOpenApprovalDropdownId,
+    preset = 'legacy',
   } = params
+  const isGeneralDetail = preset === 'general-detail'
 
   return useMemo(
     () => [
       /* 화면 너비 대비 비율 분배(합 100%). 가로 스크롤은 scroll.x = max(최소, 래퍼 너비)로 처리 */
       { title: 'No.', dataIndex: 'no', key: 'no', width: '64px', align: 'center' },
       {
-        title: '참여 기관명',
+        title: isGeneralDetail ? '신청 기관명' : '참여 기관명',
         dataIndex: 'schoolName',
         key: 'schoolName',
         align: 'center',
@@ -52,40 +58,62 @@ export function useInstitutionApplicantColumns(params: {
         ),
       },
       {
-        title: '기관 지역',
+        title: isGeneralDetail ? '기관 소재지' : '기관 지역',
         dataIndex: 'region',
         key: 'region',
         align: 'center',
         ellipsis: true,
+        render: isGeneralDetail
+          ? (text: string) => {
+              const short = text.split(/\s+/).slice(0, 2).join(' ')
+              return short || text
+            }
+          : undefined,
       },
       {
         title: '프로그램 승인 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: '150px',
+        width: isGeneralDetail ? '180px' : '150px',
         align: 'center',
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-        render: (status: ApprovalStatusKey, record: ApplicantSchoolRow) => (
-          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
-            <StatusDropdownCell<ApprovalStatusKey>
-              status={status ?? null}
-              statusOptions={approvalStatusKeys}
-              renderBadge={s => <ApprovalStatusBadge status={s} />}
-              isItemDisabled={(cur, opt) => cur === opt}
-              onChange={newStatus => handleInstitutionApprovalStatusChange(record.id, newStatus)}
-              isOpen={openApprovalDropdownId === record.id}
-              onOpenChange={open => setOpenApprovalDropdownId(open ? record.id : null)}
-              emptyPlaceholder="-"
-            />
-          </div>
-        ),
+        ...(isGeneralDetail
+          ? {}
+          : {
+              className: STATUS_DROPDOWN_CELL_CLASSNAME,
+              onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+              onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+            }),
+        render: (status: ApprovalStatusKey, record: ApplicantSchoolRow) =>
+          isGeneralDetail ? (
+            status ? <ApprovalStatusText status={status} /> : '-'
+          ) : (
+            <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+              <StatusDropdownCell<ApprovalStatusKey>
+                status={status ?? null}
+                statusOptions={approvalStatusKeys}
+                renderBadge={s => <ApprovalStatusBadge status={s} />}
+                isItemDisabled={(cur, opt) => cur === opt}
+                onChange={newStatus => handleInstitutionApprovalStatusChange(record.id, newStatus)}
+                isOpen={openApprovalDropdownId === record.id}
+                onOpenChange={open => setOpenApprovalDropdownId(open ? record.id : null)}
+                emptyPlaceholder="-"
+              />
+            </div>
+          ),
       },
       {
-        title: '강의 회차 별 희망 교육 날짜 및 시간',
+        title: isGeneralDetail ? '진행 희망 교육 일정' : '강의 회차 별 희망 교육 날짜 및 시간',
         key: 'sessions',
         width: '480px',
         align: 'center',
-        onCell: () => ({ className: 'applicant-details__td-sessions' }),
+        className: isGeneralDetail ? 'applicant-details__th-sessions' : undefined,
+        onHeaderCell: () =>
+          isGeneralDetail ? { className: 'applicant-details__th-sessions' } : {},
+        onCell: () => ({
+          className: isGeneralDetail
+            ? 'applicant-details__td-sessions applicant-details__td-sessions--center'
+            : 'applicant-details__td-sessions',
+        }),
         render: (_: unknown, record: ApplicantSchoolRow) => {
           const sessions = record.sessions ?? []
           const total = sessions.length
@@ -95,6 +123,13 @@ export function useInstitutionApplicantColumns(params: {
           return (
             <div className="applicant-details__sessions-cell">
               {displaySessions.map(s => {
+                if (isGeneralDetail) {
+                  return (
+                    <div key={s.round} className="applicant-details__session-line">
+                      <GeneralDetailSessionLine session={s} />
+                    </div>
+                  )
+                }
                 const { datePart, durationPart, periodPart } = getSessionLineParts(s)
                 return (
                   <div key={s.round} className="applicant-details__session-line">
@@ -114,13 +149,13 @@ export function useInstitutionApplicantColumns(params: {
         },
       },
       {
-        title: '대상 학년',
+        title: isGeneralDetail ? '신청 학년' : '대상 학년',
         dataIndex: 'educationGrade',
         key: 'educationGrade',
         align: 'center',
       },
       {
-        title: '대상 학급 수',
+        title: isGeneralDetail ? '신청 학급 수' : '대상 학급 수',
         dataIndex: 'classCount',
         key: 'classCount',
         align: 'center',
@@ -134,26 +169,31 @@ export function useInstitutionApplicantColumns(params: {
         render: (v: number) => (v != null ? `${v}명` : '-'),
       },
       {
-        title: '담당 교사명',
+        title: isGeneralDetail ? '신청 교사명' : '담당 교사명',
         dataIndex: 'teacherName',
         key: 'teacherName',
 
         align: 'center',
       },
-      {
-        title: '담당 강사',
-        dataIndex: 'assignedInstructorNames',
-        key: 'assignedInstructorNames',
+      ...(isGeneralDetail
+        ? []
+        : [
+            {
+              title: '담당 강사',
+              dataIndex: 'assignedInstructorNames',
+              key: 'assignedInstructorNames',
 
-        align: 'center',
-        ellipsis: true,
-        render: (v: string | undefined) => v ?? '-',
-      },
+              align: 'center' as const,
+              ellipsis: true,
+              render: (v: string | undefined) => v ?? '-',
+            },
+          ]),
     ],
     [
       approvalStatusKeys,
       getSessionLineParts,
       handleInstitutionApprovalStatusChange,
+      isGeneralDetail,
       openApprovalDropdownId,
       setSelectedItem,
     ]

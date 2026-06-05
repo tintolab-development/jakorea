@@ -1,0 +1,54 @@
+.general-volunteer-interview2-bulk-pass-modal.content-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 12px;
+}
+
+.general-volunteer-interview2-bulk-pass-modal .content-modal__description {
+  margin-bottom: 20px;
+}
+
+.general-volunteer-interview2-bulk-pass-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.general-volunteer-interview2-bulk-pass-modal__field,
+.general-volunteer-interview2-bulk-pass-modal__notify-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.general-volunteer-interview2-bulk-pass-modal__label {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  padding: 0 8px;
+  margin-bottom: 6px;
+}
+
+.general-volunteer-interview2-bulk-pass-modal__notify-field .ant-radio-group {
+  padding-left: 8px;
+}
+
+.general-volunteer-interview2-bulk-pass-modal__field-error {
+  display: block;
+  margin-top: 8px;
+  padding: 0 8px;
+  font-size: 14px;
+  color: var(--color-red, #ff4d4f);
+}
+
+.general-volunteer-interview2-bulk-pass-modal__manual-summary {
+  color: rgba(61, 61, 61, 0.65);
+  font-weight: 400;
+}
+
+.general-volunteer-interview2-bulk-pass-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { UjatInstitutionApplicationStatusBadge } from './status-badge'
+import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segments'
 import {
   UJAT_INSTITUTION_SCHEDULE_COLUMNS,
   type UjatInstitutionApplicationRow,
@@ -21,10 +22,12 @@ const COL = {
 const GRADE_CELL_CLASS = 'ujat-institution-application-list__cell-grade'
 const TOTAL_CELL_CLASS = 'ujat-institution-application-list__cell-total'
 
-function formatGradeClassCounts(row: UjatInstitutionApplicationRow): string {
-  return row.gradeClassCounts
-    .map(g => `${g.gradeLabel} ${g.classCount}학급`)
-    .join(' | ')
+function renderGradeClassCounts(row: UjatInstitutionApplicationRow) {
+  return (
+    <UjatInlineDividedSegments
+      segments={row.gradeClassCounts.map(g => `${g.gradeLabel} ${g.classCount}학급`)}
+    />
+  )
 }
 
 /** 선택 열 + 본문 열 너비 합(가로 스크롤 최소값) */
@@ -72,7 +75,7 @@ export function useUjatInstitutionApplicationColumns(): ColumnsType<UjatInstitut
         align: 'center',
         onHeaderCell: () => ({ className: GRADE_CELL_CLASS }),
         onCell: () => ({ className: GRADE_CELL_CLASS }),
-        render: (_: unknown, record) => formatGradeClassCounts(record),
+        render: (_: unknown, record) => renderGradeClassCounts(record),
       },
       {
         title: '총 신청 학급 수',

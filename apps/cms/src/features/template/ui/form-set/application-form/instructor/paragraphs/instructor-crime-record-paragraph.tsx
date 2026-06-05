@@ -1,3 +1,4 @@
+import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
 import { useState } from 'react'
 import { FilePdfOutlined } from '@ant-design/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
+import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 
 export type UjatVolunteerAddRegistrationSectionHeaderProps = {
   title: string
@@ -12,22 +12,16 @@ export function UjatVolunteerAddRegistrationSectionHeader({
   required = false,
   description,
 }: UjatVolunteerAddRegistrationSectionHeaderProps) {
+  const descriptionText = typeof description === 'string' ? description : undefined
+
   return (
-    <header className="ujat-volunteer-add-registration__section-header">
-      <h3 className="info-section-title">
-        {title}
-        {required ? (
-          <span className="detail-info-form__field-required" aria-hidden>
-            *
-          </span>
-        ) : null}
-      </h3>
-      {description ? (
-        <FormParagraphSectionDescription surface="responseEntry" titleAligned>
-          {description}
-        </FormParagraphSectionDescription>
-      ) : null}
-    </header>
+    <FormParagraphSectionHeader
+      title={title}
+      description={descriptionText}
+      required={required}
+      surface="responseEntry"
+      titleAligned
+    />
   )
 }
 

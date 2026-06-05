@@ -30,6 +30,12 @@ import { type ProgramRegistrationIpsTypeValue } from '@/features/template/ui/for
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '../../general/paragraphs/program-registration-ips-options'
+import {
+  initialProgramRegistrationSurveyItems,
+  PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
+  PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
+  type ProgramRegistrationSurveyItemId,
+} from '@/features/template/lib/program-registration-survey-items'
 
 const REP_KO = '1사1교 경제금융교육'
 const REP_EN = '1 Company 1 School Economics and Finance Education'
@@ -49,21 +55,6 @@ const BUSINESS_FIELD_FIXED_VALUE = 'economy_finance'
 const IPS_PREPARE_FIXED: ProgramRegistrationIpsTypeValue = {
   category: 'prepare',
   detail: 'none',
-}
-
-type OrganizationSurveyItemId =
-  | 'survey'
-  | 'student_satisfaction'
-  | 'teacher_satisfaction'
-  | 'lecture_evaluation'
-
-function initialOrganizationSurveyItemsAllOn(): Record<OrganizationSurveyItemId, boolean> {
-  return {
-    survey: true,
-    student_satisfaction: true,
-    teacher_satisfaction: true,
-    lecture_evaluation: true,
-  }
 }
 
 function participantTypeLabel(
@@ -104,14 +95,13 @@ export function OneCOneSRegistrationBasicInfoParagraph({
   const [managerContactId, setManagerContactId] = useState<string>(ALL_VALUE)
   const [detailedProgramId, setDetailedProgramId] = useState<string>(DETAILED_PROGRAM_MAIN_VALUE)
 
-  const [organizationSurveyItems, setOrganizationSurveyItems] = useState<
-    Record<OrganizationSurveyItemId, boolean>
-  >(initialOrganizationSurveyItemsAllOn)
+  const [surveyItems, setSurveyItems] = useState<
+    Record<ProgramRegistrationSurveyItemId, boolean>
+  >(() => initialProgramRegistrationSurveyItems(true))
 
-  const toggleOrganizationSurveyItem =
-    (id: OrganizationSurveyItemId) => (e: CheckboxChangeEvent) => {
-      setOrganizationSurveyItems(prev => ({ ...prev, [id]: e.target.checked }))
-    }
+  const toggleSurveyItem = (id: ProgramRegistrationSurveyItemId) => (e: CheckboxChangeEvent) => {
+    setSurveyItems(prev => ({ ...prev, [id]: e.target.checked }))
+  }
 
   const sponsorOptions = useMemo(
     () => [
@@ -359,34 +349,16 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             fullRow
             edit={
               <div className="detail-info-form-inputs-wrapper">
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={organizationSurveyItems.survey}
-                  onChange={toggleOrganizationSurveyItem('survey')}
-                >
-                  설문조사
-                </CmsCheckbox>
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={organizationSurveyItems.student_satisfaction}
-                  onChange={toggleOrganizationSurveyItem('student_satisfaction')}
-                >
-                  학생 만족도조사
-                </CmsCheckbox>
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={organizationSurveyItems.teacher_satisfaction}
-                  onChange={toggleOrganizationSurveyItem('teacher_satisfaction')}
-                >
-                  교사 만족도조사
-                </CmsCheckbox>
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={organizationSurveyItems.lecture_evaluation}
-                  onChange={toggleOrganizationSurveyItem('lecture_evaluation')}
-                >
-                  강의평가
-                </CmsCheckbox>
+                {PROGRAM_REGISTRATION_SURVEY_ITEM_IDS.map(id => (
+                  <CmsCheckbox
+                    key={id}
+                    checkboxSize="large"
+                    checked={surveyItems[id]}
+                    onChange={toggleSurveyItem(id)}
+                  >
+                    {PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[id]}
+                  </CmsCheckbox>
+                ))}
               </div>
             }
             view="-"

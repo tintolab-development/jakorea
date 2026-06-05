@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { Form, Input, Radio, DatePicker, Modal, Pagination } from 'antd'
+import { Form, Input, DatePicker, Modal, Pagination } from 'antd'
 import type { InputHTMLAttributes } from 'react'
 import { useForm, type Path } from 'react-hook-form'
 import { readJusoConfmKeyFromEnv, useJusoAddressSearch, type JusoAddressItem } from '@/shared/hooks'
@@ -47,7 +47,7 @@ function AddressSearchInput({ onSearchClick, ...props }: AddressSearchInputProps
   )
 }
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CmsRadio } from '@/shared/ui'
 import type {
   ParticipatingInstructorRow,
   SettlementStatusKey } from '@/data/mock/participating-instructors'
@@ -635,7 +635,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                   </td>
                   <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                     <Form.Item name="consentOpenProfile" noStyle>
-                      <Radio.Group
+                      <CmsRadio.Group
                         options={CONSENT_RADIO_OPTIONS}
                         className="add-instructor-modal__consent-radio-group"
                       />
@@ -646,7 +646,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                   </td>
                   <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                     <Form.Item name="consentMarketing" noStyle>
-                      <Radio.Group
+                      <CmsRadio.Group
                         options={CONSENT_RADIO_OPTIONS}
                         className="add-instructor-modal__consent-radio-group"
                       />
@@ -663,7 +663,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                   >
                     <div className="add-instructor-modal__consent-action-row">
                       <Form.Item name="consentWithholdingTax" noStyle>
-                        <Radio.Group
+                        <CmsRadio.Group
                           options={CONSENT_RADIO_OPTIONS}
                           className="add-instructor-modal__consent-radio-group"
                         />
@@ -693,7 +693,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                   >
                     <div className="add-instructor-modal__consent-action-row">
                       <Form.Item name="consentCriminalRecord" noStyle>
-                        <Radio.Group
+                        <CmsRadio.Group
                           options={CONSENT_RADIO_OPTIONS}
                           className="add-instructor-modal__consent-radio-group"
                         />
@@ -719,7 +719,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                   >
                     <div className="add-instructor-modal__consent-action-row">
                       <Form.Item name="consentAdministrativeInfo" noStyle>
-                        <Radio.Group
+                        <CmsRadio.Group
                           options={CONSENT_RADIO_OPTIONS}
                           className="add-instructor-modal__consent-radio-group"
                         />
@@ -750,7 +750,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                   >
                     <div className="add-instructor-modal__consent-action-row">
                       <Form.Item name="consentEducationFacilitatorPledge" noStyle>
-                        <Radio.Group
+                        <CmsRadio.Group
                           options={CONSENT_RADIO_OPTIONS}
                           className="add-instructor-modal__consent-radio-group"
                         />

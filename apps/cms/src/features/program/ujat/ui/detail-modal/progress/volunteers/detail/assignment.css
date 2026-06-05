@@ -36,22 +36,13 @@
   background: #e6f2f7;
 }
 
-/* 역할 열 — 배지·드롭다운 트리거 가로 중앙 (오버레이 행 포함) */
+/* 역할 열 — 배지·드롭다운 트리거 가로 중앙 */
 .ujat-volunteer-assignment-role-cell__center {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
   box-sizing: border-box;
-}
-
-.ujat-volunteer-assignment-table__table
-  .ant-table-tbody
-  > tr.ujat-volunteer-assignment-table__row--class-withdrawn
-  > td.status-dropdown-cell__cell-status
-  .ujat-volunteer-assignment-role-cell__center {
-  position: relative;
-  z-index: 2;
 }
 
 .ujat-volunteer-assignment-table__dash {
@@ -63,11 +54,6 @@
   font-weight: 500;
 }
 
-.ujat-volunteer-assignment-table__class-withdrawn {
-  color: var(--color-red, #c32f4a);
-  font-weight: 500;
-}
-
 .ujat-volunteer-assignment-table__attendance-late {
   color: var(--color-red, #c32f4a);
   font-weight: 500;
@@ -76,50 +62,6 @@
 .ujat-volunteer-assignment-table__attendance-excused {
   color: var(--color-blue, #017eaf);
   font-weight: 500;
-}
-
-/* 배정 학급 `활동 포기` 행만 — 하단 고정·흰색 오버레이 */
-.ujat-volunteer-assignment-table__table
-  .ant-table-tbody
-  > tr.ujat-volunteer-assignment-table__row--class-withdrawn {
-  position: relative;
-}
-
-.ujat-volunteer-assignment-table__table
-  .ant-table-tbody
-  > tr.ujat-volunteer-assignment-table__row--class-withdrawn
-  > td {
-  position: relative;
-  pointer-events: none;
-  color: var(--main-BK, #3d3d3d);
-  background: var(--default-WT, #fff) !important;
-}
-
-.ujat-volunteer-assignment-table__table
-  .ant-table-tbody
-  > tr.ujat-volunteer-assignment-table__row--class-withdrawn
-  > td::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.55);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.ujat-volunteer-assignment-table__table
-  .ant-table-tbody
-  > tr.ujat-volunteer-assignment-table__row--class-withdrawn:hover
-  > td {
-  background: var(--default-WT, #fff) !important;
-}
-
-.ujat-volunteer-assignment-table__table
-  .ant-table-tbody
-  > tr.ujat-volunteer-assignment-table__row--class-withdrawn
-  .ujat-volunteer-assignment-table__class-withdrawn {
-  position: relative;
-  z-index: 2;
 }
 
 .ujat-volunteer-assignment-attendance-info {

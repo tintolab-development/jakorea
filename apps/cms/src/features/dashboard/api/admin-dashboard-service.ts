@@ -9,7 +9,8 @@
 import type { Program } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock/programs'
 import { getEducationPrograms } from '@/data/mock/education-programs'
-import { getEconomyPrograms, getEconomyProgramById } from '@/data/mock/economy-programs'
+import { getCompanySchoolPrograms, getCompanySchoolProgramById } from '@/data/mock/economy-programs'
+import { getGeneralPrograms } from '@/data/mock/general-programs'
 import { getVolunteerPrograms } from '@/data/mock/volunteer-programs'
 import { mockApplications } from '@/data/mock/applications'
 import { mockMatchings } from '@/data/mock/matchings'
@@ -59,15 +60,18 @@ export interface ProgramProgressStages {
   total: number
 }
 
-/** 경제 교육 3단계 진행 현황 */
-export interface ProgramEconomyStages {
+/** 1사1교·일반 프로그램 3단계 진행 현황 (예정/진행/완료) */
+export interface ProgramOverviewStages {
   scheduled: number
   inProgress: number
   completed: number
   total: number
 }
 
-export type ProgramProgressStagesResult = ProgramProgressStages | ProgramEconomyStages
+/** @deprecated `ProgramOverviewStages` 사용 */
+export type ProgramEconomyStages = ProgramOverviewStages
+
+export type ProgramProgressStagesResult = ProgramProgressStages | ProgramOverviewStages
 
 export interface PendingActionCounts {
   pendingApplications: number
@@ -148,15 +152,16 @@ export async function getProgramProgressSummary(): Promise<ProgramProgressSummar
 /**
  * 프로그램 진행 현황 집계 (상태별 세분화)
  * - programType 'education' | 'volunteer' 시 7단계 집계
- * - programType 'economy' 시 3단계(예정/진행/완료) 집계
+ * - programType 'company_school' | 'general' 시 4카드(예정/진행/완료) 집계
  */
 export async function getProgramProgressStages(options?: {
-  programType?: 'education' | 'economy' | 'volunteer' | 'all'
+  programType?: 'education' | 'company_school' | 'general' | 'volunteer' | 'all'
 }): Promise<ProgramProgressStagesResult> {
   await new Promise(resolve => setTimeout(resolve, 300))
 
-  if (options?.programType === 'economy') {
-    const programs = getEconomyPrograms()
+  if (options?.programType === 'company_school' || options?.programType === 'general') {
+    const programs =
+      options.programType === 'general' ? getGeneralPrograms() : getCompanySchoolPrograms()
     const stages = {
       scheduled: 0,
       inProgress: 0,
@@ -165,9 +170,16 @@ export async function getProgramProgressStages(options?: {
 
     programs.forEach(program => {
       const status = program.lifecycleStatus || ''
-      if (['recruiting_students', 'recruiting_instructors', 'matching_completed', 'education_before_textbook'].includes(status)) {
+      if (
+        [
+          'recruiting_students',
+          'recruiting_instructors',
+          'matching_completed',
+          'education_before_textbook',
+        ].includes(status)
+      ) {
         stages.scheduled++
-      } else if (status === 'education_after_textbook') {
+      } else if (status === 'education_after_textbook' || status === 'education_in_progress') {
         stages.inProgress++
       } else if (['education_completed', 'document_processing_completed'].includes(status)) {
         stages.completed++
@@ -422,9 +434,9 @@ export async function getKpiAchievementList(options?: {
       if (fromRegistry) {
         return buildProgramKpiItemFromProgram(fromRegistry, requestIndex)
       }
-      const economyProgram = getEconomyProgramById(id)
-      if (economyProgram) {
-        return buildProgramKpiItemFromProgram(economyProgram, requestIndex)
+      const companySchoolProgram = getCompanySchoolProgramById(id)
+      if (companySchoolProgram) {
+        return buildProgramKpiItemFromProgram(companySchoolProgram, requestIndex)
       }
       return buildDefaultProgramKpiItem(id, '프로그램')
     })
@@ -508,8 +520,8 @@ function getPendingActionCountsSync(): PendingActionCounts {
 export function getMenuShortcutBadgeCounts(): Record<string, number> {
   const educationPrograms = getEducationPrograms()
   const stages = accumulateLifecycleStages(educationPrograms)
-  const economyPrograms = getEconomyPrograms()
-  const economyStages = accumulateLifecycleStages(economyPrograms)
+  const companySchoolPrograms = getCompanySchoolPrograms()
+  const companySchoolStages = accumulateLifecycleStages(companySchoolPrograms)
   const geminiPrograms = educationPrograms.filter(
     p => (p.title ?? '').includes('제미나이') || (p.mainTitle ?? '').includes('제미나이')
   )
@@ -534,7 +546,7 @@ export function getMenuShortcutBadgeCounts(): Record<string, number> {
 
   const mapped: Record<string, number> = {
     'programs-general-education': stages.studentRecruitment,
-    'programs-economy': economyStages.studentRecruitment + economyStages.instructorRecruitment,
+    'programs-economy': companySchoolStages.studentRecruitment + companySchoolStages.instructorRecruitment,
     'programs-gemini': geminiStages.studentRecruitment + geminiStages.instructorRecruitment,
     'programs-ujat': ujatStages.studentRecruitment + ujatStages.instructorRecruitment,
     'programs-detail': stages.matchingCompleted,

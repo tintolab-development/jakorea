@@ -1,30 +1,61 @@
 /**
- * 교재 현황 배지 색상 모디파이어 (레이아웃은 app-status-badge.css)
+ * 교재 배송 현황 배지 색상 (레이아웃은 app-status-badge.css)
+ * UJAT 교육 진행 참여 기관 상세(`ujat-education-progress-institution-detail__textbook-badge--*`)와 동일
  */
 
-/* 교재 준비 중: 연한 녹색 배경 #E8F5E9, 텍스트 #1E8C29 */
+/* 배송 전 */
 .app-status-badge.textbook-status-badge--preparing {
-    background: #e8f5e9;
+    border: 1px solid rgba(30, 140, 41, 0.1);
+    background: #e9f3ea;
     color: #1e8c29;
 }
 
-/* 교재 배송 중: 연한 보라 배경 #F0E6FA, 텍스트 #8457CE */
+/* 배송 중 */
 .app-status-badge.textbook-status-badge--shipping {
-    background: #f0e6fa;
-    color: #8457ce;
+    border-radius: var(--6, 6px);
+    border: 1px solid rgba(1, 126, 175, 0.1);
+    background: #e6f2f7;
+    color: var(--color-blue, #017eaf);
 }
 
-/* 교재 배송 완료: 배경 #F2F3F5, 텍스트 #464646 */
+/* 배송 완료 */
 .app-status-badge.textbook-status-badge--delivered {
+    border: 1px solid rgba(70, 70, 70, 0.1);
     background: #f2f3f5;
     color: #464646;
+}
+
+/* StatusDropdownCell: 행 hover·트리거·메뉴에서도 UJAT 상세 톤 유지 */
+.ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .app-status-badge.textbook-status-badge--preparing,
+.status-dropdown-cell__status-trigger .app-status-badge.textbook-status-badge--preparing,
+.status-dropdown-cell__dropdown-item .app-status-badge.textbook-status-badge--preparing {
+    border: 1px solid rgba(30, 140, 41, 0.1) !important;
+    background: #e9f3ea !important;
+    color: #1e8c29 !important;
+}
+
+.ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .app-status-badge.textbook-status-badge--shipping,
+.status-dropdown-cell__status-trigger .app-status-badge.textbook-status-badge--shipping,
+.status-dropdown-cell__dropdown-item .app-status-badge.textbook-status-badge--shipping {
+    border-radius: var(--6, 6px) !important;
+    border: 1px solid rgba(1, 126, 175, 0.1) !important;
+    background: #e6f2f7 !important;
+    color: var(--color-blue, #017eaf) !important;
+}
+
+.ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .app-status-badge.textbook-status-badge--delivered,
+.status-dropdown-cell__status-trigger .app-status-badge.textbook-status-badge--delivered,
+.status-dropdown-cell__dropdown-item .app-status-badge.textbook-status-badge--delivered {
+    border: 1px solid rgba(70, 70, 70, 0.1) !important;
+    background: #f2f3f5 !important;
+    color: #464646 !important;
 }
 
 /* ===== 결재 현황 (동일 배지, 배경/텍스트색만 다름) ===== */
 /* 승인 대기 */
 .app-status-badge.textbook-status-badge--pending {
-    background: #e3f2fd;
-    color: #1976d2;
+    background: #e8f5e9;
+    color: var(--color-green, #1e8c29);
 }
 
 /* 신청 반려 */
@@ -32,7 +63,7 @@
     border-radius: 4px;
     border: 1px solid rgba(195, 47, 74, 0.06);
     background: #f9eaed;
-    color: var(--color-red, #c32f4a);
+    color: #c32f4a;
     text-align: center;
     font-family: Pretendard, sans-serif;
     font-size: 14px;
@@ -44,7 +75,7 @@
 /* 승인 완료 */
 .app-status-badge.textbook-status-badge--approved {
     background: #f2f3f5;
-    color: #464646;
+    color: var(--main-BK, #3d3d3d);
 }
 
 /* 승인 취소 */

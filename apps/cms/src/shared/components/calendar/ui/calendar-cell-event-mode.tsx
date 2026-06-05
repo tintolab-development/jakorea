@@ -1,8 +1,76 @@
 import dayjs from 'dayjs'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import { calendarItemsForEventMode, getItemsForDate, resolveItemColor } from '../lib/calendar-helpers'
+import type { CalendarMonthCellRow } from '../model/calendar-month-cell-row'
+import { defaultCalendarMonthEventTitle } from './calendar-month-event-title'
 import { CalendarPreviewTooltip } from './preview-tooltip/calendar-preview-tooltip'
 import type { CalendarCellEventModeProps } from './calendar-cell-types'
+
+function defaultBuildMonthCellRows(
+  dayEvents: ReturnType<typeof calendarItemsForEventMode>
+): CalendarMonthCellRow[] {
+  return dayEvents.map(event => ({
+    id: event.id,
+    sourceEvent: event,
+  }))
+}
+
+function defaultRenderMonthEventContent({
+  row,
+  colors,
+}: {
+  row: CalendarMonthCellRow
+  colors: { text: string }
+}) {
+  return defaultCalendarMonthEventTitle(String(row.sourceEvent.title ?? ''), colors.text)
+}
+
+function renderMonthEventStrips(
+  dayEvents: ReturnType<typeof calendarItemsForEventMode>,
+  config: CalendarCellEventModeProps['eventsConfig'],
+  selectedKeys: CalendarCellEventModeProps['selectedKeys'],
+  colorMap: CalendarCellEventModeProps['colorMap']
+) {
+  const buildRows = config.buildMonthCellRows ?? defaultBuildMonthCellRows
+  const renderContent = config.renderMonthEventContent ?? defaultRenderMonthEventContent
+  const rows = buildRows(dayEvents)
+
+  return (
+    <>
+      {rows.slice(0, 2).map(row => {
+        const isEventSelected = selectedKeys.includes(row.sourceEvent.id)
+        const colors =
+          config.resolveEventColors?.(row.sourceEvent) ??
+          resolveItemColor(row.sourceEvent, colorMap, SCHEDULE_COLORS[0])
+        return (
+          <div key={String(row.id)}>
+            <div
+              className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
+              style={{
+                backgroundColor: colors.bg,
+                border: isEventSelected ? 'none' : `1px solid ${colors.border}`,
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              {renderContent({
+                row,
+                dayEvents,
+                colors,
+                isSelected: isEventSelected,
+              })}
+            </div>
+          </div>
+        )
+      })}
+      {rows.length > 2 && (
+        <div className="calendar-event-more">
+          {config.formatEventsOverflowText?.(rows.length - 2) ??
+            `외 ${rows.length - 2}개의 항목`}
+        </div>
+      )}
+    </>
+  )
+}
 
 export function CalendarCellEventMode(props: CalendarCellEventModeProps) {
   const {
@@ -45,38 +113,13 @@ export function CalendarCellEventMode(props: CalendarCellEventModeProps) {
       )
     }
 
+    const eventStrips = renderMonthEventStrips(dayEvents, config, selectedKeys, colorMap)
+
     if (config.eventsTooltipTrigger === 'cell') {
       const cellInner = (
         <div className={cellClass} onClick={() => onSelectDate(date)}>
           <div className="calendar-cell-date">{date.date()}</div>
-          <div className="calendar-cell-events">
-            {dayEvents.slice(0, 2).map(event => {
-              const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
-              const isEventSelected = selectedKeys.includes(event.id)
-              const colors =
-                config.resolveEventColors?.(event) ??
-                resolveItemColor(event, colorMap, SCHEDULE_COLORS[0])
-              return (
-                <div key={String(event.id)}>
-                  <div
-                    className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
-                    style={{ backgroundColor: colors.bg }}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <span className="calendar-event-title" style={{ color: colors.text }}>
-                      {displayTitle}
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
-            {dayEvents.length > 2 && (
-              <div className="calendar-event-more">
-                {config.formatEventsOverflowText?.(dayEvents.length - 2) ??
-                  `외 ${dayEvents.length - 2}개의 항목`}
-              </div>
-            )}
-          </div>
+          <div className="calendar-cell-events">{eventStrips}</div>
         </div>
       )
 
@@ -101,34 +144,7 @@ export function CalendarCellEventMode(props: CalendarCellEventModeProps) {
       >
         <div className={cellClass} onClick={() => onSelectDate(date)}>
           <div className="calendar-cell-date">{date.date()}</div>
-          <div className="calendar-cell-events">
-            {dayEvents.slice(0, 2).map(event => {
-              const displayTitle = String(event.title ?? '').replace(/^\[.*?\]\s*/, '')
-              const isEventSelected = selectedKeys.includes(event.id)
-              const colors =
-                config.resolveEventColors?.(event) ??
-                resolveItemColor(event, colorMap, SCHEDULE_COLORS[0])
-              return (
-                <div key={String(event.id)}>
-                  <div
-                    className={`calendar-event ${isEventSelected ? 'calendar-event--selected' : ''}`}
-                    style={{ backgroundColor: colors.bg }}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <span className="calendar-event-title" style={{ color: colors.text }}>
-                      {displayTitle}
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
-            {dayEvents.length > 2 && (
-              <div className="calendar-event-more">
-                {config.formatEventsOverflowText?.(dayEvents.length - 2) ??
-                  `외 ${dayEvents.length - 2}개의 항목`}
-              </div>
-            )}
-          </div>
+          <div className="calendar-cell-events">{eventStrips}</div>
         </div>
       </CalendarPreviewTooltip>
     )

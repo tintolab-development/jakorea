@@ -5,9 +5,9 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import { Form, Select, Radio, Modal, Button } from 'antd'
+import { Form, Select, Modal, Button } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CmsRadio } from '@/shared/ui'
 import type { ProgramRole } from '@/types/user'
 import {
   PROGRAM_ROLE_LABELS,
@@ -131,9 +131,9 @@ export function AddManagerModal({
               rules={[{ required: true }]}
               className="add-manager-modal__field"
             >
-              <Radio.Group className="add-manager-modal__role-radios" size="large">
+              <CmsRadio.Group className="add-manager-modal__role-radios" size="large">
                 {ROLE_OPTIONS.map(opt => (
-                  <Radio
+                  <CmsRadio
                     key={opt.value}
                     value={opt.value}
                     disabled={
@@ -141,9 +141,9 @@ export function AddManagerModal({
                     }
                   >
                     {opt.label}
-                  </Radio>
+                  </CmsRadio>
                 ))}
-              </Radio.Group>
+              </CmsRadio.Group>
             </Form.Item>
 
             <Form.Item

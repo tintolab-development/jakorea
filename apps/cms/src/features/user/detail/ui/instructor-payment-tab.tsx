@@ -38,14 +38,14 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     type: 'search',
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
-    flex: 1,
+    width: 260,
   },
   {
     key: 'institutionName',
     type: 'search',
     label: '참여 기관명',
     placeholder: '기관명을 입력하세요',
-    flex: 1,
+    width: 260,
   },
   {
     key: 'settlementStatus',
@@ -54,7 +54,7 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     placeholder: '전체',
     options: INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
     allowClear: true,
-    flex: 1,
+    width: 260,
   },
 ]
 

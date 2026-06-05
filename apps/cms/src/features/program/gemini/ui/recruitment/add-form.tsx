@@ -7,7 +7,7 @@ import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsButton } from '@/shared/ui'
 import type { useGeminiRecruitmentAddForm } from '../../hooks/use-gemini-recruitment-add-form'
-import '@toast-ui/editor/dist/toastui-editor.css'
+import { RichTextEditor } from '@/shared/rich-text'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
@@ -29,7 +29,8 @@ export function GeminiRecruitmentAddForm({ onCancel, form }: GeminiRecruitmentAd
     setTrainingRequestPeriod,
     minStudentCount,
     handleMinStudentCountChange,
-    editorHostRef,
+    editor,
+    editorMinHeight,
   } = form
 
   if (!hydrated) {
@@ -123,7 +124,9 @@ export function GeminiRecruitmentAddForm({ onCancel, form }: GeminiRecruitmentAd
         >
           <DetailInfoForm.Row type="custom">
             <div className="notice-register-modal__section notice-register-modal__section--editor gemini-recruitment-add-form__editor">
-              <div className="notice-register-modal__editor-host" ref={editorHostRef} />
+              <div className="notice-register-modal__editor-host">
+                <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+              </div>
             </div>
           </DetailInfoForm.Row>
         </DetailInfoForm>

@@ -49,7 +49,13 @@ export function useProgressSchoolList({
         const lower = schoolNameKeyword.toLowerCase()
         if (!row.schoolName.toLowerCase().includes(lower)) return false
       }
+      const institutionSido = (appliedFilters.institutionSido || '').trim()
+      const institutionSigungu = (appliedFilters.institutionSigungu || '').trim()
+      if (institutionSido && !row.region.includes(institutionSido)) return false
+      if (institutionSigungu && !row.region.includes(institutionSigungu)) return false
       if (
+        !institutionSido &&
+        !institutionSigungu &&
         appliedFilters.region &&
         appliedFilters.region !== 'all' &&
         !row.region.includes(appliedFilters.region)

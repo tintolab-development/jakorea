@@ -1,0 +1,218 @@
+/**
+ * 학교 상세 > 학생 명단 탭 — FilterTableLayout + 테이블
+ */
+
+.school-detail-student-list-section {
+  --student-list-filter-column-width: 260px;
+  width: 100%;
+}
+
+.school-detail-student-list-section__filter-layout.filter-table-layout {
+  background: transparent;
+  box-shadow: none !important;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.school-detail-student-list-section__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.school-detail-student-list-section__filter-layout .table-filter-group__container {
+  gap: var(--filter-field-gap, 12px);
+}
+
+.school-detail-student-list-section__filter-layout .table-filter-group__fields-inner.ant-row {
+  flex-wrap: nowrap;
+  width: auto;
+  max-width: 100%;
+  gap: var(--filter-field-gap, 12px);
+}
+
+/* 학생명 · 성별 · 학급 — 좌측 고정 폭(조회 버튼은 우측) */
+.school-detail-student-list-section__filter-layout
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='studentName'],
+.school-detail-student-list-section__filter-layout
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='studentGender'],
+.school-detail-student-list-section__filter-layout
+  .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='studentClass'] {
+  width: var(--student-list-filter-column-width) !important;
+  flex: 0 0 var(--student-list-filter-column-width) !important;
+  max-width: var(--student-list-filter-column-width) !important;
+  min-width: var(--student-list-filter-column-width) !important;
+}
+
+@media (max-width: 960px) {
+  .school-detail-student-list-section__filter-layout .table-filter-group__fields-inner.ant-row {
+    flex-wrap: wrap;
+  }
+
+  .school-detail-student-list-section__filter-layout
+    .table-filter-group__fields-inner
+    > .ant-col[data-filter-field-key='studentName'],
+  .school-detail-student-list-section__filter-layout
+    .table-filter-group__fields-inner
+    > .ant-col[data-filter-field-key='studentGender'],
+  .school-detail-student-list-section__filter-layout
+    .table-filter-group__fields-inner
+    > .ant-col[data-filter-field-key='studentClass'] {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+.school-detail-student-list-section__toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.school-detail-student-list-section__table-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.school-detail-student-list-section__table-wrap .school-detail-modal__student-table .ant-table-cell {
+  white-space: nowrap;
+}
+
+.school-detail-student-list-section--edit-mode
+  .school-detail-student-list-section__table-wrap
+  .school-detail-modal__student-table
+  .ant-table-cell {
+  white-space: normal;
+}
+
+/* 수정 모드: 셀 안 인풋·셀렉트가 열 폭을 넘지 않도록 */
+.school-detail-student-list-section__edit-cell {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.school-detail-modal__student-table--edit .ant-table-thead > tr > th.ant-table-cell,
+.school-detail-modal__student-table--edit .ant-table-tbody > tr > td.ant-table-cell {
+  height: auto !important;
+  min-height: 52px !important;
+  max-height: none !important;
+  padding: 6px 8px !important;
+  vertical-align: middle;
+  overflow: hidden;
+}
+
+.school-detail-modal__student-table--edit .school-detail-student-list-section__edit-cell .cms-input,
+.school-detail-modal__student-table--edit .school-detail-student-list-section__edit-cell .cms-select {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+.school-detail-modal__student-table--edit .school-detail-student-list-section__edit-cell .cms-input__control,
+.school-detail-modal__student-table--edit .school-detail-student-list-section__edit-cell .cms-select .ant-select {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+.school-detail-modal__student-table--edit
+  .school-detail-student-list-section__edit-cell
+  .cms-select
+  .ant-select
+  .ant-select-selector {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* 성별 수정: 남/여 라디오 가로 중앙, 줄바꿈 없음 */
+.school-detail-student-list-section__edit-cell .school-detail-student-list-section__gender-radios {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.school-detail-student-list-section__edit-cell
+  .school-detail-student-list-section__gender-radios
+  .ant-radio-wrapper {
+  flex-shrink: 0;
+  margin-inline-end: 0;
+  white-space: nowrap;
+}
+
+.school-detail-student-list-section__table-wrap .school-detail-modal__student-table .ant-table-content > table {
+  min-width: 1362px;
+}
+
+/* 아웃라인 보조 액션(초상권·수료증) */
+.school-detail-student-list-section__btn-outline.cms-button.cms-button--secondary.ant-btn {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 20px !important;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px !important;
+  border: 1px solid var(--JA-mint-01, #01a1af) !important;
+  background: #fff !important;
+  color: var(--JA-mint-01, #01a1af) !important;
+}
+
+.school-detail-student-list-section__btn-outline.cms-button.cms-button--secondary.ant-btn:hover:not(:disabled) {
+  border-color: var(--color-modal-header-hover, #01919e) !important;
+  color: var(--color-modal-header-hover, #01919e) !important;
+  background: #fff !important;
+}
+
+/* 정보 수정 — 연한 민트 채움 */
+.school-detail-student-list-section__btn-edit-info.cms-button.cms-button--secondary.ant-btn {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 20px !important;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px !important;
+  border: 1px solid var(--JA-mint-01, #01a1af) !important;
+  background: var(
+    --color-bg-mint,
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+    #fff
+  ) !important;
+  color: var(--JA-mint-01, #01a1af) !important;
+}
+
+.school-detail-student-list-section__btn-edit-info.cms-button.cms-button--secondary.ant-btn:hover:not(:disabled) {
+  border-color: var(--color-modal-header-hover, #01919e) !important;
+  color: var(--color-modal-header-hover, #01919e) !important;
+  background: linear-gradient(0deg, rgba(1, 161, 175, 0.08) 0%, rgba(1, 161, 175, 0.08) 100%), #fff !important;
+}
+
+.school-detail-student-list-section__btn-edit-info--active.cms-button.cms-button--secondary.ant-btn {
+  border-color: var(--JA-mint-01, #01a1af) !important;
+  color: var(--JA-mint-01, #01a1af) !important;
+  background: var(
+    --color-bg-mint,
+    linear-gradient(0deg, rgba(1, 161, 175, 0.12) 0%, rgba(1, 161, 175, 0.12) 100%),
+    #fff
+  ) !important;
+  box-shadow: inset 0 0 0 1px rgba(1, 161, 175, 0.2);
+}

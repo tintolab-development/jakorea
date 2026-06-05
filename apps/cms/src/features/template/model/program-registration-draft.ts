@@ -5,6 +5,7 @@ import {
   type TitleWithPeriodParagraph,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
+import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
 
 export const PROGRAM_REGISTRATION_IDS = {
   basicInfo: 'program-registration-seed-basic-info',
@@ -75,21 +76,35 @@ export function createProgramRegistrationDraft(
   const paragraphs: HorizontalTableParagraph[] = [
     createSeedParagraph(PROGRAM_REGISTRATION_IDS.basicInfo, '기본 정보'),
     createSeedParagraph(PROGRAM_REGISTRATION_IDS.businessKpi, '사업 KPI 목표'),
-    createSeedParagraph(PROGRAM_REGISTRATION_IDS.wageInfo, '임금 정보'),
+    createSeedParagraph(
+      PROGRAM_REGISTRATION_IDS.wageInfo,
+      PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.title,
+      PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.editDescription
+    ),
   ]
   if (variant === 'general') {
     paragraphs.push(
-      createSeedParagraph(PROGRAM_REGISTRATION_IDS.typeSettings, '프로그램 유형 설정')
+      createSeedParagraph(
+        PROGRAM_REGISTRATION_IDS.typeSettings,
+        PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.title,
+        PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.editDescription
+      )
     )
   }
   paragraphs.push(
     createSeedParagraph(
       PROGRAM_REGISTRATION_IDS.educationCurriculum,
-      variant === 'economy' ? '교육 커리큘럼' : '교육 진행 (커리큘럼)'
+      variant === 'economy' ? '교육 커리큘럼' : PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.title,
+      variant === 'general'
+        ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.editDescription
+        : ''
     ),
     createSeedParagraph(
       PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
-      '교육 진행 일정 설정'
+      PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.title,
+      variant === 'general'
+        ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.editDescription
+        : ''
     )
   )
   return normalizeWritingFormDraft({

@@ -1,3 +1,4 @@
+import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
 import { Fragment, useMemo, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'

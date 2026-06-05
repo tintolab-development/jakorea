@@ -5,6 +5,7 @@ import {
   type UjatInterview2BulkPassType,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
+import { alertUjatVolunteerInterview2BulkPassTypeRequired } from './ujat-volunteer-applicant-guard-actions'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsRadio } from '@/shared/ui/cms-radio'
@@ -72,7 +73,7 @@ export function UjatVolunteerInterview2BulkPassModal({
 
   const handleConfirm = () => {
     if (!passType) {
-      setPassTypeError('합격 유형을 선택해 주세요.')
+      alertUjatVolunteerInterview2BulkPassTypeRequired()
       return
     }
     if (notifyTiming === 'manual' && !manualNotifyAt) {
@@ -87,8 +88,6 @@ export function UjatVolunteerInterview2BulkPassModal({
       manualNotifyAt: notifyTiming === 'manual' ? manualNotifyAt ?? undefined : undefined,
     })
   }
-
-  const canConfirm = passType != null
 
   return (
     <>
@@ -109,7 +108,6 @@ export function UjatVolunteerInterview2BulkPassModal({
               variant="primary"
               size="medium"
               type="button"
-              disabled={!canConfirm}
               onClick={handleConfirm}
             >
               합격

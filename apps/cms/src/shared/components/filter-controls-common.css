@@ -84,9 +84,9 @@
 }
 
 /* 통일 필터 카드 (flex 컬럼 내에서는 min-width + 높이만 고정) */
-.unified-filter-card .app-select,
-.unified-filter-card .unified-filter-card__field .app-select,
-.unified-filter-card .labeled-search-input .app-input,
+.unified-filter-card .cms-select,
+.unified-filter-card .unified-filter-card__field .cms-select,
+.unified-filter-card .labeled-search-input .cms-input,
 .unified-filter-card .unified-filter-card__field .app-datepicker:not(.app-datepicker--range-split),
 .unified-filter-card .app-datepicker:not(.app-datepicker--range-split) {
   min-width: var(--filter-control-width);
@@ -121,15 +121,15 @@
   min-width: 0;
 }
 
-/* 셀렉트·기간: 드롭다운이 잘리지 않도록 — 클리어·화살표는 app-select / app-datepicker 규칙으로 박스 안 배치 */
-.unified-filter-card .app-select,
-.unified-filter-card .unified-filter-card__field .app-select,
+/* 셀렉트·기간: 드롭다운이 잘리지 않도록 — 클리어·화살표는 cms-select / app-datepicker 규칙으로 박스 안 배치 */
+.unified-filter-card .cms-select,
+.unified-filter-card .unified-filter-card__field .cms-select,
 .unified-filter-card .unified-filter-card__field .app-datepicker,
 .unified-filter-card .app-datepicker {
   overflow: visible;
 }
 
-.unified-filter-card .app-select > .ant-select,
+.unified-filter-card .cms-select > .ant-select,
 .unified-filter-card .app-datepicker > .ant-picker,
 .unified-filter-card .app-datepicker > .ant-picker-range {
   flex: 1 1 auto;
@@ -163,7 +163,7 @@
   align-items: center !important;
 }
 
-/* LabeledSearchInput + AppInput: 래퍼 패딩 안에 맞추고 allowClear 아이콘이 박스 밖으로 나가지 않게 */
+/* LabeledSearchInput + CmsInput: 래퍼 패딩 안에 맞추고 allowClear 아이콘이 박스 밖으로 나가지 않게 */
 .unified-filter-card .labeled-search-input {
   max-width: var(--filter-control-max-width) !important;
   width: 100%;
@@ -176,7 +176,7 @@
   width: 100%;
 }
 
-.unified-filter-card .labeled-search-input .app-input {
+.unified-filter-card .labeled-search-input .cms-input {
   max-width: 100%;
   min-width: 0;
   overflow: hidden;
@@ -185,18 +185,18 @@
   box-shadow: none !important;
 }
 
-/* Ant Input borderless/underlined 내부 장식 제거 — 박스는 .app-input__control 테두리만 사용 */
-.unified-filter-card .labeled-search-input .app-input .ant-input-affix-wrapper,
-.unified-filter-card .labeled-search-input .app-input .ant-input {
+/* Ant Input borderless/underlined 내부 장식 제거 — 박스는 .cms-input__control 테두리만 사용 */
+.unified-filter-card .labeled-search-input .cms-input .cms-input__inner .ant-input-affix-wrapper,
+.unified-filter-card .labeled-search-input .cms-input .cms-input__inner .ant-input {
   box-shadow: none !important;
 }
 
-.unified-filter-card .labeled-search-input .app-input .ant-input-affix-wrapper::before,
-.unified-filter-card .labeled-search-input .app-input .ant-input-affix-wrapper::after {
+.unified-filter-card .labeled-search-input .cms-input .cms-input__inner .ant-input-affix-wrapper::before,
+.unified-filter-card .labeled-search-input .cms-input .cms-input__inner .ant-input-affix-wrapper::after {
   display: none !important;
 }
 
-.unified-filter-card .labeled-search-input .app-input .ant-input-affix-wrapper {
+.unified-filter-card .labeled-search-input .cms-input .cms-input__inner .ant-input-affix-wrapper {
   min-width: 0 !important;
   width: 100% !important;
   max-width: 100% !important;
@@ -208,7 +208,7 @@
   box-sizing: border-box !important;
 }
 
-.unified-filter-card .labeled-search-input .app-input .app-input__control {
+.unified-filter-card .labeled-search-input .cms-input .cms-input__control {
   height: var(--filter-control-height) !important;
   min-height: var(--filter-control-height) !important;
   border: 1px solid #c4cdd1 !important;
@@ -217,7 +217,7 @@
   box-shadow: none !important;
 }
 
-.unified-filter-card .labeled-search-input .app-input .ant-input-affix-wrapper .ant-input {
+.unified-filter-card .labeled-search-input .cms-input .cms-input__inner .ant-input-affix-wrapper .ant-input {
   height: 100% !important;
   min-height: 0 !important;
   line-height: 1 !important;
@@ -226,16 +226,9 @@
   min-width: 0;
 }
 
-.unified-filter-card .labeled-search-input .app-input .ant-input-clear-icon {
+.unified-filter-card .labeled-search-input .cms-input .ant-input-clear-icon {
   flex-shrink: 0;
   margin-inline-end: 0;
-}
-
-/* prefix 없음(filter 검색): borderless 단일 input — 가로 패딩은 span.app-input(14px/16px)에서만 */
-.unified-filter-card .labeled-search-input .app-input > .ant-input:not(.ant-input-affix-wrapper) {
-  height: var(--filter-control-height) !important;
-  line-height: 1 !important;
-  padding: 0 !important;
 }
 
 /* 통일 필터 카드 - 운영기간 등 DatePicker / RangePicker */
@@ -636,8 +629,8 @@
   }
 
   .unified-filter-card .labeled-search-input__input,
-  .unified-filter-card .labeled-search-input .app-input,
-  .unified-filter-card .labeled-search-input .app-input .ant-input-affix-wrapper,
+  .unified-filter-card .labeled-search-input .cms-input,
+  .unified-filter-card .labeled-search-input .cms-input .cms-input__inner .ant-input-affix-wrapper,
   .program-progress-tab__filters .labeled-search-input__input,
   .list-page-filters .labeled-search-input__input {
     width: 100% !important;
@@ -645,9 +638,9 @@
     min-width: var(--filter-control-min-width);
   }
 
-  .unified-filter-card .app-select,
+  .unified-filter-card .cms-select,
   .unified-filter-card .app-datepicker:not(.app-datepicker--range-split),
-  .unified-filter-card .labeled-search-input .app-input {
+  .unified-filter-card .labeled-search-input .cms-input {
     width: 100% !important;
     max-width: var(--filter-control-max-width) !important;
     min-width: var(--filter-control-min-width);
@@ -704,7 +697,7 @@
 }
 
 .cms-select .ant-select-arrow,
-.app-select.app-select--filter .ant-select-arrow,
+.unified-filter-card .cms-select .ant-select-arrow,
 .unified-filter-card .ant-select .ant-select-arrow,
 .list-page-filters .ant-select .ant-select-arrow,
 .program-filter-card .ant-select .ant-select-arrow,
@@ -724,7 +717,7 @@
 }
 
 .cms-select .ant-select-arrow > *,
-.app-select.app-select--filter .ant-select-arrow > *,
+.unified-filter-card .cms-select .ant-select-arrow > *,
 .unified-filter-card .ant-select .ant-select-arrow > *,
 .list-page-filters .ant-select .ant-select-arrow > *,
 .program-filter-card .ant-select .ant-select-arrow > *,
@@ -742,7 +735,7 @@
   transform: translateY(-50%) rotate(180deg) !important;
 }
 
-.app-select.app-select--filter .ant-select.ant-select-open .ant-select-arrow,
+.unified-filter-card .cms-select .ant-select.ant-select-open .ant-select-arrow,
 .list-page-filters .ant-select.ant-select-open .ant-select-arrow,
 .program-filter-card .ant-select.ant-select-open .ant-select-arrow,
 .program-filter-wrapper .ant-select.ant-select-open .ant-select-arrow,
@@ -754,7 +747,7 @@
 }
 
 .cms-select--disabled .ant-select-arrow,
-.app-select.app-select--filter .ant-select-disabled .ant-select-arrow,
+.unified-filter-card .cms-select--disabled .ant-select-arrow,
 .list-page-filters .ant-select-disabled .ant-select-arrow,
 .program-filter-card .ant-select-disabled .ant-select-arrow,
 .program-filter-wrapper .ant-select-disabled .ant-select-arrow,

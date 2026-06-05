@@ -113,7 +113,7 @@
   border-right: 1px solid var(--table-line, #e0e0e0);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
   height: 54px !important;
-  background: var(--BG-header, linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%), #fff);
+  background: var(--BG-header);
 }
 
 /* 본문 셀: 기본·호버 동일 테두리(--table-line) 유지 */
@@ -348,4 +348,36 @@
   height: 54px !important;
   min-height: 54px !important;
   box-sizing: border-box !important;
+}
+
+/**
+ * 비활성 행 (활동 포기 등) — 행 전체 클릭·호버 차단 + 셀별 흰색 오버레이.
+ * `rowClassName` / `onRow({ className })`에 `CMS_DATA_TABLE_ROW_DISABLED_CLASS` 부여.
+ * 주의: `tr::after`는 Ant Table에서 빈 열(유령 셀)을 만들 수 있어 `td::after` 사용.
+ * 강조 텍스트(활동 포기 등)는 `.cms-data-table__cell-accent--danger` (오버레이와 동일 톤).
+ */
+.cms-data-table .ant-table-tbody > tr.cms-data-table__row--disabled > td {
+  position: relative;
+  pointer-events: none;
+  cursor: default !important;
+  color: var(--main-BK, #3d3d3d);
+  background: var(--default-WT, #fff) !important;
+}
+
+.cms-data-table .ant-table-tbody > tr.cms-data-table__row--disabled > td::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cms-data-table .ant-table-tbody > tr.cms-data-table__row--disabled:hover > td {
+  background: var(--default-WT, #fff) !important;
+}
+
+.cms-data-table__cell-accent--danger {
+  color: var(--color-red, #c32f4a);
+  font-weight: 500;
 }

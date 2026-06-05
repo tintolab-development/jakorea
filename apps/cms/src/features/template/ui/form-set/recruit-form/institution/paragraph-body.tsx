@@ -1,18 +1,29 @@
 import type { ReactNode } from 'react'
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { APPLICANT_RECRUIT_FORM_INSTITUTION_IDS } from '@/features/template/model/applicant-recruit-form-institution-draft'
-import { ApplicantRecruitParticipantInfoParagraph } from '@/features/template/ui/form-set/recruit-form/institution/paragraphs/applicant-recruit-participant-info-paragraph'
+import {
+  ApplicantRecruitParticipantInfoParagraph,
+  type ApplicantRecruitParticipantInfoParagraphProps,
+} from '@/features/template/ui/form-set/recruit-form/institution/paragraphs/applicant-recruit-participant-info-paragraph'
 import { RecruitDetailInfoParagraph } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-paragraph'
+
+export type ApplicantRecruitFormInstitutionParagraphBodyOptions = {
+  showInstitutionApplicationLimits?: boolean
+}
 
 /** 템플릿 편집기 — 프로그램 참여자 모집 폼 (학교) 시드 단락 본문 */
 export function renderApplicantRecruitFormInstitutionParagraphBody(
   paragraph: HorizontalTableParagraph,
-  enabled: boolean | undefined
+  enabled: boolean | undefined,
+  options?: ApplicantRecruitFormInstitutionParagraphBodyOptions
 ): ReactNode | null {
   if (!enabled) return null
+  const limitsProps: ApplicantRecruitParticipantInfoParagraphProps = {
+    showInstitutionApplicationLimits: options?.showInstitutionApplicationLimits ?? true,
+  }
   switch (paragraph.id) {
     case APPLICANT_RECRUIT_FORM_INSTITUTION_IDS.participantRecruitInfo:
-      return <ApplicantRecruitParticipantInfoParagraph />
+      return <ApplicantRecruitParticipantInfoParagraph {...limitsProps} />
     case APPLICANT_RECRUIT_FORM_INSTITUTION_IDS.detailInfo:
       return (
         <RecruitDetailInfoParagraph

@@ -80,7 +80,7 @@
 
 .cross-table__cell--column-header,
 .cross-table__cell--row-header {
-  background: #f5f6f7;
+  background: var(--BG-header);
   font-weight: 700;
 }
 

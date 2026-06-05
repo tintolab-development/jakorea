@@ -9,8 +9,38 @@ export const FEATURE_COMING_SOON_ALERT_MESSAGE = '준비 중입니다.'
 /** 참여 강사진 — 활동확인서 발급 버튼 미구현 시 `window.alert` */
 export const ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE = '준비중'
 
-/** 참여 기관 학생 명단 — 정보 수정 버튼 미구현 시 `window.alert` */
+/** 참여 기관 학생 명단 — 정보 수정 버튼 미구현 시 AlertModal 본문 */
 export const STUDENT_LIST_INFO_EDIT_COMING_SOON_ALERT_MESSAGE = '준비중'
+
+/** 참여 학생 목록 — 수정 모드 중 필터·다른 액션 시 AlertModal 본문 */
+export const STUDENT_LIST_EDIT_MODE_BLOCKED_ALERT_MESSAGE =
+  '학생 정보 수정 중에는 이용할 수 없습니다. 정보 수정을 완료한 후 다시 시도해 주세요.'
+
+/** 참여 학생 목록 — 수료증/참여인증서 발급: 미선택 시 AlertModal 본문 */
+export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE =
+  '발급할 학생을 1명 선택해 주세요.'
+
+/** 참여 학생 목록 — 수료증/참여인증서 발급: 다수 선택 시 AlertModal 본문 */
+export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE =
+  '수료증/참여인증서는 한 번에 1명만 발급할 수 있습니다.\n학생 1명만 선택한 뒤 다시 시도해 주세요.'
+
+/** 수료증/참여인증서·활동인증서 발급 사유 모달 — 사유 미선택 시 AlertModal 본문 */
+export const CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE = '발급 사유를 선택해 주세요.'
+
+/** 참여 기관 강사 배정 현황 — 배정 취소: 미선택 시 AlertModal 본문 */
+export const INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE =
+  '배정 취소할 강사를 선택해 주세요.'
+
+/** 참여 강사 배정 현황 — 배정 취소: 미선택 시 AlertModal 본문 */
+export const INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE =
+  '배정 취소할 기관을 선택해 주세요.'
+
+/** 참여 기관 강사 배정 현황 — 선택 배정: 미선택 시 AlertModal 본문 */
+export const INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE =
+  '배정할 강사를 선택해 주세요.'
+
+/** 참여 강사 배정 현황 — 선택 배정: 미선택 시 AlertModal 본문 */
+export const INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE = '배정할 기관을 선택해 주세요.'
 
 export const MESSAGES = {
   success: {

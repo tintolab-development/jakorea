@@ -7,18 +7,9 @@
  * Step 3: 정보 입력 (역할별 분기)
  */
 
+import { CmsRadio } from '@/shared/ui'
 import { useState } from 'react'
-import {
-  Steps,
-  Card,
-  Form,
-  Input,
-  Button,
-  Checkbox,
-  Typography,
-  Space,
-  Radio,
-  Divider } from 'antd'
+import { Steps, Card, Form, Input, Button, Checkbox, Typography, Space, Divider } from 'antd'
 import {
   UserOutlined,
   LockOutlined,
@@ -240,14 +231,14 @@ export function RegisterPage() {
               가입 유형에 따라 제공되는 서비스가 다릅니다.
             </Paragraph>
 
-            <Radio.Group
+            <CmsRadio.Group
               value={selectedRole}
               onChange={e => setSelectedRole(e.target.value)}
               style={{ width: '100%' }}
             >
               <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                 {REGISTER_TYPES.map(type => (
-                  <Radio.Button
+                  <CmsRadio.Button
                     key={type.value}
                     value={type.value}
                     style={{
@@ -275,10 +266,10 @@ export function RegisterPage() {
                         {type.description}
                       </Text>
                     </div>
-                  </Radio.Button>
+                  </CmsRadio.Button>
                 ))}
               </Space>
-            </Radio.Group>
+            </CmsRadio.Group>
 
             <Button
               type="primary"

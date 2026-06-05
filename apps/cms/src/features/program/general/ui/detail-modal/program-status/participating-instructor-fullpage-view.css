@@ -26,6 +26,33 @@
   margin-bottom: var(--spacing-24);
 }
 
+.participating-instructor-fullpage-view__basic-info-form .detail-info-form__title {
+  padding: 0 10px 0 8px;
+}
+
+.participating-instructor-fullpage-view__basic-info-form .detail-info-form__body {
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+}
+
+.participating-instructor-fullpage-view__resume-form .detail-info-form__title {
+  padding: 0 10px 0 8px;
+}
+
+.participating-instructor-fullpage-view__resume-form .detail-info-form__description {
+  margin: 0;
+  opacity: 1;
+}
+
+.participating-instructor-fullpage-view__resume-form .detail-info-form__body {
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+}
+
 .participating-instructor-fullpage-view__admin-note {
   margin: 0 0 var(--spacing-12) 0;
   font-size: 14px;

@@ -32,10 +32,11 @@ import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-sa
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
 import {
-  SCHOOL_DETAIL_TAB_KEYS,
-  normalizeSchoolDetailTab,
-  type SchoolDetailTabKey,
-} from '../school-detail-fullpage-view'
+  GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS,
+  normalizeGeneralParticipatingInstitutionDetailTab,
+  type GeneralParticipatingInstitutionDetailTabKey,
+} from './program-status/general-participating-institution-detail-view'
+import { ProgramManagersTab } from './managers/program-managers-tab'
 import {
   INSTRUCTOR_DETAIL_TAB_KEYS,
   type InstructorDetailTabKey,
@@ -43,10 +44,9 @@ import {
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
 import { ApplicantList } from '../../../shared/ui/program-detail/applicant-list/applicant-list'
 import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/project-info/project-info-detail'
-import { ProgramManagersTab } from '../program-managers-tab'
 import type { Program } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
-import { getEconomyPrograms } from '@/data/mock'
+import { getEconomyPrograms, getGeneralPrograms } from '@/data/mock'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { handleError } from '@/shared/utils/error-handler'
 import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
@@ -60,7 +60,6 @@ import {
   LnbIconProgress,
   LnbIconProjectInfo,
 } from './program-detail-lnb-icons'
-import '@toast-ui/editor/dist/toastui-editor.css'
 import './program-detail-fullpage-modal.css'
 
 export interface ProgramDetailFullPageModalProps {
@@ -107,11 +106,14 @@ const PROGRAM_NESTED_DETAIL_QUERY_PARAMS = [
  */
 const LNB_KEYS_READONLY: readonly LnbKey[] = ['info', 'applicants', 'progress', 'managers']
 
-/** 학교 상세 뷰 내 탭 — 키 목록은 `school-detail-fullpage-view`의 SCHOOL_DETAIL_TAB_KEYS와 동일 */
-function parseSchoolTabFromSearch(searchParams: URLSearchParams): SchoolDetailTabKey {
+function parseSchoolTabFromSearch(
+  searchParams: URLSearchParams
+): GeneralParticipatingInstitutionDetailTabKey {
   const t = searchParams.get(SCHOOL_TAB_PARAM)
-  if (t && (SCHOOL_DETAIL_TAB_KEYS as readonly string[]).includes(t))
-    return normalizeSchoolDetailTab(t as SchoolDetailTabKey)
+  if (t && (GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS as readonly string[]).includes(t))
+    return normalizeGeneralParticipatingInstitutionDetailTab(
+      t as GeneralParticipatingInstitutionDetailTabKey
+    )
   return 'application'
 }
 
@@ -451,9 +453,9 @@ export function ProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }
 
-  const setSchoolTab = (tab: SchoolDetailTabKey) => {
+  const setSchoolTab = (tab: GeneralParticipatingInstitutionDetailTabKey) => {
     const next = new URLSearchParams(searchParams)
-    next.set(SCHOOL_TAB_PARAM, normalizeSchoolDetailTab(tab))
+    next.set(SCHOOL_TAB_PARAM, normalizeGeneralParticipatingInstitutionDetailTab(tab))
     setSearchParams(next, { replace: true })
   }
 
@@ -502,8 +504,10 @@ export function ProgramDetailFullPageModal({
   }, [instructorIdFromUrl])
 
   const title =
-    schoolDetailTitle != null && displayProgram
-      ? `${displayProgram.title}_${schoolDetailTitle}`
+    schoolIdFromUrl && schoolDetailTitle
+      ? `참여 기관 상세 (${schoolDetailTitle})`
+      : schoolDetailTitle != null && displayProgram
+        ? `${displayProgram.title}_${schoolDetailTitle}`
       : instructorDetailTitle != null && displayProgram
         ? `${displayProgram.title}_${instructorDetailTitle}`
         : (displayProgram?.title ?? '프로그램 상세')
@@ -578,10 +582,14 @@ export function ProgramDetailFullPageModal({
           : { label: activeLnbItem.label }
       )
     } else {
+      const childLabel =
+        schoolIdFromUrl && activeChildItem?.key === 'institutions'
+          ? '참여 기관 목록'
+          : activeChildItem.label
       items.push(
         nestedDetailLabel && childParams
-          ? makeBreadcrumbItem(activeChildItem.label, location.pathname, childParams)
-          : { label: activeChildItem.label }
+          ? makeBreadcrumbItem(childLabel, location.pathname, childParams)
+          : { label: childLabel }
       )
     }
 
@@ -701,10 +709,12 @@ export function ProgramDetailFullPageModal({
   }
 
   const handleInstitutionsSave = () => {
+    setEditMode(null)
     institutionsTriggerSave()
   }
 
   const handleInstructorsSave = () => {
+    setEditMode(null)
     instructorsTriggerSave()
   }
 
@@ -736,6 +746,7 @@ export function ProgramDetailFullPageModal({
   })
 
   const handleVolunteersSave = () => {
+    setEditMode(null)
     volunteersTriggerSave()
   }
 
@@ -748,16 +759,16 @@ export function ProgramDetailFullPageModal({
   if (!open) return null
 
   const pNorm = location.pathname.replace(/\/$/, '') || '/'
-  const isEconomyOnProgramsIndex =
-    pNorm === '/programs' &&
-    displayProgram != null &&
-    getEconomyPrograms().some(pr => pr.id === displayProgram.id)
-  const isEconomyEducationProgram =
+  const isOverviewListProgram =
+    pNorm === '/programs/general' ||
+    pNorm.startsWith('/programs/general/') ||
     pNorm === '/programs/economy-education' ||
     pNorm.startsWith('/programs/economy-education/') ||
     pNorm === '/programs/company-school' ||
     pNorm.startsWith('/programs/company-school/') ||
-    isEconomyOnProgramsIndex
+    (displayProgram != null &&
+      (getGeneralPrograms().some(pr => pr.id === displayProgram.id) ||
+        getEconomyPrograms().some(pr => pr.id === displayProgram.id)))
 
   return (
     <DetailFullPageModal
@@ -768,7 +779,7 @@ export function ProgramDetailFullPageModal({
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className={[
         'program-detail-fullpage-modal',
-        isEconomyEducationProgram && 'program-detail-fullpage-modal--economy-education',
+        isOverviewListProgram && 'program-detail-fullpage-modal--program-list-overview',
       ]
         .filter(Boolean)
         .join(' ')}

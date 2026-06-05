@@ -11,9 +11,11 @@ import type { Program } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { FileSelectField } from '@/shared/ui/file-select-field'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
 import { fileUploadService } from '@/entities/application/api/file-upload-service'
 import { useTemplateEditor } from '@/features/template/hooks/use-template-editor'
+import { RichTextEditor, RichTextViewer } from '@/shared/rich-text'
 import {
   DEFAULT_ADDITIONAL_HTML,
   DEFAULT_LEARNING_SUPPORT,
@@ -39,6 +41,11 @@ const PLACEHOLDER_ADDITIONAL_IMAGE =
 const FALLBACK_ADDITIONAL_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='200' viewBox='0 0 600 200'%3E%3Crect fill='%23f5f5f5' width='600' height='200'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='14'%3E추가 내용 이미지%3C/text%3E%3C/svg%3E"
 
+/** 조회·수정 모드 동일 — mock 기본 HTML 포함 */
+function resolveAdditionalContentHtml(program: Program): string {
+  return program.additionalContentHtml?.trim() || DEFAULT_ADDITIONAL_HTML
+}
+
 function useDetailInfoEditorBlock(
   program: Program,
   isEditMode: boolean,
@@ -62,16 +69,18 @@ function useDetailInfoEditorBlock(
     return () => clearTimeout(t)
   }, [isEditMode])
 
-  const { editorHostRef, getHTML } = useTemplateEditor(
+  const additionalContentHtml = resolveAdditionalContentHtml(program)
+
+  const { editor, editorMinHeight, getHTML } = useTemplateEditor(
     editorOpen,
     '',
-    program.additionalContentHtml ?? undefined
+    additionalContentHtml
   )
   const getterRef = useRef<() => string>(() => '')
 
   useEffect(() => {
-    getterRef.current = () => (editorOpen ? getHTML() : (program.additionalContentHtml ?? ''))
-  }, [editorOpen, getHTML, program.additionalContentHtml])
+    getterRef.current = () => (editorOpen ? getHTML() : additionalContentHtml)
+  }, [editorOpen, getHTML, additionalContentHtml])
 
   useEffect(() => {
     if (!isEditMode) return
@@ -95,7 +104,8 @@ function useDetailInfoEditorBlock(
 
   return {
     editorOpen,
-    editorHostRef,
+    editor,
+    editorMinHeight,
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
@@ -105,26 +115,6 @@ function useDetailInfoEditorBlock(
     thumbnailFilename,
     form,
   }
-}
-
-function DetailSectionHeader({
-  title = '상세 정보',
-  description,
-}: {
-  title?: string
-  description?: string
-}) {
-  if (!title?.trim() && !description?.trim()) return null
-  return (
-    <header className="detail-info-form__header" style={{ marginBottom: 10 }}>
-      <div className="detail-info-form__header-lead">
-        {title?.trim() ? <h2 className="detail-info-form__title">{title.trim()}</h2> : null}
-        {description?.trim() ? (
-          <div className="detail-info-form__description">{description.trim()}</div>
-        ) : null}
-      </div>
-    </header>
-  )
 }
 
 function DetailInfoTableFrame({ children }: { children: ReactNode }) {
@@ -214,10 +204,10 @@ function ThumbnailImageRow({
                           const result = await fileUploadService.upload(file, 'image')
                           form.setValue('keyVisualImage', result.url)
                           form.setValue('posterImage', result.url)
-                          } catch (e) {
+                        } catch (e) {
                           URL.revokeObjectURL(blobUrl)
                           setThumbnailPreviewBlobUrl(null)
-                          } finally {
+                        } finally {
                           setUploadingThumbnail(false)
                         }
                       }
@@ -251,14 +241,16 @@ function AdditionalContentRow({
   isEditMode,
   isFormEdit,
   editorOpen,
-  editorHostRef,
+  editor,
+  editorMinHeight,
   showRequiredOnTh,
 }: {
   program: Program
   isEditMode: boolean
   isFormEdit: boolean
   editorOpen: boolean
-  editorHostRef: React.RefObject<HTMLDivElement | null>
+  editor: ReturnType<typeof useTemplateEditor>['editor']
+  editorMinHeight: string
   showRequiredOnTh: boolean
 }) {
   return (
@@ -272,8 +264,10 @@ function AdditionalContentRow({
       <td>
         {isEditMode ? (
           <div className="program-detail-info-tab__additional-content program-detail-info-tab__additional-content--edit">
-            {editorOpen ? (
-              <div ref={editorHostRef} className="program-detail-info-tab__editor-host" />
+            {editorOpen && editor ? (
+              <div className="program-detail-info-tab__editor-host">
+                <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+              </div>
             ) : (
               <div className="program-detail-info-tab__editor-placeholder">로딩 중…</div>
             )}
@@ -289,11 +283,11 @@ function AdditionalContentRow({
                 fallback={FALLBACK_ADDITIONAL_SVG}
               />
             </div>
-            <div
-              className="program-detail-info-tab__editor-content toastui-editor-contents"
-              dangerouslySetInnerHTML={{
-                __html: program.additionalContentHtml || DEFAULT_ADDITIONAL_HTML,
-              }}
+            <RichTextViewer
+              content={resolveAdditionalContentHtml(program)}
+              contentFormat="html"
+              maxHeight="none"
+              className="program-detail-info-tab__editor-content"
             />
           </div>
         )}
@@ -383,7 +377,8 @@ export function DetailInfoSection({
 }: DetailInfoSectionProps) {
   const {
     editorOpen,
-    editorHostRef,
+    editor,
+    editorMinHeight,
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
@@ -394,83 +389,83 @@ export function DetailInfoSection({
     form: f,
   } = useDetailInfoEditorBlock(program, isEditMode, form, onRegisterGetAdditionalContentHtml)
 
-  const headerDescription = sectionTitleOnly
+  const headerDescription = !isFormEdit
     ? undefined
-    : (sectionDescription ??
-      '필수 정보가 아닌 항목이 공란인 경우, 상세 페이지에서 항목 미노출 됩니다.')
+    : sectionTitleOnly
+      ? undefined
+      : (sectionDescription ??
+        '필수 정보가 아닌 항목이 공란인 경우, 상세 페이지에서 항목 미노출 됩니다.')
 
   return (
     <>
-      <DetailSectionHeader
+      <DetailInfoForm
         title={sectionTitle ?? '상세 정보'}
         description={headerDescription}
-      />
-      <DetailInfoTableFrame>
-        {showThumbnail && (
-          <ThumbnailImageRow
+        descriptionPlacement="below"
+        mode={isFormEdit ? 'edit' : 'view'}
+        className="project-info-detail-info-section__frame"
+      >
+        <DetailInfoTableFrame>
+          {showThumbnail && (
+            <ThumbnailImageRow
+              program={program}
+              isEditMode={isEditMode}
+              isFormEdit={isFormEdit}
+              form={f}
+              uploadingThumbnail={uploadingThumbnail}
+              setUploadingThumbnail={setUploadingThumbnail}
+              setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
+              displayThumbnailUrl={displayThumbnailUrl}
+              thumbnailFilename={thumbnailFilename}
+              guideLines={THUMBNAIL_GUIDE_LINES}
+              showRequiredStar={false}
+            />
+          )}
+          <TextAreaFieldRow
+            label="프로그램 설명"
+            showRequiredStar={false}
+            isFormEdit={isFormEdit}
+            form={f}
+            name="description"
+            placeholder="프로그램 설명"
+            readContent={program.description || DEFAULT_PROGRAM_DESCRIPTION}
+          />
+          <TextAreaFieldRow
+            label="모집 안내"
+            showRequiredStar={false}
+            isFormEdit={isFormEdit}
+            form={f}
+            name="recruitmentGuide"
+            placeholder="모집 안내"
+            readContent={program.recruitmentGuide || DEFAULT_RECRUITMENT_GUIDE}
+          />
+          <TextAreaFieldRow
+            label="학습 지원 내용"
+            showRequiredStar={false}
+            isFormEdit={isFormEdit}
+            form={f}
+            name="learningSupportContent"
+            placeholder="학습 지원 내용"
+            readContent={program.learningSupportContent || DEFAULT_LEARNING_SUPPORT}
+          />
+          <AdditionalContentRow
             program={program}
             isEditMode={isEditMode}
             isFormEdit={isFormEdit}
-            form={f}
-            uploadingThumbnail={uploadingThumbnail}
-            setUploadingThumbnail={setUploadingThumbnail}
-            setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
-            displayThumbnailUrl={displayThumbnailUrl}
-            thumbnailFilename={thumbnailFilename}
-            guideLines={THUMBNAIL_GUIDE_LINES}
-            showRequiredStar={isFormEdit}
+            editorOpen={editorOpen}
+            editor={editor}
+            editorMinHeight={editorMinHeight}
+            showRequiredOnTh={false}
           />
-        )}
-        <TextAreaFieldRow
-          label="프로그램 설명"
-          showRequiredStar={isFormEdit}
-          isFormEdit={isFormEdit}
-          form={f}
-          name="description"
-          rows={6}
-          placeholder="프로그램 설명"
-          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
-          readContent={program.description || DEFAULT_PROGRAM_DESCRIPTION}
-        />
-        <TextAreaFieldRow
-          label="모집 안내"
-          showRequiredStar={false}
-          isFormEdit={isFormEdit}
-          form={f}
-          name="recruitmentGuide"
-          rows={6}
-          placeholder="모집 안내"
-          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
-          readContent={program.recruitmentGuide || DEFAULT_RECRUITMENT_GUIDE}
-        />
-        <TextAreaFieldRow
-          label="학습 지원 내용"
-          showRequiredStar={isFormEdit}
-          isFormEdit={isFormEdit}
-          form={f}
-          name="learningSupportContent"
-          rows={5}
-          placeholder="학습 지원 내용"
-          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
-          readContentWrapperClassName="text-area-field-row__content-block text-area-field-row__content-block--sm"
-          readContent={program.learningSupportContent || DEFAULT_LEARNING_SUPPORT}
-        />
-        <AdditionalContentRow
-          program={program}
-          isEditMode={isEditMode}
-          isFormEdit={isFormEdit}
-          editorOpen={editorOpen}
-          editorHostRef={editorHostRef}
-          showRequiredOnTh={false}
-        />
-        <AttachmentRowStandard
-          isEditMode={isEditMode}
-          isFormEdit={isFormEdit}
-          form={f}
-          displayFileNames={displayFileNames}
-          guideLines={THUMBNAIL_GUIDE_LINES}
-        />
-      </DetailInfoTableFrame>
+          <AttachmentRowStandard
+            isEditMode={isEditMode}
+            isFormEdit={isFormEdit}
+            form={f}
+            displayFileNames={displayFileNames}
+            guideLines={THUMBNAIL_GUIDE_LINES}
+          />
+        </DetailInfoTableFrame>
+      </DetailInfoForm>
     </>
   )
 }
@@ -490,7 +485,8 @@ export function InstructorDetailInfoSection({
 }: InstructorDetailInfoSectionProps) {
   const {
     editorOpen,
-    editorHostRef,
+    editor,
+    editorMinHeight,
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
@@ -503,87 +499,90 @@ export function InstructorDetailInfoSection({
 
   const applicationMethod = program.applicationMethod ?? '-'
   const otherNotes = program.otherNotes ?? program.oneLineIntroduction ?? '-'
+  const headerDescription = isFormEdit
+    ? '공란인 경우, 상세 페이지에서 항목 미노출 됩니다.'
+    : undefined
 
   return (
     <>
-      <DetailSectionHeader description="공란인 경우, 상세 페이지에서 항목 미노출 됩니다." />
-      <DetailInfoTableFrame>
-        <ThumbnailImageRow
-          program={program}
-          isEditMode={isEditMode}
-          isFormEdit={isFormEdit}
-          form={f}
-          uploadingThumbnail={uploadingThumbnail}
-          setUploadingThumbnail={setUploadingThumbnail}
-          setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
-          displayThumbnailUrl={displayThumbnailUrl}
-          thumbnailFilename={thumbnailFilename}
-          guideLines={THUMBNAIL_GUIDE_LINES}
-          showRequiredStar={isFormEdit}
-        />
-        <TextAreaFieldRow
-          label="프로그램 설명"
-          showRequiredStar={isFormEdit}
-          isFormEdit={isFormEdit}
-          form={f}
-          name="description"
-          rows={6}
-          placeholder="프로그램 설명"
-          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
-          readContent={program.description || DEFAULT_PROGRAM_DESCRIPTION}
-        />
-        <TextAreaFieldRow
-          label="모집 안내"
-          showRequiredStar={isFormEdit}
-          isFormEdit={isFormEdit}
-          form={f}
-          name="recruitmentGuide"
-          rows={6}
-          placeholder="모집 안내"
-          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
-          readContent={program.recruitmentGuide || DEFAULT_RECRUITMENT_GUIDE}
-        />
-        <TextAreaFieldRow
-          label="지원 방법"
-          showRequiredStar={isFormEdit}
-          isFormEdit={isFormEdit}
-          form={f}
-          name="applicationMethod"
-          rows={5}
-          placeholder="지원 방법"
-          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
-          readContent={applicationMethod}
-        />
-        <AdditionalContentRow
-          program={program}
-          isEditMode={isEditMode}
-          isFormEdit={isFormEdit}
-          editorOpen={editorOpen}
-          editorHostRef={editorHostRef}
-          showRequiredOnTh={false}
-        />
-        <TextAreaFieldRow
-          label="기타사항"
-          showRequiredStar={isFormEdit}
-          isFormEdit={isFormEdit}
-          form={f}
-          name="otherNotes"
-          rows={3}
-          placeholder="기타사항"
-          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
-          readContent={otherNotes}
-        />
-        <AttachmentRowStandard
-          isEditMode={isEditMode}
-          isFormEdit={isFormEdit}
-          form={f}
-          displayFileNames={displayFileNames}
-          guideLines={[
-            '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-            '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-          ]}
-        />
-      </DetailInfoTableFrame>
+      <DetailInfoForm
+        title="상세 정보"
+        description={headerDescription}
+        descriptionPlacement="below"
+        mode={isFormEdit ? 'edit' : 'view'}
+        className="project-info-detail-info-section__frame"
+      >
+        <DetailInfoTableFrame>
+          <ThumbnailImageRow
+            program={program}
+            isEditMode={isEditMode}
+            isFormEdit={isFormEdit}
+            form={f}
+            uploadingThumbnail={uploadingThumbnail}
+            setUploadingThumbnail={setUploadingThumbnail}
+            setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
+            displayThumbnailUrl={displayThumbnailUrl}
+            thumbnailFilename={thumbnailFilename}
+            guideLines={THUMBNAIL_GUIDE_LINES}
+            showRequiredStar={false}
+          />
+          <TextAreaFieldRow
+            label="프로그램 설명"
+            showRequiredStar={false}
+            isFormEdit={isFormEdit}
+            form={f}
+            name="description"
+            placeholder="프로그램 설명"
+            readContent={program.description || DEFAULT_PROGRAM_DESCRIPTION}
+          />
+          <TextAreaFieldRow
+            label="모집 안내"
+            showRequiredStar={false}
+            isFormEdit={isFormEdit}
+            form={f}
+            name="recruitmentGuide"
+            placeholder="모집 안내"
+            readContent={program.recruitmentGuide || DEFAULT_RECRUITMENT_GUIDE}
+          />
+          <TextAreaFieldRow
+            label="지원 방법"
+            showRequiredStar={false}
+            isFormEdit={isFormEdit}
+            form={f}
+            name="applicationMethod"
+            placeholder="지원 방법"
+            readContent={applicationMethod}
+          />
+          <AdditionalContentRow
+            program={program}
+            isEditMode={isEditMode}
+            isFormEdit={isFormEdit}
+            editorOpen={editorOpen}
+            editor={editor}
+            editorMinHeight={editorMinHeight}
+            showRequiredOnTh={false}
+          />
+          <TextAreaFieldRow
+            label="기타사항"
+            showRequiredStar={false}
+            isFormEdit={isFormEdit}
+            form={f}
+            name="otherNotes"
+            placeholder="기타사항"
+            readContent={otherNotes}
+          />
+          <AttachmentRowStandard
+            isEditMode={isEditMode}
+            isFormEdit={isFormEdit}
+            form={f}
+            displayFileNames={displayFileNames}
+            guideLines={[
+              '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
+              '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+            ]}
+          />
+        </DetailInfoTableFrame>
+      </DetailInfoForm>
     </>
   )
 }
@@ -609,7 +608,8 @@ export function VolunteerDetailInfoSection({
 }: VolunteerDetailInfoSectionProps) {
   const {
     editorOpen,
-    editorHostRef,
+    editor,
+    editorMinHeight,
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
@@ -622,122 +622,124 @@ export function VolunteerDetailInfoSection({
 
   const applicationMethod = program.applicationMethod ?? '-'
   const otherNotes = program.otherNotes ?? program.oneLineIntroduction ?? '-'
-  const headerDescription = sectionTitleOnly
+  const headerDescription = !isFormEdit
     ? undefined
-    : (sectionDescription ?? '공란인 경우, 상세 페이지에서 항목 미노출 됩니다.')
+    : sectionTitleOnly
+      ? undefined
+      : (sectionDescription ?? '공란인 경우, 상세 페이지에서 항목 미노출 됩니다.')
 
   return (
     <>
-      <DetailSectionHeader
+      <DetailInfoForm
         title={sectionTitle ?? '상세 정보'}
         description={headerDescription}
-      />
-      <DetailInfoTableFrame>
-        <ThumbnailImageRow
-          program={program}
-          isEditMode={isEditMode}
-          isFormEdit={isFormEdit}
-          form={f}
-          uploadingThumbnail={uploadingThumbnail}
-          setUploadingThumbnail={setUploadingThumbnail}
-          setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
-          displayThumbnailUrl={displayThumbnailUrl}
-          thumbnailFilename={thumbnailFilename}
-          guideLines={THUMBNAIL_GUIDE_LINES}
-          showRequiredStar={isFormEdit}
-        />
-        <TextAreaFieldRow
-          label="프로그램 설명"
-          showRequiredStar={isFormEdit}
-          isFormEdit={isFormEdit}
-          form={f}
-          name="description"
-          rows={6}
-          placeholder="프로그램 설명"
-          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
-          readContent={program.description || DEFAULT_PROGRAM_DESCRIPTION}
-        />
-        <TextAreaFieldRow
-          label="모집 안내"
-          showRequiredStar={isFormEdit}
-          isFormEdit={isFormEdit}
-          form={f}
-          name="recruitmentGuide"
-          rows={6}
-          placeholder="모집 안내"
-          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
-          readContent={program.recruitmentGuide || DEFAULT_RECRUITMENT_GUIDE}
-        />
-        <TextAreaFieldRow
-          label="지원 방법"
-          showRequiredStar={false}
-          isFormEdit={isFormEdit}
-          form={f}
-          name="applicationMethod"
-          rows={3}
-          placeholder="지원 방법"
-          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
-          readContent={applicationMethod}
-        />
-        <AdditionalContentRow
-          program={program}
-          isEditMode={isEditMode}
-          isFormEdit={isFormEdit}
-          editorOpen={editorOpen}
-          editorHostRef={editorHostRef}
-          showRequiredOnTh={false}
-        />
-        <TextAreaFieldRow
-          label="기타사항"
-          showRequiredStar={isFormEdit}
-          isFormEdit={isFormEdit}
-          form={f}
-          name="otherNotes"
-          rows={4}
-          placeholder="기타사항"
-          textareaClassName="text-area-field-row__content-textarea program-detail-info-tab__edit-row-input"
-          readContent={otherNotes}
-        />
-        <tr>
-          <th>첨부 파일</th>
-          <td>
-            {isEditMode ? (
-              <FileSelectField
-                accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
-                multiple
-                disabled={false}
-                buttonLabel="파일 선택"
-                className="file-select-field--edit"
-                fileNames={displayFileNames}
-                guideLines={ATTACHMENT_GUIDE_LINES}
-                onFilesChange={
-                  isFormEdit
-                    ? files => {
-                        const current = f!.getValues('attachmentFileNames') ?? []
-                        f!.setValue('attachmentFileNames', [...current, ...files.map(x => x.name)])
-                      }
-                    : undefined
-                }
-                onRemoveFile={
-                  isFormEdit
-                    ? index => {
-                        const list = f!.getValues('attachmentFileNames') ?? []
-                        f!.setValue(
-                          'attachmentFileNames',
-                          list.filter((_, i) => i !== index)
-                        )
-                      }
-                    : undefined
-                }
-              />
-            ) : (
-              <div className="program-detail-info-tab__content-block">
-                {displayFileNames.length > 0 ? displayFileNames.join(', ') : '-'}
-              </div>
-            )}
-          </td>
-        </tr>
-      </DetailInfoTableFrame>
+        descriptionPlacement="below"
+        mode={isFormEdit ? 'edit' : 'view'}
+        className="project-info-detail-info-section__frame"
+      >
+        <DetailInfoTableFrame>
+          <ThumbnailImageRow
+            program={program}
+            isEditMode={isEditMode}
+            isFormEdit={isFormEdit}
+            form={f}
+            uploadingThumbnail={uploadingThumbnail}
+            setUploadingThumbnail={setUploadingThumbnail}
+            setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
+            displayThumbnailUrl={displayThumbnailUrl}
+            thumbnailFilename={thumbnailFilename}
+            guideLines={THUMBNAIL_GUIDE_LINES}
+            showRequiredStar={false}
+          />
+          <TextAreaFieldRow
+            label="프로그램 설명"
+            showRequiredStar={false}
+            isFormEdit={isFormEdit}
+            form={f}
+            name="description"
+            placeholder="프로그램 설명"
+            readContent={program.description || DEFAULT_PROGRAM_DESCRIPTION}
+          />
+          <TextAreaFieldRow
+            label="모집 안내"
+            showRequiredStar={false}
+            isFormEdit={isFormEdit}
+            form={f}
+            name="recruitmentGuide"
+            placeholder="모집 안내"
+            readContent={program.recruitmentGuide || DEFAULT_RECRUITMENT_GUIDE}
+          />
+          <TextAreaFieldRow
+            label="지원 방법"
+            showRequiredStar={false}
+            isFormEdit={isFormEdit}
+            form={f}
+            name="applicationMethod"
+            placeholder="지원 방법"
+            readContent={applicationMethod}
+          />
+          <AdditionalContentRow
+            program={program}
+            isEditMode={isEditMode}
+            isFormEdit={isFormEdit}
+            editorOpen={editorOpen}
+            editor={editor}
+            editorMinHeight={editorMinHeight}
+            showRequiredOnTh={false}
+          />
+          <TextAreaFieldRow
+            label="기타사항"
+            showRequiredStar={false}
+            isFormEdit={isFormEdit}
+            form={f}
+            name="otherNotes"
+            placeholder="기타사항"
+            readContent={otherNotes}
+          />
+          <tr>
+            <th>첨부 파일</th>
+            <td>
+              {isEditMode ? (
+                <FileSelectField
+                  accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                  multiple
+                  disabled={false}
+                  buttonLabel="파일 선택"
+                  className="file-select-field--edit"
+                  fileNames={displayFileNames}
+                  guideLines={ATTACHMENT_GUIDE_LINES}
+                  onFilesChange={
+                    isFormEdit
+                      ? files => {
+                          const current = f!.getValues('attachmentFileNames') ?? []
+                          f!.setValue('attachmentFileNames', [
+                            ...current,
+                            ...files.map(x => x.name),
+                          ])
+                        }
+                      : undefined
+                  }
+                  onRemoveFile={
+                    isFormEdit
+                      ? index => {
+                          const list = f!.getValues('attachmentFileNames') ?? []
+                          f!.setValue(
+                            'attachmentFileNames',
+                            list.filter((_, i) => i !== index)
+                          )
+                        }
+                      : undefined
+                  }
+                />
+              ) : (
+                <div className="program-detail-info-tab__content-block">
+                  {displayFileNames.length > 0 ? displayFileNames.join(', ') : '-'}
+                </div>
+              )}
+            </td>
+          </tr>
+        </DetailInfoTableFrame>
+      </DetailInfoForm>
     </>
   )
 }

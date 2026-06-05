@@ -31,6 +31,8 @@ export type TemplateWritingUserPreviewSession = {
    * 작성 화면에서 선택 중인 단락 id — 미리보기에서 해당 단락으로 페이지·스크롤·강조 동기화
    */
   focusedParagraphId?: string | null
+  /** 미리보기에서 「양식 수정」 선택 시 — 템플릿 편집 화면 등으로 이동 */
+  onEditForm?: () => void
 }
 
 export type TemplateWritingPreviewContextValue = {
@@ -91,6 +93,7 @@ export function TemplateWritingPreviewProvider({ children }: { children: ReactNo
           a4RenderMode={session.a4RenderMode}
           a4ParagraphGapPx={session.a4ParagraphGapPx}
           focusedParagraphId={session.focusedParagraphId}
+          onEditForm={session.onEditForm}
         />
       ) : null}
     </TemplateWritingPreviewContext.Provider>

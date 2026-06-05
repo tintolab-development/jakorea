@@ -15,7 +15,7 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { CmsButton } from '@/shared/ui'
 import { downloadFile } from '@/shared/lib/file-download'
-import { ToastUiMarkdownViewer } from '@/shared/components/toast-ui-markdown-viewer'
+import { RichTextViewer } from '@/shared/rich-text'
 import './admin-notice-detail-page.css'
 
 export function AdminNoticeDetailPage() {
@@ -152,7 +152,7 @@ export function AdminNoticeDetailPage() {
             <hr className="admin-notice-detail-page__section-divider" aria-hidden />
           )}
           <div className="admin-notice-detail-page__body">
-            <ToastUiMarkdownViewer markdown={notice.content} />
+            <RichTextViewer markdown={notice.content} />
           </div>
         </div>
         <div className="admin-notice-detail-page__actions">

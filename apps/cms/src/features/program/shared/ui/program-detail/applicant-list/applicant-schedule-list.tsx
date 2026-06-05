@@ -1,10 +1,17 @@
 import { Empty, Checkbox } from 'antd'
 import type { Dayjs } from 'dayjs'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import { MOCK_APPLICANT_INSTRUCTORS } from '@/data/mock/applicant-instructors'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import { MOCK_APPLICANT_INSTITUTIONS } from '@/data/mock/applicant-institutions'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
+import { ApprovalStatusText } from '@/shared/components/approval-status-text'
+import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
+import { getInstructorCalendarSessionSummary } from './applicant-instructor-calendar-session'
+import {
+  getInstructorScheduleDispatchStats,
+  getInstructorScheduleDistanceKm,
+  LONG_DISTANCE_THRESHOLD_KM,
+} from './applicant-instructor-schedule-meta'
 import './applicant-calendar-view.css'
 
 /** 강사 캘린더 기관 집계 이벤트(대표 행 클릭 시) — 메타 제거 후 상세로 전달 */
@@ -28,21 +35,13 @@ interface ApplicantScheduleListProps {
   onSelectionChange: (keys: React.Key[]) => void
   onEventClick: (item: any) => void
   getColorForEvent?: (event: any) => ScheduleColorPair
+  /** 일반 프로그램 강사 캘린더 — 승인 배지·preferredSchool 회차 */
+  showApprovalStatus?: boolean
 }
-
-const LONG_DISTANCE_THRESHOLD_KM = 60
 
 const SCHOOL_BY_NAME = new Map<string, ApplicantSchoolRow>(
   MOCK_APPLICANT_INSTITUTIONS.map(s => [s.schoolName, s])
 )
-
-function stableHash(input: string): number {
-  let h = 0
-  for (let i = 0; i < input.length; i++) {
-    h = (Math.imul(31, h) + input.charCodeAt(i)) >>> 0
-  }
-  return h
-}
 
 function parsePrimaryInstructorName(raw?: string): string {
   if (!raw) return '-'
@@ -58,20 +57,26 @@ function normalizeTimeRange(range?: string): string {
   return range.replace(/\s*~\s*/g, ' ~ ')
 }
 
-function getSessionTimeSummary(schoolName: string, fallbackPeriod?: string): string {
-  const school = SCHOOL_BY_NAME.get(schoolName)
+function getSessionTimeSummaryFromSessions(
+  sessions: ApplicantSchoolRow['sessions'] | undefined
+): string | null {
   const validSessions =
-    school?.sessions
+    sessions
       ?.filter(s => s.status !== 'not_planned' && s.classNum && s.timeRange)
       .sort((a, b) => a.round - b.round) ?? []
-  if (validSessions.length > 0) {
-    const first = validSessions[0]!
-    const last = validSessions[validSessions.length - 1]!
-    if (validSessions.length === 1) {
-      return `${first.classNum} (${normalizeTimeRange(first.timeRange)})`
-    }
-    return `${first.classNum} (${normalizeTimeRange(first.timeRange)}) ~ ${last.classNum} (${normalizeTimeRange(last.timeRange)})`
+  if (validSessions.length === 0) return null
+  const first = validSessions[0]!
+  const last = validSessions[validSessions.length - 1]!
+  if (validSessions.length === 1) {
+    return `${first.classNum} (${normalizeTimeRange(first.timeRange)})`
   }
+  return `${first.classNum} (${normalizeTimeRange(first.timeRange)}) ~ ${last.classNum} (${normalizeTimeRange(last.timeRange)})`
+}
+
+function getSessionTimeSummary(schoolName: string, fallbackPeriod?: string): string {
+  const school = SCHOOL_BY_NAME.get(schoolName)
+  const fromSchool = getSessionTimeSummaryFromSessions(school?.sessions)
+  if (fromSchool) return fromSchool
   if (fallbackPeriod) {
     const match = fallbackPeriod.match(/(\d{1,2}:\d{2})\s*[-~]\s*(\d{1,2}:\d{2})/)
     if (match) return `${match[1]} ~ ${match[2]}`
@@ -79,23 +84,18 @@ function getSessionTimeSummary(schoolName: string, fallbackPeriod?: string): str
   return '-'
 }
 
-function getDistanceKm(schoolName: string, instructorName: string, instructorAddress?: string): number {
-  const schoolRegion = SCHOOL_BY_NAME.get(schoolName)?.region ?? schoolName
-  const seed = `${schoolRegion}|${instructorAddress ?? ''}|${instructorName}`
-  return 20 + (stableHash(seed) % 121)
+function resolveApplicantDisplayName(originalItem: Record<string, unknown> | undefined): string {
+  if (!originalItem) return '기관'
+  const schoolName = String(originalItem.schoolName ?? '').trim()
+  if (schoolName) return schoolName
+  const applicantName = String(originalItem.applicantName ?? '').trim()
+  if (applicantName) return applicantName
+  return '기관'
 }
 
-function getDispatchStats(instructorName: string): { dispatchCount: number; longDistanceCount: number } {
-  const approvedRows = MOCK_APPLICANT_INSTRUCTORS.filter(
-    row => row.instructorName === instructorName && row.approvalStatus === 'approved'
-  )
-  const longDistanceCount = approvedRows.filter(
-    row => getDistanceKm(row.schoolName, row.instructorName, row.address) > LONG_DISTANCE_THRESHOLD_KM
-  ).length
-  return {
-    dispatchCount: approvedRows.length,
-    longDistanceCount,
-  }
+function resolveRowSelectionKey(originalItem: Record<string, unknown> | undefined, eventId: string): string {
+  const rowId = originalItem?.id
+  return typeof rowId === 'string' && rowId ? rowId : eventId
 }
 
 export function ApplicantScheduleList({
@@ -104,7 +104,19 @@ export function ApplicantScheduleList({
   onSelectionChange,
   onEventClick,
   getColorForEvent,
+  showApprovalStatus = false,
 }: ApplicantScheduleListProps) {
+  const resolveSessionSummary = (
+    instructor: ApplicantInstructorRow,
+    schoolName: string,
+    fallbackPeriod?: string
+  ) => {
+    if (showApprovalStatus) {
+      const fromPreferred = getInstructorCalendarSessionSummary(instructor, schoolName)
+      if (fromPreferred !== '-') return fromPreferred
+    }
+    return getSessionTimeSummary(schoolName, fallbackPeriod)
+  }
   const handleToggleSelection = (id: React.Key) => {
     if (selectedRowKeys.includes(id)) {
       onSelectionChange(selectedRowKeys.filter(k => k !== id))
@@ -114,12 +126,17 @@ export function ApplicantScheduleList({
   }
 
   return (
-    <div className="applicant-schedule-list">
-      <div className="applicant-schedule-list-content">
-        {events.length === 0 ? (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
-        ) : (
-          events.map(event => {
+    <div
+      className={
+        events.length === 0
+          ? 'calendar-list applicant-schedule-list calendar-list--empty'
+          : 'calendar-list applicant-schedule-list'
+      }
+    >
+      {events.length === 0 ? (
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+      ) : (
+        events.map(event => {
             const color = getColorForEvent?.(event)
             const originalItem = event.originalItem
             const institutionRows = originalItem?.calendarInstitutionInstructors as
@@ -133,14 +150,27 @@ export function ApplicantScheduleList({
                   {institutionRows.map(inst => {
                     const isInstSelected = selectedRowKeys.includes(inst.id)
                     const instructorName = inst.instructorName || '-'
-                    const sessionSummary = getSessionTimeSummary(schoolName)
-                    const distanceKm = getDistanceKm(schoolName, instructorName, inst.address)
-                    const { dispatchCount, longDistanceCount } = getDispatchStats(instructorName)
+                    const sessionSummary = resolveSessionSummary(inst, schoolName)
+                    const distanceKm = getInstructorScheduleDistanceKm(
+                      schoolName,
+                      instructorName,
+                      inst.address
+                    )
+                    const { dispatchCount, longDistanceCount } =
+                      getInstructorScheduleDispatchStats(instructorName)
                     const isLongDistance = distanceKm > LONG_DISTANCE_THRESHOLD_KM
                     return (
                       <div
                         key={`${event.id}-${inst.id}`}
-                        className={`applicant-schedule-item ${isInstSelected ? 'applicant-schedule-item--selected' : ''}`}
+                        className={[
+                          'calendar-list-item',
+                          'applicant-schedule-item',
+                          isInstSelected
+                            ? 'calendar-list-item--selected applicant-schedule-item--selected'
+                            : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
                         data-has-color={color ? 'true' : undefined}
                         style={
                           color
@@ -152,14 +182,18 @@ export function ApplicantScheduleList({
                         }
                       >
                         <div
-                          className="applicant-schedule-item-info"
+                          className="calendar-list-item__column applicant-schedule-item-info"
                           onClick={() => onEventClick(inst)}
                         >
                           <div className="applicant-schedule-item-title-row">
+                            {showApprovalStatus && inst.approvalStatus ? (
+                              <ApprovalStatusText
+                                status={inst.approvalStatus as ApprovalStatusKey}
+                                className="applicant-schedule-item-approval"
+                              />
+                            ) : null}
                             <span className="applicant-schedule-item-title">{schoolName}</span>
-                            <span className="applicant-schedule-item-title-divider" aria-hidden>
-                              |
-                            </span>
+                            <span className="applicant-schedule-item-title-divider" aria-hidden />
                             <span className="applicant-schedule-item-title">
                               {instructorName}
                             </span>
@@ -178,7 +212,7 @@ export function ApplicantScheduleList({
                           </div>
                         </div>
                         <div
-                          className="applicant-schedule-item-checkbox"
+                          className="calendar-list-item__checkbox applicant-schedule-item-checkbox"
                           onClick={e => {
                             e.stopPropagation()
                             handleToggleSelection(inst.id)
@@ -194,28 +228,62 @@ export function ApplicantScheduleList({
             }
 
             const displayTitle = event.title.replace(/^\[.*?\]\s*/, '')
-            const isSelected = selectedRowKeys.includes(event.id)
-            const schoolName = String(originalItem?.schoolName ?? displayTitle).trim() || '기관'
-            const instructorName =
-              typeof originalItem?.instructorName === 'string'
-                ? originalItem.instructorName
-                : parsePrimaryInstructorName(originalItem?.assignedInstructorNames)
-            const sessionSummary = getSessionTimeSummary(
-              schoolName,
-              originalItem?.desiredEducationPeriod as string | undefined
+            const selectionKey = resolveRowSelectionKey(
+              originalItem as Record<string, unknown> | undefined,
+              String(event.id)
             )
-            const distanceKm = getDistanceKm(
+            const isSelected = selectedRowKeys.includes(selectionKey)
+            const isIndividualRow =
+              originalItem != null && typeof originalItem === 'object' && 'applicantName' in originalItem
+            const primaryTitle = resolveApplicantDisplayName(
+              originalItem as Record<string, unknown> | undefined
+            )
+            const secondaryTitle = isIndividualRow
+              ? [originalItem?.affiliation, originalItem?.educationGrade]
+                  .map(v => String(v ?? '').trim())
+                  .filter(Boolean)
+                  .join(' · ') || '-'
+              : typeof originalItem?.instructorName === 'string'
+                ? originalItem.instructorName
+                : parsePrimaryInstructorName(originalItem?.assignedInstructorNames as string | undefined)
+            const schoolName = isIndividualRow
+              ? String(originalItem?.affiliation ?? '').trim() || primaryTitle
+              : primaryTitle
+            const instructorName = isIndividualRow ? primaryTitle : secondaryTitle
+            const sessionFromRow = getSessionTimeSummaryFromSessions(
+              originalItem?.sessions as ApplicantSchoolRow['sessions'] | undefined
+            )
+            const sessionSummary =
+              sessionFromRow ??
+              (showApprovalStatus && originalItem && 'instructorName' in originalItem
+                ? resolveSessionSummary(
+                    originalItem as ApplicantInstructorRow,
+                    schoolName,
+                    originalItem?.desiredEducationPeriod as string | undefined
+                  )
+                : getSessionTimeSummary(
+                    schoolName,
+                    originalItem?.desiredEducationPeriod as string | undefined
+                  ))
+            const distanceKm = getInstructorScheduleDistanceKm(
               schoolName,
               instructorName,
               originalItem?.address as string | undefined
             )
-            const { dispatchCount, longDistanceCount } = getDispatchStats(instructorName)
+            const { dispatchCount, longDistanceCount } =
+              getInstructorScheduleDispatchStats(instructorName)
             const isLongDistance = distanceKm > LONG_DISTANCE_THRESHOLD_KM
 
             return (
               <div
                 key={event.id}
-                className={`applicant-schedule-item ${isSelected ? 'applicant-schedule-item--selected' : ''}`}
+                className={[
+                  'calendar-list-item',
+                  'applicant-schedule-item',
+                  isSelected ? 'calendar-list-item--selected applicant-schedule-item--selected' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
                 data-has-color={color ? 'true' : undefined}
                 style={
                   color
@@ -227,41 +295,56 @@ export function ApplicantScheduleList({
                 }
               >
                 <div
-                  className="applicant-schedule-item-info"
+                  className="calendar-list-item__column applicant-schedule-item-info"
                   onClick={() => onEventClick(rowForCalendarDetailClick(originalItem))}
                 >
                   <div className="applicant-schedule-item-title-row">
-                    <span className="applicant-schedule-item-title">{schoolName}</span>
-                    <span className="applicant-schedule-item-title-divider" aria-hidden>
-                      |
+                    {showApprovalStatus &&
+                    originalItem &&
+                    typeof originalItem.approvalStatus === 'string' ? (
+                      <ApprovalStatusText
+                        status={originalItem.approvalStatus as ApprovalStatusKey}
+                        className="applicant-schedule-item-approval"
+                      />
+                    ) : null}
+                    <span className="applicant-schedule-item-title">
+                      {primaryTitle || displayTitle}
                     </span>
-                    <span className="applicant-schedule-item-title">{instructorName}</span>
+                    {secondaryTitle && secondaryTitle !== '-' ? (
+                      <>
+                        <span className="applicant-schedule-item-title-divider" aria-hidden />
+                        <span className="applicant-schedule-item-title">{secondaryTitle}</span>
+                      </>
+                    ) : null}
                   </div>
                   <div className="applicant-schedule-item-session">{sessionSummary}</div>
-                  <div className="applicant-schedule-item-tags">
-                    <span
-                      className={`applicant-schedule-item-tag ${isLongDistance ? '' : 'applicant-schedule-item-tag--mint'}`.trim()}
-                    >
-                      거리 : {distanceKm}km
-                    </span>
-                    <span className="applicant-schedule-item-tag">출강 : {dispatchCount}회</span>
-                    <span className="applicant-schedule-item-tag">장거리 : {longDistanceCount}회</span>
-                  </div>
+                  {!isIndividualRow ? (
+                    <div className="applicant-schedule-item-tags">
+                      <span
+                        className={`applicant-schedule-item-tag ${isLongDistance ? '' : 'applicant-schedule-item-tag--mint'}`.trim()}
+                      >
+                        거리 : {distanceKm}km
+                      </span>
+                      <span className="applicant-schedule-item-tag">출강 : {dispatchCount}회</span>
+                      <span className="applicant-schedule-item-tag">
+                        장거리 : {longDistanceCount}회
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
                 <div
-                  className="applicant-schedule-item-checkbox"
+                  className="calendar-list-item__checkbox applicant-schedule-item-checkbox"
                   onClick={e => {
                     e.stopPropagation()
-                    handleToggleSelection(event.id)
+                    handleToggleSelection(selectionKey)
                   }}
                 >
                   <Checkbox checked={isSelected} />
                 </div>
               </div>
             )
-          })
-        )}
-      </div>
+        })
+      )}
     </div>
   )
 }

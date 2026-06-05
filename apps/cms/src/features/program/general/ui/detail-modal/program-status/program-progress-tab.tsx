@@ -29,7 +29,7 @@ import { SettlementStatusBadge } from '@/shared/components/settlement-status-bad
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { SegmentedTab } from '@/shared/ui'
 import { AddInstructorModal } from '../../add-instructor-modal'
-import { SchoolDetailModal } from '../../school-detail-modal'
+import { SchoolDetailModal } from './school-detail-modal'
 import { ApplicantInstructorDetailModal } from '../../applicant-instructor-detail-modal'
 import {
   DeleteGuideModal,

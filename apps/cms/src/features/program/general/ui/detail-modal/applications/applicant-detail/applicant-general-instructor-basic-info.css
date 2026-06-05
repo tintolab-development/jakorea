@@ -1,0 +1,260 @@
+/**
+ * 일반 프로그램 — 강사 유형 신청 상세
+ */
+
+.applicant-general-instructor-basic-info.applicant-institution-basic-info {
+  margin-top: 0;
+}
+
+.applicant-general-instructor-basic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.applicant-general-instructor-basic-info .applicant-institution-basic-info__section {
+  margin-top: 0;
+}
+
+.applicant-general-instructor-basic-info .applicant-institution-basic-info__basic-info-fields {
+  gap: 16px;
+}
+
+.applicant-general-instructor-basic-info__approval-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* 프로그램 승인 현황 + 강의비 책정 기준 — 하나의 테이블 블록으로 연결 */
+.applicant-general-instructor-basic-info__approval-block:has(
+    .applicant-general-instructor-basic-info__post-approval-wrap
+  ) {
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.applicant-general-instructor-basic-info__approval-block:has(
+    .applicant-general-instructor-basic-info__post-approval-wrap
+  )
+  > .applicant-institution-basic-info__table-wrap {
+  border: none;
+  border-radius: 0;
+}
+
+.applicant-general-instructor-basic-info__approval-block:has(
+    .applicant-general-instructor-basic-info__post-approval-wrap
+  )
+  > .applicant-institution-basic-info__table-wrap:first-child
+  .applicant-institution-basic-info__table
+  tbody
+  tr:last-child
+  .applicant-institution-basic-info__cell {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.applicant-general-instructor-basic-info__post-approval-wrap {
+  margin-top: 0;
+}
+
+.applicant-general-instructor-basic-info__post-approval-table
+  tbody
+  tr:first-child
+  .applicant-institution-basic-info__cell {
+  border-top: none;
+}
+
+.applicant-general-instructor-basic-info__name-badge {
+  margin-left: 8px;
+}
+
+.applicant-general-instructor-basic-info__employment-dropdown {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.applicant-general-instructor-basic-info__employment-dropdown .status-dropdown-cell__status-trigger {
+  box-sizing: border-box;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  padding: 0;
+  gap: 0;
+  overflow: visible;
+}
+
+.applicant-general-instructor-basic-info__employment-dropdown
+  .status-dropdown-cell__status-trigger--open {
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  padding: 0 !important;
+  overflow: visible;
+}
+
+/* 트리거·드롭다운 내부 — status-dropdown-cell 공통 120×33 규칙 덮어쓰기 */
+.applicant-general-instructor-basic-info__employment-dropdown
+  .applicant-general-instructor-basic-info__employment-badge.app-status-badge,
+.applicant-general-instructor-basic-info__employment-dropdown
+  .status-dropdown-cell__status-trigger
+  .app-status-badge.status-dropdown-cell__badge--cell-style,
+.applicant-general-instructor-basic-info__employment-dropdown
+  .status-dropdown-cell__dropdown-item
+  .app-status-badge.status-dropdown-cell__badge--cell-style {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 200px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  gap: 0 !important;
+  border-radius: 6px !important;
+  overflow: visible !important;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px !important;
+  font-style: normal;
+  font-weight: 600 !important;
+  line-height: 150% !important;
+}
+
+/* 재직 현황 배지 — 재직중(active) / 휴직·전근(muted) */
+.applicant-general-instructor-basic-info__employment-badge.app-status-badge {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100px;
+  min-width: 100px;
+  max-width: 200px;
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  gap: 0;
+  border-radius: 6px;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+/* 소속 행 — 배지 활성화(드롭다운 열림) 시에도 행 높이 고정 */
+.applicant-general-instructor-basic-info
+  .applicant-institution-basic-info__table
+  tbody
+  tr:has(.applicant-general-instructor-basic-info__employment-dropdown),
+.applicant-general-instructor-basic-info
+  .applicant-institution-basic-info__table
+  tbody
+  tr:has(.status-dropdown-cell__status-trigger--open) {
+  height: 56px;
+  min-height: 56px;
+  max-height: 56px;
+}
+
+.applicant-general-instructor-basic-info
+  .applicant-institution-basic-info__table
+  tbody
+  tr:has(.applicant-general-instructor-basic-info__employment-dropdown)
+  .applicant-institution-basic-info__cell {
+  overflow: visible;
+  vertical-align: middle;
+}
+
+.applicant-general-instructor-basic-info__employment-badge--active.app-status-badge {
+  border: 1px solid rgba(1, 126, 175, 0.1);
+  background: #e6f2f7;
+  color: var(--color-blue, #017eaf);
+}
+
+.applicant-general-instructor-basic-info__employment-badge--muted.app-status-badge {
+  border: 1px solid rgba(61, 61, 61, 0.1);
+  background: #f2f3f5;
+  color: var(--main-bk, #3d3d3d);
+}
+
+.applicant-general-instructor-basic-info__form-error {
+  color: #c32f4a;
+  font-size: 13px;
+  line-height: 150%;
+  margin-bottom: -8px;
+}
+
+.applicant-general-instructor-basic-info__field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.applicant-general-instructor-basic-info__field-error {
+  color: #c32f4a;
+  font-size: 13px;
+  line-height: 150%;
+}
+
+.applicant-general-instructor-basic-info__full-width-control {
+  width: 100%;
+  max-width: 280px;
+}
+
+.applicant-general-instructor-basic-info__lecture-fee-edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  width: 100%;
+}
+
+.applicant-general-instructor-basic-info__lecture-fee-radios,
+.applicant-general-instructor-basic-info__business-income-radios {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.applicant-general-instructor-basic-info__lecture-fee-amount-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.applicant-general-instructor-basic-info__lecture-fee-measure {
+  width: 120px;
+  min-width: 120px;
+}
+
+.applicant-general-instructor-basic-info__lecture-fee-amount {
+  width: 160px;
+  min-width: 160px;
+}
+
+/* 자택 주소: 읍·면·동(또는 구) 이후 가우시안 블러 */
+.applicant-general-instructor-basic-info__address-blur {
+  display: inline-block;
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+  user-select: none;
+  -webkit-user-select: none;
+  vertical-align: baseline;
+}

@@ -26,8 +26,7 @@ import {
 import type { Program } from '@/types/domain'
 import { FilterTableLayout, CmsButton } from '@/shared/ui'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import { StatusBadge } from '@/shared/components/status-badge'
-import { getUjatProgramProgressDisplayStatus } from '@/features/program/ujat/ui/detail-modal/info/ujat-program-info-edit'
+import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
 import {
   TemplateWritingPreviewProvider,
   useTemplateWritingPreview,
@@ -82,8 +81,7 @@ function dispatchedSchoolDisplay(program: Program): string {
 
 /** UJAT 목록 — 프로그램 진행 현황(7단계, 모집 신청 현황과 별도) */
 function UjatProgramProgressCell({ program }: { program: Program }) {
-  const status = getUjatProgramProgressDisplayStatus(program)
-  return <StatusBadge domain="programEnrollment" status={status} variant="text" />
+  return <ProgramProgressStatusText program={program} />
 }
 
 const ujatProgramIdSet = new Set(getUjatPrograms().map(p => p.id))

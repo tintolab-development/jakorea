@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
-import { AppDatePicker } from '@/shared/ui/app-datepicker'
+import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
 import './payment-order-batch-confirm-modal.css'
 
 const DEFAULT_SCHEDULED_DATE = dayjs('2026-02-17')
@@ -80,10 +80,11 @@ export function PaymentOrderBatchConfirmModal({
         </p>
         <div className="payment-order-batch-confirm-modal__field">
           <span className="payment-order-batch-confirm-modal__label">강의비 지급 예정일</span>
-          <AppDatePicker
+          <CmsDatePicker
             className="payment-order-batch-confirm-modal__datepicker"
             value={scheduledDate}
             onChange={d => setScheduledDate(d)}
+            inputSize="medium"
             allowClear={false}
           />
         </div>

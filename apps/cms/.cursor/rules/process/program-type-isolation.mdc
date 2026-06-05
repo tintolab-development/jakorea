@@ -1,0 +1,91 @@
+---
+description: 일반·UJAT·1사1교·Gemini 프로그램 UI/로직 간섭 방지 — 유형별 격리·공유 코드 변경 시 검증
+alwaysApply: true
+---
+
+# 프로그램 유형 간 간섭 방지 (CMS)
+
+**Scope:** `apps/cms/src/features/program/**`, 관련 mock·라우트·상세 모달
+
+일반 프로그램·UJAT·1사1교·Gemini(찾아가는 연수)는 **UI가 비슷해도 스펙·컬럼·필터·LNB·mock이 다르다.** 한 유형 작업이 다른 유형 기본 동작을 바꾸면 회귀가 잦다.
+
+## 1. 유형 경계 (먼저 확인)
+
+| 유형 | 코드 루트 | 라우트·식별 (대표) |
+|------|-----------|-------------------|
+| **일반 프로그램** | `features/program/general/` | `/programs/general`, `general-prog-*` mock |
+| **UJAT** | `features/program/ujat/` | UJAT 전용 id·상세 URL, `ujat-*` mock |
+| **1사1교** | `features/program/1c-1s/` (추출 예정) + **`general/` 내 `economy` 분기** | `/programs/economy-education`, `ProgramListProgramMode: 'overview'` |
+| **Gemini (찾아가는 연수)** | `features/program/gemini/` | `/programs/gemini/visiting-training`, 모집(`recruitment/`)·승인(`approved/`) 하위 플로우 |
+| **공유** | `features/program/shared/` | **모든 유형에 영향** |
+
+작업 시작 시 **대상 유형을 한 줄로 명시**한다. 요청이 모호하면 **유저에게 먼저 확인**한다.
+
+## 2. 변경 범위 원칙
+
+1. **대상 유형 폴더만 수정**하는 것을 기본으로 한다.
+2. **`shared/` 수정은 최후 수단.** 불가피하면 영향받는 유형(일반·UJAT·1사1교·Gemini)을 응답·PR에 명시한다.
+3. **타 유형 폴더를 import만 해 재사용할 때**, 그 파일의 **기본값·기본 UI는 해당 타 유형 스펙을 유지**한다. 일반용 변경을 UJAT 기본값에 넣지 않는다.
+4. **「공통화·통합·중복 제거」 리팩터**는 유저가 명시적으로 요청한 경우에만 한다.
+5. **mock·필터·테이블 컬럼·LNB·breadcrumb**은 유형별로 다를 수 있다. 한쪽 스펙에 맞춰 다른 쪽 필드를 **무조건 삭제·축소하지 않는다.**
+
+## 3. 크로스 재사용 패턴 (필수)
+
+다른 유형 컴ponent/훅을 쓸 때 **명시적 분기 prop**으로 격리한다.
+
+```tsx
+// ✅ GOOD — 기본값은 원래 유형(UJAT), 일반은 호출부에서만 지정
+<UjatVolunteerDocScreeningSection columnPreset="general" ... />
+
+// ❌ BAD — 일반 스펙으로 UJAT 기본 컬럼/필터 변경
+// ujat-volunteer-doc-screening-columns.tsx 에서 grade 컬럼 무조건 제거
+```
+
+권장 prop 이름: `columnPreset`, `variant`, `programMode`, `programType`, `audience` 등 **유형·스펙이 드러나는 이름**.
+
+- 분기 prop 추가 시 **기존 호출부(UJAT)는 prop 생략 가능 = 기존 동작 유지**
+- 일반·1사1교·Gemini 전용 분기는 **`general/`·`1c-1s/`·`gemini/` 호출부** 또는 해당 preset에서만 활성화
+
+## 4. 유저 확인이 필요한 경우 (AskQuestion)
+
+아래에 해당하면 **코드 변경 전** 유저에게 영향 유형과 방향을 확인받는다.
+
+- `shared/` 또는 **2개 이상 유형**이 import하는 파일 수정
+- UJAT·1사1교·Gemini 파일을 다른 유형에서 재사용 중인데, **그 파일의 기본 UI/로직**을 바꾸려 할 때
+- 컬럼·필터·탭·LNB 항목 **추가/삭제/순서 변경** (다른 유형에도 같은 컴포넌트가 있을 때)
+- `economy` / `overview` / `ujat` / `gemini` 분기 **조건식 변경**
+- 요청이 「1차 서류 심사」「신청 목록」 등 **동명 UI**만 언급하고 **어느 프로그램 유형인지 불명확**할 때
+
+확인 예시: 「일반 프로그램만 컬럼을 줄이고, UJAT 기존 컬럼은 유지할까요?」
+
+## 5. 작업 완료 전 체크
+
+- [ ] 수정 파일이 **대상 유형과 일치**하는가
+- [ ] `shared/`·`ujat/`·`general/`·`gemini/` **교차 수정**이 있으면 유형별 **회귀 가능 화면**을 요약했는가
+- [ ] 새 prop 분기 추가 시 **기존 호출부(UJAT·1사1교·Gemini) 기본 동작**이 그대로인가
+- [ ] mock id·라우트·LNB key 변경 시 **다른 유형 목록/상세가 빈 화면·404** 되지 않는가
+
+## 6. 알려진 크로스 의존 (주의)
+
+일반 → UJAT 재사용 예 (이 파일들 수정 시 **양쪽 영향** 검토):
+
+- `general/.../general-volunteer-applications-view.tsx` → UJAT 봉사자 심사 섹션
+- `general/.../detail-lnb-icons.tsx` → UJAT LNB 아이콘 re-export
+- `general/.../survey-management-view.tsx` → UJAT 설문 UI
+
+1사1교는 아직 `general/`의 `economy`·`overview` 분기에 묶여 있음 → **일반 목록/상세 수정 시 1사1교 회귀** 주의.
+
+Gemini → 일반 재사용 예 (이 파일들 수정 시 **양쪽 영향** 검토):
+
+- `gemini/ui/detail/fullpage-modal.tsx` → `general/.../program-detail-lnb-icons` (`LnbIconProjectInfo`)
+- `gemini/ui/approved/detail-fullpage-modal.tsx` → 동일 LNB 아이콘
+
+Gemini 내부도 **모집(`recruitment/`)·승인 후(`approved/`)** 플로우가 분리되어 있음 → 한쪽 상세/LNB 수정 시 다른 쪽 회귀 주의.
+
+## Related
+
+- [general-program-type-variant-spec.md](./general-program-type-variant-spec.md)
+- [1c-1s/README.md](../../../src/features/program/1c-1s/README.md)
+- [ui-merge.mdc](../../../../../.cursor/rules/ui-merge.mdc)
+
+**Last updated:** 2026-06-04

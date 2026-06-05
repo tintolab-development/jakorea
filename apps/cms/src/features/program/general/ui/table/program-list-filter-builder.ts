@@ -1,10 +1,11 @@
 import type { Dayjs } from 'dayjs'
 import type { ProgramLifecycleStatus, ProgramCategory, ProgramType } from '@/types/domain'
+import type { ProgramProgressPhaseFilter } from '../constants/program-list-constants'
 import type { ProgramListProgramMode } from '../../model/program-list-program-mode'
 
 interface PendingFilters {
   title: string
-  lifecycleStatus: ProgramLifecycleStatus | undefined
+  lifecycleStatus: ProgramLifecycleStatus | ProgramProgressPhaseFilter | undefined
   category: string | undefined
   businessArea: string | undefined
   targetLevel: string | undefined
@@ -29,27 +30,23 @@ interface PendingUserFilters {
 export function buildProgramListFilters(
   pendingFilters: PendingFilters,
   programMode: ProgramListProgramMode,
-  economyScheduledLayout = false
+  overviewScheduledLayout = false
 ) {
-  if (programMode === 'economy' && economyScheduledLayout) {
+  if (programMode === 'overview' && overviewScheduledLayout) {
     return {
       title: pendingFilters.title,
+      targetLevel: pendingFilters.targetLevel,
       operationPeriod:
         pendingFilters.operationStartDate && pendingFilters.operationEndDate
           ? [pendingFilters.operationStartDate, pendingFilters.operationEndDate]
           : null,
-      participantRecruitment: pendingFilters.participantRecruitment,
-      category: pendingFilters.category,
-      targetLevel: pendingFilters.targetLevel,
     }
   }
 
-  if (programMode === 'economy') {
+  if (programMode === 'overview') {
     return {
       title: pendingFilters.title,
       lifecycleStatus: pendingFilters.lifecycleStatus,
-      participantRecruitment: pendingFilters.participantRecruitment,
-      category: pendingFilters.category,
       targetLevel: pendingFilters.targetLevel,
     }
   }

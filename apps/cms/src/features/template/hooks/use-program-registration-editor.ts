@@ -27,10 +27,14 @@ import type {
   ProgramRegistrationSessionRoundType,
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
+import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import { resolveProgramRegistrationCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
+import { persistGeneralRegistrationFormLocal } from '@/features/program/general/lib/registration-local-save'
 
-type ProgramRegistrationParticipantState = {
+export type ProgramRegistrationParticipantSelection = {
   individual: boolean
   organization: boolean
   teacherInstructor: boolean
@@ -119,6 +123,8 @@ export type UseProgramRegistrationEditorOptions = {
   restrictCurriculumSessionStructure?: boolean
   /** `economy`: 1사 1교 등록 폼 시드(프로그램 유형 설정 단락 없음) */
   programRegistrationFormVariant?: ProgramRegistrationFormVariant
+  /** 일반 프로그램 등록 풀페이지 — 임시 저장 성공 후(목록 갱신·모달 닫기 등) */
+  onRegistrationSaved?: () => void
 }
 
 export function useProgramRegistrationEditor(
@@ -130,6 +136,7 @@ export function useProgramRegistrationEditor(
     editorOptions?.restrictCurriculumSessionStructure === true
   const programRegistrationFormVariant: ProgramRegistrationFormVariant =
     editorOptions?.programRegistrationFormVariant ?? 'general'
+  const onRegistrationSaved = editorOptions?.onRegistrationSaved
   const seedParagraphIds = useMemo(
     () => getProgramRegistrationSeedParagraphIds(programRegistrationFormVariant),
     [programRegistrationFormVariant]
@@ -143,7 +150,7 @@ export function useProgramRegistrationEditor(
       .paragraphs[0]?.id ?? null
   )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
-  const [participant, setParticipant] = useState<ProgramRegistrationParticipantState>({
+  const [participant, setParticipant] = useState<ProgramRegistrationParticipantSelection>({
     individual: true,
     organization: false,
     teacherInstructor: false,
@@ -168,6 +175,14 @@ export function useProgramRegistrationEditor(
     closeWritingUserPreview,
     isWritingUserPreviewOpen,
   } = useTemplateWritingPreview()
+
+  useEffect(() => {
+    if (!active || programRegistrationFormVariant !== 'general') return
+    patchInstitutionApplicationProgramBridge({
+      educationStructure: programType,
+      sessionRound: sessionRoundType,
+    })
+  }, [active, programRegistrationFormVariant, programType, sessionRoundType])
 
   useEffect(() => {
     if (!active) return
@@ -263,13 +278,17 @@ export function useProgramRegistrationEditor(
   const onIndividualChange = useCallback((checked: boolean) => {
     setParticipant(prev => {
       if (checked) return { ...prev, individual: true, organization: false }
+      setParticipationScheduleDetail('common')
       return { ...prev, individual: false, organization: true }
     })
   }, [])
 
   const onOrganizationChange = useCallback((checked: boolean) => {
     setParticipant(prev => {
-      if (checked) return { ...prev, individual: false, organization: true }
+      if (checked) {
+        setParticipationScheduleDetail('common')
+        return { ...prev, individual: false, organization: true }
+      }
       return { ...prev, individual: true, organization: false }
     })
   }, [])
@@ -282,12 +301,30 @@ export function useProgramRegistrationEditor(
     setParticipant(prev => ({ ...prev, volunteer: checked }))
   }, [])
 
-  const onSessionRoundTypeChange = useCallback((value: ProgramRegistrationSessionRoundType) => {
-    setSessionRoundType(value)
-    const defaultCount = restrictCurriculumSessionStructure ? 1 : 2
-    if (value === 'multi') setCurriculumSessionCount(defaultCount)
-    if (value === 'single') setCurriculumChartSessionCount(defaultCount)
-  }, [restrictCurriculumSessionStructure])
+  const onSessionRoundTypeChange = useCallback(
+    (value: ProgramRegistrationSessionRoundType) => {
+      setSessionRoundType(value)
+      const defaultCount = restrictCurriculumSessionStructure ? 1 : 2
+      if (value === 'multi') setCurriculumSessionCount(defaultCount)
+      if (value === 'single') setCurriculumChartSessionCount(defaultCount)
+
+      if (programRegistrationFormVariant !== 'general') return
+      setDraft(prev => ({
+        ...prev,
+        paragraphs: prev.paragraphs.map(p => {
+          if (p.id !== PROGRAM_REGISTRATION_IDS.educationCurriculum) return p
+          if (p.kind !== 'single_item' || p.variant !== 'horizontal_table') return p
+          const ht = p as HorizontalTableParagraph
+          if (programType === 'schedule') return p
+          return {
+            ...ht,
+            paragraphDescription: resolveProgramRegistrationCurriculumEditDescription(value),
+          }
+        }),
+      }))
+    },
+    [programRegistrationFormVariant, programType, restrictCurriculumSessionStructure]
+  )
 
   const onEducationFormScheduleDetailChange = useCallback((value: ProgramRegistrationScheduleDetailKind) => {
     setEducationFormScheduleDetail(value)
@@ -308,8 +345,18 @@ export function useProgramRegistrationEditor(
 
   const onAddCurriculumChartSession = useCallback(() => {
     if (restrictCurriculumSessionStructure) return
-    setCurriculumChartSessionCount(c => Math.min(c + 1, 16))
+    setCurriculumChartSessionCount(c =>
+      Math.min(c + 1, GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT)
+    )
   }, [restrictCurriculumSessionStructure])
+
+  const onDeleteCurriculumChartSession = useCallback(
+    (chartIndex: number) => {
+      if (restrictCurriculumSessionStructure || chartIndex <= 1) return
+      setCurriculumChartSessionCount(c => Math.max(1, c - 1))
+    },
+    [restrictCurriculumSessionStructure]
+  )
 
   const onProgramTypeChange = useCallback((next: ProgramRegistrationType) => {
     if (programRegistrationFormVariant === 'economy' && next !== 'curriculum') return
@@ -330,7 +377,10 @@ export function useProgramRegistrationEditor(
         return {
           ...ht,
           paragraphTitle: '교육 진행 (커리큘럼)',
-          paragraphDescription: '',
+          paragraphDescription:
+            programRegistrationFormVariant === 'general'
+              ? resolveProgramRegistrationCurriculumEditDescription(sessionRoundType)
+              : '',
         }
       }),
     }))
@@ -380,6 +430,7 @@ export function useProgramRegistrationEditor(
           ? 1
           : curriculumChartSessionCount,
         onAddCurriculumChartSession,
+        onDeleteCurriculumChartSession,
         restrictCurriculumSessionStructure,
         programRegistrationFormVariant,
         scheduleCurriculumDetailCount,
@@ -396,6 +447,7 @@ export function useProgramRegistrationEditor(
       educationFormScheduleDetail,
       ipsScheduleDetail,
       onAddCurriculumChartSession,
+      onDeleteCurriculumChartSession,
       onAddCurriculumSession,
       onAddScheduleCurriculumDetail,
       onAddScheduleCurriculumGroup,
@@ -457,7 +509,18 @@ export function useProgramRegistrationEditor(
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    }, [])
+    if (programRegistrationFormVariant !== 'general' || !onRegistrationSaved) return
+    try {
+      persistGeneralRegistrationFormLocal({
+        draft,
+        participant,
+        programType,
+      })
+      onRegistrationSaved()
+    } catch (error) {
+      console.debug('programRegistrationEditor save failed', error)
+    }
+  }, [draft, onRegistrationSaved, participant, programRegistrationFormVariant, programType])
 
   const onSelectSingleItemListItem = useCallback((paragraphId: string, itemId: string | null) => {
     setActiveParagraphId(paragraphId)
@@ -488,6 +551,9 @@ export function useProgramRegistrationEditor(
     handleSave,
     onSelectSingleItemListItem,
     paragraphBodyOptions,
+    participant,
+    programType,
+    sessionRoundType,
   }
 }
 

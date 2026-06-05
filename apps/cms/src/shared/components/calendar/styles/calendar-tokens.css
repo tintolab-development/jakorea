@@ -1,0 +1,43 @@
+/*
+ * CalendarMain 그리드·컨테이너 치수 — calendar.css 최상단 import (layout·main보다 먼저).
+ * 모든 CalendarMain 배치 래퍼 + .calendar-main-container + .calendar-main 자체.
+ */
+.calendar-set,
+.calendar-split-card-layout,
+.calendar-split-card--left,
+.ujat-institution-application-calendar-view,
+.applicant-calendar-layout,
+.calendar-main-container,
+.calendar-main {
+  --calendar-cell-min-width: 116px;
+  --calendar-cell-min-height: 124px;
+  --calendar-week-hour-px: 56px;
+  --calendar-week-total-px: calc(24 * var(--calendar-week-hour-px));
+  --calendar-week-gutter-width: 112px;
+  --calendar-week-gutter-gap: 20px;
+  --calendar-month-week-count: 6;
+  --calendar-month-grid-min-width: calc(var(--calendar-cell-min-width) * 7);
+  --calendar-month-grid-min-height: calc(var(--calendar-cell-min-height) * var(--calendar-month-week-count));
+  --calendar-main-weekday-header-min-height: 37px;
+  --calendar-main-header-min-height: 50px;
+  --calendar-main-horizontal-padding: 40px;
+  --calendar-main-vertical-padding: 32px;
+  --calendar-week-time-grid-header-min-height: 40px;
+  --calendar-main-month-min-width: calc(
+    var(--calendar-month-grid-min-width) + var(--calendar-main-horizontal-padding)
+  );
+  --calendar-main-month-min-height: calc(
+    var(--calendar-month-grid-min-height) +
+      var(--calendar-main-weekday-header-min-height) +
+      var(--calendar-main-header-min-height) +
+      var(--calendar-main-vertical-padding)
+  );
+  --calendar-main-week-min-width: calc(
+    var(--calendar-week-gutter-width) + var(--calendar-week-gutter-gap) +
+      var(--calendar-month-grid-min-width) + var(--calendar-main-horizontal-padding)
+  );
+  --calendar-main-week-min-height: calc(
+    var(--calendar-week-total-px) + var(--calendar-week-time-grid-header-min-height) +
+      var(--calendar-main-header-min-height) + var(--calendar-main-vertical-padding)
+  );
+}

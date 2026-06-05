@@ -3,31 +3,31 @@ import dayjs, { type Dayjs } from 'dayjs'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import { programLifecycleStatusConfig } from '@/shared/constants/status'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import {
-  economyProgramListAfterApplyParams,
-  economyProgramListParamConfig,
-  economyProgramListTableConfig,
+  programListOverviewAfterApplyParams,
+  programListOverviewParamConfig,
+  programListOverviewTableConfig,
   educationProgramListParamConfig,
   educationProgramListTableConfig,
   type ProgramListPendingFilters,
 } from '../model/program-list-search-sync'
 import type { ProgramListProgramMode } from '../model/program-list-program-mode'
-import { getRecruitmentStatus } from './constants/program-list-constants'
-import { resolveEducationColumns, type EconomyView } from './table/program-table-column-resolver'
+import {
+  isProgramProgressPhaseFilter,
+  programMatchesProgressPhase,
+  type ProgramProgressPhaseFilter,
+} from './constants/program-list-constants'
+import { resolveEducationColumns, type ProgramListView } from './table/program-table-column-resolver'
 
 dayjs.extend(isSameOrBefore)
 dayjs.extend(isSameOrAfter)
 
-const economyFilterLifecycleStatuses = new Set<ProgramLifecycleStatus>(
-  programLifecycleStatusConfig.order
-)
 const participantRecruitmentFilterValues = new Set(['scheduled', 'recruiting', 'closed'])
 
 export type ProgramTableContext = {
   mode: ProgramListProgramMode
-  view: EconomyView
+  view: ProgramListView
   tableType?: 'student' | 'instructor'
   effectiveLifecycleStatus?: ProgramLifecycleStatus | null
 }
@@ -122,9 +122,9 @@ export function getProgramTablePageConfig(
         return resolveEducationColumns({
           studentRecruitmentTable: ctx.tableType === 'student',
           instructorRecruitmentTable: ctx.tableType === 'instructor',
-          isEconomyPage: ctx.mode === 'economy',
+          isOverviewListPage: ctx.mode === 'overview',
           programMode: ctx.mode,
-          economyView: ctx.mode === 'economy' ? ctx.view : undefined,
+          listView: ctx.mode === 'overview' ? ctx.view : undefined,
         })
       },
     },
@@ -145,15 +145,13 @@ export function getProgramTablePageConfig(
       },
 
       syncPendingFromUrl: ({ context: ctx, searchParams, table, columnFilters, setPendingFilters }) => {
-        if (ctx.mode === 'economy') {
+        if (ctx.mode === 'overview') {
           const titleFromUrl = searchParams.get('title') || ''
           const lifecycleRaw = searchParams.get('lifecycleStatus') || ''
           const lifecycleFromUrl =
-            lifecycleRaw &&
-            economyFilterLifecycleStatuses.has(lifecycleRaw as ProgramLifecycleStatus)
-              ? (lifecycleRaw as ProgramLifecycleStatus)
+            lifecycleRaw && isProgramProgressPhaseFilter(lifecycleRaw)
+              ? (lifecycleRaw as ProgramProgressPhaseFilter)
               : undefined
-          const categoryFilter = searchParams.get('category') || undefined
           const targetLevelFilter = searchParams.get('targetLevel') || undefined
           const participantRaw = searchParams.get('participantRecruitment') || ''
           const participantFromUrl = participantRecruitmentFilterValues.has(participantRaw)
@@ -166,7 +164,6 @@ export function getProgramTablePageConfig(
             const hasChanges =
               prev.title !== titleFromUrl ||
               prev.lifecycleStatus !== lifecycleFromUrl ||
-              prev.category !== categoryFilter ||
               prev.targetLevel !== targetLevelFilter ||
               prev.participantRecruitment !== participantFromUrl ||
               prev.operationStartDate?.format('YYYY-MM-DD') !== operationStartDateStr ||
@@ -178,7 +175,6 @@ export function getProgramTablePageConfig(
               ...prev,
               title: titleFromUrl,
               lifecycleStatus: lifecycleFromUrl,
-              category: categoryFilter,
               targetLevel: targetLevelFilter,
               participantRecruitment: participantFromUrl,
               operationStartDate: operationStartDateStr
@@ -260,7 +256,7 @@ export function getProgramTablePageConfig(
       },
 
       hasActiveFilters: ({ context: ctx, searchParams, columnFilters }) => {
-        if (ctx.mode === 'economy') {
+        if (ctx.mode === 'overview') {
           const isScheduled = ctx.view === 'SCHEDULED'
           const isInProgress = ctx.view === 'IN_PROGRESS'
           const title = searchParams.get('title') || ''
@@ -269,13 +265,10 @@ export function getProgramTablePageConfig(
             !isScheduled &&
             !isInProgress &&
             lifecycleRaw !== '' &&
-            economyFilterLifecycleStatuses.has(lifecycleRaw as ProgramLifecycleStatus)
+            isProgramProgressPhaseFilter(lifecycleRaw)
           const hasOperationPeriod = Boolean(
             searchParams.get('operationStartDate') && searchParams.get('operationEndDate')
           )
-          const participantRaw = searchParams.get('participantRecruitment') || ''
-          const hasParticipantRecruitmentFilter =
-            !isInProgress && participantRecruitmentFilterValues.has(participantRaw)
           const hasColumnFilter = columnFilters.some(
             f => f.value != null && String(f.value).trim() !== ''
           )
@@ -283,8 +276,7 @@ export function getProgramTablePageConfig(
             hasColumnFilter ||
               title.trim() !== '' ||
               hasLifecycleFilter ||
-              hasOperationPeriod ||
-              hasParticipantRecruitmentFilter
+              hasOperationPeriod
           )
         }
 
@@ -321,9 +313,8 @@ export function getProgramTablePageConfig(
           }
         }
         if (
-          ctx.mode === 'economy' &&
-          (key === 'category' ||
-            key === 'targetLevel' ||
+          ctx.mode === 'overview' &&
+          (key === 'targetLevel' ||
             key === 'lifecycleStatus' ||
             key === 'participantRecruitment')
         ) {
@@ -332,7 +323,7 @@ export function getProgramTablePageConfig(
             [key]:
               value != null && String(value).trim()
                 ? key === 'lifecycleStatus'
-                  ? (value as ProgramLifecycleStatus)
+                  ? (value as ProgramLifecycleStatus | ProgramProgressPhaseFilter)
                   : value
                 : undefined,
           }
@@ -362,56 +353,50 @@ export function getProgramTablePageConfig(
         applicationPeriodRange
       )
 
-      if (ctx.mode !== 'economy') {
+      if (ctx.mode !== 'overview') {
         return { dataForTable: filteredData, filteredData }
       }
 
       /** 전체·완료 탭에서만「프로그램 진행 현황」필터 사용 */
       const applyLifecycleFromUrl = ctx.view !== 'SCHEDULED' && ctx.view !== 'IN_PROGRESS'
-      /** 진행 중 탭에는「참여자 모집」필터 없음 — URL 잔존 값 무시 */
-      const applyParticipantRecruitmentFromUrl = ctx.view !== 'IN_PROGRESS'
 
       const title = searchParams.get('title') || ''
       const lifecycleRaw = searchParams.get('lifecycleStatus') || ''
-      const lifecycleFilter =
-        lifecycleRaw && economyFilterLifecycleStatuses.has(lifecycleRaw as ProgramLifecycleStatus)
-          ? (lifecycleRaw as ProgramLifecycleStatus)
+      const lifecyclePhaseFilter =
+        lifecycleRaw && isProgramProgressPhaseFilter(lifecycleRaw)
+          ? lifecycleRaw
           : null
-      const categoryFilter = searchParams.get('category') || ''
       const targetLevelFilter = searchParams.get('targetLevel') || ''
-      const participantRaw = searchParams.get('participantRecruitment') || ''
-      const participantFilter = participantRecruitmentFilterValues.has(participantRaw)
-        ? participantRaw
-        : null
 
       let result = filteredData
       if (title.trim()) {
         const q = title.trim().toLowerCase()
-        result = result.filter(p => p.title?.toLowerCase().includes(q))
+        result = result.filter(p => {
+          const programTitle = p.title?.trim() || ''
+          const announcementTitle = p.generalCommonInfo?.announcementTitle?.trim() || ''
+          return (
+            programTitle.toLowerCase().includes(q) ||
+            announcementTitle.toLowerCase().includes(q)
+          )
+        })
       }
-      if (lifecycleFilter && applyLifecycleFromUrl) {
-        result = result.filter(p => p.lifecycleStatus === lifecycleFilter)
-      }
-      if (categoryFilter) {
-        result = result.filter(p => p.category === categoryFilter)
+      if (lifecyclePhaseFilter && applyLifecycleFromUrl) {
+        result = result.filter(p => programMatchesProgressPhase(p, lifecyclePhaseFilter))
       }
       if (targetLevelFilter) {
         result = result.filter(p => p.targetLevel === targetLevelFilter)
-      }
-      if (participantFilter && applyParticipantRecruitmentFromUrl) {
-        result = result.filter(p => getRecruitmentStatus(p) === participantFilter)
       }
 
       return { dataForTable: result, filteredData }
     },
 
     getSearchSync: ctx => {
-      if (ctx.mode === 'economy') {
+      if (ctx.mode === 'overview') {
         return {
-          paramConfig: economyProgramListParamConfig,
-          tableConfig: economyProgramListTableConfig,
+          paramConfig: programListOverviewParamConfig,
+          tableConfig: programListOverviewTableConfig,
           afterApplyParams: (nextParams: URLSearchParams, _filters: ProgramListPendingFilters) => {
-            economyProgramListAfterApplyParams(nextParams)
+            programListOverviewAfterApplyParams(nextParams)
           },
         }
       }

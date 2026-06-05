@@ -260,6 +260,8 @@ export function ParticipatingInstructorsSection({
     () => ({
       schoolName: '',
       region: 'all',
+      institutionSido: '',
+      institutionSigungu: '',
       educationGrade: 'all',
       lectureRound: appliedFilters.educationAssignmentStatus || 'all',
       textbookStatus: 'all',
@@ -525,16 +527,16 @@ export function ParticipatingInstructorsSection({
       <Divider className="participating-institutions-section__divider" />
 
       <div className="participating-institutions-section__below-divider">
-        <div className="participating-institutions-section__table-header">
-          <div className="participating-institutions-section__table-heading">
-            <span className="participating-institutions-section__table-title">
+        <div className="table-header-actions">
+          <div className="table-header-title--wrapper">
+            <span className="table-title">
               교육 참여 강사 목록
             </span>
-            <span className="participating-institutions-section__table-description">
+            <span className="table-description">
               {filteredInstructors.length}건
             </span>
           </div>
-          <div className="participating-institutions-section__table-actions">
+          <div className="info-section-buttons--wrapper">
             {viewMode === 'list' ? (
               <CmsButton
                 variant="secondary"

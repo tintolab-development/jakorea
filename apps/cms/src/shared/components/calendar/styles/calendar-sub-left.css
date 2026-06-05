@@ -1,15 +1,51 @@
 .calendar-search {
   box-sizing: border-box;
+  /* 3열 calendar-set 좌측 하단 — `--calendar-search-height` (`calendar-layout.css`) */
+  height: var(--calendar-search-height, 391px);
+  min-height: var(--calendar-search-height, 391px);
+  max-height: var(--calendar-search-height, 391px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--color-bg-base);
   border-radius: 16px;
   padding: 20px;
   border: 1px solid var(--color-border-light);
 }
 
-.calendar-search__filters-wrapper {
+.calendar-search__input {
+  flex-shrink: 0;
+}
+
+.calendar-search__input .ant-input-affix-wrapper {
+  border-radius: var(--radius-8);
+  border: 1px solid var(--color-border-light);
+  height: var(--filter-control-height, 44px) !important;
+  min-height: var(--filter-control-height, 44px) !important;
+  box-sizing: border-box;
+}
+
+.calendar-search__input .ant-input-affix-wrapper .ant-input {
+  height: 100% !important;
+  min-height: 0 !important;
+  line-height: 1;
+}
+
+.calendar-search__filters {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   margin-top: 16px;
+}
+
+.calendar-search__filters-wrapper {
+  margin-top: 0;
   width: 100%;
   min-width: 0;
+  flex-shrink: 0;
 }
 
 /* Ant Checkbox: 라벨은 형제 span — flex + min-width:0 으로 말줄임 동작 */

@@ -17,6 +17,8 @@ export type ProgressSubTabKey = (typeof VALID_SUB_TABS)[number]
 const FILTER_KEYS_SCHOOLS = [
   'schoolName',
   'region',
+  'institutionSido',
+  'institutionSigungu',
   'educationGrade',
   'lectureRound',
   'textbookStatus',
@@ -33,6 +35,8 @@ const FILTER_KEYS_INSTRUCTORS = [
 export interface ProgressFilters {
   schoolName: string
   region: string
+  institutionSido: string
+  institutionSigungu: string
   educationGrade: string
   lectureRound: string
   textbookStatus: string
@@ -43,6 +47,8 @@ export interface ProgressFilters {
 const DEFAULT_FILTERS: ProgressFilters = {
   schoolName: '',
   region: 'all',
+  institutionSido: '',
+  institutionSigungu: '',
   educationGrade: 'all',
   lectureRound: 'all',
   textbookStatus: 'all',
@@ -66,6 +72,9 @@ export function useProgramProgressParams() {
     return {
       schoolName: searchParams.get('schoolName') ?? DEFAULT_FILTERS.schoolName,
       region: searchParams.get('region') ?? DEFAULT_FILTERS.region,
+      institutionSido: searchParams.get('institutionSido') ?? DEFAULT_FILTERS.institutionSido,
+      institutionSigungu:
+        searchParams.get('institutionSigungu') ?? DEFAULT_FILTERS.institutionSigungu,
       educationGrade: searchParams.get('educationGrade') ?? DEFAULT_FILTERS.educationGrade,
       lectureRound: searchParams.get('lectureRound') ?? DEFAULT_FILTERS.lectureRound,
       textbookStatus: searchParams.get('textbookStatus') ?? DEFAULT_FILTERS.textbookStatus,

@@ -3,7 +3,8 @@
  * Phase 4.3: 모집 종료 후 추가 배정 (FR-F02)
  */
 
-import { Modal, Form, Select, Input, Space, Radio } from 'antd'
+import { CmsRadio } from '@/shared/ui'
+import { Modal, Form, Select, Input, Space } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -221,13 +222,13 @@ export function ManualAssignmentModal({
         )}
 
         <Form.Item label="배정 방식" required>
-          <Radio.Group
+          <CmsRadio.Group
             value={assignmentType}
             onChange={e => setValue('assignmentType', e.target.value)}
           >
-            <Radio value="existing">기존 강사 선택</Radio>
-            <Radio value="new">신규 강사 정보 입력</Radio>
-          </Radio.Group>
+            <CmsRadio value="existing">기존 강사 선택</CmsRadio>
+            <CmsRadio value="new">신규 강사 정보 입력</CmsRadio>
+          </CmsRadio.Group>
         </Form.Item>
 
         {assignmentType === 'existing' && (

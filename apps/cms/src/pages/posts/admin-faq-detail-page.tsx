@@ -1,6 +1,6 @@
 /**
  * 게시글 관리 — FAQ 상세 (관리자)
- * 레이아웃·마크업은 공지 상세(admin-notice-detail-page)와 동일 스펙, 본문은 ToastUiMarkdownViewer
+ * 레이아웃·마크업은 공지 상세(admin-notice-detail-page)와 동일 스펙, 본문은 RichTextViewer
  */
 
 import { useCallback, useMemo, useState } from 'react'
@@ -10,7 +10,7 @@ import { getAdminFaqById } from '@/features/posts/api/admin-faq-mock-store'
 import { deleteFaq } from '@/features/posts/api/admin-faq-service'
 import { FaqFormModal } from '@/features/posts/ui/faq-form-modal'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
-import { ToastUiMarkdownViewer } from '@/shared/components/toast-ui-markdown-viewer'
+import { RichTextViewer } from '@/shared/rich-text'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { CmsButton } from '@/shared/ui'
@@ -121,7 +121,7 @@ export function AdminFaqDetailPage() {
           </div>
           <hr className="admin-faq-detail-page__section-divider" aria-hidden />
           <div className="admin-faq-detail-page__body">
-            <ToastUiMarkdownViewer markdown={faq.answer} />
+            <RichTextViewer markdown={faq.answer} />
           </div>
         </div>
         <div className="admin-faq-detail-page__actions">

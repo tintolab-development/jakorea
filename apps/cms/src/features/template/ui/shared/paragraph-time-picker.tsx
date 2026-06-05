@@ -35,6 +35,8 @@ export interface ParagraphTimePickerProps {
   endTimeAlwaysOn?: boolean
   zIndex?: number
   showEndTimeToggle?: boolean
+  /** 마운트 시 트리거에 표시할 시간 범위(프로그램 상세 수정 mock 시드 등) */
+  initialTimeRange?: [Dayjs, Dayjs] | null
 }
 
 type FocusPhase = 'single' | 'start' | 'end'
@@ -51,6 +53,7 @@ export function ParagraphTimePicker({
   endTimeAlwaysOn = false,
   zIndex,
   showEndTimeToggle = true,
+  initialTimeRange = null,
 }: ParagraphTimePickerProps) {
   const rootRef = useRef<HTMLSpanElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -86,6 +89,11 @@ export function ParagraphTimePicker({
   useEffect(() => {
     if (endTimeAlwaysOn) setEndTimeOn(true)
   }, [endTimeAlwaysOn])
+
+  useEffect(() => {
+    if (initialTimeRange == null) return
+    setSurfaceTimeRange(initialTimeRange)
+  }, [initialTimeRange])
 
   useEffect(() => {
     if (value == null) {

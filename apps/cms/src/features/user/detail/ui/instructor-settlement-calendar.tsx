@@ -22,7 +22,6 @@ import {
   type CalendarItem,
 } from '@/shared/components/calendar'
 import '@/shared/components/calendar/styles/calendar.css'
-import '@/shared/components/program-calendar.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)

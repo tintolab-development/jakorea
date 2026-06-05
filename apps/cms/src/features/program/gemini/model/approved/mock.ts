@@ -1,0 +1,47 @@
+import type { GeminiApprovedTrainingRow } from './types'
+
+export const GEMINI_APPROVED_TRAINING_MOCK_ROWS: GeminiApprovedTrainingRow[] = [
+  {
+    id: 'gat-215',
+    no: 215,
+    institutionName: '강서초등학교',
+    institutionSido: '서울특별시',
+    institutionSigungu: '강서구',
+    status: 'SCHEDULED',
+    officialDocumentRequired: false,
+    trainingDate: '2026-01-09',
+    trainingTimeText: '15:30~16:40(2차시)',
+    studentCount: 15,
+    instructorName: '미지정',
+    managerName: '박민수',
+  },
+  {
+    id: 'gat-214',
+    no: 214,
+    institutionName: '푸른솔초등학교',
+    institutionSido: '경기도',
+    institutionSigungu: '성남시 분당구',
+    status: 'IN_PROGRESS',
+    officialDocumentRequired: false,
+    trainingDate: '2026-01-08',
+    trainingTimeText: '15:30~16:40(2차시)',
+    studentCount: 15,
+    instructorName: '홍길동',
+    managerName: '박민수',
+  },
+  {
+    id: 'gat-213',
+    no: 213,
+    institutionName: '하늘빛초등학교',
+    institutionSido: '인천광역시',
+    institutionSigungu: '연수구',
+    status: 'ENDED',
+    officialDocumentRequired: true,
+    trainingDate: '2026-01-07',
+    trainingTimeText: '15:30~16:40(2차시)',
+    studentCount: 15,
+    instructorName: '홍길동',
+    managerName: '박민수',
+  },
+]
+

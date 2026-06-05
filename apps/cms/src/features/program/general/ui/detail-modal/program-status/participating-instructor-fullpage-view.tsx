@@ -17,10 +17,15 @@ import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instru
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import {
+  INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
+  INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
+} from '@/shared/constants/messages'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
@@ -49,10 +54,13 @@ import {
   type InstructorWaitingSchoolRow,
   type InstructorWaitingAssignmentStatus,
 } from '@/features/program/general/lib/instructor-institution-assignment-mock'
+import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
+import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import './participating-institutions-section.css'
-import '../../instructor-assignment-role-tag.css'
-import '../../instructor-assignment-status-text.css'
-import '../../school-detail-fullpage-view.css'
+import './instructor-assignment-role-tag.css'
+import './instructor-assignment-status-text.css'
+import './school-detail-fullpage-view.css'
 import './participating-instructor-fullpage-view.css'
 
 const ASSIGNMENT_STATUS_LABELS: Record<InstructorWaitingAssignmentStatus, string> = {
@@ -285,9 +293,15 @@ export function ParticipatingInstructorFullpageView({
   const [selectedWaitingSchoolKeys, setSelectedWaitingSchoolKeys] = useState<Key[]>([])
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
   const [unassignConfirmOpen, setUnassignConfirmOpen] = useState(false)
+  const [unassignCompleteModal, setUnassignCompleteModal] = useState<{
+    instructorNames: string[]
+    targetNames: string[]
+    reason: string
+  } | null>(null)
   const [selectAssignConfirmOpen, setSelectAssignConfirmOpen] = useState(false)
   const [addAssignModalOpen, setAddAssignModalOpen] = useState(false)
   const [addAssignSchoolId, setAddAssignSchoolId] = useState<string | null>(null)
+  const { showAlert } = useCmsAlert()
 
   const resolveParticipatingInstructorFullpageAccessItem = useCallback(
     () => d.instructorName ?? '참여 강사 상세 정보',
@@ -475,27 +489,60 @@ export function ParticipatingInstructorFullpageView({
     []
   )
 
-  const handleUnassignConfirm = useCallback(() => {
-    if (selectedAssignedSchoolKeys.length === 0) return
-    const toRemove = new Set(selectedAssignedSchoolKeys.map(String))
-    setAssignedSchools(prev => {
-      const removedRows = prev.filter(r => toRemove.has(r.id))
-      const next = renumberAssignedRows(prev.filter(r => !toRemove.has(r.id)))
-      setWaitingSchools(wPrev => {
-        const added: InstructorWaitingSchoolRow[] = []
-        for (const row of removedRows) {
-          const school = schoolRows.find(s => s.id === row.id)
-          if (school) {
-            added.push(createWaitingRowForSchool(school, d, instructorList, 0, 'waiting'))
+  const handleUnassignClick = useCallback(() => {
+    if (selectedAssignedSchoolKeys.length === 0) {
+      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      return
+    }
+    setUnassignConfirmOpen(true)
+  }, [selectedAssignedSchoolKeys.length, showAlert])
+
+  const handleSelectAssignClick = useCallback(() => {
+    if (selectedWaitingSchoolKeys.length === 0) {
+      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      return
+    }
+    const movable = waitingSchools.some(
+      w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus !== 'assigned'
+    )
+    if (!movable) {
+      return
+    }
+    setSelectAssignConfirmOpen(true)
+  }, [selectedWaitingSchoolKeys, waitingSchools, showAlert])
+
+  const handleUnassignConfirm = useCallback(
+    (payload: PermissionModalPayload) => {
+      if (selectedAssignedSchoolKeys.length === 0) return
+      const removedSchoolNames = assignedSchools
+        .filter(r => selectedAssignedSchoolKeys.includes(r.id))
+        .map(r => r.schoolName)
+      const toRemove = new Set(selectedAssignedSchoolKeys.map(String))
+      setAssignedSchools(prev => {
+        const removedRows = prev.filter(r => toRemove.has(r.id))
+        const next = renumberAssignedRows(prev.filter(r => !toRemove.has(r.id)))
+        setWaitingSchools(wPrev => {
+          const added: InstructorWaitingSchoolRow[] = []
+          for (const row of removedRows) {
+            const school = schoolRows.find(s => s.id === row.id)
+            if (school) {
+              added.push(createWaitingRowForSchool(school, d, instructorList, 0, 'waiting'))
+            }
           }
-        }
-        return renumberWaitingRows([...wPrev, ...added])
+          return renumberWaitingRows([...wPrev, ...added])
+        })
+        return next
       })
-      return next
-    })
-    setUnassignConfirmOpen(false)
-    setSelectedAssignedSchoolKeys([])
-    }, [selectedAssignedSchoolKeys, schoolRows, d, instructorList])
+      setUnassignConfirmOpen(false)
+      setSelectedAssignedSchoolKeys([])
+      setUnassignCompleteModal({
+        instructorNames: [d.instructorName],
+        targetNames: removedSchoolNames,
+        reason: payload.reason,
+      })
+    },
+    [selectedAssignedSchoolKeys, assignedSchools, schoolRows, d, instructorList]
+  )
 
   const handleSelectAssignConfirm = useCallback(() => {
     const selectedRows = waitingSchools.filter(
@@ -600,11 +647,13 @@ export function ParticipatingInstructorFullpageView({
   const applicationTab = (
     <>
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block">
-        <div className="program-detail-info-tab__section-header-row">
-          <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
-        </div>
-        <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
-          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
+        <DetailInfoForm
+          title="기본 정보"
+          mode="view"
+          className="participating-instructor-fullpage-view__basic-info-form"
+        >
+          <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
+            <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
             <colgroup>
               <col style={{ width: '200px' }} />
               <col />
@@ -681,10 +730,10 @@ export function ParticipatingInstructorFullpageView({
                 </td>
               </tr>
             </tbody>
-          </table>
-        </div>
-        <div className="program-detail-info-tab__table-wrapper participating-instructor-fullpage-view__fee-table-wrap">
-          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
+            </table>
+          </div>
+          <div className="program-detail-info-tab__table-wrapper participating-instructor-fullpage-view__fee-table-wrap">
+            <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
             <colgroup>
               <col style={{ width: '200px' }} />
               <col />
@@ -703,104 +752,114 @@ export function ParticipatingInstructorFullpageView({
                 <td>{d.businessIncomeEarnerStatus?.trim() || '-'}</td>
               </tr>
             </tbody>
-          </table>
-        </div>
+            </table>
+          </div>
+        </DetailInfoForm>
       </div>
 
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block instructor-resume-section">
-        <h3 className="instructor-resume-section-title">
-          학력사항
-          <span className="instructor-resume-section-count">{educationSummary}</span>
-        </h3>
-        <div className="instructor-resume-card">
-          {(d.educations?.length ?? 0) > 0 ? (
-            d.educations!.map((item, idx) => {
-              const period = formatEducationPeriod(item)
-              const schoolLabel = item.schoolName
-                ? [
-                    item.schoolName,
-                    item.schoolType
-                      ? `(${getEducationLevelBadge(undefined, item.schoolType)})`
-                      : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')
-                : NO_DATA
-              return (
+        <DetailInfoForm
+          title="학력사항"
+          description={<span className="instructor-resume-section-count">{educationSummary}</span>}
+          mode="view"
+          className="participating-instructor-fullpage-view__resume-form"
+        >
+          <div className="instructor-resume-card">
+            {(d.educations?.length ?? 0) > 0 ? (
+              d.educations!.map((item, idx) => {
+                const period = formatEducationPeriod(item)
+                const schoolLabel = item.schoolName
+                  ? [
+                      item.schoolName,
+                      item.schoolType
+                        ? `(${getEducationLevelBadge(undefined, item.schoolType)})`
+                        : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')
+                  : NO_DATA
+                return (
+                  <div key={idx} className="instructor-resume-row instructor-resume-row--career">
+                    <span className="instructor-resume-row-left">{period || NO_DATA}</span>
+                    <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
+                      <span className="instructor-resume-emphasis">{schoolLabel}</span>
+                      {item.major ? (
+                        <>
+                          <ProgramDetailTdDivider />
+                          <span className="instructor-resume-role">{item.major}</span>
+                        </>
+                      ) : null}
+                    </span>
+                  </div>
+                )
+              })
+            ) : (
+              <p className="instructor-resume-empty">{NO_DATA}</p>
+            )}
+          </div>
+        </DetailInfoForm>
+      </div>
+
+      <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block instructor-resume-section">
+        <DetailInfoForm
+          title="경력사항"
+          description={<span className="instructor-resume-section-count">{careerSummaryYears}년</span>}
+          mode="view"
+          className="participating-instructor-fullpage-view__resume-form"
+        >
+          <div className="instructor-resume-card">
+            {(d.careerDetails?.length ?? 0) > 0 ? (
+              d.careerDetails!.map((item, idx) => (
                 <div key={idx} className="instructor-resume-row instructor-resume-row--career">
-                  <span className="instructor-resume-row-left">{period || NO_DATA}</span>
+                  <span className="instructor-resume-row-left">{formatCareerPeriod(item)}</span>
                   <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
-                    <span className="instructor-resume-emphasis">{schoolLabel}</span>
-                    {item.major ? (
+                    {item.companyName || item.role ? (
                       <>
-                        <ProgramDetailTdDivider />
-                        <span className="instructor-resume-role">{item.major}</span>
+                        {item.companyName ? (
+                          <span className="instructor-resume-emphasis">{item.companyName}</span>
+                        ) : null}
+                        {item.companyName && item.role ? <ProgramDetailTdDivider /> : null}
+                        {item.role ? (
+                          <span className="instructor-resume-role">{item.role}</span>
+                        ) : null}
                       </>
-                    ) : null}
+                    ) : (
+                      <span className="instructor-resume-emphasis">{NO_DATA}</span>
+                    )}
                   </span>
                 </div>
-              )
-            })
-          ) : (
-            <p className="instructor-resume-empty">{NO_DATA}</p>
-          )}
-        </div>
+              ))
+            ) : (
+              <p className="instructor-resume-empty">{NO_DATA}</p>
+            )}
+          </div>
+        </DetailInfoForm>
       </div>
 
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block instructor-resume-section">
-        <h3 className="instructor-resume-section-title">
-          경력사항
-          <span className="instructor-resume-section-count">{careerSummaryYears}년</span>
-        </h3>
-        <div className="instructor-resume-card">
-          {(d.careerDetails?.length ?? 0) > 0 ? (
-            d.careerDetails!.map((item, idx) => (
-              <div key={idx} className="instructor-resume-row instructor-resume-row--career">
-                <span className="instructor-resume-row-left">{formatCareerPeriod(item)}</span>
-                <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
-                  {item.companyName || item.role ? (
-                    <>
-                      {item.companyName ? (
-                        <span className="instructor-resume-emphasis">{item.companyName}</span>
-                      ) : null}
-                      {item.companyName && item.role ? <ProgramDetailTdDivider /> : null}
-                      {item.role ? (
-                        <span className="instructor-resume-role">{item.role}</span>
-                      ) : null}
-                    </>
-                  ) : (
-                    <span className="instructor-resume-emphasis">{NO_DATA}</span>
-                  )}
-                </span>
-              </div>
-            ))
-          ) : (
-            <p className="instructor-resume-empty">{NO_DATA}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block instructor-resume-section">
-        <h3 className="instructor-resume-section-title">
-          자격 및 면허
-          <span className="instructor-resume-section-count">{qualificationCount}개</span>
-        </h3>
-        <div className="instructor-resume-card">
-          {(d.qualifications?.length ?? 0) > 0 ? (
-            d.qualifications!.map((q: ParticipatingInstructorQualification, idx: number) => (
-              <div key={idx} className="instructor-resume-row">
-                <span className="instructor-resume-row-left instructor-resume-row-left--single-year">
-                  {q.year ?? '-'}
-                </span>
-                <span className="instructor-resume-row-right instructor-resume-row-right--black">
-                  {q.name ?? '-'}
-                </span>
-              </div>
-            ))
-          ) : (
-            <p className="instructor-resume-empty">{NO_DATA}</p>
-          )}
-        </div>
+        <DetailInfoForm
+          title="자격 및 면허"
+          description={<span className="instructor-resume-section-count">{qualificationCount}개</span>}
+          mode="view"
+          className="participating-instructor-fullpage-view__resume-form"
+        >
+          <div className="instructor-resume-card">
+            {(d.qualifications?.length ?? 0) > 0 ? (
+              d.qualifications!.map((q: ParticipatingInstructorQualification, idx: number) => (
+                <div key={idx} className="instructor-resume-row">
+                  <span className="instructor-resume-row-left instructor-resume-row-left--single-year">
+                    {q.year ?? '-'}
+                  </span>
+                  <span className="instructor-resume-row-right instructor-resume-row-right--black">
+                    {q.name ?? '-'}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="instructor-resume-empty">{NO_DATA}</p>
+            )}
+          </div>
+        </DetailInfoForm>
       </div>
     </>
   )
@@ -859,25 +918,20 @@ export function ParticipatingInstructorFullpageView({
         {effectiveTab === 'institutionAssignment' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
             <div className="school-detail-fullpage-view__instructor-section">
-              <div className="participating-institutions-section__table-header">
-                <div className="participating-institutions-section__table-heading">
-                  <span className="participating-institutions-section__table-title">
+              <div className="table-header-actions">
+                <div className="table-header-title--wrapper">
+                  <span className="table-title">
                     배정된 학교 목록
                   </span>
-                  <span className="participating-institutions-section__table-description">
+                  <span className="table-description">
                     {assignedSchools.length}건
                   </span>
                 </div>
-                <div className="participating-institutions-section__table-actions">
+                <div className="info-section-buttons--wrapper">
                   <CmsButton
                     variant="delete"
                     size="large"
-                    onClick={() => {
-                      if (selectedAssignedSchoolKeys.length === 0) {
-                        return
-                      }
-                      setUnassignConfirmOpen(true)
-                    }}
+                    onClick={handleUnassignClick}
                   >
                     배정 취소
                   </CmsButton>
@@ -900,7 +954,7 @@ export function ParticipatingInstructorFullpageView({
               <div className="participating-institutions-section__table-wrap">
                 {assignedSchools.length === 0 ? (
                   <div
-                    className="school-detail-fullpage-view__assigned-empty"
+                    className="school-detail-fullpage-view__instructor-list-empty"
                     role="status"
                     aria-label="배정된 학교 없음"
                   >
@@ -926,96 +980,76 @@ export function ParticipatingInstructorFullpageView({
             </div>
 
             <div className="school-detail-fullpage-view__instructor-section school-detail-fullpage-view__instructor-section--waiting">
-              <div className="participating-institutions-section__table-header">
-                <div className="participating-institutions-section__table-heading">
-                  <span className="participating-institutions-section__table-title">
+              <div className="table-header-actions">
+                <div className="table-header-title--wrapper">
+                  <span className="table-title">
                     배정 대기 학교 목록
                   </span>
-                  <span className="participating-institutions-section__table-description">
+                  <span className="table-description">
                     {waitingSchools.length}건
                   </span>
                 </div>
-                <div className="participating-institutions-section__table-actions">
+                <div className="info-section-buttons--wrapper">
                   <CmsButton
                     variant="primary"
                     size="large"
                     className="participating-institutions-section__btn-approve"
-                    onClick={() => {
-                      if (selectedWaitingSchoolKeys.length === 0) {
-                        return
-                      }
-                      const movable = waitingSchools.some(
-                        w =>
-                          selectedWaitingSchoolKeys.includes(w.id) &&
-                          w.assignmentStatus !== 'assigned'
-                      )
-                      if (!movable) {
-                        return
-                      }
-                      setSelectAssignConfirmOpen(true)
-                    }}
+                    onClick={handleSelectAssignClick}
                   >
                     선택 배정
                   </CmsButton>
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap">
-                <Table<InstructorWaitingSchoolRow>
-                  className="participating-institutions-section__table cms-data-table"
-                  rowKey="id"
-                  size="middle"
-                  pagination={false}
-                  scroll={{ x: 1180 }}
-                  rowSelection={{
-                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                    selectedRowKeys: selectedWaitingSchoolKeys,
-                    onChange: keys => setSelectedWaitingSchoolKeys(keys),
-                    getCheckboxProps: record => ({
-                      disabled: record.assignmentStatus === 'assigned',
-                    }),
-                  }}
-                  columns={waitingSchoolColumns}
-                  dataSource={waitingSchools}
-                  rowClassName={record =>
-                    record.assignmentStatus === 'assigned'
-                      ? 'school-detail-fullpage-view__waiting-row--assigned'
-                      : ''
-                  }
-                  locale={{ emptyText: '배정 대기 중인 기관이 없습니다.' }}
-                />
+                {waitingSchools.length === 0 ? (
+                  <div
+                    className="school-detail-fullpage-view__instructor-list-empty"
+                    role="status"
+                    aria-label="배정 대기 학교 없음"
+                  >
+                    배정 대기 중인 기관이 없습니다.
+                  </div>
+                ) : (
+                  <Table<InstructorWaitingSchoolRow>
+                    className="participating-institutions-section__table cms-data-table"
+                    rowKey="id"
+                    size="middle"
+                    pagination={false}
+                    scroll={{ x: 1180 }}
+                    rowSelection={{
+                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                      selectedRowKeys: selectedWaitingSchoolKeys,
+                      onChange: keys => setSelectedWaitingSchoolKeys(keys),
+                      getCheckboxProps: record => ({
+                        disabled: record.assignmentStatus === 'assigned',
+                      }),
+                    }}
+                    columns={waitingSchoolColumns}
+                    dataSource={waitingSchools}
+                    rowClassName={record =>
+                      record.assignmentStatus === 'assigned'
+                        ? 'school-detail-fullpage-view__waiting-row--assigned'
+                        : ''
+                    }
+                  />
+                )}
               </div>
             </div>
 
-            <ContentModal
+            <SchoolDetailUnassignConfirmModal
               open={unassignConfirmOpen}
               onCancel={() => setUnassignConfirmOpen(false)}
-              title="배정 취소 안내"
-              width={560}
-              footer={
-                <>
-                  <CmsButton
-                    variant="secondary"
-                    size="large"
-                    onClick={() => setUnassignConfirmOpen(false)}
-                  >
-                    취소
-                  </CmsButton>
-                  <CmsButton variant="delete" size="large" onClick={handleUnassignConfirm}>
-                    배정 취소
-                  </CmsButton>
-                </>
-              }
-            >
-              <p>
-                [<strong>{d.instructorName}</strong>] 강사님의 선택한 기관(
-                {unassignSchoolNames.map((name, i) => (
-                  <span key={`${name}-${i}`}>
-                    [<strong>{name}</strong>]{i < unassignSchoolNames.length - 1 ? ', ' : ''}
-                  </span>
-                ))}
-                ) 배정을 취소하시겠습니까?
-              </p>
-            </ContentModal>
+              instructorNames={[d.instructorName]}
+              targetNames={unassignSchoolNames}
+              onConfirm={handleUnassignConfirm}
+            />
+            <SchoolDetailUnassignCompleteModal
+              open={unassignCompleteModal != null}
+              onClose={() => setUnassignCompleteModal(null)}
+              instructorNames={unassignCompleteModal?.instructorNames ?? []}
+              targetNames={unassignCompleteModal?.targetNames ?? []}
+              reason={unassignCompleteModal?.reason ?? ''}
+            />
 
             <ContentModal
               open={selectAssignConfirmOpen}

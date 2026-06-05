@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import {
+  shouldShowInstitutionApplicationGuidanceParagraph,
+  useInstitutionApplicationProgramBridge,
+} from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -33,8 +37,7 @@ const inlineRowStyle = {
 
 const nowrapSpanStyle = { whiteSpace: 'nowrap' as const, flexShrink: 0 as const }
 
-/** 프로그램 참여자 신청 폼 (학교) — 안내 사항 단락 (`DetailInfoForm` 격자) */
-export function ProgramApplicationFormInstitutionGuidanceParagraph() {
+function ProgramApplicationFormInstitutionGuidanceParagraphBody() {
   const [computerRoom, setComputerRoom] = useState<string>(HAS_NOT[0]?.value ?? 'yes')
   const [usbUsable, setUsbUsable] = useState<string>(USB_OPTIONS[0]?.value ?? 'usable')
   const [tabletUse, setTabletUse] = useState<string>(POSSIBLE_NOT[0]?.value ?? 'possible')
@@ -260,4 +263,13 @@ export function ProgramApplicationFormInstitutionGuidanceParagraph() {
       </DetailInfoForm.Row>
     </DetailInfoForm>
   )
+}
+
+/** 프로그램 참여자 신청 폼 (학교) — 안내 사항 단락 (`DetailInfoForm` 격자) */
+export function ProgramApplicationFormInstitutionGuidanceParagraph() {
+  const bridge = useInstitutionApplicationProgramBridge()
+  if (!shouldShowInstitutionApplicationGuidanceParagraph(bridge)) {
+    return null
+  }
+  return <ProgramApplicationFormInstitutionGuidanceParagraphBody />
 }

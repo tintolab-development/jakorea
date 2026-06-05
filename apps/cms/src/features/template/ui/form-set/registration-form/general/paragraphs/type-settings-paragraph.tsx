@@ -111,6 +111,8 @@ export function ProgramRegistrationTypeSettingsParagraph({
     onSessionRoundTypeChange(e.target.value as ProgramRegistrationSessionRoundType)
   }
 
+  const showParticipationMethod = !participantOrganization
+
   return (
     <>
       <DetailInfoForm
@@ -151,7 +153,11 @@ export function ProgramRegistrationTypeSettingsParagraph({
         </DetailInfoForm.Row>
       </DetailInfoForm>
       <DetailInfoForm
-        title="교육 형태, 참여 방식, IPS 유형 설정"
+        title={
+          showParticipationMethod
+            ? '교육 형태, 참여 방식, IPS 유형 설정'
+            : '교육 형태, IPS 유형 설정'
+        }
         hideHeader
         mode="edit"
         className="program-registration-paragraph"
@@ -174,22 +180,24 @@ export function ProgramRegistrationTypeSettingsParagraph({
                 />
               }
             />
-            <ScheduleDetailRadioRow
-              label="참여 방식"
-              value={participationScheduleDetail}
-              onChange={onParticipationScheduleDetailChange}
-              commonDetailEdit={
-                <CmsSelect
-                  inputSize="medium"
-                  withAllOption={false}
-                  placeholder="참여 방식"
-                  width={160}
-                  options={[...PROGRAM_REGISTRATION_MULTI_COMMON_PARTICIPATION_OPTIONS]}
-                  value={multiCommonParticipation || undefined}
-                  onChange={v => setMultiCommonParticipation(String(v ?? ''))}
-                />
-              }
-            />
+            {showParticipationMethod ? (
+              <ScheduleDetailRadioRow
+                label="참여 방식"
+                value={participationScheduleDetail}
+                onChange={onParticipationScheduleDetailChange}
+                commonDetailEdit={
+                  <CmsSelect
+                    inputSize="medium"
+                    withAllOption={false}
+                    placeholder="참여 방식"
+                    width={160}
+                    options={[...PROGRAM_REGISTRATION_MULTI_COMMON_PARTICIPATION_OPTIONS]}
+                    value={multiCommonParticipation || undefined}
+                    onChange={v => setMultiCommonParticipation(String(v ?? ''))}
+                  />
+                }
+              />
+            ) : null}
             <ScheduleDetailRadioRow
               label="IPS 유형"
               value={ipsScheduleDetail}
@@ -201,9 +209,10 @@ export function ProgramRegistrationTypeSettingsParagraph({
           </>
         ) : (
           <>
-            <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Row type={showParticipationMethod ? 'double' : 'single'}>
               <DetailInfoForm.Field
                 label="교육 형태"
+                fullRow={!showParticipationMethod}
                 edit={
                   <CmsRadioGroup
                     size="large"
@@ -219,20 +228,22 @@ export function ProgramRegistrationTypeSettingsParagraph({
                 }
                 view="-"
               />
-              <DetailInfoForm.Field
-                label="참여 방식"
-                edit={
-                  <CmsRadioGroup
-                    size="large"
-                    value={singleParticipation}
-                    onChange={e => setSingleParticipation(String(e.target.value))}
-                  >
-                    <CmsRadio value="individual">개인</CmsRadio>
-                    <CmsRadio value="team">팀</CmsRadio>
-                  </CmsRadioGroup>
-                }
-                view="-"
-              />
+              {showParticipationMethod ? (
+                <DetailInfoForm.Field
+                  label="참여 방식"
+                  edit={
+                    <CmsRadioGroup
+                      size="large"
+                      value={singleParticipation}
+                      onChange={e => setSingleParticipation(String(e.target.value))}
+                    >
+                      <CmsRadio value="individual">개인</CmsRadio>
+                      <CmsRadio value="team">팀</CmsRadio>
+                    </CmsRadioGroup>
+                  }
+                  view="-"
+                />
+              ) : null}
             </DetailInfoForm.Row>
             <ScheduleDetailRadioRow
               label="IPS 유형"

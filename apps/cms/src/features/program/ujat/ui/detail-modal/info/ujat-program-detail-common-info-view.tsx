@@ -19,9 +19,8 @@ import {
   PARTNER_INVOLVEMENT_OPTIONS,
   TARGET_LEVEL_LABEL,
 } from '@/features/program/shared/lib/program-detail-info-constants'
-import { StatusBadge } from '@/shared/components/status-badge'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
-import { getUjatProgramProgressDisplayStatus } from './ujat-program-info-edit'
+import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
+import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import {
   UjatHalfEducationScheduleReadonly,
   UJAT_FIRST_HALF_SCHEDULE_ROWS,
@@ -29,6 +28,7 @@ import {
 } from './ujat-half-education-schedule-readonly'
 import { UjatEducationScheduleSettingsReadonly } from './ujat-education-schedule-settings-readonly'
 import { UjatRegionCapacityReadonly } from './ujat-region-capacity-readonly'
+import { UjatInlineDividedSegments } from '../shared/ujat-inline-divided-segments'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './ujat-program-detail-common-info-view.css'
@@ -42,8 +42,7 @@ function optionLabel<T extends { value: string; label: string }>(
 }
 
 function UjatProgressStatusView({ program }: { program: Program }) {
-  const status = getUjatProgramProgressDisplayStatus(program)
-  return <StatusBadge domain="programEnrollment" status={status} variant="text" />
+  return <ProgramProgressStatusText program={program} />
 }
 
 function participantTypeSummary(program: Program): string {
@@ -54,57 +53,25 @@ function participantTypeSummary(program: Program): string {
   return level ? `${cat}, ${level}` : cat
 }
 
-function normalizeExternalUrl(url: string): string {
-  const trimmed = url.trim()
-  if (/^https?:\/\//i.test(trimmed)) return trimmed
-  return `https://${trimmed}`
-}
-
-/** 후원사명 — 클릭 시 홈페이지(데이터 연동 전: 준비 중 알림) */
-function UjatSponsorLink({
-  name,
-  homepageUrl,
-}: {
-  name: string
-  homepageUrl?: string | null
-}) {
-  const handleClick = () => {
-    const url = homepageUrl?.trim()
-    if (url) {
-      window.open(normalizeExternalUrl(url), '_blank', 'noopener,noreferrer')
-      return
-    }
-    window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
-  }
-
-  return (
-    <button
-      type="button"
-      className="ujat-program-detail-common-info-view__sponsor-link"
-      onClick={handleClick}
-    >
-      {name}
-    </button>
-  )
-}
-
 /** 기본 정보 — 스크린샷 5블록(각각 DetailInfoForm) */
 function UjatBasicInfoFiveBlocks({
   program,
   sponsorName,
-  sponsorHomepageUrl,
   v,
   operationRange,
 }: {
   program: Program
   sponsorName?: string
-  sponsorHomepageUrl?: string | null
   v: ReturnType<typeof programToDetailEditValues>
   operationRange: string
 }) {
-  const managerLine = [v.managerName, v.contactPhone].filter(Boolean).join(' | ') || '-'
   const sponsorDisplay = sponsorName?.trim() ? (
-    <UjatSponsorLink name={sponsorName.trim()} homepageUrl={sponsorHomepageUrl} />
+    <ProgramDetailSponsorLink
+      name={sponsorName.trim()}
+      sponsorId={program.sponsorId}
+      sponsorName={sponsorName.trim()}
+      sponsorManagementId={program.generalCommonInfo?.sponsorManagementId}
+    />
   ) : (
     '-'
   )
@@ -121,19 +88,17 @@ function UjatBasicInfoFiveBlocks({
           <DetailInfoForm.Field
             label="최초 등록일"
             view={
-              <>
-                {formatDate(program.createdAt)}
-                {program.createdByName ? ` | ${program.createdByName}` : null}
-              </>
+              <UjatInlineDividedSegments
+                segments={[formatDate(program.createdAt), program.createdByName]}
+              />
             }
           />
           <DetailInfoForm.Field
             label="마지막 수정일"
             view={
-              <>
-                {formatDate(program.updatedAt)}
-                {program.updatedByName ? ` | ${program.updatedByName}` : null}
-              </>
+              <UjatInlineDividedSegments
+                segments={[formatDate(program.updatedAt), program.updatedByName]}
+              />
             }
           />
         </DetailInfoForm.Row>
@@ -198,7 +163,12 @@ function UjatBasicInfoFiveBlocks({
       >
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="후원사" view={sponsorDisplay} />
-          <DetailInfoForm.Field label="후원사 담당자" view={managerLine} />
+          <DetailInfoForm.Field
+            label="후원사 담당자"
+            view={
+              <UjatInlineDividedSegments segments={[v.managerName, v.contactPhone]} />
+            }
+          />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
@@ -252,14 +222,11 @@ function UjatBasicInfoFiveBlocks({
 export interface UjatProgramDetailCommonInfoViewProps {
   program: Program
   sponsorName?: string
-  /** 후원사 홈페이지 URL — 없으면 클릭 시 준비 중 알림 */
-  sponsorHomepageUrl?: string | null
 }
 
 export function UjatProgramDetailCommonInfoView({
   program,
   sponsorName,
-  sponsorHomepageUrl,
 }: UjatProgramDetailCommonInfoViewProps) {
   const v = programToDetailEditValues(program)
   const operationRange = formatDateRange(program.startDate, program.endDate)
@@ -269,7 +236,6 @@ export function UjatProgramDetailCommonInfoView({
       <UjatBasicInfoFiveBlocks
         program={program}
         sponsorName={sponsorName}
-        sponsorHomepageUrl={sponsorHomepageUrl}
         v={v}
         operationRange={operationRange}
       />

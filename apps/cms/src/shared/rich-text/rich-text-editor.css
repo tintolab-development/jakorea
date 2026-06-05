@@ -1,0 +1,43 @@
+/**
+ * Headless 에디터 chrome — notice-register-modal 에디터 치수는 호출부 className으로 보강.
+ * @see .cursor/rules/process/admin-notice-form-modal-spec.md
+ */
+
+.rich-text-editor {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.rich-text-editor__toolbar {
+  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+}
+
+.rich-text-editor__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.rich-text-editor__body .tiptap {
+  min-height: inherit;
+  padding: 12px 16px;
+}
+
+.rich-text-editor--is-empty:first-child::before {
+  color: var(--text-placeholder, #999);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

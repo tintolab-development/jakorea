@@ -1,0 +1,9 @@
+.recruit-form-instructor-info-paragraph__forms {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.recruit-form-instructor-info-paragraph__forms .detail-info-form {
+  margin: 0;
+}

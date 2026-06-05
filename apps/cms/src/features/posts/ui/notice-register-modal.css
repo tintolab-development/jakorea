@@ -172,10 +172,10 @@
   box-sizing: border-box;
 }
 
-.notice-register-modal__editor-host .toastui-editor {
-  border: 1px solid #e0e0e0;
+.notice-register-modal__editor-host .rich-text-editor {
+  height: 100%;
+  min-height: inherit;
   border-radius: 0;
-  overflow: hidden;
 }
 
 /* 첨부: 좌측 th(라벨) + FileSelectField — 하단 선은 자식에서 맞춤 */

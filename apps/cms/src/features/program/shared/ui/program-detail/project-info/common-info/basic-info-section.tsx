@@ -18,6 +18,7 @@ import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
+import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import {
   formatDate,
   formatDateRange,
@@ -31,17 +32,12 @@ import {
   IPS_OPTIONS,
   PROGRAM_CATEGORY_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
-import { getProgramProgressPhaseDisplay } from '@/shared/constants/status'
+import { ProgramLifecycleEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 
 function ProgramProgressReadonlyCell({ status }: { status: ProgramLifecycleStatus }) {
-  const { label, color } = getProgramProgressPhaseDisplay(status)
-  return (
-    <span className="program-detail-info-tab__lifecycle-status-text" style={{ color }}>
-      {label}
-    </span>
-  )
+  return <ProgramLifecycleEnrollmentStatusText lifecycleStatus={status} />
 }
 
 export interface BasicInfoSectionProps {
@@ -249,7 +245,17 @@ export function BasicInfoSection({
         <DetailInfoForm.Field
           label="후원사"
           required
-          view={<span>{sponsorName ?? '-'}</span>}
+          view={
+            sponsorName ? (
+              <ProgramDetailSponsorLink
+                name={sponsorName}
+                sponsorId={program.sponsorId}
+                sponsorName={sponsorName}
+              />
+            ) : (
+              '-'
+            )
+          }
           edit={
             <>
               <Controller

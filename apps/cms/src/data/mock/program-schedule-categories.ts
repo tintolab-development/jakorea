@@ -8,10 +8,9 @@ import type { Program } from '@/types/domain'
 import type { User } from '@/types/user'
 import { filterProgramsByACL } from '@/features/permission-request/lib/program-acl'
 import { getEducationPrograms } from './education-programs'
-import { getEconomyPrograms } from './economy-programs'
 import { mockUjatElementaryListPrograms } from './ujat-programs-list-mock'
 
-export type ProgramScheduleKind = 'general' | 'economy' | 'ujat' | 'gemini'
+export type ProgramScheduleKind = 'general' | 'company_school' | 'ujat' | 'gemini'
 
 export function isGeminiProgram(program: Program): boolean {
   const t = `${program.title ?? ''}${program.mainTitle ?? ''}`
@@ -35,12 +34,12 @@ export function getUjatPrograms(): Program[] {
 export const PROGRAM_SCHEDULE_WIDGET_KEYS: Record<
   ProgramScheduleKind,
   | 'program-schedule-general-widget'
-  | 'program-schedule-economy-widget'
+  | 'program-schedule-company-school-widget'
   | 'program-schedule-ujat-widget'
   | 'program-schedule-gemini-widget'
 > = {
   general: 'program-schedule-general-widget',
-  economy: 'program-schedule-economy-widget',
+  company_school: 'program-schedule-company-school-widget',
   ujat: 'program-schedule-ujat-widget',
   gemini: 'program-schedule-gemini-widget',
 }
@@ -52,19 +51,11 @@ export function getProgramScheduleKindsForAdminUser(
   if (!user || user.role !== 'ADMIN') {
     return []
   }
+  // TODO(dashboard): 1사1교·UJAT·Gemini 일정 위젯은 추후 단계별 노출
   if (user.adminLevel === 'MASTER') {
-    return ['general', 'economy', 'ujat', 'gemini']
+    return ['general']
   }
 
   const general = filterProgramsByACL(getGeneralEducationPrograms(), user)
-  const economy = filterProgramsByACL(getEconomyPrograms(), user)
-  const ujat = filterProgramsByACL(getUjatPrograms(), user)
-  const gemini = filterProgramsByACL(getGeminiPrograms(), user)
-
-  const out: ProgramScheduleKind[] = []
-  if (general.length > 0) out.push('general')
-  if (economy.length > 0) out.push('economy')
-  if (ujat.length > 0) out.push('ujat')
-  if (gemini.length > 0) out.push('gemini')
-  return out
+  return general.length > 0 ? ['general'] : []
 }

@@ -413,6 +413,7 @@ export function HorizontalTableParagraphBody({
   ujatProgramApplicationGradeInfo,
   ujatProgramApplicationGradeClassTime,
   applicantRecruitFormInstitution,
+  showInstitutionApplicationLimits,
   ujatRecruitFormInstitution,
   applicantRecruitFormIndividual,
   recruitFormInstructor,
@@ -454,6 +455,7 @@ export function HorizontalTableParagraphBody({
   ujatProgramApplicationGradeClassTime?: UjatProgramApplicationGradeClassTimeParagraphOptions
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   applicantRecruitFormInstitution?: boolean
+  showInstitutionApplicationLimits?: boolean
   /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatRecruitFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
@@ -520,7 +522,8 @@ export function HorizontalTableParagraphBody({
 
   const applicantRecruitFormInstitutionBody = renderApplicantRecruitFormInstitutionParagraphBody(
     p,
-    applicantRecruitFormInstitution
+    applicantRecruitFormInstitution,
+    { showInstitutionApplicationLimits }
   )
   if (applicantRecruitFormInstitutionBody != null) return applicantRecruitFormInstitutionBody
 
@@ -625,10 +628,12 @@ export function HorizontalTableParagraphBody({
     activeSelection?.area === 'body' && activeSelection.row === rowIdx
 
   const toggleHeaderRow = () => {
+    if (!canvasInteractive) return
     setSelection(activeSelection?.area === 'header' ? null : { area: 'header' })
   }
 
   const toggleBodyCellSelection = (rowIdx: number, colIdx: number) => {
+    if (!canvasInteractive) return
     if (activeSelection?.area === 'body' && activeSelection.row === rowIdx) {
       const curCol = Math.min(Math.max(activeSelection.col ?? 0, 0), colCount - 1)
       if (curCol === colIdx) {
@@ -640,6 +645,7 @@ export function HorizontalTableParagraphBody({
   }
 
   const focusBodyCell = (rowIdx: number, colIdx: number) => {
+    if (!canvasInteractive) return
     setSelection({ area: 'body', row: rowIdx, col: colIdx })
   }
 
@@ -662,7 +668,8 @@ export function HorizontalTableParagraphBody({
 
   const isField = p.tableFlavor === 'field'
   const canvasInteractive = tableCanvasInteractive
-  const effectiveEditMode = isEditMode && canvasInteractive
+  /** 셀·하단 동의 입력은 `isEditMode`, 격자 행 선택·민트 강조는 `canvasInteractive`로 분리 */
+  const effectiveEditMode = isEditMode
   const bottomConsentInteractive = effectiveEditMode || bottomConsentPreviewInAuthoring
 
   const isAgreementNoticeTable = p.id === 'agreement-notice-table'
@@ -731,7 +738,9 @@ export function HorizontalTableParagraphBody({
                       value={h ?? ''}
                       placeholder={ph}
                       onChange={e => setHeaderValue(i, e.target.value)}
-                      onFocus={() => setSelection({ area: 'header' })}
+                      onFocus={() => {
+                        if (canvasInteractive) setSelection({ area: 'header' })
+                      }}
                       onKeyDown={e => {
                         if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
                       }}

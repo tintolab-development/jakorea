@@ -45,18 +45,21 @@
   max-width: 100%;
 }
 
-.ujat-volunteer-add-registration__section-header {
+.ujat-volunteer-add-registration__section > .detail-info-form__header.form-paragraph-section-header {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.ujat-volunteer-add-registration__section-header .info-section-title {
+.ujat-volunteer-add-registration__section
+  > .detail-info-form__header.form-paragraph-section-header
+  .detail-info-form__title {
   margin: 0;
 }
 
-.ujat-volunteer-add-registration__section-header
-  .info-section-title
+.ujat-volunteer-add-registration__section
+  > .detail-info-form__header.form-paragraph-section-header
+  .detail-info-form__title
   .detail-info-form__field-required {
   margin-left: 2px;
 }

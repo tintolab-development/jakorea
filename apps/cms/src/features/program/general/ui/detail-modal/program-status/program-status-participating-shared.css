@@ -146,14 +146,21 @@
 .program-status-participating__calendar-wrap,
 .participating-institutions-section__calendar-wrap {
   width: 100%;
-  overflow-x: auto;
+  min-width: 0;
+  overflow: visible;
   min-height: 900px;
 }
 
 /* TODO 추후 삭제 */
-/* 목록 상단: 제목 + (총 N건) + 우측 버튼 — 풀페이지 참여 섹션·구 program-progress-tab 테이블 헤더 통합 */
+/* 목록 상단: 제목 + (총 N건) + 우측 버튼 — FilterTableLayout·index.css 공통 클래스 + program-progress-tab 레거시 */
+.participating-institutions-section__below-divider > .table-header-actions,
+.payment-orders-page__content-wrapper .table-header-actions {
+  gap: var(--spacing-16);
+  margin-bottom: var(--spacing-16);
+  width: 100%;
+}
+
 .program-status-participating__table-header,
-.participating-institutions-section__table-header,
 .program-progress-tab__table-header {
   display: flex;
   align-items: center;
@@ -164,7 +171,6 @@
 }
 
 .program-status-participating__table-heading,
-.participating-institutions-section__table-heading,
 .program-progress-tab__table-heading {
   display: flex;
   align-items: baseline;
@@ -172,7 +178,6 @@
 }
 
 .program-status-participating__table-title,
-.participating-institutions-section__table-title,
 .program-progress-tab__table-title {
   color: var(--color-text-primary, #3d3d3d);
   font-family: var(--font-family-primary, Pretendard), sans-serif;
@@ -183,7 +188,6 @@
 }
 
 .program-status-participating__table-description,
-.participating-institutions-section__table-description,
 .program-progress-tab__table-description {
   color: var(--default-BK, #3d3d3d);
   font-size: 16px;
@@ -193,7 +197,6 @@
 }
 
 .program-status-participating__table-actions,
-.participating-institutions-section__table-actions,
 .program-progress-tab__table-actions {
   display: flex;
   align-items: center;
@@ -272,16 +275,7 @@
 }
 
 /* 정산관리 페이지 공통 컨테이너/헤더 레이아웃 */
-.payment-orders-page .participating-institutions-section__table-heading {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-.payment-orders-page .participating-institutions-section__table-title,
-.payment-orders-page .participating-institutions-section__table-description {
+.payment-orders-page .table-description {
   margin: 0;
   line-height: 1.5;
 }
@@ -312,7 +306,7 @@
   overflow: visible;
 }
 
-.payment-orders-page__content-wrapper .participating-institutions-section__table-header {
+.payment-orders-page__content-wrapper .table-header-actions {
   flex-shrink: 0;
 }
 

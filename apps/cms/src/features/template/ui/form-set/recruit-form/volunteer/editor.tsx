@@ -13,37 +13,35 @@ export function RecruitFormVolunteerEditorLeftColumn({
   vm: ProgramParticipantApplicationEditorViewModel
 }) {
   return (
-    <div className="recruit-form-volunteer recruit-form-volunteer--editor-left">
-      <FormEditorLeftPanel
-        paragraphs={vm.draft.paragraphs}
-        titleNumbering={vm.draft.formSettings.titleNumbering}
-        selectedCardId={vm.activeParagraphId}
-        onSelectCard={vm.handleSelectCard}
-        onReorderMiddle={vm.onReorderMiddle}
-        updateParagraph={vm.updateParagraph}
-        editorKind="horizontal_table"
-        layout="three"
-        horizontalTableRowSelectionsByParagraphId={vm.horizontalTableRowSelectionsByParagraphId}
-        onHorizontalTableRowSelectionChange={vm.onHorizontalTableRowSelectionChange}
-        verticalTableBodyRowSelection={vm.verticalTableBodyRowSelection}
-        onVerticalTableBodyRowSelectionChange={vm.onVerticalTableBodyRowSelectionChange}
-        middleParagraphActions={vm.middleParagraphActions}
-        singleItemListActiveItemId={vm.singleItemListActiveItemId}
-        onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
-        structureLockedParagraphIds={vm.structureLockedParagraphIds}
-        paragraphBodyOptions={{
-          structureLockedParagraphIds: vm.structureLockedParagraphIds,
-          structureLockedAuthoringChoicePreview: true,
-          recruitFormVolunteer: true,
-          programApplicationFormVolunteer: {
-            ...vm.programApplicationFormVolunteerOptions,
-            enabled: true,
-            isTemplateAuthoringMode: true,
-          },
-        }}
-        headingDescriptionExtraClassName="paragraph-input-explanation-title"
-      />
-    </div>
+    <FormEditorLeftPanel
+      paragraphs={vm.draft.paragraphs}
+      titleNumbering={vm.draft.formSettings.titleNumbering}
+      selectedCardId={vm.activeParagraphId}
+      onSelectCard={vm.handleSelectCard}
+      onReorderMiddle={vm.onReorderMiddle}
+      updateParagraph={vm.updateParagraph}
+      editorKind="horizontal_table"
+      layout="three"
+      horizontalTableRowSelectionsByParagraphId={vm.horizontalTableRowSelectionsByParagraphId}
+      onHorizontalTableRowSelectionChange={vm.onHorizontalTableRowSelectionChange}
+      verticalTableBodyRowSelection={vm.verticalTableBodyRowSelection}
+      onVerticalTableBodyRowSelectionChange={vm.onVerticalTableBodyRowSelectionChange}
+      middleParagraphActions={vm.middleParagraphActions}
+      singleItemListActiveItemId={vm.singleItemListActiveItemId}
+      onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
+      structureLockedParagraphIds={vm.structureLockedParagraphIds}
+      paragraphBodyOptions={{
+        structureLockedParagraphIds: vm.structureLockedParagraphIds,
+        structureLockedAuthoringChoicePreview: true,
+        recruitFormVolunteer: true,
+        programApplicationFormVolunteer: {
+          ...vm.programApplicationFormVolunteerOptions,
+          enabled: true,
+          isTemplateAuthoringMode: true,
+        },
+      }}
+      headingDescriptionExtraClassName="paragraph-input-explanation-title"
+    />
   )
 }
 

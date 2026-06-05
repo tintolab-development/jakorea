@@ -17,10 +17,16 @@ import {
   isProgramOriginal,
   type CalendarItem,
 } from '../lib/calendar-helpers'
+import {
+  buildTimedItemGroupLayouts,
+  buildWeekTimeGridGroupStyle,
+  isAllDayScheduleSpan,
+  readTimesOrAllDaySpan,
+  resolveWeekTimeGridSubtext,
+  WEEK_TIME_GRID_HOUR_PX,
+  WEEK_TIME_GRID_TOTAL_PX,
+} from '../lib/week-time-grid-layout'
 
-const WEEK_TIME_GRID_HOURS = 24
-const WEEK_TIME_GRID_HOUR_PX = 54
-const WEEK_TIME_GRID_TOTAL_PX = WEEK_TIME_GRID_HOUR_PX * WEEK_TIME_GRID_HOURS
 const WEEK_HEADER_WEEKDAY_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
 
 const WEEK_TIME_GRID_HOUR_ROWS: readonly { period: '오전' | '오후'; hour: string }[] = (() => {
@@ -34,18 +40,6 @@ const WEEK_TIME_GRID_HOUR_ROWS: readonly { period: '오전' | '오후'; hour: st
 
 function formatWeekHeaderDayLabel(date: Dayjs): string {
   return String(date.date())
-}
-
-function parseHHmmToMinutes(s: string | undefined): number | null {
-  if (!s?.trim()) return null
-  const t = s.trim()
-  if (t === '24:00') return 24 * 60
-  const m = /^(\d{1,2}):(\d{2})$/.exec(t)
-  if (!m) return null
-  const h = parseInt(m[1], 10)
-  const min = parseInt(m[2], 10)
-  if (h < 0 || h > 23 || min < 0 || min > 59) return null
-  return h * 60 + min
 }
 
 function readStartEndFromUnknown(original: unknown): { startTime?: string; endTime?: string } {
@@ -103,111 +97,30 @@ function weekGridSurfaceFromOriginal(
   )
 }
 
-type TimedItemSpan = {
-  item: CalendarItem
-  startM: number
-  endM: number
-}
-
-function buildTimedItemSpans(items: CalendarItem[]): TimedItemSpan[] {
-  const spans: TimedItemSpan[] = []
-  for (const item of items) {
-    const { startTime, endTime } = readTimesFromCalendarItem(item)
-    const startM = parseHHmmToMinutes(startTime)
-    if (startM == null) continue
-    const endRaw = parseHHmmToMinutes(endTime)
-    let endM = endRaw != null && endRaw > startM ? endRaw : startM + 60
-    endM = Math.min(endM, 24 * 60)
-    spans.push({ item, startM, endM })
-  }
-  return spans
-}
-
-type TimedItemGroupLayout = {
-  items: CalendarItem[]
-  representative: CalendarItem
-  startM: number
-  endM: number
-  top: number
-  height: number
-}
-
-function pickRepresentativeSpan(cluster: TimedItemSpan[]): TimedItemSpan {
-  return [...cluster].sort((a, b) => {
-    const durA = a.endM - a.startM
-    const durB = b.endM - b.startM
-    if (durA !== durB) return durB - durA
-    if (a.startM !== b.startM) return a.startM - b.startM
-    return String(a.item.id).localeCompare(String(b.item.id))
-  })[0]
-}
-
-function buildTimedItemGroupLayouts(items: CalendarItem[], hourPx: number): TimedItemGroupLayout[] {
-  const spans = buildTimedItemSpans(items).sort(
-    (a, b) =>
-      a.startM - b.startM || b.endM - a.endM || String(a.item.id).localeCompare(String(b.item.id))
-  )
-  if (spans.length === 0) return []
-
-  const groups: TimedItemGroupLayout[] = []
-  let cluster: TimedItemSpan[] = [spans[0]]
-  let clusterMaxEnd = spans[0].endM
-
-  for (let i = 1; i < spans.length; i++) {
-    const sp = spans[i]
-    if (sp.startM < clusterMaxEnd) {
-      cluster.push(sp)
-      clusterMaxEnd = Math.max(clusterMaxEnd, sp.endM)
-      continue
-    }
-
-    const rep = pickRepresentativeSpan(cluster)
-    const clusterStart = Math.min(...cluster.map(c => c.startM))
-    const clusterEnd = Math.max(...cluster.map(c => c.endM))
-    groups.push({
-      items: cluster.map(c => c.item),
-      representative: rep.item,
-      startM: clusterStart,
-      endM: clusterEnd,
-      top: (clusterStart / 60) * hourPx,
-      height: Math.max(((clusterEnd - clusterStart) / 60) * hourPx, 28),
-    })
-
-    cluster = [sp]
-    clusterMaxEnd = sp.endM
-  }
-
-  const rep = pickRepresentativeSpan(cluster)
-  const clusterStart = Math.min(...cluster.map(c => c.startM))
-  const clusterEnd = Math.max(...cluster.map(c => c.endM))
-  groups.push({
-    items: cluster.map(c => c.item),
-    representative: rep.item,
-    startM: clusterStart,
-    endM: clusterEnd,
-    top: (clusterStart / 60) * hourPx,
-    height: Math.max(((clusterEnd - clusterStart) / 60) * hourPx, 28),
-  })
-
-  return groups
-}
-
-function groupedTimedItemText(group: TimedItemGroupLayout): {
-  title: string
-  overflowText?: string
-} {
-  const title = String(group.representative.title ?? '')
-  if (group.items.length <= 1) return { title }
-  return {
-    title,
-    overflowText: `외 ${group.items.length - 1}개의 항목`,
-  }
-}
-
 function weekTimeGridItemLabel(item: CalendarItem): string {
   const custom = timeGridLabelFromOriginal(item)
   if (custom) return custom
   return String(item.title ?? '')
+}
+
+/** 교육·신청 `CalendarItem` 중 프로그램당 1건만(교육 우선) — 종일·집약 라벨 정확도 */
+function dedupeProgramWeekGridItems(dayItems: CalendarItem[]): CalendarItem[] {
+  const byProgramId = new Map<string, CalendarItem>()
+  const nonProgram: CalendarItem[] = []
+
+  for (const item of dayItems) {
+    if (!isProgramOriginal(item.original)) {
+      nonProgram.push(item)
+      continue
+    }
+    const programId = String(item.original.id)
+    const prev = byProgramId.get(programId)
+    if (!prev || String(item.id).endsWith('__edu')) {
+      byProgramId.set(programId, item)
+    }
+  }
+
+  return [...nonProgram, ...byProgramId.values()]
 }
 
 function weekTimeGridItemColors(
@@ -235,6 +148,36 @@ function weekProgramItemColor(
     return colorMap.get(String(item.original.id)) ?? SCHEDULE_COLORS[0]
   }
   return colorMap.get(item.id) ?? SCHEDULE_COLORS[0]
+}
+
+function WeekTimeGridEventText({
+  title,
+  subtext,
+  textColor,
+}: {
+  title: string
+  subtext?: string
+  textColor: string
+}) {
+  if (subtext) {
+    return (
+      <span
+        className="calendar-event-title calendar-week-time-grid__event-text"
+        style={{ color: textColor }}
+      >
+        <span>{title}</span>
+        <span className="calendar-week-time-grid__event-subtext">{subtext}</span>
+      </span>
+    )
+  }
+  return (
+    <span
+      className="calendar-event-title calendar-week-time-grid__event-text"
+      style={{ color: textColor }}
+    >
+      {title}
+    </span>
+  )
 }
 
 function withScheduleOverlay(
@@ -347,13 +290,9 @@ export function WeekView({
                   eventsConfig.overrideEventColorMap != null
                     ? eventsConfig.overrideEventColorMap(dayEvents)
                     : buildResolvedColorMap(dayEvents)
-                const allDayItems = dayEvents.filter(
-                  e => parseHHmmToMinutes(readTimesFromCalendarItem(e).startTime) == null
+                const timedGroups = buildTimedItemGroupLayouts(dayEvents, hourPx, item =>
+                  readTimesOrAllDaySpan(item, readTimesFromCalendarItem)
                 )
-                const timedItems = dayEvents.filter(
-                  e => parseHHmmToMinutes(readTimesFromCalendarItem(e).startTime) != null
-                )
-                const timedGroups = buildTimedItemGroupLayouts(timedItems, hourPx)
 
                 const fullDayPreview =
                   eventsConfig.previewTooltipContent != null
@@ -380,74 +319,32 @@ export function WeekView({
                         className="calendar-week-time-grid__column-inner"
                         style={{ height: totalPx }}
                       >
-                        {allDayItems.map((item, idx) => {
+                        {timedGroups.map((group, idx) => {
+                          const item = group.representative
                           const displayTitle = weekTimeGridItemLabel(item)
-                          const isSelected = eventsConfig.selectedRowKeys.includes(item.id)
+                          const subtext = resolveWeekTimeGridSubtext(
+                            item,
+                            group.items.length,
+                            readTimesFromCalendarItem
+                          )
+                          const isAllDay = isAllDayScheduleSpan(item, readTimesFromCalendarItem)
+                          const isSelected = group.items.some(grouped =>
+                            eventsConfig.selectedRowKeys.includes(grouped.id)
+                          )
                           const colors = weekTimeGridItemColors(
                             item,
                             eventsConfig.resolveEventColors,
                             resolvedDayColors
                           )
                           const pos: CSSProperties & Record<string, string | number> = {
-                            position: 'absolute',
-                            top: idx * 36,
-                            left: 0,
-                            right: 0,
-                            height: 32,
-                            zIndex: 10 + idx,
-                            '--calendar-week-event-overlay-bg': colors.bg,
-                            border: isSelected ? 'none' : `1px solid ${colors.border}`,
-                          }
-                          return (
-                            <div key={String(item.id)} className="calendar-event-tooltip-trigger">
-                              <div
-                                className={[
-                                  'calendar-week-time-grid__event',
-                                  'calendar-event',
-                                  isSelected ? 'calendar-event--selected' : '',
-                                ]
-                                  .filter(Boolean)
-                                  .join(' ')}
-                                style={pos}
-                                onClick={e => e.stopPropagation()}
-                              >
-                                <span
-                                  className="calendar-event-title calendar-week-time-grid__event-text"
-                                  style={{ color: colors.text }}
-                                >
-                                  {displayTitle}
-                                </span>
-                              </div>
-                            </div>
-                          )
-                        })}
-                        {timedGroups.map((group, idx) => {
-                          const it = group.representative
-                          const groupedText = groupedTimedItemText(group)
-                          const displayTitle =
-                            group.items.length > 1 ? groupedText.title : weekTimeGridItemLabel(it)
-                          const isSelected = group.items.some(grouped =>
-                            eventsConfig.selectedRowKeys.includes(grouped.id)
-                          )
-                          const colors = weekTimeGridItemColors(
-                            it,
-                            eventsConfig.resolveEventColors,
-                            resolvedDayColors
-                          )
-                          const pos: CSSProperties & Record<string, string | number> = {
-                            position: 'absolute',
-                            top: group.top,
-                            left: 0,
-                            right: 0,
-                            height: group.height,
-                            minHeight: 28,
+                            ...buildWeekTimeGridGroupStyle(group),
                             zIndex: 20 + idx,
                             '--calendar-week-event-overlay-bg': colors.bg,
                             border: isSelected ? 'none' : `1px solid ${colors.border}`,
                           }
                           return (
                             <div
-                              key={`${String(it.id)}-${group.startM}-${group.endM}-${group.items.length}`}
+                              key={`${String(item.id)}-${group.startM}-${group.endM}-${group.items.length}`}
                               className="calendar-event-tooltip-trigger"
                             >
                               <div
@@ -455,6 +352,7 @@ export function WeekView({
                                   'calendar-week-time-grid__event',
                                   'calendar-event',
                                   'calendar-week-time-grid__event--timed',
+                                  isAllDay ? 'calendar-week-time-grid__event--all-day' : '',
                                   isSelected ? 'calendar-event--selected' : '',
                                 ]
                                   .filter(Boolean)
@@ -462,24 +360,11 @@ export function WeekView({
                                 style={pos}
                                 onClick={e => e.stopPropagation()}
                               >
-                                {group.items.length > 1 ? (
-                                  <span
-                                    className="calendar-event-title calendar-week-time-grid__event-text"
-                                    style={{ color: colors.text }}
-                                  >
-                                    <span>{displayTitle}</span>
-                                    <span className="calendar-week-time-grid__event-subtext">
-                                      {groupedText.overflowText}
-                                    </span>
-                                  </span>
-                                ) : (
-                                  <span
-                                    className="calendar-event-title calendar-week-time-grid__event-text"
-                                    style={{ color: colors.text }}
-                                  >
-                                    {displayTitle}
-                                  </span>
-                                )}
+                                <WeekTimeGridEventText
+                                  title={displayTitle}
+                                  subtext={subtext}
+                                  textColor={colors.text}
+                                />
                               </div>
                             </div>
                           )
@@ -490,13 +375,10 @@ export function WeekView({
                 )
               }
 
-              const untimedItems = dayItems.filter(
-                it => parseHHmmToMinutes(readTimesFromCalendarItem(it).startTime) == null
+              const gridDayItems = dedupeProgramWeekGridItems(dayItems)
+              const timedGroups = buildTimedItemGroupLayouts(gridDayItems, hourPx, item =>
+                readTimesOrAllDaySpan(item, readTimesFromCalendarItem)
               )
-              const timedItems = dayItems.filter(
-                it => parseHHmmToMinutes(readTimesFromCalendarItem(it).startTime) != null
-              )
-              const timedGroups = buildTimedItemGroupLayouts(timedItems, hourPx)
 
               return (
                 <div
@@ -509,76 +391,20 @@ export function WeekView({
                     className="calendar-week-time-grid__column-inner"
                     style={{ height: totalPx }}
                   >
-                    {untimedItems.map((item, idx) => {
-                      const colors = weekProgramItemColor(item, colorMap)
-                      const preview = isProgramOriginal(item.original) ? (
-                        <CalendarCellSchedulePreview
-                          date={date}
-                          items={[item.original]}
-                          colorMap={colorMap}
-                        />
-                      ) : (
-                        <div className="program-preview">
-                          <div className="program-preview-item program-preview-item--stack">
-                            <span
-                              className="program-preview-item__title"
-                              style={{ color: colors.text }}
-                            >
-                              {weekTimeGridItemLabel(item)}
-                            </span>
-                          </div>
-                        </div>
-                      )
-                      const pos: CSSProperties & Record<string, string | number> = {
-                        position: 'absolute',
-                        top: idx * 36,
-                        left: 0,
-                        right: 0,
-                        height: 32,
-                        zIndex: 10 + idx,
-                        '--calendar-week-event-overlay-bg': colors.bg,
-                        border: `1px solid ${colors.border}`,
-                      }
-                      return (
-                        <Fragment key={String(item.id)}>
-                          {withScheduleOverlay(
-                            <div className="calendar-event-tooltip-trigger">
-                              <div
-                                className="calendar-week-time-grid__event calendar-event"
-                                style={pos}
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  if (isProgramOriginal(item.original)) {
-                                    onProgramClick?.(item.original)
-                                  }
-                                }}
-                              >
-                                <span
-                                  className="calendar-event-title calendar-week-time-grid__event-text"
-                                  style={{ color: colors.text }}
-                                >
-                                  {item.title ?? weekTimeGridItemLabel(item)}
-                                </span>
-                              </div>
-                            </div>,
-                            true,
-                            preview,
-                            overlayProps
-                          )}
-                        </Fragment>
-                      )
-                    })}
                     {timedGroups.map((group, idx) => {
                       const item = group.representative
                       const colors = weekProgramItemColor(item, colorMap)
                       const groupedPrograms = group.items
                         .map(it => (isProgramOriginal(it.original) ? it.original : null))
                         .filter((p): p is Program => p != null)
+                      const uniquePrograms = Array.from(
+                        new Map(groupedPrograms.map(p => [String(p.id), p])).values()
+                      )
                       const preview =
-                        groupedPrograms.length > 0 ? (
+                        uniquePrograms.length > 0 ? (
                           <CalendarCellSchedulePreview
                             date={date}
-                            items={groupedPrograms}
+                            items={uniquePrograms}
                             colorMap={colorMap}
                           />
                         ) : (
@@ -588,24 +414,24 @@ export function WeekView({
                                 className="program-preview-item__title"
                                 style={{ color: colors.text }}
                               >
-                                {group.items.length > 1
-                                  ? groupedTimedItemText(group).title
-                                  : weekTimeGridItemLabel(item)}
+                                {weekTimeGridItemLabel(item)}
                               </span>
                             </div>
                           </div>
                         )
                       const pos: CSSProperties & Record<string, string | number> = {
-                        position: 'absolute',
-                        top: group.top,
-                        left: 0,
-                        right: 0,
-                        height: group.height,
-                        minHeight: 28,
+                        ...buildWeekTimeGridGroupStyle(group),
                         zIndex: 20 + idx,
                         '--calendar-week-event-overlay-bg': colors.bg,
                         border: `1px solid ${colors.border}`,
                       }
+                      const displayTitle = item.title ?? weekTimeGridItemLabel(item)
+                      const subtext = resolveWeekTimeGridSubtext(
+                        item,
+                        group.items.length,
+                        readTimesFromCalendarItem
+                      )
+                      const isAllDay = isAllDayScheduleSpan(item, readTimesFromCalendarItem)
                       return (
                         <Fragment
                           key={`${String(item.id)}-${group.startM}-${group.endM}-${group.items.length}`}
@@ -617,34 +443,26 @@ export function WeekView({
                                   'calendar-week-time-grid__event',
                                   'calendar-event',
                                   'calendar-week-time-grid__event--timed',
+                                  isAllDay ? 'calendar-week-time-grid__event--all-day' : '',
                                 ]
                                   .filter(Boolean)
                                   .join(' ')}
                                 style={pos}
                                 onClick={e => {
                                   e.stopPropagation()
-                                  if (groupedPrograms.length > 0) {
-                                    onProgramClick?.(groupedPrograms[0])
+                                  if (uniquePrograms.length > 0) {
+                                    onProgramClick?.(uniquePrograms[0])
                                     return
                                   }
                                   if (isProgramOriginal(item.original))
                                     onProgramClick?.(item.original)
                                 }}
                               >
-                                <span className="calendar-event-title calendar-week-time-grid__event-text">
-                                  {group.items.length > 1 ? (
-                                    <>
-                                      <span className="calendar-week-time-grid__event-text">
-                                        {groupedTimedItemText(group).title}
-                                      </span>
-                                      <span className="calendar-week-time-grid__event-subtext">
-                                        {groupedTimedItemText(group).overflowText}
-                                      </span>
-                                    </>
-                                  ) : (
-                                    (item.title ?? weekTimeGridItemLabel(item))
-                                  )}
-                                </span>
+                                <WeekTimeGridEventText
+                                  title={displayTitle}
+                                  subtext={subtext}
+                                  textColor={colors.text}
+                                />
                               </div>
                             </div>,
                             true,

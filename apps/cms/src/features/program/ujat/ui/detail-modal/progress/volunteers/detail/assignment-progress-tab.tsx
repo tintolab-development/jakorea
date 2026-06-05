@@ -324,6 +324,7 @@ export const UjatEducationProgressVolunteerAssignmentProgressTab = forwardRef<
         <h3 className="program-detail-info-tab__section-title">교육 배정 및 진행 현황</h3>
         <UjatEducationProgressVolunteerAssignmentTable
           initialRows={rows}
+          volunteerName={volunteerName}
           selectedRowKeys={selectedRowKeys}
           onSelectedRowKeysChange={setSelectedRowKeys}
         />

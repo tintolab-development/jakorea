@@ -91,7 +91,7 @@
 /* 교통비: ModalSpecTable 산정 기준 단위 — 거리 숫자 인풋 120px */
 .settlement-item-setting-detail-modal--transport
   .modal-spec-table__input-wrap--transport-km
-  .app-input__control {
+  .cms-input__control {
   width: 120px !important;
   min-width: 120px !important;
   max-width: 120px !important;
@@ -101,7 +101,7 @@
 /* 숙박비: 산정 기준 단위(일) 숫자 인풋 120px */
 .settlement-item-setting-detail-modal--lodging
   .modal-spec-table__input-wrap--lodging-basis-days
-  .app-input__control {
+  .cms-input__control {
   width: 120px !important;
   min-width: 120px !important;
   max-width: 120px !important;
@@ -111,7 +111,7 @@
 /* 식사비: 산정 기준 단위(시간) 숫자 인풋 120px */
 .settlement-item-setting-detail-modal--meal
   .modal-spec-table__input-wrap--meal-basis-hours
-  .app-input__control {
+  .cms-input__control {
   width: 120px !important;
   min-width: 120px !important;
   max-width: 120px !important;
@@ -121,7 +121,7 @@
 /* 자원봉사자 활동비: 산정 기준 단위(시간) 숫자 인풋 120px */
 .settlement-item-setting-detail-modal--volunteer-activity
   .modal-spec-table__input-wrap--volunteer-activity-basis-hours
-  .app-input__control {
+  .cms-input__control {
   width: 120px !important;
   min-width: 120px !important;
   max-width: 120px !important;
@@ -131,7 +131,7 @@
 /* 회의참석비: 산정 기준 단위(시간) 숫자 인풋 120px */
 .settlement-item-setting-detail-modal--meeting-attendance
   .modal-spec-table__input-wrap--meeting-attendance-hours
-  .app-input__control {
+  .cms-input__control {
   width: 120px !important;
   min-width: 120px !important;
   max-width: 120px !important;
@@ -632,7 +632,7 @@
 }
 
 /* 최대 한도 금액 — 접미사「원」 (스펙: 14px / 500 / 150%) */
-.settlement-item-setting-detail-modal__fee-col .app-input__suffix {
+.settlement-item-setting-detail-modal__fee-col .cms-input .ant-input-suffix {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 14px;

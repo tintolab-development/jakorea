@@ -4,15 +4,16 @@
 import { useMemo, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import {
+  EducationSchedulePreviewLines,
+  EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER,
+} from '@/features/template/ui/shared/education-schedule-preview-lines'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 type EducationScheduleMode = 'date' | 'period'
-
-const EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER =
-  '교육 진행 일정을 선택해 주세요. (해당 란에는 선택한 날짜가 노출됩니다.)'
 
 function isValidDayjs(d: Dayjs | null | undefined): d is Dayjs {
   return d != null && d.isValid()
@@ -23,34 +24,20 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph() {
   const [singleDate, setSingleDate] = useState<Dayjs | null>(null)
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null])
 
-  const educationSchedulePreview = useMemo(() => {
+  const previewLines = useMemo((): string[] => {
     if (scheduleMode === 'period') {
       const [start, end] = dateRange
       if (isValidDayjs(start) && isValidDayjs(end)) {
-        return (
-          <span className="detail-info-form--text nowrap">
-            {formatAppDatepickerDisplay(start)} ~ {formatAppDatepickerDisplay(end)}
-          </span>
-        )
+        return [`${formatAppDatepickerDisplay(start)} ~ ${formatAppDatepickerDisplay(end)}`]
       }
-      return (
-        <span className="program-registration-paragraph__schedule-preview-placeholder">
-          {EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER}
-        </span>
-      )
+      return []
     }
 
     if (isValidDayjs(singleDate)) {
-      return (
-        <span className="detail-info-form--text">{formatAppDatepickerDisplay(singleDate)}</span>
-      )
+      return [formatAppDatepickerDisplay(singleDate)]
     }
 
-    return (
-      <span className="program-registration-paragraph__schedule-preview-placeholder">
-        {EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER}
-      </span>
-    )
+    return []
   }, [scheduleMode, dateRange, singleDate])
 
   const rangePlaceholder: [string, string] = ['진행 기간을 선택하세요', '진행 기간을 선택하세요']
@@ -112,7 +99,12 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph() {
           label="교육 진행 예정일"
           fullRow
           readOnlyDisplay
-          view={educationSchedulePreview}
+          view={
+            <EducationSchedulePreviewLines
+              lines={previewLines}
+              placeholder={EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER}
+            />
+          }
         />
       </DetailInfoForm.Row>
     </DetailInfoForm>

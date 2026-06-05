@@ -5,7 +5,6 @@ import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
 } from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
-import '@/features/template/ui/form-editor/form-editor.css'
 
 export function UjatProgramRegistrationEditorLeftColumn({
   vm,

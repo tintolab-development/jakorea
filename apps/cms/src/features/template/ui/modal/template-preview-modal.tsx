@@ -60,6 +60,8 @@ export interface TemplatePreviewModalProps {
   a4ParagraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
   /** 작성 화면에서 선택한 단락 — A4 미리보기 페이지·스크롤·강조와 맞춤 */
   focusedParagraphId?: string | null
+  /** 미리보기에서 「양식 수정」 — 템플릿 편집 등 */
+  onEditForm?: () => void
 }
 
 /**
@@ -81,11 +83,11 @@ export function TemplatePreviewModal({
   a4RenderMode = 'card',
   a4ParagraphGapPx,
   focusedParagraphId = null,
+  onEditForm,
 }: TemplatePreviewModalProps) {
   const previewBodyRef = useRef<HTMLDivElement>(null)
   const [searchParams, setSearchParams] = useSearchParams()
-  const isReportPreviewLayout = editorKind === 'survey'
-  const isA4DocumentPreviewLayout = isReportPreviewLayout || previewLayout === 'a4-document'
+  const isA4DocumentPreviewLayout = previewLayout === 'a4-document'
   const isAgreementPreviewLayout = editorKind === 'agreement'
   const isHorizontalTablePreviewLayout = editorKind === 'horizontal_table'
   const isFormPreviewLayout = isA4DocumentPreviewLayout || isAgreementPreviewLayout
@@ -256,23 +258,37 @@ export function TemplatePreviewModal({
                 <span className="template-preview-modal__notice-text">
                   현재 화면은 미리보기 화면입니다.
                 </span>
-                <CmsButton
-                  type="button"
-                  variant="secondary"
-                  size="large"
-                  width={140}
-                  className="template-preview-modal__notice-close-btn"
-                  onClick={handleClose}
-                >
-                  미리보기 닫기
-                </CmsButton>
+                <div className="template-preview-modal__notice-actions">
+                  <CmsButton
+                    type="button"
+                    variant="secondary"
+                    size="large"
+                    width={140}
+                    className="template-preview-modal__notice-close-btn"
+                    onClick={handleClose}
+                  >
+                    미리보기 닫기
+                  </CmsButton>
+                  {onEditForm != null ? (
+                    <CmsButton
+                      type="button"
+                      variant="primary"
+                      size="large"
+                      width={140}
+                      className="template-preview-modal__notice-edit-btn"
+                      onClick={onEditForm}
+                    >
+                      양식 수정
+                    </CmsButton>
+                  ) : null}
+                </div>
               </div>
             </div>
           ) : null}
 
           <div
             className={
-              isFormPreviewLayout
+              isFormPreviewLayout || isCardUserPreviewLayout
                 ? 'template-preview-modal__pages'
                 : 'template-preview-modal__content'
             }
@@ -314,7 +330,7 @@ export function TemplatePreviewModal({
               <FormEditorLeftPanel
                 paragraphs={draft.paragraphs}
                 titleNumbering={draft.formSettings.titleNumbering}
-                selectedCardId={focusedParagraphId}
+                selectedCardId={null}
                 onSelectCard={() => {}}
                 onReorderMiddle={() => {}}
                 updateParagraph={updateParagraph}
@@ -327,6 +343,9 @@ export function TemplatePreviewModal({
               />
             )}
           </div>
+          {isCardUserPreviewLayout && !isA4DocumentPreviewLayout ? (
+            <div className="template-preview-modal__body-bottom" aria-hidden="true" />
+          ) : null}
         </div>
       </div>
     </TealHeaderModal>

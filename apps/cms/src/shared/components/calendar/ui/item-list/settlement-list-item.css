@@ -96,39 +96,3 @@
   line-height: 150%;
 }
 
-.settlement-list-item__checkbox {
-  flex-shrink: 0;
-  width: 52px;
-  height: 52px;
-  padding: 0;
-  align-self: center;
-  border-radius: 10px;
-  transition: background-color 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.settlement-list-item__checkbox:hover {
-  background: rgba(1, 161, 175, 0.14);
-}
-
-.settlement-list-item__checkbox .ant-checkbox-wrapper {
-  align-items: center;
-}
-
-.settlement-list-item__checkbox .ant-checkbox {
-  width: 20px;
-  height: 20px;
-  top: 0;
-}
-
-.settlement-list-item__checkbox .ant-checkbox .ant-checkbox-inner {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-}
-
-.settlement-list-item__checkbox .ant-checkbox .ant-checkbox-inner::after {
-  inset-block-start: 45%;
-}

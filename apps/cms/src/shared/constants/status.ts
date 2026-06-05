@@ -502,6 +502,49 @@ export function getEnrollmentDisplayStatusFromProgramLifecycle(
 }
 
 /**
+ * 프로그램 진행 현황(7단계) 텍스트 액센트 — `status-badge.css` `.status-badge--program-enrollment-*` 와 동일.
+ * UI는 `ProgramEnrollmentStatusText` / `StatusBadge domain="programEnrollment" variant="text"` 사용 권장.
+ */
+export const PROGRAM_ENROLLMENT_DISPLAY_ACCENT_COLORS: Record<
+  ProgramEnrollmentDisplayStatus,
+  string
+> = {
+  WAITING_RESULT: 'var(--color-orange, #f07917)',
+  DOCUMENT_PASS: 'var(--color-purple, #8457ce)',
+  EDUCATION_SCHEDULED: 'var(--color-green, #1e8c29)',
+  EDUCATION_IN_PROGRESS: 'var(--color-blue, #017eaf)',
+  PROGRAM_ENDED: '#374151',
+  INTERVIEW_FAILED: 'var(--main-BK, #3d3d3d)',
+  REJECTED: 'var(--color-red, #c32f4a)',
+}
+
+/** 프로그램 엔티티 → UJAT·일반 상세 공통 진행 현황(7단계) */
+export function getProgramProgressDisplayStatus(program: {
+  ujatProgressStatus?: ProgramEnrollmentDisplayStatus
+  lifecycleStatus?: ProgramLifecycleStatus
+}): ProgramEnrollmentDisplayStatus {
+  if (program.ujatProgressStatus) {
+    return program.ujatProgressStatus
+  }
+  return getEnrollmentDisplayStatusFromProgramLifecycle(program.lifecycleStatus)
+}
+
+/** 라벨 문자열만 있을 때 7단계 상태 역매핑 (mock·레거시 호환) */
+export function resolveProgramEnrollmentDisplayStatusFromLabel(
+  label: string | undefined | null
+): ProgramEnrollmentDisplayStatus | null {
+  if (!label?.trim()) return null
+  const trimmed = label.trim()
+  const matched = (
+    Object.entries(programEnrollmentDisplayConfig.labels) as [
+      ProgramEnrollmentDisplayStatus,
+      string,
+    ][]
+  ).find(([, value]) => value === trimmed)
+  return matched?.[0] ?? null
+}
+
+/**
  * 수강 이력 표시용 진행 현황 (추론 연동)
  * Application 기준으로 계산한 뒤, 프로그램이 종료 단계면 PROGRAM_ENDED로 통일
  */

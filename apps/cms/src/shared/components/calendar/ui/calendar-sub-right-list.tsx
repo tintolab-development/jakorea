@@ -16,6 +16,14 @@ import {
   CalendarListItemContentInstitutionApplication,
   type CalendarInstitutionApplicationListRow,
 } from './item-list/ujat-institution-application'
+import {
+  CalendarListItemContentVolunteerInterview,
+  type CalendarVolunteerInterviewListRow,
+} from './item-list/ujat-volunteer-interview'
+import {
+  CalendarListItemContentVolunteerInterview2,
+  type CalendarVolunteerInterview2ListRow,
+} from './item-list/ujat-volunteer-interview2'
 import { settlementEventStatusColorPair } from './preview-tooltip/settlement'
 import {
   PROGRAM_DAY_SCHEDULE_STATUS_CONFIG,
@@ -171,7 +179,12 @@ function CalendarSubRightInstitutionApplicationList({
           return (
             <div
               key={row.id}
-              className="calendar-list-item"
+              className={[
+                'calendar-list-item',
+                selectedSet.has(row.id) ? 'calendar-list-item--selected' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               data-has-color="true"
               style={{
                 backgroundColor: colors.bg,
@@ -224,6 +237,113 @@ export type CalendarSubRightSettlementListProps = {
   onRowClick: (row: InstructorSettlementListRow) => void
   resolveRowColors?: (row: InstructorSettlementListRow) => ScheduleColorPair | undefined
   resolveBadgeLabel?: (row: InstructorSettlementListRow) => string | undefined
+}
+
+export type CalendarSubRightVolunteerInterviewListProps = {
+  rows: CalendarVolunteerInterviewListRow[]
+  onRowClick: (row: CalendarVolunteerInterviewListRow) => void
+  resolveRowColors?: (row: CalendarVolunteerInterviewListRow) => ScheduleColorPair | undefined
+}
+
+export function CalendarSubRightVolunteerInterviewList({
+  rows,
+  onRowClick,
+  resolveRowColors,
+}: CalendarSubRightVolunteerInterviewListProps) {
+  return (
+    <div className={rows.length === 0 ? 'calendar-list calendar-list--empty' : 'calendar-list'}>
+      {rows.length === 0 ? (
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+      ) : (
+        rows.map(row => {
+          const colors = resolveRowColors?.(row) ?? SCHEDULE_COLORS[0]
+          return (
+            <div
+              key={row.id}
+              className="calendar-list-item"
+              data-has-color="true"
+              style={{
+                backgroundColor: colors.bg,
+                border: `1px solid ${colors.border}`,
+              }}
+              onClick={() => onRowClick(row)}
+            >
+              <div className="calendar-list-item__column">
+                <CalendarListItemContentVolunteerInterview row={row} />
+              </div>
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
+}
+
+export type CalendarSubRightVolunteerInterview2ListProps = {
+  rows: CalendarVolunteerInterview2ListRow[]
+  selectedRowKeys: Key[]
+  onSelectionChange: (keys: Key[]) => void
+  onRowClick: (row: CalendarVolunteerInterview2ListRow) => void
+  resolveRowColors?: (row: CalendarVolunteerInterview2ListRow) => ScheduleColorPair | undefined
+}
+
+export function CalendarSubRightVolunteerInterview2List({
+  rows,
+  selectedRowKeys,
+  onSelectionChange,
+  onRowClick,
+  resolveRowColors,
+}: CalendarSubRightVolunteerInterview2ListProps) {
+  const selectedSet = useMemo(() => new Set(selectedRowKeys.map(String)), [selectedRowKeys])
+
+  const handleToggle = useCallback(
+    (key: string, checked: boolean) => {
+      if (checked) {
+        if (selectedSet.has(key)) return
+        onSelectionChange([...selectedRowKeys, key])
+      } else {
+        onSelectionChange(selectedRowKeys.filter(k => String(k) !== key))
+      }
+    },
+    [onSelectionChange, selectedRowKeys, selectedSet]
+  )
+
+  return (
+    <div className={rows.length === 0 ? 'calendar-list calendar-list--empty' : 'calendar-list'}>
+      {rows.length === 0 ? (
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+      ) : (
+        rows.map(row => {
+          const colors = resolveRowColors?.(row) ?? SCHEDULE_COLORS[0]
+          return (
+            <div
+              key={row.id}
+              className={[
+                'calendar-list-item',
+                selectedSet.has(row.id) ? 'calendar-list-item--selected' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              data-has-color="true"
+              style={{
+                backgroundColor: colors.bg,
+                border: `1px solid ${colors.border}`,
+              }}
+              onClick={() => onRowClick(row)}
+            >
+              <div className="calendar-list-item__column">
+                <CalendarListItemContentVolunteerInterview2
+                  row={row}
+                  checked={selectedSet.has(row.id)}
+                  onToggle={handleToggle}
+                />
+              </div>
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
 }
 
 export function CalendarSubRightSettlementList({

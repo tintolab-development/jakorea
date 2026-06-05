@@ -12,7 +12,7 @@ import {
   type UjatProgramRegistrationStepKey,
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
 import type { UjatRecruitTabKey } from '@/features/program/ujat/ui/detail-modal/info/ujat-program-detail-recruitment-tabs'
-import './ujat-program-registration-body-header.css'
+import '@/features/program/shared/ui/registration/registration-body-header.css'
 
 export function UjatProgramRegistrationBodyHeader({
   activeStep,
@@ -25,7 +25,7 @@ export function UjatProgramRegistrationBodyHeader({
 
   if (phase === 'program') {
     return (
-      <p className="ujat-program-registration-body-header__hint">
+      <p className="registration-body-header__hint">
         {UJAT_PROGRAM_REGISTRATION_PHASE_HINT.program}
       </p>
     )
@@ -35,7 +35,7 @@ export function UjatProgramRegistrationBodyHeader({
     const recruitTab = recruitTabKeyFromRegistrationStep(activeStep) ?? 'recruit_participant'
     return (
       <CmsTextTabs
-        className="ujat-program-registration-body-header__tabs"
+        className="registration-body-header__tabs"
         variant="list"
         activeKey={recruitTab}
         onChange={(tab: UjatRecruitTabKey) => onSelectStep(registrationStepFromRecruitTab(tab))}
@@ -52,7 +52,7 @@ export function UjatProgramRegistrationBodyHeader({
   const applicationTab = activeStep as UjatProgramRegistrationApplicationTabKey
   return (
     <CmsTextTabs
-      className="ujat-program-registration-body-header__tabs"
+      className="registration-body-header__tabs"
       variant="list"
       activeKey={applicationTab}
       onChange={onSelectStep}

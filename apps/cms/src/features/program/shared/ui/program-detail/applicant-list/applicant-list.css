@@ -16,7 +16,7 @@
   overflow: visible;
 }
 
-/* 셀 횡 사이즈 고정: 드롭다운 트리거 외곽 136px과 동일 */
+/* 셀 횡 사이즈: 본문 좌우 패딩은 cms-data-table(16px)과 동일, 상하만 0 */
 .applicant-details
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
@@ -26,8 +26,8 @@
   max-width: 136px;
   padding-top: 0;
   padding-bottom: 0;
-  padding-left: 0;
-  padding-right: 0;
+  padding-left: 16px;
+  padding-right: 16px;
   overflow: visible;
   box-sizing: border-box;
 }
@@ -47,15 +47,15 @@
   max-height: 53px !important;
 }
 
-/* 해당 셀 padding 0 — vertical shifting 방지, 160px 트리거가 셀 밖으로 넘지 않도록 */
+/* 상하 패딩만 0 — 좌우는 다른 컬럼과 동일(16px) */
 .applicant-details
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.status-dropdown-cell__cell-status {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
 }
 
 /* 캘린더 뷰: 풀페이지 메인 안에서 가로 100%·flex 축소 시에도 비율 유지 */
@@ -100,7 +100,7 @@
 .applicant-details .table-filter-group__fields-inner .ant-col .ant-select,
 .applicant-details .table-filter-group__fields-inner .ant-col .cms-select,
 .applicant-details .table-filter-group__fields-inner .labeled-search-input__input,
-.applicant-details .table-filter-group__fields-inner .labeled-search-input .app-input,
+.applicant-details .table-filter-group__fields-inner .labeled-search-input .cms-input,
 .applicant-details .table-filter-group__fields-inner .ant-col .ant-picker-range,
 .applicant-details .table-filter-group__fields-inner .ant-col .cms-datepicker {
   min-width: 0 !important;
