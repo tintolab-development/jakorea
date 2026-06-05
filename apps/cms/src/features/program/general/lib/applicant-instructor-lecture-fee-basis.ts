@@ -20,6 +20,25 @@ export const LECTURE_FEE_MEASURE_OPTIONS: { value: string; label: string }[] = [
   { value: '1회 기준', label: '1회 기준' },
 ]
 
+/** 강사비 책정 승인 모달 — 라디오 라벨(「적용」 접미사) */
+export const INSTRUCTOR_FEE_APPROVAL_BASIS_OPTIONS: {
+  value: ApplicantInstructorLectureFeeBasisType
+  label: string
+}[] = [
+  { value: 'program', label: '프로그램 기준 적용' },
+  { value: 'special_lecture', label: '특강 강사비 적용' },
+  { value: 'other_labor', label: '기타 인건비 적용' },
+]
+
+/** 강사비 책정 승인 모달 — 지급 기준 */
+export const LECTURE_FEE_PAYMENT_CRITERIA_OPTIONS: { value: string; label: string }[] = [
+  { value: '출강 1회당', label: '출강 1회당' },
+  { value: '1시간 당', label: '1시간 당' },
+]
+
+export const DEFAULT_LECTURE_FEE_PAYMENT_CRITERIA =
+  LECTURE_FEE_PAYMENT_CRITERIA_OPTIONS[0]!.value
+
 const LECTURE_FEE_BASIS_TYPE_LABEL: Record<ApplicantInstructorLectureFeeBasisType, string> = {
   program: '프로그램 기준',
   special_lecture: '특강 강사비',
