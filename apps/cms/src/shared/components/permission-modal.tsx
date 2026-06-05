@@ -83,6 +83,12 @@ export type PermissionModalProps = {
   showNotifyTiming?: boolean
   /** 기본 three — 즉시 / 발표일에 맞춰서 / 직접 설정 */
   notifyTimingOptions?: 'two' | 'three'
+  /** 본문 메시지와 알림 발송 사이 안내 박스 (일괄 승인 등) */
+  infoCallout?: ReactNode
+  /** `permission-modal`에 추가로 붙는 클래스 (모달별 스타일 오버라이드) */
+  className?: string
+  /** true면 알림 발송 필드를 사유 입력 위에 표시 (기본: 사유 → 알림) */
+  notifyBeforeReason?: boolean
 }
 
 function resolveVariantDefaults(variant: PermissionModalVariant): {
@@ -131,6 +137,9 @@ export function PermissionModal({
   reasonRequiredMessage: reasonRequiredMessageProp,
   showNotifyTiming = true,
   notifyTimingOptions = 'three',
+  infoCallout,
+  className: classNameProp,
+  notifyBeforeReason = false,
 }: PermissionModalProps) {
   const defaults = resolveVariantDefaults(variant)
   const confirmLabel = confirmLabelProp ?? defaults.confirmLabel
@@ -145,6 +154,7 @@ export function PermissionModal({
   const [notifyTiming, setNotifyTiming] = useState<PermissionModalNotifyTiming>('immediate')
   const [manualNotifyAt, setManualNotifyAt] = useState<Dayjs | null>(null)
   const [dateTimePickerOpen, setDateTimePickerOpen] = useState(false)
+  const [notifyError, setNotifyError] = useState('')
   const manualRadioAnchorRef = useRef<HTMLSpanElement>(null)
   const modalContentRef = useRef<HTMLDivElement>(null)
 
@@ -155,6 +165,7 @@ export function PermissionModal({
     setNotifyTiming('immediate')
     setManualNotifyAt(null)
     setDateTimePickerOpen(false)
+    setNotifyError('')
   }, [open])
 
   const hasReason = reason.trim().length > 0
@@ -166,7 +177,12 @@ export function PermissionModal({
       setReasonError(reasonRequiredMessage)
       return
     }
+    if (showNotifyTiming && notifyTiming === 'manual' && !manualNotifyAt) {
+      setNotifyError('알림 발송 일시를 설정해 주세요.')
+      return
+    }
     setReasonError('')
+    setNotifyError('')
     onConfirm({
       reason: trimmed,
       notifyTiming,
@@ -176,6 +192,7 @@ export function PermissionModal({
 
   const handleNotifyTimingChange = (next: PermissionModalNotifyTiming) => {
     setNotifyTiming(next)
+    setNotifyError('')
     if (next === 'manual') {
       setManualNotifyAt(nowManualNotifyAt())
       setDateTimePickerOpen(true)
@@ -194,7 +211,7 @@ export function PermissionModal({
         onCancel={onCancel}
         title={title}
         width={width}
-        className="permission-modal"
+        className={['permission-modal', classNameProp].filter(Boolean).join(' ')}
         zIndex={resolvedModalZ}
         footer={
           <div className="permission-modal__footer">
@@ -216,29 +233,9 @@ export function PermissionModal({
         <div ref={modalContentRef} className="permission-modal__content">
           {message ? <PermissionModalMessage text={message} /> : children}
 
-          {requireReason ? (
-            <div className="permission-modal__field">
-              <span className="permission-modal__label">{reasonLabel}</span>
-              <CmsInput
-                inputSize="large"
-                width="100%"
-                value={reason}
-                onChange={e => {
-                  setReason(e.target.value)
-                  if (reasonError) setReasonError('')
-                }}
-                placeholder={reasonPlaceholder}
-                maxLength={500}
-              />
-              {reasonError ? (
-                <span className="permission-modal__field-error" role="alert">
-                  {reasonError}
-                </span>
-              ) : null}
-            </div>
-          ) : null}
+          {infoCallout ? <div className="permission-modal__info-callout">{infoCallout}</div> : null}
 
-          {showNotifyTiming ? (
+          {notifyBeforeReason && showNotifyTiming ? (
             <div className="permission-modal__field">
               <span className="permission-modal__label">알림 발송</span>
               <CmsRadio.Group
@@ -273,6 +270,76 @@ export function PermissionModal({
                   </CmsRadio>
                 </span>
               </CmsRadio.Group>
+              {notifyError ? (
+                <span className="permission-modal__field-error" role="alert">
+                  {notifyError}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+
+          {requireReason ? (
+            <div className="permission-modal__field">
+              <span className="permission-modal__label">{reasonLabel}</span>
+              <CmsInput
+                inputSize="large"
+                width="100%"
+                value={reason}
+                onChange={e => {
+                  setReason(e.target.value)
+                  if (reasonError) setReasonError('')
+                }}
+                placeholder={reasonPlaceholder}
+                maxLength={500}
+              />
+              {reasonError ? (
+                <span className="permission-modal__field-error" role="alert">
+                  {reasonError}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+
+          {!notifyBeforeReason && showNotifyTiming ? (
+            <div className="permission-modal__field">
+              <span className="permission-modal__label">알림 발송</span>
+              <CmsRadio.Group
+                style={{ marginTop: 12, paddingLeft: 8 }}
+                size="large"
+                value={notifyTiming}
+                onChange={e =>
+                  handleNotifyTimingChange(e.target.value as PermissionModalNotifyTiming)
+                }
+              >
+                <CmsRadio value="immediate">즉시</CmsRadio>
+                {notifyTimingOptions === 'three' ? (
+                  <CmsRadio value="on_announcement">발표일에 맞춰서</CmsRadio>
+                ) : null}
+                <span ref={manualRadioAnchorRef} className="permission-modal__manual-anchor">
+                  <CmsRadio
+                    value="manual"
+                    onClick={() => {
+                      if (notifyTiming === 'manual') {
+                        setManualNotifyAt(prev => prev ?? nowManualNotifyAt())
+                        setDateTimePickerOpen(true)
+                      }
+                    }}
+                  >
+                    직접 설정
+                    {notifyTiming === 'manual' && manualNotifyAt != null ? (
+                      <span className="permission-modal__manual-summary">
+                        {' '}
+                        ({manualNotifyAt.format('YYYY. MM. DD HH:mm')})
+                      </span>
+                    ) : null}
+                  </CmsRadio>
+                </span>
+              </CmsRadio.Group>
+              {notifyError ? (
+                <span className="permission-modal__field-error" role="alert">
+                  {notifyError}
+                </span>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -289,6 +356,7 @@ export function PermissionModal({
           onApply={value => {
             setManualNotifyAt(value)
             setDateTimePickerOpen(false)
+            setNotifyError('')
           }}
           zIndex={dateTimePickerZ}
         />

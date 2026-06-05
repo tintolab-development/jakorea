@@ -66,12 +66,85 @@
 }
 
 .general-volunteer-screening__center-cell,
-.general-volunteer-screening__status-cell {
+.general-volunteer-screening__screening-status-cell {
   text-align: center;
+  vertical-align: middle;
+}
+
+.general-volunteer-screening th.general-volunteer-screening__center-cell,
+.general-volunteer-screening td.general-volunteer-screening__center-cell {
+  box-sizing: border-box !important;
+  overflow: hidden;
+}
+
+.general-volunteer-screening th.general-volunteer-screening__center-cell {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.general-volunteer-screening td.general-volunteer-screening__center-cell .ant-table-cell-content {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  text-align: center;
+  overflow: hidden;
 }
 
 .general-volunteer-screening__nowrap-cell {
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.general-volunteer-screening td.general-volunteer-screening__nowrap-cell .ant-table-cell-content {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.general-volunteer-screening td.general-volunteer-screening__application-type-cell .ant-table-cell-content,
+.general-volunteer-screening .general-volunteer-screening__text-cell {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.general-volunteer-screening td.general-volunteer-screening__application-type-cell {
+  overflow: hidden;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.general-volunteer-screening td.general-volunteer-screening__screening-status-cell .ujat-doc-screening-status-text {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+th.general-volunteer-screening__essay-cell .ant-table-cell-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+td.general-volunteer-screening__essay-cell .ant-table-cell-content {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  text-align: center;
+  overflow: hidden !important;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 td.general-volunteer-screening__essay-cell .general-volunteer-screening__text-cell {
@@ -84,12 +157,6 @@ td.general-volunteer-screening__essay-cell .general-volunteer-screening__text-ce
   white-space: normal;
   word-break: break-word;
   overflow-wrap: anywhere;
-}
-
-th.general-volunteer-screening__essay-cell .ant-table-cell-content {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .general-volunteer-status {
@@ -130,33 +197,74 @@ th.general-volunteer-screening__essay-cell .ant-table-cell-content {
   color: #777;
 }
 
-.general-volunteer-applicant-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+/* 담당자 평가 StatusDropdownCell — UJAT 서류 심사 대상자 컬럼과 동일 배지 톤 */
+.general-volunteer-screening .ant-table-tbody
+  > tr:has(td.general-volunteer-screening__manager-eval-dropdown-cell)
+  > td.general-volunteer-screening__manager-eval-dropdown-cell {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
 }
 
-.general-volunteer-applicant-detail__essays {
-  display: grid;
-  gap: 16px;
+.general-volunteer-screening
+  .ant-table-thead
+  > tr
+  > th.general-volunteer-screening__manager-eval-dropdown-header {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
-.general-volunteer-applicant-detail__essay-section {
-  padding: 20px;
-  border: 1px solid var(--color-gray-20, #e5e5e5);
-  border-radius: 12px;
-  background: #fff;
+.general-volunteer-screening
+  .status-dropdown-cell__status-trigger.status-dropdown-cell__trigger--cell-style {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  min-width: 116px;
+  max-width: 216px;
+  padding: 8px;
 }
 
-.general-volunteer-applicant-detail__essay-section h3 {
-  margin: 0 0 12px;
-  font-size: 16px;
-  font-weight: 700;
+.general-volunteer-screening
+  .status-dropdown-cell__status-trigger
+  .ujat-manager-evaluation-badge.status-dropdown-cell__badge--cell-style,
+.general-volunteer-screening
+  .status-dropdown-cell__dropdown-item
+  .ujat-manager-evaluation-badge.status-dropdown-cell__badge--cell-style {
+  display: flex !important;
+  height: 32px !important;
+  min-width: 100px !important;
+  max-width: 200px !important;
+  padding: 6px 12px !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex: 1 0 0 !important;
+  width: auto !important;
+  box-sizing: border-box !important;
 }
 
-.general-volunteer-applicant-detail__essay-section p {
-  margin: 0;
-  color: var(--color-gray-80, #333);
-  line-height: 1.7;
-  white-space: pre-wrap;
+.general-volunteer-screening
+  .status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style {
+  min-width: 216px !important;
+  width: 216px !important;
+  max-width: 216px !important;
+}
+
+.general-volunteer-screening
+  .status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style
+  .ant-dropdown-menu {
+  min-width: 216px !important;
+  width: 216px !important;
+  max-width: 216px !important;
 }

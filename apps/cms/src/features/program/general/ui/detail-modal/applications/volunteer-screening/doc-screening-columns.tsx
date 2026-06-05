@@ -16,12 +16,15 @@ import {
   GeneralManagerEvaluationBadge,
 } from './status-text'
 
+const APPLICATION_TYPE_COLUMN_WIDTH = 180
+
 export const GENERAL_DOC_SCREENING_TABLE_SCROLL_X =
-  60 + 72 + 140 + 140 + 220 + 140 + 200 + 200 + 160 +
+  60 + 72 + 140 + 140 + 220 + APPLICATION_TYPE_COLUMN_WIDTH + 200 + 200 + 160 +
   Object.values(GENERAL_ESSAY_COLUMN_DEFAULT_WIDTHS).reduce((sum, width) => sum + width, 0)
 
 const CENTER_CELL_CLASS = 'general-volunteer-screening__center-cell'
 const NOWRAP_CELL_CLASS = 'general-volunteer-screening__nowrap-cell'
+const APPLICATION_TYPE_CELL_CLASS = 'general-volunteer-screening__application-type-cell'
 const ESSAY_CELL_CLASS = 'general-volunteer-screening__essay-cell'
 const MANAGER_EVALUATION_CELL_CLASS = `${STATUS_DROPDOWN_CELL_CLASSNAME} general-volunteer-screening__manager-eval-dropdown-cell`
 
@@ -83,8 +86,9 @@ export function useGeneralVolunteerDocScreeningColumns({
         minWidth: 140,
         align: 'center',
         fixed: 'left',
+        ellipsis: { showTitle: true },
         onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
-        onCell: () => ({ className: CENTER_CELL_CLASS }),
+        onCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
       },
       {
         title: '연락처',
@@ -93,6 +97,7 @@ export function useGeneralVolunteerDocScreeningColumns({
         width: 140,
         minWidth: 140,
         align: 'center',
+        ellipsis: { showTitle: true },
         onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
         onCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
       },
@@ -103,6 +108,7 @@ export function useGeneralVolunteerDocScreeningColumns({
         width: 220,
         minWidth: 220,
         align: 'center',
+        ellipsis: { showTitle: true },
         onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
         onCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
       },
@@ -110,13 +116,16 @@ export function useGeneralVolunteerDocScreeningColumns({
         title: '지원 형태',
         dataIndex: 'applicationType',
         key: 'applicationType',
-        width: 140,
-        minWidth: 140,
+        width: APPLICATION_TYPE_COLUMN_WIDTH,
+        minWidth: APPLICATION_TYPE_COLUMN_WIDTH,
         align: 'center',
-        onHeaderCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
-        onCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
-        render: (type: GeneralVolunteerApplicantRow['applicationType']) =>
-          formatGeneralVolunteerApplicationType(type),
+        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
+        onCell: () => ({ className: `${CENTER_CELL_CLASS} ${APPLICATION_TYPE_CELL_CLASS}` }),
+        render: (type: GeneralVolunteerApplicantRow['applicationType']) => (
+          <span className="general-volunteer-screening__text-cell">
+            {formatGeneralVolunteerApplicationType(type)}
+          </span>
+        ),
       },
       ...essayColumns,
       {
@@ -125,6 +134,9 @@ export function useGeneralVolunteerDocScreeningColumns({
         width: 200,
         minWidth: 200,
         align: 'center',
+        onHeaderCell: () => ({
+          className: 'general-volunteer-screening__manager-eval-dropdown-header',
+        }),
         onCell: () => ({ className: MANAGER_EVALUATION_CELL_CLASS }),
         render: (_: unknown, record: GeneralVolunteerApplicantRow) => (
           <StatusDropdownCell<GeneralManagerEvaluation>
@@ -149,6 +161,9 @@ export function useGeneralVolunteerDocScreeningColumns({
         width: 200,
         minWidth: 200,
         align: 'center',
+        onHeaderCell: () => ({
+          className: 'general-volunteer-screening__manager-eval-dropdown-header',
+        }),
         onCell: () => ({ className: MANAGER_EVALUATION_CELL_CLASS }),
         render: (_: unknown, record: GeneralVolunteerApplicantRow) => (
           <StatusDropdownCell<GeneralManagerEvaluation>
@@ -174,7 +189,7 @@ export function useGeneralVolunteerDocScreeningColumns({
         width: 160,
         minWidth: 160,
         align: 'center',
-        onCell: () => ({ className: 'general-volunteer-screening__status-cell' }),
+        onCell: () => ({ className: 'general-volunteer-screening__screening-status-cell' }),
         render: (status: GeneralVolunteerApplicantRow['documentScreeningStatus']) => (
           <GeneralDocumentScreeningStatusText status={status} />
         ),

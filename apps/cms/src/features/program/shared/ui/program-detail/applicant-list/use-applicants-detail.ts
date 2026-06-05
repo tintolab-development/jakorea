@@ -40,9 +40,11 @@ import {
   getApplicantInstructorsByProgramId,
   patchApplicantInstructorForApprovalStatus,
   updateApplicantInstructorApprovalStatus,
+  type ApplicantInstructorApprovalNotifyOptions,
   type ApplicantInstructorApprovalStatusKey,
   type ApplicantInstructorRow,
 } from '@/data/mock/applicant-instructors'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import {
   getGeneralIndividualApplicationsForProgram,
   updateGeneralIndividualApplicantApprovalStatus,
@@ -68,6 +70,16 @@ import type {
   InstructorColumnPreset,
   SessionLinePreset,
 } from './applicant-list-menu'
+import type { InstructorLectureAssignItem } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
+
+export type InstructorApprovalTarget =
+  | { id: string; name: string; step: 'assign' }
+  | {
+      id: string
+      name: string
+      step: 'fee'
+      assignments: InstructorLectureAssignItem[]
+    }
 
 export type ApplicantListRow =
   | ApplicantSchoolRow
@@ -261,10 +273,8 @@ export function useApplicantsDetail({
 
   const [openApprovalDropdownId, setOpenApprovalDropdownId] = useState<string | null>(null)
 
-  const [instructorApprovalTarget, setInstructorApprovalTarget] = useState<{
-    id: string
-    name: string
-  } | null>(null)
+  const [instructorApprovalTarget, setInstructorApprovalTarget] =
+    useState<InstructorApprovalTarget | null>(null)
 
   useEffect(() => {
     if (!selectedItem) {
@@ -494,6 +504,59 @@ export function useApplicantsDetail({
     setSelectedRowKeys([])
   }
 
+  const toInstructorNotifyOptions = (
+    payload: PermissionModalPayload,
+    rejectionReason?: string
+  ): ApplicantInstructorApprovalNotifyOptions => ({
+    notifyTiming: payload.notifyTiming,
+    manualNotifyAt: payload.manualNotifyAt ?? undefined,
+    rejectionReason,
+  })
+
+  const confirmBulkInstructorReject = useCallback(
+    (payload: PermissionModalPayload) => {
+      if (selectedRowKeys.length === 0) {
+        return
+      }
+      const keys = selectedRowKeys as string[]
+      const notifyOptions = toInstructorNotifyOptions(payload, payload.reason)
+      setInstructorList(prev =>
+        prev.map(row =>
+          keys.includes(row.id)
+            ? patchApplicantInstructorForApprovalStatus(row, 'rejected', notifyOptions)
+            : row
+        )
+      )
+      keys.forEach(id =>
+        updateApplicantInstructorApprovalStatus(id, 'rejected', notifyOptions)
+      )
+      setSelectedRowKeys([])
+    },
+    [selectedRowKeys]
+  )
+
+  const confirmBulkInstructorApprove = useCallback(
+    (payload: PermissionModalPayload) => {
+      if (selectedRowKeys.length === 0) {
+        return
+      }
+      const keys = selectedRowKeys as string[]
+      const notifyOptions = toInstructorNotifyOptions(payload)
+      setInstructorList(prev =>
+        prev.map(row =>
+          keys.includes(row.id)
+            ? patchApplicantInstructorForApprovalStatus(row, 'approved', notifyOptions)
+            : row
+        )
+      )
+      keys.forEach(id =>
+        updateApplicantInstructorApprovalStatus(id, 'approved', notifyOptions)
+      )
+      setSelectedRowKeys([])
+    },
+    [selectedRowKeys]
+  )
+
   const handleBulkApprove = () => {
     if (selectedRowKeys.length === 0) {
       return
@@ -649,6 +712,7 @@ export function useApplicantsDetail({
     pendingFilters,
     fields,
     institutionList,
+    instructorList,
     setInstitutionList,
     setInstructorList,
     setIndividualList,
@@ -668,6 +732,8 @@ export function useApplicantsDetail({
     handleSearch: applySearch,
     handleBulkReject,
     handleBulkApprove,
+    confirmBulkInstructorReject,
+    confirmBulkInstructorApprove,
     handleCancelApproval,
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,

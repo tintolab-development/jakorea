@@ -1,12 +1,20 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
-import { GeneralSecondInterviewStatusText } from './status-text'
+import {
+  computeGeneralInterviewTotalScore,
+  resolveGeneralEffectiveSecondInterviewStatus,
+} from '@/features/program/general/lib/general-volunteer-interview2-display'
+import {
+  GeneralInterviewAssignmentStatusText,
+  GeneralSecondInterviewStatusText,
+} from './status-text'
 
 const CENTER_CELL_CLASS = 'general-volunteer-screening__center-cell'
 const NOWRAP_CELL_CLASS = 'general-volunteer-screening__nowrap-cell'
+const SCORE_VALUE_CLASS = 'general-volunteer-interview2__score-value'
 
-export const GENERAL_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X = 1112
+export const GENERAL_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X = 892
 
 export function useGeneralVolunteerInterview2Columns(): ColumnsType<GeneralVolunteerApplicantRow> {
   return useMemo(
@@ -18,15 +26,6 @@ export function useGeneralVolunteerInterview2Columns(): ColumnsType<GeneralVolun
         dataIndex: 'contact',
         key: 'contact',
         width: 140,
-        align: 'center',
-        onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
-        onCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
-      },
-      {
-        title: '이메일',
-        dataIndex: 'email',
-        key: 'email',
-        width: 220,
         align: 'center',
         onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
         onCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
@@ -53,7 +52,14 @@ export function useGeneralVolunteerInterview2Columns(): ColumnsType<GeneralVolun
         width: 100,
         align: 'center',
         className: CENTER_CELL_CLASS,
-        render: (_value, record) => record.totalScore ?? '-',
+        render: (_value, record) => {
+          const totalScore = computeGeneralInterviewTotalScore(record)
+          return totalScore != null ? (
+            <span className={SCORE_VALUE_CLASS}>{totalScore}</span>
+          ) : (
+            '-'
+          )
+        },
       },
       {
         title: '2차 면접 심사 현황',
@@ -61,12 +67,13 @@ export function useGeneralVolunteerInterview2Columns(): ColumnsType<GeneralVolun
         width: 160,
         align: 'center',
         className: CENTER_CELL_CLASS,
-        render: (_value, record) =>
-          record.secondInterviewScreeningStatus ? (
-            <GeneralSecondInterviewStatusText status={record.secondInterviewScreeningStatus} />
-          ) : (
-            '-'
-          ),
+        render: (_value, record) => {
+          const status = resolveGeneralEffectiveSecondInterviewStatus(record)
+          if (status === 'withdrawn') {
+            return <GeneralInterviewAssignmentStatusText status="withdrawn" />
+          }
+          return <GeneralSecondInterviewStatusText status={status} />
+        },
       },
     ],
     []

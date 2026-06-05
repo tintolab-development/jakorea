@@ -1,24 +1,20 @@
-import {
-  GENERAL_DOCUMENT_SCREENING_STATUS_LABELS,
-  GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS,
-  GENERAL_MANAGER_EVALUATION_LABELS,
-  GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_LABELS,
-  type GeneralDocumentScreeningStatus,
-  type GeneralInterviewAssignmentStatus,
-  type GeneralManagerEvaluation,
-  type GeneralSecondInterviewScreeningStatus,
+import type {
+  GeneralDocumentScreeningStatus,
+  GeneralInterviewAssignmentStatus,
+  GeneralManagerEvaluation,
+  GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
+import { DocumentScreeningStatusText } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/document-screening-status-text'
+import { InterviewAssignmentStatusText } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assignment-status-text'
+import { ManagerEvaluationBadge } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/manager-evaluation-badge'
+import { SecondInterviewScreeningStatusText } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/second-interview-screening-status-text'
 
 export function GeneralManagerEvaluationBadge({
   evaluation,
 }: {
   evaluation: GeneralManagerEvaluation
 }) {
-  return (
-    <span className={`general-volunteer-status general-volunteer-status--${evaluation}`}>
-      {GENERAL_MANAGER_EVALUATION_LABELS[evaluation]}
-    </span>
-  )
+  return <ManagerEvaluationBadge evaluation={evaluation} />
 }
 
 export function GeneralDocumentScreeningStatusText({
@@ -26,11 +22,7 @@ export function GeneralDocumentScreeningStatusText({
 }: {
   status: GeneralDocumentScreeningStatus
 }) {
-  return (
-    <span className={`general-volunteer-status general-volunteer-status--${status}`}>
-      {GENERAL_DOCUMENT_SCREENING_STATUS_LABELS[status]}
-    </span>
-  )
+  return <DocumentScreeningStatusText status={status} />
 }
 
 export function GeneralInterviewAssignmentStatusText({
@@ -38,11 +30,7 @@ export function GeneralInterviewAssignmentStatusText({
 }: {
   status: GeneralInterviewAssignmentStatus
 }) {
-  return (
-    <span className={`general-volunteer-status general-volunteer-status--${status}`}>
-      {GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS[status]}
-    </span>
-  )
+  return <InterviewAssignmentStatusText status={status} />
 }
 
 export function GeneralSecondInterviewStatusText({
@@ -50,9 +38,5 @@ export function GeneralSecondInterviewStatusText({
 }: {
   status: GeneralSecondInterviewScreeningStatus
 }) {
-  return (
-    <span className={`general-volunteer-status general-volunteer-status--${status}`}>
-      {GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_LABELS[status]}
-    </span>
-  )
+  return <SecondInterviewScreeningStatusText status={status} />
 }

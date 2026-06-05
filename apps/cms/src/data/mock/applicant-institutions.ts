@@ -380,6 +380,27 @@ export function updateApplicantSchoolApprovalStatus(
   }
 }
 
+/** 알림 재발송 — 발송 일시 갱신 */
+export function patchApplicantSchoolForNotificationResend(
+  row: ApplicantSchoolRow,
+  sentAt = new Date()
+): ApplicantSchoolRow {
+  return {
+    ...row,
+    approvalNotificationSentAt: formatApplicantSchoolApprovalNotificationSentAt(sentAt),
+  }
+}
+
+export function updateApplicantSchoolNotificationResend(
+  schoolId: string,
+  sentAt = new Date()
+): void {
+  const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === schoolId)
+  if (row) {
+    Object.assign(row, patchApplicantSchoolForNotificationResend(row, sentAt))
+  }
+}
+
 export interface ApplicantInstitutionDetailSavePayload {
   adminComment?: string
   educationGrade: string

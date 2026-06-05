@@ -1,0 +1,110 @@
+/*
+ * 필터 5필드(신청 봉사자명·면접일·면접 시간·점수 종합·2차 면접 심사 현황) + 조회
+ */
+.filter-table-layout.general-volunteer-interview2__filter-layout {
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
+  --general-interview2-filter-col-width: min(
+    var(--filter-control-max-width, 260px),
+    calc((100% - 4 * var(--filter-field-gap)) / 5)
+  );
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.filter-table-layout.general-volunteer-interview2__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.filter-table-layout.general-volunteer-interview2__filter-layout .table-filter-group__container {
+  display: grid !important;
+  width: 100%;
+  box-sizing: border-box;
+  gap: var(--table-filter-field-gap);
+  align-items: end;
+  justify-content: start;
+  grid-template-columns:
+    repeat(5, minmax(0, var(--general-interview2-filter-col-width))) minmax(0, 1fr) 160px !important;
+}
+
+.filter-table-layout.general-volunteer-interview2__filter-layout .table-filter-group__fields-container {
+  display: contents;
+}
+
+.filter-table-layout.general-volunteer-interview2__filter-layout .table-filter-group__fields-inner.ant-row {
+  display: contents;
+}
+
+.filter-table-layout.general-volunteer-interview2__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.filter-table-layout.general-volunteer-interview2__filter-layout .table-filter-group__fields-shell {
+  grid-column: 7;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  justify-self: end;
+}
+
+.filter-table-layout.general-volunteer-interview2__filter-layout
+  .table-filter-group__grid-cell,
+.filter-table-layout.general-volunteer-interview2__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .unified-filter-card__field,
+.filter-table-layout.general-volunteer-interview2__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .labeled-search-input,
+.filter-table-layout.general-volunteer-interview2__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .cms-select,
+.filter-table-layout.general-volunteer-interview2__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .ant-select {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.general-volunteer-interview2__toolbar-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.general-volunteer-interview2__toolbar-title {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.general-volunteer-interview2__toolbar-count {
+  color: var(--sub-BK, #767676);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.general-volunteer-interview2__table-wrap .general-volunteer-interview2__score-value {
+  color: var(--color-mint-01, #01a1af);
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}

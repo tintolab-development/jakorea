@@ -3,10 +3,17 @@
  * 강의 신청 강사 목록 (필터: 학교명, 강사명, 결재 현황)
  */
 
+import type { Dayjs } from 'dayjs'
 import type { SchoolTeacherEmploymentStatus } from '@/types/user'
+import { getGeneralProgramById } from '@/data/mock/general-programs'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { INDIVIDUAL_LECTURE_ASSIGN_DEMO_SLOT_KEYS } from '@/features/program/general/lib/individual-lecture-assign-demo'
+import { INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 export type ApplicantInstructorLectureFeeBasisType = 'program' | 'special_lecture' | 'other_labor'
 
 export type ApplicantInstructorApprovalStatusKey = 'pending' | 'rejected' | 'approved'
+
+export type ApplicantInstructorApprovalNotifyTiming = 'immediate' | 'on_announcement' | 'manual'
 
 /** 희망 배정 학교 1~4순위 (상세 모달 희망 배정 학교 섹션) */
 export interface ApplicantInstructorPreferredSchool {
@@ -102,10 +109,24 @@ export interface ApplicantInstructorRow {
   profileImageUrl?: string
   /** 희망 배정 학교 1~4순위 (일부 assignable: false로 배정 불가) */
   preferredSchools?: ApplicantInstructorPreferredSchool[]
+  /** 개인 프로그램 — 강의 배정 가능 일정 (assignable: false면 배정 불가) */
+  preferredScheduleSlots?: Array<{
+    slotKey: string
+    assignable: boolean
+  }>
   /** 승인 완료 시 배정된 학교 ID (결재 내역 배정 학교 표시용) */
   assignedSchoolId?: string
   /** 승인 완료 시 배정된 학교명 */
   assignedSchoolName?: string
+  /** 승인 시 배정된 강의 일정 (기관 프로그램 강의 배정 모달) */
+  assignedLectures?: Array<{
+    slotKey: string
+    dateKey: string
+    schoolId: string
+    schoolName: string
+    sessionLabel: string
+    timeRange: string
+  }>
   /** 승인 반려 시 반려 사유 (결재 내역 반려 사유 표시용) */
   rejectionReason?: string
   /** 강사 이력서 - 경력 상세 (강사 이력서 탭) */
@@ -138,6 +159,10 @@ export interface ApplicantInstructorRow {
   businessIncomeEarnerStatus?: string
   /** 승인 완료 시 알림 발송 일시 (프로그램 승인 현황 옆 표시) */
   approvalNotificationSentAt?: string
+  /** 승인 시 선택한 알림 발송 방식 (승인 취소 모달 분기용) */
+  approvalNotifyTiming?: ApplicantInstructorApprovalNotifyTiming
+  /** 반려 시 선택한 알림 발송 방식 (반려 취소 모달 분기용) */
+  rejectionNotifyTiming?: ApplicantInstructorApprovalNotifyTiming
   /** 회원 관리 강사 상세 기본 정보: 정산 현황 셀 (프로그램 신청 강사 플로우에서는 미사용) */
   settlementStatusLabel?: string
 }
@@ -493,6 +518,8 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
     const managerComment =
       status === 'approved' ? '정보 재검토 정보 재확인 필요, 입금기입이 다르네요.' : undefined
     const rejectionReason = status === 'rejected' ? '인원 초과' : undefined
+    const rejectionNotifyTiming: ApplicantInstructorApprovalNotifyTiming | undefined =
+      status === 'rejected' ? (i % 2 === 1 ? 'immediate' : 'on_announcement') : undefined
     const lectureFeeBasisType: ApplicantInstructorLectureFeeBasisType | undefined =
       status === 'approved' ? 'special_lecture' : undefined
     const lectureFeeMeasure = status === 'approved' ? '1회 기준' : undefined
@@ -508,7 +535,11 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
     const affiliationIsCurrentlyEmployed = affiliationEmploymentStatus === 'ACTIVE'
     const instructorFeeGradeLabel = INSTRUCTOR_FEE_GRADE_LABELS[i % INSTRUCTOR_FEE_GRADE_LABELS.length]
     const approvalNotificationSentAt =
-      status === 'approved' ? '2026.01.15 09:15:42' : undefined
+      status === 'approved'
+        ? '2026.01.15 09:15:42'
+        : status === 'rejected' && rejectionNotifyTiming === 'immediate'
+          ? formatApprovalNotificationSentAt()
+          : undefined
     const resumeSample = getResumeSample(i)
     const evaluationGrades = ['A', 'B', 'C']
     const teachingExperiences = ['신규', '1년 미만', '1~3년', '3년 이상']
@@ -540,6 +571,7 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
       schoolName: SCHOOL_NAMES[i % SCHOOL_NAMES.length],
       ...assignedSchool,
       rejectionReason,
+      rejectionNotifyTiming,
       scheduleChangeCancelCount:
         scheduleChangeCancelCount > 0 ? scheduleChangeCancelCount : undefined,
       oneLineIntro: ONE_LINE_INTROS[i % ONE_LINE_INTROS.length] || undefined,
@@ -562,17 +594,112 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
 
 export const MOCK_APPLICANT_INSTRUCTORS: ApplicantInstructorRow[] = buildMockList(72)
 
+const INDIVIDUAL_PROGRAM_SLOT_KEYS = INDIVIDUAL_LECTURE_ASSIGN_DEMO_SLOT_KEYS
+
+/** 개인 프로그램 강사 배정 QA — `general-prog-scheduled-2` 전용 최소 목록 */
+export const INDIVIDUAL_PROGRAM_DEMO_INSTRUCTOR_PROGRAM_ID = 'general-prog-scheduled-2'
+
+const INDIVIDUAL_PROGRAM_DEMO_INSTRUCTORS: ApplicantInstructorRow[] = [
+  {
+    id: 'individual-program-instructor-pending',
+    no: 2,
+    instructorName: '박틴토',
+    lectureExperienceYears: 4,
+    educationLevel: '대학교',
+    educationSchoolName: '한국대학교',
+    contact: '010-7733-2211',
+    email: 'tinto@naver.com',
+    address: '서울특별시 강서구',
+    appliedAt: '2026.04.01',
+    affiliation: '개인',
+    approvalStatus: 'pending',
+    schoolName: '-',
+    evaluationGrade: 'A',
+    instructorFeeGradeLabel: '3급 강사비',
+    gender: '남성',
+    birthDate: '1994.04.12',
+    age: 32,
+    accountHolder: '박틴토',
+    preferredScheduleSlots: [
+      { slotKey: INDIVIDUAL_PROGRAM_SLOT_KEYS.first, assignable: true },
+      { slotKey: INDIVIDUAL_PROGRAM_SLOT_KEYS.second, assignable: false },
+    ],
+  },
+  {
+    id: 'individual-program-instructor-approved',
+    no: 1,
+    instructorName: '김서연',
+    lectureExperienceYears: 6,
+    educationLevel: '대학교',
+    educationSchoolName: '서울대학교',
+    contact: '010-1111-2222',
+    email: 'seoyeon@example.com',
+    address: '서울특별시 마포구',
+    appliedAt: '2026.03.28',
+    affiliation: '개인',
+    approvalStatus: 'approved',
+    schoolName: '-',
+    evaluationGrade: 'B',
+    instructorFeeGradeLabel: '2급 강사비',
+    lectureFeeBasisDisplay: '특강 강사비 | 1회 기준 | 915,000원',
+    lectureFeeBasisType: 'special_lecture',
+    lectureFeeMeasure: '1회 기준',
+    lectureFeeAmount: '915000',
+    businessIncomeEarnerStatus: '해당 없음',
+    approvalNotificationSentAt: '2026.04.02 10:00:00',
+    assignedLectures: [
+      {
+        slotKey: INDIVIDUAL_PROGRAM_SLOT_KEYS.first,
+        dateKey: '2026-04-20',
+        schoolId: INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID,
+        schoolName: 'UJAT 36기',
+        sessionLabel: '1차시',
+        timeRange: '09:30 ~ 12:20',
+      },
+    ],
+    assignedSchoolId: INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID,
+    assignedSchoolName: 'UJAT 36기',
+  },
+]
+
 /**
  * 프로그램별 강의 신청 강사 목록 (강사 모집 상세 모달용).
  * Mock: programId별로 다른 수의 강사 반환 (실제 API 연동 시 programId 필터 적용).
  */
 export function getApplicantInstructorsByProgramId(programId: string): ApplicantInstructorRow[] {
+  const program = getGeneralProgramById(programId)
+  if (program != null && isGeneralIndividualProgram(program)) {
+    return INDIVIDUAL_PROGRAM_DEMO_INSTRUCTORS.map(row => ({ ...row, programId }))
+  }
+
   const hash = programId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
   const count = Math.min(72, Math.max(5, (hash % 50) + 20))
   return MOCK_APPLICANT_INSTRUCTORS.slice(0, count).map((row, idx) => ({
     ...row,
     no: count - idx,
   }))
+}
+
+export type ApplicantInstructorApprovalNotifyOptions = {
+  notifyTiming: ApplicantInstructorApprovalNotifyTiming
+  manualNotifyAt?: Dayjs | null
+  /** 반려 시 사유 */
+  rejectionReason?: string
+}
+
+export function resolveApplicantInstructorApprovalNotificationSentAt(
+  options?: ApplicantInstructorApprovalNotifyOptions
+): string | undefined {
+  if (!options || options.notifyTiming === 'immediate') {
+    return formatApprovalNotificationSentAt()
+  }
+  if (options.notifyTiming === 'on_announcement') {
+    return undefined
+  }
+  if (options.notifyTiming === 'manual' && options.manualNotifyAt) {
+    return formatApprovalNotificationSentAt(options.manualNotifyAt.toDate())
+  }
+  return undefined
 }
 
 function formatApprovalNotificationSentAt(d = new Date()): string {
@@ -590,7 +717,8 @@ function formatApprovalNotificationSentAt(d = new Date()): string {
  */
 export function patchApplicantInstructorForApprovalStatus(
   row: ApplicantInstructorRow,
-  approvalStatus: ApplicantInstructorApprovalStatusKey
+  approvalStatus: ApplicantInstructorApprovalStatusKey,
+  notifyOptions?: ApplicantInstructorApprovalNotifyOptions
 ): ApplicantInstructorRow {
   if (approvalStatus === 'approved') {
     return {
@@ -602,17 +730,39 @@ export function patchApplicantInstructorForApprovalStatus(
       lectureFeeBasisDisplay:
         row.lectureFeeBasisDisplay ?? '특강 강사비 | 1회 기준 | 915,000원',
       businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
-      approvalNotificationSentAt: formatApprovalNotificationSentAt(),
+      approvalNotifyTiming: notifyOptions?.notifyTiming,
+      approvalNotificationSentAt:
+        resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
     }
   }
+  if (approvalStatus === 'rejected') {
+    return {
+      ...row,
+      approvalStatus,
+      rejectionReason: notifyOptions?.rejectionReason ?? row.rejectionReason,
+      lectureFeeBasisDisplay: undefined,
+      lectureFeeBasisType: undefined,
+      lectureFeeMeasure: undefined,
+      lectureFeeAmount: undefined,
+      businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
+      approvalNotifyTiming: undefined,
+      rejectionNotifyTiming: notifyOptions?.notifyTiming,
+      approvalNotificationSentAt:
+        resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
+    }
+  }
+
   return {
     ...row,
     approvalStatus,
+    rejectionReason: undefined,
     lectureFeeBasisDisplay: undefined,
     lectureFeeBasisType: undefined,
     lectureFeeMeasure: undefined,
     lectureFeeAmount: undefined,
     businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
+    approvalNotifyTiming: undefined,
+    rejectionNotifyTiming: undefined,
     approvalNotificationSentAt: undefined,
   }
 }
@@ -623,11 +773,87 @@ export function patchApplicantInstructorForApprovalStatus(
  */
 export function updateApplicantInstructorApprovalStatus(
   instructorId: string,
-  approvalStatus: ApplicantInstructorApprovalStatusKey
+  approvalStatus: ApplicantInstructorApprovalStatusKey,
+  notifyOptions?: ApplicantInstructorApprovalNotifyOptions
 ): void {
   const row = MOCK_APPLICANT_INSTRUCTORS.find(i => i.id === instructorId)
   if (row) {
-    Object.assign(row, patchApplicantInstructorForApprovalStatus(row, approvalStatus))
+    Object.assign(
+      row,
+      patchApplicantInstructorForApprovalStatus(row, approvalStatus, notifyOptions)
+    )
+  }
+}
+
+/** 승인 취소 — 반려 처리 + 배정·승인 알림 예약 정보 제거 */
+export function patchApplicantInstructorForCancelApproval(
+  row: ApplicantInstructorRow,
+  notifyOptions: ApplicantInstructorApprovalNotifyOptions
+): ApplicantInstructorRow {
+  const rejected = patchApplicantInstructorForApprovalStatus(row, 'rejected', notifyOptions)
+  return {
+    ...rejected,
+    assignedLectures: undefined,
+    assignedSchoolId: undefined,
+    assignedSchoolName: undefined,
+  }
+}
+
+export function updateApplicantInstructorCancelApproval(
+  instructorId: string,
+  notifyOptions: ApplicantInstructorApprovalNotifyOptions
+): void {
+  const row = MOCK_APPLICANT_INSTRUCTORS.find(i => i.id === instructorId)
+  if (row) {
+    Object.assign(row, patchApplicantInstructorForCancelApproval(row, notifyOptions))
+  }
+}
+
+/** 반려 취소 — 승인 대기 복원 */
+export function patchApplicantInstructorForCancelRejection(
+  row: ApplicantInstructorRow,
+  notifyOptions?: ApplicantInstructorApprovalNotifyOptions
+): ApplicantInstructorRow {
+  const pending = patchApplicantInstructorForApprovalStatus(row, 'pending')
+  if (!notifyOptions) {
+    return pending
+  }
+  return {
+    ...pending,
+    approvalNotificationSentAt:
+      resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
+  }
+}
+
+export function updateApplicantInstructorCancelRejection(
+  instructorId: string,
+  notifyOptions?: ApplicantInstructorApprovalNotifyOptions
+): void {
+  const row = MOCK_APPLICANT_INSTRUCTORS.find(i => i.id === instructorId)
+  if (row) {
+    Object.assign(row, patchApplicantInstructorForCancelRejection(row, notifyOptions))
+  }
+}
+
+/** 알림 재발송 — 발송 일시 갱신 */
+export function patchApplicantInstructorForNotificationResend(
+  row: ApplicantInstructorRow,
+  notifyOptions: ApplicantInstructorApprovalNotifyOptions
+): ApplicantInstructorRow {
+  return {
+    ...row,
+    approvalNotificationSentAt:
+      resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
+  }
+}
+
+export function updateApplicantInstructorNotificationResend(
+  instructorId: string,
+  notifyOptions: ApplicantInstructorApprovalNotifyOptions
+): void {
+  const row = MOCK_APPLICANT_INSTRUCTORS.find(i => i.id === instructorId)
+  if (row) {
+    Object.assign(row, patchApplicantInstructorForNotificationResend(row, notifyOptions))
   }
 }
 

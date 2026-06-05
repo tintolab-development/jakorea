@@ -79,6 +79,25 @@ export const GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_LABELS: Record<
   reserve4: '예비 4',
 }
 
+/** 2차 면접 일괄 합격 모달 — 합격 유형 선택 */
+export type GeneralInterview2BulkPassType =
+  | 'pass'
+  | 'reserve1'
+  | 'reserve2'
+  | 'reserve3'
+  | 'reserve4'
+
+export const GENERAL_INTERVIEW2_BULK_PASS_TYPE_OPTIONS: readonly {
+  value: GeneralInterview2BulkPassType
+  label: string
+}[] = [
+  { value: 'pass', label: '합격' },
+  { value: 'reserve1', label: '예비합격 1' },
+  { value: 'reserve2', label: '예비합격 2' },
+  { value: 'reserve3', label: '예비합격 3' },
+  { value: 'reserve4', label: '예비합격 4' },
+] as const
+
 export type GeneralEssayColumnKey =
   | 'essayIntro'
   | 'essayEducationExperience'
