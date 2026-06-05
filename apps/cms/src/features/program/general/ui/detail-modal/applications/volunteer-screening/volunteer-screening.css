@@ -71,8 +71,80 @@
   vertical-align: middle;
 }
 
+.general-volunteer-screening th.general-volunteer-screening__center-cell,
+.general-volunteer-screening td.general-volunteer-screening__center-cell {
+  box-sizing: border-box !important;
+  overflow: hidden;
+}
+
+.general-volunteer-screening th.general-volunteer-screening__center-cell {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.general-volunteer-screening td.general-volunteer-screening__center-cell .ant-table-cell-content {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  text-align: center;
+  overflow: hidden;
+}
+
 .general-volunteer-screening__nowrap-cell {
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.general-volunteer-screening td.general-volunteer-screening__nowrap-cell .ant-table-cell-content {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.general-volunteer-screening td.general-volunteer-screening__application-type-cell .ant-table-cell-content,
+.general-volunteer-screening .general-volunteer-screening__text-cell {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.general-volunteer-screening td.general-volunteer-screening__application-type-cell {
+  overflow: hidden;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.general-volunteer-screening td.general-volunteer-screening__screening-status-cell .ujat-doc-screening-status-text {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+th.general-volunteer-screening__essay-cell .ant-table-cell-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+td.general-volunteer-screening__essay-cell .ant-table-cell-content {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  text-align: center;
+  overflow: hidden !important;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 td.general-volunteer-screening__essay-cell .general-volunteer-screening__text-cell {
@@ -85,12 +157,6 @@ td.general-volunteer-screening__essay-cell .general-volunteer-screening__text-ce
   white-space: normal;
   word-break: break-word;
   overflow-wrap: anywhere;
-}
-
-th.general-volunteer-screening__essay-cell .ant-table-cell-content {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .general-volunteer-status {
