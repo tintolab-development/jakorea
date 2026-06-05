@@ -20,7 +20,13 @@ const APPROVAL_STATUS_LABELS: Record<ApplicantInstructorRow['approvalStatus'], s
   rejected: '참여 반려',
 }
 
-function ProgramApprovalStatusValue({ instructor }: { instructor: ApplicantInstructorRow }) {
+function ProgramApprovalStatusValue({
+  instructor,
+  onResendNotificationClick,
+}: {
+  instructor: ApplicantInstructorRow
+  onResendNotificationClick?: () => void
+}) {
   const status = instructor.approvalStatus
   if (status === 'pending') {
     return <>{APPROVAL_STATUS_LABELS.pending}</>
@@ -30,7 +36,7 @@ function ProgramApprovalStatusValue({ instructor }: { instructor: ApplicantInstr
       <div className="applicant-instructor-basic-info__approval-status-row">
         <span>{APPROVAL_STATUS_LABELS.approved}</span>
         <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
-        <SendNotiButton mode="resend" />
+        <SendNotiButton mode="resend" onClick={onResendNotificationClick} />
         {instructor.approvalNotificationSentAt ? (
           <>
             <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
@@ -50,7 +56,15 @@ function ProgramApprovalStatusValue({ instructor }: { instructor: ApplicantInstr
         <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
         <span>사유 : ({reason})</span>
         <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
-        <SendNotiButton />
+        <SendNotiButton mode="resend" onClick={onResendNotificationClick} />
+        {instructor.approvalNotificationSentAt ? (
+          <>
+            <span className="applicant-instructor-basic-info__approval-status-vbar" aria-hidden />
+            <span className="applicant-instructor-basic-info__approval-notification-sent-at">
+              {instructor.approvalNotificationSentAt}
+            </span>
+          </>
+        ) : null}
       </div>
     )
   }
@@ -175,6 +189,7 @@ export interface ApplicantInstructorBasicInfoProps {
     joinDate: string
     linkedSocial: string
   }
+  onResendNotificationClick?: () => void
   /**
    * 승인 완료 등으로 신청 맥락 마스킹이 꺼져 있어도 주소만 읍·면·동 이후 블러 처리
    * (개인정보 미공개 시 회원 상세 강사 탭)
@@ -190,6 +205,7 @@ export function ApplicantInstructorBasicInfo({
   showPostApprovalFields,
   memberBasicInfoFooter,
   privacyMaskAddress = false,
+  onResendNotificationClick,
 }: ApplicantInstructorBasicInfoProps) {
   const managerComment = instructor.managerComment
   const showManagerComment = instructor.approvalStatus === 'approved' && !!managerComment
@@ -283,7 +299,10 @@ export function ApplicantInstructorBasicInfo({
                     프로그램 승인 현황
                   </td>
                   <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                    <ProgramApprovalStatusValue instructor={instructor} />
+                    <ProgramApprovalStatusValue
+                      instructor={instructor}
+                      onResendNotificationClick={onResendNotificationClick}
+                    />
                   </td>
                 </>
               ) : (

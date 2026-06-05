@@ -374,6 +374,8 @@ interface ApplicantsDetailContentsProps {
   onCancelApproval?: (id: string) => void
   /** 신청 강사 반려 시 반려 취소 클릭 시 호출 (대기로 복원) */
   onCancelReject?: (id: string) => void
+  /** 승인·반려 상태에서 알림 재발송 클릭 시 호출 */
+  onResendNotification?: () => void
 }
 
 export function ApplicantsDetailContents({
@@ -390,6 +392,7 @@ export function ApplicantsDetailContents({
   onReject,
   onCancelApproval,
   onCancelReject,
+  onResendNotification,
 }: ApplicantsDetailContentsProps) {
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -652,6 +655,7 @@ export function ApplicantsDetailContents({
               sameSchoolGradeOptions={institutionDetailEdit.sameSchoolGradeOptions}
               canApplyCombinedClass={institutionDetailEdit.canApplyCombinedClass}
               validationErrors={institutionDetailEdit.validationErrors}
+              onResendNotificationClick={onResendNotification}
             />
           )
         }
@@ -690,6 +694,7 @@ export function ApplicantsDetailContents({
           draft={individualDetailEdit.draft ?? undefined}
           onDraftChange={individualDetailEdit.updateDraft}
           validationErrors={individualDetailEdit.validationErrors}
+          onResendNotificationClick={onResendNotification}
         />
       )
     }
@@ -706,6 +711,7 @@ export function ApplicantsDetailContents({
                 draft={instructorDetailEdit.draft ?? undefined}
                 onDraftChange={instructorDetailEdit.updateDraft}
                 validationErrors={instructorDetailEdit.validationErrors}
+                onResendNotificationClick={onResendNotification}
               />
               <ApplicantInstructorResume instructor={d} />
             </div>
@@ -716,6 +722,7 @@ export function ApplicantsDetailContents({
             <ApplicantInstructorBasicInfo
               instructor={d}
               maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
+              onResendNotificationClick={onResendNotification}
             />
             <ApplicantInstructorResume instructor={d} />
           </div>
