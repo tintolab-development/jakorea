@@ -3,12 +3,22 @@
  * 수강 신청 학교 목록 (필터: 학교명, 지역, 대상 학년, 담당 교사명, 결재 현황)
  */
 
+import type { Dayjs } from 'dayjs'
 import type {
   ParticipatingSchoolSession,
   ParticipatingSchoolSessionStatusKey,
 } from './participating-schools'
 
 export type ApplicantApprovalStatusKey = 'pending' | 'rejected' | 'approved'
+
+export type ApplicantSchoolApprovalNotifyTiming = 'immediate' | 'on_announcement' | 'manual'
+
+export type ApplicantSchoolApprovalNotifyOptions = {
+  notifyTiming: ApplicantSchoolApprovalNotifyTiming
+  manualNotifyAt?: Dayjs | null
+  /** 반려 시 사유 */
+  rejectionReason?: string
+}
 
 /** 신청 기관 상세 — 기본 정보·안내 사항 확장 필드 (mock/UI 공통) */
 export interface ApplicantInstitutionDetailExtend {
@@ -70,6 +80,10 @@ export interface ApplicantSchoolRow {
   detail?: ApplicantInstitutionDetailExtend
   /** 참여 반려 시 사유 (프로그램 승인 현황 영역 표시용) */
   participationRejectionReason?: string
+  /** 승인 알림 발송 예약 방식 */
+  approvalNotifyTiming?: ApplicantSchoolApprovalNotifyTiming
+  /** 반려 알림 발송 예약 방식 */
+  rejectionNotifyTiming?: ApplicantSchoolApprovalNotifyTiming
   /** 승인/반려 알림 발송 일시 — 상세 승인 현황 행 표시 */
   approvalNotificationSentAt?: string
   /** 신청 건별 관리자 코멘트 (회원 상세 adminComment와 별도) */
@@ -333,20 +347,55 @@ export function formatApplicantSchoolApprovalNotificationSentAt(d = new Date()):
   return `${y}.${m}.${day} ${hh}:${mm}:${ss}`
 }
 
+export function resolveApplicantSchoolApprovalNotificationSentAt(
+  options?: ApplicantSchoolApprovalNotifyOptions
+): string | undefined {
+  if (!options || options.notifyTiming === 'immediate') {
+    return formatApplicantSchoolApprovalNotificationSentAt()
+  }
+  if (options.notifyTiming === 'on_announcement') {
+    return undefined
+  }
+  if (options.notifyTiming === 'manual' && options.manualNotifyAt) {
+    return formatApplicantSchoolApprovalNotificationSentAt(options.manualNotifyAt.toDate())
+  }
+  return undefined
+}
+
 export function patchApplicantSchoolForApprovalStatus(
   row: ApplicantSchoolRow,
-  approvalStatus: ApplicantApprovalStatusKey
+  approvalStatus: ApplicantApprovalStatusKey,
+  notifyOptions?: ApplicantSchoolApprovalNotifyOptions
 ): ApplicantSchoolRow {
-  if (approvalStatus === 'approved' || approvalStatus === 'rejected') {
+  if (approvalStatus === 'approved') {
     return {
       ...row,
       approvalStatus,
-      approvalNotificationSentAt: formatApplicantSchoolApprovalNotificationSentAt(),
+      participationRejectionReason: undefined,
+      approvalNotifyTiming: notifyOptions?.notifyTiming,
+      rejectionNotifyTiming: undefined,
+      approvalNotificationSentAt:
+        resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
+    }
+  }
+  if (approvalStatus === 'rejected') {
+    return {
+      ...row,
+      approvalStatus,
+      participationRejectionReason:
+        notifyOptions?.rejectionReason ?? row.participationRejectionReason,
+      approvalNotifyTiming: undefined,
+      rejectionNotifyTiming: notifyOptions?.notifyTiming,
+      approvalNotificationSentAt:
+        resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
     }
   }
   return {
     ...row,
     approvalStatus,
+    participationRejectionReason: undefined,
+    approvalNotifyTiming: undefined,
+    rejectionNotifyTiming: undefined,
     approvalNotificationSentAt: undefined,
   }
 }
@@ -372,11 +421,59 @@ export function getApplicantSchoolsByProgramId(programId: string): ApplicantScho
  */
 export function updateApplicantSchoolApprovalStatus(
   schoolId: string,
-  approvalStatus: ApplicantApprovalStatusKey
+  approvalStatus: ApplicantApprovalStatusKey,
+  notifyOptions?: ApplicantSchoolApprovalNotifyOptions
 ): void {
   const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === schoolId)
   if (row) {
-    Object.assign(row, patchApplicantSchoolForApprovalStatus(row, approvalStatus))
+    Object.assign(
+      row,
+      patchApplicantSchoolForApprovalStatus(row, approvalStatus, notifyOptions)
+    )
+  }
+}
+
+/** 승인 취소 — 반려 처리 */
+export function patchApplicantSchoolForCancelApproval(
+  row: ApplicantSchoolRow,
+  notifyOptions: ApplicantSchoolApprovalNotifyOptions
+): ApplicantSchoolRow {
+  return patchApplicantSchoolForApprovalStatus(row, 'rejected', notifyOptions)
+}
+
+export function updateApplicantSchoolCancelApproval(
+  schoolId: string,
+  notifyOptions: ApplicantSchoolApprovalNotifyOptions
+): void {
+  const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === schoolId)
+  if (row) {
+    Object.assign(row, patchApplicantSchoolForCancelApproval(row, notifyOptions))
+  }
+}
+
+/** 반려 취소 — 승인 대기 복원 */
+export function patchApplicantSchoolForCancelRejection(
+  row: ApplicantSchoolRow,
+  notifyOptions?: ApplicantSchoolApprovalNotifyOptions
+): ApplicantSchoolRow {
+  const pending = patchApplicantSchoolForApprovalStatus(row, 'pending')
+  if (!notifyOptions) {
+    return pending
+  }
+  return {
+    ...pending,
+    approvalNotificationSentAt:
+      resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
+  }
+}
+
+export function updateApplicantSchoolCancelRejection(
+  schoolId: string,
+  notifyOptions?: ApplicantSchoolApprovalNotifyOptions
+): void {
+  const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === schoolId)
+  if (row) {
+    Object.assign(row, patchApplicantSchoolForCancelRejection(row, notifyOptions))
   }
 }
 
