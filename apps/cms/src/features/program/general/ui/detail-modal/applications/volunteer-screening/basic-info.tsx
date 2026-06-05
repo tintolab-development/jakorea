@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import { formatGeneralVolunteerApplicationType } from '@/features/program/general/lib/volunteer-screening-constants'
+import { resolveGeneralEffectiveSecondInterviewStatus } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
@@ -73,11 +74,13 @@ export function GeneralVolunteerApplicantBasicInfo({
 
   const statusValue =
     statusRow === 'second_interview' ? (
-      applicant.secondInterviewScreeningStatus ? (
-        <GeneralSecondInterviewStatusText status={applicant.secondInterviewScreeningStatus} />
-      ) : (
-        '—'
-      )
+      (() => {
+        const effectiveStatus = resolveGeneralEffectiveSecondInterviewStatus(applicant)
+        if (effectiveStatus === 'withdrawn') {
+          return <GeneralInterviewAssignmentStatusText status="withdrawn" />
+        }
+        return <GeneralSecondInterviewStatusText status={effectiveStatus} />
+      })()
     ) : statusRow === 'interview_assignment' ? (
       <GeneralInterviewAssignmentStatusText status={applicant.interviewAssignmentStatus} />
     ) : (

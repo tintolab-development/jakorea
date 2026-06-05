@@ -1,16 +1,11 @@
 import { useMemo } from 'react'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import { computeGeneralInterviewTotalScore } from '@/features/program/general/lib/general-volunteer-interview2-display'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 
 function formatScoreValue(score: number | null | undefined): string {
   return score != null ? String(score) : '-'
-}
-
-function formatAssignedInterviewScheduleDisplay(applicant: GeneralVolunteerApplicantRow): string {
-  const dateLabel = applicant.assignedInterviewDateLabel
-  const time = applicant.assignedInterviewTime
-  if (!dateLabel || !time) return '—'
-  return `${dateLabel} ${time}`
 }
 
 export interface GeneralVolunteerApplicantInterviewEvaluationSectionProps {
@@ -20,57 +15,57 @@ export interface GeneralVolunteerApplicantInterviewEvaluationSectionProps {
 export function GeneralVolunteerApplicantInterviewEvaluationSection({
   applicant,
 }: GeneralVolunteerApplicantInterviewEvaluationSectionProps) {
-  const scheduleDisplay = useMemo(
-    () => formatAssignedInterviewScheduleDisplay(applicant),
-    [applicant]
-  )
-
   const remarkDisplay = applicant.interviewEvaluationRemark?.trim()
     ? applicant.interviewEvaluationRemark
     : '-'
 
+  const totalScore = useMemo(
+    () => computeGeneralInterviewTotalScore(applicant),
+    [applicant]
+  )
+
   return (
     <section className="general-volunteer-applicant-detail__subsection general-volunteer-applicant-interview-evaluation">
       <h3 className="general-volunteer-applicant-detail__subsection-title">면접 평가</h3>
-      <div className="program-detail-info-tab__table-wrapper general-volunteer-applicant-detail__table-wrapper--horizontal">
-        <table className="program-detail-info-tab__table general-volunteer-applicant-detail__table--horizontal">
+      <div className="applicant-instructor-basic-info__table-wrap general-volunteer-applicant-detail__grid-table-wrap">
+        <table className="applicant-instructor-basic-info__table general-volunteer-applicant-detail__table--grid">
+          <colgroup>
+            <col className="col-pair-label" />
+            <col />
+            <col className="col-pair-label" />
+            <col />
+          </colgroup>
           <tbody>
             <tr>
-              <th scope="row" className="general-volunteer-applicant-detail__horizontal-label">
-                면접 일정
-              </th>
-              <td colSpan={3} className="general-volunteer-applicant-detail__horizontal-value">
-                {scheduleDisplay}
-              </td>
-            </tr>
-            <tr>
-              <th scope="row" className="general-volunteer-applicant-detail__horizontal-label">
+              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
                 담당자 A 점수
-              </th>
-              <td className="general-volunteer-applicant-detail__horizontal-value">
+              </td>
+              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
                 {formatScoreValue(applicant.managerAScore)}
               </td>
-              <th scope="row" className="general-volunteer-applicant-detail__horizontal-label">
+              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
                 담당자 B 점수
-              </th>
-              <td className="general-volunteer-applicant-detail__horizontal-value">
+              </td>
+              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
                 {formatScoreValue(applicant.managerBScore)}
               </td>
             </tr>
             <tr>
-              <th scope="row" className="general-volunteer-applicant-detail__horizontal-label">
+              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
                 비고
-              </th>
-              <td colSpan={3} className="general-volunteer-applicant-detail__horizontal-value">
+              </td>
+              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
                 {remarkDisplay}
               </td>
-            </tr>
-            <tr>
-              <th scope="row" className="general-volunteer-applicant-detail__horizontal-label">
+              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
                 점수 종합
-              </th>
-              <td colSpan={3} className="general-volunteer-applicant-detail__horizontal-value">
-                {formatScoreValue(applicant.totalScore)}
+              </td>
+              <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
+                {totalScore != null ? (
+                  <span className="general-volunteer-interview2__score-value">{totalScore}</span>
+                ) : (
+                  '-'
+                )}
               </td>
             </tr>
           </tbody>

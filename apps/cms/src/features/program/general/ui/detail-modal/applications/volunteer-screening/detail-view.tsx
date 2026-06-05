@@ -38,6 +38,7 @@ type Interview2DetailProps = {
   onWithdrawActivity?: () => void
   onInterviewFail?: () => void
   onInterviewPass?: () => void
+  onOpenInterviewEvaluation?: () => void
 }
 
 export type GeneralVolunteerApplicantDetailViewProps =
@@ -81,7 +82,8 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
   }, [applicant.interviewAssignmentStatus])
 
   if (isInterview2Props(props)) {
-    const { onWithdrawActivity, onInterviewFail, onInterviewPass } = props
+    const { onWithdrawActivity, onInterviewFail, onInterviewPass, onOpenInterviewEvaluation } =
+      props
 
     return (
       <div className="general-volunteer-applicant-detail">
@@ -113,6 +115,15 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
               onClick={onInterviewPass}
             >
               면접 합격
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="primary"
+              size="large"
+              width={160}
+              onClick={onOpenInterviewEvaluation}
+            >
+              면접 평가
             </CmsButton>
             <PersonalInfoRevealButton
               labelMode="stickyReveal"
