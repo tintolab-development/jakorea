@@ -102,6 +102,7 @@ export interface ApplicantGeneralInstructorBasicInfoProps {
   draft?: ApplicantInstructorEditDraft
   onDraftChange?: (partial: Partial<ApplicantInstructorEditDraft>) => void
   validationErrors?: Record<string, string>
+  onResendNotificationClick?: () => void
 }
 
 function formatBirthDateAndAge(birthDate?: string, age?: number): string {
@@ -231,12 +232,19 @@ function TableRowFullWidth({ label, value }: { label: string; value: ReactNode }
   )
 }
 
-function ProgramApprovalStatusValue({ instructor }: { instructor: ApplicantInstructorRow }) {
+function ProgramApprovalStatusValue({
+  instructor,
+  onResendNotificationClick,
+}: {
+  instructor: ApplicantInstructorRow
+  onResendNotificationClick?: () => void
+}) {
   return (
     <ProgramApprovalStatusDetailValue
       status={instructor.approvalStatus}
       participationRejectionReason={instructor.rejectionReason}
       approvalNotificationSentAt={instructor.approvalNotificationSentAt}
+      onResendNotificationClick={onResendNotificationClick}
     />
   )
 }
@@ -248,6 +256,7 @@ export function ApplicantGeneralInstructorBasicInfo({
   draft,
   onDraftChange,
   validationErrors,
+  onResendNotificationClick,
 }: ApplicantGeneralInstructorBasicInfoProps) {
   const shouldMask = maskSensitive && instructor.approvalStatus !== 'approved'
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
@@ -379,7 +388,7 @@ export function ApplicantGeneralInstructorBasicInfo({
                 <tbody>
                   <TableRowTwoCols
                     label1="프로그램 승인 현황"
-                    value1={<ProgramApprovalStatusValue instructor={instructor} />}
+                    value1={<ProgramApprovalStatusValue instructor={instructor} onResendNotificationClick={onResendNotificationClick} />}
                     label2="JA 평가 등급"
                     value2={evaluationGradeDisplay}
                   />

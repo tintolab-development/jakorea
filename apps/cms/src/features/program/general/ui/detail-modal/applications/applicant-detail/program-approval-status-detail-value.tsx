@@ -11,12 +11,14 @@ export interface ProgramApprovalStatusDetailValueProps {
   status: ApprovalStatusKey
   participationRejectionReason?: string
   approvalNotificationSentAt?: string
+  onResendNotificationClick?: () => void
 }
 
 export function ProgramApprovalStatusDetailValue({
   status,
   participationRejectionReason,
   approvalNotificationSentAt,
+  onResendNotificationClick,
 }: ProgramApprovalStatusDetailValueProps) {
   if (status === 'pending') {
     return <ApprovalStatusText status="pending" />
@@ -27,7 +29,7 @@ export function ProgramApprovalStatusDetailValue({
       <div className="applicant-institution-basic-info__approval-status-row">
         <ApprovalStatusText status="approved" />
         <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
-        <SendNotiButton mode="resend" />
+        <SendNotiButton mode="resend" onClick={onResendNotificationClick} />
         {approvalNotificationSentAt ? (
           <>
             <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
@@ -48,7 +50,7 @@ export function ProgramApprovalStatusDetailValue({
         <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
         <span>사유 : ({reason})</span>
         <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
-        <SendNotiButton mode="resend" />
+        <SendNotiButton mode="resend" onClick={onResendNotificationClick} />
         {approvalNotificationSentAt ? (
           <>
             <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />

@@ -87,6 +87,7 @@ export interface ApplicantGeneralInstitutionBasicInfoProps {
   sameSchoolGradeOptions?: SameSchoolGradeOption[]
   canApplyCombinedClass?: boolean
   validationErrors?: Record<string, string>
+  onResendNotificationClick?: () => void
 }
 
 function TableRowTwoCols({
@@ -154,14 +155,17 @@ function TableRowSingleCol({ label, value }: { label: ReactNode; value: ReactNod
 
 function ProgramApprovalStatusValue({
   institution,
+  onResendNotificationClick,
 }: {
   institution: ApplicantSchoolRow
+  onResendNotificationClick?: () => void
 }) {
   return (
     <ProgramApprovalStatusDetailValue
       status={institution.approvalStatus}
       participationRejectionReason={institution.participationRejectionReason}
       approvalNotificationSentAt={institution.approvalNotificationSentAt}
+      onResendNotificationClick={onResendNotificationClick}
     />
   )
 }
@@ -314,6 +318,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
   sameSchoolGradeOptions = [],
   canApplyCombinedClass = false,
   validationErrors,
+  onResendNotificationClick,
 }: ApplicantGeneralInstitutionBasicInfoProps) {
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
   const shouldMask = maskSensitive && institution.approvalStatus !== 'approved'
@@ -418,7 +423,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
               <tbody>
                 <TableRowFullWidth
                   label="프로그램 승인 현황"
-                  value={<ProgramApprovalStatusValue institution={institution} />}
+                  value={<ProgramApprovalStatusValue institution={institution} onResendNotificationClick={onResendNotificationClick} />}
                 />
                 <TableRowTwoCols
                   label1="교재명"
