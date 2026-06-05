@@ -66,5 +66,6 @@ export function toInstructorCancelRejectionNotifyOptions(
   return {
     notifyTiming: payload.notifyTiming,
     manualNotifyAt: payload.manualNotifyAt ?? undefined,
+    rejectionReason: payload.reason.trim() || undefined,
   }
 }

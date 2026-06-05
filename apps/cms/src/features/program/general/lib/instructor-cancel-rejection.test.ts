@@ -22,6 +22,15 @@ describe('instructor-cancel-rejection', () => {
     ).toBe('alreadySent')
   })
 
+  it('반려 알림 발송 일시가 있으면 alreadySent 분기를 사용한다', () => {
+    expect(
+      resolveInstructorCancelRejectionNotifyVariant({
+        ...baseRow,
+        approvalNotificationSentAt: '2026.04.01 10:00:00',
+      })
+    ).toBe('alreadySent')
+  })
+
   it('예약 반려 알림은 pendingNotification 분기를 사용한다', () => {
     expect(
       resolveInstructorCancelRejectionNotifyVariant({

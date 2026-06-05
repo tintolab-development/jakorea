@@ -518,6 +518,8 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
     const managerComment =
       status === 'approved' ? '정보 재검토 정보 재확인 필요, 입금기입이 다르네요.' : undefined
     const rejectionReason = status === 'rejected' ? '인원 초과' : undefined
+    const rejectionNotifyTiming: ApplicantInstructorApprovalNotifyTiming | undefined =
+      status === 'rejected' ? (i % 2 === 1 ? 'immediate' : 'on_announcement') : undefined
     const lectureFeeBasisType: ApplicantInstructorLectureFeeBasisType | undefined =
       status === 'approved' ? 'special_lecture' : undefined
     const lectureFeeMeasure = status === 'approved' ? '1회 기준' : undefined
@@ -533,7 +535,11 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
     const affiliationIsCurrentlyEmployed = affiliationEmploymentStatus === 'ACTIVE'
     const instructorFeeGradeLabel = INSTRUCTOR_FEE_GRADE_LABELS[i % INSTRUCTOR_FEE_GRADE_LABELS.length]
     const approvalNotificationSentAt =
-      status === 'approved' ? '2026.01.15 09:15:42' : undefined
+      status === 'approved'
+        ? '2026.01.15 09:15:42'
+        : status === 'rejected' && rejectionNotifyTiming === 'immediate'
+          ? formatApprovalNotificationSentAt()
+          : undefined
     const resumeSample = getResumeSample(i)
     const evaluationGrades = ['A', 'B', 'C']
     const teachingExperiences = ['신규', '1년 미만', '1~3년', '3년 이상']
@@ -565,6 +571,7 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
       schoolName: SCHOOL_NAMES[i % SCHOOL_NAMES.length],
       ...assignedSchool,
       rejectionReason,
+      rejectionNotifyTiming,
       scheduleChangeCancelCount:
         scheduleChangeCancelCount > 0 ? scheduleChangeCancelCount : undefined,
       oneLineIntro: ONE_LINE_INTROS[i % ONE_LINE_INTROS.length] || undefined,
