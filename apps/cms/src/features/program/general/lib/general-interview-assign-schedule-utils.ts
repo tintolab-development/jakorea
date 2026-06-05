@@ -22,7 +22,7 @@ function parseTimeSlotsString(slotsString: string): string[] {
   return slotsString
     .split(',')
     .map(s => s.trim())
-    .filter(Boolean)
+    .filter(slot => /\d{2}:\d{2}/.test(slot))
     .map(normalizeTimeRangeKey)
 }
 

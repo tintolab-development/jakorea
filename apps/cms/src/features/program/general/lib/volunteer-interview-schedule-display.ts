@@ -8,6 +8,7 @@ import {
   type VolunteerInterviewScheduleEditSeed,
 } from '@/features/program/shared/lib/volunteer-interview-schedule-edit-seed'
 import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
+import { DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK } from '@/data/mock/general-volunteer-interview-schedule-mock'
 
 export type { VolunteerInterviewScheduleEditSeed }
 
@@ -34,11 +35,18 @@ export function resolveGeneralProgramVolunteerInterviewScheduleDisplay(
   }
 
   const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
+  const availableTimeSlots = info?.availableTimeSlots?.trim()
+
+  if (!availableTimeSlots || availableTimeSlots === '-') {
+    return DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK
+  }
 
   return {
-    recurringUnavailable: info?.recurringUnavailable ?? '-',
-    specificUnavailableDates: info?.specificUnavailableDates ?? '',
-    availableTimeSlots: info?.availableTimeSlots ?? '-',
+    recurringUnavailable:
+      info?.recurringUnavailable ?? DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.recurringUnavailable,
+    specificUnavailableDates:
+      info?.specificUnavailableDates ?? DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.specificUnavailableDates,
+    availableTimeSlots,
   }
 }
 
