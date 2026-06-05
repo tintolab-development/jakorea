@@ -1,0 +1,110 @@
+/**
+ * 일반 프로그램 — 강사 개별 반려 완료 안내 (600×222)
+ */
+
+.instructor-reject-complete-modal.teal-header-modal.ant-modal {
+  max-width: 600px;
+}
+
+.instructor-reject-complete-modal.content-modal.ant-modal .ant-modal-content,
+.instructor-reject-complete-modal.teal-header-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  box-sizing: border-box;
+  width: 600px !important;
+  max-width: 600px;
+  min-height: 222px;
+  height: 222px;
+  padding: 24px 30px 24px !important;
+  border-radius: var(--16, 16px);
+  background: #fff;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35) !important;
+  overflow: visible !important;
+}
+
+.instructor-reject-complete-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  width: 100%;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+.instructor-reject-complete-modal .teal-header-modal__header {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+  height: auto;
+  min-height: 36px;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+}
+
+.instructor-reject-complete-modal .teal-header-modal__title {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 24px;
+  line-height: 150%;
+}
+
+.instructor-reject-complete-modal .teal-header-modal__close {
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+.instructor-reject-complete-modal .teal-header-modal__body {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 0 !important;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.instructor-reject-complete-modal.content-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 0 !important;
+}
+
+.instructor-reject-complete-modal .content-modal__description {
+  margin: 0;
+  align-self: stretch;
+  width: 100%;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.instructor-reject-complete-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 100%;
+  margin-top: 30px;
+  padding: 0 !important;
+  background: transparent;
+  justify-content: flex-end;
+}
+
+.instructor-reject-complete-modal.content-modal .teal-header-modal__footer {
+  margin-top: 30px;
+}
+
+.instructor-reject-complete-modal .content-modal__footer-actions {
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.ant-modal-wrap:has(.instructor-reject-complete-modal) {
+  overflow: visible;
+}
+
+.ant-modal-wrap:has(.instructor-reject-complete-modal) .ant-modal {
+  overflow: visible;
+}
