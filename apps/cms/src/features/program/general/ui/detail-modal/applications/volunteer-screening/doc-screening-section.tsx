@@ -44,6 +44,10 @@ export function GeneralVolunteerDocScreeningSection({
     closeConfirm,
     showConfirm,
     applyDocumentScreeningStatus,
+    openManagerDropdown,
+    setOpenManagerDropdown,
+    onManagerAEvaluationChange,
+    onManagerBEvaluationChange,
   } = useGeneralVolunteerDocScreening({ programId })
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
@@ -92,20 +96,24 @@ export function GeneralVolunteerDocScreeningSection({
         <GeneralVolunteerApplicantDetailView
           variant="doc_screening"
           applicant={selectedApplicant}
+          openManagerDropdown={openManagerDropdown}
+          setOpenManagerDropdown={setOpenManagerDropdown}
+          onManagerAEvaluationChange={onManagerAEvaluationChange}
+          onManagerBEvaluationChange={onManagerBEvaluationChange}
           onDocumentReject={() =>
             showConfirm({
-              title: '반려',
-              content: `${selectedApplicant.name} 봉사자를 반려 처리하시겠습니까?`,
-              confirmText: '반려',
+              title: '서류 반려',
+              content: `${selectedApplicant.name} 봉사자를 서류 반려 처리하시겠습니까?`,
+              confirmText: '서류 반려',
               danger: true,
               onConfirm: () => applyDocumentScreeningStatus([selectedApplicant.id], 'fail'),
             })
           }
           onDocumentApprove={() =>
             showConfirm({
-              title: '승인',
-              content: `${selectedApplicant.name} 봉사자를 승인 처리하시겠습니까?`,
-              confirmText: '승인',
+              title: '서류 승인',
+              content: `${selectedApplicant.name} 봉사자를 서류 승인 처리하시겠습니까?`,
+              confirmText: '서류 승인',
               onConfirm: () => applyDocumentScreeningStatus([selectedApplicant.id], 'pass'),
             })
           }

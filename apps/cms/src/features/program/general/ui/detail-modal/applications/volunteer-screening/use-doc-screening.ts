@@ -227,5 +227,9 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     closeConfirm,
     showConfirm,
     applyDocumentScreeningStatus,
+    openManagerDropdown,
+    setOpenManagerDropdown,
+    onManagerAEvaluationChange,
+    onManagerBEvaluationChange,
   }
 }

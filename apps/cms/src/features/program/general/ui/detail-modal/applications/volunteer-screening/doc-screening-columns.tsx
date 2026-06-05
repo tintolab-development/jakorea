@@ -125,6 +125,9 @@ export function useGeneralVolunteerDocScreeningColumns({
         width: 200,
         minWidth: 200,
         align: 'center',
+        onHeaderCell: () => ({
+          className: 'general-volunteer-screening__manager-eval-dropdown-header',
+        }),
         onCell: () => ({ className: MANAGER_EVALUATION_CELL_CLASS }),
         render: (_: unknown, record: GeneralVolunteerApplicantRow) => (
           <StatusDropdownCell<GeneralManagerEvaluation>
@@ -149,6 +152,9 @@ export function useGeneralVolunteerDocScreeningColumns({
         width: 200,
         minWidth: 200,
         align: 'center',
+        onHeaderCell: () => ({
+          className: 'general-volunteer-screening__manager-eval-dropdown-header',
+        }),
         onCell: () => ({ className: MANAGER_EVALUATION_CELL_CLASS }),
         render: (_: unknown, record: GeneralVolunteerApplicantRow) => (
           <StatusDropdownCell<GeneralManagerEvaluation>
@@ -174,7 +180,7 @@ export function useGeneralVolunteerDocScreeningColumns({
         width: 160,
         minWidth: 160,
         align: 'center',
-        onCell: () => ({ className: 'general-volunteer-screening__status-cell' }),
+        onCell: () => ({ className: 'general-volunteer-screening__screening-status-cell' }),
         render: (status: GeneralVolunteerApplicantRow['documentScreeningStatus']) => (
           <GeneralDocumentScreeningStatusText status={status} />
         ),
