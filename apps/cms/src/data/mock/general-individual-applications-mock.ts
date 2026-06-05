@@ -271,6 +271,27 @@ export function updateGeneralIndividualApplicantApprovalStatus(
   }
 }
 
+/** 알림 재발송 — 발송 일시 갱신 */
+export function patchGeneralIndividualApplicantForNotificationResend(
+  row: GeneralIndividualApplicantRow,
+  sentAt = new Date()
+): GeneralIndividualApplicantRow {
+  return {
+    ...row,
+    approvalNotificationSentAt: formatApprovalNotificationSentAt(sentAt),
+  }
+}
+
+export function updateGeneralIndividualApplicantNotificationResend(
+  applicantId: string,
+  sentAt = new Date()
+): void {
+  const row = MOCK_GENERAL_INDIVIDUAL_APPLICATIONS.find(r => r.id === applicantId)
+  if (row) {
+    Object.assign(row, patchGeneralIndividualApplicantForNotificationResend(row, sentAt))
+  }
+}
+
 export function updateGeneralIndividualApplicantTeamRole(
   applicantId: string,
   teamRole: NonNullable<GeneralIndividualApplicantDetail['teamRole']>
