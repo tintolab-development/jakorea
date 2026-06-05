@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
-import { isAssignedInterviewSlot } from '@/features/program/general/lib/interview-availability-utils'
+import { isAssignedInterviewSlot, mergeAssignedInterviewIntoAvailability } from '@/features/program/general/lib/interview-availability-utils'
 import {
   formatDisplayTimeRange,
   normalizeTimeRangeKey,
@@ -34,7 +34,7 @@ function renderInterviewSlot(
 export function GeneralVolunteerApplicantInterviewAvailability({
   applicant,
 }: GeneralVolunteerApplicantInterviewAvailabilityProps) {
-  const days = applicant.interviewAvailability
+  const days = mergeAssignedInterviewIntoAvailability(applicant)
 
   return (
     <section className="general-volunteer-applicant-detail__subsection general-volunteer-applicant-interview-availability">

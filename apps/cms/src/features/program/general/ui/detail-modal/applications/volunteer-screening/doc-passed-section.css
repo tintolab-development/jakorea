@@ -2,8 +2,17 @@
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: visible;
   box-sizing: border-box;
+}
+
+.general-volunteer-doc-passed__table-header.participating-institutions-section__table-header {
+  width: 100%;
+  min-width: 0;
+}
+
+.general-volunteer-doc-passed__table-actions.participating-institutions-section__table-actions {
+  margin-left: auto;
 }
 
 /*
@@ -177,4 +186,18 @@
   opacity: 0.4;
   background: #fff !important;
   cursor: not-allowed;
+}
+
+.general-volunteer-doc-passed__calendar-container {
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.general-volunteer-doc-passed:has(.general-volunteer-doc-passed__calendar-container) {
+  overflow-x: visible;
+}
+
+.general-volunteer-doc-passed-calendar-list-item.ujat-volunteer-interview2-list-item {
+  width: 100%;
 }

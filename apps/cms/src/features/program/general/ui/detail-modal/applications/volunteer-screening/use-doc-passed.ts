@@ -16,6 +16,13 @@ import {
 } from './general-volunteer-applicant-guard-actions'
 import type { GeneralInterviewAssignConfirmPayload } from './general-volunteer-interview-assign-modal'
 import { useGeneralVolunteerDocPassedColumns } from './doc-passed-columns'
+import {
+  countInterviewAvailabilitySlots,
+  mergeAssignedInterviewIntoAvailability,
+} from '@/features/program/general/lib/interview-availability-utils'
+import { mapGeneralVolunteerAssignedInterviewToCalendarEvents } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
+
+export type GeneralVolunteerDocPassedViewMode = 'list' | 'calendar'
 
 export type GeneralInterviewAssignPickFlow = {
   type: 'pick'
@@ -44,6 +51,7 @@ export function useGeneralVolunteerDocPassed({ programId }: { programId: string 
   const [appliedFilters, setAppliedFilters] = useState<GeneralVolunteerDocPassedFilters>(() => ({
     ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS,
   }))
+  const [viewMode, setViewMode] = useState<GeneralVolunteerDocPassedViewMode>('list')
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
   const [assignFlow, setAssignFlow] = useState<GeneralInterviewAssignFlow | null>(null)
   const assignFlowRef = useRef(assignFlow)
@@ -53,6 +61,7 @@ export function useGeneralVolunteerDocPassed({ programId }: { programId: string 
     setList(getGeneralVolunteerDocPassedApplicants(programId))
     setPendingFilters({ ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS })
     setAppliedFilters({ ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS })
+    setViewMode('list')
   }, [programId])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
@@ -67,6 +76,11 @@ export function useGeneralVolunteerDocPassed({ programId }: { programId: string 
     const filtered = filterGeneralDocPassedApplicants(list, appliedFilters)
     return sortGeneralVolunteerDocPassedApplicants(filtered)
   }, [appliedFilters, list])
+
+  const calendarEvents = useMemo(
+    () => mapGeneralVolunteerAssignedInterviewToCalendarEvents(tableData),
+    [tableData]
+  )
 
   const updateRow = useCallback((id: string, patch: Partial<GeneralVolunteerApplicantRow>) => {
     setList(prev => prev.map(row => (row.id === id ? { ...row, ...patch } : row)))
@@ -88,11 +102,22 @@ export function useGeneralVolunteerDocPassed({ programId }: { programId: string 
 
       const { target } = flow
       const wasAssigned = target.interviewAssignmentStatus === 'assigned'
+      const assignedApplicant: GeneralVolunteerApplicantRow = {
+        ...target,
+        interviewAssignmentStatus: 'assigned',
+        assignedInterviewDateLabel: payload.dateLabel,
+        assignedInterviewTime: payload.timeRange,
+        secondInterviewScreeningStatus: target.secondInterviewScreeningStatus ?? 'waiting',
+      }
+      const interviewAvailability = mergeAssignedInterviewIntoAvailability(assignedApplicant)
+
       updateRow(target.id, {
         interviewAssignmentStatus: 'assigned',
         assignedInterviewDateLabel: payload.dateLabel,
         assignedInterviewTime: payload.timeRange,
         secondInterviewScreeningStatus: target.secondInterviewScreeningStatus ?? 'waiting',
+        interviewAvailability,
+        interviewSlotCount: countInterviewAvailabilitySlots(interviewAvailability),
       })
       setAssignFlow({
         type: 'complete',
@@ -139,6 +164,14 @@ export function useGeneralVolunteerDocPassed({ programId }: { programId: string 
 
   const columns = useGeneralVolunteerDocPassedColumns({ onAssignInterview: handleAssignInterview })
 
+  const handleViewCalendar = useCallback(() => {
+    setViewMode('calendar')
+  }, [])
+
+  const handleViewList = useCallback(() => {
+    setViewMode('list')
+  }, [])
+
   return {
     list,
     pendingFilters,
@@ -156,5 +189,9 @@ export function useGeneralVolunteerDocPassed({ programId }: { programId: string 
     cancelWithdrawActivity,
     confirmWithdrawActivity,
     withdrawTarget,
+    viewMode,
+    handleViewCalendar,
+    handleViewList,
+    calendarEvents,
   }
 }

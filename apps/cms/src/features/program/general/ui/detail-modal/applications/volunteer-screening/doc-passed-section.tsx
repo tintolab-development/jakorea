@@ -1,6 +1,8 @@
 import { useCallback, type MouseEvent } from 'react'
 import { Table } from 'antd'
+import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { CmsButton } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import type { Program } from '@/types/domain'
@@ -12,7 +14,10 @@ import {
 } from './use-detail'
 import { GeneralVolunteerApplicantDetailView } from './detail-view'
 import { GeneralVolunteerInterviewAssignModals } from './general-volunteer-interview-assign-modals'
+import { GeneralVolunteerDocPassedCalendarView } from './general-volunteer-doc-passed-calendar-view'
 import { useGeneralVolunteerDocPassed } from './use-doc-passed'
+import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import './doc-passed-section.css'
 import './volunteer-screening.css'
 
@@ -37,6 +42,10 @@ export function GeneralVolunteerDocPassedSection({
     tableData,
     columns,
     count,
+    viewMode,
+    handleViewCalendar,
+    handleViewList,
+    calendarEvents,
     handleAssignInterview,
     assignFlow,
     closeAssignModal,
@@ -99,6 +108,31 @@ export function GeneralVolunteerDocPassedSection({
     />
   )
 
+  const viewToggleButton =
+    viewMode === 'list' ? (
+      <CmsButton
+        type="button"
+        variant="secondary"
+        size="large"
+        style={{ minWidth: 180 }}
+        icon={<CalendarOutlined />}
+        onClick={handleViewCalendar}
+      >
+        캘린더 뷰로 보기
+      </CmsButton>
+    ) : (
+      <CmsButton
+        type="button"
+        variant="secondary"
+        size="large"
+        style={{ minWidth: 180 }}
+        icon={<UnorderedListOutlined />}
+        onClick={handleViewList}
+      >
+        리스트 뷰로 보기
+      </CmsButton>
+    )
+
   if (selectedApplicant) {
     return (
       <>
@@ -118,36 +152,57 @@ export function GeneralVolunteerDocPassedSection({
     <div className="general-volunteer-doc-passed applicant-details">
       <FilterTableLayout
         bordered={false}
-        className="general-volunteer-doc-passed__filter-layout"
+        className="general-volunteer-doc-passed__filter-layout applicant-details__filter-table-layout"
         rows={FILTER_ROWS}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
-        title="봉사자 1차 서류 합격자 목록"
-        description={`${count.toLocaleString()}건`}
       >
-        <div className="general-volunteer-doc-passed__table-wrap">
-          <Table<GeneralVolunteerApplicantRow>
-            rowKey="id"
-            className="cms-data-table cms-data-table--fluid clickable-table general-volunteer-doc-passed__table"
-            columns={columns}
-            dataSource={tableData}
-            pagination={false}
-            tableLayout="fixed"
-            rowClassName={record =>
-              record.interviewAssignmentStatus === 'withdrawn'
-                ? CMS_DATA_TABLE_ROW_DISABLED_CLASS
-                : ''
-            }
-            onRow={record => {
-              const withdrawn = record.interviewAssignmentStatus === 'withdrawn'
-              return {
-                onClick: withdrawn ? undefined : e => handleRowClick(record, e),
-                style: { cursor: withdrawn ? 'default' : 'pointer' },
-              }
-            }}
-          />
+        <div className="participating-institutions-section__table-header general-volunteer-doc-passed__table-header">
+          <div className="participating-institutions-section__table-heading">
+            <span className="participating-institutions-section__table-title">
+              봉사자 1차 서류 합격자 목록
+            </span>
+            <span className="participating-institutions-section__table-description">
+              {count.toLocaleString()}건
+            </span>
+          </div>
+          <div className="participating-institutions-section__table-actions general-volunteer-doc-passed__table-actions">
+            {viewToggleButton}
+          </div>
         </div>
+
+        {viewMode === 'list' ? (
+          <div className="general-volunteer-doc-passed__table-wrap">
+            <Table<GeneralVolunteerApplicantRow>
+              rowKey="id"
+              className="cms-data-table cms-data-table--fluid clickable-table general-volunteer-doc-passed__table"
+              columns={columns}
+              dataSource={tableData}
+              pagination={false}
+              tableLayout="fixed"
+              rowClassName={record =>
+                record.interviewAssignmentStatus === 'withdrawn'
+                  ? CMS_DATA_TABLE_ROW_DISABLED_CLASS
+                  : ''
+              }
+              onRow={record => {
+                const withdrawn = record.interviewAssignmentStatus === 'withdrawn'
+                return {
+                  onClick: withdrawn ? undefined : e => handleRowClick(record, e),
+                  style: { cursor: withdrawn ? 'default' : 'pointer' },
+                }
+              }}
+            />
+          </div>
+        ) : (
+          <div className="general-volunteer-doc-passed__calendar-container">
+            <GeneralVolunteerDocPassedCalendarView
+              events={calendarEvents}
+              onItemClick={openApplicantDetail}
+            />
+          </div>
+        )}
       </FilterTableLayout>
       {withdrawConfirmModal}
       {assignModals}
