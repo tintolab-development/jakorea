@@ -27,6 +27,21 @@ export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE =
 /** 수료증/참여인증서·활동인증서 발급 사유 모달 — 사유 미선택 시 AlertModal 본문 */
 export const CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE = '발급 사유를 선택해 주세요.'
 
+/** 참여 기관 강사 배정 현황 — 배정 취소: 미선택 시 AlertModal 본문 */
+export const INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE =
+  '배정 취소할 강사를 선택해 주세요.'
+
+/** 참여 강사 배정 현황 — 배정 취소: 미선택 시 AlertModal 본문 */
+export const INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE =
+  '배정 취소할 기관을 선택해 주세요.'
+
+/** 참여 기관 강사 배정 현황 — 선택 배정: 미선택 시 AlertModal 본문 */
+export const INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE =
+  '배정할 강사를 선택해 주세요.'
+
+/** 참여 강사 배정 현황 — 선택 배정: 미선택 시 AlertModal 본문 */
+export const INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE = '배정할 기관을 선택해 주세요.'
+
 export const MESSAGES = {
   success: {
     created: '등록되었습니다.',

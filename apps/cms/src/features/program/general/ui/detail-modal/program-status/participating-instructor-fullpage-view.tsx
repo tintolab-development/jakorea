@@ -17,8 +17,12 @@ import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instru
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import {
+  INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
+  INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
+} from '@/shared/constants/messages'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -50,6 +54,9 @@ import {
   type InstructorWaitingSchoolRow,
   type InstructorWaitingAssignmentStatus,
 } from '@/features/program/general/lib/instructor-institution-assignment-mock'
+import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
+import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import './participating-institutions-section.css'
 import './instructor-assignment-role-tag.css'
 import './instructor-assignment-status-text.css'
@@ -286,9 +293,15 @@ export function ParticipatingInstructorFullpageView({
   const [selectedWaitingSchoolKeys, setSelectedWaitingSchoolKeys] = useState<Key[]>([])
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
   const [unassignConfirmOpen, setUnassignConfirmOpen] = useState(false)
+  const [unassignCompleteModal, setUnassignCompleteModal] = useState<{
+    instructorNames: string[]
+    targetNames: string[]
+    reason: string
+  } | null>(null)
   const [selectAssignConfirmOpen, setSelectAssignConfirmOpen] = useState(false)
   const [addAssignModalOpen, setAddAssignModalOpen] = useState(false)
   const [addAssignSchoolId, setAddAssignSchoolId] = useState<string | null>(null)
+  const { showAlert } = useCmsAlert()
 
   const resolveParticipatingInstructorFullpageAccessItem = useCallback(
     () => d.instructorName ?? '참여 강사 상세 정보',
@@ -476,27 +489,60 @@ export function ParticipatingInstructorFullpageView({
     []
   )
 
-  const handleUnassignConfirm = useCallback(() => {
-    if (selectedAssignedSchoolKeys.length === 0) return
-    const toRemove = new Set(selectedAssignedSchoolKeys.map(String))
-    setAssignedSchools(prev => {
-      const removedRows = prev.filter(r => toRemove.has(r.id))
-      const next = renumberAssignedRows(prev.filter(r => !toRemove.has(r.id)))
-      setWaitingSchools(wPrev => {
-        const added: InstructorWaitingSchoolRow[] = []
-        for (const row of removedRows) {
-          const school = schoolRows.find(s => s.id === row.id)
-          if (school) {
-            added.push(createWaitingRowForSchool(school, d, instructorList, 0, 'waiting'))
+  const handleUnassignClick = useCallback(() => {
+    if (selectedAssignedSchoolKeys.length === 0) {
+      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      return
+    }
+    setUnassignConfirmOpen(true)
+  }, [selectedAssignedSchoolKeys.length, showAlert])
+
+  const handleSelectAssignClick = useCallback(() => {
+    if (selectedWaitingSchoolKeys.length === 0) {
+      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
+      return
+    }
+    const movable = waitingSchools.some(
+      w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus !== 'assigned'
+    )
+    if (!movable) {
+      return
+    }
+    setSelectAssignConfirmOpen(true)
+  }, [selectedWaitingSchoolKeys, waitingSchools, showAlert])
+
+  const handleUnassignConfirm = useCallback(
+    (payload: PermissionModalPayload) => {
+      if (selectedAssignedSchoolKeys.length === 0) return
+      const removedSchoolNames = assignedSchools
+        .filter(r => selectedAssignedSchoolKeys.includes(r.id))
+        .map(r => r.schoolName)
+      const toRemove = new Set(selectedAssignedSchoolKeys.map(String))
+      setAssignedSchools(prev => {
+        const removedRows = prev.filter(r => toRemove.has(r.id))
+        const next = renumberAssignedRows(prev.filter(r => !toRemove.has(r.id)))
+        setWaitingSchools(wPrev => {
+          const added: InstructorWaitingSchoolRow[] = []
+          for (const row of removedRows) {
+            const school = schoolRows.find(s => s.id === row.id)
+            if (school) {
+              added.push(createWaitingRowForSchool(school, d, instructorList, 0, 'waiting'))
+            }
           }
-        }
-        return renumberWaitingRows([...wPrev, ...added])
+          return renumberWaitingRows([...wPrev, ...added])
+        })
+        return next
       })
-      return next
-    })
-    setUnassignConfirmOpen(false)
-    setSelectedAssignedSchoolKeys([])
-    }, [selectedAssignedSchoolKeys, schoolRows, d, instructorList])
+      setUnassignConfirmOpen(false)
+      setSelectedAssignedSchoolKeys([])
+      setUnassignCompleteModal({
+        instructorNames: [d.instructorName],
+        targetNames: removedSchoolNames,
+        reason: payload.reason,
+      })
+    },
+    [selectedAssignedSchoolKeys, assignedSchools, schoolRows, d, instructorList]
+  )
 
   const handleSelectAssignConfirm = useCallback(() => {
     const selectedRows = waitingSchools.filter(
@@ -872,25 +918,20 @@ export function ParticipatingInstructorFullpageView({
         {effectiveTab === 'institutionAssignment' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
             <div className="school-detail-fullpage-view__instructor-section">
-              <div className="participating-institutions-section__table-header">
-                <div className="participating-institutions-section__table-heading">
-                  <span className="participating-institutions-section__table-title">
+              <div className="table-header-actions">
+                <div className="table-header-title--wrapper">
+                  <span className="table-title">
                     배정된 학교 목록
                   </span>
-                  <span className="participating-institutions-section__table-description">
+                  <span className="table-description">
                     {assignedSchools.length}건
                   </span>
                 </div>
-                <div className="participating-institutions-section__table-actions">
+                <div className="info-section-buttons--wrapper">
                   <CmsButton
                     variant="delete"
                     size="large"
-                    onClick={() => {
-                      if (selectedAssignedSchoolKeys.length === 0) {
-                        return
-                      }
-                      setUnassignConfirmOpen(true)
-                    }}
+                    onClick={handleUnassignClick}
                   >
                     배정 취소
                   </CmsButton>
@@ -913,7 +954,7 @@ export function ParticipatingInstructorFullpageView({
               <div className="participating-institutions-section__table-wrap">
                 {assignedSchools.length === 0 ? (
                   <div
-                    className="school-detail-fullpage-view__assigned-empty"
+                    className="school-detail-fullpage-view__instructor-list-empty"
                     role="status"
                     aria-label="배정된 학교 없음"
                   >
@@ -939,96 +980,76 @@ export function ParticipatingInstructorFullpageView({
             </div>
 
             <div className="school-detail-fullpage-view__instructor-section school-detail-fullpage-view__instructor-section--waiting">
-              <div className="participating-institutions-section__table-header">
-                <div className="participating-institutions-section__table-heading">
-                  <span className="participating-institutions-section__table-title">
+              <div className="table-header-actions">
+                <div className="table-header-title--wrapper">
+                  <span className="table-title">
                     배정 대기 학교 목록
                   </span>
-                  <span className="participating-institutions-section__table-description">
+                  <span className="table-description">
                     {waitingSchools.length}건
                   </span>
                 </div>
-                <div className="participating-institutions-section__table-actions">
+                <div className="info-section-buttons--wrapper">
                   <CmsButton
                     variant="primary"
                     size="large"
                     className="participating-institutions-section__btn-approve"
-                    onClick={() => {
-                      if (selectedWaitingSchoolKeys.length === 0) {
-                        return
-                      }
-                      const movable = waitingSchools.some(
-                        w =>
-                          selectedWaitingSchoolKeys.includes(w.id) &&
-                          w.assignmentStatus !== 'assigned'
-                      )
-                      if (!movable) {
-                        return
-                      }
-                      setSelectAssignConfirmOpen(true)
-                    }}
+                    onClick={handleSelectAssignClick}
                   >
                     선택 배정
                   </CmsButton>
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap">
-                <Table<InstructorWaitingSchoolRow>
-                  className="participating-institutions-section__table cms-data-table"
-                  rowKey="id"
-                  size="middle"
-                  pagination={false}
-                  scroll={{ x: 1180 }}
-                  rowSelection={{
-                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                    selectedRowKeys: selectedWaitingSchoolKeys,
-                    onChange: keys => setSelectedWaitingSchoolKeys(keys),
-                    getCheckboxProps: record => ({
-                      disabled: record.assignmentStatus === 'assigned',
-                    }),
-                  }}
-                  columns={waitingSchoolColumns}
-                  dataSource={waitingSchools}
-                  rowClassName={record =>
-                    record.assignmentStatus === 'assigned'
-                      ? 'school-detail-fullpage-view__waiting-row--assigned'
-                      : ''
-                  }
-                  locale={{ emptyText: '배정 대기 중인 기관이 없습니다.' }}
-                />
+                {waitingSchools.length === 0 ? (
+                  <div
+                    className="school-detail-fullpage-view__instructor-list-empty"
+                    role="status"
+                    aria-label="배정 대기 학교 없음"
+                  >
+                    배정 대기 중인 기관이 없습니다.
+                  </div>
+                ) : (
+                  <Table<InstructorWaitingSchoolRow>
+                    className="participating-institutions-section__table cms-data-table"
+                    rowKey="id"
+                    size="middle"
+                    pagination={false}
+                    scroll={{ x: 1180 }}
+                    rowSelection={{
+                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                      selectedRowKeys: selectedWaitingSchoolKeys,
+                      onChange: keys => setSelectedWaitingSchoolKeys(keys),
+                      getCheckboxProps: record => ({
+                        disabled: record.assignmentStatus === 'assigned',
+                      }),
+                    }}
+                    columns={waitingSchoolColumns}
+                    dataSource={waitingSchools}
+                    rowClassName={record =>
+                      record.assignmentStatus === 'assigned'
+                        ? 'school-detail-fullpage-view__waiting-row--assigned'
+                        : ''
+                    }
+                  />
+                )}
               </div>
             </div>
 
-            <ContentModal
+            <SchoolDetailUnassignConfirmModal
               open={unassignConfirmOpen}
               onCancel={() => setUnassignConfirmOpen(false)}
-              title="배정 취소 안내"
-              width={560}
-              footer={
-                <>
-                  <CmsButton
-                    variant="secondary"
-                    size="large"
-                    onClick={() => setUnassignConfirmOpen(false)}
-                  >
-                    취소
-                  </CmsButton>
-                  <CmsButton variant="delete" size="large" onClick={handleUnassignConfirm}>
-                    배정 취소
-                  </CmsButton>
-                </>
-              }
-            >
-              <p>
-                [<strong>{d.instructorName}</strong>] 강사님의 선택한 기관(
-                {unassignSchoolNames.map((name, i) => (
-                  <span key={`${name}-${i}`}>
-                    [<strong>{name}</strong>]{i < unassignSchoolNames.length - 1 ? ', ' : ''}
-                  </span>
-                ))}
-                ) 배정을 취소하시겠습니까?
-              </p>
-            </ContentModal>
+              instructorNames={[d.instructorName]}
+              targetNames={unassignSchoolNames}
+              onConfirm={handleUnassignConfirm}
+            />
+            <SchoolDetailUnassignCompleteModal
+              open={unassignCompleteModal != null}
+              onClose={() => setUnassignCompleteModal(null)}
+              instructorNames={unassignCompleteModal?.instructorNames ?? []}
+              targetNames={unassignCompleteModal?.targetNames ?? []}
+              reason={unassignCompleteModal?.reason ?? ''}
+            />
 
             <ContentModal
               open={selectAssignConfirmOpen}

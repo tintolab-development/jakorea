@@ -9,7 +9,7 @@ import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { CmsButton, CmsRadio } from '@/shared/ui'
+import { CmsButton, CmsRadio, useCmsAlert } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
@@ -34,12 +34,19 @@ import {
   getAssignedInstructorDisplayRows,
   getWaitingInstructorRows,
 } from '../../../lib/school-detail-mock'
-import { MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS } from '../../../lib/instructor-assign-session-options'
+import {
+  MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS,
+  mapParticipatingSessionsToInstructorAssignOptions,
+} from '../../../lib/instructor-assign-session-options'
 import {
   maskEmailLocalAfterTwoChars,
   maskMobilePhoneMiddleStars,
 } from '../../../lib/teacher-contact-display-mask'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import {
+  INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
+  INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
+} from '@/shared/constants/messages'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import {
@@ -54,9 +61,12 @@ import {
   type AddInstructorAssignOption,
 } from './school-detail-add-instructor-assign-modal'
 import { SchoolDetailSelectAssignConfirmModal } from './school-detail-select-assign-confirm-modal'
+import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { SchoolDetailAssignOverflowModal } from './school-detail-assign-overflow-modal'
 import { SchoolDetailAssignCompleteModal } from './school-detail-assign-complete-modal'
+import { SchoolDetailLeadInstructorConfirmModal } from './school-detail-lead-instructor-confirm-modal'
 import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import {
   getProgramProgressDisplayStatus,
@@ -308,6 +318,7 @@ export function GeneralParticipatingInstitutionDetailView({
 }: SchoolDetailFullpageViewProps) {
   const currentUser = useAuthStore(state => state.user)
   const showAdminCommentSection = isCmsAdminUser(currentUser)
+  const { showAlert } = useCmsAlert()
   const [internalTab, setInternalTab] = useState<SchoolDetailTabKey>('application')
   const activeTab = normalizeSchoolDetailTab(
     activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
@@ -323,6 +334,11 @@ export function GeneralParticipatingInstitutionDetailView({
   const [addModalOpenedFromOverflow, setAddModalOpenedFromOverflow] = useState(false)
   const [selectAssignConfirmOpen, setSelectAssignConfirmOpen] = useState(false)
   const [unassignConfirmOpen, setUnassignConfirmOpen] = useState(false)
+  const [unassignCompleteModal, setUnassignCompleteModal] = useState<{
+    instructorNames: string[]
+    targetNames: string[]
+    reason: string
+  } | null>(null)
   const [selectAssignOverflowOpen, setSelectAssignOverflowOpen] = useState(false)
   const [assignCompleteModal, setAssignCompleteModal] = useState<{
     instructorName: string
@@ -331,6 +347,10 @@ export function GeneralParticipatingInstitutionDetailView({
     showApprovalAlarmSection: boolean
   } | null>(null)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
+  const [leadRoleChangeConfirm, setLeadRoleChangeConfirm] = useState<{
+    instructorId: string
+    newLeadInstructorName: string
+  } | null>(null)
   const [textbookStatusDropdownOpen, setTextbookStatusDropdownOpen] = useState(false)
   const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
 
@@ -460,10 +480,10 @@ export function GeneralParticipatingInstitutionDetailView({
       }))
   }, [instructorList, instructors])
 
-  const addAssignSessionOptions = useMemo(
-    () => MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS,
-    []
-  )
+  const addAssignSessionOptions = useMemo(() => {
+    const fromSessions = mapParticipatingSessionsToInstructorAssignOptions(row.sessions)
+    return fromSessions.length > 0 ? fromSessions : MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS
+  }, [row.sessions])
 
   const currentLeadName =
     instructors.find((i: { role: InstructorRoleKey }) => i.role === 'lead')?.instructorName ?? null
@@ -510,24 +530,51 @@ export function GeneralParticipatingInstitutionDetailView({
     onSaveInstructorInfo,
   ])
 
-  /** 배정 취소 확인 모달에서 "배정 취소" 클릭 시: 선택한 배정된 강사를 목록에서 제거 */
-  const handleUnassignConfirm = useCallback(() => {
-    if (selectedAssignedKeys.length === 0) return
-    const newFormList: InstructorListFormInstructor[] = instructors
-      .filter(inv => !selectedAssignedKeys.includes(inv.id))
-      .map(({ id, role, instructorName, contact, email }) => ({
-        id,
-        role,
-        instructorName,
-        contact,
-        email,
-      }))
-    onSaveInstructorInfo?.(detail.id, newFormList)
-    setUnassignConfirmOpen(false)
-    setSelectedAssignedKeys([])
-    }, [selectedAssignedKeys, instructors, detail.id, onSaveInstructorInfo])
+  const handleUnassignClick = useCallback(() => {
+    if (selectedAssignedKeys.length === 0) {
+      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE })
+      return
+    }
+    setUnassignConfirmOpen(true)
+  }, [selectedAssignedKeys.length, showAlert])
 
-  const handleRoleChange = useCallback(
+  const handleSelectAssignClick = useCallback(() => {
+    if (selectedWaitingKeys.length === 0) {
+      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE })
+      return
+    }
+    setSelectAssignConfirmOpen(true)
+  }, [selectedWaitingKeys.length, showAlert])
+
+  /** 배정 취소 확인 모달에서 "배정 취소" 클릭 시: 선택한 배정된 강사를 목록에서 제거 */
+  const handleUnassignConfirm = useCallback(
+    (payload: PermissionModalPayload) => {
+      if (selectedAssignedKeys.length === 0) return
+      const removedInstructorNames = assignedRows
+        .filter(r => selectedAssignedKeys.includes(r.id))
+        .map(r => r.instructorName)
+      const newFormList: InstructorListFormInstructor[] = instructors
+        .filter(inv => !selectedAssignedKeys.includes(inv.id))
+        .map(({ id, role, instructorName, contact, email }) => ({
+          id,
+          role,
+          instructorName,
+          contact,
+          email,
+        }))
+      onSaveInstructorInfo?.(detail.id, newFormList)
+      setUnassignConfirmOpen(false)
+      setSelectedAssignedKeys([])
+      setUnassignCompleteModal({
+        instructorNames: removedInstructorNames,
+        targetNames: [row.schoolName],
+        reason: payload.reason,
+      })
+    },
+    [selectedAssignedKeys, assignedRows, instructors, detail.id, onSaveInstructorInfo, row.schoolName]
+  )
+
+  const applyRoleChange = useCallback(
     (instructorId: string, newRole: InstructorRoleKey) => {
       const updated = instructors.map(inv => ({
         ...inv,
@@ -544,8 +591,27 @@ export function GeneralParticipatingInstitutionDetailView({
       )
       onSaveInstructorInfo?.(detail.id, formList)
       setOpenRoleDropdownId(null)
-      },
+    },
     [instructors, detail.id, onSaveInstructorInfo]
+  )
+
+  const handleRoleChange = useCallback(
+    (instructorId: string, newRole: InstructorRoleKey) => {
+      if (newRole === 'lead') {
+        const currentLead = instructors.find(inv => inv.role === 'lead')
+        const target = instructors.find(inv => inv.id === instructorId)
+        if (currentLead && currentLead.id !== instructorId && target) {
+          setLeadRoleChangeConfirm({
+            instructorId,
+            newLeadInstructorName: target.instructorName,
+          })
+          setOpenRoleDropdownId(null)
+          return
+        }
+      }
+      applyRoleChange(instructorId, newRole)
+    },
+    [instructors, applyRoleChange]
   )
 
   const assignedInstructorColumns: ColumnsType<AssignedInstructorDisplayRow> = useMemo(
@@ -1010,25 +1076,20 @@ export function GeneralParticipatingInstitutionDetailView({
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
             {/* 섹션 1: 배정된 강사 목록 */}
             <div className="school-detail-fullpage-view__instructor-section">
-              <div className="participating-institutions-section__table-header">
-                <div className="participating-institutions-section__table-heading">
-                  <span className="participating-institutions-section__table-title">
+              <div className="table-header-actions">
+                <div className="table-header-title--wrapper">
+                  <span className="table-title">
                     배정된 강사 목록
                   </span>
-                  <span className="participating-institutions-section__table-description">
+                  <span className="table-description">
                     {instructors.length} / {MOCK_REQUIRED_INSTRUCTORS}명
                   </span>
                 </div>
-                <div className="participating-institutions-section__table-actions">
+                <div className="info-section-buttons--wrapper">
                   <CmsButton
                     variant="delete"
                     size="large"
-                    onClick={() => {
-                      if (selectedAssignedKeys.length === 0) {
-                        return
-                      }
-                      setUnassignConfirmOpen(true)
-                    }}
+                    onClick={handleUnassignClick}
                   >
                     배정 취소
                   </CmsButton>
@@ -1051,7 +1112,7 @@ export function GeneralParticipatingInstitutionDetailView({
               <div className="participating-institutions-section__table-wrap">
                 {assignedRows.length === 0 ? (
                   <div
-                    className="school-detail-fullpage-view__assigned-empty"
+                    className="school-detail-fullpage-view__instructor-list-empty"
                     role="status"
                     aria-label="배정된 강사 없음"
                   >
@@ -1078,55 +1139,59 @@ export function GeneralParticipatingInstitutionDetailView({
 
             {/* 섹션 2: 배정 대기 강사 목록 */}
             <div className="school-detail-fullpage-view__instructor-section school-detail-fullpage-view__instructor-section--waiting">
-              <div className="participating-institutions-section__table-header">
-                <div className="participating-institutions-section__table-heading">
-                  <span className="participating-institutions-section__table-title">
+              <div className="table-header-actions">
+                <div className="table-header-title--wrapper">
+                  <span className="table-title">
                     배정 대기 강사 목록
                   </span>
-                  <span className="participating-institutions-section__table-description">
+                  <span className="table-description">
                     {waitingRows.length}건
                   </span>
                 </div>
-                <div className="participating-institutions-section__table-actions">
+                <div className="info-section-buttons--wrapper">
                   <CmsButton
                     variant="primary"
                     size="large"
                     className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
-                    onClick={() => {
-                      if (selectedWaitingKeys.length === 0) {
-                        return
-                      }
-                      setSelectAssignConfirmOpen(true)
-                    }}
+                    onClick={handleSelectAssignClick}
                   >
                     선택 배정
                   </CmsButton>
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap">
-                <Table<WaitingInstructorRow>
-                  className="participating-institutions-section__table cms-data-table"
-                  rowKey="id"
-                  size="middle"
-                  pagination={false}
-                  scroll={{ x: 1000 }}
-                  rowSelection={{
-                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                    selectedRowKeys: selectedWaitingKeys,
-                    onChange: keys => setSelectedWaitingKeys(keys),
-                    getCheckboxProps: record => ({
-                      disabled: record.assignmentStatus === 'assigned',
-                    }),
-                  }}
-                  columns={waitingInstructorColumns}
-                  dataSource={waitingRows}
-                  rowClassName={record =>
-                    record.assignmentStatus === 'assigned'
-                      ? 'school-detail-fullpage-view__waiting-row--assigned'
-                      : ''
-                  }
-                  locale={{ emptyText: '배정 대기 중인 강사가 없습니다.' }}
-                />
+                {waitingRows.length === 0 ? (
+                  <div
+                    className="school-detail-fullpage-view__instructor-list-empty"
+                    role="status"
+                    aria-label="배정 대기 강사 없음"
+                  >
+                    배정 대기 중인 강사가 없습니다.
+                  </div>
+                ) : (
+                  <Table<WaitingInstructorRow>
+                    className="participating-institutions-section__table cms-data-table"
+                    rowKey="id"
+                    size="middle"
+                    pagination={false}
+                    scroll={{ x: 1000 }}
+                    rowSelection={{
+                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                      selectedRowKeys: selectedWaitingKeys,
+                      onChange: keys => setSelectedWaitingKeys(keys),
+                      getCheckboxProps: record => ({
+                        disabled: record.assignmentStatus === 'assigned',
+                      }),
+                    }}
+                    columns={waitingInstructorColumns}
+                    dataSource={waitingRows}
+                    rowClassName={record =>
+                      record.assignmentStatus === 'assigned'
+                        ? 'school-detail-fullpage-view__waiting-row--assigned'
+                        : ''
+                    }
+                  />
+                )}
               </div>
             </div>
 
@@ -1223,11 +1288,30 @@ export function GeneralParticipatingInstitutionDetailView({
             <SchoolDetailUnassignConfirmModal
               open={unassignConfirmOpen}
               onCancel={() => setUnassignConfirmOpen(false)}
-              schoolName={row.schoolName}
               instructorNames={assignedRows
                 .filter(r => selectedAssignedKeys.includes(r.id))
                 .map(r => r.instructorName)}
+              targetNames={[row.schoolName]}
               onConfirm={handleUnassignConfirm}
+            />
+            <SchoolDetailUnassignCompleteModal
+              open={unassignCompleteModal != null}
+              onClose={() => setUnassignCompleteModal(null)}
+              instructorNames={unassignCompleteModal?.instructorNames ?? []}
+              targetNames={unassignCompleteModal?.targetNames ?? []}
+              reason={unassignCompleteModal?.reason ?? ''}
+            />
+            <SchoolDetailLeadInstructorConfirmModal
+              open={leadRoleChangeConfirm != null}
+              onCancel={() => setLeadRoleChangeConfirm(null)}
+              onConfirm={() => {
+                if (leadRoleChangeConfirm) {
+                  applyRoleChange(leadRoleChangeConfirm.instructorId, 'lead')
+                  setLeadRoleChangeConfirm(null)
+                }
+              }}
+              currentLeadInstructorName={currentLeadName ?? ''}
+              newLeadInstructorName={leadRoleChangeConfirm?.newLeadInstructorName ?? ''}
             />
           </div>
         )}

@@ -38,7 +38,10 @@ import {
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
 } from '@/data/mock/participating-schools'
-import { MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS } from '../../../lib/instructor-assign-session-options'
+import {
+  MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS,
+  mapParticipatingSessionsToInstructorAssignOptions,
+} from '../../../lib/instructor-assign-session-options'
 import {
   SchoolDetailAddInstructorAssignModal,
   type AddInstructorAssignOption,
@@ -224,10 +227,10 @@ export function SchoolDetailModal({
     }))
   }, [detail])
 
-  const addInstructorAssignSessionOptions = useMemo(
-    () => MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS,
-    []
-  )
+  const addInstructorAssignSessionOptions = useMemo(() => {
+    const fromSessions = mapParticipatingSessionsToInstructorAssignOptions(participatingRow?.sessions)
+    return fromSessions.length > 0 ? fromSessions : MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS
+  }, [participatingRow?.sessions])
 
   const handleAddInstructorAssign = (
     instructorId: string,

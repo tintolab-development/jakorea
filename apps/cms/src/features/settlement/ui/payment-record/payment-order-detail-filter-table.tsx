@@ -105,14 +105,14 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
       </div>
 
       <div className="payment-order-detail-filter-table__below-divider participating-institutions-section__below-divider">
-        <div className="participating-institutions-section__table-header">
-          <div className="participating-institutions-section__table-heading">
-            <span className="participating-institutions-section__table-title">{sectionTitle}</span>
-            <span className="participating-institutions-section__table-description">
+        <div className="table-header-actions">
+          <div className="table-header-title--wrapper">
+            <span className="table-title">{sectionTitle}</span>
+            <span className="table-description">
               총 {filteredRows.length}건
             </span>
           </div>
-          <div className="participating-institutions-section__table-actions">
+          <div className="info-section-buttons--wrapper">
             <CmsButton
               variant="secondary"
               size="large" width={160}

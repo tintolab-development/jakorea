@@ -22,6 +22,7 @@ import type {
   AssignmentSubmissionRowStatusKey,
 } from '../model/school-detail-types'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
+import { sortWaitingRowsAssignedToBottom } from './instructor-institution-assignment-mock'
 import type { Application } from '@/types/domain'
 
 const TEACHER_PHONES = ['010-3927-5140', '010-5218-3674', '010-7483-2915']
@@ -200,20 +201,22 @@ export function getWaitingInstructorRows(
   const notAssignedToThisSchool = instructorList.filter(r => r.schoolName !== schoolName)
   const slice = notAssignedToThisSchool.slice(0, 12)
   const n = slice.length
-  return slice.map((r, idx) => {
-    const seed = hash(r.id)
-    return {
-      id: r.id,
-      no: n - idx,
-      instructorName: r.instructorName,
-      homeAddress: r.address ?? pick(WAITING_HOME_ADDRESSES, seed + idx),
-      distanceToSchool: pick(WAITING_DISTANCES, seed % 5),
-      assignmentStatus: pick([...WAITING_ASSIGNMENT_STATUSES], seed + idx),
-      hopeDate: pick(WAITING_HOPE_DATES, idx % 3),
-      hopeTime: pick(WAITING_HOPE_TIMES, idx % 3),
-      hopeSession: pick(WAITING_HOPE_SESSIONS, idx % 2),
-    }
-  })
+  return sortWaitingRowsAssignedToBottom(
+    slice.map((r, idx) => {
+      const seed = hash(r.id)
+      return {
+        id: r.id,
+        no: n - idx,
+        instructorName: r.instructorName,
+        homeAddress: r.address ?? pick(WAITING_HOME_ADDRESSES, seed + idx),
+        distanceToSchool: pick(WAITING_DISTANCES, seed % 5),
+        assignmentStatus: pick([...WAITING_ASSIGNMENT_STATUSES], seed + idx),
+        hopeDate: pick(WAITING_HOPE_DATES, idx % 3),
+        hopeTime: pick(WAITING_HOPE_TIMES, idx % 3),
+        hopeSession: pick(WAITING_HOPE_SESSIONS, idx % 2),
+      }
+    })
+  )
 }
 
 /**

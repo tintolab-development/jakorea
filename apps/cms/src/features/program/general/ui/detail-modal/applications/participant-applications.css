@@ -561,19 +561,6 @@
   text-align: left;
 }
 
-.program-detail-fullpage-modal--program-list-overview
-  .participant-applications
-  .applicant-details__filter-table-layout
-  .filter-table-layout__description {
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, var(--font-family-primary, 'Pretendard', sans-serif);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
-}
-
 /* 일반 프로그램 강사 신청 — 캘린더 뷰 풀페이지 */
 .detail-fullpage-modal.general-program-detail-fullpage-modal
   .general-instructor-applications
