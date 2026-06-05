@@ -205,6 +205,16 @@ export function ApplicantList({
     program != null &&
     !isGeneralIndividualProgram(program)
 
+  const useIndividualInstructorAssignFlow =
+    menu === 'instructors' &&
+    instructorColumnPreset === 'general-detail' &&
+    detailVariant === 'general' &&
+    program != null &&
+    isGeneralIndividualProgram(program)
+
+  const useInstructorAssignFlow =
+    useOrganizationInstructorAssignFlow || useIndividualInstructorAssignFlow
+
   const instructorApprovalInstructor = useMemo(() => {
     if (!instructorApprovalTarget) return null
     return (
@@ -445,7 +455,7 @@ export function ApplicantList({
           onApprove={id => {
             const row = selectedItem
             if (row && 'instructorName' in row && row.id === id) {
-              if (useOrganizationInstructorAssignFlow) {
+              if (useInstructorAssignFlow) {
                 setInstructorApprovalTarget({ id, name: row.instructorName, step: 'assign' })
               } else {
                 setInstructorApprovalTarget({
@@ -737,7 +747,9 @@ export function ApplicantList({
       program?.id ? (
         <InstructorLectureAssignModal
           open
+          variant={useIndividualInstructorAssignFlow ? 'individual' : 'organization'}
           programId={program.id}
+          program={program}
           instructor={instructorApprovalInstructor}
           allInstructors={instructorList}
           onCancel={() => setInstructorApprovalTarget(null)}

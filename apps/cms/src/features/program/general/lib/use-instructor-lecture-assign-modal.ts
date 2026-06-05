@@ -1,16 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { Program } from '@/types/domain'
 import {
   getApplicantPreferredDateKeys,
   getAssignedLectureDateKeys,
+  getIndividualLectureAssignSlots,
   getSlotsForLectureAssignDate,
   parseInstructorLectureAssignSchedule,
+  resolveProgramForIndividualLectureAssign,
   resolveLectureAssignModalCalendarState,
+  toIndividualLectureAssignItem,
   toLectureAssignItem,
   type InstructorLectureAssignItem,
   type InstructorLectureAssignSlot,
 } from './instructor-lecture-assign-schedule'
+
+export type InstructorLectureAssignModalVariant = 'organization' | 'individual'
 
 export type InstructorLectureAssignConfirmPayload = {
   assignments: InstructorLectureAssignItem[]
@@ -18,11 +24,22 @@ export type InstructorLectureAssignConfirmPayload = {
 
 export function useInstructorLectureAssignModal(params: {
   open: boolean
+  variant?: InstructorLectureAssignModalVariant
   programId: string
+  program?: Program | null
   instructor: ApplicantInstructorRow
   allInstructors: ApplicantInstructorRow[]
 }) {
-  const { open, programId, instructor, allInstructors } = params
+  const {
+    open,
+    variant = 'organization',
+    programId,
+    program = null,
+    instructor,
+    allInstructors,
+  } = params
+
+  const isIndividual = variant === 'individual'
 
   const schedule = useMemo(
     () => parseInstructorLectureAssignSchedule(programId),
@@ -35,6 +52,10 @@ export function useInstructorLectureAssignModal(params: {
 
   useEffect(() => {
     if (!open) return
+    if (isIndividual) {
+      setAssignedItems([])
+      return
+    }
     const { scheduleMonth, selectedDate: initialDate } = resolveLectureAssignModalCalendarState(
       schedule,
       instructor
@@ -42,7 +63,7 @@ export function useInstructorLectureAssignModal(params: {
     setCurrentMonth(scheduleMonth)
     setSelectedDate(initialDate)
     setAssignedItems([])
-  }, [open, instructor, schedule])
+  }, [open, instructor, schedule, isIndividual])
 
   const selectedDateKey = selectedDate.format('YYYY-MM-DD')
 
@@ -57,6 +78,21 @@ export function useInstructorLectureAssignModal(params: {
       ),
     [schedule, selectedDateKey, assignedItems, allInstructors, instructor.id]
   )
+
+  const individualProgram = useMemo(
+    () => (isIndividual ? resolveProgramForIndividualLectureAssign(program, programId) : null),
+    [isIndividual, program, programId]
+  )
+
+  const individualSlots = useMemo(() => {
+    if (!isIndividual || !individualProgram) return []
+    return getIndividualLectureAssignSlots(
+      individualProgram,
+      instructor,
+      allInstructors,
+      instructor.id
+    )
+  }, [isIndividual, individualProgram, instructor, allInstructors])
 
   const preferredDateKeys = useMemo(
     () => getApplicantPreferredDateKeys(instructor),
@@ -76,13 +112,17 @@ export function useInstructorLectureAssignModal(params: {
     [schedule]
   )
 
-  const handleAddSlot = useCallback((slot: InstructorLectureAssignSlot) => {
-    if (slot.disabled) return
-    setAssignedItems(prev => {
-      if (prev.some(item => item.slotKey === slot.key)) return prev
-      return [...prev, toLectureAssignItem(slot)]
-    })
-  }, [])
+  const handleAddSlot = useCallback(
+    (slot: InstructorLectureAssignSlot) => {
+      if (slot.disabled) return
+      setAssignedItems(prev => {
+        if (prev.some(item => item.slotKey === slot.key)) return prev
+        const nextItem = isIndividual ? toIndividualLectureAssignItem(slot) : toLectureAssignItem(slot)
+        return [...prev, nextItem]
+      })
+    },
+    [isIndividual]
+  )
 
   const handleRemoveAssignment = useCallback((slotKey: string) => {
     setAssignedItems(prev => prev.filter(item => item.slotKey !== slotKey))
@@ -91,12 +131,15 @@ export function useInstructorLectureAssignModal(params: {
   const canConfirm = assignedItems.length > 0
 
   return {
+    variant,
+    isIndividual,
     schedule,
     currentMonth,
     setCurrentMonth,
     selectedDate,
     selectedDateKey,
     slotsForDay,
+    individualSlots,
     preferredDateKeys,
     assignedDateKeys,
     assignedItems,

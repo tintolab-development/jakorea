@@ -18,6 +18,7 @@ import type {
   ProgramRound,
   TargetLevel,
 } from '../../types/domain'
+import { MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES } from '@/features/program/general/lib/individual-lecture-assign-demo'
 import {
   buildGeneralProgramVariantTitle,
   GENERAL_PROGRAM_VARIANTS,
@@ -144,6 +145,10 @@ const CALENDAR_DEMO_IN_PROGRESS_A_COMMON_INFO: NonNullable<Program['generalCommo
       dueDate: calendarDemoIso(2026, 6, 24, true),
     },
   ],
+}
+
+const CALENDAR_DEMO_SCHEDULED_INDIVIDUAL_COMMON_INFO: NonNullable<Program['generalCommonInfo']> = {
+  educationScheduleLines: [...MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES],
 }
 
 const CALENDAR_DEMO_IN_PROGRESS_B_COMMON_INFO: NonNullable<Program['generalCommonInfo']> = {
@@ -278,6 +283,11 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     generalParticipantTypes: ['individual', 'teacher_instructor'],
     generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
     generalProgramAudience: 'individual',
+    generalProgramEducationStructure: 'schedule',
+    generalProgramSessionRound: 'multi',
+    instructorApplicationStartDate: calendarDemoIso(2026, 4, 1),
+    instructorApplicationEndDate: calendarDemoIso(2026, 4, 30, true),
+    generalCommonInfo: CALENDAR_DEMO_SCHEDULED_INDIVIDUAL_COMMON_INFO,
   },
   {
     id: 'general-prog-in-progress-1',

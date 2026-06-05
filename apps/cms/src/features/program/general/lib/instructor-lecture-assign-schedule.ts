@@ -2,7 +2,11 @@ import dayjs, { type Dayjs } from 'dayjs'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import { getGeneralProgramById } from '@/data/mock/general-programs'
 import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications-mock'
+import { MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES } from '@/features/program/general/lib/individual-lecture-assign-demo'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import type { Program } from '@/types/domain'
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
@@ -30,6 +34,11 @@ export type InstructorLectureAssignItem = {
   tagLabel: string
 }
 
+/** 개인 프로그램 강의 배정 — 기관 ID 대체값 */
+export const INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID = 'individual-program'
+
+export { MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES } from '@/features/program/general/lib/individual-lecture-assign-demo'
+
 /** 슬롯별 기존 배정 강사 수 (mock seed) */
 const MOCK_SLOT_ASSIGNMENT_COUNTS: Record<string, number> = {
   '2026-03-19|assign-school-gangseo|1': 3,
@@ -37,6 +46,56 @@ const MOCK_SLOT_ASSIGNMENT_COUNTS: Record<string, number> = {
   '2026-03-19|assign-school-2|1': 1,
   '2026-03-19|assign-school-3|1': 0,
   '2026-03-19|assign-school-4|1': 2,
+  '2026-04-20|individual-program|1': 2,
+  '2026-04-27|individual-program|2': 2,
+}
+
+function parseEducationScheduleLine(
+  line: string
+): { dateKey: string; startTime?: string; endTime?: string } | null {
+  const match = line.match(
+    /(\d{2})년\s*(\d{1,2})월\s*(\d{1,2})일(?:\([^)]*\))?\s*(?:(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2}))?/
+  )
+  if (!match) return null
+  const year = `20${match[1]}`
+  const month = match[2]!.padStart(2, '0')
+  const day = match[3]!.padStart(2, '0')
+  return {
+    dateKey: `${year}-${month}-${day}`,
+    startTime: match[4],
+    endTime: match[5],
+  }
+}
+
+function normalizeIndividualTimeRange(startTime?: string, endTime?: string): string {
+  const start = startTime?.trim()
+  const end = endTime?.trim()
+  if (start && end) {
+    const formatPart = (part: string) => {
+      const m = part.match(/^(\d{1,2}):(\d{2})$/)
+      if (!m) return part
+      return `${m[1]!.padStart(2, '0')}:${m[2]}`
+    }
+    return `${formatPart(start)} ~ ${formatPart(end)}`
+  }
+  return '종일'
+}
+
+function buildIndividualSlotKey(dateKey: string, sessionRound: number): string {
+  return `${dateKey}|${INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID}|${sessionRound}`
+}
+
+export function formatIndividualLectureAssignSlotLabel(
+  date: Dayjs,
+  timeRange: string,
+  sessionLabel: string
+): string {
+  const dateLabel = formatLectureAssignDateLabel(date)
+  return `${dateLabel} ${timeRange} | ${sessionLabel}`
+}
+
+export function formatIndividualLectureAssignTagLabel(date: Dayjs, timeRange: string): string {
+  return `${formatLectureAssignDateLabel(date)} ${timeRange}`
 }
 
 /** 시안용 2026년 3월 고정 슬롯 */
@@ -375,4 +434,149 @@ export function getAssignedLectureDateKeys(
   assignedItems: InstructorLectureAssignItem[]
 ): Set<string> {
   return new Set(assignedItems.map(item => item.dateKey))
+}
+
+export function resolveIndividualProgramEducationScheduleLines(program: Program): string[] {
+  const direct =
+    program.generalCommonInfo?.educationScheduleLines?.map(line => line.trim()).filter(Boolean) ??
+    []
+  if (direct.length > 0) return direct
+
+  const seeded = getGeneralProgramById(String(program.id))
+  const fromSeed =
+    seeded?.generalCommonInfo?.educationScheduleLines?.map(line => line.trim()).filter(Boolean) ??
+    []
+  if (fromSeed.length > 0) return fromSeed
+
+  if (isGeneralIndividualProgram(program) || (seeded != null && isGeneralIndividualProgram(seeded))) {
+    return [...MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES]
+  }
+
+  return []
+}
+
+export function resolveProgramForIndividualLectureAssign(
+  program: Program | null | undefined,
+  programId: string
+): Program {
+  const seeded = getGeneralProgramById(programId)
+  if (program && seeded) {
+    const scheduleLines = resolveIndividualProgramEducationScheduleLines({
+      ...seeded,
+      ...program,
+      generalCommonInfo: {
+        ...seeded.generalCommonInfo,
+        ...program.generalCommonInfo,
+      },
+    })
+    return {
+      ...seeded,
+      ...program,
+      generalCommonInfo: {
+        ...seeded.generalCommonInfo,
+        ...program.generalCommonInfo,
+        educationScheduleLines: scheduleLines,
+      },
+    }
+  }
+
+  if (program) {
+    const scheduleLines = resolveIndividualProgramEducationScheduleLines(program)
+    return {
+      ...program,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        educationScheduleLines: scheduleLines,
+      },
+    }
+  }
+
+  if (seeded) {
+    const scheduleLines = resolveIndividualProgramEducationScheduleLines(seeded)
+    return {
+      ...seeded,
+      generalCommonInfo: {
+        ...seeded.generalCommonInfo,
+        educationScheduleLines: scheduleLines,
+      },
+    }
+  }
+
+  return {
+    id: programId,
+    generalProgramAudience: 'individual',
+    generalCommonInfo: {
+      educationScheduleLines: [...MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES],
+    },
+  } as Program
+}
+
+export function parseIndividualInstructorLectureAssignSchedule(
+  program: Program
+): InstructorLectureAssignSlot[] {
+  const lines = resolveIndividualProgramEducationScheduleLines(program)
+  const slots: InstructorLectureAssignSlot[] = []
+
+  lines.forEach((line, index) => {
+    const parsed = parseEducationScheduleLine(line)
+    if (!parsed) return
+    const sessionRound = index + 1
+    const sessionLabel = `${sessionRound}차시`
+    const timeRange = normalizeIndividualTimeRange(parsed.startTime, parsed.endTime)
+    const key = buildIndividualSlotKey(parsed.dateKey, sessionRound)
+    slots.push({
+      key,
+      dateKey: parsed.dateKey,
+      schoolId: INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID,
+      schoolName: program.mainTitle?.trim() || program.title?.trim() || '개인 프로그램',
+      region: '',
+      sessionRound,
+      sessionLabel,
+      timeRange,
+      assignedCount: 0,
+    })
+  })
+
+  return slots
+}
+
+export function isIndividualLectureAssignSlotDisabled(
+  slot: InstructorLectureAssignSlot,
+  instructor: ApplicantInstructorRow
+): boolean {
+  if (slot.disabled) return true
+  const preferences = instructor.preferredScheduleSlots
+  if (!preferences?.length) return false
+  const matched = preferences.find(item => item.slotKey === slot.key)
+  if (!matched) return false
+  return !matched.assignable
+}
+
+export function getIndividualLectureAssignSlots(
+  program: Program,
+  instructor: ApplicantInstructorRow,
+  allInstructors: ApplicantInstructorRow[],
+  excludeInstructorId?: string
+): InstructorLectureAssignSlot[] {
+  return parseIndividualInstructorLectureAssignSchedule(program).map(slot => ({
+    ...slot,
+    assignedCount: countLectureSlotAssignments(slot.key, allInstructors, excludeInstructorId),
+    disabled: isIndividualLectureAssignSlotDisabled(slot, instructor),
+  }))
+}
+
+export function toIndividualLectureAssignItem(
+  slot: InstructorLectureAssignSlot
+): InstructorLectureAssignItem {
+  const date = dayjs(slot.dateKey)
+  return {
+    slotKey: slot.key,
+    dateKey: slot.dateKey,
+    schoolId: slot.schoolId,
+    schoolName: slot.schoolName,
+    sessionLabel: slot.sessionLabel,
+    timeRange: slot.timeRange,
+    dateLabel: formatLectureAssignDateLabel(date),
+    tagLabel: formatIndividualLectureAssignTagLabel(date, slot.timeRange),
+  }
 }

@@ -5,6 +5,10 @@
 
 import type { Dayjs } from 'dayjs'
 import type { SchoolTeacherEmploymentStatus } from '@/types/user'
+import { getGeneralProgramById } from '@/data/mock/general-programs'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { INDIVIDUAL_LECTURE_ASSIGN_DEMO_SLOT_KEYS } from '@/features/program/general/lib/individual-lecture-assign-demo'
+import { INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 export type ApplicantInstructorLectureFeeBasisType = 'program' | 'special_lecture' | 'other_labor'
 
 export type ApplicantInstructorApprovalStatusKey = 'pending' | 'rejected' | 'approved'
@@ -105,6 +109,11 @@ export interface ApplicantInstructorRow {
   profileImageUrl?: string
   /** 희망 배정 학교 1~4순위 (일부 assignable: false로 배정 불가) */
   preferredSchools?: ApplicantInstructorPreferredSchool[]
+  /** 개인 프로그램 — 강의 배정 가능 일정 (assignable: false면 배정 불가) */
+  preferredScheduleSlots?: Array<{
+    slotKey: string
+    assignable: boolean
+  }>
   /** 승인 완료 시 배정된 학교 ID (결재 내역 배정 학교 표시용) */
   assignedSchoolId?: string
   /** 승인 완료 시 배정된 학교명 */
@@ -578,11 +587,84 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
 
 export const MOCK_APPLICANT_INSTRUCTORS: ApplicantInstructorRow[] = buildMockList(72)
 
+const INDIVIDUAL_PROGRAM_SLOT_KEYS = INDIVIDUAL_LECTURE_ASSIGN_DEMO_SLOT_KEYS
+
+/** 개인 프로그램 강사 배정 QA — `general-prog-scheduled-2` 전용 최소 목록 */
+export const INDIVIDUAL_PROGRAM_DEMO_INSTRUCTOR_PROGRAM_ID = 'general-prog-scheduled-2'
+
+const INDIVIDUAL_PROGRAM_DEMO_INSTRUCTORS: ApplicantInstructorRow[] = [
+  {
+    id: 'individual-program-instructor-pending',
+    no: 2,
+    instructorName: '박틴토',
+    lectureExperienceYears: 4,
+    educationLevel: '대학교',
+    educationSchoolName: '한국대학교',
+    contact: '010-7733-2211',
+    email: 'tinto@naver.com',
+    address: '서울특별시 강서구',
+    appliedAt: '2026.04.01',
+    affiliation: '개인',
+    approvalStatus: 'pending',
+    schoolName: '-',
+    evaluationGrade: 'A',
+    instructorFeeGradeLabel: '3급 강사비',
+    gender: '남성',
+    birthDate: '1994.04.12',
+    age: 32,
+    accountHolder: '박틴토',
+    preferredScheduleSlots: [
+      { slotKey: INDIVIDUAL_PROGRAM_SLOT_KEYS.first, assignable: true },
+      { slotKey: INDIVIDUAL_PROGRAM_SLOT_KEYS.second, assignable: false },
+    ],
+  },
+  {
+    id: 'individual-program-instructor-approved',
+    no: 1,
+    instructorName: '김서연',
+    lectureExperienceYears: 6,
+    educationLevel: '대학교',
+    educationSchoolName: '서울대학교',
+    contact: '010-1111-2222',
+    email: 'seoyeon@example.com',
+    address: '서울특별시 마포구',
+    appliedAt: '2026.03.28',
+    affiliation: '개인',
+    approvalStatus: 'approved',
+    schoolName: '-',
+    evaluationGrade: 'B',
+    instructorFeeGradeLabel: '2급 강사비',
+    lectureFeeBasisDisplay: '특강 강사비 | 1회 기준 | 915,000원',
+    lectureFeeBasisType: 'special_lecture',
+    lectureFeeMeasure: '1회 기준',
+    lectureFeeAmount: '915000',
+    businessIncomeEarnerStatus: '해당 없음',
+    approvalNotificationSentAt: '2026.04.02 10:00:00',
+    assignedLectures: [
+      {
+        slotKey: INDIVIDUAL_PROGRAM_SLOT_KEYS.first,
+        dateKey: '2026-04-20',
+        schoolId: INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID,
+        schoolName: 'UJAT 36기',
+        sessionLabel: '1차시',
+        timeRange: '09:30 ~ 12:20',
+      },
+    ],
+    assignedSchoolId: INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID,
+    assignedSchoolName: 'UJAT 36기',
+  },
+]
+
 /**
  * 프로그램별 강의 신청 강사 목록 (강사 모집 상세 모달용).
  * Mock: programId별로 다른 수의 강사 반환 (실제 API 연동 시 programId 필터 적용).
  */
 export function getApplicantInstructorsByProgramId(programId: string): ApplicantInstructorRow[] {
+  const program = getGeneralProgramById(programId)
+  if (program != null && isGeneralIndividualProgram(program)) {
+    return INDIVIDUAL_PROGRAM_DEMO_INSTRUCTORS.map(row => ({ ...row, programId }))
+  }
+
   const hash = programId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
   const count = Math.min(72, Math.max(5, (hash % 50) + 20))
   return MOCK_APPLICANT_INSTRUCTORS.slice(0, count).map((row, idx) => ({
