@@ -158,16 +158,16 @@ export function GeneralVolunteerDocPassedSection({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
       >
-        <div className="participating-institutions-section__table-header general-volunteer-doc-passed__table-header">
-          <div className="participating-institutions-section__table-heading">
-            <span className="participating-institutions-section__table-title">
+        <div className="table-header-actions general-volunteer-doc-passed__table-header">
+          <div className="table-header-title--wrapper">
+            <span className="table-title">
               봉사자 1차 서류 합격자 목록
             </span>
-            <span className="participating-institutions-section__table-description">
+            <span className="table-description">
               {count.toLocaleString()}건
             </span>
           </div>
-          <div className="participating-institutions-section__table-actions general-volunteer-doc-passed__table-actions">
+          <div className="info-section-buttons--wrapper general-volunteer-doc-passed__table-actions">
             {viewToggleButton}
           </div>
         </div>

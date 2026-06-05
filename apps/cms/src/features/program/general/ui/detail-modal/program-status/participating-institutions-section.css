@@ -248,17 +248,6 @@
   color: var(--color-text-disabled) !important;
 }
 
-/* 테이블 헤더 타이틀 스펙 (참여 강사 뷰) */
-.participating-institutions-section--instructors .participating-institutions-section__table-title,
-.program-status-participating--instructors .program-status-participating__table-title {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 20px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 140%;
-}
-
 /* 정산현황 컬럼: 텍스트만 표기, 기본 폰트 스펙 + 상태별 대표 컬러 */
 .participating-instructors-section__settlement-text {
   text-align: center;

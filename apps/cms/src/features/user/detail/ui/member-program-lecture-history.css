@@ -41,17 +41,6 @@
   background: transparent;
 }
 
-.member-program-lecture-history .filter-table-layout__description {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
-  white-space: normal;
-}
-
 .member-program-lecture-history__table-description {
   display: inline-flex;
   align-items: center;

@@ -16,8 +16,8 @@ import {
 import type { InstructorLectureAssignItem } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 import { UjatVolunteerInterviewAssignCalendarMini } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-interview-assign-calendar-mini'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
+import { InstructorAssignSessionSlotChip } from '@/features/program/shared/ui/detail-modal/components/instructor-assign-session-slot-chip'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { DividerVertical } from '@/shared/components/divider-vertical'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import type { Program } from '@/types/domain'
@@ -94,9 +94,20 @@ function renderSlotChip(params: {
   onAdd: () => void
 }) {
   const { slot, isSelected, isIndividual, onAdd } = params
-  const individualScheduleText = isIndividual
-    ? formatIndividualLectureAssignTagLabel(dayjs(slot.dateKey), slot.timeRange)
-    : null
+
+  if (isIndividual) {
+    return (
+      <InstructorAssignSessionSlotChip
+        key={slot.key}
+        scheduleLabel={formatIndividualLectureAssignTagLabel(dayjs(slot.dateKey), slot.timeRange)}
+        sessionRoundLabel={slot.sessionLabel}
+        capacityLabel={`${slot.assignedCount}명`}
+        selected={isSelected}
+        disabled={slot.disabled}
+        onClick={onAdd}
+      />
+    )
+  }
 
   return (
     <ParagraphChip
@@ -105,7 +116,6 @@ function renderSlotChip(params: {
       disabled={slot.disabled}
       className={[
         'instructor-lecture-assign-modal__slot-chip',
-        isIndividual ? 'instructor-lecture-assign-modal__slot-chip--individual' : '',
         isSelected ? 'instructor-lecture-assign-modal__slot-chip--selected' : '',
         slot.disabled ? 'instructor-lecture-assign-modal__slot-chip--disabled' : '',
       ]
@@ -115,27 +125,10 @@ function renderSlotChip(params: {
       onClick={onAdd}
     >
       <span className="instructor-lecture-assign-modal__slot-main">
-        {isIndividual ? (
-          <span className="instructor-lecture-assign-modal__slot-individual-content">
-            <span className="instructor-lecture-assign-modal__slot-schedule-text">
-              {individualScheduleText}
-            </span>
-            <DividerVertical
-              height={13}
-              className="instructor-lecture-assign-modal__slot-divider"
-            />
-            <span className="instructor-lecture-assign-modal__slot-session-label">
-              {slot.sessionLabel}
-            </span>
-          </span>
-        ) : (
-          <>
-            <span className="instructor-lecture-assign-modal__slot-school">{slot.schoolName}</span>
-            <span className="instructor-lecture-assign-modal__slot-meta">
-              {slot.region} | {slot.sessionLabel} ({slot.timeRange})
-            </span>
-          </>
-        )}
+        <span className="instructor-lecture-assign-modal__slot-school">{slot.schoolName}</span>
+        <span className="instructor-lecture-assign-modal__slot-meta">
+          {slot.region} | {slot.sessionLabel} ({slot.timeRange})
+        </span>
       </span>
       <span className="instructor-lecture-assign-modal__slot-count">{slot.assignedCount}명</span>
     </ParagraphChip>

@@ -1,0 +1,44 @@
+/**
+ * 대표 강사 지정 변경 확인 모달
+ */
+
+.school-detail-lead-instructor-confirm-modal.ant-modal .ant-modal-content {
+  border-radius: var(--radius-8, 8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.school-detail-lead-instructor-confirm-modal .teal-header-modal__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--default-BK, #3d3d3d);
+  text-align: left;
+}
+
+.content-modal.school-detail-lead-instructor-confirm-modal .teal-header-modal__body {
+  padding-top: 16px;
+}
+
+.school-detail-lead-instructor-confirm-modal__body {
+  padding: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--default-BK, #3d3d3d);
+  text-align: left;
+  line-height: 150%;
+}
+
+.school-detail-lead-instructor-confirm-modal__body p {
+  margin: 0 0 12px;
+}
+
+.school-detail-lead-instructor-confirm-modal__body p:last-child {
+  margin-bottom: 0;
+}
+
+.school-detail-lead-instructor-confirm-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}

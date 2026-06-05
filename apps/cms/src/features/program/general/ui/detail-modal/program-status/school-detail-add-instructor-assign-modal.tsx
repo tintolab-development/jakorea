@@ -6,14 +6,16 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Form, Select } from 'antd'
+import { Form } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, CmsRadio } from '@/shared/ui'
+import { CmsButton, CmsRadio, CmsSelect } from '@/shared/ui'
 import type { InstructorRoleKey } from '../../../model/school-detail-types'
 import { INSTRUCTOR_ROLE_LABELS } from '../../../model/school-detail-types'
 import type { InstructorAssignSessionOption } from '../../../lib/instructor-assign-session-options'
+import { InstructorAssignSessionSlotChip } from '@/features/program/shared/ui/detail-modal/components/instructor-assign-session-slot-chip'
 import { SchoolDetailNewAssignGuideModal } from './school-detail-new-assign-guide-modal'
 import { SchoolDetailAssignOverflowModal } from './school-detail-assign-overflow-modal'
+import { SchoolDetailLeadInstructorConfirmModal } from './school-detail-lead-instructor-confirm-modal'
 import './school-detail-add-instructor-assign-modal.css'
 
 function InstructorAssignSessionTags({
@@ -33,7 +35,7 @@ function InstructorAssignSessionTags({
   }
   return (
     <div
-      className="school-detail-add-instructor-assign-modal__session-tags"
+      className="school-detail-add-instructor-assign-modal__session-grid"
       role="group"
       aria-label="교육 배정일 선택"
     >
@@ -41,19 +43,13 @@ function InstructorAssignSessionTags({
         const selected = value?.includes(opt.id) ?? false
         const isDisabled = Boolean(opt.disabled)
         return (
-          <button
+          <InstructorAssignSessionSlotChip
             key={opt.id}
-            type="button"
+            scheduleLabel={opt.scheduleLabel}
+            sessionRoundLabel={opt.sessionRoundLabel}
+            capacityLabel={opt.capacityLabel}
+            selected={selected}
             disabled={isDisabled}
-            className={[
-              'school-detail-add-instructor-assign-modal__session-tag',
-              selected && !isDisabled
-                ? 'school-detail-add-instructor-assign-modal__session-tag--selected'
-                : '',
-              isDisabled ? 'school-detail-add-instructor-assign-modal__session-tag--disabled' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
             onClick={() => {
               if (isDisabled) return
               const prev = value ?? []
@@ -62,25 +58,7 @@ function InstructorAssignSessionTags({
                 : [...prev, opt.id]
               onChange?.(next)
             }}
-          >
-            <span className="school-detail-add-instructor-assign-modal__session-tag-text">
-              {opt.dateLabel}
-            </span>
-            <span
-              className="school-detail-add-instructor-assign-modal__session-tag-divider"
-              aria-hidden
-            />
-            <span className="school-detail-add-instructor-assign-modal__session-tag-text">
-              {opt.durationLabel}
-            </span>
-            <span
-              className="school-detail-add-instructor-assign-modal__session-tag-divider"
-              aria-hidden
-            />
-            <span className="school-detail-add-instructor-assign-modal__session-tag-text">
-              {opt.timeRangeLabel}
-            </span>
-          </button>
+          />
         )
       })}
     </div>
@@ -135,7 +113,7 @@ export interface SchoolDetailAddInstructorAssignModalProps {
 }
 
 const DEFAULT_ROLE: InstructorRoleKey = 'assistant'
-const LEAD_CONFIRM_MODAL_WIDTH = 600
+const MODAL_WIDTH = 800
 
 export function SchoolDetailAddInstructorAssignModal({
   open,
@@ -262,7 +240,7 @@ export function SchoolDetailAddInstructorAssignModal({
         open={open}
         onCancel={handleCancel}
         title="강사 배정 안내"
-        width={600}
+        width={MODAL_WIDTH}
         footer={footer}
         className="school-detail-add-instructor-assign-modal"
       >
@@ -302,10 +280,9 @@ export function SchoolDetailAddInstructorAssignModal({
                 rules={[{ required: true }]}
                 className="school-detail-add-instructor-assign-modal__field"
               >
-                <Select
+                <CmsSelect
                   placeholder="배정할 강사를 선택해 주세요"
-                  size="large"
-                  allowClear
+                  inputSize="medium"
                   className="school-detail-add-instructor-assign-modal__select"
                   options={instructorOptions}
                   showSearch
@@ -339,35 +316,13 @@ export function SchoolDetailAddInstructorAssignModal({
         </div>
       </ContentModal>
 
-      {/* 대표 강사 지정 안내 확인 더블 모달: 이미 대표 강사 있을 때 변경 여부 확인 (스크린샷 스펙) */}
-      <ContentModal
+      <SchoolDetailLeadInstructorConfirmModal
         open={leadConfirmOpen}
         onCancel={handleLeadConfirmCancel}
-        title="대표 강사 지정 안내"
-        width={LEAD_CONFIRM_MODAL_WIDTH}
-        footer={
-          <div className="school-detail-add-instructor-assign-modal__lead-confirm-footer">
-            <CmsButton variant="secondary" size="large" onClick={handleLeadConfirmCancel}>
-              취소
-            </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={handleLeadConfirmOk}>
-              변경
-            </CmsButton>
-          </div>
-        }
-        className="school-detail-add-instructor-assign-modal__lead-confirm"
-      >
-        <div className="school-detail-add-instructor-assign-modal__lead-confirm-body">
-          <p>
-            현재 [<strong>{currentLeadInstructorName ?? ''}</strong>] 강사가 대표 강사로 지정되어
-            있습니다.
-          </p>
-          <p>
-            [<strong>{leadConfirmPayload?.option.label ?? ''}</strong>] 강사로 대표 강사를
-            변경하시겠습니까?
-          </p>
-        </div>
-      </ContentModal>
+        onConfirm={handleLeadConfirmOk}
+        currentLeadInstructorName={currentLeadInstructorName ?? ''}
+        newLeadInstructorName={leadConfirmPayload?.option.label ?? ''}
+      />
 
       {/* 강사 배정 인원 초과 안내: 최대 인원 찼을 때 인원 외 추가 배정 확인 */}
       <SchoolDetailAssignOverflowModal

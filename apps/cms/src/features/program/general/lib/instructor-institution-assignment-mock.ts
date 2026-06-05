@@ -48,6 +48,18 @@ const WAITING_DISTANCES = ['2km', '4km', '6km', '5km', '7km', '32km', '12km']
 
 export type InstructorWaitingAssignmentStatus = 'waiting' | 'cancelled' | 'assigned'
 
+/** 배정 완료 행은 No.와 무관하게 목록 하단에 노출 */
+export function sortWaitingRowsAssignedToBottom<
+  T extends { no: number; assignmentStatus: InstructorWaitingAssignmentStatus },
+>(rows: T[]): T[] {
+  return [...rows].sort((a, b) => {
+    const aAssigned = a.assignmentStatus === 'assigned' ? 1 : 0
+    const bAssigned = b.assignmentStatus === 'assigned' ? 1 : 0
+    if (aAssigned !== bAssigned) return aAssigned - bAssigned
+    return b.no - a.no
+  })
+}
+
 export interface InstructorAssignedSchoolRow {
   id: string
   no: number
@@ -135,21 +147,23 @@ export function buildWaitingSchoolRows(
   const slice = sorted.slice(0, 12)
   const n = slice.length
 
-  return slice.map((school, idx) => {
-    const rowSeed = hash(school.id + instructor.id)
-    return {
-      id: school.id,
-      no: n - idx,
-      schoolName: school.schoolName,
-      region: school.region,
-      distanceFromHome: pick(WAITING_DISTANCES, rowSeed + idx),
-      assignmentStatus: pick([...WAITING_ASSIGNMENT_STATUSES], rowSeed + idx),
-      hopeDate: pick(WAITING_HOPE_DATES, idx % 3),
-      hopeTime: pick(WAITING_HOPE_TIMES, idx % 3),
-      hopeSession: pick(WAITING_HOPE_SESSIONS, idx % 4),
-      instructorCountLabel: instructorSlotsLabel(school.schoolName, instructorList),
-    }
-  })
+  return sortWaitingRowsAssignedToBottom(
+    slice.map((school, idx) => {
+      const rowSeed = hash(school.id + instructor.id)
+      return {
+        id: school.id,
+        no: n - idx,
+        schoolName: school.schoolName,
+        region: school.region,
+        distanceFromHome: pick(WAITING_DISTANCES, rowSeed + idx),
+        assignmentStatus: pick([...WAITING_ASSIGNMENT_STATUSES], rowSeed + idx),
+        hopeDate: pick(WAITING_HOPE_DATES, idx % 3),
+        hopeTime: pick(WAITING_HOPE_TIMES, idx % 3),
+        hopeSession: pick(WAITING_HOPE_SESSIONS, idx % 4),
+        instructorCountLabel: instructorSlotsLabel(school.schoolName, instructorList),
+      }
+    })
+  )
 }
 
 export function schoolRowToAssignedRow(
@@ -204,8 +218,9 @@ export function renumberAssignedRows(rows: InstructorAssignedSchoolRow[]): Instr
 }
 
 export function renumberWaitingRows(rows: InstructorWaitingSchoolRow[]): InstructorWaitingSchoolRow[] {
-  const n = rows.length
-  return rows.map((r, i) => ({ ...r, no: n - i }))
+  const sorted = sortWaitingRowsAssignedToBottom(rows)
+  const n = sorted.length
+  return sorted.map((r, i) => ({ ...r, no: n - i }))
 }
 
 export { MOCK_REQUIRED_INSTRUCTOR_SLOTS }

@@ -6,7 +6,8 @@
 
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
-import './school-detail-select-assign-confirm-modal.css'
+
+const SELECT_ASSIGN_CONFIRM_MODAL_WIDTH = 560
 
 export interface SchoolDetailSelectAssignConfirmModalProps {
   open: boolean
@@ -23,6 +24,24 @@ export interface SchoolDetailSelectAssignConfirmModalProps {
   onConfirm: () => void
 }
 
+function formatBracketedBoldNames(names: string[]): string {
+  return names.map(name => `[**${name}**]`).join(', ')
+}
+
+function buildSelectAssignConfirmDescription(
+  instructorNames: string[],
+  schoolName: string,
+  currentCount: number,
+  requiredCount: number
+): string {
+  const mainLine =
+    instructorNames.length > 0
+      ? `${formatBracketedBoldNames(instructorNames)} 강사님을 [**${schoolName}**]에 새로 배정하시겠습니까?`
+      : `[**${schoolName}**]에 새로 배정하시겠습니까?`
+
+  return `${mainLine}\n(현재 배정 인원 : ${currentCount}/${requiredCount}명)`
+}
+
 export function SchoolDetailSelectAssignConfirmModal({
   open,
   onCancel,
@@ -32,47 +51,30 @@ export function SchoolDetailSelectAssignConfirmModal({
   requiredCount,
   onConfirm,
 }: SchoolDetailSelectAssignConfirmModalProps) {
-  const footer = (
-    <>
-      <CmsButton variant="secondary" size="large" onClick={onCancel}>
-        취소
-      </CmsButton>
-      <CmsButton variant="primary" size="large" onClick={onConfirm}>
-        강사 배정
-      </CmsButton>
-    </>
-  )
-
   return (
     <ContentModal
       open={open}
       onCancel={onCancel}
       title="강사 배정 안내"
-      width={560}
-      footer={footer}
-      className="school-detail-select-assign-confirm-modal"
+      width={SELECT_ASSIGN_CONFIRM_MODAL_WIDTH}
+      description={buildSelectAssignConfirmDescription(
+        instructorNames,
+        schoolName,
+        currentCount,
+        requiredCount
+      )}
+      footer={
+        <>
+          <CmsButton variant="secondary" size="large" onClick={onCancel}>
+            취소
+          </CmsButton>
+          <CmsButton variant="primary" size="large" onClick={onConfirm}>
+            강사 배정
+          </CmsButton>
+        </>
+      }
     >
-      <div className="school-detail-select-assign-confirm-modal__body">
-        <p className="school-detail-select-assign-confirm-modal__main">
-          {instructorNames.length > 0 ? (
-            <>
-              {instructorNames.map((name, i) => (
-                <span key={`${name}-${i}`}>
-                  [<strong>{name}</strong>]{i < instructorNames.length - 1 ? ', ' : ''}
-                </span>
-              ))}{' '}
-              강사님을 [<strong>{schoolName}</strong>]에 새로 배정하시겠습니까?
-            </>
-          ) : (
-            <>
-              [<strong>{schoolName}</strong>]에 새로 배정하시겠습니까?
-            </>
-          )}
-        </p>
-        <p className="school-detail-select-assign-confirm-modal__sub">
-          (현재 배정 인원 : {currentCount}/{requiredCount}명)
-        </p>
-      </div>
+      {null}
     </ContentModal>
   )
 }
