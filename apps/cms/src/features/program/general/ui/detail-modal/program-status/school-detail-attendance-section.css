@@ -129,19 +129,21 @@
   min-width: 0;
 }
 
-.school-detail-attendance-session__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+.school-detail-attendance-session__title-row.table-header-title--wrapper {
+  align-items: baseline;
+  row-gap: 4px;
 }
 
-.school-detail-attendance-session__title {
-  margin: 0;
+.school-detail-attendance-session__header-meta {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
   color: var(--default-BK, #3d3d3d);
-  font-size: 18px;
-  font-weight: 600;
+  font-family: Pretendard, var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
   line-height: 150%;
 }
 

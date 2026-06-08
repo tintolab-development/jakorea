@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
+import {
+  SCHOOL_DETAIL_ATTENDANCE_EXCEL_COLUMNS,
+  buildSchoolDetailAttendanceSessionExcelRows,
+  resolveSchoolDetailAttendanceSessionExcelFilename,
+} from '../../../lib/school-detail-attendance-export'
 import {
   attendanceStudentRowsEqual,
   cloneAttendanceStudentRows,
@@ -43,16 +49,28 @@ export function SchoolDetailAttendanceSessionPanel({
     [appliedFilters, workingRows]
   )
 
+  const excelRows = useMemo(
+    () => buildSchoolDetailAttendanceSessionExcelRows(session.headerPrefix, displayRows),
+    [displayRows, session.headerPrefix]
+  )
+
+  const { exportExcel, isExporting } = useTableExcelExport({
+    columns: SCHOOL_DETAIL_ATTENDANCE_EXCEL_COLUMNS,
+    data: excelRows,
+    filename: resolveSchoolDetailAttendanceSessionExcelFilename(session),
+  })
+
   const hasChanges = useMemo(
     () => !attendanceStudentRowsEqual(workingRows, savedRows),
     [savedRows, workingRows]
   )
 
-  const handleStatusChange = useCallback((studentId: string, status: SchoolSessionAttendanceStatusKey) => {
-    setWorkingRows(prev =>
-      prev.map(row => (row.id === studentId ? { ...row, status } : row))
-    )
-  }, [])
+  const handleStatusChange = useCallback(
+    (studentId: string, status: SchoolSessionAttendanceStatusKey) => {
+      setWorkingRows(prev => prev.map(row => (row.id === studentId ? { ...row, status } : row)))
+    },
+    []
+  )
 
   const handleSave = useCallback(() => {
     if (!hasChanges) return
@@ -61,22 +79,31 @@ export function SchoolDetailAttendanceSessionPanel({
     showAlert({ title: '안내', content: '출결 정보가 저장되었습니다.' })
   }, [hasChanges, onSave, session.id, showAlert, workingRows])
 
-  const headerText = `${session.headerPrefix} 총 ${displayRows.length}건`
-
   return (
     <section className="school-detail-attendance-session">
-      <div className="school-detail-attendance-session__header">
-        <h3 className="school-detail-attendance-session__title">{headerText}</h3>
-        <CmsButton
-          type="button"
-          variant="primary"
-          size="large"
-          width={100}
-          disabled={!hasChanges}
-          onClick={handleSave}
-        >
-          저장
-        </CmsButton>
+      <div className="table-header-actions">
+        <div className="table-header-title--wrapper school-detail-attendance-session__title-row">
+          <span className="table-title">{session.headerTitle}</span>
+          <div className="school-detail-attendance-session__header-meta">
+            <span>{session.headerScheduleSummary}</span>
+            <span className="detail-info-form-inputs-separator" aria-hidden />
+            <span>{session.headerPeriodRangeLabel}</span>
+          </div>
+          <span className="table-description">총 {displayRows.length}건</span>
+        </div>
+        <div className="info-section-buttons--wrapper">
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="large"
+            width={120}
+            disabled={!hasChanges}
+            onClick={handleSave}
+          >
+            저장
+          </CmsButton>
+          <ExcelButton loading={isExporting} onClick={exportExcel} />
+        </div>
       </div>
       <div className="school-detail-attendance-session__table-wrap">
         <SchoolDetailAttendanceTable rows={displayRows} onStatusChange={handleStatusChange} />

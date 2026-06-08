@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
+import type { Program } from '@/types/domain'
 import { buildSchoolDetailAttendanceFilterFields } from '../lib/school-detail-attendance-filter-fields'
 import {
   cloneAttendanceStudentRows,
@@ -43,7 +44,7 @@ function filterSessionGroups(
     .filter(session => session.students.length > 0)
 }
 
-export function useSchoolDetailAttendance(row: ParticipatingSchoolRow) {
+export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: Program) {
   const [dataVersion, setDataVersion] = useState(0)
   const [pendingFilters, setPendingFilters] = useState<SchoolDetailAttendanceFilters>(
     () => ({ ...EMPTY_SCHOOL_DETAIL_ATTENDANCE_FILTERS })
@@ -54,8 +55,8 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow) {
 
   const educationScheduleOptions = useMemo(() => {
     void dataVersion
-    return getSchoolDetailAttendanceEducationScheduleOptions(row)
-  }, [dataVersion, row])
+    return getSchoolDetailAttendanceEducationScheduleOptions(row, program)
+  }, [dataVersion, program, row])
 
   const filterFields = useMemo(
     () => buildSchoolDetailAttendanceFilterFields(educationScheduleOptions),
@@ -64,9 +65,9 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow) {
 
   const sessionGroups = useMemo(() => {
     void dataVersion
-    const sessions = getSchoolDetailAttendanceSessions(row)
+    const sessions = getSchoolDetailAttendanceSessions(row, program)
     return filterSessionGroups(sessions, appliedFilters)
-  }, [appliedFilters, dataVersion, row])
+  }, [appliedFilters, dataVersion, program, row])
 
   const handleFilterChange = useCallback((key: string, value: string) => {
     setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -87,9 +88,11 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow) {
   const getSessionStudents = useCallback(
     (sessionId: string): SchoolDetailAttendanceStudentRow[] => {
       void dataVersion
-      return cloneAttendanceStudentRows(getSchoolDetailAttendanceSessionStudents(row, sessionId))
+      return cloneAttendanceStudentRows(
+        getSchoolDetailAttendanceSessionStudents(row, sessionId, program)
+      )
     },
-    [dataVersion, row]
+    [dataVersion, program, row]
   )
 
   return {

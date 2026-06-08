@@ -1,4 +1,7 @@
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
+import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import type { Program } from '@/types/domain'
 import {
   SCHOOL_ATTENDANCE_FILTER_ALL,
   type SchoolDetailAttendanceFilters,
@@ -34,15 +37,71 @@ function buildPeriodRangeLabel(round: number): string {
   return `${classNum} (${formatTimeRange('9:20~10:10')})`
 }
 
-export function buildAttendanceSessionHeaderPrefix(session: ParticipatingSchoolSession): string {
-  const dateLabel = formatSessionDate(session.date, session.dayOfWeek)
-  const formatLabel = formatEducationFormat(session.format)
-  const periodLabel = buildPeriodRangeLabel(session.round)
-  return `${session.round}회차 : ${dateLabel} ${session.duration} (${formatLabel}) | ${periodLabel}`
+export interface SchoolDetailAttendanceSessionHeaderParts {
+  sessionLeadLabel: string
+  title: string
+  scheduleSummary: string
+  periodRangeLabel: string
+  headerPrefix: string
 }
 
-export function buildAttendanceSessionFilterLabel(session: ParticipatingSchoolSession): string {
-  return `${session.round}회차 · ${formatSessionDate(session.date, session.dayOfWeek)}`
+/**
+ * 출석 관리 회차/일정 선행 라벨.
+ * - 커리큘럼형: curriculumSessions[].sessionLabel (예: 1회차, 1차시) — 없으면 `${round}회차`
+ * - 일정형: scheduleDetails[].name — 없으면 scheduleLabel → 세부 일정 NN
+ */
+export function resolveSchoolDetailAttendanceSessionLeadLabel(
+  program: Program,
+  round: number
+): string {
+  const commonInfo = resolveGeneralProgramCommonInfo(program)
+  const { educationStructure } = resolveEffectiveGeneralProgramTypeFields({
+    generalProgramAudience: program.generalProgramAudience,
+    generalProgramEducationStructure: program.generalProgramEducationStructure,
+    generalProgramSessionRound: program.generalProgramSessionRound,
+    curriculumSessions: commonInfo.curriculumSessions,
+  })
+
+  if (educationStructure === 'schedule') {
+    const detail = commonInfo.scheduleDetails?.[round - 1]
+    const name = detail?.name?.trim()
+    if (name) return name
+    const scheduleLabel = detail?.scheduleLabel?.trim()
+    if (scheduleLabel) return scheduleLabel
+    return `세부 일정 ${String(round).padStart(2, '0')}`
+  }
+
+  const sessionLabel = commonInfo.curriculumSessions?.[round - 1]?.sessionLabel?.trim()
+  if (sessionLabel) return sessionLabel
+  return `${round}회차`
+}
+
+export function buildAttendanceSessionHeaderParts(
+  session: ParticipatingSchoolSession,
+  sessionLeadLabel: string
+): SchoolDetailAttendanceSessionHeaderParts {
+  const dateLabel = formatSessionDate(session.date, session.dayOfWeek)
+  const formatLabel = formatEducationFormat(session.format)
+  const periodRangeLabel = buildPeriodRangeLabel(session.round)
+  const title = `${sessionLeadLabel} : ${dateLabel}`
+  const scheduleSummary = `${session.duration} (${formatLabel})`
+  const headerPrefix = `${title} ${scheduleSummary} | ${periodRangeLabel}`
+  return { sessionLeadLabel, title, scheduleSummary, periodRangeLabel, headerPrefix }
+}
+
+/** @deprecated {@link buildAttendanceSessionHeaderParts} 사용 */
+export function buildAttendanceSessionHeaderPrefix(
+  session: ParticipatingSchoolSession,
+  sessionLeadLabel: string
+): string {
+  return buildAttendanceSessionHeaderParts(session, sessionLeadLabel).headerPrefix
+}
+
+export function buildAttendanceSessionFilterLabel(
+  session: ParticipatingSchoolSession,
+  sessionLeadLabel: string
+): string {
+  return `${sessionLeadLabel} · ${formatSessionDate(session.date, session.dayOfWeek)}`
 }
 
 export function studentMatchesAttendanceFilters(

@@ -31,17 +31,17 @@ function AttendanceStatusRadios({
   return (
     <CmsRadioGroup
       className="school-detail-attendance-table__status-radios"
-      size="medium"
+      size="large"
       value={value}
       onChange={event => onChange(event.target.value as SchoolSessionAttendanceStatusKey)}
     >
-      <CmsRadio value="present" size="medium">
+      <CmsRadio value="present" size="large">
         출석
       </CmsRadio>
-      <CmsRadio value="absent" size="medium">
+      <CmsRadio value="absent" size="large">
         결석
       </CmsRadio>
-      <CmsRadio value="late" size="medium">
+      <CmsRadio value="late" size="large">
         지각
       </CmsRadio>
     </CmsRadioGroup>

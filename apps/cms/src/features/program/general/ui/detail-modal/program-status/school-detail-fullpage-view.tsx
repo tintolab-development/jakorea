@@ -9,7 +9,7 @@ import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { CmsButton, CmsRadio, ExcelButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsRadio, useCmsAlert } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
@@ -44,7 +44,6 @@ import {
 } from '../../../lib/teacher-contact-display-mask'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import {
-  FEATURE_COMING_SOON_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
@@ -913,12 +912,6 @@ export function GeneralParticipatingInstitutionDetailView({
                 onClick={handlePrivacyToggleClick}
               />
             </>
-          ) : activeTab === 'attendance' ? (
-            <ExcelButton
-              onClick={() =>
-                showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
-              }
-            />
           ) : activeTab === 'posts' ? (
             <CmsButton variant="primary" size="large" width={160} onClick={() => setPostWriteModalOpen(true)}>
               게시글 등록
@@ -1326,7 +1319,7 @@ export function GeneralParticipatingInstitutionDetailView({
 
         {activeTab === 'attendance' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__attendance-tab">
-            <SchoolDetailAttendanceSection row={row} />
+            <SchoolDetailAttendanceSection row={row} program={program} />
           </div>
         )}
 

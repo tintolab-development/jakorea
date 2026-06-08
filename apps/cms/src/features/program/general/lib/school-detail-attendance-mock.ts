@@ -1,4 +1,5 @@
 import type { ParticipatingSchoolRow, ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { Program } from '@/types/domain'
 import type {
   SchoolDetailAttendanceSessionGroup,
   SchoolDetailAttendanceStudentRow,
@@ -7,8 +8,9 @@ import type {
 import { getSchoolDetailStudents } from './school-detail-mock'
 import {
   buildAttendanceSessionFilterLabel,
-  buildAttendanceSessionHeaderPrefix,
+  buildAttendanceSessionHeaderParts,
   cloneAttendanceStudentRows,
+  resolveSchoolDetailAttendanceSessionLeadLabel,
 } from './school-detail-attendance-display'
 
 function hash(s: string): number {
@@ -92,34 +94,44 @@ function buildSessionStudents(
 function toSessionGroup(
   schoolId: string,
   session: ParticipatingSchoolSession,
-  studentCount: number
+  studentCount: number,
+  program: Program
 ): SchoolDetailAttendanceSessionGroup {
   const id = `${schoolId}-round-${session.round}`
   const students = buildSessionStudents(schoolId, id, studentCount)
+  const sessionLeadLabel = resolveSchoolDetailAttendanceSessionLeadLabel(program, session.round)
+  const header = buildAttendanceSessionHeaderParts(session, sessionLeadLabel)
   return {
     id,
     round: session.round,
     filterValue: id,
-    headerPrefix: buildAttendanceSessionHeaderPrefix(session),
+    sessionLeadLabel: header.sessionLeadLabel,
+    headerTitle: header.title,
+    headerScheduleSummary: header.scheduleSummary,
+    headerPeriodRangeLabel: header.periodRangeLabel,
+    headerPrefix: header.headerPrefix,
     students,
   }
 }
 
 export function getSchoolDetailAttendanceSessions(
-  row: ParticipatingSchoolRow
+  row: ParticipatingSchoolRow,
+  program: Program
 ): SchoolDetailAttendanceSessionGroup[] {
   return resolveAttendanceSessions(row).map(session =>
-    toSessionGroup(row.id, session, row.studentCount)
+    toSessionGroup(row.id, session, row.studentCount, program)
   )
 }
 
 export function getSchoolDetailAttendanceEducationScheduleOptions(
-  row: ParticipatingSchoolRow
+  row: ParticipatingSchoolRow,
+  program: Program
 ): Array<{ label: string; value: string }> {
   return resolveAttendanceSessions(row).map(session => {
     const id = `${row.id}-round-${session.round}`
+    const sessionLeadLabel = resolveSchoolDetailAttendanceSessionLeadLabel(program, session.round)
     return {
-      label: buildAttendanceSessionFilterLabel(session),
+      label: buildAttendanceSessionFilterLabel(session, sessionLeadLabel),
       value: id,
     }
   })
@@ -143,9 +155,10 @@ export function patchSchoolDetailAttendanceSession(
 
 export function getSchoolDetailAttendanceSessionStudents(
   row: ParticipatingSchoolRow,
-  sessionId: string
+  sessionId: string,
+  program: Program
 ): SchoolDetailAttendanceStudentRow[] {
-  const session = getSchoolDetailAttendanceSessions(row).find(item => item.id === sessionId)
+  const session = getSchoolDetailAttendanceSessions(row, program).find(item => item.id === sessionId)
   if (!session) return []
   return cloneAttendanceStudentRows(session.students)
 }

@@ -319,10 +319,8 @@
   margin-top: 8px;
 }
 
-/* 4탭 목록 상세: 테이블 헤더 옆 「총 N건」 등 레이블 디스크립션 공통 타이포 */
+/* 4탭 목록 상세: BEM 전용 table-description 레이블 (공통 `.table-description`은 index.css 16px 유지) */
 .program-detail-fullpage-modal--program-list-overview .program-progress-tab__table-description,
-.program-detail-fullpage-modal--program-list-overview
-  .table-description,
 .program-detail-fullpage-modal--program-list-overview .program-status-participating__table-description,
 .program-detail-fullpage-modal--program-list-overview .program-applicants-tab__table-description,
 .program-detail-fullpage-modal--program-list-overview .program-managers-tab__table-description,

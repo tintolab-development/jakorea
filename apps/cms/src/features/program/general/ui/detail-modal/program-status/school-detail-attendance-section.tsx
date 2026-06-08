@@ -1,15 +1,18 @@
-import { useMemo } from 'react'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
-import {
-  SCHOOL_DETAIL_ATTENDANCE_EXCEL_COLUMNS,
-  buildSchoolDetailAttendanceExcelRows,
-} from '@/features/program/general/lib/school-detail-attendance-export'
+import type { Program } from '@/types/domain'
 import { useSchoolDetailAttendance } from '../../../hooks/use-school-detail-attendance'
 import { SchoolDetailAttendanceSessionPanel } from './school-detail-attendance-session-panel'
+import '@/shared/components/detail-info-form/detail-info-form.css'
 import './school-detail-attendance-section.css'
 
-export function SchoolDetailAttendanceSection({ row }: { row: ParticipatingSchoolRow }) {
+export function SchoolDetailAttendanceSection({
+  row,
+  program,
+}: {
+  row: ParticipatingSchoolRow
+  program: Program
+}) {
   const {
     pendingFilters,
     appliedFilters,
@@ -19,12 +22,7 @@ export function SchoolDetailAttendanceSection({ row }: { row: ParticipatingSchoo
     sessionGroups,
     saveSessionStudents,
     getSessionStudents,
-  } = useSchoolDetailAttendance(row)
-
-  const attendanceExcelRows = useMemo(
-    () => buildSchoolDetailAttendanceExcelRows(sessionGroups),
-    [sessionGroups]
-  )
+  } = useSchoolDetailAttendance(row, program)
 
   return (
     <div className="school-detail-attendance-section">
@@ -37,11 +35,8 @@ export function SchoolDetailAttendanceSection({ row }: { row: ParticipatingSchoo
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         showFilter
-        title="출석 관리"
-        excelExport={{
-          columns: SCHOOL_DETAIL_ATTENDANCE_EXCEL_COLUMNS,
-          data: attendanceExcelRows,
-        }}
+        showTitle={false}
+        hideExcelDownload
       >
         {sessionGroups.length === 0 ? (
           <div className="school-detail-attendance-section__empty">조회 결과가 없습니다.</div>

@@ -266,7 +266,15 @@ export interface SchoolDetailAttendanceSessionGroup {
   round: number
   /** 필터 Select value (ISO date 또는 session id) */
   filterValue: string
-  /** 회차 헤더 (예: 1회차 : 2026. 01. 09(금) …) */
+  /** 회차/일정 선행 라벨 (커리큘럼: 1회차·1차시, 일정형: 일정명) */
+  sessionLeadLabel: string
+  /** 회차 헤더 — table-title (예: 1회차 : 2026. 01. 09(금)) */
+  headerTitle: string
+  /** 회차 헤더 — 16px 메타 앞段 (예: 2시간 (대면)) */
+  headerScheduleSummary: string
+  /** 회차 헤더 — 16px 메타 뒷段 (예: 1교시 … ~ 2교시 …) */
+  headerPeriodRangeLabel: string
+  /** 엑셀·전체 문자열 (예: 1회차 : … 2시간 (대면) | 1교시 …) */
   headerPrefix: string
   students: SchoolDetailAttendanceStudentRow[]
 }

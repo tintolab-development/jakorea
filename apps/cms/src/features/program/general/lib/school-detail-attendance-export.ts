@@ -41,30 +41,37 @@ function maskEmail(email?: string): string {
   return MASKING_POLICY.email(email) || email
 }
 
+export function buildSchoolDetailAttendanceSessionExcelRows(
+  sessionLabel: string,
+  students: SchoolDetailAttendanceSessionGroup['students']
+): SchoolDetailAttendanceExcelRow[] {
+  const total = students.length
+  return students.map((student, index) => ({
+    sessionLabel,
+    no: total - index,
+    name: student.name,
+    genderLabel: student.gender ? (STUDENT_GENDER_LABELS[student.gender] ?? '') : '',
+    birthDate: student.birthDate ?? '',
+    gradeClass: student.gradeClass,
+    contact: maskContact(student.contact),
+    email: maskEmail(student.email),
+    statusLabel:
+      SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS[student.status as SchoolSessionAttendanceStatusKey] ??
+      '',
+  }))
+}
+
 export function buildSchoolDetailAttendanceExcelRows(
   sessionGroups: SchoolDetailAttendanceSessionGroup[]
 ): SchoolDetailAttendanceExcelRow[] {
-  const rows: SchoolDetailAttendanceExcelRow[] = []
+  return sessionGroups.flatMap(session =>
+    buildSchoolDetailAttendanceSessionExcelRows(session.headerPrefix, session.students)
+  )
+}
 
-  for (const session of sessionGroups) {
-    const total = session.students.length
-    session.students.forEach((student, index) => {
-      rows.push({
-        sessionLabel: session.headerPrefix,
-        no: total - index,
-        name: student.name,
-        genderLabel: student.gender ? (STUDENT_GENDER_LABELS[student.gender] ?? '') : '',
-        birthDate: student.birthDate ?? '',
-        gradeClass: student.gradeClass,
-        contact: maskContact(student.contact),
-        email: maskEmail(student.email),
-        statusLabel:
-          SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS[
-            student.status as SchoolSessionAttendanceStatusKey
-          ] ?? '',
-      })
-    })
-  }
-
-  return rows
+export function resolveSchoolDetailAttendanceSessionExcelFilename(
+  session: Pick<SchoolDetailAttendanceSessionGroup, 'headerPrefix'>
+): string {
+  const label = session.headerPrefix.split('|')[0]?.trim() ?? session.headerPrefix
+  return label.replace(/[\\/:*?"<>|]/g, '').trim() || '출석관리'
 }

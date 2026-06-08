@@ -44,6 +44,8 @@ export interface FilterTableLayoutProps extends TableFilterGroupProps {
   filterResponsiveWrap?: boolean
   /** 테이블 상단 제목 */
   title?: ReactNode
+  /** false면 `title`을 툴바에 렌더하지 않음 (엑셀 파일명 등에는 `title` 값 그대로 사용 가능) */
+  showTitle?: boolean
   /** 제목과 건수(description) 사이 보조 텍스트(JSX) */
   titleNote?: ReactNode
   /** 테이블 상단 보조 설명(건수 등) */
@@ -69,6 +71,7 @@ export function FilterTableLayout({
   showFilter = true,
   filterResponsiveWrap = true,
   title,
+  showTitle = true,
   titleNote,
   description,
   actions,
@@ -123,10 +126,11 @@ export function FilterTableLayout({
     onExcelDownload ?? (excelExport != null ? exportExcel : undefined)
   const resolvedExcelDownloadLoading = excelDownloadLoading ?? isExcelExporting
 
+  const toolbarTitle = showTitle ? title : null
   const showExcelButton = !hideExcelDownload
   const showToolbarActions = actions != null || showExcelButton
   const showToolbar =
-    title != null ||
+    toolbarTitle != null ||
     titleNote != null ||
     description != null ||
     actions != null ||
@@ -155,7 +159,9 @@ export function FilterTableLayout({
       {showToolbar ? (
         <div className="filter-table-layout__toolbar">
           <div className="filter-table-layout__toolbar-main">
-            {title != null ? <div className="filter-table-layout__title">{title}</div> : null}
+            {toolbarTitle != null ? (
+              <div className="filter-table-layout__title">{toolbarTitle}</div>
+            ) : null}
             {titleNote != null ? (
               <div className="filter-table-layout__title-note">{titleNote}</div>
             ) : null}
