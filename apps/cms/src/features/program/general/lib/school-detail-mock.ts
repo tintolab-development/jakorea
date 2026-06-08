@@ -101,10 +101,12 @@ export function getInstructorRowsForSchool(
   const forSchool = instructorRows.filter(r => r.schoolName === schoolName)
   const rows = forSchool.map((r, i) => toDetailInstructor(r, i))
   /** 배정된 강사 목록 데모: 정산 대기 1건 → 일부 정산 완료 */
-  const firstPendingIdx = rows.findIndex(r => r.settlementStatus === 'pending')
+  const firstPendingIdx = rows.findIndex(r => r.settlementStatus === 'awaiting_confirmation')
   if (firstPendingIdx < 0) return rows
   return rows.map((r, i) =>
-    i === firstPendingIdx ? { ...r, settlementStatus: 'partial' satisfies SettlementStatusKey } : r
+    i === firstPendingIdx
+      ? { ...r, settlementStatus: 'partial_confirmation' satisfies SettlementStatusKey }
+      : r
   )
 }
 

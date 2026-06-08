@@ -24,6 +24,7 @@ import {
   CalendarSplitCardLayout,
   calendarItemsForEventMode,
   type CalendarMainEventInput,
+  type RenderCalendarMonthEventContent,
 } from '@/shared/components/calendar'
 import {
   createInitialCalendarNavigationState,
@@ -62,9 +63,35 @@ export type ParticipatingCalendarPopoverRowParts = {
   sessionLine?: string
   /** 참여 강사 등: 2행째 보조 문구(지역 다음 구분) */
   valueLabel?: string
+  /** 참여 강사 캘린더 팝오버 2행 — 강사명 */
+  instructorName?: string
+  /** 참여 강사 캘린더 팝오버 2행 — 강의보고서 제출 여부 */
+  lectureReportSubmitted?: boolean
+}
+
+function isInstructorCalendarEventItem(
+  item: CalendarEvent['originalItem']
+): item is CalendarEvent['originalItem'] & { instructorName: string; lectureReportSubmitted?: boolean } {
+  return typeof (item as { instructorName?: string }).instructorName === 'string'
+}
+
+function getInstructorCalendarPopoverParts(ev: CalendarEvent): ParticipatingCalendarPopoverRowParts {
+  const { row, instructorName, lectureReportSubmitted } = ev.originalItem as CalendarEvent['originalItem'] & {
+    instructorName: string
+    lectureReportSubmitted?: boolean
+  }
+  return {
+    title: row.schoolName?.trim() || '-',
+    location: '',
+    instructorName,
+    lectureReportSubmitted: lectureReportSubmitted ?? false,
+  }
 }
 
 function getPopoverRowParts(ev: CalendarEvent): ParticipatingCalendarPopoverRowParts {
+  if (isInstructorCalendarEventItem(ev.originalItem)) {
+    return getInstructorCalendarPopoverParts(ev)
+  }
   const { row, sessionsOnDate, educationGrade } = ev.originalItem
   return {
     title: row.schoolName?.trim() || '-',
@@ -72,6 +99,22 @@ function getPopoverRowParts(ev: CalendarEvent): ParticipatingCalendarPopoverRowP
     grade: educationGrade?.trim() || row.educationGrade?.trim() || '-',
     sessionLine: getPrimaryParticipatingSessionLine(sessionsOnDate),
   }
+}
+
+function resolveEventPopoverRowParts(
+  ev: CalendarEvent,
+  resolvePopoverRowParts?: ParticipatingInstitutionsCalendarViewProps['resolvePopoverRowParts']
+): ParticipatingCalendarPopoverRowParts {
+  if (isInstructorCalendarEventItem(ev.originalItem)) {
+    return getInstructorCalendarPopoverParts(ev)
+  }
+  if (resolvePopoverRowParts) {
+    return resolvePopoverRowParts({
+      schoolRow: ev.originalItem.row,
+      date: dayjs(ev.startDate),
+    })
+  }
+  return getPopoverRowParts(ev)
 }
 
 function ParticipatingCalendarEventPopoverContent({
@@ -88,6 +131,8 @@ function ParticipatingCalendarEventPopoverContent({
       {events.map(ev => {
         const parts = resolvePopoverRowParts ? resolvePopoverRowParts(ev) : getPopoverRowParts(ev)
         const titleColor = titleColorMap?.get(String(ev.id))
+        const instructorName = parts.instructorName?.trim()
+        const isInstructorPopover = Boolean(instructorName)
         const hasGradeSession =
           parts.grade != null &&
           parts.grade !== '' &&
@@ -101,6 +146,17 @@ function ParticipatingCalendarEventPopoverContent({
             >
               {parts.title}
             </div>
+            {isInstructorPopover ? (
+              <div className="participating-institutions-calendar-popover__meta participating-institutions-calendar-popover__meta--instructor">
+                <span className="participating-institutions-calendar-popover__meta-part">
+                  {instructorName}
+                </span>
+                <span className="participating-institutions-calendar-popover__meta-sep" aria-hidden />
+                <span className="participating-institutions-calendar-popover__meta-part participating-institutions-calendar-popover__meta-part--report">
+                  강의보고서 : {parts.lectureReportSubmitted ? '제출' : '미제출'}
+                </span>
+              </div>
+            ) : (
             <div className="participating-institutions-calendar-popover__meta">
               <span className="participating-institutions-calendar-popover__meta-part">
                 {parts.location}
@@ -125,6 +181,7 @@ function ParticipatingCalendarEventPopoverContent({
                 </>
               ) : null}
             </div>
+            )}
           </div>
         )
       })}
@@ -180,6 +237,10 @@ export interface ParticipatingInstitutionsCalendarViewProps {
     schoolRow: ParticipatingSchoolRow
     date: Dayjs
   }) => ParticipatingCalendarPopoverRowParts
+  /** 제공 시 schools 기반 이벤트 대신 사용 (참여 강사 캘린더) */
+  customEvents?: CalendarEvent[]
+  /** 월간 셀 strip 내부 커스텀 렌더 (참여 강사: 학교명 | 강사명) */
+  renderMonthEventContent?: RenderCalendarMonthEventContent
 }
 
 export function ParticipatingInstitutionsCalendarView({
@@ -192,6 +253,8 @@ export function ParticipatingInstitutionsCalendarView({
   calendarGranularity: calendarGranularityProp,
   onCalendarGranularityChange,
   resolvePopoverRowParts,
+  customEvents,
+  renderMonthEventContent,
 }: ParticipatingInstitutionsCalendarViewProps) {
   const [fallbackCalendarMode, setFallbackCalendarMode] = useState<'month' | 'week'>('month')
   const calendarControlled =
@@ -205,7 +268,10 @@ export function ParticipatingInstitutionsCalendarView({
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() =>
     createInitialCalendarNavigationState(calendarGranularityProp ?? 'month').viewAnchor
   )
-  const baseEvents = useMemo(() => buildEventsFromSchools(schools), [schools])
+  const baseEvents = useMemo(
+    () => customEvents ?? buildEventsFromSchools(schools),
+    [customEvents, schools]
+  )
   const events = useMemo(
     () =>
       baseEvents.map(ev => {
@@ -267,6 +333,7 @@ export function ParticipatingInstitutionsCalendarView({
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
           tooltipOverlayClassName="participating-institutions-calendar-tooltip-overlay"
+          renderMonthEventContent={renderMonthEventContent}
           previewTooltipContent={({ events: dayItems, colorMap }) => {
             const dayEvents = calendarItemsForEventMode(dayItems).map(
               item => item.original as CalendarEvent
@@ -280,14 +347,8 @@ export function ParticipatingInstitutionsCalendarView({
                     colorMap.get(ev.id)?.text ?? getColorForEvent(ev).text,
                   ])
                 )}
-                resolvePopoverRowParts={
-                  resolvePopoverRowParts
-                    ? event =>
-                        resolvePopoverRowParts({
-                          schoolRow: event.originalItem.row,
-                          date: dayjs(event.startDate),
-                        })
-                    : undefined
+                resolvePopoverRowParts={event =>
+                  resolveEventPopoverRowParts(event, resolvePopoverRowParts)
                 }
               />
             )

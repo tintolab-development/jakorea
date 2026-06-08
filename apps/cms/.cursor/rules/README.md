@@ -34,6 +34,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [Event handling](./design/event-handling.md)  
 - [Color system](./design/color-system.md)  
 - [Color palette](./design/color-palette.md)  
+- [Instructor settlement status (8종)](./design/instructor-settlement-status.mdc) — 정산 현황 라벨·색상·UI 공통  
 - [Styling tokens](./design/styling-tokens.md)  
 - [Schedule / calendar UX](./design/schedule-calendar-ux.md)  
 - [Calendar sub-right list](./design/calendar-sub-right-list.md) — `.calendar-list` / `.calendar-list-item` 공통 shell·mint hover  

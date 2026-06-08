@@ -7,9 +7,9 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   MOCK_PARTICIPATING_INSTRUCTORS,
-  SETTLEMENT_STATUS_LABELS,
   type SettlementStatusKey,
 } from '@/data/mock/participating-instructors'
+import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import {
   getAssignedInstructorDisplayRows,
   getInstructorRowsForSchool,
@@ -115,11 +115,7 @@ export function ApplicantInstitutionInstructorAssignTab({
         width: 120,
         align: 'center',
         render: (status: SettlementStatusKey) => (
-          <span
-            className={`school-detail-fullpage-view__settlement-text school-detail-fullpage-view__settlement-text--${status}`}
-          >
-            {SETTLEMENT_STATUS_LABELS[status]}
-          </span>
+          <InstructorSettlementStatusText status={status} />
         ),
       },
     ],

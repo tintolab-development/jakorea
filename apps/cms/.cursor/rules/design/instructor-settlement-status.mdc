@@ -1,0 +1,63 @@
+---
+description: 강사 정산 현황 8종 — 라벨·색상·UI 적용 규칙 (CMS 공통)
+alwaysApply: false
+globs:
+  - "**/participating-instructors*"
+  - "**/instructor-payment*"
+  - "**/instructor-settlement*"
+  - "**/settlement-status*"
+  - "**/instructor-payment-status-badge*"
+  - "**/payment-order*"
+  - "**/account-payment*"
+  - "**/school-detail-fullpage-view*"
+---
+
+# 강사 정산 현황 8종 (공통)
+
+스크린샷·회원 상세 정산 탭·참여 강사 목록 등 **동일한 8개 상태**를 쓴다. 라벨·색상·배지 클래스는 **한 곳**에서만 정의한다.
+
+## 단일 정의 (필수 import)
+
+| 용도 | 경로 |
+|------|------|
+| 타입·라벨·색상·필터 옵션 | `@/shared/constants/instructor-settlement-status` |
+| Mock 재export | `@/data/mock/instructor-member-settlements` (상수만 re-export) |
+
+### 8개 상태 (`InstructorSettlementUiStatus`)
+
+| key | 라벨 | 글자색 |
+|-----|------|--------|
+| `payment_statement_reapplication` | 지급조서 재신청 | `#c45c00` |
+| `awaiting_confirmation` | 확인 대기 중 | `#f07917` |
+| `partial_confirmation` | 확인 진행 중 | `#8457ce` |
+| `payment_statement_verified` | 지급조서 확인 완료 | `#1e8c29` |
+| `account_paid` | 계좌 지급 완료 | `#017eaf` |
+| `none` | 해당 없음 | `#333333` |
+| `application_rejected` | 신청 반려 | `#c32f4a` |
+| `payment_correction_requested` | 지급 정정 요청 | `#e8007c` |
+
+## UI 적용 (화면별)
+
+| 표현 | 사용 컴포넌트 / CSS |
+|------|---------------------|
+| **배지** (테두리·배경 6%) | `InstructorPaymentStatusBadge` 또는 `SettlementStatusBadge` → `status-badge.css` `status-badge--instructor-settlement-*` |
+| **텍스트만** (테이블 열) | `InstructorSettlementStatusText` → `instructor-settlement-status-text.css` |
+| **캘린더·인라인 태그** | `INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE` (bg/color/border) |
+
+## 금지 · deprecated
+
+- `participating-instructors` mock의 구 6키 (`pending`, `partial`, `completed`, `reviewing` 등) **신규 코드에 사용 금지**
+- 화면별 `--settlement-text--pending` 등 **로컬 색상·라벨 하드코딩 금지** — 공통 상수·컴포넌트로 대체
+- `status-badge--settlement-pending` (구 participating 6종) — 신규는 `instructor-settlement-*` 만 사용
+
+## 신규 화면 체크리스트
+
+- [ ] 상태 타입: `InstructorSettlementUiStatus`
+- [ ] 라벨: `INSTRUCTOR_SETTLEMENT_STATUS_LABELS` (또는 `_SHORT` / 필터는 `INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS`)
+- [ ] 테이블 텍스트: `<InstructorSettlementStatusText status={…} />`
+- [ ] 배지: `<InstructorPaymentStatusBadge status={…} />`
+- [ ] 색 변경 시 **`instructor-settlement-status.ts` + `status-badge.css` + `instructor-settlement-status-text.css`** 만 수정
+
+## 관련 문서
+
+- 지급조서 발급 조건: `docs/features/instructor-settlement-payment-statement-issue-rules.md`

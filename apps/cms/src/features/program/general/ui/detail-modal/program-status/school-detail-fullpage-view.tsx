@@ -27,7 +27,8 @@ import type {
   ParticipatingInstructorRow,
   SettlementStatusKey,
 } from '@/data/mock/participating-instructors'
-import { SETTLEMENT_STATUS_LABELS } from '@/data/mock/participating-instructors'
+import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
+import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import type { InstructorListFormInstructor } from '../../../model/school-detail-types'
 import {
   getInstructorRowsForSchool,
@@ -409,7 +410,7 @@ export function GeneralParticipatingInstitutionDetailView({
     savedInstructorPatches[detail.id] !== undefined
       ? savedInstructorPatches[detail.id].map(inv => ({
           ...inv,
-          settlementStatus: 'pending' as SettlementStatusKey,
+          settlementStatus: 'awaiting_confirmation' as SettlementStatusKey,
         }))
       : getInstructorRowsForSchool(row.schoolName, instructorList)
 
@@ -707,12 +708,8 @@ export function GeneralParticipatingInstitutionDetailView({
         key: 'settlementStatus',
         width: 120,
         align: 'center',
-        render: (status: SettlementStatusKey) => (
-          <span
-            className={`school-detail-fullpage-view__settlement-text school-detail-fullpage-view__settlement-text--${status}`}
-          >
-            {SETTLEMENT_STATUS_LABELS[status]}
-          </span>
+        render: (status: InstructorSettlementUiStatus) => (
+          <InstructorSettlementStatusText status={status} />
         ),
       },
     ],

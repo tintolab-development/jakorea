@@ -24,6 +24,22 @@ export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE =
 export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE =
   '수료증/참여인증서는 한 번에 1명만 발급할 수 있습니다.\n학생 1명만 선택한 뒤 다시 시도해 주세요.'
 
+/** 참여 강사 목록 — 활동인증서 발급: 미선택 시 AlertModal 본문 */
+export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE =
+  '발급할 강사를 1명 선택해 주세요.'
+
+/** 참여 강사 목록 — 활동인증서 발급: 다수 선택 시 AlertModal 본문 */
+export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE =
+  '활동인증서는 한 번에 1명만 발급할 수 있습니다.\n강사 1명만 선택한 뒤 다시 시도해 주세요.'
+
+/** 참여 강사 목록 — 강사 추가 등록: 미선택 시 AlertModal 본문 */
+export const PARTICIPATING_INSTRUCTOR_ADD_SELECT_ALERT_MESSAGE =
+  '추가 등록할 강사를 선택해 주세요.'
+
+/** 참여 강사 목록 — 강사 추가 등록: 등록 완료 시 AlertModal 본문 */
+export const PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE =
+  '강사 추가 등록이 완료되었습니다.'
+
 /** 수료증/참여인증서·활동인증서 발급 사유 모달 — 사유 미선택 시 AlertModal 본문 */
 export const CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE = '발급 사유를 선택해 주세요.'
 

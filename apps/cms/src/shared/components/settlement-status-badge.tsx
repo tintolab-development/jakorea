@@ -1,17 +1,18 @@
 /**
- * 정산 현황 배지 — StatusBadge(settlement) 위임
+ * 정산 현황 배지 — `InstructorPaymentStatusBadge` 위임 (8종 공통)
  */
 
-import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
-import { StatusBadge } from './status-badge'
+import { InstructorPaymentStatusBadge } from './instructor-payment-status-badge'
+import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 
-export type { SettlementStatusKey }
+/** @deprecated `InstructorSettlementUiStatus` 사용 */
+export type SettlementStatusKey = InstructorSettlementUiStatus
 
 interface SettlementStatusBadgeProps {
-  status: SettlementStatusKey
+  status: InstructorSettlementUiStatus
   className?: string
 }
 
 export function SettlementStatusBadge({ status, className }: SettlementStatusBadgeProps) {
-  return <StatusBadge domain="settlement" status={status} variant="badge" className={className} />
+  return <InstructorPaymentStatusBadge status={status} className={className} />
 }

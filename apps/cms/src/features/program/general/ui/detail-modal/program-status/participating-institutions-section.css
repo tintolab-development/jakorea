@@ -263,39 +263,40 @@
   color: var(--color-text-disabled) !important;
 }
 
-/* 정산현황 컬럼: 텍스트만 표기, 기본 폰트 스펙 + 상태별 대표 컬러 */
-.participating-instructors-section__settlement-text {
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
+/* 연락처·이메일: 가로 축소 시 셀 밖으로 텍스트가 삐져나오지 않도록 말줄임 */
+.participating-institutions-section--instructors
+  .participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  th.participating-instructors-section__ellipsis-cell,
+.participating-institutions-section--instructors
+  .participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  td.participating-instructors-section__ellipsis-cell {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
-.participating-instructors-section__settlement-text--pending {
-  color: var(--color-green, #1e8c29);
+.participating-institutions-section--instructors
+  .participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  td.participating-instructors-section__ellipsis-cell
+  .ant-table-cell-content {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
-.participating-instructors-section__settlement-text--partial {
-  color: var(--color-purple, #8457ce);
-}
-
-.participating-instructors-section__settlement-text--completed {
-  color: var(--color-blue, #017eaf);
-}
-
-.participating-instructors-section__settlement-text--na {
-  color: var(--default-BK, #3d3d3d);
-  opacity: 0.5;
-}
-
-.participating-instructors-section__settlement-text--reviewing {
-  color: #ed6c02;
-}
-
-.participating-instructors-section__settlement-text--rejected {
-  color: #d32f2f;
+.participating-institutions-section--instructors
+  .participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-cell-ellipsis.participating-instructors-section__ellipsis-cell {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
 /* 캘린더 뷰 우측 카드 리스트 */
@@ -489,45 +490,63 @@
   box-sizing: border-box;
 }
 
-/* 강의보고서 태그 */
+/* 강의보고서 태그 — 제출/미제출 동일 고정 스타일 */
 .participating-instructors-section__calendar-card-tag--report {
-  border-color: #e0e0e0;
+  border-radius: var(--6, 6px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--default-WT, #fff);
   color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
-.participating-instructors-section__calendar-card-tag--report-submitted {
-  border-color: #c8e6c9;
-  color: #2e7d32;
+/* 정산 상태 태그: shared/constants/instructor-settlement-status.ts 색상과 동조 */
+.participating-instructors-section__calendar-card-tag--settlement {
+  font-weight: 700;
 }
 
-/* 정산 상태 태그: 테두리·글자색 동조 */
-.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--pending {
-  color: #2e7d32;
-  border-color: #2e7d32;
+.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--payment_statement_reapplication {
+  color: #c45c00;
+  border-color: #c45c00;
 }
 
-.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--completed {
-  color: var(--color-blue, #017eaf);
-  border-color: var(--color-blue, #017eaf);
+.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--awaiting_confirmation {
+  color: #f07917;
+  border-color: #f07917;
 }
 
-.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--partial {
+.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--partial_confirmation {
   color: var(--color-purple, #8457ce);
   border-color: var(--color-purple, #8457ce);
 }
 
-.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--na {
+.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--payment_statement_verified {
+  color: var(--color-green, #1e8c29);
+  border-color: var(--color-green, #1e8c29);
+}
+
+.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--account_paid {
+  color: var(--color-blue, #017eaf);
+  border-color: var(--color-blue, #017eaf);
+}
+
+.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--none {
+  border-radius: var(--6, 6px);
+  border: 1px solid rgba(61, 61, 61, 0.8);
+  background: var(--main-WT, #fff);
   color: var(--default-BK, #3d3d3d);
-  border-color: rgba(61, 61, 61, 0.2);
-  opacity: 0.65;
+  opacity: 1;
 }
 
-.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--reviewing {
-  color: #ed6c02;
-  border-color: #ed6c02;
+.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--application_rejected {
+  color: #c32f4a;
+  border-color: #c32f4a;
 }
 
-.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--rejected {
-  color: #d32f2f;
-  border-color: #d32f2f;
+.participating-instructors-section__calendar-card-tag--settlement.participating-instructors-section__calendar-card-tag--payment_correction_requested {
+  color: #e8007c;
+  border-color: #e8007c;
 }

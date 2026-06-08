@@ -3,7 +3,11 @@
  * 참여 강사진 목록 (필터: 교육 학년, 강의 진행 회차, 정산 현황, 교사/강사명)
  */
 
-export type SettlementStatusKey = 'pending' | 'partial' | 'completed' | 'na' | 'reviewing' | 'rejected'
+import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
+import { INSTRUCTOR_SETTLEMENT_STATUS_LABELS } from '@/shared/constants/instructor-settlement-status'
+
+/** @deprecated `InstructorSettlementUiStatus` 사용 — 하위 호환용 alias */
+export type SettlementStatusKey = InstructorSettlementUiStatus
 
 /** 참여 강사 상세 모달·강사 이력서 탭용 (ApplicantInstructorRow와 동일 구조) */
 export interface ParticipatingInstructorCareerDetail {
@@ -43,7 +47,7 @@ export interface ParticipatingInstructorRow {
   classCount: number
   studentCount: number
   lectureRound: string
-  settlementStatus: SettlementStatusKey
+  settlementStatus: InstructorSettlementUiStatus
   teacherName: string
   /** 참여 강사 상세 모달(기본 정보 탭)용 */
   contact?: string
@@ -94,14 +98,8 @@ export interface ParticipatingInstructorRow {
   businessIncomeEarnerStatus?: string
 }
 
-export const SETTLEMENT_STATUS_LABELS: Record<SettlementStatusKey, string> = {
-  pending: '정산 대기',
-  partial: '일부 정산 완료',
-  completed: '정산 완료',
-  na: '해당 없음',
-  reviewing: '내역 검토 중',
-  rejected: '지급 반려',
-}
+/** @deprecated `INSTRUCTOR_SETTLEMENT_STATUS_LABELS` 사용 */
+export const SETTLEMENT_STATUS_LABELS = INSTRUCTOR_SETTLEMENT_STATUS_LABELS
 
 const INSTRUCTOR_NAMES = [
   '김서연',
@@ -193,7 +191,16 @@ const TEACHER_NAMES = [
   '조아람',
 ]
 
-const settlementStatuses: SettlementStatusKey[] = ['pending', 'partial', 'completed', 'na']
+const settlementStatuses: InstructorSettlementUiStatus[] = [
+  'payment_statement_reapplication',
+  'awaiting_confirmation',
+  'partial_confirmation',
+  'payment_statement_verified',
+  'account_paid',
+  'none',
+  'application_rejected',
+  'payment_correction_requested',
+]
 
 const EDUCATION_LEVELS = [
   '4년제 졸업',
@@ -323,10 +330,11 @@ function getDetailExtension(
   }
 }
 
-function buildMockList(count: number): ParticipatingInstructorRow[] {
+/** 정산 현황 8종 각 1건 — 스크린샷·상태별 색상 확인용 */
+function buildMockList(): ParticipatingInstructorRow[] {
+  const count = settlementStatuses.length
   const rows: ParticipatingInstructorRow[] = []
   for (let i = 0; i < count; i++) {
-    const statusIdx = i % settlementStatuses.length
     const extension = getDetailExtension(i)
     const region = REGIONS[i % REGIONS.length]
     const jaGrade = JA_EVALUATION_GRADES[i % JA_EVALUATION_GRADES.length]
@@ -341,7 +349,7 @@ function buildMockList(count: number): ParticipatingInstructorRow[] {
       classCount: 2 + (i % 4),
       studentCount: 40 + (i % 85),
       lectureRound: LECTURE_ROUNDS[i % LECTURE_ROUNDS.length],
-      settlementStatus: settlementStatuses[statusIdx],
+      settlementStatus: settlementStatuses[i],
       teacherName: TEACHER_NAMES[i % TEACHER_NAMES.length],
       /** 일부 강사는 최초 승인 미완료(신규 배정 안내 모달 테스트용) */
       initialApproval: i % 4 !== 2,
@@ -358,4 +366,4 @@ function buildMockList(count: number): ParticipatingInstructorRow[] {
   return rows
 }
 
-export const MOCK_PARTICIPATING_INSTRUCTORS: ParticipatingInstructorRow[] = buildMockList(72)
+export const MOCK_PARTICIPATING_INSTRUCTORS: ParticipatingInstructorRow[] = buildMockList()

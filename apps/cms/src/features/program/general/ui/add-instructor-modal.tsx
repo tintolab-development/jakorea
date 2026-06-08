@@ -1311,7 +1311,7 @@ export function buildInstructorRowFromForm(
     classCount: 0,
     studentCount: 0,
     lectureRound: '진행 전',
-    settlementStatus: 'pending' as SettlementStatusKey,
+    settlementStatus: 'awaiting_confirmation' as SettlementStatusKey,
     teacherName: '-',
     educationLevel,
     educationSchoolName,

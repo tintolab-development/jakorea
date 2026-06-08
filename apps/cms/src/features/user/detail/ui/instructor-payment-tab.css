@@ -130,41 +130,6 @@
   width: 100%;
 }
 
-.instructor-payment-tab__settlement-text {
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-  text-align: center;
-}
-
-.instructor-payment-tab__settlement-text--awaiting {
-  color: #f07917;
-}
-
-.instructor-payment-tab__settlement-text--partial {
-  color: #8457ce;
-}
-
-.instructor-payment-tab__settlement-text--statement-verified {
-  color: #1e8c29;
-}
-
-.instructor-payment-tab__settlement-text--account-paid {
-  color: #017eaf;
-}
-
-.instructor-payment-tab__settlement-text--na {
-  color: #333333;
-}
-
-.instructor-payment-tab__settlement-text--rejected {
-  color: #c32f4a;
-}
-
-.instructor-payment-tab__settlement-text--correction {
-  color: #c32f4a;
-}
-
 /* 산출 내역 열: 버튼 셀 가운데 정렬 */
 .instructor-payment-tab__detail-action-cell {
   display: flex;

@@ -369,7 +369,7 @@ export function ParticipatingInstitutionsSection({
         savedInstructorPatches[schoolId] !== undefined
           ? savedInstructorPatches[schoolId].map(inv => ({
               ...inv,
-              settlementStatus: 'pending' as SettlementStatusKey,
+              settlementStatus: 'awaiting_confirmation' as SettlementStatusKey,
             }))
           : getInstructorRowsForSchool(
               selectedRowFromUrl.schoolName,
@@ -517,7 +517,7 @@ export function ParticipatingInstitutionsSection({
                     savedInstructors !== undefined
                       ? savedInstructors.map(inv => ({
                           ...inv,
-                          settlementStatus: 'pending' as SettlementStatusKey,
+                          settlementStatus: 'awaiting_confirmation' as SettlementStatusKey,
                         }))
                       : getInstructorRowsForSchool(schoolName, instructorHook.instructorList)
                   return {

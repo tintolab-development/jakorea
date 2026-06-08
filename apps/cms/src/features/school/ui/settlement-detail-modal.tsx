@@ -7,8 +7,7 @@ import { useState } from 'react'
 import { Input, Modal } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui'
-import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
-import type { SettlementDetail } from '@/data/mock/school-detail'
+import { SETTLEMENT_ROW_STATUS_LABELS, type SettlementDetail } from '@/data/mock/school-detail'
 import './settlement-detail-modal.css'
 
 export interface BankInfo {
@@ -107,7 +106,7 @@ export function SettlementDetailModal({
                   <div className="settlement-detail__info-split-cell">
                     <span className="settlement-detail__info-split-label">정산 상태</span>
                     <span className="settlement-detail__info-split-value">
-                      <SettlementStatusBadge status={detail.status} />
+                      {SETTLEMENT_ROW_STATUS_LABELS[detail.status]}
                     </span>
                   </div>
                 </div>

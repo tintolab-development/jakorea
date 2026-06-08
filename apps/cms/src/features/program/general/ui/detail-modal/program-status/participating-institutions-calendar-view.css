@@ -317,6 +317,15 @@
   opacity: 0.6;
 }
 
+.participating-institutions-calendar-popover__meta--instructor {
+  gap: 0;
+}
+
+.participating-institutions-calendar-popover__meta--instructor
+  .participating-institutions-calendar-popover__meta-sep {
+  margin: 0 8px;
+}
+
 .participating-institutions-calendar-popover__meta-part {
   flex-shrink: 0;
   white-space: nowrap;
@@ -361,6 +370,23 @@
   .participating-instructors-section__calendar-right__school-filter {
   flex-shrink: 0;
   margin-bottom: 12px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.calendar-split-card--right
+  .participating-instructors-section__calendar-right__school-filter
+  .cms-select {
+  width: 100%;
+  min-width: 0;
+}
+
+.calendar-split-card--right
+  .participating-instructors-section__calendar-right__school-filter
+  .ant-select-selector {
+  min-height: 48px;
+  border-radius: 8px;
 }
 
 /* 참여 강사 캘린더 우측 카드 목록만 스크롤 */

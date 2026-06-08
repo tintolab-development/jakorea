@@ -1,0 +1,44 @@
+/**
+ * 강사 정산 현황 — 텍스트 전용 (색상은 shared/constants/instructor-settlement-status.ts 와 동기화)
+ */
+
+.instructor-settlement-status-text {
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.instructor-settlement-status-text--reapplication {
+  color: #c45c00;
+}
+
+.instructor-settlement-status-text--awaiting {
+  color: #f07917;
+}
+
+.instructor-settlement-status-text--partial {
+  color: #8457ce;
+}
+
+.instructor-settlement-status-text--statement-verified {
+  color: #1e8c29;
+}
+
+.instructor-settlement-status-text--account-paid {
+  color: #017eaf;
+}
+
+.instructor-settlement-status-text--na {
+  color: #333333;
+}
+
+.instructor-settlement-status-text--rejected {
+  color: #c32f4a;
+}
+
+.instructor-settlement-status-text--correction {
+  color: #e8007c;
+}

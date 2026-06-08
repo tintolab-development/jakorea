@@ -18,10 +18,9 @@ import {
   summarizeSettlementRows,
   rowsToCalendarEvents,
   INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
-  INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
   type InstructorSettlementListRow,
-  type InstructorSettlementUiStatus,
 } from '@/data/mock/instructor-member-settlements'
+import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { InstructorInvoiceModal } from './modal/instructor-invoice-modal'
 import { InstructorPaymentStatementBlockedModal } from './modal/instructor-payment-statement-blocked-modal'
 import {
@@ -31,6 +30,11 @@ import {
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import './instructor-payment-tab.css'
+
+const SETTLEMENT_STATUS_OPTIONS = INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS.map(option => ({
+  label: option.label,
+  value: option.value,
+}))
 
 const FILTER_FIELDS: FilterFieldConfig[] = [
   {
@@ -52,22 +56,11 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     type: 'select',
     label: '정산 현황',
     placeholder: '전체',
-    options: INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
+    options: SETTLEMENT_STATUS_OPTIONS,
     allowClear: true,
     width: 260,
   },
 ]
-
-/** 테이블 정산 현황 열 — 텍스트 색만 (status-badge.css instructor-settlement 톤과 동일) */
-const SETTLEMENT_TABLE_STATUS_CLASS: Record<InstructorSettlementUiStatus, string> = {
-  awaiting_confirmation: 'instructor-payment-tab__settlement-text--awaiting',
-  partial_confirmation: 'instructor-payment-tab__settlement-text--partial',
-  payment_statement_verified: 'instructor-payment-tab__settlement-text--statement-verified',
-  account_paid: 'instructor-payment-tab__settlement-text--account-paid',
-  none: 'instructor-payment-tab__settlement-text--na',
-  application_rejected: 'instructor-payment-tab__settlement-text--rejected',
-  payment_correction_requested: 'instructor-payment-tab__settlement-text--correction',
-}
 
 export interface InstructorPaymentTabProps {
   instructorUserId: string
@@ -202,11 +195,7 @@ export function InstructorPaymentTab({
         minWidth: 180,
         render: (status: InstructorSettlementListRow['status']) => (
           <div className="instructor-payment-tab__settlement-status-cell">
-            <span
-              className={`instructor-payment-tab__settlement-text ${SETTLEMENT_TABLE_STATUS_CLASS[status]}`}
-            >
-              {INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status]}
-            </span>
+            <InstructorSettlementStatusText status={status} />
           </div>
         ),
       },

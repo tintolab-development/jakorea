@@ -1,0 +1,93 @@
+.activity-cert-issuance-preview-modal {
+  --activity-cert-design-width: 1208px;
+  --activity-cert-design-height: 1682px;
+  --activity-cert-display-width: min(920px, calc(100vw - 140px));
+  --activity-cert-scale: calc(
+    var(--activity-cert-display-width) / var(--activity-cert-design-width)
+  );
+}
+
+.activity-cert-issuance-preview-modal__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.activity-cert-issuance-preview-modal__file-name {
+  color: var(--main-WT, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(1040px, calc(100vw - 520px));
+}
+
+.activity-cert-issuance-preview-modal__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 11px;
+  border: 1px solid var(--main-WT, #fff);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--main-WT, #fff);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.activity-cert-issuance-preview-modal__description {
+  font-size: 15px;
+}
+
+.activity-cert-issuance-preview-modal__actions {
+  gap: 8px;
+}
+
+.activity-cert-issuance-preview-modal .full-page-modal__topbar {
+  background: var(--color-mint-01, #01a1af);
+}
+
+.activity-cert-issuance-preview-modal .full-page-modal__title {
+  color: var(--main-WT, #fff);
+}
+
+.activity-cert-issuance-preview-modal .full-page-modal__close {
+  color: var(--main-WT, #fff);
+}
+
+.activity-cert-issuance-preview-modal__workspace {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 0;
+  padding: 4px 0 24px;
+  box-sizing: border-box;
+}
+
+.activity-cert-issuance-preview-modal__page {
+  position: relative;
+  width: var(--activity-cert-display-width);
+  height: calc(var(--activity-cert-design-height) * var(--activity-cert-scale));
+  overflow: hidden;
+  flex-shrink: 0;
+  background: transparent;
+}
+
+.activity-cert-issuance-preview-modal__scale-inner {
+  width: var(--activity-cert-design-width);
+  height: var(--activity-cert-design-height);
+  transform-origin: top left;
+  transform: scale(var(--activity-cert-scale));
+  will-change: transform;
+}
+
+.activity-cert-issuance-preview-modal__pdf-host {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: var(--activity-cert-design-width);
+  pointer-events: none;
+  visibility: hidden;
+}

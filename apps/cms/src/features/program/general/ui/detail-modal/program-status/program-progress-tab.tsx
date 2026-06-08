@@ -20,10 +20,13 @@ import {
 } from '@/data/mock/participating-schools'
 import {
   MOCK_PARTICIPATING_INSTRUCTORS,
-  SETTLEMENT_STATUS_LABELS,
   type ParticipatingInstructorRow,
   type SettlementStatusKey,
 } from '@/data/mock/participating-instructors'
+import {
+  INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
+  INSTRUCTOR_SETTLEMENT_STATUS_ORDER,
+} from '@/shared/constants/instructor-settlement-status'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
@@ -96,13 +99,10 @@ const TEXTBOOK_OPTIONS = [
   { label: TEXTBOOK_STATUS_LABELS.delivered, value: 'delivered' },
 ]
 
-const SETTLEMENT_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: SETTLEMENT_STATUS_LABELS.pending, value: 'pending' },
-  { label: SETTLEMENT_STATUS_LABELS.partial, value: 'partial' },
-  { label: SETTLEMENT_STATUS_LABELS.completed, value: 'completed' },
-  { label: SETTLEMENT_STATUS_LABELS.na, value: 'na' },
-]
+const SETTLEMENT_OPTIONS = INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS.map(option => ({
+  label: option.label,
+  value: option.value,
+}))
 
 interface ProgramProgressTabProps {
   programId: string
@@ -223,7 +223,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
   )
 
   const settlementStatusKeys: SettlementStatusKey[] = useMemo(
-    () => Object.keys(SETTLEMENT_STATUS_LABELS) as SettlementStatusKey[],
+    () => [...INSTRUCTOR_SETTLEMENT_STATUS_ORDER],
     []
   )
 
@@ -688,7 +688,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                   savedInstructors !== undefined
                     ? savedInstructors.map(inv => ({
                         ...inv,
-                        settlementStatus: 'pending' as SettlementStatusKey,
+                        settlementStatus: 'awaiting_confirmation' as SettlementStatusKey,
                       }))
                     : getInstructorRowsForSchool(schoolName, instructorList)
                 return {

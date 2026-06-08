@@ -9,6 +9,7 @@ import {
   type ParticipatingInstructorRow,
   type SettlementStatusKey,
 } from '@/data/mock/participating-instructors'
+import { buildParticipatingInstructorRowFromMember } from '../lib/participating-instructor-member-candidates'
 import {
   buildInstructorRowFromForm,
   type AddInstructorFormValues,
@@ -125,7 +126,20 @@ export function useProgressInstructorList({
       const nextId = `instructor-new-${Date.now()}`
       const newRow = buildInstructorRowFromForm(values, nextNo, nextId)
       setInstructorList(prev => [newRow, ...prev])
-      },
+    },
+    [instructorList]
+  )
+
+  const handleAddInstructorByMemberId = useCallback(
+    async (memberId: string): Promise<boolean> => {
+      const nextNo =
+        instructorList.length > 0 ? Math.max(...instructorList.map(r => r.no)) + 1 : 1
+      const nextId = `instructor-added-${memberId}-${Date.now()}`
+      const newRow = await buildParticipatingInstructorRowFromMember(memberId, nextNo, nextId)
+      if (!newRow) return false
+      setInstructorList(prev => [newRow, ...prev])
+      return true
+    },
     [instructorList]
   )
 
@@ -168,6 +182,7 @@ export function useProgressInstructorList({
     filteredInstructors,
     instructorNamesToDelete,
     handleAddInstructor,
+    handleAddInstructorByMemberId,
     handleSettlementStatusChange,
     handleInstructorDeleteClick,
     handleInstructorDeleteConfirm,
