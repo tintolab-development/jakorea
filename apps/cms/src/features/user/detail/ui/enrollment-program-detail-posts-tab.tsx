@@ -234,7 +234,7 @@ export function EnrollmentProgramDetailPostsTab({
     { key: 'download', label: '다운로드', onClick: () => downloadFile(file.fileName, file.fileUrl) },
     {
       key: 'preview',
-      label: '원글보기',
+      label: '바로보기',
       onClick: () => {
         if (file.postId) {
           const post = posts.find(p => p.id === file.postId)
@@ -426,6 +426,7 @@ export function EnrollmentProgramDetailPostsTab({
         open={postWriteModalOpen}
         onCancel={() => setPostWriteModalOpen(false)}
         programId={program.id}
+        program={program}
         schoolId={schoolId}
         authorName={writeAuthorName}
         onSuccess={() => {

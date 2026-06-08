@@ -5,23 +5,49 @@
  * 실제 데이터: createProgramPost + fileUploadService 연동
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Checkbox, Input, Modal } from 'antd'
 import { CmsButton } from '@/shared/ui'
 import { FileSelectField } from '@/shared/ui/file-select-field'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import type { Program } from '@/types/domain'
 import { createProgramPost, addProgramFiles } from '@/data/mock'
 import { fileUploadService } from '@/entities/application/api/file-upload-service'
 import './post-write-modal.css'
 
 const { TextArea } = Input
 
-const AUDIENCE_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: '담당교사', value: 'teacher' },
-  { label: '강사', value: 'instructor' },
-  { label: '봉사자', value: 'volunteer' },
-  { label: '학생', value: 'student' },
-]
+/** 게시글 등록 모달 전용 공개 범위 UI 키 */
+const POST_WRITE_AUDIENCE_KEYS = ['all', 'participant', 'instructor', 'volunteer'] as const
+type PostWriteAudienceKey = (typeof POST_WRITE_AUDIENCE_KEYS)[number]
+
+const DEFAULT_POST_WRITE_AUDIENCE: PostWriteAudienceKey[] = [...POST_WRITE_AUDIENCE_KEYS]
+
+function buildPostWriteAudienceOptions(program?: Program) {
+  const isIndividual = program ? isGeneralIndividualProgram(program) : false
+  const participantHint = isIndividual
+    ? '학생(개인 참여자)에게 공개'
+    : '담당교사(신청자)에게 공개'
+
+  return [
+    { label: '전체', value: 'all' as const },
+    { label: '참여자', value: 'participant' as const, title: participantHint },
+    { label: '강사', value: 'instructor' as const },
+    { label: '봉사자', value: 'volunteer' as const },
+  ]
+}
+
+/** 저장 시 participant → 기관: teacher / 개인: student */
+function resolvePostWriteAudienceForSave(
+  audience: PostWriteAudienceKey[],
+  program?: Program
+): string[] {
+  const isIndividual = program ? isGeneralIndividualProgram(program) : false
+  return audience.map(key => {
+    if (key === 'participant') return isIndividual ? 'student' : 'teacher'
+    return key
+  })
+}
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024 // 15MB
 
@@ -38,6 +64,8 @@ export interface PostWriteModalProps {
   onCancel: () => void
   /** 프로그램 ID (필수, 등록 대상 프로그램) */
   programId: string
+  /** 참여자(참여자 체크) 매핑 — 기관/개인 구분용 */
+  program?: Program
   /** 참여기관(학교) ID — 있으면 해당 학교 전용 게시글 */
   schoolId?: string
   /** 작성자 표시명 (예: "JA KOREA 알림", "박○○ 담당교사님") */
@@ -47,11 +75,11 @@ export interface PostWriteModalProps {
 }
 
 function resetForm(
-  setAudience: (v: string[]) => void,
+  setAudience: (v: PostWriteAudienceKey[]) => void,
   setContent: (v: string) => void,
   setFiles: (v: File[]) => void
 ) {
-  setAudience(['all', 'teacher', 'instructor', 'volunteer', 'student'])
+  setAudience([...DEFAULT_POST_WRITE_AUDIENCE])
   setContent('')
   setFiles([])
 }
@@ -60,22 +88,18 @@ export function PostWriteModal({
   open,
   onCancel,
   programId,
+  program,
   schoolId,
   authorName,
   onSuccess,
 }: PostWriteModalProps) {
-  const [audience, setAudience] = useState<string[]>([
-    'all',
-    'teacher',
-    'instructor',
-    'volunteer',
-    'student',
-  ])
+  const [audience, setAudience] = useState<PostWriteAudienceKey[]>([...DEFAULT_POST_WRITE_AUDIENCE])
   const [content, setContent] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
 
   const fileNames = files.map(f => f.name)
+  const audienceOptions = useMemo(() => buildPostWriteAudienceOptions(program), [program])
 
   useEffect(() => {
     if (!open) resetForm(setAudience, setContent, setFiles)
@@ -117,7 +141,7 @@ export function PostWriteModal({
         schoolId: schoolId as import('@/types').UUID | undefined,
         authorName,
         content: trimmed,
-        audience,
+        audience: resolvePostWriteAudienceForSave(audience, program),
         attachmentCount: uploadResults.length,
       })
       if (uploadResults.length > 0) {
@@ -166,9 +190,9 @@ export function PostWriteModal({
             게시글 공개 범위 <span className="post-write-modal__required" aria-hidden>*</span>
           </label>
           <Checkbox.Group
-            options={AUDIENCE_OPTIONS}
+            options={audienceOptions}
             value={audience}
-            onChange={vals => setAudience(vals as string[])}
+            onChange={vals => setAudience(vals as PostWriteAudienceKey[])}
             className="post-write-modal__checkbox-group"
           />
         </div>
@@ -197,7 +221,6 @@ export function PostWriteModal({
                   onRemoveFile={handleRemoveFile}
                   uploading={loading}
                   buttonLabel="파일 선택"
-                  emptyPlaceholder="파일을 업로드 해주세요"
                   guideLines={[
                     `-  파일은 최대 15M까지 ${getAllowedExtensionsDescription()} 형식만 등록 가능합니다.`,
                     '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',

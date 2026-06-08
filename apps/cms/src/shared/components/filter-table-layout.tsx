@@ -89,9 +89,10 @@ export function FilterTableLayout({
   rows,
   ...tableFilterGroupRest
 }: FilterTableLayoutProps) {
-  const hasExplicitMultiRowLayout = rows != null && rows.length > 1
+  const hasExplicitRows = rows != null && rows.length > 0
+  /** `rows`로 행 구성을 지정한 화면은 전용 CSS 그리드(1행 N필드 등)를 쓰므로 기본 wrap 미적용 */
   const shouldApplyDefaultResponsiveWrap =
-    showFilter && filterResponsiveWrap && !hasExplicitMultiRowLayout && multiRowGridMode === undefined
+    showFilter && filterResponsiveWrap && !hasExplicitRows && multiRowGridMode === undefined
 
   const resolvedMultiRowGridMode =
     multiRowGridMode ?? (shouldApplyDefaultResponsiveWrap ? 'responsive' : 'fixed')

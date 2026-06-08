@@ -887,6 +887,8 @@ export interface ProgramPost {
   attachmentCount: number
   /** 게시글 상태 태그 (예: [공지사항], [일정 알림]) */
   postType?: 'notice' | 'schedule'
+  /** 공개 범위 (all, teacher, student, instructor, volunteer) */
+  audience?: string[]
   publishedAt: DateValue
   createdAt: DateValue
   updatedAt: DateValue

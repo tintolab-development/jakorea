@@ -117,6 +117,14 @@
 .school-detail-fullpage-view__posts-tab-wrap .enrollment-program-detail-modal__posts-tab {
   flex: 1;
   min-height: 0;
+  height: auto;
+  max-height: none;
+}
+
+.school-detail-fullpage-view__posts-tab-wrap
+  .enrollment-program-detail-modal__posts-tab-column--right {
+  height: auto;
+  align-self: stretch;
 }
 
 /* 교재명 행: 교재명·수량·상태(태그/드롭다운) 한 줄 정렬 — StatusDropdown 트리거가 block처럼 줄바꿈되지 않도록 */

@@ -58,8 +58,6 @@ export interface FileSelectFieldProps {
   onRemoveFile?: (index: number) => void
   /** 버튼에 표시할 텍스트 (기본: "파일 선택") */
   buttonLabel?: string
-  /** 파일이 없을 때 파일명 자리에 표시할 안내 문구 (예: "파일을 선택해주세요") */
-  emptyPlaceholder?: string
   /** 업로드 중일 때 true — 파일명 영역에 "파일을 업로드중입니다" 표시하여 UI shifting 방지 */
   uploading?: boolean
   /** 추가 클래스명 */
@@ -75,7 +73,6 @@ export function FileSelectField({
   onFilesChange,
   onRemoveFile,
   buttonLabel = '파일 선택',
-  emptyPlaceholder,
   uploading = false,
   className = '',
 }: FileSelectFieldProps) {
@@ -90,11 +87,19 @@ export function FileSelectField({
   }
 
   const canRemove = !disabled && typeof onRemoveFile === 'function'
-  const showEmptyPlaceholder =
-    Boolean(emptyPlaceholder) && !disabled && (!fileNames || fileNames.length === 0)
+  const hasFiles = Boolean(fileNames && fileNames.length > 0)
+  const showNames = hasFiles || uploading
 
   return (
-    <div className={`file-select-field ${className}`.trim()}>
+    <div
+      className={[
+        'file-select-field',
+        !showNames ? 'file-select-field--empty' : '',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {!disabled && (
         <input
           ref={inputRef}
@@ -107,7 +112,7 @@ export function FileSelectField({
         />
       )}
 
-      {(fileNames && fileNames.length > 0) || showEmptyPlaceholder || uploading ? (
+      {showNames ? (
         <div className="file-select-field__names">
           {uploading ? (
             <span className="file-select-field__name-row">
@@ -115,8 +120,8 @@ export function FileSelectField({
                 파일을 업로드중입니다
               </span>
             </span>
-          ) : fileNames && fileNames.length > 0 ? (
-            fileNames.map((name, i) => (
+          ) : (
+            fileNames!.map((name, i) => (
               <span key={`${i}-${name}`} className="file-select-field__name-row">
                 <span className="file-select-field__name">{name}</span>
                 {canRemove && (
@@ -131,12 +136,6 @@ export function FileSelectField({
                 )}
               </span>
             ))
-          ) : (
-            <span className="file-select-field__name-row">
-              <span className="file-select-field__name file-select-field__name--placeholder">
-                {emptyPlaceholder}
-              </span>
-            </span>
           )}
         </div>
       ) : null}

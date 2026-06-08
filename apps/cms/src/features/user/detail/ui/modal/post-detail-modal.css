@@ -53,8 +53,8 @@
 /* ── 게시글 카드 ─────────────────────────────────── */
 
 .post-detail-modal__card {
-  border: 1px solid var(--color-border-light, #e8e8e8);
-  border-radius: var(--radius-8, 8px);
+  border: 1px solid #d4d4d4;
+  border-radius: 10px;
   padding: var(--spacing-20);
   background: #fff;
 }
@@ -62,8 +62,34 @@
 .post-detail-modal__card-header {
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
   gap: var(--spacing-12);
   margin-bottom: var(--spacing-16);
+}
+
+.post-detail-modal__card-header-main {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+  min-width: 0;
+  flex: 1;
+}
+
+.post-detail-modal__audience-badge {
+  flex-shrink: 0;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  display: flex;
+  padding: 4px 12px 5px 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 50px;
+  background: rgba(51, 51, 51, 0.1);
+  white-space: nowrap;
 }
 
 .post-detail-modal__avatar {
@@ -288,7 +314,7 @@
 .post-detail-modal__reaction-user-role {
   width: 114px;
   height: 21px;
-  color: var(--default-BK, #3D3D3D);
+  color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 14px;
   font-style: normal;
@@ -346,7 +372,7 @@
 .post-detail-modal__attachments {
   margin-top: 20px;
   box-sizing: border-box;
-  background: #F5F6F7;
+  background: #f5f6f7;
   border-radius: 8px;
   padding: 20px;
 }
@@ -355,7 +381,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #00A9A3;
+  color: #00a9a3;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.5;
@@ -369,7 +395,7 @@
   flex-shrink: 0;
   width: 18px;
   height: 18px;
-  color: #00A9A3;
+  color: #00a9a3;
 }
 
 .post-detail-modal__attachments-icon svg {
@@ -421,19 +447,19 @@
 }
 
 .post-detail-modal__file-item:hover {
-  color: #00A9A3;
+  color: #00a9a3;
 }
 
 .post-detail-modal__file-item:hover .post-detail-modal__file-item-icon {
-  color: #00A9A3;
+  color: #00a9a3;
 }
 
 /* ── 댓글 카드 ──────────────────────────────────── */
 
 .post-detail-modal__comments-card {
   position: relative;
-  border: 1px solid var(--color-border-light, #e8e8e8);
-  border-radius: var(--radius-8, 8px);
+  border: 1px solid #d4d4d4;
+  border-radius: 10px;
   background: #fff;
   overflow: visible;
 }
@@ -502,9 +528,9 @@
   min-width: 0;
   height: 44px;
   padding: 0 14px 0 16px;
-  border: 1px solid #C4CDD1;
+  border: 1px solid #c4cdd1;
   border-radius: 8px;
-  background: #FFF;
+  background: #fff;
   outline: none;
   font-size: 14px;
   color: var(--color-text-primary, #3d3d3d);
@@ -513,7 +539,7 @@
 
 .post-detail-modal__comment-input::placeholder {
   overflow: hidden;
-  color: #85969D;
+  color: #85969d;
   text-overflow: ellipsis;
   font-family: Pretendard, sans-serif;
   font-size: 16px;

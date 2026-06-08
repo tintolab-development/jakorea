@@ -2,8 +2,7 @@
  * 일반 프로그램 상세 — 공통 정보 표시 mock/파생
  */
 
-import type { Program } from '@/types/domain'
-import { getGeneralSurveyMenuItems } from '@/features/program/general/lib/detail-meta'
+import type { GeneralProgramParticipantType, Program, ProgramCategory } from '@/types/domain'
 import {
   GENERAL_PROGRAM_EDUCATION_STRUCTURE_LABELS,
   GENERAL_PROGRAM_SESSION_ROUND_LABELS,
@@ -12,11 +11,23 @@ import {
   type GeneralProgramVariant,
 } from '@/features/program/general/lib/variant'
 import { TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS } from '@/features/template/lib/template-form-select-options'
-import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
+import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
 
 const PARTICIPANT_LABEL_BY_VALUE = Object.fromEntries(
   TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.map(o => [o.value, o.label])
 ) as Record<string, string>
+
+const CATEGORY_TO_PARTICIPANT: Record<ProgramCategory, GeneralProgramParticipantType> = {
+  school: 'school_institution',
+  individual: 'individual',
+  instructor: 'teacher_instructor',
+  volunteer: 'volunteer',
+}
+
+function resolveParticipantTypes(program: Program): GeneralProgramParticipantType[] {
+  if (program.generalParticipantTypes?.length) return [...program.generalParticipantTypes]
+  return [CATEGORY_TO_PARTICIPANT[program.category]]
+}
 
 /** 기관_커리큘럼형_단일 회차 유형 mock id */
 export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID =
@@ -339,7 +350,7 @@ export function resolveGeneralProgramListTitle(program: Program): string {
 }
 
 export function formatGeneralParticipantTypesSummary(program: Program): string {
-  return getGeneralParticipantTypes(program)
+  return resolveParticipantTypes(program)
     .map(t => {
       if (t === 'teacher_instructor') return '강사'
       return PARTICIPANT_LABEL_BY_VALUE[t] ?? t
@@ -348,9 +359,9 @@ export function formatGeneralParticipantTypesSummary(program: Program): string {
 }
 
 export function formatGeneralSurveyItemsSummary(program: Program): string {
-  const items = getGeneralSurveyMenuItems(program)
-  if (items.length === 0) return '-'
-  return items.map(i => i.label).join(', ')
+  const keys = program.generalSurveyMenuKeys ?? []
+  if (keys.length === 0) return '-'
+  return keys.map(key => PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[key]).join(', ')
 }
 
 export function resolveGeneralProgramCommonInfo(

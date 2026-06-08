@@ -27,6 +27,7 @@ import { downloadFile } from '@/shared/lib/file-download'
 import { truncateDisplayNameForList } from '@/shared/lib/truncate-display-name'
 import { POST_DETAIL_EMOJI_BAR_ITEMS } from '../post-detail-emoji-bar-icons'
 import { PostReadStatusPopoverContent } from '../post-read-status-popover'
+import { formatProgramPostAudienceBadgeLabel } from '../../lib/post-audience-display'
 import './post-detail-modal.css'
 
 function formatKoDate(date: string | Date): string {
@@ -322,6 +323,7 @@ export function PostDetailModal({
     post.postType === 'notice' ? '[공지사항]' :
     post.postType === 'schedule' ? '[일정 알림]' :
     null
+  const audienceBadgeLabel = formatProgramPostAudienceBadgeLabel(post.audience)
 
   return (
     <ContentModal
@@ -343,10 +345,11 @@ export function PostDetailModal({
             {/* ── 게시글 카드 (본문만) ── */}
             <div className="post-detail-modal__card">
               <div className="post-detail-modal__card-header">
-                <ProfileAvatarIcon className="post-detail-modal__avatar" />
-                <div className="post-detail-modal__author-info">
-                  <span className="post-detail-modal__author-name">{post.authorName}</span>
-                  <div className="post-detail-modal__author-meta">
+                <div className="post-detail-modal__card-header-main">
+                  <ProfileAvatarIcon className="post-detail-modal__avatar" />
+                  <div className="post-detail-modal__author-info">
+                    <span className="post-detail-modal__author-name">{post.authorName}</span>
+                    <div className="post-detail-modal__author-meta">
                     <span className="post-detail-modal__date">{dateStr}</span>
                     <span className="post-detail-modal__meta-divider">|</span>
                     <Popover
@@ -484,6 +487,8 @@ export function PostDetailModal({
                     </span>
                   </div>
                 </div>
+                </div>
+                <span className="post-detail-modal__audience-badge">{audienceBadgeLabel}</span>
               </div>
 
               <div className="post-detail-modal__content">

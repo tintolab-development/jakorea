@@ -5,8 +5,15 @@
  */
 
 import type { ProgramPost, UUID } from '../../types'
+import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
 import { mockPrograms } from './programs'
 import { MOCK_PARTICIPATING_SCHOOLS } from './participating-schools'
+
+/** 일반 프로그램 참여 기관 상세 게시글 탭 mock (canonical programId) */
+export const GENERAL_PARTICIPATING_SCHOOLS_PROGRAM_ID =
+  GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID as UUID
+
+const GENERAL_ORG_SCHOOL_1_ID = 'school-1'
 
 function date(daysAgo: number, hour: number = 15, minute: number = 0): string {
   const d = new Date()
@@ -34,6 +41,7 @@ function buildPostsForHSBCGangseo(): ProgramPost[] {
       commentCount: 2,
       attachmentCount: 0,
       postType: 'notice',
+      audience: ['all'],
       publishedAt: new Date(2026, 0, 15, 15, 0, 0).toISOString(),
       createdAt: new Date(2026, 0, 15, 15, 0, 0).toISOString(),
       updatedAt: new Date(2026, 0, 15, 15, 0, 0).toISOString(),
@@ -51,6 +59,7 @@ function buildPostsForHSBCGangseo(): ProgramPost[] {
       commentCount: 2,
       attachmentCount: 2,
       postType: 'notice',
+      audience: ['teacher', 'instructor'],
       publishedAt: new Date(2026, 0, 10, 10, 0, 0).toISOString(),
       createdAt: new Date(2026, 0, 10, 10, 0, 0).toISOString(),
       updatedAt: new Date(2026, 0, 10, 10, 0, 0).toISOString(),
@@ -76,10 +85,69 @@ function buildPostsForHSBCGangseo(): ProgramPost[] {
   return posts
 }
 
+/** 일반 프로그램 참여 기관 상세 — 강서초등학교(school-1) 스크린샷 시안 3건 */
+function buildGeneralOrgSchool1ScreenshotPosts(): ProgramPost[] {
+  const programId = GENERAL_PARTICIPATING_SCHOOLS_PROGRAM_ID
+  return [
+    {
+      id: 'post-general-org-school1-001' as UUID,
+      programId,
+      schoolId: GENERAL_ORG_SCHOOL_1_ID as UUID,
+      authorName: '박○○ 담당교사님',
+      content:
+        '최근 과제 제출과 관련하여 다른 반 친구의 과제를 그대로 베끼거나, GPT 등에 답을 맡기는 사례가 많다는 소식을 전해 들었습니다.\n\n강서초등학교 학생 여러분, 과제를 스스로 성실히 수행하는 학생이 되어 주시기 바랍니다.\n\n앞으로 타인의 글을 베끼거나 대신 작성한 것으로 확인되는 과제는 0점 처리하며 재제출이 필요합니다.',
+      read: false,
+      viewCount: 12,
+      reactionCount: 10,
+      commentCount: 2,
+      attachmentCount: 0,
+      postType: 'notice',
+      audience: ['all'],
+      publishedAt: new Date(2026, 0, 15, 15, 0, 0).toISOString(),
+      createdAt: new Date(2026, 0, 15, 15, 0, 0).toISOString(),
+      updatedAt: new Date(2026, 0, 15, 15, 0, 0).toISOString(),
+    },
+    {
+      id: 'post-general-org-school1-002' as UUID,
+      programId,
+      schoolId: GENERAL_ORG_SCHOOL_1_ID as UUID,
+      authorName: '김틴토 강사님',
+      content:
+        '2회차 강의의 테마는 "나를 보여주는 기술"입니다. 면접 태도와 모의 면접을 다룰 예정이오니 교재를 꼭 준비해 주시고, 이번 주까지 과제 제출 부탁드립니다.',
+      read: false,
+      viewCount: 12,
+      reactionCount: 10,
+      commentCount: 2,
+      attachmentCount: 2,
+      postType: 'notice',
+      audience: ['teacher', 'instructor'],
+      publishedAt: new Date(2026, 0, 10, 10, 0, 0).toISOString(),
+      createdAt: new Date(2026, 0, 10, 10, 0, 0).toISOString(),
+      updatedAt: new Date(2026, 0, 10, 10, 0, 0).toISOString(),
+    },
+    {
+      id: 'post-general-org-school1-003' as UUID,
+      programId,
+      schoolId: GENERAL_ORG_SCHOOL_1_ID as UUID,
+      authorName: 'JA KOREA 알림',
+      content:
+        '1회차 수업 하루 전입니다. 내일 진행될 단원 내용을 미리 준비해 주시기 바랍니다!',
+      read: true,
+      viewCount: 12,
+      reactionCount: 10,
+      commentCount: 2,
+      attachmentCount: 0,
+      postType: 'schedule',
+      publishedAt: new Date(2026, 0, 5, 10, 0, 0).toISOString(),
+      createdAt: new Date(2026, 0, 5, 10, 0, 0).toISOString(),
+      updatedAt: new Date(2026, 0, 5, 10, 0, 0).toISOString(),
+    },
+  ]
+}
+
 /** 참여기관(학교)별 게시글 생성 — 해당 학교 전용 공지/일정 (진월초등학교 등) */
 function buildPostsForSchools(): ProgramPost[] {
-  const programId = mockPrograms[0]?.id
-  if (!programId) return []
+  const programId = GENERAL_PARTICIPATING_SCHOOLS_PROGRAM_ID
 
   const authors = [
     '박○○ 담당교사님',
@@ -93,6 +161,7 @@ function buildPostsForSchools(): ProgramPost[] {
   let idSeq = 1000
 
   schoolRows.forEach((school, schoolIdx) => {
+    if (school.id === GENERAL_ORG_SCHOOL_1_ID) return
     const schoolName = school.schoolName
     const postCount = schoolIdx < 3 ? 5 : schoolIdx < 6 ? 3 : 2
     const contentsForSchool = [
@@ -497,6 +566,7 @@ function buildPostsForUjatInstitutions(): ProgramPost[] {
 export const mockProgramPosts: ProgramPost[] = [
   ...buildPosts(),
   ...buildPostsForSchools(),
+  ...buildGeneralOrgSchool1ScreenshotPosts(),
   ...buildPostsForHSBCGangseo(),
   ...buildPostsForUjatInstitutions(),
 ]
@@ -529,6 +599,10 @@ export function getProgramPostsByProgramIdAndSchoolId(programId: UUID, schoolId:
   const directKey = `${programId}:${schoolId}`
   const direct = byProgramAndSchool.get(directKey) ?? []
   if (direct.length > 0) return direct.slice()
+  if (programId.startsWith('general-prog')) {
+    const canonicalKey = `${GENERAL_PARTICIPATING_SCHOOLS_PROGRAM_ID}:${schoolId}`
+    return (byProgramAndSchool.get(canonicalKey) ?? []).slice()
+  }
   if (isUjatProgressProgramId(programId)) {
     const canonicalKey = `${UJAT_EDUCATION_IN_PROGRESS_PROGRAM_ID}:${schoolId}`
     return (byProgramAndSchool.get(canonicalKey) ?? []).slice()
@@ -564,6 +638,7 @@ export function createProgramPost(payload: CreateProgramPostPayload): ProgramPos
     reactionCount: 0,
     commentCount: 0,
     attachmentCount: payload.attachmentCount,
+    audience: payload.audience?.length ? [...payload.audience] : undefined,
     publishedAt: now,
     createdAt: now,
     updatedAt: now,
