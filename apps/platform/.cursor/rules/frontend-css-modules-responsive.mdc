@@ -1,0 +1,295 @@
+---
+description: Frontend responsive UI implementation rules optimized for CSS Modules
+globs:
+  - "src/**/*.{tsx,ts,jsx,js}"
+  - "src/**/*.module.css"
+  - "src/**/*.module.scss"
+alwaysApply: true
+---
+
+# Frontend CSS Modules Responsive Rules
+
+You are a senior frontend engineer specializing in scalable responsive UI with React, TypeScript, and CSS Modules.
+
+## Core Principles
+
+- Use CSS Modules as the default styling method.
+- Do not use inline styles unless the value is dynamic and cannot be expressed safely with CSS variables or class composition.
+- Prefer semantic, reusable layout classes over one-off visual hacks.
+- Keep JSX structure simple and make responsiveness primarily controlled by CSS.
+- Avoid adding JavaScript viewport checks unless layout behavior truly requires runtime measurement.
+- Implement mobile-first responsive design by default.
+- Preserve existing UI behavior and component APIs unless explicitly asked to refactor them.
+
+## File Structure
+
+For each component, prefer this structure (kebab-case files, PascalCase export):
+
+```txt
+home-page/
+  home-page.tsx
+  home-page.module.css
+  index.ts
+```
+
+```tsx
+// home-page.tsx
+export function HomePage() { ... }
+```
+
+When modifying an existing component, follow the existing project structure instead of forcing a new one.
+
+## CSS Modules Naming
+
+Use clear class names that describe structure or role, not visual appearance only.
+
+Good:
+
+```css
+.container {}
+.header {}
+.content {}
+.actions {}
+.cardList {}
+.thumbnailWrap {}
+.primaryButton {}
+```
+
+Avoid:
+
+```css
+.bigRedBox {}
+.marginTop20 {}
+.flexDiv {}
+```
+
+## React Class Usage
+
+Use CSS Modules imports like this:
+
+```tsx
+import styles from './home-page.module.css';
+
+export function HomePage() {
+  return <section className={styles.container}>...</section>;
+}
+```
+
+For conditional classes, prefer a small utility such as `clsx` if already available:
+
+```tsx
+className={clsx(styles.card, isActive && styles.active)}
+```
+
+If no class utility exists, use array filtering:
+
+```tsx
+className={[styles.card, isActive ? styles.active : null].filter(Boolean).join(' ')}
+```
+
+Do not concatenate CSS Module class names manually in fragile ways.
+
+## Responsive Strategy
+
+Use mobile-first CSS:
+
+```css
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .container {
+    flex-direction: row;
+    gap: 24px;
+  }
+}
+```
+
+Default breakpoints:
+
+```css
+/* mobile: default */
+/* tablet: 768px+ */
+/* desktop: 1024px+ */
+/* wide: 1280px+ */
+```
+
+Use these breakpoints unless the project already defines different breakpoints.
+
+## Layout Rules
+
+- Prefer `flex`, `grid`, `gap`, `minmax`, `clamp`, `max-width`, and `width: min(...)` for responsive layouts.
+- Avoid fixed widths unless the design requires them.
+- Avoid magic pixel offsets.
+- Use `box-sizing: border-box` assumption, but do not redefine global resets inside module files unless necessary.
+- For responsive grids, prefer:
+
+```css
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+```
+
+## Typography Rules
+
+Use responsive typography with `clamp()` when appropriate:
+
+```css
+.title {
+  font-size: clamp(24px, 4vw, 40px);
+  line-height: 1.2;
+}
+```
+
+Do not reduce readability on mobile. Keep body text generally at 14px or larger unless the design clearly requires smaller metadata text.
+
+## Spacing Rules
+
+Prefer reusable spacing patterns:
+
+```css
+.section {
+  padding: 24px 16px;
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding: 48px 32px;
+  }
+}
+```
+
+Use `gap` instead of margin between repeated child elements whenever possible.
+
+## CSS Variables
+
+Use local or global CSS variables for repeated values:
+
+```css
+.container {
+  --card-radius: 16px;
+  --card-padding: 16px;
+
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+}
+```
+
+If a design token system exists, use the existing variables instead of creating new arbitrary values.
+
+## CSS Modules Composition
+
+Use `composes` only when it improves clarity and avoids duplication. Do not overuse it.
+
+```css
+.baseButton {
+  border: 0;
+  border-radius: 8px;
+}
+
+.primaryButton {
+  composes: baseButton;
+  background: var(--color-primary);
+}
+```
+
+## Accessibility
+
+- Do not remove focus styles.
+- Add clear `:focus-visible` states for interactive elements.
+- Maintain sufficient touch target size, usually at least 44px height for primary touch controls.
+- Ensure responsive changes do not reorder meaningful content in a confusing way.
+
+Example:
+
+```css
+.button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+```
+
+## Images and Media
+
+Use responsive media rules:
+
+```css
+.image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+```
+
+For fixed-ratio cards:
+
+```css
+.thumbnail {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+```
+
+## Overflow Handling
+
+- Prevent accidental horizontal scroll.
+- Use `min-width: 0` for flex/grid children containing long text.
+- Use text truncation only when content loss is acceptable.
+
+```css
+.content {
+  min-width: 0;
+}
+
+.title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+```
+
+## What To Avoid
+
+Avoid:
+
+- Inline style objects for normal layout or spacing.
+- Deep selector chains.
+- Styling by global tag selectors inside CSS Modules.
+- JavaScript-driven responsiveness when CSS can solve it.
+- Large monolithic CSS Module files that style unrelated components.
+- Using `!important` unless overriding third-party styles is unavoidable.
+- Hardcoding desktop-first styles and patching mobile later.
+
+## Refactoring Rules
+
+When refactoring existing responsive CSS:
+
+1. Identify the current layout intent.
+2. Preserve class names where possible to reduce risk.
+3. Convert desktop-first media queries to mobile-first only when it is safe.
+4. Replace repeated margins with parent `gap` where possible.
+5. Replace fixed widths with fluid width, `max-width`, `minmax`, or `clamp`.
+6. Test at common widths: 360, 390, 768, 1024, 1280.
+
+## Output Requirements
+
+When generating or modifying code:
+
+- Provide complete replacement files when possible.
+- Include both the component file and its CSS Module file when styling changes are needed.
+- Do not omit imports.
+- Do not use placeholder comments like `// existing code here` unless explicitly requested.
+- Keep the final implementation directly copy-pasteable.

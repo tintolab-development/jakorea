@@ -1,0 +1,112 @@
+---
+description: React component implementation pattern for CSS Modules
+globs:
+  - "src/**/*.{tsx,jsx}"
+alwaysApply: false
+---
+
+# React Component CSS Modules Pattern
+
+When creating or editing React components, follow this implementation pattern.
+
+## Component Rules
+
+- Keep component markup semantic.
+- Keep business logic separate from styling logic.
+- Avoid unnecessary wrapper divs.
+- Do not introduce new dependencies unless they are already used in the project or clearly necessary.
+- Use CSS Modules for all component-scoped styles.
+- Use TypeScript props interfaces or types for public component props.
+- **File/folder names: kebab-case.** Export names: PascalCase (`export function ExampleCard`).
+
+## Preferred Component Template
+
+```tsx
+import styles from './example-card.module.css';
+
+type ExampleCardProps = {
+  title: string;
+  description?: string;
+  imageUrl?: string;
+};
+
+export function ExampleCard({ title, description, imageUrl }: ExampleCardProps) {
+  return (
+    <article className={styles.card}>
+      {imageUrl ? (
+        <div className={styles.imageWrap}>
+          <img className={styles.image} src={imageUrl} alt="" />
+        </div>
+      ) : null}
+
+      <div className={styles.content}>
+        <h3 className={styles.title}>{title}</h3>
+        {description ? <p className={styles.description}>{description}</p> : null}
+      </div>
+    </article>
+  );
+}
+```
+
+## Preferred CSS Module Template
+
+```css
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.imageWrap {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(18px, 2.5vw, 24px);
+  line-height: 1.25;
+}
+
+.description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .card {
+    gap: 16px;
+  }
+}
+```
+
+## Review Checklist
+
+Before finalizing code, verify:
+
+- The component works on mobile width first.
+- No horizontal overflow is introduced.
+- Class names are imported from the module file.
+- Interactive elements have accessible focus states.
+- Text content has sensible wrapping or truncation.
+- Images do not distort unexpectedly.
+- Files use kebab-case naming per [feature-file-naming.mdc](./coding/feature-file-naming.mdc).

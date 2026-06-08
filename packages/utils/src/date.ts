@@ -2,12 +2,16 @@ const defaultLocale = 'ko-KR'
 
 export function formatDate(value: Date | string | number, options: Intl.DateTimeFormatOptions = {}) {
   const date = value instanceof Date ? value : new Date(value)
-  return new Intl.DateTimeFormat(defaultLocale, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    ...options
-  }).format(date)
+  const formatOptions: Intl.DateTimeFormatOptions =
+    options.dateStyle != null || options.timeStyle != null
+      ? options
+      : {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          ...options,
+        }
+  return new Intl.DateTimeFormat(defaultLocale, formatOptions).format(date)
 }
 
 export function timeSince(value: Date | string | number) {
