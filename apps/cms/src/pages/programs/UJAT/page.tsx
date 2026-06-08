@@ -327,6 +327,10 @@ function UjatProgramListPageContent() {
         title="전체 프로그램"
         description={`총 ${filteredRows.length.toLocaleString()}건`}
         actions={toolbarActions}
+        excelExport={{
+          columns,
+          data: filteredRows,
+        }}
       >
         <Table<Program>
           className="cms-data-table"

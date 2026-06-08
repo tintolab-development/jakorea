@@ -123,3 +123,18 @@
 .filter-table-layout.filter-table-layout--without-filter .filter-table-layout__toolbar {
   margin-top: 0;
 }
+
+/*
+ * FilterTableLayout 기본 responsive wrap — 필드만 flex-wrap, 조회는 우측 shell(필드 입력란과 baseline 정렬)
+ */
+.filter-table-layout.filter-table-layout--filter-responsive-wrap .table-filter-group__container {
+  align-items: flex-end;
+}
+
+.filter-table-layout.filter-table-layout--filter-responsive-wrap
+  .table-filter-group__fields-container--multi-row-responsive {
+  container-type: inline-size;
+  container-name: filter-table-layout-fields;
+  flex: 1 1 0;
+  min-width: 0;
+}

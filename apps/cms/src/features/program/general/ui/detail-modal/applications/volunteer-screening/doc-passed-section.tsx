@@ -157,6 +157,11 @@ export function GeneralVolunteerDocPassedSection({
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
+        title={`봉사자 1차 서류 합격자 목록 (${count.toLocaleString()})`}
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         <div className="table-header-actions general-volunteer-doc-passed__table-header">
           <div className="table-header-title--wrapper">

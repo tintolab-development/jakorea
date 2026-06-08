@@ -205,6 +205,10 @@ export function GeneralVolunteerInterview2Section({
             </CmsButton>
           </div>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         <div className="general-volunteer-interview2__table-wrap">
           <Table<GeneralVolunteerApplicantRow>

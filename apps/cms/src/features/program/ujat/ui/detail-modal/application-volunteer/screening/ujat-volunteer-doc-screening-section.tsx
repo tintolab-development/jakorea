@@ -1,7 +1,6 @@
 import { useCallback, useRef, useState, type MouseEvent } from 'react'
 import type { UjatEssayColumnKey } from './ujat-volunteer-doc-screening-columns'
 import { Table } from 'antd'
-import { DownloadOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
@@ -74,11 +73,10 @@ export function UjatVolunteerDocScreeningSection({
     setSelectedRowKeys,
     handleBulkReject,
     handleBulkApprove,
-    handleExportExcel,
+    excelExport,
     showDocumentScreeningConfirm,
     documentScreeningConfirm,
     closeDocumentScreeningConfirm,
-    isExporting,
     count,
     openManagerDropdown,
     setOpenManagerDropdown,
@@ -192,20 +190,9 @@ export function UjatVolunteerDocScreeningSection({
               >
                 선택 승인
               </CmsButton>
-              <CmsButton
-                type="button"
-                variant="primary"
-                size="large"
-                width={160}
-                icon={<DownloadOutlined />}
-                className="ujat-volunteer-doc-screening__btn-excel"
-                loading={isExporting}
-                onClick={handleExportExcel}
-              >
-                엑셀 다운로드
-              </CmsButton>
             </div>
           }
+          excelExport={excelExport}
         >
           <div
             ref={tableWrapRef}

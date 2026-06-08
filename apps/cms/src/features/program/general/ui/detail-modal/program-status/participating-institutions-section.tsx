@@ -439,6 +439,10 @@ export function ParticipatingInstitutionsSection({
             </CmsButton>
           )
         }
+        excelExport={{
+          columns,
+          data: filteredSchools,
+        }}
       >
         {viewMode === 'list' ? (
           <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">

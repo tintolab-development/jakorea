@@ -589,7 +589,14 @@ export function TableFilterGroup({
   )
 
   const isMultiRowLayout = resolvedRows.length > 1
-  const useResponsiveMultiRowGrid = isMultiRowLayout && multiRowGridMode === 'responsive'
+  const useSingleRowResponsiveFieldWrap =
+    resolvedRows.length <= 1 &&
+    multiRowGridMode === 'responsive' &&
+    multiRowResponsiveLayout === 'merged-auto-fill'
+  const useSingleRowResponsiveInlineSearch =
+    useSingleRowResponsiveFieldWrap && mergedAutoFillInlineSearch
+  const useResponsiveMultiRowGrid =
+    multiRowGridMode === 'responsive' && (isMultiRowLayout || useSingleRowResponsiveFieldWrap)
   const useMergedResponsiveGrid =
     useResponsiveMultiRowGrid && multiRowResponsiveLayout === 'merged-auto-fill'
   const useMergedInlineSearchWrap = useMergedResponsiveGrid && mergedAutoFillInlineSearch
@@ -632,7 +639,31 @@ export function TableFilterGroup({
     .join(' ')
 
   const fieldsBody =
-    resolvedRows.length <= 1 ? (
+    useSingleRowResponsiveInlineSearch ? (
+      <div
+        className={[
+          'table-filter-group__fields-rows',
+          'table-filter-group__fields-rows--merged-responsive',
+          'table-filter-group__fields-rows--merged-responsive-inline-search',
+        ].join(' ')}
+      >
+        <div className="table-filter-group__merged-inline-wrap">
+          {filterRowFields.map(field => renderFieldGridCell(field))}
+          <div className="table-filter-group__merged-inline-wrap__search">{actionButtons}</div>
+        </div>
+      </div>
+    ) : useSingleRowResponsiveFieldWrap ? (
+      <div
+        className={[
+          'table-filter-group__fields-rows',
+          'table-filter-group__fields-rows--merged-responsive',
+        ].join(' ')}
+      >
+        <div className="table-filter-group__merged-inline-wrap table-filter-group__merged-inline-wrap--fields-only">
+          {filterRowFields.map(field => renderFieldGridCell(field))}
+        </div>
+      </div>
+    ) : resolvedRows.length <= 1 ? (
       <Row
         gutter={0}
         className="table-filter-group__fields-inner"
@@ -741,10 +772,12 @@ export function TableFilterGroup({
       </div>
     )
 
+  const hideStandaloneSearchShell = isMultiRowLayout || useSingleRowResponsiveInlineSearch
+
   return (
     <div className="table-filter-group__container">
       <div className={fieldsContainerClassName}>{fieldsBody}</div>
-      {!isMultiRowLayout ? (
+      {!hideStandaloneSearchShell ? (
         <div className="table-filter-group__fields-shell">{actionButtons}</div>
       ) : null}
     </div>

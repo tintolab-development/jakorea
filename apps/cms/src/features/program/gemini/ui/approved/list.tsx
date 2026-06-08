@@ -262,9 +262,12 @@ export function GeminiApprovedTrainingList() {
           <CmsButton variant="delete" disabled={!canWrite} onClick={handleBulkDelete}>
             선택 삭제
           </CmsButton>
-          <CmsButton variant="secondary">엑셀 다운로드</CmsButton>
         </>
       }
+      excelExport={{
+        columns,
+        data: filteredRows,
+      }}
     >
       <Table<GeminiApprovedTrainingRow>
         rowKey="id"

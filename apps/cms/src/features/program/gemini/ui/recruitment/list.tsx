@@ -192,6 +192,10 @@ export function GeminiRecruitmentList() {
           </CmsButton>
         </>
       }
+      excelExport={{
+        columns,
+        data: tableData,
+      }}
     >
       <Table<GeminiRecruitmentRow>
         rowKey="id"

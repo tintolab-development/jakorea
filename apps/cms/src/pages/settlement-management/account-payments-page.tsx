@@ -717,6 +717,10 @@ export default function AccountPaymentsPage() {
             title="계좌 지급 대상 목록"
             description={`총 ${total}건`}
             actions={accountPaymentsFilterTableActions}
+            excelExport={{
+              columns,
+              data: filteredRows,
+            }}
           >
             <Table<AccountPaymentRow>
               className="cms-data-table"

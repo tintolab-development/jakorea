@@ -26,6 +26,9 @@ export default function PaymentOrdersPage() {
     paymentOrdersViewModeOptions,
     renderHeader,
     renderContent,
+    excelExport,
+    listTitle,
+    total,
   } = usePaymentOrdersListPage()
 
   return (
@@ -44,6 +47,9 @@ export default function PaymentOrdersPage() {
         }}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
+        title={listTitle}
+        description={`총 ${total}건`}
+        excelExport={excelExport}
       >
         <ViewModeController
           value={viewMode}

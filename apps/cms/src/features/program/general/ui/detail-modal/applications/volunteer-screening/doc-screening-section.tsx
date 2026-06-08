@@ -1,6 +1,5 @@
 import { useCallback, type MouseEvent } from 'react'
 import { Table } from 'antd'
-import { DownloadOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
@@ -37,8 +36,7 @@ export function GeneralVolunteerDocScreeningSection({
     setSelectedRowKeys,
     handleBulkReject,
     handleBulkApprove,
-    handleExportExcel,
-    isExporting,
+    excelExport,
     count,
     confirmRequest,
     closeConfirm,
@@ -142,19 +140,9 @@ export function GeneralVolunteerDocScreeningSection({
               <CmsButton type="button" variant="secondary" size="large" width={160} onClick={handleBulkApprove}>
                 선택 승인
               </CmsButton>
-              <CmsButton
-                type="button"
-                variant="primary"
-                size="large"
-                width={160}
-                icon={<DownloadOutlined />}
-                loading={isExporting}
-                onClick={handleExportExcel}
-              >
-                엑셀 다운로드
-              </CmsButton>
             </div>
           }
+          excelExport={excelExport}
         >
           <div className="general-volunteer-screening__table-wrap">
             <Table<GeneralVolunteerApplicantRow>

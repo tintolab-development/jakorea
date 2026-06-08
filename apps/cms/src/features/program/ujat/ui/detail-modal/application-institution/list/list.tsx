@@ -124,6 +124,10 @@ export function UjatInstitutionApplicationList({
             )}
           </div>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         {viewMode === 'table' ? (
           <div className="ujat-institution-application-list__table-wrap">

@@ -192,6 +192,10 @@ export function UjatVolunteerDocPassedSection({
             </CmsButton>
           )
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         {viewMode === 'list' ? (
           <div className="ujat-volunteer-doc-passed__table-wrap">

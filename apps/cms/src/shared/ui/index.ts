@@ -60,7 +60,10 @@ export type { TableFilterGroupProps } from '../components/table-filter-group'
 export { FilterListLayout } from '../components/filter-list-layout'
 export type { FilterListLayoutProps } from '../components/filter-list-layout'
 export { FilterTableLayout } from '../components/filter-table-layout'
-export type { FilterTableLayoutProps } from '../components/filter-table-layout'
+export type {
+  FilterTableLayoutProps,
+  FilterTableExcelExportConfig,
+} from '../components/filter-table-layout'
 export { ListPageLayout } from '../components/list-page'
 export type { ListPageLayoutProps } from '../components/list-page'
 export { LabeledSearchInput } from './labeled-search-input'
@@ -99,6 +102,8 @@ export type { AppDatePickerProps, AppDateRangePickerProps } from './app-datepick
 export { AppButton, FilterSearchButton } from './app-button'
 export { CmsButton } from './cms-button'
 export type { CmsButtonProps, CmsButtonVariant, CmsButtonSize } from './cms-button'
+export { ExcelButton } from './excel-button'
+export type { ExcelButtonProps } from './excel-button'
 export { CmsInput } from './cms-input'
 export type { CmsInputProps, CmsInputSize } from './cms-input'
 export { CmsInputIconClick } from './cms-input-iconclick'

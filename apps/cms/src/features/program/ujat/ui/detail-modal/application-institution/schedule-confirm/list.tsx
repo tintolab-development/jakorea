@@ -77,6 +77,10 @@ export function UjatInstitutionScheduleConfirmList({
             )}
           </div>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         {viewMode === 'table' ? (
           <div className="ujat-schedule-confirm-list__table-wrap">

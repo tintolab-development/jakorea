@@ -278,6 +278,10 @@ function AdminFAQPage() {
             </CmsButton>
           </>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         <Table<AdminFaq>
           rowKey="id"

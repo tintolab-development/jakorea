@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type Key, type RefObject } from 'react'
-import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
 import type { UjatDocumentScreeningConfirmRequest } from './ujat-volunteer-document-screening-actions'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -16,7 +16,6 @@ import {
   type UjatManagerEvaluation,
   type UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { exportTableToExcel } from '@/shared/utils/table-export'
 import {
   DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS,
   UJAT_VOLUNTEER_DOC_SCREENING_FILTER_ALL,
@@ -157,7 +156,6 @@ export function useUjatVolunteerDocScreening({
   onEssayColumnResizeStop: (key: UjatEssayColumnKey, width: number) => void
   tableWrapRef: RefObject<HTMLElement | null>
 }) {
-  const { showAlert } = useCmsAlert()
   const [documentScreeningConfirm, setDocumentScreeningConfirm] =
     useState<UjatDocumentScreeningConfirmRequest | null>(null)
   const [list, setList] = useState<UjatVolunteerApplicantRow[]>(() =>
@@ -170,7 +168,6 @@ export function useUjatVolunteerDocScreening({
     ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS,
   }))
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [isExporting, setIsExporting] = useState(false)
   const [openManagerDropdown, setOpenManagerDropdown] = useState<{
     rowId: string
     manager: 'A' | 'B'
@@ -195,6 +192,16 @@ export function useUjatVolunteerDocScreening({
     const filtered = filterApplicants(list, appliedFilters)
     return sortUjatVolunteerApplicants(filtered)
   }, [appliedFilters, list])
+
+  const exportRows = useMemo(() => filteredSorted.map(toExportRowUjat), [filteredSorted])
+
+  const excelExport = useMemo<FilterTableExcelExportConfig>(
+    () => ({
+      columns: EXPORT_COLUMNS_UJAT,
+      data: exportRows,
+    }),
+    [exportRows]
+  )
 
   const updateRow = useCallback((id: string, patch: Partial<UjatVolunteerApplicantRow>) => {
     setList(prev => prev.map(row => (row.id === id ? { ...row, ...patch } : row)))
@@ -264,34 +271,6 @@ export function useUjatVolunteerDocScreening({
     })
   }, [applyDocumentScreeningStatus, selectedRowKeys, showDocumentScreeningConfirm])
 
-  const handleExportExcel = useCallback(async () => {
-    if (isExporting) return
-    if (filteredSorted.length === 0) {
-      showAlert({
-        title: '다운로드 안내',
-        content: '다운로드할 데이터가 없습니다.',
-      })
-      return
-    }
-    setIsExporting(true)
-    try {
-      const exportRows = filteredSorted.map(toExportRowUjat)
-      await exportTableToExcel(
-        EXPORT_COLUMNS_UJAT,
-        exportRows,
-        `ujat-volunteer-${half}-doc-screening`
-      )
-    } catch (error) {
-      console.error('[ujat-volunteer-doc-screening] excel export failed', error)
-      showAlert({
-        title: '다운로드 실패',
-        content: '엑셀 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-      })
-    } finally {
-      setIsExporting(false)
-    }
-  }, [filteredSorted, half, isExporting, showAlert])
-
   return {
     list,
     setList,
@@ -306,11 +285,10 @@ export function useUjatVolunteerDocScreening({
     setSelectedRowKeys,
     handleBulkReject,
     handleBulkApprove,
-    handleExportExcel,
+    excelExport,
     showDocumentScreeningConfirm,
     documentScreeningConfirm,
     closeDocumentScreeningConfirm,
-    isExporting,
     count: filteredSorted.length,
     openManagerDropdown,
     setOpenManagerDropdown,

@@ -148,6 +148,10 @@ export function ProgramList({
           title={headerTitle}
           description={`총 ${displayedCount.toLocaleString()}건`}
           actions={children}
+          excelExport={{
+            columns: antdColumns,
+            data: table.getFilteredRowModel().rows.map(row => row.original),
+          }}
         >
           <Table
             className="cms-data-table"

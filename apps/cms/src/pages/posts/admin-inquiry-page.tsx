@@ -351,6 +351,10 @@ export function AdminInquiryPage() {
             </CmsButton>
           </>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         <Table<AdminInquiryRow>
           rowKey="id"

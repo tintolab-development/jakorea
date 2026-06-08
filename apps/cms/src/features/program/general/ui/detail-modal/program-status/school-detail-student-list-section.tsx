@@ -685,6 +685,10 @@ export function SchoolDetailStudentListSection({
         title="참여 학생 목록"
         description={`총 ${displayCount}건`}
         actions={studentListToolbarActions}
+        excelExport={{
+          columns: studentColumnsView,
+          data: filteredStudentList,
+        }}
       >
         <div className="school-detail-student-list-section__table-wrap">
           {isStudentListEditMode ? (

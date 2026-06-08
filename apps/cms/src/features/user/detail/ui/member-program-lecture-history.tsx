@@ -720,6 +720,10 @@ export function MemberProgramLectureHistory({
             </div>
           </div>
         }
+        excelExport={{
+          columns,
+          data: tableDataSource,
+        }}
       >
         <Table<Application | UserHistory>
           className="cms-data-table"

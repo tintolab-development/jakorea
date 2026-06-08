@@ -1187,6 +1187,10 @@ export function ApplicantList({
               )}
             </div>
           }
+          excelExport={{
+            columns,
+            data: tableData,
+          }}
         >
           {viewMode === 'table' ? (
             <div ref={usesInstitutionTableScroll ? institutionTableWrapRef : undefined}>

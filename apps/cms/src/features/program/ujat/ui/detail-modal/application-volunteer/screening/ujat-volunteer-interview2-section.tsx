@@ -274,6 +274,10 @@ export function UjatVolunteerInterview2Section({
             )}
           </div>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         {viewMode === 'list' ? (
           <div ref={tableWrapRef} className="ujat-volunteer-interview2__table-wrap">

@@ -1,7 +1,7 @@
 /**
  * 일반 프로그램 > 진행 현황 > 참여 기관 상세 (풀페이지 인라인)
  * UJAT 참여 기관 상세는 `features/program/ujat/ui/detail-modal/progress/institutions/detail/` — 별도 구현.
- * 탭: 신청 정보 | 학생 명단 | 강사 배정 현황 | 출석 관리(비활성) | 게시글
+ * 탭: 신청 정보 | 학생 명단 | 강사 배정 현황 | 출석 관리 | 게시글
  * 신청 정보 액션: 활동 포기 | 정보 수정 | 개인정보 상세보기
  */
 
@@ -9,7 +9,7 @@ import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { CmsButton, CmsRadio, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsRadio, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
@@ -44,6 +44,7 @@ import {
 } from '../../../lib/teacher-contact-display-mask'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import {
+  FEATURE_COMING_SOON_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
@@ -56,6 +57,7 @@ import {
   STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
+import { SchoolDetailAttendanceSection } from './school-detail-attendance-section'
 import {
   SchoolDetailAddInstructorAssignModal,
   type AddInstructorAssignOption,
@@ -117,7 +119,7 @@ export type GeneralParticipatingInstitutionDetailTabKey =
 export const SCHOOL_DETAIL_TAB_KEYS = GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS
 export type SchoolDetailTabKey = GeneralParticipatingInstitutionDetailTabKey
 
-export const SCHOOL_DETAIL_DISABLED_TAB_KEYS: readonly SchoolDetailTabKey[] = ['attendance']
+export const SCHOOL_DETAIL_DISABLED_TAB_KEYS: readonly SchoolDetailTabKey[] = []
 
 export function normalizeGeneralParticipatingInstitutionDetailTab(
   tab: GeneralParticipatingInstitutionDetailTabKey
@@ -911,6 +913,12 @@ export function GeneralParticipatingInstitutionDetailView({
                 onClick={handlePrivacyToggleClick}
               />
             </>
+          ) : activeTab === 'attendance' ? (
+            <ExcelButton
+              onClick={() =>
+                showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
+              }
+            />
           ) : activeTab === 'posts' ? (
             <CmsButton variant="primary" size="large" width={160} onClick={() => setPostWriteModalOpen(true)}>
               게시글 등록
@@ -1313,6 +1321,12 @@ export function GeneralParticipatingInstitutionDetailView({
               currentLeadInstructorName={currentLeadName ?? ''}
               newLeadInstructorName={leadRoleChangeConfirm?.newLeadInstructorName ?? ''}
             />
+          </div>
+        )}
+
+        {activeTab === 'attendance' && (
+          <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__attendance-tab">
+            <SchoolDetailAttendanceSection row={row} />
           </div>
         )}
 

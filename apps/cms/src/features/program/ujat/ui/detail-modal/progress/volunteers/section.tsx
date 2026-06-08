@@ -157,6 +157,10 @@ export function UjatEducationProgressVolunteersSection({
             </CmsButton>
           </div>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         <div ref={tableWrapRef} className="ujat-education-progress-volunteers__table-wrap">
           <Table<UjatEducationProgressVolunteerRow>

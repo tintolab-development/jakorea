@@ -115,6 +115,10 @@ export default function PersonalInfoAccessHistoryPage() {
       onSearch={applySearch}
       title="개인정보 조회 이력"
       description={`총 ${displayedCount.toLocaleString()}건`}
+      excelExport={{
+        columns,
+        data: tableData,
+      }}
     >
       <Table<PersonalInfoAccessLog>
         rowKey="id"

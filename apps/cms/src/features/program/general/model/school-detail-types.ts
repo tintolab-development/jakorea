@@ -226,3 +226,47 @@ export const ASSIGNMENT_SUBMISSION_ROW_STATUS_LABELS: Record<
   scheduled: '진행 예정',
   none: '-',
 }
+
+/** 학교 상세 > 출석 관리 탭 — 회차별 출결 상태 */
+export type SchoolSessionAttendanceStatusKey = 'present' | 'absent' | 'late'
+
+export const SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS: Record<
+  SchoolSessionAttendanceStatusKey,
+  string
+> = {
+  present: '출석',
+  absent: '결석',
+  late: '지각',
+}
+
+export const SCHOOL_ATTENDANCE_FILTER_ALL = 'all'
+
+export interface SchoolDetailAttendanceFilters {
+  educationSchedule: string
+  studentName: string
+  studentGender: string
+  studentClass: string
+  attendanceStatus: string
+}
+
+export interface SchoolDetailAttendanceStudentRow {
+  id: string
+  no: number
+  name: string
+  gender?: StudentGenderKey
+  birthDate?: string
+  gradeClass: string
+  contact?: string
+  email?: string
+  status: SchoolSessionAttendanceStatusKey
+}
+
+export interface SchoolDetailAttendanceSessionGroup {
+  id: string
+  round: number
+  /** 필터 Select value (ISO date 또는 session id) */
+  filterValue: string
+  /** 회차 헤더 (예: 1회차 : 2026. 01. 09(금) …) */
+  headerPrefix: string
+  students: SchoolDetailAttendanceStudentRow[]
+}

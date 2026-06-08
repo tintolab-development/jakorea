@@ -582,6 +582,10 @@ export const MembersPermissionList = forwardRef<
           />
         </>
       }
+      excelExport={{
+        columns,
+        data: tableData,
+      }}
     >
       <Table<MemberPermissionApplicationRow>
         rowKey="id"

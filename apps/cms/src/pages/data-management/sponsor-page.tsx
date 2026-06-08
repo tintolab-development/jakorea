@@ -313,6 +313,10 @@ export default function SponsorPage() {
             </CmsButton>
           </>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         <Table<SponsorManagementRow>
           rowKey="id"

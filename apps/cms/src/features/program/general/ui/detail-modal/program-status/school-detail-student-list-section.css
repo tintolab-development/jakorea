@@ -39,7 +39,16 @@
   > .ant-col[data-filter-field-key='studentGender'],
 .school-detail-student-list-section__filter-layout
   .table-filter-group__fields-inner
-  > .ant-col[data-filter-field-key='studentClass'] {
+  > .ant-col[data-filter-field-key='studentClass'],
+.school-detail-student-list-section__filter-layout
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell[data-filter-field-key='studentName'],
+.school-detail-student-list-section__filter-layout
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell[data-filter-field-key='studentGender'],
+.school-detail-student-list-section__filter-layout
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell[data-filter-field-key='studentClass'] {
   width: var(--student-list-filter-column-width) !important;
   flex: 0 0 var(--student-list-filter-column-width) !important;
   max-width: var(--student-list-filter-column-width) !important;

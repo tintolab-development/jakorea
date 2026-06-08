@@ -334,6 +334,10 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           </CmsButton>
         ) : null
       }
+      excelExport={{
+        columns,
+        data: filteredRows,
+      }}
     >
       <Table<GeminiInstructorApplicationRow>
         rowKey="id"

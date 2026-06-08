@@ -106,6 +106,10 @@ export default function BugIssueHistoryPage() {
       onSearch={applySearch}
       title="버그/이슈 이력"
       description={`총 ${displayedCount.toLocaleString()}건`}
+      excelExport={{
+        columns,
+        data: tableData,
+      }}
     >
       <Table<BugIssueLog>
         rowKey="id"

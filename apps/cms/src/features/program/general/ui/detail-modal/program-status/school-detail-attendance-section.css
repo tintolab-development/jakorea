@@ -1,0 +1,183 @@
+.school-detail-attendance-section {
+  width: 100%;
+  min-width: 0;
+}
+
+/*
+ * 필터 1행 5필드 + 조회 — UJAT 1차 서류 심사·참여 기관 목록과 동일 원리
+ * (칸 너비 고정 + gap 12px, 카드 폭 축소 시 입력만 줄어듦)
+ */
+.filter-table-layout.school-detail-attendance-section__filter-layout {
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
+  --school-detail-attendance-filter-col-width: min(
+    var(--filter-control-max-width, 260px),
+    calc((100% - 4 * var(--filter-field-gap)) / 5)
+  );
+  background: transparent;
+  box-shadow: none !important;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.filter-table-layout.school-detail-attendance-section__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.filter-table-layout.school-detail-attendance-section__filter-layout .table-filter-group__container {
+  display: grid !important;
+  width: 100%;
+  box-sizing: border-box;
+  gap: var(--table-filter-field-gap);
+  align-items: end;
+  justify-content: start;
+  grid-template-columns:
+    repeat(5, minmax(0, var(--school-detail-attendance-filter-col-width))) minmax(0, 1fr) 160px !important;
+}
+
+.filter-table-layout.school-detail-attendance-section__filter-layout
+  .table-filter-group__fields-container {
+  display: contents;
+}
+
+.filter-table-layout.school-detail-attendance-section__filter-layout
+  .table-filter-group__fields-inner.ant-row {
+  display: contents;
+}
+
+.filter-table-layout.school-detail-attendance-section__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.filter-table-layout.school-detail-attendance-section__filter-layout
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell,
+.filter-table-layout.school-detail-attendance-section__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  flex: initial !important;
+}
+
+.filter-table-layout.school-detail-attendance-section__filter-layout .table-filter-group__fields-shell {
+  grid-column: 7;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  justify-self: end;
+}
+
+.filter-table-layout.school-detail-attendance-section__filter-layout
+  .table-filter-group__grid-cell
+  .unified-filter-card__field,
+.filter-table-layout.school-detail-attendance-section__filter-layout
+  .table-filter-group__grid-cell
+  .labeled-search-input,
+.filter-table-layout.school-detail-attendance-section__filter-layout
+  .table-filter-group__grid-cell
+  .cms-select,
+.filter-table-layout.school-detail-attendance-section__filter-layout
+  .table-filter-group__grid-cell
+  .ant-select,
+.filter-table-layout.school-detail-attendance-section__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .unified-filter-card__field,
+.filter-table-layout.school-detail-attendance-section__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .labeled-search-input,
+.filter-table-layout.school-detail-attendance-section__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .cms-select,
+.filter-table-layout.school-detail-attendance-section__filter-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col
+  .ant-select {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.school-detail-attendance-section__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  min-width: 0;
+}
+
+.school-detail-attendance-section__empty {
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+}
+
+.school-detail-attendance-session {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.school-detail-attendance-session__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.school-detail-attendance-session__title {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.school-detail-attendance-session__table-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.school-detail-attendance-session__table-wrap
+  .school-detail-attendance-table
+  table.ant-table {
+  table-layout: fixed !important;
+  width: max-content !important;
+  min-width: 100%;
+}
+
+.school-detail-attendance-table__status-cell {
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+.school-detail-attendance-table__status-radios.app-radio-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.school-detail-attendance-table__status-radios .app-radio {
+  margin-inline-end: 0;
+}
+
+.school-detail-attendance-table .ant-table-tbody > tr:hover > td {
+  background: color-mix(in srgb, var(--color-mint-01, #01a1af) 6%, #fff) !important;
+}

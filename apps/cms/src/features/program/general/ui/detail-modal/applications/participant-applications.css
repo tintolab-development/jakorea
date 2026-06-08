@@ -67,6 +67,108 @@
   max-width: none;
 }
 
+/* FilterTableLayout responsive wrap(grid-cell) — 단행 nowrap(.fields-inner)과 동일 필드 폭 */
+.participant-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell {
+  flex: 0 0 auto;
+  width: min(100%, var(--application-filter-column-width));
+  max-width: min(100%, var(--application-filter-column-width));
+  min-width: 0;
+}
+
+.participant-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell[data-filter-field-key='homeAddress'],
+.participant-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell[data-filter-field-key='institutionAddress'],
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell[data-filter-field-key='homeAddress'] {
+  width: min(100%, var(--application-filter-address-region-width));
+  max-width: min(100%, var(--application-filter-address-region-width));
+}
+
+.participant-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  .labeled-search-input,
+.participant-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  .unified-filter-card__field:not(:has(.table-filter-group__select-pair-selects)),
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  .labeled-search-input,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  .unified-filter-card__field:not(:has(.table-filter-group__select-pair-selects)) {
+  width: 100%;
+  max-width: min(100%, var(--application-filter-column-width));
+}
+
+.participant-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  .unified-filter-card__field--select:has(.table-filter-group__select-pair-selects),
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  .unified-filter-card__field--select:has(.table-filter-group__select-pair-selects) {
+  width: 100%;
+  max-width: min(100%, var(--application-filter-address-region-width));
+}
+
+.participant-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  .table-filter-group__select-pair-selects,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  .table-filter-group__select-pair-selects {
+  width: 100%;
+  max-width: min(100%, var(--application-filter-address-region-width));
+  gap: var(--application-filter-address-pair-gap);
+}
+
+.participant-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  .table-filter-group__select-pair-selects
+  > .cms-select,
+.participant-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  .table-filter-group__select-pair-selects
+  > .ant-select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  .table-filter-group__select-pair-selects
+  > .cms-select,
+.general-instructor-applications
+  .applicant-details
+  .table-filter-group__merged-inline-wrap
+  .table-filter-group__select-pair-selects
+  > .ant-select {
+  flex: 0 0 var(--application-filter-address-segment-width) !important;
+  width: var(--application-filter-address-segment-width) !important;
+  min-width: var(--application-filter-address-segment-width) !important;
+  max-width: var(--application-filter-address-segment-width) !important;
+}
+
 /* 검색·단일 셀렉트 — 260px 고정 */
 .participant-applications
   .applicant-details

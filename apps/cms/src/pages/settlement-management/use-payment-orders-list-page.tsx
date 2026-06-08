@@ -427,6 +427,16 @@ export function usePaymentOrdersListPage() {
     ]
   )
 
+  const excelExport = useMemo(
+    () => ({
+      columns: isProgram ? programColumns : instructorColumns,
+      data: isProgram ? listProgram : listInstructor,
+    }),
+    [isProgram, programColumns, instructorColumns, listProgram, listInstructor]
+  )
+
+  const listTitle = isProgram ? '프로그램 별 정산 목록' : '강사 별 정산 목록'
+
   return {
     viewMode,
     setViewMode,
@@ -441,5 +451,8 @@ export function usePaymentOrdersListPage() {
     paymentOrdersViewModeOptions,
     renderHeader,
     renderContent,
+    excelExport,
+    listTitle,
+    total,
   }
 }

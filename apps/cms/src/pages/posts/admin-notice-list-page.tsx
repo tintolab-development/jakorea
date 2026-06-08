@@ -288,6 +288,10 @@ export function AdminNoticeListPage() {
             </CmsButton>
           </>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         <Table<Notice>
           rowKey="id"

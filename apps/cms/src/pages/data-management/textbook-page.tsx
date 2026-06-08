@@ -506,6 +506,10 @@ export default function TextbookPage() {
             </CmsButton>
           </>
         }
+        excelExport={{
+          columns,
+          data: filteredRows,
+        }}
       >
         <Table<TextbookRow>
           rowKey="id"

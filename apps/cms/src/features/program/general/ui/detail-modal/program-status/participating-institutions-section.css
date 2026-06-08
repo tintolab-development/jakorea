@@ -48,6 +48,18 @@
 
 .participating-institutions-section__filter-layout
   .table-filter-group__fields-inner
+  > .ant-col[data-filter-field-key='institutionAddress'],
+.participating-institutions-section__filter-layout
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell[data-filter-field-key='institutionAddress'] {
+  width: var(--participating-institutions-filter-address-region-width) !important;
+  flex: 0 0 var(--participating-institutions-filter-address-region-width) !important;
+  max-width: var(--participating-institutions-filter-address-region-width) !important;
+  min-width: var(--participating-institutions-filter-address-region-width) !important;
+}
+
+.participating-institutions-section__filter-layout
+  .table-filter-group__fields-inner
   > .ant-col[data-filter-field-key='schoolName'],
 .participating-institutions-section__filter-layout
   .table-filter-group__fields-inner
@@ -57,20 +69,23 @@
   > .ant-col[data-filter-field-key='educationGrade'],
 .participating-institutions-section__filter-layout
   .table-filter-group__fields-inner
-  > .ant-col[data-filter-field-key='teacherName'] {
+  > .ant-col[data-filter-field-key='teacherName'],
+.participating-institutions-section__filter-layout
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell[data-filter-field-key='schoolName'],
+.participating-institutions-section__filter-layout
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell[data-filter-field-key='textbookStatus'],
+.participating-institutions-section__filter-layout
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell[data-filter-field-key='educationGrade'],
+.participating-institutions-section__filter-layout
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell[data-filter-field-key='teacherName'] {
   width: var(--participating-institutions-filter-column-width) !important;
   flex: 0 0 var(--participating-institutions-filter-column-width) !important;
   max-width: var(--participating-institutions-filter-column-width) !important;
   min-width: var(--participating-institutions-filter-column-width) !important;
-}
-
-.participating-institutions-section__filter-layout
-  .table-filter-group__fields-inner
-  > .ant-col[data-filter-field-key='institutionAddress'] {
-  width: var(--participating-institutions-filter-address-region-width) !important;
-  flex: 0 0 var(--participating-institutions-filter-address-region-width) !important;
-  max-width: var(--participating-institutions-filter-address-region-width) !important;
-  min-width: var(--participating-institutions-filter-address-region-width) !important;
 }
 
 /* UJAT 진행현황 참여 기관과 동일: 가로 스크롤·열 고정 (공통 table-wrap max-width 규칙은 아래에서 무효화) */

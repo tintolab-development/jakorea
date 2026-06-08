@@ -356,6 +356,10 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
             이력 삭제
           </CmsButton>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         <Table<Program>
           rowSelection={{

@@ -354,6 +354,10 @@ export default function DetailedProgramPage() {
             </CmsButton>
           </>
         }
+        excelExport={{
+          columns,
+          data: tableDisplayData,
+        }}
       >
         <Table<DetailedProgramManagementRow>
           rowKey="id"

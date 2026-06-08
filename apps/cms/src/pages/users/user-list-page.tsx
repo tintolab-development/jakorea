@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
+import type { ColumnsType } from 'antd/es/table'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
@@ -296,6 +297,27 @@ export function UserListPage() {
   const userListFilterFields = useMemo(
     () => getUserListFilterFields(resolvedMemberListKind),
     [resolvedMemberListKind]
+  )
+
+  const userExcelColumns = useMemo<
+    ColumnsType<{ name: string; email: string; phone: string }>
+  >(
+    () => [
+      { title: '이름', dataIndex: 'name', key: 'name' },
+      { title: '이메일', dataIndex: 'email', key: 'email' },
+      { title: '전화번호', dataIndex: 'phone', key: 'phone' },
+    ],
+    []
+  )
+
+  const userExcelData = useMemo(
+    () =>
+      listUsers.map(user => ({
+        name: user.name,
+        email: user.email,
+        phone: user.phone ?? '',
+      })),
+    [listUsers]
   )
 
   // URL에서 id가 빠지면(뒤로가기 등) 풀페이지·드로어를 같은 페인트 전에 닫음 — 안 닫히는 현상 방지
@@ -802,6 +824,10 @@ export function UserListPage() {
             )}
           </>
         }
+        excelExport={{
+          columns: userExcelColumns,
+          data: userExcelData,
+        }}
       >
         <UserList
           listKind={resolvedMemberListKind}

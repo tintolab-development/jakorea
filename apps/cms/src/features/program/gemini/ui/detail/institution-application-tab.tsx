@@ -318,6 +318,10 @@ export function GeminiInstitutionApplicationTab() {
           </>
         ) : null
       }
+      excelExport={{
+        columns,
+        data: filteredRows,
+      }}
     >
       <Table<GeminiInstitutionApplicationRow>
         rowKey="id"

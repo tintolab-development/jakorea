@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { ColumnsType } from 'antd/es/table'
-import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { exportTableToExcel } from '@/shared/utils/table-export'
+import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
 import {
   getGeneralVolunteerDoc1Applicants,
   patchGeneralVolunteerDocumentScreeningStatus,
@@ -83,7 +82,6 @@ function toExportRow(row: GeneralVolunteerApplicantRow): Record<string, string |
 }
 
 export function useGeneralVolunteerDocScreening({ programId }: { programId: string }) {
-  const { showAlert } = useCmsAlert()
   const [confirmRequest, setConfirmRequest] = useState<GeneralVolunteerConfirmRequest | null>(null)
   const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() =>
     getGeneralVolunteerDoc1Applicants(programId)
@@ -95,7 +93,6 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     ...DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS,
   }))
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [isExporting, setIsExporting] = useState(false)
   const [openManagerDropdown, setOpenManagerDropdown] = useState<{
     rowId: string
     manager: 'A' | 'B'
@@ -119,6 +116,16 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
   const tableData = useMemo(
     () => filterGeneralDoc1Applicants(list, appliedFilters),
     [appliedFilters, list]
+  )
+
+  const exportRows = useMemo(() => tableData.map(toExportRow), [tableData])
+
+  const excelExport = useMemo<FilterTableExcelExportConfig>(
+    () => ({
+      columns: EXPORT_COLUMNS,
+      data: exportRows,
+    }),
+    [exportRows]
   )
 
   const updateRow = useCallback((id: string, patch: Partial<GeneralVolunteerApplicantRow>) => {
@@ -164,30 +171,6 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     })
   }, [applyDocumentScreeningStatus, selectedRowKeys, showConfirm])
 
-  const handleExportExcel = useCallback(async () => {
-    if (isExporting) return
-    if (tableData.length === 0) {
-      showAlert({ title: '다운로드 안내', content: '다운로드할 데이터가 없습니다.' })
-      return
-    }
-    setIsExporting(true)
-    try {
-      await exportTableToExcel(
-        EXPORT_COLUMNS,
-        tableData.map(toExportRow),
-        `general-volunteer-${programId}-doc-screening`
-      )
-    } catch (error) {
-      console.error('[general-volunteer-doc-screening] excel export failed', error)
-      showAlert({
-        title: '다운로드 실패',
-        content: '엑셀 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-      })
-    } finally {
-      setIsExporting(false)
-    }
-  }, [isExporting, programId, showAlert, tableData])
-
   const onManagerAEvaluationChange = useCallback(
     (id: string, evaluation: GeneralManagerEvaluation) => {
       updateRow(id, { managerAEvaluation: evaluation })
@@ -220,8 +203,7 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     setSelectedRowKeys,
     handleBulkReject,
     handleBulkApprove,
-    handleExportExcel,
-    isExporting,
+    excelExport,
     count: tableData.length,
     confirmRequest,
     closeConfirm,

@@ -201,6 +201,10 @@ export function SponsorProgramHistoryPanel({
             이력 삭제
           </CmsButton>
         }
+        excelExport={{
+          columns,
+          data: filteredRows,
+        }}
       >
         <Table<SponsorProgramHistoryRow>
           rowKey="id"

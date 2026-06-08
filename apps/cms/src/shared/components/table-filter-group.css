@@ -318,6 +318,20 @@
   box-sizing: border-box;
 }
 
+.table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell:has(.table-filter-group__select-pair-selects),
+.table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell:has(.cms-datepicker--range-split) {
+  width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px))
+  );
+  max-width: min(
+    100%,
+    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px))
+  );
+}
+
 .table-filter-group__merged-inline-wrap__search {
   display: flex;
   flex-wrap: wrap;

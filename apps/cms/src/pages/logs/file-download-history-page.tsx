@@ -106,6 +106,10 @@ export default function FileDownloadHistoryPage() {
       onSearch={applySearch}
       title="파일 다운로드 이력"
       description={`총 ${displayedCount.toLocaleString()}건`}
+      excelExport={{
+        columns,
+        data: tableData,
+      }}
     >
       <Table<DownloadLog>
         rowKey="id"

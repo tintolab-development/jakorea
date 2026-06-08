@@ -50,6 +50,10 @@ export function EnrollmentTableView(props: RendererProps) {
       onSearch={handleEnrollmentSearchStub}
       title={enrollmentSectionTitle}
       description={`총 ${displayedCount.toLocaleString()}건`}
+      excelExport={{
+        columns: programHistoryColumns,
+        data: enrollmentTableRows,
+      }}
     >
       <div className="user-detail-modal__program-tab">
         {loading ? (
