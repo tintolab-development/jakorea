@@ -40,6 +40,10 @@ export const PARTICIPATING_INSTRUCTOR_ADD_SELECT_ALERT_MESSAGE =
 export const PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE =
   '강사 추가 등록이 완료되었습니다.'
 
+/** 참여 강사 상세 — 이미 활동 포기 처리된 강사 재시도 시 AlertModal 본문 */
+export const PARTICIPATING_INSTRUCTOR_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE =
+  '이미 활동 포기 처리된 강사입니다.'
+
 /** 수료증/참여인증서·활동인증서 발급 사유 모달 — 사유 미선택 시 AlertModal 본문 */
 export const CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE = '발급 사유를 선택해 주세요.'
 

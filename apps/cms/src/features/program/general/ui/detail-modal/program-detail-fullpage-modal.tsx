@@ -38,7 +38,7 @@ import {
 } from './program-status/general-participating-institution-detail-view'
 import { ProgramManagersTab } from './managers/program-managers-tab'
 import {
-  INSTRUCTOR_DETAIL_TAB_KEYS,
+  normalizeInstructorDetailTab,
   type InstructorDetailTabKey,
 } from './program-status/participating-instructor-fullpage-view'
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
@@ -118,12 +118,7 @@ function parseSchoolTabFromSearch(
 }
 
 function parseInstructorTabFromSearch(searchParams: URLSearchParams): InstructorDetailTabKey {
-  const t = searchParams.get(INSTRUCTOR_TAB_PARAM)
-  if (t && (INSTRUCTOR_DETAIL_TAB_KEYS as readonly string[]).includes(t)) {
-    if (t === 'settlement') return 'application'
-    return t as InstructorDetailTabKey
-  }
-  return 'application'
+  return normalizeInstructorDetailTab(searchParams.get(INSTRUCTOR_TAB_PARAM))
 }
 
 function parseTabFromSearch(searchParams: URLSearchParams): TabKey {
@@ -268,16 +263,10 @@ export function ProgramDetailFullPageModal({
   useEffect(() => {
     if (!open || !instructorIdFromUrl) return
     const raw = searchParams.get(INSTRUCTOR_TAB_PARAM)
-    if (raw === 'settlement') {
-      const next = new URLSearchParams(searchParams)
-      next.set(INSTRUCTOR_TAB_PARAM, 'application')
-      if (programId) next.set('programId', programId)
-      setSearchParams(next, { replace: true })
-      return
-    }
-    if (raw && (INSTRUCTOR_DETAIL_TAB_KEYS as readonly string[]).includes(raw)) return
+    const normalized = parseInstructorTabFromSearch(searchParams)
+    if (raw === normalized) return
     const next = new URLSearchParams(searchParams)
-    next.set(INSTRUCTOR_TAB_PARAM, 'application')
+    next.set(INSTRUCTOR_TAB_PARAM, normalized)
     if (programId) next.set('programId', programId)
     setSearchParams(next, { replace: true })
   }, [open, instructorIdFromUrl, searchParams, setSearchParams, programId])
@@ -446,7 +435,6 @@ export function ProgramDetailFullPageModal({
   }
 
   const setInstructorTab = (tab: InstructorDetailTabKey) => {
-    if (tab === 'settlement') return
     const next = new URLSearchParams(searchParams)
     next.set(INSTRUCTOR_TAB_PARAM, tab)
     if (programId) next.set('programId', programId)
@@ -506,6 +494,8 @@ export function ProgramDetailFullPageModal({
   const title =
     schoolIdFromUrl && schoolDetailTitle
       ? `참여 기관 상세 (${schoolDetailTitle})`
+      : instructorIdFromUrl && instructorDetailTitle
+        ? `참여 강사 상세 (${instructorDetailTitle})`
       : schoolDetailTitle != null && displayProgram
         ? `${displayProgram.title}_${schoolDetailTitle}`
       : instructorDetailTitle != null && displayProgram

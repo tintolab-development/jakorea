@@ -1,0 +1,61 @@
+---
+description: DetailInfoForm 다블록 레이아웃 — title + hideHeader 2개, 공통 gap 클래스 (CMS)
+globs:
+  - 'apps/cms/src/**/*.tsx'
+alwaysApply: false
+---
+
+# DetailInfoForm — 다블록 기본 정보 레이아웃
+
+프로그램·강사·정산 상세의 **기본 정보**를 native `<table>` / `applicant-institution-basic-info__table`에서 `DetailInfoForm`으로 옮길 때 아래 패턴을 **한 번에** 따른다.
+
+## 표준 구조 (2블록)
+
+상태·승인 행(상단)과 프로필 행(하단)을 **각각 하나의 `DetailInfoForm`**으로 나눈다.
+
+```tsx
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
+
+<div className="applicant-instructor-basic-info">
+  <DetailInfoForm title="기본 정보" mode={mode}>
+    {/* 승인/진행 현황, JA 등급, 강의비 책정 기준 등 — Row는 이 Form 안에만 */}
+    {statusRows}
+  </DetailInfoForm>
+  <DetailInfoForm title="기본 정보" hideHeader mode={mode}>
+    {/* 성명, 소속, 연락처, 강사비 등급 등 프로필 Row */}
+    {profileRows}
+  </DetailInfoForm>
+</div>
+```
+
+**참고 구현**
+
+- `apps/cms/src/pages/settlement-management/payment-order-instructor-basic-info.tsx`
+- `apps/cms/src/features/program/general/ui/detail-modal/applications/applicant-detail/instructor-basic-info-detail-form.tsx`
+
+## 간격·스타일
+
+| ✅ 사용 | ❌ 금지 |
+|--------|--------|
+| 래퍼 `applicant-instructor-basic-info` (`gap: 16px`, 기존 CSS import) | colocated CSS로 `gap` / `flex` 래퍼 새로 정의 |
+| `DetailInfoForm` 기본 `__body` 테두리·radius (`detail-info-form.css`) | `#d4d4d4`·`8px` 등 `table-wrap` 흉내용 `__body` override |
+| 첫 Form에만 `title`, 이어지는 Form은 `hideHeader` | 수동 `h3` + `DetailInfoForm hideHeader` 이중 제목 |
+| 강의비 등 추가 Row는 **같은 상단 Form** 안에 `Row` 추가 | `approval-block` + Form 3개로 테두리 연결 |
+
+## 편집 모드
+
+- 두 Form 모두 동일 `mode="edit" | "view"`.
+- 읽기 전용 필드: `readOnlyDisplay`.
+- 수정 필드: `Field`의 `view` / `edit` 슬롯.
+
+## 값 셀 구분
+
+여러 값을 한 칸에 나열할 때 문자 `|` 금지 → [table-td-divider.mdc](./table-td-divider.mdc) (`DetailInfoForm.TdDivider`, `withProgramDetailTdDivider`).
+
+## 체크리스트
+
+- [ ] Form 2개 — 상단(title) + 하단(hideHeader)
+- [ ] `applicant-instructor-basic-info` 래퍼 + 공통 CSS import
+- [ ] 로컬 gap/border override CSS 없음
+- [ ] 프로그램 유형 간 공통화 시 `shared/` 또는 general 전용 컴포넌트로 추출 ([program-type-isolation](../process/program-type-isolation.mdc))

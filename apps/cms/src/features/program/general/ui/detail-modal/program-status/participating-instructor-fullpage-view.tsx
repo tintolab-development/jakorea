@@ -3,8 +3,9 @@
  * 프로그램 진행 현황 > 참여 강사 — instructorId 쿼리 시 목록 대신 표시
  */
 
-import { useState, useEffect, useMemo, useCallback, type ReactNode, type Key } from 'react'
+import { useState, useEffect, useMemo, useCallback, type Key } from 'react'
 import { Table, Select } from 'antd'
+import { DownloadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import type {
@@ -16,27 +17,24 @@ import type {
 import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import {
   INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
+  PARTICIPATING_INSTRUCTOR_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
-import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import {
-  ProgramDetailTdDivider,
-  withProgramDetailTdDivider,
-  ProgramDetailTdSegmentWrap,
-} from '@/features/program/shared/ui/program-detail-td-divider'
-import type { InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
-import { INSTRUCTOR_ROLE_LABELS } from '@/features/program/general/model/school-detail-types'
+  INSTRUCTOR_ROLE_LABELS,
+  type InstructorRoleKey,
+} from '@/features/program/general/model/school-detail-types'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -54,8 +52,22 @@ import {
   type InstructorWaitingSchoolRow,
   type InstructorWaitingAssignmentStatus,
 } from '@/features/program/general/lib/instructor-institution-assignment-mock'
+import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
+import { ParticipatingInstructorApplicationInfo } from './participating-instructor-application-info'
+import { useParticipatingInstructorDetailEdit } from '@/features/program/general/hooks/use-participating-instructor-detail-edit'
+import {
+  applyParticipatingInstructorActivityWithdraw,
+  getParticipatingInstructorActivityWithdrawScheduleOptions,
+} from '@/features/program/general/lib/participating-instructor-activity-withdraw'
+import {
+  ParticipatingInstructorActivityWithdrawModal,
+  type ParticipatingInstructorActivityWithdrawModalPayload,
+} from './participating-instructor-activity-withdraw-modal'
+import { ParticipatingInstructorLectureReportsSection } from './participating-instructor-lecture-reports-section'
+import { ParticipatingInstructorSettlementSection } from './participating-instructor-settlement-section'
+import { ActivityCertificateIssuancePreviewModal } from './activity-certificate-issuance-preview-modal'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import './participating-institutions-section.css'
 import './instructor-assignment-role-tag.css'
@@ -65,28 +77,56 @@ import './participating-instructor-fullpage-view.css'
 
 const ASSIGNMENT_STATUS_LABELS: Record<InstructorWaitingAssignmentStatus, string> = {
   waiting: '배정 대기',
-  cancelled: '배정 취소',
+  cancelled: '배정 불가',
   assigned: '배정 완료',
+}
+
+function renderEducationScheduleLines(lines: string[]) {
+  if (lines.length === 0) return <>-</>
+  const total = lines.length
+  const showCount = total <= 3 ? total : 2
+  const displayLines = lines.slice(0, showCount)
+  const restCount = total - showCount
+  return (
+    <div className="participating-institutions-section__sessions-cell">
+      {displayLines.map((line, index) => (
+        <div key={`${line}-${index}`} className="participating-institutions-section__session-line">
+          {line}
+        </div>
+      ))}
+      {restCount > 0 ? (
+        <div className="participating-institutions-section__session-more">
+          외 {restCount}개의 교육 일정
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 export const INSTRUCTOR_DETAIL_TAB_KEYS = [
   'application',
   'institutionAssignment',
+  'lectureReports',
   'settlement',
-  'posts',
 ] as const
 export type InstructorDetailTabKey = (typeof INSTRUCTOR_DETAIL_TAB_KEYS)[number]
 
-/** 참여 강사 풀페이지 — 정산 현황 탭 비활성화(표시만 유지) */
-const INSTRUCTOR_TAB_DISABLED: Partial<Record<InstructorDetailTabKey, boolean>> = {
-  settlement: true,
+/** 이전 URL 호환 — 게시글 탭 → 강의보고서 관리 */
+export function normalizeInstructorDetailTab(
+  tab: string | null | undefined
+): InstructorDetailTabKey {
+  if (tab === 'posts') return 'lectureReports'
+  if (tab && (INSTRUCTOR_DETAIL_TAB_KEYS as readonly string[]).includes(tab)) {
+    return tab as InstructorDetailTabKey
+  }
+  return 'application'
 }
 
 const TAB_LABELS: Record<InstructorDetailTabKey, string> = {
   application: '신청 정보',
-  institutionAssignment: '기관 배정 현황',
+  institutionAssignment: '교육 배정 현황',
+  lectureReports: '강의보고서 관리',
   settlement: '정산 현황',
-  posts: '게시글',
 }
 
 const NO_DATA = '데이터 없음'
@@ -147,123 +187,6 @@ function getTotalCareerYears(items: ParticipatingInstructorCareerDetail[] | unde
   return Math.floor(totalMonths / 12)
 }
 
-function formatBirthGenderAgeContent(d: ParticipatingInstructorRow): ReactNode {
-  /** 생년월일과 (만 n세)는 한 문자열로 묶어 flex 분리 시 공백이 사라지지 않도록 함 */
-  const birthAgeStr =
-    d.birthDate && d.age != null
-      ? `${d.birthDate} (만 ${d.age}세)`
-      : d.birthDate
-        ? d.birthDate
-        : d.age != null
-          ? `만 ${d.age}세`
-          : null
-  const parts = [d.gender, birthAgeStr].filter(Boolean) as string[]
-  if (parts.length === 0) return '-'
-  return withProgramDetailTdDivider(parts)
-}
-
-function formatAccountContent(d: ParticipatingInstructorRow, mask: boolean): ReactNode {
-  const bank = d.bankName ?? ''
-  const num = d.accountNumber ?? ''
-  const holder = d.accountHolder ?? ''
-  if (!bank && !num && !holder) return '-'
-  if (mask) {
-    const maskedNum = num ? MASKING_POLICY.accountNumber(num) : ''
-    const maskedHolder = holder ? MASKING_POLICY.accountHolderName(holder) : ''
-    const left = [bank, maskedNum].filter(Boolean).join(' ')
-    if (!maskedHolder) return left || '-'
-    if (!left) return maskedHolder
-    return withProgramDetailTdDivider([left, maskedHolder])
-  }
-  const left = [bank, num].filter(Boolean).join(' ')
-  if (!holder) return left || '-'
-  if (!left) return holder
-  return withProgramDetailTdDivider([left, holder])
-}
-
-/** 읍·면·동 단위까지 노출, 그 이후는 블러(마스킹 모드). 신청 강사 기본 정보와 동일 */
-function splitAddressAfterDong(address: string): { head: string; tail: string } | null {
-  const re = /(?:^|\s)([가-힣]{2,12}동)(?=\s|$)/u
-  const m = address.match(re)
-  if (!m) return null
-  const dong = m[1]
-  const i = address.indexOf(dong)
-  if (i === -1) return null
-  const end = i + dong.length
-  return { head: address.slice(0, end), tail: address.slice(end) }
-}
-
-/** 동 미매칭 시: 행정구(OO구)까지 노출, 그 이후 블러 */
-function splitAddressAfterGu(address: string): { head: string; tail: string } | null {
-  const re = /(?:^|\s)([가-힣]{1,12}구)(?=\s|$)/u
-  const m = address.match(re)
-  if (!m) return null
-  const gu = m[1]
-  const i = address.indexOf(gu)
-  if (i === -1) return null
-  const end = i + gu.length
-  return { head: address.slice(0, end), tail: address.slice(end) }
-}
-
-function splitAddressForPrivacyBlur(address: string): { head: string; tail: string } | null {
-  return splitAddressAfterDong(address) ?? splitAddressAfterGu(address)
-}
-
-function maskEducationSchoolName(name: string): string {
-  const suffixes = [
-    '교육대학교',
-    '전문대학교',
-    '초등학교',
-    '고등학교',
-    '중학교',
-    '대학교',
-    '대학원',
-    '대학',
-    '전문대',
-  ].sort((a, b) => b.length - a.length)
-  for (const suf of suffixes) {
-    if (name.endsWith(suf)) {
-      return `**${suf}`
-    }
-  }
-  if (name.length <= 2) return '**'
-  return `**${name.slice(-2)}`
-}
-
-function ParticipatingAddressDisplay({ address, mask }: { address: string; mask: boolean }) {
-  if (!address) return <>-</>
-  if (!mask) return <>{address}</>
-  const split = splitAddressForPrivacyBlur(address)
-  if (!split) {
-    return (
-      <span className="participating-instructor-fullpage-view__address-blur" aria-hidden="true">
-        {address}
-      </span>
-    )
-  }
-  const { head, tail } = split
-  if (!tail.trim()) {
-    return <>{head}</>
-  }
-  return (
-    <>
-      {head}
-      <span className="participating-instructor-fullpage-view__address-blur" aria-hidden="true">
-        {tail}
-      </span>
-    </>
-  )
-}
-
-function lectureFeeCriteriaContent(d: ParticipatingInstructorRow): ReactNode {
-  const cat = d.lectureFeeCategory?.trim()
-  const amt = d.lectureFeeAmount?.trim()
-  if (!cat && !amt) return '-'
-  if (!cat) return amt ?? '-'
-  if (!amt) return cat
-  return withProgramDetailTdDivider([cat, amt])
-}
-
 export interface ParticipatingInstructorFullpageViewProps {
   program: Program
   instructor: ParticipatingInstructorRow
@@ -286,7 +209,6 @@ export function ParticipatingInstructorFullpageView({
   instructorList = MOCK_PARTICIPATING_INSTRUCTORS,
 }: ParticipatingInstructorFullpageViewProps) {
   const [internalTab, setInternalTab] = useState<InstructorDetailTabKey>('application')
-  const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
   const [assignedSchools, setAssignedSchools] = useState<InstructorAssignedSchoolRow[]>([])
   const [waitingSchools, setWaitingSchools] = useState<InstructorWaitingSchoolRow[]>([])
   const [selectedAssignedSchoolKeys, setSelectedAssignedSchoolKeys] = useState<Key[]>([])
@@ -301,7 +223,41 @@ export function ParticipatingInstructorFullpageView({
   const [selectAssignConfirmOpen, setSelectAssignConfirmOpen] = useState(false)
   const [addAssignModalOpen, setAddAssignModalOpen] = useState(false)
   const [addAssignSchoolId, setAddAssignSchoolId] = useState<string | null>(null)
+  const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
+  const [savedAdminComment, setSavedAdminComment] = useState('')
+  const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
+  const [adminCommentDraft, setAdminCommentDraft] = useState('')
+  const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
+  const [instructorPatches, setInstructorPatches] = useState<Partial<ParticipatingInstructorRow>>(
+    {}
+  )
+  const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
   const { showAlert } = useCmsAlert()
+
+  const mergedInstructor = useMemo(() => ({ ...d, ...instructorPatches }), [d, instructorPatches])
+
+  const isActivityWithdrawn = mergedInstructor.activityWithdrawn === true
+
+  const activityWithdrawScheduleOptions = useMemo(
+    () => getParticipatingInstructorActivityWithdrawScheduleOptions(mergedInstructor.id),
+    [mergedInstructor.id]
+  )
+
+  const applicationInfoEdit = useParticipatingInstructorDetailEdit({
+    instructor: mergedInstructor,
+    onSaved: updatedRow => {
+      setInstructorPatches(prev => ({
+        ...prev,
+        lectureFeeBasisType: updatedRow.lectureFeeBasisType,
+        lectureFeeMeasure: updatedRow.lectureFeeMeasure,
+        lectureFeeAmount: updatedRow.lectureFeeAmount,
+        lectureFeeBasisDisplay: updatedRow.lectureFeeBasisDisplay,
+        lectureFeeCategory: updatedRow.lectureFeeCategory,
+        instructorFeeGradeLabel: updatedRow.instructorFeeGradeLabel,
+        businessIncomeEarnerStatus: updatedRow.businessIncomeEarnerStatus,
+      }))
+    },
+  })
 
   const resolveParticipatingInstructorFullpageAccessItem = useCallback(
     () => d.instructorName ?? '참여 강사 상세 정보',
@@ -320,10 +276,8 @@ export function ParticipatingInstructorFullpageView({
 
   const activeTab =
     activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
-  const effectiveTab: InstructorDetailTabKey =
-    activeTab === 'settlement' ? 'application' : activeTab
+  const effectiveTab = activeTab
   const setActiveTab = (key: InstructorDetailTabKey) => {
-    if (INSTRUCTOR_TAB_DISABLED[key]) return
     if (onTabChange) onTabChange(key)
     else setInternalTab(key)
   }
@@ -339,6 +293,15 @@ export function ParticipatingInstructorFullpageView({
     setOpenRoleDropdownId(null)
   }, [d.id, schoolRows, instructorList])
 
+  useEffect(() => {
+    setSavedAdminComment(d.adminComment ?? '')
+    setIsAdminCommentEditing(false)
+    setAdminCommentDraft('')
+    setAdminCommentError(undefined)
+    setInstructorPatches({})
+    setActivityWithdrawModalOpen(false)
+  }, [d.id, d.adminComment])
+
   const handleRoleChange = useCallback((schoolId: string, newRole: InstructorRoleKey) => {
     setAssignedSchools(prev => {
       const updated = prev.map(row => ({
@@ -353,7 +316,7 @@ export function ParticipatingInstructorFullpageView({
       return renumberAssignedRows(updated)
     })
     setOpenRoleDropdownId(null)
-    }, [])
+  }, [])
 
   const assignedSchoolColumns: ColumnsType<InstructorAssignedSchoolRow> = useMemo(
     () => [
@@ -393,7 +356,14 @@ export function ParticipatingInstructorFullpageView({
         ),
       },
       { title: '기관명', dataIndex: 'schoolName', key: 'schoolName', width: 140 },
-      { title: '기관 주소', dataIndex: 'region', key: 'region', width: 160 },
+      {
+        title: '교육 학년',
+        dataIndex: 'educationGrade',
+        key: 'educationGrade',
+        width: 96,
+        align: 'center',
+      },
+      { title: '기관 소재지', dataIndex: 'region', key: 'region', width: 200 },
       {
         title: '자택과의 거리',
         dataIndex: 'distanceFromHome',
@@ -402,47 +372,144 @@ export function ParticipatingInstructorFullpageView({
         align: 'center',
       },
       {
-        title: '교육 담당 날짜',
-        dataIndex: 'assignedDate',
-        key: 'assignedDate',
-        width: 140,
-        align: 'center',
-      },
-      {
-        title: '교육 담당 수업 시간',
-        dataIndex: 'assignedTime',
-        key: 'assignedTime',
-        width: 180,
-      },
-      {
-        title: '교육 할당 차시',
-        dataIndex: 'assignedSession',
-        key: 'assignedSession',
-        width: 110,
-        align: 'center',
-      },
-      {
-        title: '강사 배정 현황',
-        dataIndex: 'instructorAssignmentLabel',
-        key: 'instructorAssignmentLabel',
-        width: 120,
-        align: 'center',
+        title: '담당 교육 진행 일정',
+        key: 'educationScheduleLines',
+        width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+        minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+        className: 'participating-institutions-section__th-sessions',
+        onHeaderCell: () => ({
+          className: 'participating-institutions-section__th-sessions',
+        }),
+        onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+        render: (_: unknown, record: InstructorAssignedSchoolRow) =>
+          renderEducationScheduleLines(record.educationScheduleLines),
       },
     ],
     [openRoleDropdownId, handleRoleChange]
   )
 
+  const assignedSchoolExportColumns: ColumnsType<{
+    no: number
+    role: string
+    schoolName: string
+    educationGrade: string
+    region: string
+    distanceFromHome: string
+    educationSchedule: string
+  }> = useMemo(
+    () => [
+      { title: 'No.', dataIndex: 'no', key: 'no' },
+      { title: '역할', dataIndex: 'role', key: 'role' },
+      { title: '기관명', dataIndex: 'schoolName', key: 'schoolName' },
+      { title: '교육 학년', dataIndex: 'educationGrade', key: 'educationGrade' },
+      { title: '기관 소재지', dataIndex: 'region', key: 'region' },
+      { title: '자택과의 거리', dataIndex: 'distanceFromHome', key: 'distanceFromHome' },
+      { title: '담당 교육 진행 일정', dataIndex: 'educationSchedule', key: 'educationSchedule' },
+    ],
+    []
+  )
+
+  const waitingSchoolExportColumns: ColumnsType<{
+    no: number
+    schoolName: string
+    desiredGrade: string
+    region: string
+    distanceFromHome: string
+    educationSchedule: string
+    assignmentStatus: string
+    assignedInstructorCountLabel: string
+  }> = useMemo(
+    () => [
+      { title: 'No.', dataIndex: 'no', key: 'no' },
+      { title: '기관명', dataIndex: 'schoolName', key: 'schoolName' },
+      { title: '희망 학년', dataIndex: 'desiredGrade', key: 'desiredGrade' },
+      { title: '기관 소재지', dataIndex: 'region', key: 'region' },
+      { title: '자택과의 거리', dataIndex: 'distanceFromHome', key: 'distanceFromHome' },
+      { title: '교육 진행 희망 일정', dataIndex: 'educationSchedule', key: 'educationSchedule' },
+      { title: '배정 현황', dataIndex: 'assignmentStatus', key: 'assignmentStatus' },
+      {
+        title: '배정 강사 수',
+        dataIndex: 'assignedInstructorCountLabel',
+        key: 'assignedInstructorCountLabel',
+      },
+    ],
+    []
+  )
+
+  const assignedSchoolExportRows = useMemo(
+    () =>
+      assignedSchools.map(row => ({
+        no: row.no,
+        role: INSTRUCTOR_ROLE_LABELS[row.role],
+        schoolName: row.schoolName,
+        educationGrade: row.educationGrade,
+        region: row.region,
+        distanceFromHome: row.distanceFromHome,
+        educationSchedule: row.educationScheduleLines.join('\n'),
+      })),
+    [assignedSchools]
+  )
+
+  const waitingSchoolExportRows = useMemo(
+    () =>
+      waitingSchools.map(row => ({
+        no: row.no,
+        schoolName: row.schoolName,
+        desiredGrade: row.desiredGrade,
+        region: row.region,
+        distanceFromHome: row.distanceFromHome,
+        educationSchedule: row.educationScheduleLines.join('\n'),
+        assignmentStatus: ASSIGNMENT_STATUS_LABELS[row.assignmentStatus],
+        assignedInstructorCountLabel: row.assignedInstructorCountLabel,
+      })),
+    [waitingSchools]
+  )
+
+  const { exportExcel: exportAssignedSchoolsExcel, isExporting: isAssignedSchoolsExcelExporting } =
+    useTableExcelExport({
+      columns: assignedSchoolExportColumns,
+      data: assignedSchoolExportRows,
+      filename: '배정된 기관 목록',
+    })
+
+  const { exportExcel: exportWaitingSchoolsExcel, isExporting: isWaitingSchoolsExcelExporting } =
+    useTableExcelExport({
+      columns: waitingSchoolExportColumns,
+      data: waitingSchoolExportRows,
+      filename: '배정 대기 기관 목록',
+    })
+
   const waitingSchoolColumns: ColumnsType<InstructorWaitingSchoolRow> = useMemo(
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
       { title: '기관명', dataIndex: 'schoolName', key: 'schoolName', width: 140 },
-      { title: '기관 주소', dataIndex: 'region', key: 'region', width: 160 },
+      {
+        title: '희망 학년',
+        dataIndex: 'desiredGrade',
+        key: 'desiredGrade',
+        width: 96,
+        align: 'center',
+      },
+      { title: '기관 소재지', dataIndex: 'region', key: 'region', width: 200 },
       {
         title: '자택과의 거리',
         dataIndex: 'distanceFromHome',
         key: 'distanceFromHome',
         width: 110,
         align: 'center',
+      },
+      {
+        title: '교육 진행 희망 일정',
+        key: 'educationScheduleLines',
+        width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+        minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+        className: 'participating-institutions-section__th-sessions',
+        onHeaderCell: () => ({
+          className: 'participating-institutions-section__th-sessions',
+        }),
+        onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
+        render: (_: unknown, record: InstructorWaitingSchoolRow) =>
+          renderEducationScheduleLines(record.educationScheduleLines),
       },
       {
         title: '배정 현황',
@@ -459,30 +526,10 @@ export function ParticipatingInstructorFullpageView({
         ),
       },
       {
-        title: '교육 희망 날짜',
-        dataIndex: 'hopeDate',
-        key: 'hopeDate',
-        width: 140,
-        align: 'center',
-      },
-      {
-        title: '교육 희망 수업 시간',
-        dataIndex: 'hopeTime',
-        key: 'hopeTime',
-        width: 180,
-      },
-      {
-        title: '교육 희망 차시',
-        dataIndex: 'hopeSession',
-        key: 'hopeSession',
+        title: '배정 강사 수',
+        dataIndex: 'assignedInstructorCountLabel',
+        key: 'assignedInstructorCountLabel',
         width: 110,
-        align: 'center',
-      },
-      {
-        title: '강사 배정 인원',
-        dataIndex: 'instructorCountLabel',
-        key: 'instructorCountLabel',
-        width: 120,
         align: 'center',
       },
     ],
@@ -503,7 +550,7 @@ export function ParticipatingInstructorFullpageView({
       return
     }
     const movable = waitingSchools.some(
-      w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus !== 'assigned'
+      w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus === 'waiting'
     )
     if (!movable) {
       return
@@ -546,7 +593,7 @@ export function ParticipatingInstructorFullpageView({
 
   const handleSelectAssignConfirm = useCallback(() => {
     const selectedRows = waitingSchools.filter(
-      w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus !== 'assigned'
+      w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus === 'waiting'
     )
     if (selectedRows.length === 0) {
       return
@@ -569,7 +616,7 @@ export function ParticipatingInstructorFullpageView({
     })
     setSelectAssignConfirmOpen(false)
     setSelectedWaitingSchoolKeys([])
-    }, [selectedWaitingSchoolKeys, waitingSchools, schoolRows, d, instructorList])
+  }, [selectedWaitingSchoolKeys, waitingSchools, schoolRows, d, instructorList])
 
   const handleAddAssignConfirm = useCallback(() => {
     if (!addAssignSchoolId) {
@@ -591,12 +638,12 @@ export function ParticipatingInstructorFullpageView({
     })
     setAddAssignModalOpen(false)
     setAddAssignSchoolId(null)
-    }, [addAssignSchoolId, schoolRows, d, instructorList])
+  }, [addAssignSchoolId, schoolRows, d, instructorList])
 
   const addAssignOptions = useMemo(
     () =>
       waitingSchools
-        .filter(w => w.assignmentStatus !== 'assigned')
+        .filter(w => w.assignmentStatus === 'waiting')
         .map(w => ({ value: w.id, label: w.schoolName })),
     [waitingSchools]
   )
@@ -610,23 +657,12 @@ export function ParticipatingInstructorFullpageView({
   const selectAssignSchoolNames = useMemo(
     () =>
       waitingSchools
-        .filter(w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus !== 'assigned')
+        .filter(w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus === 'waiting')
         .map(w => w.schoolName),
     [waitingSchools, selectedWaitingSchoolKeys]
   )
 
   const privacyMasked = !personalInfoRevealed
-
-  const educationCell = useMemo(() => {
-    const schoolPart = d.educationSchoolName
-      ? privacyMasked
-        ? maskEducationSchoolName(d.educationSchoolName)
-        : d.educationSchoolName
-      : ''
-    return withProgramDetailTdDivider(
-      [d.educationLevel, schoolPart].filter(s => Boolean(s)) as string[]
-    )
-  }, [d.educationLevel, d.educationSchoolName, privacyMasked])
 
   const educationSummary =
     d.educations?.[0]?.schoolType != null
@@ -636,125 +672,83 @@ export function ParticipatingInstructorFullpageView({
   const careerSummaryYears =
     careerYearsFromDetails > 0 ? careerYearsFromDetails : (d.lectureExperienceYears ?? 0)
   const qualificationCount = d.qualifications?.length ?? 0
-  const affiliationCell = withProgramDetailTdDivider(
-    [
-      'JA강사단',
-      d.lectureExperienceYears != null ? `${d.lectureExperienceYears}년` : null,
-      d.jaEvaluationGrade,
-    ].filter((x): x is string => Boolean(x))
+
+  const handleActivityCertificateIssueClick = useCallback(() => {
+    setActivityCertPreviewOpen(true)
+  }, [])
+
+  const handleRequestActivityWithdraw = useCallback(() => {
+    if (isActivityWithdrawn) {
+      showAlert({
+        title: '활동 포기 안내',
+        content: PARTICIPATING_INSTRUCTOR_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE,
+      })
+      return
+    }
+    if (applicationInfoEdit.isEditing || isAdminCommentEditing) return
+    setActivityWithdrawModalOpen(true)
+  }, [applicationInfoEdit.isEditing, isActivityWithdrawn, isAdminCommentEditing, showAlert])
+
+  const handleCancelActivityWithdraw = useCallback(() => {
+    setActivityWithdrawModalOpen(false)
+  }, [])
+
+  const handleConfirmActivityWithdraw = useCallback(
+    (payload: ParticipatingInstructorActivityWithdrawModalPayload) => {
+      const updated = applyParticipatingInstructorActivityWithdraw(mergedInstructor.id, {
+        reason: 'institution',
+        stopScheduleId: payload.stopScheduleId,
+      })
+      if (!updated) return
+
+      setInstructorPatches(prev => ({
+        ...prev,
+        activityWithdrawn: updated.activityWithdrawn,
+        activityWithdrawReason: updated.activityWithdrawReason,
+        activityWithdrawStopScheduleId: updated.activityWithdrawStopScheduleId,
+        activityWithdrawStopScheduleLabel: updated.activityWithdrawStopScheduleLabel,
+        performanceIncludedScheduleIds: updated.performanceIncludedScheduleIds,
+      }))
+      setActivityWithdrawModalOpen(false)
+    },
+    [mergedInstructor.id]
   )
+
+  const handleAdminCommentEditEnter = useCallback(() => {
+    if (applicationInfoEdit.isEditing) return
+    setAdminCommentDraft(savedAdminComment)
+    setAdminCommentError(undefined)
+    setIsAdminCommentEditing(true)
+  }, [applicationInfoEdit.isEditing, savedAdminComment])
+
+  const handleAdminCommentSave = useCallback(() => {
+    setSavedAdminComment(adminCommentDraft.trim())
+    setIsAdminCommentEditing(false)
+    setAdminCommentError(undefined)
+  }, [adminCommentDraft])
+
+  const handleAdminCommentDraftChange = useCallback((value: string) => {
+    setAdminCommentDraft(value)
+    setAdminCommentError(undefined)
+  }, [])
 
   const applicationTab = (
     <>
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block">
-        <DetailInfoForm
-          title="기본 정보"
-          mode="view"
-          className="participating-instructor-fullpage-view__basic-info-form"
-        >
-          <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
-            <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
-            <colgroup>
-              <col style={{ width: '200px' }} />
-              <col />
-              <col style={{ width: '200px' }} />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr>
-                <th scope="row">성명</th>
-                <td>
-                  <ProgramDetailTdSegmentWrap>
-                    <span>{d.instructorName}</span>
-                    {d.nameEnglish ? (
-                      <>
-                        <ProgramDetailTdDivider />
-                        <span>{d.nameEnglish}</span>
-                      </>
-                    ) : null}
-                  </ProgramDetailTdSegmentWrap>
-                </td>
-                <th scope="row">프로그램 승인 현황</th>
-                <td>
-                  <ProgramDetailTdSegmentWrap>
-                    <span>승인 완료</span>
-                    <ProgramDetailTdDivider />
-                    <SendNotiButton />
-                  </ProgramDetailTdSegmentWrap>
-                </td>
-              </tr>
-              <tr>
-                <th scope="row">연락처</th>
-                <td>
-                  {d.contact ? (privacyMasked ? MASKING_POLICY.phone(d.contact) : d.contact) : '-'}
-                </td>
-                <th scope="row">성별 및 생년월일</th>
-                <td>
-                  <ProgramDetailTdSegmentWrap>
-                    {formatBirthGenderAgeContent(d)}
-                  </ProgramDetailTdSegmentWrap>
-                </td>
-              </tr>
-              <tr>
-                <th scope="row">자택 주소</th>
-                <td>
-                  {d.address ? (
-                    <ParticipatingAddressDisplay address={d.address} mask={privacyMasked} />
-                  ) : (
-                    '-'
-                  )}
-                </td>
-                <th scope="row">이메일</th>
-                <td>{d.email ? (privacyMasked ? MASKING_POLICY.email(d.email) : d.email) : '-'}</td>
-              </tr>
-              <tr>
-                <th scope="row">최종 학력</th>
-                <td>
-                  <ProgramDetailTdSegmentWrap>{educationCell}</ProgramDetailTdSegmentWrap>
-                </td>
-                <th scope="row">정산 계좌 정보</th>
-                <td>
-                  <ProgramDetailTdSegmentWrap>
-                    {formatAccountContent(d, privacyMasked)}
-                  </ProgramDetailTdSegmentWrap>
-                </td>
-              </tr>
-              <tr>
-                <th scope="row">한 줄 소개</th>
-                <td colSpan={3}>{d.oneLineIntro ?? '-'}</td>
-              </tr>
-              <tr>
-                <th scope="row">소속 및 강사 경력</th>
-                <td colSpan={3}>
-                  <ProgramDetailTdSegmentWrap>{affiliationCell}</ProgramDetailTdSegmentWrap>
-                </td>
-              </tr>
-            </tbody>
-            </table>
-          </div>
-          <div className="program-detail-info-tab__table-wrapper participating-instructor-fullpage-view__fee-table-wrap">
-            <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
-            <colgroup>
-              <col style={{ width: '200px' }} />
-              <col />
-              <col style={{ width: '200px' }} />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr>
-                <th scope="row">강의비 책정 기준</th>
-                <td>
-                  <ProgramDetailTdSegmentWrap>
-                    {lectureFeeCriteriaContent(d)}
-                  </ProgramDetailTdSegmentWrap>
-                </td>
-                <th scope="row">사업소득자 여부</th>
-                <td>{d.businessIncomeEarnerStatus?.trim() || '-'}</td>
-              </tr>
-            </tbody>
-            </table>
-          </div>
-        </DetailInfoForm>
+        <ParticipatingInstructorApplicationInfo
+          instructor={mergedInstructor}
+          program={program}
+          privacyMasked={privacyMasked}
+          adminComment={savedAdminComment}
+          isAdminCommentEditing={isAdminCommentEditing}
+          adminCommentDraft={adminCommentDraft}
+          onAdminCommentDraftChange={handleAdminCommentDraftChange}
+          adminCommentError={adminCommentError}
+          mode={applicationInfoEdit.isEditing ? 'edit' : 'view'}
+          draft={applicationInfoEdit.draft ?? undefined}
+          onDraftChange={applicationInfoEdit.updateDraft}
+          validationErrors={applicationInfoEdit.validationErrors}
+        />
       </div>
 
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block instructor-resume-section">
@@ -803,7 +797,9 @@ export function ParticipatingInstructorFullpageView({
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block instructor-resume-section">
         <DetailInfoForm
           title="경력사항"
-          description={<span className="instructor-resume-section-count">{careerSummaryYears}년</span>}
+          description={
+            <span className="instructor-resume-section-count">{careerSummaryYears}년</span>
+          }
           mode="view"
           className="participating-instructor-fullpage-view__resume-form"
         >
@@ -839,7 +835,9 @@ export function ParticipatingInstructorFullpageView({
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-fullpage-view__section-block instructor-resume-section">
         <DetailInfoForm
           title="자격 및 면허"
-          description={<span className="instructor-resume-section-count">{qualificationCount}개</span>}
+          description={
+            <span className="instructor-resume-section-count">{qualificationCount}개</span>
+          }
           mode="view"
           className="participating-instructor-fullpage-view__resume-form"
         >
@@ -873,40 +871,61 @@ export function ParticipatingInstructorFullpageView({
         items={INSTRUCTOR_DETAIL_TAB_KEYS.map(key => ({
           key,
           label: TAB_LABELS[key],
-          disabled: !!INSTRUCTOR_TAB_DISABLED[key],
         }))}
         trailing={
           effectiveTab === 'application' ? (
             <>
-              <CmsButton variant="delete" size="large" width={160} onClick={() => {}}>
-                승인 취소
+              <CmsButton
+                variant="delete"
+                size="large"
+                width={140}
+                disabled={
+                  isActivityWithdrawn || applicationInfoEdit.isEditing || isAdminCommentEditing
+                }
+                onClick={handleRequestActivityWithdraw}
+              >
+                활동 포기
               </CmsButton>
-              <CmsButton variant="primary" size="large" width={160} onClick={() => {}}>
-                정보 수정
+              <CmsButton
+                variant="secondary"
+                size="large"
+                width={180}
+                icon={<DownloadOutlined />}
+                onClick={handleActivityCertificateIssueClick}
+              >
+                활동인증서 발급
+              </CmsButton>
+              <CmsButton
+                variant="secondary"
+                size="large"
+                width={140}
+                disabled={isAdminCommentEditing}
+                onClick={
+                  applicationInfoEdit.isEditing
+                    ? () => applicationInfoEdit.saveEdit()
+                    : applicationInfoEdit.enterEdit
+                }
+              >
+                {applicationInfoEdit.isEditing ? '정보 저장' : '정보 수정'}
+              </CmsButton>
+              <CmsButton
+                variant="primary"
+                size="large"
+                width={140}
+                disabled={applicationInfoEdit.isEditing}
+                onClick={
+                  isAdminCommentEditing ? handleAdminCommentSave : handleAdminCommentEditEnter
+                }
+              >
+                {isAdminCommentEditing ? '코멘트 저장' : '코멘트 작성'}
               </CmsButton>
               <PersonalInfoRevealButton
-                labelMode="toggle"
+                labelMode="stickyReveal"
                 revealed={personalInfoRevealed}
-                style={{ minWidth: 180 }}
+                width={180}
                 onClick={handlePrivacyToggleClick}
               />
             </>
-          ) : effectiveTab === 'institutionAssignment' ? (
-            <>
-              <CmsButton variant="delete" size="large" width={160} onClick={() => {}}>
-                승인 취소
-              </CmsButton>
-              <PersonalInfoRevealButton
-                labelMode="toggle"
-                revealed={personalInfoRevealed}
-                style={{ minWidth: 180 }}
-                onClick={handlePrivacyToggleClick}
-              />
-            </>
-          ) : effectiveTab === 'posts' ? (
-            <CmsButton variant="primary" size="large" width={160} onClick={() => setPostWriteModalOpen(true)}>
-              게시글 등록
-            </CmsButton>
           ) : null
         }
       />
@@ -920,25 +939,16 @@ export function ParticipatingInstructorFullpageView({
             <div className="school-detail-fullpage-view__instructor-section">
               <div className="table-header-actions">
                 <div className="table-header-title--wrapper">
-                  <span className="table-title">
-                    배정된 학교 목록
-                  </span>
-                  <span className="table-description">
-                    {assignedSchools.length}건
-                  </span>
+                  <span className="table-title">배정된 기관 목록</span>
+                  <span className="table-description">{assignedSchools.length}건</span>
                 </div>
                 <div className="info-section-buttons--wrapper">
-                  <CmsButton
-                    variant="delete"
-                    size="large"
-                    onClick={handleUnassignClick}
-                  >
+                  <CmsButton variant="delete" size="large" onClick={handleUnassignClick}>
                     배정 취소
                   </CmsButton>
                   <CmsButton
-                    variant="primary"
+                    variant="secondary"
                     size="large"
-                    className="participating-institutions-section__btn-approve"
                     onClick={() => {
                       if (addAssignOptions.length === 0) {
                         return
@@ -949,6 +959,10 @@ export function ParticipatingInstructorFullpageView({
                   >
                     추가 배정
                   </CmsButton>
+                  <ExcelButton
+                    onClick={exportAssignedSchoolsExcel}
+                    loading={isAssignedSchoolsExcelExporting}
+                  />
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap">
@@ -966,7 +980,7 @@ export function ParticipatingInstructorFullpageView({
                     rowKey="id"
                     size="middle"
                     pagination={false}
-                    scroll={{ x: 1280 }}
+                    scroll={{ x: 1200 }}
                     rowSelection={{
                       columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                       selectedRowKeys: selectedAssignedSchoolKeys,
@@ -982,22 +996,17 @@ export function ParticipatingInstructorFullpageView({
             <div className="school-detail-fullpage-view__instructor-section school-detail-fullpage-view__instructor-section--waiting">
               <div className="table-header-actions">
                 <div className="table-header-title--wrapper">
-                  <span className="table-title">
-                    배정 대기 학교 목록
-                  </span>
-                  <span className="table-description">
-                    {waitingSchools.length}건
-                  </span>
+                  <span className="table-title">배정 대기 기관 목록</span>
+                  <span className="table-description">{waitingSchools.length}건</span>
                 </div>
                 <div className="info-section-buttons--wrapper">
-                  <CmsButton
-                    variant="primary"
-                    size="large"
-                    className="participating-institutions-section__btn-approve"
-                    onClick={handleSelectAssignClick}
-                  >
+                  <CmsButton variant="secondary" size="large" onClick={handleSelectAssignClick}>
                     선택 배정
                   </CmsButton>
+                  <ExcelButton
+                    onClick={exportWaitingSchoolsExcel}
+                    loading={isWaitingSchoolsExcelExporting}
+                  />
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap">
@@ -1015,19 +1024,19 @@ export function ParticipatingInstructorFullpageView({
                     rowKey="id"
                     size="middle"
                     pagination={false}
-                    scroll={{ x: 1180 }}
+                    scroll={{ x: 1300 }}
                     rowSelection={{
                       columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                       selectedRowKeys: selectedWaitingSchoolKeys,
                       onChange: keys => setSelectedWaitingSchoolKeys(keys),
                       getCheckboxProps: record => ({
-                        disabled: record.assignmentStatus === 'assigned',
+                        disabled: record.assignmentStatus !== 'waiting',
                       }),
                     }}
                     columns={waitingSchoolColumns}
                     dataSource={waitingSchools}
                     rowClassName={record =>
-                      record.assignmentStatus === 'assigned'
+                      record.assignmentStatus !== 'waiting'
                         ? 'school-detail-fullpage-view__waiting-row--assigned'
                         : ''
                     }
@@ -1122,18 +1131,37 @@ export function ParticipatingInstructorFullpageView({
             </ContentModal>
           </div>
         )}
-        {effectiveTab === 'posts' && (
-          <div className="program-detail-fullpage-modal__info-tab participating-instructor-fullpage-view__posts-tab-wrap">
-            <EnrollmentProgramDetailPostsTab
+        {effectiveTab === 'lectureReports' && (
+          <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
+            <ParticipatingInstructorLectureReportsSection
+              instructor={mergedInstructor}
               program={program}
-              showWriteButtonInSection={false}
-              writeModalOpen={postWriteModalOpen}
-              onWriteModalOpenChange={setPostWriteModalOpen}
+            />
+          </div>
+        )}
+        {effectiveTab === 'settlement' && (
+          <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
+            <ParticipatingInstructorSettlementSection
+              instructor={d}
+              assignedSchools={assignedSchools}
             />
           </div>
         )}
       </div>
       {personalInfoRevealModal}
+      <ActivityCertificateIssuancePreviewModal
+        open={activityCertPreviewOpen}
+        onClose={() => setActivityCertPreviewOpen(false)}
+        instructor={mergedInstructor}
+        program={program}
+      />
+      <ParticipatingInstructorActivityWithdrawModal
+        open={activityWithdrawModalOpen}
+        instructorName={mergedInstructor.instructorName}
+        scheduleOptions={activityWithdrawScheduleOptions}
+        onCancel={handleCancelActivityWithdraw}
+        onConfirm={handleConfirmActivityWithdraw}
+      />
     </div>
   )
 }

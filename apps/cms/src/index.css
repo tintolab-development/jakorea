@@ -172,6 +172,7 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
   font-weight: 700;
   line-height: 140%; /* 28px */
   padding: 0 10px 0 8px;
+  padding-right: 0;
 }
 
 .table-description {

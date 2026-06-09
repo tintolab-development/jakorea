@@ -39,6 +39,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [Schedule / calendar UX](./design/schedule-calendar-ux.md)  
 - [Calendar sub-right list](./design/calendar-sub-right-list.md) — `.calendar-list` / `.calendar-list-item` 공통 shell·mint hover  
 - [Cross table (행·열 교차 격자)](./design/cross-table.md) — `CrossTable` (`@/shared/ui/cross-table`)  
+- **[DetailInfoForm 다블록 레이아웃](./design/detail-info-form-layout.mdc)** — `title` + `hideHeader` 2개, `applicant-instructor-basic-info`  
 - [Table td divider (값 셀 `|` 금지)](./design/table-td-divider.mdc) — `withProgramDetailTdDivider`, `DetailInfoForm.TdDivider`  
 - [Design requests](./design/design-requests.md)  
 
@@ -97,6 +98,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [UJAT 기관 신청 목록](./process/ujat-institution-application-list-table-spec.md) — 진행일 열·희망일 `O`·선택 임시 배정
 - [UJAT 신청 기관 임시 배정](./process/ujat-institution-schedule-assign-spec.md) — `inst_schedule_assign` 날짜별 배정·배정값 산정
 - [UJAT 참여 봉사자 상세 — 교육 배정 및 진행 현황](./process/volunteer-assignment-tab-spec.md) — 역할 드롭다운·출결 담당 1명·활동 포기 행 오버레이
+- [일반 프로그램 — 참여 강사 상세 · 활동 포기](./process/participating-instructor-activity-withdraw-spec.md) — 기관 사유 포기·실적 반영(중단일까지) API 연동 규칙
 - Other `process/*` files — feature-specific UI specs (English).  
 
 ---

@@ -4,6 +4,15 @@
   gap: 10px;
 }
 
+/* h3 기본 margin + info-tab .info-section-title margin-bottom 과 flex gap 중복 방지 */
+.applicant-admin-comment-section > .info-section-title {
+  margin: 0;
+}
+
+.program-detail-fullpage-modal__info-tab .applicant-admin-comment-section > .info-section-title {
+  margin-bottom: 0;
+}
+
 .applicant-admin-comment-section__edit-wrap {
   box-sizing: border-box;
   display: flex;

@@ -276,63 +276,6 @@
   gap: 32px;
 }
 
-/* 배정 취소·추가 배정·선택 배정: 120×40 고정 */
-.school-detail-fullpage-view__instructor-tab
-  .info-section-buttons--wrapper
-  .cms-button.cms-button--large {
-  box-sizing: border-box;
-  width: 120px;
-  min-width: 120px;
-  max-width: 120px;
-  height: 40px;
-  min-height: 40px;
-  max-height: 40px;
-  padding: 0 8px;
-}
-
-/* 추가 배정·선택 배정 버튼 스펙 */
-.school-detail-fullpage-view__btn-assign.cms-button.ant-btn.ant-btn-primary {
-  display: flex !important;
-  box-sizing: border-box !important;
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-  height: 40px !important;
-  min-height: 40px !important;
-  max-height: 40px !important;
-  /* height 40px 고정 유지: 세로 패딩은 0, 가로 패딩만 31px 적용 */
-  padding: 0 31px !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  align-items: center !important;
-  gap: 10px !important;
-  flex-shrink: 0 !important;
-  border-radius: 6px !important;
-  border: 1px solid var(--JA-mint-01, #01a1af) !important;
-  background: var(
-    --color-bg-mint,
-    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
-    #fff
-  ) !important;
-  color: var(--JA-mint-01, #01a1af) !important;
-  line-height: 1 !important;
-  overflow: hidden !important;
-}
-
-.school-detail-fullpage-view__btn-assign.cms-button.ant-btn.ant-btn-primary:hover:not(:disabled),
-.school-detail-fullpage-view__btn-assign.cms-button.ant-btn.ant-btn-primary:focus-visible:not(
-    :disabled
-  ),
-.school-detail-fullpage-view__btn-assign.cms-button.ant-btn.ant-btn-primary:active:not(:disabled) {
-  border: 1px solid var(--JA-mint-01, #01a1af) !important;
-  background: var(
-    --color-bg-mint,
-    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
-    #fff
-  ) !important;
-  color: var(--JA-mint-01, #01a1af) !important;
-}
-
 /* 테이블 헤더(타이틀 영역)와 테이블 간 gap 16px */
 .school-detail-fullpage-view__instructor-tab .table-header-actions {
   margin-bottom: var(--spacing-16);

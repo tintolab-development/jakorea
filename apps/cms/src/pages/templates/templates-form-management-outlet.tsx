@@ -1,8 +1,10 @@
 /**
  * `/templates/form-management` 전용 — 라우터 `<Outlet />`과 동기화.
- * `TemplateWritingPreviewProvider`는 상위 `TemplatesRouteLayout`에서 한 번만 감싼다.
+ * `TemplateWritingPreviewProvider`는 lazy `TemplateListPage`의 Outlet 래퍼와
+ * 이 outlet(동기 import) 양쪽에 둔다 — RR7에서 layout lazy 전 leaf가 먼저 마운트될 때 대비.
  */
 import type { ReactElement } from 'react'
+import { TemplateWritingPreviewProvider } from '@/features/template/context/template-writing-preview-context'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import TemplateFormTab from './template-form-tab'
 import { IssuanceFormTab } from './issuance-form-tab'
@@ -24,5 +26,5 @@ export default function TemplatesFormManagementOutlet() {
   } else {
     content = <TemplateFormTab />
   }
-  return content
+  return <TemplateWritingPreviewProvider>{content}</TemplateWritingPreviewProvider>
 }

@@ -5,6 +5,7 @@
 import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import type { InstructorRoleKey } from '../model/school-detail-types'
+import { buildParticipatingSchoolSessionLines } from './participating-school-session-display'
 
 const MOCK_REQUIRED_INSTRUCTOR_SLOTS = 4
 
@@ -19,13 +20,6 @@ function pick<T>(arr: T[], seed: number): T {
 }
 
 const ASSIGNED_DISTANCES = ['3km', '5km', '7km', '4km', '6km', '8km']
-const ASSIGNED_DATES = ['2026. 01. 09(금)', '2026. 01. 10(토)', '2026. 01. 11(일)']
-const ASSIGNED_TIMES = [
-  '1교시 (9:20 ~ 10:10)',
-  '2교시 (10:20 ~ 11:10)',
-  '3교시 (11:20 ~ 12:10)',
-]
-const ASSIGNED_SESSIONS = ['1차시', '2차시', '3차시', '4차시']
 
 const WAITING_ASSIGNMENT_STATUSES = [
   'waiting',
@@ -37,13 +31,6 @@ const WAITING_ASSIGNMENT_STATUSES = [
   'waiting',
 ] as const
 
-const WAITING_HOPE_DATES = ['2026. 01. 16(금)', '2026. 01. 17(토)', '2026. 01. 18(일)']
-const WAITING_HOPE_TIMES = [
-  '1교시 (9:20 ~ 10:10)',
-  '2교시 (10:20 ~ 11:10)',
-  '3교시 (11:20 ~ 12:10)',
-]
-const WAITING_HOPE_SESSIONS = ['1차시', '2차시', '3차시', '4차시']
 const WAITING_DISTANCES = ['2km', '4km', '6km', '5km', '7km', '32km', '12km']
 
 export type InstructorWaitingAssignmentStatus = 'waiting' | 'cancelled' | 'assigned'
@@ -65,25 +52,22 @@ export interface InstructorAssignedSchoolRow {
   no: number
   role: InstructorRoleKey
   schoolName: string
+  educationGrade: string
   region: string
   distanceFromHome: string
-  assignedDate: string
-  assignedTime: string
-  assignedSession: string
-  instructorAssignmentLabel: string
+  educationScheduleLines: string[]
 }
 
 export interface InstructorWaitingSchoolRow {
   id: string
   no: number
   schoolName: string
+  desiredGrade: string
   region: string
   distanceFromHome: string
+  educationScheduleLines: string[]
   assignmentStatus: InstructorWaitingAssignmentStatus
-  hopeDate: string
-  hopeTime: string
-  hopeSession: string
-  instructorCountLabel: string
+  assignedInstructorCountLabel: string
 }
 
 function countInstructorsAtSchool(
@@ -93,16 +77,29 @@ function countInstructorsAtSchool(
   return instructorList.filter(r => r.schoolName === schoolName).length
 }
 
-function instructorSlotsLabel(schoolName: string, instructorList: ParticipatingInstructorRow[]): string {
+function instructorCountLabel(schoolName: string, instructorList: ParticipatingInstructorRow[]): string {
   const n = countInstructorsAtSchool(schoolName, instructorList)
-  return `${n}/${MOCK_REQUIRED_INSTRUCTOR_SLOTS}`
+  return `${n}명`
+}
+
+function scheduleLinesForSchool(school: ParticipatingSchoolRow, rowSeed: number, idx: number): string[] {
+  const fromSessions = buildParticipatingSchoolSessionLines(school.sessions)
+  if (fromSessions.length > 0) return fromSessions
+
+  const fallbackDates = ['2026. 01. 09(금)', '2026. 01. 10(토)', '2026. 01. 11(일)']
+  const fallbackTimes = ['09:20 ~ 11:10', '09:20 ~ 11:20', '10:20 ~ 11:10']
+  const fallbackSessions = [1, 2, 3, 4]
+  const date = pick(fallbackDates, rowSeed % 3)
+  const time = pick(fallbackTimes, idx % 3)
+  const round = pick(fallbackSessions, idx % 4)
+  return [`${date} ${time} | ${round}차시`]
 }
 
 /** 배정된 학교 3건 목업: 강사의 schoolName 학교 필수 포함 + 나머지 2교 */
 export function buildInitialAssignedSchoolRows(
   instructor: ParticipatingInstructorRow,
   schools: ParticipatingSchoolRow[],
-  instructorList: ParticipatingInstructorRow[]
+  _instructorList: ParticipatingInstructorRow[]
 ): InstructorAssignedSchoolRow[] {
   if (schools.length === 0) return []
 
@@ -123,12 +120,10 @@ export function buildInitialAssignedSchoolRows(
       no: pickedSchools.length - idx,
       role: idx === 0 ? ('lead' satisfies InstructorRoleKey) : ('assistant' satisfies InstructorRoleKey),
       schoolName: school.schoolName,
+      educationGrade: school.educationGrade,
       region: school.region,
       distanceFromHome: pick(ASSIGNED_DISTANCES, rowSeed + idx),
-      assignedDate: pick(ASSIGNED_DATES, rowSeed % 3),
-      assignedTime: pick(ASSIGNED_TIMES, idx % 3),
-      assignedSession: pick(ASSIGNED_SESSIONS, idx % 4),
-      instructorAssignmentLabel: instructorSlotsLabel(school.schoolName, instructorList),
+      educationScheduleLines: scheduleLinesForSchool(school, rowSeed, idx),
     }
   })
 }
@@ -154,13 +149,12 @@ export function buildWaitingSchoolRows(
         id: school.id,
         no: n - idx,
         schoolName: school.schoolName,
+        desiredGrade: school.educationGrade,
         region: school.region,
         distanceFromHome: pick(WAITING_DISTANCES, rowSeed + idx),
+        educationScheduleLines: scheduleLinesForSchool(school, rowSeed, idx),
         assignmentStatus: pick([...WAITING_ASSIGNMENT_STATUSES], rowSeed + idx),
-        hopeDate: pick(WAITING_HOPE_DATES, idx % 3),
-        hopeTime: pick(WAITING_HOPE_TIMES, idx % 3),
-        hopeSession: pick(WAITING_HOPE_SESSIONS, idx % 4),
-        instructorCountLabel: instructorSlotsLabel(school.schoolName, instructorList),
+        assignedInstructorCountLabel: instructorCountLabel(school.schoolName, instructorList),
       }
     })
   )
@@ -169,7 +163,7 @@ export function buildWaitingSchoolRows(
 export function schoolRowToAssignedRow(
   school: ParticipatingSchoolRow,
   instructor: ParticipatingInstructorRow,
-  instructorList: ParticipatingInstructorRow[],
+  _instructorList: ParticipatingInstructorRow[],
   no: number,
   role: InstructorRoleKey,
   idx: number
@@ -180,12 +174,10 @@ export function schoolRowToAssignedRow(
     no,
     role,
     schoolName: school.schoolName,
+    educationGrade: school.educationGrade,
     region: school.region,
     distanceFromHome: pick(ASSIGNED_DISTANCES, rowSeed + idx),
-    assignedDate: pick(ASSIGNED_DATES, rowSeed % 3),
-    assignedTime: pick(ASSIGNED_TIMES, idx % 3),
-    assignedSession: pick(ASSIGNED_SESSIONS, idx % 4),
-    instructorAssignmentLabel: instructorSlotsLabel(school.schoolName, instructorList),
+    educationScheduleLines: scheduleLinesForSchool(school, rowSeed, idx),
   }
 }
 
@@ -201,13 +193,12 @@ export function createWaitingRowForSchool(
     id: school.id,
     no,
     schoolName: school.schoolName,
+    desiredGrade: school.educationGrade,
     region: school.region,
     distanceFromHome: pick(WAITING_DISTANCES, rowSeed),
+    educationScheduleLines: scheduleLinesForSchool(school, rowSeed, 0),
     assignmentStatus,
-    hopeDate: pick(WAITING_HOPE_DATES, rowSeed % 3),
-    hopeTime: pick(WAITING_HOPE_TIMES, rowSeed % 3),
-    hopeSession: pick(WAITING_HOPE_SESSIONS, rowSeed % 4),
-    instructorCountLabel: instructorSlotsLabel(school.schoolName, instructorList),
+    assignedInstructorCountLabel: instructorCountLabel(school.schoolName, instructorList),
   }
 }
 

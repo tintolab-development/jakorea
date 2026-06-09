@@ -42,22 +42,14 @@ import { participatingInstitutionsFilterFields } from '../../../lib/participatin
 import { programUsesTextbook } from '../../../lib/participating-institution-textbook'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
+import { formatParticipatingSchoolSessionLine } from '../../../lib/participating-school-session-display'
 import './participating-institutions-section.css'
 
 const textbookStatusKeys: TextbookStatusKey[] = ['preparing', 'shipping', 'delivered']
 
-function padTimePart(part: string): string {
-  const trimmed = part.trim()
-  const [h, m = '00'] = trimmed.split(':')
-  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`
-}
-
 /** 스크린샷 형식: YYYY. MM. DD(요일) HH:mm ~ HH:mm | N차시 */
 function formatSessionLine(s: ParticipatingSchoolSession): string {
-  const datePart = s.date.replace(/\./g, '. ')
-  const [startRaw, endRaw] = s.timeRange.split('~')
-  const timePart = `${padTimePart(startRaw)} ~ ${padTimePart(endRaw ?? startRaw)}`
-  return `${datePart}(${s.dayOfWeek}) ${timePart} | ${s.round}차시`
+  return formatParticipatingSchoolSessionLine(s)
 }
 
 export interface ParticipatingInstitutionsSectionProps {

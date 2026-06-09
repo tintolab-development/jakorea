@@ -75,6 +75,13 @@ Show history of status steps with `items` + `statusLabels` / `statusColors`.
 
 ---
 
+## 8. `DetailInfoForm` 다블록 기본 정보
+
+상태 블록 + 프로필 블록 등 **연속 격자**는 Form 2개(`title` / `hideHeader`) + `applicant-instructor-basic-info` 래퍼.  
+로컬 gap·border CSS 추가 금지. → [detail-info-form-layout.mdc](../design/detail-info-form-layout.mdc)
+
+---
+
 ## Common compositions
 
 - **Status + next action:** `StatusDisplay` + conditional `SingleCTA` from API `nextAction`.  

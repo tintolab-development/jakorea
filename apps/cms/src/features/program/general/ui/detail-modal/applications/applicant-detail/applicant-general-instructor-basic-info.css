@@ -2,68 +2,10 @@
  * 일반 프로그램 — 강사 유형 신청 상세
  */
 
-.applicant-general-instructor-basic-info.applicant-institution-basic-info {
-  margin-top: 0;
-}
-
 .applicant-general-instructor-basic-info {
   display: flex;
   flex-direction: column;
   gap: 32px;
-}
-
-.applicant-general-instructor-basic-info .applicant-institution-basic-info__section {
-  margin-top: 0;
-}
-
-.applicant-general-instructor-basic-info .applicant-institution-basic-info__basic-info-fields {
-  gap: 16px;
-}
-
-.applicant-general-instructor-basic-info__approval-block {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-/* 프로그램 승인 현황 + 강의비 책정 기준 — 하나의 테이블 블록으로 연결 */
-.applicant-general-instructor-basic-info__approval-block:has(
-    .applicant-general-instructor-basic-info__post-approval-wrap
-  ) {
-  border: 1px solid #d4d4d4;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #fff;
-}
-
-.applicant-general-instructor-basic-info__approval-block:has(
-    .applicant-general-instructor-basic-info__post-approval-wrap
-  )
-  > .applicant-institution-basic-info__table-wrap {
-  border: none;
-  border-radius: 0;
-}
-
-.applicant-general-instructor-basic-info__approval-block:has(
-    .applicant-general-instructor-basic-info__post-approval-wrap
-  )
-  > .applicant-institution-basic-info__table-wrap:first-child
-  .applicant-institution-basic-info__table
-  tbody
-  tr:last-child
-  .applicant-institution-basic-info__cell {
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.applicant-general-instructor-basic-info__post-approval-wrap {
-  margin-top: 0;
-}
-
-.applicant-general-instructor-basic-info__post-approval-table
-  tbody
-  tr:first-child
-  .applicant-institution-basic-info__cell {
-  border-top: none;
 }
 
 .applicant-general-instructor-basic-info__name-badge {
@@ -156,27 +98,18 @@
   line-height: 150%;
 }
 
-/* 소속 행 — 배지 활성화(드롭다운 열림) 시에도 행 높이 고정 */
+/* 소속 필드 — 재직 StatusDropdownCell 열림 시에도 행 높이·오버플로 고정 */
 .applicant-general-instructor-basic-info
-  .applicant-institution-basic-info__table
-  tbody
-  tr:has(.applicant-general-instructor-basic-info__employment-dropdown),
+  .detail-info-form__field:has(.applicant-general-instructor-basic-info__employment-dropdown),
 .applicant-general-instructor-basic-info
-  .applicant-institution-basic-info__table
-  tbody
-  tr:has(.status-dropdown-cell__status-trigger--open) {
-  height: 56px;
+  .detail-info-form__field:has(.status-dropdown-cell__status-trigger--open) {
   min-height: 56px;
-  max-height: 56px;
 }
 
 .applicant-general-instructor-basic-info
-  .applicant-institution-basic-info__table
-  tbody
-  tr:has(.applicant-general-instructor-basic-info__employment-dropdown)
-  .applicant-institution-basic-info__cell {
+  .detail-info-form__field:has(.applicant-general-instructor-basic-info__employment-dropdown)
+  .detail-info-form__field-content {
   overflow: visible;
-  vertical-align: middle;
 }
 
 .applicant-general-instructor-basic-info__employment-badge--active.app-status-badge {

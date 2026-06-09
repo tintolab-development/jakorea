@@ -5,6 +5,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { TemplateWritingPreviewProvider } from '@/features/template/context/template-writing-preview-context'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { TemplateCreateModal } from '@/features/template/ui/modal/template-create-modal'
 import './template-list-page.css'
@@ -156,8 +157,10 @@ export function TemplateListPage() {
           )}
         </>
       )}
-      {/* 자식 라우트(`form-management` 등)는 반드시 Outlet으로만 마운트 — 인라인 중복 시 Provider 밖에서 렌더될 수 있음(RR7) */}
-      <Outlet />
+      {/* 자식 라우트(`form-management` 등) — Provider는 lazy 페이지 내부 Outlet 직전에 둔다 (RR7 + Suspense) */}
+      <TemplateWritingPreviewProvider>
+        <Outlet />
+      </TemplateWritingPreviewProvider>
     </>
   )
 }
