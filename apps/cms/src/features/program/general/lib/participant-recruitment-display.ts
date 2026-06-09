@@ -19,8 +19,11 @@ import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
   GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID,
 } from '@/features/program/general/lib/detail-common-info-display'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 
 export type GeneralProgramParticipantRecruitmentDisplay = {
+  /** 개인 프로그램 — 면접 유무 표시 (없으면 undefined) */
+  interviewEnabledLabel?: string
   announcementPublishedLabel: string
   preEducationNoticeLabel: string
   certificateIssuanceLabel: string
@@ -122,7 +125,20 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
         ? '제공'
         : '미제공'
 
+  const interviewEnabled =
+    program.generalParticipantInterviewEnabled ??
+    info?.interviewEnabled ??
+    undefined
+  const interviewEnabledLabel = isGeneralIndividualProgram(program)
+    ? interviewEnabled === true
+      ? '면접 있음'
+      : interviewEnabled === false
+        ? '면접 없음'
+        : '-'
+    : undefined
+
   return {
+    interviewEnabledLabel,
     announcementPublishedLabel: needOrNotLabel(
       info?.announcementPublished,
       '게시',

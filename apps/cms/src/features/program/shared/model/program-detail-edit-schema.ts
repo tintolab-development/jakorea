@@ -104,6 +104,7 @@ const programDetailEditSchemaBase = z.object({
   participantRecruitmentMaxClassCount: z.number().min(0).optional(),
   participantRecruitmentMaxScheduleCount: z.number().min(0).optional(),
   participantRecruitmentMaxSessionsPerDay: z.number().min(0).optional(),
+  participantRecruitmentInterviewEnabled: z.enum(['yes', 'no']).optional(),
   // 강사 모집
   instructorRecruitmentAnnouncementPublished: z.enum(['published', 'unpublished']).optional(),
   instructorCapacity: z.number().min(0).optional(),
@@ -244,6 +245,15 @@ export function programToDetailEditValues(
       program.generalCommonInfo?.participantRecruitmentInfo?.maxScheduleCount,
     participantRecruitmentMaxSessionsPerDay:
       program.generalCommonInfo?.participantRecruitmentInfo?.maxSessionsPerDay,
+    participantRecruitmentInterviewEnabled: (() => {
+      const v = program.generalParticipantInterviewEnabled
+      if (v === true) return 'yes' as const
+      if (v === false) return 'no' as const
+      const nested = program.generalCommonInfo?.participantRecruitmentInfo?.interviewEnabled
+      if (nested === true) return 'yes' as const
+      if (nested === false) return 'no' as const
+      return undefined
+    })(),
     instructorRecruitmentAnnouncementPublished: announcementPublishedToFormValue(
       program.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublished
     ),
@@ -393,6 +403,12 @@ export function detailEditValuesToProgramPatch(
         maxSessionsPerDay:
           values.participantRecruitmentMaxSessionsPerDay ??
           existing.generalCommonInfo?.participantRecruitmentInfo?.maxSessionsPerDay,
+        interviewEnabled:
+          values.participantRecruitmentInterviewEnabled === 'yes'
+            ? true
+            : values.participantRecruitmentInterviewEnabled === 'no'
+              ? false
+              : existing.generalCommonInfo?.participantRecruitmentInfo?.interviewEnabled,
       },
       instructorRecruitmentInfo: {
         ...existing.generalCommonInfo?.instructorRecruitmentInfo,
@@ -413,6 +429,12 @@ export function detailEditValuesToProgramPatch(
         : values.volunteerRecruitmentInterviewEnabled === 'no'
           ? false
           : existing.generalVolunteerInterviewEnabled,
+    generalParticipantInterviewEnabled:
+      values.participantRecruitmentInterviewEnabled === 'yes'
+        ? true
+        : values.participantRecruitmentInterviewEnabled === 'no'
+          ? false
+          : existing.generalParticipantInterviewEnabled,
     instructorCapacity: values.instructorCapacity ?? existing.instructorCapacity,
     instructorApplicationStartDate:
       values.instructorApplicationStartDate ?? existing.instructorApplicationStartDate,
