@@ -51,7 +51,8 @@ import {
   DeleteGuideModal,
   buildSchoolCancelApprovalMessageLines,
 } from '../../manager-delete-guide-modal'
-import './instructor-assignment-role-tag.css'
+import { EditableStatusBadge } from '@/shared/components'
+import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import './school-detail-modal.css'
 
 const { TextArea } = Input
@@ -269,15 +270,10 @@ export function SchoolDetailModal({
         width: 100,
         align: 'center',
         render: (r: InstructorRoleKey) => (
-          <span
-            className={
-              r === 'lead'
-                ? 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--lead'
-                : 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--assistant'
-            }
-          >
-            {INSTRUCTOR_ROLE_LABELS[r]}
-          </span>
+          <EditableStatusBadge
+            label={INSTRUCTOR_ROLE_LABELS[r]}
+            tone={getInstructorRoleBadgeTone(r)}
+          />
         ),
       },
       {
