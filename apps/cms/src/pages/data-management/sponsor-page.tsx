@@ -12,7 +12,10 @@ import { sponsorManagementTablePageConfig } from '@/features/sponsor/model/spons
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
+  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
+  StatusDropdownCell,
+} from '@/shared/components/status-dropdown-cell'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { EMPTY_TABLE_PAGE_CONTEXT } from '@/shared/components/table-system/model/use-table-page'
@@ -252,14 +255,17 @@ export default function SponsorPage() {
       {
         title: '후원 상태',
         key: 'sponsorshipStatus',
-        width: 150,
+        width: 116,
         align: 'center',
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
+        onCell: () => ({
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+        }),
         render: (_: unknown, r: SponsorManagementRow) => (
           <StatusDropdownCell<SponsorSponsorshipStatus>
             status={r.sponsorshipStatus ?? 'active'}
             statusOptions={SPONSORSHIP_STATUS_OPTIONS}
-            renderBadge={s => <SponsorSponsorshipStatusBadge status={s} variant="table" />}
+            renderBadge={s => <SponsorSponsorshipStatusBadge status={s} />}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={
               canWrite
@@ -271,6 +277,7 @@ export default function SponsorPage() {
             }
             isOpen={openSponsorshipDropdownId === r.id}
             onOpenChange={open => setOpenSponsorshipDropdownId(open ? r.id : null)}
+            tagLayout="tag100"
           />
         ) },
       {
