@@ -79,12 +79,7 @@ function AffiliationEmploymentStatusField({
       <StatusDropdownCell<SchoolTeacherEmploymentStatus>
         status={employmentStatus}
         statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
-        renderBadge={status => (
-          <SchoolTeacherEmploymentStatusBadge
-            status={status}
-            classNamePrefix="applicant-general-instructor-basic-info__employment-badge"
-          />
-        )}
+        renderBadge={status => <SchoolTeacherEmploymentStatusBadge status={status} />}
         isItemDisabled={(cur, opt) => cur === opt}
         onChange={handleEmploymentStatusChange}
         isOpen={employmentDropdownOpen}
