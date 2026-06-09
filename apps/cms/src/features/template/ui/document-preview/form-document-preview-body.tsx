@@ -52,7 +52,7 @@ export function FormDocumentPreviewBody({
   const getGapBefore = (paragraph: WritingFormParagraph, index: number) => {
     if (index === 0 || paragraphGapPx == null) return undefined
     if (typeof paragraphGapPx === 'number') return paragraphGapPx
-    return paragraphGapPx(paragraph, index, visibleParagraphs)
+    return paragraphGapPx(paragraph, index, visibleParagraphs.slice(0, index))
   }
 
   return (

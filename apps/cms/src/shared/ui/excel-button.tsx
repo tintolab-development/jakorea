@@ -12,7 +12,7 @@ export type ExcelButtonProps = Omit<
 >
 
 export const ExcelButton = forwardRef<HTMLButtonElement, ExcelButtonProps>(
-  ({ type = 'button', ...rest }, ref) => (
+  ({ type = 'button', className, ...rest }, ref) => (
     <CmsButton
       ref={ref}
       type={type}
@@ -20,6 +20,7 @@ export const ExcelButton = forwardRef<HTMLButtonElement, ExcelButtonProps>(
       size="large"
       width={180}
       icon={<DownloadOutlined />}
+      className={['excel-button', className].filter(Boolean).join(' ')}
       {...rest}
     >
       엑셀 다운로드

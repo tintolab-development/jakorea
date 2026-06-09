@@ -26,23 +26,17 @@ export interface LectureReportPreviewContext {
   row: LectureReportPreviewRowContext
 }
 
-const SESSION_MOCK_CONTENT: Array<{ intro: string; body: string; outro: string }> = [
-  {
-    intro:
-      '오늘 수업의 목표와 경제 개념을 간단히 소개하는 아이스브레이킹 활동을 진행했습니다. 학생들이 흥미를 가질 수 있도록 일상 속 경제 사례를 이야기 나누며 수업에 대한 기대감을 높였습니다.',
-    body:
-      '경제의 기본 개념인 수요와 공급, 가격 결정 원리를 설명했습니다. 학생들이 직접 시장 상황을 체험할 수 있는 모의 경제 게임을 실시하여 이론을 실습으로 연결했습니다.',
-    outro:
-      '오늘 배운 내용을 정리하고 핵심 개념을 복습했습니다. 학생들의 질의응답 시간을 가진 후, 다음 차시 예고와 함께 과제를 안내했습니다.',
-  },
-  {
-    intro:
-      '지난 차시 복습을 통해 학습 연속성을 확보하고, 이번 차시 주제인 저축과 투자의 차이를 소개했습니다.',
-    body:
-      '저축의 종류와 이자율의 개념을 학습하고, 간단한 복리 계산 실습을 진행했습니다. 투자의 위험성과 수익성을 비교 분석하는 그룹 활동을 진행했습니다.',
-    outro:
-      '저축과 투자의 장단점을 비교 정리했습니다. 학생들이 배운 내용을 바탕으로 본인만의 저축 계획을 세워보는 활동지를 배포하고 마무리했습니다.',
-  },
+export function buildLectureReportPreviewContext(
+  instructor: ParticipatingInstructorRow,
+  program: Program | null | undefined,
+  row: LectureReportPreviewRowContext
+): LectureReportPreviewContext {
+  return { instructor, program, row }
+}
+
+const EDUCATION_CONTENT_MOCK = [
+  '경제의 기본 개념인 수요와 공급, 가격 결정 원리를 중심으로 학습했습니다. 학생들이 일상 속 경제 사례와 연결해 이해할 수 있도록 설명했습니다.',
+  '교재 활동과 모의 경제 게임, 시각 자료를 활용해 강의를 진행했습니다. 그룹 토론과 질의응답 시간을 통해 학습 내용을 실습으로 연결했습니다.',
 ]
 
 const EDUCATION_OPERATION_MOCK = [
@@ -120,14 +114,12 @@ function fillProgramProgressParagraph(
 
 function fillSessionPlanParagraph(
   paragraph: WritingFormParagraph,
-  sessionIndex: number
+  _sessionIndex: number
 ): WritingFormParagraph {
   if (paragraph.kind !== 'single_item' || paragraph.variant !== 'session_plan_short_essay') {
     return paragraph
   }
   const p = paragraph as SessionPlanShortEssayParagraph
-  const content = SESSION_MOCK_CONTENT[sessionIndex % SESSION_MOCK_CONTENT.length]!
-  const itemCount = p.items?.length ?? 0
 
   if (p.id === LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.educationOperation) {
     const updatedItems = (p.items ?? []).map((item, index) => ({
@@ -135,6 +127,14 @@ function fillSessionPlanParagraph(
       bodyText: EDUCATION_OPERATION_MOCK[index] ?? EDUCATION_OPERATION_MOCK[0]!,
     }))
     return { ...p, items: updatedItems }
+  }
+
+  if (p.id === LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.educationContent) {
+    const updatedItems = (p.items ?? []).map((item, index) => ({
+      ...item,
+      bodyText: EDUCATION_CONTENT_MOCK[index] ?? EDUCATION_CONTENT_MOCK[0]!,
+    }))
+    return { ...p, items: updatedItems, bodyText: EDUCATION_CONTENT_MOCK[0]! }
   }
 
   if (p.id === LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS.overallEvaluation) {
@@ -145,24 +145,11 @@ function fillSessionPlanParagraph(
     return { ...p, items: updatedItems, bodyText: OVERALL_EVALUATION_MOCK }
   }
 
-  if (itemCount >= 3) {
-    const updatedItems = (p.items ?? []).map((item, index) => {
-      if (index === 0) return { ...item, bodyText: content.intro }
-      if (index === 1) return { ...item, bodyText: content.body }
-      return { ...item, bodyText: content.outro }
-    })
-    return { ...p, items: updatedItems, bodyText: content.intro }
-  }
-
   return p
 }
 
 export function buildLectureReportFilledDraft(ctx: LectureReportPreviewContext): WritingFormDraft {
   const programTitle = resolveProgramTitle(ctx.program)
-  const sessionIndex = Math.max(0, Number.parseInt(
-    parseEducationScheduleLabel(ctx.row.educationScheduleLabel).sessionIndex,
-    10
-  ) - 1)
 
   const base = normalizeWritingFormDraft(createLectureReportIssuanceDraft())
   return {
@@ -170,7 +157,7 @@ export function buildLectureReportFilledDraft(ctx: LectureReportPreviewContext):
     paragraphs: base.paragraphs.map(paragraph => {
       const withTitle = fillSurveyTitleParagraph(paragraph, programTitle)
       const withProgress = fillProgramProgressParagraph(withTitle, ctx)
-      return fillSessionPlanParagraph(withProgress, sessionIndex)
+      return fillSessionPlanParagraph(withProgress, 0)
     }),
   }
 }

@@ -406,3 +406,12 @@
   color: var(--default-BK, #3d3d3d);
   opacity: 0.6;
 }
+
+/* 강의보고서 관리 — 강의보고서 열 버튼 중앙 정렬 */
+.school-detail-fullpage-view__instructor-section
+  .participating-instructor-lecture-reports-section__report-cell-inner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}

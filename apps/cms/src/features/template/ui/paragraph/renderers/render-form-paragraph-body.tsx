@@ -171,7 +171,7 @@ export function renderFormParagraphBody(
   p: WritingFormParagraph,
   updateParagraph: FormUpdateParagraph,
   isParagraphSelected: boolean,
-  editorKind: FormEditorKind = 'survey',
+  _editorKind: FormEditorKind = 'survey',
   options?: RenderFormParagraphBodyOptions
 ) {
   const paragraphInteractionMode = options?.paragraphInteractionMode ?? 'authoring'
@@ -197,19 +197,17 @@ export function renderFormParagraphBody(
           <ExplanationSurveyPeriodReadonly
             startAt={p.startAt}
             endAt={p.endAt}
-            periodLabel={editorKind === 'survey' ? '설문 기간' : undefined}
+            periodLabel="작성 기간"
           />
         )
       }
-      const titlePeriodEditMode = structureLocked
-        ? paragraphInteractionMode === 'user'
-        : paragraphInteractionMode === 'user' || isParagraphSelected
+      const titlePeriodEditMode =
+        paragraphInteractionMode === 'user' || isParagraphSelected
       return (
         <ExplanationTitle
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={titlePeriodEditMode}
-          periodLabel={editorKind === 'survey' ? '설문 기간' : undefined}
         />
       )
     case 'user_profile':

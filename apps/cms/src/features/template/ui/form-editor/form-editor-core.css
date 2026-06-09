@@ -231,6 +231,11 @@
   opacity: 0.6;
 }
 
+/* 잠금 안내 → 작성 시작일(제목형 기간 설정) — 20px */
+.form-editor-right-panel__form-items--after-structure-locked {
+  padding-top: 20px;
+}
+
 .form-editor-right-panel__structure-locked-hint-mark {
   color: var(--ant-color-error, #ff4d4f);
   margin-right: 2px;

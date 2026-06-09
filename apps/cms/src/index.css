@@ -188,7 +188,15 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
 .info-section-buttons--wrapper {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+/* table-header-actions: 버튼 그룹 전체를 우측에 붙이고, 엑셀은 그룹 내 마지막 */
+.table-header-actions .info-section-buttons--wrapper {
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .info-section-wrapper {

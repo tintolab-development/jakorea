@@ -3,6 +3,7 @@ import type { ParagraphCardEditableHeading } from '@/features/template/ui/templa
 import { getFormParagraphTitleNumberPrefix } from '@/features/template/lib/form-title-numbering'
 import {
   isAgreementLockedSystemParagraph,
+  LECTURE_REPORT_SEED_PARAGRAPH_IDS,
   type FormEditorKind,
   type FormTitleNumberingStyle,
   type HorizontalTableParagraph,
@@ -91,7 +92,8 @@ function usesPlaceholderDescriptionValue(paragraphId: string): boolean {
     RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
-    UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(paragraphId)
+    UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    LECTURE_REPORT_SEED_PARAGRAPH_IDS.has(paragraphId)
   )
 }
 
@@ -463,12 +465,21 @@ export function paragraphEditableHeading(
   if (locked) {
     if (paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period') {
       const p = paragraph as TitleWithPeriodParagraph
+      const lectureReportLockedHeaderEditable =
+        isSelected && LECTURE_REPORT_SEED_PARAGRAPH_IDS.has(p.id)
       return {
-        isEditMode: false,
-        titleIsEditMode: false,
-        descriptionIsEditMode: false,
+        isEditMode: lectureReportLockedHeaderEditable,
+        titleIsEditMode: lectureReportLockedHeaderEditable,
+        descriptionIsEditMode: lectureReportLockedHeaderEditable,
         titleValue: p.surveyTitle,
-        onTitleChange: () => {},
+        onTitleChange: lectureReportLockedHeaderEditable
+          ? (next: string) =>
+              updateParagraph(p.id, cur =>
+                cur.kind === 'description' && cur.variant === 'survey_title_with_period'
+                  ? { ...cur, surveyTitle: next }
+                  : cur
+              )
+          : () => {},
         titlePlaceholder: titleWithPeriodPlaceholder(editorKind),
         titleRequired: p.requiredMark,
         titleClassName: [
@@ -479,7 +490,14 @@ export function paragraphEditableHeading(
           .join(' '),
         titleLeading: prefix,
         descriptionValue: p.surveyDescription,
-        onDescriptionChange: () => {},
+        onDescriptionChange: lectureReportLockedHeaderEditable
+          ? (next: string) =>
+              updateParagraph(p.id, cur =>
+                cur.kind === 'description' && cur.variant === 'survey_title_with_period'
+                  ? { ...cur, surveyDescription: next }
+                  : cur
+              )
+          : () => {},
         descriptionPlaceholder: '설명 입력',
         descriptionClassName: descCls('paragraph-input-explanation-title'),
       }
@@ -539,41 +557,45 @@ export function paragraphEditableHeading(
         isSelected &&
         p.variant === 'horizontal_table' &&
         editorKind === 'horizontal_table'
+      const lectureReportLockedHeaderEditable =
+        isSelected && LECTURE_REPORT_SEED_PARAGRAPH_IDS.has(p.id)
       const lockedDescriptionEditable =
-        horizontalLockedHeaderEditable &&
-        (PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS.has(p.id) ||
-          PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
-          PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS.has(p.id) ||
-          PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
-          PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
-          UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
-          UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
-          GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
-          GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
-          APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS.has(p.id) ||
-          APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
-          RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
-          RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
-          UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
-          UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
-          PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS.has(p.id) ||
-          UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(p.id))
-      const titleIsEditMode = horizontalLockedHeaderEditable
-      /* 잠금 시드: 기본은 설명 편집 불가, 일부 등록/신청 폼 시드만 예외로 허용 */
+        (horizontalLockedHeaderEditable &&
+          (PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS.has(p.id) ||
+            PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+            PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS.has(p.id) ||
+            PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
+            PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
+            UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+            UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
+            GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+            GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
+            APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS.has(p.id) ||
+            APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+            RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
+            RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
+            UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+            UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
+            PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS.has(p.id) ||
+            UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(p.id))) ||
+        lectureReportLockedHeaderEditable
+      const titleIsEditMode = horizontalLockedHeaderEditable || lectureReportLockedHeaderEditable
+      /* 잠금 시드: 기본은 설명 편집 불가, 일부 등록/신청·강의보고서 발급 폼 시드만 예외로 허용 */
       const descriptionIsEditMode = lockedDescriptionEditable
       return {
         isEditMode: false,
         titleIsEditMode,
         descriptionIsEditMode,
         titleValue: p.paragraphTitle,
-        onTitleChange: titleIsEditMode
-          ? (next: string) =>
-              updateParagraph(p.id, cur =>
-                cur.kind === 'single_item' && cur.id === p.id
-                  ? { ...cur, paragraphTitle: next }
-                  : cur
-              )
-          : () => {},
+        onTitleChange:
+          titleIsEditMode
+            ? (next: string) =>
+                updateParagraph(p.id, cur =>
+                  cur.kind === 'single_item' && cur.id === p.id
+                    ? { ...cur, paragraphTitle: next }
+                    : cur
+                )
+            : () => {},
         titlePlaceholder: '타이틀을 입력해 주세요',
         titleRequired,
         titleClassName: formCardTitleUsesPlaceholderTone(paragraph)

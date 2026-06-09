@@ -65,12 +65,17 @@ export function getDocumentPreviewParagraphViewModel(
     paragraph.variant === 'agreement_explanation_text' &&
     paragraph.paragraphTitle.trim().length === 0
 
+  const isFileAttachmentContentOnly =
+    renderMode === 'contentOnly' &&
+    paragraph.kind === 'single_item' &&
+    paragraph.variant === 'file_attachment'
+
   return {
     title: getDocumentPreviewParagraphTitle(paragraph, displayTitle),
     description: paragraph.paragraphDescription?.trim() || undefined,
     showHeader:
       renderMode !== 'contentOnly' ||
-      (!isClosing && !isSystem && !isUntitledAgreementExplanation),
+      (!isClosing && !isSystem && !isUntitledAgreementExplanation && !isFileAttachmentContentOnly),
     showWritingPeriod: renderMode !== 'contentOnly',
     isClosing,
     isClosingSignature: isClosing && paragraph.id.includes('closing-signature'),

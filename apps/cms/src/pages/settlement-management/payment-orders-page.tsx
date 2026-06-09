@@ -1,13 +1,14 @@
 /**
  * 정산 관리 > 지급조서 확인 페이지 — 프로그램별·강사별 정산 목록
- * 필터: FilterTableLayout(TableFilterGroup) · 헤더·뷰 전환: ViewModeController (참여기관 섹션과 동일 패턴)
+ * 필터·툴바(제목·뷰 전환·엑셀): FilterTableLayout
  */
 
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { ViewModeController } from '@/shared/components/view-mode'
+import { ViewModeToggle } from '@/shared/components/view-mode'
 import '@/shared/components/list-page/list-page-layout.css'
 import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/general/ui/detail-modal/program-status/program-progress-tab.css'
+import './payment-orders-page.css'
 import { PaymentOrderDetailFullPageModal } from './payment-order-detail-fullpage-modal'
 import { usePaymentOrdersListPage } from './use-payment-orders-list-page'
 
@@ -24,16 +25,16 @@ export default function PaymentOrdersPage() {
     handleFilterChange,
     paymentOrdersFilterFields,
     paymentOrdersViewModeOptions,
-    renderHeader,
-    renderContent,
-    excelExport,
     listTitle,
     total,
+    paymentOrdersExcelExport,
+    renderContent,
   } = usePaymentOrdersListPage()
 
   return (
     <>
       <FilterTableLayout
+        className="payment-orders-page__filter-list-layout"
         fields={paymentOrdersFilterFields}
         filters={{
           exposureMode,
@@ -49,15 +50,16 @@ export default function PaymentOrdersPage() {
         onSearch={handleSearch}
         title={listTitle}
         description={`총 ${total}건`}
-        excelExport={excelExport}
+        actions={
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            options={paymentOrdersViewModeOptions}
+          />
+        }
+        excelExport={paymentOrdersExcelExport}
       >
-        <ViewModeController
-          value={viewMode}
-          onChange={setViewMode}
-          options={paymentOrdersViewModeOptions}
-          renderHeader={renderHeader}
-          renderContent={mode => <div>{renderContent(mode)}</div>}
-        />
+        <div className="list-page-layout__table-shell">{renderContent(viewMode)}</div>
       </FilterTableLayout>
 
       <PaymentOrderDetailFullPageModal

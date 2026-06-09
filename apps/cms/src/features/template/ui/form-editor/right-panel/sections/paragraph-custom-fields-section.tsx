@@ -151,14 +151,20 @@ export function ParagraphCustomFieldsSection({
 export function ParagraphCustomFieldsFormShell({
   active,
   children,
+  className,
 }: {
   active: WritingFormParagraph
   children: ReactNode
+  className?: string
 }) {
   if (active.kind === 'description' && active.variant === 'closing') return null
 
   return (
-    <Form layout="vertical" className="form-editor-right-panel__form-items" requiredMark={false}>
+    <Form
+      layout="vertical"
+      className={['form-editor-right-panel__form-items', className].filter(Boolean).join(' ')}
+      requiredMark={false}
+    >
       {children}
     </Form>
   )

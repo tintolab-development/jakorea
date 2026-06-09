@@ -31,6 +31,7 @@ import { createPaymentStatementPreConsentDraft } from '@/features/template/model
 import {
   getSettlementApplicationA4ParagraphGap,
   SETTLEMENT_APPLICATION_A4_HIDDEN_PARAGRAPH_IDS } from '@/features/template/model/settlement-application-issuance-a4-preview'
+import { createLectureReportIssuanceA4Preview } from '@/features/template/model/lecture-report-issuance-a4-preview'
 import {
   createUjatEducationIssuanceA4Preview,
 } from '@/features/template/model/ujat-education-issuance-a4-preview'
@@ -394,6 +395,85 @@ export function IssuanceFormTab() {
     renderMode: 'contentOnly',
     paragraphGapPx: getSettlementApplicationA4ParagraphGap })
 
+  const lectureReportA4Preview = useMemo(() => createLectureReportIssuanceA4Preview(), [])
+  const lectureReportPdfHostRef = useRef<HTMLDivElement>(null)
+  const [lectureReportPdfLoading, setLectureReportPdfLoading] = useState(false)
+  const lectureReportPreviewParagraphs = useMemo(
+    () =>
+      getA4PreviewParagraphs(
+        lectureReportVm.draft.paragraphs,
+        lectureReportA4Preview.a4HiddenParagraphIds
+      ),
+    [lectureReportVm.draft.paragraphs, lectureReportA4Preview.a4HiddenParagraphIds]
+  )
+  const lectureReportA4Title = useMemo(
+    () =>
+      getA4DocumentTitle(
+        lectureReportVm.draft,
+        selectedTemplate?.templateName ?? LECTURE_REPORT_TEMPLATE_NAME
+      ),
+    [lectureReportVm.draft, selectedTemplate?.templateName]
+  )
+  const {
+    pages: lectureReportPdfPages,
+    overflowParagraphIds: lectureReportPdfOverflowParagraphIds,
+    measureLayer: lectureReportPdfMeasureLayer,
+  } = useA4ParagraphPages({
+    allParagraphs: lectureReportPreviewParagraphs,
+    titleNumbering: lectureReportVm.draft.formSettings.titleNumbering,
+    editorKind: 'survey',
+    enabled: isPreviewOpen && isLectureReportIssuance,
+    paragraphBodyOptions: lectureReportA4Preview.paragraphBodyOptions,
+    renderMode: lectureReportA4Preview.a4RenderMode,
+    paragraphGapPx: lectureReportA4Preview.a4ParagraphGapPx,
+    pageBreakBeforeParagraphIds: lectureReportA4Preview.a4PageBreakBeforeParagraphIds,
+  })
+
+  const ujatStructuredA4Preview = useMemo(
+    () =>
+      createUjatEducationIssuanceA4Preview({
+        variant: ujatStructuredIssuanceVariant ?? 'plan',
+        ...(ujatStructuredIssuanceVariant === 'journal'
+          ? { journalInstitutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME }
+          : {}),
+      }),
+    [ujatStructuredIssuanceVariant]
+  )
+  const ujatStructuredPdfHostRef = useRef<HTMLDivElement>(null)
+  const [ujatStructuredPdfLoading, setUjatStructuredPdfLoading] = useState(false)
+  const ujatStructuredPreviewParagraphs = useMemo(
+    () =>
+      getA4PreviewParagraphs(
+        ujatStructuredIssuanceVm.draft.paragraphs,
+        ujatStructuredA4Preview.a4HiddenParagraphIds
+      ),
+    [ujatStructuredIssuanceVm.draft.paragraphs, ujatStructuredA4Preview.a4HiddenParagraphIds]
+  )
+  const ujatStructuredA4Title = useMemo(
+    () =>
+      getA4DocumentTitle(
+        ujatStructuredIssuanceVm.draft,
+        selectedTemplate?.templateName ??
+          (ujatStructuredIssuanceVariant === 'journal'
+            ? UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
+            : UJAT_EDUCATION_PLAN_TEMPLATE_NAME)
+      ),
+    [ujatStructuredIssuanceVm.draft, selectedTemplate?.templateName, ujatStructuredIssuanceVariant]
+  )
+  const {
+    pages: ujatStructuredPdfPages,
+    overflowParagraphIds: ujatStructuredPdfOverflowParagraphIds,
+    measureLayer: ujatStructuredPdfMeasureLayer,
+  } = useA4ParagraphPages({
+    allParagraphs: ujatStructuredPreviewParagraphs,
+    titleNumbering: ujatStructuredIssuanceVm.draft.formSettings.titleNumbering,
+    editorKind: 'survey',
+    enabled: isPreviewOpen && isUjatStructuredIssuance,
+    paragraphBodyOptions: ujatStructuredA4Preview.paragraphBodyOptions,
+    renderMode: ujatStructuredA4Preview.a4PreviewOptions.a4RenderMode ?? 'contentOnly',
+    paragraphGapPx: ujatStructuredA4Preview.a4ParagraphGapPx,
+  })
+
   const openTemplatePreview = useCallback(
     (row: IssuanceTemplateRow) => {
       setParams(
@@ -668,18 +748,50 @@ export function IssuanceFormTab() {
     }
   }, [settlementA4Title])
 
+  const handleDownloadLectureReportDocument = useCallback(async () => {
+    const root = lectureReportPdfHostRef.current
+    if (root == null) return
+    setLectureReportPdfLoading(true)
+    try {
+      const pageEls = collectFormDocumentPdfPageElements(root)
+      await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(lectureReportA4Title))
+    } catch (e) {
+      handleError(e, { context: 'issuanceFormTab.downloadLectureReportPdf' })
+    } finally {
+      setLectureReportPdfLoading(false)
+    }
+  }, [lectureReportA4Title])
+
+  const handleDownloadUjatStructuredDocument = useCallback(async () => {
+    const root = ujatStructuredPdfHostRef.current
+    if (root == null) return
+    setUjatStructuredPdfLoading(true)
+    try {
+      const pageEls = collectFormDocumentPdfPageElements(root)
+      await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(ujatStructuredA4Title))
+    } catch (e) {
+      handleError(e, { context: 'issuanceFormTab.downloadUjatStructuredPdf' })
+    } finally {
+      setUjatStructuredPdfLoading(false)
+    }
+  }, [ujatStructuredA4Title])
+
   return (
     <>
       <FormCertificatePdfExportOverlay
         visible={
           paymentStatementPdfLoading ||
           paymentStatementPreConsentPdfLoading ||
-          settlementPdfLoading
+          settlementPdfLoading ||
+          lectureReportPdfLoading ||
+          ujatStructuredPdfLoading
         }
       />
       {isPreviewOpen && isPaymentStatementIssuance ? paymentStatementPdfMeasureLayer : null}
       {isPreviewOpen && isPaymentStatementPreConsent ? paymentStatementPreConsentPdfMeasureLayer : null}
       {isPreviewOpen && isSettlementApplicationIssuance ? settlementPdfMeasureLayer : null}
+      {isPreviewOpen && isLectureReportIssuance ? lectureReportPdfMeasureLayer : null}
+      {isPreviewOpen && isUjatStructuredIssuance ? ujatStructuredPdfMeasureLayer : null}
       <div className="template-form-tab__content">
         <TemplateListCard
           title="보고 양식"
@@ -741,7 +853,11 @@ export function IssuanceFormTab() {
               ? () => void handleDownloadPaymentStatementPreConsentDocument()
             : isSettlementApplicationIssuance
               ? () => void handleDownloadSettlementApplicationDocument()
-              : undefined
+              : isLectureReportIssuance
+                ? () => void handleDownloadLectureReportDocument()
+                : isUjatStructuredIssuance
+                  ? () => void handleDownloadUjatStructuredDocument()
+                  : undefined
         }
         downloadDocumentLoading={
           isPaymentStatementIssuance
@@ -750,7 +866,11 @@ export function IssuanceFormTab() {
               ? paymentStatementPreConsentPdfLoading
             : isSettlementApplicationIssuance
               ? settlementPdfLoading
-              : false
+              : isLectureReportIssuance
+                ? lectureReportPdfLoading
+                : isUjatStructuredIssuance
+                  ? ujatStructuredPdfLoading
+                  : false
         }
         leftContent={
           isPaymentStatementIssuance ? (
@@ -775,7 +895,6 @@ export function IssuanceFormTab() {
               hideDragHandleForParagraphIds={
                 UJAT_STRUCTURED_ISSUANCE_HIDDEN_DRAG_HANDLES[ujatStructuredIssuanceVariant ?? 'plan']
               }
-              hideParagraphRequiredChrome
               headingDescriptionExtraClassName="paragraph-input-explanation-title"
               paragraphBodyOptions={
                 ujatStructuredIssuanceVariant === 'journal'
@@ -799,7 +918,6 @@ export function IssuanceFormTab() {
               middleParagraphActions={lectureReportVm.middleParagraphActions}
               structureLockedParagraphIds={lectureReportVm.structureLockedParagraphIds}
               hideDragHandleForParagraphIds={LECTURE_REPORT_HIDDEN_DRAG_HANDLE_IDS}
-              hideParagraphRequiredChrome
               headingDescriptionExtraClassName="paragraph-input-explanation-title"
             />
           ) : (
@@ -1000,6 +1118,80 @@ export function IssuanceFormTab() {
                   paragraphBodyOptions={SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS}
                   renderMode="contentOnly"
                   paragraphGapPx={getSettlementApplicationA4ParagraphGap}
+                />
+              </div>
+            </A4DocumentPageLayout>
+          ))}
+        </div>
+      ) : null}
+      {isPreviewOpen && isLectureReportIssuance ? (
+        <div
+          ref={lectureReportPdfHostRef}
+          style={{
+            position: 'fixed',
+            left: -20000,
+            top: 0,
+            width: 1464,
+            display: 'flex',
+            flexDirection: 'column',
+            pointerEvents: 'none',
+            zIndex: -1 }}
+          aria-hidden="true"
+        >
+          {lectureReportPdfPages.map((pageParagraphs, pageIndex) => (
+            <A4DocumentPageLayout
+              key={pageIndex}
+              title={lectureReportA4Title}
+              pageIndex={pageIndex}
+              pdfCapture
+            >
+              <div style={{ width: '100%', paddingBottom: 16, boxSizing: 'border-box' }}>
+                <FormDocumentPreviewBody
+                  paragraphs={pageParagraphs}
+                  allParagraphs={lectureReportPreviewParagraphs}
+                  titleNumbering={lectureReportVm.draft.formSettings.titleNumbering}
+                  editorKind="survey"
+                  overflowParagraphIds={lectureReportPdfOverflowParagraphIds}
+                  paragraphBodyOptions={lectureReportA4Preview.paragraphBodyOptions}
+                  renderMode={lectureReportA4Preview.a4RenderMode}
+                  paragraphGapPx={lectureReportA4Preview.a4ParagraphGapPx}
+                />
+              </div>
+            </A4DocumentPageLayout>
+          ))}
+        </div>
+      ) : null}
+      {isPreviewOpen && isUjatStructuredIssuance ? (
+        <div
+          ref={ujatStructuredPdfHostRef}
+          style={{
+            position: 'fixed',
+            left: -20000,
+            top: 0,
+            width: 1464,
+            display: 'flex',
+            flexDirection: 'column',
+            pointerEvents: 'none',
+            zIndex: -1 }}
+          aria-hidden="true"
+        >
+          {ujatStructuredPdfPages.map((pageParagraphs, pageIndex) => (
+            <A4DocumentPageLayout
+              key={pageIndex}
+              title={ujatStructuredA4Title}
+              pageIndex={pageIndex}
+              pdfCapture
+            >
+              <div style={{ width: '100%', paddingBottom: 16, boxSizing: 'border-box' }}>
+                <FormDocumentPreviewBody
+                  paragraphs={pageParagraphs}
+                  allParagraphs={ujatStructuredPreviewParagraphs}
+                  titleNumbering={ujatStructuredIssuanceVm.draft.formSettings.titleNumbering}
+                  editorKind="survey"
+                  overflowParagraphIds={ujatStructuredPdfOverflowParagraphIds}
+                  paragraphBodyOptions={ujatStructuredA4Preview.paragraphBodyOptions}
+                  renderMode={ujatStructuredA4Preview.a4PreviewOptions.a4RenderMode ?? 'contentOnly'}
+                  paragraphGapPx={ujatStructuredA4Preview.a4ParagraphGapPx}
                 />
               </div>
             </A4DocumentPageLayout>

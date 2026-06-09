@@ -15,6 +15,7 @@ import type { Dayjs } from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
 import type { FilterFieldConfig } from '@/shared/components/table-filter-group'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import type { ViewModeToggleOption } from '@/shared/components/view-mode'
@@ -360,21 +361,14 @@ export function usePaymentOrdersListPage() {
     ]
   }, [isProgram])
 
-  const renderHeader = useCallback(
-    (_mode: PaymentOrdersPageViewMode): ReactElement => {
-      return (
-        <div className="table-header-actions">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">
-              {isProgram ? '프로그램 별 정산 목록' : '강사 별 정산 목록'}
-            </span>
-            <span className="table-description">총 {total}건</span>
-          </div>
-        </div>
-      )
-    },
-    [isProgram, total]
-  )
+  const listTitle = isProgram ? '프로그램 별 정산 목록' : '강사 별 정산 목록'
+
+  const paymentOrdersExcelExport = useMemo((): FilterTableExcelExportConfig => {
+    if (isProgram) {
+      return { columns: programColumns, data: listProgram }
+    }
+    return { columns: instructorColumns, data: listInstructor }
+  }, [isProgram, programColumns, instructorColumns, listProgram, listInstructor])
 
   const renderContent = useCallback(
     (mode: PaymentOrdersPageViewMode): ReactElement =>
@@ -427,16 +421,6 @@ export function usePaymentOrdersListPage() {
     ]
   )
 
-  const excelExport = useMemo(
-    () => ({
-      columns: isProgram ? programColumns : instructorColumns,
-      data: isProgram ? listProgram : listInstructor,
-    }),
-    [isProgram, programColumns, instructorColumns, listProgram, listInstructor]
-  )
-
-  const listTitle = isProgram ? '프로그램 별 정산 목록' : '강사 별 정산 목록'
-
   return {
     viewMode,
     setViewMode,
@@ -449,10 +433,9 @@ export function usePaymentOrdersListPage() {
     handleFilterChange,
     paymentOrdersFilterFields,
     paymentOrdersViewModeOptions,
-    renderHeader,
-    renderContent,
-    excelExport,
     listTitle,
     total,
+    paymentOrdersExcelExport,
+    renderContent,
   }
 }

@@ -198,8 +198,11 @@ export function createDescriptionTitleDefault(id: string): WritingFormParagraph 
     surveyTitle: '',
     surveyDescription: '',
     periodMode: 'immediate',
+    startPeriodMode: 'immediate',
+    endPeriodMode: 'immediate',
     startAt: null,
     endAt: null,
+    endPeriodPresetLabel: null,
     showWritingPeriodOnForm: false,
   }
 }

@@ -71,6 +71,7 @@
   align-items: baseline;
   flex-wrap: wrap;
   gap: 10px;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -92,9 +93,25 @@
 .filter-table-layout__toolbar-actions {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--filter-field-gap, var(--spacing-12, 12px));
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  min-width: 0;
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.filter-table-layout__toolbar-actions-slot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--filter-field-gap, var(--spacing-12, 12px));
+  min-width: 0;
+}
+
+.filter-table-layout__toolbar-excel {
+  flex: 0 0 auto;
 }
 
 .filter-table-layout__title {

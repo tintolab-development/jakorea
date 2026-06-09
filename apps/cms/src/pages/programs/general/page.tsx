@@ -18,10 +18,7 @@ import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general
 import type { Program } from '@/types/domain'
 import { CmsButton, ConfirmModal } from '@/shared/ui'
 import { useProgramListActions } from '@/pages/programs/use-program-list-actions'
-import {
-  TemplateWritingPreviewProvider,
-  useTemplateWritingPreview,
-} from '@/features/template/context/template-writing-preview-context'
+import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 import { useGeneralProgramListFilters } from './use-general-program-list-filters'
@@ -39,7 +36,7 @@ function isGeneralProgramListPath(pathnameNormalized: string): boolean {
   )
 }
 
-function GeneralProgramListPageContent() {
+export function GeneralProgramListPageContent() {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -293,12 +290,3 @@ function GeneralProgramListPageContent() {
   )
 }
 
-export function GeneralProgramListPage() {
-  return (
-    <TemplateWritingPreviewProvider>
-      <GeneralProgramListPageContent />
-    </TemplateWritingPreviewProvider>
-  )
-}
-
-export default GeneralProgramListPage

@@ -19,6 +19,7 @@ export interface A4PreviewSessionOptions {
   a4RenderMode?: FormDocumentPreviewRenderMode
   hideParagraphRequiredChrome?: boolean
   a4HiddenParagraphIds?: ReadonlySet<string>
+  a4PageBreakBeforeParagraphIds?: ReadonlySet<string>
   a4ParagraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
 }
 
@@ -37,13 +38,20 @@ export function shouldUseA4PreviewForWritingTemplate(templateId?: string): boole
 }
 
 export function createContentOnlyA4PreviewOptions(
-  overrides?: Pick<A4PreviewSessionOptions, 'a4HiddenParagraphIds' | 'a4ParagraphGapPx'>
+  overrides?: Pick<
+    A4PreviewSessionOptions,
+    | 'a4HiddenParagraphIds'
+    | 'a4PageBreakBeforeParagraphIds'
+    | 'a4ParagraphGapPx'
+    | 'hideParagraphRequiredChrome'
+  >
 ): A4PreviewSessionOptions {
   return {
     previewLayout: 'a4-document',
     a4RenderMode: 'contentOnly',
-    hideParagraphRequiredChrome: true,
+    hideParagraphRequiredChrome: overrides?.hideParagraphRequiredChrome ?? true,
     a4HiddenParagraphIds: overrides?.a4HiddenParagraphIds,
+    a4PageBreakBeforeParagraphIds: overrides?.a4PageBreakBeforeParagraphIds,
     a4ParagraphGapPx: overrides?.a4ParagraphGapPx,
   }
 }

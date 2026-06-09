@@ -1,0 +1,149 @@
+.lecture-report-issuance-preview-modal {
+  --lecture-report-a4-design-page-width: 1464px;
+  --lecture-report-a4-display-width: 1404px;
+  --lecture-report-a4-scale: calc(
+    var(--lecture-report-a4-display-width) / var(--lecture-report-a4-design-page-width)
+  );
+}
+
+.lecture-report-issuance-preview-modal__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lecture-report-issuance-preview-modal__file-name {
+  color: var(--main-WT, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(1040px, calc(100vw - 520px));
+}
+
+.lecture-report-issuance-preview-modal__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 11px;
+  border: 1px solid var(--main-WT, #fff);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--main-WT, #fff);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lecture-report-issuance-preview-modal__description {
+  font-size: 15px;
+}
+
+.lecture-report-issuance-preview-modal__actions {
+  gap: 8px;
+}
+
+.lecture-report-issuance-preview-modal .full-page-modal__topbar {
+  background: var(--color-mint-01, #01a1af);
+}
+
+.lecture-report-issuance-preview-modal .full-page-modal__title {
+  color: var(--main-WT, #fff);
+}
+
+.lecture-report-issuance-preview-modal .full-page-modal__close {
+  color: var(--main-WT, #fff);
+}
+
+.lecture-report-issuance-preview-modal__workspace {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  min-height: 0;
+  padding: 4px 0 0;
+  box-sizing: border-box;
+}
+
+.lecture-report-issuance-preview-modal__page {
+  position: relative;
+  width: var(--lecture-report-a4-display-width);
+  aspect-ratio: 65 / 92;
+  height: calc(var(--lecture-report-a4-display-width) * 92 / 65);
+  background: #fff;
+  box-shadow: none;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.lecture-report-issuance-preview-modal__page .a4-document-page-layout {
+  transform: scale(var(--lecture-report-a4-scale));
+  transform-origin: top left;
+}
+
+.lecture-report-issuance-preview-modal__a4-text-content {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.lecture-report-issuance-preview-modal__page-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 20px;
+  min-height: 48px;
+  padding: 10px 16px;
+  border-radius: var(--16, 16px);
+  background: rgba(34, 64, 75, 0.5);
+  z-index: 1400;
+  flex-shrink: 0;
+}
+
+.lecture-report-issuance-preview-modal__page-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 0;
+  color: #fff;
+  padding: 0;
+  transition: opacity 0.15s;
+}
+
+.lecture-report-issuance-preview-modal__page-nav-btn:hover:not(:disabled) {
+  opacity: 0.86;
+}
+
+.lecture-report-issuance-preview-modal__page-nav-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.lecture-report-issuance-preview-modal__page-indicator {
+  font-size: 20px;
+  font-weight: 500;
+  color: #fff;
+  min-width: 64px;
+  text-align: center;
+}
+
+.lecture-report-issuance-preview-modal__pdf-host {
+  position: fixed;
+  left: -20000px;
+  top: 0;
+  width: 1464px;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  z-index: -1;
+}

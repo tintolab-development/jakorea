@@ -1,3 +1,5 @@
+import { normalizeTitleWithPeriodParagraph } from '@/features/template/lib/title-with-period-settings'
+
 /** 설문·동의·테이블 가로형 직접 등록 에디터 공통 — 에디터 문맥(직렬화 키와 무관) */
 export type FormEditorKind = 'survey' | 'agreement' | 'horizontal_table'
 
@@ -30,8 +32,14 @@ export interface TitleWithPeriodParagraph extends Omit<WritingFormParagraphBase,
   surveyTitle: string
   surveyDescription: string
   periodMode: FormPeriodMode
+  /** 작성 시작 — `바로 시작` / `직접 설정` (미지정 시 `periodMode`·`startAt`에서 추론) */
+  startPeriodMode?: FormPeriodMode
+  /** 작성 종료 — `마감 없음` / `직접 설정` */
+  endPeriodMode?: FormPeriodMode
   startAt: string | null
   endAt: string | null
+  /** 종료 `직접 설정` + 상대 규칙 등 — `endAt` 없을 때 표시(예: 활동일 전주 목요일) */
+  endPeriodPresetLabel?: string | null
   showWritingPeriodOnForm: boolean
 }
 
@@ -2088,12 +2096,18 @@ export function normalizeLectureReportProgramProgressParagraph(
 export function normalizeWritingFormDraft(draft: WritingFormDraft): WritingFormDraft {
   return {
     ...draft,
-    paragraphs: draft.paragraphs.map(p =>
-      normalizeLectureReportProgramProgressParagraph(
-        normalizeUjatJournalEducationInfoParagraph(migrateLegacySingleItemDateTimeParagraph(p))
-      )
-    ),
+    paragraphs: draft.paragraphs.map(p => normalizeWritingFormParagraph(p)),
   }
+}
+
+function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormParagraph {
+  let next = migrateLegacySingleItemDateTimeParagraph(p)
+  next = normalizeUjatJournalEducationInfoParagraph(next)
+  next = normalizeLectureReportProgramProgressParagraph(next)
+  if (next.kind === 'description' && next.variant === 'survey_title_with_period') {
+    return normalizeTitleWithPeriodParagraph(next)
+  }
+  return next
 }
 
 /** 신규 설문 기본 양식 단락 id (초기 state·테스트에서 안정적으로 참조) */
@@ -3280,9 +3294,12 @@ function createUjatEducationIssuanceDraft(
         participatesInTitleNumbering: false,
         surveyTitle,
         surveyDescription: '',
-        periodMode: 'immediate',
+        periodMode: 'custom',
+        startPeriodMode: 'immediate',
+        endPeriodMode: 'custom',
         startAt: null,
         endAt: null,
+        endPeriodPresetLabel: '활동일 전주 목요일 (24:00)',
         showWritingPeriodOnForm: false,
       },
       {
@@ -3354,6 +3371,19 @@ function createUjatEducationJournalContentFeedbackParagraph(
   }
 }
 
+function createLectureReportEducationPhotosParagraph(id: string): FileAttachmentParagraph {
+  return {
+    id,
+    kind: 'single_item',
+    variant: 'file_attachment',
+    answerRequired: true,
+    requiredMark: true,
+    paragraphTitle: '교육 사진',
+    paragraphDescription: '교육 장면 사진을 2장 이상 첨부해 주세요',
+    participatesInTitleNumbering: true,
+  }
+}
+
 function createUjatEducationJournalEducationPhotosParagraph(
   id: string
 ): FileAttachmentParagraph {
@@ -3420,7 +3450,7 @@ export function createLectureReportProgramProgressParagraph(
   }) as LectureReportProgramProgressParagraph
 }
 
-/** 발급 양식 > 강의보고서 — 제목·프로그램 진행(2단×4행)·교육계획 차시형 본문·사진 */
+/** 발급 양식 > 강의보고서 — 제목·프로그램 진행(2단×4행)·교육 내용/운영(Q형)·사진 */
 export function createLectureReportIssuanceDraft(): WritingFormDraft {
   const ph = '자유롭게 작성해 주세요'
   const ids = LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS
@@ -3472,16 +3502,14 @@ export function createLectureReportIssuanceDraft(): WritingFormDraft {
         showWritingPeriodOnForm: true,
       },
       createLectureReportProgramProgressParagraph(ids.programProgress),
-      lectureReportSessionParagraph(
-        ids.educationContent,
-        '교육 내용',
-        '',
-        ['도입', '전개', '마무리']
-      ),
-      lectureReportSessionParagraph(ids.educationOperation, '교육 운영', '', [
-        '전반적인 학생들의 교육 참여도는 어떠했나요?',
-        '교육 콘텐츠 난이도 적합성은 어떠했나요?',
-        '강의 진행 중 이슈 및 특이사항이 있었나요?',
+      lectureReportSessionParagraph(ids.educationContent, '교육 내용', '설명 입력', [
+        'Q1. 주요 학습 내용 및 핵심 개념은 무엇이었나요?',
+        'Q2. 강의 진행 내용 (ex: 교재/활동 내용, 교구재 활용 방식 등)',
+      ]),
+      lectureReportSessionParagraph(ids.educationOperation, '교육 운영', '설명 입력', [
+        'Q1. 전반적인 학생들의 교육 참여도는 어떠했나요?',
+        'Q2. 교육 콘텐츠 난이도 적합성은 어떠했나요?',
+        'Q3. 강의 진행 중 이슈 및 특이사항이 있었나요?',
       ]),
       {
         id: ids.overallEvaluation,
@@ -3504,7 +3532,7 @@ export function createLectureReportIssuanceDraft(): WritingFormDraft {
         bodyPlaceholder: ph,
         bodyText: '',
       },
-      createUjatEducationJournalEducationPhotosParagraph(ids.educationPhotos),
+      createLectureReportEducationPhotosParagraph(ids.educationPhotos),
     ],
   }
 }

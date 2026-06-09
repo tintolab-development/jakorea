@@ -172,13 +172,17 @@ export function FilterTableLayout({
           </div>
           {showToolbarActions ? (
             <div className="filter-table-layout__toolbar-actions">
-              {actions}
+              {actions != null ? (
+                <div className="filter-table-layout__toolbar-actions-slot">{actions}</div>
+              ) : null}
               {showExcelButton ? (
-                <ExcelButton
-                  onClick={resolvedOnExcelDownload}
-                  loading={resolvedExcelDownloadLoading}
-                  disabled={excelDownloadDisabled || resolvedOnExcelDownload == null}
-                />
+                <div className="filter-table-layout__toolbar-excel">
+                  <ExcelButton
+                    onClick={resolvedOnExcelDownload}
+                    loading={resolvedExcelDownloadLoading}
+                    disabled={excelDownloadDisabled || resolvedOnExcelDownload == null}
+                  />
+                </div>
               ) : null}
             </div>
           ) : null}

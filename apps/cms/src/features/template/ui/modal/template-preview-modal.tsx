@@ -47,8 +47,8 @@ export interface TemplatePreviewModalProps {
   updateParagraph: FormUpdateParagraph
   editorKind?: FormEditorKind
   /**
-   * 부모 풀페이지 모달 위에 겹침 — Ant Modal 기본 z-index(1000)보다 높게
-   * @default 1100
+   * 부모 풀페이지 모달 위에 겹침
+   * @default 1300
    */
   zIndex?: number
   previewLayout?: TemplateWritingPreviewLayout
@@ -56,6 +56,7 @@ export interface TemplatePreviewModalProps {
   /** 지급조서 발급 미리보기 등 — 단락 필수 UI 숨김 */
   hideParagraphRequiredChrome?: boolean
   a4HiddenParagraphIds?: ReadonlySet<string>
+  a4PageBreakBeforeParagraphIds?: ReadonlySet<string>
   a4RenderMode?: FormDocumentPreviewRenderMode
   a4ParagraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
   /** 작성 화면에서 선택한 단락 — A4 미리보기 페이지·스크롤·강조와 맞춤 */
@@ -75,11 +76,12 @@ export function TemplatePreviewModal({
   draft,
   updateParagraph,
   editorKind = 'survey',
-  zIndex = 1100,
+  zIndex = 1300,
   previewLayout = 'default',
   paragraphBodyOptions,
   hideParagraphRequiredChrome,
   a4HiddenParagraphIds,
+  a4PageBreakBeforeParagraphIds,
   a4RenderMode = 'card',
   a4ParagraphGapPx,
   focusedParagraphId = null,
@@ -125,6 +127,7 @@ export function TemplatePreviewModal({
     paragraphBodyOptions,
     renderMode: a4RenderMode,
     paragraphGapPx: a4ParagraphGapPx,
+    pageBreakBeforeParagraphIds: a4PageBreakBeforeParagraphIds,
   })
   const pageCount = pagedParagraphs.length
   const safeActivePage = Math.min(readPreviewPage(searchParams), Math.max(1, pageCount))

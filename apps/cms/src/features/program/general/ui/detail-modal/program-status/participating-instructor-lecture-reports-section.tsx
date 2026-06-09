@@ -2,7 +2,7 @@
  * 참여 강사 상세 — 강의보고서 관리 탭
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
@@ -10,8 +10,16 @@ import type { ParticipatingInstructorRow } from '@/data/mock/participating-instr
 import type { Program } from '@/types/domain'
 import { StatusBadge } from '@/shared/components'
 import { CmsButton, ExcelButton } from '@/shared/ui'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import type { LectureReportPreviewContext } from '@/features/program/general/lib/build-lecture-report-issuance-preview'
+import { handleError } from '@/shared/utils/error-handler'
+import {
+  buildLectureReportPreviewContext,
+  type LectureReportPreviewContext,
+} from '@/features/program/general/lib/build-lecture-report-issuance-preview'
+import { downloadLectureReportPdfFiles } from '@/features/program/general/lib/download-lecture-reports-bulk-pdf'
+import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
+import { LectureReportBulkPdfExportHost } from './lecture-report-bulk-pdf-export-host'
 import { LectureReportIssuancePreviewModal } from './lecture-report-issuance-preview-modal'
 
 interface ParticipatingInstructorLectureReportRow {
@@ -116,26 +124,38 @@ export function ParticipatingInstructorLectureReportsSection({
   instructor,
   program,
 }: ParticipatingInstructorLectureReportsSectionProps) {
+  const { showAlert } = useCmsAlert()
   const rows = useMemo(() => buildParticipatingInstructorLectureReportRows(), [])
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewContext, setPreviewContext] = useState<LectureReportPreviewContext | null>(null)
+  const [bulkExportQueue, setBulkExportQueue] = useState<LectureReportPreviewContext[]>([])
+  const [bulkExportActive, setBulkExportActive] = useState(false)
+  const bulkExportResultsRef = useRef<Array<{ fileName: string; blob: Blob }>>([])
+  const bulkExportStartedRef = useRef(false)
+
+  const submittedRows = useMemo(
+    () => rows.filter(row => row.submissionStatusLabel === '제출 완료' && row.canViewReport),
+    [rows]
+  )
+
+  const buildRowPreviewContext = useCallback(
+    (row: ParticipatingInstructorLectureReportRow): LectureReportPreviewContext =>
+      buildLectureReportPreviewContext(instructor, program, {
+        id: row.id,
+        no: row.no,
+        schoolName: row.schoolName,
+        educationGrade: row.educationGrade,
+        educationScheduleLabel: row.educationScheduleLabel,
+      }),
+    [instructor, program]
+  )
 
   const handleOpenPreview = useCallback(
     (row: ParticipatingInstructorLectureReportRow) => {
-      setPreviewContext({
-        instructor,
-        program,
-        row: {
-          id: row.id,
-          no: row.no,
-          schoolName: row.schoolName,
-          educationGrade: row.educationGrade,
-          educationScheduleLabel: row.educationScheduleLabel,
-        },
-      })
+      setPreviewContext(buildRowPreviewContext(row))
       setPreviewOpen(true)
     },
-    [instructor, program]
+    [buildRowPreviewContext]
   )
 
   const handleClosePreview = useCallback(() => {
@@ -148,6 +168,67 @@ export function ParticipatingInstructorLectureReportsSection({
     data: rows,
     filename: '강의보고서 제출 현황',
   })
+
+  const handleBulkExportItemComplete = useCallback(
+    (result: { fileName: string; blob: Blob } | null) => {
+      if (result != null) {
+        bulkExportResultsRef.current.push(result)
+      }
+      setBulkExportQueue(prev => prev.slice(1))
+    },
+    []
+  )
+
+  const handleBulkDownload = useCallback(() => {
+    if (bulkExportActive) return
+    if (submittedRows.length === 0) {
+      showAlert({
+        title: '안내',
+        content: '다운로드할 제출 완료 강의보고서가 없습니다.',
+      })
+      return
+    }
+
+    bulkExportResultsRef.current = []
+    bulkExportStartedRef.current = true
+    setBulkExportQueue(submittedRows.map(buildRowPreviewContext))
+    setBulkExportActive(true)
+  }, [bulkExportActive, buildRowPreviewContext, showAlert, submittedRows])
+
+  useEffect(() => {
+    if (!bulkExportActive || !bulkExportStartedRef.current || bulkExportQueue.length > 0) {
+      return
+    }
+
+    bulkExportStartedRef.current = false
+    const files = bulkExportResultsRef.current
+
+    void (async () => {
+      try {
+        if (files.length === 0) {
+          showAlert({
+            title: '안내',
+            content: 'PDF 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          })
+          return
+        }
+        await downloadLectureReportPdfFiles(files)
+      } catch (error) {
+        handleError(error, {
+          context: 'participatingInstructorLectureReportsSection.bulkDownload',
+        })
+        showAlert({
+          title: '안내',
+          content: '강의보고서 일괄 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      } finally {
+        bulkExportResultsRef.current = []
+        setBulkExportActive(false)
+      }
+    })()
+  }, [bulkExportActive, bulkExportQueue.length, showAlert])
+
+  const currentBulkExportContext = bulkExportQueue[0] ?? null
 
   const columns = useMemo(
     (): ColumnsType<ParticipatingInstructorLectureReportRow> => [
@@ -210,15 +291,17 @@ export function ParticipatingInstructorLectureReportsSection({
         align: 'center',
         width: 180,
         render: (_: unknown, record: ParticipatingInstructorLectureReportRow) => (
-          <CmsButton
-            variant="default"
-            size="medium"
-            width={140}
-            disabled={!record.canViewReport}
-            onClick={() => handleOpenPreview(record)}
-          >
-            강의보고서 보기
-          </CmsButton>
+          <div className="participating-instructor-lecture-reports-section__report-cell-inner">
+            <CmsButton
+              variant="default"
+              size="medium"
+              width={140}
+              disabled={!record.canViewReport}
+              onClick={() => handleOpenPreview(record)}
+            >
+              강의보고서 보기
+            </CmsButton>
+          </div>
         ),
       },
     ],
@@ -227,6 +310,7 @@ export function ParticipatingInstructorLectureReportsSection({
 
   return (
     <div className="school-detail-fullpage-view__instructor-section">
+      <FormCertificatePdfExportOverlay visible={bulkExportActive} />
       <div className="table-header-actions">
         <div className="table-header-title--wrapper">
           <span className="table-title">강의보고서 제출 현황</span>
@@ -238,9 +322,8 @@ export function ParticipatingInstructorLectureReportsSection({
             size="large"
             width={220}
             icon={<DownloadOutlined />}
-            onClick={() => {
-              window.alert('준비 중입니다.')
-            }}
+            disabled={bulkExportActive || submittedRows.length === 0}
+            onClick={() => void handleBulkDownload()}
           >
             강의보고서 일괄 다운로드
           </CmsButton>
@@ -263,6 +346,13 @@ export function ParticipatingInstructorLectureReportsSection({
         onClose={handleClosePreview}
         context={previewContext}
       />
+      {currentBulkExportContext != null ? (
+        <LectureReportBulkPdfExportHost
+          key={currentBulkExportContext.row.id}
+          context={currentBulkExportContext}
+          onComplete={handleBulkExportItemComplete}
+        />
+      ) : null}
     </div>
   )
 }

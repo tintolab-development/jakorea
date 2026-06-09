@@ -67,6 +67,7 @@ export function createUjatEducationIssuanceA4Preview(input: UjatEducationIssuanc
   const a4PreviewOptions = createContentOnlyA4PreviewOptions({
     a4HiddenParagraphIds,
     a4ParagraphGapPx,
+    hideParagraphRequiredChrome: false,
   })
 
   const paragraphBodyOptions: RenderFormParagraphBodyOptions = {

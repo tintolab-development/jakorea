@@ -36,6 +36,7 @@ export type UseWritingFormEditorWithUserPreviewOptions = {
     | 'previewLayout'
     | 'hideParagraphRequiredChrome'
     | 'a4HiddenParagraphIds'
+    | 'a4PageBreakBeforeParagraphIds'
     | 'a4RenderMode'
     | 'a4ParagraphGapPx'
   >
@@ -133,6 +134,7 @@ export function useWritingFormEditorWithUserPreview(
       previewLayout: a4PreviewOptions?.previewLayout,
       hideParagraphRequiredChrome: a4PreviewOptions?.hideParagraphRequiredChrome,
       a4HiddenParagraphIds: a4PreviewOptions?.a4HiddenParagraphIds,
+      a4PageBreakBeforeParagraphIds: a4PreviewOptions?.a4PageBreakBeforeParagraphIds,
       a4RenderMode: a4PreviewOptions?.a4RenderMode,
       a4ParagraphGapPx: a4PreviewOptions?.a4ParagraphGapPx,
       focusedParagraphId: activeParagraphId,
