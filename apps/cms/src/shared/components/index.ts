@@ -23,6 +23,8 @@ export { PermissionButton } from './permission-button'
 export type { PermissionButtonProps } from './permission-button'
 export { AppStatusBadge } from './app-status-badge'
 export type { AppStatusBadgeProps } from './app-status-badge'
+export { EditableStatusBadge } from './editable-status-badge'
+export type { EditableStatusBadgeProps } from './editable-status-badge'
 export { TextbookStatusBadge } from './textbook-status-badge'
 export type { TextbookStatusKey } from './textbook-status-badge'
 export {
@@ -39,8 +41,12 @@ export type { ProgramLifecycleStatusTextProps } from './program-lifecycle-status
 export {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
   STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
   STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
 } from './status-dropdown-cell'
 export type { StatusDropdownCellProps } from './status-dropdown-cell'
 export { ProgramLifecycleStatusCell } from './program-lifecycle-status-cell'

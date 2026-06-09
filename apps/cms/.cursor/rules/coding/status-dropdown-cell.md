@@ -49,7 +49,7 @@ import {
 | `onChange` | If omitted → read-only badge |
 | `isUpdating` | Disable + spinner while saving |
 | `isOpen` / `onOpenChange` | Single open dropdown per table (`openId === rowId`) |
-| `tagLayout` | `'default'` or `'tag132'` (fixed 132×33 + mint active ring) |
+| `tagLayout` | `'default'`, `'tag100'` (100×32 editable badge + 116px wrapper), or `'tag132'` (132×33 + mint active ring) |
 
 ---
 
@@ -60,6 +60,8 @@ Use **`onCell`** for `td` classes (not only `column.className`), e.g.:
 ```tsx
 onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
 ```
+
+For **`tag100`** (재직·권한·교재배송·서류평가): add `STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME` on body cells and `STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME` via `onHeaderCell`. Column **`width: 116`** matches shared CSS. Use `EditableStatusBadge` in `renderBadge`.
 
 For **`tag132`**: add `STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME` on body cells and `STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME` via `onHeaderCell` on `th`. Column **`width: 150`** matches shared CSS.
 

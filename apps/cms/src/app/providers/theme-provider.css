@@ -309,6 +309,23 @@
   --color-blue: #017eaf;
   --color-red: #c32f4a;
   --color-bg-green: linear-gradient(0deg, rgba(30, 140, 41, 0.06) 0%, rgba(30, 140, 41, 0.06) 100%), #fff;
+  --color-bg-red: linear-gradient(0deg, rgba(195, 47, 74, 0.1) 0%, rgba(195, 47, 74, 0.1) 100%), #fff;
+  --main-BK: var(--default-BK);
+
+  /* 편집 가능 상태 배지 톤 (재직·권한·교재배송·서류평가) */
+  --editable-badge-blue-border: rgba(1, 126, 175, 0.1);
+  --editable-badge-blue-bg: #e6f2f7;
+  --editable-badge-blue-text: var(--color-blue);
+  --editable-badge-gray-border: rgba(61, 61, 61, 0.1);
+  --editable-badge-gray-bg: #f2f3f5;
+  --editable-badge-gray-text: var(--main-BK);
+  --editable-badge-green-border: rgba(30, 140, 41, 0.1);
+  --editable-badge-green-bg: #e9f3ea;
+  --editable-badge-green-text: var(--color-green);
+  --editable-badge-green-overlay-bg: var(--color-bg-green);
+  --editable-badge-red-border: rgba(195, 47, 74, 0.1);
+  --editable-badge-red-bg: var(--color-bg-red);
+  --editable-badge-red-text: var(--color-red);
 
   /**
    * 지급 조서 라인 처리 현황 · 동계열 UI
