@@ -17,7 +17,8 @@ import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-} from '@/shared/components/status-dropdown-cell'
+  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+} from '@/shared/components'
 import { useParticipatingInstitutionsParams } from '../../../hooks/use-participating-institutions-params'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
@@ -308,7 +309,9 @@ export function ParticipatingInstitutionsSection({
               key: 'textbookStatus',
               width: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH,
               align: 'center' as const,
-              onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+              onCell: () => ({
+                className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+              }),
               render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (
                 <StatusDropdownCell<TextbookStatusKey>
                   status={status ?? null}
@@ -320,6 +323,7 @@ export function ParticipatingInstitutionsSection({
                   onOpenChange={open => setOpenTextbookDropdownId(open ? record.id : null)}
                   emptyPlaceholder="-"
                   style={PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE}
+                  tagLayout="tag100"
                 />
               ),
             },
