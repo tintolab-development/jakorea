@@ -1,6 +1,10 @@
 import { useMemo, type Dispatch, type SetStateAction } from 'react'
 import type { ColumnsType } from 'antd/es/table'
-import { STATUS_DROPDOWN_CELL_CLASSNAME, StatusDropdownCell } from '@/shared/components'
+import {
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+  StatusDropdownCell,
+} from '@/shared/components'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import {
   GENERAL_ESSAY_COLUMN_DEFAULT_WIDTHS,
@@ -26,13 +30,7 @@ const CENTER_CELL_CLASS = 'general-volunteer-screening__center-cell'
 const NOWRAP_CELL_CLASS = 'general-volunteer-screening__nowrap-cell'
 const APPLICATION_TYPE_CELL_CLASS = 'general-volunteer-screening__application-type-cell'
 const ESSAY_CELL_CLASS = 'general-volunteer-screening__essay-cell'
-const MANAGER_EVALUATION_CELL_CLASS = `${STATUS_DROPDOWN_CELL_CLASSNAME} general-volunteer-screening__manager-eval-dropdown-cell`
-
-const MANAGER_EVALUATION_BADGE_STYLE = {
-  width: 100,
-  minWidth: 100,
-  maxWidth: 200,
-} as const
+const MANAGER_EVALUATION_CELL_CLASS = `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME} general-volunteer-screening__manager-eval-dropdown-cell`
 
 export function useGeneralVolunteerDocScreeningColumns({
   onManagerAEvaluationChange,
@@ -151,7 +149,7 @@ export function useGeneralVolunteerDocScreeningColumns({
             onOpenChange={open =>
               setOpenManagerDropdown(open ? { rowId: record.id, manager: 'A' } : null)
             }
-            style={MANAGER_EVALUATION_BADGE_STYLE}
+            tagLayout="tag100"
           />
         ),
       },
@@ -178,7 +176,7 @@ export function useGeneralVolunteerDocScreeningColumns({
             onOpenChange={open =>
               setOpenManagerDropdown(open ? { rowId: record.id, manager: 'B' } : null)
             }
-            style={MANAGER_EVALUATION_BADGE_STYLE}
+            tagLayout="tag100"
           />
         ),
       },

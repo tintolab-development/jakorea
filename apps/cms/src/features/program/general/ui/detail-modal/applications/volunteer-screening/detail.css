@@ -198,30 +198,6 @@
   vertical-align: middle;
 }
 
-.general-volunteer-applicant-manager-evaluation
-  .general-volunteer-applicant-detail__horizontal-value
-  .status-dropdown-cell__status-trigger.status-dropdown-cell__trigger--cell-style {
-  display: inline-flex;
-  box-sizing: border-box;
-  align-items: center;
-  justify-content: flex-start;
-  min-width: 116px;
-  max-width: 216px;
-  padding: 8px;
-}
-
-.general-volunteer-applicant-manager-evaluation
-  .general-volunteer-applicant-detail__horizontal-value
-  .ujat-manager-evaluation-badge.status-dropdown-cell__badge--cell-style {
-  display: flex !important;
-  height: 32px !important;
-  min-width: 100px !important;
-  max-width: 200px !important;
-  padding: 6px 12px !important;
-  flex: 0 0 auto !important;
-  box-sizing: border-box !important;
-}
-
 .general-volunteer-applicant-interview-availability__empty {
   margin: 0;
   padding: 0 8px;

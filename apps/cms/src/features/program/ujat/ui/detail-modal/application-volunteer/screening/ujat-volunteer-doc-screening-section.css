@@ -499,44 +499,6 @@
 }
 
 .ujat-volunteer-doc-screening
-  .status-dropdown-cell__status-trigger.status-dropdown-cell__trigger--cell-style {
-  display: inline-flex;
-  box-sizing: border-box;
-  align-items: center;
-  justify-content: center;
-  min-width: 116px;
-  max-width: 216px;
-  padding: 8px;
-}
-
-.ujat-volunteer-doc-screening
-  .status-dropdown-cell__status-trigger
-  .ujat-manager-evaluation-badge.status-dropdown-cell__badge--cell-style,
-.ujat-volunteer-doc-screening
-  .status-dropdown-cell__dropdown-item
-  .ujat-manager-evaluation-badge.status-dropdown-cell__badge--cell-style {
-  display: flex !important;
-  height: 32px !important;
-  min-width: 100px !important;
-  max-width: 200px !important;
-  padding: 6px 12px !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  align-items: center !important;
-  gap: 4px !important;
-  flex: 1 0 0 !important;
-  width: auto !important;
-  box-sizing: border-box !important;
-}
-
-.ujat-volunteer-doc-screening
-  .status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style {
-  min-width: 216px !important;
-  width: 216px !important;
-  max-width: 216px !important;
-}
-
-.ujat-volunteer-doc-screening
   .status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style
   .ant-dropdown-menu {
   min-width: 216px !important;
