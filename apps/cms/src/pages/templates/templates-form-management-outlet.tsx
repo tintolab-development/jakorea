@@ -2,6 +2,7 @@
  * `/templates/form-management` 전용 — 라우터 `<Outlet />`과 동기화.
  */
 import type { ReactElement } from 'react'
+import { TemplateWritingPreviewProvider } from '@/features/template/context/template-writing-preview-context'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import TemplateFormTab from './template-form-tab'
 import { IssuanceFormTab } from './issuance-form-tab'
@@ -23,5 +24,5 @@ export default function TemplatesFormManagementOutlet() {
   } else {
     content = <TemplateFormTab />
   }
-  return content
+  return <TemplateWritingPreviewProvider>{content}</TemplateWritingPreviewProvider>
 }

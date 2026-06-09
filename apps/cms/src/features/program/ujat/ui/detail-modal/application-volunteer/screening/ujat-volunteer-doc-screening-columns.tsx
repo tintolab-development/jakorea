@@ -1,7 +1,11 @@
 import { useMemo, type Dispatch, type RefObject, type SetStateAction, type SyntheticEvent } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { ResizeCallbackData } from 'react-resizable'
-import { STATUS_DROPDOWN_CELL_CLASSNAME, StatusDropdownCell } from '@/shared/components'
+import {
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+  StatusDropdownCell,
+} from '@/shared/components'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { formatUjatVolunteerApplicationType } from '@/data/mock/ujat-volunteer-applicants-mock'
 import {
@@ -76,13 +80,7 @@ function buildEssayColumnResizeStopHandler(
   }
 }
 
-const MANAGER_EVALUATION_CELL_CLASS = `${STATUS_DROPDOWN_CELL_CLASSNAME} ujat-volunteer-doc-screening__manager-eval-dropdown-cell`
-
-const MANAGER_EVALUATION_BADGE_STYLE = {
-  width: 100,
-  minWidth: 100,
-  maxWidth: 200,
-} as const
+const MANAGER_EVALUATION_CELL_CLASS = `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME} ujat-volunteer-doc-screening__manager-eval-dropdown-cell`
 
 export function useUjatVolunteerDocScreeningColumns({
   onManagerAEvaluationChange,
@@ -231,7 +229,7 @@ export function useUjatVolunteerDocScreeningColumns({
             onOpenChange={open =>
               setOpenManagerDropdown(open ? { rowId: record.id, manager: 'A' } : null)
             }
-            style={MANAGER_EVALUATION_BADGE_STYLE}
+            tagLayout="tag100"
           />
         ),
       },
@@ -258,7 +256,7 @@ export function useUjatVolunteerDocScreeningColumns({
             onOpenChange={open =>
               setOpenManagerDropdown(open ? { rowId: record.id, manager: 'B' } : null)
             }
-            style={MANAGER_EVALUATION_BADGE_STYLE}
+            tagLayout="tag100"
           />
         ),
       },

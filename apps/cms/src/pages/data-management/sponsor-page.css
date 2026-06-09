@@ -91,13 +91,21 @@
   padding-bottom: 10px !important;
 }
 
-/* 후원 상태 셀: 드롭다운 트리거/배지 높이를 줄여 td(54px) 고정 유지 */
+/* 후원 상태(tag100): 54px 행 안에 116px 트리거·100×32 배지 중앙 정렬 */
+.filter-table-layout.sponsor-page
+  .filter-table-layout__table
+  .sponsor-page__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row):not(.ant-table-placeholder):has(td.status-dropdown-cell__cell-status) {
+  overflow: visible;
+}
+
 .filter-table-layout.sponsor-page
   .filter-table-layout__table
   .sponsor-page__table.cms-data-table
   .ant-table-tbody
   > tr
-  > td.status-dropdown-cell__cell-status {
+  > td.status-dropdown-cell__cell-status--tag-100 {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
@@ -105,26 +113,7 @@
 .filter-table-layout.sponsor-page
   .filter-table-layout__table
   .sponsor-page__table.cms-data-table
-  .status-dropdown-cell__status-trigger {
-  min-height: 34px !important;
-  height: 34px !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-}
-
-.filter-table-layout.sponsor-page
-  .filter-table-layout__table
-  .sponsor-page__table.cms-data-table
-  .status-dropdown-cell__status-trigger
-  .app-status-badge.sponsor-sponsorship-status-badge--table,
-.filter-table-layout.sponsor-page
-  .filter-table-layout__table
-  .sponsor-page__table.cms-data-table
-  td.status-dropdown-cell__cell-status
-  .app-status-badge.sponsor-sponsorship-status-badge--table {
-  min-height: 28px !important;
-  height: 28px !important;
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
-  line-height: 1.2 !important;
+  td.status-dropdown-cell__cell-status--tag-100
+  .status-dropdown-cell__status-trigger--tag-100 {
+  margin-inline: auto;
 }

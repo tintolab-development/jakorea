@@ -221,6 +221,9 @@
   overflow: visible;
 }
 
+.program-applicants-tab .ant-table-thead
+  > tr
+  > th.status-dropdown-cell__cell-status,
 .program-applicants-tab .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.status-dropdown-cell__cell-status {
@@ -229,6 +232,10 @@
   max-width: 136px;
   padding-top: 0;
   padding-bottom: 0;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
   overflow: visible;
   box-sizing: border-box;
 }

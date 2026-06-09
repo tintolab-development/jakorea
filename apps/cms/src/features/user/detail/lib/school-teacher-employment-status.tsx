@@ -1,5 +1,13 @@
-import { AppStatusBadge } from '@/shared/components'
+import { EditableStatusBadge } from '@/shared/components'
+import {
+  getEmploymentBadgeTone,
+  SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL,
+} from '@/shared/constants/editable-status-badge-tones'
 import type { SchoolTeacherEmploymentStatus } from '@/types/user'
+
+export {
+  SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL,
+} from '@/shared/constants/editable-status-badge-tones'
 
 /** 재직 현황 드롭다운 선택지 — 탈퇴(WITHDRAWN)는 목록에서 제외, 데이터에만 남을 수 있음 */
 export const SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS = [
@@ -7,13 +15,6 @@ export const SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS = [
   'ON_LEAVE',
   'TRANSFERRED',
 ] as const satisfies readonly SchoolTeacherEmploymentStatus[]
-
-export const SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL: Record<SchoolTeacherEmploymentStatus, string> = {
-  ACTIVE: '재직중',
-  ON_LEAVE: '휴직',
-  TRANSFERRED: '전근',
-  WITHDRAWN: '탈퇴',
-}
 
 export const SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE = {
   width: 100,
@@ -38,16 +39,13 @@ export function parseSchoolTeacherEmploymentStatus(
 
 export function SchoolTeacherEmploymentStatusBadge({
   status,
-  classNamePrefix = 'school-affiliated-teachers-section__employment-badge',
 }: {
   status: SchoolTeacherEmploymentStatus
-  classNamePrefix?: string
 }) {
-  const variant = status === 'ACTIVE' ? 'active' : 'muted'
   return (
-    <AppStatusBadge
+    <EditableStatusBadge
       label={SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL[status]}
-      className={`${classNamePrefix} ${classNamePrefix}--${variant}`}
+      tone={getEmploymentBadgeTone(status)}
     />
   )
 }

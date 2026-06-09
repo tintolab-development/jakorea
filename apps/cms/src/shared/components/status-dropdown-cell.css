@@ -198,6 +198,158 @@
 }
 
 /* --------------------------------------------------------------------------
+ * 100×32 편집 가능 상태 배지: border-box 래퍼 116px = 8px pad + 100 태그 + 8px pad
+ * 재직·권한·교재배송·서류평가 시안 4종
+ * -------------------------------------------------------------------------- */
+.status-dropdown-cell__cell-status--tag-100 {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+.ant-table-tbody > tr > td.status-dropdown-cell__cell-status--tag-100 {
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.cms-data-table .ant-table-thead > tr > th.ant-table-cell.status-dropdown-cell__header--tag-100 {
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  box-sizing: border-box !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-100 {
+  box-sizing: border-box;
+  display: inline-flex;
+  vertical-align: middle;
+  width: 116px;
+  min-width: 116px;
+  max-width: 116px;
+  padding: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
+  display: inline-flex !important;
+  box-sizing: border-box !important;
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  padding: 8px !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover,
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):focus-visible {
+  border: 1px solid transparent;
+  box-shadow: none;
+  background: transparent;
+  outline: none;
+}
+
+.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-100 {
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu {
+  box-sizing: border-box;
+  min-width: 116px !important;
+  width: 116px !important;
+  max-width: 116px !important;
+  border-radius: 6px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu-item {
+  margin: 0;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border-radius: 6px;
+  background: transparent !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu-item:last-child {
+  margin-bottom: 0;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu-item:hover {
+  background: transparent !important;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-100 .editable-status-badge {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+}
+
+/* 편집 가능 상태 배지 — 테이블 행 hover 시 border 유지(박스 크기 동일) */
+.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .editable-status-badge,
+.ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .editable-status-badge {
+  border: 1px solid transparent !important;
+  border-color: transparent !important;
+  box-sizing: border-box !important;
+}
+
+.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open) {
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.status-dropdown-cell__dropdown-item .editable-status-badge {
+  pointer-events: none;
+  box-sizing: border-box;
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 0;
+  transition: none !important;
+}
+
+.ant-table-tbody > tr > td.status-dropdown-cell__cell-status .editable-status-badge {
+  transition: none !important;
+}
+
+/* --------------------------------------------------------------------------
  * 132×33 태그 변형: border-box 래퍼 150px = 1px border + 8px pad + 132 태그 + 8px pad + 1px border
  * 드롭다운 패널도 동일 가로 여백 — 기본 overlay(136px) 규칙과 충돌하지 않도록 :not(--tag-132) 사용
  * -------------------------------------------------------------------------- */
@@ -749,17 +901,21 @@
 }
 
 /* 드롭다운 패널 (tag-132·tag-160·payment-order-line는 위 전용 블록 — 여기 136px 규칙이 덮어쓰면 태그가 메뉴에 끼어 보임) */
-.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-132):not(
-    .status-dropdown-cell__dropdown-overlay--tag-160
-  ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line) {
+.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
+    .status-dropdown-cell__dropdown-overlay--tag-132
+  ):not(.status-dropdown-cell__dropdown-overlay--tag-160):not(
+    .status-dropdown-cell__dropdown-overlay--payment-order-line
+  ) {
   width: 136px !important;
   min-width: 136px !important;
   max-width: 136px !important;
 }
 
-.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-132):not(
-    .status-dropdown-cell__dropdown-overlay--tag-160
-  ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line)
+.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
+    .status-dropdown-cell__dropdown-overlay--tag-132
+  ):not(.status-dropdown-cell__dropdown-overlay--tag-160):not(
+    .status-dropdown-cell__dropdown-overlay--payment-order-line
+  )
   .ant-dropdown-menu {
   box-sizing: border-box;
   min-width: 136px !important;
@@ -776,9 +932,11 @@
   gap: 8px;
 }
 
-.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-132):not(
-    .status-dropdown-cell__dropdown-overlay--tag-160
-  ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line)
+.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
+    .status-dropdown-cell__dropdown-overlay--tag-132
+  ):not(.status-dropdown-cell__dropdown-overlay--tag-160):not(
+    .status-dropdown-cell__dropdown-overlay--payment-order-line
+  )
   .ant-dropdown-menu-item {
   margin: 0;
   width: 100%;
@@ -792,16 +950,20 @@
   justify-content: center;
 }
 
-.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-132):not(
-    .status-dropdown-cell__dropdown-overlay--tag-160
-  ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line)
+.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
+    .status-dropdown-cell__dropdown-overlay--tag-132
+  ):not(.status-dropdown-cell__dropdown-overlay--tag-160):not(
+    .status-dropdown-cell__dropdown-overlay--payment-order-line
+  )
   .ant-dropdown-menu-item:last-child {
   margin-bottom: 0;
 }
 
-.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-132):not(
-    .status-dropdown-cell__dropdown-overlay--tag-160
-  ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line)
+.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
+    .status-dropdown-cell__dropdown-overlay--tag-132
+  ):not(.status-dropdown-cell__dropdown-overlay--tag-160):not(
+    .status-dropdown-cell__dropdown-overlay--payment-order-line
+  )
   .ant-dropdown-menu-item:hover {
   background: transparent !important;
 }

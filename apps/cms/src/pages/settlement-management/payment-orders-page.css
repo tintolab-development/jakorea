@@ -101,11 +101,39 @@
 }
 
 /*
- * ViewModeController 기본은 align-items: flex-end → 우측 토글(버튼)이 더 높을 때
- * 좌측 제목이 하단 정렬되며 디바이더 직후~제목 사이에 빈 여백처럼 보임 → 수직 가운데 정렬
+ * FilterTableLayout 간격 — 교재목록·참여기관·계좌지급과 동일
+ * 필터↔구분선: divider padding 32px / 툴바↔테이블(레이블↔본문): toolbar margin-bottom 16px
  */
-.payment-orders-page__filter-list-layout .view-mode-controller__header {
+.payment-orders-page .payment-orders-page__filter-list-layout.filter-table-layout .filter-table-layout__divider {
+  padding: var(--spacing-32) 0;
+}
+
+.payment-orders-page .payment-orders-page__filter-list-layout .filter-table-layout__toolbar {
   align-items: center;
+  margin-bottom: var(--spacing-16);
+}
+
+.payment-orders-page .payment-orders-page__filter-list-layout .filter-table-layout__toolbar-actions {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--spacing-8, 8px);
+}
+
+/* 툴바 margin-bottom(16px)만 간격 — 캘린더·테이블 래퍼 상단 여백 제거 */
+.payment-orders-page
+  .payment-orders-page__filter-list-layout
+  .filter-table-layout__table
+  > .participating-institutions-section__table-wrap,
+.payment-orders-page
+  .payment-orders-page__filter-list-layout
+  .filter-table-layout__table
+  > .participating-institutions-section__calendar-wrap,
+.payment-orders-page
+  .payment-orders-page__filter-list-layout
+  .filter-table-layout__table
+  .calendar-set {
+  margin-top: 0;
 }
 
 /* 리스트 뷰: 컬럼 헤더·본문(td) 텍스트 가운데 */

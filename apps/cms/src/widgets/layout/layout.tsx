@@ -8,7 +8,6 @@
 
 import { Layout as AntLayout } from 'antd'
 import { Outlet, useLocation, useParams } from 'react-router-dom'
-import { TemplateWritingPreviewProvider } from '@/features/template/context/template-writing-preview-context'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canAccessProgram } from '@/features/permission-request/lib/program-acl'
 import { canAccessPath } from '@/shared/config/menu-config'
@@ -60,9 +59,7 @@ export function Layout() {
       <AntLayout>
         <MainHeader />
         <Content className={`layout-content ${isTemplatesPath ? 'layout-content--templates' : ''}`}>
-          <TemplateWritingPreviewProvider>
-            <LayoutContent />
-          </TemplateWritingPreviewProvider>
+          <LayoutContent />
         </Content>
       </AntLayout>
     </AntLayout>

@@ -129,7 +129,9 @@ const EducationRecordListPage = lazyLoad(
 )
 const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
-const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-page'))
+const TemplateListPage = lazyLoad(() =>
+  import('@/pages/templates/template-list-page').then(m => ({ default: m.TemplateListPage }))
+)
 const FormTestTableComponentsPage = lazyLoad(
   () => import('@/pages/templates/form-test-table-components-page')
 )

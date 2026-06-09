@@ -60,11 +60,7 @@ export default function PaymentOrdersPage() {
         }
         excelExport={paymentOrdersExcelExport}
       >
-        {viewMode === 'list' ? (
-          <div className="list-page-layout__table-shell">{renderContent('list')}</div>
-        ) : (
-          renderContent('calendar')
-        )}
+        {renderContent(viewMode)}
       </FilterTableLayout>
 
       <PaymentOrderDetailFullPageModal

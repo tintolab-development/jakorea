@@ -56,12 +56,7 @@ function SchoolTeacherEmploymentStatusField({
       <StatusDropdownCell<SchoolTeacherEmploymentStatus>
       status={employmentStatus}
       statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
-      renderBadge={status => (
-        <SchoolTeacherEmploymentStatusBadge
-          status={status}
-          classNamePrefix="user-basic-info-section__teacher-employment-badge"
-        />
-      )}
+      renderBadge={status => <SchoolTeacherEmploymentStatusBadge status={status} />}
       isItemDisabled={(cur, opt) => cur === opt}
       onChange={handleEmploymentStatusChange}
       isOpen={employmentDropdownOpen}

@@ -25,29 +25,6 @@
   margin: 0;
 }
 
-/* 일반 교사 기본 정보 — 재직 현황 (소속 교사 목록 배지 톤과 정렬) */
-.user-basic-info-section__teacher-employment-badge.app-status-badge {
-  width: auto;
-  min-width: 120px;
-  max-width: 100%;
-  height: auto;
-  min-height: 32px;
-  padding: 6px 12px;
-  white-space: nowrap;
-}
-
-.user-basic-info-section__teacher-employment-badge--active.app-status-badge {
-  border: 1px solid rgba(1, 126, 175, 0.1);
-  background: #e6f2f7;
-  color: var(--color-blue, #017eaf);
-}
-
-.user-basic-info-section__teacher-employment-badge--muted.app-status-badge {
-  border: 1px solid rgba(61, 61, 61, 0.1);
-  background: #f2f3f5;
-  color: var(--main-bk, #3d3d3d);
-}
-
 /*
  * 교사 상세 — 성명 블록 행 높이 56px (셀 padding 12×2 + 배지 32).
  * StatusDropdownCell 기본 트리거 padding(8px) 제거해 재직 현황 도입 전 높이 유지.

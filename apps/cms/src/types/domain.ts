@@ -183,6 +183,8 @@ export interface GeneralProgramParticipantRecruitmentInfo {
   recruitmentPeriodLabel?: string
   finalAnnouncementLabel?: string
   contactOrganizationName?: string
+  /** 개인 참여자 모집 — 면접 유무 (등록 양식·상세 mock) */
+  interviewEnabled?: boolean
 }
 
 /** 일반 프로그램 — 강사 모집 정보 (프로그램 등록 강사 모집 양식 필드) */
@@ -386,6 +388,8 @@ export interface Program {
   generalParticipantTypes?: GeneralProgramParticipantType[]
   /** 일반 프로그램 — 봉사자 선발 시 면접 단계 LNB 노출 여부 */
   generalVolunteerInterviewEnabled?: boolean
+  /** 일반 프로그램 — 개인 참여자 선발 시 면접 단계 LNB 노출 여부 */
+  generalParticipantInterviewEnabled?: boolean
   /** 일반 프로그램 — 설문 관리 LNB 2뎁스 키 */
   generalSurveyMenuKeys?: GeneralProgramSurveyMenuKey[]
   /** 일반 프로그램 유형 — 대분류 (기관/개인) */

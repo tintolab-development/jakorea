@@ -58,6 +58,15 @@ export const STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME = 'status-dropdown-cell__cel
 export const STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME = 'status-dropdown-cell__header--tag-160'
 
 /**
+ * 편집 가능 상태 배지 100×32 + 트리거/오버레이 116px(border-box: 8 + 100 + 8).
+ * 재직·권한·교재배송·서류평가 시안 4종용.
+ */
+export const STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME = 'status-dropdown-cell__cell-status--tag-100'
+
+/** 동일 열 `th` — `STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME` 과 짝 */
+export const STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME = 'status-dropdown-cell__header--tag-100'
+
+/**
  * 지급 조서 처리 현황 — 내부 태그 160px, 열·트리거·드롭다운 외곽 176px(패딩 8+태그+8, 기본 136px 규칙과 동일).
  * `onCell` / `onHeaderCell`에 각각 `STATUS_DROPDOWN_CELL_PAYMENT_ORDER_LINE_*` 병기.
  */
@@ -90,10 +99,11 @@ export interface StatusDropdownCellProps<T extends string = string> {
   emptyPlaceholder?: React.ReactNode
   /**
    * `tag132`: 내부 태그 132×33, 민트 래퍼·드롭다운 150px(border-box, 가로 패딩 8px).
+   * `tag100`: 편집 가능 상태 배지 100×32 — 트리거/오버레이 116px.
    * `tag160` / `paymentOrderLine`: 전용 오버레이·트리거 폭 — 셀/헤더에는 각 `STATUS_DROPDOWN_CELL_*_CLASSNAME` 병기.
    * `style`과 병행 가능(배지 폭·패널 변수).
    */
-  tagLayout?: 'default' | 'tag132' | 'tag160' | 'paymentOrderLine'
+  tagLayout?: 'default' | 'tag100' | 'tag132' | 'tag160' | 'paymentOrderLine'
   /**
    * 배지 카드(내부 Tag·`.app-status-badge` 루트)에 적용 — 드롭다운 트리거(흰 래퍼)가 아님.
    * `width`가 있으면 배지 폭에 맞추고, 드롭다운 패널은 트리거와 동일하게 배지+16px(좌우 padding 8px×2).
@@ -185,6 +195,7 @@ export function StatusDropdownCell<T extends string = string>({
 
   const overlayClassName = [
     'status-dropdown-cell__dropdown-overlay',
+    tagLayout === 'tag100' ? 'status-dropdown-cell__dropdown-overlay--tag-100' : '',
     tagLayout === 'tag132' ? 'status-dropdown-cell__dropdown-overlay--tag-132' : '',
     tagLayout === 'tag160' ? 'status-dropdown-cell__dropdown-overlay--tag-160' : '',
     tagLayout === 'paymentOrderLine'
@@ -229,7 +240,8 @@ export function StatusDropdownCell<T extends string = string>({
     >
       <span
         className={`status-dropdown-cell__status-trigger${
-          tagLayout === 'tag132' ? ' status-dropdown-cell__status-trigger--tag-132' : ''
+          tagLayout === 'tag100' ? ' status-dropdown-cell__status-trigger--tag-100' : ''
+        }${tagLayout === 'tag132' ? ' status-dropdown-cell__status-trigger--tag-132' : ''
         }${tagLayout === 'tag160' ? ' status-dropdown-cell__status-trigger--tag-160' : ''}${
           tagLayout === 'paymentOrderLine' ? ' status-dropdown-cell__status-trigger--payment-order-line' : ''
         }${isOpen ? ' status-dropdown-cell__status-trigger--open' : ''}${

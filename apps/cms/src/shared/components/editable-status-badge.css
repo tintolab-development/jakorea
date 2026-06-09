@@ -1,0 +1,58 @@
+/**
+ * 편집 가능 상태 배지 — 시안 4종 공통 (100×32, 12px/600)
+ */
+
+.editable-status-badge {
+  display: flex;
+  box-sizing: border-box;
+  width: 100px;
+  height: 32px;
+  min-width: 100px;
+  max-width: 200px;
+  padding: 6px 12px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  border-radius: var(--6, 6px);
+  border: 1px solid transparent;
+  text-align: center;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  white-space: nowrap;
+  transition: none !important;
+}
+
+.editable-status-badge--blue {
+  border-color: var(--editable-badge-blue-border);
+  background: var(--editable-badge-blue-bg);
+  color: var(--editable-badge-blue-text);
+}
+
+.editable-status-badge--gray {
+  border-color: var(--editable-badge-gray-border);
+  background: var(--editable-badge-gray-bg);
+  color: var(--editable-badge-gray-text);
+}
+
+.editable-status-badge--green {
+  border-color: var(--editable-badge-green-border);
+  background: var(--editable-badge-green-bg);
+  color: var(--editable-badge-green-text);
+}
+
+.editable-status-badge--green-overlay {
+  border-color: var(--editable-badge-green-border);
+  background: var(--editable-badge-green-overlay-bg);
+  color: var(--editable-badge-green-text);
+}
+
+.editable-status-badge--red {
+  border-color: var(--editable-badge-red-border);
+  background: var(--editable-badge-red-bg);
+  color: var(--editable-badge-red-text);
+}

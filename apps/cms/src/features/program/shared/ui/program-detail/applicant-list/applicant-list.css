@@ -27,7 +27,11 @@
   overflow: visible;
 }
 
-/* 셀 횡 사이즈: 본문 좌우 패딩은 cms-data-table(16px)과 동일, 상하만 0 */
+/* 셀 횡 사이즈: 트리거 136px — 좌우 패딩 0 + 가운데 정렬(status-dropdown-cell 공통 스펙) */
+.applicant-details
+  .ant-table-thead
+  > tr
+  > th.status-dropdown-cell__cell-status,
 .applicant-details
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
@@ -37,8 +41,10 @@
   max-width: 136px;
   padding-top: 0;
   padding-bottom: 0;
-  padding-left: 16px;
-  padding-right: 16px;
+  padding-left: 0;
+  padding-right: 0;
+  text-align: center !important;
+  vertical-align: middle !important;
   overflow: visible;
   box-sizing: border-box;
 }
@@ -58,15 +64,14 @@
   max-height: 53px !important;
 }
 
-/* 상하 패딩만 0 — 좌우는 다른 컬럼과 동일(16px) */
 .applicant-details
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.status-dropdown-cell__cell-status {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-  padding-left: 16px !important;
-  padding-right: 16px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
 /* FilterTableLayout: 풀페이지 모달 본문 안 — 이중 카드·그림자 제거 */

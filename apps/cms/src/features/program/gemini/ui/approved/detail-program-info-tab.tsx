@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { EditableStatusBadge } from '@/shared/components'
 import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
+import type { EditableStatusBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import type { GeminiApprovedTrainingDetail } from '../../model/approved/detail-types'
 import type { GeminiApprovedTrainingStatus } from '../../model/approved/types'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
@@ -46,17 +48,18 @@ function statusClassName(status: GeminiApprovedTrainingStatus) {
   return 'gemini-approved-training-detail-info__status--ended'
 }
 
+function getGeminiEmploymentBadgeTone(
+  status: GeminiApprovedEmploymentStatusValue
+): EditableStatusBadgeTone {
+  return status === 'ACTIVE' ? 'blue' : 'gray'
+}
+
 function employmentStatusBadge(status: GeminiApprovedEmploymentStatusValue) {
-  const modifier =
-    status === 'ACTIVE'
-      ? 'gemini-approved-training-detail-info__employment-badge--active'
-      : 'gemini-approved-training-detail-info__employment-badge--inactive'
   return (
-    <span
-      className={`gemini-approved-training-detail-info__employment-badge gemini-approved-training-detail-info__employment-badge--static ${modifier}`}
-    >
-      {EMPLOYMENT_STATUS_LABEL[status]}
-    </span>
+    <EditableStatusBadge
+      label={EMPLOYMENT_STATUS_LABEL[status]}
+      tone={getGeminiEmploymentBadgeTone(status)}
+    />
   )
 }
 
@@ -158,7 +161,7 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
                       isOpen={isEmploymentStatusOpen}
                       onOpenChange={setIsEmploymentStatusOpen}
                       style={employmentBadgeStyle}
-                      tagLayout="tag160"
+                      tagLayout="tag100"
                     />
                   ),
                 },

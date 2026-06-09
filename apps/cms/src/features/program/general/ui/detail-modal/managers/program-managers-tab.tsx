@@ -26,11 +26,13 @@ import {
 } from '../../add-manager-modal'
 import { ManagerDeleteGuideModal } from '../../manager-delete-guide-modal'
 import {
+  EditableStatusBadge,
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
-} from '@/shared/components/status-dropdown-cell'
+  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
+} from '@/shared/components'
+import { getProgramRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
@@ -217,14 +219,9 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
   )
 
   const renderRoleBadge = useCallback((r: ProgramRole) => {
-    const label = PROGRAM_ROLE_LABELS[r]
-    const mod =
-      r === 'OWNER'
-        ? 'program-managers-tab__role-badge--owner'
-        : r === 'PARTNER'
-          ? 'program-managers-tab__role-badge--partner'
-          : 'program-managers-tab__role-badge--assistant'
-    return <span className={`program-managers-tab__role-badge ${mod}`}>{label}</span>
+    return (
+      <EditableStatusBadge label={PROGRAM_ROLE_LABELS[r]} tone={getProgramRoleBadgeTone(r)} />
+    )
   }, [])
 
   const columns: ColumnsType<ProgramManagerRow> = useMemo(
@@ -241,11 +238,11 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         title: '권한',
         dataIndex: 'role',
         key: 'role',
-        width: 160,
+        width: 116,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME }),
+        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
         onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME}`,
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
         }),
         render: (role: ProgramRole, record: ProgramManagerRow) => (
           <StatusDropdownCell<ProgramRole>
@@ -257,7 +254,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
-            tagLayout="tag160"
+            tagLayout="tag100"
           />
         ),
       },

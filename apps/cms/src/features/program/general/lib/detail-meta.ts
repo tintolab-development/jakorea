@@ -15,8 +15,11 @@ import {
 } from '@/features/program/general/lib/registration-local-save'
 import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import type { GeneralProgressTabKey } from '@/features/program/general/lib/progress-tabs'
 
 export type GeneralSurveyMenuItem = { key: GeneralProgramSurveyMenuKey; label: string }
+
+export type GeneralProgressMenuItem = { tab: GeneralProgressTabKey; label: string }
 
 const SURVEY_MENU_LABELS: Record<GeneralProgramSurveyMenuKey, string> =
   PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS
@@ -45,14 +48,20 @@ export function getGeneralParticipantTypes(program: Program): GeneralProgramPart
 }
 
 export function hasGeneralInstructorApplications(program: Program): boolean {
-  const types = getGeneralParticipantTypes(program)
-  if (types.includes('teacher_instructor')) return true
-  /** 기관(학교) 신청 프로그램은 기관 신청 목록과 함께 강사 신청 목록 LNB 노출 */
-  return types.includes('school_institution')
+  return getGeneralParticipantTypes(program).includes('teacher_instructor')
 }
 
 export function hasGeneralVolunteerApplications(program: Program): boolean {
   return getGeneralParticipantTypes(program).includes('volunteer')
+}
+
+/** true면 개인 참여자 신청 LNB에 면접 단계 2뎁스 노출 */
+export function getGeneralParticipantInterviewEnabled(program: Program): boolean {
+  if (!isGeneralIndividualProgram(program)) return false
+  if (program.generalParticipantInterviewEnabled != null) {
+    return program.generalParticipantInterviewEnabled
+  }
+  return program.generalCommonInfo?.participantRecruitmentInfo?.interviewEnabled === true
 }
 
 /** true면 봉사자 신청 LNB에 면접 단계 2뎁스 노출 */
@@ -83,4 +92,26 @@ export function getGeneralParticipantApplicationsLnbLabel(program: Program): str
   return isGeneralIndividualProgram(program)
     ? GENERAL_PARTICIPANT_APPLICATIONS_LNB_LABEL
     : GENERAL_ORGANIZATION_APPLICATIONS_LNB_LABEL
+}
+
+/** 프로그램 진행 현황 LNB 2depth — 참여자 유형별 (출석/과제/게시글 제외) */
+export function getGeneralProgressMenuItems(program: Program): GeneralProgressMenuItem[] {
+  const types = getGeneralParticipantTypes(program)
+  const isIndividual = isGeneralIndividualProgram(program)
+  const items: GeneralProgressMenuItem[] = []
+
+  if (types.includes('individual') || types.includes('school_institution')) {
+    items.push({
+      tab: 'progress_participants',
+      label: isIndividual ? '참여자' : '참여 기관',
+    })
+  }
+  if (types.includes('teacher_instructor')) {
+    items.push({ tab: 'progress_instructors', label: '참여 강사' })
+  }
+  if (types.includes('volunteer')) {
+    items.push({ tab: 'progress_volunteers', label: '참여 봉사자' })
+  }
+
+  return items
 }

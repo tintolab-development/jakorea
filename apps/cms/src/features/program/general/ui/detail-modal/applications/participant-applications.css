@@ -92,6 +92,13 @@
   .participant-applications
   .applicant-details
   .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.status-dropdown-cell__cell-status,
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
   > td.ant-table-cell.status-dropdown-cell__cell-status {
@@ -100,8 +107,10 @@
   max-width: 180px;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-  padding-left: 16px !important;
-  padding-right: 16px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
 }
 
 .participant-applications

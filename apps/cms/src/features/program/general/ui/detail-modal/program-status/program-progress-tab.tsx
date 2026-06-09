@@ -47,7 +47,8 @@ import { useProgressInstructorList } from '../../../hooks/use-progress-instructo
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-} from '@/shared/components/status-dropdown-cell'
+  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+} from '@/shared/components'
 import { Divider } from '@/shared/components/divider'
 import './program-progress-tab.css'
 
@@ -279,9 +280,11 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         title: '교재 현황',
         dataIndex: 'textbookStatus',
         key: 'textbookStatus',
-        width: 140,
+        width: 116,
         align: 'center',
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        onCell: () => ({
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+        }),
         render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (
           <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
             <StatusDropdownCell<TextbookStatusKey>
@@ -292,6 +295,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
               onChange={key => handleTextbookStatusChange(record.id, key)}
               isOpen={openTextbookDropdownSchoolId === record.id}
               onOpenChange={open => setOpenTextbookDropdownSchoolId(open ? record.id : null)}
+              tagLayout="tag100"
             />
           </div>
         ),

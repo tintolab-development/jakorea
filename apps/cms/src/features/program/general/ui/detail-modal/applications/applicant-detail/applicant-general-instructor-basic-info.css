@@ -18,7 +18,8 @@
   flex-shrink: 0;
 }
 
-.applicant-general-instructor-basic-info__employment-dropdown .status-dropdown-cell__status-trigger {
+.applicant-general-instructor-basic-info__employment-dropdown
+  .status-dropdown-cell__status-trigger {
   box-sizing: border-box;
   width: auto;
   min-width: 0;
@@ -40,65 +41,7 @@
   overflow: visible;
 }
 
-/* 트리거·드롭다운 내부 — status-dropdown-cell 공통 120×33 규칙 덮어쓰기 */
-.applicant-general-instructor-basic-info__employment-dropdown
-  .applicant-general-instructor-basic-info__employment-badge.app-status-badge,
-.applicant-general-instructor-basic-info__employment-dropdown
-  .status-dropdown-cell__status-trigger
-  .app-status-badge.status-dropdown-cell__badge--cell-style,
-.applicant-general-instructor-basic-info__employment-dropdown
-  .status-dropdown-cell__dropdown-item
-  .app-status-badge.status-dropdown-cell__badge--cell-style {
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  align-items: center !important;
-  box-sizing: border-box !important;
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 200px !important;
-  height: 32px !important;
-  min-height: 32px !important;
-  max-height: 32px !important;
-  margin: 0 !important;
-  padding: 0 12px !important;
-  gap: 0 !important;
-  border-radius: 6px !important;
-  overflow: visible !important;
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 12px !important;
-  font-style: normal;
-  font-weight: 600 !important;
-  line-height: 150% !important;
-}
-
-/* 재직 현황 배지 — 재직중(active) / 휴직·전근(muted) */
-.applicant-general-instructor-basic-info__employment-badge.app-status-badge {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  box-sizing: border-box;
-  width: 100px;
-  min-width: 100px;
-  max-width: 200px;
-  height: 32px;
-  min-height: 32px;
-  max-height: 32px;
-  margin: 0;
-  padding: 0 12px;
-  gap: 0;
-  border-radius: 6px;
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 150%;
-}
-
-/* 소속 필드 — 재직 StatusDropdownCell 열림 시에도 행 높이·오버플로 고정 */
+/* 소속 행 — 배지 활성화(드롭다운 열림) 시에도 행 높이 고정 */
 .applicant-general-instructor-basic-info
   .detail-info-form__field:has(.applicant-general-instructor-basic-info__employment-dropdown),
 .applicant-general-instructor-basic-info
@@ -110,18 +53,6 @@
   .detail-info-form__field:has(.applicant-general-instructor-basic-info__employment-dropdown)
   .detail-info-form__field-content {
   overflow: visible;
-}
-
-.applicant-general-instructor-basic-info__employment-badge--active.app-status-badge {
-  border: 1px solid rgba(1, 126, 175, 0.1);
-  background: #e6f2f7;
-  color: var(--color-blue, #017eaf);
-}
-
-.applicant-general-instructor-basic-info__employment-badge--muted.app-status-badge {
-  border: 1px solid rgba(61, 61, 61, 0.1);
-  background: #f2f3f5;
-  color: var(--main-bk, #3d3d3d);
 }
 
 .applicant-general-instructor-basic-info__form-error {

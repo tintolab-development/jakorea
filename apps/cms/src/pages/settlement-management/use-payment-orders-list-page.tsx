@@ -2,14 +2,7 @@
  * 정산 관리 > 지급조서 확인 목록 — URL·필터·테이블 데이터·상세 모달 상태
  */
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactElement,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { flushSync } from 'react-dom'
 import type { Dayjs } from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -184,12 +177,15 @@ export function usePaymentOrdersListPage() {
   })
 
   const closeDetail = useCallback(() => {
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev)
-      next.delete(PO_DETAIL_TYPE)
-      next.delete(PO_DETAIL_NO)
-      return next
-    }, { replace: true })
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.delete(PO_DETAIL_TYPE)
+        next.delete(PO_DETAIL_NO)
+        return next
+      },
+      { replace: true }
+    )
   }, [setSearchParams])
 
   const openPaymentOrderDetail = useCallback(
@@ -198,12 +194,15 @@ export function usePaymentOrdersListPage() {
       data: PaymentOrderAdminProgramRow | PaymentOrderAdminInstructorRow
     ) => {
       setExposureMode(type)
-      setSearchParams(prev => {
-        const next = new URLSearchParams(prev)
-        next.set(PO_DETAIL_TYPE, type)
-        next.set(PO_DETAIL_NO, String(data.no))
-        return next
-      }, { replace: false })
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set(PO_DETAIL_TYPE, type)
+          next.set(PO_DETAIL_NO, String(data.no))
+          return next
+        },
+        { replace: false }
+      )
     },
     [setSearchParams]
   )
@@ -373,39 +372,45 @@ export function usePaymentOrdersListPage() {
   const renderContent = useCallback(
     (mode: PaymentOrdersPageViewMode): ReactElement =>
       mode === 'calendar' ? (
-        <PaymentOrdersCalendarView
-          key={`${appliedResetKey}-${resolvedExposureMode}`}
-          exposure={resolvedExposureMode}
-          programRows={listProgram}
-          instructorRows={listInstructor}
-          filterDateRange={appliedFromUrl.dateRange}
-          onFilterDateRangeApply={applyDateRangeFromCalendar}
-          onPaymentStatusDetailClick={payload => {
-            if (payload.exposure === 'program') {
-              openPaymentOrderDetail('program', payload.row)
-            } else {
-              openPaymentOrderDetail('instructor', payload.row)
-            }
-          }}
-        />
-      ) : isProgram ? (
-        <PaymentOrdersTable<PaymentOrderAdminProgramRow>
-          key="payment-orders-program"
-          rowKey="no"
-          columns={programColumns}
-          dataSource={listProgram}
-          scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_PROGRAM }}
-          onRowClick={record => openPaymentOrderDetail('program', record)}
-        />
+        <div className="participating-institutions-section__calendar-wrap">
+          <PaymentOrdersCalendarView
+            key={`${appliedResetKey}-${resolvedExposureMode}`}
+            exposure={resolvedExposureMode}
+            programRows={listProgram}
+            instructorRows={listInstructor}
+            filterDateRange={appliedFromUrl.dateRange}
+            onFilterDateRangeApply={applyDateRangeFromCalendar}
+            onPaymentStatusDetailClick={payload => {
+              if (payload.exposure === 'program') {
+                openPaymentOrderDetail('program', payload.row)
+              } else {
+                openPaymentOrderDetail('instructor', payload.row)
+              }
+            }}
+          />
+        </div>
       ) : (
-        <PaymentOrdersTable<PaymentOrderAdminInstructorRow>
-          key="payment-orders-instructor"
-          rowKey="no"
-          columns={instructorColumns}
-          dataSource={listInstructor}
-          scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_INSTRUCTOR }}
-          onRowClick={record => openPaymentOrderDetail('instructor', record)}
-        />
+        <div className="participating-institutions-section__table-wrap list-page-layout__table-shell">
+          {isProgram ? (
+            <PaymentOrdersTable<PaymentOrderAdminProgramRow>
+              key="payment-orders-program"
+              rowKey="no"
+              columns={programColumns}
+              dataSource={listProgram}
+              scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_PROGRAM }}
+              onRowClick={record => openPaymentOrderDetail('program', record)}
+            />
+          ) : (
+            <PaymentOrdersTable<PaymentOrderAdminInstructorRow>
+              key="payment-orders-instructor"
+              rowKey="no"
+              columns={instructorColumns}
+              dataSource={listInstructor}
+              scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_INSTRUCTOR }}
+              onRowClick={record => openPaymentOrderDetail('instructor', record)}
+            />
+          )}
+        </div>
       ),
     [
       appliedResetKey,

@@ -49,11 +49,13 @@ import {
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import {
+  EditableStatusBadge,
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
-} from '@/shared/components/status-dropdown-cell'
+  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
+} from '@/shared/components'
+import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
 import { SchoolDetailAttendanceSection } from './school-detail-attendance-section'
 import {
@@ -96,7 +98,6 @@ import {
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import './participating-institutions-section.css'
-import './instructor-assignment-role-tag.css'
 import './instructor-assignment-status-text.css'
 import { ParticipatingInstitutionApplicationInfo } from './participating-institution-application-info'
 import './school-detail-fullpage-view.css'
@@ -619,33 +620,28 @@ export function GeneralParticipatingInstitutionDetailView({
         title: '역할',
         dataIndex: 'role',
         key: 'role',
-        width: 150,
+        width: 116,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME }),
+        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
         onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME}`,
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
         }),
         render: (role: InstructorRoleKey, record: AssignedInstructorDisplayRow) => (
           <StatusDropdownCell<InstructorRoleKey>
             status={role}
             statusOptions={['lead', 'assistant']}
             renderBadge={r => (
-              <span
-                className={
-                  r === 'lead'
-                    ? 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--lead'
-                    : 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--assistant'
-                }
-              >
-                {INSTRUCTOR_ROLE_LABELS[r]}
-              </span>
+              <EditableStatusBadge
+                label={INSTRUCTOR_ROLE_LABELS[r]}
+                tone={getInstructorRoleBadgeTone(r)}
+              />
             )}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={key => handleRoleChange(record.id, key as InstructorRoleKey)}
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
-            tagLayout="tag132"
+            tagLayout="tag100"
           />
         ),
       },
@@ -793,6 +789,7 @@ export function GeneralParticipatingInstitutionDetailView({
         onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
         isOpen={textbookStatusDropdownOpen}
         onOpenChange={setTextbookStatusDropdownOpen}
+        tagLayout="tag100"
       />
     ) : (
       <TextbookStatusBadge status={mergedDetail.textbookStatus} />

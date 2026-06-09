@@ -4,6 +4,8 @@
  */
 
 import './delivery-status-badge.css'
+import { EditableStatusBadge } from './editable-status-badge'
+import { getTextbookDeliveryStatusBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 
 export type TextbookDeliveryStatus = 'before_shipping' | 'shipping' | 'delivered'
 
@@ -15,10 +17,9 @@ export const TEXTBOOK_DELIVERY_STATUS_LABEL: Record<TextbookDeliveryStatus, stri
 
 export function DeliveryStatusBadge({ status }: { status: TextbookDeliveryStatus }) {
   return (
-    <span
-      className={`delivery-status-badge delivery-status-badge--${status}`}
-    >
-      {TEXTBOOK_DELIVERY_STATUS_LABEL[status]}
-    </span>
+    <EditableStatusBadge
+      label={TEXTBOOK_DELIVERY_STATUS_LABEL[status]}
+      tone={getTextbookDeliveryStatusBadgeTone(status)}
+    />
   )
 }

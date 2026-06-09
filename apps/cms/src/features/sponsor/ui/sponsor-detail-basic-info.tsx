@@ -60,9 +60,7 @@ export function SponsorBasicInfoSection({
       <StatusDropdownCell<SponsorshipStatus>
         status={value.sponsorshipStatus ?? 'active'}
         statusOptions={SPONSORSHIP_STATUS_OPTIONS}
-        renderBadge={status => (
-          <SponsorSponsorshipStatusBadge status={status} variant="table" />
-        )}
+        renderBadge={status => <SponsorSponsorshipStatusBadge status={status} />}
         isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
         onChange={next =>
           onChange(prev => ({
@@ -72,10 +70,10 @@ export function SponsorBasicInfoSection({
         }
         isOpen={isSponsorshipStatusDropdownOpen}
         onOpenChange={setIsSponsorshipStatusDropdownOpen}
-        style={{ width: '120px' }}
+        tagLayout="tag100"
       />
     ) : (
-      <SponsorSponsorshipStatusBadge status={value.sponsorshipStatus ?? 'active'} variant="table" />
+      <SponsorSponsorshipStatusBadge status={value.sponsorshipStatus ?? 'active'} />
     )
 
   return (

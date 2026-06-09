@@ -7,14 +7,14 @@ export const PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH = 152
 /** 교재 배송 현황 StatusDropdownCell 배지·트리거·드롭다운 패널 폭 */
 export const PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_BADGE_WIDTH = 120
 
-/** StatusDropdownCell `style` — 배지 100×30, 패널은 공통 CSS에서 배지+16px */
+/** StatusDropdownCell `style` — 배지 100×32 (tag100 레이아웃과 병행) */
 export const PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE = {
   width: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_BADGE_WIDTH,
   minWidth: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_BADGE_WIDTH,
   maxWidth: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_BADGE_WIDTH,
-  height: 30,
-  minHeight: 30,
-  maxHeight: 30,
+  height: 32,
+  minHeight: 32,
+  maxHeight: 32,
 } as const
 
 /** 참여 기관 목록 테이블 최소 가로 스크롤 폭(열 width 합) */

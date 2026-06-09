@@ -6,15 +6,6 @@
   box-sizing: border-box;
 }
 
-.general-volunteer-doc-passed__table-header.table-header-actions {
-  width: 100%;
-  min-width: 0;
-}
-
-.general-volunteer-doc-passed__table-actions.info-section-buttons--wrapper {
-  margin-left: auto;
-}
-
 /*
  * 필터 2필드(신청 봉사자명·면접일 배정 현황) + 조회 — 기관 프로그램 260px 칸 규격
  */

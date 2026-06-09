@@ -7,8 +7,6 @@ import {
 import { GeneralManagerEvaluationBadge } from './status-text'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 
-const MANAGER_EVALUATION_BADGE_STYLE = { minWidth: 72 } as const
-
 export interface GeneralVolunteerApplicantManagerEvaluationSectionProps {
   applicant: GeneralVolunteerApplicantRow
   openManagerDropdown: { rowId: string; manager: 'A' | 'B' } | null
@@ -48,7 +46,7 @@ export function GeneralVolunteerApplicantManagerEvaluationSection({
                   onOpenChange={open =>
                     setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'A' } : null)
                   }
-                  style={MANAGER_EVALUATION_BADGE_STYLE}
+                  tagLayout="tag100"
                 />
               </td>
               <th scope="row" className="general-volunteer-applicant-detail__horizontal-label">
@@ -68,7 +66,7 @@ export function GeneralVolunteerApplicantManagerEvaluationSection({
                   onOpenChange={open =>
                     setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'B' } : null)
                   }
-                  style={MANAGER_EVALUATION_BADGE_STYLE}
+                  tagLayout="tag100"
                 />
               </td>
             </tr>

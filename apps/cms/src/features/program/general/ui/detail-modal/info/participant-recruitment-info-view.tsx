@@ -26,6 +26,7 @@ import {
 } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { resolveGeneralProgramParticipantRecruitmentDisplay } from '@/features/program/general/lib/participant-recruitment-display'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './participant-recruitment-info-view.css'
@@ -44,6 +45,11 @@ const NEED_OR_NOT_OPTIONS = [
   { value: 'required' as const, label: '필요' },
   { value: 'not_required' as const, label: '불필요' },
 ]
+
+const INTERVIEW_OPTIONS = [
+  { value: 'yes' as const, label: '면접 있음' },
+  { value: 'no' as const, label: '면접 없음' },
+] as const
 
 const CERTIFICATE_OPTIONS = [
   { value: 'provided' as const, label: '제공' },
@@ -153,11 +159,41 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   )
 
   const contactOrg = display.contactOrganizationName
+  const showIndividualInterview = isGeneralIndividualProgram(program)
 
   return (
     <section className="participant-recruitment-info-view" aria-label="참여자 모집 정보">
       <FormParagraphSectionHeader title="참여자 모집 정보" surface="responseEntry" titleAligned />
       <div className="participant-recruitment-info-view__forms">
+        {showIndividualInterview ? (
+          <DetailInfoForm title="참여자 면접 유무" hideHeader mode={formMode} className={FORM_CLASS}>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="참여자 면접 유무"
+                fullRow
+                view={display.interviewEnabledLabel ?? '-'}
+                edit={
+                  isEdit && form ? (
+                    <Controller
+                      name="participantRecruitmentInterviewEnabled"
+                      control={form.control}
+                      render={({ field }) => (
+                        <CmsRadio.Group
+                          {...field}
+                          size="large"
+                          value={field.value ?? undefined}
+                          onChange={e => field.onChange(e.target.value)}
+                          options={[...INTERVIEW_OPTIONS]}
+                          className="program-detail-info-tab__recruitment-radio"
+                        />
+                      )}
+                    />
+                  ) : undefined
+                }
+              />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
+        ) : null}
         <DetailInfoForm
           title="참여자 모집 정보(설정)"
           hideHeader

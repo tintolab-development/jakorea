@@ -1,6 +1,5 @@
-import { AppStatusBadge } from '@/shared/components/app-status-badge'
-import '@/shared/components/app-status-badge.css'
-import './sponsor-sponsorship-status-badge.css'
+import { EditableStatusBadge } from '@/shared/components/editable-status-badge'
+import type { EditableStatusBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 
 export type SponsorContactType = 'lead' | 'assistant'
 
@@ -9,9 +8,9 @@ const LABELS: Record<SponsorContactType, string> = {
   assistant: '담당자',
 }
 
-const STATUS_CLASS: Record<SponsorContactType, 'active' | 'ended'> = {
-  lead: 'active',
-  assistant: 'ended',
+const TONE: Record<SponsorContactType, EditableStatusBadgeTone> = {
+  lead: 'blue',
+  assistant: 'gray',
 }
 
 export interface SponsorContactTypeBadgeProps {
@@ -19,11 +18,5 @@ export interface SponsorContactTypeBadgeProps {
 }
 
 export function SponsorContactTypeBadge({ type }: SponsorContactTypeBadgeProps) {
-  const tone = STATUS_CLASS[type]
-  return (
-    <AppStatusBadge
-      label={LABELS[type]}
-      className={`sponsor-sponsorship-status-badge sponsor-sponsorship-status-badge--${tone} sponsor-sponsorship-status-badge--table`}
-    />
-  )
+  return <EditableStatusBadge label={LABELS[type]} tone={TONE[type]} />
 }

@@ -134,11 +134,14 @@ function onSettlementDecimalNumericKeyDown(e: KeyboardEvent<HTMLInputElement>) {
   e.preventDefault()
 }
 
+/** ModalSpecTable 인풋 — medium(40px). large(44px)는 표 셀·테두리와 충돌 */
 const settlementInputIntegerKeyDownProps = {
+  inputSize: 'medium',
   onKeyDown: onSettlementIntegerNumericKeyDown,
 } as const
 
 const settlementInputDecimalKeyDownProps = {
+  inputSize: 'medium',
   onKeyDown: onSettlementDecimalNumericKeyDown,
 } as const
 

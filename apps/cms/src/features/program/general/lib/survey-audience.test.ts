@@ -86,10 +86,17 @@ describe('general survey audience', () => {
     ).toBe('참여자 신청 목록')
   })
 
-  it('기관 신청 프로그램은 teacher_instructor 없이도 강사 신청 목록 LNB를 노출한다', () => {
+  it('강사 신청 목록 LNB는 teacher_instructor 포함 시에만 노출한다', () => {
     expect(
       hasGeneralInstructorApplications(
         program({ generalParticipantTypes: ['school_institution'] })
+      )
+    ).toBe(false)
+    expect(
+      hasGeneralInstructorApplications(
+        program({
+          generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+        })
       )
     ).toBe(true)
     expect(

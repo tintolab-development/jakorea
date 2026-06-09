@@ -16,7 +16,6 @@ import { GeneralVolunteerApplicantDetailView } from './detail-view'
 import { GeneralVolunteerInterviewAssignModals } from './general-volunteer-interview-assign-modals'
 import { GeneralVolunteerDocPassedCalendarView } from './general-volunteer-doc-passed-calendar-view'
 import { useGeneralVolunteerDocPassed } from './use-doc-passed'
-import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import './doc-passed-section.css'
 import './volunteer-screening.css'
@@ -157,26 +156,14 @@ export function GeneralVolunteerDocPassedSection({
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
-        title={`봉사자 1차 서류 합격자 목록 (${count.toLocaleString()})`}
+        title="봉사자 1차 서류 합격자 목록"
+        description={`${count.toLocaleString()}건`}
+        actions={viewToggleButton}
         excelExport={{
           columns,
           data: tableData,
         }}
       >
-        <div className="table-header-actions general-volunteer-doc-passed__table-header">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">
-              봉사자 1차 서류 합격자 목록
-            </span>
-            <span className="table-description">
-              {count.toLocaleString()}건
-            </span>
-          </div>
-          <div className="info-section-buttons--wrapper general-volunteer-doc-passed__table-actions">
-            {viewToggleButton}
-          </div>
-        </div>
-
         {viewMode === 'list' ? (
           <div className="general-volunteer-doc-passed__table-wrap">
             <Table<GeneralVolunteerApplicantRow>

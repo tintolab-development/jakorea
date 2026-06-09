@@ -38,30 +38,8 @@
   padding-bottom: 10px !important;
 }
 
-/* 후원 상태 셀: 상태변경 드롭다운/배지 높이를 축소해 54px 행 높이 유지 */
+/* 담당자 유형 등 StatusDropdownCell: 54px 행에서 상하 패딩만 제거 */
 .sponsor-detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td.status-dropdown-cell__cell-status {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-}
-
-.sponsor-detail-fullpage-modal .cms-data-table .status-dropdown-cell__status-trigger {
-  min-height: 34px !important;
-  height: 34px !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-}
-
-.sponsor-detail-fullpage-modal
-  .cms-data-table
-  .status-dropdown-cell__status-trigger
-  .app-status-badge.sponsor-sponsorship-status-badge--table,
-.sponsor-detail-fullpage-modal
-  .cms-data-table
-  td.status-dropdown-cell__cell-status
-  .app-status-badge.sponsor-sponsorship-status-badge--table {
-  min-height: 28px !important;
-  height: 28px !important;
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
-  line-height: 1.2 !important;
 }
