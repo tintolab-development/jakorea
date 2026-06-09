@@ -35,8 +35,8 @@ import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-
 import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
 import {
   TEXTBOOK_STATUS_LABELS,
+  TEXTBOOK_STATUS_OPTION_KEYS,
   type ParticipatingSchoolRow,
-  type TextbookStatusKey,
 } from '@/data/mock/participating-schools'
 import {
   MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS,
@@ -461,11 +461,10 @@ export function SchoolDetailModal({
   /** 수정 모드 시 강의·교재 정보: 교재 현황만 라디오로 선택 가능 */
   function getLectureItemsEditMode(form: ReturnType<typeof useForm<SchoolDetailBasicFormValues>>) {
     const { control } = form
-    const textbookStatusOptions: { label: string; value: TextbookStatusKey }[] = [
-      { label: TEXTBOOK_STATUS_LABELS.preparing, value: 'preparing' },
-      { label: TEXTBOOK_STATUS_LABELS.shipping, value: 'shipping' },
-      { label: TEXTBOOK_STATUS_LABELS.delivered, value: 'delivered' },
-    ]
+    const textbookStatusOptions = TEXTBOOK_STATUS_OPTION_KEYS.map(value => ({
+      label: TEXTBOOK_STATUS_LABELS[value],
+      value,
+    }))
     const d = detail!
     return [
       { key: 'lectureRound', label: '강의 진행 회차', children: d.lectureRound },

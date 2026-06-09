@@ -1,4 +1,4 @@
-import { useCallback, useMemo, type ComponentType, type Key } from 'react'
+import { useCallback, useMemo, type ComponentType, type Key, type ReactNode } from 'react'
 import { Empty } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -11,11 +11,20 @@ import {
   type InstructorSettlementListRow,
 } from '@/data/mock/instructor-member-settlements'
 import { CalendarListItemContentProgram } from './item-list/program'
+import { CalendarListItemContentGeneralProgramEvent } from './item-list/general-program-event'
 import { CalendarListItemContentSettlement } from './item-list/settlement'
 import {
   CalendarListItemContentInstitutionApplication,
   type CalendarInstitutionApplicationListRow,
 } from './item-list/ujat-institution-application'
+import {
+  CalendarListItemContentGeneralInstitutionApplication,
+  type CalendarGeneralInstitutionApplicationListRow,
+} from './item-list/general-institution-application'
+import {
+  CalendarListItemContentGeneralInstructorApplication,
+  type CalendarGeneralInstructorApplicationListRow,
+} from './item-list/general-instructor-application'
 import {
   CalendarListItemContentVolunteerInterview,
   type CalendarVolunteerInterviewListRow,
@@ -226,6 +235,247 @@ export function CalendarSubRightList(props: CalendarSubRightListProps) {
       onItemClick={onItemClick}
       listItem={listItem}
     />
+  )
+}
+
+export type CalendarSubRightGeneralInstitutionApplicationListProps = {
+  rows: CalendarGeneralInstitutionApplicationListRow[]
+  selectedRowKeys: Key[]
+  onSelectionChange: (keys: Key[]) => void
+  onRowClick: (row: CalendarGeneralInstitutionApplicationListRow) => void
+  resolveRowColors?: (
+    row: CalendarGeneralInstitutionApplicationListRow
+  ) => ScheduleColorPair | undefined
+  toolbar?: ReactNode
+}
+
+function CalendarListShell({
+  toolbar,
+  isEmpty,
+  children,
+}: {
+  toolbar?: ReactNode
+  isEmpty: boolean
+  children: ReactNode
+}) {
+  if (!toolbar) {
+    return (
+      <div className={isEmpty ? 'calendar-list calendar-list--empty' : 'calendar-list'}>
+        {isEmpty ? (
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+        ) : (
+          children
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="calendar-list calendar-list--with-toolbar">
+      <div className="calendar-list__toolbar">{toolbar}</div>
+      <div
+        className={[
+          'calendar-list__items',
+          isEmpty ? 'calendar-list__items--empty' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {isEmpty ? (
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+        ) : (
+          children
+        )}
+      </div>
+    </div>
+  )
+}
+
+export function CalendarSubRightGeneralInstitutionApplicationList({
+  rows,
+  selectedRowKeys,
+  onSelectionChange,
+  onRowClick,
+  resolveRowColors,
+  toolbar,
+}: CalendarSubRightGeneralInstitutionApplicationListProps) {
+  const selectedSet = useMemo(() => new Set(selectedRowKeys.map(String)), [selectedRowKeys])
+
+  const handleToggle = useCallback(
+    (key: string, checked: boolean) => {
+      if (checked) {
+        if (selectedSet.has(key)) return
+        onSelectionChange([...selectedRowKeys, key])
+      } else {
+        onSelectionChange(selectedRowKeys.filter(k => String(k) !== key))
+      }
+    },
+    [onSelectionChange, selectedRowKeys, selectedSet]
+  )
+
+  return (
+    <CalendarListShell toolbar={toolbar} isEmpty={rows.length === 0}>
+      {rows.map(row => {
+        const colors = resolveRowColors?.(row) ?? SCHEDULE_COLORS[0]
+        return (
+          <div
+            key={row.id}
+            className={[
+              'calendar-list-item',
+              selectedSet.has(row.id) ? 'calendar-list-item--selected' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            data-has-color="true"
+            style={{
+              backgroundColor: colors.bg,
+              border: `1px solid ${colors.border}`,
+            }}
+            onClick={() => onRowClick(row)}
+          >
+            <div className="calendar-list-item__column">
+              <CalendarListItemContentGeneralInstitutionApplication
+                row={row}
+                checked={selectedSet.has(row.id)}
+                onToggle={handleToggle}
+              />
+            </div>
+          </div>
+        )
+      })}
+    </CalendarListShell>
+  )
+}
+
+export type CalendarSubRightGeneralInstructorApplicationListProps = {
+  rows: CalendarGeneralInstructorApplicationListRow[]
+  selectedRowKeys: Key[]
+  onSelectionChange: (keys: Key[]) => void
+  onRowClick: (row: CalendarGeneralInstructorApplicationListRow) => void
+  resolveRowColors?: (
+    row: CalendarGeneralInstructorApplicationListRow
+  ) => ScheduleColorPair | undefined
+  toolbar?: ReactNode
+}
+
+export function CalendarSubRightGeneralInstructorApplicationList({
+  rows,
+  selectedRowKeys,
+  onSelectionChange,
+  onRowClick,
+  resolveRowColors,
+  toolbar,
+}: CalendarSubRightGeneralInstructorApplicationListProps) {
+  const selectedSet = useMemo(() => new Set(selectedRowKeys.map(String)), [selectedRowKeys])
+
+  const handleToggle = useCallback(
+    (key: string, checked: boolean) => {
+      if (checked) {
+        if (selectedSet.has(key)) return
+        onSelectionChange([...selectedRowKeys, key])
+      } else {
+        onSelectionChange(selectedRowKeys.filter(k => String(k) !== key))
+      }
+    },
+    [onSelectionChange, selectedRowKeys, selectedSet]
+  )
+
+  return (
+    <CalendarListShell toolbar={toolbar} isEmpty={rows.length === 0}>
+      {rows.map(row => {
+        const colors = resolveRowColors?.(row) ?? SCHEDULE_COLORS[0]
+        return (
+          <div
+            key={row.id}
+            className={[
+              'calendar-list-item',
+              selectedSet.has(row.id) ? 'calendar-list-item--selected' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            data-has-color="true"
+            style={{
+              backgroundColor: colors.bg,
+              border: `1px solid ${colors.border}`,
+            }}
+            onClick={() => onRowClick(row)}
+          >
+            <div className="calendar-list-item__column">
+              <CalendarListItemContentGeneralInstructorApplication
+                row={row}
+                checked={selectedSet.has(row.id)}
+                onToggle={handleToggle}
+              />
+            </div>
+          </div>
+        )
+      })}
+    </CalendarListShell>
+  )
+}
+
+export type CalendarGeneralProgramEventListRow = {
+  id: string | number
+  programId: string
+  programTitle: string
+  scheduleContent: string
+  timeLabel: string
+  startDate: string
+  endDate: string
+  originalItem: Program
+}
+
+export type CalendarSubRightGeneralProgramEventListProps = {
+  selectedDate: Dayjs
+  events: CalendarGeneralProgramEventListRow[]
+  onEventClick: (program: Program) => void
+  resolveEventColors?: (event: CalendarGeneralProgramEventListRow) => ScheduleColorPair | undefined
+}
+
+export function CalendarSubRightGeneralProgramEventList({
+  selectedDate,
+  events,
+  onEventClick,
+  resolveEventColors,
+}: CalendarSubRightGeneralProgramEventListProps) {
+  const dayEvents = useMemo(() => {
+    return events.filter(event => {
+      const start = dayjs(event.startDate)
+      const end = dayjs(event.endDate)
+      return selectedDate.isSameOrAfter(start, 'day') && selectedDate.isSameOrBefore(end, 'day')
+    })
+  }, [events, selectedDate])
+
+  return (
+    <div className={dayEvents.length === 0 ? 'calendar-list calendar-list--empty' : 'calendar-list'}>
+      {dayEvents.length === 0 ? (
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+      ) : (
+        dayEvents.map(event => {
+          const colors = resolveEventColors?.(event) ?? SCHEDULE_COLORS[0]
+          return (
+            <div
+              key={String(event.id)}
+              className="calendar-list-item"
+              data-has-color="true"
+              style={{
+                backgroundColor: colors.bg,
+                border: `1px solid ${colors.border}`,
+              }}
+              onClick={() => onEventClick(event.originalItem)}
+            >
+              <div className="calendar-list-item__column">
+                <CalendarListItemContentGeneralProgramEvent
+                  programTitle={event.programTitle}
+                  scheduleContent={event.scheduleContent}
+                  timeLabel={event.timeLabel}
+                />
+              </div>
+            </div>
+          )
+        })
+      )}
+    </div>
   )
 }
 

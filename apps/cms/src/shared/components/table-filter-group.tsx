@@ -14,6 +14,12 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsRadio } from '@/shared/ui/cms-radio'
+import {
+  buildFilterFieldWidthStyle,
+  isFilterFieldPctWidth,
+  filterFieldGridCellClassName,
+  isFilterFieldPairType,
+} from './table-filter-group-field-width'
 import './table-filter-group.css'
 
 export type AddressRegionFilterSubConfig = {
@@ -238,25 +244,14 @@ export function TableFilterGroup({
   /** `%` 열 flex 계산용 — `filter-controls-common` 의 `--filter-field-gap`(기본 12px)과 동일하게 유지 */
   const interFieldGapPx = 12
 
-  /**
-   * `%` 열 flex 상한(px) — 래퍼 Col의 max-width·컨트롤 상한과 맞춤
-   * (단일 260 / 기간·이중 셀렉트는 2×260 + gap)
-   */
-  const pctColumnMaxCapPx = (field: FilterFieldConfig) => {
-    if (field.type === 'dateRange') return 540
-    if (field.type === 'addressRegion' || field.type === 'selectPair') return 540
-    return 260
-  }
-
   const colFlex = (field: FilterFieldConfig, defaultFlex: string, rowFieldCount = 1) => {
     if (field.width != null) {
-      if (typeof field.width === 'string' && field.width.trim().endsWith('%')) {
-        const pct = parseFloat(field.width) / 100
+      if (isFilterFieldPctWidth(field)) {
+        const pct = parseFloat(String(field.width)) / 100
         if (!Number.isNaN(pct)) {
           const totalGaps = Math.max(0, rowFieldCount - 1) * interFieldGapPx
           const basis = `calc((100% - ${totalGaps}px) * ${pct})`
-          const cap = pctColumnMaxCapPx(field)
-          return `0 1 min(${basis}, ${cap}px)`
+          return `0 0 ${basis}`
         }
       }
       const w = typeof field.width === 'number' ? `${field.width}px` : field.width
@@ -268,15 +263,20 @@ export function TableFilterGroup({
   const colClassName = (field: FilterFieldConfig) => {
     if (field.width == null) return undefined
     const parts = ['unified-filter-card__col--explicit-width']
-    if (typeof field.width === 'string' && field.width.trim().endsWith('%')) {
+    if (isFilterFieldPctWidth(field)) {
       parts.push('table-filter-group__col--pct-width')
       if (field.type === 'dateRange') parts.push('table-filter-group__col--date-range')
-      else if (field.type === 'addressRegion' || field.type === 'selectPair') {
+      else if (isFilterFieldPairType(field)) {
         parts.push('table-filter-group__col--wide')
       }
     }
+    if (isFilterFieldPairType(field)) {
+      parts.push('table-filter-group__col--pair-field')
+    }
     return parts.join(' ')
   }
+
+  const colInlineStyle = (field: FilterFieldConfig) => buildFilterFieldWidthStyle(field)
 
   const maxRowFieldCount = useMemo(
     () => (resolvedRows.length > 0 ? Math.max(0, ...resolvedRows.map(r => r.length)) : 0),
@@ -487,6 +487,7 @@ export function TableFilterGroup({
           key={field.key}
           flex={colFlex(field, '0 0 auto', rowFieldCount)}
           className={['unified-filter-card__col--radio', colClassName(field)].filter(Boolean).join(' ')}
+          style={colInlineStyle(field)}
           {...colDataAttrs}
         >
           {inner}
@@ -500,6 +501,7 @@ export function TableFilterGroup({
           key={field.key}
           flex={colFlex(field, '0 0 240px', rowFieldCount)}
           className={colClassName(field)}
+          style={colInlineStyle(field)}
           {...colDataAttrs}
         >
           {inner}
@@ -513,6 +515,7 @@ export function TableFilterGroup({
           key={field.key}
           flex={colFlex(field, '1 1 300px', rowFieldCount)}
           className={colClassName(field)}
+          style={colInlineStyle(field)}
           {...colDataAttrs}
         >
           {inner}
@@ -526,6 +529,7 @@ export function TableFilterGroup({
           key={field.key}
           flex={colFlex(field, '1 1 360px', rowFieldCount)}
           className={colClassName(field)}
+          style={colInlineStyle(field)}
           {...colDataAttrs}
         >
           {inner}
@@ -539,6 +543,7 @@ export function TableFilterGroup({
           key={field.key}
           flex={colFlex(field, '0 0 240px', rowFieldCount)}
           className={colClassName(field)}
+          style={colInlineStyle(field)}
           {...colDataAttrs}
         >
           {inner}
@@ -552,6 +557,7 @@ export function TableFilterGroup({
           key={field.key}
           flex={colFlex(field, '1 1 320px', rowFieldCount)}
           className={colClassName(field)}
+          style={colInlineStyle(field)}
           {...colDataAttrs}
         >
           {inner}
@@ -566,7 +572,12 @@ export function TableFilterGroup({
     const inner = renderFieldInner(field)
     if (inner == null) return null
     return (
-      <div key={field.key} className="table-filter-group__grid-cell" data-filter-field-key={field.key}>
+      <div
+        key={field.key}
+        className={filterFieldGridCellClassName(field)}
+        style={buildFilterFieldWidthStyle(field)}
+        data-filter-field-key={field.key}
+      >
         {inner}
       </div>
     )

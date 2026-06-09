@@ -2,10 +2,10 @@
   box-sizing: border-box;
   min-width: var(--calendar-main-month-min-width, calc(116px * 7 + 40px));
   min-height: var(--calendar-main-month-min-height, calc(124px * 6 + 37px + 50px + 32px));
-  background: var(--color-bg-base);
-  border-radius: var(--16, 16px);
   background: var(--main-WT, #fff);
-  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  border-radius: var(--calendar-shell-radius, 12px);
+  border: var(--calendar-shell-border, 1px solid #d4d4d4);
+  box-shadow: var(--calendar-shell-shadow, none);
   display: flex;
   flex-direction: column;
   padding: 16px 20px;

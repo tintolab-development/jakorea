@@ -71,6 +71,9 @@ export { CalendarSearch } from './ui/calendar-search'
 export type { CalendarSearchProps, CalendarSearchOption } from './ui/calendar-search'
 export {
   CalendarSubRightList,
+  CalendarSubRightGeneralProgramEventList,
+  CalendarSubRightGeneralInstitutionApplicationList,
+  CalendarSubRightGeneralInstructorApplicationList,
   CalendarSubRightSettlementList,
   CalendarSubRightVolunteerInterviewList,
   CalendarSubRightVolunteerInterview2List,
@@ -78,6 +81,10 @@ export {
 export type {
   CalendarSubRightListProps,
   CalendarSubRightListProgramProps,
+  CalendarSubRightGeneralProgramEventListProps,
+  CalendarGeneralProgramEventListRow,
+  CalendarSubRightGeneralInstitutionApplicationListProps,
+  CalendarSubRightGeneralInstructorApplicationListProps,
   CalendarSubRightListInstitutionApplicationProps,
   CalendarSubRightSettlementListProps,
   CalendarSubRightVolunteerInterviewListProps,
@@ -86,6 +93,8 @@ export type {
 export type { CalendarVolunteerInterviewListRow } from './ui/item-list/ujat-volunteer-interview'
 export type { CalendarVolunteerInterview2ListRow } from './ui/item-list/ujat-volunteer-interview2'
 export type { CalendarInstitutionApplicationListRow } from './ui/item-list/ujat-institution-application'
+export type { CalendarGeneralInstitutionApplicationListRow } from './ui/item-list/general-institution-application'
+export type { CalendarGeneralInstructorApplicationListRow } from './ui/item-list/general-instructor-application'
 export { CALENDAR_FILTER_COLOR_CLASSES } from './lib/calendar-color-set'
 export { CalendarListItemContentSettlement } from './ui/item-list/settlement'
 export {
@@ -97,6 +106,7 @@ export {
   ProgramPreviewTooltipBody,
   renderProgramApplicantPreviewTooltipContent,
   renderProgramCalendarEventsDefaultTooltipContent,
+  renderGeneralProgramCalendarPreviewTooltipContent,
 } from './ui/preview-tooltip/program'
 export { CalendarPreviewTooltip } from './ui/preview-tooltip/calendar-preview-tooltip'
 export type { ProgramPreviewTooltipEventRow } from './ui/preview-tooltip/program'

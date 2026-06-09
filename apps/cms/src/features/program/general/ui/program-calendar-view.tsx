@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
-import { Empty } from 'antd'
+import { Spin } from 'antd'
 import dayjs from 'dayjs'
-import type { Dayjs } from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { Program } from '@/types/domain'
@@ -9,7 +8,10 @@ import {
   CalendarMain,
   CalendarMini,
   CalendarSearch,
+  CalendarSubRightGeneralProgramEventList,
+  type CalendarGeneralProgramEventListRow,
   type CalendarItem,
+  renderGeneralProgramCalendarPreviewTooltipContent,
 } from '@/shared/components/calendar'
 import { useCalendarNavigationState } from '@/shared/components/calendar/lib/use-calendar-navigation-state'
 import { useCalendarMiniState } from '@/shared/components/calendar/lib/use-calendar-mini-state'
@@ -18,13 +20,13 @@ import {
   buildResolvedScheduleColorMapForPrograms,
   type ScheduleColorPair,
 } from '@/features/program/shared/ui/program-schedule-colors'
-import { DividerVertical } from '@/shared/components/divider-vertical'
 import {
   buildGeneralProgramCalendarEvents,
-  type GeneralProgramCalendarEvent,
+  getGeneralProgramCalendarEventFromCalendarItem,
   type GeneralProgramCalendarView,
 } from '../lib/program-calendar-events'
 import '@/shared/components/calendar/styles/calendar.css'
+import './program-calendar-view.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -34,50 +36,8 @@ interface ProgramCalendarViewProps {
   loading?: boolean
   onItemClick: (program: Program) => void
   view?: GeneralProgramCalendarView
-}
-
-function getCalendarEvent(item: CalendarItem): GeneralProgramCalendarEvent | null {
-  const original = item.original
-  if (
-    original != null &&
-    typeof original === 'object' &&
-    'scheduleContent' in original &&
-    'originalItem' in original
-  ) {
-    return original as GeneralProgramCalendarEvent
-  }
-  return null
-}
-
-function renderGeneralProgramPreviewTooltip({
-  events,
-  colorMap,
-}: {
-  events: CalendarItem[]
-  colorMap: Map<string | number, ScheduleColorPair>
-}): ReactNode {
-  return (
-    <div className="program-preview">
-      {events.map(item => {
-        const event = getCalendarEvent(item)
-        const colors = colorMap.get(item.id) ?? SCHEDULE_COLORS[0]
-        return (
-          <button
-            key={String(item.id)}
-            type="button"
-            className="program-preview-item program-preview-item--stack"
-          >
-            <span className="program-preview-item__title" style={{ color: colors.text }}>
-              {event?.programTitle ?? item.title ?? '-'}
-            </span>
-            <span className="program-preview-item__desc">
-              {event?.scheduleContent ?? '-'} | {event?.timeLabel ?? '종일'}
-            </span>
-          </button>
-        )
-      })}
-    </div>
-  )
+  /** 3열 grid 1행 — 프로그램 목록 툴바 등 */
+  toolbar?: ReactNode
 }
 
 function renderGeneralProgramMonthEventContent({
@@ -85,7 +45,7 @@ function renderGeneralProgramMonthEventContent({
 }: {
   row: { sourceEvent: CalendarItem }
 }) {
-  const event = getCalendarEvent(row.sourceEvent)
+  const event = getGeneralProgramCalendarEventFromCalendarItem(row.sourceEvent)
   return <span className="calendar-event-title">{event?.programTitle ?? row.sourceEvent.title}</span>
 }
 
@@ -154,66 +114,12 @@ function useProgramCalendarFilter(items: Program[]) {
   }
 }
 
-function ProgramCalendarScheduleList({
-  selectedDate,
-  events,
-  programColorMap,
-  onProgramClick,
-}: {
-  selectedDate: Dayjs
-  events: GeneralProgramCalendarEvent[]
-  programColorMap: Map<string | number, ScheduleColorPair>
-  onProgramClick: (program: Program) => void
-}) {
-  const dayEvents = useMemo(() => {
-    return events.filter(event => {
-      const start = dayjs(event.startDate)
-      const end = dayjs(event.endDate)
-      return selectedDate.isSameOrAfter(start, 'day') && selectedDate.isSameOrBefore(end, 'day')
-    })
-  }, [events, selectedDate])
-
-  return (
-    <div className={dayEvents.length === 0 ? 'calendar-list calendar-list--empty' : 'calendar-list'}>
-      {dayEvents.length === 0 ? (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
-      ) : (
-        dayEvents.map(event => {
-          const color = programColorMap.get(event.programId) ?? SCHEDULE_COLORS[0]
-          return (
-            <div
-              key={event.id}
-              className="calendar-list-item"
-              data-has-color="true"
-              style={{
-                backgroundColor: color.bg,
-                border: `1px solid ${color.border}`,
-              }}
-              onClick={() => onProgramClick(event.originalItem)}
-            >
-              <div className="calendar-list-item__column">
-                <div className="calendar-list-item__head" title={event.programTitle}>
-                  {event.programTitle}
-                </div>
-                <div className="calendar-list-item__desc">
-                  <span>{event.scheduleContent}</span>
-                  <DividerVertical height={12} />
-                  <span>{event.timeLabel}</span>
-                </div>
-              </div>
-            </div>
-          )
-        })
-      )}
-    </div>
-  )
-}
-
 export function ProgramCalendarView({
   items,
   loading,
   onItemClick,
   view = 'ALL',
+  toolbar,
 }: ProgramCalendarViewProps) {
   const {
     selectedDate,
@@ -254,24 +160,38 @@ export function ProgramCalendarView({
     (dayEvents: CalendarItem[]) => {
       const map = new Map<string | number, ScheduleColorPair>()
       dayEvents.forEach(item => {
-        const event = getCalendarEvent(item)
+        const event = getGeneralProgramCalendarEventFromCalendarItem(item)
         map.set(item.id, programColorMap.get(event?.programId ?? '') ?? SCHEDULE_COLORS[0])
       })
       return map
     },
     [programColorMap]
   )
+  const resolveEventColors = useCallback(
+    (event: CalendarGeneralProgramEventListRow) =>
+      programColorMap.get(event.programId) ?? SCHEDULE_COLORS[0],
+    [programColorMap]
+  )
 
   if (loading) {
     return (
       <div className="calendar-view calendar-view--loading">
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="캘린더를 불러오는 중입니다" />
+        <Spin size="large" />
       </div>
     )
   }
 
   return (
-    <div className="calendar-set">
+    <div
+      className={[
+        'calendar-set',
+        'calendar-set--shell-shadow',
+        toolbar ? 'calendar-set--with-toolbar' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {toolbar ? <div className="calendar-set__toolbar">{toolbar}</div> : null}
       <div className="calendar-sub-left">
         <CalendarMini
           currentMonth={miniCurrentMonth}
@@ -298,7 +218,7 @@ export function ProgramCalendarView({
           onSelectDate={handleMainDateSelect}
           onMonthChange={handleMainMonthChange}
           onModeChange={onModeChange}
-          previewTooltipContent={renderGeneralProgramPreviewTooltip}
+          previewTooltipContent={renderGeneralProgramCalendarPreviewTooltipContent}
           renderMonthEventContent={renderGeneralProgramMonthEventContent}
           overrideEventColorMap={overrideEventColorMap}
           eventsTooltipTrigger="cell"
@@ -307,11 +227,11 @@ export function ProgramCalendarView({
         />
       </div>
       <div className="calendar-sub-right-list">
-        <ProgramCalendarScheduleList
+        <CalendarSubRightGeneralProgramEventList
           selectedDate={selectedDate}
           events={events}
-          programColorMap={programColorMap}
-          onProgramClick={onItemClick}
+          onEventClick={onItemClick}
+          resolveEventColors={resolveEventColors}
         />
       </div>
     </div>

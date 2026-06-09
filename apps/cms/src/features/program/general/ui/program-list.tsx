@@ -179,18 +179,20 @@ export function ProgramList({
 
       {showCalendarView && viewMode === 'calendar' ? (
         <div className="program-list-calendar-view-container">
-          <div className="table-header-actions ">
-            <div className="table-header-title-wrapper">
-              <span className="table-title">{headerTitle}</span>
-              <span className="table-description">{`총 ${displayedCount.toLocaleString()}건`}</span>
-            </div>
-            {children}
-          </div>
           <ProgramCalendarView
             items={table.getFilteredRowModel().rows.map(row => row.original)}
             loading={loading}
             onItemClick={onView}
             view={listView}
+            toolbar={
+              <div className="table-header-actions">
+                <div className="table-header-title-wrapper">
+                  <span className="table-title">{headerTitle}</span>
+                  <span className="table-description">{`총 ${displayedCount.toLocaleString()}건`}</span>
+                </div>
+                {children}
+              </div>
+            }
           />
         </div>
       ) : null}

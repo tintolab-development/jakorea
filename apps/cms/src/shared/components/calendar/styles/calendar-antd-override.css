@@ -34,7 +34,8 @@
   width: 100%;
   min-width: var(--calendar-cell-min-width, 116px);
   min-height: var(--calendar-cell-min-height, 124px);
-  height: auto;
+  height: var(--calendar-cell-min-height, 124px);
+  max-height: var(--calendar-cell-min-height, 124px);
   box-sizing: border-box;
 }
 
@@ -61,7 +62,7 @@
 }
 
 .calendar-main .ant-picker-content tbody tr {
-  height: auto;
+  height: var(--calendar-cell-min-height, 124px);
 }
 
 .calendar-main .ant-picker-calendar-mini .ant-picker-content {

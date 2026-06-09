@@ -237,6 +237,28 @@
   max-width: 100%;
 }
 
+.unified-filter-card__fields-inner .ant-col.unified-filter-card__col--pct-width {
+  max-width: none;
+}
+
+.unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--pct-width
+  .labeled-search-input,
+.unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--pct-width
+  .unified-filter-card__field,
+.unified-filter-card__fields-inner .ant-col.unified-filter-card__col--pct-width .cms-select,
+.unified-filter-card__fields-inner .ant-col.unified-filter-card__col--pct-width .ant-select,
+.unified-filter-card__fields-inner .ant-col.unified-filter-card__col--pct-width .app-datepicker,
+.unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--pct-width
+  .app-datepicker.app-datepicker--range-split {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
 .unified-filter-card__fields-inner
   .ant-col.unified-filter-card__col--explicit-width
   .unified-filter-card__field--select,

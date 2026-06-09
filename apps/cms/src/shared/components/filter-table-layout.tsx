@@ -18,6 +18,7 @@ import {
   type UseTableExcelExportOptions,
 } from '@/shared/hooks/use-table-excel-export'
 import { ExcelButton } from '@/shared/ui/excel-button'
+import { isFilterFieldPctWidth } from './table-filter-group-field-width'
 import {
   TableFilterGroup,
   type FilterFieldConfig,
@@ -37,9 +38,9 @@ export interface FilterTableLayoutProps extends TableFilterGroupProps {
   /** false면 `TableFilterGroup`·필터 하단 구분선을 숨김(캘린더 전용 뷰 등) */
   showFilter?: boolean
   /**
-   * true(기본): 필드가 많거나 카드 폭이 좁을 때 flex-wrap으로 여러 줄 배치.
-   * 조회 버튼은 우측 shell에 고정(입력란과 baseline 정렬). `mergedAutoFillInlineSearch`로 조회를 wrap 안에 넣을 수 있음.
-   * `rows`(2행 이상)·`multiRowGridMode` 등을 직접 지정하면 해당 값이 우선합니다.
+   * true(기본): 픽셀/기본 폭 필드가 4개 이상일 때 flex-wrap으로 여러 줄 배치.
+   * `%` 열 비율 필드는 Row 고정 배치(한 줄·조회 우측 shell). `mergedAutoFillInlineSearch`로 조회를 wrap 안에 넣을 수 있음.
+   * `rows`·`multiRowGridMode` 등을 직접 지정하면 해당 값이 우선합니다.
    */
   filterResponsiveWrap?: boolean
   /** 테이블 상단 제목 */
@@ -50,7 +51,7 @@ export interface FilterTableLayoutProps extends TableFilterGroupProps {
   titleNote?: ReactNode
   /** 테이블 상단 보조 설명(건수 등) */
   description?: ReactNode
-  /** 헤더 우측 버튼·액션 (엑셀 다운로드 버튼 좌측) */
+  /** 헤더 우측 버튼·액션 (엑셀 다운로드 버튼 좌측). 버튼 간격은 레이아웃에서 8px 고정 — 별도 gap 래퍼 불필요 */
   actions?: ReactNode
   /** true면 툴바 우측 엑셀 다운로드 버튼 숨김 (기본 false) */
   hideExcelDownload?: boolean
@@ -62,6 +63,11 @@ export interface FilterTableLayoutProps extends TableFilterGroupProps {
   excelDownloadDisabled?: boolean
   /** 구분선과 제목 사이에 노출할 상단 내비게이션(탭 등) */
   topNav?: ReactNode
+  /**
+   * `'calendar'` — `calendar-set` 본문 슬롯(`filter-table-layout__calendar-body`).
+   * sticky·가로 overflow는 `filter-table-layout.css` + `layout-content`에서 처리.
+   */
+  contentVariant?: 'table' | 'calendar'
   /** 필터·헤더 아래 테이블 본문 */
   children?: ReactNode
   className?: string
@@ -81,6 +87,7 @@ export function FilterTableLayout({
   excelDownloadLoading,
   excelDownloadDisabled,
   topNav,
+  contentVariant = 'table',
   children,
   className,
   multiRowGridMode,
@@ -90,9 +97,19 @@ export function FilterTableLayout({
   ...tableFilterGroupRest
 }: FilterTableLayoutProps) {
   const hasExplicitRows = rows != null && rows.length > 0
-  /** `rows`로 행 구성을 지정한 화면은 전용 CSS 그리드(1행 N필드 등)를 쓰므로 기본 wrap 미적용 */
+  const singleRowFields = tableFilterGroupRest.fields ?? []
+  const hasPctWidthFields = singleRowFields.some(isFilterFieldPctWidth)
+  /**
+   * `rows` 지정 화면·`%` 열 비율 필드는 Row+Col 고정 배치.
+   * 픽셀/기본 폭 필드가 4개 이상일 때만 merged-auto-fill wrap 기본 적용.
+   */
   const shouldApplyDefaultResponsiveWrap =
-    showFilter && filterResponsiveWrap && !hasExplicitRows && multiRowGridMode === undefined
+    showFilter &&
+    filterResponsiveWrap &&
+    !hasExplicitRows &&
+    multiRowGridMode === undefined &&
+    !hasPctWidthFields &&
+    singleRowFields.length >= 4
 
   const resolvedMultiRowGridMode =
     multiRowGridMode ?? (shouldApplyDefaultResponsiveWrap ? 'responsive' : 'fixed')
@@ -105,6 +122,7 @@ export function FilterTableLayout({
     'filter-table-layout',
     !showFilter && 'filter-table-layout--without-filter',
     shouldApplyDefaultResponsiveWrap && 'filter-table-layout--filter-responsive-wrap',
+    contentVariant === 'calendar' && 'filter-table-layout--calendar-view',
     className,
   ]
     .filter(Boolean)
@@ -189,7 +207,13 @@ export function FilterTableLayout({
         </div>
       ) : null}
 
-      <div className="filter-table-layout__table">{children}</div>
+      <div className="filter-table-layout__table">
+        {contentVariant === 'calendar' ? (
+          <div className="filter-table-layout__calendar-body">{children}</div>
+        ) : (
+          children
+        )}
+      </div>
     </div>
   )
 }

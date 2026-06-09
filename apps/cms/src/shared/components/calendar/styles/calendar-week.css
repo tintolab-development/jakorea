@@ -6,19 +6,26 @@
 
 .calendar-week-header {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(var(--calendar-cell-min-width, 116px), 1fr));
 }
 
 .calendar-week-body {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(var(--calendar-cell-min-width, 116px), 1fr));
+  grid-template-rows: var(--calendar-cell-min-height, 124px);
 }
 
 .calendar-week-cell {
+  min-width: var(--calendar-cell-min-width, 116px);
+  min-height: var(--calendar-cell-min-height, 124px);
+  height: var(--calendar-cell-min-height, 124px);
+  max-height: var(--calendar-cell-min-height, 124px);
   border: 1px solid #f0f0f0;
   padding: 8px;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .calendar-week-cell:hover {

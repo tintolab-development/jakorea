@@ -32,9 +32,10 @@ export default function PaymentOrdersPage() {
   } = usePaymentOrdersListPage()
 
   return (
-    <>
+    <div className="payment-orders-page">
       <FilterTableLayout
         className="payment-orders-page__filter-list-layout"
+        contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         fields={paymentOrdersFilterFields}
         filters={{
           exposureMode,
@@ -59,7 +60,11 @@ export default function PaymentOrdersPage() {
         }
         excelExport={paymentOrdersExcelExport}
       >
-        <div className="list-page-layout__table-shell">{renderContent(viewMode)}</div>
+        {viewMode === 'list' ? (
+          <div className="list-page-layout__table-shell">{renderContent('list')}</div>
+        ) : (
+          renderContent('calendar')
+        )}
       </FilterTableLayout>
 
       <PaymentOrderDetailFullPageModal
@@ -69,6 +74,6 @@ export default function PaymentOrdersPage() {
         data={detailState?.data ?? null}
         listPageDateRange={appliedFromUrl.dateRange}
       />
-    </>
+    </div>
   )
 }

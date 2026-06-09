@@ -29,7 +29,7 @@
 .program-list-page__widget-header-actions {
   display: flex;
   align-items: center;
-  gap: var(--spacing-12);
+  gap: var(--filter-table-toolbar-actions-gap, 8px);
   flex-wrap: wrap;
 }
 

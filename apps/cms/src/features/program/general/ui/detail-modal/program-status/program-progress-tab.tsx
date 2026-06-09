@@ -15,6 +15,7 @@ import {
 } from '../../../hooks/use-program-progress-params'
 import {
   TEXTBOOK_STATUS_LABELS,
+  TEXTBOOK_STATUS_OPTION_KEYS,
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
 } from '@/data/mock/participating-schools'
@@ -94,9 +95,10 @@ const LECTURE_ROUND_OPTIONS = [
 
 const TEXTBOOK_OPTIONS = [
   { label: '전체', value: 'all' },
-  { label: TEXTBOOK_STATUS_LABELS.preparing, value: 'preparing' },
-  { label: TEXTBOOK_STATUS_LABELS.shipping, value: 'shipping' },
-  { label: TEXTBOOK_STATUS_LABELS.delivered, value: 'delivered' },
+  ...TEXTBOOK_STATUS_OPTION_KEYS.map(key => ({
+    label: TEXTBOOK_STATUS_LABELS[key],
+    value: key,
+  })),
 ]
 
 const SETTLEMENT_OPTIONS = INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS.map(option => ({
@@ -217,10 +219,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
     }
   }
 
-  const textbookStatusKeys: TextbookStatusKey[] = useMemo(
-    () => Object.keys(TEXTBOOK_STATUS_LABELS) as TextbookStatusKey[],
-    []
-  )
+  const textbookStatusKeys = TEXTBOOK_STATUS_OPTION_KEYS
 
   const settlementStatusKeys: SettlementStatusKey[] = useMemo(
     () => [...INSTRUCTOR_SETTLEMENT_STATUS_ORDER],

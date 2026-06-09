@@ -70,7 +70,7 @@
 }
 
 .calendar-split-card--left .ant-picker-content tbody tr {
-  height: auto;
+  height: var(--calendar-cell-min-height, 124px);
 }
 
 .calendar-split-card--left .ant-picker-cell {
@@ -78,7 +78,8 @@
   max-width: calc(100% / 7);
   min-width: var(--calendar-cell-min-width, 116px);
   min-height: var(--calendar-cell-min-height, 124px);
-  height: auto;
+  height: var(--calendar-cell-min-height, 124px);
+  max-height: var(--calendar-cell-min-height, 124px);
   border: 1px solid #f0f0f0;
   padding: 0;
   vertical-align: top;
@@ -91,8 +92,9 @@
 
 .calendar-split-card-main .calendar-cell {
   width: 100%;
-  height: auto;
   min-height: var(--calendar-cell-min-height, 124px);
+  height: var(--calendar-cell-min-height, 124px);
+  max-height: var(--calendar-cell-min-height, 124px);
   padding: 8px;
   display: flex;
   flex-direction: column;

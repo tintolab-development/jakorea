@@ -7,7 +7,7 @@
 import { z } from 'zod'
 import type { SchoolDetailForModal } from './school-detail-types'
 
-const textbookStatusEnum = z.enum(['preparing', 'shipping', 'delivered'])
+const textbookStatusEnum = z.enum(['preparing', 'shipping', 'delivered', 'not_applicable'])
 
 export const schoolDetailBasicFormSchema = z
   .object({

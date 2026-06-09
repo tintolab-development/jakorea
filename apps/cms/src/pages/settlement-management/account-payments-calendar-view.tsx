@@ -321,15 +321,13 @@ export function AccountPaymentsCalendarView({
   return (
     <div className="calendar-set">
       <div className="calendar-sub-left">
-        <div className="calendar-mini">
-          <CalendarMini
-            currentMonth={miniCurrentMonth}
-            selectedDate={miniSelectedDate}
-            onMonthChange={onMiniMonthChange}
-            onSelectDate={onMiniSelectDate}
-            programDates={programDates}
-          />
-        </div>
+        <CalendarMini
+          currentMonth={miniCurrentMonth}
+          selectedDate={miniSelectedDate}
+          onMonthChange={onMiniMonthChange}
+          onSelectDate={onMiniSelectDate}
+          programDates={programDates}
+        />
         <CalendarSearch
           keyword={calendarSearchKeyword}
           options={programFilterOptions}
@@ -339,23 +337,25 @@ export function AccountPaymentsCalendarView({
           onOptionToggle={handleProgramFilterChange}
         />
       </div>
-      <CalendarMain
-        mode="month"
-        hideModeToggle
-        onModeChange={() => {}}
-        events={calendarMainEvents}
-        currentMonth={currentMonth}
-        selectedDate={selectedDate}
-        onSelectDate={onSelectDate}
-        onMonthChange={onMonthChange}
-        onTodayClick={onTodayClick}
-        selectedRowKeys={selectedRowKeys}
-        overrideEventColorMap={overrideEventColorMap}
-        eventsTooltipScope="full-day"
-        eventsTooltipTrigger="cell"
-        formatEventsOverflowText={n => `외 ${n}개의 항목`}
-        previewTooltipContent={renderAccountPaymentEventsTooltipContent}
-      />
+      <div className="calendar-main-container">
+        <CalendarMain
+          mode="month"
+          hideModeToggle
+          onModeChange={() => {}}
+          events={calendarMainEvents}
+          currentMonth={currentMonth}
+          selectedDate={selectedDate}
+          onSelectDate={onSelectDate}
+          onMonthChange={onMonthChange}
+          onTodayClick={onTodayClick}
+          selectedRowKeys={selectedRowKeys}
+          overrideEventColorMap={overrideEventColorMap}
+          eventsTooltipScope="full-day"
+          eventsTooltipTrigger="cell"
+          formatEventsOverflowText={n => `외 ${n}개의 항목`}
+          previewTooltipContent={renderAccountPaymentEventsTooltipContent}
+        />
+      </div>
       <div className="calendar-sub-right-list">
         <CalendarSubRightSettlementList
           key={selectedDate.format('YYYY-MM-DD')}

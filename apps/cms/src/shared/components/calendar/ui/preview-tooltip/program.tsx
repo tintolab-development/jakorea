@@ -162,3 +162,76 @@ export function renderProgramCalendarEventsDefaultTooltipContent({
 }): ReactNode {
   return <ProgramPreviewTooltipBody events={events} colorMap={colorMap} />
 }
+
+export type GeneralProgramCalendarPreviewRow = {
+  id: string | number
+  programTitle: string
+  scheduleContent: string
+  timeLabel: string
+}
+
+function isGeneralProgramCalendarPreviewRow(
+  value: unknown
+): value is GeneralProgramCalendarPreviewRow {
+  if (value == null || typeof value !== 'object') return false
+  return (
+    'programTitle' in value &&
+    'scheduleContent' in value &&
+    'timeLabel' in value &&
+    'originalItem' in value
+  )
+}
+
+function resolveGeneralProgramCalendarPreviewRow(
+  item: CalendarItem
+): GeneralProgramCalendarPreviewRow | null {
+  const original = item.original
+  if (!isGeneralProgramCalendarPreviewRow(original)) return null
+  return {
+    id: item.id,
+    programTitle: original.programTitle,
+    scheduleContent: original.scheduleContent,
+    timeLabel: original.timeLabel,
+  }
+}
+
+/** 일반 프로그램 목록 캘린더 — 이벤트 모드 셀 툴팁 (제목 + 일정 내용 | 시간) */
+export function renderGeneralProgramCalendarPreviewTooltipContent({
+  events,
+  colorMap,
+}: {
+  events: CalendarItem[]
+  colorMap: Map<string | number, ScheduleColorPair>
+}): ReactNode {
+  return (
+    <div className="program-preview">
+      {events.map(item => {
+        const event = resolveGeneralProgramCalendarPreviewRow(item)
+        const colors = colorMap.get(item.id) ?? SCHEDULE_COLORS[0]
+        if (!event) {
+          return (
+            <div key={String(item.id)} className="program-preview-item program-preview-item--stack">
+              <span className="program-preview-item__title" style={{ color: colors.text }}>
+                {item.title ?? '-'}
+              </span>
+            </div>
+          )
+        }
+        return (
+          <button
+            key={String(item.id)}
+            type="button"
+            className="program-preview-item program-preview-item--stack"
+          >
+            <span className="program-preview-item__title" style={{ color: colors.text }}>
+              {event.programTitle}
+            </span>
+            <span className="program-preview-item__desc">
+              {event.scheduleContent} | {event.timeLabel}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}

@@ -1,4 +1,5 @@
 @import './calendar-tokens.css';
+@import './calendar-shell-variant.css';
 @import './calendar-layout.css';
 @import './calendar-split-card-layout.css';
 @import './calendar-split-card-main.css';
@@ -11,6 +12,8 @@
 @import './calendar-preview.css';
 @import './calendar-sub-right.css';
 @import '../ui/item-list/ujat-institution-application-list-item.css';
+@import '../ui/item-list/general-institution-application-list-item.css';
+@import '../ui/item-list/general-instructor-application-list-item.css';
 @import '../ui/item-list/ujat-institution-application-calendar-status-badge.css';
 @import '../ui/item-list/ujat-volunteer-interview-list-item.css';
 @import '../ui/item-list/ujat-volunteer-interview2-list-item.css';

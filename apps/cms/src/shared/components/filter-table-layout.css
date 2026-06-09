@@ -3,6 +3,8 @@
  */
 
 .filter-table-layout {
+  /* 테이블 툴바 액션 버튼 간격 — 필터 칸 gap(--filter-field-gap)과 분리 */
+  --filter-table-toolbar-actions-gap: 8px;
   width: 100%;
   min-width: 0;
   background: var(--color-bg-base);
@@ -94,7 +96,7 @@
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: var(--filter-field-gap, var(--spacing-12, 12px));
+  gap: var(--filter-table-toolbar-actions-gap);
   flex: 0 0 auto;
   min-width: 0;
   margin-left: auto;
@@ -106,8 +108,19 @@
   align-items: center;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: var(--filter-field-gap, var(--spacing-12, 12px));
+  gap: var(--filter-table-toolbar-actions-gap);
   min-width: 0;
+}
+
+/* actions를 div 등으로 감싼 화면 — 페이지별 gap(12px 등) 덮어써 8px 통일 */
+.filter-table-layout__toolbar-actions-slot > :is(div, span) {
+  gap: var(--filter-table-toolbar-actions-gap);
+}
+
+.filter-table-layout__toolbar-actions-slot .info-section-buttons--wrapper,
+.filter-table-layout__toolbar-actions-slot [class*='toolbar-actions'],
+.filter-table-layout__toolbar-actions-slot [class$='__actions'] {
+  gap: var(--filter-table-toolbar-actions-gap);
 }
 
 .filter-table-layout__toolbar-excel {
@@ -154,4 +167,54 @@
   container-name: filter-table-layout-fields;
   flex: 1 1 0;
   min-width: 0;
+}
+
+/*
+ * 캘린더 본문 — FilterTableLayout 카드 안 `calendar-set`.
+ * 프로그램 목록 캘린더(program-list-calendar-view-container)와 동일:
+ * - sticky·가로 스크롤은 layout-content(:has(.calendar-set)) — __calendar-body overflow 금지
+ * - scroll 맨 위: grid align-items:start + calendar-layout shell 정렬
+ * - scroll 중: 3열=좌·우 sticky / 2열=메인·우 sticky (calendar-layout.css)
+ */
+.filter-table-layout.filter-table-layout--calendar-view {
+  overflow: visible;
+  width: 100%;
+  max-width: 100%;
+}
+
+.filter-table-layout.filter-table-layout--calendar-view .filter-table-layout__table {
+  overflow: visible;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.filter-table-layout__calendar-body {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.filter-table-layout__calendar-body .calendar-set {
+  margin-top: 0;
+  width: 100%;
+  min-width: 0;
+  --calendar-set-sticky-top: calc(16px + var(--cms-layout-content-padding-top, 0px));
+}
+
+/* 2열 — grid-area 명시 */
+.filter-table-layout__calendar-body .calendar-set:not(:has(.calendar-sub-left)) {
+  grid-template-areas: 'main sub-right';
+}
+
+.filter-table-layout__calendar-body
+  .calendar-set:not(:has(.calendar-sub-left))
+  > .calendar-main-container {
+  grid-area: main;
+}
+
+.filter-table-layout__calendar-body
+  .calendar-set:not(:has(.calendar-sub-left))
+  > .calendar-sub-right-list {
+  grid-area: sub-right;
 }

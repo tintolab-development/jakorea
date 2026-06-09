@@ -1,242 +1,26 @@
 /**
- * 참여 기관 캘린더 뷰 — 7:3 카드 레이아웃은 `calendar-split-card-layout.css`
- * 월간 그리드: 요일 행 + 최대 6주 × min 124px tbody — 콘텐츠에 따라 행 높이 확장.
+ * 참여 기관·강사 캘린더 뷰 보조 스타일.
+ * split-card shell·sticky·743px: `calendar-split-card-layout.css`
+ * 헤더·그리드·셀: `calendar.css` 공통.
+ * 본 파일: page-scroll 래퍼 여유, tooltip/popover, day-list 텍스트만.
  */
 
 .participating-institutions-calendar-view {
   width: 100%;
-  min-width: 0;
   box-sizing: border-box;
 }
 
 /**
- * split-card shell box-shadow(16px)가 부모 overflow에 잘리지 않도록 여유 확보.
- * `detail-fullpage-modal__content` `--page-scroll` 연동은 `detail-fullpage-modal.css`.
+ * split-card shell box-shadow(16px) 클리핑 여유.
+ * `detail-fullpage-modal__content` page-scroll 연동: `detail-fullpage-modal.css`.
  */
 .participating-institutions-calendar-view--page-scroll {
   --calendar-set-sticky-top: 16px;
-  --participating-institutions-calendar-page-bottom-gap: var(--detail-fullpage-padding-bottom, 52px);
   padding: 16px;
   margin: -16px;
 }
 
-.participating-institutions-calendar-view .calendar-split-card-layout {
-  overflow: visible;
-}
-
-.participating-institutions-calendar-view--page-scroll .calendar-split-card--right {
-  position: sticky;
-  top: var(--calendar-set-sticky-top);
-  align-self: flex-start;
-  min-height: 0;
-  max-height: calc(
-    100dvh - var(--calendar-set-sticky-top) - var(--participating-institutions-calendar-page-bottom-gap) -
-      88px
-  );
-  height: min(
-    var(--calendar-sub-right-list-height, 743px),
-    calc(100dvh - var(--calendar-set-sticky-top) - var(--participating-institutions-calendar-page-bottom-gap) -
-      88px)
-  );
-}
-
-/* Header */
-.participating-institutions-calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-}
-
-/* [날짜]와 [오늘, 나비게이션] 사이 16px, 오늘·나비게이션 버튼 사이 8px */
-.participating-institutions-calendar-header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* 캘린더 년도·날짜 영역 텍스트 스펙 */
-.participating-institutions-calendar-header-title {
-  margin-right: 8px; /* 8px(gap) + 8px = 16px between 날짜 and 오늘 */
-  color: var(--default-BK, #3d3d3d);
-  font-family: Outfit;
-  font-size: 24px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 130%;
-}
-
-/* 오늘 버튼 스펙: 60×34 고정 */
-.participating-institutions-calendar-today-btn {
-  display: flex;
-  width: 60px;
-  height: 34px;
-  padding: 0;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 0;
-  border-radius: 6px;
-  border: 1px solid var(--JA-mint-01, #01a1af);
-  background: var(--default-WT, #fff);
-  color: var(--JA-mint-01, #01a1af);
-  box-sizing: border-box;
-}
-
-.participating-institutions-calendar-today-btn:hover {
-  border-color: var(--JA-mint-01, #01a1af);
-  color: var(--JA-mint-01, #01a1af);
-  background: var(--default-WT, #fff);
-  opacity: 0.9;
-}
-
-.participating-institutions-calendar-nav {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-/* 캘린더 네비게이터 버튼: 34×34 고정 (Ant Design 기본 스타일 오버라이드) */
-.participating-institutions-calendar-nav-btn {
-  display: inline-flex !important;
-  width: 34px !important;
-  min-width: 34px !important;
-  max-width: 34px !important;
-  height: 34px !important;
-  min-height: 34px !important;
-  max-height: 34px !important;
-  padding: 0 !important;
-  justify-content: center;
-  align-items: center;
-  gap: 0;
-  aspect-ratio: 1 / 1;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: var(--default-WT, #fff);
-  color: #3d3d3d;
-  box-sizing: border-box !important;
-  transition:
-    border-color 0.2s,
-    background 0.2s;
-}
-
-.participating-institutions-calendar-nav-btn:hover {
-  border-color: #d9d9d9;
-  background: #fafafa;
-  color: #3d3d3d;
-}
-
-.participating-institutions-calendar-nav-btn .anticon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  line-height: 0;
-}
-
-.participating-institutions-calendar-nav-btn .anticon svg {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-}
-
-.participating-institutions-calendar-nav-icon--left {
-  transform: scaleX(-1);
-}
-
-.participating-institutions-calendar-header-right {
-  display: flex;
-  align-items: center;
-}
-
-/* ===== 월간/주간 스위처 (백그라운드 컨테이너 124×42, padding 4px) ===== */
-.participating-institutions-calendar-view-mode {
-  position: relative;
-  width: 124px;
-  height: 42px;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: #f5f6f7;
-  display: flex;
-  padding-top: 4px;
-  padding-right: 4px;
-  padding-bottom: 4px;
-  padding-left: 4px;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 4px;
-  box-sizing: border-box;
-}
-
-/* 슬라이드 인디케이터: 탭 전환 시 이동 (상·하·좌·우 4px 안쪽에 배치) */
-.participating-institutions-calendar-view-mode__indicator {
-  position: absolute;
-  left: 4px;
-  top: 4px;
-  right: auto;
-  bottom: 4px;
-  width: 56px;
-  height: auto;
-  border-radius: 6px;
-  border: 1px solid var(--JA-mint-01, #01a1af);
-  background: var(--default-WT, #fff);
-  transition: transform 0.25s ease;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.participating-institutions-calendar-view-mode__indicator--week {
-  transform: translateX(60px);
-}
-
-.participating-institutions-calendar-view-mode__tab {
-  position: relative;
-  z-index: 1;
-  width: 56px;
-  min-width: 56px;
-  height: 34px;
-  padding: 0 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: #8c8c8c;
-  font-family: Pretendard, sans-serif;
-  font-size: 15px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  box-sizing: border-box;
-  cursor: pointer;
-  transition: color 0.2s;
-  text-align: center;
-}
-
-.participating-institutions-calendar-view-mode__tab:hover {
-  color: #595959;
-}
-
-.participating-institutions-calendar-view-mode__tab--active {
-  color: var(--JA-mint-01, #01a1af);
-  font-weight: 700;
-}
-
-/* 탭 내부 텍스트 row 정렬 (세로·가로 중앙) */
-.participating-institutions-calendar-view-mode__tab-text {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-/* 좌측 그리드·일정 칩: `calendar-split-card-main.css` (calendar.css import) */
-
-/* 날짜 셀 hover 팝오버 */
+/* ===== 날짜 셀 hover tooltip / popover (도메인별 미리보기) ===== */
 .participating-institutions-calendar-tooltip-overlay .ant-tooltip-arrow {
   display: none !important;
 }
@@ -326,6 +110,27 @@
   margin: 0 8px;
 }
 
+.participating-institutions-calendar-popover__meta--applicant-instructor {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0;
+  color: var(--main-BK, #3d3d3d);
+  opacity: 1;
+}
+
+.participating-institutions-calendar-popover__meta--applicant-instructor
+  .participating-institutions-calendar-popover__meta-part {
+  flex: 0 0 auto;
+  max-width: 100%;
+  color: var(--main-BK, #3d3d3d);
+}
+
+.participating-institutions-calendar-popover__meta--applicant-instructor
+  .participating-institutions-calendar-popover__meta-sep {
+  margin: 0 8px;
+  background: var(--main-BK, #3d3d3d);
+}
+
 .participating-institutions-calendar-popover__meta-part {
   flex-shrink: 0;
   white-space: nowrap;
@@ -352,75 +157,7 @@
   overflow: hidden;
 }
 
-/* 참여 강사 캘린더 우측: 기관 선택 + 목록 (신청기관 ApplicantCalendarView 우측과 동일 레이아웃) */
-.calendar-split-card--right
-  .participating-instructors-section__calendar-right {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 0;
-  min-height: 0;
-  height: 100%;
-  max-height: 100%;
-  width: 100%;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.calendar-split-card--right
-  .participating-instructors-section__calendar-right__school-filter {
-  flex-shrink: 0;
-  margin-bottom: 12px;
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-.calendar-split-card--right
-  .participating-instructors-section__calendar-right__school-filter
-  .cms-select {
-  width: 100%;
-  min-width: 0;
-}
-
-.calendar-split-card--right
-  .participating-instructors-section__calendar-right__school-filter
-  .ant-select-selector {
-  min-height: 48px;
-  border-radius: 8px;
-}
-
-/* 참여 강사 캘린더 우측 카드 목록만 스크롤 */
-.calendar-split-card--right
-  .participating-instructors-section__calendar-right-cards {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  box-sizing: border-box;
-  padding-bottom: 8px;
-}
-
-/* 참여 기관 캘린더 우측 일별 리스트 */
-.calendar-split-card--right > .participating-institutions-calendar-day-list {
-  flex: 1 1 0;
-  min-height: 0;
-  height: auto;
-  overflow-x: hidden;
-  overflow-y: auto;
-  box-sizing: border-box;
-  padding-bottom: 8px;
-}
-
-.participating-institutions-calendar-day-list__item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
-  cursor: pointer;
-}
-
+/* ===== 참여 기관 우측 day-list — 행 shell은 `.calendar-list-item` 공통, 텍스트만 ===== */
 .participating-institutions-calendar-day-list__title {
   width: 100%;
   min-width: 0;

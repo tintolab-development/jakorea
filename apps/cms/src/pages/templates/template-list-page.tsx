@@ -5,6 +5,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { TemplateWritingPreviewProvider } from '@/features/template/context/template-writing-preview-context'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { TemplateCreateModal } from '@/features/template/ui/modal/template-create-modal'
 import './template-list-page.css'
@@ -156,7 +157,10 @@ export function TemplateListPage() {
           )}
         </>
       )}
-      <Outlet />
+      {/* 자식 라우트(form-management·form-test/tables 등) — lazy/Suspense 경계에서 hook·Provider 정합 */}
+      <TemplateWritingPreviewProvider>
+        <Outlet />
+      </TemplateWritingPreviewProvider>
     </>
   )
 }

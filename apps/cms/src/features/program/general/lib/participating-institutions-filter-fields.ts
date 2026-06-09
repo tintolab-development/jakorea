@@ -3,7 +3,7 @@ import {
   INSTITUTION_SIDO_FILTER_OPTIONS,
   getInstitutionSigunguSelectOptions,
 } from '@/shared/config/institution-address-region-data'
-import { TEXTBOOK_STATUS_LABELS } from '@/data/mock/participating-schools'
+import { TEXTBOOK_STATUS_LABELS, TEXTBOOK_STATUS_OPTION_KEYS } from '@/data/mock/participating-schools'
 
 const GRADE_OPTIONS = [
   { label: '전체', value: 'all' },
@@ -17,9 +17,10 @@ const GRADE_OPTIONS = [
 
 const TEXTBOOK_OPTIONS = [
   { label: '전체', value: 'all' },
-  { label: TEXTBOOK_STATUS_LABELS.preparing, value: 'preparing' },
-  { label: TEXTBOOK_STATUS_LABELS.shipping, value: 'shipping' },
-  { label: TEXTBOOK_STATUS_LABELS.delivered, value: 'delivered' },
+  ...TEXTBOOK_STATUS_OPTION_KEYS.map(key => ({
+    label: TEXTBOOK_STATUS_LABELS[key],
+    value: key,
+  })),
 ]
 
 const FILTER_CONTROL_WIDTH = 260
@@ -69,8 +70,8 @@ export const participatingInstitutionsFilterFields: FilterFieldConfig[] = [
   {
     key: 'teacherName',
     type: 'search',
-    label: '담당 강사명',
-    placeholder: '담당 강사명을 입력하세요',
+    label: '담당 교사명',
+    placeholder: '담당 교사명을 입력하세요',
     width: FILTER_CONTROL_WIDTH,
   },
 ]

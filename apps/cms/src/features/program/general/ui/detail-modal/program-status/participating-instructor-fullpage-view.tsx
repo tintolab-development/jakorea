@@ -1142,8 +1142,8 @@ export function ParticipatingInstructorFullpageView({
         {effectiveTab === 'settlement' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
             <ParticipatingInstructorSettlementSection
-              instructor={d}
-              assignedSchools={assignedSchools}
+              instructor={mergedInstructor}
+              program={program}
             />
           </div>
         )}

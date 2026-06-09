@@ -27,7 +27,10 @@ import type { Program } from '@/types/domain'
 import { FilterTableLayout, CmsButton } from '@/shared/ui'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
-import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
+import {
+  TemplateWritingPreviewProvider,
+  useTemplateWritingPreview,
+} from '@/features/template/context/template-writing-preview-context'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import { UjatProgramRegistrationFullpageModal } from '@/features/program/ujat/ui/registration/ujat-program-registration-fullpage-modal'
 import { UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/ujat/model/ujat-program-registration-flow'
@@ -360,5 +363,9 @@ function UjatProgramListPageContent() {
 }
 
 export default function UjatProgramListPage() {
-  return <UjatProgramListPageContent />
+  return (
+    <TemplateWritingPreviewProvider>
+      <UjatProgramListPageContent />
+    </TemplateWritingPreviewProvider>
+  )
 }

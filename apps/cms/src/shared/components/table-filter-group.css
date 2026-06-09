@@ -38,6 +38,22 @@
   box-sizing: border-box;
 }
 
+/* FilterFieldConfig.width — responsive wrap(grid-cell) 경로 (픽셀·절대 폭) */
+.table-filter-group__grid-cell--explicit-width:not(.table-filter-group__grid-cell--pct-width) {
+  flex: 0 0 auto;
+  width: min(100%, var(--filter-field-width));
+  max-width: min(100%, var(--filter-field-width));
+}
+
+/* % 행 비율 — wrap 컨테이너 대비 한 번만 해석 */
+.table-filter-group__grid-cell--explicit-width.table-filter-group__grid-cell--pct-width {
+  flex: 0 0 auto;
+  width: min(100%, var(--filter-field-width));
+  max-width: min(100%, var(--filter-field-width));
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .table-filter-group__fields-shell {
   flex: 0 0 auto;
   white-space: nowrap;
@@ -101,29 +117,11 @@
   min-width: 0;
 }
 
-/*
- * `width: '25%'` 등 퍼센트 Col — 안쪽 컨트롤만 260px로 맞추면 래퍼(.ant-col)가 더 넓게 남음.
- * 래퍼도 동일 토큰 상한(날짜·이중 셀렉트는 별도 상한).
- */
+/* % Col — flex-basis로 행 비율 확보, 래퍼는 260px 상한 없음 */
 .table-filter-group__fields-inner.ant-row > .ant-col.table-filter-group__col--pct-width {
-  max-width: min(100%, var(--filter-control-max-width, 260px));
+  min-width: 0;
+  max-width: none;
   box-sizing: border-box;
-}
-
-.table-filter-group__fields-inner.ant-row
-  > .ant-col.table-filter-group__col--pct-width.table-filter-group__col--wide {
-  max-width: min(
-    100%,
-    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px))
-  );
-}
-
-.table-filter-group__fields-inner.ant-row
-  > .ant-col.table-filter-group__col--pct-width.table-filter-group__col--date-range {
-  max-width: min(
-    100%,
-    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
-  );
 }
 
 .table-filter-group__fields-inner .unified-filter-card__field {
@@ -136,7 +134,10 @@
  * 필터 컨트롤 상한: filter-controls-common 의 --filter-control-max-width(260px)와 동일.
  * width 100% + max-width min(100%, 260px) → 좁은 열/뷰포트에서는 100%만큼만, 넓은 열에서는 260px에서 멈춤.
  */
-.table-filter-group__container .labeled-search-input {
+.table-filter-group__container
+  .ant-col:not(.table-filter-group__col--pct-width)
+  .labeled-search-input,
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width) .labeled-search-input {
   max-width: min(100%, var(--filter-control-max-width, 260px));
   width: 100%;
   box-sizing: border-box;
@@ -144,12 +145,15 @@
 
 /* unified-filter-card의 전역 select min-width(280px)가 table-filter-group에서 gap을 먹지 않도록 무효화 */
 /* 단일 셀렉트: 래퍼·컨트롤 상한 260. 이중 셀렉트 래퍼(field--select)는 아래 :has 규칙으로 분리(260×1 적용 시 Col 대비 빈 간격 발생) */
-.table-filter-group__fields-inner .unified-filter-card__field--select:not(:has(.table-filter-group__select-pair-selects)),
-.table-filter-group__fields-inner .cms-select,
-.table-filter-group__fields-inner .ant-select,
-.table-filter-group__grid-cell .unified-filter-card__field--select:not(:has(.table-filter-group__select-pair-selects)),
-.table-filter-group__grid-cell .cms-select,
-.table-filter-group__grid-cell .ant-select {
+.table-filter-group__fields-inner
+  .ant-col:not(.table-filter-group__col--pct-width)
+  .unified-filter-card__field--select:not(:has(.table-filter-group__select-pair-selects)),
+.table-filter-group__fields-inner .ant-col:not(.table-filter-group__col--pct-width) .cms-select,
+.table-filter-group__fields-inner .ant-col:not(.table-filter-group__col--pct-width) .ant-select,
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width)
+  .unified-filter-card__field--select:not(:has(.table-filter-group__select-pair-selects)),
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width) .cms-select,
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width) .ant-select {
   min-width: 0 !important;
   width: 100% !important;
   max-width: min(100%, var(--filter-control-max-width, 260px)) !important;
@@ -165,9 +169,116 @@
   ) !important;
 }
 
-/* 단일 날짜: 컨트롤 하나당 상한 */
-.table-filter-group__fields-inner .cms-datepicker:not(.cms-datepicker--range-split),
-.table-filter-group__grid-cell .cms-datepicker:not(.cms-datepicker--range-split) {
+.table-filter-group__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width.table-filter-group__col--pair-field:not(
+    .table-filter-group__col--pct-width
+  )
+  .unified-filter-card__field--select:has(.table-filter-group__select-pair-selects),
+.table-filter-group__grid-cell--explicit-width.table-filter-group__grid-cell--pair-field:not(
+    .table-filter-group__grid-cell--pct-width
+  )
+  .unified-filter-card__field--select:has(.table-filter-group__select-pair-selects) {
+  max-width: min(100%, var(--filter-field-width)) !important;
+}
+
+.table-filter-group__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width.table-filter-group__col--pair-field:not(
+    .table-filter-group__col--pct-width
+  )
+  .table-filter-group__select-pair-selects,
+.table-filter-group__grid-cell--explicit-width.table-filter-group__grid-cell--pair-field:not(
+    .table-filter-group__grid-cell--pct-width
+  )
+  .table-filter-group__select-pair-selects {
+  width: 100%;
+  max-width: min(100%, var(--filter-field-width));
+  gap: var(--filter-field-gap, 12px);
+}
+
+.table-filter-group__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width.table-filter-group__col--pair-field:not(
+    .table-filter-group__col--pct-width
+  )
+  .table-filter-group__select-pair-selects
+  > .cms-select,
+.table-filter-group__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width.table-filter-group__col--pair-field:not(
+    .table-filter-group__col--pct-width
+  )
+  .table-filter-group__select-pair-selects
+  > .ant-select,
+.table-filter-group__grid-cell--explicit-width.table-filter-group__grid-cell--pair-field:not(
+    .table-filter-group__grid-cell--pct-width
+  )
+  .table-filter-group__select-pair-selects
+  > .cms-select,
+.table-filter-group__grid-cell--explicit-width.table-filter-group__grid-cell--pair-field:not(
+    .table-filter-group__grid-cell--pct-width
+  )
+  .table-filter-group__select-pair-selects
+  > .ant-select {
+  flex: 0 0 var(--filter-field-pair-segment-width, var(--filter-control-max-width, 260px)) !important;
+  width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 260px)) !important;
+  min-width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 260px)) !important;
+  max-width: var(--filter-field-pair-segment-width, var(--filter-control-max-width, 260px)) !important;
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--pair-field
+  .unified-filter-card__field--select:has(.table-filter-group__select-pair-selects),
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--pair-field
+  .unified-filter-card__field--select:has(.table-filter-group__select-pair-selects) {
+  max-width: 100% !important;
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--pair-field
+  .table-filter-group__select-pair-selects,
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--pair-field
+  .table-filter-group__address-region-selects,
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--pair-field
+  .table-filter-group__select-pair-selects,
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--pair-field
+  .table-filter-group__address-region-selects {
+  width: 100%;
+  max-width: 100%;
+  gap: var(--filter-field-gap, 12px);
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--pair-field
+  .table-filter-group__select-pair-selects
+  > .cms-select,
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--pair-field
+  .table-filter-group__select-pair-selects
+  > .ant-select,
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width.table-filter-group__col--pair-field
+  .table-filter-group__address-region-selects
+  > .cms-select,
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--pair-field
+  .table-filter-group__select-pair-selects
+  > .cms-select,
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--pair-field
+  .table-filter-group__select-pair-selects
+  > .ant-select,
+.table-filter-group__grid-cell--pct-width.table-filter-group__grid-cell--pair-field
+  .table-filter-group__address-region-selects
+  > .cms-select {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* 단일 날짜: 컨트롤 하나당 상한 (픽셀·기본 폭 열) */
+.table-filter-group__fields-inner
+  .ant-col:not(.table-filter-group__col--pct-width)
+  .cms-datepicker:not(.cms-datepicker--range-split),
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width)
+  .cms-datepicker:not(.cms-datepicker--range-split) {
   max-width: min(100%, var(--filter-control-max-width, 260px));
   width: 100%;
   box-sizing: border-box;
@@ -177,8 +288,11 @@
  * 기간(분리 UI): 바깥 래퍼는 두 칸 + 구분자까지 — 전체를 260px로 씌우면 칸마다 반으로 찌그러짐.
  * 각 세그먼트는 아래에서 max 260px, 래퍼는 min(100%, 2×260 + gutter).
  */
-.table-filter-group__fields-inner .cms-datepicker.cms-datepicker--range-split,
-.table-filter-group__grid-cell .cms-datepicker.cms-datepicker--range-split {
+.table-filter-group__fields-inner
+  .ant-col:not(.table-filter-group__col--pct-width)
+  .cms-datepicker.cms-datepicker--range-split,
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width)
+  .cms-datepicker.cms-datepicker--range-split {
   max-width: min(
     100%,
     calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
@@ -193,8 +307,10 @@
   min-width: 0;
 }
 
-.table-filter-group__fields-inner .cms-select--multiple-ui,
-.table-filter-group__grid-cell .cms-select--multiple-ui {
+.table-filter-group__fields-inner
+  .ant-col:not(.table-filter-group__col--pct-width)
+  .cms-select--multiple-ui,
+.table-filter-group__grid-cell:not(.table-filter-group__grid-cell--pct-width) .cms-select--multiple-ui {
   max-width: min(100%, var(--filter-control-max-width, 260px));
   width: 100%;
   box-sizing: border-box;
@@ -204,6 +320,116 @@
   min-width: 0;
   width: 100%;
   max-width: 100%;
+}
+
+/* 픽셀·절대 폭 — inner가 명시 폭까지 */
+.table-filter-group__grid-cell--explicit-width:not(.table-filter-group__grid-cell--pct-width)
+  .labeled-search-input,
+.table-filter-group__grid-cell--explicit-width:not(.table-filter-group__grid-cell--pct-width)
+  .unified-filter-card__field:not(:has(.table-filter-group__select-pair-selects)) {
+  width: 100%;
+  max-width: min(100%, var(--filter-field-width));
+}
+
+.table-filter-group__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width:not(.table-filter-group__col--pct-width):not(
+    .table-filter-group__col--pair-field
+  )
+  .labeled-search-input,
+.table-filter-group__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width:not(.table-filter-group__col--pct-width):not(
+    .table-filter-group__col--pair-field
+  )
+  .unified-filter-card__field:not(:has(.table-filter-group__select-pair-selects)),
+.table-filter-group__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width:not(.table-filter-group__col--pct-width):not(
+    .table-filter-group__col--pair-field
+  )
+  .cms-select,
+.table-filter-group__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width:not(.table-filter-group__col--pct-width):not(
+    .table-filter-group__col--pair-field
+  )
+  .ant-select {
+  max-width: min(100%, var(--filter-field-width)) !important;
+}
+
+/*
+ * % 행 비율 — Col/셀 폭은 flex·wrap에서 확보, inner는 100% 채움
+ * (--filter-field-width를 inner max-width에 쓰면 Col 안에서 %가 재해석되어 이중 축소됨)
+ */
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .labeled-search-input,
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .unified-filter-card__field:not(:has(.table-filter-group__select-pair-selects)),
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .cms-select,
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .ant-select,
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .labeled-search-input__input,
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .labeled-search-input
+  .cms-input,
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width:not(.table-filter-group__col--pair-field)
+  .labeled-search-input
+  .ant-input-affix-wrapper,
+.table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field)
+  .labeled-search-input,
+.table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field)
+  .unified-filter-card__field:not(:has(.table-filter-group__select-pair-selects)),
+.table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field) .cms-select,
+.table-filter-group__grid-cell--pct-width:not(.table-filter-group__grid-cell--pair-field) .ant-select {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width
+  .cms-datepicker:not(.cms-datepicker--range-split),
+.table-filter-group__grid-cell--pct-width .cms-datepicker:not(.cms-datepicker--range-split) {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width
+  .cms-datepicker.cms-datepicker--range-split,
+.table-filter-group__grid-cell--pct-width .cms-datepicker.cms-datepicker--range-split {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width
+  .cms-datepicker--range-split
+  .cms-datepicker__segment,
+.table-filter-group__grid-cell--pct-width
+  .cms-datepicker--range-split
+  .cms-datepicker__segment {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: min(100%, var(--filter-control-max-width, 260px));
+}
+
+.table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--pct-width
+  .cms-select--multiple-ui,
+.table-filter-group__grid-cell--pct-width .cms-select--multiple-ui {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* table-filter-group 라디오는 좁은 폭에서도 항상 가로 정렬 유지 */
@@ -289,7 +515,8 @@
   box-sizing: border-box;
 }
 
-.table-filter-group__fields-grid-row--merged-auto-fill > .table-filter-group__grid-cell {
+.table-filter-group__fields-grid-row--merged-auto-fill
+  > .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width) {
   flex: 0 0 auto;
   width: min(100%, var(--filter-control-max-width, 260px));
   max-width: min(100%, var(--filter-control-max-width, 260px));
@@ -310,7 +537,8 @@
   box-sizing: border-box;
 }
 
-.table-filter-group__merged-inline-wrap > .table-filter-group__grid-cell {
+.table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width) {
   flex: 0 0 auto;
   width: min(100%, var(--filter-control-max-width, 260px));
   max-width: min(100%, var(--filter-control-max-width, 260px));
@@ -319,9 +547,13 @@
 }
 
 .table-filter-group__merged-inline-wrap
-  > .table-filter-group__grid-cell:has(.table-filter-group__select-pair-selects),
+  > .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width):has(
+    .table-filter-group__select-pair-selects
+  ),
 .table-filter-group__merged-inline-wrap
-  > .table-filter-group__grid-cell:has(.cms-datepicker--range-split) {
+  > .table-filter-group__grid-cell:not(.table-filter-group__grid-cell--explicit-width):has(
+    .cms-datepicker--range-split
+  ) {
   width: min(
     100%,
     calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px))

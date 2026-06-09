@@ -13,16 +13,20 @@ export type CalendarSplitCardLayoutProps = {
 export function CalendarSplitCardLayout({ loading, left, right }: CalendarSplitCardLayoutProps) {
   if (loading) {
     return (
-      <div className="calendar-split-card-layout calendar-split-card-layout--loading">
-        <Spin size="large" />
+      <div className="calendar-set-scroll-host">
+        <div className="calendar-split-card-layout calendar-split-card-layout--loading">
+          <Spin size="large" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="calendar-split-card-layout">
-      <div className="calendar-split-card calendar-split-card--left">{left}</div>
-      <div className="calendar-split-card calendar-split-card--right">{right}</div>
+    <div className="calendar-set-scroll-host">
+      <div className="calendar-split-card-layout">
+        <div className="calendar-split-card calendar-split-card--left">{left}</div>
+        <div className="calendar-split-card calendar-split-card--right">{right}</div>
+      </div>
     </div>
   )
 }

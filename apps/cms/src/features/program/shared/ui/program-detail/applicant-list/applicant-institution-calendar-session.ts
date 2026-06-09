@@ -7,6 +7,31 @@ function parseSessionDate(dateStr: string): dayjs.Dayjs {
   return dayjs(normalized)
 }
 
+function padHourMinute(hour: string, minute: string): string {
+  return `${String(Number.parseInt(hour, 10)).padStart(2, '0')}:${minute}`
+}
+
+function parseSessionTimeDisplay(timeRange: string): string | null {
+  const compact = timeRange.replace(/\s/g, '')
+  const match = /^(\d{1,2}):(\d{2})[~\-–—]+(\d{1,2}):(\d{2})$/.exec(compact)
+  if (!match) return null
+  return `${padHourMinute(match[1], match[2])} ~ ${padHourMinute(match[3], match[4])}`
+}
+
+function tryResolveInstitutionSessionRound(session: ParticipatingSchoolSession): string | null {
+  if (session.round != null && session.round > 0) {
+    return `${session.round}차시`
+  }
+  const classRoundMatch = session.classNum.match(/(\d+)\s*차시/)
+  if (classRoundMatch) {
+    return `${classRoundMatch[1]}차시`
+  }
+  if (session.classNum.trim().endsWith('차시')) {
+    return session.classNum.trim().replace(/\s+/g, '')
+  }
+  return null
+}
+
 /** 캘린더 카드 2행 — 지역 짧은 표기 (첫 토큰) */
 export function getInstitutionRegionShort(region: string | undefined): string {
   const trimmed = String(region ?? '').trim()
@@ -25,30 +50,36 @@ export function findInstitutionSessionForDate(
   })
 }
 
-function resolveRoundLabel(session: ParticipatingSchoolSession): string {
-  if (session.round != null) return `${session.round}차시`
-  const classMatch = session.classNum.match(/\d+\s*차시/)
-  if (classMatch) return classMatch[0].replace(/\s+/g, '')
-  const digits = Number.parseInt(session.classNum.replace(/\D/g, ''), 10)
-  return `${Number.isFinite(digits) && digits > 0 ? digits : 1}차시`
-}
-
-/** 캘린더 우측 카드 2행 — `2차시 (09:20 ~ 11:20)` 형식 */
-export function getInstitutionCalendarSessionCardLabel(
+/**
+ * 캘린더 카드·호버 팝오버 — 강의 진행 시간
+ * - 차시/회차 있음: `2차시 (09:20 ~ 11:20)`
+ * - 차시/회차 없음: `09:20 ~ 11:20`
+ */
+export function formatInstitutionCalendarSessionTimeDisplay(
   session: ParticipatingSchoolSession | undefined,
   fallbackPeriod?: string
 ): string {
   if (session) {
-    const roundLabel = resolveRoundLabel(session)
-    const timeMatch = session.timeRange.match(/(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)
-    if (timeMatch) {
-      return `${roundLabel} (${timeMatch[1]} ~ ${timeMatch[2]})`
-    }
-    return roundLabel
+    const timeDisplay = parseSessionTimeDisplay(session.timeRange)
+    const roundLabel = tryResolveInstitutionSessionRound(session)
+    if (roundLabel && timeDisplay) return `${roundLabel} (${timeDisplay})`
+    if (roundLabel) return roundLabel
+    if (timeDisplay) return timeDisplay
+    return '-'
   }
   if (fallbackPeriod) {
-    const timeMatch = fallbackPeriod.match(/(\d{1,2}:\d{2})\s*[-~]\s*(\d{1,2}:\d{2})/)
-    if (timeMatch) return `1차시 (${timeMatch[1]} ~ ${timeMatch[2]})`
+    const timeMatch = fallbackPeriod.match(/(\d{1,2}):(\d{2})\s*[-~]\s*(\d{1,2}):(\d{2})/)
+    if (timeMatch) {
+      return `${padHourMinute(timeMatch[1], timeMatch[2])} ~ ${padHourMinute(timeMatch[3], timeMatch[4])}`
+    }
   }
   return '-'
+}
+
+/** @deprecated alias — `formatInstitutionCalendarSessionTimeDisplay` 사용 */
+export function getInstitutionCalendarSessionCardLabel(
+  session: ParticipatingSchoolSession | undefined,
+  fallbackPeriod?: string
+): string {
+  return formatInstitutionCalendarSessionTimeDisplay(session, fallbackPeriod)
 }

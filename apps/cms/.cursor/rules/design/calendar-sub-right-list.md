@@ -65,6 +65,7 @@
 
 - **`calendar-set` + `.calendar-sub-right-list`:** 미니 캘린더·검색이 있는 3열. 우측 sticky 래퍼 — **743px** 높이 · **280~400px** clamp 너비 ([calendar-common.md](./calendar-common.md) 토큰). 래퍼는 **border·shadow·radius 없음** — shell은 자식 `.calendar-list`만 (**border만**, `box-shadow` 금지).
 - **`CalendarSplitCardLayout` + `.calendar-split-card--right`:** 7:3 카드. 우측에는 **`.calendar-list`만** 두고 `.calendar-sub-right-list` 래퍼를 **추가하지 않는다.** → [calendar-split-card-layout.md](./calendar-split-card-layout.md). 우측 카드 너비·리스트 높이는 공통 토큰과 동일.
+- **FilterTableLayout `contentVariant="calendar"`:** 3열·2열 sticky는 `calendar-layout.css` 그대로. `filter-table-layout__calendar-body`에 overflow 금지 — scrollport는 `layout-content`. → [calendar-filter-table-layout.md](./calendar-filter-table-layout.md)
 - **7:3 카드 안의 `.calendar-list`:** 기본 `calendar-sub-right.css`의 border·box-shadow는 **끈 상태**여야 한다. shell은 `.calendar-split-card--right`만 담당.
 
 ---

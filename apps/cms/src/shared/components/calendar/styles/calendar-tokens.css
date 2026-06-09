@@ -5,8 +5,6 @@
 .calendar-set,
 .calendar-split-card-layout,
 .calendar-split-card--left,
-.ujat-institution-application-calendar-view,
-.applicant-calendar-layout,
 .calendar-main-container,
 .calendar-main {
   --calendar-cell-min-width: 116px;
@@ -39,5 +37,35 @@
   --calendar-main-week-min-height: calc(
     var(--calendar-week-total-px) + var(--calendar-week-time-grid-header-min-height) +
       var(--calendar-main-header-min-height) + var(--calendar-main-vertical-padding)
+  );
+  /* 3열 calendar-set · 2열 split-card — 가로 축소 시 열 겹침 방지용 합산 min-width */
+  --calendar-sub-left-width: 300px;
+  --calendar-set-column-gap: var(--spacing-24, 24px);
+  --calendar-split-card-column-gap: 16px;
+  --calendar-set-min-width-3col-month: calc(
+    var(--calendar-sub-left-width) + var(--calendar-set-column-gap) +
+      var(--calendar-main-month-min-width) + var(--calendar-set-column-gap) +
+      var(--calendar-sub-right-list-min-width, 280px)
+  );
+  --calendar-set-min-width-2col-month: calc(
+    var(--calendar-main-month-min-width) + var(--calendar-set-column-gap) +
+      var(--calendar-sub-right-list-min-width, 280px)
+  );
+  --calendar-set-min-width-3col-week: calc(
+    var(--calendar-sub-left-width) + var(--calendar-set-column-gap) +
+      var(--calendar-main-week-min-width) + var(--calendar-set-column-gap) +
+      var(--calendar-sub-right-list-min-width, 280px)
+  );
+  --calendar-set-min-width-2col-week: calc(
+    var(--calendar-main-week-min-width) + var(--calendar-set-column-gap) +
+      var(--calendar-sub-right-list-min-width, 280px)
+  );
+  --calendar-split-card-min-width-month: calc(
+    var(--calendar-main-month-min-width) + var(--calendar-split-card-column-gap) +
+      var(--calendar-sub-right-list-min-width, 280px)
+  );
+  --calendar-split-card-min-width-week: calc(
+    var(--calendar-main-week-min-width) + var(--calendar-split-card-column-gap) +
+      var(--calendar-sub-right-list-min-width, 280px)
   );
 }

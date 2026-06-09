@@ -26,12 +26,19 @@ Use this stack for **admin/data list pages**: filters + toolbar + `cms-data-tabl
 - **Table**: `className="cms-data-table"`, `dataSource={tableData}`, `TABLE_COLUMN_WIDTHS` from `@/shared/constants/table`, `pagination={false}` unless PM asks otherwise, `rowSelection` only when `canWrite`.
 - **Toolbar**: `CmsButton` (`delete` / `secondary` / `primary`), gate with `canPerformWriteAction`.
 
+## Calendar view (list + calendar toggle)
+
+- Same `FilterTableLayout`; pass **`contentVariant="calendar"`** when children are `calendar-set`.
+- Do **not** move `calendar-set` outside the layout to “fix” sticky — see [calendar-filter-table-layout.md](../design/calendar-filter-table-layout.md).
+
 ## Do not
 
 - Rebuild filter rows ad hoc when this pattern fits.
 - Mix **LMS** or **other apps** list patterns into `apps/cms` pages — follow **CMS** siblings in the same route area.
+- Put `overflow-x: auto` on `filter-table-layout__calendar-body` or disable sticky with `position: static` for top alignment.
 
 ## Related rules
 
+- [calendar-filter-table-layout.md](../design/calendar-filter-table-layout.md) — FilterTableLayout + calendar sticky/scroll
 - [list-page-table-stack.md](../tables/list-page-table-stack.md), [table-implementation.md](../tables/table-implementation.md)
 - Admin notice create/edit modal layout: [admin-notice-form-modal-spec.md](../process/admin-notice-form-modal-spec.md)

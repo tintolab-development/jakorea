@@ -208,7 +208,7 @@
 
 /*
  * 교재 배송 현황(StatusDropdownCell)
- * - 배지·패널 100×30 / 116px: column width + `PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE` + status-dropdown-cell.css `--sdcb-*`
+ * - 배지·패널 120×30 / 152px: column width + `PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE` + status-dropdown-cell.css `--sdcb-*`
  * - 아래는 cms-data-table 행 패딩·드롭다운 열림 시 세로 흔들림만 막음 (공통 셀 패딩 0은 status-dropdown-cell.css)
  */
 .participating-institutions-section__table--textbook-dropdown.cms-data-table
@@ -297,6 +297,41 @@
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
+}
+
+/* 참여 강사 캘린더 — split-card 우측: 기관 필터 + 카드 목록 */
+.calendar-split-card--right .participating-instructors-section__calendar-right {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.calendar-split-card--right .participating-instructors-section__calendar-right__school-filter {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.calendar-split-card--right
+  .participating-instructors-section__calendar-right__school-filter
+  .cms-select {
+  width: 100%;
+  min-width: 0;
+}
+
+.calendar-split-card--right
+  .participating-instructors-section__calendar-right__school-filter
+  .ant-select-selector {
+  min-height: 48px;
+  border-radius: 8px;
 }
 
 /* 캘린더 뷰 우측 카드 리스트 */

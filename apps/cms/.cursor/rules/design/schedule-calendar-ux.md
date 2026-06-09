@@ -24,6 +24,7 @@ Prefer **option 1** for consistency with common calendar apps and fewer mistaken
 ## Engineering
 
 - **공통 캘린더 단일 진입:** [calendar-common.md](./calendar-common.md) (shell 토큰·셀·리스트·날짜·모드·[오늘]·PR 체크리스트)
+- FilterTableLayout 안 캘린더: [calendar-filter-table-layout.md](./calendar-filter-table-layout.md)
 - Stop propagation on nested controls per [event-handling.md](./event-handling.md).
 - 7:3 카드형: [calendar-split-card-layout.md](./calendar-split-card-layout.md)
 - 우측 일별 리스트: [calendar-sub-right-list.md](./calendar-sub-right-list.md)

@@ -4,9 +4,7 @@
 import { Suspense, lazy } from 'react'
 import { Spin } from 'antd'
 
-const GeneralProgramListPageContent = lazy(() =>
-  import('./page').then(m => ({ default: m.GeneralProgramListPageContent }))
-)
+const GeneralProgramListPage = lazy(() => import('./page'))
 
 function GeneralProgramListLoadingFallback() {
   return (
@@ -19,7 +17,7 @@ function GeneralProgramListLoadingFallback() {
 export function GeneralProgramListRouteShell() {
   return (
     <Suspense fallback={<GeneralProgramListLoadingFallback />}>
-      <GeneralProgramListPageContent />
+      <GeneralProgramListPage />
     </Suspense>
   )
 }

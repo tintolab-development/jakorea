@@ -227,16 +227,17 @@
 .detail-fullpage-modal__content:has(
     .instructor-payment-tab__calendar-view-container--no-inner-scroll
   ),
-.detail-fullpage-modal__content:has(.ujat-institution-application-calendar-view--page-scroll),
+.detail-fullpage-modal__content:has(.calendar-set--page-scroll),
 .detail-fullpage-modal__content:has(.participating-institutions-calendar-view--page-scroll) {
   overflow-x: clip;
   /*
-   * UJAT 캘린더: 하단 52px는 list `__page-bottom-spacer` 블록으로만 둠.
+   * 캘린더 page-scroll: 하단 52px는 `__page-bottom-spacer` 블록으로만 둠.
    * __content padding-bottom 과 겹치지 않게 0.
    */
   padding-bottom: 0;
 }
 
+.detail-fullpage-modal__main:has(.calendar-set--page-scroll),
 .detail-fullpage-modal__main:has(.participating-institutions-calendar-view--page-scroll) {
   overflow-x: clip;
 }
@@ -245,11 +246,12 @@
   .detail-fullpage-modal__content:has(
       .instructor-payment-tab__calendar-view-container--no-inner-scroll
     ),
-  .detail-fullpage-modal__content:has(.ujat-institution-application-calendar-view--page-scroll),
+  .detail-fullpage-modal__content:has(.calendar-set--page-scroll),
   .detail-fullpage-modal__content:has(.participating-institutions-calendar-view--page-scroll) {
     overflow-x: visible;
   }
 
+  .detail-fullpage-modal__main:has(.calendar-set--page-scroll),
   .detail-fullpage-modal__main:has(.participating-institutions-calendar-view--page-scroll) {
     overflow-x: visible;
   }
@@ -601,16 +603,18 @@
  */
 .detail-fullpage-modal
   .unified-filter-card__fields-inner
-  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio) {
+  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio):not(
+    .unified-filter-card__col--pct-width
+  ) {
   max-width: min(100%, var(--filter-control-max-width, 260px));
   box-sizing: border-box;
 }
 
 .detail-fullpage-modal
   .unified-filter-card__fields-inner
-  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio):has(
-    .app-datepicker--range-split
-  ) {
+  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio):not(
+    .unified-filter-card__col--pct-width
+  ):has(.app-datepicker--range-split) {
   max-width: min(
     100%,
     calc(
@@ -621,9 +625,9 @@
 
 .detail-fullpage-modal
   .unified-filter-card__fields-inner
-  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio):has(
-    .unified-filter-card__address-region-selects
-  ) {
+  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio):not(
+    .unified-filter-card__col--pct-width
+  ):has(.unified-filter-card__address-region-selects) {
   max-width: min(
     100%,
     calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px))

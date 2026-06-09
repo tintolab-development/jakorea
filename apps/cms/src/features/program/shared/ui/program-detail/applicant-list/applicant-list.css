@@ -7,6 +7,17 @@
   box-sizing: border-box;
 }
 
+/* 캘린더 뷰: overflow-x:hidden이 sticky 조상이 되어 우측 리스트 고정이 깨짐 — clip으로 대체 */
+.applicant-details.applicant-details--calendar-view {
+  overflow-x: clip;
+}
+
+@supports not (overflow-x: clip) {
+  .applicant-details.applicant-details--calendar-view {
+    overflow-x: visible;
+  }
+}
+
 /* 프로그램 승인 현황: shared StatusDropdownCell 사용 — participating-institutions-section과 동일 스타일 */
 /* 행 높이 53px 고정 (테이블 셀 높이와 동일, vertical shifting 방지) */
 .applicant-details .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) {
@@ -58,14 +69,6 @@
   padding-right: 16px !important;
 }
 
-/* 캘린더 뷰: 풀페이지 메인 안에서 가로 100%·flex 축소 시에도 비율 유지 */
-.applicant-calendar-view-container {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
 /* FilterTableLayout: 풀페이지 모달 본문 안 — 이중 카드·그림자 제거 */
 .applicant-details .applicant-details__filter-table-layout.filter-table-layout {
   background: transparent;
@@ -83,7 +86,10 @@
   padding-bottom: 24px;
 }
 
-.applicant-details .applicant-details__filter-table-layout .filter-table-layout__toolbar-actions .cms-button {
+.applicant-details
+  .applicant-details__filter-table-layout
+  .filter-table-layout__toolbar-actions
+  .cms-button {
   border-radius: 8px !important;
   font-weight: 600;
   font-size: 16px;
@@ -133,7 +139,11 @@
 }
 
 /* 신청자 목록: 헤더 16px (전역 Table/fontSize 14 토큰·다른 규칙보다 확실히) */
-.applicant-details .cms-data-table .ant-table-thead > tr > th.ant-table-cell:not(.ant-table-cell-scrollbar) {
+.applicant-details
+  .cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell:not(.ant-table-cell-scrollbar) {
   font-size: 16px !important;
 }
 

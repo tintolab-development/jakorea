@@ -1,0 +1,49 @@
+/**
+ * 프로그램 목록 캘린더 뷰 — `calendar-set` 3열 레이아웃·sticky 보조 (공통 치수는 calendar-layout.css).
+ */
+.program-list-calendar-view-container {
+  width: 100%;
+}
+
+.program-list-calendar-view-container .calendar-set__toolbar .table-header-actions {
+  height: auto;
+  align-items: center;
+}
+
+.program-list-calendar-view-container .calendar-set {
+  margin-top: 0;
+  --calendar-set-sticky-top: calc(16px + var(--cms-layout-content-padding-top, 32px));
+}
+
+/* 월간: 중앙 메인 캘린더 카드 하단 32px */
+.program-list-calendar-view-container:not(:has(.calendar-week--time-grid))
+  .calendar-main-container
+  .calendar-main {
+  margin-bottom: var(--spacing-32);
+}
+
+/*
+ * 주간(시간 격자): 24시간 격자 전체 높이를 카드·페이지에 펼침(내부 스크롤 없음).
+ * 우측 743px 고정 높이 해제.
+ */
+.program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-set {
+  min-height: 0;
+}
+
+.program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-sub-right-list {
+  height: auto;
+  max-height: none;
+}
+
+.program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-main-container .calendar-main {
+  margin-bottom: 0;
+  padding-bottom: var(--spacing-32);
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-week-time-grid__scroll {
+  min-height: var(--calendar-week-total-px, 1296px);
+  max-height: none;
+  overflow: visible;
+}

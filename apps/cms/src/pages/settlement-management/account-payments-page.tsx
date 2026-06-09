@@ -23,6 +23,7 @@ import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/f
 import { CmsButton } from '@/shared/ui/cms-button'
 import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/general/ui/detail-modal/program-status/program-progress-tab.css'
+import './payment-orders-page.css'
 import './account-payments-page.css'
 import { AccountPaymentsCalendarView } from './account-payments-calendar-view'
 import {
@@ -625,6 +626,8 @@ export default function AccountPaymentsPage() {
     setBulkTransferPreviewOpen(true)
   }, [filteredRows])
 
+  const filterLayoutClassName = 'account-payments-page__filter-table'
+
   return (
     <div className="payment-orders-page account-payments-page">
       <div className="account-payments-page__top-nav">
@@ -705,23 +708,21 @@ export default function AccountPaymentsPage() {
       </div>
 
       <div className="payment-orders-page__content-wrapper">
-        {viewMode === 'list' ? (
-          <FilterTableLayout
-            className="account-payments-page__filter-table"
-            bordered={false}
-            cardStyle={{ marginBottom: 0 }}
-            fields={accountFilterFields}
-            filters={unifiedFilterValues}
-            onFilterChange={handleUnifiedFilterChange}
-            onSearch={handleSearch}
-            title="계좌 지급 대상 목록"
-            description={`총 ${total}건`}
-            actions={accountPaymentsFilterTableActions}
-            excelExport={{
-              columns,
-              data: filteredRows,
-            }}
-          >
+        <FilterTableLayout
+          className={filterLayoutClassName}
+          contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
+          bordered={false}
+          cardStyle={{ marginBottom: 0 }}
+          fields={accountFilterFields}
+          filters={unifiedFilterValues}
+          onFilterChange={handleUnifiedFilterChange}
+          onSearch={handleSearch}
+          title={viewMode === 'list' ? '계좌 지급 대상 목록' : '예정 프로그램'}
+          description={`총 ${total}건`}
+          actions={accountPaymentsFilterTableActions}
+          hideExcelDownload
+        >
+          {viewMode === 'list' ? (
             <Table<AccountPaymentRow>
               className="cms-data-table"
               rowKey="id"
@@ -738,18 +739,7 @@ export default function AccountPaymentsPage() {
                 },
               })}
             />
-          </FilterTableLayout>
-        ) : (
-          <div className="account-payments-page__calendar-without-card">
-            <div className="table-header-actions account-payments-page__calendar-toolbar">
-              <div className="table-header-title--wrapper">
-                <span className="table-title">예정 프로그램</span>
-                <span className="table-description">{`총 ${total}건`}</span>
-              </div>
-              <div className="account-payments-page__calendar-toolbar-actions">
-                {accountPaymentsFilterTableActions}
-              </div>
-            </div>
+          ) : (
             <AccountPaymentsCalendarView
               key={appliedResetKey}
               rows={filteredRows}
@@ -757,8 +747,8 @@ export default function AccountPaymentsPage() {
               onSelectionChange={setSelectedRowKeys}
               onAccountPaymentRowClick={openAccountPaymentDetail}
             />
-          </div>
-        )}
+          )}
+        </FilterTableLayout>
       </div>
 
       <AccountPaymentConfirmationModal

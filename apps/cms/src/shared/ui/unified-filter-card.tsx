@@ -18,6 +18,7 @@ import type { CmsSelectMultipleOption } from './cms-select-multiple'
 import { AppDateRangePicker } from './app-datepicker'
 import { CmsRadio } from './cms-radio'
 import type { AddressRegionFilterSubConfig } from '@/shared/components/table-filter-group'
+import { isFilterFieldPctWidth } from '@/shared/components/table-filter-group-field-width'
 import './unified-filter-card.css'
 
 export interface FilterFieldConfig {
@@ -301,8 +302,14 @@ export function UnifiedFilterCard({
     return field.flex ?? defaultFlex
   }
 
-  const colClassFor = (field: FilterFieldConfig) =>
-    field.width != null ? 'unified-filter-card__col--explicit-width' : undefined
+  const colClassFor = (field: FilterFieldConfig) => {
+    if (field.width == null) return undefined
+    const parts = ['unified-filter-card__col--explicit-width']
+    if (isFilterFieldPctWidth(field)) {
+      parts.push('unified-filter-card__col--pct-width')
+    }
+    return parts.join(' ')
+  }
 
   // 필터 렌더링 함수
   const renderField = (field: FilterFieldConfig) => {

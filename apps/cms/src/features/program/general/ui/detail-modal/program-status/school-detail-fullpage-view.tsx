@@ -19,10 +19,8 @@ import type {
   InstructorRoleKey,
 } from '../../../model/school-detail-types'
 import { INSTRUCTOR_ROLE_LABELS } from '../../../model/school-detail-types'
-import type {
-  ParticipatingSchoolRow,
-  TextbookStatusKey,
-} from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolRow, TextbookStatusKey } from '@/data/mock/participating-schools'
+import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/data/mock/participating-schools'
 import type {
   ParticipatingInstructorRow,
   SettlementStatusKey,
@@ -178,8 +176,6 @@ const ASSIGNMENT_STATUS_LABELS: Record<AssignmentStatusKey, string> = {
 
 /** 필요 배정 인원(분모) — 상세에 필드 없으면 mock */
 const MOCK_REQUIRED_INSTRUCTORS = 4
-
-const TEXTBOOK_STATUS_OPTIONS: TextbookStatusKey[] = ['preparing', 'shipping', 'delivered']
 
 /** td 내 세로 디바이더 — 1×13px, default-BK @ 50%, 양옆 gap 12px */
 function TdDivider() {
@@ -791,7 +787,7 @@ export function GeneralParticipatingInstitutionDetailView({
     onTextbookStatusChange != null ? (
       <StatusDropdownCell<TextbookStatusKey>
         status={mergedDetail.textbookStatus}
-        statusOptions={TEXTBOOK_STATUS_OPTIONS}
+        statusOptions={TEXTBOOK_STATUS_OPTION_KEYS}
         renderBadge={s => <TextbookStatusBadge status={s} />}
         isItemDisabled={(cur, opt) => cur === opt}
         onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}

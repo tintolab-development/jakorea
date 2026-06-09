@@ -49,7 +49,10 @@ import {
 } from '@/features/program/general/lib/applicant-notification-resend'
 import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
 import { patchInstructorForCancelApproval } from '@/features/program/general/lib/instructor-cancel-approval'
-import { patchInstructorForCancelRejection, toInstructorCancelRejectionNotifyOptions } from '@/features/program/general/lib/instructor-cancel-rejection'
+import {
+  patchInstructorForCancelRejection,
+  toInstructorCancelRejectionNotifyOptions,
+} from '@/features/program/general/lib/instructor-cancel-rejection'
 import { InstructorCancelApprovalCompleteModal } from '@/features/program/shared/ui/detail-modal/components/instructor-cancel-approval-complete-modal'
 import { InstructorCancelApprovalModal } from '@/features/program/shared/ui/detail-modal/components/instructor-cancel-approval-modal'
 import { InstructorCancelRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/instructor-cancel-reject-complete-modal'
@@ -286,7 +289,9 @@ export function ApplicantList({
     if (!instructorApprovalTarget) return null
     return (
       instructorList.find(row => row.id === instructorApprovalTarget.id) ??
-      (selectedItem && 'instructorName' in selectedItem && selectedItem.id === instructorApprovalTarget.id
+      (selectedItem &&
+      'instructorName' in selectedItem &&
+      selectedItem.id === instructorApprovalTarget.id
         ? (selectedItem as ApplicantInstructorRow)
         : null)
     )
@@ -392,17 +397,11 @@ export function ApplicantList({
 
   const tableHorizontalScrollX = usesInstitutionTableScroll ? institutionTableScrollX : tableScrollX
 
-  const isGeneralInstructorCalendar =
-    menu === 'instructors' &&
-    instructorColumnPreset === 'general-detail' &&
+  const isGeneralCalendarView =
     viewMode === 'calendar' &&
-    !selectedItem
-
-  const isGeneralInstitutionCalendar =
-    menu === 'institutions' &&
-    institutionColumnPreset === 'general-detail' &&
-    viewMode === 'calendar' &&
-    !selectedItem
+    !selectedItem &&
+    ((menu === 'institutions' && institutionColumnPreset === 'general-detail') ||
+      (menu === 'instructors' && instructorColumnPreset === 'general-detail'))
 
   const showInstitutionDetail =
     selectedItem != null && menu === 'institutions' && 'schoolName' in selectedItem
@@ -463,7 +462,7 @@ export function ApplicantList({
 
   return (
     <div
-      className={`applicant-details${isGeneralInstructorCalendar || isGeneralInstitutionCalendar ? ' applicant-details--instructor-calendar' : ''}`}
+      className={`applicant-details${isGeneralCalendarView ? ' applicant-details--calendar-view' : ''}`}
     >
       {showInstitutionDetail ? (
         <ApplicantsDetailContents
@@ -474,9 +473,7 @@ export function ApplicantList({
           institutionList={institutionList}
           onInstitutionDetailSaved={rows => {
             const updatedById = new Map(rows.map(row => [row.id, row]))
-            setInstitutionList(prev =>
-              prev.map(row => updatedById.get(row.id) ?? row)
-            )
+            setInstitutionList(prev => prev.map(row => updatedById.get(row.id) ?? row))
             const current = selectedItem as ApplicantSchoolRow
             const nextSelected = updatedById.get(current.id)
             if (nextSelected) {
@@ -544,7 +541,9 @@ export function ApplicantList({
           onApprove={id => {
             setIndividualList(prev =>
               prev.map(row =>
-                row.id === id ? patchGeneralIndividualApplicantForApprovalStatus(row, 'approved') : row
+                row.id === id
+                  ? patchGeneralIndividualApplicantForApprovalStatus(row, 'approved')
+                  : row
               )
             )
             updateGeneralIndividualApplicantApprovalStatus(id, 'approved')
@@ -552,7 +551,9 @@ export function ApplicantList({
           onReject={id => {
             setIndividualList(prev =>
               prev.map(row =>
-                row.id === id ? patchGeneralIndividualApplicantForApprovalStatus(row, 'rejected') : row
+                row.id === id
+                  ? patchGeneralIndividualApplicantForApprovalStatus(row, 'rejected')
+                  : row
               )
             )
             updateGeneralIndividualApplicantApprovalStatus(id, 'rejected')
@@ -724,9 +725,7 @@ export function ApplicantList({
           updateApplicantSchoolApprovalStatus(id, 'approved', notifyOptions)
           setInstitutionApprovalComplete({
             schoolName: name,
-            assignedInstructorCount: countAssignedInstructors(
-              patchedRow?.assignedInstructorNames
-            ),
+            assignedInstructorCount: countAssignedInstructors(patchedRow?.assignedInstructorNames),
           })
         }}
       />
@@ -865,12 +864,7 @@ export function ApplicantList({
             )
             const updated = next.find(row => row.id === id)
             const current = selectedItem
-            if (
-              updated &&
-              current &&
-              'instructorName' in current &&
-              current.id === id
-            ) {
+            if (updated && current && 'instructorName' in current && current.id === id) {
               setSelectedItem(updated)
             }
             return next
@@ -907,12 +901,7 @@ export function ApplicantList({
             )
             const updated = next.find(row => row.id === id)
             const current = selectedItem
-            if (
-              updated &&
-              current &&
-              'instructorName' in current &&
-              current.id === id
-            ) {
+            if (updated && current && 'instructorName' in current && current.id === id) {
               setSelectedItem(updated)
             }
             return next
@@ -948,12 +937,7 @@ export function ApplicantList({
             )
             const updated = next.find(row => row.id === id)
             const current = selectedItem
-            if (
-              updated &&
-              current &&
-              'instructorName' in current &&
-              current.id === id
-            ) {
+            if (updated && current && 'instructorName' in current && current.id === id) {
               setSelectedItem(updated)
             }
             return next
@@ -989,12 +973,7 @@ export function ApplicantList({
               )
               const updated = next.find(row => row.id === id)
               const current = selectedItem
-              if (
-                updated &&
-                current &&
-                'instructorName' in current &&
-                current.id === id
-              ) {
+              if (updated && current && 'instructorName' in current && current.id === id) {
                 setSelectedItem(updated)
               }
               return next
@@ -1021,7 +1000,9 @@ export function ApplicantList({
 
           setIndividualList(prev => {
             const next = prev.map(row =>
-              row.id === id ? patchGeneralIndividualApplicantForNotificationResend(row, sentAt) : row
+              row.id === id
+                ? patchGeneralIndividualApplicantForNotificationResend(row, sentAt)
+                : row
             )
             const updated = next.find(row => row.id === id)
             const current = selectedItem
@@ -1087,7 +1068,11 @@ export function ApplicantList({
           setInstructorList(prev => {
             const next = prev.map(row => {
               if (row.id !== id) return row
-              const approved = patchApplicantInstructorForApprovalStatus(row, 'approved', notifyOptions)
+              const approved = patchApplicantInstructorForApprovalStatus(
+                row,
+                'approved',
+                notifyOptions
+              )
               const withFee = {
                 ...approved,
                 lectureFeeBasisType: detail.lectureFeeBasisType,
@@ -1117,12 +1102,7 @@ export function ApplicantList({
             })
             const updated = next.find(row => row.id === id)
             const current = selectedItem
-            if (
-              updated &&
-              current &&
-              'instructorName' in current &&
-              current.id === id
-            ) {
+            if (updated && current && 'instructorName' in current && current.id === id) {
               setSelectedItem(updated)
             }
             return next
@@ -1141,6 +1121,7 @@ export function ApplicantList({
         onClose={() => setInstructorApprovalComplete(null)}
       />
       {!selectedItem && menu ? (
+        <>
         <FilterTableLayout
           key={
             menu === 'instructors' && instructorColumnPreset === 'general-detail'
@@ -1160,7 +1141,12 @@ export function ApplicantList({
               <CmsButton variant="delete" size="large" width={160} onClick={handleBulkRejectClick}>
                 선택 반려
               </CmsButton>
-              <CmsButton variant="secondary" size="large" width={160} onClick={handleBulkApproveClick}>
+              <CmsButton
+                variant="secondary"
+                size="large"
+                width={160}
+                onClick={handleBulkApproveClick}
+              >
                 선택 승인
               </CmsButton>
               {viewMode === 'table' && (
@@ -1235,35 +1221,37 @@ export function ApplicantList({
               />
             </div>
           ) : (
-            <div className="applicant-calendar-view-container">
-              <ApplicantCalendarView
-                events={mapApplicantDataToCalendarEvents(
-                  tableData as
-                    | ApplicantSchoolRow[]
-                    | ApplicantInstructorRow[]
-                    | GeneralIndividualApplicantRow[],
-                  menu
-                )}
-                loading={false}
-                selectedRowKeys={selectedRowKeys}
-                onSelectionChange={setSelectedRowKeys}
-                onItemClick={item => {
-                  setSelectedItem(item)
-                }}
-                menu={menu}
-                calendarGranularity={applicantsCalendarGranularity}
-                onCalendarGranularityChange={setApplicantsCalendarGranularity}
-                calendarVariant={
-                  instructorColumnPreset === 'general-detail' && menu === 'instructors'
-                    ? 'general-instructor'
-                    : institutionColumnPreset === 'general-detail' && menu === 'institutions'
-                      ? 'general-institution'
-                      : 'default'
-                }
-              />
-            </div>
+            <ApplicantCalendarView
+              events={mapApplicantDataToCalendarEvents(
+                tableData as
+                  | ApplicantSchoolRow[]
+                  | ApplicantInstructorRow[]
+                  | GeneralIndividualApplicantRow[],
+                menu
+              )}
+              loading={false}
+              selectedRowKeys={selectedRowKeys}
+              onSelectionChange={setSelectedRowKeys}
+              onItemClick={item => {
+                setSelectedItem(item)
+              }}
+              menu={menu}
+              calendarGranularity={applicantsCalendarGranularity}
+              onCalendarGranularityChange={setApplicantsCalendarGranularity}
+              calendarVariant={
+                instructorColumnPreset === 'general-detail' && menu === 'instructors'
+                  ? 'general-instructor'
+                  : institutionColumnPreset === 'general-detail' && menu === 'institutions'
+                    ? 'general-institution'
+                    : 'default'
+              }
+            />
           )}
         </FilterTableLayout>
+        {isGeneralCalendarView ? (
+          <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />
+        ) : null}
+        </>
       ) : null}
     </div>
   )

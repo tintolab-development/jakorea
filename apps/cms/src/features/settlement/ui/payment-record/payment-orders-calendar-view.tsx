@@ -555,21 +555,21 @@ export function PaymentOrdersCalendarView({
           eventsTooltipScope="full-day"
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
-        previewTooltipContent={renderPaymentOrdersEventsTooltipContent}
+          previewTooltipContent={renderPaymentOrdersEventsTooltipContent}
           tooltipOverlayClassName="payment-orders-calendar-tooltip-overlay"
         />
       </div>
       <div className="calendar-sub-right-list">
         <CalendarSubRightSettlementList
-          key={`${exposure}-${selectedDate.format('YYYY-MM-DD')}`}
-          selectedDate={selectedDate}
-          rows={uniqueSettlementRows}
-          selectedRowKeys={selectedRowKeys}
-          onSelectionChange={setSelectedRowKeys}
-          onRowClick={handleSettlementRowClick}
-          resolveRowColors={resolveSettlementRowColors}
-          resolveBadgeLabel={resolveSettlementBadgeLabel}
-        />
+            key={`${exposure}-${selectedDate.format('YYYY-MM-DD')}`}
+            selectedDate={selectedDate}
+            rows={uniqueSettlementRows}
+            selectedRowKeys={selectedRowKeys}
+            onSelectionChange={setSelectedRowKeys}
+            onRowClick={handleSettlementRowClick}
+            resolveRowColors={resolveSettlementRowColors}
+            resolveBadgeLabel={resolveSettlementBadgeLabel}
+          />
       </div>
     </div>
   )

@@ -16,6 +16,14 @@
 
 → 상세: [calendar-split-card-layout.md](./calendar-split-card-layout.md) · [calendar-sub-right-list.md](./calendar-sub-right-list.md)
 
+### FilterTableLayout 안 `calendar-set` (정산·목록 캘린더 뷰)
+
+필터 카드 **안**에 캘린더를 둘 때: `FilterTableLayout` `contentVariant="calendar"`.  
+sticky·가로 스크롤은 **`layout-content` 단일 scrollport** — `filter-table-layout__calendar-body`에 `overflow-x/y: auto` **금지**.  
+3열=좌·우 sticky / 2열=메인+우 sticky (`calendar-layout.css`). 상단 flush는 sticky 해제가 아니라 grid·padding.
+
+→ **필수:** [calendar-filter-table-layout.md](./calendar-filter-table-layout.md)
+
 **절대 혼용 금지:** split-card 좌측에 `calendar-main-container`, split-card 우측에 `.calendar-sub-right-list` 래퍼, split-card 바깥에 `participating-institutions-calendar-card` 재생성.
 
 ---
@@ -162,6 +170,7 @@ border-radius: 16px;
 - [ ] DevTools: `.calendar-split-card`에 `box-shadow` 있고 `border` 없음
 - [ ] DevTools: 선택 셀에 **셀 전체 border 2px** 없음, 날짜 mint 원만
 - [ ] `participating-institutions-calendar-view.css`에 **popover/tooltip만** 추가 (그리드·셀 상태 X)
+- [ ] **FilterTableLayout 캘린더:** `contentVariant="calendar"` · `__calendar-body` `overflow: visible` · sticky override(`position: static`) **없음** — [calendar-filter-table-layout.md](./calendar-filter-table-layout.md) QA
 
 ### 알려진 레거시 (신규 코드 따라가지 말 것)
 
@@ -309,9 +318,10 @@ const {
 
 ## 관련 규칙
 
+- [calendar-filter-table-layout.md](./calendar-filter-table-layout.md) — FilterTableLayout 안 sticky·scrollport·상단 정렬
 - [calendar-split-card-layout.md](./calendar-split-card-layout.md) — 7:3 DOM·이중 shell
 - [calendar-sub-right-list.md](./calendar-sub-right-list.md) — 우측 리스트 행
 - [calendar-week-time-grid.md](./calendar-week-time-grid.md) — 주간 격자
 - [schedule-calendar-ux.md](./schedule-calendar-ux.md) — 클릭 UX
 
-**Last updated:** 2026-05-29 (CalendarMini 300×332px 고정)
+**Last updated:** 2026-05-29 (FilterTableLayout 캘린더 sticky·scrollport)

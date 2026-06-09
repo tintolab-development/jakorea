@@ -3,7 +3,7 @@
  * 수강 참여 학교 목록 (필터: 지역, 교육 학년, 강의 진행 회차, 교재 현황, 교사/강사명)
  */
 
-export type TextbookStatusKey = 'preparing' | 'shipping' | 'delivered'
+export type TextbookStatusKey = 'preparing' | 'shipping' | 'delivered' | 'not_applicable'
 
 /** 참여 기관 승인/반려 상태 (선택 승인·선택 반려·승인 취소 연동) */
 export type ParticipatingSchoolApprovalStatusKey = 'pending' | 'rejected' | 'approved' | 'cancelled'
@@ -43,10 +43,19 @@ export interface ParticipatingSchoolRow {
 }
 
 export const TEXTBOOK_STATUS_LABELS: Record<TextbookStatusKey, string> = {
-  preparing: '배송 전',
-  shipping: '배송 중',
-  delivered: '배송 완료',
+  preparing: '교재 배송 전',
+  shipping: '교재 배송 중',
+  delivered: '교재 배송 완료',
+  not_applicable: '해당 없음',
 }
+
+/** StatusDropdownCell·필터 셀렉트 등 옵션 순서 */
+export const TEXTBOOK_STATUS_OPTION_KEYS: TextbookStatusKey[] = [
+  'preparing',
+  'shipping',
+  'delivered',
+  'not_applicable',
+]
 
 const LECTURE_ROUND_LABEL = '진행 전'
 

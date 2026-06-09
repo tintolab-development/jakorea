@@ -12,6 +12,7 @@ import {
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
   type ParticipatingSchoolSession,
+  TEXTBOOK_STATUS_OPTION_KEYS,
 } from '@/data/mock/participating-schools'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import {
@@ -45,9 +46,6 @@ import { ParticipatingInstitutionsCalendarView } from './participating-instituti
 import { formatParticipatingSchoolSessionLine } from '../../../lib/participating-school-session-display'
 import './participating-institutions-section.css'
 
-const textbookStatusKeys: TextbookStatusKey[] = ['preparing', 'shipping', 'delivered']
-
-/** 스크린샷 형식: YYYY. MM. DD(요일) HH:mm ~ HH:mm | N차시 */
 function formatSessionLine(s: ParticipatingSchoolSession): string {
   return formatParticipatingSchoolSessionLine(s)
 }
@@ -304,7 +302,7 @@ export function ParticipatingInstitutionsSection({
               render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (
                 <StatusDropdownCell<TextbookStatusKey>
                   status={status ?? null}
-                  statusOptions={textbookStatusKeys}
+                  statusOptions={TEXTBOOK_STATUS_OPTION_KEYS}
                   renderBadge={s => <TextbookStatusBadge status={s} />}
                   isItemDisabled={(cur, opt) => cur === opt}
                   onChange={key => handleTextbookStatusChange(record.id, key)}
