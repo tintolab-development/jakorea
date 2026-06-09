@@ -360,58 +360,48 @@ export function usePaymentOrdersListPage() {
     ]
   }, [isProgram])
 
-  const renderHeader = useCallback(
-    (_mode: PaymentOrdersPageViewMode): ReactElement => {
-      return (
-        <div className="table-header-actions">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">
-              {isProgram ? '프로그램 별 정산 목록' : '강사 별 정산 목록'}
-            </span>
-            <span className="table-description">총 {total}건</span>
-          </div>
-        </div>
-      )
-    },
-    [isProgram, total]
-  )
-
   const renderContent = useCallback(
     (mode: PaymentOrdersPageViewMode): ReactElement =>
       mode === 'calendar' ? (
-        <PaymentOrdersCalendarView
-          key={`${appliedResetKey}-${resolvedExposureMode}`}
-          exposure={resolvedExposureMode}
-          programRows={listProgram}
-          instructorRows={listInstructor}
-          filterDateRange={appliedFromUrl.dateRange}
-          onFilterDateRangeApply={applyDateRangeFromCalendar}
-          onPaymentStatusDetailClick={payload => {
-            if (payload.exposure === 'program') {
-              openPaymentOrderDetail('program', payload.row)
-            } else {
-              openPaymentOrderDetail('instructor', payload.row)
-            }
-          }}
-        />
-      ) : isProgram ? (
-        <PaymentOrdersTable<PaymentOrderAdminProgramRow>
-          key="payment-orders-program"
-          rowKey="no"
-          columns={programColumns}
-          dataSource={listProgram}
-          scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_PROGRAM }}
-          onRowClick={record => openPaymentOrderDetail('program', record)}
-        />
+        <div className="participating-institutions-section__calendar-wrap">
+          <PaymentOrdersCalendarView
+            key={`${appliedResetKey}-${resolvedExposureMode}`}
+            exposure={resolvedExposureMode}
+            programRows={listProgram}
+            instructorRows={listInstructor}
+            filterDateRange={appliedFromUrl.dateRange}
+            onFilterDateRangeApply={applyDateRangeFromCalendar}
+            onPaymentStatusDetailClick={payload => {
+              if (payload.exposure === 'program') {
+                openPaymentOrderDetail('program', payload.row)
+              } else {
+                openPaymentOrderDetail('instructor', payload.row)
+              }
+            }}
+          />
+        </div>
       ) : (
-        <PaymentOrdersTable<PaymentOrderAdminInstructorRow>
-          key="payment-orders-instructor"
-          rowKey="no"
-          columns={instructorColumns}
-          dataSource={listInstructor}
-          scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_INSTRUCTOR }}
-          onRowClick={record => openPaymentOrderDetail('instructor', record)}
-        />
+        <div className="participating-institutions-section__table-wrap list-page-layout__table-shell">
+          {isProgram ? (
+            <PaymentOrdersTable<PaymentOrderAdminProgramRow>
+              key="payment-orders-program"
+              rowKey="no"
+              columns={programColumns}
+              dataSource={listProgram}
+              scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_PROGRAM }}
+              onRowClick={record => openPaymentOrderDetail('program', record)}
+            />
+          ) : (
+            <PaymentOrdersTable<PaymentOrderAdminInstructorRow>
+              key="payment-orders-instructor"
+              rowKey="no"
+              columns={instructorColumns}
+              dataSource={listInstructor}
+              scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_INSTRUCTOR }}
+              onRowClick={record => openPaymentOrderDetail('instructor', record)}
+            />
+          )}
+        </div>
       ),
     [
       appliedResetKey,
@@ -449,7 +439,6 @@ export function usePaymentOrdersListPage() {
     handleFilterChange,
     paymentOrdersFilterFields,
     paymentOrdersViewModeOptions,
-    renderHeader,
     renderContent,
     excelExport,
     listTitle,
