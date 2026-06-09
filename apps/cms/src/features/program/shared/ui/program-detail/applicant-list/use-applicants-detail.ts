@@ -607,6 +607,59 @@ export function useApplicantsDetail({
     [selectedRowKeys]
   )
 
+  const toParticipantNotifyOptions = (
+    payload: PermissionModalPayload,
+    rejectionReason?: string
+  ): ApplicantSchoolApprovalNotifyOptions => ({
+    notifyTiming: payload.notifyTiming,
+    manualNotifyAt: payload.manualNotifyAt ?? undefined,
+    rejectionReason,
+  })
+
+  const confirmBulkParticipantReject = useCallback(
+    (payload: PermissionModalPayload) => {
+      if (selectedRowKeys.length === 0) {
+        return
+      }
+      const keys = selectedRowKeys as string[]
+      const notifyOptions = toParticipantNotifyOptions(payload, payload.reason)
+      setIndividualList(prev =>
+        prev.map(row =>
+          keys.includes(row.id)
+            ? patchGeneralIndividualApplicantForApprovalStatus(row, 'rejected', notifyOptions)
+            : row
+        )
+      )
+      keys.forEach(id =>
+        updateGeneralIndividualApplicantApprovalStatus(id, 'rejected', notifyOptions)
+      )
+      setSelectedRowKeys([])
+    },
+    [selectedRowKeys]
+  )
+
+  const confirmBulkParticipantApprove = useCallback(
+    (payload: PermissionModalPayload) => {
+      if (selectedRowKeys.length === 0) {
+        return
+      }
+      const keys = selectedRowKeys as string[]
+      const notifyOptions = toParticipantNotifyOptions(payload)
+      setIndividualList(prev =>
+        prev.map(row =>
+          keys.includes(row.id)
+            ? patchGeneralIndividualApplicantForApprovalStatus(row, 'approved', notifyOptions)
+            : row
+        )
+      )
+      keys.forEach(id =>
+        updateGeneralIndividualApplicantApprovalStatus(id, 'approved', notifyOptions)
+      )
+      setSelectedRowKeys([])
+    },
+    [selectedRowKeys]
+  )
+
   const handleBulkApprove = () => {
     if (selectedRowKeys.length === 0) {
       return
@@ -763,6 +816,7 @@ export function useApplicantsDetail({
     fields,
     institutionList,
     instructorList,
+    individualList,
     setInstitutionList,
     setInstructorList,
     setIndividualList,
@@ -786,6 +840,8 @@ export function useApplicantsDetail({
     confirmBulkInstructorApprove,
     confirmBulkInstitutionReject,
     confirmBulkInstitutionApprove,
+    confirmBulkParticipantReject,
+    confirmBulkParticipantApprove,
     handleCancelApproval,
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,

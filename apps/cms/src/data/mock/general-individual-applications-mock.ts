@@ -2,7 +2,12 @@
  * 일반 프로그램 상세 — 개인(참여자) 신청 목록 mock
  */
 
-import type { ApplicantApprovalStatusKey } from '@/data/mock/applicant-institutions'
+import type {
+  ApplicantApprovalStatusKey,
+  ApplicantSchoolApprovalNotifyOptions,
+  ApplicantSchoolApprovalNotifyTiming,
+} from '@/data/mock/applicant-institutions'
+import { resolveApplicantSchoolApprovalNotificationSentAt } from '@/data/mock/applicant-institutions'
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
 
 /** 일반 프로그램 개인 참여자 신청 상세 확장 필드 */
@@ -36,6 +41,10 @@ export interface GeneralIndividualApplicantRow {
   sessions?: ParticipatingSchoolSession[]
   detail?: GeneralIndividualApplicantDetail
   participationRejectionReason?: string
+  /** 승인 알림 발송 예약 방식 */
+  approvalNotifyTiming?: ApplicantSchoolApprovalNotifyTiming
+  /** 반려 알림 발송 예약 방식 */
+  rejectionNotifyTiming?: ApplicantSchoolApprovalNotifyTiming
   /** 승인/반려 알림 발송 일시 — 상세 승인 현황 행 표시 */
   approvalNotificationSentAt?: string
   /** 신청 건별 관리자 코멘트 (회원 상세 adminComment와 별도) */
@@ -54,19 +63,63 @@ export function formatApprovalNotificationSentAt(d = new Date()): string {
 
 export function patchGeneralIndividualApplicantForApprovalStatus(
   row: GeneralIndividualApplicantRow,
-  approvalStatus: ApplicantApprovalStatusKey
+  approvalStatus: ApplicantApprovalStatusKey,
+  notifyOptions?: ApplicantSchoolApprovalNotifyOptions
 ): GeneralIndividualApplicantRow {
-  if (approvalStatus === 'approved' || approvalStatus === 'rejected') {
+  if (approvalStatus === 'approved') {
     return {
       ...row,
       approvalStatus,
-      approvalNotificationSentAt: formatApprovalNotificationSentAt(),
+      participationRejectionReason: undefined,
+      approvalNotifyTiming: notifyOptions?.notifyTiming,
+      rejectionNotifyTiming: undefined,
+      approvalNotificationSentAt:
+        resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
+    }
+  }
+  if (approvalStatus === 'rejected') {
+    return {
+      ...row,
+      approvalStatus,
+      participationRejectionReason:
+        notifyOptions?.rejectionReason ?? row.participationRejectionReason,
+      approvalNotifyTiming: undefined,
+      rejectionNotifyTiming: notifyOptions?.notifyTiming,
+      approvalNotificationSentAt:
+        resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
     }
   }
   return {
     ...row,
     approvalStatus,
+    participationRejectionReason: undefined,
+    approvalNotifyTiming: undefined,
+    rejectionNotifyTiming: undefined,
     approvalNotificationSentAt: undefined,
+  }
+}
+
+/** 승인 취소 — 반려 처리 */
+export function patchGeneralIndividualApplicantForCancelApproval(
+  row: GeneralIndividualApplicantRow,
+  notifyOptions: ApplicantSchoolApprovalNotifyOptions
+): GeneralIndividualApplicantRow {
+  return patchGeneralIndividualApplicantForApprovalStatus(row, 'rejected', notifyOptions)
+}
+
+/** 반려 취소 — 승인 대기 복원 */
+export function patchGeneralIndividualApplicantForCancelRejection(
+  row: GeneralIndividualApplicantRow,
+  notifyOptions?: ApplicantSchoolApprovalNotifyOptions
+): GeneralIndividualApplicantRow {
+  const pending = patchGeneralIndividualApplicantForApprovalStatus(row, 'pending')
+  if (!notifyOptions) {
+    return pending
+  }
+  return {
+    ...pending,
+    approvalNotificationSentAt:
+      resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
   }
 }
 
@@ -261,13 +314,62 @@ export function getGeneralIndividualApplicationsForProgram(
   }))
 }
 
+/** 1차 서류 심사 대상자 — 전체 신청자 */
+export function getGeneralParticipantDoc1Applicants(
+  programId: string
+): GeneralIndividualApplicantRow[] {
+  return getGeneralIndividualApplicationsForProgram(programId)
+}
+
+/** 1차 서류 합격자 — 승인 대기·승인 완료(면접 대기 mock) */
+export function getGeneralParticipantDocPassedApplicants(
+  programId: string
+): GeneralIndividualApplicantRow[] {
+  return getGeneralIndividualApplicationsForProgram(programId).filter(
+    row => row.approvalStatus === 'approved' || row.approvalStatus === 'pending'
+  )
+}
+
+/** 2차 면접 대상자 — 승인 완료 mock */
+export function getGeneralParticipantInterview2Applicants(
+  programId: string
+): GeneralIndividualApplicantRow[] {
+  return getGeneralIndividualApplicationsForProgram(programId).filter(
+    row => row.approvalStatus === 'approved'
+  )
+}
+
 export function updateGeneralIndividualApplicantApprovalStatus(
   applicantId: string,
-  approvalStatus: ApplicantApprovalStatusKey
+  approvalStatus: ApplicantApprovalStatusKey,
+  notifyOptions?: ApplicantSchoolApprovalNotifyOptions
 ): void {
   const row = MOCK_GENERAL_INDIVIDUAL_APPLICATIONS.find(r => r.id === applicantId)
   if (row) {
-    Object.assign(row, patchGeneralIndividualApplicantForApprovalStatus(row, approvalStatus))
+    Object.assign(
+      row,
+      patchGeneralIndividualApplicantForApprovalStatus(row, approvalStatus, notifyOptions)
+    )
+  }
+}
+
+export function updateGeneralIndividualApplicantCancelApproval(
+  applicantId: string,
+  notifyOptions: ApplicantSchoolApprovalNotifyOptions
+): void {
+  const row = MOCK_GENERAL_INDIVIDUAL_APPLICATIONS.find(r => r.id === applicantId)
+  if (row) {
+    Object.assign(row, patchGeneralIndividualApplicantForCancelApproval(row, notifyOptions))
+  }
+}
+
+export function updateGeneralIndividualApplicantCancelRejection(
+  applicantId: string,
+  notifyOptions?: ApplicantSchoolApprovalNotifyOptions
+): void {
+  const row = MOCK_GENERAL_INDIVIDUAL_APPLICATIONS.find(r => r.id === applicantId)
+  if (row) {
+    Object.assign(row, patchGeneralIndividualApplicantForCancelRejection(row, notifyOptions))
   }
 }
 
