@@ -14,13 +14,24 @@ import type { Program } from '@/types/domain'
 import {
   GENERAL_ORGANIZATION_APPLICATIONS_LNB_LABEL,
   getGeneralParticipantApplicationsLnbLabel,
+  getGeneralParticipantInterviewEnabled,
+  getGeneralProgressMenuItems,
   getGeneralSurveyMenuItems,
   getGeneralVolunteerInterviewEnabled,
   hasGeneralInstructorApplications,
   hasGeneralVolunteerApplications,
   resolveGeneralProgramForDetail,
+  type GeneralProgressMenuItem,
   type GeneralSurveyMenuItem,
 } from '@/features/program/general/lib/detail-meta'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import {
+  defaultParticipantApplicationTab,
+  isParticipantTabValid,
+  isValidGeneralProgressTab,
+  normalizeGeneralProgressTab,
+  PARTICIPANT_INTERVIEW_CHILD_ROWS,
+} from '@/features/program/general/lib/progress-tabs'
 import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/lib/detail-common-info-display'
 import {
   parseGeneralDetailLnb,
@@ -46,7 +57,8 @@ import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-p
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { GeneralSurveyManagementView } from './survey-management/survey-management-view'
 import { ProgramManagersTab } from './managers/program-managers-tab'
-import { GeneralParticipantApplicationsView } from './applications/participant-applications-view'
+import { GeneralParticipantApplicationsScreeningView } from './applications/participant-screening/applications-screening-view'
+import { ParticipatingParticipantsSection } from './program-status/participating-participants-section'
 import { GeneralInstructorApplicationsView } from './applications/general-instructor-applications-view'
 import { GeneralVolunteerApplicationsView } from './applications/general-volunteer-applications-view'
 import { isGeneralVolunteerApplicantDetailRoute } from '@/features/program/general/lib/general-volunteer-applications'
@@ -122,11 +134,6 @@ function parseInstructorTabFromSearch(searchParams: URLSearchParams): Instructor
 
 const INFO_TABS = ['info', 'recruitment', 'application'] as const
 const VOLUNTEER_INTERVIEW_TABS = ['vol_doc1', 'vol_doc_passed', 'vol_interview2'] as const
-const PROGRESS_TABS = [
-  'progress_institutions',
-  'progress_instructors',
-  'progress_volunteers',
-] as const
 
 export interface GeneralProgramDetailFullPageModalProps {
   open: boolean
@@ -137,19 +144,22 @@ export interface GeneralProgramDetailFullPageModalProps {
 
 function defaultTabForLnb(
   lnb: GeneralDetailLnbKey,
-  interview: boolean,
-  surveyKeys: string[]
+  volunteerInterview: boolean,
+  participantInterview: boolean,
+  surveyKeys: string[],
+  progressMenuItems: GeneralProgressMenuItem[]
 ): string {
   switch (lnb) {
     case 'info':
       return 'info'
     case 'institution_applications':
+      return defaultParticipantApplicationTab(participantInterview)
     case 'instructor_applications':
       return 'main'
     case 'volunteer_applications':
-      return interview ? 'vol_doc1' : 'vol_all'
+      return volunteerInterview ? 'vol_doc1' : 'vol_all'
     case 'progress':
-      return 'progress_institutions'
+      return progressMenuItems[0]?.tab ?? 'progress_participants'
     case 'survey':
       return surveyKeys[0] ?? 'main'
     case 'managers':
@@ -169,8 +179,11 @@ function normalizeGeneralDetailParams(
   searchParams: URLSearchParams,
   program: Program
 ): URLSearchParams | null {
-  const interview = getGeneralVolunteerInterviewEnabled(program)
+  const volunteerInterview = getGeneralVolunteerInterviewEnabled(program)
+  const participantInterview = getGeneralParticipantInterviewEnabled(program)
   const surveyKeys = getGeneralSurveyMenuItems(program).map(s => s.key)
+  const progressMenuItems = getGeneralProgressMenuItems(program)
+  const progressTabKeys = progressMenuItems.map(item => item.tab)
   const showInstructor = hasGeneralInstructorApplications(program)
   const showVolunteer = hasGeneralVolunteerApplications(program)
 
@@ -186,7 +199,18 @@ function normalizeGeneralDetailParams(
   }
 
   if (tab === '') {
-    tab = defaultTabForLnb(lnb, interview, surveyKeys)
+    tab = defaultTabForLnb(
+      lnb,
+      volunteerInterview,
+      participantInterview,
+      surveyKeys,
+      progressMenuItems
+    )
+  }
+
+  const normalizedProgressTab = normalizeGeneralProgressTab(tab)
+  if (normalizedProgressTab != null && normalizedProgressTab !== tab) {
+    tab = normalizedProgressTab
   }
 
   if (lnb === 'info') {
@@ -194,21 +218,40 @@ function normalizeGeneralDetailParams(
       setInvalid('info', 'info')
     }
   } else if (lnb === 'institution_applications') {
-    if (tab !== 'main') setInvalid('institution_applications', 'main')
+    if (!isParticipantTabValid(tab, participantInterview)) {
+      setInvalid(
+        'institution_applications',
+        defaultTabForLnb(
+          'institution_applications',
+          volunteerInterview,
+          participantInterview,
+          surveyKeys,
+          progressMenuItems
+        )
+      )
+    }
   } else if (lnb === 'instructor_applications') {
     if (!showInstructor) setInvalid('info', 'info')
     else if (tab !== 'main') setInvalid('instructor_applications', 'main')
   } else if (lnb === 'volunteer_applications') {
     if (!showVolunteer) setInvalid('info', 'info')
-    else if (!isVolunteerTabValid(tab, interview)) {
+    else if (!isVolunteerTabValid(tab, volunteerInterview)) {
       setInvalid(
         'volunteer_applications',
-        defaultTabForLnb('volunteer_applications', interview, surveyKeys)
+        defaultTabForLnb(
+          'volunteer_applications',
+          volunteerInterview,
+          participantInterview,
+          surveyKeys,
+          progressMenuItems
+        )
       )
     }
   } else if (lnb === 'progress') {
-    if (!(PROGRESS_TABS as readonly string[]).includes(tab)) {
-      setInvalid('progress', 'progress_institutions')
+    if (progressTabKeys.length === 0) {
+      setInvalid('info', 'info')
+    } else if (!isValidGeneralProgressTab(tab, progressTabKeys)) {
+      setInvalid('progress', progressTabKeys[0] ?? 'progress_participants')
     }
   } else if (lnb === 'survey') {
     if (surveyKeys.length === 0) {
@@ -258,13 +301,18 @@ function generalLnbBreadcrumbLabel(
 function generalChildBreadcrumbLabel(
   lnb: GeneralDetailLnbKey,
   tab: string,
-  surveyItems: GeneralSurveyMenuItem[]
+  surveyItems: GeneralSurveyMenuItem[],
+  progressMenuItems: GeneralProgressMenuItem[]
 ): string | null {
   if (lnb === 'info') {
     if (tab === 'info') return '공통 정보'
     if (tab === 'recruitment') return '모집 정보'
     if (tab === 'application') return '신청 정보'
     return null
+  }
+  if (lnb === 'institution_applications') {
+    const row = PARTICIPANT_INTERVIEW_CHILD_ROWS.find(item => item.tab === tab)
+    return row?.label ?? null
   }
   if (lnb === 'volunteer_applications') {
     if (tab === 'vol_doc1') return '1차 서류 심사 대상자'
@@ -273,10 +321,13 @@ function generalChildBreadcrumbLabel(
     return null
   }
   if (lnb === 'progress') {
-    if (tab === 'progress_institutions') return '참여 기관 목록'
-    if (tab === 'progress_instructors') return '참여 강사'
-    if (tab === 'progress_volunteers') return '참여 봉사자'
-    return null
+    const normalized = normalizeGeneralProgressTab(tab)
+    if (normalized == null) return null
+    const row = progressMenuItems.find(item => item.tab === normalized)
+    if (row?.tab === 'progress_participants') {
+      return row.label === '참여자' ? '참여자 목록' : '참여 기관 목록'
+    }
+    return row?.label ?? null
   }
   if (lnb === 'survey') {
     return surveyItems.find(item => item.key === tab)?.label ?? null
@@ -287,14 +338,26 @@ function generalChildBreadcrumbLabel(
 function generalLnbBreadcrumbTargetTab(
   lnb: GeneralDetailLnbKey,
   activeTab: string,
-  interview: boolean,
-  surveyKeys: string[]
+  volunteerInterview: boolean,
+  participantInterview: boolean,
+  surveyKeys: string[],
+  progressMenuItems: GeneralProgressMenuItem[]
 ): string {
-  if (lnb === 'volunteer_applications' && interview) {
+  if (lnb === 'institution_applications' && participantInterview) {
+    if (isParticipantTabValid(activeTab, true) && activeTab !== 'main') return activeTab
+    return 'part_doc1'
+  }
+  if (lnb === 'volunteer_applications' && volunteerInterview) {
     if ((VOLUNTEER_INTERVIEW_TABS as readonly string[]).includes(activeTab)) return activeTab
     return 'vol_doc1'
   }
-  return defaultTabForLnb(lnb, interview, surveyKeys)
+  return defaultTabForLnb(
+    lnb,
+    volunteerInterview,
+    participantInterview,
+    surveyKeys,
+    progressMenuItems
+  )
 }
 
 export function GeneralProgramDetailFullPageModal({
@@ -323,8 +386,18 @@ export function GeneralProgramDetailFullPageModal({
     )
   }, [detailProgram, program, programId])
 
-  const interviewEnabled = displayProgram
+  const volunteerInterviewEnabled = displayProgram
     ? getGeneralVolunteerInterviewEnabled(displayProgram)
+    : false
+  const participantInterviewEnabled = displayProgram
+    ? getGeneralParticipantInterviewEnabled(displayProgram)
+    : false
+  const progressMenuItems = useMemo(
+    () => (displayProgram ? getGeneralProgressMenuItems(displayProgram) : []),
+    [displayProgram]
+  )
+  const isIndividualProgram = displayProgram
+    ? isGeneralIndividualProgram(displayProgram)
     : false
   const surveyItems = useMemo(
     () => (displayProgram ? getGeneralSurveyMenuItems(displayProgram) : []),
@@ -690,7 +763,7 @@ export function GeneralProgramDetailFullPageModal({
 
       if (lnb !== 'progress') {
         for (const key of GENERAL_PROGRESS_NESTED_QUERY_PARAMS) next.delete(key)
-      } else if (tab === 'progress_institutions') {
+      } else if (tab === 'progress_participants') {
         next.delete(INSTRUCTOR_ID_PARAM)
         next.delete(INSTRUCTOR_TAB_PARAM)
       } else if (tab === 'progress_instructors') {
@@ -797,8 +870,20 @@ export function GeneralProgramDetailFullPageModal({
     })
 
     const lnbLabel = generalLnbBreadcrumbLabel(activeLnb, participantApplicationsLnbLabel)
-    const childLabel = generalChildBreadcrumbLabel(activeLnb, activeTab, surveyItems)
-    const lnbTab = generalLnbBreadcrumbTargetTab(activeLnb, activeTab, interviewEnabled, surveyKeys)
+    const childLabel = generalChildBreadcrumbLabel(
+      activeLnb,
+      activeTab,
+      surveyItems,
+      progressMenuItems
+    )
+    const lnbTab = generalLnbBreadcrumbTargetTab(
+      activeLnb,
+      activeTab,
+      volunteerInterviewEnabled,
+      participantInterviewEnabled,
+      surveyKeys,
+      progressMenuItems
+    )
     const lnbParams = buildSearchParams(searchParams, {
       delete: GENERAL_DETAIL_QUERY_PARAMS,
       set: {
@@ -844,7 +929,8 @@ export function GeneralProgramDetailFullPageModal({
     } else if (
       activeLnb === 'progress' &&
       schoolIdFromUrl &&
-      activeTab === 'progress_institutions'
+      activeTab === 'progress_participants' &&
+      !isIndividualProgram
     ) {
       items.push(
         childParams && hasProgressNestedDetail
@@ -906,7 +992,9 @@ export function GeneralProgramDetailFullPageModal({
               participantApplicationsLnbLabel={participantApplicationsLnbLabel}
               showInstructorApplications={showInstructorApplications}
               showVolunteerApplications={showVolunteerApplications}
-              volunteerInterviewEnabled={interviewEnabled}
+              participantInterviewEnabled={participantInterviewEnabled}
+              volunteerInterviewEnabled={volunteerInterviewEnabled}
+              progressMenuItems={progressMenuItems}
               surveyItems={surveyItems}
               onSelectChildTab={setLnbTab}
             />
@@ -969,9 +1057,11 @@ export function GeneralProgramDetailFullPageModal({
               </div>
             ) : activeLnb === 'institution_applications' ? (
               <div className="program-detail-fullpage-modal__info-tab">
-                <GeneralParticipantApplicationsView
+                <GeneralParticipantApplicationsScreeningView
                   program={displayProgram}
+                  activeTab={activeTab}
                   listTitle={participantApplicationsLnbLabel}
+                  interviewEnabled={participantInterviewEnabled}
                   onRegisterApplicantCloseHandler={fn => {
                     applicantCloseHandlerRef.current = fn
                   }}
@@ -988,7 +1078,15 @@ export function GeneralProgramDetailFullPageModal({
                   onApplicantDetailMetaChange={handleApplicantDetailMetaChange}
                 />
               </div>
-            ) : activeLnb === 'progress' && activeTab === 'progress_institutions' ? (
+            ) : activeLnb === 'progress' &&
+              activeTab === 'progress_participants' &&
+              isIndividualProgram ? (
+              <div className="program-detail-fullpage-modal__info-tab">
+                <ParticipatingParticipantsSection programId={displayProgram.id} />
+              </div>
+            ) : activeLnb === 'progress' &&
+              activeTab === 'progress_participants' &&
+              !isIndividualProgram ? (
               <div className="program-detail-fullpage-modal__info-tab">
                 <ParticipatingInstitutionsSection
                   programId={displayProgram.id}
@@ -1028,7 +1126,7 @@ export function GeneralProgramDetailFullPageModal({
                 <GeneralVolunteerApplicationsView
                   program={displayProgram}
                   activeTab={activeTab}
-                  interviewEnabled={interviewEnabled}
+                  interviewEnabled={volunteerInterviewEnabled}
                   onRegisterApplicantCloseHandler={fn => {
                     volunteerApplicantCloseHandlerRef.current = fn
                   }}
@@ -1039,7 +1137,12 @@ export function GeneralProgramDetailFullPageModal({
               <div
                 className="general-detail-fullpage-modal__main"
                 aria-label={
-                  generalChildBreadcrumbLabel(activeLnb, activeTab, surveyItems) ??
+                  generalChildBreadcrumbLabel(
+                    activeLnb,
+                    activeTab,
+                    surveyItems,
+                    progressMenuItems
+                  ) ??
                   generalLnbBreadcrumbLabel(activeLnb, participantApplicationsLnbLabel)
                 }
               />

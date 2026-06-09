@@ -281,6 +281,7 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     approvedStudentCount: 0,
     scheduleTimeEnabled: false,
     generalParticipantTypes: ['individual', 'teacher_instructor'],
+    generalParticipantInterviewEnabled: true,
     generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
     generalProgramAudience: 'individual',
     generalProgramEducationStructure: 'schedule',
@@ -348,11 +349,13 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     participatingStudentCount: 320,
     scheduleTimeEnabled: true,
     generalParticipantTypes: ['individual', 'volunteer'],
+    generalParticipantInterviewEnabled: true,
     generalVolunteerInterviewEnabled: true,
     interviewStartDate: calendarDemoIso(2026, 5, 8),
     interviewEndDate: calendarDemoIso(2026, 5, 12, true),
     interviewMethod: '대면 면접',
     generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
+    generalProgramAudience: 'individual',
     generalProgramEducationStructure: 'schedule',
     generalProgramSessionRound: 'single',
     generalCommonInfo: CALENDAR_DEMO_IN_PROGRESS_B_COMMON_INFO,
@@ -1068,6 +1071,16 @@ export function isGeneralTypeVariantMockProgramId(programId: string): boolean {
  * - `generalParticipantTypes`에 `volunteer` 포함 시 LNB 노출
  * - `generalVolunteerInterviewEnabled === true`(또는 면접 일정) 시 2depth 메뉴
  */
+/** 개인 참여자 신청 LNB QA용 프로그램 id */
+export const GENERAL_PARTICIPANT_APPLICATION_QA = {
+  /** 개인 + 면접 2depth */
+  individualWithInterview2Depth: 'general-prog-scheduled-2',
+  /** 개인 + 봉사 + 참여자·봉사 면접 2depth */
+  individualWithBothInterviews: 'general-prog-in-progress-2',
+  /** 개인 + 면접 없음 */
+  individualNoInterview: 'general-prog-completed-2',
+} as const
+
 export const GENERAL_VOLUNTEER_APPLICATION_QA = {
   /** 개인 + 봉사 + 면접 2depth */
   individualWithInterview2Depth: 'general-prog-in-progress-2',

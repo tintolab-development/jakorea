@@ -5,8 +5,15 @@
 import { useCallback, useState } from 'react'
 import { DetailFullpageModalLnbBrand } from '@/shared/ui/detail-fullpage-modal-lnb-brand'
 import { DetailFullpageModalLnbArrowDown } from '@/shared/ui/detail-fullpage-modal-lnb-arrow'
-import type { GeneralSurveyMenuItem } from '@/features/program/general/lib/detail-meta'
+import type {
+  GeneralProgressMenuItem,
+  GeneralSurveyMenuItem,
+} from '@/features/program/general/lib/detail-meta'
 import type { GeneralDetailLnbKey } from '@/features/program/general/lib/detail-url'
+import {
+  defaultParticipantApplicationTab,
+  PARTICIPANT_INTERVIEW_CHILD_ROWS,
+} from '@/features/program/general/lib/progress-tabs'
 import {
   GeneralLnbInstitutionApplicationIcon,
   GeneralLnbInstructorApplicationIcon,
@@ -19,12 +26,14 @@ import {
 
 type TopAccordionKey =
   | 'info'
+  | 'institution_applications'
   | 'volunteer_applications'
   | 'progress'
   | 'survey'
 
 const TOP_ACCORDION_KEYS = [
   'info',
+  'institution_applications',
   'volunteer_applications',
   'progress',
   'survey',
@@ -36,18 +45,13 @@ const VOLUNTEER_INTERVIEW_CHILD_ROWS = [
   { tab: 'vol_interview2', label: '2차 면접 대상자' },
 ] as const
 
-const PROGRESS_CHILD_ROWS = [
-  { tab: 'progress_institutions', label: '참여 기관' },
-  { tab: 'progress_instructors', label: '참여 강사' },
-  { tab: 'progress_volunteers', label: '참여 봉사자' },
-] as const
-
 function isTopBodyDerivedOpen(
   key: TopAccordionKey,
   lnb: GeneralDetailLnbKey,
   _tab: string
 ): boolean {
   if (key === 'info') return lnb === 'info'
+  if (key === 'institution_applications') return lnb === 'institution_applications'
   if (key === 'volunteer_applications') return lnb === 'volunteer_applications'
   if (key === 'progress') return lnb === 'progress'
   if (key === 'survey') return lnb === 'survey'
@@ -68,6 +72,7 @@ function resolveTopBodyOpen(
 
 function accordionKeysForRoute(lnb: GeneralDetailLnbKey): TopAccordionKey[] {
   if (lnb === 'info') return ['info']
+  if (lnb === 'institution_applications') return ['institution_applications']
   if (lnb === 'volunteer_applications') return ['volunteer_applications']
   if (lnb === 'progress') return ['progress']
   if (lnb === 'survey') return ['survey']
@@ -80,7 +85,9 @@ export interface GeneralProgramDetailSidebarProps {
   participantApplicationsLnbLabel: string
   showInstructorApplications: boolean
   showVolunteerApplications: boolean
+  participantInterviewEnabled: boolean
   volunteerInterviewEnabled: boolean
+  progressMenuItems: GeneralProgressMenuItem[]
   surveyItems: GeneralSurveyMenuItem[]
   onSelectChildTab: (lnb: GeneralDetailLnbKey, tab: string) => void
 }
@@ -91,7 +98,9 @@ export function GeneralProgramDetailSidebar({
   participantApplicationsLnbLabel,
   showInstructorApplications,
   showVolunteerApplications,
+  participantInterviewEnabled,
   volunteerInterviewEnabled,
+  progressMenuItems,
   surveyItems,
   onSelectChildTab,
 }: GeneralProgramDetailSidebarProps) {
@@ -198,18 +207,69 @@ export function GeneralProgramDetailSidebar({
           </li>
 
           <li>
-            <button
-              type="button"
-              className={`detail-fullpage-modal__lnb-item ${activeLnb === 'institution_applications' ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
-              onClick={() => handleSelectChildTab('institution_applications', 'main')}
-            >
-              <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
-                <GeneralLnbInstitutionApplicationIcon />
-              </span>
-              <span className="detail-fullpage-modal__lnb-item-label">
-                {participantApplicationsLnbLabel}
-              </span>
-            </button>
+            {participantInterviewEnabled ? (
+              <>
+                <button
+                  type="button"
+                  className={`detail-fullpage-modal__lnb-item ${activeLnb === 'institution_applications' ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
+                  onClick={() => toggleTopBody('institution_applications')}
+                >
+                  <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
+                    <GeneralLnbInstitutionApplicationIcon />
+                  </span>
+                  <span className="detail-fullpage-modal__lnb-item-label">
+                    {participantApplicationsLnbLabel}
+                  </span>
+                  <DetailFullpageModalLnbArrowDown
+                    className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('institution_applications') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
+                  />
+                </button>
+                <div
+                  className={childrenWrapClass(isTopBodyOpen('institution_applications'))}
+                  aria-hidden={!isTopBodyOpen('institution_applications')}
+                >
+                  <ul className="detail-fullpage-modal__lnb-children">
+                    {PARTICIPANT_INTERVIEW_CHILD_ROWS.map(row => (
+                      <li key={row.tab}>
+                        <button
+                          type="button"
+                          className={`detail-fullpage-modal__lnb-child ${activeLnb === 'institution_applications' && activeTab === row.tab ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
+                          onClick={() =>
+                            handleSelectChildTab('institution_applications', row.tab)
+                          }
+                        >
+                          <span className="detail-fullpage-modal__lnb-child-dot" />
+                          <span
+                            className="detail-fullpage-modal__lnb-child-label"
+                            data-text={row.label}
+                          >
+                            {row.label}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            ) : (
+              <button
+                type="button"
+                className={`detail-fullpage-modal__lnb-item ${activeLnb === 'institution_applications' ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
+                onClick={() =>
+                  handleSelectChildTab(
+                    'institution_applications',
+                    defaultParticipantApplicationTab(false)
+                  )
+                }
+              >
+                <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
+                  <GeneralLnbInstitutionApplicationIcon />
+                </span>
+                <span className="detail-fullpage-modal__lnb-item-label">
+                  {participantApplicationsLnbLabel}
+                </span>
+              </button>
+            )}
           </li>
 
           {showInstructorApplications ? (
@@ -284,42 +344,47 @@ export function GeneralProgramDetailSidebar({
             </li>
           ) : null}
 
-          <li>
-            <button
-              type="button"
-              className={`detail-fullpage-modal__lnb-item ${activeLnb === 'progress' ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
-              onClick={() => toggleTopBody('progress')}
-            >
-              <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
-                <LnbIconProgress />
-              </span>
-              <span className="detail-fullpage-modal__lnb-item-label">프로그램 진행 현황</span>
-              <DetailFullpageModalLnbArrowDown
-                className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('progress') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
-              />
-            </button>
-            <div
-              className={childrenWrapClass(isTopBodyOpen('progress'))}
-              aria-hidden={!isTopBodyOpen('progress')}
-            >
-              <ul className="detail-fullpage-modal__lnb-children">
-                {PROGRESS_CHILD_ROWS.map(row => (
-                  <li key={row.tab}>
-                    <button
-                      type="button"
-                      className={`detail-fullpage-modal__lnb-child ${activeLnb === 'progress' && activeTab === row.tab ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
-                      onClick={() => handleSelectChildTab('progress', row.tab)}
-                    >
-                      <span className="detail-fullpage-modal__lnb-child-dot" />
-                      <span className="detail-fullpage-modal__lnb-child-label" data-text={row.label}>
-                        {row.label}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </li>
+          {progressMenuItems.length > 0 ? (
+            <li>
+              <button
+                type="button"
+                className={`detail-fullpage-modal__lnb-item ${activeLnb === 'progress' ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
+                onClick={() => toggleTopBody('progress')}
+              >
+                <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
+                  <LnbIconProgress />
+                </span>
+                <span className="detail-fullpage-modal__lnb-item-label">프로그램 진행 현황</span>
+                <DetailFullpageModalLnbArrowDown
+                  className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('progress') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
+                />
+              </button>
+              <div
+                className={childrenWrapClass(isTopBodyOpen('progress'))}
+                aria-hidden={!isTopBodyOpen('progress')}
+              >
+                <ul className="detail-fullpage-modal__lnb-children">
+                  {progressMenuItems.map(row => (
+                    <li key={row.tab}>
+                      <button
+                        type="button"
+                        className={`detail-fullpage-modal__lnb-child ${activeLnb === 'progress' && activeTab === row.tab ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
+                        onClick={() => handleSelectChildTab('progress', row.tab)}
+                      >
+                        <span className="detail-fullpage-modal__lnb-child-dot" />
+                        <span
+                          className="detail-fullpage-modal__lnb-child-label"
+                          data-text={row.label}
+                        >
+                          {row.label}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </li>
+          ) : null}
 
           <li>
             {surveyHasChildren ? (
