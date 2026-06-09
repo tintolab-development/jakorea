@@ -5,6 +5,7 @@
 import type { TextbookStatusKey } from '@/data/mock/participating-schools'
 import type { InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
+import type { SponsorSponsorshipStatus } from '@/types/domain'
 import type { ProgramRole, SchoolTeacherEmploymentStatus } from '@/types/user'
 
 export const SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL: Record<SchoolTeacherEmploymentStatus, string> = {
@@ -74,4 +75,15 @@ export function getManagerEvaluationBadgeTone(
   if (evaluation === 'fail') return 'red'
   if (evaluation === 'neutral') return 'greenOverlay'
   return 'gray'
+}
+
+export const SPONSOR_SPONSORSHIP_STATUS_LABEL: Record<SponsorSponsorshipStatus, string> = {
+  active: '진행 중',
+  ended: '후원 종료',
+}
+
+export function getSponsorSponsorshipStatusBadgeTone(
+  status: SponsorSponsorshipStatus
+): EditableStatusBadgeTone {
+  return status === 'active' ? 'blue' : 'gray'
 }
