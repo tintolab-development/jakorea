@@ -227,19 +227,27 @@
 .detail-fullpage-modal__content:has(
     .instructor-payment-tab__calendar-view-container--no-inner-scroll
   ),
-.detail-fullpage-modal__content:has(.calendar-set--page-scroll),
-.detail-fullpage-modal__content:has(.participating-institutions-calendar-view--page-scroll) {
+.detail-fullpage-modal__content:has(.calendar-set--page-scroll) {
   overflow-x: clip;
-  /*
-   * 캘린더 page-scroll: 하단 52px는 `__page-bottom-spacer` 블록으로만 둠.
-   * __content padding-bottom 과 겹치지 않게 0.
-   */
   padding-bottom: 0;
 }
 
+/*
+ * split-card 캘린더 — grid min-width(852+280)는 __main 가로 스크롤로 처리.
+ * __content clip은 초과 폭을 잘라 7:3이 깨지므로 visible 유지(세로 sticky는 __main 기준).
+ */
+.detail-fullpage-modal__content:has(.calendar-split-card-layout--page-scroll) {
+  overflow-x: visible;
+  padding-bottom: 0;
+}
+
+/*
+ * 캘린더 grid min-width(메인 852px + 우 280px) 초과 시 가로 스크롤 — scrollport는 __main.
+ * __content만 clip(sticky 조상 방지), __main은 auto(program-list layout-content와 동일).
+ */
 .detail-fullpage-modal__main:has(.calendar-set--page-scroll),
-.detail-fullpage-modal__main:has(.participating-institutions-calendar-view--page-scroll) {
-  overflow-x: clip;
+.detail-fullpage-modal__main:has(.calendar-split-card-layout--page-scroll) {
+  overflow-x: auto;
 }
 
 @supports not (overflow-x: clip) {
@@ -247,12 +255,7 @@
       .instructor-payment-tab__calendar-view-container--no-inner-scroll
     ),
   .detail-fullpage-modal__content:has(.calendar-set--page-scroll),
-  .detail-fullpage-modal__content:has(.participating-institutions-calendar-view--page-scroll) {
-    overflow-x: visible;
-  }
-
-  .detail-fullpage-modal__main:has(.calendar-set--page-scroll),
-  .detail-fullpage-modal__main:has(.participating-institutions-calendar-view--page-scroll) {
+  .detail-fullpage-modal__content:has(.calendar-split-card-layout--page-scroll) {
     overflow-x: visible;
   }
 }

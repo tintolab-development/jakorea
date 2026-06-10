@@ -176,11 +176,32 @@
 }
 
 .program-status-participating__calendar-wrap,
-.participating-institutions-section__calendar-wrap {
+.participating-institutions-section__calendar-wrap,
+.applicant-details__calendar-wrap,
+.general-volunteer-doc-passed__calendar-container {
   width: 100%;
   min-width: 0;
   overflow: visible;
   min-height: 900px;
+}
+
+/*
+ * 일반 프로그램 상세 풀페이지 모달 — 캘린더 뷰
+ * 레이아웃·shell·sticky: `CalendarSplitCardLayout` `pageScroll` + `filter-table-layout--calendar-view` + `calendar.css`
+ */
+.general-program-detail--calendar-view {
+  overflow-x: visible;
+  box-sizing: border-box;
+}
+
+.general-program-detail__calendar-page-bottom-spacer,
+.applicant-details__calendar-page-bottom-spacer,
+.participating-institutions-section__page-bottom-spacer {
+  display: block;
+  width: 100%;
+  height: var(--detail-fullpage-padding-bottom, 52px);
+  flex-shrink: 0;
+  pointer-events: none;
 }
 
 /* TODO 추후 삭제 */

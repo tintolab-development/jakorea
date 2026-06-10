@@ -22,12 +22,6 @@
   padding: 0;
 }
 
-/* 캘린더 뷰: 모달 __content padding-bottom 0 연동 시 하단 여백 */
-.participating-institutions-section__page-bottom-spacer {
-  height: var(--detail-fullpage-padding-bottom, 52px);
-  flex-shrink: 0;
-}
-
 .participating-institutions-section__filter-layout .filter-table-layout__divider {
   padding: 32px 0;
 }

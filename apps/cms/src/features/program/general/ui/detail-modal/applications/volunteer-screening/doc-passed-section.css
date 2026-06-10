@@ -179,16 +179,6 @@
   cursor: not-allowed;
 }
 
-.general-volunteer-doc-passed__calendar-container {
-  width: 100%;
-  min-width: 0;
-  overflow: visible;
-}
-
-.general-volunteer-doc-passed:has(.general-volunteer-doc-passed__calendar-container) {
-  overflow-x: visible;
-}
-
 .general-volunteer-doc-passed-calendar-list-item.ujat-volunteer-interview2-list-item {
   width: 100%;
 }

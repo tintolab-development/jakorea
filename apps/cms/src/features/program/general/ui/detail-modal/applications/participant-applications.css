@@ -3,6 +3,8 @@
   flex: 1;
   min-width: 0;
   min-height: 0;
+  overflow-x: visible;
+  box-sizing: border-box;
 
   /*
    * 필터 칸 gap·기본 상한 — FilterFieldConfig.width는 TableFilterGroup이 적용
@@ -180,16 +182,6 @@
   .applicant-details__td-sessions--center
   .applicant-details__session-more {
   text-align: left;
-}
-
-.detail-fullpage-modal.general-program-detail-fullpage-modal
-  .general-instructor-applications
-  .applicant-details.applicant-details--instructor-calendar
-  .filter-table-layout__table {
-  min-height: 0;
-  overflow: visible;
-  width: 100%;
-  min-width: 0;
 }
 
 .applicant-schedule-item-title-row .applicant-schedule-item-approval {

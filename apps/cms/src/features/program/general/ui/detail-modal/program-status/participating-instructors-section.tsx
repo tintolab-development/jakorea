@@ -599,7 +599,14 @@ export function ParticipatingInstructorsSection({
   }
 
   return (
-    <div className="program-status-participating program-status-participating--instructors participating-institutions-section participating-institutions-section--instructors">
+    <div
+      className={[
+        'program-status-participating program-status-participating--instructors participating-institutions-section participating-institutions-section--instructors',
+        viewMode === 'calendar' ? 'general-program-detail--calendar-view' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <UnifiedFilterCard
         bordered={false}
         cardStyle={{ marginBottom: 0 }}
@@ -695,17 +702,18 @@ export function ParticipatingInstructorsSection({
             />
           </div>
         ) : (
-          <ParticipatingInstitutionsCalendarView
-            schools={MOCK_PARTICIPATING_SCHOOLS}
-            customEvents={instructorCalendarEvents}
-            renderMonthEventContent={renderParticipatingInstructorCalendarMonthEventContent}
-            selectedRowKeys={[]}
-            onSelectionChange={() => {}}
-            onSchoolClick={() => {}}
-            onDateSelect={setCalendarSelectedDate}
-            calendarGranularity={progressCalendarGranularity}
-            onCalendarGranularityChange={setProgressCalendarGranularity}
-            rightContent={
+          <div className="participating-institutions-section__calendar-wrap">
+            <ParticipatingInstitutionsCalendarView
+              schools={MOCK_PARTICIPATING_SCHOOLS}
+              customEvents={instructorCalendarEvents}
+              renderMonthEventContent={renderParticipatingInstructorCalendarMonthEventContent}
+              selectedRowKeys={[]}
+              onSelectionChange={() => {}}
+              onSchoolClick={() => {}}
+              onDateSelect={setCalendarSelectedDate}
+              calendarGranularity={progressCalendarGranularity}
+              onCalendarGranularityChange={setProgressCalendarGranularity}
+              rightContent={
               <div className="participating-instructors-section__calendar-right">
                 <div className="calendar-split-card-right__toolbar participating-instructors-section__calendar-right__school-filter">
                   <CmsSelect
@@ -802,9 +810,14 @@ export function ParticipatingInstructorsSection({
                 </div>
               </div>
             }
-          />
+            />
+          </div>
         )}
       </div>
+
+      {viewMode === 'calendar' ? (
+        <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />
+      ) : null}
 
       <AddParticipatingInstructorModal
         open={addInstructorModalOpen}

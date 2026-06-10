@@ -125,26 +125,4 @@
   height: 400px;
 }
 
-/*
- * 캘린더 page-scroll sticky — `calendar-layout.css` `.calendar-set--page-scroll` 공통.
- * 아래는 신청자 목록 레이아웃 보조만.
- */
-
-.applicant-details--calendar-view .filter-table-layout__table {
-  min-height: 0;
-  overflow: visible;
-  width: 100%;
-  min-width: 0;
-}
-
-.applicant-details--calendar-view .calendar-set {
-  width: 100%;
-}
-
-.applicant-details__calendar-page-bottom-spacer {
-  display: block;
-  width: 100%;
-  height: var(--detail-fullpage-padding-bottom, 52px);
-  flex-shrink: 0;
-  pointer-events: none;
-}
+/* split-card shell·sticky: `CalendarSplitCardLayout` `pageScroll` + `calendar.css` */

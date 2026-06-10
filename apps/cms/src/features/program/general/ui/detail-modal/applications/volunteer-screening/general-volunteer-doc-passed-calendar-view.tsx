@@ -31,8 +31,6 @@ import {
   ujatInterview2ScreeningTone,
 } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-interview2-screening-ui'
 import '@/shared/components/calendar/ui/item-list/ujat-volunteer-interview2-list-item.css'
-import '@/features/program/general/ui/detail-modal/program-status/participating-institutions-calendar-view.css'
-
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
@@ -194,6 +192,7 @@ export function GeneralVolunteerDocPassedCalendarView({
 
   return (
     <CalendarSplitCardLayout
+      pageScroll
       loading={loading}
       left={
         <CalendarMain
@@ -209,7 +208,6 @@ export function GeneralVolunteerDocPassedCalendarView({
           eventsTooltipScope="full-day"
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
-          tooltipOverlayClassName="participating-institutions-calendar-tooltip-overlay"
           previewTooltipContent={renderGeneralVolunteerInterviewCalendarPreviewTooltipContent}
           buildMonthCellRows={buildUjatVolunteerInterviewMonthCellRows}
           renderMonthEventContent={renderUjatVolunteerInterviewMonthEventContent}

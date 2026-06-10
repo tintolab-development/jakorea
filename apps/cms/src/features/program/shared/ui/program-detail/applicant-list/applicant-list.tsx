@@ -495,11 +495,8 @@ export function ApplicantList({
 
   const tableHorizontalScrollX = usesInstitutionTableScroll ? institutionTableScrollX : tableScrollX
 
-  const isGeneralCalendarView =
-    viewMode === 'calendar' &&
-    !selectedItem &&
-    ((menu === 'institutions' && institutionColumnPreset === 'general-detail') ||
-      (menu === 'instructors' && instructorColumnPreset === 'general-detail'))
+  const isGeneralProgramCalendarView =
+    detailVariant === 'general' && viewMode === 'calendar' && !selectedItem
 
   const showInstitutionDetail =
     selectedItem != null && menu === 'institutions' && 'schoolName' in selectedItem
@@ -560,7 +557,9 @@ export function ApplicantList({
 
   return (
     <div
-      className={`applicant-details${isGeneralCalendarView ? ' applicant-details--calendar-view' : ''}`}
+      className={`applicant-details${
+        isGeneralProgramCalendarView ? ' general-program-detail--calendar-view' : ''
+      }`}
     >
       {showInstitutionDetail ? (
         <ApplicantsDetailContents
@@ -1466,6 +1465,7 @@ export function ApplicantList({
           }
           className="applicant-details__filter-table-layout"
           bordered={false}
+          contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
           fields={fields}
           filters={pendingFilters}
           onFilterChange={handleFilterChange}
@@ -1557,7 +1557,9 @@ export function ApplicantList({
               />
             </div>
           ) : (
+            <div className="applicant-details__calendar-wrap">
             <ApplicantCalendarView
+              useSplitCardPageScroll={detailVariant === 'general'}
               events={mapApplicantDataToCalendarEvents(
                 tableData as
                   | ApplicantSchoolRow[]
@@ -1582,9 +1584,10 @@ export function ApplicantList({
                     : 'default'
               }
             />
+            </div>
           )}
         </FilterTableLayout>
-        {isGeneralCalendarView ? (
+        {isGeneralProgramCalendarView ? (
           <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />
         ) : null}
         </>
