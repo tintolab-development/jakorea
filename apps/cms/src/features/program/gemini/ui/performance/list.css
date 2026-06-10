@@ -1,0 +1,101 @@
+/*
+ * 실적 관리 필터 — 4필드+조회 한 줄, 카드 너비(100%) 안에서만 배치(페이지 가로 스크롤 없음).
+ */
+.program-list-page:has(> .gemini-performance-list) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.gemini-performance-list.filter-table-layout {
+  max-width: 100%;
+  overflow-x: clip;
+  box-sizing: border-box;
+}
+
+.gemini-performance-list.filter-table-layout .filter-table-layout__filter {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.gemini-performance-list.filter-table-layout .table-filter-group__container {
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  box-sizing: border-box;
+}
+
+.gemini-performance-list.filter-table-layout .table-filter-group__fields-container {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+
+.gemini-performance-list.filter-table-layout .table-filter-group__fields-inner.ant-row {
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: nowrap;
+}
+
+.gemini-performance-list.filter-table-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--explicit-width {
+  flex: 0 1 var(--filter-field-width) !important;
+  min-width: 0 !important;
+  max-width: var(--filter-field-width);
+}
+
+.gemini-performance-list.filter-table-layout .table-filter-group__fields-shell {
+  flex: 0 0 auto;
+}
+
+.gemini-performance-list.filter-table-layout
+  .table-filter-group__fields-inner
+  .ant-col
+  .labeled-search-input,
+.gemini-performance-list.filter-table-layout
+  .table-filter-group__fields-inner
+  .ant-col
+  .cms-select,
+.gemini-performance-list.filter-table-layout
+  .table-filter-group__fields-inner
+  .ant-col
+  .ant-select,
+.gemini-performance-list.filter-table-layout
+  .table-filter-group__fields-inner
+  .ant-col
+  .cms-datepicker:not(.cms-datepicker--range-split) {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.gemini-performance-list.filter-table-layout
+  .table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--date-range
+  .cms-datepicker.cms-datepicker--range-split {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.gemini-performance-list.filter-table-layout
+  .table-filter-group__fields-inner
+  .ant-col.table-filter-group__col--date-range
+  .cms-datepicker--range-split
+  .cms-datepicker__segment {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+.gemini-performance-list__table td.ant-table-cell:not(.ant-table-selection-column) {
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gemini-performance-list__table td.ant-table-cell:not(.ant-table-selection-column) > * {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
