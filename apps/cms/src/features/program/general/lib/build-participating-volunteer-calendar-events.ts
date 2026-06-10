@@ -9,6 +9,7 @@ import type { CalendarMainEventInput } from '@/shared/components/calendar/model/
 
 export type ParticipatingVolunteerCalendarEventItem = {
   row: ParticipatingSchoolRow
+  volunteerId: string
   volunteerName: string
   sessionsOnDate: ParticipatingSchoolSession[]
   educationGrade: string
@@ -76,6 +77,7 @@ export function buildParticipatingVolunteerCalendarEvents(
         endTime: times?.endTime,
         originalItem: {
           row: school,
+          volunteerId: volunteer.id,
           volunteerName: volunteer.volunteerName,
           sessionsOnDate: [session],
           educationGrade: school.educationGrade,

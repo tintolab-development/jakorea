@@ -19,9 +19,8 @@ export interface AddParticipatingVolunteerModalProps {
   onCancel: () => void
   memberOptions: ParticipatingVolunteerMemberCandidate[]
   onNoMemberSelected: () => void
-  onAdd: (memberId: string) => void
-  /** 모달 제목·필드 라벨 분기 (임직원 자원봉사자 등록) */
-  variant?: 'volunteer' | 'employee'
+  /** 봉사자 선택 후 추가 등록 클릭 시 — 신청 폼 모달로 진행 */
+  onProceedToRegistration: (memberId: string) => void
 }
 
 export function AddParticipatingVolunteerModal({
@@ -29,11 +28,9 @@ export function AddParticipatingVolunteerModal({
   onCancel,
   memberOptions,
   onNoMemberSelected,
-  onAdd,
-  variant = 'volunteer',
+  onProceedToRegistration,
 }: AddParticipatingVolunteerModalProps) {
   const [form] = Form.useForm<AddParticipatingVolunteerModalFormValues>()
-  const isEmployee = variant === 'employee'
 
   useEffect(() => {
     if (!open) return
@@ -51,7 +48,7 @@ export function AddParticipatingVolunteerModal({
       onNoMemberSelected()
       return
     }
-    onAdd(memberId)
+    onProceedToRegistration(memberId)
     form.resetFields()
     onCancel()
   }
@@ -71,14 +68,12 @@ export function AddParticipatingVolunteerModal({
     <ContentModal
       open={open}
       onCancel={handleCancel}
-      title={isEmployee ? '임직원 자원봉사자 추가 등록' : '봉사자 추가 등록'}
+      title="봉사자 추가 등록"
       width={560}
       footer={footer}
       className="add-participating-volunteer-modal"
       description={
-        isEmployee
-          ? '추가할 임직원 회원을 선택해 주세요.\n등록된 회원 정보가 없는 경우, **[회원 관리]**에서 회원 정보를 먼저 등록해 주세요.'
-          : '추가할 회원을 선택해 주세요.\n등록된 회원 정보가 없는 경우, **[회원 관리]**에서 회원 정보를 먼저 등록해 주세요.'
+        '추가할 회원을 선택해 주세요.\n등록된 회원 정보가 없는 경우, **[회원 관리]**에서 회원 정보를 먼저 등록해 주세요.'
       }
     >
       <div className="add-participating-volunteer-modal__body">
@@ -90,18 +85,14 @@ export function AddParticipatingVolunteerModal({
         >
           <Form.Item
             name="memberId"
-            label={isEmployee ? '임직원 자원봉사자 추가' : '봉사자 추가'}
+            label="봉사자 추가"
             className="add-participating-volunteer-modal__field"
           >
             <CmsSelect
               inputSize="large"
               width="100%"
               withAllOption={false}
-              placeholder={
-                isEmployee
-                  ? '추가 등록할 임직원을 선택해 주세요'
-                  : '추가 등록할 봉사자를 선택해 주세요'
-              }
+              placeholder="추가 등록할 봉사자를 선택해 주세요"
               options={memberOptions.map(member => ({
                 value: member.memberId,
                 label: member.volunteerName,

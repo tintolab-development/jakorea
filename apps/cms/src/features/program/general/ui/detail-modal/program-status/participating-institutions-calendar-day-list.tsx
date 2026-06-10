@@ -34,10 +34,25 @@ export function parseParticipatingSessionTimeRange(
   }
 }
 
+function resolveParticipatingSessionPeriodLabel(session: ParticipatingSchoolSession): string {
+  const classNum = session.classNum?.trim()
+  if (classNum) {
+    if (classNum.endsWith('교시') || classNum.endsWith('차시')) return classNum
+    return `${classNum}교시`
+  }
+  return `${session.round}차시`
+}
+
 export function formatParticipatingSessionLine(session: ParticipatingSchoolSession): string {
   const timeRangeDisplay = session.timeRange.replace(/\s*~\s*/, ' ~ ')
-  const periodLabel = session.classNum.endsWith('교시') ? session.classNum : `${session.classNum}교시`
-  return `${periodLabel} (${timeRangeDisplay})`
+  return `${resolveParticipatingSessionPeriodLabel(session)} (${timeRangeDisplay})`
+}
+
+/** 캘린더 우측 목록 2행 — 교시·차시 + 시간만 (학년 제외) */
+export function formatParticipatingSessionPeriodForCalendarDisplay(
+  session: ParticipatingSchoolSession
+): string {
+  return formatParticipatingSessionLine(session)
 }
 
 export function getPrimaryParticipatingSessionLine(sessions: ParticipatingSchoolSession[]): string {

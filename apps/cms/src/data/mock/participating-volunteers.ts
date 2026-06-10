@@ -14,6 +14,8 @@ export interface ParticipatingVolunteerRow {
   sessions: ParticipatingSchoolSession[]
   contact: string
   email: string
+  /** 일반 봉사자 중 재참여 여부 — 교육 실적 재참여 합산용 */
+  isReturningVolunteer?: boolean
 }
 
 function demoSession(
@@ -136,6 +138,15 @@ export const MOCK_PARTICIPATING_VOLUNTEERS: ParticipatingVolunteerRow[] = Array.
         ],
         contact: '010-1234-5678',
         email: 'mint***@example.com',
+        isReturningVolunteer: true,
+      }
+    }
+    if (index === 5) {
+      return {
+        ...row,
+        isReturningVolunteer: true,
+        assignedInstitutionNames: ['마포초등학교'],
+        sessions: [demoSession(1, '2026.01.16', '금', '9:30~10:20')],
       }
     }
     return row

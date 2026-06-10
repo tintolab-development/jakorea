@@ -35,6 +35,11 @@
   white-space: nowrap;
 }
 
+.general-institution-application-list-item__title--secondary {
+  font-weight: 500;
+  opacity: 0.6;
+}
+
 .general-institution-application-list-item__title-divider {
   width: 1px;
   height: 13px;

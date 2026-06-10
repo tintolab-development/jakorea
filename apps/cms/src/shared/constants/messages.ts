@@ -56,6 +56,18 @@ export const PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE =
 export const PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE =
   '봉사자 추가 등록이 완료되었습니다.'
 
+/** 참여 봉사자 목록 — 임직원 자원봉사자 등록: 기관 미선택 시 AlertModal 본문 */
+export const PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_SELECT_INSTITUTION_ALERT_MESSAGE =
+  '자원봉사자를 배정할 기관을 선택해 주세요.'
+
+/** 참여 봉사자 목록 — 임직원 자원봉사자 등록: 인원 수 미입력 시 AlertModal 본문 */
+export const PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COUNTS_REQUIRED_ALERT_MESSAGE =
+  '일정별 신규·재참여 자원봉사자 수를 모두 입력해 주세요.\n배정된 자원봉사자가 없는 경우, 0으로 입력해 주세요.'
+
+/** 참여 봉사자 목록 — 임직원 자원봉사자 등록: 등록 완료 시 AlertModal 본문 */
+export const PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COMPLETE_ALERT_MESSAGE =
+  '임직원 자원봉사자 등록이 완료되었습니다.'
+
 /** 참여 강사 상세 — 이미 활동 포기 처리된 강사 재시도 시 AlertModal 본문 */
 export const PARTICIPATING_INSTRUCTOR_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE =
   '이미 활동 포기 처리된 강사입니다.'

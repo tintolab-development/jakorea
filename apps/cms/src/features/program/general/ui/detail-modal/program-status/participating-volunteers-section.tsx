@@ -3,6 +3,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { Table } from 'antd'
 import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -13,6 +15,9 @@ import {
   ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_VOLUNTEER_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_VOLUNTEER_ALERT_MESSAGE,
+  PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COMPLETE_ALERT_MESSAGE,
+  PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COUNTS_REQUIRED_ALERT_MESSAGE,
+  PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_SELECT_INSTITUTION_ALERT_MESSAGE,
   PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE,
   PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
@@ -24,6 +29,12 @@ import {
 } from '@/features/program/general/lib/participating-volunteer-member-candidates'
 import { participatingVolunteersFilterFields } from '@/features/program/general/lib/participating-volunteers-filter-fields'
 import { AddParticipatingVolunteerModal } from '../../add-participating-volunteer-modal'
+import { ParticipatingVolunteerAddRegistrationModal } from '../../participating-volunteer-add-registration-modal'
+import {
+  RegisterEmployeeVolunteerModal,
+  type RegisterEmployeeVolunteerPayload,
+} from '../../register-employee-volunteer-modal'
+import { useEmployeeVolunteerRegistration } from '../../../hooks/use-employee-volunteer-registration'
 import { useProgressVolunteerList } from '../../../hooks/use-progress-volunteer-list'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
@@ -36,15 +47,18 @@ import {
 } from '../../../lib/participating-volunteers-filter'
 import { formatParticipatingSchoolSessionLine } from '../../../lib/participating-school-session-display'
 import { buildParticipatingVolunteerCalendarEvents } from '../../../lib/build-participating-volunteer-calendar-events'
+import { getSchoolNamesForDateFromVolunteerEvents } from '../../../lib/participating-calendar-date-schools'
 import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '../../../lib/participating-institutions-table'
+import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import { renderParticipatingVolunteerCalendarMonthEventContent } from './participating-volunteer-calendar-month-event'
+import { ParticipatingVolunteersCalendarRight } from './participating-volunteers-calendar-right'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
 
 /** 체크박스(48) + 열 width 합 — 뷰포트보다 좁을 때만 가로 스크롤 */
 const TABLE_SCROLL_X =
-  48 + 64 + 120 + 120 + 180 + PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH + 140 + 180
+  48 + 64 + 120 + 120 + 220 + PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH + 140 + 180
 
 export interface ParticipatingVolunteersSectionProps {
   programId?: string
@@ -53,7 +67,7 @@ export interface ParticipatingVolunteersSectionProps {
 
 export function ParticipatingVolunteersSection({
   programId: _programId,
-  program: _program,
+  program,
 }: ParticipatingVolunteersSectionProps) {
   const { showAlert } = useCmsAlert()
   const {
@@ -66,12 +80,23 @@ export function ParticipatingVolunteersSection({
     setProgressCalendarGranularity,
   } = useParticipatingVolunteersParams()
   const { volunteerList, addVolunteerFromMember } = useProgressVolunteerList()
+  const {
+    sessionRows,
+    approvedInstitutionOptions,
+    registrations,
+    saveRegistration,
+  } = useEmployeeVolunteerRegistration(program, MOCK_PARTICIPATING_SCHOOLS, volunteerList)
 
   const [pendingFilters, setPendingFilters] = useState<ParticipatingVolunteersFilters>(() => ({
     ...filters,
   }))
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([])
+  const [calendarSelectedDate, setCalendarSelectedDate] = useState<Dayjs>(() => dayjs())
+  /** `null` — 해당 날짜 기관 전체 선택(날짜 변경 시 기본), `[]` — 사용자가 모두 해제 */
+  const [calendarSelectedSchools, setCalendarSelectedSchools] = useState<string[] | null>(null)
   const [addVolunteerModalOpen, setAddVolunteerModalOpen] = useState(false)
+  const [volunteerRegistrationModalOpen, setVolunteerRegistrationModalOpen] = useState(false)
+  const [pendingVolunteerMemberId, setPendingVolunteerMemberId] = useState<string | null>(null)
   const [addEmployeeVolunteerModalOpen, setAddEmployeeVolunteerModalOpen] = useState(false)
   const [volunteerMemberOptions, setVolunteerMemberOptions] = useState<
     ParticipatingVolunteerMemberCandidate[]
@@ -116,19 +141,100 @@ export function ParticipatingVolunteersSection({
     [filteredVolunteers]
   )
 
+  const schoolNameToScheduleColor = useMemo(() => {
+    const sorted = Array.from(new Set(MOCK_PARTICIPATING_SCHOOLS.map(s => s.schoolName))).sort()
+    const map = new Map<string, (typeof SCHEDULE_COLORS)[number]>()
+    sorted.forEach((name, i) => {
+      map.set(name, SCHEDULE_COLORS[i % SCHEDULE_COLORS.length])
+    })
+    return map
+  }, [])
+
+  const schoolNamesOnCalendarDate = useMemo(
+    () => getSchoolNamesForDateFromVolunteerEvents(volunteerCalendarEvents, calendarSelectedDate),
+    [volunteerCalendarEvents, calendarSelectedDate]
+  )
+
+  const calendarSchoolFilterOptions = useMemo(() => {
+    const names = [...schoolNamesOnCalendarDate].sort((a, b) => a.localeCompare(b, 'ko'))
+    return names.map(school => {
+      const pair = schoolNameToScheduleColor.get(school) ?? SCHEDULE_COLORS[0]
+      return {
+        value: school,
+        label: school,
+        tagColor: pair.bg,
+        tagTextColor: pair.text,
+      }
+    })
+  }, [schoolNamesOnCalendarDate, schoolNameToScheduleColor])
+
+  useEffect(() => {
+    setCalendarSelectedSchools(null)
+  }, [calendarSchoolFilterOptions])
+
+  const effectiveCalendarSelectedSchools = useMemo(() => {
+    if (calendarSelectedSchools !== null) return calendarSelectedSchools
+    return calendarSchoolFilterOptions.map(option => option.value)
+  }, [calendarSelectedSchools, calendarSchoolFilterOptions])
+
+  const volunteerEventsForCalendarDate = useMemo(
+    () =>
+      volunteerCalendarEvents.filter(event =>
+        dayjs(event.startDate).isSame(calendarSelectedDate, 'day')
+      ),
+    [volunteerCalendarEvents, calendarSelectedDate]
+  )
+
   const showVolunteerAddSelectAlert = useCallback(() => {
     showAlert({ title: '안내', content: PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE })
   }, [showAlert])
 
-  const handleAddVolunteerFromMember = useCallback(
-    async (memberId: string) => {
-      const row = await addVolunteerFromMember(memberId)
-      if (row) {
-        showAlert({ title: '안내', content: PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE })
-      }
+  const showEmployeeVolunteerInstitutionSelectAlert = useCallback(() => {
+    showAlert({
+      title: '안내',
+      content: PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_SELECT_INSTITUTION_ALERT_MESSAGE,
+    })
+  }, [showAlert])
+
+  const showEmployeeVolunteerCountsRequiredAlert = useCallback(() => {
+    showAlert({
+      title: '안내',
+      content: PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COUNTS_REQUIRED_ALERT_MESSAGE,
+    })
+  }, [showAlert])
+
+  const handleRegisterEmployeeVolunteer = useCallback(
+    (payload: RegisterEmployeeVolunteerPayload) => {
+      saveRegistration(payload.institutionId, payload.countsBySessionId)
+      showAlert({
+        title: '안내',
+        content: PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COMPLETE_ALERT_MESSAGE,
+      })
     },
-    [addVolunteerFromMember, showAlert]
+    [saveRegistration, showAlert]
   )
+
+  const handleProceedToVolunteerRegistration = useCallback((memberId: string) => {
+    setPendingVolunteerMemberId(memberId)
+    setVolunteerRegistrationModalOpen(true)
+  }, [])
+
+  const handleVolunteerRegistrationClose = useCallback(() => {
+    setVolunteerRegistrationModalOpen(false)
+    setPendingVolunteerMemberId(null)
+  }, [])
+
+  const handleVolunteerRegistrationConfirm = useCallback(async () => {
+    const memberId = pendingVolunteerMemberId
+    setVolunteerRegistrationModalOpen(false)
+    setPendingVolunteerMemberId(null)
+    if (!memberId) return
+
+    const row = await addVolunteerFromMember(memberId)
+    if (row) {
+      showAlert({ title: '안내', content: PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE })
+    }
+  }, [addVolunteerFromMember, pendingVolunteerMemberId, showAlert])
 
   const handleActivityCertificateIssueClick = useCallback(() => {
     const selectedCount = selectedRowKeys.length
@@ -152,7 +258,10 @@ export function ParticipatingVolunteersSection({
     })
   }, [selectedRowKeys.length, showAlert])
 
-  const handleCalendarView = () => setViewMode('calendar')
+  const handleCalendarView = () => {
+    setCalendarSelectedSchools(null)
+    setViewMode('calendar')
+  }
   const handleListView = () => setViewMode('list')
 
   const columns = useMemo((): ColumnsType<ParticipatingVolunteerRow> => {
@@ -184,7 +293,8 @@ export function ParticipatingVolunteersSection({
       {
         title: '배정 기관명',
         key: 'assignedInstitutionNames',
-        width: 180,
+        width: 220,
+        minWidth: 220,
         align: 'center',
         render: (_: unknown, record) =>
           formatParticipatingVolunteerAssignedInstitutions(record.assignedInstitutionNames),
@@ -341,10 +451,24 @@ export function ParticipatingVolunteersSection({
               selectedRowKeys={[]}
               onSelectionChange={() => {}}
               onSchoolClick={() => {}}
+              onDateSelect={setCalendarSelectedDate}
               calendarGranularity={progressCalendarGranularity}
               onCalendarGranularityChange={setProgressCalendarGranularity}
               customEvents={volunteerCalendarEvents}
               renderMonthEventContent={renderParticipatingVolunteerCalendarMonthEventContent}
+              rightContent={
+                <ParticipatingVolunteersCalendarRight
+                  events={volunteerEventsForCalendarDate}
+                  schoolFilterOptions={calendarSchoolFilterOptions}
+                  effectiveSelectedSchools={effectiveCalendarSelectedSchools}
+                  onSelectedSchoolsChange={setCalendarSelectedSchools}
+                  getColorForSchool={school =>
+                    schoolNameToScheduleColor.get(school) ?? SCHEDULE_COLORS[0]
+                  }
+                  selectedVolunteerIds={selectedRowKeys}
+                  onVolunteerSelectionChange={setSelectedRowKeys}
+                />
+              }
             />
           </div>
         )}
@@ -359,15 +483,22 @@ export function ParticipatingVolunteersSection({
         onCancel={() => setAddVolunteerModalOpen(false)}
         memberOptions={volunteerMemberOptions}
         onNoMemberSelected={showVolunteerAddSelectAlert}
-        onAdd={handleAddVolunteerFromMember}
+        onProceedToRegistration={handleProceedToVolunteerRegistration}
       />
-      <AddParticipatingVolunteerModal
+      <ParticipatingVolunteerAddRegistrationModal
+        open={volunteerRegistrationModalOpen}
+        onClose={handleVolunteerRegistrationClose}
+        onConfirm={handleVolunteerRegistrationConfirm}
+      />
+      <RegisterEmployeeVolunteerModal
         open={addEmployeeVolunteerModalOpen}
         onCancel={() => setAddEmployeeVolunteerModalOpen(false)}
-        memberOptions={volunteerMemberOptions}
-        onNoMemberSelected={showVolunteerAddSelectAlert}
-        onAdd={handleAddVolunteerFromMember}
-        variant="employee"
+        sessionRows={sessionRows}
+        institutionOptions={approvedInstitutionOptions}
+        savedRegistrations={registrations}
+        onNoInstitutionSelected={showEmployeeVolunteerInstitutionSelectAlert}
+        onIncompleteCounts={showEmployeeVolunteerCountsRequiredAlert}
+        onRegister={handleRegisterEmployeeVolunteer}
       />
     </div>
   )

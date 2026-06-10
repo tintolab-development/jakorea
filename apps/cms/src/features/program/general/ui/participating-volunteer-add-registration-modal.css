@@ -1,0 +1,138 @@
+/**
+ * 참여 봉사자 추가 등록 — 신청 폼 모달
+ */
+
+.content-modal.participating-volunteer-add-registration-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 26px 30px 34px;
+}
+
+.participating-volunteer-add-registration-modal.ant-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.participating-volunteer-add-registration-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  justify-content: flex-end;
+  padding-top: 0;
+  margin-top: var(--spacing-30);
+  gap: var(--spacing-12);
+}
+
+.participating-volunteer-add-registration-modal__scroll {
+  width: 100%;
+  max-height: min(72vh, 720px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.participating-volunteer-add-registration-modal__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+}
+
+.participating-volunteer-add-registration-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.participating-volunteer-add-registration-modal__template-block {
+  width: 100%;
+  min-width: 0;
+}
+
+.participating-volunteer-add-registration-modal__template-block .form-editor-horizontal-table-wrap {
+  width: 100%;
+}
+
+.participating-volunteer-add-registration-modal__section--basic-info {
+  gap: 10px;
+}
+
+.participating-volunteer-add-registration-modal__basic-info-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.participating-volunteer-add-registration-modal__section:not(
+    .participating-volunteer-add-registration-modal__section--basic-info
+  )
+  > .detail-info-form {
+  background: var(--main-WT, #fff);
+  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  overflow: hidden;
+}
+
+.participating-volunteer-add-registration-modal__section--basic-info
+  .detail-info-form-inputs-wrapper-no-gap
+  > .cms-input {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  width: 100% !important;
+}
+
+.participating-volunteer-add-registration-modal__free-text-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.participating-volunteer-add-registration-modal__free-text-card {
+  box-sizing: border-box;
+  width: 100%;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  overflow: hidden;
+}
+
+.participating-volunteer-add-registration-modal__free-text-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  background:
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    var(--main-WT, #fff);
+}
+
+.participating-volunteer-add-registration-modal__free-text-card-label {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.participating-volunteer-add-registration-modal__free-text-card-hint {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.participating-volunteer-add-registration-modal__free-text-card-body {
+  padding: 16px 20px;
+}

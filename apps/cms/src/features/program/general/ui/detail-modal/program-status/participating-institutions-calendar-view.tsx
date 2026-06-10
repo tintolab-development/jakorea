@@ -12,10 +12,14 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/data/mock/participating-schools'
-import { formatInstitutionRegionForTableDisplay } from '@/shared/lib/format-institution-region-display'
+import {
+  formatInstitutionRegionForCalendarListDisplay,
+  formatInstitutionRegionForTableDisplay,
+} from '@/shared/lib/format-institution-region-display'
 import { SCHEDULE_COLORS } from '../../../../shared/ui/program-schedule-colors'
 import {
   ParticipatingInstitutionsCalendarDayList,
+  formatParticipatingSessionPeriodForCalendarDisplay,
   getPrimaryParticipatingSessionLine,
   parseParticipatingSessionTimeRange,
 } from './participating-institutions-calendar-day-list'
@@ -67,12 +71,37 @@ export type ParticipatingCalendarPopoverRowParts = {
   instructorName?: string
   /** 참여 강사 캘린더 팝오버 2행 — 강의보고서 제출 여부 */
   lectureReportSubmitted?: boolean
+  /** 참여 봉사자 캘린더 팝오버 1행 — 봉사자명 */
+  volunteerName?: string
 }
 
 function isInstructorCalendarEventItem(
   item: CalendarEvent['originalItem']
 ): item is CalendarEvent['originalItem'] & { instructorName: string; lectureReportSubmitted?: boolean } {
   return typeof (item as { instructorName?: string }).instructorName === 'string'
+}
+
+function isVolunteerCalendarEventItem(
+  item: CalendarEvent['originalItem']
+): item is CalendarEvent['originalItem'] & {
+  volunteerName: string
+  sessionsOnDate: ParticipatingSchoolSession[]
+} {
+  return typeof (item as { volunteerName?: string }).volunteerName === 'string'
+}
+
+function getVolunteerCalendarPopoverParts(ev: CalendarEvent): ParticipatingCalendarPopoverRowParts {
+  const { row, volunteerName, sessionsOnDate } = ev.originalItem as CalendarEvent['originalItem'] & {
+    volunteerName: string
+    sessionsOnDate: ParticipatingSchoolSession[]
+  }
+  const session = sessionsOnDate[0]
+  return {
+    title: row.schoolName?.trim() || '-',
+    location: formatInstitutionRegionForCalendarListDisplay(row.region),
+    volunteerName,
+    sessionLine: session ? formatParticipatingSessionPeriodForCalendarDisplay(session) : '-',
+  }
 }
 
 function getInstructorCalendarPopoverParts(ev: CalendarEvent): ParticipatingCalendarPopoverRowParts {
@@ -89,6 +118,9 @@ function getInstructorCalendarPopoverParts(ev: CalendarEvent): ParticipatingCale
 }
 
 function getPopoverRowParts(ev: CalendarEvent): ParticipatingCalendarPopoverRowParts {
+  if (isVolunteerCalendarEventItem(ev.originalItem)) {
+    return getVolunteerCalendarPopoverParts(ev)
+  }
   if (isInstructorCalendarEventItem(ev.originalItem)) {
     return getInstructorCalendarPopoverParts(ev)
   }
@@ -105,6 +137,9 @@ function resolveEventPopoverRowParts(
   ev: CalendarEvent,
   resolvePopoverRowParts?: ParticipatingInstitutionsCalendarViewProps['resolvePopoverRowParts']
 ): ParticipatingCalendarPopoverRowParts {
+  if (isVolunteerCalendarEventItem(ev.originalItem)) {
+    return getVolunteerCalendarPopoverParts(ev)
+  }
   if (isInstructorCalendarEventItem(ev.originalItem)) {
     return getInstructorCalendarPopoverParts(ev)
   }
@@ -132,10 +167,17 @@ function ParticipatingCalendarEventPopoverContent({
         const parts = resolvePopoverRowParts ? resolvePopoverRowParts(ev) : getPopoverRowParts(ev)
         const titleColor = titleColorMap?.get(String(ev.id))
         const instructorName = parts.instructorName?.trim()
+        const volunteerName = parts.volunteerName?.trim()
         const isInstructorPopover = Boolean(instructorName)
+        const isVolunteerPopover = Boolean(volunteerName)
         const hasGradeSession =
           parts.grade != null &&
           parts.grade !== '' &&
+          parts.sessionLine != null &&
+          parts.sessionLine !== ''
+        const hasLocationSession =
+          parts.location != null &&
+          parts.location !== '' &&
           parts.sessionLine != null &&
           parts.sessionLine !== ''
         return (
@@ -146,7 +188,25 @@ function ParticipatingCalendarEventPopoverContent({
             >
               {parts.title}
             </div>
-            {isInstructorPopover ? (
+            {isVolunteerPopover ? (
+              <div className="participating-institutions-calendar-popover__meta">
+                <span className="participating-institutions-calendar-popover__meta-part">
+                  {volunteerName}
+                </span>
+                {hasLocationSession ? (
+                  <>
+                    <span className="participating-institutions-calendar-popover__meta-sep" aria-hidden />
+                    <span className="participating-institutions-calendar-popover__meta-part">
+                      {parts.location}
+                    </span>
+                    <span className="participating-institutions-calendar-popover__meta-sep" aria-hidden />
+                    <span className="participating-institutions-calendar-popover__meta-part participating-institutions-calendar-popover__meta-part--session">
+                      {parts.sessionLine}
+                    </span>
+                  </>
+                ) : null}
+              </div>
+            ) : isInstructorPopover ? (
               <div className="participating-institutions-calendar-popover__meta participating-institutions-calendar-popover__meta--instructor">
                 <span className="participating-institutions-calendar-popover__meta-part">
                   {instructorName}
