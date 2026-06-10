@@ -19,8 +19,9 @@
 ## 열 최소 너비 (116px)
 
 - 토큰: `--calendar-cell-min-width` (116px) · `--calendar-week-columns-min-width` (7×116px)
-- **헤더·본문 동일 9트랙 grid:** `[gutter 112][gap 20][repeat(7, minmax(116px, 1fr))]`
-- **래퍼:** `calendar-week-time-grid__sync-scroll` — `__header-row` + `__scroll`을 묶어 동일 가로 폭·좌측 정렬 유지
+- **헤더·본문 동일 9트랙 grid:** `[gutter 72][gap 20][repeat(7, minmax(116px, 1fr))]` — 시간 라벨은 gutter **좌측 정렬**(header-title 좌측과 일치)
+- **우측 보더:** 마지막 요일 열 `border-right` 유지(shell `border-right` 없음 — clip 시 잘림 방지)
+- **래퍼:** `.calendar-week--time-grid` — `__header-row` + `__shell` 직계 자식, 동일 가로 폭·좌측 정렬
 - **헤더 요일:** `__header-day:nth-child(2..8) { grid-column: 3..9 }` — `:first-of-type` 사용 금지(코너 `div`와 타입 불일치로 열 어긋남)
 - **본문:** `calendar-week-time-grid__shell` = 위와 **동일** `grid-template-columns`. `__columns { display: contents }` + `__column:nth-child(n) { grid-column: 3..9 }`
 - **금지:** 본문만 `flex`·단일 `minmax(0,1fr)` 셀 — 헤더·요일 열 너비 불일치(DevTools에서 116px 미만 또는 헤더≠본문)

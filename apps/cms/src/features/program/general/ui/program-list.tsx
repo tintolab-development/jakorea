@@ -186,7 +186,7 @@ export function ProgramList({
             view={listView}
             toolbar={
               <div className="table-header-actions">
-                <div className="table-header-title-wrapper">
+                <div className="table-header-title--wrapper">
                   <span className="table-title">{headerTitle}</span>
                   <span className="table-description">{`총 ${displayedCount.toLocaleString()}건`}</span>
                 </div>

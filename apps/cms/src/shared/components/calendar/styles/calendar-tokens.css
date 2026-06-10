@@ -11,7 +11,8 @@
   --calendar-cell-min-height: 124px;
   --calendar-week-hour-px: 56px;
   --calendar-week-total-px: calc(24 * var(--calendar-week-hour-px));
-  --calendar-week-gutter-width: 112px;
+  /* 시간 라벨(오전/오후 + N시) 좌측 정렬 — header-title 좌측과 맞춤 */
+  --calendar-week-gutter-width: 72px;
   --calendar-week-gutter-gap: 20px;
   --calendar-week-columns-min-width: calc(var(--calendar-cell-min-width) * 7);
   --calendar-week-time-grid-min-width: calc(
@@ -23,6 +24,7 @@
   --calendar-month-grid-min-height: calc(var(--calendar-cell-min-height) * var(--calendar-month-week-count));
   --calendar-main-weekday-header-min-height: 37px;
   --calendar-main-header-min-height: 50px;
+  --calendar-main-header-body-gap: 10px;
   --calendar-main-horizontal-padding: 40px;
   --calendar-main-vertical-padding: 32px;
   --calendar-week-time-grid-header-min-height: 40px;

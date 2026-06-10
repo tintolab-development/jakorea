@@ -48,15 +48,21 @@ function readStartEndFromUnknown(original: unknown): { startTime?: string; endTi
   const st = o.startTime
   const et = o.endTime
   return {
-    startTime: typeof st === 'string' ? st : undefined,
-    endTime: typeof et === 'string' ? et : undefined,
+    startTime: typeof st === 'string' && st.trim() ? st.trim() : undefined,
+    endTime: typeof et === 'string' && et.trim() ? et.trim() : undefined,
   }
+}
+
+/** `CalendarMainEventInput` 등 이벤트 래퍼에 시각 필드가 있으면 그 값만 사용(없으면 종일) */
+function hasEventLevelTimeFields(original: unknown): boolean {
+  if (original == null || typeof original !== 'object') return false
+  return 'startTime' in original || 'endTime' in original
 }
 
 /** `CalendarItem.original` 또는 중첩 `originalItem`에서 주간 격자용 시각 */
 function readTimesFromCalendarItem(item: CalendarItem): { startTime?: string; endTime?: string } {
   const direct = readStartEndFromUnknown(item.original)
-  if (direct.startTime) return direct
+  if (hasEventLevelTimeFields(item.original)) return direct
   if (
     item.original != null &&
     typeof item.original === 'object' &&
@@ -236,34 +242,32 @@ export function WeekView({
 
   return (
     <div className="calendar-week calendar-week--time-grid" style={rootStyle}>
-      <div className="calendar-week-time-grid__sync-scroll">
-        <div className="calendar-week-time-grid__header-row" role="row">
-          <div className="calendar-week-time-grid__header-corner" aria-hidden />
-          {weekDates.map(date => {
-            const isSelected = date.isSame(selectedDate, 'day')
-            const dateKey = date.format('YYYY-MM-DD')
-            const dayLabel = formatWeekHeaderDayLabel(date)
-            const weekday = WEEK_HEADER_WEEKDAY_EN[date.day()]
-            return (
-              <button
-                key={dateKey}
-                type="button"
-                className={[
-                  'calendar-week-time-grid__header-day',
-                  isSelected ? 'calendar-week-time-grid__header-day--selected' : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                onClick={() => onSelectDate(date)}
-              >
-                {`${dayLabel} (${weekday})`}
-              </button>
-            )
-          })}
-        </div>
-        <div className="calendar-week-time-grid__scroll">
-          <div className="calendar-week-time-grid__shell">
-          <div className="calendar-week-time-grid__gutter">
+      <div className="calendar-week-time-grid__header-row" role="row">
+        <div className="calendar-week-time-grid__header-corner" aria-hidden />
+        {weekDates.map(date => {
+          const isSelected = date.isSame(selectedDate, 'day')
+          const dateKey = date.format('YYYY-MM-DD')
+          const dayLabel = formatWeekHeaderDayLabel(date)
+          const weekday = WEEK_HEADER_WEEKDAY_EN[date.day()]
+          return (
+            <button
+              key={dateKey}
+              type="button"
+              className={[
+                'calendar-week-time-grid__header-day',
+                isSelected ? 'calendar-week-time-grid__header-day--selected' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onClick={() => onSelectDate(date)}
+            >
+              {`${dayLabel} (${weekday})`}
+            </button>
+          )
+        })}
+      </div>
+      <div className="calendar-week-time-grid__shell">
+        <div className="calendar-week-time-grid__gutter">
             {WEEK_TIME_GRID_HOUR_ROWS.map((row, hourIdx) => (
               <div
                 key={`week-gutter-${hourIdx}`}
@@ -477,8 +481,6 @@ export function WeekView({
                 </div>
               )
             })}
-          </div>
-        </div>
         </div>
       </div>
     </div>

@@ -42,7 +42,7 @@
   overflow: visible;
 }
 
-.program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-week-time-grid__scroll {
+.program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-week-time-grid__shell {
   min-height: var(--calendar-week-total-px, 1296px);
   max-height: none;
   overflow: visible;

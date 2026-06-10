@@ -8,11 +8,12 @@
   box-shadow: var(--calendar-shell-shadow, none);
   display: flex;
   flex-direction: column;
+  gap: var(--calendar-main-header-body-gap, 10px);
   padding: 16px 20px;
 }
 
 .calendar-main:has(.calendar-week--time-grid) {
-  min-width: var(--calendar-main-week-min-width, calc(112px + 20px + 116px * 7 + 40px));
+  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 40px));
   min-height: var(
     --calendar-main-week-min-height,
     calc(1344px + 40px + 50px + 32px)
@@ -26,6 +27,10 @@
   width: 100%;
   align-self: stretch;
   box-sizing: border-box;
+}
+
+.calendar-main:has(.calendar-week--time-grid) .calendar-week--time-grid {
+  overflow: visible;
 }
 
 /* header */
