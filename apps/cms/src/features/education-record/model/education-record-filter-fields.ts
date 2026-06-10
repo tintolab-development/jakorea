@@ -2,7 +2,7 @@
  * 실적 관리 목록 필터 필드 정의 (TableFilterGroup용)
  * - 년도/분기는 한 항목(`selectPair`)으로 묶어 레이블 1개 + 셀렉트 2개로 렌더
  * - 기관 소재지(시/도·시/군/구)도 한 항목(`addressRegion`)으로 묶음
- * - 필드 width 합계가 100%가 되도록 배분
+ * - pair 필드는 고정 px(`width`), 검색 필드는 공통 260px 고정
  */
 
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
@@ -85,7 +85,7 @@ export function createEducationRecordFilterFields({
       type: 'addressRegion',
       label: '기관 소재지',
       allowClear: true,
-      width: 224,
+      width: 252,
       addressRegion: {
         sidoKey: 'sido',
         sigunguKey: 'sigungu',
@@ -100,28 +100,24 @@ export function createEducationRecordFilterFields({
       type: 'search',
       label: '후원사명',
       placeholder: '후원사명을 입력하세요',
-      flex: '1 1 0',
     },
     {
       key: 'mainTitle',
       type: 'search',
       label: '대표 프로그램명',
       placeholder: '대표 프로그램명을 입력하세요',
-      flex: '1 1 0',
     },
     {
       key: 'title',
       type: 'search',
       label: '세부 프로그램명',
       placeholder: '세부 프로그램명을 입력하세요',
-      flex: '1 1 0',
     },
     {
       key: 'textbookName',
       type: 'search',
       label: '교재명',
       placeholder: '교재명을 입력하세요',
-      flex: '1 1 0',
     },
   ]
 }

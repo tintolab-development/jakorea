@@ -21,7 +21,7 @@ import './ujat-volunteer-doc-passed-section.css'
 import './ujat-volunteer-doc-screening-section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
 
-const FILTER_ROWS = buildUjatVolunteerDocPassedFilterRows()
+const FILTER_FIELDS = buildUjatVolunteerDocPassedFilterRows()[0] ?? []
 
 const noopApplyDocumentScreeningStatus = () => undefined
 const noopShowDocumentScreeningConfirm = () => undefined
@@ -161,7 +161,10 @@ export function UjatVolunteerDocPassedSection({
       <FilterTableLayout
         bordered={false}
         className="ujat-volunteer-doc-passed__filter-layout"
-        rows={FILTER_ROWS}
+        multiRowGridMode="responsive"
+        multiRowResponsiveLayout="merged-auto-fill"
+        mergedAutoFillInlineSearch
+        fields={FILTER_FIELDS}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}

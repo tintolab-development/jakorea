@@ -1,7 +1,7 @@
-import { Button } from 'antd'
+import { CmsButton } from '@/shared/ui'
 import type { TemplateStatus } from '@/types/template'
 import { statusOptions } from '@/features/template/constants'
-import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
+import { TableFilterGroup } from '@/shared/components/table-filter-group'
 
 interface TemplateFiltersProps {
   /** 검색어 */
@@ -39,7 +39,7 @@ export function TemplateFilters({
   loading = false,
 }: TemplateFiltersProps) {
   return (
-    <UnifiedFilterCard
+    <TableFilterGroup
       fields={[
         {
           key: 'query',
@@ -75,9 +75,9 @@ export function TemplateFilters({
       loading={loading}
       extra={
         onCreateClick ? (
-          <Button type="primary" onClick={onCreateClick}>
+          <CmsButton variant="primary" onClick={onCreateClick}>
             {createButtonText}
-          </Button>
+          </CmsButton>
         ) : undefined
       }
     />

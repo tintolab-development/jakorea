@@ -19,7 +19,6 @@ import { UjatVolunteerInterview2CalendarView } from './ujat-volunteer-interview2
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import { UJAT_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X } from './ujat-volunteer-interview2-columns'
 import './ujat-volunteer-interview2-section.css'
-import './ujat-volunteer-doc-screening-section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
 
 const noopApplyDocumentScreeningStatus = () => undefined
@@ -87,8 +86,8 @@ export function UjatVolunteerInterview2Section({
     showDocumentScreeningConfirm: noopShowDocumentScreeningConfirm,
   })
 
-  const filterRows = useMemo(
-    () => buildUjatVolunteerInterview2FilterRows(filterRowsSource),
+  const filterFields = useMemo(
+    () => buildUjatVolunteerInterview2FilterRows(filterRowsSource)[0] ?? [],
     [filterRowsSource]
   )
 
@@ -217,18 +216,15 @@ export function UjatVolunteerInterview2Section({
       <FilterTableLayout
         bordered={false}
         className="ujat-volunteer-interview2__filter-layout"
-        rows={filterRows}
+        multiRowGridMode="responsive"
+        multiRowResponsiveLayout="merged-auto-fill"
+        mergedAutoFillInlineSearch
+        fields={filterFields}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
-        title={
-          <div className="ujat-volunteer-interview2__toolbar-main">
-            <span className="ujat-volunteer-interview2__toolbar-title">
-              봉사자 2차 면접 대상자 목록
-            </span>
-            <span className="ujat-volunteer-interview2__toolbar-count">{count}건</span>
-          </div>
-        }
+        title="봉사자 2차 면접 대상자 목록"
+        description={`${count.toLocaleString()}건`}
         actions={
           <div className="ujat-volunteer-interview2__actions">
             <CmsButton

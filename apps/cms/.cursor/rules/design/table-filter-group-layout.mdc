@@ -1,0 +1,97 @@
+---
+description: TableFilterGroup / FilterTableLayout 필터 겹침·간격·반응형 wrap — 공통 레이어 우선
+globs:
+  - "apps/cms/src/shared/components/filter-table-layout.*"
+  - "apps/cms/src/shared/components/table-filter-group.*"
+  - "apps/cms/src/shared/components/filter-controls-common.css"
+  - "apps/cms/src/features/**/*filter*.{ts,tsx,css}"
+  - "apps/cms/src/pages/**/*.{tsx,css}"
+alwaysApply: false
+---
+
+# TableFilterGroup / FilterTableLayout 레이아웃
+
+**코드:** `table-filter-group.tsx` · `table-filter-group.css` · `filter-table-layout.tsx` · `filter-controls-common.css`
+
+필터 **겹침·gap 벌어짐**은 페이지 CSS를 더 쓰기 전에 아래 공통 규칙을 먼저 따른다.
+
+## 기본 치수 (변경 시 공통만)
+
+| 항목 | 값 |
+|------|-----|
+| 필드·컨트롤 폭 | **260px** (`--filter-control-max-width`, `--table-filter-field-min/max-width`) |
+| 필드 사이 gap | **12px** (`--filter-field-gap`, `--table-filter-field-gap`) |
+| 라벨↔컨트롤 gap | **6px** (`--filter-label-control-gap`) |
+| 조회 버튼 | **160×44** (`.table-filter-group__search-button`) |
+| addressRegion | 120px × 2 + gap 12 |
+| dateRange 분리형 | 2×260 + 가운데 20px |
+
+## 화면별 props (FilterTableLayout)
+
+### 단일 행 · 픽셀/기본 폭 필드 **4개 이상** (모달·좁은 폭)
+
+```tsx
+<FilterTableLayout
+  fields={filterFields}  // rows 말고 fields — 기본 wrap 활성화
+  multiRowGridMode="responsive"
+  multiRowResponsiveLayout="merged-auto-fill"
+  mergedAutoFillInlineSearch  // 조회를 필드와 같은 flex-wrap에 포함
+  ...
+/>
+```
+
+- `fields` + 4개 이상 → `filter-table-layout--filter-responsive-wrap` 자동.
+- `mergedAutoFillInlineSearch` 기본값도 wrap 대상이면 **true** (`filter-table-layout.tsx`).
+- 참고: `admin-inquiry-page.tsx`, UJAT 2차 면접·1차 합격자.
+
+### 단일 행 · 필드 **3개 이하**
+
+- `fields`만 넘기면 Row+Col + `flex-wrap` (기본 `multiRowGridMode="fixed"`).
+
+### 다행 `rows` (2행 이상 고정 배치)
+
+- `rows`를 쓰면 **기본 responsive wrap이 꺼짐** (`hasExplicitRows`).
+- 2행 + 마지막 줄 조회: `multiRowGridMode="responsive"` + `mergedAutoFillTrailingFieldKeys` (문의·서류 심사 등).
+- **다행 전용** 그리드가 필요하면 `table-filter-group`의 `fields-grid-row` / `fields-row-with-action`만 쓰고, 아래 **금지 패턴**은 쓰지 않는다.
+
+### 툴바
+
+- 제목·건수: `title` + `description` (공통 `.filter-table-layout__title` / `__description`).
+- 페이지별 `__toolbar-main` / `__toolbar-title` CSS **불필요**.
+
+### 풀페이지·상세 탭 카드
+
+- `bordered={false}` + `className="…__filter-layout"`에서 **배경·shadow·padding·divider 패딩만** 덮어쓴다.
+
+## 금지 (겹침·회귀 원인)
+
+1. **페이지 CSS로 `table-filter-group` 레이아웃 재정의**
+   - `display: grid !important` + `display: contents` on Row/shell
+   - `grid-template-columns: repeat(N, minmax(0, min(260px, …)))` — 칸만 줄고 field `min-width: 260px`는 유지 → **겹침**
+   - Col/field/control에 `min-width: 0` / `width: 100% !important` (공통 260px와 충돌)
+   - container/Col에 `flex: 0 0 auto`·`gap` **중복** 정의
+
+2. **`FilterFieldConfig.width: 240`** (또는 260 미만 픽셀) — Col vs 컨트롤 260px 불일치.
+
+3. **루트 `.applicant-details`에 필터 `min-width: 0` 오버라이드**  
+   - 레거시는 `applicant-details__filter-table-layout`에만 (`applicant-list.css`).
+
+4. **의미 없는 CSS import** — 다른 탭 `*-section.css`를 필터 목적으로 import하지 않는다.
+
+5. **`UnifiedFilterCard`** 신규 사용 — `FilterTableLayout` / `TableFilterGroup`만.
+
+## 겹침 발생 시 체크리스트
+
+1. DevTools → 겹친 필드의 Col/grid-cell **computed `min-width`**가 260px인지, 부모가 `minmax(0, …)`로 더 좁은지 확인.
+2. `rows` vs `fields` — 4+ 필드인데 `rows`만 쓰고 wrap props 없으면 한 줄 고정 → overflow.
+3. `filter-table-layout--filter-responsive-wrap` 클래스 존재 여부.
+4. `.applicant-details` / 페이지 scoped CSS가 `.table-filter-group__*`를 덮는지 grep.
+5. 공통 수정은 `table-filter-group.css`·`filter-table-layout.tsx`에서 한 번만.
+
+## 관련 규칙
+
+- [list-page-composition.mdc](../coding/list-page-composition.mdc)
+- [calendar-filter-table-layout.md](./calendar-filter-table-layout.md)
+- [ui-merge.mdc](../../../../.cursor/rules/ui-merge.mdc) — 공유 레이어 변경 시 리뷰 권고
+
+**Last updated:** 2026-05-29

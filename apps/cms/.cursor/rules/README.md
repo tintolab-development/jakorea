@@ -18,6 +18,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - **[Feature file naming](./coding/feature-file-naming.mdc)** — CMS 전역 파일명 간략화 (**alwaysApply**, 필수)  
 - [Component patterns](./coding/component-patterns.md) — shared UI usage  
 - [List page composition](./coding/list-page-composition.mdc) — filter + table layout  
+- **[TableFilterGroup layout](./design/table-filter-group-layout.mdc)** — 260px·gap·responsive wrap·겹침 금지 패턴  
 - [Status dropdown cell](./coding/status-dropdown-cell.md) — `StatusDropdownCell`, tag layout  
 - [Custom hooks](./coding/custom-hooks.md)  
 - [Type safety & consistency](./coding/type-safety-and-consistency.md) — no deprecated APIs  

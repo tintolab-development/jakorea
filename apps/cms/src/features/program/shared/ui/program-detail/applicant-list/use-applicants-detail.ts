@@ -4,7 +4,7 @@ import {
   useTablePage,
   EMPTY_TABLE_PAGE_CONTEXT,
 } from '@/shared/components/table-system/model/use-table-page'
-import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CMS_MULTI_SELECT_TAG_COLORS } from '@/shared/ui/cms-select'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import {

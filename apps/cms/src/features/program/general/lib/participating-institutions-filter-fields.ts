@@ -1,4 +1,4 @@
-import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import {
   INSTITUTION_SIDO_FILTER_OPTIONS,
   getInstitutionSigunguSelectOptions,

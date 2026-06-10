@@ -1,14 +1,14 @@
 /**
- * 목록 페이지 조합: UnifiedFilterCard(FilterListLayout) + 구분선 + ViewModeController + 선택 children(테이블 슬롯)
+ * 목록 페이지 조합: TableFilterGroup + 구분선 + ViewModeController + 선택 children(테이블 슬롯)
  * 도메인 로직 없음 — 컴포넌트 연결만 담당
  */
 
 import type { ReactNode } from 'react'
-import { FilterListLayout, type UnifiedFilterCardProps } from '../filter-list-layout'
+import { TableFilterGroup, type TableFilterGroupProps } from '../table-filter-group'
 import { ViewModeController, type ViewModeToggleOption } from '../view-mode'
 import './list-page-layout.css'
 
-export type ListPageLayoutProps<T extends string = string> = UnifiedFilterCardProps & {
+export type ListPageLayoutProps<T extends string = string> = TableFilterGroupProps & {
   viewMode: T
   onViewModeChange: (v: T) => void
   viewModeOptions: readonly ViewModeToggleOption<T>[]
@@ -35,25 +35,25 @@ export function ListPageLayout<T extends string>({
   const rootClass = ['list-page-layout', className].filter(Boolean).join(' ')
 
   return (
-    <FilterListLayout
-      {...filterProps}
-      className={rootClass}
-      listHeader={
-        <>
-          <div className="participating-institutions-section__divider" />
-          <div className="participating-institutions-section__below-divider">
-            <ViewModeController<T>
-              value={viewMode}
-              onChange={onViewModeChange}
-              options={viewModeOptions}
-              renderHeader={renderHeader}
-              renderContent={mode => tableShell(renderContent(mode))}
-            />
-          </div>
-        </>
-      }
-    >
-      {children != null ? tableShell(children) : null}
-    </FilterListLayout>
+    <div className={rootClass}>
+      <div className="list-page-layout__filter">
+        <TableFilterGroup {...filterProps} />
+      </div>
+      <div className="list-page-layout__header">
+        <div className="participating-institutions-section__divider" />
+        <div className="participating-institutions-section__below-divider">
+          <ViewModeController<T>
+            value={viewMode}
+            onChange={onViewModeChange}
+            options={viewModeOptions}
+            renderHeader={renderHeader}
+            renderContent={mode => tableShell(renderContent(mode))}
+          />
+        </div>
+      </div>
+      {children != null ? (
+        <div className="list-page-layout__body">{tableShell(children)}</div>
+      ) : null}
+    </div>
   )
 }

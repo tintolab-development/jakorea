@@ -319,14 +319,12 @@ export function usePaymentOrdersListPage() {
           type: 'search',
           label: '프로그램명',
           placeholder: '프로그램명을 입력하세요',
-          width: '25%',
         }
       : {
           key: 'instructorName',
           type: 'search',
           label: '강사명',
           placeholder: '강사명을 입력하세요',
-          width: '25%',
         }
 
     return [
@@ -338,7 +336,6 @@ export function usePaymentOrdersListPage() {
           { label: '프로그램별', value: 'program' },
           { label: '강사별', value: 'instructor' },
         ],
-        width: '16%',
       },
       nameFilter,
       {
@@ -348,13 +345,11 @@ export function usePaymentOrdersListPage() {
         placeholder: '전체',
         options: PENDING_PAYMENT_ITEM_FILTER_OPTIONS,
         allowClear: true,
-        width: '25%',
       },
       {
         key: 'dateRange',
         type: 'dateRange',
         label: '기간',
-        width: '34%',
         dateRangeOneMonthFromStart: true,
       },
     ]

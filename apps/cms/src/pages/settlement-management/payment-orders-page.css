@@ -81,6 +81,48 @@
 }
 
 /*
+ * 필터 — TableFilterGroup responsive wrap(260px 고정 + gap 12px)
+ * % Col 제거 후에도 루트 FilterTableLayout( content-wrapper 없음 ) 경로에 동일 규칙 적용
+ */
+.payment-orders-page .payment-orders-page__filter-list-layout .table-filter-group__container {
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
+  gap: var(--filter-field-gap);
+  align-items: flex-end;
+}
+
+.payment-orders-page .payment-orders-page__filter-list-layout .table-filter-group__fields-container {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.payment-orders-page
+  .payment-orders-page__filter-list-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col,
+.payment-orders-page
+  .payment-orders-page__filter-list-layout
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell {
+  flex: 0 0 auto !important;
+  min-width: 0;
+  max-width: none;
+}
+
+.payment-orders-page
+  .payment-orders-page__filter-list-layout
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--radio,
+.payment-orders-page
+  .payment-orders-page__filter-list-layout
+  .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell[data-filter-field-key='exposureMode'] {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+
+/*
  * 프로그램별·강사별 목록: 동일 열 정의를 써도 fluid 기본(table-layout:auto)이면
  * 셀 텍스트 길이에 따라 열 비율이 달라짐 → 한쪽만 고정 레이아웃으로 통일
  */
@@ -89,15 +131,6 @@
   .cms-data-table.cms-data-table--fluid
   table.ant-table {
   table-layout: fixed !important;
-}
-
-/* 필터: 노출 기준(라디오) ~ 프로그램명 간 과한 여백 완화 + 칸 간격 살짝 타이트 */
-.payment-orders-page .unified-filter-card__fields-shell {
-  margin-right: 8px;
-}
-
-.payment-orders-page .unified-filter-card__fields-inner > .ant-col:not(:last-child) {
-  margin-right: 8px;
 }
 
 /*

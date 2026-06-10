@@ -40,6 +40,22 @@ export const PARTICIPATING_INSTRUCTOR_ADD_SELECT_ALERT_MESSAGE =
 export const PARTICIPATING_INSTRUCTOR_ADD_COMPLETE_ALERT_MESSAGE =
   '강사 추가 등록이 완료되었습니다.'
 
+/** 참여 봉사자 목록 — 활동확인서 발급: 미선택 시 AlertModal 본문 */
+export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_VOLUNTEER_ALERT_MESSAGE =
+  '발급할 봉사자를 1명 선택해 주세요.'
+
+/** 참여 봉사자 목록 — 활동확인서 발급: 다수 선택 시 AlertModal 본문 */
+export const ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_VOLUNTEER_ALERT_MESSAGE =
+  '활동확인서는 한 번에 1명만 발급할 수 있습니다.\n봉사자 1명만 선택한 뒤 다시 시도해 주세요.'
+
+/** 참여 봉사자 목록 — 봉사자 추가 등록: 미선택 시 AlertModal 본문 */
+export const PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE =
+  '추가 등록할 회원을 선택해 주세요.'
+
+/** 참여 봉사자 목록 — 봉사자 추가 등록: 등록 완료 시 AlertModal 본문 */
+export const PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE =
+  '봉사자 추가 등록이 완료되었습니다.'
+
 /** 참여 강사 상세 — 이미 활동 포기 처리된 강사 재시도 시 AlertModal 본문 */
 export const PARTICIPATING_INSTRUCTOR_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE =
   '이미 활동 포기 처리된 강사입니다.'

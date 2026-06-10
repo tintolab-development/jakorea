@@ -5,8 +5,8 @@
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Table } from 'antd'
+import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
-import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProgramRole } from '@/types/user'
 import {
@@ -72,7 +72,6 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         type: 'search',
         label: '담당자명',
         placeholder: '담당자명을 입력하세요',
-        width: 240,
       },
       {
         key: 'role',
@@ -80,12 +79,11 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         label: '권한',
         placeholder: '전체',
         options: ROLE_OPTIONS,
-        width: 240,
       },
     ]
   }, [])
 
-  const unifiedFilterCardValues = useMemo(
+  const filterValues = useMemo(
     () => ({
       managerName: pendingFilters.managerName,
       role: pendingFilters.role === 'all' ? undefined : pendingFilters.role,
@@ -93,7 +91,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
     [pendingFilters]
   )
 
-  const handleUnifiedFilterChange = (key: string, value: unknown) => {
+  const handleFilterChange = (key: string, value: unknown) => {
     if (key === 'managerName') {
       setPendingFilters(prev => ({ ...prev, managerName: String(value ?? '') }))
       return
@@ -102,7 +100,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
     setPendingFilters(prev => ({ ...prev, role: v }))
   }
 
-  const handleUnifiedFilterSearch = () => {
+  const handleFilterSearch = () => {
     setFilters({
       managerName: pendingFilters.managerName,
       role: pendingFilters.role,
@@ -302,27 +300,18 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
 
   return (
     <div className="program-managers-tab">
-      <div className="program-managers-tab__top">
-        <UnifiedFilterCard
-          bordered={false}
-          cardStyle={{ marginBottom: 0 }}
-          fields={managerFilterFields}
-          filters={unifiedFilterCardValues}
-          onFilterChange={handleUnifiedFilterChange}
-          onSearch={handleUnifiedFilterSearch}
-        />
-      </div>
-
-      <div className="program-managers-tab__divider" />
-      <div className="program-managers-tab__below-divider">
-        <div className="program-managers-tab__table-header">
-          <div className="program-managers-tab__table-heading">
-            <span className="program-managers-tab__table-title">담당자 목록</span>
-            <span className="program-managers-tab__table-description">
-              {filteredManagers.length}건
-            </span>
-          </div>
-          <div className="program-managers-tab__table-actions">
+      <FilterTableLayout
+        className="program-managers-tab__filter-layout"
+        bordered={false}
+        hideExcelDownload
+        fields={managerFilterFields}
+        filters={filterValues}
+        onFilterChange={handleFilterChange}
+        onSearch={handleFilterSearch}
+        title="담당자 목록"
+        description={`${filteredManagers.length}건`}
+        actions={
+          <>
             <CmsButton variant="delete" size="large" width={160} onClick={handleDeleteClick}>
               담당자 삭제
             </CmsButton>
@@ -335,8 +324,9 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
               style={{ minWidth: 180 }}
               onClick={handleProgramManagersPrivacyClick}
             />
-          </div>
-        </div>
+          </>
+        }
+      >
         <Table<ProgramManagerRow>
           className="cms-data-table cms-data-table--fluid program-managers-tab__managers-table"
           rowKey="id"
@@ -349,7 +339,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
           columns={columns}
           dataSource={filteredManagers}
         />
-      </div>
+      </FilterTableLayout>
 
       <AddManagerModal
         open={addModalOpen}

@@ -14,31 +14,24 @@
   min-width: 0;
 }
 
-/* .unified-filter-card 왼쪽 패딩 삭제 */
-.program-status-participating .unified-filter-card .ant-card-body,
-.participating-institutions-section .unified-filter-card .ant-card-body {
-  padding-left: 0 !important;
-}
-
-/* 참여 기관/강사 필터: 데스크톱에서도 필드 폭 균등 분배
- * 정산 관리(지급조서·계좌 지급 등)는 블록만 participating-institutions-section 이므로 동일 규칙 병기
- * 라디오(노출 기준 등)는 컨텐츠 너비만 — 1 1 0 이면 첫 칸이 과도하게 넓어짐 */
+/* TableFilterGroup — Col은 콘텐츠 너비, 필터 간 gap 12px (table-filter-group 공통) */
 .program-status-participating
-  .unified-filter-card__fields-inner
-  > .ant-col:not(.unified-filter-card__col--radio),
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col:not(.table-filter-group__col--radio),
 .participating-institutions-section
-  .unified-filter-card__fields-inner
-  > .ant-col:not(.unified-filter-card__col--radio) {
-  flex: 1 1 0 !important;
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col:not(.table-filter-group__col--radio) {
+  flex: 0 0 auto !important;
+  width: auto;
   min-width: 0;
 }
 
 .program-status-participating
-  .unified-filter-card__fields-inner
-  > .ant-col.unified-filter-card__col--radio,
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--radio,
 .participating-institutions-section
-  .unified-filter-card__fields-inner
-  > .ant-col.unified-filter-card__col--radio {
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--radio {
   flex: 0 0 auto !important;
   min-width: 0;
   max-width: none;
@@ -46,102 +39,105 @@
 
 /* 참여 기관/강사 필터: 반응형 너비 분배 (갭 12px 유지) */
 @media (max-width: 1280px) {
-  .program-status-participating .unified-filter-card__toolbar,
-  .participating-institutions-section .unified-filter-card__toolbar {
+  .program-status-participating .table-filter-group__container,
+  .participating-institutions-section .table-filter-group__container {
     flex-wrap: wrap;
   }
 
-  .program-status-participating .unified-filter-card__fields-shell,
-  .participating-institutions-section .unified-filter-card__fields-shell {
+  .program-status-participating .table-filter-group__fields-container,
+  .participating-institutions-section .table-filter-group__fields-container {
     flex: 1 1 100%;
     max-width: 100%;
     margin-right: 0;
     margin-bottom: 8px;
   }
 
-  .program-status-participating .unified-filter-card__fields-inner.ant-row,
-  .participating-institutions-section .unified-filter-card__fields-inner.ant-row {
+  .program-status-participating .table-filter-group__fields-inner.ant-row,
+  .participating-institutions-section .table-filter-group__fields-inner.ant-row {
     flex-wrap: wrap !important;
   }
 
   .program-status-participating
-    .unified-filter-card__fields-inner
-    > .ant-col:not(.unified-filter-card__col--radio),
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col:not(.table-filter-group__col--radio),
   .participating-institutions-section
-    .unified-filter-card__fields-inner
-    > .ant-col:not(.unified-filter-card__col--radio) {
-    flex: 1 1 calc((100% - 24px) / 3) !important;
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col:not(.table-filter-group__col--radio) {
+    flex: 0 0 auto !important;
+    width: auto;
     min-width: 0;
   }
 
   .program-status-participating
-    .unified-filter-card__fields-inner
-    > .ant-col.unified-filter-card__col--radio,
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col.table-filter-group__col--radio,
   .participating-institutions-section
-    .unified-filter-card__fields-inner
-    > .ant-col.unified-filter-card__col--radio {
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col.table-filter-group__col--radio {
     flex: 0 0 auto !important;
   }
 
-  .program-status-participating .unified-filter-card__fields-inner > .ant-col:nth-child(3n),
-  .participating-institutions-section .unified-filter-card__fields-inner > .ant-col:nth-child(3n) {
+  .program-status-participating .table-filter-group__fields-inner.ant-row > .ant-col:nth-child(3n),
+  .participating-institutions-section .table-filter-group__fields-inner.ant-row > .ant-col:nth-child(3n) {
     margin-right: 0 !important;
   }
 }
 
 @media (max-width: 960px) {
   .program-status-participating
-    .unified-filter-card__fields-inner
-    > .ant-col:not(.unified-filter-card__col--radio),
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col:not(.table-filter-group__col--radio),
   .participating-institutions-section
-    .unified-filter-card__fields-inner
-    > .ant-col:not(.unified-filter-card__col--radio) {
-    flex: 1 1 calc((100% - 12px) / 2) !important;
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col:not(.table-filter-group__col--radio) {
+    flex: 0 0 auto !important;
+    width: auto;
   }
 
   .program-status-participating
-    .unified-filter-card__fields-inner
-    > .ant-col.unified-filter-card__col--radio,
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col.table-filter-group__col--radio,
   .participating-institutions-section
-    .unified-filter-card__fields-inner
-    > .ant-col.unified-filter-card__col--radio {
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col.table-filter-group__col--radio {
     flex: 0 0 auto !important;
   }
 
-  .program-status-participating .unified-filter-card__fields-inner > .ant-col:nth-child(3n),
-  .participating-institutions-section .unified-filter-card__fields-inner > .ant-col:nth-child(3n) {
+  .program-status-participating .table-filter-group__fields-inner.ant-row > .ant-col:nth-child(3n),
+  .participating-institutions-section .table-filter-group__fields-inner.ant-row > .ant-col:nth-child(3n) {
     margin-right: 12px !important;
   }
 
-  .program-status-participating .unified-filter-card__fields-inner > .ant-col:nth-child(2n),
-  .participating-institutions-section .unified-filter-card__fields-inner > .ant-col:nth-child(2n) {
+  .program-status-participating .table-filter-group__fields-inner.ant-row > .ant-col:nth-child(2n),
+  .participating-institutions-section .table-filter-group__fields-inner.ant-row > .ant-col:nth-child(2n) {
     margin-right: 0 !important;
   }
 }
 
 @media (max-width: 640px) {
   .program-status-participating
-    .unified-filter-card__fields-inner
-    > .ant-col:not(.unified-filter-card__col--radio),
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col:not(.table-filter-group__col--radio),
   .participating-institutions-section
-    .unified-filter-card__fields-inner
-    > .ant-col:not(.unified-filter-card__col--radio) {
-    flex: 1 1 100% !important;
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col:not(.table-filter-group__col--radio) {
+    flex: 0 0 auto !important;
+    width: auto;
     margin-right: 0 !important;
   }
 
   .program-status-participating
-    .unified-filter-card__fields-inner
-    > .ant-col.unified-filter-card__col--radio,
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col.table-filter-group__col--radio,
   .participating-institutions-section
-    .unified-filter-card__fields-inner
-    > .ant-col.unified-filter-card__col--radio {
+    .table-filter-group__fields-inner.ant-row
+    > .ant-col.table-filter-group__col--radio {
     flex: 0 0 auto !important;
     margin-right: 0 !important;
   }
 
-  .program-status-participating .unified-filter-card__actions,
-  .participating-institutions-section .unified-filter-card__actions {
+  .program-status-participating .table-filter-group__shell-actions,
+  .participating-institutions-section .table-filter-group__shell-actions {
     width: 100%;
     justify-content: flex-start;
   }

@@ -77,7 +77,7 @@
 
 .filter-table-layout.school-detail-attendance-section__filter-layout
   .table-filter-group__grid-cell
-  .unified-filter-card__field,
+  .table-filter-group__field,
 .filter-table-layout.school-detail-attendance-section__filter-layout
   .table-filter-group__grid-cell
   .labeled-search-input,
@@ -90,7 +90,7 @@
 .filter-table-layout.school-detail-attendance-section__filter-layout
   .table-filter-group__fields-inner.ant-row
   > .ant-col
-  .unified-filter-card__field,
+  .table-filter-group__field,
 .filter-table-layout.school-detail-attendance-section__filter-layout
   .table-filter-group__fields-inner.ant-row
   > .ant-col
