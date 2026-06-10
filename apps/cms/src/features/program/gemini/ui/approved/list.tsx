@@ -14,6 +14,7 @@ import type {
   GeminiApprovedTrainingStatus,
 } from '../../model/approved/types'
 import { useGeminiApprovedTrainingDetailUrl } from './detail-fullpage-modal'
+import '@/pages/programs/program-list-page.css'
 import './list.css'
 
 type PendingFilters = {
@@ -206,8 +207,11 @@ export function GeminiApprovedTrainingList() {
   )
 
   return (
+    <div className="program-list-page">
     <FilterTableLayout
       bordered={false}
+      className="gemini-approved-training-list"
+      filterResponsiveWrap={false}
       fields={GEMINI_APPROVED_TRAINING_FILTER_FIELDS}
       filters={pendingFilters}
       onFilterChange={(key, value) => {
@@ -296,5 +300,6 @@ export function GeminiApprovedTrainingList() {
         }
       />
     </FilterTableLayout>
+    </div>
   )
 }
