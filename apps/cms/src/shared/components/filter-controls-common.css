@@ -94,9 +94,12 @@
   gap: var(--filter-label-control-gap);
 }
 
-/* TableFilterGroup 필터 컨트롤 — % Col 포함 min/max 260px 고정 (table-filter-group.css와 동일 토큰) */
-.table-filter-group .cms-select,
-.table-filter-group .table-filter-group__field .cms-select,
+/* TableFilterGroup 단일 셀렉트만 240px — pair·addressRegion 내부 셀렉트는 하위 규칙 */
+.table-filter-group
+  .table-filter-group__field--select:not(:has(.table-filter-group__address-region-selects)):not(
+    :has(.table-filter-group__select-pair-selects)
+  )
+  > .cms-select,
 .table-filter-group .labeled-search-input .cms-input,
 .table-filter-group .table-filter-group__field .app-datepicker:not(.app-datepicker--range-split),
 .table-filter-group .app-datepicker:not(.app-datepicker--range-split) {

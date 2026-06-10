@@ -276,7 +276,11 @@ export function TableFilterGroup({
     if (isFilterFieldPairType(field)) {
       parts.push('table-filter-group__col--pair-field')
     }
+    if (field.type === 'dateRange') {
+      parts.push('table-filter-group__col--date-range')
+    }
     if (field.type === 'addressRegion') {
+      parts.push('table-filter-group__col--address-region-field')
       parts.push('table-filter-group__col--address-region')
     }
     return parts.join(' ')

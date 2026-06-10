@@ -98,6 +98,7 @@ export function filterFieldGridCellClassName(field: FilterFieldConfig): string {
   }
   if (field.type === 'addressRegion') {
     parts.push('table-filter-group__grid-cell--address-region-field')
+    parts.push('table-filter-group__grid-cell--address-region')
   }
   return parts.join(' ')
 }
