@@ -7,6 +7,10 @@ import {
   targetLevelOptions,
   programListTargetLevelOptions,
 } from '../constants/program-list-constants'
+import {
+  FILTER_CONTROL_MAX_WIDTH_PX,
+  FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+} from '@/shared/components/table-filter-group-field-width'
 
 /**
  * 「전체 프로그램」「완료 프로그램」위젯 탭
@@ -18,7 +22,7 @@ export const programListOverviewFilterFields = [
     type: 'search' as const,
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
-    width: '34%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'lifecycleStatus',
@@ -26,7 +30,7 @@ export const programListOverviewFilterFields = [
     label: '프로그램 진행 현황',
     placeholder: '전체',
     options: programProgressPhaseFilterOptions,
-    width: '33%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'targetLevel',
@@ -34,7 +38,7 @@ export const programListOverviewFilterFields = [
     label: '교육 대상',
     placeholder: '전체',
     options: programListTargetLevelOptions,
-    width: '33%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
 ]
 
@@ -45,7 +49,7 @@ export const programListScheduledFilterFields = [
     type: 'search' as const,
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
-    width: '34%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'targetLevel',
@@ -53,13 +57,13 @@ export const programListScheduledFilterFields = [
     label: '교육 대상',
     placeholder: '전체',
     options: programListTargetLevelOptions,
-    width: '33%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'operationPeriod',
     type: 'dateRange' as const,
     label: '사업 운영 기간',
-    width: '33%',
+    width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
   },
 ]
 
@@ -70,7 +74,7 @@ export const programListInProgressFilterFields = [
     type: 'search' as const,
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
-    width: '50%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'targetLevel',
@@ -78,7 +82,7 @@ export const programListInProgressFilterFields = [
     label: '교육 대상',
     placeholder: '전체',
     options: programListTargetLevelOptions,
-    width: '50%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
 ]
 
@@ -156,7 +160,7 @@ export const programListFilterFields = [
     label: '프로그램 진행현황',
     placeholder: '전체',
     options: statusOptions,
-    width: '15%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'category',
@@ -164,7 +168,7 @@ export const programListFilterFields = [
     label: '수강자 유형',
     placeholder: '전체',
     options: categoryOptions,
-    width: '15%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'businessArea',
@@ -172,7 +176,7 @@ export const programListFilterFields = [
     label: '교육 분야',
     placeholder: '전체',
     options: businessAreaOptions,
-    width: '15%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'targetLevel',
@@ -180,7 +184,7 @@ export const programListFilterFields = [
     label: '교육 대상',
     placeholder: '전체',
     options: targetLevelOptions,
-    width: '15%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'type',
@@ -191,12 +195,12 @@ export const programListFilterFields = [
       { value: 'all', label: '전체' },
       ...programTypes.map(t => ({ value: t.value, label: t.label })),
     ],
-    width: '15%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'operationPeriod',
     type: 'dateRange' as const,
     label: '운영기간',
-    width: '25%',
+    width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
   },
 ]

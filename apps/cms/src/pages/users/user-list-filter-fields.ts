@@ -3,10 +3,7 @@
  */
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import type { MemberListKind } from '@/shared/config/member-list-kinds'
-import {
-  INSTITUTION_SIDO_FILTER_OPTIONS,
-  getInstitutionSigunguSelectOptions,
-} from '@/shared/config/institution-address-region-data'
+import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
 import {
   INSTRUCTOR_SETTLEMENT_FILTER_OPTIONS,
   INSTRUCTOR_TYPE_FILTER_OPTIONS,
@@ -50,20 +47,7 @@ const MEMBER_ROLE_SELECT_FIELD: FilterFieldConfig = {
 
 const INSTITUTION_FIELDS: FilterFieldConfig[] = [
   searchField('기관명', '기관명을 입력하세요', '34%'),
-  {
-    key: 'institutionAddress',
-    type: 'addressRegion',
-    label: '기관 소재지',
-    width: '22%',
-    addressRegion: {
-      sidoKey: 'institutionSido',
-      sigunguKey: 'institutionSigungu',
-      sidoOptions: INSTITUTION_SIDO_FILTER_OPTIONS,
-      getSigunguOptions: getInstitutionSigunguSelectOptions,
-      sidoPlaceholder: '시/도',
-      sigunguPlaceholder: '시/군/구',
-    },
-  },
+  createInstitutionAddressRegionFilterField(),
   dateRangeField('등록 시기', '44%'),
 ]
 

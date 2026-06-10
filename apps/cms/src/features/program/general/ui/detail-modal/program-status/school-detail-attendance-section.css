@@ -11,7 +11,7 @@
   --filter-field-gap: 12px;
   --table-filter-field-gap: 12px;
   --school-detail-attendance-filter-col-width: min(
-    var(--filter-control-max-width, 260px),
+    var(--filter-control-max-width, 240px),
     calc((100% - 4 * var(--filter-field-gap)) / 5)
   );
   background: transparent;

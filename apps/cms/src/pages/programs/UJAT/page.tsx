@@ -26,6 +26,7 @@ import {
 import type { Program } from '@/types/domain'
 import { FilterTableLayout, CmsButton } from '@/shared/ui'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
 import {
   TemplateWritingPreviewProvider,
@@ -38,6 +39,7 @@ import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 import { UjatProgramDetailFullPageModal } from '@/features/program/ujat/ui/detail-modal/ujat-program-detail-fullpage-modal'
 import { UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/program/ujat/lib/ujat-registration-local-save'
 
+import '@/pages/programs/program-list-page.css'
 import './ujat-program-list-page.css'
 
 const UJAT_VOLUNTEER_CAP_FALLBACK = 30
@@ -209,7 +211,7 @@ function UjatProgramListPageContent() {
         options: progressYearFieldOptions,
         placeholder: '진행년도',
         allowClear: false,
-        width: 260,
+        width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
     ],
     [progressYearFieldOptions]
@@ -317,7 +319,7 @@ function UjatProgramListPageContent() {
   )
 
   return (
-    <div className="ujat-program-list-page">
+    <div className="program-list-page ujat-program-list-page">
       <FilterTableLayout
         fields={filterFields}
         filters={pendingFilters}

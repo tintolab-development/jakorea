@@ -1,6 +1,8 @@
 /**
  * 학교(교사) 회원 목록 — 기관 소재지: 시/도 · 시/군/구 2단 필터용 데이터
  * (행정구역 전량이 아니라 목록·목업 주소에 맞춘 실용적 집합)
+ *
+ * 필터 필드 정의(114.75px×2 + gap 6px): `institution-address-region-filter-field.ts`
  */
 
 export const INSTITUTION_SIDO_VALUES = [
