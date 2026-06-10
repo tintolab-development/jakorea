@@ -76,6 +76,17 @@ function statusText(status: GeminiApprovedTrainingStatus) {
   return <span className={`${base} ${modifier}`}>{STATUS_LABEL[status]}</span>
 }
 
+function instructorNameText(name: string) {
+  if (name === '미지정') {
+    return (
+      <span className="gemini-approved-training-list__instructor gemini-approved-training-list__instructor--unassigned">
+        {name}
+      </span>
+    )
+  }
+  return name
+}
+
 function formatTrainingDatetime(row: GeminiApprovedTrainingRow): string {
   const x = dayjs(row.trainingDate)
   return `${x.format('YYYY. MM. DD')}(${KO_DOW[x.day()]}) | ${row.trainingTimeText}`
@@ -194,6 +205,7 @@ export function GeminiApprovedTrainingList() {
         key: 'instructorName',
         width: COL.instructorName,
         align: 'center',
+        render: (name: string) => instructorNameText(name),
       },
       {
         title: '기관 담당자명',

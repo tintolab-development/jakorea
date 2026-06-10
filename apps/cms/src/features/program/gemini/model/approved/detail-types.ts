@@ -1,5 +1,7 @@
 import type { GeminiApprovedTrainingStatus } from './types'
 
+export type GeminiApprovedTrainingEmploymentStatus = 'ACTIVE' | 'LEAVE' | 'TRANSFER'
+
 export type GeminiApprovedTrainingInstructorInfo = {
   name: string
   region: string
@@ -20,15 +22,14 @@ export type GeminiApprovedTrainingDetail = {
   completedRecruitmentCount: number
   institutionAddress: string
   joinedAt: string
-  connectedSocialAccount: string
   managerNameKo: string
-  managerNameEn: string
+  managerScheduleChangeCount: number
+  managerGender: string
   managerBirthDate: string
+  managerEmploymentStatus: GeminiApprovedTrainingEmploymentStatus
   managerContact: string
   managerEmail: string
-  managerHomeAddress: string
   managerSchool: string
-  managerGrade: string
   managerPosition: string
   managerSubject: string
   instructor: GeminiApprovedTrainingInstructorInfo

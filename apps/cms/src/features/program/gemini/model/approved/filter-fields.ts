@@ -1,8 +1,9 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
 import {
-  INSTITUTION_SIDO_FILTER_OPTIONS,
-  getInstitutionSigunguSelectOptions,
-} from '@/shared/config/institution-address-region-data'
+  FILTER_CONTROL_MAX_WIDTH_PX,
+  FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+} from '@/shared/components/table-filter-group-field-width'
 
 export const GEMINI_APPROVED_TRAINING_FILTER_FIELDS: FilterFieldConfig[] = [
   {
@@ -10,28 +11,15 @@ export const GEMINI_APPROVED_TRAINING_FILTER_FIELDS: FilterFieldConfig[] = [
     type: 'search',
     label: '기관명',
     placeholder: '기관명을 입력하세요',
-    width: '18%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
-  {
-    key: 'institutionAddress',
-    type: 'addressRegion',
-    label: '기관 소재지',
-    width: '24%',
-    addressRegion: {
-      sidoKey: 'institutionSido',
-      sigunguKey: 'institutionSigungu',
-      sidoOptions: INSTITUTION_SIDO_FILTER_OPTIONS,
-      getSigunguOptions: getInstitutionSigunguSelectOptions,
-      sidoPlaceholder: '시/도',
-      sigunguPlaceholder: '시/군/구',
-    },
-  },
+  createInstitutionAddressRegionFilterField(),
   {
     key: 'status',
     type: 'select',
     label: '프로그램 진행 현황',
     placeholder: '전체',
-    width: '16%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: [
       { label: '전체', value: 'ALL' },
       { label: '프로그램 진행 예정', value: 'SCHEDULED' },
@@ -44,7 +32,7 @@ export const GEMINI_APPROVED_TRAINING_FILTER_FIELDS: FilterFieldConfig[] = [
     type: 'select',
     label: '공문 필요 여부',
     placeholder: '전체',
-    width: '14%',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: [
       { label: '전체', value: 'ALL' },
       { label: '필요', value: 'Y' },
@@ -55,8 +43,7 @@ export const GEMINI_APPROVED_TRAINING_FILTER_FIELDS: FilterFieldConfig[] = [
     key: 'trainingDateRange',
     type: 'dateRange',
     label: '연수일',
-    width: '28%',
+    width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
     defaultValue: null,
   },
 ]
-

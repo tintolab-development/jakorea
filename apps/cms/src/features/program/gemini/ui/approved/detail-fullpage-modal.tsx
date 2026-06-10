@@ -5,7 +5,8 @@ import { useSearchParams } from 'react-router-dom'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { useCmsAlert } from '@/shared/ui'
+import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import {
   LnbIconApplicants,
   LnbIconProjectInfo,
@@ -114,9 +115,12 @@ export function GeminiApprovedTrainingDetailFullPageModal({
           {activeLnb === 'info' ? (
             <>
               <div className="gemini-recruitment-detail__header-actions program-detail-fullpage-modal__header-actions">
-                <CmsButton variant="primary" size="large" onClick={handlePrivateInfoClick}>
-                  개인정보 상세보기
-                </CmsButton>
+                <PersonalInfoRevealButton
+                  labelMode="stickyReveal"
+                  revealed={false}
+                  width={180}
+                  onClick={handlePrivateInfoClick}
+                />
               </div>
               <GeminiApprovedTrainingDetailProgramInfoTab detail={detail} />
             </>

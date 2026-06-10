@@ -20,6 +20,12 @@
   color: var(--color-red, #c32f4a);
 }
 
+.gemini-approved-training-detail-info__manager-name-with-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* DetailInfoForm body border + program-detail-info-tab__table-wrapper 이중 테두리 방지 */
 .gemini-approved-training-detail-info__table-only-block .detail-info-form__body {
   border: none;

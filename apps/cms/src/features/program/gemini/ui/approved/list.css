@@ -40,7 +40,7 @@
 /* Ant Col 기본 flex: 0 0 Npx → shrink 허용해 한 줄·무스크롤 */
 .gemini-approved-training-list.filter-table-layout
   .table-filter-group__fields-inner.ant-row
-  > .ant-col.unified-filter-card__col--explicit-width {
+  > .ant-col.table-filter-group__col--explicit-width {
   flex: 0 1 var(--filter-field-width) !important;
   min-width: 0 !important;
   max-width: var(--filter-field-width);
@@ -124,4 +124,16 @@
 
 .gemini-approved-training-list__status--ended {
   color: var(--color-red, #c32f4a);
+}
+
+.gemini-approved-training-list__instructor--unassigned {
+  overflow: hidden;
+  color: var(--gray-85969-d, #85969d);
+  text-align: center;
+  text-overflow: ellipsis;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }

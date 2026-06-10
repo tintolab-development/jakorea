@@ -1,16 +1,19 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { EditableStatusBadge } from '@/shared/components'
+import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
 import type { EditableStatusBadgeTone } from '@/shared/constants/editable-status-badge-tones'
-import type { GeminiApprovedTrainingDetail } from '../../model/approved/detail-types'
+import type {
+  GeminiApprovedTrainingDetail,
+  GeminiApprovedTrainingEmploymentStatus,
+} from '../../model/approved/detail-types'
 import type { GeminiApprovedTrainingStatus } from '../../model/approved/types'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './detail-program-info-tab.css'
 
 const KO_DOW = ['일', '월', '화', '수', '목', '금', '토'] as const
-type GeminiApprovedEmploymentStatusValue = 'ACTIVE' | 'LEAVE' | 'TRANSFER'
 
 const STATUS_LABEL: Record<GeminiApprovedTrainingStatus, string> = {
   SCHEDULED: '프로그램 진행 예정',
@@ -18,13 +21,13 @@ const STATUS_LABEL: Record<GeminiApprovedTrainingStatus, string> = {
   ENDED: '프로그램 진행 종료',
 }
 
-const EMPLOYMENT_STATUS_LABEL: Record<GeminiApprovedEmploymentStatusValue, string> = {
+const EMPLOYMENT_STATUS_LABEL: Record<GeminiApprovedTrainingEmploymentStatus, string> = {
   ACTIVE: '재직 중',
   LEAVE: '휴직',
   TRANSFER: '전근',
 }
 
-const EMPLOYMENT_STATUS_ORDER: GeminiApprovedEmploymentStatusValue[] = [
+const EMPLOYMENT_STATUS_ORDER: GeminiApprovedTrainingEmploymentStatus[] = [
   'ACTIVE',
   'LEAVE',
   'TRANSFER',
@@ -49,12 +52,12 @@ function statusClassName(status: GeminiApprovedTrainingStatus) {
 }
 
 function getGeminiEmploymentBadgeTone(
-  status: GeminiApprovedEmploymentStatusValue
+  status: GeminiApprovedTrainingEmploymentStatus
 ): EditableStatusBadgeTone {
   return status === 'ACTIVE' ? 'blue' : 'gray'
 }
 
-function employmentStatusBadge(status: GeminiApprovedEmploymentStatusValue) {
+function employmentStatusBadge(status: GeminiApprovedTrainingEmploymentStatus) {
   return (
     <EditableStatusBadge
       label={EMPLOYMENT_STATUS_LABEL[status]}
@@ -69,10 +72,25 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
   detail: GeminiApprovedTrainingDetail
 }) {
   const trainingTime = splitTrainingTimeText(detail.trainingTimeText)
-  const [employmentStatus, setEmploymentStatus] =
-    useState<GeminiApprovedEmploymentStatusValue>('ACTIVE')
+  const [employmentStatus, setEmploymentStatus] = useState<GeminiApprovedTrainingEmploymentStatus>(
+    detail.managerEmploymentStatus
+  )
   const [isEmploymentStatusOpen, setIsEmploymentStatusOpen] = useState(false)
   const employmentBadgeStyle = useMemo(() => ({ width: 100, minWidth: 100, maxWidth: 200 }), [])
+
+  useEffect(() => {
+    setEmploymentStatus(detail.managerEmploymentStatus)
+  }, [detail.id, detail.managerEmploymentStatus])
+
+  const managerNameCell =
+    detail.managerScheduleChangeCount > 0 ? (
+      <span className="gemini-approved-training-detail-info__manager-name-with-badge">
+        {detail.managerNameKo}
+        <ScheduleChangeHistoryBadge count={detail.managerScheduleChangeCount} />
+      </span>
+    ) : (
+      detail.managerNameKo
+    )
 
   return (
     <div className="gemini-approved-training-detail-info">
@@ -127,82 +145,48 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
         </DetailInfoForm.Row>
       </DetailInfoForm>
 
-      <div>
-        <DetailInfoForm
-          title="기관 담당자 정보"
-          mode="view"
-          className="program-registration-paragraph mb-16"
-        >
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field label="가입일" view={detail.joinedAt} />
-            <DetailInfoForm.Field label="연동된 소셜 계정" view={detail.connectedSocialAccount} />
-          </DetailInfoForm.Row>
-        </DetailInfoForm>
-        <DetailInfoForm
-          title="기관 담당자 정보"
-          hideHeader
-          mode="view"
-          className="program-registration-paragraph"
-        >
-          <DetailInfoForm.Row type="custom">
-            <DetailInfoForm.NameBlock
-              rows={[
-                {
-                  subLabel: '한글',
-                  main: detail.managerNameKo,
-                  sideLabel: '재직 현황',
-                  side: (
-                    <StatusDropdownCell<GeminiApprovedEmploymentStatusValue>
-                      status={employmentStatus}
-                      statusOptions={EMPLOYMENT_STATUS_ORDER}
-                      renderBadge={status => employmentStatusBadge(status)}
-                      isItemDisabled={(current, option) => current === option}
-                      onChange={setEmploymentStatus}
-                      isOpen={isEmploymentStatusOpen}
-                      onOpenChange={setIsEmploymentStatusOpen}
-                      style={employmentBadgeStyle}
-                      tagLayout="tag100"
-                    />
-                  ),
-                },
-                {
-                  subLabel: '영문',
-                  main: detail.managerNameEn,
-                  sideLabel: '성별 및 생년월일',
-                  side: (
-                    <>
-                      남성
-                      <DetailInfoForm.InputsSeparator />
-                      {detail.managerBirthDate}
-                    </>
-                  ),
-                },
-              ]}
-            />
-          </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field label="연락처" view={detail.managerContact} />
-            <DetailInfoForm.Field label="이메일" view={detail.managerEmail} />
-          </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field label="자택 주소" view={detail.managerHomeAddress} />
-            <DetailInfoForm.Field
-              label="소속 및 담당 학년"
-              view={
-                <>
-                  {detail.managerSchool}
-                  <DetailInfoForm.InputsSeparator />
-                  {detail.managerGrade}
-                </>
-              }
-            />
-          </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field label="직급" view={detail.managerPosition} />
-            <DetailInfoForm.Field label="과목" view={detail.managerSubject} />
-          </DetailInfoForm.Row>
-        </DetailInfoForm>
-      </div>
+      <DetailInfoForm title="기관 담당자 정보" mode="view" className="program-registration-paragraph">
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field label="성명" view={managerNameCell} />
+          <DetailInfoForm.Field
+            label="성별 및 생년월일"
+            view={
+              <>
+                {detail.managerGender}
+                <DetailInfoForm.InputsSeparator />
+                {detail.managerBirthDate}
+              </>
+            }
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field label="소속" view={detail.managerSchool} />
+          <DetailInfoForm.Field
+            label="재직 현황"
+            view={
+              <StatusDropdownCell<GeminiApprovedTrainingEmploymentStatus>
+                status={employmentStatus}
+                statusOptions={EMPLOYMENT_STATUS_ORDER}
+                renderBadge={status => employmentStatusBadge(status)}
+                isItemDisabled={(current, option) => current === option}
+                onChange={setEmploymentStatus}
+                isOpen={isEmploymentStatusOpen}
+                onOpenChange={setIsEmploymentStatusOpen}
+                style={employmentBadgeStyle}
+                tagLayout="tag100"
+              />
+            }
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field label="연락처" view={detail.managerContact} />
+          <DetailInfoForm.Field label="이메일" view={detail.managerEmail} />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field label="직급" view={detail.managerPosition} />
+          <DetailInfoForm.Field label="과목" view={detail.managerSubject} />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
 
       <DetailInfoForm
         title="연수 담당 강사"
@@ -227,7 +211,7 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
                 <tr>
                   <th scope="col">신청 강사명</th>
                   <th scope="col">자택 주소지</th>
-                  <th scope="col">JA 경력</th>
+                  <th scope="col">JA 강의 경력</th>
                   <th scope="col">JA 평가 등급</th>
                   <th scope="col">연락처</th>
                   <th scope="col">이메일</th>

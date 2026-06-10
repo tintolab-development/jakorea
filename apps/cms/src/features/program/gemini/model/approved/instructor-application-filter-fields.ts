@@ -1,8 +1,5 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import {
-  INSTITUTION_SIDO_FILTER_OPTIONS,
-  getInstitutionSigunguSelectOptions,
-} from '@/shared/config/institution-address-region-data'
+import { createHomeAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
 
 export const GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS: FilterFieldConfig[] = [
   {
@@ -12,20 +9,7 @@ export const GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS: FilterFieldConfig[] = 
     placeholder: '강사명을 입력하세요',
     width: '18%',
   },
-  {
-    key: 'homeAddress',
-    type: 'addressRegion',
-    label: '자택 주소지',
-    width: '24%',
-    addressRegion: {
-      sidoKey: 'homeSido',
-      sigunguKey: 'homeSigungu',
-      sidoOptions: INSTITUTION_SIDO_FILTER_OPTIONS,
-      getSigunguOptions: getInstitutionSigunguSelectOptions,
-      sidoPlaceholder: '시/도',
-      sigunguPlaceholder: '시/군/구',
-    },
-  },
+  createHomeAddressRegionFilterField({ label: '자택 주소지' }),
   {
     key: 'experienceYears',
     type: 'select',
