@@ -1,24 +1,107 @@
 .gemini-recruitment-add-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   width: 100%;
+  max-width: 1404px;
+  align-self: stretch;
 }
 
 .gemini-recruitment-add-form__card.paragraph-card {
   border-color: transparent;
+  width: 100%;
+  max-width: 1404px;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+.gemini-recruitment-add-form__card--basic {
+  min-height: 276px;
+}
+
+.gemini-recruitment-add-form__card--basic .paragraph-card__slot {
+  margin-top: 20px;
+}
+
+.gemini-recruitment-add-form__card--training {
+  display: flex;
+  flex-direction: column;
+  height: 480px;
+  min-height: 480px;
+}
+
+.gemini-recruitment-add-form__card--training .paragraph-card__slot {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: 20px;
+}
+
+.gemini-recruitment-add-form__training-form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .gemini-recruitment-add-form__training-form .detail-info-form__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
   padding: 0;
 }
 
+.gemini-recruitment-add-form__training-form .detail-info-form__row--custom {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.gemini-recruitment-add-form__card--training .notice-register-modal__section--editor {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  margin-bottom: 0;
+  flex-shrink: 1;
+}
+
 .gemini-recruitment-add-form__editor {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   width: 100%;
+  min-height: 0;
+}
+
+.gemini-recruitment-add-form__card--training .notice-register-modal__editor-host {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  flex-shrink: 1;
+}
+
+.gemini-recruitment-add-form__card--training .notice-register-modal__editor-host .rich-text-editor {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.gemini-recruitment-add-form__card--training .rich-text-editor__body {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .gemini-recruitment-add-form__footer {
   display: flex;
   justify-content: flex-start;
-  padding-top: 16px;
+  padding-top: 0;
 }

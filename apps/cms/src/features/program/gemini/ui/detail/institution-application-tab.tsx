@@ -5,10 +5,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import {
-  INSTITUTION_SIDO_FILTER_OPTIONS,
-  getInstitutionSigunguSelectOptions,
-} from '@/shared/config/institution-address-region-data'
+import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import './institution-application-tab.css'
 
@@ -48,20 +45,7 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     placeholder: '기관명을 입력하세요',
     width: '25%',
   },
-  {
-    key: 'institutionAddress',
-    type: 'addressRegion',
-    label: '기관 소재지',
-    width: '25%',
-    addressRegion: {
-      sidoKey: 'institutionSido',
-      sigunguKey: 'institutionSigungu',
-      sidoOptions: INSTITUTION_SIDO_FILTER_OPTIONS,
-      getSigunguOptions: getInstitutionSigunguSelectOptions,
-      sidoPlaceholder: '시/도',
-      sigunguPlaceholder: '시/군/구',
-    },
-  },
+  createInstitutionAddressRegionFilterField(),
   {
     key: 'approvalStatus',
     type: 'select',

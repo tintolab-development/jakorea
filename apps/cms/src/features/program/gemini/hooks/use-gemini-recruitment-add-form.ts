@@ -83,7 +83,7 @@ export function useGeminiRecruitmentAddForm(open: boolean) {
       setTitle('')
       setApplicationPeriod(null)
       setTrainingRequestPeriod(null)
-      setMinStudentCount(undefined)
+      setMinStudentCount(15)
       setTrainingContentMarkdown('')
     }
     setHydrated(true)

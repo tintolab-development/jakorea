@@ -28,3 +28,7 @@
   color: var(--default-BK, #3d3d3d);
   white-space: pre-wrap;
 }
+
+.gemini-recruitment-info-tab__editor {
+  width: 100%;
+}

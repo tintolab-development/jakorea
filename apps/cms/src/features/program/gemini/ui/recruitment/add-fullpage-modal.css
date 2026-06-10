@@ -3,6 +3,10 @@
  * 청록 헤더 · 회색 본문 · 단락 중앙 정렬 · 우측 네비 없음
  */
 
+.gemini-recruitment-add-fullpage-modal {
+  --template-preview-paragraph-column-max: 1404px;
+}
+
 .gemini-recruitment-add-fullpage-modal .full-page-modal__actions {
   display: none;
 }
@@ -27,7 +31,7 @@
 .gemini-recruitment-add-fullpage-modal .full-page-modal__contents {
   display: block;
   width: 100%;
-  max-width: var(--template-preview-paragraph-column-max, 1254px);
+  max-width: var(--template-preview-paragraph-column-max, 1404px);
 }
 
 .gemini-recruitment-add-fullpage-modal .full-page-modal__right-wrap {
@@ -36,12 +40,12 @@
 
 .gemini-recruitment-add-fullpage-modal .full-page-modal__left {
   width: 100%;
-  max-width: var(--template-preview-paragraph-column-max, 1254px);
+  max-width: var(--template-preview-paragraph-column-max, 1404px);
   margin: 0 auto;
 }
 
 .gemini-recruitment-add-fullpage-modal .gemini-recruitment-add-form {
-  gap: 16px;
+  gap: 20px;
 }
 
 .gemini-recruitment-add-fullpage-modal__nav-placeholder {

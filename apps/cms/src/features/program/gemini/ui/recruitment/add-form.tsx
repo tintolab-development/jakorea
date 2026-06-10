@@ -30,7 +30,6 @@ export function GeminiRecruitmentAddForm({ onCancel, form }: GeminiRecruitmentAd
     minStudentCount,
     handleMinStudentCountChange,
     editor,
-    editorMinHeight,
   } = form
 
   if (!hydrated) {
@@ -40,7 +39,7 @@ export function GeminiRecruitmentAddForm({ onCancel, form }: GeminiRecruitmentAd
   return (
     <div className="gemini-recruitment-add-form">
       <ParagraphCard
-        className="gemini-recruitment-add-form__card"
+        className="gemini-recruitment-add-form__card gemini-recruitment-add-form__card--basic"
         editableHeading={paragraphCardStaticHeading('기본 정보', { required: true })}
       >
         <DetailInfoForm
@@ -113,7 +112,7 @@ export function GeminiRecruitmentAddForm({ onCancel, form }: GeminiRecruitmentAd
       </ParagraphCard>
 
       <ParagraphCard
-        className="gemini-recruitment-add-form__card"
+        className="gemini-recruitment-add-form__card gemini-recruitment-add-form__card--training"
         editableHeading={paragraphCardStaticHeading('연수 내용', { required: true })}
       >
         <DetailInfoForm
@@ -125,7 +124,7 @@ export function GeminiRecruitmentAddForm({ onCancel, form }: GeminiRecruitmentAd
           <DetailInfoForm.Row type="custom">
             <div className="notice-register-modal__section notice-register-modal__section--editor gemini-recruitment-add-form__editor">
               <div className="notice-register-modal__editor-host">
-                <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+                <RichTextEditor editor={editor} />
               </div>
             </div>
           </DetailInfoForm.Row>

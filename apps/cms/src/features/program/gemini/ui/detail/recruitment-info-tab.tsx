@@ -1,9 +1,16 @@
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
+import type { Editor } from '@tiptap/react'
+import { useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { StatusBadge } from '@/shared/components/status-badge'
 import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { RichTextEditor } from '@/shared/rich-text'
+import {
+  ANNOUNCEMENT_PUBLISHED_OPTIONS,
+} from '@/features/program/shared/lib/participant-recruitment-form-options'
+import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import type { GeminiRecruitmentDetail } from '../../model/recruitment/detail-types'
 import type { GeminiRecruitmentInfoEditDraft } from '../../model/recruitment/info-edit-draft'
 import { toDateRangeValue } from '../../model/recruitment/info-edit-draft'
@@ -15,6 +22,7 @@ import {
   geminiRecruitmentStatusToEnrollmentDisplay,
   resolveRecruitmentStatus,
 } from '../../lib/recruitment/resolve-status'
+import '@/features/posts/ui/notice-register-modal.css'
 import './recruitment-info-tab.css'
 
 function commitDateRange(
@@ -27,24 +35,41 @@ function commitDateRange(
   onCommit(start.startOf('day').toISOString(), end.startOf('day').toISOString())
 }
 
+function resolveAnnouncementPublishedLabel(
+  value: GeminiRecruitmentDetail['announcementPublished']
+): string {
+  return (
+    ANNOUNCEMENT_PUBLISHED_OPTIONS.find(option => option.value === value)?.label ?? '-'
+  )
+}
+
 export function GeminiRecruitmentInfoTab({
   detail,
   todayKey,
   isEditMode = false,
   draft = null,
   onDraftChange,
+  editor = null,
+  editorMinHeight,
 }: {
   detail: GeminiRecruitmentDetail
   todayKey: string
   isEditMode?: boolean
   draft?: GeminiRecruitmentInfoEditDraft | null
   onDraftChange?: (patch: Partial<GeminiRecruitmentInfoEditDraft>) => void
+  editor?: Editor | null
+  editorMinHeight?: string | number
 }) {
   const status = resolveRecruitmentStatus(
     detail.applicationPeriodStart,
     detail.applicationPeriodEnd,
     dayjs(todayKey)
   )
+
+  const resolvedDetail = useMemo((): GeminiRecruitmentDetail => {
+    if (!isEditMode || draft == null) return detail
+    return { ...detail, ...draft }
+  }, [detail, draft, isEditMode])
 
   const applicationRange = draft
     ? toDateRangeValue(draft.applicationPeriodStart, draft.applicationPeriodEnd)
@@ -89,10 +114,22 @@ export function GeminiRecruitmentInfoTab({
           mode={basicInfoMode}
           className="program-registration-paragraph gemini-recruitment-info-tab__basic-info-block"
         >
-          <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="공고 게시 여부"
+              view={resolveAnnouncementPublishedLabel(resolvedDetail.announcementPublished)}
+              edit={
+                draft != null && onDraftChange != null ? (
+                  <ParticipantRecruitmentAnnouncementPublishedRadios
+                    value={draft.announcementPublished}
+                    onChange={next => onDraftChange({ announcementPublished: next })}
+                  />
+                ) : undefined
+              }
+            />
             <DetailInfoForm.Field
               label="공고명"
-              view={detail.title}
+              view={resolvedDetail.title}
               edit={
                 draft != null && onDraftChange != null ? (
                   <CmsInput
@@ -110,8 +147,8 @@ export function GeminiRecruitmentInfoTab({
             <DetailInfoForm.Field
               label="신청 기간"
               view={formatRecruitmentPeriodRange(
-                detail.applicationPeriodStart,
-                detail.applicationPeriodEnd
+                resolvedDetail.applicationPeriodStart,
+                resolvedDetail.applicationPeriodEnd
               )}
               edit={
                 draft != null && onDraftChange != null ? (
@@ -135,8 +172,8 @@ export function GeminiRecruitmentInfoTab({
             <DetailInfoForm.Field
               label="연수 요청 가능 기간"
               view={formatRecruitmentPeriodRange(
-                detail.trainingRequestPeriodStart,
-                detail.trainingRequestPeriodEnd
+                resolvedDetail.trainingRequestPeriodStart,
+                resolvedDetail.trainingRequestPeriodEnd
               )}
               edit={
                 draft != null && onDraftChange != null ? (
@@ -161,7 +198,7 @@ export function GeminiRecruitmentInfoTab({
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="최소 수강 인원"
-              view={detail.minStudentCount.toLocaleString('ko-KR')}
+              view={resolvedDetail.minStudentCount.toLocaleString('ko-KR')}
               edit={
                 draft != null && onDraftChange != null ? (
                   <CmsInput
@@ -195,9 +232,26 @@ export function GeminiRecruitmentInfoTab({
         </DetailInfoForm>
       </div>
 
-      <DetailInfoForm title="연수 내용" mode="view" className="gemini-recruitment-info-tab__training">
+      <DetailInfoForm
+        title="연수 내용"
+        mode={isEditMode && draft != null && onDraftChange != null ? 'edit' : 'view'}
+        className="gemini-recruitment-info-tab__training"
+      >
         <DetailInfoForm.Row type="custom">
-          <div className="gemini-recruitment-info-tab__training-body">{detail.trainingContent}</div>
+          {isEditMode && draft != null && onDraftChange != null ? (
+            <div className="notice-register-modal__section notice-register-modal__section--editor gemini-recruitment-info-tab__editor">
+              <div className="notice-register-modal__editor-host">
+                <RichTextEditor
+                  editor={editor}
+                  minHeight={editorMinHeight}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="gemini-recruitment-info-tab__training-body">
+              {resolvedDetail.trainingContent}
+            </div>
+          )}
         </DetailInfoForm.Row>
       </DetailInfoForm>
     </div>

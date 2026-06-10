@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
+import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import {
   applyInfoEditDraft,
   detailToInfoEditDraft,
@@ -54,6 +55,18 @@ export function useGeminiRecruitmentInfoEdit(
     resetDraftFromDetail()
   }, [isEditMode, resetDraftFromDetail])
 
+  const trainingContentSource =
+    isEditMode && draft != null ? draft.trainingContent : detail?.trainingContent ?? ''
+
+  const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
+    isEditMode && detail != null,
+    trainingContentSource,
+    `gemini-recruitment-info-edit-${recruitmentId ?? 'none'}-${isEditMode ? 'edit' : 'view'}`,
+    {
+      placeholder: '모집 내용을 입력해 주세요. (ex. 연수 모집 절차, 연수 내용 등)',
+    }
+  )
+
   const setEditMode = useCallback(
     (enabled: boolean) => {
       setSearchParams(
@@ -83,19 +96,25 @@ export function useGeminiRecruitmentInfoEdit(
 
   const handleSave = useCallback(() => {
     if (detail == null || draft == null) return
-    const nextDetail = applyInfoEditDraft(detail, draft)
+    const nextDraft: GeminiRecruitmentInfoEditDraft = {
+      ...draft,
+      trainingContent: getMarkdown() || draft.trainingContent,
+    }
+    const nextDetail = applyInfoEditDraft(detail, nextDraft)
     patchRecruitmentDetail(detail.id, {
       title: nextDetail.title,
+      announcementPublished: nextDetail.announcementPublished,
       applicationPeriodStart: nextDetail.applicationPeriodStart,
       applicationPeriodEnd: nextDetail.applicationPeriodEnd,
       trainingRequestPeriodStart: nextDetail.trainingRequestPeriodStart,
       trainingRequestPeriodEnd: nextDetail.trainingRequestPeriodEnd,
       minStudentCount: nextDetail.minStudentCount,
+      trainingContent: nextDetail.trainingContent,
       updatedAt: nextDetail.updatedAt,
     })
     setEditMode(false)
     setDetailVersion(v => v + 1)
-  }, [detail, draft, setEditMode])
+  }, [detail, draft, getMarkdown, setEditMode])
 
   const patchDraft = useCallback((patch: Partial<GeminiRecruitmentInfoEditDraft>) => {
     setDraft(prev => (prev == null ? prev : { ...prev, ...patch }))
@@ -115,5 +134,7 @@ export function useGeminiRecruitmentInfoEdit(
     patchDraft,
     handleEdit,
     handleSave,
+    editor,
+    editorMinHeight,
   }
 }

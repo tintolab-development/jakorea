@@ -58,6 +58,8 @@ export function GeminiRecruitmentDetailFullPageModal({
     patchDraft,
     handleEdit: handleInfoEdit,
     handleSave: handleInfoSave,
+    editor: infoEditor,
+    editorMinHeight: infoEditorMinHeight,
   } = useGeminiRecruitmentInfoEdit(recruitmentId, todayKey)
 
   const setActiveLnb = useCallback(
@@ -154,6 +156,8 @@ export function GeminiRecruitmentDetailFullPageModal({
                 isEditMode={isEditModeInfo}
                 draft={infoDraft}
                 onDraftChange={patchDraft}
+                editor={infoEditor}
+                editorMinHeight={infoEditorMinHeight}
               />
             </>
           ) : (

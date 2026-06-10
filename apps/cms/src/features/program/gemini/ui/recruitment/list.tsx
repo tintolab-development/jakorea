@@ -26,8 +26,6 @@ import { resolveRecruitmentStatus } from '../../lib/recruitment/resolve-status'
 import { useGeminiRecruitmentDetailUrl } from '../detail/fullpage-modal'
 import { useGeminiRecruitmentAddUrl } from './add-fullpage-modal'
 import '@/pages/programs/program-list-page.css'
-import '@/pages/users/user-list-page.css'
-import '@/features/program/general/ui/program-list.css'
 import './list.css'
 
 const RECRUITMENT_STATUS_LABEL: Record<GeminiRecruitmentStatus, string> = {
@@ -170,8 +168,10 @@ export function GeminiRecruitmentList() {
   )
 
   return (
+    <div className="program-list-page">
     <FilterTableLayout
       bordered={false}
+      filterResponsiveWrap={false}
       fields={GEMINI_RECRUITMENT_FILTER_FIELDS}
       filters={{
         title: pendingFilters.title,
@@ -224,5 +224,6 @@ export function GeminiRecruitmentList() {
         }
       />
     </FilterTableLayout>
+    </div>
   )
 }
