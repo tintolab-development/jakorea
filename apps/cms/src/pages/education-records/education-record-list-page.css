@@ -25,6 +25,11 @@
   min-width: 0;
 }
 
+/* 필터 Col 고정 폭(240/500) + 칸 gap 12px만 — flex grow로 행 전체 stretch 금지 */
+.education-record-list-page__filter .table-filter-group__fields-inner.ant-row {
+  flex-wrap: wrap;
+}
+
 .education-record-list-page__filter .unified-filter-card {
   margin-bottom: 0 !important;
   padding: 0 !important;

@@ -1,20 +1,31 @@
 /**
  * 필터 영역 Select(드롭다운) 및 검색 인풋 공통 크기
- * 기본 240×44px, 최대 너비 --filter-control-max-width(260px), 화면 크기에 따라 반응형 적용
- * 필터 칸 사이 간격: --filter-field-gap(기본 12px) — TableFilterGroup·UnifiedFilterCard·ListPageFilters 등
- * 레이블·컨트롤 사이 갭: --filter-label-control-gap (= --spacing-6, 6px)
- * 필터 레이블 타이포: --filter-area-label-* (14px / 500 / 150% / default-BK / Pretendard 계열)
- * 필터 레이블 텍스트 영역 높이: --filter-label-height (27px)
- * 프로그램 상세 탭(진행현황/신청자/담당자): 필터 간격·필터-버튼 간격 12px (각 탭 CSS에서 gutter 12, 버튼 col padding 12px 적용)
+ *
+ * ## 공통 규격 (FilterTableGroup · UnifiedFilterCard)
+ * - 단일 검색·셀렉트: **240×44px** (`--filter-control-width` = `--filter-control-max-width` = 240px)
+ * - 분리형 dateRange·selectPair: 열 500px (2×240 + --filter-control-range-split-between 20px)
+ * - addressRegion(기관 소재지): 열 235.5px (시/도·시/군/구 각 114.75px + 사이 gap 6px)
+ * - 필터 칸 사이 gap: --filter-field-gap (12px)
+ * - 레이블·컨트롤 gap: --filter-label-control-gap (6px)
+ * - 조회 버튼: 160×44px (table-filter-group.css)
+ *
+ * FilterFieldConfig.width: 단일 필드는 `FILTER_CONTROL_MAX_WIDTH_PX`(240), 기간·이중셀렉트는
+ * `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX`(500). `%` 폭은 행 전체 stretch — 목록 필터에 쓰지 않음.
+ *
+ * 상세: apps/cms/.cursor/rules/design/filter-area-layout.mdc
  */
 
 :root {
   --filter-control-width: 240px;
-  --filter-control-max-width: 260px;
+  --filter-control-max-width: 240px;
   /** 분리형 기간(시작·종료 두 칸): 구분자(~) 좌우 margin 6px 등 포함한 가운데 간격 */
   --filter-control-range-split-between: 20px;
   /** 필터 칸 사이·TableFilterGroup·UnifiedFilterCard 행 간격 */
   --filter-field-gap: 12px;
+  /** addressRegion(시/도·시/군/구) 하위 셀렉트 사이 gap */
+  --filter-address-region-pair-gap: 6px;
+  /** addressRegion 하위 셀렉트 각 폭 */
+  --filter-address-region-segment-width: 114.75px;
   --filter-control-height: 44px;
   --filter-control-min-width: 180px;
   --filter-label-height: 27px;
@@ -99,7 +110,7 @@
   border-radius: 8px;
 }
 
-/* 분리형 기간(AppDateRangePicker): 바깥은 두 칸 + 구분자까지, 각 세그먼트는 아래에서 max 260 */
+/* 분리형 기간(AppDateRangePicker): 바깥은 두 칸 + 구분자까지, 각 세그먼트는 아래에서 max 240 */
 .unified-filter-card .unified-filter-card__field .app-datepicker.app-datepicker--range-split,
 .unified-filter-card .app-datepicker.app-datepicker--range-split {
   min-width: var(--filter-control-width);

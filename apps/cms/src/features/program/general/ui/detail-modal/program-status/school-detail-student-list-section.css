@@ -3,7 +3,7 @@
  */
 
 .school-detail-student-list-section {
-  --student-list-filter-column-width: 260px;
+  --student-list-filter-column-width: 240px;
   width: 100%;
 }
 

@@ -359,14 +359,14 @@
 /* Select: single-row에서 min-width:0 때문에 트리거가 과도하게 줄지 않도록, 드롭다운 폭과 정렬 */
 .unified-filter-card__field--select {
   width: 100%;
-  min-width: min(var(--filter-select-min-width, 280px), var(--filter-control-max-width, 260px));
+  min-width: min(var(--filter-select-min-width, 280px), var(--filter-control-max-width, 240px));
 }
 
 .unified-filter-card--single-row
   .unified-filter-card__fields-inner
   .ant-col
   .unified-filter-card__field--select {
-  min-width: min(var(--filter-select-min-width, 280px), var(--filter-control-max-width, 260px));
+  min-width: min(var(--filter-select-min-width, 280px), var(--filter-control-max-width, 240px));
 }
 
 .unified-filter-card__field--select .cms-select {
@@ -400,7 +400,7 @@
 
 .unified-filter-card--single-row .unified-filter-card__fields-inner .ant-col .ant-select,
 .unified-filter-card--single-row .unified-filter-card__fields-inner .ant-col .cms-select {
-  min-width: min(var(--filter-select-min-width, 280px), var(--filter-control-max-width, 260px));
+  min-width: min(var(--filter-select-min-width, 280px), var(--filter-control-max-width, 240px));
 }
 
 .unified-filter-card--single-row .unified-filter-card__fields-inner .ant-col .ant-picker-range,
@@ -423,16 +423,77 @@
 
 .unified-filter-card__address-region-selects {
   display: flex;
-  gap: var(--filter-field-gap, 12px);
   width: 100%;
   min-width: 0;
+  gap: var(
+    --filter-field-pair-gap,
+    var(--filter-address-region-pair-gap, 6px)
+  );
 }
 
-.unified-filter-card__address-region-selects > .cms-select {
+/* addressRegion: % 열 — 행 비율에 맞춰 grow */
+.unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--pct-width.unified-filter-card__col--address-region-field
+  .unified-filter-card__address-region-selects
+  > .cms-select {
   flex: 1 1 0;
   min-width: 0;
 }
 
-.unified-filter-card--single-row .unified-filter-card__address-region-selects .cms-select {
+/* addressRegion: 픽셀 열 — 시/도·시/군/구 각 114.75px, gap 6px */
+.unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width.unified-filter-card__col--address-region-field:not(
+    .unified-filter-card__col--pct-width
+  )
+  .unified-filter-card__address-region-selects,
+.unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width.unified-filter-card__col--address-region-field:not(
+    .unified-filter-card__col--pct-width
+  )
+  .unified-filter-card__address-region-selects {
+  width: 100%;
+  max-width: min(100%, var(--filter-field-width, 235.5px));
+}
+
+.unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width.unified-filter-card__col--address-region-field:not(
+    .unified-filter-card__col--pct-width
+  )
+  .unified-filter-card__address-region-selects
+  > .cms-select,
+.unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width.unified-filter-card__col--address-region-field:not(
+    .unified-filter-card__col--pct-width
+  )
+  .unified-filter-card__address-region-selects
+  > .cms-select {
+  flex: 0 0
+    var(
+      --filter-field-pair-segment-width,
+      var(--filter-address-region-segment-width, 114.75px)
+    ) !important;
+  width: var(
+    --filter-field-pair-segment-width,
+    var(--filter-address-region-segment-width, 114.75px)
+  ) !important;
+  min-width: var(
+    --filter-field-pair-segment-width,
+    var(--filter-address-region-segment-width, 114.75px)
+  ) !important;
+  max-width: var(
+    --filter-field-pair-segment-width,
+    var(--filter-address-region-segment-width, 114.75px)
+  ) !important;
+}
+
+.unified-filter-card--single-row
+  .unified-filter-card__fields-inner
+  .ant-col.unified-filter-card__col--explicit-width.unified-filter-card__col--address-region-field:not(
+    .unified-filter-card__col--pct-width
+  )
+  .unified-filter-card__address-region-selects
+  .cms-select {
   min-width: 0 !important;
 }

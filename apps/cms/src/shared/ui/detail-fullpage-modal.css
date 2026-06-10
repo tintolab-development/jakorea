@@ -606,7 +606,7 @@
   > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio):not(
     .unified-filter-card__col--pct-width
   ) {
-  max-width: min(100%, var(--filter-control-max-width, 260px));
+  max-width: min(100%, var(--filter-control-max-width, 240px));
   box-sizing: border-box;
 }
 
@@ -618,7 +618,7 @@
   max-width: min(
     100%,
     calc(
-      2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+      2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
     )
   );
 }
@@ -630,7 +630,7 @@
   ):has(.unified-filter-card__address-region-selects) {
   max-width: min(
     100%,
-    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px))
+    calc(2 * var(--filter-control-max-width, 240px) + var(--filter-field-gap, 12px))
   );
 }
 

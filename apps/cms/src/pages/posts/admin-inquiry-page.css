@@ -12,19 +12,19 @@
  * 문의일(dateRange): 래퍼 전체를 260px 한 덩어리로 제한하지 않음 — 분리형 각 세그먼트(시작·종료)만 max 260px.
  */
 .admin-inquiry-page .table-filter-group__grid-cell {
-  max-width: min(100%, var(--filter-control-max-width, 260px));
-  width: min(100%, var(--filter-control-max-width, 260px));
+  max-width: min(100%, var(--filter-control-max-width, 240px));
+  width: min(100%, var(--filter-control-max-width, 240px));
   box-sizing: border-box;
 }
 
 .admin-inquiry-page .table-filter-group__grid-cell[data-filter-field-key='dateRange'] {
   max-width: min(
     100%,
-    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
+    calc(2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px))
   );
   width: min(
     100%,
-    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
+    calc(2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px))
   );
 }
 
@@ -33,7 +33,7 @@
   .cms-datepicker.cms-datepicker--range-split {
   max-width: min(
     100%,
-    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px))
+    calc(2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px))
   );
   width: 100%;
   box-sizing: border-box;
@@ -43,7 +43,7 @@
   .table-filter-group__grid-cell[data-filter-field-key='dateRange']
   .cms-datepicker.cms-datepicker--range-split
   .cms-datepicker__segment {
-  max-width: min(100%, var(--filter-control-max-width, 260px)) !important;
+  max-width: min(100%, var(--filter-control-max-width, 240px)) !important;
   flex: 1 1 0;
   width: 100%;
   box-sizing: border-box;

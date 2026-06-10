@@ -1,4 +1,5 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import {
   SCHOOL_ATTENDANCE_FILTER_ALL,
   SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS,
@@ -9,7 +10,7 @@ import {
   STUDENT_LIST_GENDER_FILTER_OPTIONS,
 } from './student-list-filter-fields'
 
-const FILTER_CONTROL_WIDTH = 260
+const FILTER_CONTROL_WIDTH = FILTER_CONTROL_MAX_WIDTH_PX
 
 const attendanceStatusOptions = [
   { label: '전체', value: SCHOOL_ATTENDANCE_FILTER_ALL },

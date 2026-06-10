@@ -20,7 +20,7 @@
   --table-filter-field-gap: 12px;
   /* 1행 5열과 동일한 칸 너비 — 2행 필드에도 동일 적용 */
   --ujat-volunteer-filter-col-width: min(
-    var(--filter-control-max-width, 260px),
+    var(--filter-control-max-width, 240px),
     calc((100% - 4 * var(--filter-field-gap)) / 5)
   );
   background: transparent;

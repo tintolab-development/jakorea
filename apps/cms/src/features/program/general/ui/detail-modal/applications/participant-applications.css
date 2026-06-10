@@ -10,9 +10,9 @@
    */
   --filter-field-gap: 12px;
   --table-filter-field-gap: 12px;
-  --filter-control-width: 260px;
-  --filter-control-max-width: 260px;
-  --application-filter-column-width: 260px;
+  --filter-control-width: 240px;
+  --filter-control-max-width: 240px;
+  --application-filter-column-width: 240px;
   --application-filter-address-segment-width: 120px;
   --application-filter-address-pair-gap: 12px;
   --application-filter-address-region-width: calc(

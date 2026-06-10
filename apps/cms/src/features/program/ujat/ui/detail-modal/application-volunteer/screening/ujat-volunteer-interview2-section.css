@@ -10,7 +10,7 @@
   --filter-field-gap: 12px;
   --table-filter-field-gap: 12px;
   --ujat-interview2-filter-col-width: min(
-    var(--filter-control-max-width, 260px),
+    var(--filter-control-max-width, 240px),
     calc((100% - 5 * var(--filter-field-gap)) / 6)
   );
   background: transparent;

@@ -8,9 +8,9 @@
 
 .participating-institutions-section {
   --filter-field-gap: 12px;
-  --filter-control-width: 260px;
-  --filter-control-max-width: 260px;
-  --participating-institutions-filter-column-width: 260px;
+  --filter-control-width: 240px;
+  --filter-control-max-width: 240px;
+  --participating-institutions-filter-column-width: 240px;
   --participating-institutions-filter-address-region-width: 252px;
 }
 

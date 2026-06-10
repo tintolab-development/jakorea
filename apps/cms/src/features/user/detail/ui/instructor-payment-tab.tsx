@@ -11,6 +11,7 @@ import {
 import dayjs from 'dayjs'
 import { Button } from 'antd'
 import { TableFilterGroup, type FilterFieldConfig } from '@/shared/components/table-filter-group'
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { CmsButton } from '@/shared/ui/cms-button'
 import {
   getInstructorSettlementRows,
@@ -42,14 +43,14 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     type: 'search',
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
-    width: 260,
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'institutionName',
     type: 'search',
     label: '참여 기관명',
     placeholder: '기관명을 입력하세요',
-    width: 260,
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'settlementStatus',
@@ -58,7 +59,7 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     placeholder: '전체',
     options: SETTLEMENT_STATUS_OPTIONS,
     allowClear: true,
-    width: 260,
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
 ]
 
