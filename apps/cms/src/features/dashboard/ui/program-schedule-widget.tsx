@@ -34,7 +34,6 @@ import {
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import { SegmentedTab } from '@/shared/ui'
 import '@/shared/ui/widget-more-button.css'
-import '@/shared/components/program-calendar.css'
 import './program-schedule-widget.css'
 import type { User } from '@/types/user'
 import { filterProgramsByACL } from '@/features/permission-request/lib/program-acl'
@@ -887,7 +886,7 @@ export function ProgramScheduleWidget({
           <div className="program-schedule-widget__head-right">
             <div className="program-schedule-widget__view-mode-switch">
               <SegmentedTab
-                size="small"
+                size="medium"
                 value={viewMode}
                 onChange={v => {
                   const mode = v as 'month' | 'week'
@@ -918,14 +917,14 @@ export function ProgramScheduleWidget({
       <div className="program-schedule-widget__content">
         {viewMode === 'month' ? (
           <div className="program-schedule-widget__body program-schedule-widget__body--month">
-            <div className="program-calendar-main program-schedule-widget__calendar-main">
+            <div className="program-schedule-widget__calendar-main">
               {renderMonthGrid()}
             </div>
             {eventListSection}
           </div>
         ) : (
           <div className="program-schedule-widget__body program-schedule-widget__body--week">
-            <div className="program-calendar-main program-schedule-widget__calendar-main">
+            <div className="program-schedule-widget__calendar-main">
               {renderWeekView()}
             </div>
           </div>

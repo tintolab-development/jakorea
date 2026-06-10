@@ -173,6 +173,18 @@
     --calendar-main-week-min-height,
     calc(1344px + 40px + 50px + 32px)
   );
+  flex-shrink: 0;
+}
+
+.calendar-set-scroll-host:has(.calendar-set .calendar-week--time-grid) {
+  min-width: var(--calendar-set-min-width-2col-week);
+}
+
+.calendar-set:has(.calendar-week--time-grid) > .calendar-main-container,
+.calendar-set:has(.calendar-week--time-grid) > .calendar-main {
+  flex-shrink: 0;
+  min-width: var(--calendar-main-week-min-width, calc(112px + 20px + 116px * 7 + 40px));
+  max-width: none;
 }
 
 .calendar-set:not(:has(.calendar-sub-left)) > .calendar-main-container,

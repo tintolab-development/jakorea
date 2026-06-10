@@ -17,6 +17,15 @@
     --calendar-main-week-min-height,
     calc(1344px + 40px + 50px + 32px)
   );
+  flex-shrink: 0;
+  max-width: none;
+  align-items: flex-start;
+}
+
+.calendar-main:has(.calendar-week--time-grid) .calendar-header {
+  width: 100%;
+  align-self: stretch;
+  box-sizing: border-box;
 }
 
 /* header */

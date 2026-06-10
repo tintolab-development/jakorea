@@ -236,32 +236,33 @@ export function WeekView({
 
   return (
     <div className="calendar-week calendar-week--time-grid" style={rootStyle}>
-      <div className="calendar-week-time-grid__header-row" role="row">
-        <div className="calendar-week-time-grid__header-corner" aria-hidden />
-        {weekDates.map(date => {
-          const isSelected = date.isSame(selectedDate, 'day')
-          const dateKey = date.format('YYYY-MM-DD')
-          const dayLabel = formatWeekHeaderDayLabel(date)
-          const weekday = WEEK_HEADER_WEEKDAY_EN[date.day()]
-          return (
-            <button
-              key={dateKey}
-              type="button"
-              className={[
-                'calendar-week-time-grid__header-day',
-                isSelected ? 'calendar-week-time-grid__header-day--selected' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              onClick={() => onSelectDate(date)}
-            >
-              {`${dayLabel} (${weekday})`}
-            </button>
-          )
-        })}
-      </div>
-      <div className="calendar-week-time-grid__scroll">
-        <div className="calendar-week-time-grid__shell">
+      <div className="calendar-week-time-grid__sync-scroll">
+        <div className="calendar-week-time-grid__header-row" role="row">
+          <div className="calendar-week-time-grid__header-corner" aria-hidden />
+          {weekDates.map(date => {
+            const isSelected = date.isSame(selectedDate, 'day')
+            const dateKey = date.format('YYYY-MM-DD')
+            const dayLabel = formatWeekHeaderDayLabel(date)
+            const weekday = WEEK_HEADER_WEEKDAY_EN[date.day()]
+            return (
+              <button
+                key={dateKey}
+                type="button"
+                className={[
+                  'calendar-week-time-grid__header-day',
+                  isSelected ? 'calendar-week-time-grid__header-day--selected' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                onClick={() => onSelectDate(date)}
+              >
+                {`${dayLabel} (${weekday})`}
+              </button>
+            )
+          })}
+        </div>
+        <div className="calendar-week-time-grid__scroll">
+          <div className="calendar-week-time-grid__shell">
           <div className="calendar-week-time-grid__gutter">
             {WEEK_TIME_GRID_HOUR_ROWS.map((row, hourIdx) => (
               <div
@@ -477,6 +478,7 @@ export function WeekView({
               )
             })}
           </div>
+        </div>
         </div>
       </div>
     </div>

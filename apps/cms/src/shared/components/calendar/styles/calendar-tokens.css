@@ -13,6 +13,11 @@
   --calendar-week-total-px: calc(24 * var(--calendar-week-hour-px));
   --calendar-week-gutter-width: 112px;
   --calendar-week-gutter-gap: 20px;
+  --calendar-week-columns-min-width: calc(var(--calendar-cell-min-width) * 7);
+  --calendar-week-time-grid-min-width: calc(
+    var(--calendar-week-gutter-width) + var(--calendar-week-gutter-gap) +
+      var(--calendar-week-columns-min-width)
+  );
   --calendar-month-week-count: 6;
   --calendar-month-grid-min-width: calc(var(--calendar-cell-min-width) * 7);
   --calendar-month-grid-min-height: calc(var(--calendar-cell-min-height) * var(--calendar-month-week-count));

@@ -11,6 +11,7 @@
 @import './calendar-antd-override.css';
 @import './calendar-preview.css';
 @import './calendar-preview-popover-content.css';
+@import '../ui/preview-tooltip/settlement-preview-tooltip.css';
 @import './calendar-sub-right.css';
 @import '../ui/item-list/ujat-institution-application-list-item.css';
 @import '../ui/item-list/general-institution-application-list-item.css';

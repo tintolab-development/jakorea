@@ -72,7 +72,16 @@
   overflow: visible;
 }
 
+.ujat-volunteer-interview2__calendar-container:has(.calendar-week--time-grid) {
+  min-width: var(--calendar-split-card-min-width-week);
+  flex-shrink: 0;
+}
+
 .ujat-volunteer-interview2:has(.ujat-volunteer-interview2__calendar-container) {
+  overflow-x: visible;
+}
+
+.ujat-volunteer-interview2:has(.calendar-week--time-grid) {
   overflow-x: visible;
 }
 

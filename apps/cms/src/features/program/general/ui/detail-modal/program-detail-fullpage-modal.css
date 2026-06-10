@@ -50,6 +50,17 @@
   background: var(--color-bg-base);
 }
 
+/* 주간 시간 격자·split-card page-scroll — `detail-fullpage-modal.css`와 동일하게 __main 가로 스크롤 */
+.program-detail-fullpage-modal .detail-fullpage-modal__main:has(.calendar-split-card-layout--page-scroll),
+.program-detail-fullpage-modal .detail-fullpage-modal__main:has(.calendar-week--time-grid) {
+  overflow-x: auto;
+}
+
+.program-detail-fullpage-modal .detail-fullpage-modal__content:has(.calendar-split-card-layout--page-scroll),
+.program-detail-fullpage-modal .detail-fullpage-modal__content:has(.calendar-week--time-grid) {
+  overflow-x: visible;
+}
+
 /* 메인 헤더: 프로그램명 + 우측 닫기(X) / padding-left 60, height 90 */
 .program-detail-fullpage-modal__header {
   flex-shrink: 0;

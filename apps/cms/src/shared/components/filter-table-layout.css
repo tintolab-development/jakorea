@@ -149,6 +149,17 @@
   min-width: 0;
 }
 
+/* split-card 주간 캘린더가 테이블 슬롯에 있을 때(봉사자 면접 등) — min-width·가로 스크롤은 __main·scroll-host */
+.filter-table-layout:has(.calendar-split-card-layout .calendar-week--time-grid) {
+  overflow: visible;
+}
+
+.filter-table-layout:has(.calendar-split-card-layout .calendar-week--time-grid) .filter-table-layout__table {
+  overflow: visible;
+  min-width: var(--calendar-split-card-min-width-week);
+  flex-shrink: 0;
+}
+
 /* 필터 미노출: 툴바가 카드 상단부터 오도록 상단 여백만 보정 */
 .filter-table-layout.filter-table-layout--without-filter .filter-table-layout__toolbar {
   margin-top: 0;

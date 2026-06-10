@@ -29,7 +29,6 @@ import {
 } from '@/shared/components/calendar'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import '@/shared/components/calendar/styles/calendar.css'
-import '@/shared/components/program-calendar.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -128,7 +127,7 @@ function paymentOrderStatusShortLabelFromUiStatus(status: InstructorSettlementUi
 /** 지급조서 확인 캘린더 한정: tooltip 상태 문구 축약 */
 function renderPaymentOrdersEventsTooltipContent({ events: dayEvents }: { events: CalendarItem[] }) {
   return (
-    <div className="program-calendar-schedule-panel">
+    <div className="settlement-preview-tooltip">
       {dayEvents.map(ev => {
         const row = settlementRowFromCalendarItem(ev)
         const colors = paymentOrderCalendarStatusColorPair(row.status)
@@ -141,8 +140,8 @@ function renderPaymentOrdersEventsTooltipContent({ events: dayEvents }: { events
               <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
                 {paymentOrderStatusShortLabelFromUiStatus(row.status)}
               </span>
-              <span className="program-calendar-schedule-panel__text">
-                <span className="program-calendar-schedule-panel__sep">|</span> +
+              <span className="settlement-preview-tooltip__text">
+                <span className="settlement-preview-tooltip__sep">|</span> +
                 {row.scheduledAmount.toLocaleString()}원
               </span>
             </div>
