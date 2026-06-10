@@ -26,8 +26,6 @@ import {
   buildUjatVolunteerInterviewMonthCellRows,
   renderUjatVolunteerInterviewMonthEventContent,
 } from './ujat-volunteer-calendar-month-cells'
-import '@/features/program/general/ui/detail-modal/program-status/participating-institutions-calendar-view.css' /* tooltip/popover only */
-
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
@@ -112,6 +110,7 @@ export function UjatVolunteerInterview2CalendarView({
 
   return (
     <CalendarSplitCardLayout
+      pageScroll
       loading={loading}
       left={
         <CalendarMain
@@ -127,7 +126,6 @@ export function UjatVolunteerInterview2CalendarView({
           eventsTooltipScope="full-day"
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
-          tooltipOverlayClassName="participating-institutions-calendar-tooltip-overlay"
           previewTooltipContent={renderUjatVolunteerInterview2PreviewTooltipContent}
           buildMonthCellRows={buildUjatVolunteerInterviewMonthCellRows}
           renderMonthEventContent={renderUjatVolunteerInterviewMonthEventContent}

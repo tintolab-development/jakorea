@@ -1,0 +1,129 @@
+/**
+ * 셀 미리보기 popover 본문 — `previewTooltipContent` 공통 shell.
+ * 클래스명은 도메인 파일과 공유(추후 `calendar-preview-popover`로 이전 가능).
+ */
+
+.participating-institutions-calendar-popover {
+  display: flex;
+  width: auto;
+  min-width: 360px;
+  max-width: min(460px, calc(100vw - 24px));
+  max-height: 250px;
+  padding: 11px 16px 10px 14px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.participating-institutions-calendar-popover__entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 0;
+  box-sizing: border-box;
+}
+
+.participating-institutions-calendar-popover__entry:first-child {
+  padding-top: 0;
+}
+
+.participating-institutions-calendar-popover__entry:last-child {
+  padding-bottom: 0;
+}
+
+.participating-institutions-calendar-popover__entry:not(:last-child) {
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.participating-institutions-calendar-popover__title {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.participating-institutions-calendar-popover__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.participating-institutions-calendar-popover__meta--instructor {
+  gap: 0;
+}
+
+.participating-institutions-calendar-popover__meta--instructor
+  .participating-institutions-calendar-popover__meta-sep {
+  margin: 0 8px;
+}
+
+.participating-institutions-calendar-popover__meta--applicant-instructor {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0;
+  color: var(--main-BK, #3d3d3d);
+  opacity: 1;
+}
+
+.participating-institutions-calendar-popover__meta--applicant-instructor
+  .participating-institutions-calendar-popover__meta-part {
+  flex: 0 0 auto;
+  max-width: 100%;
+  color: var(--main-BK, #3d3d3d);
+}
+
+.participating-institutions-calendar-popover__meta--applicant-instructor
+  .participating-institutions-calendar-popover__meta-sep {
+  margin: 0 8px;
+  background: var(--main-BK, #3d3d3d);
+}
+
+.participating-institutions-calendar-popover__meta-part {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.participating-institutions-calendar-popover__meta-part--session {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.participating-institutions-calendar-popover__meta-sep {
+  display: inline-block;
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
+}

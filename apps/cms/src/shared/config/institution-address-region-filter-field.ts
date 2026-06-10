@@ -5,7 +5,7 @@
  * @see apps/cms/.cursor/rules/design/filter-area-layout.mdc
  */
 
-import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_ADDRESS_REGION_FIELD_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import {
   INSTITUTION_SIDO_FILTER_OPTIONS,

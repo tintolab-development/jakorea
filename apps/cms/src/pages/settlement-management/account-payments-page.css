@@ -23,6 +23,8 @@
 .payment-orders-page__content-wrapper
   .account-payments-page__filter-table.filter-table-layout
   .table-filter-group__container {
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
   margin-bottom: 0;
 }
 

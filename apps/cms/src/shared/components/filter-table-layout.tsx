@@ -1,5 +1,5 @@
 /**
- * 목록 페이지용 레이아웃: UnifiedFilterCard → 구분선 → 테이블 제목·설명·버튼(actions) → 테이블(children)
+ * 목록 페이지용 레이아웃: TableFilterGroup → 구분선 → 테이블 제목·설명·버튼(actions) → 테이블(children)
  *
  * `fields` 등 필터 설정은 {@link TableFilterGroupProps}와 동일합니다.
  *
@@ -39,7 +39,7 @@ export interface FilterTableLayoutProps extends TableFilterGroupProps {
   showFilter?: boolean
   /**
    * true(기본): 픽셀/기본 폭 필드가 4개 이상일 때 flex-wrap으로 여러 줄 배치.
-   * `%` 열 비율 필드는 Row 고정 배치(한 줄·조회 우측 shell). `mergedAutoFillInlineSearch`로 조회를 wrap 안에 넣을 수 있음.
+   * `%` 열 비율 필드는 Row 고정 배치(한 줄·조회 우측 shell). `mergedAutoFillInlineSearch` 미지정 시 4개 이상 wrap 화면은 true(조회·필드 같은 flex-wrap).
    * `rows`·`multiRowGridMode` 등을 직접 지정하면 해당 값이 우선합니다.
    */
   filterResponsiveWrap?: boolean
@@ -115,8 +115,9 @@ export function FilterTableLayout({
     multiRowGridMode ?? (shouldApplyDefaultResponsiveWrap ? 'responsive' : 'fixed')
   const resolvedMultiRowResponsiveLayout =
     multiRowResponsiveLayout ?? (shouldApplyDefaultResponsiveWrap ? 'merged-auto-fill' : 'per-row')
+  /** 4개 이상 단일 행 wrap 시 조회를 필드와 같은 flex-wrap에 넣어 shell·필드 가로 겹침 방지 */
   const resolvedMergedAutoFillInlineSearch =
-    mergedAutoFillInlineSearch ?? false
+    mergedAutoFillInlineSearch ?? shouldApplyDefaultResponsiveWrap
 
   const rootClass = [
     'filter-table-layout',

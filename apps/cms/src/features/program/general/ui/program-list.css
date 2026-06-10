@@ -61,19 +61,10 @@
   box-shadow: 0 0 16px 0 var(--shadow-card-soft);
 }
 
-.program-list-content-wrapper .unified-filter-card {
+.program-list-content-wrapper .filter-table-layout,
+.program-list-content-wrapper .table-filter-group {
   margin-bottom: var(--spacing-16);
 }
-
-/* 프로그램 목록(4탭 위젯): 필터~디바이더 (카드 인라인 marginBottom 제거해 과한 간격 방지) */
-.program-list-content-wrapper--program-list-overview.filter-list-layout .unified-filter-card {
-  margin-bottom: 0 !important;
-}
-
-/*
- * 프로그램 관리 1뎁스 목록 필터 — TableFilterGroup 기본 `flex-wrap: nowrap` 유지(승인 연수 등 다필드 한 줄).
- * FilterFieldConfig.width 는 FILTER_CONTROL_MAX_WIDTH_PX(240) / WIDE(500) 사용. 행 전체 stretch CSS 금지.
- */
 
 .program-list-content-wrapper--program-list-overview
   .program-list-card--in-wrapper

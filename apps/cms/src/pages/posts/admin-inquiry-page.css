@@ -49,13 +49,13 @@
   box-sizing: border-box;
 }
 
-.admin-inquiry-page .table-filter-group__grid-cell .unified-filter-card__field {
+.admin-inquiry-page .table-filter-group__grid-cell .table-filter-group__field {
   width: 100%;
   min-width: 0;
   max-width: 100%;
 }
 
-.admin-inquiry-page .table-filter-group__grid-cell .unified-filter-card__label {
+.admin-inquiry-page .table-filter-group__grid-cell .table-filter-group__label {
   display: block;
   white-space: normal;
   overflow-wrap: break-word;

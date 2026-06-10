@@ -6,10 +6,6 @@
   box-sizing: border-box;
 }
 
-/*
- * 필터 1행 4필드 + 조회 — 1차 서류 심사 대상자(doc-screening) 2행 그리드와 동일 원리
- * (칸 너비 고정 + gap 12px, 퍼센트 Col·merged-inline 래퍼로 인한 과한 간격 방지)
- */
 .filter-table-layout.ujat-volunteer-doc-passed__filter-layout {
   --filter-field-gap: 12px;
   --table-filter-field-gap: 12px;
@@ -26,64 +22,6 @@
 
 .filter-table-layout.ujat-volunteer-doc-passed__filter-layout .filter-table-layout__divider {
   padding: 32px 0;
-}
-
-.filter-table-layout.ujat-volunteer-doc-passed__filter-layout .table-filter-group__container {
-  display: grid !important;
-  width: 100%;
-  box-sizing: border-box;
-  gap: var(--table-filter-field-gap);
-  align-items: end;
-  justify-content: start;
-  grid-template-columns:
-    repeat(4, minmax(0, var(--ujat-doc-passed-filter-col-width))) minmax(0, 1fr) 160px !important;
-}
-
-.filter-table-layout.ujat-volunteer-doc-passed__filter-layout .table-filter-group__fields-container {
-  display: contents;
-}
-
-.filter-table-layout.ujat-volunteer-doc-passed__filter-layout .table-filter-group__fields-inner.ant-row {
-  display: contents;
-}
-
-.filter-table-layout.ujat-volunteer-doc-passed__filter-layout
-  .table-filter-group__fields-inner.ant-row
-  > .ant-col {
-  min-width: 0;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.filter-table-layout.ujat-volunteer-doc-passed__filter-layout .table-filter-group__fields-shell {
-  grid-column: 6;
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
-  justify-self: end;
-}
-
-.filter-table-layout.ujat-volunteer-doc-passed__filter-layout
-  .table-filter-group__grid-cell,
-.filter-table-layout.ujat-volunteer-doc-passed__filter-layout
-  .table-filter-group__fields-inner.ant-row
-  > .ant-col
-  .unified-filter-card__field,
-.filter-table-layout.ujat-volunteer-doc-passed__filter-layout
-  .table-filter-group__fields-inner.ant-row
-  > .ant-col
-  .labeled-search-input,
-.filter-table-layout.ujat-volunteer-doc-passed__filter-layout
-  .table-filter-group__fields-inner.ant-row
-  > .ant-col
-  .cms-select,
-.filter-table-layout.ujat-volunteer-doc-passed__filter-layout
-  .table-filter-group__fields-inner.ant-row
-  > .ant-col
-  .ant-select {
-  width: 100% !important;
-  max-width: 100% !important;
 }
 
 .ujat-volunteer-doc-passed__table-wrap {

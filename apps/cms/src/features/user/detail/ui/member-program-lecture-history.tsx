@@ -32,7 +32,7 @@ import {
   memberProgramEnrollmentStatusFieldOptions,
   type MemberProgramHistoryMode,
 } from './member-program-lecture-table.config'
-import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,

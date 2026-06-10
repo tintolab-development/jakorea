@@ -26,10 +26,6 @@
   flex-direction: column;
 }
 
-.instructor-payment-tab__divider-wrapper {
-  padding: 14px 52px 32px 52px;
-}
-
 .instructor-payment-tab__toolbar {
   display: flex;
   align-items: center;

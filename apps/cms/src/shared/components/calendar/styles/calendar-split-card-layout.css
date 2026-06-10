@@ -4,6 +4,12 @@
  * 좌: CalendarMain 단일 자식. calendar-main-container 중첩 금지.
  */
 
+.calendar-set-scroll-host {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .calendar-split-card-layout {
   --calendar-split-card-height: 900px;
   --calendar-sub-right-list-height: 743px;
@@ -72,6 +78,7 @@
   flex-direction: column;
   overflow: visible;
   background: transparent;
+  border: none;
   box-shadow: none;
   border-radius: 0;
   padding: 0;
@@ -169,18 +176,42 @@
 }
 
 /*
- * 풀페이지 모달 page-scroll — 우측 split-card sticky + 743px (`detail-fullpage-modal.css` overflow-x: clip 연동)
+ * 풀페이지 모달 page-scroll — 우측 split-card sticky + 743px (`detail-fullpage-modal.css` __main 가로 스크롤 연동)
  */
-.participating-institutions-calendar-view--page-scroll .calendar-split-card-layout {
+.calendar-split-card-layout--page-scroll {
   overflow: visible;
+  align-items: start;
 }
 
-.participating-institutions-calendar-view--page-scroll .calendar-split-card--right {
+.calendar-split-card-layout--page-scroll .calendar-split-card--right {
   position: sticky;
   top: var(--calendar-set-sticky-top, 16px);
   align-self: flex-start;
   flex-shrink: 0;
-  height: var(--calendar-sub-right-list-height, 743px);
-  min-height: var(--calendar-sub-right-list-height, 743px);
-  max-height: var(--calendar-sub-right-list-height, 743px);
+  box-sizing: border-box;
+  /* shell border + padding 20px×2 — 리스트 743px와 합쳐 카드 전체 높이 */
+  height: calc(var(--calendar-sub-right-list-height, 743px) + 40px);
+  min-height: calc(var(--calendar-sub-right-list-height, 743px) + 40px);
+  max-height: calc(var(--calendar-sub-right-list-height, 743px) + 40px);
+  overflow: hidden;
+}
+
+.calendar-split-card-layout--page-scroll .calendar-split-card--right > .calendar-list,
+.calendar-split-card-layout--page-scroll
+  .calendar-split-card--right
+  > .calendar-list--with-toolbar {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-split-card-layout--page-scroll
+  .calendar-split-card--right
+  > .calendar-list--with-toolbar
+  .calendar-list__items {
+  flex: 1 1 auto;
+  min-height: 0;
 }

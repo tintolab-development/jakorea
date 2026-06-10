@@ -316,8 +316,8 @@ export function ParticipatingInstitutionsCalendarView({
   }
 
   return (
-    <div className="participating-institutions-calendar-view participating-institutions-calendar-view--page-scroll">
-      <CalendarSplitCardLayout
+    <CalendarSplitCardLayout
+      pageScroll
       left={
         <CalendarMain
           className="calendar-split-card-main"
@@ -332,7 +332,6 @@ export function ParticipatingInstitutionsCalendarView({
           eventsTooltipScope="full-day"
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
-          tooltipOverlayClassName="participating-institutions-calendar-tooltip-overlay"
           renderMonthEventContent={renderMonthEventContent}
           previewTooltipContent={({ events: dayItems, colorMap }) => {
             const dayEvents = calendarItemsForEventMode(dayItems).map(
@@ -366,7 +365,6 @@ export function ParticipatingInstitutionsCalendarView({
           />
         )
       }
-      />
-    </div>
+    />
   )
 }

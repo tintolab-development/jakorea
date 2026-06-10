@@ -1,5 +1,5 @@
 /**
- * 테이블 상단 필터 그룹 (UnifiedFilterCard와 동일 레이아웃·스타일)
+ * 테이블 상단 필터 그룹
  * - search: 로컬 `searchDrafts` → 조회 시 `flushSync`로 부모 `onFilterChange` 반영 후 `onSearch`(applySearch)
  * - dateRange: 부모 `onFilterChange` 직접 반영 · 기본값은 `filters[key] == null && defaultValue !== null`일 때만 시드
  */
@@ -21,6 +21,16 @@ import {
   isFilterFieldPairType,
 } from './table-filter-group-field-width'
 import './table-filter-group.css'
+
+/** 필터 칸(검색·셀렉트·기간 등) 기본 고정 너비 — `table-filter-group.css` 토큰과 동일 */
+export const FILTER_FIELD_MIN_WIDTH_PX = 260
+export const FILTER_FIELD_MAX_WIDTH_PX = FILTER_FIELD_MIN_WIDTH_PX
+/** 시/도·시/군/구(`addressRegion`) 셀렉트 각 칸 너비 */
+export const FILTER_FIELD_ADDRESS_REGION_SEGMENT_WIDTH_PX = 120
+
+const FILTER_FIELD_PAIR_MIN_WIDTH_CSS = `calc(2 * ${FILTER_FIELD_MIN_WIDTH_PX}px + var(--filter-field-gap, 12px))`
+const FILTER_FIELD_ADDRESS_REGION_PAIR_MIN_WIDTH_CSS = `calc(2 * ${FILTER_FIELD_ADDRESS_REGION_SEGMENT_WIDTH_PX}px + var(--filter-field-gap, 12px))`
+const FILTER_FIELD_DATE_RANGE_MIN_WIDTH_CSS = `calc(2 * ${FILTER_FIELD_MIN_WIDTH_PX}px + var(--filter-control-range-split-between, 20px))`
 
 export type AddressRegionFilterSubConfig = {
   /** 시/도 값이 저장되는 `filters` 키 */
@@ -241,18 +251,11 @@ export function TableFilterGroup({
     }
   }, [filterRowFields, filters, onFilterChange])
 
-  /** `%` 열 flex 계산용 — `filter-controls-common` 의 `--filter-field-gap`(기본 12px)과 동일하게 유지 */
-  const interFieldGapPx = 12
-
-  const colFlex = (field: FilterFieldConfig, defaultFlex: string, rowFieldCount = 1) => {
+  const colFlex = (field: FilterFieldConfig, defaultFlex: string, _rowFieldCount = 1) => {
     if (field.width != null) {
       if (isFilterFieldPctWidth(field)) {
-        const pct = parseFloat(String(field.width)) / 100
-        if (!Number.isNaN(pct)) {
-          const totalGaps = Math.max(0, rowFieldCount - 1) * interFieldGapPx
-          const basis = `calc((100% - ${totalGaps}px) * ${pct})`
-          return `0 0 ${basis}`
-        }
+        // 컨트롤 고정 폭(260px 등) — Col은 콘텐츠 너비, 필터 간 간격은 Row gap(12px)만 사용
+        return '0 0 auto'
       }
       const w = typeof field.width === 'number' ? `${field.width}px` : field.width
       return `0 0 ${w}`
@@ -262,7 +265,7 @@ export function TableFilterGroup({
 
   const colClassName = (field: FilterFieldConfig) => {
     if (field.width == null) return undefined
-    const parts = ['unified-filter-card__col--explicit-width']
+    const parts = ['table-filter-group__col--explicit-width']
     if (isFilterFieldPctWidth(field)) {
       parts.push('table-filter-group__col--pct-width')
       if (field.type === 'dateRange') parts.push('table-filter-group__col--date-range')
@@ -272,6 +275,9 @@ export function TableFilterGroup({
     }
     if (isFilterFieldPairType(field)) {
       parts.push('table-filter-group__col--pair-field')
+    }
+    if (field.type === 'addressRegion') {
+      parts.push('table-filter-group__col--address-region')
     }
     return parts.join(' ')
   }
@@ -298,18 +304,20 @@ export function TableFilterGroup({
   const renderFieldInner = (field: FilterFieldConfig) => {
     if (field.type === 'radio') {
       return (
-        <div className="unified-filter-card__field unified-filter-card__field--radio">
-          <span className="unified-filter-card__label">{field.label}</span>
-          <CmsRadio.Group
-            value={filters[field.key]}
-            onChange={e => onFilterChange(field.key, e.target.value)}
-          >
-            {(field.options ?? []).map(opt => (
-              <CmsRadio key={String(opt.value)} value={opt.value}>
-                {opt.label}
-              </CmsRadio>
-            ))}
-          </CmsRadio.Group>
+        <div className="table-filter-group__field table-filter-group__field--radio">
+          <span className="table-filter-group__label">{field.label}</span>
+          <div className="table-filter-group__radio-control">
+            <CmsRadio.Group
+              value={filters[field.key]}
+              onChange={e => onFilterChange(field.key, e.target.value)}
+            >
+              {(field.options ?? []).map(opt => (
+                <CmsRadio key={String(opt.value)} value={opt.value}>
+                  {opt.label}
+                </CmsRadio>
+              ))}
+            </CmsRadio.Group>
+          </div>
         </div>
       )
     }
@@ -339,14 +347,14 @@ export function TableFilterGroup({
       const sidoEmpty = sido == null || sido === ''
       const districtOptions = ar.getSigunguOptions(sido)
       return (
-        <div className="unified-filter-card__field unified-filter-card__field--select">
-          <span className="unified-filter-card__label">{field.label}</span>
-          <div className="table-filter-group__select-pair-selects">
+        <div className="table-filter-group__field table-filter-group__field--select table-filter-group__field--address-region">
+          <span className="table-filter-group__label">{field.label}</span>
+          <div className="table-filter-group__address-region-selects">
             <CmsSelect
               inputSize="large"
               placeholder={ar.sidoPlaceholder ?? '시/도'}
               value={sidoEmpty ? undefined : sido}
-              selectClassName="unified-filter-card__select"
+              selectClassName="table-filter-group__select"
               onChange={value => onFilterChange(ar.sidoKey, value ?? '')}
               popupMatchSelectWidth={false}
               style={{ width: '100%', ...field.style }}
@@ -356,7 +364,7 @@ export function TableFilterGroup({
               inputSize="large"
               placeholder={ar.sigunguPlaceholder ?? '시/군/구'}
               value={sigungu == null || sigungu === '' ? undefined : sigungu}
-              selectClassName="unified-filter-card__select"
+              selectClassName="table-filter-group__select"
               onChange={value => onFilterChange(ar.sigunguKey, value ?? '')}
               disabled={sidoEmpty}
               popupMatchSelectWidth={false}
@@ -378,14 +386,14 @@ export function TableFilterGroup({
         ? sp.getSecondaryOptions(primaryRaw as string | number | undefined | null)
         : sp.secondary.options
       return (
-        <div className="unified-filter-card__field unified-filter-card__field--select">
-          <span className="unified-filter-card__label">{field.label}</span>
+        <div className="table-filter-group__field table-filter-group__field--select">
+          <span className="table-filter-group__label">{field.label}</span>
           <div className="table-filter-group__select-pair-selects">
             <CmsSelect
               inputSize="large"
               placeholder={sp.primary.placeholder ?? '선택'}
               value={primaryEmpty ? undefined : (primaryRaw as string | number)}
-              selectClassName="unified-filter-card__select"
+              selectClassName="table-filter-group__select"
               onChange={value => onFilterChange(sp.primary.key, value ?? '')}
               popupMatchSelectWidth
               style={{ width: '100%', ...field.style }}
@@ -399,7 +407,7 @@ export function TableFilterGroup({
                   ? undefined
                   : (secondaryRaw as string | number)
               }
-              selectClassName="unified-filter-card__select"
+              selectClassName="table-filter-group__select"
               onChange={value => onFilterChange(sp.secondary.key, value ?? '')}
               disabled={sp.secondary.disableWhenPrimaryEmpty === true && primaryEmpty}
               popupMatchSelectWidth
@@ -413,13 +421,13 @@ export function TableFilterGroup({
 
     if (field.type === 'select') {
       return (
-        <div className="unified-filter-card__field unified-filter-card__field--select">
-          <span className="unified-filter-card__label">{field.label}</span>
+        <div className="table-filter-group__field table-filter-group__field--select">
+          <span className="table-filter-group__label">{field.label}</span>
           <CmsSelect
             inputSize="large"
             placeholder={field.placeholder || '전체'}
             value={filters[field.key]}
-            selectClassName="unified-filter-card__select"
+            selectClassName="table-filter-group__select"
             withAllOption={field.withAllOption}
             onChange={value => onFilterChange(field.key, value)}
             popupMatchSelectWidth
@@ -435,11 +443,10 @@ export function TableFilterGroup({
 
     if (field.type === 'dateRange') {
       return (
-        <div className="unified-filter-card__field">
-          <span className="unified-filter-card__label">{field.label}</span>
+        <div className="table-filter-group__field">
+          <span className="table-filter-group__label">{field.label}</span>
           <CmsDateRangePicker
             inputSize="large"
-            width="100%"
             style={field.style}
             value={filters[field.key]}
             onChange={dates => onFilterChange(field.key, dates as DateRangeFilterValue)}
@@ -454,13 +461,13 @@ export function TableFilterGroup({
       const raw = filters[field.key]
       const arr = Array.isArray(raw) ? (raw as string[]) : []
       return (
-        <div className="unified-filter-card__field">
-          <span className="unified-filter-card__label">{field.label}</span>
+        <div className="table-filter-group__field">
+          <span className="table-filter-group__label">{field.label}</span>
           <CmsSelect
             mode="multiple"
             withAllOption={false}
             inputSize="large"
-            className="unified-filter-card__multi-select"
+            className="table-filter-group__multi-select"
             placeholder={field.placeholder || '선택하세요'}
             value={arr}
             onChange={next => onFilterChange(field.key, next as string[])}
@@ -486,7 +493,7 @@ export function TableFilterGroup({
         <Col
           key={field.key}
           flex={colFlex(field, '0 0 auto', rowFieldCount)}
-          className={['unified-filter-card__col--radio', colClassName(field)].filter(Boolean).join(' ')}
+          className={['table-filter-group__col--radio', colClassName(field)].filter(Boolean).join(' ')}
           style={colInlineStyle(field)}
           {...colDataAttrs}
         >
@@ -499,7 +506,7 @@ export function TableFilterGroup({
       return (
         <Col
           key={field.key}
-          flex={colFlex(field, '0 0 240px', rowFieldCount)}
+          flex={colFlex(field, `0 0 ${FILTER_FIELD_MIN_WIDTH_PX}px`, rowFieldCount)}
           className={colClassName(field)}
           style={colInlineStyle(field)}
           {...colDataAttrs}
@@ -513,7 +520,7 @@ export function TableFilterGroup({
       return (
         <Col
           key={field.key}
-          flex={colFlex(field, '1 1 300px', rowFieldCount)}
+          flex={colFlex(field, `0 0 ${FILTER_FIELD_MAX_WIDTH_PX}px`, rowFieldCount)}
           className={colClassName(field)}
           style={colInlineStyle(field)}
           {...colDataAttrs}
@@ -527,7 +534,7 @@ export function TableFilterGroup({
       return (
         <Col
           key={field.key}
-          flex={colFlex(field, '1 1 360px', rowFieldCount)}
+          flex={colFlex(field, `0 0 ${FILTER_FIELD_DATE_RANGE_MIN_WIDTH_CSS}`, rowFieldCount)}
           className={colClassName(field)}
           style={colInlineStyle(field)}
           {...colDataAttrs}
@@ -541,7 +548,7 @@ export function TableFilterGroup({
       return (
         <Col
           key={field.key}
-          flex={colFlex(field, '0 0 240px', rowFieldCount)}
+          flex={colFlex(field, `0 0 ${FILTER_FIELD_MIN_WIDTH_PX}px`, rowFieldCount)}
           className={colClassName(field)}
           style={colInlineStyle(field)}
           {...colDataAttrs}
@@ -551,11 +558,25 @@ export function TableFilterGroup({
       )
     }
 
-    if (field.type === 'addressRegion' || field.type === 'selectPair') {
+    if (field.type === 'addressRegion') {
       return (
         <Col
           key={field.key}
-          flex={colFlex(field, '1 1 320px', rowFieldCount)}
+          flex={colFlex(field, `0 0 ${FILTER_FIELD_ADDRESS_REGION_PAIR_MIN_WIDTH_CSS}`, rowFieldCount)}
+          className={colClassName(field)}
+          style={colInlineStyle(field)}
+          {...colDataAttrs}
+        >
+          {inner}
+        </Col>
+      )
+    }
+
+    if (field.type === 'selectPair') {
+      return (
+        <Col
+          key={field.key}
+          flex={colFlex(field, `0 0 ${FILTER_FIELD_PAIR_MIN_WIDTH_CSS}`, rowFieldCount)}
           className={colClassName(field)}
           style={colInlineStyle(field)}
           {...colDataAttrs}
@@ -680,7 +701,7 @@ export function TableFilterGroup({
         className="table-filter-group__fields-inner"
         align="bottom"
         justify="start"
-        wrap={false}
+        wrap
       >
         {resolvedRows[0]?.map(field => renderFieldCol(field, resolvedRows[0].length)) ?? null}
       </Row>

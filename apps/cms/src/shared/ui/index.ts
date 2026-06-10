@@ -53,12 +53,9 @@ export { BaseDetailDrawer } from './base-detail-drawer'
 export type { BaseDetailDrawerProps, DrawerAction } from './base-detail-drawer'
 export { ListPageFilters } from './list-page-filters'
 export type { ListPageFiltersProps, FilterConfig, FilterOption } from './list-page-filters'
-export { UnifiedFilterCard } from './unified-filter-card'
-export type { UnifiedFilterCardProps, FilterFieldConfig } from './unified-filter-card'
+export type { FilterFieldConfig } from '../components/filter-table-layout'
 export { TableFilterGroup } from '../components/table-filter-group'
 export type { TableFilterGroupProps } from '../components/table-filter-group'
-export { FilterListLayout } from '../components/filter-list-layout'
-export type { FilterListLayoutProps } from '../components/filter-list-layout'
 export { FilterTableLayout } from '../components/filter-table-layout'
 export type {
   FilterTableLayoutProps,

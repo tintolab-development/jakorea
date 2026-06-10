@@ -20,7 +20,7 @@
   min-width: 0;
 }
 
-.filter-table-layout .unified-filter-card {
+.filter-table-layout .table-filter-group {
   margin-bottom: 0 !important;
   padding: 0 !important;
 }
@@ -180,6 +180,16 @@
   overflow: visible;
   width: 100%;
   max-width: 100%;
+  /* 풀페이지 모달 안 — FilterTableLayout 기본 카드(shell-shadow·padding) 제거 */
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.filter-table-layout.filter-table-layout--calendar-view .filter-table-layout__divider {
+  padding: 32px 0;
 }
 
 .filter-table-layout.filter-table-layout--calendar-view .filter-table-layout__table {
@@ -195,11 +205,33 @@
   overflow: visible;
 }
 
+.filter-table-layout__calendar-body .calendar-set-scroll-host {
+  margin-top: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .filter-table-layout__calendar-body .calendar-set {
   margin-top: 0;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
+  box-sizing: border-box;
   --calendar-set-sticky-top: calc(16px + var(--cms-layout-content-padding-top, 0px));
+}
+
+/* split-card — grid track min(852+280) 유지, 좁을 때는 modal __main 가로 스크롤 */
+.filter-table-layout__calendar-body .calendar-split-card-layout {
+  margin-top: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* FilterTableLayout 안 split-card page-scroll — sticky top만 (레이아웃은 `calendar-split-card-layout.css`) */
+.filter-table-layout__calendar-body .calendar-split-card-layout--page-scroll {
+  --calendar-set-sticky-top: 16px;
 }
 
 /* 2열 — grid-area 명시 */

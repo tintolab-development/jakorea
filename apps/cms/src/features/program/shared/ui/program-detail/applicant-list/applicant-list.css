@@ -1,21 +1,13 @@
-/* 신청 기관 화면 전체 가로 스크롤 방지: 컨테이너를 부모 너비로 제한, 테이블만 래퍼 내에서 가로 스크롤 */
+/* 리스트 뷰만 가로 클립 — 캘린더(split-card)는 grid min-width로 가로 overflow 가능 */
 .applicant-details {
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  overflow-x: hidden;
   box-sizing: border-box;
 }
 
-/* 캘린더 뷰: overflow-x:hidden이 sticky 조상이 되어 우측 리스트 고정이 깨짐 — clip으로 대체 */
-.applicant-details.applicant-details--calendar-view {
-  overflow-x: clip;
-}
-
-@supports not (overflow-x: clip) {
-  .applicant-details.applicant-details--calendar-view {
-    overflow-x: visible;
-  }
+.applicant-details:not(.general-program-detail--calendar-view) {
+  overflow-x: hidden;
 }
 
 /* 프로그램 승인 현황: shared StatusDropdownCell 사용 — participating-institutions-section과 동일 스타일 */
@@ -74,7 +66,7 @@
   padding-right: 0 !important;
 }
 
-/* FilterTableLayout: 풀페이지 모달 본문 안 — 이중 카드·그림자 제거 */
+/* FilterTableLayout: 풀페이지 모달 본문 안 — 이중 카드·그림자 제거 (캘린더는 --calendar-view 공통) */
 .applicant-details .applicant-details__filter-table-layout.filter-table-layout {
   background: transparent;
   box-shadow: none;
@@ -83,7 +75,9 @@
   padding: 0;
 }
 
-.applicant-details .applicant-details__filter-table-layout .filter-table-layout__divider {
+.applicant-details
+  .applicant-details__filter-table-layout:not(.filter-table-layout--calendar-view)
+  .filter-table-layout__divider {
   padding: var(--spacing-16, 16px) 0;
 }
 
@@ -100,45 +94,64 @@
   font-size: 16px;
 }
 
-/* 필터 칸 반응형 분배: 갭(12px) 유지, 각 필드 폭 균등 — TableFilterGroup */
-.applicant-details .table-filter-group__fields-inner > .ant-col {
-  flex: 1 1 0 !important;
+/*
+ * 레거시 신청자 목록(applicant-list.tsx) 전용 — FilterTableLayout className에만 적용.
+ * `.applicant-details` 루트에 두면 UJAT·FilterTableLayout 공통(260px)과 충돌해 필터 겹침 발생.
+ * 신규 화면은 table-filter-group-layout.mdc 규칙 따를 것.
+ */
+.filter-table-layout.applicant-details__filter-table-layout .table-filter-group__fields-inner > .ant-col {
+  flex: 0 0 auto !important;
+  width: auto;
   min-width: 0;
 }
 
-/* 신청자 화면에서는 긴 라벨 때문에 최소 너비 과다 고정 해제 */
-.applicant-details .unified-filter-card__field--select,
-.applicant-details .table-filter-group__fields-inner .ant-col .ant-select,
-.applicant-details .table-filter-group__fields-inner .ant-col .cms-select,
-.applicant-details .table-filter-group__fields-inner .labeled-search-input__input,
-.applicant-details .table-filter-group__fields-inner .labeled-search-input .cms-input,
-.applicant-details .table-filter-group__fields-inner .ant-col .ant-picker-range,
-.applicant-details .table-filter-group__fields-inner .ant-col .cms-datepicker {
+.filter-table-layout.applicant-details__filter-table-layout .table-filter-group__field--select,
+.filter-table-layout.applicant-details__filter-table-layout
+  .table-filter-group__fields-inner
+  .ant-col
+  .ant-select,
+.filter-table-layout.applicant-details__filter-table-layout .table-filter-group__fields-inner .ant-col .cms-select,
+.filter-table-layout.applicant-details__filter-table-layout .table-filter-group__fields-inner .labeled-search-input__input,
+.filter-table-layout.applicant-details__filter-table-layout
+  .table-filter-group__fields-inner
+  .labeled-search-input
+  .cms-input,
+.filter-table-layout.applicant-details__filter-table-layout
+  .table-filter-group__fields-inner
+  .ant-col
+  .ant-picker-range,
+.filter-table-layout.applicant-details__filter-table-layout
+  .table-filter-group__fields-inner
+  .ant-col
+  .cms-datepicker {
   min-width: 0 !important;
 }
 
 @media (max-width: 1280px) {
-  .applicant-details .table-filter-group__container {
+  .filter-table-layout.applicant-details__filter-table-layout .table-filter-group__container {
     flex-wrap: wrap;
   }
 
-  .applicant-details .table-filter-group__fields-shell {
+  .filter-table-layout.applicant-details__filter-table-layout .table-filter-group__fields-shell {
     flex: 1 1 100%;
     max-width: 100%;
     margin-right: 0;
     margin-bottom: 8px;
   }
 
-  .applicant-details .table-filter-group__fields-inner.ant-row {
+  .filter-table-layout.applicant-details__filter-table-layout .table-filter-group__fields-inner.ant-row {
     flex-wrap: wrap !important;
   }
 
-  .applicant-details .table-filter-group__fields-inner > .ant-col {
-    flex: 1 1 calc((100% - 12px) / 2) !important;
+  .filter-table-layout.applicant-details__filter-table-layout .table-filter-group__fields-inner > .ant-col {
+    flex: 0 0 auto !important;
+    width: auto;
     min-width: 0;
   }
 
-  .applicant-details .table-filter-group__fields-inner > .ant-col:nth-child(2n) {
+  .filter-table-layout.applicant-details__filter-table-layout
+    .table-filter-group__fields-inner
+    > .ant-col:nth-child(2n) {
     margin-right: 0 !important;
   }
 }

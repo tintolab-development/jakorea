@@ -400,10 +400,18 @@ export function ParticipatingInstitutionsSection({
   }
 
   return (
-    <div className="program-status-participating participating-institutions-section">
+    <div
+      className={[
+        'program-status-participating participating-institutions-section',
+        viewMode === 'calendar' ? 'general-program-detail--calendar-view' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <FilterTableLayout
         className="participating-institutions-section__filter-layout"
         bordered={false}
+        contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         fields={filterFields}
         filters={filterTableValues}
         onFilterChange={handleFilterChange}

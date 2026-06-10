@@ -1,4 +1,4 @@
-import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { APPROVAL_STATUS_LABELS } from '@/shared/components/textbook-status-badge'
 import {
   createHomeAddressRegionFilterField,

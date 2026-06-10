@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Divider, Table } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   CalendarOutlined,
@@ -30,6 +30,7 @@ import {
 } from './instructor-settlement-calendar'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import '@/shared/components/filter-table-layout.css'
 import './instructor-payment-tab.css'
 
 const SETTLEMENT_STATUS_OPTIONS = INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS.map(option => ({
@@ -257,15 +258,13 @@ export function InstructorPaymentTab({
         onSearch={handleSearch}
         bordered={false}
         cardStyle={{
-          padding: '0 34px',
+          padding: 0,
           marginBottom: 0,
           background: 'transparent',
         }}
       />
 
-      <div className="instructor-payment-tab__divider-wrapper">
-        <Divider style={{ margin: 0 }} />
-      </div>
+      <div className="filter-table-layout__divider" role="separator" aria-hidden />
 
       <div className="instructor-payment-tab__toolbar">
         <div className="instructor-payment-tab__month-nav">

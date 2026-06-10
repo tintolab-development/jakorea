@@ -8,10 +8,10 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { Table, Checkbox } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined, DownloadOutlined } from '@ant-design/icons'
+import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
-import { ExcelButton } from '@/shared/ui/excel-button'
 import { CmsSelect } from '@/shared/ui'
-import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import { participatingInstructorsFilterFields } from '@/features/program/general/lib/participating-instructors-filter-fields'
 import type { ColumnsType } from 'antd/es/table'
 import {
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
@@ -38,14 +38,12 @@ import {
 } from '../../../hooks/use-participating-instructors-params'
 import type { ProgressFilters } from '../../../hooks/use-program-progress-params'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
-import { Divider } from '@/shared/components/divider'
 import { AddParticipatingInstructorModal } from '../../add-participating-instructor-modal'
 import { ParticipatingInstructorAddConsentModal } from '../../participating-instructor-add-consent-modal'
 import {
   ParticipatingInstructorFullpageView,
   type InstructorDetailTabKey,
 } from './participating-instructor-fullpage-view'
-import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import {
   INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT,
@@ -61,50 +59,6 @@ import {
 } from '../../../../shared/ui/program-schedule-colors'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
-
-const REGION_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: '서울', value: '서울' },
-  { label: '부산', value: '부산' },
-  { label: '대구', value: '대구' },
-  { label: '인천', value: '인천' },
-  { label: '광주', value: '광주' },
-  { label: '대전', value: '대전' },
-  { label: '울산', value: '울산' },
-  { label: '세종', value: '세종' },
-  { label: '경기', value: '경기' },
-  { label: '강원', value: '강원' },
-  { label: '충북', value: '충북' },
-  { label: '충남', value: '충남' },
-  { label: '전북', value: '전북' },
-  { label: '전남', value: '전남' },
-  { label: '경북', value: '경북' },
-  { label: '경남', value: '경남' },
-  { label: '제주', value: '제주' },
-]
-
-const JA_LECTURE_EXPERIENCE_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: '1년', value: '1' },
-  { label: '2년', value: '2' },
-  { label: '3년', value: '3' },
-  { label: '5년', value: '5' },
-]
-
-const JA_EVALUATION_GRADE_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: 'A등급', value: 'A등급' },
-  { label: 'B등급', value: 'B등급' },
-  { label: 'C등급', value: 'C등급' },
-]
-
-const EDUCATION_ASSIGNMENT_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: '진행 전', value: '진행 전' },
-  { label: '1회차', value: '1회차' },
-  { label: '2회차', value: '2회차' },
-  { label: '진행 완료', value: '진행 완료' },
-]
 
 const INSTRUCTOR_ELLIPSIS_CELL_CLASS = 'participating-instructors-section__ellipsis-cell'
 
@@ -201,52 +155,7 @@ export function ParticipatingInstructorsSection({
     setPendingFilters({ ...filters })
   }, [filters])
 
-  const instructorFilterFields = useMemo((): FilterFieldConfig[] => {
-    const colWidth = '18%'
-    return [
-      {
-        key: 'instructorName',
-        type: 'search',
-        label: '강사명',
-        placeholder: '강사명을 입력하세요',
-        width: colWidth,
-      },
-      {
-        key: 'region',
-        type: 'select',
-        label: '거주 지역',
-        placeholder: '전체',
-        options: REGION_OPTIONS,
-        width: colWidth,
-      },
-      {
-        key: 'jaLectureExperience',
-        type: 'select',
-        label: 'JA 강의 이력',
-        placeholder: '전체',
-        options: JA_LECTURE_EXPERIENCE_OPTIONS,
-        width: colWidth,
-      },
-      {
-        key: 'jaEvaluationGrade',
-        type: 'select',
-        label: 'JA 평가 등급',
-        placeholder: '전체',
-        options: JA_EVALUATION_GRADE_OPTIONS,
-        width: colWidth,
-      },
-      {
-        key: 'educationAssignmentStatus',
-        type: 'select',
-        label: '교육 예정 현황',
-        placeholder: '전체',
-        options: EDUCATION_ASSIGNMENT_OPTIONS,
-        width: colWidth,
-      },
-    ]
-  }, [])
-
-  const unifiedFilterCardValues = useMemo(
+  const filterValues = useMemo(
     () => ({
       instructorName: pendingFilters.instructorName,
       region: pendingFilters.region === 'all' ? undefined : pendingFilters.region,
@@ -264,7 +173,7 @@ export function ParticipatingInstructorsSection({
     [pendingFilters]
   )
 
-  const handleUnifiedFilterChange = (key: string, value: unknown) => {
+  const handleFilterChange = (key: string, value: unknown) => {
     if (key === 'instructorName') {
       setPendingFilters(prev => ({ ...prev, instructorName: String(value ?? '') }))
       return
@@ -274,7 +183,7 @@ export function ParticipatingInstructorsSection({
     setPendingFilters(prev => ({ ...prev, [k]: v }))
   }
 
-  const handleUnifiedFilterSearch = () => {
+  const handleFilterSearch = () => {
     applyFilters(pendingFilters)
   }
 
@@ -564,12 +473,6 @@ export function ParticipatingInstructorsSection({
     []
   )
 
-  const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
-    columns,
-    data: filteredInstructors,
-    filename: '교육 참여 강사 목록',
-  })
-
   if (selectedInstructorFromUrl && program) {
     return (
       <div className="program-status-participating program-status-participating--instructors participating-institutions-section participating-institutions-section--instructors">
@@ -599,29 +502,26 @@ export function ParticipatingInstructorsSection({
   }
 
   return (
-    <div className="program-status-participating program-status-participating--instructors participating-institutions-section participating-institutions-section--instructors">
-      <UnifiedFilterCard
+    <div
+      className={[
+        'program-status-participating program-status-participating--instructors participating-institutions-section participating-institutions-section--instructors',
+        viewMode === 'calendar' ? 'general-program-detail--calendar-view' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <FilterTableLayout
+        className="participating-institutions-section__filter-layout"
         bordered={false}
-        cardStyle={{ marginBottom: 0 }}
-        fields={instructorFilterFields}
-        filters={unifiedFilterCardValues}
-        onFilterChange={handleUnifiedFilterChange}
-        onSearch={handleUnifiedFilterSearch}
-      />
-
-      <Divider className="participating-institutions-section__divider" />
-
-      <div className="participating-institutions-section__below-divider">
-        <div className="table-header-actions">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">
-              교육 참여 강사 목록
-            </span>
-            <span className="table-description">
-              {filteredInstructors.length}건
-            </span>
-          </div>
-          <div className="info-section-buttons--wrapper">
+        contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
+        fields={participatingInstructorsFilterFields}
+        filters={filterValues}
+        onFilterChange={handleFilterChange}
+        onSearch={handleFilterSearch}
+        title="교육 참여 강사 목록"
+        description={`${filteredInstructors.length}건`}
+        actions={
+          <>
             <CmsButton
               variant="secondary"
               size="large"
@@ -661,10 +561,13 @@ export function ParticipatingInstructorsSection({
             >
               강사 등록
             </CmsButton>
-            <ExcelButton onClick={exportExcel} loading={isExcelExporting} />
-          </div>
-        </div>
-
+          </>
+        }
+        excelExport={{
+          columns,
+          data: filteredInstructors,
+        }}
+      >
         {viewMode === 'list' ? (
           <div className="participating-institutions-section__table-wrap">
             <Table<ParticipatingInstructorRow>
@@ -695,116 +598,120 @@ export function ParticipatingInstructorsSection({
             />
           </div>
         ) : (
-          <ParticipatingInstitutionsCalendarView
-            schools={MOCK_PARTICIPATING_SCHOOLS}
-            customEvents={instructorCalendarEvents}
-            renderMonthEventContent={renderParticipatingInstructorCalendarMonthEventContent}
-            selectedRowKeys={[]}
-            onSelectionChange={() => {}}
-            onSchoolClick={() => {}}
-            onDateSelect={setCalendarSelectedDate}
-            calendarGranularity={progressCalendarGranularity}
-            onCalendarGranularityChange={setProgressCalendarGranularity}
-            rightContent={
-              <div className="participating-instructors-section__calendar-right">
-                <div className="calendar-split-card-right__toolbar participating-instructors-section__calendar-right__school-filter">
-                  <CmsSelect
-                    mode="multiple"
-                    withAllOption={false}
-                    width="100%"
-                    value={effectiveCalendarSelectedSchools}
-                    onChange={next => setCalendarSelectedSchools(next as string[])}
-                    options={calendarSchoolFilterOptions}
-                    placeholder="기관 선택"
-                  />
-                </div>
-                <div className="participating-instructors-section__calendar-right-cards">
-                  {instructorsForCalendarDateFiltered.map(row => {
-                    const schoolColors =
-                      schoolNameToScheduleColor.get(row.schoolName) ?? programScheduleColors
-                    return (
-                      <div
-                        key={row.id}
-                        className="participating-instructors-section__calendar-card"
-                        role="button"
-                        tabIndex={0}
-                        style={
-                          {
-                            '--calendar-card-bg': schoolColors.bg,
-                            '--calendar-card-border': schoolColors.border,
-                          } as CSSProperties
-                        }
-                        onClick={e => {
-                          const target = e.target as HTMLElement
-                          if (
-                            target.closest(
-                              '.participating-instructors-section__calendar-card-checkbox-wrap'
-                            )
-                          )
-                            return
-                          onInstructorRowClick?.(row)
-                        }}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault()
-                            onInstructorRowClick?.(row)
+          <div className="participating-institutions-section__calendar-wrap">
+            <ParticipatingInstitutionsCalendarView
+              schools={MOCK_PARTICIPATING_SCHOOLS}
+              customEvents={instructorCalendarEvents}
+              renderMonthEventContent={renderParticipatingInstructorCalendarMonthEventContent}
+              selectedRowKeys={[]}
+              onSelectionChange={() => {}}
+              onSchoolClick={() => {}}
+              onDateSelect={setCalendarSelectedDate}
+              calendarGranularity={progressCalendarGranularity}
+              onCalendarGranularityChange={setProgressCalendarGranularity}
+              rightContent={
+                <div className="participating-instructors-section__calendar-right">
+                  <div className="calendar-split-card-right__toolbar participating-instructors-section__calendar-right__school-filter">
+                    <CmsSelect
+                      mode="multiple"
+                      withAllOption={false}
+                      width="100%"
+                      value={effectiveCalendarSelectedSchools}
+                      onChange={next => setCalendarSelectedSchools(next as string[])}
+                      options={calendarSchoolFilterOptions}
+                      placeholder="기관 선택"
+                    />
+                  </div>
+                  <div className="participating-instructors-section__calendar-right-cards">
+                    {instructorsForCalendarDateFiltered.map(row => {
+                      const schoolColors =
+                        schoolNameToScheduleColor.get(row.schoolName) ?? programScheduleColors
+                      return (
+                        <div
+                          key={row.id}
+                          className="participating-instructors-section__calendar-card"
+                          role="button"
+                          tabIndex={0}
+                          style={
+                            {
+                              '--calendar-card-bg': schoolColors.bg,
+                              '--calendar-card-border': schoolColors.border,
+                            } as CSSProperties
                           }
-                        }}
-                      >
-                        <div className="participating-instructors-section__calendar-card-main">
-                          <div className="participating-instructors-section__calendar-card-body">
-                            <div className="participating-instructors-section__calendar-card-header">
-                              <span className="participating-instructors-section__calendar-card-school">
-                                {row.schoolName}
-                              </span>
-                              <span
-                                className="participating-instructors-section__calendar-card-divider"
-                                aria-hidden
+                          onClick={e => {
+                            const target = e.target as HTMLElement
+                            if (
+                              target.closest(
+                                '.participating-instructors-section__calendar-card-checkbox-wrap'
+                              )
+                            )
+                              return
+                            onInstructorRowClick?.(row)
+                          }}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              onInstructorRowClick?.(row)
+                            }
+                          }}
+                        >
+                          <div className="participating-instructors-section__calendar-card-main">
+                            <div className="participating-instructors-section__calendar-card-body">
+                              <div className="participating-instructors-section__calendar-card-header">
+                                <span className="participating-instructors-section__calendar-card-school">
+                                  {row.schoolName}
+                                </span>
+                                <span
+                                  className="participating-instructors-section__calendar-card-divider"
+                                  aria-hidden
+                                />
+                                <span className="participating-instructors-section__calendar-card-name">
+                                  {row.instructorName}
+                                </span>
+                              </div>
+                              <div className="participating-instructors-section__calendar-card-tags">
+                                <span
+                                  className={
+                                    'participating-instructors-section__calendar-card-tag participating-instructors-section__calendar-card-tag--settlement participating-instructors-section__calendar-card-tag--' +
+                                    row.settlementStatus
+                                  }
+                                >
+                                  {INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[row.settlementStatus]}
+                                </span>
+                                <span className="participating-instructors-section__calendar-card-tag participating-instructors-section__calendar-card-tag--report">
+                                  강의보고서 : {row.lectureReportSubmitted ? '제출' : '미제출'}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="participating-instructors-section__calendar-card-checkbox-wrap">
+                              <Checkbox
+                                checked={selectedInstructorRowKeys.includes(row.id)}
+                                onChange={e => {
+                                  e.stopPropagation()
+                                  const next = e.target.checked
+                                    ? [...selectedInstructorRowKeys, row.id]
+                                    : selectedInstructorRowKeys.filter(k => k !== row.id)
+                                  setSelectedInstructorRowKeys(next)
+                                }}
+                                onClick={e => e.stopPropagation()}
+                                className="participating-instructors-section__calendar-card-checkbox"
                               />
-                              <span className="participating-instructors-section__calendar-card-name">
-                                {row.instructorName}
-                              </span>
                             </div>
-                            <div className="participating-instructors-section__calendar-card-tags">
-                              <span
-                                className={
-                                  'participating-instructors-section__calendar-card-tag participating-instructors-section__calendar-card-tag--settlement participating-instructors-section__calendar-card-tag--' +
-                                  row.settlementStatus
-                                }
-                              >
-                                {INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT[row.settlementStatus]}
-                              </span>
-                              <span
-                                className="participating-instructors-section__calendar-card-tag participating-instructors-section__calendar-card-tag--report"
-                              >
-                                강의보고서 : {row.lectureReportSubmitted ? '제출' : '미제출'}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="participating-instructors-section__calendar-card-checkbox-wrap">
-                            <Checkbox
-                              checked={selectedInstructorRowKeys.includes(row.id)}
-                              onChange={e => {
-                                e.stopPropagation()
-                                const next = e.target.checked
-                                  ? [...selectedInstructorRowKeys, row.id]
-                                  : selectedInstructorRowKeys.filter(k => k !== row.id)
-                                setSelectedInstructorRowKeys(next)
-                              }}
-                              onClick={e => e.stopPropagation()}
-                              className="participating-instructors-section__calendar-card-checkbox"
-                            />
                           </div>
                         </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            }
-          />
+              }
+            />
+          </div>
         )}
-      </div>
+      </FilterTableLayout>
+
+      {viewMode === 'calendar' ? (
+        <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />
+      ) : null}
 
       <AddParticipatingInstructorModal
         open={addInstructorModalOpen}

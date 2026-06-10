@@ -148,9 +148,17 @@ export function GeneralVolunteerDocPassedSection({
   }
 
   return (
-    <div className="general-volunteer-doc-passed applicant-details">
+    <div
+      className={[
+        'general-volunteer-doc-passed applicant-details',
+        viewMode === 'calendar' ? 'general-program-detail--calendar-view' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <FilterTableLayout
         bordered={false}
+        contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         className="general-volunteer-doc-passed__filter-layout applicant-details__filter-table-layout"
         rows={FILTER_ROWS}
         filters={pendingFilters}
@@ -196,6 +204,9 @@ export function GeneralVolunteerDocPassedSection({
           </div>
         )}
       </FilterTableLayout>
+      {viewMode === 'calendar' ? (
+        <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />
+      ) : null}
       {withdrawConfirmModal}
       {assignModals}
     </div>

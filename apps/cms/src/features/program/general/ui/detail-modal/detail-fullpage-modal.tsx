@@ -68,6 +68,7 @@ import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
 import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
+import { ParticipatingVolunteersSection } from './program-status/participating-volunteers-section'
 import {
   GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS,
   normalizeGeneralParticipatingInstitutionDetailTab,
@@ -1105,11 +1106,11 @@ export function GeneralProgramDetailFullPageModal({
                 />
               </div>
             ) : activeLnb === 'progress' && activeTab === 'progress_volunteers' ? (
-              <div className="program-status-participating program-detail-fullpage-modal__progress-section">
-                <Typography.Title level={5}>참여 봉사자</Typography.Title>
-                <Typography.Text className="program-status-participating__placeholder">
-                  참여 봉사자 목록 및 현황이 표시됩니다.
-                </Typography.Text>
+              <div className="program-detail-fullpage-modal__progress-section">
+                <ParticipatingVolunteersSection
+                  programId={displayProgram.id}
+                  program={displayProgram}
+                />
               </div>
             ) : activeLnb === 'volunteer_applications' ? (
               <div className="program-detail-fullpage-modal__info-tab">

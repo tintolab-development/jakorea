@@ -1,104 +1,10 @@
 /**
  * 프로그램 상세 - 담당자 정보 탭
- * 상단 필터: UnifiedFilterCard · StatusDropdownCell(권한) · 테이블
+ * FilterTableLayout · StatusDropdownCell(권한) · 테이블
  */
 
 .program-managers-tab {
   width: 100%;
-}
-
-.program-managers-tab__top {
-  margin-bottom: 0;
-  width: 100%;
-}
-
-/* 필터: 콘텐츠 폭 기준 — 50% flex 분배 대신 explicit width col */
-.program-managers-tab .unified-filter-card {
-  --filter-select-min-width: 0px;
-}
-
-.program-managers-tab .unified-filter-card .ant-card-body {
-  padding: 0;
-}
-
-.program-managers-tab .unified-filter-card__fields-inner .ant-col {
-  min-width: 0;
-}
-
-.program-managers-tab
-  .unified-filter-card--single-row
-  .unified-filter-card__fields-inner
-  .ant-col
-  .unified-filter-card__field--select,
-.program-managers-tab
-  .unified-filter-card--single-row
-  .unified-filter-card__fields-inner
-  .ant-col
-  .ant-select,
-.program-managers-tab
-  .unified-filter-card--single-row
-  .unified-filter-card__fields-inner
-  .ant-col
-  .cms-select,
-.program-managers-tab .unified-filter-card--single-row .labeled-search-input__input,
-.program-managers-tab .unified-filter-card--single-row .labeled-search-input .cms-input {
-  min-width: 0 !important;
-}
-
-.program-managers-tab__divider {
-  height: 0;
-  border: none;
-  border-top: 1px solid var(--color-border-light);
-  margin: 32px 0 0;
-}
-
-/* 디바이더 하위: 테이블 영역 (진행 현황 탭과 동일 32px) */
-.program-managers-tab__below-divider {
-  padding-top: 0;
-  margin-top: 32px;
-}
-
-.program-managers-tab__table-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-16);
-  gap: var(--spacing-12);
-  flex-wrap: wrap;
-}
-
-.program-managers-tab__table-heading {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--spacing-8);
-}
-
-.program-managers-tab__table-title {
-  color: var(--color-text-heading);
-  font-size: 20px;
-  font-weight: var(--font-weight-700);
-  line-height: 1.4;
-}
-
-.program-managers-tab__table-description {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%; /* 24px */
-  opacity: 0.6;
-}
-
-.program-managers-tab__table-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-8);
-  flex-wrap: wrap;
-}
-
-.program-managers-tab__table {
-  margin-top: 0;
 }
 
 /* 컬럼 width 합 68+80+246+116+246+246+246 = 1248 */

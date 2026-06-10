@@ -11,6 +11,7 @@ import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-c
 import './applicant-calendar-view.css'
 import {
   CalendarMain,
+  CalendarSplitCardLayout,
   CalendarSubRightGeneralInstitutionApplicationList,
   CalendarSubRightGeneralInstructorApplicationList,
   type CalendarGeneralInstitutionApplicationListRow,
@@ -34,8 +35,6 @@ import {
   buildGeneralInstructorCalendarListRows,
   filterApplicantCalendarEventsForDate,
 } from './applicant-general-calendar-list-rows'
-import '@/features/program/general/ui/detail-modal/program-status/participating-institutions-calendar-view.css'
-
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
@@ -52,6 +51,8 @@ interface ApplicantCalendarViewProps {
   calendarVariant?: 'default' | 'general-instructor' | 'general-institution'
   filterEntity?: ApplicantCalendarFilterEntity
   menu?: ApplicantListMenu | ''
+  /** 일반 프로그램 상세 풀페이지 모달 — split-card + page-scroll sticky */
+  useSplitCardPageScroll?: boolean
 }
 
 function findInstitutionForRow(
@@ -101,10 +102,11 @@ export function ApplicantCalendarView({
   calendarVariant = 'default',
   filterEntity: filterEntityProp,
   menu = '',
+  useSplitCardPageScroll = false,
 }: ApplicantCalendarViewProps) {
   const isGeneralInstructor = calendarVariant === 'general-instructor'
   const isGeneralInstitution = calendarVariant === 'general-institution'
-  const usesCommonGeneralList = isGeneralInstructor || isGeneralInstitution
+  const usesSplitCardLayout = useSplitCardPageScroll || isGeneralInstructor || isGeneralInstitution
   const filterEntity: ApplicantCalendarFilterEntity =
     filterEntityProp ?? (menu === 'individual-applications' ? 'participant' : 'school')
   const [fallbackCalendarMode, setFallbackCalendarMode] = useState<'month' | 'week'>('month')
@@ -233,14 +235,6 @@ export function ApplicantCalendarView({
     [filteredDayEvents, onItemClick]
   )
 
-  if (loading) {
-    return (
-      <div className="applicant-calendar-view applicant-calendar-view--loading">
-        <Spin size="large" />
-      </div>
-    )
-  }
-
   const entityFilterSelect = (
     <CmsSelect
       mode="multiple"
@@ -283,45 +277,55 @@ export function ApplicantCalendarView({
     />
   )
 
-  return (
-    <div
-      className={[
-        'calendar-set',
-        usesCommonGeneralList ? 'calendar-set--page-scroll' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <div className="calendar-main-container">
-        <CalendarMain
-          events={events}
-          selectedRowKeys={selectedRowKeys}
-          selectedDate={selectedDate}
-          currentMonth={currentMonth}
-          mode={calendarMode}
-          onSelectDate={handleDateSelect}
-          onMonthChange={setCurrentMonth}
-          onModeChange={setCalendarMode}
-          eventsTooltipScope="full-day"
-          eventsTooltipTrigger="cell"
-          formatEventsOverflowText={n => `외 ${n}개의 항목`}
-          previewTooltipContent={
-            isGeneralInstitution
-              ? renderGeneralInstitutionCalendarPreviewTooltipContent
-              : isGeneralInstructor
-                ? renderGeneralInstructorCalendarPreviewTooltipContent
-                : renderProgramCalendarEventsDefaultTooltipContent
-          }
-          tooltipOverlayClassName={
-            isGeneralInstitution || isGeneralInstructor
-              ? 'participating-institutions-calendar-tooltip-overlay'
-              : undefined
-          }
-          {...(isGeneralInstructor
-            ? { renderMonthEventContent: renderGeneralInstructorCalendarMonthEventContent }
-            : {})}
-        />
+  const calendarMain = (
+    <CalendarMain
+      className={usesSplitCardLayout ? 'calendar-split-card-main' : undefined}
+      events={events}
+      selectedRowKeys={selectedRowKeys}
+      selectedDate={selectedDate}
+      currentMonth={currentMonth}
+      mode={calendarMode}
+      onSelectDate={handleDateSelect}
+      onMonthChange={setCurrentMonth}
+      onModeChange={setCalendarMode}
+      eventsTooltipScope="full-day"
+      eventsTooltipTrigger="cell"
+      formatEventsOverflowText={n => `외 ${n}개의 항목`}
+      previewTooltipContent={
+        isGeneralInstitution
+          ? renderGeneralInstitutionCalendarPreviewTooltipContent
+          : isGeneralInstructor
+            ? renderGeneralInstructorCalendarPreviewTooltipContent
+            : renderProgramCalendarEventsDefaultTooltipContent
+      }
+      {...(isGeneralInstructor
+        ? { renderMonthEventContent: renderGeneralInstructorCalendarMonthEventContent }
+        : {})}
+    />
+  )
+
+  if (usesSplitCardLayout) {
+    return (
+      <CalendarSplitCardLayout
+        pageScroll={useSplitCardPageScroll}
+        loading={loading}
+        left={calendarMain}
+        right={rightListContent}
+      />
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="applicant-calendar-view applicant-calendar-view--loading">
+        <Spin size="large" />
       </div>
+    )
+  }
+
+  return (
+    <div className="calendar-set">
+      <div className="calendar-main-container">{calendarMain}</div>
       <div className="calendar-sub-right-list">{rightListContent}</div>
     </div>
   )

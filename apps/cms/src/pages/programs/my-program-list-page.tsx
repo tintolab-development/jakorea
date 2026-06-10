@@ -8,7 +8,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { Tag, Button, Table, Empty } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
+import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -304,7 +304,9 @@ export function MyProgramListPage() {
     <div>
       <h1 style={{ ...PAGE_HEADER_STYLE, marginBottom: 24 }}>{categoryName}</h1>
 
-      <UnifiedFilterCard
+      <FilterTableLayout
+        showTitle={false}
+        hideExcelDownload
         fields={[
           {
             key: 'search',
@@ -345,20 +347,21 @@ export function MyProgramListPage() {
           setPendingFilters(prev => ({ ...prev, [key]: value || undefined }))
         }}
         onSearch={handleSearch}
-      />
-
-      <Table
-        columns={columns}
-        dataSource={programs}
-        rowKey="id"
         loading={loading}
-        pagination={{
-          defaultPageSize: 10,
-          showSizeChanger: true,
-          showTotal: total => `총 ${total}개`,
-        }}
-        scroll={{ x: 1200 }}
-      />
+      >
+        <Table
+          columns={columns}
+          dataSource={programs}
+          rowKey="id"
+          loading={loading}
+          pagination={{
+            defaultPageSize: 10,
+            showSizeChanger: true,
+            showTotal: total => `총 ${total}개`,
+          }}
+          scroll={{ x: 1200 }}
+        />
+      </FilterTableLayout>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { TEXTBOOK_STATUS_LABELS, TEXTBOOK_STATUS_OPTION_KEYS } from '@/data/mock/participating-schools'
@@ -42,11 +42,18 @@ export const participatingInstitutionsFilterFields: FilterFieldConfig[] = [
     width: FILTER_CONTROL_WIDTH,
   },
   {
-    key: 'grade',
+    key: 'educationGrade',
     type: 'select',
-    label: '신청 학년',
+    label: '교육 학년',
     placeholder: '전체',
     options: GRADE_OPTIONS,
+    width: FILTER_CONTROL_WIDTH,
+  },
+  {
+    key: 'teacherName',
+    type: 'search',
+    label: '담당 교사명',
+    placeholder: '담당 교사명을 입력하세요',
     width: FILTER_CONTROL_WIDTH,
   },
 ]
