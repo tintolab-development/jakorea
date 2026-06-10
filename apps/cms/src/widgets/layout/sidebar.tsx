@@ -26,8 +26,7 @@ export function Sidebar() {
 
     // ADMIN: 프로그램 관리 그룹 (/programs/education, /programs/:id 등)
     const isGeminiProgramScope =
-      user?.role === 'ADMIN' &&
-      (path === '/education-records' || path.startsWith('/programs/gemini'))
+      user?.role === 'ADMIN' && path.startsWith('/programs/gemini')
     const isProgramMgmt =
       user?.role === 'ADMIN' &&
       ((path.startsWith('/programs') &&

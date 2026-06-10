@@ -366,6 +366,7 @@ export function ProgramListPage() {
       className={[
         'program-list-page',
         programType === 'company_school' ? 'program-list-page--overview' : '',
+        isScheduledFilter ? 'program-list-page--scheduled-filters' : '',
       ]
         .filter(Boolean)
         .join(' ')}

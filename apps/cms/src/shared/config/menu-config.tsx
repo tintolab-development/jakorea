@@ -374,7 +374,7 @@ const allMenuItems: MenuItemConfig[] = [
         allowedRoles: ['ADMIN'],
         children: [
           {
-            key: '/education-records',
+            key: '/programs/gemini/performance',
             label: '실적 관리',
             icon: <DotIcon />,
             enabled: true,
@@ -839,8 +839,9 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
     { prefix: '/programs/general', menuKey: '/programs/general' },
     { prefix: '/programs/company-school', menuKey: '/programs/company-school' },
     { prefix: '/programs/ujat', menuKey: '/programs/ujat' },
+    { prefix: '/programs/gemini/performance', menuKey: '/programs/gemini/performance' },
     { prefix: '/programs/gemini/visiting-training', menuKey: '/programs/gemini/visiting-training' },
-    { prefix: '/programs/gemini', menuKey: '/programs/gemini/visiting-training' },
+    { prefix: '/programs/gemini', menuKey: '/programs/gemini/performance' },
     { prefix: '/programs/education', menuKey: '/programs/general' },
     { prefix: '/programs/economy-education', menuKey: '/programs/company-school' },
   ]

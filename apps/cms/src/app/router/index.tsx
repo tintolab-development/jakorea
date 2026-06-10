@@ -92,6 +92,9 @@ const UjatProgramListPage = lazyLoad(() => import('@/pages/programs/UJAT/page'))
 const GeminiVisitingTrainingPage = lazyLoad(
   () => import('@/pages/programs/gemini/visiting-training/page')
 )
+const GeminiPerformancePage = lazyLoad(
+  () => import('@/pages/programs/gemini/performance/page')
+)
 const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
 const ProgramApplicationCompletePage = lazyLoad(
   () => import('@/pages/programs/program-application-complete-page')
@@ -272,6 +275,8 @@ export const router = createBrowserRouter([
           { path: 'company-school/*', element: <ProgramListPage /> },
           { path: 'ujat', element: <UjatProgramListPage /> },
           { path: 'ujat/*', element: <UjatProgramListPage /> },
+          { path: 'gemini/performance', element: <GeminiPerformancePage /> },
+          { path: 'gemini/performance/*', element: <GeminiPerformancePage /> },
           { path: 'gemini/visiting-training', element: <GeminiVisitingTrainingPage /> },
           { path: 'gemini/visiting-training/*', element: <GeminiVisitingTrainingPage /> },
           { path: 'gemini', element: programCategoryPreparing },
