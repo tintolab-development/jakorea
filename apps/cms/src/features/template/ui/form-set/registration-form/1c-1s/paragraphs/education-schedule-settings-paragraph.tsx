@@ -2,6 +2,7 @@
  * 1사 1교 프로그램 등록 폼 — 교육 진행 일정 설정
  */
 import { useMemo, useState } from 'react'
+import type { ProgramRegistrationEducationScheduleMode } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { Dayjs } from 'dayjs'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import {
@@ -13,14 +14,18 @@ import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
-type EducationScheduleMode = 'date' | 'period'
-
 function isValidDayjs(d: Dayjs | null | undefined): d is Dayjs {
   return d != null && d.isValid()
 }
 
-export function OneCOneSRegistrationEducationScheduleSettingsParagraph() {
-  const [scheduleMode, setScheduleMode] = useState<EducationScheduleMode>('period')
+export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
+  educationScheduleMode,
+  onEducationScheduleModeChange,
+}: {
+  educationScheduleMode: ProgramRegistrationEducationScheduleMode
+  onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
+}) {
+  const scheduleMode = educationScheduleMode
   const [singleDate, setSingleDate] = useState<Dayjs | null>(null)
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null])
 
@@ -57,7 +62,11 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph() {
               <CmsRadioGroup
                 size="large"
                 value={scheduleMode}
-                onChange={e => setScheduleMode(e.target.value as EducationScheduleMode)}
+                onChange={e =>
+                  onEducationScheduleModeChange(
+                    e.target.value as ProgramRegistrationEducationScheduleMode
+                  )
+                }
               >
                 <CmsRadio value="date" disabled>
                   날짜 지정

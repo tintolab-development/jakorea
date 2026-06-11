@@ -22,6 +22,9 @@ export type ProgramRegistrationType = 'curriculum' | 'schedule'
 /** 수업 회차 유형 — 단일/복수 */
 export type ProgramRegistrationSessionRoundType = 'single' | 'multi'
 
+/** 교육 진행 일정 유형 — `period` = 기획 「날짜 선택(기간)」 */
+export type ProgramRegistrationEducationScheduleMode = 'date' | 'period'
+
 /** 복수 회차 시 교육 형태·참여 방식·IPS: 일정 공통 vs 차시별 입력 */
 export type ProgramRegistrationScheduleDetailKind = 'common' | 'perSchedule'
 
@@ -75,6 +78,8 @@ export interface ProgramRegistrationParagraphBodyOptions {
   /** 일정형(복수·일정 별 상이 조합) 카드 헤더 — 사전 교육 토글 */
   scheduleCurriculumPreEducation: boolean
   onScheduleCurriculumPreEducationChange: (checked: boolean) => void
+  educationScheduleMode: ProgramRegistrationEducationScheduleMode
+  onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
 }
 
 export function renderProgramRegistrationParagraphBody(
@@ -172,10 +177,16 @@ export function renderProgramRegistrationParagraphBody(
         />
       )
     case PROGRAM_REGISTRATION_IDS.educationScheduleSettings:
-      return options?.programRegistrationFormVariant === 'economy' ? (
-        <OneCOneSRegistrationEducationScheduleSettingsParagraph />
+      return options == null ? null : options.programRegistrationFormVariant === 'economy' ? (
+        <OneCOneSRegistrationEducationScheduleSettingsParagraph
+          educationScheduleMode={options.educationScheduleMode}
+          onEducationScheduleModeChange={options.onEducationScheduleModeChange}
+        />
       ) : (
-        <ProgramRegistrationEducationScheduleSettingsParagraph />
+        <ProgramRegistrationEducationScheduleSettingsParagraph
+          educationScheduleMode={options.educationScheduleMode}
+          onEducationScheduleModeChange={options.onEducationScheduleModeChange}
+        />
       )
     default:
       return null

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import type { ProgramRegistrationEducationScheduleMode } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { Dayjs } from 'dayjs'
 import { formatEducationScheduleLineFromRange } from '@/features/template/lib/format-education-schedule-line'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
@@ -10,10 +10,14 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import './program-registration-paragraph.css'
 
-type EducationScheduleMode = 'date' | 'period'
-
-export function ProgramRegistrationEducationScheduleSettingsParagraph() {
-  const [scheduleMode, setScheduleMode] = useState<EducationScheduleMode>('date')
+export function ProgramRegistrationEducationScheduleSettingsParagraph({
+  educationScheduleMode,
+  onEducationScheduleModeChange,
+}: {
+  educationScheduleMode: ProgramRegistrationEducationScheduleMode
+  onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
+}) {
+  const scheduleMode = educationScheduleMode
   const [singleDate, setSingleDate] = useState<Dayjs | null>(null)
   const [periodDate, setPeriodDate] = useState<Dayjs | null>(null)
   const [scheduleLines, setScheduleLines] = useState<string[]>([])
@@ -47,10 +51,6 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph() {
     setSingleDate(null)
   }, [scheduleMode])
 
-  useEffect(() => {
-    patchInstitutionApplicationProgramBridge({ educationScheduleMode: scheduleMode })
-  }, [scheduleMode])
-
   return (
     <DetailInfoForm
       title="교육 진행 일정 설정"
@@ -66,7 +66,11 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph() {
               <CmsRadioGroup
                 size="large"
                 value={scheduleMode}
-                onChange={e => setScheduleMode(e.target.value as EducationScheduleMode)}
+                onChange={e =>
+                  onEducationScheduleModeChange(
+                    e.target.value as ProgramRegistrationEducationScheduleMode
+                  )
+                }
               >
                 <CmsRadio value="date">날짜 지정</CmsRadio>
                 <CmsRadio value="period">기간 지정</CmsRadio>

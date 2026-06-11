@@ -131,8 +131,14 @@ export function useGeneralProgramRegistrationFlow(
     patchInstitutionApplicationProgramBridge({
       educationStructure: registrationVm.programType,
       sessionRound: registrationVm.sessionRoundType,
+      educationScheduleMode: registrationVm.educationScheduleMode,
     })
-  }, [open, registrationVm.programType, registrationVm.sessionRoundType])
+  }, [
+    open,
+    registrationVm.programType,
+    registrationVm.sessionRoundType,
+    registrationVm.educationScheduleMode,
+  ])
 
   const registryEntry = useMemo(
     () => lookupTemplateRegistry(currentStepDef.templateId),

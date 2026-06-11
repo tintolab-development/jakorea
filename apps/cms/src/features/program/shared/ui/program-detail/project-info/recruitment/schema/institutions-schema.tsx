@@ -1,6 +1,6 @@
 import { Controller } from 'react-hook-form'
 import type { UseFormReturn } from 'react-hook-form'
-import type { Program, ProgramLifecycleStatus, TargetLevel } from '@/types/domain'
+import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -8,7 +8,11 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import { formatDateRange, TARGET_LEVEL_LABEL } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  formatDateRange,
+  parseTargetLevelsSelectValue,
+  TARGET_LEVEL_LABEL,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import type { SectionSchema } from '@/features/program/shared/model/recruitment-schema'
 import { DateRangeEdit, ProgramDetailContactReadRow } from '../components/recruitment-form-parts'
 import dayjs from 'dayjs'
@@ -88,16 +92,18 @@ export function createInstitutionsSchema({
             edit:
               isEdit && form ? (
                 <Controller
-                  name="targetLevel"
+                  name="targetLevels"
                   control={form.control}
                   render={({ field }) => (
                     <CmsSelect
+                      mode="multiple"
                       inputSize="medium"
+                      width="100%"
                       withAllOption={false}
-                      value={field.value ?? undefined}
+                      value={field.value ?? []}
                       options={TARGET_LEVEL_OPTIONS}
-                      onChange={v => field.onChange((v as TargetLevel) || undefined)}
-                      placeholder="대상"
+                      onChange={v => field.onChange(parseTargetLevelsSelectValue(v))}
+                      placeholder="교육 대상을 선택하세요"
                       className="program-detail-info-tab__target-select"
                     />
                   )}

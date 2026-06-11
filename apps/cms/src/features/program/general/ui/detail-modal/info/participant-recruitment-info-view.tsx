@@ -9,9 +9,12 @@ import {
   resolveInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import type { UseFormReturn } from 'react-hook-form'
-import type { Program, TargetLevel } from '@/types/domain'
+import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import { TARGET_LEVEL_LABEL } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  parseTargetLevelsSelectValue,
+  TARGET_LEVEL_LABEL,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { parsePositiveIntInput } from '@/features/template/lib/participant-recruitment-institution-limits'
@@ -302,36 +305,50 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                 />
               </DetailInfoForm.Row>
 
-              <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field
-                  label="신청 가능 최대 일정 수"
-                  view={display.maxScheduleCountLabel}
-                  edit={
-                    isEdit && form ? (
-                      <NumberWithSuffixEdit
-                        form={form}
-                        name="participantRecruitmentMaxScheduleCount"
-                        placeholder="최대값 입력"
-                        suffix="개"
-                      />
-                    ) : undefined
+              {display.showMaxScheduleCountField || display.showMaxSessionsPerDayField ? (
+                <DetailInfoForm.Row
+                  type={
+                    display.showMaxScheduleCountField && display.showMaxSessionsPerDayField
+                      ? 'double'
+                      : 'single'
                   }
-                />
-                <DetailInfoForm.Field
-                  label="신청 가능 1일 최대 차시"
-                  view={display.maxSessionsPerDayLabel}
-                  edit={
-                    isEdit && form ? (
-                      <NumberWithSuffixEdit
-                        form={form}
-                        name="participantRecruitmentMaxSessionsPerDay"
-                        placeholder="최대값 입력"
-                        suffix="차시"
-                      />
-                    ) : undefined
-                  }
-                />
-              </DetailInfoForm.Row>
+                >
+                  {display.showMaxScheduleCountField ? (
+                    <DetailInfoForm.Field
+                      label="신청 가능 최대 일정 수"
+                      fullRow={!display.showMaxSessionsPerDayField}
+                      view={display.maxScheduleCountLabel}
+                      edit={
+                        isEdit && form ? (
+                          <NumberWithSuffixEdit
+                            form={form}
+                            name="participantRecruitmentMaxScheduleCount"
+                            placeholder="최대값 입력"
+                            suffix="개"
+                          />
+                        ) : undefined
+                      }
+                    />
+                  ) : null}
+                  {display.showMaxSessionsPerDayField ? (
+                    <DetailInfoForm.Field
+                      label="신청 가능 1일 최대 차시"
+                      fullRow={!display.showMaxScheduleCountField}
+                      view={display.maxSessionsPerDayLabel}
+                      edit={
+                        isEdit && form ? (
+                          <NumberWithSuffixEdit
+                            form={form}
+                            name="participantRecruitmentMaxSessionsPerDay"
+                            placeholder="최대값 입력"
+                            suffix="차시"
+                          />
+                        ) : undefined
+                      }
+                    />
+                  ) : null}
+                </DetailInfoForm.Row>
+              ) : null}
             </>
           ) : null}
         </DetailInfoForm>
@@ -392,17 +409,18 @@ export function GeneralProgramParticipantRecruitmentInfoView({
               edit={
                 isEdit && form ? (
                   <Controller
-                    name="targetLevel"
+                    name="targetLevels"
                     control={form.control}
                     render={({ field }) => (
                       <CmsSelect
+                        mode="multiple"
                         inputSize="medium"
-                        width={240}
-                        withAllOption
-                        value={field.value ?? undefined}
+                        width="100%"
+                        withAllOption={false}
+                        value={field.value ?? []}
                         options={TARGET_LEVEL_OPTIONS}
-                        onChange={v => field.onChange((v as TargetLevel) || undefined)}
-                        placeholder="전체"
+                        onChange={v => field.onChange(parseTargetLevelsSelectValue(v))}
+                        placeholder="교육 대상을 선택하세요"
                         className="program-detail-info-tab__target-select"
                       />
                     )}

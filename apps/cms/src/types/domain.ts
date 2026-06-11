@@ -300,7 +300,9 @@ export interface Program {
   schoolId?: UUID // 학교명 (기관) - Application을 통해 연결
   district?: string // 시군구 - School.region에서 추출
   ips?: IPSClassification // IPS 분류 (Prepare/Succeed/Inspire)
-  targetLevel?: TargetLevel // 대상 구분 (초/중/고/대학생/성인)
+  targetLevel?: TargetLevel // 대상 구분 (초/중/고/대학생/성인) — 목록·레거시 호환용(첫 번째 값)
+  /** 교육 대상 다중 선택 (모집 정보) */
+  targetLevels?: TargetLevel[]
   institutionType?: InstitutionType // 기관 구분 (학교 안/밖)
   // 프로그램 설정 정보
   ipOwned?: string // IP Owned (기본값: "JA")

@@ -63,7 +63,6 @@ import { programDetailInstitutionsEditSchema } from '@/features/program/shared/m
 import { GeneralSurveyManagementView } from './survey-management/survey-management-view'
 import { ProgramManagersTab } from './managers/program-managers-tab'
 import { GeneralParticipantApplicationsScreeningView } from './applications/participant-screening/applications-screening-view'
-import { ParticipatingParticipantsSection } from './program-status/participating-participants-section'
 import { GeneralInstructorApplicationsView } from './applications/general-instructor-applications-view'
 import { GeneralVolunteerApplicationsView } from './applications/general-volunteer-applications-view'
 import { isGeneralVolunteerApplicantDetailRoute } from '@/features/program/general/lib/general-volunteer-applications'
@@ -160,7 +159,7 @@ function defaultTabForLnb(
     case 'volunteer_applications':
       return volunteerInterview ? 'vol_doc1' : 'vol_all'
     case 'progress':
-      return progressMenuItems[0]?.tab ?? 'progress_participants'
+      return progressMenuItems[0]?.tab ?? 'progress_instructors'
     case 'survey':
       return surveyKeys[0] ?? 'main'
     case 'managers':
@@ -260,7 +259,7 @@ function normalizeGeneralDetailParams(
     if (progressTabKeys.length === 0) {
       setInvalid('info', 'info')
     } else if (!isValidGeneralProgressTab(tab, progressTabKeys)) {
-      setInvalid('progress', progressTabKeys[0] ?? 'progress_participants')
+      setInvalid('progress', progressTabKeys[0] ?? 'progress_instructors')
     }
   } else if (lnb === 'survey') {
     if (surveyKeys.length === 0) {
@@ -334,7 +333,7 @@ function generalChildBreadcrumbLabel(
     if (normalized == null) return null
     const row = progressMenuItems.find(item => item.tab === normalized)
     if (row?.tab === 'progress_participants') {
-      return row.label === '참여자' ? '참여자 목록' : '참여 기관 목록'
+      return '참여 기관 목록'
     }
     return row?.label ?? null
   }
@@ -1106,15 +1105,7 @@ export function GeneralProgramDetailFullPageModal({
                   onApplicantDetailMetaChange={handleApplicantDetailMetaChange}
                 />
               </div>
-            ) : activeLnb === 'progress' &&
-              activeTab === 'progress_participants' &&
-              isIndividualProgram ? (
-              <div className="program-detail-fullpage-modal__info-tab">
-                <ParticipatingParticipantsSection programId={displayProgram.id} />
-              </div>
-            ) : activeLnb === 'progress' &&
-              activeTab === 'progress_participants' &&
-              !isIndividualProgram ? (
+            ) : activeLnb === 'progress' && activeTab === 'progress_participants' ? (
               <div className="program-detail-fullpage-modal__info-tab">
                 <ParticipatingInstitutionsSection
                   programId={displayProgram.id}

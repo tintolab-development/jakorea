@@ -16,7 +16,8 @@ import {
   getParticipantRecruitmentLifecycle,
   getVolunteerRecruitmentStatus,
   RECRUITMENT_RADIO_OPTIONS,
-  TARGET_LEVEL_LABEL,
+  formatTargetLevelsLabel,
+  resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 
@@ -75,9 +76,7 @@ export function ParticipantRecruitmentSection({
         }
       : undefined
   )
-  const targetLabel = program.targetLevel
-    ? (TARGET_LEVEL_LABEL[program.targetLevel] ?? program.targetLevel)
-    : '-'
+  const targetLabel = formatTargetLevelsLabel(resolveProgramTargetLevels(program))
   const resultDate = program.resultAnnouncementDate ?? program.applicationEndDate
   const resultMethod = program.resultAnnouncementMethod ?? '홈페이지 공지 및 담당교사 개별 안내'
   const resultLine = resultDate ? `${formatDateOnly(resultDate)} | ${resultMethod}` : '-'

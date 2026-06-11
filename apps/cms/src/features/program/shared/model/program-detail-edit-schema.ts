@@ -19,6 +19,7 @@
  *    백엔드 저장이 필요하면 패치 함수와 `Program` 모델을 확장할 것 (그 전까지는 UI 상태만 유지)
  */
 
+import { resolveProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import { z } from 'zod'
 import {
   announcementPublishedFromFormValue,
@@ -60,12 +61,14 @@ const roundEditSchema = z.object({
   deliveryType: roundDeliveryTypeEnum.optional(),
 })
 
+const targetLevelEnum = z.enum(['elementary', 'middle', 'high', 'university', 'adult'])
+
 const programDetailEditSchemaBase = z.object({
   title: z.string().min(1, '프로그램명을 입력해주세요'),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   category: z.enum(['school', 'individual']),
-  targetLevel: z.enum(['elementary', 'middle', 'high', 'university', 'adult']).optional(),
+  targetLevels: z.array(targetLevelEnum).optional(),
   district: z.string().optional(),
   type: z.enum(['online', 'offline', 'hybrid']),
   lifecycleStatus: programLifecycleStatusEnum.optional(),
@@ -198,7 +201,7 @@ export function programToDetailEditValues(
     startDate: toStr(program.startDate),
     endDate: toStr(program.endDate),
     category: toDetailEditCategory(program.category),
-    targetLevel: program.targetLevel ?? undefined,
+    targetLevels: resolveProgramTargetLevels(program),
     district: program.district ?? undefined,
     type: program.type ?? 'offline',
     lifecycleStatus: program.lifecycleStatus ?? undefined,
@@ -350,7 +353,8 @@ export function detailEditValuesToProgramPatch(
     startDate: values.startDate ?? existing.startDate,
     endDate: values.endDate ?? existing.endDate,
     category: values.category,
-    targetLevel: values.targetLevel,
+    targetLevels: values.targetLevels?.length ? values.targetLevels : undefined,
+    targetLevel: values.targetLevels?.[0],
     district: values.district,
     type: values.type,
     lifecycleStatus: values.lifecycleStatus ?? existing.lifecycleStatus,

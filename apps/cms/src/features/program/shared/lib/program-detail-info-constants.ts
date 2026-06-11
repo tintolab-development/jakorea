@@ -4,7 +4,7 @@
 
 import dayjs from 'dayjs'
 import type { DateValue } from '@/types'
-import type { Program, ProgramLifecycleStatus } from '@/types/domain'
+import type { Program, ProgramLifecycleStatus, TargetLevel } from '@/types/domain'
 import {
   getProgramLifecycleLabel,
   PROGRAM_LIFECYCLE_STATUS_SELECT_ORDER,
@@ -169,6 +169,39 @@ export const TARGET_LEVEL_LABEL: Record<string, string> = {
   high: '고등학교',
   university: '대학(원)생',
   adult: '성인',
+}
+
+const TARGET_LEVEL_VALUES = new Set<string>([
+  'elementary',
+  'middle',
+  'high',
+  'university',
+  'adult',
+])
+
+export function resolveProgramTargetLevels(program: {
+  targetLevels?: TargetLevel[]
+  targetLevel?: TargetLevel
+}): TargetLevel[] {
+  if (program.targetLevels?.length) return program.targetLevels
+  if (program.targetLevel) return [program.targetLevel]
+  return []
+}
+
+export function formatTargetLevelsLabel(
+  levels: TargetLevel[],
+  labels: Record<string, string> = TARGET_LEVEL_LABEL
+): string {
+  if (levels.length === 0) return '-'
+  return levels.map(level => labels[level] ?? level).join(', ')
+}
+
+export function parseTargetLevelsSelectValue(value: unknown): TargetLevel[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const levels = value
+    .map(String)
+    .filter((item): item is TargetLevel => TARGET_LEVEL_VALUES.has(item))
+  return levels.length > 0 ? levels : undefined
 }
 
 export const LIFECYCLE_OPTIONS = PROGRAM_LIFECYCLE_STATUS_SELECT_ORDER.map(status => ({

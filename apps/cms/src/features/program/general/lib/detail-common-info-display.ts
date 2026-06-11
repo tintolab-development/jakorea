@@ -151,6 +151,7 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK: NonNullable
         '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.',
     },
   ],
+  educationScheduleMode: 'period',
   educationScheduleLines: [
     '26년 4월 20일(월) 9:30 ~ 12:20',
     '26년 4월 27일(월) 13:00 ~ 15:50',

@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
-import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  patchInstitutionApplicationProgramBridge,
+  shouldShowInstitutionApplicationMaxScheduleFields,
+  shouldShowInstitutionApplicationMaxSessionsPerDayField,
+  useInstitutionApplicationProgramBridge,
+} from '@/features/program/general/lib/institution-application-program-bridge'
 import type { Dayjs } from 'dayjs'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { parsePositiveIntInput } from '@/features/template/lib/participant-recruitment-institution-limits'
@@ -136,6 +141,13 @@ export type ApplicantRecruitParticipantInfoParagraphProps = {
 export function ApplicantRecruitParticipantInfoParagraph({
   showInstitutionApplicationLimits = true,
 }: ApplicantRecruitParticipantInfoParagraphProps = {}) {
+  const institutionApplicationBridge = useInstitutionApplicationProgramBridge()
+  const showMaxScheduleCountField =
+    showInstitutionApplicationLimits &&
+    shouldShowInstitutionApplicationMaxScheduleFields(institutionApplicationBridge)
+  const showMaxSessionsPerDayField =
+    showInstitutionApplicationLimits &&
+    shouldShowInstitutionApplicationMaxSessionsPerDayField(institutionApplicationBridge)
   const [announcementPublished, setAnnouncementPublished] =
     useState<ParticipantRecruitmentAnnouncementPublishedValue>('published')
   const [preguidanceRequired, setPreguidanceRequired] = useState<string>('need')
@@ -175,6 +187,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
   )
 
   const [finalAnnounceDate, setFinalAnnounceDate] = useState<Dayjs | null>(null)
+  const [targetLevels, setTargetLevels] = useState<string[]>([])
 
   useEffect(() => {
     patchInstitutionApplicationProgramBridge({
@@ -261,32 +274,44 @@ export function ApplicantRecruitParticipantInfoParagraph({
               />
             </DetailInfoForm.Row>
 
-            <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field
-                label="신청 가능 최대 일정 수"
-                edit={
-                  <NumberWithSuffixRow
-                    placeholder="최대값 입력"
-                    suffix="개"
-                    value={maxScheduleInput}
-                    onChange={setMaxScheduleCount}
-                  />
+            {showMaxScheduleCountField || showMaxSessionsPerDayField ? (
+              <DetailInfoForm.Row
+                type={
+                  showMaxScheduleCountField && showMaxSessionsPerDayField ? 'double' : 'single'
                 }
-                view="-"
-              />
-              <DetailInfoForm.Field
-                label="신청 가능 1일 최대 차시"
-                edit={
-                  <NumberWithSuffixRow
-                    placeholder="최대값 입력"
-                    suffix="차시"
-                    value={maxSessionsInput}
-                    onChange={setMaxSessionsPerDay}
+              >
+                {showMaxScheduleCountField ? (
+                  <DetailInfoForm.Field
+                    label="신청 가능 최대 일정 수"
+                    fullRow={!showMaxSessionsPerDayField}
+                    edit={
+                      <NumberWithSuffixRow
+                        placeholder="최대값 입력"
+                        suffix="개"
+                        value={maxScheduleInput}
+                        onChange={setMaxScheduleCount}
+                      />
+                    }
+                    view="-"
                   />
-                }
-                view="-"
-              />
-            </DetailInfoForm.Row>
+                ) : null}
+                {showMaxSessionsPerDayField ? (
+                  <DetailInfoForm.Field
+                    label="신청 가능 1일 최대 차시"
+                    fullRow={!showMaxScheduleCountField}
+                    edit={
+                      <NumberWithSuffixRow
+                        placeholder="최대값 입력"
+                        suffix="차시"
+                        value={maxSessionsInput}
+                        onChange={setMaxSessionsPerDay}
+                      />
+                    }
+                    view="-"
+                  />
+                ) : null}
+              </DetailInfoForm.Row>
+            ) : null}
           </>
         ) : null}
       </DetailInfoForm>
@@ -330,10 +355,14 @@ export function ApplicantRecruitParticipantInfoParagraph({
             label="교육 대상"
             edit={
               <CmsSelect
+                mode="multiple"
                 inputSize="medium"
-                width={240}
-                placeholder="전체"
+                width="100%"
+                withAllOption={false}
+                placeholder="교육 대상을 선택하세요"
                 options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+                value={targetLevels}
+                onChange={v => setTargetLevels(Array.isArray(v) ? v.map(String) : [])}
               />
             }
             view="-"

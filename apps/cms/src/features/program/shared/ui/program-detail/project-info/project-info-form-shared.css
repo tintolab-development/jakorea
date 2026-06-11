@@ -650,6 +650,23 @@
   min-width: 0;
 }
 
+/* 모집 정보 — 비고(수정): CmsInput 기본 240px 대신 값 셀 가로 100% */
+.detail-info-form__field-content--edit > .cms-input.program-detail-info-tab__notes-input {
+  flex: 1 1 auto;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.detail-info-form__field-content--edit
+  > .cms-input.program-detail-info-tab__notes-input
+  .cms-input__control {
+  width: 100% !important;
+  min-width: 0;
+  max-width: none;
+}
+
 .program-detail-info-tab__result-row > .paragraph-date-picker {
   flex: 0 0 auto;
   flex-shrink: 0;

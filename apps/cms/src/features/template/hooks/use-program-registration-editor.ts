@@ -27,6 +27,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
 import type {
+  ProgramRegistrationEducationScheduleMode,
   ProgramRegistrationScheduleDetailKind,
   ProgramRegistrationSessionRoundType,
   ProgramRegistrationType,
@@ -172,6 +173,10 @@ export function useProgramRegistrationEditor(
   const [scheduleCurriculumDetailCount, setScheduleCurriculumDetailCount] = useState(1)
   const [scheduleCurriculumGroupCount, setScheduleCurriculumGroupCount] = useState(1)
   const [scheduleCurriculumPreEducation, setScheduleCurriculumPreEducation] = useState(false)
+  const defaultEducationScheduleMode: ProgramRegistrationEducationScheduleMode =
+    programRegistrationFormVariant === 'economy' ? 'period' : 'date'
+  const [educationScheduleMode, setEducationScheduleMode] =
+    useState<ProgramRegistrationEducationScheduleMode>(defaultEducationScheduleMode)
 
   const {
     openWritingUserPreview,
@@ -181,12 +186,23 @@ export function useProgramRegistrationEditor(
   } = useTemplateWritingPreview()
 
   useEffect(() => {
-    if (!active || programRegistrationFormVariant !== 'general') return
-    patchInstitutionApplicationProgramBridge({
-      educationStructure: programType,
-      sessionRound: sessionRoundType,
-    })
-  }, [active, programRegistrationFormVariant, programType, sessionRoundType])
+    if (!active) return
+    if (programRegistrationFormVariant === 'general') {
+      patchInstitutionApplicationProgramBridge({
+        educationStructure: programType,
+        sessionRound: sessionRoundType,
+        educationScheduleMode,
+      })
+      return
+    }
+    patchInstitutionApplicationProgramBridge({ educationScheduleMode })
+  }, [
+    active,
+    programRegistrationFormVariant,
+    programType,
+    sessionRoundType,
+    educationScheduleMode,
+  ])
 
   useEffect(() => {
     if (!active) return
@@ -209,6 +225,7 @@ export function useProgramRegistrationEditor(
     setScheduleCurriculumDetailCount(1)
     setScheduleCurriculumGroupCount(1)
     setScheduleCurriculumPreEducation(false)
+    setEducationScheduleMode(programRegistrationFormVariant === 'economy' ? 'period' : 'date')
   }, [active, programRegistrationFormVariant, restrictCurriculumSessionStructure])
 
   useEffect(() => {
@@ -421,6 +438,10 @@ export function useProgramRegistrationEditor(
     setScheduleCurriculumPreEducation(checked)
   }, [])
 
+  const onEducationScheduleModeChange = useCallback((value: ProgramRegistrationEducationScheduleMode) => {
+    setEducationScheduleMode(value)
+  }, [])
+
   const paragraphBodyOptions = useMemo(
     () =>
       buildProgramRegistrationParagraphBodyOptions({
@@ -459,6 +480,8 @@ export function useProgramRegistrationEditor(
         onDeleteScheduleCurriculumGroup,
         scheduleCurriculumPreEducation,
         onScheduleCurriculumPreEducationChange,
+        educationScheduleMode,
+        onEducationScheduleModeChange,
       }),
     [
       curriculumChartSessionCount,
@@ -492,6 +515,8 @@ export function useProgramRegistrationEditor(
       sessionRoundType,
       restrictCurriculumSessionStructure,
       programRegistrationFormVariant,
+      educationScheduleMode,
+      onEducationScheduleModeChange,
     ]
   )
 
@@ -575,6 +600,7 @@ export function useProgramRegistrationEditor(
     participant,
     programType,
     sessionRoundType,
+    educationScheduleMode,
   }
 }
 

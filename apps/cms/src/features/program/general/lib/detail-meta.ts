@@ -95,16 +95,15 @@ export function getGeneralParticipantApplicationsLnbLabel(program: Program): str
     : GENERAL_ORGANIZATION_APPLICATIONS_LNB_LABEL
 }
 
-/** 프로그램 진행 현황 LNB 2depth — 참여자 유형별 (출석/과제/게시글 제외) */
+/** 프로그램 진행 현황 LNB 2depth — 교육진행자 유형별 (개인 대분류 참여자 탭 없음) */
 export function getGeneralProgressMenuItems(program: Program): GeneralProgressMenuItem[] {
   const types = getGeneralParticipantTypes(program)
-  const isIndividual = isGeneralIndividualProgram(program)
   const items: GeneralProgressMenuItem[] = []
 
-  if (types.includes('individual') || types.includes('school_institution')) {
+  if (types.includes('school_institution')) {
     items.push({
       tab: 'progress_participants',
-      label: isIndividual ? '참여자' : '참여 기관',
+      label: '참여 기관',
     })
   }
   if (types.includes('teacher_instructor')) {
