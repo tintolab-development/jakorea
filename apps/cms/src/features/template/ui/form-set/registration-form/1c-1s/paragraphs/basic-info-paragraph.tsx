@@ -18,6 +18,7 @@ import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-dat
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
+import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
@@ -250,22 +251,12 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             label="참여자 유형"
             edit={
               <div className="detail-info-form-inputs-wrapper">
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={participant.individual}
-                  disabled={participant.organization}
-                  onChange={e => onIndividualChange(e.target.checked)}
-                >
-                  {participantTypeLabel('individual')}
-                </CmsCheckbox>
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={participant.organization}
-                  disabled={participant.individual}
-                  onChange={e => onOrganizationChange(e.target.checked)}
-                >
-                  {participantTypeLabel('school_institution')}
-                </CmsCheckbox>
+                <GeneralParticipantAudienceCheckboxGroup
+                  individual={participant.individual}
+                  organization={participant.organization}
+                  onIndividualChange={onIndividualChange}
+                  onOrganizationChange={onOrganizationChange}
+                />
                 <CmsCheckbox
                   checkboxSize="large"
                   checked={teacherChecked}

@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   formatEducationScheduleLineFromRange,
@@ -67,7 +66,7 @@ export function ProgramRegistrationMultiRoundAssignmentFields({
               customizable={false}
               suppressAutoTodayWhenEmpty
               disabled={!value.enabled}
-              value={appliedSurfaceRange?.[0] ?? dayjs()}
+              value={appliedSurfaceRange?.[0] ?? null}
               onChange={() => {}}
               appliedSurfaceRange={appliedSurfaceRange}
               onRangeChange={([start, end]) => {

@@ -17,12 +17,17 @@ export type ProgramRegistrationIpsTypeFieldsProps = {
   onChange: (next: ProgramRegistrationIpsTypeValue) => void
   /** true면 1·2차 IPS 셀렉트 모두 비활성 (값은 `value` 그대로 표시) */
   disabled?: boolean
+  className?: string
+  /** double 행 반쪽 — 2번째 셀렉트를 남는 폭에 맞춤 (커리큘럼 회차별 IPS) */
+  layout?: 'default' | 'inline'
 }
 
 export function ProgramRegistrationIpsTypeFields({
   value,
   onChange,
   disabled = false,
+  className,
+  layout = 'default',
 }: ProgramRegistrationIpsTypeFieldsProps) {
   const { category, detail } = value
 
@@ -63,9 +68,18 @@ export function ProgramRegistrationIpsTypeFields({
 
   const primaryDisabled = disabled
   const secondarySelectDisabled = disabled || secondaryDisabled
+  const isInlineLayout = layout === 'inline'
+
+  const wrapperClassName = [
+    'detail-info-form-inputs-wrapper',
+    isInlineLayout && 'program-registration-paragraph__schedule-detail-row',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
-    <div className="detail-info-form-inputs-wrapper">
+    <div className={wrapperClassName}>
       <CmsSelect
         inputSize="medium"
         withAllOption={false}
@@ -80,7 +94,7 @@ export function ProgramRegistrationIpsTypeFields({
         inputSize="medium"
         withAllOption={false}
         placeholder={secondaryPlaceholder}
-        width={360}
+        width={isInlineLayout ? '100%' : 360}
         options={secondaryOptions}
         value={secondaryValue}
         disabled={secondarySelectDisabled}

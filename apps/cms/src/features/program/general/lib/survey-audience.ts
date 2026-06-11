@@ -29,6 +29,28 @@ export function isGeneralIndividualProgram(program: Program): boolean {
   return participantTypes.includes('individual') && !participantTypes.includes('school_institution')
 }
 
+/** 참여자 유형 [개인]만 선택 — KPI 학교·학급 해당 없음 */
+export function isGeneralIndividualParticipantSelection(
+  participantIndividual: boolean,
+  participantOrganization: boolean
+): boolean {
+  return participantIndividual && !participantOrganization
+}
+
+export function isGeneralIndividualParticipantTarget(
+  program: Program,
+  participantIndividual?: boolean,
+  participantOrganization?: boolean
+): boolean {
+  if (participantIndividual != null || participantOrganization != null) {
+    return isGeneralIndividualParticipantSelection(
+      Boolean(participantIndividual),
+      Boolean(participantOrganization)
+    )
+  }
+  return isGeneralIndividualProgram(program)
+}
+
 export function getGeneralSatisfactionAudienceTabs(
   program: Program
 ): ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>> {

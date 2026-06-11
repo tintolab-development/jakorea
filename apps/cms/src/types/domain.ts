@@ -55,10 +55,11 @@ export type GeneralProgramParticipantType =
   | 'teacher_instructor'
   | 'volunteer'
 
-/** 일반 프로그램 등록 폼 — 설문 진행 항목 키 (등록 양식·상세 LNB 공통 3종) */
+/** 일반 프로그램 등록 폼 — 설문 진행 항목 키 (등록 양식·상세 LNB 공통 4종) */
 export type GeneralProgramSurveyMenuKey =
   | 'survey'
-  | 'satisfaction'
+  | 'student_satisfaction'
+  | 'teacher_satisfaction'
   | 'lecture_evaluation'
 
 /** 일반 프로그램 대분류 — 등록 폼 참여자 유형 [기관] / [개인] */
@@ -126,10 +127,12 @@ export interface GeneralProgramCommonInfoExtension {
   sponsorManagerLine?: string
   /** 교육 장소 상세 (기관 안/밖 뒤 `|` 구분) */
   venueDetail?: string
-  /** 후원사 표시명 mock — `sponsorId` resolve 전 스크린샷·데모용 */
+  /** 후원사 표시명 mock — `sponsorId` resolve 전 스크린샷·데모용 (복수 시 `, ` 구분) */
   sponsorDisplayName?: string
-  /** 후원사 관리 목록 id — `/sponsor?sponsorId=` 링크용 */
+  /** 후원사 관리 목록 id — `/sponsor?sponsorId=` 링크용 (레거시·주 후원사) */
   sponsorManagementId?: string
+  /** 후원사 관리 목록 id — 다중 선택 */
+  sponsorManagementIds?: string[]
   educationFormLabel?: string
   ipsTypeSummary?: string
   educationFormScheduleDetail?: GeneralProgramScheduleDetailKind

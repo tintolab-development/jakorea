@@ -46,6 +46,20 @@ export const GENERAL_SATISFACTION_EMPTY_COPY = {
   registerButton: '만족도조사 등록',
 } as const satisfies SurveyEmptyCopy
 
+export const GENERAL_STUDENT_SATISFACTION_EMPTY_COPY = {
+  title: '아직 등록된 학생 만족도조사가 없습니다.',
+  description: '학생 만족도조사 등록 버튼을 눌러 설문 내용을 추가해 주세요.',
+  secondaryDescription: '링크 공유하여 비회원(학생) 대상으로 진행합니다.',
+  registerButton: '학생 만족도조사 등록',
+} as const satisfies SurveyEmptyCopy
+
+export const GENERAL_TEACHER_SATISFACTION_EMPTY_COPY = {
+  title: '아직 등록된 교사 만족도조사가 없습니다.',
+  description: '교사 만족도조사 등록 버튼을 눌러 설문 내용을 추가해 주세요.',
+  secondaryDescription: '등록 시 해당 프로그램 참여 교사에게 동일하게 노출됩니다.',
+  registerButton: '교사 만족도조사 등록',
+} as const satisfies SurveyEmptyCopy
+
 export const GENERAL_SATISFACTION_NO_RESPONSE_COPY = {
   description: '설문 진행 이후에 확인해 주세요.',
   deleteButton: '만족도조사 삭제',
@@ -55,5 +69,17 @@ export const GENERAL_SATISFACTION_NO_RESPONSE_COPY = {
 export const GENERAL_SATISFACTION_ACTION_LABELS = {
   share: '만족도조사 공유',
   download: '만족도조사 결과 다운로드',
+  preview: '설문 양식 보기',
+} as const satisfies SurveyActionLabels
+
+export const GENERAL_STUDENT_SATISFACTION_ACTION_LABELS = {
+  share: '학생 만족도조사 공유',
+  download: '학생 만족도조사 결과 다운로드',
+  preview: '설문 양식 보기',
+} as const satisfies SurveyActionLabels
+
+export const GENERAL_TEACHER_SATISFACTION_ACTION_LABELS = {
+  share: '교사 만족도조사 공유',
+  download: '교사 만족도조사 결과 다운로드',
   preview: '설문 양식 보기',
 } as const satisfies SurveyActionLabels

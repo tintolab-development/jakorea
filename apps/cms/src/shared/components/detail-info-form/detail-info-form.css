@@ -128,6 +128,11 @@
   border-right: none;
 }
 
+/* 반쪽 Field 다음 fullRow Field(줄바꿈) — 교육 형태·IPS 등 내부 행 구분선 */
+.detail-info-form__row--double > .detail-info-form__field--full-row:not(:first-child) {
+  border-top: 1px solid var(--table-line, #e0e0e0);
+}
+
 .detail-info-form__row--double
   > .detail-info-form__field:not(.detail-info-form__field--full-row):nth-child(odd):not(
     :last-child

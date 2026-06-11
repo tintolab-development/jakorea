@@ -14,6 +14,7 @@ export type SatisfactionSurveyViewProps<TKey extends string> = {
   noResponseCopy: SurveyNoResponseCopy
   actionLabels: SurveyActionLabels
   showAudienceTabs?: boolean
+  showShareButton?: boolean
   onAudienceChange: (audience: TKey) => void
   onRegisterClick: () => void
   onShareClick: () => void
@@ -30,6 +31,7 @@ export function SatisfactionSurveyView<TKey extends string>({
   noResponseCopy,
   actionLabels,
   showAudienceTabs = true,
+  showShareButton = true,
   onAudienceChange,
   onRegisterClick,
   onShareClick,
@@ -46,6 +48,7 @@ export function SatisfactionSurveyView<TKey extends string>({
         labels={actionLabels}
         layout="satisfaction"
         showAddButton={false}
+        showShareButton={showShareButton}
         onShareClick={onShareClick}
         onOpenTemplatePreview={onOpenTemplatePreview}
         onDownloadClick={onDownloadClick}

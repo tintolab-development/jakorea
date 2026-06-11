@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import { useCmsAlert } from '@/shared/ui'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
 import { buildSearchParams, makeBreadcrumbItem } from '@/shared/lib/detail-fullpage-query-stack'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
@@ -39,6 +40,10 @@ import {
 } from '@/features/program/general/lib/detail-url'
 import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/hooks/use-common-info-edit-form'
 import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hooks/use-common-info-save'
+import {
+  canGeneralProgramCommonInfoEdit,
+  getGeneralProgramCommonInfoEditBlockedAlertMessage,
+} from '@/features/program/general/lib/common-info-edit-policy'
 import { GeneralProgramDetailSidebar } from './detail-sidebar'
 import { GeneralProgramDetailCommonInfoView } from './info/common-info-view'
 import { GeneralProgramRecruitmentView } from './info/recruitment-view'
@@ -209,6 +214,14 @@ function normalizeGeneralDetailParams(
     tab = normalizedProgressTab
   }
 
+  if (tab === 'satisfaction') {
+    tab = surveyKeys.includes('student_satisfaction')
+      ? 'student_satisfaction'
+      : surveyKeys.includes('teacher_satisfaction')
+        ? 'teacher_satisfaction'
+        : (surveyKeys[0] ?? 'main')
+  }
+
   if (lnb === 'info') {
     if (!(INFO_TABS as readonly string[]).includes(tab)) {
       setInvalid('info', 'info')
@@ -374,6 +387,7 @@ export function GeneralProgramDetailFullPageModal({
     updateProgram,
     setSelectedProgram,
   } = useProgramDetail(open ? programId : undefined)
+  const { showAlert } = useCmsAlert()
   const displayProgram = useMemo(() => {
     return (
       detailProgram ??
@@ -437,8 +451,18 @@ export function GeneralProgramDetailFullPageModal({
     [programId, searchParams, setSearchParams]
   )
 
+  const canEditCommonInfo = useMemo(
+    () => canGeneralProgramCommonInfoEdit(displayProgram),
+    [displayProgram]
+  )
+
   const isEditModeInfo =
-    open && activeLnb === 'info' && activeTab === 'info' && editTab === 'info' && !!displayProgram
+    open &&
+    activeLnb === 'info' &&
+    activeTab === 'info' &&
+    editTab === 'info' &&
+    !!displayProgram &&
+    canEditCommonInfo
 
   const infoForm = useGeneralProgramCommonInfoEditForm({
     program: displayProgram,
@@ -453,6 +477,7 @@ export function GeneralProgramDetailFullPageModal({
             try {
               const { id: _id, createdAt: _c, ...patch } = draft
               await updateProgram(draft.id, patch)
+              setSelectedProgram(draft)
             } catch {
               // API 연동 전 — 일반 프로그램 mock은 선택 프로그램 store에만 반영
               setSelectedProgram(draft)
@@ -463,17 +488,29 @@ export function GeneralProgramDetailFullPageModal({
 
   const handleInfoEdit = useCallback(() => {
     if (activeLnb !== 'info' || activeTab !== 'info' || !displayProgram) return
+    if (!canGeneralProgramCommonInfoEdit(displayProgram)) {
+      showAlert({
+        title: '안내',
+        content: getGeneralProgramCommonInfoEditBlockedAlertMessage(displayProgram),
+      })
+      return
+    }
     infoResetToProgram()
     setEditMode('info')
-  }, [activeLnb, activeTab, displayProgram, infoResetToProgram, setEditMode])
+  }, [activeLnb, activeTab, displayProgram, infoResetToProgram, setEditMode, showAlert])
+
+  useEffect(() => {
+    if (!open || !displayProgram || editTab !== 'info') return
+    if (activeLnb !== 'info' || activeTab !== 'info') return
+    if (canGeneralProgramCommonInfoEdit(displayProgram)) return
+    setEditMode(null)
+  }, [open, editTab, displayProgram, activeLnb, activeTab, setEditMode])
 
   const handleInfoSave = useCallback(async () => {
     if (!displayProgram) return
-    const isValid = await infoForm.trigger()
-    if (!isValid) return
-    setEditMode(null)
-    void infoTriggerSave()
-  }, [displayProgram, infoForm, infoTriggerSave, setEditMode])
+    const saved = await infoTriggerSave()
+    if (saved) setEditMode(null)
+  }, [displayProgram, infoTriggerSave, setEditMode])
 
   const [recruitSubTab, setRecruitSubTab] = useState<GeneralRecruitTabKey>('institutions')
 

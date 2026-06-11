@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
+import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/general/lib/wage-info-constants'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -72,7 +73,7 @@ export function ProgramRegistrationWageInfoParagraph() {
           }
           view="-"
         />
-        <DetailInfoForm.Field label="공제 항목" view="일용근로자 원천징수세액" />
+        <DetailInfoForm.Field label="공제 항목" view={GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL} />
       </DetailInfoForm.Row>
     </DetailInfoForm>
   )

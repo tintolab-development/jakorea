@@ -4,7 +4,8 @@
 
 export const PROGRAM_REGISTRATION_SURVEY_ITEM_IDS = [
   'survey',
-  'satisfaction',
+  'student_satisfaction',
+  'teacher_satisfaction',
   'lecture_evaluation',
 ] as const
 
@@ -16,7 +17,8 @@ export const PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS: Record<
   string
 > = {
   survey: '설문조사',
-  satisfaction: '만족도 조사',
+  student_satisfaction: '학생 만족도조사',
+  teacher_satisfaction: '교사 만족도조사',
   lecture_evaluation: '강의평가',
 }
 
@@ -25,7 +27,8 @@ export function initialProgramRegistrationSurveyItems(
 ): Record<ProgramRegistrationSurveyItemId, boolean> {
   return {
     survey: allOn,
-    satisfaction: allOn,
+    student_satisfaction: allOn,
+    teacher_satisfaction: allOn,
     lecture_evaluation: allOn,
   }
 }

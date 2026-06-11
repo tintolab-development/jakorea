@@ -7,6 +7,7 @@ import {
 import {
   getDefaultGeneralSatisfactionAudience,
   getGeneralSatisfactionAudienceTabs,
+  isGeneralIndividualParticipantSelection,
   isGeneralIndividualProgram,
 } from './survey-audience'
 
@@ -65,6 +66,12 @@ describe('general survey audience', () => {
     })
 
     expect(isGeneralIndividualProgram(p)).toBe(true)
+  })
+
+  it('개인만 선택하면 KPI 학교·학급 대상이 아니다', () => {
+    expect(isGeneralIndividualParticipantSelection(true, false)).toBe(true)
+    expect(isGeneralIndividualParticipantSelection(false, true)).toBe(false)
+    expect(isGeneralIndividualParticipantSelection(true, true)).toBe(false)
   })
 
   it('신청 목록 LNB 라벨을 참여자 유형 대분류에 맞게 표시한다', () => {

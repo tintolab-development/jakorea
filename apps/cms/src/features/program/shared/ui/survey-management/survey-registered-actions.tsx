@@ -20,6 +20,7 @@ type SurveyRegisteredActionsProps = {
   labels: SurveyRegisteredActionLabels
   layout?: 'poll' | 'satisfaction'
   showAddButton?: boolean
+  showShareButton?: boolean
   onShareClick: () => void
   onAddClick?: () => void
   onOpenTemplatePreview: () => void
@@ -35,6 +36,7 @@ export function SurveyRegisteredActions({
   labels,
   layout = 'poll',
   showAddButton = true,
+  showShareButton = true,
   onShareClick,
   onAddClick,
   onOpenTemplatePreview,
@@ -50,13 +52,15 @@ export function SurveyRegisteredActions({
   if (!hasResponses) {
     return (
       <div className={rootClassName}>
-        <CmsButton
-          className="ujat-survey-registered-actions__share-button"
-          width={layout === 'satisfaction' ? undefined : 160}
-          onClick={onShareClick}
-        >
-          {labels.share}
-        </CmsButton>
+        {showShareButton ? (
+          <CmsButton
+            className="ujat-survey-registered-actions__share-button"
+            width={layout === 'satisfaction' ? undefined : 160}
+            onClick={onShareClick}
+          >
+            {labels.share}
+          </CmsButton>
+        ) : null}
         {showAddButton && onAddClick != null && labels.add != null ? (
           <CmsButton
             className="ujat-survey-registered-actions__add-button"
@@ -91,13 +95,15 @@ export function SurveyRegisteredActions({
       >
         {labels.preview}
       </CmsButton>
-      <CmsButton
-        className="ujat-survey-registered-actions__share-button"
-        width={layout === 'satisfaction' ? undefined : 160}
-        onClick={onShareClick}
-      >
-        {labels.share}
-      </CmsButton>
+      {showShareButton ? (
+        <CmsButton
+          className="ujat-survey-registered-actions__share-button"
+          width={layout === 'satisfaction' ? undefined : 160}
+          onClick={onShareClick}
+        >
+          {labels.share}
+        </CmsButton>
+      ) : null}
       {showAddButton && onAddClick != null && labels.add != null ? (
         <CmsButton
           className="ujat-survey-registered-actions__add-button"

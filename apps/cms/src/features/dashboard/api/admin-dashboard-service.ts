@@ -11,6 +11,7 @@ import { mockPrograms, mockProgramsMap } from '@/data/mock/programs'
 import { getEducationPrograms } from '@/data/mock/education-programs'
 import { getCompanySchoolPrograms, getCompanySchoolProgramById } from '@/data/mock/economy-programs'
 import { getGeneralPrograms } from '@/data/mock/general-programs'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { getVolunteerPrograms } from '@/data/mock/volunteer-programs'
 import { mockApplications } from '@/data/mock/applications'
 import { mockMatchings } from '@/data/mock/matchings'
@@ -361,13 +362,14 @@ const KPI_LABELS: Record<KpiMetricKey, { label: string; description: string }> =
 }
 
 /** 사업 KPI 목표·위젯 공통: 달성/목표 수치 (patternIndex로 목록 간 변주) */
-function buildKpiMetricsForPattern(patternIndex: number): KpiMetric[] {
+function buildKpiMetricsForPattern(patternIndex: number, program?: Program): KpiMetric[] {
+  const isIndividual = program != null && isGeneralIndividualProgram(program)
   const achievedParticipants = patternIndex % 3 === 0 ? 100 : 80
   const targetParticipants = 100
-  const achievedSchools = 100
-  const targetSchools = 100
-  const achievedClasses = patternIndex % 2 === 0 ? 100 : 80
-  const targetClasses = 100
+  const achievedSchools = isIndividual ? 0 : 100
+  const targetSchools = isIndividual ? 0 : 100
+  const achievedClasses = isIndividual ? 0 : patternIndex % 2 === 0 ? 100 : 80
+  const targetClasses = isIndividual ? 0 : 100
 
   return [
     {
@@ -398,7 +400,7 @@ function buildProgramKpiItemFromProgram(program: Program, patternIndex: number):
   return {
     programId: program.id,
     programTitle: program.title ?? '',
-    kpis: buildKpiMetricsForPattern(patternIndex),
+    kpis: buildKpiMetricsForPattern(patternIndex, program),
     educationInstructorTargets: { instructors: 80, volunteers: 80 },
   }
 }

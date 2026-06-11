@@ -40,11 +40,18 @@
   border-style: solid;
   border-color: #c4cdd1;
   background-color: #fff;
+  box-sizing: border-box;
 }
 
 .app-radio-group--large .ant-radio-checked .ant-radio-inner::after,
 .app-radio--large .ant-radio-checked .ant-radio-inner::after {
-  transform: scale(0.56) !important;
+  width: 10px !important;
+  height: 10px !important;
+  margin-block-start: 0 !important;
+  margin-inline-start: 0 !important;
+  inset-block-start: 50% !important;
+  inset-inline-start: 50% !important;
+  transform: translate(-50%, -50%) scale(1) !important;
 }
 
 /* ----- medium: 원 18px, 본문 14px, 원–텍스트 6px ----- */
@@ -72,11 +79,18 @@
   border-style: solid;
   border-color: #c4cdd1;
   background-color: #fff;
+  box-sizing: border-box;
 }
 
 .app-radio-group--medium .ant-radio-checked .ant-radio-inner::after,
 .app-radio--medium .ant-radio-checked .ant-radio-inner::after {
-  transform: scale(0.51) !important;
+  width: 9px !important;
+  height: 9px !important;
+  margin-block-start: 0 !important;
+  margin-inline-start: 0 !important;
+  inset-block-start: 50% !important;
+  inset-inline-start: 50% !important;
+  transform: translate(-50%, -50%) scale(1) !important;
 }
 
 /* ----- 공통: 선택·호버 ----- */

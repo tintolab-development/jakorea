@@ -6,6 +6,7 @@ import { useEffect, useLayoutEffect, useMemo } from 'react'
 import { useForm, type UseFormReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Program } from '@/types/domain'
+import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/general/lib/wage-info-constants'
 import {
   generalProgramCommonInfoEditSchema,
   programToGeneralCommonInfoEditValues,
@@ -29,12 +30,13 @@ const EMPTY_DEFAULTS: GeneralProgramCommonInfoEditFormValues = {
   participantTeacherInstructor: false,
   participantVolunteer: false,
   businessArea: '',
-  sponsorManagementId: '',
+  sponsorManagementIds: [],
   sponsorManagerContactId: '',
   venueKind: 'inside',
   venueDetail: '',
   surveySurvey: false,
-  surveySatisfaction: false,
+  surveyStudentSatisfaction: false,
+  surveyTeacherSatisfaction: false,
   surveyLectureEvaluation: false,
   educationProcess: '',
   ipOwned: '',
@@ -49,7 +51,7 @@ const EMPTY_DEFAULTS: GeneralProgramCommonInfoEditFormValues = {
   wageGrade2Amount: '',
   wageGrade3Amount: '',
   wagePaymentItemIds: [],
-  wageDeductionItems: '',
+  wageDeductionItems: GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL,
   educationStructure: 'curriculum',
   sessionRound: 'single',
   educationForm: 'online',

@@ -264,6 +264,15 @@ function ParagraphDatePickerSingleInner({
 
   const hasExternalSurfaceControl = appliedSurfaceRange !== undefined
 
+  /** 교육 진행 일정 등 — 추가 후 부모가 value를 null로 비우면 트리거 표면도 초기화 */
+  useEffect(() => {
+    if (value != null) return
+    if (!suppressAutoTodayWhenEmpty) return
+    if (hasExternalSurfaceControl) return
+    setSurfaceRange(null)
+    setSurfaceAppliedWithTime(false)
+  }, [value, suppressAutoTodayWhenEmpty, hasExternalSurfaceControl])
+
   const appliedSurfaceSyncKey = useMemo(() => {
     if (!hasExternalSurfaceControl) return 'uncontrolled'
     if (appliedSurfaceRange == null) return 'none'
@@ -423,11 +432,24 @@ function ParagraphDatePickerSingleInner({
         setSurfaceAppliedWithTime(false)
       }
     } else if (timeOn) {
-      onChange(buildTime(draft, parseNum(singleHour, 12), parseNum(singleMinute, 0), singleMer))
+      const applied = buildTime(
+        draft,
+        parseNum(singleHour, 12),
+        parseNum(singleMinute, 0),
+        singleMer
+      )
+      onChange(applied)
+      if (presetMode === 'schedule' && onRangeChange) {
+        onRangeChange([applied, applied.add(1, 'hour')])
+      }
       setSurfaceRange(null)
       setSurfaceAppliedWithTime(true)
     } else {
       onChange(draft)
+      if (presetMode === 'schedule' && onRangeChange) {
+        const day = draft.startOf('day')
+        onRangeChange([day, day])
+      }
       setSurfaceRange(null)
       setSurfaceAppliedWithTime(false)
     }

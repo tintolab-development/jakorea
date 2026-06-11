@@ -32,6 +32,8 @@ import {
   inferScheduleDetailBlockKind,
   isGeneralProgramMultiRoundForTypeSettings,
   isScheduleMultiAllPerSchedule,
+  getScheduleDetailPerBlockLayoutPlan,
+  isScheduleEducationAndIpsBothPerSchedule,
   padEventScheduleLabel,
 } from '@/features/program/general/lib/schedule-detail-form'
 import {
@@ -44,26 +46,31 @@ import {
   formatGeneralParticipantTypesSummary,
   formatGeneralSurveyItemsSummary,
   resolveGeneralProgramCommonInfo,
+  resolveGeneralProgramDetailedProgramNameDisplay,
 } from '@/features/program/general/lib/detail-common-info-display'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
+import { applyGeneralParticipantAudienceToEditForm } from '@/features/program/general/lib/participant-audience-selection'
+import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/general/lib/wage-info-constants'
+import { isGeneralIndividualParticipantTarget } from '@/features/program/general/lib/survey-audience'
 import {
   GENERAL_PROGRAM_EDUCATION_STRUCTURE_LABELS,
   GENERAL_PROGRAM_SESSION_ROUND_LABELS,
 } from '@/features/program/general/lib/variant'
 import {
+  encodeSponsorManagerContactRef,
   GENERAL_SURVEY_EDIT_FIELDS,
   getGeneralDetailedProgramSelectOptions,
   isGeneralProgramScheduleType,
   padScheduleDetailLabel,
   relabelScheduleDetailFormRows,
   buildSessionIpsTypeSummary,
+  resolveSponsorManagementIds,
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsButton } from '@/shared/ui'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsToggle } from '@/shared/ui'
-import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -80,7 +87,10 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import { ProgramRegistrationIpsTypeFields } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
 import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
-import { getProgramRegistrationCurriculumMultiSessionRowPlan } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-curriculum-paragraph'
+import {
+  getProgramRegistrationCurriculumMultiSessionRowPlan,
+  shouldHideCurriculumParticipationRowForCommonEduPartWithIpsPerSchedule,
+} from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-curriculum-paragraph'
 import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
 import {
   formatEducationScheduleLineFromRange,
@@ -88,8 +98,10 @@ import {
 } from '@/features/template/lib/format-education-schedule-line'
 import { EducationSchedulePreviewLines } from '@/features/template/ui/shared/education-schedule-preview-lines'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
+import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import '@/features/template/ui/shared/paragraph-date-picker.css'
 import '@/features/template/ui/shared/paragraph-time-picker.css'
@@ -126,6 +138,10 @@ const PARTICIPANT_FORM_KEYS = {
   (typeof TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS)[number]['value'],
   keyof GeneralProgramCommonInfoEditFormValues
 >
+
+const SECONDARY_PARTICIPANT_TYPE_OPTIONS = TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.filter(
+  option => option.value !== 'individual' && option.value !== 'school_institution'
+)
 
 function optionLabel<T extends { value: string; label: string }>(
   options: readonly T[],
@@ -223,11 +239,7 @@ function BasicInfoSection({
   )
 
   const announcementTitle = commonInfo.announcementTitle ?? program.title
-  const detailedName =
-    commonInfo.detailedProgramName?.trim() ||
-    program.textbookName?.trim() ||
-    program.teamDivision?.trim() ||
-    (isScheduleType ? '해당없음' : '-')
+  const detailedName = resolveGeneralProgramDetailedProgramNameDisplay(program, commonInfo)
   const venueType =
     program.institutionType === 'inside_school'
       ? '기관 안'
@@ -235,18 +247,34 @@ function BasicInfoSection({
         ? '기관 밖'
         : program.venue?.trim() || '기관 안'
   const venueLine = [venueType, commonInfo.venueDetail?.trim() || '-'].join(' | ')
-  const resolvedSponsorName =
-    commonInfo.sponsorDisplayName?.trim() || sponsorName?.trim() || ''
-  const sponsorDisplay = resolvedSponsorName ? (
-    <ProgramDetailSponsorLink
-      name={resolvedSponsorName}
-      sponsorId={program.sponsorId}
-      sponsorName={resolvedSponsorName}
-      sponsorManagementId={commonInfo.sponsorManagementId}
-    />
-  ) : (
-    '-'
-  )
+  const sponsorManagementIds = resolveSponsorManagementIds(program)
+  const sponsorDisplay =
+    sponsorManagementIds.length > 0 ? (
+      <>
+        {sponsorManagementIds.map((sponsorManagementId, index) => {
+          const sponsorRow =
+            mockSponsorManagementListRows.find(row => row.id === sponsorManagementId) ?? null
+          const name =
+            sponsorRow?.name?.trim() ||
+            (index === 0 ? sponsorName?.trim() : '') ||
+            ''
+          if (!name) return null
+          return (
+            <Fragment key={sponsorManagementId}>
+              {index > 0 ? ', ' : null}
+              <ProgramDetailSponsorLink
+                name={name}
+                sponsorId={program.sponsorId}
+                sponsorName={name}
+                sponsorManagementId={sponsorManagementId}
+              />
+            </Fragment>
+          )
+        })}
+      </>
+    ) : (
+      '-'
+    )
 
   const editForm =
     form ??
@@ -257,23 +285,37 @@ function BasicInfoSection({
       setValue: () => undefined,
     } as unknown as UseFormReturn<GeneralProgramCommonInfoEditFormValues>)
 
-  const watchedSponsorId = isFormEdit ? editForm.watch('sponsorManagementId') : ''
-  const selectedSponsor = useMemo(
-    () => mockSponsorManagementListRows.find(s => s.id === watchedSponsorId) ?? null,
-    [watchedSponsorId]
+  const watchedSponsorIds = isFormEdit ? (editForm.watch('sponsorManagementIds') ?? []) : []
+  const selectedSponsors = useMemo(
+    () =>
+      watchedSponsorIds
+        .map(id => mockSponsorManagementListRows.find(s => s.id === id))
+        .filter((sponsor): sponsor is NonNullable<typeof sponsor> => sponsor != null),
+    [watchedSponsorIds]
   )
   const managerOptions = useMemo(() => {
-    if (!selectedSponsor) return []
-    return getSponsorDetailContactsNormalized(selectedSponsor).map(c => ({
-      value: c.id,
-      label: c.name,
-    }))
-  }, [selectedSponsor])
+    const options: Array<{ value: string; label: string }> = []
+    for (const sponsor of selectedSponsors) {
+      for (const contact of getSponsorDetailContactsNormalized(sponsor)) {
+        const label =
+          selectedSponsors.length > 1
+            ? `${sponsor.name} · ${contact.position ? `${contact.position} ` : ''}${contact.name}`
+            : contact.position
+              ? `${contact.position} ${contact.name}`
+              : contact.name
+        options.push({
+          value: encodeSponsorManagerContactRef(sponsor.id, contact.id),
+          label,
+        })
+      }
+    }
+    return options
+  }, [selectedSponsors])
 
   useEffect(() => {
     if (!isFormEdit) return
     const currentManagerId = editForm.getValues('sponsorManagerContactId')
-    if (!watchedSponsorId) {
+    if (watchedSponsorIds.length === 0) {
       if (currentManagerId) editForm.setValue('sponsorManagerContactId', '')
       return
     }
@@ -281,13 +323,27 @@ function BasicInfoSection({
       if (currentManagerId) editForm.setValue('sponsorManagerContactId', '')
       return
     }
-    if (!managerOptions.some(o => o.value === currentManagerId)) {
+    if (!managerOptions.some(option => option.value === currentManagerId)) {
       editForm.setValue('sponsorManagerContactId', managerOptions[0]?.value ?? '')
     }
-  }, [editForm, isFormEdit, managerOptions, watchedSponsorId])
+  }, [editForm, isFormEdit, managerOptions, watchedSponsorIds])
 
-  const participantOrganization = isFormEdit ? editForm.watch('participantOrganization') : false
   const participantIndividual = isFormEdit ? editForm.watch('participantIndividual') : false
+  const participantOrganization = isFormEdit ? editForm.watch('participantOrganization') : false
+
+  const handleParticipantIndividualChange = useCallback(
+    (checked: boolean) => {
+      applyGeneralParticipantAudienceToEditForm(editForm, 'individual', checked)
+    },
+    [editForm]
+  )
+
+  const handleParticipantOrganizationChange = useCallback(
+    (checked: boolean) => {
+      applyGeneralParticipantAudienceToEditForm(editForm, 'organization', checked)
+    },
+    [editForm]
+  )
 
   const mainFormMode = isFormEdit ? 'edit' : 'view'
   const courseFormMode = isFormEdit ? 'edit' : 'view'
@@ -433,23 +489,42 @@ function BasicInfoSection({
               <Controller
                 name="startDate"
                 control={editForm.control}
-                render={({ field }) => (
-                  <CmsDateRangePicker
-                    value={[toDayjs(field.value), toDayjs(editForm.watch('endDate'))]}
-                    onChange={dates => {
-                      const [start, end] = dates ?? [null, null]
-                      field.onChange(toIso(start))
-                      editForm.setValue('endDate', toIso(end))
-                    }}
-                    format="YYYY. MM. DD"
-                    width="100%"
-                    status={
-                      editForm.formState.errors.startDate || editForm.formState.errors.endDate
-                        ? 'error'
-                        : undefined
-                    }
-                  />
-                )}
+                render={({ field }) => {
+                  const endDateValue = editForm.watch('endDate')
+                  const start = toDayjs(field.value)
+                  const end = toDayjs(endDateValue)
+                  const operationRange =
+                    start && end ? ([start, end] as [Dayjs, Dayjs]) : null
+                  const operationRangeWithTime =
+                    operationRange == null
+                      ? false
+                      : dateRangeUsesClockTime(operationRange[0], operationRange[1])
+
+                  return (
+                    <div className="detail-info-form-inputs-wrapper-no-gap">
+                      <ParagraphDatePicker
+                        mode="single"
+                        presetMode="period"
+                        value={start ?? dayjs()}
+                        width="100%"
+                        placeholder="사업 운영 기간을 선택하세요"
+                        preferPeriodModeInPopover
+                        appliedSurfaceRange={operationRange}
+                        appliedSurfaceWithTime={operationRangeWithTime}
+                        onRangeChange={range => {
+                          field.onChange(toIso(range[0]))
+                          editForm.setValue('endDate', toIso(range[1]), {
+                            shouldValidate: true,
+                          })
+                        }}
+                        onChange={next => {
+                          if (next == null) return
+                          field.onChange(toIso(next))
+                        }}
+                      />
+                    </div>
+                  )
+                }}
               />
             }
           />
@@ -473,14 +548,17 @@ function BasicInfoSection({
             view={formatGeneralParticipantTypesSummary(program)}
             edit={
               <div className="detail-info-form-inputs-wrapper">
-                {TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.map(option => {
+                <GeneralParticipantAudienceCheckboxGroup
+                  individual={Boolean(participantIndividual)}
+                  organization={Boolean(participantOrganization)}
+                  onIndividualChange={handleParticipantIndividualChange}
+                  onOrganizationChange={handleParticipantOrganizationChange}
+                />
+                {SECONDARY_PARTICIPANT_TYPE_OPTIONS.map(option => {
                   const formKey =
                     PARTICIPANT_FORM_KEYS[
                       option.value as keyof typeof PARTICIPANT_FORM_KEYS
                     ]
-                  const disabled =
-                    (option.value === 'individual' && participantOrganization) ||
-                    (option.value === 'school_institution' && participantIndividual)
                   return (
                     <Controller
                       key={option.value}
@@ -490,8 +568,7 @@ function BasicInfoSection({
                         <CmsCheckbox
                           checkboxSize="large"
                           checked={Boolean(field.value)}
-                          disabled={disabled}
-                          onChange={e => field.onChange(e.target.checked)}
+                          onChange={event => field.onChange(event.target.checked)}
                         >
                           {option.label}
                         </CmsCheckbox>
@@ -530,22 +607,24 @@ function BasicInfoSection({
             view={sponsorDisplay}
             edit={
               <Controller
-                name="sponsorManagementId"
+                name="sponsorManagementIds"
                 control={editForm.control}
                 render={({ field }) => (
                   <CmsSelect
+                    mode="multiple"
                     withAllOption={false}
                     placeholder="후원사를 선택하세요"
                     width="100%"
                     showSearch
                     optionFilterProp="label"
                     options={sponsorOptions}
-                    value={field.value || undefined}
+                    value={field.value ?? []}
                     onChange={v => {
-                      field.onChange(String(v ?? ''))
+                      const next = Array.isArray(v) ? v.map(String) : []
+                      field.onChange(next)
                       editForm.setValue('sponsorManagerContactId', '')
                     }}
-                    status={editForm.formState.errors.sponsorManagementId ? 'error' : undefined}
+                    status={editForm.formState.errors.sponsorManagementIds ? 'error' : undefined}
                   />
                 )}
               />
@@ -564,7 +643,7 @@ function BasicInfoSection({
                     width="100%"
                     options={managerOptions}
                     value={field.value || undefined}
-                    disabled={!watchedSponsorId || managerOptions.length === 0}
+                    disabled={watchedSponsorIds.length === 0 || managerOptions.length === 0}
                     onChange={v => field.onChange(String(v ?? ''))}
                     status={editForm.formState.errors.sponsorManagerContactId ? 'error' : undefined}
                   />
@@ -772,6 +851,21 @@ function KpiSection({
   const hasVolunteer = isFormEdit
     ? editForm.watch('participantVolunteer')
     : getGeneralParticipantTypes(program).includes('volunteer')
+  const participantIndividual = isFormEdit ? editForm.watch('participantIndividual') : false
+  const participantOrganization = isFormEdit ? editForm.watch('participantOrganization') : false
+  const isIndividualTarget = isFormEdit
+    ? isGeneralIndividualParticipantTarget(program, participantIndividual, participantOrganization)
+    : isGeneralIndividualParticipantTarget(program)
+
+  useEffect(() => {
+    if (!isFormEdit || !isIndividualTarget) return
+    editForm.setValue('kpiFinalSchools', 0)
+    editForm.setValue('kpiFinalClasses', 0)
+  }, [editForm, isFormEdit, isIndividualTarget])
+
+  const dispatchedSchoolClassView = isIndividualTarget ? (
+    <span className="detail-info-form--text">해당 없음</span>
+  ) : null
 
   const formMode = isFormEdit ? 'edit' : 'view'
 
@@ -858,28 +952,74 @@ function KpiSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="최종 파견 학교 수"
-            view={<KpiBoldNumber value={kpi?.finalSchools ?? 0} />}
+            view={
+              isIndividualTarget ? (
+                dispatchedSchoolClassView
+              ) : (
+                <KpiBoldNumber value={kpi?.finalSchools ?? 0} />
+              )
+            }
             edit={
-              <CmsInput
-                disabled
-                inputSize="medium"
-                placeholder="해당 없음"
-                width={120}
-                value=""
-              />
+              isIndividualTarget ? (
+                <CmsInput
+                  disabled
+                  inputSize="medium"
+                  placeholder="해당 없음"
+                  width={120}
+                  value=""
+                />
+              ) : (
+                <Controller
+                  name="kpiFinalSchools"
+                  control={editForm.control}
+                  render={({ field }) => (
+                    <CmsInput
+                      {...field}
+                      value={field.value ?? ''}
+                      onChange={e => field.onChange(Number(e.target.value) || 0)}
+                      inputSize="medium"
+                      placeholder="목표값 입력"
+                      width={120}
+                    />
+                  )}
+                />
+              )
             }
           />
           <DetailInfoForm.Field
             label="최종 파견 학급 수"
-            view={<KpiBoldNumber value={kpi?.finalClasses ?? 0} />}
+            view={
+              isIndividualTarget ? (
+                dispatchedSchoolClassView
+              ) : (
+                <KpiBoldNumber value={kpi?.finalClasses ?? 0} />
+              )
+            }
             edit={
-              <CmsInput
-                disabled
-                inputSize="medium"
-                placeholder="해당 없음"
-                width={120}
-                value=""
-              />
+              isIndividualTarget ? (
+                <CmsInput
+                  disabled
+                  inputSize="medium"
+                  placeholder="해당 없음"
+                  width={120}
+                  value=""
+                />
+              ) : (
+                <Controller
+                  name="kpiFinalClasses"
+                  control={editForm.control}
+                  render={({ field }) => (
+                    <CmsInput
+                      {...field}
+                      value={field.value ?? ''}
+                      onChange={e => field.onChange(Number(e.target.value) || 0)}
+                      inputSize="medium"
+                      placeholder="목표값 입력"
+                      width={120}
+                    />
+                  )}
+                />
+              )
             }
           />
         </DetailInfoForm.Row>
@@ -978,22 +1118,7 @@ function WageSection({
           />
           <DetailInfoForm.Field
             label="공제 항목"
-            view={commonInfo.deductionItems ?? '-'}
-            edit={
-              <Controller
-                name="wageDeductionItems"
-                control={editForm.control}
-                render={({ field }) => (
-                  <CmsInput
-                    {...field}
-                    value={field.value ?? ''}
-                    inputSize="medium"
-                    placeholder="공제 항목"
-                    width="100%"
-                  />
-                )}
-              />
-            }
+            view={GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL}
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
@@ -1503,6 +1628,7 @@ function MultiRoundCurriculumSessionForm({
   isFormEdit,
   onRemove,
   showEducationPerRound,
+  showIpsPerRoundWithEducation,
   showIpsOnlyPerRound,
   educationFormOptions,
 }: {
@@ -1512,8 +1638,10 @@ function MultiRoundCurriculumSessionForm({
   editForm: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
   isFormEdit: boolean
   onRemove: () => void
-  /** 교육 형태 일정 별 상이 — 회차별 교육 형태 + IPS */
+  /** 교육 형태 일정 별 상이 — 회차별 교육 형태 */
   showEducationPerRound: boolean
+  /** 교육·IPS 모두 일정 별 상이 — 회차별 교육 형태 + IPS를 같은 행에 */
+  showIpsPerRoundWithEducation: boolean
   /** 교육·참여 공통 + IPS 일정 별 상이 — 회차별 IPS만 */
   showIpsOnlyPerRound: boolean
   educationFormOptions: ReturnType<typeof getProgramRegistrationEducationFormOptions>
@@ -1628,7 +1756,7 @@ function MultiRoundCurriculumSessionForm({
                           customizable={false}
                           suppressAutoTodayWhenEmpty
                           disabled={!assignmentEnabled}
-                          value={appliedRange?.[0] ?? dayjs()}
+                          value={appliedRange?.[0] ?? null}
                           onChange={() => {}}
                           appliedSurfaceRange={appliedRange}
                           onRangeChange={([start, end]) => {
@@ -1653,52 +1781,81 @@ function MultiRoundCurriculumSessionForm({
             />
           </DetailInfoForm.Row>
           {showEducationPerRound ? (
-            <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field
-                label="교육 형태"
-                view={session.educationFormLabel ?? '-'}
-                edit={
-                  <Controller
-                    name={`curriculumSessions.${index}.educationForm`}
-                    control={editForm.control}
-                    render={({ field }) => (
-                      <CmsRadioGroup
-                        size="large"
-                        value={field.value ?? 'online'}
-                        onChange={e => field.onChange(e.target.value)}
-                      >
-                        {educationFormOptions.map(opt => (
-                          <CmsRadio key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </CmsRadio>
-                        ))}
-                      </CmsRadioGroup>
-                    )}
-                  />
-                }
-              />
-              <DetailInfoForm.Field
-                label="IPS 유형"
-                fullRow
-                view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
-                edit={
-                  <ProgramRegistrationIpsTypeFields
-                    value={{
-                      category: sessionIpsCategory,
-                      detail: sessionIpsDetail,
-                    }}
-                    onChange={next => {
-                      editForm.setValue(`curriculumSessions.${index}.ipsCategory`, next.category, {
-                        shouldDirty: true,
-                      })
-                      editForm.setValue(`curriculumSessions.${index}.ipsDetail`, next.detail, {
-                        shouldDirty: true,
-                      })
-                    }}
-                  />
-                }
-              />
-            </DetailInfoForm.Row>
+            showIpsPerRoundWithEducation ? (
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field
+                  label="교육 형태"
+                  view={session.educationFormLabel ?? '-'}
+                  edit={
+                    <Controller
+                      name={`curriculumSessions.${index}.educationForm`}
+                      control={editForm.control}
+                      render={({ field }) => (
+                        <CmsRadioGroup
+                          size="large"
+                          value={field.value ?? 'online'}
+                          onChange={e => field.onChange(e.target.value)}
+                        >
+                          {educationFormOptions.map(opt => (
+                            <CmsRadio key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </CmsRadio>
+                          ))}
+                        </CmsRadioGroup>
+                      )}
+                    />
+                  }
+                />
+                <DetailInfoForm.Field
+                  label="IPS 유형"
+                  view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
+                  edit={
+                    <ProgramRegistrationIpsTypeFields
+                      layout="inline"
+                      value={{
+                        category: sessionIpsCategory,
+                        detail: sessionIpsDetail,
+                      }}
+                      onChange={next => {
+                        editForm.setValue(`curriculumSessions.${index}.ipsCategory`, next.category, {
+                          shouldDirty: true,
+                        })
+                        editForm.setValue(`curriculumSessions.${index}.ipsDetail`, next.detail, {
+                          shouldDirty: true,
+                        })
+                      }}
+                    />
+                  }
+                />
+              </DetailInfoForm.Row>
+            ) : (
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="교육 형태"
+                  fullRow
+                  view={session.educationFormLabel ?? '-'}
+                  edit={
+                    <Controller
+                      name={`curriculumSessions.${index}.educationForm`}
+                      control={editForm.control}
+                      render={({ field }) => (
+                        <CmsRadioGroup
+                          size="large"
+                          value={field.value ?? 'online'}
+                          onChange={e => field.onChange(e.target.value)}
+                        >
+                          {educationFormOptions.map(opt => (
+                            <CmsRadio key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </CmsRadio>
+                          ))}
+                        </CmsRadioGroup>
+                      )}
+                    />
+                  }
+                />
+              </DetailInfoForm.Row>
+            )
           ) : null}
           {showIpsOnlyPerRound ? (
             <DetailInfoForm.Row type="single">
@@ -1921,12 +2078,15 @@ function CurriculumSection({
     : null
   const showEducationPerRound =
     isMultiRoundCurriculum && educationFormScheduleDetail === 'perSchedule'
+  const showIpsPerRoundWithEducation =
+    showEducationPerRound && ipsScheduleDetail === 'perSchedule'
   const showIpsOnlyPerRound =
     isMultiRoundCurriculum && multiCurriculumRowPlan === 'c_allCommon_piBothPer'
   const showIpsPerSession =
     !isMultiRoundCurriculum && ipsScheduleDetail === 'perSchedule'
-  const educationFormOptions = getProgramRegistrationEducationFormOptions(
-    Boolean(participantOrganization)
+  const perScheduleEducationFormOptions = getProgramRegistrationEducationFormOptions(
+    Boolean(participantOrganization),
+    { context: 'perScheduleBlock' }
   )
 
   const { fields, append, remove } = useFieldArray({
@@ -1946,10 +2106,10 @@ function CurriculumSection({
           assignmentEnabled: editForm.watch(`curriculumSessions.${i}.assignmentEnabled`) ?? false,
           assignmentPeriod: editForm.watch(`curriculumSessions.${i}.assignmentPeriod`) ?? '',
           educationFormLabel: showEducationPerRound
-            ? educationFormOptions.find(o => o.value === educationForm)?.label
+            ? perScheduleEducationFormOptions.find(o => o.value === educationForm)?.label
             : undefined,
           ipsTypeSummary:
-            (showEducationPerRound || showIpsOnlyPerRound || showIpsPerSession) && ipsCategory
+            (showIpsPerRoundWithEducation || showIpsOnlyPerRound || showIpsPerSession) && ipsCategory
               ? buildSessionIpsTypeSummary(
                   ipsCategory as 'inspire' | 'prepare' | 'succeed',
                   ipsDetail
@@ -2017,8 +2177,9 @@ function CurriculumSection({
         isFormEdit={isFormEdit}
         onRemove={() => remove(index)}
         showEducationPerRound={showEducationPerRound}
+        showIpsPerRoundWithEducation={showIpsPerRoundWithEducation}
         showIpsOnlyPerRound={showIpsOnlyPerRound}
-        educationFormOptions={educationFormOptions}
+        educationFormOptions={perScheduleEducationFormOptions}
       />
     ) : (
       <SingleRoundCurriculumSessionForm
@@ -2063,7 +2224,81 @@ function CurriculumSection({
       bodyClassName="detail-common-info-view__section-body--curriculum"
     >
       {isFormEdit ? (
-        <div className="program-registration-curriculum__sessions">{sessionBlocks}</div>
+        <div className="program-registration-curriculum__sessions">
+          {!isMultiRoundCurriculum && fields.length > 0 ? (
+            <DetailInfoForm
+              title="교육 진행 (커리큘럼)"
+              hideHeader
+              mode={formMode}
+              className="program-registration-paragraph"
+            >
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="과제 설정"
+                  fullRow
+                  edit={
+                    <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap program-registration-paragraph__assignment-row">
+                      <Controller
+                        name="curriculumSessions.0.assignmentEnabled"
+                        control={editForm.control}
+                        render={({ field }) => (
+                          <CmsRadioGroup
+                            size="large"
+                            value={field.value ? 'yes' : 'no'}
+                            onChange={e => {
+                              const enabled = e.target.value === 'yes'
+                              field.onChange(enabled)
+                              if (!enabled) {
+                                editForm.setValue('curriculumSessions.0.assignmentPeriod', '')
+                              }
+                            }}
+                          >
+                            <CmsRadio value="yes">있음</CmsRadio>
+                            <CmsRadio value="no">없음</CmsRadio>
+                          </CmsRadioGroup>
+                        )}
+                      />
+                      <DetailInfoForm.InputsSeparator />
+                      <Controller
+                        name="curriculumSessions.0.assignmentPeriod"
+                        control={editForm.control}
+                        render={({ field: periodField }) => {
+                          const appliedRange = parseEducationScheduleLineToRange(periodField.value)
+                          const assignmentEnabled =
+                            editForm.watch('curriculumSessions.0.assignmentEnabled') ?? false
+                          return (
+                            <ParagraphDatePicker
+                              mode="single"
+                              presetMode="period"
+                              customizable={false}
+                              suppressAutoTodayWhenEmpty
+                              disabled={!assignmentEnabled}
+                              value={appliedRange?.[0] ?? null}
+                              onChange={() => {}}
+                              appliedSurfaceRange={appliedRange}
+                              onRangeChange={([start, end]) => {
+                                periodField.onChange(
+                                  formatEducationScheduleLineFromRange([start, end])
+                                )
+                                if (!assignmentEnabled) {
+                                  editForm.setValue('curriculumSessions.0.assignmentEnabled', true)
+                                }
+                              }}
+                              width={360}
+                              placeholder="제출 기한을 설정해 주세요"
+                            />
+                          )
+                        }}
+                      />
+                    </div>
+                  }
+                  view="-"
+                />
+              </DetailInfoForm.Row>
+            </DetailInfoForm>
+          ) : null}
+          {sessionBlocks}
+        </div>
       ) : (
         sessionBlocks
       )}
@@ -2294,7 +2529,7 @@ function ScheduleEventDetailEditBlock({
                             customizable={false}
                             suppressAutoTodayWhenEmpty
                             disabled={!assignmentEnabled}
-                            value={appliedRange?.[0] ?? dayjs()}
+                            value={appliedRange?.[0] ?? null}
                             onChange={() => {}}
                             appliedSurfaceRange={appliedRange}
                             onRangeChange={([start, end]) => {
@@ -2357,9 +2592,11 @@ function ScheduleDetailEditBlock({
   onRemoveGroup: (groupIndex: number) => void
 }) {
   const showGroupLabel = groupCount > 1
+  const isSingleRound = sessionRound === 'single'
   const participantOrganization = editForm.watch('participantOrganization')
-  const educationFormOptions = getProgramRegistrationEducationFormOptions(
-    Boolean(participantOrganization)
+  const perScheduleEducationFormOptions = getProgramRegistrationEducationFormOptions(
+    Boolean(participantOrganization),
+    { context: 'perScheduleBlock' }
   )
   const educationFormScheduleDetail = editForm.watch('educationFormScheduleDetail') ?? 'common'
   const participationScheduleDetail = editForm.watch('participationScheduleDetail') ?? 'common'
@@ -2372,8 +2609,329 @@ function ScheduleDetailEditBlock({
           ipsScheduleDetail
         )
       : null
+  const showEducationWithIpsPerBlock = isScheduleEducationAndIpsBothPerSchedule(
+    educationFormScheduleDetail,
+    ipsScheduleDetail
+  )
+  const perBlockLayoutPlan = getScheduleDetailPerBlockLayoutPlan(
+    sessionRound,
+    educationFormScheduleDetail,
+    ipsScheduleDetail
+  )
   const sessionIpsCategory = editForm.watch(`scheduleDetails.${index}.ipsCategory`) ?? ''
   const sessionIpsDetail = editForm.watch(`scheduleDetails.${index}.ipsDetail`) ?? ''
+  const assignmentEnabled = editForm.watch(`scheduleDetails.${index}.assignmentEnabled`) ?? false
+  const showParticipationMethod = !participantOrganization
+
+  const renderGroupTimeField = () => (
+    <div className="program-registration-schedule-curriculum__time-groups">
+      {Array.from({ length: groupCount }, (_, groupIndex) => {
+        const letter = scheduleGroupLetter(groupIndex)
+        return (
+          <Fragment key={`${index}-${letter}`}>
+            {groupIndex > 0 ? <DetailInfoForm.InputsSeparator /> : null}
+            <div className="program-registration-schedule-curriculum__time-group">
+              {showGroupLabel ? `그룹 ${letter}` : null}
+              <div className="program-registration-schedule-curriculum__time-group-control">
+                <Controller
+                  name={`scheduleDetails.${index}.groupTimes.${groupIndex}`}
+                  control={editForm.control}
+                  render={({ field }) => (
+                    <ParagraphTimePicker
+                      endTimeAlwaysOn
+                      placeholder="시간 선택"
+                      width={200}
+                      value={scheduleTimeStringToDayjs(field.value?.startTime)}
+                      onTimeRangeChange={range => {
+                        field.onChange({
+                          startTime: range[0].format('HH:mm'),
+                          endTime: range[1].format('HH:mm'),
+                        })
+                      }}
+                    />
+                  )}
+                />
+                {groupIndex > 0 ? (
+                  <ItemDeleteButton
+                    className="item-delete-button"
+                    aria-label={`그룹 ${letter} 삭제`}
+                    onClick={event => {
+                      event.stopPropagation()
+                      onRemoveGroup(groupIndex)
+                    }}
+                  />
+                ) : null}
+              </div>
+            </div>
+          </Fragment>
+        )
+      })}
+    </div>
+  )
+
+  const renderAssignmentFieldEdit = () => (
+    <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap program-registration-paragraph__assignment-row">
+      <Controller
+        name={`scheduleDetails.${index}.assignmentEnabled`}
+        control={editForm.control}
+        render={({ field }) => (
+          <CmsRadioGroup
+            size="large"
+            value={field.value ? 'yes' : 'no'}
+            onChange={e => {
+              const enabled = e.target.value === 'yes'
+              field.onChange(enabled)
+              if (!enabled) {
+                editForm.setValue(`scheduleDetails.${index}.assignmentPeriod`, '')
+              }
+            }}
+          >
+            <CmsRadio value="yes">있음</CmsRadio>
+            <CmsRadio value="no">없음</CmsRadio>
+          </CmsRadioGroup>
+        )}
+      />
+      <DetailInfoForm.InputsSeparator />
+      <Controller
+        name={`scheduleDetails.${index}.assignmentPeriod`}
+        control={editForm.control}
+        render={({ field: periodField }) => {
+          const appliedRange = parseEducationScheduleLineToRange(periodField.value)
+          return (
+            <ParagraphDatePicker
+              mode="single"
+              presetMode="period"
+              customizable={false}
+              suppressAutoTodayWhenEmpty
+              disabled={!assignmentEnabled}
+              value={appliedRange?.[0] ?? null}
+              onChange={() => {}}
+              appliedSurfaceRange={appliedRange}
+              onRangeChange={([start, end]) => {
+                periodField.onChange(formatEducationScheduleLineFromRange([start, end]))
+                if (!assignmentEnabled) {
+                  editForm.setValue(`scheduleDetails.${index}.assignmentEnabled`, true)
+                }
+              }}
+              width={360}
+              placeholder="제출 기한을 설정해 주세요"
+            />
+          )
+        }}
+      />
+    </div>
+  )
+
+  const renderEducationFormField = () => (
+    <DetailInfoForm.Field
+      label="교육 형태"
+      edit={
+        <Controller
+          name={`scheduleDetails.${index}.educationForm`}
+          control={editForm.control}
+          render={({ field }) => (
+            <CmsRadioGroup
+              size="large"
+              value={field.value ?? 'online'}
+              onChange={e => field.onChange(e.target.value)}
+            >
+              {perScheduleEducationFormOptions.map(opt => (
+                <CmsRadio key={opt.value} value={opt.value}>
+                  {opt.label}
+                </CmsRadio>
+              ))}
+            </CmsRadioGroup>
+          )}
+        />
+      }
+      view="-"
+    />
+  )
+
+  const renderIpsFormField = (options?: { fullRow?: boolean; layout?: 'default' | 'inline' }) => (
+    <DetailInfoForm.Field
+      label="IPS 유형"
+      fullRow={options?.fullRow}
+      edit={
+        <ProgramRegistrationIpsTypeFields
+          layout={options?.layout}
+          value={{ category: sessionIpsCategory, detail: sessionIpsDetail }}
+          onChange={next => {
+            editForm.setValue(`scheduleDetails.${index}.ipsCategory`, next.category)
+            editForm.setValue(`scheduleDetails.${index}.ipsDetail`, next.detail)
+          }}
+        />
+      }
+      view="-"
+    />
+  )
+
+  const renderPerBlockLayoutRows = () => {
+    if (perBlockLayoutPlan === 'none') return null
+
+    if (perBlockLayoutPlan === 'assignment_education_then_ips') {
+      return (
+        <>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field label="과제 설정" edit={renderAssignmentFieldEdit()} view="-" />
+            {renderEducationFormField()}
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">{renderIpsFormField({ fullRow: true })}</DetailInfoForm.Row>
+        </>
+      )
+    }
+
+    if (perBlockLayoutPlan === 'assignment_with_education') {
+      return (
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field label="과제 설정" edit={renderAssignmentFieldEdit()} view="-" />
+          {renderEducationFormField()}
+        </DetailInfoForm.Row>
+      )
+    }
+
+    if (perBlockLayoutPlan === 'assignment_with_ips') {
+      return (
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field label="과제 설정" edit={renderAssignmentFieldEdit()} view="-" />
+          {renderIpsFormField({ layout: 'inline' })}
+        </DetailInfoForm.Row>
+      )
+    }
+
+    return null
+  }
+
+  const renderParticipationRows = () => {
+    if (!isSingleRound && sessionRound === 'multi' && multiRowPlan != null) {
+      if (multiRowPlan === 'c_allCommon_piBothPer') {
+        if (
+          !showParticipationMethod ||
+          shouldHideCurriculumParticipationRowForCommonEduPartWithIpsPerSchedule(
+            educationFormScheduleDetail,
+            participationScheduleDetail,
+            ipsScheduleDetail
+          )
+        ) {
+          return null
+        }
+        return (
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="참여 방식"
+              edit={
+                <Controller
+                  name={`scheduleDetails.${index}.participationMethod`}
+                  control={editForm.control}
+                  render={({ field }) => (
+                    <CmsRadioGroup
+                      size="large"
+                      value={field.value ?? 'individual'}
+                      onChange={e => field.onChange(e.target.value)}
+                    >
+                      <CmsRadio value="individual">개인</CmsRadio>
+                      <CmsRadio value="team">팀</CmsRadio>
+                    </CmsRadioGroup>
+                  )}
+                />
+              }
+              view="-"
+            />
+          </DetailInfoForm.Row>
+        )
+      }
+
+      if (showParticipationMethod && multiRowPlan === 'c_allCommon_piPartPerOnly') {
+        return (
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="참여 방식"
+              edit={
+                <Controller
+                  name={`scheduleDetails.${index}.participationMethod`}
+                  control={editForm.control}
+                  render={({ field }) => (
+                    <CmsRadioGroup
+                      size="large"
+                      value={field.value ?? 'individual'}
+                      onChange={e => field.onChange(e.target.value)}
+                    >
+                      <CmsRadio value="individual">개인</CmsRadio>
+                      <CmsRadio value="team">팀</CmsRadio>
+                    </CmsRadioGroup>
+                  )}
+                />
+              }
+              view="-"
+            />
+          </DetailInfoForm.Row>
+        )
+      }
+
+      if (
+        multiRowPlan === 'p_eduPer_piAnyPer' &&
+        participationScheduleDetail === 'perSchedule' &&
+        showParticipationMethod
+      ) {
+        if (showEducationWithIpsPerBlock) {
+          return (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="참여 방식"
+                edit={
+                  <Controller
+                    name={`scheduleDetails.${index}.participationMethod`}
+                    control={editForm.control}
+                    render={({ field }) => (
+                      <CmsRadioGroup
+                        size="large"
+                        value={field.value ?? 'individual'}
+                        onChange={e => field.onChange(e.target.value)}
+                      >
+                        <CmsRadio value="individual">개인</CmsRadio>
+                        <CmsRadio value="team">팀</CmsRadio>
+                      </CmsRadioGroup>
+                    )}
+                  />
+                }
+                view="-"
+              />
+            </DetailInfoForm.Row>
+          )
+        }
+
+        if (educationFormScheduleDetail === 'perSchedule') {
+          return (
+            <DetailInfoForm.Row type="double">
+              {renderEducationFormField()}
+              <DetailInfoForm.Field
+                label="참여 방식"
+                edit={
+                  <Controller
+                    name={`scheduleDetails.${index}.participationMethod`}
+                    control={editForm.control}
+                    render={({ field }) => (
+                      <CmsRadioGroup
+                        size="large"
+                        value={field.value ?? 'individual'}
+                        onChange={e => field.onChange(e.target.value)}
+                      >
+                        <CmsRadio value="individual">개인</CmsRadio>
+                        <CmsRadio value="team">팀</CmsRadio>
+                      </CmsRadioGroup>
+                    )}
+                  />
+                }
+                view="-"
+              />
+            </DetailInfoForm.Row>
+          )
+        }
+      }
+    }
+
+    return null
+  }
 
   return (
     <div className="program-registration-schedule-curriculum__block">
@@ -2388,145 +2946,73 @@ function ScheduleDetailEditBlock({
             mode={formMode}
             className="program-registration-paragraph"
           >
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="일정명"
-                fullRow
-                edit={
-                  <Controller
-                    name={`scheduleDetails.${index}.name`}
-                    control={editForm.control}
-                    render={({ field }) => (
-                      <CmsInput
-                        {...field}
-                        value={field.value ?? ''}
-                        inputSize="medium"
-                        placeholder="세부 일정명을 작성하세요"
-                        width="100%"
-                        style={{ minWidth: 0, flex: '1 1 0' }}
-                      />
-                    )}
-                  />
-                }
-                view="-"
-              />
-            </DetailInfoForm.Row>
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="진행 시간"
-                fullRow
-                edit={
-                  <div className="program-registration-schedule-curriculum__time-groups">
-                    {Array.from({ length: groupCount }, (_, groupIndex) => {
-                      const letter = scheduleGroupLetter(groupIndex)
-                      return (
-                        <Fragment key={`${index}-${letter}`}>
-                          {groupIndex > 0 ? <DetailInfoForm.InputsSeparator /> : null}
-                          <div className="program-registration-schedule-curriculum__time-group">
-                            {showGroupLabel ? `그룹 ${letter}` : null}
-                            <div className="program-registration-schedule-curriculum__time-group-control">
-                              <Controller
-                                name={`scheduleDetails.${index}.groupTimes.${groupIndex}`}
-                                control={editForm.control}
-                                render={({ field }) => (
-                                  <ParagraphTimePicker
-                                    endTimeAlwaysOn
-                                    placeholder="시간 선택"
-                                    width={200}
-                                    value={scheduleTimeStringToDayjs(field.value?.startTime)}
-                                    onTimeRangeChange={range => {
-                                      field.onChange({
-                                        startTime: range[0].format('HH:mm'),
-                                        endTime: range[1].format('HH:mm'),
-                                      })
-                                    }}
-                                  />
-                                )}
-                              />
-                              {groupIndex > 0 ? (
-                                <ItemDeleteButton
-                                  className="item-delete-button"
-                                  aria-label={`그룹 ${letter} 삭제`}
-                                  onClick={event => {
-                                    event.stopPropagation()
-                                    onRemoveGroup(groupIndex)
-                                  }}
-                                />
-                              ) : null}
-                            </div>
-                          </div>
-                        </Fragment>
-                      )
-                    })}
-                  </div>
-                }
-                view="-"
-              />
-            </DetailInfoForm.Row>
-            {ipsPerSchedule ? (
-              <DetailInfoForm.Row type="single">
+            {isSingleRound ? (
+              <DetailInfoForm.Row type="double">
                 <DetailInfoForm.Field
-                  label="IPS 유형"
-                  fullRow
-                  edit={
-                    <ProgramRegistrationIpsTypeFields
-                      value={{ category: sessionIpsCategory, detail: sessionIpsDetail }}
-                      onChange={next => {
-                        editForm.setValue(`scheduleDetails.${index}.ipsCategory`, next.category)
-                        editForm.setValue(`scheduleDetails.${index}.ipsDetail`, next.detail)
-                      }}
-                    />
-                  }
-                  view="-"
-                />
-              </DetailInfoForm.Row>
-            ) : null}
-            {sessionRound === 'multi' && multiRowPlan === 'p_eduPer_piAllCommon' ? (
-              <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field
-                  label="교육 형태"
+                  label="일정명"
                   edit={
                     <Controller
-                      name={`scheduleDetails.${index}.educationForm`}
+                      name={`scheduleDetails.${index}.name`}
                       control={editForm.control}
                       render={({ field }) => (
-                        <CmsRadioGroup
-                          size="large"
-                          value={field.value ?? 'online'}
-                          onChange={e => field.onChange(e.target.value)}
-                        >
-                          {educationFormOptions.map(opt => (
-                            <CmsRadio key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </CmsRadio>
-                          ))}
-                        </CmsRadioGroup>
+                        <CmsInput
+                          {...field}
+                          value={field.value ?? ''}
+                          inputSize="medium"
+                          placeholder="세부 일정명을 작성하세요"
+                          width="100%"
+                          style={{ minWidth: 0, flex: '1 1 0' }}
+                        />
                       )}
                     />
                   }
                   view="-"
                 />
+                <DetailInfoForm.Field label="진행 시간" edit={renderGroupTimeField()} view="-" />
               </DetailInfoForm.Row>
+            ) : (
+              <>
+                <DetailInfoForm.Row type="single">
+                  <DetailInfoForm.Field
+                    label="일정명"
+                    fullRow
+                    edit={
+                      <Controller
+                        name={`scheduleDetails.${index}.name`}
+                        control={editForm.control}
+                        render={({ field }) => (
+                          <CmsInput
+                            {...field}
+                            value={field.value ?? ''}
+                            inputSize="medium"
+                            placeholder="세부 일정명을 작성하세요"
+                            width="100%"
+                            style={{ minWidth: 0, flex: '1 1 0' }}
+                          />
+                        )}
+                      />
+                    }
+                    view="-"
+                  />
+                </DetailInfoForm.Row>
+                <DetailInfoForm.Row type="single">
+                  <DetailInfoForm.Field
+                    label="진행 시간"
+                    fullRow
+                    edit={renderGroupTimeField()}
+                    view="-"
+                  />
+                </DetailInfoForm.Row>
+              </>
+            )}
+            {isSingleRound && ipsPerSchedule ? (
+              <DetailInfoForm.Row type="single">{renderIpsFormField({ fullRow: true })}</DetailInfoForm.Row>
             ) : null}
-            {sessionRound === 'multi' &&
-            (multiRowPlan === 'c_allCommon_piBothPer' || multiRowPlan === 'p_eduPer_piAnyPer') &&
-            !ipsPerSchedule ? (
-              <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field
-                  label="IPS 유형"
-                  fullRow
-                  edit={
-                    <ProgramRegistrationIpsTypeFields
-                      value={{ category: sessionIpsCategory, detail: sessionIpsDetail }}
-                      onChange={next => {
-                        editForm.setValue(`scheduleDetails.${index}.ipsCategory`, next.category)
-                        editForm.setValue(`scheduleDetails.${index}.ipsDetail`, next.detail)
-                      }}
-                    />
-                  }
-                  view="-"
-                />
-              </DetailInfoForm.Row>
+            {!isSingleRound ? (
+              <>
+                {renderPerBlockLayoutRows()}
+                {renderParticipationRows()}
+              </>
             ) : null}
           </DetailInfoForm>
         </div>
@@ -2720,6 +3206,78 @@ function ScheduleProgressEditSection({
       }
       bodyClassName="detail-common-info-view__section-body--schedule-curriculum"
     >
+      {!isMultiRound && !multiAllPer && fields.length > 0 ? (
+        <DetailInfoForm
+          title="교육 진행 (일정형)"
+          hideHeader
+          mode={formMode}
+          className="program-registration-paragraph"
+        >
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="과제 설정"
+              fullRow
+              edit={
+                <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap program-registration-paragraph__assignment-row">
+                  <Controller
+                    name="scheduleDetails.0.assignmentEnabled"
+                    control={editForm.control}
+                    render={({ field }) => (
+                      <CmsRadioGroup
+                        size="large"
+                        value={field.value ? 'yes' : 'no'}
+                        onChange={e => {
+                          const enabled = e.target.value === 'yes'
+                          field.onChange(enabled)
+                          if (!enabled) {
+                            editForm.setValue('scheduleDetails.0.assignmentPeriod', '')
+                          }
+                        }}
+                      >
+                        <CmsRadio value="yes">있음</CmsRadio>
+                        <CmsRadio value="no">없음</CmsRadio>
+                      </CmsRadioGroup>
+                    )}
+                  />
+                  <DetailInfoForm.InputsSeparator />
+                  <Controller
+                    name="scheduleDetails.0.assignmentPeriod"
+                    control={editForm.control}
+                    render={({ field: periodField }) => {
+                      const appliedRange = parseEducationScheduleLineToRange(periodField.value)
+                      const topAssignmentEnabled =
+                        editForm.watch('scheduleDetails.0.assignmentEnabled') ?? false
+                      return (
+                        <ParagraphDatePicker
+                          mode="single"
+                          presetMode="period"
+                          customizable={false}
+                          suppressAutoTodayWhenEmpty
+                          disabled={!topAssignmentEnabled}
+                          value={appliedRange?.[0] ?? null}
+                          onChange={() => {}}
+                          appliedSurfaceRange={appliedRange}
+                          onRangeChange={([start, end]) => {
+                            periodField.onChange(
+                              formatEducationScheduleLineFromRange([start, end])
+                            )
+                            if (!topAssignmentEnabled) {
+                              editForm.setValue('scheduleDetails.0.assignmentEnabled', true)
+                            }
+                          }}
+                          width={360}
+                          placeholder="제출 기한을 설정해 주세요"
+                        />
+                      )
+                    }}
+                  />
+                </div>
+              }
+              view="-"
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
+      ) : null}
       {fields.map((field, index) => {
         const detailBlockKind =
           editForm.watch(`scheduleDetails.${index}.blockKind`) ??
@@ -2966,15 +3524,34 @@ function ScheduleSettingsEditFields({
 }
 
 function ScheduleSettingsSection({
+  program,
   commonInfo,
   isEditMode = false,
   form,
 }: {
+  program: Program
   commonInfo: ReturnType<typeof resolveGeneralProgramCommonInfo>
   isEditMode?: boolean
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
 }) {
   const isFormEdit = isEditMode && !!form
+  const effectiveTypeFields = resolveEffectiveGeneralProgramTypeFields({
+    generalProgramAudience: program.generalProgramAudience,
+    generalProgramEducationStructure: program.generalProgramEducationStructure,
+    generalProgramSessionRound: program.generalProgramSessionRound,
+    curriculumSessions: commonInfo.curriculumSessions,
+  })
+  const educationStructure = isFormEdit
+    ? (form!.watch('educationStructure') ?? effectiveTypeFields.educationStructure)
+    : effectiveTypeFields.educationStructure
+  const sessionRound = isFormEdit
+    ? (form!.watch('sessionRound') ?? effectiveTypeFields.sessionRound)
+    : effectiveTypeFields.sessionRound
+
+  if (educationStructure === 'schedule' && sessionRound === 'multi') {
+    return null
+  }
+
   const editForm =
     form ??
     ({
@@ -3084,7 +3661,12 @@ export function GeneralProgramDetailCommonInfoView({
         isEditMode={isEditMode}
         form={form}
       />
-      <ScheduleSettingsSection commonInfo={commonInfo} isEditMode={isEditMode} form={form} />
+      <ScheduleSettingsSection
+        program={program}
+        commonInfo={commonInfo}
+        isEditMode={isEditMode}
+        form={form}
+      />
     </div>
   )
 }

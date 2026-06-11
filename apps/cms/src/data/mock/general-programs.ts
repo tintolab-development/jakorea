@@ -42,10 +42,11 @@ const SPONSOR_ID = mockSponsors[0]?.id ?? 'sponsor-1'
 /** 기관 프로그램 공통 — 기관 신청·진행 현황 LNB는 항상 노출 */
 const BASE_PARTICIPANT_TYPES: GeneralProgramParticipantType[] = ['school_institution']
 
-/** 설문 2depth 있음 — 설문 진행 항목 3종 전체 */
+/** 설문 2depth 있음 — 설문 진행 항목 4종 전체 */
 const SURVEY_MENU_FULL: GeneralProgramSurveyMenuKey[] = [
   'survey',
-  'satisfaction',
+  'student_satisfaction',
+  'teacher_satisfaction',
   'lecture_evaluation',
 ]
 
@@ -84,7 +85,7 @@ function formatLnbCaseTitle(row: number, config: LnbMatrixConfig): string {
       ? '설문 없음'
       : config.surveyMode === 'single'
         ? '설문 있음(하위 1항목)'
-        : '설문 있음(하위 3항목)'
+        : '설문 있음(하위 4항목)'
   return `【LNB·${row}】${instructorLabel} · ${volunteerLabel} · ${surveyLabel}`
 }
 
@@ -317,7 +318,7 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     participatingStudentCount: 180,
     scheduleTimeEnabled: false,
     generalParticipantTypes: ['school_institution', 'teacher_instructor'],
-    generalSurveyMenuKeys: ['survey', 'satisfaction'],
+    generalSurveyMenuKeys: ['survey', 'student_satisfaction'],
     generalProgramEducationStructure: 'curriculum',
     generalProgramSessionRound: 'multi',
     generalCommonInfo: CALENDAR_DEMO_IN_PROGRESS_A_COMMON_INFO,
@@ -354,7 +355,7 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     interviewStartDate: calendarDemoIso(2026, 5, 8),
     interviewEndDate: calendarDemoIso(2026, 5, 12, true),
     interviewMethod: '대면 면접',
-    generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
+    generalSurveyMenuKeys: ['survey', 'student_satisfaction', 'lecture_evaluation'],
     generalProgramAudience: 'individual',
     generalProgramEducationStructure: 'schedule',
     generalProgramSessionRound: 'single',
@@ -393,7 +394,7 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     interviewStartDate: calendarDemoIso(2026, 4, 28),
     interviewEndDate: calendarDemoIso(2026, 5, 3, true),
     interviewMethod: '대면 면접',
-    generalSurveyMenuKeys: ['survey', 'satisfaction'],
+    generalSurveyMenuKeys: ['survey', 'student_satisfaction'],
     generalProgramAudience: 'organization',
     generalProgramEducationStructure: 'curriculum',
     generalProgramSessionRound: 'single',

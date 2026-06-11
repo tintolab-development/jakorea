@@ -8,7 +8,7 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   align-content: flex-start;
   row-gap: 10px;
   width: 100%;
@@ -55,6 +55,7 @@
 }
 
 .detail-info-form__field-content > .education-schedule-preview-lines {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  align-self: flex-start;
   min-width: 0;
 }

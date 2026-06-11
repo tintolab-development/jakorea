@@ -6,6 +6,11 @@
   min-height: 60px;
 }
 
+/* 교육 진행 예정일 — 항목 수만큼만 행 높이 (min-height·세로 중앙 정렬 여백 방지) */
+.program-registration-paragraph .detail-info-form__field:has(.education-schedule-preview-lines) {
+  min-height: 0;
+}
+
 .program-registration-paragraph .detail-info-form__field-label,
 .program-registration-paragraph .detail-info-form__field-content {
   padding-top: 10px;
@@ -130,6 +135,43 @@
 .program-registration-paragraph__schedule-detail-row
   > .detail-info-form-inputs-wrapper
   > .cms-select {
+  min-width: 0;
+}
+
+/* double 행 IPS 칸 — 셀렉트 넘침·하단 잘림 방지 */
+.program-registration-paragraph
+  .detail-info-form__row--double
+  .detail-info-form-inputs-wrapper.program-registration-paragraph__schedule-detail-row {
+  flex-wrap: nowrap;
+  width: 100%;
+  min-width: 0;
+}
+
+.program-registration-paragraph
+  .detail-info-form__field-content--edit
+  > .detail-info-form-inputs-wrapper.program-registration-paragraph__schedule-detail-row {
+  width: 100%;
+  min-width: 0;
+}
+
+.program-registration-paragraph
+  .detail-info-form__row--double
+  > .detail-info-form__field--edit {
+  grid-template-rows: minmax(min-content, 1fr);
+}
+
+.program-registration-paragraph
+  .detail-info-form__row--double
+  .program-registration-paragraph__schedule-detail-row
+  > .cms-select:first-child {
+  flex-shrink: 0;
+}
+
+.program-registration-paragraph
+  .detail-info-form__row--double
+  .program-registration-paragraph__schedule-detail-row
+  > .cms-select:last-child {
+  flex: 1 1 0;
   min-width: 0;
 }
 

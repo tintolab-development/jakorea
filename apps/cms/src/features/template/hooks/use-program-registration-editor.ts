@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
+import {
+  applyGeneralParticipantAudienceSelection,
+  shouldResetParticipationScheduleDetailForAudience,
+} from '@/features/program/general/lib/participant-audience-selection'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import {
@@ -163,10 +167,10 @@ export function useProgramRegistrationEditor(
   const [participationScheduleDetail, setParticipationScheduleDetail] =
     useState<ProgramRegistrationScheduleDetailKind>('common')
   const [ipsScheduleDetail, setIpsScheduleDetail] = useState<ProgramRegistrationScheduleDetailKind>('common')
-  const [curriculumSessionCount, setCurriculumSessionCount] = useState(2)
-  const [curriculumChartSessionCount, setCurriculumChartSessionCount] = useState(2)
-  const [scheduleCurriculumDetailCount, setScheduleCurriculumDetailCount] = useState(2)
-  const [scheduleCurriculumGroupCount, setScheduleCurriculumGroupCount] = useState(2)
+  const [curriculumSessionCount, setCurriculumSessionCount] = useState(1)
+  const [curriculumChartSessionCount, setCurriculumChartSessionCount] = useState(1)
+  const [scheduleCurriculumDetailCount, setScheduleCurriculumDetailCount] = useState(1)
+  const [scheduleCurriculumGroupCount, setScheduleCurriculumGroupCount] = useState(1)
   const [scheduleCurriculumPreEducation, setScheduleCurriculumPreEducation] = useState(false)
 
   const {
@@ -199,11 +203,11 @@ export function useProgramRegistrationEditor(
     setEducationFormScheduleDetail('common')
     setParticipationScheduleDetail('common')
     setIpsScheduleDetail('common')
-    setCurriculumSessionCount(restrictCurriculumSessionStructure ? 1 : 2)
-    setCurriculumChartSessionCount(restrictCurriculumSessionStructure ? 1 : 2)
+    setCurriculumSessionCount(1)
+    setCurriculumChartSessionCount(1)
     setProgramType('curriculum')
-    setScheduleCurriculumDetailCount(2)
-    setScheduleCurriculumGroupCount(2)
+    setScheduleCurriculumDetailCount(1)
+    setScheduleCurriculumGroupCount(1)
     setScheduleCurriculumPreEducation(false)
   }, [active, programRegistrationFormVariant, restrictCurriculumSessionStructure])
 
@@ -277,19 +281,21 @@ export function useProgramRegistrationEditor(
 
   const onIndividualChange = useCallback((checked: boolean) => {
     setParticipant(prev => {
-      if (checked) return { ...prev, individual: true, organization: false }
-      setParticipationScheduleDetail('common')
-      return { ...prev, individual: false, organization: true }
+      const next = applyGeneralParticipantAudienceSelection('individual', checked)
+      if (shouldResetParticipationScheduleDetailForAudience(next)) {
+        setParticipationScheduleDetail('common')
+      }
+      return { ...prev, individual: next.individual, organization: next.organization }
     })
   }, [])
 
   const onOrganizationChange = useCallback((checked: boolean) => {
     setParticipant(prev => {
-      if (checked) {
+      const next = applyGeneralParticipantAudienceSelection('organization', checked)
+      if (shouldResetParticipationScheduleDetailForAudience(next)) {
         setParticipationScheduleDetail('common')
-        return { ...prev, individual: false, organization: true }
       }
-      return { ...prev, individual: true, organization: false }
+      return { ...prev, individual: next.individual, organization: next.organization }
     })
   }, [])
 
@@ -304,9 +310,8 @@ export function useProgramRegistrationEditor(
   const onSessionRoundTypeChange = useCallback(
     (value: ProgramRegistrationSessionRoundType) => {
       setSessionRoundType(value)
-      const defaultCount = restrictCurriculumSessionStructure ? 1 : 2
-      if (value === 'multi') setCurriculumSessionCount(defaultCount)
-      if (value === 'single') setCurriculumChartSessionCount(defaultCount)
+      if (value === 'multi') setCurriculumSessionCount(1)
+      if (value === 'single') setCurriculumChartSessionCount(1)
 
       if (programRegistrationFormVariant !== 'general') return
       setDraft(prev => ({
@@ -342,6 +347,14 @@ export function useProgramRegistrationEditor(
     if (restrictCurriculumSessionStructure) return
     setCurriculumSessionCount(c => c + 1)
   }, [restrictCurriculumSessionStructure])
+
+  const onDeleteCurriculumSession = useCallback(
+    (_roundIndex: number) => {
+      if (restrictCurriculumSessionStructure) return
+      setCurriculumSessionCount(c => Math.max(1, c - 1))
+    },
+    [restrictCurriculumSessionStructure]
+  )
 
   const onAddCurriculumChartSession = useCallback(() => {
     if (restrictCurriculumSessionStructure) return
@@ -390,6 +403,10 @@ export function useProgramRegistrationEditor(
     setScheduleCurriculumDetailCount(c => Math.min(c + 1, 99))
   }, [])
 
+  const onDeleteScheduleCurriculumDetail = useCallback((_detailIndex: number) => {
+    setScheduleCurriculumDetailCount(c => Math.max(1, c - 1))
+  }, [])
+
   const onAddScheduleCurriculumGroup = useCallback(() => {
     setScheduleCurriculumGroupCount(c =>
       Math.min(c + 1, PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT)
@@ -426,6 +443,7 @@ export function useProgramRegistrationEditor(
           ? 1
           : curriculumSessionCount,
         onAddCurriculumSession,
+        onDeleteCurriculumSession,
         curriculumChartSessionCount: restrictCurriculumSessionStructure
           ? 1
           : curriculumChartSessionCount,
@@ -435,6 +453,7 @@ export function useProgramRegistrationEditor(
         programRegistrationFormVariant,
         scheduleCurriculumDetailCount,
         onAddScheduleCurriculumDetail,
+        onDeleteScheduleCurriculumDetail,
         scheduleCurriculumGroupCount,
         onAddScheduleCurriculumGroup,
         onDeleteScheduleCurriculumGroup,
@@ -449,7 +468,9 @@ export function useProgramRegistrationEditor(
       onAddCurriculumChartSession,
       onDeleteCurriculumChartSession,
       onAddCurriculumSession,
+      onDeleteCurriculumSession,
       onAddScheduleCurriculumDetail,
+      onDeleteScheduleCurriculumDetail,
       onAddScheduleCurriculumGroup,
       onDeleteScheduleCurriculumGroup,
       onScheduleCurriculumPreEducationChange,

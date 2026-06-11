@@ -37,12 +37,16 @@ import {
 import { UjatLectureEvalSurveyView } from '@/features/program/ujat/ui/detail-modal/survey-management/ui/ujat-lecture-eval-survey-view'
 import type { Program } from '@/types/domain'
 import {
-  GENERAL_SATISFACTION_ACTION_LABELS,
-  GENERAL_SATISFACTION_EMPTY_COPY,
   GENERAL_SATISFACTION_NO_RESPONSE_COPY,
+  GENERAL_STUDENT_SATISFACTION_ACTION_LABELS,
+  GENERAL_STUDENT_SATISFACTION_EMPTY_COPY,
   GENERAL_SURVEY_POLL_ACTION_LABELS,
   GENERAL_SURVEY_POLL_EMPTY_COPY,
   GENERAL_SURVEY_POLL_NO_RESPONSE_COPY,
+  GENERAL_TEACHER_SATISFACTION_ACTION_LABELS,
+  GENERAL_TEACHER_SATISFACTION_EMPTY_COPY,
+  type SurveyActionLabels,
+  type SurveyEmptyCopy,
 } from '@/features/program/shared/lib/survey-management/survey-copy'
 import type {
   RegisteredSurvey,
@@ -57,9 +61,7 @@ import { SatisfactionSurveyView } from '@/features/program/shared/ui/survey-mana
 import { SurveyTemplateEditModal } from '@/features/program/shared/ui/survey-management/survey-template-edit-modal'
 import {
   GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE,
-  getDefaultGeneralSatisfactionAudience,
   getGeneralSatisfactionAudienceLabel,
-  getGeneralSatisfactionAudienceTabs,
   isGeneralIndividualProgram,
   type GeneralSatisfactionAudienceKey,
 } from '@/features/program/general/lib/survey-audience'
@@ -72,6 +74,19 @@ type DeleteModalKind = 'survey' | 'satisfaction'
 export type GeneralSurveyManagementViewProps = {
   program: Program
   activeTab: string
+}
+
+function resolveSatisfactionAudienceFromTab(
+  activeTab: string,
+  program: Program
+): GeneralSatisfactionAudienceKey | null {
+  if (activeTab === 'student_satisfaction') {
+    return isGeneralIndividualProgram(program) ? 'individual' : 'student'
+  }
+  if (activeTab === 'teacher_satisfaction') {
+    return 'teacher'
+  }
+  return null
 }
 
 function buildPreviewSession(templateId: string, onEditForm: () => void) {
@@ -97,8 +112,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const [satisfactionSurveysByAudience, setSatisfactionSurveysByAudience] = useState(
     initialMock.satisfactionSurveysByAudience
   )
-  const [activeSatisfactionAudience, setActiveSatisfactionAudience] =
-    useState<GeneralSatisfactionAudienceKey>(() => getDefaultGeneralSatisfactionAudience(program))
+  const [pendingSatisfactionAudience, setPendingSatisfactionAudience] =
+    useState<GeneralSatisfactionAudienceKey | null>(null)
   const [lectureEvalSurvey, setLectureEvalSurvey] = useState<RegisteredSurvey | null>(
     initialMock.lectureEvalSurvey
   )
@@ -124,7 +139,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     setRegisteredSurveys(next.registeredSurveys)
     setActiveRegisteredSurveyId(next.activeRegisteredSurveyId)
     setSatisfactionSurveysByAudience(next.satisfactionSurveysByAudience)
-    setActiveSatisfactionAudience(getDefaultGeneralSatisfactionAudience(program))
+    setPendingSatisfactionAudience(null)
     setLectureEvalSurvey(next.lectureEvalSurvey)
     setLectureEvalSubmitted(false)
     setLectureEvalFormDraft(null)
@@ -137,9 +152,12 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     () => registeredSurveys.find(item => item.id === activeRegisteredSurveyId) ?? null,
     [registeredSurveys, activeRegisteredSurveyId]
   )
-  const audienceTabs = useMemo(() => getGeneralSatisfactionAudienceTabs(program), [program])
-  const activeSatisfactionSurvey = satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null
   const individualProgram = isGeneralIndividualProgram(program)
+  const activeSatisfactionAudience = resolveSatisfactionAudienceFromTab(activeTab, program)
+  const activeSatisfactionSurvey =
+    activeSatisfactionAudience != null
+      ? (satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null)
+      : null
 
   useEffect(() => {
     if (lectureEvalSurvey == null) {
@@ -163,18 +181,21 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   )
 
   const openCreateModal = useCallback(
-    (kind: CreateModalKind) => {
+    (kind: CreateModalKind, satisfactionAudience?: GeneralSatisfactionAudienceKey) => {
       setSubmitting(false)
-      if (kind === 'satisfaction') {
-        setSelectedTemplateId(GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE[activeSatisfactionAudience])
+      if (kind === 'satisfaction' && satisfactionAudience != null) {
+        setPendingSatisfactionAudience(satisfactionAudience)
+        setSelectedTemplateId(GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE[satisfactionAudience])
       } else if (kind === 'lecture') {
+        setPendingSatisfactionAudience(null)
         setSelectedTemplateId(UJAT_LECTURE_EVAL_TEMPLATE_ID)
       } else {
+        setPendingSatisfactionAudience(null)
         setSelectedTemplateId(null)
       }
       setCreateModalKind(kind)
     },
-    [activeSatisfactionAudience]
+    []
   )
 
   const closeCreateModal = useCallback(() => {
@@ -203,10 +224,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         setRegisteredSurveys(prev => [...prev, nextSurvey])
         setActiveRegisteredSurveyId(nextSurvey.id)
       }
-      if (row != null && createModalKind === 'satisfaction') {
-        const audienceLabel = getGeneralSatisfactionAudienceLabel(activeSatisfactionAudience)
+      if (row != null && createModalKind === 'satisfaction' && pendingSatisfactionAudience != null) {
+        const audienceLabel = getGeneralSatisfactionAudienceLabel(pendingSatisfactionAudience)
         const nextSurvey: RegisteredSurvey = {
-          id: `general-satisfaction-${activeSatisfactionAudience}-${Date.now()}`,
+          id: `general-satisfaction-${pendingSatisfactionAudience}-${Date.now()}`,
           title: `${audienceLabel} 만족도조사`,
           templateId: row.id,
           status: 'before_start',
@@ -215,7 +236,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         }
         setSatisfactionSurveysByAudience(prev => ({
           ...prev,
-          [activeSatisfactionAudience]: nextSurvey,
+          [pendingSatisfactionAudience]: nextSurvey,
         }))
       }
       if (row != null && createModalKind === 'lecture') {
@@ -240,9 +261,9 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       setSubmitting(false)
     }
   }, [
-    activeSatisfactionAudience,
     createModalKind,
     individualProgram,
+    pendingSatisfactionAudience,
     registeredSurveys.length,
     selectedTemplateId,
   ])
@@ -258,7 +279,11 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         return next
       })
     }
-    if (deleteModalKind === 'satisfaction' && activeSatisfactionSurvey != null) {
+    if (
+      deleteModalKind === 'satisfaction' &&
+      activeSatisfactionSurvey != null &&
+      activeSatisfactionAudience != null
+    ) {
       setSatisfactionSurveysByAudience(prev => {
         const next = { ...prev }
         delete next[activeSatisfactionAudience]
@@ -275,13 +300,19 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     deleteModalKind,
   ])
 
-  const shareUrl = useCallback(
-    (kind: string) => {
-      const url = `${window.location.origin}/programs/general?programId=${program.id}&lnb=survey&tab=${kind}`
+  const shareSurveyAdminUrl = useCallback(
+    (tab: string) => {
+      const url = `${window.location.origin}/programs/general?programId=${program.id}&lnb=survey&tab=${tab}`
       void copyText(url)
     },
     [copyText, program.id]
   )
+
+  const shareStudentSatisfactionUrl = useCallback(() => {
+    const audience = individualProgram ? 'individual' : 'student'
+    const url = `${window.location.origin}/programs/general/satisfaction?programId=${program.id}&audience=${audience}`
+    void copyText(url)
+  }, [copyText, individualProgram, program.id])
 
   const handleLectureEvalSubmit = useCallback(() => {
     if (lectureEvalSurvey == null || lectureEvalFormDraft == null) return
@@ -368,7 +399,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               <SurveyRegisteredActions
                 survey={activeRegisteredSurvey}
                 labels={GENERAL_SURVEY_POLL_ACTION_LABELS}
-                onShareClick={() => shareUrl('survey')}
+                onShareClick={() => shareSurveyAdminUrl('survey')}
                 onAddClick={() => openCreateModal('survey')}
                 onOpenTemplatePreview={() => openTemplatePreview(activeRegisteredSurvey.templateId)}
                 onDownloadClick={() => undefined}
@@ -406,52 +437,84 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       <div className="survey-management__empty-main-card">
         <p className="survey-management__empty-main-title">설문 관리 항목이 없습니다.</p>
         <p className="survey-management__empty-main-description">
-          공통 정보에서 설문 진행 항목을 선택하면 설문조사, 만족도조사, 강의평가를 관리할 수 있습니다.
+          공통 정보에서 설문 진행 항목을 선택하면 설문조사, 학생 만족도조사, 교사 만족도조사, 강의평가를
+          관리할 수 있습니다.
         </p>
       </div>
     </div>
   )
 
   const createTitle =
-    createModalKind === 'satisfaction'
-      ? '신규 만족도조사 등록'
+    createModalKind === 'satisfaction' && pendingSatisfactionAudience != null
+      ? pendingSatisfactionAudience === 'teacher'
+        ? '신규 교사 만족도조사 등록'
+        : '신규 학생 만족도조사 등록'
       : createModalKind === 'lecture'
         ? UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY.title
         : '신규 설문조사 등록'
   const createDescription =
-    createModalKind === 'satisfaction'
-      ? `${getGeneralSatisfactionAudienceLabel(activeSatisfactionAudience)}용 만족도조사를 등록하시겠습니까?\n등록 시 해당 프로그램 참여 대상에게 동일하게 노출됩니다.`
+    createModalKind === 'satisfaction' && pendingSatisfactionAudience != null
+      ? pendingSatisfactionAudience === 'student' || pendingSatisfactionAudience === 'individual'
+        ? '학생 만족도조사를 등록하시겠습니까?\n등록 후 링크 공유하여 비회원(학생) 대상으로 진행할 수 있습니다.'
+        : `${getGeneralSatisfactionAudienceLabel(pendingSatisfactionAudience)}용 만족도조사를 등록하시겠습니까?\n등록 시 해당 프로그램 참여 교사에게 동일하게 노출됩니다.`
       : createModalKind === 'lecture'
         ? UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY.description
         : '새로운 설문조사를 진행하시겠습니까?\n설문조사 신규 등록을 위해 사용할 템플릿 유형을 선택해 주세요.'
 
+  const renderSatisfactionTab = (
+    audience: GeneralSatisfactionAudienceKey,
+    emptyCopy: SurveyEmptyCopy,
+    actionLabels: SurveyActionLabels,
+    showShareButton: boolean,
+    onShareClick: () => void
+  ) => (
+    <SatisfactionSurveyView
+      surveysByAudience={satisfactionSurveysByAudience}
+      activeAudience={audience}
+      audienceTabs={[{ key: audience, label: getGeneralSatisfactionAudienceLabel(audience) }]}
+      emptyCopy={emptyCopy}
+      noResponseCopy={GENERAL_SATISFACTION_NO_RESPONSE_COPY}
+      actionLabels={actionLabels}
+      showAudienceTabs={false}
+      showShareButton={showShareButton}
+      onAudienceChange={() => undefined}
+      onRegisterClick={() => openCreateModal('satisfaction', audience)}
+      onShareClick={onShareClick}
+      onDeleteClick={() => {
+        setDeleteConfirmWord('')
+        setDeleteModalKind('satisfaction')
+      }}
+      onOpenTemplatePreview={() => {
+        const survey = satisfactionSurveysByAudience[audience]
+        if (survey != null) {
+          openTemplatePreview(survey.templateId)
+        }
+      }}
+      onDownloadClick={() => undefined}
+    />
+  )
+
   return (
     <>
       {activeTab === 'survey' ? renderPoll() : null}
-      {activeTab === 'satisfaction' ? (
-        <SatisfactionSurveyView
-          surveysByAudience={satisfactionSurveysByAudience}
-          activeAudience={activeSatisfactionAudience}
-          audienceTabs={audienceTabs}
-          emptyCopy={GENERAL_SATISFACTION_EMPTY_COPY}
-          noResponseCopy={GENERAL_SATISFACTION_NO_RESPONSE_COPY}
-          actionLabels={GENERAL_SATISFACTION_ACTION_LABELS}
-          showAudienceTabs={!individualProgram}
-          onAudienceChange={setActiveSatisfactionAudience}
-          onRegisterClick={() => openCreateModal('satisfaction')}
-          onShareClick={() => shareUrl('satisfaction')}
-          onDeleteClick={() => {
-            setDeleteConfirmWord('')
-            setDeleteModalKind('satisfaction')
-          }}
-          onOpenTemplatePreview={() => {
-            if (activeSatisfactionSurvey != null) {
-              openTemplatePreview(activeSatisfactionSurvey.templateId)
-            }
-          }}
-          onDownloadClick={() => undefined}
-        />
-      ) : null}
+      {activeTab === 'student_satisfaction'
+        ? renderSatisfactionTab(
+            individualProgram ? 'individual' : 'student',
+            GENERAL_STUDENT_SATISFACTION_EMPTY_COPY,
+            GENERAL_STUDENT_SATISFACTION_ACTION_LABELS,
+            true,
+            shareStudentSatisfactionUrl
+          )
+        : null}
+      {activeTab === 'teacher_satisfaction'
+        ? renderSatisfactionTab(
+            'teacher',
+            GENERAL_TEACHER_SATISFACTION_EMPTY_COPY,
+            GENERAL_TEACHER_SATISFACTION_ACTION_LABELS,
+            false,
+            () => undefined
+          )
+        : null}
       {activeTab === 'lecture_evaluation' ? (
         <UjatLectureEvalSurveyView
           survey={lectureEvalSurvey}
@@ -535,15 +598,27 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           setDeleteModalKind(null)
           setDeleteConfirmWord('')
         }}
-        title={deleteModalKind === 'satisfaction' ? '만족도조사 삭제 안내' : '설문조사 삭제 안내'}
+        title={
+          deleteModalKind === 'satisfaction' && activeSatisfactionAudience != null
+            ? activeSatisfactionAudience === 'teacher'
+              ? '교사 만족도조사 삭제 안내'
+              : '학생 만족도조사 삭제 안내'
+            : '설문조사 삭제 안내'
+        }
         width={600}
         modalStyles={{ content: { minHeight: 310 } }}
         className="ujat-survey-delete-modal"
         description={`**[${
-          deleteModalKind === 'satisfaction'
+          deleteModalKind === 'satisfaction' && activeSatisfactionAudience != null
             ? `${getGeneralSatisfactionAudienceLabel(activeSatisfactionAudience)} 만족도조사`
             : activeRegisteredSurvey?.title ?? '설문조사'
-        }]** ${deleteModalKind === 'satisfaction' ? '만족도조사' : '설문조사'}를 삭제하시겠습니까?\n삭제 시 해당 양식의 내용은 모두 삭제됩니다.\n삭제된 항목 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?`}
+        }]** ${
+          deleteModalKind === 'satisfaction' && activeSatisfactionAudience === 'teacher'
+            ? '교사 만족도조사'
+            : deleteModalKind === 'satisfaction'
+              ? '학생 만족도조사'
+              : '설문조사'
+        }를 삭제하시겠습니까?\n삭제 시 해당 양식의 내용은 모두 삭제됩니다.\n삭제된 항목 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?`}
         footer={
           <div className="ujat-survey-delete-modal__footer">
             <CmsButton

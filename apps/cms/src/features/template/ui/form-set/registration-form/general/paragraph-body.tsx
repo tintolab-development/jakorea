@@ -52,6 +52,7 @@ export interface ProgramRegistrationParagraphBodyOptions {
   onIpsScheduleDetailChange: (value: ProgramRegistrationScheduleDetailKind) => void
   curriculumSessionCount: number
   onAddCurriculumSession: () => void
+  onDeleteCurriculumSession: (roundIndex: number) => void
   /** 단일 회차 + IPS 일정 별 상이 — 커리큘럼 차시 블록 개수·추가 */
   curriculumChartSessionCount: number
   onAddCurriculumChartSession: () => void
@@ -66,6 +67,7 @@ export interface ProgramRegistrationParagraphBodyOptions {
   /** 교육 진행 구조 일정형 — 세부 일정 블록 수·추가 */
   scheduleCurriculumDetailCount: number
   onAddScheduleCurriculumDetail: () => void
+  onDeleteScheduleCurriculumDetail: (detailIndex: number) => void
   /** 일정형 — 진행 그룹(A,B,…) 수·추가 */
   scheduleCurriculumGroupCount: number
   onAddScheduleCurriculumGroup: () => void
@@ -107,6 +109,14 @@ export function renderProgramRegistrationParagraphBody(
           }
           volunteerDisabled={options?.participant.volunteer !== true}
           volunteerPlaceholder={options?.participant.volunteer === true ? '목표값 입력' : '해당 없음'}
+          dispatchedSchoolDisabled={options?.participant.individual === true}
+          dispatchedSchoolPlaceholder={
+            options?.participant.individual === true ? '해당 없음' : '목표값 입력'
+          }
+          dispatchedClassDisabled={options?.participant.individual === true}
+          dispatchedClassPlaceholder={
+            options?.participant.individual === true ? '해당 없음' : '목표값 입력'
+          }
         />
       )
     case PROGRAM_REGISTRATION_IDS.wageInfo:
@@ -136,6 +146,7 @@ export function renderProgramRegistrationParagraphBody(
         <ProgramRegistrationEducationScheduleCurriculumParagraph
           key={`pr-schedule-curriculum-${options.sessionRoundType}-${options.educationFormScheduleDetail}-${options.participationScheduleDetail}-${options.ipsScheduleDetail}-${options.participant.organization ? 'org' : 'ind'}`}
           scheduleDetailCount={options.scheduleCurriculumDetailCount}
+          onDeleteScheduleCurriculumDetail={options.onDeleteScheduleCurriculumDetail}
           scheduleGroupCount={options.scheduleCurriculumGroupCount}
           onDeleteScheduleCurriculumGroup={options.onDeleteScheduleCurriculumGroup}
           ipsPerSchedule={options.ipsScheduleDetail === 'perSchedule'}
@@ -152,6 +163,7 @@ export function renderProgramRegistrationParagraphBody(
           sessionRoundType={options.sessionRoundType}
           participantOrganization={options.participant.organization}
           curriculumSessionCount={options.curriculumSessionCount}
+          onDeleteCurriculumSession={options.onDeleteCurriculumSession}
           curriculumChartSessionCount={options.curriculumChartSessionCount}
           onDeleteCurriculumChartSession={options.onDeleteCurriculumChartSession}
           educationFormScheduleDetail={options.educationFormScheduleDetail}

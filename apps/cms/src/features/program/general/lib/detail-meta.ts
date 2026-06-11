@@ -15,6 +15,7 @@ import {
 } from '@/features/program/general/lib/registration-local-save'
 import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import type { GeneralProgressTabKey } from '@/features/program/general/lib/progress-tabs'
 
 export type GeneralSurveyMenuItem = { key: GeneralProgramSurveyMenuKey; label: string }
@@ -77,7 +78,7 @@ export function getGeneralVolunteerInterviewEnabled(program: Program): boolean {
 }
 
 export function getGeneralSurveyMenuItems(program: Program): GeneralSurveyMenuItem[] {
-  const keys = program.generalSurveyMenuKeys ?? []
+  const keys = normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys ?? [])
   return keys.map(key => ({ key, label: SURVEY_MENU_LABELS[key] }))
 }
 

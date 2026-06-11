@@ -24,12 +24,12 @@ export function useGeneralProgramCommonInfoSave({
 }: UseGeneralProgramCommonInfoSaveOptions) {
   const savingRef = useRef(false)
 
-  const triggerSave = useCallback(async () => {
-    if (savingRef.current || !onSaveEdit || !program) return
+  const triggerSave = useCallback(async (): Promise<boolean> => {
+    if (savingRef.current || !onSaveEdit || !program) return false
     savingRef.current = true
     try {
       const isValid = await form.trigger()
-      if (!isValid) return
+      if (!isValid) return false
       const values = form.getValues()
       const patch = generalCommonInfoEditValuesToProgramPatch(values, program)
       const draftToSave: Program = {
@@ -41,6 +41,9 @@ export function useGeneralProgramCommonInfoSave({
         },
       }
       await onSaveEdit(draftToSave)
+      return true
+    } catch {
+      return false
     } finally {
       savingRef.current = false
     }
