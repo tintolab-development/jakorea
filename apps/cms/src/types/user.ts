@@ -63,6 +63,8 @@ export interface User {
   programRoles?: Record<string, ProgramRole>
 
   // 개인(참여자) 전용 (§2.1)
+  /** 1365 자원봉사 포털 ID — 회원 관리 등록 시 저장 */
+  id1365?: string
   // - 프로그램 신청(개인)
   // - 신청내역/진행상황 확인
   // - 일정 확인, 과제 제출

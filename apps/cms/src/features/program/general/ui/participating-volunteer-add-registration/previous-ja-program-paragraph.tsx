@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
+import type { ParticipatingVolunteerAddRegistrationSectionContext } from './add-registration-form-types'
 
 const CERTIFICATE_GUIDE_LINES = [
   '- 파일은 최대 15M까지 JPG, PNG, PDF 형식만 등록 가능합니다.',
@@ -10,17 +11,19 @@ const CERTIFICATE_GUIDE_LINES = [
 
 const CERTIFICATE_ACCEPT = '.jpg,.jpeg,.png,.pdf'
 
-/** UJAT 프로그램 봉사자 신청 폼 — 이전 UJAT 활동 기수 */
-export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
-  const [term, setTerm] = useState('')
-  const [year, setYear] = useState('')
+/** 참여 봉사자 추가 등록 — 이전 참여 JA 봉사 프로그램 plugin 본문 */
+export function ParticipatingVolunteerAddRegistrationPreviousJaProgramParagraph(
+  _props: ParticipatingVolunteerAddRegistrationSectionContext
+) {
+  const [applicationYear, setApplicationYear] = useState('')
+  const [programName, setProgramName] = useState('')
   const [fileNames, setFileNames] = useState<string[]>([])
 
   return (
-    <DetailInfoForm title="이전 UJAT 활동 기수" hideHeader mode="edit">
+    <DetailInfoForm title="이전 참여 JA 봉사 프로그램" hideHeader mode="edit">
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label="이전 활동 기수 및 년도"
+          label="참여 JA 봉사 프로그램"
           fullRow
           edit={
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
@@ -28,18 +31,18 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
                 inputSize="medium"
                 width="100%"
                 style={{ flex: '3 1 0', minWidth: 0 }}
-                placeholder="활동 기수"
-                value={term}
-                onChange={e => setTerm(e.target.value)}
+                placeholder="신청년도"
+                value={applicationYear}
+                onChange={e => setApplicationYear(e.target.value)}
               />
               <DetailInfoForm.InputsSeparator />
               <CmsInput
                 inputSize="medium"
                 width="100%"
                 style={{ flex: '7 1 0', minWidth: 0 }}
-                placeholder="활동 년도"
-                value={year}
-                onChange={e => setYear(e.target.value)}
+                placeholder="프로그램명"
+                value={programName}
+                onChange={e => setProgramName(e.target.value)}
               />
             </div>
           }
@@ -49,7 +52,7 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
 
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label="수료증 첨부"
+          label="증빙서류 첨부"
           fullRow
           edit={
             <ParagraphFileUpload
@@ -60,9 +63,7 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
               onFilesChange={files =>
                 setFileNames(prev => [...prev, ...files.map(file => file.name)])
               }
-              onRemoveFile={index =>
-                setFileNames(prev => prev.filter((_, i) => i !== index))
-              }
+              onRemoveFile={index => setFileNames(prev => prev.filter((_, i) => i !== index))}
             />
           }
           view="-"

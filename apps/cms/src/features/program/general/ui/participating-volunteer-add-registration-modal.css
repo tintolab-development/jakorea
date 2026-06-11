@@ -70,15 +70,7 @@
   min-width: 0;
 }
 
-.participating-volunteer-add-registration-modal__section:not(
-    .participating-volunteer-add-registration-modal__section--basic-info
-  )
-  > .detail-info-form {
-  background: var(--main-WT, #fff);
-  border-radius: 8px;
-  border: 1px solid var(--table-line, #e0e0e0);
-  overflow: hidden;
-}
+/* DetailInfoForm — `detail-info-form__body` 기본 border만 사용(이중 border 방지) */
 
 .participating-volunteer-add-registration-modal__section--basic-info
   .detail-info-form-inputs-wrapper-no-gap
@@ -135,4 +127,25 @@
 
 .participating-volunteer-add-registration-modal__free-text-card-body {
   padding: 16px 20px;
+}
+
+/* 객관식(단일항목) — DetailInfoForm 없이 라디오 가로 정렬 */
+.participating-volunteer-add-registration-modal__section--multiple-choice-horizontal
+  .multiple-choice-body {
+  border: none;
+  padding: 0;
+}
+
+.participating-volunteer-add-registration-modal__section--multiple-choice-horizontal
+  .multiple-choice-radio-group.app-radio-group {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  width: auto;
+}
+
+.participating-volunteer-add-registration-modal__section--multiple-choice-horizontal
+  .multiple-choice-row {
+  padding: 0;
 }

@@ -1,12 +1,27 @@
 import {
   HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
   normalizeHorizontalTableParagraph,
+  normalizeWritingFormDraft,
   type HorizontalTableParagraph,
+  type MultipleChoiceParagraph,
+  type WritingFormDraft,
+  type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+
+export type JaVolunteerExperience = 'yes' | 'no' | undefined
 
 export const PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS = {
   personalInfoCollection: 'participating-volunteer-add-registration-personal-info',
   thirdPartyConsent: 'participating-volunteer-add-registration-third-party',
+  basicInfo: 'participating-volunteer-add-registration-basic-info',
+  jaVolunteerExperience: 'participating-volunteer-add-registration-ja-experience',
+  previousJaProgram: 'participating-volunteer-add-registration-previous-ja-program',
+  freeTextItems: 'participating-volunteer-add-registration-free-text-items',
+} as const
+
+export const JA_VOLUNTEER_EXPERIENCE_OPTION_IDS = {
+  yes: 'participating-volunteer-add-registration-ja-experience-yes',
+  no: 'participating-volunteer-add-registration-ja-experience-no',
 } as const
 
 const PERSONAL_INFO_COLLECTION_BOTTOM =
@@ -98,11 +113,61 @@ function createParticipatingVolunteerThirdPartyTable(): HorizontalTableParagraph
   })
 }
 
-export function createParticipatingVolunteerAddRegistrationConsentParagraphs(): HorizontalTableParagraph[] {
-  return [
-    createParticipatingVolunteerPersonalInfoTable(),
-    createParticipatingVolunteerThirdPartyTable(),
-  ]
+function createJaVolunteerExperienceMultipleChoiceParagraph(): MultipleChoiceParagraph {
+  return {
+    id: PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.jaVolunteerExperience,
+    kind: 'single_item',
+    variant: 'multiple_choice',
+    requiredMark: true,
+    paragraphTitle: 'JA 봉사 프로그램 진행 경험 여부',
+    paragraphDescription: 'JA 봉사 프로그램 진행 이력 여부를 선택해 주세요.',
+    participatesInTitleNumbering: false,
+    answerRequired: true,
+    allowMultiple: false,
+    items: [
+      { id: JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.yes, label: '있음' },
+      { id: JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.no, label: '없음' },
+    ],
+    selectedPreviewSingleId: null,
+    selectedPreviewMultipleIds: [],
+  }
+}
+
+export function resolveJaVolunteerExperienceFromParagraph(
+  paragraph: WritingFormParagraph | undefined
+): JaVolunteerExperience {
+  if (!paragraph || paragraph.variant !== 'multiple_choice') return undefined
+  const selectedId = paragraph.selectedPreviewSingleId
+  if (selectedId === JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.yes) return 'yes'
+  if (selectedId === JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.no) return 'no'
+  return undefined
+}
+
+/** plugin 섹션 메타 — UJAT 추가 등록 draft seed 단락과 동일 패턴 */
+function createSeedHorizontalTable(
+  id: string,
+  paragraphTitle: string,
+  paragraphDescription: string
+): HorizontalTableParagraph {
+  return normalizeHorizontalTableParagraph({
+    id,
+    kind: 'single_item',
+    variant: 'horizontal_table',
+    requiredMark: true,
+    paragraphTitle,
+    paragraphDescription,
+    participatesInTitleNumbering: false,
+    tableFlavor: 'text',
+    columnHeaders: ['항목', '내용'],
+    dataRows: [['', '']],
+    columnFields: [],
+    fieldDataRows: [],
+    bottomText: '',
+    showBottomText: false,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
+    answerRequired: true,
+  })
 }
 
 export function resolveParticipatingVolunteerBasicInfoDescription(): string {
@@ -110,4 +175,43 @@ export function resolveParticipatingVolunteerBasicInfoDescription(): string {
   const year = now.getFullYear()
   const semester = now.getMonth() < 6 ? 1 : 2
   return `학년은 ${year}년 ${semester}학기 기준으로 기재해 주세요.`
+}
+
+export function createParticipatingVolunteerAddRegistrationDraft(): WritingFormDraft {
+  const paragraphs: WritingFormParagraph[] = [
+    createParticipatingVolunteerPersonalInfoTable(),
+    createParticipatingVolunteerThirdPartyTable(),
+    createSeedHorizontalTable(
+      PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.basicInfo,
+      '기본 정보',
+      resolveParticipatingVolunteerBasicInfoDescription()
+    ),
+    createJaVolunteerExperienceMultipleChoiceParagraph(),
+    createSeedHorizontalTable(
+      PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.previousJaProgram,
+      '이전 참여 JA 봉사 프로그램',
+      ''
+    ),
+    createSeedHorizontalTable(
+      PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.freeTextItems,
+      '자유 작성 항목',
+      '1~3번 문항은 자유롭게 작성 가능합니다.'
+    ),
+  ]
+  return normalizeWritingFormDraft({
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'none' },
+    paragraphs,
+  })
+}
+
+/** @deprecated — `createParticipatingVolunteerAddRegistrationDraft` 사용 */
+export function createParticipatingVolunteerAddRegistrationConsentParagraphs(): HorizontalTableParagraph[] {
+  const draft = createParticipatingVolunteerAddRegistrationDraft()
+  return draft.paragraphs.filter(
+    (p): p is HorizontalTableParagraph =>
+      p.variant === 'horizontal_table' &&
+      (p.id === PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.personalInfoCollection ||
+        p.id === PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.thirdPartyConsent)
+  )
 }

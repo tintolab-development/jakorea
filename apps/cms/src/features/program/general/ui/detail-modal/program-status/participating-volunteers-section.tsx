@@ -214,6 +214,14 @@ export function ParticipatingVolunteersSection({
     [saveRegistration, showAlert]
   )
 
+  const pendingVolunteerHideBasicInfo = useMemo(() => {
+    if (!pendingVolunteerMemberId) return false
+    const candidate = volunteerMemberOptions.find(
+      member => member.memberId === pendingVolunteerMemberId
+    )
+    return candidate?.hasRegisteredId1365 ?? false
+  }, [pendingVolunteerMemberId, volunteerMemberOptions])
+
   const handleProceedToVolunteerRegistration = useCallback((memberId: string) => {
     setPendingVolunteerMemberId(memberId)
     setVolunteerRegistrationModalOpen(true)
@@ -487,6 +495,7 @@ export function ParticipatingVolunteersSection({
       />
       <ParticipatingVolunteerAddRegistrationModal
         open={volunteerRegistrationModalOpen}
+        hideBasicInfoSection={pendingVolunteerHideBasicInfo}
         onClose={handleVolunteerRegistrationClose}
         onConfirm={handleVolunteerRegistrationConfirm}
       />

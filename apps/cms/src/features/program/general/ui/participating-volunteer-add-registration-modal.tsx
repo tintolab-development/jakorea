@@ -1,88 +1,81 @@
 /**
  * 참여 봉사자 추가 등록 — 신청 폼 모달
- * 봉사자 선택 후 「추가 등록」 클릭 시 노출 (참여 강사 추가 등록 2단계 플로우와 동일)
+ * 봉사자 선택 후 「추가 등록」 클릭 시 노출 (UJAT 추가 등록 draft-paragraph + plugin 패턴)
  */
 
 import { useEffect, useMemo, useState } from 'react'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
-import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/table/horizontal-table-paragraph-body'
-import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
-import { createParticipatingVolunteerAddRegistrationConsentParagraphs } from '@/features/program/general/lib/participating-volunteer-add-registration-draft'
-import { ParticipatingVolunteerAddRegistrationBasicInfoSection } from './participating-volunteer-add-registration/basic-info-section'
+import type { HorizontalTableParagraph, WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
 import {
-  ParticipatingVolunteerAddRegistrationJaExperienceSection,
-  type JaVolunteerExperience,
-} from './participating-volunteer-add-registration/ja-volunteer-experience-section'
-import { ParticipatingVolunteerAddRegistrationPreviousJaProgramSection } from './participating-volunteer-add-registration/previous-ja-program-section'
-import { ParticipatingVolunteerAddRegistrationFreeTextSection } from './participating-volunteer-add-registration/free-text-section'
+  createParticipatingVolunteerAddRegistrationDraft,
+  PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS,
+  resolveJaVolunteerExperienceFromParagraph,
+} from '@/features/program/general/lib/participating-volunteer-add-registration-draft'
+import { PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_SECTIONS } from './participating-volunteer-add-registration/add-registration-form-section-config'
+import { ParticipatingVolunteerAddRegistrationFormSectionRenderer } from './participating-volunteer-add-registration/add-registration-form-section-renderer'
 import '@/features/template/ui/form-editor/form-editor-horizontal-table.css'
 import './participating-volunteer-add-registration-modal.css'
 
 export interface ParticipatingVolunteerAddRegistrationModalProps {
   open: boolean
+  /** true — 선택한 회원에 1365 ID가 이미 등록됨(기본 정보 단락 숨김) */
+  hideBasicInfoSection?: boolean
   onClose: () => void
   onConfirm: () => void
 }
 
-function ConsentParagraphSection({
-  paragraph,
-  onChange,
-}: {
-  paragraph: HorizontalTableParagraph
-  onChange: (next: HorizontalTableParagraph) => void
-}) {
-  return (
-    <section className="participating-volunteer-add-registration-modal__section">
-      <FormParagraphSectionHeader
-        title={paragraph.paragraphTitle}
-        required={paragraph.requiredMark}
-        surface="responseEntry"
-        titleAligned
-      />
-      <div className="participating-volunteer-add-registration-modal__template-block">
-        <HorizontalTableParagraphBody
-          paragraph={paragraph}
-          onChange={onChange}
-          isEditMode={false}
-          tableCanvasInteractive={false}
-          bottomConsentPreviewInAuthoring
-          paragraphInteractionMode="user"
-        />
-      </div>
-    </section>
-  )
-}
+const CONSENT_PARAGRAPH_IDS = new Set<string>([
+  PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.personalInfoCollection,
+  PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.thirdPartyConsent,
+])
 
 export function ParticipatingVolunteerAddRegistrationModal({
   open,
+  hideBasicInfoSection = false,
   onClose,
   onConfirm,
 }: ParticipatingVolunteerAddRegistrationModalProps) {
   const { showAlert } = useCmsAlert()
-  const initialParagraphs = useMemo(
-    () => createParticipatingVolunteerAddRegistrationConsentParagraphs(),
-    []
-  )
-  const [paragraphs, setParagraphs] = useState(initialParagraphs)
-  const [jaVolunteerExperience, setJaVolunteerExperience] = useState<JaVolunteerExperience>(undefined)
+  const initialDraft = useMemo(() => createParticipatingVolunteerAddRegistrationDraft(), [])
+  const [paragraphs, setParagraphs] = useState(initialDraft.paragraphs)
 
   useEffect(() => {
     if (!open) return
     setParagraphs(
-      initialParagraphs.map(paragraph => ({ ...paragraph, bottomConsent: 'agree' as const }))
+      initialDraft.paragraphs.map(paragraph => {
+        if (paragraph.variant === 'horizontal_table' && CONSENT_PARAGRAPH_IDS.has(paragraph.id)) {
+          return { ...paragraph, bottomConsent: 'agree' as const }
+        }
+        if (
+          paragraph.variant === 'multiple_choice' &&
+          paragraph.id === PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.jaVolunteerExperience
+        ) {
+          return { ...paragraph, selectedPreviewSingleId: null, selectedPreviewMultipleIds: [] }
+        }
+        return paragraph
+      })
     )
-    setJaVolunteerExperience(undefined)
-  }, [open, initialParagraphs])
+  }, [open, initialDraft.paragraphs])
 
-  const updateParagraph = (id: string, next: HorizontalTableParagraph) => {
+  const updateParagraph = (id: string, next: WritingFormParagraph) => {
     setParagraphs(prev => prev.map(paragraph => (paragraph.id === id ? next : paragraph)))
   }
 
+  const jaVolunteerExperience = useMemo(() => {
+    const paragraph = paragraphs.find(
+      p => p.id === PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.jaVolunteerExperience
+    )
+    return resolveJaVolunteerExperienceFromParagraph(paragraph)
+  }, [paragraphs])
+
   const handleConfirm = () => {
-    const allAgreed = paragraphs.every(paragraph => paragraph.bottomConsent === 'agree')
+    const consentParagraphs = paragraphs.filter(
+      (p): p is HorizontalTableParagraph =>
+        p.variant === 'horizontal_table' && CONSENT_PARAGRAPH_IDS.has(p.id)
+    )
+    const allAgreed = consentParagraphs.every(paragraph => paragraph.bottomConsent === 'agree')
     if (!allAgreed) {
       showAlert({
         title: '안내',
@@ -92,6 +85,14 @@ export function ParticipatingVolunteerAddRegistrationModal({
     }
     onConfirm()
   }
+
+  const sectionContext = useMemo(
+    () => ({
+      jaVolunteerExperience,
+      hideBasicInfoSection,
+    }),
+    [jaVolunteerExperience, hideBasicInfoSection]
+  )
 
   const footer = (
     <>
@@ -116,22 +117,15 @@ export function ParticipatingVolunteerAddRegistrationModal({
     >
       <div className="participating-volunteer-add-registration-modal__scroll">
         <div className="participating-volunteer-add-registration-modal__sections">
-          {paragraphs.map(paragraph => (
-            <ConsentParagraphSection
-              key={paragraph.id}
-              paragraph={paragraph}
-              onChange={next => updateParagraph(paragraph.id, next)}
+          {PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_SECTIONS.map(section => (
+            <ParticipatingVolunteerAddRegistrationFormSectionRenderer
+              key={section.key}
+              section={section}
+              paragraphs={paragraphs}
+              onParagraphChange={updateParagraph}
+              sectionContext={sectionContext}
             />
           ))}
-          <ParticipatingVolunteerAddRegistrationBasicInfoSection />
-          <ParticipatingVolunteerAddRegistrationJaExperienceSection
-            value={jaVolunteerExperience}
-            onChange={setJaVolunteerExperience}
-          />
-          {jaVolunteerExperience === 'yes' ? (
-            <ParticipatingVolunteerAddRegistrationPreviousJaProgramSection />
-          ) : null}
-          <ParticipatingVolunteerAddRegistrationFreeTextSection />
         </div>
       </div>
     </ContentModal>
