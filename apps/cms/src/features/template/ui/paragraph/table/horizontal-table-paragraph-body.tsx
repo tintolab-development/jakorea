@@ -60,6 +60,7 @@ import type {
   UjatProgramApplicationGradeInfoParagraphOptions,
 } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-program-application-institution-body-options'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
+import { isFormPreviewReadonlyMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import { IdTypeWithInputBody } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -570,7 +571,17 @@ export function HorizontalTableParagraphBody({
     return programApplicationFormGeminiInstructorBody
 
   const programApplicationFormInstitutionBody =
-    renderProgramApplicationFormInstitutionParagraphBody(p, programApplicationFormInstitution)
+    renderProgramApplicationFormInstitutionParagraphBody(
+      p,
+      programApplicationFormInstitution
+        ? {
+            enabled: programApplicationFormInstitution,
+            readOnlyPreview: isFormPreviewReadonlyMode(paragraphInteractionMode),
+            paragraph: p,
+            onParagraphChange: next => onChange(next),
+          }
+        : undefined
+    )
   if (programApplicationFormInstitutionBody != null) return programApplicationFormInstitutionBody
 
   const economyProgramApplicationBody = renderEconomyProgramApplicationParagraphBody(

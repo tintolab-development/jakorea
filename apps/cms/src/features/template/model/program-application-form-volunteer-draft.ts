@@ -3,7 +3,7 @@ import {
   normalizeHorizontalTableParagraph,
   normalizeWritingFormDraft,
   type HorizontalTableParagraph,
-  type ShortEssayParagraph,
+  type MultipleChoiceParagraph,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -12,8 +12,15 @@ import {
 export const PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS = {
   personalInfoCollection: 'program-volunteer-application-seed-personal-info',
   thirdPartyConsent: 'program-volunteer-application-seed-third-party',
-  selfIntro: 'program-volunteer-application-seed-self-intro',
+  jaVolunteerExperience: 'program-volunteer-application-seed-ja-experience',
+  previousJaProgram: 'program-volunteer-application-seed-previous-ja-program',
+  freeTextItems: 'program-volunteer-application-seed-free-text-items',
   interviewSchedule: 'program-volunteer-application-seed-interview-schedule',
+} as const
+
+export const PROGRAM_VOLUNTEER_JA_EXPERIENCE_OPTION_IDS = {
+  yes: 'program-volunteer-application-ja-experience-yes',
+  no: 'program-volunteer-application-ja-experience-no',
 } as const
 
 export const PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS = new Set<string>(
@@ -109,20 +116,71 @@ function createVolunteerThirdPartyHorizontalTable(): HorizontalTableParagraph {
   })
 }
 
-function createVolunteerSelfIntroShortEssay(): ShortEssayParagraph {
+function createJaVolunteerExperienceMultipleChoiceParagraph(): MultipleChoiceParagraph {
   return {
-    id: PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.selfIntro,
+    id: PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.jaVolunteerExperience,
     kind: 'single_item',
-    variant: 'short_essay',
+    variant: 'multiple_choice',
     requiredMark: true,
-    paragraphTitle: '자기소개 및 지원동기',
-    paragraphDescription: '',
+    paragraphTitle: 'JA 봉사 프로그램 진행 경험 여부',
+    paragraphDescription: 'JA 봉사 프로그램 진행 이력 여부를 선택해 주세요.',
     participatesInTitleNumbering: true,
     answerRequired: true,
-    showItemTitle: false,
-    bodyPlaceholder: '자유롭게 작성해 주세요',
-    bodyText: '',
+    allowMultiple: false,
+    items: [
+      { id: PROGRAM_VOLUNTEER_JA_EXPERIENCE_OPTION_IDS.yes, label: '있음' },
+      { id: PROGRAM_VOLUNTEER_JA_EXPERIENCE_OPTION_IDS.no, label: '없음' },
+    ],
+    selectedPreviewSingleId: null,
+    selectedPreviewMultipleIds: [],
   }
+}
+
+/** 본문은 `VolunteerPreviousJaProgramParagraph`로 대체 */
+function createPreviousJaProgramPlaceholderTable(): HorizontalTableParagraph {
+  return normalizeHorizontalTableParagraph({
+    id: PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousJaProgram,
+    kind: 'single_item',
+    variant: 'horizontal_table',
+    requiredMark: true,
+    paragraphTitle: '이전 참여 JA 봉사 프로그램',
+    paragraphDescription:
+      '이전에 참여한 JA 봉사 프로그램명과 진행년도 및 해당 프로그램의 활동인증서 또는 수료증 파일을 첨부해 주세요.',
+    participatesInTitleNumbering: true,
+    tableFlavor: 'text',
+    columnHeaders: ['항목', '내용'],
+    dataRows: [['', '']],
+    columnFields: [],
+    fieldDataRows: [],
+    bottomText: '',
+    showBottomText: false,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
+    answerRequired: true,
+  })
+}
+
+/** 본문은 `VolunteerFreeTextItemsParagraph`로 대체 */
+function createVolunteerFreeTextItemsPlaceholderTable(): HorizontalTableParagraph {
+  return normalizeHorizontalTableParagraph({
+    id: PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems,
+    kind: 'single_item',
+    variant: 'horizontal_table',
+    requiredMark: true,
+    paragraphTitle: '자유 작성 항목',
+    paragraphDescription: '1~3번 문항은 자유롭게 작성 가능합니다.',
+    participatesInTitleNumbering: true,
+    tableFlavor: 'text',
+    columnHeaders: ['항목', '내용'],
+    dataRows: [['', '']],
+    columnFields: [],
+    fieldDataRows: [],
+    bottomText: '',
+    showBottomText: false,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
+    answerRequired: true,
+  })
 }
 
 /** 본문은 `VolunteerInterviewAvailableScheduleParagraph`로 대체 */
@@ -153,7 +211,9 @@ export function createProgramApplicationFormVolunteerDraft(): WritingFormDraft {
   const paragraphs: WritingFormParagraph[] = [
     createVolunteerPersonalInfoHorizontalTable(),
     createVolunteerThirdPartyHorizontalTable(),
-    createVolunteerSelfIntroShortEssay(),
+    createJaVolunteerExperienceMultipleChoiceParagraph(),
+    createPreviousJaProgramPlaceholderTable(),
+    createVolunteerFreeTextItemsPlaceholderTable(),
     createVolunteerInterviewSchedulePlaceholderTable(),
   ]
   return normalizeWritingFormDraft({

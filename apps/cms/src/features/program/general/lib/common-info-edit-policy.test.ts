@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   canGeneralProgramCommonInfoEdit,
+  canGeneralProgramRecruitmentInfoEdit,
   getGeneralProgramCommonInfoEditBlockedAlertMessage,
+  getGeneralProgramRecruitmentInfoEditBlockedAlertMessage,
 } from './common-info-edit-policy'
 import type { Program } from '@/types/domain'
 
@@ -54,5 +56,35 @@ describe('getGeneralProgramCommonInfoEditBlockedAlertMessage', () => {
         baseProgram({ lifecycleStatus: 'document_processing_completed' })
       )
     ).toContain('완료')
+  })
+})
+
+describe('canGeneralProgramRecruitmentInfoEdit', () => {
+  it('공통 정보와 동일하게 프로그램 진행 예정 단계에서만 수정 가능', () => {
+    expect(
+      canGeneralProgramRecruitmentInfoEdit(
+        baseProgram({ lifecycleStatus: 'recruiting_students' })
+      )
+    ).toBe(true)
+    expect(
+      canGeneralProgramRecruitmentInfoEdit(
+        baseProgram({ lifecycleStatus: 'education_in_progress' })
+      )
+    ).toBe(false)
+  })
+})
+
+describe('getGeneralProgramRecruitmentInfoEditBlockedAlertMessage', () => {
+  it('진행 중·완료에 따라 모집 정보 안내 문구를 반환한다', () => {
+    expect(
+      getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(
+        baseProgram({ lifecycleStatus: 'education_after_textbook' })
+      )
+    ).toContain('모집 정보')
+    expect(
+      getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(
+        baseProgram({ lifecycleStatus: 'document_processing_completed' })
+      )
+    ).toContain('모집 정보')
   })
 })

@@ -32,7 +32,6 @@ import { SessionPlanShortEssay } from '@/features/template/ui/paragraph/single-i
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
 import { ProgramApplicationFormInstitutionScheduleParagraph } from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-schedule-paragraph'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
-import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
 import { ProgramApplicationFormIndividualScheduleParagraph } from '@/features/template/ui/form-set/application-form/individual/paragraphs/individual-schedule-paragraph'
 import {
   mergeSubjectiveFromShortEssayEdit,
@@ -51,6 +50,10 @@ import {
 } from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
+import {
+  isFormPreviewReadonlyMode,
+  isFormUserLikeVisibleMode,
+} from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import type { PaymentStatementCalculationLinesViewModel } from '@/features/template/model/lecture-fee-calculation-lines-sample'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
@@ -94,7 +97,7 @@ export type RenderFormParagraphBodyOptions = {
   /**
    * 기본 authoring.
    * - user: 카드 선택은 유지(우측 패널 등)하되, 본문 입력은 카드 비선택에서도 가능(`isBodyInteractive`).
-   * - user: 카드 전환 시 미리보기 초기화 등 편집 전용 부수 효과는 끔(단락 컴포넌트에서 `paragraphInteractionMode`로 분기).
+   * - preview: user와 동일하게 본문 노출, 입력은 전부 비활성(프로그램 상세 신청 정보 미리보기).
    */
   paragraphInteractionMode?: ParagraphBodyInteractionMode
   /** id 포함 시 본문·표 편집 비활성(템플릿 고정 단락) */
@@ -163,6 +166,11 @@ export type RenderFormParagraphBodyOptions = {
   structureLockedAuthoringChoicePreview?: boolean
   /** 현재 조건에 따라 숨겨야 하는 단락 id 목록(에디터/미리보기 공통) */
   hiddenParagraphIds?: ReadonlySet<string>
+  /**
+   * 프로그램 상세 신청 양식 수정·미리보기 — 기관 「진행 희망 교육 일정」에
+   * 템플릿 설정 힌트 대신 프로그램 연동 UI 노출
+   */
+  programLinkedInstitutionApplicationForm?: boolean
   /** 강의 평가 등 — 설문 기간을 기간 피커 대신 지정 텍스트로 표시 */
   surveyPeriodReadonly?: boolean
 }
@@ -175,22 +183,26 @@ export function renderFormParagraphBody(
   options?: RenderFormParagraphBodyOptions
 ) {
   const paragraphInteractionMode = options?.paragraphInteractionMode ?? 'authoring'
+  const isUserLikeVisible = isFormUserLikeVisibleMode(paragraphInteractionMode)
+  const isPreviewReadonly = isFormPreviewReadonlyMode(paragraphInteractionMode)
   const isCardSelected = isParagraphSelected
   const structureLocked = options?.structureLockedParagraphIds?.has(p.id) ?? false
   /**
    * 구조 잠금: 작성(authoring)에서는 카드 선택만으로는 본문 편집 불가.
-   * 미리보기(`user`)에서는 잠긴 시드도 입력 가능.
+   * 미리보기(`user`)에서는 잠긴 시드도 입력 가능. `preview`는 항상 비활성.
    */
-  const isBodyInteractive = structureLocked
-    ? paragraphInteractionMode === 'user'
-    : paragraphInteractionMode === 'user' || isParagraphSelected
+  const isBodyInteractive = isPreviewReadonly
+    ? false
+    : structureLocked
+      ? paragraphInteractionMode === 'user'
+      : paragraphInteractionMode === 'user' || isParagraphSelected
   const lockedAuthoringChoicePreview =
     structureLocked &&
     paragraphInteractionMode === 'authoring' &&
     options?.structureLockedAuthoringChoicePreview === true
   switch (p.variant) {
     case 'survey_title_with_period':
-      if (!isCardSelected && paragraphInteractionMode !== 'user') return null
+      if (!isCardSelected && !isUserLikeVisible) return null
       if (!(p.showWritingPeriodOnForm ?? false)) return null
       if (options?.surveyPeriodReadonly) {
         return (
@@ -201,8 +213,7 @@ export function renderFormParagraphBody(
           />
         )
       }
-      const titlePeriodEditMode =
-        paragraphInteractionMode === 'user' || isParagraphSelected
+      const titlePeriodEditMode = isUserLikeVisible || isParagraphSelected
       return (
         <ExplanationTitle
           paragraph={p}
@@ -281,6 +292,7 @@ export function renderFormParagraphBody(
       )
       /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 구조 잠금 시 작성 모드에서는 편집 불가, 미리보기(user)는 예외 */
       const isEditMode =
+        !isPreviewReadonly &&
         (!structureLocked || paragraphInteractionMode === 'user') &&
         (paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field')
       /** 표 격자·헤더 행 선택(민트 스트로크) — 작성(authoring) + 구조 미잠금에서만 */
@@ -328,6 +340,7 @@ export function renderFormParagraphBody(
               : {
                   ...options.programApplicationFormInstructor,
                   isTemplateAuthoringMode: paragraphInteractionMode === 'authoring',
+                  readOnlyPreview: isPreviewReadonly,
                 }
           }
           programApplicationFormVolunteer={
@@ -336,6 +349,7 @@ export function renderFormParagraphBody(
               : {
                   ...options.programApplicationFormVolunteer,
                   isTemplateAuthoringMode: paragraphInteractionMode === 'authoring',
+                  readOnlyPreview: isPreviewReadonly,
                 }
           }
           paragraphInteractionMode={paragraphInteractionMode}
@@ -373,19 +387,9 @@ export function renderFormParagraphBody(
           />
         )
       }
-      const normalizedVp = normalizeVerticalTableParagraph(
+      const vp = normalizeVerticalTableParagraph(
         p as Extract<WritingFormParagraph, { variant: 'vertical_table' }>
       )
-      const shouldUseInstructorUnavailableDatesAuthoringExample =
-        paragraphInteractionMode === 'authoring' &&
-        p.id === PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.unavailableDates &&
-        options?.programApplicationFormInstructor?.authoringUnavailableDatesExampleRowOnly === true
-      const vp = shouldUseInstructorUnavailableDatesAuthoringExample
-        ? normalizeVerticalTableParagraph({
-            ...normalizedVp,
-            rows: normalizedVp.rows.slice(0, 1),
-          })
-        : normalizedVp
       const dateTimeCellsInteractive = isBodyInteractive || lockedAuthoringChoicePreview
       const tableCanvasInteractive =
         !structureLocked && paragraphInteractionMode === 'authoring'
@@ -454,7 +458,15 @@ export function renderFormParagraphBody(
         options?.programApplicationFormInstitution === true &&
         p.id === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
       ) {
-        return <ProgramApplicationFormInstitutionScheduleParagraph />
+        return (
+          <ProgramApplicationFormInstitutionScheduleParagraph
+            readOnlyPreview={isPreviewReadonly}
+            isTemplateAuthoringMode={
+              paragraphInteractionMode === 'authoring' &&
+              options?.programLinkedInstitutionApplicationForm !== true
+            }
+          />
+        )
       }
       if (
         options?.programApplicationFormIndividual === true &&
@@ -538,7 +550,7 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isBodyInteractive}
-          layout={paragraphInteractionMode === 'user' ? 'previewTable' : 'chips'}
+          layout={isUserLikeVisible ? 'previewTable' : 'chips'}
           previewValues={options?.userInfoPreviewValues}
         />
       )

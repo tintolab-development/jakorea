@@ -1,7 +1,10 @@
 import { useEffect, useRef, type MouseEvent as ReactMouseEvent } from 'react'
 import type { MultipleChoiceParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { createDefaultMultipleChoiceItems } from '@/features/template/model/writing-form-draft.schema'
-import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
+import {
+  isFormPreviewReadonlyMode,
+  type ParagraphBodyInteractionMode,
+} from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import './multiple-choice.css'
@@ -67,6 +70,8 @@ export function MultipleChoice({
   const allowMultiple = paragraph.allowMultiple ?? false
   const singleId = paragraph.selectedPreviewSingleId ?? null
   const multiIds = paragraph.selectedPreviewMultipleIds ?? []
+  const isPreviewReadonly = isFormPreviewReadonlyMode(paragraphInteractionMode)
+  const controlDisabled = !isBodyInteractive && !isPreviewReadonly
 
   const patch = (partial: Partial<MultipleChoiceParagraph>) => {
     if (!isBodyInteractive) return
@@ -99,7 +104,7 @@ export function MultipleChoice({
         {items.map(item => (
           <div key={item.id} role="presentation" className="multiple-choice-row">
             <CmsCheckbox
-              disabled={!isBodyInteractive}
+              disabled={controlDisabled}
               checked={multiIds.includes(item.id)}
               onChange={e => toggleMulti(item.id, e.target.checked)}
             />
@@ -114,13 +119,13 @@ export function MultipleChoice({
     <div role="presentation" className={bodyClass} onClick={handleBodyClick}>
       <CmsRadioGroup
         className="multiple-choice-radio-group"
-        disabled={!isBodyInteractive}
+        disabled={controlDisabled}
         value={singleId ?? undefined}
         onChange={e => patch({ selectedPreviewSingleId: e.target.value })}
       >
         {items.map(item => (
           <div key={item.id} role="presentation" className="multiple-choice-row">
-            <CmsRadio value={item.id} disabled={!isBodyInteractive} />
+            <CmsRadio value={item.id} disabled={controlDisabled} />
             <span className="multiple-choice-row__label">{item.label}</span>
           </div>
         ))}

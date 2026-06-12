@@ -35,7 +35,6 @@ import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
 import { UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-recruit-form-institution-draft'
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
-import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
@@ -317,48 +316,6 @@ export function withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrai
       >
         수업 진행 시간 추가
       </CmsButton>
-    ),
-  }
-}
-
-/** 프로그램 강사 신청 폼 — 강의 불가 일정 단락: 카드 제목 줄 우측「강의 불가 일자 추가」 */
-export function withProgramApplicationFormInstructorTitleTrailing(
-  heading: ParagraphCardEditableHeading,
-  paragraph: WritingFormParagraph,
-  paragraphBodyOptions?: RenderFormParagraphBodyOptions
-): ParagraphCardEditableHeading {
-  const opts = paragraphBodyOptions?.programApplicationFormInstructor
-  if (
-    paragraph.id !== PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.unavailableDates ||
-    opts?.enabled !== true
-  ) {
-    return heading
-  }
-  return {
-    ...heading,
-    titleTrailing: (
-      <div
-        className="program-registration-paragraph__card-title-actions"
-        onClick={e => e.stopPropagation()}
-        onKeyDown={e => e.stopPropagation()}
-        role="presentation"
-      >
-        <CmsButton
-          type="button"
-          variant="secondary"
-          size="medium"
-          width={180}
-          disabled={opts.disableUnavailableDateRowAddButton === true}
-          icon={<PlusOutlined aria-hidden />}
-          onClick={e => {
-            e.stopPropagation()
-            if (opts.disableUnavailableDateRowAddButton === true) return
-            opts.onAddUnavailableDateRow()
-          }}
-        >
-          강의 불가 일자 추가
-        </CmsButton>
-      </div>
     ),
   }
 }

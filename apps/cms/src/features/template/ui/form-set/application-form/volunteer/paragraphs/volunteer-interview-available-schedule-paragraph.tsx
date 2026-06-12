@@ -325,6 +325,7 @@ function VolunteerInterviewScheduleTemplateUi({
 /** 봉사자 신청 폼 — 면접 진행 가능 일정 */
 export function VolunteerInterviewAvailableScheduleParagraph({
   isTemplateAuthoringMode = false,
+  readOnlyPreview = false,
   exceptionScheduleCount = 0,
   exceptionBlockKeys,
   onRemoveExceptionBlock,
@@ -332,13 +333,14 @@ export function VolunteerInterviewAvailableScheduleParagraph({
   onCommonExclusionChange,
 }: {
   isTemplateAuthoringMode?: boolean
+  readOnlyPreview?: boolean
   exceptionScheduleCount?: number
   exceptionBlockKeys?: number[]
   onRemoveExceptionBlock?: (key: number) => void
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
 }) {
-  if (isTemplateAuthoringMode) {
+  if (isTemplateAuthoringMode && !readOnlyPreview) {
     return (
       <VolunteerInterviewScheduleTemplateUi
         exceptionScheduleCount={exceptionScheduleCount}
@@ -350,5 +352,10 @@ export function VolunteerInterviewAvailableScheduleParagraph({
     )
   }
 
-  return <InstructorAvailableScheduleParagraph summaryFieldLabel="면접 진행 가능일" />
+  return (
+    <InstructorAvailableScheduleParagraph
+      summaryFieldLabel="면접 진행 가능일"
+      readOnlyPreview={readOnlyPreview}
+    />
+  )
 }

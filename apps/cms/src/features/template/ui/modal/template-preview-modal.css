@@ -4,10 +4,10 @@
  */
 
 .template-preview-modal {
-  --template-preview-paragraph-column-max: 1254px;
-  /* 텍스트(1254) + 간격(10) + 닫기(140) — A4 표시 너비와 동일 */
-  --template-preview-content-max-width: 1404px;
-  --template-preview-notice-text-width: 1254px;
+  --template-preview-paragraph-column-max: 1400px;
+  /* 텍스트(1400) + 간격(10) + 닫기(140) — A4 표시 너비와 동일 */
+  --template-preview-content-max-width: 1550px;
+  --template-preview-notice-text-width: 1400px;
   /* 디자인 캔버스(1464px) → 화면 표시 너비(var(--template-preview-content-max-width))로 스케일 */
   --template-preview-a4-design-page-width: 1464px;
   --template-preview-a4-display-width: var(--template-preview-content-max-width, 1404px);
@@ -150,7 +150,7 @@
 
 .template-preview-modal__notice {
   width: 100%;
-  max-width: var(--template-preview-paragraph-column-max, 1254px);
+  max-width: var(--template-preview-paragraph-column-max, 1400px);
   display: flex;
   height: 44px;
   align-items: center;
@@ -232,13 +232,13 @@
   width: 100%;
 }
 
-/* 단락 카드 열: 최대 1254px, 배경(#F4F6F6)은 화면 전폭 유지 */
+/* 단락 카드 열: 최대 1400px, 배경(#F4F6F6)은 화면 전폭 유지 */
 .template-preview-modal__pages .form-editor-left {
   flex: 0 1 auto;
   align-self: center;
   min-width: 0;
   width: 100%;
-  max-width: var(--template-preview-paragraph-column-max, 1254px);
+  max-width: var(--template-preview-paragraph-column-max, 1400px);
   box-sizing: border-box;
 }
 
@@ -345,7 +345,7 @@
 
 .template-preview-modal__content .form-editor-left {
   width: 100%;
-  max-width: var(--template-preview-paragraph-column-max, 1254px);
+  max-width: var(--template-preview-paragraph-column-max, 1400px);
   margin: 0 auto;
 }
 

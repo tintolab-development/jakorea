@@ -13,7 +13,7 @@
 
 /**
  * 캘린더+우측 열 레이아웃에서 우측 높이가 캘린더와 동기화될 때 —
- * 부모(`.program-application-form-instructor__schedule-side`)가 flex column + 명시 높이.
+ * 부모(`.program-application-form-instructor__schedule-side`)가 grid + 명시 높이.
  */
 .program-application-schedule-template-hint.program-application-schedule-template-hint--fillScheduleSide {
   flex: 1 1 auto;

@@ -275,6 +275,27 @@ export function formatLectureAssignTagLabel(date: Dayjs, schoolName: string): st
   return `${y}년 ${m}월 ${d}일(${weekday}) ${shortSchool}`
 }
 
+/** 승인된 기관 신청의 희망 교육 일정만 슬롯으로 변환 (강사 신청 — 강의 진행 가능 일정) */
+export function getApprovedInstitutionLectureScheduleSlots(
+  programId: string
+): InstructorLectureAssignSlot[] {
+  const slotMap = new Map<string, InstructorLectureAssignSlot>()
+  for (const institution of getGeneralInstitutionApplicationsForProgram(programId)) {
+    if (institution.approvalStatus !== 'approved') continue
+    for (const session of institution.sessions ?? []) {
+      const slot = slotFromInstitutionSession(institution, session)
+      if (slot) mergeSlot(slotMap, slot)
+    }
+  }
+  return [...slotMap.values()].sort((a, b) => {
+    const byDate = a.dateKey.localeCompare(b.dateKey)
+    if (byDate !== 0) return byDate
+    const bySchool = a.schoolName.localeCompare(b.schoolName, 'ko')
+    if (bySchool !== 0) return bySchool
+    return a.sessionRound - b.sessionRound
+  })
+}
+
 export function parseInstructorLectureAssignSchedule(
   programId: string
 ): ParsedInstructorLectureAssignSchedule {

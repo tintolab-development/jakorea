@@ -4,7 +4,7 @@
  */
 
 .gemini-recruitment-add-fullpage-modal {
-  --template-preview-paragraph-column-max: 1404px;
+  --template-preview-paragraph-column-max: 1400px;
 }
 
 .gemini-recruitment-add-fullpage-modal .full-page-modal__actions {
@@ -31,7 +31,7 @@
 .gemini-recruitment-add-fullpage-modal .full-page-modal__contents {
   display: block;
   width: 100%;
-  max-width: var(--template-preview-paragraph-column-max, 1404px);
+  max-width: var(--template-preview-paragraph-column-max, 1400px);
 }
 
 .gemini-recruitment-add-fullpage-modal .full-page-modal__right-wrap {
@@ -40,7 +40,7 @@
 
 .gemini-recruitment-add-fullpage-modal .full-page-modal__left {
   width: 100%;
-  max-width: var(--template-preview-paragraph-column-max, 1404px);
+  max-width: var(--template-preview-paragraph-column-max, 1400px);
   margin: 0 auto;
 }
 

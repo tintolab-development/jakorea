@@ -67,6 +67,11 @@
   flex: 1 0 0;
 }
 
+.application-view__preview-panel--readonly {
+  pointer-events: none;
+  cursor: default;
+}
+
 .application-view__preview-panel {
   width: 100%;
   min-width: 0;
@@ -74,7 +79,7 @@
 
 .application-view__preview-panel .form-editor-left {
   width: 100%;
-  max-width: 1254px;
+  max-width: 1400px;
   margin: 0 auto;
   gap: 16px;
   box-sizing: border-box;

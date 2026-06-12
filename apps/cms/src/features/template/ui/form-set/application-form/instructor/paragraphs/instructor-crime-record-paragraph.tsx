@@ -10,20 +10,23 @@ const TEMPLATE_AUTO_USER_INFO_HINT = '로그인 사용자 정보가 자동으로
 /** 성범죄 경력 조회서 제출 — 가로 테이블 레이아웃(데모 고정값) */
 export function InstructorCrimeRecordParagraph({
   isTemplateAuthoringMode = false,
+  readOnlyPreview = false,
 }: {
   isTemplateAuthoringMode?: boolean
+  readOnlyPreview?: boolean
 }) {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const readOnly = isTemplateAuthoringMode || readOnlyPreview
 
   return (
     <DetailInfoForm title="" hideHeader mode="edit">
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="기관 ID 및 검증번호"
-          readOnlyDisplay={isTemplateAuthoringMode}
+          readOnlyDisplay={readOnly}
           edit={MOCK_AGENCY_LINE}
           view={
-            isTemplateAuthoringMode ? (
+            readOnly ? (
               <span className="form-editor-template-field-hint-text">
                 {TEMPLATE_AUTO_USER_INFO_HINT}
               </span>
@@ -34,7 +37,11 @@ export function InstructorCrimeRecordParagraph({
         />
         <DetailInfoForm.Field
           label="파일 첨부"
+          readOnlyDisplay={readOnlyPreview}
           edit={
+            readOnlyPreview ? (
+              '—'
+            ) : (
             <div className="program-application-form-instructor__file-cell">
               <ParagraphFileUpload
                 accept=".pdf"
@@ -57,6 +64,7 @@ export function InstructorCrimeRecordParagraph({
                 </span>
               ) : null}
             </div>
+            )
           }
           view={uploadedFile?.name ?? '—'}
         />

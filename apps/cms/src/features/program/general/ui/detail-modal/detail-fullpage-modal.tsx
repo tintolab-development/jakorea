@@ -42,7 +42,9 @@ import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/
 import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hooks/use-common-info-save'
 import {
   canGeneralProgramCommonInfoEdit,
+  canGeneralProgramRecruitmentInfoEdit,
   getGeneralProgramCommonInfoEditBlockedAlertMessage,
+  getGeneralProgramRecruitmentInfoEditBlockedAlertMessage,
 } from '@/features/program/general/lib/common-info-edit-policy'
 import { GeneralProgramDetailSidebar } from './detail-sidebar'
 import { GeneralProgramDetailCommonInfoView } from './info/common-info-view'
@@ -455,6 +457,11 @@ export function GeneralProgramDetailFullPageModal({
     [displayProgram]
   )
 
+  const canEditRecruitmentInfo = useMemo(
+    () => canGeneralProgramRecruitmentInfoEdit(displayProgram),
+    [displayProgram]
+  )
+
   const isEditModeInfo =
     open &&
     activeLnb === 'info' &&
@@ -502,6 +509,20 @@ export function GeneralProgramDetailFullPageModal({
     if (!open || !displayProgram || editTab !== 'info') return
     if (activeLnb !== 'info' || activeTab !== 'info') return
     if (canGeneralProgramCommonInfoEdit(displayProgram)) return
+    setEditMode(null)
+  }, [open, editTab, displayProgram, activeLnb, activeTab, setEditMode])
+
+  useEffect(() => {
+    if (!open || !displayProgram) return
+    if (
+      editTab !== 'institutions' &&
+      editTab !== 'instructors' &&
+      editTab !== 'volunteers'
+    ) {
+      return
+    }
+    if (activeLnb !== 'info' || activeTab !== 'recruitment') return
+    if (canGeneralProgramRecruitmentInfoEdit(displayProgram)) return
     setEditMode(null)
   }, [open, editTab, displayProgram, activeLnb, activeTab, setEditMode])
 
@@ -566,7 +587,8 @@ export function GeneralProgramDetailFullPageModal({
     activeTab === 'recruitment' &&
     recruitSubTab === 'institutions' &&
     editTab === 'institutions' &&
-    !!displayProgram
+    !!displayProgram &&
+    canEditRecruitmentInfo
 
   const institutionsForm = useProgramDetailEditForm({
     program: displayProgram,
@@ -598,7 +620,8 @@ export function GeneralProgramDetailFullPageModal({
     activeTab === 'recruitment' &&
     recruitSubTab === 'instructors' &&
     editTab === 'instructors' &&
-    !!displayProgram
+    !!displayProgram &&
+    canEditRecruitmentInfo
 
   const instructorsForm = useProgramDetailEditForm({
     program: displayProgram,
@@ -629,7 +652,8 @@ export function GeneralProgramDetailFullPageModal({
     activeTab === 'recruitment' &&
     recruitSubTab === 'volunteers' &&
     editTab === 'volunteers' &&
-    !!displayProgram
+    !!displayProgram &&
+    canEditRecruitmentInfo
 
   const volunteersForm = useProgramDetailEditForm({
     program: displayProgram,
@@ -656,6 +680,13 @@ export function GeneralProgramDetailFullPageModal({
 
   const handleRecruitmentEdit = useCallback(() => {
     if (activeLnb !== 'info' || activeTab !== 'recruitment' || !displayProgram) return
+    if (!canGeneralProgramRecruitmentInfoEdit(displayProgram)) {
+      showAlert({
+        title: '안내',
+        content: getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(displayProgram),
+      })
+      return
+    }
     if (recruitSubTab === 'institutions') {
       institutionsResetToProgram()
       setEditMode('institutions')
@@ -679,6 +710,7 @@ export function GeneralProgramDetailFullPageModal({
     instructorsResetToProgram,
     volunteersResetToProgram,
     setEditMode,
+    showAlert,
   ])
 
   const handleRecruitmentSave = useCallback(() => {

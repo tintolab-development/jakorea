@@ -1,4 +1,13 @@
 import {
+  INSTITUTION_GUIDANCE_FIELDS,
+  INSTITUTION_GUIDANCE_ANSWER_PLACEHOLDER,
+  INSTITUTION_GUIDANCE_SECTION_DESCRIPTION,
+} from '@/features/template/lib/institution-guidance-field-definitions'
+import {
+  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION,
+  INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION,
+} from '@/features/template/lib/institution-sex-offense-consent-field-definitions'
+import {
   HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
   normalizeHorizontalTableParagraph,
   normalizeWritingFormDraft,
@@ -14,6 +23,10 @@ export const PROGRAM_APPLICATION_FORM_INSTITUTION_IDS = {
   thirdPartyConsent: 'program-application-institution-seed-third-party',
   basicInfo: 'program-application-institution-seed-basic-info',
   guidance: 'program-application-institution-seed-guidance',
+  sexOffenseConsentSubmissionRequest:
+    'program-application-institution-seed-sex-offense-consent-submission',
+  sexOffenseConsentInquiryMethod:
+    'program-application-institution-seed-sex-offense-consent-inquiry',
   scheduleChoice: 'program-application-institution-seed-schedule',
 } as const
 
@@ -110,6 +123,44 @@ function createInstitutionThirdPartyHorizontalTable(): HorizontalTableParagraph 
   })
 }
 
+function createInstitutionGuidanceHorizontalTable(): HorizontalTableParagraph {
+  const colCount = 2
+  const columnFields = [
+    { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
+    {
+      kind: 'subjective' as const,
+      placeholder: INSTITUTION_GUIDANCE_ANSWER_PLACEHOLDER,
+    },
+  ]
+  const fieldDataRows = INSTITUTION_GUIDANCE_FIELDS.map(field => [
+    {
+      kind: 'text' as const,
+      value: `${field.title}\n${field.description}`,
+    },
+    { kind: 'subjective' as const, value: '' },
+  ])
+
+  return normalizeHorizontalTableParagraph({
+    id: PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance,
+    kind: 'single_item',
+    variant: 'horizontal_table',
+    requiredMark: true,
+    paragraphTitle: '안내 사항',
+    paragraphDescription: INSTITUTION_GUIDANCE_SECTION_DESCRIPTION,
+    participatesInTitleNumbering: true,
+    tableFlavor: 'field',
+    columnHeaders: ['항목', '내용'],
+    dataRows: fieldDataRows.map(() => Array.from({ length: colCount }, () => '')),
+    columnFields,
+    fieldDataRows,
+    bottomText: '',
+    showBottomText: false,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
+    answerRequired: true,
+  })
+}
+
 /** 프로그램 등록 폼 시드와 동일 — 본문은 `renderProgramApplicationFormInstitutionParagraphBody`로 대체 */
 function createInstitutionSeedHorizontalTable(
   id: string,
@@ -166,10 +217,16 @@ export function createProgramApplicationFormInstitutionDraft(): WritingFormDraft
       '기본 정보',
       '설명 입력'
     ),
+    createInstitutionGuidanceHorizontalTable(),
     createInstitutionSeedHorizontalTable(
-      PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance,
-      '안내 사항',
-      '강사님들에게 제공 또는 요청할 사전 정보를 작성해 주세요.'
+      PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentSubmissionRequest,
+      INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION.title,
+      INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION.description
+    ),
+    createInstitutionSeedHorizontalTable(
+      PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod,
+      INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.title,
+      INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description
     ),
     createInstitutionScheduleMultipleChoice(),
   ]

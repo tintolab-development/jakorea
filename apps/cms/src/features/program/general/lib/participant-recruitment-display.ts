@@ -25,6 +25,7 @@ import {
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 
 export type GeneralProgramParticipantRecruitmentDisplay = {
@@ -167,10 +168,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     showMaxScheduleCountField,
     showMaxSessionsPerDayField,
     studentListLabel,
-    maxClassLabel: countLabel(
-      info?.maxClassCount ?? program.rounds?.[0]?.classCount,
-      '개'
-    ),
+    maxClassLabel: countLabel(resolveProgramParticipantMaxClassCount(program), '개'),
     maxInstructorsLabel: countLabel(info?.maxAssignableInstructors, '명'),
     maxSessionsPerDayLabel: countLabel(info?.maxSessionsPerDay, '차시'),
     maxScheduleCountLabel: countLabel(info?.maxScheduleCount, '개'),

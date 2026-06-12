@@ -1,11 +1,8 @@
 import {
   HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
   normalizeHorizontalTableParagraph,
-  normalizeVerticalTableParagraph,
   normalizeWritingFormDraft,
   type HorizontalTableParagraph,
-  type VerticalTableParagraph,
-  type VerticalTableRow,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -15,7 +12,6 @@ export const PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS = {
   personalInfoCollection: 'program-instructor-application-seed-personal-info',
   thirdPartyConsent: 'program-instructor-application-seed-third-party',
   crimeRecord: 'program-instructor-application-seed-crime-record',
-  unavailableDates: 'program-instructor-application-seed-unavailable-dates',
   availableSchedule: 'program-instructor-application-seed-available-schedule',
 } as const
 
@@ -135,33 +131,6 @@ function createInstructorCrimeRecordPlaceholderTable(): HorizontalTableParagraph
   })
 }
 
-function createUnavailableDatesVerticalTable(): VerticalTableParagraph {
-  const row = (label: string): VerticalTableRow => ({
-    stageCount: 1,
-    headers: [label],
-    cells: [''],
-    stageKinds: ['date_time'],
-    dateTimeSingleStageMode: 'date',
-    placeholderHints: ['일정 선택'],
-  })
-  return normalizeVerticalTableParagraph({
-    id: PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.unavailableDates,
-    kind: 'single_item',
-    variant: 'vertical_table',
-    verticalTableFlavor: 'date_time',
-    requiredMark: true,
-    paragraphTitle: '강의 진행 불가 일정',
-    paragraphDescription: '강의 진행이 불가한 일정을 모두 선택해 주세요.',
-    participatesInTitleNumbering: true,
-    rows: [row('강의 불가 일정 01'), row('강의 불가 일정 02')],
-    bottomText: '',
-    showBottomText: false,
-    showBottomConsent: false,
-    bottomConsent: 'agree',
-    answerRequired: true,
-  })
-}
-
 /** 본문은 `InstructorAvailableScheduleParagraph`로 대체 */
 function createAvailableSchedulePlaceholderTable(): HorizontalTableParagraph {
   return normalizeHorizontalTableParagraph({
@@ -190,7 +159,6 @@ export function createProgramApplicationFormInstructorDraft(): WritingFormDraft 
     createInstructorPersonalInfoHorizontalTable(),
     createInstructorThirdPartyHorizontalTable(),
     createInstructorCrimeRecordPlaceholderTable(),
-    createUnavailableDatesVerticalTable(),
     createAvailableSchedulePlaceholderTable(),
   ]
   return normalizeWritingFormDraft({

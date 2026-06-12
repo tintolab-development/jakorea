@@ -37,6 +37,8 @@ export function ProgramApplicationFormInstitutionEditorLeftColumn({
         structureLockedParagraphIds: vm.structureLockedParagraphIds,
         structureLockedAuthoringChoicePreview: true,
         programApplicationFormInstitution: true,
+        programLinkedInstitutionApplicationForm: vm.programLinkedInstitutionApplicationForm,
+        hiddenParagraphIds: vm.institutionApplicationHiddenParagraphIds,
       }}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />

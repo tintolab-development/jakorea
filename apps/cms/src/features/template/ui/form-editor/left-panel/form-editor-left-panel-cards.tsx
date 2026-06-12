@@ -16,7 +16,6 @@ import { renderFormEditorParagraphBody } from '@/features/template/ui/form-edito
 import {
   isTitleWithPeriodParagraph,
   paragraphEditableHeading,
-  withProgramApplicationFormInstructorTitleTrailing,
   withProgramApplicationFormVolunteerTitleTrailing,
   withProgramRegistrationCurriculumTitleTrailing,
   withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing,
@@ -105,14 +104,10 @@ export function PinnedFormCard({
     !showEditorChrome
   )
   const editableHeading = withProgramApplicationFormVolunteerTitleTrailing(
-    withProgramApplicationFormInstructorTitleTrailing(
-      withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
-        withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
-          withProgramRegistrationCurriculumTitleTrailing(
-            editableHeadingBase as ParagraphCardEditableHeading,
-            paragraph,
-            paragraphBodyOptions
-          ),
+    withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+      withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+        withProgramRegistrationCurriculumTitleTrailing(
+          editableHeadingBase as ParagraphCardEditableHeading,
           paragraph,
           paragraphBodyOptions
         ),
@@ -257,14 +252,10 @@ export function SortableMiddleFormCard({
     !showEditorChrome
   )
   const editableHeading = withProgramApplicationFormVolunteerTitleTrailing(
-    withProgramApplicationFormInstructorTitleTrailing(
-      withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
-        withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
-          withProgramRegistrationCurriculumTitleTrailing(
-            editableHeadingBase as ParagraphCardEditableHeading,
-            paragraph,
-            paragraphBodyOptions
-          ),
+    withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+      withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+        withProgramRegistrationCurriculumTitleTrailing(
+          editableHeadingBase as ParagraphCardEditableHeading,
           paragraph,
           paragraphBodyOptions
         ),

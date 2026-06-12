@@ -36,3 +36,23 @@ export function getGeneralProgramCommonInfoEditBlockedAlertMessage(
   }
   return '현재 상태에서는 공통 정보를 수정할 수 없습니다.'
 }
+
+/** 모집 정보 — 공통 정보와 동일하게 프로그램 진행 예정 단계에서만 수정 허용 */
+export function canGeneralProgramRecruitmentInfoEdit(
+  program: Program | null | undefined
+): boolean {
+  return canGeneralProgramCommonInfoEdit(program)
+}
+
+export function getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(
+  program: Program
+): string {
+  const phase = resolveGeneralProgramCommonInfoEditPhase(program)
+  if (phase === 'inProgress') {
+    return '프로그램 진행 중에는 모집 정보를 수정할 수 없습니다.'
+  }
+  if (phase === 'completed') {
+    return '프로그램 진행이 완료된 경우 모집 정보를 수정할 수 없습니다.'
+  }
+  return '현재 상태에서는 모집 정보를 수정할 수 없습니다.'
+}

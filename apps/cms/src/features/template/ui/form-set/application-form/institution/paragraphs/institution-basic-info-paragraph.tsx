@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { buildInstitutionClassCountOptions } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -38,13 +38,26 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph() {
     EDUCATION_FORM_OPTIONS[0]?.value ?? 'online'
   )
 
+  useEffect(() => {
+    if (classCount === '') return
+    const selected = parseInt(classCount, 10)
+    const max = bridge.maxClassCount
+    if (max != null && max > 0 && (Number.isNaN(selected) || selected > max)) {
+      setClassCount('')
+    }
+  }, [bridge.maxClassCount, classCount])
+
   return (
     <DetailInfoForm title="기본 정보" hideHeader mode="edit">
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="신청 기관명"
           readOnlyDisplay
-          view={<span className="form-editor-template-field-hint-text">{TEMPLATE_AUTO_USER_INFO_HINT}</span>}
+          view={
+            <span className="form-editor-template-field-hint-text">
+              {TEMPLATE_AUTO_USER_INFO_HINT}
+            </span>
+          }
         />
         <DetailInfoForm.Field
           label="신청 학년"
@@ -67,12 +80,20 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph() {
         <DetailInfoForm.Field
           label="기관 소재지"
           readOnlyDisplay
-          view={<span className="form-editor-template-field-hint-text">{TEMPLATE_AUTO_USER_INFO_HINT}</span>}
+          view={
+            <span className="form-editor-template-field-hint-text">
+              {TEMPLATE_AUTO_USER_INFO_HINT}
+            </span>
+          }
         />
         <DetailInfoForm.Field
           label="상세 주소"
           edit={
-            <CmsInput inputSize="medium" placeholder={DETAIL_ADDRESS_PLACEHOLDER} width="100%" />
+            <CmsInput
+              inputSize="medium"
+              placeholder={DETAIL_ADDRESS_PLACEHOLDER}
+              width="100%"
+            />
           }
           view="-"
         />
@@ -86,7 +107,8 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph() {
               <CmsSelect
                 inputSize="medium"
                 withAllOption={false}
-                placeholder="신청 학급"
+                disabled={classCountOptions.length === 0}
+                placeholder="신청 학급 수"
                 width={120}
                 value={classCount === '' ? undefined : classCount}
                 onChange={v => setClassCount(String(v ?? ''))}
@@ -94,7 +116,12 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph() {
               />
               <span>개 학급</span>
               <DetailInfoForm.InputsSeparator />
-              <CmsInput inputSize="medium" type="number" placeholder="총 학생 수" width={120} />
+              <CmsInput
+                inputSize="medium"
+                type="number"
+                placeholder="총 학생 수"
+                width={120}
+              />
               <span>명</span>
             </div>
           }
@@ -125,7 +152,11 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph() {
           label="담당 교사 정보"
           fullRow
           readOnlyDisplay
-          view={<span className="form-editor-template-field-hint-text">{TEMPLATE_AUTO_USER_INFO_HINT}</span>}
+          view={
+            <span className="form-editor-template-field-hint-text">
+              {TEMPLATE_AUTO_USER_INFO_HINT}
+            </span>
+          }
         />
       </DetailInfoForm.Row>
 
@@ -136,7 +167,8 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph() {
           edit={
             <CmsTextArea
               inputSize="medium"
-              rows={4}
+              rows={1}
+              expandableFromSingleRow
               placeholder="신청 사유를 입력해 주세요."
               width="100%"
             />
@@ -152,7 +184,8 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph() {
           edit={
             <CmsTextArea
               inputSize="medium"
-              rows={4}
+              rows={1}
+              expandableFromSingleRow
               placeholder="기타 요청사항을 입력해 주세요."
               width="100%"
             />
