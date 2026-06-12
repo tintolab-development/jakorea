@@ -7,9 +7,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Form } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { useMfa } from '@/features/auth/hooks/use-mfa'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
-import { getTotpProvisioning } from '@/entities/user/api/mfa-service'
+import { getTotpProvisioning, verifyTotp } from '@/entities/user/api/mfa-service'
 import { OTP_LENGTH } from '@/shared/constants/mfa-policy'
 import { unknownErrorText } from '@/shared/utils/error-handler'
 import type { TotpProvisioning } from '@/types/mfa'
@@ -22,7 +21,7 @@ interface UseMfaVerificationResult {
   form: FormInstance
   otpCode: string
   setOtpCode: (value: string) => void
-  mfaState: ReturnType<typeof useMfa>['mfaState']
+  mfaState: ReturnType<typeof useAuthStore.getState>['mfaState']
   provisioning: TotpProvisioning | null
   provisioningLoading: boolean
   provisioningError: string | null
@@ -40,8 +39,7 @@ interface UseMfaVerificationResult {
 export function useMfaVerification({
   open,
 }: UseMfaVerificationOptions): UseMfaVerificationResult {
-  const { user, setMfaVerified } = useAuthStore()
-  const { mfaState, initializeMfa, completeMfa } = useMfa()
+  const { user, mfaState, setMfaVerified, completeAdminAuth } = useAuthStore()
   const { verifying, failedAttempts, isLocked, lockUntil, verifyTotpCode, reset: resetVerification } =
     useOtpVerification()
   const [form] = Form.useForm()
@@ -49,10 +47,13 @@ export function useMfaVerification({
   const [provisioning, setProvisioning] = useState<TotpProvisioning | null>(null)
   const [provisioningLoading, setProvisioningLoading] = useState(false)
   const [provisioningError, setProvisioningError] = useState<string | null>(null)
+  const [remoteVerifying, setRemoteVerifying] = useState(false)
   const verifyInFlightRef = useRef(false)
 
+  const isRemoteMfa = Boolean(mfaState?.challengeUuid)
+
   const refreshProvisioning = useCallback(async () => {
-    if (!user?.email) return
+    if (!user?.email || isRemoteMfa) return
     setProvisioningLoading(true)
     setProvisioningError(null)
     try {
@@ -65,23 +66,17 @@ export function useMfaVerification({
     } finally {
       setProvisioningLoading(false)
     }
-  }, [user?.email])
+  }, [user?.email, isRemoteMfa])
 
   useEffect(() => {
-    if (open && user && user.role === 'ADMIN' && !mfaState) {
-      initializeMfa(user.id, user.email)
-    }
-  }, [open, user, mfaState, initializeMfa])
-
-  useEffect(() => {
-    if (open && user?.email && mfaState && !mfaState.isVerified) {
+    if (open && user?.email && mfaState && !mfaState.isVerified && !isRemoteMfa) {
       void refreshProvisioning()
     }
     if (!open) {
       setProvisioning(null)
       setProvisioningError(null)
     }
-  }, [open, user?.email, mfaState?.isVerified, refreshProvisioning])
+  }, [open, user?.email, mfaState, mfaState?.isVerified, isRemoteMfa, refreshProvisioning])
 
   useEffect(() => {
     if (!open) {
@@ -137,13 +132,44 @@ export function useMfaVerification({
         }
 
         try {
+          if (isRemoteMfa && mfaState?.challengeUuid) {
+            setRemoteVerifying(true)
+            try {
+              const response = await verifyTotp(user.email, codeToVerify, {
+                challengeUuid: mfaState.challengeUuid,
+              })
+
+              if (response.verified && response.tokens) {
+                completeAdminAuth(response.tokens)
+                try {
+                  form.resetFields()
+                } catch {
+                  console.debug('Form not connected, skipping resetFields')
+                }
+                setOtpCode('')
+                return
+              }
+
+              const errMsg = response.detail ?? '인증번호가 올바르지 않습니다.'
+              try {
+                form.setFields([{ name: 'otpCode', errors: [errMsg] }])
+                form.setFieldsValue({ otpCode: '' })
+              } catch {
+                console.debug('Form not connected, skipping setFields (invalid otp)')
+              }
+              setOtpCode('')
+            } finally {
+              setRemoteVerifying(false)
+            }
+            return
+          }
+
           const verified = await verifyTotpCode({
             email: user.email,
             otpCode: codeToVerify,
           })
 
           if (verified) {
-            completeMfa()
             setMfaVerified()
             try {
               form.resetFields()
@@ -174,7 +200,7 @@ export function useMfaVerification({
         verifyInFlightRef.current = false
       }
     },
-    [user, verifyTotpCode, completeMfa, setMfaVerified, form]
+    [user, isRemoteMfa, mfaState?.challengeUuid, verifyTotpCode, completeAdminAuth, setMfaVerified, form]
   )
 
   const onOtpCodeChange = useCallback(
@@ -227,7 +253,7 @@ export function useMfaVerification({
     failedAttempts,
     isLocked,
     lockUntil,
-    verifying,
+    verifying: verifying || remoteVerifying,
     handleVerify,
     onOtpCodeChange,
     refreshProvisioning,

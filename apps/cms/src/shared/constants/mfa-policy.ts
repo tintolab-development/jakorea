@@ -25,3 +25,6 @@ export const OTP_POLICY = {
  * OTP 길이
  */
 export const OTP_LENGTH = 6
+
+/** 백엔드 `LOCAL_TEST_CODE` MFA 방식용 고정 테스트 코드 (Swagger 예시) */
+export const ADMIN_MFA_LOCAL_TEST_CODE = '000000'

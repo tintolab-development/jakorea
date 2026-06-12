@@ -1,23 +1,17 @@
 /**
- * 실서버 관리자 로그인 — 경로는 `adminAuthPaths`, 클라이언트는 공통 axios 인스턴스만 사용.
- * mock 로그인(`entities/user/api/auth-service`)과 분리되어 있으며, 스토어·훅에서 실 API 분기 시 이 함수만 호출하면 됨.
+ * 실서버 관리자 로그인 — POST /api/admin/auth/login → MFA challenge
  */
 
 import { axiosClient } from '@/shared/api'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import type {
-  AdminLoginApiResponse,
-  AdminLoginMeta,
   AdminLoginRequestBody,
-  AdminLoginSuccessData,
+  AdminMfaChallengeResponse,
 } from '@/features/auth/model/admin-login-api.types'
 
 export type {
-  AdminLoginApiResponse,
   AdminLoginRequestBody,
-  AdminLoginSuccessData,
-  AdminLoginErrorBody,
-  AdminLoginMeta,
+  AdminMfaChallengeResponse,
 } from '@/features/auth/model/admin-login-api.types'
 
 export class AdminLoginApiError extends Error {
@@ -30,28 +24,43 @@ export class AdminLoginApiError extends Error {
   }
 }
 
-export interface AdminLoginFetcherResult {
-  data: AdminLoginSuccessData
-  meta?: AdminLoginMeta
+function parseLoginError(payload: unknown): AdminLoginApiError {
+  if (payload && typeof payload === 'object') {
+    const o = payload as Record<string, unknown>
+    const wrapped = o.error as { code?: string; message?: string } | undefined
+    const code = wrapped?.code ?? (typeof o.code === 'string' ? o.code : 'UNKNOWN')
+    const message =
+      wrapped?.message ??
+      (typeof o.message === 'string' ? o.message : undefined) ??
+      '로그인에 실패했습니다.'
+    return new AdminLoginApiError(String(code), message)
+  }
+  return new AdminLoginApiError('UNKNOWN', '로그인에 실패했습니다.')
 }
 
 /**
- * 로그인 성공 시 `data`·`meta` 반환. HTTP 200이어도 `success: false`면 예외.
- * 액세스 토큰이 바디에 없고 쿠키만 내려오는 경우 axios 인스턴스의 `withCredentials`로 처리.
+ * 이메일·비밀번호 검증 성공 시 MFA challenge 반환 (토큰은 mfa/verify 이후).
  */
 export async function fetchAdminLogin(
   body: AdminLoginRequestBody
-): Promise<AdminLoginFetcherResult> {
-  const { data: payload } = await axiosClient.post<AdminLoginApiResponse>(
-    adminAuthPaths.login(),
-    body
-  )
+): Promise<AdminMfaChallengeResponse> {
+  try {
+    const { data: payload } = await axiosClient.post<AdminMfaChallengeResponse>(
+      adminAuthPaths.login(),
+      body
+    )
 
-  if (payload.success && payload.data) {
-    return { data: payload.data, meta: payload.meta }
+    if (payload?.challengeUuid) {
+      return payload
+    }
+
+    throw parseLoginError(payload)
+  } catch (err) {
+    if (err instanceof AdminLoginApiError) throw err
+    if (err && typeof err === 'object' && 'response' in err) {
+      const axiosErr = err as { response?: { data?: unknown } }
+      throw parseLoginError(axiosErr.response?.data)
+    }
+    throw new AdminLoginApiError('NETWORK', '로그인 요청에 실패했습니다.')
   }
-
-  const code = payload.error?.code ?? 'UNKNOWN'
-  const message = payload.error?.message ?? '로그인에 실패했습니다.'
-  throw new AdminLoginApiError(code, message)
 }

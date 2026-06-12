@@ -14,6 +14,8 @@ import { useEffect, useState } from 'react'
 import type { LoginRequest } from '@/types/user'
 import type { LoginMode } from '@/entities/user/api/auth-service'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import { ADMIN_MFA_LOCAL_TEST_CODE } from '@/shared/constants/mfa-policy'
 import { MfaVerificationModal } from '@/features/auth/ui/mfa-verification-modal'
 import { SocialLoginForm } from '@/features/auth/ui/social-login-form'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
@@ -50,6 +52,7 @@ export function LoginPage() {
   const [mfaModalOpen, setMfaModalOpen] = useState(false)
   const [loginMode, setLoginMode] = useState<LoginMode | null>(null)
   const apiLoginAvailable = isRemoteApiConfigured()
+  const adminAuthApiEnabled = isRealApiModuleEnabled('adminAuth')
 
   // Phase 0.5.5: 로그인 실패 추적 및 잠금 관리
   const {
@@ -255,6 +258,11 @@ export function LoginPage() {
               {!apiLoginAvailable && (
                 <Text type="secondary" className="login-api-hint">
                   API 로그인은 `VITE_API_SERVER` 또는 `VITE_API_BASE_URL` 설정 후 사용할 수 있습니다.
+                </Text>
+              )}
+              {apiLoginAvailable && adminAuthApiEnabled && (
+                <Text type="secondary" className="login-api-hint">
+                  API 로그인 MFA(LOCAL_TEST_CODE): 인증번호 <Text code>{ADMIN_MFA_LOCAL_TEST_CODE}</Text>
                 </Text>
               )}
             </Form.Item>

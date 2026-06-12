@@ -6,6 +6,7 @@
 import { Modal, Form, Alert, Typography, Spin } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useMfaVerification } from '@/features/auth/hooks/use-mfa-verification'
+import { ADMIN_MFA_LOCAL_TEST_CODE } from '@/shared/constants/mfa-policy'
 import { MfaModalHeader } from './mfa-modal-header'
 import { MfaOtpInput } from './mfa-otp-input'
 import { MfaOtpStatus } from './mfa-otp-status'
@@ -60,11 +61,34 @@ export function MfaVerificationModal({ open }: MfaVerificationModalProps) {
         <Alert type="error" description={lockMessage} style={{ marginBottom: 24 }} showIcon />
       )}
 
+      {mfaState?.challengeUuid && mfaState.mfaMethod === 'LOCAL_TEST_CODE' && (
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message="로컬 테스트 MFA"
+          description={
+            <>
+              API 로그인 후 아래 고정 코드를 입력하세요:{' '}
+              <Text code copyable={{ text: ADMIN_MFA_LOCAL_TEST_CODE }}>
+                {ADMIN_MFA_LOCAL_TEST_CODE}
+              </Text>
+            </>
+          }
+        />
+      )}
+
       {provisioningError && (
         <Alert type="warning" description={provisioningError} style={{ marginBottom: 16 }} showIcon />
       )}
 
-      <div style={{ textAlign: 'center', marginBottom: 20, minHeight: 220 }}>
+      <div
+        style={{
+          textAlign: 'center',
+          marginBottom: 20,
+          minHeight: mfaState?.challengeUuid ? 0 : 220,
+        }}
+      >
         {provisioningLoading ? (
           <Spin tip="QR 코드 생성 중…" />
         ) : provisioning ? (
@@ -105,7 +129,9 @@ export function MfaVerificationModal({ open }: MfaVerificationModalProps) {
 
       <div style={{ marginTop: 24, textAlign: 'center' }}>
         <Text type="secondary" style={{ fontSize: '12px' }}>
-          개발용: 시크릿은 Mock 데이터에 고정되어 있습니다. 운영 환경에서는 서버에서만 검증해야 합니다.
+          {mfaState?.challengeUuid
+            ? '서버에서 발급한 인증 코드를 입력하세요.'
+            : '개발용: 시크릿은 Mock 데이터에 고정되어 있습니다. 운영 환경에서는 서버에서만 검증해야 합니다.'}
         </Text>
       </div>
     </Modal>
