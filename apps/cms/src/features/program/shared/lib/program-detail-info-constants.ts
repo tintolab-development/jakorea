@@ -89,7 +89,38 @@ export const INSTRUCTOR_TARGET_OPTIONS = [
   { value: '성인', label: '성인' },
   { value: '대학생', label: '대학생' },
   { value: '기타', label: '기타' },
-]
+] as const
+
+const INSTRUCTOR_TARGET_VALUES = new Set<string>(
+  INSTRUCTOR_TARGET_OPTIONS.map(option => option.value)
+)
+
+export function resolveProgramInstructorTargets(program: {
+  instructorTargets?: string[]
+  instructorTarget?: string
+}): string[] {
+  if (program.instructorTargets?.length) return program.instructorTargets
+  const raw = program.instructorTarget?.trim()
+  if (!raw) return []
+  const parts = raw
+    .split(/[,，·]/)
+    .map(part => part.trim())
+    .filter(Boolean)
+  const valid = parts.filter(part => INSTRUCTOR_TARGET_VALUES.has(part))
+  if (valid.length > 0) return valid
+  return [raw]
+}
+
+export function formatInstructorTargetsLabel(targets: string[]): string {
+  if (targets.length === 0) return '-'
+  return targets.join(', ')
+}
+
+export function parseInstructorTargetsSelectValue(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const targets = value.map(String).filter(item => INSTRUCTOR_TARGET_VALUES.has(item))
+  return targets.length > 0 ? targets : undefined
+}
 
 /** 2차 면접 심사 방법 옵션 */
 export const INTERVIEW_METHOD_OPTIONS = [
@@ -161,7 +192,38 @@ export const VOLUNTEER_TARGET_OPTIONS = [
   { value: '대학(원)생', label: '대학(원)생' },
   { value: '일반인', label: '일반인' },
   { value: '기타', label: '기타' },
-]
+] as const
+
+const VOLUNTEER_TARGET_VALUES = new Set<string>(
+  VOLUNTEER_TARGET_OPTIONS.map(option => option.value)
+)
+
+export function resolveProgramVolunteerTargets(program: {
+  volunteerTargets?: string[]
+  volunteerTarget?: string
+}): string[] {
+  if (program.volunteerTargets?.length) return program.volunteerTargets
+  const raw = program.volunteerTarget?.trim()
+  if (!raw) return []
+  const parts = raw
+    .split(/[,，·]/)
+    .map(part => part.trim())
+    .filter(Boolean)
+  const valid = parts.filter(part => VOLUNTEER_TARGET_VALUES.has(part))
+  if (valid.length > 0) return valid
+  return [raw]
+}
+
+export function formatVolunteerTargetsLabel(targets: string[]): string {
+  if (targets.length === 0) return '-'
+  return targets.join(', ')
+}
+
+export function parseVolunteerTargetsSelectValue(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const targets = value.map(String).filter(item => VOLUNTEER_TARGET_VALUES.has(item))
+  return targets.length > 0 ? targets : undefined
+}
 
 export const TARGET_LEVEL_LABEL: Record<string, string> = {
   elementary: '초등학교',

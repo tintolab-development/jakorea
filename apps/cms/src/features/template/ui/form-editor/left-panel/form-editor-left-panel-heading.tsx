@@ -393,6 +393,7 @@ export function withProgramApplicationFormVolunteerTitleTrailing(
           variant="secondary"
           size="medium"
           width={160}
+          disabled={opts?.exceptionScheduleAddDisabled}
           icon={<PlusOutlined aria-hidden />}
           onClick={e => {
             e.stopPropagation()

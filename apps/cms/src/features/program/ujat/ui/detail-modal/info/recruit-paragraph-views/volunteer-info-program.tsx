@@ -7,11 +7,14 @@ import {
   formatDateRange,
   getVolunteerRecruitmentStatus,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { ProgramDetailContactReadRow } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import { DateRangeEdit } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
+import { recruitmentTargetLabelsToOptionValues } from '../recruit-lib/recruitment-target-values'
 import { UjatRecruitSectionDescriptionHeader } from '../ujat-recruit-section-description-header'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import type { UjatVolunteerRecruitHalf } from '../ujat-recruit-paragraph-props'
@@ -131,18 +134,15 @@ export function UjatRecruitVolunteerInfoProgramView({
             view={volunteerTarget}
             edit={
               isEdit && form ? (
-                <Controller
-                  name="volunteerTarget"
-                  control={form.control}
-                  render={({ field }) => (
-                    <CmsTextArea
-                      {...field}
-                      value={field.value ?? ''}
-                      placeholder="모집 대상"
-                      inputSize="medium"
-                      rows={1}
-                    />
-                  )}
+                <CmsSelect
+                  mode="multiple"
+                  withAllOption={false}
+                  style={{ width: 240 }}
+                  value={recruitmentTargetLabelsToOptionValues(program.volunteerTarget)}
+                  onChange={() => undefined}
+                  disabled
+                  placeholder="모집 대상"
+                  options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
                 />
               ) : undefined
             }

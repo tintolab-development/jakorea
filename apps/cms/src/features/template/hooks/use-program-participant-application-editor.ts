@@ -579,6 +579,13 @@ export function useProgramParticipantApplicationEditor(
   const onAddVolunteerExceptionSchedule = useCallback(() => {
     setVolunteerExceptionScheduleCount(prev => prev + 1)
   }, [])
+  const [volunteerInterviewExcludeNone, setVolunteerInterviewExcludeNone] = useState(false)
+  const onVolunteerInterviewExclusionChange = useCallback(
+    (state: { excludeNone: boolean }) => {
+      setVolunteerInterviewExcludeNone(state.excludeNone)
+    },
+    []
+  )
 
   const programApplicationFormVolunteerOptions = useMemo(
     () =>
@@ -588,14 +595,24 @@ export function useProgramParticipantApplicationEditor(
         ? {
             enabled: true as const,
             exceptionScheduleCount: volunteerExceptionScheduleCount,
+            exceptionScheduleAddDisabled: volunteerInterviewExcludeNone,
             onAddExceptionSchedule: onAddVolunteerExceptionSchedule,
+            onCommonExclusionChange: onVolunteerInterviewExclusionChange,
           }
         : {
             enabled: false as const,
             exceptionScheduleCount: 0,
+            exceptionScheduleAddDisabled: false,
             onAddExceptionSchedule: () => {},
+            onCommonExclusionChange: undefined,
           },
-    [variant, volunteerExceptionScheduleCount, onAddVolunteerExceptionSchedule]
+    [
+      variant,
+      volunteerExceptionScheduleCount,
+      volunteerInterviewExcludeNone,
+      onAddVolunteerExceptionSchedule,
+      onVolunteerInterviewExclusionChange,
+    ]
   )
 
   const institutionApplicationBridge = useInstitutionApplicationProgramBridge()

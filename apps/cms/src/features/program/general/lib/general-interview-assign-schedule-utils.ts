@@ -44,6 +44,7 @@ function buildParsedInterviewSchedule(
 ): ParsedInterviewSchedule {
   const commonSlots = parseTimeSlotsString(source.availableTimeSlots)
   const unavailableKeys = parseUnavailableDateLabels(source.specificUnavailableDates)
+  const blockSaturday = source.recurringUnavailable.includes('토요일')
   const blockSunday = source.recurringUnavailable.includes('일요일')
   const includeHolidays = source.recurringUnavailable.includes('공휴일')
   const holidayDateKeys = includeHolidays ? getMockHolidayDateKeys() : new Set<string>()
@@ -54,10 +55,11 @@ function buildParsedInterviewSchedule(
   let cursor = rangeStart.startOf('day')
   while (!cursor.isAfter(rangeEnd, 'day')) {
     const dateKey = cursor.format('YYYY-MM-DD')
+    const isSaturday = blockSaturday && cursor.day() === 6
     const isSunday = blockSunday && cursor.day() === 0
     const isUnavailable = unavailableKeys.has(dateKey)
 
-    if (!isSunday && !isUnavailable && commonSlots.length > 0) {
+    if (!isSaturday && !isSunday && !isUnavailable && commonSlots.length > 0) {
       const slots: InterviewAssignSlot[] = commonSlots.map(timeRange => ({
         key: `${dateKey}|${timeRange}`,
         timeRange,
@@ -76,6 +78,7 @@ function buildParsedInterviewSchedule(
     }
 
     const dateKey = date.format('YYYY-MM-DD')
+    if (blockSaturday && date.day() === 6) return true
     if (blockSunday && date.day() === 0) return true
     if (unavailableKeys.has(dateKey)) return true
 

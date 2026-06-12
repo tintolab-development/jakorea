@@ -19,7 +19,11 @@
  *    백엔드 저장이 필요하면 패치 함수와 `Program` 모델을 확장할 것 (그 전까지는 UI 상태만 유지)
  */
 
-import { resolveProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  resolveProgramInstructorTargets,
+  resolveProgramTargetLevels,
+  resolveProgramVolunteerTargets,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import { z } from 'zod'
 import {
   announcementPublishedFromFormValue,
@@ -120,14 +124,14 @@ const programDetailEditSchemaBase = z.object({
   interviewMethod: z.string().optional(),
   finalPassAnnouncementDate: z.string().optional(),
   finalPassAnnouncementMethod: z.string().optional(),
-  instructorTarget: z.string().optional(),
+  instructorTargets: z.array(z.string()).optional(),
   instructorTargetDetail: z.string().optional(),
   // 봉사자
   volunteerRecruitmentAnnouncementPublished: z.enum(['published', 'unpublished']).optional(),
   volunteerRecruitmentInterviewEnabled: z.enum(['yes', 'no']).optional(),
   volunteerApplicationStartDate: z.string().optional(),
   volunteerApplicationEndDate: z.string().optional(),
-  volunteerTarget: z.string().optional(),
+  volunteerTargets: z.array(z.string()).optional(),
   volunteerTargetDetail: z.string().optional(),
   applicationMethod: z
     .string()
@@ -278,7 +282,7 @@ export function programToDetailEditValues(
       ? toStr(program.finalPassAnnouncementDate)
       : undefined,
     finalPassAnnouncementMethod: program.finalPassAnnouncementMethod ?? undefined,
-    instructorTarget: program.instructorTarget ?? undefined,
+    instructorTargets: resolveProgramInstructorTargets(program),
     instructorTargetDetail: program.instructorTargetDetail ?? undefined,
     volunteerRecruitmentAnnouncementPublished: announcementPublishedToFormValue(
       program.generalCommonInfo?.volunteerRecruitmentInfo?.announcementPublished
@@ -295,7 +299,7 @@ export function programToDetailEditValues(
     volunteerApplicationEndDate: program.volunteerApplicationEndDate
       ? toStr(program.volunteerApplicationEndDate)
       : undefined,
-    volunteerTarget: program.volunteerTarget ?? undefined,
+    volunteerTargets: resolveProgramVolunteerTargets(program),
     volunteerTargetDetail: program.volunteerTargetDetail ?? undefined,
     applicationMethod: program.applicationMethod?.trim() ? program.applicationMethod : undefined,
     otherNotes: program.otherNotes?.trim() ? program.otherNotes : undefined,
@@ -455,13 +459,19 @@ export function detailEditValuesToProgramPatch(
       values.finalPassAnnouncementDate ?? existing.finalPassAnnouncementDate,
     finalPassAnnouncementMethod:
       values.finalPassAnnouncementMethod ?? existing.finalPassAnnouncementMethod,
-    instructorTarget: values.instructorTarget ?? existing.instructorTarget,
+    instructorTargets: values.instructorTargets?.length ? values.instructorTargets : undefined,
+    instructorTarget: values.instructorTargets?.length
+      ? values.instructorTargets.join(', ')
+      : undefined,
     instructorTargetDetail: values.instructorTargetDetail ?? existing.instructorTargetDetail,
     volunteerApplicationStartDate:
       values.volunteerApplicationStartDate ?? existing.volunteerApplicationStartDate,
     volunteerApplicationEndDate:
       values.volunteerApplicationEndDate ?? existing.volunteerApplicationEndDate,
-    volunteerTarget: values.volunteerTarget ?? existing.volunteerTarget,
+    volunteerTargets: values.volunteerTargets?.length ? values.volunteerTargets : undefined,
+    volunteerTarget: values.volunteerTargets?.length
+      ? values.volunteerTargets.join(', ')
+      : undefined,
     volunteerTargetDetail: values.volunteerTargetDetail ?? existing.volunteerTargetDetail,
     applicationMethod: values.applicationMethod ?? existing.applicationMethod,
     otherNotes: values.otherNotes ?? existing.otherNotes,

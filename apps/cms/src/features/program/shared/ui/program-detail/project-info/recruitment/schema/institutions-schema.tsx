@@ -98,7 +98,7 @@ export function createInstitutionsSchema({
                     <CmsSelect
                       mode="multiple"
                       inputSize="medium"
-                      width="100%"
+                      width={240}
                       withAllOption={false}
                       value={field.value ?? []}
                       options={TARGET_LEVEL_OPTIONS}
@@ -124,6 +124,8 @@ export function createInstitutionsSchema({
                       {...field}
                       value={field.value ?? ''}
                       placeholder="경기, 광주, 대구, 대전, 부산, 서울, 인천, 전북 지역"
+                      inputSize="medium"
+                      width="100%"
                       className="program-detail-info-tab__district-input"
                     />
                   )}

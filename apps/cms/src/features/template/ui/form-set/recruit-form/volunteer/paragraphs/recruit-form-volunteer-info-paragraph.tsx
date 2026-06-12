@@ -1,9 +1,8 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import type { Dayjs } from 'dayjs'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
-import { INTERVIEW_METHOD_OPTIONS } from '@/features/program/shared/lib/program-detail-info-constants'
+import { INTERVIEW_METHOD_OPTIONS, VOLUNTEER_TARGET_OPTIONS } from '@/features/program/shared/lib/program-detail-info-constants'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
-import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -71,6 +70,9 @@ export function RecruitFormVolunteerInfoParagraph() {
     [interviewRange]
   )
   const [finalAnnounceDate, setFinalAnnounceDate] = useState<Dayjs | null>(null)
+  const [volunteerTargets, setVolunteerTargets] = useState<string[]>(['대학(원)생'])
+
+  const interviewEnabled = interviewRequired === 'yes'
 
   return (
     <div className="recruit-form-volunteer-info-paragraph__forms">
@@ -146,10 +148,14 @@ export function RecruitFormVolunteerInfoParagraph() {
             label="모집 대상"
             edit={
               <CmsSelect
+                mode="multiple"
                 inputSize="medium"
                 width={240}
-                placeholder="전체"
-                options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+                withAllOption={false}
+                placeholder="모집 대상을 선택하세요"
+                options={[...VOLUNTEER_TARGET_OPTIONS]}
+                value={volunteerTargets}
+                onChange={v => setVolunteerTargets(Array.isArray(v) ? v.map(String) : [])}
               />
             }
             view="-"
@@ -163,111 +169,164 @@ export function RecruitFormVolunteerInfoParagraph() {
           />
         </DetailInfoForm.Row>
 
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="봉사자 모집 기간"
-            edit={
-              <div className={MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker
-                  mode="single"
-                  presetMode="period"
-                  value={recruitAnchor}
-                  width="100%"
-                  placeholder="모집 기간을 선택하세요"
-                  preferPeriodModeInPopover
-                  appliedSurfaceRange={recruitRange}
-                  appliedSurfaceWithTime={recruitRangeWithTime}
-                  onRangeChange={range => setRecruitRange(range)}
-                  onChange={next => {
-                    if (next == null) return
-                    setRecruitAnchor(next)
-                  }}
-                />
-              </div>
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label="1차 서류 합격자 발표"
-            edit={
-              <div className={MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker
-                  mode="single"
-                  presetMode="date"
-                  value={docDeadlineDate}
-                  placeholder="발표일"
-                  suppressAutoTodayWhenEmpty
-                  onChange={next => setDocDeadlineDate(next)}
-                />
-                <DetailInfoForm.InputsSeparator />
-                <CmsInput
-                  inputSize="medium"
-                  width="100%"
-                  style={{ flex: '1 1 0', minWidth: 0 }}
-                  placeholder="발표 방법 안내"
-                />
-              </div>
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+        {interviewEnabled ? (
+          <>
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="봉사자 모집 기간"
+                edit={
+                  <div className={MAX_SUFFIX_CLASS}>
+                    <ParagraphDatePicker
+                      mode="single"
+                      presetMode="period"
+                      value={recruitAnchor}
+                      width="100%"
+                      placeholder="모집 기간을 선택하세요"
+                      preferPeriodModeInPopover
+                      appliedSurfaceRange={recruitRange}
+                      appliedSurfaceWithTime={recruitRangeWithTime}
+                      onRangeChange={range => setRecruitRange(range)}
+                      onChange={next => {
+                        if (next == null) return
+                        setRecruitAnchor(next)
+                      }}
+                    />
+                  </div>
+                }
+                view="-"
+              />
+              <DetailInfoForm.Field
+                label="1차 서류 합격자 발표"
+                edit={
+                  <div className={MAX_SUFFIX_CLASS}>
+                    <ParagraphDatePicker
+                      mode="single"
+                      presetMode="date"
+                      value={docDeadlineDate}
+                      placeholder="발표일"
+                      suppressAutoTodayWhenEmpty
+                      onChange={next => setDocDeadlineDate(next)}
+                    />
+                    <DetailInfoForm.InputsSeparator />
+                    <CmsInput
+                      inputSize="medium"
+                      width="100%"
+                      style={{ flex: '1 1 0', minWidth: 0 }}
+                      placeholder="발표 방법 안내"
+                    />
+                  </div>
+                }
+                view="-"
+              />
+            </DetailInfoForm.Row>
 
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="2차 면접 기간"
-            edit={
-              <div className={MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker
-                  mode="single"
-                  presetMode="period"
-                  value={interviewAnchor}
-                  style={{ flex: '1 1 0', minWidth: 0 }}
-                  placeholder="면접 기간을 선택하세요"
-                  preferPeriodModeInPopover
-                  appliedSurfaceRange={interviewRange}
-                  appliedSurfaceWithTime={interviewRangeWithTime}
-                  onRangeChange={range => setInterviewRange(range)}
-                  onChange={next => {
-                    if (next == null) return
-                    setInterviewAnchor(next)
-                  }}
-                />
-                <DetailInfoForm.InputsSeparator />
-                <CmsSelect
-                  inputSize="medium"
-                  width={140}
-                  placeholder="면접 유형"
-                  options={INTERVIEW_METHOD_OPTIONS}
-                  withAllOption={false}
-                />
-              </div>
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label="최종 합격자 발표"
-            edit={
-              <div className={MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker
-                  mode="single"
-                  presetMode="date"
-                  value={finalAnnounceDate}
-                  placeholder="합격자 발표일"
-                  suppressAutoTodayWhenEmpty
-                  onChange={next => setFinalAnnounceDate(next)}
-                />
-                <DetailInfoForm.InputsSeparator />
-                <CmsInput
-                  inputSize="medium"
-                  width="100%"
-                  style={{ flex: '1 1 0', minWidth: 0 }}
-                  placeholder="발표 방법 안내"
-                />
-              </div>
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="2차 면접 기간"
+                edit={
+                  <div className={MAX_SUFFIX_CLASS}>
+                    <ParagraphDatePicker
+                      mode="single"
+                      presetMode="period"
+                      value={interviewAnchor}
+                      style={{ flex: '1 1 0', minWidth: 0 }}
+                      placeholder="면접 기간을 선택하세요"
+                      preferPeriodModeInPopover
+                      appliedSurfaceRange={interviewRange}
+                      appliedSurfaceWithTime={interviewRangeWithTime}
+                      onRangeChange={range => setInterviewRange(range)}
+                      onChange={next => {
+                        if (next == null) return
+                        setInterviewAnchor(next)
+                      }}
+                    />
+                    <DetailInfoForm.InputsSeparator />
+                    <CmsSelect
+                      inputSize="medium"
+                      width={140}
+                      placeholder="면접 유형"
+                      options={INTERVIEW_METHOD_OPTIONS}
+                      withAllOption={false}
+                    />
+                  </div>
+                }
+                view="-"
+              />
+              <DetailInfoForm.Field
+                label="최종 합격자 발표"
+                edit={
+                  <div className={MAX_SUFFIX_CLASS}>
+                    <ParagraphDatePicker
+                      mode="single"
+                      presetMode="date"
+                      value={finalAnnounceDate}
+                      placeholder="합격자 발표일"
+                      suppressAutoTodayWhenEmpty
+                      onChange={next => setFinalAnnounceDate(next)}
+                    />
+                    <DetailInfoForm.InputsSeparator />
+                    <CmsInput
+                      inputSize="medium"
+                      width="100%"
+                      style={{ flex: '1 1 0', minWidth: 0 }}
+                      placeholder="발표 방법 안내"
+                    />
+                  </div>
+                }
+                view="-"
+              />
+            </DetailInfoForm.Row>
+          </>
+        ) : (
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="봉사자 모집 기간"
+              edit={
+                <div className={MAX_SUFFIX_CLASS}>
+                  <ParagraphDatePicker
+                    mode="single"
+                    presetMode="period"
+                    value={recruitAnchor}
+                    width="100%"
+                    placeholder="모집 기간을 선택하세요"
+                    preferPeriodModeInPopover
+                    appliedSurfaceRange={recruitRange}
+                    appliedSurfaceWithTime={recruitRangeWithTime}
+                    onRangeChange={range => setRecruitRange(range)}
+                    onChange={next => {
+                      if (next == null) return
+                      setRecruitAnchor(next)
+                    }}
+                  />
+                </div>
+              }
+              view="-"
+            />
+            <DetailInfoForm.Field
+              label="최종 합격자 발표"
+              edit={
+                <div className={MAX_SUFFIX_CLASS}>
+                  <ParagraphDatePicker
+                    mode="single"
+                    presetMode="date"
+                    value={finalAnnounceDate}
+                    placeholder="합격자 발표일"
+                    suppressAutoTodayWhenEmpty
+                    onChange={next => setFinalAnnounceDate(next)}
+                  />
+                  <DetailInfoForm.InputsSeparator />
+                  <CmsInput
+                    inputSize="medium"
+                    width="100%"
+                    style={{ flex: '1 1 0', minWidth: 0 }}
+                    placeholder="발표 방법 안내"
+                  />
+                </div>
+              }
+              view="-"
+            />
+          </DetailInfoForm.Row>
+        )}
 
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field

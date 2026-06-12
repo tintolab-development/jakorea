@@ -369,15 +369,19 @@ export interface Program {
   /** 최종 합격자 발표 */
   finalPassAnnouncementDate?: DateValue
   finalPassAnnouncementMethod?: string
-  /** 강사 모집 대상 (강사 정보 탭) */
+  /** 강사 모집 대상 (강사 정보 탭) — 레거시 단일/쉼표 구분 문자열 */
   instructorTarget?: string
+  /** 강사 모집 대상 다중 선택 */
+  instructorTargets?: string[]
   /** 강사 모집 대상 상세 */
   instructorTargetDetail?: string
   /** 봉사자 모집 기간 */
   volunteerApplicationStartDate?: DateValue
   volunteerApplicationEndDate?: DateValue
-  /** 봉사자 모집 대상 (봉사자 정보 탭) */
+  /** 봉사자 모집 대상 (봉사자 정보 탭) — 레거시 단일/쉼표 구분 문자열 */
   volunteerTarget?: string
+  /** 봉사자 모집 대상 다중 선택 */
+  volunteerTargets?: string[]
   /** 봉사자 모집 대상 상세 */
   volunteerTargetDetail?: string
   /** 지원 방법 (강사/봉사자 상세정보 탭) */

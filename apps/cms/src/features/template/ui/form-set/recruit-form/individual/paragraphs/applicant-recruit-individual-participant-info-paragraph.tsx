@@ -139,7 +139,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
               <CmsSelect
                 mode="multiple"
                 inputSize="medium"
-                width="100%"
+                width={240}
                 withAllOption={false}
                 placeholder="교육 대상을 선택하세요"
                 options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}

@@ -1,9 +1,11 @@
 /** 봉사자 면접 진행 가능 일정 — 프로그램 상세 수정 모드 초기값 */
-export type VolunteerInterviewScheduleEditSeed = {
+import {
+  resolveUnavailableDatesExclusionState,
+  type UnavailableDatesExclusionState,
+} from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
+
+export type VolunteerInterviewScheduleEditSeed = UnavailableDatesExclusionState & {
   appliedUnavailableDates: string[]
-  excludeSunday: boolean
-  excludeHoliday: boolean
-  excludeSaturday: boolean
   selectedTimeSlotLabels: string[]
   interviewTimeRange: {
     startHour: number
@@ -61,12 +63,14 @@ export function buildVolunteerInterviewScheduleEditSeed(input: {
   if (!interviewTimeRange) return undefined
 
   const recurring = input.recurringUnavailable
+  const exclusion = resolveUnavailableDatesExclusionState({
+    recurringUnavailable: recurring,
+    hasSpecificUnavailableDates: (input.specificUnavailableDateIsos?.length ?? 0) > 0,
+  })
 
   return {
     appliedUnavailableDates: input.specificUnavailableDateIsos ?? [],
-    excludeSunday: recurring.includes('일요일'),
-    excludeHoliday: recurring.includes('공휴일'),
-    excludeSaturday: recurring.includes('토요일'),
+    ...exclusion,
     selectedTimeSlotLabels,
     interviewTimeRange,
     timeUnit: '30',

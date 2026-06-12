@@ -5,7 +5,9 @@
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import {
   formatDateRange,
+  formatInstructorTargetsLabel,
   getInstructorRecruitmentStatus,
+  resolveProgramInstructorTargets,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
@@ -87,7 +89,7 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
       info?.operationPeriodLabel ?? formatDateRange(program.startDate, program.endDate),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
-    instructorTargetLabel: program.instructorTarget ?? '성인',
+    instructorTargetLabel: formatInstructorTargetsLabel(resolveProgramInstructorTargets(program)),
     instructorTargetDetailLabel: program.instructorTargetDetail ?? '-',
     recruitmentPeriodLabel:
       info?.recruitmentPeriodLabel ??

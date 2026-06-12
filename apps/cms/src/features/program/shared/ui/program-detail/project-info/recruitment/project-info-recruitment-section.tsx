@@ -12,12 +12,16 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import {
   formatDateOnly,
   formatDateRange,
+  formatInstructorTargetsLabel,
+  formatTargetLevelsLabel,
   getInstructorRecruitmentStatus,
   getParticipantRecruitmentLifecycle,
   getVolunteerRecruitmentStatus,
   RECRUITMENT_RADIO_OPTIONS,
-  formatTargetLevelsLabel,
+  resolveProgramInstructorTargets,
   resolveProgramTargetLevels,
+  formatVolunteerTargetsLabel,
+  resolveProgramVolunteerTargets,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 
@@ -129,7 +133,7 @@ export function InstructorRecruitmentSection({
   const instructorRecruitmentLifecycle =
     recruitmentStatus != null ? INSTRUCTOR_RECRUITMENT_STATUS_TO_LIFECYCLE[recruitmentStatus] : null
 
-  const instructorTarget = program.instructorTarget ?? '성인'
+  const instructorTarget = formatInstructorTargetsLabel(resolveProgramInstructorTargets(program))
   const instructorTargetDetail = program.instructorTargetDetail ?? '-'
 
   const notes =
@@ -180,7 +184,7 @@ export function VolunteerRecruitmentSection({
   const volunteerRecruitmentLifecycle =
     recruitmentStatus != null ? VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE[recruitmentStatus] : null
 
-  const volunteerTarget = program.volunteerTarget ?? '대학(원)생'
+  const volunteerTarget = formatVolunteerTargetsLabel(resolveProgramVolunteerTargets(program))
   const volunteerTargetDetail = program.volunteerTargetDetail ?? '-'
 
   const volunteerStart =

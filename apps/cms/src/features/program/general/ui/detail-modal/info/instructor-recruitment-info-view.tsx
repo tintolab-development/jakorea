@@ -7,7 +7,10 @@ import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
-import { INSTRUCTOR_TARGET_OPTIONS } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  INSTRUCTOR_TARGET_OPTIONS,
+  parseInstructorTargetsSelectValue,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -133,16 +136,18 @@ export function GeneralProgramInstructorRecruitmentInfoView({
               edit={
                 isEdit && form ? (
                   <Controller
-                    name="instructorTarget"
+                    name="instructorTargets"
                     control={form.control}
                     render={({ field }) => (
                       <CmsSelect
+                        mode="multiple"
                         inputSize="medium"
                         width={240}
-                        value={field.value ?? '성인'}
-                        options={INSTRUCTOR_TARGET_OPTIONS}
-                        onChange={v => field.onChange(v ?? '성인')}
-                        placeholder="전체"
+                        withAllOption={false}
+                        value={field.value ?? []}
+                        options={[...INSTRUCTOR_TARGET_OPTIONS]}
+                        onChange={v => field.onChange(parseInstructorTargetsSelectValue(v))}
+                        placeholder="모집 대상을 선택하세요"
                         className="program-detail-info-tab__target-select"
                       />
                     )}
@@ -164,6 +169,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                         value={field.value ?? ''}
                         placeholder="상세 모집 대상을 입력하세요"
                         inputSize="medium"
+                        width="100%"
                         className="program-detail-info-tab__district-input"
                       />
                     )}

@@ -23,6 +23,7 @@ import {
   DEFAULT_RECRUITMENT_GUIDE,
   getThumbnailFilename,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import { ProgramThumbnailPlaceholder } from '@/features/program/shared/ui/program-thumbnail-placeholder'
 import './project-info-detail-info-section.css'
 
 /** 참여자 정보 탭 등 파일 선택(FileSelectField) 우측 안내 — 썸네일·첨부 공통 */
@@ -173,7 +174,7 @@ function ThumbnailImageRow({
                 preview={{ mask: '확대 보기' }}
               />
             ) : (
-              <div className="program-detail-info-tab__thumbnail-placeholder-box">이미지 없음</div>
+              <ProgramThumbnailPlaceholder />
             )}
             <div className="program-detail-info-tab__thumbnail-meta">
               <FileSelectField

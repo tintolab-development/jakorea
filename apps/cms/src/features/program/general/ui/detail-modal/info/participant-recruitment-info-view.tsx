@@ -415,7 +415,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                       <CmsSelect
                         mode="multiple"
                         inputSize="medium"
-                        width="100%"
+                        width={240}
                         withAllOption={false}
                         value={field.value ?? []}
                         options={TARGET_LEVEL_OPTIONS}
@@ -442,6 +442,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                         value={field.value ?? ''}
                         placeholder="상세 교육 대상을 입력하세요"
                         inputSize="medium"
+                        width="100%"
                         className="program-detail-info-tab__district-input"
                       />
                     )}
