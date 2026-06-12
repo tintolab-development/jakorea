@@ -11,26 +11,27 @@ import {
   type Key,
   type MouseEvent,
 } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type { Notice } from '@/data/mock/notices'
-import { listAdminNotices } from '@/features/posts/api/admin-notice-mock-store'
-import { deleteNotices } from '@/features/posts/api/admin-notice-service'
+import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { useAdminNoticeCategories } from '@/features/posts/hooks/use-admin-notice-categories'
+import { useNoticeListQuery } from '@/features/posts/hooks/use-notice-list-query'
+import { useNoticeMutations } from '@/features/posts/hooks/use-notice-mutations'
 import { buildAdminNoticeManagementFilterFields } from '@/features/posts/model/admin-notice-management-filter-fields'
 import { adminNoticeManagementTablePageConfig } from '@/features/posts/model/admin-notice-management-table.config'
-import type {
-  AdminNoticeTableContext,
-  NoticeCategoryRow,
-} from '@/features/posts/model/admin-notice-management.types'
+import type { AdminNoticeTableContext } from '@/features/posts/model/admin-notice-management.types'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { CmsButton } from '@/shared/ui'
+import {
+  ActionResultModal,
+  CmsButton,
+} from '@/shared/ui'
 import { NoticePinnedIcon } from '@/features/posts/ui/notice-pinned-icon'
 import { NoticeCategoryManagementModal } from '@/features/posts/ui/notice-category-management-modal'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
@@ -53,43 +54,26 @@ const NOTICE_LIST_COL_WIDTH = {
   views: 108,
 } as const
 
-const ADMIN_NOTICES_LIST_PATH = '/admin/posts/notices'
-
 export function AdminNoticeListPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const navigate = useNavigate()
-  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const [rows, setRows] = useState<Notice[]>(() => listAdminNotices())
-
-  /** mock 단일 저장소와 목록 로컬 state 동기화 — 상세에서 수정·삭제 후 복귀, 다른 탭 조작 등 */
-  const syncRowsFromStore = useCallback(() => {
-    setRows(listAdminNotices())
-  }, [])
-
-  useEffect(() => {
-    if (location.pathname === ADMIN_NOTICES_LIST_PATH) {
-      syncRowsFromStore()
-    }
-  }, [location.pathname, syncRowsFromStore])
+  const listQuery = useNoticeListQuery(searchParams, true)
+  const { bulkDeleteMutation } = useNoticeMutations()
+  const rows = listQuery.data ?? []
 
   const {
     categoryRows,
     allowedCategoryLabels,
     allowedCategorySet,
-    replaceCategories: replaceNoticeCategories,
+    remoteActions: noticeCategoryRemoteActions,
   } = useAdminNoticeCategories()
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
-
-  const handleNoticeCategoriesChange = useCallback(
-    (next: NoticeCategoryRow[]) => {
-      replaceNoticeCategories(next)
-      syncRowsFromStore()
-    },
-    [replaceNoticeCategories, syncRowsFromStore]
-  )
+  const [actionResultOpen, setActionResultOpen] = useState(false)
+  const [actionResultTitle, setActionResultTitle] = useState('')
+  const [actionResultMessage, setActionResultMessage] = useState('')
 
   const tablePageContext: AdminNoticeTableContext = useMemo(
     () => ({
@@ -142,14 +126,15 @@ export function AdminNoticeListPage() {
       return
     }
     try {
-      await deleteNotices(ids)
-      setRows(listAdminNotices())
+      await bulkDeleteMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setBulkDeleteConfirmOpen(false)
     } catch (error) {
-      console.debug('adminNoticeListPage bulkDelete failed', error)
+      setActionResultTitle('공지 삭제 실패')
+      setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
+      setActionResultOpen(true)
     }
-  }, [selectedRowKeys])
+  }, [bulkDeleteMutation, selectedRowKeys])
 
   const handleRegister = useCallback(() => {
     if (!canWrite) return
@@ -248,14 +233,21 @@ export function AdminNoticeListPage() {
         open={categoryModalOpen}
         onCancel={() => setCategoryModalOpen(false)}
         categories={categoryRows}
-        onCategoriesChange={handleNoticeCategoriesChange}
+        onCategoriesChange={() => {}}
         notices={rows}
+        remoteActions={noticeCategoryRemoteActions}
       />
       <NoticeFormModal
         open={registerModalOpen}
         mode="create"
         onCancel={() => setRegisterModalOpen(false)}
-        onSuccess={() => setRows(listAdminNotices())}
+        onSuccess={() => setRegisterModalOpen(false)}
+      />
+      <ActionResultModal
+        open={actionResultOpen}
+        title={actionResultTitle}
+        body={actionResultMessage}
+        onClose={() => setActionResultOpen(false)}
       />
       <FilterTableLayout
         bordered={false}

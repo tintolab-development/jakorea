@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Form } from 'antd'
 import type { Notice } from '@/data/mock/notices'
-import { getNoticeCategorySelectOptions } from '@/features/posts/api/admin-notice-category-mock-store'
+import { shouldUseNoticesRemoteApi } from '@/features/posts/api/notices/admin-notices-service'
+import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import {
-  buildNoticeCreateBody,
-  buildNoticeUpdateBody,
   noticeInitialAttachmentNames,
   noticeToFormValues,
   type NoticeFormFieldValues } from '@/features/posts/model/notice-form-mapper'
-import { createAdminNotice, updateAdminNotice } from '@/features/posts/api/admin-notice-mock-store'
-import { deleteNotice } from '@/features/posts/api/admin-notice-service'
+import { useNoticeCategoriesQuery } from '@/features/posts/hooks/use-notice-categories-query'
+import { useNoticeMutations } from '@/features/posts/hooks/use-notice-mutations'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import { RichTextEditor } from '@/shared/rich-text'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -52,7 +51,11 @@ export function NoticeFormModal({
   onDeleted }: NoticeFormModalProps) {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
+  const remoteEnabled = shouldUseNoticesRemoteApi()
+  const { createMutation, updateMutation, deleteMutation } = useNoticeMutations()
+  const categoriesQuery = useNoticeCategoriesQuery(open)
   const [form] = Form.useForm<FormValues>()
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [existingAttachmentNames, setExistingAttachmentNames] = useState<string[]>([])
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -101,8 +104,10 @@ export function NoticeFormModal({
     [existingAttachmentNames, newFiles]
   )
 
-  /** 카테고리 관리·저장소와 동기화된 옵션 (모달이 열릴 때마다 최신 목록) */
-  const categorySelectOptions = useMemo(() => getNoticeCategorySelectOptions(), [open])
+  const categorySelectOptions = useMemo(
+    () => (categoriesQuery.data ?? []).map(row => ({ label: row.name, value: row.name })),
+    [categoriesQuery.data]
+  )
 
   const handleCancel = () => {
     form.resetFields()
@@ -119,12 +124,12 @@ export function NoticeFormModal({
   const handleConfirmDelete = async () => {
     if (!notice) return
     try {
-      await deleteNotice(notice.id)
+      await deleteMutation.mutateAsync(notice.id)
       setDeleteConfirmOpen(false)
       handleCancel()
       onDeleted?.()
     } catch (error) {
-      console.debug('noticeFormModal delete failed', error)
+      setErrorMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
     }
   }
 
@@ -148,7 +153,7 @@ export function NoticeFormModal({
     }
   }
 
-  const handleFinish = (values: FormValues) => {
+  const handleFinish = async (values: FormValues) => {
     if (mode === 'edit' && !notice) {
       return
     }
@@ -158,7 +163,9 @@ export function NoticeFormModal({
       return
     }
 
-    const attachmentNames = [...existingAttachmentNames, ...newFiles.map(f => f.name)]
+    const attachmentNames = remoteEnabled
+      ? []
+      : [...existingAttachmentNames, ...newFiles.map(f => f.name)]
     const pinToTop = values.pinTop === 'on'
     const base = {
       title: values.title,
@@ -167,24 +174,29 @@ export function NoticeFormModal({
       visibility: values.visibility,
       pinToTop,
       attachmentNames,
-      author: authorName }
-
-    if (mode === 'create') {
-      const created = createAdminNotice(buildNoticeCreateBody(base))
-      onSuccess?.(created)
-    } else {
-      const updated = updateAdminNotice(notice!.id, buildNoticeUpdateBody(notice!, base))
-      if (updated) {
-        onSuccess?.(updated)
-      } else {
-        return
-      }
+      author: authorName,
     }
 
-    form.resetFields()
-    setExistingAttachmentNames([])
-    setNewFiles([])
-    onCancel()
+    try {
+      if (mode === 'create') {
+        const created = await createMutation.mutateAsync(base)
+        onSuccess?.(created)
+      } else {
+        const updated = await updateMutation.mutateAsync({
+          id: notice!.id,
+          existing: notice!,
+          params: base,
+        })
+        onSuccess?.(updated)
+      }
+      setErrorMessage(null)
+      form.resetFields()
+      setExistingAttachmentNames([])
+      setNewFiles([])
+      onCancel()
+    } catch (error) {
+      setErrorMessage(getPostsApiErrorMessage(error, '저장에 실패했습니다.'))
+    }
   }
 
   const modalTitle = mode === 'create' ? '공지사항 등록' : '공지사항 수정'
@@ -300,12 +312,19 @@ export function NoticeFormModal({
             </div>
           </div>
 
+          {errorMessage ? (
+            <p className="notice-register-modal__error" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
+
           <div className="notice-register-modal__attachment">
             <div className="notice-register-modal__attachment-label">첨부 파일</div>
             <div className="notice-register-modal__attachment-body">
               <FileSelectField
                 className="notice-register-modal__file-field"
                 multiple
+                disabled={remoteEnabled}
                 buttonLabel="파일 추가"
                 fileNames={attachmentDisplayNames}
                 onFilesChange={handleAttachmentAdd}

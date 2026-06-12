@@ -10,6 +10,7 @@ import {
   createNoticeCategoryId,
   hasDuplicateCategoryName,
 } from '@/features/posts/model/notice-category-domain'
+import type { FaqCategoryRemoteActions } from '@/features/posts/hooks/use-admin-faq-categories'
 import type { FaqCategoryRow } from '@/features/posts/model/admin-faq-management.types'
 
 export type UseFaqCategoryManagementModalParams = {
@@ -18,6 +19,7 @@ export type UseFaqCategoryManagementModalParams = {
   onCategoriesChange: (next: FaqCategoryRow[]) => void
   faqs: readonly AdminFaq[]
   onClose: () => void
+  remoteActions?: FaqCategoryRemoteActions
 }
 
 export type UseFaqCategoryManagementModalResult = {
@@ -50,6 +52,7 @@ export function useFaqCategoryManagementModal({
   onCategoriesChange,
   faqs,
   onClose,
+  remoteActions,
 }: UseFaqCategoryManagementModalParams): UseFaqCategoryManagementModalResult {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState('')
@@ -92,7 +95,7 @@ export function useFaqCategoryManagementModal({
     setEditDraft('')
   }, [])
 
-  const submitEdit = useCallback(() => {
+  const submitEdit = useCallback(async () => {
     if (editingId == null) return
     const trimmed = editDraft.trim()
     if (trimmed === '') {
@@ -101,11 +104,16 @@ export function useFaqCategoryManagementModal({
     if (hasDuplicateCategoryName(categories, trimmed, editingId)) {
       return
     }
+    if (remoteActions) {
+      await remoteActions.onUpdate(editingId, trimmed)
+      cancelEdit()
+      return
+    }
     onCategoriesChange(
       categories.map(c => (c.id === editingId ? { ...c, name: trimmed } : c))
     )
     cancelEdit()
-  }, [cancelEdit, categories, editDraft, editingId, onCategoriesChange])
+  }, [cancelEdit, categories, editDraft, editingId, onCategoriesChange, remoteActions])
 
   const removeCategory = useCallback(
     (id: string) => {
@@ -133,18 +141,24 @@ export function useFaqCategoryManagementModal({
     setPendingDeleteRow(null)
   }, [])
 
-  const confirmDeleteCategory = useCallback(() => {
+  const confirmDeleteCategory = useCallback(async () => {
     if (pendingDeleteRow == null) return
+    if (remoteActions) {
+      await remoteActions.onDelete(pendingDeleteRow.id)
+      setDeleteConfirmOpen(false)
+      setPendingDeleteRow(null)
+      return
+    }
     removeCategory(pendingDeleteRow.id)
     setDeleteConfirmOpen(false)
     setPendingDeleteRow(null)
-  }, [pendingDeleteRow, removeCategory])
+  }, [pendingDeleteRow, remoteActions, removeCategory])
 
   const cancelNew = useCallback(() => {
     setNewDraft('')
   }, [])
 
-  const submitNew = useCallback(() => {
+  const submitNew = useCallback(async () => {
     const trimmed = newDraft.trim()
     if (trimmed === '') {
       return
@@ -152,10 +166,15 @@ export function useFaqCategoryManagementModal({
     if (hasDuplicateCategoryName(categories, trimmed)) {
       return
     }
+    if (remoteActions) {
+      await remoteActions.onCreate(trimmed)
+      setNewDraft('')
+      return
+    }
     const id = createNoticeCategoryId()
     onCategoriesChange([...categories, { id, name: trimmed }])
     setNewDraft('')
-    }, [categories, newDraft, onCategoriesChange])
+  }, [categories, newDraft, onCategoriesChange, remoteActions])
 
   const focusNewRow = useCallback(() => {
     newInputRef.current?.focus()

@@ -8,6 +8,7 @@ import type { AdminFaq } from '@/data/mock/admin-faqs'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
+import type { FaqCategoryRemoteActions } from '@/features/posts/hooks/use-admin-faq-categories'
 import { useFaqCategoryManagementModal } from '@/features/posts/hooks/use-faq-category-management-modal'
 import type { FaqCategoryRow } from '@/features/posts/model/admin-faq-management.types'
 import { NoticeCategoryDeleteBlockedModal } from '@/features/posts/ui/notice-category-management/notice-category-delete-blocked-modal'
@@ -25,6 +26,7 @@ export type FaqCategoryManagementModalProps = {
   categories: FaqCategoryRow[]
   onCategoriesChange: (next: FaqCategoryRow[]) => void
   faqs: readonly AdminFaq[]
+  remoteActions?: FaqCategoryRemoteActions
 }
 
 export function FaqCategoryManagementModal({
@@ -33,6 +35,7 @@ export function FaqCategoryManagementModal({
   categories,
   onCategoriesChange,
   faqs,
+  remoteActions,
 }: FaqCategoryManagementModalProps) {
   const ctrl = useFaqCategoryManagementModal({
     open,
@@ -40,6 +43,7 @@ export function FaqCategoryManagementModal({
     onCategoriesChange,
     faqs,
     onClose: onCancel,
+    remoteActions,
   })
 
   const {

@@ -22,9 +22,9 @@ export function createInitialInquiryCategoryRows(): InquiryCategoryRow[] {
 }
 
 /**
- * TableFilterGroup `rows` — 문의내역: `merged-auto-fill` + `mergedAutoFillInlineSearch`:
- * 모든 필터와 조회를 한 flex-wrap에 두어 화면 너비에 따라 한 줄·여러 줄로 동일 규칙 적용.
- * 칸 사이 gap 12px는 `--table-filter-field-gap`.
+ * TableFilterGroup `rows` — 문의내역 2행(고정 5열 그리드, `admin-inquiry-page__filter-layout` CSS):
+ * 1행: 답변 현황·카테고리·프로그램명·제목·문의 회원명
+ * 2행: 담당자명·문의일시 + 조회
  */
 export function buildAdminInquiryFilterRows(
   categoryLabels: readonly string[]
@@ -68,14 +68,14 @@ export function buildAdminInquiryFilterRows(
         label: '제목',
         placeholder: '제목을 입력하세요',
       },
-    ],
-    [
       {
         key: 'memberName',
         type: 'search',
         label: '문의 회원명',
-        placeholder: '회원명을 입력하세요',
+        placeholder: '문의 회원명을 입력하세요',
       },
+    ],
+    [
       {
         key: 'assigneeName',
         type: 'search',
@@ -85,7 +85,7 @@ export function buildAdminInquiryFilterRows(
       {
         key: 'dateRange',
         type: 'dateRange',
-        label: '문의일',
+        label: '문의일시',
         defaultValue: null,
       },
     ],
