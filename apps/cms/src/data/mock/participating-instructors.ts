@@ -6,7 +6,7 @@
 import type { ApplicantInstructorLectureFeeBasisType } from '@/data/mock/applicant-instructors'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import { INSTRUCTOR_SETTLEMENT_STATUS_LABELS } from '@/shared/constants/instructor-settlement-status'
-import type { SchoolTeacherEmploymentStatus } from '@/types/user'
+import type { SchoolTeacherEmploymentStatus, InstructorMemberProfile } from '@/types/user'
 import type { ParticipatingInstructorDetailSavePayload } from '@/features/program/general/lib/participating-instructor-detail-edit'
 
 /** @deprecated `InstructorSettlementUiStatus` 사용 — 하위 호환용 alias */
@@ -109,7 +109,9 @@ export interface ParticipatingInstructorRow {
   scheduleChangeCancelCount?: number
   /** 참여 강사 상세 — 소속(학교 등) */
   affiliation?: string
-  /** 참여 강사 상세 — 소속 재직 현황 배지 */
+  /** 강사 회원 유형 — 교사 겸직(instructor_dual)일 때만 소속 재직 현황 태그 노출 */
+  instructorMemberProfile?: InstructorMemberProfile
+  /** 참여 강사 상세 — 소속 재직 현황 배지 (교사 겸직 전용) */
   affiliationEmploymentStatus?: SchoolTeacherEmploymentStatus
   /** 참여 강사 상세 — 강사비 등급 라벨 */
   instructorFeeGradeLabel?: string
@@ -300,6 +302,7 @@ function getDetailExtension(
     | 'lectureFeeBasisDisplay'
     | 'businessIncomeEarnerStatus'
     | 'affiliation'
+    | 'instructorMemberProfile'
     | 'affiliationEmploymentStatus'
     | 'instructorFeeGradeLabel'
     | 'scheduleChangeCancelCount'
@@ -327,12 +330,13 @@ function getDetailExtension(
       educationSchoolName: EDUCATION_SCHOOLS[0],
       lectureExperienceYears: 3,
       affiliation: '진월초등학교',
+      instructorMemberProfile: 'instructor_dual',
       affiliationEmploymentStatus: 'ACTIVE',
       instructorFeeGradeLabel: '3급 강사비',
       scheduleChangeCancelCount: 1,
       lectureFeeCategory: '프로그램 기준',
       lectureFeeBasisType: 'program',
-      lectureFeeMeasure: '1회 기준',
+      lectureFeeMeasure: '출강 1회당',
       lectureFeeBasisDisplay: '프로그램 기준',
       lectureFeeAmount: '240,000원',
       businessIncomeEarnerStatus: '해당 없음',
@@ -389,8 +393,8 @@ function getDetailExtension(
     freeWriting4: '-',
     lectureFeeCategory: '특강 강사비',
     lectureFeeBasisType: 'special_lecture',
-    lectureFeeMeasure: '1회 기준',
-    lectureFeeBasisDisplay: '특강 강사비 | 1회 기준 | 680,000원',
+    lectureFeeMeasure: '출강 1회당',
+    lectureFeeBasisDisplay: '특강 강사비 | 출강 1회당 | 680,000원',
     lectureFeeAmount: '680000',
     businessIncomeEarnerStatus: '해당',
   }

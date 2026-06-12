@@ -11,9 +11,18 @@ import {
 } from '@/shared/components/status-dropdown-cell'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 import type { ApplicantSessionLineInput } from './applicants-detail-session-format'
 import { GeneralDetailSessionLine } from './general-detail-session-line'
 import type { InstitutionColumnPreset } from './applicant-list-menu'
+import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  getInstitutionApplicationSessionsTableSlice,
+  shouldShowInstitutionApplicationSessionsColumn,
+} from '@/features/program/general/lib/institution-application-session-display'
+
+const GENERAL_DETAIL_INSTITUTION_TEXT_COL_MIN_WIDTH = 185
+const GENERAL_DETAIL_INSTITUTION_SESSIONS_COL_MIN_WIDTH = 360
 
 export function useInstitutionApplicantColumns(params: {
   setSelectedItem: (record: ApplicantSchoolRow) => void
@@ -27,6 +36,7 @@ export function useInstitutionApplicantColumns(params: {
   openApprovalDropdownId: string | null
   setOpenApprovalDropdownId: (id: string | null) => void
   preset?: InstitutionColumnPreset
+  programBridge?: InstitutionApplicationProgramBridge | null
 }): ColumnsType<ApplicantSchoolRow> {
   const {
     setSelectedItem,
@@ -36,17 +46,32 @@ export function useInstitutionApplicantColumns(params: {
     openApprovalDropdownId,
     setOpenApprovalDropdownId,
     preset = 'legacy',
+    programBridge = null,
   } = params
   const isGeneralDetail = preset === 'general-detail'
+  const showSessionsColumn =
+    !isGeneralDetail ||
+    programBridge == null ||
+    shouldShowInstitutionApplicationSessionsColumn(programBridge)
 
   return useMemo(
-    () => [
+    () => {
+      const columns: ColumnsType<ApplicantSchoolRow> = [
       /* 화면 너비 대비 비율 분배(합 100%). 가로 스크롤은 scroll.x = max(최소, 래퍼 너비)로 처리 */
       { title: 'No.', dataIndex: 'no', key: 'no', width: '64px', align: 'center' },
       {
         title: isGeneralDetail ? '신청 기관명' : '참여 기관명',
         dataIndex: 'schoolName',
         key: 'schoolName',
+        ...(isGeneralDetail
+          ? {
+              width: GENERAL_DETAIL_INSTITUTION_TEXT_COL_MIN_WIDTH,
+              minWidth: GENERAL_DETAIL_INSTITUTION_TEXT_COL_MIN_WIDTH,
+              className: 'applicant-details__th-school-name',
+              onHeaderCell: () => ({ className: 'applicant-details__th-school-name' }),
+              onCell: () => ({ className: 'applicant-details__td-school-name' }),
+            }
+          : {}),
         align: 'center',
         render: (text: string, record) => (
           <a
@@ -61,6 +86,15 @@ export function useInstitutionApplicantColumns(params: {
         title: isGeneralDetail ? '기관 소재지' : '기관 지역',
         dataIndex: 'region',
         key: 'region',
+        ...(isGeneralDetail
+          ? {
+              width: GENERAL_DETAIL_INSTITUTION_TEXT_COL_MIN_WIDTH,
+              minWidth: GENERAL_DETAIL_INSTITUTION_TEXT_COL_MIN_WIDTH,
+              className: 'applicant-details__th-region',
+              onHeaderCell: () => ({ className: 'applicant-details__th-region' }),
+              onCell: () => ({ className: 'applicant-details__td-region' }),
+            }
+          : {}),
         align: 'center',
         ellipsis: true,
         render: isGeneralDetail
@@ -104,7 +138,12 @@ export function useInstitutionApplicantColumns(params: {
       {
         title: isGeneralDetail ? '진행 희망 교육 일정' : '강의 회차 별 희망 교육 날짜 및 시간',
         key: 'sessions',
-        width: '480px',
+        ...(isGeneralDetail
+          ? {
+              width: GENERAL_DETAIL_INSTITUTION_SESSIONS_COL_MIN_WIDTH,
+              minWidth: GENERAL_DETAIL_INSTITUTION_SESSIONS_COL_MIN_WIDTH,
+            }
+          : { width: '480px' }),
         align: 'center',
         className: isGeneralDetail ? 'applicant-details__th-sessions' : undefined,
         onHeaderCell: () =>
@@ -116,17 +155,15 @@ export function useInstitutionApplicantColumns(params: {
         }),
         render: (_: unknown, record: ApplicantSchoolRow) => {
           const sessions = record.sessions ?? []
-          const total = sessions.length
-          const showCount = total <= 3 ? total : 2
-          const displaySessions = sessions.slice(0, showCount)
-          const restCount = total - showCount
+          if (sessions.length === 0) return '-'
+          const { displaySessions, restCount } = getInstitutionApplicationSessionsTableSlice(sessions)
           return (
             <div className="applicant-details__sessions-cell">
               {displaySessions.map(s => {
                 if (isGeneralDetail) {
                   return (
                     <div key={s.round} className="applicant-details__session-line">
-                      <GeneralDetailSessionLine session={s} />
+                      <GeneralDetailSessionLine session={s} bridge={programBridge} />
                     </div>
                   )
                 }
@@ -188,14 +225,19 @@ export function useInstitutionApplicantColumns(params: {
               render: (v: string | undefined) => v ?? '-',
             },
           ]),
-    ],
+      ]
+
+      return showSessionsColumn ? columns : columns.filter(column => column.key !== 'sessions')
+    },
     [
       approvalStatusKeys,
       getSessionLineParts,
       handleInstitutionApprovalStatusChange,
       isGeneralDetail,
       openApprovalDropdownId,
+      programBridge,
       setSelectedItem,
+      showSessionsColumn,
     ]
   )
 }
@@ -254,7 +296,7 @@ export function useInstructorApplicantColumns(params: {
         key: 'evaluationGrade',
         width: 110,
         align: 'center',
-        render: (v: string) => (v ? `${v}등급` : '-'),
+        render: (v: string | undefined) => formatJaEvaluationGradeCellDisplay(v),
       },
       {
         title: '연락처',

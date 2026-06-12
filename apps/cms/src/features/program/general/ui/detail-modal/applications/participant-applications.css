@@ -90,6 +90,57 @@
   max-width: 148px !important;
 }
 
+/* 신청 기관명 · 기관 소재지 · 진행 희망 교육 일정 — cms-data-table--fluid 에서 minWidth prop만으로는 미적용 */
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.applicant-details__th-school-name,
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell.applicant-details__td-school-name,
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.applicant-details__th-region,
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell.applicant-details__td-region {
+  min-width: 185px;
+}
+
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.applicant-details__th-sessions,
+.detail-fullpage-modal.general-detail-fullpage-modal
+  .participant-applications
+  .applicant-details
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell.applicant-details__td-sessions {
+  min-width: 360px;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
 .detail-fullpage-modal.general-detail-fullpage-modal
   .participant-applications
   .applicant-details

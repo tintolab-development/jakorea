@@ -515,6 +515,9 @@ export interface ApplicantInstitutionDetailSavePayload {
   textbookName: string
   combinedClassApplication: '신청' | '미신청'
   combinedClassPartnerApplicantIds: string[]
+  teacherName?: string
+  contact?: string
+  teacherInfo?: string
 }
 
 function buildCombinedClassDetailFields(
@@ -551,12 +554,30 @@ function applyDetailSaveToRow(
     educationGrade: payload.educationGrade,
     classCount: payload.classCount,
     studentCount: payload.studentCount,
+    teacherName: payload.teacherName ?? row.teacherName,
+    contact: payload.contact ?? row.contact,
     adminComment: adminTrimmed ? adminTrimmed : undefined,
     detail: {
       ...row.detail,
       ...detailPatch,
+      teacherInfo: payload.teacherInfo ?? row.detail?.teacherInfo,
+      applicationReason: payload.applicationReason ?? row.detail?.applicationReason,
+      otherRequests: payload.otherRequests ?? row.detail?.otherRequests,
     },
   }
+}
+
+/** 단일 기관 신청 관리자 코멘트 갱신 (mock) */
+export function patchApplicantInstitutionAdminComment(
+  schoolId: string,
+  adminComment: string
+): ApplicantSchoolRow | null {
+  const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === schoolId)
+  if (!row) return null
+
+  const adminTrimmed = adminComment.trim()
+  row.adminComment = adminTrimmed ? adminTrimmed : undefined
+  return { ...row }
 }
 
 /** 단일 기관 신청 상세 필드 갱신 (mock) */

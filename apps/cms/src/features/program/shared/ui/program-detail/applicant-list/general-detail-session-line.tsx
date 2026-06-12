@@ -11,11 +11,26 @@ import {
   getSessionLineParts,
   type ApplicantSessionLineInput,
 } from './applicants-detail-session-format'
+import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import './general-detail-session-line.css'
 
-export function GeneralDetailSessionLine({ session }: { session: ApplicantSessionLineInput }) {
-  const { datePart, durationPart, periodPart } = getSessionLineParts(session, 'general-detail')
+export function GeneralDetailSessionLine({
+  session,
+  bridge,
+}: {
+  session: ApplicantSessionLineInput
+  bridge?: InstitutionApplicationProgramBridge | null
+}) {
+  const { datePart, durationPart, periodPart } = getSessionLineParts(session, 'general-detail', bridge)
   const schedulePart = `${datePart} ${durationPart}`
+
+  if (!periodPart) {
+    return (
+      <div className="general-detail-session-line">
+        <span>{schedulePart}</span>
+      </div>
+    )
+  }
 
   return (
     <div className="general-detail-session-line">

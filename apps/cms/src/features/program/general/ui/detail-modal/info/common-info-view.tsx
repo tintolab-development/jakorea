@@ -69,6 +69,10 @@ import {
 } from '@/features/program/general/model/common-info-edit-schema'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsButton } from '@/shared/ui'
+import {
+  PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  resolveProgramEditInfoClick,
+} from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsToggle } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -3623,10 +3627,16 @@ export function GeneralProgramDetailCommonInfoView({
       {(canWrite || isEditMode) && (
         <div className="detail-common-info-view__header">
           <CmsButton
-            onClick={isEditMode ? onSave : onEdit}
-            aria-label={isEditMode ? '공통 정보 저장' : '공통 정보 수정'}
+            variant="secondary"
+            size="large"
+            width={140}
+            onClick={resolveProgramEditInfoClick(isEditMode, {
+              onEnterEdit: onEdit ?? (() => {}),
+              onSaveEdit: onSave ?? (() => {}),
+            })}
+            aria-label={PROGRAM_EDIT_INFO_BUTTON_LABEL}
           >
-            {isEditMode ? '정보 저장' : '정보 수정'}
+            {PROGRAM_EDIT_INFO_BUTTON_LABEL}
           </CmsButton>
         </div>
       )}

@@ -25,6 +25,11 @@
 - 저장 시 `textbookId`, `textbookName`, `textbookGrade`, `textbookKits`, `textbookQuantity` 반영.
 - **실적 취합** 학년명: `textbookGrade`(선택 교재 학년). 기관 **교육 학년**(`educationGrade`)과 별도.
 
+## 합반 신청 여부 (편집 UI)
+
+- 라디오·타 학년 셀렉·단일 회차 제한·안내 문구 등 **공통 규칙**은 [applicant-institution-combined-class-spec.md](./applicant-institution-combined-class-spec.md) 따름.
+- 참여 화면도 `InstitutionCombinedClassEditCell` 공유.
+
 ## 정보 수정 저장
 
 - 수정 가능: 관리자 코멘트, 합반 신청 여부(+ 타 학년), 합반 시 교재명.
@@ -34,4 +39,4 @@
 
 UJAT 참여 기관 상세 교재 로직은 `features/program/ujat/.../textbook.ts` — 본 규칙과 분리.
 
-**Last updated:** 2026-06-05
+**Last updated:** 2026-06-08

@@ -85,17 +85,21 @@ export function ApprovalAlarmSendSection({
       >
         <span className="permission-modal__label">승인 알림 발송</span>
         <CmsRadio.Group
-          style={{ marginTop: 12, paddingLeft: 8 }}
           size="large"
           value={currentValue}
           onChange={e => handleChange(e.target.value as ApprovalAlarmSendValue)}
           className="approval-alarm-send-section__radio-group"
         >
-          <CmsRadio value="immediate">즉시</CmsRadio>
-          <CmsRadio value="on_announcement">발표일에 맞춰서</CmsRadio>
+          <CmsRadio value="immediate" size="large">
+            즉시
+          </CmsRadio>
+          <CmsRadio value="on_announcement" size="large">
+            발표일에 맞춰서
+          </CmsRadio>
           <span ref={manualRadioAnchorRef} className="permission-modal__manual-anchor">
             <CmsRadio
               value="manual"
+              size="large"
               onClick={() => {
                 if (currentValue === 'manual') {
                   const resolved = currentManual ?? nowManualNotifyAt()

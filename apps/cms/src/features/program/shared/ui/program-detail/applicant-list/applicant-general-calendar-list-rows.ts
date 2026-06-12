@@ -18,6 +18,7 @@ import { getInstructorCalendarSessionCardLabel } from './applicant-instructor-ca
 import {
   getInstructorScheduleDispatchStats,
   getInstructorScheduleDistanceKm,
+  isInstructorNearDistanceKm,
 } from './applicant-instructor-schedule-meta'
 import type { ApplicantCalendarEvent } from './applicant-calendar-events'
 
@@ -129,6 +130,7 @@ export function buildGeneralInstructorCalendarListRows(
       ),
       sessionLabel,
       distanceKm,
+      isNearDistance: isInstructorNearDistanceKm(distanceKm),
       dispatchCount,
       longDistanceCount,
     }

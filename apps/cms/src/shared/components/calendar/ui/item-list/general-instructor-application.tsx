@@ -12,6 +12,7 @@ export type CalendarGeneralInstructorApplicationListRow = {
   approvalStatus: ApprovalStatusKey
   sessionLabel: string
   distanceKm: number
+  isNearDistance: boolean
   dispatchCount: number
   longDistanceCount: number
 }
@@ -47,7 +48,14 @@ export function CalendarListItemContentGeneralInstructorApplication({
           ) : null}
         </div>
         <div className="general-instructor-application-list-item__tags">
-          <span className="general-instructor-application-list-item__tag general-instructor-application-list-item__tag--mint">
+          <span
+            className={[
+              'general-instructor-application-list-item__tag',
+              row.isNearDistance ? 'general-instructor-application-list-item__tag--mint' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
             거리 : {row.distanceKm}km
           </span>
           <span className="general-instructor-application-list-item__tag">

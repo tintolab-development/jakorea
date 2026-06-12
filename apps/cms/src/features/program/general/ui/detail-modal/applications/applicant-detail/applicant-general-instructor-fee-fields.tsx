@@ -12,7 +12,10 @@ import {
   formatLectureFeeAmountInput,
   formatLectureFeeAmountWon,
   LECTURE_FEE_BASIS_TYPE_OPTIONS,
+  LECTURE_FEE_MEASURE_NOT_APPLICABLE,
+  LECTURE_FEE_MEASURE_NOT_APPLICABLE_OPTION,
   LECTURE_FEE_MEASURE_OPTIONS,
+  DEFAULT_LECTURE_FEE_MEASURE,
   lectureFeeBasisTypeLabel,
   parseLectureFeeAmountDigits,
   resolveLectureFeeBasisFromRow,
@@ -33,7 +36,15 @@ export function LectureFeeBasisView({ instructor }: { instructor: ApplicantInstr
   const display = instructor.lectureFeeBasisDisplay?.trim()
 
   if (fee.type === 'program') {
-    return <span>{lectureFeeBasisTypeLabel('program')}</span>
+    const amountLabel = formatLectureFeeAmountWon(fee.amount)
+    if (!amountLabel) {
+      return <span>{lectureFeeBasisTypeLabel('program')}</span>
+    }
+    return (
+      <ProgramDetailTdSegmentWrap>
+        {withProgramDetailTdDivider([lectureFeeBasisTypeLabel('program'), amountLabel])}
+      </ProgramDetailTdSegmentWrap>
+    )
   }
 
   const segments: ReactNode[] = [lectureFeeBasisTypeLabel(fee.type)]
@@ -71,9 +82,27 @@ export function LectureFeeBasisEditField({
   onDraftChange: (partial: Partial<ApplicantInstructorEditDraft>) => void
   validationError?: string
 }) {
-  const showAmountFields =
-    draft.lectureFeeBasisType === 'special_lecture' ||
-    draft.lectureFeeBasisType === 'other_labor'
+  const isProgramBasis = draft.lectureFeeBasisType === 'program'
+
+  const handleBasisTypeChange = (next: ApplicantInstructorLectureFeeBasisType) => {
+    if (next === draft.lectureFeeBasisType) return
+
+    if (next === 'program') {
+      onDraftChange({
+        lectureFeeBasisType: next,
+        lectureFeeMeasure: LECTURE_FEE_MEASURE_NOT_APPLICABLE,
+      })
+      return
+    }
+
+    onDraftChange({
+      lectureFeeBasisType: next,
+      lectureFeeMeasure:
+        draft.lectureFeeMeasure === LECTURE_FEE_MEASURE_NOT_APPLICABLE
+          ? DEFAULT_LECTURE_FEE_MEASURE
+          : draft.lectureFeeMeasure,
+    })
+  }
 
   return (
     <div className="applicant-general-instructor-basic-info__lecture-fee-edit">
@@ -81,9 +110,7 @@ export function LectureFeeBasisEditField({
         className="applicant-general-instructor-basic-info__lecture-fee-radios"
         value={draft.lectureFeeBasisType}
         onChange={e =>
-          onDraftChange({
-            lectureFeeBasisType: e.target.value as ApplicantInstructorLectureFeeBasisType,
-          })
+          handleBasisTypeChange(e.target.value as ApplicantInstructorLectureFeeBasisType)
         }
       >
         {LECTURE_FEE_BASIS_TYPE_OPTIONS.map(option => (
@@ -92,31 +119,38 @@ export function LectureFeeBasisEditField({
           </CmsRadio>
         ))}
       </CmsRadioGroup>
-      {showAmountFields ? (
-        <div className="applicant-general-instructor-basic-info__lecture-fee-amount-row">
-          <CmsSelect
-            className="applicant-general-instructor-basic-info__lecture-fee-measure"
-            inputSize="medium"
-            withAllOption={false}
-            value={draft.lectureFeeMeasure || undefined}
-            options={LECTURE_FEE_MEASURE_OPTIONS}
-            onChange={v => onDraftChange({ lectureFeeMeasure: v != null ? String(v) : '' })}
-            getPopupContainer={() => document.body}
-          />
-          <CmsInput
-            className="applicant-general-instructor-basic-info__lecture-fee-amount"
-            inputSize="medium"
-            value={formatLectureFeeAmountInput(draft.lectureFeeAmount)}
-            onChange={e =>
-              onDraftChange({
-                lectureFeeAmount: parseLectureFeeAmountDigits(e.target.value),
-              })
-            }
-            inputMode="numeric"
-            suffix="원"
-          />
-        </div>
-      ) : null}
+      <div className="applicant-general-instructor-basic-info__lecture-fee-amount-row">
+        <CmsSelect
+          className="applicant-general-instructor-basic-info__lecture-fee-measure"
+          inputSize="medium"
+          withAllOption={false}
+          disabled={isProgramBasis}
+          value={
+            isProgramBasis
+              ? LECTURE_FEE_MEASURE_NOT_APPLICABLE
+              : draft.lectureFeeMeasure || undefined
+          }
+          options={
+            isProgramBasis
+              ? [LECTURE_FEE_MEASURE_NOT_APPLICABLE_OPTION]
+              : LECTURE_FEE_MEASURE_OPTIONS
+          }
+          onChange={v => onDraftChange({ lectureFeeMeasure: v != null ? String(v) : '' })}
+          getPopupContainer={() => document.body}
+        />
+        <CmsInput
+          className="applicant-general-instructor-basic-info__lecture-fee-amount"
+          inputSize="medium"
+          value={formatLectureFeeAmountInput(draft.lectureFeeAmount)}
+          onChange={e =>
+            onDraftChange({
+              lectureFeeAmount: parseLectureFeeAmountDigits(e.target.value),
+            })
+          }
+          inputMode="numeric"
+          suffix="원"
+        />
+      </div>
       <FieldError message={validationError} />
     </div>
   )

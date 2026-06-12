@@ -100,7 +100,7 @@ describe('general application table filters', () => {
     ]
     const filtered = filterGeneralInstructorApplications(rows, {
       instructorName: '김',
-      experienceYears: '3',
+      experienceYears: '1-5',
       evaluationGrade: 'A',
       approvalStatus: 'pending',
       homeSido: '서울특별시',
@@ -110,7 +110,7 @@ describe('general application table filters', () => {
     expect(filtered[0]?.instructorName).toBe('김서연')
   })
 
-  it('강사 신청 목록 — 6년 이상 경력 필터', () => {
+  it('강사 신청 목록 — 6~10년 경력 필터', () => {
     const rows: ApplicantInstructorRow[] = [
       {
         id: 'a',
@@ -139,7 +139,43 @@ describe('general application table filters', () => {
         schoolName: '',
       },
     ]
-    const filtered = filterGeneralInstructorApplications(rows, { experienceYears: '6+' })
+    const filtered = filterGeneralInstructorApplications(rows, { experienceYears: '6-10' })
+    expect(filtered).toHaveLength(1)
+    expect(filtered[0]?.instructorName).toBe('B')
+  })
+
+  it('강사 신청 목록 — D등급 필터', () => {
+    const rows: ApplicantInstructorRow[] = [
+      {
+        id: 'a',
+        no: 1,
+        instructorName: 'A',
+        lectureExperienceYears: 3,
+        educationLevel: '',
+        educationSchoolName: '',
+        contact: '',
+        email: '',
+        address: '',
+        approvalStatus: 'pending',
+        schoolName: '',
+        evaluationGrade: 'C',
+      },
+      {
+        id: 'b',
+        no: 2,
+        instructorName: 'B',
+        lectureExperienceYears: 3,
+        educationLevel: '',
+        educationSchoolName: '',
+        contact: '',
+        email: '',
+        address: '',
+        approvalStatus: 'pending',
+        schoolName: '',
+        evaluationGrade: 'D',
+      },
+    ]
+    const filtered = filterGeneralInstructorApplications(rows, { evaluationGrade: 'D' })
     expect(filtered).toHaveLength(1)
     expect(filtered[0]?.instructorName).toBe('B')
   })

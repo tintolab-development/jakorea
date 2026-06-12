@@ -23,7 +23,7 @@ import type { ApplicantInstructorEditDraft } from '@/features/program/general/li
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
-import type { SchoolTeacherEmploymentStatus } from '@/types/user'
+import { resolveInstructorAffiliationEmploymentStatus } from '@/features/program/general/lib/instructor-affiliation-employment-display'
 import {
   ProgramDetailTdSegmentWrap,
   withProgramDetailTdDivider,
@@ -37,13 +37,6 @@ import {
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/instructor-basic-info-detail-form'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-basic-info.css'
 import './participating-instructor-application-info.css'
-
-function resolveAffiliationEmploymentStatus(
-  instructor: ParticipatingInstructorRow
-): SchoolTeacherEmploymentStatus | null {
-  if (!instructor.affiliation?.trim()) return null
-  return instructor.affiliationEmploymentStatus ?? null
-}
 
 export interface ParticipatingInstructorApplicationInfoProps {
   instructor: ParticipatingInstructorRow
@@ -119,7 +112,7 @@ export function ParticipatingInstructorApplicationInfo({
     formatBirthDateAndAge(instructor.birthDate, instructor.age),
   ])
 
-  const affiliationEmploymentStatus = resolveAffiliationEmploymentStatus(instructor)
+  const affiliationEmploymentStatus = resolveInstructorAffiliationEmploymentStatus(instructor)
   const affiliationEmploymentBadge =
     affiliationEmploymentStatus != null ? (
       <AffiliationEmploymentStatusField

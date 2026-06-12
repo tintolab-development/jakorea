@@ -5,7 +5,6 @@
 
 import type { ReactNode } from 'react'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
-import { CmsRadio } from '@/shared/ui'
 import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
@@ -17,24 +16,33 @@ import {
   formatCombinedClassDisplay,
   type ApplicantInstitutionEditDraft,
 } from '@/features/program/general/lib/applicant-institution-detail-edit'
+import { isCombinedClassProgramEligible } from '@/features/program/general/lib/combined-class-edit-policy'
+import { InstitutionCombinedClassEditCell } from './institution-combined-class-edit-cell'
 import type {
   SameSchoolGradeOption,
   TextbookSelectOption,
 } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
+import type { InstitutionAffiliatedTeacherOption } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import {
   InstitutionAddressDetailEdit,
-  InstitutionComputerInRoomEdit,
+  InstitutionClassAndStudentCountEdit,
   InstitutionEducationFormatRadios,
-  InstitutionMealEdit,
-  InstitutionMultilineEdit,
-  InstitutionWaitingRoomEdit,
+  InstitutionGradeSelectEdit,
+  InstitutionReadonlyInput,
+  InstitutionTeacherEdit,
 } from './institution-application-edit-fields'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { GeneralDetailSessionLine } from '@/features/program/shared/ui/program-detail/applicant-list/general-detail-session-line'
+import {
+  resolveInstitutionApplicationProgramBridge,
+  shouldShowInstitutionApplicationScheduleParagraph,
+} from '@/features/program/general/lib/institution-application-program-bridge'
+import { formatInstitutionApplicationScheduleRowLabel } from '@/features/program/general/lib/institution-application-session-display'
+import type { Program } from '@/types/domain'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import {
   INSTITUTION_APPLICATION_INFO_COLGROUP,
@@ -86,9 +94,19 @@ export interface ApplicantGeneralInstitutionBasicInfoProps {
   onDraftChange?: (partial: Partial<ApplicantInstitutionEditDraft>) => void
   textbookOptions?: TextbookSelectOption[]
   sameSchoolGradeOptions?: SameSchoolGradeOption[]
-  canApplyCombinedClass?: boolean
+  classCountOptions?: Array<{ value: string; label: string }>
+  teacherOptions?: InstitutionAffiliatedTeacherOption[]
+  showEducationFormatField?: boolean
+  isCombinedClassProgramEligible?: boolean
+  isCombinedClassApplyRadioDisabled?: boolean
   validationErrors?: Record<string, string>
   onResendNotificationClick?: () => void
+  program?: Program | null
+  /** 정보 수정과 분리 — 코멘트 작성 버튼으로만 편집 */
+  isAdminCommentEditing?: boolean
+  adminCommentDraft?: string
+  onAdminCommentDraftChange?: (value: string) => void
+  adminCommentError?: string
 }
 
 function ProgramApprovalStatusValue({
@@ -159,20 +177,32 @@ function buildTeacherInfoCell(
   )
 }
 
-function PreferredScheduleRow({ rank, session }: { rank: number; session: ParticipatingSchoolSession }) {
+function PreferredScheduleRow({
+  rank,
+  session,
+  bridge,
+}: {
+  rank: number
+  session: ParticipatingSchoolSession
+  bridge?: ReturnType<typeof resolveInstitutionApplicationProgramBridge> | null
+}) {
   return (
     <tr>
       <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {rank}지망
+        {formatInstitutionApplicationScheduleRowLabel(rank, bridge)}
       </td>
       <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-        <GeneralDetailSessionLine session={session} />
+        <GeneralDetailSessionLine session={session} bridge={bridge} />
       </td>
     </tr>
   )
 }
 
-function buildCombinedClassViewValue(detail?: ApplicantInstitutionDetailExtend): ReactNode {
+function buildCombinedClassViewValue(
+  detail?: ApplicantInstitutionDetailExtend,
+  programEligible = true
+): ReactNode {
+  if (!programEligible) return '해당 없음'
   const display = formatCombinedClassDisplay(detail)
   if (display === '미신청') return display
   const parts = display.split(' | ').map(part => part.trim()).filter(Boolean)
@@ -181,66 +211,6 @@ function buildCombinedClassViewValue(detail?: ApplicantInstitutionDetailExtend):
     <ProgramDetailTdSegmentWrap>
       {withProgramDetailTdDivider(parts)}
     </ProgramDetailTdSegmentWrap>
-  )
-}
-
-function CombinedClassEditCell({
-  draft,
-  onDraftChange,
-  sameSchoolGradeOptions,
-  canApplyCombinedClass,
-  validationErrors,
-}: {
-  draft: ApplicantInstitutionEditDraft
-  onDraftChange: (partial: Partial<ApplicantInstitutionEditDraft>) => void
-  sameSchoolGradeOptions: SameSchoolGradeOption[]
-  canApplyCombinedClass: boolean
-  validationErrors?: Record<string, string>
-}) {
-  const isApplied = draft.combinedClassApplication === '신청'
-
-  return (
-    <div className="institution-basic-info__combined-class-edit">
-      <CmsRadio.Group
-        className="institution-basic-info__combined-class-radios"
-        value={draft.combinedClassApplication}
-        onChange={event => {
-          const next = event.target.value as ApplicantInstitutionEditDraft['combinedClassApplication']
-          onDraftChange({
-            combinedClassApplication: next,
-            combinedClassPartnerApplicantIds:
-              next === '신청' ? draft.combinedClassPartnerApplicantIds : [],
-          })
-        }}
-      >
-        <CmsRadio value="신청" disabled={!canApplyCombinedClass}>
-          신청
-        </CmsRadio>
-        <CmsRadio value="미신청">미신청</CmsRadio>
-      </CmsRadio.Group>
-      <CmsSelect
-        className="institution-basic-info__combined-class-select"
-        inputSize="large"
-        mode="multiple"
-        disabled={!isApplied}
-        placeholder={isApplied ? '합반 대상 학년 선택' : '해당 없음'}
-        value={isApplied ? draft.combinedClassPartnerApplicantIds : []}
-        options={sameSchoolGradeOptions.map(option => ({
-          label: option.label,
-          value: option.value,
-        }))}
-        onChange={value => {
-          onDraftChange({
-            combinedClassPartnerApplicantIds: Array.isArray(value) ? value.map(String) : [],
-          })
-        }}
-      />
-      {validationErrors?.combinedClassPartnerApplicantIds ? (
-        <span className="institution-basic-info__field-error">
-          {validationErrors.combinedClassPartnerApplicantIds}
-        </span>
-      ) : null}
-    </div>
   )
 }
 
@@ -253,15 +223,43 @@ export function ApplicantGeneralInstitutionBasicInfo({
   onDraftChange,
   textbookOptions = [],
   sameSchoolGradeOptions = [],
-  canApplyCombinedClass = false,
+  classCountOptions = [],
+  teacherOptions = [],
+  showEducationFormatField = false,
+  isCombinedClassProgramEligible: isCombinedClassProgramEligibleProp,
+  isCombinedClassApplyRadioDisabled = true,
   validationErrors,
   onResendNotificationClick,
+  program = null,
+  isAdminCommentEditing = false,
+  adminCommentDraft = '',
+  onAdminCommentDraftChange,
+  adminCommentError,
 }: ApplicantGeneralInstitutionBasicInfoProps) {
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
   const shouldMask = maskSensitive && institution.approvalStatus !== 'approved'
+  const institutionApplicationBridge = program
+    ? resolveInstitutionApplicationProgramBridge(program)
+    : null
+  const combinedClassProgramEligible =
+    isCombinedClassProgramEligibleProp ?? isCombinedClassProgramEligible(program)
+  const showScheduleSection =
+    institutionApplicationBridge == null ||
+    shouldShowInstitutionApplicationScheduleParagraph(institutionApplicationBridge)
 
   const classAndCount: ReactNode =
-    institution.classCount != null && institution.studentCount != null ? (
+    isEditMode && draft && onDraftChange ? (
+      <InstitutionClassAndStudentCountEdit
+        classCount={draft.classCount}
+        studentCount={draft.studentCount}
+        classCountOptions={classCountOptions}
+        onChange={patch => onDraftChange(patch)}
+        errors={{
+          classCount: validationErrors?.classCount,
+          studentCount: validationErrors?.studentCount,
+        }}
+      />
+    ) : institution.classCount != null && institution.studentCount != null ? (
       <ProgramDetailTdSegmentWrap>
         {withProgramDetailTdDivider([
           `${institution.classCount}개 학급`,
@@ -272,12 +270,30 @@ export function ApplicantGeneralInstitutionBasicInfo({
       '-'
     )
 
-  const teacherInfo = buildTeacherInfoCell(institution, detail, shouldMask)
+  const teacherInfo =
+    isEditMode && draft && onDraftChange ? (
+      <InstitutionTeacherEdit
+        name={draft.teacherName}
+        phone={draft.teacherPhone}
+        mobile={draft.teacherMobile}
+        email={draft.teacherEmail}
+        teacherOptions={teacherOptions}
+        onChange={patch => onDraftChange(patch)}
+        errors={{
+          teacherName: validationErrors?.teacherName,
+          teacherPhone: validationErrors?.teacherPhone,
+          teacherMobile: validationErrors?.teacherMobile,
+          teacherEmail: validationErrors?.teacherEmail,
+        }}
+      />
+    ) : (
+      buildTeacherInfoCell(institution, detail, shouldMask)
+    )
   const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
   const sessions = institution.sessions ?? []
 
   const textbookViewValue = detail?.textbookName ?? '-'
-  const combinedClassViewValue = buildCombinedClassViewValue(detail)
+  const combinedClassViewValue = buildCombinedClassViewValue(detail, combinedClassProgramEligible)
 
   const addressDetailValue =
     isEditMode && draft && onDraftChange ? (
@@ -291,86 +307,50 @@ export function ApplicantGeneralInstitutionBasicInfo({
     )
 
   const educationTypeValue =
-    isEditMode && draft && onDraftChange ? (
+    showEducationFormatField && isEditMode && draft && onDraftChange ? (
       <InstitutionEducationFormatRadios
         value={draft.educationFormat}
         onChange={value => onDraftChange({ educationFormat: value })}
         error={validationErrors?.educationFormat}
       />
-    ) : (
+    ) : showEducationFormatField ? (
       detail?.educationType ?? '-'
+    ) : (
+      '-'
     )
 
-  const applicationReasonValue =
-    isEditMode && draft && onDraftChange ? (
-      <InstitutionMultilineEdit
-        value={draft.applicationReason}
-        onChange={value => onDraftChange({ applicationReason: value })}
-        placeholder="신청 사유를 입력해 주세요."
-        error={validationErrors?.applicationReason}
-      />
+  const applicationReasonValue = detail?.applicationReason ?? '-'
+  const otherRequestsValue = detail?.otherRequests ?? '-'
+
+  const schoolNameValue =
+    isEditMode && draft ? (
+      <InstitutionReadonlyInput value={institution.schoolName ?? ''} />
     ) : (
-      detail?.applicationReason ?? '-'
+      institution.schoolName ?? '-'
     )
 
-  const otherRequestsValue =
+  const educationGradeValue =
     isEditMode && draft && onDraftChange ? (
-      <InstitutionMultilineEdit
-        value={draft.otherRequests}
-        onChange={value => onDraftChange({ otherRequests: value })}
-        placeholder="기타 요청사항을 입력해 주세요."
-        error={validationErrors?.otherRequests}
+      <InstitutionGradeSelectEdit
+        value={draft.educationGrade}
+        onChange={value => onDraftChange({ educationGrade: value })}
+        error={validationErrors?.educationGrade}
       />
     ) : (
-      detail?.otherRequests ?? '-'
+      institution.educationGrade ?? '-'
     )
 
-  const computerValue =
-    isEditMode && draft && onDraftChange ? (
-      <InstitutionComputerInRoomEdit
-        value={draft.computerInRoom}
-        onChange={value => onDraftChange({ computerInRoom: value })}
-        error={validationErrors?.computerInRoom}
-      />
+  const regionValue =
+    isEditMode && draft ? (
+      <InstitutionReadonlyInput value={institution.region ?? ''} />
     ) : (
-      detail?.computerInSpace ?? '-'
+      institution.region ?? '-'
     )
 
-  const waitingPlaceValue =
-    isEditMode && draft && onDraftChange ? (
-      <InstitutionWaitingRoomEdit
-        available={draft.waitingRoomAvailable}
-        location={draft.waitingRoomLocation}
-        onChange={patch => onDraftChange(patch)}
-        error={validationErrors?.waitingRoomLocation}
-      />
-    ) : (
-      detail?.waitingPlaceGuide ?? detail?.waitingRoom ?? '-'
-    )
-
-  const mealValue =
-    isEditMode && draft && onDraftChange ? (
-      <InstitutionMealEdit
-        provided={draft.mealProvided}
-        notice={draft.mealNotice}
-        onChange={patch => onDraftChange(patch)}
-        error={validationErrors?.mealNotice}
-      />
-    ) : (
-      detail?.mealInfo ?? '-'
-    )
-
-  const otherNotesValue =
-    isEditMode && draft && onDraftChange ? (
-      <InstitutionMultilineEdit
-        value={draft.parkingInfo}
-        onChange={value => onDraftChange({ parkingInfo: value })}
-        placeholder="주차, 전달사항 등을 입력해 주세요."
-        error={validationErrors?.parkingInfo}
-      />
-    ) : (
-      detail?.otherSpecialNotes ?? detail?.parkingInfo ?? '-'
-    )
+  const computerValue = detail?.computerInSpace ?? '-'
+  const waitingPlaceValue = detail?.waitingPlaceGuide ?? detail?.waitingRoom ?? '-'
+  const mealValue = detail?.mealInfo ?? '-'
+  const otherNotesValue = detail?.otherSpecialNotes ?? detail?.parkingInfo ?? '-'
 
   const textbookEditValue =
     isEditMode && draft && onDraftChange ? (
@@ -404,12 +384,23 @@ export function ApplicantGeneralInstitutionBasicInfo({
 
   const combinedClassEditValue =
     isEditMode && draft && onDraftChange ? (
-      <CombinedClassEditCell
-        draft={draft}
-        onDraftChange={onDraftChange}
+      <InstitutionCombinedClassEditCell
+        combinedClassApplication={draft.combinedClassApplication}
+        partnerIds={draft.combinedClassPartnerApplicantIds}
+        onCombinedClassApplicationChange={next =>
+          onDraftChange({
+            combinedClassApplication: next,
+            combinedClassPartnerApplicantIds:
+              next === '신청' ? draft.combinedClassPartnerApplicantIds : [],
+          })
+        }
+        onPartnerIdsChange={partnerIds =>
+          onDraftChange({ combinedClassPartnerApplicantIds: partnerIds })
+        }
         sameSchoolGradeOptions={sameSchoolGradeOptions}
-        canApplyCombinedClass={canApplyCombinedClass}
-        validationErrors={validationErrors}
+        isProgramEligible={combinedClassProgramEligible}
+        isApplyRadioDisabled={isCombinedClassApplyRadioDisabled}
+        validationError={validationErrors?.combinedClassPartnerApplicantIds}
       />
     ) : (
       combinedClassViewValue
@@ -424,15 +415,11 @@ export function ApplicantGeneralInstitutionBasicInfo({
       ) : null}
       {showAdminComment ? (
         <ApplicantAdminCommentSection
-          adminComment={isEditMode && draft ? draft.adminComment : institution.adminComment}
-          mode={isEditMode ? 'edit' : 'view'}
-          draftValue={draft?.adminComment ?? ''}
-          onDraftChange={
-            isEditMode && onDraftChange
-              ? value => onDraftChange({ adminComment: value })
-              : undefined
-          }
-          validationError={validationErrors?.adminComment}
+          adminComment={institution.adminComment}
+          mode={isAdminCommentEditing ? 'edit' : 'view'}
+          draftValue={adminCommentDraft}
+          onDraftChange={isAdminCommentEditing ? onAdminCommentDraftChange : undefined}
+          validationError={adminCommentError}
         />
       ) : null}
       <section className="applicant-institution-basic-info__section">
@@ -461,22 +448,29 @@ export function ApplicantGeneralInstitutionBasicInfo({
               <tbody>
                 <InstitutionApplicationTableRowTwoCols
                   label1="신청 기관명"
-                  value1={institution.schoolName ?? '-'}
+                  value1={schoolNameValue}
                   label2="신청 학년"
-                  value2={institution.educationGrade ?? '-'}
+                  value2={educationGradeValue}
                 />
                 <InstitutionApplicationTableRowTwoCols
                   label1="기관 소재지"
-                  value1={institution.region ?? '-'}
+                  value1={regionValue}
                   label2="상세 주소"
                   value2={addressDetailValue}
                 />
-                <InstitutionApplicationTableRowTwoCols
-                  label1="신청 학급 수 및 총 인원"
-                  value1={classAndCount}
-                  label2="희망 교육 형태"
-                  value2={educationTypeValue}
-                />
+                {showEducationFormatField ? (
+                  <InstitutionApplicationTableRowTwoCols
+                    label1="신청 학급 수 및 총 인원"
+                    value1={classAndCount}
+                    label2="희망 교육 형태"
+                    value2={educationTypeValue}
+                  />
+                ) : (
+                  <InstitutionApplicationTableRowSingleCol
+                    label="신청 학급 수 및 총 인원"
+                    value={classAndCount}
+                  />
+                )}
                 <InstitutionApplicationTableRowFullWidth label="담당 교사 정보" value={teacherInfo} />
                 <InstitutionApplicationTableRowFullWidth
                   label="신청 사유"
@@ -524,6 +518,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
         </div>
       </section>
 
+      {showScheduleSection ? (
       <section className="applicant-institution-basic-info__section">
         <h3 className="applicant-institution-basic-info__title">진행 희망 교육 일정</h3>
         <div className="applicant-institution-basic-info__table-wrap">
@@ -541,13 +536,19 @@ export function ApplicantGeneralInstitutionBasicInfo({
                 </tr>
               ) : (
                 sessions.map((session, index) => (
-                  <PreferredScheduleRow key={session.round} rank={index + 1} session={session} />
+                  <PreferredScheduleRow
+                    key={session.round}
+                    rank={index + 1}
+                    session={session}
+                    bridge={institutionApplicationBridge}
+                  />
                 ))
               )}
             </tbody>
           </table>
         </div>
       </section>
+      ) : null}
     </div>
   )
 }

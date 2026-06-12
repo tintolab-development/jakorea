@@ -72,6 +72,8 @@ import type {
   SessionLinePreset,
 } from './applicant-list-menu'
 import type { InstructorLectureAssignItem } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
+import type { Program } from '@/types/domain'
+import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 
 export type InstructorApprovalTarget =
   | { id: string; name: string; step: 'assign' }
@@ -104,6 +106,7 @@ export function useApplicantsDetail({
   sessionLinePreset,
   programId,
   detailVariant = 'legacy',
+  program = null,
 }: {
   menu: ApplicantListMenu | ''
   /** 풀페이지 모달 X: 상세가 열려 있으면 목록으로만 돌아가도록 등록 (true면 모달은 닫지 않음) */
@@ -118,10 +121,16 @@ export function useApplicantsDetail({
   sessionLinePreset?: SessionLinePreset
   programId?: string
   detailVariant?: 'legacy' | 'general'
+  program?: Program | null
 }) {
   const resolvedSessionPreset: SessionLinePreset =
     sessionLinePreset ??
     (institutionColumnPreset === 'general-detail' ? 'general-detail' : 'legacy')
+
+  const institutionApplicationBridge = useMemo(
+    () => (program ? resolveInstitutionApplicationProgramBridge(program) : null),
+    [program]
+  )
 
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -440,8 +449,9 @@ export function useApplicantsDetail({
   )
 
   const getSessionLineParts = useCallback(
-    (s: ApplicantSessionLineInput) => getSessionLinePartsPure(s, resolvedSessionPreset),
-    [resolvedSessionPreset]
+    (s: ApplicantSessionLineInput) =>
+      getSessionLinePartsPure(s, resolvedSessionPreset, institutionApplicationBridge),
+    [resolvedSessionPreset, institutionApplicationBridge]
   )
 
   const institutionColumns = useInstitutionApplicantColumns({
@@ -452,6 +462,7 @@ export function useApplicantsDetail({
     openApprovalDropdownId,
     setOpenApprovalDropdownId,
     preset: institutionColumnPreset,
+    programBridge: institutionApplicationBridge,
   })
 
   const instructorColumnsLegacy = useInstructorApplicantColumns({

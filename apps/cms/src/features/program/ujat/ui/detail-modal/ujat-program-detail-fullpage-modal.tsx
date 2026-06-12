@@ -86,6 +86,10 @@ import {
 } from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
+import {
+  PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  resolveProgramEditInfoClick,
+} from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   isUjatRecruitTab,
@@ -1558,8 +1562,16 @@ export function UjatProgramDetailFullPageModal({
               {(canEditInfo || isEditModeInfo) && (
                 <div className="ujat-detail-modal__info-header">
                   <div className="program-detail-fullpage-modal__header-actions">
-                    <CmsButton onClick={isEditModeInfo ? handleInfoSave : handleInfoEdit}>
-                      {isEditModeInfo ? '정보 저장' : '정보 수정'}
+                    <CmsButton
+                      variant="secondary"
+                      size="large"
+                      width={140}
+                      onClick={resolveProgramEditInfoClick(isEditModeInfo, {
+                        onEnterEdit: handleInfoEdit,
+                        onSaveEdit: handleInfoSave,
+                      })}
+                    >
+                      {PROGRAM_EDIT_INFO_BUTTON_LABEL}
                     </CmsButton>
                   </div>
                 </div>

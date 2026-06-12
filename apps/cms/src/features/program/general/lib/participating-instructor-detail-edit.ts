@@ -5,9 +5,11 @@ import {
   buildLectureFeeBasisDisplay,
   formatLectureFeeAmountWon,
   lectureFeeBasisTypeLabel,
+  normalizeLectureFeeMeasure,
   parseBusinessIncomeStatus,
   parseLectureFeeAmountDigits,
-  LECTURE_FEE_MEASURE_OPTIONS,
+  DEFAULT_LECTURE_FEE_MEASURE,
+  LECTURE_FEE_MEASURE_NOT_APPLICABLE,
   type ApplicantInstructorBusinessIncomeStatus,
   type ResolvedLectureFeeBasis,
 } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
@@ -39,7 +41,6 @@ export const participatingInstructorEditSchema = z
     businessIncomeEarnerStatus: z.enum(['해당', '해당 없음']),
   })
   .superRefine((data, ctx) => {
-    if (data.lectureFeeBasisType === 'program') return
     if (parseLectureFeeAmountDigits(data.lectureFeeAmount)) return
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -67,7 +68,7 @@ export function resolveLectureFeeBasisFromParticipatingRow(
   if (row.lectureFeeBasisType) {
     return {
       type: row.lectureFeeBasisType,
-      measure: row.lectureFeeMeasure?.trim() || LECTURE_FEE_MEASURE_OPTIONS[0]!.value,
+      measure: normalizeLectureFeeMeasure(row.lectureFeeMeasure, row.lectureFeeBasisType),
       amount: parseLectureFeeAmountDigits(row.lectureFeeAmount),
     }
   }
@@ -76,10 +77,12 @@ export function resolveLectureFeeBasisFromParticipatingRow(
   if (display) {
     const inferred = inferLectureFeeBasisTypeFromCategory(display)
     if (inferred === 'program') {
+      const segments = display.split('|').map(s => s.trim()).filter(Boolean)
+      const amountSegment = segments.find(s => /[\d,]+/.test(s))
       return {
         type: 'program',
-        measure: LECTURE_FEE_MEASURE_OPTIONS[0]!.value,
-        amount: '',
+        measure: LECTURE_FEE_MEASURE_NOT_APPLICABLE,
+        amount: parseLectureFeeAmountDigits(amountSegment ?? row.lectureFeeAmount),
       }
     }
 
@@ -92,11 +95,16 @@ export function resolveLectureFeeBasisFromParticipatingRow(
           ? 'other_labor'
           : 'special_lecture')
     const amountSegment = segments.find(s => /[\d,]+/.test(s)) ?? segments[segments.length - 1]
-    const measureSegment = segments.find(s => /기준/.test(s))
+    const measureSegment = segments.find(
+      s =>
+        s === '출강 1회당' ||
+        s === '1시간 당' ||
+        s === '1회 기준'
+    )
 
     return {
       type,
-      measure: measureSegment ?? LECTURE_FEE_MEASURE_OPTIONS[0]!.value,
+      measure: normalizeLectureFeeMeasure(measureSegment),
       amount: parseLectureFeeAmountDigits(amountSegment ?? row.lectureFeeAmount),
     }
   }
@@ -106,14 +114,14 @@ export function resolveLectureFeeBasisFromParticipatingRow(
   if (inferred === 'program') {
     return {
       type: 'program',
-      measure: LECTURE_FEE_MEASURE_OPTIONS[0]!.value,
+      measure: DEFAULT_LECTURE_FEE_MEASURE,
       amount: '',
     }
   }
 
   return {
     type: inferred ?? 'special_lecture',
-    measure: LECTURE_FEE_MEASURE_OPTIONS[0]!.value,
+    measure: DEFAULT_LECTURE_FEE_MEASURE,
     amount: parseLectureFeeAmountDigits(row.lectureFeeAmount) || '915000',
   }
 }
@@ -149,8 +157,7 @@ export function draftToParticipatingInstructorSavePayload(
       parsed.lectureFeeBasisType === 'program'
         ? undefined
         : parsed.lectureFeeMeasure.trim() || undefined,
-    lectureFeeAmount:
-      parsed.lectureFeeBasisType === 'program' ? undefined : amountDigits || undefined,
+    lectureFeeAmount: amountDigits || undefined,
     lectureFeeBasisDisplay,
     lectureFeeCategory: lectureFeeBasisTypeLabel(parsed.lectureFeeBasisType),
     instructorFeeGradeLabel: instructorFeeGrade || undefined,

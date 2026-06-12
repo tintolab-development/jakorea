@@ -5,7 +5,10 @@
 
 import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import type { InstitutionAffiliatedTeacherOption } from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import { INSTITUTION_APPLICATION_GRADE_OPTIONS } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import { CmsInput, CmsRadio, CmsRadioGroup, CmsTextArea } from '@/shared/ui'
+import { CmsSelect } from '@/shared/ui/cms-select'
 
 export const INSTITUTION_EDUCATION_FORMAT_OPTIONS = [
   { value: '온라인', label: '온라인' },
@@ -14,6 +17,9 @@ export const INSTITUTION_EDUCATION_FORMAT_OPTIONS = [
 ] as const
 
 export interface InstitutionApplicationDetailEditFields {
+  educationGrade: string
+  classCount: string
+  studentCount: string
   addressDetail: string
   educationFormat: string
   applicationReason: string
@@ -79,10 +85,27 @@ export function buildInstitutionApplicationEditFieldsFromApplicantDetail(
     parkingInfo?: string
     teacherInfo?: string
   },
-  institution?: { teacherName?: string; contact?: string }
+  institution?: {
+    educationGrade?: string
+    classCount?: number
+    studentCount?: number
+    teacherName?: string
+    contact?: string
+  }
 ): InstitutionApplicationDetailEditFields {
   const waitingText = detail?.waitingPlaceGuide?.trim() || detail?.waitingRoom?.trim() || ''
+  const teacherFields = parseInstitutionTeacherInfoFromApplicantDetail(detail, institution)
+
   return {
+    educationGrade: normalizeInstitutionApplicationGradeForApplicantEdit(institution?.educationGrade),
+    classCount:
+      institution?.classCount != null && institution.classCount > 0
+        ? String(institution.classCount)
+        : '',
+    studentCount:
+      institution?.studentCount != null && institution.studentCount > 0
+        ? String(institution.studentCount)
+        : '',
     addressDetail: detail?.addressDetail ?? '',
     educationFormat: detail?.educationType ?? '',
     applicationReason: detail?.applicationReason ?? '',
@@ -97,6 +120,63 @@ export function buildInstitutionApplicationEditFieldsFromApplicantDetail(
         ? ''
         : (detail?.mealInfo ?? ''),
     parkingInfo: detail?.otherSpecialNotes?.trim() || detail?.parkingInfo?.trim() || '',
+    ...teacherFields,
+  }
+}
+
+function normalizeInstitutionApplicationGradeForApplicantEdit(grade?: string): string {
+  if (!grade?.trim()) return ''
+  const match = grade.trim().match(/^(\d+)/)
+  return match ? match[1]! : grade.trim()
+}
+
+function parseInstitutionTeacherInfoFromApplicantDetail(
+  detail?: { teacherInfo?: string },
+  institution?: { teacherName?: string; contact?: string }
+): Pick<
+  InstitutionApplicationDetailEditFields,
+  'teacherName' | 'teacherPhone' | 'teacherMobile' | 'teacherEmail'
+> {
+  const raw = detail?.teacherInfo?.trim()
+  if (raw) {
+    const parsed: {
+      name?: string
+      tel?: string
+      mobile?: string
+      email?: string
+    } = {}
+
+    for (const segment of raw.split('|').map(part => part.trim()).filter(Boolean)) {
+      const nameMatch = segment.match(/^담당\s*교사\s*:\s*(.+)$/i)
+      if (nameMatch) {
+        parsed.name = nameMatch[1]?.trim()
+        continue
+      }
+      const telMatch = segment.match(/^Tel\s*:\s*(.+)$/i)
+      if (telMatch) {
+        parsed.tel = telMatch[1]?.trim()
+        continue
+      }
+      const mobileMatch = segment.match(/^M\s*:\s*(.+)$/i)
+      if (mobileMatch) {
+        parsed.mobile = mobileMatch[1]?.trim()
+        continue
+      }
+      const emailMatch = segment.match(/^E-mail\s*:\s*(.+)$/i)
+      if (emailMatch) {
+        parsed.email = emailMatch[1]?.trim()
+      }
+    }
+
+    return {
+      teacherName: parsed.name ?? institution?.teacherName ?? '',
+      teacherPhone: parsed.tel ?? institution?.contact ?? '',
+      teacherMobile: parsed.mobile ?? '',
+      teacherEmail: parsed.email ?? '',
+    }
+  }
+
+  return {
     teacherName: institution?.teacherName ?? '',
     teacherPhone: institution?.contact ?? '',
     teacherMobile: '',
@@ -105,6 +185,9 @@ export function buildInstitutionApplicationEditFieldsFromApplicantDetail(
 }
 
 export function buildInstitutionApplicationEditFieldsFromParticipatingDetail(detail: {
+  educationGrade?: string
+  classCount?: number
+  studentCount?: number
   addressDetail?: string
   educationFormat?: string
   applicationReason?: string
@@ -121,6 +204,13 @@ export function buildInstitutionApplicationEditFieldsFromParticipatingDetail(det
   teacherEmail?: string
 }): InstitutionApplicationDetailEditFields {
   return {
+    educationGrade: detail.educationGrade
+      ? normalizeInstitutionApplicationGradeForApplicantEdit(detail.educationGrade)
+      : '',
+    classCount:
+      detail.classCount != null && detail.classCount > 0 ? String(detail.classCount) : '',
+    studentCount:
+      detail.studentCount != null && detail.studentCount > 0 ? String(detail.studentCount) : '',
     addressDetail: detail.addressDetail ?? '',
     educationFormat: detail.educationFormat ?? '',
     applicationReason: detail.applicationReason ?? '',
@@ -150,6 +240,84 @@ function FieldStack({
       {children}
       {error ? <span className="institution-basic-info__field-error">{error}</span> : null}
     </div>
+  )
+}
+
+export function InstitutionReadonlyInput({ value }: { value: string }) {
+  return (
+    <CmsInput inputSize="medium" width="100%" value={value} disabled readOnly />
+  )
+}
+
+export function InstitutionGradeSelectEdit({
+  value,
+  onChange,
+  error,
+}: {
+  value: string
+  onChange: (value: string) => void
+  error?: string
+}) {
+  return (
+    <FieldStack error={error}>
+      <CmsSelect
+        className="institution-basic-info__full-width-control"
+        inputSize="medium"
+        withAllOption={false}
+        placeholder="학년 선택"
+        value={value || undefined}
+        options={INSTITUTION_APPLICATION_GRADE_OPTIONS}
+        onChange={next => onChange(String(next ?? ''))}
+      />
+    </FieldStack>
+  )
+}
+
+export function InstitutionClassAndStudentCountEdit({
+  classCount,
+  studentCount,
+  classCountOptions,
+  onChange,
+  errors,
+}: {
+  classCount: string
+  studentCount: string
+  classCountOptions: Array<{ value: string; label: string }>
+  onChange: (patch: { classCount?: string; studentCount?: string }) => void
+  errors?: Partial<Record<'classCount' | 'studentCount', string>>
+}) {
+  const firstError = errors?.classCount ?? errors?.studentCount
+
+  return (
+    <FieldStack error={firstError}>
+      <div
+        className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
+        style={inlineRowStyle}
+      >
+        <CmsSelect
+          inputSize="medium"
+          withAllOption={false}
+          disabled={classCountOptions.length === 0}
+          placeholder="신청 학급 수"
+          width={120}
+          value={classCount || undefined}
+          options={classCountOptions}
+          onChange={value => onChange({ classCount: String(value ?? '') })}
+        />
+        <span style={nowrapSpanStyle}>개 학급</span>
+        <DetailInfoForm.InputsSeparator />
+        <CmsInput
+          inputSize="medium"
+          type="number"
+          min={1}
+          placeholder="총 학생 수"
+          width={120}
+          value={studentCount}
+          onChange={event => onChange({ studentCount: event.target.value })}
+        />
+        <span style={nowrapSpanStyle}>명</span>
+      </div>
+    </FieldStack>
   )
 }
 
@@ -353,6 +521,7 @@ export function InstitutionTeacherEdit({
   email,
   onChange,
   errors,
+  teacherOptions,
 }: {
   name: string
   phone: string
@@ -360,9 +529,14 @@ export function InstitutionTeacherEdit({
   email: string
   onChange: (patch: Partial<InstitutionApplicationDetailEditFields>) => void
   errors?: Partial<Record<'teacherName' | 'teacherPhone' | 'teacherMobile' | 'teacherEmail', string>>
+  teacherOptions?: InstitutionAffiliatedTeacherOption[]
 }) {
   const firstError =
     errors?.teacherName ?? errors?.teacherPhone ?? errors?.teacherMobile ?? errors?.teacherEmail
+
+  const resolvedTeacherValue =
+    teacherOptions?.find(option => option.label === name)?.value ??
+    (name ? `legacy:${name}` : undefined)
 
   return (
     <FieldStack error={firstError}>
@@ -371,13 +545,36 @@ export function InstitutionTeacherEdit({
         style={inlineRowStyle}
       >
         <span style={nowrapSpanStyle}>담당 교사</span>
-        <CmsInput
-          inputSize="medium"
-          width={140}
-          placeholder="담당 교사명"
-          value={name}
-          onChange={e => onChange({ teacherName: e.target.value })}
-        />
+        {teacherOptions ? (
+          <CmsSelect
+            inputSize="medium"
+            width={140}
+            withAllOption={false}
+            placeholder="교사 선택"
+            value={resolvedTeacherValue}
+            options={teacherOptions.map(option => ({
+              label: option.label,
+              value: option.value,
+            }))}
+            onChange={value => {
+              const selected = teacherOptions.find(option => option.value === value)
+              if (!selected) return
+              onChange({
+                teacherName: selected.label,
+                teacherMobile: selected.mobile,
+                teacherEmail: selected.email,
+              })
+            }}
+          />
+        ) : (
+          <CmsInput
+            inputSize="medium"
+            width={140}
+            placeholder="담당 교사명"
+            value={name}
+            onChange={e => onChange({ teacherName: e.target.value })}
+          />
+        )}
         <DetailInfoForm.InputsSeparator />
         <span style={nowrapSpanStyle}>Tel</span>
         <CmsInput

@@ -171,7 +171,7 @@ export function UjatEducationProgressInstitutionDetailView({
             </CmsButton>
             <CmsButton
               type="button"
-              variant="primary"
+              variant="secondary"
               size="large"
               width={160}
               onClick={() => window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)}

@@ -3,10 +3,7 @@
  * `PermissionModal` + 알림 발송(즉시 / 발표일 / 직접 설정) 재사용
  */
 
-import {
-  PermissionModal,
-  type PermissionModalPayload,
-} from '@/shared/components/permission-modal'
+import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import './instructor-bulk-approve-modal.css'
 
 export type InstructorBulkApproveModalProps = {
@@ -25,7 +22,8 @@ function InstructorBulkApproveInfoCallout() {
       <span className="instructor-bulk-approve-modal__callout-em">
         강사비는 프로그램 기준으로 자동 책정
       </span>
-      되며,{' '}
+      되며,
+      <br />
       <span className="instructor-bulk-approve-modal__callout-em">
         기관 배정은 승인 후 강사 상세에서 개별 설정이 필요
       </span>

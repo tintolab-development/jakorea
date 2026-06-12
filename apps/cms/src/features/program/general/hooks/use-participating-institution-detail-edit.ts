@@ -3,6 +3,10 @@ import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import type { Program } from '@/types/domain'
 import type { SchoolDetailForModal } from '@/features/program/general/model/school-detail-types'
 import {
+  isCombinedClassProgramEligible,
+  resolveCombinedClassApplyRadioDisabled,
+} from '@/features/program/general/lib/combined-class-edit-policy'
+import {
   detailToParticipatingInstitutionEditDraft,
   parseParticipatingInstitutionEditDraft,
   participatingInstitutionEditDraftToDetailPatch,
@@ -53,6 +57,11 @@ export function useParticipatingInstitutionDetailEdit({
 
   const usesTextbook = useMemo(() => programUsesTextbook(program), [program])
 
+  const isCombinedClassProgramEligibleFlag = useMemo(
+    () => isCombinedClassProgramEligible(program),
+    [program]
+  )
+
   const textbookDisplay = useMemo(
     () =>
       resolveParticipatingInstitutionTextbookDisplay({
@@ -102,6 +111,7 @@ export function useParticipatingInstitutionDetailEdit({
   const canEditTextbook = usesTextbook && draft?.combinedClassApplication === '신청'
 
   const sameSchoolGradeOptions = useMemo((): SameSchoolParticipatingGradeOption[] => {
+    if (!isCombinedClassProgramEligibleFlag) return []
     return getSameSchoolParticipatingGrades(
       participatingSchoolList,
       row.schoolName,
@@ -111,9 +121,15 @@ export function useParticipatingInstitutionDetailEdit({
       label: participatingRow.educationGrade,
       educationGrade: participatingRow.educationGrade,
     }))
-  }, [participatingSchoolList, row.id, row.schoolName])
+  }, [isCombinedClassProgramEligibleFlag, participatingSchoolList, row.id, row.schoolName])
 
-  const canApplyCombinedClass = sameSchoolGradeOptions.length >= 1
+  const isCombinedClassApplyRadioDisabled = resolveCombinedClassApplyRadioDisabled(
+    sameSchoolGradeOptions
+  )
+
+  /** @deprecated isCombinedClassProgramEligibleFlag && !isCombinedClassApplyRadioDisabled */
+  const canApplyCombinedClass =
+    isCombinedClassProgramEligibleFlag && !isCombinedClassApplyRadioDisabled
 
   const resetEditState = useCallback(() => {
     setIsEditing(false)
@@ -137,7 +153,7 @@ export function useParticipatingInstitutionDetailEdit({
       textbookIdFallback,
       textbookDisplay.textbookGrade
     )
-    if (!canApplyCombinedClass) {
+    if (!isCombinedClassProgramEligibleFlag) {
       nextDraft = {
         ...nextDraft,
         combinedClassApplication: '미신청',
@@ -148,8 +164,8 @@ export function useParticipatingInstitutionDetailEdit({
     setValidationErrors({})
     setIsEditing(true)
   }, [
-    canApplyCombinedClass,
     detail,
+    isCombinedClassProgramEligibleFlag,
     textbookDisplay.textbookGrade,
     textbookDisplay.textbookId,
     textbookOptions,
@@ -197,9 +213,11 @@ export function useParticipatingInstitutionDetailEdit({
 
     const normalizedDraft = {
       ...draft,
-      combinedClassApplication: canApplyCombinedClass ? draft.combinedClassApplication : '미신청',
+      combinedClassApplication: isCombinedClassProgramEligibleFlag
+        ? draft.combinedClassApplication
+        : '미신청',
       combinedClassPartnerSchoolIds:
-        canApplyCombinedClass && draft.combinedClassApplication === '신청'
+        isCombinedClassProgramEligibleFlag && draft.combinedClassApplication === '신청'
           ? draft.combinedClassPartnerSchoolIds
           : [],
     }
@@ -228,9 +246,9 @@ export function useParticipatingInstitutionDetailEdit({
     resetEditState()
     return true
   }, [
-    canApplyCombinedClass,
     detail.id,
     draft,
+    isCombinedClassProgramEligibleFlag,
     onSaveBasicInfo,
     participatingSchoolList,
     program,
@@ -252,6 +270,8 @@ export function useParticipatingInstitutionDetailEdit({
       : false,
     sameSchoolGradeOptions,
     canApplyCombinedClass,
+    isCombinedClassProgramEligible: isCombinedClassProgramEligibleFlag,
+    isCombinedClassApplyRadioDisabled,
     enterEdit,
     cancelEdit,
     saveEdit,

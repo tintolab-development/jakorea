@@ -3,6 +3,7 @@ import type { ColumnsType } from 'antd/es/table'
 import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 
 export function useGeneralInstructorApplicantColumns(params: {
   setSelectedItem: (record: ApplicantInstructorRow) => void
@@ -49,7 +50,7 @@ export function useGeneralInstructorApplicantColumns(params: {
         dataIndex: 'evaluationGrade',
         key: 'evaluationGrade',
         align: 'center',
-        render: (v: string) => (v ? `${v}등급` : '-'),
+        render: (v: string | undefined) => formatJaEvaluationGradeCellDisplay(v),
       },
       {
         title: '연락처',

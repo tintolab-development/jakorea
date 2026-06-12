@@ -31,6 +31,10 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 /* 참여자·강사·봉사 탭 상세(썸네일·테이블) 스타일 — 하위 컴포넌트 import에만 의존하지 않도록 고정 */
 import './project-info-form-shared.css'
 import { CmsButton } from '@/shared/ui'
+import {
+  PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  resolveProgramEditInfoClick,
+} from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 
 type DetailForm = UseFormReturn<ProgramDetailEditFormValues>
@@ -166,26 +170,32 @@ function ProjectInfoDetailTabsRow({
   onVolunteersSave: () => void
   onPreview: () => void
 }) {
+  const editInfoButton = (isEditing: boolean, onSave: () => void) => (
+    <CmsButton
+      variant="secondary"
+      size="large"
+      width={140}
+      onClick={resolveProgramEditInfoClick(isEditing, {
+        onEnterEdit: onInfoEdit,
+        onSaveEdit: onSave,
+      })}
+    >
+      {PROGRAM_EDIT_INFO_BUTTON_LABEL}
+    </CmsButton>
+  )
+
   const trailing =
     displayProgram != null ? (
       <>
-        {activeTab === 'info' ? (
-          <CmsButton onClick={isEditModeInfo ? onInfoSave : onInfoEdit}>
-            {isEditModeInfo ? '정보 저장' : '정보 수정'}
-          </CmsButton>
-        ) : activeTab === 'institutions' ? (
-          <CmsButton onClick={isEditModeInstitutions ? onInstitutionsSave : onInfoEdit}>
-            {isEditModeInstitutions ? '정보 저장' : '정보 수정'}
-          </CmsButton>
-        ) : activeTab === 'volunteers' ? (
-          <CmsButton onClick={isEditModeVolunteers ? onVolunteersSave : onInfoEdit}>
-            {isEditModeVolunteers ? '정보 저장' : '정보 수정'}
-          </CmsButton>
-        ) : activeTab === 'instructors' ? (
-          <CmsButton onClick={isEditModeInstructors ? onInstructorsSave : onInfoEdit}>
-            {isEditModeInstructors ? '정보 저장' : '정보 수정'}
-          </CmsButton>
-        ) : null}
+        {activeTab === 'info'
+          ? editInfoButton(isEditModeInfo, onInfoSave)
+          : activeTab === 'institutions'
+            ? editInfoButton(isEditModeInstitutions, onInstitutionsSave)
+            : activeTab === 'volunteers'
+              ? editInfoButton(isEditModeVolunteers, onVolunteersSave)
+              : activeTab === 'instructors'
+                ? editInfoButton(isEditModeInstructors, onInstructorsSave)
+                : null}
         <CmsButton width={180} onClick={onPreview}>
           프로그램 상세 미리보기
         </CmsButton>

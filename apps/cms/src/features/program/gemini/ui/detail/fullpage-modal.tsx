@@ -6,6 +6,10 @@ import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
+import {
+  PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  resolveProgramEditInfoClick,
+} from '@/features/program/shared/lib/program-edit-info-button'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE, MESSAGES } from '@/shared/constants/messages'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { LnbIconProjectInfo } from '@/features/program/general/ui/detail-modal/program-detail-lnb-icons'
@@ -135,9 +139,12 @@ export function GeminiRecruitmentDetailFullPageModal({
                     variant="secondary"
                     size="large"
                     width={160}
-                    onClick={isEditModeInfo ? handleInfoSaveClick : handleInfoEdit}
+                    onClick={resolveProgramEditInfoClick(isEditModeInfo, {
+                      onEnterEdit: handleInfoEdit,
+                      onSaveEdit: handleInfoSaveClick,
+                    })}
                   >
-                    {isEditModeInfo ? '정보 저장' : '정보 수정'}
+                    {PROGRAM_EDIT_INFO_BUTTON_LABEL}
                   </CmsButton>
                 ) : null}
                 <CmsButton

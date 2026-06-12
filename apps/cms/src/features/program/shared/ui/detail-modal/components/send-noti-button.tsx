@@ -1,6 +1,5 @@
 import { CmsButton } from '@/shared/ui'
 import type { CmsButtonProps } from '@/shared/ui'
-import './send-noti-button.css'
 
 function defaultSendNotiClick() {
   window.alert('준비 중입니다.')
@@ -20,7 +19,6 @@ export function SendNotiButton({ mode = 'send', onClick }: SendNotiButtonProps) 
       variant="secondary"
       size="small"
       type="button"
-      className="send-noti-button"
       onClick={onClick ?? defaultSendNotiClick}
     >
       {label}

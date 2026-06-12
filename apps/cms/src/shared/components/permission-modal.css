@@ -57,3 +57,27 @@
   gap: 8px;
   width: 100%;
 }
+
+.permission-modal__manual-anchor {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
+/* 알림 발송 — 직접 설정(span)과 동일한 flex 행·세로 중앙 정렬 */
+.permission-modal__field > .app-radio-group.ant-radio-group {
+  margin-top: 12px;
+  padding-left: 8px;
+  align-items: center;
+}
+
+.permission-modal__field > .app-radio-group .ant-radio-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+  align-self: center;
+  margin-inline-end: 0 !important;
+}
+
+.permission-modal__field > .app-radio-group .ant-radio-wrapper .ant-radio {
+  top: 0 !important;
+}

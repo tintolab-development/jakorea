@@ -2,6 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
+import {
+  PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  resolveProgramEditInfoClick,
+} from '@/features/program/shared/lib/program-edit-info-button'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -122,13 +126,12 @@ export function UjatEducationProgressVolunteerDetailView({
     })
   }
 
-  const handleToggleEdit = () => {
-    if (!isEditing) {
-      setPreferredRegionDraft(detail.applicant.preferredRegion)
-      setIsEditing(true)
-      return
-    }
+  const handleEnterEdit = () => {
+    setPreferredRegionDraft(detail.applicant.preferredRegion)
+    setIsEditing(true)
+  }
 
+  const handleSaveEdit = () => {
     const profileId = parseEducationProgressVolunteerProfileId(detail.volunteerId)
     if (profileId) {
       patchUjatVolunteerMockProfilePreferredRegion(profileId, preferredRegionDraft)
@@ -176,12 +179,15 @@ export function UjatEducationProgressVolunteerDetailView({
       </CmsButton>
       <CmsButton
         type="button"
-        variant="primary"
+        variant="secondary"
         size="large"
         width={140}
-        onClick={handleToggleEdit}
+        onClick={resolveProgramEditInfoClick(isEditing, {
+          onEnterEdit: handleEnterEdit,
+          onSaveEdit: handleSaveEdit,
+        })}
       >
-        {isEditing ? '정보 저장' : '정보 수정'}
+        {PROGRAM_EDIT_INFO_BUTTON_LABEL}
       </CmsButton>
       <PersonalInfoRevealButton
         labelMode="stickyReveal"

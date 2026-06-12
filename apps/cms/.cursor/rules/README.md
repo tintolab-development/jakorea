@@ -100,6 +100,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [UJAT 신청 기관 임시 배정](./process/ujat-institution-schedule-assign-spec.md) — `inst_schedule_assign` 날짜별 배정·배정값 산정
 - [UJAT 참여 봉사자 상세 — 교육 배정 및 진행 현황](./process/volunteer-assignment-tab-spec.md) — 역할 드롭다운·출결 담당 1명·활동 포기 행 오버레이
 - [일반 프로그램 — 참여 강사 상세 · 활동 포기](./process/participating-instructor-activity-withdraw-spec.md) — 기관 사유 포기·실적 반영(중단일까지) API 연동 규칙
+- [일반 프로그램 — 기관 합반 신청 여부](./process/applicant-institution-combined-class-spec.md) — 단일 회차·라디오+셀렉·타 학년 lookup·교육 일정 안내
 - Other `process/*` files — feature-specific UI specs (English).  
 
 ---

@@ -115,7 +115,7 @@ export function buildInstructorInstitutionCalendarEvents(
 
     events.push({
       id: key,
-      title: `[참여기관] ${bucket.schoolName} | ${regionShort}`,
+      title: bucket.schoolName,
       startDate: dayIso,
       endDate: dayIso,
       originalItem,

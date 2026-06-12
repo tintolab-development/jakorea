@@ -117,12 +117,8 @@ export function DateTimePickerPopover({
   }, [open, value, disabledDate])
 
   const buildDraftDateTime = useCallback(
-    (
-      date: Dayjs,
-      hour = singleHour,
-      minute = singleMinute,
-      mer = singleMer
-    ) => buildTime(date, parseNum(hour, 12), parseNum(minute, 0), mer),
+    (date: Dayjs, hour = singleHour, minute = singleMinute, mer = singleMer) =>
+      buildTime(date, parseNum(hour, 12), parseNum(minute, 0), mer),
     [singleHour, singleMinute, singleMer]
   )
 
@@ -172,7 +168,7 @@ export function DateTimePickerPopover({
       >
         <div className="date-time-picker-popover__body">
           <div className="date-time-picker-popover__calendar">
-            <div className="calendar-mini date-time-picker-popover__calendar-mini">
+            <div className="date-time-picker-popover__calendar-mini">
               <CalendarMini
                 currentMonth={calendarMonth}
                 selectedDate={draft}

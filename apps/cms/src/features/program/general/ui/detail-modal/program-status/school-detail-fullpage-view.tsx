@@ -9,7 +9,11 @@ import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { CmsButton, CmsRadio, useCmsAlert } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
+import {
+  PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  resolveProgramEditInfoClick,
+} from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
@@ -87,10 +91,9 @@ import {
   InstitutionWaitingRoomEdit,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
-import {
-  formatParticipatingCombinedClassDisplay,
-  type ParticipatingInstitutionEditDraft,
-} from '@/features/program/general/lib/participating-institution-detail-edit'
+import { isCombinedClassProgramEligible } from '@/features/program/general/lib/combined-class-edit-policy'
+import { formatParticipatingCombinedClassDisplay } from '@/features/program/general/lib/participating-institution-detail-edit'
+import { InstitutionCombinedClassEditCell } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-combined-class-edit-cell'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
@@ -196,7 +199,11 @@ function withTdDivider(segments: ReactNode[]) {
   )
 }
 
-function buildCombinedClassViewValue(detail: SchoolDetailForModal): ReactNode {
+function buildCombinedClassViewValue(
+  detail: SchoolDetailForModal,
+  programEligible = true
+): ReactNode {
+  if (!programEligible) return '해당 없음'
   const display = formatParticipatingCombinedClassDisplay(detail)
   if (display === '미신청') return display
   const parts = display.split(' | ').map(part => part.trim()).filter(Boolean)
@@ -205,67 +212,6 @@ function buildCombinedClassViewValue(detail: SchoolDetailForModal): ReactNode {
     <ProgramDetailTdSegmentWrap>
       {withProgramDetailTdDivider(parts)}
     </ProgramDetailTdSegmentWrap>
-  )
-}
-
-function ParticipatingCombinedClassEditCell({
-  draft,
-  onDraftChange,
-  sameSchoolGradeOptions,
-  canApplyCombinedClass,
-  validationErrors,
-}: {
-  draft: ParticipatingInstitutionEditDraft
-  onDraftChange: (partial: Partial<ParticipatingInstitutionEditDraft>) => void
-  sameSchoolGradeOptions: Array<{ value: string; label: string }>
-  canApplyCombinedClass: boolean
-  validationErrors?: Record<string, string>
-}) {
-  const combinedClassValue = canApplyCombinedClass ? draft.combinedClassApplication : '미신청'
-  const isApplied = combinedClassValue === '신청'
-
-  return (
-    <div className="institution-basic-info__combined-class-edit">
-      <CmsRadio.Group
-        className="institution-basic-info__combined-class-radios"
-        value={combinedClassValue}
-        disabled={!canApplyCombinedClass}
-        onChange={event => {
-          const next = event.target.value as ParticipatingInstitutionEditDraft['combinedClassApplication']
-          onDraftChange({
-            combinedClassApplication: next,
-            combinedClassPartnerSchoolIds:
-              next === '신청' ? draft.combinedClassPartnerSchoolIds : [],
-          })
-        }}
-      >
-        <CmsRadio value="미신청">미신청</CmsRadio>
-        <CmsRadio value="신청">신청</CmsRadio>
-      </CmsRadio.Group>
-      {isApplied ? (
-        <CmsSelect
-          className="institution-basic-info__combined-class-select"
-          inputSize="large"
-          mode="multiple"
-          placeholder="타 학년 선택"
-          value={draft.combinedClassPartnerSchoolIds}
-          options={sameSchoolGradeOptions.map(option => ({
-            label: option.label,
-            value: option.value,
-          }))}
-          onChange={value => {
-            onDraftChange({
-              combinedClassPartnerSchoolIds: Array.isArray(value) ? value.map(String) : [],
-            })
-          }}
-        />
-      ) : null}
-      {validationErrors?.combinedClassPartnerSchoolIds ? (
-        <span className="institution-basic-info__field-error">
-          {validationErrors.combinedClassPartnerSchoolIds}
-        </span>
-      ) : null}
-    </div>
   )
 }
 
@@ -376,7 +322,8 @@ export function GeneralParticipatingInstitutionDetailView({
     usesTextbook,
     canEditTextbook,
     sameSchoolGradeOptions,
-    canApplyCombinedClass,
+    isCombinedClassProgramEligible: isCombinedClassProgramEligibleFlag,
+    isCombinedClassApplyRadioDisabled,
     enterEdit: enterApplicationInfoEdit,
     saveEdit: saveApplicationInfoEdit,
     updateDraft: updateApplicationInfoDraft,
@@ -842,17 +789,31 @@ export function GeneralParticipatingInstitutionDetailView({
       </div>
     )
 
+  const combinedClassProgramEligible =
+    isCombinedClassProgramEligibleFlag ?? isCombinedClassProgramEligible(program)
+
   const combinedClassCell =
     isApplicationInfoEditing && applicationInfoDraft ? (
-      <ParticipatingCombinedClassEditCell
-        draft={applicationInfoDraft}
-        onDraftChange={updateApplicationInfoDraft}
+      <InstitutionCombinedClassEditCell
+        combinedClassApplication={applicationInfoDraft.combinedClassApplication}
+        partnerIds={applicationInfoDraft.combinedClassPartnerSchoolIds}
+        onCombinedClassApplicationChange={next =>
+          updateApplicationInfoDraft({
+            combinedClassApplication: next,
+            combinedClassPartnerSchoolIds:
+              next === '신청' ? applicationInfoDraft.combinedClassPartnerSchoolIds : [],
+          })
+        }
+        onPartnerIdsChange={partnerIds =>
+          updateApplicationInfoDraft({ combinedClassPartnerSchoolIds: partnerIds })
+        }
         sameSchoolGradeOptions={sameSchoolGradeOptions}
-        canApplyCombinedClass={canApplyCombinedClass}
-        validationErrors={applicationInfoValidationErrors}
+        isProgramEligible={combinedClassProgramEligible}
+        isApplyRadioDisabled={isCombinedClassApplyRadioDisabled}
+        validationError={applicationInfoValidationErrors?.combinedClassPartnerSchoolIds}
       />
     ) : (
-      buildCombinedClassViewValue(mergedDetail)
+      buildCombinedClassViewValue(mergedDetail, combinedClassProgramEligible)
     )
 
   const isApplicationDetailEditing =
@@ -884,16 +845,15 @@ export function GeneralParticipatingInstitutionDetailView({
                 활동 포기
               </CmsButton>
               <CmsButton
-                variant="primary"
+                variant="secondary"
                 size="large"
                 width={140}
-                onClick={
-                  isApplicationInfoEditing
-                    ? () => saveApplicationInfoEdit()
-                    : enterApplicationInfoEdit
-                }
+                onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
+                  onEnterEdit: enterApplicationInfoEdit,
+                  onSaveEdit: () => saveApplicationInfoEdit(),
+                })}
               >
-                {isApplicationInfoEditing ? '정보 저장' : '정보 수정'}
+                {PROGRAM_EDIT_INFO_BUTTON_LABEL}
               </CmsButton>
               <PersonalInfoRevealButton
                 labelMode="toggle"

@@ -47,6 +47,13 @@
   width: 100%;
 }
 
+.institution-basic-info__combined-class-unavailable {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
 .institution-basic-info__combined-class-radios {
   display: inline-flex;
   flex-wrap: wrap;

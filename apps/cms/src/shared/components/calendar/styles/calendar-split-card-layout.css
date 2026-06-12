@@ -112,7 +112,7 @@
 }
 
 .calendar-split-card--left .ant-picker-content {
-  overflow: hidden;
+  overflow: visible;
 }
 
 .calendar-split-card--right {

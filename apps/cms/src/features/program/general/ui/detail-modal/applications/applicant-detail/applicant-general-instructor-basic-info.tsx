@@ -9,12 +9,13 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import type { SchoolTeacherEmploymentStatus } from '@/types/user'
+import { resolveInstructorAffiliationEmploymentStatus } from '@/features/program/general/lib/instructor-affiliation-employment-display'
 import {
   ProgramDetailTdSegmentWrap,
   withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { ApplicantInstructorEditDraft } from '@/features/program/general/lib/applicant-instructor-detail-edit'
+import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 import {
   BusinessIncomeEditField,
   BusinessIncomeView,
@@ -31,17 +32,6 @@ import {
   InstructorBasicInfoDetailForm,
 } from './instructor-basic-info-detail-form'
 import './applicant-general-instructor-basic-info.css'
-
-function resolveAffiliationEmploymentStatus(
-  instructor: ApplicantInstructorRow
-): SchoolTeacherEmploymentStatus | null {
-  if (!instructor.affiliation?.trim()) return null
-  if (instructor.affiliationEmploymentStatus) {
-    return instructor.affiliationEmploymentStatus
-  }
-  if (instructor.affiliationIsCurrentlyEmployed) return 'ACTIVE'
-  return null
-}
 
 export interface ApplicantGeneralInstructorBasicInfoProps {
   instructor: ApplicantInstructorRow
@@ -103,7 +93,7 @@ export function ApplicantGeneralInstructorBasicInfo({
     formatBirthDateAndAge(instructor.birthDate, instructor.age),
   ])
 
-  const affiliationEmploymentStatus = resolveAffiliationEmploymentStatus(instructor)
+  const affiliationEmploymentStatus = resolveInstructorAffiliationEmploymentStatus(instructor)
   const affiliationEmploymentBadge =
     affiliationEmploymentStatus != null ? (
       <AffiliationEmploymentStatusField
@@ -138,9 +128,7 @@ export function ApplicantGeneralInstructorBasicInfo({
       : instructor.email
     : '-'
 
-  const evaluationGradeDisplay = instructor.evaluationGrade
-    ? `${instructor.evaluationGrade}등급`
-    : '-'
+  const evaluationGradeDisplay = formatJaEvaluationGradeCellDisplay(instructor.evaluationGrade)
 
   const lectureFeeView = <LectureFeeBasisView instructor={instructor} />
   const lectureFeeEdit =

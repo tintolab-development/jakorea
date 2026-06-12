@@ -5,6 +5,10 @@ import {
   createInstitutionAddressRegionFilterField,
 } from '@/shared/config/institution-address-region-filter-field'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
+import {
+  INSTRUCTOR_JA_EVALUATION_GRADE_FILTER_OPTIONS,
+  INSTRUCTOR_JA_EXPERIENCE_FILTER_OPTIONS,
+} from '@/features/program/general/lib/instructor-application-filter-options'
 
 const GRADE_OPTIONS = [
   { label: '전체', value: 'all' },
@@ -104,22 +108,9 @@ export const generalIndividualApplicationFilterFields: FilterFieldConfig[] = [
   },
 ]
 
-const INSTRUCTOR_EXPERIENCE_YEARS_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: '1년', value: '1' },
-  { label: '2년', value: '2' },
-  { label: '3년', value: '3' },
-  { label: '4년', value: '4' },
-  { label: '5년', value: '5' },
-  { label: '6년 이상', value: '6+' },
-]
+const INSTRUCTOR_EXPERIENCE_YEARS_OPTIONS = INSTRUCTOR_JA_EXPERIENCE_FILTER_OPTIONS
 
-const INSTRUCTOR_EVALUATION_GRADE_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: 'A등급', value: 'A' },
-  { label: 'B등급', value: 'B' },
-  { label: 'C등급', value: 'C' },
-]
+const INSTRUCTOR_EVALUATION_GRADE_OPTIONS = [...INSTRUCTOR_JA_EVALUATION_GRADE_FILTER_OPTIONS]
 
 /** 일반 프로그램 상세 — 강사 신청 목록 필터 (스크린샷 라벨) */
 export const generalInstructorApplicationFilterFields: FilterFieldConfig[] = [

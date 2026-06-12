@@ -24,6 +24,10 @@ import {
 } from '@/shared/constants/messages'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import {
+  PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  resolveProgramEditInfoClick,
+} from '@/features/program/shared/lib/program-edit-info-button'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -896,13 +900,12 @@ export function ParticipatingInstructorFullpageView({
                 size="large"
                 width={140}
                 disabled={isAdminCommentEditing}
-                onClick={
-                  applicationInfoEdit.isEditing
-                    ? () => applicationInfoEdit.saveEdit()
-                    : applicationInfoEdit.enterEdit
-                }
+                onClick={resolveProgramEditInfoClick(applicationInfoEdit.isEditing, {
+                  onEnterEdit: applicationInfoEdit.enterEdit,
+                  onSaveEdit: () => applicationInfoEdit.saveEdit(),
+                })}
               >
-                {applicationInfoEdit.isEditing ? '정보 저장' : '정보 수정'}
+                {PROGRAM_EDIT_INFO_BUTTON_LABEL}
               </CmsButton>
               <CmsButton
                 variant="primary"

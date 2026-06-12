@@ -23,7 +23,7 @@
 .app-radio-group--large .ant-radio-wrapper,
 .app-radio--large.ant-radio-wrapper {
   display: inline-flex;
-  align-items: center;
+  align-items: center !important;
   gap: 8px;
   margin-inline-end: 0;
   font-size: 16px;
@@ -32,8 +32,8 @@
   color: var(--default-BK, #3d3d3d);
 }
 
-.app-radio-group--large .ant-radio-inner,
-.app-radio--large .ant-radio-inner {
+.app-radio-group--large .ant-radio-wrapper .ant-radio .ant-radio-inner,
+.app-radio--large.ant-radio-wrapper .ant-radio .ant-radio-inner {
   width: 20px;
   height: 20px;
   border-width: 1px;
@@ -43,8 +43,8 @@
   box-sizing: border-box;
 }
 
-.app-radio-group--large .ant-radio-checked .ant-radio-inner::after,
-.app-radio--large .ant-radio-checked .ant-radio-inner::after {
+.app-radio-group--large .ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after,
+.app-radio--large.ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after {
   width: 10px !important;
   height: 10px !important;
   margin-block-start: 0 !important;
@@ -71,8 +71,8 @@
   color: var(--default-BK, #3d3d3d);
 }
 
-.app-radio-group--medium .ant-radio-inner,
-.app-radio--medium .ant-radio-inner {
+.app-radio-group--medium .ant-radio-wrapper .ant-radio .ant-radio-inner,
+.app-radio--medium.ant-radio-wrapper .ant-radio .ant-radio-inner {
   width: 18px;
   height: 18px;
   border-width: 1px;
@@ -82,8 +82,8 @@
   box-sizing: border-box;
 }
 
-.app-radio-group--medium .ant-radio-checked .ant-radio-inner::after,
-.app-radio--medium .ant-radio-checked .ant-radio-inner::after {
+.app-radio-group--medium .ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after,
+.app-radio--medium.ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after {
   width: 9px !important;
   height: 9px !important;
   margin-block-start: 0 !important;
@@ -93,13 +93,18 @@
   transform: translate(-50%, -50%) scale(1) !important;
 }
 
+/* Ant baseline spacer 제거 — flex row에서 항목별 세로 위치 틀어짐 방지 */
+.app-radio-group .ant-radio-wrapper::after {
+  display: none !important;
+}
+
 /* ----- 공통: 선택·호버 ----- */
-.app-radio-group--large .ant-radio,
-.app-radio-group--medium .ant-radio,
-.app-radio--large .ant-radio,
-.app-radio--medium .ant-radio {
+.app-radio-group--large .ant-radio-wrapper .ant-radio,
+.app-radio-group--medium .ant-radio-wrapper .ant-radio,
+.app-radio--large.ant-radio-wrapper .ant-radio,
+.app-radio--medium.ant-radio-wrapper .ant-radio {
   align-self: center;
-  top: 0;
+  top: 0 !important;
 }
 
 .app-radio-group--large .ant-radio-checked .ant-radio-inner,

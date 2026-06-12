@@ -7,6 +7,10 @@ import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsButton } from '@/shared/ui'
+import {
+  PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  resolveProgramEditInfoClick,
+} from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   DetailInfoSection,
@@ -151,8 +155,16 @@ export function GeneralProgramRecruitmentView({
         })}
         trailing={
           canWrite || isEditMode ? (
-            <CmsButton onClick={isEditMode ? onSave : onEdit}>
-              {isEditMode ? '정보 저장' : '정보 수정'}
+            <CmsButton
+              variant="secondary"
+              size="large"
+              width={140}
+              onClick={resolveProgramEditInfoClick(isEditMode, {
+                onEnterEdit: onEdit,
+                onSaveEdit: onSave,
+              })}
+            >
+              {PROGRAM_EDIT_INFO_BUTTON_LABEL}
             </CmsButton>
           ) : null
         }

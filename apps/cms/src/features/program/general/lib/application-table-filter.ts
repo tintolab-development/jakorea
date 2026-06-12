@@ -1,14 +1,7 @@
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
-
-function matchesExperienceYears(rowYears: number, filter: unknown): boolean {
-  const raw = String(filter ?? 'all')
-  if (raw === 'all' || raw === '') return true
-  if (raw === '6+') return rowYears >= 6
-  const parsed = Number(raw)
-  return !Number.isNaN(parsed) && rowYears === parsed
-}
+import { matchesInstructorJaExperienceYears } from '@/features/program/general/lib/instructor-application-filter-options'
 
 function matchesAddressRegion(
   address: string,
@@ -97,7 +90,7 @@ export function filterGeneralInstructorApplications(
   return rows.filter(item => {
     if (instructorName && !item.instructorName.includes(instructorName)) return false
     if (!matchesAddressRegion(item.address, homeSido, homeSigungu)) return false
-    if (!matchesExperienceYears(item.lectureExperienceYears, experienceYears)) return false
+    if (!matchesInstructorJaExperienceYears(item.lectureExperienceYears, experienceYears)) return false
     if (
       evaluationGrade &&
       evaluationGrade !== 'all' &&

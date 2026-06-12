@@ -300,13 +300,14 @@ export function WeekView({
                 )
 
                 const fullDayPreview =
-                  eventsConfig.previewTooltipContent != null
+                  dayEvents.length > 0 && eventsConfig.previewTooltipContent != null
                     ? buildEventsPreview(
                         dayEvents,
                         resolvedDayColors,
                         eventsConfig.previewTooltipContent
                       )
                     : null
+                const fullDayPreviewEnabled = dayEvents.length > 0 && fullDayPreview != null
 
                 return (
                   <div
@@ -316,7 +317,7 @@ export function WeekView({
                     onClick={() => onSelectDate(date)}
                   >
                     <CalendarPreviewTooltip
-                      enabled={fullDayPreview != null}
+                      enabled={fullDayPreviewEnabled}
                       content={fullDayPreview}
                       tooltipOverlayClassName={tooltipOverlayClassName}
                     >

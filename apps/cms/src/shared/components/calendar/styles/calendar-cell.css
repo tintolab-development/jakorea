@@ -22,27 +22,71 @@
 }
 
 /*
- * Ant Calendar 월간 그리드: 셀마다 right+bottom으로 1px만 그어 이웃과 이중선이 나오지 않게 함.
- * 첫 열·첫 행에만 left / top 추가.
+ * Ant Calendar 월간 그리드: td에 right+bottom 1px — nested .calendar-cell min-width가
+ * td를 넘치면 금~토 등 구분선이 가려지므로 선은 td에만 둔다.
  * (대시보드 위젯 등은 program-schedule-widget.css에서 별도 처리)
  */
-.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td .calendar-cell {
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td {
   border-right: 1px solid var(--table-line, #e0e0e0);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
+  padding: 0;
+  vertical-align: top;
+  box-sizing: border-box;
+}
+
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td:first-child {
+  border-left: 1px solid var(--table-line, #e0e0e0);
+}
+
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:first-child td {
+  border-top: 1px solid var(--table-line, #e0e0e0);
+}
+
+/* clip·서브픽셀 라운딩 시 마지막 열(토) 우측·금~토 구분선 유지 */
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td:last-child {
+  border-right: 1px solid var(--table-line, #e0e0e0);
+}
+
+.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody td .calendar-cell {
+  border: none;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .calendar-main
   .ant-picker-calendar-mini
   .ant-picker-content
   tbody
-  tr
-  td:first-child
-  .calendar-cell {
-  border-left: 1px solid var(--table-line, #e0e0e0);
+  tr:first-child
+  td:first-child {
+  border-top-left-radius: var(--radius-8, 8px);
 }
 
-.calendar-main .ant-picker-calendar-mini .ant-picker-content tbody tr:first-child .calendar-cell {
-  border-top: 1px solid var(--table-line, #e0e0e0);
+.calendar-main
+  .ant-picker-calendar-mini
+  .ant-picker-content
+  tbody
+  tr:first-child
+  td:last-child {
+  border-top-right-radius: var(--radius-8, 8px);
+}
+
+.calendar-main
+  .ant-picker-calendar-mini
+  .ant-picker-content
+  tbody
+  tr:last-child
+  td:first-child {
+  border-bottom-left-radius: var(--radius-8, 8px);
+}
+
+.calendar-main
+  .ant-picker-calendar-mini
+  .ant-picker-content
+  tbody
+  tr:last-child
+  td:last-child {
+  border-bottom-right-radius: var(--radius-8, 8px);
 }
 
 .calendar-main

@@ -1,8 +1,8 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import {
   updateApplicantSchoolApprovalStatus,
   patchApplicantSchoolForApprovalStatus,
@@ -151,6 +151,7 @@ export function ApplicantList({
   detailVariant = 'legacy',
   onApplicantDetailMetaChange,
 }: ApplicantListProps) {
+  const { showAlert } = useCmsAlert()
   const {
     applicantsCalendarGranularity,
     setApplicantsCalendarGranularity,
@@ -202,6 +203,7 @@ export function ApplicantList({
     sessionLinePreset,
     programId,
     detailVariant,
+    program,
   })
 
   const institutionTableWrapRef = useRef<HTMLDivElement>(null)
@@ -435,8 +437,16 @@ export function ApplicantList({
     )
   }, [participantCancelRejectTarget, individualList, selectedItem])
 
+  const showNoSelectionAlert = useCallback(() => {
+    showAlert({
+      title: '항목 선택 안내',
+      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+    })
+  }, [showAlert])
+
   const handleBulkRejectClick = () => {
     if (selectedRowKeys.length === 0) {
+      showNoSelectionAlert()
       return
     }
     if (useGeneralInstitutionActionModal) {
@@ -456,6 +466,7 @@ export function ApplicantList({
 
   const handleBulkApproveClick = () => {
     if (selectedRowKeys.length === 0) {
+      showNoSelectionAlert()
       return
     }
     if (useGeneralInstitutionActionModal) {
@@ -1474,13 +1485,13 @@ export function ApplicantList({
           description={`${tableData.length}건`}
           actions={
             <div style={{ display: 'flex', gap: '8px' }}>
-              <CmsButton variant="delete" size="large" width={160} onClick={handleBulkRejectClick}>
+              <CmsButton variant="delete" size="large" width={140} onClick={handleBulkRejectClick}>
                 선택 반려
               </CmsButton>
               <CmsButton
                 variant="secondary"
                 size="large"
-                width={160}
+                width={140}
                 onClick={handleBulkApproveClick}
               >
                 선택 승인

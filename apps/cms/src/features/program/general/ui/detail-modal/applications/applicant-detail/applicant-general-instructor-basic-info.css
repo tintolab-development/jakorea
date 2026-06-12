@@ -69,6 +69,12 @@
   width: 100%;
 }
 
+/* DetailInfoForm 편집 슬롯의 align-items: center(교차축 중앙) 오버라이드 */
+.detail-info-form__field-content--edit > .applicant-general-instructor-basic-info__field-stack {
+  align-self: stretch;
+  align-items: flex-start;
+}
+
 .applicant-general-instructor-basic-info__field-error {
   color: #c32f4a;
   font-size: 13px;
@@ -109,8 +115,8 @@
 }
 
 .applicant-general-instructor-basic-info__lecture-fee-amount {
-  width: 160px;
-  min-width: 160px;
+  width: 120px;
+  min-width: 120px;
 }
 
 /* 자택 주소: 읍·면·동(또는 구) 이후 가우시안 블러 */
