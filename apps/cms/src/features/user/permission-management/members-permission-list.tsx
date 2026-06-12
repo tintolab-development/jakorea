@@ -40,7 +40,7 @@ import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './members-permission-list.css'
-import { CmsButton, ContentModal } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH, ContentModal } from '@/shared/ui'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { usePersonalInfoRevealByRow } from '@/features/user/detail/lib/use-personal-info-reveal'
 
@@ -557,6 +557,8 @@ export const MembersPermissionList = forwardRef<
         <>
           <CmsButton
             variant="delete"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
             onClick={bulkReject}
             disabled={!canWrite || selectedRowKeys.length === 0}
           >
@@ -564,6 +566,8 @@ export const MembersPermissionList = forwardRef<
           </CmsButton>
           <CmsButton
             variant="secondary"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
             onClick={bulkApprove}
             disabled={!canWrite || selectedRowKeys.length === 0}
           >

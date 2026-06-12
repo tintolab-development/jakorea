@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { ColumnsType } from 'antd/es/table'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
 import {
   getGeneralVolunteerDoc1Applicants,
+  patchGeneralVolunteerDocumentScreeningCancel,
   patchGeneralVolunteerDocumentScreeningStatus,
   type GeneralVolunteerApplicantRow,
 } from '@/data/mock/general-volunteer-applicants-mock'
+import type { VolunteerDocumentCancelRejectionConfirmPayload } from '@/features/program/general/lib/volunteer-document-cancel-rejection'
 import {
   DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS,
   filterGeneralDoc1Applicants,
@@ -15,26 +18,22 @@ import {
   GENERAL_DOCUMENT_SCREENING_STATUS_LABELS,
   GENERAL_MANAGER_EVALUATION_LABELS,
   GENERAL_VOLUNTEER_ESSAY_COLUMN_TITLES,
-  formatGeneralVolunteerApplicationType,
+  formatGeneralJaVolunteerExperienceCell,
   formatGeneralVolunteerEssayCellValue,
   type GeneralManagerEvaluation,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useGeneralVolunteerDocScreeningColumns } from './doc-screening-columns'
-
-export type GeneralVolunteerConfirmRequest = {
-  title: string
-  content: string
-  confirmText: string
-  danger?: boolean
-  onConfirm: () => void
-}
+import {
+  requestGeneralVolunteerDocumentBulkApprove,
+  requestGeneralVolunteerDocumentBulkReject,
+} from './general-volunteer-document-screening-actions'
 
 const EXPORT_COLUMNS: ColumnsType<Record<string, string | number>> = [
   { title: 'No.', dataIndex: 'no', key: 'no' },
   { title: '신청 봉사자명', dataIndex: 'name', key: 'name' },
   { title: '연락처', dataIndex: 'contact', key: 'contact' },
   { title: '이메일', dataIndex: 'email', key: 'email' },
-  { title: '지원 형태', dataIndex: 'applicationTypeLabel', key: 'applicationTypeLabel' },
+  { title: 'JA 봉사 진행 경험', dataIndex: 'jaVolunteerExperience', key: 'jaVolunteerExperience' },
   {
     title: GENERAL_VOLUNTEER_ESSAY_COLUMN_TITLES.essayIntro,
     dataIndex: 'essayIntro',
@@ -66,7 +65,7 @@ function toExportRow(row: GeneralVolunteerApplicantRow): Record<string, string |
     name: row.name,
     contact: row.contact,
     email: row.email,
-    applicationTypeLabel: formatGeneralVolunteerApplicationType(row.applicationType),
+    jaVolunteerExperience: formatGeneralJaVolunteerExperienceCell(row.hasJaVolunteerExperience),
     essayIntro: formatGeneralVolunteerEssayCellValue(row.applicationType, row.essayIntro),
     essayEducationExperience: formatGeneralVolunteerEssayCellValue(
       row.applicationType,
@@ -82,7 +81,23 @@ function toExportRow(row: GeneralVolunteerApplicantRow): Record<string, string |
 }
 
 export function useGeneralVolunteerDocScreening({ programId }: { programId: string }) {
-  const [confirmRequest, setConfirmRequest] = useState<GeneralVolunteerConfirmRequest | null>(null)
+  const [bulkApproveOpen, setBulkApproveOpen] = useState(false)
+  const [bulkRejectOpen, setBulkRejectOpen] = useState(false)
+  const [bulkApproveCompleteCount, setBulkApproveCompleteCount] = useState<number | null>(null)
+  const [bulkRejectCompleteCount, setBulkRejectCompleteCount] = useState<number | null>(null)
+  const [approveModalVolunteer, setApproveModalVolunteer] =
+    useState<GeneralVolunteerApplicantRow | null>(null)
+  const [rejectModalVolunteer, setRejectModalVolunteer] =
+    useState<GeneralVolunteerApplicantRow | null>(null)
+  const [approveCompleteVolunteerName, setApproveCompleteVolunteerName] = useState<string | null>(
+    null
+  )
+  const [rejectCompleteVolunteer, setRejectCompleteVolunteer] = useState<{
+    name: string
+    reason: string
+  } | null>(null)
+  const [cancelApprovalTargetId, setCancelApprovalTargetId] = useState<string | null>(null)
+  const [cancelRejectTargetId, setCancelRejectTargetId] = useState<string | null>(null)
   const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() =>
     getGeneralVolunteerDoc1Applicants(programId)
   )
@@ -132,44 +147,168 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     setList(prev => prev.map(row => (row.id === id ? { ...row, ...patch } : row)))
   }, [])
 
-  const applyDocumentScreeningStatus = useCallback((ids: string[], status: 'pass' | 'fail') => {
-    setList(prev => patchGeneralVolunteerDocumentScreeningStatus(prev, ids, status))
+  const cancelApprovalVolunteer = useMemo(
+    () =>
+      cancelApprovalTargetId
+        ? (list.find(row => row.id === cancelApprovalTargetId) ?? null)
+        : null,
+    [cancelApprovalTargetId, list]
+  )
+
+  const cancelRejectVolunteer = useMemo(
+    () =>
+      cancelRejectTargetId ? (list.find(row => row.id === cancelRejectTargetId) ?? null) : null,
+    [cancelRejectTargetId, list]
+  )
+
+  const applyDocumentScreeningStatus = useCallback(
+    (ids: string[], status: 'pass' | 'fail', notifyTiming?: PermissionModalPayload['notifyTiming']) => {
+      setList(prev => patchGeneralVolunteerDocumentScreeningStatus(prev, ids, status, notifyTiming))
+    },
+    []
+  )
+
+  const applyDocumentScreeningCancel = useCallback((id: string) => {
+    setList(prev => patchGeneralVolunteerDocumentScreeningCancel(prev, id))
   }, [])
 
-  const showConfirm = useCallback((request: GeneralVolunteerConfirmRequest) => {
-    setConfirmRequest(request)
+  const closeBulkApproveModal = useCallback(() => {
+    setBulkApproveOpen(false)
   }, [])
 
-  const closeConfirm = useCallback(() => {
-    setConfirmRequest(null)
+  const closeBulkRejectModal = useCallback(() => {
+    setBulkRejectOpen(false)
   }, [])
+
+  const closeApproveModal = useCallback(() => {
+    setApproveModalVolunteer(null)
+  }, [])
+
+  const closeRejectModal = useCallback(() => {
+    setRejectModalVolunteer(null)
+  }, [])
+
+  const closeBulkApproveCompleteModal = useCallback(() => {
+    setBulkApproveCompleteCount(null)
+  }, [])
+
+  const closeBulkRejectCompleteModal = useCallback(() => {
+    setBulkRejectCompleteCount(null)
+  }, [])
+
+  const closeApproveCompleteModal = useCallback(() => {
+    setApproveCompleteVolunteerName(null)
+  }, [])
+
+  const closeRejectCompleteModal = useCallback(() => {
+    setRejectCompleteVolunteer(null)
+  }, [])
+
+  const openApproveModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
+    setApproveModalVolunteer(applicant)
+  }, [])
+
+  const openRejectModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
+    setRejectModalVolunteer(applicant)
+  }, [])
+
+  const openCancelApprovalModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
+    setCancelApprovalTargetId(applicant.id)
+  }, [])
+
+  const openCancelRejectModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
+    setCancelRejectTargetId(applicant.id)
+  }, [])
+
+  const closeCancelApprovalModal = useCallback(() => {
+    setCancelApprovalTargetId(null)
+  }, [])
+
+  const closeCancelRejectModal = useCallback(() => {
+    setCancelRejectTargetId(null)
+  }, [])
+
+  const handleBulkApproveConfirm = useCallback(
+    (payload: PermissionModalPayload) => {
+      const ids = selectedRowKeys.map(String)
+      if (ids.length === 0) return
+      const approvedCount = ids.length
+      applyDocumentScreeningStatus(ids, 'pass', payload.notifyTiming)
+      setSelectedRowKeys([])
+      setBulkApproveOpen(false)
+      setBulkApproveCompleteCount(approvedCount)
+    },
+    [applyDocumentScreeningStatus, selectedRowKeys]
+  )
+
+  const handleBulkRejectConfirm = useCallback(
+    (payload: PermissionModalPayload) => {
+      const ids = selectedRowKeys.map(String)
+      if (ids.length === 0) return
+      const rejectedCount = ids.length
+      applyDocumentScreeningStatus(ids, 'fail', payload.notifyTiming)
+      setSelectedRowKeys([])
+      setBulkRejectOpen(false)
+      setBulkRejectCompleteCount(rejectedCount)
+    },
+    [applyDocumentScreeningStatus, selectedRowKeys]
+  )
+
+  const handleApproveModalConfirm = useCallback(
+    (payload: PermissionModalPayload) => {
+      if (!approveModalVolunteer) return
+      const volunteerName = approveModalVolunteer.name
+      applyDocumentScreeningStatus([approveModalVolunteer.id], 'pass', payload.notifyTiming)
+      setSelectedRowKeys(prev => prev.filter(key => String(key) !== approveModalVolunteer.id))
+      setApproveModalVolunteer(null)
+      setApproveCompleteVolunteerName(volunteerName)
+    },
+    [applyDocumentScreeningStatus, approveModalVolunteer]
+  )
+
+  const handleRejectModalConfirm = useCallback(
+    (payload: PermissionModalPayload) => {
+      if (!rejectModalVolunteer) return
+      const { name, id } = rejectModalVolunteer
+      applyDocumentScreeningStatus([id], 'fail', payload.notifyTiming)
+      setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
+      setRejectModalVolunteer(null)
+      setRejectCompleteVolunteer({ name, reason: payload.reason })
+    },
+    [applyDocumentScreeningStatus, rejectModalVolunteer]
+  )
+
+  const handleCancelApprovalConfirm = useCallback(
+    (_payload: PermissionModalPayload) => {
+      if (!cancelApprovalVolunteer) return
+      applyDocumentScreeningCancel(cancelApprovalVolunteer.id)
+      setCancelApprovalTargetId(null)
+    },
+    [applyDocumentScreeningCancel, cancelApprovalVolunteer]
+  )
+
+  const handleCancelRejectConfirm = useCallback(
+    (_payload: VolunteerDocumentCancelRejectionConfirmPayload) => {
+      if (!cancelRejectVolunteer) return
+      applyDocumentScreeningCancel(cancelRejectVolunteer.id)
+      setCancelRejectTargetId(null)
+    },
+    [applyDocumentScreeningCancel, cancelRejectVolunteer]
+  )
 
   const handleBulkReject = useCallback(() => {
-    const ids = selectedRowKeys.map(String)
-    showConfirm({
-      title: '선택 반려',
-      content: `${ids.length}건을 반려 처리하시겠습니까?`,
-      confirmText: '반려',
-      danger: true,
-      onConfirm: () => {
-        applyDocumentScreeningStatus(ids, 'fail')
-        setSelectedRowKeys([])
-      },
+    requestGeneralVolunteerDocumentBulkReject({
+      selectedIds: selectedRowKeys.map(String),
+      onOpenBulkReject: () => setBulkRejectOpen(true),
     })
-  }, [applyDocumentScreeningStatus, selectedRowKeys, showConfirm])
+  }, [selectedRowKeys])
 
   const handleBulkApprove = useCallback(() => {
-    const ids = selectedRowKeys.map(String)
-    showConfirm({
-      title: '선택 승인',
-      content: `${ids.length}건을 승인 처리하시겠습니까?`,
-      confirmText: '승인',
-      onConfirm: () => {
-        applyDocumentScreeningStatus(ids, 'pass')
-        setSelectedRowKeys([])
-      },
+    requestGeneralVolunteerDocumentBulkApprove({
+      selectedIds: selectedRowKeys.map(String),
+      onOpenBulkApprove: () => setBulkApproveOpen(true),
     })
-  }, [applyDocumentScreeningStatus, selectedRowKeys, showConfirm])
+  }, [selectedRowKeys])
 
   const onManagerAEvaluationChange = useCallback(
     (id: string, evaluation: GeneralManagerEvaluation) => {
@@ -205,9 +344,36 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     handleBulkApprove,
     excelExport,
     count: tableData.length,
-    confirmRequest,
-    closeConfirm,
-    showConfirm,
+    bulkApproveOpen,
+    bulkRejectOpen,
+    closeBulkApproveModal,
+    closeBulkRejectModal,
+    handleBulkApproveConfirm,
+    handleBulkRejectConfirm,
+    bulkApproveCompleteCount,
+    bulkRejectCompleteCount,
+    closeBulkApproveCompleteModal,
+    closeBulkRejectCompleteModal,
+    approveCompleteVolunteerName,
+    closeApproveCompleteModal,
+    rejectCompleteVolunteer,
+    closeRejectCompleteModal,
+    approveModalVolunteer,
+    rejectModalVolunteer,
+    closeApproveModal,
+    closeRejectModal,
+    openApproveModal,
+    openRejectModal,
+    handleApproveModalConfirm,
+    handleRejectModalConfirm,
+    cancelApprovalVolunteer,
+    cancelRejectVolunteer,
+    closeCancelApprovalModal,
+    closeCancelRejectModal,
+    openCancelApprovalModal,
+    openCancelRejectModal,
+    handleCancelApprovalConfirm,
+    handleCancelRejectConfirm,
     applyDocumentScreeningStatus,
     openManagerDropdown,
     setOpenManagerDropdown,

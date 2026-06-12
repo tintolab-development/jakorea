@@ -6,6 +6,8 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
+  width: 100%;
+  min-width: 0;
 }
 
 .applicant-general-instructor-basic-info__name-badge {

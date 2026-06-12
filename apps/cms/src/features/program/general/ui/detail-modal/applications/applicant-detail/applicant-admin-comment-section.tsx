@@ -3,8 +3,8 @@
  * 회원 상세 User.adminComment 와 저장 경로가 분리된 신청 건별 코멘트입니다.
  */
 
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui'
-import '@/features/program/general/ui/detail-modal/program-status/school-detail-fullpage-view.css'
 import './applicant-admin-comment-section.css'
 
 export interface ApplicantAdminCommentSectionProps {
@@ -25,11 +25,14 @@ export function ApplicantAdminCommentSection({
   const trimmed = adminComment?.trim() ?? ''
   const isEditMode = mode === 'edit' && onDraftChange != null
 
-  return (
-    <section className="applicant-admin-comment-section">
-      <h3 className="info-section-title">관리자 코멘트</h3>
-      {isEditMode ? (
-        <div className="applicant-admin-comment-section__edit-wrap">
+  if (isEditMode) {
+    return (
+      <DetailInfoForm
+        title="관리자 코멘트"
+        mode="edit"
+        className="applicant-admin-comment-section applicant-admin-comment-section--editing"
+      >
+        <DetailInfoForm.Row type="custom">
           <CmsInput
             className="applicant-admin-comment-section__input"
             value={draftValue}
@@ -42,18 +45,26 @@ export function ApplicantAdminCommentSection({
           {validationError ? (
             <span className="applicant-admin-comment-section__error">{validationError}</span>
           ) : null}
-        </div>
-      ) : (
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+    )
+  }
+
+  return (
+    <DetailInfoForm title="관리자 코멘트" mode="view" className="applicant-admin-comment-section">
+      <DetailInfoForm.Row type="custom">
         <div
-          className={`school-detail-fullpage-view__admin-comment-box ${
-            !trimmed ? 'school-detail-fullpage-view__admin-comment-box--empty' : ''
-          }`}
+          className={
+            trimmed
+              ? 'applicant-admin-comment-section__text'
+              : 'applicant-admin-comment-section__text applicant-admin-comment-section__text--empty'
+          }
           role="region"
           aria-label="관리자 코멘트"
         >
           {trimmed ? adminComment : '작성된 코멘트가 없습니다.'}
         </div>
-      )}
-    </section>
+      </DetailInfoForm.Row>
+    </DetailInfoForm>
   )
 }

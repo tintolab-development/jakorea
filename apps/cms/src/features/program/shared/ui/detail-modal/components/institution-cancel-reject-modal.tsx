@@ -10,7 +10,7 @@ import {
   type PermissionModalPayload,
 } from '@/shared/components/permission-modal'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 import './instructor-bulk-approve-modal.css'
 import './instructor-cancel-reject-modal.css'
 
@@ -58,10 +58,24 @@ function InstitutionCancelRejectPendingNotificationModal({
       description={buildInstitutionCancelRejectionMessage(schoolName, 'pendingNotification')}
       footer={
         <>
-          <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
+          <CmsButton
+            variant="secondary"
+            size="large"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
+            type="button"
+            onClick={onCancel}
+          >
             취소
           </CmsButton>
-          <CmsButton variant="delete" size="medium" type="button" onClick={onConfirm}>
+          <CmsButton
+            variant="delete"
+            size="large"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
+            type="button"
+            onClick={onConfirm}
+          >
             반려 취소
           </CmsButton>
         </>

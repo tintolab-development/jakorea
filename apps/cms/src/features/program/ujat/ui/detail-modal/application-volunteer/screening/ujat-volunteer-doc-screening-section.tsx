@@ -2,7 +2,7 @@ import { useCallback, useRef, useState, type MouseEvent } from 'react'
 import type { UjatEssayColumnKey } from './ujat-volunteer-doc-screening-columns'
 import { Table } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
@@ -176,7 +176,8 @@ export function UjatVolunteerDocScreeningSection({
                 type="button"
                 variant="delete"
                 size="large"
-                width={160}
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
                 onClick={handleBulkReject}
               >
                 선택 반려
@@ -185,7 +186,8 @@ export function UjatVolunteerDocScreeningSection({
                 type="button"
                 variant="secondary"
                 size="large"
-                width={160}
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
                 onClick={handleBulkApprove}
               >
                 선택 승인

@@ -1,3 +1,4 @@
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import {
   UJAT_VOLUNTEER_ESSAY_COLUMN_TITLES,
@@ -21,22 +22,25 @@ export interface UjatVolunteerApplicantEssaySectionsProps {
 
 export function UjatVolunteerApplicantEssaySections({ applicant }: UjatVolunteerApplicantEssaySectionsProps) {
   return (
-    <div className="instructor-resume-free-writing-stack ujat-volunteer-applicant-essay-sections">
+    <div className="ujat-volunteer-applicant-essay-sections">
       {ESSAY_KEYS.map(key => {
         const raw = applicant[key]
         const formatted = formatUjatVolunteerEssayCellValue(applicant.applicationType, raw)
         const text =
           formatted != null && String(formatted).trim() !== '' ? formatted : INSTRUCTOR_RESUME_NO_DATA
         return (
-          <section
+          <DetailInfoForm
             key={key}
-            className="instructor-resume-section instructor-resume-section--free-writing"
+            title={UJAT_VOLUNTEER_ESSAY_COLUMN_TITLES[key]}
+            mode="view"
+            className="ujat-volunteer-applicant-essay-sections__item"
           >
-            <div className="info-section-title">{UJAT_VOLUNTEER_ESSAY_COLUMN_TITLES[key]}</div>
-            <div className="instructor-resume-free-writing-card">
-              <p className="instructor-resume-free-writing-text">{text}</p>
-            </div>
-          </section>
+            <DetailInfoForm.Row type="custom">
+              <div className="instructor-resume-free-writing-card">
+                <p className="instructor-resume-free-writing-text">{text}</p>
+              </div>
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
         )
       })}
     </div>

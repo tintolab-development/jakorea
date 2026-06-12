@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Space } from 'antd'
 import { useCmsAlert } from '@/shared/ui'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import {
   getUjatInstitutionApplicationDetail,
   getUjatInstitutionApplicationRowById,
@@ -101,7 +101,8 @@ export function UjatInstitutionApplicationDetailPage({
             type="button"
             variant="delete"
             size="large"
-            width={160}
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
             onClick={() => setPendingAction('application_reject')}
           >
             신청 반려
@@ -110,13 +111,21 @@ export function UjatInstitutionApplicationDetailPage({
             type="button"
             variant="delete"
             size="large"
-            width={160}
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
             style={TEMP_REJECT_BUTTON_STYLE}
             onClick={() => setPendingAction('temp_reject')}
           >
             임시 반려
           </CmsButton>
-          <CmsButton type="button" variant="secondary" size="large" width={160} onClick={handleTempAssign}>
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="large"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
+            onClick={handleTempAssign}
+          >
             임시 배정
           </CmsButton>
           <PersonalInfoRevealButton

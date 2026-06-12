@@ -18,9 +18,9 @@ export type GeneralVolunteerApplicantDetailMetaChangeHandler = (
 ) => void
 
 function getDetailTitle(variant: GeneralVolunteerApplicantDetailVariant, name: string): string {
-  if (variant === 'doc_passed') return `1차 서류 합격자 > ${name}`
-  if (variant === 'interview2') return `2차 면접 대상자 > ${name}`
-  return `1차 서류 심사 대상자 > ${name}`
+  if (variant === 'doc_passed') return `봉사자 1차 서류 합격자 상세 (${name})`
+  if (variant === 'interview2') return `봉사자 2차 면접 대상자 상세 (${name})`
+  return `봉사자 1차 서류 심사 대상자 상세 (${name})`
 }
 
 export function useGeneralVolunteerApplicantDetail({

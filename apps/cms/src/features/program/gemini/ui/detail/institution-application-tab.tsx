@@ -6,7 +6,7 @@ import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/f
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
 import './institution-application-tab.css'
 
 type GeminiInstitutionApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
@@ -293,10 +293,22 @@ export function GeminiInstitutionApplicationTab() {
       actions={
         canWrite ? (
           <>
-            <CmsButton variant="delete" size="medium" onClick={handleBulkReject}>
+            <CmsButton
+              variant="delete"
+              size="large"
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
+              onClick={handleBulkReject}
+            >
               선택 반려
             </CmsButton>
-            <CmsButton variant="secondary" size="medium" onClick={handleBulkApprove}>
+            <CmsButton
+              variant="secondary"
+              size="large"
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
+              onClick={handleBulkApprove}
+            >
               선택 승인
             </CmsButton>
           </>

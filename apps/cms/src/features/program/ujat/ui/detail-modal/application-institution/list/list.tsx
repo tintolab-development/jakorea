@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import type { UjatInstitutionApplicationRegionKey } from './regions'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './filter-fields'
 import { UjatInstitutionApplicationRegionTabs } from './region-tabs'
@@ -76,7 +76,8 @@ export function UjatInstitutionApplicationList({
               type="button"
               variant="delete"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkApplicationReject}
             >
               선택 신청 반려
@@ -85,7 +86,8 @@ export function UjatInstitutionApplicationList({
               type="button"
               variant="delete"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkTempReject}
             >
               선택 임시 반려
@@ -94,7 +96,8 @@ export function UjatInstitutionApplicationList({
               type="button"
               variant="secondary"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkTempAssign}
             >
               선택 임시 배정

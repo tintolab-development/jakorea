@@ -2,7 +2,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
 import {
   updateApplicantSchoolApprovalStatus,
   patchApplicantSchoolForApprovalStatus,
@@ -1485,13 +1485,20 @@ export function ApplicantList({
           description={`${tableData.length}건`}
           actions={
             <div style={{ display: 'flex', gap: '8px' }}>
-              <CmsButton variant="delete" size="large" width={140} onClick={handleBulkRejectClick}>
+              <CmsButton
+                variant="delete"
+                size="large"
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
+                onClick={handleBulkRejectClick}
+              >
                 선택 반려
               </CmsButton>
               <CmsButton
                 variant="secondary"
                 size="large"
-                width={140}
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
                 onClick={handleBulkApproveClick}
               >
                 선택 승인

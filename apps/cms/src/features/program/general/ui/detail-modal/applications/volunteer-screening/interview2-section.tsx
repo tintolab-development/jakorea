@@ -1,7 +1,7 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Table } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import { buildGeneralVolunteerInterview2FilterRows } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
@@ -197,10 +197,24 @@ export function GeneralVolunteerInterview2Section({
         }
         actions={
           <div className="general-volunteer-screening__actions">
-            <CmsButton type="button" variant="delete" size="large" width={160} onClick={handleBulkFail}>
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
+              onClick={handleBulkFail}
+            >
               선택 불합격
             </CmsButton>
-            <CmsButton type="button" variant="secondary" size="large" width={160} onClick={handleBulkPass}>
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="large"
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
+              onClick={handleBulkPass}
+            >
               선택 합격
             </CmsButton>
           </div>

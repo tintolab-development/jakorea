@@ -6,7 +6,7 @@
 import { useState } from 'react'
 import { Input, Modal } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { SETTLEMENT_ROW_STATUS_LABELS, type SettlementDetail } from '@/data/mock/school-detail'
 import './settlement-detail-modal.css'
 
@@ -65,7 +65,14 @@ export function SettlementDetailModal({
           <CmsButton variant="secondary" size="large" onClick={onClose}>
             닫기
           </CmsButton>
-          <CmsButton variant="delete" size="large" onClick={() => setRejectOpen(true)} disabled={detail.status === 'completed'}>
+          <CmsButton
+            variant="delete"
+            size="large"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
+            onClick={() => setRejectOpen(true)}
+            disabled={detail.status === 'completed'}
+          >
             지급 신청 반려
           </CmsButton>
           <CmsButton variant="primary" size="large" onClick={() => setPaymentOpen(true)} disabled={detail.status === 'completed'}>

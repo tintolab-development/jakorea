@@ -6,12 +6,10 @@ import {
   GENERAL_MANAGER_EVALUATION_ORDER,
   GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_LABELS,
   GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_ORDER,
-  GENERAL_VOLUNTEER_APPLICATION_TYPE_LABELS,
   type GeneralDocumentScreeningStatus,
   type GeneralInterviewAssignmentStatus,
   type GeneralManagerEvaluation,
   type GeneralSecondInterviewScreeningStatus,
-  type GeneralVolunteerApplicationType,
 } from './volunteer-screening-constants'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import {
@@ -25,14 +23,10 @@ const FILTER_WIDTH = 260
 
 const selectStyle = { width: FILTER_WIDTH } as const
 
-const applicationTypeOptions = [
+const jaVolunteerExperienceOptions = [
   { label: '전체', value: ALL },
-  ...(
-    Object.entries(GENERAL_VOLUNTEER_APPLICATION_TYPE_LABELS) as [
-      GeneralVolunteerApplicationType,
-      string,
-    ][]
-  ).map(([value, label]) => ({ label, value })),
+  { label: '있음', value: 'yes' },
+  { label: '없음', value: 'no' },
 ]
 
 const managerEvaluationOptions = [
@@ -91,7 +85,7 @@ export const GENERAL_VOLUNTEER_FILTER_ALL = ALL
 /** 1차 서류 심사 대상자 — 기관 프로그램 5필터(1행) */
 export type GeneralVolunteerDoc1Filters = {
   volunteerName: string
-  applicationType: string
+  jaVolunteerExperience: string
   managerAEvaluation: string
   managerBEvaluation: string
   documentScreeningStatus: string
@@ -99,7 +93,7 @@ export type GeneralVolunteerDoc1Filters = {
 
 export const DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS: GeneralVolunteerDoc1Filters = {
   volunteerName: '',
-  applicationType: ALL,
+  jaVolunteerExperience: ALL,
   managerAEvaluation: ALL,
   managerBEvaluation: ALL,
   documentScreeningStatus: ALL,
@@ -151,11 +145,11 @@ export function buildGeneralVolunteerDoc1FilterRows(): FilterFieldConfig[][] {
         placeholder: '봉사자명을 입력하세요',
       }),
       buildGeneralFilterField({
-        key: 'applicationType',
+        key: 'jaVolunteerExperience',
         type: 'select',
-        label: '지원 형태',
+        label: 'JA 봉사 프로그램 진행 경험',
         placeholder: '전체',
-        options: applicationTypeOptions,
+        options: jaVolunteerExperienceOptions,
       }),
       buildGeneralFilterField({
         key: 'managerAEvaluation',
@@ -189,12 +183,8 @@ export function filterGeneralDoc1Applicants(
   const nameQ = filters.volunteerName.trim().toLowerCase()
   return rows.filter(row => {
     if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
-    if (
-      filters.applicationType !== GENERAL_VOLUNTEER_FILTER_ALL &&
-      row.applicationType !== filters.applicationType
-    ) {
-      return false
-    }
+    if (filters.jaVolunteerExperience === 'yes' && !row.hasJaVolunteerExperience) return false
+    if (filters.jaVolunteerExperience === 'no' && row.hasJaVolunteerExperience) return false
     if (
       filters.managerAEvaluation !== GENERAL_VOLUNTEER_FILTER_ALL &&
       row.managerAEvaluation !== filters.managerAEvaluation

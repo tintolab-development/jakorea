@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -215,12 +215,21 @@ export function PermissionModal({
         zIndex={resolvedModalZ}
         footer={
           <div className="permission-modal__footer">
-            <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
+            <CmsButton
+              variant="secondary"
+              size="large"
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
+              type="button"
+              onClick={onCancel}
+            >
               취소
             </CmsButton>
             <CmsButton
               variant={confirmVariant}
-              size="medium"
+              size="large"
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               type="button"
               disabled={!canConfirm}
               onClick={handleConfirm}

@@ -1,3 +1,4 @@
+import type { PermissionModalNotifyTiming } from '@/shared/components/permission-modal'
 import {
   GENERAL_VOLUNTEER_APPLICATION_TYPE_LABELS,
   type GeneralDocumentScreeningStatus,
@@ -28,6 +29,7 @@ export interface GeneralVolunteerApplicantRow {
   id1365: string
   scheduleChangeCancelCount: number
   applicationType: GeneralVolunteerApplicationType
+  hasJaVolunteerExperience: boolean
   essayIntro: string
   essayEducationExperience: string
   essayNecessity: string
@@ -35,6 +37,8 @@ export interface GeneralVolunteerApplicantRow {
   managerAEvaluation: GeneralManagerEvaluation
   managerBEvaluation: GeneralManagerEvaluation
   documentScreeningStatus: GeneralDocumentScreeningStatus
+  documentApprovalNotifyTiming?: PermissionModalNotifyTiming
+  documentRejectionNotifyTiming?: PermissionModalNotifyTiming
   interviewSlotCount: number
   interviewAssignmentStatus: GeneralInterviewAssignmentStatus
   programId: string
@@ -274,6 +278,7 @@ function buildRow(programId: string, index: number): GeneralVolunteerApplicantRo
     id1365: buildId1365(name, no),
     scheduleChangeCancelCount: index === 2 ? 1 : seed % 7 === 0 ? 1 : 0,
     applicationType,
+    hasJaVolunteerExperience: seed % 3 !== 0,
     essayIntro: applicationType === 'ujat-graduate' ? '' : `${ESSAY_INTRO} (${name})`,
     essayEducationExperience: applicationType === 'ujat-graduate' ? '' : ESSAY_EDUCATION,
     essayNecessity: applicationType === 'ujat-graduate' ? '' : ESSAY_NECESSITY,
@@ -376,11 +381,42 @@ export { sortGeneralVolunteerInterview2Applicants } from '@/features/program/gen
 export function patchGeneralVolunteerDocumentScreeningStatus(
   rows: GeneralVolunteerApplicantRow[],
   ids: string[],
-  status: 'pass' | 'fail'
+  status: 'pass' | 'fail',
+  notifyTiming?: PermissionModalNotifyTiming
 ): GeneralVolunteerApplicantRow[] {
   const idSet = new Set(ids)
+  return rows.map(row => {
+    if (!idSet.has(row.id)) return row
+    if (status === 'pass') {
+      return {
+        ...row,
+        documentScreeningStatus: status,
+        documentApprovalNotifyTiming: notifyTiming,
+        documentRejectionNotifyTiming: undefined,
+      }
+    }
+    return {
+      ...row,
+      documentScreeningStatus: status,
+      documentRejectionNotifyTiming: notifyTiming,
+      documentApprovalNotifyTiming: undefined,
+    }
+  })
+}
+
+export function patchGeneralVolunteerDocumentScreeningCancel(
+  rows: GeneralVolunteerApplicantRow[],
+  id: string
+): GeneralVolunteerApplicantRow[] {
   return rows.map(row =>
-    idSet.has(row.id) ? { ...row, documentScreeningStatus: status } : row
+    row.id === id
+      ? {
+          ...row,
+          documentScreeningStatus: 'pending',
+          documentApprovalNotifyTiming: undefined,
+          documentRejectionNotifyTiming: undefined,
+        }
+      : row
   )
 }
 

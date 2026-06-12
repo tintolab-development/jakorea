@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Space, Empty } from 'antd'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
-import { CmsButton, type CmsButtonVariant } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH, type CmsButtonVariant } from '@/shared/ui'
 import {
   patchApplicantInstitutionAdminComment,
   type ApplicantSchoolRow,
@@ -93,7 +93,7 @@ function ApplicantHeaderActionsExtra({
             revealed={personalInfoRevealed}
             cmsVariant={a.variant}
             cmsSize="large"
-            width={a.width ?? (a.size === 'filter-wide' ? 180 : 160)}
+            width={a.width ?? (a.size === 'filter-wide' ? 180 : CMS_ACTION_BUTTON_WIDTH)}
             disabled={a.disabled}
             onClick={a.onClick ?? (() => {})}
           />
@@ -102,7 +102,8 @@ function ApplicantHeaderActionsExtra({
             key={a.key}
             variant={a.variant}
             size="large"
-            width={a.width ?? (a.size === 'filter-wide' ? 180 : 160)}
+            className="cms-button--action"
+            width={a.width ?? (a.size === 'filter-wide' ? 180 : CMS_ACTION_BUTTON_WIDTH)}
             disabled={a.disabled}
             title={a.title}
             onClick={a.onClick}
@@ -135,7 +136,7 @@ function headerBtnCancelApproval(
     key: 'cancel-approval',
     variant: 'delete',
     label: '승인 취소',
-    width: 140,
+    width: CMS_ACTION_BUTTON_WIDTH,
     disabled: cancelApprovalState.disabled,
     title: cancelApprovalState.reason ?? undefined,
     onClick: cancelApprovalState.disabled ? undefined : () => onCancelApproval?.(applicantId),
@@ -152,7 +153,7 @@ function headerBtnEditInfo(
     key: 'edit-info',
     variant: 'secondary',
     label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
-    width: 140,
+    width: CMS_ACTION_BUTTON_WIDTH,
     disabled,
     onClick: disabled
       ? undefined
@@ -168,7 +169,7 @@ function headerBtnEditInfoDisabled(): ApplicantHeaderActionItem {
     key: 'edit-info',
     variant: 'secondary',
     label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
-    width: 140,
+    width: CMS_ACTION_BUTTON_WIDTH,
     disabled: true,
   }
 }
@@ -178,7 +179,7 @@ function headerBtnEditInfoPreparing(): ApplicantHeaderActionItem {
     key: 'edit-info',
     variant: 'secondary',
     label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
-    width: 140,
+    width: CMS_ACTION_BUTTON_WIDTH,
     onClick: () => window.alert('준비중'),
   }
 }
@@ -188,7 +189,7 @@ function headerBtnWriteComment(onClick: () => void, disabled = false): Applicant
     key: 'write-comment',
     variant: 'primary',
     label: '코멘트 작성',
-    width: 140,
+    width: CMS_ACTION_BUTTON_WIDTH,
     disabled,
     onClick: disabled ? undefined : onClick,
   }
@@ -199,7 +200,7 @@ function headerBtnSaveComment(onClick: () => void): ApplicantHeaderActionItem {
     key: 'write-comment',
     variant: 'primary',
     label: '코멘트 저장',
-    width: 140,
+    width: CMS_ACTION_BUTTON_WIDTH,
     onClick,
   }
 }
@@ -212,7 +213,7 @@ function headerBtnCancelReject(
     key: 'cancel-reject',
     variant: 'delete',
     label: '반려 취소',
-    width: 140,
+    width: CMS_ACTION_BUTTON_WIDTH,
     disabled: !onCancelReject,
     onClick: () => onCancelReject?.(applicantId),
   }
@@ -229,14 +230,14 @@ function headerBtnsPendingParticipation(
       key: 'reject',
       variant: 'delete',
       label: '참여 반려',
-      width: 140,
+      width: CMS_ACTION_BUTTON_WIDTH,
       onClick: () => onReject(applicantId),
     },
     {
       key: 'approve',
       variant: 'secondary',
       label: '참여 승인',
-      width: 140,
+      width: CMS_ACTION_BUTTON_WIDTH,
       onClick: () => onApprove(applicantId),
     },
     headerBtnPrivacy(onRevealPersonalInfo),

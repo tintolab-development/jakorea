@@ -1,3 +1,4 @@
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import {
   GENERAL_VOLUNTEER_ESSAY_COLUMN_TITLES,
@@ -25,22 +26,25 @@ export function GeneralVolunteerApplicantEssaySections({
   if (applicant.applicationType === 'ujat-graduate') return null
 
   return (
-    <div className="instructor-resume-free-writing-stack general-volunteer-applicant-essay-sections">
+    <div className="general-volunteer-applicant-essay-sections">
       {ESSAY_KEYS.map(key => {
         const raw = applicant[key]
         const formatted = formatGeneralVolunteerEssayCellValue(applicant.applicationType, raw)
         const text =
           formatted != null && String(formatted).trim() !== '' ? formatted : NO_DATA
         return (
-          <section
+          <DetailInfoForm
             key={key}
-            className="instructor-resume-section instructor-resume-section--free-writing"
+            title={GENERAL_VOLUNTEER_ESSAY_COLUMN_TITLES[key]}
+            mode="view"
+            className="general-volunteer-applicant-essay-sections__item"
           >
-            <div className="info-section-title">{GENERAL_VOLUNTEER_ESSAY_COLUMN_TITLES[key]}</div>
-            <div className="instructor-resume-free-writing-card">
-              <p className="instructor-resume-free-writing-text">{text}</p>
-            </div>
-          </section>
+            <DetailInfoForm.Row type="custom">
+              <div className="instructor-resume-free-writing-card">
+                <p className="instructor-resume-free-writing-text">{text}</p>
+              </div>
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
         )
       })}
     </div>

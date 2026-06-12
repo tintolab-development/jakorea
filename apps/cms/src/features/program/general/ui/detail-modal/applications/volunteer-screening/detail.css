@@ -1,5 +1,5 @@
 /**
- * 일반 프로그램 봉사자 상세 — program-detail-info-tab / DetailInfoForm 테이블 토큰 정렬
+ * 일반 프로그램 봉사자 상세 — DetailInfoForm 레이아웃
  */
 
 .general-volunteer-applicant-detail {
@@ -47,27 +47,22 @@
   gap: 32px;
 }
 
-.general-volunteer-applicant-detail__subsection {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.general-volunteer-applicant-detail__subsection-title,
-.general-volunteer-applicant-essay-sections .info-section-title {
-  margin: 0;
-  padding: 0 8px;
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 140%;
-}
-
-.general-volunteer-applicant-basic-info__tables {
+.general-volunteer-applicant-basic-info {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.general-volunteer-applicant-essay-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.general-volunteer-applicant-manager-evaluation .detail-info-form__field-content {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
 }
 
 .general-volunteer-applicant-detail .program-detail-info-tab__table-wrapper {

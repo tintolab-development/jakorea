@@ -274,7 +274,7 @@
   flex-shrink: 0;
 }
 
-/* 산출 내역서 모달 — 산출 내역 상세 헤더: 신청 반려·확인 처리 120×40 */
+/* 산출 내역서 모달 — 산출 내역 상세 헤더: 신청 반려·확인 처리 140×44 */
 .payment-order-calc-statement-modal
   .payment-order-calc-statement-modal__detail-actions
   .cms-button.cms-button--large.ant-btn,
@@ -282,12 +282,12 @@
   .payment-order-calc-statement-modal__detail-actions
   .cms-button.cms-button--large.ant-btn-lg {
   box-sizing: border-box !important;
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-  height: 40px !important;
-  min-height: 40px !important;
-  max-height: 40px !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
   padding: 0 !important;
   display: inline-flex !important;
   align-items: center !important;

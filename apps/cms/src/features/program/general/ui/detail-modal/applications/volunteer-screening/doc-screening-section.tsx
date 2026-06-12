@@ -1,9 +1,18 @@
 import { useCallback, type MouseEvent } from 'react'
 import { Table } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
-import { ConfirmModal } from '@/shared/ui/confirm-modal'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import { GeneralVolunteerDocumentApproveCompleteModal } from './general-volunteer-document-approve-complete-modal'
+import { GeneralVolunteerDocumentApproveModal } from './general-volunteer-document-approve-modal'
+import { GeneralVolunteerDocumentBulkApproveCompleteModal } from './general-volunteer-document-bulk-approve-complete-modal'
+import { GeneralVolunteerDocumentBulkApproveModal } from './general-volunteer-document-bulk-approve-modal'
+import { GeneralVolunteerDocumentBulkRejectCompleteModal } from './general-volunteer-document-bulk-reject-complete-modal'
+import { GeneralVolunteerDocumentBulkRejectModal } from './general-volunteer-document-bulk-reject-modal'
+import { GeneralVolunteerDocumentCancelApprovalModal } from './general-volunteer-document-cancel-approval-modal'
+import { GeneralVolunteerDocumentCancelRejectModal } from './general-volunteer-document-cancel-reject-modal'
+import { GeneralVolunteerDocumentRejectCompleteModal } from './general-volunteer-document-reject-complete-modal'
+import { GeneralVolunteerDocumentRejectModal } from './general-volunteer-document-reject-modal'
 import { buildGeneralVolunteerDoc1FilterRows } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 import { GENERAL_DOC_SCREENING_TABLE_SCROLL_X } from './doc-screening-columns'
 import { useGeneralVolunteerDocScreening } from './use-doc-screening'
@@ -38,10 +47,36 @@ export function GeneralVolunteerDocScreeningSection({
     handleBulkApprove,
     excelExport,
     count,
-    confirmRequest,
-    closeConfirm,
-    showConfirm,
-    applyDocumentScreeningStatus,
+    bulkApproveOpen,
+    bulkRejectOpen,
+    closeBulkApproveModal,
+    closeBulkRejectModal,
+    handleBulkApproveConfirm,
+    handleBulkRejectConfirm,
+    bulkApproveCompleteCount,
+    bulkRejectCompleteCount,
+    closeBulkApproveCompleteModal,
+    closeBulkRejectCompleteModal,
+    approveCompleteVolunteerName,
+    closeApproveCompleteModal,
+    rejectCompleteVolunteer,
+    closeRejectCompleteModal,
+    approveModalVolunteer,
+    rejectModalVolunteer,
+    closeApproveModal,
+    closeRejectModal,
+    openApproveModal,
+    openRejectModal,
+    handleApproveModalConfirm,
+    handleRejectModalConfirm,
+    cancelApprovalVolunteer,
+    cancelRejectVolunteer,
+    closeCancelApprovalModal,
+    closeCancelRejectModal,
+    openCancelApprovalModal,
+    openCancelRejectModal,
+    handleCancelApprovalConfirm,
+    handleCancelRejectConfirm,
     openManagerDropdown,
     setOpenManagerDropdown,
     onManagerAEvaluationChange,
@@ -71,26 +106,83 @@ export function GeneralVolunteerDocScreeningSection({
     [openApplicantDetail]
   )
 
-  const confirmModal = confirmRequest ? (
-    <ConfirmModal
-      open
-      title={confirmRequest.title}
-      content={confirmRequest.content}
-      confirmText={confirmRequest.confirmText}
-      cancelText="취소"
-      danger={confirmRequest.danger}
-      onConfirm={() => {
-        confirmRequest.onConfirm()
-        closeConfirm()
-      }}
-      onCancel={closeConfirm}
-    />
-  ) : null
+  const detailPermissionModals = (
+    <>
+      <GeneralVolunteerDocumentApproveModal
+        open={approveModalVolunteer != null}
+        volunteerName={approveModalVolunteer?.name ?? ''}
+        onCancel={closeApproveModal}
+        onConfirm={handleApproveModalConfirm}
+      />
+      <GeneralVolunteerDocumentRejectModal
+        open={rejectModalVolunteer != null}
+        volunteerName={rejectModalVolunteer?.name ?? ''}
+        onCancel={closeRejectModal}
+        onConfirm={handleRejectModalConfirm}
+      />
+      <GeneralVolunteerDocumentCancelApprovalModal
+        open={cancelApprovalVolunteer != null}
+        volunteer={cancelApprovalVolunteer}
+        onCancel={closeCancelApprovalModal}
+        onConfirm={handleCancelApprovalConfirm}
+      />
+      <GeneralVolunteerDocumentCancelRejectModal
+        open={cancelRejectVolunteer != null}
+        volunteer={cancelRejectVolunteer}
+        onCancel={closeCancelRejectModal}
+        onConfirm={handleCancelRejectConfirm}
+      />
+    </>
+  )
+
+  const listBulkModals = (
+    <>
+      <GeneralVolunteerDocumentBulkApproveModal
+        open={bulkApproveOpen}
+        selectionCount={selectedRowKeys.length}
+        onCancel={closeBulkApproveModal}
+        onConfirm={handleBulkApproveConfirm}
+      />
+      <GeneralVolunteerDocumentBulkRejectModal
+        open={bulkRejectOpen}
+        selectionCount={selectedRowKeys.length}
+        onCancel={closeBulkRejectModal}
+        onConfirm={handleBulkRejectConfirm}
+      />
+    </>
+  )
+
+  const completeModals = (
+    <>
+      <GeneralVolunteerDocumentApproveCompleteModal
+        open={approveCompleteVolunteerName != null}
+        volunteerName={approveCompleteVolunteerName ?? ''}
+        onClose={closeApproveCompleteModal}
+      />
+      <GeneralVolunteerDocumentRejectCompleteModal
+        open={rejectCompleteVolunteer != null}
+        volunteerName={rejectCompleteVolunteer?.name ?? ''}
+        rejectionReason={rejectCompleteVolunteer?.reason ?? ''}
+        onClose={closeRejectCompleteModal}
+      />
+      <GeneralVolunteerDocumentBulkApproveCompleteModal
+        open={bulkApproveCompleteCount != null}
+        selectionCount={bulkApproveCompleteCount ?? 0}
+        onClose={closeBulkApproveCompleteModal}
+      />
+      <GeneralVolunteerDocumentBulkRejectCompleteModal
+        open={bulkRejectCompleteCount != null}
+        selectionCount={bulkRejectCompleteCount ?? 0}
+        onClose={closeBulkRejectCompleteModal}
+      />
+    </>
+  )
 
   if (selectedApplicant) {
     return (
       <>
-        {confirmModal}
+        {detailPermissionModals}
+        {completeModals}
         <GeneralVolunteerApplicantDetailView
           variant="doc_screening"
           applicant={selectedApplicant}
@@ -98,23 +190,10 @@ export function GeneralVolunteerDocScreeningSection({
           setOpenManagerDropdown={setOpenManagerDropdown}
           onManagerAEvaluationChange={onManagerAEvaluationChange}
           onManagerBEvaluationChange={onManagerBEvaluationChange}
-          onDocumentReject={() =>
-            showConfirm({
-              title: '서류 반려',
-              content: `${selectedApplicant.name} 봉사자를 서류 반려 처리하시겠습니까?`,
-              confirmText: '서류 반려',
-              danger: true,
-              onConfirm: () => applyDocumentScreeningStatus([selectedApplicant.id], 'fail'),
-            })
-          }
-          onDocumentApprove={() =>
-            showConfirm({
-              title: '서류 승인',
-              content: `${selectedApplicant.name} 봉사자를 서류 승인 처리하시겠습니까?`,
-              confirmText: '서류 승인',
-              onConfirm: () => applyDocumentScreeningStatus([selectedApplicant.id], 'pass'),
-            })
-          }
+          onDocumentReject={() => openRejectModal(selectedApplicant)}
+          onDocumentApprove={() => openApproveModal(selectedApplicant)}
+          onCancelDocumentApproval={() => openCancelApprovalModal(selectedApplicant)}
+          onCancelDocumentRejection={() => openCancelRejectModal(selectedApplicant)}
         />
       </>
     )
@@ -122,7 +201,8 @@ export function GeneralVolunteerDocScreeningSection({
 
   return (
     <>
-      {confirmModal}
+      {listBulkModals}
+      {completeModals}
       <div className="general-volunteer-screening applicant-details">
         <FilterTableLayout
           bordered={false}
@@ -134,10 +214,24 @@ export function GeneralVolunteerDocScreeningSection({
           title={`봉사자 신청 목록 (${count.toLocaleString()})`}
           actions={
             <div className="general-volunteer-screening__actions">
-              <CmsButton type="button" variant="delete" size="large" width={160} onClick={handleBulkReject}>
+              <CmsButton
+                type="button"
+                variant="delete"
+                size="large"
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
+                onClick={handleBulkReject}
+              >
                 선택 반려
               </CmsButton>
-              <CmsButton type="button" variant="secondary" size="large" width={160} onClick={handleBulkApprove}>
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="large"
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
+                onClick={handleBulkApprove}
+              >
                 선택 승인
               </CmsButton>
             </div>

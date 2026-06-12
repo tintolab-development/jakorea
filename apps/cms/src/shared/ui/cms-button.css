@@ -45,6 +45,13 @@
   font-size: 16px;
 }
 
+/* 승인·반려·취소 등 관리 액션 — size·외부 오버라이드와 무관하게 폭 140 유지 */
+.cms-button.cms-button--action.ant-btn {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+}
+
 .cms-button.ant-btn.cms-button--medium {
   width: 120px;
   height: 40px;

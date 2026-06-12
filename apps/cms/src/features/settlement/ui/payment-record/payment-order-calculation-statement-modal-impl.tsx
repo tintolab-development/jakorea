@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
 import type { PaymentOrderCalculationStatementCommitPayload } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
@@ -97,10 +97,22 @@ export function PaymentOrderCalculationStatementModalImpl({
           processingStatus={statement.basic.processingStatusClass}
           headerActions={
             <>
-              <CmsButton variant="delete" size="large" onClick={() => setPaymentRejectOpen(true)}>
+              <CmsButton
+                variant="delete"
+                size="large"
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
+                onClick={() => setPaymentRejectOpen(true)}
+              >
                 신청 반려
               </CmsButton>
-              <CmsButton variant="primary" size="large" onClick={() => setPaymentConfirmOpen(true)}>
+              <CmsButton
+                variant="primary"
+                size="large"
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
+                onClick={() => setPaymentConfirmOpen(true)}
+              >
                 확인 처리
               </CmsButton>
             </>

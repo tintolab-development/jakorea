@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { UjatVolunteerApplicantBasicInfo } from './ujat-volunteer-applicant-basic-info'
@@ -94,7 +94,8 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
               type="button"
               variant="delete"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={onWithdrawActivity}
             >
               활동 포기
@@ -103,7 +104,8 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
               type="button"
               variant="delete"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={onInterviewFail}
             >
               면접 불합격
@@ -112,7 +114,8 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
               type="button"
               variant="secondary"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={onInterviewPass}
             >
               면접 합격
@@ -121,7 +124,8 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
               type="button"
               variant="primary"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={onOpenInterviewEvaluation}
             >
               면접 평가
@@ -163,7 +167,8 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
               type="button"
               variant="delete"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={onWithdrawActivity}
             >
               활동 포기
@@ -172,7 +177,8 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
               type="button"
               variant="secondary"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={onAssignInterview}
             >
               {assignInterviewLabel}
@@ -216,10 +222,12 @@ export function UjatVolunteerApplicantDetailView(props: UjatVolunteerApplicantDe
     <div className="ujat-volunteer-applicant-detail">
       <div className="ujat-volunteer-applicant-detail__header">
         <div className="program-detail-fullpage-modal__header-actions">
-          <CmsButton type="button" variant="delete" size="large" width={160} onClick={onDocumentReject}>
+          <CmsButton type="button" variant="delete" size="large" className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH} onClick={onDocumentReject}>
             서류 반려
           </CmsButton>
-          <CmsButton type="button" variant="secondary" size="large" width={160} onClick={onDocumentApprove}>
+          <CmsButton type="button" variant="secondary" size="large" className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH} onClick={onDocumentApprove}>
             서류 승인
           </CmsButton>
           <PersonalInfoRevealButton

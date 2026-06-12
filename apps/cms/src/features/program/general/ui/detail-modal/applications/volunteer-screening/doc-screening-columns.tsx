@@ -10,27 +10,44 @@ import {
   GENERAL_ESSAY_COLUMN_DEFAULT_WIDTHS,
   GENERAL_MANAGER_EVALUATION_ORDER,
   GENERAL_VOLUNTEER_ESSAY_COLUMN_TITLES,
-  formatGeneralVolunteerApplicationType,
+  formatGeneralJaVolunteerExperienceCell,
   formatGeneralVolunteerEssayCellValue,
   type GeneralEssayColumnKey,
   type GeneralManagerEvaluation,
 } from '@/features/program/general/lib/volunteer-screening-constants'
-import {
-  GeneralDocumentScreeningStatusText,
-  GeneralManagerEvaluationBadge,
-} from './status-text'
+import { GeneralDocumentScreeningStatusText, GeneralManagerEvaluationBadge } from './status-text'
 
-const APPLICATION_TYPE_COLUMN_WIDTH = 180
+const JA_VOLUNTEER_EXPERIENCE_COLUMN_WIDTH = 160
 
 export const GENERAL_DOC_SCREENING_TABLE_SCROLL_X =
-  60 + 72 + 140 + 140 + 220 + APPLICATION_TYPE_COLUMN_WIDTH + 200 + 200 + 160 +
+  60 +
+  72 +
+  140 +
+  140 +
+  220 +
+  JA_VOLUNTEER_EXPERIENCE_COLUMN_WIDTH +
+  200 +
+  200 +
+  160 +
   Object.values(GENERAL_ESSAY_COLUMN_DEFAULT_WIDTHS).reduce((sum, width) => sum + width, 0)
 
 const CENTER_CELL_CLASS = 'general-volunteer-screening__center-cell'
 const NOWRAP_CELL_CLASS = 'general-volunteer-screening__nowrap-cell'
-const APPLICATION_TYPE_CELL_CLASS = 'general-volunteer-screening__application-type-cell'
 const ESSAY_CELL_CLASS = 'general-volunteer-screening__essay-cell'
+const ESSAY_TEXT_CELL_CLASS = 'general-volunteer-screening__essay-text'
 const MANAGER_EVALUATION_CELL_CLASS = `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME} general-volunteer-screening__manager-eval-dropdown-cell`
+
+function renderEssayCell(value: string | undefined, record: GeneralVolunteerApplicantRow) {
+  const display = formatGeneralVolunteerEssayCellValue(record.applicationType, value)
+  return (
+    <span
+      className={`general-volunteer-screening__text-cell ${ESSAY_TEXT_CELL_CLASS}`}
+      title={display !== '-' ? display : undefined}
+    >
+      {display}
+    </span>
+  )
+}
 
 export function useGeneralVolunteerDocScreeningColumns({
   onManagerAEvaluationChange,
@@ -41,9 +58,7 @@ export function useGeneralVolunteerDocScreeningColumns({
   onManagerAEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
   onManagerBEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
   openManagerDropdown: { rowId: string; manager: 'A' | 'B' } | null
-  setOpenManagerDropdown: Dispatch<
-    SetStateAction<{ rowId: string; manager: 'A' | 'B' } | null>
-  >
+  setOpenManagerDropdown: Dispatch<SetStateAction<{ rowId: string; manager: 'A' | 'B' } | null>>
 }): ColumnsType<GeneralVolunteerApplicantRow> {
   return useMemo(() => {
     const essayColumns: ColumnsType<GeneralVolunteerApplicantRow> = (
@@ -55,13 +70,11 @@ export function useGeneralVolunteerDocScreeningColumns({
       width: GENERAL_ESSAY_COLUMN_DEFAULT_WIDTHS[key],
       minWidth: GENERAL_ESSAY_COLUMN_DEFAULT_WIDTHS[key],
       align: 'center',
+      ellipsis: false,
       onHeaderCell: () => ({ className: ESSAY_CELL_CLASS }),
       onCell: () => ({ className: ESSAY_CELL_CLASS }),
-      render: (value: string | undefined, record: GeneralVolunteerApplicantRow) => (
-        <span className="general-volunteer-screening__text-cell">
-          {formatGeneralVolunteerEssayCellValue(record.applicationType, value)}
-        </span>
-      ),
+      render: (value: string | undefined, record: GeneralVolunteerApplicantRow) =>
+        renderEssayCell(value, record),
     }))
 
     return [
@@ -111,19 +124,15 @@ export function useGeneralVolunteerDocScreeningColumns({
         onCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
       },
       {
-        title: '지원 형태',
-        dataIndex: 'applicationType',
-        key: 'applicationType',
-        width: APPLICATION_TYPE_COLUMN_WIDTH,
-        minWidth: APPLICATION_TYPE_COLUMN_WIDTH,
+        title: 'JA 봉사 진행 경험',
+        key: 'jaVolunteerExperience',
+        width: JA_VOLUNTEER_EXPERIENCE_COLUMN_WIDTH,
+        minWidth: JA_VOLUNTEER_EXPERIENCE_COLUMN_WIDTH,
         align: 'center',
         onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
-        onCell: () => ({ className: `${CENTER_CELL_CLASS} ${APPLICATION_TYPE_CELL_CLASS}` }),
-        render: (type: GeneralVolunteerApplicantRow['applicationType']) => (
-          <span className="general-volunteer-screening__text-cell">
-            {formatGeneralVolunteerApplicationType(type)}
-          </span>
-        ),
+        onCell: () => ({ className: CENTER_CELL_CLASS }),
+        render: (_: unknown, record: GeneralVolunteerApplicantRow) =>
+          formatGeneralJaVolunteerExperienceCell(record.hasJaVolunteerExperience),
       },
       ...essayColumns,
       {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
 import { PlainHeaderModal } from '@/shared/ui/plain-header-modal'
-import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   getInstructorSettlementInvoiceStatusPresentation,
@@ -184,6 +184,8 @@ export function InstructorInvoiceModal({
                   <CmsButton
                     variant="delete"
                     size="large"
+                    className="cms-button--action"
+                    width={CMS_ACTION_BUTTON_WIDTH}
                     onClick={() => setPaymentRejectOpen(true)}
                   >
                     신청 반려
@@ -192,6 +194,8 @@ export function InstructorInvoiceModal({
                     <CmsButton
                       variant="primary"
                       size="large"
+                      className="cms-button--action"
+                      width={CMS_ACTION_BUTTON_WIDTH}
                       onClick={() => setPaymentConfirmOpen(true)}
                     >
                       확인 처리

@@ -899,6 +899,9 @@ export function GeneralProgramDetailFullPageModal({
     ) {
       return
     }
+    if (activeLnb === 'volunteer_applications' && volunteerApplicantCloseHandlerRef.current?.()) {
+      return
+    }
     onClose()
   }, [activeLnb, schoolIdFromUrl, instructorIdFromUrl, setSchoolId, setInstructorId, onClose])
 
@@ -1040,7 +1043,14 @@ export function GeneralProgramDetailFullPageModal({
         open={open}
         onClose={handleModalClose}
         title={modalTitle}
-        closeAriaLabel={schoolIdFromUrl || instructorIdFromUrl ? '목록으로' : undefined}
+        closeAriaLabel={
+          schoolIdFromUrl ||
+          instructorIdFromUrl ||
+          (volunteerApplicantDetailMeta != null &&
+            isGeneralVolunteerApplicantDetailRoute(activeLnb, activeTab))
+            ? '목록으로'
+            : undefined
+        }
         headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
         className="program-detail-fullpage-modal general-detail-fullpage-modal program-detail-fullpage-modal--program-list-overview"
         sidebar={

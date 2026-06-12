@@ -2,7 +2,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MouseEven
 import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
@@ -231,7 +231,8 @@ export function UjatVolunteerInterview2Section({
               type="button"
               variant="delete"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkFail}
             >
               선택 불합격
@@ -240,7 +241,8 @@ export function UjatVolunteerInterview2Section({
               type="button"
               variant="secondary"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkPass}
             >
               선택 합격

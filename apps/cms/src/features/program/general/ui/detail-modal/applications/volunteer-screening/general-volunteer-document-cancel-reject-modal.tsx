@@ -1,54 +1,48 @@
-/**
- * 일반 프로그램 — 강사 반려 취소 확인
- * - alreadySent(1번 시안): PermissionModal — 알림 발송 + 취소 사유 → 완료 모달
- * - pendingNotification(2번 시안): ContentModal — 안내 확인 → 완료 모달
- */
-
+import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import {
-  buildInstructorCancelRejectionMessage,
-  resolveInstructorCancelRejectionNotifyVariant,
-  type InstructorCancelRejectionConfirmPayload,
-  type InstructorCancelRejectionNotifyVariant,
-} from '@/features/program/general/lib/instructor-cancel-rejection'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+  buildVolunteerDocumentCancelRejectionMessage,
+  resolveVolunteerDocumentCancelRejectionNotifyVariant,
+  type VolunteerDocumentCancelRejectionConfirmPayload,
+  type VolunteerDocumentCancelRejectionNotifyVariant,
+} from '@/features/program/general/lib/volunteer-document-cancel-rejection'
 import {
   PermissionModal,
   type PermissionModalPayload,
 } from '@/shared/components/permission-modal'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
-import './instructor-bulk-approve-modal.css'
-import './instructor-cancel-reject-modal.css'
+import '@/features/program/shared/ui/detail-modal/components/instructor-bulk-approve-modal.css'
+import '@/features/program/shared/ui/detail-modal/components/instructor-cancel-reject-modal.css'
 
 const MODAL_WIDTH = 600
 const MODAL_Z_INDEX = 2500
 
-export type { InstructorCancelRejectionConfirmPayload }
+export type { VolunteerDocumentCancelRejectionConfirmPayload }
 
-export type InstructorCancelRejectModalProps = {
+export type GeneralVolunteerDocumentCancelRejectModalProps = {
   open: boolean
-  instructor: ApplicantInstructorRow | null
+  volunteer: GeneralVolunteerApplicantRow | null
   onCancel: () => void
-  onConfirm: (payload: InstructorCancelRejectionConfirmPayload) => void
+  onConfirm: (payload: VolunteerDocumentCancelRejectionConfirmPayload) => void
   zIndex?: number
 }
 
-export function resolveInstructorCancelRejectionNotifyVariantFromRow(
-  instructor: ApplicantInstructorRow | null
-): InstructorCancelRejectionNotifyVariant {
-  if (!instructor) return 'pendingNotification'
-  return resolveInstructorCancelRejectionNotifyVariant(instructor)
+export function resolveVolunteerDocumentCancelRejectionNotifyVariantFromRow(
+  volunteer: GeneralVolunteerApplicantRow | null
+): VolunteerDocumentCancelRejectionNotifyVariant {
+  if (!volunteer) return 'pendingNotification'
+  return resolveVolunteerDocumentCancelRejectionNotifyVariant(volunteer)
 }
 
-function InstructorCancelRejectPendingNotificationModal({
+function VolunteerDocumentCancelRejectPendingNotificationModal({
   open,
-  instructorName,
+  volunteerName,
   onCancel,
   onConfirm,
   zIndex = MODAL_Z_INDEX,
 }: {
   open: boolean
-  instructorName: string
+  volunteerName: string
   onCancel: () => void
   onConfirm: () => void
   zIndex?: number
@@ -57,12 +51,12 @@ function InstructorCancelRejectPendingNotificationModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="강사 반려 취소 안내"
+      title="봉사자 1차 반려 취소 안내"
       width={MODAL_WIDTH}
       zIndex={zIndex}
-      className="instructor-cancel-reject-modal"
-      description={buildInstructorCancelRejectionMessage(
-        instructorName,
+      className="general-volunteer-document-cancel-reject-modal instructor-cancel-reject-modal"
+      description={buildVolunteerDocumentCancelRejectionMessage(
+        volunteerName,
         'pendingNotification'
       )}
       footer={
@@ -95,15 +89,15 @@ function InstructorCancelRejectPendingNotificationModal({
   )
 }
 
-function InstructorCancelRejectAlreadySentModal({
+function VolunteerDocumentCancelRejectAlreadySentModal({
   open,
-  instructorName,
+  volunteerName,
   onCancel,
   onConfirm,
   zIndex = MODAL_Z_INDEX,
 }: {
   open: boolean
-  instructorName: string
+  volunteerName: string
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
   zIndex?: number
@@ -112,9 +106,9 @@ function InstructorCancelRejectAlreadySentModal({
     <PermissionModal
       open={open}
       variant="reject"
-      className="instructor-cancel-reject-modal"
-      title="강사 반려 취소 안내"
-      message={buildInstructorCancelRejectionMessage(instructorName, 'alreadySent')}
+      className="general-volunteer-document-cancel-reject-modal instructor-cancel-reject-modal"
+      title="봉사자 1차 반려 취소 안내"
+      message={buildVolunteerDocumentCancelRejectionMessage(volunteerName, 'alreadySent')}
       confirmLabel="반려 취소"
       confirmVariant="delete"
       requireReason
@@ -130,21 +124,21 @@ function InstructorCancelRejectAlreadySentModal({
   )
 }
 
-export function InstructorCancelRejectModal({
+export function GeneralVolunteerDocumentCancelRejectModal({
   open,
-  instructor,
+  volunteer,
   onCancel,
   onConfirm,
   zIndex = MODAL_Z_INDEX,
-}: InstructorCancelRejectModalProps) {
-  const variant = resolveInstructorCancelRejectionNotifyVariantFromRow(instructor)
-  const instructorName = instructor?.instructorName ?? ''
+}: GeneralVolunteerDocumentCancelRejectModalProps) {
+  const variant = resolveVolunteerDocumentCancelRejectionNotifyVariantFromRow(volunteer)
+  const volunteerName = volunteer?.name ?? ''
 
   if (variant === 'pendingNotification') {
     return (
-      <InstructorCancelRejectPendingNotificationModal
+      <VolunteerDocumentCancelRejectPendingNotificationModal
         open={open}
-        instructorName={instructorName}
+        volunteerName={volunteerName}
         onCancel={onCancel}
         onConfirm={() => onConfirm({ variant: 'pendingNotification' })}
         zIndex={zIndex}
@@ -153,9 +147,9 @@ export function InstructorCancelRejectModal({
   }
 
   return (
-    <InstructorCancelRejectAlreadySentModal
+    <VolunteerDocumentCancelRejectAlreadySentModal
       open={open}
-      instructorName={instructorName}
+      volunteerName={volunteerName}
       onCancel={onCancel}
       onConfirm={payload => {
         onConfirm({

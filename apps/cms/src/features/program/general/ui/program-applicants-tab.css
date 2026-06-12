@@ -162,11 +162,11 @@
     flex-shrink: 0;
 }
 
-/* 선택 반려 / 선택 승인 버튼: 120×40 고정 */
+/* 선택 반려 / 선택 승인 버튼: 140×44 (cms-button--large와 동일) */
 .program-applicants-tab__table-actions .cms-button {
-    width: 120px;
-    min-width: 120px;
-    height: 40px;
+    width: 140px;
+    min-width: 140px;
+    height: 44px;
 }
 
 .program-applicants-tab__table-title {

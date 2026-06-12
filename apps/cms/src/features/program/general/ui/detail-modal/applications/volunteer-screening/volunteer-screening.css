@@ -65,6 +65,65 @@
   overflow-x: auto;
 }
 
+/* 서술형 1~4번 행: cms-data-table 기본 54px·nowrap 해제 — 내용 길이에 따라 최대 192px까지 확장 */
+.general-volunteer-screening
+  .cms-data-table.general-volunteer-screening__table
+  .ant-table-tbody
+  > tr
+  > td.general-volunteer-screening__essay-cell {
+  height: auto !important;
+  min-height: 54px !important;
+  max-height: none !important;
+  white-space: normal !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  vertical-align: middle !important;
+  line-height: 1.5;
+}
+
+.general-volunteer-screening
+  .cms-data-table.general-volunteer-screening__table
+  .ant-table-tbody
+  > tr:has(td.general-volunteer-screening__essay-cell)
+  > td:not(.general-volunteer-screening__nowrap-cell) {
+  height: auto !important;
+  white-space: normal !important;
+  vertical-align: middle !important;
+}
+
+.general-volunteer-screening
+  .cms-data-table.general-volunteer-screening__table
+  .ant-table-tbody
+  > tr
+  > td.general-volunteer-screening__nowrap-cell {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  white-space: nowrap !important;
+}
+
+.general-volunteer-screening
+  .cms-data-table
+  .ant-table-tbody
+  .ant-table-cell-ellipsis.general-volunteer-screening__essay-cell,
+.general-volunteer-screening
+  .cms-data-table
+  .ant-table-tbody
+  td.general-volunteer-screening__essay-cell.ant-table-cell-ellipsis {
+  white-space: normal !important;
+  text-overflow: clip !important;
+}
+
+.general-volunteer-screening
+  .cms-data-table
+  .ant-table-tbody
+  td.general-volunteer-screening__essay-cell
+  .ant-table-cell-content {
+  overflow: hidden !important;
+  white-space: normal !important;
+  text-overflow: clip !important;
+}
+
 .general-volunteer-screening__center-cell,
 .general-volunteer-screening__screening-status-cell {
   text-align: center;
@@ -136,6 +195,15 @@ th.general-volunteer-screening__essay-cell .ant-table-cell-content {
   white-space: nowrap;
 }
 
+th.general-volunteer-screening__essay-cell {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  white-space: nowrap;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
 td.general-volunteer-screening__essay-cell .ant-table-cell-content {
   display: block;
   width: 100%;
@@ -147,7 +215,8 @@ td.general-volunteer-screening__essay-cell .ant-table-cell-content {
   overflow-wrap: anywhere;
 }
 
-td.general-volunteer-screening__essay-cell .general-volunteer-screening__text-cell {
+/* 서술형 본문: 최대 192px(8줄)까지 자동 확장, 초과 시 말줄임 */
+td.general-volunteer-screening__essay-cell .general-volunteer-screening__essay-text {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 8;
@@ -157,6 +226,14 @@ td.general-volunteer-screening__essay-cell .general-volunteer-screening__text-ce
   white-space: normal;
   word-break: break-word;
   overflow-wrap: anywhere;
+  line-height: 1.5;
+  text-align: center;
+}
+
+td.general-volunteer-screening__essay-cell .general-volunteer-screening__essay-text:not(:empty) {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 .general-volunteer-status {
@@ -229,4 +306,28 @@ td.general-volunteer-screening__essay-cell .general-volunteer-screening__text-ce
   min-width: 216px !important;
   width: 216px !important;
   max-width: 216px !important;
+}
+
+/* 풀페이지 상세 — cms-data-table 전역 54px보다 서술형 행 우선 */
+.detail-fullpage-modal
+  .general-volunteer-screening
+  .cms-data-table.general-volunteer-screening__table
+  .ant-table-tbody
+  > tr
+  > td.general-volunteer-screening__essay-cell {
+  height: auto !important;
+  min-height: 54px !important;
+  white-space: normal !important;
+}
+
+.detail-fullpage-modal
+  .general-volunteer-screening
+  .cms-data-table.general-volunteer-screening__table
+  .ant-table-tbody
+  > tr
+  > td.general-volunteer-screening__nowrap-cell {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  white-space: nowrap !important;
 }

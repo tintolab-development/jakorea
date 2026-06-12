@@ -9,7 +9,7 @@ import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Tabs, Descriptions, Table, Input } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CmsButton, CmsRadio } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH, CmsRadio } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { ColumnsType } from 'antd/es/table'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -876,10 +876,22 @@ export function SchoolDetailModal({
                   <DefaultTabBar {...tabBarProps} className="school-detail-modal__tabs-nav" />
                   {isApplicant && activeTab !== TAB_STUDENTS && (
                     <div className="school-detail-modal__top-actions school-detail-modal__basic-actions school-detail-modal__basic-actions--approval">
-                      <CmsButton variant="delete" size="large" width={160} onClick={() => {}}>
+                      <CmsButton
+                        variant="delete"
+                        size="large"
+                        className="cms-button--action"
+                        width={CMS_ACTION_BUTTON_WIDTH}
+                        onClick={() => {}}
+                      >
                         반려
                       </CmsButton>
-                      <CmsButton variant="primary" size="large" width={160} onClick={() => {}}>
+                      <CmsButton
+                        variant="primary"
+                        size="large"
+                        className="cms-button--action"
+                        width={CMS_ACTION_BUTTON_WIDTH}
+                        onClick={() => {}}
+                      >
                         승인
                       </CmsButton>
                     </div>
@@ -888,7 +900,9 @@ export function SchoolDetailModal({
                     <div className="school-detail-modal__top-actions school-detail-modal__basic-actions">
                       <CmsButton
                         variant="delete"
-                        size="large" width={160}
+                        size="large"
+                        className="cms-button--action"
+                        width={CMS_ACTION_BUTTON_WIDTH}
                         disabled={isCancelApprovalDisabled}
                         title={cancelApprovalDisabledReason ?? undefined}
                         onClick={() => setCancelApprovalConfirmOpen(true)}
