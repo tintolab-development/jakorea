@@ -1,45 +1,13 @@
-import { mockPersonalInfoAccessLogs } from '@/data/mock/personal-info-access-logs'
+/**
+ * 개인정보 조회 기록 (write-only stub — 목록은 GET /api/logs/privacy-access)
+ */
+
 import type {
   PersonalInfoAccessLog,
-  PersonalInfoAccessLogFilters,
   RecordPersonalInfoAccessPayload,
 } from '@/types/personal-info-access-log'
 
-function normalizeText(value: string | undefined): string {
-  return (value ?? '').trim().toLowerCase()
-}
-
-function applyFilters(
-  logs: PersonalInfoAccessLog[],
-  filters?: PersonalInfoAccessLogFilters
-): PersonalInfoAccessLog[] {
-  if (!filters) return logs
-
-  const accessPurpose = normalizeText(filters.accessPurpose)
-  const accessorName = normalizeText(filters.accessorName)
-  const startDate = filters.startDate ? new Date(filters.startDate).getTime() : null
-  const endDate = filters.endDate ? new Date(filters.endDate).getTime() : null
-
-  return logs.filter(log => {
-    if (accessPurpose && !log.accessPurpose.toLowerCase().includes(accessPurpose)) return false
-    if (accessorName && !log.accessorName.toLowerCase().includes(accessorName)) return false
-
-    const accessedAt = new Date(log.accessedAt).getTime()
-    if (startDate != null && accessedAt < startDate) return false
-    if (endDate != null && accessedAt > endDate) return false
-    return true
-  })
-}
-
-export async function getPersonalInfoAccessLogs(
-  filters?: PersonalInfoAccessLogFilters
-): Promise<PersonalInfoAccessLog[]> {
-  await new Promise(resolve => setTimeout(resolve, 120))
-  const logs = [...mockPersonalInfoAccessLogs].sort(
-    (a, b) => new Date(b.accessedAt).getTime() - new Date(a.accessedAt).getTime()
-  )
-  return applyFilters(logs, filters)
-}
+const personalInfoAccessLogMemory: PersonalInfoAccessLog[] = []
 
 export async function logPersonalInfoAccess(
   log: Omit<PersonalInfoAccessLog, 'id'>
@@ -49,7 +17,7 @@ export async function logPersonalInfoAccess(
     ...log,
     id: `pi-log-${Math.random().toString(36).slice(2, 11)}-${Date.now()}`,
   }
-  mockPersonalInfoAccessLogs.unshift(newLog)
+  personalInfoAccessLogMemory.unshift(newLog)
   return newLog
 }
 

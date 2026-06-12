@@ -1,49 +1,10 @@
 /**
- * 파일 다운로드 이력 서비스 (mock-memory)
+ * 파일 다운로드 기록 (write-only stub — 목록은 GET /api/logs/file-access)
  */
 
-import type {
-  DownloadLog,
-  DownloadLogFilters,
-  RecordDownloadPayload,
-} from '@/types/download-log'
-import { mockDownloadLogs } from '@/data/mock/download-logs'
+import type { DownloadLog, RecordDownloadPayload } from '@/types/download-log'
 
-function normalizeText(value: string | undefined): string {
-  return (value ?? '').trim().toLowerCase()
-}
-
-function applyFilters(logs: DownloadLog[], filters?: DownloadLogFilters): DownloadLog[] {
-  if (!filters) return logs
-
-  const no = normalizeText(filters.no)
-  const fileName = normalizeText(filters.fileName)
-  const userName = normalizeText(filters.userName)
-  const ipAddress = normalizeText(filters.ipAddress)
-  const startDate = filters.startDate ? new Date(filters.startDate).getTime() : null
-  const endDate = filters.endDate ? new Date(filters.endDate).getTime() : null
-
-  return logs.filter((log, index) => {
-    const orderNo = String(logs.length - index)
-    if (no && !orderNo.includes(no)) return false
-    if (fileName && !log.fileName.toLowerCase().includes(fileName)) return false
-    if (userName && !log.userName.toLowerCase().includes(userName)) return false
-    if (ipAddress && !log.ipAddress.toLowerCase().includes(ipAddress)) return false
-
-    const downloadedAt = new Date(log.downloadedAt).getTime()
-    if (startDate != null && downloadedAt < startDate) return false
-    if (endDate != null && downloadedAt > endDate) return false
-    return true
-  })
-}
-
-export async function getDownloadLogs(filters?: DownloadLogFilters): Promise<DownloadLog[]> {
-  await new Promise(resolve => setTimeout(resolve, 120))
-
-  const logs = [...mockDownloadLogs]
-  logs.sort((a, b) => new Date(b.downloadedAt).getTime() - new Date(a.downloadedAt).getTime())
-  return applyFilters(logs, filters)
-}
+const downloadLogMemory: DownloadLog[] = []
 
 export async function logDownload(log: Omit<DownloadLog, 'id'>): Promise<DownloadLog> {
   await new Promise(resolve => setTimeout(resolve, 80))
@@ -53,7 +14,7 @@ export async function logDownload(log: Omit<DownloadLog, 'id'>): Promise<Downloa
     id: `log-${Math.random().toString(36).slice(2, 11)}-${Date.now()}`,
   }
 
-  mockDownloadLogs.unshift(newLog)
+  downloadLogMemory.unshift(newLog)
   return newLog
 }
 

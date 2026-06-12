@@ -1,0 +1,19 @@
+import { useQuery } from '@tanstack/react-query'
+import { getBugIssueLogsList } from '@/features/logs/api/admin-logs-service'
+import { logsQueryKeys } from '@/features/logs/api/logs-query-keys'
+import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
+
+export function useBugIssueHistoryQuery(
+  apiParams: Record<string, string>,
+  enabled = true
+) {
+  const remoteEnabled = useLogsRemoteQueryEnabled(enabled)
+
+  return useQuery({
+    queryKey: logsQueryKeys.systemIssues(apiParams),
+    queryFn: () => getBugIssueLogsList(apiParams),
+    enabled: remoteEnabled,
+    staleTime: 30_000,
+    retry: false,
+  })
+}

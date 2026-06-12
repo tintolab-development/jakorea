@@ -189,12 +189,18 @@ export const MembersPermissionList = forwardRef<
     return target?.name ?? '회원 권한 신청자'
   }, [])
 
+  const resolvePermissionListMemberId = useCallback((rowId: string) => {
+    const target = rowsRef.current.find(row => row.id === rowId)
+    return target?.userId
+  }, [])
+
   const {
     privacyRevealedByRowId,
     handleToggleListPrivacyMask,
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoRevealByRow({
     resolveAccessItem: resolvePermissionListPersonalInfoAccessItem,
+    resolveMemberId: resolvePermissionListMemberId,
     resetDeps: [baseRows],
   })
 

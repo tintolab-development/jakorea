@@ -137,6 +137,7 @@ export function useUserDetailController({
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolvePersonalInfoAccessItem,
+    resolveMemberId: () => displayUser?.id,
     resetDeps: [open, displayUser?.id],
     controlMode: 'hideWhenRevealed',
     modalZIndex: PERSONAL_INFO_REVEAL_MODAL_Z_INDEX,
