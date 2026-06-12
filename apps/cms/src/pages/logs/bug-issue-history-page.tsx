@@ -6,7 +6,6 @@ import { useSearchParams } from 'react-router-dom'
 import { bugIssueHistoryFilterFields } from '@/features/download/model/bug-issue-history-filter-fields'
 import { bugIssueHistoryTablePageConfig } from '@/features/download/model/bug-issue-history-table.config'
 import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
-import { bugIssueLogsParamsFromSearchParams } from '@/features/logs/api/logs-filter-params'
 import { useBugIssueHistoryQuery } from '@/features/logs/hooks/use-bug-issue-history-query'
 import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
 import { BugIssueDetailModal } from '@/features/logs/ui/bug-issue-detail-modal'
@@ -41,11 +40,7 @@ export default function BugIssueHistoryPage() {
   const [selectedIssueId, setSelectedIssueId] = useState<number | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const remoteEnabled = useLogsRemoteQueryEnabled()
-  const apiParams = useMemo(
-    () => bugIssueLogsParamsFromSearchParams(searchParams),
-    [searchParams]
-  )
-  const { data: rows = [], isLoading, isError, error } = useBugIssueHistoryQuery(apiParams)
+  const { data: rows = [], isLoading, isError, error } = useBugIssueHistoryQuery(searchParams)
 
   const { pendingFilters, handleFilterChange, applySearch, tableData, displayedCount } = useTablePage(
     bugIssueHistoryTablePageConfig,

@@ -54,6 +54,27 @@ function resolvePendingDateRangeFromUrl(args: {
   return prev ?? null
 }
 
+function filterLogs(data: DownloadLog[], searchParams: URLSearchParams): DownloadLog[] {
+  const fileName = (searchParams.get('fdl_file') ?? '').trim().toLowerCase()
+  const userName = (searchParams.get('fdl_user') ?? '').trim().toLowerCase()
+  const from = searchParams.get('fdl_from')
+  const to = searchParams.get('fdl_to')
+
+  return data
+    .filter(row => {
+      if (fileName && !row.fileName.toLowerCase().includes(fileName)) return false
+      if (userName && !row.userName.toLowerCase().includes(userName)) return false
+      if (from && to) {
+        const downloadedAt = dayjs(row.downloadedAt)
+        const start = dayjs(from).startOf('day')
+        const end = dayjs(to).endOf('day')
+        if (downloadedAt.isBefore(start) || downloadedAt.isAfter(end)) return false
+      }
+      return true
+    })
+    .sort((a, b) => dayjs(b.downloadedAt).valueOf() - dayjs(a.downloadedAt).valueOf())
+}
+
 const tanstackColumns: ColumnDef<DownloadLog>[] = [{ accessorKey: 'id', id: 'id' }]
 
 const searchSyncRules: readonly TableSearchParamRule<FileDownloadHistoryPendingFilters>[] = [
@@ -145,7 +166,10 @@ export const fileDownloadHistoryTablePageConfig: TablePageConfig<
       return { ...prev, [key]: value } as FileDownloadHistoryPendingFilters
     },
   },
-  filterFn: ({ data }) => ({ dataForTable: data, filteredData: data }),
+  filterFn: ({ data, searchParams }) => {
+    const filtered = filterLogs(data, searchParams)
+    return { dataForTable: filtered, filteredData: filtered }
+  },
   getSearchSync: () => ({
     paramConfig: searchSyncRules,
     tableConfig: {},

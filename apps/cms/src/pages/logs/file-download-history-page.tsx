@@ -6,7 +6,6 @@ import { useSearchParams } from 'react-router-dom'
 import { fileDownloadHistoryFilterFields } from '@/features/download/model/file-download-history-filter-fields'
 import { fileDownloadHistoryTablePageConfig } from '@/features/download/model/file-download-history-table.config'
 import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
-import { fileDownloadLogsParamsFromSearchParams } from '@/features/logs/api/logs-filter-params'
 import { useFileDownloadHistoryQuery } from '@/features/logs/hooks/use-file-download-history-query'
 import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
 import { LogsQueryError } from '@/features/logs/ui/logs-query-error'
@@ -33,11 +32,7 @@ const TABLE_COL_WIDTH = {
 export default function FileDownloadHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const remoteEnabled = useLogsRemoteQueryEnabled()
-  const apiParams = useMemo(
-    () => fileDownloadLogsParamsFromSearchParams(searchParams),
-    [searchParams]
-  )
-  const { data: rows = [], isLoading, isError, error } = useFileDownloadHistoryQuery(apiParams)
+  const { data: rows = [], isLoading, isError, error } = useFileDownloadHistoryQuery(searchParams)
 
   const { pendingFilters, handleFilterChange, applySearch, tableData, displayedCount } = useTablePage(
     fileDownloadHistoryTablePageConfig,

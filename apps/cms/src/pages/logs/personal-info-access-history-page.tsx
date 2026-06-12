@@ -4,7 +4,6 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
-import { personalInfoAccessLogsParamsFromSearchParams } from '@/features/logs/api/logs-filter-params'
 import { usePersonalInfoAccessHistoryQuery } from '@/features/logs/hooks/use-personal-info-access-history-query'
 import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
 import { personalInfoAccessHistoryFilterFields } from '@/features/logs/model/personal-info-access-history-filter-fields'
@@ -34,12 +33,8 @@ const TABLE_COL_WIDTH = {
 export default function PersonalInfoAccessHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const remoteEnabled = useLogsRemoteQueryEnabled()
-  const apiParams = useMemo(
-    () => personalInfoAccessLogsParamsFromSearchParams(searchParams),
-    [searchParams]
-  )
   const { data: rows = [], isLoading, isError, error } =
-    usePersonalInfoAccessHistoryQuery(apiParams)
+    usePersonalInfoAccessHistoryQuery(searchParams)
 
   const { pendingFilters, handleFilterChange, applySearch, tableData, displayedCount } = useTablePage(
     personalInfoAccessHistoryTablePageConfig,

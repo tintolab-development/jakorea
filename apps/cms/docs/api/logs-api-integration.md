@@ -65,4 +65,6 @@
 
 백엔드 handoff와 불일치 시 `logs-filter-params.ts`만 수정합니다.
 
+**필터 동작:** 조회 버튼 → URL(`fdl_*` 등) 갱신 → React Query key(`searchParams.toString()`) 변경 → API `params` 재조회. 테이블은 URL 기준 클라이언트 필터도 적용합니다(서버 필터 미반영 시 UI 회귀 방지).
+
 **Last updated:** 2026-06-12
