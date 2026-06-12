@@ -19,13 +19,48 @@ import { mockSettlements } from '@/data/mock/settlements'
 import { MOCK_APPLICANT_INSTITUTIONS } from '@/data/mock/applicant-institutions'
 import { MOCK_APPLICANT_INSTRUCTORS } from '@/data/mock/applicant-instructors'
 import { mockInquiries } from '@/data/mock/inquiries'
+import { mockInstructors } from '@/data/mock/instructors'
 import { mockPermissionRequests } from '@/data/mock/permission-requests'
 import {
   mockPaymentOrderAdminProgramList,
   mockPaymentOrderAdminInstructorList,
 } from '@/data/mock/payment-order-admin-list'
 import { mockAccountPaymentRows } from '@/data/mock/account-payments-list'
-import { SHORTCUT_ITEMS } from '@/features/dashboard/model/dashboard-settings-store'
+import { SHORTCUT_ITEMS, DASHBOARD_HOME_PATH } from '@/features/dashboard/model/dashboard-settings-store'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
+import {
+  fetchDashboardHomeRemote,
+  fetchDashboardKpiProgressRemote,
+  fetchDashboardLogAlertsRemote,
+  fetchDashboardNotificationCountRemote,
+  fetchDashboardProgramInquiriesRemote,
+  fetchDashboardProgramSchedulesRemote,
+  fetchDashboardRecruitmentsRemote,
+  fetchDashboardShortcutsRemote,
+  toDashboardQueryParams,
+} from '@/features/dashboard/api/dashboard-api-client'
+import {
+  mapDashboardHomeResponse,
+  mapKpiProgressListResponse,
+  mapProgramInquiryListResponse,
+  mapProgramOptionsFromRecruitmentList,
+  mapProgramScheduleListResponse,
+  mapRecruitmentListResponse,
+  type DashboardHomeSummary,
+  type DashboardProgramOption,
+  type DashboardScheduleEventDto,
+  type ProgramInquiryRow,
+} from '@/features/dashboard/api/adapters/dashboard-adapters'
+import { getMockDashboardProgramOptions } from '@/features/dashboard/api/dashboard-program-options-mock'
+import { getDashboardProgramTypeParamForWidget } from '@/features/dashboard/lib/dashboard-widget-program-type'
+
+export type { DashboardHomeSummary, ProgramInquiryRow, DashboardScheduleEventDto, DashboardProgramOption }
+
+/** dashboard 실 API — 유효 JWT 없으면 mock fallback (403 방지) */
+export function shouldUseDashboardRemoteApi(): boolean {
+  return isRealApiModuleEnabled('dashboard') && hasRemoteAdminJwt()
+}
 
 export interface ProgramProgressSummary {
   total: number
@@ -87,7 +122,8 @@ export interface KpiMetric {
   key: KpiMetricKey
   label: string
   description: string
-  achieved: number
+  /** null = API 미제공(달성 실적 없음) */
+  achieved: number | null
   target: number
 }
 
@@ -320,6 +356,17 @@ export async function getProgramProgressStagesByProgramId(
 export async function getRecruitmentStatusList(options?: {
   programIds?: string[]
 }): Promise<Program[]> {
+  if (shouldUseDashboardRemoteApi()) {
+    const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
+    const dto = await fetchDashboardRecruitmentsRemote({ params: queryParams })
+    return mapRecruitmentListResponse(dto)
+  }
+  return getRecruitmentStatusListFromMock(options)
+}
+
+async function getRecruitmentStatusListFromMock(options?: {
+  programIds?: string[]
+}): Promise<Program[]> {
   await new Promise(resolve => setTimeout(resolve, 200))
   const programs = getEducationPrograms()
   if (options?.programIds && options.programIds.length > 0) {
@@ -420,6 +467,17 @@ function buildDefaultProgramKpiItem(programId: string, title: string): ProgramKp
  * programIds 있으면 해당 id마다 1건씩 반환(교육 목록에 없어도 mockPrograms·기본값으로 채움)
  */
 export async function getKpiAchievementList(options?: {
+  programIds?: string[]
+}): Promise<ProgramKpiItem[]> {
+  if (shouldUseDashboardRemoteApi()) {
+    const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
+    const dto = await fetchDashboardKpiProgressRemote({ params: queryParams })
+    return mapKpiProgressListResponse(dto)
+  }
+  return getKpiAchievementListFromMock(options)
+}
+
+async function getKpiAchievementListFromMock(options?: {
   programIds?: string[]
 }): Promise<ProgramKpiItem[]> {
   await new Promise(resolve => setTimeout(resolve, 200))
@@ -581,4 +639,149 @@ export function getMenuShortcutBadgeCounts(): Record<string, number> {
     out[item.id] = mapped[item.id] ?? 0
   }
   return out
+}
+
+/** Swagger: GET /api/admin/dashboard/home */
+export async function getDashboardHomeSummary(): Promise<DashboardHomeSummary> {
+  if (shouldUseDashboardRemoteApi()) {
+    const dto = await fetchDashboardHomeRemote()
+    return mapDashboardHomeResponse(dto)
+  }
+  await new Promise(resolve => setTimeout(resolve, 150))
+  return {
+    version: 'mock',
+    programCount: mockPrograms.length,
+    memberCount: mockInstructors.length,
+    unreadNotificationCount: 0,
+  }
+}
+
+/** Swagger: GET /api/admin/dashboard/notifications/count */
+export async function getDashboardNotificationCount(): Promise<number> {
+  if (shouldUseDashboardRemoteApi()) {
+    const dto = await fetchDashboardNotificationCountRemote()
+    return dto.unreadCount ?? 0
+  }
+  return 0
+}
+
+/** Swagger: GET /api/admin/dashboard/program-inquiries */
+export async function getProgramInquiryStatusList(options?: {
+  programIds?: string[]
+}): Promise<ProgramInquiryRow[]> {
+  if (shouldUseDashboardRemoteApi()) {
+    const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
+    const dto = await fetchDashboardProgramInquiriesRemote({ params: queryParams })
+    return mapProgramInquiryListResponse(dto)
+  }
+  return getProgramInquiryStatusListFromMock()
+}
+
+function getProgramInquiryStatusListFromMock(): ProgramInquiryRow[] {
+  const grouped = new Map<string, { pending: number; answered: number; total: number }>()
+  for (const inquiry of mockInquiries) {
+    const programName = inquiry.category
+    const bucket = grouped.get(programName) ?? { pending: 0, answered: 0, total: 0 }
+    bucket.total += 1
+    if (inquiry.status === 'PENDING') bucket.pending += 1
+    else bucket.answered += 1
+    grouped.set(programName, bucket)
+  }
+  return [...grouped.entries()].map(([programName, counts], index) => ({
+    key: String(index + 1),
+    programName,
+    ...counts,
+  }))
+}
+
+/** Swagger: GET /api/admin/dashboard/program-schedules */
+export async function getDashboardScheduleEvents(options?: {
+  programIds?: string[]
+  dateFrom?: string
+  dateTo?: string
+  programType?: string
+}): Promise<DashboardScheduleEventDto[]> {
+  if (shouldUseDashboardRemoteApi()) {
+    const extra: Record<string, string> = {}
+    if (options?.dateFrom) extra.dateFrom = options.dateFrom
+    if (options?.dateTo) extra.dateTo = options.dateTo
+    if (options?.programType) extra.programType = options.programType
+    const queryParams = toDashboardQueryParams({
+      programIds: options?.programIds,
+      extra,
+    })
+    const dto = await fetchDashboardProgramSchedulesRemote({ params: queryParams })
+    return mapProgramScheduleListResponse(dto)
+  }
+  return []
+}
+
+/** Swagger: GET /api/admin/dashboard/recruitments — 위젯별 프로그램 선택 옵션 */
+export async function getDashboardProgramOptions(widgetKey: string): Promise<DashboardProgramOption[]> {
+  if (shouldUseDashboardRemoteApi()) {
+    const programType = getDashboardProgramTypeParamForWidget(widgetKey)
+    const extra = programType ? { programType } : undefined
+    const queryParams = toDashboardQueryParams({ extra })
+    const dto = await fetchDashboardRecruitmentsRemote({ params: queryParams })
+    return mapProgramOptionsFromRecruitmentList(dto)
+  }
+  return getMockDashboardProgramOptions(widgetKey)
+}
+
+export interface DashboardShortcutItem {
+  id: string
+  label: string
+  path: string
+  iconKey?: string
+  useYn: boolean
+}
+
+/** Swagger: GET /api/admin/dashboard/shortcuts */
+export async function getDashboardShortcuts(): Promise<DashboardShortcutItem[]> {
+  if (shouldUseDashboardRemoteApi()) {
+    const dto = await fetchDashboardShortcutsRemote()
+    const items = dto.items ?? []
+    return items
+      .filter(item => item.shortcutKey)
+      .map(item => ({
+        id: item.shortcutKey!,
+        label: item.shortcutName ?? item.shortcutKey!,
+        path: item.targetUrl ?? DASHBOARD_HOME_PATH,
+        iconKey: item.iconKey,
+        useYn: item.useYn !== false,
+      }))
+  }
+  return SHORTCUT_ITEMS.map(item => ({
+    id: item.id,
+    label: item.label,
+    path: item.path,
+    useYn: true,
+  }))
+}
+
+export interface DashboardLogAlertItem {
+  id: string
+  actionType: string
+  targetType: string
+  targetId?: number
+  adminId?: number
+  accessedAt: string
+}
+
+/** Swagger: GET /api/admin/dashboard/log-alerts */
+export async function getDashboardLogAlerts(): Promise<DashboardLogAlertItem[]> {
+  if (shouldUseDashboardRemoteApi()) {
+    const dto = await fetchDashboardLogAlertsRemote()
+    return (dto.items ?? [])
+      .filter(item => item.accessLogId != null)
+      .map(item => ({
+        id: String(item.accessLogId),
+        actionType: item.actionType ?? '-',
+        targetType: item.targetType ?? '-',
+        targetId: item.targetId,
+        adminId: item.adminId,
+        accessedAt: item.accessedAt ?? '',
+      }))
+  }
+  return []
 }

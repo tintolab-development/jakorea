@@ -32,13 +32,14 @@ import {
   UserOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import { useMemo } from 'react'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
-import { getMenuShortcutBadgeCounts } from '../api/admin-dashboard-service'
+import { getMenuShortcutBadgeCounts, shouldUseDashboardRemoteApi } from '../api/admin-dashboard-service'
 import {
-  SHORTCUT_ITEMS,
-  isShortcutItemEnabled,
   useDashboardSettingsStore,
 } from '../model/dashboard-settings-store'
+import { useDashboardShortcuts } from '../hooks/use-dashboard-shortcuts'
+import { resolveDashboardShortcutItems } from '../lib/resolve-dashboard-shortcut-items'
 import './menu-shortcut-widget.css'
 
 /** 배지 표시용: 99 초과 시 "99+" */
@@ -78,12 +79,17 @@ export function MenuShortcutWidget() {
   const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
   const badgeCounts = useDashboardSettingsStore(s => s.shortcutBadgeCounts)
   const setShortcutBadgeCount = useDashboardSettingsStore(s => s.setShortcutBadgeCount)
+  const useRemoteShortcuts = shouldUseDashboardRemoteApi()
+  const { data: apiShortcuts } = useDashboardShortcuts(useRemoteShortcuts)
 
-  const visibleItems = SHORTCUT_ITEMS.filter(item => isShortcutItemEnabled(shortcutEnabled, item.id))
+  const visibleItems = useMemo(
+    () => resolveDashboardShortcutItems(apiShortcuts, shortcutEnabled),
+    [apiShortcuts, shortcutEnabled]
+  )
 
   if (visibleItems.length === 0) return null
 
-  /** 목/API 집계. 스토어에 0이면 해당 메뉴는 읽음 처리로 배지 숨김 */
+  // TODO(api): shortcuts API에 badge count 필드 추가 전까지 mock 집계 유지
   const liveBadgeCounts = getMenuShortcutBadgeCounts()
 
   return (

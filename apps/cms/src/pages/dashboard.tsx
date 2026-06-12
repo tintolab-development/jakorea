@@ -15,7 +15,6 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getAdminLevelLabel } from '@/shared/config/permissions'
 import { DASHBOARD_SLOT_HEIGHT_HALF_PX, isWidgetResizable } from '@/shared/config/dashboard-config'
 import { getRoleLabel } from '@/shared/ui'
-import { mockInstructors } from '@/data/mock'
 import {
   useDashboardData,
   useDashboardLayout,
@@ -27,7 +26,11 @@ import {
   useInstructorActivity,
   useDashboardDnd,
   getSlotHeight,
+  useDashboardHome,
+  useDashboardPreferences,
+  useSaveDashboardPreferences,
 } from '@/features/dashboard'
+import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
 import './dashboard.css'
 import '@/features/dashboard/ui/widget-card.css'
 /* 메뉴 바로가기 태그: Ant css-in-js보다 앞서 로드(중복 import는 Vite가 합침) */
@@ -44,7 +47,22 @@ export function Dashboard() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const { activePrograms } = useDashboardData()
-  const instructorCount = mockInstructors.length
+  const isAdmin = user?.role === 'ADMIN'
+  const useRemoteDashboard = isAdmin && shouldUseDashboardRemoteApi()
+  const { data: dashboardHome } = useDashboardHome(!!isAdmin)
+  const { isFetched: preferencesFetched } = useDashboardPreferences(!!isAdmin)
+  const preferencesReady = !useRemoteDashboard || preferencesFetched
+  const { mutate: persistDashboardPreferences } = useSaveDashboardPreferences()
+
+  const handlePersistLayout = useCallback(() => {
+    if (!preferencesReady) return
+    persistDashboardPreferences(undefined)
+  }, [persistDashboardPreferences, preferencesReady])
+  const instructorCount = dashboardHome?.memberCount ?? 0
+  const activeProgramsCount =
+    useRemoteDashboard && dashboardHome?.programCount != null
+      ? dashboardHome.programCount
+      : activePrograms.count
 
   const userRoleLabel = useMemo(() => {
     if (!user) return ''
@@ -54,7 +72,6 @@ export function Dashboard() {
     return getRoleLabel(user.role, user.adminLevel)
   }, [user?.role, user?.adminLevel])
 
-  const isAdmin = user?.role === 'ADMIN'
   const isInstructorOrIndividual =
     (user?.role === 'INSTRUCTOR' || user?.role === 'INDIVIDUAL') && !!user?.instructorId
 
@@ -101,7 +118,7 @@ export function Dashboard() {
       displayItemsMeta,
       setWidgetWidth,
       getSlotRects,
-      onLayoutSaved: () => {},
+      onLayoutSaved: handlePersistLayout,
     })
 
   const handleInstructorCardClick = useCallback(() => {
@@ -153,7 +170,7 @@ export function Dashboard() {
       <DashboardToolbar
         userName={user?.name}
         roleLabel={userRoleLabel}
-        activeProgramsCount={activePrograms.count}
+        activeProgramsCount={activeProgramsCount}
         onOpenSettings={() => setSettingsModalOpen(true)}
       />
 
@@ -194,7 +211,10 @@ export function Dashboard() {
                     height={slotHeight}
                     onResizeWidth={
                       user?.role && isWidgetResizable(id)
-                        ? newColSpan => setWidgetWidth(user.role, id, newColSpan)
+                        ? newColSpan => {
+                            setWidgetWidth(user.role, id, newColSpan)
+                            handlePersistLayout()
+                          }
                         : undefined
                     }
                   >

@@ -37,6 +37,10 @@ import '@/shared/ui/widget-more-button.css'
 import './program-schedule-widget.css'
 import type { User } from '@/types/user'
 import { filterProgramsByACL } from '@/features/permission-request/lib/program-acl'
+import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
+import { useDashboardProgramSchedules } from '../hooks/use-dashboard-program-schedules'
+import { useDashboardProgramOptions } from '../hooks/use-dashboard-program-options'
+import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 
@@ -78,6 +82,30 @@ function resolveWidgetProgram(programId: string, variant: ProgramScheduleKind): 
     return programService.getByIdSync(programId) ?? getUjatPrograms().find(p => p.id === programId)
   }
   return programService.getByIdSync(programId)
+}
+
+function programsFromOptions(
+  options: { id: string; title: string }[],
+  user: Omit<User, 'password'> | null | undefined
+): Program[] {
+  const base: Program[] = options.map(o => ({
+    id: o.id,
+    title: o.title,
+    sponsorId: '',
+    type: 'offline',
+    format: 'workshop',
+    category: 'school',
+    rounds: [],
+    startDate: '',
+    endDate: '',
+    status: 'active',
+    createdAt: '',
+    updatedAt: '',
+  }))
+  if (!user || user.role !== 'ADMIN' || user.adminLevel === 'MASTER') {
+    return base
+  }
+  return filterProgramsByACL(base, user)
 }
 
 /** 빈 배열 = 전체, 선택 id → 해당 id만 */
@@ -391,17 +419,27 @@ export function ProgramScheduleWidget({
 
   const selectedMockProgramIds = useDashboardSettingsStore(s => s.widgetProgramIds[widgetKey])
 
-  const categoryProgramIdSet = useMemo(() => getCategoryProgramIdSet(variant), [variant])
+  const useRemoteSchedules = shouldUseDashboardRemoteApi()
+  const { data: remoteProgramOptions = [] } = useDashboardProgramOptions(widgetKey, useRemoteSchedules)
+
+  const categoryProgramIdSet = useMemo(() => {
+    if (useRemoteSchedules && remoteProgramOptions.length > 0) {
+      return new Set(remoteProgramOptions.map(p => p.id))
+    }
+    return getCategoryProgramIdSet(variant)
+  }, [useRemoteSchedules, remoteProgramOptions, variant])
 
   const allowedProgramIdSet = useMemo(
     () => allowedIdsFromWidgetSelection(variant, selectedMockProgramIds),
     [variant, selectedMockProgramIds]
   )
 
-  const programsForRecruitment = useMemo(
-    () => getProgramsForRecruitmentForUser(variant, user),
-    [variant, user]
-  )
+  const programsForRecruitment = useMemo(() => {
+    if (useRemoteSchedules && remoteProgramOptions.length > 0) {
+      return programsFromOptions(remoteProgramOptions, user)
+    }
+    return getProgramsForRecruitmentForUser(variant, user)
+  }, [useRemoteSchedules, remoteProgramOptions, variant, user])
 
   const visibleDateRange = useMemo(() => {
     if (viewMode === 'week') {
@@ -413,7 +451,20 @@ export function ProgramScheduleWidget({
     return Array.from({ length: 35 }, (_, i) => start.add(i, 'day'))
   }, [currentMonth, viewMode])
 
+  const scheduleDateFrom = visibleDateRange[0]?.format('YYYY-MM-DD')
+  const scheduleDateTo = visibleDateRange[visibleDateRange.length - 1]?.format('YYYY-MM-DD')
+  const { data: remoteScheduleEvents = [], isError: scheduleQueryError } = useDashboardProgramSchedules({
+    programIds: selectedMockProgramIds,
+    dateFrom: scheduleDateFrom,
+    dateTo: scheduleDateTo,
+    programType: variant,
+    enabled: useRemoteSchedules,
+  })
+
   const schedulesByDate = useMemo(() => {
+    if (useRemoteSchedules) {
+      return {} as Record<string, Schedule[]>
+    }
     const grouped: Record<string, Schedule[]> = {}
     const visibleKeys = visibleDateRange.map(d => d.format('YYYY-MM-DD'))
     const dynamic = buildDynamicSchedulesForVisibleRange(variant, visibleKeys, allowedProgramIdSet)
@@ -431,9 +482,37 @@ export function ProgramScheduleWidget({
     })
 
     return grouped
-  }, [allowedProgramIdSet, categoryProgramIdSet, variant, visibleDateRange])
+  }, [useRemoteSchedules, allowedProgramIdSet, categoryProgramIdSet, variant, visibleDateRange])
 
   const eventsByDate = useMemo(() => {
+    if (useRemoteSchedules) {
+      const out: Record<string, ScheduleEvent[]> = {}
+      for (const d of visibleDateRange) {
+        out[d.format('YYYY-MM-DD')] = []
+      }
+      for (const ev of remoteScheduleEvents) {
+        const dateKey = dayjs(ev.startAt).format('YYYY-MM-DD')
+        if (!out[dateKey]) out[dateKey] = []
+        out[dateKey].push({
+          id: ev.id,
+          type: ev.type,
+          title: ev.title,
+          time: ev.time,
+          programId: ev.programId,
+          programTitle: ev.programTitle,
+          lifecycleStatus: ev.lifecycleStatus,
+        })
+      }
+      for (const key of Object.keys(out)) {
+        out[key].sort((a, b) => {
+          const timeA = a.time === '24:00' ? '23:59' : a.time
+          const timeB = b.time === '24:00' ? '23:59' : b.time
+          return timeA.localeCompare(timeB)
+        })
+      }
+      return out
+    }
+
     const out: Record<string, ScheduleEvent[]> = {}
     visibleDateRange.forEach(d => {
       out[d.format('YYYY-MM-DD')] = buildEventsForDate(
@@ -447,6 +526,8 @@ export function ProgramScheduleWidget({
     })
     return out
   }, [
+    useRemoteSchedules,
+    remoteScheduleEvents,
     visibleDateRange,
     schedulesByDate,
     allowedProgramIdSet,
@@ -914,22 +995,26 @@ export function ProgramScheduleWidget({
       }
       className={cardClassName}
     >
-      <div className="program-schedule-widget__content">
-        {viewMode === 'month' ? (
-          <div className="program-schedule-widget__body program-schedule-widget__body--month">
-            <div className="program-schedule-widget__calendar-main">
-              {renderMonthGrid()}
+      {scheduleQueryError ? (
+        <DashboardWidgetQueryError />
+      ) : (
+        <div className="program-schedule-widget__content">
+          {viewMode === 'month' ? (
+            <div className="program-schedule-widget__body program-schedule-widget__body--month">
+              <div className="program-schedule-widget__calendar-main">
+                {renderMonthGrid()}
+              </div>
+              {eventListSection}
             </div>
-            {eventListSection}
-          </div>
-        ) : (
-          <div className="program-schedule-widget__body program-schedule-widget__body--week">
-            <div className="program-schedule-widget__calendar-main">
-              {renderWeekView()}
+          ) : (
+            <div className="program-schedule-widget__body program-schedule-widget__body--week">
+              <div className="program-schedule-widget__calendar-main">
+                {renderWeekView()}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </Card>
   )
 }
