@@ -18,7 +18,9 @@ import { fetchAdminAuthRefresh, fetchAdminAuthLogout } from '@/features/auth/api
 import { AUTH_REFRESH_TOKEN_KEY } from '@/shared/instance/axios-instance'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import { clearDashboardQueryCache } from '@/features/dashboard/api/clear-dashboard-query-cache'
+import { clearDataManagementQueryCache } from '@/features/data-management/api/clear-data-management-query-cache'
 import { clearLogsQueryCache } from '@/features/logs/api/clear-logs-query-cache'
+import { clearPostsQueryCache } from '@/features/posts/api/clear-posts-query-cache'
 
 function elevateAdminToMaster(user: Omit<User, 'password'>): Omit<User, 'password'> {
   if (user.role !== 'ADMIN') return user
@@ -250,6 +252,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
       clearDashboardQueryCache()
       clearLogsQueryCache()
+      clearDataManagementQueryCache()
+      clearPostsQueryCache()
     },
 
     logout: () => {
@@ -291,6 +295,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
       clearDashboardQueryCache()
       clearLogsQueryCache()
+      clearDataManagementQueryCache()
+      clearPostsQueryCache()
     },
 
     checkAuth: async () => {
