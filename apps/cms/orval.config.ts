@@ -33,4 +33,36 @@ export default defineConfig({
       },
     },
   },
+  dataManagement: {
+    input: './openapi/data-management.openapi.json',
+    output: {
+      mode: 'split',
+      target: './src/shared/api/generated/data-management/data-management-api.ts',
+      schemas: './src/shared/api/generated/data-management/schemas',
+      client: 'axios',
+      prettier: false,
+      override: {
+        mutator: {
+          path: './src/shared/api/orval-mutator.ts',
+          name: 'customInstance',
+        },
+      },
+    },
+  },
+  posts: {
+    input: './openapi/posts.openapi.json',
+    output: {
+      mode: 'split',
+      target: './src/shared/api/generated/posts/posts-api.ts',
+      schemas: './src/shared/api/generated/posts/schemas',
+      client: 'axios',
+      prettier: false,
+      override: {
+        mutator: {
+          path: './src/shared/api/orval-mutator.ts',
+          name: 'customInstance',
+        },
+      },
+    },
+  },
 })
