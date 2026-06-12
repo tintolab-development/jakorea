@@ -1,0 +1,121 @@
+import {
+  mapSponsorContactResponse,
+  mapSponsorDetailResponse,
+  mapSponsorResponse,
+  toSponsorContactRequest,
+  toSponsorContactUpdateRequest,
+  toSponsorRequestFromBasicInfo,
+  toSponsorRequestFromRegister,
+} from '@/features/sponsor/api/adapters/sponsor-adapters'
+import { sponsorsParamsFromSearchParams } from '@/features/sponsor/api/sponsor-filter-params'
+import {
+  addSponsorContactRemote,
+  createSponsorRemote,
+  deleteSponsorContactRemote,
+  deleteSponsorRemote,
+  endSponsorRemote,
+  fetchSponsorRemote,
+  fetchSponsorsRemote,
+  updateSponsorContactRemote,
+  updateSponsorRemote,
+} from '@/features/sponsor/api/sponsors-api-client'
+import type {
+  SponsorContactRow,
+  SponsorManagementDetailView,
+  SponsorManagementRow,
+} from '@/features/sponsor/model/sponsor-management.types'
+import type { BasicInfoEditState } from '@/features/sponsor/ui/sponsor-detail-basic-info'
+import type { SponsorContactRegisterPayload } from '@/features/sponsor/ui/modal/sponsor-contact-register-modal'
+import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+
+function assertSponsorsRemoteReady(): void {
+  if (!isRealApiModuleEnabled('sponsors')) {
+    throw new Error('후원사 API가 활성화되지 않았습니다. VITE_REAL_API_MODULES에 sponsors를 추가해 주세요.')
+  }
+  if (!hasRemoteAdminJwt()) {
+    throw new Error('후원사 조회는 관리자 로그인 후 이용할 수 있습니다.')
+  }
+}
+
+export function shouldUseSponsorsRemoteApi(): boolean {
+  return isRealApiModuleEnabled('sponsors') && hasRemoteAdminJwt()
+}
+
+export async function getSponsorList(
+  searchParams: URLSearchParams
+): Promise<SponsorManagementRow[]> {
+  assertSponsorsRemoteReady()
+  const dtos = await fetchSponsorsRemote(sponsorsParamsFromSearchParams(searchParams))
+  return dtos.map(mapSponsorResponse)
+}
+
+export async function getSponsorDetail(id: string): Promise<SponsorManagementDetailView> {
+  assertSponsorsRemoteReady()
+  const dto = await fetchSponsorRemote(id)
+  return mapSponsorDetailResponse(dto)
+}
+
+export async function createSponsor(row: SponsorManagementRow): Promise<SponsorManagementRow> {
+  assertSponsorsRemoteReady()
+  const dto = await createSponsorRemote(toSponsorRequestFromRegister(row))
+  return mapSponsorResponse(dto)
+}
+
+export async function updateSponsorBasicInfo(
+  sponsorId: string,
+  basicInfo: BasicInfoEditState,
+  existing: SponsorManagementDetailView
+): Promise<SponsorManagementDetailView> {
+  assertSponsorsRemoteReady()
+  await updateSponsorRemote(sponsorId, toSponsorRequestFromBasicInfo(basicInfo, existing))
+  return getSponsorDetail(sponsorId)
+}
+
+export async function updateSponsorStatus(
+  sponsorId: string,
+  sponsorshipStatus: SponsorManagementRow['sponsorshipStatus']
+): Promise<void> {
+  assertSponsorsRemoteReady()
+  const detail = await getSponsorDetail(sponsorId)
+  await updateSponsorRemote(sponsorId, {
+    ...toSponsorRequestFromRegister(detail),
+    sponsorshipStatus,
+  })
+}
+
+export async function deleteSponsor(id: string): Promise<void> {
+  assertSponsorsRemoteReady()
+  await deleteSponsorRemote(id)
+}
+
+export async function endSponsorship(id: string): Promise<void> {
+  assertSponsorsRemoteReady()
+  await endSponsorRemote(id)
+}
+
+export async function addSponsorContact(
+  sponsorId: string,
+  payload: SponsorContactRegisterPayload,
+  contactType: SponsorContactRow['contactType']
+): Promise<SponsorContactRow> {
+  assertSponsorsRemoteReady()
+  const dto = await addSponsorContactRemote(
+    sponsorId,
+    toSponsorContactRequest(payload, contactType)
+  )
+  return mapSponsorContactResponse(dto)
+}
+
+export async function updateSponsorContact(row: SponsorContactRow): Promise<SponsorContactRow> {
+  assertSponsorsRemoteReady()
+  const dto = await updateSponsorContactRemote(row.id, toSponsorContactUpdateRequest(row))
+  return mapSponsorContactResponse(dto)
+}
+
+export async function deleteSponsorContacts(contactIds: string[]): Promise<void> {
+  assertSponsorsRemoteReady()
+  for (const id of contactIds) {
+    await deleteSponsorContactRemote(id)
+  }
+}

@@ -10,12 +10,10 @@ import {
 } from '@/shared/constants'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ContentModal, DeleteGuideModal } from '@/shared/ui'
-import {
-  createTextbook,
-  deleteTextbooks,
-  listTextbooksFromStore,
-  updateTextbook,
-} from '@/features/textbook/api/textbook-service'
+import { getTextbookListFilterKey } from '@/features/textbook/api/admin-textbooks-service'
+import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
+import { useTextbookListQuery } from '@/features/textbook/hooks/use-textbook-list-query'
+import { useTextbookMutations } from '@/features/textbook/hooks/use-textbook-mutations'
 import {
   TextbookRegisterModal,
   type TextbookRegisterPayload,
@@ -102,7 +100,6 @@ function gradeOptionsByEducationTarget(educationTarget: string): FilterOption[] 
 
 export default function TextbookPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [rows, setRows] = useState<TextbookRow[]>(() => listTextbooksFromStore())
   const [pendingFilters, setPendingFilters] = useState<TextbookFilters>(INITIAL_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<TextbookFilters>(INITIAL_FILTERS)
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
@@ -116,6 +113,11 @@ export default function TextbookPage() {
     useState<TextbookKitQuantityValues>(DEFAULT_KIT_QUANTITIES)
   const [pendingKitQuantities, setPendingKitQuantities] =
     useState<TextbookKitQuantityValues | null>(null)
+
+  const listQuery = useTextbookListQuery(appliedFilters, true)
+  const filterKey = getTextbookListFilterKey(appliedFilters)
+  const { createMutation, updateMutation, deleteMutation } = useTextbookMutations(filterKey)
+  const rows = listQuery.data ?? []
 
   const gradeOptions = useMemo(
     () => gradeOptionsByEducationTarget(pendingFilters.educationTarget),
@@ -200,33 +202,7 @@ export default function TextbookPage() {
     [searchParams, setSearchParams]
   )
 
-  const filteredRows = useMemo(() => {
-    const keyword = appliedFilters.textbookName.trim().toLowerCase()
-    return rows.filter(row => {
-      if (
-        appliedFilters.businessArea !== 'ALL' &&
-        row.businessArea !== appliedFilters.businessArea
-      ) {
-        return false
-      }
-      if (
-        appliedFilters.educationTarget !== 'ALL' &&
-        row.educationTarget !== appliedFilters.educationTarget
-      ) {
-        return false
-      }
-      if (appliedFilters.grade !== 'ALL' && row.grade !== appliedFilters.grade) {
-        return false
-      }
-      if (appliedFilters.useStatus !== 'ALL' && row.useStatus !== appliedFilters.useStatus) {
-        return false
-      }
-      if (keyword.length > 0 && !row.textbookName.toLowerCase().includes(keyword)) {
-        return false
-      }
-      return true
-    })
-  }, [appliedFilters, rows])
+  const filteredRows = rows
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
     setPendingFilters(prev => {
@@ -260,24 +236,28 @@ export default function TextbookPage() {
     const selectedIds = new Set(selectedRowKeys.map(key => String(key)))
     if (selectedIds.size === 0) return
     try {
-      await deleteTextbooks(Array.from(selectedIds))
-      setRows(listTextbooksFromStore())
+      await deleteMutation.mutateAsync(Array.from(selectedIds))
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
-      } catch (error) {
-      console.debug('textbookPage bulkDelete failed', error)
+    } catch (error) {
+      console.debug(
+        'textbookPage bulkDelete failed',
+        getDataManagementApiErrorMessage(error, '삭제에 실패했습니다.')
+      )
     }
-  }, [selectedRowKeys])
+  }, [deleteMutation, selectedRowKeys])
 
   const handleRegisterSubmit = useCallback(async (payload: TextbookRegisterPayload) => {
     try {
-      await createTextbook(payload)
-      setRows(listTextbooksFromStore())
+      await createMutation.mutateAsync(payload)
       setRegisterModalOpen(false)
     } catch (error) {
-      console.debug('textbookPage register failed', error)
+      console.debug(
+        'textbookPage register failed',
+        getDataManagementApiErrorMessage(error, '등록에 실패했습니다.')
+      )
     }
-  }, [])
+  }, [createMutation])
 
   const handleKitQuantityConfirm = useCallback((nextValues: TextbookKitQuantityValues) => {
     setPendingKitQuantities(nextValues)
@@ -426,13 +406,18 @@ export default function TextbookPage() {
             return
           }
           try {
-            const updated = await updateTextbook(selectedTextbook.id, payload)
-            setRows(listTextbooksFromStore())
+            const updated = await updateMutation.mutateAsync({
+              id: selectedTextbook.id,
+              input: payload,
+            })
             setSelectedTextbook(updated)
             setDetailRoute(updated.id, 'view')
-            } catch (error) {
-              console.debug('textbookPage detail update failed', error)
-            }
+          } catch (error) {
+            console.debug(
+              'textbookPage detail update failed',
+              getDataManagementApiErrorMessage(error, '수정에 실패했습니다.')
+            )
+          }
         }}
       />
       <TextbookKitQuantityModal

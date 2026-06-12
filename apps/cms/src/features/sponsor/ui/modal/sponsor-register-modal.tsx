@@ -63,11 +63,13 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
 
     const now = new Date().toISOString()
     const id = `sponsor-new-${Date.now()}`
+    const address = [form.district.trim(), form.detailAddress.trim()].filter(Boolean).join(' ')
     const row: SponsorManagementRow = {
       id,
       name,
       nameEn: form.nameDisplayEn.trim() || undefined,
       description: buildDescription(form),
+      contactInfo: address || undefined,
       createdAt: now,
       updatedAt: now,
       organizationKind: form.organizationKind,
