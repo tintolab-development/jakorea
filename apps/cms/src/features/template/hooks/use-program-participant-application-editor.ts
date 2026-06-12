@@ -109,7 +109,10 @@ import {
   getInstitutionApplicationFormHiddenParagraphIds,
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
-import { getVolunteerApplicationFormHiddenParagraphIds } from '@/features/program/general/lib/volunteer-application-form-visibility'
+import { resolveGeneralApplicationFormHiddenParagraphIds } from '@/features/program/general/lib/application-form-preview-options'
+import { buildInstructorAvailableScheduleSlots } from '@/features/program/general/lib/instructor-application-available-schedule'
+import { resolveGeneralProgramVolunteerInterviewScheduleEditSeed } from '@/features/program/general/lib/volunteer-interview-schedule-display'
+import type { Program } from '@/types/domain'
 
 function useParticipantApplicationMiddleActions(
   setDraft: Dispatch<SetStateAction<WritingFormDraft>>,
@@ -217,6 +220,9 @@ export type UseProgramParticipantApplicationEditorOptions = {
    * 등록·모집 설정 연동 본문 노출
    */
   programLinkedInstitutionApplicationForm?: boolean
+  /** 프로그램 상세 — 공통·모집 정보 연동 미리보기/양식 수정 */
+  program?: Program | null
+  programLinkedApplicationFormPreview?: boolean
 }
 
 export function useProgramParticipantApplicationEditor(
@@ -536,9 +542,35 @@ export function useProgramParticipantApplicationEditor(
     }
   }, [draft])
 
+  const programLinkedPreview = editorOptions?.programLinkedApplicationFormPreview === true
+  const linkedProgram = editorOptions?.program ?? null
+
+  const instructorScheduleSlots = useMemo(
+    () =>
+      linkedProgram && variant === 'instructor'
+        ? buildInstructorAvailableScheduleSlots(linkedProgram.id)
+        : undefined,
+    [linkedProgram, variant]
+  )
+
+  const volunteerScheduleSeed = useMemo(
+    () =>
+      linkedProgram && variant === 'volunteer'
+        ? resolveGeneralProgramVolunteerInterviewScheduleEditSeed(linkedProgram)
+        : undefined,
+    [linkedProgram, variant]
+  )
+
   const programApplicationFormInstructorOptions = useMemo(
-    () => ({ enabled: variant === 'instructor' }),
-    [variant]
+    () =>
+      variant === 'instructor'
+        ? {
+            enabled: true as const,
+            ...(instructorScheduleSlots ? { scheduleSlots: instructorScheduleSlots } : {}),
+            ...(programLinkedPreview ? { programLinkedPreview: true as const } : {}),
+          }
+        : { enabled: false as const },
+    [variant, instructorScheduleSlots, programLinkedPreview]
   )
   const onAddVolunteerExceptionSchedule = useCallback(() => {
     setVolunteerExceptionScheduleCount(prev => prev + 1)
@@ -562,6 +594,10 @@ export function useProgramParticipantApplicationEditor(
             exceptionScheduleAddDisabled: volunteerInterviewExcludeNone,
             onAddExceptionSchedule: onAddVolunteerExceptionSchedule,
             onCommonExclusionChange: onVolunteerInterviewExclusionChange,
+            ...(volunteerScheduleSeed ? { commonScheduleSeed: volunteerScheduleSeed } : {}),
+            ...(programLinkedPreview && variant === 'volunteer'
+              ? { programLinkedPreview: true as const }
+              : {}),
           }
         : {
             enabled: false as const,
@@ -576,6 +612,8 @@ export function useProgramParticipantApplicationEditor(
       volunteerInterviewExcludeNone,
       onAddVolunteerExceptionSchedule,
       onVolunteerInterviewExclusionChange,
+      volunteerScheduleSeed,
+      programLinkedPreview,
     ]
   )
 
@@ -588,8 +626,11 @@ export function useProgramParticipantApplicationEditor(
 
   const volunteerApplicationHiddenParagraphIds = useMemo(() => {
     if (variant !== 'volunteer') return undefined
-    return getVolunteerApplicationFormHiddenParagraphIds(draft.paragraphs)
-  }, [variant, draft.paragraphs])
+    return resolveGeneralApplicationFormHiddenParagraphIds('volunteer', {
+      program: linkedProgram,
+      paragraphs: draft.paragraphs,
+    })
+  }, [variant, draft.paragraphs, linkedProgram])
 
   const ujatProgramApplicationFormVolunteerOptions = useMemo(
     () =>
@@ -629,6 +670,13 @@ export function useProgramParticipantApplicationEditor(
           ) {
             return new Set([UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm])
           }
+          if (linkedProgram != null) {
+            return resolveGeneralApplicationFormHiddenParagraphIds(variant, {
+              program: linkedProgram,
+              paragraphs: draft.paragraphs,
+              institutionBridge: institutionApplicationBridge,
+            })
+          }
           if (variant === 'volunteer') return volunteerApplicationHiddenParagraphIds
           return institutionApplicationHiddenParagraphIds
         })(),
@@ -652,6 +700,8 @@ export function useProgramParticipantApplicationEditor(
     [
       draft,
       previewHeaderTitle,
+      linkedProgram,
+      institutionApplicationBridge,
       programApplicationFormInstructorOptions,
       programApplicationFormVolunteerOptions,
       ujatProgramApplicationFormVolunteerOptions,

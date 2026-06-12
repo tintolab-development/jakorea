@@ -19,12 +19,13 @@ export interface ParagraphCalendarMiniProps
 
 /**
  * 템플릿 페이지(단락 에디터/미리보기) 전용 CalendarMini 래퍼.
- * - 폭 360px 고정
+ * - large: 360×372px 고정 · small: 300×332px
+ * - `CalendarMini`가 월별 `countMiniCalendarWeekRows`로 주 수(4~6)를 정하고,
+ *   `--calendar-mini-week-rows` → 행 높이 → 셀 크기를 자동 조정
  * - 그림자 제거 + 토큰 기반 보더/라운드
- * - schedule(이벤트) 셀, 선택 셀 스펙 갱신
  * - `clickableDates`로 클릭 가능 날짜 제한 + 비활성 시각화
  *
- * 추후 템플릿 페이지의 모든 `CalendarMini` 사용처는 이 컴포넌트로 대체 예정.
+ * 템플릿 단락(강사·봉사자 일정 등)에서는 `CalendarMini` 직접 사용 대신 이 래퍼를 쓴다.
  */
 export function ParagraphCalendarMini({
   size = 'large',

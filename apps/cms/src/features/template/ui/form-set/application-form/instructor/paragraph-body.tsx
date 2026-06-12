@@ -9,6 +9,8 @@ export type ProgramApplicationFormInstructorBodyOptions = {
   enabled: boolean
   /** 승인된 기관 희망 일정 (프로그램 상세 연동) */
   scheduleSlots?: readonly InstructorAvailableScheduleSlot[]
+  /** 프로그램 상세 양식 수정·미리보기 — 등록·모집 설정 연동 일정 UI */
+  programLinkedPreview?: boolean
   /** authoring(user preview 아님)일 때 템플릿 안내 문구 렌더링에 사용 */
   isTemplateAuthoringMode?: boolean
   /** 프로그램 상세 신청 정보 탭 — 읽기 전용 미리보기 */

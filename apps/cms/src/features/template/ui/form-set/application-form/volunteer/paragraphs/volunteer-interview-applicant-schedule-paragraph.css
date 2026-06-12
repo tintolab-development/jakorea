@@ -1,0 +1,58 @@
+/**
+ * 봉사자 신청 폼 — 면접 진행 가능 일정(신청자 응답)
+ * 모집 폼 관리자 설정 연동 · 스크린샷 시안(캘린더 + 시간 그리드 + 하단 요약)
+ */
+
+.volunteer-interview-applicant-schedule.program-application-form-instructor__available-schedule {
+  gap: 20px;
+}
+
+.volunteer-interview-applicant-schedule .program-application-form-instructor__available-schedule-top {
+  width: 100%;
+}
+
+.volunteer-interview-applicant-schedule .program-application-form-instructor__schedule-side {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.volunteer-interview-applicant-schedule__time-slots {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  align-content: start;
+}
+
+.volunteer-interview-applicant-schedule__time-slot.paragraph-chip {
+  min-height: 40px;
+  padding: 0 10px;
+}
+
+.volunteer-interview-applicant-schedule__time-slot.paragraph-chip:disabled {
+  border-color: var(--table-line, #e0e0e0);
+  background: rgba(61, 61, 61, 0.08);
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  cursor: not-allowed;
+}
+
+.volunteer-interview-applicant-schedule__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-height: 200px;
+  width: 100%;
+  border-radius: var(--4, 4px);
+  background: rgba(61, 61, 61, 0.04);
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: center;
+}

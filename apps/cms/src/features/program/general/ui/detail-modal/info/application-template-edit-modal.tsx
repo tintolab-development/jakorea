@@ -66,6 +66,9 @@ export function GeneralProgramApplicationTemplateEditModal({
   const vm = useProgramParticipantApplicationEditor(open, templateName, variant, {
     participantOrganization: variant === 'institution',
     programLinkedInstitutionApplicationForm: variant === 'institution',
+    program,
+    programLinkedApplicationFormPreview:
+      variant === 'institution' || variant === 'instructor' || variant === 'volunteer',
   })
 
   const editorVm = useMemo((): TemplateEditorVm => {

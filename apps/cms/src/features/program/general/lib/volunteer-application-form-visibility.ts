@@ -16,14 +16,24 @@ export function resolveJaVolunteerExperienceFromParagraph(
   return undefined
 }
 
-/** 「있음」 선택 시에만 이전 참여 JA 봉사 프로그램 단락 노출 */
+/** 「있음」 선택 시에만 이전 참여 JA 봉사 프로그램 단락 노출 · 면접 없음 시 면접 일정 단락 숨김 */
 export function getVolunteerApplicationFormHiddenParagraphIds(
-  paragraphs: readonly WritingFormParagraph[]
+  paragraphs: readonly WritingFormParagraph[],
+  options?: { interviewEnabled?: boolean }
 ): ReadonlySet<string> | undefined {
+  const hidden = new Set<string>()
+
   const experienceParagraph = paragraphs.find(
     p => p.id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.jaVolunteerExperience
   )
   const experience = resolveJaVolunteerExperienceFromParagraph(experienceParagraph)
-  if (experience === 'yes') return undefined
-  return new Set([PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousJaProgram])
+  if (experience !== 'yes') {
+    hidden.add(PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousJaProgram)
+  }
+
+  if (options?.interviewEnabled === false) {
+    hidden.add(PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule)
+  }
+
+  return hidden.size > 0 ? hidden : undefined
 }

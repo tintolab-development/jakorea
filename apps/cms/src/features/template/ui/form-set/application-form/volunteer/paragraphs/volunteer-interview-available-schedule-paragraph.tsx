@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import type { VolunteerInterviewScheduleEditSeed } from '@/features/program/shared/lib/volunteer-interview-schedule-edit-seed'
 import { createDefaultUnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
-import { InstructorAvailableScheduleParagraph } from '@/features/template/ui/form-set/application-form/instructor/paragraphs/instructor-available-schedule-paragraph'
+import { VolunteerInterviewApplicantScheduleParagraph } from '@/features/template/ui/form-set/application-form/volunteer/paragraphs/volunteer-interview-applicant-schedule-paragraph'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
@@ -353,8 +353,8 @@ export function VolunteerInterviewAvailableScheduleParagraph({
   }
 
   return (
-    <InstructorAvailableScheduleParagraph
-      summaryFieldLabel="면접 진행 가능일"
+    <VolunteerInterviewApplicantScheduleParagraph
+      commonScheduleSeed={commonScheduleSeed}
       readOnlyPreview={readOnlyPreview}
     />
   )

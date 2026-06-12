@@ -35,7 +35,6 @@ import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
 import { UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-recruit-form-institution-draft'
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
-import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
 import {
@@ -327,12 +326,11 @@ export function withProgramApplicationFormVolunteerTitleTrailing(
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
 ): ParagraphCardEditableHeading {
   const opts = paragraphBodyOptions?.programApplicationFormVolunteer
-  const isVolunteerInterviewSchedule =
-    paragraph.id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule ||
+  const isRecruitVolunteerInterviewSchedule =
     paragraph.id === RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule ||
     paragraph.id === UJAT_RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule
 
-  if (!isVolunteerInterviewSchedule || opts?.enabled !== true) {
+  if (!isRecruitVolunteerInterviewSchedule || opts?.enabled !== true) {
     return heading
   }
 

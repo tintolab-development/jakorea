@@ -2,30 +2,60 @@
  * 템플릿 페이지 전용 CalendarMini 래퍼 스타일.
  * `.paragraph-calendar-mini` 스코프 안에서만 `.calendar-mini*` 룰을 덮어쓴다.
  * 공유 컴포넌트(.calendar-mini)의 기본 스타일은 다른 사용처에 영향 없음.
+ *
+ * 높이·행별 셀 크기는 `CalendarMini`가 월별로 주입하는 `--calendar-mini-week-rows`와
+ * `calendar-mini.css` 토큰 체인(`--calendar-mini-row-height` → `--calendar-mini-cell-size`)을 따른다.
  */
 
 .paragraph-calendar-mini {
-  width: 360px;
+  flex-shrink: 0;
   box-sizing: border-box;
+}
+
+.paragraph-calendar-mini--large {
+  width: 360px;
+  min-width: 360px;
+  max-width: 360px;
 }
 
 .paragraph-calendar-mini--small {
   width: 300px;
+  min-width: 300px;
+  max-width: 300px;
 }
 
 .paragraph-calendar-mini .calendar-mini {
   box-sizing: border-box;
-  width: 100%;
-  max-height: none;
+  width: var(--calendar-mini-width);
+  min-width: var(--calendar-mini-width);
+  max-width: var(--calendar-mini-width);
+  height: var(--calendar-mini-height);
+  min-height: var(--calendar-mini-height);
+  max-height: var(--calendar-mini-height);
   box-shadow: none;
   border-radius: var(--8, 8px);
   border: 1px solid var(--table-line, #e0e0e0);
 }
 
-/* 기본 셀 — 40x40 정사각, 토큰 폰트 */
+.paragraph-calendar-mini--large .calendar-mini {
+  --calendar-mini-width: 360px;
+  --calendar-mini-height: 372px;
+  width: 360px;
+  min-width: 360px;
+  max-width: 360px;
+  /* 행 간 padding-top(15px) 반영 — 월별 주 수에 따라 셀 크기 자동 조정 */
+  --calendar-mini-cell-size: min(40px, calc(var(--calendar-mini-row-height) - 15px));
+}
+
+.paragraph-calendar-mini--small .calendar-mini {
+  --calendar-mini-width: 300px;
+  --calendar-mini-height: 332px;
+  --calendar-mini-cell-size: min(30px, calc(var(--calendar-mini-row-height) - 13px));
+}
+
 .paragraph-calendar-mini .calendar-mini-cell {
-  width: 40px;
-  height: 40px;
+  width: var(--calendar-mini-cell-size);
+  height: var(--calendar-mini-cell-size);
   margin: 0;
   padding: 0;
   border-radius: var(--8, 8px);
@@ -61,8 +91,8 @@
 /* 이벤트/스케줄 있는 날짜 */
 .paragraph-calendar-mini .calendar-mini-cell--has-schedule {
   display: flex;
-  width: 40px;
-  height: 40px;
+  width: var(--calendar-mini-cell-size);
+  height: var(--calendar-mini-cell-size);
   padding: 0;
   flex-direction: column;
   justify-content: center;
@@ -91,14 +121,6 @@
   font-style: normal;
   font-weight: 500;
   line-height: 130%;
-  display: flex;
-  width: 30px;
-  height: 30px;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  aspect-ratio: 1 / 1;
 }
 
 /* 비활성 날짜 — antd가 disabledDate에 따라 td에 .ant-picker-cell-disabled 부여 */
@@ -128,15 +150,8 @@
 .paragraph-calendar-mini .calendar-mini-cell--has-schedule.calendar-mini-cell--selected {
   background: var(--color-mint-01, #01a1af) !important;
   border-radius: var(--8, 8px);
-  width: 40px;
-  height: 40px;
-}
-
-.paragraph-calendar-mini--small .calendar-mini-cell,
-.paragraph-calendar-mini--small .calendar-mini-cell--selected,
-.paragraph-calendar-mini--small .calendar-mini-cell--has-schedule.calendar-mini-cell--selected {
-  width: 30px;
-  height: 30px;
+  width: var(--calendar-mini-cell-size);
+  height: var(--calendar-mini-cell-size);
 }
 
 .paragraph-calendar-mini .calendar-mini-cell--selected .calendar-mini-date {

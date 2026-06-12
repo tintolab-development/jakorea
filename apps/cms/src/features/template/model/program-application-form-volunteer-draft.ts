@@ -192,7 +192,7 @@ function createVolunteerInterviewSchedulePlaceholderTable(): HorizontalTablePara
     requiredMark: true,
     paragraphTitle: '면접 진행 가능 일정',
     paragraphDescription:
-      '서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정을 모두 선택해 주세요.',
+      '서류 합격 시 면접이 진행됩니다. 면접이 진행 가능한 일정 모두 선택해 주세요',
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['면접 진행 가능일', ''],

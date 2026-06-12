@@ -1,9 +1,47 @@
-import { buildInstructorAvailableScheduleSlots } from '@/features/program/general/lib/instructor-application-available-schedule'
+import {
+  getInstitutionApplicationFormHiddenParagraphIds,
+  type InstitutionApplicationProgramBridge,
+} from '@/features/program/general/lib/institution-application-program-bridge'
+import { getInstructorApplicationFormHiddenParagraphIds } from '@/features/program/general/lib/institution-application-form-visibility'
+import {
+  buildInstructorAvailableScheduleSlots,
+  type InstructorAvailableScheduleSlot,
+} from '@/features/program/general/lib/instructor-application-available-schedule'
+import { getVolunteerApplicationFormHiddenParagraphIds } from '@/features/program/general/lib/volunteer-application-form-visibility'
+import {
+  isGeneralProgramVolunteerInterviewScheduleVisible,
+  resolveGeneralProgramVolunteerInterviewScheduleEditSeed,
+} from '@/features/program/general/lib/volunteer-interview-schedule-display'
 import type { ProgramParticipantApplicationEditorViewModel } from '@/features/template/hooks/use-program-participant-application-editor'
 import type { ProgramParticipantApplicationEditorVariant } from '@/features/template/hooks/use-program-participant-application-editor'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
-import type { InstructorAvailableScheduleSlot } from '@/features/program/general/lib/instructor-application-available-schedule'
+import type { WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
 import type { Program } from '@/types/domain'
+
+export function resolveGeneralApplicationFormHiddenParagraphIds(
+  variant: ProgramParticipantApplicationEditorVariant,
+  params: {
+    program?: Program | null
+    paragraphs: readonly WritingFormParagraph[]
+    institutionBridge?: InstitutionApplicationProgramBridge
+  }
+): ReadonlySet<string> | undefined {
+  if (variant === 'institution' && params.institutionBridge) {
+    return getInstitutionApplicationFormHiddenParagraphIds(params.institutionBridge)
+  }
+  if (variant === 'instructor') {
+    return getInstructorApplicationFormHiddenParagraphIds()
+  }
+  if (variant === 'volunteer') {
+    return getVolunteerApplicationFormHiddenParagraphIds(params.paragraphs, {
+      interviewEnabled:
+        params.program == null
+          ? undefined
+          : isGeneralProgramVolunteerInterviewScheduleVisible(params.program),
+    })
+  }
+  return undefined
+}
 
 export function buildGeneralApplicationFormPreviewParagraphBodyOptions(
   variant: ProgramParticipantApplicationEditorVariant,
@@ -13,18 +51,50 @@ export function buildGeneralApplicationFormPreviewParagraphBodyOptions(
     | 'programApplicationFormInstructorOptions'
     | 'programApplicationFormVolunteerOptions'
   >,
-  hiddenParagraphIds?: ReadonlySet<string>,
-  program?: Program | null,
-  instructorScheduleSlots?: readonly InstructorAvailableScheduleSlot[]
+  params: {
+    program?: Program | null
+    paragraphs: readonly WritingFormParagraph[]
+    institutionBridge?: InstitutionApplicationProgramBridge
+    instructorScheduleSlots?: readonly InstructorAvailableScheduleSlot[]
+    /** 프로그램 상세 양식 수정 — 등록·모집 설정 연동 일정 UI */
+    programLinkedApplicationFormPreview?: boolean
+  }
 ): RenderFormParagraphBodyOptions {
+  const { program, paragraphs, institutionBridge, instructorScheduleSlots } = params
+  const programLinkedPreview = params.programLinkedApplicationFormPreview === true
+
   const programApplicationFormInstructor =
-    variant === 'instructor' && program
+    variant === 'instructor'
       ? {
           ...vm.programApplicationFormInstructorOptions,
-          scheduleSlots:
-            instructorScheduleSlots ?? buildInstructorAvailableScheduleSlots(program.id),
+          ...(program
+            ? {
+                scheduleSlots:
+                  instructorScheduleSlots ?? buildInstructorAvailableScheduleSlots(program.id),
+              }
+            : {}),
+          ...(programLinkedPreview ? { programLinkedPreview: true as const } : {}),
         }
       : vm.programApplicationFormInstructorOptions
+
+  const programApplicationFormVolunteer =
+    variant === 'volunteer'
+      ? {
+          ...vm.programApplicationFormVolunteerOptions,
+          ...(program
+            ? {
+                commonScheduleSeed: resolveGeneralProgramVolunteerInterviewScheduleEditSeed(program),
+              }
+            : {}),
+          ...(programLinkedPreview ? { programLinkedPreview: true as const } : {}),
+        }
+      : vm.programApplicationFormVolunteerOptions
+
+  const hiddenParagraphIds = resolveGeneralApplicationFormHiddenParagraphIds(variant, {
+    program,
+    paragraphs,
+    institutionBridge,
+  })
 
   return {
     structureLockedParagraphIds: vm.structureLockedParagraphIds,
@@ -32,8 +102,8 @@ export function buildGeneralApplicationFormPreviewParagraphBodyOptions(
     programApplicationFormInstitution: variant === 'institution',
     programApplicationFormIndividual: variant === 'individual',
     programApplicationFormInstructor,
-    programApplicationFormVolunteer: vm.programApplicationFormVolunteerOptions,
-    programLinkedInstitutionApplicationForm: variant === 'institution',
+    programApplicationFormVolunteer,
+    programLinkedInstitutionApplicationForm: variant === 'institution' && programLinkedPreview,
     hiddenParagraphIds,
   }
 }

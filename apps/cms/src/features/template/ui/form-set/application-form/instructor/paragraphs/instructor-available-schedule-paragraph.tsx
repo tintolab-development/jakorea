@@ -4,11 +4,14 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { InstructorAvailableScheduleSlot } from '@/features/program/general/lib/instructor-application-available-schedule'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CalendarMini } from '@/shared/components/calendar'
 import '@/shared/components/calendar/styles/calendar.css'
-import { ProgramApplicationScheduleTemplateHintParagraph } from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
+import {
+  ProgramApplicationScheduleSummaryHintText,
+  ProgramApplicationScheduleTemplateHintParagraph,
+} from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
 import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
 import { extractClockTimeRangeForScheduleSummary } from '@/features/template/lib/extract-clock-time-range-for-schedule-summary'
+import { ParagraphCalendarMini } from '@/features/template/ui/shared/paragraph-calendar-mini'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
 
 const EMPTY_SCHEDULE_SLOTS: readonly InstructorAvailableScheduleSlot[] = []
@@ -84,14 +87,10 @@ export function InstructorAvailableScheduleParagraph({
     [scheduleSlots, selectedSlotIds]
   )
 
-  const summaryPlaceholder = '일정을 선택해 주세요.'
-
   const scheduleSummaryBlock =
     selectedSlotsOrdered.length === 0 ? (
       <div className="program-application-form-instructor__field-summary-wrap">
-        <span className="program-application-form-instructor__summary-text program-application-form-instructor__summary-text--placeholder">
-          {summaryPlaceholder}
-        </span>
+        <ProgramApplicationScheduleSummaryHintText />
       </div>
     ) : (
       <div className="program-application-form-instructor__field-summary-wrap">
@@ -131,7 +130,7 @@ export function InstructorAvailableScheduleParagraph({
         className="program-application-form-instructor__available-schedule-top"
       >
         <div ref={calendarWrapRef} className="program-application-form-instructor__calendar-wrap">
-          <CalendarMini
+          <ParagraphCalendarMini
             currentMonth={currentMonth}
             selectedDate={selectedDate}
             onMonthChange={setCurrentMonth}

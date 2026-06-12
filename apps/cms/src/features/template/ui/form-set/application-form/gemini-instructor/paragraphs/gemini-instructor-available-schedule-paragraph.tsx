@@ -5,19 +5,15 @@ import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import '@/shared/components/calendar/styles/calendar.css'
 import { ParagraphCalendarMini } from '@/features/template/ui/shared/paragraph-calendar-mini'
-import { ProgramApplicationScheduleTemplateHintParagraph } from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
+import {
+  ProgramApplicationScheduleSummaryHintText,
+  ProgramApplicationScheduleTemplateHintParagraph,
+} from '@/features/template/ui/form-set/application-form/shared/paragraphs/program-application-schedule-template-hint-paragraph'
 import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
-
-const summaryPlaceholder = '일정을 선택해 주세요.'
-
-const scheduleSummaryHint = '신청자가 선택한 진행 가능일이 노출됩니다.'
 
 const scheduleSummaryBlock = (
   <div className="program-application-form-instructor__field-summary-wrap">
-    <span className="form-editor-template-field-hint-text">{scheduleSummaryHint}</span>
-    <span className="program-application-form-instructor__summary-text program-application-form-instructor__summary-text--placeholder">
-      {summaryPlaceholder}
-    </span>
+    <ProgramApplicationScheduleSummaryHintText />
   </div>
 )
 

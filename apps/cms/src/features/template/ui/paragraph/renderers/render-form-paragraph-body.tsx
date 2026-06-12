@@ -339,7 +339,9 @@ export function renderFormParagraphBody(
               ? undefined
               : {
                   ...options.programApplicationFormInstructor,
-                  isTemplateAuthoringMode: paragraphInteractionMode === 'authoring',
+                  isTemplateAuthoringMode:
+                    paragraphInteractionMode === 'authoring' &&
+                    options.programApplicationFormInstructor.programLinkedPreview !== true,
                   readOnlyPreview: isPreviewReadonly,
                 }
           }
@@ -348,7 +350,9 @@ export function renderFormParagraphBody(
               ? undefined
               : {
                   ...options.programApplicationFormVolunteer,
-                  isTemplateAuthoringMode: paragraphInteractionMode === 'authoring',
+                  isTemplateAuthoringMode:
+                    paragraphInteractionMode === 'authoring' &&
+                    options.programApplicationFormVolunteer.programLinkedPreview !== true,
                   readOnlyPreview: isPreviewReadonly,
                 }
           }

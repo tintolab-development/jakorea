@@ -25,4 +25,12 @@ describe('getVolunteerApplicationFormHiddenParagraphIds', () => {
     const hidden = getVolunteerApplicationFormHiddenParagraphIds(draft.paragraphs)
     expect(hidden?.has(PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousJaProgram)).toBe(true)
   })
+
+  it('면접 없음 프로그램이면 면접 일정 단락을 숨긴다', () => {
+    const draft = createProgramApplicationFormVolunteerDraft()
+    const hidden = getVolunteerApplicationFormHiddenParagraphIds(draft.paragraphs, {
+      interviewEnabled: false,
+    })
+    expect(hidden?.has(PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule)).toBe(true)
+  })
 })

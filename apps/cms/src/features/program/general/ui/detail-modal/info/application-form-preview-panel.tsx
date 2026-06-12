@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Program } from '@/types/domain'
 import {
-  getInstructorApplicationFormHiddenParagraphIds,
   resetInstitutionApplicationFormVisibility,
   useInstitutionApplicationFormVisibilityVersion,
 } from '@/features/program/general/lib/institution-application-form-visibility'
 import {
-  getInstitutionApplicationFormHiddenParagraphIds,
   patchInstitutionApplicationProgramBridge,
   resetInstitutionApplicationProgramBridge,
   resolveInstitutionApplicationProgramBridge,
@@ -24,8 +22,6 @@ import { useProgramParticipantApplicationEditor } from '@/features/template/hook
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
 import '@/features/template/ui/form-set/application-form/volunteer/program-application-form-volunteer.css'
-import { getVolunteerApplicationFormHiddenParagraphIds } from '@/features/program/general/lib/volunteer-application-form-visibility'
-
 export function ApplicationFormPreviewPanel({
   program,
   applicationTab,
@@ -88,41 +84,29 @@ export function ApplicationFormPreviewPanel({
     () => resolveInstitutionApplicationProgramBridge(program),
     [program]
   )
-  const institutionApplicationFormVisibilityVersion = useInstitutionApplicationFormVisibilityVersion()
+  useInstitutionApplicationFormVisibilityVersion()
   const instructorScheduleSlots = useMemo(
     () =>
       variant === 'instructor' ? buildInstructorAvailableScheduleSlots(program.id) : undefined,
     [variant, program.id]
   )
-  const hiddenParagraphIds = useMemo(() => {
-    if (variant === 'institution') {
-      return getInstitutionApplicationFormHiddenParagraphIds(institutionBridge)
-    }
-    if (variant === 'instructor') {
-      return getInstructorApplicationFormHiddenParagraphIds()
-    }
-    if (variant === 'volunteer') {
-      return getVolunteerApplicationFormHiddenParagraphIds(vm.draft.paragraphs)
-    }
-    return undefined
-  }, [institutionBridge, variant, institutionApplicationFormVisibilityVersion, vm.draft.paragraphs])
 
   const paragraphBodyOptions = useMemo(
     () =>
-      buildGeneralApplicationFormPreviewParagraphBodyOptions(
-        variant,
-        vm,
-        hiddenParagraphIds,
+      buildGeneralApplicationFormPreviewParagraphBodyOptions(variant, vm, {
         program,
-        instructorScheduleSlots
-      ),
+        paragraphs: vm.draft.paragraphs,
+        institutionBridge,
+        instructorScheduleSlots,
+      }),
     [
       variant,
       vm.structureLockedParagraphIds,
       vm.programApplicationFormInstructorOptions,
       vm.programApplicationFormVolunteerOptions,
-      hiddenParagraphIds,
+      vm.draft.paragraphs,
       program,
+      institutionBridge,
       instructorScheduleSlots,
     ]
   )

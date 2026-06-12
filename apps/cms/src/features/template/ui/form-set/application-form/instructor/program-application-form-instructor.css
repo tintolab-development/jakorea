@@ -8,6 +8,16 @@
   min-width: 0;
 }
 
+/* DetailInfoForm 값 칸 — edit/view 슬롯 flex 오버라이드 후에도 업로드 버튼이 보이도록 */
+.detail-info-form__field-content--edit > .program-application-form-instructor__file-cell,
+.detail-info-form__field-content--view > .program-application-form-instructor__file-cell {
+  display: flex;
+  margin-block: 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+}
+
 .program-application-form-instructor__file-cell
   .program-application-form-instructor__file-upload-trigger.paragraph-file-upload {
   width: auto;
@@ -93,10 +103,11 @@
 }
 
 .program-application-form-instructor__calendar-wrap {
-  flex: 0 0 auto;
-  width: auto;
-  min-width: 0;
-  max-width: none;
+  flex: 0 0 360px;
+  flex-shrink: 0;
+  width: 360px;
+  min-width: 360px;
+  max-width: 360px;
 }
 
 .program-application-form-instructor__session-grid {
