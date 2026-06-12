@@ -11,7 +11,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "preview": "vite preview",
-    "validate": "pnpm typecheck && pnpm lint && pnpm build"
+    "validate": "pnpm typecheck && pnpm lint && pnpm build",
+    "fetch:openapi": "curl -sS -H 'ngrok-skip-browser-warning: true' \"${VITE_API_SERVER:-https://462b-221-146-247-18.ngrok-free.app}/v3/api-docs\" -o openapi/backend.openapi.json",
+    "filter:openapi:dashboard": "node scripts/filter-openapi-dashboard.mjs",
+    "filter:openapi:logs": "node scripts/filter-openapi-logs.mjs",
+    "generate:api": "pnpm filter:openapi:dashboard && pnpm filter:openapi:logs && orval --config orval.config.ts",
+    "generate:api:watch": "orval --config orval.config.ts --watch openapi/dashboard.openapi.json"
   },
   "dependencies": {
     "@ant-design/cssinjs": "^2.0.1",
@@ -80,6 +85,7 @@
     "@vitejs/plugin-react": "^5.1.1",
     "@vitest/ui": "^4.0.16",
     "jsdom": "^27.4.0",
+    "orval": "^8.17.0",
     "typescript": "~5.9.3",
     "vite": "^7.2.4",
     "vitest": "^4.0.16"
