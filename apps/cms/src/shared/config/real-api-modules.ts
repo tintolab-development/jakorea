@@ -13,7 +13,17 @@
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
 /** 실 API 연동 단위 — 필요 시 문자열 하나씩 추가 */
-export const REAL_API_MODULE_KEYS = ['adminAuth', 'dashboard', 'logs'] as const
+export const REAL_API_MODULE_KEYS = [
+  'adminAuth',
+  'dashboard',
+  'logs',
+  'detailedPrograms',
+  'textbooks',
+  'sponsors',
+  'notices',
+  'faqs',
+  'inquiries',
+] as const
 export type RealApiModule = (typeof REAL_API_MODULE_KEYS)[number]
 
 function explicitModuleSet(): Set<string> | null {
