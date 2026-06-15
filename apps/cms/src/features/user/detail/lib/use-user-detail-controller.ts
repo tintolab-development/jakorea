@@ -59,6 +59,10 @@ import { handleError } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
+import {
+  isMemberBasicInfoPatchRemoteEnabled,
+  isMembersRemoteEnabled,
+} from '@/features/user/api/member-remote-capabilities'
 
 const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
 
@@ -137,8 +141,11 @@ export function useUserDetailController({
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolvePersonalInfoAccessItem,
-    resolveMemberId: () => displayUser?.id,
-    resetDeps: [open, displayUser?.id],
+    resolveMemberId: () => {
+      if (displayUser?.memberId != null) return String(displayUser.memberId)
+      return displayUser?.id
+    },
+    resetDeps: [open, displayUser?.id, displayUser?.memberId],
     controlMode: 'hideWhenRevealed',
     modalZIndex: PERSONAL_INFO_REVEAL_MODAL_Z_INDEX,
   })
@@ -364,6 +371,12 @@ export function useUserDetailController({
 
   const saveBasicInfoEdit = useCallback(async () => {
     if (!displayUser || !basicInfoDraft || !patchMemberBasicInfo) return
+    if (isMembersRemoteEnabled() && !isMemberBasicInfoPatchRemoteEnabled()) {
+      handleError(new Error('회원 기본정보 수정 API가 아직 제공되지 않습니다.'), {
+        defaultMessage: '회원 기본정보 수정 API가 아직 제공되지 않습니다.',
+      })
+      return
+    }
     if (displayUser.role === 'ADMIN' && !canAccessAdminCommentInAdminDetail(currentUser)) return
     setBasicInfoSaveLoading(true)
     try {

@@ -21,6 +21,8 @@ import {
   PM_UNCHECKED_PERMISSION_IDS,
   createInitialPermissionsByRole,
   isValidRoleTab } from './admin-permission-settings-ui-data'
+import { isAdminPermissionsRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { AdminPermissionsRemotePanel } from './admin-permissions-remote-panel'
 import './permission-customization-page.css'
 
 interface CategoryCardsProps {
@@ -95,6 +97,7 @@ export function PermissionCustomizationPage() {
   const { user } = useAuthStore()
   const [searchParams, setSearchParams] = useSearchParams()
   const [permissionsByRole, setPermissionsByRole] = useState(createInitialPermissionsByRole)
+  const adminPermissionsRemote = isAdminPermissionsRemoteEnabled()
 
   const activeRole = useMemo((): AdminPermissionRoleTab => {
     const r = searchParams.get('role')
@@ -172,12 +175,16 @@ export function PermissionCustomizationPage() {
         }))}
       />
 
-      <CategoryCards
-        role={activeRole}
-        flags={permissionsByRole[activeRole]}
-        onItemChange={(itemId, checked) => setItem(activeRole, itemId, checked)}
-        onCategorySelectAll={(cat, checked) => setCategoryAll(activeRole, cat, checked)}
-      />
+      {adminPermissionsRemote ? (
+        <AdminPermissionsRemotePanel activeRole={activeRole} />
+      ) : (
+        <CategoryCards
+          role={activeRole}
+          flags={permissionsByRole[activeRole]}
+          onItemChange={(itemId, checked) => setItem(activeRole, itemId, checked)}
+          onCategorySelectAll={(cat, checked) => setCategoryAll(activeRole, cat, checked)}
+        />
+      )}
     </div>
   )
 }

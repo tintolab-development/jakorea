@@ -17,6 +17,8 @@ import type { Program, TargetLevel } from '@/types/domain'
 import type { User } from '@/types/user'
 import { programService } from '@/entities/program/api/program-service'
 import { mockPrograms } from '@/data/mock'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { MemberDetailMockDataBanner } from '@/features/user/detail/ui/member-detail-mock-data-banner'
 import {
   getEnrollmentDisplayStatusFromProgramLifecycle,
   getProgramLifecycleLabel,
@@ -333,6 +335,9 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
 
   return (
     <>
+      {isMembersRemoteEnabled() ? (
+        <MemberDetailMockDataBanner message="관리자 담당 프로그램 이력 Admin API가 제공되지 않아 mock 데이터를 표시합니다." />
+      ) : null}
       <FilterTableLayout
         bordered={false}
         fields={filterFields}

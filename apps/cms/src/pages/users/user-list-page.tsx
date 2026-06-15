@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
+import { Alert } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
@@ -73,6 +74,11 @@ import {
   type UserListQueryParams,
 } from './user-list-table.config'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
+import {
+  getUnsupportedMemberListFilterLabels,
+  isMembersRemoteEnabled,
+} from '@/features/user/api/member-remote-capabilities'
+import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 
 type UserListRow = Omit<User, 'password'>
 
@@ -153,6 +159,11 @@ export function UserListPage() {
   const canWrite = canPerformWriteAction(user)
 
   const listQueryFilters = useMemo(() => buildListQueryApiFilters(params), [params])
+
+  const unsupportedRemoteFilterLabels = useMemo(
+    () => (isMembersRemoteEnabled() ? getUnsupportedMemberListFilterLabels(listQueryFilters) : []),
+    [listQueryFilters]
+  )
 
   const {
     users: listUsers,
@@ -369,6 +380,19 @@ export function UserListPage() {
 
     const listMatched = listUsers.find(u => u.id === targetId)
     if (listMatched) {
+      if (isMembersRemoteEnabled()) {
+        ;(async () => {
+          try {
+            await fetchUserById(targetId)
+            if (cancelled) return
+            const fetched = useUserStore.getState().usersById[targetId] ?? listMatched
+            openDrawer(fetched)
+          } catch {
+            if (!cancelled) openDrawer(listMatched)
+          }
+        })()
+        return
+      }
       openDrawer(listMatched)
       return
     }
@@ -431,7 +455,11 @@ export function UserListPage() {
   }, [modalDetailUser, resolvedMemberListKind])
 
   const invalidateList = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
+    if (isMembersRemoteEnabled()) {
+      void queryClient.invalidateQueries({ queryKey: memberQueryKeys.all })
+      return
+    }
+    void queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
   }, [queryClient])
 
   const handleMemberBasicInfoSaved = useCallback(
@@ -444,21 +472,33 @@ export function UserListPage() {
 
   // 사용자 상세 보기
   const handleView = useCallback(
-    (user: Omit<User, 'password'>, opts?: { replace?: boolean }) => {
+    async (user: Omit<User, 'password'>, opts?: { replace?: boolean }) => {
       pendingOpenedUserIdRef.current = user.id
       setDetailBridgeUser(user)
-      setSelectedUserId(user.id) // 스토어에 ID만 저장
-      openDrawer(user)
+      setSelectedUserId(user.id)
+
+      let displayUser = user
+      if (isMembersRemoteEnabled()) {
+        try {
+          await fetchUserById(user.id)
+          const fetched = useUserStore.getState().usersById[user.id]
+          if (fetched) displayUser = fetched
+        } catch (error) {
+          handleError(error, { defaultMessage: '회원 상세를 불러오지 못했습니다.' })
+        }
+      }
+
+      openDrawer(displayUser)
       setParams(
         {
-          id: user.id,
+          id: displayUser.id,
           lnb: 'detail-info',
           [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
         },
         { replace: opts?.replace ?? false }
       )
     },
-    [setSelectedUserId, openDrawer, setParams]
+    [setSelectedUserId, openDrawer, setParams, fetchUserById]
   )
 
   const handleNavigateToLinkedUser = useCallback(
@@ -722,6 +762,15 @@ export function UserListPage() {
 
   return (
     <div>
+      {unsupportedRemoteFilterLabels.length > 0 ? (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 12 }}
+          message="실 API 모드에서는 일부 필터가 적용되지 않습니다"
+          description={`다음 필터는 백엔드 API 미지원으로 무시됩니다: ${unsupportedRemoteFilterLabels.join(', ')}`}
+        />
+      ) : null}
       <FilterTableLayout
         bordered={false}
         fields={userListFilterFields}
