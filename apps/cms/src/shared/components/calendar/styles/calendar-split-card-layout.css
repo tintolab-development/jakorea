@@ -22,7 +22,7 @@
   /* shell 변형: `calendar-shell-variant.css` — stroke(기본) */
   display: grid;
   grid-template-columns:
-    minmax(var(--calendar-main-month-min-width, calc(116px * 7 + 40px)), 1fr)
+    minmax(var(--calendar-main-month-min-width, calc(116px * 7 + 42px)), 1fr)
     minmax(
       var(--calendar-sub-right-list-min-width, 280px),
       var(--calendar-sub-right-list-max-width, 400px)
@@ -37,7 +37,7 @@
 
 .calendar-split-card-layout:has(.calendar-week--time-grid) {
   grid-template-columns:
-    minmax(var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 40px)), 1fr)
+    minmax(var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px)), 1fr)
     minmax(
       var(--calendar-sub-right-list-min-width, 280px),
       var(--calendar-sub-right-list-max-width, 400px)
@@ -63,7 +63,7 @@
 
 .calendar-split-card--left {
   width: 100%;
-  min-width: var(--calendar-main-month-min-width, calc(116px * 7 + 40px));
+  min-width: var(--calendar-main-month-min-width, calc(116px * 7 + 42px));
   min-height: var(--calendar-split-card-height);
   height: auto;
   padding: 16px 20px 20px;
@@ -169,22 +169,21 @@
 }
 
 .calendar-split-card-layout:has(.calendar-week--time-grid) .calendar-split-card--left {
-  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 40px));
+  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px));
   min-height: 0;
   height: auto;
   flex-shrink: 0;
-  /* 격자 min-width 유지 — 가로 넘침은 __main·scroll-host 스크롤(clip 시 토요일 열 우측 보더 잘림) */
-  overflow-x: visible;
+  overflow-x: clip;
   overflow-y: visible;
 }
 
 .calendar-split-card-layout:has(.calendar-week--time-grid) .calendar-split-card--left > .calendar-main {
   flex: 0 0 auto;
   flex-shrink: 0;
-  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 40px));
+  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px));
   max-width: none;
   width: 100%;
-  overflow: visible;
+  overflow: hidden;
 }
 
 /*

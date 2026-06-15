@@ -15,6 +15,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  --calendar-sub-right-list-item-gap: 12px;
   gap: 6px;
   overflow-y: auto;
   /*
@@ -178,6 +179,11 @@
   overflow: hidden;
 }
 
+/* 툴바 없이 `.calendar-list-item`을 직접 자식으로 둔 리스트(2차 면접 등) */
+.calendar-list:not(.calendar-list--with-toolbar):not(.calendar-list--empty) {
+  gap: var(--calendar-sub-right-list-item-gap);
+}
+
 .calendar-list__items {
   flex: 1 1 auto;
   min-height: 0;
@@ -186,7 +192,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 6px;
+  gap: var(--calendar-sub-right-list-item-gap);
   scroll-padding-top: 4px;
 }
 

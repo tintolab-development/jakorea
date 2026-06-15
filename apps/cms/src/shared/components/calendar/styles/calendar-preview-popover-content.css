@@ -74,11 +74,24 @@
 
 .participating-institutions-calendar-popover__meta--instructor {
   gap: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 1;
+}
+
+.participating-institutions-calendar-popover__meta--instructor
+  .participating-institutions-calendar-popover__meta-part {
+  color: var(--main-BK, #3d3d3d);
 }
 
 .participating-institutions-calendar-popover__meta--instructor
   .participating-institutions-calendar-popover__meta-sep {
   margin: 0 8px;
+  background: var(--main-BK, #3d3d3d);
 }
 
 .participating-institutions-calendar-popover__meta--applicant-instructor {

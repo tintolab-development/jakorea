@@ -36,7 +36,7 @@
   display: grid;
   grid-template-columns:
     var(--calendar-sub-left-width, 300px)
-    minmax(var(--calendar-main-month-min-width, calc(116px * 7 + 40px)), 1fr)
+    minmax(var(--calendar-main-month-min-width, calc(116px * 7 + 42px)), 1fr)
     minmax(
       var(--calendar-sub-right-list-min-width, 280px),
       var(--calendar-sub-right-list-max-width, 400px)
@@ -85,7 +85,7 @@
 /* 미니·검색 없음 — 메인 + 우측 2열 (정산 캘린더 등) */
 .calendar-set:not(:has(.calendar-sub-left)) {
   grid-template-columns:
-    minmax(var(--calendar-main-month-min-width, calc(116px * 7 + 40px)), 1fr)
+    minmax(var(--calendar-main-month-min-width, calc(116px * 7 + 42px)), 1fr)
     minmax(
       var(--calendar-sub-right-list-min-width, 280px),
       var(--calendar-sub-right-list-max-width, 400px)
@@ -96,7 +96,7 @@
 .calendar-set:has(.calendar-week--time-grid) {
   grid-template-columns:
     var(--calendar-sub-left-width, 300px)
-    minmax(var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 40px)), 1fr)
+    minmax(var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px)), 1fr)
     minmax(
       var(--calendar-sub-right-list-min-width, 280px),
       var(--calendar-sub-right-list-max-width, 400px)
@@ -106,7 +106,7 @@
 
 .calendar-set:has(.calendar-week--time-grid):not(:has(.calendar-sub-left)) {
   grid-template-columns:
-    minmax(var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 40px)), 1fr)
+    minmax(var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px)), 1fr)
     minmax(
       var(--calendar-sub-right-list-min-width, 280px),
       var(--calendar-sub-right-list-max-width, 400px)
@@ -162,13 +162,13 @@
 
 .calendar-main-container {
   width: 100%;
-  min-width: var(--calendar-main-month-min-width, calc(116px * 7 + 40px));
+  min-width: var(--calendar-main-month-min-width, calc(116px * 7 + 42px));
   min-height: var(--calendar-main-month-min-height, calc(124px * 6 + 37px + 50px + 32px));
   box-sizing: border-box;
 }
 
 .calendar-main-container:has(.calendar-week--time-grid) {
-  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 40px));
+  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px));
   min-height: var(
     --calendar-main-week-min-height,
     calc(1344px + 40px + 50px + 32px)
@@ -183,7 +183,7 @@
 .calendar-set:has(.calendar-week--time-grid) > .calendar-main-container,
 .calendar-set:has(.calendar-week--time-grid) > .calendar-main {
   flex-shrink: 0;
-  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 40px));
+  min-width: var(--calendar-main-week-min-width, calc(72px + 20px + 116px * 7 + 42px));
   max-width: none;
 }
 
