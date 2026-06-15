@@ -239,7 +239,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     suppressUserPreviewStrip: true,
     selfManagedPreview: true,
     previewStrategy: 'a4-content-only',
-    previewHeaderTitleFallback: '초상권 수집·이용 동의',
+    previewHeaderTitleFallback: '초상권 수집·이용 동의서',
   },
 }
 

@@ -3,6 +3,7 @@ import type { FormDocumentPreviewParagraphGapResolver, FormDocumentPreviewRender
 const CERTIFICATE_ISSUANCE_TEMPLATE_NAMES = new Set([
   '휴가 인증서',
   '수료증',
+  '참여인증서',
   '강사 활동 인증서',
   '봉사 활동 인증서',
 ])

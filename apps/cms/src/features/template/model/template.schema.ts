@@ -122,7 +122,7 @@ const agreementDefinitions: TemplateDefinition[] = [
   { id: 'agreement-crime', templateName: '성범죄 경력조회 동의서', variant: 'default' },
   { id: 'agreement-notice', templateName: '행정정보 공동이용 사전 동의서', variant: 'default' },
   { id: 'agreement-expense', templateName: '교육진행자 동의 서약서', variant: 'default' },
-  { id: 'agreement-portrait', templateName: '초상권 수집·이용 동의', variant: 'default' },
+  { id: 'agreement-portrait', templateName: '초상권 수집·이용 동의서', variant: 'default' },
 ]
 
 export const writingSections: TemplateSection[] = [
