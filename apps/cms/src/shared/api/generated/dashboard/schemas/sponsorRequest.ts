@@ -10,6 +10,11 @@ import type { SponsorManager } from './sponsorManager';
 export interface SponsorRequest {
   name?: string;
   nameEn?: string;
+  nameDisplayKo?: string;
+  nameDisplayEn?: string;
+  businessNumber?: string;
+  executives?: string;
+  address?: string;
   description?: string;
   contactInfo?: string;
   managers?: SponsorManager[];

@@ -5,6 +5,7 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { EducationStageDto } from './educationStageDto';
 
 export interface TextbookRequest {
   useStatus?: string;
@@ -13,5 +14,5 @@ export interface TextbookRequest {
   businessArea?: string;
   educationTarget?: string;
   grade?: string;
-  educationStages?: unknown[];
+  educationStages?: EducationStageDto[];
 }

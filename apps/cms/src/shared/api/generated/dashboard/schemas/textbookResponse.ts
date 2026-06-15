@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { EducationStageDto } from './educationStageDto';
 
 export interface TextbookResponse {
   id?: string;
@@ -13,7 +14,7 @@ export interface TextbookResponse {
   grade?: string;
   textbookName?: string;
   textbookNameEn?: string;
-  educationStages?: unknown[];
+  educationStages?: EducationStageDto[];
   useStatus?: string;
   registrant?: string;
   registeredAt?: string;

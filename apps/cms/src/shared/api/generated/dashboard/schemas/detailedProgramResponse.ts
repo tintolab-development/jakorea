@@ -13,6 +13,7 @@ export interface DetailedProgramResponse {
   businessArea?: string;
   useYn?: boolean;
   createdByAdminId?: number;
+  createdByName?: string;
   createdAt?: string;
   updatedAt?: string;
 }

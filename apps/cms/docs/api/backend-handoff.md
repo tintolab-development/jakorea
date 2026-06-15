@@ -12,8 +12,8 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 | 항목 | 값 |
 |------|-----|
-| Swagger UI | 팀 ngrok URL `/swagger-ui/index.html` (예: `https://xxxx.ngrok-free.app/swagger-ui/index.html`) |
-| OpenAPI JSON | `{BACKEND_ORIGIN}/v3/api-docs` |
+| Swagger UI | `https://8957-221-146-247-18.ngrok-free.app/swagger-ui/index.html` |
+| OpenAPI JSON | `https://8957-221-146-247-18.ngrok-free.app/v3/api-docs` |
 | 프론트 스냅샷 | [`apps/cms/openapi/backend.openapi.json`](../../openapi/backend.openapi.json) |
 | 대시보드 subset | [`apps/cms/openapi/dashboard.openapi.json`](../../openapi/dashboard.openapi.json) |
 
@@ -27,8 +27,8 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 2. **프록시 모드(권장)**
 
 ```env
-VITE_API_SERVER=https://xxxx.ngrok-free.app
-VITE_REAL_API_MODULES=adminAuth,dashboard
+VITE_API_SERVER=https://8957-221-146-247-18.ngrok-free.app
+VITE_REAL_API_MODULES=adminAuth,dashboard,logs,detailedPrograms,textbooks,sponsors,notices,faqs,inquiries,paymentOrders,accountPayments,settlementConfigs
 VITE_ADMIN_AUTH_API_PREFIX=/api/admin/auth
 VITE_AUTH_REFRESH_PATH=/api/auth/refresh
 ```

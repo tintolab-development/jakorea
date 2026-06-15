@@ -65,4 +65,36 @@ export default defineConfig({
       },
     },
   },
+  settlement: {
+    input: './openapi/settlement.openapi.json',
+    output: {
+      mode: 'split',
+      target: './src/shared/api/generated/settlement/settlement-api.ts',
+      schemas: './src/shared/api/generated/settlement/schemas',
+      client: 'axios',
+      prettier: false,
+      override: {
+        mutator: {
+          path: './src/shared/api/orval-mutator.ts',
+          name: 'customInstance',
+        },
+      },
+    },
+  },
+  members: {
+    input: './openapi/members.openapi.json',
+    output: {
+      mode: 'split',
+      target: './src/shared/api/generated/members/members-api.ts',
+      schemas: './src/shared/api/generated/members/schemas',
+      client: 'axios',
+      prettier: false,
+      override: {
+        mutator: {
+          path: './src/shared/api/orval-mutator.ts',
+          name: 'customInstance',
+        },
+      },
+    },
+  },
 })

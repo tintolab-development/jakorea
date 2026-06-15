@@ -8,8 +8,6 @@
 
 export interface DetailedProgramDeleteResponse {
   id?: number;
-  nameKo?: string;
-  nameEn?: string;
-  businessArea?: string;
-  useYn?: boolean;
+  deleted?: boolean;
+  status?: string;
 }

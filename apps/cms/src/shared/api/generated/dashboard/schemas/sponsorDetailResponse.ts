@@ -24,6 +24,8 @@ export interface SponsorDetailResponse {
   sponsorshipStatus?: string;
   sponsorshipStartDate?: string;
   programCount?: number;
+  activeProgramCount?: number;
+  deletable?: boolean;
   nameDisplayKo?: string;
   nameDisplayEn?: string;
   businessNumber?: string;

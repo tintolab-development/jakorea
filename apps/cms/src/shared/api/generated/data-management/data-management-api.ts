@@ -7,6 +7,7 @@
  */
 import type {
   ApiResponseDeleteResponse,
+  ApiResponseDetailedProgramDeleteResponse,
   ApiResponseDetailedProgramResponse,
   ApiResponseMaterialKitResponse,
   ApiResponseMaterialKitVersionResponse,
@@ -18,7 +19,6 @@ import type {
   ApiResponseVoid,
   CalculateParams,
   CurrentKitCalculationParams,
-  DetailedProgramDeleteResponse,
   DetailedProgramRequest,
   DetailedProgramResponse,
   DetailedProgramsParams,
@@ -32,7 +32,9 @@ import type {
   MaterialKitVersionResponse,
   PageResponseDetailedProgramResponse,
   PageResponseMaterialKitResponse,
+  PageResponseSponsorProgramHistoryResponse,
   PageResponseTextbookResponse,
+  ProgramHistoriesParams,
   SponsorContactRequest,
   SponsorContactResponse,
   SponsorDetailResponse,
@@ -67,9 +69,9 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
  * - 프론트 조회 키: `get_admin_sponsors`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -122,9 +124,9 @@ const sponsors = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `post_admin_sponsors`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -178,9 +180,9 @@ const create = (
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
  * - 프론트 조회 키: `get_admin_sponsors_sponsorId_yearly-businesses`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -232,9 +234,9 @@ const yearlyBusinesses = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `post_admin_sponsors_sponsorId_yearly-businesses`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -289,9 +291,9 @@ const addYearlyBusiness = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `post_admin_sponsors_sponsorId_end`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -343,9 +345,9 @@ const end = (
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
  * - 프론트 조회 키: `get_admin_sponsors_sponsorId_contacts`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -397,9 +399,9 @@ const contacts = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `post_admin_sponsors_sponsorId_contacts`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -454,9 +456,9 @@ const addContact = (
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
  * - 프론트 조회 키: `get_admin_textbooks`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -509,9 +511,9 @@ const textbooks = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `post_admin_textbooks`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -565,9 +567,9 @@ const create2 = (
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
  * - 프론트 조회 키: `get_admin_material-kits`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -620,9 +622,9 @@ const kits = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `post_admin_material-kits`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -676,9 +678,9 @@ const create3 = (
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
  * - 프론트 조회 키: `get_admin_material-kits_kitId_versions`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -730,9 +732,9 @@ const versions = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `post_admin_material-kits_kitId_versions`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -787,9 +789,9 @@ const createVersion = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `post_admin_material-kits_versions_versionId_target-counts`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -844,9 +846,9 @@ const addTargetCount = (
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
  * - 프론트 조회 키: `get_admin_detailed-programs`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -899,9 +901,9 @@ const detailedPrograms = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `post_admin_detailed-programs`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -955,9 +957,9 @@ const create4 = (
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
  * - 프론트 조회 키: `get_admin_sponsors_sponsorId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1009,9 +1011,9 @@ const sponsor = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `delete_admin_sponsors_sponsorId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1063,9 +1065,9 @@ const _delete = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `patch_admin_sponsors_sponsorId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1120,9 +1122,9 @@ const update = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `delete_admin_sponsor-yearly-businesses_yearlyBusinessId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1174,9 +1176,9 @@ const deleteYearlyBusiness = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `patch_admin_sponsor-yearly-businesses_yearlyBusinessId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1231,9 +1233,9 @@ const updateYearlyBusiness = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `delete_admin_sponsor-contacts_contactId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1285,9 +1287,9 @@ const deleteContact = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `patch_admin_sponsor-contacts_contactId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1342,9 +1344,9 @@ const updateContact = (
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
  * - 프론트 조회 키: `get_admin_textbooks_textbookId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1396,9 +1398,9 @@ const textbook = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `delete_admin_textbooks_textbookId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1450,9 +1452,9 @@ const delete1 = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `patch_admin_textbooks_textbookId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1507,9 +1509,9 @@ const update1 = (
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
  * - 프론트 조회 키: `get_admin_material-kits_kitId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1550,6 +1552,60 @@ const kit = (
 
 /**
  * ### 이 API가 하는 일
+ * - 키트 삭제/비활성화
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - 프론트 담당 영역: master-data-material-kits (`master-data-material-kits`)
+ * - 호출 방식: `DELETE /api/admin/material-kits/{kitId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 교재 관리 > 키트 수량 관리 모달에서 선택한 kitId
+ * - 응답 사용 위치: 삭제/비활성화 성공 시 키트 목록 재조회, 참조 중 409 발생 시 삭제 불가 모달 표시
+ * - 프론트 조회 키: `delete_admin_material_kits_kitId`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
+ * - 목데이터 대체: 교재 키트 수량 관리 모달의 임시 삭제 상태를 키트 비활성화 API 결과로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MASTER_DATA_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v9.28 데이터 관리 프론트 요청사항 반영
+ * @summary 키트 삭제/비활성화
+ */
+const delete2 = (
+    kitId: number,
+ options?: SecondParameter<typeof customInstance<ApiResponseMaterialKitResponse>>,) => {
+      return customInstance<ApiResponseMaterialKitResponse>(
+      {url: `/api/admin/material-kits/${kitId}`, method: 'DELETE'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 키트 수정
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
@@ -1561,9 +1617,9 @@ const kit = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `patch_admin_material-kits_kitId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1618,9 +1674,9 @@ const update2 = (
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
  * - 프론트 조회 키: `get_admin_detailed-programs_detailedProgramId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1672,9 +1728,9 @@ const detailedProgram = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `delete_admin_detailed-programs_detailedProgramId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1704,10 +1760,10 @@ const detailedProgram = (
  * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
  * @summary 세부 프로그램 삭제
  */
-const deleteDetailedProgram = (
+const delete3 = (
     detailedProgramId: number,
- options?: SecondParameter<typeof customInstance<DetailedProgramDeleteResponse>>,) => {
-      return customInstance<DetailedProgramDeleteResponse>(
+ options?: SecondParameter<typeof customInstance<ApiResponseDetailedProgramDeleteResponse>>,) => {
+      return customInstance<ApiResponseDetailedProgramDeleteResponse>(
       {url: `/api/admin/detailed-programs/${detailedProgramId}`, method: 'DELETE'
     },
       options);
@@ -1726,9 +1782,9 @@ const deleteDetailedProgram = (
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
  * - 프론트 조회 키: `patch_admin_detailed-programs_detailedProgramId`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1772,6 +1828,62 @@ const update3 = (
 
 /**
  * ### 이 API가 하는 일
+ * - 후원사 프로그램 진행 이력 필터 목록
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - 프론트 담당 영역: master-data-sponsors (`master-data-sponsors`)
+ * - 호출 방식: `GET /api/sponsors/{sponsorId}/program-histories`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 후원사 상세 선택 sponsorId와 프로그램명/년도/진행현황/교육대상/담당자 필터
+ * - 응답 사용 위치: 후원사 상세 프로그램 진행 이력 테이블과 필터 결과, 페이지 상태를 갱신
+ * - 프론트 조회 키: `get_sponsors_sponsorId_program_histories`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
+ * - 목데이터 대체: 후원사 상세 프로그램 진행 이력의 클라이언트 전체조회/필터 상태를 서버 페이지·필터 응답으로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MASTER_DATA_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: MIXED 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Frontend data-management follow-up route for sponsor program history 필터
+ * @summary 후원사 프로그램 진행 이력 필터 목록
+ */
+const programHistories = (
+    sponsorId: number,
+    params?: ProgramHistoriesParams,
+ options?: SecondParameter<typeof customInstance<PageResponseSponsorProgramHistoryResponse>>,) => {
+      return customInstance<PageResponseSponsorProgramHistoryResponse>(
+      {url: `/api/sponsors/${sponsorId}/program-histories`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 프로그램 등록용 교재 매칭 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
@@ -1783,9 +1895,9 @@ const update3 = (
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
  * - 프론트 조회 키: `get_admin_textbooks_matches`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1838,9 +1950,9 @@ const matches = (
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
  * - 프론트 조회 키: `get_admin_material-kits_kitId_versions_current_calculate`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1894,9 +2006,9 @@ const currentKitCalculation = (
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
  * - 프론트 조회 키: `get_admin_material-kits_kitId_calculate`
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
  * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
@@ -1937,7 +2049,7 @@ const calculate = (
       options);
     }
 
-return {sponsors,create,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,textbooks,create2,kits,create3,versions,createVersion,addTargetCount,detailedPrograms,create4,sponsor,_delete,update,deleteYearlyBusiness,updateYearlyBusiness,deleteContact,updateContact,textbook,delete1,update1,kit,update2,detailedProgram,deleteDetailedProgram,update3,matches,currentKitCalculation,calculate}};
+return {sponsors,create,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,textbooks,create2,kits,create3,versions,createVersion,addTargetCount,detailedPrograms,create4,sponsor,_delete,update,deleteYearlyBusiness,updateYearlyBusiness,deleteContact,updateContact,textbook,delete1,update1,kit,delete2,update2,detailedProgram,delete3,update3,programHistories,matches,currentKitCalculation,calculate}};
 export type SponsorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['sponsors']>>>
 export type CreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create']>>>
 export type YearlyBusinessesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['yearlyBusinesses']>>>
@@ -1965,10 +2077,12 @@ export type TextbookResult = NonNullable<Awaited<ReturnType<ReturnType<typeof ge
 export type Delete1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['delete1']>>>
 export type Update1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update1']>>>
 export type KitResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['kit']>>>
+export type Delete2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['delete2']>>>
 export type Update2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update2']>>>
 export type DetailedProgramResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['detailedProgram']>>>
-export type DeleteDetailedProgramResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['deleteDetailedProgram']>>>
+export type Delete3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['delete3']>>>
 export type Update3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update3']>>>
+export type ProgramHistoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['programHistories']>>>
 export type MatchesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['matches']>>>
 export type CurrentKitCalculationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['currentKitCalculation']>>>
 export type CalculateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['calculate']>>>

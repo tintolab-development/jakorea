@@ -222,6 +222,10 @@
     },
     {
       "name": "관리자 관리",
+      "description": "현재 로그인 관리자 프로필 API"
+    },
+    {
+      "name": "관리자 관리",
       "description": "관리자 계정 목록, 생성, 수정, 잠금, 권한 관리 API입니다."
     }
   ],
@@ -1821,6 +1825,21 @@
           "nameEn": {
             "type": "string"
           },
+          "nameDisplayKo": {
+            "type": "string"
+          },
+          "nameDisplayEn": {
+            "type": "string"
+          },
+          "businessNumber": {
+            "type": "string"
+          },
+          "executives": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
           "description": {
             "type": "string"
           },
@@ -1916,6 +1935,28 @@
           "programCount": {
             "type": "integer",
             "format": "int64"
+          },
+          "activeProgramCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deletable": {
+            "type": "boolean"
+          },
+          "nameDisplayKo": {
+            "type": "string"
+          },
+          "nameDisplayEn": {
+            "type": "string"
+          },
+          "businessNumber": {
+            "type": "string"
+          },
+          "executives": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
           }
         }
       },
@@ -2031,6 +2072,9 @@
           },
           "primary": {
             "type": "boolean"
+          },
+          "contactType": {
+            "type": "string"
           },
           "memo": {
             "type": "string"
@@ -5601,6 +5645,26 @@
           }
         }
       },
+      "EducationStageDto": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string"
+          },
+          "gradeFrom": {
+            "type": "string"
+          },
+          "gradeTo": {
+            "type": "string"
+          },
+          "grades": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "TextbookRequest": {
         "type": "object",
         "properties": {
@@ -5624,7 +5688,9 @@
           },
           "educationStages": {
             "type": "array",
-            "items": {}
+            "items": {
+              "$ref": "#/components/schemas/EducationStageDto"
+            }
           }
         }
       },
@@ -5675,7 +5741,9 @@
           },
           "educationStages": {
             "type": "array",
-            "items": {}
+            "items": {
+              "$ref": "#/components/schemas/EducationStageDto"
+            }
           },
           "useStatus": {
             "type": "string"
@@ -6717,6 +6785,10 @@
           },
           "useYn": {
             "type": "boolean"
+          },
+          "textbookId": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -6759,6 +6831,10 @@
           },
           "useYn": {
             "type": "boolean"
+          },
+          "textbookId": {
+            "type": "integer",
+            "format": "int64"
           },
           "createdAt": {
             "type": "string",
@@ -7421,6 +7497,9 @@
           "createdByAdminId": {
             "type": "integer",
             "format": "int64"
+          },
+          "createdByName": {
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -8804,6 +8883,96 @@
           }
         }
       },
+      "AdminMeUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminMeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uuid": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          },
+          "roleCode": {
+            "type": "string"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "mfaRequired": {
+            "type": "boolean"
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApiResponseAdminMeResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에 표준 오류 코드와 안전한 메시지를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/AdminMeResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 CODE: message 형식을 사용합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          }
+        }
+      },
       "InquiryAnswerUpdateRequest": {
         "type": "object",
         "properties": {
@@ -9240,6 +9409,13 @@
             "type": "integer",
             "format": "int64"
           },
+          "activeProgramCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deletable": {
+            "type": "boolean"
+          },
           "nameDisplayKo": {
             "type": "string"
           },
@@ -9305,6 +9481,33 @@
           },
           "educationTarget": {
             "type": "string"
+          }
+        }
+      },
+      "PageResponseSponsorProgramHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SponsorProgramHistoryResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -15154,6 +15357,30 @@
           }
         }
       },
+      "ApiResponseDetailedProgramDeleteResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에 표준 오류 코드와 안전한 메시지를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/DetailedProgramDeleteResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 CODE: message 형식을 사용합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          }
+        }
+      },
       "DetailedProgramDeleteResponse": {
         "type": "object",
         "properties": {
@@ -15161,17 +15388,11 @@
             "type": "integer",
             "format": "int64"
           },
-          "nameKo": {
-            "type": "string"
-          },
-          "nameEn": {
-            "type": "string"
-          },
-          "businessArea": {
-            "type": "string"
-          },
-          "useYn": {
+          "deleted": {
             "type": "boolean"
+          },
+          "status": {
+            "type": "string"
           }
         }
       }

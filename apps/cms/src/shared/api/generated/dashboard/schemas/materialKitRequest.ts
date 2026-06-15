@@ -10,4 +10,5 @@ export interface MaterialKitRequest {
   kitName?: string;
   businessArea?: string;
   useYn?: boolean;
+  textbookId?: number;
 }

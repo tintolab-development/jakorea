@@ -11,6 +11,7 @@ export interface MaterialKitResponse {
   kitName?: string;
   businessArea?: string;
   useYn?: boolean;
+  textbookId?: number;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -15,5 +15,6 @@ export interface SponsorContactRequest {
   mobilePhone?: string;
   companyAddress?: string;
   primary?: boolean;
+  contactType?: string;
   memo?: string;
 }
