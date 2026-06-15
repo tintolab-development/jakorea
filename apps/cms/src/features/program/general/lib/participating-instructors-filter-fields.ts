@@ -1,90 +1,56 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { createHomeAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
+import {
+  INSTRUCTOR_JA_EVALUATION_GRADE_FILTER_OPTIONS,
+  INSTRUCTOR_JA_EXPERIENCE_FILTER_OPTIONS,
+} from '@/features/program/general/lib/instructor-application-filter-options'
+import { INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS } from '@/shared/constants/instructor-settlement-status'
 
-const REGION_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: '서울', value: '서울' },
-  { label: '부산', value: '부산' },
-  { label: '대구', value: '대구' },
-  { label: '인천', value: '인천' },
-  { label: '광주', value: '광주' },
-  { label: '대전', value: '대전' },
-  { label: '울산', value: '울산' },
-  { label: '세종', value: '세종' },
-  { label: '경기', value: '경기' },
-  { label: '강원', value: '강원' },
-  { label: '충북', value: '충북' },
-  { label: '충남', value: '충남' },
-  { label: '전북', value: '전북' },
-  { label: '전남', value: '전남' },
-  { label: '경북', value: '경북' },
-  { label: '경남', value: '경남' },
-  { label: '제주', value: '제주' },
-]
+const COL_WIDTH = FILTER_CONTROL_MAX_WIDTH_PX
 
-const JA_LECTURE_EXPERIENCE_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: '1년', value: '1' },
-  { label: '2년', value: '2' },
-  { label: '3년', value: '3' },
-  { label: '5년', value: '5' },
-]
-
-const JA_EVALUATION_GRADE_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: 'A등급', value: 'A등급' },
-  { label: 'B등급', value: 'B등급' },
-  { label: 'C등급', value: 'C등급' },
-]
-
-const EDUCATION_ASSIGNMENT_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: '진행 전', value: '진행 전' },
-  { label: '1회차', value: '1회차' },
-  { label: '2회차', value: '2회차' },
-  { label: '진행 완료', value: '진행 완료' },
-]
-
-const COL_WIDTH = '18%'
+const SELECT_FIELD_STYLE = {
+  width: COL_WIDTH,
+} as const
 
 /** 참여 강사 목록 필터 */
 export const participatingInstructorsFilterFields: FilterFieldConfig[] = [
   {
     key: 'instructorName',
     type: 'search',
-    label: '강사명',
+    label: '참여 강사명',
     placeholder: '강사명을 입력하세요',
     width: COL_WIDTH,
   },
+  createHomeAddressRegionFilterField({ label: '자택 주소지' }),
   {
-    key: 'region',
+    key: 'experienceYears',
     type: 'select',
-    label: '거주 지역',
+    label: 'JA 강의 경력',
     placeholder: '전체',
-    options: REGION_OPTIONS,
+    options: [...INSTRUCTOR_JA_EXPERIENCE_FILTER_OPTIONS],
     width: COL_WIDTH,
+    style: SELECT_FIELD_STYLE,
   },
   {
-    key: 'jaLectureExperience',
-    type: 'select',
-    label: 'JA 강의 이력',
-    placeholder: '전체',
-    options: JA_LECTURE_EXPERIENCE_OPTIONS,
-    width: COL_WIDTH,
-  },
-  {
-    key: 'jaEvaluationGrade',
+    key: 'evaluationGrade',
     type: 'select',
     label: 'JA 평가 등급',
     placeholder: '전체',
-    options: JA_EVALUATION_GRADE_OPTIONS,
+    options: [...INSTRUCTOR_JA_EVALUATION_GRADE_FILTER_OPTIONS],
     width: COL_WIDTH,
+    style: SELECT_FIELD_STYLE,
   },
   {
-    key: 'educationAssignmentStatus',
+    key: 'settlementStatus',
     type: 'select',
-    label: '교육 예정 현황',
+    label: '정산 현황',
     placeholder: '전체',
-    options: EDUCATION_ASSIGNMENT_OPTIONS,
+    options: INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS.map(option => ({
+      label: option.label,
+      value: option.value,
+    })),
     width: COL_WIDTH,
+    style: SELECT_FIELD_STYLE,
   },
 ]

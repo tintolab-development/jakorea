@@ -551,6 +551,19 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
         : status === 'rejected' && rejectionNotifyTiming === 'immediate'
           ? formatApprovalNotificationSentAt()
           : undefined
+    const assignedLectures =
+      status === 'approved' && i % 11 === 5
+        ? [
+            {
+              slotKey: '2026-01-09|assign-school-gangseo|1',
+              dateKey: '2026-01-09',
+              schoolId: 'assign-school-gangseo',
+              schoolName: '강서초등학교',
+              sessionLabel: '1차시',
+              timeRange: '09:20 ~ 11:20',
+            },
+          ]
+        : undefined
     const resumeSample = getResumeSample(i)
     const evaluationGrades = ['A', 'B', 'C']
     const teachingExperiences = ['신규', '1년 미만', '1~3년', '3년 이상']
@@ -598,6 +611,7 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
       lectureFeeAmount,
       businessIncomeEarnerStatus,
       approvalNotificationSentAt,
+      assignedLectures,
       ...resumeSample,
     })
   }

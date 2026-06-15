@@ -115,6 +115,8 @@ export interface ParticipatingInstructorRow {
   affiliationEmploymentStatus?: SchoolTeacherEmploymentStatus
   /** 참여 강사 상세 — 강사비 등급 라벨 */
   instructorFeeGradeLabel?: string
+  /** 강사가 일정 불가로 선택한 교육일 (YYYY-MM-DD) — 추가 배정 모달 일정 비활성용 */
+  unavailableEducationDateKeys?: string[]
   /** 활동 포기 처리 여부 (기관 사유) */
   activityWithdrawn?: boolean
   /** 활동 포기 사유 — 현재 CMS는 `institution`(기관 사유)만 지원 */
@@ -306,6 +308,7 @@ function getDetailExtension(
     | 'affiliationEmploymentStatus'
     | 'instructorFeeGradeLabel'
     | 'scheduleChangeCancelCount'
+    | 'unavailableEducationDateKeys'
   >
 > {
   if (index > 1) return {}
@@ -363,6 +366,7 @@ function getDetailExtension(
     contact: '010-3156-8274',
     email: 'instructor1@example.com',
     address: '경기도 수원시',
+    unavailableEducationDateKeys: ['2026-01-16'],
     nameHanja: '李준혁',
     nameEnglish: 'Lee Junhyuk',
     birthDate: `${birthYear}.03.07`,

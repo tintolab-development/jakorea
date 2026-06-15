@@ -24,6 +24,12 @@ import {
   type ParticipatingInstructorMemberCandidate,
 } from '@/features/program/general/lib/participating-instructor-member-candidates'
 import { buildParticipatingInstructorCalendarEvents } from '@/features/program/general/lib/build-participating-instructor-calendar-events'
+import { matchesInstructorJaExperienceYears } from '@/features/program/general/lib/instructor-application-filter-options'
+import {
+  formatParticipatingInstructorAssignedInstitutions,
+  formatParticipatingInstructorHomeAddress,
+  getParticipatingInstructorAssignedSchoolNames,
+} from '@/features/program/general/lib/participating-instructors-table-display'
 import { ActivityCertificateIssuancePreviewModal } from './activity-certificate-issuance-preview-modal'
 import { renderParticipatingInstructorCalendarMonthEventContent } from './participating-instructor-calendar-month-event'
 import {
@@ -45,10 +51,12 @@ import {
   type InstructorDetailTabKey,
 } from './participating-instructor-fullpage-view'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
+import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
 import {
   INSTRUCTOR_SETTLEMENT_STATUS_LABELS_SHORT,
   type InstructorSettlementUiStatus,
 } from '@/shared/constants/instructor-settlement-status'
+import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
@@ -158,17 +166,14 @@ export function ParticipatingInstructorsSection({
   const filterValues = useMemo(
     () => ({
       instructorName: pendingFilters.instructorName,
-      region: pendingFilters.region === 'all' ? undefined : pendingFilters.region,
-      jaLectureExperience:
-        pendingFilters.jaLectureExperience === 'all'
-          ? undefined
-          : pendingFilters.jaLectureExperience,
-      jaEvaluationGrade:
-        pendingFilters.jaEvaluationGrade === 'all' ? undefined : pendingFilters.jaEvaluationGrade,
-      educationAssignmentStatus:
-        pendingFilters.educationAssignmentStatus === 'all'
-          ? undefined
-          : pendingFilters.educationAssignmentStatus,
+      homeSido: pendingFilters.homeSido,
+      homeSigungu: pendingFilters.homeSigungu,
+      experienceYears:
+        pendingFilters.experienceYears === 'all' ? undefined : pendingFilters.experienceYears,
+      evaluationGrade:
+        pendingFilters.evaluationGrade === 'all' ? undefined : pendingFilters.evaluationGrade,
+      settlementStatus:
+        pendingFilters.settlementStatus === 'all' ? undefined : pendingFilters.settlementStatus,
     }),
     [pendingFilters]
   )
@@ -178,9 +183,25 @@ export function ParticipatingInstructorsSection({
       setPendingFilters(prev => ({ ...prev, instructorName: String(value ?? '') }))
       return
     }
-    const k = key as keyof ParticipatingInstructorsFilters
-    const v = value == null || value === '' ? 'all' : String(value)
-    setPendingFilters(prev => ({ ...prev, [k]: v }))
+    if (key === 'homeSido') {
+      setPendingFilters(prev => ({
+        ...prev,
+        homeSido: value == null || value === '' ? '' : String(value),
+        homeSigungu: '',
+      }))
+      return
+    }
+    if (key === 'homeSigungu') {
+      setPendingFilters(prev => ({
+        ...prev,
+        homeSigungu: value == null || value === '' ? '' : String(value),
+      }))
+      return
+    }
+    if (key === 'experienceYears' || key === 'evaluationGrade' || key === 'settlementStatus') {
+      const v = value == null || value === '' || value === 'all' ? 'all' : String(value)
+      setPendingFilters(prev => ({ ...prev, [key]: v }))
+    }
   }
 
   const handleFilterSearch = () => {
@@ -194,12 +215,12 @@ export function ParticipatingInstructorsSection({
       institutionSido: '',
       institutionSigungu: '',
       educationGrade: 'all',
-      lectureRound: appliedFilters.educationAssignmentStatus || 'all',
+      lectureRound: 'all',
       textbookStatus: 'all',
-      settlementStatus: 'all',
+      settlementStatus: appliedFilters.settlementStatus || 'all',
       teacherName: appliedFilters.instructorName,
     }),
-    [appliedFilters.educationAssignmentStatus, appliedFilters.instructorName]
+    [appliedFilters.settlementStatus, appliedFilters.instructorName]
   )
 
   const {
@@ -242,29 +263,31 @@ export function ParticipatingInstructorsSection({
 
   const filteredInstructors = useMemo(() => {
     return baseFiltered.filter(row => {
+      const addressText = row.address ?? row.region ?? ''
+      const homeSido = appliedFilters.homeSido.trim()
+      const homeSigungu = appliedFilters.homeSigungu.trim()
+      if (homeSido && !addressText.includes(homeSido)) return false
+      if (homeSigungu && !addressText.includes(homeSigungu)) return false
       if (
-        appliedFilters.region &&
-        appliedFilters.region !== 'all' &&
-        !(row.region ?? row.address ?? '').includes(appliedFilters.region)
-      )
+        !matchesInstructorJaExperienceYears(
+          row.lectureExperienceYears ?? 0,
+          appliedFilters.experienceYears
+        )
+      ) {
         return false
-      if (appliedFilters.jaLectureExperience && appliedFilters.jaLectureExperience !== 'all') {
-        const years = row.lectureExperienceYears ?? 0
-        if (String(years) !== appliedFilters.jaLectureExperience) return false
       }
-      if (
-        appliedFilters.jaEvaluationGrade &&
-        appliedFilters.jaEvaluationGrade !== 'all' &&
-        row.jaEvaluationGrade !== appliedFilters.jaEvaluationGrade
-      )
-        return false
+      if (appliedFilters.evaluationGrade && appliedFilters.evaluationGrade !== 'all') {
+        const rowGrade = (row.jaEvaluationGrade ?? '').replace(/등급$/, '')
+        if (rowGrade !== appliedFilters.evaluationGrade) return false
+      }
       return true
     })
   }, [
     baseFiltered,
-    appliedFilters.region,
-    appliedFilters.jaLectureExperience,
-    appliedFilters.jaEvaluationGrade,
+    appliedFilters.homeSido,
+    appliedFilters.homeSigungu,
+    appliedFilters.experienceYears,
+    appliedFilters.evaluationGrade,
   ])
 
   const handleActivityCertificateIssueClick = useCallback(() => {
@@ -387,7 +410,48 @@ export function ParticipatingInstructorsSection({
   }
   const handleListView = () => setViewMode('list')
 
-  const tableScrollX = 48 + 64 + 100 + 140 + 160 + 100 + 100 + 120 + 140 + 120
+  const tableScrollX = 48 + 64 + 120 + 160 + 220 + 100 + 100 + 120 + 140 + 140
+
+  const instructorListExportRows = useMemo(
+    () =>
+      filteredInstructors.map(row => ({
+        no: row.no,
+        instructorName: row.instructorName,
+        homeAddress: formatParticipatingInstructorHomeAddress(
+          row.address ? MASKING_POLICY.address(row.address) : row.region
+        ),
+        assignedInstitutions: formatParticipatingInstructorAssignedInstitutions(
+          getParticipatingInstructorAssignedSchoolNames(row, MOCK_PARTICIPATING_SCHOOLS, instructorList)
+        ),
+        lectureExperienceYears:
+          row.lectureExperienceYears != null ? `${row.lectureExperienceYears}년` : '-',
+        jaEvaluationGrade: row.jaEvaluationGrade ?? '-',
+        contact: row.contact ? MASKING_POLICY.phone(row.contact) : '-',
+        email: row.email ? MASKING_POLICY.email(row.email) : '-',
+        settlementStatus: getInstructorSettlementStatusLabel(row.settlementStatus),
+      })),
+    [filteredInstructors, instructorList]
+  )
+
+  const instructorListExportColumns: ColumnsType<(typeof instructorListExportRows)[number]> =
+    useMemo(
+      () => [
+        { title: 'No.', dataIndex: 'no', key: 'no' },
+        { title: '참여 강사명', dataIndex: 'instructorName', key: 'instructorName' },
+        { title: '자택 주소지', dataIndex: 'homeAddress', key: 'homeAddress' },
+        { title: '배정 기관명', dataIndex: 'assignedInstitutions', key: 'assignedInstitutions' },
+        {
+          title: 'JA 강의 경력',
+          dataIndex: 'lectureExperienceYears',
+          key: 'lectureExperienceYears',
+        },
+        { title: 'JA 평가 등급', dataIndex: 'jaEvaluationGrade', key: 'jaEvaluationGrade' },
+        { title: '연락처', dataIndex: 'contact', key: 'contact' },
+        { title: '이메일', dataIndex: 'email', key: 'email' },
+        { title: '정산 현황', dataIndex: 'settlementStatus', key: 'settlementStatus' },
+      ],
+      []
+    )
 
   const columns: ColumnsType<ParticipatingInstructorRow> = useMemo(
     () => [
@@ -397,29 +461,43 @@ export function ParticipatingInstructorsSection({
         key: 'no',
         width: 64,
         align: 'center',
+        className: CMS_TABLE_NO_COL_CLASS,
+        onHeaderCell: () => ({ className: CMS_TABLE_NO_COL_CLASS }),
+        onCell: () => ({ className: CMS_TABLE_NO_COL_CLASS }),
       },
       {
-        title: '강사명',
+        title: '참여 강사명',
         dataIndex: 'instructorName',
         key: 'instructorName',
-        width: 100,
+        width: 120,
+        ellipsis: true,
       },
       {
-        title: '거주 지역',
-        key: 'region',
-        width: 140,
+        title: '자택 주소지',
+        key: 'homeAddress',
+        width: 160,
+        ellipsis: true,
         render: (_: unknown, record: ParticipatingInstructorRow) => {
-          if (record.region) return record.region
-          if (record.address) return MASKING_POLICY.address(record.address)
-          return '-'
+          const raw = record.address ?? record.region
+          if (!raw) return '-'
+          const display = record.address ? MASKING_POLICY.address(raw) : raw
+          return formatParticipatingInstructorHomeAddress(display)
         },
       },
       {
-        title: '참여 학교',
-        dataIndex: 'schoolName',
-        key: 'schoolName',
-        width: 160,
+        title: '배정 기관명',
+        key: 'assignedInstitutions',
+        width: 220,
+        minWidth: 220,
         ellipsis: true,
+        render: (_: unknown, record: ParticipatingInstructorRow) =>
+          formatParticipatingInstructorAssignedInstitutions(
+            getParticipatingInstructorAssignedSchoolNames(
+              record,
+              MOCK_PARTICIPATING_SCHOOLS,
+              instructorList
+            )
+          ),
       },
       {
         title: 'JA 강의 경력',
@@ -435,7 +513,7 @@ export function ParticipatingInstructorsSection({
         key: 'jaEvaluationGrade',
         width: 100,
         align: 'center',
-        render: (v: string) => v ?? '-',
+        render: (v: string | undefined) => v ?? '-',
       },
       {
         title: '연락처',
@@ -460,17 +538,17 @@ export function ParticipatingInstructorsSection({
         render: (v: string | undefined) => (v ? MASKING_POLICY.email(v) : '-'),
       },
       {
-        title: '정산현황',
+        title: '정산 현황',
         dataIndex: 'settlementStatus',
         key: 'settlementStatus',
-        width: 120,
+        width: 140,
         align: 'center',
         render: (status: InstructorSettlementUiStatus) => (
           <InstructorSettlementStatusText status={status} />
         ),
       },
     ],
-    []
+    [instructorList]
   )
 
   if (selectedInstructorFromUrl && program) {
@@ -513,6 +591,7 @@ export function ParticipatingInstructorsSection({
       <FilterTableLayout
         className="participating-institutions-section__filter-layout"
         bordered={false}
+        filterResponsiveWrap={false}
         contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         fields={participatingInstructorsFilterFields}
         filters={filterValues}
@@ -564,8 +643,8 @@ export function ParticipatingInstructorsSection({
           </>
         }
         excelExport={{
-          columns,
-          data: filteredInstructors,
+          columns: instructorListExportColumns,
+          data: instructorListExportRows,
         }}
       >
         {viewMode === 'list' ? (

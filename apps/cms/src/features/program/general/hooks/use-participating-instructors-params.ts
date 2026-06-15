@@ -1,6 +1,6 @@
 /**
  * 참여 강사 페이지(풀페이지 모달) 필터·뷰 쿼리 파라미터 연동
- * lnb=progress&tab=instructors 일 때 강사명·거주지역·JA강의이력·JA평가등급·교육예정현황
+ * lnb=progress&tab=instructors 일 때 참여 강사명·자택 주소지(시/도·시/군/구)·JA 강의 경력·JA 평가 등급·정산 현황
  * instructorView=list|calendar — 리스트/캘린더 뷰 (생략 시 list)
  */
 
@@ -24,31 +24,58 @@ function parseViewMode(searchParams: URLSearchParams): ParticipatingInstructorsV
 
 export interface ParticipatingInstructorsFilters {
   instructorName: string
-  region: string
-  jaLectureExperience: string
-  jaEvaluationGrade: string
-  educationAssignmentStatus: string
+  homeSido: string
+  homeSigungu: string
+  experienceYears: string
+  evaluationGrade: string
+  settlementStatus: string
 }
 
 const DEFAULT_FILTERS: ParticipatingInstructorsFilters = {
   instructorName: '',
-  region: 'all',
-  jaLectureExperience: 'all',
-  jaEvaluationGrade: 'all',
-  educationAssignmentStatus: 'all',
+  homeSido: '',
+  homeSigungu: '',
+  experienceYears: 'all',
+  evaluationGrade: 'all',
+  settlementStatus: 'all',
 }
+
+const FILTER_KEYS: (keyof ParticipatingInstructorsFilters)[] = [
+  'instructorName',
+  'homeSido',
+  'homeSigungu',
+  'experienceYears',
+  'evaluationGrade',
+  'settlementStatus',
+]
+
+const LEGACY_FILTER_KEYS = ['region', 'jaLectureExperience', 'educationAssignmentStatus'] as const
 
 function readFiltersFromParams(searchParams: URLSearchParams): ParticipatingInstructorsFilters {
   return {
     instructorName: searchParams.get('instructorName') ?? DEFAULT_FILTERS.instructorName,
-    region: searchParams.get('region') ?? DEFAULT_FILTERS.region,
-    jaLectureExperience:
-      searchParams.get('jaLectureExperience') ?? DEFAULT_FILTERS.jaLectureExperience,
-    jaEvaluationGrade:
-      searchParams.get('jaEvaluationGrade') ?? DEFAULT_FILTERS.jaEvaluationGrade,
-    educationAssignmentStatus:
-      searchParams.get('educationAssignmentStatus') ?? DEFAULT_FILTERS.educationAssignmentStatus,
+    homeSido: searchParams.get('homeSido') ?? DEFAULT_FILTERS.homeSido,
+    homeSigungu: searchParams.get('homeSigungu') ?? DEFAULT_FILTERS.homeSigungu,
+    experienceYears: searchParams.get('experienceYears') ?? DEFAULT_FILTERS.experienceYears,
+    evaluationGrade: searchParams.get('evaluationGrade') ?? DEFAULT_FILTERS.evaluationGrade,
+    settlementStatus: searchParams.get('settlementStatus') ?? DEFAULT_FILTERS.settlementStatus,
   }
+}
+
+function mergeFilterParams(
+  next: URLSearchParams,
+  merged: ParticipatingInstructorsFilters
+): void {
+  FILTER_KEYS.forEach(name => {
+    const value = merged[name]
+    const defaultValue = DEFAULT_FILTERS[name]
+    if (value === '' || value === defaultValue) {
+      next.delete(name)
+    } else {
+      next.set(name, value)
+    }
+  })
+  LEGACY_FILTER_KEYS.forEach(key => next.delete(key))
 }
 
 export function useParticipatingInstructorsParams() {
@@ -61,30 +88,17 @@ export function useParticipatingInstructorsParams() {
     return readFiltersFromParams(searchParams)
   }, [searchParams])
 
-  const FILTER_KEYS: (keyof ParticipatingInstructorsFilters)[] = [
-    'instructorName',
-    'region',
-    'jaLectureExperience',
-    'jaEvaluationGrade',
-    'educationAssignmentStatus',
-  ]
-
   const setFilters = useCallback(
     (updates: Partial<ParticipatingInstructorsFilters>) => {
       const next = new URLSearchParams(searchParams)
-      FILTER_KEYS.forEach(name => {
-        const value = updates[name]
-        if (value === undefined) return
-        const defaultValue = DEFAULT_FILTERS[name]
-        if (value === '' || value === defaultValue) {
-          next.delete(name)
-        } else {
-          next.set(name, value)
-        }
-      })
+      const merged: ParticipatingInstructorsFilters = {
+        ...filters,
+        ...updates,
+      }
+      mergeFilterParams(next, merged)
       setSearchParams(next, { replace: true })
     },
-    [searchParams, setSearchParams]
+    [searchParams, setSearchParams, filters]
   )
 
   const setFilter = useCallback(
@@ -132,22 +146,13 @@ export function useParticipatingInstructorsParams() {
       const next = new URLSearchParams(searchParams)
       const merged: ParticipatingInstructorsFilters = {
         instructorName: overrides?.instructorName ?? filters.instructorName,
-        region: overrides?.region ?? filters.region,
-        jaLectureExperience:
-          overrides?.jaLectureExperience ?? filters.jaLectureExperience,
-        jaEvaluationGrade: overrides?.jaEvaluationGrade ?? filters.jaEvaluationGrade,
-        educationAssignmentStatus:
-          overrides?.educationAssignmentStatus ?? filters.educationAssignmentStatus,
+        homeSido: overrides?.homeSido ?? filters.homeSido,
+        homeSigungu: overrides?.homeSigungu ?? filters.homeSigungu,
+        experienceYears: overrides?.experienceYears ?? filters.experienceYears,
+        evaluationGrade: overrides?.evaluationGrade ?? filters.evaluationGrade,
+        settlementStatus: overrides?.settlementStatus ?? filters.settlementStatus,
       }
-      FILTER_KEYS.forEach(name => {
-        const value = merged[name]
-        const defaultValue = DEFAULT_FILTERS[name]
-        if (value === '' || value === defaultValue) {
-          next.delete(name)
-        } else {
-          next.set(name, value)
-        }
-      })
+      mergeFilterParams(next, merged)
       setSearchParams(next, { replace: true })
       setAppliedFilters(merged)
     },

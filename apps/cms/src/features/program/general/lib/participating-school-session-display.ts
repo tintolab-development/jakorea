@@ -1,4 +1,8 @@
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
+import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import { resolveSchoolDetailAttendanceSessionLeadLabel } from '@/features/program/general/lib/school-detail-attendance-display'
+import type { Program } from '@/types/domain'
 
 function padTimePart(part: string): string {
   const trimmed = part.trim()
@@ -19,4 +23,29 @@ export function buildParticipatingSchoolSessionLines(
 ): string[] {
   if (!sessions?.length) return []
   return sessions.map(formatParticipatingSchoolSessionLine)
+}
+
+/**
+ * 참여 기관 상세 — 교육 진행 일정 행 라벨 (진행 내용 기준)
+ * - 단일 회차: 교육 일정
+ * - 복수 회차 + 커리큘럼형: 회차명 (curriculumSessions[].sessionLabel)
+ * - 복수 회차 + 일정형: 일정명 (scheduleDetails[].name)
+ */
+export function resolveParticipatingInstitutionScheduleRowLabel(
+  program: Program,
+  session: ParticipatingSchoolSession
+): string {
+  const commonInfo = resolveGeneralProgramCommonInfo(program)
+  const { sessionRound } = resolveEffectiveGeneralProgramTypeFields({
+    generalProgramAudience: program.generalProgramAudience,
+    generalProgramEducationStructure: program.generalProgramEducationStructure,
+    generalProgramSessionRound: program.generalProgramSessionRound,
+    curriculumSessions: commonInfo.curriculumSessions,
+  })
+
+  if (sessionRound === 'single') {
+    return '교육 일정'
+  }
+
+  return resolveSchoolDetailAttendanceSessionLeadLabel(program, session.round)
 }
