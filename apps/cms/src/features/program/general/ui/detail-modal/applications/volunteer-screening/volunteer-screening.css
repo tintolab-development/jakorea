@@ -23,6 +23,10 @@
 .participant-applications
   .general-volunteer-screening__filter-layout.filter-table-layout
   .table-filter-group__fields-rows
+  > .table-filter-group__fields-row-with-action,
+.participant-applications
+  .general-volunteer-interview2__filter-layout.filter-table-layout
+  .table-filter-group__fields-rows
   > .table-filter-group__fields-row-with-action {
   display: grid !important;
   width: 100%;
@@ -36,12 +40,20 @@
 .participant-applications
   .general-volunteer-screening__filter-layout.filter-table-layout
   .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-grid-row,
+.participant-applications
+  .general-volunteer-interview2__filter-layout.filter-table-layout
+  .table-filter-group__fields-row-with-action
   > .table-filter-group__fields-grid-row {
   display: contents;
 }
 
 .participant-applications
   .general-volunteer-screening__filter-layout.filter-table-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-shell--inline,
+.participant-applications
+  .general-volunteer-interview2__filter-layout.filter-table-layout
   .table-filter-group__fields-row-with-action
   > .table-filter-group__fields-shell--inline {
   grid-column: 7;
@@ -63,6 +75,64 @@
   width: 100%;
   min-width: 0;
   overflow-x: auto;
+}
+
+/*
+ * 1차 서류 심사 — 좌측 고정 열(선택·No.·신청 봉사자명):
+ * 가로 스크롤·행 선택 시 본문 텍스트가 고정 열 아래로 비치지 않도록
+ */
+.general-volunteer-screening .ant-table-thead > tr > th.ant-table-cell-fix-left,
+.general-volunteer-screening .ant-table-tbody > tr > td.ant-table-cell-fix-left {
+  z-index: 2;
+  background: var(--color-bg-base, #fff);
+}
+
+.general-volunteer-screening .ant-table-thead > tr > th.ant-table-cell-fix-left-last,
+.general-volunteer-screening .ant-table-tbody > tr > td.ant-table-cell-fix-left-last {
+  z-index: 3;
+  background: var(--color-bg-base, #fff);
+}
+
+.general-volunteer-screening .ant-table-thead > tr > th.ant-table-cell-fix-left {
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
+}
+
+.general-volunteer-screening
+  .ant-table-tbody
+  > tr.ant-table-row-selected
+  > td.ant-table-cell-fix-left,
+.general-volunteer-screening
+  .ant-table-tbody
+  > tr.ant-table-row-selected
+  > td.ant-table-cell-fix-left-last,
+.general-volunteer-screening
+  .ant-table-tbody
+  > tr.ant-table-row-selected:hover
+  > td.ant-table-cell-fix-left,
+.general-volunteer-screening
+  .ant-table-tbody
+  > tr.ant-table-row-selected:hover
+  > td.ant-table-cell-fix-left-last {
+  background: var(--color-table-row-selected, #f0f9fa) !important;
+  z-index: 4;
+}
+
+.general-volunteer-screening
+  .clickable-table
+  .ant-table-tbody
+  > tr.ant-table-row:hover:not(.ant-table-row-selected)
+  > td.ant-table-cell-fix-left,
+.general-volunteer-screening
+  .clickable-table
+  .ant-table-tbody
+  > tr.ant-table-row:hover:not(.ant-table-row-selected)
+  > td.ant-table-cell-fix-left-last {
+  background: var(--color-table-row-hover, rgba(1, 161, 175, 0.06)) !important;
+  z-index: 4;
 }
 
 /* 서술형 1~4번 행: cms-data-table 기본 54px·nowrap 해제 — 내용 길이에 따라 최대 192px까지 확장 */

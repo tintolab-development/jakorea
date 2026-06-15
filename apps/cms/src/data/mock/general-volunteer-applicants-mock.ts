@@ -98,6 +98,117 @@ const ESSAY_NECESSITY =
 const ESSAY_JA =
   '중·고등학교 시절 JA Korea 경제금융교육 안내를 들었고, 대학 진학 후 프로그램에 관심을 갖게 되었습니다.'
 
+/** 1차 서류 합격자 — 면접일 배정 현황별 3명 */
+const DOC_PASSED_WAITING_INDICES = new Set([20, 21, 22])
+const DOC_PASSED_ASSIGNED_INDICES = new Set([2, 6, 8])
+const DOC_PASSED_WITHDRAWN_INDICES = new Set([25, 26, 27])
+
+/** 2차 면접 대상자 — 심사 현황별 demo 1명 (index 30~37: assigned, 25: 활동 포기) */
+const INTERVIEW2_STATUS_DEMO_INDICES = new Set([30, 31, 32, 33, 34, 35, 36, 37])
+
+/** 2차 면접 상세 — 자유 작성 항목 노출 demo (신규·JA 경험 없음) */
+const INTERVIEW2_FREE_WRITE_DEMO_INDICES = new Set([30, 31])
+
+const DOC_PASSED_ASSIGNED_INDICES_WITH_INTERVIEW2_DEMO = new Set([
+  ...DOC_PASSED_ASSIGNED_INDICES,
+  ...INTERVIEW2_STATUS_DEMO_INDICES,
+])
+
+const INTERVIEW2_STATUS_DEMO_FIELDS: Partial<
+  Record<
+    number,
+    Pick<
+      GeneralVolunteerApplicantRow,
+      | 'assignedInterviewDateLabel'
+      | 'assignedInterviewTime'
+      | 'secondInterviewScreeningStatus'
+      | 'managerAScore'
+      | 'managerBScore'
+      | 'interviewEvaluationRemark'
+    >
+  >
+> = {
+  /** 면접 진행 대기 — 미래 면접 슬롯, 수동 상태 없음 */
+  30: {
+    assignedInterviewDateLabel: '26. 03. 30(목)',
+    assignedInterviewTime: '19:30 ~ 20:00',
+    secondInterviewScreeningStatus: undefined,
+    managerAScore: null,
+    managerBScore: null,
+    interviewEvaluationRemark: '지원동기도 좋고, 교육 경험이 풍부함',
+  },
+  /** 면접 진행 완료 — 과거 면접 슬롯, 수동 상태 없음 */
+  31: {
+    assignedInterviewDateLabel: '26. 05. 12(화)',
+    assignedInterviewTime: '10:00 ~ 10:30',
+    secondInterviewScreeningStatus: undefined,
+    managerAScore: 4,
+    managerBScore: 3,
+  },
+  /** 면접 합격 */
+  32: {
+    assignedInterviewDateLabel: '26. 06. 10(수)',
+    assignedInterviewTime: '11:00 ~ 11:30',
+    secondInterviewScreeningStatus: 'pass',
+    managerAScore: 5,
+    managerBScore: 4,
+  },
+  /** 면접 불합격 */
+  33: {
+    assignedInterviewDateLabel: '26. 06. 11(목)',
+    assignedInterviewTime: '13:00 ~ 13:30',
+    secondInterviewScreeningStatus: 'fail',
+    managerAScore: 1,
+    managerBScore: 2,
+  },
+  /** 예비 1 */
+  34: {
+    assignedInterviewDateLabel: '26. 06. 12(금)',
+    assignedInterviewTime: '14:00 ~ 14:30',
+    secondInterviewScreeningStatus: 'reserve1',
+    managerAScore: 4,
+    managerBScore: 4,
+  },
+  /** 예비 2 */
+  35: {
+    assignedInterviewDateLabel: '26. 06. 13(토)',
+    assignedInterviewTime: '15:00 ~ 15:30',
+    secondInterviewScreeningStatus: 'reserve2',
+    managerAScore: 3,
+    managerBScore: 3,
+  },
+  /** 예비 3 — 미평가 */
+  36: {
+    assignedInterviewDateLabel: '26. 06. 16(월)',
+    assignedInterviewTime: '09:30 ~ 10:00',
+    secondInterviewScreeningStatus: 'reserve3',
+    managerAScore: null,
+    managerBScore: null,
+  },
+  /** 예비 4 */
+  37: {
+    assignedInterviewDateLabel: '26. 06. 17(화)',
+    assignedInterviewTime: '10:30 ~ 11:00',
+    secondInterviewScreeningStatus: 'reserve4',
+    managerAScore: 5,
+    managerBScore: 5,
+  },
+  /** 활동 포기 */
+  25: {
+    assignedInterviewDateLabel: '26. 06. 18(수)',
+    assignedInterviewTime: '11:30 ~ 12:00',
+    secondInterviewScreeningStatus: undefined,
+    managerAScore: null,
+    managerBScore: null,
+  },
+}
+
+const DOC_PASSED_INDICES = new Set<number>([
+  ...DOC_PASSED_WAITING_INDICES,
+  ...DOC_PASSED_ASSIGNED_INDICES_WITH_INTERVIEW2_DEMO,
+  ...DOC_PASSED_WITHDRAWN_INDICES,
+])
+
 function hashSeed(programId: string, index: number): number {
   let h = 0
   const source = `${programId}:general-volunteer:${index}`
@@ -149,10 +260,9 @@ function countInterviewSlots(days: GeneralVolunteerInterviewAvailabilityDay[]): 
 }
 
 function resolveDocumentStatus(index: number): GeneralDocumentScreeningStatus {
-  if (index === 2) return 'pass'
-  if (index <= 4) return 'pending'
-  if (index % 11 === 10) return 'fail'
-  return 'pass'
+  if (DOC_PASSED_INDICES.has(index)) return 'pass'
+  if (index % 19 === 18) return 'fail'
+  return 'pending'
 }
 
 function resolveInterviewAssignmentStatus(
@@ -160,9 +270,10 @@ function resolveInterviewAssignmentStatus(
   documentScreeningStatus: GeneralDocumentScreeningStatus
 ): GeneralInterviewAssignmentStatus {
   if (documentScreeningStatus !== 'pass') return 'waiting'
-  if (index % 17 === 0) return 'withdrawn'
-  if (index % 12 === 0) return 'waiting'
-  return 'assigned'
+  if (DOC_PASSED_WAITING_INDICES.has(index)) return 'waiting'
+  if (DOC_PASSED_WITHDRAWN_INDICES.has(index)) return 'withdrawn'
+  if (DOC_PASSED_ASSIGNED_INDICES_WITH_INTERVIEW2_DEMO.has(index)) return 'assigned'
+  return 'waiting'
 }
 
 const MANUAL_SECOND_INTERVIEW_STATUSES: GeneralSecondInterviewScreeningStatus[] = [
@@ -198,6 +309,20 @@ function buildAssignedInterviewFields(
   interviewAvailability: GeneralVolunteerInterviewAvailabilityDay[],
   index?: number
 ) {
+  const demoFields = index != null ? INTERVIEW2_STATUS_DEMO_FIELDS[index] : undefined
+  if (demoFields) {
+    return {
+      assignedInterviewDateLabel: demoFields.assignedInterviewDateLabel,
+      assignedInterviewTime: demoFields.assignedInterviewTime,
+      secondInterviewScreeningStatus: demoFields.secondInterviewScreeningStatus,
+      managerAScore: demoFields.managerAScore ?? null,
+      managerBScore: demoFields.managerBScore ?? null,
+      ...(demoFields.interviewEvaluationRemark
+        ? { interviewEvaluationRemark: demoFields.interviewEvaluationRemark }
+        : {}),
+    }
+  }
+
   if (index === 2) {
     return {
       assignedInterviewDateLabel: '26. 03. 23(월)',
@@ -278,7 +403,9 @@ function buildRow(programId: string, index: number): GeneralVolunteerApplicantRo
     id1365: buildId1365(name, no),
     scheduleChangeCancelCount: index === 2 ? 1 : seed % 7 === 0 ? 1 : 0,
     applicationType,
-    hasJaVolunteerExperience: seed % 3 !== 0,
+    hasJaVolunteerExperience: INTERVIEW2_FREE_WRITE_DEMO_INDICES.has(index)
+      ? false
+      : seed % 3 !== 0,
     essayIntro: applicationType === 'ujat-graduate' ? '' : `${ESSAY_INTRO} (${name})`,
     essayEducationExperience: applicationType === 'ujat-graduate' ? '' : ESSAY_EDUCATION,
     essayNecessity: applicationType === 'ujat-graduate' ? '' : ESSAY_NECESSITY,

@@ -1,76 +1,47 @@
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 
-export type GeneralInterview2ConfirmRequest = {
-  title: string
-  content: string
-  confirmText: string
-  danger?: boolean
-  onConfirm: () => void
+export function requestGeneralVolunteerInterview2BulkPass({
+  selectedIds,
+  onOpenSinglePass,
+  onOpenBulkPass,
+}: {
+  selectedIds: string[]
+  onOpenSinglePass: () => void
+  onOpenBulkPass: () => void
+}): void {
+  if (selectedIds.length === 0) {
+    cmsAlertModal.show({
+      title: '항목 선택 안내',
+      content: '합격 처리할 항목을 선택해 주세요.',
+    })
+    return
+  }
+  if (selectedIds.length === 1) {
+    onOpenSinglePass()
+    return
+  }
+  onOpenBulkPass()
 }
 
-export function confirmGeneralVolunteerInterview2Fail({
-  showConfirm,
-  count,
-  onConfirm,
+export function requestGeneralVolunteerInterview2BulkFail({
+  selectedIds,
+  onOpenSingleFail,
+  onOpenBulkFail,
 }: {
-  showConfirm: (options: GeneralInterview2ConfirmRequest) => void
-  count: number
-  onConfirm: () => void
+  selectedIds: string[]
+  onOpenSingleFail: () => void
+  onOpenBulkFail: () => void
 }): void {
-  if (count === 0) {
+  if (selectedIds.length === 0) {
     cmsAlertModal.show({
       title: '항목 선택 안내',
       content: '불합격 처리할 항목을 선택해 주세요.',
     })
     return
   }
-  showConfirm({
-    title: count === 1 ? '면접 불합격' : '선택 불합격',
-    content:
-      count === 1
-        ? '해당 지원자를 면접 불합격 처리하시겠습니까?'
-        : `선택한 ${count}건을 면접 불합격 처리하시겠습니까?`,
-    confirmText: '불합격',
-    danger: true,
-    onConfirm,
-  })
-}
-
-export function confirmGeneralVolunteerInterview2Pass({
-  showConfirm,
-  count,
-  onConfirm,
-}: {
-  showConfirm: (options: GeneralInterview2ConfirmRequest) => void
-  count: number
-  onConfirm: () => void
-}): void {
-  if (count === 0) {
-    cmsAlertModal.show({
-      title: '항목 선택 안내',
-      content: '합격 처리할 항목을 선택해 주세요.',
-    })
+  if (selectedIds.length === 1) {
+    onOpenSingleFail()
     return
   }
-  showConfirm({
-    title: count === 1 ? '면접 합격' : '선택 합격',
-    content:
-      count === 1
-        ? '해당 지원자를 면접 합격 처리하시겠습니까?'
-        : `선택한 ${count}건을 면접 합격 처리하시겠습니까?`,
-    confirmText: '합격',
-    onConfirm,
-  })
-}
-
-/** 목록 일괄 합격 — 선택 건수 검증 후 BulkPassModal 오픈 */
-export function openGeneralVolunteerInterview2BulkPassModal(onOpen: () => void, count: number): void {
-  if (count === 0) {
-    cmsAlertModal.show({
-      title: '항목 선택 안내',
-      content: '합격 처리할 항목을 선택해 주세요.',
-    })
-    return
-  }
-  onOpen()
+  onOpenBulkFail()
 }

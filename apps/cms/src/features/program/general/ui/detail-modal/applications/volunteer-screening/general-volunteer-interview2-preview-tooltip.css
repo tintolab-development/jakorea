@@ -1,0 +1,71 @@
+.general-volunteer-interview2-calendar-popover {
+  display: flex;
+  width: auto;
+  min-width: 360px;
+  max-width: min(460px, calc(100vw - 24px));
+  max-height: 250px;
+  padding: 11px 16px 10px 14px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.general-volunteer-interview2-calendar-popover__entry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+  box-sizing: border-box;
+}
+
+.general-volunteer-interview2-calendar-popover__entry:first-child {
+  padding-top: 0;
+}
+
+.general-volunteer-interview2-calendar-popover__entry:last-child {
+  padding-bottom: 0;
+}
+
+.general-volunteer-interview2-calendar-popover__entry:not(:last-child) {
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.general-volunteer-interview2-calendar-popover__head {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0;
+}
+
+.general-volunteer-interview2-calendar-popover__name,
+.general-volunteer-interview2-calendar-popover__slot {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.general-volunteer-interview2-calendar-popover__sep {
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 21px;
+  justify-content: center;
+  color: #d4d4d4;
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1;
+  user-select: none;
+}

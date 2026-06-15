@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
+import { useGeneralInterview2EffectiveStatusTick } from '@/features/program/general/hooks/use-general-interview2-effective-status-tick'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -62,6 +63,12 @@ function isInterview2Props(
 
 export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerApplicantDetailViewProps) {
   const { applicant } = props
+
+  const interview2StatusTickRows = useMemo(
+    () => (props.variant === 'interview2' ? [applicant] : []),
+    [applicant, props.variant]
+  )
+  useGeneralInterview2EffectiveStatusTick(interview2StatusTickRows)
 
   const resolveAccessItem = useCallback(
     () => `${applicant.name} 봉사자 신청 정보`,

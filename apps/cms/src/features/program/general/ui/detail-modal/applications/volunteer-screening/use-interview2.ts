@@ -10,19 +10,21 @@ import {
 import {
   DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS,
   filterGeneralInterview2Applicants,
+  filterGeneralInterview2CalendarApplicants,
   type GeneralVolunteerInterview2Filters,
 } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 import { sortGeneralVolunteerInterview2Applicants } from '@/features/program/general/lib/general-volunteer-interview2-display'
+import { mapGeneralVolunteerAssignedInterviewToCalendarEvents } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
+import { useGeneralInterview2EffectiveStatusTick } from '@/features/program/general/hooks/use-general-interview2-effective-status-tick'
 import {
   GENERAL_INTERVIEW2_BULK_PASS_TYPE_OPTIONS,
   type GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useGeneralVolunteerInterview2Columns } from './interview2-columns'
-import type { GeneralInterview2ConfirmRequest } from './general-volunteer-interview2-actions'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import {
-  confirmGeneralVolunteerInterview2Fail,
-  confirmGeneralVolunteerInterview2Pass,
-  openGeneralVolunteerInterview2BulkPassModal,
+  requestGeneralVolunteerInterview2BulkFail,
+  requestGeneralVolunteerInterview2BulkPass,
 } from './general-volunteer-interview2-actions'
 import type { GeneralInterview2BulkPassConfirmPayload } from './general-volunteer-interview2-bulk-pass-modal'
 import {
@@ -31,6 +33,9 @@ import {
   guardGeneralVolunteerInterview2Pass,
   guardGeneralVolunteerWithdrawActivity,
 } from './general-volunteer-applicant-guard-actions'
+import type { ActivityWithdrawScheduleModalPayload } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+
+export type GeneralVolunteerInterview2ViewMode = 'list' | 'calendar'
 
 export function useGeneralVolunteerInterview2({ programId }: { programId: string }) {
   const { showAlert } = useCmsAlert()
@@ -43,23 +48,42 @@ export function useGeneralVolunteerInterview2({ programId }: { programId: string
   const [appliedFilters, setAppliedFilters] = useState<GeneralVolunteerInterview2Filters>(() => ({
     ...DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS,
   }))
+  const [viewMode, setViewMode] = useState<GeneralVolunteerInterview2ViewMode>('list')
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [interview2Confirm, setInterview2Confirm] = useState<GeneralInterview2ConfirmRequest | null>(
-    null
-  )
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
   const [evaluationTargetId, setEvaluationTargetId] = useState<string | null>(null)
   const [bulkPassModalOpen, setBulkPassModalOpen] = useState(false)
+  const [bulkFailModalOpen, setBulkFailModalOpen] = useState(false)
+  const [bulkFailCompleteCount, setBulkFailCompleteCount] = useState<number | null>(null)
+  const [passModalVolunteer, setPassModalVolunteer] = useState<GeneralVolunteerApplicantRow | null>(
+    null
+  )
+  const [failModalVolunteer, setFailModalVolunteer] = useState<GeneralVolunteerApplicantRow | null>(
+    null
+  )
+  const [passCompleteVolunteerName, setPassCompleteVolunteerName] = useState<string | null>(null)
+  const [failCompleteVolunteer, setFailCompleteVolunteer] = useState<{
+    name: string
+    reason: string
+  } | null>(null)
+
+  useGeneralInterview2EffectiveStatusTick(list)
 
   useEffect(() => {
     setList(getGeneralVolunteerInterview2Applicants(programId))
     setPendingFilters({ ...DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS })
     setAppliedFilters({ ...DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS })
+    setViewMode('list')
     setSelectedRowKeys([])
-    setInterview2Confirm(null)
     setWithdrawTargetId(null)
     setEvaluationTargetId(null)
     setBulkPassModalOpen(false)
+    setBulkFailModalOpen(false)
+    setBulkFailCompleteCount(null)
+    setPassModalVolunteer(null)
+    setFailModalVolunteer(null)
+    setPassCompleteVolunteerName(null)
+    setFailCompleteVolunteer(null)
   }, [programId])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
@@ -71,46 +95,137 @@ export function useGeneralVolunteerInterview2({ programId }: { programId: string
   }, [pendingFilters])
 
   const tableData = useMemo(
-    () => sortGeneralVolunteerInterview2Applicants(
-      filterGeneralInterview2Applicants(list, appliedFilters)
-    ),
+    () =>
+      sortGeneralVolunteerInterview2Applicants(
+        filterGeneralInterview2Applicants(list, appliedFilters)
+      ),
     [appliedFilters, list]
   )
+
+  const calendarFilteredData = useMemo(
+    () =>
+      sortGeneralVolunteerInterview2Applicants(
+        filterGeneralInterview2CalendarApplicants(list, appliedFilters)
+      ),
+    [appliedFilters, list]
+  )
+
+  const calendarEvents = useMemo(
+    () => mapGeneralVolunteerAssignedInterviewToCalendarEvents(calendarFilteredData),
+    [calendarFilteredData]
+  )
+
+  const count = viewMode === 'calendar' ? calendarFilteredData.length : tableData.length
+
+  const handleViewCalendar = useCallback(() => {
+    setSelectedRowKeys([])
+    setViewMode('calendar')
+  }, [])
+
+  const handleViewList = useCallback(() => {
+    setViewMode('list')
+  }, [])
 
   const applySecondInterviewStatus = useCallback(
     (ids: string[], status: GeneralSecondInterviewScreeningStatus) => {
       setList(prev => patchGeneralVolunteerSecondInterviewScreeningStatus(prev, ids, status))
-      setSelectedRowKeys([])
     },
     []
   )
 
-  const showInterview2Confirm = useCallback((options: GeneralInterview2ConfirmRequest) => {
-    setInterview2Confirm(options)
+  const openPassModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
+    if (!guardGeneralVolunteerInterview2Pass(applicant)) return
+    setPassModalVolunteer(applicant)
   }, [])
 
-  const closeInterview2Confirm = useCallback(() => {
-    setInterview2Confirm(null)
+  const closePassModal = useCallback(() => {
+    setPassModalVolunteer(null)
   }, [])
+
+  const openFailModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
+    if (!guardGeneralVolunteerInterview2Fail(applicant)) return
+    setFailModalVolunteer(applicant)
+  }, [])
+
+  const closeFailModal = useCallback(() => {
+    setFailModalVolunteer(null)
+  }, [])
+
+  const closePassCompleteModal = useCallback(() => {
+    setPassCompleteVolunteerName(null)
+  }, [])
+
+  const closeFailCompleteModal = useCallback(() => {
+    setFailCompleteVolunteer(null)
+  }, [])
+
+  const handlePassModalConfirm = useCallback(
+    (_payload: PermissionModalPayload) => {
+      if (!passModalVolunteer) return
+      const volunteerName = passModalVolunteer.name
+      applySecondInterviewStatus([passModalVolunteer.id], 'pass')
+      setSelectedRowKeys(prev => prev.filter(key => String(key) !== passModalVolunteer.id))
+      setPassModalVolunteer(null)
+      setPassCompleteVolunteerName(volunteerName)
+    },
+    [applySecondInterviewStatus, passModalVolunteer]
+  )
+
+  const handleFailModalConfirm = useCallback(
+    (payload: PermissionModalPayload) => {
+      if (!failModalVolunteer) return
+      const { name, id } = failModalVolunteer
+      applySecondInterviewStatus([id], 'fail')
+      setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
+      setFailModalVolunteer(null)
+      setFailCompleteVolunteer({ name, reason: payload.reason })
+    },
+    [applySecondInterviewStatus, failModalVolunteer]
+  )
 
   const handleBulkFail = useCallback(() => {
     const ids = selectedRowKeys.map(String)
-    confirmGeneralVolunteerInterview2Fail({
-      showConfirm: showInterview2Confirm,
-      count: ids.length,
-      onConfirm: () => {
-        applySecondInterviewStatus(ids, 'fail')
-        showAlert({ title: '선택 불합격', content: `${ids.length}건이 불합격 처리되었습니다.` })
+    requestGeneralVolunteerInterview2BulkFail({
+      selectedIds: ids,
+      onOpenSingleFail: () => {
+        const applicant = list.find(row => row.id === ids[0])
+        if (applicant) openFailModal(applicant)
       },
+      onOpenBulkFail: () => setBulkFailModalOpen(true),
     })
-  }, [applySecondInterviewStatus, selectedRowKeys, showAlert, showInterview2Confirm])
+  }, [list, openFailModal, selectedRowKeys])
+
+  const closeBulkFailModal = useCallback(() => {
+    setBulkFailModalOpen(false)
+  }, [])
+
+  const closeBulkFailCompleteModal = useCallback(() => {
+    setBulkFailCompleteCount(null)
+  }, [])
+
+  const confirmBulkFail = useCallback(
+    (_payload: PermissionModalPayload) => {
+      const ids = selectedRowKeys.map(String)
+      if (ids.length === 0) return
+      applySecondInterviewStatus(ids, 'fail')
+      setSelectedRowKeys([])
+      setBulkFailModalOpen(false)
+      setBulkFailCompleteCount(ids.length)
+    },
+    [applySecondInterviewStatus, selectedRowKeys]
+  )
 
   const handleBulkPass = useCallback(() => {
-    openGeneralVolunteerInterview2BulkPassModal(
-      () => setBulkPassModalOpen(true),
-      selectedRowKeys.length
-    )
-  }, [selectedRowKeys.length])
+    const ids = selectedRowKeys.map(String)
+    requestGeneralVolunteerInterview2BulkPass({
+      selectedIds: ids,
+      onOpenSinglePass: () => {
+        const applicant = list.find(row => row.id === ids[0])
+        if (applicant) openPassModal(applicant)
+      },
+      onOpenBulkPass: () => setBulkPassModalOpen(true),
+    })
+  }, [list, openPassModal, selectedRowKeys])
 
   const closeBulkPassModal = useCallback(() => {
     setBulkPassModalOpen(false)
@@ -133,6 +248,7 @@ export function useGeneralVolunteerInterview2({ programId }: { programId: string
         title: '일괄 합격',
         content: `선택한 ${ids.length}건이 ${passTypeLabel} 처리되었습니다. (알림: ${notifyLabel}, 목 데이터)`,
       })
+      setSelectedRowKeys([])
       setBulkPassModalOpen(false)
     },
     [applySecondInterviewStatus, selectedRowKeys, showAlert]
@@ -147,24 +263,27 @@ export function useGeneralVolunteerInterview2({ programId }: { programId: string
     setWithdrawTargetId(null)
   }, [])
 
-  const confirmWithdrawActivity = useCallback(() => {
-    if (!withdrawTargetId) return
-    const row = list.find(item => item.id === withdrawTargetId)
-    if (!row) {
-      setWithdrawTargetId(null)
-      return
-    }
-    setList(prev =>
-      prev.map(item =>
-        item.id === withdrawTargetId ? { ...item, interviewAssignmentStatus: 'withdrawn' } : item
+  const confirmWithdrawActivity = useCallback(
+    (_payload: ActivityWithdrawScheduleModalPayload) => {
+      if (!withdrawTargetId) return
+      const row = list.find(item => item.id === withdrawTargetId)
+      if (!row) {
+        setWithdrawTargetId(null)
+        return
+      }
+      setList(prev =>
+        prev.map(item =>
+          item.id === withdrawTargetId ? { ...item, interviewAssignmentStatus: 'withdrawn' } : item
+        )
       )
-    )
-    showAlert({
-      title: '활동 포기',
-      content: `${row.name} 봉사자가 활동 포기 처리되었습니다.`,
-    })
-    setWithdrawTargetId(null)
-  }, [list, showAlert, withdrawTargetId])
+      showAlert({
+        title: '활동 포기',
+        content: `${row.name} 봉사자가 활동 포기 처리되었습니다.`,
+      })
+      setWithdrawTargetId(null)
+    },
+    [list, showAlert, withdrawTargetId]
+  )
 
   const withdrawTarget = useMemo(
     () => (withdrawTargetId ? list.find(row => row.id === withdrawTargetId) : undefined),
@@ -173,26 +292,16 @@ export function useGeneralVolunteerInterview2({ programId }: { programId: string
 
   const requestInterview2Pass = useCallback(
     (row: GeneralVolunteerApplicantRow) => {
-      if (!guardGeneralVolunteerInterview2Pass(row)) return
-      confirmGeneralVolunteerInterview2Pass({
-        showConfirm: showInterview2Confirm,
-        count: 1,
-        onConfirm: () => applySecondInterviewStatus([row.id], 'pass'),
-      })
+      openPassModal(row)
     },
-    [applySecondInterviewStatus, showInterview2Confirm]
+    [openPassModal]
   )
 
   const requestInterview2Fail = useCallback(
     (row: GeneralVolunteerApplicantRow) => {
-      if (!guardGeneralVolunteerInterview2Fail(row)) return
-      confirmGeneralVolunteerInterview2Fail({
-        showConfirm: showInterview2Confirm,
-        count: 1,
-        onConfirm: () => applySecondInterviewStatus([row.id], 'fail'),
-      })
+      openFailModal(row)
     },
-    [applySecondInterviewStatus, showInterview2Confirm]
+    [openFailModal]
   )
 
   const openEvaluationModal = useCallback((row: GeneralVolunteerApplicantRow) => {
@@ -231,7 +340,11 @@ export function useGeneralVolunteerInterview2({ programId }: { programId: string
     handleSearch,
     tableData,
     columns,
-    count: tableData.length,
+    count,
+    viewMode,
+    handleViewCalendar,
+    handleViewList,
+    calendarEvents,
     selectedRowKeys,
     setSelectedRowKeys,
     handleBulkFail,
@@ -240,14 +353,28 @@ export function useGeneralVolunteerInterview2({ programId }: { programId: string
     closeBulkPassModal,
     confirmBulkPass,
     bulkPassCount: selectedRowKeys.length,
+    bulkFailModalOpen,
+    closeBulkFailModal,
+    confirmBulkFail,
+    bulkFailCount: selectedRowKeys.length,
+    bulkFailCompleteCount,
+    closeBulkFailCompleteModal,
+    passModalVolunteer,
+    failModalVolunteer,
+    closePassModal,
+    closeFailModal,
+    handlePassModalConfirm,
+    handleFailModalConfirm,
+    passCompleteVolunteerName,
+    failCompleteVolunteer,
+    closePassCompleteModal,
+    closeFailCompleteModal,
     requestWithdrawActivity,
     cancelWithdrawActivity,
     confirmWithdrawActivity,
     withdrawTarget,
     requestInterview2Pass,
     requestInterview2Fail,
-    interview2Confirm,
-    closeInterview2Confirm,
     openEvaluationModal,
     closeEvaluationModal,
     evaluationTarget,

@@ -2,6 +2,8 @@
  * 일반 프로그램(기관) 봉사자 신청·심사 UI 상수
  */
 
+import type { SecondInterviewScreeningStatus } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
+
 export const GENERAL_VOLUNTEER_APPLICATION_LIST_TITLE = '봉사자 신청 현황'
 
 export type GeneralVolunteerApplicationType = 'new' | 'ujat-graduate'
@@ -47,37 +49,24 @@ export const GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS: Record<
   GeneralInterviewAssignmentStatus,
   string
 > = {
-  waiting: '배정 대기',
+  waiting: '면접일 배정 전',
+  assigned: '면접일 배정 완료',
+  withdrawn: '활동 포기',
+}
+
+/** 1차 서류 합격자 캘린더 우측 목록 — 면접일 배정 현황 태그 (짧은 문구) */
+export const GENERAL_INTERVIEW_ASSIGNMENT_STATUS_CALENDAR_LIST_TAG_LABELS: Record<
+  GeneralInterviewAssignmentStatus,
+  string
+> = {
+  waiting: '배정 전',
   assigned: '배정 완료',
   withdrawn: '활동 포기',
 }
 
-export type GeneralSecondInterviewScreeningStatus =
-  | 'waiting'
-  | 'completed'
-  | 'pass'
-  | 'fail'
-  | 'reserve1'
-  | 'reserve2'
-  | 'reserve3'
-  | 'reserve4'
+export type { SecondInterviewScreeningStatus }
 
-export const GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_ORDER: readonly GeneralSecondInterviewScreeningStatus[] =
-  ['waiting', 'completed', 'pass', 'fail', 'reserve1', 'reserve2', 'reserve3', 'reserve4'] as const
-
-export const GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_LABELS: Record<
-  GeneralSecondInterviewScreeningStatus,
-  string
-> = {
-  waiting: '면접 진행 대기',
-  completed: '면접 진행 완료',
-  pass: '면접 합격',
-  fail: '면접 불합격',
-  reserve1: '예비 1',
-  reserve2: '예비 2',
-  reserve3: '예비 3',
-  reserve4: '예비 4',
-}
+export type GeneralSecondInterviewScreeningStatus = SecondInterviewScreeningStatus
 
 /** 2차 면접 일괄 합격 모달 — 합격 유형 선택 */
 export type GeneralInterview2BulkPassType =
@@ -149,6 +138,16 @@ export function formatGeneralJaVolunteerExperienceLabel(hasExperience: boolean):
   return hasExperience ? '있음' : '없음'
 }
 
+/** 자유 작성 항목(서술형 1~4번) — 신규 봉사자(JA 봉사 진행 경험 없음)만 노출 */
+export function shouldShowGeneralVolunteerFreeWriteItems(applicant: {
+  hasJaVolunteerExperience: boolean
+  applicationType: GeneralVolunteerApplicationType
+}): boolean {
+  if (applicant.hasJaVolunteerExperience) return false
+  if (applicant.applicationType === 'ujat-graduate') return false
+  return true
+}
+
 export function formatGeneralVolunteerApplicationType(
   type: GeneralVolunteerApplicationType
 ): string {
@@ -157,9 +156,12 @@ export function formatGeneralVolunteerApplicationType(
 
 export function formatGeneralVolunteerEssayCellValue(
   applicationType: GeneralVolunteerApplicationType,
+  hasJaVolunteerExperience: boolean,
   value: string | undefined
 ): string {
-  if (applicationType === 'ujat-graduate') return '-'
+  if (!shouldShowGeneralVolunteerFreeWriteItems({ applicationType, hasJaVolunteerExperience })) {
+    return '-'
+  }
   const trimmed = value?.trim()
   return trimmed ? trimmed : '-'
 }
