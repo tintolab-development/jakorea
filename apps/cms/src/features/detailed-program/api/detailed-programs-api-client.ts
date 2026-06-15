@@ -35,5 +35,5 @@ export async function updateDetailedProgramRemote(
 }
 
 export async function deleteDetailedProgramRemote(id: number): Promise<void> {
-  await dmApi.deleteDetailedProgram(id)
+  await dmApi.delete3(id)
 }
