@@ -8,7 +8,6 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import type { UjatSecondInterviewScreeningStatus } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import {
   CalendarMain,
@@ -45,7 +44,9 @@ function buildInterview2ListRows(
     eventId: String(event.id),
     volunteerName: event.volunteerName,
     screeningStatus:
-      event.originalItem.secondInterviewScreeningStatus ?? ('waiting' as UjatSecondInterviewScreeningStatus),
+      event.originalItem.interviewAssignmentStatus === 'withdrawn'
+        ? 'withdrawn'
+        : (event.originalItem.secondInterviewScreeningStatus ?? 'waiting'),
     slotLabel: event.slotLabel,
     totalScore: event.originalItem.totalScore,
   }))

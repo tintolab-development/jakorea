@@ -1,7 +1,9 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import {
-  UJAT_SECOND_INTERVIEW_SCREENING_STATUS_LABELS,
-  UJAT_SECOND_INTERVIEW_SCREENING_STATUS_ORDER,
+  SECOND_INTERVIEW_SCREENING_STATUS_LABELS,
+  SECOND_INTERVIEW_SCREENING_STATUS_ORDER,
+} from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
+import {
   UJAT_VOLUNTEER_PREFERRED_REGIONS,
   type UjatSecondInterviewScreeningStatus,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
@@ -23,8 +25,8 @@ const scoreOptions = [
 
 const screeningStatusOptions = [
   { label: '전체', value: ALL },
-  ...UJAT_SECOND_INTERVIEW_SCREENING_STATUS_ORDER.map((value: UjatSecondInterviewScreeningStatus) => ({
-    label: UJAT_SECOND_INTERVIEW_SCREENING_STATUS_LABELS[value],
+  ...SECOND_INTERVIEW_SCREENING_STATUS_ORDER.map((value: UjatSecondInterviewScreeningStatus) => ({
+    label: SECOND_INTERVIEW_SCREENING_STATUS_LABELS[value],
     value,
   })),
 ]

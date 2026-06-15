@@ -2,6 +2,8 @@
  * UJAT 봉사자 1차 서류 심사 — 필터·정렬 공통 상수
  */
 
+import type { SecondInterviewScreeningStatus } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
+
 export const UJAT_VOLUNTEER_PREFERRED_REGIONS = [
   '서울',
   '경기(남부)',
@@ -74,32 +76,7 @@ export const UJAT_INTERVIEW_ASSIGNMENT_STATUS_LABELS: Record<UjatInterviewAssign
 }
 
 /** 2차 면접 심사 현황 (2차 면접 대상자 목록) */
-export type UjatSecondInterviewScreeningStatus =
-  | 'waiting'
-  | 'completed'
-  | 'pass'
-  | 'fail'
-  | 'reserve1'
-  | 'reserve2'
-  | 'reserve3'
-  | 'reserve4'
-
-export const UJAT_SECOND_INTERVIEW_SCREENING_STATUS_ORDER: readonly UjatSecondInterviewScreeningStatus[] =
-  ['waiting', 'completed', 'pass', 'fail', 'reserve1', 'reserve2', 'reserve3', 'reserve4'] as const
-
-export const UJAT_SECOND_INTERVIEW_SCREENING_STATUS_LABELS: Record<
-  UjatSecondInterviewScreeningStatus,
-  string
-> = {
-  waiting: '면접 진행 대기',
-  completed: '면접 진행 완료',
-  pass: '면접 합격',
-  fail: '면접 불합격',
-  reserve1: '예비 1',
-  reserve2: '예비 2',
-  reserve3: '예비 3',
-  reserve4: '예비 4',
-}
+export type UjatSecondInterviewScreeningStatus = SecondInterviewScreeningStatus
 
 /** 2차 면접 일괄 합격 모달 — 합격 유형 선택 */
 export type UjatInterview2BulkPassType =

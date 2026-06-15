@@ -1,21 +1,23 @@
 import type { ReactNode } from 'react'
-import type { UjatSecondInterviewScreeningStatus } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
+import type { SecondInterviewScreeningEffectiveStatus } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-ui'
+import {
+  formatSecondInterviewScoreLabel,
+  resolveSecondInterviewScreeningPopoverLabel,
+  resolveSecondInterviewScreeningTone,
+} from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-ui'
+import '@/features/program/shared/ui/volunteer-screening/second-interview-screening-tone.css'
 import {
   calendarItemsForEventMode,
   type CalendarItem,
 } from '@/shared/components/calendar'
 import type { UjatVolunteerInterviewCalendarEvent } from './ujat-volunteer-interview-calendar-events'
-import {
-  formatUjatInterview2ScoreLabel,
-  ujatInterview2ScreeningPopoverLabel,
-  ujatInterview2ScreeningTone,
-} from './ujat-volunteer-interview2-screening-ui'
 import './ujat-volunteer-interview2-preview-tooltip.css'
 
 function readScreeningStatus(
   event: UjatVolunteerInterviewCalendarEvent
-): UjatSecondInterviewScreeningStatus {
+): SecondInterviewScreeningEffectiveStatus {
+  if (event.originalItem.interviewAssignmentStatus === 'withdrawn') return 'withdrawn'
   return event.originalItem.secondInterviewScreeningStatus ?? 'waiting'
 }
 
@@ -28,7 +30,7 @@ function UjatVolunteerInterview2CalendarPopoverContent({
     <div className="ujat-volunteer-interview2-calendar-popover">
       {events.map(ev => {
         const status = readScreeningStatus(ev)
-        const tone = ujatInterview2ScreeningTone(status)
+        const tone = resolveSecondInterviewScreeningTone(status)
         return (
           <div key={ev.id} className="ujat-volunteer-interview2-calendar-popover__entry">
             <div className="ujat-volunteer-interview2-calendar-popover__head">
@@ -39,9 +41,12 @@ function UjatVolunteerInterview2CalendarPopoverContent({
                 |
               </span>
               <span
-                className={`ujat-volunteer-interview2-calendar-popover__status ujat-volunteer-interview2-calendar-popover__status--${tone}`}
+                className={[
+                  'second-interview-screening-popover-status',
+                  `second-interview-screening-tone--${tone}`,
+                ].join(' ')}
               >
-                {ujatInterview2ScreeningPopoverLabel(status)}
+                {resolveSecondInterviewScreeningPopoverLabel(status)}
               </span>
             </div>
             <div className="ujat-volunteer-interview2-calendar-popover__meta">
@@ -52,7 +57,7 @@ function UjatVolunteerInterview2CalendarPopoverContent({
                 |
               </span>
               <span className="ujat-volunteer-interview2-calendar-popover__meta-score">
-                {formatUjatInterview2ScoreLabel(ev.originalItem.totalScore)}
+                {formatSecondInterviewScoreLabel(ev.originalItem.totalScore)}
               </span>
             </div>
           </div>

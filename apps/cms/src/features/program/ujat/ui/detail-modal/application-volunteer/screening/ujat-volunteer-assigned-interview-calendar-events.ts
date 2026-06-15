@@ -1,5 +1,5 @@
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
-import { UJAT_SECOND_INTERVIEW_SCREENING_STATUS_LABELS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
+import { SECOND_INTERVIEW_SCREENING_STATUS_LABELS } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
 import type { UjatVolunteerInterviewCalendarEvent } from './ujat-volunteer-interview-calendar-events'
 import {
   parseUjatInterviewDateLabel,
@@ -23,7 +23,7 @@ export function mapUjatVolunteerAssignedInterviewToCalendarEvents(
     if (!range) continue
 
     const status = row.secondInterviewScreeningStatus
-    const statusLabel = status ? UJAT_SECOND_INTERVIEW_SCREENING_STATUS_LABELS[status] : ''
+    const statusLabel = status ? SECOND_INTERVIEW_SCREENING_STATUS_LABELS[status] : ''
 
     events.push({
       id: `${row.id}|${dateLabel}|${slot}`,

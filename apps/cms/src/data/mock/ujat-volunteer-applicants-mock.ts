@@ -20,12 +20,12 @@ import {
   type UjatInterviewAssignmentStatus,
   type UjatManagerEvaluation,
   type UjatSecondInterviewScreeningStatus,
-  UJAT_SECOND_INTERVIEW_SCREENING_STATUS_ORDER,
   type UjatVolunteerApplicationType,
   type UjatVolunteerGrade,
   type UjatVolunteerPreferredRegion,
   type UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
+import { SECOND_INTERVIEW_SCREENING_STATUS_ORDER } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
 
 export type {
   UjatDocumentScreeningStatus,
@@ -236,8 +236,8 @@ function buildAssignedInterviewFields(
     firstDay?.dateLabel ?? INTERVIEW_DATE_LABELS[seed % INTERVIEW_DATE_LABELS.length]
   const time = firstSlot ?? INTERVIEW_TIME_SLOTS[seed % INTERVIEW_TIME_SLOTS.length]
   const status =
-    UJAT_SECOND_INTERVIEW_SCREENING_STATUS_ORDER[
-      seed % UJAT_SECOND_INTERVIEW_SCREENING_STATUS_ORDER.length
+    SECOND_INTERVIEW_SCREENING_STATUS_ORDER[
+      seed % SECOND_INTERVIEW_SCREENING_STATUS_ORDER.length
     ]
   const scoreSeed = seed % 11
   const totalScore =

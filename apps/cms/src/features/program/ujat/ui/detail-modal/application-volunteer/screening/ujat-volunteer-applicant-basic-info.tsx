@@ -7,7 +7,7 @@ import {
 } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { DocumentScreeningStatusText } from './document-screening-status-text'
 import { InterviewAssignmentStatusText } from './interview-assignment-status-text'
-import { SecondInterviewScreeningStatusText } from './second-interview-screening-status-text'
+import { SecondInterviewScreeningStatusText } from '@/features/program/shared/ui/volunteer-screening/second-interview-screening-status-text'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,

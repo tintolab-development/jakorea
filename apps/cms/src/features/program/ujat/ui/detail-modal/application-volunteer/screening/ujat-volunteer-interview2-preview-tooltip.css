@@ -69,33 +69,9 @@
   user-select: none;
 }
 
-.ujat-volunteer-interview2-calendar-popover__status {
+.ujat-volunteer-interview2-calendar-popover__head .second-interview-screening-popover-status {
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
-}
-
-.ujat-volunteer-interview2-calendar-popover__status--waiting {
-  color: var(--color-green, #1e8c29);
-}
-
-.ujat-volunteer-interview2-calendar-popover__status--fail {
-  color: var(--color-red, #c32f4a);
-}
-
-.ujat-volunteer-interview2-calendar-popover__status--passOrReserve {
-  color: var(--color-blue, #017eaf);
-}
-
-.ujat-volunteer-interview2-calendar-popover__status--completed {
-  color: var(--default-BK, #3d3d3d);
 }
 
 .ujat-volunteer-interview2-calendar-popover__meta {

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
-import { SecondInterviewScreeningStatusText } from './second-interview-screening-status-text'
+import { SecondInterviewScreeningStatusText } from '@/features/program/shared/ui/volunteer-screening/second-interview-screening-status-text'
 
 const CENTER_CELL_CLASS = 'ujat-volunteer-interview2__center-cell'
 const NOWRAP_CELL_CLASS = 'ujat-volunteer-doc-screening__nowrap-cell'

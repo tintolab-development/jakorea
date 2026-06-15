@@ -46,47 +46,6 @@
   user-select: none;
 }
 
-.ujat-volunteer-interview2-list-item__status-badge {
-  box-sizing: border-box;
-  flex: 0 0 auto;
-  display: flex;
-  min-width: 68px;
-  width: auto;
-  height: 26px;
-  padding: 5px 12px 4px 12px;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  border-radius: var(--6, 6px);
-  background: var(--main-WT, #fff);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
-  white-space: nowrap;
-}
-
-.ujat-volunteer-interview2-list-item__status-badge--waiting {
-  border: 1px solid var(--color-green, #1e8c29);
-  color: var(--color-green, #1e8c29);
-}
-
-.ujat-volunteer-interview2-list-item__status-badge--fail {
-  border: 1px solid var(--color-red, #c32f4a);
-  color: var(--color-red, #c32f4a);
-}
-
-.ujat-volunteer-interview2-list-item__status-badge--passOrReserve {
-  border: 1px solid var(--color-blue, #017eaf);
-  color: var(--color-blue, #017eaf);
-}
-
-.ujat-volunteer-interview2-list-item__status-badge--completed {
-  border: 1px solid rgba(61, 61, 61, 0.8);
-  color: rgba(61, 61, 61, 0.8);
-}
-
 .ujat-volunteer-interview2-list-item__meta {
   display: flex;
   align-items: center;

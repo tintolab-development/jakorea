@@ -1,0 +1,76 @@
+/* 2차 면접 심사 현황 — CMS 전체 공통 색상 톤 */
+
+.second-interview-screening-tone--waiting {
+  color: var(--color-green, #1e8c29);
+}
+
+.second-interview-screening-tone--fail,
+.second-interview-screening-tone--withdrawn {
+  color: var(--color-red, #c32f4a);
+}
+
+.second-interview-screening-tone--passOrReserve {
+  color: var(--color-blue, #017eaf);
+}
+
+.second-interview-screening-tone--completed {
+  color: var(--main-BK, #3d3d3d);
+}
+
+.second-interview-screening-status-badge.second-interview-screening-tone--waiting {
+  border: 1px solid var(--color-green, #1e8c29);
+}
+
+.second-interview-screening-status-badge.second-interview-screening-tone--fail,
+.second-interview-screening-status-badge.second-interview-screening-tone--withdrawn {
+  border: 1px solid var(--color-red, #c32f4a);
+}
+
+.second-interview-screening-status-badge.second-interview-screening-tone--passOrReserve {
+  border: 1px solid var(--color-blue, #017eaf);
+}
+
+.second-interview-screening-status-badge.second-interview-screening-tone--completed {
+  border: 1px solid var(--main-BK, #3d3d3d);
+}
+
+.second-interview-screening-status-text {
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.second-interview-screening-status-badge {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  display: inline-flex;
+  min-width: 68px;
+  height: 26px;
+  padding: 5px 12px 4px;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--6, 6px);
+  background: var(--main-WT, #fff);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.second-interview-screening-popover-status {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
