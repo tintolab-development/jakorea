@@ -21,6 +21,8 @@ import { clearDashboardQueryCache } from '@/features/dashboard/api/clear-dashboa
 import { clearDataManagementQueryCache } from '@/features/data-management/api/clear-data-management-query-cache'
 import { clearLogsQueryCache } from '@/features/logs/api/clear-logs-query-cache'
 import { clearPostsQueryCache } from '@/features/posts/api/clear-posts-query-cache'
+import { clearSettlementQueryCache } from '@/features/settlement-management/api/clear-settlement-query-cache'
+import { clearMemberQueryCache } from '@/features/user/api/clear-member-query-cache'
 
 function elevateAdminToMaster(user: Omit<User, 'password'>): Omit<User, 'password'> {
   if (user.role !== 'ADMIN') return user
@@ -254,6 +256,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearLogsQueryCache()
       clearDataManagementQueryCache()
       clearPostsQueryCache()
+      clearSettlementQueryCache()
+      clearMemberQueryCache()
     },
 
     logout: () => {
@@ -297,6 +301,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearLogsQueryCache()
       clearDataManagementQueryCache()
       clearPostsQueryCache()
+      clearSettlementQueryCache()
+      clearMemberQueryCache()
     },
 
     checkAuth: async () => {
