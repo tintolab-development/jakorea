@@ -18,6 +18,10 @@ import {
   type AccountPaymentRow,
   type AccountPaymentTransferStatus,
 } from '@/data/mock/account-payments-list'
+import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
+import { useAccountPaymentsListQuery } from '@/features/settlement-management/hooks/use-account-payments-list-query'
+import { useMarkAccountPaymentPaidMutation } from '@/features/settlement-management/hooks/use-account-payment-mutations'
+import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { ACCOUNT_PAYMENT_AGGREGATE_STATUSES } from '@/shared/constants/payment-order-aggregate-status'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -198,18 +202,17 @@ export default function AccountPaymentsPage() {
   const [accountFormIssueBlockedSelectedCount, setAccountFormIssueBlockedSelectedCount] =
     useState(0)
   const [accountPaymentCompleteSuccessOpen, setAccountPaymentCompleteSuccessOpen] = useState(false)
-  /** mock 배열을 직접 수정하지 않도록 복사본 유지 — 계좌 지급 완료 시 상태 반영 */
-  const [accountPaymentRows, setAccountPaymentRows] = useState<AccountPaymentRow[]>(() =>
-    mockAccountPaymentRows
-      .filter(isPaymentOrderStatementConfirmedForAccountPayments)
-      .map(r => ({ ...r }))
+  /** mock 배열을 직접 수정하지 않도록 복사본 유지 — 계좌 지급 완료 시 상태 반영 (mock 전용) */
+  const [mockAccountPaymentRowsState, setMockAccountPaymentRowsState] = useState<AccountPaymentRow[]>(
+    () =>
+      mockAccountPaymentRows
+        .filter(isPaymentOrderStatementConfirmedForAccountPayments)
+        .map(r => ({ ...r }))
   )
 
-  const accountPaymentDetailRow = useMemo(() => {
-    const id = searchParams.get(AP_DETAIL_ID)?.trim()
-    if (!id) return null
-    return accountPaymentRows.find(r => r.id === id) ?? null
-  }, [searchParams, accountPaymentRows])
+  const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
+  const markPaidMutation = useMarkAccountPaymentPaidMutation()
+
   const accountFilterFields = useMemo((): FilterFieldConfig[] => {
     const colWidth = '25%'
     return [
@@ -284,6 +287,28 @@ export default function AccountPaymentsPage() {
       ].join('|'),
     [applied]
   )
+
+  const accountPaymentsListQuery = useAccountPaymentsListQuery(
+    appliedResetKey,
+    accountPaymentsRemote
+  )
+
+  const accountPaymentRows = useMemo(() => {
+    if (accountPaymentsRemote) {
+      return accountPaymentsListQuery.data ?? []
+    }
+    return mockAccountPaymentRowsState
+  }, [
+    accountPaymentsRemote,
+    accountPaymentsListQuery.data,
+    mockAccountPaymentRowsState,
+  ])
+
+  const accountPaymentDetailRow = useMemo(() => {
+    const id = searchParams.get(AP_DETAIL_ID)?.trim()
+    if (!id) return null
+    return accountPaymentRows.find(r => r.id === id) ?? null
+  }, [searchParams, accountPaymentRows])
 
   const filteredRows = useMemo(
     () => filterRows(accountPaymentRows, applied),
@@ -501,11 +526,33 @@ export default function AccountPaymentsPage() {
     [setSearchParams]
   )
 
-  const handleAccountPaymentCompletedForRow = useCallback((rowId: string) => {
-    setAccountPaymentRows(prev =>
-      prev.map(r => (r.id === rowId ? { ...r, accountPaymentStatus: 'account_paid' as const } : r))
-    )
-  }, [])
+  const handleAccountPaymentCompletedForRow = useCallback(
+    (rowId: string) => {
+      const target = accountPaymentRows.find(r => r.id === rowId)
+      if (!target) return
+
+      if (accountPaymentsRemote) {
+        const paymentId = target.accountPaymentId
+        if (paymentId == null) {
+          window.alert('지급 완료 API에 필요한 accountPaymentId가 없습니다.')
+          return
+        }
+        void markPaidMutation
+          .mutateAsync([paymentId])
+          .catch(error => {
+            window.alert(getSettlementApiErrorMessage(error, '계좌 지급 완료 처리에 실패했습니다.'))
+          })
+        return
+      }
+
+      setMockAccountPaymentRowsState(prev =>
+        prev.map(r =>
+          r.id === rowId ? { ...r, accountPaymentStatus: 'account_paid' as const } : r
+        )
+      )
+    },
+    [accountPaymentRows, accountPaymentsRemote, markPaidMutation]
+  )
 
   const closeAccountPaymentConfirmModal = useCallback(() => {
     setAccountPayConfirmSelection(null)
@@ -603,14 +650,42 @@ export default function AccountPaymentsPage() {
       closeAccountPaymentConfirmModal()
       return
     }
+
+    if (accountPaymentsRemote) {
+      const paymentIds = selection
+        .map(r => r.accountPaymentId)
+        .filter((id): id is number => id != null)
+      if (paymentIds.length === 0) {
+        window.alert('지급 완료 API에 필요한 accountPaymentId가 없습니다.')
+        return
+      }
+      void markPaidMutation
+        .mutateAsync(paymentIds)
+        .then(() => {
+          const ids = new Set(selection.map(r => r.id))
+          setSelectedRowKeys(prev => prev.filter(k => !ids.has(String(k))))
+          closeAccountPaymentConfirmModal()
+          setAccountPaymentCompleteSuccessOpen(true)
+        })
+        .catch(error => {
+          window.alert(getSettlementApiErrorMessage(error, '계좌 지급 완료 처리에 실패했습니다.'))
+        })
+      return
+    }
+
     const ids = new Set(selection.map(r => r.id))
-    setAccountPaymentRows(prev =>
+    setMockAccountPaymentRowsState(prev =>
       prev.map(r => (ids.has(r.id) ? { ...r, accountPaymentStatus: 'account_paid' as const } : r))
     )
     setSelectedRowKeys(prev => prev.filter(k => !ids.has(String(k))))
     closeAccountPaymentConfirmModal()
     setAccountPaymentCompleteSuccessOpen(true)
-  }, [accountPayConfirmSelection, closeAccountPaymentConfirmModal])
+  }, [
+    accountPayConfirmSelection,
+    accountPaymentsRemote,
+    closeAccountPaymentConfirmModal,
+    markPaidMutation,
+  ])
 
   const closeAccountPaymentCompleteSuccess = useCallback(() => {
     setAccountPaymentCompleteSuccessOpen(false)
@@ -664,9 +739,13 @@ export default function AccountPaymentsPage() {
           </span>
           <div className="account-payments-page__card-amount-row">
             <span className="account-payments-page__card-amount-num">
-              {MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET.toLocaleString('ko-KR')}
+              {accountPaymentsRemote
+                ? '—'
+                : MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET.toLocaleString('ko-KR')}
             </span>
-            <span className="account-payments-page__card-amount-won">원</span>
+            {!accountPaymentsRemote && (
+              <span className="account-payments-page__card-amount-won">원</span>
+            )}
           </div>
         </div>
         <div className="account-payments-page__summary-card">
@@ -723,7 +802,18 @@ export default function AccountPaymentsPage() {
           hideExcelDownload
         >
           {viewMode === 'list' ? (
-            <Table<AccountPaymentRow>
+            accountPaymentsRemote && accountPaymentsListQuery.isLoading ? (
+              <div className="account-payments-page__loading">
+                <Spin />
+              </div>
+            ) : accountPaymentsRemote && accountPaymentsListQuery.isError ? (
+              <div className="account-payments-page__error" role="alert">
+                {accountPaymentsListQuery.error instanceof Error
+                  ? accountPaymentsListQuery.error.message
+                  : '목록을 불러오지 못했습니다.'}
+              </div>
+            ) : (
+              <Table<AccountPaymentRow>
               className="cms-data-table"
               rowKey="id"
               columns={columns}
@@ -739,6 +829,17 @@ export default function AccountPaymentsPage() {
                 },
               })}
             />
+            )
+          ) : accountPaymentsRemote && accountPaymentsListQuery.isLoading ? (
+            <div className="account-payments-page__loading">
+              <Spin />
+            </div>
+          ) : accountPaymentsRemote && accountPaymentsListQuery.isError ? (
+            <div className="account-payments-page__error" role="alert">
+              {accountPaymentsListQuery.error instanceof Error
+                ? accountPaymentsListQuery.error.message
+                : '목록을 불러오지 못했습니다.'}
+            </div>
           ) : (
             <AccountPaymentsCalendarView
               key={appliedResetKey}

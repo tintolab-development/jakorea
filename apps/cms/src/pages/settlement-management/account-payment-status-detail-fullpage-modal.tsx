@@ -1,8 +1,9 @@
 /**
  * 정산 관리 > 계좌 지급 확인 — 행 클릭 시 [계좌 지급 현황 상세] 풀페이지 모달
- *  */
+ */
 
 import { useMemo, useState } from 'react'
+import { Spin } from 'antd'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -20,6 +21,8 @@ import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program
 import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
 import { getMockAccountPaymentStatusDetail } from '@/data/mock/account-payments-list'
+import { useAccountPaymentDetailQuery } from '@/features/settlement-management/hooks/use-account-payment-detail-query'
+import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import './payment-order-admin-status-tag.css'
 import '@/features/settlement/ui/payment-record/payment-order-program-calculation-statement-modal.css'
@@ -62,7 +65,17 @@ export function AccountPaymentStatusDetailFullPageModal({
 }: AccountPaymentStatusDetailFullPageModalProps) {
   const location = useLocation()
   const [searchParams] = useSearchParams()
-  const detail = useMemo(() => (row ? getMockAccountPaymentStatusDetail(row) : null), [row])
+  const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
+  const detailQuery = useAccountPaymentDetailQuery(row, open && accountPaymentsRemote)
+
+  const mockDetail = useMemo(
+    () => (row && !accountPaymentsRemote ? getMockAccountPaymentStatusDetail(row) : null),
+    [row, accountPaymentsRemote]
+  )
+  const detail = accountPaymentsRemote ? (detailQuery.data ?? null) : mockDetail
+  const detailLoading = accountPaymentsRemote && open && detailQuery.isLoading
+  const detailError = accountPaymentsRemote ? detailQuery.error : null
+
   const [paymentCompleteConfirmOpen, setPaymentCompleteConfirmOpen] = useState(false)
 
   const singlePaymentConfirmPayload = useMemo(
@@ -81,8 +94,28 @@ export function AccountPaymentStatusDetailFullPageModal({
     []
   )
 
-  if (!open || !row || !detail) {
+  if (!open || !row) {
     return null
+  }
+
+  if (detailLoading) {
+    return (
+      <DetailFullPageModal open={open} onClose={onClose} title="계좌 지급 현황 상세">
+        <div className="account-payments-page__loading" role="status">
+          <Spin />
+        </div>
+      </DetailFullPageModal>
+    )
+  }
+
+  if (detailError || !detail) {
+    return (
+      <DetailFullPageModal open={open} onClose={onClose} title="계좌 지급 현황 상세">
+        <div className="account-payments-page__error" role="alert">
+          {detailError instanceof Error ? detailError.message : '상세를 불러오지 못했습니다.'}
+        </div>
+      </DetailFullPageModal>
+    )
   }
 
   const { basic } = detail
@@ -240,10 +273,11 @@ export function AccountPaymentStatusDetailFullPageModal({
               totalAmount={detail.totalAmount}
               lectureSessionSegmentLabel="round"
               headerActions={
-                basic.accountPaymentStatus === 'account_paid' ? undefined : (
+                row.accountPaymentStatus === 'account_paid' ? undefined : (
                   <CmsButton
                     variant="primary"
-                    size="large" width={160}
+                    size="large"
+                    width={160}
                     onClick={() => setPaymentCompleteConfirmOpen(true)}
                   >
                     지급 완료 처리

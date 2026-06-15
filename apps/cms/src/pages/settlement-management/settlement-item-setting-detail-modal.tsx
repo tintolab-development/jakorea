@@ -1902,6 +1902,8 @@ export interface SettlementItemSettingDetailModalProps {
     meta: { title: string; description: string; emojiOverride?: string | null }
   ) => void
   item: SettlementItemSettingRow | null
+  /** API 연동 시 상세 편집·저장 비활성 */
+  readOnly?: boolean
 }
 
 export function SettlementItemSettingDetailModal({
@@ -1910,6 +1912,7 @@ export function SettlementItemSettingDetailModal({
   onSave,
   onSaveItemMeta,
   item,
+  readOnly = false,
 }: SettlementItemSettingDetailModalProps) {
   const show = open && item !== null
   const snapshotRef = useRef<(() => SettlementItemSettingDetail) | null>(null)
@@ -1930,7 +1933,7 @@ export function SettlementItemSettingDetailModal({
   }, [show, item?.id, item?.title, item?.description, item?.emojiOverride])
 
   const handleSave = () => {
-    if (!item) return
+    if (readOnly || !item) return
     const snap = snapshotRef.current?.()
     if (snap) {
       saveSettlementItemSettingDetail(item.id, snap)
@@ -1957,9 +1960,11 @@ export function SettlementItemSettingDetailModal({
         item ? (
           <SettlementItemSettingDetailModalHeaderTitle
             value={headerTitle}
-            editing={titleEditing}
+            editing={titleEditing && !readOnly}
             onChange={setHeaderTitle}
-            onRequestEdit={() => setTitleEditing(true)}
+            onRequestEdit={() => {
+              if (!readOnly) setTitleEditing(true)
+            }}
             onCommitEdit={() => setTitleEditing(false)}
             restoreValueIfEmptyOnBlur={item.title}
           />
@@ -1967,7 +1972,7 @@ export function SettlementItemSettingDetailModal({
       }
       titlePrefix={
         item ? (
-          <SettlementItemTossfaceIconPickerTrigger onPickEmoji={setHeaderEmoji}>
+          readOnly ? (
             <span className="settlement-item-setting-detail-modal__header-icon">
               {headerEmoji ? (
                 <span
@@ -1980,7 +1985,22 @@ export function SettlementItemSettingDetailModal({
                 <SettlementItemSettingIcon iconKey={item.iconKey} />
               )}
             </span>
-          </SettlementItemTossfaceIconPickerTrigger>
+          ) : (
+            <SettlementItemTossfaceIconPickerTrigger onPickEmoji={setHeaderEmoji}>
+              <span className="settlement-item-setting-detail-modal__header-icon">
+                {headerEmoji ? (
+                  <span
+                    className="tossface settlement-item-setting-detail-modal__header-tossface"
+                    aria-hidden
+                  >
+                    {headerEmoji}
+                  </span>
+                ) : (
+                  <SettlementItemSettingIcon iconKey={item.iconKey} />
+                )}
+              </span>
+            </SettlementItemTossfaceIconPickerTrigger>
+          )
         ) : undefined
       }
       width={800}
@@ -2017,14 +2037,20 @@ export function SettlementItemSettingDetailModal({
         .filter(Boolean)
         .join(' ')}
       footer={
-        <>
+        readOnly ? (
           <CmsButton variant="secondary" size="large" onClick={onCancel}>
-            취소
+            닫기
           </CmsButton>
-          <CmsButton variant="primary" size="large" width={160} onClick={handleSave}>
-            저장
-          </CmsButton>
-        </>
+        ) : (
+          <>
+            <CmsButton variant="secondary" size="large" onClick={onCancel}>
+              취소
+            </CmsButton>
+            <CmsButton variant="primary" size="large" width={160} onClick={handleSave}>
+              저장
+            </CmsButton>
+          </>
+        )
       }
     >
       {item ? (

@@ -2,8 +2,8 @@
  * 정산 관리 > 정산 항목 설정 — 임금 / 지급 / 공제 카테고리 카드 목록
  */
 
-import { useCallback, useState } from 'react'
-import { Dropdown } from 'antd'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Dropdown, Spin } from 'antd'
 import type { MenuProps } from 'antd'
 import {
   getSettlementItemSettingDetail,
@@ -15,6 +15,8 @@ import {
   type SettlementItemSettingRow,
   type SettlementItemSettingSection,
 } from '@/data/mock/settlement-item-settings'
+import { useSettlementConfigSectionsQuery } from '@/features/settlement-management/hooks/use-settlement-config-sections-query'
+import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import {
   SettlementItemCardMoreIcon,
   SettlementItemSettingIcon,
@@ -35,33 +37,75 @@ const cardOptionMenuItems: MenuProps['items'] = [
 ]
 
 export default function SettlementItemSettingsPage() {
-  const [sections, setSections] = useState<SettlementItemSettingSection[]>(() =>
+  const settlementConfigsRemote = shouldUseSettlementRemote('settlementConfigs')
+  const configQuery = useSettlementConfigSectionsQuery(settlementConfigsRemote)
+
+  const [mockSections, setMockSections] = useState<SettlementItemSettingSection[]>(() =>
     cloneSettlementSections(settlementItemSettingSections)
   )
   const [selectedItem, setSelectedItem] = useState<SettlementItemSettingRow | null>(null)
 
-  const deleteItem = useCallback((sectionKind: SettlementItemSettingCategoryKind, itemId: string) => {
-    setSelectedItem(cur => (cur?.id === itemId ? null : cur))
-    setSections(prev =>
-      prev.map(section =>
-        section.kind === sectionKind
-          ? { ...section, items: section.items.filter(i => i.id !== itemId) }
-          : section
-      )
-    )
-  }, [])
+  useEffect(() => {
+    if (settlementConfigsRemote && configQuery.data) {
+      setMockSections(cloneSettlementSections(configQuery.data))
+    }
+  }, [settlementConfigsRemote, configQuery.data])
 
-  const duplicateItem = useCallback((sectionKind: SettlementItemSettingCategoryKind, item: SettlementItemSettingRow) => {
-    const newId = `${item.id}__dup__${Date.now()}`
-    saveSettlementItemSettingDetail(newId, getSettlementItemSettingDetail(item.id))
-    setSections(prev =>
-      prev.map(section =>
-        section.kind === sectionKind
-          ? { ...section, items: [...section.items, { ...item, id: newId }] }
-          : section
+  const sections = useMemo(() => {
+    if (settlementConfigsRemote) {
+      return configQuery.data ?? []
+    }
+    return mockSections
+  }, [settlementConfigsRemote, configQuery.data, mockSections])
+
+  const deleteItem = useCallback(
+    (sectionKind: SettlementItemSettingCategoryKind, itemId: string) => {
+      if (settlementConfigsRemote) return
+      setSelectedItem(cur => (cur?.id === itemId ? null : cur))
+      setMockSections(prev =>
+        prev.map(section =>
+          section.kind === sectionKind
+            ? { ...section, items: section.items.filter(i => i.id !== itemId) }
+            : section
+        )
       )
+    },
+    [settlementConfigsRemote]
+  )
+
+  const duplicateItem = useCallback(
+    (sectionKind: SettlementItemSettingCategoryKind, item: SettlementItemSettingRow) => {
+      if (settlementConfigsRemote) return
+      const newId = `${item.id}__dup__${Date.now()}`
+      saveSettlementItemSettingDetail(newId, getSettlementItemSettingDetail(item.id))
+      setMockSections(prev =>
+        prev.map(section =>
+          section.kind === sectionKind
+            ? { ...section, items: [...section.items, { ...item, id: newId }] }
+            : section
+        )
+      )
+    },
+    [settlementConfigsRemote]
+  )
+
+  if (settlementConfigsRemote && configQuery.isLoading) {
+    return (
+      <div className="settlement-item-settings-page settlement-item-settings-page--loading">
+        <Spin />
+      </div>
     )
-  }, [])
+  }
+
+  if (settlementConfigsRemote && configQuery.isError) {
+    return (
+      <div className="settlement-item-settings-page settlement-item-settings-page--error" role="alert">
+        {configQuery.error instanceof Error
+          ? configQuery.error.message
+          : '정산 항목 설정을 불러오지 못했습니다.'}
+      </div>
+    )
+  }
 
   return (
     <div className="settlement-item-settings-page">
@@ -106,31 +150,33 @@ export default function SettlementItemSettingsPage() {
                       <p className="settlement-item-settings__card-desc">{item.description}</p>
                     </div>
                   </button>
-                  <div className="settlement-item-settings__card-more-wrap">
-                    <Dropdown
-                      trigger={['click']}
-                      menu={{
-                        items: cardOptionMenuItems,
-                        onClick: ({ key, domEvent }) => {
-                          domEvent.stopPropagation()
-                          if (key === 'delete') {
-                            deleteItem(section.kind, item.id)
-                          } else if (key === 'duplicate') {
-                            duplicateItem(section.kind, item)
-                          }
-                        },
-                      }}
-                    >
-                      <button
-                        type="button"
-                        className="settlement-item-settings__card-more"
-                        aria-label="항목 옵션"
-                        onClick={e => e.stopPropagation()}
+                  {!settlementConfigsRemote ? (
+                    <div className="settlement-item-settings__card-more-wrap">
+                      <Dropdown
+                        trigger={['click']}
+                        menu={{
+                          items: cardOptionMenuItems,
+                          onClick: ({ key, domEvent }) => {
+                            domEvent.stopPropagation()
+                            if (key === 'delete') {
+                              deleteItem(section.kind, item.id)
+                            } else if (key === 'duplicate') {
+                              duplicateItem(section.kind, item)
+                            }
+                          },
+                        }}
                       >
-                        <SettlementItemCardMoreIcon />
-                      </button>
-                    </Dropdown>
-                  </div>
+                        <button
+                          type="button"
+                          className="settlement-item-settings__card-more"
+                          aria-label="항목 옵션"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <SettlementItemCardMoreIcon />
+                        </button>
+                      </Dropdown>
+                    </div>
+                  ) : null}
                 </article>
               ))}
             </div>
@@ -140,9 +186,11 @@ export default function SettlementItemSettingsPage() {
       <SettlementItemSettingDetailModal
         open={selectedItem !== null}
         item={selectedItem}
+        readOnly={settlementConfigsRemote}
         onCancel={() => setSelectedItem(null)}
         onSaveItemMeta={(itemId, meta) => {
-          setSections(prev =>
+          if (settlementConfigsRemote) return
+          setMockSections(prev =>
             prev.map(section => ({
               ...section,
               items: section.items.map(i => (i.id === itemId ? { ...i, ...meta } : i)),

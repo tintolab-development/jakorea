@@ -15,6 +15,7 @@ import type {
   PaymentOrderProgramCalculationStatement,
 } from '@/data/mock/payment-order-admin-list'
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
+import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
 import { usePaymentOrderDetailInstructorPrivacyReveal } from './use-payment-order-detail-instructor-privacy'
 import { usePaymentOrderStatementCommitBridge } from './use-payment-order-statement-commit-bridge'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -49,9 +50,14 @@ type PaymentOrderDetailViewShared = {
   handleAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
   calcStatementOpen: boolean
   calcStatementData: PaymentOrderProgramCalculationStatement | null
+  calcStatementLoading?: boolean
+  calcStatementError?: unknown
+  calcStatementId?: number | null
   openCalculationStatement: (lineRow: PaymentOrderCalculationStatementLineRow) => void
   closeCalculationStatement: () => void
   resetCalcAndClose: () => void
+  paymentOrdersRemote?: boolean
+  detailContextQuery?: PaymentOrdersDetailContextQueryResult
 }
 
 type PaymentOrderDetailViewProgramBranch = {
@@ -88,9 +94,14 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     handleAggregateChange,
     calcStatementOpen,
     calcStatementData,
+    calcStatementLoading,
+    calcStatementError,
+    calcStatementId,
     openCalculationStatement,
     closeCalculationStatement,
     resetCalcAndClose,
+    paymentOrdersRemote,
+    detailContextQuery,
   } = props
 
   const instructorRowKey = kind === 'instructor' ? row.no : null
@@ -147,7 +158,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     makeBreadcrumbItem(
       '지급조서 확인',
       location.pathname,
-      buildSearchParams(searchParams, { delete: ['po_detail', 'po_detail_no'] })
+      buildSearchParams(searchParams, { delete: ['po_detail', 'po_detail_no', 'po_detail_key'] })
     ),
     { label: title },
   ]
@@ -173,6 +184,8 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
           onAggregateChange={handleAggregateChange}
           onOpenCalculationStatement={openCalculationStatement}
           registerStatementCommitSink={registerStatementCommitSink}
+          paymentOrdersRemote={paymentOrdersRemote}
+          detailContextQuery={detailContextQuery}
         />
       ) : (
         <PaymentOrderDetailFilterTable
@@ -183,6 +196,8 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
           onAggregateChange={handleAggregateChange}
           onOpenCalculationStatement={openCalculationStatement}
           registerStatementCommitSink={registerStatementCommitSink}
+          paymentOrdersRemote={paymentOrdersRemote}
+          detailContextQuery={detailContextQuery}
         />
       )}
     </>
@@ -196,6 +211,11 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
           open={calcStatementOpen}
           onCancel={closeCalculationStatement}
           data={calcStatementData}
+          loading={calcStatementLoading}
+          loadError={calcStatementError}
+          paymentOrdersRemote={paymentOrdersRemote}
+          statementId={calcStatementId}
+          detailContextQuery={detailContextQuery}
           onStatementLineCommitted={handleStatementLineCommitted}
           onAfterRejectResultClosed={closeCalculationStatement}
         />
@@ -204,6 +224,11 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
           open={calcStatementOpen}
           onCancel={closeCalculationStatement}
           data={calcStatementData}
+          loading={calcStatementLoading}
+          loadError={calcStatementError}
+          paymentOrdersRemote={paymentOrdersRemote}
+          statementId={calcStatementId}
+          detailContextQuery={detailContextQuery}
           onStatementLineCommitted={handleStatementLineCommitted}
           onAfterRejectResultClosed={closeCalculationStatement}
         />

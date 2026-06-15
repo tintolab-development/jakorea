@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { flushSync } from 'react-dom'
 import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
@@ -19,6 +20,13 @@ import {
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
+import {
+  calendarRangeFromFilter,
+  mapCalendarItemsToPaymentOrderEvents,
+} from '@/features/settlement-management/api/calendar/map-calendar-items-to-events'
+import { useSettlementCalendarQuery } from '@/features/settlement-management/hooks/use-settlement-calendar-query'
+import { usePaymentOrdersListQuery } from '@/features/settlement-management/hooks/use-payment-orders-list-query'
+import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import {
   PaymentOrdersCalendarView,
   PaymentOrdersTable,
@@ -61,6 +69,7 @@ const PENDING_PAYMENT_ITEM_FILTER_OPTIONS: {
 /** 풀페이지 상세 — `replace: false`로 열어 뒤로가기 시 목록 복귀 */
 const PO_DETAIL_TYPE = 'po_detail'
 const PO_DETAIL_NO = 'po_detail_no'
+const PO_DETAIL_KEY = 'po_detail_key'
 
 function formatWon(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`
@@ -116,29 +125,69 @@ export function usePaymentOrdersListPage() {
     [searchParams]
   )
 
+  const paymentOrdersRemote = shouldUseSettlementRemote('paymentOrders')
+  const searchParamsKey = searchParams.toString()
+  const remoteListQuery = usePaymentOrdersListQuery(searchParamsKey, paymentOrdersRemote)
+
+  const calendarRange = useMemo(
+    () => calendarRangeFromFilter(appliedFromUrl.dateRange, dayjs()),
+    [appliedFromUrl.dateRange]
+  )
+
+  const remoteCalendarQuery = useSettlementCalendarQuery(
+    calendarRange.fromDate,
+    calendarRange.toDate,
+    paymentOrdersRemote && viewMode === 'calendar'
+  )
+
+  const sourceProgramRows = useMemo(() => {
+    if (paymentOrdersRemote) {
+      return remoteListQuery.data?.programRows ?? []
+    }
+    return mockPaymentOrderAdminProgramList
+  }, [paymentOrdersRemote, remoteListQuery.data?.programRows])
+
+  const sourceInstructorRows = useMemo(() => {
+    if (paymentOrdersRemote) {
+      return remoteListQuery.data?.instructorRows ?? []
+    }
+    return mockPaymentOrderAdminInstructorList
+  }, [paymentOrdersRemote, remoteListQuery.data?.instructorRows])
+
   const listProgram = useMemo(
-    () => filterPaymentProgramRows(mockPaymentOrderAdminProgramList, appliedFromUrl),
-    [appliedFromUrl]
+    () => filterPaymentProgramRows(sourceProgramRows, appliedFromUrl),
+    [sourceProgramRows, appliedFromUrl]
   )
   const listInstructor = useMemo(
-    () => filterPaymentInstructorRows(mockPaymentOrderAdminInstructorList, appliedFromUrl),
-    [appliedFromUrl]
+    () => filterPaymentInstructorRows(sourceInstructorRows, appliedFromUrl),
+    [sourceInstructorRows, appliedFromUrl]
   )
 
   const detailState = useMemo((): PaymentOrdersDetailState => {
     const t = searchParams.get(PO_DETAIL_TYPE)
+    const keyRaw = searchParams.get(PO_DETAIL_KEY)
     const noRaw = searchParams.get(PO_DETAIL_NO)
     if (t !== 'program' && t !== 'instructor') return null
+
+    if (keyRaw) {
+      if (t === 'program') {
+        const data = sourceProgramRows.find(r => r.aggregateKey === keyRaw)
+        return data != null ? { type: 'program' as const, data } : null
+      }
+      const data = sourceInstructorRows.find(r => r.aggregateKey === keyRaw)
+      return data != null ? { type: 'instructor' as const, data } : null
+    }
+
     if (noRaw == null || noRaw === '') return null
     const no = Number(noRaw)
     if (!Number.isFinite(no)) return null
     if (t === 'program') {
-      const data = mockPaymentOrderAdminProgramList.find(r => r.no === no)
+      const data = sourceProgramRows.find(r => r.no === no)
       return data != null ? { type: 'program' as const, data } : null
     }
-    const data = mockPaymentOrderAdminInstructorList.find(r => r.no === no)
+    const data = sourceInstructorRows.find(r => r.no === no)
     return data != null ? { type: 'instructor' as const, data } : null
-  }, [searchParams])
+  }, [searchParams, sourceProgramRows, sourceInstructorRows])
 
   const detailExposureFromUrl = useMemo((): ExposureMode | null => {
     const t = searchParams.get(PO_DETAIL_TYPE)
@@ -146,6 +195,24 @@ export function usePaymentOrdersListPage() {
   }, [searchParams])
 
   const resolvedExposureMode: ExposureMode = detailExposureFromUrl ?? exposureMode
+
+  const calendarEventsOverride = useMemo(() => {
+    if (!paymentOrdersRemote || viewMode !== 'calendar') return undefined
+    const items = remoteCalendarQuery.data ?? []
+    return mapCalendarItemsToPaymentOrderEvents(
+      items,
+      resolvedExposureMode,
+      sourceProgramRows,
+      sourceInstructorRows
+    )
+  }, [
+    paymentOrdersRemote,
+    viewMode,
+    remoteCalendarQuery.data,
+    resolvedExposureMode,
+    sourceProgramRows,
+    sourceInstructorRows,
+  ])
 
   const isProgram = resolvedExposureMode === 'program'
   const rowsForTable = useMemo(
@@ -177,15 +244,16 @@ export function usePaymentOrdersListPage() {
   })
 
   const closeDetail = useCallback(() => {
-    setSearchParams(
-      prev => {
-        const next = new URLSearchParams(prev)
-        next.delete(PO_DETAIL_TYPE)
-        next.delete(PO_DETAIL_NO)
-        return next
-      },
-      { replace: true }
-    )
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.delete(PO_DETAIL_TYPE)
+          next.delete(PO_DETAIL_NO)
+          next.delete(PO_DETAIL_KEY)
+          return next
+        },
+        { replace: true }
+      )
   }, [setSearchParams])
 
   const openPaymentOrderDetail = useCallback(
@@ -198,7 +266,13 @@ export function usePaymentOrdersListPage() {
         prev => {
           const next = new URLSearchParams(prev)
           next.set(PO_DETAIL_TYPE, type)
-          next.set(PO_DETAIL_NO, String(data.no))
+          if (data.aggregateKey) {
+            next.set(PO_DETAIL_KEY, data.aggregateKey)
+            next.delete(PO_DETAIL_NO)
+          } else {
+            next.set(PO_DETAIL_NO, String(data.no))
+            next.delete(PO_DETAIL_KEY)
+          }
           return next
         },
         { replace: false }
@@ -373,6 +447,7 @@ export function usePaymentOrdersListPage() {
             exposure={resolvedExposureMode}
             programRows={listProgram}
             instructorRows={listInstructor}
+            eventsOverride={calendarEventsOverride}
             filterDateRange={appliedFromUrl.dateRange}
             onFilterDateRangeApply={applyDateRangeFromCalendar}
             onPaymentStatusDetailClick={payload => {
@@ -412,6 +487,7 @@ export function usePaymentOrdersListPage() {
       resolvedExposureMode,
       listProgram,
       listInstructor,
+      calendarEventsOverride,
       appliedFromUrl.dateRange,
       applyDateRangeFromCalendar,
       isProgram,
@@ -437,5 +513,8 @@ export function usePaymentOrdersListPage() {
     total,
     paymentOrdersExcelExport,
     renderContent,
+    paymentOrdersRemote,
+    remoteListQuery,
+    remoteCalendarQuery,
   }
 }

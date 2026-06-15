@@ -24,7 +24,16 @@ export type PaymentOrderDetailFullPageModalProps = {
 }
 
 export function PaymentOrderDetailFullPageModal(props: PaymentOrderDetailFullPageModalProps) {
-  const { canRender, sharedViewProps, viewBranch } = usePaymentOrderDetailFullPageModalState(props)
+  const { canRender, detailLoading, detailError, sharedViewProps, viewBranch } =
+    usePaymentOrderDetailFullPageModalState(props)
+
+  if (detailLoading) {
+    return null
+  }
+
+  if (detailError) {
+    return null
+  }
 
   if (!canRender || !viewBranch) {
     return null

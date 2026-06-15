@@ -344,6 +344,8 @@ export interface PaymentOrdersCalendarViewProps {
   exposure: PaymentOrdersCalendarExposure
   programRows: PaymentOrderAdminProgramRow[]
   instructorRows: PaymentOrderAdminInstructorRow[]
+  /** API 캘린더 이벤트 — 있으면 mock 집계 대신 사용 */
+  eventsOverride?: PaymentOrderCalendarEvent[]
   /** URL·조회에 적용된 기간(실제 출강일). 없으면 데이터 앵커 월을 표시 */
   filterDateRange: [Dayjs, Dayjs] | null
   /** 캘린더 헤더 네비·날짜 선택 시 기간 필터·URL과 동일하게 맞출 때 호출 */
@@ -396,17 +398,21 @@ export function PaymentOrdersCalendarView({
   exposure,
   programRows,
   instructorRows,
+  eventsOverride,
   filterDateRange,
   onFilterDateRangeApply,
   onPaymentStatusDetailClick,
 }: PaymentOrdersCalendarViewProps) {
   const events = useMemo(() => {
+    if (eventsOverride) {
+      return filterEventsByDateRange(eventsOverride, filterDateRange)
+    }
     const raw =
       exposure === 'program'
         ? eventsFromPrograms(programRows)
         : eventsFromInstructors(instructorRows)
     return filterEventsByDateRange(raw, filterDateRange)
-  }, [exposure, programRows, instructorRows, filterDateRange])
+  }, [eventsOverride, exposure, programRows, instructorRows, filterDateRange])
 
   const eventById = useMemo(() => new Map(events.map(e => [e.id, e] as const)), [events])
 

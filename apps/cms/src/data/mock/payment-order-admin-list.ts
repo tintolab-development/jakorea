@@ -50,6 +50,9 @@ export const PAYMENT_ORDER_CALENDAR_STATUS_SHORT_DETAIL: Record<
 
 export interface PaymentOrderAdminProgramRow {
   no: number
+  /** API 집계 키 (programId) */
+  programId?: number
+  aggregateKey?: string
   programName: string
   instructorCount: number
   processingStatus: PaymentOrderAdminProcessingStatus
@@ -64,6 +67,9 @@ export interface PaymentOrderAdminProgramRow {
 
 export interface PaymentOrderAdminInstructorRow {
   no: number
+  /** API 집계 키 (instructorMemberId) */
+  instructorMemberId?: number
+  aggregateKey?: string
   instructorName: string
   programCount: number
   processingStatus: PaymentOrderAdminProcessingStatus
@@ -103,6 +109,8 @@ export const PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS: Record<
 export interface PaymentOrderAdminProgramDetailInstructorRow {
   id: string
   no: number
+  settlementId?: number
+  statementId?: number
   instructorName: string
   institutionName: string
   /** 강의일 (ISO YYYY-MM-DD) */
@@ -131,6 +139,8 @@ export interface PaymentOrderAdminProgramDetail {
 export interface PaymentOrderAdminInstructorDetailProgramRow {
   id: string
   no: number
+  settlementId?: number
+  statementId?: number
   programName: string
   institutionName: string
   lectureDate: string

@@ -10,6 +10,11 @@ export interface PaymentOrderProgramCalculationStatementModalProps {
   open: boolean
   onCancel: () => void
   data: PaymentOrderProgramCalculationStatement | null
+  loading?: boolean
+  loadError?: unknown
+  paymentOrdersRemote?: boolean
+  statementId?: number | null
+  detailContextQuery?: import('@/features/settlement-management/hooks/use-payment-orders-detail-query').PaymentOrdersDetailContextQueryResult
   onStatementLineCommitted?: (payload: PaymentOrderCalculationStatementCommitPayload) => void
   onAfterRejectResultClosed?: () => void
 }
