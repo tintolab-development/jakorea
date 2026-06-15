@@ -1,110 +1,66 @@
 /**
  * 일반 프로그램 — 1차 서류 합격자 캘린더 뷰
- * UJAT 2차 면접 캘린더(`UjatVolunteerInterview2CalendarView`) UI 재사용 — 체크박스·일괄 처리 제외
  */
 
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, type ReactNode } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import { Empty } from 'antd'
-import type { GeneralSecondInterviewScreeningStatus } from '@/features/program/general/lib/volunteer-screening-constants'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import type { GeneralVolunteerInterviewCalendarEvent } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
 import {
-  CalendarMain,
-  CalendarSplitCardLayout,
-} from '@/shared/components/calendar'
+  buildGeneralVolunteerDocPassedCalendarListRows,
+  type GeneralVolunteerDocPassedCalendarListRow,
+} from '@/features/program/general/lib/general-volunteer-doc-passed-calendar-list-rows'
+import { CalendarMain, CalendarSplitCardLayout } from '@/shared/components/calendar'
 import { useCalendarNavigationState } from '@/shared/components/calendar/lib/use-calendar-navigation-state'
 import '@/shared/components/calendar/styles/calendar.css'
 import { SCHEDULE_COLORS, type ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import { useApplicantCalendarColorMaps } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-schedule-helpers'
 import { renderGeneralVolunteerInterviewCalendarPreviewTooltipContent } from './general-volunteer-interview-calendar-preview-tooltip'
-import {
-  buildUjatVolunteerInterviewMonthCellRows,
-  renderUjatVolunteerInterviewMonthEventContent,
-} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-calendar-month-cells'
-import {
-  formatUjatInterview2ScoreLabel,
-  ujatInterview2ScreeningListBadgeLabel,
-  ujatInterview2ScreeningTone,
-} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-interview2-screening-ui'
-import '@/shared/components/calendar/ui/item-list/ujat-volunteer-interview2-list-item.css'
+import { GeneralVolunteerDocPassedCalendarListItem } from './general-volunteer-doc-passed-calendar-list-item'
+import { buildUjatVolunteerInterviewMonthCellRows } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-calendar-month-cells'
+import type { CalendarMonthCellRow } from '@/shared/components/calendar/model/calendar-month-cell-row'
+import { CalendarMonthEventTitleWithDivider } from '@/shared/components/calendar/ui/calendar-month-event-title'
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
-type GeneralDocPassedCalendarListRow = {
-  id: string
-  eventId: string
-  volunteerName: string
-  screeningStatus: GeneralSecondInterviewScreeningStatus
-  slotLabel: string
-  totalScore: number | null | undefined
+const GENERAL_DOC_PASSED_CALENDAR_EVENT_TITLE_COLOR = 'var(--main-BK, #3D3D3D)'
+
+type GeneralDocPassedMonthCellMeta = {
+  titleParts: {
+    left: string
+    right?: string
+  }
 }
 
-export interface GeneralVolunteerDocPassedCalendarViewProps {
-  events: GeneralVolunteerInterviewCalendarEvent[]
-  loading?: boolean
-  onItemClick: (item: GeneralVolunteerApplicantRow) => void
-}
-
-function buildDocPassedCalendarListRows(
-  dayEvents: GeneralVolunteerInterviewCalendarEvent[]
-): GeneralDocPassedCalendarListRow[] {
-  return dayEvents.map(event => ({
-    id: event.originalItem.id,
-    eventId: String(event.id),
-    volunteerName: event.volunteerName,
-    screeningStatus: event.originalItem.secondInterviewScreeningStatus ?? 'waiting',
-    slotLabel: event.slotLabel,
-    totalScore: event.originalItem.totalScore,
-  }))
-}
-
-function GeneralDocPassedCalendarListItem({ row }: { row: GeneralDocPassedCalendarListRow }) {
-  const tone = ujatInterview2ScreeningTone(
-    row.screeningStatus as Parameters<typeof ujatInterview2ScreeningTone>[0]
-  )
-
+/** 캘린더 셀 — 봉사자명은 기본색, 팝오버에서만 일정 색 강조 */
+function renderGeneralVolunteerDocPassedMonthEventContent({
+  row,
+}: {
+  row: CalendarMonthCellRow
+  colors: ScheduleColorPair
+}): ReactNode {
+  const meta = row.meta as GeneralDocPassedMonthCellMeta | undefined
+  const titleParts = meta?.titleParts ?? { left: String(row.sourceEvent.title ?? '') }
   return (
-    <div className="ujat-volunteer-interview2-list-item general-volunteer-doc-passed-calendar-list-item">
-      <div className="ujat-volunteer-interview2-list-item__body">
-        <div className="ujat-volunteer-interview2-list-item__head">
-          <span className="ujat-volunteer-interview2-list-item__name">{row.volunteerName}</span>
-          <span className="ujat-volunteer-interview2-list-item__sep" aria-hidden>
-            |
-          </span>
-          <span
-            className={`ujat-volunteer-interview2-list-item__status-badge ujat-volunteer-interview2-list-item__status-badge--${tone}`}
-          >
-            {ujatInterview2ScreeningListBadgeLabel(
-              row.screeningStatus as Parameters<typeof ujatInterview2ScreeningListBadgeLabel>[0]
-            )}
-          </span>
-        </div>
-        <div className="ujat-volunteer-interview2-list-item__meta">
-          <span className="ujat-volunteer-interview2-list-item__meta-slot">{row.slotLabel}</span>
-          <span className="ujat-volunteer-interview2-list-item__sep" aria-hidden>
-            |
-          </span>
-          <span className="ujat-volunteer-interview2-list-item__meta-score">
-            {formatUjatInterview2ScoreLabel(row.totalScore)}
-          </span>
-        </div>
-      </div>
-    </div>
+    <CalendarMonthEventTitleWithDivider
+      parts={titleParts}
+      accentColor={GENERAL_DOC_PASSED_CALENDAR_EVENT_TITLE_COLOR}
+    />
   )
 }
 
-function GeneralDocPassedCalendarRightList({
+function GeneralVolunteerDocPassedCalendarRightList({
   rows,
   onRowClick,
   resolveRowColors,
 }: {
-  rows: GeneralDocPassedCalendarListRow[]
-  onRowClick: (row: GeneralDocPassedCalendarListRow) => void
-  resolveRowColors?: (row: GeneralDocPassedCalendarListRow) => ScheduleColorPair | undefined
+  rows: GeneralVolunteerDocPassedCalendarListRow[]
+  onRowClick: (row: GeneralVolunteerDocPassedCalendarListRow) => void
+  resolveRowColors?: (row: GeneralVolunteerDocPassedCalendarListRow) => ScheduleColorPair | undefined
 }) {
   return (
     <div className={rows.length === 0 ? 'calendar-list calendar-list--empty' : 'calendar-list'}>
@@ -125,7 +81,7 @@ function GeneralDocPassedCalendarRightList({
               onClick={() => onRowClick(row)}
             >
               <div className="calendar-list-item__column">
-                <GeneralDocPassedCalendarListItem row={row} />
+                <GeneralVolunteerDocPassedCalendarListItem row={row} />
               </div>
             </div>
           )
@@ -133,6 +89,12 @@ function GeneralDocPassedCalendarRightList({
       )}
     </div>
   )
+}
+
+export interface GeneralVolunteerDocPassedCalendarViewProps {
+  events: GeneralVolunteerInterviewCalendarEvent[]
+  loading?: boolean
+  onItemClick: (item: GeneralVolunteerApplicantRow) => void
 }
 
 export function GeneralVolunteerDocPassedCalendarView({
@@ -149,10 +111,7 @@ export function GeneralVolunteerDocPassedCalendarView({
     onModeChange: setCalendarMode,
   } = useCalendarNavigationState('month')
 
-  const applicantById = useMemo(
-    () => new Map(events.map(event => [event.originalItem.id, event.originalItem])),
-    [events]
-  )
+  const eventById = useMemo(() => new Map(events.map(event => [String(event.id), event])), [events])
 
   const getEventsForDate = useCallback(
     (date: Dayjs): GeneralVolunteerInterviewCalendarEvent[] => {
@@ -166,7 +125,11 @@ export function GeneralVolunteerDocPassedCalendarView({
   )
 
   const dayEvents = useMemo(() => getEventsForDate(selectedDate), [getEventsForDate, selectedDate])
-  const dayListRows = useMemo(() => buildDocPassedCalendarListRows(dayEvents), [dayEvents])
+
+  const dayListRows = useMemo(
+    () => buildGeneralVolunteerDocPassedCalendarListRows(dayEvents),
+    [dayEvents]
+  )
 
   const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events)
 
@@ -176,18 +139,17 @@ export function GeneralVolunteerDocPassedCalendarView({
   )
 
   const resolveRowColors = useCallback(
-    (row: GeneralDocPassedCalendarListRow) =>
-      scheduleListColorMap.get(row.eventId) ?? SCHEDULE_COLORS[0],
+    (row: GeneralVolunteerDocPassedCalendarListRow) =>
+      scheduleListColorMap.get(row.id) ?? SCHEDULE_COLORS[0],
     [scheduleListColorMap]
   )
 
   const handleListRowClick = useCallback(
-    (row: GeneralDocPassedCalendarListRow) => {
-      const applicant = applicantById.get(row.id)
-      if (!applicant || applicant.interviewAssignmentStatus === 'withdrawn') return
-      onItemClick(applicant)
+    (row: GeneralVolunteerDocPassedCalendarListRow) => {
+      const event = eventById.get(row.id)
+      if (event) onItemClick(event.originalItem)
     },
-    [applicantById, onItemClick]
+    [eventById, onItemClick]
   )
 
   return (
@@ -210,11 +172,11 @@ export function GeneralVolunteerDocPassedCalendarView({
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
           previewTooltipContent={renderGeneralVolunteerInterviewCalendarPreviewTooltipContent}
           buildMonthCellRows={buildUjatVolunteerInterviewMonthCellRows}
-          renderMonthEventContent={renderUjatVolunteerInterviewMonthEventContent}
+          renderMonthEventContent={renderGeneralVolunteerDocPassedMonthEventContent}
         />
       }
       right={
-        <GeneralDocPassedCalendarRightList
+        <GeneralVolunteerDocPassedCalendarRightList
           rows={dayListRows}
           onRowClick={handleListRowClick}
           resolveRowColors={resolveRowColors}

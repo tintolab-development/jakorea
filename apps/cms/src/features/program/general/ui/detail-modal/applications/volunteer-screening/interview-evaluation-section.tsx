@@ -1,7 +1,10 @@
 import { useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
-import { computeGeneralInterviewTotalScore } from '@/features/program/general/lib/general-volunteer-interview2-display'
+import {
+  computeGeneralInterviewTotalScore,
+  formatGeneralAssignedInterviewScheduleDisplay,
+} from '@/features/program/general/lib/general-volunteer-interview2-display'
 
 function formatScoreValue(score: number | null | undefined): string {
   return score != null ? String(score) : '-'
@@ -14,6 +17,11 @@ export interface GeneralVolunteerApplicantInterviewEvaluationSectionProps {
 export function GeneralVolunteerApplicantInterviewEvaluationSection({
   applicant,
 }: GeneralVolunteerApplicantInterviewEvaluationSectionProps) {
+  const scheduleDisplay = useMemo(
+    () => formatGeneralAssignedInterviewScheduleDisplay(applicant),
+    [applicant]
+  )
+
   const remarkDisplay = applicant.interviewEvaluationRemark?.trim()
     ? applicant.interviewEvaluationRemark
     : '-'
@@ -26,6 +34,14 @@ export function GeneralVolunteerApplicantInterviewEvaluationSection({
   return (
     <section className="general-volunteer-applicant-interview-evaluation">
       <DetailInfoForm title="면접 평가" mode="view">
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="면접 일정"
+            fullRow
+            readOnlyDisplay
+            view={scheduleDisplay}
+          />
+        </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="담당자 A 점수"
@@ -41,7 +57,7 @@ export function GeneralVolunteerApplicantInterviewEvaluationSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="비고" readOnlyDisplay view={remarkDisplay} />
           <DetailInfoForm.Field
-            label="점수 종합"
+            label="점수 총합"
             readOnlyDisplay
             view={
               totalScore != null ? (

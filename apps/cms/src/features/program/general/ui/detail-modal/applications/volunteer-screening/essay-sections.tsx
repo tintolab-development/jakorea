@@ -3,6 +3,7 @@ import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer
 import {
   GENERAL_VOLUNTEER_ESSAY_COLUMN_TITLES,
   formatGeneralVolunteerEssayCellValue,
+  shouldShowGeneralVolunteerFreeWriteItems,
   type GeneralEssayColumnKey,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-resume.css'
@@ -23,15 +24,22 @@ export interface GeneralVolunteerApplicantEssaySectionsProps {
 export function GeneralVolunteerApplicantEssaySections({
   applicant,
 }: GeneralVolunteerApplicantEssaySectionsProps) {
-  if (applicant.applicationType === 'ujat-graduate') return null
+  if (!shouldShowGeneralVolunteerFreeWriteItems(applicant)) return null
 
   return (
     <div className="general-volunteer-applicant-essay-sections">
       {ESSAY_KEYS.map(key => {
         const raw = applicant[key]
-        const formatted = formatGeneralVolunteerEssayCellValue(applicant.applicationType, raw)
+        const formatted = formatGeneralVolunteerEssayCellValue(
+          applicant.applicationType,
+          applicant.hasJaVolunteerExperience,
+          raw
+        )
         const text =
-          formatted != null && String(formatted).trim() !== '' ? formatted : NO_DATA
+          formatted != null && String(formatted).trim() !== '' && formatted !== '-'
+            ? formatted
+            : NO_DATA
+
         return (
           <DetailInfoForm
             key={key}

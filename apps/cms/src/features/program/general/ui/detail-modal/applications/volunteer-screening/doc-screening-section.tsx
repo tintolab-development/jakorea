@@ -106,7 +106,7 @@ export function GeneralVolunteerDocScreeningSection({
     [openApplicantDetail]
   )
 
-  const detailPermissionModals = (
+  const approveRejectModals = (
     <>
       <GeneralVolunteerDocumentApproveModal
         open={approveModalVolunteer != null}
@@ -120,6 +120,11 @@ export function GeneralVolunteerDocScreeningSection({
         onCancel={closeRejectModal}
         onConfirm={handleRejectModalConfirm}
       />
+    </>
+  )
+
+  const cancelDocumentModals = (
+    <>
       <GeneralVolunteerDocumentCancelApprovalModal
         open={cancelApprovalVolunteer != null}
         volunteer={cancelApprovalVolunteer}
@@ -132,6 +137,13 @@ export function GeneralVolunteerDocScreeningSection({
         onCancel={closeCancelRejectModal}
         onConfirm={handleCancelRejectConfirm}
       />
+    </>
+  )
+
+  const detailPermissionModals = (
+    <>
+      {approveRejectModals}
+      {cancelDocumentModals}
     </>
   )
 
@@ -201,6 +213,7 @@ export function GeneralVolunteerDocScreeningSection({
 
   return (
     <>
+      {approveRejectModals}
       {listBulkModals}
       {completeModals}
       <div className="general-volunteer-screening applicant-details">

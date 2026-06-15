@@ -20,7 +20,7 @@ import {
   countInterviewAvailabilitySlots,
   mergeAssignedInterviewIntoAvailability,
 } from '@/features/program/general/lib/interview-availability-utils'
-import { mapGeneralVolunteerAssignedInterviewToCalendarEvents } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
+import { mapGeneralVolunteerInterviewAvailabilityToCalendarEvents } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
 
 export type GeneralVolunteerDocPassedViewMode = 'list' | 'calendar'
 
@@ -78,7 +78,7 @@ export function useGeneralVolunteerDocPassed({ programId }: { programId: string 
   }, [appliedFilters, list])
 
   const calendarEvents = useMemo(
-    () => mapGeneralVolunteerAssignedInterviewToCalendarEvents(tableData),
+    () => mapGeneralVolunteerInterviewAvailabilityToCalendarEvents(tableData),
     [tableData]
   )
 

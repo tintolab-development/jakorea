@@ -51,12 +51,41 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
+  min-width: 0;
+  --detail-info-label-w: 220px;
+}
+
+.general-volunteer-applicant-basic-info > .detail-info-form:first-child .detail-info-form__field-content {
+  justify-content: flex-start;
+}
+
+.general-volunteer-applicant-basic-info
+  .detail-info-form__field-content
+  .ujat-doc-screening-status-text {
+  text-align: left;
+}
+
+.general-volunteer-applicant-basic-info__id1365-cell {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-8, 8px);
+}
+
+.general-volunteer-applicant-basic-info .applicant-instructor-basic-info__name-badge {
+  margin-left: 8px;
 }
 
 .general-volunteer-applicant-essay-sections {
   display: flex;
   flex-direction: column;
   gap: 32px;
+}
+
+.general-volunteer-applicant-essay-sections__item {
+  width: 100%;
+  min-width: 0;
 }
 
 .general-volunteer-applicant-manager-evaluation .detail-info-form__field-content {

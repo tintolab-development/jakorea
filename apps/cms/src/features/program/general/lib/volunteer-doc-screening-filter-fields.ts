@@ -1,11 +1,13 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import {
+  SECOND_INTERVIEW_SCREENING_STATUS_LABELS,
+  SECOND_INTERVIEW_SCREENING_STATUS_ORDER,
+} from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
+import {
   GENERAL_DOCUMENT_SCREENING_STATUS_LABELS,
   GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS,
   GENERAL_MANAGER_EVALUATION_LABELS,
   GENERAL_MANAGER_EVALUATION_ORDER,
-  GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_LABELS,
-  GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_ORDER,
   type GeneralDocumentScreeningStatus,
   type GeneralInterviewAssignmentStatus,
   type GeneralManagerEvaluation,
@@ -59,9 +61,9 @@ const interviewAssignmentOptions = [
 
 const secondInterviewStatusOptions = [
   { label: '전체', value: ALL },
-  ...GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_ORDER.map(
+  ...SECOND_INTERVIEW_SCREENING_STATUS_ORDER.map(
     (value: GeneralSecondInterviewScreeningStatus) => ({
-      label: GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_LABELS[value],
+      label: SECOND_INTERVIEW_SCREENING_STATUS_LABELS[value],
       value,
     })
   ),
@@ -289,6 +291,45 @@ export function buildGeneralVolunteerInterview2FilterRows(
   ]
 }
 
+/** 2차 면접 대상자 캘린더 뷰 — 면접일 필드 제외, 점수 라벨 '점수 총합' */
+export function buildGeneralVolunteerInterview2CalendarFilterRows(
+  rows: GeneralVolunteerApplicantRow[]
+): FilterFieldConfig[][] {
+  const timeOptions = buildGeneralVolunteerInterview2TimeOptions(rows)
+
+  return [
+    [
+      buildGeneralFilterField({
+        key: 'volunteerName',
+        type: 'search',
+        label: '신청 봉사자명',
+        placeholder: '봉사자명을 입력하세요',
+      }),
+      buildGeneralFilterField({
+        key: 'interviewTime',
+        type: 'select',
+        label: '면접 시간',
+        placeholder: '전체',
+        options: timeOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'totalScore',
+        type: 'select',
+        label: '점수 총합',
+        placeholder: '전체',
+        options: interview2ScoreOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'secondInterviewScreeningStatus',
+        type: 'select',
+        label: '2차 면접 심사 현황',
+        placeholder: '전체',
+        options: secondInterviewStatusOptions,
+      }),
+    ],
+  ]
+}
+
 export function matchesGeneralInterviewSlotRange(
   count: number,
   filter: string
@@ -317,14 +358,17 @@ export function filterGeneralDocPassedApplicants(
   })
 }
 
-export function filterGeneralInterview2Applicants(
+function filterGeneralInterview2ApplicantsBySharedFields(
   rows: GeneralVolunteerApplicantRow[],
-  filters: GeneralVolunteerInterview2Filters
+  filters: GeneralVolunteerInterview2Filters,
+  options?: { includeInterviewDate?: boolean }
 ): GeneralVolunteerApplicantRow[] {
+  const includeInterviewDate = options?.includeInterviewDate ?? true
   const nameQ = filters.volunteerName.trim().toLowerCase()
   return rows.filter(row => {
     if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
     if (
+      includeInterviewDate &&
       filters.interviewDate !== GENERAL_VOLUNTEER_FILTER_ALL &&
       row.assignedInterviewDateLabel !== filters.interviewDate
     ) {
@@ -349,5 +393,23 @@ export function filterGeneralInterview2Applicants(
       if (effectiveStatus !== filters.secondInterviewScreeningStatus) return false
     }
     return true
+  })
+}
+
+export function filterGeneralInterview2Applicants(
+  rows: GeneralVolunteerApplicantRow[],
+  filters: GeneralVolunteerInterview2Filters
+): GeneralVolunteerApplicantRow[] {
+  return filterGeneralInterview2ApplicantsBySharedFields(rows, filters, {
+    includeInterviewDate: true,
+  })
+}
+
+export function filterGeneralInterview2CalendarApplicants(
+  rows: GeneralVolunteerApplicantRow[],
+  filters: GeneralVolunteerInterview2Filters
+): GeneralVolunteerApplicantRow[] {
+  return filterGeneralInterview2ApplicantsBySharedFields(rows, filters, {
+    includeInterviewDate: false,
   })
 }

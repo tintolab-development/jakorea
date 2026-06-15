@@ -38,7 +38,11 @@ const ESSAY_TEXT_CELL_CLASS = 'general-volunteer-screening__essay-text'
 const MANAGER_EVALUATION_CELL_CLASS = `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME} general-volunteer-screening__manager-eval-dropdown-cell`
 
 function renderEssayCell(value: string | undefined, record: GeneralVolunteerApplicantRow) {
-  const display = formatGeneralVolunteerEssayCellValue(record.applicationType, value)
+  const display = formatGeneralVolunteerEssayCellValue(
+    record.applicationType,
+    record.hasJaVolunteerExperience,
+    value
+  )
   return (
     <span
       className={`general-volunteer-screening__text-cell ${ESSAY_TEXT_CELL_CLASS}`}

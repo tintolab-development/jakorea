@@ -66,13 +66,26 @@ function toExportRow(row: GeneralVolunteerApplicantRow): Record<string, string |
     contact: row.contact,
     email: row.email,
     jaVolunteerExperience: formatGeneralJaVolunteerExperienceCell(row.hasJaVolunteerExperience),
-    essayIntro: formatGeneralVolunteerEssayCellValue(row.applicationType, row.essayIntro),
+    essayIntro: formatGeneralVolunteerEssayCellValue(
+      row.applicationType,
+      row.hasJaVolunteerExperience,
+      row.essayIntro
+    ),
     essayEducationExperience: formatGeneralVolunteerEssayCellValue(
       row.applicationType,
+      row.hasJaVolunteerExperience,
       row.essayEducationExperience
     ),
-    essayNecessity: formatGeneralVolunteerEssayCellValue(row.applicationType, row.essayNecessity),
-    essayJaExperience: formatGeneralVolunteerEssayCellValue(row.applicationType, row.essayJaExperience),
+    essayNecessity: formatGeneralVolunteerEssayCellValue(
+      row.applicationType,
+      row.hasJaVolunteerExperience,
+      row.essayNecessity
+    ),
+    essayJaExperience: formatGeneralVolunteerEssayCellValue(
+      row.applicationType,
+      row.hasJaVolunteerExperience,
+      row.essayJaExperience
+    ),
     managerAEvaluationLabel: GENERAL_MANAGER_EVALUATION_LABELS[row.managerAEvaluation],
     managerBEvaluationLabel: GENERAL_MANAGER_EVALUATION_LABELS[row.managerBEvaluation],
     documentScreeningStatusLabel:
@@ -297,18 +310,28 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
   )
 
   const handleBulkReject = useCallback(() => {
+    const ids = selectedRowKeys.map(String)
     requestGeneralVolunteerDocumentBulkReject({
-      selectedIds: selectedRowKeys.map(String),
+      selectedIds: ids,
+      onOpenSingleReject: () => {
+        const applicant = list.find(row => row.id === ids[0])
+        if (applicant) openRejectModal(applicant)
+      },
       onOpenBulkReject: () => setBulkRejectOpen(true),
     })
-  }, [selectedRowKeys])
+  }, [list, openRejectModal, selectedRowKeys])
 
   const handleBulkApprove = useCallback(() => {
+    const ids = selectedRowKeys.map(String)
     requestGeneralVolunteerDocumentBulkApprove({
-      selectedIds: selectedRowKeys.map(String),
+      selectedIds: ids,
+      onOpenSingleApprove: () => {
+        const applicant = list.find(row => row.id === ids[0])
+        if (applicant) openApproveModal(applicant)
+      },
       onOpenBulkApprove: () => setBulkApproveOpen(true),
     })
-  }, [selectedRowKeys])
+  }, [list, openApproveModal, selectedRowKeys])
 
   const onManagerAEvaluationChange = useCallback(
     (id: string, evaluation: GeneralManagerEvaluation) => {

@@ -1,0 +1,26 @@
+/**
+ * 1차 서류 합격자 캘린더 호버 popover — shell은 UJAT 면접 popover와 동일
+ */
+
+.ujat-volunteer-interview-calendar-popover
+  .general-volunteer-doc-passed-calendar-popover__name {
+  font-weight: 700;
+}
+
+.general-volunteer-doc-passed-calendar-popover__time-range {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--default-BK, #3d3d3d);
+  font-weight: 500;
+}
+
+.general-volunteer-doc-passed-calendar-popover__availability-count {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 140%;
+  word-break: keep-all;
+}
