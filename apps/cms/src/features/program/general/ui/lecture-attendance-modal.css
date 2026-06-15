@@ -1,52 +1,45 @@
 /**
  * 강의 출석 내역 모달 — 컨텐츠 전용 스타일
- * 격자 테두리는 DetailInfoForm(detail-info-form.css), 레이아웃은 ContentModal
  */
 
-.lecture-attendance-modal__detail-form {
+.lecture-attendance-modal__table-wrap {
   width: 100%;
+  overflow-x: auto;
 }
 
-.lecture-attendance-modal__detail-form .detail-info-form__body {
-  width: 100%;
-}
-
-.lecture-attendance-modal__detail-form .detail-info-form__field {
-  grid-template-columns: 140px minmax(0, 1fr);
-}
-
-.lecture-attendance-modal__detail-form .detail-info-form__field-label {
-  width: 140px;
-  min-width: 140px;
-  max-width: 140px;
-}
-
-/* 출석률 제외 값 영역 공통 타이포 */
-.lecture-attendance-modal__detail-form .detail-info-form__field-content {
-  color: var(--default-BK, #3d3d3d);
+.lecture-attendance-modal__table.cms-data-table .ant-table-thead > tr > th {
+  text-align: center;
   font-family: Pretendard, sans-serif;
   font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 150%;
+  background: #fafafa;
 }
 
-/* 홀수 회차 마지막 행 — 우측 빈 칸(격자 비율 유지) */
-.lecture-attendance-modal__session-spacer {
-  flex: 1 1 50%;
-  min-width: 0;
-  min-height: 48px;
-  background: #fff;
-  box-sizing: border-box;
+.lecture-attendance-modal__table.cms-data-table .ant-table-tbody > tr > td {
+  vertical-align: middle;
+}
+
+.lecture-attendance-modal__round-header-cell,
+.lecture-attendance-modal__fixed-header-cell {
+  white-space: nowrap;
+}
+
+.lecture-attendance-modal__round-body-cell {
+  min-width: 88px;
+}
+
+.lecture-attendance-modal__fixed-body-cell {
+  white-space: nowrap;
 }
 
 /* 출석률: n/n건 + (강의 진행 회차 기준) */
 .lecture-attendance-modal__rate-wrap {
   display: inline-flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: 4px;
-  white-space: nowrap;
 }
 
 .lecture-attendance-modal__rate-count {
@@ -68,35 +61,40 @@
   opacity: 0.6;
 }
 
-.lecture-attendance-modal__status-text--attended {
-  color: var(--default-BK, #3d3d3d);
+.lecture-attendance-modal__status-text {
   font-family: Pretendard, sans-serif;
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+}
+
+.lecture-attendance-modal__status-text--attended,
+.lecture-attendance-modal__status-text--late {
+  color: var(--default-BK, #3d3d3d);
 }
 
 .lecture-attendance-modal__status-text--absent {
   color: var(--color-red, #c32f4a);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
 }
 
 .lecture-attendance-modal__status-text--not_held {
   color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
   opacity: 0.5;
+  cursor: not-allowed;
 }
 
-/* CmsRadioGroup(app-radio.css) — 항목 간 16px만 덮어씀 */
-.lecture-attendance-modal__detail-form .app-radio-group.lecture-attendance-modal__session-radios {
-  gap: 16px;
+.lecture-attendance-modal__session-radios.app-radio-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 12px;
+}
+
+.lecture-attendance-modal__session-radios .app-radio {
+  margin-inline-end: 0;
+}
+
+.lecture-attendance-modal__table.cms-data-table .ant-table-tbody > tr:hover > td {
+  background: #fff;
 }
