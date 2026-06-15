@@ -11,6 +11,7 @@ import {
   type TextbookStatusKey,
 } from '@/data/mock/participating-schools'
 import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import { formatAssignedInstructorSummary } from '../lib/institution-assigned-instructor-count'
 import { getInstructorRowsForSchool } from '../lib/school-detail-mock'
 import type {
   SchoolDetailForModal,
@@ -149,19 +150,18 @@ export function useProgressSchoolList({
     )
     }, [])
 
-  /** 학교별 담당 강사진 표시 문자열 (저장 패치 우선, 없으면 참여 강사 목록에서 schoolName 기준) */
+  /** 학교별 배정 강사 요약 (대표강사명 외 N명, 저장 패치 우선) */
   const getInstructorDisplayForSchool = useCallback(
     (schoolId: string, schoolName: string): string => {
       const saved = savedInstructorPatches[schoolId]
-      const names =
+      const rows =
         saved !== undefined
-          ? saved.map(i => i.instructorName)
-          : instructorList
-              .filter(r => r.schoolName === schoolName)
-              .map(r => r.instructorName)
-      if (names.length === 0) return '-'
-      if (names.length <= 2) return names.join(', ')
-      return `${names[0]} 외 ${names.length - 1}명`
+          ? saved.map(i => ({ role: i.role, instructorName: i.instructorName }))
+          : getInstructorRowsForSchool(schoolName, instructorList).map(i => ({
+              role: i.role,
+              instructorName: i.instructorName,
+            }))
+      return formatAssignedInstructorSummary(rows)
     },
     [instructorList, savedInstructorPatches]
   )

@@ -5,13 +5,23 @@
  * - 스크린샷 스펙: 제목 "강사 배정 안내", [기관명] 볼드 처리, 대표 강사 변경 시 확인 더블 모달(ContentModal).
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Form } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CmsRadio, CmsSelect } from '@/shared/ui'
+import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type {
+  ParticipatingSchoolRow,
+  ParticipatingSchoolSession,
+} from '@/data/mock/participating-schools'
 import type { InstructorRoleKey } from '../../../model/school-detail-types'
 import { INSTRUCTOR_ROLE_LABELS } from '../../../model/school-detail-types'
 import type { InstructorAssignSessionOption } from '../../../lib/instructor-assign-session-options'
+import {
+  buildProgramApprovedInstructorAssignOptions,
+  buildSchoolAddInstructorAssignSessionOptions,
+  type SchoolAddInstructorAssignOption,
+} from '../../../lib/school-add-instructor-assign'
 import { InstructorAssignSessionSlotChip } from '@/features/program/shared/ui/detail-modal/components/instructor-assign-session-slot-chip'
 import { SchoolDetailNewAssignGuideModal } from './school-detail-new-assign-guide-modal'
 import { SchoolDetailAssignOverflowModal } from './school-detail-assign-overflow-modal'
@@ -45,7 +55,8 @@ function InstructorAssignSessionTags({
         return (
           <InstructorAssignSessionSlotChip
             key={opt.id}
-            scheduleLabel={opt.scheduleLabel}
+            scheduleLabel={opt.dateLabel ?? opt.scheduleLabel}
+            timeLabel={opt.timeLabel}
             sessionRoundLabel={opt.sessionRoundLabel}
             capacityLabel={opt.capacityLabel}
             selected={selected}
@@ -65,14 +76,7 @@ function InstructorAssignSessionTags({
   )
 }
 
-export interface AddInstructorAssignOption {
-  value: string
-  label: string
-  contact?: string
-  email?: string
-  /** 프로그램 참여 최초 승인 유무 (false면 강사 신규 배정 안내 모달 노출) */
-  initialApproval?: boolean
-}
+export type AddInstructorAssignOption = SchoolAddInstructorAssignOption
 
 export interface AddInstructorAssignFormValues {
   instructorId: string
@@ -90,11 +94,21 @@ interface LeadConfirmPayload {
 export interface SchoolDetailAddInstructorAssignModalProps {
   open: boolean
   onCancel: () => void
+  programId: string
+  /** 추가 배정 대상 기관 id */
+  schoolId: string
   /** 추가 배정 대상 기관명 (안내 문구 "[기관명]에 추가 배정할 강사님을 선택해 주세요"에 사용) */
   schoolName: string
-  /** 기존 강사 목록 (이미 해당 학교에 배정된 자 제외 권장) */
-  instructorOptions: AddInstructorAssignOption[]
-  /** 교육 배정일 태그 (참여 기관 회차 일정 등 상위에서 매핑해 전달) */
+  /** 기관이 신청한 교육 회차 일정 */
+  schoolSessions?: ParticipatingSchoolSession[] | null
+  /** 프로그램 참여 강사 목록 (타 기관 배정·일정 불가 판별용) */
+  participatingInstructorList?: ParticipatingInstructorRow[]
+  participatingSchoolList?: ParticipatingSchoolRow[]
+  /** 이미 해당 기관에 배정된 강사명 (선택 목록 제외) */
+  assignedInstructorNames?: string[]
+  /** @deprecated instructorOptions 대신 programId + assignedInstructorNames 사용 권장 */
+  instructorOptions?: AddInstructorAssignOption[]
+  /** @deprecated schoolSessions 기반 자동 생성. 하위 호환용 */
   assignmentSessionOptions?: InstructorAssignSessionOption[]
   /** 현재 해당 학교 대표 강사 이름 (없으면 null, 대표 지정 시 안내 모달용) */
   currentLeadInstructorName?: string | null
@@ -118,15 +132,57 @@ const MODAL_WIDTH = 800
 export function SchoolDetailAddInstructorAssignModal({
   open,
   onCancel,
+  programId,
+  schoolId,
   schoolName,
-  instructorOptions,
-  assignmentSessionOptions = [],
+  schoolSessions,
+  participatingInstructorList = [],
+  participatingSchoolList = [],
+  assignedInstructorNames = [],
+  instructorOptions: instructorOptionsProp,
+  assignmentSessionOptions: assignmentSessionOptionsProp = [],
   currentLeadInstructorName = null,
   currentAssignedCount = 0,
   requiredInstructorCount = 4,
   overflowAlreadyConfirmed = false,
-  onAdd }: SchoolDetailAddInstructorAssignModalProps) {
+  onAdd,
+}: SchoolDetailAddInstructorAssignModalProps) {
   const [form] = Form.useForm<AddInstructorAssignFormValues>()
+  const selectedInstructorId = Form.useWatch('instructorId', form)
+
+  const instructorOptions = useMemo(() => {
+    if (instructorOptionsProp?.length) return instructorOptionsProp
+    return buildProgramApprovedInstructorAssignOptions(programId, assignedInstructorNames)
+  }, [instructorOptionsProp, programId, assignedInstructorNames])
+
+  const assignmentSessionOptions = useMemo(() => {
+    if (assignmentSessionOptionsProp.length > 0 && !schoolSessions?.length) {
+      return assignmentSessionOptionsProp
+    }
+    return buildSchoolAddInstructorAssignSessionOptions({
+      programId,
+      schoolId,
+      schoolName,
+      sessions: schoolSessions,
+      selectedInstructorId,
+      participatingInstructorList,
+      participatingSchoolList,
+    })
+  }, [
+    assignmentSessionOptionsProp,
+    schoolSessions,
+    programId,
+    schoolId,
+    schoolName,
+    selectedInstructorId,
+    participatingInstructorList,
+    participatingSchoolList,
+  ])
+
+  useEffect(() => {
+    if (!open) return
+    form.setFieldValue('sessionIds', [])
+  }, [open, selectedInstructorId, form])
   const [leadConfirmOpen, setLeadConfirmOpen] = useState(false)
   const [leadConfirmPayload, setLeadConfirmPayload] = useState<LeadConfirmPayload | null>(null)
   const [newAssignGuideOpen, setNewAssignGuideOpen] = useState(false)

@@ -407,8 +407,8 @@
 }
 
 /*
- * 참여 학생 목록 컬럼 min-width: 48,64,160,170,130,170,255,255,110(px)
- * 합계 1362 — TS `STUDENT_LIST_TABLE_SCROLL_X` 와 동기화
+ * 참여 학생 목록 컬럼 min-width: 48,64,160,170,130,170,255,255,200,110(px)
+ * 합계 1617 — TS `STUDENT_LIST_TABLE_SCROLL_X` 와 동기화
  */
 .school-detail-modal__student-table {
   width: 100%;
@@ -474,6 +474,13 @@
 .school-detail-modal__student-table col:nth-child(9),
 .school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(9),
 .school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(9) {
+  width: 200px !important;
+  min-width: 200px !important;
+}
+
+.school-detail-modal__student-table col:nth-child(10),
+.school-detail-modal__student-table .ant-table-thead > tr > th:nth-child(10),
+.school-detail-modal__student-table .ant-table-tbody > tr > td:nth-child(10) {
   width: 110px !important;
   min-width: 110px !important;
 }

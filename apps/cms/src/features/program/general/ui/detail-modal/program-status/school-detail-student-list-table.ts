@@ -3,7 +3,7 @@
  * CSS `.school-detail-modal__student-table` nth-child와 합계(1362)를 맞출 것.
  */
 export const STUDENT_LIST_TABLE_COL_MIN_WIDTHS = [
-  48, 64, 160, 170, 130, 170, 255, 255, 110,
+  48, 64, 160, 170, 130, 170, 255, 255, 200, 110,
 ] as const
 
 export const STUDENT_LIST_TABLE_SCROLL_X = STUDENT_LIST_TABLE_COL_MIN_WIDTHS.reduce(

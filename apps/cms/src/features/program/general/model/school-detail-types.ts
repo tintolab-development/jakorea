@@ -6,6 +6,7 @@
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import type { TextbookStatusKey } from '@/data/mock/participating-schools'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
+import type { StudentPortraitConsentSubmission } from '../lib/student-portrait-consent'
 
 export type InstructorRoleKey = 'lead' | 'assistant'
 
@@ -81,6 +82,14 @@ export interface SchoolDetailForModal {
   programProgressLabel?: string
   /** 프로그램 진행 현황(7단계) — `ProgramEnrollmentStatusText`용 */
   programProgressStatus?: ProgramEnrollmentDisplayStatus
+  /** 활동 포기 처리 여부 */
+  activityWithdrawn?: boolean
+  /** 활동 포기 기준 교육 일정 키 (`buildParticipatingSchoolSessionKey`) */
+  activityWithdrawStopSessionKey?: string
+  /** 활동 포기 기준 교육 일정 표시 라벨 */
+  activityWithdrawStopScheduleLabel?: string
+  /** 프로그램 참여 신청일 — 수료증/참여인증서 발급 가능 기한(3년) 산정 기준 */
+  participationAppliedAt?: string
   instructors: SchoolDetailInstructorRow[]
 }
 
@@ -105,6 +114,10 @@ export interface SchoolDetailStudentRow {
   email?: string
   /** 강의 출석: "출석수/총회차" (예: "0/4") */
   lectureAttendance?: string
+  /** 교사 제출 초상권 동의서 (`agreement-portrait` 연동) */
+  portraitConsentSubmission?: StudentPortraitConsentSubmission | null
+  /** 학생 만족도조사 제출 완료 여부 (프로그램에 만족도 조사가 있을 때 수료 판별에 사용) */
+  satisfactionSurveyCompleted?: boolean
   /** 과제 제출 내역 있음 여부 */
   hasAssignmentSubmission?: boolean
   notes?: string
@@ -120,6 +133,7 @@ export interface StudentListFormStudent {
   gradeClass: string
   contact: string
   email: string
+  notes: string
   lectureAttendance?: string
 }
 
@@ -146,7 +160,7 @@ export const INSTRUCTOR_ROLE_LABELS: Record<InstructorRoleKey, string> = {
 }
 
 /** 강의 출석 내역 모달: 회차별 출석 상태 (명세: docs/design/lecture-attendance-modal-spec.md) */
-export type LectureAttendanceStatusKey = 'attended' | 'absent' | 'not_held'
+export type LectureAttendanceStatusKey = 'attended' | 'absent' | 'late' | 'not_held'
 
 export interface LectureAttendanceSession {
   roundNumber: number
@@ -160,8 +174,9 @@ export interface LectureAttendanceDetail {
 }
 
 export const LECTURE_ATTENDANCE_STATUS_LABELS: Record<LectureAttendanceStatusKey, string> = {
-  attended: '출석 완료',
+  attended: '출석',
   absent: '결석',
+  late: '지각',
   not_held: '강의 미진행',
 }
 

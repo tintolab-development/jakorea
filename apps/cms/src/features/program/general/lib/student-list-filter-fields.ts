@@ -1,20 +1,29 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 
 export const STUDENT_LIST_GENDER_FILTER_OPTIONS = [
   { label: '남', value: 'male' },
   { label: '여', value: 'female' },
 ]
 
-/** 학교 상세 > 학생 명단 학급 Select 옵션 (1반 … 6반) */
-export const STUDENT_GRADE_CLASS_OPTIONS = Array.from({ length: 6 }, (_, index) => {
-  const label = `${index + 1}반`
-  return { label, value: label }
-})
+/** @deprecated 고정 1~6반 — `buildStudentGradeClassOptions(classCount)` 사용 */
+export const STUDENT_GRADE_CLASS_OPTIONS = buildStudentGradeClassOptions(6)
 
-const STUDENT_LIST_FILTER_CONTROL_WIDTH = 260
+/** 참여 기관 신청 학급 수(`classCount`) 기준 학급 Select 옵션 (예: 4 → 1반 … 4반) */
+export function buildStudentGradeClassOptions(classCount?: number | null) {
+  if (classCount == null || classCount < 1) return []
+
+  return Array.from({ length: classCount }, (_, index) => {
+    const label = `${index + 1}반`
+    return { label, value: label }
+  })
+}
+
+const STUDENT_LIST_FILTER_CONTROL_WIDTH = FILTER_CONTROL_MAX_WIDTH_PX
 
 /** 학교 상세 > 학생 명단 탭 필터 (학생명·성별·학급) */
-export function buildStudentListFilterFields(): FilterFieldConfig[] {
+export function buildStudentListFilterFields(classCount?: number | null): FilterFieldConfig[] {
+  const gradeClassOptions = buildStudentGradeClassOptions(classCount)
   return [
     {
       key: 'studentName',
@@ -36,7 +45,7 @@ export function buildStudentListFilterFields(): FilterFieldConfig[] {
       type: 'select',
       label: '학급',
       placeholder: '전체',
-      options: STUDENT_GRADE_CLASS_OPTIONS,
+      options: gradeClassOptions,
       width: STUDENT_LIST_FILTER_CONTROL_WIDTH,
     },
   ]

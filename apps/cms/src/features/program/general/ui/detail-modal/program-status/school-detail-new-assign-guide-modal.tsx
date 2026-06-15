@@ -9,6 +9,8 @@ import { CmsButton } from '@/shared/ui'
 
 const NEW_ASSIGN_GUIDE_MODAL_WIDTH = 560
 
+export type SchoolDetailNewAssignGuideVariant = 'confirm-assign' | 'guide-only'
+
 export interface SchoolDetailNewAssignGuideModalProps {
   open: boolean
   onCancel: () => void
@@ -20,7 +22,12 @@ export interface SchoolDetailNewAssignGuideModalProps {
   currentCount: number
   /** 필요 배정 인원 수 (정원) */
   requiredCount: number
-  /** "강사 배정" 클릭 시 호출 (승인 + 배정 처리) */
+  /**
+   * - confirm-assign: 추가 배정 — 취소/강사 배정 (승인+배정 즉시)
+   * - guide-only: 선택 배정 1차 — 안내 확인 후 강사비 승인 단계로 진행
+   */
+  variant?: SchoolDetailNewAssignGuideVariant
+  /** 확인(또는 강사 배정) 클릭 시 */
   onConfirm: () => void
 }
 
@@ -40,8 +47,11 @@ export function SchoolDetailNewAssignGuideModal({
   schoolName,
   currentCount,
   requiredCount,
+  variant = 'confirm-assign',
   onConfirm,
 }: SchoolDetailNewAssignGuideModalProps) {
+  const isGuideOnly = variant === 'guide-only'
+
   return (
     <ContentModal
       open={open}
@@ -55,14 +65,20 @@ export function SchoolDetailNewAssignGuideModal({
         requiredCount
       )}
       footer={
-        <>
-          <CmsButton variant="secondary" size="large" onClick={onCancel}>
-            취소
-          </CmsButton>
+        isGuideOnly ? (
           <CmsButton variant="primary" size="large" onClick={onConfirm}>
-            강사 배정
+            확인
           </CmsButton>
-        </>
+        ) : (
+          <>
+            <CmsButton variant="secondary" size="large" onClick={onCancel}>
+              취소
+            </CmsButton>
+            <CmsButton variant="primary" size="large" onClick={onConfirm}>
+              강사 배정
+            </CmsButton>
+          </>
+        )
       }
     >
       {null}

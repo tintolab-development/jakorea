@@ -8,6 +8,9 @@ import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
 import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
+import {
+  countLectureAttendanceHeldAndAttended,
+} from './lecture-attendance-count'
 import type {
   SchoolDetailForModal,
   SchoolDetailInstructorRow,
@@ -21,8 +24,15 @@ import type {
   LectureProgressDisplayKey,
   AssignmentSubmissionRowStatusKey,
 } from '../model/school-detail-types'
+import { PORTRAIT_CONSENT_AGREEMENT_TEMPLATE_ID } from './student-portrait-consent'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
-import { sortWaitingRowsAssignedToBottom } from './instructor-institution-assignment-mock'
+import {
+  buildOccupiedWaitingInstructorScheduleSlots,
+  participatingSchoolSessionToHopeSchedule,
+  resolveWaitingInstructorAssignmentStatus,
+  sortWaitingInstructorRowsUnavailableToBottom,
+  type WaitingInstructorAssignmentStatus,
+} from './waiting-instructor-assignment'
 import type { Application } from '@/types/domain'
 
 const TEACHER_PHONES = ['010-3927-5140', '010-5218-3674', '010-7483-2915']
@@ -156,23 +166,9 @@ export function getAssignedInstructorDisplayRows(
   })
 }
 
-/** 배정 대기 강사 목록용 배정 현황·희망 일정 목 데이터 */
-/** 배정 대기 목록 목업: 일부는 배정 완료(다른 기관 배정 등)로 표시 */
-const WAITING_ASSIGNMENT_STATUSES = [
-  'waiting',
-  'assigned',
-  'waiting',
-  'assigned',
-  'cancelled',
-  'assigned',
-  'waiting',
-] as const
-const WAITING_HOPE_DATES = ['2026. 01. 10(토)', '2026. 01. 11(일)', '2026. 01. 12(일)']
-const WAITING_HOPE_TIMES = [
-  '1교시 (9:20 ~ 10:10)',
-  '2교시 (10:20 ~ 11:10)',
-  '3교시 (11:20 ~ 12:10)',
-]
+/** 배정 대기 강사 목록용 희망 일정 목 데이터 */
+const WAITING_HOPE_DATES = ['2026.01.09(금)', '2026.01.16(금)', '2026.01.23(금)']
+const WAITING_HOPE_TIMES = ['09:20 ~ 11:20', '09:20 ~ 10:10', '10:20 ~ 11:10']
 const WAITING_HOPE_SESSIONS = ['1차시', '2차시']
 const WAITING_HOME_ADDRESSES = [
   '서울특별시 강남구 역삼동',
@@ -190,7 +186,7 @@ export interface WaitingInstructorRowMock {
   instructorName: string
   homeAddress?: string
   distanceToSchool?: string
-  assignmentStatus: 'waiting' | 'cancelled' | 'assigned'
+  assignmentStatus: WaitingInstructorAssignmentStatus
   hopeDate?: string
   hopeTime?: string
   hopeSession?: string
@@ -198,24 +194,39 @@ export interface WaitingInstructorRowMock {
 
 export function getWaitingInstructorRows(
   schoolName: string,
-  instructorList: ParticipatingInstructorRow[]
+  instructorList: ParticipatingInstructorRow[],
+  schoolRows: ParticipatingSchoolRow[] = []
 ): WaitingInstructorRowMock[] {
+  const occupiedSlots = buildOccupiedWaitingInstructorScheduleSlots(
+    instructorList,
+    schoolName,
+    schoolRows
+  )
+  const currentSchool = schoolRows.find(s => s.schoolName === schoolName)
+  const hopeSchedulePool =
+    currentSchool?.sessions?.map(participatingSchoolSessionToHopeSchedule) ?? []
+
   const notAssignedToThisSchool = instructorList.filter(r => r.schoolName !== schoolName)
   const slice = notAssignedToThisSchool.slice(0, 12)
   const n = slice.length
-  return sortWaitingRowsAssignedToBottom(
+  return sortWaitingInstructorRowsUnavailableToBottom(
     slice.map((r, idx) => {
       const seed = hash(r.id)
+      const hopeFromSchool = hopeSchedulePool[idx % Math.max(hopeSchedulePool.length, 1)]
+      const hopeDate = hopeFromSchool?.hopeDate ?? pick(WAITING_HOPE_DATES, idx % 3)
+      const hopeTime = hopeFromSchool?.hopeTime ?? pick(WAITING_HOPE_TIMES, idx % 3)
+      const hopeSession = hopeFromSchool?.hopeSession ?? pick(WAITING_HOPE_SESSIONS, idx % 2)
+      const hopeSchedule = { hopeDate, hopeTime, hopeSession }
       return {
         id: r.id,
         no: n - idx,
         instructorName: r.instructorName,
         homeAddress: r.address ?? pick(WAITING_HOME_ADDRESSES, seed + idx),
         distanceToSchool: pick(WAITING_DISTANCES, seed % 5),
-        assignmentStatus: pick([...WAITING_ASSIGNMENT_STATUSES], seed + idx),
-        hopeDate: pick(WAITING_HOPE_DATES, idx % 3),
-        hopeTime: pick(WAITING_HOPE_TIMES, idx % 3),
-        hopeSession: pick(WAITING_HOPE_SESSIONS, idx % 2),
+        assignmentStatus: resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedSlots),
+        hopeDate,
+        hopeTime,
+        hopeSession,
       }
     })
   )
@@ -257,6 +268,7 @@ export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailF
     combinedClassPartnerGrades: isGangseoFiveGrade ? ['3학년'] : undefined,
     programProgressLabel: '프로그램 진행 중',
     programProgressStatus: 'EDUCATION_IN_PROGRESS',
+    participationAppliedAt: '2024-03-15',
     venue: pick(VENUES, seed),
     educationFormat: isJinwolDemo ? '온/오프라인' : pick(EDUCATION_FORMATS, seed),
     totalEducationHours: 2,
@@ -313,6 +325,7 @@ const SCHOOL_DETAIL_STUDENT_LIST_MOCK: ReadonlyArray<
     contact: '010-1234-5678',
     email: 'haksaeng@gmail.com',
     lectureAttendance: '1/4',
+    satisfactionSurveyCompleted: false,
   },
   {
     no: 7,
@@ -322,7 +335,8 @@ const SCHOOL_DETAIL_STUDENT_LIST_MOCK: ReadonlyArray<
     gradeClass: '2반',
     contact: '010-1234-5678',
     email: 'haksaeng@gmail.com',
-    lectureAttendance: '2/4',
+    lectureAttendance: '4/4',
+    satisfactionSurveyCompleted: true,
   },
   {
     no: 6,
@@ -333,6 +347,7 @@ const SCHOOL_DETAIL_STUDENT_LIST_MOCK: ReadonlyArray<
     contact: undefined,
     email: 'haksaeng@gmail.com',
     lectureAttendance: '1/4',
+    satisfactionSurveyCompleted: false,
   },
   {
     no: 5,
@@ -342,7 +357,8 @@ const SCHOOL_DETAIL_STUDENT_LIST_MOCK: ReadonlyArray<
     gradeClass: '4반',
     contact: '010-1234-5678',
     email: undefined,
-    lectureAttendance: '2/4',
+    lectureAttendance: '1/4',
+    satisfactionSurveyCompleted: true,
   },
   {
     no: 4,
@@ -353,6 +369,7 @@ const SCHOOL_DETAIL_STUDENT_LIST_MOCK: ReadonlyArray<
     contact: '010-1234-5678',
     email: 'haksaeng@gmail.com',
     lectureAttendance: '1/4',
+    satisfactionSurveyCompleted: false,
   },
   {
     no: 3,
@@ -362,7 +379,8 @@ const SCHOOL_DETAIL_STUDENT_LIST_MOCK: ReadonlyArray<
     gradeClass: '2반',
     contact: undefined,
     email: undefined,
-    lectureAttendance: '2/4',
+    lectureAttendance: '1/4',
+    satisfactionSurveyCompleted: false,
   },
   {
     no: 2,
@@ -372,7 +390,8 @@ const SCHOOL_DETAIL_STUDENT_LIST_MOCK: ReadonlyArray<
     gradeClass: '3반',
     contact: '010-1234-5678',
     email: 'haksaeng@gmail.com',
-    lectureAttendance: '1/4',
+    lectureAttendance: '4/4',
+    satisfactionSurveyCompleted: true,
   },
   {
     no: 1,
@@ -382,9 +401,15 @@ const SCHOOL_DETAIL_STUDENT_LIST_MOCK: ReadonlyArray<
     gradeClass: '4반',
     contact: '010-1234-5678',
     email: 'haksaeng@gmail.com',
-    lectureAttendance: '2/4',
+    lectureAttendance: '4/4',
+    satisfactionSurveyCompleted: false,
   },
 ]
+
+const PORTRAIT_CONSENT_SUBMITTED_AT_MOCK = '2026.01.20 14:30:00'
+
+/** 데모: 일부 학생만 미제출 */
+const PORTRAIT_CONSENT_UNSUBMITTED_STUDENT_NAMES = new Set(['박학생', '강학생'])
 
 /**
  * 해당 학교 학생 명단 Mock (데모 8건)
@@ -393,6 +418,12 @@ export function getSchoolDetailStudents(schoolId: string, _count: number): Schoo
   return SCHOOL_DETAIL_STUDENT_LIST_MOCK.map((row, i) => ({
     ...row,
     id: `student-${schoolId}-${i + 1}`,
+    portraitConsentSubmission: PORTRAIT_CONSENT_UNSUBMITTED_STUDENT_NAMES.has(row.name)
+      ? null
+      : {
+          templateId: PORTRAIT_CONSENT_AGREEMENT_TEMPLATE_ID,
+          submittedAt: PORTRAIT_CONSENT_SUBMITTED_AT_MOCK,
+        },
   }))
 }
 
@@ -409,8 +440,8 @@ const LECTURE_ATTENDANCE_SESSIONS_BY_STUDENT_NAME: Readonly<
   이학생: [
     { roundNumber: 1, status: 'attended' },
     { roundNumber: 2, status: 'attended' },
-    { roundNumber: 3, status: 'not_held' },
-    { roundNumber: 4, status: 'not_held' },
+    { roundNumber: 3, status: 'attended' },
+    { roundNumber: 4, status: 'attended' },
   ],
   박학생: [
     { roundNumber: 1, status: 'attended' },
@@ -421,8 +452,8 @@ const LECTURE_ATTENDANCE_SESSIONS_BY_STUDENT_NAME: Readonly<
   최학생: [
     { roundNumber: 1, status: 'attended' },
     { roundNumber: 2, status: 'absent' },
-    { roundNumber: 3, status: 'not_held' },
-    { roundNumber: 4, status: 'not_held' },
+    { roundNumber: 3, status: 'attended' },
+    { roundNumber: 4, status: 'attended' },
   ],
   정학생: [
     { roundNumber: 1, status: 'attended' },
@@ -433,20 +464,20 @@ const LECTURE_ATTENDANCE_SESSIONS_BY_STUDENT_NAME: Readonly<
   강학생: [
     { roundNumber: 1, status: 'attended' },
     { roundNumber: 2, status: 'absent' },
-    { roundNumber: 3, status: 'not_held' },
-    { roundNumber: 4, status: 'not_held' },
+    { roundNumber: 3, status: 'attended' },
+    { roundNumber: 4, status: 'attended' },
   ],
   조학생: [
     { roundNumber: 1, status: 'attended' },
-    { roundNumber: 2, status: 'not_held' },
-    { roundNumber: 3, status: 'not_held' },
-    { roundNumber: 4, status: 'not_held' },
+    { roundNumber: 2, status: 'attended' },
+    { roundNumber: 3, status: 'attended' },
+    { roundNumber: 4, status: 'late' },
   ],
   윤학생: [
     { roundNumber: 1, status: 'attended' },
     { roundNumber: 2, status: 'attended' },
-    { roundNumber: 3, status: 'not_held' },
-    { roundNumber: 4, status: 'not_held' },
+    { roundNumber: 3, status: 'attended' },
+    { roundNumber: 4, status: 'attended' },
   ],
 }
 
@@ -454,8 +485,7 @@ function buildLectureAttendanceDetailFromSessions(
   studentName: string,
   sessions: LectureAttendanceSession[]
 ): LectureAttendanceDetail {
-  const held = sessions.filter(s => s.status !== 'not_held').length
-  const attended = sessions.filter(s => s.status === 'attended').length
+  const { attended, held } = countLectureAttendanceHeldAndAttended(sessions)
   const attendanceRatePercent = held === 0 ? 0 : Math.round((attended / held) * 100)
   return {
     studentName,
@@ -497,6 +527,22 @@ export function getLectureAttendanceDetail(
     status,
   }))
   return buildLectureAttendanceDetailFromSessions(student.name, sessions)
+}
+
+/** 학생 수료증 발급 판별용 회차별 출석 세션 */
+export function getStudentLectureAttendanceSessions(
+  student: SchoolDetailStudentRow,
+  schoolId: string,
+  savedSessions?: LectureAttendanceSession[]
+): LectureAttendanceSession[] {
+  if (savedSessions?.length) {
+    return savedSessions.map(session => ({ ...session }))
+  }
+  const fixed = LECTURE_ATTENDANCE_SESSIONS_BY_STUDENT_NAME[student.name]
+  if (fixed) {
+    return fixed.map(session => ({ ...session }))
+  }
+  return getLectureAttendanceDetail(student, schoolId).sessions
 }
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const

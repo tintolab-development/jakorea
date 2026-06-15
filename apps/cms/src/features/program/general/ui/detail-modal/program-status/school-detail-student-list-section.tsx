@@ -4,7 +4,7 @@
  * 모달·풀페이지 뷰에서 재사용
  */
 
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
 import { useStudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
 import type { StudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
 import { CheckOutlined, DownloadOutlined } from '@ant-design/icons'
@@ -13,11 +13,13 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { CmsButton, CmsInput, CmsRadio, CmsSelect, FilterTableLayout, useCmsAlert } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import {
-  FEATURE_COMING_SOON_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
   STUDENT_LIST_EDIT_MODE_BLOCKED_ALERT_MESSAGE,
   STUDENT_LIST_INFO_EDIT_COMING_SOON_ALERT_MESSAGE,
+  STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE,
+  STUDENT_PORTRAIT_CONSENT_NOT_SUBMITTED_ALERT_MESSAGE,
+  STUDENT_PORTRAIT_CONSENT_SELECT_ONE_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { formatLectureAttendanceCellDisplay } from '@/shared/lib/format-lecture-attendance-display'
 import type {
@@ -28,8 +30,11 @@ import type {
   StudentGenderKey,
 } from '../../../model/school-detail-types'
 import { STUDENT_GENDER_LABELS } from '../../../model/school-detail-types'
-import { getSchoolDetailStudents } from '../../../lib/school-detail-mock'
-import { buildStudentListFilterFields, STUDENT_GRADE_CLASS_OPTIONS } from '../../../lib/student-list-filter-fields'
+import { getSchoolDetailStudents, getStudentLectureAttendanceSessions } from '../../../lib/school-detail-mock'
+import {
+  buildStudentGradeClassOptions,
+  buildStudentListFilterFields,
+} from '../../../lib/student-list-filter-fields'
 import { lectureAttendanceStringFromSessions } from '../../../lib/lecture-attendance-from-sessions'
 import {
   formatStudentBirthDateFromDigits,
@@ -38,6 +43,23 @@ import {
 import { LectureAttendanceModal } from '../../lecture-attendance-modal'
 import { AddStudentModal } from '../../add-student-modal'
 import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
+import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
+import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
+import { handleError } from '@/shared/utils/error-handler'
+import {
+  buildPortraitConsentDownloadContext,
+  type PortraitConsentDownloadContext,
+} from '../../../lib/build-portrait-consent-download'
+import { buildStudentCertificateDownloadContext } from '../../../lib/build-student-certificate-issuance'
+import type { StudentCertificateDownloadContext } from '../../../lib/build-student-certificate-issuance'
+import {
+  isWithinStudentCertificateIssuancePeriod,
+  resolveStudentCertificateKind,
+} from '../../../lib/resolve-student-certificate-kind'
+import { downloadLectureReportPdfFiles } from '../../../lib/download-lecture-reports-bulk-pdf'
+import { hasStudentPortraitConsentSubmission } from '../../../lib/student-portrait-consent'
+import { PortraitConsentBulkPdfExportHost } from './portrait-consent-bulk-pdf-export-host'
+import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
 import './school-detail-modal.css'
 import './school-detail-student-list-section.css'
 import {
@@ -66,6 +88,7 @@ function rowsToFormValues(rows: SchoolDetailStudentRow[]): StudentListFormValues
       gradeClass: r.gradeClass,
       contact: r.contact ?? '',
       email: r.email ?? '',
+      notes: r.notes ?? '',
       lectureAttendance: r.lectureAttendance,
     })),
   }
@@ -81,6 +104,7 @@ function formValuesToRows(students: StudentListFormStudent[]): SchoolDetailStude
     gradeClass: r.gradeClass,
     contact: r.contact?.trim() || undefined,
     email: r.email?.trim() || undefined,
+    notes: r.notes?.trim() || undefined,
     lectureAttendance: r.lectureAttendance,
   }))
 }
@@ -88,8 +112,18 @@ function formValuesToRows(students: StudentListFormStudent[]): SchoolDetailStude
 export interface SchoolDetailStudentListSectionProps {
   schoolId: string
   studentCount: number
+  /** 신청 학급 수 — 학급 Select·필터 옵션 상한 (1반 … N반) */
+  classCount?: number
+  schoolName?: string
+  educationGrade?: string
   /** 과제·설문 제출 내역 모달 설명에 사용하는 프로그램명 */
   programTitle?: string
+  programStartDate?: Date | string | null
+  programEndDate?: Date | string | null
+  /** 프로그램 참여 신청일 — 발급 가능 기한(3년) 산정 */
+  participationAppliedAt?: Date | string | null
+  /** 학생 만족도조사 운영 여부 (공통 정보 > 설문 진행 항목) */
+  hasStudentSatisfactionSurvey?: boolean
   /** 풀페이지 등에서 상단에 이미 정보 수정/개인정보 상세보기 있을 때 버튼만 숨기거나 콜백으로 위임 */
   readOnly?: boolean
   /**
@@ -107,7 +141,14 @@ export interface SchoolDetailStudentListSectionProps {
 export function SchoolDetailStudentListSection({
   schoolId,
   studentCount,
-  programTitle: _programTitle,
+  classCount,
+  schoolName = '',
+  educationGrade = '',
+  programTitle = 'JA Korea 경제교육 프로그램',
+  programStartDate = null,
+  programEndDate = null,
+  participationAppliedAt = null,
+  hasStudentSatisfactionSurvey = true,
   readOnly = false,
   studentListInfoEditComingSoonAlert = false,
   onIssueCertificates: _onIssueCertificates,
@@ -135,48 +176,21 @@ export function SchoolDetailStudentListSection({
   >({})
   const [addStudentModalOpen, setAddStudentModalOpen] = useState(false)
   const [certificateIssueModalOpen, setCertificateIssueModalOpen] = useState(false)
-  const [certificateIssueStudentId, setCertificateIssueStudentId] = useState<string | null>(null)
+  const [certificateExportContext, setCertificateExportContext] =
+    useState<StudentCertificateDownloadContext | null>(null)
+  const [certificateExportActive, setCertificateExportActive] = useState(false)
+  const [portraitConsentExportQueue, setPortraitConsentExportQueue] = useState<
+    PortraitConsentDownloadContext[]
+  >([])
+  const [portraitConsentExportActive, setPortraitConsentExportActive] = useState(false)
+  const portraitConsentExportResultsRef = useRef<Array<{ fileName: string; blob: Blob }>>([])
+  const portraitConsentExportStartedRef = useRef(false)
   const { showAlert } = useCmsAlert()
-
-  const showComingSoonAlert = useCallback(
-    () => showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE }),
-    [showAlert]
-  )
 
   const showStudentListEditModeBlockedAlert = useCallback(
     () => showAlert({ title: '안내', content: STUDENT_LIST_EDIT_MODE_BLOCKED_ALERT_MESSAGE }),
     [showAlert]
   )
-
-  const handleCertificateIssueClick = useCallback(() => {
-    if (isStudentListEditMode) {
-      showStudentListEditModeBlockedAlert()
-      return
-    }
-
-    const selectedCount = selectedStudentKeys.length
-    if (selectedCount === 0) {
-      showAlert({ title: '안내', content: STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE })
-      return
-    }
-    if (selectedCount > 1) {
-      showAlert({ title: '안내', content: STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE })
-      return
-    }
-
-    setCertificateIssueStudentId(String(selectedStudentKeys[0]))
-    setCertificateIssueModalOpen(true)
-  }, [
-    isStudentListEditMode,
-    selectedStudentKeys,
-    showAlert,
-    showStudentListEditModeBlockedAlert,
-  ])
-
-  const handleCertificateIssueModalCancel = useCallback(() => {
-    setCertificateIssueModalOpen(false)
-    setCertificateIssueStudentId(null)
-  }, [])
 
   const studentList = useMemo(
     () => getSchoolDetailStudents(schoolId, studentCount),
@@ -209,6 +223,176 @@ export function SchoolDetailStudentListSection({
     appliedFilters.studentGender,
     appliedFilters.studentClass,
   ])
+
+  const handleCertificateIssueClick = useCallback(() => {
+    if (isStudentListEditMode) {
+      showStudentListEditModeBlockedAlert()
+      return
+    }
+
+    const selectedCount = selectedStudentKeys.length
+    if (selectedCount === 0) {
+      showAlert({ title: '안내', content: STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE })
+      return
+    }
+    if (selectedCount > 1) {
+      showAlert({ title: '안내', content: STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE })
+      return
+    }
+    if (certificateExportActive) return
+    if (!isWithinStudentCertificateIssuancePeriod(participationAppliedAt)) {
+      return
+    }
+
+    setCertificateIssueModalOpen(true)
+  }, [
+    certificateExportActive,
+    isStudentListEditMode,
+    participationAppliedAt,
+    selectedStudentKeys,
+    showAlert,
+    showStudentListEditModeBlockedAlert,
+  ])
+
+  const handleCertificateIssueModalCancel = useCallback(() => {
+    setCertificateIssueModalOpen(false)
+  }, [])
+
+  const handleCertificateIssueConfirm = useCallback(
+    (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      const selectedId = String(selectedStudentKeys[0])
+      const student = mergedStudentList.find(row => row.id === selectedId)
+      if (student == null) return
+
+      const sessions = getStudentLectureAttendanceSessions(
+        student,
+        schoolId,
+        attendanceSessionsByStudentId[student.id]
+      )
+      const certificateKind = resolveStudentCertificateKind({
+        sessions,
+        satisfactionSurveyRequired: hasStudentSatisfactionSurvey,
+        satisfactionSurveyCompleted: student.satisfactionSurveyCompleted === true,
+      })
+
+      setCertificateExportContext(
+        buildStudentCertificateDownloadContext({
+          student,
+          certificateKind,
+          schoolName,
+          educationGrade,
+          programTitle,
+          programStartDate,
+          programEndDate,
+          issuanceReasonLabel: reasonLabel,
+        })
+      )
+      setCertificateExportActive(true)
+    },
+    [
+      attendanceSessionsByStudentId,
+      educationGrade,
+      hasStudentSatisfactionSurvey,
+      mergedStudentList,
+      programEndDate,
+      programStartDate,
+      programTitle,
+      schoolId,
+      schoolName,
+      selectedStudentKeys,
+    ]
+  )
+
+  const handleCertificateExportComplete = useCallback((success: boolean) => {
+    setCertificateExportContext(null)
+    setCertificateExportActive(false)
+    if (!success) {
+      handleError(new Error('student certificate pdf export failed'), {
+        context: 'schoolDetailStudentListSection.certificateDownload',
+      })
+    }
+  }, [])
+
+  const handlePortraitConsentExportItemComplete = useCallback(
+    (result: { fileName: string; blob: Blob } | null) => {
+      if (result != null) {
+        portraitConsentExportResultsRef.current.push(result)
+      }
+      setPortraitConsentExportQueue(prev => prev.slice(1))
+    },
+    []
+  )
+
+  const handlePortraitConsentConfirmClick = useCallback(() => {
+    if (isStudentListEditMode) {
+      showStudentListEditModeBlockedAlert()
+      return
+    }
+    if (selectedStudentKeys.length === 0) {
+      showAlert({ title: '안내', content: STUDENT_PORTRAIT_CONSENT_SELECT_ONE_ALERT_MESSAGE })
+      return
+    }
+
+    const selectedIdSet = new Set(selectedStudentKeys.map(String))
+    const selectedRows = mergedStudentList.filter(row => selectedIdSet.has(row.id))
+    const downloadableRows = selectedRows.filter(hasStudentPortraitConsentSubmission)
+
+    if (downloadableRows.length === 0) {
+      showAlert({ title: '안내', content: STUDENT_PORTRAIT_CONSENT_NOT_SUBMITTED_ALERT_MESSAGE })
+      return
+    }
+
+    if (portraitConsentExportActive) return
+
+    portraitConsentExportResultsRef.current = []
+    portraitConsentExportStartedRef.current = true
+    setPortraitConsentExportQueue(
+      downloadableRows.map(row =>
+        buildPortraitConsentDownloadContext(row, schoolName, educationGrade)
+      )
+    )
+    setPortraitConsentExportActive(true)
+  }, [
+    educationGrade,
+    isStudentListEditMode,
+    mergedStudentList,
+    portraitConsentExportActive,
+    schoolName,
+    selectedStudentKeys,
+    showAlert,
+    showStudentListEditModeBlockedAlert,
+  ])
+
+  useEffect(() => {
+    if (
+      !portraitConsentExportActive ||
+      !portraitConsentExportStartedRef.current ||
+      portraitConsentExportQueue.length > 0
+    ) {
+      return
+    }
+
+    portraitConsentExportStartedRef.current = false
+    const files = portraitConsentExportResultsRef.current
+
+    void (async () => {
+      try {
+        if (files.length === 0) {
+          showAlert({ title: '안내', content: STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE })
+          return
+        }
+        await downloadLectureReportPdfFiles(files)
+      } catch (error) {
+        handleError(error, { context: 'schoolDetailStudentListSection.portraitConsentDownload' })
+        showAlert({ title: '안내', content: STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE })
+      } finally {
+        portraitConsentExportResultsRef.current = []
+        setPortraitConsentExportActive(false)
+      }
+    })()
+  }, [portraitConsentExportActive, portraitConsentExportQueue.length, showAlert])
+
+  const currentPortraitConsentExportContext = portraitConsentExportQueue[0] ?? null
 
   const handleFilterChange = useCallback(
     (key: string, value: unknown) => {
@@ -250,7 +434,15 @@ export function SchoolDetailStudentListSection({
     [pendingFilters]
   )
 
-  const studentListFilterFields = useMemo(() => buildStudentListFilterFields(), [])
+  const gradeClassOptions = useMemo(
+    () => buildStudentGradeClassOptions(classCount),
+    [classCount]
+  )
+
+  const studentListFilterFields = useMemo(
+    () => buildStudentListFilterFields(classCount),
+    [classCount]
+  )
 
   const studentListForm = useForm<StudentListFormValues>({
     defaultValues: { students: [] },
@@ -288,6 +480,7 @@ export function SchoolDetailStudentListSection({
         gradeClass: values.gradeClass,
         contact: values.contact?.trim() || undefined,
         email: values.email?.trim() || undefined,
+        notes: values.notes?.trim() || undefined,
       }
       setAddedStudents(prev => [...prev, newRow])
       setAddStudentModalOpen(false)
@@ -351,13 +544,8 @@ export function SchoolDetailStudentListSection({
         width={180}
         icon={<CheckOutlined />}
         className="school-detail-student-list-section__btn-outline"
-        onClick={() => {
-          if (isStudentListEditMode) {
-            showStudentListEditModeBlockedAlert()
-            return
-          }
-          showComingSoonAlert()
-        }}
+        disabled={portraitConsentExportActive}
+        onClick={handlePortraitConsentConfirmClick}
       >
         초상권 동의 확인
       </CmsButton>
@@ -367,6 +555,7 @@ export function SchoolDetailStudentListSection({
         width={215}
         icon={<DownloadOutlined />}
         className="school-detail-student-list-section__btn-outline"
+        disabled={certificateExportActive}
         onClick={handleCertificateIssueClick}
       >
         수료증/참여인증서 발급
@@ -497,11 +686,20 @@ export function SchoolDetailStudentListSection({
         render: (v: string | undefined) => v ?? '-',
       },
       {
+        title: '비고',
+        dataIndex: 'notes',
+        key: 'notes',
+        align: 'center',
+        ellipsis: true,
+        ...studentListTableDataColumnSize(7),
+        render: (v: string | undefined) => v?.trim() || '-',
+      },
+      {
         title: '강의 출석 내역',
         dataIndex: 'lectureAttendance',
         key: 'lectureAttendance',
         align: 'center',
-        ...studentListTableDataColumnSize(7),
+        ...studentListTableDataColumnSize(8),
         onCell: () => ({ className: 'school-detail-modal__td-lecture-attendance' }),
         render: (v: string | undefined, record: SchoolDetailStudentRow) => (
           <button
@@ -603,7 +801,7 @@ export function SchoolDetailStudentListSection({
                   inputSize="medium"
                   width="100%"
                   withAllOption={false}
-                  options={STUDENT_GRADE_CLASS_OPTIONS}
+                  options={gradeClassOptions}
                   getPopupContainer={() => document.body}
                 />
               </StudentListEditCell>
@@ -646,11 +844,28 @@ export function SchoolDetailStudentListSection({
         ),
       },
       {
+        title: '비고',
+        key: 'notes',
+        align: 'center',
+        ...studentListTableDataColumnSize(7),
+        render: (_: unknown, __: unknown, index: number) => (
+          <Controller
+            control={control}
+            name={`students.${index}.notes`}
+            render={({ field }) => (
+              <StudentListEditCell>
+                <CmsInput {...field} inputSize="medium" width="100%" />
+              </StudentListEditCell>
+            )}
+          />
+        ),
+      },
+      {
         title: '강의 출석 내역',
         dataIndex: 'lectureAttendance',
         key: 'lectureAttendance',
         align: 'center',
-        ...studentListTableDataColumnSize(7),
+        ...studentListTableDataColumnSize(8),
         onCell: () => ({ className: 'school-detail-modal__td-lecture-attendance' }),
         render: (v: string | undefined) => (
           <button
@@ -663,7 +878,7 @@ export function SchoolDetailStudentListSection({
         ),
       },
     ],
-    [control, showStudentListEditModeBlockedAlert]
+    [control, gradeClassOptions, showStudentListEditModeBlockedAlert]
   )
 
   return (
@@ -678,6 +893,7 @@ export function SchoolDetailStudentListSection({
       <FilterTableLayout
         className="school-detail-student-list-section__filter-layout"
         bordered={false}
+        filterResponsiveWrap={false}
         fields={studentListFilterFields}
         filters={filterTableValues}
         onFilterChange={handleFilterChange}
@@ -739,12 +955,33 @@ export function SchoolDetailStudentListSection({
         open={addStudentModalOpen}
         onCancel={() => setAddStudentModalOpen(false)}
         onAdd={handleAddStudent}
+        gradeClassOptions={gradeClassOptions}
       />
       <CertificateBulkIssueReasonModal
         open={certificateIssueModalOpen}
         onCancel={handleCertificateIssueModalCancel}
-        applicationIds={certificateIssueStudentId ? [certificateIssueStudentId] : []}
+        applicationIds={
+          selectedStudentKeys.length === 1 ? [String(selectedStudentKeys[0])] : []
+        }
+        onIssue={handleCertificateIssueConfirm}
       />
+      <FormCertificatePdfExportOverlay
+        visible={portraitConsentExportActive || certificateExportActive}
+      />
+      {certificateExportContext != null ? (
+        <StudentCertificatePdfExportHost
+          key={`${certificateExportContext.student.id}-${certificateExportContext.certificateKind}-${certificateExportContext.issuanceReasonLabel}`}
+          context={certificateExportContext}
+          onComplete={handleCertificateExportComplete}
+        />
+      ) : null}
+      {currentPortraitConsentExportContext != null ? (
+        <PortraitConsentBulkPdfExportHost
+          key={currentPortraitConsentExportContext.student.id}
+          context={currentPortraitConsentExportContext}
+          onComplete={handlePortraitConsentExportItemComplete}
+        />
+      ) : null}
     </div>
   )
 }

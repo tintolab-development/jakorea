@@ -70,7 +70,8 @@
   background: #c4cdd1;
 }
 
-.instructor-assign-session-slot-chip__round {
+.instructor-assign-session-slot-chip__round,
+.instructor-assign-session-slot-chip__time {
   flex-shrink: 0;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, system-ui, sans-serif;
@@ -98,7 +99,8 @@
 }
 
 .instructor-assign-session-slot-chip.paragraph-chip--selected .instructor-assign-session-slot-chip__schedule,
-.instructor-assign-session-slot-chip.paragraph-chip--selected .instructor-assign-session-slot-chip__round {
+.instructor-assign-session-slot-chip.paragraph-chip--selected .instructor-assign-session-slot-chip__round,
+.instructor-assign-session-slot-chip.paragraph-chip--selected .instructor-assign-session-slot-chip__time {
   color: var(--JA-mint-01, #01a1af);
   font-weight: 600;
 }
@@ -126,6 +128,8 @@
 .instructor-assign-session-slot-chip.paragraph-chip:disabled .instructor-assign-session-slot-chip__schedule,
 .instructor-assign-session-slot-chip--disabled .instructor-assign-session-slot-chip__round,
 .instructor-assign-session-slot-chip.paragraph-chip:disabled .instructor-assign-session-slot-chip__round,
+.instructor-assign-session-slot-chip--disabled .instructor-assign-session-slot-chip__time,
+.instructor-assign-session-slot-chip.paragraph-chip:disabled .instructor-assign-session-slot-chip__time,
 .instructor-assign-session-slot-chip--disabled
   .instructor-assign-session-slot-chip__divider.app-divider-vertical,
 .instructor-assign-session-slot-chip.paragraph-chip:disabled

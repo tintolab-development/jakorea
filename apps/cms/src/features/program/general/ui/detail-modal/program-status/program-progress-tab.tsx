@@ -703,6 +703,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
             : null
         }
         participatingRow={selectedSchoolForDetail}
+        programId={_programId}
         onCancelApproval={handleSchoolApprovalCancel}
         onSaveBasicInfo={patch => {
           setSavedBasicPatches(prev => ({ ...prev, [patch.id]: patch }))

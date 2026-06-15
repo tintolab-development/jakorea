@@ -3,7 +3,6 @@
  */
 
 .school-detail-student-list-section {
-  --student-list-filter-column-width: 240px;
   width: 100%;
 }
 
@@ -30,31 +29,6 @@
   gap: var(--filter-field-gap, 12px);
 }
 
-/* 학생명 · 성별 · 학급 — 좌측 고정 폭(조회 버튼은 우측) */
-.school-detail-student-list-section__filter-layout
-  .table-filter-group__fields-inner
-  > .ant-col[data-filter-field-key='studentName'],
-.school-detail-student-list-section__filter-layout
-  .table-filter-group__fields-inner
-  > .ant-col[data-filter-field-key='studentGender'],
-.school-detail-student-list-section__filter-layout
-  .table-filter-group__fields-inner
-  > .ant-col[data-filter-field-key='studentClass'],
-.school-detail-student-list-section__filter-layout
-  .table-filter-group__merged-inline-wrap
-  > .table-filter-group__grid-cell[data-filter-field-key='studentName'],
-.school-detail-student-list-section__filter-layout
-  .table-filter-group__merged-inline-wrap
-  > .table-filter-group__grid-cell[data-filter-field-key='studentGender'],
-.school-detail-student-list-section__filter-layout
-  .table-filter-group__merged-inline-wrap
-  > .table-filter-group__grid-cell[data-filter-field-key='studentClass'] {
-  width: var(--student-list-filter-column-width) !important;
-  flex: 0 0 var(--student-list-filter-column-width) !important;
-  max-width: var(--student-list-filter-column-width) !important;
-  min-width: var(--student-list-filter-column-width) !important;
-}
-
 @media (max-width: 960px) {
   .school-detail-student-list-section__filter-layout .table-filter-group__fields-inner.ant-row {
     flex-wrap: wrap;
@@ -62,13 +36,7 @@
 
   .school-detail-student-list-section__filter-layout
     .table-filter-group__fields-inner
-    > .ant-col[data-filter-field-key='studentName'],
-  .school-detail-student-list-section__filter-layout
-    .table-filter-group__fields-inner
-    > .ant-col[data-filter-field-key='studentGender'],
-  .school-detail-student-list-section__filter-layout
-    .table-filter-group__fields-inner
-    > .ant-col[data-filter-field-key='studentClass'] {
+    > .ant-col {
     flex: 1 1 100% !important;
     width: 100% !important;
     max-width: 100% !important;

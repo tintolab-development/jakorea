@@ -39,13 +39,10 @@ import {
   type ParticipatingSchoolRow,
 } from '@/data/mock/participating-schools'
 import {
-  MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS,
-  mapParticipatingSessionsToInstructorAssignOptions,
-} from '../../../lib/instructor-assign-session-options'
-import {
   SchoolDetailAddInstructorAssignModal,
-  type AddInstructorAssignOption,
 } from './school-detail-add-instructor-assign-modal'
+import { SchoolDetailAssignCompleteModal } from './school-detail-assign-complete-modal'
+import { buildProgramApprovedInstructorAssignOptions } from '../../../lib/school-add-instructor-assign'
 import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
 import {
   DeleteGuideModal,
@@ -89,6 +86,8 @@ export interface SchoolDetailModalProps {
   onSaveInstructorInfo?: (schoolId: string, instructors: InstructorListFormInstructor[]) => void
   /** 진행현황: 참여 학교 목록 행 — 승인 취소 노출·회차 완료 비활성 판단 (onCancelApproval과 함께 전달) */
   participatingRow?: ParticipatingSchoolRow | null
+  /** 프로그램 id — 추가 배정 시 승인된 강사 목록 조회용 */
+  programId?: string
   /** 승인 취소 확인 후 호출 (프로그램 승인 현황 → 승인 취소) */
   onCancelApproval?: (schoolId: string) => void
 }
@@ -102,6 +101,7 @@ export function SchoolDetailModal({
   onSaveBasicInfo,
   onSaveInstructorInfo,
   participatingRow,
+  programId = '',
   onCancelApproval,
 }: SchoolDetailModalProps) {
   const [unsavedCloseConfirmOpen, setUnsavedCloseConfirmOpen] = useState(false)
@@ -127,6 +127,12 @@ export function SchoolDetailModal({
   const [isBasicEditMode, setIsBasicEditMode] = useState(false)
   const [isInstructorEditMode, setIsInstructorEditMode] = useState(false)
   const [addInstructorAssignModalOpen, setAddInstructorAssignModalOpen] = useState(false)
+  const [assignCompleteModal, setAssignCompleteModal] = useState<{
+    instructorName: string
+    schoolName: string
+    currentCount: number
+    showApprovalAlarmSection: boolean
+  } | null>(null)
   const [cancelApprovalConfirmOpen, setCancelApprovalConfirmOpen] = useState(false)
 
   const defaultBasicValues = useMemo<SchoolDetailBasicFormValues>(
@@ -215,28 +221,20 @@ export function SchoolDetailModal({
     setIsInstructorEditMode(false)
   }
 
-  /** 추가 배정 모달: 선택 가능한 강사 옵션 (이미 이 학교에 배정된 강사 제외) */
-  const addInstructorAssignOptions = useMemo((): AddInstructorAssignOption[] => {
-    if (!detail) return []
-    const assignedIds = new Set(detail.instructors.map(i => i.id))
-    return MOCK_PARTICIPATING_INSTRUCTORS.filter(r => !assignedIds.has(r.id)).map(r => ({
-      value: r.id,
-      label: r.instructorName,
-      contact: r.contact,
-      email: r.email,
-      initialApproval: r.initialApproval ?? true,
-    }))
-  }, [detail])
+  const assignedInstructorNames = useMemo(
+    () => detail?.instructors.map(i => i.instructorName) ?? [],
+    [detail?.instructors]
+  )
 
-  const addInstructorAssignSessionOptions = useMemo(() => {
-    const fromSessions = mapParticipatingSessionsToInstructorAssignOptions(participatingRow?.sessions)
-    return fromSessions.length > 0 ? fromSessions : MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS
-  }, [participatingRow?.sessions])
+  const addInstructorAssignOptions = useMemo(() => {
+    if (!programId) return []
+    return buildProgramApprovedInstructorAssignOptions(programId, assignedInstructorNames)
+  }, [programId, assignedInstructorNames])
 
   const handleAddInstructorAssign = (
     instructorId: string,
     role: InstructorRoleKey,
-    option: AddInstructorAssignOption,
+    option: (typeof addInstructorAssignOptions)[number],
     _meta?: { isNewApproval?: boolean; sessionIds?: string[] }
   ) => {
     if (!detail) return
@@ -259,6 +257,12 @@ export function SchoolDetailModal({
       setInstructorValue('instructors', newList)
     }
     setAddInstructorAssignModalOpen(false)
+    setAssignCompleteModal({
+      instructorName: option.label,
+      schoolName: detail.schoolName,
+      currentCount: newList.length,
+      showApprovalAlarmSection: _meta?.isNewApproval ?? false,
+    })
   }
 
   const instructorColumns: ColumnsType<SchoolDetailInstructorRow> = useMemo(
@@ -845,6 +849,10 @@ export function SchoolDetailModal({
         <SchoolDetailStudentListSection
           schoolId={detail.id}
           studentCount={detail.studentCount}
+          classCount={detail.classCount}
+          schoolName={detail.schoolName ?? ''}
+          educationGrade={detail.educationGrade ?? ''}
+          participationAppliedAt={detail.participationAppliedAt}
           onSaveEdit={() => {}}
         />
       ) : null,
@@ -937,15 +945,28 @@ export function SchoolDetailModal({
       <SchoolDetailAddInstructorAssignModal
         open={addInstructorAssignModalOpen}
         onCancel={() => setAddInstructorAssignModalOpen(false)}
+        programId={programId}
+        schoolId={participatingRow?.id ?? detail?.id ?? ''}
         schoolName={detail?.schoolName ?? ''}
+        schoolSessions={participatingRow?.sessions}
+        participatingInstructorList={MOCK_PARTICIPATING_INSTRUCTORS}
+        assignedInstructorNames={assignedInstructorNames}
         instructorOptions={addInstructorAssignOptions}
-        assignmentSessionOptions={addInstructorAssignSessionOptions}
         currentLeadInstructorName={
           detail?.instructors.find(i => i.role === 'lead')?.instructorName ?? null
         }
         currentAssignedCount={detail?.instructors.length ?? 0}
         requiredInstructorCount={4}
         onAdd={handleAddInstructorAssign}
+      />
+      <SchoolDetailAssignCompleteModal
+        open={assignCompleteModal != null}
+        onClose={() => setAssignCompleteModal(null)}
+        instructorName={assignCompleteModal?.instructorName ?? ''}
+        schoolName={assignCompleteModal?.schoolName ?? ''}
+        currentCount={assignCompleteModal?.currentCount ?? 0}
+        requiredCount={4}
+        showApprovalAlarmSection={assignCompleteModal?.showApprovalAlarmSection ?? false}
       />
       <ConfirmModal
         open={unsavedCloseConfirmOpen}

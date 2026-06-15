@@ -151,7 +151,7 @@
   align-items: center;
 }
 
-/* 배정된 강사 목록 > 교육 담당 날짜 및 수업 시간: 디바이더 컴포넌트 사용 + 디바이더 좌우 10px */
+/* 배정된 강사 목록 > 담당 교육 진행 일정: 디바이더 컴포넌트 사용 + 디바이더 좌우 10px */
 .school-detail-fullpage-view__assigned-datetime-cell {
   display: inline-flex;
   align-items: center;
@@ -401,8 +401,13 @@
   padding-right: 0 !important;
 }
 
-/* 배정 완료된 행: 셀 텍스트 전부 default-BK @ 60% */
-.school-detail-fullpage-view__waiting-row--assigned.ant-table-row > td {
+.school-detail-fullpage-view__assignment-status--unavailable {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
+}
+
+/* 배정 불가 행: 셀 텍스트 전부 default-BK @ 60% */
+.school-detail-fullpage-view__waiting-row--unavailable.ant-table-row > td {
   color: var(--default-BK, #3d3d3d);
   opacity: 0.6;
 }
