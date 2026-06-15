@@ -2,7 +2,7 @@
  * 참여 강사 상세 — 정산 현황 탭
  */
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
@@ -10,7 +10,9 @@ import type { ParticipatingInstructorRow } from '@/data/mock/participating-instr
 import type { Program } from '@/types/domain'
 import { StatusBadge } from '@/shared/components'
 import { CmsButton, ExcelButton } from '@/shared/ui'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
+import { handleError } from '@/shared/utils/error-handler'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
@@ -20,6 +22,17 @@ import {
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-fee-fields'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { participatingRowToApplicantFeeViewRow } from '@/features/program/general/lib/participating-instructor-detail-edit'
+import {
+  buildParticipatingInstructorPaymentStatementViewOptions,
+  buildPaymentStatementIssuancePreviewContext,
+  buildPaymentStatementIssuancePreviewFileName,
+  isParticipatingInstructorSettlementEligibleForPaymentStatementDownload,
+  type PaymentStatementIssuancePreviewContext,
+} from '@/features/program/general/lib/participating-instructor-payment-statement-issuance-view'
+import { downloadLectureReportPdfFiles } from '@/features/program/general/lib/download-lecture-reports-bulk-pdf'
+import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
+import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
+import { PaymentStatementIssuanceBulkPdfExportHost } from './payment-statement-issuance-bulk-pdf-export-host'
 import './participating-instructor-settlement-section.css'
 
 /** 프로그램 전체 강의 회차 수 (mock — API 연동 시 program 기준) */
@@ -61,8 +74,8 @@ function buildParticipatingInstructorSettlementRows(): ParticipatingInstructorSe
       educationScheduleLabel: '2026. 01. 16(금) 09:20 ~ 11:20 | 2회차',
       lectureProgressLabel: '진행 완료',
       hasPaymentStatementApplication: true,
-      paymentStatementStatus: 'application_rejected',
-      scheduledSettlementAmount: null,
+      paymentStatementStatus: 'account_paid',
+      scheduledSettlementAmount: 880_000,
       canViewPaymentStatement: true,
     },
     {
@@ -160,7 +173,39 @@ export function ParticipatingInstructorSettlementSection({
   instructor,
   program: _program,
 }: ParticipatingInstructorSettlementSectionProps) {
+  const { showAlert } = useCmsAlert()
   const rows = useMemo(() => buildParticipatingInstructorSettlementRows(), [])
+
+  const [paymentStatementViewOpen, setPaymentStatementViewOpen] = useState(false)
+  const [paymentStatementViewRow, setPaymentStatementViewRow] =
+    useState<ParticipatingInstructorSettlementRow | null>(null)
+
+  const [bulkExportQueue, setBulkExportQueue] = useState<PaymentStatementIssuancePreviewContext[]>(
+    []
+  )
+  const [bulkExportActive, setBulkExportActive] = useState(false)
+  const bulkExportResultsRef = useRef<Array<{ fileName: string; blob: Blob }>>([])
+  const bulkExportStartedRef = useRef(false)
+
+  const downloadableRows = useMemo(
+    () => rows.filter(isParticipatingInstructorSettlementEligibleForPaymentStatementDownload),
+    [rows]
+  )
+
+  const paymentStatementViewOptions = useMemo(() => {
+    if (!paymentStatementViewRow) return undefined
+    return buildParticipatingInstructorPaymentStatementViewOptions(
+      instructor,
+      paymentStatementViewRow
+    )
+  }, [instructor, paymentStatementViewRow])
+
+  const paymentStatementViewFileName = useMemo(() => {
+    if (!paymentStatementViewRow) return undefined
+    return buildPaymentStatementIssuancePreviewFileName(
+      buildPaymentStatementIssuancePreviewContext(instructor, paymentStatementViewRow)
+    )
+  }, [instructor, paymentStatementViewRow])
 
   const feeViewRow = useMemo(
     () => participatingRowToApplicantFeeViewRow(instructor) as ApplicantInstructorRow,
@@ -178,9 +223,83 @@ export function ParticipatingInstructorSettlementSection({
     filename: '정산 내역',
   })
 
-  const handleOpenPaymentStatement = useCallback(() => {
-    window.alert('준비 중입니다.')
+  const handleOpenPaymentStatement = useCallback((row: ParticipatingInstructorSettlementRow) => {
+    setPaymentStatementViewRow(row)
+    setPaymentStatementViewOpen(true)
   }, [])
+
+  const handleClosePaymentStatementView = useCallback(() => {
+    setPaymentStatementViewOpen(false)
+    setPaymentStatementViewRow(null)
+  }, [])
+
+  const buildRowPreviewContext = useCallback(
+    (row: ParticipatingInstructorSettlementRow) =>
+      buildPaymentStatementIssuancePreviewContext(instructor, row),
+    [instructor]
+  )
+
+  const handleBulkExportItemComplete = useCallback(
+    (result: { fileName: string; blob: Blob } | null) => {
+      if (result != null) {
+        bulkExportResultsRef.current.push(result)
+      }
+      setBulkExportQueue(prev => prev.slice(1))
+    },
+    []
+  )
+
+  const handleBulkDownloadPaymentStatements = useCallback(() => {
+    if (bulkExportActive) return
+    if (downloadableRows.length === 0) {
+      showAlert({
+        title: '안내',
+        content:
+          '다운로드할 지급조서가 없습니다. 지급조서 확인 완료 또는 계좌 지급 완료 상태인 건만 다운로드됩니다.',
+      })
+      return
+    }
+
+    bulkExportResultsRef.current = []
+    bulkExportStartedRef.current = true
+    setBulkExportQueue(downloadableRows.map(buildRowPreviewContext))
+    setBulkExportActive(true)
+  }, [bulkExportActive, buildRowPreviewContext, downloadableRows, showAlert])
+
+  useEffect(() => {
+    if (!bulkExportActive || !bulkExportStartedRef.current || bulkExportQueue.length > 0) {
+      return
+    }
+
+    bulkExportStartedRef.current = false
+    const files = bulkExportResultsRef.current
+
+    void (async () => {
+      try {
+        if (files.length === 0) {
+          showAlert({
+            title: '안내',
+            content: 'PDF 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          })
+          return
+        }
+        await downloadLectureReportPdfFiles(files)
+      } catch (error) {
+        handleError(error, {
+          context: 'participatingInstructorSettlementSection.bulkDownloadPaymentStatements',
+        })
+        showAlert({
+          title: '안내',
+          content: '지급조서 일괄 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      } finally {
+        bulkExportResultsRef.current = []
+        setBulkExportActive(false)
+      }
+    })()
+  }, [bulkExportActive, bulkExportQueue.length, showAlert])
+
+  const currentBulkExportContext = bulkExportQueue[0] ?? null
 
   const columns = useMemo(
     (): ColumnsType<ParticipatingInstructorSettlementRow> => [
@@ -245,7 +364,7 @@ export function ParticipatingInstructorSettlementSection({
               size="medium"
               width={140}
               disabled={!record.canViewPaymentStatement}
-              onClick={() => handleOpenPaymentStatement()}
+              onClick={() => handleOpenPaymentStatement(record)}
             >
               지급조서 보기
             </CmsButton>
@@ -258,6 +377,7 @@ export function ParticipatingInstructorSettlementSection({
 
   return (
     <div className="school-detail-fullpage-view__instructor-section participating-instructor-settlement-section">
+      <FormCertificatePdfExportOverlay visible={bulkExportActive} />
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-settlement-section__summary">
         <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
           <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
@@ -298,9 +418,8 @@ export function ParticipatingInstructorSettlementSection({
             size="large"
             width={220}
             icon={<DownloadOutlined />}
-            onClick={() => {
-              window.alert('준비 중입니다.')
-            }}
+            disabled={bulkExportActive || downloadableRows.length === 0}
+            onClick={() => void handleBulkDownloadPaymentStatements()}
           >
             지급조서 일괄 다운로드
           </CmsButton>
@@ -319,6 +438,20 @@ export function ParticipatingInstructorSettlementSection({
           dataSource={rows}
         />
       </div>
+
+      <PaymentStatementIssuanceViewModal
+        open={paymentStatementViewOpen}
+        onClose={handleClosePaymentStatementView}
+        paragraphBodyOptions={paymentStatementViewOptions}
+        fileName={paymentStatementViewFileName}
+      />
+      {currentBulkExportContext != null ? (
+        <PaymentStatementIssuanceBulkPdfExportHost
+          key={currentBulkExportContext.settlementRow.id}
+          context={currentBulkExportContext}
+          onComplete={handleBulkExportItemComplete}
+        />
+      ) : null}
     </div>
   )
 }
