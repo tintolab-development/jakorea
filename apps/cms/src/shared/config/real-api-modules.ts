@@ -23,6 +23,12 @@ export const REAL_API_MODULE_KEYS = [
   'notices',
   'faqs',
   'inquiries',
+  'paymentOrders',
+  'accountPayments',
+  'settlementConfigs',
+  'members',
+  'instructorRoleRequests',
+  'adminPermissions',
 ] as const
 export type RealApiModule = (typeof REAL_API_MODULE_KEYS)[number]
 
