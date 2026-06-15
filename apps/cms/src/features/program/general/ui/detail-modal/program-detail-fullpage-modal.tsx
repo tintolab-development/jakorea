@@ -107,12 +107,14 @@ const PROGRAM_NESTED_DETAIL_QUERY_PARAMS = [
 const LNB_KEYS_READONLY: readonly LnbKey[] = ['info', 'applicants', 'progress', 'managers']
 
 function parseSchoolTabFromSearch(
-  searchParams: URLSearchParams
+  searchParams: URLSearchParams,
+  program?: Pick<Program, 'studentListRequired'> | null
 ): GeneralParticipatingInstitutionDetailTabKey {
   const t = searchParams.get(SCHOOL_TAB_PARAM)
   if (t && (GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS as readonly string[]).includes(t))
     return normalizeGeneralParticipatingInstitutionDetailTab(
-      t as GeneralParticipatingInstitutionDetailTabKey
+      t as GeneralParticipatingInstitutionDetailTabKey,
+      program
     )
   return 'application'
 }
@@ -162,6 +164,7 @@ export function ProgramDetailFullPageModal({
     sponsorName,
     updateProgram,
   } = useProgramDetail(open ? programId : undefined)
+  const displayProgram = useMemo(() => detailProgram ?? program ?? null, [detailProgram, program])
   const activeTab = open ? parseTabFromSearch(searchParams) : 'info'
   const editTab = open ? parseEditTabFromSearch(searchParams) : null
   const activeLnb = open ? (parseLnbFromSearch(searchParams) ?? 'info') : 'info'
@@ -177,8 +180,11 @@ export function ProgramDetailFullPageModal({
   const PROGRESS_TAB_KEYS: TabKey[] = ['institutions', 'instructors', 'volunteers']
 
   const schoolIdFromUrl = searchParams.get(SCHOOL_ID_PARAM)
-  const activeSchoolTab = schoolIdFromUrl ? parseSchoolTabFromSearch(searchParams) : 'application'
   const instructorIdFromUrl = searchParams.get(INSTRUCTOR_ID_PARAM)
+  const activeSchoolTab = useMemo(
+    () => (schoolIdFromUrl ? parseSchoolTabFromSearch(searchParams, displayProgram) : 'application'),
+    [schoolIdFromUrl, searchParams, displayProgram]
+  )
   const activeInstructorTab = instructorIdFromUrl
     ? parseInstructorTabFromSearch(searchParams)
     : 'application'
@@ -252,13 +258,13 @@ export function ProgramDetailFullPageModal({
   useEffect(() => {
     if (!open || !schoolIdFromUrl) return
     const raw = searchParams.get(SCHOOL_TAB_PARAM)
-    const normalized = parseSchoolTabFromSearch(searchParams)
+    const normalized = parseSchoolTabFromSearch(searchParams, displayProgram)
     if (raw === normalized) return
     const next = new URLSearchParams(searchParams)
     next.set(SCHOOL_TAB_PARAM, normalized)
     if (programId) next.set('programId', programId)
     setSearchParams(next, { replace: true })
-  }, [open, schoolIdFromUrl, searchParams, setSearchParams, programId])
+  }, [open, schoolIdFromUrl, searchParams, setSearchParams, programId, displayProgram])
 
   useEffect(() => {
     if (!open || !instructorIdFromUrl) return
@@ -443,7 +449,7 @@ export function ProgramDetailFullPageModal({
 
   const setSchoolTab = (tab: GeneralParticipatingInstitutionDetailTabKey) => {
     const next = new URLSearchParams(searchParams)
-    next.set(SCHOOL_TAB_PARAM, normalizeGeneralParticipatingInstitutionDetailTab(tab))
+    next.set(SCHOOL_TAB_PARAM, normalizeGeneralParticipatingInstitutionDetailTab(tab, displayProgram))
     setSearchParams(next, { replace: true })
   }
 
@@ -479,7 +485,6 @@ export function ProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }
 
-  const displayProgram = useMemo(() => detailProgram ?? program ?? null, [detailProgram, program])
   const [schoolDetailTitle, setSchoolDetailTitle] = useState<string | null>(null)
   const [instructorDetailTitle, setInstructorDetailTitle] = useState<string | null>(null)
 

@@ -16,6 +16,18 @@ export const STUDENT_LIST_INFO_EDIT_COMING_SOON_ALERT_MESSAGE = '준비중'
 export const STUDENT_LIST_EDIT_MODE_BLOCKED_ALERT_MESSAGE =
   '학생 정보 수정 중에는 이용할 수 없습니다. 정보 수정을 완료한 후 다시 시도해 주세요.'
 
+/** 참여 학생 목록 — 초상권 동의 확인: 미선택 시 AlertModal 본문 */
+export const STUDENT_PORTRAIT_CONSENT_SELECT_ONE_ALERT_MESSAGE =
+  '초상권 동의서를 확인할 학생을 1명 이상 선택해 주세요.'
+
+/** 참여 학생 목록 — 초상권 동의 확인: 선택 행 전원 미제출 시 AlertModal 본문 */
+export const STUDENT_PORTRAIT_CONSENT_NOT_SUBMITTED_ALERT_MESSAGE =
+  '선택한 학생 중 교사가 제출한 초상권 동의서가 없습니다.'
+
+/** 참여 학생 목록 — 초상권 동의 PDF 생성 실패 */
+export const STUDENT_PORTRAIT_CONSENT_DOWNLOAD_FAILED_ALERT_MESSAGE =
+  '초상권 동의서 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+
 /** 참여 학생 목록 — 수료증/참여인증서 발급: 미선택 시 AlertModal 본문 */
 export const STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE =
   '발급할 학생을 1명 선택해 주세요.'
@@ -72,6 +84,10 @@ export const PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COMPLETE_ALERT_MESSAGE =
 export const PARTICIPATING_INSTRUCTOR_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE =
   '이미 활동 포기 처리된 강사입니다.'
 
+/** 참여 기관 상세 — 이미 활동 포기 처리된 기관 재시도 시 AlertModal 본문 */
+export const PARTICIPATING_INSTITUTION_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE =
+  '이미 활동 포기 처리된 기관입니다.'
+
 /** 수료증/참여인증서·활동인증서 발급 사유 모달 — 사유 미선택 시 AlertModal 본문 */
 export const CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE = '발급 사유를 선택해 주세요.'
 
@@ -83,7 +99,11 @@ export const INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE =
 export const INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE =
   '배정 취소할 기관을 선택해 주세요.'
 
-/** 참여 기관 강사 배정 현황 — 선택 배정: 미선택 시 AlertModal 본문 */
+/** 참여 기관 강사 배정 — 승인 미완료 강사는 선택 배정 시 1명만 가능 */
+export const INSTRUCTOR_ASSIGN_SELECT_UNAPPROVED_SINGLE_ONLY_ALERT_MESSAGE =
+  '프로그램 참여 승인이 필요한 강사는 한 번에 한 명씩 선택 배정해 주세요.'
+
+/** 참여 강사 배정 현황 — 선택 배정: 미선택 시 AlertModal 본문 */
 export const INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE =
   '배정할 강사를 선택해 주세요.'
 

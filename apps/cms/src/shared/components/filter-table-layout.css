@@ -224,6 +224,18 @@
   box-sizing: border-box;
 }
 
+.filter-table-layout__calendar-body
+  .calendar-set-scroll-host:has(.calendar-week--time-grid) {
+  min-width: var(--calendar-split-card-min-width-week);
+  flex-shrink: 0;
+}
+
+.filter-table-layout__calendar-body
+  .calendar-split-card-layout:has(.calendar-week--time-grid) {
+  min-width: var(--calendar-split-card-min-width-week);
+  flex-shrink: 0;
+}
+
 .filter-table-layout__calendar-body .calendar-set {
   margin-top: 0;
   width: 100%;

@@ -120,12 +120,14 @@ const GENERAL_DETAIL_QUERY_PARAMS = [
 ] as const
 
 function parseSchoolTabFromSearch(
-  searchParams: URLSearchParams
+  searchParams: URLSearchParams,
+  program?: Pick<Program, 'studentListRequired'> | null
 ): GeneralParticipatingInstitutionDetailTabKey {
   const t = searchParams.get(SCHOOL_TAB_PARAM)
   if (t && (GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS as readonly string[]).includes(t))
     return normalizeGeneralParticipatingInstitutionDetailTab(
-      t as GeneralParticipatingInstitutionDetailTabKey
+      t as GeneralParticipatingInstitutionDetailTabKey,
+      program
     )
   return 'application'
 }
@@ -435,7 +437,9 @@ export function GeneralProgramDetailFullPageModal({
   const activeTab = open ? (searchParams.get(TAB_PARAM) ?? 'info') : 'info'
   const editTab = open ? searchParams.get(EDIT_PARAM) : null
   const schoolIdFromUrl = open ? searchParams.get(SCHOOL_ID_PARAM) : null
-  const activeSchoolTab = schoolIdFromUrl ? parseSchoolTabFromSearch(searchParams) : 'application'
+  const activeSchoolTab = schoolIdFromUrl
+    ? parseSchoolTabFromSearch(searchParams, displayProgram)
+    : 'application'
   const instructorIdFromUrl = open ? searchParams.get(INSTRUCTOR_ID_PARAM) : null
   const activeInstructorTab = instructorIdFromUrl
     ? parseInstructorTabFromSearch(searchParams)
@@ -800,11 +804,11 @@ export function GeneralProgramDetailFullPageModal({
   const setSchoolTab = useCallback(
     (tab: GeneralParticipatingInstitutionDetailTabKey) => {
       const next = new URLSearchParams(searchParams)
-      next.set(SCHOOL_TAB_PARAM, normalizeGeneralParticipatingInstitutionDetailTab(tab))
+      next.set(SCHOOL_TAB_PARAM, normalizeGeneralParticipatingInstitutionDetailTab(tab, displayProgram))
       if (programId) next.set('programId', programId)
       setSearchParams(next, { replace: true })
     },
-    [programId, searchParams, setSearchParams]
+    [displayProgram, programId, searchParams, setSearchParams]
   )
 
   const setInstructorTab = useCallback(
@@ -855,13 +859,13 @@ export function GeneralProgramDetailFullPageModal({
   useEffect(() => {
     if (!open || !schoolIdFromUrl) return
     const raw = searchParams.get(SCHOOL_TAB_PARAM)
-    const normalized = parseSchoolTabFromSearch(searchParams)
+    const normalized = parseSchoolTabFromSearch(searchParams, displayProgram)
     if (raw === normalized) return
     const next = new URLSearchParams(searchParams)
     next.set(SCHOOL_TAB_PARAM, normalized)
     if (programId) next.set('programId', programId)
     setSearchParams(next, { replace: true })
-  }, [open, schoolIdFromUrl, searchParams, setSearchParams, programId])
+  }, [open, schoolIdFromUrl, searchParams, setSearchParams, programId, displayProgram])
 
   useEffect(() => {
     if (!open || !instructorIdFromUrl) return
