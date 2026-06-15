@@ -36,8 +36,8 @@ export function formatInstitutionRegionForTableDisplay(region: string | undefine
 }
 
 /**
- * 캘린더 우측 목록용 — 시·군·구 중 가장 큰 행정 단위 1개만.
- * 경기도는 도를 생략하고 도 바로 다음 시·군만 노출(예: 성남시).
+ * 캘린더 우측 목록·호버 팝오버용 — 시·도(광역자치단체) 단위 1개만.
+ * 예: `서울특별시 강서구` → `서울특별시`, `경기도 성남시` → `경기도`
  */
 export function formatInstitutionRegionForCalendarListDisplay(
   region: string | undefined | null
@@ -47,12 +47,6 @@ export function formatInstitutionRegionForCalendarListDisplay(
 
   const tokens = trimmed.split(/\s+/).filter(Boolean)
   if (tokens.length === 0) return '-'
-
-  if (tokens[0] === '경기도') {
-    const cityToken = tokens.find((token, index) => index > 0 && CITY_OR_GUN_PATTERN.test(token))
-    if (cityToken) return cityToken
-    return '경기도'
-  }
 
   const metro = tokens.find(token => METRO_CITY_PATTERN.test(token))
   if (metro) return metro

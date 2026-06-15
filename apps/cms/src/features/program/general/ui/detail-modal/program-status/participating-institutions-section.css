@@ -10,8 +10,6 @@
   --filter-field-gap: 12px;
   --filter-control-width: 240px;
   --filter-control-max-width: 240px;
-  --participating-institutions-filter-column-width: 240px;
-  --participating-institutions-filter-address-region-width: 252px;
 }
 
 .participating-institutions-section__filter-layout.filter-table-layout {
@@ -32,54 +30,6 @@
 
 .participating-institutions-section__filter-layout .table-filter-group__fields-inner.ant-row {
   gap: var(--filter-field-gap);
-}
-
-.participating-institutions-section__filter-layout .table-filter-group__fields-inner > .ant-col {
-  flex: 0 0 auto !important;
-  min-width: 0;
-  max-width: none;
-}
-
-.participating-institutions-section__filter-layout
-  .table-filter-group__fields-inner
-  > .ant-col[data-filter-field-key='institutionAddress'],
-.participating-institutions-section__filter-layout
-  .table-filter-group__merged-inline-wrap
-  > .table-filter-group__grid-cell[data-filter-field-key='institutionAddress'] {
-  width: var(--participating-institutions-filter-address-region-width) !important;
-  flex: 0 0 var(--participating-institutions-filter-address-region-width) !important;
-  max-width: var(--participating-institutions-filter-address-region-width) !important;
-  min-width: var(--participating-institutions-filter-address-region-width) !important;
-}
-
-.participating-institutions-section__filter-layout
-  .table-filter-group__fields-inner
-  > .ant-col[data-filter-field-key='schoolName'],
-.participating-institutions-section__filter-layout
-  .table-filter-group__fields-inner
-  > .ant-col[data-filter-field-key='textbookStatus'],
-.participating-institutions-section__filter-layout
-  .table-filter-group__fields-inner
-  > .ant-col[data-filter-field-key='educationGrade'],
-.participating-institutions-section__filter-layout
-  .table-filter-group__fields-inner
-  > .ant-col[data-filter-field-key='teacherName'],
-.participating-institutions-section__filter-layout
-  .table-filter-group__merged-inline-wrap
-  > .table-filter-group__grid-cell[data-filter-field-key='schoolName'],
-.participating-institutions-section__filter-layout
-  .table-filter-group__merged-inline-wrap
-  > .table-filter-group__grid-cell[data-filter-field-key='textbookStatus'],
-.participating-institutions-section__filter-layout
-  .table-filter-group__merged-inline-wrap
-  > .table-filter-group__grid-cell[data-filter-field-key='educationGrade'],
-.participating-institutions-section__filter-layout
-  .table-filter-group__merged-inline-wrap
-  > .table-filter-group__grid-cell[data-filter-field-key='teacherName'] {
-  width: var(--participating-institutions-filter-column-width) !important;
-  flex: 0 0 var(--participating-institutions-filter-column-width) !important;
-  max-width: var(--participating-institutions-filter-column-width) !important;
-  min-width: var(--participating-institutions-filter-column-width) !important;
 }
 
 /* UJAT 진행현황 참여 기관과 동일: 가로 스크롤·열 고정 (공통 table-wrap max-width 규칙은 아래에서 무효화) */
@@ -104,7 +54,9 @@
   max-width: none;
 }
 
-.participating-institutions-section__table-wrap .participating-institutions-section__table table.ant-table {
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  table.ant-table {
   table-layout: fixed !important;
   width: max-content !important;
   min-width: 100%;
@@ -122,6 +74,23 @@
   > td {
   overflow: visible;
   text-overflow: clip;
+}
+
+/* 교육 학급 수 열: 헤더 텍스트 nowrap 시 우측 보더 잘림 방지 */
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-thead
+  > tr
+  > th.participating-institutions-section__th-class-count,
+.participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-institutions-section__td-class-count {
+  width: 112px !important;
+  min-width: 112px !important;
+  max-width: 112px !important;
+  box-sizing: border-box;
 }
 
 /* 교육 진행 일정 열: 360px 고정 (scroll.x가 뷰포트보다 넓어져도 열 확장 방지) */
@@ -468,14 +437,11 @@
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);
   text-overflow: ellipsis;
-  font-family: Pretendard, sans-serif;
+  font-family: Pretendard;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
-  min-width: 0;
-  white-space: nowrap;
+  line-height: 150%; /* 24px */
 }
 
 .participating-instructors-section__calendar-card-divider {
@@ -496,7 +462,7 @@
 .participating-instructors-section__calendar-card-tags {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 

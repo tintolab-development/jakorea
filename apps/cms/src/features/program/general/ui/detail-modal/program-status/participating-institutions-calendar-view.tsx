@@ -14,7 +14,6 @@ import type {
 } from '@/data/mock/participating-schools'
 import {
   formatInstitutionRegionForCalendarListDisplay,
-  formatInstitutionRegionForTableDisplay,
 } from '@/shared/lib/format-institution-region-display'
 import { SCHEDULE_COLORS } from '../../../../shared/ui/program-schedule-colors'
 import {
@@ -127,7 +126,7 @@ function getPopoverRowParts(ev: CalendarEvent): ParticipatingCalendarPopoverRowP
   const { row, sessionsOnDate, educationGrade } = ev.originalItem
   return {
     title: row.schoolName?.trim() || '-',
-    location: formatInstitutionRegionForTableDisplay(row.region),
+    location: formatInstitutionRegionForCalendarListDisplay(row.region),
     grade: educationGrade?.trim() || row.educationGrade?.trim() || '-',
     sessionLine: getPrimaryParticipatingSessionLine(sessionsOnDate),
   }

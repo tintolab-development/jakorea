@@ -30,6 +30,8 @@ import {
   type GeneralParticipatingInstitutionDetailTabKey,
 } from './general-participating-institution-detail-view'
 import {
+  PARTICIPATING_INSTITUTIONS_ASSIGNED_INSTRUCTOR_COLUMN_WIDTH,
+  PARTICIPATING_INSTITUTIONS_CLASS_COUNT_COLUMN_WIDTH,
   PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
   PARTICIPATING_INSTITUTIONS_TABLE_MIN_SCROLL_X,
   PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH,
@@ -195,6 +197,7 @@ export function ParticipatingInstitutionsSection({
     savedInstructorPatches,
     setSavedInstructorPatches,
     getInstructorRowsForSchool,
+    getInstructorDisplayForSchool,
   } = schoolHook
 
   /** URL schoolId로 선택된 학교 행 (인라인 상세 뷰용) */
@@ -257,7 +260,7 @@ export function ParticipatingInstitutionsSection({
         render: (region: string | undefined) => formatInstitutionRegionForTableDisplay(region),
       },
       {
-        title: '교육 진행 일정',
+        title: '진행 희망 교육 일정',
         key: 'sessions',
         width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
         minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
@@ -327,11 +330,17 @@ export function ParticipatingInstitutionsSection({
         align: 'center',
       },
       {
-        title: '대상 학급 수',
+        title: '교육 학급 수',
         dataIndex: 'classCount',
         key: 'classCount',
-        width: 100,
+        width: PARTICIPATING_INSTITUTIONS_CLASS_COUNT_COLUMN_WIDTH,
+        minWidth: PARTICIPATING_INSTITUTIONS_CLASS_COUNT_COLUMN_WIDTH,
         align: 'center',
+        className: 'participating-institutions-section__th-class-count',
+        onHeaderCell: () => ({
+          className: 'participating-institutions-section__th-class-count',
+        }),
+        onCell: () => ({ className: 'participating-institutions-section__td-class-count' }),
         render: (v: number) => (v != null ? `${v}개` : '-'),
       },
       {
@@ -349,8 +358,22 @@ export function ParticipatingInstitutionsSection({
         width: 120,
         align: 'center',
       },
+      {
+        title: '배정 강사',
+        key: 'assignedInstructors',
+        width: PARTICIPATING_INSTITUTIONS_ASSIGNED_INSTRUCTOR_COLUMN_WIDTH,
+        align: 'center',
+        ellipsis: true,
+        render: (_: unknown, record: ParticipatingSchoolRow) =>
+          getInstructorDisplayForSchool(record.id, record.schoolName),
+      },
     ],
-    [handleTextbookStatusChange, openTextbookDropdownId, showTextbookFeatures]
+    [
+      getInstructorDisplayForSchool,
+      handleTextbookStatusChange,
+      openTextbookDropdownId,
+      showTextbookFeatures,
+    ]
   )
 
   if (selectedRowFromUrl && program) {
@@ -411,6 +434,7 @@ export function ParticipatingInstitutionsSection({
       <FilterTableLayout
         className="participating-institutions-section__filter-layout"
         bordered={false}
+        filterResponsiveWrap={false}
         contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         fields={filterFields}
         filters={filterTableValues}

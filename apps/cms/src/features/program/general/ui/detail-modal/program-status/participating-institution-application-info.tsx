@@ -4,6 +4,8 @@
 
 import type { ReactNode } from 'react'
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { Program } from '@/types/domain'
+import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import { getSessionLineParts } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import {
@@ -36,10 +38,10 @@ function padScheduleTimePart(part: string): string {
 }
 
 function ParticipatingScheduleRow({
-  rank,
+  rowLabel,
   session,
 }: {
-  rank: number
+  rowLabel: string
   session: ParticipatingSchoolSession
 }) {
   const { datePart, periodPart } = getSessionLineParts(session, 'general-detail')
@@ -58,7 +60,7 @@ function ParticipatingScheduleRow({
   return (
     <tr>
       <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {rank}지망
+        {rowLabel}
       </td>
       <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
         <ProgramDetailTdSegmentWrap>
@@ -82,7 +84,8 @@ export interface ParticipatingInstitutionApplicationInfoProps {
   formError?: string
   showAdminComment?: boolean
   adminComment?: string
-  isEditing?: boolean
+  /** 정보 수정과 분리 — 코멘트 작성 버튼으로만 편집 */
+  isAdminCommentEditing?: boolean
   adminCommentDraft?: string
   onAdminCommentDraftChange?: (value: string) => void
   adminCommentError?: string
@@ -105,6 +108,7 @@ export interface ParticipatingInstitutionApplicationInfoProps {
   mealInfo: ReactNode
   otherNotes: ReactNode
   criminalCheck: ReactNode
+  program: Program
   sessions: ParticipatingSchoolSession[]
 }
 
@@ -112,7 +116,7 @@ export function ParticipatingInstitutionApplicationInfo({
   formError,
   showAdminComment = false,
   adminComment,
-  isEditing = false,
+  isAdminCommentEditing = false,
   adminCommentDraft = '',
   onAdminCommentDraftChange,
   adminCommentError,
@@ -135,6 +139,7 @@ export function ParticipatingInstitutionApplicationInfo({
   mealInfo,
   otherNotes,
   criminalCheck,
+  program,
   sessions,
 }: ParticipatingInstitutionApplicationInfoProps) {
   return (
@@ -144,9 +149,9 @@ export function ParticipatingInstitutionApplicationInfo({
       {showAdminComment ? (
         <ApplicantAdminCommentSection
           adminComment={adminComment}
-          mode={isEditing ? 'edit' : 'view'}
+          mode={isAdminCommentEditing ? 'edit' : 'view'}
           draftValue={adminCommentDraft}
-          onDraftChange={onAdminCommentDraftChange}
+          onDraftChange={isAdminCommentEditing ? onAdminCommentDraftChange : undefined}
           validationError={adminCommentError}
         />
       ) : null}
@@ -274,8 +279,12 @@ export function ParticipatingInstitutionApplicationInfo({
                   </td>
                 </tr>
               ) : (
-                sessions.map((session, index) => (
-                  <ParticipatingScheduleRow key={`${session.round}-${session.date}`} rank={index + 1} session={session} />
+                sessions.map(session => (
+                  <ParticipatingScheduleRow
+                    key={`${session.round}-${session.date}`}
+                    rowLabel={resolveParticipatingInstitutionScheduleRowLabel(program, session)}
+                    session={session}
+                  />
                 ))
               )}
             </tbody>
