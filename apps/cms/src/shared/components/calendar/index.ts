@@ -74,6 +74,7 @@ export {
   CalendarSubRightGeneralProgramEventList,
   CalendarSubRightGeneralInstitutionApplicationList,
   CalendarSubRightGeneralInstructorApplicationList,
+  CalendarSubRightGeneralIndividualApplicationList,
   CalendarSubRightSettlementList,
   CalendarSubRightVolunteerInterviewList,
   CalendarSubRightVolunteerInterview2List,
@@ -85,6 +86,7 @@ export type {
   CalendarGeneralProgramEventListRow,
   CalendarSubRightGeneralInstitutionApplicationListProps,
   CalendarSubRightGeneralInstructorApplicationListProps,
+  CalendarSubRightGeneralIndividualApplicationListProps,
   CalendarSubRightListInstitutionApplicationProps,
   CalendarSubRightSettlementListProps,
   CalendarSubRightVolunteerInterviewListProps,
@@ -95,6 +97,7 @@ export type { CalendarVolunteerInterview2ListRow } from './ui/item-list/ujat-vol
 export type { CalendarInstitutionApplicationListRow } from './ui/item-list/ujat-institution-application'
 export type { CalendarGeneralInstitutionApplicationListRow } from './ui/item-list/general-institution-application'
 export type { CalendarGeneralInstructorApplicationListRow } from './ui/item-list/general-instructor-application'
+export type { CalendarGeneralIndividualApplicationListRow } from './ui/item-list/general-individual-application'
 export { CALENDAR_FILTER_COLOR_CLASSES } from './lib/calendar-color-set'
 export { CalendarListItemContentSettlement } from './ui/item-list/settlement'
 export {

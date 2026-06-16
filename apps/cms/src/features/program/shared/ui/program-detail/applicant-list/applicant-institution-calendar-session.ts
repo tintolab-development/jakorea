@@ -1,5 +1,4 @@
 import dayjs from 'dayjs'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
 
 function parseSessionDate(dateStr: string): dayjs.Dayjs {
@@ -40,7 +39,7 @@ export function getInstitutionRegionShort(region: string | undefined): string {
 }
 
 export function findInstitutionSessionForDate(
-  row: ApplicantSchoolRow,
+  row: { sessions?: ParticipatingSchoolSession[] },
   dateKey: string
 ): ParticipatingSchoolSession | undefined {
   const sessions = row.sessions?.filter(s => s.status !== 'not_planned') ?? []

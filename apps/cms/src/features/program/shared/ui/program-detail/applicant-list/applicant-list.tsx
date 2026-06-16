@@ -62,6 +62,7 @@ import {
   InstructorApprovalCompleteModal,
 } from '@/features/program/shared/ui/detail-modal/components/instructor-approval-complete-modal'
 import { InstructorLectureAssignModal } from '@/features/program/shared/ui/detail-modal/components/instructor-lecture-assign-modal'
+import { getGeneralParticipantInterviewEnabled } from '@/features/program/general/lib/detail-meta'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
   resolveApplicantNotificationResendSentAt,
@@ -136,6 +137,8 @@ export interface ApplicantListProps {
   /** 일반 프로그램 상세: 신규 UI / legacy 구분 */
   detailVariant?: 'legacy' | 'general'
   onApplicantDetailMetaChange?: (meta: ApplicantDetailMeta) => void
+  /** 개인 참여자 면접 1차 서류 심사 탭 */
+  individualScreeningStage?: 'doc1'
 }
 
 export function ApplicantList({
@@ -150,6 +153,7 @@ export function ApplicantList({
   onRegisterApplicantCloseHandler,
   detailVariant = 'legacy',
   onApplicantDetailMetaChange,
+  individualScreeningStage,
 }: ApplicantListProps) {
   const { showAlert } = useCmsAlert()
   const {
@@ -204,6 +208,7 @@ export function ApplicantList({
     programId,
     detailVariant,
     program,
+    individualScreeningStage,
   })
 
   const institutionTableWrapRef = useRef<HTMLDivElement>(null)
@@ -336,6 +341,18 @@ export function ApplicantList({
   const useGeneralParticipantActionModal =
     menu === 'individual-applications' && detailVariant === 'general'
 
+  /** 개인 참여자 — 면접 불필요 시 캘린더 우측 목록 상단 multi select 미노출 */
+  const showCalendarEntityFilter =
+    menu !== 'individual-applications' ||
+    !program ||
+    getGeneralParticipantInterviewEnabled(program)
+
+  /** 1차 서류 심사 탭 — 리스트뷰만 (봉사자 doc1과 동일) */
+  const isIndividualDoc1Screening =
+    menu === 'individual-applications' && individualScreeningStage === 'doc1'
+  const displayViewMode = isIndividualDoc1Screening ? 'table' : viewMode
+  const showIndividualCalendarToggle = !isIndividualDoc1Screening
+
   const useOrganizationInstructorAssignFlow =
     menu === 'instructors' &&
     instructorColumnPreset === 'general-detail' &&
@@ -444,6 +461,12 @@ export function ApplicantList({
     })
   }, [showAlert])
 
+  const resolveSingleSelectedIndividual = useCallback((): GeneralIndividualApplicantRow | null => {
+    if (selectedRowKeys.length !== 1) return null
+    const id = String(selectedRowKeys[0])
+    return individualList.find(row => row.id === id) ?? null
+  }, [selectedRowKeys, individualList])
+
   const handleBulkRejectClick = () => {
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
@@ -454,6 +477,11 @@ export function ApplicantList({
       return
     }
     if (useGeneralParticipantActionModal) {
+      const single = resolveSingleSelectedIndividual()
+      if (single) {
+        setParticipantRejectTarget({ id: single.id, name: single.applicantName })
+        return
+      }
       setParticipantBulkRejectOpen(true)
       return
     }
@@ -474,6 +502,11 @@ export function ApplicantList({
       return
     }
     if (useGeneralParticipantActionModal) {
+      const single = resolveSingleSelectedIndividual()
+      if (single) {
+        setParticipantApproveTarget({ id: single.id, name: single.applicantName })
+        return
+      }
       setParticipantBulkApproveOpen(true)
       return
     }
@@ -490,7 +523,7 @@ export function ApplicantList({
     (menu === 'instructors' && instructorColumnPreset === 'general-detail')
 
   useLayoutEffect(() => {
-    if (!usesInstitutionTableScroll || viewMode !== 'table' || selectedItem) return
+    if (!usesInstitutionTableScroll || displayViewMode !== 'table' || selectedItem) return
     const el = institutionTableWrapRef.current
     if (!el) return
     const minW = 1280
@@ -502,12 +535,12 @@ export function ApplicantList({
     const ro = new ResizeObserver(update)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [usesInstitutionTableScroll, viewMode, selectedItem])
+  }, [usesInstitutionTableScroll, displayViewMode, selectedItem])
 
   const tableHorizontalScrollX = usesInstitutionTableScroll ? institutionTableScrollX : tableScrollX
 
   const isGeneralProgramCalendarView =
-    detailVariant === 'general' && viewMode === 'calendar' && !selectedItem
+    detailVariant === 'general' && displayViewMode === 'calendar' && !selectedItem
 
   const showInstitutionDetail =
     selectedItem != null && menu === 'institutions' && 'schoolName' in selectedItem
@@ -716,6 +749,7 @@ export function ApplicantList({
               setSelectedItem(row)
             }
           }}
+          individualScreeningStage={individualScreeningStage === 'doc1' ? 'doc1' : 'main'}
         />
       ) : showInstructorDetail ? (
         <ApplicantsDetailContents
@@ -1476,7 +1510,7 @@ export function ApplicantList({
           }
           className="applicant-details__filter-table-layout"
           bordered={false}
-          contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
+          contentVariant={displayViewMode === 'calendar' ? 'calendar' : 'table'}
           fields={fields}
           filters={pendingFilters}
           onFilterChange={handleFilterChange}
@@ -1503,7 +1537,7 @@ export function ApplicantList({
               >
                 선택 승인
               </CmsButton>
-              {viewMode === 'table' && (
+              {showIndividualCalendarToggle && displayViewMode === 'table' && (
                 <CmsButton
                   icon={<CalendarOutlined />}
                   variant="secondary"
@@ -1514,7 +1548,7 @@ export function ApplicantList({
                   캘린더 뷰로 보기
                 </CmsButton>
               )}
-              {viewMode === 'calendar' && (
+              {showIndividualCalendarToggle && displayViewMode === 'calendar' && (
                 <CmsButton
                   variant="secondary"
                   icon={<UnorderedListOutlined />}
@@ -1532,7 +1566,7 @@ export function ApplicantList({
             data: tableData,
           }}
         >
-          {viewMode === 'table' ? (
+          {displayViewMode === 'table' ? (
             <div ref={usesInstitutionTableScroll ? institutionTableWrapRef : undefined}>
               <Table<ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow>
                 rowKey="id"
@@ -1592,6 +1626,7 @@ export function ApplicantList({
                 setSelectedItem(item)
               }}
               menu={menu}
+              showEntityFilter={showCalendarEntityFilter}
               calendarGranularity={applicantsCalendarGranularity}
               onCalendarGranularityChange={setApplicantsCalendarGranularity}
               calendarVariant={
@@ -1599,7 +1634,9 @@ export function ApplicantList({
                   ? 'general-instructor'
                   : institutionColumnPreset === 'general-detail' && menu === 'institutions'
                     ? 'general-institution'
-                    : 'default'
+                    : menu === 'individual-applications' && !showCalendarEntityFilter
+                      ? 'general-individual'
+                      : 'default'
               }
             />
             </div>

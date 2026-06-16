@@ -4,10 +4,12 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import type {
   CalendarGeneralInstitutionApplicationListRow,
   CalendarGeneralInstructorApplicationListRow,
+  CalendarGeneralIndividualApplicationListRow,
 } from '@/shared/components/calendar'
 import {
   findInstitutionSessionForDate,
@@ -63,6 +65,40 @@ export function buildGeneralInstitutionCalendarListRows(
         session,
         institution.desiredEducationPeriod
       ),
+    })
+  }
+
+  return rows
+}
+
+export function buildGeneralIndividualCalendarListRows(
+  events: ApplicantCalendarEvent[]
+): CalendarGeneralIndividualApplicationListRow[] {
+  const seen = new Set<string>()
+  const rows: CalendarGeneralIndividualApplicationListRow[] = []
+
+  for (const event of events) {
+    const applicant = event.originalItem as GeneralIndividualApplicantRow | undefined
+    if (!applicant || typeof applicant.applicantName !== 'string') continue
+
+    const selectionKey =
+      typeof applicant.id === 'string' && applicant.id ? applicant.id : String(event.id)
+    if (seen.has(selectionKey)) continue
+    seen.add(selectionKey)
+
+    const dateKey = dayjs(event.startDate).format('YYYY-MM-DD')
+    const session = findInstitutionSessionForDate(applicant, dateKey)
+
+    rows.push({
+      id: selectionKey,
+      colorKey: event.id,
+      applicantName: applicant.applicantName.trim() || '참여자',
+      approvalStatus: approvalStatusModifier(
+        applicant.approvalStatus as ApprovalStatusKey | undefined
+      ),
+      regionLabel: getInstitutionRegionShort(applicant.homeAddress),
+      gradeLabel: applicant.educationGrade?.trim() || '-',
+      sessionLabel: formatInstitutionCalendarSessionTimeDisplay(session),
     })
   }
 

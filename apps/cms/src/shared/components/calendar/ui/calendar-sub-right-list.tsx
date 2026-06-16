@@ -26,6 +26,10 @@ import {
   type CalendarGeneralInstructorApplicationListRow,
 } from './item-list/general-instructor-application'
 import {
+  CalendarListItemContentGeneralIndividualApplication,
+  type CalendarGeneralIndividualApplicationListRow,
+} from './item-list/general-individual-application'
+import {
   CalendarListItemContentVolunteerInterview,
   type CalendarVolunteerInterviewListRow,
 } from './item-list/ujat-volunteer-interview'
@@ -402,6 +406,73 @@ export function CalendarSubRightGeneralInstructorApplicationList({
           >
             <div className="calendar-list-item__column">
               <CalendarListItemContentGeneralInstructorApplication
+                row={row}
+                checked={selectedSet.has(row.id)}
+                onToggle={handleToggle}
+              />
+            </div>
+          </div>
+        )
+      })}
+    </CalendarListShell>
+  )
+}
+
+export type CalendarSubRightGeneralIndividualApplicationListProps = {
+  rows: CalendarGeneralIndividualApplicationListRow[]
+  selectedRowKeys: Key[]
+  onSelectionChange: (keys: Key[]) => void
+  onRowClick: (row: CalendarGeneralIndividualApplicationListRow) => void
+  resolveRowColors?: (
+    row: CalendarGeneralIndividualApplicationListRow
+  ) => ScheduleColorPair | undefined
+  toolbar?: ReactNode
+}
+
+export function CalendarSubRightGeneralIndividualApplicationList({
+  rows,
+  selectedRowKeys,
+  onSelectionChange,
+  onRowClick,
+  resolveRowColors,
+  toolbar,
+}: CalendarSubRightGeneralIndividualApplicationListProps) {
+  const selectedSet = useMemo(() => new Set(selectedRowKeys.map(String)), [selectedRowKeys])
+
+  const handleToggle = useCallback(
+    (key: string, checked: boolean) => {
+      if (checked) {
+        if (selectedSet.has(key)) return
+        onSelectionChange([...selectedRowKeys, key])
+      } else {
+        onSelectionChange(selectedRowKeys.filter(k => String(k) !== key))
+      }
+    },
+    [onSelectionChange, selectedRowKeys, selectedSet]
+  )
+
+  return (
+    <CalendarListShell toolbar={toolbar} isEmpty={rows.length === 0}>
+      {rows.map(row => {
+        const colors = resolveRowColors?.(row) ?? SCHEDULE_COLORS[0]
+        return (
+          <div
+            key={row.id}
+            className={[
+              'calendar-list-item',
+              selectedSet.has(row.id) ? 'calendar-list-item--selected' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            data-has-color="true"
+            style={{
+              backgroundColor: colors.bg,
+              border: `1px solid ${colors.border}`,
+            }}
+            onClick={() => onRowClick(row)}
+          >
+            <div className="calendar-list-item__column">
+              <CalendarListItemContentGeneralIndividualApplication
                 row={row}
                 checked={selectedSet.has(row.id)}
                 onToggle={handleToggle}

@@ -6,6 +6,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 import { ApplicantScheduleList } from './applicant-schedule-list'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import './applicant-calendar-view.css'
@@ -14,8 +15,10 @@ import {
   CalendarSplitCardLayout,
   CalendarSubRightGeneralInstitutionApplicationList,
   CalendarSubRightGeneralInstructorApplicationList,
+  CalendarSubRightGeneralIndividualApplicationList,
   type CalendarGeneralInstitutionApplicationListRow,
   type CalendarGeneralInstructorApplicationListRow,
+  type CalendarGeneralIndividualApplicationListRow,
 } from '@/shared/components/calendar'
 import {
   createInitialCalendarNavigationState,
@@ -26,6 +29,7 @@ import '@/shared/components/calendar/styles/calendar.css'
 import { useApplicantCalendarColorMaps } from './applicant-calendar-schedule-helpers'
 import { renderGeneralInstructorCalendarMonthEventContent } from './applicant-instructor-calendar-month-event'
 import { renderGeneralInstitutionCalendarPreviewTooltipContent } from './applicant-general-institution-calendar-popover'
+import { renderGeneralIndividualCalendarPreviewTooltipContent } from './applicant-general-individual-calendar-popover'
 import { renderGeneralInstructorCalendarPreviewTooltipContent } from './applicant-general-instructor-calendar-popover'
 import { renderProgramCalendarEventsDefaultTooltipContent } from '@/shared/components/calendar/ui/preview-tooltip/program'
 import type { ApplicantCalendarEvent } from './applicant-calendar-events'
@@ -33,6 +37,7 @@ import type { ApplicantListMenu } from './applicant-list-menu'
 import {
   buildGeneralInstitutionCalendarListRows,
   buildGeneralInstructorCalendarListRows,
+  buildGeneralIndividualCalendarListRows,
   filterApplicantCalendarEventsForDate,
 } from './applicant-general-calendar-list-rows'
 dayjs.extend(isSameOrAfter)
@@ -48,9 +53,11 @@ interface ApplicantCalendarViewProps {
   onItemClick: (item: ApplicantCalendarEvent['originalItem']) => void
   calendarGranularity?: 'month' | 'week'
   onCalendarGranularityChange?: (mode: 'month' | 'week') => void
-  calendarVariant?: 'default' | 'general-instructor' | 'general-institution'
+  calendarVariant?: 'default' | 'general-instructor' | 'general-institution' | 'general-individual'
   filterEntity?: ApplicantCalendarFilterEntity
   menu?: ApplicantListMenu | ''
+  /** false면 우측 목록 상단 기관/참여자 multi select 미노출 */
+  showEntityFilter?: boolean
   /** 일반 프로그램 상세 풀페이지 모달 — split-card + page-scroll sticky */
   useSplitCardPageScroll?: boolean
 }
@@ -91,6 +98,20 @@ function findInstructorForRow(
   return null
 }
 
+function findIndividualForRow(
+  events: ApplicantCalendarEvent[],
+  row: CalendarGeneralIndividualApplicationListRow
+): GeneralIndividualApplicantRow | null {
+  for (const event of events) {
+    const applicant = event.originalItem as GeneralIndividualApplicantRow | undefined
+    if (!applicant) continue
+    const key =
+      typeof applicant.id === 'string' && applicant.id ? applicant.id : String(event.id)
+    if (key === row.id) return applicant
+  }
+  return null
+}
+
 export function ApplicantCalendarView({
   events,
   loading,
@@ -102,11 +123,14 @@ export function ApplicantCalendarView({
   calendarVariant = 'default',
   filterEntity: filterEntityProp,
   menu = '',
+  showEntityFilter = true,
   useSplitCardPageScroll = false,
 }: ApplicantCalendarViewProps) {
   const isGeneralInstructor = calendarVariant === 'general-instructor'
   const isGeneralInstitution = calendarVariant === 'general-institution'
-  const usesSplitCardLayout = useSplitCardPageScroll || isGeneralInstructor || isGeneralInstitution
+  const isGeneralIndividual = calendarVariant === 'general-individual'
+  const usesSplitCardLayout =
+    useSplitCardPageScroll || isGeneralInstructor || isGeneralInstitution || isGeneralIndividual
   const filterEntity: ApplicantCalendarFilterEntity =
     filterEntityProp ?? (menu === 'individual-applications' ? 'participant' : 'school')
   const [fallbackCalendarMode, setFallbackCalendarMode] = useState<'month' | 'week'>('month')
@@ -174,19 +198,21 @@ export function ApplicantCalendarView({
   }, [dayEvents, resolveFilterLabel])
 
   useEffect(() => {
+    if (!showEntityFilter) return
     setSelectedSchools(entityFilterOptions.map(o => o.value))
-  }, [entityFilterOptions])
+  }, [entityFilterOptions, showEntityFilter])
 
   const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events)
 
   const filteredDayEvents = useMemo(() => {
+    if (!showEntityFilter) return dayEvents
     if (selectedSchools.length === 0) return []
     const selectedSet = new Set(selectedSchools)
     return dayEvents.filter(ev => {
       const label = resolveFilterLabel(ev)
       return label !== '' && selectedSet.has(label)
     })
-  }, [dayEvents, selectedSchools, resolveFilterLabel])
+  }, [dayEvents, selectedSchools, resolveFilterLabel, showEntityFilter])
 
   const scheduleListColorMap = useMemo(
     () => buildResolvedColorMap(filteredDayEvents),
@@ -214,6 +240,11 @@ export function ApplicantCalendarView({
     [filteredDayEvents, isGeneralInstructor]
   )
 
+  const individualListRows = useMemo(
+    () => (isGeneralIndividual ? buildGeneralIndividualCalendarListRows(filteredDayEvents) : []),
+    [filteredDayEvents, isGeneralIndividual]
+  )
+
   const handleDateSelect = (date: Dayjs) => {
     setSelectedDate(date)
     setCurrentMonth(prev => syncViewAnchorOnDateSelect(calendarMode, date, prev))
@@ -235,7 +266,15 @@ export function ApplicantCalendarView({
     [filteredDayEvents, onItemClick]
   )
 
-  const entityFilterSelect = (
+  const handleIndividualRowClick = useCallback(
+    (row: CalendarGeneralIndividualApplicationListRow) => {
+      const applicant = findIndividualForRow(filteredDayEvents, row)
+      if (applicant) onItemClick(applicant)
+    },
+    [filteredDayEvents, onItemClick]
+  )
+
+  const entityFilterSelect = showEntityFilter ? (
     <CmsSelect
       mode="multiple"
       withAllOption={false}
@@ -245,7 +284,7 @@ export function ApplicantCalendarView({
       options={entityFilterOptions}
       placeholder={filterEntity === 'participant' ? '참여자 선택' : '기관 선택'}
     />
-  )
+  ) : undefined
 
   const rightListContent = isGeneralInstitution ? (
     <CalendarSubRightGeneralInstitutionApplicationList
@@ -262,6 +301,15 @@ export function ApplicantCalendarView({
       selectedRowKeys={selectedRowKeys}
       onSelectionChange={onSelectionChange}
       onRowClick={handleInstructorRowClick}
+      resolveRowColors={resolveGeneralRowColors}
+      toolbar={entityFilterSelect}
+    />
+  ) : isGeneralIndividual ? (
+    <CalendarSubRightGeneralIndividualApplicationList
+      rows={individualListRows}
+      selectedRowKeys={selectedRowKeys}
+      onSelectionChange={onSelectionChange}
+      onRowClick={handleIndividualRowClick}
       resolveRowColors={resolveGeneralRowColors}
       toolbar={entityFilterSelect}
     />
@@ -294,9 +342,11 @@ export function ApplicantCalendarView({
       previewTooltipContent={
         isGeneralInstitution
           ? renderGeneralInstitutionCalendarPreviewTooltipContent
-          : isGeneralInstructor
-            ? renderGeneralInstructorCalendarPreviewTooltipContent
-            : renderProgramCalendarEventsDefaultTooltipContent
+          : isGeneralIndividual
+            ? renderGeneralIndividualCalendarPreviewTooltipContent
+            : isGeneralInstructor
+              ? renderGeneralInstructorCalendarPreviewTooltipContent
+              : renderProgramCalendarEventsDefaultTooltipContent
       }
       {...(isGeneralInstructor
         ? { renderMonthEventContent: renderGeneralInstructorCalendarMonthEventContent }
