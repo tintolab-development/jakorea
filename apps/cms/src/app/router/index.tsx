@@ -41,6 +41,8 @@ const lazyLoad = <T extends React.ComponentType<any>>(importFunc: () => Promise<
 // 인증 관련 페이지 (즉시 로드)
 import { LoginPage } from '@/pages/auth/login-page'
 import { RegisterPage } from '@/pages/auth/register-page'
+import { RegisterCompletePage } from '@/pages/auth/register-complete-page'
+import { RegisterSocialConnectPage } from '@/pages/auth/register-social-connect-page'
 import { MfaPage } from '@/pages/auth/mfa-page'
 import { OAuthCallbackPage } from '@/pages/auth/oauth-callback-page'
 import { ForbiddenPage } from '@/pages/error/forbidden-page'
@@ -193,8 +195,34 @@ export const router = createBrowserRouter([
     element: <RegisterPage />,
   },
   {
+    path: '/register/complete',
+    element: <RegisterCompletePage />,
+  },
+  {
+    path: '/register/social-connect',
+    element: <RegisterSocialConnectPage />,
+  },
+  {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/find-email',
+    element: (
+      <ComingSoonPage
+        title="이메일 찾기"
+        description="이메일 찾기 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+      />
+    ),
+  },
+  {
+    path: '/find-password',
+    element: (
+      <ComingSoonPage
+        title="비밀번호 찾기"
+        description="비밀번호 찾기 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
+      />
+    ),
   },
   {
     path: '/auth/mfa',
