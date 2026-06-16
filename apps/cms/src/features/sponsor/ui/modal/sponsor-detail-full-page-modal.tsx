@@ -1,5 +1,12 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
+import {
+  addSponsorContact,
+  deleteSponsorContacts,
+  updateSponsorContact,
+} from '@/features/sponsor/api/admin-sponsors-service'
+import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
+import type { SponsorContactsRemoteActions } from '@/features/sponsor/hooks/use-sponsor-contacts'
 import { BulbOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
@@ -89,10 +96,53 @@ function SponsorDetailFullPageModalInner({
     handleToggleBasicInfoEdit,
     programHistories,
     removeProgramHistoryRows,
+    programHistoryDeleteDisabled,
+    refetchDetail,
   } = sponsorDetail
 
+  const remoteContactActions = useMemo((): SponsorContactsRemoteActions => ({
+      onRegister: async (payload, contactType) => {
+        try {
+          await addSponsorContact(sponsor.id, payload, contactType)
+          await refetchDetail()
+        } catch (error) {
+          console.debug(
+            'sponsorContact register failed',
+            getDataManagementApiErrorMessage(error, '담당자 등록에 실패했습니다.')
+          )
+        }
+      },
+      onDelete: async ids => {
+        try {
+          await deleteSponsorContacts(ids)
+          await refetchDetail()
+        } catch (error) {
+          console.debug(
+            'sponsorContact delete failed',
+            getDataManagementApiErrorMessage(error, '담당자 삭제에 실패했습니다.')
+          )
+        }
+      },
+      onTypeChange: async (row, nextType) => {
+        try {
+          await updateSponsorContact({ ...row, contactType: nextType })
+          await refetchDetail()
+        } catch (error) {
+          console.debug(
+            'sponsorContact type change failed',
+            getDataManagementApiErrorMessage(error, '담당자 유형 변경에 실패했습니다.')
+          )
+        }
+      },
+  }), [refetchDetail, sponsor.id])
+
   const sponsorDelete = useSponsorDelete(sponsor, canWrite, onDeleteSponsor, onClose)
-  const sponsorContacts = useSponsorContacts(sponsorDetail.contacts, sponsorDetail.setContacts, canWrite)
+  const sponsorContacts = useSponsorContacts(
+    sponsorDetail.contacts,
+    sponsorDetail.setContacts,
+    canWrite,
+    remoteContactActions
+  )
   const { registerModalOpen, setRegisterModalOpen, handleRegister } = sponsorContacts
   const programHistory = useProgramHistoryFilter(programHistories)
   const { contactColumns, programHistoryColumns } = useSponsorDetailModalTableColumns({
@@ -207,6 +257,7 @@ function SponsorDetailFullPageModalInner({
           columns={programHistoryColumns}
           canWrite={canWrite}
           onRemoveProgramHistories={removeProgramHistoryRows}
+          deleteDisabled={programHistoryDeleteDisabled}
         />
       )}
       <SponsorDeleteModal

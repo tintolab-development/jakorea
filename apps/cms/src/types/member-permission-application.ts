@@ -15,6 +15,10 @@ export type MemberPermissionMemberCategoryFilter =
 
 export interface MemberPermissionApplicationRow {
   id: string
+  /** instructor-role-requests API requestId (remote) */
+  requestId?: number
+  /** 백엔드 memberId (remote) */
+  memberId?: number
   userId: string
   name: string
   phone: string

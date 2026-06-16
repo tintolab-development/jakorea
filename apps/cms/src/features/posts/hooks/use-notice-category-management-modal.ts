@@ -11,6 +11,7 @@ import {
   createNoticeCategoryId,
   hasDuplicateCategoryName,
 } from '@/features/posts/model/notice-category-domain'
+import type { NoticeCategoryRemoteActions } from '@/features/posts/hooks/use-admin-notice-categories'
 import type { NoticeCategoryRow } from '@/features/posts/model/admin-notice-management.types'
 
 export type UseNoticeCategoryManagementModalParams = {
@@ -21,6 +22,7 @@ export type UseNoticeCategoryManagementModalParams = {
   notices: readonly Notice[]
   /** 메인 모달 닫기(상위) */
   onClose: () => void
+  remoteActions?: NoticeCategoryRemoteActions
 }
 
 export type UseNoticeCategoryManagementModalResult = {
@@ -53,6 +55,7 @@ export function useNoticeCategoryManagementModal({
   onCategoriesChange,
   notices,
   onClose,
+  remoteActions,
 }: UseNoticeCategoryManagementModalParams): UseNoticeCategoryManagementModalResult {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState('')
@@ -96,7 +99,7 @@ export function useNoticeCategoryManagementModal({
     setEditDraft('')
   }, [])
 
-  const submitEdit = useCallback(() => {
+  const submitEdit = useCallback(async () => {
     if (editingId == null) return
     const trimmed = editDraft.trim()
     if (trimmed === '') {
@@ -105,11 +108,16 @@ export function useNoticeCategoryManagementModal({
     if (hasDuplicateCategoryName(categories, trimmed, editingId)) {
       return
     }
+    if (remoteActions) {
+      await remoteActions.onUpdate(editingId, trimmed)
+      cancelEdit()
+      return
+    }
     onCategoriesChange(
       categories.map(c => (c.id === editingId ? { ...c, name: trimmed } : c))
     )
     cancelEdit()
-  }, [cancelEdit, categories, editDraft, editingId, onCategoriesChange])
+  }, [cancelEdit, categories, editDraft, editingId, onCategoriesChange, remoteActions])
 
   const removeCategory = useCallback(
     (id: string) => {
@@ -137,18 +145,24 @@ export function useNoticeCategoryManagementModal({
     setPendingDeleteRow(null)
   }, [])
 
-  const confirmDeleteCategory = useCallback(() => {
+  const confirmDeleteCategory = useCallback(async () => {
     if (pendingDeleteRow == null) return
+    if (remoteActions) {
+      await remoteActions.onDelete(pendingDeleteRow.id)
+      setDeleteConfirmOpen(false)
+      setPendingDeleteRow(null)
+      return
+    }
     removeCategory(pendingDeleteRow.id)
     setDeleteConfirmOpen(false)
     setPendingDeleteRow(null)
-  }, [pendingDeleteRow, removeCategory])
+  }, [pendingDeleteRow, remoteActions, removeCategory])
 
   const cancelNew = useCallback(() => {
     setNewDraft('')
   }, [])
 
-  const submitNew = useCallback(() => {
+  const submitNew = useCallback(async () => {
     const trimmed = newDraft.trim()
     if (trimmed === '') {
       return
@@ -156,10 +170,15 @@ export function useNoticeCategoryManagementModal({
     if (hasDuplicateCategoryName(categories, trimmed)) {
       return
     }
+    if (remoteActions) {
+      await remoteActions.onCreate(trimmed)
+      setNewDraft('')
+      return
+    }
     const id = createNoticeCategoryId()
     onCategoriesChange([...categories, { id, name: trimmed }])
     setNewDraft('')
-    }, [categories, newDraft, onCategoriesChange])
+  }, [categories, newDraft, onCategoriesChange, remoteActions])
 
   const focusNewRow = useCallback(() => {
     newInputRef.current?.focus()

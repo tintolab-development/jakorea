@@ -1,5 +1,5 @@
 /**
- * 사용자 관리 API 서비스 (Mock)
+ * 사용자 관리 API 서비스 (Mock + Remote 분기)
  * Phase 5.1.2: 사용자 관리 페이지
  */
 
@@ -21,6 +21,29 @@ import {
 import { mockUsers } from '@/data/mock/users'
 import { mockUserHistories } from '@/data/mock/mypage'
 import type { UUID } from '@/types/index'
+import {
+  isMemberBasicInfoPatchRemoteEnabled,
+  isMembersRemoteEnabled,
+  stripUnsupportedMemberListFilters,
+} from '@/features/user/api/member-remote-capabilities'
+import { mapMemberListItems } from '@/features/user/api/map-member-list-item'
+import { mapMemberDetailToUser } from '@/features/user/api/map-member-detail-to-user'
+import { mapCreateUserRequestToPreRegister } from '@/features/user/api/map-pre-register-request'
+import {
+  mapIsActiveToMemberStatus,
+  mapUserRoleToApiRole,
+} from '@/features/user/api/map-member-role'
+import {
+  deleteMemberRemote,
+  fetchMemberDetailRemote,
+  fetchMemberExternalIdentifiersRemote,
+  fetchMemberInstructorProfileRemote,
+  fetchMembersPageRemote,
+  preRegisterMemberRemote,
+} from '@/features/user/api/members-api-client'
+import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-external-identifiers'
+import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
+import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 
 /**
  * 사용자 목록 조회
@@ -141,6 +164,26 @@ export async function getUsersPage(
   filters: GetUsersPageParams | undefined,
   page: number
 ): Promise<GetUsersPageResult> {
+  if (isMembersRemoteEnabled()) {
+    try {
+      const apiFilters = stripUnsupportedMemberListFilters(filters)
+      const res = await fetchMembersPageRemote({
+        keyword: apiFilters.search?.trim() || undefined,
+        role: mapUserRoleToApiRole(apiFilters.role),
+        memberStatus: mapIsActiveToMemberStatus(apiFilters.isActive),
+        page,
+        size: PAGE_SIZE,
+      })
+      const users = mapMemberListItems(res.items)
+      const total = res.totalElements ?? users.length
+      const totalPages = res.totalPages ?? 0
+      const hasMore = totalPages > 0 ? page + 1 < totalPages : users.length >= PAGE_SIZE
+      return { users, total, hasMore }
+    } catch (error) {
+      throw new Error(getMemberApiErrorMessage(error, '회원 목록을 불러오지 못했습니다.'))
+    }
+  }
+
   const all = await getUsers(filters)
   const offset = page * PAGE_SIZE
   const users = all.slice(offset, offset + PAGE_SIZE)
@@ -178,6 +221,10 @@ export async function patchUserBasicInfo(
   userId: UUID,
   patch: PatchUserBasicInfoInput
 ): Promise<Omit<User, 'password'>> {
+  if (isMembersRemoteEnabled() && !isMemberBasicInfoPatchRemoteEnabled()) {
+    throw new Error('회원 기본정보 수정 API가 아직 제공되지 않습니다.')
+  }
+
   await new Promise(resolve => setTimeout(resolve, 300))
 
   const userIndex = mockUsers.findIndex(u => u.id === userId)
@@ -264,6 +311,33 @@ function snapshotUserWithoutPassword(userId: UUID): Omit<User, 'password'> | nul
 }
 
 export async function getUserById(userId: UUID): Promise<Omit<User, 'password'> | null> {
+  if (isMembersRemoteEnabled()) {
+    try {
+      const memberId = resolveMemberIdForApi(userId)
+      const detail = await fetchMemberDetailRemote(memberId)
+      const isInstructor = (detail.roles ?? []).some(
+        r => String(r).toUpperCase() === 'INSTRUCTOR'
+      )
+      const [instructorProfile, externalIdentifiers] = await Promise.all([
+        isInstructor
+          ? fetchMemberInstructorProfileRemote(memberId).catch(() => null)
+          : Promise.resolve(null),
+        fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
+      ])
+      const user = mapMemberDetailToUser(detail, instructorProfile)
+      const id1365 = resolve1365IdFromExternalIdentifiers(
+        externalIdentifiers,
+        detail.external1365Id
+      )
+      if (id1365) {
+        user.id1365 = id1365
+      }
+      return user
+    } catch (error) {
+      throw new Error(getMemberApiErrorMessage(error, '회원 상세를 불러오지 못했습니다.'))
+    }
+  }
+
   await new Promise(resolve => setTimeout(resolve, 200))
   return snapshotUserWithoutPassword(userId)
 }
@@ -357,6 +431,43 @@ export interface CreateUserRequest {
 }
 
 export async function createUser(request: CreateUserRequest): Promise<Omit<User, 'password'>> {
+  if (isMembersRemoteEnabled()) {
+    try {
+      const body = mapCreateUserRequestToPreRegister(request)
+      const created = await preRegisterMemberRemote(body)
+      const memberId = created.memberId
+      if (memberId != null && !Number.isNaN(memberId)) {
+        const detail = await fetchMemberDetailRemote(memberId)
+        return mapMemberDetailToUser(detail, null)
+      }
+      if (created.memberUuid?.trim()) {
+        return {
+          id: created.memberUuid.trim(),
+          memberId: created.memberId,
+          email: request.email,
+          name: request.name,
+          role: request.role,
+          isActive: request.isActive ?? true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          registeredByAdmin: true,
+        }
+      }
+      return {
+        id: `member-pre-${Date.now()}`,
+        email: request.email,
+        name: request.name,
+        role: request.role,
+        isActive: request.isActive ?? true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        registeredByAdmin: true,
+      }
+    } catch (error) {
+      throw new Error(getMemberApiErrorMessage(error, '회원 사전 등록에 실패했습니다.'))
+    }
+  }
+
   await new Promise(resolve => setTimeout(resolve, 300))
 
   // 이메일 중복 체크
@@ -464,7 +575,17 @@ export async function updateUserProgramRole(
 /**
  * 사용자 삭제
  */
-export async function deleteUser(userId: UUID): Promise<void> {
+export async function deleteUser(userId: UUID, reason = 'CMS 관리자 회원 삭제'): Promise<void> {
+  if (isMembersRemoteEnabled()) {
+    try {
+      const memberId = resolveMemberIdForApi(userId)
+      await deleteMemberRemote(memberId, { reason })
+      return
+    } catch (error) {
+      throw new Error(getMemberApiErrorMessage(error, '회원 삭제에 실패했습니다.'))
+    }
+  }
+
   await new Promise(resolve => setTimeout(resolve, 300))
 
   const userIndex = mockUsers.findIndex(u => u.id === userId)

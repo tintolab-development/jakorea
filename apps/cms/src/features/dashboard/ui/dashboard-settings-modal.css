@@ -35,6 +35,14 @@
   flex-shrink: 0;
 }
 
+.dashboard-settings-modal__program-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  padding: 24px 0;
+}
+
 .dashboard-settings-modal__content {
   display: flex;
   flex-direction: column;

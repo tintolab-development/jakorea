@@ -1,53 +1,815 @@
 /**
- * 회원가입 페이지 스타일
- * Phase 0.1.2: 회원가입 흐름
+ * 관리자 회원가입 페이지 스타일
+ * auth-shell은 AuthPageShell에서 로드 — 여기서 @import 하면 패딩 등이 뒤집힘
  */
 
-.register-page {
+.auth-card.auth-card--register {
+  width: 600px;
+  max-width: 100%;
+  height: 709px;
+  min-height: 709px;
+  box-sizing: border-box;
+  padding: 72px 60px;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.auth-card.auth-card--register-step-2 {
+  height: 600px;
+  min-height: 600px;
+}
+
+.auth-card.auth-card--register-step-3 {
+  height: 802px;
+  min-height: 802px;
+}
+
+.auth-card.auth-card--register-step-5 {
+  height: 850px;
+  min-height: 850px;
+}
+
+.auth-card.auth-card--register-step-6 {
+  height: 870px;
+  min-height: 870px;
+}
+
+.register-page-content {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  gap: 48px;
+}
+
+.register-step-progress {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  flex-shrink: 0;
+  padding-left: 8px;
+}
+
+.register-step-progress__list {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 328px;
+  height: 32px;
+}
+
+.register-step-progress__item {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+}
+
+.register-step-progress__item:last-child {
+  flex: 0 0 32px;
+}
+
+.register-step-progress__line {
+  flex: 1;
+  height: 1px;
+  min-width: 0;
+  background: var(--table-line, #e0e0e0);
+}
+
+.register-step-progress__line--active {
+  background: var(--Color-primary-800_immersive_blueblack, #22404d);
+}
+
+.register-step-progress__circle {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background: var(--color-bg-base);
-  padding: var(--spacing-20);
+  border-radius: var(--Radius-999, 999px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  color: var(--Color-netural-cool-500, #85969d);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
 }
 
-.register-card {
+.register-step-progress__circle--active {
+  border-color: var(--Color-primary-800_immersive_blueblack, #22404d);
+  background: var(--Color-primary-800_immersive_blueblack, #22404d);
+  color: var(--main-WT, #fff);
+}
+
+.register-step-progress__circle--completed {
+  border-color: var(--Color-primary-800_immersive_blueblack, #22404d);
+  background: var(--Color-primary-800_immersive_blueblack, #22404d);
+  color: var(--main-WT, #fff);
+}
+
+.register-step-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
   width: 100%;
-  max-width: 600px;
-  box-shadow: var(--shadow-card-soft);
-  border-radius: var(--radius-8);
 }
 
-.register-header {
-  text-align: center;
-  margin-bottom: var(--spacing-32);
+.register-step-header__title {
+  margin: 0;
+  color: var(--Color-netural-black, #3d3d3d);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 144%;
 }
 
-.register-logo {
-  width: 120px;
+.register-step-header__description {
+  margin: 0;
+  color: var(--Color-primary-boundless_blue, #285f74);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.18px;
+}
+
+.admin-register-step {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  gap: 48px;
+}
+
+.admin-register-step__form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.admin-register-step__form .ant-form-item {
+  margin-bottom: 20px;
+}
+
+.admin-register-step__form .ant-form-item:last-of-type {
+  margin-bottom: 0;
+}
+
+.admin-register-step__form .ant-form-item .ant-form-item-label {
+  padding-bottom: 8px;
+}
+
+.admin-register-step__form .ant-form-item .ant-form-item-label > label {
   height: auto;
-  object-fit: contain;
-  margin-bottom: var(--spacing-24);
 }
 
-.register-step-content {
-  min-height: 400px;
-  padding: 0 var(--spacing-8);
+.admin-register-step__form .admin-register-step__actions,
+.admin-register-step--placeholder .admin-register-step__actions,
+.admin-register-step--identity .admin-register-step__actions,
+.admin-register-step--terms .admin-register-step__actions,
+.admin-register-step--review .admin-register-step__actions,
+.admin-register-step--email .admin-register-step__actions,
+.admin-register-step--password .admin-register-step__actions {
+  gap: 16px;
+  margin-top: auto;
+  padding-top: 40px;
+  flex-shrink: 0;
 }
 
-.register-error {
-  margin-bottom: var(--spacing-16);
+.admin-register-step__trailing {
+  display: none;
+}
+
+.admin-register-step--placeholder .admin-register-step__actions {
+  margin-top: auto;
+}
+
+.admin-register-step--identity {
+  gap: 48px;
+}
+
+.admin-register-step--identity .admin-register-step__content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.admin-register-step--identity .admin-register-step__actions {
+  padding-top: 40px;
+}
+
+.admin-register-step--terms {
+  gap: 48px;
+}
+
+.admin-register-step--terms .admin-register-step__content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.admin-register-step--terms .admin-register-step__actions {
+  padding-top: 8px;
+  flex-shrink: 0;
+}
+
+.register-terms-agreement {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  width: 100%;
+}
+
+.register-terms-agreement__body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.register-terms-agree-all {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  gap: var(--Spacing-16, 16px);
+  width: 100%;
+  padding: var(--Spacing-16, 16px) var(--Spacing-20, 20px);
+  border: none;
+  border-radius: var(--radius-8, 8px);
+  background: rgba(1, 161, 175, 0.08);
+  cursor: pointer;
+}
+
+.register-terms-agree-all__label {
+  color: var(--Color-primary-600, #337791);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.18px;
+}
+
+.register-terms-check {
+  display: inline-flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.register-terms-check--item {
+  width: 15px;
+  height: 11px;
+}
+
+.register-terms-check--agree-all {
+  width: 21px;
+  height: 15.4px;
+}
+
+.register-terms-check--static {
+  cursor: inherit;
+}
+
+.register-terms-check-icon--agree-all {
+  width: 21px;
+  height: 15.4px;
+  flex-shrink: 0;
+  aspect-ratio: 15 / 11;
+}
+
+.register-terms-check-icon--item {
+  width: 15px;
+  height: 11px;
+  flex-shrink: 0;
+  aspect-ratio: 15 / 11;
+}
+
+.register-terms-agreement__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.register-terms-agreement__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding-left: 16px;
+}
+
+.register-terms-agreement__item .register-terms-check--item {
+  margin-right: 16px;
+}
+
+.register-terms-agreement__badge {
+  flex-shrink: 0;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.register-terms-agreement__badge--required {
+  color: var(--Color-primary-500_resilient_turquoise, #01a1af);
+}
+
+.register-terms-agreement__badge--optional {
+  color: var(--Color-netural-cool-400, #9fafb5);
+}
+
+.register-terms-agreement__label {
+  flex: 1;
+  min-width: 0;
+  color: var(--Color-netural-warm-700, #525252);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
+.register-terms-agreement__view {
+  flex-shrink: 0;
+  padding: 0 16px 0 0;
+  border: none;
+  background: transparent;
+  color: var(--Color-netural-warm-400, #bdbdbd);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+  cursor: pointer;
+}
+
+.register-terms-agreement__footnote-wrapper {
+  display: flex;
+  padding: 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.register-terms-agreement__footnote {
+  margin: 0;
+  color: var(--Color-netural-warm-500, #999);
   text-align: center;
-  padding: var(--spacing-12);
-  background: var(--color-settlement-light);
-  border: 1px solid var(--color-settlement-border);
-  border-radius: var(--radius-4);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 160%;
 }
 
-.register-footer {
-  margin-top: var(--spacing-24);
+.admin-register-step__actions--single {
+  gap: 0;
+}
+
+.register-identity-module {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  min-height: 0;
+  padding: 24px;
+  border-radius: var(--radius-8, 8px);
+  background: var(--Color-netural-cool-50, #f5f7f7);
+}
+
+.register-identity-module__title,
+.register-identity-module__meta {
+  margin: 0;
+  color: var(--Color-netural-black, #3d3d3d);
   text-align: center;
-  padding-top: var(--spacing-16);
-  border-top: 1px solid var(--color-border-light);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 160%;
+}
+
+.admin-register-step__form .admin-register-birth-input::placeholder {
+  overflow: hidden;
+  color: var(--gray-85969-d, #85969d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.register-gender-toggle {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+.register-gender-toggle__option {
+  display: flex;
+  height: 44px;
+  padding: 6px 16px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex: 1 0 0;
+  border-radius: var(--8, 8px);
+  border: 1px solid rgba(61, 61, 61, 0.16);
+  background: var(--main-WT, #fff);
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  cursor: pointer;
+}
+
+.register-gender-toggle__option--active {
+  border-color: var(--color-mint-01, #01a1af);
+  background: rgba(1, 161, 175, 0.08);
+  color: var(--color-mint-01, #01a1af);
+  font-weight: 600;
+}
+
+.register-gender-toggle__option:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.admin-register-step--email {
+  gap: 48px;
+}
+
+.admin-register-step--email .register-step-header__description {
+  color: var(--Color-primary-boundless_blue, #285f74) !important;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 18px !important;
+  font-style: normal;
+  font-weight: 400 !important;
+  line-height: 150% !important;
+  letter-spacing: -0.18px;
+}
+
+.register-email-field {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+}
+
+.register-email-field__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-register-step--email .auth-form .register-email-field__input.ant-input {
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 16px !important;
+  font-style: normal;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+  white-space: nowrap;
+}
+
+.admin-register-step--email .auth-form .register-email-field__input.ant-input::placeholder {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+}
+
+.admin-register-step--email .auth-form .register-email-field__input--error,
+.admin-register-step--email .auth-form .register-email-field__input--error:focus {
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--color-red, #c32f4a) !important;
+  background: var(--main-WT, #fff) !important;
+  box-shadow: none !important;
+}
+
+.register-email-field__domain {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.register-email-field__check-btn.cms-button.ant-btn {
+  width: 120px !important;
+  height: auto;
+  min-height: 52px;
+  align-self: stretch;
+  flex-shrink: 0;
+  padding: 6px 16px !important;
+  font-size: 16px;
+}
+
+.register-email-field__message {
+  margin: 0;
+  padding-left: 8px;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 12px !important;
+  font-style: normal;
+  font-weight: 400 !important;
+  line-height: 140% !important;
+}
+
+.admin-register-step--email .auth-form .ant-form-item .ant-form-item-control-input {
+  min-height: 0;
+}
+
+.admin-register-step--email .auth-form .ant-form-item .ant-form-item-additional {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 6px !important;
+  min-height: 0;
+}
+
+.admin-register-step--email .auth-form .ant-form-item .ant-form-item-extra,
+.admin-register-step--email .auth-form .ant-form-item .ant-form-item-explain,
+.admin-register-step--email .auth-form .ant-form-item .ant-form-item-explain-error {
+  min-height: 0;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  font-size: 12px !important;
+  line-height: 140% !important;
+}
+
+.admin-register-step--email .auth-form .ant-form-item .ant-form-item-explain,
+.admin-register-step--email .auth-form .ant-form-item .ant-form-item-explain-error {
+  padding-left: 8px;
+}
+
+.register-email-field__message--success {
+  color: var(--color-mint-01, #01a1af);
+  text-align: left;
+}
+
+.register-email-field__message--error {
+  color: var(--color-red, #c32f4a);
+  text-align: left;
+}
+
+.admin-register-step--password {
+  gap: 48px;
+}
+
+.admin-register-step--password .auth-form .ant-form-item:has(+ .admin-register-step__actions) {
+  margin-bottom: 0;
+}
+
+.admin-register-step--password .admin-register-step__actions {
+  margin-top: 40px;
+  padding-top: 0;
+}
+
+.admin-register-step--password .auth-form .ant-form-item .ant-form-item-control-input {
+  min-height: 0;
+}
+
+.admin-register-step--password .auth-form .ant-form-item .ant-form-item-additional {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 6px !important;
+  min-height: 0;
+}
+
+.admin-register-step--password .auth-form .ant-form-item .ant-form-item-extra,
+.admin-register-step--password .auth-form .ant-form-item .ant-form-item-explain,
+.admin-register-step--password .auth-form .ant-form-item .ant-form-item-explain-error {
+  min-height: 0;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  font-size: 12px !important;
+  line-height: 140% !important;
+}
+
+.admin-register-step--password .auth-form .ant-form-item .ant-form-item-explain,
+.admin-register-step--password .auth-form .ant-form-item .ant-form-item-explain-error {
+  padding-left: 8px;
+}
+
+.admin-register-step--password .auth-form .register-password-field.ant-input-password .ant-input {
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 16px !important;
+  font-style: normal;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+  white-space: nowrap;
+}
+
+.admin-register-step--password .auth-form .register-password-field.ant-input-password .ant-input::placeholder {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+}
+
+.admin-register-step--password .auth-form .register-password-field.ant-input-password .ant-input-suffix {
+  gap: 0;
+}
+
+.register-page-content .register-password-field.ant-input-password .ant-input-password-icon {
+  display: none !important;
+}
+
+.register-page-content .register-password-field--clearable.ant-input-affix-wrapper {
+  position: relative;
+  padding-right: 12px !important;
+}
+
+.register-page-content .register-password-field--clearable .ant-input-suffix {
+  position: absolute;
+  inset-inline-end: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+}
+
+.register-page-content .register-password-field--clearable .ant-input {
+  padding-right: 46px !important;
+}
+
+.register-page-content .register-password-field--clearable .ant-input-clear-icon {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  font-size: 0;
+  line-height: 0;
+}
+
+.register-page-content .register-password-field--clearable .ant-input-clear-icon .anticon {
+  display: none;
+}
+
+.admin-register-step--password .auth-form .register-password-field--error.ant-input-password,
+.admin-register-step--password .auth-form .register-password-field--error.ant-input-affix-wrapper-focused {
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--color-red, #c32f4a) !important;
+  background: var(--main-WT, #fff) !important;
+  box-shadow: none !important;
+}
+
+.register-password-field__help {
+  margin: 0;
+  padding-left: 8px;
+  color: var(--Color-netural-cool-500, #85969d);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 12px !important;
+  font-style: normal;
+  font-weight: 400 !important;
+  line-height: 140% !important;
+}
+
+.register-password-field__message {
+  margin: 0;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 12px !important;
+  font-style: normal;
+  font-weight: 400 !important;
+  line-height: 140% !important;
+}
+
+.register-password-field__message--error {
+  color: var(--color-red, #c32f4a);
+  text-align: left;
+  padding-left: 8px;
+}
+
+.admin-register-step--review {
+  gap: 48px;
+}
+
+.admin-register-step--review .admin-register-step__content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.admin-register-step--review .admin-register-step__actions {
+  padding-top: 40px;
+}
+
+.register-review-summary {
+  width: 480px;
+  max-width: 100%;
+  border-top: 2px solid var(--Color-primary-500_resilient_turquoise, #01a1af);
+  box-sizing: border-box;
+}
+
+.register-review-summary__row {
+  display: flex;
+  width: 480px;
+  max-width: 100%;
+  padding: 16px 12px;
+  align-items: center;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.register-review-summary__row + .register-review-summary__row {
+  border-top: 1px solid var(--Color-border-default, #d9d9d9);
+}
+
+.register-review-summary__label-wrap {
+  display: flex;
+  min-width: 120px;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.register-review-summary__label {
+  overflow: hidden;
+  color: var(--Color-netural-cool-500, #85969d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  white-space: nowrap;
+}
+
+.register-review-summary__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--Color-netural-black, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .auth-card.auth-card--register,
+  .auth-card.auth-card--register-step-2,
+  .auth-card.auth-card--register-step-3,
+  .auth-card.auth-card--register-step-5,
+  .auth-card.auth-card--register-step-6 {
+    height: auto;
+    min-height: 0;
+    padding: 40px 24px;
+  }
+
+  .register-page-content {
+    padding: 0;
+  }
 }

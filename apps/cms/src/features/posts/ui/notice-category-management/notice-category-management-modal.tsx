@@ -8,6 +8,7 @@ import type { Notice } from '@/data/mock/notices'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
+import type { NoticeCategoryRemoteActions } from '@/features/posts/hooks/use-admin-notice-categories'
 import { useNoticeCategoryManagementModal } from '@/features/posts/hooks/use-notice-category-management-modal'
 import type { NoticeCategoryRow } from '@/features/posts/model/admin-notice-management.types'
 import { NoticeCategoryDeleteBlockedModal } from '@/features/posts/ui/notice-category-management/notice-category-delete-blocked-modal'
@@ -26,6 +27,7 @@ export type NoticeCategoryManagementModalProps = {
   categories: NoticeCategoryRow[]
   onCategoriesChange: (next: NoticeCategoryRow[]) => void
   notices: readonly Notice[]
+  remoteActions?: NoticeCategoryRemoteActions
 }
 
 export function NoticeCategoryManagementModal({
@@ -34,6 +36,7 @@ export function NoticeCategoryManagementModal({
   categories,
   onCategoriesChange,
   notices,
+  remoteActions,
 }: NoticeCategoryManagementModalProps) {
   const ctrl = useNoticeCategoryManagementModal({
     open,
@@ -41,6 +44,7 @@ export function NoticeCategoryManagementModal({
     onCategoriesChange,
     notices,
     onClose: onCancel,
+    remoteActions,
   })
 
   const {

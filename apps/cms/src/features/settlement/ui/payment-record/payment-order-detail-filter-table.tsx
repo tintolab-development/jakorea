@@ -13,6 +13,7 @@ import type {
 } from '@/data/mock/payment-order-admin-list'
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
 import type { PaymentOrderCalculationStatementCommitPayload } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
+import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { PaymentOrderBatchConfirmModal } from './payment-order-batch-confirm-modal'
@@ -26,7 +27,10 @@ import './payment-order-detail-filter-table.css'
 
 export type { PaymentOrderDetailLineRow }
 
-export type PaymentOrderDetailFilterTableProps =
+export type PaymentOrderDetailFilterTableProps = {
+  paymentOrdersRemote?: boolean
+  detailContextQuery?: PaymentOrdersDetailContextQueryResult
+} & (
   | {
       mode: 'program'
       programRow: PaymentOrderAdminProgramRow
@@ -49,6 +53,7 @@ export type PaymentOrderDetailFilterTableProps =
         sink: (payload: PaymentOrderCalculationStatementCommitPayload) => void
       ) => void
     }
+)
 
 export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTableProps) {
   const {

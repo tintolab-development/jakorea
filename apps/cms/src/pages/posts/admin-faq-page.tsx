@@ -11,26 +11,24 @@ import {
   type Key,
   type MouseEvent as ReactMouseEvent,
 } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type { AdminFaq } from '@/data/mock/admin-faqs'
-import { listAdminFaqs } from '@/features/posts/api/admin-faq-mock-store'
-import { deleteFaqs } from '@/features/posts/api/admin-faq-service'
+import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { useAdminFaqCategories } from '@/features/posts/hooks/use-admin-faq-categories'
+import { useFaqListQuery } from '@/features/posts/hooks/use-faq-list-query'
+import { useFaqMutations } from '@/features/posts/hooks/use-faq-mutations'
 import { buildAdminFaqManagementFilterFields } from '@/features/posts/model/admin-faq-management-filter-fields'
 import { adminFaqManagementTablePageConfig } from '@/features/posts/model/admin-faq-management-table.config'
-import type {
-  AdminFaqTableContext,
-  FaqCategoryRow,
-} from '@/features/posts/model/admin-faq-management.types'
+import type { AdminFaqTableContext } from '@/features/posts/model/admin-faq-management.types'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { CmsButton } from '@/shared/ui'
+import { ActionResultModal, CmsButton } from '@/shared/ui'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import { FaqCategoryManagementModal } from '@/features/posts/ui/faq-category-management-modal'
 import { FaqFormModal } from '@/features/posts/ui/faq-form-modal'
@@ -51,44 +49,26 @@ const FAQ_LIST_COL_WIDTH = {
   datetime: 176,
 } as const
 
-const ADMIN_FAQ_LIST_PATH = '/admin/posts/faq'
-
 function AdminFAQPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
-  const location = useLocation()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const [rows, setRows] = useState<AdminFaq[]>(() => listAdminFaqs())
-
-  const syncRowsFromStore = useCallback(() => {
-    setRows(listAdminFaqs())
-  }, [])
-
-  useEffect(() => {
-    if (location.pathname === ADMIN_FAQ_LIST_PATH) {
-      // mock 저장소와 목록 동기화 — 상세 복귀 등(공지 목록과 동일)
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- pathname 변경 시 스토어 재로드
-      syncRowsFromStore()
-    }
-  }, [location.pathname, syncRowsFromStore])
+  const listQuery = useFaqListQuery(searchParams, true)
+  const { bulkDeleteMutation } = useFaqMutations()
+  const rows = listQuery.data ?? []
 
   const {
     categoryRows,
     allowedCategoryLabels,
     allowedCategorySet,
-    replaceCategories: replaceFaqCategories,
+    remoteActions: faqCategoryRemoteActions,
   } = useAdminFaqCategories()
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
-
-  const handleFaqCategoriesChange = useCallback(
-    (next: FaqCategoryRow[]) => {
-      replaceFaqCategories(next)
-      syncRowsFromStore()
-    },
-    [replaceFaqCategories, syncRowsFromStore]
-  )
+  const [actionResultOpen, setActionResultOpen] = useState(false)
+  const [actionResultTitle, setActionResultTitle] = useState('')
+  const [actionResultMessage, setActionResultMessage] = useState('')
 
   const tablePageContext: AdminFaqTableContext = useMemo(
     () => ({
@@ -141,14 +121,15 @@ function AdminFAQPage() {
       return
     }
     try {
-      await deleteFaqs(ids)
-      setRows(listAdminFaqs())
+      await bulkDeleteMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setBulkDeleteConfirmOpen(false)
     } catch (error) {
-      console.debug('adminFaqPage bulkDelete failed', error)
+      setActionResultTitle('FAQ 삭제 실패')
+      setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
+      setActionResultOpen(true)
     }
-  }, [selectedRowKeys])
+  }, [bulkDeleteMutation, selectedRowKeys])
 
   const handleRegister = useCallback(() => {
     if (!canWrite) return
@@ -238,13 +219,20 @@ function AdminFAQPage() {
         open={categoryModalOpen}
         onCancel={() => setCategoryModalOpen(false)}
         categories={categoryRows}
-        onCategoriesChange={handleFaqCategoriesChange}
+        onCategoriesChange={() => {}}
         faqs={rows}
+        remoteActions={faqCategoryRemoteActions}
       />
       <FaqFormModal
         open={registerModalOpen}
         onCancel={() => setRegisterModalOpen(false)}
-        onSuccess={() => setRows(listAdminFaqs())}
+        onSuccess={() => setRegisterModalOpen(false)}
+      />
+      <ActionResultModal
+        open={actionResultOpen}
+        title={actionResultTitle}
+        body={actionResultMessage}
+        onClose={() => setActionResultOpen(false)}
       />
       <FilterTableLayout
         bordered={false}

@@ -6,6 +6,7 @@
 
 import { useEffect, useMemo } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { shouldUseDashboardRemoteApi } from '../api/admin-dashboard-service'
 import { useNotificationStore } from '../model/notification-store'
 import type { Notification } from '../api/notification-service'
 
@@ -21,8 +22,9 @@ interface UseNotificationsResult {
 
 export function useNotifications(): UseNotificationsResult {
   const { user } = useAuthStore()
+  const useMockList = !(user?.role === 'ADMIN' && shouldUseDashboardRemoteApi())
   const {
-    notifications,
+    notifications: storeNotifications,
     loading,
     fetchNotifications,
     markAsRead,
@@ -31,16 +33,20 @@ export function useNotifications(): UseNotificationsResult {
     refresh,
   } = useNotificationStore()
 
-  // 사용자 변경 시 알림 로드
+  const notifications = useMockList ? storeNotifications : []
+
+  // 사용자 변경 시 알림 로드 (목록 API 없음 — ADMIN 실 API는 count만 사용)
   useEffect(() => {
-    if (user?.id) {
-      fetchNotifications()
-    } else {
-      // 사용자가 없으면 알림 초기화
+    if (!user?.id) {
       useNotificationStore.setState({ notifications: [] })
+      return
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id])
+    if (!useMockList) {
+      useNotificationStore.setState({ notifications: [] })
+      return
+    }
+    void fetchNotifications()
+  }, [user?.id, useMockList, fetchNotifications])
 
   const unreadCount = useMemo(
     () => notifications.filter(notification => !notification.read).length,

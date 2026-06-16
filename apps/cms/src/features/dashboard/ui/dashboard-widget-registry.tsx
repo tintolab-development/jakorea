@@ -33,6 +33,7 @@ import { ProgramScheduleWidget } from '@/features/dashboard/ui/program-schedule-
 import { MenuShortcutWidget } from '@/features/dashboard/ui/menu-shortcut-widget'
 import { RecruitmentStatusWidget } from '@/features/dashboard/ui/recruitment-status-widget'
 import { KpiAchievementWidget } from '@/features/dashboard/ui/kpi-achievement-widget'
+import { LogAlertsWidget } from '@/features/dashboard/ui/log-alerts-widget'
 
 export interface DashboardWidgetRenderProps {
   overallStatistics: OverallStatistics | null
@@ -170,4 +171,5 @@ export const DASHBOARD_WIDGET_REGISTRY: Partial<Record<DashboardWidgetType, Dash
   'menu-shortcut-widget': () => <MenuShortcutWidget />,
   'recruitment-status-widget': () => <RecruitmentStatusWidget />,
   'kpi-achievement-widget': () => <KpiAchievementWidget />,
+  'log-alerts-widget': () => <LogAlertsWidget />,
 }

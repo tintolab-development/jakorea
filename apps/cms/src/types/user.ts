@@ -49,6 +49,8 @@ export interface SchoolAffiliatedTeacherRow {
 
 export interface User {
   id: UUID
+  /** 백엔드 회원 숫자 ID — remote API 연동 시 목록·상세에서 채움 */
+  memberId?: number
   email: string
   password: string // Mock 데이터용 (실제로는 해시된 값)
   name: string
@@ -151,6 +153,13 @@ export interface User {
   gender?: string
   affiliation?: string
   socialAccounts?: string[]
+
+  /** 강사 instructor-profile — 경력 텍스트 (remote) */
+  instructorCareerText?: string
+  /** 강사 instructor-profile — 자기소개 (remote) */
+  instructorSelfIntroduction?: string
+  /** 강사 instructor-profile — 승인 상태 (remote) */
+  instructorApprovalStatus?: string
 
   /**
    * 회원 목록 테이블 전용 지표 (API가 내려주면 표시, 없으면 '-' 또는 기존 필드로 추론)

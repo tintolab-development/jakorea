@@ -1,17 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { useMemo } from 'react'
+import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
+import { fileDownloadHistoryFilterFields } from '@/features/download/model/file-download-history-filter-fields'
+import { fileDownloadHistoryTablePageConfig } from '@/features/download/model/file-download-history-table.config'
+import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
+import { useFileDownloadHistoryQuery } from '@/features/logs/hooks/use-file-download-history-query'
+import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
+import { LogsQueryError } from '@/features/logs/ui/logs-query-error'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
   EMPTY_TABLE_PAGE_CONTEXT,
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
-import { getDownloadLogs } from '@/entities/download-log/api/download-log-service'
 import type { DownloadLog } from '@/types/download-log'
-import { fileDownloadHistoryFilterFields } from '@/features/download/model/file-download-history-filter-fields'
-import { fileDownloadHistoryTablePageConfig } from '@/features/download/model/file-download-history-table.config'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
@@ -28,15 +31,8 @@ const TABLE_COL_WIDTH = {
 
 export default function FileDownloadHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [rows, setRows] = useState<DownloadLog[]>([])
-
-  useEffect(() => {
-    const load = async () => {
-      const result = await getDownloadLogs()
-      setRows(result)
-    }
-    void load()
-  }, [])
+  const remoteEnabled = useLogsRemoteQueryEnabled()
+  const { data: rows = [], isLoading, isError, error } = useFileDownloadHistoryQuery(searchParams)
 
   const { pendingFilters, handleFilterChange, applySearch, tableData, displayedCount } = useTablePage(
     fileDownloadHistoryTablePageConfig,
@@ -111,15 +107,25 @@ export default function FileDownloadHistoryPage() {
         data: tableData,
       }}
     >
-      <Table<DownloadLog>
-        rowKey="id"
-        className="cms-data-table"
-        tableLayout="fixed"
-        scroll={{ x: FILE_DOWNLOAD_HISTORY_TABLE_SCROLL_X }}
-        columns={columns}
-        dataSource={tableData}
-        pagination={false}
-      />
+      {!remoteEnabled ? (
+        <LogsQueryError message="로그 관리 API를 사용하려면 관리자 로그인이 필요합니다." />
+      ) : isLoading ? (
+        <Spin />
+      ) : isError ? (
+        <LogsQueryError
+          message={getLogsApiErrorMessage(error, '파일 다운로드 이력을 불러오지 못했습니다.')}
+        />
+      ) : (
+        <Table<DownloadLog>
+          rowKey="id"
+          className="cms-data-table"
+          tableLayout="fixed"
+          scroll={{ x: FILE_DOWNLOAD_HISTORY_TABLE_SCROLL_X }}
+          columns={columns}
+          dataSource={tableData}
+          pagination={false}
+        />
+      )}
     </FilterTableLayout>
   )
 }

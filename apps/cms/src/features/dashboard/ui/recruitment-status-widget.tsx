@@ -7,14 +7,15 @@
 
 import { Card, Button, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Program } from '@/types/domain'
 import { getCapacity } from '@/features/program/general/lib/program-helpers'
 import { ProgramLifecycleStatusText } from '@/shared/components/program-lifecycle-status-text'
-import { getRecruitmentStatusList } from '../api/admin-dashboard-service'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
+import { useRecruitmentStatusList } from '../hooks/use-recruitment-status-list'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
+import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
 import '@/shared/ui/widget-more-button.css'
 import './dashboard-widget-table.css'
 
@@ -22,7 +23,6 @@ const { Text } = Typography
 
 const WIDGET_KEY = 'recruitment-status-widget'
 const EMPTY_IDS: string[] = []
-const recruitmentStatusCache = new Map<string, Program[]>()
 
 export function RecruitmentStatusWidget() {
   const navigate = useNavigate()
@@ -30,39 +30,8 @@ export function RecruitmentStatusWidget() {
   const [halfColumn, setHalfColumn] = useState(false)
   const allowedProgramIds =
     useDashboardSettingsStore(s => s.widgetProgramIds[WIDGET_KEY]) ?? EMPTY_IDS
-  const [programs, setPrograms] = useState<Program[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: programs = [], isLoading: loading, isError } = useRecruitmentStatusList(allowedProgramIds)
   const equalWidth = halfColumn ? '25%' : undefined
-  const allowedProgramIdsKey = allowedProgramIds.join(',')
-
-  useEffect(() => {
-    const cached = recruitmentStatusCache.get(allowedProgramIdsKey)
-    if (cached) {
-      setPrograms(cached)
-      setLoading(false)
-      return
-    }
-
-    let cancelled = false
-    setLoading(true)
-    getRecruitmentStatusList(
-      allowedProgramIds.length > 0 ? { programIds: allowedProgramIds } : undefined
-    )
-      .then(data => {
-        if (!cancelled) {
-          recruitmentStatusCache.set(allowedProgramIdsKey, data)
-          setPrograms(data)
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [allowedProgramIds.length, allowedProgramIds, allowedProgramIdsKey])
-
-  const totalCount = programs.length
   useLayoutEffect(() => {
     const root = cardRef.current
     if (!root) {
@@ -80,6 +49,8 @@ export function RecruitmentStatusWidget() {
     mo.observe(slot, { attributes: true, attributeFilter: ['data-col-span'] })
     return () => mo.disconnect()
   }, [])
+
+  const totalCount = programs.length
 
   const columns: ColumnsType<Program> = useMemo(
     () => [
@@ -164,19 +135,23 @@ export function RecruitmentStatusWidget() {
         </Button>
       }
     >
-      <Table<Program>
-        columns={columns}
-        dataSource={programs}
-        rowKey="id"
-        pagination={false}
-        loading={loading}
-        className="dashboard-widget-table__data"
-        onRow={record => ({
-          onClick: () => {
-            navigate(`/programs/general?programId=${encodeURIComponent(record.id)}`)
-          },
-        })}
-      />
+      {isError ? (
+        <DashboardWidgetQueryError />
+      ) : (
+        <Table<Program>
+          columns={columns}
+          dataSource={programs}
+          rowKey="id"
+          pagination={false}
+          loading={loading}
+          className="dashboard-widget-table__data"
+          onRow={record => ({
+            onClick: () => {
+              navigate(`/programs/general?programId=${encodeURIComponent(record.id)}`)
+            },
+          })}
+        />
+      )}
     </Card>
   )
 }

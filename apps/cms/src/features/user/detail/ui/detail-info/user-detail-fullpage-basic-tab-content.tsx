@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Space } from 'antd'
 import type { User } from '@/types/user'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
@@ -9,6 +10,8 @@ import {
 import {
   UserConsentAgreementSection,
   resolveUserConsentAgreementPreset,
+  CONSENT_PRESET_SCHEMA,
+  CONSENT_ROWS_PERMISSION_INSTRUCTOR,
 } from '@/features/user/detail/ui/user-consent-agreement-section'
 import { InstructorResumeDetailForms } from '@/features/user/detail/ui/instructor-resume-detail-forms'
 import { SchoolAffiliatedTeachersSection } from '@/features/user/detail/ui/school-affiliated-teachers-section'
@@ -20,6 +23,10 @@ import {
   shouldShowAdminCommentSectionForViewer,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useMemberConsentRecordsQuery } from '@/features/user/api/hooks/use-member-detail-query'
+import { applyConsentRecordsToSchema } from '@/features/user/api/map-member-consent-records'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { MemberDetailMockDataBanner } from '@/features/user/detail/ui/member-detail-mock-data-banner'
 
 export interface UserDetailFullpageBasicTabContentProps {
   mode: 'default' | 'permission'
@@ -60,23 +67,53 @@ export function UserDetailFullpageBasicTabContent({
   onPermissionResendNotification,
 }: UserDetailFullpageBasicTabContentProps) {
   const currentUser = useAuthStore(state => state.user)
+  const membersRemote = isMembersRemoteEnabled()
   const adminMemberProfileFieldsEditableWhenEditing =
     user.role !== 'ADMIN' || canEditAdminMemberInfo(currentUser, user)
   const canShowAdminCommentForTarget = shouldShowAdminCommentSectionForViewer(currentUser, user)
 
+  const consentPreset = resolveUserConsentAgreementPreset(user)
+  const consentViewVariant =
+    mode === 'permission' && permissionRole === 'instructor' ? 'permission_instructor' : 'default'
+
+  const { data: consentRecords = [], isLoading: consentLoading } = useMemberConsentRecordsQuery(
+    user.memberId,
+    membersRemote && basicTab.showConsentAgreement
+  )
+
+  const remoteConsentRows = useMemo(() => {
+    if (!membersRemote || !basicTab.showConsentAgreement) return undefined
+    const baseSchema =
+      consentViewVariant === 'permission_instructor'
+        ? CONSENT_ROWS_PERMISSION_INSTRUCTOR
+        : CONSENT_PRESET_SCHEMA[consentPreset]
+    return applyConsentRecordsToSchema(baseSchema, consentRecords)
+  }, [
+    membersRemote,
+    basicTab.showConsentAgreement,
+    consentViewVariant,
+    consentPreset,
+    consentRecords,
+  ])
+
   return (
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
       {canShowAdminCommentForTarget ? (
-        <UserDetailAdminCommentSection
-          user={user}
-          memberInfoEditing={memberInfoEditing}
-          adminCommentDraft={memberInfoDraft?.adminComment}
-          onAdminCommentChange={
-            memberInfoEditing && onMemberInfoDraftChange
-              ? value => onMemberInfoDraftChange({ adminComment: value })
-              : undefined
-          }
-        />
+        <>
+          {membersRemote ? (
+            <MemberDetailMockDataBanner message="관리자 코멘트는 API가 제공되지 않아 mock 데이터로 표시됩니다." />
+          ) : null}
+          <UserDetailAdminCommentSection
+            user={user}
+            memberInfoEditing={memberInfoEditing}
+            adminCommentDraft={memberInfoDraft?.adminComment}
+            onAdminCommentChange={
+              memberInfoEditing && onMemberInfoDraftChange
+                ? value => onMemberInfoDraftChange({ adminComment: value })
+                : undefined
+            }
+          />
+        </>
       ) : null}
       <UserBasicInfoSection
         user={user}
@@ -96,23 +133,31 @@ export function UserDetailFullpageBasicTabContent({
       />
       {basicTab.showConsentAgreement ? (
         <UserConsentAgreementSection
-          preset={resolveUserConsentAgreementPreset(user)}
-          viewVariant={
-            mode === 'permission' && permissionRole === 'instructor'
-              ? 'permission_instructor'
-              : 'default'
-          }
+          preset={consentPreset}
+          viewVariant={consentViewVariant}
+          remoteConsentRows={remoteConsentRows}
+          remoteConsentLoading={membersRemote && consentLoading}
         />
       ) : null}
       {instructorResumeApplicantRow ? (
-        <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />
+        <>
+          {membersRemote ? (
+            <MemberDetailMockDataBanner message="강사 이력서 중 계좌·학력 상세·자격증·수상 내역은 API 미제공 필드로 mock 또는 빈 값이 표시될 수 있습니다." />
+          ) : null}
+          <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />
+        </>
       ) : null}
       {basicTab.showSchoolAffiliatedTeachers ? (
-        <SchoolAffiliatedTeachersSection
-          rows={user.schoolInfo?.affiliatedTeachers ?? []}
-          personalInfoRevealed={personalInfoRevealed}
-          onLinkedUserClick={onNavigateToLinkedUser}
-        />
+        <>
+          {membersRemote ? (
+            <MemberDetailMockDataBanner message="소속 교사 목록 API가 제공되지 않아 mock 데이터로 표시됩니다." />
+          ) : null}
+          <SchoolAffiliatedTeachersSection
+            rows={user.schoolInfo?.affiliatedTeachers ?? []}
+            personalInfoRevealed={personalInfoRevealed}
+            onLinkedUserClick={onNavigateToLinkedUser}
+          />
+        </>
       ) : null}
     </Space>
   )

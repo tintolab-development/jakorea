@@ -8,74 +8,132 @@
 }
 
 /*
- * 문의내역 TableFilterGroup: 일반 칸 max-width 260px.
- * 문의일(dateRange): 래퍼 전체를 260px 한 덩어리로 제한하지 않음 — 분리형 각 세그먼트(시작·종료)만 max 260px.
+ * 필터 2행 고정 (1행 5필드 · 2행 담당자명·문의일시 + 조회)
+ * 필드 규격: min 240px · max 260px · 기본 260px (좁은 카드에서는 clamp로 240~260 사이 축소)
+ * gap 12px · dateRange 열 = 2×열폭 + 20px
  */
-.admin-inquiry-page .table-filter-group__grid-cell {
-  max-width: min(100%, var(--filter-control-max-width, 240px));
-  width: min(100%, var(--filter-control-max-width, 240px));
-  box-sizing: border-box;
-}
-
-.admin-inquiry-page .table-filter-group__grid-cell[data-filter-field-key='dateRange'] {
-  max-width: min(
-    100%,
-    calc(2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px))
-  );
-  width: min(
-    100%,
-    calc(2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px))
+.filter-table-layout.admin-inquiry-page__filter-layout {
+  --filter-field-gap: 12px;
+  --table-filter-field-gap: 12px;
+  --table-filter-field-min-width: 240px;
+  --table-filter-field-max-width: 260px;
+  --filter-control-width: 260px;
+  --filter-control-max-width: 260px;
+  --admin-inquiry-filter-col-width: clamp(
+    240px,
+    calc((100% - 4 * var(--filter-field-gap)) / 5),
+    260px
   );
 }
 
-.admin-inquiry-page
-  .table-filter-group__grid-cell[data-filter-field-key='dateRange']
-  .cms-datepicker.cms-datepicker--range-split {
-  max-width: min(
-    100%,
-    calc(2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px))
-  );
+.filter-table-layout.admin-inquiry-page__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.filter-table-layout.admin-inquiry-page__filter-layout .table-filter-group__fields-rows {
+  gap: 12px;
+  width: 100%;
+}
+
+/* 1행: 필드 5개 가로 한 줄 */
+.filter-table-layout.admin-inquiry-page__filter-layout
+  .table-filter-group__fields-rows
+  > .table-filter-group__fields-grid-row {
+  display: grid !important;
   width: 100%;
   box-sizing: border-box;
+  gap: 12px;
+  align-items: end;
+  justify-content: start;
+  grid-template-columns: repeat(5, minmax(0, var(--admin-inquiry-filter-col-width))) !important;
 }
 
-.admin-inquiry-page
+/* 2행: 담당자명(1열) · 문의일시(2열+구분) · 여백 · 조회(우측) */
+.filter-table-layout.admin-inquiry-page__filter-layout
+  .table-filter-group__fields-row-with-action {
+  display: grid !important;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 12px;
+  align-items: end;
+  grid-template-columns:
+    minmax(0, var(--admin-inquiry-filter-col-width))
+    minmax(
+      0,
+      calc(2 * var(--admin-inquiry-filter-col-width) + var(--filter-control-range-split-between, 20px))
+    )
+    minmax(0, 1fr)
+    160px !important;
+}
+
+.filter-table-layout.admin-inquiry-page__filter-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-grid-row {
+  display: contents;
+}
+
+.filter-table-layout.admin-inquiry-page__filter-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-shell--inline {
+  grid-column: 4;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  justify-self: end;
+}
+
+.filter-table-layout.admin-inquiry-page__filter-layout .table-filter-group__grid-cell {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.filter-table-layout.admin-inquiry-page__filter-layout
+  .table-filter-group__grid-cell
+  .table-filter-group__field,
+.filter-table-layout.admin-inquiry-page__filter-layout
+  .table-filter-group__grid-cell
+  .labeled-search-input,
+.filter-table-layout.admin-inquiry-page__filter-layout
+  .table-filter-group__grid-cell
+  .cms-select,
+.filter-table-layout.admin-inquiry-page__filter-layout
+  .table-filter-group__grid-cell
+  .ant-select,
+.filter-table-layout.admin-inquiry-page__filter-layout
+  .table-filter-group__grid-cell
+  .cms-input,
+.filter-table-layout.admin-inquiry-page__filter-layout
+  .table-filter-group__grid-cell
+  .ant-input-affix-wrapper,
+.filter-table-layout.admin-inquiry-page__filter-layout
+  .table-filter-group__grid-cell
+  .cms-datepicker:not(.cms-datepicker--range-split) {
+  width: 100% !important;
+  min-width: 240px !important;
+  max-width: 260px !important;
+  box-sizing: border-box;
+}
+
+.filter-table-layout.admin-inquiry-page__filter-layout
+  .table-filter-group__grid-cell[data-filter-field-key='dateRange']
+  .cms-datepicker.cms-datepicker--range-split {
+  width: 100% !important;
+  min-width: calc(2 * 240px + var(--filter-control-range-split-between, 20px)) !important;
+  max-width: calc(2 * 260px + var(--filter-control-range-split-between, 20px)) !important;
+  box-sizing: border-box;
+}
+
+.filter-table-layout.admin-inquiry-page__filter-layout
   .table-filter-group__grid-cell[data-filter-field-key='dateRange']
   .cms-datepicker.cms-datepicker--range-split
   .cms-datepicker__segment {
-  max-width: min(100%, var(--filter-control-max-width, 240px)) !important;
   flex: 1 1 0;
-  width: 100%;
+  min-width: 240px !important;
+  max-width: 260px !important;
+  width: 100% !important;
   box-sizing: border-box;
-}
-
-.admin-inquiry-page .table-filter-group__grid-cell .table-filter-group__field {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-}
-
-.admin-inquiry-page .table-filter-group__grid-cell .table-filter-group__label {
-  display: block;
-  white-space: normal;
-  overflow-wrap: break-word;
-  word-break: keep-all;
-  height: auto;
-  min-height: var(--filter-label-height, 27px);
-}
-
-.admin-inquiry-page .table-filter-group__grid-cell .labeled-search-input__label {
-  display: flex;
-  align-items: flex-start;
-  white-space: normal;
-  overflow-wrap: break-word;
-  word-break: keep-all;
-  height: auto;
-  min-height: var(--filter-label-height, 27px);
-}
-
-.admin-inquiry-page .filter-table-layout .filter-table-layout__divider {
-  padding: 32px 0;
 }
 
 .admin-inquiry-page__table.cms-data-table .ant-table-thead > tr > th:not(.ant-table-cell-scrollbar),
@@ -96,10 +154,6 @@
   width: 80px;
   min-width: 80px;
   max-width: 80px;
-}
-
-.admin-inquiry-page__table.cms-data-table .admin-inquiry-page__cell--title {
-  text-align: left;
 }
 
 /* 답변 대기·답변 완료 공통 타이포 */

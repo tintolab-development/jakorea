@@ -38,6 +38,14 @@
   ) !important;
 }
 
+.cms-button.ant-btn.cms-button--loading-only {
+  gap: 0 !important;
+}
+
+.cms-button.ant-btn.cms-button--loading-only .ant-btn-loading-icon {
+  margin-inline-end: 0 !important;
+}
+
 /* ----- size ----- */
 .cms-button.ant-btn.cms-button--large {
   width: 140px;

@@ -3,6 +3,7 @@
  * 필터·툴바(제목·뷰 전환·엑셀): FilterTableLayout
  */
 
+import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { ViewModeToggle } from '@/shared/components/view-mode'
 import '@/shared/components/list-page/list-page-layout.css'
@@ -29,7 +30,28 @@ export default function PaymentOrdersPage() {
     total,
     paymentOrdersExcelExport,
     renderContent,
+    paymentOrdersRemote,
+    remoteListQuery,
+    remoteCalendarQuery,
   } = usePaymentOrdersListPage()
+
+  const contentLoading =
+    paymentOrdersRemote &&
+    ((viewMode === 'list' && remoteListQuery.isLoading) ||
+      (viewMode === 'calendar' &&
+        (remoteListQuery.isLoading || remoteCalendarQuery.isLoading)))
+
+  const contentError =
+    paymentOrdersRemote &&
+    (viewMode === 'list'
+      ? remoteListQuery.isError
+        ? remoteListQuery.error
+        : null
+      : remoteListQuery.isError
+        ? remoteListQuery.error
+        : remoteCalendarQuery.isError
+          ? remoteCalendarQuery.error
+          : null)
 
   return (
     <div className="payment-orders-page">
@@ -60,7 +82,17 @@ export default function PaymentOrdersPage() {
         }
         excelExport={paymentOrdersExcelExport}
       >
-        {renderContent(viewMode)}
+        {contentLoading ? (
+          <div className="payment-orders-page__loading">
+            <Spin />
+          </div>
+        ) : contentError ? (
+          <div className="payment-orders-page__error" role="alert">
+            {contentError instanceof Error ? contentError.message : '목록을 불러오지 못했습니다.'}
+          </div>
+        ) : (
+          renderContent(viewMode)
+        )}
       </FilterTableLayout>
 
       <PaymentOrderDetailFullPageModal

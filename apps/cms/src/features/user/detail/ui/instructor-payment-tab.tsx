@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Table } from 'antd'
+import { Alert, Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   CalendarOutlined,
@@ -21,6 +21,12 @@ import {
   INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
   type InstructorSettlementListRow,
 } from '@/data/mock/instructor-member-settlements'
+import { useMemberInstructorSettlementsQuery } from '@/features/user/api/instructor-member-settlements-remote'
+import { mapSettlementsToInstructorMemberRows } from '@/features/user/api/map-settlement-to-instructor-member-row'
+import {
+  isMemberInstructorSettlementsRemoteEnabled,
+  isMembersRemoteEnabled,
+} from '@/features/user/api/member-remote-capabilities'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { InstructorInvoiceModal } from './modal/instructor-invoice-modal'
 import { InstructorPaymentStatementBlockedModal } from './modal/instructor-payment-statement-blocked-modal'
@@ -67,11 +73,13 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
 export interface InstructorPaymentTabProps {
   instructorUserId: string
   instructorName: string
+  instructorMemberId?: number
 }
 
 export function InstructorPaymentTab({
   instructorUserId,
   instructorName: _instructorName,
+  instructorMemberId,
 }: InstructorPaymentTabProps) {
   const [pendingFilters, setPendingFilters] = useState<Record<string, unknown>>({
     programName: '',
@@ -94,7 +102,24 @@ export function InstructorPaymentTab({
     selectedCount: number
   }>({ open: false, variant: 'single', selectedCount: 0 })
 
-  const baseRows = useMemo(() => getInstructorSettlementRows(instructorUserId), [instructorUserId])
+  const settlementsRemote = isMemberInstructorSettlementsRemoteEnabled()
+  const membersRemote = isMembersRemoteEnabled()
+  const showMockSettlementBanner = membersRemote && !settlementsRemote
+
+  const { data: remoteSettlementItems = [], isLoading: settlementsLoading } =
+    useMemberInstructorSettlementsQuery(instructorMemberId, settlementsRemote)
+
+  const baseRows = useMemo(() => {
+    if (settlementsRemote && instructorMemberId != null) {
+      return mapSettlementsToInstructorMemberRows(remoteSettlementItems)
+    }
+    return getInstructorSettlementRows(instructorUserId)
+  }, [
+    settlementsRemote,
+    instructorMemberId,
+    remoteSettlementItems,
+    instructorUserId,
+  ])
   const effectiveRows = useMemo(
     () =>
       baseRows.map(row => {
@@ -246,6 +271,15 @@ export function InstructorPaymentTab({
         .filter(Boolean)
         .join(' ')}
     >
+      {showMockSettlementBanner ? (
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message="정산 API 모듈(paymentOrders 또는 accountPayments)이 비활성화되어 mock 정산 데이터를 표시합니다."
+        />
+      ) : null}
+      <Spin spinning={settlementsRemote && settlementsLoading}>
       <TableFilterGroup
         fields={FILTER_FIELDS}
         filters={pendingFilters}
@@ -418,6 +452,7 @@ export function InstructorPaymentTab({
         variant={paymentStatementBlockedModal.variant}
         selectedCount={paymentStatementBlockedModal.selectedCount}
       />
+      </Spin>
     </div>
   )
 }

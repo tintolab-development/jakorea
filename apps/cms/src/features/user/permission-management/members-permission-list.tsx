@@ -2,18 +2,8 @@
  * 회원 권한 신청 목록 — 강사·관리자 공통 UI (`FilterTableLayout` / user-list·program-list 스타일 정렬)
  */
 
-import {
-  useMemo,
-  useState,
-  useEffect,
-  useCallback,
-  useImperativeHandle,
-  forwardRef,
-  useRef,
-  type Key,
-  type MouseEvent,
-} from 'react'
-import { Table } from 'antd'
+import { useMemo, useState, useEffect, useCallback, useImperativeHandle, forwardRef, useRef, type Key, type MouseEvent } from 'react'
+import { Alert, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
@@ -31,6 +21,11 @@ import {
   mockMemberPermissionApplicationsAdmin,
   mockMemberPermissionApplicationsInstructor,
 } from '@/data/mock/member-permission-applications'
+import { useInstructorRoleRequestsQuery } from '@/features/user/api/hooks/use-instructor-role-requests-query'
+import {
+  isInstructorRoleRequestsRemoteEnabled,
+  isMembersRemoteEnabled,
+} from '@/features/user/api/member-remote-capabilities'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -90,14 +85,14 @@ export interface MembersPermissionListProps {
    */
   onInstructorApproveRequest?: (
     ctx:
-      | { mode: 'single'; userId: string; displayName: string }
-      | { mode: 'bulk'; userIds: string[]; memberCount: number }
+      | { mode: 'single'; userId: string; requestId?: number; displayName: string }
+      | { mode: 'bulk'; userIds: string[]; requestIds?: number[]; memberCount: number }
   ) => void
   /** 강사 탭: 행 선택 후 [승인 반려] — 승인 대기·승인 완료·신청 반려 모두 재반려 가능 */
   onInstructorRejectRequest?: (
     ctx:
-      | { mode: 'single'; userId: string; displayName: string }
-      | { mode: 'bulk'; userIds: string[]; memberCount: number }
+      | { mode: 'single'; userId: string; requestId?: number; displayName: string }
+      | { mode: 'bulk'; userIds: string[]; requestIds?: number[]; memberCount: number }
   ) => void
   /** 관리자 탭: [신청 승인] — 강사 탭과 동일하게 단건·일괄 승인 모달 */
   onAdminApproveRequest?: (
@@ -140,13 +135,25 @@ export const MembersPermissionList = forwardRef<
 
   const tableContext = useMemo<MembersPermissionTableContext>(() => ({ memberType }), [memberType])
 
+  const instructorRemote = memberType === 'instructor' && isInstructorRoleRequestsRemoteEnabled()
+  const instructorRemoteQuery = useInstructorRoleRequestsQuery({}, instructorRemote)
+
   const baseRows = useMemo(
-    () =>
-      memberType === 'instructor'
+    () => {
+      if (instructorRemote) {
+        return instructorRemoteQuery.data?.rows ?? []
+      }
+      return memberType === 'instructor'
         ? [...mockMemberPermissionApplicationsInstructor]
-        : [...mockMemberPermissionApplicationsAdmin],
-    [memberType]
+        : [...mockMemberPermissionApplicationsAdmin]
+    },
+    [instructorRemote, instructorRemoteQuery.data?.rows, memberType]
   )
+
+  const adminRemoteNotice =
+    memberType === 'admin' && isMembersRemoteEnabled()
+      ? '관리자 권한 신청 API가 아직 제공되지 않아 목록은 mock 데이터입니다.'
+      : null
 
   const [rows, setRows] = useState<MemberPermissionApplicationRow[]>(baseRows)
 
@@ -189,12 +196,19 @@ export const MembersPermissionList = forwardRef<
     return target?.name ?? '회원 권한 신청자'
   }, [])
 
+  const resolvePermissionListMemberId = useCallback((rowId: string) => {
+    const target = rowsRef.current.find(row => row.id === rowId)
+    if (target?.memberId != null) return String(target.memberId)
+    return target?.userId
+  }, [])
+
   const {
     privacyRevealedByRowId,
     handleToggleListPrivacyMask,
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoRevealByRow({
     resolveAccessItem: resolvePermissionListPersonalInfoAccessItem,
+    resolveMemberId: resolvePermissionListMemberId,
     resetDeps: [baseRows],
   })
 
@@ -290,6 +304,7 @@ export const MembersPermissionList = forwardRef<
         onInstructorApproveRequest?.({
           mode: 'single',
           userId: row.userId,
+          requestId: row.requestId,
           displayName: (row.name ?? '').trim() || '회원',
         })
         return
@@ -297,6 +312,7 @@ export const MembersPermissionList = forwardRef<
       onInstructorApproveRequest?.({
         mode: 'bulk',
         userIds: pendingRows.map(r => r.userId),
+        requestIds: pendingRows.map(r => r.requestId).filter((id): id is number => id != null),
         memberCount: pendingRows.length,
       })
       return
@@ -360,6 +376,7 @@ export const MembersPermissionList = forwardRef<
         onInstructorRejectRequest({
           mode: 'single',
           userId: row.userId,
+          requestId: row.requestId,
           displayName: (row.name ?? '').trim() || '회원',
         })
         return
@@ -370,6 +387,7 @@ export const MembersPermissionList = forwardRef<
       onInstructorRejectRequest({
         mode: 'bulk',
         userIds: pendingRows.map(r => r.userId),
+        requestIds: pendingRows.map(r => r.requestId).filter((id): id is number => id != null),
         memberCount: pendingRows.length,
       })
       return
@@ -540,7 +558,19 @@ export const MembersPermissionList = forwardRef<
   }, [memberType])
 
   return (
-    <FilterTableLayout
+    <>
+      {adminRemoteNotice ? (
+        <Alert type="info" showIcon message={adminRemoteNotice} style={{ marginBottom: 12 }} />
+      ) : null}
+      {instructorRemote && instructorRemoteQuery.isError ? (
+        <Alert
+          type="error"
+          showIcon
+          message="강사 권한 신청 목록을 불러오지 못했습니다"
+          style={{ marginBottom: 12 }}
+        />
+      ) : null}
+      <FilterTableLayout
       bordered={false}
       fields={filterFields}
       filters={{
@@ -596,6 +626,7 @@ export const MembersPermissionList = forwardRef<
         className="cms-data-table members-permission-list__table"
         columns={columns}
         dataSource={tableData}
+        loading={instructorRemote && instructorRemoteQuery.isLoading}
         onRow={record => ({
           onClick: (e: MouseEvent<HTMLElement>) => {
             if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
@@ -665,6 +696,7 @@ export const MembersPermissionList = forwardRef<
         </ContentModal>
       ) : null}
     </FilterTableLayout>
+    </>
   )
 })
 

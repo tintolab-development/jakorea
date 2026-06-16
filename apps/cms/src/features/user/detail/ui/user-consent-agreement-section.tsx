@@ -2,6 +2,7 @@
  * 회원 상세 — 정보 제공 동의 (DetailInfoForm)
  */
 
+import { Spin } from 'antd'
 import { type CSSProperties, type ReactNode } from 'react'
 import type { User } from '@/types/user'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -24,6 +25,10 @@ export interface UserConsentAgreementSectionProps {
   caption?: ReactNode
   /** 동의서 보기 — 필요한 항목에만 사용 */
   onOpenAgreementDocument?: () => void
+  /** remote API 동의 레코드 오버레이 (미지정 시 mock 샘플) */
+  remoteConsentRows?: ConsentRowSchema[]
+  /** remote 모드에서 API 로딩 중 */
+  remoteConsentLoading?: boolean
 }
 
 const DEFAULT_CAPTION = '*미동의 시 프로그램 신청 및 활동에 제한이 있을 수 있습니다.'
@@ -50,6 +55,11 @@ const CONSENT_LABEL_WIDTH = 240 as const
 /** 단일 필드 값 — 샘플 텍스트 또는 동의서 행 */
 export type ConsentFieldValueSchema =
   | { type: 'sample_consent' }
+  | {
+      type: 'remote_consent'
+      agreed: boolean
+      agreedAtDisplay?: string
+    }
   | {
       type: 'document'
       agreed: boolean
@@ -219,7 +229,7 @@ export const CONSENT_PRESET_SCHEMA: ConsentPresetSchema = {
   ],
 }
 
-const CONSENT_ROWS_PERMISSION_INSTRUCTOR: ConsentRowSchema[] = [
+export const CONSENT_ROWS_PERMISSION_INSTRUCTOR: ConsentRowSchema[] = [
   {
     rowType: 'double',
     fields: [
@@ -363,6 +373,15 @@ function resolveConsentFieldView(value: ConsentFieldValueSchema, ctx: ConsentRen
   switch (value.type) {
     case 'sample_consent':
       return consentFieldContent(SAMPLE_CONSENT)
+    case 'remote_consent': {
+      if (!value.agreed) {
+        return consentFieldContent('미동의')
+      }
+      const text = value.agreedAtDisplay
+        ? `동의 | ${value.agreedAtDisplay}`
+        : '동의'
+      return consentFieldContent(text)
+    }
     case 'document':
       return (
         <ConsentDocumentRow
@@ -432,26 +451,31 @@ export function UserConsentAgreementSection({
   viewVariant = 'default',
   caption,
   onOpenAgreementDocument,
+  remoteConsentRows,
+  remoteConsentLoading = false,
 }: UserConsentAgreementSectionProps) {
   const effectiveCaption = caption ?? DEFAULT_CAPTION
 
   const doc = onOpenAgreementDocument ?? (() => window.alert('준비 중입니다.'))
 
-  const schema =
+  const baseSchema =
     viewVariant === 'permission_instructor'
       ? CONSENT_ROWS_PERMISSION_INSTRUCTOR
       : CONSENT_PRESET_SCHEMA[preset]
+  const schema = remoteConsentRows ?? baseSchema
   const ctx: ConsentRenderCtx = { openDocument: doc }
 
   return (
     <div className="user-consent-agreement-section">
-      <DetailInfoForm
-        title="정보 제공 동의"
-        description={effectiveCaption}
-        className="user-consent-agreement-section__form"
-      >
-        {schema.map((row, rowIndex) => renderConsentRow(row, ctx, rowIndex))}
-      </DetailInfoForm>
+      <Spin spinning={remoteConsentLoading}>
+        <DetailInfoForm
+          title="정보 제공 동의"
+          description={effectiveCaption}
+          className="user-consent-agreement-section__form"
+        >
+          {schema.map((row, rowIndex) => renderConsentRow(row, ctx, rowIndex))}
+        </DetailInfoForm>
+      </Spin>
     </div>
   )
 }

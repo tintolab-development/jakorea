@@ -1,17 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { useMemo } from 'react'
+import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
+import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
+import { usePersonalInfoAccessHistoryQuery } from '@/features/logs/hooks/use-personal-info-access-history-query'
+import { useLogsRemoteQueryEnabled } from '@/features/logs/hooks/use-logs-query-scope'
+import { personalInfoAccessHistoryFilterFields } from '@/features/logs/model/personal-info-access-history-filter-fields'
+import { personalInfoAccessHistoryTablePageConfig } from '@/features/logs/model/personal-info-access-history-table.config'
+import { LogsQueryError } from '@/features/logs/ui/logs-query-error'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
   EMPTY_TABLE_PAGE_CONTEXT,
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
 import type { PersonalInfoAccessLog } from '@/types/personal-info-access-log'
-import { getPersonalInfoAccessLogs } from '@/entities/personal-info-access-log/api/personal-info-access-log-service'
-import { personalInfoAccessHistoryFilterFields } from '@/features/logs/model/personal-info-access-history-filter-fields'
-import { personalInfoAccessHistoryTablePageConfig } from '@/features/logs/model/personal-info-access-history-table.config'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
@@ -29,15 +32,9 @@ const TABLE_COL_WIDTH = {
 
 export default function PersonalInfoAccessHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [rows, setRows] = useState<PersonalInfoAccessLog[]>([])
-
-  useEffect(() => {
-    const load = async () => {
-      const result = await getPersonalInfoAccessLogs()
-      setRows(result)
-    }
-    void load()
-  }, [])
+  const remoteEnabled = useLogsRemoteQueryEnabled()
+  const { data: rows = [], isLoading, isError, error } =
+    usePersonalInfoAccessHistoryQuery(searchParams)
 
   const { pendingFilters, handleFilterChange, applySearch, tableData, displayedCount } = useTablePage(
     personalInfoAccessHistoryTablePageConfig,
@@ -120,15 +117,25 @@ export default function PersonalInfoAccessHistoryPage() {
         data: tableData,
       }}
     >
-      <Table<PersonalInfoAccessLog>
-        rowKey="id"
-        className="cms-data-table"
-        tableLayout="fixed"
-        scroll={{ x: PERSONAL_INFO_ACCESS_TABLE_SCROLL_X }}
-        columns={columns}
-        dataSource={tableData}
-        pagination={false}
-      />
+      {!remoteEnabled ? (
+        <LogsQueryError message="로그 관리 API를 사용하려면 관리자 로그인이 필요합니다." />
+      ) : isLoading ? (
+        <Spin />
+      ) : isError ? (
+        <LogsQueryError
+          message={getLogsApiErrorMessage(error, '개인정보 조회 이력을 불러오지 못했습니다.')}
+        />
+      ) : (
+        <Table<PersonalInfoAccessLog>
+          rowKey="id"
+          className="cms-data-table"
+          tableLayout="fixed"
+          scroll={{ x: PERSONAL_INFO_ACCESS_TABLE_SCROLL_X }}
+          columns={columns}
+          dataSource={tableData}
+          pagination={false}
+        />
+      )}
     </FilterTableLayout>
   )
 }

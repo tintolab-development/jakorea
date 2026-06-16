@@ -8,7 +8,10 @@ import type { ColumnsType } from 'antd/es/table'
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
+import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
+import { useProgramInquiryStatusList } from '../hooks/use-program-inquiry-status-list'
+import type { ProgramInquiryRow } from '../api/adapters/dashboard-adapters'
 import '@/shared/ui/widget-more-button.css'
 import './dashboard-widget-table.css'
 
@@ -20,52 +23,6 @@ const ADMIN_POSTS_INQUIRIES_PATH = '/admin/posts/inquiries'
 const WIDGET_KEY = 'customer-inquiry-status-widget'
 const EMPTY_IDS: string[] = []
 
-interface ProgramInquiryRow {
-  key: string
-  programName: string
-  pending: number
-  answered: number
-  total: number
-}
-
-const MOCK_PROGRAM_INQUIRIES: ProgramInquiryRow[] = [
-  {
-    key: '1',
-    programName: 'HSBC/HKU Business Case Competition 2026 모집 안내',
-    pending: 1,
-    answered: 30,
-    total: 31,
-  },
-  {
-    key: '2',
-    programName: '2026 JA Korea 대학생경제교육봉사단 UJAT 36기 모집',
-    pending: 0,
-    answered: 9,
-    total: 9,
-  },
-  {
-    key: '3',
-    programName: 'EY한영-JA Korea Growth to Professional 2026 대학생 참가자 모집',
-    pending: 2,
-    answered: 15,
-    total: 17,
-  },
-  {
-    key: '4',
-    programName: '2026년 JA Korea 초등 경제교육 대상학교 모집',
-    pending: 5,
-    answered: 6,
-    total: 11,
-  },
-  {
-    key: '5',
-    programName: '2026 SAP-함께 성장하는AI 참여 고등학생 모집 안내 (IT, SW 멘토링)',
-    pending: 0,
-    answered: 2,
-    total: 2,
-  },
-]
-
 export function CustomerInquiryStatusWidget() {
   const navigate = useNavigate()
   const cardRef = useRef<HTMLDivElement>(null)
@@ -75,10 +32,7 @@ export function CustomerInquiryStatusWidget() {
   const inquiryNotificationReadProgramKeys =
     useDashboardSettingsStore(s => s.inquiryNotificationReadProgramKeys) ?? {}
 
-  const data = useMemo(() => {
-    if (allowedProgramIds.length === 0) return MOCK_PROGRAM_INQUIRIES
-    return MOCK_PROGRAM_INQUIRIES
-  }, [allowedProgramIds])
+  const { data = [], isLoading: loading, isError } = useProgramInquiryStatusList(allowedProgramIds)
 
   const totalCount = data.length
   const equalWidth = halfColumn ? '25%' : undefined
@@ -191,15 +145,21 @@ export function CustomerInquiryStatusWidget() {
         </Button>
       }
     >
-      <Table<ProgramInquiryRow>
-        columns={columns}
-        dataSource={data}
-        pagination={false}
-        className="dashboard-widget-table__data"
-        onRow={record => ({
-          onClick: () => goToInquiryListForProgram(record),
-        })}
-      />
+      {isError ? (
+        <DashboardWidgetQueryError />
+      ) : (
+        <Table<ProgramInquiryRow>
+          columns={columns}
+          dataSource={data}
+          rowKey="key"
+          pagination={false}
+          loading={loading}
+          className="dashboard-widget-table__data"
+          onRow={record => ({
+            onClick: () => goToInquiryListForProgram(record),
+          })}
+        />
+      )}
     </Card>
   )
 }

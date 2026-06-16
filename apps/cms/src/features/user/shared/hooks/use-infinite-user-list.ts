@@ -6,12 +6,20 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { getUsersPage, type GetUsersPageParams } from '@/entities/user/api/user-service'
+import {
+  memberQueryKeys,
+  serializeMemberListFilters,
+} from '@/features/user/api/member-query-keys'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import type { User } from '@/types/user'
 
 export type UseInfiniteUserListFilters = GetUsersPageParams
 
 export function useInfiniteUserList(filters: UseInfiniteUserListFilters) {
-  const queryKey = ['users', 'list', filters]
+  const remote = isMembersRemoteEnabled()
+  const queryKey = remote
+    ? memberQueryKeys.list(serializeMemberListFilters(filters))
+    : (['users', 'list', filters] as const)
 
   const query = useInfiniteQuery({
     queryKey,

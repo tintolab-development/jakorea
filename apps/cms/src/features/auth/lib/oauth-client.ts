@@ -55,8 +55,11 @@ export function validateOAuthState(provider: SocialProvider, state: string | nul
   }
   const key = `${OAUTH_STATE_PREFIX}${provider}`
   const expected = localStorage.getItem(key)
-  localStorage.removeItem(key)
-  return Boolean(expected) && expected === state
+  const isValid = Boolean(expected) && expected === state
+  if (isValid) {
+    localStorage.removeItem(key)
+  }
+  return isValid
 }
 
 export function buildOAuthAuthorizeUrl(provider: SocialProvider): string {

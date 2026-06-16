@@ -51,6 +51,7 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
       style,
       disabled,
       type = 'button',
+      loading,
       ...rest
     },
     ref
@@ -66,6 +67,7 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
       `cms-button--${variant}`,
       `cms-button--${size}`,
       hasIcon && 'cms-button--has-icon',
+      loading && 'cms-button--loading-only',
       className,
     ]
       .filter(Boolean)
@@ -83,11 +85,12 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
         size={antdSize}
         className={cn}
         disabled={disabled}
+        loading={loading}
         style={{ outline: 'none', ...widthStyle, ...style }}
         {...rest}
       >
-        {hasIcon ? <span className="cms-button__icon">{icon}</span> : null}
-        {children != null ? <span className="cms-button__label">{children}</span> : null}
+        {!loading && hasIcon ? <span className="cms-button__icon">{icon}</span> : null}
+        {!loading && children != null ? <span className="cms-button__label">{children}</span> : null}
       </Button>
     )
   }

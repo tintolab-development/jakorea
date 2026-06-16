@@ -6,23 +6,21 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Form } from 'antd'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { CmsButton, CmsInput, ContentModal } from '@/shared/ui'
+import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
+import {
+  AdminProfileApiError,
+  shouldAttemptRemoteProfileUpdate,
+  updateMyProfile,
+} from '@/features/auth/api/admin-profile-service'
+import {
+  profileEditSchema,
+  type ProfileEditFormData,
+} from '@/features/auth/model/profile-edit-schema'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { CmsButton, CmsInput, ContentModal, useCmsAlert } from '@/shared/ui'
 import type { User } from '@/types/user'
 import './profile-edit-modal.css'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
-
-const profileEditSchema = z.object({
-  name: z.string().min(1, '이름을 입력해주세요'),
-  phone: z.string().optional(),
-  email: z
-    .string()
-    .min(1, '이메일을 입력해주세요')
-    .email('올바른 이메일 형식이 아닙니다'),
-})
-
-type ProfileFormData = z.infer<typeof profileEditSchema>
 
 interface ProfileEditModalProps {
   open: boolean
@@ -73,6 +71,7 @@ function AvatarCameraIcon() {
 
 export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModalProps) {
   const { user, updateUser, logout } = useAuthStore()
+  const { showAlert } = useCmsAlert()
   const [saving, setSaving] = useState(false)
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
   const [withdrawKeyword, setWithdrawKeyword] = useState('')
@@ -83,7 +82,7 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<ProfileFormData>({
+  } = useForm<ProfileEditFormData>({
     resolver: zodResolver(profileEditSchema),
     defaultValues: {
       name: '',
@@ -101,21 +100,60 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
     })
   }, [open, user, reset])
 
-  const onFormSubmit = async (values: ProfileFormData) => {
+  const onFormSubmit = async (values: ProfileEditFormData) => {
     if (!user) return
+
+    const normalizedPhone = values.phone?.trim() || ''
+    const normalizedEmail = values.email.trim()
+    const currentPhone = user.phone?.trim() || ''
+    const currentEmail = user.email.trim()
+
+    if (normalizedPhone === currentPhone && normalizedEmail === currentEmail) {
+      showAlert({
+        title: '변경 사항 없음',
+        content: '수정된 내용이 없습니다.',
+      })
+      return
+    }
+
     setSaving(true)
     try {
+      const saved = await updateMyProfile({
+        phone: normalizedPhone || undefined,
+        email: normalizedEmail,
+      })
+
       const updateData: Partial<Omit<User, 'password'>> = {
-        phone: values.phone,
-        email: values.email,
+        phone: saved.phone,
+        email: saved.email,
+        updatedAt: new Date().toISOString(),
       }
 
       updateUser(updateData)
       onSuccess?.()
       onCancel()
-    } catch (e) {
-      console.error('Failed to update profile:', e)
-      } finally {
+
+      const savedMessage = shouldAttemptRemoteProfileUpdate()
+        ? '내 정보가 저장되었습니다.'
+        : hasRemoteAdminJwt()
+          ? '내 정보가 로컬 세션에 저장되었습니다. 서버 프로필 수정 API가 준비되면 동기화됩니다.'
+          : '내 정보가 저장되었습니다.'
+
+      showAlert({
+        title: '저장 완료',
+        content: savedMessage,
+      })
+    } catch (error) {
+      console.error('Failed to update profile:', error)
+      const message =
+        error instanceof AdminProfileApiError
+          ? error.message
+          : '내 정보 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+      showAlert({
+        title: '저장 실패',
+        content: message,
+      })
+    } finally {
       setSaving(false)
     }
   }
@@ -171,12 +209,20 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
     if (!allowedTypes.includes(file.type)) {
+      showAlert({
+        title: '업로드 불가',
+        content: 'JPG, PNG, WEBP 형식의 이미지만 업로드할 수 있습니다.',
+      })
       event.target.value = ''
       return
     }
 
     const maxBytes = 2 * 1024 * 1024
     if (file.size > maxBytes) {
+      showAlert({
+        title: '업로드 불가',
+        content: '프로필 이미지는 2MB 이하만 업로드할 수 있습니다.',
+      })
       event.target.value = ''
       return
     }
@@ -189,9 +235,13 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
       }
 
       updateUser({ profileImageUrl: result })
-      }
+    }
     reader.onerror = () => {
-      }
+      showAlert({
+        title: '업로드 실패',
+        content: '이미지를 읽는 중 오류가 발생했습니다. 다시 시도해 주세요.',
+      })
+    }
     reader.readAsDataURL(file)
     event.target.value = ''
   }
