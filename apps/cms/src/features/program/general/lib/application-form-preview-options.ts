@@ -1,5 +1,7 @@
 import {
   getInstitutionApplicationFormHiddenParagraphIds,
+  resolveInstitutionApplicationProgramBridge,
+  shouldShowInstitutionApplicationScheduleParagraph,
   type InstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { getInstructorApplicationFormHiddenParagraphIds } from '@/features/program/general/lib/institution-application-form-visibility'
@@ -16,7 +18,9 @@ import type { ProgramParticipantApplicationEditorViewModel } from '@/features/te
 import type { ProgramParticipantApplicationEditorVariant } from '@/features/template/hooks/use-program-participant-application-editor'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import type { WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
+import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@/features/template/model/program-application-form-individual-draft'
 import type { Program } from '@/types/domain'
+import { isGeneralIndividualTeamParticipationProgram } from '@/features/program/general/lib/individual-application-visibility'
 
 export function resolveGeneralApplicationFormHiddenParagraphIds(
   variant: ProgramParticipantApplicationEditorVariant,
@@ -39,6 +43,18 @@ export function resolveGeneralApplicationFormHiddenParagraphIds(
           ? undefined
           : isGeneralProgramVolunteerInterviewScheduleVisible(params.program),
     })
+  }
+  if (variant === 'individual' && params.program) {
+    const bridge =
+      params.institutionBridge ?? resolveInstitutionApplicationProgramBridge(params.program)
+    const hidden = new Set<string>()
+    if (!shouldShowInstitutionApplicationScheduleParagraph(bridge)) {
+      hidden.add(PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice)
+    }
+    if (!isGeneralIndividualTeamParticipationProgram(params.program)) {
+      hidden.add(PROGRAM_PARTICIPANT_APPLICATION_IDS.teamInfo)
+    }
+    return hidden.size > 0 ? hidden : undefined
   }
   return undefined
 }
@@ -104,6 +120,7 @@ export function buildGeneralApplicationFormPreviewParagraphBodyOptions(
     programApplicationFormInstructor,
     programApplicationFormVolunteer,
     programLinkedInstitutionApplicationForm: variant === 'institution' && programLinkedPreview,
+    programLinkedIndividualApplicationForm: variant === 'individual' && programLinkedPreview,
     hiddenParagraphIds,
   }
 }

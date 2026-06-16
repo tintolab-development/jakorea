@@ -50,6 +50,7 @@ import {
   renderProgramApplicationFormVolunteerParagraphBody,
   type ProgramApplicationFormVolunteerBodyOptions,
 } from '@/features/template/ui/form-set/application-form/volunteer/paragraph-body'
+import { renderProgramApplicationFormIndividualParagraphBody } from '@/features/template/ui/form-set/application-form/individual/paragraph-body'
 import {
   renderProgramRegistrationParagraphBody,
   type ProgramRegistrationParagraphBodyOptions,
@@ -423,6 +424,7 @@ export function HorizontalTableParagraphBody({
   ujatRecruitParagraphProps,
   programApplicationFormInstructor,
   programApplicationFormVolunteer,
+  programApplicationFormIndividual,
   paragraphInteractionMode = 'authoring',
 }: {
   paragraph: HorizontalTableParagraph
@@ -470,6 +472,8 @@ export function HorizontalTableParagraphBody({
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
   programApplicationFormInstructor?: ProgramApplicationFormInstructorBodyOptions
   programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
+  /** 프로그램 참여자 신청 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
+  programApplicationFormIndividual?: boolean
   paragraphInteractionMode?: ParagraphBodyInteractionMode
 }) {
   const p = useMemo(() => normalizeHorizontalTableParagraph(paragraph), [paragraph])
@@ -618,6 +622,12 @@ export function HorizontalTableParagraphBody({
     programApplicationFormVolunteer
   )
   if (programApplicationFormVolunteerBody != null) return programApplicationFormVolunteerBody
+
+  const programApplicationFormIndividualBody = renderProgramApplicationFormIndividualParagraphBody(
+    p,
+    programApplicationFormIndividual
+  )
+  if (programApplicationFormIndividualBody != null) return programApplicationFormIndividualBody
 
   const paymentStatementBody = renderPaymentStatementIssuanceParagraphBody({
     paragraph: p,

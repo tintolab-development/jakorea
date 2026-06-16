@@ -632,6 +632,16 @@ export function useProgramParticipantApplicationEditor(
     })
   }, [variant, draft.paragraphs, linkedProgram])
 
+  const individualApplicationHiddenParagraphIds = useMemo(() => {
+    if (variant !== 'individual') return undefined
+    if (linkedProgram == null) return undefined
+    return resolveGeneralApplicationFormHiddenParagraphIds('individual', {
+      program: linkedProgram,
+      paragraphs: draft.paragraphs,
+      institutionBridge: institutionApplicationBridge,
+    })
+  }, [variant, linkedProgram, draft.paragraphs, institutionApplicationBridge])
+
   const ujatProgramApplicationFormVolunteerOptions = useMemo(
     () =>
       variant === 'ujat-application-volunteer'
@@ -678,6 +688,7 @@ export function useProgramParticipantApplicationEditor(
             })
           }
           if (variant === 'volunteer') return volunteerApplicationHiddenParagraphIds
+          if (variant === 'individual') return individualApplicationHiddenParagraphIds
           return institutionApplicationHiddenParagraphIds
         })(),
         ujatProgramApplicationGradeInfo,
@@ -716,6 +727,7 @@ export function useProgramParticipantApplicationEditor(
       ujatProgramApplicationGradeClassTime,
       institutionApplicationHiddenParagraphIds,
       volunteerApplicationHiddenParagraphIds,
+      individualApplicationHiddenParagraphIds,
     ]
   )
 
@@ -802,6 +814,7 @@ export function useProgramParticipantApplicationEditor(
       editorOptions?.programLinkedInstitutionApplicationForm === true,
     institutionApplicationHiddenParagraphIds,
     volunteerApplicationHiddenParagraphIds,
+    individualApplicationHiddenParagraphIds,
   }
 }
 

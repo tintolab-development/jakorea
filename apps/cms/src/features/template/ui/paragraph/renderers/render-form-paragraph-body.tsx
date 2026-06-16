@@ -171,6 +171,8 @@ export type RenderFormParagraphBodyOptions = {
    * 템플릿 설정 힌트 대신 프로그램 연동 UI 노출
    */
   programLinkedInstitutionApplicationForm?: boolean
+  /** 프로그램 상세 신청 양식 수정·미리보기 — 개인 「진행 희망 교육 일정」 연동 */
+  programLinkedIndividualApplicationForm?: boolean
   /** 강의 평가 등 — 설문 기간을 기간 피커 대신 지정 텍스트로 표시 */
   surveyPeriodReadonly?: boolean
 }
@@ -356,6 +358,7 @@ export function renderFormParagraphBody(
                   readOnlyPreview: isPreviewReadonly,
                 }
           }
+          programApplicationFormIndividual={options?.programApplicationFormIndividual}
           paragraphInteractionMode={paragraphInteractionMode}
         />
       )
@@ -476,7 +479,15 @@ export function renderFormParagraphBody(
         options?.programApplicationFormIndividual === true &&
         p.id === PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice
       ) {
-        return <ProgramApplicationFormIndividualScheduleParagraph />
+        return (
+          <ProgramApplicationFormIndividualScheduleParagraph
+            readOnlyPreview={isPreviewReadonly}
+            isTemplateAuthoringMode={
+              paragraphInteractionMode === 'authoring' &&
+              options?.programLinkedIndividualApplicationForm !== true
+            }
+          />
+        )
       }
       const usesMcItemsFocus = options?.onSelectSingleItemListItem != null
       const itemsEditActive = usesMcItemsFocus

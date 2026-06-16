@@ -58,7 +58,7 @@ export function ApplicationFormPreviewPanel({
       resetInstitutionApplicationFormVisibility()
       return
     }
-    if (variant === 'institution') {
+    if (variant === 'institution' || variant === 'individual') {
       patchInstitutionApplicationProgramBridge(resolveInstitutionApplicationProgramBridge(program))
     }
   }, [active, program, variant])
@@ -98,6 +98,8 @@ export function ApplicationFormPreviewPanel({
         paragraphs: vm.draft.paragraphs,
         institutionBridge,
         instructorScheduleSlots,
+        programLinkedApplicationFormPreview:
+          variant === 'institution' || variant === 'individual',
       }),
     [
       variant,

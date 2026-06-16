@@ -14,6 +14,7 @@ export const PROGRAM_PARTICIPANT_APPLICATION_IDS = {
   personalInfoCollection: 'program-participant-application-seed-personal-info',
   thirdPartyConsent: 'program-participant-application-seed-third-party',
   selfIntro: 'program-participant-application-seed-self-intro',
+  teamInfo: 'program-participant-application-seed-team-info',
   scheduleChoice: 'program-participant-application-seed-schedule',
 } as const
 
@@ -127,6 +128,30 @@ function createSelfIntroShortEssay(): ShortEssayParagraph {
   }
 }
 
+/** 본문은 `ProgramApplicationFormIndividualTeamInfoParagraph`로 대체 */
+function createTeamInfoPlaceholderTable(): HorizontalTableParagraph {
+  return normalizeHorizontalTableParagraph({
+    id: PROGRAM_PARTICIPANT_APPLICATION_IDS.teamInfo,
+    kind: 'single_item',
+    variant: 'horizontal_table',
+    requiredMark: true,
+    paragraphTitle: '팀 정보',
+    paragraphDescription:
+      '팀원 모두 ★반드시 개별로 신청서 작성★하여 제출해야 합니다. (팀장은 신청 시 팀원 중 한 명만 선택해 주세요)',
+    participatesInTitleNumbering: true,
+    tableFlavor: 'text',
+    columnHeaders: ['항목', '내용'],
+    dataRows: [['', '']],
+    columnFields: [],
+    fieldDataRows: [],
+    bottomText: '',
+    showBottomText: false,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
+    answerRequired: true,
+  })
+}
+
 function createScheduleMultipleChoice(): MultipleChoiceParagraph {
   return {
     id: PROGRAM_PARTICIPANT_APPLICATION_IDS.scheduleChoice,
@@ -153,6 +178,7 @@ export function createProgramParticipantApplicationDraft(): WritingFormDraft {
     createPersonalInfoHorizontalTable(),
     createThirdPartyHorizontalTable(),
     createSelfIntroShortEssay(),
+    createTeamInfoPlaceholderTable(),
     createScheduleMultipleChoice(),
   ]
   return normalizeWritingFormDraft({
