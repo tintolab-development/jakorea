@@ -10,11 +10,11 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 ## Swagger / OpenAPI
 
-| 항목 | 값 |
-|------|-----|
-| Swagger UI | `https://8957-221-146-247-18.ngrok-free.app/swagger-ui/index.html` |
-| OpenAPI JSON | `https://8957-221-146-247-18.ngrok-free.app/v3/api-docs` |
-| 프론트 스냅샷 | [`apps/cms/openapi/backend.openapi.json`](../../openapi/backend.openapi.json) |
+| 항목            | 값                                                                                |
+| --------------- | --------------------------------------------------------------------------------- |
+| Swagger UI      | `https://bfba-115-94-189-196.ngrok-free.app/swagger-ui/index.html`                |
+| OpenAPI JSON    | `https://bfba-115-94-189-196.ngrok-free.app/v3/api-docs`                          |
+| 프론트 스냅샷   | [`apps/cms/openapi/backend.openapi.json`](../../openapi/backend.openapi.json)     |
 | 대시보드 subset | [`apps/cms/openapi/dashboard.openapi.json`](../../openapi/dashboard.openapi.json) |
 
 백엔드 설명에 따르면 프론트 handoff용 계약은 `openapi_frontend_handoff.json`(백엔드 repo)에도 존재합니다. 스펙 drift 방지를 위해 백엔드팀과 주기적으로 동기화하세요.
@@ -27,7 +27,7 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 2. **프록시 모드(권장)**
 
 ```env
-VITE_API_SERVER=https://8957-221-146-247-18.ngrok-free.app
+VITE_API_SERVER=https://bfba-115-94-189-196.ngrok-free.app
 VITE_REAL_API_MODULES=adminAuth,dashboard,logs,detailedPrograms,textbooks,sponsors,notices,faqs,inquiries,paymentOrders,accountPayments,settlementConfigs
 VITE_ADMIN_AUTH_API_PREFIX=/api/admin/auth
 VITE_AUTH_REFRESH_PATH=/api/auth/refresh
@@ -42,12 +42,12 @@ VITE_AUTH_REFRESH_PATH=/api/auth/refresh
 
 ## 인증
 
-| API | 경로 |
-|-----|------|
-| 관리자 로그인 | `POST /api/admin/auth/login` |
-| MFA | `POST /api/admin/auth/mfa/verify` |
+| API             | 경로                                                                      |
+| --------------- | ------------------------------------------------------------------------- |
+| 관리자 로그인   | `POST /api/admin/auth/login`                                              |
+| MFA             | `POST /api/admin/auth/mfa/verify`                                         |
 | 관리자 로그아웃 | `POST /api/admin/auth/logout` body: `{ refreshToken }` (Bearer + refresh) |
-| 관리자 refresh | `POST /api/admin/auth/refresh` (`adminAuth` 활성 시 axios가 자동 사용) |
+| 관리자 refresh  | `POST /api/admin/auth/refresh` (`adminAuth` 활성 시 axios가 자동 사용)    |
 
 **로그인 → MFA 흐름**
 
@@ -90,10 +90,10 @@ UI·페이지는 분기하지 않습니다. **서비스 레이어**(`entities/*/
 
 ## 운영/QA 보조 API (Bearer 필요)
 
-| API | 용도 |
-|-----|------|
-| `GET /api/system/frontend-integration-pack` | 프론트 연동 pack |
-| `GET /api/system/screen-api-readiness` | 화면별 API readiness |
+| API                                         | 용도                 |
+| ------------------------------------------- | -------------------- |
+| `GET /api/system/frontend-integration-pack` | 프론트 연동 pack     |
+| `GET /api/system/screen-api-readiness`      | 화면별 API readiness |
 
 Swagger Authorize에 관리자 토큰 입력 후 호출.
 
