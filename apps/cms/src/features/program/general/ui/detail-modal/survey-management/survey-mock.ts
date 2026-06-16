@@ -12,6 +12,7 @@ import type {
 import {
   getDefaultGeneralSatisfactionAudience,
   isGeneralIndividualProgram,
+  programHasVolunteerParticipant,
   type GeneralSatisfactionAudienceKey,
 } from '@/features/program/general/lib/survey-audience'
 
@@ -27,6 +28,7 @@ function buildSurvey(
   id: string,
   title: string,
   templateId: string,
+  status: RegisteredSurvey['status'],
   responseCount: number,
   participantTotal: number
 ): RegisteredSurvey {
@@ -34,9 +36,71 @@ function buildSurvey(
     id,
     title,
     templateId,
-    status: responseCount > 0 ? 'finished' : 'before_start',
+    status,
     responseCount,
     participantTotal,
+  }
+}
+
+function buildSatisfactionSurveysByAudience(
+  program: Program,
+  prefix: string,
+  participantTotal: number
+): Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>> {
+  const individual = isGeneralIndividualProgram(program)
+  const defaultAudience = getDefaultGeneralSatisfactionAudience(program)
+
+  if (individual) {
+    return {
+      [defaultAudience]: buildSurvey(
+        `${prefix}-satisfaction-${defaultAudience}`,
+        '참여자 만족도조사',
+        'survey-student',
+        'before_start',
+        0,
+        participantTotal
+      ),
+    }
+  }
+
+  if (programHasVolunteerParticipant(program)) {
+    return {
+      teacher: buildSurvey(
+        `${prefix}-satisfaction-teacher`,
+        '교사 만족도조사',
+        'survey-teacher',
+        'before_start',
+        0,
+        participantTotal
+      ),
+      volunteer_h1: buildSurvey(
+        `${prefix}-satisfaction-volunteer-h1`,
+        '상반기 봉사자 만족도조사',
+        'survey-student',
+        'in_progress',
+        8,
+        participantTotal
+      ),
+      volunteer_h2: buildSurvey(
+        `${prefix}-satisfaction-volunteer-h2`,
+        '하반기 봉사자 만족도조사',
+        'survey-student',
+        'before_start',
+        0,
+        participantTotal
+      ),
+    }
+  }
+
+  return {
+    teacher: buildSurvey(
+      `${prefix}-satisfaction-teacher`,
+      '교사 만족도조사',
+      'survey-teacher',
+      'before_start',
+      0,
+      participantTotal
+    ),
   }
 }
 
@@ -50,45 +114,38 @@ export function buildGeneralSurveyMockState(program: Program): GeneralSurveyMock
     : GENERAL_ORGANIZATION_SURVEY_RESPONSE_COUNT
   const participantTotal = individual ? 12 : 36
   const prefix = individual ? 'general-individual' : 'general-organization'
-  const defaultAudience = getDefaultGeneralSatisfactionAudience(program)
+
+  const registeredSurveyBeforeStart = buildSurvey(
+    `${prefix}-survey-before-start`,
+    individual ? '개인 참여자 설문조사 (진행 전)' : '기관 참여 설문조사 (진행 전)',
+    'survey-student',
+    'before_start',
+    0,
+    participantTotal
+  )
 
   const registeredSurvey = buildSurvey(
     `${prefix}-survey-main`,
     individual ? '개인 참여자 설문조사 01' : '기관 참여 설문조사 01',
     'survey-student',
-    responseCount,
-    participantTotal
-  )
-
-  const satisfactionSurvey = buildSurvey(
-    `${prefix}-satisfaction-${defaultAudience}`,
-    individual ? '참여자 만족도조사' : '교사 만족도조사',
-    defaultAudience === 'teacher' ? 'survey-teacher' : 'survey-student',
+    responseCount >= participantTotal ? 'finished' : 'in_progress',
     responseCount,
     participantTotal
   )
 
   return {
-    registeredSurveys: [registeredSurvey],
-    activeRegisteredSurveyId: registeredSurvey.id,
-    satisfactionSurveysByAudience: {
-      [defaultAudience]: satisfactionSurvey,
-      ...(individual
-        ? {}
-        : {
-            student: buildSurvey(
-              `${prefix}-satisfaction-student`,
-              '학생 만족도조사',
-              'survey-student',
-              0,
-              participantTotal
-            ),
-          }),
-    },
+    registeredSurveys: [registeredSurveyBeforeStart, registeredSurvey],
+    activeRegisteredSurveyId: registeredSurveyBeforeStart.id,
+    satisfactionSurveysByAudience: buildSatisfactionSurveysByAudience(
+      program,
+      prefix,
+      participantTotal
+    ),
     lectureEvalSurvey: buildSurvey(
       `${prefix}-lecture-eval`,
       '강의평가',
       'survey-admin',
+      'before_start',
       0,
       Math.max(1, participantTotal)
     ),

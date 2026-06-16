@@ -6,10 +6,13 @@ import {
 } from './detail-meta'
 import {
   getDefaultGeneralSatisfactionAudience,
+  getEnabledGeneralSatisfactionAudienceTabs,
   getGeneralSatisfactionAudienceTabs,
   isGeneralIndividualParticipantSelection,
   isGeneralIndividualProgram,
+  programHasGeneralSatisfactionSurvey,
 } from './survey-audience'
+import { getGeneralSurveyMenuItems } from './detail-meta'
 
 function program(overrides: Partial<Program>): Program {
   return {
@@ -109,5 +112,55 @@ describe('general survey audience', () => {
     expect(
       hasGeneralInstructorApplications(program({ generalParticipantTypes: ['individual'] }))
     ).toBe(false)
+  })
+
+  it('설문 진행 항목에 따라 만족도 대상 탭을 필터링한다', () => {
+    const org = program({
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+      generalSurveyMenuKeys: ['survey', 'student_satisfaction'],
+    })
+
+    expect(getEnabledGeneralSatisfactionAudienceTabs(org).map(tab => tab.key)).toEqual(['student'])
+    expect(programHasGeneralSatisfactionSurvey(org)).toBe(true)
+    expect(getDefaultGeneralSatisfactionAudience(org)).toBe('student')
+  })
+
+  it('만족도조사 LNB는 학생·교사 항목을 하나로 묶는다', () => {
+    const org = program({
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+      generalSurveyMenuKeys: ['survey', 'student_satisfaction', 'teacher_satisfaction'],
+    })
+
+    expect(getGeneralSurveyMenuItems(org).map(item => item.key)).toEqual(['survey', 'satisfaction'])
+  })
+
+  it('봉사자 포함 프로그램은 학생 만족도 대신 상·하반기 봉사자 탭을 제공한다', () => {
+    const volunteerProgram = program({
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution', 'teacher_instructor', 'volunteer'],
+      generalSurveyMenuKeys: ['survey', 'student_satisfaction', 'teacher_satisfaction'],
+    })
+
+    expect(getEnabledGeneralSatisfactionAudienceTabs(volunteerProgram).map(tab => tab.key)).toEqual([
+      'teacher',
+      'volunteer_h1',
+      'volunteer_h2',
+    ])
+    expect(getDefaultGeneralSatisfactionAudience(volunteerProgram)).toBe('teacher')
+  })
+
+  it('봉사자 없는 기관 프로그램은 학생 만족도 탭을 유지한다', () => {
+    const org = program({
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+      generalSurveyMenuKeys: ['survey', 'student_satisfaction', 'teacher_satisfaction'],
+    })
+
+    expect(getEnabledGeneralSatisfactionAudienceTabs(org).map(tab => tab.key)).toEqual([
+      'teacher',
+      'student',
+    ])
   })
 })

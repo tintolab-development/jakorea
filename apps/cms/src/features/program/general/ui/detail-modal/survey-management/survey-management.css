@@ -5,3 +5,19 @@
 .general-detail-fullpage-modal .ujat-survey-registered__tabs {
   flex-shrink: 0;
 }
+
+/* 설문 모달 — UJAT fullpage CSS 미로드 시 ContentModal 기본 푸터·본문 보완 */
+.ujat-survey-delete-modal .content-modal__description {
+  margin-bottom: 16px;
+}
+
+.ujat-survey-delete-modal__field {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ujat-survey-create-modal .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 12px;
+}

@@ -17,8 +17,14 @@ import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import type { GeneralProgressTabKey } from '@/features/program/general/lib/progress-tabs'
+import {
+  programHasGeneralSatisfactionSurvey,
+  GENERAL_SATISFACTION_NAV_TAB,
+} from '@/features/program/general/lib/survey-audience'
 
-export type GeneralSurveyMenuItem = { key: GeneralProgramSurveyMenuKey; label: string }
+export type GeneralSurveyNavKey = GeneralProgramSurveyMenuKey | typeof GENERAL_SATISFACTION_NAV_TAB
+
+export type GeneralSurveyMenuItem = { key: GeneralSurveyNavKey; label: string }
 
 export type GeneralProgressMenuItem = { tab: GeneralProgressTabKey; label: string }
 
@@ -79,7 +85,19 @@ export function getGeneralVolunteerInterviewEnabled(program: Program): boolean {
 
 export function getGeneralSurveyMenuItems(program: Program): GeneralSurveyMenuItem[] {
   const keys = normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys ?? [])
-  return keys.map(key => ({ key, label: SURVEY_MENU_LABELS[key] }))
+  const items: GeneralSurveyMenuItem[] = []
+
+  if (keys.includes('survey')) {
+    items.push({ key: 'survey', label: SURVEY_MENU_LABELS.survey })
+  }
+  if (programHasGeneralSatisfactionSurvey(program)) {
+    items.push({ key: GENERAL_SATISFACTION_NAV_TAB, label: '만족도조사' })
+  }
+  if (keys.includes('lecture_evaluation')) {
+    items.push({ key: 'lecture_evaluation', label: SURVEY_MENU_LABELS.lecture_evaluation })
+  }
+
+  return items
 }
 
 /** LNB·breadcrumb — 기관 대분류 프로그램 */

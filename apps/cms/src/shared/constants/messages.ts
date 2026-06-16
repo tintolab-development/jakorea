@@ -110,6 +110,16 @@ export const INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE =
 /** 참여 강사 배정 현황 — 선택 배정: 미선택 시 AlertModal 본문 */
 export const INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE = '배정할 기관을 선택해 주세요.'
 
+/** 참여 봉사자 배정 현황 — 배정 취소: 미선택 시 AlertModal 본문 */
+export const VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE =
+  '배정 취소할 기관을 선택해 주세요.'
+
+/** 참여 봉사자 배정 현황 — 선택 배정: 미선택 시 AlertModal 본문 */
+export const VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE = '배정할 기관을 선택해 주세요.'
+
+/** 일반 프로그램 상세 — 설문 관리 LNB: 등록된 설문 항목 없을 때 AlertModal 본문 */
+export const GENERAL_SURVEY_MENU_EMPTY_ALERT_MESSAGE = '등록된 설문 항목이 없습니다.'
+
 export const MESSAGES = {
   success: {
     created: '등록되었습니다.',

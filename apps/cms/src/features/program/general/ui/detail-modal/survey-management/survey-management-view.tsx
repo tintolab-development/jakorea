@@ -20,33 +20,31 @@ import {
   buildLectureEvalFormDraft,
   canEditLectureEvalResponse,
   draftToLectureEvalPollResponse,
-  UJAT_LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT,
-  UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
-  UJAT_LECTURE_EVAL_TEMPLATE_ID,
+  LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT,
+  LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
+  LECTURE_EVAL_TEMPLATE_ID,
   validateLectureEvalFormDraft,
-  type UjatLectureEvalTabKey,
-} from '@/features/program/ujat/ui/detail-modal/survey-management/lib/ujat-lecture-eval-survey'
-import {
-  UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY,
-  UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY,
-} from '@/features/program/ujat/ui/detail-modal/survey-management/lib/ujat-survey-copy'
+  type LectureEvalTabKey,
+} from '@/features/program/shared/lib/survey-management/lecture-eval-survey'
 import {
   buildLectureEvalResultsPdfFileName,
   exportLectureEvalResultsPdf,
 } from '@/features/program/ujat/ui/detail-modal/survey-management/lib/export-lecture-eval-results-pdf'
-import { UjatLectureEvalSurveyView } from '@/features/program/ujat/ui/detail-modal/survey-management/ui/ujat-lecture-eval-survey-view'
 import type { Program } from '@/types/domain'
 import {
+  GENERAL_LECTURE_EVAL_ACTION_LABELS,
+  GENERAL_LECTURE_EVAL_DOWNLOAD_MODAL_COPY,
+  GENERAL_LECTURE_EVAL_EMPTY_COPY,
+  GENERAL_LECTURE_EVAL_INCOMPLETE_MODAL_COPY,
+  GENERAL_LECTURE_EVAL_PRE_START_COPY,
+  GENERAL_LECTURE_EVAL_REGISTER_MODAL_COPY,
+  GENERAL_LECTURE_EVAL_SUBMITTED_COPY,
   GENERAL_SATISFACTION_NO_RESPONSE_COPY,
-  GENERAL_STUDENT_SATISFACTION_ACTION_LABELS,
-  GENERAL_STUDENT_SATISFACTION_EMPTY_COPY,
+  GENERAL_SATISFACTION_SHARE_TOAST_COPY,
   GENERAL_SURVEY_POLL_ACTION_LABELS,
   GENERAL_SURVEY_POLL_EMPTY_COPY,
   GENERAL_SURVEY_POLL_NO_RESPONSE_COPY,
-  GENERAL_TEACHER_SATISFACTION_ACTION_LABELS,
-  GENERAL_TEACHER_SATISFACTION_EMPTY_COPY,
-  type SurveyActionLabels,
-  type SurveyEmptyCopy,
+  GENERAL_SURVEY_POLL_SHARE_TOAST_COPY,
 } from '@/features/program/shared/lib/survey-management/survey-copy'
 import type {
   RegisteredSurvey,
@@ -58,11 +56,26 @@ import { SurveyNoResponseState } from '@/features/program/shared/ui/survey-manag
 import { SurveyPollResultsView } from '@/features/program/shared/ui/survey-management/survey-poll-results-view'
 import { SurveyRegisteredActions } from '@/features/program/shared/ui/survey-management/survey-registered-actions'
 import { SatisfactionSurveyView } from '@/features/program/shared/ui/survey-management/satisfaction-survey-view'
+import { LectureEvalSurveyView } from '@/features/program/shared/ui/survey-management/lecture-eval-survey-view'
 import { SurveyTemplateEditModal } from '@/features/program/shared/ui/survey-management/survey-template-edit-modal'
+import { SurveyShareCopyToast } from '@/features/program/shared/ui/survey-management/survey-share-copy-toast'
+import {
+  SurveyResultsDownloadModal,
+  type SurveyResultsDownloadFormat,
+} from '@/features/program/shared/ui/survey-management/survey-results-download-modal'
+import { exportSurveyResultsExcel } from '@/features/program/shared/lib/survey-management/export-survey-results-excel'
 import {
   GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE,
+  getDefaultGeneralSatisfactionAudience,
+  getEnabledGeneralSatisfactionAudienceTabs,
+  getGeneralSatisfactionActionLabels,
   getGeneralSatisfactionAudienceLabel,
+  getGeneralSatisfactionCreateDescription,
+  getGeneralSatisfactionDeleteModalTitle,
+  getGeneralSatisfactionEmptyCopy,
   isGeneralIndividualProgram,
+  isGeneralSatisfactionSurveyNavTab,
+  resolveGeneralSatisfactionAudienceFromNavTab,
   type GeneralSatisfactionAudienceKey,
 } from '@/features/program/general/lib/survey-audience'
 import { buildGeneralSurveyMockState } from './survey-mock'
@@ -76,20 +89,7 @@ export type GeneralSurveyManagementViewProps = {
   activeTab: string
 }
 
-function resolveSatisfactionAudienceFromTab(
-  activeTab: string,
-  program: Program
-): GeneralSatisfactionAudienceKey | null {
-  if (activeTab === 'student_satisfaction') {
-    return isGeneralIndividualProgram(program) ? 'individual' : 'student'
-  }
-  if (activeTab === 'teacher_satisfaction') {
-    return 'teacher'
-  }
-  return null
-}
-
-function buildPreviewSession(templateId: string, onEditForm: () => void) {
+function buildPreviewSession(templateId: string, onEditForm?: () => void) {
   const row = findWritingTemplateRowByDefinitionId(templateId)
   if (row == null) return null
   const entry = lookupTemplateRegistry(row.id)
@@ -99,8 +99,20 @@ function buildPreviewSession(templateId: string, onEditForm: () => void) {
     updateParagraph: () => {},
     headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
     editorKind: 'survey' as const,
-    onEditForm,
+    ...(onEditForm != null ? { onEditForm } : {}),
   }
+}
+
+function buildSurveyPollResultsPdfFileName(programTitle: string, surveyTitle: string): string {
+  const safeProgram = programTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '프로그램'
+  const safeSurvey = surveyTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '설문조사'
+  return `${safeProgram}_${safeSurvey}_설문조사결과.pdf`
+}
+
+function buildSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: string): string {
+  const safeProgram = programTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '프로그램'
+  const safeSurvey = surveyTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '만족도조사'
+  return `${safeProgram}_${safeSurvey}_만족도조사결과.pdf`
 }
 
 export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurveyManagementViewProps) {
@@ -112,6 +124,9 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const [satisfactionSurveysByAudience, setSatisfactionSurveysByAudience] = useState(
     initialMock.satisfactionSurveysByAudience
   )
+  const [activeSatisfactionAudience, setActiveSatisfactionAudience] = useState(
+    () => getDefaultGeneralSatisfactionAudience(program)
+  )
   const [pendingSatisfactionAudience, setPendingSatisfactionAudience] =
     useState<GeneralSatisfactionAudienceKey | null>(null)
   const [lectureEvalSurvey, setLectureEvalSurvey] = useState<RegisteredSurvey | null>(
@@ -120,7 +135,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const [lectureEvalSubmitted, setLectureEvalSubmitted] = useState(false)
   const [lectureEvalFormDraft, setLectureEvalFormDraft] = useState<WritingFormDraft | null>(null)
   const [lectureEvalResponses, setLectureEvalResponses] = useState<SurveyPollRawResponse[]>([])
-  const [activeLectureEvalTab, setActiveLectureEvalTab] = useState<UjatLectureEvalTabKey>('eval')
+  const [activeLectureEvalTab, setActiveLectureEvalTab] = useState<LectureEvalTabKey>('eval')
   const [createModalKind, setCreateModalKind] = useState<CreateModalKind | null>(null)
   const [deleteModalKind, setDeleteModalKind] = useState<DeleteModalKind | null>(null)
   const [deleteConfirmWord, setDeleteConfirmWord] = useState('')
@@ -129,7 +144,20 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const [lectureEvalIncompleteModalOpen, setLectureEvalIncompleteModalOpen] = useState(false)
   const [downloadingLectureEvalResults, setDownloadingLectureEvalResults] = useState(false)
   const [templateEditId, setTemplateEditId] = useState<string | null>(null)
+  const [shareToastOpen, setShareToastOpen] = useState(false)
+  const [shareToastLines, setShareToastLines] = useState<{ line1: string; line2: string }>({
+    line1: GENERAL_SURVEY_POLL_SHARE_TOAST_COPY.line1,
+    line2: GENERAL_SURVEY_POLL_SHARE_TOAST_COPY.line2,
+  })
+  const [lectureEvalDownloadModalOpen, setLectureEvalDownloadModalOpen] = useState(false)
+  const [pollDownloadModalOpen, setPollDownloadModalOpen] = useState(false)
+  const [satisfactionDownloadModalOpen, setSatisfactionDownloadModalOpen] = useState(false)
+  const [downloadingPollResults, setDownloadingPollResults] = useState(false)
+  const [downloadingSatisfactionResults, setDownloadingSatisfactionResults] = useState(false)
   const lectureEvalResultsExportRef = useRef<HTMLDivElement>(null)
+  const pollResultsExportRef = useRef<HTMLDivElement>(null)
+  const satisfactionResultsExportRef = useRef<HTMLDivElement>(null)
+  const shareToastTimerRef = useRef<number | null>(null)
   const { openWritingUserPreview } = useTemplateWritingPreview()
   const { copyText } = useClipboard()
   const { showAlert } = useCmsAlert()
@@ -140,6 +168,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     setActiveRegisteredSurveyId(next.activeRegisteredSurveyId)
     setSatisfactionSurveysByAudience(next.satisfactionSurveysByAudience)
     setPendingSatisfactionAudience(null)
+    setActiveSatisfactionAudience(getDefaultGeneralSatisfactionAudience(program))
     setLectureEvalSurvey(next.lectureEvalSurvey)
     setLectureEvalSubmitted(false)
     setLectureEvalFormDraft(null)
@@ -147,17 +176,34 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     setActiveLectureEvalTab('eval')
   }, [program])
 
+  useEffect(() => {
+    if (!isGeneralSatisfactionSurveyNavTab(activeTab)) return
+    setActiveSatisfactionAudience(prev =>
+      resolveGeneralSatisfactionAudienceFromNavTab(activeTab, program, prev)
+    )
+  }, [activeTab, program])
+
+  useEffect(() => {
+    return () => {
+      if (shareToastTimerRef.current != null) {
+        window.clearTimeout(shareToastTimerRef.current)
+      }
+    }
+  }, [])
+
   const surveyTemplateOptions = useMemo(() => getSurveyWritingTemplateSelectOptions(), [])
   const activeRegisteredSurvey = useMemo(
     () => registeredSurveys.find(item => item.id === activeRegisteredSurveyId) ?? null,
     [registeredSurveys, activeRegisteredSurveyId]
   )
   const individualProgram = isGeneralIndividualProgram(program)
-  const activeSatisfactionAudience = resolveSatisfactionAudienceFromTab(activeTab, program)
-  const activeSatisfactionSurvey =
-    activeSatisfactionAudience != null
-      ? (satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null)
-      : null
+  const satisfactionAudienceTabs = useMemo(
+    () => getEnabledGeneralSatisfactionAudienceTabs(program),
+    [program]
+  )
+  const activeSatisfactionSurvey = satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null
+  const pollResponses = useMemo(() => buildGeneralSurveyMockState(program).responses, [program])
+  const satisfactionResponses = pollResponses
 
   useEffect(() => {
     if (lectureEvalSurvey == null) {
@@ -173,11 +219,28 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   }, [lectureEvalSurvey])
 
   const openTemplatePreview = useCallback(
-    (templateId: string) => {
-      const session = buildPreviewSession(templateId, () => setTemplateEditId(templateId))
+    (templateId: string, options?: { allowEdit?: boolean }) => {
+      const onEditForm =
+        options?.allowEdit === true ? () => setTemplateEditId(templateId) : undefined
+      const session = buildPreviewSession(templateId, onEditForm)
       if (session != null) openWritingUserPreview(session)
     },
     [openWritingUserPreview]
+  )
+
+  const showShareCopyToast = useCallback(
+    (lines: { line1: string; line2: string } = GENERAL_SURVEY_POLL_SHARE_TOAST_COPY) => {
+      setShareToastLines(lines)
+      setShareToastOpen(true)
+      if (shareToastTimerRef.current != null) {
+        window.clearTimeout(shareToastTimerRef.current)
+      }
+      shareToastTimerRef.current = window.setTimeout(() => {
+        setShareToastOpen(false)
+        shareToastTimerRef.current = null
+      }, 4000)
+    },
+    []
   )
 
   const openCreateModal = useCallback(
@@ -188,7 +251,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         setSelectedTemplateId(GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE[satisfactionAudience])
       } else if (kind === 'lecture') {
         setPendingSatisfactionAudience(null)
-        setSelectedTemplateId(UJAT_LECTURE_EVAL_TEMPLATE_ID)
+        setSelectedTemplateId(LECTURE_EVAL_TEMPLATE_ID)
       } else {
         setPendingSatisfactionAudience(null)
         setSelectedTemplateId(null)
@@ -244,7 +307,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           id: `general-lecture-eval-${Date.now()}`,
           title: row.templateName,
           templateId: row.id,
-          status: 'in_progress',
+          status: 'before_start',
           responseCount: 0,
           participantTotal: 1,
         }
@@ -252,7 +315,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         setLectureEvalSubmitted(false)
         setLectureEvalResponses([])
         setActiveLectureEvalTab('eval')
-        setLectureEvalFormDraft(buildLectureEvalFormDraft(row.id))
+        setLectureEvalFormDraft(null)
       }
       setCreateModalKind(null)
     } catch (error) {
@@ -271,6 +334,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const confirmDelete = useCallback(() => {
     if (deleteConfirmWord.trim() !== '삭제') return
     if (deleteModalKind === 'survey' && activeRegisteredSurvey != null) {
+      if (activeRegisteredSurvey.status !== 'before_start') return
       setRegisteredSurveys(prev => {
         const next = prev.filter(item => item.id !== activeRegisteredSurvey.id)
         setActiveRegisteredSurveyId(current =>
@@ -284,6 +348,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       activeSatisfactionSurvey != null &&
       activeSatisfactionAudience != null
     ) {
+      if (activeSatisfactionSurvey.status !== 'before_start') return
       setSatisfactionSurveysByAudience(prev => {
         const next = { ...prev }
         delete next[activeSatisfactionAudience]
@@ -300,19 +365,97 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     deleteModalKind,
   ])
 
-  const shareSurveyAdminUrl = useCallback(
-    (tab: string) => {
-      const url = `${window.location.origin}/programs/general?programId=${program.id}&lnb=survey&tab=${tab}`
+  const shareRegisteredSurveyUrl = useCallback(
+    (survey: RegisteredSurvey) => {
+      const url = `${window.location.origin}/programs/general/survey?programId=${program.id}&surveyId=${survey.id}`
       void copyText(url)
+      showShareCopyToast()
     },
-    [copyText, program.id]
+    [copyText, program.id, showShareCopyToast]
   )
 
-  const shareStudentSatisfactionUrl = useCallback(() => {
-    const audience = individualProgram ? 'individual' : 'student'
-    const url = `${window.location.origin}/programs/general/satisfaction?programId=${program.id}&audience=${audience}`
-    void copyText(url)
-  }, [copyText, individualProgram, program.id])
+  const shareSatisfactionSurveyUrl = useCallback(
+    (audience: GeneralSatisfactionAudienceKey) => {
+      const url = `${window.location.origin}/programs/general/satisfaction?programId=${program.id}&audience=${audience}`
+      void copyText(url)
+      showShareCopyToast(GENERAL_SATISFACTION_SHARE_TOAST_COPY)
+    },
+    [copyText, program.id, showShareCopyToast]
+  )
+
+  const handleDownloadSatisfactionResults = useCallback(
+    async (format: SurveyResultsDownloadFormat) => {
+      if (activeSatisfactionSurvey == null) return
+      setDownloadingSatisfactionResults(true)
+      try {
+        if (format === 'pdf') {
+          const root = satisfactionResultsExportRef.current
+          if (root == null) {
+            throw new Error('PDF로보낼 결과 영역을 찾을 수 없습니다.')
+          }
+          await exportLectureEvalResultsPdf(
+            root,
+            buildSatisfactionResultsPdfFileName(program.title, activeSatisfactionSurvey.title)
+          )
+        } else {
+          await exportSurveyResultsExcel({
+            surveyTitle: activeSatisfactionSurvey.title,
+            templateId: activeSatisfactionSurvey.templateId,
+            responseCount: activeSatisfactionSurvey.responseCount,
+            participantTotal: activeSatisfactionSurvey.participantTotal,
+            responses: satisfactionResponses,
+          })
+        }
+        setSatisfactionDownloadModalOpen(false)
+      } catch (error) {
+        handleError(error, { context: 'generalSatisfactionResultsDownload' })
+        showAlert({
+          title: '다운로드',
+          content: '파일 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      } finally {
+        setDownloadingSatisfactionResults(false)
+      }
+    },
+    [activeSatisfactionSurvey, program.title, satisfactionResponses, showAlert]
+  )
+
+  const handleDownloadPollResults = useCallback(
+    async (format: SurveyResultsDownloadFormat) => {
+      if (activeRegisteredSurvey == null) return
+      setDownloadingPollResults(true)
+      try {
+        if (format === 'pdf') {
+          const root = pollResultsExportRef.current
+          if (root == null) {
+            throw new Error('PDF로보낼 결과 영역을 찾을 수 없습니다.')
+          }
+          await exportLectureEvalResultsPdf(
+            root,
+            buildSurveyPollResultsPdfFileName(program.title, activeRegisteredSurvey.title)
+          )
+        } else {
+          await exportSurveyResultsExcel({
+            surveyTitle: activeRegisteredSurvey.title,
+            templateId: activeRegisteredSurvey.templateId,
+            responseCount: activeRegisteredSurvey.responseCount,
+            participantTotal: activeRegisteredSurvey.participantTotal,
+            responses: pollResponses,
+          })
+        }
+        setPollDownloadModalOpen(false)
+      } catch (error) {
+        handleError(error, { context: 'generalSurveyPollResultsDownload' })
+        showAlert({
+          title: '다운로드',
+          content: '파일 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      } finally {
+        setDownloadingPollResults(false)
+      }
+    },
+    [activeRegisteredSurvey, pollResponses, program.title, showAlert]
+  )
 
   const handleLectureEvalSubmit = useCallback(() => {
     if (lectureEvalSurvey == null || lectureEvalFormDraft == null) return
@@ -327,7 +470,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     setLectureEvalSurvey(prev => {
       if (prev == null) return prev
       const nextStatus =
-        UJAT_LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT && prev.status === 'in_progress'
+        LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT && prev.status === 'in_progress'
           ? 'finished'
           : prev.status
       return {
@@ -340,7 +483,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   }, [lectureEvalFormDraft, lectureEvalSurvey, showAlert])
 
   const handleLectureEvalTabChange = useCallback(
-    (tab: UjatLectureEvalTabKey) => {
+    (tab: LectureEvalTabKey) => {
       if (tab === 'results' && lectureEvalSurvey?.status !== 'finished') {
         setLectureEvalIncompleteModalOpen(true)
         return
@@ -361,22 +504,49 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       updateParagraph: () => {},
       headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
       editorKind: 'survey',
-      paragraphBodyOptions: UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
+      paragraphBodyOptions: LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
+      ...(lectureEvalSurvey.status === 'before_start'
+        ? { onEditForm: () => setTemplateEditId(row.id) }
+        : {}),
     })
   }, [lectureEvalSurvey, openWritingUserPreview])
 
-  const handleDownloadLectureEvalResults = useCallback(async () => {
-    const root = lectureEvalResultsExportRef.current
-    if (root == null) return
-    setDownloadingLectureEvalResults(true)
-    try {
-      await exportLectureEvalResultsPdf(root, buildLectureEvalResultsPdfFileName(program.title))
-    } catch (error) {
-      handleError(error, { context: 'generalLectureEvalResultsPdfDownload' })
-    } finally {
-      setDownloadingLectureEvalResults(false)
-    }
-  }, [program.title])
+  const handleDownloadLectureEvalResults = useCallback(
+    async (format: SurveyResultsDownloadFormat) => {
+      if (lectureEvalSurvey == null) return
+      setDownloadingLectureEvalResults(true)
+      try {
+        if (format === 'pdf') {
+          const root = lectureEvalResultsExportRef.current
+          if (root == null) {
+            throw new Error('PDF로보낼 결과 영역을 찾을 수 없습니다.')
+          }
+          await exportLectureEvalResultsPdf(
+            root,
+            buildLectureEvalResultsPdfFileName(program.title)
+          )
+        } else {
+          await exportSurveyResultsExcel({
+            surveyTitle: lectureEvalSurvey.title,
+            templateId: lectureEvalSurvey.templateId,
+            responseCount: lectureEvalSurvey.responseCount,
+            participantTotal: lectureEvalSurvey.participantTotal,
+            responses: lectureEvalResponses,
+          })
+        }
+        setLectureEvalDownloadModalOpen(false)
+      } catch (error) {
+        handleError(error, { context: 'generalLectureEvalResultsDownload' })
+        showAlert({
+          title: '다운로드',
+          content: '파일 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      } finally {
+        setDownloadingLectureEvalResults(false)
+      }
+    },
+    [lectureEvalResponses, lectureEvalSurvey, program.title, showAlert]
+  )
 
   const renderPoll = () =>
     registeredSurveys.length === 0 ? (
@@ -399,10 +569,14 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               <SurveyRegisteredActions
                 survey={activeRegisteredSurvey}
                 labels={GENERAL_SURVEY_POLL_ACTION_LABELS}
-                onShareClick={() => shareSurveyAdminUrl('survey')}
+                onShareClick={() => shareRegisteredSurveyUrl(activeRegisteredSurvey)}
                 onAddClick={() => openCreateModal('survey')}
-                onOpenTemplatePreview={() => openTemplatePreview(activeRegisteredSurvey.templateId)}
-                onDownloadClick={() => undefined}
+                onOpenTemplatePreview={() =>
+                  openTemplatePreview(activeRegisteredSurvey.templateId, {
+                    allowEdit: activeRegisteredSurvey.status === 'before_start',
+                  })
+                }
+                onDownloadClick={() => setPollDownloadModalOpen(true)}
               />
             ) : null
           }
@@ -414,109 +588,93 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             deleteButtonLabel={GENERAL_SURVEY_POLL_NO_RESPONSE_COPY.deleteButton}
             previewButtonLabel={GENERAL_SURVEY_POLL_NO_RESPONSE_COPY.previewButton}
             canDelete={activeRegisteredSurvey.status === 'before_start'}
+            embedded
             onDeleteClick={() => {
+              if (activeRegisteredSurvey.status !== 'before_start') return
               setDeleteConfirmWord('')
               setDeleteModalKind('survey')
             }}
-            onOpenTemplatePreview={() => openTemplatePreview(activeRegisteredSurvey.templateId)}
+            onOpenTemplatePreview={() =>
+              openTemplatePreview(activeRegisteredSurvey.templateId, { allowEdit: true })
+            }
           />
         ) : activeRegisteredSurvey != null ? (
-          <SurveyPollResultsView
-            templateId={activeRegisteredSurvey.templateId}
-            responseCount={activeRegisteredSurvey.responseCount}
-            participantTotal={activeRegisteredSurvey.participantTotal}
-            responses={initialMock.responses}
-            pdfTitle="설문조사 결과"
-          />
+          <div ref={pollResultsExportRef}>
+            <SurveyPollResultsView
+              templateId={activeRegisteredSurvey.templateId}
+              responseCount={activeRegisteredSurvey.responseCount}
+              participantTotal={activeRegisteredSurvey.participantTotal}
+              responses={pollResponses}
+              pdfTitle="설문조사 결과"
+            />
+          </div>
         ) : null}
       </div>
     )
 
   const renderEmptyMain = () => (
-    <div className="program-detail-fullpage-modal__info-tab survey-management__empty-main">
-      <div className="survey-management__empty-main-card">
-        <p className="survey-management__empty-main-title">설문 관리 항목이 없습니다.</p>
-        <p className="survey-management__empty-main-description">
-          공통 정보에서 설문 진행 항목을 선택하면 설문조사, 학생 만족도조사, 교사 만족도조사, 강의평가를
-          관리할 수 있습니다.
-        </p>
-      </div>
-    </div>
+    <SurveyEmptyState
+      title={GENERAL_SURVEY_POLL_EMPTY_COPY.title}
+      description={GENERAL_SURVEY_POLL_EMPTY_COPY.description}
+      registerButtonLabel={GENERAL_SURVEY_POLL_EMPTY_COPY.registerButton}
+      onRegisterClick={() => openCreateModal('survey')}
+    />
   )
 
   const createTitle =
     createModalKind === 'satisfaction' && pendingSatisfactionAudience != null
-      ? pendingSatisfactionAudience === 'teacher'
-        ? '신규 교사 만족도조사 등록'
-        : '신규 학생 만족도조사 등록'
+      ? `신규 ${getGeneralSatisfactionAudienceLabel(pendingSatisfactionAudience)} 만족도조사 등록`
       : createModalKind === 'lecture'
-        ? UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY.title
+        ? GENERAL_LECTURE_EVAL_REGISTER_MODAL_COPY.title
         : '신규 설문조사 등록'
   const createDescription =
     createModalKind === 'satisfaction' && pendingSatisfactionAudience != null
-      ? pendingSatisfactionAudience === 'student' || pendingSatisfactionAudience === 'individual'
-        ? '학생 만족도조사를 등록하시겠습니까?\n등록 후 링크 공유하여 비회원(학생) 대상으로 진행할 수 있습니다.'
-        : `${getGeneralSatisfactionAudienceLabel(pendingSatisfactionAudience)}용 만족도조사를 등록하시겠습니까?\n등록 시 해당 프로그램 참여 교사에게 동일하게 노출됩니다.`
+      ? getGeneralSatisfactionCreateDescription(pendingSatisfactionAudience)
       : createModalKind === 'lecture'
-        ? UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY.description
+        ? GENERAL_LECTURE_EVAL_REGISTER_MODAL_COPY.description
         : '새로운 설문조사를 진행하시겠습니까?\n설문조사 신규 등록을 위해 사용할 템플릿 유형을 선택해 주세요.'
 
-  const renderSatisfactionTab = (
-    audience: GeneralSatisfactionAudienceKey,
-    emptyCopy: SurveyEmptyCopy,
-    actionLabels: SurveyActionLabels,
-    showShareButton: boolean,
-    onShareClick: () => void
-  ) => (
+  const renderSatisfactionView = () => (
     <SatisfactionSurveyView
       surveysByAudience={satisfactionSurveysByAudience}
-      activeAudience={audience}
-      audienceTabs={[{ key: audience, label: getGeneralSatisfactionAudienceLabel(audience) }]}
-      emptyCopy={emptyCopy}
+      activeAudience={activeSatisfactionAudience}
+      audienceTabs={satisfactionAudienceTabs}
+      emptyCopy={getGeneralSatisfactionEmptyCopy(activeSatisfactionAudience, program)}
       noResponseCopy={GENERAL_SATISFACTION_NO_RESPONSE_COPY}
-      actionLabels={actionLabels}
-      showAudienceTabs={false}
-      showShareButton={showShareButton}
-      onAudienceChange={() => undefined}
-      onRegisterClick={() => openCreateModal('satisfaction', audience)}
-      onShareClick={onShareClick}
+      actionLabels={getGeneralSatisfactionActionLabels()}
+      showAudienceTabs={satisfactionAudienceTabs.length > 0}
+      showShareButton
+      onAudienceChange={setActiveSatisfactionAudience}
+      onRegisterClick={() => openCreateModal('satisfaction', activeSatisfactionAudience)}
+      onShareClick={() => shareSatisfactionSurveyUrl(activeSatisfactionAudience)}
       onDeleteClick={() => {
+        const survey = satisfactionSurveysByAudience[activeSatisfactionAudience]
+        if (survey?.status !== 'before_start') return
         setDeleteConfirmWord('')
         setDeleteModalKind('satisfaction')
       }}
       onOpenTemplatePreview={() => {
-        const survey = satisfactionSurveysByAudience[audience]
+        const survey = satisfactionSurveysByAudience[activeSatisfactionAudience]
         if (survey != null) {
-          openTemplatePreview(survey.templateId)
+          openTemplatePreview(survey.templateId, {
+            allowEdit: survey.status === 'before_start',
+          })
         }
       }}
-      onDownloadClick={() => undefined}
+      onDownloadClick={() => setSatisfactionDownloadModalOpen(true)}
+      resultsExportRef={satisfactionResultsExportRef}
+      resultsResponses={satisfactionResponses}
     />
   )
 
   return (
     <>
       {activeTab === 'survey' ? renderPoll() : null}
-      {activeTab === 'student_satisfaction'
-        ? renderSatisfactionTab(
-            individualProgram ? 'individual' : 'student',
-            GENERAL_STUDENT_SATISFACTION_EMPTY_COPY,
-            GENERAL_STUDENT_SATISFACTION_ACTION_LABELS,
-            true,
-            shareStudentSatisfactionUrl
-          )
-        : null}
-      {activeTab === 'teacher_satisfaction'
-        ? renderSatisfactionTab(
-            'teacher',
-            GENERAL_TEACHER_SATISFACTION_EMPTY_COPY,
-            GENERAL_TEACHER_SATISFACTION_ACTION_LABELS,
-            false,
-            () => undefined
-          )
+      {isGeneralSatisfactionSurveyNavTab(activeTab) && satisfactionAudienceTabs.length > 0
+        ? renderSatisfactionView()
         : null}
       {activeTab === 'lecture_evaluation' ? (
-        <UjatLectureEvalSurveyView
+        <LectureEvalSurveyView
           survey={lectureEvalSurvey}
           submitted={lectureEvalSubmitted}
           formDraft={lectureEvalFormDraft}
@@ -524,6 +682,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           activeTab={activeLectureEvalTab}
           downloadingResults={downloadingLectureEvalResults}
           resultsExportRef={lectureEvalResultsExportRef}
+          emptyCopy={GENERAL_LECTURE_EVAL_EMPTY_COPY}
+          preStartCopy={GENERAL_LECTURE_EVAL_PRE_START_COPY}
+          submittedCopy={GENERAL_LECTURE_EVAL_SUBMITTED_COPY}
+          actionLabels={GENERAL_LECTURE_EVAL_ACTION_LABELS}
           onTabChange={handleLectureEvalTabChange}
           onRegisterClick={() => openCreateModal('lecture')}
           onOpenTemplatePreview={handleLectureEvalPreview}
@@ -537,9 +699,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               setLectureEvalSubmitted(false)
             }
           }}
-          onDownloadResultsClick={() => {
-            void handleDownloadLectureEvalResults()
-          }}
+          onDownloadResultsClick={() => setLectureEvalDownloadModalOpen(true)}
         />
       ) : null}
       {activeTab === 'main' ? renderEmptyMain() : null}
@@ -552,7 +712,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         className="ujat-survey-create-modal"
         description={createDescription}
         footer={
-          <div className="ujat-survey-create-modal__footer">
+          <>
             <CmsButton
               variant="secondary"
               size="medium"
@@ -576,7 +736,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             >
               신규 등록
             </CmsButton>
-          </div>
+          </>
         }
       >
         <div className="ujat-survey-create-modal__field">
@@ -600,9 +760,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         }}
         title={
           deleteModalKind === 'satisfaction' && activeSatisfactionAudience != null
-            ? activeSatisfactionAudience === 'teacher'
-              ? '교사 만족도조사 삭제 안내'
-              : '학생 만족도조사 삭제 안내'
+            ? getGeneralSatisfactionDeleteModalTitle(activeSatisfactionAudience)
             : '설문조사 삭제 안내'
         }
         width={600}
@@ -613,18 +771,16 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             ? `${getGeneralSatisfactionAudienceLabel(activeSatisfactionAudience)} 만족도조사`
             : activeRegisteredSurvey?.title ?? '설문조사'
         }]** ${
-          deleteModalKind === 'satisfaction' && activeSatisfactionAudience === 'teacher'
-            ? '교사 만족도조사'
-            : deleteModalKind === 'satisfaction'
-              ? '학생 만족도조사'
-              : '설문조사'
+          deleteModalKind === 'satisfaction' && activeSatisfactionAudience != null
+            ? `${getGeneralSatisfactionAudienceLabel(activeSatisfactionAudience)} 만족도조사`
+            : '설문조사'
         }를 삭제하시겠습니까?\n삭제 시 해당 양식의 내용은 모두 삭제됩니다.\n삭제된 항목 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?`}
         footer={
-          <div className="ujat-survey-delete-modal__footer">
+          <>
             <CmsButton
               variant="secondary"
-              size="large"
-              width={140}
+              size="medium"
+              width={120}
               type="button"
               onClick={() => {
                 setDeleteModalKind(null)
@@ -635,15 +791,15 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             </CmsButton>
             <CmsButton
               variant="delete"
-              size="large"
-              width={160}
+              size="medium"
+              width={120}
               type="button"
               disabled={deleteConfirmWord.trim() !== '삭제'}
               onClick={confirmDelete}
             >
               삭제
             </CmsButton>
-          </div>
+          </>
         }
       >
         <div className="ujat-survey-delete-modal__field">
@@ -659,22 +815,20 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       <ContentModal
         open={lectureEvalIncompleteModalOpen}
         onCancel={() => setLectureEvalIncompleteModalOpen(false)}
-        title={UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.title}
+        title={GENERAL_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.title}
         width={600}
         className="ujat-lecture-eval-incomplete-modal"
-        description={UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.description}
+        description={GENERAL_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.description}
         footer={
-          <div className="ujat-lecture-eval-incomplete-modal__footer">
-            <CmsButton
-              variant="secondary"
-              size="medium"
-              width={120}
-              type="button"
-              onClick={() => setLectureEvalIncompleteModalOpen(false)}
-            >
-              {UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.confirmButton}
-            </CmsButton>
-          </div>
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            width={120}
+            type="button"
+            onClick={() => setLectureEvalIncompleteModalOpen(false)}
+          >
+            {GENERAL_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.confirmButton}
+          </CmsButton>
         }
       >
         <span className="ujat-lecture-eval-incomplete-modal__body-placeholder" />
@@ -687,6 +841,34 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           onClose={() => setTemplateEditId(null)}
         />
       ) : null}
+
+      <SurveyResultsDownloadModal
+        open={pollDownloadModalOpen}
+        downloading={downloadingPollResults}
+        onCancel={() => setPollDownloadModalOpen(false)}
+        onDownload={handleDownloadPollResults}
+      />
+
+      <SurveyResultsDownloadModal
+        open={satisfactionDownloadModalOpen}
+        downloading={downloadingSatisfactionResults}
+        onCancel={() => setSatisfactionDownloadModalOpen(false)}
+        onDownload={handleDownloadSatisfactionResults}
+      />
+
+      <SurveyResultsDownloadModal
+        open={lectureEvalDownloadModalOpen}
+        downloading={downloadingLectureEvalResults}
+        copy={GENERAL_LECTURE_EVAL_DOWNLOAD_MODAL_COPY}
+        onCancel={() => setLectureEvalDownloadModalOpen(false)}
+        onDownload={handleDownloadLectureEvalResults}
+      />
+
+      <SurveyShareCopyToast
+        open={shareToastOpen}
+        line1={shareToastLines.line1}
+        line2={shareToastLines.line2}
+      />
     </>
   )
 }
