@@ -1,0 +1,113 @@
+/**
+ * 회원가입 완료 페이지 스타일
+ * auth-shell은 AuthPageShell에서 로드
+ */
+
+.auth-card.auth-card--register-complete {
+  height: auto;
+  min-height: 580px;
+  padding: 60px 0;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.register-complete {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.register-complete__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  width: 100%;
+  padding: 0 72px;
+  box-sizing: border-box;
+}
+
+.register-complete__title {
+  margin: 40px 0 0;
+  color: var(--Color-netural-black, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 144%;
+  letter-spacing: -0.6px;
+}
+
+.register-complete__description {
+  margin: 12px 0 0;
+  color: var(--Color-primary-boundless_blue, #285f74);
+  text-align: center;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.18px;
+}
+
+.register-complete__actions {
+  margin-top: 40px;
+}
+
+.register-complete__actions .auth-submit-btn,
+.register-complete__actions .auth-secondary-btn {
+  display: flex;
+  height: 52px;
+  padding: 6px 16px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  align-self: stretch;
+  width: 100%;
+}
+
+.register-complete__social-link-wrap {
+  display: flex;
+  padding: var(--Spacing-16, 16px) var(--Spacing-72, 72px) 0 var(--Spacing-72, 72px);
+  justify-content: center;
+  align-items: center;
+  gap: var(--Spacing-8, 8px);
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.register-complete__social-link {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.register-complete__social-link:hover {
+  color: var(--color-mint-01, #01a1af);
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .register-complete__body {
+    padding: 0 24px;
+  }
+
+  .register-complete__social-link-wrap {
+    padding: var(--Spacing-16, 16px) 24px 0 24px;
+  }
+}
