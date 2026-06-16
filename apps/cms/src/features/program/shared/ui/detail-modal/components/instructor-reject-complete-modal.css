@@ -82,6 +82,16 @@
   line-height: 150%;
 }
 
+.instructor-reject-complete-modal .content-modal__description-text strong,
+.participant-reject-complete-modal .content-modal__description-text strong {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
 .instructor-reject-complete-modal .teal-header-modal__footer {
   flex-shrink: 0;
   align-self: stretch;
