@@ -2,6 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import {
+  screeningDoc1DetailTitle,
+  screeningDocPassedDetailTitle,
+  screeningInterview2DetailTitle,
+  type ScreeningSubjectKind,
+} from '@/features/program/general/lib/screening-subject-kind'
 
 export type GeneralVolunteerApplicantDetailVariant =
   | 'doc_screening'
@@ -17,22 +23,28 @@ export type GeneralVolunteerApplicantDetailMetaChangeHandler = (
   meta: GeneralVolunteerApplicantDetailMeta | null
 ) => void
 
-function getDetailTitle(variant: GeneralVolunteerApplicantDetailVariant, name: string): string {
-  if (variant === 'doc_passed') return `봉사자 1차 서류 합격자 상세 (${name})`
-  if (variant === 'interview2') return `봉사자 2차 면접 대상자 상세 (${name})`
-  return `봉사자 1차 서류 심사 대상자 상세 (${name})`
+function getDetailTitle(
+  variant: GeneralVolunteerApplicantDetailVariant,
+  name: string,
+  subjectKind: ScreeningSubjectKind = 'volunteer'
+): string {
+  if (variant === 'doc_passed') return screeningDocPassedDetailTitle(subjectKind, name)
+  if (variant === 'interview2') return screeningInterview2DetailTitle(subjectKind, name)
+  return screeningDoc1DetailTitle(subjectKind, name)
 }
 
 export function useGeneralVolunteerApplicantDetail({
   programId,
   list,
   variant,
+  subjectKind = 'volunteer',
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: {
   programId: string
   list: GeneralVolunteerApplicantRow[]
   variant: GeneralVolunteerApplicantDetailVariant
+  subjectKind?: ScreeningSubjectKind
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
@@ -84,13 +96,12 @@ export function useGeneralVolunteerApplicantDetail({
     onVolunteerApplicantDetailMetaChange(
       selectedApplicant
         ? {
-            title: getDetailTitle(variant, selectedApplicant.name),
+            title: getDetailTitle(variant, selectedApplicant.name, subjectKind),
             breadcrumbLabel: selectedApplicant.name,
           }
         : null
     )
-    return () => onVolunteerApplicantDetailMetaChange(null)
-  }, [onVolunteerApplicantDetailMetaChange, selectedApplicant, variant])
+  }, [onVolunteerApplicantDetailMetaChange, selectedApplicant, subjectKind, variant])
 
   useEffect(() => {
     const applicantId = searchParams.get(APPLICANT_ID_PARAM)
@@ -112,7 +123,11 @@ export function useGeneralVolunteerApplicantDetail({
   useEffect(() => {
     if (!selectedApplicant) return
     const updated = list.find(row => row.id === selectedApplicant.id)
-    if (updated) setSelectedApplicant(updated)
+    if (!updated) return
+    setSelectedApplicant(prev => {
+      if (prev?.id === updated.id && prev.name === updated.name) return prev
+      return updated
+    })
   }, [list, selectedApplicant])
 
   const openApplicantDetail = useCallback(

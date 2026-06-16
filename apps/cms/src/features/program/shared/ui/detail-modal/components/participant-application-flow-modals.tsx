@@ -41,8 +41,8 @@ export type { ParticipantCancelRejectionConfirmPayload }
 // ——— 승인 ———
 
 export function buildParticipantApproveMessage(participantName: string): string {
-  const trimmedName = participantName.trim() || '참여자'
-  return `[${trimmedName}]의 프로그램 참여를 승인하시겠습니까?\n승인 시 해당 참여자에게 승인 알림이 발송됩니다.`
+  const subject = formatModalBracketedSubjectName(participantName, '참여자')
+  return `${subject}의 프로그램 참여를 승인하시겠습니까?\n승인 시 해당 참여자에게 승인 알림이 발송됩니다.`
 }
 
 export function ParticipantApproveModal({
@@ -75,7 +75,7 @@ export function ParticipantApproveModal({
 
 export function buildParticipantApprovalCompleteDescription(participantName: string): string {
   const trimmedName = participantName.trim() || '참여자'
-  return `[${trimmedName}]의 프로그램 참여가 승인 되었습니다.`
+  return `${formatModalBracketedSubjectName(trimmedName, '참여자')}의 프로그램 참여가 ${formatModalBoldPhrase('승인')} 되었습니다.`
 }
 
 export function ParticipantApprovalCompleteModal({
@@ -112,8 +112,8 @@ export function ParticipantApprovalCompleteModal({
 // ——— 반려 ———
 
 export function buildParticipantRejectMessage(participantName: string): string {
-  const trimmedName = participantName.trim() || '참여자'
-  return `[${trimmedName}]의 프로그램 참여를 반려하시겠습니까?\n반려 시 입력하신 반려 사유가 해당 참여자에게 전달되며, 알림이 발송됩니다.`
+  const subject = formatModalBracketedSubjectName(participantName, '참여자')
+  return `${subject}의 프로그램 참여를 반려하시겠습니까?\n반려 시 입력하신 반려 사유가 해당 참여자에게 전달되며, 알림이 발송됩니다.`
 }
 
 export function ParticipantRejectModal({
@@ -155,7 +155,7 @@ export function buildParticipantRejectCompleteDescription(
 ): string {
   const trimmedName = participantName.trim() || '참여자'
   const trimmedReason = rejectionReason.trim() || '-'
-  return `[${trimmedName}]의 프로그램 참여가 반려 되었습니다.\n(사유 : ${trimmedReason})`
+  return `${formatModalBracketedSubjectName(trimmedName, '참여자')}의 프로그램 참여가 ${formatModalBoldPhrase('반려')} 되었습니다.\n(사유 : ${trimmedReason})`
 }
 
 export function ParticipantRejectCompleteModal({

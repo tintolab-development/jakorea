@@ -4,6 +4,11 @@ import {
   SECOND_INTERVIEW_SCREENING_STATUS_ORDER,
 } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
 import {
+  screeningApplicantNameLabel,
+  screeningApplicantNamePlaceholder,
+  type ScreeningSubjectKind,
+} from './screening-subject-kind'
+import {
   GENERAL_DOCUMENT_SCREENING_STATUS_LABELS,
   GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS,
   GENERAL_MANAGER_EVALUATION_LABELS,
@@ -209,14 +214,16 @@ export function filterGeneralDoc1Applicants(
   })
 }
 
-export function buildGeneralVolunteerDocPassedFilterRows(): FilterFieldConfig[][] {
+export function buildGeneralVolunteerDocPassedFilterRows(
+  subjectKind: ScreeningSubjectKind = 'volunteer'
+): FilterFieldConfig[][] {
   return [
     [
       buildGeneralFilterField({
         key: 'volunteerName',
         type: 'search',
-        label: '신청 봉사자명',
-        placeholder: '봉사자명을 입력하세요',
+        label: screeningApplicantNameLabel(subjectKind),
+        placeholder: screeningApplicantNamePlaceholder(subjectKind),
       }),
       buildGeneralFilterField({
         key: 'interviewAssignmentStatus',
@@ -246,7 +253,8 @@ export function buildGeneralVolunteerInterview2TimeOptions(rows: GeneralVoluntee
 }
 
 export function buildGeneralVolunteerInterview2FilterRows(
-  rows: GeneralVolunteerApplicantRow[]
+  rows: GeneralVolunteerApplicantRow[],
+  subjectKind: ScreeningSubjectKind = 'volunteer'
 ): FilterFieldConfig[][] {
   const dateOptions = buildGeneralVolunteerInterview2DateOptions(rows)
   const timeOptions = buildGeneralVolunteerInterview2TimeOptions(rows)
@@ -256,8 +264,8 @@ export function buildGeneralVolunteerInterview2FilterRows(
       buildGeneralFilterField({
         key: 'volunteerName',
         type: 'search',
-        label: '신청 봉사자명',
-        placeholder: '봉사자명을 입력하세요',
+        label: screeningApplicantNameLabel(subjectKind),
+        placeholder: screeningApplicantNamePlaceholder(subjectKind),
       }),
       buildGeneralFilterField({
         key: 'interviewDate',
@@ -293,7 +301,8 @@ export function buildGeneralVolunteerInterview2FilterRows(
 
 /** 2차 면접 대상자 캘린더 뷰 — 면접일 필드 제외, 점수 라벨 '점수 총합' */
 export function buildGeneralVolunteerInterview2CalendarFilterRows(
-  rows: GeneralVolunteerApplicantRow[]
+  rows: GeneralVolunteerApplicantRow[],
+  subjectKind: ScreeningSubjectKind = 'volunteer'
 ): FilterFieldConfig[][] {
   const timeOptions = buildGeneralVolunteerInterview2TimeOptions(rows)
 
@@ -302,8 +311,8 @@ export function buildGeneralVolunteerInterview2CalendarFilterRows(
       buildGeneralFilterField({
         key: 'volunteerName',
         type: 'search',
-        label: '신청 봉사자명',
-        placeholder: '봉사자명을 입력하세요',
+        label: screeningApplicantNameLabel(subjectKind),
+        placeholder: screeningApplicantNamePlaceholder(subjectKind),
       }),
       buildGeneralFilterField({
         key: 'interviewTime',

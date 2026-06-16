@@ -1,4 +1,4 @@
-import { useCallback, type MouseEvent } from 'react'
+import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -9,29 +9,40 @@ import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import { buildGeneralVolunteerDocPassedFilterRows } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 import {
+  screeningDocPassedListTitle,
+  screeningWithdrawConfirmContent,
+  type ScreeningSubjectKind,
+} from '@/features/program/general/lib/screening-subject-kind'
+import {
   useGeneralVolunteerApplicantDetail,
   type GeneralVolunteerApplicantDetailMetaChangeHandler,
 } from './use-detail'
 import { GeneralVolunteerApplicantDetailView } from './detail-view'
 import { GeneralVolunteerInterviewAssignModals } from './general-volunteer-interview-assign-modals'
 import { GeneralVolunteerDocPassedCalendarView } from './general-volunteer-doc-passed-calendar-view'
+import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
 import { useGeneralVolunteerDocPassed } from './use-doc-passed'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import './doc-passed-section.css'
 import './volunteer-screening.css'
 
-const FILTER_ROWS = buildGeneralVolunteerDocPassedFilterRows()
-
 export function GeneralVolunteerDocPassedSection({
   program,
+  subjectKind = 'volunteer',
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: {
   program: Program
+  subjectKind?: ScreeningSubjectKind
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
   const programId = program.id
+  const filterRows = useMemo(
+    () => buildGeneralVolunteerDocPassedFilterRows(subjectKind),
+    [subjectKind]
+  )
+  const listTitle = screeningDocPassedListTitle(subjectKind)
 
   const {
     list,
@@ -54,12 +65,13 @@ export function GeneralVolunteerDocPassedSection({
     cancelWithdrawActivity,
     confirmWithdrawActivity,
     withdrawTarget,
-  } = useGeneralVolunteerDocPassed({ programId })
+  } = useGeneralVolunteerDocPassed({ programId, subjectKind })
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
     programId,
     list,
     variant: 'doc_passed',
+    subjectKind,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailMetaChange,
   })
@@ -88,7 +100,7 @@ export function GeneralVolunteerDocPassedSection({
     <ConfirmModal
       open
       title="활동 포기"
-      content={`${withdrawTarget.name} 봉사자를 활동 포기 처리하시겠습니까?`}
+      content={screeningWithdrawConfirmContent(subjectKind, withdrawTarget.name)}
       confirmText="활동 포기"
       danger
       onConfirm={confirmWithdrawActivity}
@@ -133,6 +145,30 @@ export function GeneralVolunteerDocPassedSection({
     )
 
   if (selectedApplicant) {
+    if (subjectKind === 'participant') {
+      return (
+        <>
+          <GeneralParticipantApplicantDetailView
+            program={program}
+            applicantId={selectedApplicant.id}
+            screeningStage="doc_passed"
+            onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
+            onApplicantDetailMetaChange={meta => {
+              if (!meta) {
+                onVolunteerApplicantDetailMetaChange?.(null)
+                return
+              }
+              onVolunteerApplicantDetailMetaChange?.({
+                title: meta.title,
+                breadcrumbLabel: meta.breadcrumbLabel,
+              })
+            }}
+          />
+          {assignModals}
+        </>
+      )
+    }
+
     return (
       <>
         <GeneralVolunteerApplicantDetailView
@@ -160,11 +196,11 @@ export function GeneralVolunteerDocPassedSection({
         bordered={false}
         contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         className="general-volunteer-doc-passed__filter-layout applicant-details__filter-table-layout"
-        rows={FILTER_ROWS}
+        rows={filterRows}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
-        title="봉사자 1차 서류 합격자 목록"
+        title={listTitle}
         description={`${count.toLocaleString()}건`}
         actions={viewToggleButton}
         excelExport={{

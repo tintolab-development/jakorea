@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import {
   getGeneralParticipantApplicationsLnbLabel,
+  getGeneralProgressMenuItems,
   hasGeneralInstructorApplications,
+  hasGeneralParticipantApplications,
 } from './detail-meta'
 import {
   getDefaultGeneralSatisfactionAudience,
@@ -13,6 +15,7 @@ import {
   programHasGeneralSatisfactionSurvey,
 } from './survey-audience'
 import { getGeneralSurveyMenuItems } from './detail-meta'
+import { getGeneralSurveyEditFieldsForAudience } from '@/features/program/general/model/common-info-edit-schema'
 
 function program(overrides: Partial<Program>): Program {
   return {
@@ -96,6 +99,51 @@ describe('general survey audience', () => {
     ).toBe('참여자 신청 목록')
   })
 
+  it('참여자·기관 신청 목록 LNB는 해당 유형 포함 시에만 노출한다', () => {
+    expect(
+      hasGeneralParticipantApplications(
+        program({ generalParticipantTypes: ['individual', 'teacher_instructor'] })
+      )
+    ).toBe(true)
+    expect(
+      hasGeneralParticipantApplications(
+        program({ generalParticipantTypes: ['school_institution', 'volunteer'] })
+      )
+    ).toBe(true)
+    expect(
+      hasGeneralParticipantApplications(
+        program({ generalParticipantTypes: ['teacher_instructor', 'volunteer'] })
+      )
+    ).toBe(false)
+  })
+
+  it('개인 프로그램 진행 현황 LNB에 참여자·출석·과제·게시글을 포함한다', () => {
+    const items = getGeneralProgressMenuItems(
+      program({
+        generalProgramAudience: 'individual',
+        generalParticipantTypes: ['individual', 'teacher_instructor', 'volunteer'],
+      })
+    )
+    expect(items.map(item => item.label)).toEqual([
+      '참여자',
+      '참여 강사',
+      '참여 봉사자',
+      '출석 관리',
+      '과제 관리',
+      '게시글',
+    ])
+  })
+
+  it('기관 프로그램 진행 현황 LNB는 참여 기관·강사·봉사자만 노출한다', () => {
+    const items = getGeneralProgressMenuItems(
+      program({
+        generalProgramAudience: 'organization',
+        generalParticipantTypes: ['school_institution', 'teacher_instructor', 'volunteer'],
+      })
+    )
+    expect(items.map(item => item.label)).toEqual(['참여 기관', '참여 강사', '참여 봉사자'])
+  })
+
   it('강사 신청 목록 LNB는 teacher_instructor 포함 시에만 노출한다', () => {
     expect(
       hasGeneralInstructorApplications(
@@ -161,6 +209,26 @@ describe('general survey audience', () => {
     expect(getEnabledGeneralSatisfactionAudienceTabs(org).map(tab => tab.key)).toEqual([
       'teacher',
       'student',
+    ])
+  })
+
+  it('개인 대상 설문 수정 항목은 교사 만족도를 제외한다', () => {
+    const individualFields = getGeneralSurveyEditFieldsForAudience(true)
+    expect(individualFields.map(field => field.id)).toEqual([
+      'survey',
+      'student_satisfaction',
+      'lecture_evaluation',
+    ])
+    expect(
+      individualFields.find(field => field.id === 'student_satisfaction')?.label
+    ).toBe('만족도조사')
+
+    const organizationFields = getGeneralSurveyEditFieldsForAudience(false)
+    expect(organizationFields.map(field => field.id)).toEqual([
+      'survey',
+      'student_satisfaction',
+      'teacher_satisfaction',
+      'lecture_evaluation',
     ])
   })
 })

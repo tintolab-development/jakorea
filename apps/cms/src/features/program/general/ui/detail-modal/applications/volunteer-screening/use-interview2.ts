@@ -7,6 +7,10 @@ import {
   type GeneralVolunteerApplicantRow,
   type GeneralVolunteerInterviewEvaluationPayload,
 } from '@/data/mock/general-volunteer-applicants-mock'
+import { getGeneralParticipantInterview2Applicants } from '@/data/mock/general-individual-applications-mock'
+import { mapParticipantsToVolunteerScreeningRows } from '@/features/program/general/lib/participant-volunteer-row-adapter'
+import type { ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
+import { screeningWithdrawCompleteContent } from '@/features/program/general/lib/screening-subject-kind'
 import {
   DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS,
   filterGeneralInterview2Applicants,
@@ -37,11 +41,28 @@ import type { ActivityWithdrawScheduleModalPayload } from '@/features/program/sh
 
 export type GeneralVolunteerInterview2ViewMode = 'list' | 'calendar'
 
-export function useGeneralVolunteerInterview2({ programId }: { programId: string }) {
+export function useGeneralVolunteerInterview2({
+  programId,
+  subjectKind = 'volunteer',
+}: {
+  programId: string
+  subjectKind?: ScreeningSubjectKind
+}) {
   const { showAlert } = useCmsAlert()
-  const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() =>
-    getGeneralVolunteerInterview2Applicants(programId)
-  )
+  const loadRows = useCallback(() => {
+    if (subjectKind === 'participant') {
+      return sortGeneralVolunteerInterview2Applicants(
+        mapParticipantsToVolunteerScreeningRows(
+          getGeneralParticipantInterview2Applicants(programId)
+        )
+      )
+    }
+    return sortGeneralVolunteerInterview2Applicants(
+      getGeneralVolunteerInterview2Applicants(programId)
+    )
+  }, [programId, subjectKind])
+
+  const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() => loadRows())
   const [pendingFilters, setPendingFilters] = useState<GeneralVolunteerInterview2Filters>(() => ({
     ...DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS,
   }))
@@ -70,7 +91,7 @@ export function useGeneralVolunteerInterview2({ programId }: { programId: string
   useGeneralInterview2EffectiveStatusTick(list)
 
   useEffect(() => {
-    setList(getGeneralVolunteerInterview2Applicants(programId))
+    setList(loadRows())
     setPendingFilters({ ...DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS })
     setAppliedFilters({ ...DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS })
     setViewMode('list')
@@ -84,7 +105,7 @@ export function useGeneralVolunteerInterview2({ programId }: { programId: string
     setFailModalVolunteer(null)
     setPassCompleteVolunteerName(null)
     setFailCompleteVolunteer(null)
-  }, [programId])
+  }, [loadRows])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
     setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -278,11 +299,11 @@ export function useGeneralVolunteerInterview2({ programId }: { programId: string
       )
       showAlert({
         title: '활동 포기',
-        content: `${row.name} 봉사자가 활동 포기 처리되었습니다.`,
+        content: screeningWithdrawCompleteContent(subjectKind, row.name),
       })
       setWithdrawTargetId(null)
     },
-    [list, showAlert, withdrawTargetId]
+    [list, showAlert, subjectKind, withdrawTargetId]
   )
 
   const withdrawTarget = useMemo(
@@ -331,7 +352,7 @@ export function useGeneralVolunteerInterview2({ programId }: { programId: string
     [evaluationTargetId, showAlert]
   )
 
-  const columns = useGeneralVolunteerInterview2Columns()
+  const columns = useGeneralVolunteerInterview2Columns(subjectKind)
 
   return {
     list,

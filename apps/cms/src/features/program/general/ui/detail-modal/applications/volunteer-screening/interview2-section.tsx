@@ -9,6 +9,10 @@ import {
   buildGeneralVolunteerInterview2CalendarFilterRows,
   buildGeneralVolunteerInterview2FilterRows,
 } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
+import {
+  screeningInterview2ListTitle,
+  type ScreeningSubjectKind,
+} from '@/features/program/general/lib/screening-subject-kind'
 import { GENERAL_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X } from './interview2-columns'
 import {
   useGeneralVolunteerApplicantDetail,
@@ -24,6 +28,7 @@ import { GeneralVolunteerInterview2FailModal } from './general-volunteer-intervi
 import { GeneralVolunteerInterview2PassCompleteModal } from './general-volunteer-interview2-pass-complete-modal'
 import { GeneralVolunteerInterview2PassModal } from './general-volunteer-interview2-pass-modal'
 import { GeneralVolunteerInterview2CalendarView } from './general-volunteer-interview2-calendar-view'
+import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
 import { useGeneralVolunteerInterview2 } from './use-interview2'
 import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
@@ -34,14 +39,18 @@ import './interview2-section.css'
 export function GeneralVolunteerInterview2Section({
   program,
   programId,
+  subjectKind = 'volunteer',
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: {
   program: Program
   programId: string
+  subjectKind?: ScreeningSubjectKind
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
+  const listTitle = screeningInterview2ListTitle(subjectKind)
+
   const {
     list,
     pendingFilters,
@@ -89,7 +98,7 @@ export function GeneralVolunteerInterview2Section({
     evaluationTarget,
     saveInterviewEvaluation,
     filterRowsSource,
-  } = useGeneralVolunteerInterview2({ programId })
+  } = useGeneralVolunteerInterview2({ programId, subjectKind })
 
   const activityWithdrawScheduleOptions = useMemo(
     () => getGeneralVolunteerActivityWithdrawScheduleOptions(program),
@@ -99,15 +108,16 @@ export function GeneralVolunteerInterview2Section({
   const filterRows = useMemo(
     () =>
       viewMode === 'calendar'
-        ? buildGeneralVolunteerInterview2CalendarFilterRows(filterRowsSource)
-        : buildGeneralVolunteerInterview2FilterRows(filterRowsSource),
-    [filterRowsSource, viewMode]
+        ? buildGeneralVolunteerInterview2CalendarFilterRows(filterRowsSource, subjectKind)
+        : buildGeneralVolunteerInterview2FilterRows(filterRowsSource, subjectKind),
+    [filterRowsSource, subjectKind, viewMode]
   )
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
     programId,
     list,
     variant: 'interview2',
+    subjectKind,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailMetaChange,
   })
@@ -229,6 +239,35 @@ export function GeneralVolunteerInterview2Section({
   )
 
   if (selectedApplicant) {
+    if (subjectKind === 'participant') {
+      return (
+        <>
+          <GeneralParticipantApplicantDetailView
+            program={program}
+            applicantId={selectedApplicant.id}
+            screeningStage="interview2"
+            onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
+            onApplicantDetailMetaChange={meta => {
+              if (!meta) {
+                onVolunteerApplicantDetailMetaChange?.(null)
+                return
+              }
+              onVolunteerApplicantDetailMetaChange?.({
+                title: meta.title,
+                breadcrumbLabel: meta.breadcrumbLabel,
+              })
+            }}
+          />
+          {passFailModals}
+          {withdrawConfirmModal}
+          {evaluationModal}
+          {bulkPassModal}
+          {bulkFailModal}
+          {completeModals}
+        </>
+      )
+    }
+
     return (
       <>
         <GeneralVolunteerApplicantDetailView
@@ -274,9 +313,7 @@ export function GeneralVolunteerInterview2Section({
         onSearch={handleSearch}
         title={
           <div className="general-volunteer-interview2__toolbar-main">
-            <span className="general-volunteer-interview2__toolbar-title">
-              봉사자 2차 면접 대상자 목록
-            </span>
+            <span className="general-volunteer-interview2__toolbar-title">{listTitle}</span>
             <span className="general-volunteer-interview2__toolbar-count">{count}건</span>
           </div>
         }

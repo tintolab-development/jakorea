@@ -5,6 +5,10 @@ import {
   sortGeneralVolunteerDocPassedApplicants,
   type GeneralVolunteerApplicantRow,
 } from '@/data/mock/general-volunteer-applicants-mock'
+import { getGeneralParticipantDocPassedApplicants } from '@/data/mock/general-individual-applications-mock'
+import { mapParticipantsToVolunteerScreeningRows } from '@/features/program/general/lib/participant-volunteer-row-adapter'
+import type { ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
+import { screeningWithdrawCompleteContent } from '@/features/program/general/lib/screening-subject-kind'
 import {
   DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS,
   filterGeneralDocPassedApplicants,
@@ -40,11 +44,24 @@ export type GeneralInterviewAssignFlow =
   | GeneralInterviewAssignPickFlow
   | GeneralInterviewAssignCompleteFlow
 
-export function useGeneralVolunteerDocPassed({ programId }: { programId: string }) {
+export function useGeneralVolunteerDocPassed({
+  programId,
+  subjectKind = 'volunteer',
+}: {
+  programId: string
+  subjectKind?: ScreeningSubjectKind
+}) {
   const { showAlert } = useCmsAlert()
-  const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() =>
-    getGeneralVolunteerDocPassedApplicants(programId)
-  )
+  const loadRows = useCallback(() => {
+    if (subjectKind === 'participant') {
+      return mapParticipantsToVolunteerScreeningRows(
+        getGeneralParticipantDocPassedApplicants(programId)
+      )
+    }
+    return getGeneralVolunteerDocPassedApplicants(programId)
+  }, [programId, subjectKind])
+
+  const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() => loadRows())
   const [pendingFilters, setPendingFilters] = useState<GeneralVolunteerDocPassedFilters>(() => ({
     ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS,
   }))
@@ -58,11 +75,11 @@ export function useGeneralVolunteerDocPassed({ programId }: { programId: string 
   assignFlowRef.current = assignFlow
 
   useEffect(() => {
-    setList(getGeneralVolunteerDocPassedApplicants(programId))
+    setList(loadRows())
     setPendingFilters({ ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS })
     setAppliedFilters({ ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS })
     setViewMode('list')
-  }, [programId])
+  }, [loadRows])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
     setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -152,17 +169,20 @@ export function useGeneralVolunteerDocPassed({ programId }: { programId: string 
     updateRow(withdrawTargetId, { interviewAssignmentStatus: 'withdrawn' })
     showAlert({
       title: '활동 포기',
-      content: `${row.name} 봉사자가 활동 포기 처리되었습니다.`,
+      content: screeningWithdrawCompleteContent(subjectKind, row.name),
     })
     setWithdrawTargetId(null)
-  }, [list, showAlert, updateRow, withdrawTargetId])
+  }, [list, showAlert, subjectKind, updateRow, withdrawTargetId])
 
   const withdrawTarget = useMemo(
     () => (withdrawTargetId ? list.find(row => row.id === withdrawTargetId) : undefined),
     [list, withdrawTargetId]
   )
 
-  const columns = useGeneralVolunteerDocPassedColumns({ onAssignInterview: handleAssignInterview })
+  const columns = useGeneralVolunteerDocPassedColumns({
+    onAssignInterview: handleAssignInterview,
+    subjectKind,
+  })
 
   const handleViewCalendar = useCallback(() => {
     setViewMode('calendar')
