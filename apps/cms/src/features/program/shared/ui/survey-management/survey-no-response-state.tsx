@@ -8,6 +8,7 @@ export type SurveyNoResponseStateProps = {
   deleteButtonLabel: string
   previewButtonLabel: string
   canDelete: boolean
+  embedded?: boolean
   onDeleteClick: () => void
   onOpenTemplatePreview: () => void
 }
@@ -18,11 +19,16 @@ export function SurveyNoResponseState({
   deleteButtonLabel,
   previewButtonLabel,
   canDelete,
+  embedded = false,
   onDeleteClick,
   onOpenTemplatePreview,
 }: SurveyNoResponseStateProps) {
+  const rootClassName = embedded
+    ? 'ujat-survey-registered-empty-state'
+    : 'program-detail-fullpage-modal__info-tab ujat-survey-registered-empty-state'
+
   return (
-    <div className="program-detail-fullpage-modal__info-tab ujat-survey-registered-empty-state">
+    <div className={rootClassName}>
       <div className="ujat-survey-registered-empty-state__content">
         <span className="ujat-survey-registered-empty-state__icon" aria-hidden>
           <SurveyEmptyIcon maskId="survey-registered-empty-icon-mask" />

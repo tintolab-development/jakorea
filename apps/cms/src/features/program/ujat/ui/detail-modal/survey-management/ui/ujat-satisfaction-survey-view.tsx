@@ -93,6 +93,7 @@ export function UjatSatisfactionSurveyView({
           deleteButtonLabel={UJAT_SATISFACTION_NO_RESPONSE_COPY.deleteButton}
           previewButtonLabel={UJAT_SATISFACTION_NO_RESPONSE_COPY.previewButton}
           canDelete={activeSurvey.status === 'before_start'}
+          embedded
           onDeleteClick={onDeleteClick}
           onOpenTemplatePreview={onOpenTemplatePreview}
         />

@@ -329,12 +329,6 @@
   width: 100%;
 }
 
-.ujat-survey-create-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
 .ujat-survey-create-modal.ant-modal .ant-modal-content {
   width: 600px;
   padding: 24px 30px 32px;
@@ -386,12 +380,6 @@
 
 .ujat-survey-delete-modal .cms-input {
   width: 100%;
-}
-
-.ujat-survey-delete-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
 }
 
 .ujat-survey-delete-modal.ant-modal .ant-modal-content {
@@ -448,12 +436,6 @@
   padding-top: 24px;
 }
 
-.ujat-lecture-eval-incomplete-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-}
-
 .ujat-lecture-eval-incomplete-modal__body-placeholder {
   display: none;
 }
@@ -475,22 +457,6 @@
 .ujat-survey-registered__actions {
   display: flex;
   gap: 8px;
-}
-
-.ujat-program-detail-fullpage-modal
-  .ujat-survey-registered__share-button.cms-button.ant-btn.cms-button--large {
-  width: 160px;
-  min-width: 160px;
-  height: 44px;
-  padding: 0 31px !important;
-}
-
-.ujat-program-detail-fullpage-modal
-  .ujat-survey-registered__add-button.cms-button.ant-btn.cms-button--large {
-  width: 160px;
-  min-width: 160px;
-  height: 44px;
-  padding: 0 31px !important;
 }
 
 .ujat-survey-registered-empty-state {
@@ -557,54 +523,4 @@
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.ujat-program-detail-fullpage-modal
-  .ujat-survey-registered-empty-state__delete-button.cms-button.ant-btn.cms-button--large {
-  display: flex;
-  width: 140px;
-  min-width: 140px;
-  height: 44px;
-  padding: 0 12px !important;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  border-radius: 8px;
-  border: 1px solid var(--color-red, #c32f4a) !important;
-  background: var(
-    --color-bg-red,
-    linear-gradient(0deg, rgba(195, 47, 74, 0.1) 0%, rgba(195, 47, 74, 0.1) 100%),
-    #fff
-  ) !important;
-  color: var(--color-red, #c32f4a) !important;
-  text-align: center;
-  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 150%;
-}
-
-.ujat-program-detail-fullpage-modal
-  .ujat-survey-registered-empty-state__delete-button
-  .cms-button__label {
-  overflow: visible;
-  text-overflow: clip;
-  white-space: nowrap;
-}
-
-.ujat-program-detail-fullpage-modal
-  .ujat-survey-registered-empty-state__preview-button.cms-button.ant-btn.cms-button--large {
-  display: flex;
-  width: 180px;
-  height: 44px;
-  padding: 0 31px !important;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
-  background: var(--JA-mint-01, #01a1af) !important;
 }

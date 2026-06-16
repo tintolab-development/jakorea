@@ -1,5 +1,6 @@
+import type { RefObject } from 'react'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
-import type { RegisteredSurvey, SurveyAudienceTab } from '../../lib/survey-management/survey-management-types'
+import type { RegisteredSurvey, SurveyAudienceTab, SurveyPollRawResponse } from '../../lib/survey-management/survey-management-types'
 import type { SurveyActionLabels, SurveyEmptyCopy, SurveyNoResponseCopy } from '../../lib/survey-management/survey-copy'
 import { SurveyEmptyState } from './survey-empty-state'
 import { SurveyNoResponseState } from './survey-no-response-state'
@@ -21,6 +22,8 @@ export type SatisfactionSurveyViewProps<TKey extends string> = {
   onDeleteClick: () => void
   onOpenTemplatePreview: () => void
   onDownloadClick: () => void
+  resultsExportRef?: RefObject<HTMLDivElement | null>
+  resultsResponses?: SurveyPollRawResponse[]
 }
 
 export function SatisfactionSurveyView<TKey extends string>({
@@ -38,6 +41,8 @@ export function SatisfactionSurveyView<TKey extends string>({
   onDeleteClick,
   onOpenTemplatePreview,
   onDownloadClick,
+  resultsExportRef,
+  resultsResponses,
 }: SatisfactionSurveyViewProps<TKey>) {
   const activeSurvey = surveysByAudience[activeAudience]
 
@@ -90,22 +95,27 @@ export function SatisfactionSurveyView<TKey extends string>({
   return (
     <div className="program-detail-fullpage-modal__info-tab ujat-survey-registered ujat-satisfaction-survey">
       {audienceTabRow}
-      {activeSurvey.responseCount === 0 ? (
+      {activeSurvey.status === 'before_start' ? (
         <SurveyNoResponseState
           title={noResponseCopy.title ?? `${activeAudienceLabel}용 만족도조사는 아직 진행 전입니다.`}
           description={noResponseCopy.description}
           deleteButtonLabel={noResponseCopy.deleteButton}
           previewButtonLabel={noResponseCopy.previewButton}
           canDelete={activeSurvey.status === 'before_start'}
+          embedded
           onDeleteClick={onDeleteClick}
           onOpenTemplatePreview={onOpenTemplatePreview}
         />
       ) : (
-        <SurveyPollResultsView
-          templateId={activeSurvey.templateId}
-          responseCount={activeSurvey.responseCount}
-          participantTotal={activeSurvey.participantTotal}
-        />
+        <div ref={resultsExportRef}>
+          <SurveyPollResultsView
+            templateId={activeSurvey.templateId}
+            responseCount={activeSurvey.responseCount}
+            participantTotal={activeSurvey.participantTotal}
+            responses={resultsResponses}
+            pdfTitle="만족도조사 결과"
+          />
+        </div>
       )}
     </div>
   )

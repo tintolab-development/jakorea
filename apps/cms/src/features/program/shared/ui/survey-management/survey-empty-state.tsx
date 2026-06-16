@@ -36,7 +36,11 @@ export function SurveyEmptyState({
             <p className="ujat-survey-poll-empty__secondary-description">{secondaryDescription}</p>
           ) : null}
         </div>
-        <CmsButton className="ujat-survey-poll-empty__register-button" onClick={onRegisterClick}>
+        <CmsButton
+          className="ujat-survey-poll-empty__register-button"
+          size="large"
+          onClick={onRegisterClick}
+        >
           {registerButtonLabel}
         </CmsButton>
       </div>

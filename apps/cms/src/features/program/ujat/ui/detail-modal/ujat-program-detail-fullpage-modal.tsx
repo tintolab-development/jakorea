@@ -1822,6 +1822,7 @@ export function UjatProgramDetailFullPageModal({
                       deleteButtonLabel={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.deleteButton}
                       previewButtonLabel={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.previewButton}
                       canDelete={activeRegisteredSurvey.status === 'before_start'}
+                      embedded
                       onDeleteClick={handleOpenSurveyDeleteModal}
                       onOpenTemplatePreview={handleOpenRegisteredSurveyTemplatePreview}
                     />
@@ -1885,7 +1886,7 @@ export function UjatProgramDetailFullPageModal({
           '새로운 설문조사를 진행하시겠습니까?\n설문조사 신규 등록을 위해 사용할 템플릿 유형을 선택해 주세요.'
         }
         footer={
-          <div className="ujat-survey-create-modal__footer">
+          <>
             <CmsButton
               variant="secondary"
               size="medium"
@@ -1909,7 +1910,7 @@ export function UjatProgramDetailFullPageModal({
             >
               신규 등록
             </CmsButton>
-          </div>
+          </>
         }
       >
         <div className="ujat-survey-create-modal__field">
@@ -1935,11 +1936,11 @@ export function UjatProgramDetailFullPageModal({
         className="ujat-survey-delete-modal"
         description={`**[${activeRegisteredSurvey?.title ?? '설문조사'}]** 설문조사를 삭제하시겠습니까?\n삭제 시 해당 양식의 내용은 모두 삭제됩니다.\n삭제된 항목 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?`}
         footer={
-          <div className="ujat-survey-delete-modal__footer">
+          <>
             <CmsButton
               variant="secondary"
-              size="large"
-              width={140}
+              size="medium"
+              width={120}
               type="button"
               onClick={handleCloseSurveyDeleteModal}
             >
@@ -1947,15 +1948,15 @@ export function UjatProgramDetailFullPageModal({
             </CmsButton>
             <CmsButton
               variant="delete"
-              size="large"
-              width={160}
+              size="medium"
+              width={120}
               type="button"
               disabled={surveyDeleteConfirmWord.trim() !== '삭제'}
               onClick={handleConfirmSurveyDelete}
             >
               설문 삭제
             </CmsButton>
-          </div>
+          </>
         }
       >
         <div className="ujat-survey-delete-modal__field">
@@ -1975,7 +1976,7 @@ export function UjatProgramDetailFullPageModal({
         className="ujat-survey-create-modal"
         description={`${getSatisfactionAudienceLabel(activeSatisfactionAudience)}용 만족도조사를 등록하시겠습니까?\n등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.`}
         footer={
-          <div className="ujat-survey-create-modal__footer">
+          <>
             <CmsButton
               variant="secondary"
               size="medium"
@@ -2001,7 +2002,7 @@ export function UjatProgramDetailFullPageModal({
             >
               신규 등록
             </CmsButton>
-          </div>
+          </>
         }
       >
         <div className="ujat-survey-create-modal__field">
@@ -2027,11 +2028,11 @@ export function UjatProgramDetailFullPageModal({
         className="ujat-survey-delete-modal"
         description={`**[${getSatisfactionDeleteModalSubject(activeSatisfactionAudience)}]** 만족도조사를 삭제하시겠습니까?\n삭제 시 해당 양식의 내용은 모두 삭제됩니다.\n삭제된 항목 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?`}
         footer={
-          <div className="ujat-survey-delete-modal__footer">
+          <>
             <CmsButton
               variant="secondary"
-              size="large"
-              width={140}
+              size="medium"
+              width={120}
               type="button"
               onClick={handleCloseSatisfactionDeleteModal}
             >
@@ -2039,15 +2040,15 @@ export function UjatProgramDetailFullPageModal({
             </CmsButton>
             <CmsButton
               variant="delete"
-              size="large"
-              width={160}
+              size="medium"
+              width={120}
               type="button"
               disabled={satisfactionDeleteConfirmWord.trim() !== '삭제'}
               onClick={handleConfirmSatisfactionDelete}
             >
               만족도조사 삭제
             </CmsButton>
-          </div>
+          </>
         }
       >
         <div className="ujat-survey-delete-modal__field">
@@ -2067,7 +2068,7 @@ export function UjatProgramDetailFullPageModal({
         className="ujat-survey-create-modal"
         description={UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY.description}
         footer={
-          <div className="ujat-survey-create-modal__footer">
+          <>
             <CmsButton
               variant="secondary"
               size="medium"
@@ -2091,7 +2092,7 @@ export function UjatProgramDetailFullPageModal({
             >
               {UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY.confirmButton}
             </CmsButton>
-          </div>
+          </>
         }
       >
         <div className="ujat-survey-create-modal__field">
@@ -2114,17 +2115,15 @@ export function UjatProgramDetailFullPageModal({
         className="ujat-lecture-eval-incomplete-modal"
         description={UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.description}
         footer={
-          <div className="ujat-lecture-eval-incomplete-modal__footer">
-            <CmsButton
-              variant="secondary"
-              size="medium"
-              width={120}
-              type="button"
-              onClick={handleCloseLectureEvalIncompleteModal}
-            >
-              {UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.confirmButton}
-            </CmsButton>
-          </div>
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            width={120}
+            type="button"
+            onClick={handleCloseLectureEvalIncompleteModal}
+          >
+            {UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.confirmButton}
+          </CmsButton>
         }
       >
         <span className="ujat-lecture-eval-incomplete-modal__body-placeholder" />

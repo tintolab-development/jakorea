@@ -1,0 +1,30 @@
+.survey-share-copy-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 40px;
+  z-index: 1400;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 320px;
+  max-width: min(480px, calc(100vw - 32px));
+  padding: 16px 20px;
+  border-radius: 8px;
+  background: var(--default-WH, #fff);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.survey-share-copy-toast__line {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: center;
+  white-space: pre-wrap;
+}

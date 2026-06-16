@@ -42,14 +42,14 @@ export function SurveyRegisteredActions({
   onOpenTemplatePreview,
   onDownloadClick,
 }: SurveyRegisteredActionsProps) {
-  const hasResponses = survey.responseCount > 0
+  const showProgressHeaderActions = survey.status !== 'before_start'
   const downloadEnabled = canDownloadSurveyResults(survey)
   const rootClassName =
     layout === 'satisfaction'
       ? 'ujat-survey-registered-actions ujat-survey-registered-actions--satisfaction'
       : 'ujat-survey-registered-actions'
 
-  if (!hasResponses) {
+  if (!showProgressHeaderActions) {
     return (
       <div className={rootClassName}>
         {showShareButton ? (
