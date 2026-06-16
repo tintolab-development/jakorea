@@ -16,6 +16,7 @@ import { LoginSocialAlreadyLinkedView } from '@/features/auth/ui/login-social-al
 import { LoginUtilityLinks } from '@/features/auth/ui/login-utility-links'
 import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
+import { getUserByEmail } from '@/data/mock/users'
 import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
 import { LOGIN_POLICY } from '@/shared/constants/login-policy'
 import { handleError } from '@/shared/utils/error-handler'
@@ -28,7 +29,8 @@ const { Text } = Typography
 const TEST_ACCOUNTS = {
   admin: {
     email: 'admin1@jakorea.org',
-    password: 'admin1234!' },
+    password: 'admin1234!',
+  },
 }
 
 type LoginSocialView = 'default' | 'socialNotLinked' | 'socialAlreadyLinked'
@@ -56,7 +58,7 @@ export function LoginPage() {
     socialAlreadyLinked?: string
   }>()
   const authStore = useAuthStore()
-  const { login, loading, error, isAuthenticated, requiresMfa, user } = authStore
+  const { login, setAuth, loading, error, isAuthenticated, requiresMfa, user } = authStore
   const [form] = Form.useForm()
   const [mfaModalOpen, setMfaModalOpen] = useState(false)
   const [loginMode, setLoginMode] = useState<LoginMode | null>(null)
@@ -68,7 +70,8 @@ export function LoginPage() {
     recordFailure,
     recordSuccess,
     checkLocked,
-    getRemainingLockMinutes } = useLoginAttempts()
+    getRemainingLockMinutes,
+  } = useLoginAttempts()
 
   const redirectPath = params.redirect
   const showSocialNotLinked = params.socialNotLinked === '1' || params.socialNotLinked === 'true'
@@ -139,6 +142,32 @@ export function LoginPage() {
 
   const handleConnectOtherSocial = () => {
     navigate(buildLoginPath(redirectPath, 'default'), { replace: true })
+  }
+
+  /** DEV 전용 — mock 관리자로 MFA·API 없이 즉시 로그인 */
+  const handleDevLoginBypass = () => {
+    const mockUser = getUserByEmail(TEST_ACCOUNTS.admin.email)
+    if (!mockUser?.isActive) {
+      handleError(new Error('개발용 관리자 mock 계정을 찾을 수 없습니다.'), {
+        context: 'loginPage.devBypass',
+      })
+      return
+    }
+
+    const { password: _password, ...userWithoutPassword } = mockUser
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+
+    setMfaModalOpen(false)
+    recordSuccess()
+    setAuth({
+      user: {
+        ...userWithoutPassword,
+        lastLoginAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      token: `mock-jwt-token-${mockUser.id}-${Date.now()}`,
+      expiresAt,
+    })
   }
 
   useEffect(() => {
@@ -240,7 +269,8 @@ export function LoginPage() {
                         description={
                           <div>
                             <Text>
-                              로그인 시도가 {LOGIN_POLICY.maxFailedAttempts}회 실패하여 계정이 잠겼습니다.
+                              로그인 시도가 {LOGIN_POLICY.maxFailedAttempts}회 실패하여 계정이
+                              잠겼습니다.
                             </Text>
                             <br />
                             <Text>
@@ -286,7 +316,8 @@ export function LoginPage() {
                       </Button>
                       {!apiLoginAvailable && (
                         <Text type="secondary" className="login-api-hint">
-                          API 로그인은 `VITE_API_SERVER` 또는 `VITE_API_BASE_URL` 설정 후 사용할 수 있습니다.
+                          API 로그인은 `VITE_API_SERVER` 또는 `VITE_API_BASE_URL` 설정 후 사용할 수
+                          있습니다.
                         </Text>
                       )}
                     </Form.Item>
@@ -297,19 +328,20 @@ export function LoginPage() {
 
                   {import.meta.env.DEV && (
                     <div className="login-dev-quick">
-                      <Text type="secondary" className="login-dev-quick__label">
-                        [개발용] 빠른 로그인:
-                      </Text>
                       <Space size="small" wrap>
                         <Button
                           size="small"
                           onClick={() => {
                             form.setFieldsValue({
                               email: TEST_ACCOUNTS.admin.email,
-                              password: TEST_ACCOUNTS.admin.password })
+                              password: TEST_ACCOUNTS.admin.password,
+                            })
                           }}
                         >
-                          관리자
+                          어드민 계정정보 자동 입력
+                        </Button>
+                        <Button size="small" onClick={handleDevLoginBypass}>
+                          로그인 우회
                         </Button>
                       </Space>
                     </div>
