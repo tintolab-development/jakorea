@@ -2,7 +2,7 @@
  * 참여 봉사자 페이지 (풀페이지 모달 > 프로그램 진행 현황 > 참여 봉사자)
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { Table } from 'antd'
@@ -12,7 +12,6 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import {
-  ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_VOLUNTEER_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_VOLUNTEER_ALERT_MESSAGE,
   PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COMPLETE_ALERT_MESSAGE,
@@ -30,6 +29,11 @@ import {
 import { participatingVolunteersFilterFields } from '@/features/program/general/lib/participating-volunteers-filter-fields'
 import { AddParticipatingVolunteerModal } from '../../add-participating-volunteer-modal'
 import { ParticipatingVolunteerAddRegistrationModal } from '../../participating-volunteer-add-registration-modal'
+import {
+  ParticipatingVolunteerFullpageView,
+  type VolunteerDetailTabKey,
+} from './participating-volunteer-fullpage-view'
+import { mergeParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import {
   RegisterEmployeeVolunteerModal,
   type RegisterEmployeeVolunteerPayload,
@@ -63,11 +67,26 @@ const TABLE_SCROLL_X =
 export interface ParticipatingVolunteersSectionProps {
   programId?: string
   program?: Program | null
+  /** URL volunteerId — 있으면 인라인 상세 뷰 */
+  volunteerIdFromUrl?: string | null
+  volunteerTabFromUrl?: VolunteerDetailTabKey | null
+  onVolunteerTabChange?: (tab: VolunteerDetailTabKey) => void
+  onVolunteerRowClick?: (row: ParticipatingVolunteerRow) => void
+  onClearVolunteerId?: () => void
+  onVolunteerDetailOpen?: (volunteerName: string) => void
+  onVolunteerDetailClose?: () => void
 }
 
 export function ParticipatingVolunteersSection({
   programId: _programId,
   program,
+  volunteerIdFromUrl,
+  volunteerTabFromUrl,
+  onVolunteerTabChange,
+  onVolunteerRowClick,
+  onClearVolunteerId,
+  onVolunteerDetailOpen,
+  onVolunteerDetailClose,
 }: ParticipatingVolunteersSectionProps) {
   const { showAlert } = useCmsAlert()
   const {
@@ -80,12 +99,8 @@ export function ParticipatingVolunteersSection({
     setProgressCalendarGranularity,
   } = useParticipatingVolunteersParams()
   const { volunteerList, addVolunteerFromMember } = useProgressVolunteerList()
-  const {
-    sessionRows,
-    approvedInstitutionOptions,
-    registrations,
-    saveRegistration,
-  } = useEmployeeVolunteerRegistration(program, MOCK_PARTICIPATING_SCHOOLS, volunteerList)
+  const { sessionRows, approvedInstitutionOptions, registrations, saveRegistration } =
+    useEmployeeVolunteerRegistration(program, MOCK_PARTICIPATING_SCHOOLS, volunteerList)
 
   const [pendingFilters, setPendingFilters] = useState<ParticipatingVolunteersFilters>(() => ({
     ...filters,
@@ -260,11 +275,47 @@ export function ParticipatingVolunteersSection({
       })
       return
     }
-    showAlert({
-      title: '안내',
-      content: ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE,
-    })
-  }, [selectedRowKeys.length, showAlert])
+    const selectedId = String(selectedRowKeys[0])
+    const selectedRow =
+      volunteerList.find(row => row.id === selectedId) ??
+      filteredVolunteers.find(row => row.id === selectedId)
+    if (!selectedRow) {
+      showAlert({
+        title: '안내',
+        content: ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_VOLUNTEER_ALERT_MESSAGE,
+      })
+      return
+    }
+    onVolunteerRowClick?.(selectedRow)
+  }, [filteredVolunteers, onVolunteerRowClick, selectedRowKeys, showAlert, volunteerList])
+
+  const selectedVolunteerFromUrl = useMemo(() => {
+    if (!volunteerIdFromUrl) return null
+    const row = volunteerList.find(r => r.id === volunteerIdFromUrl)
+    return row ? mergeParticipatingVolunteerDetailRow(row) : null
+  }, [volunteerIdFromUrl, volunteerList])
+
+  useEffect(() => {
+    if (!volunteerIdFromUrl || !onClearVolunteerId) return
+    const row = volunteerList.find(r => r.id === volunteerIdFromUrl)
+    if (!row) onClearVolunteerId()
+  }, [volunteerIdFromUrl, volunteerList, onClearVolunteerId])
+
+  const prevVolunteerDetailId = useRef<string | null>(null)
+  useEffect(() => {
+    if (selectedVolunteerFromUrl) {
+      onVolunteerDetailOpen?.(selectedVolunteerFromUrl.volunteerName)
+      prevVolunteerDetailId.current = volunteerIdFromUrl ?? null
+    } else {
+      if (prevVolunteerDetailId.current != null) onVolunteerDetailClose?.()
+      prevVolunteerDetailId.current = null
+    }
+  }, [
+    selectedVolunteerFromUrl,
+    volunteerIdFromUrl,
+    onVolunteerDetailOpen,
+    onVolunteerDetailClose,
+  ])
 
   const handleCalendarView = () => {
     setCalendarSelectedSchools(null)
@@ -299,7 +350,7 @@ export function ParticipatingVolunteersSection({
         align: 'center',
       },
       {
-        title: '배정 기관명',
+        title: '기관명',
         key: 'assignedInstitutionNames',
         width: 220,
         minWidth: 220,
@@ -360,6 +411,43 @@ export function ParticipatingVolunteersSection({
       },
     ]
   }, [])
+
+  if (selectedVolunteerFromUrl && program) {
+    return (
+      <div className="program-status-participating program-status-participating--volunteers participating-institutions-section participating-institutions-section--volunteers">
+        <ParticipatingVolunteerFullpageView
+          program={program}
+          volunteer={selectedVolunteerFromUrl}
+          activeTab={volunteerTabFromUrl ?? undefined}
+          onTabChange={onVolunteerTabChange}
+          onClearVolunteerId={onClearVolunteerId ?? (() => {})}
+        />
+        <AddParticipatingVolunteerModal
+          open={addVolunteerModalOpen}
+          onCancel={() => setAddVolunteerModalOpen(false)}
+          memberOptions={volunteerMemberOptions}
+          onNoMemberSelected={showVolunteerAddSelectAlert}
+          onProceedToRegistration={handleProceedToVolunteerRegistration}
+        />
+        <ParticipatingVolunteerAddRegistrationModal
+          open={volunteerRegistrationModalOpen}
+          hideBasicInfoSection={pendingVolunteerHideBasicInfo}
+          onClose={handleVolunteerRegistrationClose}
+          onConfirm={handleVolunteerRegistrationConfirm}
+        />
+        <RegisterEmployeeVolunteerModal
+          open={addEmployeeVolunteerModalOpen}
+          onCancel={() => setAddEmployeeVolunteerModalOpen(false)}
+          sessionRows={sessionRows}
+          institutionOptions={approvedInstitutionOptions}
+          savedRegistrations={registrations}
+          onNoInstitutionSelected={showEmployeeVolunteerInstitutionSelectAlert}
+          onIncompleteCounts={showEmployeeVolunteerCountsRequiredAlert}
+          onRegister={handleRegisterEmployeeVolunteer}
+        />
+      </div>
+    )
+  }
 
   return (
     <div
@@ -438,7 +526,7 @@ export function ParticipatingVolunteersSection({
         {viewMode === 'list' ? (
           <div className="participating-institutions-section__table-wrap">
             <Table<ParticipatingVolunteerRow>
-              className="participating-institutions-section__table cms-data-table"
+              className="participating-institutions-section__table cms-data-table participating-institutions-section__table--clickable"
               rowKey="id"
               size="middle"
               pagination={false}
@@ -450,6 +538,18 @@ export function ParticipatingVolunteersSection({
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys as string[]),
               }}
+              onRow={record => ({
+                onClick: e => {
+                  const target = e.target as HTMLElement
+                  if (
+                    target.closest('.ant-table-selection-column') ||
+                    target.closest('.ant-checkbox-wrapper')
+                  )
+                    return
+                  onVolunteerRowClick?.(record)
+                },
+                style: { cursor: onVolunteerRowClick ? 'pointer' : undefined },
+              })}
             />
           </div>
         ) : (

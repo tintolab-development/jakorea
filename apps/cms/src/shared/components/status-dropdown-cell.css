@@ -236,6 +236,11 @@
   padding: 8px;
   justify-content: center;
   align-items: center;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
 }
 
 .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
@@ -244,7 +249,8 @@
   width: 116px !important;
   min-width: 116px !important;
   max-width: 116px !important;
-  padding: 8px !important;
+  /* border-box 116px 안에 100px 배지: 1px border + 7px pad + 100 + 7px pad + 1px */
+  padding: 7px !important;
   justify-content: center !important;
   align-items: center !important;
 }
@@ -257,6 +263,15 @@
   outline: none;
 }
 
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge,
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):focus-visible
+  .editable-status-badge {
+  border: 1px solid transparent !important;
+  border-color: transparent !important;
+  box-sizing: border-box !important;
+}
+
 .status-dropdown-cell__status-trigger--tag-100 .editable-status-badge {
   width: 100px !important;
   min-width: 100px !important;
@@ -264,6 +279,8 @@
   height: 32px !important;
   min-height: 32px !important;
   max-height: 32px !important;
+  margin: 0 !important;
+  flex-shrink: 0;
 }
 
 .status-dropdown-cell__dropdown-overlay--tag-100 {

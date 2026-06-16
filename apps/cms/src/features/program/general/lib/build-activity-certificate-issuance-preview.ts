@@ -55,9 +55,43 @@ export function buildActivityCertificateInitialStringValues(
 }
 
 /** 파일명 포맷: 활동인증서_김서연_260605 */
-export function buildActivityCertificateFileName(instructorName: string, date = new Date()): string {
+export function buildActivityCertificateFileName(participantName: string, date = new Date()): string {
   const y = String(date.getFullYear()).slice(2)
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
-  return `${ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}_${instructorName}_${y}${m}${d}`
+  return `${ACTIVITY_CERTIFICATE_DOCUMENT_TITLE}_${participantName}_${y}${m}${d}`
+}
+
+export function buildActivityCertificateParticipantInfoForVolunteer(
+  volunteerName: string,
+  options?: {
+    birthDate?: string
+    institutionName?: string
+    program?: Program | null
+  }
+): string {
+  return [
+    volunteerName,
+    options?.birthDate ?? '-',
+    options?.institutionName ?? '-',
+    resolveProgramName(options?.program),
+    formatProgramPeriod(options?.program),
+    '기관 및 학교 제출용',
+  ].join('\n')
+}
+
+export function buildActivityCertificateInitialStringValuesForVolunteer(
+  volunteerName: string,
+  options?: {
+    birthDate?: string
+    institutionName?: string
+    program?: Program | null
+  }
+): Record<string, string> {
+  return {
+    ...DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,
+    titleName: ACTIVITY_CERTIFICATE_DOCUMENT_TITLE,
+    bodyContent: ACTIVITY_CERTIFICATE_BODY_CONTENT,
+    participantInfo: buildActivityCertificateParticipantInfoForVolunteer(volunteerName, options),
+  }
 }

@@ -20,6 +20,7 @@ export type GeneralVolunteerApplicantBasicInfoStatusRow =
   | 'document_screening'
   | 'interview_assignment'
   | 'second_interview'
+  | 'none'
 
 function formatBirthDateAndAge(birthDate: string, age: number): string {
   const formatted = birthDate.replace(/\./g, '. ')
@@ -99,21 +100,24 @@ export function GeneralVolunteerApplicantBasicInfo({
       applicant.name
     )
 
-  const statusField = resolveStatusField(applicant, statusRow)
+  const statusField =
+    statusRow === 'none' ? null : resolveStatusField(applicant, statusRow)
 
   return (
     <section className="general-volunteer-applicant-basic-info">
-      <DetailInfoForm title="기본 정보" mode="view">
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label={statusField.label}
-            fullRow
-            readOnlyDisplay
-            view={statusField.value}
-          />
-        </DetailInfoForm.Row>
-      </DetailInfoForm>
-      <DetailInfoForm title="기본 정보" hideHeader mode="view">
+      {statusField != null ? (
+        <DetailInfoForm title="기본 정보" mode="view">
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label={statusField.label}
+              fullRow
+              readOnlyDisplay
+              view={statusField.value}
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
+      ) : null}
+      <DetailInfoForm title="기본 정보" hideHeader={statusField != null} mode="view">
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="성명" readOnlyDisplay view={nameCell} />
           <DetailInfoForm.Field

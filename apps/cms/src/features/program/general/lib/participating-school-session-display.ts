@@ -18,6 +18,35 @@ export function formatParticipatingSchoolSessionLine(s: ParticipatingSchoolSessi
   return `${datePart}(${s.dayOfWeek}) ${timePart} | ${s.round}차시`
 }
 
+/** 참여 봉사자 배정 현황 — 단일 회차 프로그램은 차시/회차 생략 */
+export function formatVolunteerAssignmentScheduleLine(
+  s: ParticipatingSchoolSession,
+  program?: Program
+): string {
+  const datePart = s.date.replace(/\./g, '. ')
+  const [startRaw, endRaw] = s.timeRange.split('~')
+  const timePart = `${padTimePart(startRaw)} ~ ${padTimePart(endRaw ?? startRaw)}`
+  const base = `${datePart}(${s.dayOfWeek}) ${timePart}`
+
+  if (!program) {
+    return `${base} | ${s.round}차시`
+  }
+
+  const commonInfo = resolveGeneralProgramCommonInfo(program)
+  const { sessionRound } = resolveEffectiveGeneralProgramTypeFields({
+    generalProgramAudience: program.generalProgramAudience,
+    generalProgramEducationStructure: program.generalProgramEducationStructure,
+    generalProgramSessionRound: program.generalProgramSessionRound,
+    curriculumSessions: commonInfo.curriculumSessions,
+  })
+
+  if (sessionRound === 'single') {
+    return base
+  }
+
+  return `${base} | ${s.round}차시`
+}
+
 export function buildParticipatingSchoolSessionLines(
   sessions: ParticipatingSchoolSession[] | undefined
 ): string[] {

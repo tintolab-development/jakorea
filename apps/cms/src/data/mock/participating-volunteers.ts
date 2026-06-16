@@ -4,6 +4,7 @@
 
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
+import type { GeneralVolunteerApplicationType } from '@/features/program/general/lib/volunteer-screening-constants'
 
 export interface ParticipatingVolunteerRow {
   id: string
@@ -16,6 +17,23 @@ export interface ParticipatingVolunteerRow {
   email: string
   /** 일반 봉사자 중 재참여 여부 — 교육 실적 재참여 합산용 */
   isReturningVolunteer?: boolean
+  /** 상세 — 신청 정보 탭 */
+  contactRaw?: string
+  emailRaw?: string
+  gender?: string
+  birthDate?: string
+  age?: number
+  scheduleChangeCancelCount?: number
+  hasJaVolunteerExperience?: boolean
+  applicationType?: GeneralVolunteerApplicationType
+  adminComment?: string
+  activityWithdrawn?: boolean
+  activityWithdrawStopSessionKey?: string
+  performanceExcludedSessionKeys?: string[]
+  essayIntro?: string
+  essayEducationExperience?: string
+  essayNecessity?: string
+  essayJaExperience?: string
 }
 
 function demoSession(
@@ -79,6 +97,13 @@ function hashSeed(index: number): number {
   return ((h % 997) + 997) % 997
 }
 
+const DEMO_ESSAY_INTRO =
+  '교육과 봉사활동에 대한 열정을 바탕으로 JA Korea 봉사 프로그램에 지원하게 되었습니다. 어린 시절부터 경제와 금융에 관심이 많았고, 대학에서 경제학을 전공하며 이론적 지식을 쌓았습니다. 특히 초등학생들에게 경제 개념을 쉽고 재미있게 전달하는 것에 큰 보람을 느끼며, 학생들의 눈높이에 맞춘 설명과 소통을 중요하게 생각합니다.'
+const DEMO_ESSAY_EDUCATION =
+  '대학 재학 중 교육봉사 동아리에서 2년간 활동하며 초등학생 대상 학습 멘토링을 진행했습니다. 또한 사설 학원에서 중학생 대상 수학 과외를 1년간 담당하여 학생 수준에 맞는 맞춤형 교육 방법을 익혔습니다. 강사 아르바이트 경험으로는 영어 학원에서 초등부 보조 강사로 6개월간 근무하며 수업 진행과 학생 관리를 담당했습니다.'
+const DEMO_ESSAY_NECESSITY =
+  '초등학생 시기는 경제적 개념을 형성하는 중요한 시기입니다. 요즘 아이들은 소비와 저축에 대한 올바른 가치관을 갖추기 어려운 환경에 노출되어 있으며, 체계적인 경제 교육을 통해 합리적인 소비 습관과 미래를 준비하는 자세를 기를 수 있다고 생각합니다. JA Korea의 프로그램은 실생활과 연결된 경제 교육을 제공하여 학생들이 경제를 친근하게 느낄 수 있도록 돕습니다.'
+
 function buildVolunteerRow(index: number): ParticipatingVolunteerRow {
   const no = index + 1
   const seed = hashSeed(index)
@@ -117,6 +142,20 @@ function buildVolunteerRow(index: number): ParticipatingVolunteerRow {
     sessions,
     contact: `010-${phoneMid}-${phoneLast}`,
     email: `volunteer${no}@example.com`,
+    contactRaw: `010-${phoneMid}-${phoneLast}`,
+    emailRaw: `volunteer${no}@example.com`,
+    gender: seed % 2 === 0 ? '여성' : '남성',
+    birthDate: `200${seed % 5}.${String(1 + (seed % 12)).padStart(2, '0')}.${String(
+      1 + (seed % 28)
+    ).padStart(2, '0')}`,
+    age: 22 + (seed % 7),
+    scheduleChangeCancelCount: seed % 7 === 0 ? 1 : 0,
+    hasJaVolunteerExperience: seed % 3 !== 0,
+    applicationType: 'new',
+    essayIntro: DEMO_ESSAY_INTRO,
+    essayEducationExperience: DEMO_ESSAY_EDUCATION,
+    essayNecessity: DEMO_ESSAY_NECESSITY,
+    essayJaExperience: '',
   }
 }
 
@@ -138,7 +177,35 @@ export const MOCK_PARTICIPATING_VOLUNTEERS: ParticipatingVolunteerRow[] = Array.
         ],
         contact: '010-1234-5678',
         email: 'mint***@example.com',
+        contactRaw: '010-1234-5678',
+        emailRaw: 'mint@example.com',
         isReturningVolunteer: true,
+      }
+    }
+    if (index === 3) {
+      return {
+        ...row,
+        id: 'participating-volunteer-demo-parktinto',
+        volunteerName: '박틴토',
+        id1365: '0915123456',
+        assignedInstitutionNames: ['틴토초등학교'],
+        sessions: [
+          demoSession(1, '2026.01.09', '금', '9:20~11:20'),
+          demoSession(2, '2026.01.16', '금', '9:30~11:30'),
+        ],
+        contact: '010-****-0000',
+        email: 'haksa***@naver.com',
+        contactRaw: '010-1234-0000',
+        emailRaw: 'haksa@naver.com',
+        gender: '여성',
+        birthDate: '2015.09.15',
+        age: 10,
+        scheduleChangeCancelCount: 1,
+        hasJaVolunteerExperience: true,
+        applicationType: 'new',
+        essayIntro: DEMO_ESSAY_INTRO,
+        essayEducationExperience: DEMO_ESSAY_EDUCATION,
+        essayNecessity: DEMO_ESSAY_NECESSITY,
       }
     }
     if (index === 5) {

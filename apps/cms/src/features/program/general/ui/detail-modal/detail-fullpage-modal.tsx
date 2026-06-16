@@ -84,6 +84,10 @@ import {
   normalizeInstructorDetailTab,
   type InstructorDetailTabKey,
 } from './program-status/participating-instructor-fullpage-view'
+import {
+  normalizeVolunteerDetailTab,
+  type VolunteerDetailTabKey,
+} from './program-status/participating-volunteer-fullpage-view'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './detail-fullpage-modal.css'
 
@@ -94,12 +98,16 @@ const SCHOOL_ID_PARAM = 'schoolId'
 const SCHOOL_TAB_PARAM = 'schoolTab'
 const INSTRUCTOR_ID_PARAM = 'instructorId'
 const INSTRUCTOR_TAB_PARAM = 'instructorTab'
+const VOLUNTEER_ID_PARAM = 'volunteerId'
+const VOLUNTEER_TAB_PARAM = 'volunteerTab'
 
 const GENERAL_PROGRESS_NESTED_QUERY_PARAMS = [
   SCHOOL_ID_PARAM,
   SCHOOL_TAB_PARAM,
   INSTRUCTOR_ID_PARAM,
   INSTRUCTOR_TAB_PARAM,
+  VOLUNTEER_ID_PARAM,
+  VOLUNTEER_TAB_PARAM,
   'progressCalendarRange',
   'schoolName',
   'institutionSido',
@@ -134,6 +142,10 @@ function parseSchoolTabFromSearch(
 
 function parseInstructorTabFromSearch(searchParams: URLSearchParams): InstructorDetailTabKey {
   return normalizeInstructorDetailTab(searchParams.get(INSTRUCTOR_TAB_PARAM))
+}
+
+function parseVolunteerTabFromSearch(searchParams: URLSearchParams): VolunteerDetailTabKey {
+  return normalizeVolunteerDetailTab(searchParams.get(VOLUNTEER_TAB_PARAM))
 }
 
 const INFO_TABS = ['info', 'recruitment', 'application'] as const
@@ -217,12 +229,12 @@ function normalizeGeneralDetailParams(
     tab = normalizedProgressTab
   }
 
-  if (tab === 'satisfaction') {
-    tab = surveyKeys.includes('student_satisfaction')
-      ? 'student_satisfaction'
-      : surveyKeys.includes('teacher_satisfaction')
-        ? 'teacher_satisfaction'
-        : (surveyKeys[0] ?? 'main')
+  if (tab === 'student_satisfaction' || tab === 'teacher_satisfaction') {
+    if (surveyKeys.includes('satisfaction')) {
+      tab = 'satisfaction'
+    } else if (!surveyKeys.includes(tab)) {
+      tab = surveyKeys[0] ?? 'main'
+    }
   }
 
   if (lnb === 'info') {
@@ -443,6 +455,10 @@ export function GeneralProgramDetailFullPageModal({
   const instructorIdFromUrl = open ? searchParams.get(INSTRUCTOR_ID_PARAM) : null
   const activeInstructorTab = instructorIdFromUrl
     ? parseInstructorTabFromSearch(searchParams)
+    : 'application'
+  const volunteerIdFromUrl = open ? searchParams.get(VOLUNTEER_ID_PARAM) : null
+  const activeVolunteerTab = volunteerIdFromUrl
+    ? parseVolunteerTabFromSearch(searchParams)
     : 'application'
 
   const setEditMode = useCallback(
@@ -773,6 +789,8 @@ export function GeneralProgramDetailFullPageModal({
         next.set(SCHOOL_TAB_PARAM, 'application')
         next.delete(INSTRUCTOR_ID_PARAM)
         next.delete(INSTRUCTOR_TAB_PARAM)
+        next.delete(VOLUNTEER_ID_PARAM)
+        next.delete(VOLUNTEER_TAB_PARAM)
       } else {
         next.delete(SCHOOL_ID_PARAM)
         next.delete(SCHOOL_TAB_PARAM)
@@ -791,9 +809,31 @@ export function GeneralProgramDetailFullPageModal({
         next.set(INSTRUCTOR_TAB_PARAM, 'application')
         next.delete(SCHOOL_ID_PARAM)
         next.delete(SCHOOL_TAB_PARAM)
+        next.delete(VOLUNTEER_ID_PARAM)
+        next.delete(VOLUNTEER_TAB_PARAM)
       } else {
         next.delete(INSTRUCTOR_ID_PARAM)
         next.delete(INSTRUCTOR_TAB_PARAM)
+      }
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: id == null })
+    },
+    [programId, searchParams, setSearchParams]
+  )
+
+  const setVolunteerId = useCallback(
+    (id: string | null) => {
+      const next = new URLSearchParams(searchParams)
+      if (id) {
+        next.set(VOLUNTEER_ID_PARAM, id)
+        next.set(VOLUNTEER_TAB_PARAM, 'application')
+        next.delete(SCHOOL_ID_PARAM)
+        next.delete(SCHOOL_TAB_PARAM)
+        next.delete(INSTRUCTOR_ID_PARAM)
+        next.delete(INSTRUCTOR_TAB_PARAM)
+      } else {
+        next.delete(VOLUNTEER_ID_PARAM)
+        next.delete(VOLUNTEER_TAB_PARAM)
       }
       if (programId) next.set('programId', programId)
       setSearchParams(next, { replace: id == null })
@@ -821,6 +861,16 @@ export function GeneralProgramDetailFullPageModal({
     [programId, searchParams, setSearchParams]
   )
 
+  const setVolunteerTab = useCallback(
+    (tab: VolunteerDetailTabKey) => {
+      const next = new URLSearchParams(searchParams)
+      next.set(VOLUNTEER_TAB_PARAM, tab)
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: true })
+    },
+    [programId, searchParams, setSearchParams]
+  )
+
   const setLnbTab = useCallback(
     (lnb: GeneralDetailLnbKey, tab: string) => {
       const next = new URLSearchParams(searchParams)
@@ -836,8 +886,13 @@ export function GeneralProgramDetailFullPageModal({
       } else if (tab === 'progress_instructors') {
         next.delete(SCHOOL_ID_PARAM)
         next.delete(SCHOOL_TAB_PARAM)
+        next.delete(VOLUNTEER_ID_PARAM)
+        next.delete(VOLUNTEER_TAB_PARAM)
       } else if (tab === 'progress_volunteers') {
-        for (const key of GENERAL_PROGRESS_NESTED_QUERY_PARAMS) next.delete(key)
+        next.delete(SCHOOL_ID_PARAM)
+        next.delete(SCHOOL_TAB_PARAM)
+        next.delete(INSTRUCTOR_ID_PARAM)
+        next.delete(INSTRUCTOR_TAB_PARAM)
       }
 
       setSearchParams(next, { replace: true })
@@ -847,6 +902,7 @@ export function GeneralProgramDetailFullPageModal({
 
   const [schoolDetailTitle, setSchoolDetailTitle] = useState<string | null>(null)
   const [instructorDetailTitle, setInstructorDetailTitle] = useState<string | null>(null)
+  const [volunteerDetailTitle, setVolunteerDetailTitle] = useState<string | null>(null)
 
   useEffect(() => {
     if (!schoolIdFromUrl) setSchoolDetailTitle(null)
@@ -855,6 +911,10 @@ export function GeneralProgramDetailFullPageModal({
   useEffect(() => {
     if (!instructorIdFromUrl) setInstructorDetailTitle(null)
   }, [instructorIdFromUrl])
+
+  useEffect(() => {
+    if (!volunteerIdFromUrl) setVolunteerDetailTitle(null)
+  }, [volunteerIdFromUrl])
 
   useEffect(() => {
     if (!open || !schoolIdFromUrl) return
@@ -879,6 +939,17 @@ export function GeneralProgramDetailFullPageModal({
   }, [open, instructorIdFromUrl, searchParams, setSearchParams, programId])
 
   useEffect(() => {
+    if (!open || !volunteerIdFromUrl) return
+    const raw = searchParams.get(VOLUNTEER_TAB_PARAM)
+    const normalized = parseVolunteerTabFromSearch(searchParams)
+    if (raw === normalized) return
+    const next = new URLSearchParams(searchParams)
+    next.set(VOLUNTEER_TAB_PARAM, normalized)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, volunteerIdFromUrl, searchParams, setSearchParams, programId])
+
+  useEffect(() => {
     if (!open || !instructorIdFromUrl) return
     if (activeLnb === 'progress' && activeTab === 'progress_instructors') return
     const next = new URLSearchParams(searchParams)
@@ -888,6 +959,16 @@ export function GeneralProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }, [open, activeLnb, activeTab, instructorIdFromUrl, programId, searchParams, setSearchParams])
 
+  useEffect(() => {
+    if (!open || !volunteerIdFromUrl) return
+    if (activeLnb === 'progress' && activeTab === 'progress_volunteers') return
+    const next = new URLSearchParams(searchParams)
+    next.delete(VOLUNTEER_ID_PARAM)
+    next.delete(VOLUNTEER_TAB_PARAM)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, activeLnb, activeTab, volunteerIdFromUrl, programId, searchParams, setSearchParams])
+
   const handleModalClose = useCallback(() => {
     if (activeLnb === 'progress' && schoolIdFromUrl) {
       setSchoolId(null)
@@ -895,6 +976,10 @@ export function GeneralProgramDetailFullPageModal({
     }
     if (activeLnb === 'progress' && instructorIdFromUrl) {
       setInstructorId(null)
+      return
+    }
+    if (activeLnb === 'progress' && volunteerIdFromUrl) {
+      setVolunteerId(null)
       return
     }
     if (
@@ -907,14 +992,16 @@ export function GeneralProgramDetailFullPageModal({
       return
     }
     onClose()
-  }, [activeLnb, schoolIdFromUrl, instructorIdFromUrl, setSchoolId, setInstructorId, onClose])
+  }, [activeLnb, schoolIdFromUrl, instructorIdFromUrl, volunteerIdFromUrl, setSchoolId, setInstructorId, setVolunteerId, onClose])
 
   const progressNestedDetailLabel =
     activeLnb === 'progress' && schoolIdFromUrl && schoolDetailTitle
       ? schoolDetailTitle
       : activeLnb === 'progress' && instructorIdFromUrl && instructorDetailTitle
         ? instructorDetailTitle
-        : null
+        : activeLnb === 'progress' && volunteerIdFromUrl && volunteerDetailTitle
+          ? volunteerDetailTitle
+          : null
 
   const headerBreadcrumbItems = (() => {
     const listParams = buildSearchParams(searchParams, {
@@ -1035,6 +1122,8 @@ export function GeneralProgramDetailFullPageModal({
           ? `참여 기관 상세 (${schoolDetailTitle})`
           : activeLnb === 'progress' && instructorIdFromUrl && instructorDetailTitle
             ? `참여 강사 상세 (${instructorDetailTitle})`
+          : activeLnb === 'progress' && volunteerIdFromUrl && volunteerDetailTitle
+            ? `참여 봉사자 상세 (${volunteerDetailTitle})`
           : progressNestedDetailLabel && displayProgram
             ? `${resolveGeneralProgramDisplayTitle(displayProgram)}_${progressNestedDetailLabel}`
             : displayProgram
@@ -1050,6 +1139,7 @@ export function GeneralProgramDetailFullPageModal({
         closeAriaLabel={
           schoolIdFromUrl ||
           instructorIdFromUrl ||
+          volunteerIdFromUrl ||
           (volunteerApplicantDetailMeta != null &&
             isGeneralVolunteerApplicantDetailRoute(activeLnb, activeTab))
             ? '목록으로'
@@ -1184,6 +1274,13 @@ export function GeneralProgramDetailFullPageModal({
                 <ParticipatingVolunteersSection
                   programId={displayProgram.id}
                   program={displayProgram}
+                  volunteerIdFromUrl={volunteerIdFromUrl}
+                  volunteerTabFromUrl={activeVolunteerTab}
+                  onVolunteerTabChange={setVolunteerTab}
+                  onVolunteerRowClick={row => setVolunteerId(row.id)}
+                  onClearVolunteerId={() => setVolunteerId(null)}
+                  onVolunteerDetailOpen={name => setVolunteerDetailTitle(name)}
+                  onVolunteerDetailClose={() => setVolunteerDetailTitle(null)}
                 />
               </div>
             ) : activeLnb === 'volunteer_applications' ? (
