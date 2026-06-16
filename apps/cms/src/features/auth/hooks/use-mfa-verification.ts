@@ -48,12 +48,24 @@ export function useMfaVerification({
   const [provisioningLoading, setProvisioningLoading] = useState(false)
   const [provisioningError, setProvisioningError] = useState<string | null>(null)
   const [remoteVerifying, setRemoteVerifying] = useState(false)
+  const [remoteFailedAttempts, setRemoteFailedAttempts] = useState(0)
   const verifyInFlightRef = useRef(false)
 
   const isRemoteMfa = Boolean(mfaState?.challengeUuid)
+  const displayFailedAttempts = isRemoteMfa ? remoteFailedAttempts : failedAttempts
+
+  const clearOtpInput = useCallback(() => {
+    try {
+      form.setFields([{ name: 'otpCode', errors: [] }])
+      form.setFieldsValue({ otpCode: '' })
+    } catch {
+      console.debug('Form not connected, skipping clearOtpInput')
+    }
+    setOtpCode('')
+  }, [form])
 
   const refreshProvisioning = useCallback(async () => {
-    if (!user?.email || isRemoteMfa) return
+    if (!user?.email) return
     setProvisioningLoading(true)
     setProvisioningError(null)
     try {
@@ -66,17 +78,18 @@ export function useMfaVerification({
     } finally {
       setProvisioningLoading(false)
     }
-  }, [user?.email, isRemoteMfa])
+  }, [user?.email])
 
   useEffect(() => {
-    if (open && user?.email && mfaState && !mfaState.isVerified && !isRemoteMfa) {
+    if (open && user?.email) {
       void refreshProvisioning()
     }
     if (!open) {
       setProvisioning(null)
       setProvisioningError(null)
+      setRemoteFailedAttempts(0)
     }
-  }, [open, user?.email, mfaState, mfaState?.isVerified, isRemoteMfa, refreshProvisioning])
+  }, [open, user?.email, refreshProvisioning])
 
   useEffect(() => {
     if (!open) {
@@ -140,6 +153,7 @@ export function useMfaVerification({
               })
 
               if (response.verified && response.tokens) {
+                setRemoteFailedAttempts(0)
                 completeAdminAuth(response.tokens)
                 try {
                   form.resetFields()
@@ -150,14 +164,8 @@ export function useMfaVerification({
                 return
               }
 
-              const errMsg = response.detail ?? '인증번호가 올바르지 않습니다.'
-              try {
-                form.setFields([{ name: 'otpCode', errors: [errMsg] }])
-                form.setFieldsValue({ otpCode: '' })
-              } catch {
-                console.debug('Form not connected, skipping setFields (invalid otp)')
-              }
-              setOtpCode('')
+              setRemoteFailedAttempts(prev => prev + 1)
+              clearOtpInput()
             } finally {
               setRemoteVerifying(false)
             }
@@ -178,29 +186,37 @@ export function useMfaVerification({
             }
             setOtpCode('')
           } else {
-            try {
-              form.setFields([{ name: 'otpCode', errors: ['인증번호가 올바르지 않습니다.'] }])
-              form.setFieldsValue({ otpCode: '' })
-            } catch {
-              console.debug('Form not connected, skipping setFields (invalid otp)')
-            }
-            setOtpCode('')
+            clearOtpInput()
           }
         } catch (error: unknown) {
           const errMsg = unknownErrorText(error, '인증에 실패했습니다.')
-          try {
-            form.setFields([{ name: 'otpCode', errors: [errMsg] }])
-            form.setFieldsValue({ otpCode: '' })
-          } catch {
-            console.debug('Form not connected, skipping setFields (verify error)')
+          if (isLocked || errMsg.includes('인증 시도 횟수')) {
+            clearOtpInput()
+          } else {
+            try {
+              form.setFields([{ name: 'otpCode', errors: [errMsg] }])
+              form.setFieldsValue({ otpCode: '' })
+            } catch {
+              console.debug('Form not connected, skipping setFields (verify error)')
+            }
+            setOtpCode('')
           }
-          setOtpCode('')
         }
       } finally {
         verifyInFlightRef.current = false
       }
     },
-    [user, isRemoteMfa, mfaState?.challengeUuid, verifyTotpCode, completeAdminAuth, setMfaVerified, form]
+    [
+      user,
+      isRemoteMfa,
+      mfaState?.challengeUuid,
+      verifyTotpCode,
+      completeAdminAuth,
+      setMfaVerified,
+      form,
+      clearOtpInput,
+      isLocked,
+    ]
   )
 
   const onOtpCodeChange = useCallback(
@@ -250,7 +266,7 @@ export function useMfaVerification({
     provisioning,
     provisioningLoading,
     provisioningError,
-    failedAttempts,
+    failedAttempts: displayFailedAttempts,
     isLocked,
     lockUntil,
     verifying: verifying || remoteVerifying,
