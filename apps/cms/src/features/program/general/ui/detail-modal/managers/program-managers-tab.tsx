@@ -1,6 +1,6 @@
 /**
  * 프로그램 상세 - 담당자 정보 탭
- * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록/개인정보 상세보기
+ * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록
  */
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
@@ -18,7 +18,10 @@ import {
   PROGRAM_ROLE_LABELS,
   type ProgramManagerRow,
 } from '@/data/mock/program-managers'
-import { canAddProgramPm, canSetProgramManagerRole } from '@/entities/program/lib/program-pm-role-policy'
+import {
+  canAddProgramPm,
+  canSetProgramManagerRole,
+} from '@/entities/program/lib/program-pm-role-policy'
 import {
   AddManagerModal,
   buildManagerRowFromForm,
@@ -33,10 +36,7 @@ import {
   STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
 } from '@/shared/components'
 import { getProgramRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
-import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import './program-managers-tab.css'
 
 const ROLE_OPTIONS = [
@@ -139,21 +139,6 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
     return [...list].sort((a, b) => b.no - a.no)
   }, [managerList, appliedFilters])
 
-  const resolveProgramManagerPersonalInfoAccessItem = useCallback(() => {
-    if (selectedRowKeys.length !== 1) return '담당자 목록'
-    return managerList.find(row => row.id === String(selectedRowKeys[0]))?.name ?? '담당자 목록'
-  }, [managerList, selectedRowKeys])
-
-  const {
-    personalInfoRevealed,
-    onPrivacyControlClick: handleProgramManagersPrivacyClick,
-    confirmModal: personalInfoRevealModal,
-  } = usePersonalInfoReveal({
-    resolveAccessItem: resolveProgramManagerPersonalInfoAccessItem,
-    resetDeps: [programId],
-    controlMode: 'toggleRemask',
-  })
-
   const handleDeleteClick = () => {
     if (selectedRowKeys.length === 0) {
       return
@@ -217,9 +202,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
   )
 
   const renderRoleBadge = useCallback((r: ProgramRole) => {
-    return (
-      <EditableStatusBadge label={PROGRAM_ROLE_LABELS[r]} tone={getProgramRoleBadgeTone(r)} />
-    )
+    return <EditableStatusBadge label={PROGRAM_ROLE_LABELS[r]} tone={getProgramRoleBadgeTone(r)} />
   }, [])
 
   const columns: ColumnsType<ProgramManagerRow> = useMemo(
@@ -229,7 +212,6 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         title: '담당자명',
         dataIndex: 'name',
         key: 'name',
-        width: 246,
         align: 'center',
       },
       {
@@ -264,8 +246,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         align: 'center',
         render: (phone: string) => {
           const value = phone?.trim()
-          if (!value) return '-'
-          return personalInfoRevealed ? value : MASKING_POLICY.phone(value)
+          return value || '-'
         },
       },
       {
@@ -277,8 +258,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         ellipsis: true,
         render: (email: string) => {
           const value = email?.trim()
-          if (!value) return '-'
-          return personalInfoRevealed ? value : MASKING_POLICY.email(value)
+          return value || '-'
         },
       },
       {
@@ -294,7 +274,6 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
       openRoleDropdownId,
       renderRoleBadge,
       roleItemDisabled,
-      personalInfoRevealed,
     ]
   )
 
@@ -312,18 +291,12 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         description={`${filteredManagers.length}건`}
         actions={
           <>
-            <CmsButton variant="delete" size="large" width={160} onClick={handleDeleteClick}>
+            <CmsButton variant="delete" size="large" onClick={handleDeleteClick}>
               담당자 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" width={160} onClick={() => setAddModalOpen(true)}>
+            <CmsButton variant="primary" size="large" onClick={() => setAddModalOpen(true)}>
               담당자 등록
             </CmsButton>
-            <PersonalInfoRevealButton
-              labelMode="toggle"
-              revealed={personalInfoRevealed}
-              style={{ minWidth: 180 }}
-              onClick={handleProgramManagersPrivacyClick}
-            />
           </>
         }
       >
@@ -354,7 +327,6 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         managerNames={managerNamesToDelete}
         onConfirm={handleDeleteConfirm}
       />
-      {personalInfoRevealModal}
     </div>
   )
 }
