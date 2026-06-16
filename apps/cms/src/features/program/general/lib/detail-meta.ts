@@ -62,6 +62,12 @@ export function hasGeneralVolunteerApplications(program: Program): boolean {
   return getGeneralParticipantTypes(program).includes('volunteer')
 }
 
+/** 참여자(개인)·기관 신청 목록 LNB — school_institution 또는 individual 포함 시 */
+export function hasGeneralParticipantApplications(program: Program): boolean {
+  const types = getGeneralParticipantTypes(program)
+  return types.includes('individual') || types.includes('school_institution')
+}
+
 /** true면 개인 참여자 신청 LNB에 면접 단계 2뎁스 노출 */
 export function getGeneralParticipantInterviewEnabled(program: Program): boolean {
   if (!isGeneralIndividualProgram(program)) return false
@@ -113,15 +119,22 @@ export function getGeneralParticipantApplicationsLnbLabel(program: Program): str
     : GENERAL_ORGANIZATION_APPLICATIONS_LNB_LABEL
 }
 
-/** 프로그램 진행 현황 LNB 2depth — 교육진행자 유형별 (개인 대분류 참여자 탭 없음) */
+/** 프로그램 진행 현황 LNB 2depth — 참여자 유형·개인 대분류에 따라 항목 구성 */
 export function getGeneralProgressMenuItems(program: Program): GeneralProgressMenuItem[] {
   const types = getGeneralParticipantTypes(program)
+  const isIndividual = isGeneralIndividualProgram(program)
   const items: GeneralProgressMenuItem[] = []
 
-  if (types.includes('school_institution')) {
+  if (types.includes('school_institution') && !isIndividual) {
     items.push({
       tab: 'progress_participants',
       label: '참여 기관',
+    })
+  }
+  if (types.includes('individual') && isIndividual) {
+    items.push({
+      tab: 'progress_participants',
+      label: '참여자',
     })
   }
   if (types.includes('teacher_instructor')) {
@@ -129,6 +142,13 @@ export function getGeneralProgressMenuItems(program: Program): GeneralProgressMe
   }
   if (types.includes('volunteer')) {
     items.push({ tab: 'progress_volunteers', label: '참여 봉사자' })
+  }
+  if (isIndividual) {
+    items.push(
+      { tab: 'progress_attendance', label: '출석 관리' },
+      { tab: 'progress_assignments', label: '과제 관리' },
+      { tab: 'progress_posts', label: '게시글' }
+    )
   }
 
   return items

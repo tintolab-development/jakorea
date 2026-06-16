@@ -7,12 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -65,7 +60,6 @@ export function ParticipatingVolunteerFullpageView({
   const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
-  const [isInfoEditing, setIsInfoEditing] = useState(false)
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
 
@@ -107,7 +101,6 @@ export function ParticipatingVolunteerFullpageView({
     setAdminCommentDraft('')
     setAdminCommentError(undefined)
     setVolunteerPatches({})
-    setIsInfoEditing(false)
     setActivityWithdrawModalOpen(false)
     setActivityCertPreviewOpen(false)
   }, [initialVolunteer.id, initialVolunteer.adminComment])
@@ -129,12 +122,11 @@ export function ParticipatingVolunteerFullpageView({
       })
       return
     }
-    if (isAdminCommentEditing || isInfoEditing) return
+    if (isAdminCommentEditing) return
     setActivityWithdrawModalOpen(true)
   }, [
     activityWithdrawScheduleOptions.length,
     isAdminCommentEditing,
-    isInfoEditing,
     mergedVolunteer.activityWithdrawn,
     showAlert,
   ])
@@ -157,25 +149,11 @@ export function ParticipatingVolunteerFullpageView({
     setActivityCertPreviewOpen(true)
   }, [])
 
-  const handleEnterInfoEdit = useCallback(() => {
-    if (isAdminCommentEditing) return
-    setIsInfoEditing(true)
-  }, [isAdminCommentEditing])
-
-  const handleSaveInfoEdit = useCallback(() => {
-    setIsInfoEditing(false)
-    showAlert({
-      title: '안내',
-      content: FEATURE_COMING_SOON_ALERT_MESSAGE,
-    })
-  }, [showAlert])
-
   const handleAdminCommentEditEnter = useCallback(() => {
-    if (isInfoEditing) return
     setAdminCommentDraft(savedAdminComment)
     setAdminCommentError(undefined)
     setIsAdminCommentEditing(true)
-  }, [isInfoEditing, savedAdminComment])
+  }, [savedAdminComment])
 
   const handleAdminCommentSave = useCallback(() => {
     setSavedAdminComment(adminCommentDraft.trim())
@@ -208,7 +186,6 @@ export function ParticipatingVolunteerFullpageView({
                 disabled={
                   mergedVolunteer.activityWithdrawn ||
                   isAdminCommentEditing ||
-                  isInfoEditing ||
                   activityWithdrawScheduleOptions.length === 0
                 }
                 onClick={handleRequestActivityWithdraw}
@@ -225,22 +202,9 @@ export function ParticipatingVolunteerFullpageView({
                 활동인증서 발급
               </CmsButton>
               <CmsButton
-                variant="secondary"
-                size="large"
-                width={140}
-                disabled={isAdminCommentEditing}
-                onClick={resolveProgramEditInfoClick(isInfoEditing, {
-                  onEnterEdit: handleEnterInfoEdit,
-                  onSaveEdit: handleSaveInfoEdit,
-                })}
-              >
-                {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-              </CmsButton>
-              <CmsButton
                 variant="primary"
                 size="large"
                 width={140}
-                disabled={isInfoEditing}
                 onClick={
                   isAdminCommentEditing ? handleAdminCommentSave : handleAdminCommentEditEnter
                 }

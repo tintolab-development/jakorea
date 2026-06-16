@@ -83,6 +83,7 @@ export interface GeneralProgramDetailSidebarProps {
   activeLnb: GeneralDetailLnbKey
   activeTab: string
   participantApplicationsLnbLabel: string
+  showParticipantApplications: boolean
   showInstructorApplications: boolean
   showVolunteerApplications: boolean
   participantInterviewEnabled: boolean
@@ -96,6 +97,7 @@ export function GeneralProgramDetailSidebar({
   activeLnb,
   activeTab,
   participantApplicationsLnbLabel,
+  showParticipantApplications,
   showInstructorApplications,
   showVolunteerApplications,
   participantInterviewEnabled,
@@ -206,6 +208,7 @@ export function GeneralProgramDetailSidebar({
             </div>
           </li>
 
+          {showParticipantApplications ? (
           <li>
             {participantInterviewEnabled ? (
               <>
@@ -271,6 +274,7 @@ export function GeneralProgramDetailSidebar({
               </button>
             )}
           </li>
+          ) : null}
 
           {showInstructorApplications ? (
             <li>

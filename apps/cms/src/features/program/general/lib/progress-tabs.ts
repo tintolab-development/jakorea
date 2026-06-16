@@ -20,7 +20,29 @@ export const GENERAL_PROGRESS_TAB_KEYS = [
   'progress_participants',
   'progress_instructors',
   'progress_volunteers',
+  'progress_attendance',
+  'progress_assignments',
+  'progress_posts',
 ] as const
+
+/** 개인 프로그램 진행 현황 — 출석·과제·게시글 (참여자 유형과 무관하게 개인 대분류에서 노출) */
+export const GENERAL_INDIVIDUAL_PROGRESS_EXTRA_TAB_KEYS = [
+  'progress_attendance',
+  'progress_assignments',
+  'progress_posts',
+] as const
+
+export type GeneralIndividualProgressExtraTabKey =
+  (typeof GENERAL_INDIVIDUAL_PROGRESS_EXTRA_TAB_KEYS)[number]
+
+export const GENERAL_INDIVIDUAL_PROGRESS_EXTRA_TAB_LABELS: Record<
+  GeneralIndividualProgressExtraTabKey,
+  string
+> = {
+  progress_attendance: '출석 관리',
+  progress_assignments: '과제 관리',
+  progress_posts: '게시글',
+}
 
 export type GeneralProgressTabKey = (typeof GENERAL_PROGRESS_TAB_KEYS)[number]
 

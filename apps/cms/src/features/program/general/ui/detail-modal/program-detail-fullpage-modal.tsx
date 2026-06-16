@@ -689,7 +689,7 @@ export function ProgramDetailFullPageModal({
     program: displayProgram,
     isEditMode: isEditModeInfo,
   })
-  const { triggerSave: infoTriggerSave, resetToProgram: infoResetToProgram } =
+  const { resetToProgram: infoResetToProgram } =
     useProgramDetailInfoSave({
       form: infoForm,
       program: displayProgram ?? ({} as Program),
@@ -715,7 +715,6 @@ export function ProgramDetailFullPageModal({
     schema: programDetailInstitutionsEditSchema,
   })
   const {
-    triggerSave: institutionsTriggerSave,
     resetToProgram: institutionsResetToProgram,
     registerGetAdditionalContentHtml: registerInstitutionsAdditionalHtml,
   } = useProgramDetailInfoSave({
@@ -742,7 +741,6 @@ export function ProgramDetailFullPageModal({
     isEditMode: isEditModeInstructors,
   })
   const {
-    triggerSave: instructorsTriggerSave,
     resetToProgram: instructorsResetToProgram,
     registerGetAdditionalContentHtml: registerInstructorsAdditionalHtml,
   } = useProgramDetailInfoSave({
@@ -789,19 +787,19 @@ export function ProgramDetailFullPageModal({
     }
   }
 
-  const handleInfoSave = () => {
+  const handleInfoExit = () => {
+    infoResetToProgram()
     setEditMode(null)
-    if (displayProgram) infoTriggerSave()
   }
 
-  const handleInstitutionsSave = () => {
+  const handleInstitutionsExit = () => {
+    institutionsResetToProgram()
     setEditMode(null)
-    institutionsTriggerSave()
   }
 
-  const handleInstructorsSave = () => {
+  const handleInstructorsExit = () => {
+    instructorsResetToProgram()
     setEditMode(null)
-    instructorsTriggerSave()
   }
 
   const isEditModeVolunteers =
@@ -811,7 +809,6 @@ export function ProgramDetailFullPageModal({
     isEditMode: isEditModeVolunteers,
   })
   const {
-    triggerSave: volunteersTriggerSave,
     resetToProgram: volunteersResetToProgram,
     registerGetAdditionalContentHtml: registerVolunteersAdditionalHtml,
   } = useProgramDetailInfoSave({
@@ -831,9 +828,9 @@ export function ProgramDetailFullPageModal({
         : undefined,
   })
 
-  const handleVolunteersSave = () => {
+  const handleVolunteersExit = () => {
+    volunteersResetToProgram()
     setEditMode(null)
-    volunteersTriggerSave()
   }
 
   const handlePreview = () => {
@@ -907,10 +904,10 @@ export function ProgramDetailFullPageModal({
               volunteersForm={isEditModeVolunteers ? volunteersForm : undefined}
               registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
               onInfoEdit={handleInfoEdit}
-              onInfoSave={handleInfoSave}
-              onInstitutionsSave={handleInstitutionsSave}
-              onInstructorsSave={handleInstructorsSave}
-              onVolunteersSave={handleVolunteersSave}
+              onInfoSave={handleInfoExit}
+              onInstitutionsSave={handleInstitutionsExit}
+              onInstructorsSave={handleInstructorsExit}
+              onVolunteersSave={handleVolunteersExit}
               onPreview={handlePreview}
             />
           )}
