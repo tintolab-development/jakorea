@@ -13,7 +13,13 @@ import { useApplicantIndividualDetailEdit } from '@/features/program/general/hoo
 import { useApplicantInstructorDetailEdit } from '@/features/program/general/hooks/use-applicant-instructor-detail-edit'
 import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import {
+  patchGeneralIndividualApplicantDetail,
+  patchGeneralIndividualApplicantManagerEvaluation,
+  type GeneralIndividualApplicantRow,
+} from '@/data/mock/general-individual-applications-mock'
+import type { IndividualApplicantScreeningStage } from '@/features/program/general/lib/individual-application-visibility'
+import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
 import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-info'
 import { ApplicantGeneralInstitutionBasicInfo } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info'
@@ -347,15 +353,23 @@ function resolveApplicantHeaderItems(params: {
         ? headerBtnEditInfo(
             onEnterIndividualEdit,
             onSaveIndividualEdit,
-            isEditingIndividualDetail
+            isEditingIndividualDetail,
+            isEditingAdminComment
           )
         : headerBtnEditInfoDisabled()
 
-    return [
-      headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState),
-      editButton,
-      headerBtnPrivacy(onRevealPersonalInfo),
-    ]
+    const items: ApplicantHeaderActionItem[] = [editButton]
+
+    if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit && onSaveAdminCommentEdit) {
+      items.push(
+        isEditingAdminComment
+          ? headerBtnSaveComment(onSaveAdminCommentEdit)
+          : headerBtnWriteComment(onEnterAdminCommentEdit, isEditingIndividualDetail)
+      )
+    }
+
+    items.push(headerBtnPrivacy(onRevealPersonalInfo))
+    return items
   }
   if (isApprovedInstructor) {
     const editButton =
@@ -407,6 +421,8 @@ interface ApplicantsDetailContentsProps {
   onCancelReject?: (id: string) => void
   /** 승인·반려 상태에서 알림 재발송 클릭 시 호출 */
   onResendNotification?: () => void
+  /** 개인 면접 심사 탭 — 상세 섹션 분기 */
+  individualScreeningStage?: IndividualApplicantScreeningStage
 }
 
 export function ApplicantsDetailContents({
@@ -424,8 +440,16 @@ export function ApplicantsDetailContents({
   onCancelApproval,
   onCancelReject,
   onResendNotification,
+  individualScreeningStage = 'main',
 }: ApplicantsDetailContentsProps) {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [openManagerDropdown, setOpenManagerDropdown] = useState<{
+    rowId: string
+    manager: 'A' | 'B'
+  } | null>(null)
+  const [isIndividualAdminCommentEditing, setIsIndividualAdminCommentEditing] = useState(false)
+  const [individualAdminCommentDraft, setIndividualAdminCommentDraft] = useState('')
+  const [individualAdminCommentError, setIndividualAdminCommentError] = useState<string | undefined>()
 
   const activeTab = useMemo(
     () => parseDetailTabFromSearch(searchParams, type, detailVariant),
@@ -530,10 +554,62 @@ export function ApplicantsDetailContents({
 
   const individualDetailEdit = useApplicantIndividualDetailEdit({
     applicant: isGeneralIndividualEditEnabled ? individualData : null,
+    program,
     onSaved: row => {
       onIndividualDetailSaved?.(row)
     },
   })
+
+  /* eslint-disable react-hooks/set-state-in-effect -- 개인 신청자 변경 시 코멘트·평가 UI 초기화 */
+  useEffect(() => {
+    setIsIndividualAdminCommentEditing(false)
+    setIndividualAdminCommentDraft('')
+    setIndividualAdminCommentError(undefined)
+    setOpenManagerDropdown(null)
+  }, [applicantId, individualData?.adminComment])
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const handleIndividualAdminCommentEditEnter = useCallback(() => {
+    if (individualDetailEdit.isEditing) return
+    setIndividualAdminCommentDraft(individualData?.adminComment ?? '')
+    setIndividualAdminCommentError(undefined)
+    setIsIndividualAdminCommentEditing(true)
+  }, [individualDetailEdit.isEditing, individualData?.adminComment])
+
+  const handleIndividualAdminCommentSave = useCallback(() => {
+    if (!individualData) return
+    const updated = patchGeneralIndividualApplicantDetail(individualData.id, {
+      adminComment: individualAdminCommentDraft,
+    })
+    if (!updated) {
+      setIndividualAdminCommentError('저장에 실패했습니다.')
+      return
+    }
+    onIndividualDetailSaved?.(updated)
+    setIsIndividualAdminCommentEditing(false)
+    setIndividualAdminCommentError(undefined)
+  }, [individualAdminCommentDraft, individualData, onIndividualDetailSaved])
+
+  const handleIndividualAdminCommentDraftChange = useCallback((value: string) => {
+    setIndividualAdminCommentDraft(value)
+    setIndividualAdminCommentError(undefined)
+  }, [])
+
+  const handleManagerAEvaluationChange = useCallback(
+    (id: string, evaluation: GeneralManagerEvaluation) => {
+      const updated = patchGeneralIndividualApplicantManagerEvaluation(id, 'A', evaluation)
+      if (updated) onIndividualDetailSaved?.(updated)
+    },
+    [onIndividualDetailSaved]
+  )
+
+  const handleManagerBEvaluationChange = useCallback(
+    (id: string, evaluation: GeneralManagerEvaluation) => {
+      const updated = patchGeneralIndividualApplicantManagerEvaluation(id, 'B', evaluation)
+      if (updated) onIndividualDetailSaved?.(updated)
+    },
+    [onIndividualDetailSaved]
+  )
 
   const instructorDetailEdit = useApplicantInstructorDetailEdit({
     instructor: isGeneralInstructorEditEnabled ? instructorData : null,
@@ -640,10 +716,15 @@ export function ApplicantsDetailContents({
       onSaveInstructorEdit: () => {
         instructorDetailEdit.saveEdit()
       },
-      isAdminCommentWriteEnabled: isGeneralInstitutionEditEnabled,
-      isEditingAdminComment: isAdminCommentEditing,
-      onEnterAdminCommentEdit: handleAdminCommentEditEnter,
-      onSaveAdminCommentEdit: handleAdminCommentSave,
+      isAdminCommentWriteEnabled:
+        isGeneralInstitutionEditEnabled || isGeneralIndividualEditEnabled,
+      isEditingAdminComment: isAdminCommentEditing || isIndividualAdminCommentEditing,
+      onEnterAdminCommentEdit: isApprovedIndividual
+        ? handleIndividualAdminCommentEditEnter
+        : handleAdminCommentEditEnter,
+      onSaveAdminCommentEdit: isApprovedIndividual
+        ? handleIndividualAdminCommentSave
+        : handleAdminCommentSave,
     })
     if (!items) return null
     return <ApplicantHeaderActionsExtra items={items} personalInfoRevealed={personalInfoRevealed} />
@@ -678,8 +759,11 @@ export function ApplicantsDetailContents({
     onCancelReject,
     personalInfoRevealed,
     isAdminCommentEditing,
+    isIndividualAdminCommentEditing,
     handleAdminCommentEditEnter,
     handleAdminCommentSave,
+    handleIndividualAdminCommentEditEnter,
+    handleIndividualAdminCommentSave,
   ])
 
   const tabBarExtraContent = headerExtraContent
@@ -797,12 +881,23 @@ export function ApplicantsDetailContents({
       return (
         <ApplicantGeneralIndividualBasicInfo
           applicant={individualData}
+          program={program}
           maskSensitive={!personalInfoRevealed && individualData.approvalStatus !== 'approved'}
           mode={individualDetailEdit.isEditing ? 'edit' : 'view'}
           draft={individualDetailEdit.draft ?? undefined}
           onDraftChange={individualDetailEdit.updateDraft}
           validationErrors={individualDetailEdit.validationErrors}
           onResendNotificationClick={onResendNotification}
+          screeningStage={individualScreeningStage}
+          textbookOptions={individualDetailEdit.textbookOptions}
+          isAdminCommentEditing={isIndividualAdminCommentEditing}
+          adminCommentDraft={individualAdminCommentDraft}
+          onAdminCommentDraftChange={handleIndividualAdminCommentDraftChange}
+          adminCommentError={individualAdminCommentError}
+          openManagerDropdown={openManagerDropdown}
+          setOpenManagerDropdown={setOpenManagerDropdown}
+          onManagerAEvaluationChange={handleManagerAEvaluationChange}
+          onManagerBEvaluationChange={handleManagerBEvaluationChange}
         />
       )
     }
@@ -823,7 +918,17 @@ export function ApplicantsDetailContents({
     individualDetailEdit.draft,
     individualDetailEdit.updateDraft,
     individualDetailEdit.validationErrors,
+    individualDetailEdit.textbookOptions,
     onResendNotification,
+    program,
+    individualScreeningStage,
+    isIndividualAdminCommentEditing,
+    individualAdminCommentDraft,
+    handleIndividualAdminCommentDraftChange,
+    individualAdminCommentError,
+    openManagerDropdown,
+    handleManagerAEvaluationChange,
+    handleManagerBEvaluationChange,
   ])
 
   const tabDefs = isVolunteer ? [{ key: 'info', label: '기본 정보' }] : []

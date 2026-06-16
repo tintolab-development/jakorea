@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { patchGeneralIndividualApplicantDetail } from '@/data/mock/general-individual-applications-mock'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import type { Program } from '@/types/domain'
+import {
+  buildIndividualApplicantTextbookOptions,
+} from '@/features/program/general/lib/individual-applicant-textbook'
 import {
   draftToIndividualSavePayload,
   parseApplicantIndividualEditDraft,
@@ -10,16 +14,27 @@ import {
 
 export interface UseApplicantIndividualDetailEditParams {
   applicant: GeneralIndividualApplicantRow | null
+  program?: Program | null
   onSaved: (updatedRow: GeneralIndividualApplicantRow) => void
 }
 
 export function useApplicantIndividualDetailEdit({
   applicant,
+  program = null,
   onSaved,
 }: UseApplicantIndividualDetailEditParams) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<ApplicantIndividualEditDraft | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+
+  const textbookOptions = useMemo(
+    () =>
+      buildIndividualApplicantTextbookOptions(
+        program,
+        applicant?.educationGrade ?? applicant?.detail?.affiliationGrade ?? ''
+      ),
+    [applicant?.detail?.affiliationGrade, applicant?.educationGrade, program]
+  )
 
   const resetEditState = useCallback(() => {
     setIsEditing(false)
@@ -35,7 +50,7 @@ export function useApplicantIndividualDetailEdit({
 
   const enterEdit = useCallback(() => {
     if (!applicant) return
-    setDraft(rowToIndividualEditDraft(applicant))
+    setDraft(rowToIndividualEditDraft(applicant, program))
     setValidationErrors({})
     setIsEditing(true)
   }, [applicant])
@@ -60,7 +75,7 @@ export function useApplicantIndividualDetailEdit({
 
     const updated = patchGeneralIndividualApplicantDetail(
       applicant.id,
-      draftToIndividualSavePayload(draft)
+      draftToIndividualSavePayload(draft, program, applicant)
     )
     if (!updated) {
       setValidationErrors({ form: '저장에 실패했습니다.' })
@@ -70,12 +85,13 @@ export function useApplicantIndividualDetailEdit({
     onSaved(updated)
     resetEditState()
     return true
-  }, [applicant, draft, onSaved, resetEditState])
+  }, [applicant, draft, onSaved, program, resetEditState])
 
   return {
     isEditing,
     draft,
     validationErrors,
+    textbookOptions,
     enterEdit,
     cancelEdit,
     saveEdit,

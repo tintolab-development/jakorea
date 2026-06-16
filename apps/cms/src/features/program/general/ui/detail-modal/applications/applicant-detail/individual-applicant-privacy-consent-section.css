@@ -1,0 +1,9 @@
+.individual-applicant-privacy-consent-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.individual-applicant-privacy-consent-section__template-block {
+  margin-top: 12px;
+}

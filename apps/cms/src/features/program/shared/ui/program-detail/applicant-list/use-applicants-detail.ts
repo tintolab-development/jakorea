@@ -48,10 +48,12 @@ import {
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import {
   getGeneralIndividualApplicationsForProgram,
+  getGeneralParticipantDoc1Applicants,
   updateGeneralIndividualApplicantApprovalStatus,
   patchGeneralIndividualApplicantForApprovalStatus,
   type GeneralIndividualApplicantRow,
 } from '@/data/mock/general-individual-applications-mock'
+import { filterGeneralParticipantDoc1Applications } from '@/features/program/general/lib/participant-doc-screening-filter-fields'
 import { APPLICANT_ID_PARAM, DETAIL_TAB_PARAM } from './applicants-detail-constants'
 import {
   getSessionLineParts as getSessionLinePartsPure,
@@ -98,7 +100,7 @@ export type ApplicantDetailMeta = {
 export function useApplicantsDetail({
   menu,
   onRegisterApplicantCloseHandler,
-  onApplicantDetailMetaChange,
+  onApplicantDetailMetaChange: _onApplicantDetailMetaChange,
   listTitle,
   filterFields: filterFieldsOverride,
   institutionColumnPreset = 'legacy',
@@ -107,6 +109,7 @@ export function useApplicantsDetail({
   programId,
   detailVariant = 'legacy',
   program = null,
+  individualScreeningStage,
 }: {
   menu: ApplicantListMenu | ''
   /** 풀페이지 모달 X: 상세가 열려 있으면 목록으로만 돌아가도록 등록 (true면 모달은 닫지 않음) */
@@ -122,6 +125,8 @@ export function useApplicantsDetail({
   programId?: string
   detailVariant?: 'legacy' | 'general'
   program?: Program | null
+  /** 개인 참여자 면접 1차 서류 심사 탭 */
+  individualScreeningStage?: 'doc1'
 }) {
   const resolvedSessionPreset: SessionLinePreset =
     sessionLinePreset ??
@@ -164,6 +169,9 @@ export function useApplicantsDetail({
   })
   const [individualList, setIndividualList] = useState<GeneralIndividualApplicantRow[]>(() => {
     if (programId) {
+      if (individualScreeningStage === 'doc1') {
+        return getGeneralParticipantDoc1Applicants(programId)
+      }
       return getGeneralIndividualApplicationsForProgram(programId)
     }
     return []
@@ -319,6 +327,12 @@ export function useApplicantsDetail({
     }
   }, [menu, setPendingFilters, setSelectedItem])
 
+  useEffect(() => {
+    if (individualScreeningStage === 'doc1') {
+      setViewMode('table')
+    }
+  }, [individualScreeningStage])
+
   const prevViewModeRef = useRef(viewMode)
   useEffect(() => {
     if (
@@ -334,37 +348,6 @@ export function useApplicantsDetail({
   }, [viewMode, menu, instructorColumnPreset, setPendingFilters])
 
   useEffect(() => {
-    if (!onApplicantDetailMetaChange || detailVariant !== 'general') return
-    if (!selectedItem) {
-      onApplicantDetailMetaChange(null)
-      return
-    }
-    if (menu === 'institutions' && 'schoolName' in selectedItem) {
-      onApplicantDetailMetaChange({
-        title: `참여 기관 신청 상세 (${selectedItem.schoolName})`,
-        breadcrumbLabel: selectedItem.schoolName,
-        kind: 'institution',
-      })
-      return
-    }
-    if (menu === 'individual-applications' && 'applicantName' in selectedItem) {
-      onApplicantDetailMetaChange({
-        title: `참여자 신청 상세 (${selectedItem.applicantName})`,
-        breadcrumbLabel: selectedItem.applicantName,
-        kind: 'individual',
-      })
-      return
-    }
-    if (menu === 'instructors' && 'instructorName' in selectedItem) {
-      onApplicantDetailMetaChange({
-        title: `강사 신청 상세 (${selectedItem.instructorName})`,
-        breadcrumbLabel: selectedItem.instructorName,
-        kind: 'instructor',
-      })
-    }
-  }, [onApplicantDetailMetaChange, detailVariant, menu, selectedItem])
-
-  useEffect(() => {
     if (programId && institutionColumnPreset === 'general-detail' && menu === 'institutions') {
       setInstitutionList(getGeneralInstitutionApplicationsForProgram(programId))
     }
@@ -372,9 +355,13 @@ export function useApplicantsDetail({
 
   useEffect(() => {
     if (programId && menu === 'individual-applications') {
-      setIndividualList(getGeneralIndividualApplicationsForProgram(programId))
+      setIndividualList(
+        individualScreeningStage === 'doc1'
+          ? getGeneralParticipantDoc1Applicants(programId)
+          : getGeneralIndividualApplicationsForProgram(programId)
+      )
     }
-  }, [programId, menu])
+  }, [programId, menu, individualScreeningStage])
 
   useEffect(() => {
     if (programId && instructorColumnPreset === 'general-detail' && menu === 'instructors') {
@@ -482,7 +469,7 @@ export function useApplicantsDetail({
       ? instructorColumnsGeneral
       : instructorColumnsLegacy
 
-  const individualColumns = useGeneralIndividualApplicantColumns()
+  const individualColumns = useGeneralIndividualApplicantColumns(institutionApplicationBridge)
 
   const handleBulkReject = () => {
     if (selectedRowKeys.length === 0) {
@@ -773,6 +760,9 @@ export function useApplicantsDetail({
 
   const tableData = useMemo((): ApplicantListRow[] => {
     if (menu === 'individual-applications') {
+      if (individualScreeningStage === 'doc1') {
+        return filterGeneralParticipantDoc1Applications(individualList, appliedFilters)
+      }
       return filterGeneralIndividualApplications(individualList, appliedFilters)
     }
     if (menu === 'institutions' && institutionColumnPreset === 'general-detail') {
@@ -801,6 +791,7 @@ export function useApplicantsDetail({
     institutionColumnPreset,
     instructorColumnPreset,
     viewMode,
+    individualScreeningStage,
   ])
 
   const columns = useMemo(() => {
