@@ -17,6 +17,7 @@ export interface LoginOptions {
 }
 import { validateLogin, getUserByPhone, mockUsers } from '@/data/mock/users'
 import { createTotpMfaState } from '@/data/mock/mfa'
+import { SocialAccountNotLinkedError } from '@/features/auth/errors/social-account-not-linked-error'
 
 /** 실 API 세션 토큰 접두사 — `validateToken`·auth-store 갱신 시 mock JWT 와 구분 */
 export const CMS_REMOTE_SESSION_PREFIX = 'cms-remote-'
@@ -305,19 +306,10 @@ export async function loginWithSocial(
   const socialId = `${provider}-${socialToken}`
 
   // 기존 매핑 확인
-  let userId = socialUserMap.get(socialId)
+  const userId = socialUserMap.get(socialId)
 
   if (!userId) {
-    // 새 사용자 생성 또는 기존 사용자 매칭 (Mock)
-    // 여기서는 첫 번째 개인 사용자를 매칭 (실제로는 소셜 정보로 사용자 찾기)
-    const existingUser = mockUsers.find(u => u.role === 'INDIVIDUAL' && u.isActive)
-
-    if (existingUser) {
-      userId = existingUser.id
-      socialUserMap.set(socialId, userId)
-    } else {
-      throw new Error('소셜 로그인에 실패했습니다. 계정이 없습니다.')
-    }
+    throw new SocialAccountNotLinkedError()
   }
 
   const user = mockUsers.find(u => u.id === userId)
