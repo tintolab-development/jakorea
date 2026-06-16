@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   applyGeneralParticipantAudienceSelection,
+  applyGeneralParticipantAudienceSelectToEditForm,
+  resolveGeneralParticipantAudienceSelectValue,
   shouldResetParticipationScheduleDetailForAudience,
 } from './participant-audience-selection'
 
@@ -48,5 +50,31 @@ describe('shouldResetParticipationScheduleDetailForAudience', () => {
         organization: false,
       })
     ).toBe(false)
+  })
+})
+
+describe('resolveGeneralParticipantAudienceSelectValue', () => {
+  it('개인/기관 플래그를 셀렉트 값으로 변환한다', () => {
+    expect(
+      resolveGeneralParticipantAudienceSelectValue({ individual: true, organization: false })
+    ).toBe('individual')
+    expect(
+      resolveGeneralParticipantAudienceSelectValue({ individual: false, organization: true })
+    ).toBe('organization')
+  })
+})
+
+describe('applyGeneralParticipantAudienceSelectToEditForm', () => {
+  it('개인 선택 시 기관 플래그를 해제한다', () => {
+    const setValue = vi.fn()
+    const getValues = vi.fn()
+    const editForm = { setValue, getValues } as never
+
+    const next = applyGeneralParticipantAudienceSelectToEditForm(editForm, 'individual')
+
+    expect(next).toEqual({ individual: true, organization: false })
+    expect(setValue).toHaveBeenCalledWith('participantIndividual', true, expect.any(Object))
+    expect(setValue).toHaveBeenCalledWith('participantOrganization', false, expect.any(Object))
+    expect(setValue).toHaveBeenCalledWith('surveyTeacherSatisfaction', false, expect.any(Object))
   })
 })

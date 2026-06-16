@@ -15,6 +15,7 @@
 
 import { useCallback, useRef } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
+import type { z } from 'zod'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
@@ -26,12 +27,15 @@ export interface UseProgramDetailInfoSaveOptions {
   form: UseFormReturn<ProgramDetailEditFormValues>
   program: Program | null
   onSaveEdit?: (draft: Program) => Promise<void>
+  /** 지정 시 해당 스키마로만 검증 — 모집 정보 탭 부분 저장용 */
+  validateSchema?: z.ZodType<unknown>
 }
 
 export function useProgramDetailInfoSave({
   form,
   program,
   onSaveEdit,
+  validateSchema,
 }: UseProgramDetailInfoSaveOptions) {
   const savingRef = useRef(false)
   const getAdditionalContentHtmlRef = useRef<() => string>(() => '')
@@ -40,12 +44,15 @@ export function useProgramDetailInfoSave({
     getAdditionalContentHtmlRef.current = getter
   }, [])
 
-  const triggerSave = useCallback(async () => {
-    if (savingRef.current || !onSaveEdit || !program) return
+  const triggerSave = useCallback(async (): Promise<boolean> => {
+    if (savingRef.current || !onSaveEdit || !program) return false
     savingRef.current = true
     try {
-      const isValid = await form.trigger()
-      if (!isValid) return
+      const isValid =
+        validateSchema != null
+          ? validateSchema.safeParse(form.getValues()).success
+          : await form.trigger()
+      if (!isValid) return false
       const values = form.getValues()
       const patch = detailEditValuesToProgramPatch(values, program)
       const html = getAdditionalContentHtmlRef.current?.()
@@ -55,10 +62,13 @@ export function useProgramDetailInfoSave({
         ...(typeof html === 'string' ? { additionalContentHtml: html } : {}),
       }
       await onSaveEdit(draftToSave)
+      return true
+    } catch {
+      return false
     } finally {
       savingRef.current = false
     }
-  }, [form, program, onSaveEdit])
+  }, [form, program, onSaveEdit, validateSchema])
 
   const resetToProgram = useCallback(() => {
     if (program) {

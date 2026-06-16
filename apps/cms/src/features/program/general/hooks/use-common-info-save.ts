@@ -10,6 +10,7 @@ import {
   programToGeneralCommonInfoEditValues,
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
+import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 
 export interface UseGeneralProgramCommonInfoSaveOptions {
   form: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
@@ -32,10 +33,13 @@ export function useGeneralProgramCommonInfoSave({
       if (!isValid) return false
       const values = form.getValues()
       const patch = generalCommonInfoEditValuesToProgramPatch(values, program)
+      const resolvedCommon = resolveGeneralProgramCommonInfo(program)
       const draftToSave: Program = {
         ...program,
         ...patch,
+        updatedAt: new Date().toISOString(),
         generalCommonInfo: {
+          ...resolvedCommon,
           ...program.generalCommonInfo,
           ...patch.generalCommonInfo,
         },

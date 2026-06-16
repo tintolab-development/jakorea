@@ -134,6 +134,8 @@ export interface GeneralProgramCommonInfoExtension {
   /** 후원사 관리 목록 id — 다중 선택 */
   sponsorManagementIds?: string[]
   educationFormLabel?: string
+  /** 참여 방식 — 개인 대상 · 일정 공통 (등록 폼·상세 조회 mock) */
+  participationMethod?: 'individual' | 'team'
   ipsTypeSummary?: string
   educationFormScheduleDetail?: GeneralProgramScheduleDetailKind
   participationScheduleDetail?: GeneralProgramScheduleDetailKind

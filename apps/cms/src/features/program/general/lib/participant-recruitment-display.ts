@@ -28,6 +28,18 @@ import {
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 
+export function resolveParticipantRecruitmentInterviewEnabled(
+  program: Program,
+  editInterviewValue?: 'yes' | 'no'
+): boolean {
+  if (editInterviewValue === 'yes') return true
+  if (editInterviewValue === 'no') return false
+  const interviewEnabled =
+    program.generalParticipantInterviewEnabled ??
+    program.generalCommonInfo?.participantRecruitmentInfo?.interviewEnabled
+  return interviewEnabled === true
+}
+
 export type GeneralProgramParticipantRecruitmentDisplay = {
   /** 개인 프로그램 — 면접 유무 표시 (없으면 undefined) */
   interviewEnabledLabel?: string
@@ -50,6 +62,11 @@ export type GeneralProgramParticipantRecruitmentDisplay = {
   targetLabel: string
   targetDetailLabel: string
   recruitmentPeriodLabel: string
+  documentPassAnnouncementDate?: string | Date
+  documentPassAnnouncementMethod?: string
+  interviewStartDate?: string | Date
+  interviewEndDate?: string | Date
+  interviewMethod?: string
   finalAnnouncementLabel: string
   contactOrganizationName: string
   contactPhone: string
@@ -149,11 +166,17 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     undefined
   const interviewEnabledLabel = isGeneralIndividualProgram(program)
     ? interviewEnabled === true
-      ? '면접 있음'
+      ? '필요'
       : interviewEnabled === false
-        ? '면접 없음'
+        ? '불필요'
         : '-'
     : undefined
+
+  const documentPassAnnouncementDate = program.documentPassAnnouncementDate
+  const documentPassAnnouncementMethod = program.documentPassAnnouncementMethod
+  const interviewStartDate = program.interviewStartDate
+  const interviewEndDate = program.interviewEndDate
+  const interviewMethod = program.interviewMethod
 
   return {
     interviewEnabledLabel,
@@ -181,6 +204,11 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     recruitmentPeriodLabel:
       info?.recruitmentPeriodLabel ??
       formatDateRange(program.applicationStartDate, program.applicationEndDate),
+    documentPassAnnouncementDate,
+    documentPassAnnouncementMethod,
+    interviewStartDate,
+    interviewEndDate,
+    interviewMethod,
     finalAnnouncementLabel,
     contactOrganizationName:
       info?.contactOrganizationName ?? common?.sponsorDisplayName ?? 'JA Korea',

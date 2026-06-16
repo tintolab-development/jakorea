@@ -18,6 +18,7 @@ import {
 import { TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 
 const PARTICIPANT_LABEL_BY_VALUE = Object.fromEntries(
   TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.map(o => [o.value, o.label])
@@ -374,7 +375,15 @@ export function formatGeneralParticipantTypesSummary(program: Program): string {
 export function formatGeneralSurveyItemsSummary(program: Program): string {
   const keys = normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys ?? [])
   if (keys.length === 0) return '-'
-  return keys.map(key => PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[key]).join(', ')
+  const isIndividual = isGeneralIndividualProgram(program)
+  return keys
+    .map(key => {
+      if (isIndividual && key === 'student_satisfaction') return '만족도조사'
+      if (isIndividual && key === 'teacher_satisfaction') return null
+      return PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[key]
+    })
+    .filter((label): label is string => Boolean(label))
+    .join(', ')
 }
 
 /** 일정형 세부 일정 표시명 — name → scheduleLabel → 세부 일정 NN */

@@ -11,6 +11,7 @@ import type {
   Program,
 } from '@/types/domain'
 import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
+import { mockSponsors } from '@/data/mock/sponsors'
 import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
 import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
 import {
@@ -41,7 +42,10 @@ import {
   PROGRAM_REGISTRATION_IP_OWNED_OPTIONS,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
-import type { ProgramRegistrationSurveyItemId } from '@/features/template/lib/program-registration-survey-items'
+import {
+  PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
+  type ProgramRegistrationSurveyItemId,
+} from '@/features/template/lib/program-registration-survey-items'
 import {
   PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS,
   PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS,
@@ -154,6 +158,14 @@ export type GeneralProgramCommonInfoEditFormValues = z.infer<
   typeof generalProgramCommonInfoEditSchema
 >
 
+export function getGeneralCommonInfoEditValidationMessage(
+  values: GeneralProgramCommonInfoEditFormValues
+): string | undefined {
+  const result = generalProgramCommonInfoEditSchema.safeParse(values)
+  if (result.success) return undefined
+  return result.error.issues[0]?.message ?? '입력값을 확인해 주세요.'
+}
+
 export type GeneralProgramScheduleDetailFormValues = z.infer<typeof scheduleDetailFormSchema>
 
 export function padScheduleDetailLabel(index: number): string {
@@ -233,8 +245,8 @@ export function resolveScheduleDetailsFormState(
       scheduleDate: d.scheduleDateLabel ?? '',
       assignmentEnabled: d.assignmentEnabled ?? false,
       assignmentPeriod: d.assignmentPeriod ?? '',
-      educationForm: 'online',
-      participationMethod: 'individual' as const,
+      educationForm: educationFormValueFromLabel(d.educationFormLabel),
+      participationMethod: participationMethodValueFromLabel(d.participationMethodLabel),
       ipsCategory: '' as const,
       ipsDetail: '',
     }
@@ -357,11 +369,29 @@ function resolveDetailedProgramId(program: Program): string {
   return matched?.id ?? ''
 }
 
-function resolveVenueKind(program: Program): 'inside' | 'outside' | 'other' {
+export type GeneralProgramVenueKind = 'inside' | 'outside' | 'other'
+
+export const GENERAL_PROGRAM_VENUE_KIND_LABELS: Record<GeneralProgramVenueKind, string> = {
+  inside: '기관 안',
+  outside: '기관 밖',
+  other: '기타(직접입력)',
+}
+
+export function resolveVenueKind(program: Program): GeneralProgramVenueKind {
   if (program.institutionType === 'inside_school') return 'inside'
   if (program.institutionType === 'outside_school') return 'outside'
   if (program.venue?.trim()) return 'other'
   return 'inside'
+}
+
+/** 조회 모드 — 라디오 선택 · 상세 입력 (`|` 구분) */
+export function formatGeneralProgramVenueViewLine(
+  program: Program,
+  venueDetail?: string | null
+): string {
+  const kindLabel = GENERAL_PROGRAM_VENUE_KIND_LABELS[resolveVenueKind(program)]
+  const detail = venueDetail?.trim() || program.venue?.trim() || '-'
+  return `${kindLabel} | ${detail}`
 }
 
 const SPONSOR_MANAGER_CONTACT_REF_SEPARATOR = '::'
@@ -396,7 +426,15 @@ export function resolveSponsorManagementIds(program: Program): string[] {
       .filter((id): id is string => Boolean(id))
     if (ids.length > 0) return ids
   }
-  return []
+  if (program.sponsorId) {
+    const sponsorName = mockSponsors.find(row => row.id === program.sponsorId)?.name?.trim()
+    if (sponsorName) {
+      const matched = mockSponsorManagementListRows.find(row => row.name === sponsorName)
+      if (matched) return [matched.id]
+    }
+  }
+  const fallback = mockSponsorManagementListRows[0]
+  return fallback ? [fallback.id] : []
 }
 
 function resolveSponsorManagerContactId(
@@ -516,6 +554,26 @@ function paymentItemLabelsFromIds(ids: string[] | undefined): string {
 function educationFormLabelFromValue(value: string | undefined): string {
   const options = getProgramRegistrationEducationFormOptions(true)
   return options.find(o => o.value === value)?.label ?? value ?? '-'
+}
+
+const PARTICIPATION_METHOD_LABEL_BY_VALUE = {
+  individual: '개인',
+  team: '팀',
+} as const
+
+export function participationMethodLabelFromValue(
+  value: 'individual' | 'team' | undefined
+): string {
+  if (!value || value === 'individual') return PARTICIPATION_METHOD_LABEL_BY_VALUE.individual
+  return PARTICIPATION_METHOD_LABEL_BY_VALUE.team
+}
+
+export function participationMethodValueFromLabel(
+  label: string | undefined
+): 'individual' | 'team' {
+  const trimmed = label?.trim()
+  if (trimmed === PARTICIPATION_METHOD_LABEL_BY_VALUE.team) return 'team'
+  return 'individual'
 }
 
 function educationFormValueFromLabel(label: string | undefined): string {
@@ -675,7 +733,7 @@ function resolveTypeSettingsFromProgram(program: Program): Pick<
     ipsScheduleDetail: commonInfo.ipsScheduleDetail ?? ips.ipsScheduleDetail,
     ipsCategory: ips.ipsCategory,
     ipsDetail: ips.ipsDetail,
-    participationMethod: 'individual',
+    participationMethod: commonInfo.participationMethod ?? 'individual',
   }
 }
 
@@ -725,6 +783,18 @@ export function programToGeneralCommonInfoEditValues(
   const commonInfo = resolveGeneralProgramCommonInfo(program)
   const sponsorManagementIds = resolveSponsorManagementIds(program)
   const typeSettings = resolveTypeSettingsFromProgram(program)
+  const educationProcess =
+    resolveEducationProcessFormValue(program.educationProcess) ||
+    PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS[0]?.value ||
+    'traditional_paper'
+  const ipOwned =
+    resolveIpOwnedFormValue(program.ipOwned) ||
+    PROGRAM_REGISTRATION_IP_OWNED_OPTIONS[0]?.value ||
+    'ja'
+  const courseDeliveredBy =
+    resolveCourseDeliveredFormValue(program.courseDeliveredBy) ||
+    PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS[0]?.value ||
+    'ja'
 
   return {
     mainTitle: program.mainTitle?.trim() ?? '',
@@ -740,9 +810,9 @@ export function programToGeneralCommonInfoEditValues(
     venueDetail: commonInfo.venueDetail?.trim() || program.venue?.trim() || '',
     ...participantFlagsFromProgram(program),
     ...surveyFlagsFromProgram(program),
-    educationProcess: resolveEducationProcessFormValue(program.educationProcess),
-    ipOwned: resolveIpOwnedFormValue(program.ipOwned),
-    courseDeliveredBy: resolveCourseDeliveredFormValue(program.courseDeliveredBy),
+    educationProcess,
+    ipOwned,
+    courseDeliveredBy,
     partnerInvolvement: program.partnerInvolvement ? 'yes' : 'no',
     ...resolveKpiFromProgram(program),
     ...resolveWageFromProgram(program),
@@ -938,6 +1008,10 @@ export function generalCommonInfoEditValuesToProgramPatch(
           : undefined,
       educationFormScheduleDetail: values.educationFormScheduleDetail ?? 'common',
       participationScheduleDetail: values.participationScheduleDetail ?? 'common',
+      participationMethod:
+        values.participationScheduleDetail === 'perSchedule'
+          ? undefined
+          : (values.participationMethod ?? existingCommon.participationMethod ?? 'individual'),
       ipsScheduleDetail: values.ipsScheduleDetail,
       ipsTypeSummary: buildIpsTypeSummary(
         values.ipsScheduleDetail,
@@ -986,6 +1060,14 @@ export function generalCommonInfoEditValuesToProgramPatch(
               return {
                 ...row,
                 progressTimeSummary: buildScheduleProgressTimeSummary(d.groupTimes),
+                educationFormLabel:
+                  values.educationFormScheduleDetail === 'perSchedule' && d.educationForm
+                    ? educationFormLabelFromValue(d.educationForm)
+                    : undefined,
+                participationMethodLabel:
+                  values.participationScheduleDetail === 'perSchedule' && d.participationMethod
+                    ? participationMethodLabelFromValue(d.participationMethod)
+                    : undefined,
                 ipsTypeSummary:
                   values.ipsScheduleDetail === 'perSchedule' && d.ipsCategory
                     ? buildSessionIpsTypeSummary(
@@ -1033,3 +1115,22 @@ export const GENERAL_SURVEY_EDIT_FIELDS: {
   { id: 'teacher_satisfaction', formKey: 'surveyTeacherSatisfaction' },
   { id: 'lecture_evaluation', formKey: 'surveyLectureEvaluation' },
 ]
+
+export type GeneralSurveyEditFieldConfig = (typeof GENERAL_SURVEY_EDIT_FIELDS)[number] & {
+  label: string
+}
+
+/** 개인 대상 — 교사 만족도 제외, 학생 만족도는 「만족도조사」로 표기 */
+export function getGeneralSurveyEditFieldsForAudience(
+  isIndividualTarget: boolean
+): GeneralSurveyEditFieldConfig[] {
+  return GENERAL_SURVEY_EDIT_FIELDS.filter(
+    field => !isIndividualTarget || field.id !== 'teacher_satisfaction'
+  ).map(field => ({
+    ...field,
+    label:
+      isIndividualTarget && field.id === 'student_satisfaction'
+        ? '만족도조사'
+        : PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[field.id],
+  }))
+}
