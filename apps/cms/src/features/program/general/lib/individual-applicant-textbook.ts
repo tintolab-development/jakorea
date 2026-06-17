@@ -4,7 +4,7 @@ import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individu
 import type { Program } from '@/types/domain'
 import {
   calculateParticipatingTextbookKitQuantity,
-  programUsesTextbook,
+  programHasTextbookCatalog,
 } from '@/features/program/general/lib/participating-institution-textbook'
 import {
   filterTextbooksForApplicant,
@@ -16,9 +16,10 @@ export const TEXTBOOK_NOT_USED_OPTION_VALUE = '__TEXTBOOK_NOT_USED__'
 
 export const TEXTBOOK_UNDECIDED_LABEL = '미정'
 
+/** 개인 참여자 신청·진행 상세 — 승인 후 교재명 노출 (일정형도 카탈로그 매칭 시 표시) */
 export function individualApplicantUsesTextbook(program: Program | null | undefined): boolean {
   if (!program) return false
-  return programUsesTextbook(program)
+  return programHasTextbookCatalog(program)
 }
 
 export function buildIndividualApplicantTextbookOptions(

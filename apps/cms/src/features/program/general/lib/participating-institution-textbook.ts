@@ -51,10 +51,15 @@ function listUsedTextbooksForProgram(program: Program): TextbookRow[] {
   })
 }
 
+/** 사업 분야·교육 대상에 맞는 사용 중 교재가 카탈로그에 있는지 (일정형 여부 무관) */
+export function programHasTextbookCatalog(program: Program): boolean {
+  return dedupeTextbooksByName(listUsedTextbooksForProgram(program)).length > 0
+}
+
 /** 교재 카탈로그·일정형이 아닌 일반 프로그램에 교재 정보 노출 여부 */
 export function programUsesTextbook(program: Program): boolean {
   if (isGeneralProgramScheduleType(program)) return false
-  return dedupeTextbooksByName(listUsedTextbooksForProgram(program)).length > 0
+  return programHasTextbookCatalog(program)
 }
 
 /** 사업 분야·교육 학년에 맞는 기본 교재 (첫 매칭) */
