@@ -72,7 +72,11 @@ import {
   type ParticipatingInstructorActivityWithdrawModalPayload,
 } from './participating-instructor-activity-withdraw-modal'
 import { ParticipatingInstructorLectureReportsSection } from './participating-instructor-lecture-reports-section'
+import { ParticipatingIndividualInstructorLectureReportsSection } from './participating-individual-instructor-lecture-reports-section'
 import { ParticipatingInstructorSettlementSection } from './participating-instructor-settlement-section'
+import { ParticipatingIndividualInstructorSettlementSection } from './participating-individual-instructor-settlement-section'
+import { ParticipatingIndividualInstructorAssignmentSection } from './participating-individual-instructor-assignment-section'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { ActivityCertificateIssuancePreviewModal } from './activity-certificate-issuance-preview-modal'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import './participating-institutions-section.css'
@@ -240,6 +244,8 @@ export function ParticipatingInstructorFullpageView({
   const { showAlert } = useCmsAlert()
 
   const mergedInstructor = useMemo(() => ({ ...d, ...instructorPatches }), [d, instructorPatches])
+
+  const isIndividualProgram = isGeneralIndividualProgram(program)
 
   const isActivityWithdrawn = mergedInstructor.activityWithdrawn === true
 
@@ -933,7 +939,17 @@ export function ParticipatingInstructorFullpageView({
         {effectiveTab === 'application' && (
           <div className="program-detail-fullpage-modal__info-tab">{applicationTab}</div>
         )}
-        {effectiveTab === 'institutionAssignment' && (
+        {effectiveTab === 'institutionAssignment' &&
+          (isIndividualProgram ? (
+            <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
+              <ParticipatingIndividualInstructorAssignmentSection
+                program={program}
+                instructor={mergedInstructor}
+                schoolRows={schoolRows}
+                instructorList={instructorList}
+              />
+            </div>
+          ) : (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
             <div className="school-detail-fullpage-view__instructor-section">
               <div className="table-header-actions">
@@ -1129,21 +1145,35 @@ export function ParticipatingInstructorFullpageView({
               </div>
             </ContentModal>
           </div>
-        )}
+          ))}
         {effectiveTab === 'lectureReports' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
-            <ParticipatingInstructorLectureReportsSection
-              instructor={mergedInstructor}
-              program={program}
-            />
+            {isIndividualProgram ? (
+              <ParticipatingIndividualInstructorLectureReportsSection
+                instructor={mergedInstructor}
+                program={program}
+              />
+            ) : (
+              <ParticipatingInstructorLectureReportsSection
+                instructor={mergedInstructor}
+                program={program}
+              />
+            )}
           </div>
         )}
         {effectiveTab === 'settlement' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
-            <ParticipatingInstructorSettlementSection
-              instructor={mergedInstructor}
-              program={program}
-            />
+            {isIndividualProgram ? (
+              <ParticipatingIndividualInstructorSettlementSection
+                instructor={mergedInstructor}
+                program={program}
+              />
+            ) : (
+              <ParticipatingInstructorSettlementSection
+                instructor={mergedInstructor}
+                program={program}
+              />
+            )}
           </div>
         )}
       </div>
