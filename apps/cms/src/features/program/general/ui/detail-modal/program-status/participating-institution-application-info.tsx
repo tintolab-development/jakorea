@@ -7,11 +7,7 @@ import type { ParticipatingSchoolSession } from '@/data/mock/participating-schoo
 import type { Program } from '@/types/domain'
 import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
-import { getSessionLineParts } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
-import {
-  withProgramDetailTdDivider,
-  ProgramDetailTdSegmentWrap,
-} from '@/features/program/shared/ui/program-detail-td-divider'
+import { ParticipatingProgressScheduleRow } from './participating-progress-schedule-row'
 import {
   INSTITUTION_APPLICATION_INFO_COLGROUP,
   INSTITUTION_APPLICATION_SCHEDULE_COLGROUP,
@@ -24,61 +20,6 @@ import {
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info.css'
 import './participating-institution-application-info.css'
-
-const SESSION_STATUS_LABELS: Record<string, string> = {
-  completed: '진행 완료',
-  pending: '진행 대기',
-  not_planned: '미진행 희망',
-}
-
-function padScheduleTimePart(part: string): string {
-  const trimmed = part.trim()
-  const [h, m = '00'] = trimmed.split(':')
-  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`
-}
-
-function ParticipatingScheduleRow({
-  rowLabel,
-  session,
-}: {
-  rowLabel: string
-  session: ParticipatingSchoolSession
-}) {
-  const { datePart, periodPart } = getSessionLineParts(session, 'general-detail')
-  const [startRaw, endRaw] = session.timeRange.split('~')
-  const timePart = `${padScheduleTimePart(startRaw)} ~ ${padScheduleTimePart(endRaw ?? startRaw)}`
-  const statusLabel = session.status
-    ? (SESSION_STATUS_LABELS[session.status] ?? session.status)
-    : '미진행 희망'
-  const statusClass =
-    session.status === 'completed'
-      ? 'participating-institution-application-info__session-status--completed'
-      : session.status === 'pending'
-        ? 'participating-institution-application-info__session-status--pending'
-        : 'participating-institution-application-info__session-status--not_planned'
-
-  return (
-    <tr>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {rowLabel}
-      </td>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-        <ProgramDetailTdSegmentWrap>
-          {withProgramDetailTdDivider([
-            `${datePart} ${timePart}`,
-            periodPart,
-            <span
-              key="status"
-              className={`participating-institution-application-info__session-status ${statusClass}`}
-            >
-              {statusLabel}
-            </span>,
-          ])}
-        </ProgramDetailTdSegmentWrap>
-      </td>
-    </tr>
-  )
-}
 
 export interface ParticipatingInstitutionApplicationInfoProps {
   formError?: string
@@ -280,7 +221,7 @@ export function ParticipatingInstitutionApplicationInfo({
                 </tr>
               ) : (
                 sessions.map(session => (
-                  <ParticipatingScheduleRow
+                  <ParticipatingProgressScheduleRow
                     key={`${session.round}-${session.date}`}
                     rowLabel={resolveParticipatingInstitutionScheduleRowLabel(program, session)}
                     session={session}

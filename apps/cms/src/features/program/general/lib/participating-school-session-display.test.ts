@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
-import { resolveParticipatingInstitutionScheduleRowLabel } from './participating-school-session-display'
+import {
+  formatVolunteerAssignmentScheduleLine,
+  resolveParticipatingInstitutionScheduleRowLabel,
+} from './participating-school-session-display'
 import type { Program } from '@/types/domain'
 
 function baseProgram(overrides: Partial<Program> = {}): Program {
@@ -80,5 +83,73 @@ describe('resolveParticipatingInstitutionScheduleRowLabel', () => {
     )
 
     expect(label).toBe('오리엔테이션')
+  })
+})
+
+describe('formatVolunteerAssignmentScheduleLine', () => {
+  it('단일 회차는 날짜·시간만 노출한다', () => {
+    const line = formatVolunteerAssignmentScheduleLine(
+      baseSession(),
+      baseProgram({
+        generalProgramSessionRound: 'single',
+        generalProgramEducationStructure: 'schedule',
+      })
+    )
+
+    expect(line).toBe('2026. 01. 09(금) 09:20 ~ 11:20')
+  })
+
+  it('복수 커리큘럼형은 회차명을 노출한다', () => {
+    const line = formatVolunteerAssignmentScheduleLine(
+      baseSession({ round: 2 }),
+      baseProgram({
+        generalProgramSessionRound: 'multi',
+        generalProgramEducationStructure: 'curriculum',
+        generalCommonInfo: {
+          curriculumSessions: [
+            { sessionLabel: '1회차', title: '1차시', description: '' },
+            { sessionLabel: '2회차', title: '2차시', description: '' },
+          ],
+        },
+      })
+    )
+
+    expect(line).toBe('2026. 01. 09(금) 09:20 ~ 11:20 | 2회차')
+  })
+
+  it('복수 일정형은 일정명을 노출한다', () => {
+    const line = formatVolunteerAssignmentScheduleLine(
+      baseSession({ round: 1 }),
+      baseProgram({
+        generalProgramSessionRound: 'multi',
+        generalProgramEducationStructure: 'schedule',
+        generalCommonInfo: {
+          scheduleDetails: [
+            { scheduleLabel: '세부 일정 01', name: '오리엔테이션' },
+            { scheduleLabel: '세부 일정 02', name: '국내대회' },
+          ],
+        },
+      })
+    )
+
+    expect(line).toBe('2026. 01. 09(금) 09:20 ~ 11:20 | 오리엔테이션')
+  })
+
+  it('진행 시간이 없으면 날짜·회차만 노출한다', () => {
+    const line = formatVolunteerAssignmentScheduleLine(
+      baseSession({ timeRange: '', round: 1 }),
+      baseProgram({
+        generalProgramSessionRound: 'multi',
+        generalProgramEducationStructure: 'curriculum',
+        generalCommonInfo: {
+          curriculumSessions: [
+            { sessionLabel: '1회차', title: '1차시', description: '' },
+            { sessionLabel: '2회차', title: '2차시', description: '' },
+          ],
+        },
+      })
+    )
+
+    expect(line).toBe('2026. 01. 09(금) | 1회차')
   })
 })
