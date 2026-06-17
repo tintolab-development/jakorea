@@ -89,6 +89,11 @@ import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/
 import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
 import { ParticipatingVolunteersSection } from './program-status/participating-volunteers-section'
+import { ParticipatingParticipantsSection } from './program-status/participating-participants-section'
+import { ParticipatingIndividualProgressAttendanceSection } from './program-status/participating-individual-progress-attendance-section'
+import { ParticipatingIndividualProgressAssignmentSection } from './program-status/participating-individual-progress-assignment-section'
+import { ProgramProgressPostsSection } from './program-status/program-progress-posts-section'
+import { PARTICIPATING_PARTICIPANTS_VIEW_PARAM } from '@/features/program/general/hooks/use-participating-individual-participants-params'
 import {
   GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS,
   normalizeGeneralParticipatingInstitutionDetailTab,
@@ -102,6 +107,10 @@ import {
   normalizeVolunteerDetailTab,
   type VolunteerDetailTabKey,
 } from './program-status/participating-volunteer-fullpage-view'
+import {
+  normalizeParticipantDetailTab,
+  type ParticipantDetailTabKey,
+} from './program-status/participating-participant-fullpage-view'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './detail-fullpage-modal.css'
 
@@ -114,6 +123,8 @@ const INSTRUCTOR_ID_PARAM = 'instructorId'
 const INSTRUCTOR_TAB_PARAM = 'instructorTab'
 const VOLUNTEER_ID_PARAM = 'volunteerId'
 const VOLUNTEER_TAB_PARAM = 'volunteerTab'
+const PARTICIPANT_ID_PARAM = 'participantId'
+const PARTICIPANT_TAB_PARAM = 'participantTab'
 
 const GENERAL_PROGRESS_NESTED_QUERY_PARAMS = [
   SCHOOL_ID_PARAM,
@@ -122,6 +133,9 @@ const GENERAL_PROGRESS_NESTED_QUERY_PARAMS = [
   INSTRUCTOR_TAB_PARAM,
   VOLUNTEER_ID_PARAM,
   VOLUNTEER_TAB_PARAM,
+  PARTICIPANT_ID_PARAM,
+  PARTICIPANT_TAB_PARAM,
+  PARTICIPATING_PARTICIPANTS_VIEW_PARAM,
   'progressCalendarRange',
   'schoolName',
   'institutionSido',
@@ -129,6 +143,9 @@ const GENERAL_PROGRESS_NESTED_QUERY_PARAMS = [
   'educationGrade',
   'textbookStatus',
   'teacherName',
+  'participantName',
+  'homeSido',
+  'homeSigungu',
 ] as const
 
 const GENERAL_DETAIL_QUERY_PARAMS = [
@@ -160,6 +177,10 @@ function parseInstructorTabFromSearch(searchParams: URLSearchParams): Instructor
 
 function parseVolunteerTabFromSearch(searchParams: URLSearchParams): VolunteerDetailTabKey {
   return normalizeVolunteerDetailTab(searchParams.get(VOLUNTEER_TAB_PARAM))
+}
+
+function parseParticipantTabFromSearch(searchParams: URLSearchParams): ParticipantDetailTabKey {
+  return normalizeParticipantDetailTab(searchParams.get(PARTICIPANT_TAB_PARAM))
 }
 
 const INFO_TABS = ['info', 'recruitment', 'application'] as const
@@ -476,6 +497,10 @@ export function GeneralProgramDetailFullPageModal({
   const volunteerIdFromUrl = open ? searchParams.get(VOLUNTEER_ID_PARAM) : null
   const activeVolunteerTab = volunteerIdFromUrl
     ? parseVolunteerTabFromSearch(searchParams)
+    : 'application'
+  const participantIdFromUrl = open ? searchParams.get(PARTICIPANT_ID_PARAM) : null
+  const activeParticipantTab = participantIdFromUrl
+    ? parseParticipantTabFromSearch(searchParams)
     : 'application'
 
   const setEditMode = useCallback(
@@ -814,6 +839,8 @@ export function GeneralProgramDetailFullPageModal({
         next.delete(INSTRUCTOR_TAB_PARAM)
         next.delete(VOLUNTEER_ID_PARAM)
         next.delete(VOLUNTEER_TAB_PARAM)
+        next.delete(PARTICIPANT_ID_PARAM)
+        next.delete(PARTICIPANT_TAB_PARAM)
       } else {
         next.delete(SCHOOL_ID_PARAM)
         next.delete(SCHOOL_TAB_PARAM)
@@ -834,6 +861,8 @@ export function GeneralProgramDetailFullPageModal({
         next.delete(SCHOOL_TAB_PARAM)
         next.delete(VOLUNTEER_ID_PARAM)
         next.delete(VOLUNTEER_TAB_PARAM)
+        next.delete(PARTICIPANT_ID_PARAM)
+        next.delete(PARTICIPANT_TAB_PARAM)
       } else {
         next.delete(INSTRUCTOR_ID_PARAM)
         next.delete(INSTRUCTOR_TAB_PARAM)
@@ -854,9 +883,33 @@ export function GeneralProgramDetailFullPageModal({
         next.delete(SCHOOL_TAB_PARAM)
         next.delete(INSTRUCTOR_ID_PARAM)
         next.delete(INSTRUCTOR_TAB_PARAM)
+        next.delete(PARTICIPANT_ID_PARAM)
+        next.delete(PARTICIPANT_TAB_PARAM)
       } else {
         next.delete(VOLUNTEER_ID_PARAM)
         next.delete(VOLUNTEER_TAB_PARAM)
+      }
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: id == null })
+    },
+    [programId, searchParams, setSearchParams]
+  )
+
+  const setParticipantId = useCallback(
+    (id: string | null) => {
+      const next = new URLSearchParams(searchParams)
+      if (id) {
+        next.set(PARTICIPANT_ID_PARAM, id)
+        next.set(PARTICIPANT_TAB_PARAM, 'application')
+        next.delete(SCHOOL_ID_PARAM)
+        next.delete(SCHOOL_TAB_PARAM)
+        next.delete(INSTRUCTOR_ID_PARAM)
+        next.delete(INSTRUCTOR_TAB_PARAM)
+        next.delete(VOLUNTEER_ID_PARAM)
+        next.delete(VOLUNTEER_TAB_PARAM)
+      } else {
+        next.delete(PARTICIPANT_ID_PARAM)
+        next.delete(PARTICIPANT_TAB_PARAM)
       }
       if (programId) next.set('programId', programId)
       setSearchParams(next, { replace: id == null })
@@ -894,6 +947,16 @@ export function GeneralProgramDetailFullPageModal({
     [programId, searchParams, setSearchParams]
   )
 
+  const setParticipantTab = useCallback(
+    (tab: ParticipantDetailTabKey) => {
+      const next = new URLSearchParams(searchParams)
+      next.set(PARTICIPANT_TAB_PARAM, tab)
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: true })
+    },
+    [programId, searchParams, setSearchParams]
+  )
+
   const setLnbTab = useCallback(
     (lnb: GeneralDetailLnbKey, tab: string) => {
       const next = new URLSearchParams(searchParams)
@@ -906,16 +969,26 @@ export function GeneralProgramDetailFullPageModal({
       } else if (tab === 'progress_participants') {
         next.delete(INSTRUCTOR_ID_PARAM)
         next.delete(INSTRUCTOR_TAB_PARAM)
+        next.delete(VOLUNTEER_ID_PARAM)
+        next.delete(VOLUNTEER_TAB_PARAM)
+        if (displayProgram && isGeneralIndividualProgram(displayProgram)) {
+          next.delete(SCHOOL_ID_PARAM)
+          next.delete(SCHOOL_TAB_PARAM)
+        } else {
+          next.delete(PARTICIPANT_ID_PARAM)
+        }
       } else if (tab === 'progress_instructors') {
         next.delete(SCHOOL_ID_PARAM)
         next.delete(SCHOOL_TAB_PARAM)
         next.delete(VOLUNTEER_ID_PARAM)
         next.delete(VOLUNTEER_TAB_PARAM)
+        next.delete(PARTICIPANT_ID_PARAM)
       } else if (tab === 'progress_volunteers') {
         next.delete(SCHOOL_ID_PARAM)
         next.delete(SCHOOL_TAB_PARAM)
         next.delete(INSTRUCTOR_ID_PARAM)
         next.delete(INSTRUCTOR_TAB_PARAM)
+        next.delete(PARTICIPANT_ID_PARAM)
       } else {
         next.delete(SCHOOL_ID_PARAM)
         next.delete(SCHOOL_TAB_PARAM)
@@ -923,16 +996,18 @@ export function GeneralProgramDetailFullPageModal({
         next.delete(INSTRUCTOR_TAB_PARAM)
         next.delete(VOLUNTEER_ID_PARAM)
         next.delete(VOLUNTEER_TAB_PARAM)
+        next.delete(PARTICIPANT_ID_PARAM)
       }
 
       setSearchParams(next, { replace: true })
     },
-    [programId, searchParams, setSearchParams]
+    [displayProgram, programId, searchParams, setSearchParams]
   )
 
   const [schoolDetailTitle, setSchoolDetailTitle] = useState<string | null>(null)
   const [instructorDetailTitle, setInstructorDetailTitle] = useState<string | null>(null)
   const [volunteerDetailTitle, setVolunteerDetailTitle] = useState<string | null>(null)
+  const [participantDetailTitle, setParticipantDetailTitle] = useState<string | null>(null)
 
   useEffect(() => {
     if (!schoolIdFromUrl) setSchoolDetailTitle(null)
@@ -945,6 +1020,10 @@ export function GeneralProgramDetailFullPageModal({
   useEffect(() => {
     if (!volunteerIdFromUrl) setVolunteerDetailTitle(null)
   }, [volunteerIdFromUrl])
+
+  useEffect(() => {
+    if (!participantIdFromUrl) setParticipantDetailTitle(null)
+  }, [participantIdFromUrl])
 
   useEffect(() => {
     if (!open || !schoolIdFromUrl) return
@@ -980,6 +1059,17 @@ export function GeneralProgramDetailFullPageModal({
   }, [open, volunteerIdFromUrl, searchParams, setSearchParams, programId])
 
   useEffect(() => {
+    if (!open || !participantIdFromUrl) return
+    const raw = searchParams.get(PARTICIPANT_TAB_PARAM)
+    const normalized = parseParticipantTabFromSearch(searchParams)
+    if (raw === normalized) return
+    const next = new URLSearchParams(searchParams)
+    next.set(PARTICIPANT_TAB_PARAM, normalized)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, participantIdFromUrl, searchParams, setSearchParams, programId])
+
+  useEffect(() => {
     if (!open || !instructorIdFromUrl) return
     if (activeLnb === 'progress' && activeTab === 'progress_instructors') return
     const next = new URLSearchParams(searchParams)
@@ -999,6 +1089,16 @@ export function GeneralProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }, [open, activeLnb, activeTab, volunteerIdFromUrl, programId, searchParams, setSearchParams])
 
+  useEffect(() => {
+    if (!open || !participantIdFromUrl) return
+    if (activeLnb === 'progress' && activeTab === 'progress_participants') return
+    const next = new URLSearchParams(searchParams)
+    next.delete(PARTICIPANT_ID_PARAM)
+    next.delete(PARTICIPANT_TAB_PARAM)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }, [open, activeLnb, activeTab, participantIdFromUrl, programId, searchParams, setSearchParams])
+
   const handleModalClose = useCallback(() => {
     if (activeLnb === 'progress' && schoolIdFromUrl) {
       setSchoolId(null)
@@ -1012,6 +1112,10 @@ export function GeneralProgramDetailFullPageModal({
       setVolunteerId(null)
       return
     }
+    if (activeLnb === 'progress' && participantIdFromUrl) {
+      setParticipantId(null)
+      return
+    }
     if (
       (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications') &&
       applicantCloseHandlerRef.current?.()
@@ -1022,7 +1126,7 @@ export function GeneralProgramDetailFullPageModal({
       return
     }
     onClose()
-  }, [activeLnb, schoolIdFromUrl, instructorIdFromUrl, volunteerIdFromUrl, setSchoolId, setInstructorId, setVolunteerId, onClose])
+  }, [activeLnb, schoolIdFromUrl, instructorIdFromUrl, volunteerIdFromUrl, participantIdFromUrl, setSchoolId, setInstructorId, setVolunteerId, setParticipantId, onClose])
 
   const progressNestedDetailLabel =
     activeLnb === 'progress' && schoolIdFromUrl && schoolDetailTitle
@@ -1031,7 +1135,9 @@ export function GeneralProgramDetailFullPageModal({
         ? instructorDetailTitle
         : activeLnb === 'progress' && volunteerIdFromUrl && volunteerDetailTitle
           ? volunteerDetailTitle
-          : null
+          : activeLnb === 'progress' && participantIdFromUrl && participantDetailTitle
+            ? participantDetailTitle
+            : null
 
   const headerBreadcrumbItems = (() => {
     const listParams = buildSearchParams(searchParams, {
@@ -1109,9 +1215,9 @@ export function GeneralProgramDetailFullPageModal({
       )
     } else if (
       activeLnb === 'progress' &&
-      schoolIdFromUrl &&
       activeTab === 'progress_participants' &&
-      !isIndividualProgram
+      ((schoolIdFromUrl && !isIndividualProgram) ||
+        (participantIdFromUrl && isIndividualProgram))
     ) {
       items.push(
         childParams && hasProgressNestedDetail
@@ -1155,7 +1261,9 @@ export function GeneralProgramDetailFullPageModal({
         ? `참여 강사 상세 (${instructorDetailTitle})`
         : activeLnb === 'progress' && volunteerIdFromUrl && volunteerDetailTitle
           ? `참여 봉사자 상세 (${volunteerDetailTitle})`
-          : progressNestedDetailLabel && displayProgram
+          : activeLnb === 'progress' && participantIdFromUrl && participantDetailTitle
+            ? `참여자 상세 (${participantDetailTitle})`
+            : progressNestedDetailLabel && displayProgram
             ? `${resolveGeneralProgramDisplayTitle(displayProgram)}_${progressNestedDetailLabel}`
             : displayProgram
               ? resolveGeneralProgramDisplayTitle(displayProgram)
@@ -1176,6 +1284,7 @@ export function GeneralProgramDetailFullPageModal({
           schoolIdFromUrl ||
           instructorIdFromUrl ||
           volunteerIdFromUrl ||
+          participantIdFromUrl ||
           (volunteerApplicantDetailMeta != null &&
             isGeneralVolunteerApplicantDetailRoute(activeLnb, activeTab))
             ? '목록으로'
@@ -1280,9 +1389,16 @@ export function GeneralProgramDetailFullPageModal({
             ) : activeLnb === 'progress' && activeTab === 'progress_participants' ? (
               <div className="program-detail-fullpage-modal__info-tab">
                 {isIndividualProgram ? (
-                  <div
-                    className="general-detail-fullpage-modal__main"
-                    aria-label="참여자"
+                  <ParticipatingParticipantsSection
+                    programId={displayProgram.id}
+                    program={displayProgram}
+                    participantIdFromUrl={participantIdFromUrl}
+                    participantTabFromUrl={activeParticipantTab}
+                    onParticipantTabChange={setParticipantTab}
+                    onParticipantRowClick={row => setParticipantId(row.id)}
+                    onClearParticipantId={() => setParticipantId(null)}
+                    onParticipantDetailOpen={name => setParticipantDetailTitle(name)}
+                    onParticipantDetailClose={() => setParticipantDetailTitle(null)}
                   />
                 ) : (
                   <ParticipatingInstitutionsSection
@@ -1302,17 +1418,23 @@ export function GeneralProgramDetailFullPageModal({
               <div
                 className="program-detail-fullpage-modal__info-tab general-detail-fullpage-modal__main"
                 aria-label="출석 관리"
-              />
+              >
+                <ParticipatingIndividualProgressAttendanceSection program={displayProgram} />
+              </div>
             ) : activeLnb === 'progress' && activeTab === 'progress_assignments' ? (
               <div
                 className="program-detail-fullpage-modal__info-tab general-detail-fullpage-modal__main"
                 aria-label="과제 관리"
-              />
+              >
+                <ParticipatingIndividualProgressAssignmentSection program={displayProgram} />
+              </div>
             ) : activeLnb === 'progress' && activeTab === 'progress_posts' ? (
               <div
                 className="program-detail-fullpage-modal__info-tab general-detail-fullpage-modal__main"
                 aria-label="게시글"
-              />
+              >
+                <ProgramProgressPostsSection program={displayProgram} />
+              </div>
             ) : activeLnb === 'progress' && activeTab === 'progress_instructors' ? (
               <div className="program-detail-fullpage-modal__info-tab">
                 <ParticipatingInstructorsSection
