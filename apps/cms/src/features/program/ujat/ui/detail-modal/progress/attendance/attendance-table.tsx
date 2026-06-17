@@ -6,25 +6,21 @@ import {
   maskAttendanceContact,
   maskAttendanceEmail,
 } from './attendance-display'
+import { ProgramAttendanceStatusText } from '@/features/program/shared/ui/program-attendance-status-text'
 import {
   UJAT_ATTENDANCE_STATUS_LABEL,
   type UjatAttendanceStatus,
   type UjatAttendanceVolunteerRow,
 } from './types'
-import '../volunteers/detail/assignment.css'
 import './section.css'
 
 function AttendanceStatusBadge({ status }: { status: UjatAttendanceStatus }) {
   const label = UJAT_ATTENDANCE_STATUS_LABEL[status]
   if (status === 'late' || status === 'absent') {
-    return (
-      <span className="ujat-volunteer-assignment-table__attendance-late">{label}</span>
-    )
+    return <ProgramAttendanceStatusText kind={status} label={label} />
   }
   if (status === 'excused_absence') {
-    return (
-      <span className="ujat-volunteer-assignment-table__attendance-excused">{label}</span>
-    )
+    return <ProgramAttendanceStatusText kind="excused_absence" label={label} />
   }
   return <span>{label}</span>
 }

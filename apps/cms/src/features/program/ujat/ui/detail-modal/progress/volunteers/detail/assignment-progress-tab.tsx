@@ -13,10 +13,12 @@ import { getUjatVolunteerAssignmentProgressBundle } from './assignment-mock'
 import { UjatEducationProgressVolunteerAssignmentAttendanceInfo } from './assignment-attendance-info'
 import { UjatEducationProgressVolunteerAssignmentTable } from './assignment-table'
 import { UjatVolunteerAssignmentAssignModal } from './assign-modal'
+import { ProgramAttendanceCorrectionModal } from '@/features/program/shared/ui/attendance-correction-modal'
+import type { ProgramAttendanceCorrectionConfirmPayload } from '@/features/program/shared/lib/attendance-correction-types'
 import {
-  UjatVolunteerAttendanceCorrectionModal,
-  type AttendanceCorrectionConfirmPayload,
-} from './attendance-correction-modal'
+  UJAT_ATTENDANCE_STATUS_LABEL,
+  UJAT_ATTENDANCE_STATUS_ORDER,
+} from '../../attendance/types'
 import {
   applyVolunteerAssignmentConfirm,
   formatScheduleShortDateLabel,
@@ -250,8 +252,17 @@ export const UjatEducationProgressVolunteerAssignmentProgressTab = forwardRef<
     [assignModalData, assignTargetRow, showAlert]
   )
 
+  const ujatAttendanceCorrectionStatusOptions = useMemo(
+    () =>
+      UJAT_ATTENDANCE_STATUS_ORDER.map(value => ({
+        value: value === 'absent' ? ('absence' as const) : value,
+        label: UJAT_ATTENDANCE_STATUS_LABEL[value],
+      })),
+    []
+  )
+
   const handleAttendanceCorrectionConfirm = useCallback(
-    (payload: AttendanceCorrectionConfirmPayload) => {
+    (payload: ProgramAttendanceCorrectionConfirmPayload) => {
       if (!attendanceCorrectionTargetRow) return
 
       setRows(prev =>
@@ -357,13 +368,14 @@ export const UjatEducationProgressVolunteerAssignmentProgressTab = forwardRef<
       ) : null}
 
       {attendanceCorrectionTargetRow ? (
-        <UjatVolunteerAttendanceCorrectionModal
+        <ProgramAttendanceCorrectionModal
           open={attendanceCorrectionModalOpen}
-          volunteerName={volunteerName}
+          subjectName={volunteerName}
           scheduleDateLabel={formatScheduleShortDateLabel(
             attendanceCorrectionTargetRow.scheduleLabel
           )}
           initialAttendance={attendanceCorrectionTargetRow.attendance}
+          statusOptions={ujatAttendanceCorrectionStatusOptions}
           onCancel={() => {
             setAttendanceCorrectionModalOpen(false)
             setAttendanceCorrectionTargetRowId(null)

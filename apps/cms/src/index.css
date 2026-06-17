@@ -3,6 +3,7 @@
 @import './shared/ui/ant-table-rows.css';
 @import './shared/ui/cms-data-table.css';
 @import './shared/ui/ant-table-selection-checkbox.css';
+@import './features/program/shared/ui/program-attendance-detail.css';
 
 /* 토큰 정의는 theme-provider.css에서 로드됨 (ThemeProvider import) */
 :root {
