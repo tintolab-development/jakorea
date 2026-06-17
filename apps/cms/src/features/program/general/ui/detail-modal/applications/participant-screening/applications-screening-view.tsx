@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import type { Program } from '@/types/domain'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
-import { buildGeneralParticipantDoc1FilterRows } from '@/features/program/general/lib/participant-doc-screening-filter-fields'
 import { ApplicantList } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-list'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { GeneralParticipantApplicationsView } from '../participant-applications-view'
@@ -34,8 +33,6 @@ function resolveParticipantScreenTab(
   if (activeTab === 'part_doc_passed' || activeTab === 'part_interview2') return activeTab
   return 'part_doc1'
 }
-
-const PARTICIPANT_DOC1_FILTER_FIELDS = buildGeneralParticipantDoc1FilterRows()[0] ?? []
 
 /**
  * 참여자 신청 목록 — LNB 면접 2depth(tab)와 본문 라우팅 shell.
@@ -118,7 +115,6 @@ export function GeneralParticipantApplicationsScreeningView({
         program={program}
         programId={program.id}
         listTitle={doc1ListTitle}
-        filterFields={PARTICIPANT_DOC1_FILTER_FIELDS}
         detailVariant="general"
         individualScreeningStage="doc1"
         onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}

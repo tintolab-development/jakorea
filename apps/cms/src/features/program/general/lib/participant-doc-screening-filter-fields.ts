@@ -1,3 +1,4 @@
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 import {
@@ -9,7 +10,7 @@ import {
 } from './volunteer-screening-constants'
 import { GENERAL_VOLUNTEER_FILTER_ALL } from './volunteer-doc-screening-filter-fields'
 
-const FILTER_WIDTH = 260
+const FILTER_WIDTH = FILTER_CONTROL_MAX_WIDTH_PX
 const selectStyle = { width: FILTER_WIDTH } as const
 
 const GRADE_OPTIONS = [

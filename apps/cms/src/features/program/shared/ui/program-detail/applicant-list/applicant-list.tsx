@@ -2,6 +2,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
 import {
   updateApplicantSchoolApprovalStatus,
@@ -51,7 +52,7 @@ import {
   ParticipantCancelRejectCompleteModal,
 } from '@/features/program/shared/ui/detail-modal/components/participant-application-flow-modals'
 import type { Program } from '@/types/domain'
-import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { buildGeneralParticipantDoc1FilterRows } from '@/features/program/general/lib/participant-doc-screening-filter-fields'
 import { ApplicantCalendarView } from './applicant-calendar-view'
 import { mapApplicantDataToCalendarEvents } from './applicant-calendar-events'
 import { ApplicantsDetailContents, type ApplicantType } from './applicants-detail-contents'
@@ -350,6 +351,10 @@ export function ApplicantList({
   /** 1차 서류 심사 탭 — 리스트뷰만 (봉사자 doc1과 동일) */
   const isIndividualDoc1Screening =
     menu === 'individual-applications' && individualScreeningStage === 'doc1'
+  const individualDoc1FilterRows = useMemo(
+    () => (isIndividualDoc1Screening ? buildGeneralParticipantDoc1FilterRows() : undefined),
+    [isIndividualDoc1Screening]
+  )
   const displayViewMode = isIndividualDoc1Screening ? 'table' : viewMode
   const showIndividualCalendarToggle = !isIndividualDoc1Screening
 
@@ -1508,10 +1513,16 @@ export function ApplicantList({
               ? `applicant-filter-${viewMode}`
               : 'applicant-filter'
           }
-          className="applicant-details__filter-table-layout"
+          className={
+            isIndividualDoc1Screening
+              ? 'applicant-details__filter-table-layout general-participant-doc1-screening__filter-layout'
+              : 'applicant-details__filter-table-layout'
+          }
           bordered={false}
           contentVariant={displayViewMode === 'calendar' ? 'calendar' : 'table'}
-          fields={fields}
+          fields={isIndividualDoc1Screening ? undefined : fields}
+          rows={individualDoc1FilterRows}
+          filterResponsiveWrap={isIndividualDoc1Screening ? false : undefined}
           filters={pendingFilters}
           onFilterChange={handleFilterChange}
           onSearch={handleSearch}
