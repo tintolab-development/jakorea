@@ -30,13 +30,11 @@ export function RegisterCompletePage() {
 
   const loginPath = buildLoginPath(params.redirect)
   const socialConnectPath = buildSocialConnectPath(params.redirect)
-  const mypageLoginPath = `/login?redirect=${encodeURIComponent('/mypage/profile')}`
 
   return (
     <AuthPageShell cardClassName="auth-card--register-complete">
       <RegisterCompleteView
         onGoLogin={() => navigate(loginPath, { replace: true })}
-        onGoMypage={() => navigate(mypageLoginPath, { replace: true })}
         onConnectSocial={() => navigate(socialConnectPath, { replace: true })}
       />
     </AuthPageShell>
