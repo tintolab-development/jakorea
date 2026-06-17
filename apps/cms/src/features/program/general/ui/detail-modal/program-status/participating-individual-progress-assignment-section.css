@@ -1,0 +1,59 @@
+.participating-individual-progress-assignment-section
+  .school-detail-attendance-session__table-wrap
+  .participating-individual-progress-assignment-table
+  table.ant-table {
+  table-layout: fixed !important;
+  width: max-content !important;
+  min-width: 100%;
+}
+
+.participating-individual-progress-assignment-table .ant-table-tbody > tr:hover > td {
+  background: color-mix(in srgb, var(--color-mint-01, #01a1af) 6%, #fff) !important;
+}
+
+.participating-individual-progress-assignment-table__not-submitted {
+  color: var(--color-red, #c32f4a);
+  font-weight: 500;
+}
+
+.participating-individual-progress-assignment-table__scheduled {
+  color: var(--color-green, #1e8c29);
+  font-weight: 500;
+}
+
+.participating-individual-progress-assignment-table__submission-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.participating-individual-progress-assignment-table__submission-link {
+  display: inline-block;
+  box-sizing: border-box;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+  color: #0070e7;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: none;
+}
+
+.participating-individual-progress-assignment-table__submission-link:hover {
+  color: #005bb5;
+}
