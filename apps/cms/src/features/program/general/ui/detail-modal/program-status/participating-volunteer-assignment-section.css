@@ -16,10 +16,13 @@
   background: #fff;
 }
 
+/* cms-data-table 외곽 보더(.ant-table-container)와 래퍼 보더 중복 방지 */
 .participating-volunteer-assignment-section
   .participating-volunteer-assignment-section__table-scroll:has(.cms-data-table)
-  .cms-data-table {
+  .cms-data-table
+  .ant-table-container {
   border: none;
+  border-radius: 0;
 }
 
 .participating-volunteer-assignment-section

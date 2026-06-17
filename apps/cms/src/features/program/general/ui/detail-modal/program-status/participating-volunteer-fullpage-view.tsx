@@ -20,6 +20,8 @@ import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/acti
 import { ParticipatingVolunteerApplicationInfo } from './participating-volunteer-application-info'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from './participating-volunteer-activity-certificate-preview-modal'
 import { ParticipatingVolunteerAssignmentSection } from './participating-volunteer-assignment-section'
+import { ParticipatingIndividualVolunteerAssignmentSection } from './participating-individual-volunteer-assignment-section'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import './school-detail-fullpage-view.css'
 import './participating-volunteer-fullpage-view.css'
 
@@ -239,7 +241,14 @@ export function ParticipatingVolunteerFullpageView({
           </div>
         ) : (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
-            <ParticipatingVolunteerAssignmentSection program={program} volunteer={mergedVolunteer} />
+            {isGeneralIndividualProgram(program) ? (
+              <ParticipatingIndividualVolunteerAssignmentSection
+                program={program}
+                volunteer={mergedVolunteer}
+              />
+            ) : (
+              <ParticipatingVolunteerAssignmentSection program={program} volunteer={mergedVolunteer} />
+            )}
           </div>
         )}
       </div>
