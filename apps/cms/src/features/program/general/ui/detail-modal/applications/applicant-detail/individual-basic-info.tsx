@@ -31,6 +31,11 @@ import {
   type IndividualApplicantScreeningStage,
 } from '@/features/program/general/lib/individual-application-visibility'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
+import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
+import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
+import { getProgramProgressDisplayStatus } from '@/shared/constants/status'
+import { ParticipatingProgressScheduleRow } from '@/features/program/general/ui/detail-modal/program-status/participating-progress-schedule-row'
+import '@/features/program/general/ui/detail-modal/program-status/participating-institution-application-info.css'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { formatInstitutionApplicationScheduleRowLabel } from '@/features/program/general/lib/institution-application-session-display'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
@@ -56,6 +61,8 @@ export interface ApplicantGeneralIndividualBasicInfoProps {
   program?: Program | null
   maskSensitive?: boolean
   mode?: 'view' | 'edit'
+  /** application: 신청 상세, progress: 프로그램 진행 현황 > 참여자 상세 */
+  detailContext?: 'application' | 'progress'
   draft?: ApplicantIndividualEditDraft
   onDraftChange?: (partial: Partial<ApplicantIndividualEditDraft>) => void
   validationErrors?: Record<string, string>
@@ -139,11 +146,7 @@ function IndividualApplicantScreeningBasicInfo({
     : '-'
 
   const id1365Raw = detail?.id1365?.trim()
-  const id1365Display = id1365Raw
-    ? shouldMask
-      ? maskId1365(id1365Raw)
-      : id1365Raw
-    : '-'
+  const id1365Display = id1365Raw ? (shouldMask ? maskId1365(id1365Raw) : id1365Raw) : '-'
 
   return (
     <section className="general-volunteer-applicant-basic-info">
@@ -439,6 +442,7 @@ export function ApplicantGeneralIndividualBasicInfo({
   program = null,
   maskSensitive = true,
   mode = 'view',
+  detailContext = 'application',
   draft,
   onDraftChange,
   validationErrors,
@@ -455,14 +459,20 @@ export function ApplicantGeneralIndividualBasicInfo({
   onManagerBEvaluationChange,
 }: ApplicantGeneralIndividualBasicInfoProps) {
   const detail = applicant.detail
+  const isProgressContext = detailContext === 'progress'
   const shouldMask = maskSensitive && applicant.approvalStatus !== 'approved'
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
-  const showAdminComment = applicant.approvalStatus === 'approved'
+  const showAdminComment = isProgressContext || applicant.approvalStatus === 'approved'
   const showTextbookField =
-    screeningStage === 'main' && individualApplicantUsesTextbook(program)
+    screeningStage === 'main' &&
+    applicant.approvalStatus === 'approved' &&
+    individualApplicantUsesTextbook(program)
 
   const showTeamSection = shouldShowIndividualApplicantTeamSection(program, detail)
-  const showManagerEvaluation = shouldShowIndividualManagerEvaluationSection(program, screeningStage)
+  const showManagerEvaluation = shouldShowIndividualManagerEvaluationSection(
+    program,
+    screeningStage
+  )
   const showInterviewAvailability = shouldShowIndividualInterviewAvailabilitySection(
     program,
     screeningStage
@@ -472,7 +482,10 @@ export function ApplicantGeneralIndividualBasicInfo({
     screeningStage
   )
   const showPreferredScheduleSection =
-    screeningStage === 'main' && shouldShowIndividualApplicantPreferredScheduleSection(program)
+    !isProgressContext &&
+    screeningStage === 'main' &&
+    shouldShowIndividualApplicantPreferredScheduleSection(program)
+  const showProgressScheduleSection = isProgressContext && program != null
   const institutionApplicationBridge = program
     ? resolveInstitutionApplicationProgramBridge(program)
     : null
@@ -532,32 +545,22 @@ export function ApplicantGeneralIndividualBasicInfo({
   )
 
   const id1365Raw = detail?.id1365?.trim()
-  const id1365Display = id1365Raw
-    ? shouldMask
-      ? maskId1365(id1365Raw)
-      : id1365Raw
-    : '-'
+  const id1365Display = id1365Raw ? (shouldMask ? maskId1365(id1365Raw) : id1365Raw) : '-'
   const id1365Cell =
-    !shouldMask && id1365Raw ? (
-      <IndividualApplicantId1365Cell id1365={id1365Raw} />
-    ) : (
-      id1365Display
-    )
+    !shouldMask && id1365Raw ? <IndividualApplicantId1365Cell id1365={id1365Raw} /> : id1365Display
 
   const textbookDisplay = resolveIndividualApplicantTextbookDisplay(program, applicant)
   const textbookViewValue =
-    textbookDisplay.isUndecided || !textbookDisplay.name ? (
+    textbookDisplay.isUndecided ||
+    textbookDisplay.name === '해당 없음' ||
+    !textbookDisplay.name ? (
       textbookDisplay.name
     ) : (
       <ProgramDetailTdSegmentWrap>
         {withProgramDetailTdDivider([
           textbookDisplay.name,
           textbookDisplay.kitsLabel,
-          textbookDisplay.status ? (
-            <TextbookStatusBadge status={textbookDisplay.status} />
-          ) : (
-            '-'
-          ),
+          textbookDisplay.status ? <TextbookStatusBadge status={textbookDisplay.status} /> : '-',
         ])}
       </ProgramDetailTdSegmentWrap>
     )
@@ -592,40 +595,56 @@ export function ApplicantGeneralIndividualBasicInfo({
       textbookViewValue
     )
 
-  const teamNameValue =
+  const teamNameAndMemberEditCell =
     isEditMode && draft && onDraftChange ? (
-      <CmsInput
-        inputSize="large"
-        width="100%"
-        value={draft.teamName}
-        onChange={event => onDraftChange({ teamName: event.target.value })}
-      />
-    ) : (
-      detail?.teamName?.trim() || '-'
-    )
-
-  const teamMemberCountValue =
-    isEditMode && draft && onDraftChange ? (
-      <CmsSelect
-        inputSize="large"
-        width="100%"
-        value={draft.teamMemberCountSelect}
-        options={TEAM_MEMBER_COUNT_OPTIONS.map(option => ({
-          label: option.label,
-          value: option.value,
-        }))}
-        onChange={value => {
-          const select = String(value ?? '1') as ApplicantIndividualEditDraft['teamMemberCountSelect']
-          const parsed = select === 'custom' ? draft.teamMemberCount : Number(select)
-          onDraftChange({
-            teamMemberCountSelect: select,
-            teamMemberCount: Number.isFinite(parsed) ? parsed : 1,
-          })
-        }}
-      />
-    ) : (
-      formatTeamMemberCountDisplay(detail, draft ?? undefined)
-    )
+      <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
+        <CmsInput
+          inputSize="large"
+          width="100%"
+          style={{ flex: '1 1 0', minWidth: 0 }}
+          value={draft.teamName}
+          onChange={event => onDraftChange({ teamName: event.target.value })}
+        />
+        <DetailInfoForm.InputsSeparator />
+        <CmsSelect
+          inputSize="large"
+          width={140}
+          value={draft.teamMemberCountSelect}
+          options={TEAM_MEMBER_COUNT_OPTIONS.map(option => ({
+            label: option.label,
+            value: option.value,
+          }))}
+          onChange={value => {
+            const select = String(
+              value ?? '1'
+            ) as ApplicantIndividualEditDraft['teamMemberCountSelect']
+            const parsed = select === 'custom' ? draft.teamMemberCount : Number(select)
+            onDraftChange({
+              teamMemberCountSelect: select,
+              teamMemberCount: Number.isFinite(parsed) ? parsed : 1,
+            })
+          }}
+        />
+        {draft.teamMemberCountSelect === 'custom' ? (
+          <>
+            <DetailInfoForm.InputsSeparator />
+            <CmsInput
+              inputSize="large"
+              type="number"
+              width="100%"
+              style={{ flex: '1 1 160px', minWidth: 140 }}
+              value={String(draft.teamMemberCount)}
+              onChange={event => {
+                const parsed = Number(event.target.value)
+                onDraftChange({
+                  teamMemberCount: Number.isFinite(parsed) && parsed > 0 ? parsed : 1,
+                })
+              }}
+            />
+          </>
+        ) : null}
+      </div>
+    ) : null
 
   const colgroup = (
     <colgroup>
@@ -667,11 +686,7 @@ export function ApplicantGeneralIndividualBasicInfo({
               label="팀 명 및 인원"
               value={
                 isEditMode ? (
-                  <ProgramDetailTdSegmentWrap>
-                    {teamNameValue}
-                    <DetailInfoForm.InputsSeparator />
-                    {teamMemberCountValue}
-                  </ProgramDetailTdSegmentWrap>
+                  teamNameAndMemberEditCell
                 ) : (
                   <ProgramDetailTdSegmentWrap>
                     {withProgramDetailTdDivider([
@@ -733,6 +748,45 @@ export function ApplicantGeneralIndividualBasicInfo({
     </section>
   ) : null
 
+  const progressScheduleSection =
+    showProgressScheduleSection && program ? (
+      <section className="applicant-institution-basic-info__section">
+        <h3 className="applicant-institution-basic-info__title">교육 진행 일정</h3>
+        <div className="applicant-institution-basic-info__table-wrap">
+          <table className="applicant-institution-basic-info__table">
+            {scheduleColgroup}
+            <tbody>
+              {sessions.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={2}
+                    className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value"
+                  >
+                    등록된 교육 일정이 없습니다.
+                  </td>
+                </tr>
+              ) : (
+                sessions.map((session, index) => (
+                  <ParticipatingProgressScheduleRow
+                    key={`${session.round}-${session.date}-${index}`}
+                    rowLabel={resolveParticipatingInstitutionScheduleRowLabel(program, session)}
+                    session={session}
+                  />
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    ) : null
+
+  const programProgressStatusCell =
+    program != null ? (
+      <ProgramEnrollmentStatusText status={getProgramProgressDisplayStatus(program)} />
+    ) : (
+      '-'
+    )
+
   const isScreeningStage = screeningStage !== 'main'
 
   if (isScreeningStage) {
@@ -767,9 +821,7 @@ export function ApplicantGeneralIndividualBasicInfo({
           <IndividualApplicantInterviewEvaluationSection applicant={applicant} />
         ) : null}
 
-        <IndividualApplicantScreeningSelfIntroSection
-          selfIntroduction={detail?.selfIntroduction}
-        />
+        <IndividualApplicantScreeningSelfIntroSection selfIntroduction={detail?.selfIntroduction} />
 
         {showTeamSection ? (
           <IndividualApplicantScreeningTeamSection applicant={applicant} detail={detail} />
@@ -813,12 +865,16 @@ export function ApplicantGeneralIndividualBasicInfo({
               {colgroup}
               <tbody>
                 <TableRowFullWidth
-                  label="프로그램 승인 현황"
+                  label={isProgressContext ? '프로그램 진행 현황' : '프로그램 승인 현황'}
                   value={
-                    <ProgramApprovalStatusValue
-                      applicant={applicant}
-                      onResendNotificationClick={onResendNotificationClick}
-                    />
+                    isProgressContext ? (
+                      programProgressStatusCell
+                    ) : (
+                      <ProgramApprovalStatusValue
+                        applicant={applicant}
+                        onResendNotificationClick={onResendNotificationClick}
+                      />
+                    )
                   }
                 />
                 {showTextbookField ? (
@@ -835,7 +891,9 @@ export function ApplicantGeneralIndividualBasicInfo({
                   label1="성명"
                   value1={nameCell}
                   label2="성별 및 생년월일"
-                  value2={<ProgramDetailTdSegmentWrap>{genderBirthDisplay}</ProgramDetailTdSegmentWrap>}
+                  value2={
+                    <ProgramDetailTdSegmentWrap>{genderBirthDisplay}</ProgramDetailTdSegmentWrap>
+                  }
                 />
                 <TableRowTwoCols
                   label1="학교 재학 여부"
@@ -864,6 +922,7 @@ export function ApplicantGeneralIndividualBasicInfo({
       {selfIntroSection}
       {teamSection}
       {preferredScheduleSection}
+      {progressScheduleSection}
     </div>
   )
 }

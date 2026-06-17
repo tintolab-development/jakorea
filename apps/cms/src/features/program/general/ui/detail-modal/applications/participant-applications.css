@@ -238,3 +238,35 @@
 .applicant-schedule-item-title-row .applicant-schedule-item-approval {
   flex-shrink: 0;
 }
+
+/* 개인 1차 서류 심사 — 봉사자 doc1과 동일 5열 그리드(240px·gap 12px) */
+.participant-applications
+  .general-participant-doc1-screening__filter-layout.filter-table-layout
+  .table-filter-group__fields-rows
+  > .table-filter-group__fields-row-with-action {
+  display: grid !important;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 12px;
+  align-items: end;
+  grid-template-columns:
+    repeat(5, minmax(0, var(--application-filter-column-width, 240px))) minmax(0, 1fr) 160px !important;
+}
+
+.participant-applications
+  .general-participant-doc1-screening__filter-layout.filter-table-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-grid-row {
+  display: contents;
+}
+
+.participant-applications
+  .general-participant-doc1-screening__filter-layout.filter-table-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-shell--inline {
+  grid-column: 7;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  justify-self: end;
+}
