@@ -3,6 +3,12 @@ import { useState } from 'react'
 
 import type { SocialProvider } from '@/entities/user/api/auth-service'
 import { buildOAuthAuthorizeUrl } from '@/features/auth/lib/oauth-client'
+import {
+  addConnectedProvider,
+  getConnectedProviders,
+  removeConnectedProvider,
+  setRegisterSocialLinkIntent,
+} from '@/features/auth/lib/register-social-connect-state'
 import { CmsButton } from '@/shared/ui/cms-button'
 
 import { RegisterStepHeader } from './register-step-header'
@@ -17,26 +23,39 @@ const SOCIAL_CONNECT_DISPLAY_NAME: Record<SocialProvider, string> = {
 }
 
 interface RegisterSocialConnectViewProps {
+  redirectPath?: string
   onComplete: () => void
   onSkip: () => void
+  onConnectSuccess: (provider: SocialProvider) => void
 }
 
-export function RegisterSocialConnectView({ onComplete, onSkip }: RegisterSocialConnectViewProps) {
-  const [connectedProviders, setConnectedProviders] = useState<Set<SocialProvider>>(new Set())
+export function RegisterSocialConnectView({
+  redirectPath,
+  onComplete,
+  onSkip,
+  onConnectSuccess,
+}: RegisterSocialConnectViewProps) {
+  const [connectedProviders, setConnectedProviders] = useState<Set<SocialProvider>>(
+    () => getConnectedProviders()
+  )
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
 
   const handleConnect = (provider: SocialProvider) => {
     setLoadingProvider(provider)
     try {
+      setRegisterSocialLinkIntent(redirectPath)
       window.location.assign(buildOAuthAuthorizeUrl(provider))
     } catch (error: unknown) {
       console.debug('registerSocialConnectView connect failed', error)
+      addConnectedProvider(provider)
       setConnectedProviders(prev => new Set(prev).add(provider))
       setLoadingProvider(null)
+      onConnectSuccess(provider)
     }
   }
 
   const handleDisconnect = (provider: SocialProvider) => {
+    removeConnectedProvider(provider)
     setConnectedProviders(prev => {
       const next = new Set(prev)
       next.delete(provider)
@@ -81,8 +100,15 @@ export function RegisterSocialConnectView({ onComplete, onSkip }: RegisterSocial
                     {SOCIAL_CONNECT_DISPLAY_NAME[provider]}
                   </span>
                   <span className="register-social-connect__label-separator" aria-hidden>
-                    {' '}
-                    ·{' '}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="2"
+                      height="2"
+                      viewBox="0 0 2 2"
+                      fill="none"
+                    >
+                      <circle cx="1" cy="1" r="1" fill="#85969D" />
+                    </svg>
                   </span>
                   <span
                     className={
@@ -96,8 +122,8 @@ export function RegisterSocialConnectView({ onComplete, onSkip }: RegisterSocial
                 </p>
                 <CmsButton
                   variant="default"
-                  size="medium"
-                  className="register-social-connect__action-btn"
+                  size="small"
+                  className="register-social-connect__action-btn cms-button--no-label-ellipsis"
                   loading={isLoading}
                   disabled={loadingProvider !== null && !isLoading}
                   onClick={() => (isConnected ? handleDisconnect(provider) : handleConnect(provider))}
