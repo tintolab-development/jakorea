@@ -53,16 +53,46 @@ describe('general survey audience', () => {
     expect(getGeneralSatisfactionAudienceTabs(p).map(tab => tab.key)).toEqual(['teacher', 'student'])
   })
 
-  it('개인 프로그램은 단일 참여자 만족도로 구성한다', () => {
+  it('개인 프로그램은 참여자 단일 만족도 탭을 제공한다', () => {
     const p = program({
       category: 'individual',
       generalProgramAudience: 'individual',
       generalParticipantTypes: ['individual'],
+      generalSurveyMenuKeys: ['survey', 'student_satisfaction'],
     })
 
     expect(isGeneralIndividualProgram(p)).toBe(true)
     expect(getDefaultGeneralSatisfactionAudience(p)).toBe('individual')
     expect(getGeneralSatisfactionAudienceTabs(p).map(tab => tab.key)).toEqual(['individual'])
+    expect(getEnabledGeneralSatisfactionAudienceTabs(p).map(tab => tab.key)).toEqual(['individual'])
+  })
+
+  it('개인 프로그램(봉사자 포함)은 교사·상·하반기 봉사자 만족도 탭을 제공한다', () => {
+    const p = program({
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual', 'teacher_instructor', 'volunteer'],
+      generalSurveyMenuKeys: ['survey', 'student_satisfaction', 'teacher_satisfaction'],
+    })
+
+    expect(getEnabledGeneralSatisfactionAudienceTabs(p).map(tab => tab.key)).toEqual([
+      'teacher',
+      'volunteer_h1',
+      'volunteer_h2',
+    ])
+    expect(getDefaultGeneralSatisfactionAudience(p)).toBe('teacher')
+  })
+
+  it('개인 프로그램(봉사자만)은 상·하반기 봉사자 만족도 탭을 제공한다', () => {
+    const p = program({
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual', 'volunteer'],
+      generalSurveyMenuKeys: ['survey', 'student_satisfaction'],
+    })
+
+    expect(getEnabledGeneralSatisfactionAudienceTabs(p).map(tab => tab.key)).toEqual([
+      'volunteer_h1',
+      'volunteer_h2',
+    ])
   })
 
   it('대분류가 없으면 참여자 유형만으로 개인 프로그램을 추론한다', () => {

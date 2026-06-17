@@ -10,9 +10,8 @@ import type {
   SurveyPollRawResponse,
 } from '@/features/program/shared/lib/survey-management/survey-management-types'
 import {
-  getDefaultGeneralSatisfactionAudience,
+  getEnabledGeneralSatisfactionAudienceTabs,
   isGeneralIndividualProgram,
-  programHasVolunteerParticipant,
   type GeneralSatisfactionAudienceKey,
 } from '@/features/program/general/lib/survey-audience'
 
@@ -47,61 +46,72 @@ function buildSatisfactionSurveysByAudience(
   prefix: string,
   participantTotal: number
 ): Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>> {
-  const individual = isGeneralIndividualProgram(program)
-  const defaultAudience = getDefaultGeneralSatisfactionAudience(program)
+  const enabledTabs = getEnabledGeneralSatisfactionAudienceTabs(program)
+  const result: Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>> = {}
 
-  if (individual) {
-    return {
-      [defaultAudience]: buildSurvey(
-        `${prefix}-satisfaction-${defaultAudience}`,
-        '참여자 만족도조사',
-        'survey-student',
-        'before_start',
-        0,
-        participantTotal
-      ),
-    }
+  if (enabledTabs.length === 0) {
+    return result
   }
 
-  if (programHasVolunteerParticipant(program)) {
-    return {
-      teacher: buildSurvey(
+  for (const tab of enabledTabs) {
+    const audience = tab.key
+    if (audience === 'teacher') {
+      result.teacher = buildSurvey(
         `${prefix}-satisfaction-teacher`,
         '교사 만족도조사',
         'survey-teacher',
         'before_start',
         0,
         participantTotal
-      ),
-      volunteer_h1: buildSurvey(
+      )
+      continue
+    }
+    if (audience === 'individual') {
+      result.individual = buildSurvey(
+        `${prefix}-satisfaction-individual`,
+        '참여자 만족도조사',
+        'survey-student',
+        'before_start',
+        0,
+        participantTotal
+      )
+      continue
+    }
+    if (audience === 'student') {
+      result.student = buildSurvey(
+        `${prefix}-satisfaction-student`,
+        '학생 만족도조사',
+        'survey-student',
+        'before_start',
+        0,
+        participantTotal
+      )
+      continue
+    }
+    if (audience === 'volunteer_h1') {
+      result.volunteer_h1 = buildSurvey(
         `${prefix}-satisfaction-volunteer-h1`,
         '상반기 봉사자 만족도조사',
         'survey-student',
         'in_progress',
         8,
         participantTotal
-      ),
-      volunteer_h2: buildSurvey(
+      )
+      continue
+    }
+    if (audience === 'volunteer_h2') {
+      result.volunteer_h2 = buildSurvey(
         `${prefix}-satisfaction-volunteer-h2`,
         '하반기 봉사자 만족도조사',
         'survey-student',
         'before_start',
         0,
         participantTotal
-      ),
+      )
     }
   }
 
-  return {
-    teacher: buildSurvey(
-      `${prefix}-satisfaction-teacher`,
-      '교사 만족도조사',
-      'survey-teacher',
-      'before_start',
-      0,
-      participantTotal
-    ),
-  }
+  return result
 }
 
 export function buildGeneralSurveyMockState(program: Program): GeneralSurveyMockState {

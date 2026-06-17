@@ -102,13 +102,25 @@ export function getEnabledGeneralSatisfactionAudienceTabs(
   program: Program
 ): ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>> {
   const keys = normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys ?? [])
-  if (isGeneralIndividualProgram(program)) {
-    if (keys.includes('student_satisfaction') || keys.includes('teacher_satisfaction')) {
-      return GENERAL_INDIVIDUAL_SATISFACTION_AUDIENCE_TABS
-    }
-    return []
-  }
   const tabs: SurveyAudienceTab<GeneralSatisfactionAudienceKey>[] = []
+
+  if (isGeneralIndividualProgram(program)) {
+    if (!keys.includes('student_satisfaction') && !keys.includes('teacher_satisfaction')) {
+      return []
+    }
+    if (keys.includes('teacher_satisfaction')) {
+      tabs.push({ key: 'teacher', label: '교사' })
+    }
+    if (keys.includes('student_satisfaction')) {
+      if (programHasVolunteerParticipant(program)) {
+        tabs.push(...GENERAL_VOLUNTEER_SATISFACTION_AUDIENCE_TABS)
+      } else {
+        tabs.push({ key: 'individual', label: '참여자' })
+      }
+    }
+    return tabs
+  }
+
   if (keys.includes('teacher_satisfaction')) {
     tabs.push({ key: 'teacher', label: '교사' })
   }
@@ -146,6 +158,7 @@ export function resolveGeneralSatisfactionAudienceFromNavTab(
   }
   if (tab === 'student_satisfaction') {
     if (enabled.some(item => item.key === 'student')) return 'student'
+    if (enabled.some(item => item.key === 'individual')) return 'individual'
     if (enabled.some(item => item.key === 'volunteer_h1')) return 'volunteer_h1'
     if (enabled.some(item => item.key === 'volunteer_h2')) return 'volunteer_h2'
     return activeAudience
@@ -161,8 +174,27 @@ export function getGeneralSatisfactionEmptyCopy(
   program: Program
 ): SurveyEmptyCopy {
   if (isGeneralIndividualProgram(program)) {
+    if (audience === 'teacher') {
+      return {
+        title: GENERAL_SATISFACTION_EMPTY_COPY.title,
+        description: GENERAL_SATISFACTION_EMPTY_COPY.description,
+        secondaryDescription:
+          '기관별 개별 폼이 아닌 하나의 폼으로 진행되며, 등록 시 해당 프로그램 참여 교사에게 동일하게 노출됩니다. 수업 직후 바로 진행됩니다.',
+        registerButton: '만족도조사 등록',
+      }
+    }
+    if (audience === 'volunteer_h1' || audience === 'volunteer_h2') {
+      return {
+        ...GENERAL_SATISFACTION_EMPTY_COPY,
+        secondaryDescription:
+          '만족도조사 등록 시 해당 프로그램 참여 봉사자에게 동일하게 노출됩니다. 마지막 교육 일정 이후 진행됩니다.',
+        registerButton: '만족도조사 등록',
+      }
+    }
     return {
       ...GENERAL_SATISFACTION_EMPTY_COPY,
+      secondaryDescription:
+        '만족도조사 등록 시 해당 프로그램 참여자에게 동일하게 노출됩니다. 기관 구분 없이 하나의 폼으로 진행됩니다.',
       registerButton: '만족도조사 등록',
     }
   }
@@ -205,7 +237,10 @@ export function getGeneralSatisfactionCreateDescription(
     const label = GENERAL_SATISFACTION_AUDIENCE_LABELS[audience]
     return `${label}용 만족도조사를 등록하시겠습니까?\n등록 시 해당 프로그램 참여 봉사자에게 동일하게 노출되며, 마지막 교육 일정 이후 진행됩니다.`
   }
-  if (audience === 'student' || audience === 'individual') {
+  if (audience === 'individual') {
+    return '만족도조사를 등록하시겠습니까?\n등록 시 해당 프로그램 참여자에게 동일하게 노출되며, 기관 구분 없이 하나의 폼으로 진행됩니다.'
+  }
+  if (audience === 'student') {
     return '만족도조사를 등록하시겠습니까?\n등록 후 링크 공유하여 비회원(학생) 대상으로 진행할 수 있습니다.\n기관 구분 없이 하나의 폼으로 진행됩니다.'
   }
   return '만족도조사를 등록하시겠습니까?'
