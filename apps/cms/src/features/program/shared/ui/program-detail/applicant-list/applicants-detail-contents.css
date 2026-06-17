@@ -282,31 +282,6 @@
   word-break: break-word;
 }
 
-.instructor-resume-section--free-writing {
-  gap: 12px;
-}
-
-.instructor-resume-section-title--free-writing {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.instructor-resume-free-writing-card {
-  border: 1px solid #d4d4d4;
-  border-radius: 8px;
-  padding: 16px;
-  box-sizing: border-box;
-}
-
-.instructor-resume-free-writing-text {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
 .applicant-contents__tab-placeholder {
   margin: 0;
   font-size: 14px;

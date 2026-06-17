@@ -66,6 +66,13 @@
   background: #fff;
 }
 
+/* 신청 양식 수정 슬롯: 테이블 td 안에서 detail-info-form 한 줄 래퍼가 폭을 채우도록 */
+.applicant-institution-basic-info__cell--value
+  > .detail-info-form-inputs-wrapper-no-gap {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 .applicant-institution-basic-info__table {
   width: 100%;
   border-collapse: collapse;
