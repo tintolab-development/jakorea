@@ -1,0 +1,20 @@
+.program-progress-posts-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.program-progress-posts-section .enrollment-program-detail-modal__posts-tab {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+}
+
+.program-progress-posts-section
+  .enrollment-program-detail-modal__posts-tab-column--right {
+  height: auto;
+  align-self: stretch;
+}
