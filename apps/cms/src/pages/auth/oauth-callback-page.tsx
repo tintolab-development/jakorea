@@ -6,6 +6,14 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { exchangeOAuthCode } from '@/features/auth/api/oauth-exchange'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { validateOAuthState } from '@/features/auth/lib/oauth-client'
+import {
+  addConnectedProvider,
+  buildRegisterSocialConnectCompletePath,
+  buildRegisterSocialConnectFailedPath,
+  clearOAuthIntent,
+  getOAuthIntent,
+  getRegisterSocialRedirect,
+} from '@/features/auth/lib/register-social-connect-state'
 import { isSocialAccountNotLinkedError } from '@/features/auth/errors/social-account-not-linked-error'
 import { isSocialAccountAlreadyLinkedError } from '@/features/auth/errors/social-account-already-linked-error'
 import { handleError, unknownErrorText } from '@/shared/utils/error-handler'
@@ -28,17 +36,41 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
       const code = params.get('code')
       const state = params.get('state')
       const error = params.get('error')
+      const oauthIntent = getOAuthIntent()
+      const registerRedirect = getRegisterSocialRedirect()
 
       if (error) {
+        if (oauthIntent === 'register-social-link') {
+          clearOAuthIntent()
+          navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
+          return
+        }
         throw new Error(`${SOCIAL_PROVIDER_LABEL[provider]} 로그인 요청이 취소되었거나 실패했습니다.`)
       }
 
       if (!code) {
+        if (oauthIntent === 'register-social-link') {
+          clearOAuthIntent()
+          navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
+          return
+        }
         throw new Error('인가 코드가 없어 소셜 로그인을 진행할 수 없습니다.')
       }
 
       if (!validateOAuthState(provider, state)) {
+        if (oauthIntent === 'register-social-link') {
+          clearOAuthIntent()
+          navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
+          return
+        }
         throw new Error('OAuth state 검증에 실패했습니다. 다시 시도해주세요.')
+      }
+
+      if (oauthIntent === 'register-social-link') {
+        clearOAuthIntent()
+        addConnectedProvider(provider)
+        navigate(buildRegisterSocialConnectCompletePath(registerRedirect), { replace: true })
+        return
       }
 
       const response = await exchangeOAuthCode({
@@ -60,6 +92,15 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
     }
 
     void execute().catch((err: unknown) => {
+      const oauthIntent = getOAuthIntent()
+      const registerRedirect = getRegisterSocialRedirect()
+
+      if (oauthIntent === 'register-social-link') {
+        clearOAuthIntent()
+        navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
+        return
+      }
+
       if (isSocialAccountNotLinkedError(err)) {
         navigate('/login?socialNotLinked=1', { replace: true })
         return

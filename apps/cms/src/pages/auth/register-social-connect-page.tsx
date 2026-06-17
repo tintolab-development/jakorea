@@ -4,6 +4,7 @@
 
 import { useNavigate } from 'react-router-dom'
 
+import { buildRegisterSocialConnectCompletePath } from '@/features/auth/lib/register-social-connect-state'
 import { RegisterSocialConnectView } from '@/features/auth/ui/admin-register/register-social-connect-view'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
@@ -27,9 +28,18 @@ export function RegisterSocialConnectPage() {
     navigate(loginPath, { replace: true })
   }
 
+  const handleConnectSuccess = () => {
+    navigate(buildRegisterSocialConnectCompletePath(params.redirect), { replace: true })
+  }
+
   return (
-    <AuthPageShell cardClassName="auth-card--register-social-connect">
-      <RegisterSocialConnectView onComplete={handleFinish} onSkip={handleFinish} />
+    <AuthPageShell showLogo={false} cardClassName="auth-card--register-social-connect">
+      <RegisterSocialConnectView
+        redirectPath={params.redirect}
+        onComplete={handleFinish}
+        onSkip={handleFinish}
+        onConnectSuccess={handleConnectSuccess}
+      />
     </AuthPageShell>
   )
 }
