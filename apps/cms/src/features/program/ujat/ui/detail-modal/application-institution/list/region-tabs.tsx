@@ -1,6 +1,6 @@
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
-  UJAT_INSTITUTION_APPLICATION_REGIONS,
+  listUjatInstitutionApplicationRegions,
   type UjatInstitutionApplicationRegionKey,
 } from './regions'
 import './region-tabs.css'
@@ -13,14 +13,15 @@ export function UjatInstitutionApplicationRegionTabs({
   activeRegion: UjatInstitutionApplicationRegionKey
   onChange: (region: UjatInstitutionApplicationRegionKey) => void
 }) {
+  const regions = listUjatInstitutionApplicationRegions()
   return (
     <CmsTextTabs
       className="ujat-institution-application-region-tabs"
       activeKey={activeRegion}
       onChange={onChange}
       wrap
-      items={UJAT_INSTITUTION_APPLICATION_REGIONS.map(region => ({
-        key: region.key,
+      items={regions.map(region => ({
+        key: region.key as UjatInstitutionApplicationRegionKey,
         label: region.label,
       }))}
     />

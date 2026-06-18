@@ -360,11 +360,27 @@ const allMenuItems: MenuItemConfig[] = [
         allowedRoles: ['ADMIN'],
       },
       {
-        key: '/programs/ujat',
+        key: 'ujat-program-group',
         label: 'UJAT 프로그램',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],
+        children: [
+          {
+            key: '/programs/ujat',
+            label: '프로그램 관리',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+          {
+            key: '/programs/ujat/regions',
+            label: '교육 지역 관리',
+            icon: <DotIcon />,
+            enabled: true,
+            allowedRoles: ['ADMIN'],
+          },
+        ],
       },
       {
         key: 'gemini-program-group',
@@ -838,6 +854,7 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
   const programCategoryByPrefix: { prefix: string; menuKey: string }[] = [
     { prefix: '/programs/general', menuKey: '/programs/general' },
     { prefix: '/programs/company-school', menuKey: '/programs/company-school' },
+    { prefix: '/programs/ujat/regions', menuKey: '/programs/ujat/regions' },
     { prefix: '/programs/ujat', menuKey: '/programs/ujat' },
     { prefix: '/programs/gemini/performance', menuKey: '/programs/gemini/performance' },
     { prefix: '/programs/gemini/visiting-training', menuKey: '/programs/gemini/visiting-training' },
@@ -866,6 +883,7 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
       'general',
       'company-school',
       'ujat',
+    'regions',
       'gemini',
       'education',
       'economy-education',
@@ -1374,6 +1392,7 @@ export function getBreadcrumbByPath(
     'general',
     'company-school',
     'ujat',
+    'regions',
     'gemini',
     'education',
     'economy-education',
