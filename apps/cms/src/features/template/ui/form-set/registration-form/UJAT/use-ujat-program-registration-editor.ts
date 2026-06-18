@@ -14,9 +14,14 @@ import {
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
 import {
   getUjatProgramRegistrationOverlayRecord,
+  patchUjatProgramRegistrationOverlay,
   resetUjatProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { persistUjatRegistrationFormLocal } from '@/features/program/ujat/lib/ujat-registration-local-save'
+import {
+  loadUjatRegistrationTemplateSave,
+  persistUjatRegistrationTemplateSave,
+} from '@/features/program/ujat/lib/ujat-registration-template-local-save'
 
 export type UseUjatProgramRegistrationEditorOptions = {
   /** 로컬 저장 성공 후(목록 갱신·모달 닫기 등) */
@@ -47,7 +52,11 @@ export function useUjatProgramRegistrationEditor(
   useEffect(() => {
     if (!active) return
     resetUjatProgramRegistrationOverlay()
-    const next = normalizeWritingFormDraft(createUjatProgramRegistrationDraft())
+    const saved = loadUjatRegistrationTemplateSave()
+    if (saved?.overlay && Object.keys(saved.overlay).length > 0) {
+      patchUjatProgramRegistrationOverlay(saved.overlay)
+    }
+    const next = normalizeWritingFormDraft(saved?.draft ?? createUjatProgramRegistrationDraft())
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)
@@ -165,6 +174,7 @@ export function useUjatProgramRegistrationEditor(
   const handleSave = useCallback(() => {
     try {
       const overlay = { ...getUjatProgramRegistrationOverlayRecord() }
+      persistUjatRegistrationTemplateSave({ draft, overlay })
       persistUjatRegistrationFormLocal({ draft, overlay })
       onRegistrationSaved?.()
     } catch (error) {

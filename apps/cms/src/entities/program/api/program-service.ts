@@ -20,6 +20,9 @@ import {
 } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import { applyUjatRecruitInstitutionTemplateDefaults } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
 import { applyUjatRecruitVolunteerTemplateDefaults } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
+import { applyUjatRegistrationTemplateDefaults } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import { isUjatProgramId } from '@/features/program/ujat/lib/ujat-program-detail-meta'
+import { UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import type { UserRole } from '@/types/user'
 import { updateUserProgramRole } from '@/entities/user/api/user-service'
 
@@ -61,10 +64,14 @@ function resolveProgramFromStores(id: string): Program | undefined {
   )
 }
 
-/** UJAT 모집 폼 템플릿 localStorage 저장본을 프로그램 mock 필드에 병합 */
+/** UJAT 모집·등록 폼 템플릿 localStorage 저장본을 프로그램 mock 필드에 병합 */
 function withUjatRecruitTemplateDefaults(program: Program): Program {
+  const base =
+    isUjatProgramId(program.id) || program.id.startsWith(UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)
+      ? applyUjatRegistrationTemplateDefaults(program)
+      : program
   return applyUjatRecruitVolunteerTemplateDefaults(
-    applyUjatRecruitInstitutionTemplateDefaults(program)
+    applyUjatRecruitInstitutionTemplateDefaults(base)
   )
 }
 

@@ -4,7 +4,7 @@ import { UjatBasicInfoParagraph } from '@/features/template/ui/form-set/registra
 import { UjatBusinessKpiParagraph } from '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-business-kpi-paragraph'
 import { UjatEducationClassCapacityByRegionParagraph } from '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-education-class-capacity-by-region-paragraph'
 import { UjatEducationScheduleSettingsParagraph } from '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-education-schedule-settings-paragraph'
-import { UjatFirstHalfEducationScheduleParagraph } from '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-first-half-education-schedule-paragraph'
+import { UjatHalfEducationScheduleParagraph } from '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-first-half-education-schedule-paragraph'
 import { UjatWageInfoParagraph } from '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-wage-info-paragraph'
 
 export function renderUjatProgramRegistrationParagraphBody(
@@ -21,9 +21,9 @@ export function renderUjatProgramRegistrationParagraphBody(
     case UJAT_PROGRAM_REGISTRATION_IDS[2]:
       return <UjatWageInfoParagraph />
     case UJAT_PROGRAM_REGISTRATION_IDS[3]:
-      return <UjatFirstHalfEducationScheduleParagraph />
+      return <UjatHalfEducationScheduleParagraph half="h1" />
     case UJAT_PROGRAM_REGISTRATION_IDS[4]:
-      return <UjatFirstHalfEducationScheduleParagraph />
+      return <UjatHalfEducationScheduleParagraph half="h2" />
     case UJAT_PROGRAM_REGISTRATION_IDS[5]:
       return <UjatEducationScheduleSettingsParagraph />
     case UJAT_PROGRAM_REGISTRATION_IDS[6]:

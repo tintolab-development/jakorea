@@ -1,5 +1,9 @@
 .ujat-education-class-capacity {
-  gap: 16px;
+  gap: 0;
+}
+
+.ujat-education-class-capacity__semester + .ujat-education-class-capacity__semester {
+  margin-top: 20px;
 }
 
 .ujat-education-class-capacity__semester {
@@ -53,4 +57,33 @@
   font-weight: 500;
   line-height: 150%;
   white-space: nowrap;
+}
+
+.ujat-education-class-capacity__inputs--view {
+  min-height: 24px;
+}
+
+.ujat-region-capacity-program-view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-region-capacity-program-view__header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.ujat-region-capacity-program-view__title {
+  margin: 0;
+  padding: 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  color: var(--default-BK, #3d3d3d);
 }

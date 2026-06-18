@@ -2,7 +2,7 @@
  * UJAT 프로그램 등록 폼 — 기본 정보
  * (1사 1교 프로그램 등록 폼 기본 정보와 동일하게 DetailInfoForm 3구역: 프로그램명 / 운영·설문 / 교육·IPS)
  */
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -31,35 +31,24 @@ import {
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
-const UJAT_REP_KO_DEFAULT = '대학생경제교육봉사단'
-const UJAT_REP_EN_DEFAULT = 'University Students JA Team'
-const UJAT_PROGRAM_MANAGEMENT_DEFAULT =
-  'JA Korea 초등 경제교육 대상 학교 및 대학생경제교육봉사단 모집'
+import {
+  UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT,
+  UJAT_BASIC_INFO_REP_EN_DEFAULT,
+  UJAT_BASIC_INFO_REP_KO_DEFAULT,
+  UJAT_DEFAULT_SPONSOR_ID,
+  UJAT_DETAILED_PROGRAM_UJAT_LABEL,
+  UJAT_DETAILED_PROGRAM_UJAT_VALUE,
+  UJAT_SPONSOR_ALL_VALUE,
+  UJAT_SURVEY_ITEMS_DEFAULT,
+  type UjatSurveyRowId,
+} from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
 
 const PROGRAM_PROGRESS_STATIC_VIEW = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
 
-const ALL_VALUE = '__all__'
-
-const DETAILED_PROGRAM_UJAT_VALUE = '__ujat_volunteer_core__'
 const DETAILED_PROGRAM_UJAT_OPTION = {
-  value: DETAILED_PROGRAM_UJAT_VALUE,
-  label: '대학생경제교육봉사단',
+  value: UJAT_DETAILED_PROGRAM_UJAT_VALUE,
+  label: UJAT_DETAILED_PROGRAM_UJAT_LABEL,
 } as const
-
-type UjatSurveyRowId =
-  | 'survey'
-  | 'volunteer_satisfaction'
-  | 'school_satisfaction'
-  | 'lecture_evaluation'
-
-function initialUjatSurveyItems(): Record<UjatSurveyRowId, boolean> {
-  return {
-    survey: true,
-    volunteer_satisfaction: true,
-    school_satisfaction: true,
-    lecture_evaluation: true,
-  }
-}
 
 function participantTypeLabel(
   value: (typeof TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS)[number]['value']
@@ -69,25 +58,20 @@ function participantTypeLabel(
 
 const educationCourseSelectOptions = [...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS]
 
-const UJAT_SURVEY_ITEMS_DEFAULT = initialUjatSurveyItems()
-
-const UJAT_DEFAULT_SPONSOR_ID =
-  mockSponsorManagementListRows.find(s => s.name === '제이에이코리아')?.id ?? ALL_VALUE
-
 const BLOCK_GAP_STYLE = { marginTop: 16 } as const
 
 type OperationRangeSeal = { start: string; end: string } | null
 
 export function UjatBasicInfoParagraph() {
-  const [repKo, setRepKo] = useUjatProgramRegistrationOverlayKv('ujat.basicInfo.repKo', UJAT_REP_KO_DEFAULT)
-  const [repEn, setRepEn] = useUjatProgramRegistrationOverlayKv('ujat.basicInfo.repEn', UJAT_REP_EN_DEFAULT)
+  const [repKo, setRepKo] = useUjatProgramRegistrationOverlayKv('ujat.basicInfo.repKo', UJAT_BASIC_INFO_REP_KO_DEFAULT)
+  const [repEn, setRepEn] = useUjatProgramRegistrationOverlayKv('ujat.basicInfo.repEn', UJAT_BASIC_INFO_REP_EN_DEFAULT)
   const [programManagementName, setProgramManagementName] = useUjatProgramRegistrationOverlayKv(
     'ujat.basicInfo.programManagementName',
-    UJAT_PROGRAM_MANAGEMENT_DEFAULT
+    UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT
   )
-  const [detailedProgramId, setDetailedProgramId] = useUjatProgramRegistrationOverlayKv(
+  const [detailedProgramId, setDetailedProgramId] = useUjatProgramRegistrationOverlayKv<string>(
     'ujat.basicInfo.detailedProgramId',
-    DETAILED_PROGRAM_UJAT_VALUE
+    UJAT_DETAILED_PROGRAM_UJAT_VALUE
   )
 
   const [operationAnchorIso, setOperationAnchorIso] = useUjatProgramRegistrationOverlayKv<string | null>(
@@ -138,6 +122,22 @@ export function UjatBasicInfoParagraph() {
     true
   )
 
+  useEffect(() => {
+    if (!organizationChecked) setOrganizationChecked(true)
+    if (!volunteerChecked) setVolunteerChecked(true)
+    if (individualChecked) setIndividualChecked(false)
+    if (teacherChecked) setTeacherChecked(false)
+  }, [
+    organizationChecked,
+    volunteerChecked,
+    individualChecked,
+    teacherChecked,
+    setOrganizationChecked,
+    setVolunteerChecked,
+    setIndividualChecked,
+    setTeacherChecked,
+  ])
+
   const [businessField, setBusinessField] = useUjatProgramRegistrationOverlayKv(
     'ujat.basicInfo.businessField',
     'economy_finance'
@@ -174,7 +174,7 @@ export function UjatBasicInfoParagraph() {
 
   const sponsorOptions = useMemo(
     () => [
-      { value: ALL_VALUE, label: '전체' },
+      { value: UJAT_SPONSOR_ALL_VALUE, label: '전체' },
       ...mockSponsorManagementListRows.map(s => ({ value: s.id, label: s.name })),
     ],
     []
@@ -327,14 +327,13 @@ export function UjatBasicInfoParagraph() {
                   checkboxSize="large"
                   checked={individualChecked}
                   disabled
-                  onChange={e => setIndividualChecked(e.target.checked)}
                 >
                   {participantTypeLabel('individual')}
                 </CmsCheckbox>
                 <CmsCheckbox
                   checkboxSize="large"
                   checked={organizationChecked}
-                  onChange={e => setOrganizationChecked(e.target.checked)}
+                  disabled
                 >
                   {participantTypeLabel('school_institution')}
                 </CmsCheckbox>
@@ -342,14 +341,13 @@ export function UjatBasicInfoParagraph() {
                   checkboxSize="large"
                   checked={teacherChecked}
                   disabled
-                  onChange={e => setTeacherChecked(e.target.checked)}
                 >
                   {participantTypeLabel('teacher_instructor')}
                 </CmsCheckbox>
                 <CmsCheckbox
                   checkboxSize="large"
                   checked={volunteerChecked}
-                  onChange={e => setVolunteerChecked(e.target.checked)}
+                  disabled
                 >
                   {participantTypeLabel('volunteer')}
                 </CmsCheckbox>
