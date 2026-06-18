@@ -7,6 +7,7 @@ import { Button } from 'antd'
 import type { ButtonProps } from 'antd'
 import type { CSSProperties, ReactNode } from 'react'
 import './cms-button.css'
+import './button-loading-only.css'
 
 type CmsButtonPropsOmit =
   | 'size'
@@ -64,6 +65,7 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
 
     const cn = [
       'cms-button',
+      'btn-loading-only',
       `cms-button--${variant}`,
       `cms-button--${size}`,
       hasIcon && 'cms-button--has-icon',
@@ -89,8 +91,12 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
         style={{ outline: 'none', ...widthStyle, ...style }}
         {...rest}
       >
-        {!loading && hasIcon ? <span className="cms-button__icon">{icon}</span> : null}
-        {!loading && children != null ? <span className="cms-button__label">{children}</span> : null}
+        {children != null || hasIcon ? (
+          <span className="btn-loading-only__content">
+            {hasIcon ? <span className="cms-button__icon">{icon}</span> : null}
+            {children != null ? <span className="cms-button__label">{children}</span> : null}
+          </span>
+        ) : null}
       </Button>
     )
   }
