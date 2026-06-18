@@ -6,23 +6,25 @@
  * OpenAPI spec version: v9
  */
 import type {
+  AdminAccountCreateRequest,
+  AdminAccountVerificationRequest,
   AdminMemberDeleteRequest,
   AdminPermissionResponse,
   AdminPreRegisterMemberRequest,
   AdminPrivacyUnmaskRequest,
+  AdminRoleChangeRequest,
   AdminRolePermissionMatrixResponse,
   AdminRolePermissionUpdateRequest,
   AdminRoleResponse,
+  ApiResponseAdminAccountResponse,
   ApiResponseRolePermissionMutationResponse,
   ApiResponseVoid,
-  AvailableProgramFormResponse,
   ExternalIdentifierResponse,
   ExternalIdentifierUpsertRequest,
-  FormRuntimeResponse,
-  FormRuntimeSubmitRequest,
   InstructorDetailResponse,
   InstructorRoleReviewRequest,
   InstructorRoleWorkflowResponse,
+  ListAdminsParams,
   ListInstructorRoleRequestsParams,
   ListMembersParams,
   ListPermissionChangeLogsParams,
@@ -31,11 +33,11 @@ import type {
   MemberDetailResponse,
   MemberWorkflowResponse,
   PageResponse,
+  PageResponseAdminAccountListItemResponse,
   PageResponseAdminPermissionChangeLogResponse,
   PageResponseInstructorRoleRequestListItemResponse,
   PreRegisterConflictResolveRequest,
   PreRegisterConflictResponse,
-  RenderBinding200,
   RolePermissionPatchRequest
 } from './schemas';
 
@@ -163,7 +165,7 @@ const updateRolePermissions = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
- * - 호출 방식: `POST /api/users/{memberId}/privacy/unmask`
+ * - 호출 방식: `POST /api/admin/users/{memberId}/privacy/unmask`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -207,7 +209,7 @@ const unmaskMemberPrivacy = (
     adminPrivacyUnmaskRequest: AdminPrivacyUnmaskRequest,
  options?: SecondParameter<typeof customInstance<MemberDetailResponse>>,) => {
       return customInstance<MemberDetailResponse>(
-      {url: `/api/users/${memberId}/privacy/unmask`, method: 'POST',
+      {url: `/api/admin/users/${memberId}/privacy/unmask`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: adminPrivacyUnmaskRequest
     },
@@ -220,7 +222,7 @@ const unmaskMemberPrivacy = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
- * - 호출 방식: `POST /api/users/{memberId}/delete`
+ * - 호출 방식: `POST /api/admin/users/{memberId}/delete`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -264,7 +266,7 @@ const deleteAndAnonymize = (
     adminMemberDeleteRequest: AdminMemberDeleteRequest,
  options?: SecondParameter<typeof customInstance<MemberWorkflowResponse>>,) => {
       return customInstance<MemberWorkflowResponse>(
-      {url: `/api/users/${memberId}/delete`, method: 'POST',
+      {url: `/api/admin/users/${memberId}/delete`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: adminMemberDeleteRequest
     },
@@ -277,7 +279,7 @@ const deleteAndAnonymize = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
- * - 호출 방식: `POST /api/users/pre-register`
+ * - 호출 방식: `POST /api/admin/users/pre-register`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -320,7 +322,7 @@ const preRegister = (
     adminPreRegisterMemberRequest: AdminPreRegisterMemberRequest,
  options?: SecondParameter<typeof customInstance<MemberWorkflowResponse>>,) => {
       return customInstance<MemberWorkflowResponse>(
-      {url: `/api/users/pre-register`, method: 'POST',
+      {url: `/api/admin/users/pre-register`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: adminPreRegisterMemberRequest
     },
@@ -333,7 +335,7 @@ const preRegister = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
- * - 호출 방식: `POST /api/users/pre-register-conflicts/{conflictId}/resolve`
+ * - 호출 방식: `POST /api/admin/users/pre-register-conflicts/{conflictId}/resolve`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -377,67 +379,9 @@ const resolvePreRegisterConflict = (
     preRegisterConflictResolveRequest: PreRegisterConflictResolveRequest,
  options?: SecondParameter<typeof customInstance<MemberWorkflowResponse>>,) => {
       return customInstance<MemberWorkflowResponse>(
-      {url: `/api/users/pre-register-conflicts/${conflictId}/resolve`, method: 'POST',
+      {url: `/api/admin/users/pre-register-conflicts/${conflictId}/resolve`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: preRegisterConflictResolveRequest
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - 사용자 대상 설문/만족도 응답 제출
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
- * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
- * - 호출 방식: `POST /api/users/me/programs/{programId}/form-bindings/{bindingId}/responses`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: 프로그램 상세 선택값, 템플릿 유형, 일정형/커리큘럼형 대상 구간, 사용자 참여 context
- * - 응답 사용 위치: 사용자 대상 설문/만족도 응답 제출 결과로 화면 목록/모달/응답 상태를 갱신
- * - 프론트 조회 키: `post_users_me_programs_programId_form_bindings_bindingId_responses`
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: STAGE178_SURVEY_SCREEN_MAPPING_SMOKE
- * - 목데이터 대체: 프로그램 상세 신규 설문조사 등록 모달 및 사용자 설문 참여 화면을 API 상태/캐시로 대체합니다.
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 일반/교사/강사 회원 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: MEMBER_PROGRAM_SCOPE 범위 정책
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v9.27 응답 제출 시 일정/커리큘럼 대상자 서버 재검증
- * @summary 사용자 대상 설문/만족도 응답 제출
- */
-const submitBinding = (
-    programId: number,
-    bindingId: number,
-    formRuntimeSubmitRequest: FormRuntimeSubmitRequest,
- options?: SecondParameter<typeof customInstance<FormRuntimeResponse>>,) => {
-      return customInstance<FormRuntimeResponse>(
-      {url: `/api/users/me/programs/${programId}/form-bindings/${bindingId}/responses`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: formRuntimeSubmitRequest
     },
       options);
     }
@@ -448,7 +392,7 @@ const submitBinding = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
- * - 호출 방식: `POST /api/instructor-role-requests/{requestId}/reject`
+ * - 호출 방식: `POST /api/admin/instructor-role-requests/{requestId}/reject`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -492,7 +436,7 @@ const reject2 = (
     instructorRoleReviewRequest: InstructorRoleReviewRequest,
  options?: SecondParameter<typeof customInstance<InstructorRoleWorkflowResponse>>,) => {
       return customInstance<InstructorRoleWorkflowResponse>(
-      {url: `/api/instructor-role-requests/${requestId}/reject`, method: 'POST',
+      {url: `/api/admin/instructor-role-requests/${requestId}/reject`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: instructorRoleReviewRequest
     },
@@ -505,7 +449,7 @@ const reject2 = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
- * - 호출 방식: `POST /api/instructor-role-requests/{requestId}/approve`
+ * - 호출 방식: `POST /api/admin/instructor-role-requests/{requestId}/approve`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -549,9 +493,176 @@ const approve1 = (
     instructorRoleReviewRequest: InstructorRoleReviewRequest,
  options?: SecondParameter<typeof customInstance<InstructorRoleWorkflowResponse>>,) => {
       return customInstance<InstructorRoleWorkflowResponse>(
-      {url: `/api/instructor-role-requests/${requestId}/approve`, method: 'POST',
+      {url: `/api/admin/instructor-role-requests/${requestId}/approve`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: instructorRoleReviewRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 관리자 목록 조회
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
+ * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
+ * - 호출 방식: `GET /api/admin/admin-accounts`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
+ * - 프론트 조회 키: `get_admin_admin-accounts`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 admin-permissions API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: ADMIN_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수 아님
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 관리자 목록 조회
+ */
+const listAdmins = (
+    params?: ListAdminsParams,
+ options?: SecondParameter<typeof customInstance<PageResponseAdminAccountListItemResponse>>,) => {
+      return customInstance<PageResponseAdminAccountListItemResponse>(
+      {url: `/api/admin/admin-accounts`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 관리자 생성
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
+ * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
+ * - 호출 방식: `POST /api/admin/admin-accounts`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
+ * - 프론트 조회 키: `post_admin_admin-accounts`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 admin-permissions API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: ADMIN_WRITE 권한 필요
+ * - 접근 범위: 마스터 관리자만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 관리자 생성
+ */
+const createAdmin = (
+    adminAccountCreateRequest: AdminAccountCreateRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseAdminAccountResponse>>,) => {
+      return customInstance<ApiResponseAdminAccountResponse>(
+      {url: `/api/admin/admin-accounts`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: adminAccountCreateRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 마스터 관리자 검증 후 관리자 계정 활성화 또는 반려
+ * - API 분류: 시스템 진단/운영 검증 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
+ * - 프론트 담당 영역: permission (`permission`)
+ * - 호출 방식: `POST /api/admin/admin-accounts/{adminId}/verify`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: path/요청 본문 from operator action or secure workflow
+ * - 응답 사용 위치: operation result / audit trail / download policy
+ * - 프론트 조회 키: `post_api_admin_admin_accounts_adminId_verify`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: SECURITY_SMOKE
+ * - 목데이터 대체: No localStorage persistence; use API response/cache and invalidate on mutation.
+ * - 이 API는 일반 사용자 화면용이 아니라 관리자/QA/운영자가 시스템 상태를 확인할 때 사용하는 API입니다. 일반 화면 개발 시에는 직접 호출하지 않습니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: ADMIN_WRITE 권한 필요
+ * - 접근 범위: 마스터 관리자만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: ADMIN_HIGH_RISK 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: admin accounts are created as PENDING_VERIFICATION and cannot login until MASTER verification
+ * @summary 마스터 관리자 검증 후 관리자 계정 활성화 또는 반려
+ */
+const verifyAdmin = (
+    adminId: number,
+    adminAccountVerificationRequest: AdminAccountVerificationRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseAdminAccountResponse>>,) => {
+      return customInstance<ApiResponseAdminAccountResponse>(
+      {url: `/api/admin/admin-accounts/${adminId}/verify`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: adminAccountVerificationRequest
     },
       options);
     }
@@ -562,7 +673,7 @@ const approve1 = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
- * - 호출 방식: `PATCH /api/users/{memberId}/external-identifiers/{provider}`
+ * - 호출 방식: `PATCH /api/admin/users/{memberId}/external-identifiers/{provider}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -607,7 +718,7 @@ const upsertExternalIdentifier = (
     externalIdentifierUpsertRequest: ExternalIdentifierUpsertRequest,
  options?: SecondParameter<typeof customInstance<ExternalIdentifierResponse>>,) => {
       return customInstance<ExternalIdentifierResponse>(
-      {url: `/api/users/${memberId}/external-identifiers/${provider}`, method: 'PATCH',
+      {url: `/api/admin/users/${memberId}/external-identifiers/${provider}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: externalIdentifierUpsertRequest
     },
@@ -673,11 +784,68 @@ const patchRolePermissions = (
 
 /**
  * ### 이 API가 하는 일
+ * - 관리자 role 변경
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
+ * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
+ * - 호출 방식: `PATCH /api/admin/admin-accounts/{adminId}/role`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
+ * - 프론트 조회 키: `patch_admin_admin-accounts_adminId_role`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 admin-permissions API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: ADMIN_WRITE 권한 필요
+ * - 접근 범위: 마스터 관리자만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 관리자 role 변경
+ */
+const changeAdminRole = (
+    adminId: number,
+    adminRoleChangeRequest: AdminRoleChangeRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseAdminAccountResponse>>,) => {
+      return customInstance<ApiResponseAdminAccountResponse>(
+      {url: `/api/admin/admin-accounts/${adminId}/role`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: adminRoleChangeRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 회원 목록 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
- * - 호출 방식: `GET /api/users`
+ * - 호출 방식: `GET /api/admin/users`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
@@ -719,7 +887,7 @@ const listMembers = (
     params?: ListMembersParams,
  options?: SecondParameter<typeof customInstance<PageResponse>>,) => {
       return customInstance<PageResponse>(
-      {url: `/api/users`, method: 'GET',
+      {url: `/api/admin/users`, method: 'GET',
         params
     },
       options);
@@ -731,7 +899,7 @@ const listMembers = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
- * - 호출 방식: `GET /api/users/{memberId}`
+ * - 호출 방식: `GET /api/admin/users/{memberId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
@@ -773,7 +941,7 @@ const getMemberDetail = (
     memberId: string,
  options?: SecondParameter<typeof customInstance<MemberDetailResponse>>,) => {
       return customInstance<MemberDetailResponse>(
-      {url: `/api/users/${memberId}`, method: 'GET'
+      {url: `/api/admin/users/${memberId}`, method: 'GET'
     },
       options);
     }
@@ -784,7 +952,7 @@ const getMemberDetail = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
- * - 호출 방식: `GET /api/users/{memberId}/instructor-profile`
+ * - 호출 방식: `GET /api/admin/users/{memberId}/instructor-profile`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
@@ -827,7 +995,7 @@ const getInstructorDetail = (
     memberId: number,
  options?: SecondParameter<typeof customInstance<InstructorDetailResponse>>,) => {
       return customInstance<InstructorDetailResponse>(
-      {url: `/api/users/${memberId}/instructor-profile`, method: 'GET'
+      {url: `/api/admin/users/${memberId}/instructor-profile`, method: 'GET'
     },
       options);
     }
@@ -838,7 +1006,7 @@ const getInstructorDetail = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
- * - 호출 방식: `GET /api/users/{memberId}/external-identifiers`
+ * - 호출 방식: `GET /api/admin/users/{memberId}/external-identifiers`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
@@ -881,7 +1049,7 @@ const externalIdentifiers = (
     memberId: number,
  options?: SecondParameter<typeof customInstance<ExternalIdentifierResponse[]>>,) => {
       return customInstance<ExternalIdentifierResponse[]>(
-      {url: `/api/users/${memberId}/external-identifiers`, method: 'GET'
+      {url: `/api/admin/users/${memberId}/external-identifiers`, method: 'GET'
     },
       options);
     }
@@ -892,7 +1060,7 @@ const externalIdentifiers = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
- * - 호출 방식: `GET /api/users/{memberId}/consent-records`
+ * - 호출 방식: `GET /api/admin/users/{memberId}/consent-records`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
@@ -935,7 +1103,7 @@ const consentRecords = (
     memberId: number,
  options?: SecondParameter<typeof customInstance<MemberConsentRecordResponse[]>>,) => {
       return customInstance<MemberConsentRecordResponse[]>(
-      {url: `/api/users/${memberId}/consent-records`, method: 'GET'
+      {url: `/api/admin/users/${memberId}/consent-records`, method: 'GET'
     },
       options);
     }
@@ -946,7 +1114,7 @@ const consentRecords = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
- * - 호출 방식: `GET /api/users/pre-register-conflicts`
+ * - 호출 방식: `GET /api/admin/users/pre-register-conflicts`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
@@ -988,114 +1156,7 @@ const listPreRegisterConflicts = (
 
  options?: SecondParameter<typeof customInstance<PreRegisterConflictResponse[]>>,) => {
       return customInstance<PreRegisterConflictResponse[]>(
-      {url: `/api/users/pre-register-conflicts`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - 사용자 대상 설문/만족도 렌더링
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
- * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
- * - 호출 방식: `GET /api/users/me/programs/{programId}/form-bindings/{bindingId}/render`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: 프로그램 상세 선택값, 템플릿 유형, 일정형/커리큘럼형 대상 구간, 사용자 참여 context
- * - 응답 사용 위치: 사용자 대상 설문/만족도 렌더링 결과로 화면 목록/모달/응답 상태를 갱신
- * - 프론트 조회 키: `get_users_me_programs_programId_form_bindings_bindingId_render`
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: STAGE178_SURVEY_SCREEN_MAPPING_SMOKE
- * - 목데이터 대체: 프로그램 상세 신규 설문조사 등록 모달 및 사용자 설문 참여 화면을 API 상태/캐시로 대체합니다.
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 일반/교사/강사 회원 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: MEMBER_PROGRAM_SCOPE 범위 정책
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
- * - 감사로그 저장: 필수 아님
- *
- * ### 상태값/화면 배지 기준
- * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
- * ### Swagger에서 확인할 때
- * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v9.27 바인딩 scope 대상자 검증 후 렌더링
- * @summary 사용자 대상 설문/만족도 렌더링
- */
-const renderBinding = (
-    programId: number,
-    bindingId: number,
- options?: SecondParameter<typeof customInstance<RenderBinding200>>,) => {
-      return customInstance<RenderBinding200>(
-      {url: `/api/users/me/programs/${programId}/form-bindings/${bindingId}/render`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - 사용자 대상 설문/만족도 목록 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
- * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
- * - 호출 방식: `GET /api/users/me/programs/{programId}/available-forms`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: 프로그램 상세 선택값, 템플릿 유형, 일정형/커리큘럼형 대상 구간, 사용자 참여 context
- * - 응답 사용 위치: 사용자 대상 설문/만족도 목록 조회 결과로 화면 목록/모달/응답 상태를 갱신
- * - 프론트 조회 키: `get_users_me_programs_programId_available_forms`
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: STAGE178_SURVEY_SCREEN_MAPPING_SMOKE
- * - 목데이터 대체: 프로그램 상세 신규 설문조사 등록 모달 및 사용자 설문 참여 화면을 API 상태/캐시로 대체합니다.
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 일반/교사/강사 회원 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: MEMBER_PROGRAM_SCOPE 범위 정책
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
- * - 감사로그 저장: 필수 아님
- *
- * ### 상태값/화면 배지 기준
- * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
- * ### Swagger에서 확인할 때
- * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v9.27 해당 일정/커리큘럼 참여자만 노출
- * @summary 사용자 대상 설문/만족도 목록 조회
- */
-const availableProgramForms = (
-    programId: number,
- options?: SecondParameter<typeof customInstance<AvailableProgramFormResponse[]>>,) => {
-      return customInstance<AvailableProgramFormResponse[]>(
-      {url: `/api/users/me/programs/${programId}/available-forms`, method: 'GET'
+      {url: `/api/admin/users/pre-register-conflicts`, method: 'GET'
     },
       options);
     }
@@ -1106,7 +1167,7 @@ const availableProgramForms = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
- * - 호출 방식: `GET /api/instructor-role-requests`
+ * - 호출 방식: `GET /api/admin/instructor-role-requests`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
@@ -1148,7 +1209,7 @@ const listInstructorRoleRequests = (
     params?: ListInstructorRoleRequestsParams,
  options?: SecondParameter<typeof customInstance<PageResponseInstructorRoleRequestListItemResponse>>,) => {
       return customInstance<PageResponseInstructorRoleRequestListItemResponse>(
-      {url: `/api/instructor-role-requests`, method: 'GET',
+      {url: `/api/admin/instructor-role-requests`, method: 'GET',
         params
     },
       options);
@@ -1318,26 +1379,27 @@ const listPermissionChangeLogs = (
       options);
     }
 
-return {getRolePermissions,updateRolePermissions,unmaskMemberPrivacy,deleteAndAnonymize,preRegister,resolvePreRegisterConflict,submitBinding,reject2,approve1,upsertExternalIdentifier,patchRolePermissions,listMembers,getMemberDetail,getInstructorDetail,externalIdentifiers,consentRecords,listPreRegisterConflicts,renderBinding,availableProgramForms,listInstructorRoleRequests,listRoles,listPermissions,listPermissionChangeLogs}};
+return {getRolePermissions,updateRolePermissions,unmaskMemberPrivacy,deleteAndAnonymize,preRegister,resolvePreRegisterConflict,reject2,approve1,listAdmins,createAdmin,verifyAdmin,upsertExternalIdentifier,patchRolePermissions,changeAdminRole,listMembers,getMemberDetail,getInstructorDetail,externalIdentifiers,consentRecords,listPreRegisterConflicts,listInstructorRoleRequests,listRoles,listPermissions,listPermissionChangeLogs}};
 export type GetRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['getRolePermissions']>>>
 export type UpdateRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['updateRolePermissions']>>>
 export type UnmaskMemberPrivacyResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['unmaskMemberPrivacy']>>>
 export type DeleteAndAnonymizeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['deleteAndAnonymize']>>>
 export type PreRegisterResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['preRegister']>>>
 export type ResolvePreRegisterConflictResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['resolvePreRegisterConflict']>>>
-export type SubmitBindingResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['submitBinding']>>>
 export type Reject2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['reject2']>>>
 export type Approve1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['approve1']>>>
+export type ListAdminsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listAdmins']>>>
+export type CreateAdminResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['createAdmin']>>>
+export type VerifyAdminResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['verifyAdmin']>>>
 export type UpsertExternalIdentifierResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['upsertExternalIdentifier']>>>
 export type PatchRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['patchRolePermissions']>>>
+export type ChangeAdminRoleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['changeAdminRole']>>>
 export type ListMembersResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listMembers']>>>
 export type GetMemberDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['getMemberDetail']>>>
 export type GetInstructorDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['getInstructorDetail']>>>
 export type ExternalIdentifiersResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['externalIdentifiers']>>>
 export type ConsentRecordsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['consentRecords']>>>
 export type ListPreRegisterConflictsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listPreRegisterConflicts']>>>
-export type RenderBindingResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['renderBinding']>>>
-export type AvailableProgramFormsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['availableProgramForms']>>>
 export type ListInstructorRoleRequestsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listInstructorRoleRequests']>>>
 export type ListRolesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listRoles']>>>
 export type ListPermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listPermissions']>>>

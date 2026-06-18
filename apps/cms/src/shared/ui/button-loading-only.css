@@ -1,0 +1,28 @@
+/**
+ * 로딩 버튼 — 라벨 영역은 유지(visibility)하고 스피너만 중앙 오버레이.
+ * `AuthLoadingButton`, `CmsButton` 공통.
+ */
+
+.btn-loading-only.ant-btn {
+  position: relative;
+}
+
+.btn-loading-only__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-loading-only.ant-btn-loading .btn-loading-only__content {
+  visibility: hidden;
+}
+
+.btn-loading-only.ant-btn-loading .ant-btn-loading-icon {
+  position: absolute;
+  inset: 0;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  margin: 0 !important;
+}

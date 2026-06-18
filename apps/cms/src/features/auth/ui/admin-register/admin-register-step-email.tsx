@@ -1,7 +1,7 @@
 import { Button, Form } from 'antd'
 import { useEffect, useState } from 'react'
 
-import { checkEmailAvailability } from '@/entities/user/api/register-service'
+import { checkAdminRegisterEmailAvailability } from '@/features/auth/api/admin-register-service'
 import {
   buildJakoreaEmail,
   isValidJakoreaEmailLocalPart,
@@ -89,7 +89,7 @@ export function AdminRegisterStepEmail({
 
     try {
       const email = buildJakoreaEmail(localPart)
-      const isAvailable = await checkEmailAvailability(email)
+      const isAvailable = await checkAdminRegisterEmailAvailability(email)
 
       if (isAvailable) {
         setDuplicateStatus('available')

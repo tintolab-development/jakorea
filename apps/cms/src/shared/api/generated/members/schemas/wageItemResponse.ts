@@ -13,4 +13,10 @@ export interface WageItemResponse {
   amount?: number;
   calculationUnit?: string;
   editableYn?: boolean;
+  iconKey?: string;
+  emojiOverride?: string;
+  layout?: string;
+  basisHours?: number;
+  maxLimitWon?: number;
+  qualificationLines?: string[];
 }

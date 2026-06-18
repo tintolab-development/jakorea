@@ -1,7 +1,9 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
 import type {
+  AdminAccountVerificationRequest,
   AdminPreRegisterMemberRequest,
+  AdminRoleChangeRequest,
   AdminRolePermissionMatrixResponse,
   AdminRolePermissionUpdateRequest,
   InstructorDetailResponse,
@@ -11,9 +13,11 @@ import type {
   MemberDetailResponse,
   MemberWorkflowResponse,
   PageResponse,
+  PageResponseAdminAccountListItemResponse,
   PageResponseInstructorRoleRequestListItemResponse,
 } from '@/shared/api/generated/members/schemas'
 import type { AdminMemberDeleteRequest } from '@/shared/api/generated/members/schemas/adminMemberDeleteRequest'
+import type { ListAdminsParams } from '@/shared/api/generated/members/schemas/listAdminsParams'
 import type { AdminPermissionResponse } from '@/shared/api/generated/members/schemas/adminPermissionResponse'
 import type { AdminRoleResponse } from '@/shared/api/generated/members/schemas/adminRoleResponse'
 import type { MemberConsentRecordResponse } from '@/shared/api/generated/members/schemas/memberConsentRecordResponse'
@@ -81,6 +85,27 @@ export async function rejectInstructorRoleRequestRemote(
   body: InstructorRoleReviewRequest
 ) {
   await membersApi.reject2(requestId, body)
+}
+
+/** Swagger `listAdminApprovalRequests` — `GET /api/admin/admin-accounts` */
+export async function fetchAdminApprovalRequestsPageRemote(
+  params: ListAdminsParams
+): Promise<PageResponseAdminAccountListItemResponse> {
+  return unwrapApiBody(await membersApi.listAdmins(params))
+}
+
+export async function verifyAdminAccountRemote(
+  adminId: number,
+  body: AdminAccountVerificationRequest
+) {
+  await membersApi.verifyAdmin(adminId, body)
+}
+
+export async function changeAdminAccountRoleRemote(
+  adminId: number,
+  body: AdminRoleChangeRequest
+) {
+  await membersApi.changeAdminRole(adminId, body)
 }
 
 export async function fetchAdminPermissionsCatalogRemote(): Promise<AdminPermissionResponse[]> {

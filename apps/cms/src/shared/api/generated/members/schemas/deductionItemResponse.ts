@@ -12,4 +12,7 @@ export interface DeductionItemResponse {
   deductionRate?: string;
   deductionAmount?: number;
   useYn?: boolean;
+  iconKey?: string;
+  emojiOverride?: string;
+  layout?: string;
 }

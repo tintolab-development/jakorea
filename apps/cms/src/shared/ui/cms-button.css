@@ -42,9 +42,7 @@
   gap: 0 !important;
 }
 
-.cms-button.ant-btn.cms-button--loading-only .ant-btn-loading-icon {
-  margin-inline-end: 0 !important;
-}
+/* spinner 오버레이는 `button-loading-only.css` */
 
 /* ----- size ----- */
 .cms-button.ant-btn.cms-button--large {

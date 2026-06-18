@@ -16,4 +16,5 @@ export const adminAuthPaths = {
   logout: () => `${adminAuthPaths.prefix}/logout`,
   refresh: () => `${adminAuthPaths.prefix}/refresh`,
   mfaVerify: () => `${adminAuthPaths.prefix}/mfa/verify`,
+  signupComplete: () => `${adminAuthPaths.prefix}/signup/complete`,
 } as const

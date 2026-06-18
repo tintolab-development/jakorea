@@ -419,6 +419,16 @@
   line-height: 160%;
 }
 
+.register-identity-module--verified .register-identity-module__verified-icon {
+  color: #52c41a;
+  font-size: 32px;
+}
+
+.register-identity-module--error {
+  justify-content: flex-start;
+  padding: 16px;
+}
+
 .admin-register-step__form .admin-register-birth-input::placeholder {
   overflow: hidden;
   color: var(--gray-85969-d, #85969d);

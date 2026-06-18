@@ -1,16 +1,26 @@
-import { Button } from 'antd'
+import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
 
-import { RegisterIdentityModulePlaceholder } from './register-identity-module-placeholder'
+import type { IdentityVerificationHookStatus } from '@/features/auth/identity-verification'
+
+import { RegisterIdentityStatusPanel } from './register-identity-status-panel'
 import { RegisterStepHeader } from './register-step-header'
 
 interface AdminRegisterStepIdentityProps {
-  onVerify: () => void
-  verifying?: boolean
+  onStartVerify: () => void
+  status: IdentityVerificationHookStatus
+  isVerifying?: boolean
+  errorMessage?: string | null
+  verifiedName?: string
+  verifiedPhone?: string
 }
 
 export function AdminRegisterStepIdentity({
-  onVerify,
-  verifying = false,
+  onStartVerify,
+  status,
+  isVerifying = false,
+  errorMessage,
+  verifiedName,
+  verifiedPhone,
 }: AdminRegisterStepIdentityProps) {
   return (
     <div className="admin-register-step admin-register-step--identity">
@@ -26,17 +36,22 @@ export function AdminRegisterStepIdentity({
       />
 
       <div className="admin-register-step__content">
-        <RegisterIdentityModulePlaceholder />
+        <RegisterIdentityStatusPanel
+          status={status}
+          errorMessage={errorMessage}
+          verifiedName={verifiedName}
+          verifiedPhone={verifiedPhone}
+        />
         <div className="admin-register-step__actions admin-register-step__actions--single">
-          <Button
+          <AuthLoadingButton
             type="primary"
             block
             className="auth-submit-btn"
-            loading={verifying}
-            onClick={onVerify}
+            loading={isVerifying}
+            onClick={onStartVerify}
           >
             휴대폰 본인인증하기
-          </Button>
+          </AuthLoadingButton>
         </div>
         <div className="admin-register-step__trailing" aria-hidden />
       </div>

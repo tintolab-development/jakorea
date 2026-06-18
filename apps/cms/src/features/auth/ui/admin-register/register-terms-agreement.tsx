@@ -11,24 +11,36 @@ interface TermsItemConfig {
   label: string
 }
 
-const TERMS_ITEMS: TermsItemConfig[] = [
+const REQUIRED_TERMS_ITEMS: TermsItemConfig[] = [
   { key: 'termsOfService', required: true, label: '서비스 이용약관' },
   { key: 'privacyPolicy', required: true, label: '개인정보 수집·이용 동의' },
+]
+
+const OPTIONAL_TERMS_ITEMS: TermsItemConfig[] = [
   { key: 'marketingConsent', required: false, label: '마케팅 정보 수신 동의' },
 ]
+
+const TERMS_ITEMS: TermsItemConfig[] = [...REQUIRED_TERMS_ITEMS, ...OPTIONAL_TERMS_ITEMS]
 
 interface RegisterTermsAgreementProps {
   value: ConsentFormData
   onChange: (value: ConsentFormData) => void
   onViewTerm?: (key: ConsentFieldKey) => void
+  mfaSetupAgreed?: boolean
+  onMfaSetupAgreedChange?: (checked: boolean) => void
 }
 
 export function RegisterTermsAgreement({
   value,
   onChange,
   onViewTerm,
+  mfaSetupAgreed = false,
+  onMfaSetupAgreedChange,
 }: RegisterTermsAgreementProps) {
-  const allChecked = TERMS_ITEMS.every(item => value[item.key])
+  const includesMfaConsent = onMfaSetupAgreedChange != null
+  const allChecked =
+    TERMS_ITEMS.every(item => value[item.key]) &&
+    (!includesMfaConsent || mfaSetupAgreed)
 
   const handleAgreeAll = () => {
     const nextChecked = !allChecked
@@ -37,6 +49,9 @@ export function RegisterTermsAgreement({
       privacyPolicy: nextChecked,
       marketingConsent: nextChecked,
     })
+    if (includesMfaConsent) {
+      onMfaSetupAgreedChange(nextChecked)
+    }
   }
 
   const handleItemChange = (key: ConsentFieldKey, checked: boolean) => {
@@ -64,7 +79,7 @@ export function RegisterTermsAgreement({
         </button>
 
         <ul className="register-terms-agreement__list">
-          {TERMS_ITEMS.map(item => {
+          {REQUIRED_TERMS_ITEMS.map(item => {
             const checked = value[item.key]
 
             return (
@@ -72,16 +87,47 @@ export function RegisterTermsAgreement({
                 <RegisterTermsCheckControl
                   checked={checked}
                   onChange={next => handleItemChange(item.key, next)}
-                  ariaLabel={`${item.required ? '필수' : '선택'} ${item.label}`}
+                  ariaLabel={`필수 ${item.label}`}
                 />
-                <span
-                  className={`register-terms-agreement__badge${
-                    item.required
-                      ? ' register-terms-agreement__badge--required'
-                      : ' register-terms-agreement__badge--optional'
-                  }`}
+                <span className="register-terms-agreement__badge register-terms-agreement__badge--required">
+                  필수
+                </span>
+                <span className="register-terms-agreement__label">{item.label}</span>
+                <button
+                  type="button"
+                  className="register-terms-agreement__view"
+                  onClick={() => onViewTerm?.(item.key)}
                 >
-                  {item.required ? '필수' : '선택'}
+                  보기
+                </button>
+              </li>
+            )
+          })}
+          {includesMfaConsent ? (
+            <li className="register-terms-agreement__item">
+              <RegisterTermsCheckControl
+                checked={mfaSetupAgreed}
+                onChange={onMfaSetupAgreedChange}
+                ariaLabel="필수 2단계 인증(MFA) 설정 동의"
+              />
+              <span className="register-terms-agreement__badge register-terms-agreement__badge--required">
+                필수
+              </span>
+              <span className="register-terms-agreement__label">2단계 인증(MFA) 설정 동의</span>
+            </li>
+          ) : null}
+          {OPTIONAL_TERMS_ITEMS.map(item => {
+            const checked = value[item.key]
+
+            return (
+              <li key={item.key} className="register-terms-agreement__item">
+                <RegisterTermsCheckControl
+                  checked={checked}
+                  onChange={next => handleItemChange(item.key, next)}
+                  ariaLabel={`선택 ${item.label}`}
+                />
+                <span className="register-terms-agreement__badge register-terms-agreement__badge--optional">
+                  선택
                 </span>
                 <span className="register-terms-agreement__label">{item.label}</span>
                 <button
