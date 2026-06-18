@@ -2,8 +2,10 @@
  * 관리자 회원가입 페이지
  */
 
+import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { useIdentityVerification, clearPendingIdentityChallenge } from '@/features/auth/identity-verification'
 import { useAdminRegisterWizard } from '@/features/auth/hooks/use-admin-register-wizard'
 import { AdminRegisterStepBirthGender } from '@/features/auth/ui/admin-register/admin-register-step-birth-gender'
 import { AdminRegisterStepEmail } from '@/features/auth/ui/admin-register/admin-register-step-email'
@@ -37,17 +39,36 @@ export function RegisterPage() {
     totalSteps,
   } = useAdminRegisterWizard({ redirectPath: params.redirect })
 
+  const handleIdentitySuccess = useCallback(
+    (result: {
+      sessionId: number
+      sessionUuid?: string
+      verifiedName?: string
+      verifiedPhone?: string
+      verifiedAt: string
+    }) => {
+      updateStepData({
+        identityVerificationSessionId: result.sessionId,
+        identityVerificationSessionUuid:
+          result.sessionUuid ?? String(result.sessionId),
+        identityVerificationStatus: 'verified',
+        identityVerifiedAt: result.verifiedAt,
+        verifiedName: result.verifiedName,
+        verifiedPhone: result.verifiedPhone,
+      })
+      goNext()
+    },
+    [goNext, updateStepData]
+  )
+
+  const { verify, status, isVerifying, errorMessage } = useIdentityVerification({
+    birthDate: formData.birthDate,
+    gender: formData.gender,
+    onSuccess: handleIdentitySuccess,
+  })
+
   const handleStep1Next = (values: AdminRegisterStep1Data) => {
     updateStepData(values)
-    goNext()
-  }
-
-  const handleStep2Verify = () => {
-    updateStepData({
-      identityVerifiedAt: new Date().toISOString(),
-      verifiedName: '홍길동',
-      verifiedPhone: '010-1234-5678',
-    })
     goNext()
   }
 
@@ -67,6 +88,9 @@ export function RegisterPage() {
   }
 
   const handleBack = () => {
+    if (currentStep === 2) {
+      clearPendingIdentityChallenge()
+    }
     if (currentStep === 1) {
       navigate(buildLoginPath(), { replace: true })
       return
@@ -86,7 +110,16 @@ export function RegisterPage() {
     }
 
     if (currentStep === 2) {
-      return <AdminRegisterStepIdentity onVerify={handleStep2Verify} />
+      return (
+        <AdminRegisterStepIdentity
+          onStartVerify={verify}
+          status={status}
+          isVerifying={isVerifying}
+          errorMessage={errorMessage}
+          verifiedName={formData.verifiedName}
+          verifiedPhone={formData.verifiedPhone}
+        />
+      )
     }
 
     if (currentStep === 3) {
@@ -96,6 +129,7 @@ export function RegisterPage() {
             termsOfService: formData.termsOfService,
             privacyPolicy: formData.privacyPolicy,
             marketingConsent: formData.marketingConsent,
+            mfaSetupAgreed: formData.mfaSetupAgreed,
           }}
           onNext={handleStep3Next}
           onBack={handleBack}

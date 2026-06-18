@@ -5,6 +5,7 @@ import {
   isValidRegisterPassword,
   REGISTER_PASSWORD_CONDITION_MESSAGE,
   REGISTER_PASSWORD_HELP_TEXT,
+  REGISTER_PASSWORD_MIN_LENGTH,
   REGISTER_PASSWORD_MISMATCH_MESSAGE,
 } from '@/features/auth/lib/validate-register-password'
 import { AuthFormLabel } from '@/features/auth/ui/auth-form-label'
@@ -49,7 +50,7 @@ export function AdminRegisterStepPassword({
   const isPasswordConditionError =
     Boolean(password) &&
     !isPasswordValid &&
-    (password.length >= 8 || Boolean(passwordConfirm))
+    (password.length >= REGISTER_PASSWORD_MIN_LENGTH || Boolean(passwordConfirm))
   const isConfirmMismatch =
     Boolean(passwordConfirm) && password !== passwordConfirm && !isPasswordConditionError
   const canProceed = isPasswordValid && Boolean(passwordConfirm) && !isConfirmMismatch

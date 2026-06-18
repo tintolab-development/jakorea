@@ -2,7 +2,8 @@ import { Alert, Button } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { register } from '@/entities/user/api/register-service'
+import { completeAdminSignup } from '@/features/auth/api/admin-register-service'
+import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
 import type { AdminRegisterWizardData } from '@/types/admin-register'
 
 import { RegisterReviewSummary } from './register-review-summary'
@@ -12,6 +13,14 @@ interface AdminRegisterStepReviewProps {
   formData: AdminRegisterWizardData
   onBack: () => void
   completePath: string
+}
+
+function isIdentityVerified(formData: AdminRegisterWizardData): boolean {
+  return (
+    formData.identityVerificationStatus === 'verified' ||
+    formData.identityVerificationSessionId != null ||
+    formData.identityVerificationSessionUuid != null
+  )
 }
 
 export function AdminRegisterStepReview({
@@ -27,12 +36,12 @@ export function AdminRegisterStepReview({
     if (
       !formData.email ||
       !formData.password ||
-      !formData.verifiedName ||
-      !formData.verifiedPhone ||
+      !isIdentityVerified(formData) ||
       !formData.birthDate ||
       !formData.gender ||
       !formData.termsOfService ||
-      !formData.privacyPolicy
+      !formData.privacyPolicy ||
+      formData.mfaSetupAgreed !== true
     ) {
       setSubmitError('가입 정보가 올바르지 않습니다. 이전 단계를 다시 확인해 주세요.')
       return
@@ -42,22 +51,7 @@ export function AdminRegisterStepReview({
     setSubmitError(null)
 
     try {
-      await register({
-        formData: {
-          role: 'ADMIN',
-          adminLevel: 'ADMIN',
-          email: formData.email,
-          password: formData.password,
-          passwordConfirm: formData.password,
-          name: formData.verifiedName,
-          phone: formData.verifiedPhone,
-        },
-        consent: {
-          termsOfService: formData.termsOfService,
-          privacyPolicy: formData.privacyPolicy,
-          marketingConsent: formData.marketingConsent ?? false,
-        },
-      })
+      await completeAdminSignup(formData)
       navigate(completePath, { replace: true })
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : '회원가입에 실패했습니다.')
@@ -81,7 +75,7 @@ export function AdminRegisterStepReview({
         ) : null}
 
         <div className="auth-actions admin-register-step__actions">
-          <Button
+          <AuthLoadingButton
             type="primary"
             block
             className="auth-submit-btn"
@@ -89,7 +83,7 @@ export function AdminRegisterStepReview({
             onClick={handleComplete}
           >
             가입 완료하기
-          </Button>
+          </AuthLoadingButton>
           <Button type="default" block className="auth-secondary-btn" onClick={onBack}>
             이전으로
           </Button>

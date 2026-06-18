@@ -8,7 +8,7 @@ import { RegisterStepHeader } from './register-step-header'
 import { RegisterTermsAgreement } from './register-terms-agreement'
 
 interface AdminRegisterStepTermsProps {
-  initialValues?: Partial<ConsentFormData>
+  initialValues?: Partial<AdminRegisterStep3Data>
   onNext: (values: AdminRegisterStep3Data) => void
   onBack: () => void
 }
@@ -28,21 +28,26 @@ export function AdminRegisterStepTerms({
     ...DEFAULT_CONSENT,
     ...initialValues,
   })
+  const [mfaSetupAgreed, setMfaSetupAgreed] = useState(initialValues?.mfaSetupAgreed ?? false)
 
   useEffect(() => {
     setConsent({
       ...DEFAULT_CONSENT,
       ...initialValues,
     })
+    setMfaSetupAgreed(initialValues?.mfaSetupAgreed ?? false)
   }, [initialValues])
 
-  const isValid = consent.termsOfService && consent.privacyPolicy
+  const isValid = consent.termsOfService && consent.privacyPolicy && mfaSetupAgreed
 
   const handleContinue = () => {
     if (!isValid) {
       return
     }
-    onNext(consent)
+    onNext({
+      ...consent,
+      mfaSetupAgreed,
+    })
   }
 
   return (
@@ -59,7 +64,12 @@ export function AdminRegisterStepTerms({
       />
 
       <div className="admin-register-step__content">
-        <RegisterTermsAgreement value={consent} onChange={setConsent} />
+        <RegisterTermsAgreement
+          value={consent}
+          onChange={setConsent}
+          mfaSetupAgreed={mfaSetupAgreed}
+          onMfaSetupAgreedChange={setMfaSetupAgreed}
+        />
         <div className="auth-actions admin-register-step__actions">
           <Button
             type="primary"
