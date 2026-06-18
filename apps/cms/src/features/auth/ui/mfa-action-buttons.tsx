@@ -3,9 +3,10 @@
  * Phase 0.5.1: MFA/OTP UX — TOTP
  */
 
-import { Button, Space } from 'antd'
+import { Space } from 'antd'
 import { SafetyOutlined, ReloadOutlined } from '@ant-design/icons'
 import { OTP_LENGTH } from '@/shared/constants/mfa-policy'
+import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
 
 interface MfaActionButtonsProps {
   otpCode: string
@@ -24,7 +25,7 @@ export function MfaActionButtons({
 }: MfaActionButtonsProps) {
   return (
     <Space direction="vertical" style={{ width: '100%' }} size="middle">
-      <Button
+      <AuthLoadingButton
         type="primary" htmlType="submit"
         block
         size="large"
@@ -33,9 +34,9 @@ export function MfaActionButtons({
         icon={<SafetyOutlined />}
       >
         인증하기
-      </Button>
+      </AuthLoadingButton>
 
-      <Button
+      <AuthLoadingButton
         type="default"
         onClick={onRefreshQr}
         block
@@ -45,7 +46,7 @@ export function MfaActionButtons({
         icon={<ReloadOutlined />}
       >
         QR 코드 다시 불러오기
-      </Button>
+      </AuthLoadingButton>
     </Space>
   )
 }

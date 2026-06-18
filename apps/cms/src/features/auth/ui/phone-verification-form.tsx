@@ -7,6 +7,7 @@ import { Form, Input, Button, Space } from 'antd'
 import { MobileOutlined, SafetyOutlined } from '@ant-design/icons'
 import { useState, useMemo } from 'react'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
+import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
 import type { OtpSendRequest, OtpVerifyRequest } from '@/types/mfa'
 
 interface PhoneVerificationFormProps {
@@ -101,7 +102,7 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
     <div>
       <Form form={form} layout="vertical" size="middle">
         {!otpSent ? (
-          <Button
+          <AuthLoadingButton
             type="default"
             block
             icon={<MobileOutlined />}
@@ -110,7 +111,7 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
             disabled={disabled || !phoneNumber || phoneNumber.length < 13}
           >
             본인인증
-          </Button>
+          </AuthLoadingButton>
         ) : (
           <>
             <Form.Item
@@ -130,7 +131,7 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
               />
             </Form.Item>
             <Space direction="vertical" style={{ width: '100%' }} size="small">
-              <Button
+              <AuthLoadingButton
                 type="primary"
                 block
                 onClick={handleVerifyOtp}
@@ -138,7 +139,7 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
                 disabled={disabled}
               >
                 인증번호 확인
-              </Button>
+              </AuthLoadingButton>
               <Button block onClick={handleReset} disabled={verifying || disabled}>
                 다시 시작
               </Button>
