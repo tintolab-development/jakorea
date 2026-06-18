@@ -1,10 +1,10 @@
 /**
  * UJAT 프로그램 관리 > 초등 경제교육·봉사단 모집 목록용 Mock
- * 프로그램 진행 현황(7단계)별 1건 — `ujatProgressStatus` (모집 신청 현황과 별도)
+ * 프로그램 진행 현황(5종)별 1건 — `ujatProgressStatus` (모집 신청 현황과 별도)
  */
 
 import type { Program, ProgramLifecycleStatus, UjatProgramProgressStatus } from '@/types/domain'
-import { PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER } from '@/shared/constants/status'
+import { UJAT_PROGRAM_LIST_PROGRESS_ORDER } from '@/features/program/ujat/lib/ujat-program-list-progress'
 import { mockSponsors } from './sponsors'
 
 const UJAT_LIST_CAP = 30
@@ -25,7 +25,8 @@ type UjatListMockRow = {
   ujatProgressStatus: UjatProgramProgressStatus
   lifecycleStatus: ProgramLifecycleStatus
   schools: number
-  volunteers: number
+  firstHalfVolunteers: number
+  secondHalfVolunteers: number
 }
 
 /** `lifecycleStatus` — 대시보드·일정 등 모집 신청 현황 연동용(진행 현황 컬럼과 무관) */
@@ -35,29 +36,40 @@ function defaultRecruitmentLifecycle(
   if (progress === 'EDUCATION_IN_PROGRESS') return 'education_in_progress'
   if (progress === 'PROGRAM_ENDED') return 'document_processing_completed'
   if (progress === 'EDUCATION_SCHEDULED') return 'planned'
+  if (progress === 'VOLUNTEER_RECRUITING') return 'recruiting_instructors'
   return 'recruiting_students'
 }
 
 const progressIdSuffix = (status: UjatProgramProgressStatus) =>
   status.toLowerCase().replace(/_/g, '-')
 
-/** 진행 현황 7단계 각 1건 (목록 정렬: 최신 연도 우선) */
-const UJAT_LIST_MOCK_ROWS: readonly UjatListMockRow[] =
-  PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER.map((ujatProgressStatus, index) => ({
+/** 진행 현황 5종 각 1건 (목록 정렬: 최신 연도 우선) */
+const UJAT_LIST_MOCK_ROWS: readonly UjatListMockRow[] = UJAT_PROGRAM_LIST_PROGRESS_ORDER.map(
+  (ujatProgressStatus, index) => ({
     id: `ujat-progress-${progressIdSuffix(ujatProgressStatus)}`,
     year: 2030 - index,
     ujatProgressStatus,
     lifecycleStatus: defaultRecruitmentLifecycle(ujatProgressStatus),
-    schools: Math.min(index * 4, UJAT_LIST_CAP),
-    volunteers: Math.min(index * 3, UJAT_LIST_CAP),
-  }))
+    schools: Math.min(index * 5 + 4, UJAT_LIST_CAP),
+    firstHalfVolunteers: Math.min(index * 4 + 2, UJAT_LIST_CAP),
+    secondHalfVolunteers: Math.min(index * 3, UJAT_LIST_CAP),
+  })
+)
 
 function buildUjatElementaryListPrograms(): Program[] {
   const sponsorId = resolveJaSponsorId()
   const now = new Date().toISOString()
 
   return UJAT_LIST_MOCK_ROWS.map(row => {
-    const { id, year, ujatProgressStatus, lifecycleStatus, schools, volunteers } = row
+    const {
+      id,
+      year,
+      ujatProgressStatus,
+      lifecycleStatus,
+      schools,
+      firstHalfVolunteers,
+      secondHalfVolunteers,
+    } = row
     const isRecruitmentDemo = lifecycleStatus === 'recruiting_students'
     return {
       id,
@@ -118,7 +130,9 @@ function buildUjatElementaryListPrograms(): Program[] {
       ujatProgressStatus,
       participatingSchoolCount: schools,
       instructorCapacity: UJAT_LIST_CAP,
-      generalVolunteers: volunteers,
+      ujatFirstHalfVolunteerCount: firstHalfVolunteers,
+      ujatSecondHalfVolunteerCount: secondHalfVolunteers,
+      generalVolunteers: firstHalfVolunteers,
       staffVolunteers: 0,
       returningVolunteers: 0,
       approvedStudentCount: 0,

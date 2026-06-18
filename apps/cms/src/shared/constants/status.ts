@@ -10,6 +10,7 @@ import type {
   SettlementStatus,
   ProgramLifecycleStatus,
   ReportStatus,
+  UjatProgramProgressStatus,
 } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
 import type { Status } from '@/types'
@@ -518,13 +519,25 @@ export const PROGRAM_ENROLLMENT_DISPLAY_ACCENT_COLORS: Record<
   REJECTED: 'var(--color-red, #c32f4a)',
 }
 
-/** 프로그램 엔티티 → UJAT·일반 상세 공통 진행 현황(7단계) */
+/** UJAT 목록 5종 → 공통 7단계 배지 토큰 (일반 화면에서 UJAT Program이 넘어올 때 폴백) */
+const UJAT_PROGRESS_TO_ENROLLMENT_DISPLAY: Record<
+  UjatProgramProgressStatus,
+  ProgramEnrollmentDisplayStatus
+> = {
+  EDUCATION_SCHEDULED: 'EDUCATION_SCHEDULED',
+  PARTICIPANT_RECRUITING: 'WAITING_RESULT',
+  VOLUNTEER_RECRUITING: 'DOCUMENT_PASS',
+  EDUCATION_IN_PROGRESS: 'EDUCATION_IN_PROGRESS',
+  PROGRAM_ENDED: 'PROGRAM_ENDED',
+}
+
+/** 프로그램 엔티티 → UJAT·일반 상세 공통 진행 현황 */
 export function getProgramProgressDisplayStatus(program: {
-  ujatProgressStatus?: ProgramEnrollmentDisplayStatus
+  ujatProgressStatus?: UjatProgramProgressStatus
   lifecycleStatus?: ProgramLifecycleStatus
 }): ProgramEnrollmentDisplayStatus {
   if (program.ujatProgressStatus) {
-    return program.ujatProgressStatus
+    return UJAT_PROGRESS_TO_ENROLLMENT_DISPLAY[program.ujatProgressStatus]
   }
   return getEnrollmentDisplayStatusFromProgramLifecycle(program.lifecycleStatus)
 }

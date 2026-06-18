@@ -3,7 +3,7 @@
  * UJAT·일반 프로그램 상세 공통. 색상은 `status-badge.css` program-enrollment 토큰.
  */
 
-import type { ProgramLifecycleStatus } from '@/types/domain'
+import type { ProgramLifecycleStatus, UjatProgramProgressStatus } from '@/types/domain'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import {
   getEnrollmentDisplayStatusFromProgramLifecycle,
@@ -28,7 +28,7 @@ export function ProgramEnrollmentStatusText({
 
 export interface ProgramProgressStatusTextProps {
   program: {
-    ujatProgressStatus?: ProgramEnrollmentDisplayStatus
+    ujatProgressStatus?: UjatProgramProgressStatus
     lifecycleStatus?: ProgramLifecycleStatus
   }
   className?: string

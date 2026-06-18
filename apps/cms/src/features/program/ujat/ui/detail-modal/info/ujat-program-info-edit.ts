@@ -20,6 +20,7 @@ export function getUjatProgramProgressDisplayStatus(
 
 export function canUjatProgramInfoEdit(program: Program | null | undefined): boolean {
   if (!program) return false
-  const status = getProgramProgressDisplayStatus(program)
-  return !EDIT_BLOCKED_STATUSES.has(status as UjatProgramProgressStatus)
+  const status = program.ujatProgressStatus
+  if (!status) return true
+  return !EDIT_BLOCKED_STATUSES.has(status)
 }

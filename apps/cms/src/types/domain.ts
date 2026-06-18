@@ -262,16 +262,14 @@ export type ProgramLifecycleStatus =
   | 'participant_instructor_recruitment_completed' // 참여자&교육자 모집 완료
 
 /**
- * UJAT 프로그램 진행 현황 (7단계) — 모집 신청 현황(`ProgramLifecycleStatus`)과 별도
+ * UJAT 프로그램 진행 현황 (목록 5종) — 모집 신청 현황(`ProgramLifecycleStatus`)과 별도
  */
 export type UjatProgramProgressStatus =
-  | 'WAITING_RESULT' // 신청 및 대기 중
-  | 'DOCUMENT_PASS' // 1차 서류 합격
   | 'EDUCATION_SCHEDULED' // 프로그램 진행 예정
+  | 'PARTICIPANT_RECRUITING' // 참여자 모집 중
+  | 'VOLUNTEER_RECRUITING' // 봉사자 모집 중
   | 'EDUCATION_IN_PROGRESS' // 프로그램 진행 중
   | 'PROGRAM_ENDED' // 프로그램 진행 완료
-  | 'INTERVIEW_FAILED' // 면접 불합격
-  | 'REJECTED' // 신청 반려
 
 // 프로그램
 export interface Program {
@@ -289,8 +287,12 @@ export interface Program {
   applicationEndDate?: DateValue // 신청 종료일
   status: Status
   lifecycleStatus?: ProgramLifecycleStatus // 모집 신청 현황(참여자·강사·봉사자 모집 등)
-  /** UJAT 전용 프로그램 진행 현황(7단계) */
+  /** UJAT 전용 프로그램 진행 현황(목록 5종) */
   ujatProgressStatus?: UjatProgramProgressStatus
+  /** UJAT 목록 — 상반기 봉사자 모집 인원(현재) */
+  ujatFirstHalfVolunteerCount?: number
+  /** UJAT 목록 — 하반기 봉사자 모집 인원(현재) */
+  ujatSecondHalfVolunteerCount?: number
   settlementRuleId?: UUID // 정산 규칙 참조
   applicationPathId?: UUID // 신청 경로 참조 (V3 Phase 7)
   // 엑셀 데이터 기반 추가 필드 - 기본 교육실적 정보

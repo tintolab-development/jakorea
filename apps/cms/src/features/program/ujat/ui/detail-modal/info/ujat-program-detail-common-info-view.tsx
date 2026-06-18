@@ -19,7 +19,7 @@ import {
   PARTNER_INVOLVEMENT_OPTIONS,
   TARGET_LEVEL_LABEL,
 } from '@/features/program/shared/lib/program-detail-info-constants'
-import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
+import { UjatProgramListProgressCell } from '@/features/program/ujat/ui/list/ujat-program-list-progress-cell'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import {
   UjatHalfEducationScheduleReadonly,
@@ -42,7 +42,7 @@ function optionLabel<T extends { value: string; label: string }>(
 }
 
 function UjatProgressStatusView({ program }: { program: Program }) {
-  return <ProgramProgressStatusText program={program} />
+  return <UjatProgramListProgressCell program={program} />
 }
 
 function participantTypeSummary(program: Program): string {

@@ -9,7 +9,6 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useProgramStore } from '@/features/program/general/model/program-store'
-import { getCapacity } from '@/features/program/general/lib/program-helpers'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import {
   UJAT_APPLICANT_ID_PARAM,
@@ -23,68 +22,53 @@ import {
   isResolvableUjatProgramId,
   resolveUjatProgramForDetail,
 } from '@/features/program/ujat/lib/ujat-program-detail-meta'
+import {
+  formatUjatDispatchedSchoolCount,
+  formatUjatProgramManagementName,
+  formatUjatVolunteerHalfRecruitment,
+} from '@/features/program/ujat/lib/ujat-program-list-display'
+import {
+  readUjatRegistrationLocalSaveRecords,
+  UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
+} from '@/features/program/ujat/lib/ujat-registration-local-save'
 import type { Program } from '@/types/domain'
 import { FilterTableLayout, CmsButton } from '@/shared/ui'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
-import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
 import {
   TemplateWritingPreviewProvider,
   useTemplateWritingPreview,
 } from '@/features/template/context/template-writing-preview-context'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import { UjatProgramRegistrationFullpageModal } from '@/features/program/ujat/ui/registration/ujat-program-registration-fullpage-modal'
+import { UjatRegistrationDraftNoticeModal } from '@/features/program/ujat/ui/registration/registration-draft-notice-modal'
 import { UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/ujat/model/ujat-program-registration-flow'
 import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 import { UjatProgramDetailFullPageModal } from '@/features/program/ujat/ui/detail-modal/ujat-program-detail-fullpage-modal'
-import { UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/program/ujat/lib/ujat-registration-local-save'
+import { UjatProgramListProgressCell } from '@/features/program/ujat/ui/list/ujat-program-list-progress-cell'
 
 import '@/pages/programs/program-list-page.css'
 import './ujat-program-list-page.css'
 
-const UJAT_VOLUNTEER_CAP_FALLBACK = 30
-
 /** `/programs/ujat?new` — 5단계 UJAT 등록 플로우 풀페이지. `userPreview`는 상단「미리보기」시 `TemplatePreviewModal` 동기화용. */
 const PROGRAMS_UJAT_NEW_QUERY_KEY = 'new'
 
-/** `/programs/ujat` 및 하위 경로(라우터 `ujat/*`) */
+/** `/programs/ujat` 및 하위 경로(라우터 `ujat/*`) — 교육 지역 관리 제외 */
 function isUjatProgramListPath(pathnameNormalized: string): boolean {
+  if (
+    pathnameNormalized === '/programs/ujat/regions' ||
+    pathnameNormalized.startsWith('/programs/ujat/regions/')
+  ) {
+    return false
+  }
   return (
     pathnameNormalized === '/programs/ujat' || pathnameNormalized.startsWith('/programs/ujat/')
   )
 }
-/** 진행년도 필터 — 전체(진행 현황별 mock 건수) */
+
+/** 진행년도 필터 — 전체 */
 const UJAT_PROGRESS_YEAR_ALL = '__all__' as const
 type UjatProgressYearFilter = typeof UJAT_PROGRESS_YEAR_ALL | number
-
-function sumVolunteers(program: Program): number {
-  return (
-    (program.generalVolunteers ?? 0) +
-    (program.staffVolunteers ?? 0) +
-    (program.returningVolunteers ?? 0)
-  )
-}
-
-function formatCurrentTotal(current: number, total: number): string {
-  return `${current} / ${total}`
-}
-
-function volunteerHalfDisplay(program: Program): string {
-  const cap = program.instructorCapacity ?? getCapacity(program) ?? UJAT_VOLUNTEER_CAP_FALLBACK
-  const current = Math.min(sumVolunteers(program), cap)
-  return formatCurrentTotal(current, cap)
-}
-
-function dispatchedSchoolDisplay(program: Program): string {
-  const cap = program.instructorCapacity ?? UJAT_VOLUNTEER_CAP_FALLBACK
-  const current = Math.min(program.participatingSchoolCount ?? 0, cap)
-  return formatCurrentTotal(current, cap)
-}
-
-/** UJAT 목록 — 프로그램 진행 현황(7단계, 모집 신청 현황과 별도) */
-function UjatProgramProgressCell({ program }: { program: Program }) {
-  return <ProgramProgressStatusText program={program} />
-}
 
 const ujatProgramIdSet = new Set(getUjatPrograms().map(p => p.id))
 
@@ -101,6 +85,11 @@ function UjatProgramListPageContent() {
 
   const { isWritingUserPreviewOpen, closeWritingUserPreview } = useTemplateWritingPreview()
 
+  const [draftNoticeOpen, setDraftNoticeOpen] = useState(false)
+  const [pendingDraftRecords, setPendingDraftRecords] = useState(
+    () => readUjatRegistrationLocalSaveRecords()
+  )
+
   const handleCloseUjatProgramRegistrationFullpage = useCallback(() => {
     if (!isUjatProgramListPath(pNorm)) return
     closeWritingUserPreview()
@@ -113,6 +102,7 @@ function UjatProgramListPageContent() {
 
   const handleUjatProgramRegistrationSaved = useCallback(() => {
     void fetchPrograms()
+    setPendingDraftRecords(readUjatRegistrationLocalSaveRecords())
     handleCloseUjatProgramRegistrationFullpage()
   }, [fetchPrograms, handleCloseUjatProgramRegistrationFullpage])
 
@@ -141,7 +131,6 @@ function UjatProgramListPageContent() {
     closeWritingUserPreview
   )
 
-  const defaultYear = dayjs().year()
   const [pendingFilters, setPendingFilters] = useState<{ progressYear: UjatProgressYearFilter }>({
     progressYear: UJAT_PROGRESS_YEAR_ALL,
   })
@@ -195,12 +184,11 @@ function UjatProgramListPageContent() {
       const y = dayjs(p.startDate).year()
       if (Number.isFinite(y)) years.add(y)
     })
-    years.add(defaultYear)
     const yearOptions = Array.from(years)
       .sort((a, b) => b - a)
       .map(y => ({ label: `${y}년`, value: y as number }))
     return [{ label: '전체', value: UJAT_PROGRESS_YEAR_ALL }, ...yearOptions]
-  }, [ujatPrograms, defaultYear])
+  }, [ujatPrograms])
 
   const filterFields = useMemo<FilterFieldConfig[]>(
     () => [
@@ -217,21 +205,17 @@ function UjatProgramListPageContent() {
     [progressYearFieldOptions]
   )
 
-  const handleFilterChange = useCallback(
-    (key: string, value: unknown) => {
-      if (key !== 'progressYear') return
-      if (value === UJAT_PROGRESS_YEAR_ALL) {
-        setPendingFilters({ progressYear: UJAT_PROGRESS_YEAR_ALL })
-        return
-      }
-      const nextYear =
-        value === '' || value === undefined || value === null ? defaultYear : Number(value)
-      setPendingFilters({
-        progressYear: Number.isFinite(nextYear) ? nextYear : defaultYear,
-      })
-    },
-    [defaultYear]
-  )
+  const handleFilterChange = useCallback((key: string, value: unknown) => {
+    if (key !== 'progressYear') return
+    if (value === UJAT_PROGRESS_YEAR_ALL) {
+      setPendingFilters({ progressYear: UJAT_PROGRESS_YEAR_ALL })
+      return
+    }
+    const nextYear = Number(value)
+    setPendingFilters({
+      progressYear: Number.isFinite(nextYear) ? nextYear : UJAT_PROGRESS_YEAR_ALL,
+    })
+  }, [])
 
   const handleSearch = useCallback(() => {
     setAppliedYear(pendingFilters.progressYear)
@@ -263,47 +247,61 @@ function UjatProgramListPageContent() {
       },
       {
         title: '프로그램명',
-        dataIndex: 'title',
         key: 'title',
         ellipsis: true,
         align: 'center',
-        render: (text: string | undefined) => text ?? '-',
+        render: (_value, record) => formatUjatProgramManagementName(record),
       },
       {
         title: '프로그램 진행 현황',
         key: 'lifecycleProgress',
         width: 200,
         align: 'center',
-        render: (_value, record) => <UjatProgramProgressCell program={record} />,
+        render: (_value, record) => <UjatProgramListProgressCell program={record} />,
       },
       {
         title: '최종 파견 학교 수',
         key: 'dispatchedSchools',
         width: 180,
         align: 'center',
-        render: (_value, record) => dispatchedSchoolDisplay(record),
+        render: (_value, record) => formatUjatDispatchedSchoolCount(record),
       },
       {
         title: '상반기 봉사자 모집 인원',
         key: 'volunteerFirstHalf',
         width: 200,
         align: 'center',
-        render: (_value, record) => volunteerHalfDisplay(record),
+        render: (_value, record) => formatUjatVolunteerHalfRecruitment(record, 'h1'),
       },
       {
         title: '하반기 봉사자 모집 인원',
         key: 'volunteerSecondHalf',
         width: 200,
         align: 'center',
-        render: (_value, record) => volunteerHalfDisplay(record),
+        render: (_value, record) => formatUjatVolunteerHalfRecruitment(record, 'h2'),
       },
     ],
     [filteredRows]
   )
 
-  const handleProgramCreateClick = useCallback(() => {
+  const openNewRegistration = useCallback(() => {
     navigate({ pathname: '/programs/ujat', search: '?new=1' })
   }, [navigate])
+
+  const handleProgramCreateClick = useCallback(() => {
+    const records = readUjatRegistrationLocalSaveRecords()
+    setPendingDraftRecords(records)
+    if (records.length > 0) {
+      setDraftNoticeOpen(true)
+      return
+    }
+    openNewRegistration()
+  }, [openNewRegistration])
+
+  const handleDraftNoticeConfirm = useCallback(() => {
+    setDraftNoticeOpen(false)
+    openNewRegistration()
+  }, [openNewRegistration])
 
   const handleRowNavigate = useCallback(
     (program: Program) => {
@@ -359,6 +357,13 @@ function UjatProgramListPageContent() {
         open={isUjatProgramNewRegistrationQuery}
         onClose={handleCloseUjatProgramRegistrationFullpage}
         onProgramRegistrationSaved={handleUjatProgramRegistrationSaved}
+      />
+
+      <UjatRegistrationDraftNoticeModal
+        open={draftNoticeOpen}
+        records={pendingDraftRecords}
+        onConfirm={handleDraftNoticeConfirm}
+        onCancel={() => setDraftNoticeOpen(false)}
       />
     </div>
   )
