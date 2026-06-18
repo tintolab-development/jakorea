@@ -70,61 +70,92 @@ function buildUjatElementaryListPrograms(): Program[] {
       firstHalfVolunteers,
       secondHalfVolunteers,
     } = row
-    const isRecruitmentDemo = lifecycleStatus === 'recruiting_students'
+    const hasRecruitDemoData =
+      ujatProgressStatus === 'PARTICIPANT_RECRUITING' ||
+      ujatProgressStatus === 'VOLUNTEER_RECRUITING'
     return {
       id,
       sponsorId,
       title: UJAT_LIST_TITLE(year),
-      mainTitle: isRecruitmentDemo ? `${year}년 JA Korea 초등 경제교육 대상 학교` : undefined,
+      mainTitle: hasRecruitDemoData ? `${year}년 JA Korea 초등 경제교육 대상 학교` : undefined,
       type: 'offline' as const,
       format: 'course' as const,
       category: 'school' as const,
-      description: isRecruitmentDemo
+      description: hasRecruitDemoData
         ? 'JA Korea 초등 경제교육 프로그램은 초등학생들에게 경제·금융 개념을 체험 중심으로 전달하는 프로그램입니다.'
         : undefined,
-      recruitmentGuide: isRecruitmentDemo
+      recruitmentGuide: hasRecruitDemoData
         ? '1. 신청 자격: 해당 지역 초등학교\n2. 신청 방법: 홈페이지 온라인 신청\n3. 선발: 선착순 및 서류 심사'
         : undefined,
-      learningSupportContent: isRecruitmentDemo
+      learningSupportContent: hasRecruitDemoData
         ? '교재, 교구, 강사 파견, 수업 지원 자료 제공'
         : undefined,
-      district: isRecruitmentDemo
+      district: hasRecruitDemoData
         ? '경기, 광주, 대구, 대전, 부산, 서울, 인천, 전북 지역 초등학교'
         : undefined,
-      contactPhone: isRecruitmentDemo ? '02-6085-6028' : undefined,
-      contactEmail: isRecruitmentDemo ? 'ujat@jakorea.org' : undefined,
-      applicationStartDate: isRecruitmentDemo ? `${year - 1}-12-08T00:00:00.000Z` : undefined,
-      applicationEndDate: isRecruitmentDemo ? `${year}-01-16T00:00:00.000Z` : undefined,
-      resultAnnouncementDate: isRecruitmentDemo ? `${year}-01-26T00:00:00.000Z` : undefined,
-      resultAnnouncementMethod: isRecruitmentDemo
+      contactPhone: hasRecruitDemoData ? '02-6085-6028' : undefined,
+      contactEmail: hasRecruitDemoData ? 'ujat@jakorea.org' : undefined,
+      applicationStartDate: hasRecruitDemoData ? `${year - 1}-12-08T00:00:00.000Z` : undefined,
+      applicationEndDate: hasRecruitDemoData ? `${year}-01-16T00:00:00.000Z` : undefined,
+      resultAnnouncementDate: hasRecruitDemoData ? `${year}-01-26T00:00:00.000Z` : undefined,
+      resultAnnouncementMethod: hasRecruitDemoData
         ? '홈페이지 공지 및 담당교사 개별 안내'
         : undefined,
-      volunteerTarget: isRecruitmentDemo ? '대학(원)생' : undefined,
-      volunteerTargetDetail: isRecruitmentDemo ? '전공무관, 휴학생 지원 가능' : undefined,
+      volunteerTarget: hasRecruitDemoData ? '대학(원)생' : undefined,
+      volunteerTargetDetail: hasRecruitDemoData ? '전공무관, 휴학생 지원 가능' : undefined,
+      volunteerApplicationStartDate: hasRecruitDemoData ? `${year}-03-10T00:00:00.000Z` : undefined,
+      volunteerApplicationEndDate: hasRecruitDemoData ? `${year}-04-20T00:00:00.000Z` : undefined,
+      documentPassAnnouncementDate: hasRecruitDemoData ? `${year}-04-25T00:00:00.000Z` : undefined,
+      documentPassAnnouncementMethod: hasRecruitDemoData ? '홈페이지 공지' : undefined,
+      interviewStartDate: hasRecruitDemoData ? `${year}-05-01T00:00:00.000Z` : undefined,
+      interviewEndDate: hasRecruitDemoData ? `${year}-05-10T00:00:00.000Z` : undefined,
+      interviewMethod: hasRecruitDemoData ? '온라인' : undefined,
+      finalPassAnnouncementDate: hasRecruitDemoData ? `${year}-05-20T00:00:00.000Z` : undefined,
+      finalPassAnnouncementMethod: hasRecruitDemoData ? '홈페이지 공지' : undefined,
+      otherNotes: hasRecruitDemoData ? '면접 일정은 개별 안내 예정' : undefined,
+      generalCommonInfo: hasRecruitDemoData
+        ? {
+            volunteerRecruitmentInfo: {
+              noticeExposureTiming: 'one-week-before',
+              notesNotApplicable: false,
+            },
+            paymentItems: '교통비',
+            deductionItems: '일용근로자 원천징수세액',
+            volunteerInterviewScheduleInfo: {
+              recurringUnavailable: '일요일, 공휴일',
+              specificUnavailableDates: '26년 3월 6일(금), 26년 3월 15일(금)',
+              specificUnavailableDateIsos: ['2026-03-06', '2026-03-15'],
+              availableTimeSlots:
+                '09:00 ~ 09:30, 09:30 ~ 10:00, 10:00 ~ 10:30, 10:30 ~ 11:00, 11:00 ~ 11:30, 16:00 ~ 16:30, 20:30 ~ 21:00',
+            },
+          }
+        : undefined,
       rounds: [
         {
           id: `${id}-round-1`,
           programId: id,
           roundNumber: 1,
-          startDate: isRecruitmentDemo ? `${year}-04-03T00:00:00.000Z` : `${year}-03-01T00:00:00.000Z`,
-          endDate: isRecruitmentDemo ? `${year}-06-19T00:00:00.000Z` : `${year}-11-30T00:00:00.000Z`,
+          startDate: hasRecruitDemoData ? `${year}-04-03T00:00:00.000Z` : `${year}-03-01T00:00:00.000Z`,
+          endDate: hasRecruitDemoData ? `${year}-06-19T00:00:00.000Z` : `${year}-11-30T00:00:00.000Z`,
           capacity: UJAT_LIST_CAP,
           status: 'active' as const,
           deliveryType: 'offline' as const,
+          curriculum: hasRecruitDemoData ? '36' : undefined,
         },
         {
           id: `${id}-round-2`,
           programId: id,
           roundNumber: 2,
-          startDate: isRecruitmentDemo ? `${year}-09-11T00:00:00.000Z` : `${year}-03-01T00:00:00.000Z`,
-          endDate: isRecruitmentDemo ? `${year}-11-20T00:00:00.000Z` : `${year}-11-30T00:00:00.000Z`,
+          startDate: hasRecruitDemoData ? `${year}-09-11T00:00:00.000Z` : `${year}-03-01T00:00:00.000Z`,
+          endDate: hasRecruitDemoData ? `${year}-11-20T00:00:00.000Z` : `${year}-11-30T00:00:00.000Z`,
           capacity: UJAT_LIST_CAP,
           status: 'active' as const,
           deliveryType: 'offline' as const,
+          curriculum: hasRecruitDemoData ? '36' : undefined,
         },
       ],
-      startDate: isRecruitmentDemo ? `${year}-04-03T00:00:00.000Z` : `${year}-01-01T00:00:00.000Z`,
-      endDate: isRecruitmentDemo ? `${year}-11-20T00:00:00.000Z` : `${year}-12-31T00:00:00.000Z`,
+      startDate: hasRecruitDemoData ? `${year}-04-03T00:00:00.000Z` : `${year}-01-01T00:00:00.000Z`,
+      endDate: hasRecruitDemoData ? `${year}-11-20T00:00:00.000Z` : `${year}-12-31T00:00:00.000Z`,
       status: 'active' as const,
       lifecycleStatus,
       ujatProgressStatus,

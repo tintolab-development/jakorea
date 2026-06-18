@@ -554,7 +554,16 @@ export function HorizontalTableParagraphBody({
   const ujatRecruitFormVolunteerBody = renderUjatRecruitFormVolunteerParagraphBody(
     p,
     ujatRecruitFormVolunteer,
-    ujatRecruitParagraphProps
+    {
+      ...ujatRecruitParagraphProps,
+      exceptionScheduleCount: programApplicationFormVolunteer?.exceptionScheduleCount ?? 0,
+    },
+    programApplicationFormVolunteer?.enabled
+      ? {
+          commonScheduleSeed: programApplicationFormVolunteer.commonScheduleSeed,
+          onCommonExclusionChange: programApplicationFormVolunteer.onCommonExclusionChange,
+        }
+      : undefined
   )
   if (ujatRecruitFormVolunteerBody != null) return ujatRecruitFormVolunteerBody
 

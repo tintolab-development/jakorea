@@ -482,7 +482,8 @@ export function getUjatVolunteerDocPassedApplicants(
 ): UjatVolunteerApplicantRow[] {
   return sortUjatVolunteerDocPassedApplicants(
     getUjatVolunteerApplicants(programId, half).filter(
-      row => row.documentScreeningStatus === 'pass'
+      row =>
+        row.documentScreeningStatus === 'pass' && row.interviewAssignmentStatus === 'waiting'
     )
   )
 }

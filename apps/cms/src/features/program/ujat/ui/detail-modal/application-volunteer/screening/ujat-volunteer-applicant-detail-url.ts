@@ -18,5 +18,8 @@ export function isUjatVolunteerApplicantInTabList(
   if (tab.endsWith('_doc_passed')) {
     return getUjatVolunteerDocPassedApplicants(programId, half).some(row => row.id === applicantId)
   }
+  if (tab.endsWith('_all') || tab.endsWith('_doc1')) {
+    return getUjatVolunteerApplicants(programId, half).some(row => row.id === applicantId)
+  }
   return getUjatVolunteerApplicants(programId, half).some(row => row.id === applicantId)
 }
