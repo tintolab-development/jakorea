@@ -15,7 +15,16 @@ import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-program-detail-info-save'
 import { handleError } from '@/shared/utils/error-handler'
-import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/project-info/project-info-detail'
+import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { normalizeWritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import { createUjatProgramRegistrationDraft } from '@/features/template/model/ujat-program-registration-draft'
+import { applyUjatRegistrationOverlayToProgram } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import {
+  readUjatRegistrationBasicInfoOverlayForSave,
+  seedUjatRegistrationBasicInfoOverlayFromProgram,
+  touchUjatRegistrationOperationAnchorFromRangeSeal,
+} from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
+import { persistUjatRegistrationTemplateSave } from '@/features/program/ujat/lib/ujat-registration-template-local-save'
 import { ProgramManagersTab } from '@/features/program/general/ui/detail-modal/managers/program-managers-tab'
 import { UjatInstitutionApplicationList } from './application-institution/list/list'
 import { UjatInstitutionApplicationDetailPage } from './application-institution/detail/detail-page'
@@ -69,6 +78,7 @@ import {
   UJAT_SURVEY_LEGACY_TAB_MAP,
   type UjatSurveyMenuItem,
 } from '@/features/program/ujat/lib/ujat-program-detail-meta'
+import { resolveUjatProgramDisplayProgram } from '@/features/program/ujat/lib/ujat-program-display-program'
 import { UjatProgramDetailSidebar } from './ujat-program-detail-sidebar'
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
 import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
@@ -83,6 +93,7 @@ import {
 import {
   isValidUjatInstitutionAppTab,
   UJAT_INSTITUTION_APP_CHILD_ROWS,
+  UJAT_INSTITUTION_APPLICATIONS_LNB_LABEL,
 } from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
@@ -116,7 +127,10 @@ import {
   resolvePreviewHeaderTitle,
 } from '@/features/template/model/template-registry/template-registry'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
-import { UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT } from '@/data/mock/ujat-survey-poll-responses-mock'
+import {
+  UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT,
+  UJAT_SURVEY_POLL_RESPONSES_MOCK,
+} from '@/data/mock/ujat-survey-poll-responses-mock'
 import { useClipboard } from '@/features/template/hooks/use-clipboard'
 import {
   getSatisfactionAudienceLabel,
@@ -130,7 +144,12 @@ import {
   UJAT_SURVEY_POLL_ACTION_LABELS,
   UJAT_SURVEY_POLL_EMPTY_COPY,
   UJAT_SURVEY_POLL_NO_RESPONSE_COPY,
+  UJAT_SURVEY_POLL_DOWNLOAD_MODAL_COPY,
+  UJAT_SURVEY_POLL_SHARE_TOAST_COPY,
+  UJAT_SATISFACTION_DOWNLOAD_MODAL_COPY,
+  UJAT_SATISFACTION_SHARE_TOAST_COPY,
   UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY,
+  UJAT_LECTURE_EVAL_DOWNLOAD_MODAL_COPY,
   UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY,
 } from './survey-management/lib/ujat-survey-copy'
 import type { UjatSurveyPollRawResponse } from '@/data/mock/ujat-survey-poll-responses-mock'
@@ -148,6 +167,11 @@ import {
   buildLectureEvalResultsPdfFileName,
   exportLectureEvalResultsPdf,
 } from './survey-management/lib/export-lecture-eval-results-pdf'
+import { exportSurveyResultsExcel } from '@/features/program/shared/lib/survey-management/export-survey-results-excel'
+import {
+  SurveyResultsDownloadModal,
+  type SurveyResultsDownloadFormat,
+} from '@/features/program/shared/ui/survey-management/survey-results-download-modal'
 import { getSurveyWritingTemplateSelectOptions } from './survey-management/lib/ujat-survey-template-options'
 import {
   buildUjatSurveyWritingPreviewSession,
@@ -159,6 +183,7 @@ import { UjatSurveyEmptyState } from './survey-management/ui/ujat-survey-empty-s
 import { UjatSurveyNoResponseState } from './survey-management/ui/ujat-survey-no-response-state'
 import { UjatSurveyPollResultsView } from './survey-management/ui/ujat-survey-poll-results-view'
 import { UjatSurveyRegisteredActions } from './survey-management/ui/ujat-survey-registered-actions'
+import { SurveyShareCopyToast } from '@/features/program/shared/ui/survey-management/survey-share-copy-toast'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './ujat-program-detail-fullpage-modal.css'
 
@@ -191,6 +216,18 @@ const UJAT_REGISTERED_SURVEY_MOCK: UjatRegisteredSurvey[] = []
 const UJAT_SATISFACTION_SURVEY_MOCK: UjatSatisfactionSurveyByAudience = {}
 
 const UJAT_LECTURE_EVAL_SURVEY_MOCK: UjatRegisteredSurvey | null = null
+
+function buildUjatSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: string): string {
+  const safeProgram = programTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '프로그램'
+  const safeSurvey = surveyTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '만족도조사'
+  return `${safeProgram}_${safeSurvey}_만족도조사결과.pdf`
+}
+
+function buildUjatSurveyPollResultsPdfFileName(programTitle: string, surveyTitle: string): string {
+  const safeProgram = programTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '프로그램'
+  const safeSurvey = surveyTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '설문조사'
+  return `${safeProgram}_${safeSurvey}_설문조사결과.pdf`
+}
 
 export interface UjatProgramDetailFullPageModalProps {
   open: boolean
@@ -309,9 +346,13 @@ function normalizeUjatDetailParams(
       setInvalid('education_progress', defaultEducationProgressTabForHalf('h1'))
     }
   } else if (lnb === 'survey') {
-    tab = UJAT_SURVEY_LEGACY_TAB_MAP[tab] ?? tab
-    if (!surveyKeys.includes(tab)) {
-      setInvalid('survey', surveyKeys[0] ?? 'survey-poll')
+    if (surveyKeys.length === 0) {
+      setInvalid('info', 'info')
+    } else {
+      tab = UJAT_SURVEY_LEGACY_TAB_MAP[tab] ?? tab
+      if (!surveyKeys.includes(tab)) {
+        setInvalid('survey', surveyKeys[0]!)
+      }
     }
   } else if (lnb === 'managers') {
     if (tab !== 'main') setInvalid('managers', 'main')
@@ -386,7 +427,7 @@ function ujatLnbBreadcrumbLabel(lnb: UjatDetailLnbKey, tab: string): string {
     case 'info':
       return '프로그램 정보'
     case 'institution_applications':
-      return '기관 신청 목록'
+      return UJAT_INSTITUTION_APPLICATIONS_LNB_LABEL
     case 'volunteer_h1':
       return '상반기 봉사자 신청 목록'
     case 'volunteer_h2':
@@ -416,7 +457,7 @@ function ujatChildBreadcrumbLabel(
     return UJAT_INSTITUTION_APP_CHILD_ROWS.find(row => row.tab === tab)?.label ?? null
   }
   if (lnb === 'volunteer_h1' || lnb === 'volunteer_h2') {
-    if (tab.endsWith('_all')) return '신청자 목록'
+    if (tab.endsWith('_all')) return null
     if (tab.endsWith('_doc1')) return '1차 서류 심사 대상자'
     if (tab.endsWith('_doc_passed')) return '1차 서류 합격자'
     if (tab.endsWith('_interview2')) return '2차 면접 대상자'
@@ -450,7 +491,9 @@ function ujatLnbBreadcrumbTargetTab(
 function isUjatVolunteerApplicantDetailRoute(lnb: UjatDetailLnbKey, tab: string): boolean {
   return (
     (lnb === 'volunteer_h1' || lnb === 'volunteer_h2') &&
-    (tab === 'vh1_doc1' ||
+    (tab === 'vh1_all' ||
+      tab === 'vh2_all' ||
+      tab === 'vh1_doc1' ||
       tab === 'vh2_doc1' ||
       tab === 'vh1_doc_passed' ||
       tab === 'vh2_doc_passed' ||
@@ -486,12 +529,15 @@ export function UjatProgramDetailFullPageModal({
     updateProgram,
   } = useProgramDetail(open ? programId : undefined)
 
-  const displayProgram = useMemo(() => detailProgram ?? program ?? null, [detailProgram, program])
+  const displayProgram = useMemo(() => {
+    const base = detailProgram ?? program ?? null
+    return base ? resolveUjatProgramDisplayProgram(base) : null
+  }, [detailProgram, program])
 
-  const interviewEnabled = programId ? getUjatVolunteerInterviewEnabled(programId) : true
+  const interviewEnabled = displayProgram ? getUjatVolunteerInterviewEnabled(displayProgram) : true
   const surveyItems = useMemo(
-    () => (programId ? getUjatSurveyMenuItemsForProgram(programId) : []),
-    [programId]
+    () => (displayProgram ? getUjatSurveyMenuItemsForProgram(displayProgram) : []),
+    [displayProgram]
   )
   const surveyKeys = useMemo(() => surveyItems.map(s => s.key), [surveyItems])
   const [institutionListVersion, setInstitutionListVersion] = useState(0)
@@ -500,6 +546,9 @@ export function UjatProgramDetailFullPageModal({
   const [submittingSurveyTemplate, setSubmittingSurveyTemplate] = useState(false)
   const [surveyDeleteModalOpen, setSurveyDeleteModalOpen] = useState(false)
   const [surveyDeleteConfirmWord, setSurveyDeleteConfirmWord] = useState('')
+  const [pollDownloadModalOpen, setPollDownloadModalOpen] = useState(false)
+  const [downloadingPollResults, setDownloadingPollResults] = useState(false)
+  const pollResultsExportRef = useRef<HTMLDivElement>(null)
   const [registeredSurveys, setRegisteredSurveys] = useState<UjatRegisteredSurvey[]>(
     UJAT_REGISTERED_SURVEY_MOCK
   )
@@ -514,6 +563,14 @@ export function UjatProgramDetailFullPageModal({
   const [submittingSatisfactionSurvey, setSubmittingSatisfactionSurvey] = useState(false)
   const [satisfactionDeleteModalOpen, setSatisfactionDeleteModalOpen] = useState(false)
   const [satisfactionDeleteConfirmWord, setSatisfactionDeleteConfirmWord] = useState('')
+  const [satisfactionDownloadModalOpen, setSatisfactionDownloadModalOpen] = useState(false)
+  const [downloadingSatisfactionResults, setDownloadingSatisfactionResults] = useState(false)
+  const [shareToastOpen, setShareToastOpen] = useState(false)
+  const [shareToastLines, setShareToastLines] = useState<{ line1: string; line2: string }>(
+    UJAT_SATISFACTION_SHARE_TOAST_COPY
+  )
+  const shareToastTimerRef = useRef<number | null>(null)
+  const satisfactionResultsExportRef = useRef<HTMLDivElement>(null)
   const [surveyTemplateEditOpen, setSurveyTemplateEditOpen] = useState(false)
   const [surveyTemplateEditId, setSurveyTemplateEditId] = useState<string | null>(null)
   const [selectedSatisfactionTemplateId, setSelectedSatisfactionTemplateId] = useState<string | null>(
@@ -533,22 +590,42 @@ export function UjatProgramDetailFullPageModal({
   )
   const [submittingLectureEvalSurvey, setSubmittingLectureEvalSurvey] = useState(false)
   const [downloadingLectureEvalResults, setDownloadingLectureEvalResults] = useState(false)
+  const [lectureEvalDownloadModalOpen, setLectureEvalDownloadModalOpen] = useState(false)
   const lectureEvalResultsExportRef = useRef<HTMLDivElement>(null)
   const { openWritingUserPreview, closeWritingUserPreview } = useTemplateWritingPreview()
   const { copyText } = useClipboard()
   const { showAlert } = useCmsAlert()
 
   const openUjatSurveyTemplatePreview = useCallback(
-    (templateId: string) => {
-      const session = buildUjatSurveyWritingPreviewSession(templateId, () => {
-        closeWritingUserPreview()
-        setSurveyTemplateEditId(templateId)
-        setSurveyTemplateEditOpen(true)
-      })
+    (templateId: string, options?: { allowEdit?: boolean }) => {
+      const allowEdit = options?.allowEdit ?? true
+      const onEditForm = allowEdit
+        ? () => {
+            closeWritingUserPreview()
+            setSurveyTemplateEditId(templateId)
+            setSurveyTemplateEditOpen(true)
+          }
+        : undefined
+      const session = buildUjatSurveyWritingPreviewSession(templateId, onEditForm)
       if (session == null) return
       openWritingUserPreview(session)
     },
     [closeWritingUserPreview, openWritingUserPreview]
+  )
+
+  const showShareCopyToast = useCallback(
+    (lines: { line1: string; line2: string } = UJAT_SATISFACTION_SHARE_TOAST_COPY) => {
+      setShareToastLines(lines)
+      setShareToastOpen(true)
+      if (shareToastTimerRef.current != null) {
+        window.clearTimeout(shareToastTimerRef.current)
+      }
+      shareToastTimerRef.current = window.setTimeout(() => {
+        setShareToastOpen(false)
+        shareToastTimerRef.current = null
+      }, 4000)
+    },
+    []
   )
 
   const handleCloseSurveyTemplateEdit = useCallback(() => {
@@ -561,10 +638,18 @@ export function UjatProgramDetailFullPageModal({
     () => registeredSurveys.find(item => item.id === activeRegisteredSurveyId) ?? null,
     [registeredSurveys, activeRegisteredSurveyId]
   )
+  const pollResponses = useMemo(() => {
+    if (activeRegisteredSurvey == null) return []
+    return UJAT_SURVEY_POLL_RESPONSES_MOCK.slice(0, activeRegisteredSurvey.responseCount)
+  }, [activeRegisteredSurvey])
   const activeSatisfactionSurvey = useMemo(
     () => satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null,
     [satisfactionSurveysByAudience, activeSatisfactionAudience]
   )
+  const satisfactionResponses = useMemo(() => {
+    if (activeSatisfactionSurvey == null) return []
+    return UJAT_SURVEY_POLL_RESPONSES_MOCK.slice(0, activeSatisfactionSurvey.responseCount)
+  }, [activeSatisfactionSurvey])
 
   const activeLnb: UjatDetailLnbKey = open
     ? (resolveUjatDetailLnbFromSearchParams(searchParams) ?? 'info')
@@ -865,14 +950,26 @@ export function UjatProgramDetailFullPageModal({
     if (!canUjatProgramInfoEdit(displayProgram)) {
       return
     }
+    seedUjatRegistrationBasicInfoOverlayFromProgram(displayProgram)
     infoResetToProgram()
     setEditMode('info')
   }, [activeTab, displayProgram, infoResetToProgram, setEditMode])
 
   const handleInfoSave = useCallback(() => {
+    if (displayProgram) {
+      const overlay = touchUjatRegistrationOperationAnchorFromRangeSeal(
+        readUjatRegistrationBasicInfoOverlayForSave()
+      )
+      const mergedProgram = applyUjatRegistrationOverlayToProgram(displayProgram, overlay)
+      infoForm.reset(programToDetailEditValues(mergedProgram))
+      persistUjatRegistrationTemplateSave({
+        draft: normalizeWritingFormDraft(createUjatProgramRegistrationDraft()),
+        overlay,
+      })
+    }
     setEditMode(null)
     if (displayProgram) void infoTriggerSave()
-  }, [displayProgram, infoTriggerSave, setEditMode])
+  }, [displayProgram, infoForm, infoTriggerSave, setEditMode])
 
   const isEditModeRecruitParticipant =
     open &&
@@ -1072,14 +1169,14 @@ export function UjatProgramDetailFullPageModal({
       })
       const next = findWritingTemplateRowByDefinitionId(newTemplateId)
       if (next != null) {
-        const isFirstSurvey = registeredSurveys.length === 0
+        const surveyIndex = registeredSurveys.length + 1
         const newSurvey: UjatRegisteredSurvey = {
           id: `ujat-survey-${Date.now()}`,
-          title: `${next.templateName} ${registeredSurveys.length + 1 < 10 ? `0${registeredSurveys.length + 1}` : registeredSurveys.length + 1}`,
+          title: `${next.templateName} ${surveyIndex < 10 ? `0${surveyIndex}` : surveyIndex}`,
           templateId: next.id,
-          status: isFirstSurvey ? 'in_progress' : 'finished',
-          responseCount: UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT,
-          participantTotal: isFirstSurvey ? 16 : UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT,
+          status: 'before_start',
+          responseCount: 0,
+          participantTotal: 16,
         }
         setRegisteredSurveys(prev => [...prev, newSurvey])
         setActiveRegisteredSurveyId(newSurvey.id)
@@ -1124,8 +1221,54 @@ export function UjatProgramDetailFullPageModal({
 
   const handleOpenRegisteredSurveyTemplatePreview = useCallback(() => {
     if (!activeRegisteredSurvey) return
-    openUjatSurveyTemplatePreview(activeRegisteredSurvey.templateId)
+    openUjatSurveyTemplatePreview(activeRegisteredSurvey.templateId, {
+      allowEdit: activeRegisteredSurvey.status === 'before_start',
+    })
   }, [activeRegisteredSurvey, openUjatSurveyTemplatePreview])
+
+  const handleShareRegisteredSurvey = useCallback(() => {
+    if (!activeRegisteredSurvey || programId == null) return
+    const shareUrl = `${window.location.origin}/programs/ujat/survey?programId=${programId}&surveyId=${activeRegisteredSurvey.id}`
+    void copyText(shareUrl)
+    showShareCopyToast(UJAT_SURVEY_POLL_SHARE_TOAST_COPY)
+  }, [activeRegisteredSurvey, copyText, programId, showShareCopyToast])
+
+  const handleDownloadPollResults = useCallback(
+    async (format: SurveyResultsDownloadFormat) => {
+      if (activeRegisteredSurvey == null || displayProgram == null) return
+      setDownloadingPollResults(true)
+      try {
+        if (format === 'pdf') {
+          const root = pollResultsExportRef.current
+          if (root == null) {
+            throw new Error('PDF로보낼 결과 영역을 찾을 수 없습니다.')
+          }
+          await exportLectureEvalResultsPdf(
+            root,
+            buildUjatSurveyPollResultsPdfFileName(displayProgram.title, activeRegisteredSurvey.title)
+          )
+        } else {
+          await exportSurveyResultsExcel({
+            surveyTitle: activeRegisteredSurvey.title,
+            templateId: activeRegisteredSurvey.templateId,
+            responseCount: activeRegisteredSurvey.responseCount,
+            participantTotal: activeRegisteredSurvey.participantTotal,
+            responses: pollResponses,
+          })
+        }
+        setPollDownloadModalOpen(false)
+      } catch (error) {
+        handleError(error, { context: 'ujatSurveyPollResultsDownload' })
+        void showAlert({
+          title: '다운로드',
+          content: '파일 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      } finally {
+        setDownloadingPollResults(false)
+      }
+    },
+    [activeRegisteredSurvey, displayProgram, pollResponses, showAlert]
+  )
 
   const handleOpenSatisfactionCreateModal = useCallback(() => {
     setSubmittingSatisfactionSurvey(false)
@@ -1202,14 +1345,63 @@ export function UjatProgramDetailFullPageModal({
 
   const handleOpenSatisfactionTemplatePreview = useCallback(() => {
     if (!activeSatisfactionSurvey) return
-    openUjatSurveyTemplatePreview(activeSatisfactionSurvey.templateId)
+    openUjatSurveyTemplatePreview(activeSatisfactionSurvey.templateId, {
+      allowEdit: activeSatisfactionSurvey.status === 'before_start',
+    })
   }, [activeSatisfactionSurvey, openUjatSurveyTemplatePreview])
 
   const handleShareSatisfactionSurvey = useCallback(() => {
     if (!activeSatisfactionSurvey || programId == null) return
     const shareUrl = `${window.location.origin}/programs/ujat/satisfaction?programId=${programId}&audience=${activeSatisfactionAudience}`
     void copyText(shareUrl)
-  }, [activeSatisfactionSurvey, activeSatisfactionAudience, copyText, programId])
+    showShareCopyToast()
+  }, [
+    activeSatisfactionSurvey,
+    activeSatisfactionAudience,
+    copyText,
+    programId,
+    showShareCopyToast,
+  ])
+
+  const handleDownloadSatisfactionResults = useCallback(
+    async (format: SurveyResultsDownloadFormat) => {
+      if (activeSatisfactionSurvey == null || displayProgram == null) return
+      setDownloadingSatisfactionResults(true)
+      try {
+        if (format === 'pdf') {
+          const root = satisfactionResultsExportRef.current
+          if (root == null) {
+            throw new Error('PDF로보낼 결과 영역을 찾을 수 없습니다.')
+          }
+          await exportLectureEvalResultsPdf(
+            root,
+            buildUjatSatisfactionResultsPdfFileName(
+              displayProgram.title,
+              activeSatisfactionSurvey.title
+            )
+          )
+        } else {
+          await exportSurveyResultsExcel({
+            surveyTitle: activeSatisfactionSurvey.title,
+            templateId: activeSatisfactionSurvey.templateId,
+            responseCount: activeSatisfactionSurvey.responseCount,
+            participantTotal: activeSatisfactionSurvey.participantTotal,
+            responses: satisfactionResponses,
+          })
+        }
+        setSatisfactionDownloadModalOpen(false)
+      } catch (error) {
+        handleError(error, { context: 'ujatSatisfactionResultsDownload' })
+        void showAlert({
+          title: '다운로드',
+          content: '파일 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      } finally {
+        setDownloadingSatisfactionResults(false)
+      }
+    },
+    [activeSatisfactionSurvey, displayProgram, satisfactionResponses, showAlert]
+  )
 
   const ensureLectureEvalFormDraft = useCallback(() => {
     const templateId = lectureEvalSurvey?.templateId ?? UJAT_LECTURE_EVAL_TEMPLATE_ID
@@ -1289,8 +1481,17 @@ export function UjatProgramDetailFullPageModal({
       headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
       editorKind: 'survey',
       paragraphBodyOptions: UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
+      ...(lectureEvalSurvey.status === 'before_start'
+        ? {
+            onEditForm: () => {
+              closeWritingUserPreview()
+              setSurveyTemplateEditId(row.id)
+              setSurveyTemplateEditOpen(true)
+            },
+          }
+        : {}),
     })
-  }, [lectureEvalSurvey, openWritingUserPreview])
+  }, [lectureEvalSurvey, closeWritingUserPreview, openWritingUserPreview])
 
   const handleLectureEvalTabChange = useCallback(
     (tab: UjatLectureEvalTabKey) => {
@@ -1339,21 +1540,42 @@ export function UjatProgramDetailFullPageModal({
     setLectureEvalSubmitted(false)
   }, [lectureEvalSurvey, lectureEvalFormDraft])
 
-  const handleDownloadLectureEvalResults = useCallback(async () => {
-    const root = lectureEvalResultsExportRef.current
-    if (root == null || !displayProgram) return
-    setDownloadingLectureEvalResults(true)
-    try {
-      await exportLectureEvalResultsPdf(
-        root,
-        buildLectureEvalResultsPdfFileName(displayProgram.title)
-      )
-    } catch (error) {
-      handleError(error, { context: 'ujatLectureEvalResultsPdfDownload' })
-    } finally {
-      setDownloadingLectureEvalResults(false)
-    }
-  }, [displayProgram])
+  const handleDownloadLectureEvalResults = useCallback(
+    async (format: SurveyResultsDownloadFormat) => {
+      if (lectureEvalSurvey == null || displayProgram == null) return
+      setDownloadingLectureEvalResults(true)
+      try {
+        if (format === 'pdf') {
+          const root = lectureEvalResultsExportRef.current
+          if (root == null) {
+            throw new Error('PDF로보낼 결과 영역을 찾을 수 없습니다.')
+          }
+          await exportLectureEvalResultsPdf(
+            root,
+            buildLectureEvalResultsPdfFileName(displayProgram.title)
+          )
+        } else {
+          await exportSurveyResultsExcel({
+            surveyTitle: lectureEvalSurvey.title,
+            templateId: lectureEvalSurvey.templateId,
+            responseCount: lectureEvalSurvey.responseCount,
+            participantTotal: lectureEvalSurvey.participantTotal,
+            responses: lectureEvalResponses,
+          })
+        }
+        setLectureEvalDownloadModalOpen(false)
+      } catch (error) {
+        handleError(error, { context: 'ujatLectureEvalResultsDownload' })
+        void showAlert({
+          title: '다운로드',
+          content: '파일 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      } finally {
+        setDownloadingLectureEvalResults(false)
+      }
+    },
+    [displayProgram, lectureEvalResponses, lectureEvalSurvey, showAlert]
+  )
 
   const handleCloseLectureEvalIncompleteModal = useCallback(() => {
     setLectureEvalIncompleteModalOpen(false)
@@ -1559,55 +1781,28 @@ export function UjatProgramDetailFullPageModal({
         <>
           {activeLnb === 'info' && activeTab === 'info' && (
             <>
-              {(canEditInfo || isEditModeInfo) && (
-                <div className="ujat-detail-modal__info-header">
-                  <div className="program-detail-fullpage-modal__header-actions">
-                    <CmsButton
-                      variant="secondary"
-                      size="large"
-                      width={140}
-                      onClick={resolveProgramEditInfoClick(isEditModeInfo, {
-                        onEnterEdit: handleInfoEdit,
-                        onSaveEdit: handleInfoSave,
-                      })}
-                    >
-                      {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-                    </CmsButton>
-                  </div>
+              <div className="ujat-detail-modal__info-header">
+                <div className="program-detail-fullpage-modal__header-actions">
+                  <CmsButton
+                    variant="secondary"
+                    size="large"
+                    width={140}
+                    disabled={!canEditInfo && !isEditModeInfo}
+                    onClick={resolveProgramEditInfoClick(isEditModeInfo, {
+                      onEnterEdit: handleInfoEdit,
+                      onSaveEdit: handleInfoSave,
+                    })}
+                  >
+                    {PROGRAM_EDIT_INFO_BUTTON_LABEL}
+                  </CmsButton>
                 </div>
-              )}
-              {isEditModeInfo ? (
-                <ProjectInfoDetailPanels
-                  program={displayProgram}
-                  sponsorName={sponsorName}
-                  isBodyLoading={loading && !displayProgram}
-                  hideTabsRow
-                  activeTab="info"
-                  onSelectTab={() => undefined}
-                  isEditModeInfo
-                  infoForm={infoForm}
-                  isEditModeInstitutions={false}
-                  institutionsForm={undefined}
-                  registerInstitutionsAdditionalHtml={() => {}}
-                  isEditModeInstructors={false}
-                  instructorsForm={undefined}
-                  registerInstructorsAdditionalHtml={() => {}}
-                  isEditModeVolunteers={false}
-                  volunteersForm={undefined}
-                  registerVolunteersAdditionalHtml={() => {}}
-                  onInfoEdit={handleInfoEdit}
-                  onInfoSave={handleInfoSave}
-                  onInstitutionsSave={() => undefined}
-                  onInstructorsSave={() => undefined}
-                  onVolunteersSave={() => undefined}
-                  onPreview={() => undefined}
-                />
-              ) : (
-                <UjatProgramDetailCommonInfoView
-                  program={displayProgram}
-                  sponsorName={sponsorName}
-                />
-              )}
+              </div>
+              <UjatProgramDetailCommonInfoView
+                program={displayProgram}
+                sponsorName={sponsorName}
+                isEditMode={isEditModeInfo}
+                infoForm={isEditModeInfo ? infoForm : undefined}
+              />
             </>
           )}
 
@@ -1666,7 +1861,10 @@ export function UjatProgramDetailFullPageModal({
           )}
 
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
-            (activeTab === 'vh1_doc1' || activeTab === 'vh2_doc1') && (
+            (activeTab === 'vh1_all' ||
+              activeTab === 'vh2_all' ||
+              activeTab === 'vh1_doc1' ||
+              activeTab === 'vh2_doc1') && (
               <UjatVolunteerDocScreeningSection
                 programId={displayProgram.id}
                 half={activeTab.startsWith('vh2') ? 'h2' : 'h1'}
@@ -1699,6 +1897,8 @@ export function UjatProgramDetailFullPageModal({
               />
             )}
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
+            activeTab !== 'vh1_all' &&
+            activeTab !== 'vh2_all' &&
             activeTab !== 'vh1_doc1' &&
             activeTab !== 'vh2_doc1' &&
             activeTab !== 'vh1_doc_passed' &&
@@ -1807,15 +2007,15 @@ export function UjatProgramDetailFullPageModal({
                         <UjatSurveyRegisteredActions
                           survey={activeRegisteredSurvey}
                           labels={UJAT_SURVEY_POLL_ACTION_LABELS}
-                          onShareClick={() => undefined}
+                          onShareClick={handleShareRegisteredSurvey}
                           onAddClick={handleOpenSurveyCreateModal}
                           onOpenTemplatePreview={handleOpenRegisteredSurveyTemplatePreview}
-                          onDownloadClick={() => undefined}
+                          onDownloadClick={() => setPollDownloadModalOpen(true)}
                         />
                       ) : null
                     }
                   />
-                  {activeRegisteredSurvey != null && activeRegisteredSurvey.responseCount === 0 ? (
+                  {activeRegisteredSurvey != null && activeRegisteredSurvey.status === 'before_start' ? (
                     <UjatSurveyNoResponseState
                       title={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.title}
                       description={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.description}
@@ -1827,11 +2027,15 @@ export function UjatProgramDetailFullPageModal({
                       onOpenTemplatePreview={handleOpenRegisteredSurveyTemplatePreview}
                     />
                   ) : activeRegisteredSurvey != null ? (
-                    <UjatSurveyPollResultsView
-                      templateId={activeRegisteredSurvey.templateId}
-                      responseCount={activeRegisteredSurvey.responseCount}
-                      participantTotal={activeRegisteredSurvey.participantTotal}
-                    />
+                    <div ref={pollResultsExportRef}>
+                      <UjatSurveyPollResultsView
+                        templateId={activeRegisteredSurvey.templateId}
+                        responseCount={activeRegisteredSurvey.responseCount}
+                        participantTotal={activeRegisteredSurvey.participantTotal}
+                        responses={pollResponses}
+                        pdfTitle="설문조사 결과"
+                      />
+                    </div>
                   ) : null}
                 </div>
               )
@@ -1844,7 +2048,9 @@ export function UjatProgramDetailFullPageModal({
                 onShareClick={handleShareSatisfactionSurvey}
                 onDeleteClick={handleOpenSatisfactionDeleteModal}
                 onOpenTemplatePreview={handleOpenSatisfactionTemplatePreview}
-                onDownloadClick={() => undefined}
+                onDownloadClick={() => setSatisfactionDownloadModalOpen(true)}
+                resultsExportRef={satisfactionResultsExportRef}
+                resultsResponses={satisfactionResponses}
               />
             ) : activeTab === 'survey-lecture-eval' ? (
               <UjatLectureEvalSurveyView
@@ -1861,9 +2067,7 @@ export function UjatProgramDetailFullPageModal({
                 onFormDraftChange={setLectureEvalFormDraft}
                 onSubmitClick={handleLectureEvalSubmit}
                 onEditResponseClick={handleLectureEvalEditResponse}
-                onDownloadResultsClick={() => {
-                  void handleDownloadLectureEvalResults()
-                }}
+                onDownloadResultsClick={() => setLectureEvalDownloadModalOpen(true)}
               />
             ) : null)}
 
@@ -2128,6 +2332,32 @@ export function UjatProgramDetailFullPageModal({
       >
         <span className="ujat-lecture-eval-incomplete-modal__body-placeholder" />
       </ContentModal>
+      <SurveyResultsDownloadModal
+        open={lectureEvalDownloadModalOpen}
+        downloading={downloadingLectureEvalResults}
+        copy={UJAT_LECTURE_EVAL_DOWNLOAD_MODAL_COPY}
+        onCancel={() => setLectureEvalDownloadModalOpen(false)}
+        onDownload={handleDownloadLectureEvalResults}
+      />
+      <SurveyResultsDownloadModal
+        open={pollDownloadModalOpen}
+        downloading={downloadingPollResults}
+        copy={UJAT_SURVEY_POLL_DOWNLOAD_MODAL_COPY}
+        onCancel={() => setPollDownloadModalOpen(false)}
+        onDownload={handleDownloadPollResults}
+      />
+      <SurveyResultsDownloadModal
+        open={satisfactionDownloadModalOpen}
+        downloading={downloadingSatisfactionResults}
+        copy={UJAT_SATISFACTION_DOWNLOAD_MODAL_COPY}
+        onCancel={() => setSatisfactionDownloadModalOpen(false)}
+        onDownload={handleDownloadSatisfactionResults}
+      />
+      <SurveyShareCopyToast
+        open={shareToastOpen}
+        line1={shareToastLines.line1}
+        line2={shareToastLines.line2}
+      />
     </DetailFullPageModal>
     {surveyTemplateEditId != null ? (
       <UjatSurveyTemplateEditModal

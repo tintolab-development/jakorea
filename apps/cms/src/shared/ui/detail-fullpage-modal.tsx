@@ -51,7 +51,7 @@ export function DetailFullPageModal({
   return (
     <TealHeaderModal
       open={open}
-      onCancel={onClose}
+      onCancel={handleClose}
       title=""
       size="full"
       hideHeader

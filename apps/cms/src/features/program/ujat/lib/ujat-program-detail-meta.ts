@@ -8,6 +8,13 @@ import {
   UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
 } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import { mockUjatElementaryListProgramsMap } from '@/data/mock/ujat-programs-list-mock'
+import { resolveUjatProgramDisplayProgram } from '@/features/program/ujat/lib/ujat-program-display-program'
+import {
+  resolveUjatSurveyMenuItems,
+  type UjatSurveyMenuItem,
+} from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+
+export type { UjatSurveyMenuItem }
 
 export function isUjatProgramId(programId: string): boolean {
   return mockUjatElementaryListProgramsMap.has(programId)
@@ -22,33 +29,17 @@ export function isResolvableUjatProgramId(programId: string): boolean {
   )
 }
 
-/** 스토어 `programs` 로드 전에도 상세 모달 복원용 */
+/** UJAT 목록·상세 mock 복원 — 템플릿 병합 포함 */
 export function resolveUjatProgramForDetail(programId: string): Program | undefined {
-  return (
+  const base =
     mockUjatElementaryListProgramsMap.get(programId) ??
     findUjatRegistrationLocalSaveProgramById(programId)
-  )
+  return base ? resolveUjatProgramDisplayProgram(base) : undefined
 }
 
-/** true면 봉사자 신청 LNB에 면접 단계(2·3뎁스) 노출 */
-export function getUjatVolunteerInterviewEnabled(programId: string): boolean {
-  const p = mockUjatElementaryListProgramsMap.get(programId)
-  if (!p) return true
-  // 진행 예정 단계는 면접 분기 없이 단순 목록만 (요구: 없으면 2depth 없음)
-  if (p.ujatProgressStatus === 'EDUCATION_SCHEDULED') return false
+/** UJAT는 봉사자 면접이 항상 있음 — 신청 목록 LNB 2depth 상시 노출 */
+export function getUjatVolunteerInterviewEnabled(_program: Program): boolean {
   return true
-}
-
-export type UjatSurveyMenuItem = { key: string; label: string }
-
-/** 설문 관리 LNB 2뎁스 — 프로그램별 노출 항목 (mock) */
-export function getUjatSurveyMenuItems(programId: string): UjatSurveyMenuItem[] {
-  void programId
-  return [
-    { key: 'survey-poll', label: '설문조사' },
-    { key: 'survey-satisfaction', label: '만족도조사' },
-    { key: 'survey-lecture-eval', label: '강의평가' },
-  ]
 }
 
 /** 레거시 URL `tab` → 현행 키 */
@@ -57,8 +48,7 @@ export const UJAT_SURVEY_LEGACY_TAB_MAP: Record<string, string> = {
   'survey-teacher-satisfaction': 'survey-satisfaction',
 }
 
-/** 진행 예정 프로그램은 설문 항목 일부만 노출 예시 */
-export function getUjatSurveyMenuItemsForProgram(programId: string): UjatSurveyMenuItem[] {
-  const all = getUjatSurveyMenuItems(programId)
-  return all.length > 0 ? all : [{ key: 'survey-poll', label: '설문조사' }]
+/** 공통 정보 > 설문 진행 항목 기준 LNB 2depth (항목 1개여도 2depth) */
+export function getUjatSurveyMenuItemsForProgram(program: Program): UjatSurveyMenuItem[] {
+  return resolveUjatSurveyMenuItems(program)
 }
