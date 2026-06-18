@@ -4,6 +4,7 @@ import { useCmsAlert } from '@/shared/ui'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import {
   getUjatInstitutionApplicationDetail,
+  getUjatInstitutionApplicationMockRows,
   getUjatInstitutionApplicationRowById,
   patchUjatInstitutionApplicationRows,
 } from '@/data/mock/ujat-institution-application-mock'
@@ -19,6 +20,10 @@ import {
   getUjatInstitutionTempAssignCompleteContent,
   UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
 } from '../list/temp-assign-complete'
+import {
+  checkUjatRegionClassCapacityExceeded,
+  getUjatRegionClassCapacityExceededAlertContent,
+} from '@/features/program/ujat/lib/ujat-region-capacity-institution-assign'
 
 const TEMP_REJECT_BUTTON_STYLE = {
   borderColor: '#e07a96',
@@ -67,12 +72,30 @@ export function UjatInstitutionApplicationDetailPage({
 
   const handleTempAssign = useCallback(() => {
     if (!row) return
+    const rowsAfterAssign = getUjatInstitutionApplicationMockRows().map(item =>
+      item.id === row.id ? { ...item, tempAssignmentStatus: 'temp_assigned' as const } : item
+    )
     patchUjatInstitutionApplicationRows([row.id], 'temp_assigned')
     onStatusUpdated()
     onBack()
+
+    const capacityCheck = checkUjatRegionClassCapacityExceeded({
+      regionKey: row.regionKey,
+      rowsAfterAssign,
+    })
+    const completeContent = getUjatInstitutionTempAssignCompleteContent(1)
+    const content =
+      capacityCheck.exceeded && capacityCheck.maxClassCount != null
+        ? `${completeContent}\n\n${getUjatRegionClassCapacityExceededAlertContent({
+            regionLabel: capacityCheck.regionLabel,
+            maxClassCount: capacityCheck.maxClassCount,
+            totalAfterAssign: capacityCheck.totalAfterAssign,
+          })}`
+        : completeContent
+
     showAlert({
       title: UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
-      content: getUjatInstitutionTempAssignCompleteContent(1),
+      content,
     })
   }, [row, onStatusUpdated, onBack, showAlert])
 

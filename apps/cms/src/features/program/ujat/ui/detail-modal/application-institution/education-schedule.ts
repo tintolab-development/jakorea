@@ -49,10 +49,17 @@ export function resolveEducationSemesterForIsoDate(isoDate: string): UjatInstitu
   return 'h2'
 }
 
-const FRIDAY_ISO_DATES = listFridayIsoDatesInPeriod(
-  UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK.startDate,
-  UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK.endDate
-)
+/** 신청 기관 목록 — 상·하반기 구분 없이 교육 일정 기간 내 모든 금요일 */
+const FRIDAY_ISO_DATES = [
+  ...listFridayIsoDatesInPeriod(
+    UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK.startDate,
+    UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK.endDate
+  ),
+  ...listFridayIsoDatesInPeriod(
+    UJAT_INSTITUTION_EDUCATION_PERIOD_H2_MOCK.startDate,
+    UJAT_INSTITUTION_EDUCATION_PERIOD_H2_MOCK.endDate
+  ),
+]
 
 /** 임시 배정 화면 — 1학기(상반기) 금요일만, 불가일 제외 */
 export const UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES = listAssignableFridayIsoDatesInPeriod(

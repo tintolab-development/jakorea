@@ -36,9 +36,9 @@ export function UjatInstitutionApplicationList({
     handleBulkApplicationReject,
     handleBulkTempReject,
     handleBulkTempAssign,
-    pendingBulkModalAction,
-    closeBulkActionModal,
-    confirmBulkActionModal,
+    pendingApplicationRejectModal,
+    closeApplicationRejectModal,
+    confirmApplicationRejectModal,
     selectedApplications,
     resetRegionState,
   } = useUjatInstitutionApplicationList(activeRegion)
@@ -166,6 +166,7 @@ export function UjatInstitutionApplicationList({
             rows={tableData}
             selectedRowKeys={selectedRowKeys}
             onSelectionChange={setSelectedRowKeys}
+            onOpenDetail={onOpenDetail}
           />
         )}
       </FilterTableLayout>
@@ -173,15 +174,15 @@ export function UjatInstitutionApplicationList({
         <div className="ujat-institution-application-list__page-bottom-spacer" aria-hidden />
       ) : null}
 
-      {pendingBulkModalAction ? (
+      {pendingApplicationRejectModal ? (
         <UjatInstitutionApplicationActionModal
           open
-          action={pendingBulkModalAction}
+          action="application_reject"
           variant={selectedApplications.length === 1 ? 'single' : 'bulk'}
           institutionName={selectedApplications[0]?.institutionName}
           selectionCount={selectedApplications.length}
-          onCancel={closeBulkActionModal}
-          onConfirm={() => confirmBulkActionModal()}
+          onCancel={closeApplicationRejectModal}
+          onConfirm={() => confirmApplicationRejectModal()}
         />
       ) : null}
     </div>

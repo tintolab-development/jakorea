@@ -11,6 +11,7 @@ import {
   type CalendarInstitutionApplicationListRow,
   type CalendarItem,
 } from '@/shared/components/calendar'
+import type { RenderCalendarMonthEventContent } from '@/shared/components/calendar/model/calendar-month-cell-row'
 import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
@@ -54,7 +55,6 @@ function toInstitutionListRow(
 
 function renderUjatInstitutionPreviewTooltipContent({
   events,
-  colorMap,
 }: {
   events: CalendarItem[]
   colorMap: Map<string | number, ScheduleColorPair>
@@ -63,16 +63,13 @@ function renderUjatInstitutionPreviewTooltipContent({
     <div className="program-preview">
       {events.map(ev => {
         const institution = extractInstitutionFromCalendarItem(ev)
-        const colors = colorMap.get(ev.id) ?? SCHEDULE_COLORS[0]
         const title = institution?.institutionName ?? String(ev.title ?? '-')
         const totalClassSummary = institution?.calendarTotalClassSummary
         const gradeDetail = institution?.calendarGradeDetail
 
         return (
           <div key={String(ev.id)} className="program-preview-item program-preview-item--stack">
-            <span className="program-preview-item__title" style={{ color: colors.text }}>
-              {title}
-            </span>
+            <span className="program-preview-item__title">{title}</span>
             {totalClassSummary ? (
               <div className="ujat-institution-preview__meta">
                 <span className="ujat-institution-preview__meta-total">{totalClassSummary}</span>
@@ -99,10 +96,12 @@ export function UjatInstitutionApplicationCalendarView({
   rows,
   selectedRowKeys,
   onSelectionChange,
+  onOpenDetail,
 }: {
   rows: UjatInstitutionApplicationRow[]
   selectedRowKeys: Key[]
   onSelectionChange: (keys: Key[]) => void
+  onOpenDetail?: (row: UjatInstitutionApplicationRow) => void
 }) {
   const events = useMemo(() => buildUjatInstitutionApplicationCalendarEvents(rows), [rows])
   const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events)
@@ -183,6 +182,22 @@ export function UjatInstitutionApplicationCalendarView({
     setCurrentMonth(today.startOf('month'))
   }, [])
 
+  const handleListRowClick = useCallback(
+    (listRow: CalendarInstitutionApplicationListRow) => {
+      if (!onOpenDetail) return
+      const fullRow = rows.find(row => row.id === listRow.id)
+      if (fullRow) onOpenDetail(fullRow)
+    },
+    [onOpenDetail, rows]
+  )
+
+  const renderMonthEventContent: RenderCalendarMonthEventContent = useCallback(
+    ({ row }) => (
+      <span className="calendar-event-title">{String(row.sourceEvent.title ?? '')}</span>
+    ),
+    []
+  )
+
   return (
     <div className="calendar-set calendar-set--page-scroll">
       <div className="calendar-main-container">
@@ -201,6 +216,7 @@ export function UjatInstitutionApplicationCalendarView({
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
           previewTooltipContent={renderUjatInstitutionPreviewTooltipContent}
+          renderMonthEventContent={renderMonthEventContent}
         />
       </div>
 
@@ -211,6 +227,7 @@ export function UjatInstitutionApplicationCalendarView({
           rows={listRows}
           selectedRowKeys={selectedRowKeys}
           onSelectionChange={onSelectionChange}
+          onRowClick={onOpenDetail ? handleListRowClick : undefined}
           resolveRowColors={resolveRowColors}
         />
       </div>

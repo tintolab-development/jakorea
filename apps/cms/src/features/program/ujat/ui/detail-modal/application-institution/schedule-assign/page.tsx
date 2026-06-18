@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
-  UJAT_INSTITUTION_APPLICATION_REGIONS,
+  listUjatInstitutionApplicationRegions,
   type UjatInstitutionApplicationRegionKey,
 } from '../list/regions'
 import { UjatInstitutionScheduleAssignSection } from './section'
@@ -10,6 +10,7 @@ import { UjatInstitutionScheduleSheetPreviewModal } from './schedule-sheet-previ
 import './page.css'
 
 export function UjatInstitutionScheduleAssignPage() {
+  const regionTabs = listUjatInstitutionApplicationRegions()
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>('seoul')
   const [scheduleSheetOpen, setScheduleSheetOpen] = useState(false)
   const [scheduleSheetRefreshKey, setScheduleSheetRefreshKey] = useState(0)
@@ -26,8 +27,8 @@ export function UjatInstitutionScheduleAssignPage() {
         activeKey={activeRegion}
         onChange={setActiveRegion}
         wrap
-        items={UJAT_INSTITUTION_APPLICATION_REGIONS.map(region => ({
-          key: region.key,
+        items={regionTabs.map(region => ({
+          key: region.key as UjatInstitutionApplicationRegionKey,
           label: region.label,
         }))}
         trailing={

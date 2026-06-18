@@ -16,6 +16,13 @@ export const UJAT_INSTITUTION_APPLICATION_REGIONS = [
 export type UjatInstitutionApplicationRegionKey =
   (typeof UJAT_INSTITUTION_APPLICATION_REGIONS)[number]['key']
 
+const CANONICAL_REGION_KEY_ORDER = UJAT_INSTITUTION_APPLICATION_REGIONS.map(region => region.key)
+
+function canonicalRegionSortIndex(regionKey: string): number {
+  const index = CANONICAL_REGION_KEY_ORDER.indexOf(regionKey as UjatInstitutionApplicationRegionKey)
+  return index >= 0 ? index : CANONICAL_REGION_KEY_ORDER.length
+}
+
 /** 교육 지역 관리에서 설정한 순서·라벨(사용 중만). API 연동 전 localStorage. */
 export function listUjatInstitutionApplicationRegions(): Array<{
   key: string
@@ -28,7 +35,13 @@ export function listUjatInstitutionApplicationRegions(): Array<{
       label: row.label,
     }))
   }
-  return rows.map(row => ({ key: row.regionKey, label: row.name }))
+  return [...rows]
+    .sort((a, b) => {
+      const orderDiff = canonicalRegionSortIndex(a.regionKey) - canonicalRegionSortIndex(b.regionKey)
+      if (orderDiff !== 0) return orderDiff
+      return a.sortOrder - b.sortOrder
+    })
+    .map(row => ({ key: row.regionKey, label: row.name }))
 }
 
 export function isUjatInstitutionApplicationRegionKey(

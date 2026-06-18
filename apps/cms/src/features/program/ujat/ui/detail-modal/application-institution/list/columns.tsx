@@ -2,19 +2,16 @@ import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { UjatInstitutionApplicationStatusBadge } from './status-badge'
 import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segments'
-import {
-  UJAT_INSTITUTION_SCHEDULE_COLUMNS,
-  type UjatInstitutionApplicationRow,
-} from './types'
+import { UJAT_INSTITUTION_SCHEDULE_COLUMNS, type UjatInstitutionApplicationRow } from './types'
 
 const COL = {
   no: 64,
   institution: 180,
   status: 140,
-  grade: 420,
+  grade: 340,
   /** 헤더 「총 신청 학급 수」 16px bold + 좌우 패딩 16px */
   total: 152,
-  schedule: 92,
+  schedule: 100,
   teacher: 120,
   selection: 68,
 } as const
@@ -59,7 +56,7 @@ export function useUjatInstitutionApplicationColumns(): ColumnsType<UjatInstitut
         align: 'center',
       },
       {
-        title: '임시 배정 현황',
+        title: '임시 배정 평가',
         dataIndex: 'tempAssignmentStatus',
         key: 'tempAssignmentStatus',
         width: COL.status,

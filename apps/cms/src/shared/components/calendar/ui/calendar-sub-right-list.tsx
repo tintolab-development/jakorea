@@ -72,6 +72,7 @@ export type CalendarSubRightListInstitutionApplicationProps = {
   rows: CalendarInstitutionApplicationListRow[]
   selectedRowKeys: Key[]
   onSelectionChange: (keys: Key[]) => void
+  onRowClick?: (row: CalendarInstitutionApplicationListRow) => void
   resolveRowColors?: (row: CalendarInstitutionApplicationListRow) => ScheduleColorPair | undefined
 }
 
@@ -157,11 +158,13 @@ function CalendarSubRightInstitutionApplicationList({
   rows,
   selectedRowKeys,
   onSelectionChange,
+  onRowClick,
   resolveRowColors,
 }: {
   rows: CalendarInstitutionApplicationListRow[]
   selectedRowKeys: Key[]
   onSelectionChange: (keys: Key[]) => void
+  onRowClick?: (row: CalendarInstitutionApplicationListRow) => void
   resolveRowColors?: (row: CalendarInstitutionApplicationListRow) => ScheduleColorPair | undefined
 }) {
   const selectedSet = useMemo(() => new Set(selectedRowKeys.map(String)), [selectedRowKeys])
@@ -203,6 +206,7 @@ function CalendarSubRightInstitutionApplicationList({
                 backgroundColor: colors.bg,
                 border: `1px solid ${colors.border}`,
               }}
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
             >
               <div className="calendar-list-item__column">
                 <CalendarListItemContentInstitutionApplication
@@ -226,6 +230,7 @@ export function CalendarSubRightList(props: CalendarSubRightListProps) {
         rows={props.rows}
         selectedRowKeys={props.selectedRowKeys}
         onSelectionChange={props.onSelectionChange}
+        onRowClick={props.onRowClick}
         resolveRowColors={props.resolveRowColors}
       />
     )
