@@ -75,12 +75,10 @@ export function UjatHalfEducationScheduleReadonly({
   rows: readonly UjatHalfEducationScheduleRow[]
 }) {
   return (
-    <div className="ujat-program-detail-common-info-view__section ujat-half-education-schedule">
-      <DetailInfoForm title={title} mode="view">
-        {rows.map(row => (
-          <UjatHalfEducationScheduleRowView key={row.label} row={row} />
-        ))}
-      </DetailInfoForm>
-    </div>
+    <DetailInfoForm title={title} mode="view" className="detail-info-form--gap">
+      {rows.map(row => (
+        <UjatHalfEducationScheduleRowView key={row.label} row={row} />
+      ))}
+    </DetailInfoForm>
   )
 }

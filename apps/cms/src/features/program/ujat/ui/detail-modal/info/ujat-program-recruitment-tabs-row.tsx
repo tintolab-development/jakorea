@@ -35,19 +35,18 @@ export function UjatProgramRecruitmentTabsRow({
         label: UJAT_RECRUIT_TAB_LABELS[key],
       }))}
       trailing={
-        canEdit || isEditMode ? (
-          <CmsButton
-            variant="secondary"
-            size="large"
-            width={140}
-            onClick={resolveProgramEditInfoClick(isEditMode, {
-              onEnterEdit: onEdit,
-              onSaveEdit: onSave,
-            })}
-          >
-            {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-          </CmsButton>
-        ) : null
+        <CmsButton
+          variant="secondary"
+          size="large"
+          width={140}
+          disabled={!canEdit && !isEditMode}
+          onClick={resolveProgramEditInfoClick(isEditMode, {
+            onEnterEdit: onEdit,
+            onSaveEdit: onSave,
+          })}
+        >
+          {PROGRAM_EDIT_INFO_BUTTON_LABEL}
+        </CmsButton>
       }
     />
   )
