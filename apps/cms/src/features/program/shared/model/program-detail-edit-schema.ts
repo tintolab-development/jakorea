@@ -24,6 +24,11 @@ import {
   resolveProgramTargetLevels,
   resolveProgramVolunteerTargets,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  programPaymentItemLabelsFromIds,
+  resolveProgramPaymentItemIdsFromLabels,
+  resolveProgramWageDeductionLabel,
+} from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { z } from 'zod'
 import {
   announcementPublishedFromFormValue,
@@ -112,6 +117,8 @@ const programDetailEditSchemaBase = z.object({
   participantRecruitmentMaxScheduleCount: z.number().min(0).optional(),
   participantRecruitmentMaxSessionsPerDay: z.number().min(0).optional(),
   participantRecruitmentInterviewEnabled: z.enum(['yes', 'no']).optional(),
+  /** 참여자 모집 비고 — 해당 없음 선택 시 공고 비노출 */
+  participantRecruitmentNotesNotApplicable: z.enum(['applicable', 'not_applicable']).optional(),
   // 강사 모집
   instructorRecruitmentAnnouncementPublished: z.enum(['published', 'unpublished']).optional(),
   instructorCapacity: z.number().min(0).optional(),
@@ -133,6 +140,12 @@ const programDetailEditSchemaBase = z.object({
   volunteerApplicationEndDate: z.string().optional(),
   volunteerTargets: z.array(z.string()).optional(),
   volunteerTargetDetail: z.string().optional(),
+  /** UJAT 하반기 — 모집 공고 노출 시점 */
+  volunteerRecruitmentNoticeExposure: z
+    .enum(['start-day', 'one-day-before', 'one-week-before'])
+    .optional(),
+  /** UJAT 봉사자 모집 비고 — 해당 없음 선택 시 공고 비노출 */
+  volunteerRecruitmentNotesNotApplicable: z.enum(['applicable', 'not_applicable']).optional(),
   applicationMethod: z
     .string()
     .optional()
@@ -164,6 +177,7 @@ const programDetailEditSchemaBase = z.object({
   wagePricingBase: z.string().optional(),
   wagePricingLongDistance: z.string().optional(),
   wagePaymentItems: z.string().optional(),
+  wagePaymentItemIds: z.array(z.string()).optional(),
   wageDeductionItems: z.string().optional(),
   // KPI
   kpiFinalParticipants: z.number().min(0).optional(),
@@ -261,6 +275,10 @@ export function programToDetailEditValues(
       if (nested === false) return 'no' as const
       return undefined
     })(),
+    participantRecruitmentNotesNotApplicable:
+      program.generalCommonInfo?.participantRecruitmentInfo?.notesNotApplicable === true
+        ? 'not_applicable'
+        : 'applicable',
     instructorRecruitmentAnnouncementPublished: announcementPublishedToFormValue(
       program.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublished
     ),
@@ -301,6 +319,15 @@ export function programToDetailEditValues(
       : undefined,
     volunteerTargets: resolveProgramVolunteerTargets(program),
     volunteerTargetDetail: program.volunteerTargetDetail ?? undefined,
+    volunteerRecruitmentNoticeExposure: (() => {
+      const raw = program.generalCommonInfo?.volunteerRecruitmentInfo?.noticeExposureTiming
+      if (raw === 'start-day' || raw === 'one-day-before' || raw === 'one-week-before') return raw
+      return 'start-day' as const
+    })(),
+    volunteerRecruitmentNotesNotApplicable:
+      program.generalCommonInfo?.volunteerRecruitmentInfo?.notesNotApplicable === true
+        ? 'not_applicable'
+        : 'applicable',
     applicationMethod: program.applicationMethod?.trim() ? program.applicationMethod : undefined,
     otherNotes: program.otherNotes?.trim() ? program.otherNotes : undefined,
     additionalContentHtml: program.additionalContentHtml ?? undefined,
@@ -333,12 +360,19 @@ export function programToDetailEditValues(
     wagePricingBase: undefined,
     wagePricingLongDistance: undefined,
     wagePaymentItems: undefined,
+    wagePaymentItemIds:
+      resolveProgramPaymentItemIdsFromLabels(program.generalCommonInfo?.paymentItems) ||
+      undefined,
     wageDeductionItems: undefined,
-    kpiFinalParticipants: undefined,
-    kpiInstructorCount: undefined,
-    kpiVolunteerCount: undefined,
-    kpiFinalSchools: undefined,
-    kpiFinalClasses: undefined,
+    kpiFinalParticipants:
+      program.generalCommonInfo?.kpi?.finalParticipants ?? program.approvedStudentCount ?? undefined,
+    kpiInstructorCount:
+      program.generalCommonInfo?.kpi?.instructorCount ?? program.instructors ?? undefined,
+    kpiVolunteerCount:
+      program.generalCommonInfo?.kpi?.volunteerCount ?? program.generalVolunteers ?? undefined,
+    kpiFinalSchools:
+      program.generalCommonInfo?.kpi?.finalSchools ?? program.participatingSchoolCount ?? undefined,
+    kpiFinalClasses: program.generalCommonInfo?.kpi?.finalClasses ?? undefined,
   }
 }
 
@@ -369,7 +403,10 @@ export function detailEditValuesToProgramPatch(
     managerName: values.managerName,
     contactPhone: values.contactPhone,
     contactEmail: values.contactEmail,
-    oneLineIntroduction: values.oneLineIntroduction,
+    oneLineIntroduction:
+      values.participantRecruitmentNotesNotApplicable === 'not_applicable'
+        ? undefined
+        : values.oneLineIntroduction,
     keyVisualImage: values.keyVisualImage,
     posterImage: values.posterImage,
     description: values.description,
@@ -380,8 +417,40 @@ export function detailEditValuesToProgramPatch(
     resultAnnouncementDate: values.resultAnnouncementDate ?? existing.resultAnnouncementDate,
     resultAnnouncementMethod: values.resultAnnouncementMethod ?? existing.resultAnnouncementMethod,
     studentListRequired: values.studentListRequired ?? existing.studentListRequired,
+    approvedStudentCount: values.kpiFinalParticipants ?? existing.approvedStudentCount,
+    generalVolunteers: values.kpiVolunteerCount ?? existing.generalVolunteers,
+    participatingSchoolCount: values.kpiFinalSchools ?? existing.participatingSchoolCount,
     generalCommonInfo: {
       ...existing.generalCommonInfo,
+      paymentItems:
+        values.wagePaymentItemIds != null
+          ? programPaymentItemLabelsFromIds(values.wagePaymentItemIds) ||
+            existing.generalCommonInfo?.paymentItems
+          : existing.generalCommonInfo?.paymentItems,
+      deductionItems:
+        values.wagePaymentItemIds != null
+          ? resolveProgramWageDeductionLabel(values.wagePaymentItemIds)
+          : existing.generalCommonInfo?.deductionItems,
+      kpi: {
+        finalParticipants:
+          values.kpiFinalParticipants ??
+          existing.generalCommonInfo?.kpi?.finalParticipants ??
+          existing.approvedStudentCount ??
+          0,
+        instructorCount:
+          values.kpiInstructorCount ?? existing.generalCommonInfo?.kpi?.instructorCount ?? 0,
+        volunteerCount:
+          values.kpiVolunteerCount ??
+          existing.generalCommonInfo?.kpi?.volunteerCount ??
+          existing.generalVolunteers ??
+          0,
+        finalSchools:
+          values.kpiFinalSchools ??
+          existing.generalCommonInfo?.kpi?.finalSchools ??
+          existing.participatingSchoolCount ??
+          0,
+        finalClasses: values.kpiFinalClasses ?? existing.generalCommonInfo?.kpi?.finalClasses ?? 0,
+      },
       participantRecruitmentInfo: {
         ...existing.generalCommonInfo?.participantRecruitmentInfo,
         announcementPublished:
@@ -417,6 +486,7 @@ export function detailEditValuesToProgramPatch(
             : values.participantRecruitmentInterviewEnabled === 'no'
               ? false
               : existing.generalCommonInfo?.participantRecruitmentInfo?.interviewEnabled,
+        notesNotApplicable: values.participantRecruitmentNotesNotApplicable === 'not_applicable',
       },
       instructorRecruitmentInfo: {
         ...existing.generalCommonInfo?.instructorRecruitmentInfo,
@@ -429,6 +499,10 @@ export function detailEditValuesToProgramPatch(
         announcementPublished:
           announcementPublishedFromFormValue(values.volunteerRecruitmentAnnouncementPublished) ??
           existing.generalCommonInfo?.volunteerRecruitmentInfo?.announcementPublished,
+        noticeExposureTiming:
+          values.volunteerRecruitmentNoticeExposure ??
+          existing.generalCommonInfo?.volunteerRecruitmentInfo?.noticeExposureTiming,
+        notesNotApplicable: values.volunteerRecruitmentNotesNotApplicable === 'not_applicable',
       },
     },
     generalVolunteerInterviewEnabled:
@@ -474,7 +548,10 @@ export function detailEditValuesToProgramPatch(
       : undefined,
     volunteerTargetDetail: values.volunteerTargetDetail ?? existing.volunteerTargetDetail,
     applicationMethod: values.applicationMethod ?? existing.applicationMethod,
-    otherNotes: values.otherNotes ?? existing.otherNotes,
+    otherNotes:
+      values.volunteerRecruitmentNotesNotApplicable === 'not_applicable'
+        ? undefined
+        : (values.otherNotes ?? existing.otherNotes),
     additionalContentHtml: values.additionalContentHtml ?? existing.additionalContentHtml,
     mainTitle: values.mainTitle ?? existing.mainTitle,
     teamDivision: values.teamDivision ?? existing.teamDivision,

@@ -146,6 +146,33 @@ export function getInstructorRecruitmentStatus(
   return 'closed'
 }
 
+/** 봉사자 모집 현황 → lifecycle 키 (봉사자 모집 정보 탭) */
+export const VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE: Record<
+  'scheduled' | 'recruiting' | 'closed',
+  ProgramLifecycleStatus
+> = {
+  scheduled: 'volunteer_recruitment_planned',
+  recruiting: 'recruiting_volunteers',
+  closed: 'document_processing_completed',
+}
+
+/** 봉사자 모집 기간 기준 lifecycle (수정 모드 폼 날짜 연동) */
+export function getVolunteerRecruitmentLifecycle(
+  program: Program,
+  overrides?: Pick<Program, 'volunteerApplicationStartDate' | 'volunteerApplicationEndDate'>
+): ProgramLifecycleStatus | null {
+  const effective = overrides ? { ...program, ...overrides } : program
+  const start = effective.volunteerApplicationStartDate ?? effective.applicationStartDate
+  const end = effective.volunteerApplicationEndDate ?? effective.applicationEndDate
+  if (!start || !end) {
+    const status = getVolunteerRecruitmentStatus(program)
+    return status != null ? VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE[status] : null
+  }
+  const s = getRecruitmentStatus({ ...effective, applicationStartDate: start, applicationEndDate: end })
+  if (s == null) return null
+  return VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE[s]
+}
+
 /** 봉사자 모집 현황: lifecycleStatus를 모집 예정/모집 중/모집 마감 세 가지로 매핑 */
 export function getVolunteerRecruitmentStatus(
   program: Program

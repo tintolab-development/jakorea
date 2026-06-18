@@ -190,6 +190,8 @@ export interface GeneralProgramParticipantRecruitmentInfo {
   contactOrganizationName?: string
   /** 개인 참여자 모집 — 면접 유무 (등록 양식·상세 mock) */
   interviewEnabled?: boolean
+  /** 비고 해당 없음 — true면 공고 비노출·관리자 상세에는 '-' */
+  notesNotApplicable?: boolean
 }
 
 /** 일반 프로그램 — 강사 모집 정보 (프로그램 등록 강사 모집 양식 필드) */
@@ -204,6 +206,10 @@ export interface GeneralProgramInstructorRecruitmentInfo {
 /** 일반 프로그램 — 봉사자 모집 정보 (프로그램 등록 봉사자 모집 양식 필드) */
 export interface GeneralProgramVolunteerRecruitmentInfo {
   announcementPublished?: boolean
+  /** UJAT 하반기 — 모집 공고 노출 시점 (`start-day` | `one-day-before` | `one-week-before`) */
+  noticeExposureTiming?: string
+  /** 비고 해당 없음 — true면 공고 비노출·관리자 상세에는 '-' */
+  notesNotApplicable?: boolean
   /** 표시용 — 운영·모집 기간 (요일 포함) */
   operationPeriodLabel?: string
   recruitmentPeriodLabel?: string
