@@ -4,38 +4,24 @@
  * 코드 스플리팅 적용: React.lazy를 사용한 동적 import
  */
 
-import { lazy, Suspense } from 'react'
-import { Navigate, createBrowserRouter, useLocation, useParams } from 'react-router-dom'
+import { lazy } from 'react'
+import { Navigate, Outlet, createBrowserRouter, useLocation, useParams } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
 import { ProtectedRoute } from '@/app/components/protected-route'
-import { Spin } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import './router.css'
 
-// 로딩 컴포넌트 - 화면 중앙 정렬
-const LoadingFallback = () => (
-  <div className="router-loading-fallback">
-    <Spin size="large" />
-  </div>
-)
-
 // Lazy loading wrapper - named export를 default export로 변환
-// 타입 복잡도를 줄이기 위해 import 함수는 느슨하게 any로 처리
+// Suspense 경계는 Layout 콘텐츠 영역에서 통합 처리
 const lazyLoad = <T extends React.ComponentType<any>>(importFunc: () => Promise<any>) => {
-  const LazyComponent = lazy(async () => {
+  return lazy(async () => {
     const module = await importFunc()
-    // default export를 우선 사용, 없으면 첫 번째 named export 사용
     const Component = (module.default || Object.values(module)[0]) as T
     if (!Component) {
       throw new Error('Failed to load component: No export found')
     }
     return { default: Component }
   })
-  return (props: any) => (
-    <Suspense fallback={<LoadingFallback />}>
-      <LazyComponent {...props} />
-    </Suspense>
-  )
 }
 
 // 인증 관련 페이지 (즉시 로드)
@@ -45,6 +31,8 @@ import { RegisterCompletePage } from '@/pages/auth/register-complete-page'
 import { RegisterSocialConnectCompletePage } from '@/pages/auth/register-social-connect-complete-page'
 import { RegisterSocialConnectFailedPage } from '@/pages/auth/register-social-connect-failed-page'
 import { RegisterSocialConnectPage } from '@/pages/auth/register-social-connect-page'
+import { RegisterIdentityCallbackPage } from '@/pages/auth/register-identity-callback-page'
+import { RegisterIdentityMockNicePage } from '@/pages/auth/register-identity-mock-nice-page'
 import { MfaPage } from '@/pages/auth/mfa-page'
 import { OAuthCallbackPage } from '@/pages/auth/oauth-callback-page'
 import { ForbiddenPage } from '@/pages/error/forbidden-page'
@@ -213,6 +201,14 @@ export const router = createBrowserRouter([
     element: <RegisterSocialConnectFailedPage />,
   },
   {
+    path: '/register/identity/callback',
+    element: <RegisterIdentityCallbackPage />,
+  },
+  {
+    path: '/register/identity/mock',
+    element: <RegisterIdentityMockNicePage />,
+  },
+  {
     path: '/login',
     element: <LoginPage />,
   },
@@ -256,12 +252,15 @@ export const router = createBrowserRouter([
   },
   {
     path: '/',
-    element: (
-      <ProtectedRoute>
-        <Layout />
-      </ProtectedRoute>
-    ),
+    element: <Layout />,
     children: [
+      {
+        element: (
+          <ProtectedRoute>
+            <Outlet />
+          </ProtectedRoute>
+        ),
+        children: [
       {
         index: true,
         element: <IndexPage />,
@@ -787,6 +786,8 @@ export const router = createBrowserRouter([
             description="요청하신 페이지가 존재하지 않거나 이동되었습니다. 해당 기능은 현재 준비 중입니다."
           />
         ),
+      },
+        ],
       },
     ],
   },

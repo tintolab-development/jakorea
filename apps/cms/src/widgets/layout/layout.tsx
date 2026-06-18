@@ -6,8 +6,10 @@
  * 접근 권한이 없는 경로는 콘텐츠 영역에서만 Coming Soon 표시 (LNB·헤더 유지)
  */
 
+import { Suspense } from 'react'
 import { Layout as AntLayout } from 'antd'
 import { Outlet, useLocation, useParams } from 'react-router-dom'
+import { RouterLoadingFallback } from '@/app/router/loading-fallback'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canAccessProgram } from '@/features/permission-request/lib/program-acl'
 import { canAccessPath } from '@/shared/config/menu-config'
@@ -46,7 +48,11 @@ function LayoutContent() {
     }
   }
 
-  return <Outlet />
+  return (
+    <Suspense fallback={<RouterLoadingFallback />}>
+      <Outlet />
+    </Suspense>
+  )
 }
 
 export function Layout() {

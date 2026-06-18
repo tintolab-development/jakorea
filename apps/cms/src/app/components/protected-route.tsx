@@ -3,11 +3,12 @@
  * Phase 4.1.1: 사용자 인증 시스템
  * Phase 4.2.1: 권한별 경로 접근 제어
  * FSD: app 레이어로 이동 (features/auth, features/permission-request 사용, shared는 features 미참조 유지)
+ *
+ * auth-store가 localStorage에서 동기 복원한 세션을 즉시 신뢰하고,
+ * 백그라운드 토큰 검증은 AuthProvider에 위임한다.
  */
 
 import { Navigate } from 'react-router-dom'
-import { Spin } from 'antd'
-import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 import type { UserRole } from '@/types/user'
@@ -23,52 +24,7 @@ export function ProtectedRoute({
   requiredRoles,
   requireAuth = true,
 }: ProtectedRouteProps) {
-  const { isAuthenticated, user, loading, checkAuth, requiresMfa, mfaState } = useAuthStore()
-  const [isChecking, setIsChecking] = useState(true)
-
-  useEffect(() => {
-    const initAuth = async () => {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const token = localStorage.getItem('auth_token')
-        const expiresAt = localStorage.getItem('auth_expires_at')
-
-        if (token && expiresAt) {
-          const expiryTime = new Date(expiresAt).getTime()
-          const now = Date.now()
-          const bufferTime = 30 * 1000
-
-          if (expiryTime > now + bufferTime) {
-            if (!isAuthenticated) {
-              try {
-                await checkAuth()
-              } catch (error) {
-                console.error('Auth check failed in ProtectedRoute:', error)
-              }
-            }
-          } else {
-            useAuthStore.getState().logout()
-          }
-        } else if (!token || !expiresAt) {
-          if (isAuthenticated) {
-            useAuthStore.getState().logout()
-          }
-        }
-      }
-      setIsChecking(false)
-    }
-
-    initAuth()
-  }, [])
-
-  if (isChecking || loading) {
-    return (
-      <div
-        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
-      >
-        <Spin size="large" />
-      </div>
-    )
-  }
+  const { isAuthenticated, user, requiresMfa, mfaState } = useAuthStore()
 
   if (requireAuth && !isAuthenticated) {
     return <Navigate to="/login" replace />
