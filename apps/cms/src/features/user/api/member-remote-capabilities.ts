@@ -5,8 +5,18 @@ export function isMembersRemoteEnabled(): boolean {
   return isRealApiModuleEnabled('members')
 }
 
+/** 권한 승인 — 강사 탭 (`GET /api/admin/instructor-role-requests`) */
 export function isInstructorRoleRequestsRemoteEnabled(): boolean {
-  return isRealApiModuleEnabled('instructorRoleRequests')
+  return (
+    isRealApiModuleEnabled('instructorRoleRequests') || isMembersRemoteEnabled()
+  )
+}
+
+/** 권한 승인 — 관리자 탭 (`GET /api/admin/admin-accounts`, Swagger `listAdminApprovalRequests`) */
+export function isAdminApprovalRequestsRemoteEnabled(): boolean {
+  return (
+    isRealApiModuleEnabled('adminApprovalRequests') || isMembersRemoteEnabled()
+  )
 }
 
 export function isAdminPermissionsRemoteEnabled(): boolean {

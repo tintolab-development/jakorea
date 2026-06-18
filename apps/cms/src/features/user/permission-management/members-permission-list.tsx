@@ -22,9 +22,10 @@ import {
   mockMemberPermissionApplicationsInstructor,
 } from '@/data/mock/member-permission-applications'
 import { useInstructorRoleRequestsQuery } from '@/features/user/api/hooks/use-instructor-role-requests-query'
+import { useAdminApprovalRequestsQuery } from '@/features/user/api/hooks/use-admin-approval-requests-query'
 import {
+  isAdminApprovalRequestsRemoteEnabled,
   isInstructorRoleRequestsRemoteEnabled,
-  isMembersRemoteEnabled,
 } from '@/features/user/api/member-remote-capabilities'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -97,14 +98,14 @@ export interface MembersPermissionListProps {
   /** 관리자 탭: [신청 승인] — 강사 탭과 동일하게 단건·일괄 승인 모달 */
   onAdminApproveRequest?: (
     ctx:
-      | { mode: 'single'; userId: string; displayName: string }
-      | { mode: 'bulk'; userIds: string[]; memberCount: number }
+      | { mode: 'single'; userId: string; requestId?: number; displayName: string }
+      | { mode: 'bulk'; userIds: string[]; requestIds?: number[]; memberCount: number }
   ) => void
   /** 관리자 탭: [신청 반려] */
   onAdminRejectRequest?: (
     ctx:
-      | { mode: 'single'; userId: string; displayName: string }
-      | { mode: 'bulk'; userIds: string[]; memberCount: number }
+      | { mode: 'single'; userId: string; requestId?: number; displayName: string }
+      | { mode: 'bulk'; userIds: string[]; requestIds?: number[]; memberCount: number }
   ) => void
 }
 
@@ -138,22 +139,33 @@ export const MembersPermissionList = forwardRef<
   const instructorRemote = memberType === 'instructor' && isInstructorRoleRequestsRemoteEnabled()
   const instructorRemoteQuery = useInstructorRoleRequestsQuery({}, instructorRemote)
 
+  const adminRemote = memberType === 'admin' && isAdminApprovalRequestsRemoteEnabled()
+  const adminRemoteQuery = useAdminApprovalRequestsQuery({}, adminRemote)
+
   const baseRows = useMemo(
     () => {
       if (instructorRemote) {
         return instructorRemoteQuery.data?.rows ?? []
       }
+      if (adminRemote) {
+        return adminRemoteQuery.data?.rows ?? []
+      }
       return memberType === 'instructor'
         ? [...mockMemberPermissionApplicationsInstructor]
         : [...mockMemberPermissionApplicationsAdmin]
     },
-    [instructorRemote, instructorRemoteQuery.data?.rows, memberType]
+    [
+      adminRemote,
+      adminRemoteQuery.data?.rows,
+      instructorRemote,
+      instructorRemoteQuery.data?.rows,
+      memberType,
+    ]
   )
 
-  const adminRemoteNotice =
-    memberType === 'admin' && isMembersRemoteEnabled()
-      ? '관리자 권한 신청 API가 아직 제공되지 않아 목록은 mock 데이터입니다.'
-      : null
+  const remoteLoading =
+    (instructorRemote && instructorRemoteQuery.isLoading) ||
+    (adminRemote && adminRemoteQuery.isLoading)
 
   const [rows, setRows] = useState<MemberPermissionApplicationRow[]>(baseRows)
 
@@ -328,6 +340,7 @@ export const MembersPermissionList = forwardRef<
         onAdminApproveRequest?.({
           mode: 'single',
           userId: row.userId,
+          requestId: row.requestId ?? row.adminId,
           displayName: (row.name ?? '').trim() || '회원',
         })
         return
@@ -335,6 +348,9 @@ export const MembersPermissionList = forwardRef<
       onAdminApproveRequest?.({
         mode: 'bulk',
         userIds: pendingRows.map(r => r.userId),
+        requestIds: pendingRows
+          .map(r => r.requestId ?? r.adminId)
+          .filter((id): id is number => id != null),
         memberCount: pendingRows.length,
       })
       return
@@ -406,6 +422,7 @@ export const MembersPermissionList = forwardRef<
         onAdminRejectRequest({
           mode: 'single',
           userId: row.userId,
+          requestId: row.requestId ?? row.adminId,
           displayName: (row.name ?? '').trim() || '회원',
         })
         return
@@ -416,6 +433,9 @@ export const MembersPermissionList = forwardRef<
       onAdminRejectRequest({
         mode: 'bulk',
         userIds: pendingRows.map(r => r.userId),
+        requestIds: pendingRows
+          .map(r => r.requestId ?? r.adminId)
+          .filter((id): id is number => id != null),
         memberCount: pendingRows.length,
       })
       return
@@ -559,14 +579,19 @@ export const MembersPermissionList = forwardRef<
 
   return (
     <>
-      {adminRemoteNotice ? (
-        <Alert type="info" showIcon message={adminRemoteNotice} style={{ marginBottom: 12 }} />
-      ) : null}
       {instructorRemote && instructorRemoteQuery.isError ? (
         <Alert
           type="error"
           showIcon
           message="강사 권한 신청 목록을 불러오지 못했습니다"
+          style={{ marginBottom: 12 }}
+        />
+      ) : null}
+      {adminRemote && adminRemoteQuery.isError ? (
+        <Alert
+          type="error"
+          showIcon
+          message="관리자 권한 신청 목록을 불러오지 못했습니다"
           style={{ marginBottom: 12 }}
         />
       ) : null}
@@ -626,7 +651,7 @@ export const MembersPermissionList = forwardRef<
         className="cms-data-table members-permission-list__table"
         columns={columns}
         dataSource={tableData}
-        loading={instructorRemote && instructorRemoteQuery.isLoading}
+        loading={remoteLoading}
         onRow={record => ({
           onClick: (e: MouseEvent<HTMLElement>) => {
             if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return

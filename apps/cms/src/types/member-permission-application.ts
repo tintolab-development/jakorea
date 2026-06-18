@@ -17,6 +17,8 @@ export interface MemberPermissionApplicationRow {
   id: string
   /** instructor-role-requests API requestId (remote) */
   requestId?: number
+  /** admin-accounts API adminId (remote) */
+  adminId?: number
   /** 백엔드 memberId (remote) */
   memberId?: number
   userId: string
