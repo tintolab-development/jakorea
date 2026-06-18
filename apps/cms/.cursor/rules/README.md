@@ -96,6 +96,9 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [Personas](./process/persona.md)  
 - [Admin notice modal](./process/admin-notice-form-modal-spec.md)  
 - [Certificate issue spec](./process/member-program-certificate-issue-spec.md)  
+- **[UJAT 교육 지역 관리](./process/ujat-education-region-management-spec.md)** — `/programs/ujat/regions` 목록·DnD·인라인 수정·등록/삭제 모달
+- **[UJAT 프로그램 목록](./process/ujat-program-list-page-spec.md)** — 진행년도 필터·테이블 컬럼·신규 등록·임시저장 이력 안내
+- **[UJAT 프로그램 도메인 특성](./process/ujat-program-characteristics-spec.md)** — 봉사자=강사, 8지역, 금요일 1~4교시, 학교 1회·봉사자 상·하반기 2회 모집 (**목록·상세 공통 기획**)
 - [UJAT 기관 신청 목록](./process/ujat-institution-application-list-table-spec.md) — 진행일 열·희망일 `O`·선택 임시 배정
 - [UJAT 신청 기관 임시 배정](./process/ujat-institution-schedule-assign-spec.md) — `inst_schedule_assign` 날짜별 배정·배정값 산정
 - [UJAT 참여 봉사자 상세 — 교육 배정 및 진행 현황](./process/volunteer-assignment-tab-spec.md) — 역할 드롭다운·출결 담당 1명·활동 포기 행 오버레이

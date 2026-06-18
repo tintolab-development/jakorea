@@ -1,0 +1,25 @@
+---
+description: UJAT 프로그램 도메인 특성 — 봉사자=강사, 8지역, 금요일 1~4교시, 학교·봉사자 모집 주기
+globs: apps/cms/src/features/program/ujat/**/*
+alwaysApply: false
+---
+
+# UJAT 프로그램 도메인 특성
+
+목록·상세·진행 관리 수정 시 아래 전제를 따른다. 상세 스펙: `apps/cms/.cursor/rules/process/ujat-program-characteristics-spec.md`
+
+## 핵심
+
+1. **봉사자 = 강사** — UJAT에서 봉사자가 교육(강의)을 진행한다. 일반 프로그램 「강사」 UI·용어를 그대로 쓰지 않는다.
+2. **8개 교육 지역** — 서울, 경기(남부), 인천, 대전, 대구, 부산, 광주, 전북(전주). 지역별 학교·봉사자 선발. 라벨은 **교육 지역 관리** 메뉴에서 수정 가능(마스터 데이터).
+3. **금요일 1~4교시만** — 금요일 외 요일·4교시 미충족 일정은 허용하지 않는다.
+4. **모집 주기**
+   - **학교**: 1년 단위 **1회** 일괄 모집
+   - **봉사단**: **상반기·하반기** **2회** 모집 (`recruit_volunteer_h1` / `recruit_volunteer_h2`)
+
+목록 화면 스펙: `apps/cms/.cursor/rules/process/ujat-program-list-page-spec.md`
+
+## 코드 경계
+
+- 변경 기본 범위: `features/program/ujat/`
+- `shared/`·타 유형 수정 시 `program-type-isolation` 규칙 준수
