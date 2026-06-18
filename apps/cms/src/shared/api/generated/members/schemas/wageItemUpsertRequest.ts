@@ -6,14 +6,11 @@
  * OpenAPI spec version: v9
  */
 
-export interface PaymentItemResponse {
+export interface WageItemUpsertRequest {
   id?: number;
+  wageItemType?: string;
   itemName?: string;
-  maxAmount?: number;
-  taxableYn?: boolean;
-  useYn?: boolean;
-  iconKey?: string;
-  emojiOverride?: string;
-  layout?: string;
-  maxLimitWon?: number;
+  amount?: number;
+  calculationUnit?: string;
+  editableYn?: boolean;
 }

@@ -12,8 +12,9 @@ const inputPath = join(root, 'openapi/backend.openapi.json')
 const outputPath = join(root, 'openapi/members.openapi.json')
 
 const MEMBERS_PATH_PREFIXES = [
-  '/api/users',
-  '/api/instructor-role-requests',
+  '/api/admin/users',
+  '/api/admin/instructor-role-requests',
+  '/api/admin/admin-accounts',
   '/api/admin/admin-permissions',
   '/api/admin/admin-roles',
   '/api/admin/roles',

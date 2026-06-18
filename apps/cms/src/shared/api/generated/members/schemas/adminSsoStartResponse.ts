@@ -6,12 +6,10 @@
  * OpenAPI spec version: v9
  */
 
-export interface IdentityChallengeCreateRequest {
+export interface AdminSsoStartResponse {
   provider?: string;
-  expectedName?: string;
-  expectedBirthDate?: string;
-  expectedPhone?: string;
-  flow?: string;
-  frontendReturnUrl?: string;
+  status?: string;
+  authorizationUrl?: string;
   state?: string;
+  message?: string;
 }

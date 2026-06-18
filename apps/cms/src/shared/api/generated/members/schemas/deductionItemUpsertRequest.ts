@@ -6,14 +6,10 @@
  * OpenAPI spec version: v9
  */
 
-export interface PaymentItemResponse {
+export interface DeductionItemUpsertRequest {
   id?: number;
   itemName?: string;
-  maxAmount?: number;
-  taxableYn?: boolean;
+  deductionRate?: string;
+  deductionAmount?: number;
   useYn?: boolean;
-  iconKey?: string;
-  emojiOverride?: string;
-  layout?: string;
-  maxLimitWon?: number;
 }

@@ -6,11 +6,15 @@
  * OpenAPI spec version: v9
  */
 
-export interface IdentityChallengeCreateRequest {
+export interface NiceIdentityAuthStartResponse {
+  sessionId?: number;
   provider?: string;
-  expectedName?: string;
-  expectedBirthDate?: string;
-  expectedPhone?: string;
+  providerTxId?: string;
+  status?: string;
+  expiresAt?: string;
+  authUrl?: string;
+  requestNo?: string;
+  transactionId?: string;
   flow?: string;
   frontendReturnUrl?: string;
   state?: string;

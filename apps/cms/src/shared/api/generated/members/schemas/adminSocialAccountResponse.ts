@@ -6,12 +6,9 @@
  * OpenAPI spec version: v9
  */
 
-export interface IdentityChallengeCreateRequest {
+export interface AdminSocialAccountResponse {
   provider?: string;
-  expectedName?: string;
-  expectedBirthDate?: string;
-  expectedPhone?: string;
-  flow?: string;
-  frontendReturnUrl?: string;
-  state?: string;
+  providerUserIdMasked?: string;
+  status?: string;
+  linkedAt?: string;
 }
