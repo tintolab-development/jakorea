@@ -28,7 +28,9 @@ export const REAL_API_MODULE_KEYS = [
   'settlementConfigs',
   'members',
   'instructorRoleRequests',
+  'adminApprovalRequests',
   'adminPermissions',
+  'identityVerification',
 ] as const
 export type RealApiModule = (typeof REAL_API_MODULE_KEYS)[number]
 
