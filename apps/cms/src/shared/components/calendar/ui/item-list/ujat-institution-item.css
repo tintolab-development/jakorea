@@ -1,5 +1,5 @@
 /* 행 shell·hover·패딩·테두리는 `.calendar-list-item` (`calendar-sub-right.css`) */
-.ujat-institution-application-list-item {
+.ujat-institution-item {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -8,12 +8,12 @@
   box-sizing: border-box;
 }
 
-.ujat-institution-application-list-item__body {
+.ujat-institution-item__body {
   flex: 1;
   min-width: 0;
 }
 
-.ujat-institution-application-list-item__title-row {
+.ujat-institution-item__title-row {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
@@ -22,7 +22,7 @@
   margin-bottom: 8px;
 }
 
-.ujat-institution-application-list-item__title {
+.ujat-institution-item__title {
   min-width: 0;
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);
@@ -34,7 +34,7 @@
   white-space: nowrap;
 }
 
-.ujat-institution-application-list-item__title-divider {
+.ujat-institution-item__title-divider {
   width: 1px;
   height: 13px;
   box-sizing: border-box;
@@ -43,7 +43,7 @@
   background: var(--default-BK, #3d3d3d);
 }
 
-.ujat-institution-application-list-item__meta {
+.ujat-institution-item__meta {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -57,12 +57,12 @@
   opacity: 0.6;
 }
 
-.ujat-institution-application-list-item__meta-total {
+.ujat-institution-item__meta-total {
   flex-shrink: 0;
   white-space: nowrap;
 }
 
-.ujat-institution-application-list-item__meta-divider {
+.ujat-institution-item__meta-divider {
   width: 1px;
   height: 13px;
   box-sizing: border-box;
@@ -71,11 +71,10 @@
   background: var(--default-BK, #3d3d3d);
 }
 
-.ujat-institution-application-list-item__meta-detail {
+.ujat-institution-item__meta-detail {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-

@@ -94,7 +94,7 @@ export type {
 } from './ui/calendar-sub-right-list'
 export type { CalendarVolunteerInterviewListRow } from './ui/item-list/ujat-volunteer-interview'
 export type { CalendarVolunteerInterview2ListRow } from './ui/item-list/ujat-volunteer-interview2'
-export type { CalendarInstitutionApplicationListRow } from './ui/item-list/ujat-institution-application'
+export type { CalendarInstitutionApplicationListRow } from './ui/item-list/ujat-institution'
 export type { CalendarGeneralInstitutionApplicationListRow } from './ui/item-list/general-institution-application'
 export type { CalendarGeneralInstructorApplicationListRow } from './ui/item-list/general-instructor-application'
 export type { CalendarGeneralIndividualApplicationListRow } from './ui/item-list/general-individual-application'

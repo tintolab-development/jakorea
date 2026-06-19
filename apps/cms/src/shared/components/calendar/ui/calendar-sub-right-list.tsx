@@ -16,7 +16,7 @@ import { CalendarListItemContentSettlement } from './item-list/settlement'
 import {
   CalendarListItemContentInstitutionApplication,
   type CalendarInstitutionApplicationListRow,
-} from './item-list/ujat-institution-application'
+} from './item-list/ujat-institution'
 import {
   CalendarListItemContentGeneralInstitutionApplication,
   type CalendarGeneralInstitutionApplicationListRow,

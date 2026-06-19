@@ -13,10 +13,10 @@
 @import './calendar-preview-popover-content.css';
 @import '../ui/preview-tooltip/settlement-preview-tooltip.css';
 @import './calendar-sub-right.css';
-@import '../ui/item-list/ujat-institution-application-list-item.css';
+@import '../ui/item-list/ujat-institution-item.css';
 @import '../ui/item-list/general-institution-application-list-item.css';
 @import '../ui/item-list/general-instructor-application-list-item.css';
-@import '../ui/item-list/ujat-institution-application-calendar-status-badge.css';
+@import '../ui/item-list/institution-application-status-badge.css';
 @import '../ui/item-list/ujat-volunteer-interview-list-item.css';
 @import '../ui/item-list/ujat-volunteer-interview2-list-item.css';
 @import './calendar-sub-left.css';
