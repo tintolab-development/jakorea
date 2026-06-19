@@ -3,6 +3,7 @@ import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from './regions'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './filter-fields'
 import { UjatInstitutionApplicationRegionTabs } from './region-tabs'
@@ -20,8 +21,9 @@ export function UjatInstitutionApplicationList({
 }: {
   onOpenDetail: (row: UjatInstitutionApplicationRow) => void
 }) {
-  const [activeRegion, setActiveRegion] =
-    useState<UjatInstitutionApplicationRegionKey>('seoul')
+  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
+    getDefaultUjatEducationRegionKey
+  )
   const {
     pendingFilters,
     handleFilterChange,

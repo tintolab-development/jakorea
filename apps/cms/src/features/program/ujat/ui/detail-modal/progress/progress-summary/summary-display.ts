@@ -1,4 +1,5 @@
-import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '../../application-institution/list/regions'
+import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
+import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import type {
   UjatEducationProgressRegionRow,
   UjatEducationProgressRegionValues,
@@ -32,9 +33,9 @@ export function formatSummaryCellValue(
 export function sumRegionValues(
   values: UjatEducationProgressRegionValues
 ): UjatEducationProgressSummaryCellValue {
-  const nums = UJAT_INSTITUTION_APPLICATION_REGIONS.map(
-    region => values[region.key]
-  ).filter((v): v is number => v != null)
+  const nums = listUjatEducationRegionsActive()
+    .map(region => values[region.key as UjatInstitutionApplicationRegionKey])
+    .filter((v): v is number => v != null)
   if (nums.length === 0) return null
   return nums.reduce((acc, n) => acc + n, 0)
 }
@@ -57,5 +58,7 @@ export function summaryToneClassName(
 export function regionValuesInOrder(
   row: UjatEducationProgressRegionRow
 ): UjatEducationProgressSummaryCellValue[] {
-  return UJAT_INSTITUTION_APPLICATION_REGIONS.map(region => row.regions[region.key])
+  return listUjatEducationRegionsActive().map(region =>
+    row.regions[region.key as UjatInstitutionApplicationRegionKey]
+  )
 }

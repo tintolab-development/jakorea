@@ -11,7 +11,7 @@ import {
   type UjatTextbookEducationMode,
   ujatHalfScheduleOverlayKeys,
 } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
-import { listUjatInstitutionApplicationRegions } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
+import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 
 export type UjatHalfScheduleTableRow = {
@@ -28,9 +28,7 @@ export type UjatHalfEducationScheduleDisplay = {
 }
 
 function regionLabelByKey(regionKey: string): string {
-  return (
-    listUjatInstitutionApplicationRegions().find(r => r.key === regionKey)?.label ?? regionKey
-  )
+  return getUjatEducationRegionLabel(regionKey, regionKey)
 }
 
 function formatScheduleDateLabel(iso: string | null | undefined): string {

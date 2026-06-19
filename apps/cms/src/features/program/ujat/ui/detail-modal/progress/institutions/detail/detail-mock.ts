@@ -5,7 +5,7 @@ import {
 import { formatUjatInstitutionFridayDisplay } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import { formatGradeClassSectionLabel } from '@/features/program/ujat/ui/detail-modal/application-institution/list/grade-class-sections'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
-import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
+import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import { getUjatScheduleAssignRegionState } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-assign/store'
 import { parseGradeClassSectionValue } from '@/features/program/ujat/ui/detail-modal/application-institution/list/grade-class-sections'
@@ -42,9 +42,7 @@ const DEFAULT_GUIDANCE: UjatEducationProgressInstitutionGuidance = {
 }
 
 function regionLabel(regionKey: UjatInstitutionApplicationRegionKey): string {
-  return (
-    UJAT_INSTITUTION_APPLICATION_REGIONS.find(r => r.key === regionKey)?.label ?? regionKey
-  )
+  return getUjatEducationRegionLabel(regionKey, regionKey)
 }
 
 function buildConfirmedEducationScheduleRows(

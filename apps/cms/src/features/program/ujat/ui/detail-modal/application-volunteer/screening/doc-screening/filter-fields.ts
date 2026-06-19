@@ -5,22 +5,17 @@ import {
   UJAT_MANAGER_EVALUATION_ORDER,
   UJAT_VOLUNTEER_APPLICATION_TYPE_LABELS,
   UJAT_VOLUNTEER_GRADE_OPTIONS,
-  UJAT_VOLUNTEER_PREFERRED_REGIONS,
   type UjatDocumentScreeningStatus,
   type UjatManagerEvaluation,
   type UjatVolunteerApplicationType,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
+import { getUjatVolunteerPreferredRegionLabels } from '@/features/program/ujat/lib/ujat-education-regions'
 
 const ALL = 'ALL'
 
 const gradeOptions = [
   { label: '전체', value: ALL },
   ...UJAT_VOLUNTEER_GRADE_OPTIONS.map(g => ({ label: g, value: g })),
-]
-
-const regionOptions = [
-  { label: '전체', value: ALL },
-  ...UJAT_VOLUNTEER_PREFERRED_REGIONS.map(r => ({ label: r, value: r })),
 ]
 
 const experienceOptions = [
@@ -86,6 +81,11 @@ export const UJAT_VOLUNTEER_DOC_SCREENING_TRAILING_FILTER_KEYS = [
 ] as const
 
 export function buildUjatVolunteerDocScreeningFilterRows(): FilterFieldConfig[][] {
+  const regionOptions = [
+    { label: '전체', value: ALL },
+    ...getUjatVolunteerPreferredRegionLabels().map(label => ({ label, value: label })),
+  ]
+
   return [
     [
       {

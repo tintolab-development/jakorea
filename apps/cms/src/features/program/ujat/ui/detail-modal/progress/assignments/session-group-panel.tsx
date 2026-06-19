@@ -1,13 +1,9 @@
 import { useMemo } from 'react'
 import { DividerVertical } from '@/shared/components/divider-vertical'
-import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '../../application-institution/list/regions'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import { filterAssignmentVolunteersForDisplay } from './use-list'
 import { UjatEducationProgressAssignmentTable } from './assignment-table'
 import type { UjatAssignmentFilters, UjatAssignmentSessionGroup } from './types'
-
-const REGION_LABEL_MAP = new Map(
-  UJAT_INSTITUTION_APPLICATION_REGIONS.map(r => [r.key, r.label])
-)
 
 export function UjatAssignmentSessionGroupPanel({
   session,
@@ -16,12 +12,17 @@ export function UjatAssignmentSessionGroupPanel({
   session: UjatAssignmentSessionGroup
   appliedFilters: UjatAssignmentFilters
 }) {
+  const { regions } = useUjatEducationRegions()
+  const regionLabelMap = useMemo(
+    () => new Map(regions.map(region => [region.key, region.label])),
+    [regions]
+  )
   const displayRows = useMemo(
     () => filterAssignmentVolunteersForDisplay(session.volunteers, appliedFilters),
     [appliedFilters, session.volunteers]
   )
 
-  const regionLabel = REGION_LABEL_MAP.get(session.regionKey) ?? session.regionKey
+  const regionLabel = regionLabelMap.get(session.regionKey) ?? session.regionKey
 
   return (
     <section className="ujat-education-progress-assignments__session-group">

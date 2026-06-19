@@ -3,6 +3,7 @@ import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
+import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../list/region-tabs'
 import { UJAT_SCHEDULE_CONFIRM_TABLE_MIN_SCROLL_X } from './columns'
@@ -16,8 +17,9 @@ export function UjatInstitutionScheduleConfirmList({
 }: {
   onOpenDetail: (row: UjatScheduleConfirmRow) => void
 }) {
-  const [activeRegion, setActiveRegion] =
-    useState<UjatInstitutionApplicationRegionKey>('seoul')
+  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
+    getDefaultUjatEducationRegionKey
+  )
   const {
     pendingFilters,
     filterFields,

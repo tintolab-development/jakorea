@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../../application-institution/list/region-tabs'
 import type { EducationProgressHalfKey } from '../tabs'
@@ -42,7 +43,9 @@ export function UjatEducationProgressAttendanceSection({
 }: {
   half: EducationProgressHalfKey
 }) {
-  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>('seoul')
+  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
+    getDefaultUjatEducationRegionKey
+  )
 
   const {
     pendingFilters,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { UJAT_EDU_VOL_ID_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { Table } from 'antd'
@@ -8,7 +8,8 @@ import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import type { EducationProgressHalfKey } from '../tabs'
 import { UjatAddVolunteerModal } from './add-volunteer-modal'
-import { UJAT_EDU_PROGRESS_VOLUNTEER_FILTER_FIELDS } from './filter-fields'
+import { buildUjatEducationProgressVolunteerFilterFields } from './filter-fields'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import { UJAT_EDU_PROGRESS_VOLUNTEERS_TABLE_MIN_SCROLL_X } from './columns'
 import { useUjatEducationProgressVolunteers } from './use-list'
 import type { UjatEducationProgressVolunteerRow } from './types'
@@ -34,6 +35,11 @@ export function UjatEducationProgressVolunteersSection({
   const tableWrapRef = useRef<HTMLDivElement>(null)
   const [tableScrollX, setTableScrollX] = useState(UJAT_EDU_PROGRESS_VOLUNTEERS_TABLE_MIN_SCROLL_X)
   const [addVolunteerModalOpen, setAddVolunteerModalOpen] = useState(false)
+  const { regions: educationRegions } = useUjatEducationRegions()
+  const filterFields = useMemo(
+    () => buildUjatEducationProgressVolunteerFilterFields(),
+    [educationRegions]
+  )
 
   const {
     pendingFilters,
@@ -108,7 +114,8 @@ export function UjatEducationProgressVolunteersSection({
       <FilterTableLayout
         className="ujat-education-progress-volunteers__filter-layout"
         bordered={false}
-        fields={UJAT_EDU_PROGRESS_VOLUNTEER_FILTER_FIELDS}
+        fields={filterFields}
+        key={educationRegions.map(region => region.key).join(',')}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}

@@ -1,3 +1,6 @@
+import { useMemo } from 'react'
+import { buildUjatRegionCapacityPairRows } from '@/features/program/ujat/lib/ujat-education-regions'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import type { UjatRegionCapacitySemesterValues } from '@/features/program/ujat/lib/ujat-region-capacity-types'
 import {
   formatUjatRegionCapacityClassView,
@@ -7,7 +10,6 @@ import {
 import {
   EMPTY_UJAT_REGION_CAPACITY_BY_SEMESTER,
   UJAT_REGION_CAPACITY_OVERLAY_KEY,
-  UJAT_REGION_CAPACITY_REGION_ROWS,
   UJAT_REGION_CAPACITY_SEMESTER_LABEL,
   type UjatRegionCapacityBySemesterState,
   type UjatRegionCapacityField,
@@ -85,11 +87,13 @@ function SemesterRegionCapacityTable({
   mode,
   values,
   onChange,
+  regionRows,
 }: {
   half: UjatRegionCapacitySemesterKey
   mode: 'view' | 'edit'
   values: UjatRegionCapacitySemesterValues
   onChange?: (region: UjatRegionCapacityRegionName, field: UjatRegionCapacityField, value: string) => void
+  regionRows: Array<{ left: string; right: string }>
 }) {
   return (
     <div className="ujat-education-class-capacity__semester">
@@ -102,7 +106,7 @@ function SemesterRegionCapacityTable({
         mode={mode}
         className="ujat-education-class-capacity__form"
       >
-        {UJAT_REGION_CAPACITY_REGION_ROWS.map(row => (
+        {regionRows.map(row => (
           <DetailInfoForm.Row key={`${half}-${row.left}-${row.right}`} type="double">
             <DetailInfoForm.Field
               label={row.left}
@@ -141,10 +145,12 @@ function SemesterRegionCapacityTableConnected({
   half,
   mode,
   fallbackValues,
+  regionRows,
 }: {
   half: UjatRegionCapacitySemesterKey
   mode: 'view' | 'edit'
   fallbackValues: UjatRegionCapacitySemesterValues
+  regionRows: Array<{ left: string; right: string }>
 }) {
   const [valuesBySemester] = useUjatProgramRegistrationOverlayKv<UjatRegionCapacityBySemesterState>(
     UJAT_REGION_CAPACITY_OVERLAY_KEY,
@@ -181,6 +187,7 @@ function SemesterRegionCapacityTableConnected({
       mode={mode}
       values={values}
       onChange={mode === 'edit' ? updateValue : undefined}
+      regionRows={regionRows}
     />
   )
 }
@@ -194,10 +201,23 @@ export function UjatRegionCapacitySection({
   h1Values: UjatRegionCapacitySemesterValues
   h2Values: UjatRegionCapacitySemesterValues
 }) {
+  const { labels } = useUjatEducationRegions()
+  const regionRows = useMemo(() => buildUjatRegionCapacityPairRows(), [labels])
+
   return (
     <div className="ujat-education-class-capacity">
-      <SemesterRegionCapacityTableConnected half="h1" mode={mode} fallbackValues={h1Values} />
-      <SemesterRegionCapacityTableConnected half="h2" mode={mode} fallbackValues={h2Values} />
+      <SemesterRegionCapacityTableConnected
+        half="h1"
+        mode={mode}
+        fallbackValues={h1Values}
+        regionRows={regionRows}
+      />
+      <SemesterRegionCapacityTableConnected
+        half="h2"
+        mode={mode}
+        fallbackValues={h2Values}
+        regionRows={regionRows}
+      />
     </div>
   )
 }

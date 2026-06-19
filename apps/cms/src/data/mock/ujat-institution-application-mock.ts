@@ -1,4 +1,6 @@
-import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
+import {
+  getUjatEducationRegionLabel,
+} from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
 import type { UjatInstitutionApplicationDetail } from '@/features/program/ujat/ui/detail-modal/application-institution/detail/detail-types'
 import type {
@@ -102,9 +104,7 @@ function gradeValuesForGrade(gradeLabel: string, classCount: number): string[] {
 }
 
 function regionLabelForKey(regionKey: UjatInstitutionApplicationRegionKey): string {
-  return (
-    UJAT_INSTITUTION_APPLICATION_REGIONS.find(r => r.key === regionKey)?.label ?? regionKey
-  )
+  return getUjatEducationRegionLabel(regionKey, regionKey)
 }
 
 function preferredDatesFromSlots(

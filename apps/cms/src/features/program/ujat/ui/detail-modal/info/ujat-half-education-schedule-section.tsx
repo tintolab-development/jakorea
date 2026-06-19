@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { mockInstructors } from '@/data/mock/instructors'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import {
   EMPTY_UJAT_HALF_EVENT_RANGE_SEAL,
   EMPTY_UJAT_HALF_MULTI_SCHEDULE_BUNDLE,
@@ -13,7 +14,6 @@ import {
   ujatHalfScheduleOverlayKeys,
 } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
 import type { UjatHalfScheduleTableRow } from '@/features/program/ujat/lib/ujat-half-education-schedule-display'
-import { listUjatInstitutionApplicationRegions } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
 import {
   updateUjatProgramRegistrationOverlayKey,
   useUjatProgramRegistrationOverlayKv,
@@ -53,14 +53,18 @@ function getUjatTextbookInstructorOptions() {
   }))
 }
 
-function getRowRegionOptions(rowId: number, regionByRow: Record<number, string[]>) {
+function getRowRegionOptions(
+  rowId: number,
+  regionByRow: Record<number, string[]>,
+  regions: Array<{ key: string; label: string }>
+) {
   const current = new Set(regionByRow[rowId] ?? [])
   const selectedByOtherRows = new Set(
     Object.entries(regionByRow)
       .filter(([key]) => Number(key) !== rowId)
       .flatMap(([, values]) => values ?? [])
   )
-  return listUjatInstitutionApplicationRegions()
+  return regions
     .map(r => ({ label: r.label, value: r.key }))
     .filter(option => current.has(option.value) || !selectedByOtherRows.has(option.value))
 }
@@ -111,6 +115,7 @@ function UjatRegionDateMultiScheduleRows({
   half: UjatHalfSemesterKey
   section: 'pre' | 'closing'
 }) {
+  const { regions } = useUjatEducationRegions()
   const keys = ujatHalfScheduleOverlayKeys(half)
   const storageKey = section === 'pre' ? keys.preMulti : keys.closingMulti
   const [bundle] = useUjatProgramRegistrationOverlayKv<UjatHalfMultiScheduleBundle>(
@@ -175,7 +180,7 @@ function UjatRegionDateMultiScheduleRows({
             withAllOption={false}
             style={{ width: 360 }}
             placeholder="지역을 선택하세요"
-            options={getRowRegionOptions(id, regionByRow)}
+            options={getRowRegionOptions(id, regionByRow, regions)}
             value={regionByRow[id] ?? []}
             onChange={next =>
               updateUjatProgramRegistrationOverlayKey<UjatHalfMultiScheduleBundle>(

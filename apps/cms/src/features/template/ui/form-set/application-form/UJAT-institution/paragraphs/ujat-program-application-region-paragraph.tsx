@@ -1,12 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-
-const REGION_OPTIONS = ['서울', '경기(남부)', '인천', '대전', '대구', '부산', '광주', '전북(전주)'] as const
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 
 /** UJAT 프로그램 학교 신청 폼 — 신청 지역 */
 export function UjatProgramApplicationRegionParagraph() {
-  const [region, setRegion] = useState<string>(REGION_OPTIONS[0])
+  const { regions: regionOptions } = useUjatEducationRegions()
+  const [region, setRegion] = useState('')
+
+  useEffect(() => {
+    if (regionOptions.length === 0) return
+    setRegion(current => {
+      const valid = regionOptions.some(r => r.label === current)
+      return valid ? current : regionOptions[0].label
+    })
+  }, [regionOptions])
 
   return (
     <DetailInfoForm title="신청 지역" hideHeader mode="edit">
@@ -21,9 +29,9 @@ export function UjatProgramApplicationRegionParagraph() {
               onChange={e => setRegion(e.target.value)}
               style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}
             >
-              {REGION_OPTIONS.map(option => (
-                <CmsRadio key={option} value={option}>
-                  {option}
+              {regionOptions.map(option => (
+                <CmsRadio key={option.key} value={option.label}>
+                  {option.label}
                 </CmsRadio>
               ))}
             </CmsRadioGroup>

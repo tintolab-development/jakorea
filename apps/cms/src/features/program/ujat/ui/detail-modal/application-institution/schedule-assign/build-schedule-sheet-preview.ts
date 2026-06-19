@@ -1,7 +1,7 @@
 import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
-import {
-  UJAT_INSTITUTION_APPLICATION_REGIONS,
-  type UjatInstitutionApplicationRegionKey,
+import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
+import type {
+  UjatInstitutionApplicationRegionKey,
 } from '../list/regions'
 import type { UjatInstitutionApplicationRow } from '../list/types'
 import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '../education-schedule'
@@ -39,8 +39,9 @@ export function buildScheduleSheetPreview(
 ): ScheduleSheetPreviewRegion[] {
   const rowById = new Map(applicationRows.map(row => [row.id, row]))
 
-  return UJAT_INSTITUTION_APPLICATION_REGIONS.map(region => {
-    const state = getUjatScheduleAssignRegionState(region.key)
+  return listUjatEducationRegionsActive().map(region => {
+    const regionKey = region.key as UjatInstitutionApplicationRegionKey
+    const state = getUjatScheduleAssignRegionState(regionKey)
     const columns: ScheduleSheetPreviewColumn[] = []
 
     for (const { isoDate, title } of UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES) {
@@ -74,7 +75,7 @@ export function buildScheduleSheetPreview(
     }
 
     return {
-      regionKey: region.key,
+      regionKey,
       regionLabel: region.label,
       columns,
     }

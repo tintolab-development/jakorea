@@ -4,22 +4,30 @@
 
 import type { SecondInterviewScreeningStatus } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
 
-export const UJAT_VOLUNTEER_PREFERRED_REGIONS = [
-  '서울',
-  '경기(남부)',
-  '인천',
-  '대전',
-  '대구',
-  '부산',
-  '광주',
-  '전북(전주)',
-] as const
+import {
+  getUjatEducationRegionSortOrderMap,
+  getUjatVolunteerPreferredRegionLabels,
+  UJAT_DEFAULT_EDUCATION_REGIONS,
+} from '@/features/program/ujat/lib/ujat-education-regions'
 
-export type UjatVolunteerPreferredRegion = (typeof UJAT_VOLUNTEER_PREFERRED_REGIONS)[number]
+/** 기본 희망 교육 활동 지역 라벨 — 런타임 목록은 `getUjatVolunteerPreferredRegionLabels()` */
+export const UJAT_VOLUNTEER_PREFERRED_REGIONS = UJAT_DEFAULT_EDUCATION_REGIONS.map(
+  row => row.label
+)
 
-/** 지역 정렬 우선순위 (기획 스펙) */
-export const UJAT_VOLUNTEER_REGION_SORT_ORDER: Record<string, number> =
-  Object.fromEntries(UJAT_VOLUNTEER_PREFERRED_REGIONS.map((r, i) => [r, i]))
+export type UjatVolunteerPreferredRegion = string
+
+/** @deprecated `getUjatEducationRegionSortOrderMap()` */
+export function getUjatVolunteerRegionSortOrderMap(): Record<string, number> {
+  return getUjatEducationRegionSortOrderMap()
+}
+
+/** @deprecated 런타임 정렬은 `getUjatEducationRegionSortOrderMap()` 사용 */
+export const UJAT_VOLUNTEER_REGION_SORT_ORDER: Record<string, number> = Object.fromEntries(
+  UJAT_VOLUNTEER_PREFERRED_REGIONS.map((label, index) => [label, index])
+)
+
+export { getUjatVolunteerPreferredRegionLabels }
 
 export const UJAT_VOLUNTEER_GRADE_OPTIONS = [
   '1학년',

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useRegionAssignment } from './use-region-assignment'
 import { DownloadOutlined } from '@ant-design/icons'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../../application-institution/list/region-tabs'
 import { UjatAssignmentAssignModal } from '../shared/assign-modal'
@@ -31,7 +32,9 @@ export function UjatEducationProgressRegionAssignmentSection({
   half: EducationProgressHalfKey
 }) {
   const { showAlert } = useCmsAlert()
-  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>('seoul')
+  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
+    getDefaultUjatEducationRegionKey
+  )
   const [directAssignModalOpen, setDirectAssignModalOpen] = useState(false)
   const [blockedDateModalOpen, setBlockedDateModalOpen] = useState(false)
   const [attendanceManagerModalOpen, setAttendanceManagerModalOpen] = useState(false)

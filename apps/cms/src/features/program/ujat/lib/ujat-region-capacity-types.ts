@@ -1,13 +1,4 @@
-export const UJAT_REGION_CAPACITY_REGION_ROWS = [
-  { left: '서울', right: '경기(남부)' },
-  { left: '인천', right: '대전' },
-  { left: '대구', right: '부산' },
-  { left: '광주', right: '전북(전주)' },
-] as const
-
-export type UjatRegionCapacityRegionName =
-  | (typeof UJAT_REGION_CAPACITY_REGION_ROWS)[number]['left']
-  | (typeof UJAT_REGION_CAPACITY_REGION_ROWS)[number]['right']
+export type UjatRegionCapacityRegionName = string
 
 export type UjatRegionCapacityField = 'classCount' | 'volunteerCount'
 

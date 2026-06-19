@@ -1,4 +1,4 @@
-import { useCallback, useRef, type MouseEvent } from 'react'
+import { useCallback, useMemo, useRef, type MouseEvent } from 'react'
 import { Table } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
@@ -7,6 +7,7 @@ import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/uja
 import { UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { buildUjatVolunteerDocScreeningFilterRows } from './filter-fields'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import { computeDocScreeningTableScrollX } from './columns'
 import { useUjatVolunteerDocScreening } from './use-list'
 import {
@@ -17,7 +18,6 @@ import { ApplicantDetailView } from '../applicant/detail-view'
 import './section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
 
-const FILTER_ROWS = buildUjatVolunteerDocScreeningFilterRows()
 const TABLE_SCROLL_X = computeDocScreeningTableScrollX(UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS)
 
 export interface DocScreeningSectionProps {
@@ -34,6 +34,11 @@ export function DocScreeningSection({
   onVolunteerApplicantDetailMetaChange,
 }: DocScreeningSectionProps) {
   const tableWrapRef = useRef<HTMLDivElement>(null)
+  const { labels: educationRegionLabels } = useUjatEducationRegions()
+  const filterRows = useMemo(
+    () => buildUjatVolunteerDocScreeningFilterRows(),
+    [educationRegionLabels]
+  )
 
   const {
     list,
@@ -135,7 +140,7 @@ export function DocScreeningSection({
         <FilterTableLayout
           bordered={false}
           className="ujat-volunteer-doc-screening__filter-layout"
-          rows={FILTER_ROWS}
+          rows={filterRows}
           filters={pendingFilters}
           onFilterChange={handleFilterChange}
           onSearch={handleSearch}

@@ -1,3 +1,4 @@
+import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import { resolveUjatRegionCapacitySemesterValues } from '@/features/program/ujat/lib/ujat-region-capacity-display'
 import type {
   UjatRegionCapacityRegionName,
@@ -5,20 +6,6 @@ import type {
 } from '@/features/program/ujat/lib/ujat-region-capacity-types'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
 import type { UjatInstitutionApplicationRow } from '@/features/program/ujat/ui/detail-modal/application-institution/list/types'
-
-const REGION_KEY_TO_CAPACITY_LABEL: Record<
-  UjatInstitutionApplicationRegionKey,
-  UjatRegionCapacityRegionName
-> = {
-  seoul: '서울',
-  gyeonggi_south: '경기(남부)',
-  incheon: '인천',
-  daejeon: '대전',
-  daegu: '대구',
-  busan: '부산',
-  gwangju: '광주',
-  jeonbuk_jeonju: '전북(전주)',
-}
 
 function parseMaxClassCount(value: string | undefined): number | null {
   const trimmed = value?.trim()
@@ -52,7 +39,7 @@ export function checkUjatRegionClassCapacityExceeded(args: {
   totalAfterAssign: number
 } {
   const half = args.half ?? 'h1'
-  const regionLabel = REGION_KEY_TO_CAPACITY_LABEL[args.regionKey]
+  const regionLabel = getUjatEducationRegionLabel(args.regionKey, args.regionKey)
   const capacityValues = resolveUjatRegionCapacitySemesterValues(half)
   const maxClassCount = parseMaxClassCount(capacityValues[regionLabel]?.classCount)
   const totalAfterAssign = sumUjatRegionAssignedClassCount(args.rowsAfterAssign, args.regionKey, {

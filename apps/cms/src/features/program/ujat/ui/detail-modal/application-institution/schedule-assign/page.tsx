@@ -2,10 +2,9 @@ import { useCallback, useState } from 'react'
 import { useCmsAlert } from '@/shared/ui'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
-import {
-  listUjatInstitutionApplicationRegions,
-  type UjatInstitutionApplicationRegionKey,
-} from '../list/regions'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
+import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
+import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { UjatInstitutionScheduleAssignSection } from './section'
 import { UjatInstitutionScheduleSheetPreviewModal } from './schedule-sheet-preview-modal'
 import { commitUjatScheduleAssignDraft } from './store'
@@ -13,8 +12,10 @@ import './page.css'
 
 export function UjatInstitutionScheduleAssignPage() {
   const { showAlert } = useCmsAlert()
-  const regionTabs = listUjatInstitutionApplicationRegions()
-  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>('seoul')
+  const { regions: regionTabs } = useUjatEducationRegions()
+  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
+    getDefaultUjatEducationRegionKey
+  )
   const [scheduleSheetOpen, setScheduleSheetOpen] = useState(false)
   const [scheduleSheetRefreshKey, setScheduleSheetRefreshKey] = useState(0)
 

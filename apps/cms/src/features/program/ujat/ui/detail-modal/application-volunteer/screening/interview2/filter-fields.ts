@@ -4,17 +4,12 @@ import {
   SECOND_INTERVIEW_SCREENING_STATUS_ORDER,
 } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
 import {
-  UJAT_VOLUNTEER_PREFERRED_REGIONS,
   type UjatSecondInterviewScreeningStatus,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
+import { getUjatVolunteerPreferredRegionLabels } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 
 const ALL = 'ALL'
-
-const regionOptions = [
-  { label: '전체', value: ALL },
-  ...UJAT_VOLUNTEER_PREFERRED_REGIONS.map(r => ({ label: r, value: r })),
-]
 
 const scoreOptions = [
   { label: '전체', value: ALL },
@@ -72,6 +67,10 @@ export function buildUjatVolunteerInterview2FilterRows(
 ): FilterFieldConfig[][] {
   const dateOptions = buildUjatVolunteerInterview2DateOptions(rows)
   const timeOptions = buildUjatVolunteerInterview2TimeOptions(rows)
+  const regionOptions = [
+    { label: '전체', value: ALL },
+    ...getUjatVolunteerPreferredRegionLabels().map(label => ({ label, value: label })),
+  ]
 
   return [
     [

@@ -7,7 +7,11 @@ import {
   UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES,
   resolveEducationSemesterForIsoDate,
 } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
-import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
+import {
+  getUjatEducationRegionLabel,
+  listUjatEducationRegionsActive,
+} from '@/features/program/ujat/lib/ujat-education-regions'
+import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
 import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
 import type { UjatEducationProgressInstitutionRow } from '@/features/program/ujat/ui/detail-modal/progress/institutions/types'
 
@@ -18,9 +22,7 @@ export function getUjatEducationProgressScheduleFilterOptions(half: EducationPro
 }
 
 function regionLabel(regionKey: string): string {
-  return (
-    UJAT_INSTITUTION_APPLICATION_REGIONS.find(r => r.key === regionKey)?.label ?? regionKey
-  )
+  return getUjatEducationRegionLabel(regionKey, regionKey)
 }
 
 function rowMatchesHalf(row: UjatEducationProgressInstitutionRow, half: EducationProgressHalfKey): boolean {
@@ -35,8 +37,8 @@ function rowMatchesHalf(row: UjatEducationProgressInstitutionRow, half: Educatio
 function buildBaseRows(half: EducationProgressHalfKey): UjatEducationProgressInstitutionRow[] {
   const rows: UjatEducationProgressInstitutionRow[] = []
 
-  for (const { key: regionKey } of UJAT_INSTITUTION_APPLICATION_REGIONS) {
-    const confirmRows = buildUjatScheduleConfirmRows(regionKey)
+  for (const { key: regionKey } of listUjatEducationRegionsActive()) {
+    const confirmRows = buildUjatScheduleConfirmRows(regionKey as UjatInstitutionApplicationRegionKey)
     for (const confirm of confirmRows) {
       if (
         confirm.scheduleConfirmStatus !== 'institution_confirmed' &&
