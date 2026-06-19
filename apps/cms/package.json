@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/identity-verification build",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint . --max-warnings=-1",
@@ -12,7 +13,7 @@
     "test:watch": "vitest",
     "preview": "vite preview",
     "validate": "pnpm typecheck && pnpm lint && pnpm build",
-    "fetch:openapi": "curl -sS -H 'ngrok-skip-browser-warning: true' \"${VITE_API_SERVER:-https://bfba-115-94-189-196.ngrok-free.app}/v3/api-docs\" -o openapi/backend.openapi.json",
+    "fetch:openapi": "curl -sS -H 'ngrok-skip-browser-warning: true' \"${VITE_API_SERVER:-https://7836-183-102-114-192.ngrok-free.app}/v3/api-docs\" -o openapi/backend.openapi.json",
     "filter:openapi:dashboard": "node scripts/filter-openapi-dashboard.mjs",
     "filter:openapi:logs": "node scripts/filter-openapi-logs.mjs",
     "filter:openapi:data-management": "node scripts/filter-openapi-data-management.mjs",
