@@ -4,16 +4,30 @@ import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 export type UjatInstitutionScheduleConfirmStatus =
   | 'institution_checking'
   | 'institution_confirmed'
+  | 'approval_completed'
+  | 'revision_requested'
   | 'application_rejected'
 
 export const UJAT_INSTITUTION_SCHEDULE_CONFIRM_STATUS_LABEL: Record<
   UjatInstitutionScheduleConfirmStatus,
   string
 > = {
-  institution_checking: '기관 확인 중',
   institution_confirmed: '기관 확인 완료',
+  institution_checking: '기관 확인 중',
+  approval_completed: '승인 완료',
+  revision_requested: '수정 요청',
   application_rejected: '신청 반려',
 }
+
+/** 필터·셀렉트 옵션 노출 순서 */
+export const UJAT_INSTITUTION_SCHEDULE_CONFIRM_STATUS_ORDER: readonly UjatInstitutionScheduleConfirmStatus[] =
+  [
+    'institution_confirmed',
+    'institution_checking',
+    'approval_completed',
+    'revision_requested',
+    'application_rejected',
+  ]
 
 /** 캘린더 우측 패널 뱃지용 짧은 라벨 */
 export const UJAT_INSTITUTION_SCHEDULE_CONFIRM_CALENDAR_STATUS_LABEL: Record<
@@ -22,6 +36,8 @@ export const UJAT_INSTITUTION_SCHEDULE_CONFIRM_CALENDAR_STATUS_LABEL: Record<
 > = {
   institution_checking: '확인 중',
   institution_confirmed: '확인 완료',
+  approval_completed: '승인 완료',
+  revision_requested: '수정 요청',
   application_rejected: '신청 반려',
 }
 
@@ -52,20 +68,21 @@ export type UjatScheduleConfirmRow = {
 export type UjatScheduleConfirmFilters = {
   institutionName: string
   scheduleConfirmStatus: string
-  confirmedScheduleIso: string
+  /** 교육 진행 확정 일정 — 다중 선택 ISO */
+  confirmedScheduleIsoDates: string[]
   teacherName: string
 }
 
-/** 안내 사항 블록 — `institution_confirmed`에서만 노출 (기관 안내 사항 폼 제출 후) */
+/** 안내 사항 블록 — 기관 확인 완료·승인 완료에서 노출 */
 export function shouldShowScheduleConfirmGuidanceNotes(
   status: UjatInstitutionScheduleConfirmStatus
 ): boolean {
-  return status === 'institution_confirmed'
+  return status === 'institution_confirmed' || status === 'approval_completed'
 }
 
 export const EMPTY_UJAT_SCHEDULE_CONFIRM_FILTERS: UjatScheduleConfirmFilters = {
   institutionName: '',
   scheduleConfirmStatus: '',
-  confirmedScheduleIso: '',
+  confirmedScheduleIsoDates: [],
   teacherName: '',
 }

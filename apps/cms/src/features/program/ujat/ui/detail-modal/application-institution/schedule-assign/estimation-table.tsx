@@ -70,7 +70,7 @@ export function UjatInstitutionScheduleAssignEstimationTable({
       mode="edit"
       description={
         <span className="ujat-schedule-assign-estimation__hint">
-          봉사단 교육 진행일 수는 예상 학급 수와 봉사단 수로 자동 계산됩니다.
+          봉사단 교육 일수는 모든 입력값이 작성되어야 계산됩니다.
         </span>
       }
     >

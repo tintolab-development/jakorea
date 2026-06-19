@@ -4,35 +4,17 @@
 
 import { buildUjatScheduleConfirmRows } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-confirm/build-confirm-rows'
 import {
-  listAssignableFridayIsoDatesInPeriod,
-  UJAT_INSTITUTION_EDUCATION_PERIOD_H2_MOCK,
-  UJAT_INSTITUTION_EDUCATION_UNAVAILABLE_H2_MOCK,
   UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES,
   resolveEducationSemesterForIsoDate,
 } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
 import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
 import type { UjatEducationProgressInstitutionRow } from '@/features/program/ujat/ui/detail-modal/progress/institutions/types'
-import dayjs from 'dayjs'
-
-function formatScheduleTitle(isoDate: string): string {
-  const d = dayjs(isoDate)
-  return `${d.month() + 1}월 ${d.date()}일`
-}
-
-const H2_SCHEDULE_ASSIGN_DATES = listAssignableFridayIsoDatesInPeriod(
-  UJAT_INSTITUTION_EDUCATION_PERIOD_H2_MOCK.startDate,
-  UJAT_INSTITUTION_EDUCATION_PERIOD_H2_MOCK.endDate,
-  UJAT_INSTITUTION_EDUCATION_UNAVAILABLE_H2_MOCK
-).map(iso => ({
-  isoDate: iso,
-  title: formatScheduleTitle(iso),
-}))
 
 export function getUjatEducationProgressScheduleFilterOptions(half: EducationProgressHalfKey) {
-  const source =
-    half === 'h1' ? UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES : H2_SCHEDULE_ASSIGN_DATES
-  return source.map(({ isoDate, title }) => ({ label: title, value: isoDate }))
+  return UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES.filter(entry => entry.semester === half).map(
+    ({ isoDate, title }) => ({ label: title, value: isoDate })
+  )
 }
 
 function regionLabel(regionKey: string): string {
@@ -56,7 +38,12 @@ function buildBaseRows(half: EducationProgressHalfKey): UjatEducationProgressIns
   for (const { key: regionKey } of UJAT_INSTITUTION_APPLICATION_REGIONS) {
     const confirmRows = buildUjatScheduleConfirmRows(regionKey)
     for (const confirm of confirmRows) {
-      if (confirm.scheduleConfirmStatus !== 'institution_confirmed') continue
+      if (
+        confirm.scheduleConfirmStatus !== 'institution_confirmed' &&
+        confirm.scheduleConfirmStatus !== 'approval_completed'
+      ) {
+        continue
+      }
       if (
         confirm.totalEducationClassCount === 0 &&
         (confirm.confirmedScheduleDisplay === '-' || !confirm.confirmedScheduleDisplay)

@@ -76,7 +76,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
 
   const handleApproveConfirm = useCallback(() => {
     if (!row) return
-    patchUjatInstitutionScheduleConfirmStatus([row.id], 'institution_confirmed')
+    patchUjatInstitutionScheduleConfirmStatus([row.id], 'approval_completed')
     setStatusRefreshTick(t => t + 1)
     onStatusUpdated()
     setPendingApprove(false)

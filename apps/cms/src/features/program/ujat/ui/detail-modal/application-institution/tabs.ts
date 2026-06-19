@@ -4,8 +4,8 @@ export const UJAT_INSTITUTION_APPLICATIONS_LNB_LABEL = '참여 기관 신청 목
 
 export const UJAT_INSTITUTION_APP_CHILD_ROWS = [
   { tab: 'inst_all', label: '신청 기관' },
-  { tab: 'inst_schedule_assign', label: '기관 일정 확인' },
-  { tab: 'inst_schedule_confirm', label: '기관 일정 배정' },
+  { tab: 'inst_schedule_assign', label: '신청 기관 임시 배정' },
+  { tab: 'inst_schedule_confirm', label: '임시 배정 기관 확인' },
 ] as const
 
 export type UjatInstitutionAppTab = (typeof UJAT_INSTITUTION_APP_CHILD_ROWS)[number]['tab']

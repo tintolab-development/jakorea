@@ -8,7 +8,7 @@ import {
 } from '../education-schedule'
 import {
   createEmptyRow,
-  getUjatScheduleAssignRegionState,
+  getUjatScheduleAssignDraftRegionState,
   patchUjatScheduleAssignDay,
   patchUjatScheduleAssignEstimation,
   patchUjatScheduleAssignMaxClassesPerDay,
@@ -30,7 +30,7 @@ export function useUjatInstitutionScheduleAssign(regionKey: UjatInstitutionAppli
 
   const regionState = useMemo(() => {
     void version
-    return getUjatScheduleAssignRegionState(regionKey)
+    return getUjatScheduleAssignDraftRegionState(regionKey)
   }, [regionKey, version])
 
   const bump = useCallback(() => setVersion(v => v + 1), [])

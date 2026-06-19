@@ -5,7 +5,6 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../list/region-tabs'
-import { UJAT_SCHEDULE_CONFIRM_FILTER_FIELDS } from './filter-fields'
 import { UJAT_SCHEDULE_CONFIRM_TABLE_MIN_SCROLL_X } from './columns'
 import { UjatInstitutionScheduleConfirmCalendarView } from './calendar-view'
 import { useUjatScheduleConfirmList } from './use-schedule-confirm-list'
@@ -21,6 +20,7 @@ export function UjatInstitutionScheduleConfirmList({
     useState<UjatInstitutionApplicationRegionKey>('seoul')
   const {
     pendingFilters,
+    filterFields,
     handleFilterChange,
     handleSearch,
     tableData,
@@ -44,7 +44,7 @@ export function UjatInstitutionScheduleConfirmList({
       <FilterTableLayout
         className="ujat-schedule-confirm-list__filter-layout"
         bordered={false}
-        fields={UJAT_SCHEDULE_CONFIRM_FILTER_FIELDS}
+        fields={filterFields}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
@@ -99,7 +99,10 @@ export function UjatInstitutionScheduleConfirmList({
             />
           </div>
         ) : (
-          <UjatInstitutionScheduleConfirmCalendarView rows={tableData} />
+          <UjatInstitutionScheduleConfirmCalendarView
+            rows={tableData}
+            onOpenDetail={onOpenDetail}
+          />
         )}
       </FilterTableLayout>
       {viewMode === 'calendar' ? (

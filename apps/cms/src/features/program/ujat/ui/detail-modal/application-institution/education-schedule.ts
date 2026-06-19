@@ -61,16 +61,36 @@ const FRIDAY_ISO_DATES = [
   ),
 ]
 
-/** 임시 배정 화면 — 1학기(상반기) 금요일만, 불가일 제외 */
-export const UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES = listAssignableFridayIsoDatesInPeriod(
-  UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK.startDate,
-  UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK.endDate,
-  UJAT_INSTITUTION_EDUCATION_UNAVAILABLE_MOCK
-).map(iso => ({
-  isoDate: iso,
-  title: formatScheduleColumnTitle(iso),
-  semester: 'h1' as const,
-}))
+export type UjatInstitutionScheduleAssignDateEntry = {
+  isoDate: string
+  title: string
+  semester: UjatInstitutionEducationSemesterKey
+}
+
+const H1_SCHEDULE_ASSIGN_DATE_ENTRIES: UjatInstitutionScheduleAssignDateEntry[] =
+  listAssignableFridayIsoDatesInPeriod(
+    UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK.startDate,
+    UJAT_INSTITUTION_EDUCATION_PERIOD_MOCK.endDate,
+    UJAT_INSTITUTION_EDUCATION_UNAVAILABLE_MOCK
+  ).map(iso => ({
+    isoDate: iso,
+    title: formatScheduleColumnTitle(iso),
+    semester: 'h1' as const,
+  }))
+
+const H2_SCHEDULE_ASSIGN_DATE_ENTRIES: UjatInstitutionScheduleAssignDateEntry[] =
+  listAssignableFridayIsoDatesInPeriod(
+    UJAT_INSTITUTION_EDUCATION_PERIOD_H2_MOCK.startDate,
+    UJAT_INSTITUTION_EDUCATION_PERIOD_H2_MOCK.endDate,
+    UJAT_INSTITUTION_EDUCATION_UNAVAILABLE_H2_MOCK
+  ).map(iso => ({
+    isoDate: iso,
+    title: formatScheduleColumnTitle(iso),
+    semester: 'h2' as const,
+  }))
+
+export const UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES: readonly UjatInstitutionScheduleAssignDateEntry[] =
+  [...H1_SCHEDULE_ASSIGN_DATE_ENTRIES, ...H2_SCHEDULE_ASSIGN_DATE_ENTRIES]
 
 export type UjatInstitutionScheduleSlotKey = (typeof FRIDAY_ISO_DATES)[number]
 

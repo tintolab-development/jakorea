@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
+import { useCmsAlert } from '@/shared/ui'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
@@ -7,9 +8,11 @@ import {
 } from '../list/regions'
 import { UjatInstitutionScheduleAssignSection } from './section'
 import { UjatInstitutionScheduleSheetPreviewModal } from './schedule-sheet-preview-modal'
+import { commitUjatScheduleAssignDraft } from './store'
 import './page.css'
 
 export function UjatInstitutionScheduleAssignPage() {
+  const { showAlert } = useCmsAlert()
   const regionTabs = listUjatInstitutionApplicationRegions()
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>('seoul')
   const [scheduleSheetOpen, setScheduleSheetOpen] = useState(false)
@@ -19,6 +22,11 @@ export function UjatInstitutionScheduleAssignPage() {
     setScheduleSheetRefreshKey(key => key + 1)
     setScheduleSheetOpen(true)
   }
+
+  const handleSave = useCallback(() => {
+    commitUjatScheduleAssignDraft(activeRegion)
+    showAlert({ title: '안내', content: '임시 배정 내용이 저장되었습니다.' })
+  }, [activeRegion, showAlert])
 
   return (
     <div className="ujat-schedule-assign-page">
@@ -32,9 +40,19 @@ export function UjatInstitutionScheduleAssignPage() {
           label: region.label,
         }))}
         trailing={
-          <CmsButton type="button" width={180} onClick={handleOpenScheduleSheet}>
-            임시 교육 일정표 확인
-          </CmsButton>
+          <>
+            <CmsButton
+              type="button"
+              variant="secondary"
+              width={180}
+              onClick={handleOpenScheduleSheet}
+            >
+              임시 교육 일정표 확인
+            </CmsButton>
+            <CmsButton type="button" variant="primary" width={140} onClick={handleSave}>
+              임시 배정 저장
+            </CmsButton>
+          </>
         }
       />
 

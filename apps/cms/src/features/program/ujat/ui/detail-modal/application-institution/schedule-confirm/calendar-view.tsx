@@ -7,6 +7,7 @@ import { CMS_MULTI_SELECT_TAG_COLORS } from '@/shared/ui'
 import {
   CalendarMain,
   CalendarSubRightList,
+  type CalendarInstitutionApplicationListRow,
   type CalendarItem,
 } from '@/shared/components/calendar'
 import {
@@ -82,8 +83,10 @@ function renderScheduleConfirmPreviewTooltipContent({
 
 export function UjatInstitutionScheduleConfirmCalendarView({
   rows,
+  onOpenDetail,
 }: {
   rows: UjatScheduleConfirmRow[]
+  onOpenDetail?: (row: UjatScheduleConfirmRow) => void
 }) {
   const events = useMemo(() => buildUjatScheduleConfirmCalendarEvents(rows), [rows])
   const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events)
@@ -164,6 +167,15 @@ export function UjatInstitutionScheduleConfirmCalendarView({
     setCurrentMonth(today.startOf('month'))
   }, [])
 
+  const handleListRowClick = useCallback(
+    (listRow: CalendarInstitutionApplicationListRow) => {
+      if (!onOpenDetail) return
+      const fullRow = rows.find(row => row.id === listRow.id)
+      if (fullRow) onOpenDetail(fullRow)
+    },
+    [onOpenDetail, rows]
+  )
+
   return (
     <div className="calendar-set calendar-set--page-scroll">
       <div className="calendar-main-container">
@@ -192,6 +204,7 @@ export function UjatInstitutionScheduleConfirmCalendarView({
           rows={listRows}
           selectedRowKeys={[]}
           onSelectionChange={() => {}}
+          onRowClick={onOpenDetail ? handleListRowClick : undefined}
           resolveRowColors={resolveRowColors}
         />
       </div>
