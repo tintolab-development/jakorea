@@ -14,7 +14,7 @@ import {
   type InstructorLectureAssignModalVariant,
 } from '@/features/program/general/lib/use-instructor-lecture-assign-modal'
 import type { InstructorLectureAssignItem } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
-import { UjatVolunteerInterviewAssignCalendarMini } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-interview-assign-calendar-mini'
+import { UjatVolunteerInterviewAssignCalendarMini } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/calendar-mini'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
 import { InstructorAssignSessionSlotChip } from '@/features/program/shared/ui/detail-modal/components/instructor-assign-session-slot-chip'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'

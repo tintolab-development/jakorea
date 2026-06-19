@@ -11,7 +11,7 @@ import { LnbIconManagers, LnbIconProjectInfo } from '@/features/program/general/
 import { UJAT_INSTITUTION_APP_CHILD_ROWS, UJAT_INSTITUTION_APPLICATIONS_LNB_LABEL } from './application-institution/tabs'
 import { UjatLnbInstitutionApplicationIcon } from './application-institution/lnb-icon'
 import { UjatLnbSurveyManagementIcon } from './survey-management/ujat-lnb-survey-management-icon'
-import { UjatLnbVolunteerHandshakeIcon } from './application-volunteer/ujat-lnb-volunteer-handshake-icon'
+import { LnbVolunteerHandshakeIcon } from './application-volunteer/lnb-icon'
 import {
   UjatLnbEducationBookIcon,
   UjatLnbEducationSummaryClipboardIcon,
@@ -272,7 +272,7 @@ export function UjatProgramDetailSidebar({
                   onClick={() => handleSelectChildTab(top, allTab)}
                 >
                   <span className="detail-fullpage-modal__lnb-item-icon">
-                    <UjatLnbVolunteerHandshakeIcon />
+                    <LnbVolunteerHandshakeIcon />
                   </span>
                   <span className="detail-fullpage-modal__lnb-item-label">{label}</span>
                 </button>
@@ -309,7 +309,7 @@ export function UjatProgramDetailSidebar({
                 onClick={() => toggleTopBody(top)}
               >
                 <span className="detail-fullpage-modal__lnb-item-icon">
-                  <UjatLnbVolunteerHandshakeIcon />
+                  <LnbVolunteerHandshakeIcon />
                 </span>
                 <span className="detail-fullpage-modal__lnb-item-label">{label}</span>
                 <DetailFullpageModalLnbArrowDown

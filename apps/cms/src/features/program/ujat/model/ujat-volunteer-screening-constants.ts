@@ -113,19 +113,21 @@ export const UJAT_VOLUNTEER_ESSAY_COLUMN_TITLES: Record<UjatEssayColumnKey, stri
     '4. 초·중·고 당시 학교에서 JA Korea 경제금융교육을 들은 경험 혹은 진행하는 프로그램에 지원하여 참여한 경험',
 }
 
-/** 서술형 컬럼 기본·최소 너비 (헤더 문구가 잘리지 않도록) */
+/** 서술형 1~4번 컬럼 고정 너비 */
+export const UJAT_ESSAY_COLUMN_WIDTH = 624
+
 export const UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS: Record<UjatEssayColumnKey, number> = {
-  essayIntro: 260,
-  essayEducationExperience: 320,
-  essayNecessity: 360,
-  essayJaExperience: 480,
+  essayIntro: UJAT_ESSAY_COLUMN_WIDTH,
+  essayEducationExperience: UJAT_ESSAY_COLUMN_WIDTH,
+  essayNecessity: UJAT_ESSAY_COLUMN_WIDTH,
+  essayJaExperience: UJAT_ESSAY_COLUMN_WIDTH,
 }
 
 export const UJAT_ESSAY_COLUMN_MIN_WIDTHS: Record<UjatEssayColumnKey, number> = {
-  essayIntro: 220,
-  essayEducationExperience: 280,
-  essayNecessity: 320,
-  essayJaExperience: 400,
+  essayIntro: UJAT_ESSAY_COLUMN_WIDTH,
+  essayEducationExperience: UJAT_ESSAY_COLUMN_WIDTH,
+  essayNecessity: UJAT_ESSAY_COLUMN_WIDTH,
+  essayJaExperience: UJAT_ESSAY_COLUMN_WIDTH,
 }
 
 /** UJAT 수료자 봉사자 — 서술형 1~4번 미작성 표기 */
@@ -140,4 +142,47 @@ export function formatUjatVolunteerEssayCellValue(
   }
   const trimmed = value?.trim()
   return trimmed ? trimmed : '-'
+}
+
+/** 지원 경로 — 신청서 선택지 (기타는 직접 입력) */
+export const UJAT_VOLUNTEER_APPLICATION_ROUTE_OPTIONS = [
+  '인스타그램',
+  '학교 안내 및 에브리타임',
+  '링커리어',
+  '올콘',
+  '캠퍼스픽',
+  '기타',
+] as const
+
+export type UjatVolunteerApplicationRoute = (typeof UJAT_VOLUNTEER_APPLICATION_ROUTE_OPTIONS)[number]
+
+export const UJAT_VOLUNTEER_APPLICATION_ROUTE_OTHER: UjatVolunteerApplicationRoute = '기타'
+
+export function formatUjatVolunteerApplicationRoute(
+  route: string,
+  routeOther?: string
+): string {
+  if (route === UJAT_VOLUNTEER_APPLICATION_ROUTE_OTHER) {
+    const custom = routeOther?.trim()
+    return custom || route
+  }
+  return route
+}
+
+export function formatUjatVolunteerBirthDateAndAge(birthDate: string, age: number): string {
+  if (!birthDate?.trim()) return '—'
+  if (!age) return birthDate
+  return `${birthDate} (만 ${age}세)`
+}
+
+/** 개인정보 마스킹 시 대학교명 — ex) **대학교 */
+export function formatUjatVolunteerUniversityDisplay(
+  universityName: string,
+  maskSensitive: boolean
+): string {
+  if (!maskSensitive) return universityName
+  if (universityName.startsWith('**')) return universityName
+  const idx = universityName.indexOf('대학교')
+  if (idx >= 0) return `**${universityName.slice(idx)}`
+  return `**${universityName}`
 }

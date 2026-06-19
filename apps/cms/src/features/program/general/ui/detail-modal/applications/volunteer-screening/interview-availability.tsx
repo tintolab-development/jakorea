@@ -5,7 +5,7 @@ import { isAssignedInterviewSlot, mergeAssignedInterviewIntoAvailability } from 
 import {
   formatDisplayTimeRange,
   normalizeTimeRangeKey,
-} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-interview-assign-schedule-utils'
+} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,

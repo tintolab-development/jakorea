@@ -27,7 +27,7 @@ import { GeneralVolunteerInterview2CalendarListItem } from './general-volunteer-
 import {
   buildUjatVolunteerInterviewMonthCellRows,
   renderUjatVolunteerInterviewMonthEventContent,
-} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-calendar-month-cells'
+} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/calendar-month-cells'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)

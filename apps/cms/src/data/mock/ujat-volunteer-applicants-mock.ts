@@ -78,6 +78,8 @@ export interface UjatVolunteerApplicantRow {
   universityName: string
   major: string
   applicationRoute: string
+  /** 지원 경로가 기타일 때 직접 입력값 */
+  applicationRouteOther?: string
   scheduleChangeCancelCount: number
   interviewAvailability: UjatVolunteerInterviewAvailabilityDay[]
   previousUjatActivity?: UjatVolunteerPreviousUjatActivity
@@ -189,12 +191,23 @@ export function buildUjatVolunteerApplicantRowFromProfile(
     universityName: profile.universityName,
     major: profile.major,
     applicationRoute: profile.applicationRoute,
+    applicationRouteOther: profile.applicationRouteOther,
     scheduleChangeCancelCount: profile.scheduleChangeCancelCount,
     interviewAvailability: profile.interviewAvailability.map(day => ({
       dateLabel: day.dateLabel,
       slots: [...day.slots],
     })),
     interviewAssignmentStatus: profile.interviewAssignmentStatus,
+    ...(profile.previousUjatActivity
+      ? {
+          previousUjatActivity: {
+            term: profile.previousUjatActivity.term,
+            year: profile.previousUjatActivity.year,
+            certificateFileName: profile.previousUjatActivity.certificateFileName,
+            certificateFileUrl: profile.previousUjatActivity.certificateFileUrl,
+          },
+        }
+      : {}),
     ...(profile.interviewAssignmentStatus === 'assigned'
       ? {
           assignedInterviewDateLabel: profile.assignedInterviewDateLabel,
@@ -349,6 +362,12 @@ function buildRow(
   const birthDate = `${birthYear}.${birthMonth}.${birthDay}`
   const age = 2026 - birthYear
 
+  const routeIndex = seed % (APPLICATION_ROUTES.length + 1)
+  const applicationRoute =
+    routeIndex < APPLICATION_ROUTES.length ? APPLICATION_ROUTES[routeIndex] : '기타'
+  const applicationRouteOther =
+    applicationRoute === '기타' ? 'JA Korea 홈페이지 검색' : undefined
+
   const row: UjatVolunteerApplicantRow = {
     id: `ujat-vol-${half}-${programId}-${index}`,
     no: index + 1,
@@ -378,7 +397,8 @@ function buildRow(
     age,
     universityName: UNIVERSITIES[seed % UNIVERSITIES.length],
     major: seed % 2 === 0 ? '경영학과 전공' : '회계학과 전공, 경영학과 복수전공',
-    applicationRoute: APPLICATION_ROUTES[seed % APPLICATION_ROUTES.length],
+    applicationRoute,
+    applicationRouteOther,
     scheduleChangeCancelCount: seed % 5 === 0 ? 1 : 0,
     interviewAvailability,
     interviewAssignmentStatus,

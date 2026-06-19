@@ -64,7 +64,7 @@ import {
   type UjatEducationProgressInstitutionDetailTab,
   type UjatEducationProgressVolunteerDetailTab,
 } from '@/features/program/ujat/lib/ujat-program-detail-url'
-import { isUjatVolunteerApplicantInTabList } from './application-volunteer/screening/ujat-volunteer-applicant-detail-url'
+import { isUjatVolunteerApplicantInTabList } from './application-volunteer/screening/applicant/detail-url'
 import {
   educationProgressHalfFromTab,
   isEducationProgressInstitutionsTab,
@@ -109,10 +109,10 @@ import {
 } from './info/ujat-program-detail-recruitment-tabs'
 import { UjatProgramRecruitmentPanels } from './info/ujat-program-recruitment-panels'
 import { UjatProgramRecruitmentTabsRow } from './info/ujat-program-recruitment-tabs-row'
-import { UjatVolunteerDocScreeningSection } from './application-volunteer/screening/ujat-volunteer-doc-screening-section'
-import { UjatVolunteerDocPassedSection } from './application-volunteer/screening/ujat-volunteer-doc-passed-section'
-import { UjatVolunteerInterview2Section } from './application-volunteer/screening/ujat-volunteer-interview2-section'
-import type { UjatVolunteerApplicantDetailMeta } from './application-volunteer/screening/use-ujat-volunteer-applicant-detail'
+import { DocScreeningSection } from './application-volunteer/screening/doc-screening/section'
+import { DocPassedSection } from './application-volunteer/screening/doc-passed/section'
+import { Interview2Section } from './application-volunteer/screening/interview2/section'
+import type { ApplicantDetailMeta } from './application-volunteer/screening/applicant/use-detail'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -1116,7 +1116,7 @@ export function UjatProgramDetailFullPageModal({
   const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
   const registerVolunteerFromMemberRef = useRef<(memberId: string) => void>(() => {})
   const [volunteerApplicantDetailMeta, setVolunteerApplicantDetailMeta] =
-    useState<UjatVolunteerApplicantDetailMeta | null>(null)
+    useState<ApplicantDetailMeta | null>(null)
 
   useEffect(() => {
     if (!isUjatVolunteerApplicantDetailRoute(activeLnb, activeTab)) {
@@ -1865,7 +1865,7 @@ export function UjatProgramDetailFullPageModal({
               activeTab === 'vh2_all' ||
               activeTab === 'vh1_doc1' ||
               activeTab === 'vh2_doc1') && (
-              <UjatVolunteerDocScreeningSection
+              <DocScreeningSection
                 programId={displayProgram.id}
                 half={activeTab.startsWith('vh2') ? 'h2' : 'h1'}
                 onRegisterApplicantCloseHandler={fn => {
@@ -1876,7 +1876,7 @@ export function UjatProgramDetailFullPageModal({
             )}
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
             (activeTab === 'vh1_doc_passed' || activeTab === 'vh2_doc_passed') && (
-              <UjatVolunteerDocPassedSection
+              <DocPassedSection
                 programId={displayProgram.id}
                 half={activeTab.startsWith('vh2') ? 'h2' : 'h1'}
                 onRegisterApplicantCloseHandler={fn => {
@@ -1887,7 +1887,7 @@ export function UjatProgramDetailFullPageModal({
             )}
           {(activeLnb === 'volunteer_h1' || activeLnb === 'volunteer_h2') &&
             (activeTab === 'vh1_interview2' || activeTab === 'vh2_interview2') && (
-              <UjatVolunteerInterview2Section
+              <Interview2Section
                 programId={displayProgram.id}
                 half={activeTab.startsWith('vh2') ? 'h2' : 'h1'}
                 onRegisterApplicantCloseHandler={fn => {

@@ -5,10 +5,10 @@ import {
   type GeneralManagerEvaluation,
   type GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
-import { DocumentScreeningStatusText } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/document-screening-status-text'
-import { ManagerEvaluationBadge } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/manager-evaluation-badge'
+import { DocumentScreeningStatusText } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/document-screening-status-text'
+import { ManagerEvaluationBadge } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/manager-evaluation-badge'
 import { SecondInterviewScreeningStatusText } from '@/features/program/shared/ui/volunteer-screening/second-interview-screening-status-text'
-import '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assignment-status-text.css'
+import '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/interview-assignment-status-text.css'
 
 export function GeneralManagerEvaluationBadge({
   evaluation,

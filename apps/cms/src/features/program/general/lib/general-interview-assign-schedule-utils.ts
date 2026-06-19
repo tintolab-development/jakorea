@@ -8,7 +8,7 @@ import {
   parseInterviewDisplayDateLabel,
   type InterviewAssignSlot,
   type ParsedInterviewSchedule,
-} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-interview-assign-schedule-utils'
+} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 
 export type { InterviewAssignSlot, ParsedInterviewSchedule }
 

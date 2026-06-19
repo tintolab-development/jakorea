@@ -21,7 +21,7 @@ import { SCHEDULE_COLORS, type ScheduleColorPair } from '@/features/program/shar
 import { useApplicantCalendarColorMaps } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-schedule-helpers'
 import { renderGeneralVolunteerInterviewCalendarPreviewTooltipContent } from './general-volunteer-interview-calendar-preview-tooltip'
 import { GeneralVolunteerDocPassedCalendarListItem } from './general-volunteer-doc-passed-calendar-list-item'
-import { buildUjatVolunteerInterviewMonthCellRows } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-calendar-month-cells'
+import { buildUjatVolunteerInterviewMonthCellRows } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/calendar-month-cells'
 import type { CalendarMonthCellRow } from '@/shared/components/calendar/model/calendar-month-cell-row'
 import { CalendarMonthEventTitleWithDivider } from '@/shared/components/calendar/ui/calendar-month-event-title'
 dayjs.extend(isSameOrAfter)

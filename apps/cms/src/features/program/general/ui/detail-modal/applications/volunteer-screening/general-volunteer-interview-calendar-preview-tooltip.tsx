@@ -8,7 +8,7 @@ import {
   type CalendarItem,
 } from '@/shared/components/calendar'
 import type { GeneralVolunteerInterviewCalendarEvent } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
-import '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-interview-preview-tooltip.css'
+import '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/preview-tooltip.css'
 import './general-volunteer-doc-passed-calendar-popover.css'
 
 type DocPassedCalendarPopoverGroup = {

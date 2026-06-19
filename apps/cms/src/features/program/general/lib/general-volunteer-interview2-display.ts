@@ -4,7 +4,7 @@ import type { GeneralSecondInterviewScreeningStatus } from './volunteer-screenin
 import {
   normalizeTimeRangeKey,
   parseInterviewDisplayDateLabel,
-} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-interview-assign-schedule-utils'
+} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 const FILTER_ALL = 'ALL'
 
 /** 합격·불합격·예비 — 면접 종료 시각과 무관하게 저장값 우선 */

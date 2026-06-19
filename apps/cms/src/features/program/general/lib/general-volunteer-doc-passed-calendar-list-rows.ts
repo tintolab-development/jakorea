@@ -3,7 +3,7 @@ import {
   GENERAL_INTERVIEW_ASSIGNMENT_STATUS_CALENDAR_LIST_TAG_LABELS,
   type GeneralInterviewAssignmentStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
-import { normalizeTimeRangeKey } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-interview-assign-schedule-utils'
+import { normalizeTimeRangeKey } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 
 export type GeneralVolunteerDocPassedCalendarListRow = {
   /** 색상·클릭용 대표 이벤트 id */

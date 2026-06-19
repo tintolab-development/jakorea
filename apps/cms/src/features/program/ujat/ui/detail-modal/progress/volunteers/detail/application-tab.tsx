@@ -1,5 +1,5 @@
 import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { UjatVolunteerApplicantEssaySections } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-applicant-essay-sections'
+import { EssaySections } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/applicant/essay-sections'
 import type { UjatEducationProgressVolunteerDetail } from './detail-mock'
 import { UjatEducationProgressVolunteerDetailBasicInfo } from './detail-basic-info'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
@@ -45,7 +45,7 @@ export function UjatEducationProgressVolunteerApplicationTab({
         onPreferredRegionDraftChange={onPreferredRegionDraftChange}
       />
 
-      <UjatVolunteerApplicantEssaySections applicant={detail.applicant} />
+      <EssaySections applicant={detail.applicant} />
     </div>
   )
 }

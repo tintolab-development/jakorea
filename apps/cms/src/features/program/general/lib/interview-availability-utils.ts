@@ -5,8 +5,8 @@ import type {
 import {
   normalizeTimeRangeKey,
   parseInterviewDisplayDateLabel,
-} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-interview-assign-schedule-utils'
-import { parseUjatInterviewDateLabel } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-interview-calendar-events'
+} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
+import { parseUjatInterviewDateLabel } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/interview-calendar-events'
 
 function parseInterviewDateLabel(label: string) {
   return parseUjatInterviewDateLabel(label) ?? parseInterviewDisplayDateLabel(label)
