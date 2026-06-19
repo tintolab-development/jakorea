@@ -5,7 +5,13 @@ import { normalizeVerificationSession } from './parse-verification-session'
 import {
   normalizeVerifiedIdentityProfile,
 } from './parse-verified-identity-profile'
-import { NiceAuthPopupBlockedError, openNiceAuthPopup, watchNiceAuthPopupClosed } from './popup'
+import {
+  NiceAuthPopupBlockedError,
+  navigateNiceAuthPopup,
+  openNiceAuthPopup,
+  openNiceAuthPopupWindow,
+  watchNiceAuthPopupClosed,
+} from './popup'
 import { createIdentityVerificationState, type IdentityVerificationState } from './state'
 import type {
   IdentityChallengeCompleteInput,
@@ -47,6 +53,8 @@ export interface IdentityVerificationClient {
   isSessionVerified: (status: string | undefined) => boolean
   popup: {
     open: typeof openNiceAuthPopup
+    openWindow: typeof openNiceAuthPopupWindow
+    navigate: typeof navigateNiceAuthPopup
     watchClosed: typeof watchNiceAuthPopupClosed
     NiceAuthPopupBlockedError: typeof NiceAuthPopupBlockedError
   }
@@ -270,6 +278,8 @@ export function createIdentityVerificationClient(
     isSessionVerified,
     popup: {
       open: openNiceAuthPopup,
+      openWindow: openNiceAuthPopupWindow,
+      navigate: navigateNiceAuthPopup,
       watchClosed: watchNiceAuthPopupClosed,
       NiceAuthPopupBlockedError,
     },

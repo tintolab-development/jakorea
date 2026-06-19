@@ -10,11 +10,22 @@ export class NiceAuthPopupBlockedError extends Error {
   }
 }
 
-export function openNiceAuthPopup(authUrl: string): Window {
-  const popup = window.open(authUrl, NICE_POPUP_NAME, NICE_POPUP_FEATURES)
+/** 사용자 클릭 직후(동기) 호출 — `await` 이후에는 브라우저가 팝업을 차단할 수 있음 */
+export function openNiceAuthPopupWindow(): Window {
+  const popup = window.open('about:blank', NICE_POPUP_NAME, NICE_POPUP_FEATURES)
   if (!popup) {
     throw new NiceAuthPopupBlockedError()
   }
+  return popup
+}
+
+export function navigateNiceAuthPopup(popup: Window, authUrl: string): void {
+  popup.location.href = authUrl
+}
+
+export function openNiceAuthPopup(authUrl: string): Window {
+  const popup = openNiceAuthPopupWindow()
+  navigateNiceAuthPopup(popup, authUrl)
   return popup
 }
 

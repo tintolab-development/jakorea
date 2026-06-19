@@ -122,9 +122,12 @@ export function useIdentityVerification({
     resetError()
     setStatus('loading')
 
+    let popup: Window | null = null
+
     try {
+      popup = client.popup.openWindow()
       const challenge = await client.startChallenge({ birthDate, gender })
-      const popup = client.popup.open(challenge.authUrl)
+      client.popup.navigate(popup, challenge.authUrl)
       popupRef.current = popup
       setStatus('popup_open')
 
@@ -135,6 +138,7 @@ export function useIdentityVerification({
         handleCancel()
       })
     } catch (error) {
+      popup?.close()
       cleanupPopupWatch()
       client.state.clearPendingChallenge()
       completingRef.current = false

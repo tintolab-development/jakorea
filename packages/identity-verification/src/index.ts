@@ -13,7 +13,9 @@ export { toApiBirthDate, toVerifiedBirthDate } from './birth-date'
 
 export {
   NiceAuthPopupBlockedError,
+  navigateNiceAuthPopup,
   openNiceAuthPopup,
+  openNiceAuthPopupWindow,
   watchNiceAuthPopupClosed,
 } from './popup'
 
