@@ -12,10 +12,12 @@ import {
   type UjatVolunteerMockProfile,
 } from '@/data/mock/ujat-volunteer-mock-profiles'
 import {
+  getUjatEducationRegionSortOrderMap,
+  getUjatVolunteerPreferredRegionLabels,
+} from '@/features/program/ujat/lib/ujat-education-regions'
+import {
   UJAT_VOLUNTEER_APPLICATION_TYPE_LABELS,
   UJAT_VOLUNTEER_GRADE_OPTIONS,
-  UJAT_VOLUNTEER_PREFERRED_REGIONS,
-  UJAT_VOLUNTEER_REGION_SORT_ORDER,
   type UjatDocumentScreeningStatus,
   type UjatInterviewAssignmentStatus,
   type UjatManagerEvaluation,
@@ -342,7 +344,9 @@ function buildRow(
   const name = pool.length > 0 ? pool[index % pool.length] : NAMES[index % NAMES.length]
   const grade = UJAT_VOLUNTEER_GRADE_OPTIONS[seed % UJAT_VOLUNTEER_GRADE_OPTIONS.length]
   const preferredRegion =
-    UJAT_VOLUNTEER_PREFERRED_REGIONS[seed % UJAT_VOLUNTEER_PREFERRED_REGIONS.length]
+    getUjatVolunteerPreferredRegionLabels()[
+      seed % Math.max(getUjatVolunteerPreferredRegionLabels().length, 1)
+    ] ?? getUjatVolunteerPreferredRegionLabels()[0] ?? '서울'
   const hasEducationExperience = seed % 3 !== 0
   const applicationType: UjatVolunteerApplicationType = seed % 4 === 0 ? 'ujat-graduate' : 'new'
   const documentScreeningStatus: UjatDocumentScreeningStatus =
@@ -474,23 +478,28 @@ export function sortUjatVolunteerApplicants(
     if (a.interviewSlotCount !== b.interviewSlotCount) {
       return a.interviewSlotCount - b.interviewSlotCount
     }
-    const ra = UJAT_VOLUNTEER_REGION_SORT_ORDER[a.preferredRegion] ?? 99
-    const rb = UJAT_VOLUNTEER_REGION_SORT_ORDER[b.preferredRegion] ?? 99
+    const order = getUjatEducationRegionSortOrderMap()
+    const ra = order[a.preferredRegion] ?? 99
+    const rb = order[b.preferredRegion] ?? 99
     if (ra !== rb) return ra - rb
     return a.no - b.no
   })
 }
 
-/** 1차 서류 합격자 목록 — 면접 가능 일정 수 오름차순 */
+/** 1차 서류 합격자 목록 — 활동 포기는 최하단, 나머지는 면접 가능 일정 수·지역 순 */
 export function sortUjatVolunteerDocPassedApplicants(
   rows: UjatVolunteerApplicantRow[]
 ): UjatVolunteerApplicantRow[] {
   return [...rows].sort((a, b) => {
+    const aWithdrawn = a.interviewAssignmentStatus === 'withdrawn'
+    const bWithdrawn = b.interviewAssignmentStatus === 'withdrawn'
+    if (aWithdrawn !== bWithdrawn) return aWithdrawn ? 1 : -1
     if (a.interviewSlotCount !== b.interviewSlotCount) {
       return a.interviewSlotCount - b.interviewSlotCount
     }
-    const ra = UJAT_VOLUNTEER_REGION_SORT_ORDER[a.preferredRegion] ?? 99
-    const rb = UJAT_VOLUNTEER_REGION_SORT_ORDER[b.preferredRegion] ?? 99
+    const order = getUjatEducationRegionSortOrderMap()
+    const ra = order[a.preferredRegion] ?? 99
+    const rb = order[b.preferredRegion] ?? 99
     if (ra !== rb) return ra - rb
     return a.no - b.no
   })
@@ -501,10 +510,7 @@ export function getUjatVolunteerDocPassedApplicants(
   half: UjatVolunteerRecruitHalf
 ): UjatVolunteerApplicantRow[] {
   return sortUjatVolunteerDocPassedApplicants(
-    getUjatVolunteerApplicants(programId, half).filter(
-      row =>
-        row.documentScreeningStatus === 'pass' && row.interviewAssignmentStatus === 'waiting'
-    )
+    getUjatVolunteerApplicants(programId, half).filter(row => row.documentScreeningStatus === 'pass')
   )
 }
 

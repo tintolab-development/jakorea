@@ -15,11 +15,11 @@ export function useUjatVolunteerDocPassedColumns({
     (): ColumnsType<UjatVolunteerApplicantRow> => [
       {
         title: 'No.',
-        dataIndex: 'no',
         key: 'no',
         width: 72,
         align: 'center',
         className: CENTER_CELL_CLASS,
+        render: (_value, _record, index) => index + 1,
       },
       {
         title: '신청 봉사자명',
@@ -64,7 +64,7 @@ export function useUjatVolunteerDocPassedColumns({
         className: CENTER_CELL_CLASS,
       },
       {
-        title: '교육 진행 경험 여부',
+        title: '교육 진행 경험',
         key: 'educationExperience',
         width: 140,
         align: 'center',
@@ -97,6 +97,7 @@ export function useUjatVolunteerDocPassedColumns({
               size="small"
               width={120}
               className="ujat-volunteer-doc-passed__assign-btn"
+              disabled={record.interviewAssignmentStatus === 'withdrawn'}
               onClick={e => {
                 e.stopPropagation()
                 onAssignInterview(record)

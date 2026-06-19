@@ -1,4 +1,4 @@
-import { useCallback, type MouseEvent } from 'react'
+import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -7,6 +7,7 @@ import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { buildUjatVolunteerDocPassedFilterRows } from './filter-fields'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import { useUjatVolunteerDocPassed } from './use-list'
 import {
   useApplicantDetail,
@@ -20,8 +21,6 @@ import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import './section.css'
 import '../doc-screening/section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
-
-const FILTER_FIELDS = buildUjatVolunteerDocPassedFilterRows()[0] ?? []
 
 const noopApplyDocumentScreeningStatus = () => undefined
 const noopShowDocumentScreeningConfirm = () => undefined
@@ -39,6 +38,12 @@ export function DocPassedSection({
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: DocPassedSectionProps) {
+  const { labels: educationRegionLabels } = useUjatEducationRegions()
+  const filterFields = useMemo(
+    () => buildUjatVolunteerDocPassedFilterRows()[0] ?? [],
+    [educationRegionLabels]
+  )
+
   const {
     list,
     pendingFilters,
@@ -164,7 +169,7 @@ export function DocPassedSection({
         multiRowGridMode="responsive"
         multiRowResponsiveLayout="merged-auto-fill"
         mergedAutoFillInlineSearch
-        fields={FILTER_FIELDS}
+        fields={filterFields}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}

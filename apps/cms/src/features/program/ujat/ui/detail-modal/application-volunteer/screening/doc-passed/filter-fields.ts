@@ -1,16 +1,11 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import {
   UJAT_INTERVIEW_ASSIGNMENT_STATUS_LABELS,
-  UJAT_VOLUNTEER_PREFERRED_REGIONS,
   type UjatInterviewAssignmentStatus,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
+import { getUjatVolunteerPreferredRegionLabels } from '@/features/program/ujat/lib/ujat-education-regions'
 
 const ALL = 'ALL'
-
-const regionOptions = [
-  { label: '전체', value: ALL },
-  ...UJAT_VOLUNTEER_PREFERRED_REGIONS.map(r => ({ label: r, value: r })),
-]
 
 const experienceOptions = [
   { label: '전체', value: ALL },
@@ -45,6 +40,11 @@ export const DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS: UjatVolunteerDocPassedFi
 }
 
 export function buildUjatVolunteerDocPassedFilterRows(): FilterFieldConfig[][] {
+  const regionOptions = [
+    { label: '전체', value: ALL },
+    ...getUjatVolunteerPreferredRegionLabels().map(label => ({ label, value: label })),
+  ]
+
   return [
     [
       {
@@ -63,7 +63,7 @@ export function buildUjatVolunteerDocPassedFilterRows(): FilterFieldConfig[][] {
       {
         key: 'educationExperience',
         type: 'select',
-        label: '교육 진행 경험 여부',
+        label: '교육 진행 경험',
         placeholder: '전체',
         options: experienceOptions,
       },
