@@ -11,7 +11,7 @@ import { EssaySections } from './essay-sections'
 import { PreviousTermSection } from './previous-term-section'
 import { InterviewEvaluationSection } from './interview-evaluation-section'
 import '@/shared/components/detail-info-form/detail-info-form.css'
-import './applicant-detail.css'
+import './detail.css'
 
 export type ApplicantDetailVariant = 'doc_screening' | 'doc_passed' | 'interview2'
 
