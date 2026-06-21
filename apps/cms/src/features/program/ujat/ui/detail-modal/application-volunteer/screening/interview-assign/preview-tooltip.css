@@ -20,8 +20,8 @@
 .ujat-volunteer-interview-calendar-popover__entry {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 8px 0;
+  gap: 2px;
+  padding: 7px 0;
   box-sizing: border-box;
 }
 
@@ -78,10 +78,11 @@
   font-weight: 500;
 }
 
-.ujat-volunteer-interview-calendar-popover__slots {
+.ujat-volunteer-interview-calendar-popover__schedule-count {
   color: var(--default-BK, #3d3d3d);
-  font-size: 14px;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
   font-weight: 500;
-  line-height: 140%;
-  word-break: keep-all;
+  line-height: 150%;
 }
+

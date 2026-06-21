@@ -8,12 +8,14 @@ import {
   type CalendarItem,
 } from '@/shared/components/calendar'
 import type { UjatVolunteerInterviewCalendarEvent } from '../shared/interview-calendar-events'
+import { formatUjatInterviewSlotSummary } from '../shared/interview-calendar-events'
 import './preview-tooltip.css'
 
 type VolunteerPopoverGroup = {
   volunteerName: string
   slots: string[]
   representativeId: string
+  totalSlotCount: number
 }
 
 function groupVolunteerInterviewDayEvents(
@@ -31,6 +33,7 @@ function groupVolunteerInterviewDayEvents(
         volunteerName: key,
         slots: [],
         representativeId: String(ev.id),
+        totalSlotCount: ev.originalItem.interviewSlotCount,
         slotSet: new Set<string>(),
       }
       grouped.set(key, group)
@@ -43,11 +46,14 @@ function groupVolunteerInterviewDayEvents(
     }
   }
 
-  return Array.from(grouped.values()).map(({ volunteerName, slots, representativeId }) => ({
-    volunteerName,
-    slots,
-    representativeId,
-  }))
+  return Array.from(grouped.values()).map(
+    ({ volunteerName, slots, representativeId, totalSlotCount }) => ({
+      volunteerName,
+      slots,
+      representativeId,
+      totalSlotCount,
+    })
+  )
 }
 
 function resolveVolunteerAccentColor(
@@ -68,6 +74,7 @@ function UjatVolunteerCalendarEventPopoverContent({
     <div className="ujat-volunteer-interview-calendar-popover">
       {groups.map(group => {
         const nameColor = resolveVolunteerAccentColor(group.representativeId, colorMap)
+        const slotSummary = formatUjatInterviewSlotSummary(group.slots)
         return (
           <div
             key={`${group.volunteerName}-${group.representativeId}`}
@@ -84,11 +91,11 @@ function UjatVolunteerCalendarEventPopoverContent({
                 |
               </span>
               <span className="ujat-volunteer-interview-calendar-popover__meta">
-                면접 가능 일정 수 : {group.slots.length}개
+                {slotSummary}
               </span>
             </div>
-            <div className="ujat-volunteer-interview-calendar-popover__slots">
-              {group.slots.join(', ')}
+            <div className="ujat-volunteer-interview-calendar-popover__schedule-count">
+              면접 가능 일정 수 : {group.totalSlotCount}개
             </div>
           </div>
         )

@@ -31,6 +31,26 @@ export function parseUjatInterviewSlotRange(
   }
 }
 
+function getInterviewSlotStartMinutes(slot: string): number {
+  const match = slot.match(/(\d{2}):(\d{2})/)
+  if (!match) return Number.MAX_SAFE_INTEGER
+  return Number(match[1]) * 60 + Number(match[2])
+}
+
+export function sortUjatInterviewSlotLabels(slots: string[]): string[] {
+  return [...slots].sort(
+    (a, b) => getInterviewSlotStartMinutes(a) - getInterviewSlotStartMinutes(b)
+  )
+}
+
+export function formatUjatInterviewSlotSummary(slots: string[]): string {
+  const sorted = sortUjatInterviewSlotLabels(slots)
+  const first = sorted[0]
+  if (!first) return '-'
+  const extraCount = sorted.length - 1
+  return extraCount > 0 ? `${first} 외 ${extraCount}개` : first
+}
+
 export function mapUjatVolunteerInterviewToCalendarEvents(
   rows: UjatVolunteerApplicantRow[]
 ): UjatVolunteerInterviewCalendarEvent[] {

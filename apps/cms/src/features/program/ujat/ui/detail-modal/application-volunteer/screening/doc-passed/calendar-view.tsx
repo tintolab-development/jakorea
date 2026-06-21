@@ -20,6 +20,7 @@ import '@/shared/components/calendar/styles/calendar.css'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import { useApplicantCalendarColorMaps } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-calendar-schedule-helpers'
 import type { UjatVolunteerInterviewCalendarEvent } from '../shared/interview-calendar-events'
+import { formatUjatInterviewSlotSummary } from '../shared/interview-calendar-events'
 import { renderUjatVolunteerInterviewPreviewTooltipContent } from '../interview-assign/preview-tooltip'
 import {
   buildUjatVolunteerInterviewMonthCellRows,
@@ -45,6 +46,7 @@ function buildVolunteerInterviewListRows(
       assignmentStatus: UjatVolunteerInterviewCalendarEvent['originalItem']['interviewAssignmentStatus']
       slots: string[]
       slotSet: Set<string>
+      totalSlotCount: number
     }
   >()
 
@@ -60,6 +62,7 @@ function buildVolunteerInterviewListRows(
         assignmentStatus: event.originalItem.interviewAssignmentStatus,
         slots: [],
         slotSet: new Set<string>(),
+        totalSlotCount: event.originalItem.interviewSlotCount,
       }
       grouped.set(key, group)
     }
@@ -76,6 +79,8 @@ function buildVolunteerInterviewListRows(
     volunteerName: group.volunteerName,
     assignmentStatus: group.assignmentStatus,
     slotLabels: group.slots,
+    slotSummary: formatUjatInterviewSlotSummary(group.slots),
+    totalSlotCount: group.totalSlotCount,
   }))
 }
 
