@@ -15,6 +15,7 @@ import {
 } from '../applicant/use-detail'
 import { ApplicantDetailView } from '../applicant/detail-view'
 import { UjatVolunteerDocPassedCalendarView } from './calendar-view'
+import { DOC_PASSED_TABLE_SCROLL_X } from './columns'
 import { UjatVolunteerInterviewAssignModal } from '../interview-assign/modal'
 import { UjatVolunteerInterviewAssignCompleteModal } from '../interview-assign/complete-modal'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
@@ -214,6 +215,7 @@ export function DocPassedSection({
               dataSource={tableData}
               pagination={false}
               tableLayout="fixed"
+              scroll={{ x: DOC_PASSED_TABLE_SCROLL_X }}
               rowClassName={record =>
                 record.interviewAssignmentStatus === 'withdrawn'
                   ? CMS_DATA_TABLE_ROW_DISABLED_CLASS

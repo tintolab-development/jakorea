@@ -90,19 +90,7 @@
 .filter-table-layout.ujat-volunteer-doc-screening__filter-layout
   .table-filter-group__fields-row-with-action
   .table-filter-group__grid-cell
-  .table-filter-group__field,
-.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
-  .table-filter-group__fields-row-with-action
-  .table-filter-group__grid-cell
-  .labeled-search-input,
-.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
-  .table-filter-group__fields-row-with-action
-  .table-filter-group__grid-cell
-  .cms-select,
-.filter-table-layout.ujat-volunteer-doc-screening__filter-layout
-  .table-filter-group__fields-row-with-action
-  .table-filter-group__grid-cell
-  .ant-select {
+  :is(.table-filter-group__field, .labeled-search-input, .cms-select, .ant-select) {
   width: 100% !important;
   max-width: 100% !important;
 }

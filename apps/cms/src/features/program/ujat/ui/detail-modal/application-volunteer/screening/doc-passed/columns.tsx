@@ -6,6 +6,8 @@ import { InterviewAssignmentStatusText } from '../shared/interview-assignment-st
 
 const CENTER_CELL_CLASS = 'ujat-volunteer-doc-passed__center-cell'
 
+export const DOC_PASSED_TABLE_SCROLL_X = 72 + 140 + 168 + 140 + 140 + 220 + 140 + 140 + 136
+
 export function useUjatVolunteerDocPassedColumns({
   onAssignInterview,
 }: {
@@ -84,7 +86,7 @@ export function useUjatVolunteerDocPassedColumns({
       {
         title: '면접일 배정',
         key: 'interviewAssignmentAction',
-        width: 136,
+        width: 160,
         align: 'center',
         className: CENTER_CELL_CLASS,
         render: (_value, record) => {
@@ -94,9 +96,9 @@ export function useUjatVolunteerDocPassedColumns({
             <CmsButton
               type="button"
               variant="secondary"
-              size="small"
+              size="medium"
               width={120}
-              className="ujat-volunteer-doc-passed__assign-btn"
+              style={{ flexShrink: 0 }}
               disabled={record.interviewAssignmentStatus === 'withdrawn'}
               onClick={e => {
                 e.stopPropagation()
