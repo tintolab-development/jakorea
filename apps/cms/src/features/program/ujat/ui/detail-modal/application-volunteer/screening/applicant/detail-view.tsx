@@ -222,12 +222,24 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
     <div className="applicant-detail">
       <div className="applicant-detail__header">
         <div className="program-detail-fullpage-modal__header-actions">
-          <CmsButton type="button" variant="delete" size="large" className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH} onClick={onDocumentReject}>
+          <CmsButton
+            type="button"
+            variant="delete"
+            size="large"
+            className="cms-button--action"
+            width={160}
+            onClick={onDocumentReject}
+          >
             서류 반려
           </CmsButton>
-          <CmsButton type="button" variant="secondary" size="large" className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH} onClick={onDocumentApprove}>
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="large"
+            className="cms-button--action"
+            width={160}
+            onClick={onDocumentApprove}
+          >
             서류 승인
           </CmsButton>
           <PersonalInfoRevealButton
@@ -235,7 +247,7 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
             revealed={personalInfoRevealed}
             cmsVariant="primary"
             cmsSize="large"
-            width={180}
+            width={200}
             onClick={openPersonalInfoRevealConfirm}
           />
         </div>

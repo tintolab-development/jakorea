@@ -57,6 +57,12 @@ function resolveStatusField(
   }
 }
 
+function formatSchoolEnrollmentStatus(grade: UjatVolunteerApplicantRow['grade']): string {
+  if (grade === '휴학생') return '휴학 중'
+  if (grade === '졸업유예') return '졸업유예'
+  return '재학 중'
+}
+
 export function ApplicantBasicInfo({
   applicant,
   maskSensitive,
@@ -67,6 +73,10 @@ export function ApplicantBasicInfo({
   const genderBirthDisplay = withProgramDetailTdDivider([
     applicant.gender,
     formatUjatVolunteerBirthDateAndAge(applicant.birthDate, applicant.age),
+  ])
+  const affiliationDisplay = withProgramDetailTdDivider([
+    formatUjatVolunteerUniversityDisplay(applicant.universityName, maskSensitive),
+    applicant.grade,
   ])
   const universityGradeDisplay = withProgramDetailTdDivider([
     formatUjatVolunteerUniversityDisplay(applicant.universityName, maskSensitive),
@@ -114,11 +124,24 @@ export function ApplicantBasicInfo({
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="학교 재학 여부"
+            readOnlyDisplay
+            view={formatSchoolEnrollmentStatus(applicant.grade)}
+          />
+          <DetailInfoForm.Field
+            label="소속"
+            readOnlyDisplay
+            view={<ProgramDetailTdSegmentWrap>{affiliationDisplay}</ProgramDetailTdSegmentWrap>}
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="연락처" readOnlyDisplay view={contactDisplay} />
           <DetailInfoForm.Field label="이메일" readOnlyDisplay view={emailDisplay} />
         </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field label="1365 ID" fullRow readOnlyDisplay view={applicant.id1365} />
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field label="자택 주소지" readOnlyDisplay view="-" />
+          <DetailInfoForm.Field label="1365 ID" readOnlyDisplay view={applicant.id1365} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
