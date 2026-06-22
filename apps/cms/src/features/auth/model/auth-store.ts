@@ -23,6 +23,7 @@ import { clearLogsQueryCache } from '@/features/logs/api/clear-logs-query-cache'
 import { clearPostsQueryCache } from '@/features/posts/api/clear-posts-query-cache'
 import { clearSettlementQueryCache } from '@/features/settlement-management/api/clear-settlement-query-cache'
 import { clearMemberQueryCache } from '@/features/user/api/clear-member-query-cache'
+import { flushSocialPendingLinks } from '@/features/auth/social-auth/flush-pending-links'
 
 function elevateAdminToMaster(user: Omit<User, 'password'>): Omit<User, 'password'> {
   if (user.role !== 'ADMIN') return user
@@ -53,6 +54,7 @@ interface AuthState {
   clearError: () => void
   setMfaVerified: () => void // Phase 0.5.1: MFA 인증 완료 처리 (Mock TOTP)
   completeAdminAuth: (tokens: AuthTokenResponse) => void // 실 API MFA 검증 후 JWT 저장
+  applySocialAuthTokens: (tokens: AuthTokenResponse) => void // 실 API 소셜 SSO 토큰 저장
   setAuth: (authData: { user: Omit<User, 'password'>; token: string; expiresAt: string }) => void // Phase 0.1.3: 인증 상태 직접 설정
   refreshToken: () => Promise<boolean> // Phase 0.5: 토큰 갱신 Mock 로직
   checkSessionExpiry: () => boolean // Phase 0.5: 세션 만료 확인
@@ -258,6 +260,40 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearPostsQueryCache()
       clearSettlementQueryCache()
       clearMemberQueryCache()
+      void flushSocialPendingLinks()
+    },
+
+    applySocialAuthTokens: (tokens: AuthTokenResponse) => {
+      const placeholderUser: Omit<User, 'password'> = {
+        id: 'social-sso-pending',
+        email: '',
+        name: '관리자',
+        role: 'ADMIN',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      const normalizedUser = elevateAdminToMaster(placeholderUser)
+      const { token, expiresAt } = persistAuthTokens(normalizedUser, tokens)
+
+      set({
+        user: normalizedUser,
+        token,
+        expiresAt,
+        isAuthenticated: true,
+        loading: false,
+        error: null,
+        mfaState: null,
+        requiresMfa: false,
+      })
+
+      clearDashboardQueryCache()
+      clearLogsQueryCache()
+      clearDataManagementQueryCache()
+      clearPostsQueryCache()
+      clearSettlementQueryCache()
+      clearMemberQueryCache()
+      void flushSocialPendingLinks()
     },
 
     logout: () => {
@@ -473,6 +509,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         mfaState: null,
         requiresMfa: false,
       })
+      void flushSocialPendingLinks()
     },
 
     // Phase 0.5: 토큰 갱신 Mock 로직

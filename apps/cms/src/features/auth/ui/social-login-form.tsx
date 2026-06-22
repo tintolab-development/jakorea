@@ -8,7 +8,7 @@ import { useState } from 'react'
 import type { SocialProvider } from '@/entities/user/api/auth-service'
 import { GoogleMarkIcon } from '@/shared/ui/icons'
 import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
-import { buildOAuthAuthorizeUrl } from '@/features/auth/lib/oauth-client'
+import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import './social-login-form.css'
 
 // interface SocialLoginFormProps {
@@ -67,7 +67,7 @@ export function SocialLoginForm() {
   const handleSocialLogin = async (provider: SocialProvider) => {
     setLoading(provider)
     try {
-      const authorizeUrl = buildOAuthAuthorizeUrl(provider)
+      const authorizeUrl = await cmsSocialAuthClient.startLogin({ provider, intent: 'login' })
       window.location.href = authorizeUrl
     } catch (error: unknown) {
       console.debug('socialLoginForm redirect failed', error)

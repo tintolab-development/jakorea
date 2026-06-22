@@ -1,86 +1,36 @@
-import type { SocialProvider } from '@/entities/user/api/auth-service'
+import type { SocialProvider } from '@jakorea/social-auth'
+import { buildOAuthAuthorizeUrl as buildPackageOAuthAuthorizeUrl } from '@jakorea/social-auth'
 
-const OAUTH_STATE_PREFIX = 'oauth_state_'
-const LOCAL_APP_ORIGIN = 'http://localhost:5173'
+import { isSocialAuthSignupRemoteEnabled } from '@/features/auth/api/social-auth-remote-capabilities'
+import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 
-const PROVIDER_AUTHORIZE_ENDPOINT: Record<SocialProvider, string> = {
-  kakao: 'https://kauth.kakao.com/oauth/authorize',
-  naver: 'https://nid.naver.com/oauth2.0/authorize',
-  google: 'https://accounts.google.com/o/oauth2/v2/auth',
-}
-
-function getClientId(provider: SocialProvider): string {
-  const envMap: Record<SocialProvider, string | undefined> = {
-    kakao: import.meta.env.VITE_KAKAO_CLIENT_ID,
-    naver: import.meta.env.VITE_NAVER_CLIENT_ID,
-    google: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-  }
-  const clientId = envMap[provider]
-  if (!clientId) {
-    throw new Error(`${provider} OAuth 클라이언트 ID가 설정되지 않았습니다.`)
-  }
-  return clientId
-}
-
+/** @deprecated `cmsSocialAuthClient.getRedirectUri`를 사용하세요 */
 export function getOAuthRedirectUri(provider: SocialProvider): string {
-  return `${LOCAL_APP_ORIGIN}/oauth/${provider}`
+  return cmsSocialAuthClient.getRedirectUri(provider)
 }
 
-function getProviderScope(provider: SocialProvider): string {
-  switch (provider) {
-    case 'google':
-      return 'openid email profile'
-    case 'kakao':
-      return 'profile_nickname account_email'
-    case 'naver':
-      return 'name email'
-    default:
-      return ''
-  }
-}
-
+/** @deprecated `cmsSocialAuthClient.state.createOAuthState`를 사용하세요 */
 export function createOAuthState(provider: SocialProvider): string {
-  const random =
-    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : Math.random().toString(36).slice(2)
-  const state = `${provider}:${Date.now()}:${random}`
-  localStorage.setItem(`${OAUTH_STATE_PREFIX}${provider}`, state)
-  return state
+  return cmsSocialAuthClient.state.createOAuthState(provider)
 }
 
+/** @deprecated `cmsSocialAuthClient.state.validateOAuthState`를 사용하세요 */
 export function validateOAuthState(provider: SocialProvider, state: string | null): boolean {
-  if (!state) {
-    return false
-  }
-  const key = `${OAUTH_STATE_PREFIX}${provider}`
-  const expected = localStorage.getItem(key)
-  const isValid = Boolean(expected) && expected === state
-  if (isValid) {
-    localStorage.removeItem(key)
-  }
-  return isValid
+  return cmsSocialAuthClient.state.validateOAuthState(provider, state)
 }
 
+/** @deprecated `cmsSocialAuthClient.startLogin`을 사용하세요. remote 가입·연결은 signup session API를 씁니다. */
 export function buildOAuthAuthorizeUrl(provider: SocialProvider): string {
-  const endpoint = PROVIDER_AUTHORIZE_ENDPOINT[provider]
-  const clientId = getClientId(provider)
-  const redirectUri = getOAuthRedirectUri(provider)
-  const state = createOAuthState(provider)
-  const scope = getProviderScope(provider)
-
-  const params = new URLSearchParams()
-  params.set('client_id', clientId)
-  params.set('redirect_uri', redirectUri)
-  params.set('response_type', 'code')
-  params.set('state', state)
-  if (scope) {
-    params.set('scope', scope)
+  if (import.meta.env.DEV && isSocialAuthSignupRemoteEnabled()) {
+    console.warn(
+      '[oauth-client] buildOAuthAuthorizeUrl: remote 모드에서는 가입·연결에 cmsSocialAuthClient.startLogin({ intent: "link" })를 사용하세요.'
+    )
   }
-
-  if (provider === 'naver') {
-    params.set('auth_type', 'reprompt')
-  }
-
-  return `${endpoint}?${params.toString()}`
+  const state = cmsSocialAuthClient.state.createOAuthState(provider)
+  return buildPackageOAuthAuthorizeUrl(
+    cmsSocialAuthClient.oauthConfig,
+    cmsSocialAuthClient.routes.callbackPath,
+    provider,
+    state
+  )
 }

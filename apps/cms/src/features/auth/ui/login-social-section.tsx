@@ -1,6 +1,9 @@
 import { useState } from 'react'
-import type { SocialProvider } from '@/entities/user/api/auth-service'
-import { buildOAuthAuthorizeUrl } from '@/features/auth/lib/oauth-client'
+
+import type { SocialProvider } from '@jakorea/social-auth'
+
+import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
+import { handleError } from '@/shared/utils/error-handler'
 import { NaverSocialLoginIcon } from '@/shared/ui/icons/NaverSocialLoginIcon'
 import { KakaoSocialLoginIcon } from '@/shared/ui/icons/KakaoSocialLoginIcon'
 import googleLogoImage from '@/assets/images/logo/google_logo.png'
@@ -10,12 +13,25 @@ export function LoginSocialSection() {
 
   const handleSocialLogin = (provider: SocialProvider) => {
     setLoadingProvider(provider)
-    try {
-      window.location.assign(buildOAuthAuthorizeUrl(provider))
-    } catch (error: unknown) {
-      console.debug('loginSocialSection redirect failed', error)
-      setLoadingProvider(null)
-    }
+    void cmsSocialAuthClient
+      .startLogin({ provider, intent: 'login' })
+      .then(url => {
+        if (import.meta.env.DEV) {
+          console.info(
+            `[social-auth] redirect_uri=${cmsSocialAuthClient.getRedirectUri(provider)}`
+          )
+        }
+        window.location.assign(url)
+      })
+      .catch((error: unknown) => {
+        handleError(error, { context: 'loginSocialSection.startLogin' })
+        if (import.meta.env.DEV) {
+          console.info(
+            `[social-auth] Kakao 콘솔 > 카카오 로그인 > Redirect URI 등록 필요: ${cmsSocialAuthClient.getRedirectUri(provider)}`
+          )
+        }
+        setLoadingProvider(null)
+      })
   }
 
   return (

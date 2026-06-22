@@ -1,14 +1,14 @@
 import { Button } from 'antd'
 import { useState } from 'react'
 
-import type { SocialProvider } from '@/entities/user/api/auth-service'
-import { buildOAuthAuthorizeUrl } from '@/features/auth/lib/oauth-client'
+import type { SocialProvider } from '@jakorea/social-auth'
+
+import { isSocialAdminSocialApiRemoteEnabled } from '@/features/auth/api/social-auth-remote-capabilities'
 import {
-  addConnectedProvider,
   getConnectedProviders,
-  removeConnectedProvider,
   setRegisterSocialLinkIntent,
 } from '@/features/auth/lib/register-social-connect-state'
+import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import { CmsButton } from '@/shared/ui/cms-button'
 
 import { RegisterStepHeader } from './register-step-header'
@@ -42,25 +42,39 @@ export function RegisterSocialConnectView({
 
   const handleConnect = (provider: SocialProvider) => {
     setLoadingProvider(provider)
-    try {
-      setRegisterSocialLinkIntent(redirectPath)
-      window.location.assign(buildOAuthAuthorizeUrl(provider))
-    } catch (error: unknown) {
-      console.debug('registerSocialConnectView connect failed', error)
-      addConnectedProvider(provider)
-      setConnectedProviders(prev => new Set(prev).add(provider))
-      setLoadingProvider(null)
-      onConnectSuccess(provider)
-    }
+    setRegisterSocialLinkIntent(redirectPath)
+    void cmsSocialAuthClient
+      .startLogin({ provider, intent: 'link', returnUrl: redirectPath })
+      .then(url => {
+        window.location.assign(url)
+      })
+      .catch((error: unknown) => {
+        console.debug('registerSocialConnectView connect failed', error)
+        cmsSocialAuthClient.state.addConnectedProvider(provider)
+        setConnectedProviders(prev => new Set(prev).add(provider))
+        setLoadingProvider(null)
+        onConnectSuccess(provider)
+      })
   }
 
   const handleDisconnect = (provider: SocialProvider) => {
-    removeConnectedProvider(provider)
-    setConnectedProviders(prev => {
-      const next = new Set(prev)
-      next.delete(provider)
-      return next
-    })
+    void (async () => {
+      if (isSocialAdminSocialApiRemoteEnabled() && cmsSocialAuthClient.hasAccessToken()) {
+        try {
+          await cmsSocialAuthClient.unlinkAccount(provider)
+        } catch (error: unknown) {
+          console.debug('registerSocialConnectView unlink failed', error)
+        }
+      }
+
+      cmsSocialAuthClient.state.removeConnectedProvider(provider)
+      cmsSocialAuthClient.state.removePendingSocialLink(provider)
+      setConnectedProviders(prev => {
+        const next = new Set(prev)
+        next.delete(provider)
+        return next
+      })
+    })()
   }
 
   return (

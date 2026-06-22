@@ -1,73 +1,35 @@
-import type { SocialProvider } from '@/entities/user/api/auth-service'
+import type { OAuthIntent, SocialProvider } from '@jakorea/social-auth'
 
-const CONNECTED_PROVIDERS_KEY = 'register_social_connected_providers'
-const OAUTH_INTENT_KEY = 'oauth_intent'
-const REGISTER_SOCIAL_REDIRECT_KEY = 'register_social_redirect'
+import { cmsSocialAuthState } from '@/features/auth/social-auth/cms-client'
 
-export type OAuthIntent = 'login' | 'register-social-link'
+export type { OAuthIntent, SocialProvider }
 
-function readConnectedProviders(): SocialProvider[] {
-  try {
-    const raw = sessionStorage.getItem(CONNECTED_PROVIDERS_KEY)
-    if (!raw) {
-      return []
-    }
-    const parsed: unknown = JSON.parse(raw)
-    if (!Array.isArray(parsed)) {
-      return []
-    }
-    return parsed.filter((item): item is SocialProvider =>
-      item === 'google' || item === 'naver' || item === 'kakao'
-    )
-  } catch {
-    return []
-  }
-}
-
-function writeConnectedProviders(providers: SocialProvider[]) {
-  sessionStorage.setItem(CONNECTED_PROVIDERS_KEY, JSON.stringify(providers))
-}
-
-export function getConnectedProviders(): Set<SocialProvider> {
-  return new Set(readConnectedProviders())
+export function getConnectedProviders() {
+  return cmsSocialAuthState.getConnectedProviders()
 }
 
 export function addConnectedProvider(provider: SocialProvider) {
-  const next = new Set(readConnectedProviders())
-  next.add(provider)
-  writeConnectedProviders([...next])
+  cmsSocialAuthState.addConnectedProvider(provider)
 }
 
 export function removeConnectedProvider(provider: SocialProvider) {
-  const next = new Set(readConnectedProviders())
-  next.delete(provider)
-  writeConnectedProviders([...next])
+  cmsSocialAuthState.removeConnectedProvider(provider)
 }
 
 export function setRegisterSocialLinkIntent(redirectPath?: string) {
-  sessionStorage.setItem(OAUTH_INTENT_KEY, 'register-social-link')
-  if (redirectPath) {
-    sessionStorage.setItem(REGISTER_SOCIAL_REDIRECT_KEY, redirectPath)
-  } else {
-    sessionStorage.removeItem(REGISTER_SOCIAL_REDIRECT_KEY)
-  }
+  cmsSocialAuthState.setOAuthIntent('link', redirectPath)
 }
 
-export function getOAuthIntent(): OAuthIntent | null {
-  const intent = sessionStorage.getItem(OAUTH_INTENT_KEY)
-  if (intent === 'login' || intent === 'register-social-link') {
-    return intent
-  }
-  return null
+export function getOAuthIntent() {
+  return cmsSocialAuthState.getOAuthIntent()
 }
 
 export function getRegisterSocialRedirect(): string | undefined {
-  return sessionStorage.getItem(REGISTER_SOCIAL_REDIRECT_KEY) ?? undefined
+  return cmsSocialAuthState.getReturnUrl()
 }
 
 export function clearOAuthIntent() {
-  sessionStorage.removeItem(OAUTH_INTENT_KEY)
-  sessionStorage.removeItem(REGISTER_SOCIAL_REDIRECT_KEY)
+  cmsSocialAuthState.clearOAuthIntent()
 }
 
 export function buildRegisterSocialConnectPath(redirectPath?: string) {

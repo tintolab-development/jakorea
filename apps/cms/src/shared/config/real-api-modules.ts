@@ -31,6 +31,10 @@ export const REAL_API_MODULE_KEYS = [
   'adminApprovalRequests',
   'adminPermissions',
   'identityVerification',
+  'socialAuth',
+  'socialAuthLogin',
+  'findEmail',
+  'findPassword',
 ] as const
 export type RealApiModule = (typeof REAL_API_MODULE_KEYS)[number]
 

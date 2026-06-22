@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Alert, Spin } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { type SocialProvider, SOCIAL_PROVIDER_LABEL } from '@/entities/user/api/auth-service'
-import { useAuthStore } from '@/features/auth/model/auth-store'
-import { exchangeOAuthCode } from '@/features/auth/api/oauth-exchange'
-import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
-import { validateOAuthState } from '@/features/auth/lib/oauth-client'
+import {
+  isSocialAccountAlreadyLinkedError,
+  isSocialAccountNotLinkedError,
+  processOAuthCallback,
+  type SocialProvider,
+} from '@jakorea/social-auth'
+
+import { loginWithSocial } from '@/entities/user/api/auth-service'
+import { isSocialAuthLoginRemoteEnabled, isSocialAuthSignupRemoteEnabled } from '@/features/auth/api/social-auth-remote-capabilities'
+import { ADMIN_REGISTER_TERMS_VERSION } from '@/features/auth/lib/admin-register.constants'
 import {
   addConnectedProvider,
   buildRegisterSocialConnectCompletePath,
@@ -14,8 +19,14 @@ import {
   getOAuthIntent,
   getRegisterSocialRedirect,
 } from '@/features/auth/lib/register-social-connect-state'
-import { isSocialAccountNotLinkedError } from '@/features/auth/errors/social-account-not-linked-error'
-import { isSocialAccountAlreadyLinkedError } from '@/features/auth/errors/social-account-already-linked-error'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import {
+  buildOAuthLinkCallbackKey,
+  isOAuthLinkCallbackHandled,
+  markOAuthLinkCallbackHandled,
+} from '@/features/auth/social-auth/callback-once'
+import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
+import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { handleError, unknownErrorText } from '@/shared/utils/error-handler'
 
 interface OAuthCallbackPageProps {
@@ -24,7 +35,7 @@ interface OAuthCallbackPageProps {
 
 export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
   const navigate = useNavigate()
-  const { setAuth } = useAuthStore()
+  const { setAuth, applySocialAuthTokens } = useAuthStore()
   const [oauthError, setOauthError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -33,74 +44,102 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
 
     const execute = async () => {
       const params = new URLSearchParams(window.location.search)
-      const code = params.get('code')
-      const state = params.get('state')
-      const error = params.get('error')
       const oauthIntent = getOAuthIntent()
       const registerRedirect = getRegisterSocialRedirect()
 
-      if (error) {
-        if (oauthIntent === 'register-social-link') {
+      if (oauthIntent === 'link' && !isSocialAuthSignupRemoteEnabled()) {
+        const error = params.get('error')
+        const code = params.get('code')
+        const state = params.get('state')
+        const callbackKey = buildOAuthLinkCallbackKey(provider, code, state)
+
+        if (isOAuthLinkCallbackHandled(callbackKey)) {
+          return
+        }
+
+        if (error || !code || !cmsSocialAuthClient.state.validateOAuthState(provider, state)) {
           clearOAuthIntent()
           navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
           return
         }
-        throw new Error(`${SOCIAL_PROVIDER_LABEL[provider]} 로그인 요청이 취소되었거나 실패했습니다.`)
-      }
 
-      if (!code) {
-        if (oauthIntent === 'register-social-link') {
-          clearOAuthIntent()
-          navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
-          return
-        }
-        throw new Error('인가 코드가 없어 소셜 로그인을 진행할 수 없습니다.')
-      }
-
-      if (!validateOAuthState(provider, state)) {
-        if (oauthIntent === 'register-social-link') {
-          clearOAuthIntent()
-          navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
-          return
-        }
-        throw new Error('OAuth state 검증에 실패했습니다. 다시 시도해주세요.')
-      }
-
-      if (oauthIntent === 'register-social-link') {
-        clearOAuthIntent()
+        cmsSocialAuthClient.state.setPendingSocialLink({
+          provider,
+          code,
+          state: state ?? '',
+          consent: {
+            socialConsentVersion: ADMIN_REGISTER_TERMS_VERSION,
+            socialConsentAgreed: true,
+          },
+        })
         addConnectedProvider(provider)
+        clearOAuthIntent()
+        markOAuthLinkCallbackHandled(callbackKey)
         navigate(buildRegisterSocialConnectCompletePath(registerRedirect), { replace: true })
         return
       }
 
-      const response = await exchangeOAuthCode({
-        provider,
-        code,
-        state: state ?? '' })
-
-      if (response.requiresMfa) {
-        throw new Error('MFA가 필요한 계정입니다. 일반 로그인으로 진행해주세요.')
-      }
-
-      setAuth({
-        user: response.user,
-        token: response.token,
-        expiresAt: String(response.expiresAt) })
-
-      const target = getRedirectPathByRole(response.user)
-      navigate(target, { replace: true })
-    }
-
-    void execute().catch((err: unknown) => {
-      const oauthIntent = getOAuthIntent()
-      const registerRedirect = getRegisterSocialRedirect()
-
-      if (oauthIntent === 'register-social-link') {
+      if (oauthIntent === 'link' && isSocialAuthSignupRemoteEnabled()) {
         clearOAuthIntent()
         navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
         return
       }
 
+      const outcome = await processOAuthCallback(cmsSocialAuthClient, provider, params, {
+        cancelled,
+      })
+
+      if (cancelled) {
+        return
+      }
+
+      clearOAuthIntent()
+
+      switch (outcome.kind) {
+        case 'cancelled':
+          return
+
+        case 'failed':
+          throw new Error(outcome.message)
+
+        case 'not_linked':
+          navigate('/login?socialNotLinked=1', { replace: true })
+          return
+
+        case 'already_linked':
+          navigate('/login?socialAlreadyLinked=1', { replace: true })
+          return
+
+        case 'authenticated': {
+          if (isSocialAuthLoginRemoteEnabled()) {
+            applySocialAuthTokens(outcome.tokens)
+            const target = getRedirectPathByRole(useAuthStore.getState().user)
+            navigate(target, { replace: true })
+            return
+          }
+
+          const mockResponse = await loginWithSocial(provider, params.get('code') ?? '')
+          if (mockResponse.requiresMfa) {
+            throw new Error('MFA가 필요한 계정입니다. 일반 로그인으로 진행해주세요.')
+          }
+
+          setAuth({
+            user: mockResponse.user,
+            token: mockResponse.token,
+            expiresAt: String(mockResponse.expiresAt),
+          })
+
+          const target = getRedirectPathByRole(mockResponse.user)
+          navigate(target, { replace: true })
+          return
+        }
+
+        default:
+          return
+      }
+    }
+
+    void execute().catch((err: unknown) => {
       if (isSocialAccountNotLinkedError(err)) {
         navigate('/login?socialNotLinked=1', { replace: true })
         return
@@ -111,7 +150,6 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
         return
       }
 
-      // Strict Mode 1차 effect cleanup 이후에는 UI 업데이트·지연 리다이렉트만 무시
       if (cancelled) {
         return
       }
@@ -129,7 +167,7 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
         window.clearTimeout(redirectTimer)
       }
     }
-  }, [navigate, provider, setAuth])
+  }, [applySocialAuthTokens, navigate, provider, setAuth])
 
   return (
     <div className="router-loading-fallback">
