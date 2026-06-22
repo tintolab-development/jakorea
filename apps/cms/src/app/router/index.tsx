@@ -5,7 +5,7 @@
  */
 
 import { lazy } from 'react'
-import { Navigate, Outlet, createBrowserRouter, useLocation, useParams } from 'react-router-dom'
+import { Navigate, createBrowserRouter, useLocation, useParams } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
 import { ProtectedRoute } from '@/app/components/protected-route'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -33,8 +33,15 @@ import { RegisterSocialConnectFailedPage } from '@/pages/auth/register-social-co
 import { RegisterSocialConnectPage } from '@/pages/auth/register-social-connect-page'
 import { RegisterIdentityCallbackPage } from '@/pages/auth/register-identity-callback-page'
 import { RegisterIdentityMockNicePage } from '@/pages/auth/register-identity-mock-nice-page'
+import { FindEmailPage } from '@/pages/auth/find-email-page'
+import { FindEmailIdentityCallbackPage } from '@/pages/auth/find-email-identity-callback-page'
+import { FindEmailIdentityMockNicePage } from '@/pages/auth/find-email-identity-mock-nice-page'
+import { FindPasswordPage } from '@/pages/auth/find-password-page'
+import { FindPasswordIdentityCallbackPage } from '@/pages/auth/find-password-identity-callback-page'
+import { FindPasswordIdentityMockNicePage } from '@/pages/auth/find-password-identity-mock-nice-page'
 import { MfaPage } from '@/pages/auth/mfa-page'
 import { OAuthCallbackPage } from '@/pages/auth/oauth-callback-page'
+import { RegisterSocialSignupCallbackPage } from '@/pages/auth/register-social-signup-callback-page'
 import { ForbiddenPage } from '@/pages/error/forbidden-page'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 
@@ -204,6 +211,10 @@ export const router = createBrowserRouter([
     element: <RegisterSocialConnectFailedPage />,
   },
   {
+    path: '/register/social-connect/callback',
+    element: <RegisterSocialSignupCallbackPage />,
+  },
+  {
     path: '/register/identity/callback',
     element: <RegisterIdentityCallbackPage />,
   },
@@ -217,21 +228,27 @@ export const router = createBrowserRouter([
   },
   {
     path: '/find-email',
-    element: (
-      <ComingSoonPage
-        title="이메일 찾기"
-        description="이메일 찾기 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-      />
-    ),
+    element: <FindEmailPage />,
+  },
+  {
+    path: '/find-email/identity/callback',
+    element: <FindEmailIdentityCallbackPage />,
+  },
+  {
+    path: '/find-email/identity/mock',
+    element: <FindEmailIdentityMockNicePage />,
   },
   {
     path: '/find-password',
-    element: (
-      <ComingSoonPage
-        title="비밀번호 찾기"
-        description="비밀번호 찾기 기능은 현재 준비 중입니다. 곧 만나보실 수 있습니다."
-      />
-    ),
+    element: <FindPasswordPage />,
+  },
+  {
+    path: '/find-password/identity/callback',
+    element: <FindPasswordIdentityCallbackPage />,
+  },
+  {
+    path: '/find-password/identity/mock',
+    element: <FindPasswordIdentityMockNicePage />,
   },
   {
     path: '/auth/mfa',
@@ -255,15 +272,12 @@ export const router = createBrowserRouter([
   },
   {
     path: '/',
-    element: <Layout />,
+    element: (
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    ),
     children: [
-      {
-        element: (
-          <ProtectedRoute>
-            <Outlet />
-          </ProtectedRoute>
-        ),
-        children: [
       {
         index: true,
         element: <IndexPage />,
@@ -791,8 +805,6 @@ export const router = createBrowserRouter([
             description="요청하신 페이지가 존재하지 않거나 이동되었습니다. 해당 기능은 현재 준비 중입니다."
           />
         ),
-      },
-        ],
       },
     ],
   },
