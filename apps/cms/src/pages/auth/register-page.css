@@ -3,34 +3,39 @@
  * auth-shell은 AuthPageShell에서 로드 — 여기서 @import 하면 패딩 등이 뒤집힘
  */
 
-.auth-card.auth-card--register {
+.auth-card.auth-card--register,
+.auth-card.auth-card--register-step-2,
+.auth-card.auth-card--register-step-3,
+.auth-card.auth-card--register-step-5,
+.auth-card.auth-card--register-step-6 {
   width: 600px;
   max-width: 100%;
-  height: 709px;
-  min-height: 709px;
+  height: auto;
   box-sizing: border-box;
   padding: 72px 60px;
   align-items: stretch;
   justify-content: flex-start;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.auth-card.auth-card--register {
+  min-height: 709px;
 }
 
 .auth-card.auth-card--register-step-2 {
-  height: 600px;
   min-height: 600px;
 }
 
 .auth-card.auth-card--register-step-3 {
-  height: 802px;
   min-height: 802px;
 }
 
 .auth-card.auth-card--register-step-5 {
-  height: 850px;
   min-height: 850px;
 }
 
 .auth-card.auth-card--register-step-6 {
-  height: 870px;
   min-height: 870px;
 }
 

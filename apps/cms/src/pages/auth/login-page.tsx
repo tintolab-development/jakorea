@@ -22,7 +22,7 @@ import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
 import { LOGIN_POLICY } from '@/shared/constants/login-policy'
 import { handleError } from '@/shared/utils/error-handler'
 import { AuthFormLabel } from '@/features/auth/ui/auth-form-label'
-import { JaKoreaLogo } from '@/shared/ui/icons/JaKoreaLogo'
+import { AuthLogoLink } from '@/features/auth/ui/auth-logo-link'
 import './login-page.css'
 
 const { Text } = Typography
@@ -208,6 +208,8 @@ export function LoginPage() {
           showSocialAlreadyLinked ? 'login-card login-card--social-already-linked' : 'login-card'
         }
       >
+        <AuthLogoLink wrapperClassName="login-logo-wrapper" logoClassName="login-logo" />
+
         {showSocialAlreadyLinked ? (
           <LoginSocialAlreadyLinkedView
             onConnectOtherSocial={handleConnectOtherSocial}
@@ -215,10 +217,6 @@ export function LoginPage() {
           />
         ) : (
           <>
-            <div className="login-logo-wrapper">
-              <JaKoreaLogo className="login-logo" />
-            </div>
-
             {showSocialNotLinked ? (
               <div className="login-form-wrapper login-form-wrapper--social-not-linked">
                 <LoginSocialNotLinkedView

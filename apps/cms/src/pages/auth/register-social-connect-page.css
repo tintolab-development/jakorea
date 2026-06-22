@@ -12,6 +12,8 @@
   padding: 72px 60px;
   align-items: stretch;
   justify-content: flex-start;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .register-social-connect {

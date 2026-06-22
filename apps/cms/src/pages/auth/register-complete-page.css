@@ -9,6 +9,8 @@
   padding: 60px 0;
   justify-content: flex-start;
   align-items: stretch;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .register-complete {

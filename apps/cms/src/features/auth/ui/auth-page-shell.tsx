@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { JaKoreaLogo } from '@/shared/ui/icons/JaKoreaLogo'
+import { AuthLogoLink } from '@/features/auth/ui/auth-logo-link'
 
 import '@/pages/auth/auth-shell.css'
 
@@ -20,11 +20,7 @@ export function AuthPageShell({
   return (
     <div className="auth-page">
       <div className={cardClass}>
-        {showLogo ? (
-          <div className="auth-logo-wrapper">
-            <JaKoreaLogo className="auth-logo" />
-          </div>
-        ) : null}
+        {showLogo ? <AuthLogoLink /> : null}
         {children}
       </div>
     </div>

@@ -28,7 +28,7 @@ export function RegisterSocialConnectFailedPage() {
   const socialConnectPath = buildRegisterSocialConnectPath(params.redirect)
 
   return (
-    <AuthPageShell cardClassName="auth-card--register-social-connect-failed">
+    <AuthPageShell showLogo={false} cardClassName="auth-card--register-social-connect-failed">
       <RegisterSocialConnectFailedView
         onRetry={() => navigate(socialConnectPath, { replace: true })}
         onSkipLogin={() => navigate(loginPath, { replace: true })}
