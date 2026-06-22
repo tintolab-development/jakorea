@@ -67,6 +67,54 @@ CMS는 `useAuthStore` 토큰 → [`axios-instance.ts`](../../src/shared/instance
 
 ---
 
+## 관리자 소셜 로그인 / 계정 연결 (`socialAuth`)
+
+공유 패키지: [`packages/social-auth`](../../../../packages/social-auth)  
+CMS wiring: [`features/auth/social-auth/cms-client.ts`](../../src/features/auth/social-auth/cms-client.ts)
+
+| API | 경로 | 용도 |
+| --- | --- | --- |
+| SSO 시작 | `POST /api/admin/auth/sso/login` | 관리자 소셜 **로그인** |
+| SSO 콜백 | `POST /api/admin/auth/sso/callback` | 로그인 code 교환 |
+| 가입 연결 시작 | `POST /api/auth/social/signup/{provider}/start` | 가입 wizard 소셜 **연결** |
+| 가입 연결 세션 | `GET /api/auth/social/signup/sessions/{sessionId}` | callback 후 세션 확인 |
+| 연결 목록 | `GET /api/admin/auth/me/social-accounts` | 로그인 후 연결 목록 |
+| 계정 연결 | `POST /api/admin/auth/me/social-accounts` | `socialVerificationSessionId` 전달 |
+| 연결 해제 | `DELETE /api/admin/auth/me/social-accounts/{provider}` | 연결 해제 |
+
+### 관리자 소셜 로그인 (Admin SSO — 유지)
+
+1. 로그인 버튼 → `startLogin({ intent: 'login' })` → `sso/login`
+2. IdP → 프론트 `/oauth/{provider}?code&state`
+3. `processOAuthCallback` → `sso/callback` → JWT 저장
+
+- redirect URI: `http://localhost:3000/oauth/{provider}`
+
+### 가입 wizard 소셜 연결 (신규 세션 API)
+
+1. 연결 버튼 → `startLogin({ intent: 'link' })` → `signup/{provider}/start` body `{ frontendReturnUrl }`
+2. IdP → **백엔드** `GET /api/auth/social/signup/{provider}/callback`
+3. 백엔드 → 프론트 `/register/social-connect/callback?socialVerificationSessionId=...`
+4. `processSignupSocialReturn` → `GET signup/sessions/{id}` → pending 저장
+5. 로그인 후 `flushSocialPendingLinks()` → `POST /api/admin/auth/me/social-accounts` body `{ socialVerificationSessionId, ...consent }`
+
+- `frontendReturnUrl` 예: `http://localhost:3000/register/social-connect/callback`
+- 백엔드 origin whitelist에 CMS origin 등록 필요
+
+**환경 변수**
+
+```env
+VITE_API_SERVER=https://12aa-221-146-247-18.ngrok-free.app
+VITE_KAKAO_CLIENT_ID=
+VITE_NAVER_CLIENT_ID=
+VITE_GOOGLE_CLIENT_ID=
+VITE_REAL_API_MODULES=...,socialAuth
+```
+
+- `CLIENT_SECRET`은 프론트에 두지 않음 (서버 OAuth 사용)
+
+---
+
 ## mock → 실 API 전환
 
 [`real-api-modules.ts`](../../src/shared/config/real-api-modules.ts):
@@ -106,4 +154,4 @@ Swagger Authorize에 관리자 토큰 입력 후 호출.
 3. `pnpm --filter cms generate:api`
 4. dev 서버 재시작
 
-**Last updated:** 2026-06-12
+**Last updated:** 2026-06-22
