@@ -12,7 +12,7 @@ export function isInstructorRoleRequestsRemoteEnabled(): boolean {
   )
 }
 
-/** 권한 승인 — 관리자 탭 (`GET /api/admin/admin-accounts`, Swagger `listAdminApprovalRequests`) */
+/** 권한 승인 — 관리자 탭 (`GET /api/admin/admin-approval-requests`, Swagger `listAdminApprovalRequests`) */
 export function isAdminApprovalRequestsRemoteEnabled(): boolean {
   return (
     isRealApiModuleEnabled('adminApprovalRequests') || isMembersRemoteEnabled()

@@ -1,6 +1,6 @@
 import type { GetUsersPageParams } from '@/entities/user/api/user-service'
 import type { ListInstructorRoleRequestsParams } from '@/shared/api/generated/members/schemas'
-import type { ListAdminsParams } from '@/shared/api/generated/members/schemas/listAdminsParams'
+import type { ListAdminApprovalRequestsParams } from '@/features/user/api/admin-approval-requests.types'
 
 export const memberQueryKeys = {
   all: ['cms', 'members'] as const,
@@ -43,6 +43,8 @@ export function serializeInstructorRoleRequestParams(
   return JSON.stringify(params)
 }
 
-export function serializeAdminApprovalRequestParams(params: ListAdminsParams): string {
+export function serializeAdminApprovalRequestParams(
+  params: ListAdminApprovalRequestsParams
+): string {
   return JSON.stringify(params)
 }

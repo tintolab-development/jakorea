@@ -2,8 +2,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminPermissionFeeGradeToRoleCode } from '@/features/user/api/admin-approval-role'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import {
+  approveAdminApprovalRequestRemote,
   changeAdminAccountRoleRemote,
-  verifyAdminAccountRemote,
+  rejectAdminApprovalRequestRemote,
 } from '@/features/user/api/members-api-client'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import type { InstructorPermissionApprovePayload } from '@/features/user/permission-management/instructor-permission-approve-modal'
@@ -17,20 +18,13 @@ function buildApproveBody(payload: InstructorPermissionApprovePayload) {
   }
 }
 
-function buildVerifyApproveBody(payload: InstructorPermissionApprovePayload) {
+function buildApproveReason(payload: InstructorPermissionApprovePayload): string {
   const roleCode = adminPermissionFeeGradeToRoleCode(payload.feeGrade)
-  return {
-    result: 'APPROVED',
-    reason: `CMS 관리자 권한 승인 (${roleCode})`,
-  }
+  return `CMS 관리자 권한 승인 (${roleCode})`
 }
 
-function buildVerifyRejectBody(payload: InstructorPermissionRejectPayload) {
-  const reason = payload.rejectionReason?.trim() || 'CMS 관리자 권한 신청 반려'
-  return {
-    result: 'REJECTED',
-    reason,
-  }
+function buildRejectReason(payload: InstructorPermissionRejectPayload): string {
+  return payload.rejectionReason?.trim() || 'CMS 관리자 권한 신청 반려'
 }
 
 export function useAdminApprovalRequestMutations() {
@@ -48,11 +42,11 @@ export function useAdminApprovalRequestMutations() {
       payload: InstructorPermissionApprovePayload
     }) => {
       const roleBody = buildApproveBody(input.payload)
-      const verifyBody = buildVerifyApproveBody(input.payload)
+      const reason = buildApproveReason(input.payload)
 
       for (const adminId of input.adminIds) {
         await changeAdminAccountRoleRemote(adminId, roleBody)
-        await verifyAdminAccountRemote(adminId, verifyBody)
+        await approveAdminApprovalRequestRemote(adminId, { reason })
       }
     },
     onSuccess: invalidate,
@@ -63,9 +57,9 @@ export function useAdminApprovalRequestMutations() {
       adminIds: number[]
       payload: InstructorPermissionRejectPayload
     }) => {
-      const body = buildVerifyRejectBody(input.payload)
+      const reason = buildRejectReason(input.payload)
       for (const adminId of input.adminIds) {
-        await verifyAdminAccountRemote(adminId, body)
+        await rejectAdminApprovalRequestRemote(adminId, { reason })
       }
     },
     onSuccess: invalidate,

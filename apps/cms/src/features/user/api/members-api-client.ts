@@ -1,5 +1,10 @@
+import type {
+  AdminAccountApprovalDecisionRequest,
+  ListAdminApprovalRequestsParams,
+} from '@/features/user/api/admin-approval-requests.types'
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
+import { customInstance } from '@/shared/api/orval-mutator'
 import type {
   AdminAccountVerificationRequest,
   AdminPreRegisterMemberRequest,
@@ -17,7 +22,6 @@ import type {
   PageResponseInstructorRoleRequestListItemResponse,
 } from '@/shared/api/generated/members/schemas'
 import type { AdminMemberDeleteRequest } from '@/shared/api/generated/members/schemas/adminMemberDeleteRequest'
-import type { ListAdminsParams } from '@/shared/api/generated/members/schemas/listAdminsParams'
 import type { AdminPermissionResponse } from '@/shared/api/generated/members/schemas/adminPermissionResponse'
 import type { AdminRoleResponse } from '@/shared/api/generated/members/schemas/adminRoleResponse'
 import type { MemberConsentRecordResponse } from '@/shared/api/generated/members/schemas/memberConsentRecordResponse'
@@ -87,11 +91,43 @@ export async function rejectInstructorRoleRequestRemote(
   await membersApi.reject2(requestId, body)
 }
 
-/** Swagger `listAdminApprovalRequests` — `GET /api/admin/admin-accounts` */
+/** Swagger `listAdminApprovalRequests` — `GET /api/admin/admin-approval-requests` */
 export async function fetchAdminApprovalRequestsPageRemote(
-  params: ListAdminsParams
+  params: ListAdminApprovalRequestsParams
 ): Promise<PageResponseAdminAccountListItemResponse> {
-  return unwrapApiBody(await membersApi.listAdmins(params))
+  return unwrapApiBody(
+    await customInstance<unknown>({
+      url: '/api/admin/admin-approval-requests',
+      method: 'GET',
+      params,
+    })
+  )
+}
+
+/** Swagger `approveAdminApprovalRequest` — `POST /api/admin/admin-approval-requests/{adminId}/approve` */
+export async function approveAdminApprovalRequestRemote(
+  adminId: number,
+  body: AdminAccountApprovalDecisionRequest
+) {
+  await customInstance({
+    url: `/api/admin/admin-approval-requests/${adminId}/approve`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
+  })
+}
+
+/** Swagger `rejectAdminApprovalRequest` — `POST /api/admin/admin-approval-requests/{adminId}/reject` */
+export async function rejectAdminApprovalRequestRemote(
+  adminId: number,
+  body: AdminAccountApprovalDecisionRequest
+) {
+  await customInstance({
+    url: `/api/admin/admin-approval-requests/${adminId}/reject`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
+  })
 }
 
 export async function verifyAdminAccountRemote(

@@ -7,16 +7,16 @@ import {
 import { fetchAdminApprovalRequestsPageRemote } from '@/features/user/api/members-api-client'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { isAdminApprovalRequestsRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
-import type { ListAdminsParams } from '@/shared/api/generated/members/schemas/listAdminsParams'
+import type { ListAdminApprovalRequestsParams } from '@/features/user/api/admin-approval-requests.types'
 
 const DEFAULT_PAGE_SIZE = 50
 
 export function useAdminApprovalRequestsQuery(
-  params: ListAdminsParams = {},
+  params: ListAdminApprovalRequestsParams = {},
   enabled = true
 ) {
   const remote = isAdminApprovalRequestsRemoteEnabled()
-  const queryParams: ListAdminsParams = {
+  const queryParams: ListAdminApprovalRequestsParams = {
     page: params.page ?? 0,
     size: params.size ?? DEFAULT_PAGE_SIZE,
     ...params,
