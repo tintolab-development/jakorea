@@ -15,7 +15,7 @@ export function HomePage() {
       </header>
 
       <article className={styles.card}>
-        <div className={styles.cardContent}>
+        <div className={styles['card-content']}>
           <p className={styles.stat}>기다리는 사용자: {waitlist}명</p>
           <p className={styles.stat}>
             다음 메이저 배포: {formatDate(launchDate, { dateStyle: 'long' })}

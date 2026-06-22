@@ -1,10 +1,13 @@
 import { AppLayout } from '@/widgets/layout'
-import { HomePage } from '@/pages/home'
+import { routes } from './router'
 
 export function App() {
+  const currentPath = window.location.pathname
+  const currentRoute = routes.find((route) => route.path === currentPath) ?? routes[0]
+
   return (
     <AppLayout>
-      <HomePage />
+      {currentRoute.element}
     </AppLayout>
   )
 }

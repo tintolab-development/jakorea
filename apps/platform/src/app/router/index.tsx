@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { HomePage } from '@/pages/home'
+import { TestPage } from '@/pages/test'
 
 type RouteConfig = {
   path: string
@@ -7,4 +8,7 @@ type RouteConfig = {
 }
 
 /** 라우터 도입 전 임시 라우트 정의. react-router 추가 시 이 파일에서 구성한다. */
-export const routes: RouteConfig[] = [{ path: '/', element: <HomePage /> }]
+export const routes: RouteConfig[] = [
+  { path: '/', element: <HomePage /> },
+  { path: '/test', element: <TestPage /> },
+]
