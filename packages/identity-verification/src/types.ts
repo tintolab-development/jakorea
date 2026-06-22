@@ -36,8 +36,9 @@ export interface IdentityVerificationSessionResponse {
 }
 
 export interface IdentityChallengeStartInput {
-  birthDate: string
-  gender: string
+  birthDate?: string
+  gender?: string
+  name?: string
 }
 
 export interface IdentityChallengeStartResult {
@@ -49,8 +50,8 @@ export interface IdentityChallengeStartResult {
 export interface IdentityChallengeCompleteInput {
   sessionId: number
   webTransactionId: string
-  birthDate: string
-  gender: string
+  birthDate?: string
+  gender?: string
 }
 
 export interface IdentityChallengeCompleteResult {
@@ -89,8 +90,9 @@ export type IdentityMessage =
 export interface PendingIdentityChallenge {
   sessionId: number
   nonce: string
-  birthDate: string
-  gender: string
+  birthDate?: string
+  gender?: string
+  name?: string
 }
 
 export interface VerifiedIdentityProfileResponse {

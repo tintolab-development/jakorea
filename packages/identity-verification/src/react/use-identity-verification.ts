@@ -15,17 +15,28 @@ export interface UseIdentityVerificationOptions {
   client: IdentityVerificationClient
   birthDate?: string
   gender?: string
+  name?: string
   onSuccess: (result: IdentityChallengeCompleteResult) => void
-  /** 생년월일·성별 미입력 시 */
+  /** 생년월일·성별 미입력 시 (requireBirthGender=true일 때) */
   missingInputMessage?: string
+  /** false면 이름만으로 본인인증 시작 가능 (이메일 찾기 등) */
+  requireBirthGender?: boolean
+  /** requireBirthGender=false일 때 이름 필수 여부 (비밀번호 찾기 등) */
+  requireName?: boolean
+  /** requireBirthGender=false일 때 이름 미입력 메시지 */
+  missingNameMessage?: string
 }
 
 export function useIdentityVerification({
   client,
   birthDate,
   gender,
+  name,
   onSuccess,
   missingInputMessage = '생년월일과 성별을 먼저 입력해 주세요.',
+  requireBirthGender = true,
+  requireName = true,
+  missingNameMessage = '이름을 먼저 입력해 주세요.',
 }: UseIdentityVerificationOptions) {
   const [status, setStatus] = useState<IdentityVerificationHookStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -113,9 +124,15 @@ export function useIdentityVerification({
   }, [cleanupPopupWatch])
 
   const verify = useCallback(async () => {
-    if (!birthDate || !gender) {
+    if (requireBirthGender) {
+      if (!birthDate || !gender) {
+        setStatus('error')
+        setErrorMessage(missingInputMessage)
+        return
+      }
+    } else if (requireName && !name?.trim()) {
       setStatus('error')
-      setErrorMessage(missingInputMessage)
+      setErrorMessage(missingNameMessage)
       return
     }
 
@@ -126,7 +143,7 @@ export function useIdentityVerification({
 
     try {
       popup = client.popup.openWindow()
-      const challenge = await client.startChallenge({ birthDate, gender })
+      const challenge = await client.startChallenge({ birthDate, gender, name: name?.trim() })
       client.popup.navigate(popup, challenge.authUrl)
       popupRef.current = popup
       setStatus('popup_open')
@@ -151,7 +168,19 @@ export function useIdentityVerification({
         error instanceof Error ? error.message : '본인인증을 시작할 수 없습니다.'
       )
     }
-  }, [birthDate, cleanupPopupWatch, client, gender, handleCancel, missingInputMessage, resetError])
+  }, [
+    birthDate,
+    cleanupPopupWatch,
+    client,
+    gender,
+    handleCancel,
+    missingInputMessage,
+    missingNameMessage,
+    name,
+    requireBirthGender,
+    requireName,
+    resetError,
+  ])
 
   const isVerifying =
     status === 'loading' || status === 'popup_open' || status === 'completing'

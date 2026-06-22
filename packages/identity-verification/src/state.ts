@@ -16,7 +16,7 @@ export interface IdentityVerificationState {
 
 export interface CreateIdentityVerificationStateOptions {
   routes: IdentityVerificationRoutes
-  /** sessionStorage 키 prefix — 앱·플로우별로 분리 */
+  /** localStorage 키 prefix — 앱·플로우별로 분리 */
   storagePrefix?: string
 }
 
@@ -31,22 +31,38 @@ export function createIdentityVerificationState(
     nonce: `${prefix}_challenge_nonce`,
     birthDate: `${prefix}_birth_date`,
     gender: `${prefix}_gender`,
+    name: `${prefix}_name`,
   }
 
+  /**
+   * NICE 콜백은 팝업 창에서 열리므로 `sessionStorage`(창별 격리) 대신
+   * 동일 origin의 `localStorage`를 사용한다.
+   */
   function setPendingChallenge(challenge: PendingIdentityChallenge) {
-    sessionStorage.setItem(keys.sessionId, String(challenge.sessionId))
-    sessionStorage.setItem(keys.nonce, challenge.nonce)
-    sessionStorage.setItem(keys.birthDate, challenge.birthDate)
-    sessionStorage.setItem(keys.gender, challenge.gender)
+    localStorage.setItem(keys.sessionId, String(challenge.sessionId))
+    localStorage.setItem(keys.nonce, challenge.nonce)
+    if (challenge.birthDate) {
+      localStorage.setItem(keys.birthDate, challenge.birthDate)
+    } else {
+      localStorage.removeItem(keys.birthDate)
+    }
+    if (challenge.gender) {
+      localStorage.setItem(keys.gender, challenge.gender)
+    } else {
+      localStorage.removeItem(keys.gender)
+    }
+    if (challenge.name) {
+      localStorage.setItem(keys.name, challenge.name)
+    } else {
+      localStorage.removeItem(keys.name)
+    }
   }
 
   function getPendingChallenge(): PendingIdentityChallenge | null {
-    const sessionIdRaw = sessionStorage.getItem(keys.sessionId)
-    const nonce = sessionStorage.getItem(keys.nonce)
-    const birthDate = sessionStorage.getItem(keys.birthDate)
-    const gender = sessionStorage.getItem(keys.gender)
+    const sessionIdRaw = localStorage.getItem(keys.sessionId)
+    const nonce = localStorage.getItem(keys.nonce)
 
-    if (!sessionIdRaw || !nonce || !birthDate || !gender) {
+    if (!sessionIdRaw || !nonce) {
       return null
     }
 
@@ -55,14 +71,19 @@ export function createIdentityVerificationState(
       return null
     }
 
-    return { sessionId, nonce, birthDate, gender }
+    const birthDate = localStorage.getItem(keys.birthDate) ?? undefined
+    const gender = localStorage.getItem(keys.gender) ?? undefined
+    const name = localStorage.getItem(keys.name) ?? undefined
+
+    return { sessionId, nonce, birthDate, gender, name }
   }
 
   function clearPendingChallenge() {
-    sessionStorage.removeItem(keys.sessionId)
-    sessionStorage.removeItem(keys.nonce)
-    sessionStorage.removeItem(keys.birthDate)
-    sessionStorage.removeItem(keys.gender)
+    localStorage.removeItem(keys.sessionId)
+    localStorage.removeItem(keys.nonce)
+    localStorage.removeItem(keys.birthDate)
+    localStorage.removeItem(keys.gender)
+    localStorage.removeItem(keys.name)
   }
 
   function buildCallbackUrl() {

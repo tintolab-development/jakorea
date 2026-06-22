@@ -96,13 +96,22 @@ export function createIdentityVerificationClient(
     input: IdentityChallengeStartInput,
     challengeState: string
   ): IdentityVerificationStartRequest {
-    return {
+    const request: IdentityVerificationStartRequest = {
       provider: 'NICE',
-      expectedBirthDate: toApiBirthDate(input.birthDate),
       flow,
       frontendReturnUrl: state.buildCallbackUrl(),
       state: challengeState,
     }
+
+    if (input.birthDate?.trim()) {
+      request.expectedBirthDate = toApiBirthDate(input.birthDate)
+    }
+
+    if (input.name?.trim()) {
+      request.expectedName = input.name.trim()
+    }
+
+    return request
   }
 
   async function startChallengeRemote(
@@ -115,6 +124,7 @@ export function createIdentityVerificationClient(
       nonce: challengeState,
       birthDate: input.birthDate,
       gender: input.gender,
+      name: input.name,
     })
 
     try {
@@ -139,6 +149,7 @@ export function createIdentityVerificationClient(
         nonce: body.state ?? challengeState,
         birthDate: input.birthDate,
         gender: input.gender,
+        name: input.name,
       })
 
       return {
@@ -165,6 +176,7 @@ export function createIdentityVerificationClient(
       nonce,
       birthDate: input.birthDate,
       gender: input.gender,
+      name: input.name,
     })
 
     return {
@@ -225,7 +237,7 @@ export function createIdentityVerificationClient(
         status: VERIFIED_SESSION_STATUS,
         name: '홍길동',
         phone: '010-1234-5678',
-        birthDate: pending ? toApiBirthDate(pending.birthDate) : undefined,
+        birthDate: pending?.birthDate ? toApiBirthDate(pending.birthDate) : undefined,
         verifiedAt: new Date().toISOString(),
       }
     }
@@ -253,12 +265,14 @@ export function createIdentityVerificationClient(
       throw new Error('입력하신 생년월일과 본인인증 정보가 일치하지 않습니다.')
     }
 
-  return {
-    sessionId: input.sessionId,
-    sessionUuid: String(input.sessionId),
-    verifiedName: '홍길동',
+    const pending = state.getPendingChallenge()
+
+    return {
+      sessionId: input.sessionId,
+      sessionUuid: String(input.sessionId),
+      verifiedName: pending?.name?.trim() || '홍길동',
       verifiedPhone: '010-1234-5678',
-      verifiedBirthDate: toVerifiedBirthDate(input.birthDate),
+      verifiedBirthDate: input.birthDate ? toVerifiedBirthDate(input.birthDate) : undefined,
       verifiedAt: new Date().toISOString(),
     }
   }
