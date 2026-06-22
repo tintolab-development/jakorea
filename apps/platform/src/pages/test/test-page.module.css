@@ -49,3 +49,23 @@
   border-radius: var(--radius-12);
   background: var(--color-neutral-cool-80);
 }
+
+.button-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  align-items: center;
+  gap: var(--spacing-24);
+}
+
+.button-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-16);
+}

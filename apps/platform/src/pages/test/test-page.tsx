@@ -1,4 +1,4 @@
-import { PFText } from '@/shared/ui'
+import { PFButton, PFText } from '@/shared/ui'
 import styles from './test-page.module.css'
 
 const typographyItems = [
@@ -21,6 +21,9 @@ const colorItems = [
   { label: 'success', color: 'success' },
   { label: 'gradient-primary-01', color: 'gradient-primary-01' },
 ] as const
+
+const buttonSizes = ['small', 'medium', 'large', 'xlarge'] as const
+const buttonVariants = ['primary', 'secondary', 'tertiary', 'text'] as const
 
 export function TestPage() {
   return (
@@ -62,6 +65,34 @@ export function TestPage() {
               <PFText as="span" typo="bd-sm-sb" color={color}>
                 {label}
               </PFText>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFButton
+        </PFText>
+        <div className={styles['button-stack']}>
+          {buttonVariants.map((variant) => (
+            <div className={styles['button-row']} key={variant}>
+              <PFText as="span" typo="label-md" color="neutral-cool-500">
+                {variant}
+              </PFText>
+              <div className={styles['button-list']}>
+                {buttonSizes.map((size) => (
+                  <PFButton size={size} variant={variant} key={`${variant}-${size}`}>
+                    {size}
+                  </PFButton>
+                ))}
+                <PFButton variant={variant} selected>
+                  selected
+                </PFButton>
+                <PFButton variant={variant} disabled>
+                  disabled
+                </PFButton>
+              </div>
             </div>
           ))}
         </div>
