@@ -16,6 +16,8 @@ import { LoginSocialNotLinkedView } from '@/features/auth/ui/login-social-not-li
 import { LoginSocialAlreadyLinkedView } from '@/features/auth/ui/login-social-already-linked-view'
 import { LoginUtilityLinks } from '@/features/auth/ui/login-utility-links'
 import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
+import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-approval-pending-notice'
+import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { getUserByEmail } from '@/data/mock/users'
 import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
@@ -59,10 +61,12 @@ export function LoginPage() {
     socialAlreadyLinked?: string
   }>()
   const authStore = useAuthStore()
-  const { login, setAuth, loading, error, isAuthenticated, requiresMfa, user } = authStore
+  const { login, setAuth, loading, error, isAuthenticated, requiresMfa, user, clearError } =
+    authStore
   const [form] = Form.useForm()
   const [mfaModalOpen, setMfaModalOpen] = useState(false)
   const [loginMode, setLoginMode] = useState<LoginMode | null>(null)
+  const [showAdminApprovalPending, setShowAdminApprovalPending] = useState(false)
   const apiLoginAvailable = isRemoteApiConfigured()
 
   const {
@@ -103,6 +107,7 @@ export function LoginPage() {
     }
 
     setLoginMode(mode)
+    setShowAdminApprovalPending(false)
 
     try {
       const result = await login(values, { mode })
@@ -121,6 +126,12 @@ export function LoginPage() {
         navigate(redirectPath || '/', { replace: true })
       }
     } catch (loginError: unknown) {
+      if (isAdminLoginApprovalPendingError(loginError)) {
+        clearError()
+        setShowAdminApprovalPending(true)
+        return
+      }
+
       recordFailure()
       handleError(loginError, { context: 'loginPage.submitLogin' })
     } finally {
@@ -238,6 +249,14 @@ export function LoginPage() {
                     layout="vertical"
                     requiredMark={false}
                     className="login-form"
+                    onValuesChange={() => {
+                      if (showAdminApprovalPending) {
+                        setShowAdminApprovalPending(false)
+                      }
+                      if (error) {
+                        clearError()
+                      }
+                    }}
                   >
                     <Form.Item
                       name="email"
@@ -261,6 +280,8 @@ export function LoginPage() {
                         disabled={isLocked}
                       />
                     </Form.Item>
+
+                    {showAdminApprovalPending && <LoginAdminApprovalPendingNotice />}
 
                     {isLocked && (
                       <Alert
@@ -296,7 +317,7 @@ export function LoginPage() {
                         />
                       )}
 
-                    {error && !isLocked && (
+                    {error && !isLocked && !showAdminApprovalPending && (
                       <div className="login-error">
                         <Text type="danger">로그인에 실패했습니다.</Text>
                       </div>

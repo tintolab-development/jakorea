@@ -51,6 +51,36 @@
   margin-bottom: 16px;
 }
 
+.login-admin-approval-pending-notice {
+  display: flex;
+  padding: var(--Spacing-8, 8px) var(--Spacing-12, 12px);
+  align-items: center;
+  gap: var(--Spacing-4, 4px);
+  align-self: stretch;
+  margin-bottom: 16px;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--Color-border-error-light, #fcd7d7);
+  background: var(--Color-status-error-bg, rgba(252, 215, 215, 0.4));
+}
+
+.login-admin-approval-pending-notice__icon {
+  width: 15.167px;
+  height: 15.167px;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+}
+
+.login-admin-approval-pending-notice__text {
+  margin: 0;
+  flex: 1;
+  color: var(--Color-status-error-default, #c31d20);
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+}
+
 .login-error {
   margin-bottom: 16px;
   text-align: center;
