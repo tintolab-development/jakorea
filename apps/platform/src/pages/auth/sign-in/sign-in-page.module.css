@@ -1,0 +1,98 @@
+.page {
+  display: flex;
+  width: 100%;
+  min-height: 480px;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  display: flex;
+  width: 480px;
+  flex-direction: column;
+  align-items: center;
+  padding-block: var(--spacing-100);
+}
+
+.intro {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-left: var(--spacing-8);
+  text-align: left;
+}
+
+.illustration {
+  width: 84px;
+  height: 84px;
+  align-self: flex-start;
+}
+
+.title {
+  margin-bottom: var(--spacing-16);
+}
+
+.input-slot {
+  width: 100%;
+  min-height: 128px;
+  margin-top: var(--spacing-40);
+}
+
+.account-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.account-link-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.account-link-separator {
+  width: 1px;
+  height: 15px;
+  background: var(--color-border-default);
+}
+
+.social-section {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-24);
+  margin-top: var(--spacing-48);
+}
+
+.social-divider {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--spacing-16);
+}
+
+.social-divider-line {
+  height: 1px;
+  flex: 1;
+  background: var(--color-border-default);
+}
+
+.social-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-16);
+}
+
+.social-button {
+  display: inline-flex;
+  width: 54px;
+  height: 54px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-999);
+  background: transparent;
+}

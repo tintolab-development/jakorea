@@ -47,7 +47,12 @@
   gap: 10px;
   padding: 0;
   border: 0;
+  border-bottom: 4px solid transparent;
   background: transparent;
+}
+
+.navigation-button-active {
+  border-bottom-color: var(--color-border-focus);
 }
 
 .user-actions {
