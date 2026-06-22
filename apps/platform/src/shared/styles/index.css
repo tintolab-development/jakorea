@@ -1,2 +1,5 @@
 @import './tokens.css';
+@import './color.css';
+@import './typography.css';
 @import './reset.css';
+@import './size.css';

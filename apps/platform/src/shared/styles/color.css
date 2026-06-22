@@ -1,0 +1,90 @@
+/**
+ * 색상 토큰
+ * 예: Color/neutral/cool/600 -> --color-neutral-cool-600
+ */
+
+:root {
+  /* gradient*/
+  --color-gradient-primary-01: linear-gradient(90deg, #285f74 0%, #00a0af 100%);
+  --color-gradient-primary-02: linear-gradient(101deg, #2eaafd 4.8%, #0d81cf 102.41%);
+  --color-gradient-primary-03: linear-gradient(93deg, #46b17b 0%, #bbd153 90.52%);
+
+  /* Border */
+  --color-border-default: #d9d9d9;
+  --color-border-error-light: #fcd7d7;
+  --color-border-error-strong: #d13235;
+  --color-border-focus: #01a1af;
+  --color-border-light: #3d3d3d;
+  --color-border-strong: #7a7a7a;
+  --color-border-success-light: #d7e5fc;
+  --color-border-success-strong: #326fd1;
+
+  /* Element */
+  --color-element-blue: #0d81cf;
+  --color-element-default-blue: rgba(0, 105, 114, 0.1);
+  --color-element-default-gray: rgba(41, 96, 117, 0.1);
+  --color-element-hover: rgba(1, 161, 175, 0.06);
+  --color-element-hover-strong: rgba(1, 161, 175, 0.1);
+  --color-element-orange: #f07917;
+
+  /* Neutral */
+  --color-neutral-black: #3d3d3d;
+  --color-neutral-white: #ffffff;
+  --color-neutral-white-60: rgba(231, 235, 239, 0.6);
+
+  /* Neutral / Cool */
+  --color-neutral-cool-100: #e6e9eb;
+  --color-neutral-cool-200: #d0d9db;
+  --color-neutral-cool-300: #bbc4c7;
+  --color-neutral-cool-400: #9fafb5;
+  --color-neutral-cool-50: #f5f7f7;
+  --color-neutral-cool-500: #85969d;
+  --color-neutral-cool-600: #667278;
+  --color-neutral-cool-700: #41494d;
+  --color-neutral-cool-80: #eef3f4;
+
+  /* Neutral / Warm */
+  --color-neutral-warm-100: #f0f1f2;
+  --color-neutral-warm-200: #e8e8e8;
+  --color-neutral-warm-300: #d1d1d1;
+  --color-neutral-warm-400: #bdbdbd;
+  --color-neutral-warm-500: #999999;
+  --color-neutral-warm-600: #7a7a7a;
+  --color-neutral-warm-700: #525252;
+  --color-neutral-warm-80: #f7f7f7;
+
+  /* Primary */
+  --color-primary-100: #cdf4f7;
+  --color-primary-200: #95e8f0;
+  --color-primary-300: #4cd9e5;
+  --color-primary-400: #0cbdcc;
+  --color-primary-500: #01a1af;
+  --color-primary-600: #337791;
+  --color-primary-700: #285f74;
+  --color-primary-800: #22404d;
+
+  /* Palette */
+  --color-palette-cream: #f3f2b3;
+  --color-palette-yellow: #e3e24f;
+  --color-palette-green: #bbd153;
+  --color-palette-ice: #c2edf0;
+  --color-palette-red: #f65f4e;
+  --color-palette-jade: #46b17b;
+  --color-palette-forest: #00763d;
+
+  /* Status / Error */
+  --color-status-error-bg: rgba(252, 215, 215, 0.4);
+  --color-status-error-dark: #4d0a0b;
+  --color-status-error-default: #c31d20;
+  --color-status-error-light: #ed4a4c;
+  --color-status-error-soft: #fac5c6;
+  --color-status-error-strong: #850d0f;
+
+  /* Status / Success */
+  --color-status-success-bg: rgba(182, 208, 250, 0.3);
+  --color-status-success-dark: #0a234d;
+  --color-status-success-default: #1d5cc2;
+  --color-status-success-light: #4a88ed;
+  --color-status-success-soft: #b6d0fa;
+  --color-status-success-strong: #0d3b85;
+}
