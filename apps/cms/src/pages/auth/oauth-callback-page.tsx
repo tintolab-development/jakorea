@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Alert, Spin } from 'antd'
+import { useEffect } from 'react'
+import { Spin } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import {
   isSocialAccountAlreadyLinkedError,
@@ -27,7 +27,14 @@ import {
 } from '@/features/auth/social-auth/callback-once'
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
-import { handleError, unknownErrorText } from '@/shared/utils/error-handler'
+import { handleError } from '@/shared/utils/error-handler'
+
+const SOCIAL_NOT_LINKED_LOGIN_PATH = '/login?socialNotLinked=1'
+const SOCIAL_ALREADY_LINKED_LOGIN_PATH = '/login?socialAlreadyLinked=1'
+
+function isMfaRequiredLoginError(err: unknown): boolean {
+  return err instanceof Error && err.message.includes('MFA')
+}
 
 interface OAuthCallbackPageProps {
   provider: SocialProvider
@@ -36,11 +43,13 @@ interface OAuthCallbackPageProps {
 export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
   const navigate = useNavigate()
   const { setAuth, applySocialAuthTokens } = useAuthStore()
-  const [oauthError, setOauthError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    let redirectTimer: number | undefined
+
+    const navigateSocialNotLinked = () => {
+      navigate(SOCIAL_NOT_LINKED_LOGIN_PATH, { replace: true })
+    }
 
     const execute = async () => {
       const params = new URLSearchParams(window.location.search)
@@ -100,14 +109,15 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
           return
 
         case 'failed':
-          throw new Error(outcome.message)
+          navigateSocialNotLinked()
+          return
 
         case 'not_linked':
-          navigate('/login?socialNotLinked=1', { replace: true })
+          navigateSocialNotLinked()
           return
 
         case 'already_linked':
-          navigate('/login?socialAlreadyLinked=1', { replace: true })
+          navigate(SOCIAL_ALREADY_LINKED_LOGIN_PATH, { replace: true })
           return
 
         case 'authenticated': {
@@ -141,12 +151,12 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
 
     void execute().catch((err: unknown) => {
       if (isSocialAccountNotLinkedError(err)) {
-        navigate('/login?socialNotLinked=1', { replace: true })
+        navigateSocialNotLinked()
         return
       }
 
       if (isSocialAccountAlreadyLinkedError(err)) {
-        navigate('/login?socialAlreadyLinked=1', { replace: true })
+        navigate(SOCIAL_ALREADY_LINKED_LOGIN_PATH, { replace: true })
         return
       }
 
@@ -154,28 +164,23 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
         return
       }
 
-      handleError(err, { context: 'oauthCallbackPage' })
-      setOauthError(unknownErrorText(err, '소셜 로그인 처리에 실패했습니다.'))
-      redirectTimer = window.setTimeout(() => {
+      if (isMfaRequiredLoginError(err)) {
+        handleError(err, { context: 'oauthCallbackPage.mfaRequired' })
         navigate('/login', { replace: true })
-      }, 2000)
+        return
+      }
+
+      navigateSocialNotLinked()
     })
 
     return () => {
       cancelled = true
-      if (redirectTimer !== undefined) {
-        window.clearTimeout(redirectTimer)
-      }
     }
   }, [applySocialAuthTokens, navigate, provider, setAuth])
 
   return (
     <div className="router-loading-fallback">
-      {oauthError ? (
-        <Alert type="error" description={oauthError} showIcon style={{ maxWidth: 420 }} />
-      ) : (
-        <Spin size="large" />
-      )}
+      <Spin size="large" />
     </div>
   )
 }
