@@ -4,8 +4,12 @@ import type { IdentityChallengeCompleteResult } from '@jakorea/identity-verifica
 import type { AdminRegisterGender } from '@/types/admin-register'
 
 import { cmsIdentityVerificationClient } from './cms-client'
+import { findEmailIdentityVerificationClient } from './find-email-client'
+import { findPasswordIdentityVerificationClient } from './find-password-client'
 
 export { cmsIdentityVerificationClient } from './cms-client'
+export { findEmailIdentityVerificationClient } from './find-email-client'
+export { findPasswordIdentityVerificationClient } from './find-password-client'
 
 export type {
   IdentityCallbackOutcome,
@@ -47,6 +51,39 @@ export function useIdentityVerification(options: UseIdentityVerificationOptions)
     client: cmsIdentityVerificationClient,
     birthDate: options.birthDate,
     gender: options.gender,
+    onSuccess: options.onSuccess,
+  })
+}
+
+interface UseFindEmailIdentityVerificationOptions {
+  name?: string
+  onSuccess: (result: IdentityChallengeCompleteResult) => void
+}
+
+export function useFindEmailIdentityVerification(
+  options: UseFindEmailIdentityVerificationOptions
+) {
+  return useIdentityVerificationBase({
+    client: findEmailIdentityVerificationClient,
+    name: options.name,
+    requireBirthGender: false,
+    requireName: true,
+    onSuccess: options.onSuccess,
+    missingNameMessage: '이름을 먼저 입력해 주세요.',
+  })
+}
+
+interface UseFindPasswordIdentityVerificationOptions {
+  onSuccess: (result: IdentityChallengeCompleteResult) => void
+}
+
+export function useFindPasswordIdentityVerification(
+  options: UseFindPasswordIdentityVerificationOptions
+) {
+  return useIdentityVerificationBase({
+    client: findPasswordIdentityVerificationClient,
+    requireBirthGender: false,
+    requireName: false,
     onSuccess: options.onSuccess,
   })
 }

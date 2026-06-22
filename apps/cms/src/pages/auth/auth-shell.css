@@ -60,6 +60,17 @@
   aspect-ratio: 99 / 50;
 }
 
+.auth-logo-link {
+  display: inline-flex;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  line-height: 0;
+}
+
 .auth-form-body {
   display: flex;
   flex-direction: column;

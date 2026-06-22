@@ -1,5 +1,6 @@
 import { CheckCircleFilled } from '@ant-design/icons'
 import { Alert } from 'antd'
+import type { ReactNode } from 'react'
 
 import type { IdentityVerificationHookStatus } from '@/features/auth/identity-verification'
 
@@ -9,6 +10,8 @@ interface RegisterIdentityStatusPanelProps {
   verifiedName?: string
   verifiedPhone?: string
   className?: string
+  idleTitle?: string
+  idleDescription?: ReactNode
 }
 
 function maskPhone(phone: string): string {
@@ -25,6 +28,14 @@ export function RegisterIdentityStatusPanel({
   verifiedName,
   verifiedPhone,
   className,
+  idleTitle = '휴대폰 본인인증',
+  idleDescription = (
+    <>
+      버튼을 누르면 인증 창이 열립니다.
+      <br />
+      인증이 완료되면 다음 단계로 이동할 수 있어요.
+    </>
+  ),
 }: RegisterIdentityStatusPanelProps) {
   const rootClass = className
     ? `register-identity-module ${className}`
@@ -70,12 +81,8 @@ export function RegisterIdentityStatusPanel({
 
   return (
     <div className={rootClass} role="region" aria-label="통신사 본인인증 안내">
-      <p className="register-identity-module__title">휴대폰 본인인증</p>
-      <p className="register-identity-module__meta">
-        버튼을 누르면 인증 창이 열립니다.
-        <br />
-        인증이 완료되면 다음 단계로 이동할 수 있어요.
-      </p>
+      <p className="register-identity-module__title">{idleTitle}</p>
+      <p className="register-identity-module__meta">{idleDescription}</p>
     </div>
   )
 }
