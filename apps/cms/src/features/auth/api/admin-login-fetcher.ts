@@ -4,6 +4,10 @@
 
 import { axiosClient } from '@/shared/api'
 import { adminAuthPaths } from '@/shared/config/api-paths'
+import {
+  AdminLoginApprovalPendingError,
+  isAdminLoginApprovalPendingCode,
+} from '@/features/auth/errors/admin-login-approval-pending-error'
 import type {
   AdminLoginRequestBody,
   AdminMfaChallengeResponse,
@@ -24,7 +28,7 @@ export class AdminLoginApiError extends Error {
   }
 }
 
-function parseLoginError(payload: unknown): AdminLoginApiError {
+function parseLoginError(payload: unknown): AdminLoginApiError | AdminLoginApprovalPendingError {
   if (payload && typeof payload === 'object') {
     const o = payload as Record<string, unknown>
     const wrapped = o.error as { code?: string; message?: string } | undefined
@@ -33,7 +37,11 @@ function parseLoginError(payload: unknown): AdminLoginApiError {
       wrapped?.message ??
       (typeof o.message === 'string' ? o.message : undefined) ??
       '로그인에 실패했습니다.'
-    return new AdminLoginApiError(String(code), message)
+    const normalizedCode = String(code)
+    if (isAdminLoginApprovalPendingCode(normalizedCode)) {
+      return new AdminLoginApprovalPendingError(message)
+    }
+    return new AdminLoginApiError(normalizedCode, message)
   }
   return new AdminLoginApiError('UNKNOWN', '로그인에 실패했습니다.')
 }
@@ -56,7 +64,7 @@ export async function fetchAdminLogin(
 
     throw parseLoginError(payload)
   } catch (err) {
-    if (err instanceof AdminLoginApiError) throw err
+    if (err instanceof AdminLoginApiError || err instanceof AdminLoginApprovalPendingError) throw err
     if (err && typeof err === 'object' && 'response' in err) {
       const axiosErr = err as { response?: { data?: unknown } }
       throw parseLoginError(axiosErr.response?.data)

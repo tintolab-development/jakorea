@@ -121,6 +121,31 @@ const mockAdmins: User[] = [
       managedProgramCount: 1,
     },
   },
+  {
+    id: generateUUID(),
+    email: 'admin.pending@jakorea.org',
+    password: 'admin123!',
+    name: '승인대기관리자',
+    nameEn: 'Pending Admin',
+    role: 'ADMIN',
+    permissionApprovalStatus: 'PENDING',
+    adminLevel: 'GENERAL',
+    programRoles: {},
+    isActive: true,
+    createdAt: generatePastDate(3),
+    updatedAt: generatePastDate(3),
+    phone: '02-1234-5005',
+    gender: '여성',
+    birthDate: '1990-07-20',
+    detailAddress: '서울특별시 마포구 상암동 100',
+    affiliation: 'JAKorea | 승인 대기',
+    adminComment: '관리자 승인 대기 로그인 안내 UI 테스트용 계정입니다.',
+    listMetrics: {
+      adminPermissionVariant: 'viewer',
+      managedProgramInProgressCount: 0,
+      managedProgramCount: 0,
+    },
+  },
 ]
 
 // ============================================

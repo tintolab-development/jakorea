@@ -18,6 +18,7 @@ export interface LoginOptions {
 import { validateLogin, getUserByPhone, mockUsers } from '@/data/mock/users'
 import { createTotpMfaState } from '@/data/mock/mfa'
 import { SocialAccountNotLinkedError } from '@/features/auth/errors/social-account-not-linked-error'
+import { AdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
 
 /** 실 API 세션 토큰 접두사 — `validateToken`·auth-store 갱신 시 mock JWT 와 구분 */
 export const CMS_REMOTE_SESSION_PREFIX = 'cms-remote-'
@@ -101,6 +102,10 @@ async function loginWithMock(
 
   if (!user) {
     throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.')
+  }
+
+  if (user.role === 'ADMIN' && user.permissionApprovalStatus === 'PENDING') {
+    throw new AdminLoginApprovalPendingError()
   }
 
   const requiresMfa = user.role === 'ADMIN'
