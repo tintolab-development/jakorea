@@ -15,6 +15,7 @@ const MEMBERS_PATH_PREFIXES = [
   '/api/admin/users',
   '/api/admin/instructor-role-requests',
   '/api/admin/admin-accounts',
+  '/api/admin/admin-approval-requests',
   '/api/admin/admin-permissions',
   '/api/admin/admin-roles',
   '/api/admin/roles',
