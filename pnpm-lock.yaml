@@ -105,6 +105,9 @@ importers:
       '@jakorea/identity-verification':
         specifier: workspace:*
         version: link:../../packages/identity-verification
+      '@jakorea/social-auth':
+        specifier: workspace:*
+        version: link:../../packages/social-auth
       '@jakorea/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -389,6 +392,18 @@ importers:
         version: 7.2.4(@types/node@24.10.1)(jiti@2.7.0)(yaml@2.9.0)
 
   packages/identity-verification:
+    devDependencies:
+      '@types/react':
+        specifier: ^19.2.5
+        version: 19.2.7
+      react:
+        specifier: ^19.2.0
+        version: 19.2.0
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+
+  packages/social-auth:
     devDependencies:
       '@types/react':
         specifier: ^19.2.5
