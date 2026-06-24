@@ -1,7 +1,11 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DeliveryStatusBadge } from '@/shared/components/delivery-status-badge'
 import { UjatInstitutionScheduleConfirmStatusBadge } from './status-badge'
-import { ClassTimeTable, PipeSeparatedValues } from '../shared/institution-detail-shared'
+import {
+  ClassTimeTable,
+  PipeSeparatedValues,
+  renderCriminalRecordCheckRequest,
+} from '../shared/institution-detail-shared'
 import { UjatInstitutionTeacherInfoValue } from '../detail/detail-display'
 import type { UjatScheduleConfirmConfirmedDetail } from './confirmed-detail-types'
 import './confirmed-detail-view.css'
@@ -192,7 +196,7 @@ export function UjatScheduleConfirmConfirmedDetailView({
             <DetailInfoForm.Field
               label="성범죄 경력 조회서 요청"
               fullRow
-              view={guidanceNotes.sexOffenderCheck}
+              view={renderCriminalRecordCheckRequest(guidanceNotes.sexOffenderCheck)}
             />
           </DetailInfoForm.Row>
         </DetailInfoForm>

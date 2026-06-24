@@ -9,6 +9,7 @@ import {
   from24h,
   parseNum,
 } from '@/shared/components/date-time-picker-modal'
+import type { CmsControlSize } from '@/shared/ui/cms-control-size'
 import '@/shared/ui/cms-datepicker.css'
 import './paragraph-time-picker.css'
 
@@ -32,6 +33,8 @@ export interface ParagraphTimePickerProps {
   className?: string
   style?: CSSProperties
   width?: number | string
+  /** large 44px / medium 40px / small 32px */
+  inputSize?: CmsControlSize
   endTimeAlwaysOn?: boolean
   zIndex?: number
   showEndTimeToggle?: boolean
@@ -50,6 +53,7 @@ export function ParagraphTimePicker({
   className,
   style,
   width,
+  inputSize = 'medium',
   endTimeAlwaysOn = false,
   zIndex,
   showEndTimeToggle = true,
@@ -187,7 +191,7 @@ export function ParagraphTimePicker({
         ref={rootRef}
         className={cn(
           'cms-datepicker',
-          'cms-datepicker--medium',
+          `cms-datepicker--${inputSize}`,
           hasExplicitWidth && 'cms-datepicker--explicit-width',
           disabled && 'cms-datepicker--disabled',
           className
