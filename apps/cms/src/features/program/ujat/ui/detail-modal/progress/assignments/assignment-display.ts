@@ -105,6 +105,9 @@ function remarkForReport(
   if (report.status === 'revised' && report.submittedDateLabel) {
     return `${reportLabel} 수정 제출 (${report.submittedDateLabel})`
   }
+  if (report.feedbackDeliveredDateLabel) {
+    return `피드백 전달 완료 (${report.feedbackDeliveredDateLabel})`
+  }
   return null
 }
 
@@ -130,7 +133,7 @@ export function isAssignmentLogViewEnabled(log: UjatAssignmentReportState): bool
 export function filterVisibleAssignmentVolunteers(
   volunteers: UjatAssignmentVolunteerRow[]
 ): UjatAssignmentVolunteerRow[] {
-  return volunteers.filter(v => !v.isDropout || v.plan !== undefined)
+  return volunteers.filter(v => !v.isDropout || v.hasProgressHistory === true)
 }
 
 export function cloneAssignmentVolunteerRows(

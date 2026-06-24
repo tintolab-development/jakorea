@@ -5,6 +5,7 @@ import type {
   UjatAssignmentSessionGroup,
   UjatAssignmentVolunteerRow,
 } from '@/features/program/ujat/ui/detail-modal/progress/assignments/types'
+import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import { formatAssignmentDateLabel } from '@/features/program/ujat/ui/detail-modal/progress/assignments/assignment-display'
 import { cloneAssignmentVolunteerRows } from '@/features/program/ujat/ui/detail-modal/progress/assignments/assignment-display'
 
@@ -20,6 +21,7 @@ type VolunteerSeed = {
   plan: ReportSeed
   log: ReportSeed
   isDropout?: boolean
+  hasProgressHistory?: boolean
 }
 
 function buildVolunteerRow(
@@ -35,6 +37,7 @@ function buildVolunteerRow(
     plan: { ...seed.plan },
     log: { ...seed.log },
     isDropout: seed.isDropout ?? false,
+    hasProgressHistory: seed.hasProgressHistory,
   }
 }
 
@@ -84,26 +87,31 @@ const logRevised = (date: string): ReportSeed => ({
   status: 'revised',
   submittedDateLabel: date,
 })
+const feedbackDelivered = (date: string): ReportSeed => ({
+  status: 'submitted',
+  feedbackDeliveredDateLabel: date,
+})
 
 const GUIL_INST = '구일초등학교'
 
 /** 스크린샷 기준 서울 구일초 24건 */
 const SEOUL_GUIL_ASSIGNMENT_SEEDS: VolunteerSeed[] = [
+  /** 제출 현황 필터 전체 상태 확인용 대표 row */
   { name: '김지윤', institutionName: GUIL_INST, assignedClass: '2학년 1반', plan: submitted(), log: submitted() },
-  { name: '이서연', institutionName: GUIL_INST, assignedClass: '2학년 2반', plan: submitted(), log: submitted() },
-  { name: '박민준', institutionName: GUIL_INST, assignedClass: '2학년 3반', plan: submitted(), log: submitted() },
-  { name: '최유진', institutionName: GUIL_INST, assignedClass: '2학년 4반', plan: submitted(), log: submitted() },
-  { name: '정하은', institutionName: GUIL_INST, assignedClass: '2학년 5반', plan: submitted(), log: submitted() },
-  { name: '강민지', institutionName: GUIL_INST, assignedClass: '2학년 6반', plan: submitted(), log: submitted() },
-  { name: '윤서준', institutionName: GUIL_INST, assignedClass: '2학년 7반', plan: submitted(), log: submitted() },
+  { name: '이서연', institutionName: GUIL_INST, assignedClass: '2학년 2반', plan: notSubmitted(), log: submitted() },
+  { name: '박민준', institutionName: GUIL_INST, assignedClass: '2학년 3반', plan: submitted(), log: notSubmitted() },
+  { name: '최유진', institutionName: GUIL_INST, assignedClass: '2학년 4반', plan: notSubmitted(), log: notSubmitted() },
+  { name: '정하은', institutionName: GUIL_INST, assignedClass: '2학년 5반', plan: planLate('26. 01. 11'), log: submitted() },
+  { name: '강민지', institutionName: GUIL_INST, assignedClass: '2학년 6반', plan: submitted(), log: logLate('26. 01. 11') },
+  { name: '윤서준', institutionName: GUIL_INST, assignedClass: '2학년 7반', plan: planLate('26. 01. 11'), log: logLate('26. 01. 11') },
   { name: '임도윤', institutionName: GUIL_INST, assignedClass: '3학년 1반', plan: submitted(), log: submitted() },
   { name: '한소율', institutionName: GUIL_INST, assignedClass: '3학년 2반', plan: submitted(), log: submitted() },
-  { name: '오지후', institutionName: GUIL_INST, assignedClass: '3학년 3반', plan: planLate('26. 01. 11'), log: submitted() },
-  { name: '서예린', institutionName: GUIL_INST, assignedClass: '3학년 4반', plan: submitted(), log: logLate('26. 01. 11') },
-  { name: '신우진', institutionName: GUIL_INST, assignedClass: '3학년 5반', plan: planLate('26. 01. 11'), log: logLate('26. 01. 11') },
-  { name: '권나연', institutionName: GUIL_INST, assignedClass: '3학년 6반', plan: notSubmitted(), log: submitted() },
-  { name: '황수진', institutionName: GUIL_INST, assignedClass: '5학년 2반', plan: submitted(), log: notSubmitted() },
-  { name: '조현우', institutionName: GUIL_INST, assignedClass: '5학년 3반', plan: notSubmitted(), log: notSubmitted() },
+  { name: '오지후', institutionName: GUIL_INST, assignedClass: '3학년 3반', plan: feedbackDelivered('26. 01. 11'), log: submitted() },
+  { name: '서예린', institutionName: GUIL_INST, assignedClass: '3학년 4반', plan: submitted(), log: submitted() },
+  { name: '신우진', institutionName: GUIL_INST, assignedClass: '3학년 5반', plan: submitted(), log: submitted() },
+  { name: '권나연', institutionName: GUIL_INST, assignedClass: '3학년 6반', plan: submitted(), log: submitted() },
+  { name: '황수진', institutionName: GUIL_INST, assignedClass: '5학년 2반', plan: submitted(), log: submitted() },
+  { name: '조현우', institutionName: GUIL_INST, assignedClass: '5학년 3반', plan: submitted(), log: submitted() },
   { name: '배서윤', institutionName: GUIL_INST, assignedClass: '5학년 4반', plan: planRevised('26. 01. 11'), log: submitted() },
   { name: '허유진', institutionName: GUIL_INST, assignedClass: '2학년 5반', plan: submitted(), log: logRevised('26. 01. 11') },
   { name: '노승민', institutionName: GUIL_INST, assignedClass: '4학년 1반', plan: submitted(), log: submitted() },
@@ -119,6 +127,7 @@ const SEOUL_GUIL_ASSIGNMENT_SEEDS: VolunteerSeed[] = [
     plan: submitted(),
     log: submitted(),
     isDropout: true,
+    hasProgressHistory: true,
   },
 ]
 
@@ -502,11 +511,14 @@ export function getUjatEducationProgressAssignmentSessions(
 }
 
 export function getUjatEducationProgressAssignmentDateOptions(
-  half: EducationProgressHalfKey,
-  regionKey: UjatInstitutionApplicationRegionKey
+  half: EducationProgressHalfKey
 ): Array<{ label: string; value: string }> {
-  const sessions = getUjatEducationProgressAssignmentSessions(half, regionKey)
-  return sessions.map(s => ({ label: s.dateLabel, value: s.isoDate }))
+  return UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES.filter(entry => entry.semester === half).map(
+    entry => ({
+      label: formatAssignmentDateLabel(entry.isoDate),
+      value: entry.isoDate,
+    })
+  )
 }
 
 export function getUjatEducationProgressAssignmentInstitutionOptions(
@@ -517,6 +529,7 @@ export function getUjatEducationProgressAssignmentInstitutionOptions(
   const names = new Set<string>()
   for (const session of sessions) {
     for (const row of session.volunteers) {
+      if (row.isDropout && row.hasProgressHistory !== true) continue
       names.add(row.institutionName)
     }
   }
