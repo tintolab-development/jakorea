@@ -8,6 +8,8 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 
+const MANAGER_SCORE_MAX = 5
+
 export type UjatVolunteerInterviewEvaluationModalProps = {
   open: boolean
   applicant: UjatVolunteerApplicantRow
@@ -63,7 +65,9 @@ export function UjatVolunteerInterviewEvaluationModal({
             edit={
               <InputNumber
                 min={0}
-                max={100}
+                max={MANAGER_SCORE_MAX}
+                precision={0}
+                controls={false}
                 value={managerAScore}
                 onChange={value => setManagerAScore(typeof value === 'number' ? value : null)}
                 placeholder="점수 입력"
@@ -77,7 +81,9 @@ export function UjatVolunteerInterviewEvaluationModal({
             edit={
               <InputNumber
                 min={0}
-                max={100}
+                max={MANAGER_SCORE_MAX}
+                precision={0}
+                controls={false}
                 value={managerBScore}
                 onChange={value => setManagerBScore(typeof value === 'number' ? value : null)}
                 placeholder="점수 입력"

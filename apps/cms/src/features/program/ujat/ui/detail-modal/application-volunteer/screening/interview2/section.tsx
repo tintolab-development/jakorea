@@ -8,6 +8,8 @@ import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/uja
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { buildUjatVolunteerInterview2FilterRows } from './filter-fields'
 import { useUjatVolunteerInterview2 } from './use-list'
+import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import {
   useApplicantDetail,
   type ApplicantDetailMetaChangeHandler,
@@ -87,8 +89,20 @@ export function Interview2Section({
   })
 
   const filterFields = useMemo(
-    () => buildUjatVolunteerInterview2FilterRows(filterRowsSource)[0] ?? [],
-    [filterRowsSource]
+    () =>
+      buildUjatVolunteerInterview2FilterRows(filterRowsSource, {
+        includeInterviewDate: viewMode === 'list',
+      })[0] ?? [],
+    [filterRowsSource, viewMode]
+  )
+
+  const activityWithdrawScheduleOptions = useMemo(
+    () =>
+      UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES.filter(entry => entry.semester === half).map(entry => ({
+        value: entry.isoDate,
+        label: entry.title,
+      })),
+    [half]
   )
 
   useLayoutEffect(() => {
@@ -157,17 +171,14 @@ export function Interview2Section({
       />
     ) : null
 
-  const withdrawConfirmModal = withdrawTarget ? (
-    <ConfirmModal
-      open
-      title="활동 포기"
-      content={`${withdrawTarget.name} 봉사자를 활동 포기 처리하시겠습니까?`}
-      confirmText="활동 포기"
-      danger
-      onConfirm={confirmWithdrawActivity}
+  const withdrawConfirmModal = (
+    <ActivityWithdrawScheduleModal
+      open={withdrawTarget != null}
+      scheduleOptions={activityWithdrawScheduleOptions}
       onCancel={cancelWithdrawActivity}
+      onConfirm={confirmWithdrawActivity}
     />
-  ) : null
+  )
 
   const bulkPassModal = (
     <UjatVolunteerInterview2BulkPassModal
@@ -256,7 +267,7 @@ export function Interview2Section({
                 icon={<CalendarOutlined />}
                 onClick={handleViewCalendar}
               >
-                캘린더 뷰로 보기
+                캘린더뷰 보기
               </CmsButton>
             ) : (
               <CmsButton

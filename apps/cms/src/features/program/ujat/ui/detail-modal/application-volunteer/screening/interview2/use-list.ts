@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import dayjs, { type Dayjs } from 'dayjs'
 import {
   getUjatVolunteerInterview2Applicants,
   patchUjatVolunteerInterviewEvaluation,
   patchUjatVolunteerSecondInterviewScreeningStatus,
-  sortUjatVolunteerInterview2Applicants,
   type UjatVolunteerApplicantRow,
   type UjatVolunteerInterviewEvaluationPayload,
 } from '@/data/mock/ujat-volunteer-applicants-mock'
@@ -33,18 +33,19 @@ import {
   guardUjatVolunteerInterview2Pass,
   guardUjatVolunteerWithdrawActivity,
 } from '../applicant/guard-actions'
-
-function matchesScoreFilter(score: number | null | undefined, filter: string): boolean {
-  if (filter === UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL) return true
-  if (filter === 'empty') return score == null
-  if (filter === 'gte90') return score != null && score >= 90
-  if (filter === 'gte80') return score != null && score >= 80
-  return true
-}
+import type { ActivityWithdrawScheduleModalPayload } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import {
+  computeUjatInterviewTotalScore,
+  matchesUjatInterview2ScoreFilter,
+  resolveUjatEffectiveSecondInterviewStatus,
+  sortUjatVolunteerInterview2Rows,
+  UJAT_INTERVIEW2_STATUS_POLL_MS,
+} from './display'
 
 function filterInterview2Applicants(
   rows: UjatVolunteerApplicantRow[],
-  filters: UjatVolunteerInterview2Filters
+  filters: UjatVolunteerInterview2Filters,
+  now: Dayjs
 ): UjatVolunteerApplicantRow[] {
   const nameQ = filters.volunteerName.trim().toLowerCase()
   return rows.filter(row => {
@@ -67,10 +68,18 @@ function filterInterview2Applicants(
     ) {
       return false
     }
-    if (!matchesScoreFilter(row.totalScore, filters.totalScore)) return false
+    if (
+      !matchesUjatInterview2ScoreFilter(
+        computeUjatInterviewTotalScore(row),
+        filters.totalScore,
+        UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL
+      )
+    ) {
+      return false
+    }
     if (
       filters.secondInterviewScreeningStatus !== UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL &&
-      row.secondInterviewScreeningStatus !== filters.secondInterviewScreeningStatus
+      resolveUjatEffectiveSecondInterviewStatus(row, now) !== filters.secondInterviewScreeningStatus
     ) {
       return false
     }
@@ -105,6 +114,7 @@ export function useUjatVolunteerInterview2({
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
   const [evaluationTargetId, setEvaluationTargetId] = useState<string | null>(null)
   const [bulkPassModalOpen, setBulkPassModalOpen] = useState(false)
+  const [now, setNow] = useState(() => dayjs())
 
   useEffect(() => {
     setList(getUjatVolunteerInterview2Applicants(programId, half))
@@ -115,7 +125,13 @@ export function useUjatVolunteerInterview2({
     setWithdrawTargetId(null)
     setEvaluationTargetId(null)
     setBulkPassModalOpen(false)
+    setNow(dayjs())
   }, [programId, half])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(dayjs()), UJAT_INTERVIEW2_STATUS_POLL_MS)
+    return () => window.clearInterval(timer)
+  }, [])
 
   const updateRow = useCallback((id: string, patch: Partial<UjatVolunteerApplicantRow>) => {
     setList(prev => prev.map(row => (row.id === id ? { ...row, ...patch } : row)))
@@ -130,9 +146,9 @@ export function useUjatVolunteerInterview2({
   }, [pendingFilters])
 
   const filteredSorted = useMemo(() => {
-    const filtered = filterInterview2Applicants(list, appliedFilters)
-    return sortUjatVolunteerInterview2Applicants(filtered)
-  }, [appliedFilters, list])
+    const filtered = filterInterview2Applicants(list, appliedFilters, now)
+    return sortUjatVolunteerInterview2Rows(filtered)
+  }, [appliedFilters, list, now])
 
   const calendarEvents = useMemo(
     () => mapUjatVolunteerAssignedInterviewToCalendarEvents(filteredSorted),
@@ -230,7 +246,7 @@ export function useUjatVolunteerInterview2({
     setWithdrawTargetId(null)
   }, [])
 
-  const confirmWithdrawActivity = useCallback(() => {
+  const confirmWithdrawActivity = useCallback((_payload: ActivityWithdrawScheduleModalPayload) => {
     if (!withdrawTargetId) return
     const row = list.find(item => item.id === withdrawTargetId)
     if (!row) {
@@ -280,6 +296,14 @@ export function useUjatVolunteerInterview2({
   const columns = useUjatVolunteerInterview2Columns()
 
   const handleViewCalendar = useCallback(() => {
+    setPendingFilters(prev => ({
+      ...prev,
+      interviewDate: UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL,
+    }))
+    setAppliedFilters(prev => ({
+      ...prev,
+      interviewDate: UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL,
+    }))
     setViewMode('calendar')
   }, [])
 

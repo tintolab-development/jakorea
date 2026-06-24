@@ -3,10 +3,11 @@ import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
-import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { buildUjatVolunteerDocPassedFilterRows } from './filter-fields'
+import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import { useUjatVolunteerDocPassed } from './use-list'
 import {
@@ -79,6 +80,15 @@ export function DocPassedSection({
     showDocumentScreeningConfirm: noopShowDocumentScreeningConfirm,
   })
 
+  const activityWithdrawScheduleOptions = useMemo(
+    () =>
+      UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES.filter(entry => entry.semester === half).map(entry => ({
+        value: entry.isoDate,
+        label: entry.title,
+      })),
+    [half]
+  )
+
   const handleDetailAssignInterview = useCallback(() => {
     if (!selectedApplicant) return
     handleAssignInterview(selectedApplicant)
@@ -101,17 +111,14 @@ export function DocPassedSection({
     [openApplicantDetail]
   )
 
-  const withdrawConfirmModal = withdrawTarget ? (
-    <ConfirmModal
-      open
-      title="활동 포기"
-      content={`${withdrawTarget.name} 봉사자를 활동 포기 처리하시겠습니까?`}
-      confirmText="활동 포기"
-      danger
-      onConfirm={confirmWithdrawActivity}
+  const withdrawConfirmModal = (
+    <ActivityWithdrawScheduleModal
+      open={withdrawTarget != null}
+      scheduleOptions={activityWithdrawScheduleOptions}
       onCancel={cancelWithdrawActivity}
+      onConfirm={confirmWithdrawActivity}
     />
-  ) : null
+  )
 
   const assignPickFlow = assignFlow?.type === 'pick' ? assignFlow : null
   const assignCompleteFlow = assignFlow?.type === 'complete' ? assignFlow : null

@@ -1,7 +1,7 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import {
   SECOND_INTERVIEW_SCREENING_STATUS_LABELS,
-  SECOND_INTERVIEW_SCREENING_STATUS_ORDER,
+  VOLUNTEER_ACTIVITY_WITHDRAWN_LABEL,
 } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
 import {
   type UjatSecondInterviewScreeningStatus,
@@ -13,15 +13,32 @@ const ALL = 'ALL'
 
 const scoreOptions = [
   { label: '전체', value: ALL },
-  { label: '90점 이상', value: 'gte90' },
-  { label: '80점 이상', value: 'gte80' },
-  { label: '미입력', value: 'empty' },
+  ...Array.from({ length: 10 }, (_, index) => {
+    const score = String(index + 1)
+    return { label: score, value: score }
+  }),
+  { label: '-', value: 'empty' },
+]
+
+const INTERVIEW2_STATUS_FILTER_ORDER: Array<UjatSecondInterviewScreeningStatus | 'withdrawn'> = [
+  'waiting',
+  'completed',
+  'pass',
+  'reserve1',
+  'reserve2',
+  'reserve3',
+  'reserve4',
+  'fail',
+  'withdrawn',
 ]
 
 const screeningStatusOptions = [
   { label: '전체', value: ALL },
-  ...SECOND_INTERVIEW_SCREENING_STATUS_ORDER.map((value: UjatSecondInterviewScreeningStatus) => ({
-    label: SECOND_INTERVIEW_SCREENING_STATUS_LABELS[value],
+  ...INTERVIEW2_STATUS_FILTER_ORDER.map(value => ({
+    label:
+      value === 'withdrawn'
+        ? VOLUNTEER_ACTIVITY_WITHDRAWN_LABEL
+        : SECOND_INTERVIEW_SCREENING_STATUS_LABELS[value],
     value,
   })),
 ]
@@ -63,8 +80,10 @@ export function buildUjatVolunteerInterview2TimeOptions(rows: UjatVolunteerAppli
 }
 
 export function buildUjatVolunteerInterview2FilterRows(
-  rows: UjatVolunteerApplicantRow[]
+  rows: UjatVolunteerApplicantRow[],
+  options: { includeInterviewDate?: boolean } = {}
 ): FilterFieldConfig[][] {
+  const includeInterviewDate = options.includeInterviewDate ?? true
   const dateOptions = buildUjatVolunteerInterview2DateOptions(rows)
   const timeOptions = buildUjatVolunteerInterview2TimeOptions(rows)
   const regionOptions = [
@@ -72,49 +91,53 @@ export function buildUjatVolunteerInterview2FilterRows(
     ...getUjatVolunteerPreferredRegionLabels().map(label => ({ label, value: label })),
   ]
 
-  return [
-    [
-      {
-        key: 'volunteerName',
-        type: 'search',
-        label: '신청 봉사자명',
-        placeholder: '봉사자명을 입력하세요',
-      },
-      {
-        key: 'preferredRegion',
-        type: 'select',
-        label: '희망 교육 활동 지역',
-        placeholder: '전체',
-        options: regionOptions,
-      },
-      {
+  const fields: FilterFieldConfig[] = [
+    {
+      key: 'volunteerName',
+      type: 'search',
+      label: '신청 봉사자명',
+      placeholder: '봉사자명을 입력하세요',
+    },
+    {
+      key: 'preferredRegion',
+      type: 'select',
+      label: '희망 교육 활동 지역',
+      placeholder: '전체',
+      options: regionOptions,
+    },
+    ...(includeInterviewDate
+      ? [
+          {
         key: 'interviewDate',
         type: 'select',
         label: '면접일',
         placeholder: '전체',
         options: dateOptions,
-      },
-      {
-        key: 'interviewTime',
-        type: 'select',
-        label: '면접 시간',
-        placeholder: '전체',
-        options: timeOptions,
-      },
-      {
-        key: 'totalScore',
-        type: 'select',
-        label: '점수 총합',
-        placeholder: '전체',
-        options: scoreOptions,
-      },
-      {
-        key: 'secondInterviewScreeningStatus',
-        type: 'select',
-        label: '2차 면접 심사 현황',
-        placeholder: '전체',
-        options: screeningStatusOptions,
-      },
-    ],
+          } satisfies FilterFieldConfig,
+        ]
+      : []),
+    {
+      key: 'interviewTime',
+      type: 'select',
+      label: '면접 시간',
+      placeholder: '전체',
+      options: timeOptions,
+    },
+    {
+      key: 'totalScore',
+      type: 'select',
+      label: '점수 총합',
+      placeholder: '전체',
+      options: scoreOptions,
+    },
+    {
+      key: 'secondInterviewScreeningStatus',
+      type: 'select',
+      label: '2차 면접 심사 현황',
+      placeholder: '전체',
+      options: screeningStatusOptions,
+    },
   ]
+
+  return [fields]
 }

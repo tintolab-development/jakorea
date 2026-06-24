@@ -39,6 +39,9 @@ export function CalendarListItemContentVolunteerInterview2({
           <span className="ujat-volunteer-interview2-list-item__sep" aria-hidden>
             |
           </span>
+          <span className="ujat-volunteer-interview2-list-item__slot">{row.slotLabel}</span>
+        </div>
+        <div className="ujat-volunteer-interview2-list-item__meta">
           <span
             className={[
               'second-interview-screening-status-badge',
@@ -47,9 +50,6 @@ export function CalendarListItemContentVolunteerInterview2({
           >
             {resolveSecondInterviewScreeningListBadgeLabel(row.screeningStatus)}
           </span>
-        </div>
-        <div className="ujat-volunteer-interview2-list-item__meta">
-          <span className="ujat-volunteer-interview2-list-item__meta-slot">{row.slotLabel}</span>
           <span className="ujat-volunteer-interview2-list-item__sep" aria-hidden>
             |
           </span>
@@ -59,7 +59,7 @@ export function CalendarListItemContentVolunteerInterview2({
         </div>
       </div>
       <div
-        className="calendar-list-item__checkbox"
+        className="calendar-list-item__checkbox ujat-volunteer-interview2-list-item__checkbox"
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >

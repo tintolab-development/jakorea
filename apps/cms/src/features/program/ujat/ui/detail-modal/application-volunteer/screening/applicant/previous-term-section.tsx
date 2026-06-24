@@ -16,12 +16,11 @@ export function PreviousTermSection({
   applicant,
 }: PreviousTermSectionProps) {
   const activity = applicant.previousUjatActivity
-  if (applicant.applicationType !== 'ujat-graduate' || !activity) return null
+  if (!applicant.hasEducationExperience) return null
 
-  const termYearDisplay = withProgramDetailTdDivider([
-    `${activity.term}기`,
-    `${activity.year}년도`,
-  ])
+  const termYearDisplay = activity
+    ? withProgramDetailTdDivider([`${activity.term}기`, `${activity.year}년도`])
+    : '-'
 
   return (
     <section className="previous-term-section">
@@ -36,18 +35,22 @@ export function PreviousTermSection({
             label="수료증 첨부"
             readOnlyDisplay
             view={
-              <button
-                type="button"
-                className="previous-term-section__file"
-                onClick={() =>
-                  downloadFile(activity.certificateFileName, activity.certificateFileUrl)
-                }
-              >
-                <NoticeAttachmentDownloadIcon className="previous-term-section__file-icon" />
-                <span className="previous-term-section__file-name">
-                  {activity.certificateFileName}
-                </span>
-              </button>
+              activity ? (
+                <button
+                  type="button"
+                  className="previous-term-section__file"
+                  onClick={() =>
+                    downloadFile(activity.certificateFileName, activity.certificateFileUrl)
+                  }
+                >
+                  <NoticeAttachmentDownloadIcon className="previous-term-section__file-icon" />
+                  <span className="previous-term-section__file-name">
+                    {activity.certificateFileName}
+                  </span>
+                </button>
+              ) : (
+                '-'
+              )
             }
           />
         </DetailInfoForm.Row>

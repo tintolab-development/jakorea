@@ -1,10 +1,11 @@
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
-import { SECOND_INTERVIEW_SCREENING_STATUS_LABELS } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
+import { resolveSecondInterviewScreeningPopoverLabel } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-ui'
 import type { UjatVolunteerInterviewCalendarEvent } from './interview-calendar-events'
 import {
   parseUjatInterviewDateLabel,
   parseUjatInterviewSlotRange,
 } from './interview-calendar-events'
+import { resolveUjatEffectiveSecondInterviewStatus } from '../interview2/display'
 
 export function mapUjatVolunteerAssignedInterviewToCalendarEvents(
   rows: UjatVolunteerApplicantRow[]
@@ -22,8 +23,9 @@ export function mapUjatVolunteerAssignedInterviewToCalendarEvents(
     const range = parseUjatInterviewSlotRange(parsedDate, slot)
     if (!range) continue
 
-    const status = row.secondInterviewScreeningStatus
-    const statusLabel = status ? SECOND_INTERVIEW_SCREENING_STATUS_LABELS[status] : ''
+    const statusLabel = resolveSecondInterviewScreeningPopoverLabel(
+      resolveUjatEffectiveSecondInterviewStatus(row)
+    )
 
     events.push({
       id: `${row.id}|${dateLabel}|${slot}`,

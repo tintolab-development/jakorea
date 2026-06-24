@@ -2,7 +2,6 @@ import type { ReactNode } from 'react'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import type { SecondInterviewScreeningEffectiveStatus } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-ui'
 import {
-  formatSecondInterviewScoreLabel,
   resolveSecondInterviewScreeningPopoverLabel,
   resolveSecondInterviewScreeningTone,
 } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-ui'
@@ -12,13 +11,15 @@ import {
   type CalendarItem,
 } from '@/shared/components/calendar'
 import type { UjatVolunteerInterviewCalendarEvent } from '../shared/interview-calendar-events'
+import {
+  resolveUjatEffectiveSecondInterviewStatus,
+} from './display'
 import './preview-tooltip.css'
 
 function readScreeningStatus(
   event: UjatVolunteerInterviewCalendarEvent
 ): SecondInterviewScreeningEffectiveStatus {
-  if (event.originalItem.interviewAssignmentStatus === 'withdrawn') return 'withdrawn'
-  return event.originalItem.secondInterviewScreeningStatus ?? 'waiting'
+  return resolveUjatEffectiveSecondInterviewStatus(event.originalItem)
 }
 
 function UjatVolunteerInterview2CalendarPopoverContent({
@@ -40,25 +41,17 @@ function UjatVolunteerInterview2CalendarPopoverContent({
               <span className="ujat-volunteer-interview2-calendar-popover__sep" aria-hidden>
                 |
               </span>
-              <span
-                className={[
-                  'second-interview-screening-popover-status',
-                  `second-interview-screening-tone--${tone}`,
-                ].join(' ')}
-              >
-                {resolveSecondInterviewScreeningPopoverLabel(status)}
-              </span>
-            </div>
-            <div className="ujat-volunteer-interview2-calendar-popover__meta">
               <span className="ujat-volunteer-interview2-calendar-popover__meta-slot">
                 {ev.slotLabel}
               </span>
-              <span className="ujat-volunteer-interview2-calendar-popover__sep" aria-hidden>
-                |
-              </span>
-              <span className="ujat-volunteer-interview2-calendar-popover__meta-score">
-                {formatSecondInterviewScoreLabel(ev.originalItem.totalScore)}
-              </span>
+            </div>
+            <div
+              className={[
+                'ujat-volunteer-interview2-calendar-popover__status',
+                `second-interview-screening-tone--${tone}`,
+              ].join(' ')}
+            >
+              {resolveSecondInterviewScreeningPopoverLabel(status)}
             </div>
           </div>
         )
