@@ -1,7 +1,15 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
-import { SecondInterviewScreeningStatusText } from '@/features/program/shared/ui/volunteer-screening/second-interview-screening-status-text'
+import {
+  resolveSecondInterviewScreeningPopoverLabel,
+  resolveSecondInterviewScreeningTone,
+} from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-ui'
+import '@/features/program/shared/ui/volunteer-screening/second-interview-screening-tone.css'
+import {
+  computeUjatInterviewTotalScore,
+  resolveUjatEffectiveSecondInterviewStatus,
+} from './display'
 
 const CENTER_CELL_CLASS = 'ujat-volunteer-interview2__center-cell'
 const NOWRAP_CELL_CLASS = 'ujat-volunteer-doc-screening__nowrap-cell'
@@ -63,17 +71,19 @@ export function useUjatVolunteerInterview2Columns() {
         render: (_value, record) => record.assignedInterviewTime ?? '—',
       },
       {
-        title: '점수 종합',
+        title: '점수 총합',
         key: 'totalScore',
         width: 100,
         align: 'center',
         className: CENTER_CELL_CLASS,
-        render: (_value, record) =>
-          record.totalScore != null ? (
-            <span className={SCORE_VALUE_CLASS}>{record.totalScore}</span>
+        render: (_value, record) => {
+          const totalScore = computeUjatInterviewTotalScore(record)
+          return totalScore != null ? (
+            <span className={SCORE_VALUE_CLASS}>{totalScore}</span>
           ) : (
             '-'
-          ),
+          )
+        },
       },
       {
         title: '2차 면접 심사 현황',
@@ -81,12 +91,20 @@ export function useUjatVolunteerInterview2Columns() {
         width: 140,
         align: 'center',
         className: CENTER_CELL_CLASS,
-        render: (_value, record) =>
-          record.secondInterviewScreeningStatus ? (
-            <SecondInterviewScreeningStatusText status={record.secondInterviewScreeningStatus} />
-          ) : (
-            '—'
-          ),
+        render: (_value, record) => {
+          const status = resolveUjatEffectiveSecondInterviewStatus(record)
+          const tone = resolveSecondInterviewScreeningTone(status)
+          return (
+            <span
+              className={[
+                'second-interview-screening-status-text',
+                `second-interview-screening-tone--${tone}`,
+              ].join(' ')}
+            >
+              {resolveSecondInterviewScreeningPopoverLabel(status)}
+            </span>
+          )
+        },
       },
     ],
     []

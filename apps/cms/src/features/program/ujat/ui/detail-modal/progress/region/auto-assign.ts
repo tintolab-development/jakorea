@@ -13,7 +13,7 @@ function pairKey(volunteerIdA: string, volunteerIdB: string): string {
 }
 
 function countAssignedDays(row: RegionAssignmentVolunteerRow): number {
-  return row.cells.filter(cell => cell.kind === 'assigned').length
+  return row.cells.filter(cell => cell.kind === 'assigned' && !cell.isInvalidAssignment).length
 }
 
 function recalculateTotalAssignedDays(
@@ -30,7 +30,11 @@ function getVolunteerIdsOnClass(
   return rows
     .filter(row => {
       const cell = row.cells[columnIndex]
-      return cell?.kind === 'assigned' && cell.classLabel === classLabel
+      return (
+        cell?.kind === 'assigned' &&
+        !cell.isInvalidAssignment &&
+        cell.classLabel === classLabel
+      )
     })
     .map(row => row.id)
 }
@@ -67,7 +71,7 @@ function isEligibleForColumn(
     return false
   }
   const cell = row.cells[columnIndex]
-  return cell?.kind !== 'assigned'
+  return cell?.kind !== 'assigned' || cell.isInvalidAssignment === true
 }
 
 function sortByAssignedDays(
@@ -137,6 +141,47 @@ function assignVolunteerToClass(
     nextCells[columnIndex] = { kind: 'assigned', classLabel }
     return recalculateTotalAssignedDays({ ...row, cells: nextCells })
   })
+}
+
+function markSoloAssignments(
+  rows: RegionAssignmentVolunteerRow[],
+  columns: RegionAssignmentColumn[]
+): RegionAssignmentVolunteerRow[] {
+  let nextRows = rows
+
+  columns.forEach((column, columnIndex) => {
+    for (const slot of column.classSlots) {
+      const assignedIds = getVolunteerIdsOnClass(nextRows, columnIndex, slot.classLabel)
+      const isSolo = assignedIds.length === 1
+
+      nextRows = nextRows.map(row => {
+        const cell = row.cells[columnIndex]
+        if (
+          cell?.kind !== 'assigned' ||
+          cell.isInvalidAssignment ||
+          cell.classLabel !== slot.classLabel
+        ) {
+          return row
+        }
+
+        const nextCells = [...row.cells]
+        nextCells[columnIndex] = { ...cell, isSolo }
+        return { ...row, cells: nextCells }
+      })
+    }
+  })
+
+  return nextRows.map(recalculateTotalAssignedDays)
+}
+
+function pickAnyEligibleVolunteer(
+  rows: RegionAssignmentVolunteerRow[],
+  columnIndex: number
+): string | null {
+  return sortByAssignedDays(
+    rows,
+    rows.filter(row => isEligibleForColumn(row, columnIndex)).map(row => row.id)
+  )[0] ?? null
 }
 
 function assignAttendanceManagersForNewDates(
@@ -255,7 +300,13 @@ export function autoAssignRegionEducationDays(
 
       if (needCount === 2) {
         const pair = pickVolunteerPair(rows, columnIndex, usedPairs)
-        if (!pair) continue
+        if (!pair) {
+          const singleId = pickAnyEligibleVolunteer(rows, columnIndex)
+          if (singleId) {
+            rows = assignVolunteerToClass(rows, singleId, columnIndex, slot.classLabel)
+          }
+          continue
+        }
 
         const [firstId, secondId] = pair
         rows = assignVolunteerToClass(rows, firstId, columnIndex, slot.classLabel)
@@ -279,6 +330,7 @@ export function autoAssignRegionEducationDays(
     }
   }
 
+  rows = markSoloAssignments(rows, columns)
   rows = assignAttendanceManagersForNewDates(rows, columns, dateLabelsNeedingManager)
 
   return { ...data, rows }

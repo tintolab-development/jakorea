@@ -25,6 +25,10 @@ import {
   buildUjatVolunteerInterviewMonthCellRows,
   renderUjatVolunteerInterviewMonthEventContent,
 } from '../shared/calendar-month-cells'
+import {
+  computeUjatInterviewTotalScore,
+  resolveUjatEffectiveSecondInterviewStatus,
+} from './display'
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
@@ -43,12 +47,9 @@ function buildInterview2ListRows(
     id: event.originalItem.id,
     eventId: String(event.id),
     volunteerName: event.volunteerName,
-    screeningStatus:
-      event.originalItem.interviewAssignmentStatus === 'withdrawn'
-        ? 'withdrawn'
-        : (event.originalItem.secondInterviewScreeningStatus ?? 'waiting'),
+    screeningStatus: resolveUjatEffectiveSecondInterviewStatus(event.originalItem),
     slotLabel: event.slotLabel,
-    totalScore: event.originalItem.totalScore,
+    totalScore: computeUjatInterviewTotalScore(event.originalItem),
   }))
 }
 

@@ -87,8 +87,8 @@ export function useUjatEducationProgressAssignments(
   )
 
   const educationDateOptions = useMemo(
-    () => getUjatEducationProgressAssignmentDateOptions(half, regionKey),
-    [half, regionKey]
+    () => getUjatEducationProgressAssignmentDateOptions(half),
+    [half]
   )
 
   const institutionOptions = useMemo(

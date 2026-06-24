@@ -63,6 +63,11 @@ function formatSchoolEnrollmentStatus(grade: UjatVolunteerApplicantRow['grade'])
   return '재학 중'
 }
 
+function maskId1365(id: string): string {
+  if (id.length <= 4) return '*'.repeat(id.length)
+  return `${id.slice(0, 4)}***`
+}
+
 export function ApplicantBasicInfo({
   applicant,
   maskSensitive,
@@ -70,6 +75,10 @@ export function ApplicantBasicInfo({
 }: ApplicantBasicInfoProps) {
   const contactDisplay = maskSensitive ? applicant.contact : applicant.contactRaw
   const emailDisplay = maskSensitive ? applicant.email : applicant.emailRaw
+  const id1365Display = maskSensitive ? maskId1365(applicant.id1365) : applicant.id1365
+  const applicationTypeDisplay = formatUjatVolunteerApplicationType(
+    applicant.hasEducationExperience ? 'ujat-graduate' : 'new'
+  )
   const genderBirthDisplay = withProgramDetailTdDivider([
     applicant.gender,
     formatUjatVolunteerBirthDateAndAge(applicant.birthDate, applicant.age),
@@ -141,7 +150,7 @@ export function ApplicantBasicInfo({
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="자택 주소지" readOnlyDisplay view="-" />
-          <DetailInfoForm.Field label="1365 ID" readOnlyDisplay view={applicant.id1365} />
+          <DetailInfoForm.Field label="1365 ID" readOnlyDisplay view={id1365Display} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -167,7 +176,7 @@ export function ApplicantBasicInfo({
           <DetailInfoForm.Field
             label="지원 형태"
             readOnlyDisplay
-            view={formatUjatVolunteerApplicationType(applicant.applicationType)}
+            view={applicationTypeDisplay}
           />
           <DetailInfoForm.Field
             label="지원 경로"

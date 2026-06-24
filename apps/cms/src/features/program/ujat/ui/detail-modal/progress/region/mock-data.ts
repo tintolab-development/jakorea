@@ -50,6 +50,13 @@ function normalizeVolunteerRowCells(
       row.withdrawnFromColumnIndex != null &&
       index >= row.withdrawnFromColumnIndex
     ) {
+      if (cell.kind === 'assigned') {
+        return {
+          ...cell,
+          isAttendanceManager: false,
+          isInvalidAssignment: true,
+        }
+      }
       return empty
     }
     return cell

@@ -258,17 +258,13 @@ export function getProgramTablePageConfig(
       hasActiveFilters: ({ context: ctx, searchParams, columnFilters }) => {
         if (ctx.mode === 'overview') {
           const isScheduled = ctx.view === 'SCHEDULED'
-          const isInProgress = ctx.view === 'IN_PROGRESS'
           const title = searchParams.get('title') || ''
           const lifecycleRaw = searchParams.get('lifecycleStatus') || ''
           const hasLifecycleFilter =
-            !isScheduled &&
-            !isInProgress &&
-            lifecycleRaw !== '' &&
-            isProgramProgressPhaseFilter(lifecycleRaw)
-          const hasOperationPeriod = Boolean(
-            searchParams.get('operationStartDate') && searchParams.get('operationEndDate')
-          )
+            ctx.view === 'ALL' && lifecycleRaw !== '' && isProgramProgressPhaseFilter(lifecycleRaw)
+          const hasOperationPeriod =
+            isScheduled &&
+            Boolean(searchParams.get('operationStartDate') && searchParams.get('operationEndDate'))
           const hasColumnFilter = columnFilters.some(
             f => f.value != null && String(f.value).trim() !== ''
           )
@@ -347,18 +343,21 @@ export function getProgramTablePageConfig(
         'applicationEndDate'
       )
 
-      const filteredData = filterByOperationAndApplicationPeriods(
-        data,
-        operationPeriodRange,
-        applicationPeriodRange
-      )
+      const filteredData =
+        ctx.mode === 'overview'
+          ? filterByOperationAndApplicationPeriods(
+              data,
+              ctx.view === 'SCHEDULED' ? operationPeriodRange : null,
+              null
+            )
+          : filterByOperationAndApplicationPeriods(data, operationPeriodRange, applicationPeriodRange)
 
       if (ctx.mode !== 'overview') {
         return { dataForTable: filteredData, filteredData }
       }
 
-      /** 전체·완료 탭에서만「프로그램 진행 현황」필터 사용 */
-      const applyLifecycleFromUrl = ctx.view !== 'SCHEDULED' && ctx.view !== 'IN_PROGRESS'
+      /** 전체 탭에서만「프로그램 진행 현황」필터 사용 */
+      const applyLifecycleFromUrl = ctx.view === 'ALL'
 
       const title = searchParams.get('title') || ''
       const lifecycleRaw = searchParams.get('lifecycleStatus') || ''

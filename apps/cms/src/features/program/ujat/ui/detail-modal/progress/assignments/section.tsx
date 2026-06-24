@@ -11,7 +11,10 @@ import {
   resolveAssignmentSubmissionStatus,
 } from './assignment-display'
 import { filterAssignmentVolunteersForDisplay } from './use-list'
-import { UjatAssignmentSessionGroupPanel } from './session-group-panel'
+import {
+  UjatAssignmentSessionGroupHeader,
+  UjatAssignmentSessionGroupPanel,
+} from './session-group-panel'
 import { useUjatEducationProgressAssignments } from './use-list'
 import './section.css'
 
@@ -81,6 +84,22 @@ export function UjatEducationProgressAssignmentsSection({
     return rows
   }, [appliedFilters, sessionGroups])
 
+  const firstSessionTitle = useMemo(() => {
+    const [firstSession] = sessionGroups
+    if (!firstSession) return null
+    const firstSessionRows = filterAssignmentVolunteersForDisplay(
+      firstSession.volunteers,
+      appliedFilters
+    )
+
+    return (
+      <UjatAssignmentSessionGroupHeader
+        session={firstSession}
+        totalCount={firstSessionRows.length}
+      />
+    )
+  }, [appliedFilters, sessionGroups])
+
   useEffect(() => {
     resetRegionState()
   }, [activeRegion, half, resetRegionState])
@@ -100,7 +119,7 @@ export function UjatEducationProgressAssignmentsSection({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         showFilter
-        title="과제 제출 관리"
+        title={firstSessionTitle}
         excelExport={{
           columns: UJAT_ASSIGNMENT_EXCEL_COLUMNS,
           data: assignmentExcelRows,
@@ -117,6 +136,7 @@ export function UjatEducationProgressAssignmentsSection({
                 key={session.id}
                 session={session}
                 appliedFilters={appliedFilters}
+                showHeader={session.id !== sessionGroups[0]?.id}
               />
             ))}
           </div>

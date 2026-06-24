@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { ContentModal, CmsButton, CmsInput, CmsSelect, FileSelectField, useCmsAlert } from '@/shared/ui'
+import {
+  ContentModal,
+  CmsButton,
+  CmsInput,
+  CmsSelect,
+  FileSelectField,
+  useCmsAlert,
+} from '@/shared/ui'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import {
   PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS,
@@ -11,7 +18,9 @@ import {
 } from '@/features/program/shared/lib/attendance-correction-types'
 import './attendance-correction-modal.css'
 
-function toStatus(attendance: ProgramAttendanceCorrectionInitialValue): ProgramAttendanceCorrectionStatus {
+function toStatus(
+  attendance: ProgramAttendanceCorrectionInitialValue
+): ProgramAttendanceCorrectionStatus {
   if (attendance.kind === 'late') return 'late'
   if (attendance.kind === 'excused_absence') return 'excused_absence'
   if (attendance.kind === 'absence') return 'absence'
@@ -135,7 +144,9 @@ export function ProgramAttendanceCorrectionModal({
               withAllOption={false}
               value={status}
               options={[...statusOptions]}
-              onChange={value => setStatus((value as ProgramAttendanceCorrectionStatus) ?? 'present')}
+              onChange={value =>
+                setStatus((value as ProgramAttendanceCorrectionStatus) ?? 'present')
+              }
               aria-label="교육 출결 현황"
             />
             <ParagraphTimePicker
@@ -145,6 +156,7 @@ export function ProgramAttendanceCorrectionModal({
               disabled={!isTimeEnabled}
               placeholder="8:30"
               width="100%"
+              inputSize="large"
               zIndex={2600}
               showEndTimeToggle={false}
             />

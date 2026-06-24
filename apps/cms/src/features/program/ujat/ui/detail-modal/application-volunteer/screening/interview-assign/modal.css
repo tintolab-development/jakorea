@@ -116,7 +116,8 @@
 
 .ujat-volunteer-interview-assign-modal__slot-chip.paragraph-chip--selected {
   border: 1px solid var(--color-mint-01, #01a1af) !important;
-  background: linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff !important;
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff !important;
   font-weight: 600;
 }
 
@@ -192,7 +193,7 @@
   font-weight: 500;
   line-height: 150%;
   padding: 0 8px;
-  margin-bottom: 6px;
+  margin-bottom: 16px;
 }
 
 .ujat-volunteer-interview-assign-modal__notify-error {

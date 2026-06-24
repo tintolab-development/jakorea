@@ -176,6 +176,13 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
   padding-right: 0;
 }
 
+.table-description--black {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+}
+
 .table-description {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard;
@@ -184,6 +191,13 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
   font-weight: 500;
   line-height: 150%; /* 24px */
   opacity: 0.6;
+}
+
+.table-header-actions--wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .info-section-buttons--wrapper {

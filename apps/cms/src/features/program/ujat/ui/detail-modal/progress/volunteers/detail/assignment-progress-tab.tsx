@@ -1,13 +1,7 @@
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useState,
-  type Key,
-} from 'react'
-import { useCmsAlert } from '@/shared/ui'
+import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import type { ColumnsType } from 'antd/es/table'
+import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import { getUjatVolunteerAssignmentProgressBundle } from './assignment-mock'
 import { UjatEducationProgressVolunteerAssignmentAttendanceInfo } from './assignment-attendance-info'
@@ -15,42 +9,114 @@ import { UjatEducationProgressVolunteerAssignmentTable } from './assignment-tabl
 import { UjatVolunteerAssignmentAssignModal } from './assign-modal'
 import { ProgramAttendanceCorrectionModal } from '@/features/program/shared/ui/attendance-correction-modal'
 import type { ProgramAttendanceCorrectionConfirmPayload } from '@/features/program/shared/lib/attendance-correction-types'
-import {
-  UJAT_ATTENDANCE_STATUS_LABEL,
-  UJAT_ATTENDANCE_STATUS_ORDER,
-} from '../../attendance/types'
+import { UJAT_ATTENDANCE_STATUS_LABEL, UJAT_ATTENDANCE_STATUS_ORDER } from '../../attendance/types'
 import {
   applyVolunteerAssignmentConfirm,
   formatScheduleShortDateLabel,
   getUjatVolunteerAssignmentAssignModalData,
 } from './assign-mock'
-import {
-  mergeVolunteerActivityWithdrawnRows,
-  sortVolunteerAssignmentRows,
-} from './assignment-mock'
+import { mergeVolunteerActivityWithdrawnRows, sortVolunteerAssignmentRows } from './assignment-mock'
 import {
   isVolunteerAssignmentClassWithdrawn,
   type UjatVolunteerAssignmentAbsenceReason,
+  type UjatVolunteerAssignmentProgressRow,
 } from './assignment-types'
 import './assignment.css'
 
-export type UjatVolunteerAssignmentProgressTabHandle = {
-  openAssignModal: () => void
-  openCancelModal: () => void
-  openAttendanceCorrectionModal: () => void
+type AssignmentProgressExportRow = {
+  no: number
+  scheduleLabel: string
+  role: string
+  assignedInstitution: string
+  partner: string
+  classDisplay: string
+  attendance: string
+  educationPlanSubmitted: string
+  educationLogSubmitted: string
+  educationProgress: string
 }
 
-export const UjatEducationProgressVolunteerAssignmentProgressTab = forwardRef<
-  UjatVolunteerAssignmentProgressTabHandle,
+function resolveRoleLabel(role: UjatVolunteerAssignmentProgressRow['role']): string {
+  if (role === 'attendance_manager') return '출결 담당자'
+  return '해당 없음'
+}
+
+function resolvePartnerLabel(partner: UjatVolunteerAssignmentProgressRow['partner']): string {
+  if (partner.kind === 'dash') return '-'
+  if (partner.kind === 'undecided') return '미정'
+  return partner.value
+}
+
+function resolveClassLabel(
+  classDisplay: UjatVolunteerAssignmentProgressRow['classDisplay']
+): string {
+  if (classDisplay.kind === 'dash') return '-'
+  if (classDisplay.kind === 'withdrawn') return '활동 포기'
+  return classDisplay.label
+}
+
+function resolveAttendanceLabel(
+  attendance: UjatVolunteerAssignmentProgressRow['attendance']
+): string {
+  if (attendance.kind === 'dash') return '-'
+  if (attendance.kind === 'late') return `지각 (${attendance.time})`
+  if (attendance.kind === 'excused_absence') return '사유 불참'
+  if (attendance.kind === 'absence') return '결석'
+  return '출석'
+}
+
+function resolveEducationProgressLabel(
+  status: UjatVolunteerAssignmentProgressRow['educationProgress']
+): string {
+  if (status === 'dash') return '-'
+  if (status === 'completed') return '교육 완료'
+  return '교육 예정'
+}
+
+function buildAssignmentProgressExportRows(
+  rows: readonly UjatVolunteerAssignmentProgressRow[]
+): AssignmentProgressExportRow[] {
+  return rows.map((row, index) => ({
+    no: index + 1,
+    scheduleLabel: row.scheduleLabel,
+    role: resolveRoleLabel(row.role),
+    assignedInstitution:
+      row.assignedInstitution.kind === 'name' ? row.assignedInstitution.value : '-',
+    partner: resolvePartnerLabel(row.partner),
+    classDisplay: resolveClassLabel(row.classDisplay),
+    attendance: resolveAttendanceLabel(row.attendance),
+    educationPlanSubmitted: row.educationPlanSubmitted ? '제출' : '-',
+    educationLogSubmitted: row.educationLogSubmitted ? '제출' : '-',
+    educationProgress: resolveEducationProgressLabel(row.educationProgress),
+  }))
+}
+
+const ASSIGNMENT_PROGRESS_EXPORT_COLUMNS: ColumnsType<AssignmentProgressExportRow> = [
+  { title: 'No.', dataIndex: 'no', key: 'no' },
+  { title: '교육 진행 일정', dataIndex: 'scheduleLabel', key: 'scheduleLabel' },
+  { title: '역할', dataIndex: 'role', key: 'role' },
+  { title: '배정 기관', dataIndex: 'assignedInstitution', key: 'assignedInstitution' },
+  { title: '파트너명', dataIndex: 'partner', key: 'partner' },
+  { title: '배정 학급', dataIndex: 'classDisplay', key: 'classDisplay' },
+  { title: '출결 현황', dataIndex: 'attendance', key: 'attendance' },
   {
-    volunteerId: string
-    volunteerName: string
-    withdrawnScheduleRowIds?: ReadonlyArray<string>
-  }
->(function UjatEducationProgressVolunteerAssignmentProgressTab(
-  { volunteerId, volunteerName, withdrawnScheduleRowIds = [] },
-  ref
-) {
+    title: '교육계획서 제출 현황',
+    dataIndex: 'educationPlanSubmitted',
+    key: 'educationPlanSubmitted',
+  },
+  { title: '교육일지 제출 현황', dataIndex: 'educationLogSubmitted', key: 'educationLogSubmitted' },
+  { title: '교육 진행 현황', dataIndex: 'educationProgress', key: 'educationProgress' },
+]
+
+export function UjatEducationProgressVolunteerAssignmentProgressTab({
+  volunteerId,
+  volunteerName,
+  withdrawnScheduleRowIds = [],
+}: {
+  volunteerId: string
+  volunteerName: string
+  withdrawnScheduleRowIds?: ReadonlyArray<string>
+}) {
   const { showAlert } = useCmsAlert()
   const bundle = useMemo(() => getUjatVolunteerAssignmentProgressBundle(volunteerId), [volunteerId])
 
@@ -160,15 +226,13 @@ export const UjatEducationProgressVolunteerAssignmentProgressTab = forwardRef<
     setAttendanceCorrectionModalOpen(true)
   }, [getSingleSelectedRow, showAlert])
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      openAssignModal,
-      openCancelModal,
-      openAttendanceCorrectionModal,
-    }),
-    [openAssignModal, openCancelModal, openAttendanceCorrectionModal]
-  )
+  const exportRows = useMemo(() => buildAssignmentProgressExportRows(rows), [rows])
+
+  const { exportExcel, isExporting } = useTableExcelExport({
+    columns: ASSIGNMENT_PROGRESS_EXPORT_COLUMNS,
+    data: exportRows,
+    filename: '교육_배정_및_진행_현황',
+  })
 
   const assignTargetRow = useMemo(
     () => (assignTargetRowId ? (rows.find(row => row.id === assignTargetRowId) ?? null) : null),
@@ -332,7 +396,42 @@ export const UjatEducationProgressVolunteerAssignmentProgressTab = forwardRef<
   return (
     <div className="ujat-volunteer-assignment-progress-tab">
       <section className="ujat-volunteer-assignment-progress-tab__table-section">
-        <h3 className="program-detail-info-tab__section-title">교육 배정 및 진행 현황</h3>
+        <div className="table-header-actions">
+          <div className="table-header-title--wrapper">
+            <span className="table-title">교육 배정 및 진행 현황</span>
+            <span className="table-description">{rows.length}건</span>
+          </div>
+          <div className="info-section-buttons--wrapper">
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              width={140}
+              onClick={openCancelModal}
+            >
+              배정 취소
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="large"
+              width={140}
+              onClick={openAttendanceCorrectionModal}
+            >
+              출결 정정
+            </CmsButton>
+            <CmsButton
+              type="button"
+              variant="primary"
+              size="large"
+              width={180}
+              onClick={openAssignModal}
+            >
+              파트너 및 교육 배정
+            </CmsButton>
+            <ExcelButton onClick={exportExcel} loading={isExporting} />
+          </div>
+        </div>
         <UjatEducationProgressVolunteerAssignmentTable
           initialRows={rows}
           volunteerName={volunteerName}
@@ -403,4 +502,4 @@ export const UjatEducationProgressVolunteerAssignmentProgressTab = forwardRef<
       ) : null}
     </div>
   )
-})
+}

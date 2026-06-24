@@ -21,7 +21,7 @@ export interface EssaySectionsProps {
 }
 
 export function EssaySections({ applicant }: EssaySectionsProps) {
-  if (applicant.applicationType !== 'new') {
+  if (applicant.hasEducationExperience) {
     return null
   }
 
@@ -29,7 +29,7 @@ export function EssaySections({ applicant }: EssaySectionsProps) {
     <div className="ujat-volunteer-applicant-essay-sections">
       {ESSAY_KEYS.map(key => {
         const raw = applicant[key]
-        const formatted = formatUjatVolunteerEssayCellValue(applicant.applicationType, raw)
+        const formatted = formatUjatVolunteerEssayCellValue('new', raw)
         const text =
           formatted != null && String(formatted).trim() !== '' ? formatted : INSTRUCTOR_RESUME_NO_DATA
         return (

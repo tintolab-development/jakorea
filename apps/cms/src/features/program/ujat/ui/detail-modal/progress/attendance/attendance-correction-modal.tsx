@@ -3,10 +3,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { ContentModal, CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
-import {
-  applyAttendanceCorrection,
-  parseSessionStartTime,
-} from './attendance-display'
+import { applyAttendanceCorrection, parseSessionStartTime } from './attendance-display'
 import {
   UJAT_ATTENDANCE_STATUS_LABEL,
   UJAT_ATTENDANCE_STATUS_ORDER,
@@ -37,11 +34,7 @@ function parseCheckInDayjs(value: string | undefined, fallback: string): Dayjs {
   const raw = value ?? fallback
   const match = raw.match(/^(\d{1,2}):(\d{2})$/)
   if (!match) return dayjs().hour(8).minute(30).second(0).millisecond(0)
-  return dayjs()
-    .hour(Number(match[1]))
-    .minute(Number(match[2]))
-    .second(0)
-    .millisecond(0)
+  return dayjs().hour(Number(match[1])).minute(Number(match[2])).second(0).millisecond(0)
 }
 
 function formatCheckInTime(value: Dayjs | null): string {
@@ -100,9 +93,7 @@ export function UjatAttendanceCorrectionModal({
       (selectedVolunteer.status === 'late' ? '9:10' : sessionStartTime)
     setCheckInTime(parseCheckInDayjs(defaultTime, sessionStartTime))
     setExcusedReason(
-      selectedVolunteer.status === 'excused_absence'
-        ? (selectedVolunteer.excusedReason ?? '')
-        : ''
+      selectedVolunteer.status === 'excused_absence' ? (selectedVolunteer.excusedReason ?? '') : ''
     )
   }, [selectedVolunteer, sessionStartTime])
 
@@ -133,9 +124,7 @@ export function UjatAttendanceCorrectionModal({
     onConfirm({
       volunteerId,
       status,
-      checkInTime: isTimeFieldVisible(status)
-        ? formatCheckInTime(checkInTime)
-        : undefined,
+      checkInTime: isTimeFieldVisible(status) ? formatCheckInTime(checkInTime) : undefined,
       excusedReason: isReasonFieldVisible(status) ? excusedReason.trim() : undefined,
     })
     setVolunteerId(undefined)
@@ -193,9 +182,7 @@ export function UjatAttendanceCorrectionModal({
               className="ujat-attendance-correction-modal__status-select"
               withAllOption={false}
               value={status}
-              onChange={value =>
-                setStatus((value ?? 'present') as UjatAttendanceStatus)
-              }
+              onChange={value => setStatus((value ?? 'present') as UjatAttendanceStatus)}
               options={UJAT_ATTENDANCE_STATUS_ORDER.map(value => ({
                 value,
                 label: UJAT_ATTENDANCE_STATUS_LABEL[value],
@@ -206,9 +193,12 @@ export function UjatAttendanceCorrectionModal({
               <div className="ujat-attendance-correction-modal__time-field">
                 <ParagraphTimePicker
                   value={checkInTime}
-                  onChange={next => setCheckInTime(next ?? parseCheckInDayjs(undefined, sessionStartTime))}
+                  onChange={next =>
+                    setCheckInTime(next ?? parseCheckInDayjs(undefined, sessionStartTime))
+                  }
                   placeholder="시간 선택"
                   width="100%"
+                  inputSize="large"
                   zIndex={MODAL_Z_INDEX + DATE_TIME_PICKER_Z_OFFSET}
                 />
               </div>

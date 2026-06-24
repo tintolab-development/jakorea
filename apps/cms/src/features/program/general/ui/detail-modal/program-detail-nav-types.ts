@@ -10,5 +10,12 @@ export const TAB_LABELS: Record<TabKey, string> = {
   volunteers: '봉사자 정보',
 }
 
-export const LNB_KEYS = ['info', 'applicants', 'progress', 'managers'] as const
+export const LNB_KEYS = [
+  'info',
+  'applicants',
+  'applicant_instructors',
+  'progress',
+  'survey',
+  'managers',
+] as const
 export type LnbKey = (typeof LNB_KEYS)[number]

@@ -20,10 +20,11 @@
 .detail-info-form__header-lead {
   display: flex;
   flex-direction: row;
-  align-items: baseline;
+  align-items: flex-end;
   flex-wrap: wrap;
   min-width: 0;
   flex: 1 1 auto;
+  height: 40px;
 }
 
 .detail-info-form__header-lead--stack {

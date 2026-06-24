@@ -16,9 +16,11 @@ import type {
   ProgramRegistrationParticipantState,
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { mockSponsors } from '@/data/mock/sponsors'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
+export const COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'company-school-local-'
 
 const STORAGE_KEY = 'cms.jakorea.generalRegistrationLocalSaves.v1'
 
@@ -48,6 +50,11 @@ function newLocalProgramId(): string {
   return `${GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}${uuid ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`}`
 }
 
+function newCompanySchoolLocalProgramId(): string {
+  const uuid = globalThis.crypto?.randomUUID?.()
+  return `${COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}${uuid ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`}`
+}
+
 function participantTypesFromState(
   participant: ProgramRegistrationParticipantState
 ): GeneralProgramParticipantType[] {
@@ -72,10 +79,12 @@ function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   id: string
   participant: ProgramRegistrationParticipantState
   programType: ProgramRegistrationType
+  variant: ProgramRegistrationFormVariant
 }): Program {
   const now = new Date().toISOString()
   const y = dayjs().year()
-  const title = `신규 일반 프로그램 (${dayjs().format('YYYY-MM-DD HH:mm')})`
+  const isCompanySchool = args.variant === 'economy'
+  const title = `신규 ${isCompanySchool ? '1사1교' : '일반'} 프로그램 (${dayjs().format('YYYY-MM-DD HH:mm')})`
   const mainTitle = title
   const participantTypes = participantTypesFromState(args.participant)
   const capacity = 30
@@ -103,10 +112,10 @@ function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     mainTitle,
     type: 'offline',
     format: 'workshop',
-    category: primaryCategoryFromParticipant(args.participant),
-    description: '일반 프로그램 등록(임시 저장)',
+    category: isCompanySchool ? 'school' : primaryCategoryFromParticipant(args.participant),
+    description: `${isCompanySchool ? '1사1교' : '일반'} 프로그램 등록(임시 저장)`,
     startDate: dayjs(`${y}-04-01`).startOf('day').toISOString(),
-    endDate: dayjs(`${y}-06-30`).endOf('day').toISOString(),
+    endDate: dayjs(`${y}-12-31`).endOf('day').toISOString(),
     applicationStartDate: dayjs().startOf('day').toISOString(),
     applicationEndDate: dayjs().add(30, 'day').endOf('day').toISOString(),
     status: 'pending',
@@ -114,6 +123,10 @@ function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     businessArea: '경제금융',
     targetLevel: 'elementary',
     approvedStudentCount: 0,
+    instructors: 0,
+    instructorCapacity: isCompanySchool ? 30 : undefined,
+    participatingSchoolCount: 0,
+    participatingStudentCount: 0,
     scheduleTimeEnabled: true,
     startTime: '09:00',
     endTime: '18:00',
@@ -137,7 +150,8 @@ export function readGeneralRegistrationLocalSaveRecords(): GeneralRegistrationLo
         typeof row === 'object' &&
         row.version === 1 &&
         typeof row.id === 'string' &&
-        row.id.startsWith(GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX) &&
+        (row.id.startsWith(GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX) ||
+          row.id.startsWith(COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)) &&
         row.program != null &&
         typeof row.program === 'object'
     )
@@ -147,7 +161,15 @@ export function readGeneralRegistrationLocalSaveRecords(): GeneralRegistrationLo
 }
 
 export function readGeneralRegistrationLocalSavePrograms(): Program[] {
-  return readGeneralRegistrationLocalSaveRecords().map(r => r.program)
+  return readGeneralRegistrationLocalSaveRecords()
+    .filter(r => r.id.startsWith(GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX))
+    .map(r => r.program)
+}
+
+export function readCompanySchoolRegistrationLocalSavePrograms(): Program[] {
+  return readGeneralRegistrationLocalSaveRecords()
+    .filter(r => r.id.startsWith(COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX))
+    .map(r => r.program)
 }
 
 export function findGeneralRegistrationLocalSaveProgramById(id: string): Program | undefined {
@@ -158,12 +180,15 @@ export function persistGeneralRegistrationFormLocal(args: {
   draft: WritingFormDraft
   participant: ProgramRegistrationParticipantState
   programType: ProgramRegistrationType
+  variant?: ProgramRegistrationFormVariant
 }): Program {
-  const id = newLocalProgramId()
+  const variant = args.variant ?? 'general'
+  const id = variant === 'economy' ? newCompanySchoolLocalProgramId() : newLocalProgramId()
   const program = buildGeneralProgramListRowFromRegistrationSnapshot({
     id,
     participant: args.participant,
     programType: args.programType,
+    variant,
   })
   const record: GeneralRegistrationLocalSaveRecord = {
     version: 1,

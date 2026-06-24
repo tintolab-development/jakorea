@@ -22,7 +22,11 @@ export function ProgramAttendanceAbsenceReasons({
 }: ProgramAttendanceAbsenceReasonsProps) {
   return (
     <section className="program-detail-fullpage-modal__info-tab-block program-attendance-absence-reasons">
-      <h3 className="program-detail-info-tab__section-title">불참 사유</h3>
+      <div className="table-header-title--wrapper">
+        <span className="table-title" style={{ marginBottom: 10 }}>
+          불참 사유
+        </span>
+      </div>
       {reasons.length > 0 ? (
         <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
           <table className="program-detail-info-tab__table program-detail-info-tab__table--basic program-attendance-absence-reasons__table">

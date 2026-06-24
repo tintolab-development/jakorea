@@ -21,6 +21,7 @@ import {
   guardUjatVolunteerAssignInterview,
   guardUjatVolunteerWithdrawActivity,
 } from '../applicant/guard-actions'
+import type { ActivityWithdrawScheduleModalPayload } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 
 export type UjatInterviewAssignPickFlow = {
   type: 'pick'
@@ -177,7 +178,7 @@ export function useUjatVolunteerDocPassed({
     setWithdrawTargetId(null)
   }, [])
 
-  const confirmWithdrawActivity = useCallback(() => {
+  const confirmWithdrawActivity = useCallback((_payload: ActivityWithdrawScheduleModalPayload) => {
     if (!withdrawTargetId) return
     const row = list.find(item => item.id === withdrawTargetId)
     if (!row) {

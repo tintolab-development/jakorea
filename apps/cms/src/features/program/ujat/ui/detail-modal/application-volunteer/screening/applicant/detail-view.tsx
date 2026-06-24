@@ -148,6 +148,7 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
             statusRow="second_interview"
           />
           <InterviewEvaluationSection applicant={applicant} />
+          <PreviousTermSection applicant={applicant} />
           <EssaySections applicant={applicant} />
         </div>
 
@@ -202,6 +203,7 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
           />
           <InterviewAvailabilitySection applicant={applicant} />
           <PreviousTermSection applicant={applicant} />
+          <EssaySections applicant={applicant} />
         </div>
 
         {personalInfoRevealModal}

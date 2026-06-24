@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
@@ -7,6 +8,7 @@ import {
   getEducationPrograms,
   getEconomyPrograms,
 } from '@/data/mock'
+import { readCompanySchoolRegistrationLocalSavePrograms } from '@/features/program/general/lib/registration-local-save'
 import type { Program, ProgramLifecycleStatus, ProgramCategory } from '@/types/domain'
 import type { User } from '@/types/user'
 
@@ -25,6 +27,17 @@ export interface ProgramListQueryParams extends Record<string, string | undefine
 }
 
 const OVERVIEW_STATUS_VALUES: readonly OverviewStatusFilter[] = ['scheduled', 'in_progress', 'completed']
+
+function getProgramOperationDatePhase(program: Program): 'scheduled' | 'in_progress' | 'completed' | null {
+  const start = dayjs(program.startDate)
+  const end = dayjs(program.endDate)
+  if (!start.isValid() || !end.isValid()) return null
+
+  const today = dayjs().startOf('day')
+  if (today.isBefore(start.startOf('day'))) return 'scheduled'
+  if (today.isBefore(end.startOf('day'))) return 'in_progress'
+  return 'completed'
+}
 
 export function useProgramListFilters(
   programs: Program[],
@@ -103,7 +116,11 @@ export function useProgramListFilters(
     let filtered: Program[]
 
     if (isAdmin && programType === 'company_school') {
-      filtered = getEconomyPrograms()
+      const economyPrograms = getEconomyPrograms()
+      const localCompanySchoolPrograms = readCompanySchoolRegistrationLocalSavePrograms().filter(
+        localProgram => !economyPrograms.some(program => program.id === localProgram.id)
+      )
+      filtered = [...economyPrograms, ...localCompanySchoolPrograms]
     } else if (isAdmin && programType === 'education') {
       filtered = getEducationPrograms()
     } else {
@@ -121,21 +138,30 @@ export function useProgramListFilters(
     if (programType === 'company_school' && statusFilter) {
       const s = statusFilter as OverviewStatusFilter
       if (s === 'scheduled') {
-        filtered = filtered.filter(program =>
-          ['recruiting_students', 'recruiting_instructors', 'matching_completed', 'education_before_textbook'].includes(
-            program.lifecycleStatus || ''
-          )
-        )
+        filtered = filtered.filter(program => {
+          const operationPhase = getProgramOperationDatePhase(program)
+          if (operationPhase) return operationPhase === 'scheduled'
+          return [
+            'recruiting_students',
+            'recruiting_instructors',
+            'matching_completed',
+            'education_before_textbook',
+          ].includes(program.lifecycleStatus || '')
+        })
       } else if (s === 'in_progress') {
-        filtered = filtered.filter(
-          program => program.lifecycleStatus === 'education_after_textbook'
-        )
+        filtered = filtered.filter(program => {
+          const operationPhase = getProgramOperationDatePhase(program)
+          if (operationPhase) return operationPhase === 'in_progress'
+          return program.lifecycleStatus === 'education_after_textbook'
+        })
       } else if (s === 'completed') {
-        filtered = filtered.filter(program =>
-          ['education_completed', 'document_processing_completed'].includes(
+        filtered = filtered.filter(program => {
+          const operationPhase = getProgramOperationDatePhase(program)
+          if (operationPhase) return operationPhase === 'completed'
+          return ['education_completed', 'document_processing_completed'].includes(
             program.lifecycleStatus || ''
           )
-        )
+        })
       }
     }
 

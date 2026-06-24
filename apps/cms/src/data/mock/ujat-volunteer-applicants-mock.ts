@@ -162,6 +162,12 @@ export function buildUjatVolunteerApplicantRowFromProfile(
   const mobile = profile.mobile.replace(/\s/g, '')
   const preferredRegion = regionLabelForVolunteerProfile(profile.regionKey)
   const interviewSlotCount = countVolunteerProfileInterviewSlots(profile.interviewAvailability)
+  const applicationType: UjatVolunteerApplicationType = profile.hasEducationExperience
+    ? 'ujat-graduate'
+    : 'new'
+  const previousUjatActivity =
+    profile.previousUjatActivity ??
+    (profile.hasEducationExperience ? buildMockPreviousUjatActivity(no, profile.name) : undefined)
 
   return {
     id: buildUjatVolunteerApplicantId(programId, half, profile.id),
@@ -174,11 +180,12 @@ export function buildUjatVolunteerApplicantRowFromProfile(
     contactRaw: mobile,
     emailRaw: profile.email,
     hasEducationExperience: profile.hasEducationExperience,
-    applicationType: profile.applicationType,
-    essayIntro: profile.essayIntro,
-    essayEducationExperience: profile.essayEducationExperience,
-    essayNecessity: profile.essayNecessity,
-    essayJaExperience: profile.essayJaExperience,
+    applicationType,
+    essayIntro: applicationType === 'ujat-graduate' ? '' : profile.essayIntro,
+    essayEducationExperience:
+      applicationType === 'ujat-graduate' ? '' : profile.essayEducationExperience,
+    essayNecessity: applicationType === 'ujat-graduate' ? '' : profile.essayNecessity,
+    essayJaExperience: applicationType === 'ujat-graduate' ? '' : profile.essayJaExperience,
     managerAEvaluation: profile.managerAEvaluation,
     managerBEvaluation: profile.managerBEvaluation,
     documentScreeningStatus: profile.documentScreeningStatus,
@@ -200,13 +207,13 @@ export function buildUjatVolunteerApplicantRowFromProfile(
       slots: [...day.slots],
     })),
     interviewAssignmentStatus: profile.interviewAssignmentStatus,
-    ...(profile.previousUjatActivity
+    ...(previousUjatActivity
       ? {
           previousUjatActivity: {
-            term: profile.previousUjatActivity.term,
-            year: profile.previousUjatActivity.year,
-            certificateFileName: profile.previousUjatActivity.certificateFileName,
-            certificateFileUrl: profile.previousUjatActivity.certificateFileUrl,
+            term: previousUjatActivity.term,
+            year: previousUjatActivity.year,
+            certificateFileName: previousUjatActivity.certificateFileName,
+            certificateFileUrl: previousUjatActivity.certificateFileUrl,
           },
         }
       : {}),
@@ -243,6 +250,8 @@ function buildAssignedInterviewFields(
   | 'assignedInterviewDateLabel'
   | 'assignedInterviewTime'
   | 'secondInterviewScreeningStatus'
+  | 'managerAScore'
+  | 'managerBScore'
   | 'totalScore'
 > {
   const firstDay = interviewAvailability[0]
@@ -255,13 +264,16 @@ function buildAssignedInterviewFields(
       seed % SECOND_INTERVIEW_SCREENING_STATUS_ORDER.length
     ]
   const scoreSeed = seed % 11
-  const totalScore =
-    scoreSeed === 0 ? null : scoreSeed <= 7 ? 70 + scoreSeed * 3 : 90 + (scoreSeed - 7)
+  const totalScore = scoreSeed === 0 ? null : scoreSeed
+  const managerAScore = totalScore == null ? null : Math.min(5, Math.ceil(totalScore / 2))
+  const managerBScore = totalScore == null || managerAScore == null ? null : totalScore - managerAScore
 
   return {
     assignedInterviewDateLabel: dateLabel,
     assignedInterviewTime: time,
     secondInterviewScreeningStatus: status,
+    managerAScore,
+    managerBScore,
     totalScore,
   }
 }
@@ -278,11 +290,10 @@ function resolveInterviewAssignmentStatus(
   return 'assigned'
 }
 
-function buildPreviousUjatActivity(
+function buildMockPreviousUjatActivity(
   seed: number,
   name: string
-): UjatVolunteerPreviousUjatActivity | undefined {
-  if (seed % 4 !== 0) return undefined
+): UjatVolunteerPreviousUjatActivity {
   const term = String(28 + (seed % 5))
   const year = String(2019 + (seed % 6))
   return {
@@ -348,7 +359,9 @@ function buildRow(
       seed % Math.max(getUjatVolunteerPreferredRegionLabels().length, 1)
     ] ?? getUjatVolunteerPreferredRegionLabels()[0] ?? '서울'
   const hasEducationExperience = seed % 3 !== 0
-  const applicationType: UjatVolunteerApplicationType = seed % 4 === 0 ? 'ujat-graduate' : 'new'
+  const applicationType: UjatVolunteerApplicationType = hasEducationExperience
+    ? 'ujat-graduate'
+    : 'new'
   const documentScreeningStatus: UjatDocumentScreeningStatus =
     seed % 4 === 0 ? 'fail' : seed % 4 === 1 ? 'pending' : 'pass'
   const interviewAssignmentStatus = resolveInterviewAssignmentStatus(seed, documentScreeningStatus)
@@ -407,7 +420,7 @@ function buildRow(
     interviewAvailability,
     interviewAssignmentStatus,
     previousUjatActivity:
-      applicationType === 'ujat-graduate' ? buildPreviousUjatActivity(seed, name) : undefined,
+      applicationType === 'ujat-graduate' ? buildMockPreviousUjatActivity(seed, name) : undefined,
     ...(interviewAssignmentStatus === 'assigned'
       ? buildAssignedInterviewFields(seed, interviewAvailability)
       : {}),
@@ -517,14 +530,21 @@ export function getUjatVolunteerDocPassedApplicants(
 export function sortUjatVolunteerInterview2Applicants(
   rows: UjatVolunteerApplicantRow[]
 ): UjatVolunteerApplicantRow[] {
+  const regionOrder = getUjatEducationRegionSortOrderMap()
+
   return [...rows].sort((a, b) => {
-    const dateA = a.assignedInterviewDateLabel ?? ''
-    const dateB = b.assignedInterviewDateLabel ?? ''
-    if (dateA !== dateB) return dateA.localeCompare(dateB)
-    const timeA = a.assignedInterviewTime ?? ''
-    const timeB = b.assignedInterviewTime ?? ''
-    if (timeA !== timeB) return timeA.localeCompare(timeB)
-    return b.no - a.no
+    const scoreA = a.totalScore ?? null
+    const scoreB = b.totalScore ?? null
+
+    if (scoreA == null && scoreB != null) return 1
+    if (scoreA != null && scoreB == null) return -1
+    if (scoreA != null && scoreB != null && scoreA !== scoreB) return scoreB - scoreA
+
+    const regionA = regionOrder[a.preferredRegion] ?? 99
+    const regionB = regionOrder[b.preferredRegion] ?? 99
+    if (regionA !== regionB) return regionA - regionB
+
+    return a.no - b.no
   })
 }
 
@@ -565,7 +585,7 @@ function computeInterviewTotalScore(
   managerBScore: number | null
 ): number | null {
   if (managerAScore == null || managerBScore == null) return null
-  return Math.round((managerAScore + managerBScore) / 2)
+  return managerAScore + managerBScore
 }
 
 export function patchUjatVolunteerInterviewEvaluation(

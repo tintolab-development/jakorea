@@ -9,7 +9,11 @@ import type { Program, ProgramRound } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock'
 import { getCompanySchoolProgramById } from '@/data/mock/economy-programs'
 import { getGeneralProgramById } from '@/data/mock/general-programs'
-import { findGeneralRegistrationLocalSaveProgramById } from '@/features/program/general/lib/registration-local-save'
+import {
+  COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
+  findGeneralRegistrationLocalSaveProgramById,
+  readCompanySchoolRegistrationLocalSavePrograms,
+} from '@/features/program/general/lib/registration-local-save'
 import {
   mockUjatElementaryListPrograms,
   mockUjatElementaryListProgramsMap,
@@ -27,7 +31,11 @@ import type { UserRole } from '@/types/user'
 import { updateUserProgramRole } from '@/entities/user/api/user-service'
 
 function isCompanySchoolProgramId(id: string): boolean {
-  return id.startsWith('economy-prog-') || id.startsWith('company-school-prog-')
+  return (
+    id.startsWith('economy-prog-') ||
+    id.startsWith('company-school-prog-') ||
+    id.startsWith(COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)
+  )
 }
 
 function resolveProgramFromStores(id: string): Program | undefined {
@@ -88,7 +96,12 @@ export const programService = {
     const localUjat = readUjatRegistrationLocalSavePrograms().filter(
       lp => !basePrograms.some(b => b.id === lp.id)
     )
-    const allPrograms = [...basePrograms, ...localUjat].map(withUjatRecruitTemplateDefaults)
+    const localCompanySchool = readCompanySchoolRegistrationLocalSavePrograms().filter(
+      lp => !basePrograms.some(b => b.id === lp.id) && !localUjat.some(b => b.id === lp.id)
+    )
+    const allPrograms = [...basePrograms, ...localUjat, ...localCompanySchool].map(
+      withUjatRecruitTemplateDefaults
+    )
 
     // 권한별 필터링 적용
     // 관리자는 전체 조회, 강사/봉사자는 본인이 담당한 프로그램만 조회

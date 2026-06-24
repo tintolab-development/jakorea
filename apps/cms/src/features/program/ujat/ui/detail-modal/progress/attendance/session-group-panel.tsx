@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import {
-  attendanceFullRowsEqual,
   cloneAttendanceVolunteerRows,
   filterVisibleAttendanceVolunteers,
   parseSessionStartTime,
@@ -16,27 +15,49 @@ import { UjatAttendanceTable } from './attendance-table'
 import type { UjatAttendanceFilters } from './types'
 import type { UjatAttendanceSessionGroup, UjatAttendanceVolunteerRow } from './types'
 
+export function UjatAttendanceSessionGroupHeader({
+  session,
+  totalCount,
+}: {
+  session: UjatAttendanceSessionGroup
+  totalCount: number
+}) {
+  return (
+    <div className="table-header-title--wrapper">
+      <span className="table-title">{session.dateLabel}</span>
+      <span className="table-description--black">
+        {session.institutionName} | {session.district} | {session.timeRange}
+      </span>
+      <span className="table-description">총 {totalCount}건</span>
+    </div>
+  )
+}
+
 export function UjatAttendanceSessionGroupPanel({
   session,
   appliedFilters,
   getSessionVolunteers,
   onSave,
+  showHeader = true,
+  onBindOpenCorrection,
 }: {
   session: UjatAttendanceSessionGroup
   appliedFilters: UjatAttendanceFilters
   getSessionVolunteers: (sessionId: string) => UjatAttendanceVolunteerRow[]
   onSave: (sessionId: string, volunteers: UjatAttendanceVolunteerRow[]) => void
+  showHeader?: boolean
+  onBindOpenCorrection?: (openCorrection: () => void) => void
 }) {
   const { showAlert } = useCmsAlert()
   const [correctionModalOpen, setCorrectionModalOpen] = useState(false)
-  const [savedRows, setSavedRows] = useState<UjatAttendanceVolunteerRow[]>(() =>
-    cloneAttendanceVolunteerRows(getSessionVolunteers(session.id))
-  )
   const [workingRows, setWorkingRows] = useState<UjatAttendanceVolunteerRow[]>(() =>
     cloneAttendanceVolunteerRows(getSessionVolunteers(session.id))
   )
 
-  const sessionStartTime = useMemo(() => parseSessionStartTime(session.timeRange), [session.timeRange])
+  const sessionStartTime = useMemo(
+    () => parseSessionStartTime(session.timeRange),
+    [session.timeRange]
+  )
 
   const correctionVolunteers = useMemo(
     () => filterVisibleAttendanceVolunteers(workingRows),
@@ -50,65 +71,53 @@ export function UjatAttendanceSessionGroupPanel({
 
   useEffect(() => {
     const rows = cloneAttendanceVolunteerRows(getSessionVolunteers(session.id))
-    setSavedRows(rows)
     setWorkingRows(rows)
     setCorrectionModalOpen(false)
   }, [getSessionVolunteers, session.id])
 
-  const hasChanges = useMemo(
-    () => !attendanceFullRowsEqual(workingRows, savedRows),
-    [savedRows, workingRows]
-  )
+  const openCorrectionModal = useCallback(() => {
+    setCorrectionModalOpen(true)
+  }, [])
 
-  const handleSave = useCallback(() => {
-    if (!hasChanges) return
-    onSave(session.id, workingRows)
-    setSavedRows(cloneAttendanceVolunteerRows(workingRows))
-    showAlert({ title: '안내', content: '출결 정보가 저장되었습니다.' })
-  }, [hasChanges, onSave, session.id, showAlert, workingRows])
+  useEffect(() => {
+    onBindOpenCorrection?.(openCorrectionModal)
+  }, [onBindOpenCorrection, openCorrectionModal])
 
   const handleCorrectionConfirm = useCallback(
     (payload: UjatAttendanceCorrectionPayload) => {
-      setWorkingRows(prev =>
-        prev.map(row =>
+      setWorkingRows(prev => {
+        const nextRows = prev.map(row =>
           row.id === payload.volunteerId
             ? buildCorrectedVolunteerRow(row, payload, sessionStartTime)
             : row
         )
-      )
+        onSave(session.id, nextRows)
+        return nextRows
+      })
       setCorrectionModalOpen(false)
+      showAlert({ title: '안내', content: '출결 정보가 저장되었습니다.' })
     },
-    [sessionStartTime]
+    [onSave, session.id, sessionStartTime, showAlert]
   )
-
-  const headerText = `${session.dateLabel} ${session.institutionName} | ${session.district} | ${session.timeRange} 총 ${displayRows.length}건`
 
   return (
     <section className="ujat-attendance-session-group">
-      <div className="ujat-attendance-session-group__header">
-        <h3 className="ujat-attendance-session-group__title">{headerText}</h3>
-        <div className="ujat-attendance-session-group__actions">
-          <CmsButton
-            type="button"
-            variant="secondary"
-            size="large"
-            width={120}
-            onClick={() => setCorrectionModalOpen(true)}
-          >
-            출결 정정
-          </CmsButton>
-          <CmsButton
-            type="button"
-            variant="primary"
-            size="large"
-            width={100}
-            disabled={!hasChanges}
-            onClick={handleSave}
-          >
-            저장
-          </CmsButton>
+      {showHeader ? (
+        <div className="ujat-attendance-session-group__header">
+          <UjatAttendanceSessionGroupHeader session={session} totalCount={displayRows.length} />
+          <div className="ujat-attendance-session-group__actions">
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="large"
+              width={120}
+              onClick={openCorrectionModal}
+            >
+              출결 정정
+            </CmsButton>
+          </div>
         </div>
-      </div>
+      ) : null}
       <div className="ujat-attendance-session-group__table-wrap">
         <UjatAttendanceTable rows={displayRows} />
       </div>

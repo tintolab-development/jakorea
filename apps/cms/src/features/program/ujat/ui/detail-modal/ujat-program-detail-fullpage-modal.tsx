@@ -1940,7 +1940,7 @@ export function UjatProgramDetailFullPageModal({
                 />
               ) : eduVolunteerDetailId && eduVolunteerHalf && displayProgram ? (
                 <UjatEducationProgressVolunteerDetailPage
-                  programId={displayProgram.id}
+                  program={displayProgram}
                   half={eduVolunteerHalf}
                   volunteerId={eduVolunteerDetailId}
                   activeTab={eduVolunteerDetailTab}
@@ -1948,6 +1948,7 @@ export function UjatProgramDetailFullPageModal({
                 />
               ) : (
                 <UjatEducationProgressVolunteersSection
+                  program={displayProgram}
                   half={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
                   onStartAddRegistration={openVolAddRegistration}
                   onOpenDetail={setEduVolunteerId}

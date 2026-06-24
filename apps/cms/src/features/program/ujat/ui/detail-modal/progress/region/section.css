@@ -11,38 +11,3 @@
   .cms-text-tabs__row {
   margin-bottom: 0;
 }
-
-.ujat-education-progress-region-assignment__toolbar {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.ujat-education-progress-region-assignment__title {
-  margin: 0;
-  color: var(--default-BK, #3d3d3d);
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 150%;
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.ujat-education-progress-region-assignment__count {
-  color: var(--default-BK, #3d3d3d);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.7;
-}
-
-.ujat-education-progress-region-assignment__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}

@@ -33,10 +33,19 @@ function findStudentCount(
   gradeBlocks: ReadonlyArray<UjatInstitutionApplicationGradeBlockDetail>,
   gradeLabel: string,
   classNo: number
-): number {
+): number | null {
   const block = gradeBlocks.find(item => item.gradeLabel === gradeLabel)
   const classRow = block?.classes.find(item => item.classNo === classNo)
-  return classRow?.studentCount ?? 0
+  return classRow?.studentCount ?? null
+}
+
+function resolveTextbookName(gradeLabel: string): string {
+  return UJAT_ELEMENTARY_TEXTBOOK_BY_GRADE[gradeLabel] ?? '-'
+}
+
+function formatTextbookQuantity(studentCount: number | null): string {
+  if (studentCount == null) return '-'
+  return `${studentCount}권`
 }
 
 function compareGradeClass(
@@ -105,8 +114,8 @@ function buildRowsForSchedule(
       gradeRowSpan: 0,
       volunteerA: volunteers.volunteerA,
       volunteerB: volunteers.volunteerB,
-      textbookName: UJAT_ELEMENTARY_TEXTBOOK_BY_GRADE[section.gradeLabel] ?? '-',
-      textbookQuantityLabel: studentCount > 0 ? `${studentCount}권` : '-',
+      textbookName: resolveTextbookName(section.gradeLabel),
+      textbookQuantityLabel: formatTextbookQuantity(studentCount),
     }
   })
 

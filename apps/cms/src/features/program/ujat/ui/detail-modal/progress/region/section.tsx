@@ -8,6 +8,7 @@ import { UjatInstitutionApplicationRegionTabs } from '../../application-institut
 import { UjatAssignmentAssignModal } from '../shared/assign-modal'
 import type { EducationProgressHalfKey } from '../tabs'
 import { RegionAssignmentTable } from './assignment-table'
+import { applyRegionBlockedDateSetting, applyRegionDirectAssignment } from './assignment-actions'
 import { RegionAssignmentDownloadModal } from './assignment-download-modal'
 import {
   applyRegionAttendanceManagersFromData,
@@ -93,13 +94,19 @@ export function UjatEducationProgressRegionAssignmentSection({
     setDirectAssignModalOpen(false)
   }, [])
 
-  const handleConfirmDirectAssign = useCallback(() => {
-    setDirectAssignModalOpen(false)
-    showAlert({
-      title: '안내',
-      content: '교육일이 직접 배정되었습니다.',
-    })
-  }, [showAlert])
+  const handleConfirmDirectAssign = useCallback(
+    (payload: { classSlotId: string; volunteerId: string }) => {
+      const next = applyRegionDirectAssignment(tableData, payload)
+      setRegionAssignmentTableData(activeRegion, next)
+      bump()
+      setDirectAssignModalOpen(false)
+      showAlert({
+        title: '안내',
+        content: '교육일이 직접 배정되었습니다.',
+      })
+    },
+    [activeRegion, bump, showAlert, tableData]
+  )
 
   const handleOpenBlockedDateModal = useCallback(() => {
     setBlockedDateModalOpen(true)
@@ -109,13 +116,23 @@ export function UjatEducationProgressRegionAssignmentSection({
     setBlockedDateModalOpen(false)
   }, [])
 
-  const handleConfirmBlockedDate = useCallback(() => {
-    setBlockedDateModalOpen(false)
-    showAlert({
-      title: '안내',
-      content: '배정 불가일이 설정되었습니다.',
-    })
-  }, [showAlert])
+  const handleConfirmBlockedDate = useCallback(
+    (payload: {
+      volunteerId: string
+      blockedDateLabels: string[]
+      substituteVolunteerId: string
+    }) => {
+      const next = applyRegionBlockedDateSetting(tableData, payload)
+      setRegionAssignmentTableData(activeRegion, next)
+      bump()
+      setBlockedDateModalOpen(false)
+      showAlert({
+        title: '안내',
+        content: '배정 불가일이 설정되었습니다.',
+      })
+    },
+    [activeRegion, bump, showAlert, tableData]
+  )
 
   const handleAutoAssign = useCallback(() => {
     runAutoAssign()
@@ -154,15 +171,13 @@ export function UjatEducationProgressRegionAssignmentSection({
         onChange={setActiveRegion}
       />
 
-      <div className="ujat-education-progress-region-assignment__toolbar">
-        <h2 className="ujat-education-progress-region-assignment__title">
-          {tableData.regionLabel} 지역 교육 배정
-          <span className="ujat-education-progress-region-assignment__count">
-            총 {tableData.volunteerCount}명
-          </span>
-        </h2>
+      <div className="table-header-actions">
+        <div className="table-header-title--wrapper">
+          <div className="table-title">{tableData.regionLabel} 지역 교육 배정</div>
+          <span className="table-description">총 {tableData.volunteerCount}명</span>
+        </div>
 
-        <div className="ujat-education-progress-region-assignment__actions">
+        <div className="table-header-actions--wrapper">
           <CmsButton
             type="button"
             variant="secondary"

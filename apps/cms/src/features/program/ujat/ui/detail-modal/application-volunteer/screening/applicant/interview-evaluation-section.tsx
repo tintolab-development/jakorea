@@ -3,6 +3,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { formatInterviewSummary } from '../interview-assign/schedule-utils'
 import { parseUjatInterviewDateLabel } from '../shared/interview-calendar-events'
+import { computeUjatInterviewTotalScore } from '../interview2/display'
 
 function formatScoreValue(score: number | null | undefined): string {
   return score != null ? String(score) : '-'
@@ -32,6 +33,7 @@ export function InterviewEvaluationSection({
   const remarkDisplay = applicant.interviewEvaluationRemark?.trim()
     ? applicant.interviewEvaluationRemark
     : '-'
+  const totalScore = useMemo(() => computeUjatInterviewTotalScore(applicant), [applicant])
 
   return (
     <section className="ujat-volunteer-applicant-interview-evaluation">
@@ -56,15 +58,12 @@ export function InterviewEvaluationSection({
             view={formatScoreValue(applicant.managerBScore)}
           />
         </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field label="비고" fullRow readOnlyDisplay view={remarkDisplay} />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field label="비고" readOnlyDisplay view={remarkDisplay} />
           <DetailInfoForm.Field
-            label="점수 종합"
-            fullRow
+            label="점수 총합"
             readOnlyDisplay
-            view={formatScoreValue(applicant.totalScore)}
+            view={formatScoreValue(totalScore)}
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>

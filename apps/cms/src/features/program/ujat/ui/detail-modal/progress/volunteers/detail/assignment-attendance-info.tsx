@@ -30,7 +30,11 @@ export function UjatEducationProgressVolunteerAssignmentAttendanceInfo({
   return (
     <div className="program-attendance-detail">
       <section className="program-detail-fullpage-modal__info-tab-block">
-        <h3 className="program-detail-info-tab__section-title">출결 관련 정보</h3>
+        <div className="table-header-title--wrapper">
+          <span className="table-title" style={{ marginBottom: 10 }}>
+            출결 관련 정보
+          </span>
+        </div>
         <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
           <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
             <colgroup>
